@@ -7,12 +7,16 @@
   <link rel="manifest" href="/assets/site.webmanifest">
   <link rel="mask-icon" href="/assets/safari-pinned-tab.svg" color="#5bbad5">
   <link rel="shortcut icon" href="/assets/favicon.ico">
+  <link rel="stylesheet" href="https://s.pageclip.co/v1/pageclip.css" media="screen">
   <meta name="msapplication-TileColor" content="#da532c">
   <meta name="msapplication-config" content="/assets/browserconfig.xml">
   <meta name="theme-color" content="#ffffff">
   <meta name="viewport" content="width=device-width">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500&display=swap');
+    * {
+      box-sizing: border-box;
+    }
     body {
       color: #FFF;
       font-family: 'Poppins', sans-serif;
@@ -26,11 +30,76 @@
       font-size: 2.5em;
       font-weight: 400;
     }
+    button {
+      background-color: #CAA557;
+      border-style: none;
+      border: 2px solid #CAA557;
+      color: black;
+      cursor: pointer;
+      font-family: 'Poppins', sans-serif;
+      padding: .75em 2em;
+      transition: background .25s ease;
+    }
+    button:hover {
+      background: rgba(202, 165, 87, .9);
+    }
+    button:active {
+      background: rgba(202, 165, 87, .8);
+    }
+    button,
+    input {width: 100%}
+    label {
+      display: block;
+      font-size: 1.25em;
+      letter-spacing: 1px;
+      margin: 1em auto;
+    }
+    input {
+      background: none;
+      border: 2px solid #CAA557;
+      color: white;
+      font-family: 'Poppins';
+      padding: 1em;
+    }
+    input:focus-visible {
+      outline: unset;
+    }
     .logo {
-      margin: 5em 0 2.5em;
+      margin: 5em 0 0 0;
+    }
+    .pageclip-input {
+      border-radius: 4px 4px 0 0;
+    }
+    .pageclip-form__submit {
+      border-radius: 0 0 4px 4px;
+      display: block;
+      padding: 1em;
+    }
+    .pageclip-form__success {
+      background: black;
+      top: 40px;
+    }
+    .pageclip-form__submit--loading:after {
+      top: calc(50% - 3px);
+      left: calc(50% - 3px);
     }
     .fade-in {
       animation: fadeIn 10s;
+    }
+    @media only screen and (min-width: 400px) {
+      .pageclip-input {
+        border-radius: 4px 0 0 4px;
+      }
+      .pageclip-form__submit {
+        border-radius: 0 4px 4px 0;
+        display: inline;
+        transform: translateX(-10px);
+      }
+      button,
+      input {width: auto}
+    }
+    #coming-soon {
+      margin: 1em auto 2em;
     }
     @keyframes fadeIn {
       0% {opacity:0;}
@@ -39,15 +108,21 @@
   </style>
 <title>Lolev | Brewing Company - Lawrenceville, Pittsburgh, PA</title>
 </head>
-<body>
+  <body>
+    <p>
+      <object class="logo" type="image/svg+xml" data="assets/logo.svg">
+        <img class="logo" src="assets/logo.png" />
+      </object>
+    </p>
 
-<p>
-  <object class="logo" type="image/svg+xml" data="assets/logo.svg">
-    <img class="logo" src="assets/logo.png" />
-  </object>
-</p>
-
-<h1 class="fade-in">coming soon</h1>
-
-</body>
+    <h1 id="coming-soon" class="fade-in">coming soon</h1>
+    <form action="https://send.pageclip.co/zQCVyw1PTrvW0l5D5Iculjmcoxqv2HPB" class="pageclip-form" method="post">
+      <label>Stay up to date</label>
+      <input type="email" class="pageclip-input" name="email" required placeholder="enter email" size="30"/>
+      <button type="submit" class="pageclip-form__submit">
+        <span>Subscribe</span>
+      </button>
+    </form>
+    <script src="https://s.pageclip.co/v1/pageclip.js" charset="utf-8"></script>
+  </body>
 </html>
