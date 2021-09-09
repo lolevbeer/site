@@ -1,0 +1,13 @@
+BEGIN:VCARD
+VERSION:3.0
+N:Gonano;Jeff;;;
+FN: Jeff Gonano
+ORG:Lolev Beer;
+TITLE:Founder\nFinance
+EMAIL;type=INTERNET;type=WORK;type=pref:jeff@lolev.beer
+TEL;type=WORK;type=VOICE:+1 724 518 9786
+item1.ADR;type=WORK;type=pref:;;5247 Butler St, Pittsburgh, PA 15201;
+item1.X-ABADR:sg
+item2.URL;type=pref:https://lolev.beer
+item2.X-ABLabel:_$!<HomePage>!$_
+END:VCARD
