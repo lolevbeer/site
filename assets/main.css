@@ -141,11 +141,13 @@ img.profile-pic {
 
 .text-name {
   font-weight: 400;
-  font-size: 20px;
+  font-size: 24px;
 }
 
 .text-title-company {
+  font-size: 18px;
   font-weight: 200;
+  line-height: 1.5em;
 }
 
 .text-detail {
@@ -171,7 +173,8 @@ img.profile-pic {
 }
 
 .logo-wrapper {
-  height: 60%;
+  height: 100%;
+  transform: translateY(-8px);
 }
 
 @media screen and (max-width: 600px) {
