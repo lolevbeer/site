@@ -20,13 +20,14 @@
     <section class="qr-code">
       <div id="qr"></div>
       <script type="text/javascript">
+      console.log(window.location);
         new QRCode(document.getElementById("qr"), {
-          text: window.location,
+          text: window.location.href,
           width: 128,
           height: 128,
           colorDark : "#000000",
           colorLight : "#ffffff",
-          correctLevel : QRCode.CorrectLevel.L
+          correctLevel : QRCode.CorrectLevel.H
         });
       </script>
     </section>
