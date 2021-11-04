@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <link rel="stylesheet" href="/assets/main.css">
+  <link href='https://fonts.googleapis.com/css?family=Poppins:200,300,400,700' rel='stylesheet' type='text/css'>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="apple-touch-icon" href="/assets/Lolev_BW.png">
+  <script src='https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js'></script>
+</head>
+
+<body>
+  <a href="index.vcf">
+    <section>
+      <img class="logo" src="/assets/Lolev_BW.png" alt="Company Logo">
+    </section>
+  	<p>{{ page.first }} {{ page.last }}</p>
+  	<p><strong>Lolev Beer</strong></p>
+    <section class="qr-code">
+      <div id="qr"></div>
+      <script type="text/javascript">
+        new QRCode(document.getElementById("qr"), {
+          text: window.location,
+          width: 128,
+          height: 128,
+          colorDark : "#000000",
+          colorLight : "#ffffff",
+          correctLevel : QRCode.CorrectLevel.L
+        });
+      </script>
+    </section>
+  	<p>{{ page.email }}</p>
+    <a class="button" href="tel:+1{{ page.phone | remove: '-' | remove: '(' | remove: ')' | remove: ' ' }}">
+      {{ page.phone }}
+    </a>
+  	<a class="button" href="https://lolev.beer">
+  		lolev.beer
+  	</a>
+  	<a class="button" href="https://www.google.com/maps/place/5247+Butler+St,+Pittsburgh,+PA+15201">
+      5247 Butler Street<br>
+      Pittsburgh, PA 15201
+  	</a>
+  </a>
+</body>
+
+</html>
