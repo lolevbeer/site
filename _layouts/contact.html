@@ -1,0 +1,13 @@
+BEGIN:VCARD
+VERSION:3.0
+N:{{ page.last}};{{ page.first}};;;
+FN:{{ page.first}} {{ page.last}}
+ORG:Lolev Beer;
+TITLE:{{ page.job_title }}
+EMAIL;type=INTERNET;type=WORK;type=pref:{{ page.email }}
+TEL;type=WORK;type=VOICE:+1 {{ page.phone | remove: "(" | remove: ")"}}
+item1.ADR;type=WORK;type=pref:;;5247 Butler St, Pittsburgh, PA 15201;
+item1.X-ABADR:sg
+item2.URL;type=pref:https://lolev.beer
+item2.X-ABLabel:_$!<HomePage>!$_
+END:VCARD
