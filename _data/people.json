@@ -1,0 +1,30 @@
+[
+  {
+    "first": "Scott",
+    "last": "Slesinski",
+    "email": "scott@lolev.beer",
+    "phone": "(484) 883-5228",
+    "job_title": "Brewer"
+  },
+  {
+    "first": "Jeff",
+    "last": "Gonano",
+    "email": "jeff@lolev.beer",
+    "phone": "(724) 518-9786",
+    "job_title": "Finance"
+  },
+  {
+    "first": "Derek",
+    "last": "Gonano",
+    "email": "derek@lolev.beer",
+    "phone": "(724) 612-8758",
+    "job_title": "Secretary"
+  },
+  {
+    "first": "Ted",
+    "last": "Slesinski",
+    "email": "ted@lolev.beer",
+    "phone": "(610) 299-1785",
+    "job_title": "Operations"
+  }
+]
