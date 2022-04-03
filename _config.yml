@@ -24,6 +24,8 @@ baseurl: "" # the subpath of your site, e.g. /blog
 url: "lolev.beer" # the base hostname & protocol for your site, e.g. http://example.com
 logo: assets/lolev.jpg
 
+sass:
+  sass_dir: _sass
 
 page_gen-dirs: true
 
@@ -31,10 +33,10 @@ page_gen:
 - data: people
   template: digicard
   name: 'first'
-  debug: true
+  debug: false
 
 - data: people
   template: contact
   name: first
   extension: vcf
-  debug: true
+  debug: false
