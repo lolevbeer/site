@@ -156,6 +156,20 @@ slider
       position: absolute
       animation: pulse 1s infinite
 
+.x-learned
+  slider > section
+    &:after,
+    &:before
+      animation: none
+      opacity: .2
+
+.y-learned
+  main > section
+    &:after,
+    &:before
+      animation: none
+      opacity: .2
+
 section
   align-items: center
   display: flex
@@ -195,7 +209,8 @@ input
     box-shadow: inset 1px 1px 3px #888888, inset -1px -1px 3px #000, 1px 1px 3px #00000088, -1px -1px 3px #FFFFFF77
     color: #FFF
     cursor: pointer
-    letter-spacing: 3px
+    letter-spacing: 5px
+    text-transform: uppercase
     &:active
       box-shadow: inset 1px 1px 3px #00000055, inset -1px -1px 3px #FFFFFF55
 
@@ -248,7 +263,7 @@ input
 header
   img,
   svg
-    transition: filter .15s ease
+    transition: filter .7s ease
 
 .dark
   header

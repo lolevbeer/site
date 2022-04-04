@@ -21,7 +21,10 @@ function scrollHandlerY(e) {
 
   e.target.scrollTimeout = setTimeout(function () {
     if (!timeOut) {
-      console.log(lastSlide);
+      window.Yscrolls++;
+      if (window.Yscrolls >= 3) {
+        document.body.classList.add('y-learned');
+      }
       if (isInViewport(lastSlide)) {
         document.body.classList.add('dark');
       } else {
@@ -38,14 +41,20 @@ function scrollHandlerX(e) {
   clearTimeout(e.target.scrollTimeout);
 
   e.target.scrollTimeout = setTimeout(function () {
-    if (timeOut) {
-      console.log("User scrolled X");
+    if (!timeOut) {
+      window.Xscrolls++;
+      if (window.Xscrolls >= 2) {
+        document.body.classList.add('x-learned');
+      }
     }
   }, timeOut);
 }
 
 let sliders = document.getElementsByTagName("slider");
 let main = document.getElementsByTagName("main");
+
+window.Yscrolls = 0;
+window.Xscrolls = 0;
 
 main[0].addEventListener("scroll", scrollHandlerY);
 
