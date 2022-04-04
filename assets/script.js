@@ -68,16 +68,18 @@ var chart3 = document.getElementById("chart-3");
 var chart1 = new Chart(chart1, {
   type: "line",
   options: {
+    animations: {
+      tension: {
+        duration: 1000,
+        easing: 'linear',
+        from: .5,
+        to: 0,
+        loop: true
+      }
+    },
     plugins: {
       legend: {
         display: false
-      }
-    },
-    tooltips: {
-      callbacks: {
-        label: function (tooltipItem) {
-          return tooltipItem.yLabel;
-        }
       }
     }
   },
@@ -85,6 +87,7 @@ var chart1 = new Chart(chart1, {
     labels: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
     datasets: [
       {
+        label: '',
         data: [
           { x: 1, y: 1080 },
           { x: 2, y: 1055 },
@@ -104,21 +107,14 @@ var chart1 = new Chart(chart1, {
 var chart2 = new Chart(chart2, {
   type: "line",
   options: {
-    scales: {
-      xAxes: [
-        {
-          gridLines: {
-            color: "rgba(0, 0, 0, 0)"
-          }
-        }
-      ],
-      yAxes: [
-        {
-          gridLines: {
-            color: "rgba(0, 0, 0, 0)"
-          }
-        }
-      ]
+    animations: {
+      tension: {
+        duration: 1000,
+        easing: 'linear',
+        from: .5,
+        to: 0,
+        loop: true
+      }
     },
     plugins: {
       legend: {
@@ -149,21 +145,14 @@ var chart2 = new Chart(chart2, {
 var chart3 = new Chart(chart3, {
   type: "line",
   options: {
-    scales: {
-      xAxes: [
-        {
-          gridLines: {
-            color: "rgba(0, 0, 0, 0)"
-          }
-        }
-      ],
-      yAxes: [
-        {
-          gridLines: {
-            color: "rgba(0, 0, 0, 0)"
-          }
-        }
-      ]
+    animations: {
+      tension: {
+        duration: 1000,
+        easing: 'linear',
+        from: .5,
+        to: 0,
+        loop: true
+      }
     },
     plugins: {
       legend: {

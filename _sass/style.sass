@@ -107,14 +107,13 @@ main
       font-weight: 700
       margin: 0 auto
       text-align: center
-      // transform: translateY(.54em)
     &:first-child:before
       content: ''
     &:last-child:after
       content: ''
     &:before
       content: '↑'
-      top: 3em
+      top: 2.3em
     &:after
       content: '↓'
       bottom: 1em
@@ -203,6 +202,7 @@ input
   box-shadow: inset 1px 1px 3px #00000044, inset -1px -1px 3px #FFFFFF77
   color: black
   font-family: inherit
+  letter-spacing: 1px
   outline: none
   padding: 1em
   &[type=submit]
@@ -227,8 +227,6 @@ input
     opacity: .2
 
 @supports (-webkit-touch-callout: none)
-  footer
-    // bottom: 55px
   main > section:after
     bottom: 3.5em
   main > section:before
@@ -251,7 +249,6 @@ input
 .columns
   flex-wrap: wrap
   justify-content: space-evenly
-  // text-align: left
   row-gap: 10px
   column-gap: 20px
 
@@ -260,6 +257,9 @@ input
   color: white
   a
     color: #777
+
+.charts
+  max-height: 50%
 
 header
   img,
