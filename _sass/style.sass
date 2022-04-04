@@ -120,7 +120,6 @@ main
       bottom: 1em
     &:after,
     &:before
-      left: 29px
       z-index: 1
 
 slider
@@ -153,6 +152,7 @@ slider
     &:before
       opacity: .5
       font-size: 2em
+      font-weight: bolder
       position: absolute
       animation: pulse 1s infinite
 
@@ -194,6 +194,7 @@ label
 
 ::placeholder
   color: #666
+
 input
   -webkit-appearance: none
   background: none
@@ -216,13 +217,13 @@ input
 
 @keyframes pulse
   0%
-    transform: scale(0.95)
+    transform: scale(0.9)
     opacity: .2
   70%
-    transform: scale(1.15)
+    transform: scale(1.5)
     opacity: .7
   100%
-    transform: scale(0.95)
+    transform: scale(1)
     opacity: .2
 
 @supports (-webkit-touch-callout: none)
