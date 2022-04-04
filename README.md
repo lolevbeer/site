@@ -1,1 +1,3 @@
-jekyll serve --livereload
+**To Run**
+
+```bundle exec jekyll serve --livereload```
