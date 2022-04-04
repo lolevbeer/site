@@ -55,6 +55,7 @@ for (slider of sliders) {
 
 var chart1 = document.getElementById("chart-1");
 var chart2 = document.getElementById("chart-2");
+var chart3 = document.getElementById("chart-3");
 var chart1 = new Chart(chart1, {
   type: "line",
   options: {
@@ -92,6 +93,51 @@ var chart1 = new Chart(chart1, {
   }
 });
 var chart2 = new Chart(chart2, {
+  type: "line",
+  options: {
+    scales: {
+      xAxes: [
+        {
+          gridLines: {
+            color: "rgba(0, 0, 0, 0)"
+          }
+        }
+      ],
+      yAxes: [
+        {
+          gridLines: {
+            color: "rgba(0, 0, 0, 0)"
+          }
+        }
+      ]
+    },
+    plugins: {
+      legend: {
+        display: false
+      }
+    }
+  },
+  data: {
+    labels: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+    datasets: [
+      {
+        data: [
+          { x: 1, y: 1070 },
+          { x: 2, y: 1047 },
+          { x: 3, y: 1020 },
+          { x: 4, y: 1022 },
+          { x: 5, y: 1020 },
+          { x: 6, y: 1021 },
+          { x: 7, y: 1010 },
+          { x: 8, y: 1005 },
+          { x: 9, y: 1003 },
+          { x: 10, y: 1001 }
+        ]
+      }
+    ]
+  }
+});
+var chart3 = new Chart(chart3, {
   type: "line",
   options: {
     scales: {
