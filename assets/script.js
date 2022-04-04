@@ -81,7 +81,7 @@ var chart1 = new Chart(chart1, {
       tension: {
         duration: 1000,
         easing: 'linear',
-        from: .5,
+        from: 1,
         to: 0,
         loop: true
       }
@@ -122,7 +122,7 @@ var chart2 = new Chart(chart2, {
       tension: {
         duration: 1000,
         easing: 'linear',
-        from: .5,
+        from: 1,
         to: 0,
         loop: true
       }
@@ -160,7 +160,7 @@ var chart3 = new Chart(chart3, {
       tension: {
         duration: 1000,
         easing: 'linear',
-        from: .5,
+        from: 1,
         to: 0,
         loop: true
       }
