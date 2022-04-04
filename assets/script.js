@@ -24,6 +24,7 @@ function scrollHandlerY(e) {
       window.Yscrolls++;
       if (window.Yscrolls >= 5) {
         document.body.classList.add('y-learned');
+        localStorage.setItem('yLearned', 1);
       }
       if (isInViewport(lastSlide)) {
         document.body.classList.add('dark');
@@ -45,9 +46,17 @@ function scrollHandlerX(e) {
       window.Xscrolls++;
       if (window.Xscrolls >= 4) {
         document.body.classList.add('x-learned');
+        localStorage.setItem('xLearned', 1);
       }
     }
   }, timeOut);
+}
+
+if (localStorage.getItem('yLearned') == 1) {
+  document.body.classList.add('y-learned');
+}
+if (localStorage.getItem('xLearned') == 1) {
+  document.body.classList.add('x-learned');
 }
 
 let sliders = document.getElementsByTagName("slider");
