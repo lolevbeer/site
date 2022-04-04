@@ -22,7 +22,7 @@ function scrollHandlerY(e) {
   e.target.scrollTimeout = setTimeout(function () {
     if (!timeOut) {
       window.Yscrolls++;
-      if (window.Yscrolls >= 3) {
+      if (window.Yscrolls >= 5) {
         document.body.classList.add('y-learned');
       }
       if (isInViewport(lastSlide)) {
@@ -43,7 +43,7 @@ function scrollHandlerX(e) {
   e.target.scrollTimeout = setTimeout(function () {
     if (!timeOut) {
       window.Xscrolls++;
-      if (window.Xscrolls >= 2) {
+      if (window.Xscrolls >= 4) {
         document.body.classList.add('x-learned');
       }
     }
