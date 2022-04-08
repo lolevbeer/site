@@ -1,5 +1,5 @@
 ---
-title: We're Hiring
+title: Jobs
 ---
 We're hiring for several positions in the front of the house and cellar.
 

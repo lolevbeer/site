@@ -1,4 +1,4 @@
 ---
-title: Releases
+title: Release
 ---
 First release on opening day
