@@ -1,7 +1,9 @@
 _site
+.pug-cache
 .sass-cache
 .jekyll-cache
 .jekyll-metadata
 .DS_Store
 vendor
 qr.py
+debug.md

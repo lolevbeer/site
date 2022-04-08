@@ -118,7 +118,7 @@ main
       top: 2.3em
     &:after
       content: '▼'
-      bottom: 1em
+      bottom: 2.3em
     &:after,
     &:before
       z-index: 1
@@ -242,6 +242,12 @@ input
   h2
     letter-spacing: 2px
 
+.abv
+  font-size: 1.5em
+  margin: 0 0 .5em
+  &:after
+    content: '%'
+
 .stacked
     flex-direction: column
     flex-wrap: wrap
@@ -268,8 +274,15 @@ header
   svg
     transition: filter .7s ease
 
+footer
+  transition: color .7s ease
+  a
+    color: black
+
 .dark
   header
     img,
     svg
       filter: invert(1)
+  footer
+    color: white

@@ -1,29 +1,19 @@
 -  name: Aurora
    style: New England IPA
    notes: Pineapple with floral undertones, stone fruit, pine, and citrus zest. A heavy aroma of passionfruit, pine resin, apricot, and citrus.
-   abv:
+   abv: 6.5
 
 -  name: Terra
    style: Saison
    notes: Orange zest, marmalade, and grapefruit. Floral and slightly spicy with a hint of lemongrass.
-   abv:
+   abv: 6.5
 
 -  name: Obsidian
    style: Black IPA
    notes: A subtle roast flavor up front opens to light grapefruit and citrus note and a subtle apricot with berry notes on the finish.
-   abv:
+   abv: 6.1
 
 -  name: Safi
    style: Bavarian Lager
    notes: Clean, crisp, rich malt flavor with slight spice and floral undertones.
-   abv:
-
--  name: Pearl
-   style: Saison
-   notes: Notes of orange citrus, grapefruit and pine. An intense citrus aroma with pronounced lemon undertones.
-   abv:
-
--  name:
-   style:
-   notes:
-   abv:
+   abv: 5.5
