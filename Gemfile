@@ -15,6 +15,7 @@ gem "jekyll", "~> 4.2.1"
 group :jekyll_plugins do
   gem 'jekyll-datapage-generator'
   gem 'jekyll-sass-converter'
+  gem 'jekyll-pug'
 end
 
 # Windows and JRuby does not include zoneinfo files, so bundle the tzinfo-data gem

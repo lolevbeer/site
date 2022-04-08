@@ -24,10 +24,21 @@ baseurl: "" # the subpath of your site, e.g. /blog
 url: "lolev.beer" # the base hostname & protocol for your site, e.g. http://example.com
 logo: assets/lolev.jpg
 
+plugins:
+- jekyll-pug
+
 sass:
   sass_dir: _sass
+  style: compressed
 
 page_gen-dirs: true
+
+collections:
+  - sections
+
+collections:
+  sections:
+    output: true
 
 page_gen:
 - data: people
