@@ -183,14 +183,18 @@ section
   text-align: center
 
 footer
-  position: absolute
-  padding-bottom: .25em
   bottom: 0
-  left: 50%
+  display: flex
+  font-size: .9em
+  justify-content: space-between
   letter-spacing: 1px
+  padding: 0.5em 1em
+  position: absolute
   text-align: center
-  transform: translateX(-50%)
+  transition: color .7s ease
   width: 100%
+  a
+    color: black
 
 label
   display: block
@@ -275,11 +279,6 @@ header
   img,
   svg
     transition: filter .7s ease
-
-footer
-  transition: color .7s ease
-  a
-    color: black
 
 .dark
   header
