@@ -70,14 +70,6 @@ header
   width: 100%
   z-index: 1
 
-section > header
-  flex-direction: column
-  top: 0
-  *
-    padding: 0 3em
-  p
-    margin-top: 3em
-
 .logo
   img
     display: inline
@@ -96,6 +88,7 @@ section > header
 main,
 section
   height: 100vh
+  height: var(--app-height)
 
 main
   overflow: auto
@@ -180,6 +173,15 @@ section
   padding: 6em 0
   scroll-snap-align: start
   text-align: center
+  &:not(.slider)
+    padding: 6em 1em
+  & > header
+    flex-direction: column
+    top: 0
+    *
+      padding: 0 3em
+    p
+      margin-top: 3em
 
 footer
   bottom: 0
@@ -192,8 +194,6 @@ footer
   text-align: center
   transition: color .7s ease
   width: 100%
-  a
-    color: black
 
 label
   display: block
@@ -211,6 +211,7 @@ input
   color: black
   font-family: inherit
   letter-spacing: 1px
+  margin-bottom: 1em
   outline: none
   padding: 1em
   &[type=submit]
@@ -238,16 +239,23 @@ input
 @supports (-webkit-touch-callout: none)
   main > section:after
     bottom: 3.5em
-  // footer
-  //   bottom: 20px
 
 @media only screen and (max-width: 640px)
+  body
+    font-size: 13px
+  main > section h2
+    top: 7px
   .stacked > *
     max-width: 90% !important
   .columns
     flex-direction: column
   h2
     letter-spacing: 2px
+  .social img
+    height: 20px
+    width: 20px
+  input
+    width: 100%
 
 .abv
   font-size: 1.5em
@@ -280,6 +288,11 @@ header
   img,
   svg
     transition: filter .7s ease
+
+footer
+  transition: color .7s ease
+  a
+    color: black
 
 .dark
   header
