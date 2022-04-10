@@ -3,19 +3,17 @@ for (let i = 0; i < items.length; i++) {
   items[i].style.background = randomColor({ luminosity: "light" });
 }
 
-function isInViewport(element) {
-  const rect = element.getBoundingClientRect();
-  return (
-    rect.top == 0 &&
-    rect.left == 0
-  );
-}
-
 function scrollHandlerY(e) {
   let atSnappingPoint = e.target.scrollTop % e.target.offsetHeight === 0;
   let timeOut = atSnappingPoint ? 0 : 150;
   let lastSlides = document.getElementsByClassName("last-slide");
   let lastSlide = lastSlides[0];
+
+  if (e.target.scrollTop > lastSlide.offsetTop - 10) {
+    document.body.classList.add('dark');
+  } else {
+    document.body.classList.remove('dark');
+  }
 
   clearTimeout(e.target.scrollTimeout);
 
@@ -25,11 +23,6 @@ function scrollHandlerY(e) {
       if (window.Yscrolls >= 5) {
         document.body.classList.add('y-learned');
         localStorage.setItem('yLearned', 1);
-      }
-      if (isInViewport(lastSlide)) {
-        document.body.classList.add('dark');
-      } else {
-        document.body.classList.remove('dark');
       }
     }
   }, timeOut);
@@ -70,3 +63,10 @@ main[0].addEventListener("scroll", scrollHandlerY);
 for (slider of sliders) {
   slider.addEventListener("scroll", scrollHandlerX);
 }
+
+const appHeight = () => {
+  const doc = document.documentElement;
+  doc.style.setProperty('--app-height', `${window.innerHeight}px`);
+}
+window.addEventListener('resize', appHeight);
+appHeight();
