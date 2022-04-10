@@ -9,7 +9,7 @@
   <!-- connect to domain of font files -->
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <!-- optionally increase loading priority -->
-  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Poppins:wght@100;200;300;400;500;600;700;800;900&amp;display=swap">
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Poppins:wght@500;600;700;800&amp;display=swap">
   <!-- async CSS -->
   <link rel="stylesheet" media="print" onload="this.onload=null;this.removeAttribute('media');" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Poppins:wght@100;200;300;400;500;600;700;800;900&amp;display=swap">
   <!-- no-JS fallback -->
@@ -58,13 +58,15 @@
   </section>
   <section>
     <h2>Beer</h2>
-    <slider>{% for beer in site.data.beer %}
+    <slider>
+    {% for beer in site.data.beer %}
       <section class="stacked">
         <h3>{{ beer.name }}</h3>
         <h4>{{ beer.style }}</h4>
         <p class="abv"><b>{{ beer.abv }}</b></p>
         <p>{{ beer.notes }}</p>
-      </section>{% endfor %}
+      </section>
+    {% endfor %}
     </slider>
   </section>
   <section>
@@ -106,8 +108,12 @@
     </div>
   </section>
   <section class="columns last-slide" id="footer">
-    <div><a href="mailto:info@lolev.beer">info@lolev.beer</a></div>
-    <address><a href="https://goo.gl/maps/LRDkR2b9vvMRFCvR6" target="_blank">5247 Butler Steet<br>Pittsburgh, PA 15201</a></address><span class="hours">Opening in July</span>
+    <div>
+      <a href="mailto:info@lolev.beer">info@lolev.beer</a>
+    </div>
+    <address>
+      <a href="https://goo.gl/maps/LRDkR2b9vvMRFCvR6" target="_blank">5247 Butler Steet<br>Pittsburgh, PA 15201</a>
+    </address><span class="hours">Opening in July</span>
   </section>
 </main>
 <footer>©2022
