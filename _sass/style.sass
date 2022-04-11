@@ -88,7 +88,11 @@ header
 main,
 section
   height: 100vh
-  height: var(--app-height)
+
+.height-rendered
+  main,
+  section
+    height: var(--app-height)
 
 main
   overflow: auto
@@ -237,8 +241,9 @@ input
     opacity: .2
 
 @supports (-webkit-touch-callout: none)
-  main > section:after
-    bottom: 3.5em
+  main,
+  section
+    height: calc(100vh - 75px)
 
 @media only screen and (max-width: 640px)
   body
