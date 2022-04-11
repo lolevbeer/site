@@ -67,6 +67,8 @@ for (slider of sliders) {
 const appHeight = () => {
   const doc = document.documentElement;
   doc.style.setProperty('--app-height', `${window.innerHeight}px`);
+  document.body.classList.add('height-rendered');
 }
 window.addEventListener('resize', appHeight);
+window.addEventListener('orientationchange', appHeight);
 appHeight();
