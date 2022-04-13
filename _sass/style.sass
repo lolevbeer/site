@@ -50,10 +50,11 @@ address
 a
   color: #333
   font-weight: 600
-  text-decoration: none
-  transition: text-shadow .4s ease
+  text-decoration: underline
+  text-decoration-color: transparent
+  transition: text-decoration-color .4s ease
   &:hover
-    text-shadow: 0px 0px 3px #ffffff77
+    text-decoration-color: initial
 
 p
   font-family: Lora, serif
@@ -87,6 +88,7 @@ header
 
 main,
 section
+  transition: background .4s ease
   height: 100vh
 
 .height-rendered
