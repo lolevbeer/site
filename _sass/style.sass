@@ -115,6 +115,9 @@ main
     &:before
       content: url(../images/up.svg)
       top: 2.3em
+      transition: filter .7s ease
+      .dark &
+        filter: invert(1)
     &:after
       content: url(../images/down.svg)
       bottom: 2.3em
