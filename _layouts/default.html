@@ -60,7 +60,7 @@
     <h2>Beer</h2>
     <slider>
     {% for beer in site.data.beer %}
-      <section class="stacked">
+      <section class="stacked" id="{{ beer.name }}">
         <h3>{{ beer.name }}</h3>
         <h4>{{ beer.style }}</h4>
         <p class="abv"><b>{{ beer.abv }}</b></p>
