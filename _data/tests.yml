@@ -4,12 +4,21 @@
 
 -  style: Bavarian Lager
    abv: 5.2
-   release: Finishing first week of May
+   release: Pouring
 
 - style: Saison
   abv: 6.5
-  release: Finishing first week of May
+  release: Pouring
 
 - style: Saison
   abv: 6.2
-  release: Finishing third week of May
+  release: Pouring
+  
+- style: Seltzer
+  abv: 5.2
+  release: Pouring
+
+- style: Lager
+  abv: 5.3
+  release: Finishing June 4th
+  
