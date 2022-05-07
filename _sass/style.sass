@@ -3,74 +3,6 @@ $rounding: .5em
 *
   box-sizing: border-box
 
-body
-  position: relative
-  font-family: Poppins, sans-serif
-  letter-spacing: 2px
-  line-height: 1.5em
-  margin: 0
-
-h1,
-h2,
-h3,
-h4,
-h5,
-h6
-  font-weight: 500
-  letter-spacing: 4px
-  line-height: 1em
-
-h1
-  font-size: 3em
-  letter-spacing: 20px
-  text-transform: uppercase
-  line-height: 1.5em
-
-h2
-  font-size: 2.5em
-  letter-spacing: .5em
-  line-height: 2em
-  text-transform: uppercase
-
-h3
-  font-size: 2em
-  font-weight: 600
-
-h4
-  font-size: 1.5em
-  color: #333
-
-small
-  font-size: .75em
-
-address
-  display: inline
-  font-style: normal
-
-a
-  color: #333
-  font-weight: 600
-  text-decoration: underline
-  text-decoration-color: transparent
-  transition: text-decoration-color .4s ease
-  &:hover
-    text-decoration-color: initial
-
-p
-  font-family: Lora, serif
-  font-size: 1.2em
-  line-height: 1.5em
-
-header
-  align-items: center
-  background: transparent
-  display: flex
-  justify-content: space-between
-  position: absolute
-  text-align: center
-  width: 100%
-  z-index: 1
-
 .logo
   img
     display: inline
@@ -116,13 +48,13 @@ main
       content: ''
     &:before
       content: url(../images/up.svg)
-      top: 2.3em
+      top: 19vh
       transition: filter .7s ease
       .dark &
         filter: invert(1)
     &:after
       content: url(../images/down.svg)
-      bottom: 2.3em
+      bottom: 19vh
     &:after,
     &:before
       z-index: 1
@@ -145,10 +77,10 @@ slider
     &:before
     &:after
       content: url(../images/right.svg)
-      right: .25em
+      right: 9vw
     &:before
       content: url(../images/left.svg)
-      left: .25em
+      left: 9vw
 
 main,
 slider
@@ -193,10 +125,11 @@ section
       margin-top: 3em
 
 footer
+  // background: rgba(0,0,0,.05)
   bottom: 0
   display: flex
   font-size: .9em
-  justify-content: space-between
+  justify-content: center
   letter-spacing: 1px
   padding: 0.5em 1em
   position: absolute
@@ -288,6 +221,8 @@ input
 .last-slide
   background: black !important
   color: white
+  font-size: 1.4em
+  letter-spacing: 2px
   a
     color: #777
 
@@ -300,9 +235,11 @@ header
     transition: filter .7s ease
 
 footer
+  color: black
   transition: color .7s ease
   a
     color: black
+    transition: color .7s ease
 
 .dark
   header
@@ -310,4 +247,6 @@ footer
     svg
       filter: invert(1)
   footer
-    color: white
+    background: none
+    a
+      color: white
