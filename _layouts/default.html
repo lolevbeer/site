@@ -52,11 +52,11 @@
   </span>
 </header>
 <main>
-  <section class="stacked">
+  <section class="stacked" id="open">
     <h1>LOLEV</h1>
     <p>Scroll to see core beer selection and what we're testing.</p>
   </section>
-  <section class="slider">
+  <section class="slider" id="flagships">
     <h2>Beer</h2>
     <slider>
     {% for beer in site.data.beer %}
@@ -69,7 +69,7 @@
     {% endfor %}
     </slider>
   </section>
-  <section class="slider">
+  <section class="slider" id="pilot">
     <h2>Pilot</h2>
     <slider>
     {% for beer in site.data.tests %}
@@ -84,12 +84,12 @@
     </slider>
   </section>
 {% for section in site.sections %}
-  <section class="stacked">
+  <section class="stacked" id="{{ section.title | downcase }}">
     <h2>{{ section.title }}</h2>
     {{ section.content }}
   </section>
 {% endfor %}
-  <section class="newsletter">
+  <section class="newsletter" id="newsletter">
     <div class="signup-form" id="mc_embed_signup">
       <form class="validate" id="mc-embedded-subscribe-form" action="https://beer.us5.list-manage.com/subscribe/post?u=f0d41c74cdaa37a0c3e949890&amp;id=05ee0f2ea4" method="post" name="mc-embedded-subscribe-form" target="_blank" novalidate="">
         <div id="mc_embed_signup_scroll">
