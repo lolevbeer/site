@@ -25,3 +25,4 @@ jobs:
           provider: 'github'
           token: ${{ secrets.GITHUB_TOKEN }}
           cname: ${{ secrets.CNAME }}
+          pre_build_commands: 'sudo pacman -S libvips --noconfirm'
