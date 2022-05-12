@@ -48,13 +48,13 @@ main
       content: ''
     &:before
       content: url(../images/up.svg)
-      top: 19vh
+      top: 13vh
       transition: filter .7s ease
       .dark &
         filter: invert(1)
     &:after
       content: url(../images/down.svg)
-      bottom: 19vh
+      bottom: 13vh
     &:after,
     &:before
       z-index: 1
@@ -109,6 +109,7 @@ slider
 
 section
   img
+    max-width: 500px
     width: 100%
   align-items: center
   display: flex
