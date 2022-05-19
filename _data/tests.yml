@@ -2,6 +2,10 @@
    abv: 5.0
    release: Pouring
 
+-  style: Pale Ale
+   abv: 5.2
+   release: Pouring
+
 -  style: Bavarian Lager
    abv: 5.2
    release: Pouring
@@ -17,6 +21,10 @@
 - style: Seltzer
   abv: 5.2
   release: Pouring
+
+-  style: Imperial IPA
+   abv: 8.5
+   release: Finishing May 27th
 
 - style: Lager
   abv: 5.3
