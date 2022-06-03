@@ -1,4 +1,4 @@
-- style: Midwest Pale Ale
+- style: Midcoast IPA
   abv: 6.0
   release: Pouring
 
@@ -21,3 +21,7 @@
 - style: Lager
   abv: 5.3
   release: Pouring
+ 
+- style: Pale Ale
+  abv: 5.5
+  release: Finishing June 11th
