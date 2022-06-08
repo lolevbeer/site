@@ -1,3 +1,8 @@
+-  name: Terra
+   style: Saison
+   notes: Orange zest, marmalade, and grapefruit. Floral and slightly spicy with a hint of lemongrass
+   abv: 6.5
+
 -  name: Revive
    style: Hard Seltzer
    notes: Notes of fresh lemon, berry, and fresh pineapple
@@ -13,15 +18,11 @@
    notes: Notes of orange citrus, grapefruit and pine, an intense citrus aroma with pronounced lemon undertones
    abv: 6.2
 
--  name: Terra
-   style: Saison
-   notes: Orange zest, marmalade, and grapefruit. Floral and slightly spicy with a hint of lemongrass
-   abv: 6.5
-
 -  name: Cove
    style: Lager
    notes: Crisp and easy drinking lager with floral notes and a citrus undertone.
    abv: 5.0
+
 -  name: Obsidian
    style: Black IPA
    notes: A subtle roast flavor up front opens to light grapefruit and citrus note and a subtle apricot with berry notes on the finish
