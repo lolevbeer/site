@@ -1,11 +1,11 @@
 -  name: Revive
    style: Hard Seltzer
-   notes: Clean, crisp, rich malt flavor with slight spice and floral undertones.
+   notes: Notes of fresh lemon, berry, and fresh pineapple
    abv: 5.5
 
 -  name: Vital
    style: Imperial IPA
-   notes: Dank flavors of grapefruit, pineapple, passionfruit with berry undertones, heavy aroma of grapefruit.
+   notes: Dank flavors of grapefruit, pineapple, passionfruit with berry undertones, heavy aroma of grapefruit
    abv: 8.5
 
 -  name: Pearl
@@ -15,20 +15,19 @@
 
 -  name: Terra
    style: Saison
-   notes: Orange zest, marmalade, and grapefruit. Floral and slightly spicy with a hint of lemongrass.
+   notes: Orange zest, marmalade, and grapefruit. Floral and slightly spicy with a hint of lemongrass
    abv: 6.5
 
 -  name: Cove
    style: Lager
    notes: Crisp and easy drinking lager with floral notes and a citrus undertone.
    abv: 5.0
-
 -  name: Obsidian
    style: Black IPA
-   notes: A subtle roast flavor up front opens to light grapefruit and citrus note and a subtle apricot with berry notes on the finish.
+   notes: A subtle roast flavor up front opens to light grapefruit and citrus note and a subtle apricot with berry notes on the finish
    abv: 6.1
 
 -  name: Safi
    style: Bavarian Lager
-   notes: Clean, crisp, rich malt flavor with slight spice and floral undertones.
+   notes: Clean, crisp, rich malt flavor with slight spice and floral undertones
    abv: 5.5
