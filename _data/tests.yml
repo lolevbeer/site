@@ -1,27 +1,23 @@
-- style: Midcoast IPA
-  abv: 6.0
-  release: Pouring
-
-- style: Saison
-  abv: 6.5
-  release: Pouring
-
-- style: Saison
-  abv: 6.2
-  release: Pouring
-  
-- style: Seltzer
-  abv: 5.2
-  release: Pouring
-
-- style: Imperial IPA
-  abv: 8.5
-  release: Pouring
-
-- style: Lager
-  abv: 5.3
-  release: Pouring
- 
-- style: Pale Ale
+- style: New England Pale Ale
   abv: 5.5
-  release: Finishing June 11th
+  release: Pouring
+
+- style: Black IPA
+  abv: 6.2
+  release: Finishing July 15
+
+- style: New England IPA
+  abv: 6.4
+  release: Finishing July 22
+
+- style: Imperial Stout
+  abv: 10.7
+  release: Finishing July 29
+  
+- style: Saison
+  abv: 7.7
+  release: Finishing July 30
+
+- style: Pilsner
+  abv: 5.3
+  release: Finishing July 31
