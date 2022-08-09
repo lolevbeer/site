@@ -1,23 +1,15 @@
-- style: New England Pale Ale
-  abv: 5.5
-  release: Pouring
-
 - style: Black IPA
   abv: 6.2
-  release: Finishing July 15
+  release: Pouring
 
 - style: New England IPA
   abv: 6.4
-  release: Finishing July 22
+  release: Pouring
 
 - style: Imperial Stout
   abv: 10.7
-  release: Finishing July 29
+  release: Pouring
   
 - style: Saison
   abv: 7.7
   release: Finishing July 30
-
-- style: Pilsner
-  abv: 5.3
-  release: Finishing July 31
