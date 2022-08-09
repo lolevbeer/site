@@ -13,7 +13,7 @@ jobs:
         run: sudo apt-get install libvips-tools
   
       - name: Checkout
-      - uses: actions/checkout@v2
+        uses: actions/checkout@v2
 
       # Use GitHub Actions' cache to cache dependencies on servers
       - uses: actions/cache@v2
