@@ -10,8 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Install dependencies
-        run: sudo apt-get install libvips-tools
-  
+        run: sudo apt-get install libvips-tools liblcms2
+
       - name: Checkout
         uses: actions/checkout@v2
 

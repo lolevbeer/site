@@ -74,6 +74,7 @@ GEM
 
 PLATFORMS
   arm64-darwin-20
+  universal-darwin-21
   x86_64-linux
 
 DEPENDENCIES
@@ -86,4 +87,4 @@ DEPENDENCIES
   wdm (~> 0.1.1)
 
 BUNDLED WITH
-   2.2.16
+   2.2.30
