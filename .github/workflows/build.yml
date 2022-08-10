@@ -9,8 +9,8 @@ jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Install dependencies
-        run: sudo apt-get install libvips-tools liblcms2
+      # - name: Install dependencies
+      #   run: sudo apt-get install libvips-tools liblcms2
 
       - name: Checkout
         uses: actions/checkout@v2
@@ -29,4 +29,4 @@ jobs:
           provider: 'github'
           token: ${{ secrets.GITHUB_TOKEN }}
           cname: ${{ secrets.CNAME }}
-          pre_build_commands: 'sudo pacman -S libvips --noconfirm'
+          pre_build_commands: 'sudo pacman -S libvips lcms2 --noconfirm'
