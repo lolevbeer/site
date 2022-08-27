@@ -1,15 +1,19 @@
-- style: Black IPA
-  abv: 6.2
-  release: Pouring
+- style: Imperial New England IPA
+  abv: 8.2
+  release: Finishing Sept 9th
 
 - style: New England IPA
-  abv: 6.4
+  abv: 6.6
+  release: Finishibg Sept 16th
+
+- style: Saison
+  abv: 6.9
+  release: Finishing September 16th
+  
+- style: Hopped Seltzer
+  abv: 5.2
   release: Pouring
 
 - style: Imperial Stout
-  abv: 10.7
+  abv: 9.9
   release: Pouring
-  
-- style: Saison
-  abv: 7.7
-  release: Finishing July 30
