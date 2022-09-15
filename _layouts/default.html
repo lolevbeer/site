@@ -1,3 +1,4 @@
+{% include header.html %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -55,19 +56,18 @@
   </span>
 </header>
 <main>
-  <section class="stacked" id="open">
-    <h1>LOLEV BEER</h1>
-    <p>We are a brewery coming to Lawrenceville, Pittsburgh. We are wrapping construction for a fall open.</p>
-    <p>You can follow us here and on <a class="link" href="https://instagram.com/lolevbeer" target="_blank">Instagram</a> for updates.</p>
-    <p>If you are interested in our beer, scroll down and swipe left to see core beer and what we're testing.</p>
+  <section class="stacked {{ page.classes }}" id="open">
+    <h1>{{ page.title}}</h1>
+    {{ content }}
   </section>
+{% if page.url == "/" %}
   <section class="slider" id="flagships">
     <h2>Beer</h2>
     <slider>
     {% for beer in site.data.beer %}
       <section class="stacked" id="{{ beer.name }}">
-        <h3>{{ beer.name }}</h3>
-        <h4>{{ beer.style }}</h4>
+        <p><h3>{{ beer.name }}</h3>
+        <p><h4>{{ beer.style }}</h4></p>
         <p class="abv"><b>{{ beer.abv }}</b></p>
         <p>{{ beer.notes }}</p>
       </section>
@@ -79,7 +79,7 @@
     <slider>
     {% for beer in site.data.tests %}
       <section class="stacked">
-        <h3>{{ beer.style }}</h3>
+        <p><h3>{{ beer.style }}</h3></p>
       {% if beer.abv %}
         <p class="abv"><b>{{ beer.abv }}</b></p>
       {% endif %}
@@ -88,12 +88,13 @@
     {% endfor %}
     </slider>
   </section>
-{% for section in site.sections %}
-  <section class="stacked" id="{{ section.title | downcase }}">
-    <h2>{{ section.title }}</h2>
-    {{ section.content }}
-  </section>
-{% endfor %}
+  {% for section in site.sections %}
+    <section class="stacked" id="{{ section.title | downcase }}">
+      <h2>{{ section.title }}</h2>
+      {{ section.content }}
+    </section>
+  {% endfor %}
+{% endif %}
   <section class="newsletter" id="newsletter">
     <div class="signup-form" id="mc_embed_signup">
       <form class="validate" id="mc-embedded-subscribe-form" action="https://beer.us5.list-manage.com/subscribe/post?u=f0d41c74cdaa37a0c3e949890&amp;id=05ee0f2ea4" method="post" name="mc-embedded-subscribe-form" target="_blank" novalidate="">
@@ -103,11 +104,14 @@
             <div class="response" id="mce-error-response" style="display:none"></div>
             <div class="response" id="mce-success-response" style="display:none"></div>
           </div>
-          <input class="required email newsletter-input" id="mce-EMAIL" type="email" placeholder="enter email" value="" name="EMAIL">
+          <div class="input-wrapper">
+            <input class="required email newsletter-input input-text" id="mce-EMAIL" type="email" value="" placeholder=" " required name="EMAIL">
+            <span class="floating-label">email address</span>
+          </div>
           <div style="position: absolute; left: -5000px;" aria-hidden="true">
             <input type="text" name="b_f0d41c74cdaa37a0c3e949890_05ee0f2ea4" tabindex="-1" value="">
           </div>
-          <input class="button newsletter-form__submit" id="mc-embedded-subscribe" type="submit" value="Subscribe" name="subscribe">
+          <input class="button newsletter-form__submit" id="mc-embedded-subscribe" type="submit" value="➜" name="subscribe">
         </div>
       </form>
     </div>
@@ -119,7 +123,4 @@
     <span class="hours">Opening this Fall</span>
   </section>
 </main>
-<footer>
-  <div><a href="https://goo.gl/maps/LRDkR2b9vvMRFCvR6" target="_blank">5247 Butler Steet, Pittsburgh, PA 15201</a></div>
-</footer>
-</html>
+{% include footer.html %}

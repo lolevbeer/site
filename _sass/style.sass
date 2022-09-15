@@ -30,7 +30,7 @@ section
 
 main
   overflow: auto
-  scroll-snap-type: y mandatory
+  scroll-snap-type: y proximity
   z-index: 2
   & > section
     position: relative
@@ -48,13 +48,13 @@ main
       content: ''
     &:before
       content: url(../images/up.svg)
-      top: 13vh
+      top: 8vh
       transition: filter .7s ease
       .dark &
         filter: invert(1)
     &:after
       content: url(../images/down.svg)
-      bottom: 13vh
+      bottom: 7vh
     &:after,
     &:before
       z-index: 1
@@ -146,28 +146,54 @@ label
 ::placeholder
   color: #666
 
+.input-wrapper
+  display: inline
+  position: relative
+  text-align: left
+
 input
   -webkit-appearance: none
   background: none
   border: none
-  border-radius: 5px
-  box-shadow: inset 1px 1px 3px #0000002b, inset -1px -1px 3px #FFFFFF77
   color: black
   font-family: inherit
   letter-spacing: 1px
   margin-bottom: 1em
   outline: none
-  padding: 1em
+  padding: 1em 0
+  &[type=email],
+    border-bottom: 2px solid black
+    margin-top: 3em
   &[type=submit]
-    background: #222
-    box-shadow: inset 1px 1px 3px #888888, inset -1px -1px 3px #000, 1px 1px 3px #0000004a, -1px -1px 3px #FFFFFF2e
-    color: #FFF
     cursor: pointer
+    font-size: 2em
     letter-spacing: 5px
-    padding: 1em 2.5em
+    padding: 0
     text-transform: uppercase
+    transition: transform .1s ease
+    vertical-align: sub
+    &:hover
+      transform: translateX(2px)
     &:active
-      box-shadow: inset 1px 1px 3px #00000055, inset -1px -1px 3px #FFFFFF55
+      transform: translateX(5px)
+  &:not(:placeholder-shown) ~ .floating-label
+    top: -20px
+    left: 0
+    font-size: 11px
+    opacity: 1
+
+.input-text
+  font-size: 14px
+  height: 35px
+  width: 200px
+
+.floating-label
+  opacity: .5
+  position: absolute
+  pointer-events: none
+  left: 0
+  top: 0
+  transition: 0.2s ease all
 
 @keyframes pulse
   0%
@@ -199,8 +225,6 @@ input
   .social img
     height: 20px
     width: 20px
-  input
-    width: 100%
 
 .abv
   font-size: 1.5em
@@ -209,10 +233,13 @@ input
     content: '%'
 
 .stacked
-    flex-direction: column
-    flex-wrap: wrap
-    & > *
-      max-width: 65%
+  flex-direction: column
+  flex-wrap: wrap
+  & > *
+    max-width: 65%
+  &.clear-height
+    height: auto
+    text-align: left
 
 .columns
   flex-wrap: wrap
