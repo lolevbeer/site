@@ -28,6 +28,8 @@ section
   section
     height: var(--app-height)
 
+
+
 main
   overflow: auto
   scroll-snap-type: y proximity
@@ -214,6 +216,8 @@ input
 @media only screen and (max-width: 640px)
   body
     font-size: 13px
+  main
+    scroll-snap-type: y mandatory
   main > section h2
     top: 7px
   .stacked > *
@@ -263,12 +267,9 @@ header
   svg
     transition: filter .7s ease
 
-footer
+footer *
   color: black
-  transition: color .7s ease
-  a
-    color: black
-    transition: color .7s ease
+  transition: color .7s ease, text-decoration-color .4s ease
 
 .dark
   header
