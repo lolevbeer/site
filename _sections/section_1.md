@@ -5,8 +5,9 @@ We strive for our customer experience to be exceptional.
 
 We are building a team that believes in this mission and is dedicated to cultivating an environment that will give back to them, our customers, and the community surrounding us...
 
-**Available Jobs**  
   
+### Available Jobs
+
 [Bar Manager](/jobs/bar-manager)  
 [Bartender](/jobs/bartender)  
 [Brewer](/jobs/brewer)  
