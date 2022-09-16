@@ -50,13 +50,13 @@ main
       content: ''
     &:before
       content: url(../images/up.svg)
-      top: 8vh
+      top: 60px
       transition: filter .7s ease
       .dark &
         filter: invert(1)
     &:after
       content: url(../images/down.svg)
-      bottom: 7vh
+      bottom: 30px
     &:after,
     &:before
       z-index: 1
@@ -120,7 +120,7 @@ section
   scroll-snap-align: start
   text-align: center
   &:not(.slider)
-    padding: 10vh 1em
+    padding: 60px 1em 35px
   & > header
     flex-direction: column
     top: 0
@@ -218,7 +218,7 @@ input
 
 @media only screen and (max-width: 640px)
   body
-    font-size: 13px
+    font-size: 1.5vh
   main
     scroll-snap-type: y mandatory
   main > section h2
