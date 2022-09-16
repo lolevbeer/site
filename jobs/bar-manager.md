@@ -32,6 +32,6 @@ This position is for individuals with heightened attention to detail and a focus
 - Previous restaurant, bar or taproom management experience, we are open to candidates without this experience that why they would excel in this role
 - Motivated about the brewing industry
 
-Compensation level varies based on experience but starts at $25/hr
+Salaried position with benefits and paid time off
 
 To apply, email us at [jobs@lolev.beer](mailto:jobs@lolev.beer?subject=Give me a job at Lolev!) with relevant experience.

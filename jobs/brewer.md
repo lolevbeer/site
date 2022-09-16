@@ -45,6 +45,4 @@ Responsibilities
 - Team Mindset
 - Focus on Excellence
 
-This is a full time position. Compensation level varies based on experience but starts at $20/hr. Salaried position possible.
-
 To apply, email us at [jobs@lolev.beer](mailto:jobs@lolev.beer?subject=Give me a job at Lolev!) with relevant experience.
