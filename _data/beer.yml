@@ -1,29 +1,29 @@
--  name: Terra
-   style: Saison
-   notes: Our house Saison dashed with lemongrass. Flavor profile of orange zest, marmalade, and grapefruit. Floral and slightly spicy.
+-  name: Torrent
+   style: IPA
+   notes: Citrus and Grapefruit, balanced.
    abv: 6.5
 
--  name: Revive
-   style: Hard Seltzer
-   notes: We ferment this seltzer like we would a beer and then dryhop it for a flavor profile unlike any other seltzer. Notes of fresh lemon, berry, and fresh pineapple.
-   abv: 5.2
+-  name: Terra
+   style: Saison
+   notes: Our house Saison
+   abv: 6.5
 
 -  name: Secrets
    style: Imperial IPA
-   notes: If you like it double dryhopped, then you will like this one, we just keep the hopcannon constantly filled with hops. Notes of lychee, berry, and citrus with earthly undertones. Aroma is slightly piney with tropical fruit.
+   notes: White peach and Orange. Earthy. Piney & Lychee aroma.
    abv: 8.5
 
--  name: Torrent
-   style: IPA
-   notes: Our house IPA. Notes of orange citrus, grapefruit and pine, an intense citrus aroma with pronounced lemon undertones.
-   abv: 6.5
+-  name: Revive
+   style: Hard Seltzer
+   notes: Fermented on champagne yeast with hops.
+   abv: 5.25
 
 -  name: Obsidian
    style: Imperial Stout
-   notes: Dark chocolate and toasted caramel layered on a blackberry cola. This one is finished in steel.
+   notes: Dark chocolate and toasted caramel layered on a blackberry cola.
    abv: 9.9
 
 -  name: Soleil
-   style: Wheat Saison
-   notes: We love Saisons at Lolev, but this one is different than Terra. Big citrus notes reminiscent of a mimosa, light floral undertones with very subtle notes of zested lime. 
+   style: Saison
+   notes: Dry orange. Notes of Mimosa, floral and funky. 
    abv: 7.7
