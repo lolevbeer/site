@@ -1,15 +1,10 @@
 ---
-title: Jobs
+title: Food
 ---
-We strive for our customer experience to be exceptional.
+November 1 - Food Truck 1  
+November 2 - Food Truck 2  
+November 3 - Food Truck 3  
+November 4 - Food Truck 4   
 
-We are building a team that believes in this mission and is dedicated to cultivating an environment that will give back to them, our customers, and the community surrounding us...
-
-  
-### Available Jobs
-
-[Bar Manager](/jobs/bar-manager)  
-[Bartender](/jobs/bartender)  
-[Brewer](/jobs/brewer)  
-
-To apply, email us at [jobs@lolev.beer](mailto:jobs@lolev.beer?subject=Give me a job at Lolev!) with relevant experience.
+Want to serve food at our brewery?  
+Contact us at [catering@lolev.beer](mailto:catering@lolev.beer)

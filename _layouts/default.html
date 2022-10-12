@@ -5,14 +5,15 @@
   <!-- connect to domain of font files -->
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <!-- optionally increase loading priority -->
-  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Lora:wght@400&amp;family=Poppins:wght@500;600&amp;display=fallback">
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500&amp;family=Poppins:wght@500;600&amp;display=fallback">
   <!-- async CSS -->
-  <link rel="stylesheet" media="print" onload="this.onload=null;this.removeAttribute('media');" href="https://fonts.googleapis.com/css2?family=Lora:wght@400&amp;family=Poppins:wght@500;600&amp;display=fallback">
+  <link rel="stylesheet" media="print" onload="this.onload=null;this.removeAttribute('media');" href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500&amp;family=Poppins:wght@500;600&amp;display=fallback">
   <!-- no-JS fallback -->
   <noscript>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:wght@400&amp;family=Poppins:wght@500;600&amp;display=fallback">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500&amp;family=Poppins:wght@500;600&amp;display=fallback">
   </noscript>
   <link rel="stylesheet" href="assets/lolev.css" media="screen">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
   <link rel="apple-touch-icon" sizes="152x152" href="assets/favicons/apple-touch-icon-152x152.png">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/favicons/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="assets/favicons/favicon-16x16.png">
@@ -25,7 +26,7 @@
   <meta name="msapplication-TileColor" content="#da532c">
   <meta name="theme-color" content="#ffffff">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-  <meta name="description" content="Lolev produces artisian craft beer and is located in Pittsburgh, PA. We source the best best hops and malt to make sure everything poured from taps is fresh.">
+  <meta name="description" content="Lolev produces artisian craft beer and is located in Pittsburgh, PA. We source the best best hops and malt, everything poured from taps is fresh.">
   <title>Lolev Beer - Brewery in Pittsburgh, PA</title>
   <!-- Global site tag (gtag.js) - Google Analytics-->
   <script async="" src="https://www.googletagmanager.com/gtag/js?id=G-RR14DE5FPS"></script>
@@ -91,7 +92,7 @@
   {% for section in site.sections %}
     <section class="stacked" id="{{ section.title | downcase }}">
       <h2>{{ section.title }}</h2>
-      {{ section.content }}
+          {{ section.content }}
     </section>
   {% endfor %}
 {% endif %}

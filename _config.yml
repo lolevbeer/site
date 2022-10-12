@@ -33,6 +33,9 @@ sass:
 
 page_gen-dirs: true
 
+plugins:
+  - jekyll-sitemap
+
 collections:
   - sections
 
