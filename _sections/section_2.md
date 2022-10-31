@@ -9,7 +9,6 @@ We are building a team that believes in this mission and is dedicated to cultiva
 ### Available Jobs
 
  - [Bar Manager](/jobs/bar-manager)
- - [Bartender](/jobs/bartender)  
- - [Brewer](/jobs/brewer)  
+ - [Bartender](/jobs/bartender)   
 
 To apply, email us at [jobs@lolev.beer](mailto:jobs@lolev.beer?subject=Give me a job at Lolev!) with relevant experience.
