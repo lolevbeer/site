@@ -75,20 +75,22 @@
     {% endfor %}
     </slider>
   </section>
-  <section class="slider" id="pilot">
-    <h2>Testing</h2>
-    <slider>
-    {% for beer in site.data.tests %}
-      <section class="stacked">
-        <p><h3>{{ beer.style }}</h3></p>
-      {% if beer.abv %}
-        <p class="abv"><b>{{ beer.abv }}</b></p>
-      {% endif %}
-        <p>{{ beer.release }}</p>
-      </section>
-    {% endfor %}
-    </slider>
-  </section>
+  {% if site.data.tests.size > 0 %}
+    <section class="slider" id="pilot">
+      <h2>Testing</h2>
+      <slider>
+      {% for beer in site.data.tests %}
+        <section class="stacked">
+          <p><h3>{{ beer.style }}</h3></p>
+        {% if beer.abv %}
+          <p class="abv"><b>{{ beer.abv }}</b></p>
+        {% endif %}
+          <p>{{ beer.release }}</p>
+        </section>
+      {% endfor %}
+      </slider>
+    </section>
+  {% endif %}
   {% for section in site.sections %}
     <section class="stacked" id="{{ section.title | downcase }}">
       <h2>{{ section.title }}</h2>
