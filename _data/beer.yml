@@ -1,29 +1,19 @@
--  name: Torrent
-   style: IPA
+-  name: Array
+   style: Pale Ale
    notes: Citrus and Grapefruit, balanced.
-   abv: 6.5
+   abv: 4.9
 
--  name: Terra
-   style: Saison
-   notes: Our house Saison
-   abv: 6.5
-
--  name: Secrets
-   style: Imperial IPA
+-  name: Tides
+   style: IPA
    notes: White peach and Orange. Earthy. Piney & Lychee aroma.
-   abv: 8.5
+   abv: 6.9
 
 -  name: Revive
    style: Hard Seltzer
    notes: Fermented on champagne yeast with hops.
-   abv: 5.25
+   abv: 4.2
 
--  name: Obsidian
+-  name: Scylla
    style: Imperial Stout
    notes: Dark chocolate and toasted caramel layered on a blackberry cola.
-   abv: 9.9
-
--  name: Soleil
-   style: Saison
-   notes: Dry orange. Notes of Mimosa, floral and funky. 
-   abv: 7.7
+   abv: 10.5
