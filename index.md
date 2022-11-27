@@ -6,4 +6,4 @@ We are a brewery coming to Lawrenceville, Pittsburgh. We are opening on December
 
 You can follow us here and on [Instagram](https://instagram.com/lolevbeer){:target="_blank" class="animate__animated animate__bounceIn"} for updates.  
 
-If you are interested in our beer, scroll down and swipe left to see core beer and what we're testing.  
+If you are interested in our beer, scroll down and swipe left to see what we have on tap.  
