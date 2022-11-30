@@ -28,8 +28,6 @@ section
   section
     height: var(--app-height)
 
-
-
 main
   overflow: auto
   scroll-snap-type: y proximity
@@ -132,7 +130,7 @@ section
 footer
   bottom: 0
   display: flex
-  font-size: .9em
+  font-size: 1.2em
   justify-content: center
   letter-spacing: 1px
   padding: 0.5em 1em
@@ -140,6 +138,10 @@ footer
   text-align: center
   transition: color .7s ease
   width: 100%
+header,
+footer
+  a
+    border-bottom: 0
 
 label
   display: block
@@ -193,7 +195,8 @@ input
   width: 200px
 
 .floating-label
-  opacity: .5
+  color: black
+  opacity: .8
   position: absolute
   pointer-events: none
   left: 0
@@ -222,7 +225,7 @@ input
   main
     scroll-snap-type: y mandatory
   main > section h2
-    top: 11px
+    top: 17px
   .columns
     flex-direction: column
   h1
@@ -268,6 +271,19 @@ input
   row-gap: 10px
   column-gap: 20px
 
+.hours
+  min-width: 350px
+  text-align: left
+  div
+    padding: 0 .5em
+    &.active
+      background: white
+      color: black
+      span
+        color: #777
+  span
+    color: #aaa
+    float: right
 .last-slide
   background: black !important
   color: white

@@ -64,6 +64,7 @@ for (slider of sliders) {
   slider.addEventListener("scroll", scrollHandlerX);
 }
 
+// Gets app height for sizing for search engines.
 const appHeight = () => {
   const doc = document.documentElement;
   doc.style.setProperty('--app-height', `${window.innerHeight}px`);
@@ -72,3 +73,14 @@ const appHeight = () => {
 window.addEventListener('resize', appHeight);
 window.addEventListener('orientationchange', appHeight);
 appHeight();
+
+const currentDate = new Date();
+var openingDate = new Date('2022-12-01');
+// Remove conditional wrap after opening.
+if (currentDate.getTime() > openingDate.getTime()) {
+  let day = currentDate.getDay();
+  let currentDay = document.getElementById("day-" + day);
+  currentDay.classList.add("active");
+  // Remove this after opening.
+  document.getElementById("not-open").remove();
+}

@@ -1,29 +1,20 @@
--  name: Array
-   style: Pale Ale
-   notes: Citrus and Grapefruit, balanced.
-   abv: 4.9
-
--  name: Terra
-   style: Saison
-   notes: Our house Saison
-   abv: 6.5
-
--  name: Tides
-   style: India Pale Ale
-   notes: White peach and Orange. Earthy. Piney & Lychee aroma.
-   abv: 6.9
-
--  name: Revive
-   style: Hard Seltzer
-   notes: Fermented on champagne yeast with hops.
-   abv: 4.2
-
--  name: Scylla
-   style: Imperial Stout
-   notes: Dark chocolate and toasted caramel layered on a blackberry cola.
-   abv: 10.5
-
--  name: Soleil
-   style: Saison
-   notes: Dry orange. Notes of Mimosa, floral and funky. 
-   abv: 7.7
+- name: Tides
+  type: India Pale Ale
+  description: "Grapefruit with light berry undertone, earthy. Blueberry and Orange aroma."
+  abv: 6.9
+  price: '$7.50'
+- name: Array
+  type: Pale Ale
+  description: "Refreshing Grapefruit and Pineapple. Subtle aroma of lemon."
+  abv: 4.9
+  price: '$6.50'
+- name: Revive
+  type: Hard Seltzer
+  description: "Fermented on champagne yeast with hops."
+  abv: 4.2
+  price: '$6.50'
+- name: Scylla
+  type: Imperial Stout
+  description: "Dark chocolate and toasted caramel layered on a blackberry cola."
+  abv: 10.5
+  price: '$8'
