@@ -1,44 +1,39 @@
 ---
 layout: default
-title: Bar Manager
+title: Bartender
 classes: clear-height
 ---
 
-The chosen candidate will be responsible for customer service in our on-site taproom at Lolev Beer. These responsibilities include serving beer for consumption on premise, selling cans to-go, communicating aspects of our beer to patrons, assisting in merchandise selection for patrons, and collecting payment for product.
+Lolev Beer is a new brewery located in the Lawrenceville neighborhood of Pittsburgh. Operating a 90 seat taproom in a 100 year old building, Lolev is dedicated to exceptional quality, in both its products and guest experiences. Our taproom is open Wednesday & Thursday from 4 - 10 PM, Friday & Saturday from 12 - 11 PM, and Sunday from 12 - 8 PM.
 
-This job has a minimum expectation of 15 hours per week with potential for up to 40, if desired.
+We are looking for passionate customer service minded individuals to fill the position of Bartender. If you love curating an experience for customers, working with a team to solve problems, and the environment of a casual craft beer taproom, this job is for you. Our bartenders are responsible for the guest experience at Lolev’s taproom, including service for onsite consumption, to go sales, guest relations, and taproom presentation.
 
-Taproom hours are: Monday through Friday 4-10pm, Saturday 12-Midnight, and Sunday 12 to 6pm.
 
-This position is for individuals with heightened attention to detail and a focus on excellence in quality. Our team members think critically, problem-solve, execute tasks precisely in a fast-paced environment, and communicate effectively.
+**What you will do**
 
-**Responsibilities**
+- Provide taproom guests with engaging and welcoming customer service
+- Bartend in our taproom, delivering general bar service and educating guests on our current offerings
+- Maintain a safe, clean, and well stocked taproom and bar back
+- Actively participate in team trainings, ensuring up-to-date knowledge of our products and procedures
+- Additional ad hoc responsibilities including events outside the brewery (i.e. festivals and promotional events)
 
-- Being Knowledgeable about Lolev’s beer and general styles of craft beer
-- Providing excellent customer service to patrons in our on-site taproom
-- Serving beer for on-premise consumption
-- Exchanging empty kegs for full kegs in our draft system
-- Keeping track of tabs for bar patrons
-- Washing glassware
-- Cleaning the taproom and organizing furniture to accommodate schedules
-- Supporting events outside of the taproom (i.e. festivals and promotional events)
-- Commitment to your agreed availability
+**This job is for you if have**
 
-**Qualifications**
+- The ability to handle the pressures of multitasking while maintaining exceptional customer service
+- Excellent communication skills and a positive attitude
+- The drive to consistently contribute to an ambitious team
+- An interest in craft beer and the growing Pittsburgh beer scene
+- Experience in the hospitality industry, especially in bar or taproom settings
+- Availability on nights and weekends
 
-- Positive attitude and interest in contributing to an ambitious team
-- Ability to articulate your ability to work well in a team
-- Full availability to your agreed schedule
-- Ability to think critically
-- Experience serving beer or bartending experience
-- 21+ years old
-- Hands-on working style
-- Motivated to learn about the brewing industry
+**What are the Details?**
 
-**Evaluated on**
+- Full Time position available (32+ hours per week)
+- $20/hr Guarantee
+- Paid Time Off
+- Flexible Schedule
+- RAMP and/or Cicerone Certifications are a plus but not required
 
-- Team Mindset
-- Focus on Excellence
-- Customer Feedback
+You must be 21 years of age to apply for this position.
 
 To apply, email us at [jobs@lolev.beer](mailto:jobs@lolev.beer?subject=Give me a job at Lolev!) with relevant experience.
