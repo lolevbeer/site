@@ -75,7 +75,7 @@ window.addEventListener('orientationchange', appHeight);
 appHeight();
 
 const currentDate = new Date();
-var openingDate = new Date('2022-12-01');
+var openingDate = new Date('2022-12-1');
 // Remove conditional wrap after opening.
 if (currentDate.getTime() > openingDate.getTime()) {
   let day = currentDate.getDay();
