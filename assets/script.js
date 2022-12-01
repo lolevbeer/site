@@ -74,6 +74,7 @@ window.addEventListener('resize', appHeight);
 window.addEventListener('orientationchange', appHeight);
 appHeight();
 
+// Days open.
 const currentDate = new Date();
 var openingDate = new Date('2022-12-2');
 // Remove conditional wrap after opening.
@@ -83,4 +84,20 @@ if (currentDate.getTime() > openingDate.getTime()) {
   currentDay.classList.add("active");
   // Remove this after opening.
   document.getElementById("not-open").remove();
+}
+
+
+// Food schedule.
+let curr = new Date();
+let firstday = new Date(curr.setDate(curr.getDate() - curr.getDay()));
+let lastday = new Date(curr.setDate(curr.getDate() - curr.getDay()+7));
+let foodEvents = document.getElementsByClassName("food-event");
+for (var i = 0; i < foodEvents.length; i++) {
+   let foodEvent = foodEvents.item(i);
+   let foodEventDate = foodEvent.dataset.date + " 2022";
+   let foodEventDateObj = new Date(foodEventDate);
+
+   if (foodEventDateObj.getTime() > lastday.getTime()) {
+     foodEvent.classList.add("blur");
+   }
 }
