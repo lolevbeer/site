@@ -4,81 +4,17 @@
     <h1>{{ page.title}}</h1>
     {{ content }}
   </section>
-{% if page.url == "/" %}
-  <section class="slider" id="flagships">
-    <h2>Beer</h2>
-    <slider>
-    {% for beer in site.data.beer %}
-      <section class="stacked" id="{{ beer.name }}">
-        <p><h3>{{ beer.name }}</h3>
-        <p><h4>{{ beer.type }}</h4></p>
-        <p class="abv"><b>{{ beer.abv }}</b></p>
-        <p>{{ beer.description }}</p>
+  {% if page.url == "/" %}
+    {% include beer.html %}
+    {% include tests.html %}
+    {% for section in site.sections %}
+      <section class="stacked" id="{{ section.title | downcase }}">
+        <h2>{{ section.title }}</h2>
+        {{ section.content }}
       </section>
     {% endfor %}
-    </slider>
-  </section>
-  {% if site.data.tests.size > 0 %}
-    <section class="slider" id="pilot">
-      <h2>In Production</h2>
-      <slider>
-      {% for beer in site.data.tests %}
-        <section class="stacked">
-          <p><h3>{{ beer.style }}</h3></p>
-        {% if beer.abv %}
-          <p class="abv"><b>{{ beer.abv }}</b></p>
-        {% endif %}
-          <p>{{ beer.release }}</p>
-        </section>
-      {% endfor %}
-      </slider>
-    </section>
   {% endif %}
-  {% for section in site.sections %}
-    <section class="stacked" id="{{ section.title | downcase }}">
-      <h2>{{ section.title }}</h2>
-          {{ section.content }}
-    </section>
-  {% endfor %}
-{% endif %}
-  <section class="newsletter" id="newsletter">
-    <div class="signup-form" id="mc_embed_signup">
-      <form class="validate" id="mc-embedded-subscribe-form" action="https://beer.us5.list-manage.com/subscribe/post?u=f0d41c74cdaa37a0c3e949890&amp;id=05ee0f2ea4" method="post" name="mc-embedded-subscribe-form" target="_blank" novalidate="">
-        <div id="mc_embed_signup_scroll">
-          <h3 for="mce-EMAIL">Stay up to date</h3>
-          <div class="clear" id="mce-responses">
-            <div class="response" id="mce-error-response" style="display:none"></div>
-            <div class="response" id="mce-success-response" style="display:none"></div>
-          </div>
-          <div class="input-wrapper">
-
-            <input class="required email newsletter-input input-text" id="mce-EMAIL" type="email" value="" placeholder=" " required name="EMAIL">
-            <label class="floating-label" id="email-input-label" for="mce-EMAIL">Email Address</label>
-          </div>
-          <div style="position: absolute; left: -5000px;" aria-hidden="true">
-            <!-- <label id="mce2" for="mce-input2"></label> -->
-            <input id="mce-input2" type="text" name="b_f0d41c74cdaa37a0c3e949890_05ee0f2ea4" tabindex="-1" value="">
-          </div>
-          <input class="button newsletter-form__submit" id="mc-embedded-subscribe" type="submit" value="➜" name="subscribe">
-        </div>
-      </form>
-    </div>
-  </section>
-  <section class="columns last-slide" id="footer">
-    <div>
-      <a href="mailto:info@lolev.beer">info@lolev.beer</a>
-    </div>
-    <span class="hours">
-      <div id="not-open">Opening December 2nd</div>
-      <br>
-      <div id="day-0"><b>Sunday</b> <span> noon - 9pm</span></div>
-      <div id="day-1"><b>Monday</b> <span> closed</span></div>
-      <div id="day-2"><b>Tuesday</b> <span> closed</span></div>
-      <div id="day-3"><b>Wednesday</b> <span> 4pm - 10pm</span></div>
-      <div id="day-4"><b>Thursday</b> <span> 4pm - 10pm</span></div>
-      <div id="day-5"><b>Friday</b> <span> noon - 11pm</span></div>
-      <div id="day-6"><b>Saturday</b> <span> noon - 11pm</span></div>
-    </span>
-  </section>
+  {% include newsletter.html %}
+  {% include lastslide.html %}
 </main>
 {% include footer.html %}

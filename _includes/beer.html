@@ -1,0 +1,13 @@
+<section class="slider" id="flagships">
+  <h2>Beer</h2>
+  <slider>
+  {% for beer in site.data.beer %}
+    <section class="stacked" id="{{ beer.name }}">
+      <p><h3>{{ beer.name }}</h3>
+      <p><h4>{{ beer.type }}</h4></p>
+      <p class="abv"><b>{{ beer.abv }}</b></p>
+      <p>{{ beer.description }}</p>
+    </section>
+  {% endfor %}
+  </slider>
+</section>
