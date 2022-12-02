@@ -26,5 +26,19 @@
     "email": "ted@lolev.beer",
     "phone": "(610) 299-1785",
     "job_title": "Operations"
+  },
+  {
+    "first": "Brian",
+    "last": "Hatheway",
+    "email": "brian@lolev.beer",
+    "phone": "(412) 452-2723‬",
+    "job_title": "Bar Manager"
+  },
+  {
+    "first": "Andy",
+    "last": "Walker",
+    "email": "andy@lolev.beer",
+    "phone": "(585) 703-1458‬‬",
+    "job_title": "Production Manager"
   }
 ]
