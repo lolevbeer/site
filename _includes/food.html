@@ -1,14 +1,15 @@
 <section id="food" class="stacked">
   <h2>Food</h2>
-  <p>
+  <div class="food-schedule">
   {% for food in site.data.food %}
-    <span class="food-event" data-date="{{ food.date }}">{{ food.date }}
-      <strong>{{ food.vendor }}</strong>
-      <em>{{ food.time }}</em>
-      <br>
+    <span class="food-event" data-date="{{ food.date }}">
+      {{ food.date }}
+        <b><a href="{{ food.site }}" target="_blank">{{ food.vendor }}</a></b>
+        <span class="right">{{ food.time }}</span>
+        <br>
     </span>
   {% endfor %}
-  </p>
+  </div>
   <p>Want to serve food at our brewery?</p>
   <p>Contact us at <a href="mailto:catering@lolev.beer">catering@lolev.beer</a></p>
 
