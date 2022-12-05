@@ -2,7 +2,7 @@
 layout: default
 title: Lolev Beer
 ---
-We are a brewery in Pittsburgh that obsesses over our customer experience. We seek to provide a guest experience that is new and memorable. We explore styles of beer in search of making them distinctive and exciting.
+We are a brewery in Pittsburgh that obsesses over our product. We seek to provide a guest experience that is new and memorable. We explore styles of beer in search of making them distinctive and exciting.
 
 You can follow us here and on [Instagram](https://instagram.com/lolevbeer){:target="_blank" class="animate__animated animate__bounceIn"} for updates.  
 
