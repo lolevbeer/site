@@ -3,7 +3,7 @@ title: Jobs
 ---
 We strive for our customer experience to be exceptional.
 
-We are building a team that believes in this mission and is dedicated to cultivating an environment that will give back to them, our customers, and the community surrounding us...
+We are cultivating an environment that gives back to our staff, our customers, and our community.
 
 ### Available Jobs
 

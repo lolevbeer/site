@@ -107,6 +107,9 @@ slider
       animation: none
       opacity: .2
 
+#flagships h3
+  letter-spacing: .5em
+
 section
   img
     max-width: 500px
@@ -142,6 +145,9 @@ header,
 footer
   a
     border-bottom: 0
+
+footer a
+  text-transform: uppercase
 
 label
   display: block
@@ -206,16 +212,19 @@ input
 .blur
   color: transparent
   text-shadow: 0 0 8px rgba(0,0,0,.5)
+  a
+    color: transparent
+    pointer-events: none
 
 @keyframes pulse
   0%
-    transform: scale(0.9)
+    transform: scale(0.5)
     opacity: .2
   70%
-    transform: scale(1.5)
+    transform: scale(2.5)
     opacity: .7
   100%
-    transform: scale(1)
+    transform: scale(0.5)
     opacity: .2
 
 @supports (-webkit-touch-callout: none)
@@ -246,6 +255,11 @@ input
   margin: 0 0 .5em
   &:after
     content: '%'
+
+.food-schedule
+  font-size: 1.4em
+  letter-spacing: 2px
+  line-height: 1.5em
 
 .stacked
   flex-direction: column
@@ -282,11 +296,9 @@ input
     padding: 0 .5em
     &.active
       background: white
+      border-radius: 5px
       color: black
-      span
-        color: #777
   span
-    color: #aaa
     float: right
 .last-slide
   background: black !important
@@ -323,6 +335,6 @@ footer *
   padding: 60px 0 35px
   *:nth-child(2)
     text-align: left
-    em
+    .right
       float: right
       padding-left: 1em
