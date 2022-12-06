@@ -1,18 +1,16 @@
 {% if site.data.coming.size > 0 %}
   <section class="slider" id="pilot">
-    <h2>Up Next</h2>
-    <slider>
+    <h2>Upcoming</h2>
+    <div>
     {% for beer in site.data.coming %}
-      <section class="stacked">
-        <p><h3>{{ beer.type }}</h3></p>
+      <h3>{{ beer.type }}</h3>
       {% if beer.abv %}
-        <p class="abv"><b>{{ beer.abv }}</b></p>
+        <div class="abv"><b>{{ beer.abv }}</b></div>
       {% endif %}
       {% if beer.description %}
-        <p>{{ beer.description }}</p>
+        <div>{{ beer.description }}</div>
       {% endif %}
-      </section>
     {% endfor %}
-    </slider>
+    </div>
   </section>
 {% endif %}
