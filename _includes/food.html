@@ -4,7 +4,11 @@
   {% for food in site.data.food %}
     <span class="food-event" data-date="{{ food.date }}">
       {{ food.date }}
+        {% if food.site %}
         <b><a href="{{ food.site }}" target="_blank">{{ food.vendor }}</a></b>
+        {% else %}
+        <b>{{ food.vendor }}</b>
+        {% endif %}
         <span class="right">{{ food.time }}</span>
         <br>
     </span>
