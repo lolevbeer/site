@@ -90,10 +90,11 @@ let lastday = new Date(curr.setDate(curr.getDate() - curr.getDay()+7));
 let foodEvents = document.getElementsByClassName("food-event");
 for (var i = 0; i < foodEvents.length; i++) {
    let foodEvent = foodEvents.item(i);
-   let foodEventDate = foodEvent.dataset.date + "/22";
-   let foodEventDateObj = new Date(foodEventDate);
-
-   if (foodEventDateObj.getTime() > lastday.getTime()) {
-     foodEvent.classList.add("blur");
+   if (i != 0) {
+     let foodEventDate = foodEvent.dataset.date + "/23";
+     let foodEventDateObj = new Date(foodEventDate);
+     if (foodEventDateObj.getTime() > lastday.getTime()) {
+       foodEvent.classList.add("blur");
+     }
    }
 }
