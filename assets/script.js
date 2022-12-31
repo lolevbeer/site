@@ -84,17 +84,17 @@ currentDay.classList.add("active");
 
 
 // Food schedule.
-let curr = new Date();
-let firstday = new Date(curr.setDate(curr.getDate() - curr.getDay()));
-let lastday = new Date(curr.setDate(curr.getDate() - curr.getDay()+7));
-let foodEvents = document.getElementsByClassName("food-event");
-for (var i = 0; i < foodEvents.length; i++) {
-   let foodEvent = foodEvents.item(i);
-   if (i != 0) {
-     let foodEventDate = foodEvent.dataset.date + "/23";
-     let foodEventDateObj = new Date(foodEventDate);
-     if (foodEventDateObj.getTime() > lastday.getTime()) {
-       foodEvent.classList.add("blur");
-     }
-   }
-}
+// let curr = new Date();
+// let firstday = new Date(curr.setDate(curr.getDate() - curr.getDay()));
+// let lastday = new Date(curr.setDate(curr.getDate() - curr.getDay()+7));
+// let foodEvents = document.getElementsByClassName("food-event");
+// for (var i = 0; i < foodEvents.length; i++) {
+//    let foodEvent = foodEvents.item(i);
+//    if (i != 0) {
+//      let foodEventDate = foodEvent.dataset.date + "/23";
+//      let foodEventDateObj = new Date(foodEventDate);
+//      if (foodEventDateObj.getTime() > lastday.getTime()) {
+//        foodEvent.classList.add("blur");
+//      }
+//    }
+// }
