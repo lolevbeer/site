@@ -10,13 +10,13 @@
 #   price: $6.50
 - name: Revive
   type: Hard Seltzer
-  description: "Fermented on champagne yeast with hops."
+  description: Fermented on champagne yeast with hops.
   abv: 4.2
   price: $5
   glutenFree: true
 - name: Scylla (Sky·La)
   type: Imperial Stout
-  description: "Dark chocolate and toasted caramel layered on a blackberry cola."
+  description: Dark chocolate and toasted caramel layered on a blackberry cola.
   abv: 10.5
   price: $8
 - name: Soleil (So·Lay)
