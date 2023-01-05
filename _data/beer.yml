@@ -9,8 +9,8 @@
 #   abv: 4.9
 #   price: $6.50
 - name: Revive
-  type: Hard Seltzer
-  description: Fermented on champagne yeast with hops.
+  type: Hopped Kilju
+  description: Modern, hopped version of a traditional Finnish fermented-water beverage.
   abv: 4.2
   price: $5
   glutenFree: true
