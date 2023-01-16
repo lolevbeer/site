@@ -1,0 +1,21 @@
+- name: Monday
+  hours: 4pm - 10pm
+  day-code: 1
+- name: Tuesday
+  hours: 4pm - 10pm
+  day-code: 2
+- name: Wednesday
+  hours: 4pm - 10pm
+  day-code: 3
+- name: Thursday
+  hours: 4pm - 10pm
+  day-code: 4
+- name: Friday
+  hours: noon - 11pm
+  day-code: 5
+- name: Saturday
+  hours: noon - 11pm
+  day-code: 6
+- name: Sunday
+  hours: noon - 9pm
+  day-code: 0

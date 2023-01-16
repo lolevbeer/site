@@ -1,0 +1,12 @@
+{% include header.html %}
+<main>
+  <section class="stacked {{ page.classes }}" id="open">
+    <h2>{{ page.title }}</h2>
+    <h3>{{ page.type }}</h3>
+    <p>{{ page.description }}</p>
+    <p class="abv"><b>{{ page.abv }}</b></p>
+  </section>
+  {% include newsletter.html %}
+  {% include lastslide.html %}
+</main>
+{% include footer.html %}
