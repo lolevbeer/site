@@ -1,15 +1,15 @@
-- name: Tides
-  type: India Pale Ale
-  description: Grapefruit with light berry undertone, earthy. Blueberry and Orange aroma
-  abv: 6.9
-  price: $7.50
-  cans: false
-
-- name: Array
-  type: Pale Ale
-  description: Refreshing Grapefruit and Pineapple. Subtle aroma of lemon.
-  abv: 4.9
-  price: $6.50
+# - name: Tides
+#   type: India Pale Ale
+#   description: Grapefruit with light berry undertone, earthy. Blueberry and Orange aroma
+#   abv: 6.9
+#   price: $7.50
+#   cans: false
+#
+# - name: Array
+#   type: Pale Ale
+#   description: Refreshing Grapefruit and Pineapple. Subtle aroma of lemon.
+#   abv: 4.9
+#   price: $6.50
 
 - tap: 1
   name: Glyphs
