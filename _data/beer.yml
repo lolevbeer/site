@@ -1,19 +1,26 @@
-# - name: Tides
-#   type: India Pale Ale
-#   description: Grapefruit with light berry undertone, earthy. Blueberry and Orange aroma
-#   abv: 6.9
-#   price: $7.50
+- name: Tides
+  type: India Pale Ale
+  description: Grapefruit with light berry undertone, earthy. Blueberry and Orange aroma.
+  abv: 6.9
+  price: $7.50
 
-# - name: Array
-#   type: Pale Ale
-#   description: Refreshing Grapefruit and Pineapple. Subtle aroma of lemon.
-#   abv: 4.9
-#   price: $6.50
+- name: Array
+  type: Pale Ale
+  description: Refreshing Grapefruit and Pineapple. Subtle aroma of lemon.
+  abv: 4.9
+  price: $6.50
 
 - tap: 1
   name: Glyphs
   type: Pale Ale
   description: Notes of tangerine, honeydew, orange zest, and aromatic pine.
+  abv: 5.4
+  price: $7
+
+- tap: 2
+  name: Revolver
+  type: Bock
+  description: Refreshing and smooth with a kick. Brewed with 100% Pilsner malt and German and American Noble Hops.
   abv: 5.4
   price: $7
 
@@ -34,11 +41,10 @@
   price: $8
 
 - tap: 5
-  name: Soleil
-  pronunciation: (So·Lay)
-  type: Saison
-  description: Dry orange, mimosa-esque. Floral notes and funky.
-  abv: 6.9
+  name: Kimik
+  type: Blonde Ale
+  description: An early easy drinking ale with heavy punch. With notes of heavy citrus, passion fruit, lychee, and a distinct guava aroma.
+  abv: 5.4
   price: $7
 
 - tap: 6
@@ -47,3 +53,11 @@
   description: Passionfruit, pine, apricot, and orange zest. Dank pine and blueberry aroma.
   abv: 7.8
   price: $8
+
+- tap: 7
+  name: Soleil
+  pronunciation: (So·Lay)
+  type: Saison
+  description: Dry orange, mimosa-esque. Floral notes and funky.
+  abv: 6.9
+  price: $7
