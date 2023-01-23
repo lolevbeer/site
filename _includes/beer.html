@@ -1,13 +1,12 @@
-<section class="slider" id="beer">
+<section class="slider" id="flagships">
   <h2>Beer</h2>
   <div>
     {% for beer in site.data.beer %}
       {% if beer.tap %}
         <div class="beer">
           <a href="/beer/{{ beer.name | downcase }}">
-            <h3>{{ beer.name }}</h3>
+          <h3>{{ beer.name }}</h3><span>{{ beer.type }}</span>
           </a>
-          <span>{{ beer.type }}</span>
         </div>
       {% endif %}
     {% endfor %}
