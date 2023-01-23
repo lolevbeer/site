@@ -2,11 +2,13 @@
   <h2>Beer</h2>
   <div>
     {% for beer in site.data.beer %}
-      <div class="beer">
-        <a href="/beer/{{ beer.name | downcase }}">
-        <h3>{{ beer.name }}</h3><span>{{ beer.type }}</span>
-        </a>
-      </div>
+      {% if beer.tap %}
+        <div class="beer">
+          <a href="/beer/{{ beer.name | downcase }}">
+          <h3>{{ beer.name }}</h3><span>{{ beer.type }}</span>
+          </a>
+        </div>
+      {% endif %}
     {% endfor %}
   </div>
 </section>
