@@ -55,8 +55,7 @@
   abv: 7.8
   price: $8
 
-- tap: 7
-  name: Soleil
+- name: Soleil
   pronunciation: (So·Lay)
   type: Saison
   description: Dry orange, mimosa-esque. Floral notes and funky.
