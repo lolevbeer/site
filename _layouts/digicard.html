@@ -7,30 +7,49 @@
   <link href='https://fonts.googleapis.com/css?family=Poppins:200,300,400,700' rel='stylesheet' type='text/css'>
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <link rel="apple-touch-icon" href="/assets/Lolev_W_no_text.png">
-  <script src='https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js'></script>
+  <script src='https://unpkg.com/qr-code-styling@1.5.0/lib/qr-code-styling.js'></script>
 </head>
 
 <body>
   <a href="index.vcf">
-    <section>
-      <img class="logo" src="/assets/Lolev_B_no_text.png" alt="Company Logo">
-    </section>
-  	<p>{{ page.first }} {{ page.last }}</p>
-  	<p><strong>Lolev Beer</strong></p>
     <section class="qr-code">
       <div id="qr"></div>
       <script type="text/javascript">
-        new QRCode(document.getElementById("qr"), {
-          text: window.location.href,
-          width: 128,
-          height: 128,
-          colorDark : "#000000",
-          colorLight : "#ffffff",
-          correctLevel : QRCode.CorrectLevel.L
+        const qrCode = new QRCodeStyling({
+            type: "svg",
+            data: window.location.href,
+            image: "https://lolev.beer/images/logo.svg",
+            width: 350,
+            height: 350,
+            dotsOptions: {
+              color: "#000",
+              type: "extra-rounded"
+            },
+            backgroundOptions: {
+              color: "#FFFFFF",
+            },
+            imageOptions: {
+              crossOrigin: "anonymous",
+              margin: 20,
+              imageSize: 0.4,
+              margin: 10,
+            },
+            qrOptions: {
+              typeNumber: 0,
+              errorCorrectionLevel: 'H',
+            },
+            cornersSquareOptions: {
+              type: 'dots'
+            }
         });
+        qrCode.append(document.getElementById("qr"));
       </script>
     </section>
-  	<p>{{ page.email }}</p>
+    <p>{{ page.first }} {{ page.last }}</p>
+    <p><strong>Lolev Beer</strong></p>
+    <a class="button" href="mailto:{{ page.email }}">
+      {{ page.email }}
+    </a>
     <a class="button" href="tel:+1{{ page.phone | remove: '-' | remove: '(' | remove: ')' | remove: ' ' }}">
       {{ page.phone }}
     </a>
@@ -43,5 +62,4 @@
   	</a>
   </a>
 </body>
-
 </html>
