@@ -21,7 +21,7 @@
 title: Lolev
 email: info@lolev.beer
 baseurl: "" # the subpath of your site, e.g. /blog
-url: "lolev.beer" # the base hostname & protocol for your site, e.g. http://example.com
+url: "https://lolev.beer" # the base hostname & protocol for your site, e.g. http://example.com
 logo: assets/lolev.jpg
 
 kramdown:
@@ -32,9 +32,6 @@ sass:
   style: compressed
 
 page_gen-dirs: true
-
-plugins:
-  - jekyll-sitemap
 
 collections:
   - sections
