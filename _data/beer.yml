@@ -48,13 +48,20 @@
   abv: 4.5
   price: $7
 
-- tap: 6
+- tap: 7
   name: Secrets
   type: Double IPA
   description: Passionfruit, pine, apricot, and orange zest. Dank pine and blueberry aroma.
   abv: 7.8
   price: $8
-
+  
+- tap: 8
+  name: Arret
+  type: Grisette
+  description: Grassy, floral, and pithy orange aromas. Notes of pear, candied orange, and lemongrass flavors. Slightly sweet finish. 
+  abv: 5.0
+  price: $7
+  
 - name: Soleil
   pronunciation: (So·Lay)
   type: Saison
