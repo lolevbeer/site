@@ -11,12 +11,12 @@
 #   abv: 4.9
 #   price: $6.50
 
-- tap: 1
-  name: Glyphs
-  type: Pale Ale
-  description: Notes of tangerine, honeydew, orange zest, and aromatic pine.
-  abv: 5.4
-  price: $7
+# - tap: 1
+#   name: Glyphs
+#   type: Pale Ale
+#   description: Notes of tangerine, honeydew, orange zest, and aromatic pine.
+#   abv: 5.4
+#   price: $7
 
 - tap: 2
   name: Sebastian
