@@ -51,10 +51,9 @@
 - tap: 6
   name: Lupitor
   type: IPA
-  description: Ripe cantaloupe, pineapple, mango, ruby red grapefruit
+  description: Ripe cantaloupe, pineapple, mango, and ruby red grapefruit. Very aromatic.
   abv: 6.2
   price: $7
-  
 
 - tap: 7
   name: Secrets
