@@ -48,6 +48,14 @@
   abv: 4.5
   price: $6
 
+- tap: 6
+  name: Lupitor
+  type: IPA
+  description: Ripe cantaloupe, pineapple, mango, ruby red grapefruit
+  abv: 6.2
+  price: $7
+  
+
 - tap: 7
   name: Secrets
   type: Double IPA
