@@ -11,11 +11,17 @@
 #   abv: 4.9
 #   price: $6.50
 
-# - tap: 1
-#   name: Glyphs
+# - name: Glyphs
 #   type: Pale Ale
 #   description: Notes of tangerine, honeydew, orange zest, and aromatic pine.
 #   abv: 5.4
+#   price: $7
+
+# - name: Soleil
+#   pronunciation: (So·Lay)
+#   type: Saison
+#   description: Dry orange, mimosa-esque. Floral notes and funky.
+#   abv: 6.9
 #   price: $7
 
 - tap: 2
@@ -34,12 +40,11 @@
   glutenFree: true
 
 - tap: 4
-  name: Scylla
-  pronunciation: (Sky·La)
-  type: Imperial Stout
-  description: Dark chocolate and toasted caramel layered on a blackberry cola.
-  abv: 10.5
-  price: $8
+  name: Dom
+  type: Kolsch
+  description: Crisp ale with floral notes and light star anise, very subtle grapefruit zest aroma.
+  abv: 4.8
+  price: $6
 
 - tap: 5
   name: Kimik
@@ -69,9 +74,10 @@
   abv: 5.0
   price: $7
   
-- name: Soleil
-  pronunciation: (So·Lay)
-  type: Saison
-  description: Dry orange, mimosa-esque. Floral notes and funky.
-  abv: 6.9
-  price: $7
+- tap: 9
+  name: Scylla
+  pronunciation: (Sky·La)
+  type: Imperial Stout
+  description: Dark chocolate and toasted caramel layered on a blackberry cola.
+  abv: 10.5
+  price: $8
