@@ -81,3 +81,10 @@
   description: Dark chocolate and toasted caramel layered on a blackberry cola.
   abv: 10.5
   price: $8
+
+- tap: 10
+  name: Glyphs
+  type: Pale Ale
+  description: Notes of tangerine, honeydew, orange zest, and aromatic pine.
+  abv: 5.4
+  price: $7
