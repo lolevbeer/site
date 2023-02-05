@@ -29,6 +29,7 @@
   description: An early easy drinking ale with heavy punch. With notes of heavy citrus, passion fruit, lychee, and a distinct guava aroma.
   abv: 4.5
   price: $6
+  glass: teku
 
 - tap: 2
   name: Sebastian
@@ -36,6 +37,7 @@
   description: Refreshing and smooth with a kick. Brewed with 100% Pilsner malt and German and American Noble Hops.
   abv: 6.7
   price: $7
+  glass: lager
 
 - tap: 3
   name: Revive
@@ -44,6 +46,7 @@
   abv: 4.2
   price: $5
   glutenFree: true
+  glass: small-teku
 
 - tap: 4
   name: Dom
@@ -51,6 +54,7 @@
   description: Crisp ale with floral notes and light star anise, very subtle grapefruit zest aroma.
   abv: 4.8
   price: $6
+  glass: lager
 
 - tap: 6
   name: Lupitor
@@ -58,6 +62,7 @@
   description: Ripe cantaloupe, pineapple, mango, and ruby red grapefruit. Very aromatic.
   abv: 6.2
   price: $7
+  glass: teku
 
 - tap: 7
   name: Secrets
@@ -65,14 +70,16 @@
   description: Passionfruit, pine, apricot, and orange zest. Dank pine and blueberry aroma.
   abv: 7.8
   price: $8
-  
+  glass: teku
+
 - tap: 8
   name: Terrini
   type: Grisette
-  description: Grassy, floral, and pithy orange aromas. Notes of pear, candied orange, and lemongrass flavors. Slightly sweet finish. 
+  description: Grassy, floral, and pithy orange aromas. Notes of pear, candied orange, and lemongrass flavors. Slightly sweet finish.
   abv: 5.0
   price: $7
-  
+  glass: teku
+
 - tap: 9
   name: Scylla
   pronunciation: (Sky·La)
@@ -80,6 +87,7 @@
   description: Dark chocolate and toasted caramel layered on a blackberry cola.
   abv: 10.5
   price: $8
+  glass: small-teku
 
 - tap: 10
   name: Glyphs
@@ -87,3 +95,4 @@
   description: Notes of tangerine, honeydew, orange zest, and aromatic pine.
   abv: 5.4
   price: $7
+  glass: teku
