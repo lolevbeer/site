@@ -1,12 +1,12 @@
-name: Lint YAML Files
+name: Check Files for errors
 
 on:
   pull_request:
-    branches:    
+    branches:
       - master
 
 jobs:
-  yamllint:
+  yml:
     runs-on: ubuntu-latest
 
     steps:
