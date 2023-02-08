@@ -58,10 +58,10 @@ let main = document.getElementsByTagName("main");
 window.Yscrolls = 0;
 window.Xscrolls = 0;
 
-main[0].addEventListener("scroll", scrollHandlerY);
+main[0].addEventListener("scroll", scrollHandlerY, {passive: true});
 
 for (slider of sliders) {
-  slider.addEventListener("scroll", scrollHandlerX);
+  slider.addEventListener("scroll", scrollHandlerX, {passive: true});
 }
 
 // Gets app height for sizing for search engines.
@@ -70,31 +70,13 @@ const appHeight = () => {
   doc.style.setProperty('--app-height', `${window.innerHeight}px`);
   document.body.classList.add('height-rendered');
 }
-window.addEventListener('resize', appHeight);
-window.addEventListener('orientationchange', appHeight);
+window.addEventListener('resize', appHeight, {passive: true});
+window.addEventListener('orientationchange', appHeight, {passive: true});
 appHeight();
 
 // Days open.
 const currentDate = new Date();
-var openingDate = new Date('2022-12-2');
 // Remove conditional wrap after opening.
 let day = currentDate.getDay();
 let currentDay = document.getElementById("day-" + day);
 currentDay.classList.add("active");
-
-
-// Food schedule.
-// let curr = new Date();
-// let firstday = new Date(curr.setDate(curr.getDate() - curr.getDay()));
-// let lastday = new Date(curr.setDate(curr.getDate() - curr.getDay()+7));
-// let foodEvents = document.getElementsByClassName("food-event");
-// for (var i = 0; i < foodEvents.length; i++) {
-//    let foodEvent = foodEvents.item(i);
-//    if (i != 0) {
-//      let foodEventDate = foodEvent.dataset.date + "/23";
-//      let foodEventDateObj = new Date(foodEventDate);
-//      if (foodEventDateObj.getTime() > lastday.getTime()) {
-//        foodEvent.classList.add("blur");
-//      }
-//    }
-// }
