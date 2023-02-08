@@ -1,28 +1,30 @@
-# - name: Tides
-#   type: India Pale Ale
-#   description: Grapefruit with light berry undertone, earthy. Blueberry and Orange aroma
-#   abv: 6.9
-#   price: $7.50
-#   cans: false
-#
-# - name: Array
-#   type: Pale Ale
-#   description: Refreshing Grapefruit and Pineapple. Subtle aroma of lemon.
-#   abv: 4.9
-#   price: $6.50
+- name: Tides
+  type: India Pale Ale
+  description: Grapefruit with light berry undertone, earthy. Blueberry and Orange aroma
+  abv: 6.9
+  price: $7
+  glass: teku
 
-# - name: Glyphs
-#   type: Pale Ale
-#   description: Notes of tangerine, honeydew, orange zest, and aromatic pine.
-#   abv: 5.4
-#   price: $7
+- name: Array
+  type: Pale Ale
+  description: Refreshing Grapefruit and Pineapple. Subtle aroma of lemon.
+  abv: 4.9
+  price: $6.50
+  glass: teku
 
-# - name: Soleil
-#   pronunciation: (So·Lay)
-#   type: Saison
-#   description: Dry orange, mimosa-esque. Floral notes and funky.
-#   abv: 6.9
-#   price: $7
+- name: Glyphs
+  type: Pale Ale
+  description: Notes of tangerine, honeydew, orange zest, and aromatic pine.
+  abv: 5.4
+  price: $7
+  glass: teku
+
+- name: Soleil
+  type: Saison
+  description: Dry orange, mimosa-esque. Floral notes and funky.
+  abv: 6.9
+  price: $7
+  glass: teku
 
 - name: Kimik
   type: Session IPA
@@ -56,7 +58,6 @@
   price: $6
   glass: lager
 
-# - tap: 6
   name: Lupitor
   type: IPA
   description: Ripe cantaloupe, pineapple, mango, and ruby red grapefruit. Very aromatic.
