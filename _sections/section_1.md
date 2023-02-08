@@ -8,12 +8,12 @@ title: FAQs
 
 **Q**: Do you allow children in the taproom?
 
-**A**: We allow well-behaved children in the taproom!
+**A**: Yes, we allow well-behaved children in the taproom!
 
 **Q**: How do you pronounce "Lolev"?
 
-**A**: Lolev is pronounced "Low-Lev".
+**A**: "Low-Lev".
 
 **Q**: How long has Lolev been open?
 
-**A**: We opened our doors on December 2nd 2022.
+**A**: We opened our doors on December 2nd, 2022.
