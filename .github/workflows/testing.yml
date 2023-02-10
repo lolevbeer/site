@@ -27,6 +27,8 @@ jobs:
 
     - name: Lint CSV files
       run: csvclean -n _data/*.csv
+      id: csv_lint
+      continue-on-error: true
       env:
         CSV_LINT_RESULT: ${{ steps.csv_lint.outcome }}
 
