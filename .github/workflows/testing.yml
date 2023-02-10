@@ -28,7 +28,13 @@ jobs:
 
     - name: Lint CSV files
       run: |
-        find _data/. -name "*.csv" -print0 | xargs -0 csvclean -n
+        csvclean -n _data/*.csv
+      env:
+        CSV_LINT_RESULT: ${{ steps.csv_lint.outcome }}
+
+    - name: Check CSV lint result
+      if: env.CSV_LINT_RESULT != 'No errors.'
+      run: exit 1
 
     # - name: Upload results
     #   if: always()
