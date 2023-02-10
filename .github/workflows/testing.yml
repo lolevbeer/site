@@ -22,7 +22,8 @@ jobs:
       run: python -m pip install yamllint csvkit
 
     - name: Lint YAML files
-      run: yamllint -d "{extends: relaxed, rules: {line-length: {max: 140}}}" _data/.
+      run: |
+        yamllint -d "{extends: relaxed, rules: {line-length: {max: 140}}}" _data/.
 
     - name: Lint CSV files
       run: csvclean -n _data/*.csv
