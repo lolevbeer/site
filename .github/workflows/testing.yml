@@ -31,7 +31,7 @@ jobs:
         CSV_LINT_RESULT: ${{ steps.csv_lint.outcome }}
 
     - name: Check CSV lint result
-      if: !contains('No errors.', env.CSV_LINT_RESULT)
+      if: "!contains('No errors.', env.CSV_LINT_RESULT)"
       run: exit 1
 
     # - name: Upload results
