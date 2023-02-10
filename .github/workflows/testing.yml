@@ -32,7 +32,7 @@ jobs:
 
     - name: Check CSV lint result
       if: env.CSV_LINT_RESULT != 'No errors.'
-      run: echo env.CSV_LINT_RESULT
+      run: echo $env.CSV_LINT_RESULT
 
     # - name: Upload results
     #   if: always()
