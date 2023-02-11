@@ -26,13 +26,6 @@
   price: $7
   glass: teku
 
-- name: Kimik
-  type: Session IPA
-  description: An early easy drinking ale with heavy punch. With notes of heavy citrus, passion fruit, lychee, and a distinct guava aroma.
-  abv: 4.5
-  price: $6
-  glass: teku
-
 - tap: 2
   name: Sebastian
   type: Bock
@@ -57,6 +50,13 @@
   abv: 4.8
   price: $6
   glass: lager
+
+- name: Kimik
+  type: Session IPA
+  description: An early easy drinking ale with heavy punch. With notes of heavy citrus, passion fruit, lychee, and a distinct guava aroma.
+  abv: 4.5
+  price: $6
+  glass: teku
 
 - tap: 6
   name: Lupitor
