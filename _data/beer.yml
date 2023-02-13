@@ -19,18 +19,18 @@
   abv: 6.9
   price: $7
   glass: teku
-  
+
 - name: Secrets
   type: Double IPA
   description: Passionfruit, pine, apricot, and orange zest. Dank pine and blueberry aroma.
   abv: 7.8
   price: $8
   glass: teku
-  
+
 - tap: 1
-- name: Tides
+  name: Tides
   type: India Pale Ale
-  description: Honeydew with blueberry undertones, earthy and dry passionfruit. Grapefruit and orange aroma.
+  description: Cantaloupe with blueberry undertones, earthy and dry passionfruit. Cantaloupe and orange aroma.
   abv: 6.9
   price: $7
   glass: teku
@@ -51,7 +51,6 @@
   price: $5
   glutenFree: true
   glass: small-teku
-
 
 - name: Dom
   type: Kölsch
