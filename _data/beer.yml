@@ -1,9 +1,3 @@
-- name: Tides
-  type: India Pale Ale
-  description: Grapefruit with light berry undertone, earthy. Blueberry and Orange aroma
-  abv: 6.9
-  price: $7
-  glass: teku
 
 - name: Array
   type: Pale Ale
@@ -26,6 +20,21 @@
   price: $7
   glass: teku
 
+- name: Secrets
+  type: Double IPA
+  description: Passionfruit, pine, apricot, and orange zest. Dank pine and blueberry aroma.
+  abv: 7.8
+  price: $8
+  glass: teku
+
+- tap: 1
+  name: Tides
+  type: India Pale Ale
+  description: Cantaloupe with blueberry undertones, earthy and dry passionfruit. Cantaloupe and orange aroma.
+  abv: 6.9
+  price: $7
+  glass: teku
+
 - tap: 2
   name: Sebastian
   type: Bock
@@ -43,8 +52,7 @@
   glutenFree: true
   glass: small-teku
 
-- tap: 4
-  name: Dom
+- name: Dom
   type: Kölsch
   description: Crisp ale with floral notes and light star anise, very subtle grapefruit zest aroma.
   abv: 4.8
@@ -65,14 +73,6 @@
   description: Ripe cantaloupe, pineapple, mango, and ruby red grapefruit. Very aromatic.
   abv: 6.2
   price: $7
-  glass: teku
-
-- tap: 7
-  name: Secrets
-  type: Double IPA
-  description: Passionfruit, pine, apricot, and orange zest. Dank pine and blueberry aroma.
-  abv: 7.8
-  price: $8
   glass: teku
 
 - tap: 8
