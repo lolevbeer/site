@@ -52,7 +52,8 @@
   glutenFree: true
   glass: small-teku
 
-- name: Dom
+- tap: 4
+  name: Dom
   type: Kölsch
   description: Crisp ale with floral notes and light star anise, very subtle grapefruit zest aroma.
   abv: 4.8
