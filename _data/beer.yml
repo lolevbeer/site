@@ -43,15 +43,6 @@
   price: $7
   glass: lager
 
-- tap: 3
-  name: Revive
-  type: Hopped Kilju
-  description: Modern, hopped version of a traditional Finnish fermented-water beverage.
-  abv: 4.2
-  price: $5
-  glutenFree: true
-  glass: small-teku
-
 - tap: 4
   name: Dom
   type: Kölsch
@@ -60,7 +51,8 @@
   price: $6
   glass: lager
 
-- name: Kimik
+- tap: 5
+  name: Kimik
   type: Session IPA
   description: An early easy drinking ale with heavy punch. With notes of heavy citrus, passion fruit, lychee, and a distinct guava aroma.
   abv: 4.5
@@ -74,6 +66,15 @@
   abv: 6.2
   price: $7
   glass: teku
+
+- tap: 7
+  name: Revive
+  type: Hopped Kilju
+  description: Modern, hopped version of a traditional Finnish fermented-water beverage.
+  abv: 4.2
+  price: $5
+  glutenFree: true
+  glass: small-teku
 
 - tap: 8
   name: Terrini
