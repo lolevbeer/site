@@ -67,7 +67,7 @@
   price: $6
   glass: teku
 
-- tap: False
+- tap: 6
   name: Lupitor
   type: India Pale Ale
   description: Ripe pineapple, mango, and ruby red grapefruit. Very aromatic.
