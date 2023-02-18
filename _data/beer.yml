@@ -27,7 +27,7 @@
   price: $8
   glass: teku
 
-- tap: 1
+- tap: false
   name: Tides
   type: India Pale Ale
   description: Cantaloupe with blueberry undertones, earthy and dry passionfruit. Cantaloupe and orange aroma.
