@@ -35,7 +35,7 @@
   price: $7
   glass: teku
 
-- tap: False
+- tap: 2
   name: Sebastian
   type: Bock
   description: Refreshing and smooth with a kick. A Maibock brewed with 100% Pilsner malt and German and American Noble Hops.
@@ -43,7 +43,7 @@
   price: $7
   glass: lager
 
-- tap: 3
+- tap: False
   name: Elias
   type: Cream Ale
   description: Refreshing and malt forward, subtle citrus notes and floral aroma.
