@@ -236,13 +236,17 @@ table
   text-align: left
 th,
 td
-  padding: 0 1em
+  padding: .25em 1em
+td:first-child
+  background: transparent
 tbody
   tr
     &:nth-child(odd)
       background: black
       color: white
-
+      a
+        color: white
+        cursor: pointer
 
 @keyframes pulse
   0%
