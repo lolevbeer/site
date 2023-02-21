@@ -34,6 +34,7 @@
   abv: 6.9
   price: $7
   glass: teku
+  cans: $16
 
 - tap: False
   name: Sebastian
@@ -42,6 +43,7 @@
   abv: 6.7
   price: $7
   glass: lager
+  cans: $12
 
 - tap: 3
   name: Elias
@@ -50,6 +52,7 @@
   abv: 4.4
   price: $6
   glass: lager
+  cans: $12
 
 - tap: 4
   name: Dom
@@ -58,6 +61,7 @@
   abv: 4.8
   price: $6
   glass: lager
+  cans: $12
 
 - tap: 5
   name: Kimik
@@ -74,6 +78,7 @@
   abv: 6.2
   price: $7
   glass: teku
+  cans: $16
 
 - tap: 7
   name: Revive
