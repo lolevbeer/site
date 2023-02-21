@@ -35,7 +35,7 @@
   price: $7
   glass: teku
 
-- tap: 2
+- tap: False
   name: Sebastian
   type: Bock
   description: Refreshing and smooth with a kick. A Maibock brewed with 100% Pilsner malt and German and American Noble Hops.
