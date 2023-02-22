@@ -2,7 +2,7 @@
   <h2>Beer</h2>
   <div>
     {% for beer in site.data.beer %}
-      {% if beer.tap %}
+      {% if beer.tap or beer.cans %}
         <div class="beer">
           <a href="/beer/{{ beer.name | downcase }}">
             <h3>{{ beer.name }}</h3>
