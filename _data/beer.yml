@@ -51,7 +51,7 @@
   abv: 6.9
   draftPrice: $7
   glass: teku
-  cans: $16
+  cans: $17
   tap: 1
 
 - name: Elias
@@ -86,7 +86,7 @@
   abv: 6.2
   draftPrice: $7
   glass: teku
-  cans: $16
+  cans: $17
   tap: 6
 
 - name: Revive
