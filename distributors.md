@@ -13,4 +13,4 @@ Click beer names for more info.
 | [Dom](/beer/dom)            | $190 | ~~$95~~  | $50 |
 | [Lupitor](/beer/lupitor)    | $245 | ~~$120~~ | $75 |
 
-Please contact [ted@lolev.beer](mailto:ted@lolev.beer) for orders.
+Please contact [derek@lolev.beer](mailto:derek@lolev.beer) for orders.
