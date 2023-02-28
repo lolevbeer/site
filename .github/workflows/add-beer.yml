@@ -1,0 +1,18 @@
+name: Add Beer based on csv
+on:
+  schedule:
+    - cron: '0 9 * * 1'
+
+jobs:
+  get-remote-doc:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+      - name: Get Remote Document
+        run: |
+          cd _data
+          wget -O beer.csv ${{ secrets.BEER_GSHEET }}
+          git add beer.csv
+          git commit -m "Sync Beer from google sheet"
+          git push
