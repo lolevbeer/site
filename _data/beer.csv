@@ -2,7 +2,7 @@ tap,name,type,description,abv,glass,draftPrice,draftAvailable,cans,cansAvailable
 1,Tides,India Pale Ale,"Cantaloupe with blueberry undertones, earthy and dry passionfruit. Cantaloupe and orange aroma.",6.9,teku,$7,TRUE,$17,TRUE,FALSE
 3,Elias,Cream Ale,"Refreshing and malt forward, subtle citrus notes and floral aroma.",4.4,lager,$6,TRUE,$12,TRUE,FALSE
 4,Dom,Kölsch,"Crisp ale with floral and pear notes, subtle grapefruit zest aroma.",4.8,lager,$6,TRUE,$12,TRUE,FALSE
-5,Kimik,Session IPA,"An easy drinking ale with heavy punch. With notes of heavy citrus, passion fruit, lychee, and a distinct guava aroma.",4.5,teku,$6,TRUE,,FALSE,FALSE
+5,Kimik,Session IPA,"An early easy drinking ale with heavy punch. With notes of heavy citrus, passion fruit, lychee, and a distinct guava aroma.",4.5,teku,$6,TRUE,,FALSE,FALSE
 6,Lupitor,India Pale Ale,"Ripe pineapple, mango, and ruby red grapefruit. Very aromatic.",6.2,teku,$7,TRUE,$17,TRUE,FALSE
 7,Revive,Hopped Kilju,"Modern, hopped version of a traditional Finnish fermented-water beverage.",4.2,teku,$5,TRUE,,FALSE,TRUE
 8,Terrini,Grisette,"Grassy, floral, and pithy orange aromas. Notes of pear, candied orange, and lemongrass flavors. Slightly sweet finish.",5,teku,$7,TRUE,,FALSE,FALSE
