@@ -1,4 +1,4 @@
-name: Add Beer based on csv
+name: Update Beer
 on:
   push:
     branches:
@@ -16,6 +16,8 @@ jobs:
         run: |
           cd _data
           wget -O beer.csv ${{ secrets.BEER_GSHEET }}
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
           git add beer.csv
           git commit -m "Sync Beer from google sheet"
           git push
