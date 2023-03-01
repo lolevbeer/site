@@ -13,11 +13,13 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
       - name: Get Remote Document
+        continue-on-error: true
         run: |
           cd _data
           wget -O beer.csv ${{ secrets.BEER_GSHEET }}
           wget -O music.csv ${{ secrets.MUSIC_GSHEET }}
           wget -O food.csv ${{ secrets.FOOD_GSHEET }}
+          wget -O sales.csv ${{ secrets.SALES_GSHEET }}
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add .

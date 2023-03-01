@@ -2,18 +2,14 @@
 title: FAQs
 ---
 
-**Q**: Do you sell beer to go?
+Do you sell beer to go?
+Yes
 
-**A**: We will have canned beer to go starting on February 22nd!
+Do you allow children in the taproom?
+Yes
 
-**Q**: Do you allow children in the taproom?
+How is Lolev pronounced?
+"Low - Lev".
 
-**A**: Yes, we allow well-behaved children in the taproom!
-
-**Q**: How do you pronounce "Lolev"?
-
-**A**: "Low-Lev".
-
-**Q**: How long has Lolev been open?
-
-**A**: We opened our doors on December 2nd, 2022.
+When did Lolev open?
+December 2nd, 2022.
