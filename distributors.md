@@ -12,7 +12,7 @@ Click beer names for more info.
       <th>1/2 Keg</th>
       <th>1/6 Keg</th>
       <th>Case</th>
-      <th>Sugg.</th>
+      <th title="Suggested Retail Price">Sugg.</th>
     </tr>
   </thead>
   <tbody>
