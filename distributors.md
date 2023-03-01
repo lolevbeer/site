@@ -37,4 +37,4 @@ Click beer names for more info.
   </tbody>
 </table>
 
-Please contact [derek@lolev.beer](mailto:derek@lolev.beer) for orders.
+Please contact [sales@lolev.beer](mailto:sales@lolev.beer) for orders.
