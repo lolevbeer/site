@@ -79,4 +79,6 @@ const currentDate = new Date();
 // Remove conditional wrap after opening.
 let day = currentDate.getDay();
 let currentDay = document.getElementById("day-" + day);
+let currentFoodDay = document.getElementById("food-day-" + day);
 currentDay.classList.add("active");
+currentFoodDay.classList.add("active");
