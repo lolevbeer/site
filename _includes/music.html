@@ -3,7 +3,7 @@
   <div class="food-schedule">
   {% for event in site.data.music %}
     <span class="food-event" data-date="{{ food.date }}">
-      {{ event.date }}
+      {{ event.date | date: '%-m/%-d' }}
         {% if event.site %}
           <b><a href="{{ event.site }}" target="_blank">{{ event.vendor }}</a></b>
         {% else %}
