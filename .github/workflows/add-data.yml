@@ -1,4 +1,4 @@
-name: Update Beer
+name: Update Data
 on:
   push:
     branches:
@@ -16,8 +16,10 @@ jobs:
         run: |
           cd _data
           wget -O beer.csv ${{ secrets.BEER_GSHEET }}
+          wget -O music.csv ${{ secrets.MUSIC_GSHEET }}
+          wget -O food.csv ${{ secrets.FOOD_GSHEET }}
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add beer.csv
-          git commit -m "Sync Beer from google sheet"
+          git add .
+          git commit -m "Sync Data from google sheets"
           git push

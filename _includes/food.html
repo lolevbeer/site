@@ -1,17 +1,22 @@
 <section id="food" class="stacked">
   <h2>Food</h2>
   <div class="food-schedule">
+  {% assign currentYear = site.time | date: "%Y" %}
+  {% assign currentWeek = site.time | date: "%W" %}
   {% for food in site.data.food %}
-    <span class="food-event" data-date="{{ food.date }}">
-      {{ food.date }}
-        {% if food.site %}
-          <b><a href="{{ food.site }}" target="_blank">{{ food.vendor }}</a></b>
-        {% else %}
-          <b>{{ food.vendor }}</b>
-        {% endif %}
-        <span class="right">{{ food.time }}</span>
-        <br>
-    </span>
+    {% assign postYear = food.date | date: "%Y" %}
+    {% assign postWeek = food.date | date: "%W" %}
+    {%- if currentYear == postYear and currentWeek == postWeek -%}
+      <span class="food-event" data-date="{{ food.date }}">
+        {{ food.date | date: '%A' }} / 
+      {% if food.site %}
+        <b><a href="{{ food.site }}" target="_blank">{{ food.vendor }}</a></b>
+      {% else %}
+        <b>{{ food.vendor }}</b>
+      {% endif %}
+        / <span>{{ food.time }}</span><br>
+      </span>
+    {%- endif -%}
   {% endfor %}
   </div>
 {% capture food_list %}Food schedule this week
