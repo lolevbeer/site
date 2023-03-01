@@ -19,10 +19,14 @@
   </div>
 {% capture food_list %}Food schedule this week
 {% for food in site.data.food %}
-{{ food.date }} - {{ food.vendor }} - {{ food.time }}{% endfor %}
+  {% assign postWeek = food.date | date: "%W" %}
+  {%- if currentWeek == postWeek -%}
+    {{ food.date | date: '%A' }} - {{ food.vendor }} - {{ food.time }}
+  {%- endif -%}
+{% endfor %}
 {% endcapture %}
   <p>
-    <a aria-label="Share on twitter" class="border-bottom-none" href="https://twitter.com/intent/tweet?text={{ food_list | uri_escape }}">
+    <a target="_blank" aria-label="Share on twitter" class="border-bottom-none" href="https://twitter.com/intent/tweet?text={{ food_list | uri_escape }}">
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false" class="twtr-rte-icon twtr-rte-icon--outgoing">
         <path opacity="0" d="M0 0h24v24H0z"></path>
         <path d="M17.53 7.47l-5-5c-.293-.293-.768-.293-1.06 0l-5 5c-.294.293-.294.768 0 1.06s.767.294 1.06 0l3.72-3.72V15c0 .414.336.75.75.75s.75-.336.75-.75V4.81l3.72 3.72c.146.147.338.22.53.22s.384-.072.53-.22c.293-.293.293-.767 0-1.06z"></path>
