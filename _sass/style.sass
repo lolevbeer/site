@@ -229,8 +229,17 @@ input
     pointer-events: none
 
 .food-event
-  letter-spacing: normal
   font-size: .9em
+  letter-spacing: normal
+  &.active
+    background: black
+    border-radius: 5px
+    color: white
+    margin-left: -0.5em
+    padding: 0.25em 0.5em
+    a
+      background: black
+      color: white
 
 #map
   // margin: .5em
