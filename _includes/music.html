@@ -1,0 +1,20 @@
+<section id="food" class="stacked">
+  <h2>Songwriter<br>Series</h2>
+  <div class="food-schedule">
+  {% for event in site.data.music %}
+    <span class="food-event" data-date="{{ food.date }}">
+      {{ event.date }}
+        {% if event.site %}
+          <b><a href="{{ event.site }}" target="_blank">{{ event.vendor }}</a></b>
+        {% else %}
+          <b>{{ event.vendor }}</b>
+        {% endif %}
+        <span class="right">{{ event.time }}</span>
+        <br>
+    </span>
+  {% endfor %}
+  </div>
+  <p>Live music every Thursday night! 🎶🎤<br><br>The Lolev Songwriter Series showcases the art of songwriting and the unique talents of local musicians! ✨</p>
+  <p>Contact us at <a href="mailto:info@lolev.beer">info@lolev.beer</a></p>
+
+</section>
