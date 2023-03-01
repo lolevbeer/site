@@ -1,12 +1,10 @@
 <section id="food" class="stacked">
   <h2>Food</h2>
   <div class="food-schedule">
-  {% assign currentYear = site.time | date: "%Y" %}
   {% assign currentWeek = site.time | date: "%W" %}
   {% for food in site.data.food %}
-    {% assign postYear = food.date | date: "%Y" %}
     {% assign postWeek = food.date | date: "%W" %}
-    {%- if currentYear == postYear and currentWeek == postWeek -%}
+    {%- if currentWeek == postWeek -%}
       <span id="food-day-{{ food.date | date: '%w' }}" class="food-event" data-date="{{ food.date }}">
         {{ food.date | date: '%A' }} /
       {% if food.site %}
