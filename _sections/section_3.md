@@ -1,5 +1,5 @@
 ---
-title: Events
+title: Reservations
 ---
 
 ### Book your party  
