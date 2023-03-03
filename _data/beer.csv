@@ -7,7 +7,7 @@ tap,name,type,description,abv,glass,draftPrice,draftAvailable,cans,cansAvailable
 7,Revive,Hopped Kilju,"Modern, hopped version of a traditional Finnish fermented-water beverage.",4.2,teku,$5,TRUE,,FALSE,TRUE
 8,Terrini,Grisette,"Grassy, floral, and pithy orange aromas. Notes of pear, candied orange, and lemongrass flavors. Slightly sweet finish.",5,teku,$7,TRUE,,FALSE,FALSE
 9,Scylla,Imperial Stout,Dark chocolate and toasted caramel layered on a blackberry cola.,10.5,small-teku,$8,TRUE,,FALSE,FALSE
-10,Glyphs,Pale Ale,"Notes of tangerine, honeydew, orange zest, and aromatic pine.",5.4,teku,$7,TRUE,,FALSE,FALSE
+,Glyphs,Pale Ale,"Notes of tangerine, honeydew, orange zest, and aromatic pine.",5.4,teku,$7,FALSE,,FALSE,FALSE
 ,Sebastian,Bock,Refreshing and smooth with a kick. A Maibock brewed with 100% Pilsner malt and German and American Noble Hops.,6.7,lager,$7,TRUE,$12,TRUE,FALSE
 ,Array,Pale Ale,Refreshing Grapefruit and Pineapple. Subtle aroma of lemon.,4.9,teku,$7,FALSE,,FALSE,FALSE
 ,Soleil,Saison,"Dry orange, mimosa-esque. Floral notes and funky.",6.9,teku,$7,FALSE,,FALSE,FALSE
