@@ -46,7 +46,7 @@ main
       margin: 0 auto
       position: absolute
       text-align: center
-      top: 0
+      top: 10px
       z-index: 1
     &:first-child:before
       content: ''
@@ -64,6 +64,10 @@ main
     &:after,
     &:before
       z-index: 1
+
+@media only screen and (min-width: 641px)
+  main>section#music:before
+    top: 100px
 
 slider
   scroll-snap-align: start
@@ -297,6 +301,10 @@ tbody
     letter-spacing: 2px
   .social img
     margin: 0
+
+@media screen and (max-height: 700px)
+  body
+    font-size: 2vh
 
 .abv
   font-size: 1.5em
