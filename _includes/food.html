@@ -1,6 +1,6 @@
 <section id="food" class="stacked">
   <h2>Food</h2>
-  <div class="food-schedule">
+  <div class="food-schedule" >
   {% assign currentWeek = site.time | date: "%W" %}
   {% for food in site.data.food %}
     {% assign postWeek = food.date | date: "%W" %}
