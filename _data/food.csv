@@ -1,14 +1,14 @@
 date,vendor,time,site
-2023-03-03,Stuntpig,5-10 PM,https://www.instagram.com/stuntpigpgh/
-2023-03-04,Mr Bulgogi,1-6 PM,https://www.instagram.com/mrbulgogifoodtruck
-2023-03-05,Sweet Little Eats,12-5 PM,https://www.facebook.com/sweetlittleeats/
-2023-03-07,Hummus PGH,5-9 PM,https://www.facebook.com/hummuspittsburgh/
-2023-03-08,El Rincon Oaxaqueno,4-9 PM,https://www.instagram.com/elrinconoaxaqueno8/
-2023-03-09,Los Gallitos,5-9 PM,https://www.instagram.com/losgallitospgh
-2023-03-10,Haskel's Deli,5-10 PM,https://www.instagram.com/haskels_deli/
-2023-03-11,Wise County Biscuits,12-5 PM,https://www.instagram.com/wisecountybiscuits/?hl=en
-2023-03-11,Benvenuti's Pizza,5-10 PM,https://www.instagram.com/benvenutispizzafactory/?hl=en
-2023-03-12,Sinkers and Suds,12-5 PM,
+2023-03-03,Stuntpig,5-10pm,https://www.instagram.com/stuntpigpgh/
+2023-03-04,Mr Bulgogi,1-6pm,https://www.instagram.com/mrbulgogifoodtruck
+2023-03-05,Sweet Little Eats,12-5pm,https://www.facebook.com/sweetlittleeats/
+2023-03-07,Hummus PGH,5-9pm,https://www.facebook.com/hummuspittsburgh/
+2023-03-08,El Rincon O.,4-9pm,https://www.instagram.com/elrinconoaxaqueno8/
+2023-03-09,Los Gallitos,5-9pm,https://www.instagram.com/losgallitospgh
+2023-03-10,Haskel's Deli,5-10pm,https://www.instagram.com/haskels_deli/
+2023-03-11,Wise County,12-5pm,https://www.instagram.com/wisecountybiscuits
+2023-03-11,Benvenuti's Pizza,5-10pm,https://www.instagram.com/benvenutispizzafactory
+2023-03-12,Sinkers and Suds,12-5pm,
 2023-03-14,Vagabond Tacos,,https://www.facebook.com/vagabondtacotruck/
 2023-03-15,Dos Reyes,,https://www.facebook.com/DosReyesPgh/
 2023-03-16,Benvenuti's Pizza,,https://www.instagram.com/benvenutispizzafactory/?hl=en
@@ -16,12 +16,12 @@ date,vendor,time,site
 2023-03-18,Haskel's Deli,,https://www.instagram.com/haskels_deli/
 2023-03-19,Sak Pase,,https://www.facebook.com/sakpasepgh/
 2023-03-21,Benvenuti's Pizza,,https://www.instagram.com/benvenutispizzafactory/?hl=en
-2023-03-22,El Rincon Oaxaqueno,,https://www.instagram.com/elrinconoaxaqueno8/
+2023-03-22,El Rincon O.,,https://www.instagram.com/elrinconoaxaqueno8/
 2023-03-23,Los Gallitos,,https://www.instagram.com/losgallitospgh
 2023-03-24,GS Sando Co.,,https://www.instagram.com/g.s.sandoco/
 2023-03-25,Ash & Kris,,
 2023-03-26,Jak's Bakery,,https://www.facebook.com/jaksbakery/
-2023-03-28,El Rincon Oaxaqueno,,https://www.instagram.com/elrinconoaxaqueno8/
+2023-03-28,El Rincon O.,,https://www.instagram.com/elrinconoaxaqueno8/
 2023-03-29,Billu's,,https://www.facebook.com/BillusIndianGrillonwheels/
 2023-03-30,Hummus PGH,,https://www.facebook.com/hummuspittsburgh/
 2023-03-31,Stuntpig,,https://www.instagram.com/stuntpigpgh/
@@ -29,7 +29,7 @@ date,vendor,time,site
 2023-04-02,Sweet Little Eats,,https://www.facebook.com/sweetlittleeats/
 2023-04-03,Ash & Kris,,
 2023-04-04,,,
-2023-04-05,El Rincon Oaxqueno,,https://www.instagram.com/elrinconoaxaqueno8/
+2023-04-05,El Rincon O.,,https://www.instagram.com/elrinconoaxaqueno8/
 2023-04-06,Mi Empanada,,
 2023-04-07,GS Sando Co,,
 2023-04-08,Totopo,,
@@ -49,7 +49,7 @@ date,vendor,time,site
 2023-04-22,La Palapa,,
 2023-04-23,,,
 2023-04-24,,,
-2023-04-25,El Rincon Oaxqueno,,
+2023-04-25,El Rincon O.,,
 2023-04-26,,,
 2023-04-27,,,
 2023-04-28,GS Sando Co,,
@@ -57,7 +57,7 @@ date,vendor,time,site
 2023-04-30,Wise County Biscuits,,
 2023-05-01,,,
 2023-05-02,Benvenutis,,
-2023-05-03,El Rincon Oaxqueno,,
+2023-05-03,El Rincon O.,,
 2023-05-04,Mi Empanada,,
 2023-05-05,Stuntpig,,
 2023-05-06,Totopo,,
@@ -67,10 +67,10 @@ date,vendor,time,site
 2023-05-10,Billu's,,
 2023-05-11,,,
 2023-05-12,Haskel's Deli,,
-2023-05-13,Barbirou Greek Gyro,,
+2023-05-13,Barbirou Gyro,,
 2023-05-14,,,
 2023-05-15,,,
 2023-05-16,,,
 2023-05-17,Dos Reyes,,
-2023-05-18,Barbirou Greek Gyro,,
-2023-05-19,Mr. Nick's Fried Chicken,,
+2023-05-18,Barbirou Gyro,,
+2023-05-19,Mr. Nick's,,
