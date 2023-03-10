@@ -12,3 +12,4 @@ tap,name,type,description,abv,glass,draftPrice,draftAvailable,cans,cansAvailable
 ,Array,Pale Ale,Refreshing Grapefruit and Pineapple. Subtle aroma of lemon.,4.9,teku,$7,FALSE,,FALSE,FALSE
 ,Soleil,Saison,"Dry orange, mimosa-esque. Floral notes and funky.",6.9,teku,$7,FALSE,,FALSE,FALSE
 ,Secrets,Double IPA,"Passionfruit, pine, apricot, and orange zest. Dank pine and blueberry aroma.",7.8,teku,$8,FALSE,,FALSE,FALSE
+,Carnyx,Dry Irish Stout,,,,,,,,
