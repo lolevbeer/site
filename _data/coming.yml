@@ -1,9 +1,9 @@
-- type: Irish Stout
-- type: Pilsner
+
 - type: West Coast IPA
 - type: Pale Ale
 - type: Scotch Ale
-- type: Vienna Lager
 - type: Gose
+- type: Pilsner
+- type: Vienna Lager
 - type: Czech Dark Lager
 - type: Barleywine
