@@ -1,5 +1,5 @@
 tap,name,type,description,abv,glass,draftPrice,draftAvailable,cans,cansAvailable,glutenFree
-1,Tides,India Pale Ale,"Cantaloupe with blueberry undertones, earthy and dry passionfruit. Cantaloupe and orange aroma.",6.9,teku,$7,TRUE,$17,TRUE,FALSE
+1,Tides,India Pale Ale,"Cantaloupe with blueberry undertones, earthy and dry passionfruit. Cantaloupe and orange aroma.",6.9,teku,$7,TRUE,$17,FALSE,FALSE
 2,Dom,Kölsch,"Crisp ale with floral and pear notes, subtle grapefruit zest aroma.",4.8,lager,$6,TRUE,$12,FALSE,FALSE
 3,Elias,Cream Ale,"Refreshing and malt forward, subtle citrus notes and floral aroma.",4.4,lager,$6,TRUE,$12,TRUE,FALSE
 4,Array,Pale Ale,Refreshing Grapefruit and Pineapple. Subtle aroma of lemon.,5.9,teku,$7,TRUE,,FALSE,FALSE
