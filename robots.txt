@@ -1,2 +1,3 @@
 User-agent: *
 Disallow: /distributors
+Disallow: /qr/*
