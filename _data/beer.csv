@@ -13,4 +13,4 @@ tap,name,type,description,abv,glass,draftPrice,draftAvailable,cans,cansAvailable
 ,Sebastian,Bock,Refreshing and smooth with a kick. A Maibock brewed with 100% Pilsner malt and German and American Noble Hops.,6.7,lager,$7,TRUE,$12,TRUE,FALSE
 ,Soleil,Saison,"Dry orange, mimosa-esque. Floral notes and funky.",6.9,teku,$7,FALSE,,FALSE,FALSE
 ,Secrets,Double IPA,"Passionfruit, pine, apricot, and orange zest. Dank pine and blueberry aroma.",7.8,teku,$8,FALSE,,FALSE,FALSE
-8,Melrose,,,,,,,,,
+8,Melrose,Scotch Ale,Smooth and malty with light caramel and dark fruit notes with subtle cherry aroma.,6,Lager,7,,,,
