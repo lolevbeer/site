@@ -47,6 +47,12 @@ page_gen:
   debug: false
 
 - data: beer
+  template: qr
+  dir: qr
+  name: name
+  debug: false
+
+- data: beer
   template: beer
   name: name
   debug: false
