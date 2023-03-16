@@ -1,8 +1,8 @@
 name: Update Data
 on:
-  push:
-    branches:
-      - master
+  # push:
+  #   branches:
+  #     - master
   schedule:
     - cron: '*/15 * * * *'
 
