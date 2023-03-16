@@ -2,16 +2,18 @@
   <h2>Events</h2>
   <div class="food-schedule">
   {% for event in site.data.events %}
-    <span class="food-event" data-date="{{ food.date }}">
-      {{ event.date | date: '%-m/%-d' }}
-        {% if event.site %}
-          <b><a href="{{ event.site }}" target="_blank">{{ event.vendor }}</a></b>
-        {% else %}
-          <b>{{ event.vendor }}</b>
-        {% endif %}
-        <span class="right">{{ event.time }}</span>
-        <br>
-    </span>
+    {% if event.site %}
+      <span class="food-event" data-date="{{ food.date }}">
+        {{ event.date | date: '%-m/%-d' }}
+          {% if event.site %}
+            <b><a href="{{ event.site }}" target="_blank">{{ event.vendor }}</a></b>
+          {% else %}
+            <b>{{ event.vendor }}</b>
+          {% endif %}
+          <span class="right">{{ event.time }}</span>
+          <br>
+      </span>
+    {% endif %}
   {% endfor %}
   </div>
   <p>Follow us here for upcoming events!</p>
