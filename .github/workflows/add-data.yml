@@ -15,7 +15,7 @@ jobs:
         with:
           token: ${{ github.token }}
       - name: Get Remote Document
-        continue-on-error: true
+        # continue-on-error: true
         run: |
           cd _data
           wget -O beer.csv ${{ secrets.BEER_GSHEET }}
