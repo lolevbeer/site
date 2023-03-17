@@ -14,4 +14,4 @@ tap,name,type,description,abv,glass,draftPrice,draftAvailable,cans,cansAvailable
 ,Terrini,Grisette,"Grassy, floral, and pithy orange aromas. Notes of pear, candied orange, and lemongrass flavors. Slightly sweet finish.",5,teku,$7,FALSE,,FALSE,FALSE
 ,Soleil,Saison,"Dry orange, mimosa-esque. Floral notes and funky.",6.9,teku,$7,FALSE,,FALSE,FALSE
 ,Secrets,Double IPA,"Passionfruit, pine, apricot, and orange zest. Dank pine and blueberry aroma.",7.8,teku,$8,FALSE,,FALSE,FALSE
-,Narada,,,,,,,,,
+,Narada,West Coast IPA,,,teku,$7,FALSE,,FALSE,FALSE
