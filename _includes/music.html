@@ -2,16 +2,16 @@
   <h2>Songwriter<br>Series</h2>
   <div class="food-schedule">
   {% for event in site.data.music %}
-    <span class="food-event" data-date="{{ food.date }}">
-      {% if event.site %}
+    {% if event.date and event.vendor  %}
+      <span class="food-event" data-date="{{ food.date }}">
         {{ event.date | date: '%-m/%-d' }}
-          {% if event.site %}
-            <b><a href="{{ event.site }}" target="_blank">{{ event.vendor }}</a></b>
-          {% else %}
-            <b>{{ event.vendor }}</b>
-          {% endif %}
-          <span class="right">{{ event.time }}</span>
-          <br>
+        {% if event.site %}
+          <b><a href="{{ event.site }}" target="_blank">{{ event.vendor }}</a></b>
+        {% else %}
+          <b>{{ event.vendor }}</b>
+        {% endif %}
+        <span class="right">{{ event.time }}</span>
+        <br>
       </span>
     {% endif %}
   {% endfor %}
