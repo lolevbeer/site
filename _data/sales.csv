@@ -1,6 +1,6 @@
 beer,half,halfStock,sixtel,sixtelStock,case,caseStock,retail
 tides,$245,TRUE,$119,FALSE,$79,FALSE,$18
-lupitor,$225,FALSE,$109,FALSE,$75,TRUE,$17
+lupitor,$225,FALSE,$109,FALSE,$75,FALSE,$17
 sebastian,$185,FALSE,$95,FALSE,$59,TRUE,$13
 elias,$180,TRUE,$85,FALSE,$55,TRUE,$12
 dom,$180,TRUE,$85,FALSE,$55,FALSE,$12
