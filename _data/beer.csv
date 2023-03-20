@@ -1,6 +1,6 @@
 tap,name,type,description,abv,glass,draftPrice,draftAvailable,cans,cansAvailable,glutenFree
 1,Tides,India Pale Ale,"Cantaloupe with blueberry undertones, earthy and dry passionfruit. Cantaloupe and orange aroma.",6.9,teku,$7,TRUE,$17,FALSE,FALSE
-2,Marty,Matcha Ale,"Light Matcha-steeped, crisp ale, our St. Pat's crusher.",4.4,teku,$6,TRUE,,FALSE,FALSE
+2,Marty,Matcha Ale,"Light Matcha-steeped, crisp ale.",4.4,teku,$6,TRUE,,FALSE,FALSE
 3,Elias,Cream Ale,"Refreshing and malt forward, subtle citrus notes and floral aroma.",4.4,lager,$6,TRUE,$12,TRUE,FALSE
 4,Array,Pale Ale,Refreshing Grapefruit and Pineapple. Subtle aroma of lemon.,5.9,teku,$7,TRUE,,FALSE,FALSE
 5,Kimik,Session IPA,"An early easy drinking ale with heavy punch. With notes of heavy citrus, passion fruit, lychee, and a distinct guava aroma.",4.5,teku,$6,TRUE,,FALSE,FALSE
