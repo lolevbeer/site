@@ -49,12 +49,13 @@ page_gen:
 - data: beer
   template: qr
   dir: qr
-  name: name
+  name_expr: record['variant']
   debug: false
 
 - data: beer
   template: beer
-  name: name
+  title: name
+  name_expr: record['variant']
   debug: false
 
 - data: people
