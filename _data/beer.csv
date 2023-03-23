@@ -9,7 +9,7 @@ tap,name,type,options,description,abv,glass,draftPrice,draftAvailable,cans,cansA
 8,Melrose,Scotch Ale,,Smooth and malty with light caramel and dark fruit notes with subtle cherry aroma.,6,lager,$7,TRUE,$13,TRUE,FALSE,melrose
 9,Scylla,Imperial Stout,,Dark chocolate and toasted caramel layered on a blackberry cola.,10.5,small-teku,$8,TRUE,,FALSE,FALSE,scylla
 10,Carnyx,Dry Irish Stout,,"Balanced richness, notes of coffee, and chocolate. A smooth, and creamy texture.",4.2,lager,$6,TRUE,$12,TRUE,FALSE,carnyx
-,Glyphs,Pale Ale,,"Notes of tangerine, honeydew, orange zest, and aromatic pine.",5.4,teku,$8,TRUE,$15,TRUE,FALSE,glyphs
+,Glyphs,Pale Ale,,"Notes of tangerine, honeydew, orange zest, and aromatic pine. Can art derived from ",5.4,teku,$8,TRUE,$15,TRUE,FALSE,glyphs
 ,Elias,Cream Ale,,"Refreshing and malt forward, subtle citrus notes and floral aroma.",4.4,lager,$6,FALSE,$12,TRUE,FALSE,elias
 ,Sebastian,Bock,,Refreshing and smooth with a kick. A Maibock brewed with 100% Pilsner malt and German and American Noble Hops.,6.7,lager,$7,FALSE,$13,FALSE,FALSE,sebastian
 ,Dom,Kölsch,,"Crisp ale with floral and pear notes, subtle grapefruit zest aroma.",4.8,lager,$6,FALSE,,FALSE,FALSE,dom
