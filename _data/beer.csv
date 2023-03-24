@@ -6,9 +6,9 @@ tap,name,type,options,description,abv,glass,draftPrice,draftAvailable,cans,cansA
 5,Narada,West Coast IPA,,"Orange hued with dank citrus and pine notes. Hopped with Citra, Amarillo, Simcoe, Columbus and Michigan Chinook.",7.4,teku,$7,TRUE,,FALSE,FALSE,narada
 6,Lupitor,India Pale Ale,,"Ripe pineapple, mango, and ruby red grapefruit. Very aromatic.",6.2,teku,$7,TRUE,$17,FALSE,FALSE,lupitor
 7,Revive,Hopped Kilju,,"Modern, hopped version of a traditional Finnish fermented-water beverage.",4.2,small-teku,$5,TRUE,,FALSE,TRUE,revive
-8,Melrose,Scotch Ale,,Smooth and malty with light caramel and dark fruit notes with subtle cherry aroma.,6,lager,$7,TRUE,$13,TRUE,FALSE,melrose
+8,Melrose,Scotch Ale,,Smooth and malty with light caramel and dark fruit notes with subtle cherry aroma.,6,lager,$6,TRUE,$13,TRUE,FALSE,melrose
 9,Scylla,Imperial Stout,,Dark chocolate and toasted caramel layered on a blackberry cola.,10.5,small-teku,$8,TRUE,,FALSE,FALSE,scylla
-10,Carnyx,Dry Irish Stout,,"Balanced richness, notes of coffee, and chocolate. A smooth, and creamy texture.",4.2,lager,$6,TRUE,$12,TRUE,FALSE,carnyx
+10,Carnyx,Dry Irish Stout,,"Balanced richness, notes of coffee, and chocolate. A smooth, and creamy texture.",4.2,lager,$7,TRUE,$13,TRUE,FALSE,carnyx
 ,Glyphs,Pale Ale,,"Notes of tangerine, honeydew, orange zest, and aromatic pine. Can art derived from ",5.4,teku,$8,TRUE,$15,TRUE,FALSE,glyphs
 ,Elias,Cream Ale,,"Refreshing and malt forward, subtle citrus notes and floral aroma.",4.4,lager,$6,TRUE,$12,TRUE,FALSE,elias
 ,Sebastian,Bock,,Refreshing and smooth with a kick. A Maibock brewed with 100% Pilsner malt and German and American Noble Hops.,6.7,lager,$7,FALSE,$13,FALSE,FALSE,sebastian
