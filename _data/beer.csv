@@ -1,5 +1,5 @@
 tap,name,type,options,description,abv,glass,draftPrice,draftAvailable,cans,cansAvailable,glutenFree,variant
-1,Tides,India Pale Ale,,"Cantaloupe with blueberry undertones, earthy and dry passionfruit. Cantaloupe and orange aroma.",6.9,teku,$7,TRUE,$17,FALSE,FALSE,tides
+1,Tides,India Pale Ale,,"Cantaloupe with blueberry undertones, earthy and dry passionfruit. Cantaloupe and orange aroma.",6.9,teku,$7,TRUE,$17,TRUE,FALSE,tides
 2,Glyphs,Pale Ale,,"Notes of tangerine, honeydew, orange zest, and aromatic pine.",5.4,teku,$7,TRUE,$15,TRUE,FALSE,glyphs
 3,Kimik,Session IPA,,"An early easy drinking ale with heavy punch. With notes of heavy citrus, passion fruit, lychee, and a distinct guava aroma.",4.5,teku,$6,TRUE,,FALSE,FALSE,kimik
 4,Array,Pale Ale,,Refreshing Grapefruit and Pineapple. Subtle aroma of lemon.,5.9,teku,$7,TRUE,$15,TRUE,FALSE,array
@@ -10,8 +10,8 @@ tap,name,type,options,description,abv,glass,draftPrice,draftAvailable,cans,cansA
 9,Scylla,Imperial Stout,,Dark chocolate and toasted caramel layered on a blackberry cola.,10.5,small-teku,$8,TRUE,,FALSE,FALSE,scylla
 10,Carnyx,Dry Irish Stout,,"Balanced richness, notes of coffee, and chocolate. A smooth, and creamy texture.",4.2,lager,$7,TRUE,$13,TRUE,FALSE,carnyx
 ,,,,,,,,,,,,
-,Sebastian,Bock,,Refreshing and smooth with a kick. A Maibock brewed with 100% Pilsner malt and German and American Noble Hops.,6.7,lager,$7,FALSE,$13,FALSE,FALSE,sebastian
-,Dom,Kölsch,,"Crisp ale with floral and pear notes, subtle grapefruit zest aroma.",4.8,lager,$6,FALSE,,FALSE,FALSE,dom
+,Sebastian,Bock,,Refreshing and smooth with a kick. A Maibock brewed with 100% Pilsner malt and German and American Noble Hops.,6.7,lager,$7,FALSE,$13,TRUE,FALSE,sebastian
+,Dom,Kölsch,,"Crisp ale with floral and pear notes, subtle grapefruit zest aroma.",4.8,lager,$6,FALSE,$12,TRUE,FALSE,dom
 ,Terrini,Grisette,,"Grassy, floral, and pithy orange aromas. Notes of pear, candied orange, and lemongrass flavors. Slightly sweet finish.",5,teku,$7,FALSE,,FALSE,FALSE,terrini
 ,Soleil,Saison,,"Dry orange, mimosa-esque. Floral notes and funky.",6.9,teku,$7,FALSE,,FALSE,FALSE,soleil
 ,Secrets,Double IPA,,"Passionfruit, pine, apricot, and orange zest. Dank pine and blueberry aroma.",7.8,teku,$8,FALSE,,FALSE,FALSE,secrets
@@ -19,4 +19,4 @@ tap,name,type,options,description,abv,glass,draftPrice,draftAvailable,cans,cansA
 ,Pomona,Sour Ale,Peach Mango,Tart ale fruited with mango and peach.,6.7,teku,$8,FALSE,,FALSE,FALSE,pomona-peach-mango
 ,Bresa,Gose,,"Tart ale with notes of lemon, lime, sea salt and coriander",5.7,teku,$7,FALSE,,FALSE,FALSE,bresa
 ,Marty,Matcha Ale,,"Light Matcha-steeped, crisp ale.",4.4,teku,$6,FALSE,,FALSE,FALSE,marty
-,Lupitor,India Pale Ale,,"Ripe pineapple, mango, and ruby red grapefruit. Very aromatic.",6.2,teku,$7,FALSE,$17,FALSE,FALSE,lupitor
+,Lupitor,India Pale Ale,,"Ripe pineapple, mango, and ruby red grapefruit. Very aromatic.",6.2,teku,$7,FALSE,$17,TRUE,FALSE,lupitor
