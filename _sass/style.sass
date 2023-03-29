@@ -68,7 +68,7 @@ main
 
 @media only screen and (min-width: 641px)
   main>section#music:before
-    top: 100px
+    top: 125px
 
 slider
   scroll-snap-align: start
@@ -191,7 +191,6 @@ input
   &[type=email]
     border-bottom: 2px solid black
     -webkit-appearance: none
-    -webkit-border-radius: 0
     border-radius: 0
     margin-top: 3em
   &[type=submit]
@@ -245,9 +244,28 @@ s
 .food-event
   font-size: .9em
   letter-spacing: normal
+  a[href*="eventbrite.com"]
+    &:after
+      content: url(/images/ticket.svg)
+      display: inline-block
+      height: auto
+      padding-left: 4px
+      width: 28px
+  a[href*="instagram.com"]
+    &:after
+      content: url(/images/instagram.svg)
+      padding-left: 4px
+  a[href*="facebook.com"]
+    &:after
+      content: url(/images/facebook.svg)
+  a[href*="instagram.com"],
+  a[href*="facebook.com"],
+  a[href*="eventbrite.com"]
+    &:after
+      vertical-align: sub
   &.active
     background: black
-    border-radius: 10px
+    border-radius: .5rem
     color: white
     display: block
     margin: 5px 0 3px -0.5em
@@ -255,6 +273,8 @@ s
     a
       background: black
       color: white
+      &:after
+        filter: invert(1)
 
 #map
   // margin: .5em
@@ -362,7 +382,7 @@ tbody
     padding: 0 .5em
     &.active
       background: white
-      border-radius: 10px
+      border-radius: .5rem
       color: black
   span
     float: right
