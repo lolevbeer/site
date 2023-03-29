@@ -9,7 +9,7 @@ tap,name,type,options,description,abv,glass,draftPrice,draftAvailable,cans,cansA
 8,Melrose,Scotch Ale,,Smooth and malty with light caramel and dark fruit notes with subtle cherry aroma.,6,lager,$6,TRUE,$12,TRUE,FALSE,melrose,TRUE
 9,Scylla,Imperial Stout,,Dark chocolate and toasted caramel layered on a blackberry cola.,10.5,small-teku,$8,TRUE,,FALSE,FALSE,scylla,FALSE
 10,Carnyx,Dry Irish Stout,,"Balanced richness, notes of coffee, and chocolate. A smooth, and creamy texture.",4.2,lager,$7,TRUE,$13,TRUE,FALSE,carnyx,TRUE
-,Sebastian,Bock,,Refreshing and smooth with a kick. A Maibock brewed with 100% Pilsner malt and German and American Noble Hops.,6.7,lager,$7,FALSE,$13,TRUE,FALSE,sebastian,FALSE
+,Sebastian,Bock,,Refreshing and smooth with a kick. A Maibock brewed with 100% Pilsner malt and German and American Noble Hops.,6.7,lager,$7,FALSE,$13,TRUE,FALSE,sebastian,TRUE
 ,Dom,Kölsch,,"Crisp ale with floral and pear notes, subtle grapefruit zest aroma.",4.8,lager,$6,FALSE,$12,FALSE,FALSE,dom,FALSE
 ,Terrini,Grisette,,"Grassy, floral, and pithy orange aromas. Notes of pear, candied orange, and lemongrass flavors. Slightly sweet finish.",5,teku,$7,FALSE,,FALSE,FALSE,terrini,FALSE
 ,Soleil,Saison,,"Dry orange, mimosa-esque. Floral notes and funky.",6.9,teku,$7,FALSE,,FALSE,FALSE,soleil,FALSE
@@ -18,4 +18,4 @@ tap,name,type,options,description,abv,glass,draftPrice,draftAvailable,cans,cansA
 ,Pomona,Sour Ale,Peach Mango,Tart ale fruited with mango and peach.,6.7,teku,$8,FALSE,,FALSE,FALSE,pomona-peach-mango,FALSE
 ,Bresa,Gose,,"Tart ale with notes of lemon, lime, sea salt and coriander",5.7,teku,$7,FALSE,,FALSE,FALSE,bresa,FALSE
 ,Marty,Matcha Ale,,"Light Matcha-steeped, crisp ale.",4.4,teku,$6,FALSE,,FALSE,FALSE,marty,FALSE
-,Lupitor,India Pale Ale,,"Ripe pineapple, mango, and ruby red grapefruit. Very aromatic.",6.2,teku,$7,FALSE,$17,FALSE,FALSE,lupitor,FALSE
+,Lupitor,India Pale Ale,,"Ripe pineapple, mango, and ruby red grapefruit. Very aromatic.",6.2,teku,$7,FALSE,$17,FALSE,FALSE,lupitor,TRUE
