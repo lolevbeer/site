@@ -1,5 +1,5 @@
 {% if beer.image == 'TRUE' %}
-  <img class="beer-img" src="/assets/beer/{{ beer.variant }}.png" />
+  <img class="beer-img" alt="beer can of {{ beer.variant }}" src="/assets/beer/{{ beer.variant }}.webp" />
 {% endif %}
 <h2>{{ beer.variant }}</h2>
 <h3>{{ beer.type }}</h3>
@@ -8,13 +8,13 @@
 <p>
 {% if beer.draftAvailable == 'TRUE' %}
   <span class="beer-icon">
-    <img src="https://menu.lolev.beer/assets/images/{{ beer.glass }}.svg">
+    <img alt="{{ beer.glass }}" src="https://menu.lolev.beer/assets/images/{{ beer.glass }}.svg">
     <b>On Draft</b>
   </span>
 {% endif %}
 {% if beer.cansAvailable == 'TRUE' %}
   <span class="beer-icon">
-    <img src="https://menu.lolev.beer/assets/images/can.svg">
+    <img alt="can" src="https://menu.lolev.beer/assets/images/can.svg">
     <b>To Go</b>
   </span>
 {% endif %}
