@@ -1,0 +1,15 @@
+<section id="beer">
+  <h2>Beer</h2>
+  <div>
+  {% for beer in site.data.beer %}
+    {% if beer.cansAvailable == 'TRUE' or beer.draftAvailable == 'TRUE' %}
+      <div class="beer">
+        <a href="/beer#{{ beer.variant | downcase }}">
+          <h3>{{ beer.name }}</h3>
+        </a>
+        <span>{{ beer.type }}</span>
+      </div>
+    {% endif %}
+  {% endfor %}
+  </div>
+</section>

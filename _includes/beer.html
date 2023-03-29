@@ -1,15 +1,7 @@
-<section class="slider" id="beer">
-  <h2>Beer</h2>
-  <div>
-    {% for beer in site.data.beer %}
-      {% if beer.cansAvailable == 'TRUE' or beer.draftAvailable == 'TRUE' %}
-        <div class="beer">
-          <a href="/beer/{{ beer.name | downcase }}">
-            <h3>{{ beer.name }}</h3>
-            <span>{{ beer.type }}</span>
-          </a>
-        </div>
-      {% endif %}
-    {% endfor %}
-  </div>
-</section>
+{% if beer.image == 'TRUE' %}
+  <img class="beer-img" src="/assets/beer/{{ beer.variant }}.png" />
+{% endif %}
+<h2>{{ beer.variant }}</h2>
+<h3>{{ beer.type }}</h3>
+<p class="abv"><b>{{ beer.abv }}</b></p>
+<p>{{ beer.description }}</p>

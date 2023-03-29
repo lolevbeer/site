@@ -38,7 +38,7 @@ main
   overflow: auto
   scroll-snap-type: y proximity
   z-index: 2
-  & > section
+  & section
     position: relative
     scroll-snap-align: start
     h2
@@ -246,7 +246,7 @@ s
   letter-spacing: normal
   &.active
     background: black
-    border-radius: 5px
+    border-radius: 10px
     color: white
     display: block
     margin: 5px 0 3px -0.5em
@@ -312,7 +312,7 @@ tbody
     margin: 0
 
 @media screen and (max-height: 700px)
-  section:not(#food)
+  section
     font-size: 2vh
 
 .abv
@@ -361,7 +361,7 @@ tbody
     padding: 0 .5em
     &.active
       background: white
-      border-radius: 5px
+      border-radius: 10px
       color: black
   span
     float: right
