@@ -246,7 +246,7 @@ h3 + p
   display: inline-block
   font-size: 1.25em
   letter-spacing: 1px
-  padding: 6px 25px
+  padding: 6px 15px
   vertical-align: super
   transform: translateX(4px)
 
@@ -295,10 +295,10 @@ section
       vertical-align: sub
   .active
     background: black
-    border-radius: .5rem
+    border-radius: 5px
     color: white
     display: block
-    margin: 5px 0 3px -0.25em
+    margin: 5px -0.25em 3px
     padding: 4px 0.5em 0
     a
       background: black
@@ -345,22 +345,8 @@ tbody
   section
     height: calc(100vh - 75px)
 
-@media only screen and (max-width: 640px)
-  body
-    font-size: 1.5vh
-  main
-    scroll-snap-type: y mandatory
-  main > section h2
-    top: 12px
-  .columns
-    flex-direction: column
-  h1
-    font-size: 2.3em
-    max-width: 100% !important
-  h2
-    letter-spacing: 2px
-  .social img
-    margin: 0
+iframe
+  max-width: 100% !important
 
 @media screen and (max-height: 700px)
   section
@@ -411,7 +397,6 @@ tbody
     padding: 0 .5em
     &.active
       background: white
-      border-radius: .5rem
       color: black
   span
     float: right
@@ -453,3 +438,27 @@ footer *
     .right
       float: right
       padding-left: 1em
+
+@media only screen and (max-width: 741px)
+  body
+    font-size: 1.5vh
+  main
+    scroll-snap-type: y mandatory
+  main > section h2
+    top: 12px
+  .columns
+    flex-direction: column
+  h1
+    font-size: 2.3em
+    max-width: 100% !important
+  h2
+    letter-spacing: 2px
+  .social img
+    margin: 0
+  .beer-style
+    transform: translate(3px, -3px)
+  #beer
+    font-size: 0.7em
+    padding: 1em 2em
+  .schedule
+    letter-spacing: 0
