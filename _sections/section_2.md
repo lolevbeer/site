@@ -9,7 +9,7 @@ Do you allow children in the taproom?
 Yes
 
 How is Lolev pronounced?
-"Low - Lev".
+"Low - Lev"
 
 When did Lolev open?
-December 2nd, 2022.
+December 2nd, 2022
