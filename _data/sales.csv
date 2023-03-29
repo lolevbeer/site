@@ -1,8 +1,8 @@
 beer,half,halfStock,sixtel,sixtelStock,case,caseStock,retail
 tides,$245,TRUE,$119,FALSE,$79,FALSE,$18
 kimik,$170,TRUE,$85,FALSE,$60,FALSE,$14
-carnyx,$185,TRUE,$89,FALSE,$59,TRUE,$13
-melrose,$180,TRUE,$85,FALSE,$55,TRUE,$12
-glyphs,$209,TRUE,$99,FALSE,$69,TRUE,$15
-array,$209,TRUE,$99,FALSE,$69,TRUE,$15
-narada,$225,TRUE,$109,FALSE,$75,FALSE,$17
+carnyx,$185,TRUE,$89,TRUE,$59,TRUE,$13
+melrose,$180,TRUE,$85,TRUE,$55,TRUE,$12
+glyphs,$209,TRUE,$99,TRUE,$69,TRUE,$15
+array,$209,TRUE,$99,TRUE,$69,TRUE,$15
+narada,$225,TRUE,$109,TRUE,$75,FALSE,$17
