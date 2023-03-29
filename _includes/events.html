@@ -1,18 +1,9 @@
 <section id="events" class="stacked">
   <h2>Events</h2>
-  <div class="food-schedule">
+  <div class="events schedule">
   {% for event in site.data.events %}
     {% if event.site %}
-      <span class="food-event" data-date="{{ food.date }}">
-        {{ event.date | date: '%-m/%-d' }}
-          {% if event.site %}
-            <b><a href="{{ event.site }}" target="_blank">{{ event.vendor }}</a></b>
-          {% else %}
-            <b>{{ event.vendor }}</b>
-          {% endif %}
-          <span class="right">{{ event.time }}</span>
-          <br>
-      </span>
+      {% include event.html %}
     {% endif %}
   {% endfor %}
   </div>

@@ -5,3 +5,17 @@
 <h3>{{ beer.type }}</h3>
 <p class="abv"><b>{{ beer.abv }}</b></p>
 <p>{{ beer.description }}</p>
+<p>
+{% if beer.draftAvailable == 'TRUE' %}
+  <span class="beer-glass">
+    <img src="https://menu.lolev.beer/assets/images/{{ beer.glass }}.svg">
+    <b>On Draft</b>
+  </span>
+{% endif %}
+{% if beer.cansAvailable == 'TRUE' %}
+  <span class="beer-glass">
+    <img src="https://menu.lolev.beer/assets/images/can.svg">
+    <b>To Go</b>
+  </span>
+{% endif %}
+</p>

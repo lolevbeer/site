@@ -1,22 +1,13 @@
 <section id="music" class="stacked">
   <h2>Songwriter<br>Series</h2>
-  <div class="food-schedule">
+  <div class="music schedule">
   {% for event in site.data.music %}
     {% if event.date and event.vendor  %}
-      <span class="food-event" data-date="{{ food.date }}">
-        {{ event.date | date: '%-m/%-d' }}
-        {% if event.site %}
-          <b><a href="{{ event.site }}" target="_blank">{{ event.vendor }}</a></b>
-        {% else %}
-          <b>{{ event.vendor }}</b>
-        {% endif %}
-        <span class="right">{{ event.time }}</span>
-        <br>
-      </span>
+      {% include event.html %}
     {% endif %}
   {% endfor %}
   </div>
-  <p>✨Live music every Thursday night! 🎶🎤<br></p>
+  <p>✨Live music every Thursday night! 🎶🎤</p>
   <p>Artists, dm us on instagram for future dates</p>
 
 </section>
