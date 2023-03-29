@@ -7,13 +7,13 @@
     {%- if currentWeek == postWeek -%}
       {% if food.vendor %}
         <span id="food-day-{{ food.date | date: '%w' }}" class="food-event" data-date="{{ food.date }}">
-          {{ food.date | date: '%A' }} /
+          {{ food.date | date: '%A' }}
         {% if food.site %}
           <b><a href="{{ food.site }}" target="_blank">{{ food.vendor }}</a></b>
         {% else %}
           <b>{{ food.vendor }}</b>
         {% endif %}
-          / <span>{{ food.time }}</span><br>
+          <span>{{ food.time }}</span><br>
         </span>
       {% endif %}
     {%- endif -%}
