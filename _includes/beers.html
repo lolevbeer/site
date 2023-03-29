@@ -9,13 +9,13 @@
           <span class="beer-style">{{ beer.type }}</span>
         </a>
         {% if beer.draftAvailable == 'TRUE' %}
-          <span class="beer-glass">
-            <img src="https://menu.lolev.beer/assets/images/{{ beer.glass }}.svg" title="To Go">
+          <span class="beer-icon">
+            <img src="https://menu.lolev.beer/assets/images/{{ beer.glass }}.svg" title="On Draft">
           </span>
         {% endif %}
         {% if beer.cansAvailable == 'TRUE' %}
-          <span class="beer-glass">
-            <img src="https://menu.lolev.beer/assets/images/can.svg" title="On Draft">
+          <span class="beer-icon">
+            <img src="https://menu.lolev.beer/assets/images/can.svg" title="To Go">
           </span>
         {% endif %}
       </div>
