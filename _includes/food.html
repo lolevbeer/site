@@ -4,7 +4,7 @@
   {% assign currentWeek = site.time | date: "%W" %}
   {% for food in site.data.food %}
     {% assign postWeek = food.date | date: "%W" %}
-    {%- if currentWeek == postWeek -%}
+    {% if currentWeek == postWeek %}
       {% if food.vendor %}
         <span id="food-day-{{ food.date | date: '%w' }}" class="food-event" data-date="{{ food.date }}">
           {{ food.date | date: '%A' }}
@@ -16,7 +16,7 @@
           <span>{{ food.time }}</span><br>
         </span>
       {% endif %}
-    {%- endif -%}
+    {% endif %}
   {% endfor %}
   </div>
 </section>

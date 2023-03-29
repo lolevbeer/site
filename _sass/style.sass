@@ -78,8 +78,6 @@ slider
   overflow-x: scroll
   & > section
     min-width: 100vw
-    padding: 0 3em
-    position: relative
     &:first-child:before
       content: ''
       z-index: 1
@@ -118,6 +116,10 @@ slider
       animation: none
       opacity: .2
 
+#slide-one,
+#newsletter
+  text-align: center
+
 #beer
   text-align: left
   h3
@@ -126,6 +128,10 @@ slider
     text-align: left
   .beer
     display: block
+#all-beer-info + slider .stacked > *,
+#beers-info > *
+  max-width: 500px
+  text-align: center
 
 section
   img
@@ -136,9 +142,6 @@ section
   justify-content: center
   padding: 6em 0
   scroll-snap-align: start
-  text-align: center
-  &:not(.slider)
-    padding: 60px 2em 35px
   & > header
     flex-direction: column
     top: 0
@@ -268,8 +271,8 @@ s
     border-radius: .5rem
     color: white
     display: block
-    margin: 5px 0 3px -0.5em
-    padding: 4px 0.5em
+    margin: 5px 0 3px -0.25em
+    padding: 4px 0.5em 0
     a
       background: black
       color: white
@@ -350,15 +353,13 @@ tbody
 .stacked
   flex-direction: column
   flex-wrap: wrap
-  & > *
-    max-width: 75%
+  @media screen and (width: 700px)
+    max-width: 400px
   &.clear-height
     height: auto
     text-align: left
     h1
       margin-top: 1em
-    > *
-      max-width: 95%
 
 .vertical-align
   align-items: unset
