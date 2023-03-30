@@ -1,4 +1,4 @@
-<section id="beer">
+<section class="stacked" id="beer">
   <h2>Beer</h2>
   <div>
   {% for beer in site.data.beer %}
@@ -15,11 +15,12 @@
         {% endif %}
         {% if beer.cansAvailable == 'TRUE' %}
           <span class="can-icon">
-            <img alt="can" src="/assets/beer/{{ beer.variant }}.webp" alt="Beer available to go in 4 packs of 16oz cans" title="To Go">
+            <img alt="can" src="/assets/beer/{{ beer.variant }}-small.webp" width="38" height="40" alt="Beer available to go in 4 packs of 16oz cans" title="To Go">
           </span>
         {% endif %}
       </div>
     {% endif %}
   {% endfor %}
   </div>
+  <p>Beer marked with cans are available to go in 4 packs</p>
 </section>
