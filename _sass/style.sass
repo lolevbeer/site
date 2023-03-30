@@ -181,6 +181,7 @@ label
 
 .input-wrapper
   display: inline
+  letter-spacing: 2px
   position: relative
   text-align: left
 
@@ -200,17 +201,20 @@ input
     border-radius: 0
     margin-top: 3em
   &[type=submit]
+    border-bottom: 2px solid
     cursor: pointer
-    font-size: 2em
-    letter-spacing: 5px
-    padding: 0
-    text-transform: uppercase
-    transition: transform .1s ease
-    vertical-align: sub
-    &:hover
-      transform: translateX(2px)
-    &:active
-      transform: translateX(5px)
+    font-size: 20px
+  //   cursor: pointer
+  //   font-size: 2em
+  //   letter-spacing: 5px
+  //   padding: 0
+  //   text-transform: uppercase
+  //   transition: transform .1s ease
+  //   vertical-align: sub
+  //   &:hover
+  //     transform: translateX(2px)
+  //   &:active
+  //     transform: translateX(5px)
   &:not(:placeholder-shown) ~ .floating-label
     top: -20px
     left: 0
@@ -238,21 +242,14 @@ h3 + p
   top: 0
   transition: 0.2s ease all
 
-.beer-style
-  background: black
-  border-radius: 10px
-  border-bottom-right-radius: 0
-  color: white
-  display: inline-block
-  font-size: 1.25em
-  letter-spacing: 1px
-  padding: 6px 15px
+.btn .beer-style
   vertical-align: super
-  transform: translateX(4px)
+
 
 .beer-img
   height: auto
-  max-height: 43vh
+  margin-bottom: 1em
+  max-height: 30vh
   width: auto
 
 .beer-icon,
@@ -291,7 +288,9 @@ section
   a[href*="instagram.com"]
     &:after
       content: url(/images/instagram.svg)
+      display: inline-block
       padding-left: 4px
+      transform: translateY(2px)
   a[href*="facebook.com"]
     &:after
       content: url(/images/facebook.svg)
@@ -301,12 +300,11 @@ section
     &:after
       vertical-align: sub
   .active
-    background: black
-    border-radius: 5px
-    color: white
+    border: 3px solid
+    border-radius: 10px
     display: block
-    margin: 5px -0.25em 3px
-    padding: 4px 0.5em 0
+    margin: 0 0 0 -1em
+    padding: 3px 1em 0
     a
       background: black
       color: white
@@ -324,7 +322,7 @@ table
   text-align: left
 th,
 td
-  padding: .25em 1em
+  padding: 0 1em
 td:first-child
   background: transparent
 tbody
@@ -403,8 +401,7 @@ iframe
   div
     padding: 0 .5em
     &.active
-      background: white
-      color: black
+      margin: 0
   span
     float: right
 .last-slide
@@ -418,6 +415,39 @@ iframe
 
 .charts
   max-height: 30%
+
+
+.btn
+
+  background: black
+  border-radius: 8px
+  color: white
+  display: inline-block
+  font-weight: bold
+  letter-spacing: 3px
+  margin: 4px auto
+  opacity: 1
+  padding: 5px 15px 3px
+  text-align: center
+  text-transform: uppercase
+  transition: all .25s ease
+  &:after
+    filter: invert(1)
+  &:hover
+    filter: drop-shadow(0px 2px 4px #00000055)
+    opacity: 1
+  &:active
+    filter: drop-shadow(0px 1px 2px #00000055)
+    transform: translateY(2px)
+
+.btn.sales
+  background: #FFD814
+  border: 3px solid #ffc107
+  border-bottom-color: #cc9900
+  color: black
+  display: block
+  margin: 1em
+  padding: 15px 25px
 
 header
   img,

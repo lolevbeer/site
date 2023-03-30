@@ -4,7 +4,7 @@
   {% for beer in site.data.beer %}
     {% if beer.cansAvailable == 'TRUE' or beer.draftAvailable == 'TRUE' %}
       <div class="beer">
-        <a href="/beer#{{ beer.variant }}">
+        <a class="btn" href="/beer#{{ beer.variant }}">
           <h3>{{ beer.name }}</h3>
           <span class="beer-style">{{ beer.type }}</span>
         </a>

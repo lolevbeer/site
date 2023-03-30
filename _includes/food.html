@@ -9,7 +9,7 @@
         <span id="food-day-{{ food.date | date: '%w' }}" class="event" data-date="{{ food.date }}">
           <b>{{ food.date | date: '%A' }}</b>
         {% if food.site %}
-          <b><a href="{{ food.site }}" target="_blank">{{ food.vendor }}</a></b>
+          <b><a class="btn" href="{{ food.site }}" target="_blank">{{ food.vendor }}</a></b>
         {% else %}
           <b>{{ food.vendor }}</b>
         {% endif %}

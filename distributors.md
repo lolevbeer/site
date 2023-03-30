@@ -18,7 +18,7 @@ Click beer names for more info.
   <tbody>
   {% for item in site.data.sales %}
     <tr>
-      <td class="name"><a href="/beer/{{item.beer}}">{{item.beer}}</a></td>
+      <td class="name"><a class="btn" href="/beer/{{item.beer}}">{{item.beer}}</a></td>
       <td>
         {% if item.halfStock == 'TRUE' %}{{item.half}}
         {% else %}<s>{{item.half}}</s>{% endif %}
@@ -37,4 +37,6 @@ Click beer names for more info.
   </tbody>
 </table>
 
-Please contact [sales@lolev.beer](mailto:sales@lolev.beer) for orders.
+[Order Here](https://docs.google.com/forms/d/e/1FAIpQLScpSY7L4Eh4_OucI8Cz1qcKFxQaWzazIoeQ__WhTKsMB6_S5w/viewform?usp=sf_link){: .btn .sales target="_blank"}
+
+Please contact [sales@lolev.beer](mailto:sales@lolev.beer) for pre-orders or other questions.
