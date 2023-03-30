@@ -300,13 +300,13 @@ section
   a[href*="facebook.com"],
   a[href*="eventbrite.com"]
     &:after
-      vertical-align: sub
+      vertical-align: middle
   .active
-    border: 3px solid
+    border: 3px dotted
     border-radius: 10px
     display: block
-    margin: 0 0 0 -1em
-    padding: 3px 1em 0
+    margin: 0 -1em 0
+    padding: 3px 1em
     a
       background: black
       color: white
@@ -369,7 +369,7 @@ iframe
   font-size: 1.4em
   letter-spacing: 2px
   line-height: 1.5em
-  margin: 1em
+  margin: 1.2em
 
 .stacked
   flex-direction: column
@@ -420,7 +420,6 @@ iframe
 
 
 .btn
-
   background: black
   border-radius: 8px
   color: white
@@ -441,6 +440,9 @@ iframe
   &:active
     filter: drop-shadow(0px 1px 2px #00000055)
     transform: translateY(2px)
+  .event &
+    @media only screen and (max-width: 600px)
+      letter-spacing: 0
 
 .btn.sales
   background: #FFD814
