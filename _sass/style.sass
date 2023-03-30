@@ -403,7 +403,8 @@ iframe
   div
     padding: 0 .5em
     &.active
-      margin: 0
+      border-radius: 7px
+      margin: 0 -3px
   span
     float: right
 .last-slide
@@ -494,8 +495,6 @@ footer *
     max-width: 100% !important
   h2
     letter-spacing: 2px
-  .social img
-    margin: 0
   .beer-style
     transform: translate(3px, -2px)
   #beer
@@ -505,3 +504,18 @@ footer *
     letter-spacing: 0
   #find-lolev
     max-width: 75% !important
+
+
+.scroll-animate
+  animation: MoveUpDown 1.5s ease-in infinite
+  left: calc(50% - 90px)
+  opacity: .3
+  position: absolute
+
+
+@keyframes MoveUpDown
+  0%, 100%
+    bottom: 100px
+
+  5%
+    bottom: 115px
