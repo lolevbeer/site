@@ -9,4 +9,4 @@ Follow us on [Instagram](https://instagram.com/lolevbeer){: .btn target="_blank"
 [Beer](/#beer){: .btn } [Food](#food){: .btn }
 [Music](/#music){: .btn } [Events](#events){: .btn }
 
-Scroll down for more
+<span class="scroll-animate"> Scroll down for more </span>
