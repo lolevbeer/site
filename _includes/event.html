@@ -1,7 +1,7 @@
 <span class="event" data-date="{{ event.date }}">
   <b>{{ event.date | date: '%b %-d' }}</b>
   {% if event.site %}
-    <b><a href="{{ event.site }}" target="_blank">{{ event.vendor }}</a></b>
+    <b><a class="btn" href="{{ event.site }}" target="_blank">{{ event.vendor }}</a></b>
   {% else %}
     <b>{{ event.vendor }}</b>
   {% endif %}
