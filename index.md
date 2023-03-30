@@ -6,4 +6,7 @@ Come visit our taproom in Pittsburgh, Pennsylvania
 
 Follow us here and on [Instagram](https://instagram.com/lolevbeer){: .btn target="_blank"} for updates  
 
-Scroll down to see our beer
+[Beer](/#beer){: .btn } [Food](#food){: .btn }
+[Music](/#music){: .btn } [Events](#events){: .btn }
+
+Scroll down for more
