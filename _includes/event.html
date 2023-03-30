@@ -1,5 +1,5 @@
 <span class="event" data-date="{{ event.date }}">
-  <b>{{ event.date | date: '%b %-d' }}</b>
+  <span class="date">{{ event.date | date: '%b %-d' }}</span>
   {% if event.site %}
     <b><a class="btn" href="{{ event.site }}" target="_blank">{{ event.vendor }}</a></b>
   {% else %}
