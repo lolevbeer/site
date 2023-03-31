@@ -18,7 +18,7 @@ Click beer names for more info.
   <tbody>
   {% for item in site.data.sales %}
     <tr>
-      <td class="name"><a class="btn" href="/beer/{{item.variant}}">{{item.variant}}</a></td>
+      <td class="name"><a class="btn" href="/beer/{{item.variant}}">{{item.beer}}</a></td>
       <td>
         {% if item.halfStock == 'TRUE' %}{{item.half}}
         {% else %}<s>{{item.half}}</s>{% endif %}
