@@ -250,10 +250,13 @@ h3 + p
   max-height: 30vh
   width: auto
 
+.beer-icon-description
+  @media screen and (max-width: 740px)
+    display: none
 
 .beer-icon,
 .can-icon
-  @media screen and (max-width: 600px)
+  @media screen and (max-width: 740px)
     display: none
   display: inline-block
   margin-left: 0.5em
@@ -266,8 +269,9 @@ h3 + p
 
 .beer-icon img
   height: 34px
-  transform: translateY(6px)
   margin-left: 3px
+  transform: translateY(6px)
+
 
 .blur
   color: transparent
@@ -315,7 +319,6 @@ section
           filter: invert(1)
 
 #map
-  // margin: .5em
   width: 100%
 
 .name
@@ -332,9 +335,7 @@ tbody
   tr
     &:nth-child(odd)
       background: #00000025
-      // color: white
       a
-        // color: white
         cursor: pointer
 
 @keyframes pulse
@@ -483,8 +484,6 @@ footer *
       padding-left: 1em
 
 @media only screen and (max-width: 741px)
-  body
-    font-size: 1.5vh
   main
     scroll-snap-type: y mandatory
   main > section h2
