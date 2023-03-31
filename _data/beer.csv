@@ -14,8 +14,8 @@ tap,name,type,draftAvailable,cansAvailable,abv,glass,draftPrice,cans,description
 ,Terrini,Grisette,FALSE,FALSE,5,teku,$7,,"Grassy, floral, and pithy orange aromas. Notes of pear, candied orange, and lemongrass flavors. Slightly sweet finish.",FALSE,,terrini,FALSE
 ,Soleil,Saison,FALSE,FALSE,6.9,teku,$7,,"Dry orange, mimosa-esque. Floral notes and funky.",FALSE,,soleil,FALSE
 ,Secrets,Double IPA,FALSE,FALSE,7.8,teku,$8,,"Passionfruit, pine, apricot, and orange zest. Dank pine and blueberry aroma.",FALSE,,secrets,FALSE
-,Pomona,Sour Ale,FALSE,FALSE,6.7,teku,$8,,Tart ale fruited with cherry and raspberry.,FALSE,Cherry Raspberry,pomona-cherry-raspberry,FALSE
-,Pomona,Sour Ale,FALSE,FALSE,6.7,teku,$8,,Tart ale fruited with mango and peach.,FALSE,Peach Mango,pomona-peach-mango,FALSE
-,Bresa,Gose,FALSE,FALSE,5.7,teku,$7,,"Tart ale with notes of lemon, lime, sea salt and coriander",FALSE,,bresa,FALSE
+,Pomona,Sour Ale,FALSE,FALSE,6.7,teku,$8,,Tart ale fruited with cherry and raspberry.,FALSE,Cherry Raspberry,pomona-cherry-raspberry,TRUE
+,Pomona,Sour Ale,FALSE,FALSE,6.7,teku,$8,,Tart ale fruited with mango and peach.,FALSE,Peach Mango,pomona-peach-mango,TRUE
+,Bresa,Gose,FALSE,FALSE,5.7,teku,$7,,"Tart ale with notes of lemon, lime, sea salt and coriander",FALSE,,bresa,TRUE
 ,Marty,Matcha Ale,FALSE,FALSE,4.4,teku,$6,,"Light Matcha-steeped, crisp ale.",FALSE,,marty,FALSE
 ,Lupitor,India Pale Ale,FALSE,FALSE,6.2,teku,$7,$17,"Ripe pineapple, mango, and ruby red grapefruit. Very aromatic.",FALSE,,lupitor,TRUE
