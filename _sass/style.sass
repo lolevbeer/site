@@ -66,6 +66,10 @@ main
     &:before
       z-index: 1
 
+@media only screen and (max-width: 400px)
+  body section
+    font-size: 4vw
+
 @media only screen and (min-width: 641px)
   main>section#music:before
     top: 125px
@@ -100,7 +104,7 @@ slider
       font-family: system-ui
       font-size: 2em
       position: absolute
-      animation: pulse 1s infinite
+      animation: pulse 1.5s infinite
 
 .x-learned
   slider > section
@@ -204,17 +208,6 @@ input
     border-bottom: 2px solid
     cursor: pointer
     font-size: 20px
-  //   cursor: pointer
-  //   font-size: 2em
-  //   letter-spacing: 5px
-  //   padding: 0
-  //   text-transform: uppercase
-  //   transition: transform .1s ease
-  //   vertical-align: sub
-  //   &:hover
-  //     transform: translateX(2px)
-  //   &:active
-  //     transform: translateX(5px)
   &:not(:placeholder-shown) ~ .floating-label
     top: -20px
     left: 0
@@ -280,38 +273,40 @@ h3 + p
 section
   font-size: .9em
   letter-spacing: normal
-  a[href*="eventbrite.com"]
-    &:after
-      content: url(/images/ticket.svg)
-      display: inline-block
-      height: auto
-      padding-left: 4px
-      width: 28px
-  a[href*="instagram.com"]
-    &:after
-      content: url(/images/instagram.svg)
-      display: inline-block
-      padding-left: 4px
-      transform: translateY(2px)
-  a[href*="facebook.com"]
-    &:after
-      content: url(/images/facebook.svg)
-  a[href*="instagram.com"],
-  a[href*="facebook.com"],
-  a[href*="eventbrite.com"]
-    &:after
-      vertical-align: middle
-  .active
-    border: 3px dotted
-    border-radius: 10px
-    display: block
-    margin: 0 -1em 0
-    padding: 3px 1em
-    a
-      background: black
-      color: white
+
+@media screen and (min-width: 450px)
+    a[href*="eventbrite.com"]
       &:after
-        filter: invert(1)
+        content: url(/images/ticket.svg)
+        display: inline-block
+        height: auto
+        padding-left: 4px
+        width: 28px
+    a[href*="instagram.com"]
+      &:after
+        content: url(/images/instagram.svg)
+        display: inline-block
+        padding-left: 4px
+        transform: translateY(2px)
+    a[href*="facebook.com"]
+      &:after
+        content: url(/images/facebook.svg)
+    a[href*="instagram.com"],
+    a[href*="facebook.com"],
+    a[href*="eventbrite.com"]
+      &:after
+        vertical-align: middle
+    .active
+      border: 3px dotted
+      border-radius: 10px
+      display: block
+      margin: 0 -1em 0
+      padding: 3px 1em
+      a
+        background: black
+        color: white
+        &:after
+          filter: invert(1)
 
 #map
   // margin: .5em
@@ -337,15 +332,12 @@ tbody
         cursor: pointer
 
 @keyframes pulse
-  0%
+  0%, 100%
     transform: scale(0.5)
     opacity: .2
-  70%
+  95%
     transform: scale(1.25)
     opacity: .7
-  100%
-    transform: scale(0.5)
-    opacity: .2
 
 @supports (-webkit-touch-callout: none)
   main,
@@ -398,7 +390,7 @@ iframe
   column-gap: 20px
 
 .hours
-  min-width: 350px
+  min-width: 300px
   text-align: left
   div
     padding: 0 .5em
@@ -506,7 +498,7 @@ footer *
   .schedule
     letter-spacing: 0
   #find-lolev
-    max-width: 75% !important
+    width: 100% !important
 
 
 .scroll-animate
