@@ -7,7 +7,7 @@
     {% if currentWeek == postWeek %}
       {% if food.vendor %}
         <span id="food-day-{{ food.date | date: '%w' }}" class="event" data-date="{{ food.date }}">
-          <span class="date">{{ food.date | date: '%A' }}</span>
+          <span class="date">{{ food.date | date: '%a' }}</span>
         {% if food.site %}
           <b><a class="btn" href="{{ food.site }}" target="_blank">{{ food.vendor }}</a></b>
         {% else %}
