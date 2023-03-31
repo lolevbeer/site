@@ -1,11 +1,11 @@
-beer,half,halfStock,sixtel,sixtelStock,case,caseStock,retail,variant
-tides,$245,TRUE,$119,FALSE,$77,FALSE,$18,tides
-kimik,$170,TRUE,$85,FALSE,,FALSE,,kimik
-carnyx,$185,TRUE,$89,TRUE,$59,TRUE,$13,carnyx
-melrose,$180,TRUE,$85,TRUE,$55,TRUE,$12,melrose
-glyphs,$209,TRUE,$99,TRUE,$69,TRUE,$15,glyphs
-array,$209,TRUE,$99,TRUE,$69,TRUE,$15,array
-narada,$225,TRUE,$109,TRUE,$75,FALSE,$17,narada
-bresa,$199,TRUE,$95,TRUE,$65,FALSE,$15,bresa
-pomona cherry & raspberry,$225,TRUE,$109,TRUE,$75,FALSE,$17,pomona-cherry-raspberry
-pomona peaches & mango,$225,TRUE,$109,TRUE,$75,FALSE,$17,pomona-peach-mango
+beer,half,halfStock,sixtel,sixtelStock,case,caseStock,retail,displayed,variant
+tides,$245,TRUE,$119,FALSE,$77,FALSE,$18,TRUE,tides
+kimik,$170,TRUE,$85,FALSE,,FALSE,,TRUE,kimik
+carnyx,$185,TRUE,$89,TRUE,$59,TRUE,$13,TRUE,carnyx
+melrose,$180,TRUE,$85,TRUE,$55,TRUE,$12,TRUE,melrose
+glyphs,$209,TRUE,$99,TRUE,$69,TRUE,$15,TRUE,glyphs
+array,$209,TRUE,$99,TRUE,$69,TRUE,$15,TRUE,array
+narada,$225,TRUE,$109,TRUE,$75,FALSE,$17,TRUE,narada
+bresa,$199,TRUE,$95,TRUE,$65,FALSE,$15,TRUE,bresa
+pomona cherry & raspberry,$225,TRUE,$109,TRUE,$75,FALSE,$17,TRUE,pomona-cherry-raspberry
+pomona peaches & mango,$225,TRUE,$109,TRUE,$75,FALSE,$17,TRUE,pomona-peach-mango
