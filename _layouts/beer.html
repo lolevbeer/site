@@ -1,12 +1,10 @@
 {% include header.html %}
 <main>
 {% assign beer = page %}
-{% if beer.cansAvailable == 'TRUE' or beer.draftAvailable == 'TRUE' %}
-  <section class="stacked" id="beers-info">
-    {% include beer.html %}
-  </section>
-{% endif %}
-  {% include newsletter.html %}
-  {% include lastslide.html %}
+<section class="stacked" id="beers-info">
+  {% include beer.html %}
+</section>
+{% include newsletter.html %}
+{% include lastslide.html %}
 </main>
 {% include footer.html %}
