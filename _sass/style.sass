@@ -66,9 +66,9 @@ main
     &:before
       z-index: 1
 
-@media only screen and (max-width: 400px)
-  body section
-    font-size: 4vw
+// @media only screen and (max-width: 400px)
+//   body section
+//     font-size: 4vw
 
 @media only screen and (min-width: 641px)
   main>section#music:before
@@ -124,6 +124,9 @@ slider
 #newsletter,
 #all-beer-info
   text-align: center
+
+#upcoming > div
+  margin-left: 2em
 
 #beer
   text-align: left
@@ -247,8 +250,11 @@ h3 + p
   max-height: 30vh
   width: auto
 
+
 .beer-icon,
 .can-icon
+  @media screen and (max-width: 600px)
+    display: none
   display: inline-block
   margin-left: 0.5em
   img
@@ -271,7 +277,6 @@ h3 + p
     pointer-events: none
 
 section
-  font-size: .9em
   letter-spacing: normal
 
 @media screen and (min-width: 450px)
