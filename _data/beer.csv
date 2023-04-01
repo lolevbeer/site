@@ -1,7 +1,7 @@
 tap,name,type,draftAvailable,cansAvailable,abv,glass,draftPrice,cans,description,glutenFree,options,variant,image
 1,Tides,India Pale Ale,TRUE,FALSE,6.9,teku,$7,$17,"Cantaloupe with blueberry undertones, earthy and dry passionfruit. Cantaloupe and orange aroma.",FALSE,,tides,TRUE
 2,Glyphs,Pale Ale,TRUE,TRUE,5.4,teku,$7,$15,"Notes of tangerine, honeydew, orange zest, and aromatic pine.",FALSE,,glyphs,TRUE
-3,Array,Pale Ale,FALSE,TRUE,5.9,teku,$7,$15,Refreshing Grapefruit and Pineapple. Subtle aroma of lemon.,FALSE,,array,TRUE
+3,Array,Pale Ale,TRUE,TRUE,5.9,teku,$7,$15,Refreshing Grapefruit and Pineapple. Subtle aroma of lemon.,FALSE,,array,TRUE
 4,Kimik,Session IPA,TRUE,FALSE,4.5,teku,$6,,"An easy drinking ale with heavy punch. With notes of heavy citrus, passion fruit, lychee, and a distinct guava aroma.",FALSE,,kimik,FALSE
 5,Narada,West Coast IPA,TRUE,FALSE,7.4,teku,$7,,"Orange hued with dank citrus and pine notes. Hopped with Citra, Amarillo, Simcoe, Columbus and Michigan Chinook.",FALSE,,narada,TRUE
 6,Elias,Cream Ale,TRUE,FALSE,4.4,lager,$6,$12,"Refreshing and malt forward, subtle citrus notes and floral aroma.",FALSE,,elias,TRUE
