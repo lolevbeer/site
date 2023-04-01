@@ -8,7 +8,7 @@ tap,name,type,draftAvailable,cansAvailable,abv,glass,draftPrice,cans,description
 7,Revive,Hopped Kilju,TRUE,FALSE,4.2,small-teku,$5,,"Modern, hopped version of a traditional Finnish fermented-water beverage.",TRUE,,revive,FALSE
 8,Melrose,Scotch Ale,TRUE,TRUE,6,lager,$6,$12,Smooth and malty with light caramel and dark fruit notes with subtle cherry aroma.,FALSE,,melrose,TRUE
 9,Scylla,Imperial Stout,TRUE,FALSE,10.5,small-teku,$8,,Dark chocolate and toasted caramel layered on a blackberry cola.,FALSE,,scylla,FALSE
-10,Carnyx,Dry Irish Stout,TRUE,TRUE,4.2,lager,$7,$13,"Balanced richness, notes of coffee, and chocolate. A smooth, and creamy texture.",FALSE,,carnyx,TRUE
+10,Carnyx,Dry Irish Stout,TRUE,TRUE,4.2,lager,$7,$13,"Balanced richness, notes of coffee, and chocolate. A smooth, and creamy texture.",FALSE,,carnyx,FALSE
 ,Sebastian,Bock,FALSE,TRUE,6.7,lager,$7,$13,Refreshing and smooth with a kick. A Maibock brewed with 100% Pilsner malt and German and American Noble Hops.,FALSE,,sebastian,TRUE
 ,Dom,Kölsch,FALSE,FALSE,4.8,lager,$6,$12,"Crisp ale with floral and pear notes, subtle grapefruit zest aroma.",FALSE,,dom,TRUE
 ,Terrini,Grisette,FALSE,FALSE,5,teku,$7,,"Grassy, floral, and pithy orange aromas. Notes of pear, candied orange, and lemongrass flavors. Slightly sweet finish.",FALSE,,terrini,FALSE
