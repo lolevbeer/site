@@ -9,7 +9,7 @@ tap,name,type,draftAvailable,cansAvailable,abv,glass,draftPrice,cans,description
 8,Melrose,Scotch Ale,TRUE,TRUE,6,lager,$6,$12,Smooth and malty with light caramel and dark fruit notes with subtle cherry aroma.,FALSE,,melrose,TRUE
 9,Scylla,Imperial Stout,TRUE,FALSE,10.5,small-teku,$8,,Dark chocolate and toasted caramel layered on a blackberry cola.,FALSE,,scylla,FALSE
 10,Glyphs,Pale Ale,TRUE,TRUE,5.4,teku,$7,$15,"Notes of tangerine, honeydew, orange zest, and aromatic pine.",FALSE,,glyphs,TRUE
-,Sebastian,Bock,FALSE,TRUE,6.7,lager,$7,$13,Refreshing and smooth with a kick. A Maibock brewed with 100% Pilsner malt and German and American Noble Hops.,FALSE,,sebastian,TRUE
+,Sebastian,Bock,FALSE,FALSE,6.7,lager,$7,$13,Refreshing and smooth with a kick. A Maibock brewed with 100% Pilsner malt and German and American Noble Hops.,FALSE,,sebastian,TRUE
 ,Dom,Kölsch,FALSE,FALSE,4.8,lager,$6,$12,"Crisp ale with floral and pear notes, subtle grapefruit zest aroma.",FALSE,,dom,TRUE
 ,Terrini,Grisette,FALSE,FALSE,5,teku,$7,,"Grassy, floral, and pithy orange aromas. Notes of pear, candied orange, and lemongrass flavors. Slightly sweet finish.",FALSE,,terrini,FALSE
 ,Soleil,Saison,FALSE,FALSE,6.9,teku,$7,,"Dry orange, mimosa-esque. Floral notes and funky.",FALSE,,soleil,FALSE
