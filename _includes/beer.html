@@ -1,7 +1,7 @@
 {% if beer.image == 'TRUE' %}
   <img class="beer-img" alt="beer can of {{ beer.variant }}" src="/assets/beer/{{ beer.variant }}.webp" />
 {% endif %}
-<h2>{{ beer.variant }}</h2>
+<h2>{{ beer.title }}</h2>
 <h3>{{ beer.type }}</h3>
 <p class="abv"><b>{{ beer.abv }}</b></p>
 <p>{{ beer.description }}</p>
