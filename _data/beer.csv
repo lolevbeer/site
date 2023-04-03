@@ -1,15 +1,15 @@
 tap,name,type,options,draftAvailable,cansAvailable,abv,glass,draftPrice,cans,description,glutenFree,variant,image
-1,Pomona,Sour Ale,Peach Mango,FALSE,FALSE,6.7,teku,$8,,Tart ale fruited with mango and peach.,FALSE,pomona-peach-mango,TRUE
+1,Pomona,Sour Ale,Peach Mango,TRUE,FALSE,6.7,teku,$8,,Tart ale fruited with mango and peach.,FALSE,pomona-peach-mango,TRUE
 2,Carnyx,Dry Irish Stout,,TRUE,TRUE,4.2,teku,$7,$12,"Balanced richness, notes of coffee, and chocolate. A smooth, and creamy texture.",FALSE,carnyx,TRUE
 3,Array,Pale Ale,,TRUE,TRUE,5.9,teku,$7,$15,Refreshing Grapefruit and Pineapple. Subtle aroma of lemon.,FALSE,array,TRUE
 4,Kimik,Session IPA,,TRUE,FALSE,4.5,teku,$6,,"An easy drinking ale with heavy punch. With notes of heavy citrus, passion fruit, lychee, and a distinct guava aroma.",FALSE,kimik,FALSE
 5,Narada,West Coast IPA,,TRUE,FALSE,7.4,teku,$7,,"Orange hued with dank citrus and pine notes. Hopped with Citra, Amarillo, Simcoe, Columbus and Michigan Chinook.",FALSE,narada,TRUE
 7,Revive,Hopped Kilju,,TRUE,FALSE,4.2,small-teku,$5,,"Modern, hopped version of a traditional Finnish fermented-water beverage.",TRUE,revive,FALSE
 9,Scylla,Imperial Stout,,TRUE,FALSE,10.5,small-teku,$8,,Dark chocolate and toasted caramel layered on a blackberry cola.,FALSE,scylla,FALSE
-10,Pomona,Sour Ale,Cherry Raspberry,FALSE,FALSE,6.7,teku,$8,,Tart ale fruited with cherry and raspberry.,FALSE,pomona-cherry-raspberry,TRUE
+10,Pomona,Sour Ale,Cherry Raspberry,TRUE,FALSE,6.7,teku,$8,,Tart ale fruited with cherry and raspberry.,FALSE,pomona-cherry-raspberry,TRUE
 ,Melrose,Scotch Ale,,FALSE,TRUE,6,lager,$6,$12,Smooth and malty with light caramel and dark fruit notes with subtle cherry aroma.,FALSE,melrose,TRUE
 ,Elias,Cream Ale,,FALSE,FALSE,4.4,lager,$6,$12,"Refreshing and malt forward, subtle citrus notes and floral aroma.",FALSE,elias,TRUE
-,Glyphs,Pale Ale,,TRUE,TRUE,5.4,teku,$7,$15,"Notes of tangerine, honeydew, orange zest, and aromatic pine.",FALSE,glyphs,TRUE
+,Glyphs,Pale Ale,,FALSE,TRUE,5.4,teku,$7,$15,"Notes of tangerine, honeydew, orange zest, and aromatic pine.",FALSE,glyphs,TRUE
 ,Tides,India Pale Ale,,FALSE,FALSE,6.9,teku,$7,$17,"Cantaloupe with blueberry undertones, earthy and dry passionfruit. Cantaloupe and orange aroma.",FALSE,tides,TRUE
 ,Sebastian,Bock,,FALSE,FALSE,6.7,lager,$7,$13,Refreshing and smooth with a kick. A Maibock brewed with 100% Pilsner malt and German and American Noble Hops.,FALSE,sebastian,TRUE
 ,Dom,Kölsch,,FALSE,FALSE,4.8,lager,$6,$12,"Crisp ale with floral and pear notes, subtle grapefruit zest aroma.",FALSE,dom,TRUE
