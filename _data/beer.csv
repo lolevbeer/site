@@ -6,9 +6,9 @@ tap,name,type,options,draftAvailable,cansAvailable,abv,glass,draftPrice,cans,des
 5,Narada,West Coast IPA,,TRUE,FALSE,7.4,teku,$7,,"Orange hued with dank citrus and pine notes. Hopped with Citra, Amarillo, Simcoe, Columbus and Michigan Chinook.",FALSE,narada,TRUE
 6,Bresa,Gose,,TRUE,FALSE,5.7,teku,$7,,"Tart ale with notes of lemon, lime, sea salt and coriander",FALSE,bresa,TRUE
 7,Revive,Hopped Kilju,,TRUE,FALSE,4.2,small-teku,$5,,"Modern, hopped version of a traditional Finnish fermented-water beverage.",TRUE,revive,FALSE
+8,Glyphs,Pale Ale,,FALSE,TRUE,5.4,teku,$7,$15,"Notes of tangerine, orange zest, and aromatic pine. Light bitterness.",FALSE,glyphs,TRUE
 9,Scylla,Imperial Stout,,TRUE,FALSE,10.5,small-teku,$8,,Dark chocolate and toasted caramel layered on a blackberry cola.,FALSE,scylla,FALSE
 10,Pomona,Sour Ale,Cherry Raspberry,TRUE,FALSE,6.7,teku,$8,,Tart ale fruited with cherry and raspberry.,FALSE,pomona-cherry-raspberry,TRUE
-,Glyphs,Pale Ale,,FALSE,TRUE,5.4,teku,$7,$15,"Notes of tangerine, honeydew, orange zest, and aromatic pine.",FALSE,glyphs,TRUE
 ,Melrose,Scotch Ale,,FALSE,TRUE,6,lager,$6,$12,Smooth and malty with light caramel and dark fruit notes with subtle cherry aroma.,FALSE,melrose,TRUE
 ,Elias,Cream Ale,,FALSE,FALSE,4.4,lager,$6,$12,"Refreshing and malt forward, subtle citrus notes and floral aroma.",FALSE,elias,TRUE
 ,Tides,India Pale Ale,,FALSE,FALSE,6.9,teku,$7,$17,"Cantaloupe with blueberry undertones, earthy and dry passionfruit. Cantaloupe and orange aroma.",FALSE,tides,TRUE
