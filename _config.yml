@@ -50,13 +50,13 @@ page_gen:
 - data: beer
   template: qr
   dir: qr
-  name_expr: record['variant']
+  name_expr: record['variant'] || ""
   debug: false
 
 - data: beer
   template: beer
   title: name
-  name_expr: record['variant']
+  name_expr: record['variant'] || ""
   debug: false
 
 - data: people
