@@ -9,7 +9,7 @@ tap,name,type,options,draftAvailable,cansAvailable,abv,glass,draftPrice,cans,des
 8,Glyphs,Pale Ale,,TRUE,TRUE,5.4,teku,$7,$15,"Notes of tangerine, orange zest, and aromatic pine. Light bitterness.",FALSE,glyphs,TRUE
 9,Scylla,Imperial Stout,,TRUE,FALSE,10.5,small-teku,$8,,Dark chocolate and toasted caramel layered on a blackberry cola.,FALSE,scylla,FALSE
 10,Pomona,Sour Ale,Cherry Raspberry,TRUE,TRUE,6.7,teku,$8,$18,Tart ale fruited with cherry and raspberry.,FALSE,pomona-cherry-raspberry,TRUE
-,Melrose,Scotch Ale,,FALSE,TRUE,6,lager,$6,$12,Smooth and malty with light caramel and dark fruit notes with subtle cherry aroma.,FALSE,melrose,TRUE
+,Melrose,Scotch Ale,,TRUE,TRUE,6,can,$7,$12,Smooth and malty with light caramel and dark fruit notes with subtle cherry aroma.,FALSE,melrose,TRUE
 ,Elias,Cream Ale,,FALSE,FALSE,4.4,lager,$6,$12,"Refreshing and malt forward, subtle citrus notes and floral aroma.",FALSE,elias,TRUE
 ,Tides,India Pale Ale,,FALSE,FALSE,6.9,teku,$7,$17,"Cantaloupe with blueberry undertones, earthy and dry passionfruit. Cantaloupe and orange aroma.",FALSE,tides,TRUE
 ,Sebastian,Bock,,FALSE,FALSE,6.7,lager,$7,$13,Refreshing and smooth with a kick. A Maibock brewed with 100% Pilsner malt and German and American Noble Hops.,FALSE,sebastian,TRUE
