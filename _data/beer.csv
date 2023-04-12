@@ -1,12 +1,12 @@
-tap,variant,singleCanAvailable,draftAvailable,cansAvailable,name,type
-1,pomona-peach-mango,FALSE,TRUE,TRUE,Pomona,Sour Ale
-2,carnyx,FALSE,TRUE,TRUE,Carnyx,Dry Irish Stout
-3,array,TRUE,FALSE,TRUE,Array,Pale Ale
-4,kimik,FALSE,TRUE,FALSE,Kimik,Session IPA
-5,melrose,FALSE,TRUE,TRUE,Melrose,Scotch Ale
-6,bresa,FALSE,TRUE,TRUE,Bresa,Gose
-7,revive,FALSE,TRUE,FALSE,Revive,Hopped Kilju
-8,glyphs,FALSE,TRUE,TRUE,Glyphs,Pale Ale
-9,scylla,FALSE,TRUE,FALSE,Scylla,Imperial Stout
-10,pomona-cherry-raspberry,FALSE,TRUE,TRUE,Pomona,Sour Ale
-,narada,TRUE,FALSE,TRUE,Narada,West Coast IPA
+tap,variant,singleCanAvailable,draftAvailable,cansAvailable,name,type,glass,abv
+1,pomona-peach-mango,FALSE,TRUE,TRUE,Pomona,Sour Ale,teku,6.7
+2,carnyx,FALSE,TRUE,TRUE,Carnyx,Dry Irish Stout,lager,4.2
+3,array,TRUE,FALSE,TRUE,Array,Pale Ale,teku,5.9
+4,kimik,FALSE,TRUE,FALSE,Kimik,Session IPA,teku,4.5
+5,melrose,FALSE,TRUE,TRUE,Melrose,Scotch Ale,lager,6
+6,bresa,FALSE,TRUE,TRUE,Bresa,Gose,teku,5.7
+7,revive,FALSE,TRUE,FALSE,Revive,Hopped Kilju,small-teku,4.2
+8,glyphs,FALSE,TRUE,TRUE,Glyphs,Pale Ale,teku,5.4
+9,scylla,FALSE,TRUE,FALSE,Scylla,Imperial Stout,small-teku,10.5
+10,pomona-cherry-raspberry,FALSE,TRUE,TRUE,Pomona,Sour Ale,teku,6.7
+,narada,TRUE,FALSE,TRUE,Narada,West Coast IPA,teku,7.4
