@@ -1,8 +1,8 @@
 name: Update Data
 on:
-  # push:
-  #   branches:
-  #     - master
+  push:
+    branches:
+      - master
   schedule:
     - cron: '*/15 * * * *'
 
@@ -18,6 +18,9 @@ jobs:
         # continue-on-error: true
         run: |
           cd _data
+          wget -O beer.csv ${{ vars.BEER_INVENTORY }}
+          wget -O menu.csv ${{ vars.BEER_MENU }}
+          wget -O food.csv ${{ vars.FOOD_SCHEDULE }}
           wget -O music.csv ${{ secrets.MUSIC_GSHEET }}
           wget -O sales.csv ${{ secrets.SALES_GSHEET }}
           wget -O events.csv ${{ secrets.EVENTS_GSHEET }}
