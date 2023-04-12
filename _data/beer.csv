@@ -1,12 +1,12 @@
-tap,variant,singleCanAvailable,draftAvailable,cansAvailable,name,type,glass,abv
-1,pomona-peach-mango,FALSE,TRUE,TRUE,Pomona,Sour Ale,teku,6.7
-2,carnyx,FALSE,TRUE,TRUE,Carnyx,Dry Irish Stout,lager,4.2
-3,array,TRUE,FALSE,TRUE,Array,Pale Ale,teku,5.9
-4,kimik,FALSE,TRUE,FALSE,Kimik,Session IPA,teku,4.5
-5,melrose,FALSE,TRUE,TRUE,Melrose,Scotch Ale,lager,6
-6,bresa,FALSE,TRUE,TRUE,Bresa,Gose,teku,5.7
-7,revive,FALSE,TRUE,FALSE,Revive,Hopped Kilju,small-teku,4.2
-8,glyphs,FALSE,TRUE,TRUE,Glyphs,Pale Ale,teku,5.4
-9,scylla,FALSE,TRUE,FALSE,Scylla,Imperial Stout,small-teku,10.5
-10,pomona-cherry-raspberry,FALSE,TRUE,TRUE,Pomona,Sour Ale,teku,6.7
-,narada,TRUE,FALSE,TRUE,Narada,West Coast IPA,teku,7.4
+tap,variant,singleCanAvailable,draftAvailable,cansAvailable,name,type,abv,glass,draftPrice,cans
+1,pomona-peach-mango,FALSE,TRUE,TRUE,Pomona,Sour Ale,6.7,teku,8,18
+2,carnyx,FALSE,TRUE,TRUE,Carnyx,Dry Irish Stout,4.2,lager,7,12
+3,array,TRUE,FALSE,TRUE,Array,Pale Ale,5.9,teku,7,15
+4,kimik,FALSE,TRUE,FALSE,Kimik,Session IPA,4.5,teku,6,
+5,melrose,FALSE,TRUE,TRUE,Melrose,Scotch Ale,6,lager,7,12
+6,bresa,FALSE,TRUE,TRUE,Bresa,Gose,5.7,teku,7,17
+7,revive,FALSE,TRUE,FALSE,Revive,Hopped Kilju,4.2,small-teku,5,
+8,glyphs,FALSE,TRUE,TRUE,Glyphs,Pale Ale,5.4,teku,7,15
+9,scylla,FALSE,TRUE,FALSE,Scylla,Imperial Stout,10.5,small-teku,8,19
+10,pomona-cherry-raspberry,FALSE,TRUE,TRUE,Pomona,Sour Ale,6.7,teku,8,18
+,narada,TRUE,FALSE,TRUE,Narada,West Coast IPA,7.4,teku,7,17
