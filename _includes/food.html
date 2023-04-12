@@ -6,7 +6,7 @@
   {% for food in site.data.food %}
     {% assign postWeek = food.date | date: "%W" %}
     {% if currentWeek == postWeek %}
-      {% if food.vendor %}
+      {% if food.vendor != empty %}
           <span id="food-day-{{ food.date | date: '%w' }}" class="event" data-date="{{ food.date }}">
             {% if previousDate != food.date %}
               {% assign previousDate = food.date %}
