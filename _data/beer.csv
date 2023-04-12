@@ -1,12 +1,12 @@
-tap,variant,name,type,singleCanAvailable,draftAvailable,cansAvailable
-1,pomona-peach-mango,Pomona,Pomona,FALSE,TRUE,TRUE
-2,carnyx,Carnyx,Carnyx,FALSE,TRUE,TRUE
-3,array,Array,Array,FALSE,TRUE,TRUE
-4,kimik,Kimik,Kimik,FALSE,TRUE,FALSE
-5,melrose,Melrose,Melrose,FALSE,TRUE,TRUE
-6,bresa,Bresa,Bresa,FALSE,TRUE,TRUE
-7,revive,Revive,Revive,FALSE,TRUE,FALSE
-8,glyphs,Glyphs,Glyphs,FALSE,TRUE,TRUE
-9,scylla,Scylla,Scylla,FALSE,TRUE,FALSE
-10,pomona-cherry-raspberry,Pomona,Pomona,FALSE,TRUE,TRUE
-,narada,Narada,Narada,TRUE,FALSE,TRUE
+tap,variant,singleCanAvailable,draftAvailable,cansAvailable,name,type
+1,pomona-peach-mango,FALSE,TRUE,TRUE,Pomona,Sour Ale
+2,carnyx,FALSE,TRUE,TRUE,Carnyx,Dry Irish Stout
+3,array,TRUE,FALSE,TRUE,Array,Pale Ale
+4,kimik,FALSE,TRUE,FALSE,Kimik,Session IPA
+5,melrose,FALSE,TRUE,TRUE,Melrose,Scotch Ale
+6,bresa,FALSE,TRUE,TRUE,Bresa,Gose
+7,revive,FALSE,TRUE,FALSE,Revive,Hopped Kilju
+8,glyphs,FALSE,TRUE,TRUE,Glyphs,Pale Ale
+9,scylla,FALSE,TRUE,FALSE,Scylla,Imperial Stout
+10,pomona-cherry-raspberry,FALSE,TRUE,TRUE,Pomona,Sour Ale
+,narada,TRUE,FALSE,TRUE,Narada,West Coast IPA
