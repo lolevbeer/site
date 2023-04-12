@@ -1,7 +1,7 @@
 <section class="stacked" id="beer">
   <h2>Beer</h2>
   <div>
-  {% for beer in site.data.beer %}
+  {% for beer in site.data.menu %}
     {% if beer.cansAvailable == 'TRUE' or beer.draftAvailable == 'TRUE' %}
       <div class="beer">
         <a class="btn" href="/beer#{{ beer.variant }}">
