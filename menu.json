@@ -2,4 +2,4 @@
 layout: null
 ---
 
-{{ site.data.beer | jsonify }}
+{{ site.data.menu | jsonify }}
