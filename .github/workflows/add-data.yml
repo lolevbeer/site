@@ -17,16 +17,16 @@ jobs:
       - name: Get Remote Document
         # continue-on-error: true
         run: |
-          cd _data
-          wget -O beer.csv ${{ vars.BEER_INVENTORY }}
-          wget -O menu.csv ${{ vars.BEER_MENU }}
-          wget -O food.csv ${{ vars.FOOD_SCHEDULE }}
-          wget -O music.csv ${{ secrets.MUSIC_GSHEET }}
-          wget -O sales.csv ${{ secrets.SALES_GSHEET }}
-          wget -O events.csv ${{ secrets.EVENTS_GSHEET }}
-          wget -O coming.csv ${{ secrets.COMING_GSHEET }}
-          git config --local user.email "lolevbeer@gmail.com"
-          git config --local user.name "Lolev Manager"
-          git add .
-          git commit -m "Sync Data from google sheets"
-          git push
+          # cd _data
+          # wget -O beer.csv ${{ vars.BEER_INVENTORY }}
+          # wget -O menu.csv ${{ vars.BEER_MENU }}
+          # wget -O food.csv ${{ vars.FOOD_SCHEDULE }}
+          # wget -O music.csv ${{ secrets.MUSIC_GSHEET }}
+          # wget -O sales.csv ${{ secrets.SALES_GSHEET }}
+          # wget -O events.csv ${{ secrets.EVENTS_GSHEET }}
+          # wget -O coming.csv ${{ secrets.COMING_GSHEET }}
+          # git config --local user.email "lolevbeer@gmail.com"
+          # git config --local user.name "Lolev Manager"
+          # git add .
+          # git commit -m "Sync Data from google sheets"
+          # git push
