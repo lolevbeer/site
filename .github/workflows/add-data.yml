@@ -19,7 +19,7 @@ jobs:
         run: |
           cd _data
           # wget -O beer.csv ${{ vars.BEER_INVENTORY }}
-          wget -O catalog.csv ${{ vars.CATALOG }}
+          # wget -O catalog.csv ${{ vars.CATALOG }}
           wget -O menu.csv ${{ vars.BEER_MENU }}
           wget -O food.csv ${{ vars.FOOD_SCHEDULE }}
           wget -O music.csv ${{ secrets.MUSIC_GSHEET }}
