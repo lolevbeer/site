@@ -1,9 +1,13 @@
 <section id="events" class="stacked">
   <h2>Events</h2>
   <div class="events schedule">
+  {% assign currentWeek = site.time | date: "%W" %}
   {% for event in site.data.events %}
     {% if event.site %}
-      {% include event.html %}
+      {% assign postWeek = event.date | date: "%W" %}
+      {% if currentWeek <= postWeek %}
+        {% include event.html %}
+      {% endif %}
     {% endif %}
   {% endfor %}
   </div>
