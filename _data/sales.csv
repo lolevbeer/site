@@ -11,5 +11,7 @@ pomona cherry & raspberry,$225,TRUE,$109,TRUE,$75,TRUE,$17,TRUE,pomona-cherry-ra
 pomona peaches & mango,$225,TRUE,$109,TRUE,$75,TRUE,$17,TRUE,pomona-peach-mango
 alma,$180,TRUE,$85,TRUE,$55,FALSE,$12,TRUE,alma
 brahms,$180,TRUE,$85,TRUE,$55,FALSE,$12,TRUE,brahms
-elias,180*,TRUE,85*,TRUE,55*,TRUE,$12,TRUE,elias
-waves,265*,TRUE,119*,TRUE,87*,TRUE,$21,TRUE,waves
+elias,180*,TRUE,85*,TRUE,"55*
+(Limit 6 cases)",TRUE,$12,TRUE,elias
+waves,265*,TRUE,119*,TRUE,"87*
+(Limit 6 cases)",TRUE,$21,TRUE,waves
