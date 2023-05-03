@@ -7,20 +7,20 @@
     {% assign postWeek = food.date | date: "%W" %}
     {% if currentWeek == postWeek %}
       {% if food.vendor != empty %}
-          <span id="food-day-{{ food.date | date: '%w' }}" class="event" data-date="{{ food.date }}">
-            {% if previousDate != food.date %}
-              {% assign previousDate = food.date %}
-              <span class="date">{{ food.date | date: '%a' }}</span>
-            {% else %}
-              <span class="date">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-            {% endif %}
-            {% if food.site %}
-              <b><a class="btn" href="{{ food.site }}" target="_blank">{{ food.vendor }}</a></b>
-            {% else %}
-              <b>{{ food.vendor }}</b>
-            {% endif %}
-            <span>{{ food.time }}</span><br>
-          </span>
+        <span id="food-day-{{ food.date | date: '%w' }}" class="event" data-date="{{ food.date }}">
+          {% if previousDate != food.date %}
+            {% assign previousDate = food.date %}
+            <span class="date">{{ food.date | date: '%a' }}</span>
+          {% else %}
+            <span class="date">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+          {% endif %}
+          {% if food.site %}
+            <b><a class="btn" href="{{ food.site }}" target="_blank">{{ food.vendor }}</a></b>
+          {% else %}
+            <b>{{ food.vendor }}</b>
+          {% endif %}
+          <span>{{ food.time }}</span><br>
+        </span>
       {% endif %}
     {% endif %}
   {% endfor %}

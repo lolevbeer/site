@@ -1,10 +1,15 @@
 <section id="music" class="stacked">
   <h2>Music</h2>
   <div class="music schedule">
-  {% for event in site.data.music %}
-    {% if event.date and event.vendor  %}
-      {% include event.html %}
-    {% endif %}
-  {% endfor %}
+    {% assign currentWeek = site.time | date: "%W" %}
+    {% assign previousDate = '' %}
+    {% for event in site.data.music %}
+      {% if event.date and event.vendor  %}
+        {% assign postWeek = event.date | date: "%W" %}
+        {% if currentWeek <= postWeek %}
+          {% include event.html %}
+        {% endif %}
+      {% endif %}
+    {% endfor %}
   </div>
 </section>
