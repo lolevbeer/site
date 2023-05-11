@@ -79,6 +79,19 @@ const currentDate = new Date();
 // Remove conditional wrap after opening.
 let day = currentDate.getDay();
 let currentDay = document.getElementById("day-" + day);
-let currentFoodDay = document.getElementById("food-day-" + day);
 currentDay.classList.add("active");
-currentFoodDay.classList.add("active");
+
+// Find all HTML elements with a "data-date" attribute
+const elements = document.querySelectorAll('[data-date]');
+
+// Loop through each element
+elements.forEach(element => {
+  // Get the value of the "data-date" attribute
+  const dateValue = element.getAttribute('data-date');
+
+  // Compare the "data-date" attribute value with today's date
+  if (dateValue === `${currentDate.getFullYear()}-${(currentDate.getMonth() + 1).toString().padStart(2, '0')}-${currentDate.getDate().toString().padStart(2, '0')}`) {
+    // Add the "active" class if the dates match
+    element.classList.add('active');
+  }
+});
