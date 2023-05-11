@@ -1,13 +1,15 @@
 <section id="music" class="stacked">
   <h2>Music</h2>
   <div class="music schedule">
-    {% assign currentWeek = site.time | date: "%m" %}
+    {% assign currentDay = site.time | date: "%Y-%m-%d" %}
     {% assign previousDate = '' %}
+    {% assign count = 0 %}
     {% for event in site.data.music %}
-      {% if event.date and event.vendor  %}
-        {% assign postMonth = event.date | date: "%m" %}
-        {% if currentWeek == postMonth %}
+      {% if event.date and event.vendor and count < 6 %}
+        {% assign postDay = event.date | date: "%Y-%m-%d" %}
+        {% if currentDay <= postDay %}
           {% include event.html %}
+          {% assign count = count | plus:1 %}
         {% endif %}
       {% endif %}
     {% endfor %}
