@@ -39,6 +39,4 @@ Click beer names for more info.
   </tbody>
 </table>
 
-[Order Here](https://docs.google.com/forms/d/e/1FAIpQLScpSY7L4Eh4_OucI8Cz1qcKFxQaWzazIoeQ__WhTKsMB6_S5w/viewform?usp=sf_link){: .btn .sales target="_blank"}
-
 Please contact [sales@lolev.beer](mailto:sales@lolev.beer) for pre-orders or other questions.
