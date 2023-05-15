@@ -1,6 +1,6 @@
 beer,half,halfStock,sixtel,sixtelStock,case,caseStock,retail,displayed,variant
 tides,$245,FALSE,$119,FALSE,$77,FALSE,$18,FALSE,tides
-kimik,$150,TRUE,$85,FALSE,$55,FALSE,$12,TRUE,kimik
+kimik,$150,FALSE,$85,FALSE,$55,FALSE,$12,FALSE,kimik
 carnyx,$185,FALSE,$89,FALSE,$59,TRUE,$13,TRUE,carnyx
 melrose,$180,TRUE,$85,TRUE,$55,TRUE,$12,TRUE,melrose
 glyphs,$209,FALSE,$99,FALSE,$69,FALSE,$15,FALSE,glyphs
