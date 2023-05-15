@@ -7,7 +7,7 @@ brahms,$180,TRUE,$85,TRUE,$55,FALSE,$12,TRUE,brahms
 alma,$180,TRUE,$85,TRUE,$55,FALSE,$12,TRUE,alma
 melrose,$180,TRUE,$85,FALSE,$55,TRUE,$12,TRUE,melrose
 carnyx,$185,FALSE,$89,FALSE,$59,TRUE,$13,TRUE,carnyx
-bresa,$199,TRUE,$95,TRUE,$65,TRUE,$15,TRUE,bresa
+bresa,$199,TRUE,$95,TRUE,$65,FALSE,$15,TRUE,bresa
 pomona cherry & raspberry,$225,TRUE,$109,TRUE,$75,FALSE,$17,TRUE,pomona-cherry-raspberry
 pomona peaches & mango,$225,TRUE,$109,TRUE,$75,TRUE,$17,TRUE,pomona-peach-mango
 ,,,,,,,,,
