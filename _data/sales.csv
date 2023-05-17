@@ -1,16 +1,16 @@
 beer,half,halfStock,sixtel,sixtelStock,case,caseStock,retail,displayed,variant
-waves,$265,FALSE,$119,TRUE,$87,TRUE,$21,TRUE,waves
-array,$209,TRUE,$99,FALSE,$69,TRUE,$15,TRUE,array
-narada,$225,FALSE,$109,FALSE,$75,FALSE,$17,FALSE,narada
+array,$209,FALSE,$99,FALSE,$69,TRUE,$15,TRUE,array
 elias,$180,TRUE,$85,TRUE,$55,TRUE,$12,TRUE,elias
 brahms,$180,TRUE,$85,TRUE,$55,FALSE,$12,TRUE,brahms
 alma,$180,TRUE,$85,TRUE,$55,FALSE,$12,TRUE,alma
-melrose,$180,TRUE,$85,FALSE,$55,TRUE,$12,TRUE,melrose
-carnyx,$185,FALSE,$89,FALSE,$59,TRUE,$13,TRUE,carnyx
 bresa,$199,TRUE,$95,TRUE,$65,FALSE,$15,TRUE,bresa
-pomona cherry & raspberry,$225,TRUE,$109,TRUE,$75,FALSE,$17,TRUE,pomona-cherry-raspberry
-pomona peaches & mango,$225,TRUE,$109,TRUE,$75,TRUE,$17,TRUE,pomona-peach-mango
+pomona peaches & mango,$225,TRUE,$109,TRUE,$75,FALSE,$17,TRUE,pomona-peach-mango
+pomona cherry & raspberry,$225,FALSE,$109,TRUE,$75,FALSE,$17,TRUE,pomona-cherry-raspberry
+waves,$265,FALSE,$119,FALSE,$87,TRUE,$21,TRUE,waves
+melrose,$180,FALSE,$85,FALSE,$55,TRUE,$12,TRUE,melrose
+carnyx,$185,FALSE,$89,FALSE,$59,TRUE,$13,TRUE,carnyx
 ,,,,,,,,,
 kimik,$150,FALSE,$85,FALSE,$55,FALSE,$12,FALSE,kimik
+narada,$225,FALSE,$109,FALSE,$75,FALSE,$17,FALSE,narada
 tides,$245,FALSE,$119,FALSE,$77,FALSE,$18,FALSE,tides
 glyphs,$209,FALSE,$99,FALSE,$69,FALSE,$15,FALSE,glyphs
