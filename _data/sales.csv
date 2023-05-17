@@ -1,7 +1,7 @@
 beer,half,halfStock,sixtel,sixtelStock,case,caseStock,retail,displayed,variant
 waves,$265,FALSE,$119,TRUE,$87,TRUE,$21,TRUE,waves
 array,$209,TRUE,$99,FALSE,$69,TRUE,$15,TRUE,array
-narada,$225,FALSE,$109,TRUE,$75,FALSE,$17,TRUE,narada
+narada,$225,FALSE,$109,FALSE,$75,FALSE,$17,FALSE,narada
 elias,$180,TRUE,$85,TRUE,$55,TRUE,$12,TRUE,elias
 brahms,$180,TRUE,$85,TRUE,$55,FALSE,$12,TRUE,brahms
 alma,$180,TRUE,$85,TRUE,$55,FALSE,$12,TRUE,alma
