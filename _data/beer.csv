@@ -1,24 +1,25 @@
 variant,name,type,options,abv,glass,draftPrice,cans,description,glutenFree,image
-pomona-peach-mango,Pomona,Sour Ale,Peach Mango,6.7,teku,$8,$18,Tart ale fruited with mango and peach.,FALSE,TRUE
-carnyx,Carnyx,Dry Irish Stout,,4.2,lager,$7,$12,"Balanced richness, notes of coffee, and chocolate. A smooth, and creamy texture.",FALSE,TRUE
-array,Array,Pale Ale,,5.9,teku,$7,$15,Refreshing Grapefruit and Pineapple. Subtle aroma of lemon.,FALSE,TRUE
-kimik,Kimik,Session IPA,,4.5,teku,$6,,"An easy drinking ale with heavy punch. With notes of heavy citrus, passion fruit, lychee, and a distinct guava aroma.",FALSE,FALSE
-melrose,Melrose,Scotch Ale,,6,lager,$7,$12,Smooth and malty with light caramel and dark fruit notes with subtle cherry aroma.,FALSE,TRUE
-bresa,Bresa,Gose,,5.7,teku,$7,$17,"Tart ale with notes of lemon, lime, sea salt and coriander",FALSE,TRUE
-revive,Revive,Hopped Kilju,,4.2,teku,$5,,"Modern, hopped version of a traditional Finnish fermented-water beverage.",TRUE,FALSE
-glyphs,Glyphs,Pale Ale,,5.4,teku,$7,$15,"Notes of tangerine, orange zest, and aromatic pine. Light bitterness.",FALSE,TRUE
-scylla,Scylla,Imperial Stout,,10.5,small-teku,$8,$19,Dark chocolate and toasted caramel layered on a blackberry cola.,FALSE,FALSE
-pomona-cherry-raspberry,Pomona,Sour Ale,Cherry Raspberry,6.7,teku,$8,$18,Tart ale fruited with cherry and raspberry.,FALSE,TRUE
-narada,Narada,West Coast IPA,,7.4,teku,$7,$17,"Orange hued with dank citrus and pine notes. Hopped with Citra, Amarillo, Simcoe, Columbus and Michigan Chinook.",FALSE,TRUE
-elias,Elias,Cream Ale,,4.4,lager,$6,$12,"Refreshing and malt forward, subtle citrus notes and floral aroma.",FALSE,TRUE
-tides,Tides,India Pale Ale,,6.9,teku,$7,$17,"Cantaloupe with blueberry undertones, earthy and dry passionfruit. Cantaloupe and orange aroma.",FALSE,TRUE
-sebastian,Sebastian,Bock,,6.7,lager,$7,$13,Refreshing and smooth with a kick. A Maibock brewed with 100% Pilsner malt and German and American Noble Hops.,FALSE,TRUE
-dom,Dom,Kölsch,,4.8,lager,$6,$12,"Crisp ale with floral and pear notes, subtle grapefruit zest aroma.",FALSE,TRUE
-terrini,Terrini,Grisette,,5,teku,$7,,"Grassy, floral, and pithy orange aromas. Notes of pear, candied orange, and lemongrass flavors. Slightly sweet finish.",FALSE,FALSE
-soleil,Soleil,Saison,,6.9,teku,$7,,"Dry orange, mimosa-esque. Floral notes and funky.",FALSE,FALSE
-secrets,Secrets,Double IPA,,7.8,teku,$8,,"Passionfruit, pine, apricot, and orange zest. Dank pine and blueberry aroma.",FALSE,FALSE
-marty,Marty,Matcha Ale,,4.4,teku,$6,,"Light Matcha-steeped, crisp ale.",FALSE,FALSE
-lupitor,Lupitor,India Pale Ale,,6.2,teku,$7,$17,"Ripe pineapple, mango, and ruby red grapefruit. Very aromatic.",FALSE,TRUE
 alma,Alma,Unfiltered Pilsner,,5.9,lager,$6,,"A radiant golden straw hue, with a robust all-malt foundation. A refreshing crispness is complemented by delicate floral and citrus notes that emerge in the finish.",FALSE,FALSE
+array,Array,Pale Ale,,5.9,teku,$7,$15,Refreshing Grapefruit and Pineapple. Subtle aroma of lemon.,FALSE,TRUE
 brahms,Brahms,Vienna Lager,,4.7,lager,$6,,"A gentle toastiness that harmonizes with a medium-bodied crispness is delicately balanced by a mild herbal bitterness, offering a sophisticated and nuanced flavor profile.",FALSE,FALSE
-waves,Waves,Double IPA,,8.5,teku,$8,,"Undertones of stonefruit and citrus, juicy hop finish. Blueberry and melon aroma.",FALSE,TRUE
+bresa,Bresa,Gose,,5.7,teku,$7,$17,"Tart ale with notes of lemon, lime, sea salt and coriander",FALSE,TRUE
+carnyx,Carnyx,Dry Irish Stout,,4.2,lager,$7,$12,"Balanced richness, notes of coffee, and chocolate. A smooth, and creamy texture.",FALSE,TRUE
+dom,Dom,Kölsch,,4.8,lager,$6,$12,"Crisp ale with floral and pear notes, subtle grapefruit zest aroma.",FALSE,TRUE
+elias,Elias,Cream Ale,,4.4,lager,$6,$12,"Refreshing and malt forward, subtle citrus notes and floral aroma. Naturally Carbonated.",FALSE,TRUE
+flux,Flux,India Pale Ale,,7,teku,$7,$17,"Tropical flavors of bubble gum, pithy orange, papaya, blueberry, and dank citrus. Complex aromas of cannabis, grapefruit, stonefruit, and orange zest. Hops: Columbus, Simcoe, Mosaic, Ekuanot, Comet, Strata.",FALSE,FALSE
+glyphs,Glyphs,Pale Ale,,5.4,teku,$7,$15,"Notes of tangerine, orange zest, and aromatic pine. Light bitterness.",FALSE,TRUE
+kimik,Kimik,Session IPA,,4.5,teku,$6,,"An easy drinking ale with heavy punch. With notes of heavy citrus, passion fruit, lychee, and a distinct guava aroma.",FALSE,FALSE
+lupula,Lupula,India Pale Ale,,6.2,teku,$7,$17,"Ripe pineapple, mango, and ruby red grapefruit. Very aromatic.",FALSE,TRUE
+marty,Marty,Matcha Ale,,4.4,teku,$6,,"Light Matcha-steeped, crisp ale.",FALSE,FALSE
+melrose,Melrose,Scotch Ale,,6,lager,$7,$12,Smooth and malty with light caramel and dark fruit notes with subtle cherry aroma.,FALSE,TRUE
+narada,Narada,West Coast IPA,,7.4,teku,$7,$17,"Orange hued with dank citrus and pine notes. Hopped with Citra, Amarillo, Simcoe, Columbus and Michigan Chinook.",FALSE,TRUE
+pomona-cherry-raspberry,Pomona,Sour Ale,Cherry Raspberry,6.7,teku,$8,$18,Tart ale fruited with cherry and raspberry.,FALSE,TRUE
+pomona-peach-mango,Pomona,Sour Ale,Peach Mango,6.7,teku,$8,$18,Tart ale fruited with mango and peach.,FALSE,TRUE
+revive,Revive,Hopped Kilju,,4.2,teku,$5,,"Modern, hopped version of a traditional Finnish fermented-water beverage.",TRUE,FALSE
+scylla,Scylla,Imperial Stout,,10.5,small-teku,$8,$19,Dark chocolate and toasted caramel layered on a blackberry cola.,FALSE,FALSE
+sebastian,Sebastian,Bock,,6.7,lager,$7,$13,Refreshing and smooth with a kick. A Maibock brewed with 100% Pilsner malt and German and American Noble Hops.,FALSE,TRUE
+secrets,Secrets,Double IPA,,7.8,teku,$8,,"Passionfruit, pine, apricot, and orange zest. Dank pine and blueberry aroma.",FALSE,FALSE
+soleil,Soleil,Saison,,6.9,teku,$7,,"Dry orange, mimosa-esque. Floral notes and funky.",FALSE,FALSE
+terrini,Terrini,Grisette,,5,teku,$7,,"Grassy, floral, and pithy orange aromas. Notes of pear, candied orange, and lemongrass flavors. Slightly sweet finish.",FALSE,FALSE
+tides,Tides,India Pale Ale,,6.9,teku,$7,$17,"Cantaloupe with blueberry undertones, earthy and dry passionfruit. Cantaloupe and orange aroma.",FALSE,TRUE
+waves,Waves,Double IPA,,8.5,teku,$8,$19,"Undertones of stonefruit and citrus, juicy hop finish. Blueberry and melon aroma. Hops: Columbus, El Dorado, Ekuanot, Citra, Mosaic, Simcoe. Naturally carbonated.",FALSE,TRUE
