@@ -18,7 +18,7 @@ jobs:
         # continue-on-error: true
         run: |
           cd _data
-          # wget -O beer.csv ${{ vars.BEER_INVENTORY }}
+          wget -O beer.csv ${{ vars.BEER }}
           # wget -O catalog.csv ${{ vars.CATALOG }}
           wget -O menu.csv ${{ vars.BEER_MENU }}
           wget -O food.csv ${{ vars.FOOD_SCHEDULE }}
