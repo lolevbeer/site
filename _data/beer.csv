@@ -1,5 +1,5 @@
 variant,name,type,options,abv,glass,draftPrice,cans,description,glutenFree,image
-alma,Alma,Pilsner,,5.9,lager,$6,,"A radiant golden straw hue, with a robust all-malt foundation. A refreshing crispness is complemented by delicate floral and citrus notes that emerge in the finish.",FALSE,TRUE
+alma,Alma,Unfiltered Pilsner,,5.9,lager,$6,,"A radiant golden straw hue, with a robust all-malt foundation. A refreshing crispness is complemented by delicate floral and citrus notes that emerge in the finish.",FALSE,TRUE
 array,Array,Pale Ale,,5.9,teku,$7,$15,Refreshing Grapefruit and Pineapple. Subtle aroma of lemon.,FALSE,TRUE
 brahms,Brahms,Vienna Lager,,4.7,lager,$6,,A gentle roast that harmonizes with a medium-bodied crispness. Delicately balanced by a mild herbal bitterness.,FALSE,TRUE
 bresa,Bresa,Gose,,5.7,teku,$7,$17,"Tart ale with notes of lemon, lime, sea salt and coriander",FALSE,TRUE
