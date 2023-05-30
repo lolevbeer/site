@@ -2,7 +2,7 @@ beer,half,halfStock,sixtel,sixtelStock,case,caseStock,retail,displayed,variant
 lupula,$225,TRUE,$109,TRUE,$77,TRUE,$18,TRUE,lupula
 flux,$225,TRUE,$109,TRUE,$77,TRUE,$18,TRUE,flux
 elias,$180,TRUE,$85,TRUE,$55,TRUE,$12,TRUE,elias
-brahms,$180,TRUE,$85,TRUE,$55,TRUE,$12,TRUE,brahms
+brahms,$180,FALSE,$85,FALSE,$55,TRUE,$12,TRUE,brahms
 alma,$180,TRUE,$85,TRUE,$55,TRUE,$12,TRUE,alma
 bresa,$199,TRUE,$95,TRUE,$65,TRUE,$15,TRUE,bresa
 pomona peaches & mango,$225,TRUE,$109,TRUE,$75,FALSE,$17,TRUE,pomona-peach-mango
