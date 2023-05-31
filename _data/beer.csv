@@ -3,7 +3,7 @@ alma,Alma,Unfiltered Pilsner,,5.9,lager,$6,$12,"A radiant golden straw hue, with
 array,Array,Pale Ale,,5.9,teku,$7,$15,Refreshing Grapefruit and Pineapple. Subtle aroma of lemon.,FALSE,TRUE
 brahms,Brahms,Vienna Lager,,4.7,lager,$6,$12,A gentle roast that harmonizes with a medium-bodied crispness. Delicately balanced by a mild herbal bitterness.,FALSE,TRUE
 bresa,Bresa,Gose,,5.7,teku,$7,$17,"Tart ale with notes of lemon, lime, sea salt and coriander",FALSE,TRUE
-carnyx,Carnyx,Dry Irish Stout,,4.2,lager,$7,$12,"Balanced richness, notes of coffee, and chocolate. A smooth, and creamy texture.",FALSE,TRUE
+carnyx,Carnyx,Dry Irish Stout,,4.2,lager,$6,$12,"Balanced richness, notes of coffee, and chocolate. A smooth, and creamy texture.",FALSE,TRUE
 dom,Dom,Kölsch,,4.8,lager,$6,$12,"Crisp ale with floral and pear notes, subtle grapefruit zest aroma.",FALSE,TRUE
 elias,Elias,Cream Ale,,4.4,lager,$6,$12,"Refreshing and malt forward, subtle citrus notes and floral aroma. Naturally Carbonated.",FALSE,TRUE
 flux,Flux,India Pale Ale,,7,teku,$7,$17,"Tropical flavors of bubble gum, pithy orange, papaya, blueberry, and dank citrus. Complex aromas of cannabis, grapefruit, stonefruit, and orange zest. Hops: Columbus, Simcoe, Mosaic, Ekuanot, Comet, Strata.",FALSE,TRUE
@@ -11,7 +11,7 @@ glyphs,Glyphs,Pale Ale,,5.4,teku,$7,$15,"Notes of tangerine, orange zest, and ar
 kimik,Kimik,Session IPA,,4.5,teku,$6,,"An easy drinking ale with heavy punch. With notes of heavy citrus, passion fruit, lychee, and a distinct guava aroma.",FALSE,FALSE
 lupula,Lupula,India Pale Ale,,6.2,teku,$7,$17,"Ripe pineapple, mango, and ruby red grapefruit. Very aromatic.",FALSE,TRUE
 marty,Marty,Matcha Ale,,4.4,teku,$6,,"Light Matcha-steeped, crisp ale.",FALSE,FALSE
-melrose,Melrose,Scotch Ale,,6,lager,$7,$12,Smooth and malty with light caramel and dark fruit notes with subtle cherry aroma.,FALSE,TRUE
+melrose,Melrose,Scotch Ale,,6,lager,$6,$12,Smooth and malty with light caramel and dark fruit notes with subtle cherry aroma.,FALSE,TRUE
 narada,Narada,West Coast IPA,,7.4,teku,$7,$17,"Orange hued with dank citrus and pine notes. Hopped with Citra, Amarillo, Simcoe, Columbus and Michigan Chinook.",FALSE,TRUE
 pomona-cherry-raspberry,Pomona,Sour Ale,Cherry Raspberry,6.7,teku,$8,$18,Tart ale fruited with cherry and raspberry.,FALSE,TRUE
 pomona-peach-mango,Pomona,Sour Ale,Peach Mango,6.7,teku,$8,$18,Tart ale fruited with mango and peach.,FALSE,TRUE
