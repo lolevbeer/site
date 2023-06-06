@@ -1,12 +1,11 @@
 beer,half,halfStock,sixtel,sixtelStock,case,caseStock,retail,displayed,variant
 lupula,$225,TRUE,$109,TRUE,$77,TRUE,$18,TRUE,lupula
-flux,$225,TRUE,$109,TRUE,$77,TRUE,$18,TRUE,flux
+flux,$225,TRUE,$109,FALSE,$77,TRUE,$18,TRUE,flux
 elias,$180,TRUE,$85,TRUE,$55,TRUE,$12,TRUE,elias
 brahms,$180,TRUE,$85,TRUE,$55,TRUE,$12,TRUE,brahms
 alma,$180,TRUE,$85,TRUE,$55,TRUE,$12,TRUE,alma
 bresa,$199,FALSE,$95,FALSE,$65,TRUE,$15,TRUE,bresa
 pomona peaches & mango,$225,TRUE,$109,TRUE,$75,FALSE,$17,TRUE,pomona-peach-mango
-pomona cherry & raspberry,$225,FALSE,$109,TRUE,$75,FALSE,$17,TRUE,pomona-cherry-raspberry
 waves,$265,FALSE,$119,FALSE,$87,TRUE,$21,TRUE,waves
 array,$209,FALSE,$99,FALSE,$69,TRUE,$15,TRUE,array
 melrose,$180,FALSE,$85,FALSE,$55,TRUE,$12,TRUE,melrose
@@ -16,3 +15,4 @@ kimik,$150,FALSE,$85,FALSE,$55,FALSE,$12,FALSE,kimik
 narada,$225,FALSE,$109,FALSE,$75,FALSE,$17,FALSE,narada
 tides,$245,FALSE,$119,FALSE,$77,FALSE,$18,FALSE,tides
 glyphs,$209,FALSE,$99,FALSE,$69,FALSE,$15,FALSE,glyphs
+pomona cherry & raspberry,$225,FALSE,$109,FALSE,$75,FALSE,$17,FALSE,pomona-cherry-raspberry
