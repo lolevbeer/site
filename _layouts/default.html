@@ -8,7 +8,9 @@
     {% include beers.html %}
     {% include coming.html %}
     {% include food.html %}
-    {% include music.html %}
+    {% comment %}
+      {% include music.html %}
+    {% endcomment %}
     {% include events.html %}
     {% for section in site.sections %}
       <section class="stacked" id="{{ section.title | downcase }}">
