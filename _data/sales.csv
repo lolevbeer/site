@@ -3,8 +3,8 @@ lupula,$225,TRUE,$109,TRUE,$77,TRUE,$18,TRUE,lupula
 flux,$225,TRUE,$109,FALSE,$77,TRUE,$18,TRUE,flux
 brahms,$180,TRUE,$85,TRUE,$55,TRUE,$12,TRUE,brahms
 alma,$180,TRUE,$85,TRUE,$55,TRUE,$12,TRUE,alma
-pomona peaches & mango,$225,TRUE,$109,TRUE,$75,FALSE,$17,TRUE,pomona-peach-mango
-elias,$180,FALSE,$85,TRUE,$55,TRUE,$12,TRUE,elias
+pomona peaches & mango,$225,TRUE,$109,FALSE,$75,FALSE,$17,TRUE,pomona-peach-mango
+elias,$180,FALSE,$85,FALSE,$55,TRUE,$12,TRUE,elias
 bresa,$199,FALSE,$95,FALSE,$65,TRUE,$15,TRUE,bresa
 array,$209,FALSE,$99,FALSE,$69,TRUE,$15,TRUE,array
 melrose,$180,FALSE,$85,FALSE,$55,TRUE,$12,TRUE,melrose
