@@ -9,10 +9,10 @@ elias,Elias,Cream Ale,,4.4,lager,$6,$12,"Refreshing and malt forward, subtle cit
 flux,Flux,India Pale Ale,,7,teku,$7,$17,"Tropical flavors of bubble gum, pithy orange, papaya, blueberry, and dank citrus. Complex aromas of cannabis, grapefruit, stonefruit, and orange zest. Hops: Columbus, Simcoe, Mosaic, Ekuanot, Comet, Strata.",FALSE,TRUE
 glyphs,Glyphs,Pale Ale,,5.4,teku,$7,$15,"Notes of tangerine, orange zest, and aromatic pine. Light bitterness.",FALSE,TRUE
 kimik,Kimik,Session IPA,,4.5,teku,$6,,"An easy drinking ale with heavy punch. With notes of heavy citrus, passion fruit, lychee, and a distinct guava aroma.",FALSE,FALSE
-lupula,Lupula,India Pale Ale,,6.2,teku,$7,$17,"Ripe pineapple, mango, and ruby red grapefruit. Very aromatic.",FALSE,TRUE
+lupula,Lupula,India Pale Ale,,6.2,teku,$7,$17,"Ripe pineapple, mango, and ruby red grapefruit. Very aromatic. Hops: Riwaka, Moutere, Motueka, Comet, Cascade.",FALSE,TRUE
 marty,Marty,Matcha Ale,,4.4,teku,$6,,"Light Matcha-steeped, crisp ale.",FALSE,FALSE
 melrose,Melrose,Scotch Ale,,6,lager,$6,$12,Smooth and malty with light caramel and dark fruit notes with subtle cherry aroma.,FALSE,TRUE
-narada,Narada,West Coast IPA,,7.4,teku,$7,$17,"Orange hued with dank citrus and pine notes. Hopped with Citra, Amarillo, Simcoe, Columbus and Michigan Chinook.",FALSE,TRUE
+narada,Narada,West Coast IPA,,7.4,teku,$7,$17,"Orange hued with dank citrus and pine notes. Hops: Amarillo, Simcoe, Columbus and Michigan Chinook.",FALSE,TRUE
 pomona-cherry-raspberry,Pomona,Sour Ale,Cherry Raspberry,6.7,teku,$8,$18,Tart ale fruited with cherry and raspberry.,FALSE,TRUE
 pomona-peach-mango,Pomona,Sour Ale,Peach Mango,6.7,teku,$8,$18,Tart ale fruited with mango and peach.,FALSE,TRUE
 revive,Revive,Hopped Kilju,,4.2,teku,$5,,"Modern, hopped version of a traditional Finnish fermented-water beverage.",TRUE,FALSE
