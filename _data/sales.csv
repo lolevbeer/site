@@ -1,5 +1,5 @@
 beer,half,halfStock,sixtel,sixtelStock,case,caseStock,retail,displayed,variant
-lupula,$225,TRUE,$109,TRUE,$77,TRUE,$18,TRUE,lupula
+lupula,$225,FALSE,$109,FALSE,$77,TRUE,$18,TRUE,lupula
 flux,$225,TRUE,$109,FALSE,$77,TRUE,$18,TRUE,flux
 brahms,$180,TRUE,$85,TRUE,$55,TRUE,$12,TRUE,brahms
 alma,$180,TRUE,$85,TRUE,$55,TRUE,$12,TRUE,alma
