@@ -1,4 +1,5 @@
 beer,half,halfStock,sixtel,sixtelStock,case,caseStock,retail,displayed,variant
+tides*,$245,TRUE,$119,TRUE,$77,TRUE,$18,TRUE,tides
 lupula,$225,FALSE,$109,FALSE,$77,TRUE,$18,TRUE,lupula
 flux,$225,TRUE,$109,FALSE,$77,TRUE,$18,TRUE,flux
 brahms,$180,TRUE,$85,TRUE,$55,TRUE,$12,TRUE,brahms
@@ -12,7 +13,6 @@ carnyx,$185,FALSE,$89,FALSE,$59,TRUE,$13,TRUE,carnyx
 ,,,,,,,,,
 kimik,$150,FALSE,$85,FALSE,$55,FALSE,$12,FALSE,kimik
 narada,$225,FALSE,$109,FALSE,$75,FALSE,$17,FALSE,narada
-tides,$245,FALSE,$119,FALSE,$77,FALSE,$18,FALSE,tides
 glyphs,$209,FALSE,$99,FALSE,$69,FALSE,$15,FALSE,glyphs
 waves,$265,FALSE,$119,FALSE,$87,FALSE,$21,FALSE,waves
 pomona cherry & raspberry,$225,FALSE,$109,FALSE,$75,FALSE,$17,FALSE,pomona-cherry-raspberry
