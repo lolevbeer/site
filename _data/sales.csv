@@ -4,7 +4,6 @@ lupula,$225,FALSE,$109,FALSE,$77,TRUE,$18,TRUE,lupula
 flux,$225,TRUE,$109,FALSE,$77,TRUE,$18,TRUE,flux
 brahms,$180,TRUE,$85,TRUE,$55,TRUE,$12,TRUE,brahms
 alma,$180,TRUE,$85,TRUE,$55,TRUE,$12,TRUE,alma
-pomona peaches & mango,$225,TRUE,$109,FALSE,$75,FALSE,$17,TRUE,pomona-peach-mango
 elias,$180,FALSE,$85,FALSE,$55,TRUE,$12,TRUE,elias
 bresa,$199,FALSE,$95,FALSE,$65,TRUE,$15,TRUE,bresa
 array,$209,FALSE,$99,FALSE,$69,TRUE,$15,TRUE,array
@@ -16,3 +15,4 @@ narada,$225,FALSE,$109,FALSE,$75,FALSE,$17,FALSE,narada
 glyphs,$209,FALSE,$99,FALSE,$69,FALSE,$15,FALSE,glyphs
 waves,$265,FALSE,$119,FALSE,$87,FALSE,$21,FALSE,waves
 pomona cherry & raspberry,$225,FALSE,$109,FALSE,$75,FALSE,$17,FALSE,pomona-cherry-raspberry
+pomona peaches & mango,$225,FALSE,$109,FALSE,$75,FALSE,$17,FALSE,pomona-peach-mango
