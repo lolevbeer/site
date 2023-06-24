@@ -1,7 +1,6 @@
 "tap","variant","singleCanAvailable","draftAvailable","cansAvailable","name","options","type","abv","glass","draftPrice","cans","description","glutenFree","image"
 "1","flux","FALSE","TRUE","TRUE","Flux","","India Pale Ale","7","teku","7","17","Tropical flavors of bubble gum, pithy orange, papaya, blueberry, and dank citrus. Complex aromas of cannabis, grapefruit, stonefruit, and orange zest. Hops: Columbus, Simcoe, Mosaic, Ekuanot, Comet, Strata.","FALSE","TRUE"
 "2","demeter","FALSE","TRUE","FALSE","Demeter","","Foeder-aged Barleywine","10.5","small-teku","9","","Aged in Missouri oak puncheons. Notes of candied orange and caramel undertones. Subtle aroma of vanilla.","FALSE","FALSE"
-"3","lupula","FALSE","TRUE","TRUE","Lupula","","India Pale Ale","6.2","teku","7","17","Ripe pineapple, mango, and ruby red grapefruit. Very aromatic. Hops: Riwaka, Moutere, Motueka, Comet, Cascade.","FALSE","TRUE"
 "4","alma","FALSE","TRUE","TRUE","Alma","","Unfiltered Pilsner","5.9","lager","6","12","A radiant golden straw hue, with a robust all-malt foundation. A refreshing crispness is complemented by delicate floral and citrus notes that emerge in the finish.","FALSE","TRUE"
 "5","elias","FALSE","TRUE","FALSE","Elias","","Cream Ale","4.4","lager","6","12","Refreshing and malt forward, subtle citrus notes and floral aroma. Naturally Carbonated.","FALSE","TRUE"
 "6","revive","FALSE","TRUE","FALSE","Revive","","Sparkling Hop Water","4.8","lager","6","","Modern, hopped version of a traditional Finnish fermented-water beverage.","TRUE","FALSE"
