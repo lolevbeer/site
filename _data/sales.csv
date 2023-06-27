@@ -1,7 +1,7 @@
 beer,half,halfStock,sixtel,sixtelStock,case,caseStock,retail,displayed,variant
 tides*,$225,TRUE,$109,TRUE,$77,TRUE,$18,TRUE,tides
-alma,$180,TRUE,$85,TRUE,$55,TRUE,$12,TRUE,alma
 brahms,$180,TRUE,$85,TRUE,$55,TRUE,$12,TRUE,brahms
+alma,$180,FALSE,$85,TRUE,$55,TRUE,$12,TRUE,alma
 lupula,$225,FALSE,$109,FALSE,$77,TRUE,$18,TRUE,lupula
 flux,$225,FALSE,$109,FALSE,$77,TRUE,$18,TRUE,flux
 bresa,$199,FALSE,$95,FALSE,$65,TRUE,$15,TRUE,bresa
