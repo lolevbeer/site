@@ -6,7 +6,7 @@ for (let i = 0; i < items.length; i++) {
 function scrollHandlerY(e) {
   let atSnappingPoint = e.target.scrollTop % e.target.offsetHeight === 0;
   let timeOut = atSnappingPoint ? 0 : 150;
-  let lastSlides = document.getElementsByClassName("last-slide");
+  let lastSlides = document.getElementsByClassName('last-slide');
   let lastSlide = lastSlides[0];
 
   if (e.target.scrollTop > lastSlide.offsetTop - 10) {
