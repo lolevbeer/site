@@ -2,16 +2,16 @@
   <h2>Food</h2>
   <p class="emoji-block">🌮🥪🍱🚚</p>
   <div class="food schedule" >
-  {% assign currentWeek = site.time | date: "%W" %}
+  {% assign currentMonth = site.time | date: "%m" %}
   {% assign previousDate = '' %}
   {% for food in site.data.food %}
-    {% assign postWeek = food.date | date: "%W" %}
-    {% if currentWeek == postWeek %}
+    {% assign postMonth = food.date | date: "%m" %}
+    {% if currentMonth == postMonth %}
       {% if food.vendor != empty %}
-        <span id="food-day-{{ food.date | date: '%w' }}" class="event" data-date="{{ food.date }}">
+        <span id="food-day-{{ food.date | date: '%d' }}" class="event" data-date="{{ food.date }}">
           {% if previousDate != food.date %}
             {% assign previousDate = food.date %}
-            <span class="date">{{ food.date | date: '%a' }}</span>
+            <span class="date">{{ food.date | date: '%a %d' }}</span>
           {% else %}
             <span class="date">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
           {% endif %}
