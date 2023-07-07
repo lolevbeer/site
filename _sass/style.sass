@@ -253,6 +253,10 @@ h3 + p
   max-height: 30vh
   width: auto
 
+@media screen and (max-height: 675px)
+  .beer-img
+    max-height: 20vh
+
 .beer-icon-description
   @media screen and (max-width: 740px)
     display: none
@@ -506,6 +510,11 @@ footer *
     letter-spacing: 0
   #find-lolev
     width: 100% !important
+
+@media only screen and (max-width: 700px)
+  #beers-info p,
+  .schedule
+    font-size: small
 
 
 .scroll-animate
