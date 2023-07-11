@@ -4,7 +4,7 @@ array,Array,Pale Ale,,5.8,teku,$7,$15,"Pineapple and Citrus. Aroma of White wine
 brahms,Brahms,Vienna Lager,,4.7,lager,$6,$12,A gentle roast that harmonizes with a medium-bodied crispness. Delicately balanced by a mild herbal bitterness.,FALSE,TRUE
 bresa,Bresa,Gose,,5.7,teku,$7,$17,"Tart ale with notes of lemon, lime, sea salt and coriander",FALSE,TRUE
 carnyx,Carnyx,Dry Irish Stout,,4.2,lager,$5,$12,"Balanced richness, notes of coffee, and chocolate. A smooth, and creamy texture.",FALSE,TRUE
-demeter,Demeter,Foeder-aged Barleywine,,10.5,small-teku,$9,,Aged in Missouri oak puncheons. Notes of candied orange and caramel undertones. Subtle aroma of vanilla.,FALSE,FALSE
+demeter,Demeter,Foeder-aged Barleywine,,10.5,small-teku,$9,,Aged in Missouri oak puncheons. Notes of candied orange and caramel undertones. Subtle aroma of vanilla.,FALSE,TRUE
 dom,Dom,Kölsch,,4.8,lager,$6,$12,"Crisp ale with floral and pear notes, subtle grapefruit zest aroma.",FALSE,TRUE
 elias,Elias,Cream Ale,,4.4,lager,$6,$12,"Refreshing and malt forward, subtle citrus notes and floral aroma. Naturally Carbonated.",FALSE,TRUE
 flux,Flux,India Pale Ale,,7,teku,$7,$17,"Tropical flavors of bubble gum, pithy orange, papaya, blueberry, and dank citrus. Complex aromas of cannabis, grapefruit, stonefruit, and orange zest. Hops: Columbus, Simcoe, Mosaic, Ekuanot, Comet, Strata.",FALSE,TRUE
@@ -17,7 +17,7 @@ narada,Narada,West Coast IPA,,7.2,teku,$7,$17,"Dank citrus and pine notes. Hops:
 pomona-cherry-raspberry,Pomona,Sour Ale,Cherry Raspberry,6.7,teku,$8,$18,Tart ale fruited with cherry and raspberry.,FALSE,TRUE
 pomona-peach-mango,Pomona,Sour Ale,Peach Mango,6.7,teku,$8,$18,Tart ale fruited with mango and peach.,FALSE,TRUE
 remo,Remo,Ultra Light Rice Ale,,3.4,lager,$5,,"Light, citrus-forward summer crusher.",FALSE,FALSE
-revive,Revive,Sparkling Hop Water,,4.8,lager,$6,,"Modern, hopped version of a traditional Finnish fermented-water beverage.",TRUE,FALSE
+revive,Revive,Sparkling Hop Water,,4.8,lager,$6,,"Modern, hopped version of a traditional Finnish fermented-water beverage.",TRUE,TRUE
 scylla,Scylla,Imperial Stout,,10.5,small-teku,$8,$19,Dark chocolate and toasted caramel layered on a blackberry cola.,FALSE,FALSE
 sebastian,Sebastian,Bock,,6.7,lager,$5,$10,Refreshing and smooth with a kick. A Maibock brewed with 100% Pilsner malt and German and American Noble Hops.,FALSE,TRUE
 secrets,Secrets,Double IPA,,7.8,teku,$8,,"Passionfruit, pine, apricot, and orange zest. Dank pine and blueberry aroma.",FALSE,FALSE
