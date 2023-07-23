@@ -11,10 +11,10 @@
   hours: 4pm - 10pm
   day-code: 4
 - name: Friday
-  hours: noon - 12pm
+  hours: noon - 12am
   day-code: 5
 - name: Saturday
-  hours: noon - 12pm
+  hours: noon - 12am
   day-code: 6
 - name: Sunday
   hours: noon - 9pm
