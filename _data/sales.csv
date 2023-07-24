@@ -2,13 +2,13 @@ beer,half,halfStock,sixtel,sixtelStock,case,caseStock,retail,displayed,variant
 waves,*$265,TRUE,*$119,TRUE,*$87,TRUE,$21,TRUE,waves
 tides,$225,FALSE,$109,TRUE,$77,TRUE,$18,TRUE,tides
 lupula,$225,TRUE,$109,TRUE,*$77,TRUE,$18,TRUE,lupula
+narada,$225,FALSE,$109,TRUE,$77,TRUE,$18,TRUE,narada
 array,$209,TRUE,$99,TRUE,$69,TRUE,$15,TRUE,array
 dom,*$180,TRUE,*$85,TRUE,*$55,TRUE,$17,TRUE,dom
 elias,$180,TRUE,$85,TRUE,*$55,TRUE,$12,TRUE,elias
-narada,$225,FALSE,$109,TRUE,$77,TRUE,$18,TRUE,narada
-brahms,$180,TRUE,$85,TRUE,$55,TRUE,$12,TRUE,brahms
 alma,$180,FALSE,$85,TRUE,$55,FALSE,$12,TRUE,alma
-bresa,$199,FALSE,$95,FALSE,$65,TRUE,$15,TRUE,bresa
+brahms,$180,TRUE,$85,TRUE,$55,FALSE,$12,TRUE,brahms
+bresa,$199,FALSE,$95,FALSE,$65,FALSE,$15,FALSE,bresa
 melrose,$180,FALSE,$85,FALSE,$55,FALSE,$12,FALSE,melrose
 carnyx,$185,FALSE,$89,FALSE,$50,FALSE,$10,FALSE,carnyx
 flux,$225,FALSE,$109,FALSE,$77,FALSE,$18,FALSE,flux
