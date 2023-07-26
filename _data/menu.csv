@@ -1,7 +1,7 @@
 "tap","variant","singleCanAvailable","draftAvailable","cansAvailable","attention","name","options","type","abv","glass","draftPrice","cans","description","glutenFree","image"
 "1","narada","FALSE","TRUE","TRUE","FALSE","Narada","","West Coast IPA","7.2","teku","7","17","Dank citrus and pine notes. Hops: Amarillo, Columbus and Michigan Chinook.","FALSE","TRUE"
 "2","demeter","FALSE","TRUE","FALSE","FALSE","Demeter","","Foeder-aged Barleywine","10.5","small-teku","9","","Aged in Missouri oak puncheons. Notes of candied orange and caramel undertones. Subtle aroma of vanilla.","FALSE","TRUE"
-"3","","FALSE","FALSE","FALSE","FALSE","","","","","","","","","",""
+"3","waves","FALSE","TRUE","FALSE","FALSE","Waves","","Double IPA","8.5","teku","8","19","Undertones of stonefruit and citrus, juicy hop finish. Blueberry and melon aroma. Hops: Columbus, El Dorado, Ekuanot, Citra, Mosaic, Simcoe. Naturally carbonated.","FALSE","TRUE"
 "4","remo","FALSE","TRUE","FALSE","FALSE","Remo","","Ultra Light Rice Ale","3.4","lager","5","","Light, citrus-forward summer crusher.","FALSE","FALSE"
 "5","iroh","FALSE","TRUE","FALSE","FALSE","Iroh","","Matcha Ale","4.2","teku","8","","Refreshing and malt forward, subtle matcha and citrus notes and floral aroma. Naturally Carbonated. Green presentation. ","FALSE","FALSE"
 "6","revive","FALSE","TRUE","FALSE","FALSE","Revive","","Sparkling Hop Water","4.8","lager","6","","Modern, hopped version of a traditional Finnish fermented-water beverage.","TRUE","TRUE"
