@@ -54,6 +54,12 @@ page_gen:
   debug: false
 
 - data: beer
+  template: barcode
+  dir: barcode
+  name_expr: record['variant'] || ""
+  debug: false
+
+- data: beer
   template: beer
   title: name
   name_expr: record['variant'] || ""

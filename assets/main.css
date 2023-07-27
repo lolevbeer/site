@@ -24,3 +24,6 @@ a {
   margin-top: 2em;
   max-width: 100%
 }
+#barcode text {
+  letter-spacing: 0;
+}
