@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>{{ page.first }} Contact</title>
+  <link rel="stylesheet" href="/assets/main.css">
+  <link href='https://fonts.googleapis.com/css?family=Poppins:200,300,400,700' rel='stylesheet' type='text/css'>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="apple-touch-icon" href="/assets/Lolev_W_no_text.png">
+  <script src='https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/barcodes/JsBarcode.ean-upc.min.js'></script>
+</head>
+
+<body>
+  <section class="barcode-wrapper">
+    <svg id="barcode"
+      jsbarcode-format="upc"
+      jsbarcode-value="{{ page.upc }}"
+      jsbarcode-textmargin="3"
+      jsbarcode-fontoptions="normal"
+      jsbarcode-background="transparent"
+      jsbarcode-font="Poppins"
+      jsbarcode-height="40"
+      jsbarcode-width="1">
+    </svg>
+    <div>
+      <button id="download" href="#">Download Barcode</button>
+    </div>
+    <script>
+      JsBarcode("#barcode").init();
+
+      var svgElement = document.getElementById('barcode');
+      var serializer = new XMLSerializer();
+      var svgString = serializer.serializeToString(svgElement);
+      var blob = new Blob([svgString], {type: "image/svg+xml"});
+      var url = URL.createObjectURL(blob);
+
+      var downloadBtn = document.getElementById('download');
+      downloadBtn.addEventListener('click', function() {
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = "{{ page.title }}-barcode.svg";
+        a.click();
+      });
+    </script>
+    <a href="/beer/{{ page.title | downcase }}">
+      <h3>{{ page.title }}</h3>
+      <span>{{ page.type }}</span>
+    </a>
+  </section>
+</body>
+</html>
