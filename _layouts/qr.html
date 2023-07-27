@@ -17,8 +17,8 @@
       const qrCode = new QRCodeStyling({
           type: "svg",
           data: "https://lolev.beer/beer/{{ page.title | downcase }}",
-          width: 350,
-          height: 350,
+          width: 50,
+          height: 50,
           dotsOptions: {
             color: "#000",
             type: "dots"
@@ -28,7 +28,7 @@
           },
           imageOptions: {
             crossOrigin: "anonymous",
-            margin: 20,
+            margin: 0,
             imageSize: 0.4,
             margin: 10,
           },
