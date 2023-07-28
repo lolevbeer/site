@@ -1,4 +1,5 @@
 variant,name,type,options,abv,glass,draftPrice,cans,description,upc,glutenFree,image
+1-onsite,Onsite I,Raspberry Smoothie Sour,,6.2,small-teku,$8,,Onsite I is the first of our pilot program. A raspberry fruited smoothie sour. No lactose added.,,FALSE,FALSE
 alma,Alma,Unfiltered Pilsner,,5.9,lager,$6,$12,"A radiant golden straw hue, with a robust all-malt foundation. A refreshing crispness is complemented by delicate floral and citrus notes that emerge in the finish.",850051366040,FALSE,TRUE
 array,Array,Pale Ale,,5.8,teku,$7,$15,"Pineapple and Citrus. Aroma of White wine and Lime Zest. Hops: BRU-1, Nelson Sauvin, Motueka, Pacific Sunrise.",860009737662,FALSE,TRUE
 brahms,Brahms,Vienna Lager,,4.7,lager,$6,$12,A gentle roast that harmonizes with a medium-bodied crispness. Delicately balanced by a mild herbal bitterness.,850051366057,FALSE,TRUE
@@ -9,9 +10,9 @@ dom,Dom,Kölsch,,5,lager,$6,$12,"Crisp ale with floral and pear notes, subtle gr
 elias,Elias,Cream Ale,,4.2,lager,$6,$12,"Refreshing and malt forward, subtle citrus notes and floral aroma. Naturally Carbonated.",860009737648,FALSE,TRUE
 flux,Flux,India Pale Ale,,7,teku,$7,$17,"Tropical flavors of bubble gum, pithy orange, papaya, blueberry, and dank citrus. Complex aromas of cannabis, grapefruit, stonefruit, and orange zest. Hops: Columbus, Simcoe, Mosaic, Ekuanot, Comet, Strata.",850051366064,FALSE,TRUE
 glyphs,Glyphs,Pale Ale,,5.4,teku,$7,$15,"Notes of tangerine, orange zest, and aromatic pine. Light bitterness.",860009737679,FALSE,TRUE
+iroh,Iroh,Matcha Ale,,4.2,teku,$8, ,"Refreshing and malt forward, subtle matcha and citrus notes and floral aroma. Naturally Carbonated. Green presentation. ",,FALSE,FALSE
 kimik,Kimik,Session IPA,,4.5,teku,$6,,"An easy drinking ale with heavy punch. With notes of heavy citrus, passion fruit, lychee, and a distinct guava aroma.",,FALSE,FALSE
 lupula,Lupula,India Pale Ale,,7,teku,$7,$17,"Ripe pineapple, mango, and ruby red grapefruit. Very aromatic. Hops: Riwaka, Moutere, Motueka, Comet, Cascade.",860009737617,FALSE,TRUE
-sonnen,Sonnen,Märzen,,5.4,lager,$7,$15,,850051366095,FALSE,FALSE
 marty,Marty,Matcha Ale,,4.4,teku,$6,,"Light Matcha-steeped, crisp ale.",,FALSE,FALSE
 melrose,Melrose,Scotch Ale,,6,lager,$6,$12,Smooth and malty with light caramel and dark fruit notes with subtle cherry aroma.,860009737655,FALSE,TRUE
 narada,Narada,West Coast IPA,,7.2,teku,$7,$17,"Dank citrus and pine notes. Hops: Amarillo, Columbus and Michigan Chinook.",860009737693,FALSE,TRUE
@@ -23,7 +24,8 @@ scylla,Scylla,Imperial Stout,,10.5,small-teku,$8,$19,Dark chocolate and toasted 
 sebastian,Sebastian,Bock,,6.7,lager,$5,$10,Refreshing and smooth with a kick. A Maibock brewed with 100% Pilsner malt and German and American Noble Hops.,860009737631,FALSE,TRUE
 secrets,Secrets,Double IPA,,7.8,teku,$8,,"Passionfruit, pine, apricot, and orange zest. Dank pine and blueberry aroma.",,FALSE,FALSE
 soleil,Soleil,Saison,,6.9,teku,$7,,"Dry orange, mimosa-esque. Floral notes and funky.",,FALSE,FALSE
+sonnen,Sonnen,Märzen,,5.4,lager,$7,$15,,850051366095,FALSE,FALSE
 terrini,Terrini,Grisette,,5,teku,$7,,"Grassy, floral, and pithy orange aromas. Notes of pear, candied orange, and lemongrass flavors. Slightly sweet finish.",,FALSE,FALSE
 tides,Tides,India Pale Ale,,7.2,teku,$7,$17,"Citrus with berry bubblegum flavors, earthy and dry passionfruit undertones. Blueberry and orange aroma. Hops: Columbus, Citra, Mosaic, and Simcoe.",860009737600,FALSE,TRUE
 waves,Waves,Double IPA,,8.5,teku,$8,$19,"Undertones of stonefruit and citrus, juicy hop finish. Blueberry and melon aroma. Hops: Columbus, El Dorado, Ekuanot, Citra, Mosaic, Simcoe. Naturally carbonated.",850051366033,FALSE,TRUE
-iroh,Iroh,Matcha Ale,,4.2,teku,$8, ,"Refreshing and malt forward, subtle matcha and citrus notes and floral aroma. Naturally Carbonated. Green presentation. ",,FALSE,FALSE
+terra,Terra,Saison,,7.5,teku,$7,,"Orange zest, marmalade, and grapefruit. Floral and slightly spicy with a hint of lemongrass.",,FALSE,FALSE
