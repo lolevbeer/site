@@ -1,7 +1,7 @@
 "tap","variant","singleCanAvailable","draftAvailable","cansAvailable","attention","name","options","type","abv","glass","draftPrice","cans","description","glutenFree","image"
 "1","dom","FALSE","TRUE","TRUE","FALSE","Dom","","Kölsch","5","lager","6","12","Crisp ale with floral and pear notes, subtle grapefruit zest aroma.","860009737624","FALSE"
 "2","demeter","FALSE","TRUE","FALSE","FALSE","Demeter","","Foeder-aged Barleywine","10.5","small-teku","9","","Aged in Missouri oak puncheons. Notes of candied orange and caramel undertones. Subtle aroma of vanilla.","850051366071","FALSE"
-"3","alma","FALSE","TRUE","FALSE","FALSE","Alma","","Unfiltered Pilsner","5.9","lager","6","12","A radiant golden straw hue, with a robust all-malt foundation. A refreshing crispness is complemented by delicate floral and citrus notes that emerge in the finish.","850051366040","FALSE"
+"3","array","FALSE","TRUE","TRUE","FALSE","Array","","Pale Ale","5.8","teku","6","15","Pineapple and Citrus. Aroma of White wine and Lime Zest. Hops: BRU-1, Nelson Sauvin, Motueka, Pacific Sunrise.","860009737662","FALSE"
 "4","elias","FALSE","TRUE","TRUE","FALSE","Elias","","Cream Ale","4.2","lager","6","12","Refreshing and malt forward, subtle citrus notes and floral aroma. Naturally Carbonated.","860009737648","FALSE"
 "5","iroh","FALSE","TRUE","FALSE","FALSE","Iroh","","Matcha Ale","4.2","teku","8","","Refreshing and malt forward, subtle matcha and citrus notes and floral aroma. Naturally Carbonated. Green presentation. ","","FALSE"
 "6","revive","FALSE","TRUE","FALSE","FALSE","Revive","","Sparkling Hop Water","4.8","lager","6","","Modern, hopped version of a traditional Finnish fermented-water beverage.","850051366088","TRUE"
