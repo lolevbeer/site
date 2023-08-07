@@ -3,10 +3,12 @@
   <p class="emoji-block">🌮🥪🍱🚚</p>
   <div class="food schedule" >
   {% assign currentWeek = site.time | date: "%W" %}
+  {% assign currentYear = site.time | date: "%Y" %}
   {% assign previousDate = '' %}
   {% for food in site.data.food %}
     {% assign postWeek = food.date | date: "%W" %}
-    {% if currentWeek == postWeek %}
+    {% assign postYear = food.date | date: "%Y" %}
+    {% if currentWeek == postWeek and currentYear == postYear %}
       {% if food.vendor != empty %}
         <span id="food-day-{{ food.date | date: '%w' }}" class="event" data-date="{{ food.date }}">
           {% if previousDate != food.date %}
