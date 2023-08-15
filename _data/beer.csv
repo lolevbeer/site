@@ -9,7 +9,7 @@ demeter,Demeter,Foeder-aged Barleywine,,10.5,small-teku,$9,,Aged in Missouri oak
 dom,Dom,Kölsch,,5,lager,$6,$12,"Crisp ale with floral and pear notes, subtle grapefruit zest aroma.",860009737624,FALSE,TRUE,5221229
 elias,Elias,Cream Ale,,4.2,lager,$6,$12,"Refreshing and malt forward, subtle citrus notes and floral aroma. Naturally Carbonated.",860009737648,FALSE,TRUE,5240800
 flux,Flux,India Pale Ale,,7,teku,$7,$17,"Tropical flavors of bubble gum, pithy orange, papaya, blueberry, and dank citrus. Complex aromas of cannabis, grapefruit, stonefruit, and orange zest. Hops: Columbus, Simcoe, Mosaic, Ekuanot, Comet, Strata.",850051366064,FALSE,TRUE,5371340
-glyphs,Glyphs,Pale Ale,,5.4,teku,$7,$15,"Notes of tangerine, orange zest, and aromatic pine. Light bitterness.",860009737679,FALSE,TRUE,5198026
+glyphs,Glyphs,Pale Ale,,5.5,teku,$7,$15,"Notes of tangerine, orange zest, and aromatic pine. Light bitterness.",860009737679,FALSE,TRUE,5198026
 iroh,Iroh,Matcha Ale,,4.2,teku,$8, ,"Refreshing and malt forward, subtle matcha and citrus notes and floral aroma. Naturally Carbonated. Green presentation. ",,FALSE,FALSE,5456132
 kimik,Kimik,Session IPA,,4.5,teku,$6,,"An easy drinking ale with heavy punch. With notes of heavy citrus, passion fruit, lychee, and a distinct guava aroma.",,FALSE,FALSE,
 lupula,Lupula,India Pale Ale,,7,teku,$7,$17,"Ripe pineapple, mango, and ruby red grapefruit. Very aromatic. Hops: Riwaka, Moutere, Motueka, Comet, Cascade.",860009737617,FALSE,TRUE,5370332
@@ -26,7 +26,7 @@ sebastian,Sebastian,Bock,,6.7,lager,$5,$10,Refreshing and smooth with a kick. A 
 secrets,Secrets,Double IPA,,7.8,teku,$8,,"Passionfruit, pine, apricot, and orange zest. Dank pine and blueberry aroma.",,FALSE,FALSE,5178870
 soleil,Soleil,Saison,,6.9,teku,$7,,"Dry orange, mimosa-esque. Floral notes and funky.",,FALSE,FALSE,
 sonnen,Sonnen,Märzen,,5.4,lager,$7,$15,"Radiant copper in color and features a plush tan head, a subtle sweetness of toasted malt, a sturdy herbal hop profile, and a balanced medium body.",850051366095,FALSE,TRUE,
-taupō,Taupō,India Pale Ale,,6.2,lager,$7,$15,,,FALSE,FALSE,
+taupō,Taupō,India Pale Ale,,6.2,teku,$7,$15,,850051366118,FALSE,FALSE,
 terra,Terra,Saison,,7.5,teku,$7,,"Orange zest, marmalade, and grapefruit. Floral and slightly spicy with a hint of lemongrass.",,FALSE,FALSE,4798044
 terrini,Terrini,Grisette,,5,teku,$7,,"Grassy, floral, and pithy orange aromas. Notes of pear, candied orange, and lemongrass flavors. Slightly sweet finish.",,FALSE,FALSE,
 tides,Tides,India Pale Ale,,7.2,teku,$7,$17,"Citrus with berry bubblegum flavors, earthy and dry passionfruit undertones. Blueberry and orange aroma. Hops: Columbus, Citra, Mosaic, and Simcoe.",860009737600,FALSE,TRUE,5142237
