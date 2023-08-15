@@ -19,13 +19,14 @@ narada,Narada,West Coast IPA,,7.2,teku,$7,$17,"Dank citrus and pine notes. Hops:
 pomona-cherry-raspberry,Pomona,Sour Ale,Cherry Raspberry,6.7,teku,$8,$18,Tart ale fruited with cherry and raspberry.,850051366002,FALSE,TRUE,5302647
 pomona-peach-mango,Pomona,Sour Ale,Peach Mango,6.7,teku,$8,$18,Tart ale fruited with mango and peach.,850051366019,FALSE,TRUE,5302649
 remo,Remo,Ultra Light Rice Ale,,3.4,lager,$5,,"Light, citrus-forward summer crusher.",,FALSE,FALSE,5385438
-revada,Revada,Strawberry & Blackberry Smoothie,,6,teku,$9,,,,FALSE,FALSE,
+revada,Revada,Strawberry & Blackberry Smoothie,,6,teku,$9,,,850051366101,FALSE,FALSE,
 revive,Revive,Sparkling Hop Water,,4.8,lager,$6,,"Modern, hopped version of a traditional Finnish fermented-water beverage.",850051366088,TRUE,TRUE,4876733
 scylla,Scylla,Imperial Stout,,10.5,small-teku,$8,$19,Dark chocolate and toasted caramel layered on a blackberry cola.,,FALSE,FALSE,5142310
 sebastian,Sebastian,Bock,,6.7,lager,$5,$10,Refreshing and smooth with a kick. A Maibock brewed with 100% Pilsner malt and German and American Noble Hops.,860009737631,FALSE,TRUE,5210316
 secrets,Secrets,Double IPA,,7.8,teku,$8,,"Passionfruit, pine, apricot, and orange zest. Dank pine and blueberry aroma.",,FALSE,FALSE,5178870
 soleil,Soleil,Saison,,6.9,teku,$7,,"Dry orange, mimosa-esque. Floral notes and funky.",,FALSE,FALSE,
 sonnen,Sonnen,Märzen,,5.4,lager,$7,$15,"Radiant copper in color and features a plush tan head, a subtle sweetness of toasted malt, a sturdy herbal hop profile, and a balanced medium body.",850051366095,FALSE,TRUE,
+taupō,Taupō,India Pale Ale,,6.2,lager,$7,$15,,,FALSE,FALSE,
 terra,Terra,Saison,,7.5,teku,$7,,"Orange zest, marmalade, and grapefruit. Floral and slightly spicy with a hint of lemongrass.",,FALSE,FALSE,4798044
 terrini,Terrini,Grisette,,5,teku,$7,,"Grassy, floral, and pithy orange aromas. Notes of pear, candied orange, and lemongrass flavors. Slightly sweet finish.",,FALSE,FALSE,
 tides,Tides,India Pale Ale,,7.2,teku,$7,$17,"Citrus with berry bubblegum flavors, earthy and dry passionfruit undertones. Blueberry and orange aroma. Hops: Columbus, Citra, Mosaic, and Simcoe.",860009737600,FALSE,TRUE,5142237
