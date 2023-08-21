@@ -1,14 +1,10 @@
 beer,half,halfStock,sixtel,sixtelStock,case,caseStock,retail,displayed,variant
 Array,$209,TRUE,$99,TRUE,$69,TRUE,$15,TRUE,array
-Narada,$225,FALSE,$109,TRUE,$77,TRUE,$18,TRUE,narada
 tides,$225,TRUE,$109,TRUE,$77,FALSE,$18,TRUE,tides
 lupula,$225,TRUE,$109,FALSE,$77,TRUE,$18,TRUE,lupula
+Narada,$225,FALSE,$109,TRUE,$77,TRUE,$18,TRUE,narada
 Taupō,$225,TRUE,$109,TRUE,$77,FALSE,$18,FALSE,taupō
-elias,$180,TRUE,$85,TRUE,$55,TRUE,$12,TRUE,elias
 waves,$265,FALSE,$119,FALSE,$87,TRUE,$21,TRUE,waves
-dom,$180,TRUE,$85,TRUE,$55,TRUE,$12,TRUE,dom
 sonnen,$200,TRUE,$99,TRUE,$69,TRUE,$15,TRUE,sonnen
-alma,$180,FALSE,$85,FALSE,$55,FALSE,$12,FALSE,alma
-bresa,$199,FALSE,$95,FALSE,$65,FALSE,$15,FALSE,bresa
-melrose,$180,FALSE,$85,FALSE,$55,FALSE,$12,FALSE,melrose
-glyphs,$209,FALSE,$99,FALSE,$69,FALSE,$15,FALSE,glyphs
+dom,$180,TRUE,$85,TRUE,$55,TRUE,$12,TRUE,dom
+elias,$180,FALSE,$85,FALSE,$55,TRUE,$12,TRUE,elias
