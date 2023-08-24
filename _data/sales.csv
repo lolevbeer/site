@@ -1,10 +1,12 @@
-beer,half,halfStock,sixtel,sixtelStock,case,caseStock,retail,displayed,variant
-Array,$209,TRUE,$99,TRUE,$69,TRUE,$15,TRUE,array
-Tides,$225,TRUE,$109,TRUE,$77,FALSE,$18,TRUE,tides
-Lupula,$225,TRUE,$109,FALSE,$77,TRUE,$18,TRUE,lupula
-Narada,$225,FALSE,$109,TRUE,$77,TRUE,$18,TRUE,narada
-Taupō,$225,TRUE,$109,TRUE,$77,FALSE,$18,FALSE,taupo
-Waves,$265,FALSE,$119,FALSE,$87,TRUE,$21,TRUE,waves
+beer,half,halfStock,sixtel,sixtelStock,case,caseStock,style,displayed,variant
+Array,$209,FALSE,$99,TRUE,$69,TRUE,pale ale,TRUE,array
+Glyphs,$207,TRUE,$103,TRUE,$73,TRUE,pale ale,TRUE,glyphs
+Tides,$225,TRUE,$109,TRUE,$77,TRUE,IPA,TRUE,tides
+Lupula,$225,FALSE,$109,FALSE,$77,TRUE,IPA,TRUE,lupula
+Narada,$225,FALSE,$109,TRUE,$77,TRUE,west coast IPA,TRUE,narada
+Taupō,$225,TRUE,$109,TRUE,$77,TRUE,IPA,TRUE,taupo
+Waves,$265,FALSE,$119,FALSE,$87,TRUE,Double IPA,TRUE,waves
+Demeter,$291,TRUE,$145,TRUE,$86,TRUE,,TRUE,demeter
 Sonnen,$200,TRUE,$99,TRUE,$69,TRUE,$15,TRUE,sonnen
 Dom,$180,FALSE,$85,TRUE,$55,TRUE,$12,TRUE,dom
 Elias,$180,FALSE,$85,FALSE,$55,TRUE,$12,TRUE,elias
