@@ -3,7 +3,7 @@ variant,name,type,options,abv,glass,draftPrice,cans,case,half,description,upc,gl
 alma,Alma,Unfiltered Pilsner,,5.9,lager,$6,$12,$65,$35,"A radiant golden straw hue, with a robust all-malt foundation. A refreshing crispness is complemented by delicate floral and citrus notes that emerge in the finish.",850051366040,FALSE,TRUE,5327606
 array,Array,Pale Ale,,5.8,teku,$6,$15,$80,$45,"Pineapple and citrus. Aroma of white wine and lime zest. Hops: BRU-1, Nelson Sauvin, Motueka, Pacific Sunrise.",860009737662,FALSE,TRUE,5142277
 brahms,Brahms,Vienna Lager,,4.7,lager,$6,$12,$65,$35,A gentle roast that harmonizes with a medium-bodied crispness. Delicately balanced by a mild herbal bitterness.,850051366057,FALSE,TRUE,5327589
-bresa,Bresa,Gose,,5.7,teku,$7,$17,$90,$50,"Tart ale with notes of lemon, lime, sea salt and coriander",850051366026,FALSE,TRUE,5302684
+bresa,Bresa,Gose,,5.7,teku,$7,$17,$90,$50,"Tart ale with notes of lemon, lime, sea salt and coriander.",850051366026,FALSE,TRUE,5302684
 carnyx,Carnyx,Dry Irish Stout,,4.2,lager,$5,$10,$55,$30,"Balanced richness, notes of coffee, and chocolate. A smooth, and creamy texture.",860009737686,FALSE,TRUE,5268842
 demeter,Demeter,Foeder-aged Barleywine,,10.5,small-teku,$9,$19,$105,$55,Aged in Missouri oak puncheons. Notes of candied orange and caramel undertones. Subtle aroma of vanilla.,850051366071,FALSE,TRUE,5385429
 dom,Dom,Kölsch,,5,lager,$6,$12,$65,$35,"Crisp ale with floral and pear notes, subtle grapefruit zest aroma.",860009737624,FALSE,TRUE,5221229
@@ -15,7 +15,7 @@ kimik,Kimik,Session IPA,,4.5,teku,$6,,,,"An easy drinking ale with heavy punch. 
 lupula,Lupula,India Pale Ale,,7,teku,$7,$17,$90,$50,"Ripe pineapple, mango, and ruby red grapefruit. Very aromatic. Hops: Riwaka, Moutere, Motueka, Comet, Cascade.",860009737617,FALSE,TRUE,5370332
 marty,Marty,Matcha Ale,,4.4,teku,$6,,,,"Light matcha-steeped, crisp ale.",,FALSE,FALSE,
 melrose,Melrose,Scotch Ale,,6,lager,$6,$12,$65,$35,Smooth and malty with light caramel and dark fruit notes with subtle cherry aroma.,860009737655,FALSE,TRUE,5276125
-narada,Narada,West Coast IPA,,7.2,teku,$7,$17,$90,$50,"Dank citrus and pine notes. Hops: Amarillo, Columbus and Michigan Chinook.",860009737693,FALSE,TRUE,5284973
+narada,Narada,West Coast IPA,,7.2,teku,$7,$17,$90,$50,"Dank citrus and pine notes. Hops: Amarillo, Centennial, Citra, Columbus and Michigan Chinook.",860009737693,FALSE,TRUE,5284973
 pomona-cherry-raspberry,Pomona,Sour Ale,Cherry Raspberry,6.7,teku,$8,$18,$95,$50,Tart ale fruited with cherry and raspberry.,850051366002,FALSE,TRUE,5302647
 pomona-peach-mango,Pomona,Sour Ale,Peach Mango,6.7,teku,$8,$18,$95,$50,Tart ale fruited with mango and peach.,850051366019,FALSE,TRUE,5302649
 remo,Remo,Ultra Light Rice Ale,,3.4,lager,$5,,,,"Light, citrus-forward summer crusher.",,FALSE,FALSE,5385438
@@ -27,7 +27,7 @@ secrets,Secrets,Double IPA,,7.8,teku,$8,,,,"Passionfruit, pine, apricot, and ora
 soleil,Soleil,Saison,,6.9,teku,$7,,,,"Dry orange, mimosa-esque. Floral notes and funky.",,FALSE,FALSE,
 sonnen,Sonnen,Märzen,,5.4,lager,$7,$15,$80,$45,"Radiant copper in color and features a plush tan head, a subtle sweetness of toasted malt, a sturdy herbal hop profile, and a balanced medium body.",850051366095,FALSE,TRUE,
 taupo,Taupō,India Pale Ale,,6.2,teku,$7,$17,$90,$50,"Vibrant notes of key lime, spanish cedar, and freshly zested orange. Presents a medium straw hue, crowned with a dense, meringue-like foam. Hops: Riwaka, Wakatu and Citra.",850051366118,FALSE,TRUE,
-terra,Terra,Saison,,7.5,teku,$7,,,,"Orange zest, marmalade, and grapefruit. Floral and slightly spicy with a hint of lemongrass.",,FALSE,FALSE,4798044
+terra,Terra,Saison,,7.5,teku,$7,,,,"Orange zest, marmalade, and grapefruit. Floral and slightly spicy with a hint of lemongrass. Hops: Wakatu and Motueka.",,FALSE,FALSE,4798044
 terrini,Terrini,Grisette,,5,teku,$7,,,,"Grassy, floral, and pithy orange aromas. Notes of pear, candied orange, and lemongrass flavors. Slightly sweet finish.",,FALSE,FALSE,
-tides,Tides,India Pale Ale,,7.2,teku,$7,$17,$90,$50,"Citrus with berry bubblegum flavors, earthy and dry passionfruit undertones. Blueberry and orange aroma. Hops: Columbus, Citra, Mosaic, and Simcoe.",860009737600,FALSE,TRUE,5142237
-waves,Waves,Double IPA,,8.5,teku,$8,$19,$105,$55,"Undertones of stonefruit and citrus, juicy hop finish. Blueberry and melon aroma. Hops: Columbus, El Dorado, Ekuanot, Citra, Mosaic, Simcoe. Naturally carbonated.",850051366033,FALSE,TRUE,5346907
+tides,Tides,India Pale Ale,,7.2,teku,$7,$17,$90,$50,"Citrus with berry bubblegum flavors, earthy and dry passionfruit undertones. Blueberry and orange aroma. Hops: El Dorado, Citra, Mosaic, and Simcoe.",860009737600,FALSE,TRUE,5142237
+waves,Waves,Double IPA,,8.5,teku,$8,$19,$105,$55,"Undertones of stonefruit and citrus, juicy hop finish. Blueberry and melon aroma. Hops: El Dorado, Ekuanot, Citra, Mosaic, Simcoe. Naturally carbonated.",850051366033,FALSE,TRUE,5346907
