@@ -1,7 +1,7 @@
 variant,name,type,options,abv,glass,draftPrice,cans,case,half,description,upc,glutenFree,image,untappd
 1-onsite,Onsite I,Raspberry Smoothie Sour,,6.2,small-teku,$8,,,,Onsite I is the first of our pilot program. A raspberry fruited smoothie sour. No lactose.,,FALSE,FALSE,5474677
 alma,Alma,Unfiltered Pilsner,,5.9,lager,$6,$12,$65,$35,"A radiant golden straw hue, with a robust all-malt foundation. A refreshing crispness is complemented by delicate floral and citrus notes that emerge in the finish.",850051366040,FALSE,TRUE,5327606
-array,Array,Pale Ale,,5.8,teku,$6,$15,$80,$45,"Pineapple and Citrus. Aroma of White wine and Lime Zest. Hops: BRU-1, Nelson Sauvin, Motueka, Pacific Sunrise.",860009737662,FALSE,TRUE,5142277
+array,Array,Pale Ale,,5.8,teku,$6,$15,$80,$45,"Pineapple and citrus. Aroma of white wine and lime zest. Hops: BRU-1, Nelson Sauvin, Motueka, Pacific Sunrise.",860009737662,FALSE,TRUE,5142277
 brahms,Brahms,Vienna Lager,,4.7,lager,$6,$12,$65,$35,A gentle roast that harmonizes with a medium-bodied crispness. Delicately balanced by a mild herbal bitterness.,850051366057,FALSE,TRUE,5327589
 bresa,Bresa,Gose,,5.7,teku,$7,$17,$90,$50,"Tart ale with notes of lemon, lime, sea salt and coriander",850051366026,FALSE,TRUE,5302684
 carnyx,Carnyx,Dry Irish Stout,,4.2,lager,$5,$10,$55,$30,"Balanced richness, notes of coffee, and chocolate. A smooth, and creamy texture.",860009737686,FALSE,TRUE,5268842
@@ -13,7 +13,7 @@ glyphs,Glyphs,Pale Ale,,5.5,teku,$7,$15,$80,$45,"Notes of tangerine, orange zest
 iroh,Iroh,Matcha Ale,,4.2,teku,$8,,,,"Refreshing and malt forward, subtle matcha and citrus notes and floral aroma. Naturally Carbonated. Green presentation. ",,FALSE,FALSE,5456132
 kimik,Kimik,Session IPA,,4.5,teku,$6,,,,"An easy drinking ale with heavy punch. With notes of heavy citrus, passion fruit, lychee, and a distinct guava aroma.",,FALSE,FALSE,
 lupula,Lupula,India Pale Ale,,7,teku,$7,$17,$90,$50,"Ripe pineapple, mango, and ruby red grapefruit. Very aromatic. Hops: Riwaka, Moutere, Motueka, Comet, Cascade.",860009737617,FALSE,TRUE,5370332
-marty,Marty,Matcha Ale,,4.4,teku,$6,,,,"Light Matcha-steeped, crisp ale.",,FALSE,FALSE,
+marty,Marty,Matcha Ale,,4.4,teku,$6,,,,"Light matcha-steeped, crisp ale.",,FALSE,FALSE,
 melrose,Melrose,Scotch Ale,,6,lager,$6,$12,$65,$35,Smooth and malty with light caramel and dark fruit notes with subtle cherry aroma.,860009737655,FALSE,TRUE,5276125
 narada,Narada,West Coast IPA,,7.2,teku,$7,$17,$90,$50,"Dank citrus and pine notes. Hops: Amarillo, Columbus and Michigan Chinook.",860009737693,FALSE,TRUE,5284973
 pomona-cherry-raspberry,Pomona,Sour Ale,Cherry Raspberry,6.7,teku,$8,$18,$95,$50,Tart ale fruited with cherry and raspberry.,850051366002,FALSE,TRUE,5302647
