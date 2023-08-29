@@ -2,7 +2,6 @@ beer,half,halfStock,sixtel,sixtelStock,case,caseStock,style,displayed,variant
 Array,$209,FALSE,$99,TRUE,$69,TRUE,pale ale,TRUE,array
 Glyphs,$207,TRUE,$103,TRUE,$73,TRUE,pale ale,TRUE,glyphs
 Tides,$225,TRUE,$109,TRUE,$77,TRUE,IPA,TRUE,tides
-Lupula,$225,FALSE,$109,FALSE,$77,TRUE,IPA,TRUE,lupula
 Taupō,$233,TRUE,$116,TRUE,$79,TRUE,IPA,TRUE,taupo
 Narada,$225,FALSE,$109,TRUE,$77,TRUE,west coast IPA,TRUE,narada
 Waves,$265,FALSE,$119,FALSE,$87,TRUE,double IPA,TRUE,waves
