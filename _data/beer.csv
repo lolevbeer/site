@@ -25,7 +25,7 @@ scylla,Scylla,Imperial Stout,,10.5,small-teku,$8,$19,$105,$55,Dark chocolate and
 sebastian,Sebastian,Bock,,6.7,lager,$5,$10,$55,$30,A Maibock brewed with 100% Pilsner malt and German and American Noble Hops.,860009737631,FALSE,TRUE,5210316
 secrets,Secrets,Double IPA,,7.8,teku,$8,,,,"Passionfruit, pine, apricot, and orange zest. Dank pine and blueberry aroma.",,FALSE,FALSE,5178870
 soleil,Soleil,Saison,,6.9,teku,$7,,,,"Dry orange, mimosa-esque. Floral notes and funky.",,FALSE,FALSE,
-sonnen,Sonnen,Märzen,,5.4,lager,$7,$15,$80,$45,"Plush tan head, a subtle sweetness of toasted malt, medium body.",850051366095,FALSE,TRUE,
+sonnen,Sonnen,Märzen,oktoberfest,5.4,lager,$7,$15,$80,$45,"Plush tan head, a subtle sweetness of toasted malt, medium body.",850051366095,FALSE,TRUE,
 taupo,Taupō,India Pale Ale,,6.2,teku,$7,$17,$90,$50,"Key lime, spanish cedar, and freshly zested orange. Medium straw hue, meringue-like foam. Hops: Riwaka, Wakatu and Citra.",850051366118,FALSE,TRUE,
 terra,Terra,Saison,,7.5,teku,$7,,,,"Orange zest, marmalade, and grapefruit. Floral and spicy. Hops: Wakatu and Motueka.",,FALSE,FALSE,4798044
 terrini,Terrini,Grisette,,5,teku,$7,,,,"Grassy, floral, and pithy orange aromas. Notes of pear, candied orange, and lemongrass flavors. Slightly sweet finish.",,FALSE,FALSE,
