@@ -1,10 +1,10 @@
 beer,half,halfStock,sixtel,sixtelStock,case,caseStock,style,displayed,variant
-Array,$209,FALSE,$99,TRUE,$69,TRUE,pale ale,TRUE,array
-Glyphs,$207,TRUE,$103,TRUE,$73,TRUE,pale ale,TRUE,glyphs
+Sonnen,$200,TRUE,$99,TRUE,$69,TRUE,märzen lager,TRUE,sonnen
 Tides,$240,TRUE,$120,TRUE,$84,TRUE,IPA,TRUE,tides
 Taupō,$233,TRUE,$116,TRUE,$79,TRUE,IPA,TRUE,taupo
 Waves,$265,FALSE,$119,FALSE,$87,TRUE,double IPA,TRUE,waves
-Demeter,$291,TRUE,$145,TRUE,$86,TRUE,barley wine,TRUE,demeter
-Sonnen,$200,TRUE,$99,TRUE,$69,TRUE,märzen lager,TRUE,sonnen
+Array,$209,FALSE,$99,TRUE,$69,TRUE,pale ale,TRUE,array
+Glyphs,$207,TRUE,$103,TRUE,$73,TRUE,pale ale,TRUE,glyphs
 Dom,$180,FALSE,$85,TRUE,$55,TRUE,kölsch,TRUE,dom
-Elias,$180,FALSE,$85,FALSE,$55,TRUE,cream ale,TRUE,elias
+Elias,$180,TRUE,$85,TRUE,$55,TRUE,cream ale,TRUE,elias
+Demeter,$291,TRUE,$145,TRUE,$86,FALSE,barley wine,TRUE,demeter
