@@ -9,10 +9,9 @@ Click beer names for more info.
   <thead>
     <tr>
       <th>Beer</th>
-      <th>1/2 Keg</th>
-      <th>1/6 Keg</th>
+      <th>Half</th>
+      <th>Sixtel</th>
       <th>Case</th>
-      <th title="Suggested Retail Price">Sugg.</th>
     </tr>
   </thead>
   <tbody>
@@ -32,7 +31,6 @@ Click beer names for more info.
           {% if item.caseStock == 'TRUE' %}{{item.case}}
           {% else %}<s>{{item.case}}</s>{% endif %}
         </td>
-        <td>{{item.retail}}</td>
       </tr>
     {% endif %}
   {% endfor %}
