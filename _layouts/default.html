@@ -1,24 +1,21 @@
 {% include header.html %}
 <main>
-  <section class="stacked" id="slide-one">
+  <section class="{{ page.class | default: "stacked" }}" id="slide-one">
     <h1>{{ page.title}}</h1>
     {{ content }}
   </section>
-  {% if page.url == "/" %}
-    {% include beers.html %}
-    {% include coming.html %}
-    {% include food.html %}
-    {% comment %}
-      {% include music.html %}
-    {% endcomment %}
-    {% include events.html %}
-    {% for section in site.sections %}
-      <section class="stacked" id="{{ section.title | downcase }}">
-        <h2>{{ section.title }}</h2>
-        {{ section.content }}
-      </section>
-    {% endfor %}
-  {% endif %}
+{% if page.url == "/" %}
+  {% include beers.html %}
+  {% include coming.html %}
+  {% include food.html %}
+  {% include events.html %}
+{% for section in site.sections %}
+  <section class="{{ section.class | default: "stacked" }}" id="{{ section.title | downcase }}">
+    <h2>{{ section.title }}</h2>
+    {{ section.content }}
+  </section>
+{% endfor %}
+{% endif %}
   {% include newsletter.html %}
   {% include lastslide.html %}
 </main>

@@ -141,17 +141,15 @@ slider
     display: block
 
 .stacked
-  & > *
+  & > *:not(#find-lolev)
     max-width: 600px
   & > p
     text-align: center
-
 section
   img
     max-width: 500px
     width: 100%
   align-items: center
-  display: flex
   justify-content: center
   padding: 6em 0
   scroll-snap-align: start
@@ -331,6 +329,7 @@ section
   text-transform: uppercase
 
 table
+  margin: 0 auto
   text-align: left
 th,
 td
@@ -377,6 +376,7 @@ iframe
   margin: 1.2em
 
 .stacked
+  display: flex
   flex-direction: column
   flex-wrap: wrap
   @media screen and (width: 700px)
@@ -397,6 +397,7 @@ iframe
   border-bottom: none
 
 .columns
+  display: flex
   flex-wrap: wrap
   justify-content: space-evenly
   row-gap: 10px
@@ -423,7 +424,6 @@ iframe
 
 .charts
   max-height: 30%
-
 
 .btn
   background: black
@@ -491,6 +491,39 @@ footer *
     .right
       float: right
       padding-left: 1em
+#find-lolev
+  width: 100% !important
+
+@media only screen and (max-width: 760px)
+  .block
+    height: auto !important
+  table
+    display: block
+    margin: 0 auto
+    max-width: 600px
+    text-align: center
+  table,
+  thead,
+  tbody,
+  th,
+  td,
+  tr
+    display: block
+  thead tr
+    position: absolute
+    top: -9999px
+    left: -9999px
+  td
+ 		position: relative
+  td:before
+ 		top: 6px
+ 		left: 6px
+ 		width: 45%
+ 		padding-right: 10px
+ 		white-space: nowrap
+ 		content: attr(data-column)
+ 		color: #000
+ 		font-weight: bold
 
 @media only screen and (max-width: 741px)
   main
@@ -511,14 +544,11 @@ footer *
     padding: 1em 2em
   .schedule
     letter-spacing: 0
-  #find-lolev
-    width: 100% !important
 
 @media only screen and (max-width: 700px)
   #beers-info p,
   .schedule
     font-size: small
-
 
 .scroll-animate
   animation: MoveUpDown 1.5s ease-in infinite
@@ -526,10 +556,8 @@ footer *
   opacity: .3
   position: absolute
 
-
 @keyframes MoveUpDown
   0%, 100%
     bottom: 100px
-
   5%
     bottom: 115px
