@@ -1,10 +1,10 @@
-variant,displayed,half,halfStock,sixtel,sixtelStock,case,caseStock,style,beer
-sonnen,TRUE,$200,TRUE,$99,TRUE,$69,TRUE,Märzen,Sonnen
-tides,TRUE,$240,TRUE,$120,TRUE,$84,TRUE,India Pale Ale,Tides
-taupo,TRUE,$233,TRUE,$116,TRUE,$79,TRUE,India Pale Ale,Taupō
-waves,TRUE,$265,FALSE,$119,FALSE,$87,TRUE,Double IPA,Waves
-array,TRUE,$209,FALSE,$99,TRUE,$69,TRUE,Pale Ale,Array
-glyphs,TRUE,$207,TRUE,$103,TRUE,$73,TRUE,Pale Ale,Glyphs
-elias,TRUE,$180,TRUE,$85,TRUE,$55,TRUE,Cream Ale,Elias
-dom,TRUE,$180,FALSE,$85,FALSE,$55,TRUE,Kölsch,Dom
-demeter,TRUE,$291,TRUE,$145,TRUE,$86,FALSE,Foeder-aged Barleywine,Demeter
+variant,displayed,half,halfStock,sixtel,sixtelStock,case,caseStock,beer,style
+sonnen,TRUE,$200,TRUE,$99,TRUE,$69,TRUE,Sonnen,Märzen
+tides,TRUE,$240,TRUE,$120,TRUE,$84,TRUE,Tides,India Pale Ale
+taupo,TRUE,$233,TRUE,$116,TRUE,$79,TRUE,Taupō,India Pale Ale
+waves,TRUE,$265,FALSE,$119,FALSE,$87,TRUE,Waves,Double IPA
+array,TRUE,$209,FALSE,$99,TRUE,$69,TRUE,Array,Pale Ale
+glyphs,TRUE,$207,TRUE,$103,TRUE,$73,TRUE,Glyphs,Pale Ale
+elias,TRUE,$180,TRUE,$85,TRUE,$55,TRUE,Elias,Cream Ale
+dom,TRUE,$180,FALSE,$85,FALSE,$55,TRUE,Dom,Kölsch
+demeter,TRUE,$291,TRUE,$145,TRUE,$86,FALSE,Demeter,Foeder-aged Barleywine
