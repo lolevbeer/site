@@ -329,6 +329,8 @@ section
   text-transform: uppercase
 
 table
+  font-size: 1.5em
+  line-height: 1.5em
   margin: 0 auto
   text-align: left
 th,
@@ -338,8 +340,14 @@ td:first-child
   background: transparent
 tbody
   tr
-    &:nth-child(odd)
-      background: #00000025
+    padding: 1em 0
+    &:nth-child(odd) td
+      // background: #00000025
+      &:nth-child(odd)
+        background: #00000025
+    &:nth-child(even) td
+      &:nth-child(even)
+        background: #00000025
       a
         cursor: pointer
 
