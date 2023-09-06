@@ -31,12 +31,12 @@ Click beer names for more info.
         <td data-column="Half">
           {% if item.halfStock == 'TRUE' %}
             {{item.half}}
-          {% else %}<s>{{item.case}}</s>{% endif %}
+          {% else %}<s>{{item.half}}</s>{% endif %}
         </td>
         <td data-column="Sixtel">
           {% if item.sixtelStock == 'TRUE' %}
             {{item.sixtel}}
-          {% else %}<s>{{item.case}}</s>{% endif %}
+          {% else %}<s>{{item.sixtel}}</s>{% endif %}
         </td>
         <td data-column="Case">
           {% if item.caseStock == 'TRUE' %}
