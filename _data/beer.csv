@@ -5,7 +5,7 @@ array,Array,Pale Ale,,5.8,teku,$6,$15,$80,$45,"Pineapple and citrus. White grape
 brahms,Brahms,Vienna Lager,,4.7,lager,$6,$12,$65,$35,A gentle roast that harmonizes with a medium-bodied crispness. Delicately balanced by a mild herbal bitterness.,850051366057,FALSE,TRUE,5327589
 bresa,Bresa,Gose,,5.7,teku,$7,$17,$90,$50,"Tart ale with notes of lemon, lime, sea salt and coriander.",850051366026,FALSE,TRUE,5302684
 carnyx,Carnyx,Dry Irish Stout,,4.2,lager,$5,$10,$55,$30,"Balanced richness, notes of coffee, and chocolate. A smooth, and creamy texture.",860009737686,FALSE,TRUE,5268842
-demeter,Demeter,Foeder-aged Barleywine,,10.5,small-teku,$9,$19,$105,$55,"Cognac, candied orange, and caramel.",850051366071,FALSE,TRUE,5385429
+demeter,Demeter,Barleywine,,10.5,small-teku,$9,$19,$105,$55,"Cognac, candied orange, and caramel.",850051366071,FALSE,TRUE,5385429
 dom,Dom,Kölsch,,5,lager,$6,$12,$65,$35,"Crisp ale with floral and pear notes, subtle grapefruit zest aroma.",860009737624,FALSE,TRUE,5221229
 elias,Elias,Cream Ale,,4.2,lager,$6,$12,$65,$35,"Smooth, subtle citrus notes and floral aroma.",860009737648,FALSE,TRUE,5240800
 flux,Flux,India Pale Ale,,7,teku,$7,$17,$90,$50,"Bubble gum, papaya, blueberry, and dank citrus. Aromas of cannabis, grapefruit, stonefruit, and orange zest. Hops: Columbus, Simcoe, Mosaic, Ekuanot, Comet, Strata.",850051366064,FALSE,TRUE,5371340
@@ -19,7 +19,7 @@ narada,Narada,West Coast IPA,,7.2,teku,$7,$17,$90,$50,"Dank citrus and pine note
 pomona-cherry-raspberry,Pomona,Sour Ale,Cherry Raspberry,6.7,teku,$8,$18,$95,$50,Tart ale fruited with cherry and raspberry.,850051366002,FALSE,TRUE,5302647
 pomona-peach-mango,Pomona,Sour Ale,Peach Mango,6.7,teku,$8,$18,$95,$50,Tart ale fruited with mango and peach.,850051366019,FALSE,TRUE,5302649
 remo,Remo,Ultra Light Rice Ale,,3.4,lager,$5,,,,"Light, citrus-forward summer crusher.",,FALSE,FALSE,5385438
-revada,Revada,Strawberry with Blueberry & Hibiscus Smoothie Sour,,6,teku,$9,,,,"Thicc and tart, berry medley, bright. Vibrant pink and full bodied.",850051366101,FALSE,FALSE,
+revada,Revada,Smoothie Sour,,6,teku,$9,,,,"Strawberry with Blueberry & Hibiscus. Thicc and tart, bright. Vibrant pink and full bodied.",850051366101,FALSE,FALSE,
 revive,Revive,Sparkling Hop Water,,4.8,lager,$6,,,,"Modern, hopped version of a traditional Finnish fermented-water beverage.",850051366088,TRUE,TRUE,4876733
 scylla,Scylla,Imperial Stout,,10.5,small-teku,$8,$19,$105,$55,Dark chocolate and toasted caramel layered on blackberry cola.,,FALSE,FALSE,5142310
 sebastian,Sebastian,Bock,,6.7,lager,$5,$10,$55,$30,A Maibock brewed with 100% Pilsner malt and German and American Noble Hops.,860009737631,FALSE,TRUE,5210316
