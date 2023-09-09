@@ -1,5 +1,5 @@
 variant,displayed,caseStock,sixtelStock,halfStock,case,sixtel,half,beer,style
-sonnen,TRUE,TRUE,TRUE,TRUE,$69,$99,$200,Sonnen,Märzen
+sonnen,TRUE,TRUE,TRUE,FALSE,$69,$99,$200,Sonnen,Märzen
 elias,TRUE,TRUE,TRUE,TRUE,$55,$85,$180,Elias,Cream Ale
 dom,TRUE,TRUE,FALSE,FALSE,$55,$85,$180,Dom,Kölsch
 array,TRUE,TRUE,TRUE,FALSE,$69,$99,$209,Array,Pale Ale
