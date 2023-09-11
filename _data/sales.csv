@@ -8,4 +8,4 @@ taupo,TRUE,TRUE,TRUE,TRUE,$79,$116,$233,Taupō,India Pale Ale
 tides,TRUE,TRUE,TRUE,TRUE,$84,$120,$240,Tides,India Pale Ale
 waves,TRUE,TRUE,FALSE,FALSE,$87,$119,$265,Waves,Double IPA
 demeter,TRUE,TRUE,TRUE,TRUE,$86,$145,$291,Demeter,Barleywine
-revada,TRUE,TRUE,TRUE,TRUE,$86,$145,$291,Revada,Smoothie Sour
+revada,TRUE,TRUE,FALSE,FALSE,$110,,,Revada,Smoothie Sour
