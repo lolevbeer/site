@@ -1,11 +1,11 @@
 variant,displayed,caseStock,sixtelStock,halfStock,case,sixtel,half,beer,style
-sonnen,TRUE,TRUE,TRUE,FALSE,$69,$99,$200,Sonnen,Märzen
-elias,TRUE,TRUE,TRUE,TRUE,$55,$85,$180,Elias,Cream Ale
-dom,TRUE,TRUE,FALSE,FALSE,$55,$85,$180,Dom,Kölsch
-array,TRUE,TRUE,TRUE,FALSE,$69,$99,$209,Array,Pale Ale
-glyphs,TRUE,TRUE,TRUE,TRUE,$73,$103,$207,Glyphs,Pale Ale
-taupo,TRUE,TRUE,TRUE,TRUE,$79,$116,$233,Taupō,India Pale Ale
-tides,TRUE,TRUE,TRUE,TRUE,$84,$120,$240,Tides,India Pale Ale
-waves,TRUE,TRUE,FALSE,FALSE,$87,$119,$265,Waves,Double IPA
-demeter,TRUE,TRUE,TRUE,TRUE,$86,$145,$291,Demeter,Barleywine
-revada,TRUE,TRUE,FALSE,FALSE,$110,,,Revada,Smoothie Sour
+sonnen,TRUE,TRUE,TRUE,FALSE,$75,$99,$200,Sonnen,Märzen
+elias,TRUE,TRUE,TRUE,TRUE,$65,$90,$180,Elias,Cream Ale
+dom,TRUE,TRUE,FALSE,FALSE,$65,$90,$180,Dom,Kölsch
+array,TRUE,TRUE,TRUE,FALSE,$75,$103,$220,Array,Pale Ale
+glyphs,TRUE,TRUE,TRUE,TRUE,$75,$103,$220,Glyphs,Pale Ale
+taupo,TRUE,TRUE,TRUE,TRUE,$84,$110,$235,Taupō,India Pale Ale
+tides,TRUE,TRUE,TRUE,TRUE,$90,$130,$270,Tides,India Pale Ale
+waves,TRUE,TRUE,FALSE,FALSE,$95,$119,,Waves,Double IPA
+demeter,TRUE,TRUE,TRUE,TRUE,$85,$145,$235,Demeter,Barleywine
+revada,TRUE,TRUE,FALSE,TRUE,$110,$170,$400,Revada,Smoothie Sour
