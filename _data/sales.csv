@@ -2,10 +2,10 @@ variant,displayed,caseStock,sixtelStock,halfStock,case,sixtel,half,beer,style
 sonnen,TRUE,TRUE,TRUE,FALSE,$75,$99,$200,Sonnen,Märzen
 elias,TRUE,TRUE,TRUE,TRUE,$65,$90,$180,Elias,Cream Ale
 dom,TRUE,TRUE,FALSE,FALSE,$65,$90,$180,Dom,Kölsch
-array,TRUE,TRUE,TRUE,FALSE,$75,$103,$220,Array,Pale Ale
-glyphs,TRUE,TRUE,TRUE,TRUE,$75,$103,$220,Glyphs,Pale Ale
-taupo,TRUE,TRUE,TRUE,TRUE,$84,$110,$235,Taupō,India Pale Ale
-tides,TRUE,TRUE,TRUE,TRUE,$90,$130,$270,Tides,India Pale Ale
+array,TRUE,TRUE,TRUE,FALSE,$75,$110,$220,Array,Pale Ale
+glyphs,TRUE,TRUE,TRUE,TRUE,$75,$110,$220,Glyphs,Pale Ale
+taupo,TRUE,TRUE,TRUE,TRUE,$84,$120,$240,Taupō,India Pale Ale
+tides,TRUE,TRUE,TRUE,TRUE,$90,$135,$270,Tides,India Pale Ale
 waves,TRUE,TRUE,FALSE,FALSE,$95,$119,,Waves,Double IPA
-demeter,TRUE,TRUE,TRUE,TRUE,$85,$145,$235,Demeter,Barleywine
-revada,TRUE,TRUE,FALSE,FALSE,$110,$170,$400,Revada,Smoothie Sour
+demeter,TRUE,TRUE,TRUE,TRUE,$85,$146,$291,Demeter,Barleywine
+revada,TRUE,TRUE,FALSE,FALSE,$111,$170,$400,Revada,Smoothie Sour
