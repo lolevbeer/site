@@ -1,17 +1,17 @@
-product,halfs,sixtels,cases,tank,upc
-Array,,4,18,,860009737662
-Carnyx,,,11,,860009737686
-Demeter,,,39,,850051366071
-Dom,,,24,,860009737624
-Demeter,,,39,8.2BBL,850051366071
-Elias,,,76,14.3BBL,860009737648
-Glyphs,1,,49,10.4BBL,860009737679
-Iroh,3,,,,
-Lupula,,,,20.0BBL,860009737617
-Revada,,,40,14.4BBL,850051366101
-Sonnen,,,11,8.0BBL,850051366095
-Taupō,,,57,4.5BBL,850051366118
-Terra,1,1,,16.5BBL,
-Tides,3,3,48,,860009737600
-Waves,,,47,,850051366033
-Zama,,,,20.0BBL,850051366125
+product,halfs,sixtels,cases,tank,upc,style,variant
+Array,,4,18,,860009737662,Pale Ale,array
+Carnyx,,,11,,860009737686,Dry Irish Stout,carnyx
+Demeter,,,39,,850051366071,Barleywine,demeter
+Dom,,,24,,860009737624,Kölsch,dom
+Demeter,,,39,8.2BBL,850051366071,Barleywine,demeter
+Elias,,,76,14.3BBL,860009737648,Cream Ale,elias
+Glyphs,1,,49,10.4BBL,860009737679,Pale Ale,glyphs
+Iroh,3,,,,,Matcha Ale,iroh
+Lupula,,,,20.0BBL,860009737617,India Pale Ale,lupula
+Revada,,,40,14.4BBL,850051366101,Smoothie Sour,revada
+Sonnen,,,11,8.0BBL,850051366095,Märzen,sonnen
+taupo,,,57,4.5BBL,850051366118,India Pale Ale,taupo
+Terra,1,1,,16.5BBL,,Saison,terra
+Tides,3,3,48,,860009737600,India Pale Ale,tides
+Waves,,,47,,850051366033,Double IPA,waves
+Zama,,,,20.0BBL,850051366125,India Pale Ale,zama
