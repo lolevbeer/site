@@ -25,7 +25,6 @@ jobs:
           wget -O sales.csv ${{ secrets.SALES_GSHEET }}
           wget -O events.csv ${{ secrets.EVENTS_GSHEET }}
           wget -O coming.csv ${{ secrets.COMING_GSHEET }}
-          wget -O wholesale.csv ${{ vars.WHOLESALE }}
           wget -O inventory.csv ${{ vars.INVENTORY }}
           git config --local user.email "lolevbeer@gmail.com"
           git config --local user.name "Lolev Manager"
