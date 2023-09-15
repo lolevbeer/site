@@ -10,10 +10,11 @@ Click beer names for more info.
   <thead>
     <tr>
       <th>Beer</th>
-      <th>Style</th>
-      <th>Half</th>
-      <th>Sixtel</th>
-      <th>Case</th>
+      <th>Halfs</th>
+      <th>Sixtels</th>
+      <th>Cases</th>
+      <th>Tank</th>
+      <th>UPC</th>
     </tr>
   </thead>
   <tbody>
@@ -21,27 +22,32 @@ Click beer names for more info.
     {% if item.displayed == 'TRUE' %}
       <tr>
         <td class="name">
-          <a class="btn" href="/beer/{{item.variant}}">{{item.beer}}</a>
+          {{item.beer}}
         </td>
-        <td>
-          {% if item.style %}
-            {{item.style}}
+        <td data-column="Halfs">
+          {% if item.halfs %}
+            {{item.halfs}}
           {% endif %}
         </td>
-        <td data-column="Half">
-          {% if item.halfStock == 'TRUE' %}
-            {{item.half}}
-          {% else %}<s>{{item.half}}</s>{% endif %}
+        <td data-column="Sixtels">
+          {% if item.sixtels %}
+            {{item.sixtels}}
+          {% endif %}
         </td>
-        <td data-column="Sixtel">
-          {% if item.sixtelStock == 'TRUE' %}
-            {{item.sixtel}}
-          {% else %}<s>{{item.sixtel}}</s>{% endif %}
+        <td data-column="Cases">
+          {% if item.cases %}
+            {{item.cases}}
+          {% endif %}
         </td>
-        <td data-column="Case">
-          {% if item.caseStock == 'TRUE' %}
-            {{item.case}}
-          {% else %}<s>{{item.case}}</s>{% endif %}
+        <td data-column="Tank">
+          {% if item.tank %}
+            {{item.tank}}
+          {% endif %}
+        </td>
+        <td data-column="UPC">
+          {% if item.upc %}
+            {{item.upc}}
+          {% endif %}
         </td>
       </tr>
     {% endif %}
