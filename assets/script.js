@@ -1,7 +1,7 @@
-let items = document.querySelectorAll("section, main");
-for (let i = 0; i < items.length; i++) {
-  items[i].style.background = randomColor({ luminosity: "light" });
-}
+// let items = document.querySelectorAll("section, main");
+// for (let i = 0; i < items.length; i++) {
+//   items[i].style.background = randomColor({ luminosity: "light" });
+// }
 
 function scrollHandlerY(e) {
   let atSnappingPoint = e.target.scrollTop % e.target.offsetHeight === 0;
