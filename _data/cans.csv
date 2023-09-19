@@ -6,7 +6,7 @@ array,TRUE,Array,,Pale Ale,5.8,teku,7,15,80,45,"Pineapple and citrus. White grap
 taupo,TRUE,Taupō,,India Pale Ale,6.2,teku,8,19,105,55,"Key lime, spanish cedar, and freshly zested orange. Medium straw hue, meringue-like foam.   Riwaka, Wakatu, Citra",850051366118,FALSE,TRUE,
 dom,TRUE,Dom,,Kölsch,5,lager,6,15,80,45,"Crisp ale with floral and pear notes, subtle grapefruit zest aroma.",860009737624,FALSE,TRUE,5221229
 tides,TRUE,Tides,,India Pale Ale,7.2,teku,8,20,110,55,"Citrus, passionfruit and canaloupe. Blueberry aroma.   El Dorado, Simcoe",860009737600,FALSE,TRUE,5142237
-revada,TRUE,Revada,,Smoothie Sour,6,small-teku,9,25,135,70,Strawberry with blueberry & hibiscus. Thicc and tart. Vibrant pink and full bodied.,850051366101,FALSE,TRUE,
+revada,TRUE,Revada,,Smoothie Sour,6,small-teku,9,25,135,70,"Conditioned on strawberries, blueberries & hibiscus. Thicc and tart. Vibrant pink and full bodied.",850051366101,FALSE,TRUE,
 waves,TRUE,Waves,,Double IPA,8.5,teku,9,19,105,55,"Stonefruit and citrus, juicy finish. Blueberry and melon aroma.   El Dorado, Ekuanot, Citra, Mosaic, Simcoe",850051366033,FALSE,TRUE,5346907
 elias,TRUE,Elias,,Cream Ale,4.2,lager,6,15,80,45,"Smooth, subtle citrus notes and floral aroma.",860009737648,FALSE,TRUE,5240800
 ,FALSE,,,,,,,,,,,,,,
