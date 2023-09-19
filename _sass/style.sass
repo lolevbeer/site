@@ -11,12 +11,14 @@ $rounding: .5em
     width: 80px
 
 .social
-  margin: 1em 1em 0
+  margin: 0 1em
   position: absolute
   right: 0
   top: 0
+  z-index: 2
   a
     display: block
+
 
 .emoji-block
   font-size: 35px
@@ -37,6 +39,18 @@ section
   section
     height: var(--app-height)
 
+.dots
+  cursor: pointer
+  padding: 30px 0
+  width: 48px
+.dot
+  background: black
+  border-radius: 50%
+  height: 5px
+  margin: 4px auto
+  text-align: center
+  width: 5px
+
 main
   overflow: auto
   scroll-snap-type: y proximity
@@ -49,25 +63,11 @@ main
       margin: 0 auto
       position: absolute
       text-align: center
-      top: 10px
-      z-index: 1
-  &>section
-    &:first-child:before
-      content: ''
-    &:last-child:after
-      content: ''
-    &:before
-      content: url(../images/up.svg)
-      top: 60px
-      transition: filter .7s ease
-      .dark &
-        filter: invert(1)
-    &:after
-      content: url(../images/down.svg)
-      bottom: 30px
-    &:after,
-    &:before
-      z-index: 1
+      top: 100px
+
+.beer-cans
+  .can
+    width: 70px
 
 @media only screen and (min-width: 641px)
   main>section#music:before
@@ -104,8 +104,8 @@ slider
     &:after,
     &:before
       opacity: .5
-      font-family: system-ui
       font-size: 2em
+      left: calc(50% - 12px)
       position: absolute
       animation: pulse 1.5s infinite
 
@@ -128,14 +128,10 @@ slider
 #all-beer-info
   text-align: center
 
-#upcoming > div
-  margin: auto 2em
-
 #beer
   text-align: left
   h3
     display: inline-block
-    letter-spacing: .5em
     text-align: left
   .beer
     display: block
@@ -172,9 +168,10 @@ footer
   text-align: center
   transition: color .7s ease
   width: 100%
-header,
-footer
-  a
+footer a,
+a.logo,
+.social a,
+menu a
     border-bottom: 0
 
 footer a
@@ -225,8 +222,8 @@ s
 h3 + p
   margin-top: 1.25em
 
-.date
-  text-transform: uppercase
+.time
+  text-transform: lowercase
 
 .input-text
   font-size: 14px
@@ -242,14 +239,22 @@ h3 + p
   top: 0
   transition: 0.2s ease all
 
+.lolev-linebreak
+  height: auto
+  width: 40px
+
 .btn .beer-style
-  vertical-align: super
+  font-size: 2em
+  letter-spacing: 2px
+  margin-left: .5em
 
 .beer-img
   height: auto
   margin-bottom: 1em
   max-height: 30vh
   width: auto
+.padded-section
+  margin: 5em auto
 
 @media screen and (max-height: 675px)
   .beer-img
@@ -287,29 +292,6 @@ h3 + p
 section
   letter-spacing: normal
 
-@media screen and (min-width: 450px)
-  p
-    a[href*="eventbrite.com"]
-      &:after
-        content: url(/images/ticket.svg)
-        display: inline-block
-        height: auto
-        padding-left: 4px
-        width: 28px
-    a[href*="instagram.com"]
-      &:after
-        content: url(/images/instagram.svg)
-        display: inline-block
-        padding-left: 4px
-        transform: translateY(2px)
-    a[href*="facebook.com"]
-      &:after
-        content: url(/images/facebook.svg)
-    a[href*="instagram.com"],
-    a[href*="facebook.com"],
-    a[href*="eventbrite.com"]
-      &:after
-        vertical-align: middle
 .active
   border: 3px dotted
   border-radius: 10px
@@ -317,8 +299,6 @@ section
   margin: 0 -1em 0
   padding: 3px 1em
   a
-    background: black
-    color: white
     &:after
       filter: invert(1)
 
@@ -379,10 +359,13 @@ iframe
     content: '%'
 
 .schedule
-  font-size: 1.4em
-  letter-spacing: 2px
-  line-height: 1.5em
-  margin: 1.2em
+  p
+    text-align: center
+  .event
+    font-size: 2em
+    letter-spacing: 2px
+    line-height: 1.5em
+    text-transform: uppercase
 
 .stacked
   display: flex
@@ -434,33 +417,30 @@ iframe
 .charts
   max-height: 30%
 
-.btn
-  background: black
-  border-radius: 8px
-  color: white
-  display: inline-block
+.logo
+  z-index: 2
+
+li
+
+menu
+  background: #fffffff0
+  display: block
+  font-size: 2.5em
   font-weight: bold
-  letter-spacing: 3px
-  margin: 4px auto
-  opacity: 1
-  padding: 5px 15px 3px
-  text-align: center
+  left: 0
+  list-style-type: none
+  margin: 0
+  max-width: 100%
+  padding: 36px
+  position: fixed
+  right: 0
   text-transform: uppercase
-  transition: all .25s ease
-  &:after
-    filter: invert(1)
-  &:hover
-    filter: drop-shadow(0px 2px 4px #00000055)
-    opacity: 1
-  &:active
-    filter: drop-shadow(0px 1px 2px #00000055)
-    transform: translateY(2px)
-  .beer &
-    margin: 3px auto
-    padding: 2px 15px
-  .event &
-    @media only screen and (max-width: 600px)
-      letter-spacing: 0
+  top: 0
+  z-index: 1
+  a
+    padding: 0 1em
+  li
+    display: inline-flex
 
 img[src="/images/x.svg"]
   width: 42px
@@ -468,7 +448,7 @@ img[src="/images/x.svg"]
 .btn.sales
   background: #FFD814
   border: 3px solid #ffc107
-  border-bottom-color: #cc9900
+  ottom-color: #cc9900
   color: black
   display: block
   margin: 1em
@@ -500,8 +480,16 @@ footer *
     .right
       float: right
       padding-left: 1em
+
 #find-lolev
   width: 100% !important
+
+.faucet
+  height: 33px
+  display: inline
+  margin-right: 10px
+  vertical-align: bottom
+  width: auto
 
 @media only screen and (max-width: 760px)
   .block
@@ -549,10 +537,13 @@ footer *
   .beer-style
     transform: translate(3px, -2px)
   #beer
-    font-size: 0.7em
-    padding: 1em 2em
+    // font-size: 0.7em
+    // padding: 1em 2em
   .schedule
     letter-spacing: 0
+.easeload
+  opacity: 0
+  transition: all 2s ease
 
 @media only screen and (max-width: 700px)
   #beers-info p,

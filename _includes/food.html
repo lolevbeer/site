@@ -1,7 +1,6 @@
 <section id="food" class="stacked">
   <h2>Food</h2>
-  <p class="emoji-block">🌮🥪🍱🚚</p>
-  <div class="food schedule" >
+  <div class="food schedule padded-section" >
   {% assign currentWeek = site.time | date: "%W" %}
   {% assign currentYear = site.time | date: "%Y" %}
   {% assign previousDate = '' %}
@@ -11,21 +10,24 @@
     {% if currentWeek == postWeek and currentYear == postYear %}
       {% if food.vendor != empty %}
         <span id="food-day-{{ food.date | date: '%w' }}" class="event" data-date="{{ food.date }}">
-          {% if previousDate != food.date %}
-            {% assign previousDate = food.date %}
-            <span class="date">{{ food.date | date: '%a' }}</span>
-          {% else %}
-            <span class="date">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-          {% endif %}
-          {% if food.site %}
-            <b><a class="btn" href="{{ food.site }}" target="_blank">{{ food.vendor }}</a></b>
-          {% else %}
-            <b>{{ food.vendor }}</b>
-          {% endif %}
-          <span>{{ food.time }}</span><br>
+          <a href="{{ food.site }}" target="_blank">
+            {% if previousDate != food.date %}
+              {% assign previousDate = food.date %}
+              <span class="date">{{ food.date | date: '%a' }}</span>
+            {% else %}
+              <span class="date">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+            {% endif %}
+            {% if food.site %}
+              <b>{{ food.vendor }}</b>
+            {% else %}
+              <b>{{ food.vendor }}</b>
+            {% endif %}
+            <span class="time">{{ food.time }}</span><br>
+          </a>
         </span>
       {% endif %}
     {% endif %}
   {% endfor %}
   </div>
+  <img class="lolev-linebreak" alt="Lolev Logo" src="/images/logo.svg" >
 </section>

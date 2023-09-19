@@ -1,25 +1,17 @@
 <section class="stacked" id="beer">
-  <h2>Beer</h2>
-  <div>
+  <h2>Draft</h2>
+  <div class="padded-section">
   {% for beer in site.data.menu %}
-    {% if beer.variant != "" %}
-      <div class="beer">
+    {% if beer.variant != "" and beer.cansAvailable == 'TRUE' or beer.draftAvailable == 'TRUE' %}
+      <article class="beer">
         <a class="btn" href="/beer#{{ beer.variant }}">
+          <img class="faucet" src="/images/faucet.svg" >
           <h3>{{ beer.name }}</h3>
           <span class="beer-style">{{ beer.type }}</span>
         </a>
-        {% if beer.draftAvailable == 'TRUE' %}
-          <span alt="{{ beer.glass }}" class="beer-icon">
-            <img src="https://menu.lolev.beer/assets/images/{{ beer.glass }}.svg" alt="Beer available on draft" title="On Draft">
-          </span>
-        {% endif %}
-        {% if beer.cansAvailable == 'TRUE' %}
-          <span class="can-icon">
-            <img alt="can" src="/assets/beer/{{ beer.variant }}-small.webp" width="38" height="40" alt="Beer available to go in 4 packs of 16oz cans" title="To Go">
-          </span>
-        {% endif %}
-      </div>
+      </article>
     {% endif %}
   {% endfor %}
   </div>
+  <img class="lolev-linebreak" alt="Lolev Logo" src="/images/logo.svg" >
 </section>
