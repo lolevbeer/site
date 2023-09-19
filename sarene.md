@@ -1,6 +1,6 @@
 ---
 layout: default
-title: Pricing
+title: Sarene Pricing
 class: block
 ---
 
@@ -30,18 +30,18 @@ Click beer names for more info.
         </td>
         <td data-column="Half">
           {% if item.halfStock == 'TRUE' %}
-            {{item.half}}
-          {% else %}<s>{{item.half}}</s>{% endif %}
+            {{item.half | times: 7 | divided_by: 10}}
+          {% else %}<s>{{item.half | times: 7 | divided_by: 10}}</s>{% endif %}
         </td>
         <td data-column="Sixtel">
           {% if item.sixtelStock == 'TRUE' %}
-            {{item.sixtel}}
-          {% else %}<s>{{item.sixtel}}</s>{% endif %}
+            {{item.sixtel | times: 7 | divided_by: 10}}
+          {% else %}<s>{{item.sixtel | times: 7 | divided_by: 10}}</s>{% endif %}
         </td>
         <td data-column="Case">
           {% if item.caseStock == 'TRUE' %}
-            {{item.case}}
-          {% else %}<s>{{item.case}}</s>{% endif %}
+            {{item.case | times: 7 | divided_by: 10}}
+          {% else %}<s>{{item.case | times: 7 | divided_by: 10}}</s>{% endif %}
         </td>
       </tr>
     {% endif %}
@@ -49,4 +49,4 @@ Click beer names for more info.
   </tbody>
 </table>
 
-Please contact [sales@lolev.beer](mailto:sales@lolev.beer) for pre-orders or other questions.
+Please contact [sales@lolev.beer](mailto:sales@lolev.beer) for questions.

@@ -42,7 +42,10 @@ section
 .dots
   cursor: pointer
   padding: 30px 0
+  transition: transform .15s ease
   width: 48px
+  .menu-open &
+    transform: rotate(90deg)
 .dot
   background: black
   border-radius: 50%
@@ -68,6 +71,8 @@ main
 .beer-cans
   .can
     width: 70px
+    #cans &
+        width: 117px
 
 @media only screen and (min-width: 641px)
   main>section#music:before
@@ -97,17 +102,6 @@ slider
     &:before
       content: url(../images/left.svg)
       left: 9vw
-
-main,
-slider
-  & > section
-    &:after,
-    &:before
-      opacity: .5
-      font-size: 2em
-      left: calc(50% - 12px)
-      position: absolute
-      animation: pulse 1.5s infinite
 
 .x-learned
   slider > section
@@ -206,9 +200,14 @@ input
     border-radius: 0
     margin-top: 3em
   &[type=submit]
-    border-bottom: 2px solid
+    background: black
+    color: white
+    border: 2px solid black
+    border-radius: 7px
     cursor: pointer
     font-size: 20px
+    text-transform: uppercase
+    padding: 5px 1em
   &:not(:placeholder-shown) ~ .floating-label
     top: -20px
     left: 0
@@ -293,8 +292,9 @@ section
   letter-spacing: normal
 
 .active
-  border: 3px dotted
+  background: black
   border-radius: 10px
+  color: white
   display: block
   margin: 0 -1em 0
   padding: 3px 1em
@@ -306,7 +306,10 @@ section
   width: 100%
 
 .name
+  font-weight: 600
+  letter-spacing: 3px
   text-transform: uppercase
+
 
 table
   border-spacing: 0
@@ -359,13 +362,15 @@ iframe
     content: '%'
 
 .schedule
-  p
-    text-align: center
   .event
     font-size: 2em
     letter-spacing: 2px
     line-height: 1.5em
     text-transform: uppercase
+.schedule,
+.beer-cans
+  p
+    text-align: center
 
 .stacked
   display: flex
@@ -401,7 +406,9 @@ iframe
   div
     padding: 0 .5em
     &.active
-      border-radius: 7px
+      background: white
+      border-radius: 4px
+      color: black
       margin: 0 -3px
   span
     float: right
@@ -422,6 +429,16 @@ iframe
 
 li
 
+@media only screen and (max-width: 1000px)
+  menu
+    display: grid !important
+    .menu-open &
+      height: 100vh
+      padding: 4em 2em
+    li
+      display: flex !important
+      flex-direction: column
+
 menu
   background: #fffffff0
   display: block
@@ -431,19 +448,31 @@ menu
   list-style-type: none
   margin: 0
   max-width: 100%
+  opacity: 0
   padding: 36px
   position: fixed
   right: 0
   text-transform: uppercase
+  transition: opacity .15s ease
   top: 0
+  visibility: hidden
   z-index: 1
   a
     padding: 0 1em
   li
     display: inline-flex
+  body.menu-open &
+    opacity: 1
+    visibility: visible
 
 img[src="/images/x.svg"]
   width: 42px
+
+[data-column="Case"],
+[data-column="Sixtel"],
+[data-column="Half"]
+  &::before
+    content: "$"
 
 .btn.sales
   background: #FFD814
@@ -463,16 +492,24 @@ footer *
   color: black
   transition: color .25s ease, text-decoration-color .25s ease
 
-.dark
+.dark footer .address
+  color: white
+.dark:not(.menu-open)
   header
     img,
-    svg
+    svg,
+    #menu-control
       filter: invert(1)
   footer
     background: none
     a
       color: white
-
+.dark.menu-open
+  .link
+    filter: invert(1)
+    margin-top: 1em
+.link
+  transition: margin-top .25s ease
 #food
   padding: 60px 0 35px
   *:nth-child(2)
@@ -526,7 +563,7 @@ footer *
   main
     scroll-snap-type: y mandatory
   main > section h2
-    top: 12px
+    top: 25px
   .columns
     flex-direction: column
   h1
@@ -543,12 +580,7 @@ footer *
     letter-spacing: 0
 .easeload
   opacity: 0
-  transition: all 2s ease
-
-@media only screen and (max-width: 700px)
-  #beers-info p,
-  .schedule
-    font-size: small
+  transition: all 1s ease
 
 .scroll-animate
   animation: MoveUpDown 1.5s ease-in infinite

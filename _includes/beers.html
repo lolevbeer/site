@@ -2,7 +2,7 @@
   <h2>Draft</h2>
   <div class="padded-section">
   {% for beer in site.data.menu %}
-    {% if beer.variant != "" and beer.cansAvailable == 'TRUE' or beer.draftAvailable == 'TRUE' %}
+    {% if beer.variant != "" %}
       <article class="beer">
         <a class="btn" href="/beer#{{ beer.variant }}">
           <img class="faucet" src="/images/faucet.svg" >
