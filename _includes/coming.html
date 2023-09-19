@@ -1,7 +1,7 @@
 {% if site.data.coming.size > 0 %}
   <section class="stacked" id="upcoming">
     <h2>Up Next</h2>
-    <div>
+    <div class="padded-section">
     {% for beer in site.data.coming %}
       <h3>{{ beer.type }}</h3>
       {% if beer.abv %}
@@ -12,5 +12,6 @@
       {% endif %}
     {% endfor %}
     </div>
+    <img class="lolev-linebreak" alt="Lolev Logo" src="/images/logo.svg" >
   </section>
 {% endif %}
