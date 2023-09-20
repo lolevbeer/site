@@ -6,7 +6,7 @@
   </section>
   <slider>
   {% for beer in site.data.menu %}
-    {% if beer.cansAvailable == 'TRUE' or beer.draftAvailable == 'TRUE' %}
+    {% if beer.variant != "" %}
       <section class="stacked" id="{{ beer.variant }}">
         {% include beer.html %}
       </section>

@@ -1,0 +1,9 @@
+<div class="beer-cans">
+{% for beer in site.data.beer %}
+  {% if beer.variant != "" and beer.image == 'TRUE' %}
+    <a href="/beer/{{ beer.variant }}">
+      <img class="easeload can" onload="this.style.opacity=1" src="/assets/beer/{{ beer.variant }}.webp" title="{{ beer.name }}">
+    </a>
+  {% endif %}
+{% endfor %}
+</div>

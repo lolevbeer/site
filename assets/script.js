@@ -3,6 +3,89 @@
 //   items[i].style.background = randomColor({ luminosity: "light" });
 // }
 
+// Function to toggle the "menu-open" class on the body element
+function toggleMenu() {
+  // Get the body element
+  const body = document.querySelector('body');
+
+  // Toggle the "menu-open" class
+  body.classList.toggle('menu-open');
+
+  // Check if the body has the "menu-open" class and save the state to local storage
+  // Only save to local storage if the viewport width is exactly 1000px
+  // if (window.innerWidth > 1000) {
+    if (body.classList.contains('menu-open')) {
+      localStorage.setItem('menuOpen', 'true');
+    } else {
+      localStorage.setItem('menuOpen', 'false');
+    }
+  // }
+}
+
+// Function to close the menu on devices smaller than 1000px
+function closeMenu() {
+  if (window.innerWidth < 1000) {
+    document.querySelector('body').classList.remove('menu-open');
+  }
+}
+
+// Function to initialize the menu based on local storage
+function initializeMenu() {
+  // Only read from local storage if the viewport width is greater than 1000px
+  // if (window.innerWidth > 1000) {
+    // Get the saved menu state from local storage
+    const savedMenuState = localStorage.getItem('menuOpen');
+
+    // If the saved state is "true", add the "menu-open" class to the body
+    if (savedMenuState === 'true') {
+      document.querySelector('body').classList.add('menu-open');
+    }
+  // }
+}
+
+// Initialize the menu when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+  initializeMenu();
+
+  // Attach event listeners to close the menu when menu items are clicked
+  const menuItems = document.querySelectorAll('.menu-item');
+  menuItems.forEach(function(menuItem) {
+    menuItem.addEventListener('click', closeMenu);
+  });
+});
+
+// Attach the toggleMenu function to the click event of the element with ID "menu-control"
+document.querySelector('#menu-control').addEventListener('click', toggleMenu);
+
+// Initialize Intersection Observer
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach((entry) => {
+    // Get the ID of the target element
+    const id = entry.target.getAttribute('id');
+
+    // Find the corresponding menu item
+    const menuItem = document.querySelector(`.menu-item[href="#${id}"]`);
+
+    // If the target element is in view, add the "active" class to the menu item
+    if (entry.isIntersecting) {
+      menuItem.classList.add('active');
+    } else {
+      menuItem.classList.remove('active');
+    }
+  });
+}, {
+  // Define the options for the Intersection Observer
+  root: null,
+  rootMargin: '0px',
+  threshold: 0.5 // Adjust the threshold as needed
+});
+
+// Get all the target elements and observe them
+document.querySelectorAll('.menu a').forEach((section) => {
+  console.log(this)
+  observer.observe(section);
+});
+
 function scrollHandlerY(e) {
   let atSnappingPoint = e.target.scrollTop % e.target.offsetHeight === 0;
   let timeOut = atSnappingPoint ? 0 : 150;
@@ -16,16 +99,6 @@ function scrollHandlerY(e) {
   }
 
   clearTimeout(e.target.scrollTimeout);
-
-  e.target.scrollTimeout = setTimeout(function () {
-    if (!timeOut) {
-      window.Yscrolls++;
-      if (window.Yscrolls >= 5) {
-        document.body.classList.add('y-learned');
-        localStorage.setItem('yLearned', 1);
-      }
-    }
-  }, timeOut);
 }
 
 function scrollHandlerX(e) {
@@ -34,15 +107,6 @@ function scrollHandlerX(e) {
 
   clearTimeout(e.target.scrollTimeout);
 
-  e.target.scrollTimeout = setTimeout(function () {
-    if (!timeOut) {
-      window.Xscrolls++;
-      if (window.Xscrolls >= 4) {
-        document.body.classList.add('x-learned');
-        localStorage.setItem('xLearned', 1);
-      }
-    }
-  }, timeOut);
 }
 
 if (localStorage.getItem('yLearned') == 1) {
