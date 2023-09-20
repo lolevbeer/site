@@ -49,4 +49,4 @@ Click beer names for more info.
   </tbody>
 </table>
 
-Please contact [sales@lolev.beer](mailto:sales@lolev.beer) for pre-orders or other questions.
+Please contact [sales@lolev.beer](mailto:sales@lolev.beer) for questions.
