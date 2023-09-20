@@ -99,16 +99,6 @@ function scrollHandlerY(e) {
   }
 
   clearTimeout(e.target.scrollTimeout);
-
-  e.target.scrollTimeout = setTimeout(function () {
-    if (!timeOut) {
-      window.Yscrolls++;
-      if (window.Yscrolls >= 5) {
-        document.body.classList.add('y-learned');
-        localStorage.setItem('yLearned', 1);
-      }
-    }
-  }, timeOut);
 }
 
 function scrollHandlerX(e) {
@@ -117,15 +107,6 @@ function scrollHandlerX(e) {
 
   clearTimeout(e.target.scrollTimeout);
 
-  e.target.scrollTimeout = setTimeout(function () {
-    if (!timeOut) {
-      window.Xscrolls++;
-      if (window.Xscrolls >= 4) {
-        document.body.classList.add('x-learned');
-        localStorage.setItem('xLearned', 1);
-      }
-    }
-  }, timeOut);
 }
 
 if (localStorage.getItem('yLearned') == 1) {

@@ -72,7 +72,18 @@ main
   .can
     width: 70px
     #cans &
-        width: 117px
+      width: 117px
+@media only screen and (max-width: 500px)
+  #slide-one
+    .can
+      width: 55px !important
+  #cans
+    text-align: center
+    .can
+      width: 65px !important
+@media only screen and (max-width: 700px)
+  .date-time
+    display: block
 
 @media only screen and (min-width: 641px)
   main>section#music:before
@@ -109,6 +120,7 @@ slider
     &:before
       animation: none
       opacity: .2
+      position: absolute
 
 .y-learned
   main > section
@@ -376,8 +388,6 @@ iframe
   display: flex
   flex-direction: column
   flex-wrap: wrap
-  @media screen and (width: 700px)
-    max-width: 400px
   &.clear-height
     height: auto
     text-align: left
@@ -433,6 +443,7 @@ li
   menu
     display: grid !important
     .menu-open &
+      background: #fffffffa
       height: 100vh
       padding: 4em 2em
     li
@@ -508,6 +519,9 @@ footer *
   .link
     filter: invert(1)
     margin-top: 1em
+    @media only screen and (max-width: 1000px)
+      filter: invert(0)
+
 .link
   transition: margin-top .25s ease
 #food
@@ -593,3 +607,15 @@ footer *
     bottom: 100px
   5%
     bottom: 115px
+
+@media screen and (max-width: 600px)
+  .stacked
+    padding: 6em 3em
+  body
+    font-size: 10px
+
+.screenshot
+  .logo,
+  footer,
+  .social
+    display: none

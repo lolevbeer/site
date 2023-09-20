@@ -2,11 +2,13 @@
   <h2>Events</h2>
   <div class="events schedule padded-section">
     {% assign currentWeek = site.time | date: "%W" %}
+    {% assign count = 0 %}
     {% for event in site.data.events %}
       {% if event.site %}
         {% assign postWeek = event.date | date: "%W" %}
-        {% if currentWeek <= postWeek %}
+        {% if currentWeek <= postWeek and count < 5 %}
           {% include event.html %}
+          {% assign count = count | plus:1 %}
         {% endif %}
       {% endif %}
     {% endfor %}
