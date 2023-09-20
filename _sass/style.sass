@@ -76,7 +76,7 @@ main
 @media only screen and (max-width: 500px)
   #slide-one
     .can
-      width: 55px !important
+      width: 45px !important
   #cans
     text-align: center
     .can
@@ -114,13 +114,11 @@ slider
       content: url(../images/left.svg)
       left: 9vw
 
-.x-learned
-  slider > section
-    &:after,
-    &:before
-      animation: none
-      opacity: .2
-      position: absolute
+slider > section
+  &:after,
+  &:before
+    opacity: .2
+    position: absolute
 
 .y-learned
   main > section
