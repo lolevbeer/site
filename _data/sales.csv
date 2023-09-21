@@ -1,11 +1,11 @@
 variant,displayed,caseStock,sixtelStock,halfStock,case,sixtel,half,beer,style
-sonnen,TRUE,TRUE,TRUE,FALSE,75,99,200,Sonnen,Märzen
-elias,TRUE,TRUE,TRUE,TRUE,65,90,180,Elias,Cream Ale
-dom,TRUE,TRUE,FALSE,FALSE,65,90,180,Dom,Kölsch
-array,TRUE,TRUE,TRUE,FALSE,75,110,220,Array,Pale Ale
-glyphs,TRUE,TRUE,TRUE,TRUE,75,110,220,Glyphs,Pale Ale
-taupo,TRUE,TRUE,TRUE,TRUE,84,120,240,Taupō,India Pale Ale
-tides,TRUE,TRUE,TRUE,TRUE,90,135,270,Tides,India Pale Ale
-waves,TRUE,TRUE,FALSE,FALSE,95,119,,Waves,Double IPA
-demeter,TRUE,TRUE,TRUE,TRUE,85,146,291,Demeter,Barleywine
-revada,TRUE,TRUE,FALSE,FALSE,111,170,400,Revada,Smoothie Sour
+sonnen,TRUE,TRUE,TRUE,FALSE,75,99,200,#N/A,#N/A
+elias,TRUE,TRUE,TRUE,TRUE,65,90,180,#N/A,#N/A
+dom,TRUE,TRUE,FALSE,FALSE,65,90,180,#N/A,#N/A
+array,TRUE,TRUE,TRUE,FALSE,75,110,220,#N/A,#N/A
+glyphs,TRUE,TRUE,TRUE,TRUE,75,110,220,#N/A,#N/A
+taupo,TRUE,TRUE,TRUE,TRUE,84,120,240,#N/A,#N/A
+tides,TRUE,TRUE,TRUE,TRUE,90,135,270,#N/A,#N/A
+waves,TRUE,TRUE,FALSE,FALSE,95,119,,#N/A,#N/A
+demeter,TRUE,TRUE,TRUE,TRUE,85,146,291,#N/A,#N/A
+revada,TRUE,TRUE,FALSE,FALSE,111,170,400,#N/A,#N/A
