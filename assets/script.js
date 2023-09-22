@@ -32,15 +32,15 @@ function closeMenu() {
 // Function to initialize the menu based on local storage
 function initializeMenu() {
   // Only read from local storage if the viewport width is greater than 1000px
-  // if (window.innerWidth > 1000) {
+  if (window.innerWidth > 1000) {
     // Get the saved menu state from local storage
-    const savedMenuState = localStorage.getItem('menuOpen');
+    const savedMenuState = localStorage.getItem('menuOpen') || 'true';
 
     // If the saved state is "true", add the "menu-open" class to the body
     if (savedMenuState === 'true') {
       document.querySelector('body').classList.add('menu-open');
     }
-  // }
+  }
 }
 
 // Initialize the menu when the page loads
@@ -87,6 +87,9 @@ document.querySelectorAll('.menu a').forEach((section) => {
 });
 
 function scrollHandlerY(e) {
+
+  // Get all sections with IDs
+  const sections = document.querySelectorAll('section[id]');
   let atSnappingPoint = e.target.scrollTop % e.target.offsetHeight === 0;
   let timeOut = atSnappingPoint ? 0 : 150;
   let lastSlides = document.getElementsByClassName('last-slide');
@@ -99,6 +102,13 @@ function scrollHandlerY(e) {
   }
 
   clearTimeout(e.target.scrollTimeout);
+
+  sections.forEach(section => {
+    if (isInMajorityView(section)) {
+      // Store the section ID in localStorage
+      localStorage.setItem('currentSection', section.id);
+    }
+  });
 }
 
 function scrollHandlerX(e) {
@@ -137,6 +147,20 @@ const appHeight = () => {
 window.addEventListener('resize', appHeight, {passive: true});
 window.addEventListener('orientationchange', appHeight, {passive: true});
 appHeight();
+
+// Scroll to the section saved in localStorage on page load
+const savedSectionId = localStorage.getItem('currentSection');
+if (savedSectionId) {
+  document.getElementById(savedSectionId).scrollIntoView();
+}
+
+// Utility function to check if an element is in majority view
+function isInMajorityView(el) {
+  const rect = el.getBoundingClientRect();
+  const windowHeight = (window.innerHeight || document.documentElement.clientHeight);
+  const majorityInView = (rect.top <= windowHeight / 2 && rect.bottom >= windowHeight / 2);
+  return majorityInView;
+}
 
 // Days open.
 const currentDate = new Date();
