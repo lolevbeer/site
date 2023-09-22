@@ -19,7 +19,6 @@ $rounding: .5em
   a
     display: block
 
-
 .emoji-block
   font-size: 35px
 
@@ -34,10 +33,11 @@ section
   transition: background .4s ease
   height: 100vh
 
-.height-rendered
-  main,
-  section
-    height: var(--app-height)
+@media only (max-width: 741px)
+  html,
+  body
+    --app-height: auto !important
+    height: auto !important
 
 .dots
   cursor: pointer
@@ -69,6 +69,7 @@ main
       top: 100px
 
 .beer-cans
+  text-align: center
   .can
     width: 70px
     #cans &
@@ -216,8 +217,9 @@ input
     border-radius: 7px
     cursor: pointer
     font-size: 20px
-    text-transform: uppercase
+    letter-spacing: 2px
     padding: 5px 1em
+    text-transform: uppercase
   &:not(:placeholder-shown) ~ .floating-label
     top: -20px
     left: 0
@@ -241,6 +243,7 @@ h3 + p
 
 .floating-label
   color: black
+  font-size: 14px
   opacity: .8
   position: absolute
   pointer-events: none
@@ -249,8 +252,11 @@ h3 + p
   transition: 0.2s ease all
 
 .lolev-linebreak
+  bottom: 10em
   height: auto
+  position: absolute
   width: 40px
+
 
 .btn .beer-style
   font-size: 2em
@@ -303,7 +309,7 @@ section
 
 .active
   background: black
-  border-radius: 10px
+  border-radius: 5px
   color: white
   display: block
   margin: 0 -1em 0
@@ -372,6 +378,7 @@ iframe
     content: '%'
 
 .schedule
+  text-align: center
   .event
     font-size: 2em
     letter-spacing: 2px
@@ -409,8 +416,10 @@ iframe
   column-gap: 20px
 
 .hours
-  min-width: 300px
+  min-width: 275px
   text-align: left
+  b
+    text-transform: uppercase
   div
     padding: 0 .5em
     &.active
@@ -534,9 +543,11 @@ footer *
   width: 100% !important
 
 .faucet
-  height: 33px
+  bottom: 2px
   display: inline
+  height: 33px
   margin-right: 10px
+  position: relative
   vertical-align: bottom
   width: auto
 
@@ -608,6 +619,7 @@ footer *
 
 @media screen and (max-width: 600px)
   .stacked
+    font-size: .9em
     padding: 6em 3em
   body
     font-size: 10px
