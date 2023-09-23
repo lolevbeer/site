@@ -5,7 +5,7 @@ dom,TRUE,TRUE,FALSE,FALSE,65,90,180,Dom,Kölsch
 array,TRUE,TRUE,TRUE,FALSE,75,110,220,Array,Pale Ale
 glyphs,TRUE,TRUE,TRUE,TRUE,75,110,220,Glyphs,Pale Ale
 taupo,TRUE,TRUE,TRUE,TRUE,84,120,240,Taupō,India Pale Ale
-tides,TRUE,TRUE,TRUE,TRUE,90,135,270,Tides,India Pale Ale
+tides,TRUE,TRUE,TRUE,TRUE,90,135,270,#N/A,#N/A
 waves,TRUE,TRUE,FALSE,FALSE,95,119,,Waves,Double IPA
 demeter,TRUE,TRUE,TRUE,TRUE,85,146,291,Demeter,Barleywine
 revada,TRUE,TRUE,FALSE,FALSE,111,170,400,Revada,Smoothie Sour
