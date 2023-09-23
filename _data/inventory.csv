@@ -1,15 +1,15 @@
 variant,halfs,sixtels,cases,tank,upc,style,product
 array,,4,18,,860009737662,Pale Ale,Array
-carnyx,,,11,,,,Bresa
-dom,,,24,,850051366071,Barleywine,Bresa
-demeter,,,39,8.2BBL,,,Bresa
-elias,,,76,14.3BBL,,,Bresa
-glyphs,1,,49,10.4BBL,850051366026,Gose,Bresa
-iroh,3,,,,850051366026,Gose,Bresa
-lupula,,,,20.0BBL,850051366026,Gose,Bresa
-revada,,,40,14.4BBL,850051366019,Sour Ale,Pomona
-sonnen,,,11,8.0BBL,850051366101,Smoothie Sour,Pomona
+carnyx,,,11,,850051366026,Gose,Array
+dom,,,24,,850051366071,Barleywine,Demeter
+demeter,,,39,8.2BBL,,,Array
+elias,,,76,14.3BBL,,,Demeter
+glyphs,1,,49,10.4BBL,850051366026,Gose,Flux
+iroh,3,,,,850051366026,Gose,Flux
+lupula,,,,20.0BBL,850051366026,Gose,Flux
+revada,,,40,14.4BBL,850051366101,Smoothie Sour,Remo
+sonnen,,,11,8.0BBL,850051366101,Smoothie Sour,Revada
 taupo,,,57,4.5BBL,850051366118,India Pale Ale,Taupō
-terra,1,1,,16.5BBL,850051366118,India Pale Ale,Taupō
-tides,3,3,48,,850051366118,India Pale Ale,Taupō
+terra,1,1,,16.5BBL,850051366019,Sour Ale,Taupō
+tides,3,3,48,,850051366019,Sour Ale,Taupō
 waves,,,47,,850051366118,India Pale Ale,Taupō
