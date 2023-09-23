@@ -1,14 +1,14 @@
 variant,halfs,sixtels,cases,tank,upc,style,product
 array,,4,18,,860009737662,Pale Ale,Array
-carnyx,,,11,,850051366026,Gose,Bresa
-dom,,,24,,,,Bresa
+carnyx,,,11,,,,Bresa
+dom,,,24,,850051366071,Barleywine,Bresa
 demeter,,,39,8.2BBL,,,Bresa
-elias,,,76,14.3BBL,,,Elias
-glyphs,1,,49,10.4BBL,860009737648,Cream Ale,Elias
-iroh,3,,,,860009737648,Cream Ale,Elias
-lupula,,,,20.0BBL,860009737648,Cream Ale,Elias
+elias,,,76,14.3BBL,,,Bresa
+glyphs,1,,49,10.4BBL,850051366026,Gose,Bresa
+iroh,3,,,,850051366026,Gose,Bresa
+lupula,,,,20.0BBL,850051366026,Gose,Bresa
 revada,,,40,14.4BBL,850051366019,Sour Ale,Pomona
-sonnen,,,11,8.0BBL,,Matcha Ale,Pomona
+sonnen,,,11,8.0BBL,850051366101,Smoothie Sour,Pomona
 taupo,,,57,4.5BBL,850051366118,India Pale Ale,Taupō
 terra,1,1,,16.5BBL,850051366118,India Pale Ale,Taupō
 tides,3,3,48,,850051366118,India Pale Ale,Taupō
