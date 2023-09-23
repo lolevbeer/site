@@ -12,6 +12,7 @@ $rounding: .5em
 
 .social
   margin: 0 1em
+  margin-right: 0
   position: absolute
   right: 0
   top: 0
@@ -44,7 +45,7 @@ section
   cursor: pointer
   padding: 30px 0
   transition: transform .15s ease
-  width: 48px
+  width: 45px
   .menu-open &
     transform: rotate(90deg)
 .dot
@@ -318,7 +319,10 @@ section
   a
     &:after
       filter: invert(1)
-
+  & + .active
+    border-top-right-radius: 0
+    border-top-left-radius: 0
+    transform: translateY(-4px)
 #map
   width: 100%
 
