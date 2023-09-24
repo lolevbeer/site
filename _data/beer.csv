@@ -3,7 +3,7 @@ array,Array,Pale Ale,,5.8,teku,$7,$15,$80,$45,"Pineapple and citrus. White grape
 tides,Tides,India Pale Ale,,7.2,teku,$8,$20,$110,$55,"Citrus, passionfruit and cantaloupe. Blueberry aroma. El Dorado, Citra, Mosaic, Simcoe",860009737600,FALSE,TRUE,5142237,2
 scylla,Scylla,Imperial Stout,,10.5,small-teku,$8,$19,$105,$55,Dark chocolate and toasted caramel layered on blackberry cola.,,FALSE,FALSE,5142310,3
 sebastian,Sebastian,Bock,,6.7,lager,$6,$10,$55,$30,A Maibock brewed with 100% Pilsner malt and German and American Noble Hops.,860009737631,FALSE,TRUE,5210316,4
-revive,Revive,Sparkling Hop Water,,4.8,lager,$6,,,,"Modern, hopped version of a traditional Finnish fermented-water beverage.",850051366088,TRUE,TRUE,4876733,5
+revive,Revive,Sparkling Hop Water,,4.8,lager,$6,,,,"Modern, hopped version of a traditional Finnish fermented-water beverage.",850051366088,TRUE,FALSE,4876733,5
 glyphs,Glyphs,Pale Ale,,5.5,teku,$7,$17,$90,$50,"Tangerine, orange zest, and aromatic pine.   BRU-1, Simcoe, Strata, Michigan Chinook",860009737679,FALSE,TRUE,5198026,6
 secrets,Secrets,Double IPA,,7.8,teku,$8,,,,"Passionfruit, pine, apricot, and orange zest. Dank pine and blueberry aroma.",,FALSE,FALSE,5178870,7
 soleil,Soleil,Saison,,6.9,teku,$7,,,,"Dry orange, mimosa-esque. Floral notes and funky.",,FALSE,FALSE,,8
