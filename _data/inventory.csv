@@ -1,15 +1,15 @@
 variant,halfs,sixtels,cases,tank,upc,style,product
 array,,4,18,,860009737662,Pale Ale,Array
-carnyx,,,11,,850051366026,Gose,Array
-dom,,,24,,850051366071,Barleywine,Demeter
-demeter,,,39,8.2BBL,,,Array
-elias,,,76,14.3BBL,,,Demeter
-glyphs,1,,49,10.4BBL,850051366026,Gose,Flux
-iroh,3,,,,850051366026,Gose,Flux
-lupula,,,,20.0BBL,850051366026,Gose,Flux
-revada,,,40,14.4BBL,850051366101,Smoothie Sour,Remo
-sonnen,,,11,8.0BBL,850051366101,Smoothie Sour,Revada
+carnyx,,,11,,860009737686,Dry Irish Stout,Carnyx
+dom,,,24,,860009737624,Kölsch,Dom
+demeter,,,39,8.2BBL,850051366071,Barleywine,Demeter
+elias,,,76,14.3BBL,860009737648,Cream Ale,Elias
+glyphs,1,,49,10.4BBL,860009737679,Pale Ale,Glyphs
+iroh,3,,,,,Matcha Ale,Iroh
+lupula,,,,20.0BBL,860009737617,India Pale Ale,Lupula
+revada,,,40,14.4BBL,850051366101,Smoothie Sour,Revada
+sonnen,,,11,8.0BBL,850051366095,Märzen,Sonnen
 taupo,,,57,4.5BBL,850051366118,India Pale Ale,Taupō
-terra,1,1,,16.5BBL,850051366019,Sour Ale,Taupō
-tides,3,3,48,,850051366019,Sour Ale,Taupō
-waves,,,47,,850051366118,India Pale Ale,Taupō
+terra,1,1,,16.5BBL,,Saison,Terra
+tides,3,3,48,,860009737600,India Pale Ale,Tides
+waves,,,47,,850051366033,Double IPA,Waves
