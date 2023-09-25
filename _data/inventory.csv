@@ -2,13 +2,13 @@ variant,halfs,sixtels,cases,tank,upc,style,product
 array,,,,,860009737662,Pale Ale,Array
 carnyx,,,,,860009737686,Dry Irish Stout,Carnyx
 dom,,,,,860009737624,Kölsch,Dom
-demeter,,,,,850051366071,Barleywine,Demeter
+demeter,,,28,,850051366071,Barleywine,Demeter
 elias,,,,,860009737648,Cream Ale,Elias
 glyphs,,,,,860009737679,Pale Ale,Glyphs
 iroh,,,,,,Matcha Ale,Iroh
-lupula,,,,,,India Pale Ale,
-revada,,,,,850051366101,Smoothie Sour,Revada
-sonnen,,,,,850051366095,Märzen,Sonnen
+lupula,,,49,,,India Pale Ale,
+revada,,,62,,850051366101,Smoothie Sour,Revada
+sonnen,,,40,,850051366095,Märzen,Sonnen
 taupo,,,,,850051366118,India Pale Ale,Taupō
 terra,,,,,,Saison,Terra
 tides,,,,,860009737600,India Pale Ale,Tides
