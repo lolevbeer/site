@@ -38,6 +38,12 @@ section
   transition: background .4s ease
   height: 100vh
 
+section
+  h1,
+  h2
+    color: #00000066
+    filter: drop-shadow(2px 4px 6px black)
+
 @media only (max-width: 741px)
   html,
   body
@@ -458,7 +464,6 @@ li
   menu
     display: grid !important
     .menu-open &
-      background: #fffffffa
       height: 100vh
       padding: 4em 2em
     li
@@ -594,19 +599,16 @@ footer *
   main
     scroll-snap-type: y mandatory
   main > section h2
-    top: 25px
+    top: 9px
   .columns
     flex-direction: column
   h1
-    font-size: 2.3em
+    font-size: 4em
     max-width: 100% !important
   h2
     letter-spacing: 2px
   .beer-style
     transform: translate(3px, -2px)
-  #beer
-    // font-size: 0.7em
-    // padding: 1em 2em
   .schedule
     letter-spacing: 0
 .easeload
