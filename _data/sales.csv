@@ -2,7 +2,7 @@ variant,displayed,caseStock,sixtelStock,halfStock,case,sixtel,half,beer,style
 sonnen,TRUE,TRUE,TRUE,FALSE,75,99,200,Sonnen,Märzen
 elias,TRUE,TRUE,TRUE,TRUE,65,90,180,Elias,Cream Ale
 dom,TRUE,TRUE,FALSE,FALSE,65,90,180,Dom,Kölsch
-array,TRUE,TRUE,TRUE,FALSE,75,110,220,#N/A,#N/A
+array,TRUE,TRUE,TRUE,FALSE,75,110,220,Array,Pale Ale
 glyphs,TRUE,TRUE,TRUE,TRUE,75,110,220,Glyphs,Pale Ale
 taupo,TRUE,TRUE,TRUE,TRUE,84,120,240,Taupō,India Pale Ale
 tides,TRUE,TRUE,TRUE,TRUE,90,135,270,Tides,India Pale Ale
