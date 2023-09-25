@@ -1,6 +1,6 @@
-// let items = document.querySelectorAll("section, main");
+// let items = document.querySelectorAll("h1, h2");
 // for (let i = 0; i < items.length; i++) {
-//   items[i].style.background = randomColor({ luminosity: "light" });
+//   items[i].style.color = randomColor({ luminosity: "dark" });
 // }
 
 // Function to toggle the "menu-open" class on the body element
