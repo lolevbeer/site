@@ -3,8 +3,8 @@ on:
   push:
     branches:
       - master
-  schedule:
-    - cron: '*/15 * * * *'
+  repository_dispatch:
+    types: update-data
 
 jobs:
   get-remote-doc:
