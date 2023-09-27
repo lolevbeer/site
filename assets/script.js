@@ -1,8 +1,3 @@
-// let items = document.querySelectorAll("h1, h2");
-// for (let i = 0; i < items.length; i++) {
-//   items[i].style.color = randomColor({ luminosity: "dark" });
-// }
-
 // Function to toggle the "menu-open" class on the body element
 function toggleMenu() {
   // Get the body element
@@ -95,10 +90,18 @@ function scrollHandlerY(e) {
   let lastSlides = document.getElementsByClassName('last-slide');
   let lastSlide = lastSlides[0];
 
-  if (e.target.scrollTop > lastSlide.offsetTop - 10) {
+  document.getElementById('footer').offsetHeight;
+
+  if (e.target.scrollTop > lastSlide.offsetTop - document.getElementById('footer').offsetHeight + 50) {
     document.body.classList.add('dark');
   } else {
     document.body.classList.remove('dark');
+  }
+
+  if (e.target.scrollTop > lastSlide.offsetTop - 10) {
+    document.body.classList.add('dark-social');
+  } else {
+    document.body.classList.remove('dark-social');
   }
 
   clearTimeout(e.target.scrollTimeout);
