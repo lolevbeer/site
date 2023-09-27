@@ -228,11 +228,17 @@ input
     font-size: 20px
     letter-spacing: 2px
     padding: 5px 1em
+    position: relative
     text-transform: uppercase
-    transition: all .25s ease
+    transition: border .25s ease
+    @media screen and (max-width: 400px)
+      font-size: 10px
+      padding: 12px 10px
+      top: -3px
     .dark &
-      background: white
-      color: black
+      // background: white
+      border: 2px solid white
+      // color: black
   &:not(:placeholder-shown) ~ .floating-label
     top: -30px
     left: 10px
@@ -504,7 +510,6 @@ img[src="/images/x.svg"]
 .btn.sales
   background: #FFD814
   border: 3px solid #ffc107
-  ottom-color: #cc9900
   color: black
   display: block
   margin: 1em
@@ -530,7 +535,7 @@ footer *
   footer
     a
       color: white
-.dark.menu-open
+.dark-social.menu-open
   .link
     filter: invert(1)
     margin-top: 1em
