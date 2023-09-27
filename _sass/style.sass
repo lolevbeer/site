@@ -19,6 +19,7 @@ body:not(.dark) .social
   position: absolute
   right: 0
   top: 0
+  transition: background .25s ease
   z-index: 2
   a
     display: block
@@ -179,19 +180,17 @@ footer
   justify-content: center
   letter-spacing: 1px
   padding: 0.5em 1em
-  position: absolute
+  position: fixed
   text-align: center
   transition: color .7s ease
   width: 100%
+  a
+    text-transform: uppercase
 footer a,
 a.logo,
 .social a,
 menu a
-    border-bottom: 0
-
-footer a
-  text-transform: uppercase
-
+  border-bottom: 0
 label
   display: block
   margin-bottom: 2em
@@ -204,7 +203,6 @@ label
   letter-spacing: 2px
   position: relative
   text-align: left
-
 input
   -webkit-appearance: none
   background: none
@@ -212,14 +210,15 @@ input
   color: black
   font-family: inherit
   letter-spacing: 1px
-  margin-bottom: 1em
   outline: none
   padding: 1em 0
   &[type=email]
-    border-bottom: 2px solid black
-    -webkit-appearance: none
-    border-radius: 0
-    margin-top: 3em
+    background: #f4fdffee
+    border: 2px solid black
+    border-radius: 5px
+    padding: 9px 9px
+    position: relative
+    top: -2px
   &[type=submit]
     background: black
     color: white
@@ -230,10 +229,14 @@ input
     letter-spacing: 2px
     padding: 5px 1em
     text-transform: uppercase
+    transition: all .25s ease
+    .dark &
+      background: white
+      color: black
   &:not(:placeholder-shown) ~ .floating-label
-    top: -20px
-    left: 0
-    font-size: 11px
+    top: -30px
+    left: 10px
+    font-size: 10px
     opacity: 1
 s
   color: #00000015
@@ -245,19 +248,15 @@ h3 + p
 
 .time
   text-transform: lowercase
-
 .input-text
   font-size: 14px
-  height: 35px
-  width: 200px
-
 .floating-label
   color: black
-  font-size: 14px
   opacity: .8
   position: absolute
   pointer-events: none
-  left: 0
+  left: 12px
+  text-transform: uppercase
   top: 0
   transition: 0.2s ease all
 
@@ -448,8 +447,6 @@ iframe
   font-size: 1.4em
   letter-spacing: 2px
   line-height: 1.5em
-  a
-    color: #777
 
 .charts
   max-height: 30%
@@ -516,7 +513,7 @@ img[src="/images/x.svg"]
 header
   img,
   svg
-    transition: filter .7s ease
+    transition: filter .25s ease
 
 footer *
   color: black
@@ -531,7 +528,6 @@ footer *
     #menu-control
       filter: invert(1)
   footer
-    background: none
     a
       color: white
 .dark.menu-open
