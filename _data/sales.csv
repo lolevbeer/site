@@ -8,5 +8,5 @@ iroh,TRUE,FALSE,TRUE,TRUE,79,105,235,Iroh,Matcha Ale
 taupo,TRUE,TRUE,FALSE,TRUE,84,120,240,Taupō,India Pale Ale
 tides,TRUE,TRUE,TRUE,TRUE,90,135,270,Tides,India Pale Ale
 waves,TRUE,TRUE,FALSE,FALSE,95,119,,Waves,Double IPA
-demeter,TRUE,TRUE,TRUE,TRUE,85,146,291,Demeter,Barleywine
-revada,TRUE,TRUE,FALSE,FALSE,111,170,400,Revada,Smoothie Sour
+demeter,TRUE,TRUE,FALSE,FALSE,85,146,291,Demeter,Barleywine
+revada,TRUE,TRUE,FALSE,TRUE,111,170,400,Revada,Smoothie Sour
