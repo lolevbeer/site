@@ -6,8 +6,8 @@ array,TRUE,TRUE,TRUE,FALSE,75,85,220,Array,Pale Ale
 glyphs,TRUE,TRUE,FALSE,TRUE,75,85,220,Glyphs,Pale Ale
 iroh,TRUE,FALSE,TRUE,FALSE,84,100,235,Iroh,Matcha Ale
 taupo,TRUE,TRUE,FALSE,TRUE,84,100,240,Taupō,India Pale Ale
-tides,TRUE,TRUE,TRUE,TRUE,90,135,270,Tides,India Pale Ale
-waves,TRUE,TRUE,FALSE,FALSE,95,119,260,Waves,Double IPA
+tides,TRUE,TRUE,TRUE,TRUE,87,135,270,Tides,India Pale Ale
+waves,TRUE,TRUE,FALSE,FALSE,99,126,300,Waves,Double IPA
 demeter,TRUE,TRUE,FALSE,FALSE,85,146,291,Demeter,Barleywine
 revada,TRUE,TRUE,FALSE,TRUE,111,170,400,Revada,Smoothie Sour
 lupula,TRUE,FALSE,TRUE,TRUE,84,100,240,Lupula,India Pale Ale
