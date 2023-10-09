@@ -1,14 +1,14 @@
 variant,displayed,caseStock,sixtelStock,halfStock,case,sixtel,half,beer,style
-sonnen,TRUE,TRUE,FALSE,FALSE,75,99,200,Sonnen,Märzen
-elias,TRUE,TRUE,TRUE,TRUE,65,90,180,Elias,Cream Ale
-dom,TRUE,TRUE,FALSE,FALSE,65,90,180,Dom,Kölsch
-array,TRUE,TRUE,TRUE,FALSE,75,110,220,Array,Pale Ale
+sonnen,TRUE,TRUE,FALSE,FALSE,75,84,200,Sonnen,Märzen
+elias,TRUE,TRUE,TRUE,TRUE,65,75,180,Elias,Cream Ale
+dom,TRUE,TRUE,FALSE,FALSE,65,75,180,Dom,Kölsch
+array,TRUE,TRUE,TRUE,FALSE,75,85,220,Array,Pale Ale
 glyphs,TRUE,TRUE,FALSE,TRUE,75,85,220,Glyphs,Pale Ale
-iroh,TRUE,FALSE,TRUE,FALSE,79,105,235,Iroh,Matcha Ale
-taupo,TRUE,TRUE,FALSE,TRUE,84,120,240,Taupō,India Pale Ale
+iroh,TRUE,FALSE,TRUE,FALSE,84,100,235,Iroh,Matcha Ale
+taupo,TRUE,TRUE,FALSE,TRUE,84,100,240,Taupō,India Pale Ale
 tides,TRUE,TRUE,TRUE,TRUE,90,135,270,Tides,India Pale Ale
-waves,TRUE,TRUE,FALSE,FALSE,95,119,,Waves,Double IPA
+waves,TRUE,TRUE,FALSE,FALSE,95,119,260,Waves,Double IPA
 demeter,TRUE,TRUE,FALSE,FALSE,85,146,291,Demeter,Barleywine
 revada,TRUE,TRUE,FALSE,TRUE,111,170,400,Revada,Smoothie Sour
 lupula,TRUE,FALSE,TRUE,TRUE,84,100,240,Lupula,India Pale Ale
-drip,TRUE,FALSE,TRUE,TRUE,95,119,260,Drip,Double IPA
+drip,TRUE,FALSE,TRUE,TRUE,99,126,300,Drip,Double IPA
