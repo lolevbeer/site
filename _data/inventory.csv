@@ -1,10 +1,10 @@
 variant,halfs,sixtels,cases,tank,upc,style,product
-array,,3,0,,860009737662,Pale Ale,Array
+array,,1,0,,860009737662,Pale Ale,Array
 carnyx,,,0,,860009737686,Dry Irish Stout,Carnyx
 dom,,,0,,860009737624,Kölsch,Dom
 demeter,,,36,,850051366071,Barleywine,Demeter
 elias,,,55,28.5BBL,860009737648,Cream Ale,Elias
-glyphs,2,,6,,860009737679,Pale Ale,Glyphs
+glyphs,3,1,6,,860009737679,Pale Ale,Glyphs
 iroh,,1,,,850051366149,Matcha Ale,Iroh
 lupula,2,,43,7.8BBL,860009737617,India Pale Ale,Lupula
 revada,2,,47,4.7BBL,850051366101,Smoothie Sour,Revada
