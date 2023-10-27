@@ -13,3 +13,6 @@ revada,TRUE,TRUE,FALSE,TRUE,111,170,400,Revada,Smoothie Sour
 lupula,TRUE,FALSE,FALSE,FALSE,84,100,240,Lupula,India Pale Ale
 drip,TRUE,TRUE,TRUE,TRUE,99,126,300,Drip,Double IPA
 zama,TRUE,TRUE,FALSE,FALSE,84,100,240,Zama,India Pale Ale
+Hanno,TRUE,FALSE,TRUE,TRUE,84,100,240,Hanno,IPA
+Grandar,TRUE,FALSE,TRUE,TRUE,70,84,200,Grandar,Imperial Pilsner
+Levenator,TRUE,FALSE,TRUE,TRUE,75,91,217,Levenator,Doppelbock
