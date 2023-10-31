@@ -2,7 +2,7 @@ variant,cansAvailable,name,options,type,abv,glass,draftPrice,cans,case,halfCase,
 sonnen,TRUE,Sonnen,oktoberfest,Märzen,5.4,lager,7,17,90,50,"Plush tan head, a subtle sweetness of toasted malt, medium body.",850051366095,FALSE,TRUE,
 carnyx,TRUE,Carnyx,,Dry Irish Stout,4.2,lager,5,10,55,30,"Balanced richness, notes of coffee, and chocolate. A smooth, and creamy texture.",860009737686,FALSE,TRUE,5268842
 elias,TRUE,Elias,,Cream Ale,4.3,lager,6,15,80,45,"Smooth, subtle citrus notes and floral aroma.",860009737648,FALSE,TRUE,5240800
-revada,TRUE,Revada,,Smoothie Sour,6,small-teku,9,25,135,70,"Conditioned on strawberries, blueberries & hibiscus. Thicc and tart. Vibrant pink and full bodied.",850051366101,FALSE,TRUE,
+revada,TRUE,Revada,,Smoothie Sour,6.8,small-teku,9,25,135,70,"Conditioned on strawberries, blueberries & hibiscus. Thicc and tart. Vibrant pink and full bodied.",850051366101,FALSE,TRUE,
 dom,TRUE,Dom,,Kölsch,5,lager,6,15,80,45,"Crisp ale with floral and pear notes, subtle grapefruit zest aroma.",860009737624,FALSE,TRUE,5221229
 array,TRUE,Array,,Pale Ale,5.8,teku,7,15,80,45,"Pineapple and citrus. White grapes and lime zest aroma.   BRU-1, Nelson Sauvin, Motueka, Pacific Sunrise",860009737662,FALSE,TRUE,5142277
 taupo,TRUE,Taupō,,India Pale Ale,6.4,teku,8,19,105,55,"Key lime, spanish cedar, and freshly zested orange. Medium straw hue, meringue-like foam.   Riwaka, Wakatu, Citra",850051366118,FALSE,TRUE,
