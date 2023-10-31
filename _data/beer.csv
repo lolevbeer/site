@@ -5,17 +5,17 @@ scylla,Scylla,Imperial Stout,,10.5,small-teku,$8,$19,$105,$55,Dark chocolate and
 sebastian,Sebastian,Bock,,6.7,lager,$6,$10,$55,$30,A Maibock brewed with 100% Pilsner malt and German and American Noble Hops.,860009737631,FALSE,TRUE,5210316,4
 revive,Revive,Sparkling Hop Water,,4.8,lager,$6,,,,"Modern, hopped version of a traditional Finnish fermented-water beverage.",850051366088,TRUE,FALSE,4876733,5
 glyphs,Glyphs,Pale Ale,,5.5,teku,$7,$17,$90,$50,"Tangerine, orange zest, and aromatic pine.   BRU-1, Simcoe, Strata, Michigan Chinook",860009737679,FALSE,TRUE,5198026,6
-secrets,Secrets,Double IPA,,7.8,teku,$8,,,,"Passionfruit, pine, apricot, and orange zest. Dank pine and blueberry aroma.",,FALSE,FALSE,5178870,7
-soleil,Soleil,Saison,,6.9,teku,$7,,,,"Dry orange, mimosa-esque. Floral notes and funky.",,FALSE,FALSE,,8
-terrini,Terrini,Grisette,,5,teku,$7,,,,"Grassy, floral, and pithy orange aromas. Notes of pear, candied orange, and lemongrass flavors. Slightly sweet finish.",,FALSE,FALSE,,9
-kimik,Kimik,Session IPA,,4.5,teku,$6,,,,"Notes of heavy citrus, passion fruit, lychee, and a distinct guava aroma.",,FALSE,FALSE,,10
-lupula,Lupula,India Pale Ale,,6.4,teku,$8,$19,$105,$55,"Pineapple, mango, and ruby red grapefruit. Aromatic.   Riwaka, Moutere, Motueka, Comet",860009737617,FALSE,TRUE,5370332,11
-melrose,Melrose,Scotch Ale,,6,lager,$6,$12,$65,$35,Smooth and malty with light caramel and dark fruit notes with subtle cherry aroma.,860009737655,FALSE,TRUE,5276125,12
-carnyx,Carnyx,Dry Irish Stout,,4.2,lager,$5,$10,$55,$30,"Balanced richness, notes of coffee, and chocolate. A smooth, and creamy texture.",860009737686,FALSE,TRUE,5268842,13
-alma,Alma,Unfiltered Pilsner,,5.9,lager,$6,$15,$80,$45,"A radiant golden straw hue, with a robust all-malt foundation. A refreshing crispness is complemented by delicate floral and citrus notes that emerge in the finish.",850051366040,FALSE,TRUE,5327606,14
-elias,Elias,Cream Ale,,4.3,lager,$6,$15,$80,$45,"Smooth, subtle citrus notes and floral aroma.",860009737648,FALSE,TRUE,5240800,15
-brahms,Brahms,Vienna Lager,,4.7,lager,$6,$15,$80,$45,A gentle roast that harmonizes with a medium-bodied crispness. Delicately balanced by a mild herbal bitterness.,850051366057,FALSE,TRUE,5327589,16
-dom,Dom,Kölsch,,5,lager,$6,$15,$80,$45,"Crisp ale with floral and pear notes, subtle grapefruit zest aroma.",860009737624,FALSE,TRUE,5221229,17
+dom,Dom,Kölsch,,5,lager,$6,$15,$80,$45,"Crisp ale with floral and pear notes, subtle grapefruit zest aroma.",860009737624,FALSE,TRUE,5221229,7
+secrets,Secrets,Double IPA,,7.8,teku,$8,,,,"Passionfruit, pine, apricot, and orange zest. Dank pine and blueberry aroma.",,FALSE,FALSE,5178870,8
+soleil,Soleil,Saison,,6.9,teku,$7,,,,"Dry orange, mimosa-esque. Floral notes and funky.",,FALSE,FALSE,,9
+terrini,Terrini,Grisette,,5,teku,$7,,,,"Grassy, floral, and pithy orange aromas. Notes of pear, candied orange, and lemongrass flavors. Slightly sweet finish.",,FALSE,FALSE,,10
+kimik,Kimik,Session IPA,,4.5,teku,$6,,,,"Notes of heavy citrus, passion fruit, lychee, and a distinct guava aroma.",,FALSE,FALSE,,11
+lupula,Lupula,India Pale Ale,,6.4,teku,$8,$19,$105,$55,"Pineapple, mango, and ruby red grapefruit. Aromatic.   Riwaka, Moutere, Motueka, Comet",860009737617,FALSE,TRUE,5370332,12
+melrose,Melrose,Scotch Ale,,6,lager,$6,$12,$65,$35,Smooth and malty with light caramel and dark fruit notes with subtle cherry aroma.,860009737655,FALSE,TRUE,5276125,13
+carnyx,Carnyx,Dry Irish Stout,,4.2,lager,$5,$10,$55,$30,"Balanced richness, notes of coffee, and chocolate. A smooth, and creamy texture.",860009737686,FALSE,TRUE,5268842,14
+alma,Alma,Unfiltered Pilsner,,5.9,lager,$6,$15,$80,$45,"A radiant golden straw hue, with a robust all-malt foundation. A refreshing crispness is complemented by delicate floral and citrus notes that emerge in the finish.",850051366040,FALSE,TRUE,5327606,15
+elias,Elias,Cream Ale,,4.3,lager,$6,$15,$80,$45,"Smooth, subtle citrus notes and floral aroma.",860009737648,FALSE,TRUE,5240800,16
+brahms,Brahms,Vienna Lager,,4.7,lager,$6,$15,$80,$45,A gentle roast that harmonizes with a medium-bodied crispness. Delicately balanced by a mild herbal bitterness.,850051366057,FALSE,TRUE,5327589,17
 bresa,Bresa,Gose,,5.7,teku,$7,$18,$95,$50,"Tart ale with notes of lemon, lime, sea salt and coriander.",850051366026,FALSE,TRUE,5302684,18
 marty,Marty,Matcha Ale,,4.4,teku,$6,,,,"Light matcha-steeped, crisp ale.",,FALSE,FALSE,,19
 narada,Narada,West Coast IPA,,7.2,teku,$8,$19,$105,$55,"Dank citrus and pine notes.   Amarillo, Citra, Michigan Chinook",860009737693,FALSE,TRUE,5284973,20
