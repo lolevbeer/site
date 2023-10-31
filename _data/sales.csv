@@ -7,11 +7,11 @@ glyphs,TRUE,TRUE,TRUE,TRUE,75,85,220,Glyphs,Pale Ale
 iroh,TRUE,TRUE,FALSE,FALSE,84,100,235,Iroh,Matcha Ale
 taupo,TRUE,TRUE,TRUE,TRUE,84,100,240,Taupō,India Pale Ale
 tides,TRUE,FALSE,TRUE,TRUE,87,135,270,Tides,India Pale Ale
-waves,TRUE,FALSE,FALSE,FALSE,99,126,300,Waves,Double IPA
+waves,FALSE,FALSE,FALSE,FALSE,99,126,300,Waves,Double IPA
 demeter,TRUE,TRUE,FALSE,FALSE,85,146,291,Demeter,Barleywine
-revada,TRUE,TRUE,FALSE,TRUE,111,170,400,Revada,Smoothie Sour
-lupula,TRUE,FALSE,FALSE,FALSE,84,100,240,Lupula,India Pale Ale
-drip,TRUE,TRUE,TRUE,TRUE,99,126,300,Drip,Double IPA
+revada,TRUE,TRUE,FALSE,FALSE,111,170,400,Revada,Smoothie Sour
+lupula,TRUE,FALSE,TRUE,TRUE,84,100,240,Lupula,India Pale Ale
+drip,TRUE,FALSE,TRUE,TRUE,99,126,300,Drip,Double IPA
 zama,TRUE,TRUE,FALSE,FALSE,84,100,240,Zama,India Pale Ale
 Hanno,TRUE,FALSE,TRUE,TRUE,84,100,240,Hanno,India Pale Ale
 Grandar,TRUE,FALSE,TRUE,TRUE,70,84,200,Grandar,Imperial Pilsner
