@@ -34,6 +34,6 @@ taupo,Taupō,India Pale Ale,,6.4,teku,$8,$19,$105,$55,"Key lime, spanish cedar, 
 zama,Zama,India Pale Ale,,6.7,teku,$8,$19,$105,$55,"Pineapple, tangerine, mango.   Nectaron, El Dorado, Ekuanot",850051366125,FALSE,TRUE,,33
 drip,Drip,Double IPA,,8.7,teku,$9,$25,$135,$70,"White grape, grapefruit and orange.  Phantasm, Motueka, Nelson Sauvin, Citra",850051366132,FALSE,TRUE,,34
 solem,Solem,Imperial Saison,,9.5,small-teku,$7,,,,"Bold pineapple, leather, and ripe peach.",,FALSE,FALSE,,35
-Hanno,Hanno,India Pale Ale,,6.8,teku,$8,,,,"Resinous, dank, douglas fir with notes of citrus and lychee. Mosaic, Comet, Triumph, and USDA Elite Line 008",850051366064,FALSE,FALSE,,36
-Grandar,Grandar,Imperial Pilsner,,6.6,lager,$7,,,,"Light bready sweetness balanced by hops, floral and herbal notes that finish with a subtle citrus. Step mashed and hopped with Hallertauer Mittelfrüh and Saaz.",850051366040,FALSE,FALSE,,37
+Hanno,Hanno,India Pale Ale,,6.8,teku,$8,$19,105,55,"Resinous, dank, douglas fir with notes of citrus and lychee. Mosaic, Comet, Triumph, and USDA Elite Line 008",850051366064,FALSE,TRUE,,36
+Grandar,Grandar,Imperial Pilsner,,6.6,lager,$7,,,,"Bready, floral and herbal notes with a citrus finish. Step mashed and hopped with Hallertauer Mittelfrüh and Saaz.",850051366040,FALSE,TRUE,,37
 Levenator,Levenator,Doppelbock,,7.8,lager,$8,,,,"Deep malt sweetness with toasted caramel, dark fruit and chocolate undertones. ",850051366095,FALSE,FALSE,,38
