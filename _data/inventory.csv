@@ -1,21 +1,21 @@
 variant,halfs,sixtels,cases,tank,upc,style,product
-array,,1,10,.0BBL,860009737662,Pale Ale,Array
+array,,1,7,.0BBL,860009737662,Pale Ale,Array
 carnyx,,,,.0BBL,860009737686,Dry Irish Stout,Carnyx
 dom,,,,.0BBL,860009737624,Kölsch,Dom
-demeter,,,15,.0BBL,850051366071,Barleywine,Demeter
-elias,,,22,19 BBL,860009737648,Cream Ale,Elias
-glyphs,,1,5,.0BBL,860009737679,Pale Ale,Glyphs
-iroh,,1,10,.0BBL,850051366149,Matcha Ale,Iroh
-lupula,,,,20.0BBL,860009737617,India Pale Ale,Lupula
-revada,,,32,.0BBL,850051366101,Smoothie Sour,Revada
-sonnen,,,10,.0BBL,850051366095,Märzen,Sonnen
-taupo,,,68,6.3BBL,850051366118,India Pale Ale,Taupō
+demeter,,,14,.0BBL,850051366071,Barleywine,Demeter
+elias,,,17,18.0BBL,860009737648,Cream Ale,Elias
+glyphs,,1,1,.0BBL,860009737679,Pale Ale,Glyphs
+iroh,,1,8,.0BBL,850051366149,Matcha Ale,Iroh
+lupula,,,0,21.0BBL,860009737617,India Pale Ale,Lupula
+revada,,,29,.0BBL,850051366101,Smoothie Sour,Revada
+sonnen,,,5,.0BBL,850051366095,Märzen,Sonnen
+taupo,,,65,6.3BBL,850051366118,India Pale Ale,Taupō
 terra,,,,14.8BBL,,Saison,Terra
 tides,4,5,,.0BBL,860009737600,India Pale Ale,Tides
 waves,,,,.0BBL,850051366033,Double IPA,Waves
-zama,,,2,.0BBL,850051366125,India Pale Ale,Zama
-drip,,,,2.4BBL,850051366132,Double IPA,Drip
+zama,,,,.0BBL,850051366125,India Pale Ale,Zama
+drip,3,9,,2.4BBL,850051366132,Double IPA,Drip
 solem,,,,4.2BBL,,Imperial Saison,Solem
 Hanno,,,,21.0BBL,850051366064,India Pale Ale,Hanno
-Grandar,,,,21.0BBL,850051366040,Imperial Pilsner,Grandar
-Levenator,,,,19.9BBL,850051366095,Doppelbock,Levenator
+Grandar,,,,20.0BBL,850051366040,Imperial Pilsner,Grandar
+Levenator,,,,18.9BBL,850051366095,Doppelbock,Levenator
