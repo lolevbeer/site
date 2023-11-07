@@ -2,13 +2,13 @@ variant,cansAvailable,name,salePrice,type,abv,glass,draftPrice,cans,case,halfCas
 sonnen,TRUE,Sonnen,12,Märzen,5.4,lager,7,17,90,50,"Plush tan head, a subtle sweetness of toasted malt, medium body.",850051366095,FALSE,TRUE,
 glyphs,TRUE,Glyphs,12,Pale Ale,5.5,teku,7,17,90,50,"Tangerine, orange zest, and aromatic pine.   BRU-1, Simcoe, Strata, Michigan Chinook",860009737679,FALSE,TRUE,5198026
 array,TRUE,Array,12,Pale Ale,5.8,teku,7,15,80,45,"Pineapple and citrus. White grapes and lime zest aroma.   BRU-1, Nelson Sauvin, Motueka, Pacific Sunrise",860009737662,FALSE,TRUE,5142277
-revada,TRUE,Revada,,Smoothie Sour,6.8,small-teku,9,25,135,70,"Conditioned on strawberries, blueberries & hibiscus. Thicc and tart. Vibrant pink and full bodied.",850051366101,FALSE,TRUE,
 dom,FALSE,Dom,,Kölsch,5,lager,6,15,80,45,"Crisp ale with floral and pear notes, subtle grapefruit zest aroma.",860009737624,FALSE,TRUE,5221229
 elias,TRUE,Elias,,Cream Ale,4.3,lager,6,15,80,45,"Smooth, subtle citrus notes and floral aroma.",860009737648,FALSE,TRUE,5240800
 taupo,TRUE,Taupō,,India Pale Ale,6.4,teku,8,19,105,55,"Key lime, spanish cedar, and freshly zested orange. Medium straw hue, meringue-like foam.   Riwaka, Wakatu, Citra",850051366118,FALSE,TRUE,
 zama,TRUE,Zama,,India Pale Ale,6.7,teku,8,19,105,55,"Pineapple, tangerine, mango.   Nectaron, El Dorado, Ekuanot",850051366125,FALSE,TRUE,
 demeter,TRUE,Demeter,,Barleywine,10.5,small-teku,9,19,105,55,"Cognac, candied orange, and caramel.",850051366071,FALSE,TRUE,5385429
 iroh,TRUE,Iroh,,Matcha Ale,4.3,teku,8,17,90,50,Subtle matcha and citrus.,850051366149,FALSE,TRUE,5456132
+revada,TRUE,Revada,,Smoothie Sour,6.8,small-teku,9,25,135,70,"Conditioned on strawberries, blueberries & hibiscus. Thicc and tart. Vibrant pink and full bodied.",850051366101,FALSE,TRUE,
 ,FALSE,,,,,,,,,,,,FALSE,FALSE,
 ,FALSE,,,,,,,,,,,,FALSE,FALSE,
 ,FALSE,,,,,,,,,,,,FALSE,FALSE,
