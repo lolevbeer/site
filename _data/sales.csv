@@ -1,4 +1,4 @@
-variant,displayed,caseStock,sixtelStock,halfStock,case,sixtel,half,beer,style
+,displayed,caseStock,sixtelStock,halfStock,case,sixtel,half,beer,style
 sonnen,TRUE,TRUE,FALSE,FALSE,75,84,200,Sonnen,Märzen
 elias,TRUE,TRUE,TRUE,TRUE,65,75,180,Elias,Cream Ale
 dom,FALSE,FALSE,FALSE,FALSE,65,75,180,Dom,Kölsch
