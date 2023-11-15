@@ -6,7 +6,7 @@ sebastian,Sebastian,Bock,,6.7,lager,$6,$10,$55,$30,A Maibock brewed with 100% Pi
 revive,Revive,Sparkling Hop Water,,4.8,lager,$6,,,,"Modern, hopped version of a traditional Finnish fermented-water beverage.",850051366088,TRUE,FALSE,4876733,5
 glyphs,Glyphs,Pale Ale,,5.5,teku,$7,$17,$90,$50,"Tangerine, orange zest, and aromatic pine.   BRU-1, Simcoe, Strata, Michigan Chinook",860009737679,FALSE,TRUE,5198026,6
 dom,Dom,Kölsch,,5,lager,$6,$15,$80,$45,"Crisp ale with floral and pear notes, subtle grapefruit zest aroma.",860009737624,FALSE,TRUE,5221229,7
-secrets,Secrets,Double IPA,,8.5,teku,$8,,,,"Pineapple, peach, bubblegum, and citrus.",,FALSE,FALSE,5178870,8
+secrets,Secrets,Double IPA,,8.5,teku,$8,,,,"Pineapple, peach, bubblegum, and citrus.        ",,FALSE,FALSE,5178870,8
 soleil,Soleil,Saison,,6.9,teku,$7,,,,"Dry orange, mimosa-esque. Floral notes and funky.",,FALSE,FALSE,,9
 terrini,Terrini,Grisette,,5,teku,$7,,,,"Grassy, floral, and pithy orange aromas. Notes of pear, candied orange, and lemongrass flavors. Slightly sweet finish.",,FALSE,FALSE,,10
 kimik,Kimik,Session IPA,,4.5,teku,$6,,,,"Notes of heavy citrus, passion fruit, lychee, and a distinct guava aroma.",,FALSE,FALSE,,11
@@ -37,4 +37,4 @@ solem,Solem,Imperial Saison,,9.5,small-teku,$7,,,,"Bold pineapple, leather, and 
 hanno,Hanno,India Pale Ale,,6.8,teku,$8,$18,$95,$50,"Resinous, dank, notes of douglas fir with citrus and lychee. Mosaic, Comet, Triumph, and USDA Elite Line 008",850051366064,FALSE,TRUE,,36
 grandar,Grandar,Imperial Pilsner,,6.6,lager,$7,$16,$85,$45,"Bready, floral and herbal notes with a citrus finish. Step mashed and hopped with Hallertauer Mittelfrüh and Saaz.",850051366040,FALSE,TRUE,,37
 levenator,Levenator,Doppelbock,,7.8,lager,$8,$15,$80,$45,"Rich malt flavor with notes of toasted caramel, dark fruit, and chocolate.",850051366095,FALSE,TRUE,,38
-rubico,Rubico,Double IPA,,8.6,teku,$9,$22,$120,$65,,850051366156,FALSE,FALSE,,39
+rubico,Rubico,Double IPA,,8.5,teku,$9,$22,$120,$65,"Pineapple, peach rings, bubblegum, strawberry and citrus.  Estate Grown Comet, Vic Scret, Galaxy",850051366156,FALSE,FALSE,,39
