@@ -18,6 +18,7 @@ jobs:
         # continue-on-error: true
         run: |
           cd _data
+          wget -O hours.csv ${{ vars.HOURS }}
           wget -O beer.csv ${{ vars.BEER }}
           wget -O menu.csv ${{ vars.BEER_MENU }}
           wget -O food.csv ${{ vars.FOOD_SCHEDULE }}
@@ -26,6 +27,7 @@ jobs:
           wget -O coming.csv ${{ secrets.COMING_GSHEET }}
           wget -O inventory.csv ${{ vars.INVENTORY }}
           wget -O cans.csv ${{ vars.CANS }}
+          
           git config --local user.email "lolevbeer@gmail.com"
           git config --local user.name "Lolev Manager"
           git add .
