@@ -1,7 +1,5 @@
 variant,halfs,sixtels,cases,tank,upc,style,product
 array,,0,7,.0BBL,860009737662,Pale Ale,Array
-,,,,,,,
-,,,,,,,
 demeter,,,0,.0BBL,850051366071,Barleywine,Demeter
 elias,,,0,17 BBL,860009737648,Cream Ale,Elias
 glyphs,,1,0,.0BBL,860009737679,Pale Ale,Glyphs
@@ -12,11 +10,9 @@ sonnen,,,0,.0BBL,850051366095,Märzen,Sonnen
 taupo,1,2,10,2.3 BBL,850051366118,India Pale Ale,Taupō
 terra,,,0,14 BBL,,Saison,Terra
 tides,0,3,0,.0BBL,860009737600,India Pale Ale,Tides
-,,,,,,,
-,,,,,,,
 drip,1,4,0,.0BBL,850051366132,Double IPA,Drip
 solem,,,0,4.2BBL,,Imperial Saison,Solem
-Hanno,,,35,11.0BBL,850051366064,India Pale Ale,Hanno
-Grandar,,,35,10.0BBL,850051366040,Imperial Pilsner,Grandar
-Levenator,,,108,5.0BBL,850051366095,Doppelbock,Levenator
+hanno,,,35,11.0BBL,850051366064,India Pale Ale,Hanno
+grandar,,,35,10.0BBL,850051366040,Imperial Pilsner,Grandar
+levenator,,,108,5.0BBL,850051366095,Doppelbock,Levenator
 rubico,,,77,4.0BBL,850051366156,Double IPA,Rubico
