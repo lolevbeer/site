@@ -124,7 +124,7 @@ function createPopUp(currentFeature) {
 function flyToStore(currentFeature) {
   map.flyTo({
     center: currentFeature.geometry.coordinates,
-    zoom: 15
+    zoom: 10
   });
 }
 /**
@@ -181,7 +181,7 @@ function sortLocationsByZipcode(zipcode) {
         // Fly the map to the zipcode location
         map.flyTo({
           center: center,
-          zoom: 15
+          zoom: 10
         });
 
         sortStoresByDistance(center);
