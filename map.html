@@ -6,10 +6,34 @@ title: Map
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Store Locator</title>
-  <link href='https://fonts.googleapis.com/css?family=Poppins:200,300,400,700' rel='stylesheet' type='text/css'>
+  <title>Lolev Beer - Find Great Beer near you</title>
   <link href='https://api.mapbox.com/mapbox-gl-js/v2.3.0/mapbox-gl.css' rel='stylesheet' />
   <link rel="stylesheet" href="/assets/map.css" media="screen">
+  <!-- connect to domain of font files -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- optionally increase loading priority -->
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&amp;display=fallback">
+  <!-- async CSS -->
+  <link rel="stylesheet" media="print" onload="this.onload=null;this.removeAttribute('media');" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&amp;display=fallback">
+  <!-- no-JS fallback -->
+  <noscript>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&amp;display=fallback">
+  </noscript>
+  <link rel="apple-touch-icon" sizes="152x152" href="/assets/favicons/apple-touch-icon-152x152.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicons/favicon-16x16.png">
+  <link rel="mask-icon" href="assets/safari-pinned-tab.svg" color="#5bbad5">
+  <link rel="shortcut icon" href="/assets/favicons/favicon.ico">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/randomcolor/0.5.2/randomColor.js" defer=""></script>
+  <script src="/assets/script.js" defer=""></script>
+  <meta property="og:title" content="Lolev Beer Finder">
+  <meta name="msapplication-TileColor" content="#da532c">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Welcome to Lolev. We are the answer to your search for 'brewery near me', we pride ourselves as a standout in Pittsburgh breweries. At Lolev, we marry age-old brewing traditions with modern, and creative engineering of brew processes, offering an eclectic range of handcrafted beers. From IPAs to rich, dark stouts, our beers celebrate the diversity and spirit of Pittsburgh. Whether you're a local or a visitor on the lookout for fine beers in the city, Lolev Beer is your go-to destination. Join us for a memorable experience, savoring beers that are as unique and welcoming as our community. Here, every pint tells a story of quality, passion, and the vibrant Pittsburgh brewing scene. Also be sure to check out our monthly comedy shows!">
+  <title>{{ page.title }} - Brewery in Pittsburgh, PA</title>
+  <!-- Global site tag (gtag.js) - Google Analytics-->
+  <script async="" src="https://www.googletagmanager.com/gtag/js?id=G-RR14DE5FPS"></script>
 </head>
 <body>
   <div class="sidebar">
