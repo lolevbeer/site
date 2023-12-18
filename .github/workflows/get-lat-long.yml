@@ -1,0 +1,35 @@
+name: Process JSON and Fetch Geocode
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Runs at 00:00 UTC every day
+
+jobs:
+  process-json:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          token: ${{ github.token }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          pip install requests geopy
+
+      - name: Change to assets directory
+        run: cd assets
+
+      - name: Process JSON
+        run: |
+          python process_json.py
+          git config --local user.email "info@lolev.beer"
+          git config --local user.name "Map Manager"
+          git add .
+          git commit -m "Process new address updates"
+          git push
