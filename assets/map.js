@@ -232,6 +232,8 @@ map.on('load', function() {
         ['get', 'customerType'],
         'Restaurant', 'restaurant',
         'Bar', 'beer',
+        'Grocery', 'grocery',
+        'Six Pack Shop', 'alchohol-shop',
         'marker'
       ],
       'icon-allow-overlap': true,
