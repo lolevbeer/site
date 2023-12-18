@@ -1,5 +1,20 @@
-mapboxgl.accessToken = 'pk.eyJ1IjoibG9sZXYiLCJhIjoiY2xxOTZoeHZzMW5xeTJsbzNkaDAxZDczOCJ9.-R_YHGdryDe5ySuVaKTrEg'; // Replace with your Mapbox access token
+mapboxgl.accessToken = 'pk.eyJ1IjoibG9sZXYiLCJhIjoiY2xxOTZoeHZzMW5xeTJsbzNkaDAxZDczOCJ9.-R_YHGdryDe5ySuVaKTrEg';
+var map = new mapboxgl.Map({
+  attributionControl: false,
+  container: 'map',
+  style: 'mapbox://styles/mapbox/dark-v11',
+  center: [-77.5, 40.440624],
+  zoom: 6.5
+});
+
+map.addControl(new mapboxgl.AttributionControl({
+  customAttribution: '<object id="mini-logo" data="/images/logo.svg" type="image/svg+xml"></object>LOLEV design team'
+}));
+
+map.addControl(new mapboxgl.NavigationControl());
+
 var zipcodeMarker = null;
+
 
 /**
  * Calculates distance.
@@ -53,8 +68,6 @@ function buildLocationList(places) {
     link.className = 'title';
     link.id = `link-${place.properties.id}`;
     link.innerHTML = `${place.properties.Name}`;
-    const details = link.appendChild(document.createElement('address'));
-    details.innerHTML = `${place.properties.address}`;
 
     /**
      * Listen to the element and when it is clicked, do four things:
@@ -114,7 +127,33 @@ function flyToStore(currentFeature) {
     zoom: 15
   });
 }
+/**
+ * Sorts a list of stores by their distance from a given center point.
+ * @param {*} center 
+ */
+function sortStoresByDistance(center) {
+  fetch('assets/processed_geo_data.json')
+    .then(response => response.json())
+    .then(data => {
+      data.features.forEach(function(feature) {
+        Object.assign(feature.properties, {
+          distance: haversineDistance(center, feature.geometry.coordinates, true)
+        });
+      });
 
+      data.features.sort(function(a, b) {
+        return a.properties.distance - b.properties.distance;
+      });
+
+      buildLocationList(data); // Rebuild the location list based on sorted data
+      map.getSource('places').setData(data);
+    });
+}
+
+/**
+ * Sorts a list of stores by their distance from a given center point.
+ * @param {*} zipcode 
+ */
 function sortLocationsByZipcode(zipcode) {
   const geocodingUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${zipcode}.json?access_token=${mapboxgl.accessToken}`;
   const zipMsgBox = document.getElementById('zip-msg');
@@ -156,48 +195,31 @@ function sortLocationsByZipcode(zipcode) {
   );
 }
 
-function sortStoresByDistance(center) {
-  fetch('assets/processed_geo_data.json')
-    .then(response => response.json())
-    .then(data => {
-      data.features.forEach(function(feature) {
-        Object.assign(feature.properties, {
-          distance: haversineDistance(center, feature.geometry.coordinates, true)
-        });
-      });
+/**
+ * Change the zoom level of the map based on the window size.
+ */
+function adjustMapZoomForWindowSize() {
+  var newZoomLevel;
 
-      data.features.sort(function(a, b) {
-        return a.properties.distance - b.properties.distance;
-      });
+  if (window.innerWidth < 600) { // Example breakpoint for mobile devices
+    newZoomLevel = 5.5; // A more zoomed-out level
+  } else {
+    newZoomLevel = 6.5; // Default zoom level
+  }
 
-      buildLocationList(data); // Rebuild the location list based on sorted data
-      map.getSource('places').setData(data);
-    });
+  map.setZoom(newZoomLevel);
 }
 
 
-var map = new mapboxgl.Map({
-  attributionControl: false,
-  container: 'map',
-  style: 'mapbox://styles/mapbox/dark-v11', // Choose a style
-  center: [-77.5, 40.440624], // Starting position [lng, lat]
-  zoom: 6.5 // Starting zoom
-}).addControl(new mapboxgl.AttributionControl({
-  customAttribution: '<object id="mini-logo" data="/images/logo.svg" type="image/svg+xml"></object>LOLEV design team'
-})).addControl(new mapboxgl.NavigationControl());
-
 map.on('load', function() {
-  // Load the GeoJSON data and add it as a source to the map
   map.addSource('places', {
     'type': 'geojson',
     'data': 'assets/processed_geo_data.json'
   });
 
   fetch('assets/processed_geo_data.json')
-  .then(response => response.json())
-  .then(data => {
-    buildLocationList(data);
-  });
+    .then(response => response.json())
+    .then(buildLocationList);
 
   // Add a layer showing the places
   map.addLayer({
@@ -217,11 +239,12 @@ map.on('load', function() {
     }
   });
 
+  adjustMapZoomForWindowSize();
+
   // When a click event occurs on a feature in the places layer, open a popup at the location of the feature
-  map.on('click', 'places', function(e) {
-    var clickedFeature = e.features[0];
-    createPopUp(clickedFeature);
-  });
+    map.on('click', 'places', function(e) {
+      createPopUp(e.features[0]);
+    });
 });
 
 document.getElementById('zipcode-input').addEventListener('keypress', function(event) {
@@ -232,6 +255,8 @@ document.getElementById('zipcode-input').addEventListener('keypress', function(e
 });
 
 document.getElementById('zipcode-button').addEventListener('click', function() {
-  const zipcode = document.getElementById('zipcode-input').value;
-  sortLocationsByZipcode(zipcode);
+  sortLocationsByZipcode(document.getElementById('zipcode-input').value);
 });
+
+window.addEventListener('resize', adjustMapZoomForWindowSize);
+
