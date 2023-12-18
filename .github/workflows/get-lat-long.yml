@@ -25,11 +25,9 @@ jobs:
         run: |
           pip install requests geopy
 
-      - name: Change to assets directory
-        run: cd assets
-
       - name: Process JSON
         run: |
+          cd assets
           python process_json.py
           git config --local user.email "info@lolev.beer"
           git config --local user.name "Map Manager"
