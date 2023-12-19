@@ -233,7 +233,7 @@ map.on('load', function() {
         'Restaurant', 'restaurant',
         'Bar', 'beer',
         'Grocery', 'grocery',
-        'Six Pack Shop', 'alchohol-shop',
+        'Six Pack Shop', 'alcohol-shop',
         'marker'
       ],
       'icon-allow-overlap': true,
