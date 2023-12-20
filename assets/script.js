@@ -1,188 +1,120 @@
-// Function to toggle the "menu-open" class on the body element
-function toggleMenu() {
-  // Get the body element
-  const body = document.querySelector('body');
+// Cached selectors for frequently accessed elements
+const body = document.querySelector('body');
+const main = document.querySelector('main');
+const menuControl = document.querySelector('#menu-control');
+const menuItems = document.querySelectorAll('.menu-item');
+const sections = document.querySelectorAll('section[id]');
 
-  // Toggle the "menu-open" class
-  body.classList.toggle('menu-open');
-
-  // Check if the body has the "menu-open" class and save the state to local storage
-  // Only save to local storage if the viewport width is exactly 1000px
-  // if (window.innerWidth > 1000) {
-    if (body.classList.contains('menu-open')) {
-      localStorage.setItem('menuOpen', 'true');
-    } else {
-      localStorage.setItem('menuOpen', 'false');
-    }
-  // }
+// Helper Functions
+function toggleClass(element, className) {
+  element.classList.toggle(className);
 }
 
-// Function to close the menu on devices smaller than 1000px
+function addClass(element, className) {
+  element.classList.add(className);
+}
+
+function removeClass(element, className) {
+  element.classList.remove(className);
+}
+
+function isInMajorityView(el) {
+  const rect = el.getBoundingClientRect();
+  const windowHeight = window.innerHeight || document.documentElement.clientHeight;
+  return rect.top <= windowHeight / 2 && rect.bottom >= windowHeight / 2;
+}
+
+// Menu Functions
+function toggleMenu() {
+  toggleClass(body, 'menu-open');
+  if (window.innerWidth > 1000) {
+    localStorage.setItem('menuOpen', body.classList.contains('menu-open') ? 'true' : 'false');
+  }
+}
+
 function closeMenu() {
   if (window.innerWidth < 1000) {
-    document.querySelector('body').classList.remove('menu-open');
+    removeClass(body, 'menu-open');
   }
 }
 
-// Function to initialize the menu based on local storage
 function initializeMenu() {
-  // Only read from local storage if the viewport width is greater than 1000px
   if (window.innerWidth > 1000) {
-    // Get the saved menu state from local storage
     const savedMenuState = localStorage.getItem('menuOpen') || 'true';
-
-    // If the saved state is "true", add the "menu-open" class to the body
     if (savedMenuState === 'true') {
-      document.querySelector('body').classList.add('menu-open');
+      addClass(body, 'menu-open');
     }
   }
 }
 
-// Initialize the menu when the page loads
-document.addEventListener('DOMContentLoaded', function() {
-  initializeMenu();
-
-  // Attach event listeners to close the menu when menu items are clicked
-  const menuItems = document.querySelectorAll('.menu-item');
-  menuItems.forEach(function(menuItem) {
-    menuItem.addEventListener('click', closeMenu);
-  });
-});
-
-// Attach the toggleMenu function to the click event of the element with ID "menu-control"
-document.querySelector('#menu-control').addEventListener('click', toggleMenu);
-
-// Initialize Intersection Observer
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach((entry) => {
-    // Get the ID of the target element
-    const id = entry.target.getAttribute('id');
-
-    // Find the corresponding menu item
-    const menuItem = document.querySelector(`.menu-item[href="#${id}"]`);
-
-    // If the target element is in view, add the "active" class to the menu item
-    if (entry.isIntersecting) {
-      menuItem.classList.add('active');
-    } else {
-      menuItem.classList.remove('active');
-    }
-  });
-}, {
-  // Define the options for the Intersection Observer
-  root: null,
-  rootMargin: '0px',
-  threshold: 0.5 // Adjust the threshold as needed
-});
-
-// Get all the target elements and observe them
-document.querySelectorAll('.menu a').forEach((section) => {
-  console.log(this)
-  observer.observe(section);
-});
-
+// Scroll Handlers
 function scrollHandlerY(e) {
+  let lastSlide = document.getElementsByClassName('last-slide')[0];
+  let footerOffset = document.getElementById('footer').offsetHeight;
+  let scrollTop = e.target.scrollTop;
 
-  // Get all sections with IDs
-  const sections = document.querySelectorAll('section[id]');
-  let atSnappingPoint = e.target.scrollTop % e.target.offsetHeight === 0;
-  let timeOut = atSnappingPoint ? 0 : 150;
-  let lastSlides = document.getElementsByClassName('last-slide');
-  let lastSlide = lastSlides[0];
-
-  document.getElementById('footer').offsetHeight;
-
-  if (e.target.scrollTop > lastSlide.offsetTop - document.getElementById('footer').offsetHeight + 50) {
-    document.body.classList.add('dark');
+  if (scrollTop > lastSlide.offsetTop - footerOffset + 50) {
+    addClass(body, 'dark');
   } else {
-    document.body.classList.remove('dark');
+    removeClass(body, 'dark');
   }
 
-  if (e.target.scrollTop > lastSlide.offsetTop - 10) {
-    document.body.classList.add('dark-social');
+  if (scrollTop > lastSlide.offsetTop - 10) {
+    addClass(body, 'dark-social');
   } else {
-    document.body.classList.remove('dark-social');
+    removeClass(body, 'dark-social');
   }
-
-  clearTimeout(e.target.scrollTimeout);
 
   sections.forEach(section => {
     if (isInMajorityView(section)) {
-      // Store the section ID in localStorage
       localStorage.setItem('currentSection', section.id);
     }
   });
 }
 
-function scrollHandlerX(e) {
-  let atSnappingPoint = e.target.scrollLeft % e.target.offsetWidth === 0;
-  let timeOut = atSnappingPoint ? 0 : 150;
-
-  clearTimeout(e.target.scrollTimeout);
-
+// Date and Time Functions
+function setActiveDays() {
+  const currentDate = new Date();
+  let day = currentDate.getDay();
+  addClass(document.getElementById("day-" + day), "active");
 }
 
-if (localStorage.getItem('yLearned') == 1) {
-  document.body.classList.add('y-learned');
-}
-if (localStorage.getItem('xLearned') == 1) {
-  document.body.classList.add('x-learned');
-}
+function setActiveDates() {
+  const elements = document.querySelectorAll('[data-date]');
+  const formattedToday = `${new Date().toISOString().slice(0, 10)}`;
 
-let sliders = document.getElementsByTagName("slider");
-let main = document.getElementsByTagName("main");
-
-window.Yscrolls = 0;
-window.Xscrolls = 0;
-
-main[0].addEventListener("scroll", scrollHandlerY, {passive: true});
-
-for (slider of sliders) {
-  slider.addEventListener("scroll", scrollHandlerX, {passive: true});
+  elements.forEach(element => {
+    if (element.getAttribute('data-date') === formattedToday) {
+      addClass(element, 'active');
+    }
+  });
 }
 
-// Gets app height for sizing for search engines.
-const appHeight = () => {
-  const doc = document.documentElement;
-  doc.style.setProperty('--app-height', `${window.innerHeight}px`);
-  document.body.classList.add('height-rendered');
-}
-window.addEventListener('resize', appHeight, {passive: true});
-window.addEventListener('orientationchange', appHeight, {passive: true});
-appHeight();
-
-// Scroll to the section saved in localStorage on page load
-const savedSectionId = localStorage.getItem('currentSection');
-if (savedSectionId) {
-  document.getElementById(savedSectionId).scrollIntoView();
+// Helper Function to get URL query parameter
+function getQueryParam(param) {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get(param);
 }
 
-// Utility function to check if an element is in majority view
-function isInMajorityView(el) {
-  const rect = el.getBoundingClientRect();
-  const windowHeight = (window.innerHeight || document.documentElement.clientHeight);
-  const majorityInView = (rect.top <= windowHeight / 2 && rect.bottom >= windowHeight / 2);
-  return majorityInView;
-}
-
-// Days open.
-const currentDate = new Date();
-// Remove conditional wrap after opening.
-let day = currentDate.getDay();
-let currentDay = document.getElementById("day-" + day);
-currentDay.classList.add("active");
-
-// Find all HTML elements with a "data-date" attribute
-const elements = document.querySelectorAll('[data-date]');
-
-// Loop through each element
-elements.forEach(element => {
-  // Get the value of the "data-date" attribute
-  const dateValue = element.getAttribute('data-date');
-
-  // Compare the "data-date" attribute value with today's date
-  if (dateValue === `${currentDate.getFullYear()}-${(currentDate.getMonth() + 1).toString().padStart(2, '0')}-${currentDate.getDate().toString().padStart(2, '0')}`) {
-    // Add the "active" class if the dates match
-    element.classList.add('active');
+// Function to add class to body based on URL query parameter
+function addClassFromBodyQuery() {
+  const className = getQueryParam('class');
+  if (className) {
+    addClass(body, className);
   }
-});
+}
+
+// Initialize
+function init() {
+  initializeMenu();
+  setActiveDays();
+  setActiveDates();
+  addClassFromBodyQuery(); // Add class to body based on URL query
+
+  menuControl.addEventListener('click', toggleMenu);
+  menuItems.forEach(item => item.addEventListener('click', closeMenu));
+  main.addEventListener('scroll', scrollHandlerY, { passive: true });
+  // Additional initialization as needed
+}
+
+document.addEventListener('DOMContentLoaded', init);
