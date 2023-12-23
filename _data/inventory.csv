@@ -1,7 +1,7 @@
 variant,halfs,sixtels,cases,tank,upc,style,product
 array,,0,0,.0BBL,860009737662,Pale Ale,Array
 demeter,,,0,.0BBL,850051366071,Barleywine,Demeter
-elias,,,57,2.0BBL,860009737648,Cream Ale,Elias
+elias,,,57,1.0BBL,860009737648,Cream Ale,Elias
 glyphs,,0,0,.0BBL,860009737679,Pale Ale,Glyphs
 iroh,,0,0,.0BBL,850051366149,Matcha Ale,Iroh
 lupula,,,93,6.0BBL,860009737617,India Pale Ale,Lupula
@@ -13,7 +13,7 @@ tides,0,3,0,.0BBL,860009737600,India Pale Ale,Tides
 drip,1,0,0,.0BBL,850051366132,Double IPA,Drip
 solem,,,0,4.2BBL,,Imperial Saison,Solem
 hanno,,,0,5.9BBL,850051366064,India Pale Ale,Hanno
-grandar,,,36,4.0BBL,850051366040,Imperial Pilsner,Grandar
+grandar,,,36,.0BBL,850051366040,Imperial Pilsner,Grandar
 levenator,,,83,.0BBL,850051366095,Doppelbock,Levenator
 rubico,,1,19,.0BBL,850051366156,Double IPA,Rubico
 orban,,1,21,.0BBL,850051366163,Imperial Stout,Orban
