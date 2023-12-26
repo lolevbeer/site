@@ -18,4 +18,4 @@ Grandar,TRUE,TRUE,TRUE,TRUE,65,84,200,Grandar,Imperial Pilsner
 Levenator,TRUE,TRUE,TRUE,TRUE,75,91,217,Levenator,Doppelbock
 terra,FALSE,FALSE,TRUE,TRUE,84,100,240,Terra,Saison
 rubico,TRUE,TRUE,FALSE,FALSE,87,116,277,Rubico,Double IPA
-orban,TRUE,TRUE,TRUE,FALSE,84,115,,Orban,Imperial Stout
+orban,TRUE,TRUE,TRUE,FALSE,,,,Orban,Imperial Stout
