@@ -4,7 +4,7 @@ grandar,TRUE,Grandar,,Imperial Pilsner,6.6,lager,7,16,85,45,"Bready, floral and 
 levenator,TRUE,Levenator,,Doppelbock,7.8,lager,8,17,90,50,"Rich malt flavor with notes of toasted caramel, dark fruit, and chocolate.",850051366095,FALSE,TRUE,
 taupo,TRUE,Taupō,,India Pale Ale,6.4,teku,8,18,95,50,"Key lime, spanish cedar, and freshly zested orange. Medium straw hue, meringue-like foam.   Riwaka, Wakatu, Citra",850051366118,FALSE,TRUE,
 lupula,TRUE,Lupula,,India Pale Ale,6.4,teku,8,18,95,50,"Pineapple, mango, and grapefruit. Aromatic.   Motueka, Moutere, Riwaka, Comet",860009737617,FALSE,TRUE,5370332
-hanno,TRUE,Hanno,,India Pale Ale,6.8,teku,8,18,95,50,"Resinous, dank, notes of douglas fir with citrus and lychee. Mosaic, Estate Grown Comet, Triumph, and USDA Elite Line 008",850051366064,FALSE,TRUE,
+hanno,FALSE,Hanno,,India Pale Ale,6.8,teku,8,18,95,50,"Resinous, dank, notes of douglas fir with citrus and lychee. Mosaic, Estate Grown Comet, Triumph, and USDA Elite Line 008",850051366064,FALSE,TRUE,
 rubico,TRUE,Rubico,,Double IPA,8.5,small-teku,8,22,120,65,"Pineapple, peach rings, bubblegum, strawberry and citrus.  Estate Grown Comet, Vic Secret, Galaxy",850051366156,FALSE,TRUE,
 revada,TRUE,Revada,,Smoothie Sour,6.8,small-teku,9,23,125,65,"Conditioned on strawberries, blueberries & hibiscus. Thicc and tart. Vibrant pink and full bodied.",850051366101,FALSE,TRUE,
 orban,TRUE,Orban,,Imperial Stout,10.5,small-teku,9,24,130,70,"Caramel, orange, dark chocolate and vanilla. Conditioned on cracked Madagascar vanilla beans and Cocoa nibs.",850051366163,FALSE,TRUE,
