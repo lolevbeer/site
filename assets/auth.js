@@ -1,23 +1,18 @@
 new Vue({
     el: '#app',
     delimiters: ['${', '}'],
-    data: {
-        inventory: [],
-        password: localStorage.getItem('password') || ''
+    data() {
+        return {
+            inventory: [],
+            password: localStorage.getItem('password') || ''
+        };
     },
-    mounted() {
+    async mounted() {
         if (this.password) {
-            this.loadInventory();
+            await this.loadInventory();
         } else {
             this.promptPassword();
         }
-    },
-    async created() {
-        await this.loadInventory();
-        const rowControlElements = document.querySelectorAll('.row-control');
-        rowControlElements.forEach(element => {
-            element.addEventListener('click', this.handleRowControlClick);
-        });
     },
     methods: {
         promptPassword() {
@@ -36,15 +31,22 @@ new Vue({
         async loadInventory() {
             try {
                 const response = await axios.get(`https://docs.google.com/spreadsheets/d/e/2PACX-1vQIcKPeDcvTKS_7zH7-XekKAuO3cl7juVJOy3upThDIM2nnca7WKrXpYIC8oBebXDMM35hstr${this.password}/pub?gid=0&single=true&output=csv`);
-                const data = response.data;
                 const parsedData = Papa.parse(response.data, { header: true }).data;
-                const json = { ...parsedData }
-                this.inventory = json;
+                this.inventory = parsedData;
+                this.$nextTick(() => {
+                    this.addEventListeners(); // Bind event listeners after setting inventory data
+                });
             } catch (error) {
                 mscAlert('Incorrect');
                 localStorage.removeItem('password');
                 this.promptPassword();
             }
+        },
+        addEventListeners() {
+            const rowControlElements = document.querySelectorAll('.row-control');
+            rowControlElements.forEach(element => {
+                element.addEventListener('click', this.handleRowControlClick);
+            });
         },
         handleRowControlClick(event) {
             console.log("clicked");
