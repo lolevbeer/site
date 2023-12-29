@@ -52,7 +52,7 @@ Click beer names for more info.
           <td v-if="item.halfs" data-column="1/2">${ item.suggRetailHalf }</td><td v-else></td>
           <td v-if="item.sixtels" data-column="1/6">${ item.suggRetailSixtel }</td><td v-else></td>
           <td v-if="item.cases" data-column="Case">${ item.suggRetailCase }</td><td v-else></td>
-          <td><b>UPC</b>: ${ item.upc }</td>
+            <td><b>UPC</b>: ${ item.upc ? 'yes' : 'None' }</td>
           <td><i></i></td>
         </tr>
       </template>
