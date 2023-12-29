@@ -65,17 +65,26 @@ const scrollHandlerY = (e) => {
 
 // Date and Time Functions
 const setActiveDays = () => {
-  const currentDate = new Date();
-  const day = currentDate.getDay();
+  const currentDate = new Date().toLocaleString('en-US', { timeZone: 'America/New_York' });
+  const day = new Date(currentDate).getDay();
   addClass(document.getElementById(`day-${day}`), 'active');
 };
 
 const setActiveDates = () => {
   const elements = document.querySelectorAll('[data-date]');
-  const formattedToday = new Date().toISOString().slice(0, 10);
+  let date = new Date().toLocaleString('en-US', { 
+    timeZone: 'America/New_York',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).split(',')[0]; // Splits at the comma, which separates date and time
 
+  // The format from toLocaleString is MM/DD/YYYY, so we need to rearrange it
+  let parts = date.split('/');
+  let currentDate = `${parts[2]}-${parts[0]}-${parts[1]}`;
+  
   elements.forEach(element => {
-    if (element.getAttribute('data-date') === formattedToday) {
+    if (element.getAttribute('data-date') === currentDate) {
       addClass(element, 'active');
     }
   });
