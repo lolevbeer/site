@@ -35,9 +35,13 @@ html
   scroll-behavior: smooth
 
 main,
-section
+section:not(.no-snap)
   transition: background .4s ease
   height: 100vh
+
+.no-snap main,
+section.no-snap
+  height: auto
 
 section
   h1,
@@ -56,8 +60,8 @@ section
   padding: 30px 0
   transition: transform .15s ease
   width: 45px
-  .menu-open &
-    transform: rotate(90deg)
+.menu-open #menu-control
+  transform: rotate(90deg)
 .dot
   background: black
   border-radius: 50%
@@ -65,6 +69,16 @@ section
   margin: 4px auto
   text-align: center
   width: 5px
+  .row-control &
+    display: inline-block
+
+.row-control
+  display: block
+  padding: 0
+  transition: transform .15s ease
+  width: 25px
+  .open &
+    transform: rotate(90deg)
 
 main
   overflow: auto
@@ -280,7 +294,7 @@ h3 + p
 
 .btn .beer-style
   font-size: 1.5em
-  letter-spacing: 2px
+  letter-spacing: 1px
   margin-left: .5em
 
 .beer-img
@@ -344,11 +358,51 @@ section
 #map
   width: 100%
 
+thead
+  background: black
+  color: white
+  text-transform: uppercase
+  letter-spacing: 1px
+
 .name
-  font-weight: 600
   letter-spacing: 3px
+
+.beer-style
+  color: #555
+  letter-spacing: 1px
+
+.name,
+.beer-style
+  font-weight: 600
   text-transform: uppercase
 
+.inventory-pricing
+  font-weight: 600
+
+.closed
+  display: none
+
+.open + .closed,
+.open + .closed + .closed
+  display: table-row
+
+[data-column="In Tank"]:not(:empty):after
+  content: 'bbl'
+  font-size: 12px
+
+[data-column="1/2"],
+[data-column="1/6"],
+[data-column="Case"],
+[data-column="1/2 Stock"],
+[data-column="1/6 Stock"],
+[data-column="Case Stock"],
+[data-column="In Tank"]
+  &:before
+    padding-right: 0.5em
+td
+  &:empty:after
+    color: red
+    content: '-'
 
 table
   border-spacing: 0
@@ -356,23 +410,38 @@ table
   line-height: 1.5em
   margin: 0 auto
   text-align: left
+  transition: all .75s ease
 th,
 td
-  padding: 0 1em
+  padding: .25em 1em
 td:first-child
   background: transparent
-tbody
-  tr
-    padding: 1em 0
-    &:nth-child(odd) td
-      // background: #00000025
-      &:nth-child(odd)
-        background: #00000025
-    &:nth-child(even) td
-      &:nth-child(even)
-        background: #00000025
-      a
-        cursor: pointer
+.wholesale
+  tbody
+    tr
+      padding: 1em 0
+      &:nth-child(6n+1),
+      &.closed:nth-child(6n+2),
+      &.closed:nth-child(6n+3)
+        td
+          background: #00000025
+
+.pricing
+  tbody
+    tr
+      padding: 1em 0
+      &:nth-child(4n+1),
+      &.closed:nth-child(4n+2)
+        td
+          background: #00000025
+
+.fade-enter-active,
+.fade-leave-active
+  transition: opacity .5s
+
+.fade-enter,
+.fade-leave-to
+  opacity: 0
 
 @keyframes pulse
   0%, 100%
@@ -506,12 +575,6 @@ menu
 img[src="/images/x.svg"]
   width: 42px
 
-[data-column="Case"],
-[data-column="Sixtel"],
-[data-column="Half"]
-  &::before
-    content: "$"
-
 .btn.sales
   background: #FFD814
   border: 3px solid #ffc107
@@ -569,6 +632,9 @@ footer *
   vertical-align: bottom
   width: auto
 
+.block
+  height: auto !important
+
 @media only screen and (max-width: 760px)
   .block
     height: auto !important
@@ -588,13 +654,12 @@ footer *
     position: absolute
     top: -9999px
     left: -9999px
+  tbody tr
+    padding: 0
   td
- 		position: relative
+    position: relative
+    text-align: left
   td:before
- 		top: 6px
- 		left: 6px
- 		width: 45%
- 		padding-right: 10px
  		white-space: nowrap
  		content: attr(data-column)
  		color: #000
@@ -613,8 +678,6 @@ footer *
     max-width: 100% !important
   h2
     letter-spacing: 2px
-  .beer-style
-    transform: translate(3px, -2px)
   .schedule
     letter-spacing: 0
 .easeload

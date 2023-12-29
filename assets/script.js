@@ -6,52 +6,43 @@ const menuItems = document.querySelectorAll('.menu-item');
 const sections = document.querySelectorAll('section[id]');
 
 // Helper Functions
-function toggleClass(element, className) {
-  element.classList.toggle(className);
-}
-
-function addClass(element, className) {
-  element.classList.add(className);
-}
-
-function removeClass(element, className) {
-  element.classList.remove(className);
-}
-
-function isInMajorityView(el) {
+const toggleClass = (element, className) => element.classList.toggle(className);
+const addClass = (element, className) => element.classList.add(className);
+const removeClass = (element, className) => element.classList.remove(className);
+const isInMajorityView = (el) => {
   const rect = el.getBoundingClientRect();
   const windowHeight = window.innerHeight || document.documentElement.clientHeight;
   return rect.top <= windowHeight / 2 && rect.bottom >= windowHeight / 2;
-}
+};
 
 // Menu Functions
-function toggleMenu() {
+const toggleMenu = () => {
   toggleClass(body, 'menu-open');
   if (window.innerWidth > 1000) {
     localStorage.setItem('menuOpen', body.classList.contains('menu-open') ? 'true' : 'false');
   }
-}
+};
 
-function closeMenu() {
+const closeMenu = () => {
   if (window.innerWidth < 1000) {
     removeClass(body, 'menu-open');
   }
-}
+};
 
-function initializeMenu() {
+const initializeMenu = () => {
   if (window.innerWidth > 1000) {
     const savedMenuState = localStorage.getItem('menuOpen') || 'true';
     if (savedMenuState === 'true') {
       addClass(body, 'menu-open');
     }
   }
-}
+};
 
 // Scroll Handlers
-function scrollHandlerY(e) {
-  let lastSlide = document.getElementsByClassName('last-slide')[0];
-  let footerOffset = document.getElementById('footer').offsetHeight;
-  let scrollTop = e.target.scrollTop;
+const scrollHandlerY = (e) => {
+  const lastSlide = document.getElementsByClassName('last-slide')[0];
+  const footerOffset = document.getElementById('footer').offsetHeight;
+  const scrollTop = e.target.scrollTop;
 
   if (scrollTop > lastSlide.offsetTop - footerOffset + 50) {
     addClass(body, 'dark');
@@ -70,42 +61,42 @@ function scrollHandlerY(e) {
       localStorage.setItem('currentSection', section.id);
     }
   });
-}
+};
 
 // Date and Time Functions
-function setActiveDays() {
+const setActiveDays = () => {
   const currentDate = new Date();
-  let day = currentDate.getDay();
-  addClass(document.getElementById("day-" + day), "active");
-}
+  const day = currentDate.getDay();
+  addClass(document.getElementById(`day-${day}`), 'active');
+};
 
-function setActiveDates() {
+const setActiveDates = () => {
   const elements = document.querySelectorAll('[data-date]');
-  const formattedToday = `${new Date().toISOString().slice(0, 10)}`;
+  const formattedToday = new Date().toISOString().slice(0, 10);
 
   elements.forEach(element => {
     if (element.getAttribute('data-date') === formattedToday) {
       addClass(element, 'active');
     }
   });
-}
+};
 
 // Helper Function to get URL query parameter
-function getQueryParam(param) {
+const getQueryParam = (param) => {
   const urlParams = new URLSearchParams(window.location.search);
   return urlParams.get(param);
-}
+};
 
 // Function to add class to body based on URL query parameter
-function addClassFromBodyQuery() {
+const addClassFromBodyQuery = () => {
   const className = getQueryParam('class');
   if (className) {
     addClass(body, className);
   }
-}
+};
 
 // Initialize
-function init() {
+const init = () => {
   initializeMenu();
   setActiveDays();
   setActiveDates();
@@ -114,7 +105,6 @@ function init() {
   menuControl.addEventListener('click', toggleMenu);
   menuItems.forEach(item => item.addEventListener('click', closeMenu));
   main.addEventListener('scroll', scrollHandlerY, { passive: true });
-  // Additional initialization as needed
-}
+};
 
 document.addEventListener('DOMContentLoaded', init);
