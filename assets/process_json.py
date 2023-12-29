@@ -74,7 +74,7 @@ def load_existing_data(filepath):
     return {"type": "FeatureCollection", "features": []}  # Return a GeoJSON structure
 
 def main():
-    url = "https://sarenecraftdist.com/API?APICommand=ReportView&ReportName=Testing&BaseQuery=Sales&Action=CrossTab&ReportID=16898519&Format=JSON&EncompassID=SareneCraft&QuickKey=39dbb6efa067dccc2651d18fa2b30672&Parameters=F:Display~V:Chart~O:E|F:ColTotals~V:Auto~O:E|F:ColumnHeadingFormat~V:3~O:E|F:Decimals~V:2~O:E|F:Format~V:HTML~O:E|F:Parent1~V:Company~O:E|F:Parent2~V:Address~O:E|F:Parent3~V:CustomerType~O:E|F:Column~V:CaseEquiv~O:E|F:Period~V:08Weeks~O:E|F:YearInt~V:1~O:E|F:CloseDay~V:4~O:E|F:OrderBy~V:2~O:E&"
+    url = "https://sarenecraftdist.com/QuickLink?QuickKey=***REMOVED***"
     original_data = fetch_json(url)
 
     existing_data = load_existing_data('processed_geo_data.json')
