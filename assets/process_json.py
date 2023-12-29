@@ -58,7 +58,7 @@ def process_data(data, existing_data):
                         },
                         "properties": {
                             "id": index,
-                            "Name": html.unescape(item.get('CustomerName', '')),
+                            "Name": html.unescape(item.get('CustomerName', '')).lower(),
                             "address": address,
                             "customerType": html.unescape(item.get('CustomerType', ''))
                         }
