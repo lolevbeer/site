@@ -1,5 +1,6 @@
 mapboxgl.accessToken = 'pk.eyJ1IjoibG9sZXYiLCJhIjoiY2xxOTZoeHZzMW5xeTJsbzNkaDAxZDczOCJ9.-R_YHGdryDe5ySuVaKTrEg';
-var map = new mapboxgl.Map({
+
+const map = new mapboxgl.Map({
   attributionControl: false,
   container: 'map',
   style: 'mapbox://styles/mapbox/dark-v11',
@@ -13,8 +14,7 @@ map.addControl(new mapboxgl.AttributionControl({
 
 map.addControl(new mapboxgl.NavigationControl());
 
-var zipcodeMarker = null;
-
+let zipcodeMarker = null;
 
 /**
  * Calculates distance.
@@ -24,27 +24,24 @@ function haversineDistance(coords1, coords2, isMiles) {
     return x * Math.PI / 180;
   }
 
-  var lon1 = coords1[0];
-  var lat1 = coords1[1];
-  var lon2 = coords2[0];
-  var lat2 = coords2[1];
+  const [lon1, lat1] = coords1;
+  const [lon2, lat2] = coords2;
 
-  var R = 6371; // km
-  var x1 = lat2 - lat1;
-  var dLat = toRad(x1);
-  var x2 = lon2 - lon1;
-  var dLon = toRad(x2)
-  var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-          Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-          Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  var d = R * c;
+  const R = 6371; // km
+  const x1 = lat2 - lat1;
+  const dLat = toRad(x1);
+  const x2 = lon2 - lon1;
+  const dLon = toRad(x2);
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  let d = R * c;
 
-  if(isMiles) d /= 1.60934;
+  if (isMiles) d /= 1.60934;
 
   return d;
 }
-
 
 /**
  * Add a listing for each store to the sidebar.
@@ -54,41 +51,29 @@ function buildLocationList(places) {
   listings.innerHTML = ''; // Clear existing listings
 
   for (const place of places.features) {
-    /* Add a new listing section to the sidebar. */
-    const listings = document.getElementById('listings');
-    const listing = listings.appendChild(document.createElement('div'));
-    /* Assign a unique `id` to the listing. */
+    const listing = document.createElement('div');
     listing.id = `listing-${place.properties.id}`;
-    /* Assign the `item` class to each listing for styling. */
     listing.className = 'item';
 
-    /* Add the link to the individual listing created above. */
-    const link = listing.appendChild(document.createElement('a'));
+    const link = document.createElement('a');
     link.href = '#';
     link.className = 'title';
     link.id = `link-${place.properties.id}`;
     link.innerHTML = `${place.properties.Name}`;
 
-    /**
-     * Listen to the element and when it is clicked, do four things:
-     * 1. Update the `currentFeature` to the store associated with the clicked link
-     * 2. Fly to the point
-     * 3. Close all other popups and display popup for clicked store
-     * 4. Highlight listing in sidebar (and remove highlight for all other listings)
-     **/
     link.addEventListener('click', function () {
-      for (const feature of places.features) {
-        if (this.id === `link-${feature.properties.id}`) {
-          flyToStore(feature);
-          createPopUp(feature);
-        }
-      }
-      const activeItem = document.getElementsByClassName('active');
-      if (activeItem[0]) {
-        activeItem[0].classList.remove('active');
+      const activeItem = document.querySelector('.active');
+      if (activeItem) {
+        activeItem.classList.remove('active');
       }
       this.parentNode.classList.add('active');
+      const feature = places.features.find(f => `link-${f.properties.id}` === this.id);
+      flyToStore(feature);
+      createPopUp(feature);
     });
+
+    listing.appendChild(link);
+    listings.appendChild(listing);
   }
 }
 
@@ -99,7 +84,7 @@ function buildLocationList(places) {
 function flyToStore(currentFeature) {
   map.flyTo({
     center: currentFeature.geometry.coordinates,
-    zoom: 15
+    zoom: 1
   });
 }
 
@@ -110,23 +95,13 @@ function createPopUp(currentFeature) {
   const popUps = document.getElementsByClassName('mapboxgl-popup');
   const googleMapLink = `https://www.google.com/maps/search/?api=1&query=${currentFeature.properties.Name} ${currentFeature.properties.address}`;
   if (popUps[0]) popUps[0].remove();
-  const popup = new mapboxgl.Popup({ closeButton: false })
+  new mapboxgl.Popup({ closeButton: false })
     .setLngLat(currentFeature.geometry.coordinates)
     .setHTML(`<h2>${currentFeature.properties.Name}</h2><p>${currentFeature.properties.address}</p><a class="button" target="_blank" href="${googleMapLink}">More info</a>`)
     .setMaxWidth('400px')
     .addTo(map);
 }
 
-/**
- * Use Mapbox GL JS's `flyTo` to move the camera smoothly
- * a given center point.
- **/
-function flyToStore(currentFeature) {
-  map.flyTo({
-    center: currentFeature.geometry.coordinates,
-    zoom: 10
-  });
-}
 /**
  * Sorts a list of stores by their distance from a given center point.
  * @param {*} center 
@@ -135,17 +110,13 @@ function sortStoresByDistance(center) {
   fetch('assets/processed_geo_data.json')
     .then(response => response.json())
     .then(data => {
-      data.features.forEach(function(feature) {
-        Object.assign(feature.properties, {
-          distance: haversineDistance(center, feature.geometry.coordinates, true)
-        });
+      data.features.forEach(feature => {
+        feature.properties.distance = haversineDistance(center, feature.geometry.coordinates, true);
       });
 
-      data.features.sort(function(a, b) {
-        return a.properties.distance - b.properties.distance;
-      });
+      data.features.sort((a, b) => a.properties.distance - b.properties.distance);
 
-      buildLocationList(data); // Rebuild the location list based on sorted data
+      buildLocationList(data);
       map.getSource('places').setData(data);
     });
 }
@@ -161,24 +132,20 @@ function sortLocationsByZipcode(zipcode) {
   fetch(geocodingUrl)
     .then(response => response.json())
     .then(data => {
-      console.log(data)
       const resultsInUS = data.features.filter(feature =>
         feature.context && feature.context.some(ctx => ctx.text === "United States")
       );
 
       if (resultsInUS.length > 0) {
         const center = resultsInUS[0].center;
-        // Remove the existing marker if it exists
         if (zipcodeMarker) {
           zipcodeMarker.remove();
         }
         msg = resultsInUS[0].place_name;
-        // Create a new marker and add it to the map
         zipcodeMarker = new mapboxgl.Marker({ color: 'red' })
           .setLngLat(center)
           .addTo(map);
 
-        // Fly the map to the zipcode location
         map.flyTo({
           center: center,
           zoom: 10
@@ -187,31 +154,21 @@ function sortLocationsByZipcode(zipcode) {
         sortStoresByDistance(center);
       }
       else {
-        msg = "Zipcode not found"; // Clear existing listings
+        msg = "Zipcode not found";
       }
-      console.log(msg)
       zipMsgBox.innerHTML = msg;
-    }
-  );
+    });
 }
 
 /**
  * Change the zoom level of the map based on the window size.
  */
 function adjustMapZoomForWindowSize() {
-  var newZoomLevel;
-
-  if (window.innerWidth < 600) { // Example breakpoint for mobile devices
-    newZoomLevel = 5.5; // A more zoomed-out level
-  } else {
-    newZoomLevel = 6.5; // Default zoom level
-  }
-
+  const newZoomLevel = window.innerWidth < 600 ? 5.5 : 6.5;
   map.setZoom(newZoomLevel);
 }
 
-
-map.on('load', function() {
+map.on('load', function () {
   map.addSource('places', {
     'type': 'geojson',
     'data': 'assets/processed_geo_data.json'
@@ -221,7 +178,6 @@ map.on('load', function() {
     .then(response => response.json())
     .then(buildLocationList);
 
-  // Add a layer showing the places
   map.addLayer({
     'id': 'places',
     'type': 'symbol',
@@ -237,28 +193,41 @@ map.on('load', function() {
         'marker'
       ],
       'icon-allow-overlap': true,
-      'icon-size': 1.25 // Adjust the size as needed
+    }
+  });
+
+  map.addLayer({
+    'id': 'places-labels',
+    'type': 'symbol',
+    'source': 'places',
+    'minzoom': 6, // Set the minimum zoom level for text labels
+    'layout': {
+      'text-field': ['get', 'Name'],
+      'text-size': 12,
+      'text-anchor': 'top',
+      'text-offset': [0, 1.5]
+    },
+    'paint': {
+      'text-color': '#FFFFFF'
     }
   });
 
   adjustMapZoomForWindowSize();
 
-  // When a click event occurs on a feature in the places layer, open a popup at the location of the feature
-    map.on('click', 'places', function(e) {
-      createPopUp(e.features[0]);
-    });
+  map.on('click', 'places', function (e) {
+    createPopUp(e.features[0]);
+  });
 });
 
-document.getElementById('zipcode-input').addEventListener('keypress', function(event) {
+document.getElementById('zipcode-input').addEventListener('keypress', function (event) {
   if (event.key === 'Enter') {
     event.preventDefault();
     sortLocationsByZipcode(this.value);
   }
 });
 
-document.getElementById('zipcode-button').addEventListener('click', function() {
+document.getElementById('zipcode-button').addEventListener('click', function () {
   sortLocationsByZipcode(document.getElementById('zipcode-input').value);
 });
 
 window.addEventListener('resize', adjustMapZoomForWindowSize);
-
