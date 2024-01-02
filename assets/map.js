@@ -84,7 +84,7 @@ function buildLocationList(places) {
 function flyToStore(currentFeature) {
   map.flyTo({
     center: currentFeature.geometry.coordinates,
-    zoom: 1
+    zoom: 14
   });
 }
 
