@@ -1,14 +1,12 @@
 variant,halfs,sixtels,cases,tank,upc,style,product,wholesaleHalf,wholesaleSixtel,wholesaleCase,suggRetailHalf,suggRetailSixtel,suggRetailCase
 elias,,,50,,860009737648,Cream Ale,Elias,$126,$63,$46,$180,$90,$65
-iroh,,,,2,850051366149,Matcha Ale,Iroh,$165,$74,$55,$235,$105,$79
-lupula,,,90,3,860009737617,India Pale Ale,Lupula,$168,$70,$59,$240,$100,$84
-revada,,,15,,850051366101,Smoothie Sour,Revada,$280,$119,$78,$400,$170,$111
-taupo,1,,,,850051366118,India Pale Ale,Taupō,$168,$70,$59,$240,$100,$84
-terra,,,,13,,Saison,Terra,$168,$70,$59,$240,$100,$84
-drip,,,,,850051366132,Double IPA,Drip,$210,$88,$69,$300,$126,$99
-solem,,,,7,,Imperial Saison,Solem,$168,$70,$59,$240,$100,$84
+lupula,3,3,85,,860009737617,India Pale Ale,Lupula,$168,$70,$59,$240,$100,$84
+revada,,,10,,850051366101,Smoothie Sour,Revada,$280,$119,$78,$400,$170,$111
+taupo,0,1,,,850051366118,India Pale Ale,Taupō,$168,$70,$59,$240,$100,$84
+terra,,,,12,,Saison,Terra,$168,$70,$59,$240,$100,$84
+solem,,,,3,,Imperial Saison,Solem,$168,$70,$59,$240,$100,$84
 hanno,2,,,,850051366064,India Pale Ale,Hanno,$168,$70,$59,$240,$100,$84
 grandar,,,30,,850051366040,Imperial Pilsner,Grandar,$140,$53,$46,$200,$75,$65
 levenator,,,60,,850051366095,Doppelbock,Levenator,$154,$63,$53,$220,$90,$75
 rubico,,1,,,850051366156,Double IPA,Rubico,$210,$88,$62,$300,$125,$89
-orban,,1,20,,850051366163,Imperial Stout,Orban,$323,$112,$75,$462,$160,$107
+orban,,1,18,,850051366163,Imperial Stout,Orban,$323,$112,$75,$462,$160,$107
