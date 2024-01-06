@@ -6,6 +6,7 @@ on:
       - master
   schedule:
     - cron: '0 0 * * *'  # Runs at 00:00 UTC every day
+  workflow_dispatch:  # Allows manual triggering
 
 jobs:
   process-json:
@@ -26,6 +27,7 @@ jobs:
           pip install requests geopy
 
       - name: Process JSON
+        continue-on-error: true
         run: |
           cd assets
           python process_json.py

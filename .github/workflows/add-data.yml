@@ -5,6 +5,7 @@ on:
       - master
   repository_dispatch:
     types: update-data
+  workflow_dispatch:  # Allows manual triggering
 
 jobs:
   get-remote-doc:
@@ -15,7 +16,7 @@ jobs:
         with:
           token: ${{ github.token }}
       - name: Get Remote Document
-        # continue-on-error: true
+        continue-on-error: true
         run: |
           cd _data
           wget -O hours.csv ${{ vars.HOURS }}
