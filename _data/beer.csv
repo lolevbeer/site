@@ -32,13 +32,13 @@ iroh,Iroh,Matcha Ale,,4.3,teku,$8,$17,$90,$50,Subtle matcha and citrus.,85005136
 revada,Revada,Smoothie Sour,,6.8,small-teku,$9,$23,$125,$65,"Conditioned on strawberries, blueberries & hibiscus. Thicc and tart. Vibrant pink and full bodied.",850051366101,FALSE,TRUE,,31
 taupo,Taupō,India Pale Ale,,6.4,teku,$8,$18,$95,$50,"Key lime, spanish cedar, and freshly zested orange. Medium straw hue, meringue-like foam.   Riwaka, Wakatu, Citra",850051366118,FALSE,TRUE,,32
 zama,Zama,India Pale Ale,,6.7,teku,$8,$18,$95,$50,"Pineapple, tangerine, mango.   Nectaron, El Dorado, Ekuanot",850051366125,FALSE,TRUE,,33
-drip,Drip,Double IPA,,8.7,small-teku,$8,$22,$120,$65,"White grape, grapefruit and orange.  Phantasm, Motueka, Nelson Sauvin, Citra",850051366132,FALSE,TRUE,,34
+drip,Drip,Double IPA,,8.7,small-teku,$8,$22,$120,$65,"White grape, grapefruit and orange.  Phantasm, Motueka, Nelson Sauvin, Citra.",850051366132,FALSE,TRUE,,34
 solem,Solem,Imperial Saison,,9.5,small-teku,$7,,,,"Funky and dry. Pineapple, leather, and ripe peach.",,FALSE,FALSE,,35
-hanno,Hanno,India Pale Ale,,6.8,teku,$8,$18,$95,$50,"Resinous, dank, notes of douglas fir with citrus and lychee. Mosaic, Estate Grown Comet, Triumph, and USDA Elite Line 008",850051366064,FALSE,TRUE,,36
+hanno,Hanno,India Pale Ale,,6.8,teku,$8,$18,$95,$50,"Resinous, dank, notes of douglas fir with citrus and lychee. Mosaic, Estate Grown Comet, Triumph, and USDA Elite Line 008.",850051366064,FALSE,TRUE,,36
 grandar,Grandar,Imperial Pilsner,,6.6,lager,$7,$16,$85,$45,"Bready, floral and herbal notes with a citrus finish. Step mashed and hopped with Hallertauer Mittelfrüh and Saaz.",850051366040,FALSE,TRUE,,37
 levenator,Levenator,Doppelbock,,7.8,lager,$8,$17,$90,$50,"Rich malt flavor with notes of toasted caramel, dark fruit, and chocolate.",850051366095,FALSE,TRUE,,38
-rubico,Rubico,Double IPA,,8.5,small-teku,$8,$22,$120,$65,"Pineapple, peach rings, bubblegum, strawberry and citrus.  Estate Grown Comet, Vic Secret, Galaxy",850051366156,FALSE,TRUE,,39
+rubico,Rubico,Double IPA,,8.5,small-teku,$8,$22,$120,$65,"Pineapple, peach rings, bubblegum, strawberry and citrus.  Estate Grown Comet, Vic Secret, Galaxy.",850051366156,FALSE,TRUE,,39
 orban,Orban,Imperial Stout,,10.5,small-teku,$9,$24,$130,$70,"Caramel, orange, dark chocolate and vanilla. Conditioned on cracked Madagascar vanilla beans and Cocoa nibs.",850051366163,FALSE,TRUE,,40
 severina,Severina,Cookie Brown Ale,,5.3,lager,$5,,,,"Infused with Amaretti cookies. Notes of ginger, cinnamon, and caramel. Collab with Severina for the Lawrenceville Cookie Tour.",,FALSE,FALSE,,41
-double-lupula,Double Lupula,Double IPA,,8.1,teku,$8,,,,,850051366170,FALSE,FALSE,,42
-prismatic,Prismatic,India Pale Ale,,6.9,small-teku,$8,,,,,850051366125,FALSE,FALSE,,43
+double-lupula,Double Lupula,Double IPA,,8.1,teku,$8,,,,"Mango, pineapple lemonade, and orange aromatics. Motueka, Moutere, Riwaka, Comet.",850051366170,FALSE,FALSE,,42
+prismatic,Prismatic,India Pale Ale,,6.9,small-teku,$8,,,,"Dense foam and creamy mouthfeel. Pine, vanilla, tropical fruits and a hint of berry. El Dorado, Idaho 7, Strata.",850051366125,FALSE,FALSE,,43
