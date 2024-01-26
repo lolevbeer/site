@@ -28,6 +28,9 @@ jobs:
 
       - name: Process JSON
         continue-on-error: true
+        env:
+          BING: ${{ vars.BING }}
+          SARENE_LOCATIONS: ${{ vars.SARENE_LOCATIONS }}
         run: |
           cd assets
           python process_json.py
