@@ -710,14 +710,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -118.23979343,
-                    34.21593622
+                    -76.666751,
+                    39.959201
                 ]
             },
             "properties": {
-                "id": 51,
+                "id": 45,
                 "Name": "brandons beverage stop",
-                "address": "2795 mt rose ave, york, pa 17402",
+                "address": "2795 Mount Rose Ave, York, PA 17402, United States",
                 "customerType": "Home-D"
             }
         },
@@ -1030,12 +1030,12 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -75.334741,
-                    40.24229
+                    -75.33475,
+                    40.242243
                 ]
             },
             "properties": {
-                "id": 73,
+                "id": 65,
                 "Name": "cjs doghouse",
                 "address": "1555 sumneytown pike, lansdale, pa 19446",
                 "customerType": "Restaurant"

@@ -10,10 +10,9 @@ def fetch_json(url):
     response = requests.get(url)
     return response.json()
 
-def geocode_address(address, existing_data):
+def geocode_address(address, customer, existing_data):
     # Check if the address is already processed
     for entry in existing_data['features']:
-        print(entry)
         if entry['properties']['address'] == address:
             return entry['geometry']['coordinates'], False
 
@@ -24,9 +23,8 @@ def geocode_address(address, existing_data):
     try:
         location = geolocator.geocode(customer + ', ' + address, timeout=10)
         if location:
-            print(location)
-            return [location.longitude, location.latitude], True
-
+            print(f"Found address: {location}")
+            return [location.longitude, location.latitude], location.address, True
         else:
             print(f"Geocoding failed for address: {address}")
     except Exception as e:
@@ -40,7 +38,9 @@ def process_data(data, existing_data):
     existing_addresses = {feature['properties']['address'].lower(): feature for feature in existing_data['features']}
 
     for index, item in enumerate(data):
+        customer = item.get('CustomerName', '')
         address = item.get('AddressCityStateZip')
+        customer_type = item.get('CustomerType', '')
         if address:
             address = html.unescape(address).lower()
             # Check if this address is already processed
@@ -51,7 +51,7 @@ def process_data(data, existing_data):
                 processed_data['features'].append(existing_address)
             else:
                 # Geocode new address
-                coordinates, made_new_request = geocode_address(address, processed_data)
+                coordinates, location, made_new_request = geocode_address(address, customer, processed_data)
                 if coordinates:
                     feature = {
                         "type": "Feature",
@@ -61,9 +61,9 @@ def process_data(data, existing_data):
                         },
                         "properties": {
                             "id": index,
-                            "Name": html.unescape(item.get('CustomerName', '')).lower(),
-                            "address": address,
-                            "customerType": html.unescape(item.get('CustomerType', ''))
+                            "Name": html.unescape(customer).lower(),
+                            "address": location,
+                            "customerType": html.unescape(customer_type)
                         }
                     }
                     processed_data['features'].append(feature)
