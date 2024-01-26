@@ -9,3 +9,5 @@ qr.py
 debug.md
 node_modules/
 .tmp.driveupload
+assets/.env
+replacements.txt

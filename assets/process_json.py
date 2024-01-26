@@ -1,4 +1,5 @@
 import requests
+from dotenv import load_dotenv
 from geopy.geocoders import Bing
 import html
 import json
@@ -16,10 +17,12 @@ def geocode_address(address, existing_data):
         if entry['properties']['address'] == address:
             return entry['geometry']['coordinates'], False
 
+    print(f"Geocoding address: {address}")
+    k = os.getenv('BING')
     # Geocode the address
-    geolocator = Bing('***REMOVED***', user_agent="lolev")
+    geolocator = Bing(k, user_agent="lolev")
     try:
-        location = geolocator.geocode(address, timeout=10)
+        location = geolocator.geocode(customer + ', ' + address, timeout=10)
         if location:
             print(location)
             return [location.longitude, location.latitude], True
@@ -74,7 +77,7 @@ def load_existing_data(filepath):
     return {"type": "FeatureCollection", "features": []}  # Return a GeoJSON structure
 
 def main():
-    url = "https://sarenecraftdist.com/QuickLink?QuickKey=***REMOVED***"
+    url = os.getenv('SARENE_LOCATIONS')
     original_data = fetch_json(url)
 
     existing_data = load_existing_data('processed_geo_data.json')
@@ -85,4 +88,5 @@ def main():
         json.dump(new_geojson_data, f, indent=4)
 
 if __name__ == "__main__":
+    load_dotenv()
     main()
