@@ -16,7 +16,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4.1.1
 
-      # Use GitHub Actions' cache to cache dependencies on servers
       - uses: actions/cache@v3.3.2
         with:
           path: vendor/bundle
