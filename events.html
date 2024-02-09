@@ -1,0 +1,18 @@
+---
+layout: default
+title: Events
+class: block no-snap
+---
+
+<div class="events schedule">
+  {% assign count = 0 %}
+  {% assign currentDate = "now" | date: "%Y-%m-%d" %}
+  {% for event in site.data.events %}
+    {% assign eventDate = event.date | date: "%Y-%m-%d" %}
+    {% if eventDate >= currentDate and count < 20 %}
+      {% include event.html %}
+      {% assign count = count | plus:1 %}
+    {% endif %}
+  {% endfor %}
+  <p> For scheduling private events, email us at <a href="mailto:events@lolev.beer">events@lolev.beer</a></p>
+</div>
