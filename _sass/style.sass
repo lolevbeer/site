@@ -49,7 +49,7 @@ section
     color: #00000066
     filter: drop-shadow(2px 4px 6px black)
 
-@media only (max-width: 741px)
+@media only screen and (max-width: 741px)
   html,
   body
     --app-height: auto !important
@@ -107,6 +107,11 @@ main
   .can
     margin: 0 2%
 
+.beers-5,
+.beers-6
+  .can
+    width: 195px !important
+
 @media only screen and (max-width: 500px)
   #slide-one
     .can
@@ -140,7 +145,6 @@ slider
       z-index: 1
     &:last-child:after
       content: ''
-    &:before
     &:after
       content: url(../images/right.svg)
       right: 9vw
@@ -353,7 +357,6 @@ section
   background: black
   border-radius: 5px
   color: white
-  display: block
   margin: 0 -1em 0
   padding: 3px 1em
   a
@@ -555,8 +558,6 @@ iframe
 .logo
   z-index: 2
 
-li
-
 @media only screen and (max-width: 1200px)
   menu
     display: grid !important
@@ -681,10 +682,10 @@ footer *
     position: relative
     text-align: left
   td:before
- 		white-space: nowrap
- 		content: attr(data-column)
- 		color: #000
- 		font-weight: bold
+    white-space: nowrap
+    content: attr(data-column)
+    color: #000
+    font-weight: bold
 
 @media only screen and (max-width: 741px)
   main
