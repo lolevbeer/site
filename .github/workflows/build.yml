@@ -42,7 +42,7 @@ jobs:
           bundle install --jobs 4 --retry 3 --path vendor/bundle
 
       # Use GitHub Deploy Action to build and deploy to Github
-      - uses: jeffreytse/jekyll-deploy-action@v0.5.0
+      - uses: energee/jekyll-deploy-action@v0.5.2
         with:
           provider: 'github'
           token: ${{ secrets.GITHUB_TOKEN }}
