@@ -32,6 +32,7 @@ jobs:
       - name: Install Bundler
         run: |
           gem install bundler:2.5.5
+          bundle update jekyll-sass-converter
           bundle install --jobs 4 --retry 3 --path vendor/bundle
 
       # Use GitHub Deploy Action to build and deploy to Github
