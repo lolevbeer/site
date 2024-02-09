@@ -1,0 +1,34 @@
+---
+layout: default
+title: Food
+class: block no-snap
+---
+
+<div class="food schedule padded-section">
+  {% assign currentDate = site.time | date: "%Y-%m-%d" %}
+  {% assign futureDate = site.time | date: "%Y-%m-%d" | date: "%s" | plus: 2592000 | date: "%Y-%m-%d" %}
+  {% assign previousDate = '' %}
+  {% for food in site.data.food %}
+    {% assign postDate = food.date | date: "%Y-%m-%d" %}
+    {% if currentDate <= postDate and postDate <= futureDate %}
+      {% if food.vendor != empty %}
+        <span id="food-day-{{ food.date | date: '%w' }}" class="event" data-date="{{ food.date }}">
+          <a href="{{ food.site }}" target="_blank">
+            {% if food.site %}
+              <b>{{ food.vendor }}</b>
+            {% else %}
+              <b>{{ food.vendor }}</b>
+            {% endif %}
+            {% if previousDate != food.date %}
+              {% assign previousDate = food.date %}
+              <span class="date">{{ food.date | date: '%-m/%-d/%Y' }}</span>
+            {% else %}
+              <span class="date">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+            {% endif %}
+            <br>
+          </a>
+        </span>
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+</div>
