@@ -23,6 +23,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gems-
 
+      # Use GitHub Deploy Action to build and deploy to Github
       - uses: energee/jekyll-deploy-action@master
         with:
           provider: 'github'
