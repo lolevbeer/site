@@ -18,19 +18,19 @@ const isInMajorityView = (el) => {
 // Menu Functions
 const toggleMenu = () => {
   toggleClass(body, 'menu-open');
-  if (window.innerWidth > 1000) {
+  if (window.innerWidth > 1200) {
     localStorage.setItem('menuOpen', body.classList.contains('menu-open') ? 'true' : 'false');
   }
 };
 
 const closeMenu = () => {
-  if (window.innerWidth < 1000) {
+  if (window.innerWidth < 1201) {
     removeClass(body, 'menu-open');
   }
 };
 
 const initializeMenu = () => {
-  if (window.innerWidth > 1000) {
+  if (window.innerWidth > 1200) {
     const savedMenuState = localStorage.getItem('menuOpen') || 'true';
     if (savedMenuState === 'true') {
       addClass(body, 'menu-open');
