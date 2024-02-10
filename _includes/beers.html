@@ -1,11 +1,15 @@
 <section class="stacked" id="beer">
-  <h2>Draft</h2>
+  <h2>At the Taproom</h2>
   <div class="padded-section">
   {% for beer in site.data.menu %}
     {% if beer.variant != "" %}
       <article class="beer">
         <a class="btn" href="/beer#{{ beer.variant }}">
-          <img class="faucet" src="/images/faucet.svg" alt="perlick faucet vector">
+          {% if beer.singleCanAvailable == "TRUE" %}
+            <img class="single-can" src="/assets/beer/{{ beer.variant }}.webp" alt="Single can {{ beer.variant }}">
+          {% else %}
+            <img class="faucet" src="/images/faucet.svg" alt="perlick faucet vector">
+          {% endif %}
           <h3>{{ beer.name }}</h3>
           <span class="beer-style">{{ beer.type }}</span>
         </a>
