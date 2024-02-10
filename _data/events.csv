@@ -1,39 +1,7 @@
-date,vendor,time,attendees,site
-2023-10-12,Trivia: Music,7-9pm,,https://www.instagram.com/p/CxJCkndptO7/
-2023-10-13,Flash Tattoos,12-10pm,,https://www.instagram.com/p/CxLWLEiLAmH/
-2023-10-19,Harvie Cheese 101 ,6:30-7:30pm,,https://www.instagram.com/p/CyWWs7HJU8B
-2023-10-19,Dungeons and Drafts,6-9pm,,https://www.dungeonsndrafts.com/product/lolev-beer-10-19/338
-2023-10-20,Wicks and Sips,7-9pm,,https://www.eventbrite.com/e/wicks-sips-lolev-beer-tickets-716513058847
-2023-10-24,Astronomy on Tap ,7-9pm,,https://www.instagram.com/p/CxtRwGBPs-T/
-2023-10-25,Women's Day,,,https://www.instagram.com/p/CytwEVNvmhH
-2023-10-25,Trivia: Television ,7-9pm,,https://www.instagram.com/p/CxJCkndptO7/
-2023-10-26,Pumpkin Patch Night ,4-9pm,,
-2023-11-04,Standup: Joe Bartnick,6-10pm,,https://www.eventbrite.com/cc/comedy-night-lolev-beer-presents-joe-bartnick-2704209
-2023-11-09,Trivia: Animals and Pets,7-9pm,,https://www.instagram.com/p/CzJZ9RzAzJo
-2023-11-16,Dungeons and Drafts,6-9pm,50,https://www.dungeonsndrafts.com/product/lolev-beer-11-16/416
-2023-11-18,Turkey Jam,12-8pm,,https://www.instagram.com/p/Cyti4c_J2_s
-2023-11-21,Trivia: World of Women ,,,
-2023-11-25,Wreath Workshop,3:00pm,,https://www.eventbrite.com/e/crafts-drafts-holiday-wreaths-tickets-754884047507?aff=oddtdtcreator
-2023-11-25,G & E Hafla,5-8pm,,
-2023-12-05,Harvie Cheese 101 ,6-8pm,,https://www.eventbrite.com/e/cheese-101-with-katie-geise-harvie-cheese-connoisseur-tickets-744637279147
-2023-12-08,Lolev Anniversary ,,,
-2023-12-09,Standup: Mary Santora,6-11pm,,https://www.eventbrite.com/cc/comedy-night-lolev-beer-presents-mary-santora-2821769
-2023-12-09,Cookie Tour,12-5pm,,https://lvpgh.com/cookietour2023/
-2023-12-10,Cookie Tour,12-5pm,,https://lvpgh.com/cookietour2023/
-2023-12-13,Lawrenceville United Holiday Party,5:30-8ish,20-40,
-2023-12-21,Dungeons and Drafts,6-9pm,,https://www.dungeonsndrafts.com/product/lolev-beer-12-21/465?cs=true&cst=custom
-2023-12-23,Lolev 1 year Anniversary ,4-12am,,https://www.instagram.com/p/C02Hz7FpnBP/
-2024-01-13,Standup: Sam Tripoli,6-11pm,,https://www.eventbrite.com/cc/comedy-night-lolev-beer-presents-sam-tripoli-2879419
-2024-01-16,Harvie Cheese 101 ,6:30-8:30pm,,https://www.eventbrite.com/e/cheese-101-with-katie-geise-harvie-cheese-connoisseur-tickets-780732059607?aff=ebdsoporgprofile
-2024-01-17,Trivia with Aaron DeLeo,7:30pm,,https://www.instagram.com/trivianightwithaarondeleo/
-2024-01-18,Dungeons and Drafts,6-9pm,,
-2024-01-28,Pittsburgh Tub Club,11am-3pm,,https://pittsburghtub.club/refresh/
-2024-01-28,Pittsburgh Beer Choir,4:00pm,,https://www.instagram.com/pittsburghbeerchoir/
-2024-01-31,Trivia with Aaron DeLeo,7:30pm,,https://www.instagram.com/trivianightwithaarondeleo/
-2024-02-06,Valentines Taco Tuesday,4-10pm,,https://www.instagram.com/bullrivertaco_pgh/
-2024-02-13,Galentines At Lolev,4-10pm,,https://www.instagram.com/p/C2urWalsux_
-2024-02-15,Dungeons and Drafts,6-9pm,,https://www.instagram.com/dungeons.n.drafts.pgh/
-2024-02-18,Vintage Market ,12-4pm,,https://www.instagram.com/p/C2gM4BONa91
-2024-02-19,Game Night,4-10pm,,https://www.instagram.com/gamesunlimitedpgh/
-2024-02-21,Trivia with Aaron DeLeo,7:30pm,,https://www.instagram.com/trivianightwithaarondeleo/
-2024-04-13,Standup: Dov Davidoff,6-11pm,200,https://www.eventbrite.com/cc/comedy-night-lolev-beer-presents-dov-davidov-3069489
+date,vendor,time,attendees,site,end
+2024-02-13,Galentines At Lolev,4-10pm,,https://www.instagram.com/p/C2urWalsux_,10
+2024-02-15,Dungeons and Drafts,6-9pm,,https://www.instagram.com/dungeons.n.drafts.pgh/,9
+2024-02-18,Vintage Market ,12-4pm,,https://www.instagram.com/p/C2gM4BONa91,4
+2024-02-19,Game Night,4-10pm,,https://www.instagram.com/gamesunlimitedpgh/,10
+2024-02-21,Trivia with Aaron DeLeo,7:30pm,,https://www.instagram.com/trivianightwithaarondeleo/,9
+2024-04-13,Standup: Dov Davidoff,6-11pm,200,https://www.eventbrite.com/cc/comedy-night-lolev-beer-presents-dov-davidov-3069489,11
