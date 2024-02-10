@@ -16,3 +16,28 @@ class: block no-snap
   {% endfor %}
   <p> For scheduling private events, email us at <a href="mailto:events@lolev.beer">events@lolev.beer</a></p>
 </div>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Event",
+  "event": [
+    {% for event in site.data.events %}{
+      "@type": "Event",
+      "name": "{{ event.vendor }}",
+      "startDate": "{{ event.date }}",
+      "location": {
+        "@type": "Place",
+        "name": "Lolev Beer, 5247 Butler St, Pittsburgh, PA 15201"{% if event.site %},
+        "url": "{{ event.site }}"{% endif %}
+      },
+      {% if event.image %}
+      "image": "{{ event.image }}",
+      {% endif %}
+      {% if event.description %}
+      "description": "{{ event.description }}",
+      {% endif %}
+    }{% unless forloop.last %},{% endunless %}{% endfor %}
+  ]
+}
+</script>
