@@ -1,5 +1,6 @@
 "tap","variant","singleCanAvailable","name","options","entryImage","type","abv","glass","draftPrice","cans","case","halfCase","description","upc","glutenFree","image","untappd"
-"1","saisar","FALSE","Saisar","","","Imperial Saison","9","small-teku","11","","","","Mixed fermentation saison, foeder-aged for six months on our house microflora.","","FALSE","FALSE",""
+"1","saisar","FALSE","Saisar","","","Imperial Saison","9","small-teku","9","","","","Mixed fermentation saison, foeder-aged for six months on our house microflora.","","FALSE","FALSE",""
+"2","petrus","FALSE","Pétrus","","","Wild Ale conditioned on Plums","7","teku","11","","","","Mixed fermentation saison, foeder-aged for six months on our house microflora and conditioned on fresh plums.","","FALSE","FALSE",""
 "5","rubico","FALSE","Rubico","","","Double IPA","8.5","small-teku","8","22","120","65","Pineapple, peach rings, bubblegum, strawberry and citrus.","850051366156","FALSE","TRUE",""
 "6","grandar","FALSE","Grandar","","","Imperial Pilsner","6.6","lager","7","16","85","45","Cracker, floral and herbal notes with a citrus finish. Step mashed and hopped with Nobles.","850051366040","FALSE","TRUE",""
 "7","vespero","FALSE","Vespero","","","Czech Dark Lager","5.8","lager","7","16","85","45","Roasted chestnut, chocolate and raisin. Ruby hue and a hint of noble hops.","850051366187","FALSE","TRUE",""
