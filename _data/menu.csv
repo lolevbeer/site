@@ -1,6 +1,5 @@
 "tap","variant","singleCanAvailable","name","options","entryImage","type","abv","glass","draftPrice","cans","case","halfCase","description","upc","glutenFree","image","untappd"
-"1","","FALSE","","","","","","","","","","","","","","",""
-"","orban","TRUE","Orban","","","Imperial Stout","10.5","small-teku","9","24","130","70","Caramel, orange, dark chocolate and vanilla. Conditioned on cracked Madagascar vanilla beans and Cocoa nibs.","850051366163","FALSE","TRUE",""
+"","","FALSE","","","","","","","","","","","","","","",""
 "5","rubico","FALSE","Rubico","","","Double IPA","8.5","small-teku","8","22","120","65","Pineapple, peach rings, bubblegum, strawberry and citrus.","850051366156","FALSE","TRUE",""
 "6","grandar","FALSE","Grandar","","","Imperial Pilsner","6.6","lager","7","16","85","45","Crackery sweetness balanced with hops, floral and herbal notes that finish with a subtle citrus. Step mashed and hopped with Nobles.","850051366040","FALSE","TRUE",""
 "7","vespero","FALSE","Vespero","","","Czech Dark Lager","5.8","lager","7","16","85","45","Roasted chestnut, chocolate and raisin. Ruby hue and a hint of noble hops.","850051366187","FALSE","TRUE",""
@@ -10,3 +9,4 @@
 "","levenator","TRUE","Levenator","","","Doppelbock","7.8","lager","8","17","90","50","Rich malt flavor with notes of toasted caramel, dark fruit, and chocolate.","850051366095","FALSE","TRUE",""
 "","revada","TRUE","Revada","","","Smoothie Sour","6.8","small-teku","9","23","125","65","Conditioned on strawberries, blueberries & hibiscus. Thicc and tart. Vibrant pink and full bodied.","850051366101","FALSE","TRUE",""
 "","elias","TRUE","Elias","","","Cream Ale","4.3","lager","6","15","80","45","Smooth, subtle citrus notes and floral aroma.","860009737648","FALSE","TRUE","5240800"
+"","orban","TRUE","Orban","","","Imperial Stout","10.5","small-teku","9","24","130","70","Caramel, orange, dark chocolate and vanilla. Conditioned on cracked Madagascar vanilla beans and Cocoa nibs.","850051366163","FALSE","TRUE",""
