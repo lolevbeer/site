@@ -1,6 +1,6 @@
 variant,name,type,options,abv,glass,draftPrice,cans,case,half,description,upc,glutenFree,image,untappd,Recipe,Hops
 array,Array,Pale Ale,,5.8,teku,$7,$15,$80,$45,Pineapple and citrus. White grapes and lime zest aroma.,860009737662,FALSE,TRUE,5142277,1,"BRU-1, Nelson Sauvin, Motueka, Pacific Sunrise"
-tides,Tides,India Pale Ale,,7.2,teku,$8,$18,$95,$50,"Citrus, passionfruit and cantaloupe. Blueberry aroma. El Dorado, Citra, Mosaic, Simcoe",860009737600,FALSE,TRUE,5142237,2,"El Dorado, Citra, Mosaic, Simcoe"
+tides,Tides,India Pale Ale,,7,teku,$8,$18,$95,$50,"Citrus, passionfruit and cantaloupe. Blueberry aroma. El Dorado, Citra, Mosaic, Simcoe",860009737600,FALSE,TRUE,5142237,2,"El Dorado, Citra, Mosaic, Simcoe"
 scylla,Scylla,Imperial Stout,,10.5,small-teku,$8,$19,$105,$55,Dark chocolate and toasted caramel layered on blackberry cola.,,FALSE,FALSE,5142310,3,
 sebastian,Sebastian,Bock,,6.7,lager,$6,$10,$55,$30,A Maibock brewed with 100% Pilsner malt and German and American Noble Hops.,860009737631,FALSE,TRUE,5210316,4,
 revive,Revive,Sparkling Hop Water,,4.8,lager,$6,,,,"Modern, hopped version of a traditional Finnish fermented-water beverage.",850051366088,TRUE,FALSE,4876733,5,
@@ -47,4 +47,4 @@ altamir,Altamir,India Pale Ale,,6.5,teku,$8,$18,$95,$50,"Berry, Citrus, and flor
 saisar,Saisar,Imperial Saison,,9,small-teku,$9,,,,"Mixed fermentation saison, foeder-aged for six months on our house microflora.",,FALSE,FALSE,,46,
 medusa,Medusa,Raspberry Rose Gose,,5.7,teku,$9,,,,Collaboration with Dollfaced Aesthetics. Our Gose blends the tartness of ripe raspberries with the subtle floral notes of rose.,,FALSE,FALSE,,47,
 petrus,Pétrus,Wild Ale conditioned on Plums,,7,teku,$11,,,,"Mixed fermentation saison, foeder-aged for six months on our house microflora and conditioned on fresh plums.",,FALSE,FALSE,,48,
-firnara,Firnara,West Coast IPA,,7.5,teku,$8,,,,"Bold and bitter. Grapefruit, orange, lemon peel and resinous pine. ",850051366194,FALSE,FALSE,,49,
+firnara,Firnara,West Coast IPA,,7.5,teku,$8,,,,"Grapefruit, orange, lemon zest and pine.",850051366194,FALSE,FALSE,,49,"Centennial, Simcoe, Amarillo"
