@@ -717,6 +717,37 @@ footer *
   opacity: .3
   position: absolute
 
+.stacked
+  position: relative
+  &::before
+    background-size: cover
+    content: ''
+    filter: blur(5px)
+    height: 100%
+    left: 0
+    opacity: 0.2
+    position: absolute
+    top: 0
+    width: 100%
+    z-index: -1
+
+#slide-one:before
+  background-image: url(../images/bar.jpg)
+
+#beer:before
+  background-image: url(../images/taproom.jpg)
+
+#upcoming:before
+  background-image: url(../images/foeders.jpg)
+
+#events:before
+  background-image: url(../images/events.jpg)
+
+.sell-sheet
+  text-align: left !important
+  .sell-sheet-can
+    width: 120px
+
 @keyframes MoveUpDown
   0%, 100%
     bottom: 100px
