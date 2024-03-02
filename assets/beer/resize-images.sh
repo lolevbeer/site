@@ -6,6 +6,8 @@
 # The resized images are saved with the same name as the original file, but with the .webp or -small.webp suffix.
 # The images are resized to specific dimensions and cropped to specific coordinates before conversion.
 
+# I want to reprocess these with cwebp if the age of the *.png file is greater than the age of the *.webp file.
+
 shopt -s nullglob
 
 for file in *-*\.png *.png; do
@@ -13,15 +15,15 @@ for file in *-*\.png *.png; do
     continue
   fi
 
-  if [[ ! -f "$(basename "$file" .png).webp" ]]; then
-    cwebp -q 100 -resize 386 405  -crop 330 300 1930 2025 "$file" -o "$(basename "$file" .png).webp"
+  if [[ ! -f "$(basename "$file" .png).webp" || "$file" -nt "$(basename "$file" .png).webp" ]]; then
+    cwebp -q 100 -resize 386 405 -crop 330 300 1930 2025 "$file" -o "$(basename "$file" .png).webp"
   fi
 
-  if [[ ! -f "$(basename "$file" .png)-small.webp" ]]; then
-    cwebp -q 100 -resize 38 40  -crop 330 300 1930 2025 "$file" -o "$(basename "$file" .png)-small.webp"
+  if [[ ! -f "$(basename "$file" .png)-small.webp" || "$file" -nt "$(basename "$file" .png)-white.webp" ]]; then
+    cwebp -q 100 -resize 38 40 -crop 330 300 1930 2025 "$file" -o "$(basename "$file" .png)-small.webp"
   fi
 
-  if [[ ! -f "$(basename "$file" .png)-white.png" ]]; then
+  if [[ ! -f "$(basename "$file" .png)-white.png" || "$file" -nt "$(basename "$file" .png)-white.png" ]]; then
     convert "$file" -background white -alpha remove -alpha off "$(basename "$file" .png)-white.png"
   fi
 done
