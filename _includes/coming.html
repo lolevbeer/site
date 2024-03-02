@@ -3,12 +3,12 @@
     <h2>Up Next</h2>
     <div class="padded-section">
     {% for beer in site.data.coming %}
-      <h3>{{ beer.type }}</h3>
-      {% if beer.abv %}
-        <div class="abv"><b>{{ beer.abv }}</b></div>
-      {% endif %}
-      {% if beer.description %}
-        <div>{{ beer.description }}</div>
+      {% if beer.variant %}
+        <a href="/beer/{{ beer.variant }}">
+          <h3>{{ beer.type }}</h3>
+        </a>
+      {% else %}
+        <h3>{{ beer.type }}</h3>
       {% endif %}
     {% endfor %}
     </div>
