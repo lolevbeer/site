@@ -33,6 +33,7 @@ new Vue({
                 const response = await axios.get(`https://docs.google.com/spreadsheets/d/e/2PACX-1vQIcKPeDcvTKS_7zH7-XekKAuO3cl7juVJOy3upThDIM2nnca7WKrXpYIC8oBebXDMM35hstr${this.password}/pub?gid=0&single=true&output=csv`);
                 const parsedData = Papa.parse(response.data, { header: true }).data;
                 this.inventory = parsedData;
+                console.log(parsedData)
                 this.$nextTick(() => {
                     this.addEventListeners(); // Bind event listeners after setting inventory data
                 });
