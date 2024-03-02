@@ -1,0 +1,46 @@
+#app
+  display: flex
+  flex-wrap: wrap
+  justify-content: space-between
+  padding: 20px
+
+.beer-tile
+  flex: 1 1 22%
+  margin: 10px
+  padding: 20px
+  display: flex
+  flex-direction: column
+  align-items: center
+  text-align: center
+  & img
+    width: 100%
+    max-width: 200px
+    height: auto
+    margin-bottom: 15px
+  & .sell-sheet-can-no-image
+    background: black
+    position: relative
+    width: 80px
+    height: 123px
+    margin-bottom: 20px
+    &::after
+      content: 'No Image'
+      color: white
+      position: absolute
+      top: 50%
+      left: 50%
+      transform: translate(-50%, -50%)
+
+.name, .description, .hops
+  margin: 5px 0
+
+.hops
+  font-style: italic
+
+// @media (max-width: 1200px)
+//   .beer-tile
+//     flex: 1 1 45%
+
+@media (max-width: 600px)
+  .beer-tile
+    flex: 1 1 100%
