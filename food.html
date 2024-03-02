@@ -13,20 +13,21 @@ class: block no-snap
     {% if currentDate <= postDate and postDate <= futureDate %}
       {% if food.vendor != empty %}
         <span id="food-day-{{ food.date | date: '%w' }}" class="event" data-date="{{ food.date }}">
-          <a href="{{ food.site }}" target="_blank">
+
             {% if food.site %}
-              <b>{{ food.vendor }}</b>
+              <a href="{{ food.site }}" target="_blank">
+                <b>{{ food.vendor }}</b>
+              </a>
             {% else %}
               <b>{{ food.vendor }}</b>
             {% endif %}
             {% if previousDate != food.date %}
               {% assign previousDate = food.date %}
-              <span class="date">{{ food.date | date: '%-m/%-d/%Y' }}</span>
-            {% else %}
+                <span class="date">{{ food.date | date: '%a %-m/%-d' }}</span>
+              {% else %}
               <span class="date">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
             {% endif %}
             <br>
-          </a>
         </span>
       {% endif %}
     {% endif %}
