@@ -1,10 +1,9 @@
-type,variant
-Firnara,firnara
-Double IPA,
-Lupula,lupula
-Coffee Porter,
-Waves,waves
-Elias,elias
-Double Lupula,double-lupula
-Helles,
-Grandar,grandar
+type,variant,tempName
+Double Lupula,double-lupula,
+Coffee Porter,,Coffee Porter
+Waves,waves,
+Elias,elias,
+Double IPA,,Double IPA
+Helles,,Helles
+Double Lupula,double-lupula,
+Grandar,grandar,
