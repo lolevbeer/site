@@ -1,13 +1,15 @@
-<div class="event" data-date="{{ event.date }}">
-  <a href="{{ event.site }}" target="_blank">
-    <span class="date">{{ event.date | date: '%b %-d' }}</span>
-    {% if event.site %}
-      <b>{{ event.vendor }}</b>
-    {% else %}
-      <b>{{ event.vendor }}</b>
-    {% endif %}
-    <span class="date-time">
-      <span class="time">{{ event.time }}</span>
-    </span>
-  </a>
+<div class="event">
+  <span data-date="{{ event.date }}"">
+    <a href="{{ event.site }}" target="_blank">
+      <span class="date">{{ event.date | date: '%b %-d' }}</span>
+      {% if event.site %}
+        <b>{{ event.vendor }}</b>
+      {% else %}
+        <b>{{ event.vendor }}</b>
+      {% endif %}
+      <span class="date-time">
+        <span class="time">{{ event.time }}</span>
+      </span>
+    </a>
+  </span>
 </div>
