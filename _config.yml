@@ -47,6 +47,13 @@ page_gen:
   name: first
   debug: false
 
+page_gen:
+- data: people
+  template: signature
+  dir: signature
+  name: first
+  debug: false
+
 - data: beer
   template: qr
   dir: qr
