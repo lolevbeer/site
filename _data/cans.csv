@@ -1,5 +1,4 @@
 variant,cansAvailable,name,salePrice,type,abv,glass,draftPrice,cans,case,halfCase,description,upc,glutenFree,image,untappd
-elias,TRUE,Elias,,Cream Ale,4.3,lager,6,15,80,45,"Smooth, subtle citrus notes and floral aroma.",860009737648,FALSE,TRUE,5240800
 grandar,TRUE,Grandar,,Imperial Pilsner,6.6,lager,7,16,85,45,"Crackery sweetness balanced with hops, floral and herbal notes that finish with a subtle citrus. Step mashed and hopped with Nobles.",850051366040,FALSE,TRUE,
 levenator,TRUE,Levenator,,Doppelbock,7.8,lager,8,17,90,50,"Rich malt flavor with notes of toasted caramel, dark fruit, and chocolate.",850051366095,FALSE,TRUE,
 lupula,TRUE,Lupula,,India Pale Ale,7,teku,8,18,95,50,"Pineapple, mango, and grapefruit. Aromatic.",860009737617,FALSE,TRUE,5370332
@@ -8,4 +7,5 @@ tides,TRUE,Tides,,India Pale Ale,7,teku,8,18,95,50,"Mango, passionfruit, and fru
 firnara,TRUE,Firnara,,West Coast IPA,7.5,teku,8,18,95,50,"Orange, lemon zest, dank, piney and resinous.",850051366194,FALSE,TRUE,
 rubico,TRUE,Rubico,,Double IPA,8.5,small-teku,8,22,120,65,"Pineapple, peach rings, bubblegum, strawberry and citrus.",850051366156,FALSE,TRUE,
 orban,TRUE,Orban,,Imperial Stout,10.5,small-teku,9,24,130,70,"Caramel, orange, dark chocolate and vanilla. Conditioned on cracked Madagascar vanilla beans and Cocoa nibs.",850051366163,FALSE,TRUE,
+,FALSE,,,,,,,,,,,,,,
 ,FALSE,,,,,,,,,,,,,,
