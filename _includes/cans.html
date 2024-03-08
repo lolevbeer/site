@@ -1,8 +1,8 @@
 {% assign total = site.data.cans | where: "cansAvailable", "TRUE" | size %}
-{% assign totalPlusOne = total | plus: 1 %}
+
 <section class="stacked" id="cans">
   <h2>To Go</h2>
-  <div class="beer-cans beers-{{ totalPlusOne }} padded-section">
+  <div class="beer-cans beers-{{ total }} padded-section">
   {% for beer in site.data.cans %}
     {% if beer.variant != "" and beer.image == 'TRUE' %}
       <a href="/beer/{{ beer.variant }}">
