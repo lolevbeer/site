@@ -9,23 +9,25 @@
     {% assign postYear = food.date | date: "%Y" %}
     {% if currentWeek == postWeek and currentYear == postYear %}
       {% if food.vendor != empty %}
-        <span id="food-day-{{ food.date | date: '%w' }}" class="event" data-date="{{ food.date }}">
-          <a href="{{ food.site }}" target="_blank">
-            {% if previousDate != food.date %}
-              {% assign previousDate = food.date %}
-              <span class="date">{{ food.date | date: '%a' }}</span>
-            {% else %}
-              <span class="date">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-            {% endif %}
-            {% if food.site %}
-              <b>{{ food.vendor }}</b>
-            {% else %}
-              <b>{{ food.vendor }}</b>
-            {% endif %}
-            <span class="time">{{ food.time }}</span>
-            <br>
-          </a>
-        </span>
+        <div>
+          <div id="food-day-{{ food.date | date: '%w' }}" class="event" data-date="{{ food.date }}">
+            <a href="{{ food.site }}" target="_blank">
+              {% if previousDate != food.date %}
+                {% assign previousDate = food.date %}
+                <span class="date">{{ food.date | date: '%a' }}</span>
+              {% else %}
+                <span class="date">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+              {% endif %}
+              {% if food.site %}
+                <b>{{ food.vendor }}</b>
+              {% else %}
+                <b>{{ food.vendor }}</b>
+              {% endif %}
+              <span class="time">{{ food.time }}</span>
+              <br>
+            </a>
+          </div>
+        </div>
       {% endif %}
     {% endif %}
   {% endfor %}
