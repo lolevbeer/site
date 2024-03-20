@@ -1,5 +1,5 @@
 variant,cansAvailable,name,salePrice,type,abv,glass,price,cans,case,halfCase,description,upc,glutenFree,image,untappd
-grandar,TRUE,Grandar,,Imperial Pilsner,6.6,lager,7,16,85,45,"Crackery sweetness balanced with hops, floral and herbal notes that finish with a subtle citrus. Step mashed and hopped with Nobles.",850051366040,FALSE,TRUE,
+grandar,FALSE,Grandar,,Imperial Pilsner,6.6,lager,7,16,85,45,"Crackery sweetness balanced with hops, floral and herbal notes that finish with a subtle citrus. Step mashed and hopped with Nobles.",850051366040,FALSE,TRUE,
 levenator,TRUE,Levenator,,Doppelbock,7.8,lager,8,17,90,50,"Rich malt flavor with notes of toasted caramel, dark fruit, and chocolate.",850051366095,FALSE,TRUE,
 lupula,FALSE,Lupula,,India Pale Ale,7,teku,8,18,95,50,"Pineapple, mango, and grapefruit. Aromatic.",860009737617,FALSE,TRUE,5370332
 prismatic,TRUE,Prismatic,,India Pale Ale,7,teku,8,18,95,50,"Pineapple, vanilla, tangerine, melon.",850051366064,FALSE,TRUE,
