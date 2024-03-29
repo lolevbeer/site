@@ -5,5 +5,5 @@ tides,TRUE,Tides,,India Pale Ale,7,teku,8,18,95,50,"Mango, passionfruit, and fru
 firnara,TRUE,Firnara,,West Coast IPA,7.5,teku,8,18,95,50,"Orange, lemon zest, dank, piney and resinous.",850051366194,FALSE,TRUE,
 rubico,TRUE,Rubico,,Double IPA,8.5,small-teku,8,22,120,65,"Pineapple, peach rings, bubblegum, strawberry and citrus.",850051366156,FALSE,TRUE,
 orban,TRUE,Orban,,Imperial Stout,10.5,small-teku,9,24,130,70,"Caramel, orange, dark chocolate and vanilla. Conditioned on cracked Madagascar vanilla beans and Cocoa nibs.",850051366163,FALSE,TRUE,
-,FALSE,,,,,,,,,,,,,,
-,FALSE,,,,,,,,,,,,,,
+espressar,TRUE,Espressar,,Coffee Porter,6.9,lager,7,17,,,"Served on Nitro. Biscuity, toasty, caramel, coffee, and vanilla. Conditioned on Peruvian coffee beans.",850051366200,FALSE,TRUE,
+tros,TRUE,Tros,,Double IPA,8,small-teku,8,22,,,"Pineapple, mandarin orange and mango.",850051366132,FALSE,TRUE,
