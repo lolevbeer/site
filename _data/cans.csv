@@ -5,6 +5,6 @@ prismatic,TRUE,Prismatic,,India Pale Ale,7,teku,8,18,95,50,"Pineapple, vanilla, 
 tides,TRUE,Tides,,India Pale Ale,7,teku,8,18,95,50,"Mango, passionfruit, and fruit stripe gum.",860009737600,FALSE,TRUE,5142237
 firnara,TRUE,Firnara,,West Coast IPA,7.5,teku,8,18,95,50,"Orange, lemon zest, dank, piney and resinous.",850051366194,FALSE,TRUE,
 lupula,TRUE,Lupula,,India Pale Ale,7,teku,8,18,95,50,"Pineapple, mango, and grapefruit. Aromatic.",860009737617,FALSE,TRUE,5370332
-rubico,TRUE,Rubico,,Double IPA,8.5,small-teku,8,22,120,65,"Pineapple, peach rings, bubblegum, strawberry and citrus.",850051366156,FALSE,TRUE,
+,FALSE,,,,,,,,,,,,,,
 tros,TRUE,Tros,,Double IPA,8,small-teku,8,22,,,"Pineapple, mandarin orange and mango.",850051366132,FALSE,TRUE,
 orban,TRUE,Orban,,Imperial Stout,10.5,small-teku,9,24,130,70,"Caramel, orange, dark chocolate and vanilla. Conditioned on cracked Madagascar vanilla beans and Cocoa nibs.",850051366163,FALSE,TRUE,
