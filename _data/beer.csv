@@ -10,7 +10,7 @@ secrets,Secrets,Double IPA,,8.5,teku,$8,,,,"Pineapple, peach, bubblegum, and cit
 soleil,Soleil,Saison,,6.9,teku,$7,,,,"Dry orange, mimosa-esque. Floral notes and funky.",,FALSE,FALSE,,9,
 terrini,Terrini,Grisette,,5,teku,$7,,,,"Grassy, floral, and pithy orange aromas. Notes of pear, candied orange, and lemongrass flavors. Slightly sweet finish.",,FALSE,FALSE,,10,
 kimik,Kimik,Session IPA,,4.5,teku,$6,,,,"Notes of heavy citrus, passion fruit, lychee, and a distinct guava aroma.",,FALSE,FALSE,,11,
-lupula,Lupula,India Pale Ale,,7,teku,$8,$18,$95,$50,"Pineapple, mango, and grapefruit. Aromatic.",860009737617,FALSE,TRUE,5370332,12,"Motueka™, Moutere™, Riwaka™ "
+lupula,Lupula,India Pale Ale,,7,teku,$8,$18,$95,$50,"Pineapple, mango, and grapefruit. Aromatic.",860009737617,FALSE,TRUE,5370332,12,"Motueka™, Moutere™, Riwaka™"
 melrose,Melrose,Scotch Ale,,6,lager,$6,$12,$65,$35,Smooth and malty with light caramel and dark fruit notes with subtle cherry aroma.,860009737655,FALSE,TRUE,5276125,13,
 carnyx,Carnyx,Dry Irish Stout,,4.2,lager,$5,$10,$55,$30,"Balanced richness, notes of coffee, and chocolate. A smooth, and creamy texture.",860009737686,FALSE,TRUE,5268842,14,
 alma,Alma,Unfiltered Pilsner,,5.9,lager,$6,$15,$80,$45,"A radiant golden straw hue, with a robust all-malt foundation. A refreshing crispness is complemented by delicate floral and citrus notes that emerge in the finish.",850051366040,FALSE,TRUE,5327606,15,
@@ -40,7 +40,7 @@ levenator,Levenator,Doppelbock,,7.8,lager,$8,$17,$90,$50,"Rich malt flavor with 
 rubico,Rubico,Double IPA,,8.5,small-teku,$8,$22,$120,$65,"Pineapple, peach rings, bubblegum, strawberry and citrus.",850051366156,FALSE,TRUE,,39,"Estate Grown Comet, Vic Secret™, Galaxy®"
 orban,Orban,Imperial Stout,,10.5,small-teku,$9,$24,$130,$70,"Caramel, orange, dark chocolate and vanilla. Conditioned on cracked Madagascar vanilla beans and Cocoa nibs.",850051366163,FALSE,TRUE,,40,
 severina,Severina,Cookie Brown Ale,,5.3,lager,$5,$16,$85,$45,"Infused with Amaretti cookies. Notes of ginger, cinnamon, and caramel. Collab with Severina for the Lawrenceville Cookie Tour.",,FALSE,FALSE,,41,
-double-lupula,Double Lupula,Double IPA,,8.2,small-teku,$8,$22,$120,$65,"Pineapple, mango, and grapefruit, and orange aromatics.",850051366170,FALSE,TRUE,,42,"Motueka™, Moutere™, Riwaka™ "
+double-lupula,Double Lupula,Double IPA,,8.2,small-teku,$8,$22,$120,$65,"Pineapple, mango, and grapefruit, and orange aromatics.",850051366170,FALSE,TRUE,,42,"Motueka™, Moutere™, Riwaka™"
 prismatic,Prismatic,India Pale Ale,,7,teku,$8,$18,$95,$50,"Pineapple, vanilla, tangerine, melon.",850051366064,FALSE,TRUE,,43,"El Dorado®, Idaho 7™, Strata®"
 vespero,Vespero,Czech Dark Lager,,5.8,lager,$7,$16,$85,$45,"Roasted chestnut, chocolate and raisin. Ruby hue and a hint of noble hops.",850051366187,FALSE,TRUE,,44,
 altamir,Altamir,India Pale Ale,,6.5,teku,$8,$18,$95,$50,"Berry, Citrus, and floral.",,FALSE,FALSE,,45,"Citra®, Amarillo®, El Dorado®, Belma®"
