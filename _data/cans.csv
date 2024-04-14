@@ -1,7 +1,7 @@
 variant,cansAvailable,name,salePrice,type,abv,glass,cans,halfCase,case,image
 levenator,TRUE,Levenator,,Doppelbock,7.8,lager,17,50,90,TRUE
 espressar,TRUE,Espressar,,Coffee Porter,6.9,lager,17,50,90,TRUE
-prismatic,TRUE,Prismatic,,India Pale Ale,7,teku,18,50,95,TRUE
+prismatic,FALSE,Prismatic,,India Pale Ale,7,teku,18,50,95,TRUE
 tides,TRUE,Tides,,India Pale Ale,7,teku,18,50,95,TRUE
 firnara,TRUE,Firnara,,West Coast IPA,7.5,teku,18,50,95,TRUE
 lupula,TRUE,Lupula,,India Pale Ale,7,teku,18,50,95,TRUE
