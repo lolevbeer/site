@@ -1,15 +1,15 @@
 variant,halfs,sixtels,cases,tank,upc,style,product,wholesaleHalf,wholesaleSixtel,wholesaleCase,suggRetailHalf,suggRetailSixtel,suggRetailCase,has-image,description,hops
 elias,,,,,860009737648,Cream Ale,Elias,$126,$63,$46,$180,$90,$65,TRUE,"Smooth, subtle citrus notes and floral aroma.",
-lupula,,,20,,860009737617,India Pale Ale,Lupula,$168,$70,$55,$240,$100,$79,TRUE,"Pineapple, mango, and grapefruit. Aromatic.","Motueka™, Moutere™, Riwaka™"
-terra,,,,,,Saison,Terra,$168,$70,$55,$240,$100,$79,FALSE,"Orange zest, marmalade, and grapefruit. Floral and spicy.","Wakatu™, Motueka™"
+lupula,,,13,,860009737617,India Pale Ale,Lupula,$168,$70,$55,$240,$100,$79,TRUE,"Pineapple, mango, and grapefruit. Aromatic.","Motueka™, Moutere™, Riwaka™"
+hanno,,,,17.5,850051366064,India Pale Ale,Hanno,$168,$70,$55,$240,$100,$79,TRUE,"Resinous, dank, notes of douglas fir with citrus and lychee.","Mosaic®, Estate Grown Comet, Triumph, and USDA Elite Line 008"
 solem,6,,,,,Imperial Saison,Solem,$168,$70,$59,$240,$100,$84,FALSE,"Funky and dry. Pineapple, leather, and ripe peach.",
 grandar,,,,,850051366040,Imperial Pilsner,Grandar,$140,$53,$46,$200,$75,$65,TRUE,"Crackery sweetness balanced with hops, floral and herbal notes that finish with a subtle citrus. Step mashed and hopped with Nobles.",Hallertauer Mittelfrüh and Saaz
-levenator,,,8,,850051366095,Doppelbock,Levenator,$154,$63,$53,$220,$90,$75,TRUE,"Rich malt flavor with notes of toasted caramel, dark fruit, and chocolate.",
+levenator,,,1,,850051366095,Doppelbock,Levenator,$154,$63,$53,$220,$90,$75,TRUE,"Rich malt flavor with notes of toasted caramel, dark fruit, and chocolate.",
 rubico,,,,,850051366156,Double IPA,Rubico,$210,$88,$62,$300,$125,$89,TRUE,"Pineapple, peach rings, bubblegum, strawberry and citrus.","Estate Grown Comet, Vic Secret™, Galaxy®"
-orban,,,5,,850051366163,Imperial Stout,Orban,$323,$112,$75,$462,$160,$107,TRUE,"Caramel, orange, dark chocolate and vanilla. Conditioned on cracked Madagascar vanilla beans and Cocoa nibs.",
-prismatic,1,,5,,850051366064,India Pale Ale,Prismatic,$168,$70,$55,$240,$100,$79,,"Pineapple, vanilla, tangerine, melon.","El Dorado®, Idaho 7™, Strata®"
-tides,,,5,,860009737600,India Pale Ale,Tides,$168,$70,$55,$240,$100,$79,,"Mango, passionfruit, and fruit stripe gum.","El Dorado®, Simcoe®, Mosaic®, Citra®"
-firnara,,,5,2,850051366194,West Coast IPA,Firnara,$168,$70,$55,$240,$100,$79,,"Orange, lemon zest, dank, piney and resinous.","Centennial, Simcoe®, Amarillo®"
-vespero,,,,,850051366187,Czech Dark Lager,Vespero,$126,$63,$46,$180,$90,$65,,"Roasted chestnut, chocolate and raisin. Ruby hue and a hint of noble hops.",
-espressar,,,2,2,850051366200,Coffee Porter,Espressar,$154,$60,$53,$220,$85,$75,,"Served on Nitro. Biscuity, toasty, caramel, coffee, and vanilla. Conditioned on Peruvian coffee beans.",
-tros,,,,,850051366132,Double IPA,Tros,$210,$88,$62,$300,$125,$89,,"Pineapple, mandarin orange and mango.","Mosaic®, Enigma®, Eureka!™"
+orban,,,1,,850051366163,Imperial Stout,Orban,$323,$112,$75,$462,$160,$107,TRUE,"Caramel, orange, dark chocolate and vanilla. Conditioned on cracked Madagascar vanilla beans and Cocoa nibs.",
+prismatic,,,,,850051366064,India Pale Ale,Prismatic,$168,$70,$55,$240,$100,$79,,"Pineapple, vanilla, tangerine, melon.","El Dorado®, Idaho 7™, Strata®"
+tides,,,2,,860009737600,India Pale Ale,Tides,$168,$70,$55,$240,$100,$79,,"Mango, passionfruit, and fruit stripe gum.","El Dorado®, Simcoe®, Mosaic®, Citra®"
+firnara,,,,,850051366194,West Coast IPA,Firnara,$168,$70,$55,$240,$100,$79,,"Orange, lemon zest, dank, piney and resinous.","Centennial, Simcoe®, Amarillo®"
+vespero,2,,,,850051366187,Czech Dark Lager,Vespero,$126,$63,$46,$180,$90,$65,,"Roasted chestnut, chocolate and raisin. Ruby hue and a hint of noble hops.",
+espressar,,,9,,850051366200,Coffee Porter,Espressar,$154,$60,$53,$220,$85,$75,,"Served on Nitro. Biscuity, toasty, caramel, coffee, and vanilla. Conditioned on Peruvian coffee beans.",
+tros,,,14,,850051366132,Double IPA,Tros,$210,$88,$62,$300,$125,$89,,"Pineapple, mandarin orange and mango.","Mosaic®, Enigma®, Eureka!™"
