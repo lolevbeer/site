@@ -34,7 +34,7 @@ taupo,Taupō,India Pale Ale,,6.4,teku,$8,$17,$90,$50,"Key lime, spanish cedar, a
 zama,Zama,India Pale Ale,,6.7,teku,$8,$17,$90,$50,"Pineapple, tangerine, mango.",850051366125,FALSE,TRUE,,33,"Nectaron®, El Dorado®, Ekuanot®"
 drip,Drip,Double IPA,,8.7,small-teku,$8,$20,$110,$55,"White grape, grapefruit and orange.  Adjuncted with Phantasm",850051366132,FALSE,TRUE,,34,"Motueka™, Nelson Sauvin™, Citra®"
 solem,Solem,Imperial Saison,,9.5,small-teku,$7,,,,"Funky and dry. Pineapple, leather, and ripe peach.",,FALSE,FALSE,,35,
-hanno,Hanno,India Pale Ale,,6.8,teku,$8,$17,$90,$50,"Resinous, dank, notes of douglas fir with citrus and lychee.",850051366064,FALSE,TRUE,,36,"Mosaic®, Comet, Triumph"
+hanno,Hanno,India Pale Ale,,6.8,teku,$8,$17,$90,$50,"Resinous, douglas fir with citrus and lychee.",850051366064,FALSE,TRUE,,36,"Mosaic®, Comet, Triumph"
 grandar,Grandar,Imperial Pilsner,,6.6,lager,$7,$16,$85,$45,"Crackery sweetness balanced with hops, floral and herbal notes that finish with a subtle citrus. Step mashed and hopped with nobles.",850051366040,FALSE,TRUE,,37,Hallertauer Mittelfrüh and Saaz
 levenator,Levenator,Doppelbock,,7.8,lager,$8,$16,$85,$45,"Rich malt flavor with notes of toasted caramel, dark fruit, and chocolate.",850051366095,FALSE,TRUE,,38,
 rubico,Rubico,Double IPA,,8.5,small-teku,$8,$20,$110,$55,"Pineapple, peach rings, bubblegum, strawberry and citrus.",850051366156,FALSE,TRUE,,39,"Estate Grown Comet, Vic Secret™, Galaxy®"
@@ -53,4 +53,4 @@ marty-ii,Marty II,Matcha Wheat Ale,,5.5,teku,$6,,,,"Our annual St. Patrick's Day
 tros,Tros,Double IPA,,8,small-teku,$8,$20,$110,$55,"Pineapple, mandarin orange and mango.",850051366132,FALSE,TRUE,,52,"Mosaic®, Enigma®, Eureka!™"
 faust,Faust,Wild Ale conditioned on Plums,,9.3,small-teku,$9,,,,"Slightly sour, dry and oaky. Aged in oak foeders on our house microflora and conditioned on fresh plums.",,FALSE,FALSE,,53,
 rein,Rein,Helles Lager,,4.9,lager,$7,,,,Refreshing smooth malt backbone with fruit notes and floral aroma. ,850051366040,FALSE,TRUE,,54,Callista
-hurron,Hurron,Double IPA,,7.7,small-teku,$8,,,,"White grape, lime, and orange mango.  Adjuncted with Phantasm.",850051366132,FALSE,TRUE,,55,"Mega Motueka, Citra®, Riwaka™, Moutere™"
+hurron,Hurron,Double IPA,,8,small-teku,$8,,,,"White grape, lime, and orange mango.  Adjuncted with Phantasm.",850051366132,FALSE,TRUE,,55,"Mega Motueka, Citra®, Riwaka™, Moutere™"
