@@ -1,7 +1,7 @@
 variant,cansAvailable,name,salePrice,type,abv,glass,cans,halfCase,case,image
 levenator,TRUE,Levenator,,Doppelbock,7.8,lager,16,45,85,TRUE
 espressar,TRUE,Espressar,,Coffee Porter,6.9,lager,17,50,90,TRUE
-firnara,TRUE,Firnara,,West Coast IPA,7.5,teku,17,50,90,TRUE
+firnara,FALSE,Firnara,,West Coast IPA,7.5,teku,17,50,90,TRUE
 lupula,TRUE,Lupula,,India Pale Ale,7,teku,17,50,90,TRUE
 tros,TRUE,Tros,,Double IPA,8,small-teku,20,55,110,TRUE
 orban,TRUE,Orban,,Imperial Stout,10.5,small-teku,21,60,115,TRUE
