@@ -54,5 +54,5 @@ tros,Tros,Double IPA,,8,small-teku,$8,$20,$110,$55,"Pineapple, mandarin orange a
 faust,Faust,Wild Ale conditioned on Plums,,9.3,small-teku,$9,,,,"Slightly sour, dry and oaky. Aged in oak foeders on our house microflora and conditioned on fresh plums.",,FALSE,FALSE,,53,
 rein,Rein,Helles Lager,,4.9,lager,$7,$15,,,Refreshing smooth malt backbone with fruit notes and floral aroma. ,850051366040,FALSE,TRUE,,54,Callista
 hurron,Hurron,Double IPA,,8,small-teku,$8,$20,,,"Enhanced with thiol-enriched Motueka from Freestyle Hops x Phantasm. Peach, pineapple and white grape. ",850051366132,FALSE,TRUE,,55,"Mega Motueka, Citra®, Riwaka™, Moutere™"
-Stark,Stark,Bock,,6.5,lager,,,,,Rich maltiness with hints of caramel and toast. Spicy hop notes with subtle floral aroma. The sweetness of the malt is balanced by a light hop bitterness. ,,,,,,Hallertauer Tradition
-Crest,Crest,India Pale Ale,,7.4,lager,,,,,,,,,,,"Cascade, Triumph, Simcoe, Mosaic"
+Stark,Stark,Bock Lager,,6.5,lager,$7,,,,Rich maltiness with caramel and toast. Spice with floral aroma.,860009737631,FALSE,FALSE,,56,Hallertauer Tradition
+Crest,Crest,India Pale Ale,,7.4,lager,$8,,,,,860009737693,FALSE,FALSE,,57,"Cascade, Triumph, Simcoe, Mosaic"
