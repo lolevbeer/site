@@ -82,8 +82,10 @@ section
 
 main
   overflow: auto
-  scroll-snap-type: y proximity
+  scroll-snap-type: none
   z-index: 2
+  @media screen and (max-width: 741px)
+    scroll-snap-type: y mandatory
   & section
     position: relative
     scroll-snap-align: center
@@ -133,8 +135,8 @@ main
       transform: rotateZ(343deg) translateX(-160px)
 
 slider
-  scroll-snap-align: start
-  scroll-snap-type: x mandatory
+  // scroll-snap-align: start
+  // scroll-snap-type: x mandatory
   display: flex
   -webkit-overflow-scrolling: touch
   overflow-x: scroll
