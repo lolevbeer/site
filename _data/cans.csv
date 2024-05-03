@@ -1,7 +1,7 @@
 variant,cansAvailable,name,salePrice,type,abv,glass,cans,halfCase,case,image
 rein,TRUE,Rein,,Helles Lager,4.9,lager,15,,,TRUE
 espressar,TRUE,Espressar,,Coffee Porter,6.9,lager,17,50,90,TRUE
-lupula,TRUE,Lupula,,India Pale Ale,7,teku,17,50,90,TRUE
+lupula,FALSE,Lupula,,India Pale Ale,7,teku,17,50,90,TRUE
 hanno,TRUE,Hanno,,India Pale Ale,7,teku,17,50,90,TRUE
 hurron,TRUE,Hurron,,Double IPA,8,small-teku,20,,,TRUE
 tros,TRUE,Tros,,Double IPA,8,small-teku,20,55,110,TRUE
