@@ -4,7 +4,7 @@ tides,Tides,India Pale Ale,,7,teku,$8,$17,$90,$50,"Mango, passionfruit, and frui
 scylla,Scylla,Imperial Stout,,10.5,small-teku,$8,$19,$105,$55,Dark chocolate and toasted caramel layered on blackberry cola.,,FALSE,FALSE,5142310,3,
 sebastian,Sebastian,Bock,,6.7,lager,$6,$10,$55,$30,A Maibock brewed with 100% Pilsner malt and German and American Noble Hops.,860009737631,FALSE,TRUE,5210316,4,
 revive,Revive,Sparkling Hop Water,,4.8,lager,$6,,,,"Modern, hopped version of a traditional Finnish fermented-water beverage.",850051366088,TRUE,FALSE,4876733,5,
-glyphs,Glyphs,Pale Ale,,5.5,teku,$7,$16,$85,$45,"Tangerine, orange zest, and aromatic pine.",860009737679,FALSE,TRUE,5198026,6,"BRU-1, Simcoe®, Strata®, Michigan Chinook"
+glyphs,Glyphs,Pale Ale,,5.5,teku,$7,$16,$85,$45,"Tangerine, orange zest, and aromatic pine.",860009737679,FALSE,TRUE,5198026,6,"Calypso™, Strata®, Michigan Chinook"
 dom,Dom,Kölsch,,5,lager,$6,$15,$80,$45,"Crisp ale with floral and pear notes, subtle grapefruit zest aroma.",860009737624,FALSE,TRUE,5221229,7,
 secrets,Secrets,Double IPA,,8.5,teku,$8,,,,"Pineapple, peach, bubblegum, and citrus.        ",,FALSE,FALSE,5178870,8,
 soleil,Soleil,Saison,,6.9,teku,$7,,,,"Dry orange, mimosa-esque. Floral notes and funky.",,FALSE,FALSE,,9,
@@ -56,3 +56,5 @@ rein,Rein,Helles Lager,,4.9,lager,$7,$15,,,Refreshing smooth malt backbone with 
 hurron,Hurron,Double IPA,,8,small-teku,$8,$20,,,"Enhanced with thiol-enriched Motueka from Freestyle Hops x Phantasm. Peach, pineapple and white grape. ",850051366132,FALSE,TRUE,,55,"Mega Motueka, Citra®, Riwaka™, Moutere™"
 stark,Stark,Heller Bock Lager,,6.2,lager,$7,$15,,,Rich maltiness with caramel and toast. Spice with floral aroma.,860009737631,FALSE,TRUE,,56,Hallertauer Tradition
 crest,Crest,India Pale Ale,,7.4,teku,$8,$17,,,"Citrus, tropical, and stone fruit flavors, accompanied by floral and piney undertones.",860009737693,FALSE,TRUE,,57,"Cascade, Triumph, Simcoe®, Mosaic®"
+summer-lupula,Summer Lupula,India Pale Ale,,6,lager,$7,$15,,,"Pineapple, mango, and grapefruit. Aromatic.",,FALSE,TRUE,,58,"Motueka™, Moutere™, Riwaka™"
+tribute,Tribute,Imperial West Coast Pilsner,,6.6,lager,$7,$17,,,"Orange, tangerine, basil. Citrus and sunflower aroma. ",850051366040,FALSE,TRUE,,59,"Citra®, Columbus, HBC 630, HBC 1019, Talus®"
