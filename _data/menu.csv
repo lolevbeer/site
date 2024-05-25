@@ -1,6 +1,6 @@
 "tap","variant","singleCanAvailable","name","type","abv","glass","price","description","glutenFree","image","hops"
 "1","rein","FALSE","Rein","Helles Lager","4.9","lager","7","Refreshing smooth malt backbone with fruit notes and floral aroma. ","FALSE","TRUE","Callista"
-"2","lupula","FALSE","Lupula","India Pale Ale","7","teku","8","Pineapple, mango, and grapefruit. Aromatic.","FALSE","TRUE","Motueka™, Moutere™, Riwaka™"
+"2","","FALSE","","","","","","","","",""
 "3","stark","FALSE","Stark","Heller Bock Lager","6.2","lager","7","Rich maltiness with caramel and toast. Spice with floral aroma.","FALSE","TRUE","Hallertauer Tradition"
 "4","","FALSE","","","","","","","","",""
 "5","crest","FALSE","Crest","India Pale Ale","7.4","teku","8","Citrus, tropical, and stone fruit flavors, accompanied by floral and piney undertones.","FALSE","TRUE","Cascade, Triumph, Simcoe®, Mosaic®"
