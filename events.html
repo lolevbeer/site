@@ -9,9 +9,11 @@ class: block no-snap
   {% assign currentDate = "now" | date: "%Y-%m-%d" | timezone: "America/New_York" %}
   {% for event in site.data.events %}
     {% assign eventDate = event.date | date: "%Y-%m-%d" | timezone: "America/New_York" %}
-    {% if eventDate >= currentDate and count < 20 %}
-      {% include event.html %}
-      {% assign count = count | plus:1 %}
+    {% if event.site %}
+      {% if eventDate >= currentDate and count < 20 %}
+        {% include event.html %}
+        {% assign count = count | plus:1 %}
+      {% endif %}
     {% endif %}
   {% endfor %}
   <p> For scheduling private events, email us at <a href="mailto:events@lolev.beer">events@lolev.beer</a></p>
