@@ -1,7 +1,7 @@
 variant,cansAvailable,name,salePrice,type,abv,cans,halfCase,case,image
 rein,TRUE,Rein,,Helles Lager,4.9,15,,,TRUE
-glyphs,TRUE,Glyphs,,Pale Ale,5,16,45,85,TRUE
-summer-lupula,TRUE,Summer Lupula,,India Pale Ale,6,15,,,TRUE
+glyphs,TRUE,Glyphs,,Pale Ale,5,15,45,80,TRUE
+summer-lupula,TRUE,Summer Lupula,,India Pale Ale,6,16,,,TRUE
 stark,TRUE,Stark,,Heller Bock Lager,6.2,15,,,TRUE
 tribute,TRUE,Tribute,,West Coast Imperial Pilsner,6.6,17,,,TRUE
 espressar,TRUE,Espressar,,Coffee Porter,6.9,17,50,90,TRUE

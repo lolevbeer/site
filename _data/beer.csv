@@ -4,7 +4,7 @@ tides,Tides,India Pale Ale,,7,teku,$8,$17,$90,$50,"Mango, passionfruit, and frui
 scylla,Scylla,Imperial Stout,,10.5,small-teku,$8,$19,$105,$55,Dark chocolate and toasted caramel layered on blackberry cola.,,FALSE,FALSE,5142310,3,
 sebastian,Sebastian,Bock,,6.7,lager,$6,$10,$55,$30,A Maibock brewed with 100% Pilsner malt and German and American Noble Hops.,860009737631,FALSE,TRUE,5210316,4,
 revive,Revive,Sparkling Hop Water,,4.8,lager,$6,,,,"Modern, hopped version of a traditional Finnish fermented-water beverage.",850051366088,TRUE,FALSE,4876733,5,
-glyphs,Glyphs,Pale Ale,,5,teku,$7,$16,$85,$45,"Tangerine, orange zest, and aromatic pine.",860009737679,FALSE,TRUE,5198026,6,"Calypso™, Strata®, Chinook"
+glyphs,Glyphs,Pale Ale,,5,lager,$7,$15,$80,$45,"Tangerine, orange zest, and aromatic pine.",860009737679,FALSE,TRUE,5198026,6,"Calypso™, Strata®, Chinook"
 dom,Dom,Kölsch,,5,lager,$6,$15,$80,$45,"Crisp ale with floral and pear notes, subtle grapefruit zest aroma.",860009737624,FALSE,TRUE,5221229,7,
 secrets,Secrets,Double IPA,,8.5,teku,$8,,,,"Pineapple, peach, bubblegum, and citrus.        ",,FALSE,FALSE,5178870,8,
 soleil,Soleil,Saison,,6.9,teku,$7,,,,"Dry orange, mimosa-esque. Floral notes and funky.",,FALSE,FALSE,,9,
@@ -21,7 +21,7 @@ marty,Marty,Matcha Ale,,4.4,teku,$6,,,,"Light matcha-steeped, crisp ale.",,FALSE
 narada,Narada,West Coast IPA,,7.2,teku,$8,$17,$90,$50,Dank citrus and pine notes.,860009737693,FALSE,TRUE,5284973,20,"Amarillo®, Citra®, Michigan Chinook"
 pomona-cherry-raspberry,Pomona,Sour Ale,Cherry Raspberry,6.7,teku,$8,$18,$95,$50,Tart ale fruited with cherry and raspberry.,850051366002,FALSE,TRUE,5302647,21,
 pomona-peach-mango,Pomona,Sour Ale,Peach Mango,6.7,teku,$8,$18,$95,$50,Tart ale fruited with mango and peach.,850051366019,FALSE,TRUE,5302649,22,
-waves,Waves,Double IPA,,8.5,small-teku,$9,$20,$110,$55,"Stonefruit and citrus, juicy finish. Blueberry and melon aroma.",850051366033,FALSE,TRUE,5346907,23,"El Dorado®, Ekuanot®, Citra®, Mosaic®, Simcoe®"
+waves,Waves,Double IPA,,8.5,teku,$8,$20,$110,$55,"Stonefruit and citrus, juicy finish. Blueberry and melon aroma.",850051366033,FALSE,TRUE,5346907,23,"El Dorado®, Ekuanot®, Citra®, Mosaic®, Simcoe®"
 terra,Terra,Saison,,7.5,teku,$7,,,,"Orange zest, marmalade, and grapefruit. Floral and spicy.",,FALSE,FALSE,4798044,24,"Wakatu™, Motueka™"
 1-onsite,Onsite I,Raspberry Smoothie Sour,,6.2,small-teku,$8,,,,Onsite I is the first of our pilot program. A raspberry fruited smoothie sour. No lactose.,,FALSE,FALSE,5474677,25,
 demeter,Demeter,Barleywine,,10.5,small-teku,$9,$22,$120,$65,"Cognac, candied orange, and caramel.",850051366071,FALSE,TRUE,5385429,26,
@@ -40,7 +40,7 @@ levenator,Levenator,Doppelbock,,7.8,lager,$8,$16,$85,$45,"Rich malt flavor with 
 rubico,Rubico,Double IPA,,8.5,small-teku,$8,$20,$110,$55,"Pineapple, peach rings, bubblegum, strawberry and citrus.",850051366156,FALSE,TRUE,,39,"Estate Grown Comet, Vic Secret™, Galaxy®"
 orban,Orban,Imperial Stout,,10.5,small-teku,$9,$21,$115,$60,"Caramel, orange, dark chocolate and vanilla. Conditioned on cracked Madagascar vanilla beans and Cocoa nibs.",850051366163,FALSE,TRUE,,40,
 severina,Severina,Cookie Brown Ale,,5.3,lager,$5,$16,$85,$45,"Infused with Amaretti cookies. Notes of ginger, cinnamon, and caramel. Collab with Severina for the Lawrenceville Cookie Tour.",,FALSE,FALSE,,41,
-double-lupula,Double Lupula,Double IPA,,8.4,small-teku,$8,$20,$110,$55,"Second revision. More hops, more malt, more everything. Everything Lupula is and more.",850051366170,FALSE,TRUE,,42,"Motueka™, Moutere™, Riwaka™"
+double-lupula,Double Lupula,Double IPA,,8.4,teku,$8,$20,$110,$55,"Second revision. More hops, more malt, more everything. Everything Lupula is and more.",850051366170,FALSE,TRUE,,42,"Motueka™, Moutere™, Riwaka™"
 prismatic,Prismatic,India Pale Ale,,7,teku,$8,$17,$90,$50,"Pineapple, vanilla, tangerine, melon.",850051366064,FALSE,TRUE,,43,"El Dorado®, Idaho 7™, Strata®"
 vespero,Vespero,Czech Dark Lager,,5.8,lager,$7,$16,$85,$45,"Roasted chestnut, chocolate and raisin. Ruby hue and a hint of noble hops.",850051366187,FALSE,TRUE,,44,
 altamir,Altamir,India Pale Ale,,6.5,teku,$8,$17,$90,$50,"Berry, Citrus, and floral.",,FALSE,FALSE,,45,"Citra®, Amarillo®, El Dorado®, Belma®"
@@ -52,10 +52,10 @@ espressar,Espressar,Coffee Porter,,6.9,lager,$7,$17,$90,$50,"Biscuity, toasty, c
 marty-ii,Marty II,Matcha Wheat Ale,,5.5,teku,$6,,,,"Our annual St. Patrick's Day green beer, this year, built on top of heavy malt ratio of wheat. Adjuncted with Matcha.",,FALSE,FALSE,,51,
 tros,Tros,Double IPA,,8,small-teku,$8,$20,$110,$55,"Pineapple, mint, mandarin orange and mango.",850051366132,FALSE,TRUE,,52,"Mosaic®, Enigma®, Eureka!™"
 faust,Faust,Wild Ale conditioned on Plums,,9.3,small-teku,$9,,,,"Slightly sour, dry and oaky. Aged in oak foeders on our house microflora and conditioned on fresh plums.",,FALSE,FALSE,,53,
-rein,Rein,Helles Lager,,4.9,lager,$7,$15,,,Refreshing smooth malt backbone with fruit notes and floral aroma. ,850051366040,FALSE,TRUE,,54,Callista
-hurron,Hurron,Double IPA,,8,small-teku,$8,$20,,,"Enhanced with thiol-enriched Motueka from Freestyle Hops x Phantasm. Peach, pineapple and white grape. ",850051366132,FALSE,TRUE,,55,"Mega Motueka, Citra®, Riwaka™, Moutere™"
+rein,Rein,Helles Lager,,4.9,lager,$6,$15,,,Refreshing smooth malt backbone with fruit notes and floral aroma. ,850051366040,FALSE,TRUE,,54,Callista
+hurron,Hurron,Double IPA,,8,teku,$8,$20,,,"Enhanced with thiol-enriched Motueka from Freestyle Hops x Phantasm. Peach, pineapple and white grape. ",850051366132,FALSE,TRUE,,55,"Mega Motueka, Citra®, Riwaka™, Moutere™"
 stark,Stark,Heller Bock Lager,,6.2,lager,$7,$15,,,Rich maltiness with caramel and toast. Spice with floral aroma.,860009737631,FALSE,TRUE,,56,Hallertauer Tradition
 crest,Crest,India Pale Ale,,7.4,teku,$8,$17,,,"Citrus, tropical, and stone fruit flavors, floral and piney undertones.",860009737693,FALSE,TRUE,,57,"Cascade, Triumph, Simcoe®, Mosaic®"
-summer-lupula,Summer Lupula,India Pale Ale,,6,lager,$7,$15,,,"Summer variant of Lupula, lower alcohol, more citrus-forward. Pineapple and mango.",860009737617,FALSE,TRUE,,58,"Motueka™, Moutere™, Riwaka™"
-tribute,Tribute,West Coast Imperial Pilsner,,6.6,lager,$7,$17,,,"Orange, tangerine, basil with earthly undertones. Citrus and sunflower aroma. Dry hopped with this year's Ales for ALS blend.",850051366095,FALSE,TRUE,,59,"Citra®, Columbus, HBC 630, HBC 1019, Talus®"
+summer-lupula,Summer Lupula,India Pale Ale,,6,lager,$7,$16,,,"Summer variant of Lupula, lower alcohol, more citrus-forward. Pineapple and mango.",860009737617,FALSE,TRUE,,58,"Motueka™, Moutere™, Riwaka™"
+tribute,Tribute,West Coast Imperial Pilsner,,6.6,lager,$7,$17,,,"Orange, tangerine, basil, earthly. Citrus and sunflower aroma. Dry hopped with this year's Ales for ALS hop blend. $2 donated to ""Ales for ALS"" per 4-Pack.",850051366095,FALSE,TRUE,,59,"Citra®, Columbus, HBC 630, HBC 1019, Talus®"
 gosev,Gosev,Gose,,5.7,teku,$7,$18,$95,$50,"Tart ale with notes of lemon, lime, sea salt and coriander. Lightly adjuncted with Raspberry.",850051366026,FALSE,FALSE,5302684,60,
