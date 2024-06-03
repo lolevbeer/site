@@ -2,12 +2,14 @@ variant,halfs,sixtels,cases,tank,upc,style,product,wholesaleHalf,wholesaleSixtel
 double-lupula,,,5,,850051366170,Double IPA,Double Lupula,$210,$88,$62,$300,$125,$89,TRUE,"Second revision. More hops, more malt, more everything. Everything Lupula is and more.","Motueka™, Moutere™, Riwaka™"
 lupula,,,,,860009737617,India Pale Ale,Lupula,$168,$70,$55,$240,$100,$79,TRUE,"Pineapple, mango, and grapefruit. Aromatic.","Motueka™, Moutere™, Riwaka™"
 hanno,,,,,850051366064,India Pale Ale,Hanno,$168,$70,$55,$240,$100,$79,TRUE,"Resinous, douglas fir with citrus and lychee.","Mosaic®, Comet, Triumph"
-stark,2,,10,3,860009737631,Heller Bock Lager,Stark,$126,$55,$46,$180,$79,$65,TRUE,Rich maltiness with caramel and toast. Spice with floral aroma.,Hallertauer Tradition
+stark,,,10,3,860009737631,Heller Bock Lager,Stark,$126,$55,$46,$180,$79,$65,TRUE,Rich maltiness with caramel and toast. Spice with floral aroma.,Hallertauer Tradition
 rein,,,5,,850051366040,Helles Lager,Rein,$126,$55,$46,$180,$79,$65,TRUE,Refreshing smooth malt backbone with fruit notes and floral aroma. ,Callista
 espressar,,,,,850051366200,Coffee Porter,Espressar,$154,$60,$53,$220,$85,$75,TRUE,"Biscuity, toasty, caramel, coffee, and vanilla. Conditioned on Peruvian coffee beans.",Helios™
-tros,,,4,,850051366132,Double IPA,Tros,$210,$88,$62,$300,$125,$89,TRUE,"Pineapple, mint, mandarin orange and mango.","Mosaic®, Enigma®, Eureka!™"
+tros,,,3,,850051366132,Double IPA,Tros,$210,$88,$62,$300,$125,$89,TRUE,"Pineapple, mint, mandarin orange and mango.","Mosaic®, Enigma®, Eureka!™"
 faust,,,,15,,Wild Ale conditioned on Plums,Faust,$315,$123,$140,$450,$175,$200,FALSE,"Slightly sour, dry and oaky. Aged in oak foeders on our house microflora and conditioned on fresh plums.",
 hurron,,,5,,850051366132,Double IPA,Hurron,$210,$88,$62,$300,$125,$89,,"Enhanced with thiol-enriched Motueka from Freestyle Hops x Phantasm. Peach, pineapple and white grape. ","Mega Motueka, Citra®, Riwaka™, Moutere™"
 waves,,,10,,850051366033,Double IPA,Waves,$210,$88,$62,$300,$125,$89,,"Stonefruit and citrus, juicy finish. Blueberry and melon aroma.","El Dorado®, Ekuanot®, Citra®, Mosaic®, Simcoe®"
 crest,,,5,,860009737693,India Pale Ale,Crest,,,,,,,,"Citrus, tropical, and stone fruit flavors, floral and piney undertones.","Cascade, Triumph, Simcoe®, Mosaic®"
-dry hopped pilsner,,,,18,,Imperial Pils,,,,,,,,,,
+tribute,,,20,,850051366095,Imperial Pils,Tribute,$140,$67,$53,$200,$95,$75,,"Orange, tangerine, basil, earthly. Citrus and sunflower aroma. Dry hopped with this year's Ales for ALS hop blend. $2 donated to ""Ales for ALS"" per 4-Pack.","Citra®, Columbus, HBC 630, HBC 1019, Talus®"
+summer-lupula,,,20,,860009737617,India Pale Ale,Summer Lupula,$168,$70,$55,$240,$100,$79,,"Summer variant of Lupula, lower alcohol, more citrus-forward. Pineapple and mango.","Motueka™, Moutere™, Riwaka™"
+glyphs,,,20,,860009737679,Pale Ale,Glyphs,$154,$60,$48,$220,$85,$69,,"Tangerine, orange zest, and aromatic pine.","Calypso™, Strata®, Chinook"
