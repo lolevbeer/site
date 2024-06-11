@@ -310,7 +310,19 @@ h3 + p
   .social-view &
     display: initial
     width: 85px
-
+.social-view
+  .padded-section
+    &:after,
+    &:before
+      content: "."
+      display: block
+      position: absolute
+    &:after
+      top: calc(50% + 340px)
+      left: calc(50% + 340px)
+    &:before
+      top: calc(50% - 340px)
+      left: calc(50% - 340px)
 
 .btn .beer-style
   font-size: 1.5em
