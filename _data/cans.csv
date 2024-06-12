@@ -4,8 +4,8 @@ glyphs,TRUE,Glyphs,,Pale Ale,5,15,45,80,TRUE
 summer-lupula,TRUE,Summer Lupula,,India Pale Ale,6,16,,,TRUE
 stark,TRUE,Stark,,Heller Bock Lager,6.2,15,,,TRUE
 tribute,TRUE,Tribute,,West Coast Imperial Pilsner,6.6,17,,,TRUE
-espressar,TRUE,Espressar,,Coffee Porter,6.9,17,50,90,TRUE
-hanno,TRUE,Hanno,10,India Pale Ale,7,17,50,90,TRUE
+espressar,FALSE,Espressar,,Coffee Porter,6.9,17,50,90,TRUE
+hanno,FALSE,Hanno,10,India Pale Ale,7,17,50,90,TRUE
 crest,TRUE,Crest,10,India Pale Ale,7.4,17,,,TRUE
 tros,TRUE,Tros,10,Double IPA,8,20,55,110,TRUE
 hurron,TRUE,Hurron,,Double IPA,8,20,,,TRUE
