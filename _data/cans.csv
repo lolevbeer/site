@@ -5,7 +5,7 @@ summer-lupula,TRUE,Summer Lupula,,India Pale Ale,6,16,,,TRUE
 stark,TRUE,Stark,,Heller Bock Lager,6.2,15,,,TRUE
 tribute,TRUE,Tribute,,West Coast Imperial Pilsner,6.6,17,,,TRUE
 crest,FALSE,Crest,10,India Pale Ale,7.4,17,,,TRUE
-tros,TRUE,Tros,10,Double IPA,8,20,55,110,TRUE
+tros,FALSE,Tros,10,Double IPA,8,20,55,110,TRUE
 hurron,TRUE,Hurron,,Double IPA,8,20,,,TRUE
 double-lupula,TRUE,Double Lupula,,Double IPA,8.4,20,55,110,TRUE
 waves,TRUE,Waves,,Double IPA,8.5,20,55,110,TRUE
