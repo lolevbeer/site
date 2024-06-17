@@ -1,13 +1,13 @@
-variant,cansAvailable,name,salePrice,type,abv,cans,halfCase,case,image
-gosev,TRUE,Gosev,,Gose,4.5,18,50,95,TRUE
-rein,TRUE,Rein,,Helles Lager,4.9,15,,,TRUE
-glyphs,TRUE,Glyphs,,Pale Ale,5,15,45,80,TRUE
-summer-lupula,TRUE,Summer Lupula,,India Pale Ale,6,16,,,TRUE
-,FALSE,,,,,,,,
-stark,TRUE,Stark,,Heller Bock Lager,6.2,15,,,TRUE
-tribute,TRUE,Tribute,,West Coast Imperial Pilsner,6.6,17,,,TRUE
-,FALSE,,,,,,,,
-hurron,TRUE,Hurron,,Double IPA,8,20,,,TRUE
-,TRUE,,,,,,,,
-double-lupula,TRUE,Double Lupula,,Double IPA,8.4,20,55,110,TRUE
-waves,TRUE,Waves,,Double IPA,8.5,20,55,110,TRUE
+variant,cansAvailable,name,salePrice,type,abv,cansSingle,fourPack,description,image
+gosev,TRUE,Gosev,,Gose,4.5,4.50,17,"Tart ale with notes of lemon, lime, sea salt and coriander. Lightly conditioned on Raspberries.",TRUE
+elias,TRUE,Elias,,Cream Ale,4.5,4.00,15,"Smooth, subtle citrus notes and floral aroma.",TRUE
+rein,TRUE,Rein,,Helles Lager,4.9,4.00,15,Refreshing smooth malt backbone with fruit notes and floral aroma. ,TRUE
+glyphs,TRUE,Glyphs,,Pale Ale,5,4.00,15,"Tangerine, orange zest, and aromatic pine.",TRUE
+summer-lupula,TRUE,Summer Lupula,,India Pale Ale,6,4.50,17,"Summer variant of Lupula, lower alcohol, more citrus-forward. Pineapple and mango.",TRUE
+stark,TRUE,Stark,,Heller Bock Lager,6.2,4.00,15,Rich maltiness with caramel and toast. Spice with floral aroma.,TRUE
+tribute,TRUE,Tribute,,West Coast Imperial Pilsner,6.6,4.50,17,"Orange, tangerine, basil, earthly. Citrus and sunflower aroma. Dry hopped with this year's Ales for ALS hop blend. $2 donated to ""Ales for ALS"" per 4-Pack.",TRUE
+prismatic,TRUE,Prismatic,,India Pale Ale,7,4.50,17,"Pineapple, vanilla, tangerine, melon.",TRUE
+hurron,TRUE,Hurron,,Double IPA,8,5.25,20,"Enhanced with thiol-enriched Motueka from Freestyle Hops x Phantasm. Peach, pineapple and white grape. ",TRUE
+double-lupula,TRUE,Double Lupula,,Double IPA,8.4,5.25,20,"Second revision. More hops, more malt, more everything. Everything Lupula is and more.",TRUE
+rubico,TRUE,Rubico,,Double IPA,8.5,5.25,20,"Pineapple, peach rings, bubblegum, strawberry and citrus.",TRUE
+waves,TRUE,Waves,,Double IPA,8.5,5.25,20,"Stonefruit and citrus, juicy finish. Blueberry and melon aroma.",TRUE
