@@ -48,7 +48,11 @@ def geocode_address(address, customer, existing_data, retries=3):
     if not success:
         print("Bing geocoding failed, trying Nominatim...")
         coordinates, location, success = geocode_address_nominatim(address, customer)
-    
+
+    if success and "PA" not in location:
+        print(f"Discarding address not in Pennsylvania: {location}")
+        return None, None, False
+
     return coordinates, location, success
 
 def process_data(data, existing_data):
