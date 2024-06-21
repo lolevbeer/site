@@ -1,6 +1,6 @@
 import requests
 from dotenv import load_dotenv
-from geopy.geocoders import Bing
+from geopy.geocoders import Bing, Nominatim
 import html
 import json
 import time
@@ -10,31 +10,49 @@ def fetch_json(url):
     response = requests.get(url)
     return response.json()
 
-def geocode_address(address, customer, existing_data):
-    # Check if the address is already processed
-    for entry in existing_data['features']:
-        if entry['properties']['address'] == address:
-            return entry['geometry']['coordinates'], False
-
-    print(f"Geocoding address: {address}")
-    k = os.getenv('BING')
-    # Geocode the address
-    geolocator = Bing(k, user_agent="lolev")
+def geocode_address_bing(address, customer):
+    print(f"Geocoding with Bing: {address}")
+    bing_key = os.getenv('BING')
+    geolocator = Bing(bing_key, user_agent="lolev")
     try:
         location = geolocator.geocode(customer + ', ' + address, timeout=10)
         if location:
-            print(f"Found address: {location}")
+            print(f"Found address with Bing: {location}")
             return [location.longitude, location.latitude], location.address, True
         else:
-            print(f"Geocoding failed for address: {address}")
+            print(f"Geocoding with Bing failed for address: {address}")
     except Exception as e:
-        print(f"Error geocoding {address}: {e}")
-    return None, False
+        print(f"Error geocoding with Bing {address}: {e}")
+    return None, None, False
+
+def geocode_address_nominatim(address, customer):
+    print(f"Geocoding with Nominatim: {address}")
+    geolocator = Nominatim(user_agent="lolev")
+    try:
+        location = geolocator.geocode(customer + ', ' + address, timeout=10)
+        if location:
+            print(f"Found address with Nominatim: {location}")
+            return [location.longitude, location.latitude], location.address, True
+        else:
+            print(f"Geocoding with Nominatim failed for address: {address}")
+    except Exception as e:
+        print(f"Error geocoding with Nominatim {address}: {e}")
+    return None, None, False
+
+def geocode_address(address, customer, existing_data, retries=3):
+    for entry in existing_data['features']:
+        if entry['properties']['address'] == address:
+            return entry['geometry']['coordinates'], entry['properties']['address'], False
+
+    coordinates, location, success = geocode_address_bing(address, customer)
+    if not success:
+        print("Bing geocoding failed, trying Nominatim...")
+        coordinates, location, success = geocode_address_nominatim(address, customer)
+    
+    return coordinates, location, success
 
 def process_data(data, existing_data):
-    processed_data = {"type": "FeatureCollection", "features": []}  # Initialize processed_data
-
-    # Convert existing data to a dictionary for faster lookup
+    processed_data = {"type": "FeatureCollection", "features": []}
     existing_addresses = {feature['properties']['address'].lower(): feature for feature in existing_data['features']}
 
     for index, item in enumerate(data):
@@ -43,14 +61,11 @@ def process_data(data, existing_data):
         customer_type = item.get('CustomerType', '')
         if address:
             address = html.unescape(address).lower()
-            # Check if this address is already processed
             if address in existing_addresses:
-                # Add the existing feature to the processed data without re-geocoding
                 existing_address = existing_addresses[address]
                 existing_address['properties']['address'] = existing_address['properties']['address'].lower()
                 processed_data['features'].append(existing_address)
             else:
-                # Geocode new address
                 coordinates, location, made_new_request = geocode_address(address, customer, processed_data)
                 if coordinates:
                     feature = {
@@ -74,7 +89,7 @@ def load_existing_data(filepath):
     if os.path.exists(filepath) and os.path.getsize(filepath) > 0:
         with open(filepath, 'r') as file:
             return json.load(file)
-    return {"type": "FeatureCollection", "features": []}  # Return a GeoJSON structure
+    return {"type": "FeatureCollection", "features": []}
 
 def main():
     url = os.getenv('SARENE_LOCATIONS')
