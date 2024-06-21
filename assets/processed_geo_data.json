@@ -70,6 +70,22 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
+                    -79.92240906,
+                    40.43091202
+                ]
+            },
+            "properties": {
+                "id": 5,
+                "Name": "aiello's pizza",
+                "address": "Pittsburgh, PA 15217, United States",
+                "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
                     -75.667725,
                     41.409735
                 ]
@@ -95,22 +111,6 @@
                 "Name": "allegheny beverage",
                 "address": "Freeport Rd, Natrona Heights, PA 15065, United States",
                 "customerType": "Home-D"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -75.0837405,
-                    39.94667815
-                ]
-            },
-            "properties": {
-                "id": 8,
-                "Name": "american sardine bar",
-                "address": "Federal St, Camden, NJ 08105, United States",
-                "customerType": "Restaurant"
             }
         },
         {
@@ -1334,22 +1334,6 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -79.76580811,
-                    40.43153763
-                ]
-            },
-            "properties": {
-                "id": 88,
-                "Name": "dad's pub",
-                "address": "Monroeville, PA 15146, United States",
-                "customerType": "Bar"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
                     -80.0866173,
                     42.0531386
                 ]
@@ -1870,38 +1854,6 @@
                 "id": 128,
                 "Name": "ice cold beer here",
                 "address": "501 w hartford st, milford, pa 18337-1211",
-                "customerType": "Restaurant"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -94.4453863,
-                    37.09782785
-                ]
-            },
-            "properties": {
-                "id": 124,
-                "Name": "iron abbey",
-                "address": "Newton Rd, Joplin, MO 64801, United States",
-                "customerType": "Hotel"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -80.039262,
-                    40.390853
-                ]
-            },
-            "properties": {
-                "id": 125,
-                "Name": "j mo's",
-                "address": "3113-3117 W Liberty Ave, Pittsburgh, PA 15216, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -2470,14 +2422,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -79.89445,
-                    40.609427
+                    -79.96051025,
+                    40.63544464
                 ]
             },
             "properties": {
                 "id": 165,
                 "Name": "narcisi winery",
-                "address": "4578 Gibsonia Rd, Gibsonia, PA 15044, United States",
+                "address": "Gibsonia, PA 15044, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -2527,22 +2479,6 @@
                 "Name": "novo asian food hall",
                 "address": "1931 Smallman St, Pittsburgh, PA 15222, United States",
                 "customerType": "Bar"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -85.483914,
-                    39.352691
-                ]
-            },
-            "properties": {
-                "id": 170,
-                "Name": "olives and peppers greensburg",
-                "address": "101 E 10th St, Greensburg, IN 47240, United States",
-                "customerType": "Restaurant"
             }
         },
         {
@@ -2806,6 +2742,22 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
+                    -80.245564,
+                    40.17218
+                ]
+            },
+            "properties": {
+                "id": 190,
+                "Name": "president's pub",
+                "address": "88 N Main St, Washington, PA 15301, United States",
+                "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
                     -75.858684,
                     40.400667
                 ]
@@ -3014,14 +2966,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -75.605451,
-                    39.960203
+                    -75.60006714,
+                    39.97716522
                 ]
             },
             "properties": {
                 "id": 204,
                 "Name": "side bar west chester",
-                "address": "10 W Gay St, West Chester, PA 19380, United States",
+                "address": "West Chester, PA 19380, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -3558,22 +3510,6 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -75.4857978,
-                    40.04232097
-                ]
-            },
-            "properties": {
-                "id": 241,
-                "Name": "tj's restaurant & drinkery",
-                "address": "39 Paoli Plaza, Paoli, PA 19301, United States",
-                "customerType": "Restaurant"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
                     -75.31611,
                     41.057151
                 ]
@@ -3686,6 +3622,22 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
+                    -75.65755463,
+                    40.33116531
+                ]
+            },
+            "properties": {
+                "id": 249,
+                "Name": "union jack's manatawny",
+                "address": "Boyertown, PA 19512, United States",
+                "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
                     -76.832194,
                     40.906966
                 ]
@@ -3750,14 +3702,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -76.350064,
-                    40.03828
+                    -76.33705902,
+                    40.02959824
                 ]
             },
             "properties": {
                 "id": 254,
                 "Name": "wheatland distributors",
-                "address": "1701 Columbia Ave, Lancaster, PA 17603, United States",
+                "address": "Lancaster, PA 17603, United States",
                 "customerType": "Home-D"
             }
         },
