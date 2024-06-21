@@ -24,7 +24,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install requests geopy dotenv
+          pip install requests geopy python-dotenv
 
       - name: Process JSON
         continue-on-error: true
