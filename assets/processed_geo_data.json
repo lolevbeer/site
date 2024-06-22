@@ -70,22 +70,6 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -79.92240906,
-                    40.43091202
-                ]
-            },
-            "properties": {
-                "id": 5,
-                "Name": "aiello's pizza",
-                "address": "Pittsburgh, PA 15217, United States",
-                "customerType": "Restaurant"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
                     -75.667725,
                     41.409735
                 ]
@@ -774,14 +758,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -75.3153123,
-                    39.9889587
+                    -75.302617,
+                    39.980231
                 ]
             },
             "properties": {
                 "id": 50,
                 "Name": "bocellas deli",
-                "address": "37 Decatur Rd, Havertown, PA 19083, United States",
+                "address": "37 Kathmere Rd, Havertown, PA 19083, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -1022,22 +1006,6 @@
                 "id": 62,
                 "Name": "bryn mawr beverage",
                 "address": "196 landover rd, bryn mawr, pa 19010",
-                "customerType": "Home-D"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -80.101051,
-                    40.68991
-                ]
-            },
-            "properties": {
-                "id": 68,
-                "Name": "bud's suds",
-                "address": "41 Dutilh Rd, Cranberry Township, PA 16066, United States",
                 "customerType": "Home-D"
             }
         },
@@ -2150,14 +2118,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -79.854055,
-                    40.497055
+                    -79.87918091,
+                    40.51712036
                 ]
             },
             "properties": {
                 "id": 145,
                 "Name": "local provisions",
-                "address": "111 Freeport Rd, Pittsburgh, PA 15238, United States",
+                "address": "Pittsburgh, PA 15238, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -2223,6 +2191,22 @@
                 "Name": "mad mex robinson",
                 "address": "2 robinson plaza, pittsburgh, pa 15205",
                 "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -76.61734772,
+                    40.96448517
+                ]
+            },
+            "properties": {
+                "id": 150,
+                "Name": "maloney's distributor",
+                "address": "Danville, PA 17821, United States",
+                "customerType": "Home-D"
             }
         },
         {
@@ -2310,6 +2294,22 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
+                    -80.035047,
+                    40.394286
+                ]
+            },
+            "properties": {
+                "id": 158,
+                "Name": "mike and tony's dormont",
+                "address": "2937 W Liberty Ave, Pittsburgh, PA 15216, United States",
+                "customerType": "Bar"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
                     -79.997151,
                     40.512535
                 ]
@@ -2367,6 +2367,22 @@
                 "Name": "milkboy",
                 "address": "Philadelphia, PA 19147, United States",
                 "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -79.7479,
+                    40.589279
+                ]
+            },
+            "properties": {
+                "id": 164,
+                "Name": "myrna's brew'ry outlet",
+                "address": "827 Carl Ave, New Kensington, PA 15068, United States",
+                "customerType": "Home-D"
             }
         },
         {
@@ -2511,22 +2527,6 @@
                 "Name": "oxford beverage",
                 "address": "2135 Baltimore Pike, Oxford, PA 19363, United States",
                 "customerType": "Redemption Center"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -79.931418,
-                    40.455243
-                ]
-            },
-            "properties": {
-                "id": 176,
-                "Name": "p'vino",
-                "address": "5724 Ellsworth Ave, Pittsburgh, PA 15232, United States",
-                "customerType": "Restaurant"
             }
         },
         {
@@ -2710,6 +2710,22 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
+                    -80.245564,
+                    40.17218
+                ]
+            },
+            "properties": {
+                "id": 190,
+                "Name": "president's pub",
+                "address": "88 N Main St, Washington, PA 15301, United States",
+                "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
                     -75.858684,
                     40.400667
                 ]
@@ -2862,6 +2878,22 @@
                 "id": 193,
                 "Name": "sellersville beverage",
                 "address": "301 s main st, sellersville, pa 18960-2530",
+                "customerType": "Home-D"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -75.48711234,
+                    40.53967205
+                ]
+            },
+            "properties": {
+                "id": 201,
+                "Name": "shangy's",
+                "address": "Main St, Emmaus, PA 18049, United States",
                 "customerType": "Home-D"
             }
         },
@@ -3071,22 +3103,6 @@
                 "Name": "tapster philadelphia",
                 "address": "110-16 S 16th St, Philadelphia, PA 19102, United States",
                 "customerType": "Bar"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -79.833899,
-                    40.619407
-                ]
-            },
-            "properties": {
-                "id": 216,
-                "Name": "tatoni's",
-                "address": "713 Little Deer Creek Valley Rd, Russellton, PA 15076, United States",
-                "customerType": "Restaurant"
             }
         },
         {
