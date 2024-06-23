@@ -758,14 +758,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -75.302617,
-                    39.980231
+                    -75.3153123,
+                    39.9889587
                 ]
             },
             "properties": {
                 "id": 50,
                 "Name": "bocellas deli",
-                "address": "37 Kathmere Rd, Havertown, PA 19083, United States",
+                "address": "37 Decatur Rd, Havertown, PA 19083, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -943,6 +943,22 @@
                 "Name": "brewhouse grille",
                 "address": "2050 State Rd, Camp Hill, PA 17011, United States",
                 "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -76.71282196,
+                    39.94457626
+                ]
+            },
+            "properties": {
+                "id": 62,
+                "Name": "brewie louie's beer stop",
+                "address": "York, PA 17403, United States",
+                "customerType": "Home-D"
             }
         },
         {
@@ -1343,6 +1359,22 @@
                 "Name": "downey's house",
                 "address": "6081 steubenville pk, mckees rocks, pa 15136-1398",
                 "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -79.974897,
+                    40.337577
+                ]
+            },
+            "properties": {
+                "id": 92,
+                "Name": "duffy's",
+                "address": "294 Curry Hollow Rd, Pittsburgh, PA 15236, United States",
+                "customerType": "Home-D"
             }
         },
         {
@@ -1830,6 +1862,22 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
+                    -80.039262,
+                    40.390853
+                ]
+            },
+            "properties": {
+                "id": 125,
+                "Name": "j mo's",
+                "address": "3113-3117 W Liberty Ave, Pittsburgh, PA 15216, United States",
+                "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
                     -75.644133,
                     41.407854
                 ]
@@ -2086,22 +2134,6 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -78.878736,
-                    40.297323
-                ]
-            },
-            "properties": {
-                "id": 143,
-                "Name": "little's beverage",
-                "address": "2202 Bedford St, Johnstown, PA 15904, United States",
-                "customerType": "Home-D"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
                     -75.12766,
                     39.971478
                 ]
@@ -2118,14 +2150,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -79.87918091,
-                    40.51712036
+                    -79.854055,
+                    40.497055
                 ]
             },
             "properties": {
                 "id": 145,
                 "Name": "local provisions",
-                "address": "Pittsburgh, PA 15238, United States",
+                "address": "111 Freeport Rd, Pittsburgh, PA 15238, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -2191,22 +2223,6 @@
                 "Name": "mad mex robinson",
                 "address": "2 robinson plaza, pittsburgh, pa 15205",
                 "customerType": "Restaurant"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -76.61734772,
-                    40.96448517
-                ]
-            },
-            "properties": {
-                "id": 150,
-                "Name": "maloney's distributor",
-                "address": "Danville, PA 17821, United States",
-                "customerType": "Home-D"
             }
         },
         {
@@ -2287,6 +2303,22 @@
                 "Name": "mcbroom beer store",
                 "address": "1200 s braddock ave, pittsburgh, pa 15218",
                 "customerType": "Home-D"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -80.1051881,
+                    40.3683051
+                ]
+            },
+            "properties": {
+                "id": 157,
+                "Name": "mike and tony's bridgeville",
+                "address": "1155 Washington Rd, Bridgeville, PA 15017, United States",
+                "customerType": "Restaurant"
             }
         },
         {
@@ -2431,6 +2463,22 @@
                 "Name": "newtown suds",
                 "address": "3517 W Chester Pike, Newtown Square, PA 19073, United States",
                 "customerType": "Home-D"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -75.951812,
+                    40.336142
+                ]
+            },
+            "properties": {
+                "id": 168,
+                "Name": "nonno alby's",
+                "address": "701 Penn Ave, West Reading, PA 19611, United States",
+                "customerType": "Restaurant"
             }
         },
         {
@@ -2710,22 +2758,6 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -80.245564,
-                    40.17218
-                ]
-            },
-            "properties": {
-                "id": 190,
-                "Name": "president's pub",
-                "address": "88 N Main St, Washington, PA 15301, United States",
-                "customerType": "Restaurant"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
                     -75.858684,
                     40.400667
                 ]
@@ -2878,22 +2910,6 @@
                 "id": 193,
                 "Name": "sellersville beverage",
                 "address": "301 s main st, sellersville, pa 18960-2530",
-                "customerType": "Home-D"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -75.48711234,
-                    40.53967205
-                ]
-            },
-            "properties": {
-                "id": 201,
-                "Name": "shangy's",
-                "address": "Main St, Emmaus, PA 18049, United States",
                 "customerType": "Home-D"
             }
         },
@@ -3103,6 +3119,22 @@
                 "Name": "tapster philadelphia",
                 "address": "110-16 S 16th St, Philadelphia, PA 19102, United States",
                 "customerType": "Bar"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -79.833899,
+                    40.619407
+                ]
+            },
+            "properties": {
+                "id": 216,
+                "Name": "tatoni's",
+                "address": "713 Little Deer Creek Valley Rd, Russellton, PA 15076, United States",
+                "customerType": "Restaurant"
             }
         },
         {
