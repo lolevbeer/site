@@ -950,22 +950,6 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -76.71282196,
-                    39.94457626
-                ]
-            },
-            "properties": {
-                "id": 62,
-                "Name": "brewie louie's beer stop",
-                "address": "York, PA 17403, United States",
-                "customerType": "Home-D"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
                     -75.182697,
                     41.000292
                 ]
@@ -1359,22 +1343,6 @@
                 "Name": "downey's house",
                 "address": "6081 steubenville pk, mckees rocks, pa 15136-1398",
                 "customerType": "Restaurant"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -79.974897,
-                    40.337577
-                ]
-            },
-            "properties": {
-                "id": 92,
-                "Name": "duffy's",
-                "address": "294 Curry Hollow Rd, Pittsburgh, PA 15236, United States",
-                "customerType": "Home-D"
             }
         },
         {
@@ -1862,22 +1830,6 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -80.039262,
-                    40.390853
-                ]
-            },
-            "properties": {
-                "id": 125,
-                "Name": "j mo's",
-                "address": "3113-3117 W Liberty Ave, Pittsburgh, PA 15216, United States",
-                "customerType": "Restaurant"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
                     -75.644133,
                     41.407854
                 ]
@@ -1967,6 +1919,22 @@
                 "Name": "john russell brewery",
                 "address": "7520 peach st, erie, pa 16509",
                 "customerType": "Six Pack Shop"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -80.288136,
+                    40.704555
+                ]
+            },
+            "properties": {
+                "id": 132,
+                "Name": "jrs beer warehouse",
+                "address": "171 Clay St, Rochester, PA 15074, United States",
+                "customerType": "Home-D"
             }
         },
         {
@@ -2230,6 +2198,22 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
+                    -76.61734772,
+                    40.96448517
+                ]
+            },
+            "properties": {
+                "id": 150,
+                "Name": "maloney's distributor",
+                "address": "Danville, PA 17821, United States",
+                "customerType": "Home-D"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
                     -75.315136,
                     39.972609
                 ]
@@ -2294,6 +2278,22 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
+                    -75.130444,
+                    40.3108
+                ]
+            },
+            "properties": {
+                "id": 155,
+                "Name": "maxwell's on main",
+                "address": "37 Main St, Doylestown, PA 18901, United States",
+                "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
                     -79.893389,
                     40.431571
                 ]
@@ -2319,22 +2319,6 @@
                 "Name": "mike and tony's bridgeville",
                 "address": "1155 Washington Rd, Bridgeville, PA 15017, United States",
                 "customerType": "Restaurant"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -80.035047,
-                    40.394286
-                ]
-            },
-            "properties": {
-                "id": 158,
-                "Name": "mike and tony's dormont",
-                "address": "2937 W Liberty Ave, Pittsburgh, PA 15216, United States",
-                "customerType": "Bar"
             }
         },
         {
@@ -2406,6 +2390,22 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
+                    -80.482072,
+                    41.262592
+                ]
+            },
+            "properties": {
+                "id": 163,
+                "Name": "muscarella's cafe italia",
+                "address": "500 W Main St, Sharpsville, PA 16150, United States",
+                "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
                     -79.7479,
                     40.589279
                 ]
@@ -2463,22 +2463,6 @@
                 "Name": "newtown suds",
                 "address": "3517 W Chester Pike, Newtown Square, PA 19073, United States",
                 "customerType": "Home-D"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -75.951812,
-                    40.336142
-                ]
-            },
-            "properties": {
-                "id": 168,
-                "Name": "nonno alby's",
-                "address": "701 Penn Ave, West Reading, PA 19611, United States",
-                "customerType": "Restaurant"
             }
         },
         {
@@ -2918,6 +2902,22 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
+                    -75.48711234,
+                    40.53967205
+                ]
+            },
+            "properties": {
+                "id": 201,
+                "Name": "shangy's",
+                "address": "Main St, Emmaus, PA 18049, United States",
+                "customerType": "Home-D"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
                     -75.956667,
                     40.307097
                 ]
@@ -3119,22 +3119,6 @@
                 "Name": "tapster philadelphia",
                 "address": "110-16 S 16th St, Philadelphia, PA 19102, United States",
                 "customerType": "Bar"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -79.833899,
-                    40.619407
-                ]
-            },
-            "properties": {
-                "id": 216,
-                "Name": "tatoni's",
-                "address": "713 Little Deer Creek Valley Rd, Russellton, PA 15076, United States",
-                "customerType": "Restaurant"
             }
         },
         {
