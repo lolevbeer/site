@@ -1,0 +1,21 @@
+---
+layout: default
+class: block no-snap sell-sheet
+haslogin: True
+---
+<link rel="stylesheet" href="/assets/sellsheet.css">
+<div v-cloak id="app">
+  <template v-for="(item, index) in inventory">
+    <div class="beer-tile">
+      <img class="sell-sheet-can" v-if="item['has-image'] == 'TRUE'" :src="'https://lolev.beer/assets/beer/' + item.variant + '.webp'"/>
+      <div v-else class="sell-sheet-can-no-image"></div>
+      <div class="name">${ item.product }</div>
+      <div class="type">${ item.style }</div>
+      <div class="description">${ item.description }</div>
+      <div class="hops" v-if="item.hops">
+        <div class="hop-title">Hops</div>
+          ${ item.hops }
+      </div>
+    </div>
+  </template>
+</div>
