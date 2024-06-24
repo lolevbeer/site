@@ -1366,6 +1366,22 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
+                    -79.974897,
+                    40.337577
+                ]
+            },
+            "properties": {
+                "id": 92,
+                "Name": "duffy's",
+                "address": "294 Curry Hollow Rd, Pittsburgh, PA 15236, United States",
+                "customerType": "Home-D"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
                     -79.998468,
                     40.455099
                 ]
@@ -1375,22 +1391,6 @@
                 "Name": "east street beer",
                 "address": "807 East St, Pittsburgh, PA 15212, United States",
                 "customerType": "Home-D"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -80.00422415,
-                    40.43833574
-                ]
-            },
-            "properties": {
-                "id": 94,
-                "Name": "emerson's",
-                "address": "39 Market St, Pittsburgh, PA 15222, United States",
-                "customerType": "Restaurant"
             }
         },
         {
@@ -1862,6 +1862,22 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
+                    -80.039262,
+                    40.390853
+                ]
+            },
+            "properties": {
+                "id": 125,
+                "Name": "j mo's",
+                "address": "3113-3117 W Liberty Ave, Pittsburgh, PA 15216, United States",
+                "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
                     -75.644133,
                     41.407854
                 ]
@@ -2214,22 +2230,6 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -76.61734772,
-                    40.96448517
-                ]
-            },
-            "properties": {
-                "id": 150,
-                "Name": "maloney's distributor",
-                "address": "Danville, PA 17821, United States",
-                "customerType": "Home-D"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
                     -75.315136,
                     39.972609
                 ]
@@ -2310,6 +2310,38 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
+                    -80.1051881,
+                    40.3683051
+                ]
+            },
+            "properties": {
+                "id": 157,
+                "Name": "mike and tony's bridgeville",
+                "address": "1155 Washington Rd, Bridgeville, PA 15017, United States",
+                "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -80.035047,
+                    40.394286
+                ]
+            },
+            "properties": {
+                "id": 158,
+                "Name": "mike and tony's dormont",
+                "address": "2937 W Liberty Ave, Pittsburgh, PA 15216, United States",
+                "customerType": "Bar"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
                     -79.997151,
                     40.512535
                 ]
@@ -2374,6 +2406,22 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
+                    -79.7479,
+                    40.589279
+                ]
+            },
+            "properties": {
+                "id": 164,
+                "Name": "myrna's brew'ry outlet",
+                "address": "827 Carl Ave, New Kensington, PA 15068, United States",
+                "customerType": "Home-D"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
                     -79.89445,
                     40.609427
                 ]
@@ -2415,6 +2463,22 @@
                 "Name": "newtown suds",
                 "address": "3517 W Chester Pike, Newtown Square, PA 19073, United States",
                 "customerType": "Home-D"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -75.951812,
+                    40.336142
+                ]
+            },
+            "properties": {
+                "id": 168,
+                "Name": "nonno alby's",
+                "address": "701 Penn Ave, West Reading, PA 19611, United States",
+                "customerType": "Restaurant"
             }
         },
         {
@@ -2678,22 +2742,6 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -80.053363,
-                    40.609143
-                ]
-            },
-            "properties": {
-                "id": 188,
-                "Name": "poor richard's public house",
-                "address": "10501 Perry Hwy, Wexford, PA 15090, United States",
-                "customerType": "Bar"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
                     -76.269408,
                     40.381231
                 ]
@@ -2702,22 +2750,6 @@
                 "id": 189,
                 "Name": "porch restaurant and pub",
                 "address": "890 Tulpehocken Rd, Myerstown, PA 17067, United States",
-                "customerType": "Restaurant"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -80.245564,
-                    40.17218
-                ]
-            },
-            "properties": {
-                "id": 190,
-                "Name": "president's pub",
-                "address": "88 N Main St, Washington, PA 15301, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -3094,6 +3126,22 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
+                    -79.833899,
+                    40.619407
+                ]
+            },
+            "properties": {
+                "id": 216,
+                "Name": "tatoni's",
+                "address": "713 Little Deer Creek Valley Rd, Russellton, PA 15076, United States",
+                "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
                     -76.132632,
                     40.228402
                 ]
@@ -3118,22 +3166,6 @@
                 "id": 210,
                 "Name": "tela's market & kitchen",
                 "address": "1833 fairmount ave, philadelphia, pa 19130",
-                "customerType": "Restaurant"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -75.388086,
-                    40.04508
-                ]
-            },
-            "properties": {
-                "id": 219,
-                "Name": "teresa's cafe",
-                "address": "124 N Wayne Ave, Wayne, PA 19087, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -3470,22 +3502,6 @@
                 "id": 240,
                 "Name": "thunderbird cafe",
                 "address": "4053 Butler St, Pittsburgh, PA 15201, United States",
-                "customerType": "Restaurant"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -75.4857978,
-                    40.04232097
-                ]
-            },
-            "properties": {
-                "id": 241,
-                "Name": "tj's restaurant & drinkery",
-                "address": "39 Paoli Plaza, Paoli, PA 19301, United States",
                 "customerType": "Restaurant"
             }
         },
