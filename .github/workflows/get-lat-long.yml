@@ -37,6 +37,6 @@ jobs:
           python process_json.py
           git config --local user.email "info@lolev.beer"
           git config --local user.name "Map Manager"
-          git add .
+          git add ./assets/processed_geo_data.json
           git commit -m "Process new address updates"
           git push
