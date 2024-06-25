@@ -6,22 +6,6 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -75.24229,
-                    40.249642
-                ]
-            },
-            "properties": {
-                "id": 2,
-                "Name": "5 points cases and kegs",
-                "address": "408 doylestown rd, montgomeryville, pa 18936",
-                "customerType": "Home-D"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
                     -75.953034,
                     40.444481
                 ]
@@ -30,6 +14,22 @@
                 "id": 3,
                 "Name": "61 brew thru",
                 "address": "5479 pottsville pk, leesport, pa 19533-8650",
+                "customerType": "Home-D"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -76.423213,
+                    40.311654
+                ]
+            },
+            "properties": {
+                "id": 2,
+                "Name": "7 cuz beer store",
+                "address": "1750 Quentin Rd, Lebanon, PA 17042, United States",
                 "customerType": "Home-D"
             }
         },
@@ -91,7 +91,7 @@
                 ]
             },
             "properties": {
-                "id": 7,
+                "id": 6,
                 "Name": "allegheny beverage",
                 "address": "Freeport Rd, Natrona Heights, PA 15065, United States",
                 "customerType": "Home-D"
@@ -123,7 +123,7 @@
                 ]
             },
             "properties": {
-                "id": 10,
+                "id": 9,
                 "Name": "arsenal cider house",
                 "address": "Pittsburgh, PA 15201, United States",
                 "customerType": "Restaurant"
@@ -139,7 +139,7 @@
                 ]
             },
             "properties": {
-                "id": 11,
+                "id": 10,
                 "Name": "aston beverage outlet",
                 "address": "411 Marianville Rd, Aston, PA 19014, United States",
                 "customerType": "Home-D"
@@ -158,22 +158,6 @@
                 "id": 10,
                 "Name": "auggie's beer warehouse",
                 "address": "4431 william penn hwy, murrysville, pa 15668",
-                "customerType": "Home-D"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -75.137953,
-                    40.335527
-                ]
-            },
-            "properties": {
-                "id": 11,
-                "Name": "b&b beverage doylestown",
-                "address": "3670 saw mill rd, doylestown, pa 18902",
                 "customerType": "Home-D"
             }
         },
@@ -203,7 +187,7 @@
                 ]
             },
             "properties": {
-                "id": 15,
+                "id": 13,
                 "Name": "back door beer",
                 "address": "3820 Washington Ave, Erie, PA 16509, United States",
                 "customerType": "Liquor Store"
@@ -235,7 +219,7 @@
                 ]
             },
             "properties": {
-                "id": 17,
+                "id": 15,
                 "Name": "backyard ale house",
                 "address": "523 Linden St, Scranton, PA 18503, United States",
                 "customerType": "Restaurant"
@@ -267,7 +251,7 @@
                 ]
             },
             "properties": {
-                "id": 19,
+                "id": 17,
                 "Name": "bartari",
                 "address": "101 Adams Ave, Scranton, PA 18503, United States",
                 "customerType": "Bar"
@@ -283,7 +267,7 @@
                 ]
             },
             "properties": {
-                "id": 20,
+                "id": 18,
                 "Name": "beaver county beer",
                 "address": "3618 Brodhead Rd, Monaca, PA 15061, United States",
                 "customerType": "Home-D"
@@ -299,7 +283,7 @@
                 ]
             },
             "properties": {
-                "id": 21,
+                "id": 19,
                 "Name": "beer & pop 4 less",
                 "address": "1155 Washington Pike, Bridgeville, PA 15017, United States",
                 "customerType": "Home-D"
@@ -315,7 +299,7 @@
                 ]
             },
             "properties": {
-                "id": 22,
+                "id": 20,
                 "Name": "beer 88",
                 "address": "4136 Library Rd, Castle Shannon, PA 15234, United States",
                 "customerType": "Home-D"
@@ -331,7 +315,7 @@
                 ]
             },
             "properties": {
-                "id": 23,
+                "id": 21,
                 "Name": "beer city",
                 "address": "391 W Broad St, Quakertown, PA 18951, United States",
                 "customerType": "Home-D"
@@ -395,7 +379,7 @@
                 ]
             },
             "properties": {
-                "id": 27,
+                "id": 25,
                 "Name": "beer minimum",
                 "address": "11689 Penn Hills Dr, Pittsburgh, PA 15235, United States",
                 "customerType": "Home-D"
@@ -427,7 +411,7 @@
                 ]
             },
             "properties": {
-                "id": 29,
+                "id": 27,
                 "Name": "beer on 8",
                 "address": "5610 William Flynn Hwy, Gibsonia, PA 15044, United States",
                 "customerType": "Home-D"
@@ -443,7 +427,7 @@
                 ]
             },
             "properties": {
-                "id": 30,
+                "id": 28,
                 "Name": "beer on butler",
                 "address": "4809 Blackberry Way, Pittsburgh, PA 15201-2713, United States",
                 "customerType": "Home-D"
@@ -539,7 +523,7 @@
                 ]
             },
             "properties": {
-                "id": 36,
+                "id": 34,
                 "Name": "beer yard wayne",
                 "address": "218 E Lancaster Ave, Wayne, PA 19087, United States",
                 "customerType": "Home-D"
@@ -555,7 +539,7 @@
                 ]
             },
             "properties": {
-                "id": 37,
+                "id": 35,
                 "Name": "bella vista",
                 "address": "755 S 11th St, Philadelphia, PA 19147, United States",
                 "customerType": "Home-D"
@@ -587,7 +571,7 @@
                 ]
             },
             "properties": {
-                "id": 39,
+                "id": 37,
                 "Name": "bensalem beer and soda",
                 "address": "1919 Street Rd, Bensalem, PA 19020, United States",
                 "customerType": "Home-D"
@@ -603,7 +587,7 @@
                 ]
             },
             "properties": {
-                "id": 40,
+                "id": 38,
                 "Name": "beverage king",
                 "address": "2607 Birney Ave, Scranton, PA 18505, United States",
                 "customerType": "Home-D"
@@ -619,7 +603,7 @@
                 ]
             },
             "properties": {
-                "id": 41,
+                "id": 39,
                 "Name": "beverage shop",
                 "address": "8236 Perry Hwy, Erie, PA 16509, United States",
                 "customerType": "Liquor Store"
@@ -667,7 +651,7 @@
                 ]
             },
             "properties": {
-                "id": 44,
+                "id": 42,
                 "Name": "black gryphon",
                 "address": "54 Mount Gretna Rd, Elizabethtown, PA 17022, United States",
                 "customerType": "Restaurant"
@@ -683,7 +667,7 @@
                 ]
             },
             "properties": {
-                "id": 45,
+                "id": 43,
                 "Name": "blackhawk beer",
                 "address": "2640 Constitution Blvd, Beaver Falls, PA 15010, United States",
                 "customerType": "Home-D"
@@ -715,7 +699,7 @@
                 ]
             },
             "properties": {
-                "id": 47,
+                "id": 45,
                 "Name": "blue collar restaurant",
                 "address": "949 Church St, Landisville, PA 17538, United States",
                 "customerType": "Club/Rotary"
@@ -731,7 +715,7 @@
                 ]
             },
             "properties": {
-                "id": 48,
+                "id": 46,
                 "Name": "blue sky tavern",
                 "address": "Old Trail Rd, Yocumtown, PA 17319, United States",
                 "customerType": "Restaurant"
@@ -758,14 +742,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -75.3153123,
-                    39.9889587
+                    -75.302617,
+                    39.980231
                 ]
             },
             "properties": {
-                "id": 50,
+                "id": 48,
                 "Name": "bocellas deli",
-                "address": "37 Decatur Rd, Havertown, PA 19083, United States",
+                "address": "37 Kathmere Rd, Havertown, PA 19083, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -779,7 +763,7 @@
                 ]
             },
             "properties": {
-                "id": 51,
+                "id": 49,
                 "Name": "boozy barrels",
                 "address": "315 Mount Lebanon Blvd, Pittsburgh, PA 15234, United States",
                 "customerType": "Restaurant"
@@ -795,7 +779,7 @@
                 ]
             },
             "properties": {
-                "id": 52,
+                "id": 50,
                 "Name": "bottle bar east",
                 "address": "1308 Frankford Ave, Philadelphia, PA 19125, United States",
                 "customerType": "Restaurant"
@@ -827,7 +811,7 @@
                 ]
             },
             "properties": {
-                "id": 54,
+                "id": 52,
                 "Name": "boyertown beverage",
                 "address": "51 E 2nd St, Boyertown, PA 19512, United States",
                 "customerType": "Home-D"
@@ -846,22 +830,6 @@
                 "id": 50,
                 "Name": "bradford village beer and soda",
                 "address": "7011 allentown blvd, harrisburg, pa 17112",
-                "customerType": "Home-D"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -76.666751,
-                    39.959211
-                ]
-            },
-            "properties": {
-                "id": 56,
-                "Name": "brandons beverage stop",
-                "address": "2795 Mount Rose Ave, York, PA 17402, United States",
                 "customerType": "Home-D"
             }
         },
@@ -923,7 +891,7 @@
                 ]
             },
             "properties": {
-                "id": 60,
+                "id": 57,
                 "Name": "brewers outlet lancaster",
                 "address": "Lancaster, PA 17601, United States",
                 "customerType": "Home-D"
@@ -939,10 +907,26 @@
                 ]
             },
             "properties": {
-                "id": 61,
+                "id": 58,
                 "Name": "brewhouse grille",
                 "address": "2050 State Rd, Camp Hill, PA 17011, United States",
                 "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -79.832538,
+                    40.608306
+                ]
+            },
+            "properties": {
+                "id": 60,
+                "Name": "brewski's_2",
+                "address": "908 Little Deer Creek Valley Rd, Russellton, PA 15076, United States",
+                "customerType": "Home-D"
             }
         },
         {
@@ -1035,7 +1019,7 @@
                 ]
             },
             "properties": {
-                "id": 70,
+                "id": 66,
                 "Name": "buena tarde",
                 "address": "5714 Ellsworth Ave, Pittsburgh, PA 15232, United States",
                 "customerType": "Restaurant"
@@ -1051,7 +1035,7 @@
                 ]
             },
             "properties": {
-                "id": 71,
+                "id": 67,
                 "Name": "bulls head public house",
                 "address": "Main St, Lititz, PA 17543, United States",
                 "customerType": "Hotel"
@@ -1126,14 +1110,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -79.983086,
-                    40.429029
+                    -79.978749,
+                    40.4284
                 ]
             },
             "properties": {
-                "id": 68,
-                "Name": "carson street deli",
-                "address": "1507 e carson st, pittsburgh, pa 15203",
+                "id": 72,
+                "Name": "carmella's",
+                "address": "1908 E Carson St, Pittsburgh, PA 15203, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -1163,7 +1147,7 @@
                 ]
             },
             "properties": {
-                "id": 79,
+                "id": 74,
                 "Name": "chester valley golf club",
                 "address": "430 Swedesford Rd, Malvern, PA 19355, United States",
                 "customerType": "Restaurant"
@@ -1179,9 +1163,25 @@
                 ]
             },
             "properties": {
-                "id": 80,
+                "id": 75,
                 "Name": "chestnut grill",
                 "address": "8229 Germantown Ave, Philadelphia, PA 19118, United States",
+                "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -79.916057,
+                    40.456823
+                ]
+            },
+            "properties": {
+                "id": 76,
+                "Name": "city kitchen",
+                "address": "145 Bakery Square Blvd, Pittsburgh, PA 15206, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -1243,7 +1243,7 @@
                 ]
             },
             "properties": {
-                "id": 84,
+                "id": 80,
                 "Name": "corners beer",
                 "address": "Norman St, Pittsburgh, PA 15214, United States",
                 "customerType": "Liquor Store"
@@ -1259,7 +1259,7 @@
                 ]
             },
             "properties": {
-                "id": 85,
+                "id": 81,
                 "Name": "craft 2700 at freymoyers",
                 "address": "2700 Kutztown Rd, Reading, PA 19605, United States",
                 "customerType": "Restaurant"
@@ -1275,7 +1275,7 @@
                 ]
             },
             "properties": {
-                "id": 86,
+                "id": 82,
                 "Name": "crafthouse kittanning",
                 "address": "405 Butler Rd, West Kittanning, PA 16201, United States",
                 "customerType": "Bar"
@@ -1291,7 +1291,7 @@
                 ]
             },
             "properties": {
-                "id": 87,
+                "id": 83,
                 "Name": "creekside beer",
                 "address": "2175 Big Sewickley Creek Rd, Sewickley, PA 15143, United States",
                 "customerType": "Home-D"
@@ -1302,15 +1302,15 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -80.0866173,
-                    42.0531386
+                    -79.76580811,
+                    40.43153763
                 ]
             },
             "properties": {
-                "id": 89,
-                "Name": "discount beer",
-                "address": "7200 Peach St, Erie, PA 16509, United States",
-                "customerType": "Liquor Store"
+                "id": 84,
+                "Name": "dad's pub",
+                "address": "Monroeville, PA 15146, United States",
+                "customerType": "Bar"
             }
         },
         {
@@ -1323,9 +1323,25 @@
                 ]
             },
             "properties": {
-                "id": 90,
+                "id": 85,
                 "Name": "djs westgate beverage",
                 "address": "1785 Loucks Rd, York, PA 17408, United States",
+                "customerType": "Home-D"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -75.505376,
+                    39.892329
+                ]
+            },
+            "properties": {
+                "id": 86,
+                "Name": "domestic and imported beverage",
+                "address": "485 Baltimore Pike, Glen Mills, PA 19342, United States",
                 "customerType": "Home-D"
             }
         },
@@ -1350,15 +1366,63 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
+                    -79.9187721,
+                    40.48757335
+                ]
+            },
+            "properties": {
+                "id": 88,
+                "Name": "driftwood oven",
+                "address": "Butler St, Pittsburgh, PA 15206, United States",
+                "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
                     -79.998468,
                     40.455099
                 ]
             },
             "properties": {
-                "id": 93,
+                "id": 90,
                 "Name": "east street beer",
                 "address": "807 East St, Pittsburgh, PA 15212, United States",
                 "customerType": "Home-D"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -80.131484,
+                    41.877741
+                ]
+            },
+            "properties": {
+                "id": 91,
+                "Name": "edinboro beverage",
+                "address": "301 Erie St, Edinboro, PA 16412, United States",
+                "customerType": "Liquor Store"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -80.00422415,
+                    40.43833574
+                ]
+            },
+            "properties": {
+                "id": 92,
+                "Name": "emerson's",
+                "address": "39 Market St, Pittsburgh, PA 15222, United States",
+                "customerType": "Restaurant"
             }
         },
         {
@@ -1398,44 +1462,12 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -76.175377,
-                    39.985781
-                ]
-            },
-            "properties": {
-                "id": 97,
-                "Name": "fireside tavern",
-                "address": "1400 Historic Dr, Strasburg, PA 17579, United States",
-                "customerType": "Hotel"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -75.305581,
-                    40.074139
-                ]
-            },
-            "properties": {
-                "id": 104,
-                "Name": "flanigans boathouse",
-                "address": "113 fayette st, conshohocken, pa 19428",
-                "customerType": "Restaurant"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
                     -75.82371821,
                     40.4577317
                 ]
             },
             "properties": {
-                "id": 99,
+                "id": 95,
                 "Name": "fleetwood beverages",
                 "address": "Fleetwood Elementary School, Fleetwood, PA 19522, United States",
                 "customerType": "Home-D"
@@ -1451,10 +1483,26 @@
                 ]
             },
             "properties": {
-                "id": 100,
+                "id": 96,
                 "Name": "forbes tavern",
                 "address": "310 Forbes Ave, Pittsburgh, PA 15222, United States",
                 "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -80.005861,
+                    41.10748
+                ]
+            },
+            "properties": {
+                "id": 97,
+                "Name": "forestville beer",
+                "address": "4127 Wm Flynn Hwy, Forestville, PA 16035, United States",
+                "customerType": "Liquor Store"
             }
         },
         {
@@ -1467,7 +1515,7 @@
                 ]
             },
             "properties": {
-                "id": 101,
+                "id": 98,
                 "Name": "fox chapel racquet club",
                 "address": "Fox Chapel, PA, United States",
                 "customerType": "Catering"
@@ -1483,7 +1531,7 @@
                 ]
             },
             "properties": {
-                "id": 102,
+                "id": 99,
                 "Name": "franklin beverage",
                 "address": "1837 Callowhill St, Philadelphia, PA 19130, United States",
                 "customerType": "Home-D"
@@ -1494,15 +1542,15 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -79.9352,
-                    40.457725
+                    -80.417421,
+                    40.788489
                 ]
             },
             "properties": {
-                "id": 91,
-                "Name": "friendship beer",
-                "address": "5604 baum blvd, pittsburgh, pa 15206",
-                "customerType": "Liquor Store"
+                "id": 100,
+                "Name": "front door tavern",
+                "address": "3121 Old Darlington Rd, Beaver Falls, PA 15010, United States",
+                "customerType": "Bar"
             }
         },
         {
@@ -1515,7 +1563,7 @@
                 ]
             },
             "properties": {
-                "id": 104,
+                "id": 101,
                 "Name": "frosty caps",
                 "address": "1745 Old York Rd, Abington, PA 19001, United States",
                 "customerType": "Home-D"
@@ -1547,7 +1595,7 @@
                 ]
             },
             "properties": {
-                "id": 106,
+                "id": 103,
                 "Name": "gin mill",
                 "address": "324 E Cumberland St, Lebanon, PA 17042, United States",
                 "customerType": "Restaurant"
@@ -1563,7 +1611,7 @@
                 ]
             },
             "properties": {
-                "id": 107,
+                "id": 104,
                 "Name": "golden crust pizza",
                 "address": "59 E Broadway, Red Lion, PA 17356, United States",
                 "customerType": "Restaurant"
@@ -1595,7 +1643,7 @@
                 ]
             },
             "properties": {
-                "id": 109,
+                "id": 106,
                 "Name": "grapperia",
                 "address": "3801 Butler St, Pittsburgh, PA 15201, United States",
                 "customerType": "Restaurant"
@@ -1611,7 +1659,7 @@
                 ]
             },
             "properties": {
-                "id": 110,
+                "id": 107,
                 "Name": "greeks next door",
                 "address": "237 Haverford Ave, Narberth, PA 19072, United States",
                 "customerType": "Restaurant"
@@ -1627,7 +1675,7 @@
                 ]
             },
             "properties": {
-                "id": 111,
+                "id": 108,
                 "Name": "grille 3501",
                 "address": "3501 Broadway, Allentown, PA 18104, United States",
                 "customerType": "Restaurant"
@@ -1675,7 +1723,7 @@
                 ]
             },
             "properties": {
-                "id": 114,
+                "id": 111,
                 "Name": "harlan beverage",
                 "address": "147 W King St, Malvern, PA 19355, United States",
                 "customerType": "Home-D"
@@ -1695,22 +1743,6 @@
                 "Name": "harmony beverage",
                 "address": "14 pa-940, blakeslee, pa 18610",
                 "customerType": "Home-D"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -80.126579,
-                    40.80293
-                ]
-            },
-            "properties": {
-                "id": 116,
-                "Name": "harmony inn",
-                "address": "230 Mercer St, Harmony, PA 16037, United States",
-                "customerType": "Restaurant"
             }
         },
         {
@@ -1739,7 +1771,7 @@
                 ]
             },
             "properties": {
-                "id": 118,
+                "id": 114,
                 "Name": "hartwood beer",
                 "address": "3392 Saxonburg Blvd, Glenshaw, PA 15116, United States",
                 "customerType": "Home-D"
@@ -1755,7 +1787,7 @@
                 ]
             },
             "properties": {
-                "id": 119,
+                "id": 115,
                 "Name": "here and now brewing",
                 "address": "645 Main St, Honesdale, PA 18431, United States",
                 "customerType": "Restaurant"
@@ -1771,7 +1803,7 @@
                 ]
             },
             "properties": {
-                "id": 120,
+                "id": 116,
                 "Name": "hilltop beverage",
                 "address": "15th St, Franklin, PA 16323, United States",
                 "customerType": "Home-D"
@@ -1803,7 +1835,7 @@
                 ]
             },
             "properties": {
-                "id": 122,
+                "id": 118,
                 "Name": "house of 1000 beers new kensington",
                 "address": "357 Freeport St, New Kensington, PA 15068, United States",
                 "customerType": "Hybrid"
@@ -1814,15 +1846,15 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -74.808604,
-                    41.326711
+                    -75.092702,
+                    40.179315
                 ]
             },
             "properties": {
-                "id": 128,
-                "Name": "ice cold beer here",
-                "address": "501 w hartford st, milford, pa 18337-1211",
-                "customerType": "Restaurant"
+                "id": 119,
+                "Name": "iron abbey",
+                "address": "Newton Rd, Hatboro, PA 19040, United States",
+                "customerType": "Hotel"
             }
         },
         {
@@ -1851,7 +1883,7 @@
                 ]
             },
             "properties": {
-                "id": 127,
+                "id": 122,
                 "Name": "jeannette distributing",
                 "address": "1317 Penn Ave, Jeannette, PA 15644, United States",
                 "customerType": "Liquor Store"
@@ -1894,22 +1926,6 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -75.599678,
-                    41.478262
-                ]
-            },
-            "properties": {
-                "id": 130,
-                "Name": "joes beerman",
-                "address": "1561 Main St, Peckville, PA 18447, United States",
-                "customerType": "Home-D"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
                     -80.085002,
                     42.051764
                 ]
@@ -1919,22 +1935,6 @@
                 "Name": "john russell brewery",
                 "address": "7520 peach st, erie, pa 16509",
                 "customerType": "Six Pack Shop"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -80.288136,
-                    40.704555
-                ]
-            },
-            "properties": {
-                "id": 132,
-                "Name": "jrs beer warehouse",
-                "address": "171 Clay St, Rochester, PA 15074, United States",
-                "customerType": "Home-D"
             }
         },
         {
@@ -1974,44 +1974,12 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -75.895574,
-                    41.262422
-                ]
-            },
-            "properties": {
-                "id": 127,
-                "Name": "kevin's restaurant",
-                "address": "247 wyoming ave, kingston, pa 18704",
-                "customerType": "Restaurant"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -79.934221,
-                    40.451345
-                ]
-            },
-            "properties": {
-                "id": 136,
-                "Name": "kujira",
-                "address": "736 Bellefonte St, Pittsburgh, PA 15232, United States",
-                "customerType": "Restaurant"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
                     -79.958733,
                     40.473345
                 ]
             },
             "properties": {
-                "id": 137,
+                "id": 128,
                 "Name": "lawrence hall",
                 "address": "4609 Butler St, Pittsburgh, PA 15201, United States",
                 "customerType": "Restaurant"
@@ -2027,7 +1995,7 @@
                 ]
             },
             "properties": {
-                "id": 138,
+                "id": 129,
                 "Name": "liberty ale house",
                 "address": "1501 Lancaster Ave, Reading, PA 19607, United States",
                 "customerType": "Restaurant"
@@ -2043,7 +2011,7 @@
                 ]
             },
             "properties": {
-                "id": 139,
+                "id": 130,
                 "Name": "liberty at dryville",
                 "address": "Lyons Rd, Waynesboro, PA 17268, United States",
                 "customerType": "Hotel"
@@ -2054,12 +2022,12 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -79.9538851,
-                    40.46337145
+                    -79.9546822,
+                    40.4632531
                 ]
             },
             "properties": {
-                "id": 140,
+                "id": 131,
                 "Name": "liberty beer pgh",
                 "address": "Liberty Ave, Pittsburgh, PA 15224, United States",
                 "customerType": "Home-D"
@@ -2075,7 +2043,7 @@
                 ]
             },
             "properties": {
-                "id": 141,
+                "id": 132,
                 "Name": "liberty bell beverage",
                 "address": "718 N 13th St, Allentown, PA 18102, United States",
                 "customerType": "Liquor Store"
@@ -2102,12 +2070,28 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
+                    -78.878736,
+                    40.297323
+                ]
+            },
+            "properties": {
+                "id": 134,
+                "Name": "little's beverage",
+                "address": "2202 Bedford St, Johnstown, PA 15904, United States",
+                "customerType": "Home-D"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
                     -75.12766,
                     39.971478
                 ]
             },
             "properties": {
-                "id": 144,
+                "id": 135,
                 "Name": "lloyd philly",
                 "address": "529 E Girard Ave, Philadelphia, PA 19125, United States",
                 "customerType": "Restaurant"
@@ -2123,7 +2107,7 @@
                 ]
             },
             "properties": {
-                "id": 145,
+                "id": 136,
                 "Name": "local provisions",
                 "address": "111 Freeport Rd, Pittsburgh, PA 15238, United States",
                 "customerType": "Restaurant"
@@ -2150,12 +2134,28 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
+                    -79.953858,
+                    40.481635
+                ]
+            },
+            "properties": {
+                "id": 138,
+                "Name": "lolev (west pa)",
+                "address": "5247 Butler St, Pittsburgh, PA 15201, United States",
+                "customerType": "Brewery"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
                     -75.297081,
                     40.008918
                 ]
             },
             "properties": {
-                "id": 147,
+                "id": 139,
                 "Name": "lower merion beverage",
                 "address": "50 Greenfield Ave, Ardmore, PA 19003, United States",
                 "customerType": "Home-D"
@@ -2171,7 +2171,7 @@
                 ]
             },
             "properties": {
-                "id": 148,
+                "id": 140,
                 "Name": "mad mex cranberry",
                 "address": "20510 Perry Hwy, Cranberry Township, PA 16066, United States",
                 "customerType": "Restaurant"
@@ -2191,22 +2191,6 @@
                 "Name": "mad mex robinson",
                 "address": "2 robinson plaza, pittsburgh, pa 15205",
                 "customerType": "Restaurant"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -76.61734772,
-                    40.96448517
-                ]
-            },
-            "properties": {
-                "id": 150,
-                "Name": "maloney's distributor",
-                "address": "Danville, PA 17821, United States",
-                "customerType": "Home-D"
             }
         },
         {
@@ -2278,22 +2262,6 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -75.130444,
-                    40.3108
-                ]
-            },
-            "properties": {
-                "id": 155,
-                "Name": "maxwell's on main",
-                "address": "37 Main St, Doylestown, PA 18901, United States",
-                "customerType": "Restaurant"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
                     -79.893389,
                     40.431571
                 ]
@@ -2310,15 +2278,31 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -80.1051881,
-                    40.3683051
+                    -80.2204444,
+                    40.51756125
                 ]
             },
             "properties": {
-                "id": 157,
-                "Name": "mike and tony's bridgeville",
-                "address": "1155 Washington Rd, Bridgeville, PA 15017, United States",
+                "id": 148,
+                "Name": "mike & tony's gyros of moon township",
+                "address": "University Blvd, Coraopolis, PA 15108, United States",
                 "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -80.035047,
+                    40.394286
+                ]
+            },
+            "properties": {
+                "id": 150,
+                "Name": "mike and tony's dormont",
+                "address": "2937 W Liberty Ave, Pittsburgh, PA 15216, United States",
+                "customerType": "Bar"
             }
         },
         {
@@ -2363,7 +2347,7 @@
                 ]
             },
             "properties": {
-                "id": 161,
+                "id": 153,
                 "Name": "milford beer barn",
                 "address": "204 E Harford St, Milford, PA 18337, United States",
                 "customerType": "Home-D"
@@ -2379,42 +2363,10 @@
                 ]
             },
             "properties": {
-                "id": 162,
+                "id": 154,
                 "Name": "milkboy",
                 "address": "Philadelphia, PA 19147, United States",
                 "customerType": "Restaurant"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -80.482072,
-                    41.262592
-                ]
-            },
-            "properties": {
-                "id": 163,
-                "Name": "muscarella's cafe italia",
-                "address": "500 W Main St, Sharpsville, PA 16150, United States",
-                "customerType": "Restaurant"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -79.7479,
-                    40.589279
-                ]
-            },
-            "properties": {
-                "id": 164,
-                "Name": "myrna's brew'ry outlet",
-                "address": "827 Carl Ave, New Kensington, PA 15068, United States",
-                "customerType": "Home-D"
             }
         },
         {
@@ -2427,7 +2379,7 @@
                 ]
             },
             "properties": {
-                "id": 165,
+                "id": 157,
                 "Name": "narcisi winery",
                 "address": "4578 Gibsonia Rd, Gibsonia, PA 15044, United States",
                 "customerType": "Restaurant"
@@ -2459,7 +2411,7 @@
                 ]
             },
             "properties": {
-                "id": 167,
+                "id": 159,
                 "Name": "newtown suds",
                 "address": "3517 W Chester Pike, Newtown Square, PA 19073, United States",
                 "customerType": "Home-D"
@@ -2475,7 +2427,7 @@
                 ]
             },
             "properties": {
-                "id": 169,
+                "id": 161,
                 "Name": "novo asian food hall",
                 "address": "1931 Smallman St, Pittsburgh, PA 15222, United States",
                 "customerType": "Bar"
@@ -2491,7 +2443,7 @@
                 ]
             },
             "properties": {
-                "id": 171,
+                "id": 163,
                 "Name": "olives and peppers trafford",
                 "address": "833 Harrison City Rd, Trafford, PA 15085, United States",
                 "customerType": "Restaurant"
@@ -2539,7 +2491,7 @@
                 ]
             },
             "properties": {
-                "id": 174,
+                "id": 166,
                 "Name": "otb boathouse",
                 "address": "10301 Pearce Mill Rd, Allison Park, PA 15101, United States",
                 "customerType": "Restaurant"
@@ -2555,10 +2507,26 @@
                 ]
             },
             "properties": {
-                "id": 175,
+                "id": 167,
                 "Name": "oxford beverage",
                 "address": "2135 Baltimore Pike, Oxford, PA 19363, United States",
                 "customerType": "Redemption Center"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -76.09251635,
+                    40.33293315
+                ]
+            },
+            "properties": {
+                "id": 169,
+                "Name": "paradise by the slice",
+                "address": "69 Penn Ave, Wernersville, PA 19565-1413, United States",
+                "customerType": "Restaurant"
             }
         },
         {
@@ -2582,15 +2550,15 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -76.069537,
-                    40.996235
+                    -75.209007,
+                    39.954486
                 ]
             },
             "properties": {
-                "id": 173,
-                "Name": "party beverage conyngham",
-                "address": "653 pa-93, sugarloaf, pa 18429",
-                "customerType": "Home-D"
+                "id": 171,
+                "Name": "pasquallys pizza",
+                "address": "200 S 43rd St, Philadelphia, PA 19104, United States",
+                "customerType": "Restaurant"
             }
         },
         {
@@ -2598,15 +2566,15 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -75.209007,
-                    39.954486
+                    -80.242281,
+                    40.546227
                 ]
             },
             "properties": {
-                "id": 179,
-                "Name": "pasquallys pizza",
-                "address": "200 S 43rd St, Philadelphia, PA 19104, United States",
-                "customerType": "Restaurant"
+                "id": 172,
+                "Name": "patrick's pub pgh",
+                "address": "1207 Spring Run Road Ext, Coraopolis, PA 15108, United States",
+                "customerType": "Bar"
             }
         },
         {
@@ -2619,7 +2587,7 @@
                 ]
             },
             "properties": {
-                "id": 181,
+                "id": 173,
                 "Name": "pennsburg beer & soda mart",
                 "address": "450 Pottstown Ave, Pennsburg, PA 18073, United States",
                 "customerType": "Home-D"
@@ -2635,7 +2603,7 @@
                 ]
             },
             "properties": {
-                "id": 182,
+                "id": 174,
                 "Name": "pig and fire",
                 "address": "1445 Washington Rd, Washington, PA 15301, United States",
                 "customerType": "Restaurant"
@@ -2651,7 +2619,7 @@
                 ]
             },
             "properties": {
-                "id": 183,
+                "id": 175,
                 "Name": "pine creek public house",
                 "address": "5055 William Flynn Hwy, Gibsonia, PA 15044, United States",
                 "customerType": "Restaurant"
@@ -2667,7 +2635,7 @@
                 ]
             },
             "properties": {
-                "id": 184,
+                "id": 176,
                 "Name": "pit stop beer express",
                 "address": "3739 Library Rd, Castle Shannon, PA 15234, United States",
                 "customerType": "Liquor Store"
@@ -2699,7 +2667,7 @@
                 ]
             },
             "properties": {
-                "id": 186,
+                "id": 178,
                 "Name": "pocono beer & beverage",
                 "address": "611 Belmont Ave, Mt. Pocono, PA 18344, United States",
                 "customerType": "Liquor Store"
@@ -2715,7 +2683,7 @@
                 ]
             },
             "properties": {
-                "id": 187,
+                "id": 179,
                 "Name": "pomodoro",
                 "address": "2570 Brandt School Rd, Wexford, PA 15090, United States",
                 "customerType": "Restaurant"
@@ -2731,7 +2699,7 @@
                 ]
             },
             "properties": {
-                "id": 189,
+                "id": 181,
                 "Name": "porch restaurant and pub",
                 "address": "890 Tulpehocken Rd, Myerstown, PA 17067, United States",
                 "customerType": "Restaurant"
@@ -2742,15 +2710,15 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -75.858684,
-                    40.400667
+                    -80.245564,
+                    40.17218
                 ]
             },
             "properties": {
                 "id": 182,
-                "Name": "pricetown beverage",
-                "address": "3131 pricetown rd, fleetwood, pa 19522",
-                "customerType": "Home-D"
+                "Name": "president's pub",
+                "address": "88 N Main St, Washington, PA 15301, United States",
+                "customerType": "Restaurant"
             }
         },
         {
@@ -2763,7 +2731,7 @@
                 ]
             },
             "properties": {
-                "id": 192,
+                "id": 183,
                 "Name": "rader beverage co",
                 "address": "191 County Line Rd, Boyertown, PA 19512, United States",
                 "customerType": "Home-D"
@@ -2774,15 +2742,15 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.234188,
-                    39.819307
+                    -75.17433,
+                    39.950768
                 ]
             },
             "properties": {
-                "id": 193,
-                "Name": "reliance mine saloon",
-                "address": "380 Steinwehr Ave, Gettysburg, PA 17325, United States",
-                "customerType": "Bar"
+                "id": 184,
+                "Name": "revolution taco",
+                "address": "2015 Walnut St, Philadelphia, PA 19103, United States",
+                "customerType": "Restaurant"
             }
         },
         {
@@ -2811,10 +2779,26 @@
                 ]
             },
             "properties": {
-                "id": 195,
+                "id": 186,
                 "Name": "righteous tap house",
                 "address": "1548 Shadyside Rd, West Chester, PA 19380, United States",
                 "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -79.661879,
+                    40.424595
+                ]
+            },
+            "properties": {
+                "id": 187,
+                "Name": "rooz brews",
+                "address": "4810 Old William Penn Hwy, Export, PA 15632, United States",
+                "customerType": "Home-D"
             }
         },
         {
@@ -2827,7 +2811,7 @@
                 ]
             },
             "properties": {
-                "id": 196,
+                "id": 188,
                 "Name": "rt 19 beer and cigar",
                 "address": "3626 Washington Rd, McMurray, PA 15317, United States",
                 "customerType": "Home-D"
@@ -2843,7 +2827,7 @@
                 ]
             },
             "properties": {
-                "id": 197,
+                "id": 189,
                 "Name": "salute beer",
                 "address": "2348 Golden Mile Hwy, Pittsburgh, PA 15239, United States",
                 "customerType": "Home-D"
@@ -2859,7 +2843,7 @@
                 ]
             },
             "properties": {
-                "id": 198,
+                "id": 190,
                 "Name": "save mor beer and pop warehouse",
                 "address": "4516 Browns Hill Rd, Pittsburgh, PA 15217, United States",
                 "customerType": "Home-D"
@@ -2907,7 +2891,7 @@
                 ]
             },
             "properties": {
-                "id": 201,
+                "id": 193,
                 "Name": "shangy's",
                 "address": "Main St, Emmaus, PA 18049, United States",
                 "customerType": "Home-D"
@@ -2955,7 +2939,7 @@
                 ]
             },
             "properties": {
-                "id": 204,
+                "id": 196,
                 "Name": "side bar west chester",
                 "address": "10 W Gay St, West Chester, PA 19380, United States",
                 "customerType": "Restaurant"
@@ -3003,7 +2987,7 @@
                 ]
             },
             "properties": {
-                "id": 207,
+                "id": 199,
                 "Name": "spaz beverage company",
                 "address": "1015 W Chester Pike, West Chester, PA 19382, United States",
                 "customerType": "Home-D"
@@ -3019,25 +3003,9 @@
                 ]
             },
             "properties": {
-                "id": 209,
+                "id": 201,
                 "Name": "station taproom",
                 "address": "207 W Lancaster Ave, Downingtown, PA 19335, United States",
-                "customerType": "Restaurant"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -80.005803,
-                    40.520757
-                ]
-            },
-            "properties": {
-                "id": 204,
-                "Name": "stoke's grill",
-                "address": "4771 mcknight rd, pittsburgh, pa 15237-3405",
                 "customerType": "Restaurant"
             }
         },
@@ -3067,7 +3035,7 @@
                 ]
             },
             "properties": {
-                "id": 212,
+                "id": 203,
                 "Name": "switchback pizza",
                 "address": "525 Jubilee St, Emmaus, PA 18049, United States",
                 "customerType": "Restaurant"
@@ -3099,7 +3067,7 @@
                 ]
             },
             "properties": {
-                "id": 214,
+                "id": 205,
                 "Name": "tanczos beverage northampton",
                 "address": "2006 Center St, Northampton, PA 18067, United States",
                 "customerType": "Home-D"
@@ -3115,7 +3083,7 @@
                 ]
             },
             "properties": {
-                "id": 215,
+                "id": 206,
                 "Name": "tapster philadelphia",
                 "address": "110-16 S 16th St, Philadelphia, PA 19102, United States",
                 "customerType": "Bar"
@@ -3131,7 +3099,7 @@
                 ]
             },
             "properties": {
-                "id": 217,
+                "id": 209,
                 "Name": "tds distributors",
                 "address": "4 Main St, Denver, PA 17517, United States",
                 "customerType": "Home-D"
@@ -3158,12 +3126,28 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
+                    -75.388086,
+                    40.04508
+                ]
+            },
+            "properties": {
+                "id": 211,
+                "Name": "teresa's cafe",
+                "address": "124 N Wayne Ave, Wayne, PA 19087, United States",
+                "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
                     -75.952346,
                     40.336179
                 ]
             },
             "properties": {
-                "id": 220,
+                "id": 212,
                 "Name": "the bar cart",
                 "address": "713 Penn Ave, West Reading, PA 19611, United States",
                 "customerType": "Bar"
@@ -3179,7 +3163,7 @@
                 ]
             },
             "properties": {
-                "id": 221,
+                "id": 213,
                 "Name": "the barley mow",
                 "address": "719 Penn Ave, West Reading, PA 19611, United States",
                 "customerType": "Restaurant"
@@ -3198,22 +3182,6 @@
                 "id": 211,
                 "Name": "the beer corner chambersburg",
                 "address": "235 walker rd, chambersburg, pa 17201",
-                "customerType": "Home-D"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -74.965987,
-                    40.088669
-                ]
-            },
-            "properties": {
-                "id": 223,
-                "Name": "the beer outlet philly",
-                "address": "189 Franklin Mills Blvd, Philadelphia, PA 19154, United States",
                 "customerType": "Home-D"
             }
         },
@@ -3259,25 +3227,9 @@
                 ]
             },
             "properties": {
-                "id": 226,
+                "id": 217,
                 "Name": "the beer wall",
                 "address": "619 Penn Ave, West Reading, PA 19611, United States",
-                "customerType": "Restaurant"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -79.982785,
-                    40.452159
-                ]
-            },
-            "properties": {
-                "id": 227,
-                "Name": "the beerhive",
-                "address": "2117 Penn Ave, Pittsburgh, PA 15222, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -3294,6 +3246,22 @@
                 "id": 214,
                 "Name": "the circle hanover",
                 "address": "5 e walnut st, hanover, pa 17331",
+                "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -75.15193995,
+                    39.93289
+                ]
+            },
+            "properties": {
+                "id": 219,
+                "Name": "the foodery chestnut hill",
+                "address": "Manton St, Philadelphia, PA 19147, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -3398,44 +3366,12 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -75.918378,
-                    40.356107
-                ]
-            },
-            "properties": {
-                "id": 235,
-                "Name": "the pike cafe",
-                "address": "930 Pk St, Reading, PA 19604, United States",
-                "customerType": "Restaurant"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -79.957956,
-                    40.474612
-                ]
-            },
-            "properties": {
-                "id": 236,
-                "Name": "the pitch",
-                "address": "4717 Butler St, Pittsburgh, PA 15201, United States",
-                "customerType": "Restaurant"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
                     -79.944143,
                     40.497627
                 ]
             },
             "properties": {
-                "id": 237,
+                "id": 226,
                 "Name": "the rear end",
                 "address": "399 Butler St, Etna, PA 15223, United States",
                 "customerType": "Bar"
@@ -3451,7 +3387,7 @@
                 ]
             },
             "properties": {
-                "id": 238,
+                "id": 227,
                 "Name": "the stables",
                 "address": "160 Park Rd, Chester Springs, PA 19425, United States",
                 "customerType": "Restaurant"
@@ -3478,12 +3414,28 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
+                    -80.00304255,
+                    40.4637024
+                ]
+            },
+            "properties": {
+                "id": 229,
+                "Name": "the warren bar and burrow",
+                "address": "Warren St, Pittsburgh, PA 15212, United States",
+                "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
                     -79.9616606,
                     40.4694273
                 ]
             },
             "properties": {
-                "id": 240,
+                "id": 230,
                 "Name": "thunderbird cafe",
                 "address": "4053 Butler St, Pittsburgh, PA 15201, United States",
                 "customerType": "Restaurant"
@@ -3499,26 +3451,10 @@
                 ]
             },
             "properties": {
-                "id": 242,
+                "id": 232,
                 "Name": "tobacco, beer & more",
                 "address": "2551 Route 611, Scotrun, PA 18355, United States",
                 "customerType": "Convenience"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -75.696167,
-                    40.108113
-                ]
-            },
-            "properties": {
-                "id": 243,
-                "Name": "top of the hill beverage",
-                "address": "101 Cedar Ln, Chester Springs, PA 19425, United States",
-                "customerType": "Home-D"
             }
         },
         {
@@ -3547,7 +3483,7 @@
                 ]
             },
             "properties": {
-                "id": 245,
+                "id": 234,
                 "Name": "trooper thorns",
                 "address": "451 Morgantown Rd, Reading, PA 19611, United States",
                 "customerType": "Restaurant"
@@ -3582,22 +3518,6 @@
                 "id": 237,
                 "Name": "u pick 6 public house",
                 "address": "4575 west ridge rd, millcreek, pa 16505",
-                "customerType": "Restaurant"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -76.439878,
-                    40.337974
-                ]
-            },
-            "properties": {
-                "id": 238,
-                "Name": "union beer house lebanon",
-                "address": "1600 w cumberland st, lebanon, pa 17042-4457",
                 "customerType": "Restaurant"
             }
         },
@@ -3675,7 +3595,7 @@
                 ]
             },
             "properties": {
-                "id": 254,
+                "id": 242,
                 "Name": "wheatland distributors",
                 "address": "1701 Columbia Ave, Lancaster, PA 17603, United States",
                 "customerType": "Home-D"
@@ -3691,7 +3611,7 @@
                 ]
             },
             "properties": {
-                "id": 255,
+                "id": 243,
                 "Name": "whole foods wexford",
                 "address": "10576 Perry Hwy, Wexford, PA 15090, United States",
                 "customerType": "Grocery"
@@ -3707,7 +3627,7 @@
                 ]
             },
             "properties": {
-                "id": 256,
+                "id": 244,
                 "Name": "world of beer exton",
                 "address": "102 Main St, Exton, PA 19341, United States",
                 "customerType": "Restaurant"
@@ -3755,7 +3675,7 @@
                 ]
             },
             "properties": {
-                "id": 259,
+                "id": 247,
                 "Name": "zig zag bbq",
                 "address": "2111 E York St, Philadelphia, PA 19125, United States",
                 "customerType": "Restaurant"
