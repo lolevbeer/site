@@ -1,6 +1,6 @@
 variant,name,type,options,abv,glass,draftPrice,canSingle,fourPack,description,upc,glutenFree,image,untappd,recipe,hops
 array,Array,Pale Ale,,5.8,teku,$7,$4.00,$15,Pineapple and citrus. White grapes and lime zest aroma.,860009737662,FALSE,TRUE,5142277,1,"BRU-1, Nelson Sauvin™, Motueka™, Pacific Sunrise™"
-tides,Tides,India Pale Ale,,7,teku,$8,$4.50,$17,"Mango, passionfruit, and fruit stripe gum.",860009737600,FALSE,TRUE,5142237,2,"El Dorado®, Simcoe®, Mosaic®, Citra®"
+tides,Tides,India Pale Ale,,7,teku,$8,$4.50,$17,"Mango, passionfruit, lime zest, citrus, and blueberry.",860009737600,FALSE,TRUE,5142237,2,"El Dorado®, Simcoe®, Mosaic®, Citra®"
 scylla,Scylla,Imperial Stout,,10.5,small-teku,$8,$5.00,$19,Dark chocolate and toasted caramel layered on blackberry cola.,,FALSE,FALSE,5142310,3,
 sebastian,Sebastian,Bock,,6.7,lager,$6,$4.00,$15,A Maibock brewed with 100% Pilsner malt and German and American Noble Hops.,860009737631,FALSE,TRUE,5210316,4,
 revive,Revive,Sparkling Hop Water,,4.8,lager,$6,,,"Modern, hopped version of a traditional Finnish fermented-water beverage.",850051366088,TRUE,FALSE,4876733,5,
@@ -30,7 +30,7 @@ remo,Remo,Ultra Light Rice Ale,,3.4,lager,$5,,,"Light, citrus-forward summer cru
 sonnen,Sonnen,Märzen,oktoberfest,5.4,lager,$7,$4.50,$17,"Plush tan head, a subtle sweetness of toasted malt, medium body.",850051366095,FALSE,TRUE,,29,
 iroh,Iroh,Matcha Ale,,4.3,teku,$8,$4.50,$17,Subtle matcha and citrus.,850051366149,FALSE,TRUE,5456132,30,
 revada,Revada,Smoothie Sour,,6.8,small-teku,$9,$6.00,$23,"Conditioned on strawberries, blueberries & hibiscus. Thicc and tart. Vibrant pink and full bodied.",850051366101,FALSE,TRUE,,31,
-taupo,Taupō,India Pale Ale,,6.4,teku,$8,$4.50,$17,"Key lime, spanish cedar, and zested orange.",850051366118,FALSE,TRUE,,32,"Riwaka™, Wakatu™, Citra®"
+taupo,Taupō,India Pale Ale,,6.4,teku,$8,$4.50,$17,"Tropical passion fruit, red grapefruit, and zested orange.",850051366118,FALSE,TRUE,,32,"Riwaka™, Wakatu™, Citra®"
 zama,Zama,India Pale Ale,,6.7,teku,$8,$4.50,$17,"Pineapple, tangerine, mango.",850051366125,FALSE,TRUE,,33,"Nectaron®, El Dorado®, Ekuanot®"
 drip,Drip,Double IPA,,8.7,teku,$8,$5.25,$20,"White grape, grapefruit and orange.  Adjuncted with Phantasm",850051366132,FALSE,TRUE,,34,"Motueka™, Nelson Sauvin™, Citra®"
 solem,Solem,Imperial Saison,,9.5,small-teku,$7,,,"Funky and dry. Pineapple, leather, and ripe peach.",,FALSE,FALSE,,35,
