@@ -5,7 +5,7 @@ glyphs,TRUE,Glyphs,,Pale Ale,5,4.00,15,"Tangerine, orange zest, and aromatic pin
 stark,TRUE,Stark,,Heller Bock Lager,6.2,4.00,15,Rich maltiness with caramel and toast. Spice with floral aroma.,TRUE
 grandar,TRUE,Grandar,,Imperial Pilsner,6.6,4.25,16,"Crackery sweetness balanced with hops, floral and herbal notes that finish with a subtle citrus. Step mashed and hopped with nobles.",TRUE
 tribute,TRUE,Tribute,,West Coast Imperial Pilsner,6.6,4.50,17,"Orange, tangerine, basil, earthly. Citrus and sunflower aroma. Dry hopped with this year's Ales for ALS hop blend. $2 donated to ""Ales for ALS"" per 4-Pack.",TRUE
-prismatic,TRUE,Prismatic,,India Pale Ale,7,4.50,17,"Pineapple, vanilla, tangerine, melon.",TRUE
+prismatic,FALSE,Prismatic,,India Pale Ale,7,4.50,17,"Pineapple, vanilla, tangerine, melon.",TRUE
 taupo,TRUE,Taupō,,India Pale Ale,7,4.50,17,"Tropical passion fruit, red grapefruit, and zested orange.",TRUE
 tides,TRUE,Tides,,India Pale Ale,7.5,4.50,17,"Mango, passionfruit, lime zest, citrus, and blueberry.",TRUE
 hurron,FALSE,Hurron,,Double IPA,8,5.25,20,"Enhanced with thiol-enriched Motueka from Freestyle Hops x Phantasm. Peach, pineapple and white grape. ",TRUE
