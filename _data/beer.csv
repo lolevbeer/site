@@ -53,9 +53,10 @@ marty-ii,Marty II,Matcha Wheat Ale,,5.5,teku,$6,,,"Our annual St. Patrick's Day 
 tros,Tros,Double IPA,,8,teku,$8,$5.25,$20,"Pineapple, mint, mandarin orange and mango.",850051366132,FALSE,TRUE,,52,"Mosaic®, Enigma®, Eureka!™"
 faust,Faust,Wild Ale conditioned on Plums,,9.3,small-teku,$9,,,"Slightly sour, dry and oaky. Aged in oak foeders on our house microflora and conditioned on fresh plums.",,FALSE,FALSE,,53,
 rein,Rein,Helles Lager,,4.9,lager,$6,$4.00,$15,Refreshing smooth malt backbone with fruit notes and floral aroma. ,850051366040,FALSE,TRUE,,54,Callista
-hurron,Hurron,Double IPA,,8,teku,$8,$5.25,$20,"Enhanced with thiol-enriched Motueka from Freestyle Hops x Phantasm. Peach, pineapple and white grape. ",850051366132,FALSE,TRUE,,55,"Mega Motueka, Citra®, Riwaka™, Moutere™"
+hurron,Hurron,Double IPA,,8,lager,$8,$5.25,$20,"Enhanced with thiol-enriched Motueka from Freestyle Hops x Phantasm. Peach, pineapple and white grape. ",850051366132,FALSE,TRUE,,55,"Mega Motueka, Citra®, Riwaka™, Moutere™"
 stark,Stark,Heller Bock Lager,,6.2,lager,$7,$4.00,$15,Rich maltiness with caramel and toast. Spice with floral aroma.,860009737631,FALSE,TRUE,,56,Hallertauer Tradition
-crest,Crest,India Pale Ale,,7.4,teku,$8,$4.50,$17,"Citrus, tropical, and stone fruit flavors, floral and piney undertones.",860009737693,FALSE,TRUE,,57,"Cascade, Triumph, Simcoe®, Mosaic®"
+crest,Crest,India Pale Ale,,7.4,lager,$8,$4.50,$17,"Citrus, tropical, and stone fruit flavors, floral and piney undertones.",860009737693,FALSE,TRUE,,57,"Cascade, Triumph, Simcoe®, Mosaic®"
 summer-lupula,Summer Lupula,India Pale Ale,,6,lager,$7,$4.50,$17,"Summer variant of Lupula, lower alcohol, more citrus-forward. Pineapple and mango.",860009737617,FALSE,TRUE,,58,"Motueka™, Moutere™, Riwaka™"
 tribute,Tribute,West Coast Imperial Pilsner,,6.6,lager,$7,$4.50,$17,"Orange, tangerine, basil, earthly. Citrus and sunflower aroma. Dry hopped with this year's Ales for ALS hop blend. $2 donated to ""Ales for ALS"" per 4-Pack.",850051366095,FALSE,TRUE,,59,"Citra®, Columbus, HBC 630, HBC 1019, Talus®"
 gosev,Gosev,Gose,,4.5,lager,$7,$4.50,$17,"Tart ale with notes of lemon, lime, sea salt and coriander. Lightly conditioned on Raspberries.",850051366026,FALSE,TRUE,,60,
+aurantia,Aurantia,Double IPA,,8.2,lager,$8,$5.25,$20,,850051366132,FALSE,FALSE,,61,Citra®
