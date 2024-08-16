@@ -1,8 +1,8 @@
 variant,cansAvailable,name,salePrice,type,abv,cansSingle,fourPack,description,image
-elias,TRUE,Elias,,Cream Ale,4.5,4.00,15,"Smooth, subtle citrus notes and floral aroma.",TRUE
+,TRUE,,,,,,,,
 gosev,TRUE,Gosev,,Gose,4.5,4.50,17,"Tart ale with notes of lemon, lime, sea salt and coriander. Lightly conditioned on Raspberries.",TRUE
 sonnen,TRUE,Sonnen,,Märzen,5.4,4.50,17,"Plush tan head, a subtle sweetness of toasted malt, medium body.",TRUE
-stark,FALSE,Stark,,Heller Bock Lager,6.2,4.00,15,Rich maltiness with caramel and toast. Spice with floral aroma.,TRUE
+,TRUE,,,,,,,,
 grandar,TRUE,Grandar,,Imperial Pilsner,6.6,4.25,16,"Crackery sweetness balanced with hops, floral and herbal notes that finish with a subtle citrus. Step mashed and hopped with nobles.",TRUE
 tribute,TRUE,Tribute,,West Coast Imperial Pilsner,6.6,4.50,17,"Orange, tangerine, basil, earthly. Citrus and sunflower aroma. Dry hopped with this year's Ales for ALS hop blend. $2 donated to ""Ales for ALS"" per 4-Pack.",TRUE
 lupula,TRUE,Lupula,,India Pale Ale,7,4.50,17,"Pineapple, mango, and grapefruit. Aromatic.",TRUE
