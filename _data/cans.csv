@@ -1,6 +1,6 @@
 variant,cansAvailable,name,salePrice,type,abv,cansSingle,fourPack,description,image
 ,TRUE,,,,,,,,
-gosev,TRUE,Gosev,,Gose,4.5,4.50,17,"Tart ale with notes of lemon, lime, sea salt and coriander. Lightly conditioned on Raspberries.",TRUE
+,FALSE,,,,,,,,
 sonnen,TRUE,Sonnen,,Märzen,5.4,4.50,17,"Plush tan head, a subtle sweetness of toasted malt, medium body.",TRUE
 ,TRUE,,,,,,,,
 grandar,TRUE,Grandar,,Imperial Pilsner,6.6,4.25,16,"Crackery sweetness balanced with hops, floral and herbal notes that finish with a subtle citrus. Step mashed and hopped with nobles.",TRUE
