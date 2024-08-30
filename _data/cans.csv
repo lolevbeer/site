@@ -7,7 +7,7 @@ grandar,TRUE,Grandar,,Imperial Pilsner,6.6,4.25,16,"Crackery sweetness balanced 
 tribute,TRUE,Tribute,,West Coast Imperial Pilsner,6.6,4.50,17,"Orange, tangerine, basil, earthy. Citrus and sunflower aroma. Dry hopped with this year's Ales for ALS hop blend. $2 donated to ""Ales for ALS"" per 4-Pack.",TRUE
 lupula,TRUE,Lupula,,India Pale Ale,7,4.50,17,"Pineapple, mango, and grapefruit. Aromatic.",TRUE
 taupo,TRUE,Taupō,,India Pale Ale,7,4.50,17,"Tropical passion fruit, red grapefruit, and zested orange.",TRUE
-tides,TRUE,Tides,,India Pale Ale,7.5,4.50,17,"Mango, passionfruit, lime zest, citrus, and blueberry.",TRUE
+tides,FALSE,Tides,,India Pale Ale,7.5,4.50,17,"Mango, passionfruit, lime zest, citrus, and blueberry.",TRUE
 aurantia,TRUE,Aurantia,,Double IPA,8.2,5.25,20,Double IPA hopped with our favorite lot of Citra.,TRUE
 rubico,TRUE,Rubico,,Double IPA,8.5,5.25,20,"Pineapple, peach rings, bubblegum, strawberry and citrus.",TRUE
 ,FALSE,,,,,,,,
