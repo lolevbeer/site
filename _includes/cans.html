@@ -4,7 +4,8 @@
   <h2>To Go</h2>
   <div class="beer-cans to-go-section beers-{{ total }} padded-section">
   {% for beer in site.data.cans %}
-    {% if beer.variant != "" and beer.image == 'TRUE' %}
+    <!-- if variant not empty or null -->
+    {% if beer.variant != "" and beer.variant != null %}
       <a href="/beer/{{ beer.variant }}">
         <img class="can" src="/assets/beer/{{ beer.variant }}.webp" title="{{ beer.name }}" alt="{{ beer.name }} {{ beer.type }}">
       </a>
