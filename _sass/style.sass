@@ -214,7 +214,6 @@ footer
   font-size: 1.2em
   justify-content: center
   letter-spacing: 1px
-  padding: 0.5em 1em
   position: fixed
   text-align: center
   transition: color .7s ease
@@ -637,6 +636,15 @@ footer *
   color: black
   transition: color .25s ease, text-decoration-color .25s ease
 
+footer p
+  background: rgba(244,253,255,.8)
+  padding: 0px 15px
+  border-radius: 15px
+
+.dark footer p
+  background: none
+  color: black
+
 .dark footer .address
   color: white
 .dark:not(.menu-open)
@@ -654,6 +662,9 @@ footer *
     margin-top: 1em
     @media only screen and (max-width: 1000px)
       filter: invert(0)
+
+.dark footer p
+  color: white
 
 .link
   transition: margin-top .25s ease
