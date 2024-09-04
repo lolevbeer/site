@@ -8,6 +8,32 @@
     {% endfor %}
   </span>
   <footer>
-    <p>Last Updated: {{ site.data.last_updated }}</p>
+    <p>Last Updated: <span id="last-updated"></span></p> <!-- Placeholder for last updated date -->
   </footer>
 </section>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Fetch the last updated timestamp from a data attribute or a variable
+    const lastUpdatedTimestamp = '{{ site.data.last_updated }}'; // Assuming this is set in your Jekyll data
+    const lastUpdatedElement = document.getElementById('last-updated');
+
+    if (lastUpdatedTimestamp) {
+      // Convert the timestamp to a readable date format
+      const date = new Date(lastUpdatedTimestamp);
+      // Format in a way that is human readable like 18 hours ago or 1 day ago.
+      const diffInSeconds = Math.floor((Date.now() - date.getTime()) / 1000);
+      if (diffInSeconds < 60) {
+        lastUpdatedElement.textContent = `${diffInSeconds} seconds ago`;
+      } else if (diffInSeconds < 3600) {
+        lastUpdatedElement.textContent = `${Math.floor(diffInSeconds / 60)} minutes ago`;
+      } else if (diffInSeconds < 86400) {
+        lastUpdatedElement.textContent = `${Math.floor(diffInSeconds / 3600)} hours ago`;
+      } else {
+        lastUpdatedElement.textContent = `${Math.floor(diffInSeconds / 86400)} days ago`;
+      }
+    } else {
+      lastUpdatedElement.textContent = 'Not available'; // Fallback if no timestamp is found
+    }
+  });
+</script>
