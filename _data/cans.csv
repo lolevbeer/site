@@ -1,14 +1,14 @@
 variant,cansAvailable,name,salePrice,type,abv,cansSingle,fourPack
-,FALSE,,,,,,
-,FALSE,,,,,,
 rein,TRUE,Rein,,Helles Lager,4.9,4.00,15
 sonnen,TRUE,Sonnen,,Märzen,5.4,4.50,17
 grandar,TRUE,Grandar,,Imperial Pilsner,6.6,4.25,16
 tribute,TRUE,Tribute,,West Coast Imperial Pilsner,6.6,4.50,17
 prismatic,TRUE,Prismatic,,India Pale Ale,7,4.50,17
-lupula,FALSE,Lupula,,India Pale Ale,7,4.50,17
-taupo,TRUE,Taupō,,India Pale Ale,7,4.50,17
+lupula,TRUE,Lupula,,India Pale Ale,7,4.50,17
+,FALSE,,,,,,
 double-prismatic,TRUE,Double Prismatic,,Double IPA,8,5.25,20
 aurantia,TRUE,Aurantia,,Double IPA,8.2,5.25,20
 rubico,TRUE,Rubico,,Double IPA,8.5,5.25,20
+,FALSE,,,,,,
+,FALSE,,,,,,
 ,FALSE,,,,,,
