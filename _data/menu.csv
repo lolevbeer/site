@@ -1,6 +1,6 @@
 "tap","variant","singleCanAvailable","name","type","abv","glass","price","description","image","hops"
-"1","","FALSE","Iron City","American Lager","4.7","lager","6","Crisp barley malt, notes of sweet corn, and American hops","",""
-"2","prismatic","FALSE","Prismatic","India Pale Ale","7","lager","8","Pineapple, vanilla, tangerine, melon.","TRUE","El Dorado®, Idaho 7™, Citra®"
+"1","iron city","FALSE","Iron City","American Lager","4.7","lager","6","Crisp barley malt, notes of sweet corn, and American hops","",""
+"2","lupula","FALSE","Lupula","India Pale Ale","7","lager","8","Pineapple, mango, and grapefruit. Aromatic.","TRUE","Motueka™, Moutere™, Riwaka™"
 "3","vespero","FALSE","Vespero","Czech Dark Lager","5.8","lager","7","Roasted chestnut, chocolate and raisin. Ruby hue and a hint of noble hops.","TRUE",""
 "4","rein","FALSE","Rein","Helles Lager","4.9","lager","6","Crisp barley malt, notes of sweet corn, and American hops","TRUE","Callista"
 "5","double-prismatic","FALSE","Double Prismatic","Double IPA","8","teku","8","Tangerine zest, pineapple, raspberry, and lemongrass.","TRUE","El Dorado®, Idaho 7™, Citra®"
