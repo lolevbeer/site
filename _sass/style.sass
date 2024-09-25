@@ -309,19 +309,29 @@ h3 + p
   .social-view &
     display: initial
     width: 85px
+
+// Add variable for width
 .social-view
+  // 610 divided by 2
+  $social-view-width: 620px
+  $half-social-view-width: $social-view-width / 2
   .padded-section
     &:after,
     &:before
-      content: "."
+      content: "∟"
       display: block
+      font-size: 75px
+      height: 1px
+      width: 1px
       position: absolute
     &:after
       top: calc(50% + 310px)
-      left: calc(50% + 310px)
+      left: calc(50% + $half-social-view-width)
+      transform: rotate(90deg) translateY(-40px)
     &:before
       top: calc(50% - 310px)
-      left: calc(50% - 310px)
+      left: calc(50% - $half-social-view-width)
+      transform: rotate(-90deg) translateY(-40px)
 
 .btn .beer-style
   font-size: 1.5em
@@ -804,3 +814,8 @@ footer p
   footer,
   .social
     display: none
+
+@mixin name
+  $social-view-width: (620 / 2)px
+  
+      
