@@ -3,7 +3,7 @@
 "2","lupula","FALSE","Lupula","India Pale Ale","7","lager","8","Pineapple, mango, and grapefruit. Aromatic.","TRUE","Motueka™, Moutere™, Riwaka™"
 "3","vespero","FALSE","Vespero","Czech Dark Lager","5.8","lager","7","Roasted chestnut, chocolate and raisin. Ruby hue and a hint of noble hops.","TRUE",""
 "4","rein","FALSE","Rein","Helles Lager","4.9","lager","6","Crisp barley malt, notes of sweet corn, and American hops","TRUE","Callista"
-"5","double-prismatic","FALSE","Double Prismatic","Double IPA","8","teku","8","Tangerine zest, pineapple, raspberry, and lemongrass.","TRUE","El Dorado®, Idaho 7™, Citra®"
+"5","ddh-double-prismatic","FALSE","DDH Dbl Prismatic","Double IPA","","teku","9","Tangerine zest, pineapple, raspberry, and lemongrass. Double dry hopped heavily of some uber tropical Idaho 7™","FALSE","El Dorado®, Idaho 7™, Citra®"
 "6","gosev","FALSE","Gosev","Gose","4.5","lager","7","Tart ale with notes of lemon, lime, sea salt and coriander. Lightly conditioned on Raspberries.","TRUE",""
 "7","medusa","FALSE","Medusa","Raspberry Rose Gose","4.5","teku","9","Collaboration with Dollfaced Aesthetics. Our Gose blends the tartness of ripe raspberries with the subtle floral notes of rose.","FALSE",""
 "8","grandar","FALSE","Grandar","Imperial Pilsner","6.6","lager","7","Crackery sweetness balanced with hops, floral and herbal notes that finish with a subtle citrus. Step mashed and hopped with nobles.","TRUE","Hallertau Mittelfrüh, Saaz"
