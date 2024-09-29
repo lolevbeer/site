@@ -1,7 +1,7 @@
 variant,cansAvailable,name,salePrice,type,abv,cansSingle,fourPack
 rein,TRUE,Rein,,Helles Lager,4.9,4.00,15
 sonnen,TRUE,Sonnen,,Märzen,5.4,4.50,17
-tribute,TRUE,Tribute,,West Coast Imperial Pilsner,6.6,4.50,17
+,FALSE,,,,,,
 lupula,TRUE,Lupula,,India Pale Ale,7,4.50,17
 prismatic,TRUE,Prismatic,,India Pale Ale,7,4.50,17
 hanno,TRUE,Hanno,,India Pale Ale,7,4.50,17
