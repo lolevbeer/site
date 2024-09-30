@@ -8,6 +8,6 @@ hanno,TRUE,Hanno,,India Pale Ale,7,4.50,17
 vespero,TRUE,Vespero,,Czech Dark Lager,5.8,4.25,16
 double-prismatic,TRUE,Double Prismatic,,Double IPA,8,5.25,20
 aurantia,TRUE,Aurantia,,Double IPA,8.2,5.25,20
-rubico,TRUE,Rubico,,Double IPA,8.5,5.25,20
+rubico,FALSE,Rubico,,Double IPA,8.5,5.25,20
 ddh-double-prismatic,TRUE,DDH Double Prismatic,,Double IPA,8,5.75,22
 ,FALSE,,,,,,
