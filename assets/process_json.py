@@ -7,8 +7,22 @@ import time
 import os
 
 def fetch_json(url):
-    response = requests.get(url)
-    return response.json()
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # Raise an error for bad responses (4xx and 5xx)
+        
+        # Log the response content for debugging
+        print("Response Content:", response.text[:200])  # Print the first 200 characters
+
+        return response.json()
+    except requests.exceptions.HTTPError as http_err:
+        print(f"HTTP error occurred: {http_err}")
+    except requests.exceptions.RequestException as req_err:
+        print(f"Request error occurred: {req_err}")
+    except ValueError as json_err:
+        print(f"JSON decode error: {json_err}")
+        print("Response was not valid JSON:", response.text[:200])  # Print the first 200 characters
+    return None
 
 def geocode_address_bing(address, customer):
     print(f"Geocoding with Bing: {address}")
