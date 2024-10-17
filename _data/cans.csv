@@ -2,12 +2,12 @@ variant,cansAvailable,name,salePrice,type,abv,cansSingle,fourPack
 rein,TRUE,Rein,,Helles Lager,4.9,4.00,15
 sonnen,TRUE,Sonnen,,Märzen,5.4,4.50,17
 lupula,TRUE,Lupula,,India Pale Ale,7,4.50,17
-prismatic,FALSE,Prismatic,,India Pale Ale,7,4.50,17
 hanno,TRUE,Hanno,,India Pale Ale,7,4.50,17
 vespero,TRUE,Vespero,,Czech Dark Lager,5.8,4.25,16
 double-prismatic,TRUE,Double Prismatic,,Double IPA,8,5.25,20
 gosev,TRUE,Gosev,,Gose,4.5,4.50,17
 ddh-double-prismatic,TRUE,DDH Double Prismatic,,Double IPA,8,5.75,22
+,FALSE,,,,,,
 ,FALSE,,,,,,
 ,FALSE,,,,,,
 ,FALSE,,,,,,
