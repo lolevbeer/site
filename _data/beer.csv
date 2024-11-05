@@ -57,13 +57,13 @@ hurron,Hurron,Double IPA,,8,pint,$8,$5.25,$20,"Enhanced with thiol-enriched Motu
 stark,Stark,Heller Bock Lager,,6.2,stein,$7,$4.00,$15,Rich maltiness with caramel and toast. Spice with floral aroma.,860009737631,FALSE,TRUE,,56,Hallertauer Tradition
 crest,Crest,India Pale Ale,,7.4,pint,$7,$4.50,$17,"Citrus, tropical, and stone fruit flavors, floral and piney undertones.",860009737693,FALSE,TRUE,,57,"Cascade, Triumph, Simcoe®, Mosaic®"
 summer-lupula,Summer Lupula,India Pale Ale,,6,pint,$7,$4.50,$17,"Summer variant of Lupula, lower alcohol, more citrus-forward. Pineapple and mango.",860009737617,FALSE,TRUE,,58,"Motueka™, Moutere™, Riwaka™"
-tribute,Tribute,West Coast Imperial Pilsner,,6.6,lager,$7,$4.50,$17,"Orange, tangerine, basil, earthy. Citrus and sunflower aroma. Dry hopped with this year's Ales for ALS hop blend. $2 donated to ""Ales for ALS"" per 4-Pack.",850051366095,FALSE,TRUE,,59,"Citra®, Columbus, HBC 630, HBC 1019, Talus®"
+tribute,Tribute,West Coast Imperial Pilsner,,6.6,pint,$7,$4.50,$17,"Orange, tangerine, basil, earthy. Citrus and sunflower aroma. Dry hopped with this year's Ales for ALS hop blend. $2 donated to ""Ales for ALS"" per 4-Pack.",850051366095,FALSE,TRUE,,59,"Citra®, Columbus, HBC 630, HBC 1019, Talus®"
 gosev,Gosev,Gose,,4.5,teku,$7,$4.50,$17,"Tart ale with notes of lemon, lime, sea salt and coriander. Lightly conditioned on Raspberries.",850051366026,FALSE,TRUE,,60,
 aurantia,Aurantia,Double IPA,,8.2,pint,$8,$5.25,$20,Double IPA hopped with our favorite lot of Citra.,850051366132,FALSE,TRUE,,61,Citra®
 double-prismatic,Double Prismatic,Double IPA,,8,pint,$8,$5.25,$20,"Tangerine zest, pineapple, raspberry, and lemongrass.",850051366156,FALSE,TRUE,,62,"El Dorado®, Idaho 7™, Citra®"
 sinos,Sinos,Belgian Wit,,5.4,teku,$9,,,"Orange peel, coriander, and lemongrass, finished with clean grapefruit zest.",,,,,63,
 ddh-double-prismatic,DDH Double Prismatic,Double IPA,,8,pint,$9,$5.75,$22,"Notes of Tangerine zest, pineapple, and raspberry. Double dry-hopped.",,FALSE,TRUE,,64,"El Dorado®, Idaho 7™, Citra®"
-domboc,Dōmbōc,Baltic Porter,,8,lager,$7,$4.50,$17,"Rich dark chocolate, caramel, dried fruit with a malty sweetness and clean finish.",,FALSE,FALSE,,65,
+domboc,Dōmbōc,Baltic Porter,,8,pint,$7,$4.50,$17,"Rich dark chocolate, caramel, dried fruit with a malty sweetness and clean finish.",,FALSE,FALSE,,65,
 zwickel-grandar,Zwickel Grandar,Unfiltered Pilsner,,6.6,stein,$7,$4.50,$17,"Grandar fresh from the fermenter. Crisp, easy drinking and unfiltered.",,FALSE,FALSE,,66,
 jantar,Jantar,Czech Amber Lager,,4.7,stein,$6,$4.25,$16,"Medium bodied lager with rich caramel sweetness, toast with a smooth, spicy finish.",,FALSE,TRUE,,67,
-verus,Verus,India Pale Ale,,7,,,,,,,,,,,
+verus,Verus,India Pale Ale,,7,pint,$7,$4.50,$17,,,FALSE,TRUE,,68,
