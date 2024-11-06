@@ -1,6 +1,6 @@
 variant,cansAvailable,name,salePrice,type,abv,cansSingle,fourPack
 rein,TRUE,Rein,,Helles Lager,4.9,4.00,15
-sonnen,FALSE,Sonnen,,Märzen,5.4,4.50,17
+,FALSE,,,,,,
 lupula,TRUE,Lupula,,India Pale Ale,7,4.50,17
 hanno,TRUE,Hanno,,India Pale Ale,7,4.50,17
 vespero,TRUE,Vespero,,Czech Dark Lager,5.8,4.25,16
