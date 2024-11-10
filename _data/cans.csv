@@ -1,7 +1,7 @@
 variant,cansAvailable,name,salePrice,type,abv,cansSingle,fourPack
-rein,TRUE,Rein,,Helles Lager,4.9,4.00,15
+rein,FALSE,Rein,,Helles Lager,4.9,4.00,15
 ,FALSE,,,,,,
-lupula,TRUE,Lupula,,India Pale Ale,7,4.50,17
+lupula,FALSE,Lupula,,India Pale Ale,7,4.50,17
 hanno,TRUE,Hanno,,India Pale Ale,7,4.50,17
 vespero,TRUE,Vespero,,Czech Dark Lager,5.8,4.25,16
 grandar,TRUE,Grandar,,Imperial Pilsner,6.6,4.25,16
