@@ -1,13 +1,13 @@
 variant,cansAvailable,name,salePrice,type,abv,cansSingle,fourPack
-rein,FALSE,Rein,,Helles Lager,4.9,4.00,15
-,FALSE,,,,,,
-lupula,FALSE,Lupula,,India Pale Ale,7,4.50,17
-hanno,TRUE,Hanno,,India Pale Ale,7,4.50,17
+gosev,TRUE,Gosev,,Gose,4.5,4.50,17
+glyphs,TRUE,Glyphs,,Pale Ale,5,4.00,15
 vespero,TRUE,Vespero,,Czech Dark Lager,5.8,4.25,16
 grandar,TRUE,Grandar,,Imperial Pilsner,6.6,4.25,16
-gosev,TRUE,Gosev,,Gose,4.5,4.50,17
-,TRUE,,,,,,
-ddh-double-prismatic,TRUE,DDH Double Prismatic,,Double IPA,8,5.75,22
-glyphs,TRUE,Glyphs,,Pale Ale,5,4.00,15
 taupo,TRUE,Taupō,,India Pale Ale,7,4.50,17
+hanno,TRUE,Hanno,,India Pale Ale,7,4.50,17
+ddh-double-prismatic,TRUE,DDH Double Prismatic,,Double IPA,8,5.75,22
+,FALSE,,,,,,
+,FALSE,,,,,,
+,FALSE,,,,,,
+,FALSE,,,,,,
 ,FALSE,,,,,,
