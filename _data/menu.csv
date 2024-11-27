@@ -1,6 +1,6 @@
 "tap","variant","singleCanAvailable","name","type","abv","glass","price","description","image","hops"
 "1","taupo","FALSE","Taupō","India Pale Ale","7","pint","7","Tropical passion fruit, red grapefruit, and zested orange.","TRUE","Riwaka™, Wakatu™, Citra®"
-"2","domboc","FALSE","Dōmbōc","Baltic Porter","8","pint","7","Chocolate, caramel, dark fruit with a malty sweetness with full body.","FALSE","Saaz"
+"2","domboc","FALSE","Dōmbōc","Baltic Porter","8","pint","7","Chocolate, caramel, dark fruit with a malty sweetness with full body.","TRUE","Saaz"
 "3","glyphs","FALSE","Glyphs","Pale Ale","5","pint","7","Tangerine, orange zest, and aromatic pine.","TRUE","Calypso™, Strata®, Chinook"
 "4","lupula","FALSE","Lupula","India Pale Ale","7","pint","7","Pineapple, mango, and grapefruit. Aromatic.","TRUE","Motueka™, Moutere™, Riwaka™"
 "5","jantar","FALSE","Jantar","Czech Amber Lager","4.7","stein","6","Medium bodied lager with rich caramel sweetness, toast with a smooth, spicy finish.","TRUE","Saaz"
