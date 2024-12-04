@@ -5,7 +5,7 @@ glyphs,TRUE,Glyphs,FALSE,Pale Ale,5,4.00,15
 vespero,TRUE,Vespero,,Czech Dark Lager,5.8,4.25,16
 grandar,TRUE,Grandar,,Imperial Pilsner,6.6,4.25,16
 domboc,TRUE,Dōmbōc,,Baltic Porter,8,4.25,16
-taupo,TRUE,Taupō,FALSE,India Pale Ale,7,4.50,17
+taupo,FALSE,Taupō,FALSE,India Pale Ale,7,4.50,17
 verus,TRUE,Verus,,India Pale Ale,7,4.50,17
 prismatic,TRUE,Prismatic,,India Pale Ale,7,4.50,17
 lupula,TRUE,Lupula,,India Pale Ale,7,4.50,17
