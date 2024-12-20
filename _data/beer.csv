@@ -61,13 +61,13 @@ tribute,Tribute,West Coast Imperial Pilsner,,6.6,pint,$7,$4.50,$17,"Orange, tang
 gosev,Gosev,Gose,,4.5,teku,$7,$4.50,$17,"Tart ale with notes of lemon, lime, sea salt and coriander. Lightly conditioned on Raspberries.",850051366026,FALSE,TRUE,,60,
 aurantia,Aurantia,Double IPA,,8.2,pint,$8,$5.25,$20,Double IPA hopped with our favorite lot of Citra.,850051366132,FALSE,TRUE,,61,Citra®
 double-prismatic,Double Prismatic,Double IPA,,8,pint,$8,$5.25,$20,"Tangerine zest, pineapple, raspberry, and lemongrass.",850051366156,FALSE,TRUE,,62,"El Dorado®, Idaho 7™, Citra®"
-sinos,Sinos,Belgian Wit,,5.4,teku,$9,,,"Orange peel, coriander, and lemongrass, finished with clean grapefruit zest.",,,,,63,
+sinos,Sinos,Belgian Wit,,5.4,teku,$9,,,"Orange peel, coriander, and lemongrass, finished with clean grapefruit zest.",,FALSE,FALSE,,63,
 ddh-double-prismatic,DDH Double Prismatic,Double IPA,,8,pint,$9,$5.75,$22,"Notes of Tangerine zest, pineapple, and raspberry. Double dry-hopped.",,FALSE,TRUE,,64,"El Dorado®, Idaho 7™, Citra®"
 domboc,Dōmbōc,Baltic Porter,,8,pint,$7,$4.25,$16,"Chocolate, caramel, dark fruit with a malty sweetness with full body.",,FALSE,TRUE,,65,Saaz
 zwickel-grandar,Zwickel Grandar,Unfiltered Pilsner,,6.6,stein,$7,$4.50,$17,"Grandar fresh from the fermenter. Crisp, easy drinking and unfiltered.",,FALSE,FALSE,,66,"Hallertau Mittelfrüh, Saaz"
 jantar,Jantar,Czech Amber Lager,,4.7,stein,$6,$4.25,$16,"Medium bodied lager with rich caramel sweetness, toast with a smooth, spicy finish.",,FALSE,TRUE,,67,Saaz
 verus,Verus,India Pale Ale,,7,pint,$7,$4.50,$17,"Tropical fruit notes balanced with pear, melon, blueberry and citrus.",,FALSE,TRUE,,68,"Erebus™, Calypso™, Citra®"
 priscus,Priscus,Double IPA,,8.6,pint,$9,$5.50,$21,"Sauvignon blanc, blueberry and citrus.",,FALSE,TRUE,,69,"Mega Motueka, Nelson Sauvin™, Citra®"
-époque,Époque,Flanders Brown,,7.5,teku,$11,,,"Aged 18 months in oak foeders, and conditioned on tart and Maraschino cherries. Notes of dark fruit, caramel, oak, and cherry, finishes tart and crisp.",,FALSE,FALSE,,70,
+epoque,Époque,Flanders Brown,,7.5,teku,$11,,,"Aged 18 months in oak foeders, and conditioned on tart and Maraschino cherries. Notes of dark fruit, caramel, oak, and cherry, finishes tart and crisp.",,FALSE,FALSE,,70,
 imara,Imara,Double IPA,,8.8,pint,$9,$5.50,$21,"Tropical fruit, juicy pineapple, white wine, and citrus zest. ",,FALSE,TRUE,,71,"Idaho 7™, Simcoe®, Cascade CGX™, Nelson Sauvin™"
 demeter-red,Demeter Red Wax,Barleywine,,12.6,teku,$11,,,Aged for 12 months in Hemingway Papa's Pilar Rum barrels. Notes of brûléed sugar crust—rounded out by dried fruit undertones.,,FALSE,FALSE,,72,
