@@ -2,7 +2,7 @@ variant,cansAvailable,name,salePrice,type,abv,cansSingle,fourPack
 gosev,TRUE,Gosev,FALSE,Gose,4.5,4.50,17
 jantar,TRUE,Jantar,,Czech Amber Lager,4.7,4.25,16
 glyphs,TRUE,Glyphs,FALSE,Pale Ale,5,4.00,15
-vespero,TRUE,Vespero,,Czech Dark Lager,5.8,4.25,16
+vespero,FALSE,Vespero,,Czech Dark Lager,5.8,4.25,16
 grandar,TRUE,Grandar,,Imperial Pilsner,6.6,4.25,16
 domboc,TRUE,Dōmbōc,,Baltic Porter,8,4.25,16
 imara,TRUE,Imara,FALSE,Double IPA,8.8,5.50,21
