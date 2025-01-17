@@ -3,7 +3,7 @@ gosev,TRUE,Gosev,FALSE,Gose,4.5,4.50,17
 jantar,TRUE,Jantar,FALSE,Czech Amber Lager,4.7,4.25,16
 rein,TRUE,Rein,FALSE,Helles Lager,4.9,4.00,15
 glyphs,TRUE,Glyphs,FALSE,Pale Ale,5,4.00,15
-taupo,TRUE,Taupō,FALSE,India Pale Ale,7,4.50,17
+taupo,FALSE,Taupō,FALSE,India Pale Ale,7,4.50,17
 verus,TRUE,Verus,FALSE,India Pale Ale,7,4.50,17
 prismatic,TRUE,Prismatic,FALSE,India Pale Ale,7,4.50,17
 lupula,TRUE,Lupula,FALSE,India Pale Ale,7,4.50,17
