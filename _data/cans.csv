@@ -5,7 +5,7 @@ rein,TRUE,Rein,FALSE,Helles Lager,4.9,4.00,15
 grandar,TRUE,Grandar,FALSE,Imperial Pilsner,6.6,4.25,16
 hanno,TRUE,Hanno,FALSE,India Pale Ale,7,4.50,17
 verus,TRUE,Verus,FALSE,India Pale Ale,7,4.50,17
-prismatic,TRUE,Prismatic,FALSE,India Pale Ale,7,4.50,17
+prismatic,FALSE,Prismatic,FALSE,India Pale Ale,7,4.50,17
 lupula,TRUE,Lupula,FALSE,India Pale Ale,7,4.50,17
 domboc,TRUE,Dōmbōc,FALSE,Baltic Porter,8,4.25,16
 priscus,TRUE,Priscus,FALSE,Double IPA,8.6,5.50,21
