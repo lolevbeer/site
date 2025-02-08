@@ -71,7 +71,7 @@ epoque,Époque,Flanders Red,,7.5,teku,$9,,,"Aged 18 months in oak foeders, and c
 imara,Imara,Double IPA,,8.8,pint,$9,$5.50,$21,"Tropical fruit, juicy pineapple, white wine, and citrus zest. ",,FALSE,TRUE,,71,"Idaho 7™, Simcoe®, Cascade CGX™, Nelson Sauvin™"
 demeter-red,Demeter Red Wax,Barleywine,,12.6,teku,$11,,,Aged for 12 months in Hemingway Papa's Pilar Rum barrels. Notes of brûléed sugar crust—rounded out by dried fruit undertones.,,FALSE,FALSE,,72,
 demeter-green,Demeter Green Wax,Barleywine,,12.6,teku,$11,,,"Aged for 12 months in BLiS™ Cinnamon Maple Syrup Bourbon Barrels. Oven fresh pecan pie, maple-syrup-on a spoon unctuosity, with a warming cinnamon candy finish.
-",,,,,,
-demeter-gold,Demeter Gold Wax,Barleywine,,12.6,teku,$11,,,"Aged for 12 months in Abraham Smith Bowman bourbon finishing barrels, previously port. Notes of honeyed malt, black cherry and oak, with a touch of port sweetness.",,,,,,
-samo,Samo,Pilsner,,4.8,stein,$6,,,"Pours pale gold with subtle bread aromas, balanced by floral and spicy notes and a touch of lemon zest.",,,,,,Sterling
-duploughman,DuPloughman,Saison,,7,teku,$7,,,"Small batch collaboration with our friends at Ploughman Cider, using their yeast to ferment. Simple yet bold saison with a strong apple backbone. ",,,,,,
+",,FALSE,FALSE,,,
+demeter-gold,Demeter Gold Wax,Barleywine,,12.6,teku,$11,,,"Aged for 12 months in Abraham Smith Bowman bourbon finishing barrels, previously port. Notes of honeyed malt, black cherry and oak, with a touch of port sweetness.",,FALSE,FALSE,,,
+samo,Samo,Pilsner,,4.8,stein,$6,,,"Pours pale gold with subtle bread aromas, balanced by floral and spicy notes and a touch of lemon zest.",,FALSE,TRUE,,,Sterling
+duploughman,DuPloughman,Saison,,7,teku,$7,,,"Small batch collaboration with our friends at Ploughman Cider, using their yeast to ferment. Simple yet bold saison with a strong apple backbone. ",,FALSE,FALSE,,,
