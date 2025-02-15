@@ -1,14 +1,13 @@
 variant,cansAvailable,name,salePrice,type,abv,cansSingle,fourPack
-vespero,TRUE,Vespero,FALSE,Czech Dark Lager,5.8,4.25,16
-jantar,TRUE,Jantar,FALSE,Czech Amber Lager,4.7,4.25,16
+samo,TRUE,Samo,FALSE,Pilsner,4.8,4.00,15
+jantar,TRUE,Jantar,FALSE,Czech Amber Lager,4.7,4.00,15
 rein,TRUE,Rein,FALSE,Helles Lager,4.9,4.00,15
+vespero,TRUE,Vespero,FALSE,Czech Dark Lager,5.8,4.25,16
 grandar,TRUE,Grandar,FALSE,Imperial Pilsner,6.6,4.25,16
 hanno,TRUE,Hanno,FALSE,India Pale Ale,7,4.50,17
 verus,TRUE,Verus,FALSE,India Pale Ale,7,4.50,17
-,FALSE,,FALSE,,,,
 lupula,TRUE,Lupula,FALSE,India Pale Ale,7,4.50,17
 double-prismatic,TRUE,Double Prismatic,FALSE,Double IPA,8.8,5.25,20
-priscus,TRUE,Priscus,FALSE,Double IPA,8.6,5.50,21
-imara,TRUE,Imara,FALSE,Double IPA,8.8,5.50,21
+priscus,TRUE,Priscus,FALSE,Double IPA,8.6,5.25,20
+imara,TRUE,Imara,FALSE,Double IPA,8.8,5.25,20
 ,FALSE,,FALSE,,,,
-,FALSE,,,,,,
