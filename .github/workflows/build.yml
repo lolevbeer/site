@@ -32,5 +32,6 @@ jobs:
           cname: ${{ secrets.CNAME }}
           bundler_ver: '2.4.22'  # Specify a newer Bundler version
           pre_build_commands: |
+            pacman -S ruby --noconfirm
             git config --global http.version HTTP/1.1
             git config --global http.postBuffer 524288000
