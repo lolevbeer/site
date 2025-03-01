@@ -9,6 +9,7 @@ on:
 
 jobs:
   build_and_deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.2.2
@@ -27,7 +28,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           cname: ${{ secrets.CNAME }}
           jekyll_src: ./
-          jekyll_build_opts: JEKYLL_ENV=production
           pre_build_commands: |
+            gem install rake
             git config --global http.version HTTP/1.1
             git config --global http.postBuffer 524288000
