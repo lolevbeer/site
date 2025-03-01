@@ -29,8 +29,12 @@ jobs:
           wget -O inventory.csv ${{ vars.INVENTORY }}
           wget -O cans.csv ${{ vars.CANS }}
           
+          # Return to the repository root
+          cd ..
+          
+          # Only stage and commit the CSV files in _data directory
           git config --local user.email "lolevbeer@gmail.com"
           git config --local user.name "Lolev Manager"
-          git add .
-          git commit -m "Sync Data from google sheets"
+          git add _data/*.csv
+          git diff-index --quiet HEAD -- _data/*.csv || git commit -m "Sync Data from google sheets"
           git push
