@@ -8,38 +8,37 @@
     {% endfor %}
   </span>
   <footer>
-    <p>Updated <span id="last-updated"></span></p> <!-- Placeholder for last updated date -->
+    <p>Updated <span id="last-updated"></span></p>
   </footer>
 </section>
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    // Fetch the last updated timestamp from a data attribute or a variable
-    const lastUpdatedTimestamp = '{{ site.data.last_updated }}'; // Assuming this is set in your Jekyll data
+    const lastUpdatedTimestamp = '{{ site.data.build_info.last_updated }}';
     const lastUpdatedElement = document.getElementById('last-updated');
 
     if (lastUpdatedTimestamp) {
-      // Convert the timestamp to a readable date format
       const date = new Date(lastUpdatedTimestamp);
-      // Format in a way that is human readable like 18 hours ago or 1 day ago.
       const diffInSeconds = Math.floor((Date.now() - date.getTime()) / 1000);
+      
       if (diffInSeconds < 60) {
         lastUpdatedElement.textContent = `${diffInSeconds} seconds ago`;
-      // account for pluralization, if it is 1 hour ago, it should not read 1 hours ago
       } else if (diffInSeconds < 3600) {
-        lastUpdatedElement.textContent = `${Math.floor(diffInSeconds / 60)} minutes ago`;
+        const minutes = Math.floor(diffInSeconds / 60);
+        lastUpdatedElement.textContent = `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
       } else if (diffInSeconds < 7200) {
         lastUpdatedElement.textContent = '1 hour ago';
       } else if (diffInSeconds < 86400) {
-        lastUpdatedElement.textContent = `${Math.floor(diffInSeconds / 3600)} hours ago`;
-      // if it is 1 day ago, it should not read 1 days ago
+        const hours = Math.floor(diffInSeconds / 3600);
+        lastUpdatedElement.textContent = `${hours} hours ago`;
       } else if (diffInSeconds < 172800) {
         lastUpdatedElement.textContent = '1 day ago';
       } else {
-        lastUpdatedElement.textContent = `${Math.floor(diffInSeconds / 86400)} days ago`;
+        const days = Math.floor(diffInSeconds / 86400);
+        lastUpdatedElement.textContent = `${days} days ago`;
       }
     } else {
-      lastUpdatedElement.textContent = 'Not available'; // Fallback if no timestamp is found
+      lastUpdatedElement.textContent = 'recently';
     }
   });
 </script>
