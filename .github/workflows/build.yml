@@ -1,11 +1,8 @@
 name: Build and Deploy to Github Pages
 
 on:
-  push:
-    branches:
-      - master  # Here source code branch is `master`, it could be other branch
   workflow_run:
-    workflows: ["Update Data"]
+    workflows: ["Update Data", "Update Map"]
     types:
       - completed
 
@@ -13,18 +10,14 @@ jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4.1.1
-
-      # Use GitHub Actions' cache to cache dependencies on servers
-      - uses: actions/cache@v3.3.2
+      - uses: actions/checkout@v4.2.2
+      - uses: actions/cache@v4.0.2
         with:
           path: vendor/bundle
           key: ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
           restore-keys: |
             ${{ runner.os }}-gems-
 
-      # Use GitHub Deploy Action to build and deploy to Github
       - uses: jeffreytse/jekyll-deploy-action@v0.6.0
         with:
           provider: 'github'
