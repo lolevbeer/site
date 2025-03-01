@@ -8,14 +8,15 @@ source "https://rubygems.org"
 # This will help ensure the proper Jekyll version is running.
 # Happy Jekylling!
 gem 'jekyll', '~> 4.3.3'
-gem 'sass-embedded'
+gem 'google-protobuf', '~> 3.24.0'
+gem 'sass-embedded', '~> 1.63.6'
 # If you want to use GitHub Pages, remove the "gem "jekyll"" above and
 # uncomment the line below. To upgrade, run `bundle update github-pages`.
 # gem "github-pages", group: :jekyll_plugins
 # If you have any plugins, put them here!
 group :jekyll_plugins do
   gem 'jekyll-datapage-generator'
-  gem 'jekyll-sass-converter'
+  gem 'jekyll-sass-converter', '~> 3.0'
 end
 
 # Windows and JRuby does not include zoneinfo files, so bundle the tzinfo-data gem
@@ -25,5 +26,5 @@ platforms :mingw, :x64_mingw, :mswin, :jruby do
   gem "tzinfo-data"
 end
 
-
 gem "webrick", "~> 1.8"
+gem "rake"
