@@ -13,6 +13,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.2.2
+      
+      - name: Generate timestamp
+        run: |
+          echo "LAST_UPDATED=$(date -u '+%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
+
       - uses: actions/cache@v4.0.2
         with:
           path: |
@@ -32,3 +37,4 @@ jobs:
             gem install rake
             git config --global http.version HTTP/1.1
             git config --global http.postBuffer 524288000
+            echo '{"last_updated": "${{ env.LAST_UPDATED }}"}' > _data/build_info.json
