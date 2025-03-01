@@ -5,24 +5,32 @@ on:
     workflows: ["Update Data", "Update Map"]
     types:
       - completed
+    conclusion: success  # Only run if upstream workflows succeed
 
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0  # Full history needed for last_updated.rb plugin
+
       - uses: actions/cache@v4.0.2
         with:
-          path: vendor/bundle
-          key: ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
+          path: |
+            vendor/bundle
+            .jekyll-cache
+          key: ${{ runner.os }}-jekyll-${{ hashFiles('**/Gemfile.lock') }}
           restore-keys: |
-            ${{ runner.os }}-gems-
+            ${{ runner.os }}-jekyll-
 
       - uses: jeffreytse/jekyll-deploy-action@v0.6.0
         with:
           provider: 'github'
           token: ${{ secrets.GITHUB_TOKEN }}
           cname: ${{ secrets.CNAME }}
+          jekyll_src: ./
+          jekyll_env: production
           pre_build_commands: |
             git config --global http.version HTTP/1.1
             git config --global http.postBuffer 524288000
