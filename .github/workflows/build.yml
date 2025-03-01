@@ -25,9 +25,12 @@ jobs:
             ${{ runner.os }}-gems-
 
       # Use GitHub Deploy Action to build and deploy to Github
-      - uses: jeffreytse/jekyll-deploy-action@v0.5.0
+      - uses: jeffreytse/jekyll-deploy-action@v0.5.1
         with:
           provider: 'github'
           token: ${{ secrets.GITHUB_TOKEN }}
           cname: ${{ secrets.CNAME }}
-          pre_build_commands: git config --global http.version HTTP/1.1; git config --global http.postBuffer 524288000;
+          bundler_ver: '2.4.22'  # Specify a newer Bundler version
+          pre_build_commands: |
+            git config --global http.version HTTP/1.1
+            git config --global http.postBuffer 524288000
