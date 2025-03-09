@@ -13,6 +13,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4.2.2
       
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2.0'
+          bundler-cache: true
+
       - name: Generate timestamp
         run: |
           mkdir -p _data
@@ -20,22 +26,14 @@ jobs:
           echo "{\"last_updated\": \"$(date -u '+%Y-%m-%dT%H:%M:%SZ')\"}" > _data/build_info.json
           cat _data/build_info.json
 
-      - uses: actions/cache@v4
-        with:
-          path: |
-            vendor/bundle
-            .jekyll-cache
-          key: ${{ runner.os }}-jekyll-${{ hashFiles('**/Gemfile.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-jekyll-
-
-      - uses: jeffreytse/jekyll-deploy-action@v0.6.0
+      - name: Build and Deploy
+        uses: jeffreytse/jekyll-deploy-action@v0.6.0
         with:
           provider: 'github'
           token: ${{ secrets.GITHUB_TOKEN }}
           cname: ${{ secrets.CNAME }}
           jekyll_src: ./
+          jekyll_build_opts: JEKYLL_ENV=production
           pre_build_commands: |
-            gem install rake
             git config --global http.version HTTP/1.1
             git config --global http.postBuffer 524288000
