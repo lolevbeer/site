@@ -5,7 +5,6 @@ on:
     workflows: ["Update Data", "Update Map"]
     types:
       - completed
-    conclusion: success  # Only run if upstream workflows succeed
 
 jobs:
   build_and_deploy:
@@ -16,9 +15,12 @@ jobs:
       
       - name: Generate timestamp
         run: |
+          mkdir -p _data
           echo "LAST_UPDATED=$(date -u '+%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
+          echo "{\"last_updated\": \"$(date -u '+%Y-%m-%dT%H:%M:%SZ')\"}" > _data/build_info.json
+          cat _data/build_info.json
 
-      - uses: actions/cache@v4.0.2
+      - uses: actions/cache@v4
         with:
           path: |
             vendor/bundle
@@ -37,4 +39,3 @@ jobs:
             gem install rake
             git config --global http.version HTTP/1.1
             git config --global http.postBuffer 524288000
-            echo '{"last_updated": "${{ env.LAST_UPDATED }}"}' > _data/build_info.json
