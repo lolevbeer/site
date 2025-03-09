@@ -9,6 +9,15 @@
   </span>
   <footer>
     <p>Updated <span id="last-updated"></span></p>
+    {% if jekyll.environment != "production" %}
+    <div style="font-size: 12px; color: #666;">
+      Debug info:
+      <pre>
+      build_info: {{ site.data.build_info | inspect }}
+      last_updated: {{ site.data.build_info.last_updated | inspect }}
+      </pre>
+    </div>
+    {% endif %}
   </footer>
 </section>
 
