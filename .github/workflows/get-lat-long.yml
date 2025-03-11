@@ -23,10 +23,6 @@ jobs:
           python-version: '3.x'
           cache: 'pip' # caching pip dependencies
 
-      - name: Install dependencies
-        run: |
-          pip install requests geopy python-dotenv
-
       - name: Process JSON
         continue-on-error: true
         env:
