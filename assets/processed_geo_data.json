@@ -822,8 +822,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -75.83037965,
-                    41.3018671
+                    -75.82849679,
+                    41.30354484
                 ]
             },
             "properties": {
@@ -1894,14 +1894,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -80.282247,
-                    40.700957
+                    -80.27146149,
+                    40.70586395
                 ]
             },
             "properties": {
                 "id": 119,
                 "Name": "hollywood garden",
-                "address": "161 Brighton Ave, Rochester, PA 15074, United States",
+                "address": "Rochester, PA 15074, United States",
                 "customerType": "Restaurant"
             }
         },
