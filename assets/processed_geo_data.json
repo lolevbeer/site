@@ -1462,14 +1462,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -75.27349427,
-                    40.34549008
+                    -79.536444,
+                    40.148055
                 ]
             },
             "properties": {
                 "id": 92,
                 "Name": "filling station brew house",
-                "address": "120 W Main St, Silverdale, PA 18962, United States",
+                "address": "120 W Main St, Mount Pleasant, PA 15666, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -3759,22 +3759,6 @@
                 "Name": "triangle tavern",
                 "address": "1338 S 10th St, Philadelphia, PA 19147, United States",
                 "customerType": "Restaurant"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -80.08611,
-                    42.132059
-                ]
-            },
-            "properties": {
-                "id": 236,
-                "Name": "u pick 6 tap house",
-                "address": "333 State St, Erie, PA 16507, United States",
-                "customerType": "Six Pack Shop"
             }
         },
         {
