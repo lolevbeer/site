@@ -75,6 +75,6 @@ demeter-green,Demeter Green Wax,Barleywine,,12.6,teku,$11,,,"Aged for 12 months 
 demeter-gold,Demeter Gold Wax,Barleywine,,12.6,teku,$11,,,"Aged for 12 months in Abraham Smith Bowman bourbon finishing barrels, previously port. Notes of honeyed malt, black cherry and oak, with a touch of port sweetness.",,FALSE,FALSE,,,
 samo,Samo,Pilsner,,4.8,stein,$6,$4.00,$15,"Pours pale gold with subtle bread aromas, balanced by floral and spicy notes and a touch of lemon zest.",,FALSE,TRUE,,,Sterling
 duploughman,DuPloughman,Saison,,7,teku,$7,,,"Small batch collaboration with our friends at Ploughman Cider, using their yeast to ferment. Simple yet bold saison with a strong apple backbone. ",,FALSE,FALSE,,,
-vindobona,Vindobona,Vienna Lager,,6.3,stein,$6,,,"Hints of caramel and biscuit, balanced by mild earthy hops, a crisp medium-light body, and a clean, dry finish.",,,,,,"Callista, Saaz"
-costilla,Costilla,Mexican Lager,,4.8,stein,$6,$4.00,$15,"Dark Mexican lager with notes of toffee, light cocoa and balanced with floral lime character.",,,,,,Motueka™
-daltonico,Daltonico,Black IPA,,6.8,pint,$7,$4.50,$17,"Slightly roasty body, with notes of subtle pine, citrus, with chocolate undertones.",,,,,,
+vindobona,Vindobona,Vienna Lager,,6.3,stein,$6,,,"Hints of caramel and biscuit, balanced by mild earthy hops, a crisp medium-light body, and a clean, dry finish.",,FALSE,FALSE,,,"Callista, Saaz"
+costilla,Costilla,Mexican Lager,,4.8,stein,$6,$4.00,$15,"Dark Mexican lager with notes of toffee, light cocoa and balanced with floral lime character.",,FALSE,FALSE,,,Motueka™
+daltonico,Daltonico,Black IPA,,6.8,pint,$7,$4.50,$17,"Slightly roasty body, with notes of subtle pine, citrus, with chocolate undertones.",,FALSE,TRUE,,,
