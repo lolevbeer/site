@@ -3766,6 +3766,22 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
+                    -80.08611,
+                    42.132059
+                ]
+            },
+            "properties": {
+                "id": 236,
+                "Name": "u pick 6 tap house",
+                "address": "333 State St, Erie, PA 16507, United States",
+                "customerType": "Six Pack Shop"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
                     -75.732466,
                     40.364237
                 ]
