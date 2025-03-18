@@ -358,8 +358,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -79.95813664,
-                    40.47667994
+                    -79.95813686,
+                    40.47667974
                 ]
             },
             "properties": {
@@ -454,8 +454,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -80.24555,
-                    40.495722
+                    -80.25605,
+                    40.49589
                 ]
             },
             "properties": {
@@ -486,8 +486,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -80.066141,
-                    40.311656
+                    -80.0656017,
+                    40.312755
                 ]
             },
             "properties": {
@@ -838,8 +838,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -75.82849679,
-                    41.30354484
+                    -75.8278752,
+                    41.30398635
                 ]
             },
             "properties": {
@@ -1350,8 +1350,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -79.93630355,
-                    40.48872005
+                    -79.93662635,
+                    40.48860925
                 ]
             },
             "properties": {
@@ -1734,8 +1734,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -79.960237,
-                    40.464621
+                    -79.960272,
+                    40.464651
                 ]
             },
             "properties": {
@@ -1926,14 +1926,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -80.039262,
-                    40.390853
+                    -80.039217,
+                    40.390954
                 ]
             },
             "properties": {
                 "id": 121,
                 "Name": "j mo's",
-                "address": "3113-3117 W Liberty Ave, Pittsburgh, PA 15216, United States",
+                "address": "3113 W Liberty Ave, Pittsburgh, PA 15216, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -2758,8 +2758,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -76.077737,
-                    40.32982
+                    -76.077735,
+                    40.329812
                 ]
             },
             "properties": {
@@ -3094,8 +3094,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -75.179077,
-                    39.973768
+                    -75.182529,
+                    39.974204
                 ]
             },
             "properties": {
@@ -3654,14 +3654,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -75.876001,
-                    40.330924
+                    -75.8760009,
+                    40.3309242
                 ]
             },
             "properties": {
                 "id": 229,
                 "Name": "the liberty taproom",
-                "address": "237 Butter Ln, Reading, PA 19606-2223, United States",
+                "address": "237 Butter Ln, Reading, PA 19606, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -3766,8 +3766,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -80.08611,
-                    42.132059
+                    -80.08675619,
+                    42.13181434
                 ]
             },
             "properties": {
