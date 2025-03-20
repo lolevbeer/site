@@ -150,14 +150,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -80.03753,
-                    40.5804
+                    -80.03830719,
+                    40.55133438
                 ]
             },
             "properties": {
                 "id": 10,
                 "Name": "barry's bar",
-                "address": "9566 Perry Hwy, Pittsburgh, PA 15237, United States",
+                "address": "Pittsburgh, PA 15237, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -918,14 +918,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -80.015725,
-                    40.592706
+                    -79.96827698,
+                    40.5688324
                 ]
             },
             "properties": {
                 "id": 58,
                 "Name": "cadence + allison park",
-                "address": "9999 Kummer Rd, Allison Park, PA 15101, United States",
+                "address": "Allison Park, PA 15101, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -1286,8 +1286,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -79.9474383,
-                    40.4846676
+                    -79.93662635,
+                    40.48860925
                 ]
             },
             "properties": {
