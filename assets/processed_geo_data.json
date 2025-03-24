@@ -1414,14 +1414,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -79.5337003,
-                    40.1289371
+                    -75.27349427,
+                    40.34549008
                 ]
             },
             "properties": {
                 "id": 89,
                 "Name": "filling station brew house",
-                "address": "Main St, Mount Pleasant, PA 15666, United States",
+                "address": "120 W Main St, Silverdale, PA 18962, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -3734,8 +3734,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -80.08675619,
-                    42.13181434
+                    -80.08611,
+                    42.132059
                 ]
             },
             "properties": {
