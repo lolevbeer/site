@@ -1286,8 +1286,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -79.93662635,
-                    40.48860925
+                    -79.93443392,
+                    40.48916869
                 ]
             },
             "properties": {
@@ -1414,14 +1414,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -75.27349427,
-                    40.34549008
+                    -79.5373872,
+                    40.12091155
                 ]
             },
             "properties": {
                 "id": 89,
                 "Name": "filling station brew house",
-                "address": "120 W Main St, Silverdale, PA 18962, United States",
+                "address": "Main St, Mount Pleasant, PA 15666, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -2118,8 +2118,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -75.64116196,
-                    40.51614243
+                    -75.64521568,
+                    40.51480845
                 ]
             },
             "properties": {
@@ -3478,14 +3478,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -75.952525,
-                    40.336168
+                    -75.94787598,
+                    40.33356094
                 ]
             },
             "properties": {
                 "id": 218,
                 "Name": "the barley mow",
-                "address": "719 Penn Ave, West Reading, PA 19611, United States",
+                "address": "West Reading, PA, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -3734,8 +3734,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -80.08611,
-                    42.132059
+                    -80.08675619,
+                    42.13181434
                 ]
             },
             "properties": {
