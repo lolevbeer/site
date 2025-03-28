@@ -1270,8 +1270,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -79.94668095,
-                    40.48501305
+                    -79.93443392,
+                    40.48916869
                 ]
             },
             "properties": {
@@ -3398,14 +3398,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -76.297424,
-                    40.03882256
+                    -76.304453,
+                    40.03782
                 ]
             },
             "properties": {
                 "id": 213,
                 "Name": "tellus360",
-                "address": "360 E King St, Lancaster, PA 17602, United States",
+                "address": "24 E King St, Lancaster, PA 17602, United States",
                 "customerType": "Restaurant"
             }
         },
