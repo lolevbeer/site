@@ -5,6 +5,9 @@ import html
 import json
 import time
 import os
+import csv
+import pandas as pd
+import glob
 
 def fetch_json(url):
     try:
@@ -27,6 +30,12 @@ def fetch_json(url):
 def geocode_address_bing(address, customer):
     print(f"Geocoding with Bing: {address}")
     bing_key = os.getenv('BING')
+    print(f"Bing API key: {bing_key[:5]}...{bing_key[-5:] if bing_key and len(bing_key) > 10 else '(key too short or empty)'}")
+    
+    if not bing_key or bing_key == "YourBingMapsAPIKeyHere":
+        print("ERROR: Invalid Bing API key. Please set a valid key in your .env file or environment variables.")
+        return None, None, False
+    
     geolocator = Bing(bing_key, user_agent="lolev")
     try:
         location = geolocator.geocode(customer + ', ' + address, timeout=10)
@@ -53,23 +62,101 @@ def geocode_address_nominatim(address, customer):
         print(f"Error geocoding with Nominatim {address}: {e}")
     return None, None, False
 
-def geocode_address(address, customer, existing_data, retries=3):
+def geocode_address(address, customer, existing_data, pa_only=False, retries=3):
     for entry in existing_data['features']:
         if entry['properties']['address'] == address:
             return entry['geometry']['coordinates'], entry['properties']['address'], False
 
-    coordinates, location, success = geocode_address_bing(address, customer)
-    if not success:
-        print("Bing geocoding failed, trying Nominatim...")
-        coordinates, location, success = geocode_address_nominatim(address, customer)
+    # Try Nominatim first as it doesn't require API key
+    coordinates, location, success = geocode_address_nominatim(address, customer)
+    
+    # Fall back to Bing if Nominatim fails and we have a Bing key
+    if not success and os.getenv('BING'):
+        print("Nominatim geocoding failed, trying Bing...")
+        coordinates, location, success = geocode_address_bing(address, customer)
 
-    if success and "PA" not in location:
-        print(f"Discarding address not in Pennsylvania: {location}")
+    # If PA filter is enabled and we have a successful geocode, check for PA
+    if success and pa_only and "PA" not in location:
+        print(f"Discarding non-PA address: {location}")
         return None, None, False
 
     return coordinates, location, success
 
-def process_data(data, existing_data):
+def load_csv_data(filepath):
+    try:
+        df = pd.read_csv(filepath)
+        
+        # Debug: Print column names to check exact spelling and format
+        print(f"CSV Columns: {list(df.columns)}")
+        
+        data = []
+        for _, row in df.iterrows():
+            # Create a structure similar to the JSON format
+            # Combine address components
+            full_address = f"{row['Address']}, {row['City']}, {row['State']} {row['Zip Code']}"
+            
+            # Map market types to customer types for consistent icon usage
+            market_type = "Retail"  # Default type
+            
+            # Debug: Try different column name variations
+            if 'Market Types' in row:
+                print(f"Found 'Market Types': {row['Market Types']}")
+                market_type = map_market_type_to_customer_type(row['Market Types'])
+            elif 'Market Type' in row:
+                print(f"Found 'Market Type': {row['Market Type']}")
+                market_type = map_market_type_to_customer_type(row['Market Type'])
+            elif 'Market_Types' in row:
+                print(f"Found 'Market_Types': {row['Market_Types']}")
+                market_type = map_market_type_to_customer_type(row['Market_Types'])
+            elif 'Market_Type' in row: 
+                print(f"Found 'Market_Type': {row['Market_Type']}")
+                market_type = map_market_type_to_customer_type(row['Market_Type'])
+            else:
+                # Try a case-insensitive search
+                market_col = next((col for col in df.columns if col.lower().replace(' ', '').replace('_', '') == 'markettypes'), None)
+                if market_col:
+                    print(f"Found market column with different casing: {market_col} = {row[market_col]}")
+                    market_type = map_market_type_to_customer_type(row[market_col])
+                else:
+                    print(f"No market type column found. Available columns: {list(df.columns)}")
+            
+            item = {
+                'CustomerName': row['Retail Accounts'],
+                'AddressCityStateZip': full_address,
+                'CustomerType': market_type
+            }
+            data.append(item)
+        return data
+    except Exception as e:
+        print(f"Error loading CSV data from {filepath}: {e}")
+        import traceback
+        traceback.print_exc()
+    return []
+
+def map_market_type_to_customer_type(market_type):
+    """Maps CSV market types to customer types used for map icons"""
+    if pd.isna(market_type):
+        return "Retail"
+        
+    market_type = market_type.upper().strip()
+    
+    # Map market types to appropriate customer types for icon display
+    if market_type in ["SUPERMARKET", "GROCERY-GENERAL"]:
+        return "Grocery"
+    elif market_type in ["RESTAURANT", "RESTAURANT/BAR", "ITALIAN"]:
+        return "Restaurant"
+    elif "BAR" in market_type or market_type in ["COCKTAIL LOUNGE", "SPORTS BAR", "BAR/TAVERN/C.L.", "THEME BAR-"]:
+        return "Bar"
+    elif market_type in ["CONVENIENCE-GEN", "GAS & CONVENIEN"]:
+        return "Convenience"
+    elif market_type in ["MARINA/LAKE", "BOWLING ALLEY", "DRIVE-THRU", "DELI"]:
+        return "Recreation"
+    elif market_type in ["GOLF-PUBLIC", "CTRY/GOLF CLUB"]:
+        return "Golf"
+    else:
+        return "Retail"  # Default fallback
+
+def process_data(data, existing_data, pa_only=False):
     processed_data = {"type": "FeatureCollection", "features": []}
     existing_addresses = {feature['properties']['address'].lower(): feature for feature in existing_data['features']}
 
@@ -84,7 +171,7 @@ def process_data(data, existing_data):
                 existing_address['properties']['address'] = existing_address['properties']['address'].lower()
                 processed_data['features'].append(existing_address)
             else:
-                coordinates, location, made_new_request = geocode_address(address, customer, processed_data)
+                coordinates, location, made_new_request = geocode_address(address, customer, processed_data, pa_only)
                 if coordinates:
                     feature = {
                         "type": "Feature",
@@ -109,17 +196,60 @@ def load_existing_data(filepath):
             return json.load(file)
     return {"type": "FeatureCollection", "features": []}
 
+def process_ingest_directory():
+    ingest_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'ingest')
+    
+    if not os.path.exists(ingest_dir):
+        print(f"Ingest directory not found: {ingest_dir}")
+        return {"type": "FeatureCollection", "features": []}
+    
+    # Load existing NY data if it exists
+    ny_data = load_existing_data('ny_geo_data.json')
+    
+    print(f"Searching for CSV files in: {ingest_dir}")
+    csv_files = glob.glob(os.path.join(ingest_dir, '*.csv'))
+    
+    for csv_file in csv_files:
+        print(f"Processing CSV file: {csv_file}")
+        csv_data = load_csv_data(csv_file)
+        if csv_data:
+            ny_data = process_data(csv_data, ny_data, pa_only=False)
+    
+    return ny_data
+
 def main():
+    # Load environment variables
+    load_dotenv()
+    
+    # Debug environment variables
+    print("Environment variables:")
+    print(f"BING set: {'Yes' if os.getenv('BING') else 'No'}")
+    if os.getenv('BING') == "YourBingMapsAPIKeyHere":
+        print("WARNING: You're using the placeholder Bing API key. Please update it in your .env file.")
+    
+    # Load existing PA geocoded data
+    pa_data = load_existing_data('processed_geo_data.json')
+    
+    # Process JSON data from URL (PA only)
     url = os.getenv('SARENE_LOCATIONS')
-    original_data = fetch_json(url)
-
-    existing_data = load_existing_data('processed_geo_data.json')
-    rows = original_data.get('Export', {}).get('Table', {}).get('Row', [])
-    new_geojson_data = process_data(rows, existing_data)
-
-    with open('processed_geo_data.json', 'w') as f:
-        json.dump(new_geojson_data, f, indent=4)
+    if url:
+        original_data = fetch_json(url)
+        if original_data:
+            rows = original_data.get('Export', {}).get('Table', {}).get('Row', [])
+            pa_data = process_data(rows, pa_data, pa_only=True)
+            
+            # Save the updated PA data
+            with open('processed_geo_data.json', 'w') as f:
+                json.dump(pa_data, f, indent=4)
+            print(f"Saved PA data to processed_geo_data.json with {len(pa_data['features'])} features")
+    
+    # Process all CSV files in the ingest directory (NY data)
+    ny_data = process_ingest_directory()
+    
+    # Save the NY data to a separate file
+    with open('ny_geo_data.json', 'w') as f:
+        json.dump(ny_data, f, indent=4)
+    print(f"Saved NY data to ny_geo_data.json with {len(ny_data['features'])} features")
 
 if __name__ == "__main__":
-    load_dotenv()
     main()

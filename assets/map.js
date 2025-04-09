@@ -4,8 +4,8 @@ const map = new mapboxgl.Map({
   attributionControl: false,
   container: 'map',
   style: 'mapbox://styles/mapbox/dark-v11',
-  center: [-77.5, 40.440624],
-  zoom: 6.5
+  center: [-77.5, 41.5],
+  zoom: 6
 });
 
 map.addControl(new mapboxgl.AttributionControl({
@@ -107,17 +107,29 @@ function createPopUp(currentFeature) {
  * @param {*} center 
  */
 function sortStoresByDistance(center) {
-  fetch('assets/processed_geo_data.json')
-    .then(response => response.json())
-    .then(data => {
-      data.features.forEach(feature => {
+  // Load and combine both data sets
+  Promise.all([
+    fetch('assets/processed_geo_data.json').then(response => response.json()),
+    fetch('assets/ny_geo_data.json').then(response => response.json())
+  ])
+    .then(([paData, nyData]) => {
+      // Combine the data
+      const combinedData = {
+        type: 'FeatureCollection',
+        features: [...paData.features, ...nyData.features]
+      };
+
+      // Calculate distances
+      combinedData.features.forEach(feature => {
         feature.properties.distance = haversineDistance(center, feature.geometry.coordinates, true);
       });
 
-      data.features.sort((a, b) => a.properties.distance - b.properties.distance);
+      // Sort by distance
+      combinedData.features.sort((a, b) => a.properties.distance - b.properties.distance);
 
-      buildLocationList(data);
-      map.getSource('places').setData(data);
+      // Update UI and map
+      buildLocationList(combinedData);
+      map.getSource('places').setData(combinedData);
     });
 }
 
@@ -169,50 +181,68 @@ function adjustMapZoomForWindowSize() {
 }
 
 map.on('load', function () {
-  map.addSource('places', {
-    'type': 'geojson',
-    'data': 'assets/processed_geo_data.json'
-  });
+  // Load and merge both PA and NY data
+  Promise.all([
+    fetch('assets/processed_geo_data.json').then(response => response.json()),
+    fetch('assets/ny_geo_data.json').then(response => response.json())
+  ])
+    .then(([paData, nyData]) => {
+      const combinedData = {
+        type: 'FeatureCollection',
+        features: [...paData.features, ...nyData.features]
+      };
 
-  fetch('assets/processed_geo_data.json')
-    .then(response => response.json())
-    .then(buildLocationList);
+      // Initialize the map with combined data
+      map.addSource('places', {
+        'type': 'geojson',
+        'data': combinedData
+      });
 
-  map.addLayer({
-    'id': 'places',
-    'type': 'symbol',
-    'source': 'places',
-    'layout': {
-      'icon-image': [
-        'match',
-        ['get', 'customerType'],
-        'Restaurant', 'restaurant',
-        'Bar', 'beer',
-        'Grocery', 'grocery',
-        'Six Pack Shop', 'alcohol-shop',
-        'marker'
-      ],
-      'icon-allow-overlap': true,
-    }
-  });
+      // Build the location list with combined data
+      buildLocationList(combinedData);
 
-  map.addLayer({
-    'id': 'places-labels',
-    'type': 'symbol',
-    'source': 'places',
-    'minzoom': 6, // Set the minimum zoom level for text labels
-    'layout': {
-      'text-field': ['get', 'Name'],
-      'text-size': 12,
-      'text-anchor': 'top',
-      'text-offset': [0, 1.5]
-    },
-    'paint': {
-      'text-color': '#FFFFFF'
-    }
-  });
+      // Add map layers
+      map.addLayer({
+        'id': 'places',
+        'type': 'symbol',
+        'source': 'places',
+        'layout': {
+          'icon-image': [
+            'match',
+            ['get', 'customerType'],
+            'Restaurant', 'restaurant',
+            'Bar', 'beer',
+            'Grocery', 'grocery',
+            'Six Pack Shop', 'alcohol-shop',
+            'Retail', 'shop',
+            'Convenience', 'convenience',
+            'Recreation', 'attraction',
+            'Golf', 'golf',
+            'marker'
+          ],
+          'icon-allow-overlap': true,
+        }
+      });
 
-  adjustMapZoomForWindowSize();
+      map.addLayer({
+        'id': 'places-labels',
+        'type': 'symbol',
+        'source': 'places',
+        'minzoom': 6, // Set the minimum zoom level for text labels
+        'layout': {
+          'text-field': ['get', 'Name'],
+          'text-size': 12,
+          'text-anchor': 'top',
+          'text-offset': [0, 1.5]
+        },
+        'paint': {
+          'text-color': '#FFFFFF'
+        }
+      });
+
+      // Adjust map zoom to fit all data
+      adjustMapZoomForWindowSize();
+    });
 
   map.on('click', 'places', function (e) {
     createPopUp(e.features[0]);
