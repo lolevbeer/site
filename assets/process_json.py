@@ -6,7 +6,6 @@ import json
 import time
 import os
 import csv
-import pandas as pd
 import glob
 
 def fetch_json(url):
@@ -84,48 +83,44 @@ def geocode_address(address, customer, existing_data, pa_only=False, retries=3):
 
 def load_csv_data(filepath):
     try:
-        df = pd.read_csv(filepath)
-        
-        # Debug: Print column names to check exact spelling and format
-        print(f"CSV Columns: {list(df.columns)}")
-        
         data = []
-        for _, row in df.iterrows():
-            # Create a structure similar to the JSON format
-            # Combine address components
-            full_address = f"{row['Address']}, {row['City']}, {row['State']} {row['Zip Code']}"
+        with open(filepath, 'r', encoding='utf-8') as csvfile:
+            # Print the first line to debug the column names
+            first_line = csvfile.readline().strip()
+            print(f"CSV Headers: {first_line}")
+            csvfile.seek(0)  # Reset file position
             
-            # Map market types to customer types for consistent icon usage
-            market_type = "Retail"  # Default type
+            # Parse CSV
+            reader = csv.DictReader(csvfile)
+            print(f"CSV Columns: {reader.fieldnames}")
             
-            # Debug: Try different column name variations
-            if 'Market Types' in row:
-                print(f"Found 'Market Types': {row['Market Types']}")
-                market_type = map_market_type_to_customer_type(row['Market Types'])
-            elif 'Market Type' in row:
-                print(f"Found 'Market Type': {row['Market Type']}")
-                market_type = map_market_type_to_customer_type(row['Market Type'])
-            elif 'Market_Types' in row:
-                print(f"Found 'Market_Types': {row['Market_Types']}")
-                market_type = map_market_type_to_customer_type(row['Market_Types'])
-            elif 'Market_Type' in row: 
-                print(f"Found 'Market_Type': {row['Market_Type']}")
-                market_type = map_market_type_to_customer_type(row['Market_Type'])
-            else:
-                # Try a case-insensitive search
-                market_col = next((col for col in df.columns if col.lower().replace(' ', '').replace('_', '') == 'markettypes'), None)
-                if market_col:
-                    print(f"Found market column with different casing: {market_col} = {row[market_col]}")
-                    market_type = map_market_type_to_customer_type(row[market_col])
-                else:
-                    print(f"No market type column found. Available columns: {list(df.columns)}")
-            
-            item = {
-                'CustomerName': row['Retail Accounts'],
-                'AddressCityStateZip': full_address,
-                'CustomerType': market_type
-            }
-            data.append(item)
+            for i, row in enumerate(reader):
+                # Create a structure similar to the JSON format
+                # Combine address components
+                full_address = f"{row.get('Address', '')}, {row.get('City', '')}, {row.get('State', '')} {row.get('Zip Code', '')}"
+                
+                # Map market types to customer types for consistent icon usage
+                market_type = "Retail"  # Default type
+                
+                # Check for market type column
+                market_type_value = None
+                # Try standard column names
+                for col_name in ['Market Types', 'Market Type', 'Market_Types', 'Market_Type', 'MarketTypes', 'MarketType']:
+                    if col_name in row and row[col_name]:
+                        market_type_value = row[col_name]
+                        print(f"Found market type in column '{col_name}': {market_type_value}")
+                        break
+                
+                # If we found a market type, map it to a customer type
+                if market_type_value:
+                    market_type = map_market_type_to_customer_type(market_type_value)
+                
+                item = {
+                    'CustomerName': row.get('Retail Accounts', ''),
+                    'AddressCityStateZip': full_address,
+                    'CustomerType': market_type
+                }
+                data.append(item)
         return data
     except Exception as e:
         print(f"Error loading CSV data from {filepath}: {e}")
@@ -135,7 +130,7 @@ def load_csv_data(filepath):
 
 def map_market_type_to_customer_type(market_type):
     """Maps CSV market types to customer types used for map icons"""
-    if pd.isna(market_type):
+    if not market_type:
         return "Retail"
         
     market_type = market_type.upper().strip()
