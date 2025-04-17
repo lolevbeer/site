@@ -1254,8 +1254,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -79.9474383,
-                    40.4846676
+                    -79.93537925,
+                    40.48904585
                 ]
             },
             "properties": {
@@ -3631,22 +3631,6 @@
                 "Name": "wyoming valley beverage",
                 "address": "63 S Wyoming Ave, Edwardsville, PA 18704, United States",
                 "customerType": "Home-D"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -79.844547,
-                    40.535112
-                ]
-            },
-            "properties": {
-                "id": 270,
-                "Name": "zone 28",
-                "address": "2525 Freeport Rd, Pittsburgh, PA 15238, United States",
-                "customerType": "Restaurant"
             }
         },
         {
