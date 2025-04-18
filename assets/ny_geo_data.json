@@ -54,14 +54,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.556047,
-                    43.146177
+                    -77.5623682,
+                    43.14719105
                 ]
             },
             "properties": {
                 "id": 3,
                 "Name": "wegman's #18 east ave",
-                "address": "1750 East Ave, Rochester, NY 14610, United States",
+                "address": "East Ave, Rochester, NY 14610, United States",
                 "customerType": "Grocery"
             }
         },
@@ -742,7 +742,7 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.55138492112664,
+                    -77.5513849,
                     43.2050778
                 ]
             },
@@ -806,8 +806,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.69591514986445,
-                    43.241761249999996
+                    -77.6959151,
+                    43.2417612
                 ]
             },
             "properties": {
