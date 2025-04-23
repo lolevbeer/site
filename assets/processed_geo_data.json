@@ -742,14 +742,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -75.5388094,
-                    39.85137235
+                    -75.539427,
+                    39.852785
                 ]
             },
             "properties": {
                 "id": 50,
                 "Name": "brewers outlet chadds ford",
-                "address": "Wilmington Pk, Chadds Ford, PA 19317, United States",
+                "address": "257 Wilmington W Chester Pk, Chadds Ford, PA 19317, United States",
                 "customerType": "Home-D"
             }
         },
