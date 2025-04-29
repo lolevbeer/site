@@ -4,7 +4,7 @@ tides,Tides,India Pale Ale,,7.5,pint,$7,$4.50,$17,"Mango, passionfruit, lime zes
 scylla,Scylla,Imperial Stout,,10.5,teku,$8,$5.00,$19,Dark chocolate and toasted caramel layered on blackberry cola.,,FALSE,FALSE,5142310,3,
 sebastian,Sebastian,Bock,,6.7,stein,$6,$4.00,$15,A Maibock brewed with 100% Pilsner malt and German and American Noble Hops.,860009737631,FALSE,TRUE,5210316,4,
 revive,Revive,Sparkling Hop Water,,4.8,teku,$6,,,"Modern, hopped version of a traditional Finnish fermented-water beverage.",850051366088,TRUE,FALSE,4876733,5,
-glyphs,Glyphs,Pale Ale,,5,pint,$7,$4.00,$15,"Tangerine, orange zest, and aromatic pine.",860009737679,FALSE,TRUE,5198026,6,"Calypso™, Strata®, Chinook"
+glyphs,Glyphs,Pale Ale,,5,pint,$7,$4.00,$15,"Tangerine, orange zest, and aromatic pine.",860009737679,FALSE,TRUE,5198026,6,"Mega Motueka™, Simcoe®, Citra®"
 dom,Dom,Kölsch,,5,stein,$6,$4.00,$15,"Crisp ale with floral and pear notes, subtle grapefruit zest aroma.",860009737624,FALSE,TRUE,5221229,7,
 secrets,Secrets,Double IPA,,8.5,pint,$8,,,"Pineapple, peach, bubblegum, and citrus.        ",,FALSE,FALSE,5178870,8,
 soleil,Soleil,Saison,,6.9,teku,$7,,,"Dry orange, mimosa-esque. Floral notes and funky.",,FALSE,FALSE,,9,
@@ -75,7 +75,7 @@ demeter-green,Demeter Green Wax,Barleywine,,12.6,teku,$11,,,"Aged for 12 months 
 demeter-gold,Demeter Gold Wax,Barleywine,,12.6,teku,$11,,,"Aged for 12 months in Abraham Smith Bowman bourbon finishing barrels, previously port. Notes of honeyed malt, black cherry and oak, with a touch of port sweetness.",,FALSE,FALSE,,74,
 samo,Samo,Pilsner,,4.8,stein,$6,$4.00,$15,"Pours pale gold with subtle bread aromas, balanced by floral and spicy notes and a touch of lemon zest.",,FALSE,TRUE,,75,Sterling
 duploughman,DuPloughman,Saison,,7,teku,$7,,,"Small batch collaboration with our friends at Ploughman Cider, using their yeast to ferment. Simple yet bold saison with a strong apple backbone. ",,FALSE,FALSE,,76,
-vindobona,Vindobona,Vienna Lager,,6.3,stein,$6,,,"Hints of caramel and biscuit, balanced by mild earthy hops, a crisp medium-light body, and a clean, dry finish.",,FALSE,FALSE,,77,"Callista, Saaz"
+vindobona,Vindobona,Vienna Lager,,6.3,stein,$6,,,"Hints of caramel and biscuit, balanced by mild earthy hops, a crisp medium-light body, and a clean, dry finish.",,FALSE,TRUE,,77,"Callista, Saaz"
 costilla,Costilla,Mexican Dark Lager,,4.8,stein,$6,$4.00,$15,Dark with toffee and lime. Brewed with Wapsi Valley naturally-pollinated heirloom corn.,,FALSE,TRUE,,78,Motueka™
 daltonico,Daltonico,Black IPA,,6.8,pint,$7,$4.50,$17,"Slightly roasty body, with notes of subtle pine, citrus, with chocolate undertones.",,FALSE,TRUE,,79,"Cascade CGX™, Erebus™, Idaho 7™, Nelson Sauvin™"
-akko,Akko,India Pale Ale,,7,pint,$7,$4.50,$17,"Pineapple and orange mango, bursting with peach ring candies. ",,FALSE,FALSE,,80,"Comet, , Galaxy®, Citra®"
+akko,Akko,India Pale Ale,,7,pint,$7,$4.50,$17,"Pineapple and orange mango, bursting with peach ring candies. ",,FALSE,TRUE,,80,"Comet, , Galaxy®, Citra®"
