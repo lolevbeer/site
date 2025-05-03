@@ -822,14 +822,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -76.917245,
-                    40.231813
+                    -76.93081665,
+                    40.23892975
                 ]
             },
             "properties": {
                 "id": 55,
                 "Name": "brewhouse grille",
-                "address": "2050 State Rd, Camp Hill, PA 17011, United States",
+                "address": "Camp Hill, PA 17011, United States",
                 "customerType": "Restaurant"
             }
         },
