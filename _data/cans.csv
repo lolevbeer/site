@@ -8,6 +8,6 @@ costilla,TRUE,Costilla,FALSE,Mexican Dark Lager,4.8,4.00,15
 lupula,TRUE,Lupula,FALSE,India Pale Ale,7,4.50,17
 double-prismatic,TRUE,Double Prismatic,FALSE,Double IPA,8.8,5.25,20
 priscus,TRUE,Priscus,FALSE,Double IPA,8.6,5.25,20
-imara,TRUE,Imara,FALSE,Double IPA,8.8,5.25,20
+imara,FALSE,Imara,FALSE,Double IPA,8.8,5.25,20
 ,FALSE,,FALSE,,,,
 ,FALSE,,FALSE,,,,
