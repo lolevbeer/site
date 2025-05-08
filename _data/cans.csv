@@ -1,13 +1,13 @@
 variant,cansAvailable,name,salePrice,type,abv,cansSingle,fourPack
 taupo,TRUE,Taupō,FALSE,India Pale Ale,7,4.50,17
 daltonico,TRUE,Daltonico,FALSE,Black IPA,6.8,4.50,17
-,FALSE,,FALSE,,,,
+vindobona,TRUE,Vindobona,FALSE,Vienna Lager,6.3,,
 vespero,TRUE,Vespero,FALSE,Czech Dark Lager,5.8,4.25,16
 grandar,TRUE,Grandar,FALSE,Imperial Pilsner,6.6,4.25,16
 costilla,TRUE,Costilla,FALSE,Mexican Dark Lager,4.8,4.00,15
-lupula,FALSE,Lupula,FALSE,India Pale Ale,7,4.50,17
-double-prismatic,TRUE,Double Prismatic,FALSE,Double IPA,8.8,5.25,20
+lupula,TRUE,Lupula,FALSE,India Pale Ale,7,4.50,17
+akko,TRUE,Akko,FALSE,India Pale Ale,7,4.50,17
 priscus,TRUE,Priscus,FALSE,Double IPA,8.6,5.25,20
-,FALSE,,FALSE,,,,
-,FALSE,,FALSE,,,,
-,FALSE,,FALSE,,,,
+glyphs,TRUE,Glyphs,FALSE,Pale Ale,5,4.00,15
+rubico,TRUE,Rubico,FALSE,Double IPA,8.5,5.25,20
+double-prismatic,TRUE,Double Prismatic,FALSE,Double IPA,8.8,5.25,20
