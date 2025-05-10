@@ -10,4 +10,4 @@ akko,TRUE,Akko,FALSE,India Pale Ale,7,4.50,17
 priscus,TRUE,Priscus,FALSE,Double IPA,8.6,5.25,20
 glyphs,TRUE,Glyphs,FALSE,Pale Ale,5,4.00,15
 rubico,TRUE,Rubico,FALSE,Double IPA,8.5,5.25,20
-double-prismatic,TRUE,Double Prismatic,FALSE,Double IPA,8.8,5.25,20
+double-prismatic,FALSE,Double Prismatic,FALSE,Double IPA,8.8,5.25,20
