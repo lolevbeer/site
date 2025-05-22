@@ -646,6 +646,22 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
+                    -79.856738,
+                    40.496254
+                ]
+            },
+            "properties": {
+                "id": 45,
+                "Name": "black and gold beer warehouse",
+                "address": "506 Freeport Rd, Pittsburgh, PA 15238, United States",
+                "customerType": "Home-D"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
                     -80.378308,
                     40.776037
                 ]
@@ -1558,6 +1574,22 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
+                    -79.935159,
+                    40.450507
+                ]
+            },
+            "properties": {
+                "id": 108,
+                "Name": "fujiya ramen",
+                "address": "815 S Aiken Ave, Pittsburgh, PA 15232, United States",
+                "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
                     -80.101245,
                     40.682438
                 ]
@@ -1615,6 +1647,22 @@
                 "Name": "guavaberry",
                 "address": "776 S 4th St, Philadelphia, PA 19147, United States",
                 "customerType": "Liquor Store"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -75.764616,
+                    40.032879
+                ]
+            },
+            "properties": {
+                "id": 115,
+                "Name": "hacc's beer store",
+                "address": "1200 Horseshoe Pk, Downingtown, PA 19335, United States",
+                "customerType": "Home-D"
             }
         },
         {
@@ -1734,14 +1782,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -76.28047,
-                    40.088795
+                    -76.26810455,
+                    40.07237244
                 ]
             },
             "properties": {
                 "id": 124,
                 "Name": "highland pizza",
-                "address": "2347 Oregon Pike, Lancaster, PA 17601, United States",
+                "address": "Manheim Township, PA, United States",
                 "customerType": "Restaurant"
             }
         },
