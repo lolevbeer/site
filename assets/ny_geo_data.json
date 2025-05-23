@@ -758,14 +758,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.13896179,
-                    42.96383667
+                    -77.138336,
+                    42.944251
                 ]
             },
             "properties": {
                 "id": 47,
                 "Name": "club at clifton llc",
-                "address": "Clifton Springs, NY 14432, United States",
+                "address": "2721 Manchester Hopewell Townline Rd, Clifton Springs, NY 14432, United States",
                 "customerType": "Golf"
             }
         },

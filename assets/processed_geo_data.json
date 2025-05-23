@@ -1782,14 +1782,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -76.26810455,
-                    40.07237244
+                    -76.28047,
+                    40.088795
                 ]
             },
             "properties": {
                 "id": 124,
                 "Name": "highland pizza",
-                "address": "Manheim Township, PA, United States",
+                "address": "2347 Oregon Pike, Lancaster, PA 17601, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -3566,7 +3566,7 @@
                 "id": 263,
                 "Name": "wegmans easton",
                 "address": "3791 Easton Nazareth Hwy, Easton, PA 18045, United States",
-                "customerType": "Restaurant"
+                "customerType": "Grocery"
             }
         },
         {
@@ -3582,7 +3582,7 @@
                 "id": 264,
                 "Name": "wegmans king of prussia",
                 "address": "200 Market St, King of Prussia, PA 19406, United States",
-                "customerType": "Restaurant"
+                "customerType": "Grocery"
             }
         },
         {
@@ -3598,7 +3598,7 @@
                 "id": 267,
                 "Name": "wegmans mechanicsburg",
                 "address": "6416 Carlisle Pike, Mechanicsburg, PA 17050, United States",
-                "customerType": "Restaurant"
+                "customerType": "Grocery"
             }
         },
         {
