@@ -54,8 +54,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.53040364,
-                    43.12979653
+                    -77.55775305,
+                    43.1460441
                 ]
             },
             "properties": {
@@ -119,7 +119,7 @@
                 "type": "Point",
                 "coordinates": [
                     -77.612258,
-                    43.066923
+                    43.066924
                 ]
             },
             "properties": {
@@ -246,8 +246,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -76.996533,
-                    42.859797
+                    -76.996504,
+                    42.859792
                 ]
             },
             "properties": {
@@ -263,7 +263,7 @@
                 "type": "Point",
                 "coordinates": [
                     -77.650656,
-                    43.092474
+                    43.092465
                 ]
             },
             "properties": {
@@ -278,8 +278,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.656838,
-                    43.091972
+                    -77.656835,
+                    43.091965
                 ]
             },
             "properties": {
@@ -311,7 +311,7 @@
                 "type": "Point",
                 "coordinates": [
                     -77.884184,
-                    43.102872
+                    43.102868
                 ]
             },
             "properties": {
@@ -374,8 +374,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.585026,
-                    43.158231
+                    -77.58407,
+                    43.158007
                 ]
             },
             "properties": {
@@ -422,8 +422,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.44395,
-                    43.105248
+                    -77.443949,
+                    43.10525
                 ]
             },
             "properties": {
@@ -438,8 +438,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.606679,
-                    43.151768
+                    -77.606738,
+                    43.151773
                 ]
             },
             "properties": {
@@ -454,7 +454,7 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -76.979996,
+                    -76.980002,
                     43.270071
                 ]
             },
@@ -477,7 +477,7 @@
             "properties": {
                 "id": 29,
                 "Name": "the red jug pub",
-                "address": "38 Merchant St, Brockport, NY 14420, United States",
+                "address": "38 Merchants St, Brockport, NY 14420, United States",
                 "customerType": "Bar"
             }
         },
@@ -774,8 +774,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.054282,
-                    42.659145
+                    -77.054286,
+                    42.659148
                 ]
             },
             "properties": {
@@ -790,8 +790,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.535114,
-                    43.128474
+                    -77.535206,
+                    43.128574
                 ]
             },
             "properties": {
