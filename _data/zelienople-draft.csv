@@ -3,7 +3,7 @@ tap,variant,singleCanAvailable,name,type,abv,glass,price,description,image,hops
 2,samo,FALSE,Samo,Pilsner,4.8,stein,6,"Pours pale gold with subtle bread aromas, balanced by floral and spicy notes and a touch of lemon zest.",TRUE,Sterling
 3,vindobona,FALSE,Vindobona,Vienna Lager,6.3,stein,6,"Hints of caramel and biscuit, balanced by mild earthy hops, a crisp medium-light body, and a clean, dry finish.",TRUE,"Callista, Saaz"
 4,,FALSE,,,,,,,,
-5,summer-Lupula,FALSE,Summer Lupula,India Pale Ale,6,pint,7,"Summer variant of Lupula, lower alcohol, more citrus-forward. Pineapple and mango.",TRUE,"Motueka™, Moutere™, Riwaka™"
+5,summer-lupula,FALSE,Summer Lupula,India Pale Ale,6,pint,7,"Summer variant of Lupula, lower alcohol, more citrus-forward. Pineapple and mango.",TRUE,"Motueka™, Moutere™, Riwaka™"
 6,daltonico,FALSE,Daltonico,Black IPA,6.8,pint,7,"Slightly roasty body, with notes of subtle pine, citrus, with chocolate undertones.",TRUE,"Cascade CGX™, Erebus™, Idaho 7™, Nelson Sauvin™"
 7,lupula,FALSE,Lupula,India Pale Ale,7,pint,7,"Pineapple, mango, and grapefruit. Aromatic.",TRUE,"Motueka™, Moutere™, Riwaka™"
 8,taupo,FALSE,Taupō,India Pale Ale,7,pint,7,"Tropical passion fruit, red grapefruit, and zested orange.",TRUE,"Riwaka™, Wakatu™, Citra®"
