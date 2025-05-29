@@ -23,7 +23,7 @@ class: block no-snap
     {% for food in site.data.lawrenceville-food %}
       {% assign postDate = food.date | date: "%Y-%m-%d" %}
       {% if currentDate <= postDate and postDate <= futureDate %}
-        {% if food.vendor != empty %}
+        {% if food.vendor != empty and food.vendor != "" and food.vendor != null %}
           <span id="food-day-{{ food.date | date: '%w' }}" class="event" data-date="{{ food.date }}">
             {% if food.site %}
               <a href="{{ food.site }}" target="_blank">
@@ -55,7 +55,7 @@ class: block no-snap
     {% for food in site.data.zelienople-food %}
       {% assign postDate = food.date | date: "%Y-%m-%d" %}
       {% if currentDate <= postDate and postDate <= futureDate %}
-        {% if food.vendor != empty %}
+        {% if food.vendor != empty and food.vendor != "" and food.vendor != null %}
           <span id="food-day-{{ food.date | date: '%w' }}" class="event" data-date="{{ food.date }}">
             {% if food.site %}
               <a href="{{ food.site }}" target="_blank">
