@@ -12,12 +12,41 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0  # Fetch full history for better caching
+      
+      # Cache Ruby gems for faster installs
+      - name: Cache Ruby gems
+        uses: actions/cache@v4
+        with:
+          path: vendor/bundle
+          key: ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-gems-
+      
+      # Cache Jekyll build artifacts
+      - name: Cache Jekyll build
+        uses: actions/cache@v4
+        with:
+          path: |
+            .jekyll-cache
+            _site
+            .sass-cache
+          key: ${{ runner.os }}-jekyll-${{ hashFiles('**/*.md', '**/*.html', '**/*.yml', '**/*.scss', '**/*.sass', '_config.yml', 'Gemfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-jekyll-
       
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.2.0'
           bundler-cache: true
+
+      # Install gems to vendor/bundle for better caching
+      - name: Install dependencies
+        run: |
+          bundle config path vendor/bundle
+          bundle install --jobs 4 --retry 3
 
       - name: Generate timestamp
         run: |
@@ -26,14 +55,16 @@ jobs:
           echo "{\"last_updated\": \"$(date -u '+%Y-%m-%dT%H:%M:%SZ')\"}" > _data/build_info.json
           cat _data/build_info.json
 
-      - name: Build and Deploy
-        uses: jeffreytse/jekyll-deploy-action@v0.6.0
+      - name: Build Jekyll site
+        run: |
+          bundle exec jekyll build --verbose --trace
+        env:
+          JEKYLL_ENV: production
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          provider: 'github'
-          token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./_site
           cname: ${{ secrets.CNAME }}
-          jekyll_src: ./
-          jekyll_build_opts: JEKYLL_ENV=production
-          pre_build_commands: |
-            git config --global http.version HTTP/1.1
-            git config --global http.postBuffer 524288000
+          force_orphan: true
