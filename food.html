@@ -4,31 +4,79 @@ title: Food
 class: block no-snap
 ---
 
-<div class="food schedule padded-section">
-  {% assign currentDate = site.time | date: "%Y-%m-%d" %}
-  {% assign futureDate = site.time | date: "%Y-%m-%d" | date: "%s" | plus: 2592000 | date: "%Y-%m-%d" %}
-  {% assign previousDate = '' %}
-  {% for food in site.data.food %}
-    {% assign postDate = food.date | date: "%Y-%m-%d" %}
-    {% if currentDate <= postDate and postDate <= futureDate %}
-      {% if food.vendor != empty %}
-        <span id="food-day-{{ food.date | date: '%w' }}" class="event" data-date="{{ food.date }}">
-          {% if food.site %}
-            <a href="{{ food.site }}" target="_blank">
-              <b>{{ food.vendor }}</b>
-            </a>
-          {% else %}
-            <b>{{ food.vendor }}</b>
-          {% endif %}
-          {% if previousDate != food.date %}
-            {% assign previousDate = food.date %}
-              <span class="date">{{ food.date | date: '%a %-m/%-d' }}, <span class="time">{{ food.time }}</span></span>
+<link rel="stylesheet" href="/assets/css/tabs.css">
+
+<!-- Tab Navigation -->
+<section class="stacked no-snap">
+  <div class="tabs">
+    <button class="tab-button tab-active" data-target="#lawrenceville-food">Lawrenceville</button>
+    <button class="tab-button" data-target="#zelienople-food">Zelienople</button>
+  </div>
+</section>
+
+<!-- Lawrenceville Food -->
+<div id="lawrenceville-food" class="tab-content tab-active">
+  <div class="food schedule padded-section">
+    {% assign currentDate = site.time | date: "%Y-%m-%d" %}
+    {% assign futureDate = site.time | date: "%Y-%m-%d" | date: "%s" | plus: 2592000 | date: "%Y-%m-%d" %}
+    {% assign previousDate = '' %}
+    {% for food in site.data.lawrenceville-food %}
+      {% assign postDate = food.date | date: "%Y-%m-%d" %}
+      {% if currentDate <= postDate and postDate <= futureDate %}
+        {% if food.vendor != empty %}
+          <span id="food-day-{{ food.date | date: '%w' }}" class="event" data-date="{{ food.date }}">
+            {% if food.site %}
+              <a href="{{ food.site }}" target="_blank">
+                <b>{{ food.vendor }}</b>
+              </a>
             {% else %}
-            <span class="date">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-          {% endif %}
-          <br>
-        </span>
+              <b>{{ food.vendor }}</b>
+            {% endif %}
+            {% if previousDate != food.date %}
+              {% assign previousDate = food.date %}
+                <span class="date">{{ food.date | date: '%a %-m/%-d' }}{% if food.time != empty %}, <span class="time">{{ food.time }}</span>{% endif %}</span>
+              {% else %}
+              <span class="date">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+            {% endif %}
+            <br>
+          </span>
+        {% endif %}
       {% endif %}
-    {% endif %}
-  {% endfor %}
+    {% endfor %}
+  </div>
 </div>
+
+<!-- Zelienople Food -->
+<div id="zelienople-food" class="tab-content" style="display: none;">
+  <div class="food schedule padded-section">
+    {% assign currentDate = site.time | date: "%Y-%m-%d" %}
+    {% assign futureDate = site.time | date: "%Y-%m-%d" | date: "%s" | plus: 2592000 | date: "%Y-%m-%d" %}
+    {% assign previousDate = '' %}
+    {% for food in site.data.zelienople-food %}
+      {% assign postDate = food.date | date: "%Y-%m-%d" %}
+      {% if currentDate <= postDate and postDate <= futureDate %}
+        {% if food.vendor != empty %}
+          <span id="food-day-{{ food.date | date: '%w' }}" class="event" data-date="{{ food.date }}">
+            {% if food.site %}
+              <a href="{{ food.site }}" target="_blank">
+                <b>{{ food.vendor }}</b>
+              </a>
+            {% else %}
+              <b>{{ food.vendor }}</b>
+            {% endif %}
+            {% if previousDate != food.date %}
+              {% assign previousDate = food.date %}
+                <span class="date">{{ food.date | date: '%a %-m/%-d' }}{% if food.time != empty %}, <span class="time">{{ food.time }}</span>{% endif %}</span>
+              {% else %}
+              <span class="date">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+            {% endif %}
+            <br>
+          </span>
+        {% endif %}
+      {% endif %}
+    {% endfor %}
+  </div>
+</div>
+
+<script src="/assets/js/location-manager.js"></script>
+<script src="/assets/js/tabs.js"></script>

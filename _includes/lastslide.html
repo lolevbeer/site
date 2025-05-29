@@ -1,23 +1,32 @@
 <section class="columns last-slide" id="footer">
   <div>
-    <a class="address" href="#footer">5247 Butler St<br>Pittsburgh, PA 15201</a>
+    <div class="location-name">Lolev Lawrenceville</div>
+    <a class="address" href="https://maps.google.com/maps?q=5247+Butler+St,+Pittsburgh,+PA" target="_blank">5247 Butler St<br>Pittsburgh, PA</a>
+    <div class="location-description"><i>Brewery and Taproom</i></div>
+    <span class="hours">
+      {% for day in site.data.lawrenceville-hours %}
+        <div id="day-{{ day.day-code }}"><b>{{ day.name }}</b> <span> {{ day.hours }}</span></div>
+      {% endfor %}
+    </span>
   </div>
-  <span class="hours">
-    {% for day in site.data.hours %}
-      <div id="day-{{ day.day-code }}"><b>{{ day.name }}</b> <span> {{ day.hours }}</span></div>
-    {% endfor %}
-  </span>
+  <div>
+    <div class="location-name">Lolev Zelienople</div>
+    <a class="address" href="https://maps.google.com/maps?q=111+South+Main+St,+Zelienople,+PA" target="_blank">111 South Main St<br>Zelienople, PA</a>
+    <div class="location-description"><i>Taproom</i></div>
+    <span class="hours">
+      {% for day in site.data.zelienople-hours %}
+        <div id="day-{{ day.day-code }}"><b>{{ day.name }}</b> <span> {{ day.hours }}</span></div>
+      {% endfor %}
+    </span>
+  </div>
   <footer>
-    <p>Updated <span id="last-updated"></span></p>
-    {% if jekyll.environment != "production" %}
-    <div style="font-size: 12px; color: #666;">
-      Debug info:
-      <pre>
-      build_info: {{ site.data.build_info | inspect }}
-      last_updated: {{ site.data.build_info.last_updated | inspect }}
-      </pre>
-    </div>
-    {% endif %}
+    <p>Updated <span id="last-updated"></span>
+    <span>• you are viewing</span>
+    <select id="location-selector" class="location-dropdown">
+        <option value="Lawrenceville">Lawrenceville</option>
+        <option value="Zelienople">Zelienople</option>
+    </select>
+    </p>
   </footer>
 </section>
 
@@ -51,3 +60,18 @@
     }
   });
 </script>
+
+<script src="/assets/js/location-manager.js"></script>
+<script src="/assets/js/location-selector.js"></script>
+
+<style>
+  .location-dropdown {
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: bold;
+    letter-spacing: 1px;
+    color: inherit;
+    background-color: transparent;
+    border: 1px solid transparent;
+  }
+</style>

@@ -386,8 +386,6 @@ section
   background: black
   border-radius: 5px
   color: white
-  margin: 0 -1em 0
-  padding: 3px 1em
   a
     &:after
       filter: invert(1)
@@ -569,12 +567,12 @@ iframe
   b
     text-transform: uppercase
   div
-    padding: 0 .5em
+    border-radius: 4px
+    padding: 0 5px
     &.active
       background: white
       border-radius: 4px
       color: black
-      margin: 0 -3px
   span
     float: right
 .last-slide
@@ -583,6 +581,21 @@ iframe
   font-size: 1.4em
   letter-spacing: 2px
   line-height: 1.5em
+  > div
+    flex: 0.6
+    max-width: 350px
+    text-align: center
+
+.address
+  display: block
+  text-align: center
+
+.location-name
+  font-weight: bold
+  text-transform: uppercase
+
+.location-description
+  margin-bottom: 0.5em
 
 .charts
   max-height: 30%
@@ -681,11 +694,9 @@ footer p
   transition: margin-top .25s ease
 #food
   padding: 60px 0 35px
-  *:nth-child(2)
-    text-align: left
-    .right
-      float: right
-      padding-left: 1em
+  .right
+    float: right
+    padding-left: 1em
 
 #find-lolev
   width: 100% !important
@@ -751,6 +762,8 @@ footer p
   h1
     font-size: 4em
     max-width: 100% !important
+    margin: 10px auto
+    letter-spacing: 2px
   h2
     letter-spacing: 2px
   .schedule
@@ -818,4 +831,5 @@ footer p
 @mixin name
   $social-view-width: (620 / 2)px
   
-      
+#lawrenceville-events
+  display: inline-block

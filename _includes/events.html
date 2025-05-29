@@ -1,18 +1,66 @@
+<link rel="stylesheet" href="/assets/css/tabs.css">
+
 <section id="events" class="stacked">
   <h2>Events</h2>
-  {% assign currentDay = site.time | date: "%Y-%m-%d" %}
-  {% assign count = 0 %}
-  <div class="events schedule padded-section">
-    {% for event in site.data.events %}
-      {% if event.site %}
-        {% assign postDay = event.date | date: "%Y-%m-%d" %}
-        {% if currentDay <= postDay and count < 6 %}
-          {% include event.html %}
-          {% assign count = count | plus:1 %}
-        {% endif %}
-      {% endif %}
-    {% endfor %}
-    <p> For scheduling private events, email us at <a href="mailto:events@lolev.beer">events@lolev.beer</a></p>
+  
+  <!-- Tab Navigation -->
+  <div class="tabs">
+    <button class="tab-button tab-active" data-target="#lawrenceville-events">Lawrenceville</button>
+    <button class="tab-button" data-target="#zelienople-events">Zelienople</button>
   </div>
+  
+  <!-- Lawrenceville Events -->
+  <div id="lawrenceville-events" class="tab-content tab-active">
+    {% assign currentDay = site.time | date: "%Y-%m-%d" %}
+    {% assign count = 0 %}
+    <div class="events schedule padded-section">
+      {% assign hasEvents = false %}
+      {% for event in site.data.lawrenceville-events %}
+        {% if event.site %}
+          {% assign postDay = event.date | date: "%Y-%m-%d" %}
+          {% if currentDay <= postDay and count < 6 %}
+            {% assign hasEvents = true %}
+            {% include event.html %}
+            {% assign count = count | plus:1 %}
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+      {% unless hasEvents %}
+        <div class="event">
+          <span>No upcoming events yet</span>
+        </div>
+      {% endunless %}
+      <p>For scheduling private events, email us at <a href="mailto:events@lolev.beer">events@lolev.beer</a></p>
+    </div>
+  </div>
+  
+  <!-- Zelienople Events -->
+  <div id="zelienople-events" class="tab-content" style="display: none;">
+    {% assign currentDay = site.time | date: "%Y-%m-%d" %}
+    {% assign count = 0 %}
+    <div class="events schedule padded-section">
+      {% assign hasEvents = false %}
+      {% for event in site.data.zelienople-events %}
+        {% if event.site %}
+          {% assign postDay = event.date | date: "%Y-%m-%d" %}
+          {% if currentDay <= postDay and count < 6 %}
+            {% assign hasEvents = true %}
+            {% include event.html %}
+            {% assign count = count | plus:1 %}
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+      {% unless hasEvents %}
+        <div class="event">
+          <span>No upcoming events yet</span>
+        </div>
+      {% endunless %}
+      <p>For scheduling private events, email us at <a href="mailto:events@lolev.beer">events@lolev.beer</a></p>
+    </div>
+  </div>
+  
   <img class="lolev-linebreak" alt="Lolev Logo" src="/images/logo.svg" >
 </section>
+
+<script src="/assets/js/location-manager.js"></script>
+<script src="/assets/js/tabs.js"></script>

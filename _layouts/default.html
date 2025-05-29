@@ -7,9 +7,9 @@
 {% if page.url == "/" %}
   {% include beers.html %}
   {% include cans.html %}
-  {% include coming.html %}
   {% include food.html %}
   {% include events.html %}
+  {% include coming.html %}
 {% for section in site.sections %}
   <section class="{{ section.class | default: "stacked" }}" id="{{ section.title | downcase }}">
     <h2>{{ section.title }}</h2>

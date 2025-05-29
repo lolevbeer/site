@@ -65,9 +65,22 @@ const scrollHandlerY = (e) => {
 
 // Date and Time Functions
 const setActiveDays = () => {
+  // Get current day for Eastern Time (both Lawrenceville and Zelienople are in PA, Eastern Time)
   const currentDate = new Date().toLocaleString('en-US', { timeZone: 'America/New_York' });
   const day = new Date(currentDate).getDay();
-  addClass(document.getElementById(`day-${day}`), 'active');
+  
+  // Add active class to the day element (this will affect both locations since they share day IDs)
+  const dayElement = document.getElementById(`day-${day}`);
+  if (dayElement) {
+    addClass(dayElement, 'active');
+  }
+  
+  // Since both locations are in the same timezone, we could also explicitly handle them
+  // by selecting all elements with the day ID pattern, in case the structure changes
+  const allDayElements = document.querySelectorAll(`[id="day-${day}"]`);
+  allDayElements.forEach(element => {
+    addClass(element, 'active');
+  });
 };
 
 const setActiveDates = () => {
