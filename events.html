@@ -46,6 +46,11 @@ class: block no-snap
         {% endif %}
       {% endif %}
     {% endfor %}
+    {% unless hasEvents %}
+      <div class="event">
+        <span>No upcoming events yet</span>
+      </div>
+    {% endunless %}
     <p> For scheduling private events, email us at <a href="mailto:events@lolev.beer">events@lolev.beer</a></p>
   </div>
 </div>
