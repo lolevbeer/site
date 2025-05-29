@@ -12,7 +12,7 @@
   <!-- Lawrenceville Draft Beers -->
   <div id="lawrenceville-beers" class="tab-content tab-active padded-section">
     {% for beer in site.data.lawrenceville-draft %}
-      {% if beer.variant != "" %}
+      {% if beer.variant != "" and beer.variant != null %}
         <article class="beer">
           <a class="btn" href="/beer/{{ beer.variant }}">
             <h3>{{ beer.name }}</h3>
@@ -26,7 +26,7 @@
   <!-- Zelienople Draft Beers -->
   <div id="zelienople-beers" class="tab-content padded-section" style="display: none;">
     {% for beer in site.data.zelienople-draft %}
-      {% if beer.variant != "" %}
+      {% if beer.variant != "" and beer.variant != null %}
         <article class="beer">
           <a class="btn" href="/beer/{{ beer.variant }}">
             <h3>{{ beer.name }}</h3>

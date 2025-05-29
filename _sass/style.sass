@@ -1,3 +1,5 @@
+@use 'sass:math'
+
 $rounding: .5em
 
 *
@@ -184,10 +186,9 @@ slider > section
     display: block
 
 .stacked
-  & > *:not(#find-lolev)
-    
   & > p
     text-align: center
+
 section
   img
     max-width: 500px
@@ -314,7 +315,7 @@ h3 + p
 .social-view
   // 610 divided by 2
   $social-view-width: 620px
-  $half-social-view-width: $social-view-width / 2
+  $half-social-view-width: math.div($social-view-width, 2)
   .padded-section
     &:after,
     &:before
