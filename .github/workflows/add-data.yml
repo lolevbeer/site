@@ -30,7 +30,7 @@ jobs:
           curl -H "User-Agent: Mozilla/5.0 (compatible; DataFetcher/1.0)" -L -o zelienople-events.csv "${{ vars.ZELIENOPLE_EVENTS }}"
           curl -H "User-Agent: Mozilla/5.0 (compatible; DataFetcher/1.0)" -L -o zelienople-hours.csv "${{ vars.ZELIENOPLE_HOURS }}"
           curl -H "User-Agent: Mozilla/5.0 (compatible; DataFetcher/1.0)" -L -o beer.csv "${{ vars.BEER }}"
-          curl -H "User-Agent: Mozilla/5.0 (compatible; DataFetcher/1.0)" -L -o coming.csv "${{ secrets.COMING_GSHEET }}"
+          curl -H "User-Agent: Mozilla/5.0 (compatible; DataFetcher/1.0)" -L -o coming.csv "${{ vars.COMING }}"
 
           cd ..
           git config --local user.email "lolevbeer@gmail.com"
