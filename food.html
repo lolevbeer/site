@@ -34,7 +34,7 @@ class: block no-snap
             {% endif %}
             {% if previousDate != food.date %}
               {% assign previousDate = food.date %}
-                <span class="date">{{ food.date | date: '%a %-m/%-d' }}{% if food.time != empty %}, <span class="time">{{ food.time }}</span>{% endif %}</span>
+                <span class="date">{{ food.date | date: '%a %-m/%-d' }}{% if food.time != empty and food.time != "" and food.time != null %}, <span class="time">{{ food.time }}</span>{% endif %}</span>
               {% else %}
               <span class="date">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
             {% endif %}
@@ -66,7 +66,7 @@ class: block no-snap
             {% endif %}
             {% if previousDate != food.date %}
               {% assign previousDate = food.date %}
-                <span class="date">{{ food.date | date: '%a %-m/%-d' }}{% if food.time != empty %}, <span class="time">{{ food.time }}</span>{% endif %}</span>
+                <span class="date">{{ food.date | date: '%a %-m/%-d' }}{% if food.time != empty and food.time != "" and food.time != null %}, <span class="time">{{ food.time }}</span>{% endif %}</span>
               {% else %}
               <span class="date">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
             {% endif %}
