@@ -19,7 +19,7 @@
       {% assign postWeek = food.date | date: "%W" %}
       {% assign postYear = food.date | date: "%Y" %}
       {% if currentWeek == postWeek and currentYear == postYear %}
-        {% if food.vendor != empty %}
+        {% if food.vendor != empty and food.vendor != "" and food.vendor != null %}
           <div>
             <div id="food-day-{{ food.date | date: '%w' }}" class="event" data-date="{{ food.date }}">
               <a href="{{ food.site }}" target="_blank">
@@ -55,7 +55,7 @@
       {% assign postWeek = food.date | date: "%W" %}
       {% assign postYear = food.date | date: "%Y" %}
       {% if currentWeek == postWeek and currentYear == postYear %}
-        {% if food.vendor != empty %}
+        {% if food.vendor != empty and food.vendor != "" and food.vendor != null %}
           <div>
             <div id="food-day-{{ food.date | date: '%w' }}" class="event" data-date="{{ food.date }}">
               <a href="{{ food.site }}" target="_blank">
