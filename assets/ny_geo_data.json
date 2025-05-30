@@ -6,44 +6,12 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.60298,
-                    43.20839
-                ]
-            },
-            "properties": {
-                "id": 0,
-                "Name": "wegman's #67  titus",
-                "address": "525 Titus Ave, Rochester, NY 14617, United States",
-                "customerType": "Grocery"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -77.255088,
-                    42.87558
-                ]
-            },
-            "properties": {
-                "id": 1,
-                "Name": "wegmans store #11/cdga.",
-                "address": "345 Eastern Blvd, Canandaigua, NY 14424, United States",
-                "customerType": "Grocery"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
                     -77.543513,
                     43.106573
                 ]
             },
             "properties": {
-                "id": 2,
+                "id": 0,
                 "Name": "wegman's #25 pittsford",
                 "address": "3195 Monroe Ave, Pittsford, NY 14618, United States",
                 "customerType": "Grocery"
@@ -54,14 +22,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.53318349,
-                    43.1325255
+                    -77.60298,
+                    43.20839
                 ]
             },
             "properties": {
-                "id": 3,
-                "Name": "wegman's #18 east ave",
-                "address": "East Ave, Rochester, NY 14610, United States",
+                "id": 1,
+                "Name": "wegman's #67  titus",
+                "address": "525 Titus Ave, Rochester, NY 14617, United States",
                 "customerType": "Grocery"
             }
         },
@@ -70,14 +38,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.442764,
-                    43.130325
+                    -77.556047,
+                    43.146177
                 ]
             },
             "properties": {
-                "id": 4,
-                "Name": "wegman's #63 penfield",
-                "address": "2155 Penfield Rd, Penfield, NY 14526, United States",
+                "id": 2,
+                "Name": "wegman's #18 east ave",
+                "address": "1750 East Ave, Rochester, NY 14610, United States",
                 "customerType": "Grocery"
             }
         },
@@ -91,7 +59,7 @@
                 ]
             },
             "properties": {
-                "id": 5,
+                "id": 3,
                 "Name": "wegman's #68 chili-paul",
                 "address": "3175 Chili Ave, Rochester, NY 14624, United States",
                 "customerType": "Grocery"
@@ -102,14 +70,30 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.503281,
-                    43.192431
+                    -77.255088,
+                    42.87558
                 ]
             },
             "properties": {
-                "id": 6,
-                "Name": "wegman's #03 empire",
-                "address": "1950 Empire Blvd, Webster, NY 14580, United States",
+                "id": 4,
+                "Name": "wegmans store #11/cdga.",
+                "address": "345 Eastern Blvd, Canandaigua, NY 14424, United States",
+                "customerType": "Grocery"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.442764,
+                    43.130325
+                ]
+            },
+            "properties": {
+                "id": 5,
+                "Name": "wegman's #63 penfield",
+                "address": "2155 Penfield Rd, Penfield, NY 14526, United States",
                 "customerType": "Grocery"
             }
         },
@@ -123,7 +107,7 @@
                 ]
             },
             "properties": {
-                "id": 7,
+                "id": 6,
                 "Name": "wegman's #22 calkins road",
                 "address": "745 Calkins Rd, Rochester, NY 14623, United States",
                 "customerType": "Grocery"
@@ -139,7 +123,7 @@
                 ]
             },
             "properties": {
-                "id": 8,
+                "id": 7,
                 "Name": "wegman's #24 perinton",
                 "address": "6600 Pittsford Palmyra Rd, Fairport, NY 14450, United States",
                 "customerType": "Grocery"
@@ -150,94 +134,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.660676,
-                    43.226243
+                    -77.503281,
+                    43.192431
                 ]
             },
             "properties": {
-                "id": 9,
-                "Name": "wegman's #20 mt read",
-                "address": "3701 Mount Read Blvd, Rochester, NY 14616, United States",
-                "customerType": "Grocery"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -77.6885,
-                    43.163349
-                ]
-            },
-            "properties": {
-                "id": 10,
-                "Name": "wegman's #13 lyell",
-                "address": "2301 Lyell Ave, Rochester, NY 14606, United States",
-                "customerType": "Grocery"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -77.707437,
-                    43.209031
-                ]
-            },
-            "properties": {
-                "id": 11,
-                "Name": "wegman's #12 west ridge",
-                "address": "2833 W Ridge Rd, Rochester, NY 14626, United States",
-                "customerType": "Grocery"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -77.483582,
-                    43.101928
-                ]
-            },
-            "properties": {
-                "id": 12,
-                "Name": "wegman's #04 east roch",
-                "address": "851 Fairport Rd, East Rochester, NY 14445, United States",
-                "customerType": "Grocery"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -77.946021,
-                    43.200205
-                ]
-            },
-            "properties": {
-                "id": 13,
-                "Name": "wegman's #65 brockport",
-                "address": "6660 4th Section Rd, Brockport, NY 14420, United States",
-                "customerType": "Grocery"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -77.783815,
-                    42.797398
-                ]
-            },
-            "properties": {
-                "id": 14,
-                "Name": "wegman's #26 geneseo",
-                "address": "4276 Lakeville Rd, Geneseo, NY 14454, United States",
+                "id": 8,
+                "Name": "wegman's #03 empire",
+                "address": "1950 Empire Blvd, Webster, NY 14580, United States",
                 "customerType": "Grocery"
             }
         },
@@ -251,9 +155,185 @@
                 ]
             },
             "properties": {
-                "id": 15,
+                "id": 9,
                 "Name": "wegman's #74/geneva",
                 "address": "300 Hamilton St, Geneva, NY 14456, United States",
+                "customerType": "Grocery"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.10314332,
+                    43.04550028
+                ]
+            },
+            "properties": {
+                "id": 10,
+                "Name": "wegman's #06 newark",
+                "address": "W Miller St, Newark, NY 14513, United States",
+                "customerType": "Grocery"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.6885,
+                    43.163349
+                ]
+            },
+            "properties": {
+                "id": 11,
+                "Name": "wegman's #13 lyell",
+                "address": "2301 Lyell Ave, Rochester, NY 14606, United States",
+                "customerType": "Grocery"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.660676,
+                    43.226243
+                ]
+            },
+            "properties": {
+                "id": 12,
+                "Name": "wegman's #20 mt read",
+                "address": "3701 Mount Read Blvd, Rochester, NY 14616, United States",
+                "customerType": "Grocery"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.606338,
+                    43.24726
+                ]
+            },
+            "properties": {
+                "id": 13,
+                "Name": "herrema's marketplace",
+                "address": "125 Pattonwood Dr, Rochester, NY 14617, United States",
+                "customerType": "Grocery"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.733757,
+                    43.120577
+                ]
+            },
+            "properties": {
+                "id": 14,
+                "Name": "wegman's #64  latta",
+                "address": "3177 Latta Rd, Rochester, NY 14612, United States",
+                "customerType": "Grocery"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.783815,
+                    42.797398
+                ]
+            },
+            "properties": {
+                "id": 15,
+                "Name": "wegman's #26 geneseo",
+                "address": "4276 Lakeville Rd, Geneseo, NY 14454, United States",
+                "customerType": "Grocery"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.946021,
+                    43.200205
+                ]
+            },
+            "properties": {
+                "id": 16,
+                "Name": "wegman's #65 brockport",
+                "address": "6660 4th Section Rd, Brockport, NY 14420, United States",
+                "customerType": "Grocery"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.483582,
+                    43.101928
+                ]
+            },
+            "properties": {
+                "id": 17,
+                "Name": "wegman's #04 east roch",
+                "address": "851 Fairport Rd, East Rochester, NY 14445, United States",
+                "customerType": "Grocery"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.44662275,
+                    43.21176765
+                ]
+            },
+            "properties": {
+                "id": 18,
+                "Name": "wegman's #66 holt rd",
+                "address": "Holt Rd, Webster, NY 14580, United States",
+                "customerType": "Grocery"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.627491,
+                    43.083122
+                ]
+            },
+            "properties": {
+                "id": 19,
+                "Name": "wegman's #62 hylan",
+                "address": "650 Hylan Dr, Rochester, NY 14623, United States",
+                "customerType": "Grocery"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.707437,
+                    43.209031
+                ]
+            },
+            "properties": {
+                "id": 20,
+                "Name": "wegman's #12 west ridge",
+                "address": "2833 W Ridge Rd, Rochester, NY 14626, United States",
                 "customerType": "Grocery"
             }
         },
@@ -267,7 +347,7 @@
                 ]
             },
             "properties": {
-                "id": 16,
+                "id": 21,
                 "Name": "macgregors            #03",
                 "address": "300 Jefferson Rd, Rochester, NY 14623, United States",
                 "customerType": "Restaurant"
@@ -278,14 +358,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.656835,
-                    43.091965
+                    -77.278797,
+                    42.88837
                 ]
             },
             "properties": {
-                "id": 17,
-                "Name": "lovin cup",
-                "address": "300 Park Point Dr, Rochester, NY 14623, United States",
+                "id": 22,
+                "Name": "beehive brew pub",
+                "address": "20 Pleasant St, Canandaigua, NY 14424, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -294,14 +374,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.5670386,
-                    43.1291214
+                    -77.5484604,
+                    43.1575256
                 ]
             },
             "properties": {
-                "id": 18,
-                "Name": "the sheffield",
-                "address": "The Sheffield, 1776, Monroe Avenue, Roselawn, Twelve Corners, City of Rochester, Monroe County, New York, 14618, United States",
+                "id": 23,
+                "Name": "lucky's",
+                "address": "Lucky's, 628, North Winton Road, Browncroft, City of Rochester, Monroe County, New York, 14609, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -315,9 +395,89 @@
                 ]
             },
             "properties": {
-                "id": 19,
+                "id": 24,
                 "Name": "churchville grill",
                 "address": "42 S Main St, Churchville, NY 14428, United States",
+                "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.513187,
+                    43.094819
+                ]
+            },
+            "properties": {
+                "id": 25,
+                "Name": "the pittsford pub",
+                "address": "60 N Main St, Pittsford, NY 14534, United States",
+                "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.6020446,
+                    43.0865814
+                ]
+            },
+            "properties": {
+                "id": 26,
+                "Name": "jeremiah's tavern",
+                "address": "Jeremiah's Tavern, 1175, Jefferson Road, Ridgeland, City of Rochester, Monroe County, New York, 14623, United States",
+                "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.478167,
+                    43.061356
+                ]
+            },
+            "properties": {
+                "id": 27,
+                "Name": "the basin pub",
+                "address": "637 Pittsford Victor Rd, Pittsford, NY 14534, United States",
+                "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.5670386,
+                    43.1291214
+                ]
+            },
+            "properties": {
+                "id": 28,
+                "Name": "the sheffield",
+                "address": "The Sheffield, 1776, Monroe Avenue, Roselawn, Twelve Corners, City of Rochester, Monroe County, New York, 14618, United States",
+                "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.656835,
+                    43.091965
+                ]
+            },
+            "properties": {
+                "id": 29,
+                "Name": "lovin cup",
+                "address": "300 Park Point Dr, Rochester, NY 14623, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -331,41 +491,9 @@
                 ]
             },
             "properties": {
-                "id": 20,
+                "id": 30,
                 "Name": "trata",
                 "address": "TRATA, 145, Culver Road, ABC Streets Neighborhood, City of Rochester, Monroe County, New York, 14620, United States",
-                "customerType": "Restaurant"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -77.583997,
-                    43.158609
-                ]
-            },
-            "properties": {
-                "id": 21,
-                "Name": "gate house cafe",
-                "address": "274 N Goodman St, Rochester, NY 14607, United States",
-                "customerType": "Restaurant"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -77.646775,
-                    43.091394
-                ]
-            },
-            "properties": {
-                "id": 22,
-                "Name": "salvatores jefferson",
-                "address": "352 Jefferson Rd, Rochester, NY 14623, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -379,9 +507,41 @@
                 ]
             },
             "properties": {
-                "id": 23,
+                "id": 31,
                 "Name": "good luck",
                 "address": "50 Anderson Ave, Rochester, NY 14607, United States",
+                "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.646775,
+                    43.091394
+                ]
+            },
+            "properties": {
+                "id": 32,
+                "Name": "salvatores jefferson",
+                "address": "352 Jefferson Rd, Rochester, NY 14623, United States",
+                "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.583997,
+                    43.158609
+                ]
+            },
+            "properties": {
+                "id": 33,
+                "Name": "gate house cafe",
+                "address": "274 N Goodman St, Rochester, NY 14607, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -395,41 +555,9 @@
                 ]
             },
             "properties": {
-                "id": 24,
+                "id": 34,
                 "Name": "martine",
                 "address": "647 South Ave, Rochester, NY 14620, United States",
-                "customerType": "Restaurant"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -77.272162,
-                    42.875454
-                ]
-            },
-            "properties": {
-                "id": 25,
-                "Name": "coho pizza & wine bar",
-                "address": "811 S Main St, Canandaigua, NY 14424, United States",
-                "customerType": "Restaurant"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -77.443949,
-                    43.10525
-                ]
-            },
-            "properties": {
-                "id": 26,
-                "Name": "compane",
-                "address": "25 Parce Ave, Fairport, NY 14450, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -443,7 +571,7 @@
                 ]
             },
             "properties": {
-                "id": 27,
+                "id": 35,
                 "Name": "the vesper",
                 "address": "1 Capron St, Rochester, NY 14607, United States",
                 "customerType": "Restaurant"
@@ -454,143 +582,15 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -76.980002,
-                    43.270071
-                ]
-            },
-            "properties": {
-                "id": 28,
-                "Name": "capt' jacks goodtime tav",
-                "address": "8505 Greig St, Sodus Point, NY 14555, United States",
-                "customerType": "Bar"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -77.940113,
-                    43.216701
-                ]
-            },
-            "properties": {
-                "id": 29,
-                "Name": "the red jug pub",
-                "address": "38 Merchants St, Brockport, NY 14420, United States",
-                "customerType": "Bar"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -77.6693881,
-                    42.8212159
-                ]
-            },
-            "properties": {
-                "id": 30,
-                "Name": "ember woodfire grill",
-                "address": "Ember Woodfire Grill, 21, Commercial Street, Village of Livonia, Town of Livonia, Livingston County, New York, 14487, United States",
-                "customerType": "Bar"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -77.695747,
-                    43.264463
-                ]
-            },
-            "properties": {
-                "id": 31,
-                "Name": "north greece grocery",
-                "address": "502 Long Pond Rd, Rochester, NY 14612, United States",
-                "customerType": "Grocery"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -77.8071365,
-                    43.120838
-                ]
-            },
-            "properties": {
-                "id": 32,
-                "Name": "food towne of n.chili",
-                "address": "Food Towne Market, 4390, Buffalo Road, North Chili, Town of Chili, Monroe County, New York, 14514, United States",
-                "customerType": "Grocery"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -77.557782,
-                    43.12085
-                ]
-            },
-            "properties": {
-                "id": 33,
-                "Name": "r's market",
-                "address": "2294 Monroe Ave, Rochester, NY 14618, United States",
-                "customerType": "Grocery"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -77.6055307,
-                    43.2534066
-                ]
-            },
-            "properties": {
-                "id": 34,
-                "Name": "rochester yacht club",
-                "address": "Rochester Yacht Club, 5555, Saint Paul Boulevard, Summerville, City of Rochester, Monroe County, New York, 14617, United States",
-                "customerType": "Recreation"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -77.586263,
-                    43.1497559
-                ]
-            },
-            "properties": {
-                "id": 35,
-                "Name": "half pint",
-                "address": "Half Pint Pub, 363, Park Avenue, City of Rochester, Monroe County, New York, 14607, United States",
-                "customerType": "Bar"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -77.621132,
-                    43.044178
+                    -77.443949,
+                    43.10525
                 ]
             },
             "properties": {
                 "id": 36,
-                "Name": "fireside grill&sports bar",
-                "address": "3939 E Henrietta Rd, Henrietta, NY 14467, United States",
-                "customerType": "Bar"
+                "Name": "compane",
+                "address": "25 Parce Ave, Fairport, NY 14450, United States",
+                "customerType": "Restaurant"
             }
         },
         {
@@ -598,15 +598,15 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.609027,
-                    43.069588
+                    -77.272162,
+                    42.875454
                 ]
             },
             "properties": {
                 "id": 37,
-                "Name": "beers of the world",
-                "address": "2599 E Henrietta Rd, Rochester, NY 14623, United States",
-                "customerType": "Recreation"
+                "Name": "coho pizza & wine bar",
+                "address": "811 S Main St, Canandaigua, NY 14424, United States",
+                "customerType": "Restaurant"
             }
         },
         {
@@ -614,62 +614,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.410013,
-                    43.064657
+                    -77.478003,
+                    43.062126
                 ]
             },
             "properties": {
                 "id": 38,
-                "Name": "tr noonans",
-                "address": "7408 Pittsford Palmyra Rd, Fairport, NY 14450, United States",
-                "customerType": "Bar"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -77.565563,
-                    43.150418
-                ]
-            },
-            "properties": {
-                "id": 39,
-                "Name": "muller's cider house",
-                "address": "1344 University Ave, Rochester, NY 14607, United States",
-                "customerType": "Bar"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -77.5610243,
-                    43.1503743
-                ]
-            },
-            "properties": {
-                "id": 40,
-                "Name": "radio social",
-                "address": "Radio Social, 20, Carlson Road, North Winton Village, City of Rochester, Monroe County, New York, 14610, United States",
-                "customerType": "Recreation"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -77.700141,
-                    43.188297
-                ]
-            },
-            "properties": {
-                "id": 41,
-                "Name": "one stop brew shop",
-                "address": "2512 Ridgeway Ave, Rochester, NY 14626, United States",
+                "Name": "hess mart",
+                "address": "640 Pittsford Victor Rd, Pittsford, NY 14534, United States",
                 "customerType": "Convenience"
             }
         },
@@ -678,14 +630,62 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.496651,
-                    43.110513
+                    -77.834183,
+                    43.285633
+                ]
+            },
+            "properties": {
+                "id": 39,
+                "Name": "pettinari's deli & pizza",
+                "address": "918 Roosevelt Hwy, Hilton, NY 14468, United States",
+                "customerType": "Convenience"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.461392,
+                    43.100852
+                ]
+            },
+            "properties": {
+                "id": 40,
+                "Name": "quicklee's #26",
+                "address": "1311 Fairport Rd, Fairport, NY 14450, United States",
+                "customerType": "Convenience"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.667242,
+                    43.002431
+                ]
+            },
+            "properties": {
+                "id": 41,
+                "Name": "rush market",
+                "address": "7283 W Henrietta Rd, Rush, NY 14543, United States",
+                "customerType": "Convenience"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.585054,
+                    43.141956
                 ]
             },
             "properties": {
                 "id": 42,
-                "Name": "a+ mini market",
-                "address": "900 S Washington St, East Rochester, NY 14445, United States",
+                "Name": "7-11 store # 35197",
+                "address": "890 Monroe Ave, Rochester, NY 14620, United States",
                 "customerType": "Convenience"
             }
         },
@@ -710,14 +710,414 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
+                    -77.496651,
+                    43.110513
+                ]
+            },
+            "properties": {
+                "id": 44,
+                "Name": "a+ mini market",
+                "address": "900 S Washington St, East Rochester, NY 14445, United States",
+                "customerType": "Convenience"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.410013,
+                    43.064657
+                ]
+            },
+            "properties": {
+                "id": 45,
+                "Name": "tr noonans",
+                "address": "7408 Pittsford Palmyra Rd, Fairport, NY 14450, United States",
+                "customerType": "Bar"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.619047,
+                    43.122421
+                ]
+            },
+            "properties": {
+                "id": 46,
+                "Name": "the beer markt/beerhd bar",
+                "address": "1401 Mount Hope Ave, Rochester, NY 14620, United States",
+                "customerType": "Bar"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.800892,
+                    43.192929
+                ]
+            },
+            "properties": {
+                "id": 47,
+                "Name": "mccolley's",
+                "address": "89 S Union St, Spencerport, NY 14559, United States",
+                "customerType": "Bar"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.548472,
+                    43.158501
+                ]
+            },
+            "properties": {
+                "id": 48,
+                "Name": "jj's pub",
+                "address": "669 Winton Rd N, Rochester, NY 14609, United States",
+                "customerType": "Bar"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.060573,
+                    42.958356
+                ]
+            },
+            "properties": {
+                "id": 49,
+                "Name": "waterside sprts wine bar",
+                "address": "125 Main St, Phelps, NY 14532, United States",
+                "customerType": "Bar"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.095736,
+                    43.06107
+                ]
+            },
+            "properties": {
+                "id": 50,
+                "Name": "joey's northside grocery",
+                "address": "1148 N Main St, Newark, NY 14513, United States",
+                "customerType": "Retail"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.609027,
+                    43.069588
+                ]
+            },
+            "properties": {
+                "id": 51,
+                "Name": "beers of the world",
+                "address": "2599 E Henrietta Rd, Rochester, NY 14623, United States",
+                "customerType": "Recreation"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.633968,
+                    43.093251
+                ]
+            },
+            "properties": {
+                "id": 52,
+                "Name": "southtown bev drive-thru",
+                "address": "2933 W Henrietta Rd, Rochester, NY 14623, United States",
+                "customerType": "Recreation"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.940113,
+                    43.216701
+                ]
+            },
+            "properties": {
+                "id": 53,
+                "Name": "the red jug pub",
+                "address": "38 Merchants St, Brockport, NY 14420, United States",
+                "customerType": "Bar"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -76.980002,
+                    43.270071
+                ]
+            },
+            "properties": {
+                "id": 54,
+                "Name": "capt' jacks goodtime tav",
+                "address": "8505 Greig St, Sodus Point, NY 14555, United States",
+                "customerType": "Bar"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.6693881,
+                    42.8212159
+                ]
+            },
+            "properties": {
+                "id": 55,
+                "Name": "ember woodfire grill",
+                "address": "Ember Woodfire Grill, 21, Commercial Street, Village of Livonia, Town of Livonia, Livingston County, New York, 14487, United States",
+                "customerType": "Bar"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.8071365,
+                    43.120838
+                ]
+            },
+            "properties": {
+                "id": 56,
+                "Name": "food towne of n.chili",
+                "address": "Food Towne Market, 4390, Buffalo Road, North Chili, Town of Chili, Monroe County, New York, 14514, United States",
+                "customerType": "Grocery"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.695747,
+                    43.264463
+                ]
+            },
+            "properties": {
+                "id": 57,
+                "Name": "north greece grocery",
+                "address": "502 Long Pond Rd, Rochester, NY 14612, United States",
+                "customerType": "Grocery"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.557782,
+                    43.12085
+                ]
+            },
+            "properties": {
+                "id": 58,
+                "Name": "r's market",
+                "address": "2294 Monroe Ave, Rochester, NY 14618, United States",
+                "customerType": "Grocery"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.549112,
+                    43.159719
+                ]
+            },
+            "properties": {
+                "id": 59,
+                "Name": "tryon city tavern",
+                "address": "2300 E Main St, Rochester, NY 14609, United States",
+                "customerType": "Retail"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.557402,
+                    43.159795
+                ]
+            },
+            "properties": {
+                "id": 60,
+                "Name": "kerny's pub",
+                "address": "2001 E Main St, Rochester, NY 14609, United States",
+                "customerType": "Retail"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
                     -77.582429,
                     43.198395
                 ]
             },
             "properties": {
-                "id": 44,
+                "id": 61,
                 "Name": "rubino italian foods",
                 "address": "1304 E Ridge Rd, Rochester, NY 14621, United States",
+                "customerType": "Recreation"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.597434,
+                    43.246356
+                ]
+            },
+            "properties": {
+                "id": 62,
+                "Name": "lakeside deli & more llc",
+                "address": "4888 Saint Paul Blvd, Rochester, NY 14617, United States",
+                "customerType": "Recreation"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.6055307,
+                    43.2534066
+                ]
+            },
+            "properties": {
+                "id": 63,
+                "Name": "rochester yacht club",
+                "address": "Rochester Yacht Club, 5555, Saint Paul Boulevard, Summerville, City of Rochester, Monroe County, New York, 14617, United States",
+                "customerType": "Recreation"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.621132,
+                    43.044178
+                ]
+            },
+            "properties": {
+                "id": 64,
+                "Name": "fireside grill&sports bar",
+                "address": "3939 E Henrietta Rd, Henrietta, NY 14467, United States",
+                "customerType": "Bar"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.586263,
+                    43.1497559
+                ]
+            },
+            "properties": {
+                "id": 65,
+                "Name": "half pint",
+                "address": "Half Pint Pub, 363, Park Avenue, City of Rochester, Monroe County, New York, 14607, United States",
+                "customerType": "Bar"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.6959151,
+                    43.2417612
+                ]
+            },
+            "properties": {
+                "id": 66,
+                "Name": "flight west",
+                "address": "Flight West, 836, Long Pond Road, City of Rochester, Monroe County, New York, 14612, United States",
+                "customerType": "Bar"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.5513849,
+                    43.2050778
+                ]
+            },
+            "properties": {
+                "id": 67,
+                "Name": "aman's farm market",
+                "address": "Aman's Farm & Market, 2458, East Ridge Road, City of Rochester, Monroe County, New York, 14622, United States",
+                "customerType": "Retail"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.565563,
+                    43.150418
+                ]
+            },
+            "properties": {
+                "id": 68,
+                "Name": "muller's cider house",
+                "address": "1344 University Ave, Rochester, NY 14607, United States",
+                "customerType": "Bar"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.5610243,
+                    43.1503743
+                ]
+            },
+            "properties": {
+                "id": 69,
+                "Name": "radio social",
+                "address": "Radio Social, 20, Carlson Road, North Winton Village, City of Rochester, Monroe County, New York, 14610, United States",
                 "customerType": "Recreation"
             }
         },
@@ -731,7 +1131,7 @@
                 ]
             },
             "properties": {
-                "id": 45,
+                "id": 70,
                 "Name": "fattey beer company",
                 "address": "60 Adventure Pl, Rochester, NY 14607, United States",
                 "customerType": "Retail"
@@ -742,14 +1142,46 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.5513849,
-                    43.2050778
+                    -77.700141,
+                    43.188297
                 ]
             },
             "properties": {
-                "id": 46,
-                "Name": "aman's farm market",
-                "address": "Aman's Farm & Market, 2458, East Ridge Road, City of Rochester, Monroe County, New York, 14622, United States",
+                "id": 71,
+                "Name": "one stop brew shop",
+                "address": "2512 Ridgeway Ave, Rochester, NY 14626, United States",
+                "customerType": "Convenience"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.054286,
+                    42.659148
+                ]
+            },
+            "properties": {
+                "id": 72,
+                "Name": "union block italian",
+                "address": "138 Water St, Penn Yan, NY 14527, United States",
+                "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.440527,
+                    43.10211
+                ]
+            },
+            "properties": {
+                "id": 73,
+                "Name": "mulconrys irish pub&rest.",
+                "address": "17 Liftbridge Ln E, Fairport, NY 14450, United States",
                 "customerType": "Retail"
             }
         },
@@ -763,7 +1195,7 @@
                 ]
             },
             "properties": {
-                "id": 47,
+                "id": 74,
                 "Name": "club at clifton llc",
                 "address": "2721 Manchester Hopewell Townline Rd, Clifton Springs, NY 14432, United States",
                 "customerType": "Golf"
@@ -774,15 +1206,15 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.054286,
-                    42.659148
+                    -77.507078,
+                    43.192257
                 ]
             },
             "properties": {
-                "id": 48,
-                "Name": "union block italian",
-                "address": "138 Water St, Penn Yan, NY 14527, United States",
-                "customerType": "Restaurant"
+                "id": 75,
+                "Name": "salvatores pizzeria",
+                "address": "1217 Bay Rd, Webster, NY 14580, United States",
+                "customerType": "Retail"
             }
         },
         {
@@ -795,7 +1227,7 @@
                 ]
             },
             "properties": {
-                "id": 49,
+                "id": 76,
                 "Name": "country club of rochester",
                 "address": "2935 East Ave, Rochester, NY 14610, United States",
                 "customerType": "Golf"
@@ -806,15 +1238,15 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.6959151,
-                    43.2417612
+                    -77.714884,
+                    43.253744
                 ]
             },
             "properties": {
-                "id": 50,
-                "Name": "flight west",
-                "address": "Flight West, 836, Long Pond Road, City of Rochester, Monroe County, New York, 14612, United States",
-                "customerType": "Bar"
+                "id": 77,
+                "Name": "countryside convenience",
+                "address": "3366 Latta Rd, Rochester, NY 14612, United States",
+                "customerType": "Retail"
             }
         }
     ]
