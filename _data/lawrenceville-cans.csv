@@ -1,11 +1,11 @@
 variant,cansAvailable,name,salePrice,type,abv,cansSingle,fourPack
-samo,FALSE,Samo,FALSE,Pilsner,4.8,4.00,15
-costilla,FALSE,Costilla,FALSE,Mexican Dark Lager,4.8,4.00,15
+,FALSE,,FALSE,,,,
+,FALSE,,FALSE,,,,
 glyphs,TRUE,Glyphs,FALSE,Pale Ale,5,4.00,15
 summer-lupula,TRUE,Summer Lupula,FALSE,India Pale Ale,6,4.50,17
-vindobona,FALSE,Vindobona,FALSE,Vienna Lager,6.3,4.25,16
-grandar,FALSE,Grandar,FALSE,Imperial Pilsner,6.6,4.25,16
-daltonico,TRUE,Daltonico,FALSE,Black IPA,6.8,4.50,17
+,FALSE,,FALSE,,,,
+,FALSE,,FALSE,,,,
+,FALSE,,FALSE,,,,
 prismatic,TRUE,Prismatic,FALSE,India Pale Ale,7,4.50,17
 lupula,TRUE,Lupula,FALSE,India Pale Ale,7,4.50,17
 taupo,TRUE,Taupō,FALSE,India Pale Ale,7,4.50,17
