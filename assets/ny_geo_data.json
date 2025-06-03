@@ -38,14 +38,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.556047,
-                    43.146177
+                    -77.53318349,
+                    43.1325255
                 ]
             },
             "properties": {
                 "id": 2,
                 "Name": "wegman's #18 east ave",
-                "address": "1750 East Ave, Rochester, NY 14610, United States",
+                "address": "East Ave, Rochester, NY 14610, United States",
                 "customerType": "Grocery"
             }
         },
@@ -62,6 +62,22 @@
                 "id": 3,
                 "Name": "wegman's #68 chili-paul",
                 "address": "3175 Chili Ave, Rochester, NY 14624, United States",
+                "customerType": "Grocery"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.255088,
+                    42.87558
+                ]
+            },
+            "properties": {
+                "id": 4,
+                "Name": "wegmans store #11/cdga.",
+                "address": "345 Eastern Blvd, Canandaigua, NY 14424, United States",
                 "customerType": "Grocery"
             }
         },
