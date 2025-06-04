@@ -1382,8 +1382,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -79.93537925,
-                    40.48904585
+                    -79.9336922,
+                    40.48915365
                 ]
             },
             "properties": {
@@ -1455,22 +1455,6 @@
                 "Name": "federal galley",
                 "address": "100 S Commons, Pittsburgh, PA 15212, United States",
                 "customerType": "Restaurant"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -79.947331,
-                    40.46048
-                ]
-            },
-            "properties": {
-                "id": 101,
-                "Name": "fet-fisk",
-                "address": "4786 Liberty Ave, Pittsburgh, PA 15224, United States",
-                "customerType": "Bar"
             }
         },
         {
