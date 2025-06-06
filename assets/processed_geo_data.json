@@ -214,22 +214,6 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -80.315322,
-                    40.661199
-                ]
-            },
-            "properties": {
-                "id": 16,
-                "Name": "beaver county beer",
-                "address": "3618 Brodhead Rd, Monaca, PA 15061, United States",
-                "customerType": "Home-D"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
                     -80.146806,
                     42.102789
                 ]
