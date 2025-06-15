@@ -1254,14 +1254,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -80.113183,
-                    40.357198
+                    -80.11450195,
+                    40.34526825
                 ]
             },
             "properties": {
                 "id": 88,
                 "Name": "crafty jackalope",
-                "address": "608 Washington Ave, Bridgeville, PA 15017, United States",
+                "address": "Bridgeville, PA 15017, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -1270,14 +1270,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -80.149232,
-                    40.613948
+                    -80.14306641,
+                    40.55991364
                 ]
             },
             "properties": {
                 "id": 89,
                 "Name": "creekside beer",
-                "address": "2175 Big Sewickley Creek Rd, Sewickley, PA 15143, United States",
+                "address": "Sewickley, PA 15143, United States",
                 "customerType": "Home-D"
             }
         },
