@@ -118,8 +118,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -75.131791,
-                    40.3398977
+                    -75.131285,
+                    40.3403432
                 ]
             },
             "properties": {
@@ -1222,14 +1222,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -75.312723,
-                    39.92384
+                    -75.33870697,
+                    39.92736816
                 ]
             },
             "properties": {
                 "id": 86,
                 "Name": "craft beer store",
-                "address": "35 Baltimore Pike, Springfield, PA 19064, United States",
+                "address": "Springfield, PA 19064, United States",
                 "customerType": "Restaurant"
             }
         },
