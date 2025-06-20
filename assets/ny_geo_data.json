@@ -29,7 +29,7 @@
             "properties": {
                 "id": 1,
                 "Name": "wegman's #67  titus",
-                "address": "525 Titus Ave, Rochester, NY 14617, United States",
+                "address": "525 Titus Avenue, Rochester, NY 14617, United States",
                 "customerType": "Grocery"
             }
         },
@@ -205,7 +205,7 @@
             "properties": {
                 "id": 12,
                 "Name": "wegman's #20 mt read",
-                "address": "3701 Mount Read Blvd, Rochester, NY 14616, United States",
+                "address": "3701 Mount Read Boulevard, Rochester, NY 14616, United States",
                 "customerType": "Grocery"
             }
         },
@@ -445,7 +445,7 @@
             "properties": {
                 "id": 27,
                 "Name": "the basin pub",
-                "address": "637 Pittsford Victor Rd, Pittsford, NY 14534, United States",
+                "address": "637 Pittsford Victor Road, Pittsford, NY 14534, United States",
                 "customerType": "Restaurant"
             }
         },
