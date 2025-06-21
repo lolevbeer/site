@@ -13,7 +13,7 @@
             "properties": {
                 "id": 0,
                 "Name": "wegman's #25 pittsford",
-                "address": "3195 Monroe Ave, Pittsford, NY 14618, United States",
+                "address": "3195 Monroe Avenue, Pittsford, NY 14618, United States",
                 "customerType": "Grocery"
             }
         },
@@ -29,7 +29,7 @@
             "properties": {
                 "id": 1,
                 "Name": "wegman's #67  titus",
-                "address": "525 Titus Avenue, Rochester, NY 14617, United States",
+                "address": "525 Titus Ave, Rochester, NY 14617, United States",
                 "customerType": "Grocery"
             }
         },
@@ -38,8 +38,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.55775305,
-                    43.1460441
+                    -77.55499731,
+                    43.14536348
                 ]
             },
             "properties": {
@@ -61,7 +61,7 @@
             "properties": {
                 "id": 3,
                 "Name": "wegman's #68 chili-paul",
-                "address": "3175 Chili Ave, Rochester, NY 14624, United States",
+                "address": "3175 Chili Avenue, Rochester, NY 14624, United States",
                 "customerType": "Grocery"
             }
         },
@@ -141,7 +141,7 @@
             "properties": {
                 "id": 8,
                 "Name": "wegman's #03 empire",
-                "address": "1950 Empire Blvd, Webster, NY 14580, United States",
+                "address": "1950 Empire Boulevard, Webster, NY 14580, United States",
                 "customerType": "Grocery"
             }
         },
@@ -205,7 +205,7 @@
             "properties": {
                 "id": 12,
                 "Name": "wegman's #20 mt read",
-                "address": "3701 Mount Read Boulevard, Rochester, NY 14616, United States",
+                "address": "3701 Mount Read Blvd, Rochester, NY 14616, United States",
                 "customerType": "Grocery"
             }
         },
@@ -445,7 +445,7 @@
             "properties": {
                 "id": 27,
                 "Name": "the basin pub",
-                "address": "637 Pittsford Victor Road, Pittsford, NY 14534, United States",
+                "address": "637 Pittsford Victor Rd, Pittsford, NY 14534, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -774,7 +774,7 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.548472,
+                    -77.54847,
                     43.158501
                 ]
             },
@@ -807,13 +807,13 @@
                 "type": "Point",
                 "coordinates": [
                     -77.095736,
-                    43.06107
+                    43.061068
                 ]
             },
             "properties": {
                 "id": 50,
                 "Name": "joey's northside grocery",
-                "address": "1148 N Main St, Newark, NY 14513, United States",
+                "address": "1148 N Main Street, Newark, NY 14513, United States",
                 "customerType": "Retail"
             }
         },
@@ -1149,7 +1149,7 @@
             "properties": {
                 "id": 71,
                 "Name": "one stop brew shop",
-                "address": "2512 Ridgeway Ave, Rochester, NY 14626, United States",
+                "address": "2512 Ridgeway Avenue, Rochester, NY 14626, United States",
                 "customerType": "Convenience"
             }
         },
