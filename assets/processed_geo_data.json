@@ -230,8 +230,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -80.146798,
-                    42.102786
+                    -80.146806,
+                    42.102789
                 ]
             },
             "properties": {
@@ -2422,8 +2422,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -75.984038,
-                    39.775835
+                    -75.984037,
+                    39.775834
                 ]
             },
             "properties": {
@@ -2598,14 +2598,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -75.37896559,
-                    40.63104044
+                    -75.377167,
+                    40.631078
                 ]
             },
             "properties": {
                 "id": 187,
                 "Name": "pints and pies",
-                "address": "21 Elizabeth Ave, Bethlehem, PA 18018, United States",
+                "address": "21 E Elizabeth Ave, Bethlehem, PA 18018, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -2822,8 +2822,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -76.5168,
-                    40.113478
+                    -76.516798,
+                    40.113485
                 ]
             },
             "properties": {
@@ -3031,7 +3031,7 @@
                 "type": "Point",
                 "coordinates": [
                     -75.577618,
-                    39.968385
+                    39.968387
                 ]
             },
             "properties": {
@@ -3069,7 +3069,7 @@
             "properties": {
                 "id": 222,
                 "Name": "super sub and six pak",
-                "address": "85 McCracken Run Road, DuBois, PA 15801, United States",
+                "address": "85 McCracken Run Rd, Du Bois, PA 15801, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -3238,8 +3238,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -76.981526,
-                    39.799644
+                    -76.98154,
+                    39.799667
                 ]
             },
             "properties": {
@@ -3366,8 +3366,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -79.944143,
-                    40.497627
+                    -79.944147,
+                    40.497597
                 ]
             },
             "properties": {
@@ -3430,14 +3430,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -75.48530228,
-                    40.04234507
+                    -75.485676,
+                    40.042751
                 ]
             },
             "properties": {
                 "id": 251,
                 "Name": "tj's restaurant & drinkery",
-                "address": "39 Paoli Plaza, Paoli, PA 19301, United States",
+                "address": "35 Paoli Plaza, Paoli, PA 19301, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -3606,8 +3606,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -75.72705,
-                    41.358664
+                    -75.727049,
+                    41.358666
                 ]
             },
             "properties": {
