@@ -86,8 +86,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.6508115,
-                    39.9371675
+                    -77.64269164,
+                    39.93385976
                 ]
             },
             "properties": {
@@ -902,14 +902,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -79.83049046,
-                    40.60102434
+                    -79.832538,
+                    40.608306
                 ]
             },
             "properties": {
                 "id": 63,
                 "Name": "brewski's_2",
-                "address": "908 Little Deer Creek Valley Rd, Russellton, PA 15024-2144, United States",
+                "address": "908 Little Deer Creek Valley Rd, Russellton, PA 15076, United States",
                 "customerType": "Home-D"
             }
         },
@@ -3398,8 +3398,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -75.70722117,
-                    41.38595345
+                    -75.70904125,
+                    41.3843167
                 ]
             },
             "properties": {
