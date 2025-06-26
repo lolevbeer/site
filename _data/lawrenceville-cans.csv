@@ -1,9 +1,9 @@
 variant,cansAvailable,name,salePrice,type,abv,cansSingle,fourPack
 ,FALSE,,FALSE,,,,
-,FALSE,,FALSE,,,,
+,TRUE,,FALSE,,,,
 glyphs,TRUE,Glyphs,FALSE,Pale Ale,5,4.00,15
 summer-lupula,TRUE,Summer Lupula,FALSE,India Pale Ale,6,4.50,17
-samo,TRUE,Samo,FALSE,Pilsner,4.8,4.00,15
+akko,TRUE,Akko,FALSE,India Pale Ale,7,4.50,17
 rein,TRUE,Rein,FALSE,Helles Lager,4.9,4.00,15
 double-prismatic,TRUE,Double Prismatic,FALSE,Double IPA,8.8,5.25,20
 prismatic,TRUE,Prismatic,FALSE,India Pale Ale,7,4.50,17
