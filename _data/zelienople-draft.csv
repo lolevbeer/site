@@ -5,8 +5,8 @@ tap,variant,singleCanAvailable,name,type,abv,glass,price,description,image,hops
 4,summer-Lupula,FALSE,Summer Lupula,India Pale Ale,6,pint,7,"Summer variant of Lupula, lower alcohol, more citrus-forward. Pineapple and mango.",TRUE,58
 5,daltonico,FALSE,Daltonico,Black IPA,6.8,pint,7,"Slightly roasty body, with notes of subtle pine, citrus, with chocolate undertones.",TRUE,79
 6,taupo,FALSE,Taupō,India Pale Ale,7,pint,7,"Tropical passion fruit, red grapefruit, and zested orange.",TRUE,32
-7,wairu,FALSE,Wairua,India Pale Ale,7,pint,7,"Collaboration with our friends at Swiftwater Brewing. Pineapple, juicy citrus, mango, and stone fruit.",TRUE,
+7,,FALSE,,,,,,,,
 8,prismatic,FALSE,Prismatic,India Pale Ale,7,pint,7,"Pineapple, vanilla, tangerine, melon.",TRUE,43
 9,rubico,FALSE,Rubico,Double IPA,8.5,pint,8,"Pineapple, peach rings, bubblegum, strawberry and citrus.",TRUE,39
 10,double-prismatic,FALSE,Double Prismatic,Double IPA,8.8,pint,8,"Tangerine zest, pineapple, raspberry, and lemongrass.",TRUE,62
-11,,FALSE,,,,,,,,
+11,edo,FALSE,Edo,Japanese Rice Lager,4.5,stein,6,"Crisp, gentle, and easy drinking from a rice malt base, this lager has floral and herbal notes, finishing dry and refreshingly smooth.",TRUE,81
