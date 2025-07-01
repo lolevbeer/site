@@ -38,14 +38,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.556047,
-                    43.146177
+                    -77.53713065,
+                    43.13571905
                 ]
             },
             "properties": {
                 "id": 2,
                 "Name": "wegman's #18 east ave",
-                "address": "1750 East Ave, Rochester, NY 14610, United States",
+                "address": "East Ave, Rochester, NY 14610, United States",
                 "customerType": "Grocery"
             }
         },
@@ -166,8 +166,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.09867608,
-                    43.04563465
+                    -77.10002,
+                    43.045598
                 ]
             },
             "properties": {
@@ -574,22 +574,6 @@
                 "id": 35,
                 "Name": "the vesper",
                 "address": "1 Capron St, Rochester, NY 14607, United States",
-                "customerType": "Restaurant"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -77.443949,
-                    43.10525
-                ]
-            },
-            "properties": {
-                "id": 36,
-                "Name": "compane",
-                "address": "25 Parce Ave, Fairport, NY 14450, United States",
                 "customerType": "Restaurant"
             }
         },
