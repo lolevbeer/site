@@ -38,8 +38,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.53713065,
-                    43.13571905
+                    -77.55775305,
+                    43.1460441
                 ]
             },
             "properties": {
@@ -574,6 +574,22 @@
                 "id": 35,
                 "Name": "the vesper",
                 "address": "1 Capron St, Rochester, NY 14607, United States",
+                "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.443949,
+                    43.10525
+                ]
+            },
+            "properties": {
+                "id": 36,
+                "Name": "compane",
+                "address": "25 Parce Ave, Fairport, NY 14450, United States",
                 "customerType": "Restaurant"
             }
         },
