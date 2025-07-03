@@ -3702,14 +3702,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -75.727049,
-                    41.358666
+                    -75.73102975,
+                    41.36714615
                 ]
             },
             "properties": {
                 "id": 279,
                 "Name": "what's brewin 6-pack ale shoppe",
-                "address": "937 Moosic Rd, Old Forge, PA 18518, United States",
+                "address": "Moosic Rd, Old Forge, PA 18518, United States",
                 "customerType": "Six Pack Shop"
             }
         },
