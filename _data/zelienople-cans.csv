@@ -1,6 +1,6 @@
 variant,cansAvailable,name,salePrice,type,abv,cansSingle,fourPack
 edo,TRUE,Edo,FALSE,Japanese Rice Lager,4.5,4.00,15
-rein,TRUE,Rein,FALSE,Helles Lager,4.9,4.00,15
+rein,FALSE,Rein,FALSE,Helles Lager,4.9,4.00,15
 glyphs,FALSE,Glyphs,FALSE,Pale Ale,5,4.00,15
 akko,TRUE,Akko,FALSE,India Pale Ale,7,4.50,17
 double-prismatic,TRUE,Double Prismatic,FALSE,Double IPA,8.8,5.25,20
