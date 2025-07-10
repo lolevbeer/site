@@ -1,7 +1,7 @@
 "tap","variant","singleCanAvailable","name","type","abv","glass","price","description","image","hops"
 "1","edo","FALSE","Edo","Japanese Rice Lager","4.5","stein","6","Crisp, gentle, and easy drinking from a rice malt base, this lager has floral and herbal notes, finishing dry and refreshingly smooth.","TRUE","81"
 "2","samo","FALSE","Samo","Pilsner","4.8","stein","6","Pours pale gold with subtle bread aromas, balanced by floral and spicy notes and a touch of lemon zest.","TRUE","75"
-"3","","FALSE","","","","","","","",""
+"3","wairu","FALSE","Wairua","India Pale Ale","7","pint","7","Collaboration with our friends at Swiftwater Brewing. Pineapple, juicy citrus, mango, and stone fruit.","TRUE",""
 "4","akko","FALSE","Akko","India Pale Ale","7","pint","7","Pineapple and orange mango, bursting with peach ring candies. ","TRUE","80"
 "5","prismatic","FALSE","Prismatic","India Pale Ale","7","pint","7","Pineapple, vanilla, tangerine, melon.","TRUE","43"
 "6","lupula","FALSE","Lupula","India Pale Ale","7","pint","7","Pineapple, mango, and grapefruit. Aromatic.","TRUE","12"
