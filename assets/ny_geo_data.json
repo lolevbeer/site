@@ -1,0 +1,181 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.5484604,
+                    43.1575256
+                ]
+            },
+            "properties": {
+                "id": 23,
+                "Name": "lucky's",
+                "address": "Lucky's, 628, North Winton Road, Browncroft, City of Rochester, Monroe County, New York, 14609, United States",
+                "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.6020446,
+                    43.0865814
+                ]
+            },
+            "properties": {
+                "id": 26,
+                "Name": "jeremiah's tavern",
+                "address": "Jeremiah's Tavern, 1175, Jefferson Road, Ridgeland, City of Rochester, Monroe County, New York, 14623, United States",
+                "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.5670386,
+                    43.1291214
+                ]
+            },
+            "properties": {
+                "id": 28,
+                "Name": "the sheffield",
+                "address": "The Sheffield, 1776, Monroe Avenue, Roselawn, Twelve Corners, City of Rochester, Monroe County, New York, 14618, United States",
+                "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.5763128,
+                    43.1423079
+                ]
+            },
+            "properties": {
+                "id": 30,
+                "Name": "trata",
+                "address": "TRATA, 145, Culver Road, ABC Streets Neighborhood, City of Rochester, Monroe County, New York, 14620, United States",
+                "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.6693881,
+                    42.8212159
+                ]
+            },
+            "properties": {
+                "id": 55,
+                "Name": "ember woodfire grill",
+                "address": "Ember Woodfire Grill, 21, Commercial Street, Village of Livonia, Town of Livonia, Livingston County, New York, 14487, United States",
+                "customerType": "Bar"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.8071365,
+                    43.120838
+                ]
+            },
+            "properties": {
+                "id": 56,
+                "Name": "food towne of n.chili",
+                "address": "Food Towne Market, 4390, Buffalo Road, North Chili, Town of Chili, Monroe County, New York, 14514, United States",
+                "customerType": "Grocery"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.6055307,
+                    43.2534066
+                ]
+            },
+            "properties": {
+                "id": 63,
+                "Name": "rochester yacht club",
+                "address": "Rochester Yacht Club, 5555, Saint Paul Boulevard, Summerville, City of Rochester, Monroe County, New York, 14617, United States",
+                "customerType": "Recreation"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.586263,
+                    43.1497559
+                ]
+            },
+            "properties": {
+                "id": 65,
+                "Name": "half pint",
+                "address": "Half Pint Pub, 363, Park Avenue, City of Rochester, Monroe County, New York, 14607, United States",
+                "customerType": "Bar"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.6959151,
+                    43.2417612
+                ]
+            },
+            "properties": {
+                "id": 66,
+                "Name": "flight west",
+                "address": "Flight West, 836, Long Pond Road, City of Rochester, Monroe County, New York, 14612, United States",
+                "customerType": "Bar"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.5513849,
+                    43.2050778
+                ]
+            },
+            "properties": {
+                "id": 67,
+                "Name": "aman's farm market",
+                "address": "Aman's Farm & Market, 2458, East Ridge Road, City of Rochester, Monroe County, New York, 14622, United States",
+                "customerType": "Retail"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.5610243,
+                    43.1503743
+                ]
+            },
+            "properties": {
+                "id": 69,
+                "Name": "radio social",
+                "address": "Radio Social, 20, Carlson Road, North Winton Village, City of Rochester, Monroe County, New York, 14610, United States",
+                "customerType": "Recreation"
+            }
+        }
+    ]
+}
