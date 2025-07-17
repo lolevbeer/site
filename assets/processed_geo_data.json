@@ -54,22 +54,6 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -80.093033,
-                    40.440873
-                ]
-            },
-            "properties": {
-                "id": 16,
-                "Name": "beer express pgh",
-                "address": "4326 steubenville pk, pittsburgh, pa 15205",
-                "customerType": "Home-D"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
                     -80.083836,
                     40.363124
                 ]
