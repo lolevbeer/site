@@ -1,12 +1,12 @@
 variant,cansAvailable,name,salePrice,type,abv,cansSingle,fourPack
 edo,TRUE,Edo,FALSE,Japanese Rice Lager,4.5,4.00,15
-,FALSE,,FALSE,,,,
-,FALSE,,FALSE,,,,
+double-lupula,TRUE,Double Lupula,FALSE,Double IPA,8.4,5.25,20
+summer-lupula,TRUE,Summer Lupula,FALSE,India Pale Ale,6,4.50,17
 akko,TRUE,Akko,FALSE,India Pale Ale,7,4.50,17
 ,TRUE,,FALSE,,,,
 grandar,TRUE,Grandar,FALSE,Imperial Pilsner,6.6,4.25,16
 lupula,TRUE,Lupula,FALSE,India Pale Ale,7,4.50,17
-,TRUE,,FALSE,,,,
+double-prismatic,TRUE,Double Prismatic,FALSE,Double IPA,8.3,5.25,20
 taupo,TRUE,Taupō,FALSE,India Pale Ale,7,4.50,17
 rubico,TRUE,Rubico,FALSE,Double IPA,8.5,5.25,20
 priscus,TRUE,Priscus,FALSE,Double IPA,8.6,5.25,20
