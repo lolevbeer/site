@@ -81,4 +81,6 @@ daltonico,Daltonico,Black IPA,,6.8,pint,$7,$4.50,$17,"Slightly roasty body, with
 akko,Akko,India Pale Ale,,7,pint,$7,$4.50,$17,"Pineapple and orange mango, bursting with peach ring candies. ",,FALSE,TRUE,FALSE,,80,"Comet, , Galaxy®, Citra®"
 wairu,Wairua,India Pale Ale,,7,pint,$7,$4.50,$17,"Collaboration with our friends at Swiftwater Brewing. Pineapple, juicy citrus, mango, and stone fruit.",,FALSE,TRUE,TRUE,,,"Wai-iti™, Citra®, Motueka™, Moutere™, Riwaka™"
 edo,Edo,Japanese Rice Lager,,4.5,stein,$6,$4.00,$15,"Crisp, gentle, and easy drinking from a rice malt base, this lager has floral and herbal notes, finishing dry and refreshingly smooth.",,FALSE,TRUE,FALSE,,81,Hallertau Mittelfrüh
-phokas,Phokas,India Pale Ale,,6,pint,$7,$4.50,$17,"Tropical and citrusy with hints of pine and white grape. Light, juicy, and easy-drinking.",,FALSE,FALSE,FALSE,,82,
+phokas,Phokas,India Pale Ale,,6,pint,$7,$4.50,$17,"Tropical and citrusy with hints of pine and white grape. Light, juicy, and easy-drinking.",,FALSE,FALSE,FALSE,,82,"Mosaic®, Nelson Sauvin™, Idaho 7™"
+ddh-taupo,DDH Taupo,India Pale Ale,,,pint,$8,,,,,FALSE,FALSE,FALSE,,83,"Wakatu™, Riwaka™, Citra®, Simcoe®"
+ddh-akko,DDH Akko,India Pale Ale,,,pint,$8,,,,,FALSE,FALSE,FALSE,,84,"Mega Motueka™,Nelson Sauvin™, Citra®, Galaxy®"
