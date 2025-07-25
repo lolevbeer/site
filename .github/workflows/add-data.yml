@@ -19,18 +19,22 @@ jobs:
         continue-on-error: true
         run: |
           cd _data
-          curl -H "User-Agent: Mozilla/5.0 (compatible; DataFetcher/1.0)" -L -o lawrenceville-draft.csv "${{ vars.LAWRENCEVILLE_DRAFT }}"
-          curl -H "User-Agent: Mozilla/5.0 (compatible; DataFetcher/1.0)" -L -o lawrenceville-cans.csv "${{ vars.LAWRENCEVILLE_CANS }}"
-          curl -H "User-Agent: Mozilla/5.0 (compatible; DataFetcher/1.0)" -L -o lawrenceville-food.csv "${{ vars.LAWRENCEVILLE_FOOD }}"
-          curl -H "User-Agent: Mozilla/5.0 (compatible; DataFetcher/1.0)" -L -o lawrenceville-events.csv "${{ vars.LAWRENCEVILLE_EVENTS }}"
-          curl -H "User-Agent: Mozilla/5.0 (compatible; DataFetcher/1.0)" -L -o lawrenceville-hours.csv "${{ vars.LAWRENCEVILLE_HOURS }}"
-          curl -H "User-Agent: Mozilla/5.0 (compatible; DataFetcher/1.0)" -L -o zelienople-draft.csv "${{ vars.ZELIENOPLE_DRAFT }}"
-          curl -H "User-Agent: Mozilla/5.0 (compatible; DataFetcher/1.0)" -L -o zelienople-cans.csv "${{ vars.ZELIENOPLE_CANS }}"
-          curl -H "User-Agent: Mozilla/5.0 (compatible; DataFetcher/1.0)" -L -o zelienople-food.csv "${{ vars.ZELIENOPLE_FOOD }}"
-          curl -H "User-Agent: Mozilla/5.0 (compatible; DataFetcher/1.0)" -L -o zelienople-events.csv "${{ vars.ZELIENOPLE_EVENTS }}"
-          curl -H "User-Agent: Mozilla/5.0 (compatible; DataFetcher/1.0)" -L -o zelienople-hours.csv "${{ vars.ZELIENOPLE_HOURS }}"
-          curl -H "User-Agent: Mozilla/5.0 (compatible; DataFetcher/1.0)" -L -o beer.csv "${{ vars.BEER }}"
-          curl -H "User-Agent: Mozilla/5.0 (compatible; DataFetcher/1.0)" -L -o coming.csv "${{ vars.COMING }}"
+          
+          # Set common curl options
+          CURL_OPTS='-H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36" -H "Accept: text/csv,*/*" -L --max-redirs 5'
+          
+          curl $CURL_OPTS -o lawrenceville-draft.csv "${{ vars.LAWRENCEVILLE_DRAFT }}"
+          curl $CURL_OPTS -o lawrenceville-cans.csv "${{ vars.LAWRENCEVILLE_CANS }}"
+          curl $CURL_OPTS -o lawrenceville-food.csv "${{ vars.LAWRENCEVILLE_FOOD }}"
+          curl $CURL_OPTS -o lawrenceville-events.csv "${{ vars.LAWRENCEVILLE_EVENTS }}"
+          curl $CURL_OPTS -o lawrenceville-hours.csv "${{ vars.LAWRENCEVILLE_HOURS }}"
+          curl $CURL_OPTS -o zelienople-draft.csv "${{ vars.ZELIENOPLE_DRAFT }}"
+          curl $CURL_OPTS -o zelienople-cans.csv "${{ vars.ZELIENOPLE_CANS }}"
+          curl $CURL_OPTS -o zelienople-food.csv "${{ vars.ZELIENOPLE_FOOD }}"
+          curl $CURL_OPTS -o zelienople-events.csv "${{ vars.ZELIENOPLE_EVENTS }}"
+          curl $CURL_OPTS -o zelienople-hours.csv "${{ vars.ZELIENOPLE_HOURS }}"
+          curl $CURL_OPTS -o beer.csv "${{ vars.BEER }}"
+          curl $CURL_OPTS -o coming.csv "${{ vars.COMING }}"
 
           cd ..
           git config --local user.email "lolevbeer@gmail.com"
