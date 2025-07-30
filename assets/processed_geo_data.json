@@ -422,22 +422,6 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -79.997151,
-                    40.512535
-                ]
-            },
-            "properties": {
-                "id": 155,
-                "Name": "mike and tony's north hills",
-                "address": "2240 babcock blvd, pittsburgh, pa 15237",
-                "customerType": "Restaurant"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
                     -80.003941,
                     40.448001
                 ]
