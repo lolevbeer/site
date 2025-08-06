@@ -27,7 +27,7 @@ jobs:
           curl $CURL_OPTS -o lawrenceville-cans.csv "${{ vars.LAWRENCEVILLE_CANS }}"
           curl $CURL_OPTS -o lawrenceville-food.csv "${{ vars.LAWRENCEVILLE_FOOD }}"
           curl $CURL_OPTS -o lawrenceville-events.csv "${{ vars.LAWRENCEVILLE_EVENTS }}"
-          curl $CURL_OPTS -o lawrenceville-hours.csv "${{ vars.LAWRENCEVILLE_HOURS }}"
+          # curl $CURL_OPTS -o lawrenceville-hours.csv "${{ vars.LAWRENCEVILLE_HOURS }}"
           curl $CURL_OPTS -o zelienople-draft.csv "${{ vars.ZELIENOPLE_DRAFT }}"
           curl $CURL_OPTS -o zelienople-cans.csv "${{ vars.ZELIENOPLE_CANS }}"
           curl $CURL_OPTS -o zelienople-food.csv "${{ vars.ZELIENOPLE_FOOD }}"
