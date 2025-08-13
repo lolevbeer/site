@@ -15,28 +15,24 @@ jobs:
         uses: actions/checkout@v4.2.2
         with:
           token: ${{ github.token }}
-      - name: Get Remote Document
-        continue-on-error: true
+      - name: Download Remote Documents
+        env:
+          LAWRENCEVILLE_DRAFT: ${{ vars.LAWRENCEVILLE_DRAFT }}
+          LAWRENCEVILLE_CANS: ${{ vars.LAWRENCEVILLE_CANS }}
+          LAWRENCEVILLE_FOOD: ${{ vars.LAWRENCEVILLE_FOOD }}
+          LAWRENCEVILLE_EVENTS: ${{ vars.LAWRENCEVILLE_EVENTS }}
+          LAWRENCEVILLE_HOURS: ${{ vars.LAWRENCEVILLE_HOURS }}
+          ZELIENOPLE_DRAFT: ${{ vars.ZELIENOPLE_DRAFT }}
+          ZELIENOPLE_CANS: ${{ vars.ZELIENOPLE_CANS }}
+          ZELIENOPLE_FOOD: ${{ vars.ZELIENOPLE_FOOD }}
+          ZELIENOPLE_EVENTS: ${{ vars.ZELIENOPLE_EVENTS }}
+          ZELIENOPLE_HOURS: ${{ vars.ZELIENOPLE_HOURS }}
+          BEER: ${{ vars.BEER }}
+          COMING: ${{ vars.COMING }}
         run: |
-          cd _data
-          
-          # Set common curl options
-          CURL_OPTS='-H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36" -H "Accept: text/csv,*/*" -L --max-redirs 5'
-          
-          curl $CURL_OPTS -o lawrenceville-draft.csv "${{ vars.LAWRENCEVILLE_DRAFT }}"
-          curl $CURL_OPTS -o lawrenceville-cans.csv "${{ vars.LAWRENCEVILLE_CANS }}"
-          curl $CURL_OPTS -o lawrenceville-food.csv "${{ vars.LAWRENCEVILLE_FOOD }}"
-          curl $CURL_OPTS -o lawrenceville-events.csv "${{ vars.LAWRENCEVILLE_EVENTS }}"
-          # curl $CURL_OPTS -o lawrenceville-hours.csv "${{ vars.LAWRENCEVILLE_HOURS }}"
-          curl $CURL_OPTS -o zelienople-draft.csv "${{ vars.ZELIENOPLE_DRAFT }}"
-          curl $CURL_OPTS -o zelienople-cans.csv "${{ vars.ZELIENOPLE_CANS }}"
-          curl $CURL_OPTS -o zelienople-food.csv "${{ vars.ZELIENOPLE_FOOD }}"
-          curl $CURL_OPTS -o zelienople-events.csv "${{ vars.ZELIENOPLE_EVENTS }}"
-          curl $CURL_OPTS -o zelienople-hours.csv "${{ vars.ZELIENOPLE_HOURS }}"
-          curl $CURL_OPTS -o beer.csv "${{ vars.BEER }}"
-          curl $CURL_OPTS -o coming.csv "${{ vars.COMING }}"
-
-          cd ..
+          bash ingest/update-data.sh
+      - name: Commit and Push Changes
+        run: |
           git config --local user.email "lolevbeer@gmail.com"
           git config --local user.name "Lolev Manager"
           git add _data/*.csv
