@@ -1,13 +1,13 @@
 variant,cansAvailable,name,salePrice,type,abv,cansSingle,fourPack
 double-lupula,TRUE,Double Lupula,FALSE,Double IPA,8.4,5.25,20
-edo,TRUE,Edo,FALSE,Japanese Rice Lager,4.5,4.00,15
-glyphs,TRUE,Glyphs,FALSE,Pale Ale,5,4.00,15
+rooted,TRUE,Rooted,FALSE,Mexican Lager,4,4.00,15
+taupo,TRUE,Taupō,FALSE,India Pale Ale,7,4.50,17
 summer-lupula,TRUE,Summer Lupula,FALSE,India Pale Ale,6,4.50,17
 grandar,TRUE,Grandar,FALSE,Imperial Pilsner,6.6,4.25,16
-ddh-akko,TRUE,DDH Akko,FALSE,India Pale Ale,7,,18
+ddh-akko,TRUE,DDH Akko,FALSE,India Pale Ale,7,,20
 double-prismatic,TRUE,Double Prismatic,FALSE,Double IPA,8.3,5.25,20
-prismatic,TRUE,Prismatic,FALSE,India Pale Ale,7,4.50,17
+samo,TRUE,Samo,FALSE,Pilsner,4.8,4.00,15
 lupula,TRUE,Lupula,FALSE,India Pale Ale,7,4.50,17
-ddh-taupo,TRUE,DDH Taupō,FALSE,India Pale Ale,7,,18
+ddh-taupo,TRUE,DDH Taupō,FALSE,India Pale Ale,7,,20
 rubico,TRUE,Rubico,FALSE,Double IPA,8.5,5.25,20
 wairu,TRUE,Wairua,FALSE,India Pale Ale,7,4.50,17

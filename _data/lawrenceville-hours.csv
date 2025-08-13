@@ -1,8 +1,8 @@
 name,hours,day-code
-Monday,4pm - 10pm,1
-Tuesday,4pm - 10pm,2
-Wednesday,4pm - 10pm,3
-Thursday,4pm - 10pm,4
-Friday,noon - 12am,5
-Saturday,noon - 12am,6
-Sunday,noon - 9pm,0
+Mon,4pm - 10pm,1
+Tue,4pm - 10pm,2
+Wed,4pm - 10pm,3
+Thu,4pm - 10pm,4
+Fri,noon - 12am,5
+Sat,noon - 12am,6
+Sun,noon - 9pm,0
