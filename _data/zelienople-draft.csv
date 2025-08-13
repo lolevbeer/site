@@ -6,7 +6,7 @@ tap,variant,singleCanAvailable,name,type,abv,glass,price,description,image,hops
 5,phokas,FALSE,Phokas,India Pale Ale,6,pint,7,"Tropical and citrusy with hints of pine and white grape. Light, juicy, and easy-drinking.",FALSE,"Mosaic®, Nelson Sauvin™, Idaho 7™"
 6,ddh-taupo,FALSE,DDH Taupō,India Pale Ale,7,pint,8,"Double dry hopped with Wakatu™, Riwaka™, Citra®, Simcoe®",TRUE,"Wakatu™, Riwaka™, Citra®, Simcoe®"
 7,ddh-akko,FALSE,DDH Akko,India Pale Ale,7,pint,8,"Double dry hopped with Mega Motueka™, Nelson Sauvin™, Citra®, Galaxy®",TRUE,"Mega Motueka, Nelson Sauvin™, Citra®, Galaxy®"
-8,ddh-lupula,FALSE,DDH Lupula,India Pale Ale,7,pint,8,"Double dry hopped with Motueka™, Moutere™, and Riwaka™",FALSE,
+8,ddh-lupula,FALSE,DDH Lupula,India Pale Ale,7,pint,8,"Double dry hopped with Motueka™, Moutere™, and Riwaka™",TRUE,
 9,prismatic,FALSE,Prismatic,India Pale Ale,7,pint,7,"Pineapple, vanilla, tangerine, melon.",TRUE,"El Dorado®, Idaho 7™, Citra®"
 10,double-prismatic,FALSE,Double Prismatic,Double IPA,8.3,pint,8,"Tangerine zest, pineapple, raspberry, and lemongrass.",TRUE,"El Dorado®, Idaho 7™, Citra®"
 11,rubico,FALSE,Rubico,Double IPA,8.5,pint,8,"Pineapple, peach rings, bubblegum, strawberry and citrus.",TRUE,"Mosaic®, Galaxy®, Citra®"
