@@ -326,22 +326,6 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -75.160707,
-                    40.106441
-                ]
-            },
-            "properties": {
-                "id": 132,
-                "Name": "jerzee's sports bar",
-                "address": "2609 w mt carmel ave, glenside, pa 19038",
-                "customerType": "Bar"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
                     -80.051983,
                     40.533898
                 ]
