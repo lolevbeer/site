@@ -7,6 +7,7 @@ import time
 import os
 import csv
 import glob
+import urllib.parse
 
 def fetch_json(url):
     try:
@@ -26,39 +27,139 @@ def fetch_json(url):
         print("Response was not valid JSON:", response.text[:200])  # Print the first 200 characters
     return None
 
-def geocode_address_bing(address, customer):
-    print(f"Geocoding with Bing: {address}")
+def geocode_address_census(address, customer=None):
+    """
+    US Census Bureau Geocoder - Free, no API key required, very accurate for US addresses
+    https://geocoding.geo.census.gov/geocoder/
+    """
+    print(f"Geocoding with US Census: {address}")
+    
+    # Census geocoder works best with just the address (no business name)
+    # Parse the address to separate components if possible
+    address_parts = address.lower().strip()
+    
+    # Build the request
+    base_url = "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress"
+    params = {
+        'address': address_parts,
+        'benchmark': 'Public_AR_Current',  # Most current data
+        'format': 'json'
+    }
+    
+    try:
+        response = requests.get(base_url, params=params, timeout=10)
+        
+        if response.status_code == 200:
+            data = response.json()
+            
+            # Check if we got results
+            if data.get('result') and data['result'].get('addressMatches'):
+                matches = data['result']['addressMatches']
+                if len(matches) > 0:
+                    # Use the first match
+                    match = matches[0]
+                    coordinates = match.get('coordinates', {})
+                    
+                    if coordinates.get('x') and coordinates.get('y'):
+                        # Census returns x=longitude, y=latitude
+                        longitude = coordinates['x']
+                        latitude = coordinates['y']
+                        
+                        # Get the formatted address
+                        matched_address = match.get('matchedAddress', address)
+                        
+                        print(f"Found address with Census: {matched_address}")
+                        return [longitude, latitude], matched_address, True
+                    
+            print(f"Census geocoding returned no matches for: {address}")
+        else:
+            print(f"Census geocoder returned status code: {response.status_code}")
+            
+    except requests.exceptions.Timeout:
+        print(f"Census geocoder timeout for: {address}")
+    except Exception as e:
+        print(f"Error with Census geocoder for {address}: {e}")
+    
+    return None, None, False
+
+def geocode_address_bing_direct(address, customer):
+    """Direct Bing Maps REST API call instead of using geopy"""
+    print(f"Geocoding with Bing REST API: {address}")
     bing_key = os.getenv('BING')
-    print(f"Bing API key: {bing_key[:5]}...{bing_key[-5:] if bing_key and len(bing_key) > 10 else '(key too short or empty)'}")
     
     if not bing_key or bing_key == "YourBingMapsAPIKeyHere":
         print("ERROR: Invalid Bing API key. Please set a valid key in your .env file or environment variables.")
         return None, None, False
     
-    geolocator = Bing(bing_key, user_agent="lolev")
     try:
-        location = geolocator.geocode(customer + ', ' + address, timeout=10)
-        if location:
-            print(f"Found address with Bing: {location}")
-            return [location.longitude, location.latitude], location.address, True
+        # Use Bing Maps REST API directly
+        import urllib.parse
+        query = f"{customer}, {address}" if customer else address
+        encoded_query = urllib.parse.quote(query)
+        
+        url = f"http://dev.virtualearth.net/REST/v1/Locations?q={encoded_query}&key={bing_key}"
+        
+        response = requests.get(url, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            if data.get('resourceSets') and data['resourceSets'][0].get('resources'):
+                resource = data['resourceSets'][0]['resources'][0]
+                coordinates = resource.get('point', {}).get('coordinates', [])
+                if coordinates and len(coordinates) == 2:
+                    # Bing returns [latitude, longitude], we need [longitude, latitude]
+                    formatted_address = resource.get('name', address)
+                    print(f"Found address with Bing REST API: {formatted_address}")
+                    return [coordinates[1], coordinates[0]], formatted_address, True
+        elif response.status_code == 403:
+            print(f"ERROR: Bing Maps API returned 403 Forbidden. API key issues:")
+            print("  - Check if your key is valid at: https://www.bingmapsportal.com/")
+            print("  - Ensure the key is not expired")
+            print("  - Verify the key type supports REST API geocoding")
+            return None, None, False
         else:
-            print(f"Geocoding with Bing failed for address: {address}")
+            print(f"Bing REST API returned status code: {response.status_code}")
     except Exception as e:
-        print(f"Error geocoding with Bing {address}: {e}")
+        print(f"Error with Bing REST API for {address}: {e}")
+    
     return None, None, False
+
+def geocode_address_bing(address, customer):
+    """Try direct REST API call instead of geopy.Bing which has auth issues"""
+    return geocode_address_bing_direct(address, customer)
 
 def geocode_address_nominatim(address, customer):
     print(f"Geocoding with Nominatim: {address}")
     geolocator = Nominatim(user_agent="lolev")
-    try:
-        location = geolocator.geocode(customer + ', ' + address, timeout=10)
-        if location:
-            print(f"Found address with Nominatim: {location}")
-            return [location.longitude, location.latitude], location.address, True
-        else:
-            print(f"Geocoding with Nominatim failed for address: {address}")
-    except Exception as e:
-        print(f"Error geocoding with Nominatim {address}: {e}")
+    
+    # Try different query formats for better results
+    queries = [
+        f"{customer}, {address}",  # Original format
+        address,  # Just the address without customer name
+        # Clean up common abbreviations that Nominatim might not understand
+        address.replace(" pk,", " pike,")
+               .replace(" rd,", " road,")
+               .replace(" st,", " street,")
+               .replace(" ave,", " avenue,")
+               .replace(" blvd,", " boulevard,")
+               .replace(" hwy,", " highway,")
+               .replace(" dr,", " drive,")
+               .replace(" ln,", " lane,")
+               .replace(" pl,", " place,")
+    ]
+    
+    for query in queries:
+        try:
+            # Add a small delay to respect Nominatim's rate limits
+            time.sleep(1)
+            location = geolocator.geocode(query, timeout=10)
+            if location:
+                print(f"Found address with Nominatim: {location}")
+                return [location.longitude, location.latitude], location.address, True
+        except Exception as e:
+            print(f"Error geocoding with Nominatim {query}: {e}")
+            continue
+    
+    print(f"Geocoding with Nominatim failed for address: {address}")
     return None, None, False
 
 def geocode_address(address, customer, existing_data, pa_only=False, retries=3):
@@ -66,18 +167,26 @@ def geocode_address(address, customer, existing_data, pa_only=False, retries=3):
         if entry['properties']['address'] == address:
             return entry['geometry']['coordinates'], entry['properties']['address'], False
 
-    # Try Nominatim first as it doesn't require API key
-    coordinates, location, success = geocode_address_nominatim(address, customer)
+    # Try Census Geocoder first - it's free, no API key needed, and very accurate for US addresses
+    coordinates, location, success = geocode_address_census(address, customer)
     
-    # Fall back to Bing if Nominatim fails and we have a Bing key
+    # Fall back to Nominatim if Census fails
+    if not success:
+        print("Census geocoding failed, trying Nominatim...")
+        coordinates, location, success = geocode_address_nominatim(address, customer)
+    
+    # Fall back to Bing if both Census and Nominatim fail and we have a Bing key
     if not success and os.getenv('BING'):
         print("Nominatim geocoding failed, trying Bing...")
         coordinates, location, success = geocode_address_bing(address, customer)
 
     # If PA filter is enabled and we have a successful geocode, check for PA
-    if success and pa_only and "PA" not in location:
-        print(f"Discarding non-PA address: {location}")
-        return None, None, False
+    if success and pa_only:
+        # Check multiple variations since different geocoders format differently
+        location_upper = location.upper()
+        if not any(state in location_upper for state in [", PA,", ", PA ", ", PENNSYLVANIA", " PA ", " 19"]):
+            print(f"Discarding non-PA address: {location}")
+            return None, None, False
 
     return coordinates, location, success
 
@@ -213,8 +322,17 @@ def process_ingest_directory():
     return ny_data
 
 def main():
-    # Load environment variables
-    load_dotenv()
+    # Load environment variables - try multiple .env file locations
+    # Priority: .env.local > .env > environment variables
+    if os.path.exists('.env.local'):
+        load_dotenv('.env.local')
+        print("Loaded configuration from .env.local")
+    elif os.path.exists('.env'):
+        load_dotenv('.env')
+        print("Loaded configuration from .env")
+    else:
+        load_dotenv()  # This will still load from environment variables
+        print("Using environment variables (no .env file found)")
     
     # Debug environment variables
     print("Environment variables:")
