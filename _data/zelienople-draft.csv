@@ -1,6 +1,6 @@
 tap,variant,singleCanAvailable,name,type,abv,glass,price,description,image,hops
 1,vespero,FALSE,Vespero,Czech Dark Lager,5.8,stein,6,"Roasted chestnut, chocolate and raisin. Ruby hue and a hint of noble hops.",TRUE,Saaz
-2,rooted,FALSE,Rooted,Mexican Lager,4,stein,6,Barrel and Flow collaboration with Catapult Pgh. This light Mexican lager finishes dry with a subtle touch of lime zest.,TRUE,Motueka™ CGX™
+2,,FALSE,,,,,,,,
 3,sonnen,FALSE,Sonnen,Märzen,5.4,stein,6,"Plush tan head, a subtle sweetness of toasted malt, medium body.",TRUE,
 4,vindobona,FALSE,Vindobona,Vienna Lager,6.3,stein,6,"Hints of caramel and biscuit, balanced by mild earthy hops, a crisp medium-light body, and a clean, dry finish.",TRUE,"Callista, Saaz"
 5,phokas,FALSE,Phokas,India Pale Ale,6,pint,7,"Tropical and citrusy with hints of pine and white grape. Light, juicy, and easy-drinking.",FALSE,"Mosaic®, Nelson Sauvin™, Idaho 7™"
