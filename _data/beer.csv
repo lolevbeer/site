@@ -50,7 +50,7 @@ firnara,Firnara,West Coast IPA,,7.5,pint,$8,$4.50,$17,"Orange, lemon zest, dank,
 espressar,Espressar,Coffee Porter,,6.9,pint,$7,$4.50,$17,"Biscuity, toasty, caramel, coffee, and vanilla. Conditioned on Peruvian coffee beans.",850051366200,FALSE,TRUE,FALSE,,50,Helios™
 marty-ii,Marty II,Matcha Wheat Ale,,5.5,teku,$6,,,"Our annual St. Patrick's Day green beer, this year, built on top of heavy malt ratio of wheat. Adjuncted with Matcha.",,FALSE,FALSE,FALSE,,51,
 tros,Tros,Double IPA,,8,pint,$8,$5.25,$20,"Pineapple, mint, mandarin orange and mango.",850051366132,FALSE,TRUE,FALSE,,52,"Mosaic®, Enigma®, Eureka!™"
-faust,Faust,Imperial Plum Saison,,9.3,teku,$10,,,"Slightly sour, dry and oaky. Aged in oak foeders on our house microflora and conditioned on fresh plums.",,FALSE,FALSE,FALSE,,53,
+faust,Faust,Imperial Plum Saison,,9.3,teku,$10,,,"Slightly sour, dry and oaky. Our unfiltered Faust was aged 18 months in our oak foeders on our house microflora and then conditioned on plums.",,FALSE,FALSE,FALSE,,53,
 rein,Rein,Helles Lager,,4.9,stein,$6,$4.00,$15,Refreshing smooth malt backbone with fruit notes and floral aroma. ,850051366040,FALSE,TRUE,FALSE,,54,Callista
 hurron,Hurron,Double IPA,,8,pint,$8,$5.25,$20,"Enhanced with thiol-enriched Motueka from Freestyle Hops x Phantasm. Peach, pineapple and white grape. ",850051366132,FALSE,TRUE,FALSE,,55,"Mega Motueka, Citra®, Riwaka™, Moutere™"
 stark,Stark,Heller Bock Lager,,6.2,stein,$7,$4.00,$15,Rich maltiness with caramel and toast. Spice with floral aroma.,860009737631,FALSE,TRUE,FALSE,,56,Hallertauer Tradition
@@ -86,3 +86,4 @@ ddh-taupo,DDH Taupō,India Pale Ale,,7,pint,$8,,$20,"Double dry hopped variant o
 ddh-akko,DDH Akko,India Pale Ale,,7,pint,$8,,$20,"Double dry hopped variant of Akko. Pineapple and orange mango, bursting with peach ring candies. ",,FALSE,TRUE,FALSE,,84,"Mega Motueka, Nelson Sauvin™, Citra®, Galaxy®"
 rooted,Rooted,Mexican Lager,,4,stein,$6,$4.00,$15,Barrel and Flow collaboration with Catapult Pgh. This light Mexican lager finishes dry with a subtle touch of lime zest.,,FALSE,TRUE,FALSE,,85,Motueka™ CGX™
 ddh-lupula,DDH Lupula,India Pale Ale,,7,pint,$8,,$20,"Double dry hopped Lupula. Notes of Pineapple, mango, and grapefruit. Aromatic.",,FALSE,TRUE,FALSE,,86,"Motueka™, Moutere™, Riwaka™"
+faust-unfiltered-25,Faust,Imperial Plum Saison,,9.3,teku,$10,,,"Unfiltered 2025 vintage. Slightly sour, dry and oaky. Aged 18 months in oak foeders on our house microflora and conditioned on plums.",,FALSE,FALSE,FALSE,,53,
