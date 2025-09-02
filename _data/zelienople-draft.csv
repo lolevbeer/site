@@ -1,6 +1,6 @@
 tap,variant,singleCanAvailable,name,type,abv,glass,price,description,image,hops
 1,vespero,FALSE,Vespero,Czech Dark Lager,5.8,stein,6,"Roasted chestnut, chocolate and raisin. Ruby hue and a hint of noble hops.",TRUE,Saaz
-2,,FALSE,,,,,,,,
+2,grandar,FALSE,Grandar,Imperial Pilsner,6.6,stein,7,"Crackery sweetness balanced with hops, floral and herbal notes that finish with a subtle citrus. Step mashed and hopped with nobles.",TRUE,"Hallertau Mittelfrüh, Saaz"
 3,Sonnen,FALSE,Sonnen,Märzen,5.4,stein,6,"Plush tan head, a subtle sweetness of toasted malt, medium body.",TRUE,
 4,,FALSE,,,,,,,,
 5,Phokas,FALSE,Phokas,India Pale Ale,6,pint,7,"Tropical and citrusy with hints of pine and white grape. Light, juicy, and easy-drinking.",FALSE,"Mosaic®, Nelson Sauvin™, Idaho 7™"
