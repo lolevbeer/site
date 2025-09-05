@@ -2,7 +2,7 @@ variant,cansAvailable,name,salePrice,type,abv,cansSingle,fourPack
 sonnen,TRUE,Sonnen,FALSE,Märzen,5.4,4.50,17
 samo,TRUE,Samo,FALSE,Pilsner,4.8,4.00,15
 grandar,TRUE,Grandar,FALSE,Imperial Pilsner,6.6,4.25,16
-summer-lupula,TRUE,Summer Lupula,FALSE,India Pale Ale,6,4.50,17
+ddh-lupula,TRUE,DDH Lupula,FALSE,India Pale Ale,7,,20
 taupo,TRUE,Taupō,FALSE,India Pale Ale,7,4.50,17
 lupula,TRUE,Lupula,FALSE,India Pale Ale,7,4.50,17
 ddh-akko,TRUE,DDH Akko,FALSE,India Pale Ale,7,,20
