@@ -2,8 +2,8 @@ variant,cansAvailable,name,salePrice,type,abv,cansSingle,fourPack
 rooted,TRUE,Rooted,FALSE,Mexican Lager,4,4.00,15
 samo,TRUE,Samo,FALSE,Pilsner,4.8,4.00,15
 sonnen,TRUE,Sonnen,FALSE,Märzen,5.4,4.50,17
-summer-lupula,FALSE,Summer Lupula,FALSE,India Pale Ale,6,4.50,17
-akko,TRUE,Akko,FALSE,India Pale Ale,7,4.50,17
+,FALSE,,FALSE,,,,
+akko,FALSE,Akko,FALSE,India Pale Ale,7,4.50,17
 priscus-II,TRUE,Priscus II,FALSE,Double IPA,8.3,5.75,22
 double-prismatic,TRUE,Double Prismatic,FALSE,Double IPA,8.3,5.25,20
 ddh-lupula,TRUE,DDH Lupula,FALSE,India Pale Ale,7,5.25,20
