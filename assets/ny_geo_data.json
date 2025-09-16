@@ -6,8 +6,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.541561699823,
-                    43.105848506954
+                    -77.541008517203,
+                    43.105312345198
                 ]
             },
             "properties": {
@@ -38,8 +38,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.558901249366,
-                    43.146387786935
+                    -77.558473396804,
+                    43.146279640267
                 ]
             },
             "properties": {
@@ -54,8 +54,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.749681799414,
-                    43.105334071595
+                    -77.74955208231,
+                    43.105397138475
                 ]
             },
             "properties": {
@@ -86,8 +86,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.442932768371,
-                    43.130686244752
+                    -77.446990144984,
+                    43.130770513452
                 ]
             },
             "properties": {
@@ -118,8 +118,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.448815775496,
-                    43.070788133758
+                    -77.445594438272,
+                    43.069766213241
                 ]
             },
             "properties": {
@@ -134,14 +134,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.501839334019,
-                    43.193699498404
+                    -77.5018066,
+                    43.1936947
                 ]
             },
             "properties": {
                 "id": 8,
                 "Name": "wegman's #03 empire",
-                "address": "1950 EMPIRE BLVD, WEBSTER, NY, 14580",
+                "address": "1950, Empire Boulevard, Baytowne, Town of Penfield, Monroe County, New York, 14580, United States",
                 "customerType": "Grocery"
             }
         },
@@ -182,8 +182,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.659141927445,
-                    43.226169014952
+                    -77.65914229247,
+                    43.226256440127
                 ]
             },
             "properties": {
@@ -198,8 +198,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.606353838317,
-                    43.248169481737
+                    -77.605843119963,
+                    43.248231538328
                 ]
             },
             "properties": {
@@ -214,8 +214,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.70039502442,
-                    43.253005183892
+                    -77.697295057083,
+                    43.252964233061
                 ]
             },
             "properties": {
@@ -230,8 +230,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.788600113639,
-                    42.797111276036
+                    -77.786481690926,
+                    42.798038416697
                 ]
             },
             "properties": {
@@ -246,14 +246,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.9476046,
-                    43.2004915
+                    -77.949220561403,
+                    43.198416256661
                 ]
             },
             "properties": {
                 "id": 16,
                 "Name": "wegman's #65 brockport",
-                "address": "Wegmans, 6660, Fourth Section Road, Village of Brockport, Town of Sweden, Monroe County, New York, 14420, United States",
+                "address": "6660 FOURTH SECTION RD, BROCKPORT, NY, 14420",
                 "customerType": "Grocery"
             }
         },
@@ -294,8 +294,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.629572455944,
-                    43.083175227914
+                    -77.629575548335,
+                    43.083436021383
                 ]
             },
             "properties": {
@@ -326,8 +326,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.651738737644,
-                    43.092448022165
+                    -77.650836560742,
+                    43.092192285123
                 ]
             },
             "properties": {
@@ -358,8 +358,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.548456306548,
-                    43.157825127427
+                    -77.548536835977,
+                    43.157675272667
                 ]
             },
             "properties": {
@@ -374,8 +374,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.884582729702,
-                    43.103065149946
+                    -77.884582909545,
+                    43.102949613402
                 ]
             },
             "properties": {
@@ -502,8 +502,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.646506500599,
-                    43.090851141086
+                    -77.646158344045,
+                    43.090746160985
                 ]
             },
             "properties": {
@@ -518,8 +518,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.58550818933,
-                    43.158297127088
+                    -77.585446426062,
+                    43.158411151579
                 ]
             },
             "properties": {
@@ -582,14 +582,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.2721235,
-                    42.8754568
+                    -77.272246956593,
+                    42.875894273127
                 ]
             },
             "properties": {
                 "id": 37,
                 "Name": "coho pizza & wine bar",
-                "address": "811, South Main Street, City of Canandaigua, Ontario County, New York, 14424, United States",
+                "address": "811 S MAIN ST, CANANDAIGUA, NY, 14424",
                 "customerType": "Restaurant"
             }
         },
@@ -598,8 +598,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.476585470916,
-                    43.061640755351
+                    -77.477117733952,
+                    43.061835847836
                 ]
             },
             "properties": {
@@ -630,8 +630,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.461380638399,
-                    43.101216443658
+                    -77.461468538196,
+                    43.101237388538
                 ]
             },
             "properties": {
@@ -710,8 +710,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.410436508849,
-                    43.06453662796
+                    -77.410355996147,
+                    43.064536831271
                 ]
             },
             "properties": {
@@ -886,8 +886,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.808087846325,
-                    43.119498688973
+                    -77.807104035146,
+                    43.11961884714
                 ]
             },
             "properties": {
@@ -1046,8 +1046,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.696520332792,
-                    43.241888241843
+                    -77.696522126172,
+                    43.241766890485
                 ]
             },
             "properties": {
@@ -1094,8 +1094,8 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.560742956672,
-                    43.150008482316
+                    -77.560031854471,
+                    43.15131772136
                 ]
             },
             "properties": {
