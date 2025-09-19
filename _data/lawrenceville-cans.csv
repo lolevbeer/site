@@ -3,11 +3,11 @@ rooted,TRUE,Rooted,FALSE,Mexican Lager,4,4.00,15
 samo,TRUE,Samo,FALSE,Pilsner,4.8,4.00,15
 vespero,TRUE,Vespero,FALSE,Czech Dark Lager,5.8,4.25,16
 ,FALSE,,FALSE,,,,
-akko,FALSE,Akko,FALSE,India Pale Ale,7,4.50,17
-priscus-ii,TRUE,Priscus II,FALSE,Double IPA,8.3,5.75,22
-double-prismatic,TRUE,Double Prismatic,FALSE,Double IPA,8.3,5.25,20
+,FALSE,,FALSE,,,,
 ddh-lupula,TRUE,DDH Lupula,FALSE,India Pale Ale,7,5.25,20
 ddh-akko,TRUE,DDH Akko,FALSE,India Pale Ale,7,5.25,20
 ddh-taupo,TRUE,DDH Taupō,FALSE,India Pale Ale,7,5.25,20
+double-prismatic,TRUE,Double Prismatic,FALSE,Double IPA,8.3,5.25,20
 double-lupula,TRUE,Double Lupula,FALSE,Double IPA,8.4,5.25,20
 rubico,TRUE,Rubico,FALSE,Double IPA,8.5,5.25,20
+priscus-ii,TRUE,Priscus II,FALSE,Double IPA,8.3,5.75,22
