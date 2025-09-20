@@ -1,5 +1,6 @@
 "tap","variant","singleCanAvailable","name","type","abv","glass","price","description","image","hops"
-"1","sonnen","FALSE","Sonnen","Märzen","5.4","stein","6","Plush tan head, a subtle sweetness of toasted malt, medium body.","TRUE",""
+"1","sever","FALSE","Sever","Pumpkin Stout","5.7","teku","7","Dark roast coffee and pumpkin pie in a rich quaffable stout. Conditioned freshly-roasted Brazilian coffee beans from Temper Coffee Roasters.
+.","FALSE",""
 "2","vespero","FALSE","Vespero","Czech Dark Lager","5.8","stein","6","Roasted chestnut, chocolate and raisin. Ruby hue and a hint of noble hops.","TRUE","Saaz"
 "3","grandar","FALSE","Grandar","Imperial Pilsner","6.6","stein","7","Crackery sweetness balanced with hops, floral and herbal notes that finish with a subtle citrus. Step mashed and hopped with nobles.","TRUE","Hallertau Mittelfrüh, Saaz"
 "4","ddh-lupula","FALSE","DDH Lupula","India Pale Ale","7","teku","8","Double dry hopped Lupula. Notes of Pineapple, mango, and grapefruit. Aromatic.","TRUE","Motueka™, Moutere™, Riwaka™"
@@ -7,5 +8,5 @@
 "6","akko","FALSE","Akko","India Pale Ale","7","pint","7","Pineapple and orange mango, notes of peach ring candies. ","TRUE","Comet, Galaxy®, Citra®"
 "7","prismatic","FALSE","Prismatic","India Pale Ale","7","pint","7","Pineapple, vanilla, tangerine, melon.","TRUE","El Dorado®, Idaho 7™, Citra®"
 "8","priscus-ii","FALSE","Priscus II","Double IPA","8.3","teku","9","Hop saturated variant. Sauvignon blanc, blueberry and citrus.","TRUE","Motueka CGX, Nelson Sauvin™, Citra®"
-"9","rubico","FALSE","Rubico","Double IPA","8.5","pint","8","Pineapple, peach rings, bubblegum, strawberry and citrus.","TRUE","Mosaic®, Galaxy®, Citra®"
+"9","sono","FALSE","Sono","Double IPA","7.6","teku","9","","TRUE","Citra® HyperBoost™, Citra® DynaBoost™, Dolcita™"
 "10","faust-unfiltered-25","FALSE","Faust","Imperial Plum Saison","6.7","teku","10","Unfiltered 2025 vintage. Slightly sour, dry and oaky. Aged 18 months in oak foeders on our house microflora and conditioned on plums.","FALSE",""
