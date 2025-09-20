@@ -109,8 +109,21 @@ function HeroSection() {
   };
 
   return (
-    <div className="flex flex-col gap-16 px-8 py-24 text-center">
-      <div className="flex flex-col items-center justify-center gap-8">
+    <div className="relative flex flex-col gap-16 px-8 py-24 text-center">
+      {/* Background image */}
+      <div className="absolute inset-0 z-0">
+        <Image
+          src="/images/bar.jpg"
+          alt="Bar background"
+          fill
+          className="object-cover"
+          priority
+        />
+        {/* Overlay for better text readability */}
+        <div className="absolute inset-0 bg-background/80 backdrop-blur-[2px]" />
+      </div>
+
+      <div className="relative z-10 flex flex-col items-center justify-center gap-8">
         <h1 className="mb-0 text-balance font-medium text-6xl md:text-7xl xl:text-[5.25rem]">
           Lolev Beer
         </h1>
@@ -128,7 +141,7 @@ function HeroSection() {
           </Button>
         </div>
       </div>
-      <section className="flex flex-col items-center justify-center gap-8 rounded-xl py-8">
+      <section className="relative z-10 flex flex-col items-center justify-center gap-8 rounded-xl py-8">
         <div className="flex size-full items-center justify-center">
           <Marquee>
             <MarqueeFade className="from-background" side="left" />
@@ -145,7 +158,7 @@ function HeroSection() {
                 // Show available beers
                 availableBeers.map((beer) => (
                   <MarqueeItem className="mx-8" key={beer.variant}>
-                    <Link href={`/${currentLocation}/beer/${getBeerSlug(beer)}`} className="group">
+                    <Link href={`/beer/${getBeerSlug(beer)}`} className="group">
                       <div className="relative h-32 w-32 overflow-hidden rounded-lg bg-transparent transition-transform group-hover:scale-105">
                         <Image
                           src={`/images/beer/${beer.variant}.webp`}
