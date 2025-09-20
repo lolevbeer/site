@@ -9,6 +9,6 @@ tap,variant,singleCanAvailable,name,type,abv,glass,price,description,image,hops
 8,ddh-lupula,FALSE,DDH Lupula,India Pale Ale,7,teku,8,"Double dry hopped Lupula. Notes of Pineapple, mango, and grapefruit. Aromatic.",TRUE,"Motueka™, Moutere™, Riwaka™"
 9,prismatic,FALSE,Prismatic,India Pale Ale,7,pint,7,"Pineapple, vanilla, tangerine, melon.",TRUE,"El Dorado®, Idaho 7™, Citra®"
 10,sever,FALSE,Sever,Pumpkin Stout,5.7,teku,7,"Dark roast coffee and pumpkin pie in a rich quaffable stout. Conditioned freshly-roasted Brazilian coffee beans from Temper Coffee Roasters.
-.",FALSE,
+.",TRUE,
 11,sono,FALSE,Sono,Double IPA,7.6,teku,9,,TRUE,"Citra® HyperBoost™, Citra® DynaBoost™, Dolcita™"
 12,faust-unfiltered-25,FALSE,Faust,Imperial Plum Saison,6.7,teku,10,"Unfiltered 2025 vintage. Slightly sour, dry and oaky. Aged 18 months in oak foeders on our house microflora and conditioned on plums.",FALSE,

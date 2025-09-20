@@ -1,6 +1,6 @@
 "tap","variant","singleCanAvailable","name","type","abv","glass","price","description","image","hops"
 "1","sever","FALSE","Sever","Pumpkin Stout","5.7","teku","7","Dark roast coffee and pumpkin pie in a rich quaffable stout. Conditioned freshly-roasted Brazilian coffee beans from Temper Coffee Roasters.
-.","FALSE",""
+.","TRUE",""
 "2","vespero","FALSE","Vespero","Czech Dark Lager","5.8","stein","6","Roasted chestnut, chocolate and raisin. Ruby hue and a hint of noble hops.","TRUE","Saaz"
 "3","grandar","FALSE","Grandar","Imperial Pilsner","6.6","stein","7","Crackery sweetness balanced with hops, floral and herbal notes that finish with a subtle citrus. Step mashed and hopped with nobles.","TRUE","Hallertau Mittelfrüh, Saaz"
 "4","ddh-lupula","FALSE","DDH Lupula","India Pale Ale","7","teku","8","Double dry hopped Lupula. Notes of Pineapple, mango, and grapefruit. Aromatic.","TRUE","Motueka™, Moutere™, Riwaka™"
