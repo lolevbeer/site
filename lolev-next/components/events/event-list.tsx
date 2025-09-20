@@ -1,0 +1,389 @@
+'use client';
+
+/**
+ * Event List Component
+ * Displays a list of events with filtering, sorting, and location awareness
+ */
+
+import React, { useState, useMemo } from 'react';
+import { BreweryEvent, EventType, EventStatus, EventFilters, EventSortOptions } from '@/lib/types/event';
+import { Location, LocationDisplayNames } from '@/lib/types/location';
+import { useLocationContext } from '@/components/location/location-provider';
+import { EventCard, EventCardSkeleton } from './event-card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Select } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Calendar, Filter, Search, SortAsc, SortDesc, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+interface EventListProps {
+  events: BreweryEvent[];
+  loading?: boolean;
+  className?: string;
+  showLocationFilter?: boolean;
+  showFilters?: boolean;
+  variant?: 'default' | 'compact' | 'featured';
+  initialFilters?: Partial<EventFilters>;
+  onEventClick?: (event: BreweryEvent) => void;
+  emptyMessage?: string;
+  maxItems?: number;
+}
+
+/**
+ * Event list component with filtering and sorting
+ */
+export function EventList({
+  events,
+  loading = false,
+  className,
+  showLocationFilter = true,
+  showFilters = true,
+  variant = 'default',
+  initialFilters = {},
+  onEventClick,
+  emptyMessage = 'No events found',
+  maxItems
+}: EventListProps) {
+  const { currentLocation } = useLocationContext();
+  const [searchQuery, setSearchQuery] = useState(initialFilters.search || '');
+  const [selectedTypes, setSelectedTypes] = useState<EventType[]>(initialFilters.type || []);
+  const [selectedLocation, setSelectedLocation] = useState<Location | undefined>(
+    showLocationFilter ? initialFilters.location || currentLocation : currentLocation
+  );
+  const [sortOptions, setSortOptions] = useState<EventSortOptions>({
+    sortBy: 'date',
+    order: 'asc'
+  });
+  const [showFiltersPanel, setShowFiltersPanel] = useState(false);
+
+  // Filter and sort events
+  const filteredAndSortedEvents = useMemo(() => {
+    let filtered = events.filter(event => {
+      // Location filter
+      if (selectedLocation && event.location !== selectedLocation) {
+        return false;
+      }
+
+      // Search filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        if (
+          !event.title.toLowerCase().includes(query) &&
+          !event.description?.toLowerCase().includes(query) &&
+          !event.vendor.toLowerCase().includes(query)
+        ) {
+          return false;
+        }
+      }
+
+      // Type filter
+      if (selectedTypes.length > 0 && !selectedTypes.includes(event.type)) {
+        return false;
+      }
+
+      // Status filter (hide cancelled by default)
+      if (event.status === EventStatus.CANCELLED) {
+        return false;
+      }
+
+      return true;
+    });
+
+    // Sort events
+    filtered.sort((a, b) => {
+      let comparison = 0;
+
+      switch (sortOptions.sortBy) {
+        case 'date':
+          comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
+          break;
+        case 'title':
+          comparison = a.title.localeCompare(b.title);
+          break;
+        case 'type':
+          comparison = a.type.localeCompare(b.type);
+          break;
+        case 'attendees':
+          comparison = (a.attendees || 0) - (b.attendees || 0);
+          break;
+      }
+
+      return sortOptions.order === 'desc' ? -comparison : comparison;
+    });
+
+    // Apply max items limit
+    if (maxItems) {
+      filtered = filtered.slice(0, maxItems);
+    }
+
+    return filtered;
+  }, [events, selectedLocation, searchQuery, selectedTypes, sortOptions, maxItems]);
+
+  // Get upcoming events (today and future)
+  const upcomingEvents = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return filteredAndSortedEvents.filter(event =>
+      new Date(event.date) >= today
+    );
+  }, [filteredAndSortedEvents]);
+
+  // Get today's events
+  const todaysEvents = useMemo(() => {
+    const today = new Date().toDateString();
+    return filteredAndSortedEvents.filter(event =>
+      new Date(event.date).toDateString() === today
+    );
+  }, [filteredAndSortedEvents]);
+
+  const hasActiveFilters = searchQuery || selectedTypes.length > 0 ||
+    (showLocationFilter && selectedLocation !== currentLocation);
+
+  const clearFilters = () => {
+    setSearchQuery('');
+    setSelectedTypes([]);
+    setSelectedLocation(showLocationFilter ? currentLocation : undefined);
+  };
+
+  const toggleEventType = (type: EventType) => {
+    setSelectedTypes(prev =>
+      prev.includes(type)
+        ? prev.filter(t => t !== type)
+        : [...prev, type]
+    );
+  };
+
+  const toggleSort = (sortBy: EventSortOptions['sortBy']) => {
+    setSortOptions(prev => ({
+      sortBy,
+      order: prev.sortBy === sortBy && prev.order === 'asc' ? 'desc' : 'asc'
+    }));
+  };
+
+  const renderEvents = (eventsToRender: BreweryEvent[]) => {
+    if (loading) {
+      return (
+        <div className="space-y-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <EventCardSkeleton key={i} variant={variant} />
+          ))}
+        </div>
+      );
+    }
+
+    if (eventsToRender.length === 0) {
+      return (
+        <div className="text-center py-12">
+          <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-semibold mb-2">No Events Found</h3>
+          <p className="text-muted-foreground mb-4">{emptyMessage}</p>
+          {hasActiveFilters && (
+            <Button variant="outline" onClick={clearFilters}>
+              Clear Filters
+            </Button>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <div className={cn(
+        'space-y-4',
+        variant === 'compact' && 'space-y-2'
+      )}>
+        {eventsToRender.map(event => (
+          <EventCard
+            key={event.id || `${event.title}-${event.date}`}
+            event={event}
+            variant={variant}
+            showLocation={showLocationFilter}
+            onEventClick={onEventClick}
+          />
+        ))}
+      </div>
+    );
+  };
+
+  return (
+    <div className={cn('space-y-6', className)}>
+      {/* Filters and Search */}
+      {showFilters && (
+        <div className="space-y-4">
+          {/* Search Bar */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search events..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+
+          {/* Quick Filters */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowFiltersPanel(!showFiltersPanel)}
+              className="flex items-center gap-1"
+            >
+              <Filter className="h-3 w-3" />
+              Filters
+              {hasActiveFilters && (
+                <Badge variant="secondary" className="ml-1 text-xs">
+                  {[
+                    searchQuery ? 1 : 0,
+                    selectedTypes.length,
+                    showLocationFilter && selectedLocation !== currentLocation ? 1 : 0
+                  ].reduce((sum, count) => sum + count, 0)}
+                </Badge>
+              )}
+            </Button>
+
+            {/* Sort Options */}
+            <div className="flex items-center gap-1">
+              {(['date', 'title', 'type'] as const).map(sortBy => (
+                <Button
+                  key={sortBy}
+                  variant={sortOptions.sortBy === sortBy ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => toggleSort(sortBy)}
+                  className="flex items-center gap-1"
+                >
+                  {sortBy.charAt(0).toUpperCase() + sortBy.slice(1)}
+                  {sortOptions.sortBy === sortBy && (
+                    sortOptions.order === 'asc'
+                      ? <SortAsc className="h-3 w-3" />
+                      : <SortDesc className="h-3 w-3" />
+                  )}
+                </Button>
+              ))}
+            </div>
+
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearFilters}
+                className="flex items-center gap-1 text-muted-foreground"
+              >
+                <X className="h-3 w-3" />
+                Clear
+              </Button>
+            )}
+          </div>
+
+          {/* Extended Filters Panel */}
+          {showFiltersPanel && (
+            <div className="border rounded-lg p-4 space-y-4 bg-muted/30">
+              {/* Location Filter */}
+              {showLocationFilter && (
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Location</label>
+                  <div className="flex gap-2">
+                    {Object.values(Location).map(location => (
+                      <Button
+                        key={location}
+                        variant={selectedLocation === location ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => setSelectedLocation(
+                          selectedLocation === location ? undefined : location
+                        )}
+                      >
+                        {LocationDisplayNames[location]}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Event Type Filter */}
+              <div>
+                <label className="text-sm font-medium mb-2 block">Event Types</label>
+                <div className="flex gap-2 flex-wrap">
+                  {Object.values(EventType).map(type => (
+                    <Button
+                      key={type}
+                      variant={selectedTypes.includes(type) ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => toggleEventType(type)}
+                    >
+                      {type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Today's Events Section */}
+      {todaysEvents.length > 0 && !maxItems && (
+        <div>
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            Today's Events
+          </h2>
+          {renderEvents(todaysEvents)}
+        </div>
+      )}
+
+      {/* Main Events List */}
+      <div>
+        {todaysEvents.length > 0 && !maxItems ? (
+          <h2 className="text-xl font-semibold mb-4">Upcoming Events</h2>
+        ) : !maxItems && (
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">Events</h2>
+            <span className="text-sm text-muted-foreground">
+              {filteredAndSortedEvents.length} event{filteredAndSortedEvents.length !== 1 ? 's' : ''}
+            </span>
+          </div>
+        )}
+        {renderEvents(maxItems ? filteredAndSortedEvents : upcomingEvents)}
+      </div>
+
+      {/* Load More Button */}
+      {maxItems && filteredAndSortedEvents.length > maxItems && (
+        <div className="text-center">
+          <Button variant="outline">
+            View All Events ({filteredAndSortedEvents.length - maxItems} more)
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Simplified event list for quick display
+ */
+export function SimpleEventList({
+  events,
+  loading = false,
+  className,
+  maxItems = 5
+}: {
+  events: BreweryEvent[];
+  loading?: boolean;
+  className?: string;
+  maxItems?: number;
+}) {
+  return (
+    <EventList
+      events={events}
+      loading={loading}
+      className={className}
+      showLocationFilter={false}
+      showFilters={false}
+      variant="compact"
+      maxItems={maxItems}
+      emptyMessage="No upcoming events"
+    />
+  );
+}
+
+export default EventList;
