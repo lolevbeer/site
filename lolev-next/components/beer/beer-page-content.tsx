@@ -32,6 +32,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 
 interface BeerPageContentProps {
@@ -160,6 +161,151 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
         </p>
       </div>
 
+      {/* Sort and Mobile Filter Controls */}
+      <div className="flex items-center justify-between mb-6">
+        {/* Mobile Filter Toggle */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowFilters(!showFilters)}
+          className="lg:hidden"
+        >
+          <Filter className="h-4 w-4 mr-2" />
+          Filters
+          {activeFilterCount > 0 && (
+            <Badge variant="secondary" className="ml-2">
+              {activeFilterCount}
+            </Badge>
+          )}
+        </Button>
+
+        {/* Sort Dropdown - Always visible */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="min-w-[140px] ml-auto">
+              <ArrowUpDown className="mr-2 h-4 w-4" />
+              Sort by
+              <ChevronDown className="ml-auto h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-[200px]">
+            <DropdownMenuLabel>Sort Options</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => setSortBy('name')}
+              className={cn("cursor-pointer", sortBy === 'name' && "bg-accent")}
+            >
+              Name (A-Z)
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => setSortBy('type')}
+              className={cn("cursor-pointer", sortBy === 'type' && "bg-accent")}
+            >
+              Type
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => setSortBy('abv-asc')}
+              className={cn("cursor-pointer", sortBy === 'abv-asc' && "bg-accent")}
+            >
+              ABV (Low to High)
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => setSortBy('abv-desc')}
+              className={cn("cursor-pointer", sortBy === 'abv-desc' && "bg-accent")}
+            >
+              ABV (High to Low)
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {/* Mobile Filters */}
+      {showFilters && (
+        <Card className="lg:hidden mb-6">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base">Filters</CardTitle>
+              <div className="flex items-center gap-2">
+                {activeFilterCount > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearFilters}
+                    className="h-auto p-1 text-xs"
+                  >
+                    Clear all
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowFilters(false)}
+                  className="h-auto p-1"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            <div className="text-sm text-muted-foreground mt-2">
+              {filteredBeers.length} {filteredBeers.length === 1 ? 'beer' : 'beers'}
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Mobile search */}
+            <div className="relative">
+              <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search beers..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8"
+              />
+            </div>
+
+            {/* Mobile type filter */}
+            <Select value={selectedType} onValueChange={setSelectedType}>
+              <SelectTrigger>
+                <SelectValue placeholder="All types" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All types</SelectItem>
+                {beerTypes.map(type => (
+                  <SelectItem key={type} value={type}>
+                    {type}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Mobile availability filters */}
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant={showOnTap ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowOnTap(!showOnTap)}
+              >
+                On Tap
+              </Button>
+              <Button
+                variant={showInCans ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowInCans(!showInCans)}
+              >
+                In Cans
+              </Button>
+              <Button
+                variant={showGlutenFree ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowGlutenFree(!showGlutenFree)}
+              >
+                Gluten Free
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Filters Sidebar - Desktop */}
         <div className="hidden lg:block">
@@ -178,6 +324,9 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
                   </Button>
                 )}
               </CardTitle>
+              <div className="text-sm text-muted-foreground mt-2">
+                {filteredBeers.length} {filteredBeers.length === 1 ? 'beer' : 'beers'}
+              </div>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Search */}
@@ -251,34 +400,37 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
               {/* Availability Filters */}
               <div className="space-y-3">
                 <Label>Availability</Label>
-                <div className="space-y-2">
-                  <label className="flex items-center space-x-2 cursor-pointer">
-                    <input
-                      type="checkbox"
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="on-tap" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                      On Tap
+                    </label>
+                    <Switch
+                      id="on-tap"
                       checked={showOnTap}
-                      onChange={(e) => setShowOnTap(e.target.checked)}
-                      className="rounded border-gray-300"
+                      onCheckedChange={setShowOnTap}
                     />
-                    <span className="text-sm">On Tap</span>
-                  </label>
-                  <label className="flex items-center space-x-2 cursor-pointer">
-                    <input
-                      type="checkbox"
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="in-cans" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                      In Cans
+                    </label>
+                    <Switch
+                      id="in-cans"
                       checked={showInCans}
-                      onChange={(e) => setShowInCans(e.target.checked)}
-                      className="rounded border-gray-300"
+                      onCheckedChange={setShowInCans}
                     />
-                    <span className="text-sm">In Cans</span>
-                  </label>
-                  <label className="flex items-center space-x-2 cursor-pointer">
-                    <input
-                      type="checkbox"
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="gluten-free" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                      Gluten Free
+                    </label>
+                    <Switch
+                      id="gluten-free"
                       checked={showGlutenFree}
-                      onChange={(e) => setShowGlutenFree(e.target.checked)}
-                      className="rounded border-gray-300"
+                      onCheckedChange={setShowGlutenFree}
                     />
-                    <span className="text-sm">Gluten Free</span>
-                  </label>
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -287,154 +439,6 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
 
         {/* Main Content */}
         <div className="lg:col-span-3">
-          {/* Mobile Filter Toggle & Sort */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowFilters(!showFilters)}
-                className="lg:hidden"
-              >
-                <Filter className="h-4 w-4 mr-2" />
-                Filters
-                {activeFilterCount > 0 && (
-                  <Badge variant="secondary" className="ml-2">
-                    {activeFilterCount}
-                  </Badge>
-                )}
-              </Button>
-
-              {/* Results count */}
-              <span className="text-sm text-muted-foreground">
-                {filteredBeers.length} {filteredBeers.length === 1 ? 'beer' : 'beers'}
-              </span>
-            </div>
-
-            {/* Sort Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="min-w-[140px]">
-                  <ArrowUpDown className="mr-2 h-4 w-4" />
-                  Sort by
-                  <ChevronDown className="ml-auto h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-[200px]">
-                <DropdownMenuLabel>Sort Options</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => setSortBy('name')}
-                  className={cn("cursor-pointer", sortBy === 'name' && "bg-accent")}
-                >
-                  Name (A-Z)
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setSortBy('type')}
-                  className={cn("cursor-pointer", sortBy === 'type' && "bg-accent")}
-                >
-                  Type
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setSortBy('abv-asc')}
-                  className={cn("cursor-pointer", sortBy === 'abv-asc' && "bg-accent")}
-                >
-                  ABV (Low to High)
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setSortBy('abv-desc')}
-                  className={cn("cursor-pointer", sortBy === 'abv-desc' && "bg-accent")}
-                >
-                  ABV (High to Low)
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
-          {/* Mobile Filters */}
-          {showFilters && (
-            <Card className="lg:hidden mb-6">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base">Filters</CardTitle>
-                  <div className="flex items-center gap-2">
-                    {activeFilterCount > 0 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={clearFilters}
-                        className="h-auto p-1 text-xs"
-                      >
-                        Clear all
-                      </Button>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowFilters(false)}
-                      className="h-auto p-1"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Mobile search */}
-                <div className="relative">
-                  <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    type="search"
-                    placeholder="Search beers..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-8"
-                  />
-                </div>
-
-                {/* Mobile type filter */}
-                <Select value={selectedType} onValueChange={setSelectedType}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All types" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All types</SelectItem>
-                    {beerTypes.map(type => (
-                      <SelectItem key={type} value={type}>
-                        {type}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-
-                {/* Mobile availability filters */}
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    variant={showOnTap ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setShowOnTap(!showOnTap)}
-                  >
-                    On Tap
-                  </Button>
-                  <Button
-                    variant={showInCans ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setShowInCans(!showInCans)}
-                  >
-                    In Cans
-                  </Button>
-                  <Button
-                    variant={showGlutenFree ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setShowGlutenFree(!showGlutenFree)}
-                  >
-                    Gluten Free
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
           {/* Beer Grid */}
           {filteredBeers.length > 0 ? (
             <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
@@ -443,7 +447,7 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
                   key={beer.variant}
                   beer={beer}
                   showLocation={false}
-                  showPricing={true}
+                  showPricing={false}
                   showAvailability={true}
                 />
               ))}

@@ -160,7 +160,7 @@ export function Footer() {
   const [selectedLocation, setSelectedLocation] = useState<Location>(Location.LAWRENCEVILLE);
 
   return (
-    <footer className="border-t bg-muted/30">
+    <footer className="border-t bg-transparent">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           {/* Brand and Description */}
