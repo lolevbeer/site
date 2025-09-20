@@ -90,8 +90,6 @@ export interface BreweryEvent extends BaseEvent {
   tags?: string[];
   /** Event image URL */
   image?: string;
-  /** Whether the event is featured */
-  featured?: boolean;
   /** Entry fee or ticket price */
   price?: string;
   /** Age restrictions */
@@ -153,8 +151,6 @@ export interface EventFilters {
   status?: EventStatus[];
   /** Search by title or description */
   search?: string;
-  /** Filter featured events only */
-  featuredOnly?: boolean;
   /** Filter free events only */
   freeOnly?: boolean;
 }

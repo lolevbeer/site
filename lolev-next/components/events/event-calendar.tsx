@@ -12,6 +12,7 @@ import { useLocationContext } from '@/components/location/location-provider';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ChevronLeft, ChevronRight, Calendar, Clock, MapPin, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -44,20 +45,21 @@ export function EventCalendar({
 }: EventCalendarProps) {
   const { currentLocation } = useLocationContext();
   const [currentWeek, setCurrentWeek] = useState(getStartOfWeek(new Date()));
-  const [selectedLocation, setSelectedLocation] = useState<Location | undefined>(
-    showLocationFilter ? currentLocation : undefined
-  );
+  const [selectedLocation, setSelectedLocation] = useState<Location | undefined>(undefined);
 
   // Get start of week (Sunday)
   function getStartOfWeek(date: Date): Date {
     const start = new Date(date);
     const day = start.getDay();
     const diff = start.getDate() - day;
-    return new Date(start.setDate(diff));
+    start.setDate(diff);
+    start.setHours(0, 0, 0, 0);
+    return start;
   }
 
   // Generate week days
   const weekDays = useMemo(() => {
+    console.log('EventCalendar received events:', events.length, events);
     const days: CalendarDay[] = [];
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -65,18 +67,18 @@ export function EventCalendar({
     for (let i = 0; i < 7; i++) {
       const date = new Date(currentWeek);
       date.setDate(currentWeek.getDate() + i);
+      date.setHours(0, 0, 0, 0);
 
       const dayEvents = events.filter(event => {
         const eventDate = new Date(event.date);
         eventDate.setHours(0, 0, 0, 0);
 
-        // Filter by location
-        if (selectedLocation && event.location !== selectedLocation) {
-          return false;
-        }
-
         // Filter by date
-        return eventDate.getTime() === date.getTime();
+        const matches = eventDate.getTime() === date.getTime();
+        if (i === 0 && matches) {
+          console.log('Event found for date:', date.toDateString(), event);
+        }
+        return matches;
       });
 
       days.push({
@@ -88,7 +90,7 @@ export function EventCalendar({
     }
 
     return days;
-  }, [currentWeek, events, selectedLocation]);
+  }, [currentWeek, events]);
 
   const navigateWeek = (direction: 'prev' | 'next') => {
     const newWeek = new Date(currentWeek);
@@ -186,40 +188,12 @@ export function EventCalendar({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* Location Filter */}
-          {showLocationFilter && (
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Location:</span>
-              <div className="flex gap-1">
-                <Button
-                  variant={!selectedLocation ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setSelectedLocation(undefined)}
-                >
-                  All
-                </Button>
-                {Object.values(Location).map(location => (
-                  <Button
-                    key={location}
-                    variant={selectedLocation === location ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setSelectedLocation(location)}
-                  >
-                    {LocationDisplayNames[location]}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {showAddEvent && (
-            <Button size="sm" className="flex items-center gap-1">
-              <Plus className="h-3 w-3" />
-              Add Event
-            </Button>
-          )}
-        </div>
+        {showAddEvent && (
+          <Button size="sm" className="flex items-center gap-1">
+            <Plus className="h-3 w-3" />
+            Add Event
+          </Button>
+        )}
       </div>
 
       {/* Week Range */}

@@ -18,22 +18,34 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  Beer as BeerIcon,
+  Wine,
+  GlassWater,
+  Flame,
+  ClipboardList,
+  Tag,
+  Package,
+  CircleX,
+  ExternalLink,
+  ArrowLeft
+} from 'lucide-react';
 
 interface BeerDetailsProps {
   beer: Beer;
   className?: string;
 }
 
-function getGlassIcon(glass: GlassType): string {
+function getGlassIcon(glass: GlassType): React.ComponentType<{ className?: string }> {
   switch (glass) {
     case GlassType.PINT:
-      return '🍺';
+      return BeerIcon;
     case GlassType.TEKU:
-      return '🍷';
+      return Wine;
     case GlassType.STEIN:
-      return '🍻';
+      return GlassWater;
     default:
-      return '🍺';
+      return BeerIcon;
   }
 }
 
@@ -50,9 +62,9 @@ function getGlassDescription(glass: GlassType): string {
   }
 }
 
-function getBeerImagePath(beer: Beer): string {
-  if (!beer.image) {
-    return '/images/beer/default-beer.webp';
+function getBeerImagePath(beer: Beer): string | null {
+  if (!beer.image || beer.image === false || beer.image === 'FALSE') {
+    return null;
   }
   return `/images/beer/${beer.variant}.webp`;
 }
@@ -113,16 +125,16 @@ function getPricingInfo(beer: Beer): {
 function SpecificationRow({
   label,
   value,
-  icon,
+  icon: Icon,
 }: {
   label: string;
   value: string | number;
-  icon?: string;
+  icon?: React.ComponentType<{ className?: string }>;
 }) {
   return (
     <div className="flex items-center justify-between py-2 border-b border-border/40 last:border-b-0">
       <span className="text-muted-foreground flex items-center gap-2">
-        {icon && <span>{icon}</span>}
+        {Icon && <Icon className="h-4 w-4" />}
         {label}
       </span>
       <span className="font-medium">{value}</span>
@@ -140,7 +152,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
   if (beer.availability.hideFromSite) {
     return (
       <div className={`flex flex-col items-center justify-center py-12 text-center ${className}`}>
-        <div className="text-6xl mb-4">🚫</div>
+        <CircleX className="h-16 w-16 mb-4 text-muted-foreground" />
         <h2 className="text-2xl font-bold mb-2">Beer Not Available</h2>
         <p>
           This beer is currently not available on our website.
@@ -159,15 +171,21 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         {/* Beer Image */}
         <div className="space-y-4">
-          <div className="relative aspect-square w-full max-w-md mx-auto overflow-hidden rounded-xl bg-muted">
-            <Image
-              src={imagePath}
-              alt={`${beer.name} beer`}
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, 50vw"
-              priority
-            />
+          <div className="relative aspect-square w-full max-w-md mx-auto overflow-hidden rounded-xl bg-muted/30">
+            {imagePath ? (
+              <Image
+                src={imagePath}
+                alt={`${beer.name} beer`}
+                fill
+                className="object-contain"
+                sizes="(max-width: 768px) 100vw, 50vw"
+                priority
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800">
+                <span className="text-gray-400 dark:text-gray-500 font-medium text-lg">No Image</span>
+              </div>
+            )}
             {beer.glutenFree && (
               <Badge
                 variant="secondary"
@@ -180,19 +198,16 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
 
           {/* Quick Stats */}
           <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Quick Facts</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-0">
+            <CardContent className="pt-6 space-y-0">
               <SpecificationRow
                 label="Style"
                 value={beer.type}
-                icon="🍺"
+                icon={BeerIcon}
               />
               <SpecificationRow
                 label="ABV"
                 value={formatAbv(beer.abv)}
-                icon="🔥"
+                icon={Flame}
               />
               <SpecificationRow
                 label="Glassware"
@@ -203,14 +218,14 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
                 <SpecificationRow
                   label="Recipe #"
                   value={beer.recipe}
-                  icon="📋"
+                  icon={ClipboardList}
                 />
               )}
               {beer.upc && (
                 <SpecificationRow
                   label="UPC"
                   value={beer.upc}
-                  icon="🏷️"
+                  icon={Tag}
                 />
               )}
             </CardContent>
@@ -306,21 +321,21 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
                   <SpecificationRow
                     label="Draft"
                     value={`$${pricing.draftPrice}`}
-                    icon="🍺"
+                    icon={BeerIcon}
                   />
                 )}
                 {pricing.singlePrice && (
                   <SpecificationRow
                     label="Single Can"
                     value={`$${pricing.singlePrice}`}
-                    icon="🥫"
+                    icon={GlassWater}
                   />
                 )}
                 {pricing.fourPackPrice && (
                   <SpecificationRow
                     label="4-Pack"
                     value={`$${pricing.fourPackPrice}`}
-                    icon="📦"
+                    icon={Package}
                   />
                 )}
               </CardContent>
@@ -337,13 +352,19 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
                   rel="noopener noreferrer"
                   className="no-underline"
                 >
-                  View on Untappd ↗
+                  <>
+                    View on Untappd
+                    <ExternalLink className="h-4 w-4 ml-1" />
+                  </>
                 </a>
               </Button>
             )}
             <Button asChild>
               <Link href={`/${currentLocation}/beer`}>
-                ← Back to Beer List
+                <>
+                    <ArrowLeft className="h-4 w-4 mr-1" />
+                    Back to Beer List
+                  </>
               </Link>
             </Button>
           </div>

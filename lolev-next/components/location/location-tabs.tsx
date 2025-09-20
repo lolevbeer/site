@@ -89,7 +89,7 @@ export function LocationTabs({
       className={cn("w-full", className)}
     >
       <TabsList className={cn(
-        "grid w-full",
+        "grid w-fit mx-auto",
         orientation === 'horizontal' ? "grid-cols-2" : "grid-rows-2 h-auto flex-col"
       )}>
         {ALL_LOCATIONS.map((location) => {
@@ -101,27 +101,11 @@ export function LocationTabs({
               key={location}
               value={location}
               className={cn(
-                "flex items-center gap-2 text-sm font-medium",
+                "text-sm font-medium",
                 orientation === 'vertical' && "justify-start"
               )}
             >
-              <MapPin className="h-4 w-4" />
-              <span>{LocationDisplayNames[location]}</span>
-              {showStatus && (
-                <Badge
-                  variant={locationIsOpen ? "default" : "secondary"}
-                  className={cn(
-                    "ml-auto text-xs",
-                    locationIsOpen && "bg-green-100 text-green-800 border-green-200"
-                  )}
-                >
-                  {locationIsOpen ? (
-                    <CheckCircle className="h-3 w-3" />
-                  ) : (
-                    <Clock className="h-3 w-3" />
-                  )}
-                </Badge>
-              )}
+              {LocationDisplayNames[location]}
             </TabsTrigger>
           );
         })}

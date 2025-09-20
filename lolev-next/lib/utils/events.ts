@@ -158,8 +158,10 @@ function parseEventRow(row: EventCSVRow, location: Location): BreweryEvent | nul
   // Skip invalid or empty rows
   if (!row.date || !row.vendor) return null;
 
-  // Parse date
-  const eventDate = new Date(row.date);
+  // Parse date as local time, not UTC (same as homepage)
+  const [year, month, day] = row.date.split('-').map(Number);
+  if (!year || !month || !day) return null;
+  const eventDate = new Date(year, month - 1, day);
   if (isNaN(eventDate.getTime())) return null;
 
   // Parse time
@@ -195,11 +197,6 @@ function parseEventRow(row: EventCSVRow, location: Location): BreweryEvent | nul
     event.site = row.site;
   }
 
-  // Mark some events as featured based on type or attendance
-  if (type === EventType.SPECIAL || (event.attendees && event.attendees > 100)) {
-    event.featured = true;
-  }
-
   return event;
 }
 
@@ -229,6 +226,7 @@ export async function loadEventsFromCSV(): Promise<BreweryEvent[]> {
     // Filter to show only future events or recent past events (within 30 days)
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    thirtyDaysAgo.setHours(0, 0, 0, 0);
 
     return allEvents
       .filter(event => {

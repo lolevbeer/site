@@ -15,8 +15,8 @@ export enum Location {
  * Display names for locations
  */
 export const LocationDisplayNames: Record<Location, string> = {
-  [Location.LAWRENCEVILLE]: 'Lolev Beer • Lawrenceville',
-  [Location.ZELIENOPLE]: 'Lolev Beer • Zelienople',
+  [Location.LAWRENCEVILLE]: 'Lawrenceville',
+  [Location.ZELIENOPLE]: 'Zelienople',
 };
 
 /**

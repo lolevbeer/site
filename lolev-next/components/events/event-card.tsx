@@ -13,12 +13,12 @@ import { LocationDisplayNames } from '@/lib/types/location';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, MapPin, Users, ExternalLink } from 'lucide-react';
+import { Calendar, Clock, MapPin, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface EventCardProps {
   event: BreweryEvent;
-  variant?: 'default' | 'compact' | 'featured';
+  variant?: 'default' | 'compact';
   className?: string;
   showLocation?: boolean;
   onEventClick?: (event: BreweryEvent) => void;
@@ -34,8 +34,13 @@ export function EventCard({
   showLocation = true,
   onEventClick
 }: EventCardProps) {
-  const isToday = new Date(event.date).toDateString() === new Date().toDateString();
-  const isPast = new Date(event.date) < new Date();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const eventDate = new Date(event.date);
+  eventDate.setHours(0, 0, 0, 0);
+
+  const isToday = eventDate.toDateString() === today.toDateString();
+  const isPast = eventDate < today;
   const isCancelled = event.status === EventStatus.CANCELLED;
   const isSoldOut = event.status === EventStatus.SOLD_OUT;
 
@@ -99,8 +104,7 @@ export function EventCard({
       'opacity-75': isPast || isCancelled,
       'cursor-pointer hover:shadow-lg': onEventClick && !isCancelled,
       'p-3': variant === 'compact',
-      'p-4': variant === 'default',
-      'p-6 border-2 border-yellow-200 bg-gradient-to-br from-yellow-50 to-orange-50': variant === 'featured'
+      'p-4': variant === 'default'
     },
     className
   );
@@ -119,15 +123,15 @@ export function EventCard({
                 <Clock className="h-3 w-3" />
                 {formatTime(event.time)}
               </span>
-              {showLocation && (
-                <span className="flex items-center gap-1">
-                  <MapPin className="h-3 w-3" />
-                  {LocationDisplayNames[event.location]}
-                </span>
-              )}
             </div>
           </div>
           <div className="flex flex-col items-end gap-1">
+            {showLocation && (
+              <Badge variant="default" className="text-xs flex items-center gap-1">
+                <MapPin className="h-3 w-3" />
+                {LocationDisplayNames[event.location]}
+              </Badge>
+            )}
             <Badge variant="outline" className="text-xs">
               {getEventTypeLabel(event.type)}
             </Badge>
@@ -148,34 +152,14 @@ export function EventCard({
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
-            <h3 className={cn(
-              'font-semibold text-lg leading-tight',
-              variant === 'featured' ? 'text-xl' : ''
-            )}>
+            <h3 className="font-semibold text-lg leading-tight">
               {event.title}
             </h3>
-            {event.vendor && (
-              <p className="text-sm text-muted-foreground mt-1">
-                by {event.vendor}
-              </p>
-            )}
           </div>
           <div className="flex flex-col items-end gap-2">
-            {variant === 'featured' && (
-              <Badge variant="default" className="bg-yellow-500 text-yellow-900">
-                Featured
-              </Badge>
-            )}
             {isToday && <Badge variant="secondary">Today</Badge>}
           </div>
         </div>
-
-        {/* Description */}
-        {event.description && (
-          <p className="text-sm text-muted-foreground line-clamp-2">
-            {event.description}
-          </p>
-        )}
 
         {/* Event Details */}
         <div className="grid grid-cols-2 gap-3 text-sm">
@@ -190,23 +174,17 @@ export function EventCard({
               <span className="text-muted-foreground">- {formatTime(event.endTime)}</span>
             )}
           </div>
-          {showLocation && (
-            <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-muted-foreground" />
-              <span>{LocationDisplayNames[event.location]}</span>
-            </div>
-          )}
-          {event.attendees && (
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-muted-foreground" />
-              <span>{event.attendees} expected</span>
-            </div>
-          )}
         </div>
 
         {/* Tags and Status */}
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2 flex-wrap">
+            {showLocation && (
+              <Badge variant="default" className="flex items-center gap-1">
+                <MapPin className="h-3 w-3" />
+                {LocationDisplayNames[event.location]}
+              </Badge>
+            )}
             <Badge variant="outline">
               {getEventTypeLabel(event.type)}
             </Badge>
@@ -273,7 +251,7 @@ export function EventCard({
 /**
  * Event card skeleton for loading states
  */
-export function EventCardSkeleton({ variant = 'default' }: { variant?: 'default' | 'compact' | 'featured' }) {
+export function EventCardSkeleton({ variant = 'default' }: { variant?: 'default' | 'compact' }) {
   if (variant === 'compact') {
     return (
       <Card className="p-3">

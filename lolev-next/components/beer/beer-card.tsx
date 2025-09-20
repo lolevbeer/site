@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Beer as BeerIcon, Wine, GlassWater } from 'lucide-react';
 
 interface BeerCardProps {
   beer: Beer;
@@ -29,22 +30,22 @@ interface BeerCardProps {
   className?: string;
 }
 
-function getGlassIcon(glass: GlassType): string {
+function getGlassIcon(glass: GlassType): React.ComponentType<{ className?: string }> {
   switch (glass) {
     case GlassType.PINT:
-      return '🍺';
+      return BeerIcon;
     case GlassType.TEKU:
-      return '🍷';
+      return Wine;
     case GlassType.STEIN:
-      return '🍻';
+      return GlassWater;
     default:
-      return '🍺';
+      return BeerIcon;
   }
 }
 
-function getBeerImagePath(beer: Beer): string {
-  if (!beer.image) {
-    return '/images/beer/default-beer.webp';
+function getBeerImagePath(beer: Beer): string | null {
+  if (!beer.image || beer.image === false || beer.image === 'FALSE') {
+    return null;
   }
   return `/images/beer/${beer.variant}.webp`;
 }
@@ -113,15 +114,21 @@ export function BeerCard({
   return (
     <Card className={`group hover:shadow-lg transition-shadow duration-200 ${className}`}>
       <CardHeader className="pb-4">
-        <div className="relative aspect-square w-full mb-4 overflow-hidden rounded-lg bg-white dark:bg-black">
-          <Image
-            src={imagePath}
-            alt={`${beer.name} beer`}
-            fill
-            className="object-cover transition-transform duration-200 group-hover:scale-105"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            loading="lazy"
-          />
+        <div className="relative aspect-square w-full mb-4 overflow-hidden rounded-lg bg-muted/30">
+          {imagePath ? (
+            <Image
+              src={imagePath}
+              alt={`${beer.name} beer`}
+              fill
+              className="object-contain transition-transform duration-200 group-hover:scale-105"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              loading="lazy"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800">
+              <span className="text-gray-400 dark:text-gray-500 font-medium">No Image</span>
+            </div>
+          )}
           {beer.glutenFree && (
             <Badge
               variant="secondary"
@@ -139,7 +146,7 @@ export function BeerCard({
         <div className="flex items-center justify-between text-sm text-muted-foreground">
           <span className="font-medium">{beer.type}</span>
           <div className="flex items-center gap-1">
-            <span>{getGlassIcon(beer.glass)}</span>
+            {React.createElement(getGlassIcon(beer.glass), { className: "h-4 w-4" })}
             <span>{formatAbv(beer.abv)} ABV</span>
           </div>
         </div>

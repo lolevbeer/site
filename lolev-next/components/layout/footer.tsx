@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { SocialLinks } from './social-links';
-import { LogoWithText } from '@/components/ui/logo';
+import { Logo } from '@/components/ui/logo';
 import { Location, LocationDisplayNames, type LocationInfo, type LocationHours } from '@/lib/types';
 import { LOCATIONS_DATA } from '@/lib/config/locations';
 import { MapPin, Clock, Phone, Mail, ExternalLink } from 'lucide-react';
@@ -165,7 +165,7 @@ export function Footer() {
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           {/* Brand and Description */}
           <div className="lg:col-span-1">
-            <LogoWithText className="mb-4" />
+            <Logo className="mb-4" />
             <p className="text-sm text-muted-foreground mb-4">
               Craft brewery with locations in Lawrenceville and Zelienople,
               Pennsylvania. Serving exceptional beer and building community.
@@ -175,7 +175,6 @@ export function Footer() {
 
           {/* Quick Links */}
           <div>
-            <h3 className="font-semibold mb-4">Quick Links</h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link href="/beer-map" className="text-muted-foreground hover:text-foreground">

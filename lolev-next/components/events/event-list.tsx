@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar, Filter, Search, SortAsc, SortDesc, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -28,6 +29,8 @@ interface EventListProps {
   onEventClick?: (event: BreweryEvent) => void;
   emptyMessage?: string;
   maxItems?: number;
+  selectedLocation?: Location | 'all';
+  onLocationChange?: (location: Location | 'all') => void;
 }
 
 /**
@@ -43,14 +46,21 @@ export function EventList({
   initialFilters = {},
   onEventClick,
   emptyMessage = 'No events found',
-  maxItems
+  maxItems,
+  selectedLocation: parentSelectedLocation,
+  onLocationChange
 }: EventListProps) {
   const { currentLocation } = useLocationContext();
   const [searchQuery, setSearchQuery] = useState(initialFilters.search || '');
   const [selectedTypes, setSelectedTypes] = useState<EventType[]>(initialFilters.type || []);
-  const [selectedLocation, setSelectedLocation] = useState<Location | undefined>(
+  const [internalSelectedLocation, setInternalSelectedLocation] = useState<Location | undefined>(
     showLocationFilter ? initialFilters.location || currentLocation : currentLocation
   );
+
+  // Use parent location if provided, otherwise use internal state
+  const selectedLocation = parentSelectedLocation !== undefined ?
+    (parentSelectedLocation === 'all' ? undefined : parentSelectedLocation) :
+    internalSelectedLocation;
   const [sortOptions, setSortOptions] = useState<EventSortOptions>({
     sortBy: 'date',
     order: 'asc'
@@ -124,9 +134,14 @@ export function EventList({
   const upcomingEvents = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    return filteredAndSortedEvents.filter(event =>
-      new Date(event.date) >= today
-    );
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    return filteredAndSortedEvents.filter(event => {
+      const eventDate = new Date(event.date);
+      eventDate.setHours(0, 0, 0, 0);
+      return eventDate >= tomorrow;  // Only events from tomorrow onwards
+    });
   }, [filteredAndSortedEvents]);
 
   // Get today's events
@@ -143,7 +158,11 @@ export function EventList({
   const clearFilters = () => {
     setSearchQuery('');
     setSelectedTypes([]);
-    setSelectedLocation(showLocationFilter ? currentLocation : undefined);
+    if (parentSelectedLocation !== undefined && onLocationChange) {
+      onLocationChange('all');
+    } else {
+      setInternalSelectedLocation(showLocationFilter ? currentLocation : undefined);
+    }
   };
 
   const toggleEventType = (type: EventType) => {
@@ -161,11 +180,11 @@ export function EventList({
     }));
   };
 
-  const renderEvents = (eventsToRender: BreweryEvent[]) => {
+  const renderEvents = (eventsToRender: BreweryEvent[], layoutType: 'list' | 'grid' | 'adaptive-grid' = 'list') => {
     if (loading) {
       return (
-        <div className="space-y-4">
-          {Array.from({ length: 3 }).map((_, i) => (
+        <div className={layoutType !== 'list' ? "grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "space-y-4"}>
+          {Array.from({ length: layoutType !== 'list' ? 4 : 3 }).map((_, i) => (
             <EventCardSkeleton key={i} variant={variant} />
           ))}
         </div>
@@ -183,6 +202,45 @@ export function EventList({
               Clear Filters
             </Button>
           )}
+        </div>
+      );
+    }
+
+    if (layoutType === 'adaptive-grid') {
+      // Adaptive grid for Today's events - adjusts columns based on count
+      const gridCols = eventsToRender.length === 1 ? 'md:grid-cols-1' :
+                       eventsToRender.length === 2 ? 'md:grid-cols-2' :
+                       eventsToRender.length === 3 ? 'md:grid-cols-3' :
+                       'md:grid-cols-2 lg:grid-cols-4';
+
+      return (
+        <div className={cn('grid gap-4 grid-cols-1', gridCols)}>
+          {eventsToRender.map(event => (
+            <EventCard
+              key={event.id || `${event.title}-${event.date}`}
+              event={event}
+              variant={variant}
+              showLocation={showLocationFilter}
+              onEventClick={onEventClick}
+            />
+          ))}
+        </div>
+      );
+    }
+
+    if (layoutType === 'grid') {
+      // Fixed 4-column grid for Upcoming events
+      return (
+        <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {eventsToRender.map(event => (
+            <EventCard
+              key={event.id || `${event.title}-${event.date}`}
+              event={event}
+              variant={variant}
+              showLocation={showLocationFilter}
+              onEventClick={onEventClick}
+            />
+          ))}
         </div>
       );
     }
@@ -242,24 +300,41 @@ export function EventList({
               )}
             </Button>
 
-            {/* Sort Options */}
-            <div className="flex items-center gap-1">
-              {(['date', 'title', 'type'] as const).map(sortBy => (
-                <Button
-                  key={sortBy}
-                  variant={sortOptions.sortBy === sortBy ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => toggleSort(sortBy)}
-                  className="flex items-center gap-1"
+            {/* Location Filter and Sort Options on the right */}
+            <div className="flex items-center gap-2 ml-auto">
+              {/* Location Filter */}
+              {parentSelectedLocation !== undefined && onLocationChange && (
+                <Tabs
+                  value={parentSelectedLocation}
+                  onValueChange={(value) => onLocationChange(value as Location | 'all')}
+                  className="w-auto"
                 >
-                  {sortBy.charAt(0).toUpperCase() + sortBy.slice(1)}
-                  {sortOptions.sortBy === sortBy && (
-                    sortOptions.order === 'asc'
-                      ? <SortAsc className="h-3 w-3" />
-                      : <SortDesc className="h-3 w-3" />
-                  )}
-                </Button>
-              ))}
+                  <TabsList className="grid w-fit grid-cols-3">
+                    <TabsTrigger value="all">All</TabsTrigger>
+                    <TabsTrigger value={Location.LAWRENCEVILLE}>
+                      {LocationDisplayNames[Location.LAWRENCEVILLE]}
+                    </TabsTrigger>
+                    <TabsTrigger value={Location.ZELIENOPLE}>
+                      {LocationDisplayNames[Location.ZELIENOPLE]}
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              )}
+
+              {/* Sort Button */}
+              <Button
+                variant={sortOptions.sortBy === 'date' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => toggleSort('date')}
+                className="flex items-center gap-1"
+              >
+                Date
+                {sortOptions.sortBy === 'date' && (
+                  sortOptions.order === 'asc'
+                    ? <SortAsc className="h-3 w-3" />
+                    : <SortDesc className="h-3 w-3" />
+                )}
+              </Button>
             </div>
 
             {hasActiveFilters && (
@@ -278,27 +353,6 @@ export function EventList({
           {/* Extended Filters Panel */}
           {showFiltersPanel && (
             <div className="border rounded-lg p-4 space-y-4 bg-muted/30">
-              {/* Location Filter */}
-              {showLocationFilter && (
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Location</label>
-                  <div className="flex gap-2">
-                    {Object.values(Location).map(location => (
-                      <Button
-                        key={location}
-                        variant={selectedLocation === location ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setSelectedLocation(
-                          selectedLocation === location ? undefined : location
-                        )}
-                      >
-                        {LocationDisplayNames[location]}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               {/* Event Type Filter */}
               <div>
                 <label className="text-sm font-medium mb-2 block">Event Types</label>
@@ -327,7 +381,7 @@ export function EventList({
             <Calendar className="h-5 w-5" />
             Today's Events
           </h2>
-          {renderEvents(todaysEvents)}
+          {renderEvents(todaysEvents, 'adaptive-grid')}
         </div>
       )}
 
@@ -343,7 +397,7 @@ export function EventList({
             </span>
           </div>
         )}
-        {renderEvents(maxItems ? filteredAndSortedEvents : upcomingEvents)}
+        {renderEvents(maxItems ? filteredAndSortedEvents : upcomingEvents, todaysEvents.length > 0 && !maxItems ? 'grid' : 'list')}
       </div>
 
       {/* Load More Button */}

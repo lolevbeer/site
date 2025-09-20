@@ -9,7 +9,7 @@ interface LogoProps {
 }
 
 export function Logo({
-  className,
+  className = "",
   width = 48,
   height = 52,
 }: LogoProps) {
@@ -21,10 +21,10 @@ export function Logo({
 }
 
 export function LogoWithText({
-  className,
+  className = "",
   logoWidth = 32,
   logoHeight = 35,
-  textClassName,
+  textClassName = "",
 }: LogoProps & { textClassName?: string }) {
   return (
     <div className={cn("flex items-center gap-2", className)}>
