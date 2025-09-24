@@ -198,22 +198,6 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.605843119963,
-                    43.248231538328
-                ]
-            },
-            "properties": {
-                "id": 13,
-                "Name": "herrema's marketplace",
-                "address": "125 PATTONWOOD DR, ROCHESTER, NY, 14617",
-                "customerType": "Grocery"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
                     -77.697295057083,
                     43.252964233061
                 ]
