@@ -5,7 +5,7 @@ vespero,TRUE,Vespero,FALSE,Czech Dark Lager,5.8,4.25,16
 sever,TRUE,Sever,FALSE,Pumpkin Stout,5.7,4.50,17
 sono,TRUE,Sono,FALSE,Double IPA,7.6,5.75,22
 ,FALSE,,FALSE,,,,
-ddh-akko,TRUE,DDH Akko,FALSE,India Pale Ale,7,5.25,20
+ddh-akko,FALSE,DDH Akko,FALSE,India Pale Ale,7,5.25,20
 ddh-taupo,TRUE,DDH Taupō,FALSE,India Pale Ale,7,5.25,20
 ,FALSE,,FALSE,,,,
 double-lupula,TRUE,Double Lupula,FALSE,Double IPA,8.4,5.25,20
