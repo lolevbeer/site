@@ -4,7 +4,7 @@ tap,variant,singleCanAvailable,name,type,abv,glass,price,description,image,hops
 3,grandar,FALSE,Grandar,Imperial Pilsner,6.6,stein,7,"Crackery sweetness balanced with hops, floral and herbal notes that finish with a subtle citrus. Step mashed and hopped with nobles.",TRUE,"Hallertau Mittelfrüh, Saaz"
 4,phokas,FALSE,Phokas,India Pale Ale,6,pint,7,"Tropical and citrusy with hints of pine and white grape. Light, juicy, and easy-drinking.",FALSE,"Mosaic®, Nelson Sauvin™, Idaho 7™"
 5,verus,FALSE,Verus,India Pale Ale,7,pint,7,"Tropical fruit notes balanced with pear, melon, blueberry and citrus.",TRUE,"Erebus™, Calypso™, Citra®"
-6,ddh-lupula,FALSE,DDH Lupula,India Pale Ale,7,teku,8,"Double dry hopped Lupula. Notes of Pineapple, mango, and grapefruit. Aromatic.",TRUE,"Motueka™, Moutere™, Riwaka™"
+6,lupula,FALSE,Lupula,India Pale Ale,7,pint,7,"Pineapple, mango, and grapefruit.",TRUE,"Motueka™, Moutere™, Riwaka™"
 7,ddh-akko,FALSE,DDH Akko,India Pale Ale,7,teku,8,"Double dry hopped variant of Akko. Pineapple and orange mango, bursting with peach ring candies. ",TRUE,"Mega Motueka, Nelson Sauvin™, Citra®, Galaxy®"
 8,prismatic,FALSE,Prismatic,India Pale Ale,7,pint,7,"Pineapple, vanilla, tangerine, melon.",TRUE,"El Dorado®, Idaho 7™, Citra®"
 9,sono,FALSE,Sono,Double IPA,7.6,teku,9,,TRUE,"Citra® HyperBoost™, Citra® DynaBoost™, Dolcita™"
