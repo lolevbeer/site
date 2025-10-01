@@ -14,18 +14,26 @@ import { EventCard } from '@/components/events/event-card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Calendar, List, Clock, MapPin, Mail, Phone } from 'lucide-react';
 import { loadEventsFromCSV } from '@/lib/utils/events';
 import { LocationDisplayNames } from '@/lib/types/location';
+import { useLocationContext } from '@/components/location/location-provider';
 
 interface EventsPageContentProps {
   initialEvents?: BreweryEvent[];
 }
 
 export function EventsPageContent({ initialEvents = [] }: EventsPageContentProps) {
+  const { currentLocation, setLocation } = useLocationContext();
   const [events, setEvents] = useState<BreweryEvent[]>(initialEvents);
   const [loading, setLoading] = useState(true);
-  const [selectedLocation, setSelectedLocation] = useState<Location | 'all'>('all');
+  const [selectedLocation, setSelectedLocation] = useState<Location | 'all'>(currentLocation);
+
+  // Update local state when global location changes
+  useEffect(() => {
+    setSelectedLocation(currentLocation);
+  }, [currentLocation]);
 
   useEffect(() => {
     const loadEvents = async () => {
@@ -67,9 +75,9 @@ export function EventsPageContent({ initialEvents = [] }: EventsPageContentProps
         </p>
       </div>
 
-      {/* All Events */}
+      {/* Upcoming Events */}
       <section className="space-y-4">
-        <h2 className="text-2xl font-bold">All Events</h2>
+        <h2 className="text-2xl font-bold">Upcoming Events</h2>
         <Tabs defaultValue="list" className="w-full">
           <div className="flex justify-center mb-4">
             {/* View Switcher */}
@@ -92,7 +100,13 @@ export function EventsPageContent({ initialEvents = [] }: EventsPageContentProps
               showLocationFilter={false}
               showFilters={true}
               selectedLocation={selectedLocation}
-              onLocationChange={setSelectedLocation}
+              onLocationChange={(location) => {
+                setSelectedLocation(location);
+                // Update global location if a specific location is selected
+                if (location !== 'all') {
+                  setLocation(location);
+                }
+              }}
             />
           </TabsContent>
 
@@ -102,6 +116,14 @@ export function EventsPageContent({ initialEvents = [] }: EventsPageContentProps
               onEventClick={handleEventClick}
               showLocationFilter={false}
               showAddEvent={false}
+              selectedLocation={selectedLocation}
+              onLocationChange={(location) => {
+                setSelectedLocation(location);
+                // Update global location if a specific location is selected
+                if (location !== 'all') {
+                  setLocation(location);
+                }
+              }}
             />
           </TabsContent>
         </Tabs>
@@ -111,18 +133,24 @@ export function EventsPageContent({ initialEvents = [] }: EventsPageContentProps
       <section className="text-center space-y-4 pt-8 border-t">
         <h2 className="text-2xl font-bold">Book Your Event</h2>
         <p>
-          Looking to host your next celebration at Love of Lev? We offer private event
-          spaces and custom beer packages for parties, corporate events, and special occasions.
+          Looking to host your next celebration at Lolev?
         </p>
-        <div className="flex flex-wrap justify-center gap-4">
-          <Badge variant="outline" className="flex items-center gap-2">
-            <Mail className="h-4 w-4" />
-            info@lolev.beer
-          </Badge>
-          <Badge variant="outline" className="flex items-center gap-2">
-            <Phone className="h-4 w-4" />
-            (412) 336-8965
-          </Badge>
+        <p>
+          We offer private event spaces and custom beer packages for parties, corporate events, and special occasions.
+        </p>
+        <div className="flex justify-center gap-4">
+          <Button variant="outline" asChild>
+            <a href="mailto:info@lolev.beer" className="flex items-center gap-2">
+              <Mail className="h-4 w-4" />
+              info@lolev.beer
+            </a>
+          </Button>
+          <Button variant="outline" asChild>
+            <a href="tel:4123368965" className="flex items-center gap-2">
+              <Phone className="h-4 w-4" />
+              (412) 336-8965
+            </a>
+          </Button>
         </div>
       </section>
     </div>

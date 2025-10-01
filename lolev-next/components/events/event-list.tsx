@@ -302,6 +302,21 @@ export function EventList({
 
             {/* Location Filter and Sort Options on the right */}
             <div className="flex items-center gap-2 ml-auto">
+              {/* Sort Button */}
+              <Button
+                variant={sortOptions.sortBy === 'date' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => toggleSort('date')}
+                className="flex items-center gap-1"
+              >
+                Date
+                {sortOptions.sortBy === 'date' && (
+                  sortOptions.order === 'asc'
+                    ? <SortAsc className="h-3 w-3" />
+                    : <SortDesc className="h-3 w-3" />
+                )}
+              </Button>
+
               {/* Location Filter */}
               {parentSelectedLocation !== undefined && onLocationChange && (
                 <Tabs
@@ -320,21 +335,6 @@ export function EventList({
                   </TabsList>
                 </Tabs>
               )}
-
-              {/* Sort Button */}
-              <Button
-                variant={sortOptions.sortBy === 'date' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => toggleSort('date')}
-                className="flex items-center gap-1"
-              >
-                Date
-                {sortOptions.sortBy === 'date' && (
-                  sortOptions.order === 'asc'
-                    ? <SortAsc className="h-3 w-3" />
-                    : <SortDesc className="h-3 w-3" />
-                )}
-              </Button>
             </div>
 
             {hasActiveFilters && (
@@ -377,8 +377,7 @@ export function EventList({
       {/* Today's Events Section */}
       {todaysEvents.length > 0 && !maxItems && (
         <div>
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
+          <h2 className="text-xl font-semibold mb-4">
             Today's Events
           </h2>
           {renderEvents(todaysEvents, 'adaptive-grid')}
@@ -397,7 +396,7 @@ export function EventList({
             </span>
           </div>
         )}
-        {renderEvents(maxItems ? filteredAndSortedEvents : upcomingEvents, todaysEvents.length > 0 && !maxItems ? 'grid' : 'list')}
+        {renderEvents(maxItems ? filteredAndSortedEvents : upcomingEvents, 'grid')}
       </div>
 
       {/* Load More Button */}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { SocialLinks } from './social-links';
@@ -9,16 +9,8 @@ import { Location, LocationDisplayNames, type LocationInfo, type LocationHours }
 import { LOCATIONS_DATA } from '@/lib/config/locations';
 import { MapPin, Clock, Phone, Mail, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-/**
- * Format time from 24-hour to 12-hour format
- */
-function formatTime(time: string): string {
-  const [hours, minutes] = time.split(':').map(Number);
-  const ampm = hours >= 12 ? 'PM' : 'AM';
-  const displayHours = hours % 12 || 12;
-  return `${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
-}
+import { useLocationContext } from '@/components/location/location-provider';
+import { format24to12Hour } from '@/lib/utils/formatters';
 
 /**
  * Get day name from hours key
@@ -63,7 +55,7 @@ function HoursDisplay({ hours }: { hours: LocationHours }) {
             <span>
               {dayHours.closed
                 ? 'Closed'
-                : `${formatTime(dayHours.open)} - ${formatTime(dayHours.close)}`
+                : `${format24to12Hour(dayHours.open)} - ${format24to12Hour(dayHours.close)}`
               }
             </span>
           </div>
@@ -157,63 +149,22 @@ function LocationInfo({ location }: { location: LocationInfo }) {
  * Main footer component with location selector and information
  */
 export function Footer() {
-  const [selectedLocation, setSelectedLocation] = useState<Location>(Location.LAWRENCEVILLE);
+  const { currentLocation, setLocation } = useLocationContext();
 
   return (
     <footer className="border-t bg-transparent">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-          {/* Brand and Description */}
-          <div className="lg:col-span-1">
-            <Logo className="mb-4" />
-            <p className="text-sm text-muted-foreground mb-4">
-              Craft brewery with locations in Lawrenceville and Zelienople,
-              Pennsylvania. Serving exceptional beer and building community.
-            </p>
-            <SocialLinks size="sm" />
-          </div>
-
-          {/* Quick Links */}
-          <div>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link href="/beer-map" className="text-muted-foreground hover:text-foreground">
-                  Beer Map
-                </Link>
-              </li>
-              <li>
-                <Link href="/events" className="text-muted-foreground hover:text-foreground">
-                  Events
-                </Link>
-              </li>
-              <li>
-                <Link href="/food" className="text-muted-foreground hover:text-foreground">
-                  Food Trucks
-                </Link>
-              </li>
-              <li>
-                <Link href="/about" className="text-muted-foreground hover:text-foreground">
-                  About Us
-                </Link>
-              </li>
-              <li>
-                <Link href="/contact" className="text-muted-foreground hover:text-foreground">
-                  Contact
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Location Selector and Info */}
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5">
+          {/* Location Selector and Info - MOVED TO FIRST */}
           <div className="lg:col-span-2">
             <div className="mb-4">
               <h3 className="font-semibold mb-3">Visit Us</h3>
               <div className="inline-flex items-center p-1 bg-secondary rounded-lg">
                 <button
-                  onClick={() => setSelectedLocation(Location.LAWRENCEVILLE)}
+                  onClick={() => setLocation(Location.LAWRENCEVILLE)}
                   className={cn(
                     "px-4 py-2 text-sm font-medium rounded-md transition-all",
-                    selectedLocation === Location.LAWRENCEVILLE
+                    currentLocation === Location.LAWRENCEVILLE
                       ? "bg-background text-foreground shadow-sm"
                       : "text-muted-foreground hover:text-foreground"
                   )}
@@ -221,10 +172,10 @@ export function Footer() {
                   Lawrenceville
                 </button>
                 <button
-                  onClick={() => setSelectedLocation(Location.ZELIENOPLE)}
+                  onClick={() => setLocation(Location.ZELIENOPLE)}
                   className={cn(
                     "px-4 py-2 text-sm font-medium rounded-md transition-all",
-                    selectedLocation === Location.ZELIENOPLE
+                    currentLocation === Location.ZELIENOPLE
                       ? "bg-background text-foreground shadow-sm"
                       : "text-muted-foreground hover:text-foreground"
                   )}
@@ -234,7 +185,49 @@ export function Footer() {
               </div>
             </div>
 
-            <LocationInfo location={LOCATIONS_DATA[selectedLocation]} />
+            <LocationInfo location={LOCATIONS_DATA[currentLocation]} />
+          </div>
+
+          {/* Quick Links - MOVED TO SECOND */}
+          <div>
+            <h3 className="font-semibold mb-3">Explore</h3>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <Link href="/beer-map" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Beer Map
+                </Link>
+              </li>
+              <li>
+                <Link href="/events" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Events
+                </Link>
+              </li>
+              <li>
+                <Link href="/food" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Food Trucks
+                </Link>
+              </li>
+              <li>
+                <Link href="/about" className="text-muted-foreground hover:text-foreground transition-colors">
+                  About Us
+                </Link>
+              </li>
+              <li>
+                <Link href="/contact" className="text-muted-foreground hover:text-foreground transition-colors">
+                  Contact
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Brand and Description - MOVED TO LAST */}
+          <div className="lg:col-span-2 flex flex-col items-end text-right">
+            <Logo className="mb-4 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground mb-4">
+              Craft brewery with locations in Lawrenceville and Zelienople,
+              Pennsylvania. Serving exceptional beer and building community.
+            </p>
+            <SocialLinks size="sm" />
           </div>
         </div>
 

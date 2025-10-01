@@ -171,7 +171,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         {/* Beer Image */}
         <div className="space-y-4">
-          <div className="relative aspect-square w-full max-w-md mx-auto overflow-hidden rounded-xl bg-muted/30">
+          <div className="relative aspect-square w-full overflow-hidden rounded-xl">
             {imagePath ? (
               <Image
                 src={imagePath}
@@ -182,7 +182,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
                 priority
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800">
+              <div className="w-full h-full flex items-center justify-center">
                 <span className="text-gray-400 dark:text-gray-500 font-medium text-lg">No Image</span>
               </div>
             )}

@@ -34,50 +34,7 @@ function getEventType(vendor: string): EventType {
   return EventType.SPECIAL;
 }
 
-// Helper to parse time string
-function parseTime(timeStr: string): { time: string; endTime?: string } {
-  if (!timeStr) return { time: '7:00 PM' };
-
-  // Handle ranges like "6-9pm" or "7:30-9pm"
-  if (timeStr.includes('-')) {
-    const parts = timeStr.split('-');
-    let startTime = parts[0].trim();
-    let endTime = parts[1].trim();
-
-    // Add PM/AM if missing from start time but present in end time
-    if (!startTime.toLowerCase().includes('am') && !startTime.toLowerCase().includes('pm')) {
-      if (endTime.toLowerCase().includes('pm')) startTime += 'pm';
-      else if (endTime.toLowerCase().includes('am')) startTime += 'am';
-    }
-
-    return {
-      time: formatTimeDisplay(startTime),
-      endTime: formatTimeDisplay(endTime)
-    };
-  }
-
-  return { time: formatTimeDisplay(timeStr) };
-}
-
-function formatTimeDisplay(time: string): string {
-  // Handle special cases
-  if (time.includes(':')) {
-    // Already has colon, just format case
-    return time
-      .replace(/pm/i, ' PM')
-      .replace(/am/i, ' AM')
-      .replace(/\s+/g, ' ')
-      .trim();
-  }
-
-  // Add colon for times like "6pm" -> "6:00 PM"
-  return time
-    .replace(/(\d+)(am|pm)/i, '$1:00 $2')
-    .replace(/pm/i, 'PM')
-    .replace(/am/i, 'AM')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
+import { parseTimeRange } from '@/lib/utils/formatters';
 
 /**
  * Generate a unique event ID from date and vendor
@@ -165,7 +122,7 @@ function parseEventRow(row: EventCSVRow, location: Location): BreweryEvent | nul
   if (isNaN(eventDate.getTime())) return null;
 
   // Parse time
-  const { time, endTime } = parseTime(row.time);
+  const { time, endTime } = parseTimeRange(row.time);
 
   // Determine event type
   const type = getEventType(row.vendor);

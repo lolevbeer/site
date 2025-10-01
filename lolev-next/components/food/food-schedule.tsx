@@ -17,7 +17,14 @@ import {
 import { Location, LocationDisplayNames } from '@/lib/types/location';
 import { useLocationContext } from '@/components/location/location-provider';
 import { VendorCard, VendorCardSkeleton } from './vendor-card';
-import { Card } from '@/components/ui/card';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -28,10 +35,11 @@ import {
   Clock,
   MapPin,
   Truck,
-  Filter,
   X,
   AlertCircle,
-  ExternalLink
+  ExternalLink,
+  Instagram,
+  Facebook
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -55,36 +63,48 @@ export function FoodSchedule({
   onVendorClick,
   loading = false
 }: FoodScheduleProps) {
-  const { currentLocation } = useLocationContext();
+  const { currentLocation, setLocation } = useLocationContext();
   const [currentWeek, setCurrentWeek] = useState(getStartOfWeek(new Date()));
   const [selectedLocation, setSelectedLocation] = useState<Location | undefined>(
     showLocationFilter ? currentLocation : undefined
   );
   const [selectedCuisines, setSelectedCuisines] = useState<CuisineType[]>([]);
-  const [showFilters, setShowFilters] = useState(false);
+
+  // Update local state when global location changes
+  React.useEffect(() => {
+    if (showLocationFilter) {
+      setSelectedLocation(currentLocation);
+    }
+  }, [currentLocation, showLocationFilter]);
 
   // Get start of week (Sunday)
   function getStartOfWeek(date: Date): Date {
     const start = new Date(date);
     const day = start.getDay();
     const diff = start.getDate() - day;
-    return new Date(start.setDate(diff));
+    start.setDate(diff);
+    start.setHours(0, 0, 0, 0);
+    return start;
   }
 
   // Generate weekly schedule
   const weeklySchedule = useMemo(() => {
     const days: DailyFoodSchedule[] = [];
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
     for (let i = 0; i < 7; i++) {
       const date = new Date(currentWeek);
       date.setDate(currentWeek.getDate() + i);
+      date.setHours(0, 0, 0, 0);
 
       const daySchedules = schedules.filter(schedule => {
-        const scheduleDate = new Date(schedule.date);
+        // Compare date strings directly (YYYY-MM-DD format)
+        const targetDateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        const scheduleDateStr = schedule.date.split('T')[0];
 
         // Filter by date
-        if (scheduleDate.toDateString() !== date.toDateString()) {
+        if (scheduleDateStr !== targetDateStr) {
           return false;
         }
 
@@ -116,10 +136,15 @@ export function FoodSchedule({
 
   // Get today's schedule
   const todaysSchedule = useMemo(() => {
-    const today = new Date().toDateString();
-    return weeklySchedule.find(day =>
-      new Date(day.date).toDateString() === today
-    );
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return weeklySchedule.find(day => {
+      const [year, month, dayNum] = day.date.split('-').map(Number);
+      const dayDate = new Date(year, month - 1, dayNum);
+      dayDate.setHours(0, 0, 0, 0);
+      return dayDate.getTime() === today.getTime();
+    });
   }, [weeklySchedule]);
 
   const navigateWeek = (direction: 'prev' | 'next') => {
@@ -154,7 +179,14 @@ export function FoodSchedule({
   };
 
   const isToday = (dateString: string) => {
-    return new Date(dateString).toDateString() === new Date().toDateString();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const [year, month, day] = dateString.split('T')[0].split('-').map(Number);
+    const checkDate = new Date(year, month - 1, day);
+    checkDate.setHours(0, 0, 0, 0);
+
+    return checkDate.getTime() === today.getTime();
   };
 
   const weekRange = useMemo(() => {
@@ -177,6 +209,18 @@ export function FoodSchedule({
   const clearFilters = () => {
     setSelectedCuisines([]);
     setSelectedLocation(showLocationFilter ? currentLocation : undefined);
+  };
+
+  const getLinkIcon = (url: string | undefined) => {
+    if (!url) return ExternalLink;
+    const lowerUrl = url.toLowerCase();
+    if (lowerUrl.includes('instagram.com') || lowerUrl.includes('instagr.am')) {
+      return Instagram;
+    }
+    if (lowerUrl.includes('facebook.com') || lowerUrl.includes('fb.com')) {
+      return Facebook;
+    }
+    return ExternalLink;
   };
 
   const renderDaySchedule = (daySchedule: DailyFoodSchedule) => {
@@ -204,48 +248,53 @@ export function FoodSchedule({
         {daySchedule.vendors.map((schedule, index) => (
           <Card
             key={index}
-            className="p-3 cursor-pointer transition-all duration-200 hover:shadow-md"
+            className="group cursor-pointer transition-all duration-300 hover:shadow-md border-gray-100"
             onClick={() => onVendorClick?.(schedule)}
           >
-            <div className="space-y-2">
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-semibold text-sm">{schedule.vendor}</h4>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Clock className="h-3 w-3" />
-                    <span>{formatTime(schedule.time)}</span>
-                    {showLocationFilter && (
-                      <>
-                        <MapPin className="h-3 w-3" />
-                        <span>{LocationDisplayNames[schedule.location]}</span>
-                      </>
+            <CardHeader className="pb-3">
+              <div className="text-center">
+                <CardTitle className="text-lg">{schedule.vendor}</CardTitle>
+                <div className="mt-2 space-y-1">
+                  <div className="text-sm text-muted-foreground">
+                    {formatTime(schedule.time)}
+                  </div>
+                  {showLocationFilter && (
+                    <div className="text-sm text-muted-foreground">
+                      {LocationDisplayNames[schedule.location]}
+                    </div>
+                  )}
+                </div>
+                {(schedule.specialEvent || schedule.site) && (
+                  <div className="flex items-center justify-center gap-2 mt-3">
+                    {schedule.specialEvent && (
+                      <Badge variant="secondary" className="text-xs">
+                        Special Event
+                      </Badge>
+                    )}
+                    {schedule.site && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(schedule.site, '_blank');
+                        }}
+                      >
+                        {React.createElement(getLinkIcon(schedule.site), {
+                          className: "h-4 w-4"
+                        })}
+                      </Button>
                     )}
                   </div>
-                </div>
-                <div className="flex items-center gap-1">
-                  {schedule.specialEvent && (
-                    <Badge variant="secondary" className="text-xs">
-                      Special
-                    </Badge>
-                  )}
-                  {schedule.site && (
-                    <Button variant="ghost" size="sm" asChild>
-                      <a
-                        href={schedule.site}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <ExternalLink className="h-3 w-3" />
-                      </a>
-                    </Button>
-                  )}
-                </div>
+                )}
               </div>
-              {schedule.notes && (
-                <p className="text-xs text-muted-foreground">{schedule.notes}</p>
-              )}
-            </div>
+            </CardHeader>
+            {schedule.notes && (
+              <CardContent className="pt-0 text-center">
+                <p className="text-sm text-muted-foreground">{schedule.notes}</p>
+              </CardContent>
+            )}
           </Card>
         ))}
       </div>
@@ -282,20 +331,28 @@ export function FoodSchedule({
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold">Food Truck Schedule</h2>
           {showLocationFilter && (
-            <div className="flex gap-2">
-              {Object.values(Location).map(location => (
-                <Button
-                  key={location}
-                  variant={selectedLocation === location ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setSelectedLocation(
-                    selectedLocation === location ? undefined : location
-                  )}
-                >
-                  {LocationDisplayNames[location]}
-                </Button>
-              ))}
-            </div>
+            <Tabs
+              value={selectedLocation || 'all'}
+              onValueChange={(value) => {
+                const newLocation = value === 'all' ? undefined : value as Location;
+                setSelectedLocation(newLocation);
+                // Update global location if a specific location is selected
+                if (newLocation) {
+                  setLocation(newLocation);
+                }
+              }}
+              className="w-auto"
+            >
+              <TabsList className="grid w-fit grid-cols-3">
+                <TabsTrigger value="all">All</TabsTrigger>
+                <TabsTrigger value={Location.LAWRENCEVILLE}>
+                  {LocationDisplayNames[Location.LAWRENCEVILLE]}
+                </TabsTrigger>
+                <TabsTrigger value={Location.ZELIENOPLE}>
+                  {LocationDisplayNames[Location.ZELIENOPLE]}
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
           )}
         </div>
 
@@ -361,44 +418,29 @@ export function FoodSchedule({
         <div className="flex items-center gap-2">
           {/* Location Filter */}
           {showLocationFilter && (
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Location:</span>
-              <div className="flex gap-1">
-                <Button
-                  variant={!selectedLocation ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setSelectedLocation(undefined)}
-                >
-                  All
-                </Button>
-                {Object.values(Location).map(location => (
-                  <Button
-                    key={location}
-                    variant={selectedLocation === location ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setSelectedLocation(location)}
-                  >
-                    {LocationDisplayNames[location]}
-                  </Button>
-                ))}
-              </div>
-            </div>
+            <Tabs
+              value={selectedLocation || 'all'}
+              onValueChange={(value) => {
+                const newLocation = value === 'all' ? undefined : value as Location;
+                setSelectedLocation(newLocation);
+                // Update global location if a specific location is selected
+                if (newLocation) {
+                  setLocation(newLocation);
+                }
+              }}
+              className="w-auto"
+            >
+              <TabsList className="grid w-fit grid-cols-3">
+                <TabsTrigger value="all">All</TabsTrigger>
+                <TabsTrigger value={Location.LAWRENCEVILLE}>
+                  {LocationDisplayNames[Location.LAWRENCEVILLE]}
+                </TabsTrigger>
+                <TabsTrigger value={Location.ZELIENOPLE}>
+                  {LocationDisplayNames[Location.ZELIENOPLE]}
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
           )}
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-1"
-          >
-            <Filter className="h-3 w-3" />
-            Filters
-            {hasActiveFilters && (
-              <Badge variant="secondary" className="ml-1 text-xs">
-                {selectedCuisines.length + (selectedLocation !== currentLocation ? 1 : 0)}
-              </Badge>
-            )}
-          </Button>
         </div>
       </div>
 
@@ -409,24 +451,9 @@ export function FoodSchedule({
         </h3>
       </div>
 
-      {/* Filters Panel */}
-      {showFilters && (
-        <Card className="p-4 space-y-4 bg-muted/30">
-          <div className="flex items-center justify-between">
-            <h4 className="font-medium">Filters</h4>
-            {hasActiveFilters && (
-              <Button variant="ghost" size="sm" onClick={clearFilters}>
-                <X className="h-3 w-3 mr-1" />
-                Clear All
-              </Button>
-            )}
-          </div>
-        </Card>
-      )}
-
       {/* Today's Highlight */}
       {todaysSchedule && todaysSchedule.vendors.length > 0 && (
-        <Card className="p-4 border-blue-200 bg-blue-50">
+        <Card className="p-4 border-blue-100 bg-blue-50/50">
           <div className="flex items-center gap-2 mb-3">
             <Calendar className="h-4 w-4 text-blue-600" />
             <h3 className="font-semibold text-blue-900">Today's Food Trucks</h3>
@@ -458,13 +485,13 @@ export function FoodSchedule({
             key={index}
             className={cn(
               'min-h-[300px] p-4',
-              isToday(daySchedule.date) && 'ring-2 ring-blue-500 ring-opacity-50 bg-blue-50',
+              isToday(daySchedule.date) && 'ring-1 ring-blue-300 ring-opacity-50 bg-blue-50/50',
               daySchedule.vendors.length === 0 && 'bg-muted/30'
             )}
           >
             <div className="space-y-3">
               {/* Day Header */}
-              <div className="text-center border-b pb-2">
+              <div className="text-center border-b border-gray-100 pb-2">
                 <h3 className={cn(
                   'font-semibold',
                   isToday(daySchedule.date) && 'text-blue-600'
@@ -472,7 +499,10 @@ export function FoodSchedule({
                   {daySchedule.day}
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  {new Date(daySchedule.date).getDate()}
+                  {(() => {
+                    const [year, month, day] = daySchedule.date.split('-').map(Number);
+                    return day;
+                  })()}
                 </p>
                 {daySchedule.specialEvent && (
                   <Badge variant="secondary" className="text-xs mt-1">

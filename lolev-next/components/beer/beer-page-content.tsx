@@ -8,7 +8,8 @@
 import React, { useState, useMemo } from 'react';
 import { Beer } from '@/lib/types/beer';
 import { BeerCard } from './beer-card';
-import { Search, Filter, X, ChevronDown, ArrowUpDown } from 'lucide-react';
+import { MapComponent } from '@/components/ui/map';
+import { Search, Filter, X, ChevronDown, ArrowUpDown, Map } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -51,6 +52,7 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
   const [showGlutenFree, setShowGlutenFree] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>('name');
   const [showFilters, setShowFilters] = useState(false);
+  const [showMap, setShowMap] = useState(false);
 
   // Get unique beer types and glasses
   const beerTypes = useMemo(() => {
@@ -160,6 +162,37 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
           Each beer is brewed with care using the finest ingredients and traditional techniques.
         </p>
       </div>
+
+      {/* Map Toggle Button */}
+      <div className="mb-6">
+        <Button
+          variant="outline"
+          onClick={() => setShowMap(!showMap)}
+          className="flex items-center gap-2"
+        >
+          <Map className="h-4 w-4" />
+          {showMap ? 'Hide Map' : 'Find Us on the Map'}
+        </Button>
+      </div>
+
+      {/* Map Component */}
+      {showMap && (
+        <div className="mb-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>Our Brewery Locations</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <MapComponent
+                height={400}
+                showControls={true}
+                showPopups={true}
+                style="streets"
+              />
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Sort and Mobile Filter Controls */}
       <div className="flex items-center justify-between mb-6">

@@ -144,8 +144,6 @@ function HeroSection() {
       <section className="relative z-10 flex flex-col items-center justify-center gap-8 rounded-xl py-8">
         <div className="flex size-full items-center justify-center">
           <Marquee>
-            <MarqueeFade className="from-background" side="left" />
-            <MarqueeFade className="from-background" side="right" />
             <MarqueeContent pauseOnHover={true} speed={40}>
               {loading ? (
                 // Show loading placeholders
@@ -190,12 +188,12 @@ function HeroSection() {
 
 function FeaturedBeers() {
   const { currentLocation } = useLocationContext();
-  const [draftVariantsByLocation, setDraftVariantsByLocation] = useState<{
-    lawrenceville: Set<string>;
-    zelienople: Set<string>;
+  const [draftBeersByLocation, setDraftBeersByLocation] = useState<{
+    lawrenceville: any[];
+    zelienople: any[];
   }>({
-    lawrenceville: new Set(),
-    zelienople: new Set()
+    lawrenceville: [],
+    zelienople: []
   });
   const [loading, setLoading] = useState(true);
 
@@ -203,53 +201,158 @@ function FeaturedBeers() {
     // Fetch draft beers from both locations
     const fetchDraftBeers = async () => {
       try {
-        const [lawrencevilleRes, zelienopleRes] = await Promise.all([
+        const [lawrencevilleRes, zelienopleRes, beerRes] = await Promise.all([
           fetch('/data/lawrenceville-draft.csv'),
-          fetch('/data/zelienople-draft.csv')
+          fetch('/data/zelienople-draft.csv'),
+          fetch('/data/beer.csv')
         ]);
 
-        const [lawrencevilleText, zelienopleText] = await Promise.all([
+        const [lawrencevilleText, zelienopleText, beerText] = await Promise.all([
           lawrencevilleRes.text(),
-          zelienopleRes.text()
+          zelienopleRes.text(),
+          beerRes.text()
         ]);
 
-        const lawrencevilleVariants = new Set<string>();
-        const zelienopleVariants = new Set<string>();
+        // Parse beer.csv for complete beer info
+        const beerMap = new Map();
+        const beerLines = beerText.split('\n').slice(1);
+        beerLines.forEach(line => {
+          if (line.trim()) {
+            const parts = line.split(',');
+            const variant = parts[0]?.replace(/"/g, '').trim();
+            const name = parts[1]?.replace(/"/g, '').trim();
+            const type = parts[2]?.replace(/"/g, '').trim();
+            const glass = parts[3]?.replace(/"/g, '').trim();
+            const abv = parts[4]?.replace(/"/g, '').trim();
+
+            if (variant) {
+              beerMap.set(variant.toLowerCase(), {
+                variant,
+                name,
+                type,
+                glass,
+                abv
+              });
+            }
+          }
+        });
+
+        // Helper function to parse CSV lines with quoted fields
+        function parseCSVLine(line) {
+          const result = [];
+          let current = '';
+          let inQuotes = false;
+
+          for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+
+            if (char === '"') {
+              inQuotes = !inQuotes;
+            } else if (char === ',' && !inQuotes) {
+              result.push(current.trim());
+              current = '';
+            } else {
+              current += char;
+            }
+          }
+          result.push(current.trim());
+          return result;
+        }
+
+        const lawrencevilleBeers = [];
+        const zelienopleBeers = [];
 
         // Parse Lawrenceville draft (with quoted values)
         const lawrencevilleLines = lawrencevilleText.split('\n').slice(1); // Skip header
         lawrencevilleLines.forEach(line => {
           if (line.trim()) {
-            const parts = line.split(',');
-            let variant = parts[1]?.replace(/"/g, '').trim();
+            const parts = parseCSVLine(line);
+            const tap = parts[0];
+            const variant = parts[1];
+            const name = parts[3] || '';
+            const type = parts[4] || '';
+            const abv = parts[5] || '';
+            const glass = parts[6] || '';
+            const price = parts[7] || '';
+            const description = parts[8] || '';
+            const image = parts[9] === 'TRUE';
+
             if (variant) {
-              // Normalize variant names (handle case differences like priscus-ii vs priscus-II)
-              variant = variant.toLowerCase();
-              lawrencevilleVariants.add(variant);
+              lawrencevilleBeers.push({
+                tap,
+                variant,
+                name,
+                type,
+                abv,
+                glass,
+                price,
+                description,
+                image
+              });
             }
           }
         });
 
-        // Parse Zelienople draft (without quotes)
-        const zelienopleLines = zelienopleText.split('\n').slice(1); // Skip header
-        zelienopleLines.forEach(line => {
-          if (line.trim()) {
-            const parts = line.split(',');
-            let variant = parts[1]?.replace(/"/g, '').trim();
-            if (variant) {
-              // Normalize variant names (handle case differences)
-              variant = variant.toLowerCase();
-              zelienopleVariants.add(variant);
+        // Parse Zelienople CSV - handle multiline fields
+        const zelienopleRows = [];
+        let currentRow = '';
+        let inQuotes = false;
+        const zelienopleLines = zelienopleText.split('\n');
+
+        for (let i = 1; i < zelienopleLines.length; i++) {
+          const line = zelienopleLines[i];
+
+          // Count quotes to determine if we're in a multiline field
+          for (let j = 0; j < line.length; j++) {
+            if (line[j] === '"') inQuotes = !inQuotes;
+          }
+
+          currentRow += (currentRow ? '\n' : '') + line;
+
+          // If quotes are balanced, we have a complete row
+          if (!inQuotes) {
+            const parts = parseCSVLine(currentRow);
+            if (parts[0] && parts[1]) { // Must have tap and variant
+              zelienopleRows.push(parts);
             }
+            currentRow = '';
+          }
+        }
+
+        // Process parsed rows
+        zelienopleRows.forEach(parts => {
+          const tap = parts[0];
+          const variant = parts[1];
+          const name = parts[3] || '';
+          const type = parts[4] || '';
+          const abv = parts[5] || '';
+          const glass = parts[6] || '';
+          const price = parts[7] || '';
+          const description = parts[8] || '';
+          const image = parts[9] === 'TRUE';
+
+          if (variant) {
+            zelienopleBeers.push({
+              tap,
+              variant,
+              name,
+              type,
+              abv,
+              glass,
+              price,
+              description,
+              image
+            });
           }
         });
 
-        console.log('Lawrenceville variants:', Array.from(lawrencevilleVariants));
-        console.log('Zelienople variants:', Array.from(zelienopleVariants));
+        console.log('Lawrenceville beers with images:', lawrencevilleBeers.filter(b => b.image).map(b => b.variant));
+        console.log('Zelienople beers with images:', zelienopleBeers.filter(b => b.image).map(b => b.variant));
+        console.log('All Lawrenceville beers:', lawrencevilleBeers.map(b => ({ variant: b.variant, image: b.image })));
 
-        setDraftVariantsByLocation({
-          lawrenceville: lawrencevilleVariants,
-          zelienople: zelienopleVariants
+        setDraftBeersByLocation({
+          lawrenceville: lawrencevilleBeers,
+          zelienople: zelienopleBeers
         });
       } catch (error) {
         console.error('Error loading draft beers:', error);
@@ -261,19 +364,12 @@ function FeaturedBeers() {
     fetchDraftBeers();
   }, []);
 
-  // Filter beers based on selected location
-  const featuredBeers = beers.filter(beer => {
-    const normalizedVariant = beer.variant.toLowerCase();
-    if (currentLocation === 'lawrenceville') {
-      return draftVariantsByLocation.lawrenceville.has(normalizedVariant);
-    } else if (currentLocation === 'zelienople') {
-      return draftVariantsByLocation.zelienople.has(normalizedVariant);
-    } else {
-      // 'both' - show beers from either location
-      return draftVariantsByLocation.lawrenceville.has(normalizedVariant) ||
-             draftVariantsByLocation.zelienople.has(normalizedVariant);
-    }
-  });
+  // Get beers based on selected location
+  const featuredBeers = currentLocation === 'lawrenceville'
+    ? draftBeersByLocation.lawrenceville
+    : currentLocation === 'zelienople'
+    ? draftBeersByLocation.zelienople
+    : [...draftBeersByLocation.lawrenceville, ...draftBeersByLocation.zelienople];
 
   return (
     <section className="py-16 lg:py-24 bg-background">
@@ -300,11 +396,64 @@ function FeaturedBeers() {
             ))}
           </div>
         ) : (
-          <BeerGrid
-            beers={featuredBeers}
-            showLocation={false}
-            className="mb-8"
-          />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+            {featuredBeers.map((beer, index) => (
+              <Card key={`${beer.variant}-${index}`} className="overflow-hidden hover:shadow-lg transition-shadow flex flex-col">
+                <div className={`relative h-48 w-full flex-shrink-0 ${beer.image ? 'bg-gradient-to-b from-muted/10 to-background/50' : ''}`}>
+                  {beer.image ? (
+                    <Image
+                      src={`/images/beer/${beer.variant.toLowerCase()}.webp`}
+                      alt={beer.name}
+                      fill
+                      className="object-contain p-4"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                      onError={(e) => {
+                        // Hide image container if image fails to load
+                        e.currentTarget.parentElement.style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-full">
+                      <div className="text-center px-4">
+                        <div className="text-2xl font-bold text-muted-foreground/30 mb-2">
+                          {beer.name}
+                        </div>
+                        <div className="text-sm text-muted-foreground/30">
+                          {beer.type}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <CardContent className="p-4 flex flex-col flex-grow">
+                  <div className="flex-grow">
+                    <div className="flex items-start justify-between mb-2">
+                      <h3 className="text-lg font-semibold">{beer.name}</h3>
+                      {beer.tap && (
+                        <Badge variant="secondary" className="text-xs">
+                          Tap {beer.tap}
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="space-y-1 text-sm text-muted-foreground">
+                      <div>{beer.type}</div>
+                      <div>{beer.abv}% ABV</div>
+                      {beer.description && (
+                        <div className="mt-2 text-xs line-clamp-2">{beer.description}</div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="mt-3 pt-3 border-t">
+                    <Button asChild variant="outline" size="sm" className="w-full">
+                      <Link href={`/beer/${beer.variant.toLowerCase()}`}>
+                        View Details
+                      </Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         )}
 
         <div className="text-center">
@@ -334,7 +483,7 @@ function UpcomingEvents() {
         const response = await fetch(csvFile);
         const text = await response.text();
 
-        // Parse CSV
+        // Parse CSV - handle commas in fields
         const lines = text.split('\n');
         const headers = lines[0].split(',');
         const events = [];
@@ -342,25 +491,46 @@ function UpcomingEvents() {
         for (let i = 1; i < lines.length; i++) {
           const line = lines[i].trim();
           if (line) {
-            const values = line.split(',');
+            // Simple CSV parser that handles commas in quoted fields
+            const values = [];
+            let current = '';
+            let inQuotes = false;
+
+            for (let j = 0; j < line.length; j++) {
+              const char = line[j];
+              if (char === '"') {
+                inQuotes = !inQuotes;
+              } else if (char === ',' && !inQuotes) {
+                values.push(current.trim());
+                current = '';
+              } else {
+                current += char;
+              }
+            }
+            values.push(current.trim());
+
             const event = {
-              date: values[0],
-              vendor: values[1],
-              time: values[2],
-              attendees: values[3],
-              site: values[4],
-              end: values[5]
+              date: values[0] || '',
+              vendor: values[1] || '',
+              time: values[2] || '',
+              attendees: values[3] || '',
+              site: values[4] || '',
+              end: values[5] || ''
             };
 
             // Include today's events and future events
             // Parse date as local time, not UTC
-            const [year, month, day] = event.date.split('-').map(Number);
-            const eventDate = new Date(year, month - 1, day);
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
+            if (event.date && event.vendor) {
+              const [year, month, day] = event.date.split('-').map(Number);
+              if (year && month && day) {
+                const eventDate = new Date(year, month - 1, day);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
 
-            if (eventDate >= today) {
-              events.push(event);
+                if (eventDate >= today) {
+                  events.push(event);
+                }
+              }
             }
           }
         }
@@ -385,7 +555,7 @@ function UpcomingEvents() {
   }, [currentLocation]);
 
   return (
-    <section className="py-16 lg:py-24 bg-muted/50">
+    <section className="py-16 lg:py-24">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h2 className="text-3xl lg:text-4xl font-bold mb-4">
@@ -429,15 +599,17 @@ function UpcomingEvents() {
                         });
                       })()}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
-                      <span>{event.time} ET</span>
-                    </div>
+                    {event.time && (
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        <span>{event.time.trim()}</span>
+                      </div>
+                    )}
                     <div className="flex items-center gap-2">
                       <MapPin className="h-4 w-4" />
                       <span>{currentLocation === 'zelienople' ? 'Zelienople' : 'Lawrenceville'}</span>
                     </div>
-                    {event.attendees && (
+                    {event.attendees && event.attendees !== '' && (
                       <div className="flex items-center gap-2">
                         <Users className="h-4 w-4" />
                         <span>{event.attendees} attending</span>
@@ -445,16 +617,17 @@ function UpcomingEvents() {
                     )}
                   </div>
 
-                  {event.site && (
+                  {event.site && event.site !== '' && (
                     <div className="mt-4 pt-4 border-t">
-                      <a
-                        href={event.site}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline text-sm"
-                      >
-                        Learn More →
-                      </a>
+                      <Button asChild variant="outline" size="sm">
+                        <a
+                          href={event.site}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Learn More
+                        </a>
+                      </Button>
                     </div>
                   )}
                 </CardContent>

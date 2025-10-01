@@ -1,14 +1,14 @@
 /**
  * Food Vendor Card Component
- * Displays food vendor information with social media links and details
+ * Refactored to use BaseCard and shared utilities
  */
 
 'use client';
 
 import React from 'react';
-import { FoodVendor, FoodVendorType, CuisineType, DietaryOption } from '@/lib/types/food';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { FoodVendor } from '@/lib/types/food';
+import { BaseCard, CardSkeleton } from '@/components/ui/base-card';
+import { StatusBadge, StatusBadgeGroup } from '@/components/ui/status-badge';
 import { Button } from '@/components/ui/button';
 import {
   ExternalLink,
@@ -16,13 +16,17 @@ import {
   Facebook,
   Phone,
   Mail,
-  Star,
-  DollarSign,
   Clock,
   MapPin,
-  Utensils
+  Utensils,
+  DollarSign
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import {
+  formatCuisineType,
+  formatDietaryOption,
+  formatVendorType,
+  formatPriceRange
+} from '@/lib/utils/formatters';
 
 interface VendorCardProps {
   vendor: FoodVendor;
@@ -37,9 +41,6 @@ interface VendorCardProps {
   onVendorClick?: (vendor: FoodVendor) => void;
 }
 
-/**
- * Food vendor information card
- */
 export function VendorCard({
   vendor,
   schedule,
@@ -48,153 +49,90 @@ export function VendorCard({
   showSchedule = true,
   onVendorClick
 }: VendorCardProps) {
-  const formatCuisineType = (cuisine: CuisineType) => {
-    return cuisine.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-  };
-
-  const formatDietaryOption = (option: DietaryOption) => {
-    return option.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-  };
-
-  const formatVendorType = (type: FoodVendorType) => {
-    return type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-  };
-
-  const getPriceRangeDisplay = (priceRange?: number) => {
-    if (!priceRange) return null;
-    return '$'.repeat(Math.min(priceRange, 4));
-  };
-
-  const getRatingStars = (rating?: number) => {
-    if (!rating) return null;
-    return Array.from({ length: 5 }, (_, i) => (
-      <Star
-        key={i}
-        className={cn(
-          'h-3 w-3',
-          i < rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
+  const renderCompactHeader = (vendor: FoodVendor) => (
+    <div className="space-y-2">
+      <div className="flex items-start justify-between">
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-sm truncate">{vendor.name}</h3>
+          <p className="text-xs text-muted-foreground truncate">
+            {vendor.cuisineTypes.slice(0, 2).map(formatCuisineType).join(', ')}
+            {vendor.cuisineTypes.length > 2 && ' +more'}
+          </p>
+        </div>
+        {vendor.priceRange && (
+          <span className="text-xs text-muted-foreground">
+            {formatPriceRange(vendor.priceRange)}
+          </span>
         )}
+      </div>
+
+      {schedule && showSchedule && (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Clock className="h-3 w-3" />
+          <span>{schedule.time}</span>
+          <MapPin className="h-3 w-3" />
+          <span>{schedule.location}</span>
+        </div>
+      )}
+
+      <StatusBadgeGroup
+        statuses={[
+          {
+            status: vendor.type,
+            type: 'general' as const,
+            customLabel: formatVendorType(vendor.type)
+          },
+          ...(!vendor.active ? [{
+            status: 'inactive',
+            type: 'vendor' as const
+          }] : [])
+        ]}
+        size="sm"
       />
-    ));
-  };
-
-  const handleCardClick = () => {
-    if (onVendorClick) {
-      onVendorClick(vendor);
-    }
-  };
-
-  const cardClasses = cn(
-    'transition-all duration-200 hover:shadow-md',
-    {
-      'cursor-pointer hover:shadow-lg': onVendorClick,
-      'opacity-75': !vendor.active,
-      'p-3': variant === 'compact',
-      'p-4': variant === 'default',
-      'p-6': variant === 'detailed'
-    },
-    className
+    </div>
   );
 
-  if (variant === 'compact') {
-    return (
-      <Card className={cardClasses} onClick={handleCardClick}>
-        <div className="space-y-2">
-          <div className="flex items-start justify-between">
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-sm truncate">{vendor.name}</h3>
-              <p className="text-xs text-muted-foreground truncate">
-                {vendor.cuisineTypes.slice(0, 2).map(formatCuisineType).join(', ')}
-                {vendor.cuisineTypes.length > 2 && ' +more'}
-              </p>
-            </div>
-            <div className="flex items-center gap-1">
-              {vendor.rating && (
-                <div className="flex items-center gap-1">
-                  <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                  <span className="text-xs">{vendor.rating}</span>
-                </div>
-              )}
-              {vendor.priceRange && (
-                <span className="text-xs text-muted-foreground">
-                  {getPriceRangeDisplay(vendor.priceRange)}
-                </span>
-              )}
-            </div>
-          </div>
-
-          {schedule && showSchedule && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Clock className="h-3 w-3" />
-              <span>{schedule.time}</span>
-              <MapPin className="h-3 w-3" />
-              <span>{schedule.location}</span>
-            </div>
+  const renderDefaultHeader = (vendor: FoodVendor) => (
+    <div className="flex items-start justify-between">
+      <div className="flex-1 min-w-0">
+        <h3 className={`font-semibold ${variant === 'detailed' ? 'text-xl' : 'text-lg'} leading-tight`}>
+          {vendor.name}
+        </h3>
+        <div className="flex items-center gap-2 mt-1">
+          <StatusBadge
+            status={vendor.type}
+            type="general"
+            customLabel={formatVendorType(vendor.type)}
+            size="sm"
+          />
+          {!vendor.active && (
+            <StatusBadge status="inactive" type="vendor" size="sm" />
           )}
-
-          <div className="flex items-center gap-1">
-            <Badge variant="outline" className="text-xs">
-              {formatVendorType(vendor.type)}
-            </Badge>
-            {!vendor.active && (
-              <Badge variant="secondary" className="text-xs">
-                Inactive
-              </Badge>
-            )}
-          </div>
         </div>
-      </Card>
-    );
-  }
+      </div>
 
-  return (
-    <Card className={cardClasses} onClick={handleCardClick}>
-      <div className="space-y-4">
-        {/* Header */}
-        <div className="flex items-start justify-between">
-          <div className="flex-1 min-w-0">
-            <h3 className={cn(
-              'font-semibold leading-tight',
-              variant === 'detailed' ? 'text-xl' : 'text-lg'
-            )}>
-              {vendor.name}
-            </h3>
-            <div className="flex items-center gap-2 mt-1">
-              <Badge variant="outline">
-                {formatVendorType(vendor.type)}
-              </Badge>
-              {!vendor.active && (
-                <Badge variant="secondary">
-                  Inactive
-                </Badge>
-              )}
-            </div>
-          </div>
-
-          <div className="flex flex-col items-end gap-2">
-            {vendor.rating && (
-              <div className="flex items-center gap-1">
-                <div className="flex">{getRatingStars(vendor.rating)}</div>
-                <span className="text-sm font-medium">{vendor.rating}</span>
-              </div>
-            )}
-            {vendor.priceRange && (
-              <div className="flex items-center gap-1">
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">{getPriceRangeDisplay(vendor.priceRange)}</span>
-              </div>
-            )}
-          </div>
+      {vendor.priceRange && (
+        <div className="flex items-center gap-1">
+          <DollarSign className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm">{formatPriceRange(vendor.priceRange)}</span>
         </div>
+      )}
+    </div>
+  );
 
-        {/* Description */}
+  const renderContent = (vendor: FoodVendor) => {
+    if (variant === 'compact') {
+      return null;
+    }
+
+    return (
+      <>
         {vendor.description && (
           <p className="text-sm text-muted-foreground">
             {vendor.description}
           </p>
         )}
 
-        {/* Schedule Info */}
         {schedule && showSchedule && (
           <div className="flex items-center gap-4 p-3 bg-muted/30 rounded-lg">
             <div className="flex items-center gap-2">
@@ -208,203 +146,153 @@ export function VendorCard({
           </div>
         )}
 
-        {/* Cuisine Types */}
         <div>
           <h4 className="text-sm font-medium mb-2 flex items-center gap-1">
             <Utensils className="h-3 w-3" />
             Cuisine
           </h4>
-          <div className="flex flex-wrap gap-1">
-            {vendor.cuisineTypes.map(cuisine => (
-              <Badge key={cuisine} variant="secondary" className="text-xs">
-                {formatCuisineType(cuisine)}
-              </Badge>
-            ))}
-          </div>
+          <StatusBadgeGroup
+            statuses={vendor.cuisineTypes.map(cuisine => ({
+              status: cuisine,
+              type: 'general' as const,
+              customLabel: formatCuisineType(cuisine)
+            }))}
+            size="sm"
+          />
         </div>
 
-        {/* Dietary Options */}
         {vendor.dietaryOptions && vendor.dietaryOptions.length > 0 && (
           <div>
             <h4 className="text-sm font-medium mb-2">Dietary Options</h4>
-            <div className="flex flex-wrap gap-1">
-              {vendor.dietaryOptions.map(option => (
-                <Badge key={option} variant="outline" className="text-xs">
-                  {formatDietaryOption(option)}
-                </Badge>
-              ))}
-            </div>
+            <StatusBadgeGroup
+              statuses={vendor.dietaryOptions.map(option => ({
+                status: option,
+                type: 'general' as const,
+                customLabel: formatDietaryOption(option)
+              }))}
+              size="sm"
+            />
           </div>
         )}
 
-        {/* Popular Items */}
         {vendor.popularItems && vendor.popularItems.length > 0 && variant === 'detailed' && (
           <div>
             <h4 className="text-sm font-medium mb-2">Popular Items</h4>
-            <div className="flex flex-wrap gap-1">
-              {vendor.popularItems.map(item => (
-                <Badge key={item} variant="outline" className="text-xs">
-                  {item}
-                </Badge>
-              ))}
-            </div>
+            <StatusBadgeGroup
+              statuses={vendor.popularItems.map(item => ({
+                status: item,
+                type: 'general' as const,
+                customLabel: item
+              }))}
+              size="sm"
+            />
           </div>
         )}
+      </>
+    );
+  };
 
-        {/* Contact & Social Links */}
-        <div className="flex items-center justify-between pt-2 border-t">
-          <div className="flex items-center gap-2">
-            {vendor.website && (
-              <Button
-                variant="outline"
-                size="sm"
-                asChild
-              >
-                <a
-                  href={vendor.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1"
-                >
-                  <ExternalLink className="h-3 w-3" />
-                  Website
-                </a>
-              </Button>
-            )}
+  const renderFooter = (vendor: FoodVendor) => {
+    if (variant === 'compact') {
+      return null;
+    }
 
-            {vendor.instagram && (
-              <Button
-                variant="outline"
-                size="sm"
-                asChild
-              >
-                <a
-                  href={`https://instagram.com/${vendor.instagram.replace('@', '')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1"
-                >
-                  <Instagram className="h-3 w-3" />
-                  Instagram
-                </a>
-              </Button>
-            )}
+    const hasContactInfo = vendor.phone || vendor.email;
+    const hasSocialLinks = vendor.website || vendor.instagram || vendor.facebook;
 
-            {vendor.facebook && (
-              <Button
-                variant="outline"
-                size="sm"
-                asChild
-              >
-                <a
-                  href={vendor.facebook}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1"
-                >
-                  <Facebook className="h-3 w-3" />
-                  Facebook
-                </a>
-              </Button>
-            )}
-          </div>
+    if (!hasContactInfo && !hasSocialLinks) {
+      return null;
+    }
 
-          <div className="flex items-center gap-2">
-            {vendor.phone && (
-              <Button
-                variant="ghost"
-                size="sm"
-                asChild
+    return (
+      <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+        <div className="flex items-center gap-2">
+          {vendor.website && (
+            <Button variant="outline" size="sm" asChild>
+              <a
+                href={vendor.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1"
               >
-                <a
-                  href={`tel:${vendor.phone}`}
-                  className="flex items-center gap-1"
-                >
-                  <Phone className="h-3 w-3" />
-                </a>
-              </Button>
-            )}
+                <ExternalLink className="h-3 w-3" />
+                Website
+              </a>
+            </Button>
+          )}
 
-            {vendor.email && (
-              <Button
-                variant="ghost"
-                size="sm"
-                asChild
+          {vendor.instagram && (
+            <Button variant="outline" size="sm" asChild>
+              <a
+                href={`https://instagram.com/${vendor.instagram.replace('@', '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1"
               >
-                <a
-                  href={`mailto:${vendor.email}`}
-                  className="flex items-center gap-1"
-                >
-                  <Mail className="h-3 w-3" />
-                </a>
-              </Button>
-            )}
-          </div>
+                <Instagram className="h-3 w-3" />
+                Instagram
+              </a>
+            </Button>
+          )}
+
+          {vendor.facebook && (
+            <Button variant="outline" size="sm" asChild>
+              <a
+                href={vendor.facebook}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1"
+              >
+                <Facebook className="h-3 w-3" />
+                Facebook
+              </a>
+            </Button>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          {vendor.phone && (
+            <Button variant="ghost" size="sm" asChild>
+              <a
+                href={`tel:${vendor.phone}`}
+                className="flex items-center gap-1"
+              >
+                <Phone className="h-3 w-3" />
+              </a>
+            </Button>
+          )}
+
+          {vendor.email && (
+            <Button variant="ghost" size="sm" asChild>
+              <a
+                href={`mailto:${vendor.email}`}
+                className="flex items-center gap-1"
+              >
+                <Mail className="h-3 w-3" />
+              </a>
+            </Button>
+          )}
         </div>
       </div>
-    </Card>
+    );
+  };
+
+  return (
+    <BaseCard
+      item={vendor}
+      variant={variant}
+      className={className}
+      onClick={onVendorClick}
+      isDisabled={!vendor.active}
+      renderHeader={variant === 'compact' ? renderCompactHeader : renderDefaultHeader}
+      renderContent={renderContent}
+      renderFooter={renderFooter}
+    />
   );
 }
 
-/**
- * Vendor card skeleton for loading states
- */
 export function VendorCardSkeleton({ variant = 'default' }: { variant?: 'default' | 'compact' | 'detailed' }) {
-  if (variant === 'compact') {
-    return (
-      <Card className="p-3">
-        <div className="space-y-2">
-          <div className="flex items-start justify-between">
-            <div className="flex-1 space-y-1">
-              <div className="h-4 bg-muted rounded w-3/4"></div>
-              <div className="h-3 bg-muted rounded w-1/2"></div>
-            </div>
-            <div className="h-4 bg-muted rounded w-12"></div>
-          </div>
-          <div className="h-3 bg-muted rounded w-full"></div>
-          <div className="h-5 bg-muted rounded w-20"></div>
-        </div>
-      </Card>
-    );
-  }
-
-  return (
-    <Card className={cn(
-      'space-y-4',
-      variant === 'default' ? 'p-4' : 'p-6'
-    )}>
-      <div className="flex items-start justify-between">
-        <div className="flex-1 space-y-2">
-          <div className="h-6 bg-muted rounded w-3/4"></div>
-          <div className="h-5 bg-muted rounded w-24"></div>
-        </div>
-        <div className="space-y-2">
-          <div className="h-4 bg-muted rounded w-16"></div>
-          <div className="h-4 bg-muted rounded w-12"></div>
-        </div>
-      </div>
-      <div className="h-4 bg-muted rounded w-full"></div>
-      <div className="h-12 bg-muted rounded w-full"></div>
-      <div className="space-y-2">
-        <div className="h-4 bg-muted rounded w-20"></div>
-        <div className="flex gap-1">
-          <div className="h-6 bg-muted rounded w-16"></div>
-          <div className="h-6 bg-muted rounded w-20"></div>
-          <div className="h-6 bg-muted rounded w-18"></div>
-        </div>
-      </div>
-      <div className="flex items-center justify-between pt-2 border-t">
-        <div className="flex gap-2">
-          <div className="h-8 bg-muted rounded w-20"></div>
-          <div className="h-8 bg-muted rounded w-24"></div>
-        </div>
-        <div className="flex gap-2">
-          <div className="h-8 bg-muted rounded w-8"></div>
-          <div className="h-8 bg-muted rounded w-8"></div>
-        </div>
-      </div>
-    </Card>
-  );
+  return <CardSkeleton variant={variant} lines={variant === 'compact' ? 3 : 5} />;
 }
 
 export default VendorCard;

@@ -35,7 +35,7 @@ const socialLinks: SocialLink[] = [
     name: 'Threads',
     href: 'https://threads.net/@lolevbeer',
     icon: MessageCircle,
-    color: 'hover:text-gray-800',
+    color: 'hover:text-foreground',
     label: 'Follow us on Threads',
   },
   {

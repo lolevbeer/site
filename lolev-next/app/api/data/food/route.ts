@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
     const day = searchParams.get('day') as DayOfWeek | null;
     const vendorType = searchParams.get('vendorType') as FoodVendorType | null;
     const search = searchParams.get('search');
-    const sortBy = searchParams.get('sortBy') as 'name' | 'date' | 'rating' | 'priceRange' | null;
+    const sortBy = searchParams.get('sortBy') as 'name' | 'date' | 'priceRange' | null;
     const order = searchParams.get('order') as 'asc' | 'desc' | null;
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : undefined;
     const currentWeek = searchParams.get('currentWeek') === 'true';
@@ -156,13 +156,6 @@ export async function GET(request: NextRequest) {
         case 'date':
           aValue = new Date(a.date).getTime();
           bValue = new Date(b.date).getTime();
-          break;
-        case 'rating':
-          // Look up vendor rating
-          const aVendor = sampleVendors.find(v => v.name === a.vendor);
-          const bVendor = sampleVendors.find(v => v.name === b.vendor);
-          aValue = aVendor?.rating || 0;
-          bValue = bVendor?.rating || 0;
           break;
         case 'priceRange':
           // Look up vendor price range

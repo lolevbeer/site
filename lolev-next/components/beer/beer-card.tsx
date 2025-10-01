@@ -1,6 +1,6 @@
 /**
  * Beer Card Component
- * Displays beer information in a card format for grid layouts
+ * Refactored to use BaseCard and shared utilities
  */
 
 'use client';
@@ -9,18 +9,17 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Beer, GlassType } from '@/lib/types/beer';
-import { Location } from '@/lib/types/location';
 import { useLocationContext } from '@/components/location/location-provider';
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { BaseCard, CardSkeleton } from '@/components/ui/base-card';
+import { StatusBadge, StatusBadgeGroup } from '@/components/ui/status-badge';
 import { Button } from '@/components/ui/button';
 import { Beer as BeerIcon, Wine, GlassWater } from 'lucide-react';
+import {
+  formatAbv,
+  getBeerSlug,
+  getBeerAvailability,
+  getBeerPricing
+} from '@/lib/utils/formatters';
 
 interface BeerCardProps {
   beer: Beer;
@@ -28,6 +27,7 @@ interface BeerCardProps {
   showPricing?: boolean;
   showAvailability?: boolean;
   className?: string;
+  variant?: 'default' | 'compact';
 }
 
 function getGlassIcon(glass: GlassType): React.ComponentType<{ className?: string }> {
@@ -50,57 +50,13 @@ function getBeerImagePath(beer: Beer): string | null {
   return `/images/beer/${beer.variant}.webp`;
 }
 
-function formatAbv(abv: number): string {
-  return `${abv.toFixed(1)}%`;
-}
-
-function getBeerSlug(beer: Beer): string {
-  return beer.variant.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-}
-
-function getAvailabilityText(beer: Beer): string {
-  const availability = [];
-
-  if (beer.availability.tap) {
-    availability.push(`Tap ${beer.availability.tap}`);
-  }
-
-  if (beer.availability.cansAvailable) {
-    availability.push('Cans');
-  }
-
-  if (beer.availability.singleCanAvailable) {
-    availability.push('Singles');
-  }
-
-  return availability.length > 0 ? availability.join(' • ') : 'Limited';
-}
-
-function getPricingText(beer: Beer): string {
-  const pricing = [];
-
-  if (beer.pricing.draftPrice) {
-    pricing.push(`Draft $${beer.pricing.draftPrice}`);
-  }
-
-  if (beer.pricing.canSingle || beer.pricing.cansSingle) {
-    const singlePrice = beer.pricing.canSingle || beer.pricing.cansSingle;
-    pricing.push(`Single $${singlePrice}`);
-  }
-
-  if (beer.pricing.fourPack) {
-    pricing.push(`4-Pack $${beer.pricing.fourPack}`);
-  }
-
-  return pricing.length > 0 ? pricing.join(' • ') : 'See store';
-}
-
 export function BeerCard({
   beer,
   showLocation = true,
   showPricing = true,
   showAvailability = true,
   className = '',
+  variant = 'default'
 }: BeerCardProps) {
   const { currentLocation } = useLocationContext();
   const beerSlug = getBeerSlug(beer);
@@ -111,113 +67,118 @@ export function BeerCard({
     return null;
   }
 
-  return (
-    <Card className={`group hover:shadow-lg transition-shadow duration-200 ${className}`}>
-      <CardHeader className="pb-4">
-        <div className="relative aspect-square w-full mb-4 overflow-hidden rounded-lg bg-muted/30">
-          {imagePath ? (
-            <Image
-              src={imagePath}
-              alt={`${beer.name} beer`}
-              fill
-              className="object-contain transition-transform duration-200 group-hover:scale-105"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              loading="lazy"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800">
-              <span className="text-gray-400 dark:text-gray-500 font-medium">No Image</span>
-            </div>
-          )}
-          {beer.glutenFree && (
-            <Badge
-              variant="secondary"
-              className="absolute top-2 right-2 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
-            >
-              GF
-            </Badge>
-          )}
-        </div>
-
-        <CardTitle className="line-clamp-2 min-h-[2.5rem]">
+  const renderHeader = (beer: Beer) => (
+    <>
+      <div className="relative aspect-square w-full mb-4 overflow-hidden rounded-lg">
+        {imagePath ? (
+          <Image
+            src={imagePath}
+            alt={`${beer.name} beer`}
+            fill
+            className="object-contain transition-transform duration-200 group-hover:scale-105"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            loading="lazy"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-muted">
+            <span className="text-gray-400 dark:text-gray-500 font-medium">No Image</span>
+          </div>
+        )}
+        {beer.glutenFree && (
+          <div className="absolute top-2 right-2">
+            <StatusBadge status="gluten_free" type="beer" size="sm" />
+          </div>
+        )}
+      </div>
+      <div>
+        <h3 className="font-semibold text-lg line-clamp-2 min-h-[2.5rem]">
           {beer.name}
-        </CardTitle>
-
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
+        </h3>
+        <div className="flex items-center justify-between text-sm text-muted-foreground mt-1">
           <span className="font-medium">{beer.type}</span>
           <div className="flex items-center gap-1">
             {React.createElement(getGlassIcon(beer.glass), { className: "h-4 w-4" })}
             <span>{formatAbv(beer.abv)} ABV</span>
           </div>
         </div>
-      </CardHeader>
+      </div>
+    </>
+  );
 
-      <CardContent className="pt-0">
-        <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
-          {beer.description}
-        </p>
+  const renderContent = (beer: Beer) => (
+    <>
+      <p className="text-sm text-muted-foreground line-clamp-3">
+        {beer.description}
+      </p>
 
-        {beer.hops && (
-          <div className="mb-3">
-            <p className="text-xs font-medium text-muted-foreground mb-1">Hops:</p>
-            <p className="text-sm">{beer.hops}</p>
-          </div>
-        )}
+      {beer.hops && variant !== 'compact' && (
+        <div>
+          <p className="text-xs font-medium text-muted-foreground mb-1">Hops:</p>
+          <p className="text-sm">{beer.hops}</p>
+        </div>
+      )}
 
+      {variant !== 'compact' && (
         <div className="space-y-2">
           {showAvailability && (
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Available:</span>
-              <span className="font-medium">{getAvailabilityText(beer)}</span>
+              <span className="font-medium">{getBeerAvailability(beer)}</span>
             </div>
           )}
 
           {showPricing && (
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Pricing:</span>
-              <span className="font-medium">{getPricingText(beer)}</span>
+              <span className="font-medium">{getBeerPricing(beer)}</span>
             </div>
           )}
         </div>
-      </CardContent>
-
-      <CardFooter className="pt-4">
-        <div className="w-full flex items-center justify-between">
-          <div className="flex gap-2">
-            {beer.availability.tap && (
-              <Badge variant="default">
-                On Tap
-              </Badge>
-            )}
-            {beer.availability.cansAvailable && (
-              <Badge variant="outline">
-                Cans
-              </Badge>
-            )}
-            {beer.pricing.salePrice && (
-              <Badge variant="destructive">
-                Sale
-              </Badge>
-            )}
-          </div>
-
-          <Button
-            asChild
-            variant="outline"
-            size="sm"
-            className="ml-auto"
-          >
-            <Link
-              href={showLocation ? `/${currentLocation}/beer/${beerSlug}` : `/beer/${beerSlug}`}
-              className="no-underline"
-            >
-              Details
-            </Link>
-          </Button>
-        </div>
-      </CardFooter>
-    </Card>
+      )}
+    </>
   );
+
+  const renderFooter = (beer: Beer) => (
+    <div className="w-full flex items-center justify-between pt-4 border-t">
+      <StatusBadgeGroup
+        statuses={[
+          ...(beer.availability.tap ? [{ status: 'on_tap', type: 'beer' as const }] : []),
+          ...(beer.availability.cansAvailable ? [{ status: 'cans', type: 'beer' as const }] : []),
+          ...(beer.pricing.salePrice ? [{ status: 'sale', type: 'beer' as const }] : [])
+        ]}
+        size="sm"
+      />
+
+      <Button
+        asChild
+        variant="outline"
+        size="sm"
+        className="ml-auto"
+      >
+        <Link
+          href={showLocation ? `/${currentLocation}/beer/${beerSlug}` : `/beer/${beerSlug}`}
+          className="no-underline"
+        >
+          Details
+        </Link>
+      </Button>
+    </div>
+  );
+
+  return (
+    <BaseCard
+      item={beer}
+      variant={variant}
+      className={`group ${className}`}
+      renderHeader={renderHeader}
+      renderContent={renderContent}
+      renderFooter={renderFooter}
+    />
+  );
+}
+
+export function BeerCardSkeleton({ variant = 'default' }: { variant?: 'default' | 'compact' }) {
+  return <CardSkeleton variant={variant} lines={4} />;
 }
 
 export default BeerCard;
