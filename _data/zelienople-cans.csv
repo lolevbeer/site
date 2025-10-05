@@ -9,5 +9,5 @@ ddh-akko,TRUE,DDH Akko,FALSE,India Pale Ale,7,5.25,20
 ddh-taupo,TRUE,DDH Taupō,FALSE,India Pale Ale,7,5.25,20
 rubico,TRUE,Rubico,FALSE,Double IPA,8.5,5.25,20
 double-lupula,TRUE,Double Lupula,FALSE,Double IPA,8.4,5.25,20
-priscus-ii,TRUE,Priscus II,FALSE,Double IPA,8.3,5.75,22
+priscus-ii,FALSE,Priscus II,FALSE,Double IPA,8.3,5.75,22
 sono,TRUE,Sono,FALSE,Double IPA,7.6,5.75,22
