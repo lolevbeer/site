@@ -14,6 +14,9 @@ sass:
 
 page_gen-dirs: true
 
+exclude:
+  - lolev-next
+
 collections:
   - sections
 
