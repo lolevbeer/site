@@ -1,13 +1,13 @@
 variant,cansAvailable,name,salePrice,type,abv,cansSingle,fourPack
 sonnen,TRUE,Sonnen,FALSE,Märzen,5.4,4.50,17
-samo,FALSE,Samo,FALSE,Pilsner,4.8,4.00,15
+glyphs-ii,TRUE,Glyphs II,FALSE,Pale Ale,5.1,5.00,19
 grandar,TRUE,Grandar,FALSE,Imperial Pilsner,6.6,4.25,16
 rooted,TRUE,Rooted,FALSE,Mexican Lager,4,4.00,15
 verus,TRUE,Verus,FALSE,India Pale Ale,7,4.50,17
 sever,TRUE,Sever,FALSE,Pumpkin Stout,5.7,4.50,17
 ddh-akko,TRUE,DDH Akko,FALSE,India Pale Ale,7,5.25,20
 ddh-taupo,TRUE,DDH Taupō,FALSE,India Pale Ale,7,5.25,20
-rubico,TRUE,Rubico,FALSE,Double IPA,8.5,5.25,20
+kamo,TRUE,Kamo,FALSE,Double IPA,8,5.75,22
 double-lupula,TRUE,Double Lupula,FALSE,Double IPA,8.4,5.25,20
-priscus-ii,FALSE,Priscus II,FALSE,Double IPA,8.3,5.75,22
+prismatic,TRUE,Prismatic,FALSE,India Pale Ale,7,4.50,17
 sono,TRUE,Sono,FALSE,Double IPA,7.6,5.75,22
