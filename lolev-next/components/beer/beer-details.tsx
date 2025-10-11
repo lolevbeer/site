@@ -5,9 +5,10 @@
 
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import Papa from 'papaparse';
 import { Beer, GlassType } from '@/lib/types/beer';
 import { useLocationContext } from '@/components/location/location-provider';
 import {
@@ -19,6 +20,14 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
+import {
   Beer as BeerIcon,
   Wine,
   GlassWater,
@@ -28,8 +37,8 @@ import {
   Package,
   CircleX,
   ExternalLink,
-  ArrowLeft
 } from 'lucide-react';
+import { UntappdIcon } from '@/components/icons/untappd-icon';
 
 interface BeerDetailsProps {
   beer: Beer;
@@ -85,8 +94,8 @@ function getAvailabilityInfo(beer: Beer): {
   let isCanned = false;
 
   if (beer.availability.tap) {
-    details.push(`Available on Tap ${beer.availability.tap}`);
-    status = 'On Tap';
+    details.push(`Pouring ${beer.availability.tap}`);
+    status = 'Pouring';
     isDraft = true;
   }
 
@@ -96,7 +105,7 @@ function getAvailabilityInfo(beer: Beer): {
     if (!isDraft) {
       status = 'Cans Available';
     } else {
-      status = 'On Tap & Cans';
+      status = 'Pouring & Cans';
     }
   }
 
@@ -118,7 +127,7 @@ function getPricingInfo(beer: Beer): {
     draftPrice: beer.pricing.draftPrice,
     singlePrice: beer.pricing.canSingle || beer.pricing.cansSingle,
     fourPackPrice: beer.pricing.fourPack,
-    hasSale: beer.pricing.salePrice || false,
+    hasSale: beer.pricing.salePrice === 'TRUE' || beer.pricing.salePrice === true,
   };
 }
 
@@ -147,6 +156,60 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
   const imagePath = getBeerImagePath(beer);
   const availability = getAvailabilityInfo(beer);
   const pricing = getPricingInfo(beer);
+  const [tapLocations, setTapLocations] = useState<string[]>([]);
+  const [canLocations, setCanLocations] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const [lawrencevilleDraftRes, zelienopleDraftRes, lawrencevilleCansRes, zelienopleCansRes] = await Promise.all([
+          fetch('/data/lawrenceville-draft.csv'),
+          fetch('/data/zelienople-draft.csv'),
+          fetch('/data/lawrenceville-cans.csv'),
+          fetch('/data/zelienople-cans.csv')
+        ]);
+
+        const [lawrencevilleDraftText, zelienopleDraftText, lawrencevilleCansText, zelienopleCansText] = await Promise.all([
+          lawrencevilleDraftRes.text(),
+          zelienopleDraftRes.text(),
+          lawrencevilleCansRes.text(),
+          zelienopleCansRes.text()
+        ]);
+
+        // Parse CSVs with papaparse
+        const lawrencevilleDraft = Papa.parse(lawrencevilleDraftText, { header: true });
+        const zelienopleDraft = Papa.parse(zelienopleDraftText, { header: true });
+        const lawrencevilleCans = Papa.parse(lawrencevilleCansText, { header: true });
+        const zelienopleCans = Papa.parse(zelienopleCansText, { header: true });
+
+        const tapLocs: string[] = [];
+        const canLocs: string[] = [];
+
+        // Check draft availability
+        if (lawrencevilleDraft.data.some((row: any) => row.variant?.toLowerCase() === beer.variant.toLowerCase())) {
+          tapLocs.push('Lawrenceville');
+        }
+        if (zelienopleDraft.data.some((row: any) => row.variant?.toLowerCase() === beer.variant.toLowerCase())) {
+          tapLocs.push('Zelienople');
+        }
+
+        // Check can availability
+        if (lawrencevilleCans.data.some((row: any) => row.variant?.toLowerCase() === beer.variant.toLowerCase())) {
+          canLocs.push('Lawrenceville');
+        }
+        if (zelienopleCans.data.some((row: any) => row.variant?.toLowerCase() === beer.variant.toLowerCase())) {
+          canLocs.push('Zelienople');
+        }
+
+        setTapLocations(tapLocs);
+        setCanLocations(canLocs);
+      } catch (error) {
+        console.error('Error fetching locations:', error);
+      }
+    };
+
+    fetchLocations();
+  }, [beer.variant]);
 
   // Don't render if beer is hidden from site
   if (beer.availability.hideFromSite) {
@@ -168,8 +231,29 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
 
   return (
     <div className={className}>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        {/* Beer Image */}
+      {/* Breadcrumbs */}
+      <Breadcrumb className="mb-6">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link href="/">Home</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link href="/beer">Beer</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>{beer.name}</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
+      <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-8 mb-8">
+        {/* Beer Image and Quick Stats */}
         <div className="space-y-4">
           <div className="relative aspect-square w-full overflow-hidden rounded-xl">
             {imagePath ? (
@@ -178,7 +262,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
                 alt={`${beer.name} beer`}
                 fill
                 className="object-contain"
-                sizes="(max-width: 768px) 100vw, 50vw"
+                sizes="(max-width: 768px) 100vw, 350px"
                 priority
               />
             ) : (
@@ -197,35 +281,20 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
           </div>
 
           {/* Quick Stats */}
-          <Card>
-            <CardContent className="pt-6 space-y-0">
+          <Card className="shadow-none border-0 p-0">
+            <CardContent className="p-0 space-y-0">
               <SpecificationRow
                 label="Style"
                 value={beer.type}
-                icon={BeerIcon}
               />
               <SpecificationRow
                 label="ABV"
                 value={formatAbv(beer.abv)}
-                icon={Flame}
-              />
-              <SpecificationRow
-                label="Glassware"
-                value={getGlassDescription(beer.glass)}
-                icon={getGlassIcon(beer.glass)}
               />
               {beer.recipe && (
                 <SpecificationRow
                   label="Recipe #"
                   value={beer.recipe}
-                  icon={ClipboardList}
-                />
-              )}
-              {beer.upc && (
-                <SpecificationRow
-                  label="UPC"
-                  value={beer.upc}
-                  icon={Tag}
                 />
               )}
             </CardContent>
@@ -237,7 +306,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
           {/* Header */}
           <div>
             <h1 className="text-3xl font-bold mb-2">{beer.name}</h1>
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-2 mb-4 flex-wrap">
               <Badge variant="outline" className="text-sm">
                 {beer.type}
               </Badge>
@@ -245,17 +314,17 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
                 {formatAbv(beer.abv)} ABV
               </Badge>
               {availability.isDraft && (
-                <Badge variant="default">
-                  On Tap
+                <Badge variant="default" className="text-sm">
+                  Pouring
                 </Badge>
               )}
               {availability.isCanned && (
-                <Badge variant="outline">
+                <Badge variant="outline" className="text-sm">
                   Cans
                 </Badge>
               )}
               {pricing.hasSale && (
-                <Badge variant="destructive">
+                <Badge variant="destructive" className="text-sm">
                   Sale
                 </Badge>
               )}
@@ -281,71 +350,69 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
             </div>
           )}
 
-          {/* Availability */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Availability</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Status:</span>
-                  <Badge variant={availability.isDraft || availability.isCanned ? 'default' : 'outline'}>
-                    {availability.status}
-                  </Badge>
-                </div>
-                {availability.details.map((detail, index) => (
-                  <p key={index} className="text-sm text-muted-foreground">
-                    • {detail}
-                  </p>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Pricing */}
-          {(pricing.draftPrice || pricing.singlePrice || pricing.fourPackPrice) && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  Pricing
-                  {pricing.hasSale && (
-                    <Badge variant="destructive" className="text-xs">
-                      Sale Price
-                    </Badge>
-                  )}
-                </CardTitle>
+          {/* Availability and Pricing - Two Columns */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Availability */}
+            <Card className="shadow-none border-0 p-0">
+              <CardHeader className="p-0 pb-4">
+                <CardTitle className="text-lg">Availability</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-0">
-                {pricing.draftPrice && (
-                  <SpecificationRow
-                    label="Draft"
-                    value={`$${pricing.draftPrice}`}
-                    icon={BeerIcon}
-                  />
-                )}
-                {pricing.singlePrice && (
-                  <SpecificationRow
-                    label="Single Can"
-                    value={`$${pricing.singlePrice}`}
-                    icon={GlassWater}
-                  />
-                )}
-                {pricing.fourPackPrice && (
-                  <SpecificationRow
-                    label="4-Pack"
-                    value={`$${pricing.fourPackPrice}`}
-                    icon={Package}
-                  />
-                )}
+              <CardContent className="p-0">
+                <div className="space-y-2">
+                  {tapLocations.length > 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      • Pouring at {tapLocations.join(' and ')}
+                    </p>
+                  )}
+                  {canLocations.length > 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      • Cans available at {canLocations.join(' and ')}
+                    </p>
+                  )}
+                  {tapLocations.length === 0 && canLocations.length === 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      Not currently available in Lawrenceville or Zelienople
+                    </p>
+                  )}
+                </div>
               </CardContent>
             </Card>
-          )}
+
+            {/* Pricing */}
+            {((tapLocations.length > 0 && pricing.draftPrice) || (canLocations.length > 0 && pricing.fourPackPrice)) && (
+              <Card className="shadow-none border-0 p-0">
+                <CardHeader className="p-0 pb-4">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    Pricing
+                    {pricing.hasSale && (
+                      <Badge variant="destructive" className="text-xs">
+                        Sale Price
+                      </Badge>
+                    )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <div className="space-y-2">
+                    {tapLocations.length > 0 && pricing.draftPrice && (
+                      <p className="text-sm text-muted-foreground">
+                        • Draft ${pricing.draftPrice}
+                      </p>
+                    )}
+                    {canLocations.length > 0 && pricing.fourPackPrice && (
+                      <p className="text-sm text-muted-foreground">
+                        • 4 Pack ${pricing.fourPackPrice}
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
 
           {/* External Links */}
-          <div className="flex gap-4">
-            {beer.untappd && (
-              <Button variant="outline" asChild>
+          {beer.untappd && (
+            <div>
+              <Button variant="ghost" asChild>
                 <a
                   href={`https://untappd.com/b/-/${beer.untappd}`}
                   target="_blank"
@@ -353,21 +420,13 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
                   className="no-underline"
                 >
                   <>
-                    View on Untappd
-                    <ExternalLink className="h-4 w-4 ml-1" />
+                    <UntappdIcon className="h-5 w-5" />
+                    Untappd
                   </>
                 </a>
               </Button>
-            )}
-            <Button asChild>
-              <Link href={`/${currentLocation}/beer`}>
-                <>
-                    <ArrowLeft className="h-4 w-4 mr-1" />
-                    Back to Beer List
-                  </>
-              </Link>
-            </Button>
-          </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

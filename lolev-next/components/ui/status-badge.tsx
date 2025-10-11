@@ -64,7 +64,7 @@ const STATUS_CONFIGS: Record<string, Record<string, StatusConfig>> = {
   beer: {
     on_tap: {
       variant: 'default',
-      label: 'On Tap'
+      label: 'Pouring'
     },
     cans: {
       variant: 'outline',

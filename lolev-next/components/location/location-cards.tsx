@@ -66,8 +66,7 @@ export function LocationCards() {
         const aIndex = dayOrder.indexOf(a.name);
         const bIndex = dayOrder.indexOf(b.name);
         return aIndex - bIndex;
-      })
-      .slice(0, 2); // Show first 2 days as preview
+      });
   };
 
   const locations = [
@@ -83,15 +82,16 @@ export function LocationCards() {
       data: LOCATIONS_DATA[Location.ZELIENOPLE],
       gradient: 'from-green-200 to-blue-300',
       displayName: 'Zelienople',
-      image: null
+      image: '/images/Zelienople-interior.jpg'
     }
   ];
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
       {locations.map(({ id, data, gradient, displayName, image }) => (
-        <Card key={id} className="overflow-hidden flex flex-col">
-          <div className="aspect-video relative">
+        <Link key={id} href={data.mapUrl || '#'} target="_blank" rel="noopener noreferrer" className="group flex">
+          <Card className="overflow-hidden flex flex-col border-0 hover:shadow-lg transition-shadow cursor-pointer w-full">
+            <div className="aspect-video relative">
             {image ? (
               <>
                 <Image
@@ -132,68 +132,32 @@ export function LocationCards() {
             )}
           </div>
           <CardContent className="p-6 flex flex-col flex-grow">
-            <div className="flex-grow">
+            <div className="flex-grow flex flex-col items-center justify-center text-center">
               <h3 className="text-xl font-semibold mb-4">{displayName} Taproom</h3>
-              <div className="space-y-3 text-gray-600 dark:text-gray-300">
-              {/* Address */}
-              <div className="flex items-start gap-2">
-                <MapPin className="h-5 w-5 mt-0.5 text-primary" />
-                <div>
-                  <p>{data.address}</p>
-                  <p className="text-sm">{data.city}, {data.state} {data.zipCode}</p>
-                </div>
-              </div>
-
-              {/* Phone */}
-              {data.phone && (
-                <div className="flex items-start gap-2">
-                  <Phone className="h-5 w-5 mt-0.5 text-primary" />
+              <div className="space-y-3 text-muted-foreground">
+                {/* Address */}
+                <div className="flex items-start gap-2 justify-center">
+                  <MapPin className="h-5 w-5 mt-0.5 text-primary" />
                   <div>
-                    <a href={`tel:${data.phone}`} className="hover:underline">
-                      {data.phone}
-                    </a>
+                    <p>{data.address}</p>
+                    <p className="text-sm">{data.city}, {data.state} {data.zipCode}</p>
                   </div>
                 </div>
-              )}
 
-              {/* Hours Preview */}
-              <div className="flex items-start gap-2">
-                <Clock className="h-5 w-5 mt-0.5 text-primary" />
-                <div>
-                  {loading ? (
-                    <p className="text-sm">Loading hours...</p>
-                  ) : hoursData ? (
-                    <>
-                      {getFullSchedule(hoursData[id]).map((day) => (
-                        <p key={day.name} className="text-sm">
-                          {day.name}: {day.hours}
-                        </p>
-                      ))}
-                      <p className="text-xs text-muted-foreground mt-1">See all hours →</p>
-                    </>
-                  ) : (
-                    <p className="text-sm">Hours not available</p>
-                  )}
-                </div>
-                </div>
+                {/* Phone */}
+                {data.phone && (
+                  <div className="flex items-start gap-2 justify-center">
+                    <Phone className="h-5 w-5 mt-0.5 text-primary" />
+                    <div>
+                      {data.phone}
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-            <div className="mt-6 flex gap-2">
-              <Button asChild variant="outline" className="flex-1">
-                <Link href={`/locations/${id.toLowerCase()}`}>
-                  View Details
-                </Link>
-              </Button>
-              {data.mapUrl && (
-                <Button asChild variant="default" className="flex-1">
-                  <a href={data.mapUrl} target="_blank" rel="noopener noreferrer">
-                    Get Directions
-                  </a>
-                </Button>
-              )}
             </div>
           </CardContent>
         </Card>
+        </Link>
       ))}
     </div>
   );

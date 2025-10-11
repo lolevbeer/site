@@ -1,23 +1,11 @@
-/**
- * Events Page Content Component
- * Client component for interactive events functionality
- */
-
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { BreweryEvent, EventType, EventStatus } from '@/lib/types/event';
-import { Location } from '@/lib/types/location';
+import React, { useEffect, useState, useMemo } from 'react';
+import { BreweryEvent } from '@/lib/types/event';
 import { EventList } from '@/components/events/event-list';
-import { EventCalendar } from '@/components/events/event-calendar';
-import { EventCard } from '@/components/events/event-card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, List, Clock, MapPin, Mail, Phone } from 'lucide-react';
+import { Mail, Phone } from 'lucide-react';
 import { loadEventsFromCSV } from '@/lib/utils/events';
-import { LocationDisplayNames } from '@/lib/types/location';
 import { useLocationContext } from '@/components/location/location-provider';
 
 interface EventsPageContentProps {
@@ -28,12 +16,6 @@ export function EventsPageContent({ initialEvents = [] }: EventsPageContentProps
   const { currentLocation, setLocation } = useLocationContext();
   const [events, setEvents] = useState<BreweryEvent[]>(initialEvents);
   const [loading, setLoading] = useState(true);
-  const [selectedLocation, setSelectedLocation] = useState<Location | 'all'>(currentLocation);
-
-  // Update local state when global location changes
-  useEffect(() => {
-    setSelectedLocation(currentLocation);
-  }, [currentLocation]);
 
   useEffect(() => {
     const loadEvents = async () => {
@@ -53,106 +35,58 @@ export function EventsPageContent({ initialEvents = [] }: EventsPageContentProps
     loadEvents();
   }, []);
   const handleEventClick = (event: BreweryEvent) => {
-    // Handle event details view
-    console.log('Event clicked:', event);
+    if (event.site) {
+      window.open(event.site, '_blank');
+    }
   };
 
-  // Filter events by location
-  const filteredEvents = selectedLocation === 'all'
-    ? events
-    : events.filter(event => event.location === selectedLocation);
+  // Filter events by location with useMemo to ensure proper updates
+  const filteredEvents = useMemo(() => {
+    console.log('Filtering events for location:', currentLocation);
+    return currentLocation === 'all'
+      ? events
+      : events.filter(event => event.location === currentLocation);
+  }, [events, currentLocation]);
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-8">
-      {/* Hero Section */}
-      <div className="text-center space-y-4">
-        <h1 className="text-4xl font-bold tracking-tight">
-          Events
-        </h1>
-        <p className="text-xl mx-auto">
-          Join us for unforgettable experiences, from trivia nights to live music,
-          brewery tours to special celebrations.
-        </p>
+    <div className="container mx-auto px-4 py-8">
+      <div className="text-center mb-8">
+        <h1 className="text-4xl font-bold tracking-tight">Events</h1>
       </div>
 
-      {/* Upcoming Events */}
-      <section className="space-y-4">
-        <h2 className="text-2xl font-bold">Upcoming Events</h2>
-        <Tabs defaultValue="list" className="w-full">
-          <div className="flex justify-center mb-4">
-            {/* View Switcher */}
-            <TabsList className="grid w-fit grid-cols-2">
-              <TabsTrigger value="list" className="flex items-center gap-2">
-                <List className="h-4 w-4" />
-                List View
-              </TabsTrigger>
-              <TabsTrigger value="calendar" className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                Calendar View
-              </TabsTrigger>
-            </TabsList>
-          </div>
+      {loading ? (
+        <div className="text-center py-12 text-muted-foreground">
+          Loading events...
+        </div>
+      ) : filteredEvents.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground">
+          No upcoming events at this location.
+        </div>
+      ) : (
+        <EventList
+          key={`events-${currentLocation}`}
+          events={filteredEvents}
+          onEventClick={handleEventClick}
+          showLocationFilter={false}
+          showFilters={false}
+        />
+      )}
 
-          <TabsContent value="list" className="space-y-0">
-            <EventList
-              events={filteredEvents}
-              onEventClick={handleEventClick}
-              showLocationFilter={false}
-              showFilters={true}
-              selectedLocation={selectedLocation}
-              onLocationChange={(location) => {
-                setSelectedLocation(location);
-                // Update global location if a specific location is selected
-                if (location !== 'all') {
-                  setLocation(location);
-                }
-              }}
-            />
-          </TabsContent>
-
-          <TabsContent value="calendar" className="space-y-0">
-            <EventCalendar
-              events={filteredEvents}
-              onEventClick={handleEventClick}
-              showLocationFilter={false}
-              showAddEvent={false}
-              selectedLocation={selectedLocation}
-              onLocationChange={(location) => {
-                setSelectedLocation(location);
-                // Update global location if a specific location is selected
-                if (location !== 'all') {
-                  setLocation(location);
-                }
-              }}
-            />
-          </TabsContent>
-        </Tabs>
-      </section>
-
-      {/* Contact Section */}
-      <section className="text-center space-y-4 pt-8 border-t">
-        <h2 className="text-2xl font-bold">Book Your Event</h2>
-        <p>
-          Looking to host your next celebration at Lolev?
-        </p>
-        <p>
-          We offer private event spaces and custom beer packages for parties, corporate events, and special occasions.
-        </p>
-        <div className="flex justify-center gap-4">
-          <Button variant="outline" asChild>
-            <a href="mailto:info@lolev.beer" className="flex items-center gap-2">
-              <Mail className="h-4 w-4" />
-              info@lolev.beer
+      <div className="text-center space-y-3 pt-12 border-t mt-12">
+        <h2 className="text-lg font-semibold">Book Private Event</h2>
+        <div className="flex justify-center gap-4 flex-wrap">
+          <Button variant="ghost" size="sm" asChild>
+            <a href="mailto:events@lolev.beer">
+              events@lolev.beer
             </a>
           </Button>
-          <Button variant="outline" asChild>
-            <a href="tel:4123368965" className="flex items-center gap-2">
-              <Phone className="h-4 w-4" />
+          <Button variant="ghost" size="sm" asChild>
+            <a href="tel:4123368965">
               (412) 336-8965
             </a>
           </Button>
         </div>
-      </section>
+      </div>
     </div>
   );
 }

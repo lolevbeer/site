@@ -8,6 +8,7 @@ import { Menu, X } from 'lucide-react';
 import { Navigation } from './navigation';
 import { MobileMenu } from './mobile-menu';
 import { LogoWithText } from '@/components/ui/logo';
+import { LocationTabs } from '@/components/location/location-tabs';
 
 /**
  * Main site header component with logo, navigation, and mobile menu toggle
@@ -21,7 +22,7 @@ export function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-sm supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             {/* Logo */}
@@ -34,6 +35,9 @@ export function Header() {
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-4">
               <Navigation />
+              <LocationTabs syncWithGlobalState={true}>
+                {/* Location tabs in header */}
+              </LocationTabs>
               <ThemeToggle />
             </div>
 

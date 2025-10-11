@@ -18,14 +18,28 @@ export function formatTime(timeString: string): string {
     if (timeString.includes(':')) {
       const [time, period] = timeString.split(/\s*(AM|PM|am|pm)\s*/);
       if (period) {
-        return timeString.toLowerCase();
+        // Already has AM/PM - format to compact version
+        const [hours, minutes] = time.split(':');
+        const hour = parseInt(hours);
+        const mins = parseInt(minutes);
+        const ampm = period.toLowerCase();
+        // Only show minutes if they're not :00
+        if (mins === 0) {
+          return `${hour}${ampm}`;
+        }
+        return `${hour}:${minutes.padStart(2, '0')}${ampm}`;
       }
       // 24-hour format
       const [hours, minutes] = time.split(':');
       const hour = parseInt(hours);
+      const mins = parseInt(minutes);
       const ampm = hour >= 12 ? 'pm' : 'am';
       const hour12 = hour % 12 || 12;
-      return `${hour12}:${minutes}${ampm}`;
+      // Only show minutes if they're not :00
+      if (mins === 0) {
+        return `${hour12}${ampm}`;
+      }
+      return `${hour12}:${minutes.padStart(2, '0')}${ampm}`;
     }
     return timeString.toLowerCase();
   } catch {
@@ -141,7 +155,7 @@ export function getBeerPricing(beer: Beer): string {
     pricing.push(`Single ${formatPrice(singlePrice)}`);
   }
   if (beer.pricing.fourPack) {
-    pricing.push(`4-Pack ${formatPrice(beer.pricing.fourPack)}`);
+    pricing.push(`4 Pack ${formatPrice(beer.pricing.fourPack)}`);
   }
 
   return pricing.length > 0 ? pricing.join(' • ') : 'See store';

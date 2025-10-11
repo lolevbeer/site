@@ -122,11 +122,6 @@ const nextConfig = {
         permanent: true,
       },
       {
-        source: '/about',
-        destination: '/',
-        permanent: false,
-      },
-      {
         source: '/taproom',
         destination: '/',
         permanent: false,

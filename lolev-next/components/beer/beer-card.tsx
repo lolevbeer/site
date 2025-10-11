@@ -142,8 +142,8 @@ export function BeerCard({
     <div className="w-full flex items-center justify-between pt-4 border-t">
       <StatusBadgeGroup
         statuses={[
-          ...(beer.availability.tap ? [{ status: 'on_tap', type: 'beer' as const }] : []),
           ...(beer.availability.cansAvailable ? [{ status: 'cans', type: 'beer' as const }] : []),
+          ...(beer.availability.tap ? [{ status: 'on_tap', type: 'beer' as const, customLabel: `Tap ${beer.availability.tap}` }] : []),
           ...(beer.pricing.salePrice ? [{ status: 'sale', type: 'beer' as const }] : [])
         ]}
         size="sm"

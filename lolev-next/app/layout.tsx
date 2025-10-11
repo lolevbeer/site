@@ -5,6 +5,7 @@ import { LocationProvider } from "@/components/location/location-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import { Toaster } from "@/components/ui/sonner";
 
 const poppins = Poppins({
   weight: ['300', '400', '500', '600', '700'],
@@ -14,14 +15,14 @@ const poppins = Poppins({
 
 export const metadata: Metadata = {
   title: {
-    default: "Love of Learning Brewing - Craft Beer in Pittsburgh",
-    template: "%s | Love of Learning Brewing"
+    default: "Lolev Beer - Craft Beer in Pittsburgh",
+    template: "%s | Lolev Beer"
   },
-  description: "Experience exceptional craft beer at Love of Learning Brewing with locations in Lawrenceville and Zelienople. Fresh brews, local food, and community events.",
+  description: "Experience exceptional craft beer at Lolev Beer with locations in Lawrenceville and Zelienople. Fresh brews, local food, and community events.",
   keywords: ["craft beer", "brewery", "Pittsburgh", "Lawrenceville", "Zelienople", "local beer", "IPA", "stout", "ale"],
-  authors: [{ name: "Love of Learning Brewing" }],
-  creator: "Love of Learning Brewing",
-  publisher: "Love of Learning Brewing",
+  authors: [{ name: "Lolev Beer" }],
+  creator: "Lolev Beer",
+  publisher: "Lolev Beer",
   formatDetection: {
     email: false,
     address: false,
@@ -35,22 +36,22 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: "https://next.lolev.beer",
-    title: "Love of Learning Brewing - Craft Beer in Pittsburgh",
-    description: "Experience exceptional craft beer at Love of Learning Brewing with locations in Lawrenceville and Zelienople. Fresh brews, local food, and community events.",
-    siteName: "Love of Learning Brewing",
+    title: "Lolev Beer - Craft Beer in Pittsburgh",
+    description: "Experience exceptional craft beer at Lolev Beer with locations in Lawrenceville and Zelienople. Fresh brews, local food, and community events.",
+    siteName: "Lolev Beer",
     images: [
       {
         url: "/images/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "Love of Learning Brewing - Craft Beer",
+        alt: "Lolev Beer - Craft Beer",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Love of Learning Brewing - Craft Beer in Pittsburgh",
-    description: "Experience exceptional craft beer at Love of Learning Brewing with locations in Lawrenceville and Zelienople. Fresh brews, local food, and community events.",
+    title: "Lolev Beer - Craft Beer in Pittsburgh",
+    description: "Experience exceptional craft beer at Lolev Beer with locations in Lawrenceville and Zelienople. Fresh brews, local food, and community events.",
     images: ["/images/og-image.jpg"],
     creator: "@loveoflearningbrewing",
   },
@@ -79,9 +80,10 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-        <link rel="manifest" href="/manifest.json" />
+        <link rel="icon" href="/favicons/favicon-16x16.png" type="image/png" sizes="16x16" />
+        <link rel="icon" href="/favicons/favicon-32x32.png" type="image/png" sizes="32x32" />
+        <link rel="apple-touch-icon" href="/favicons/apple-touch-icon.png" />
+        <link rel="manifest" href="/favicons/site.webmanifest" />
         <meta name="theme-color" content="#8B5A3C" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -103,6 +105,7 @@ export default function RootLayout({
               {children}
             </main>
             <Footer />
+            <Toaster />
           </LocationProvider>
         </ThemeProvider>
       </body>

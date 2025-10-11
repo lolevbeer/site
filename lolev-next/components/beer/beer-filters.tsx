@@ -218,7 +218,7 @@ function AvailabilityFilter({
 }) {
   const options = [
     { value: 'all', label: 'All' },
-    { value: 'draft', label: 'On Tap' },
+    { value: 'draft', label: 'Pouring' },
     { value: 'cans', label: 'Cans Available' },
   ] as const;
 

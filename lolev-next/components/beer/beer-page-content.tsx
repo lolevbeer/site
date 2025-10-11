@@ -6,12 +6,14 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
 import { Beer } from '@/lib/types/beer';
-import { BeerCard } from './beer-card';
-import { MapComponent } from '@/components/ui/map';
-import { Search, Filter, X, ChevronDown, ArrowUpDown, Map } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Search, Filter, X, ChevronDown, ArrowUpDown, SignalLow, SignalMedium, SignalHigh } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -27,13 +29,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { cn } from '@/lib/utils';
 
 interface BeerPageContentProps {
@@ -42,33 +42,41 @@ interface BeerPageContentProps {
 
 type SortOption = 'name' | 'abv-asc' | 'abv-desc' | 'type';
 
+type ABVLevel = 'low' | 'medium' | 'high';
+
 export function BeerPageContent({ beers }: BeerPageContentProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<string>('all');
-  const [selectedGlass, setSelectedGlass] = useState<string>('all');
-  const [abvRange, setAbvRange] = useState<[number, number]>([0, 15]);
-  const [showOnTap, setShowOnTap] = useState(false);
-  const [showInCans, setShowInCans] = useState(false);
+  const [abvLevels, setAbvLevels] = useState<ABVLevel[]>([]);
+  const [showOnTap, setShowOnTap] = useState(true);
+  const [showInCans, setShowInCans] = useState(true);
   const [showGlutenFree, setShowGlutenFree] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>('name');
   const [showFilters, setShowFilters] = useState(false);
-  const [showMap, setShowMap] = useState(false);
 
-  // Get unique beer types and glasses
+  // ABV level ranges
+  const getABVRange = (level: ABVLevel): [number, number] => {
+    switch (level) {
+      case 'low':
+        return [0, 5];
+      case 'medium':
+        return [5, 7];
+      case 'high':
+        return [7, 15];
+    }
+  };
+
+  const handleABVLevelsChange = (values: string[]) => {
+    setAbvLevels(values as ABVLevel[]);
+  };
+
+  // Get unique beer types
   const beerTypes = useMemo(() => {
     const types = new Set<string>();
     beers.forEach(beer => {
       if (beer.type) types.add(beer.type);
     });
     return Array.from(types).sort();
-  }, [beers]);
-
-  const glassTypes = useMemo(() => {
-    const glasses = new Set<string>();
-    beers.forEach(beer => {
-      if (beer.glass) glasses.add(beer.glass);
-    });
-    return Array.from(glasses).sort();
   }, [beers]);
 
   // Filter and sort beers
@@ -86,24 +94,27 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
         return false;
       }
 
-      // Glass filter
-      if (selectedGlass !== 'all' && beer.glass !== selectedGlass) {
-        return false;
+      // ABV filter - if levels selected, check if beer matches any level
+      if (abvLevels.length > 0) {
+        const matchesAnyLevel = abvLevels.some(level => {
+          const [min, max] = getABVRange(level);
+          return beer.abv >= min && beer.abv < max;
+        });
+        if (!matchesAnyLevel) {
+          return false;
+        }
       }
 
-      // ABV filter
-      if (beer.abv < abvRange[0] || beer.abv > abvRange[1]) {
-        return false;
-      }
+      // Availability filter - show beers that match ANY enabled availability option
+      const hasAvailabilityFilter = showOnTap || showInCans;
+      if (hasAvailabilityFilter) {
+        const matchesOnTap = showOnTap && beer.availability?.tap;
+        const matchesInCans = showInCans && beer.availability?.cansAvailable;
 
-      // On tap filter
-      if (showOnTap && !beer.availability?.tap) {
-        return false;
-      }
-
-      // In cans filter
-      if (showInCans && !beer.availability?.cansAvailable) {
-        return false;
+        // If neither condition matches, filter out the beer
+        if (!matchesOnTap && !matchesInCans) {
+          return false;
+        }
       }
 
       // Gluten free filter
@@ -130,25 +141,23 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
     });
 
     return filtered;
-  }, [beers, searchTerm, selectedType, selectedGlass, abvRange, showOnTap, showInCans, showGlutenFree, sortBy]);
+  }, [beers, searchTerm, selectedType, abvLevels, showOnTap, showInCans, showGlutenFree, sortBy, getABVRange]);
 
   const clearFilters = () => {
     setSearchTerm('');
     setSelectedType('all');
-    setSelectedGlass('all');
-    setAbvRange([0, 15]);
-    setShowOnTap(false);
-    setShowInCans(false);
+    setAbvLevels([]);
+    setShowOnTap(true);
+    setShowInCans(true);
     setShowGlutenFree(false);
     setSortBy('name');
   };
 
   const activeFilterCount = [
     selectedType !== 'all',
-    selectedGlass !== 'all',
-    abvRange[0] !== 0 || abvRange[1] !== 15,
-    showOnTap,
-    showInCans,
+    abvLevels.length > 0,
+    // Only count as active if different from defaults (both on)
+    (!showOnTap || !showInCans),
     showGlutenFree,
   ].filter(Boolean).length;
 
@@ -162,37 +171,6 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
           Each beer is brewed with care using the finest ingredients and traditional techniques.
         </p>
       </div>
-
-      {/* Map Toggle Button */}
-      <div className="mb-6">
-        <Button
-          variant="outline"
-          onClick={() => setShowMap(!showMap)}
-          className="flex items-center gap-2"
-        >
-          <Map className="h-4 w-4" />
-          {showMap ? 'Hide Map' : 'Find Us on the Map'}
-        </Button>
-      </div>
-
-      {/* Map Component */}
-      {showMap && (
-        <div className="mb-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Our Brewery Locations</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <MapComponent
-                height={400}
-                showControls={true}
-                showPopups={true}
-                style="streets"
-              />
-            </CardContent>
-          </Card>
-        </div>
-      )}
 
       {/* Sort and Mobile Filter Controls */}
       <div className="flex items-center justify-between mb-6">
@@ -311,6 +289,28 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
               </SelectContent>
             </Select>
 
+            {/* Mobile ABV filters */}
+            <div>
+              <Label className="text-sm mb-2 block">Alc by Volume</Label>
+              <ToggleGroup
+                type="multiple"
+                variant="outline"
+                value={abvLevels}
+                onValueChange={handleABVLevelsChange}
+                className="justify-start"
+              >
+                <ToggleGroupItem value="low" aria-label="Low ABV (0-5%)">
+                  <SignalLow className="h-4 w-4" />
+                </ToggleGroupItem>
+                <ToggleGroupItem value="medium" aria-label="Medium ABV (5-7%)">
+                  <SignalMedium className="h-4 w-4" />
+                </ToggleGroupItem>
+                <ToggleGroupItem value="high" aria-label="High ABV (7%+)">
+                  <SignalHigh className="h-4 w-4" />
+                </ToggleGroupItem>
+              </ToggleGroup>
+            </div>
+
             {/* Mobile availability filters */}
             <div className="flex flex-wrap gap-2">
               <Button
@@ -318,7 +318,7 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
                 size="sm"
                 onClick={() => setShowOnTap(!showOnTap)}
               >
-                On Tap
+                Pouring
               </Button>
               <Button
                 variant={showInCans ? "default" : "outline"}
@@ -397,35 +397,26 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
                 </Select>
               </div>
 
-              {/* Glass Filter */}
-              <div className="space-y-2">
-                <Label>Glass</Label>
-                <Select value={selectedGlass} onValueChange={setSelectedGlass}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All glasses" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All glasses</SelectItem>
-                    {glassTypes.map(glass => (
-                      <SelectItem key={glass} value={glass}>
-                        {glass}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* ABV Range */}
-              <div className="space-y-2">
-                <Label>ABV: {abvRange[0]}% - {abvRange[1]}%</Label>
-                <Slider
-                  min={0}
-                  max={15}
-                  step={0.5}
-                  value={abvRange}
-                  onValueChange={(value) => setAbvRange(value as [number, number])}
-                  className="w-full"
-                />
+              {/* ABV Levels */}
+              <div className="space-y-3">
+                <Label>Alc by Volume</Label>
+                <ToggleGroup
+                  type="multiple"
+                  variant="outline"
+                  value={abvLevels}
+                  onValueChange={handleABVLevelsChange}
+                  className="justify-start"
+                >
+                  <ToggleGroupItem value="low" aria-label="Low ABV (0-5%)">
+                    <SignalLow className="h-4 w-4" />
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="medium" aria-label="Medium ABV (5-7%)">
+                    <SignalMedium className="h-4 w-4" />
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="high" aria-label="High ABV (7%+)">
+                    <SignalHigh className="h-4 w-4" />
+                  </ToggleGroupItem>
+                </ToggleGroup>
               </div>
 
               <Separator />
@@ -436,7 +427,7 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <label htmlFor="on-tap" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                      On Tap
+                      Pouring
                     </label>
                     <Switch
                       id="on-tap"
@@ -470,19 +461,60 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
           </Card>
         </div>
 
-        {/* Main Content */}
+        {/* Main Content - Using Homepage Beer Card Style */}
         <div className="lg:col-span-3">
           {/* Beer Grid */}
           {filteredBeers.length > 0 ? (
-            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-              {filteredBeers.map((beer) => (
-                <BeerCard
-                  key={beer.variant}
-                  beer={beer}
-                  showLocation={false}
-                  showPricing={false}
-                  showAvailability={true}
-                />
+            <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${filteredBeers.length === 10 ? 'xl:grid-cols-5' : 'xl:grid-cols-4'}`}>
+              {filteredBeers.map((beer, index) => (
+                <Link key={`${beer.variant}-${index}`} href={`/beer/${beer.variant.toLowerCase()}`} className="group">
+                  <Card className="overflow-hidden hover:shadow-lg transition-shadow flex flex-col border-0 h-full cursor-pointer">
+                    <div className={`relative h-48 w-full flex-shrink-0 ${beer.image ? 'bg-gradient-to-b from-muted/5 to-background/20' : ''}`}>
+                      {beer.image ? (
+                        <Image
+                          src={`/images/beer/${beer.variant.toLowerCase()}.webp`}
+                          alt={beer.name}
+                          fill
+                          className="object-contain p-4"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                          onError={(e) => {
+                            e.currentTarget.parentElement!.style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <div className="flex items-center justify-center h-full">
+                          <div className="text-center px-4">
+                            <div className="text-2xl font-bold text-muted-foreground/30 mb-2">
+                              {beer.name}
+                            </div>
+                            <div className="text-sm text-muted-foreground/30">
+                              {beer.type}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <CardContent className="p-4 flex flex-col flex-grow">
+                      <div className="flex-grow">
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="text-lg font-semibold">{beer.name}</h3>
+                        </div>
+                        <div className="space-y-1 text-sm text-muted-foreground">
+                          <div>{beer.type}</div>
+                          <div>{beer.abv}% ABV</div>
+                          {beer.description && (
+                            <div className="mt-2 text-xs line-clamp-2">{beer.description}</div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="mt-3">
+                        <Button variant="ghost" size="sm" className="w-full pointer-events-none">
+                          View Details
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
               ))}
             </div>
           ) : (

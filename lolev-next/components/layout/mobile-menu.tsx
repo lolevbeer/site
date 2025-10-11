@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Navigation } from './navigation';
 import { SocialLinks } from './social-links';
+import { LocationTabs } from '@/components/location/location-tabs';
 
 interface MobileMenuProps {
   /** Whether the mobile menu is open */
@@ -44,7 +45,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
       {/* Backdrop */}
       <div
         className={cn(
-          "fixed inset-0 z-40 bg-black/50 transition-opacity duration-300 md:hidden",
+          "fixed inset-0 z-40 bg-black/10 transition-opacity duration-300 md:hidden",
           isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         )}
         onClick={onClose}
@@ -54,7 +55,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
       {/* Mobile Menu Panel */}
       <div
         className={cn(
-          "fixed top-16 right-0 z-50 h-[calc(100vh-4rem)] w-full max-w-sm bg-background shadow-lg transition-transform duration-300 ease-in-out md:hidden",
+          "fixed top-16 right-0 z-50 h-[calc(100vh-4rem)] w-full bg-background border-l shadow-lg transition-transform duration-300 ease-in-out md:hidden overflow-hidden",
           isOpen ? "translate-x-0" : "translate-x-full"
         )}
         role="dialog"
@@ -62,6 +63,14 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
         aria-label="Mobile navigation menu"
       >
         <div className="flex h-full flex-col">
+          {/* Location Switcher */}
+          <div className="border-b px-6 py-4">
+            <h3 className="mb-3 text-sm font-semibold text-muted-foreground">
+              Location
+            </h3>
+            <LocationTabs syncWithGlobalState={true} />
+          </div>
+
           {/* Navigation */}
           <div className="flex-1 overflow-y-auto px-6 py-6">
             <Navigation
