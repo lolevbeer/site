@@ -1,10 +1,10 @@
-name: Build and Deploy to Github Pages
+name: Deploy Next.js to GitHub Pages
 
 on:
-  workflow_run:
-    workflows: ["Update Data", "Update Map"]
-    types:
-      - completed
+  push:
+    branches:
+      - master  # Deploy when pushing to master branch
+  workflow_dispatch:  # Allow manual trigger
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
@@ -19,7 +19,6 @@ concurrency:
 
 jobs:
   build:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

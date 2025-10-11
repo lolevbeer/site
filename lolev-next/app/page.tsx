@@ -31,9 +31,6 @@ const LocationCards = dynamic(() => import('@/components/location/location-cards
   loading: () => <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-pulse" />,
 });
 
-// Mark this page to revalidate every 5 minutes
-export const revalidate = 300;
-
 function LocationsSection() {
   return (
     <section className="py-16 lg:py-24 bg-background">

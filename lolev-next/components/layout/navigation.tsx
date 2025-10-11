@@ -74,10 +74,10 @@ export function Navigation({
               isActive
                 ? vertical
                   ? "bg-accent text-accent-foreground"
-                  : "text-foreground"
+                  : "text-foreground font-semibold"
                 : vertical
                   ? "text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
-                  : "text-muted-foreground hover:text-foreground"
+                  : "text-foreground hover:text-muted-foreground"
             )}
           >
             {item.label}
