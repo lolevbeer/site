@@ -90,7 +90,7 @@ function LocationInfo({ location }: { location: LocationInfo }) {
       <div className="flex items-start space-x-3">
         <MapPin className="h-5 w-5 mt-0.5 text-muted-foreground flex-shrink-0" />
         <div>
-          <p className="font-semibold">{location.name}</p>
+          <p className="font-semibold">Lolev {location.name}</p>
           <p className="text-sm text-muted-foreground">
             {location.address}
             <br />
@@ -148,24 +148,18 @@ export function Footer() {
         <div className="grid gap-12 md:grid-cols-3">
           {/* Lawrenceville Location */}
           <div>
-            <h3 className="font-semibold mb-4">Lawrenceville</h3>
+            <h3 className="font-semibold mb-4 text-center md:text-left">Lawrenceville</h3>
             <LocationInfo location={LOCATIONS_DATA[Location.LAWRENCEVILLE]} />
           </div>
 
           {/* Zelienople Location */}
           <div>
-            <h3 className="font-semibold mb-4">Zelienople</h3>
+            <h3 className="font-semibold mb-4 text-center md:text-left">Zelienople</h3>
             <LocationInfo location={LOCATIONS_DATA[Location.ZELIENOPLE]} />
           </div>
 
           {/* Brand and Links */}
           <div className="flex flex-col">
-            <Logo className="mb-4 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground mb-6">
-              Craft brewery serving purposeful beer and building community in the Pittsburgh area.
-            </p>
-
-            <h3 className="font-semibold mb-3">Quick Links</h3>
             <ul className="space-y-2 text-sm mb-6">
               {navigationItems.map((item) => (
                 <li key={item.href}>
@@ -176,7 +170,13 @@ export function Footer() {
               ))}
             </ul>
 
-            <SocialLinks size="sm" className="mt-auto" />
+            <p className="text-sm text-muted-foreground mb-6">
+              Craft brewery serving purposeful beer and building community in the Pittsburgh area.
+            </p>
+
+            <Logo className="py-12 text-muted-foreground" />
+
+            <SocialLinks size="sm" className="mt-auto w-full" />
           </div>
         </div>
 

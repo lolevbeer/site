@@ -45,6 +45,7 @@ export function BaseCard<T>({
     {
       'hover:shadow-md': !isDisabled,
       'hover:shadow-lg cursor-pointer': onClick && !isDisabled,
+      'bg-[var(--color-card-interactive)]': onClick && !isDisabled,
       'opacity-75': isDisabled,
       'ring-2 ring-blue-500 ring-opacity-50': isHighlighted,
       'p-3': variant === 'compact',

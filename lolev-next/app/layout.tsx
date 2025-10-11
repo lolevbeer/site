@@ -7,10 +7,13 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Toaster } from "@/components/ui/sonner";
 
+// Reduce font weights to only what's needed (saves ~150-200KB)
 const poppins = Poppins({
-  weight: ['300', '400', '500', '600', '700'],
+  weight: ['400', '600', '700'], // Removed 300 and 500
   variable: "--font-poppins",
   subsets: ["latin"],
+  display: 'swap', // Prevents FOIT (Flash of Invisible Text)
+  preload: true,
 });
 
 export const metadata: Metadata = {
@@ -89,6 +92,8 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="LoL Brewing" />
         <meta name="mobile-web-app-capable" content="yes" />
+        {/* Preload critical resources for faster LCP */}
+        <link rel="preload" href="/images/bar.jpg" as="image" fetchPriority="high" />
       </head>
       <body
         className={`${poppins.variable} antialiased min-h-screen flex flex-col font-poppins`}

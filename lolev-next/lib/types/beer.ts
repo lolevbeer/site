@@ -56,17 +56,33 @@ export interface BeerPricing {
 }
 
 /**
- * Beer availability information
+ * Location-specific beer availability
  */
-export interface BeerAvailability {
+export interface LocationBeerAvailability {
+  /** Tap number if on draft */
+  tap?: string;
   /** Whether beer is available in cans */
   cansAvailable?: boolean;
   /** Whether single cans are available */
   singleCanAvailable?: boolean;
+}
+
+/**
+ * Beer availability information
+ */
+export interface BeerAvailability {
+  /** Whether beer is available in cans (any location) */
+  cansAvailable?: boolean;
+  /** Whether single cans are available (any location) */
+  singleCanAvailable?: boolean;
   /** Whether beer should be hidden from the website */
   hideFromSite?: boolean;
-  /** Tap number if on draft */
+  /** Tap number if on draft (any location) */
   tap?: string;
+  /** Lawrenceville location availability */
+  lawrenceville?: LocationBeerAvailability;
+  /** Zelienople location availability */
+  zelienople?: LocationBeerAvailability;
 }
 
 /**

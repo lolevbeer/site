@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { MapPin, Navigation, Phone, Clock, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Location, LocationDisplayNames } from '@/lib/types/location';
+import { useTheme } from 'next-themes';
 
 // You'll need to add your Mapbox access token to your environment variables
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || '';
@@ -90,6 +91,7 @@ export function MapComponent({
   style = 'streets'
 }: MapComponentProps) {
   const mapRef = useRef<any>(null);
+  const { theme } = useTheme();
   const [viewport, setViewport] = useState({
     latitude: 40.6322, // Center between the two locations
     longitude: -80.0472,
@@ -98,9 +100,9 @@ export function MapComponent({
   const [selectedMarker, setSelectedMarker] = useState<LocationMarker | null>(null);
   const [mapError, setMapError] = useState<string | null>(null);
 
-  // Map style URLs
+  // Map style URLs - auto-switch between light/dark based on theme
   const mapStyles = {
-    streets: 'mapbox://styles/mapbox/streets-v12',
+    streets: theme === 'dark' ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/streets-v12',
     satellite: 'mapbox://styles/mapbox/satellite-streets-v12',
     light: 'mapbox://styles/mapbox/light-v11',
     dark: 'mapbox://styles/mapbox/dark-v11'

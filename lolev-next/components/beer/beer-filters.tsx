@@ -329,7 +329,7 @@ export function BeerFilters({
   }, [onFiltersChange]);
 
   return (
-    <Card className={className}>
+    <Card className={`shadow-none ${className}`}>
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">Filter Beers</CardTitle>

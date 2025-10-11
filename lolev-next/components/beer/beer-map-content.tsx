@@ -34,7 +34,7 @@ export function BeerMapContent() {
           showSearch={true}
           showFilters={true}
           initialZoom={6.5}
-          maxPoints={100}
+          maxPoints={10}
           forceSplitView={true}
         />
       </div>

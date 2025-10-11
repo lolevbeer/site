@@ -34,7 +34,7 @@ function getEventType(vendor: string): EventType {
   return EventType.SPECIAL;
 }
 
-import { parseTimeRange } from '@/lib/utils/formatters';
+import { parseTimeRange, parseLocalDate } from '@/lib/utils/formatters';
 
 /**
  * Generate a unique event ID from date and vendor
@@ -115,7 +115,7 @@ function parseEventRow(row: EventCSVRow, location: Location): BreweryEvent | nul
   // Skip invalid or empty rows
   if (!row.date || !row.vendor) return null;
 
-  // Parse date as local time, not UTC (same as homepage)
+  // Validate date format (YYYY-MM-DD)
   const [year, month, day] = row.date.split('-').map(Number);
   if (!year || !month || !day) return null;
   const eventDate = new Date(year, month - 1, day);
@@ -128,11 +128,12 @@ function parseEventRow(row: EventCSVRow, location: Location): BreweryEvent | nul
   const type = getEventType(row.vendor);
 
   // Create event object
+  // Store date in YYYY-MM-DD format to avoid timezone issues
   const event: BreweryEvent = {
     id: generateEventId(row.date, row.vendor, location),
     title: row.vendor,
     description: createDescription(row.vendor, type),
-    date: eventDate.toISOString(),
+    date: row.date, // Keep original YYYY-MM-DD format
     time,
     vendor: row.vendor,
     type,
@@ -187,10 +188,10 @@ export async function loadEventsFromCSV(): Promise<BreweryEvent[]> {
 
     return allEvents
       .filter(event => {
-        const eventDate = new Date(event.date);
+        const eventDate = parseLocalDate(event.date);
         return eventDate >= thirtyDaysAgo;
       })
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      .sort((a, b) => parseLocalDate(a.date).getTime() - parseLocalDate(b.date).getTime());
   } catch (error) {
     console.error('Error loading events from CSV:', error);
     return [];

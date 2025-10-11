@@ -72,7 +72,7 @@ export function EventsPageContent({ initialEvents = [] }: EventsPageContentProps
         />
       )}
 
-      <div className="text-center space-y-3 pt-12 border-t mt-12">
+      <div className="text-center space-y-3 pt-12 mt-12">
         <h2 className="text-lg font-semibold">Book Private Event</h2>
         <div className="flex justify-center gap-4 flex-wrap">
           <Button variant="ghost" size="sm" asChild>

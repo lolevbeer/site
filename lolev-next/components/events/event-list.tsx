@@ -18,7 +18,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar, Filter, Search, SortAsc, SortDesc, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { formatTime } from '@/lib/utils/formatters';
+import { formatTime, parseLocalDate } from '@/lib/utils/formatters';
 
 interface EventListProps {
   events: BreweryEvent[];
@@ -108,7 +108,7 @@ export function EventList({
 
       switch (sortOptions.sortBy) {
         case 'date':
-          comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
+          comparison = parseLocalDate(a.date).getTime() - parseLocalDate(b.date).getTime();
           break;
         case 'title':
           comparison = a.title.localeCompare(b.title);
@@ -140,7 +140,7 @@ export function EventList({
     tomorrow.setDate(tomorrow.getDate() + 1);
 
     return filteredAndSortedEvents.filter(event => {
-      const eventDate = new Date(event.date);
+      const eventDate = parseLocalDate(event.date);
       eventDate.setHours(0, 0, 0, 0);
       return eventDate >= tomorrow;  // Only events from tomorrow onwards
     });
@@ -148,10 +148,13 @@ export function EventList({
 
   // Get today's events
   const todaysEvents = useMemo(() => {
-    const today = new Date().toDateString();
-    return filteredAndSortedEvents.filter(event =>
-      new Date(event.date).toDateString() === today
-    );
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return filteredAndSortedEvents.filter(event => {
+      const eventDate = parseLocalDate(event.date);
+      eventDate.setHours(0, 0, 0, 0);
+      return eventDate.getTime() === today.getTime();
+    });
   }, [filteredAndSortedEvents]);
 
   const hasActiveFilters = searchQuery || selectedTypes.length > 0 ||
@@ -228,9 +231,14 @@ export function EventList({
     }
 
     if (layoutType === 'grid') {
-      // Fixed 4-column grid for Upcoming events
+      // Adaptive grid for Upcoming events - full width for fewer than 6 items
       return (
-        <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className={cn(
+          "grid gap-4",
+          eventsToRender.length < 6
+            ? "grid-cols-1"
+            : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+        )}>
           {eventsToRender.map(event => (
             <EventCard
               key={event.id || `${event.title}-${event.date}`}

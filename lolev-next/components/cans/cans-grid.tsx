@@ -129,16 +129,16 @@ export function CansGrid({ maxItems }: CansGridProps) {
   return (
     <>
       {loading ? (
-        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${cans.length === 10 ? 'xl:grid-cols-5' : 'xl:grid-cols-4'}`}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {Array.from({ length: maxItems || 8 }).map((_, i) => (
             <div key={i} className="bg-card rounded-xl border shadow-sm animate-pulse h-96" />
           ))}
         </div>
       ) : cans.length > 0 ? (
-        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${cans.length === 10 ? 'xl:grid-cols-5' : 'xl:grid-cols-4'}`}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" suppressHydrationWarning>
           {cans.map((beer, index) => (
             <Link key={`${beer.variant}-${index}`} href={`/beer/${beer.variant.toLowerCase()}`} className="group">
-              <Card className="overflow-hidden hover:shadow-lg transition-shadow flex flex-col border-0 h-full cursor-pointer">
+              <Card className="overflow-hidden hover:shadow-lg transition-shadow flex flex-col border-0 h-full cursor-pointer bg-[var(--color-card-interactive)]">
                 <div className={`relative h-48 w-full flex-shrink-0 ${beer.image ? 'bg-gradient-to-b from-muted/5 to-background/20' : ''}`}>
                   {beer.image ? (
                     <Image
@@ -169,7 +169,7 @@ export function CansGrid({ maxItems }: CansGridProps) {
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="text-lg font-semibold">{beer.name}</h3>
                       {beer.onDraft && (
-                        <Badge variant="secondary" className="text-xs flex-shrink-0">
+                        <Badge variant="default" className="text-xs flex-shrink-0">
                           Pouring
                         </Badge>
                       )}

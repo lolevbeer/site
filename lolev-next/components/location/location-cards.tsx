@@ -90,7 +90,7 @@ export function LocationCards() {
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
       {locations.map(({ id, data, gradient, displayName, image }) => (
         <Link key={id} href={data.mapUrl || '#'} target="_blank" rel="noopener noreferrer" className="group flex">
-          <Card className="overflow-hidden flex flex-col border-0 hover:shadow-lg transition-shadow cursor-pointer w-full">
+          <Card className="overflow-hidden flex flex-col border-0 hover:shadow-lg transition-shadow cursor-pointer w-full bg-[var(--color-card-interactive)]">
             <div className="aspect-video relative">
             {image ? (
               <>
@@ -100,6 +100,9 @@ export function LocationCards() {
                   fill
                   className="object-cover"
                   priority={id === Location.LAWRENCEVILLE}
+                  fetchPriority={id === Location.LAWRENCEVILLE ? "high" : "low"}
+                  quality={85}
+                  sizes="(max-width: 768px) 100vw, 50vw"
                 />
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                   <div className="text-center text-white">

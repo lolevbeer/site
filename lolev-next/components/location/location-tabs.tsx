@@ -37,7 +37,7 @@ export function LocationTabs({
 }: LocationTabsProps) {
   const { currentLocation, setLocation, isClient } = useLocationContext();
 
-  const controlledValue = syncWithGlobalState ? currentLocation : value;
+  const controlledValue = syncWithGlobalState && isClient ? currentLocation : value;
   const controlledDefaultValue = syncWithGlobalState ? currentLocation : defaultValue;
 
   const handleValueChange = (newValue: string) => {
@@ -50,21 +50,17 @@ export function LocationTabs({
     }
   };
 
-  if (!isClient) {
-    return (
-      <div className={cn("w-full", className)}>
-        <div className="h-10 w-full rounded-md border bg-background animate-pulse" />
-      </div>
-    );
-  }
+  // Use controlled or uncontrolled mode, not both
+  const tabsProps = controlledValue !== undefined
+    ? { value: controlledValue, onValueChange: handleValueChange }
+    : { defaultValue: controlledDefaultValue || Location.LAWRENCEVILLE, onValueChange: handleValueChange };
 
   return (
     <Tabs
-      value={controlledValue}
-      defaultValue={controlledDefaultValue || Location.LAWRENCEVILLE}
-      onValueChange={handleValueChange}
+      {...tabsProps}
       orientation={orientation}
       className={cn("w-full", className)}
+      suppressHydrationWarning
     >
       <TabsList className={cn(
         "grid w-fit mx-auto",

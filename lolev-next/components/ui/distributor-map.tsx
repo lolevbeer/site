@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import Map, {
   NavigationControl,
   FullscreenControl,
@@ -12,19 +12,39 @@ import Map, {
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { MapPin, Navigation, Search, Locate } from 'lucide-react';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
+import { MapPin, Locate, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 import { toast } from 'sonner';
+import { useMapData } from '@/hooks/use-map-data';
+import { useGeolocation } from '@/hooks/use-geolocation';
+import { useLocationSearch } from '@/hooks/use-location-search';
+import { MapControls } from '@/components/map/map-controls';
+import { LocationCard } from '@/components/map/location-card';
+import { useTheme } from 'next-themes';
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || '';
+
+// Map configuration constants
+const MAP_CONFIG = {
+  DEFAULT_CENTER: { latitude: 40.5285237, longitude: -80.2456463 },
+  DEFAULT_ZOOM: 7,
+  LOCATION_ZOOM: 12,
+  DETAIL_ZOOM: 15,
+  CLUSTER_MAX_ZOOM: 12,
+  CLUSTER_RADIUS: 60,
+  EARTH_RADIUS_MILES: 3959,
+  NEARBY_PREVIEW_COUNT: 3,
+  NEARBY_TOTAL_COUNT: 10,
+} as const;
 
 interface GeoFeature {
   type: 'Feature';
@@ -56,7 +76,6 @@ interface DistributorMapProps {
   showSearch?: boolean;
   initialZoom?: number;
   maxPoints?: number;
-  forceSplitView?: boolean;
 }
 
 const customerTypeColors: Record<string, string> = {
@@ -66,9 +85,9 @@ const customerTypeColors: Record<string, string> = {
   'default': '#6b7280'
 };
 
-// Haversine distance calculation (memoized)
+// Haversine distance calculation
 const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-  const R = 3959;
+  const R = MAP_CONFIG.EARTH_RADIUS_MILES;
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLon = (lon2 - lon1) * Math.PI / 180;
   const a =
@@ -79,151 +98,45 @@ const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * c;
 };
 
-const capitalizeName = (name: string) => {
-  return name
-    .toLowerCase()
-    .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-};
-
 export function DistributorMap({
   className,
   height = 600,
   showSearch = true,
   initialZoom = 7,
-  maxPoints = 20,
-  forceSplitView = false
+  maxPoints = 20
 }: DistributorMapProps) {
-  const [geoData, setGeoData] = useState<GeoJSON | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Use custom hooks
+  const { geoData, loading, error } = useMapData();
+  const { userLocation, getUserLocation } = useGeolocation();
+  const { searchTerm, setSearchTerm, searchLocation, isSearching } = useLocationSearch();
+  const { theme } = useTheme();
+
+  // Component state
   const [selectedLocation, setSelectedLocation] = useState<GeoFeature | null>(null);
-  const [popoverOpen, setPopoverOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null);
-  const [searchLocation, setSearchLocation] = useState<{latitude: number, longitude: number} | null>(null);
-  const [isSearching, setIsSearching] = useState(false);
-
-  const mapRef = useRef<any>(null);
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const selectedCardRef = useRef<HTMLDivElement>(null);
-
+  const [clickedLocation, setClickedLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [mobileView, setMobileView] = useState<'map' | 'list'>('map');
   const [viewport, setViewport] = useState({
-    latitude: 40.5285237,
-    longitude: -80.2456463,
+    latitude: MAP_CONFIG.DEFAULT_CENTER.latitude,
+    longitude: MAP_CONFIG.DEFAULT_CENTER.longitude,
     zoom: initialZoom
   });
 
-  // Load GeoJSON data once
+  // Refs
+  const mapRef = useRef<any>(null);
+  const selectedCardRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  // Update viewport when search location changes
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [paResponse, nyResponse] = await Promise.all([
-          fetch('/processed_geo_data.json'),
-          fetch('/ny_geo_data.json')
-        ]);
-
-        const [paData, nyData] = await Promise.all([
-          paResponse.json(),
-          nyResponse.json()
-        ]) as [GeoJSON, GeoJSON];
-
-        // Add unique IDs
-        const paFeatures = paData.features.map((feature, index) => ({
-          ...feature,
-          properties: {
-            ...feature.properties,
-            uniqueId: `pa_${feature.properties.id}_${index}`
-          }
-        }));
-
-        const nyFeatures = nyData.features.map((feature, index) => ({
-          ...feature,
-          properties: {
-            ...feature.properties,
-            uniqueId: `ny_${feature.properties.id}_${index}`
-          }
-        }));
-
-        setGeoData({
-          type: 'FeatureCollection',
-          features: [...paFeatures, ...nyFeatures]
-        });
-        setLoading(false);
-      } catch (err) {
-        console.error('Error loading geo data:', err);
-        setError('Failed to load location data');
-        setLoading(false);
-      }
-    };
-
-    loadData();
-  }, []);
-
-  // Geocode with debounce
-  const geocodeLocation = useCallback(async (query: string) => {
-    if (!MAPBOX_TOKEN || !query.trim()) return null;
-
-    try {
-      const response = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?` +
-        `access_token=${MAPBOX_TOKEN}&country=US&limit=1`
-      );
-
-      if (!response.ok) return null;
-      const data = await response.json();
-
-      if (data.features && data.features.length > 0) {
-        const [longitude, latitude] = data.features[0].center;
-        return { latitude, longitude };
-      }
-    } catch (error) {
-      console.error('Geocoding error:', error);
+    if (searchLocation) {
+      setClickedLocation(null); // Clear clicked location when user searches
+      setViewport({
+        latitude: searchLocation.latitude,
+        longitude: searchLocation.longitude,
+        zoom: MAP_CONFIG.LOCATION_ZOOM
+      });
     }
-    return null;
-  }, []);
-
-  // Handle search term changes with debounce
-  useEffect(() => {
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-
-    if (!searchTerm.trim()) {
-      setSearchLocation(null);
-      setIsSearching(false);
-      return;
-    }
-
-    const isZipcode = /^\d{5}$/.test(searchTerm.trim());
-    const hasLocationIndicators = /\b(street|st|ave|avenue|rd|road|blvd|boulevard|city|state|[A-Z]{2})\b/i.test(searchTerm);
-    const hasComma = searchTerm.includes(',');
-
-    if (isZipcode || hasLocationIndicators || hasComma || searchTerm.trim().split(' ').length >= 2) {
-      searchTimeoutRef.current = setTimeout(async () => {
-        setIsSearching(true);
-        const coords = await geocodeLocation(searchTerm);
-        if (coords) {
-          setSearchLocation(coords);
-          setViewport({
-            latitude: coords.latitude,
-            longitude: coords.longitude,
-            zoom: 10
-          });
-        }
-        setIsSearching(false);
-      }, 800);
-    } else {
-      setSearchLocation(null);
-    }
-
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-    };
-  }, [searchTerm, geocodeLocation]);
+  }, [searchLocation]);
 
   // Scroll to selected item
   useEffect(() => {
@@ -239,6 +152,10 @@ export function DistributorMap({
   const locationsWithDistance = useMemo(() => {
     if (!geoData) return [];
 
+    // Only show locations if user has provided some context
+    const hasContext = searchTerm || searchLocation || userLocation || clickedLocation;
+    if (!hasContext) return [];
+
     let filtered = geoData.features;
 
     // Text search filter (only if not doing location search)
@@ -251,7 +168,7 @@ export function DistributorMap({
     }
 
     // Calculate distances if we have a reference location
-    const referenceLocation = searchLocation || userLocation;
+    const referenceLocation = searchLocation || userLocation || clickedLocation;
     if (referenceLocation) {
       const withDistances = filtered.map(location => {
         const [lng, lat] = location.geometry.coordinates;
@@ -267,66 +184,67 @@ export function DistributorMap({
       return withDistances.sort((a, b) => (a.distance || 0) - (b.distance || 0)).slice(0, maxPoints);
     }
 
-    // Limit for performance only when not searching by location
+    // For text-only search without location, just limit results
     return filtered.slice(0, maxPoints) as LocationWithDistance[];
-  }, [geoData, searchTerm, searchLocation, userLocation, maxPoints]);
+  }, [geoData, searchTerm, searchLocation, userLocation, clickedLocation, maxPoints]);
 
-  // Get top 10 nearest locations
+  // Get nearest locations for preview
   const nearbyLocations = useMemo(() => {
-    if (searchLocation || userLocation) {
-      return locationsWithDistance.slice(0, 10);
+    if (searchLocation || userLocation || clickedLocation) {
+      return locationsWithDistance.slice(0, MAP_CONFIG.NEARBY_TOTAL_COUNT);
     }
     return [];
-  }, [locationsWithDistance, searchLocation, userLocation]);
+  }, [locationsWithDistance, searchLocation, userLocation, clickedLocation]);
 
   // Handle geolocation
   const handleGeolocate = useCallback(() => {
     setSearchTerm('');
-    setSearchLocation(null);
+    setClickedLocation(null);
 
-    if (!navigator.geolocation) {
-      toast.error('Geolocation not supported');
-      return;
-    }
+    getUserLocation(
+      (coords) => {
+        setViewport({
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+          zoom: MAP_CONFIG.LOCATION_ZOOM
+        });
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        setUserLocation({ latitude, longitude });
-        setViewport({ latitude, longitude, zoom: 12 });
-        toast.success('Location found');
-      },
-      (error) => {
-        const messages: Record<number, string> = {
-          1: 'Please enable location access',
-          2: 'Location unavailable',
-          3: 'Location request timed out'
-        };
-        toast.error(messages[error.code] || 'Unable to get location');
-      },
-      {
-        enableHighAccuracy: false,
-        timeout: 5000,
-        maximumAge: 60000
+        // Scroll list to top
+        if (scrollAreaRef.current) {
+          const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+          if (scrollContainer) {
+            scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        }
+
+        toast.success(`Showing ${maxPoints} nearest locations`);
       }
     );
-  }, []);
+  }, [getUserLocation, setSearchTerm, maxPoints]);
 
   // Handle location click
-  const handleLocationClick = useCallback((location: GeoFeature) => {
+  const handleLocationClick = useCallback((location: GeoFeature, fromMap: boolean = false) => {
     const [lng, lat] = location.geometry.coordinates;
     setSelectedLocation(location);
-    setPopoverOpen(true);
+
+    // If clicking from map with no context, set clicked location to show nearby
+    if (fromMap && !searchLocation && !userLocation) {
+      setClickedLocation({ latitude: lat, longitude: lng });
+      setSearchTerm('');
+    }
+
+    // Switch to list view on mobile to show selection
+    setMobileView('list');
 
     if (mapRef.current) {
       mapRef.current.flyTo({
         center: [lng, lat],
-        zoom: 15,
+        zoom: MAP_CONFIG.DETAIL_ZOOM,
         duration: 1000,
         essential: true
       });
     }
-  }, []);
+  }, [searchLocation, userLocation, setSearchTerm]);
 
   // Create GeoJSON for clustering - always show all locations on map
   const clusteredGeoJSON = useMemo(() => {
@@ -378,81 +296,41 @@ export function DistributorMap({
   return (
     <div className={cn('flex flex-col', className)} style={{ height: containerHeight, width: '100%' }}>
       {/* Controls Bar */}
-      <Card className="rounded-b-none border-0 border-b p-4 flex-shrink-0 shadow-none">
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleGeolocate}
-                className="h-8"
-              >
-                <Locate className="h-4 w-4 mr-1" />
-                Near Me
-              </Button>
-              <span className="text-sm text-muted-foreground">
-                {locationsWithDistance.length} locations
-              </span>
-            </div>
-          </div>
-
-          {showSearch && (
-            <div className="relative">
-              {isSearching ? (
-                <div className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4">
-                  <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
-                </div>
-              ) : (
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              )}
-              <Input
-                placeholder="Search by name, zipcode, or address..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8 h-8 bg-secondary"
-              />
-              {searchLocation && (
-                <Badge variant="secondary" className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] py-0">
-                  <MapPin className="h-2 w-2 mr-1" />
-                  Location
-                </Badge>
-              )}
-            </div>
-          )}
-
-          {nearbyLocations.length > 0 && (
-            <div className="flex items-center gap-2 overflow-x-auto">
-              <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap">
-                <MapPin className="h-3 w-3 inline mr-1" />
-                Nearest:
-              </span>
-              {nearbyLocations.slice(0, 3).map((location) => (
-                <Badge
-                  key={location.properties.uniqueId}
-                  variant="secondary"
-                  className="cursor-pointer hover:bg-primary hover:text-primary-foreground text-xs whitespace-nowrap"
-                  onClick={() => handleLocationClick(location)}
-                >
-                  {capitalizeName(location.properties.Name).substring(0, 25)}
-                  {location.distance && <span className="ml-1 opacity-75">({location.distance.toFixed(1)}mi)</span>}
-                </Badge>
-              ))}
-            </div>
-          )}
-        </div>
-      </Card>
+      <MapControls
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        isSearching={isSearching}
+        hasSearchLocation={!!searchLocation}
+        locationCount={locationsWithDistance.length}
+        nearbyLocations={nearbyLocations.slice(0, MAP_CONFIG.NEARBY_PREVIEW_COUNT).map(loc => ({
+          uniqueId: loc.properties.uniqueId || '',
+          name: loc.properties.Name,
+          distance: loc.distance
+        }))}
+        onNearMeClick={handleGeolocate}
+        onNearbyLocationClick={(location) => {
+          const fullLocation = nearbyLocations.find(loc => loc.properties.uniqueId === location.uniqueId);
+          if (fullLocation) handleLocationClick(fullLocation);
+        }}
+        mobileView={mobileView}
+        onMobileViewChange={setMobileView}
+        showSearch={showSearch}
+      />
 
       {/* Split View */}
       <div className="flex flex-1 relative h-full overflow-hidden">
         {/* Map Side */}
-        <div className="w-full md:w-1/2 h-full relative border-r">
+        <div className={cn(
+          "h-full relative border-r",
+          "md:w-1/2",
+          mobileView === 'map' ? "w-full" : "hidden md:block"
+        )}>
           <Map
             ref={mapRef}
             {...viewport}
             onMove={(evt) => setViewport(evt.viewState)}
             mapboxAccessToken={MAPBOX_TOKEN}
-            mapStyle="mapbox://styles/mapbox/light-v11"
+            mapStyle={theme === 'dark' ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/light-v11'}
             style={{ width: '100%', height: '100%' }}
             reuseMaps
             interactiveLayerIds={['clusters', 'unclustered-point']}
@@ -476,12 +354,19 @@ export function DistributorMap({
                     });
                   }
                 } else {
-                  const location = locationsWithDistance.find(loc =>
+                  // Try to find in filtered list first, otherwise search full dataset
+                  let location = locationsWithDistance.find(loc =>
                     loc.properties.uniqueId === feature.properties?.uniqueId
                   );
+
+                  if (!location && geoData) {
+                    location = geoData.features.find(loc =>
+                      loc.properties.uniqueId === feature.properties?.uniqueId
+                    );
+                  }
+
                   if (location) {
-                    setSelectedLocation(location);
-                    setPopoverOpen(true);
+                    handleLocationClick(location, true);
                   }
                 }
               }
@@ -497,8 +382,8 @@ export function DistributorMap({
               type="geojson"
               data={clusteredGeoJSON}
               cluster={true}
-              clusterMaxZoom={12}
-              clusterRadius={60}
+              clusterMaxZoom={MAP_CONFIG.CLUSTER_MAX_ZOOM}
+              clusterRadius={MAP_CONFIG.CLUSTER_RADIUS}
             >
               <Layer
                 id="clusters"
@@ -563,109 +448,79 @@ export function DistributorMap({
         </div>
 
         {/* List Side */}
-        <div className="w-full md:w-1/2 h-full overflow-hidden">
-          <ScrollArea className="h-full">
+        <div className={cn(
+          "h-full overflow-hidden",
+          "md:w-1/2",
+          mobileView === 'list' ? "w-full" : "hidden md:block"
+        )}>
+          <ScrollArea className="h-full" ref={scrollAreaRef}>
             <div className="p-4 space-y-3">
               {locationsWithDistance.length > 0 ? (
                 locationsWithDistance.map((location) => {
                   const isSelected = selectedLocation?.properties.uniqueId === location.properties.uniqueId;
                   return (
-                    <Card
+                    <LocationCard
                       key={location.properties.uniqueId}
-                      ref={isSelected ? selectedCardRef : null}
-                      className={cn(
-                        "p-3 cursor-pointer transition-all border-0 shadow-none",
-                        isSelected
-                          ? "bg-primary/5"
-                          : "hover:bg-muted/50"
-                      )}
+                      name={location.properties.Name}
+                      address={location.properties.address}
+                      distance={location.distance}
+                      isSelected={isSelected}
                       onClick={() => handleLocationClick(location)}
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-semibold text-sm truncate">
-                            {capitalizeName(location.properties.Name)}
-                          </h4>
-                          <p className="text-xs text-muted-foreground mt-1 uppercase">
-                            {location.properties.address}
-                          </p>
-                          {location.distance !== undefined && (
-                            <span className="text-xs font-medium text-primary mt-1 inline-block">
-                              {location.distance.toFixed(1)} mi away
-                            </span>
-                          )}
-                        </div>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-7 text-xs shrink-0 hover:bg-primary hover:text-primary-foreground cursor-pointer"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            window.open(
-                              `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location.properties.address)}`,
-                              '_blank'
-                            );
-                          }}
-                        >
-                          <Navigation className="h-3 w-3 mr-1" />
-                          Directions
-                        </Button>
-                      </div>
-                    </Card>
+                      innerRef={isSelected ? selectedCardRef : undefined}
+                    />
                   );
                 })
               ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <MapPin className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">No locations found</p>
+                <div className="flex items-center justify-center h-full">
+                  {searchTerm ? (
+                    <Empty>
+                      <EmptyHeader>
+                        <EmptyMedia variant="icon">
+                          <Search className="h-10 w-10" />
+                        </EmptyMedia>
+                        <EmptyTitle>No locations found</EmptyTitle>
+                        <EmptyDescription>
+                          Try searching for a different name or address
+                        </EmptyDescription>
+                      </EmptyHeader>
+                    </Empty>
+                  ) : (searchLocation || userLocation) ? (
+                    <Empty>
+                      <EmptyHeader>
+                        <EmptyMedia variant="icon">
+                          <MapPin className="h-10 w-10" />
+                        </EmptyMedia>
+                        <EmptyTitle>No locations nearby</EmptyTitle>
+                        <EmptyDescription>
+                          Try expanding your search area or search by name
+                        </EmptyDescription>
+                      </EmptyHeader>
+                    </Empty>
+                  ) : (
+                    <Empty>
+                      <EmptyHeader>
+                        <EmptyMedia variant="icon">
+                          <Locate className="h-10 w-10" />
+                        </EmptyMedia>
+                        <EmptyTitle>Find Lolev Near You</EmptyTitle>
+                        <EmptyDescription>
+                          Use "Near Me" or search by location, zipcode, or address to find nearby retailers
+                        </EmptyDescription>
+                      </EmptyHeader>
+                      <EmptyContent>
+                        <Button onClick={handleGeolocate} variant="default">
+                          <Locate className="h-4 w-4 mr-2" />
+                          Near Me
+                        </Button>
+                      </EmptyContent>
+                    </Empty>
+                  )}
                 </div>
               )}
             </div>
           </ScrollArea>
         </div>
       </div>
-
-      {/* Selected Location Popover */}
-      {selectedLocation && (
-        <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-          <PopoverContent className="w-[280px]">
-            <div className="space-y-3">
-              <div>
-                <h3 className="font-semibold text-base">
-                  {capitalizeName(selectedLocation.properties.Name)}
-                </h3>
-                <p className="text-sm text-muted-foreground mt-2">
-                  {selectedLocation.properties.address}
-                </p>
-              </div>
-
-              {userLocation && (() => {
-                const [lng, lat] = selectedLocation.geometry.coordinates;
-                const distance = calculateDistance(userLocation.latitude, userLocation.longitude, lat, lng);
-                return (
-                  <div className="text-sm font-medium text-primary">
-                    {distance.toFixed(1)} miles away
-                  </div>
-                );
-              })()}
-
-              <Button
-                size="sm"
-                className="w-full"
-                onClick={() => {
-                  window.open(
-                    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedLocation.properties.address)}`,
-                    '_blank'
-                  );
-                }}
-              >
-                <Navigation className="h-4 w-4 mr-2" />
-                Get Directions
-              </Button>
-            </div>
-          </PopoverContent>
-        </Popover>
-      )}
     </div>
   );
 }

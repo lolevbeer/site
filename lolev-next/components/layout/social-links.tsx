@@ -131,7 +131,7 @@ export function SocialLinks({
       className={cn(
         'flex items-center',
         direction === 'horizontal'
-          ? 'space-x-2'
+          ? className?.includes('w-full') ? 'justify-between' : 'space-x-2'
           : 'flex-col space-y-2',
         className
       )}

@@ -20,30 +20,43 @@ export async function getAllBeersFromCSV(): Promise<Beer[]> {
     readFile(zelienopleCansPath, 'utf-8').catch(() => ''),
   ]);
 
-  // Create sets of variants pouring and in cans
+  // Create location-specific sets of variants
   const onTapVariants = new Set<string>();
   const inCansVariants = new Set<string>();
 
-  const parseDraft = (content: string) => {
+  const lawrencevilleOnTap = new Map<string, string>(); // variant -> tap number
+  const zelienopleOnTap = new Map<string, string>();
+  const lawrencevilleInCans = new Set<string>();
+  const zelienopleInCans = new Set<string>();
+
+  const parseDraft = (content: string, locationMap: Map<string, string>) => {
     if (!content) return;
     const parsed = Papa.parse(content, { header: true });
     parsed.data.forEach((row: any) => {
-      if (row.variant) onTapVariants.add(row.variant.toLowerCase());
+      if (row.variant) {
+        const variant = row.variant.toLowerCase();
+        onTapVariants.add(variant);
+        locationMap.set(variant, row.tap || 'Available');
+      }
     });
   };
 
-  const parseCans = (content: string) => {
+  const parseCans = (content: string, locationSet: Set<string>) => {
     if (!content) return;
     const parsed = Papa.parse(content, { header: true });
     parsed.data.forEach((row: any) => {
-      if (row.variant) inCansVariants.add(row.variant.toLowerCase());
+      if (row.variant) {
+        const variant = row.variant.toLowerCase();
+        inCansVariants.add(variant);
+        locationSet.add(variant);
+      }
     });
   };
 
-  parseDraft(lawrencevilleDraft);
-  parseDraft(zelienopleDraft);
-  parseCans(lawrencevilleCans);
-  parseCans(zelienopleCans);
+  parseDraft(lawrencevilleDraft, lawrencevilleOnTap);
+  parseDraft(zelienopleDraft, zelienopleOnTap);
+  parseCans(lawrencevilleCans, lawrencevilleInCans);
+  parseCans(zelienopleCans, zelienopleInCans);
 
   // Parse main beer CSV
   const parsed = Papa.parse(fileContent, { header: true });
@@ -78,6 +91,14 @@ export async function getAllBeersFromCSV(): Promise<Beer[]> {
         cansAvailable: inCansVariants.has(variantLower),
         singleCanAvailable: false,
         hideFromSite: row.hideFromSite === 'TRUE',
+        lawrenceville: {
+          tap: lawrencevilleOnTap.get(variantLower),
+          cansAvailable: lawrencevilleInCans.has(variantLower),
+        },
+        zelienople: {
+          tap: zelienopleOnTap.get(variantLower),
+          cansAvailable: zelienopleInCans.has(variantLower),
+        },
       },
       hops: row.hops?.trim() || undefined,
       recipe: row.recipe ? parseInt(row.recipe) : undefined,

@@ -17,6 +17,7 @@ const nextConfig = {
     domains: [
       'next.lolev.beer',
       'lolev.beer',
+      'lolev.dev',
       'images.unsplash.com',
       'res.cloudinary.com',
       'untappd.akamaized.net',
@@ -26,6 +27,10 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: '**.lolev.beer',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.lolev.dev',
       },
       {
         protocol: 'https',
@@ -80,7 +85,7 @@ const nextConfig = {
           },
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=()'
+            value: 'camera=(), microphone=(), geolocation=(self)'
           },
         ],
       },
@@ -89,7 +94,7 @@ const nextConfig = {
         headers: [
           {
             key: 'Access-Control-Allow-Origin',
-            value: process.env.NODE_ENV === 'development' ? '*' : 'https://next.lolev.beer'
+            value: process.env.NODE_ENV === 'development' ? '*' : process.env.NEXT_PUBLIC_APP_URL || 'https://next.lolev.beer'
           },
           {
             key: 'Access-Control-Allow-Methods',
@@ -155,12 +160,17 @@ const nextConfig = {
   // Environment variables
   env: {
     NEXT_PUBLIC_APP_ENV: process.env.NODE_ENV || 'development',
-    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || 'https://next.lolev.beer',
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || 'https://lolev.dev',
   },
 
   // Build optimization
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
+  },
+
+  // Experimental features for performance
+  experimental: {
+    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
   },
 
   // Output configuration

@@ -77,8 +77,18 @@ export function parseTimeRange(timeString: string): { time: string; endTime?: st
 /**
  * Date formatting utilities
  */
+
+/**
+ * Parse a date string in YYYY-MM-DD format without timezone conversion
+ * This prevents dates from shifting due to timezone offsets
+ */
+export function parseLocalDate(dateString: string): Date {
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
 export function formatDate(dateString: string, format: 'short' | 'long' | 'full' = 'short'): string {
-  const date = new Date(dateString);
+  const date = parseLocalDate(dateString);
 
   switch (format) {
     case 'full':

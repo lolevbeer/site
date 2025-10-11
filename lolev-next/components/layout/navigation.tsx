@@ -11,16 +11,12 @@ import { NavItem } from '@/lib/types';
  */
 const navigationItems: NavItem[] = [
   {
-    label: 'Beer',
-    href: '/beer',
-  },
-  {
     label: 'Find Lolev',
     href: '/beer-map',
   },
   {
-    label: 'Up Next',
-    href: '/up-next',
+    label: 'Beer',
+    href: '/beer',
   },
   {
     label: 'Food',
@@ -29,6 +25,10 @@ const navigationItems: NavItem[] = [
   {
     label: 'Events',
     href: '/events',
+  },
+  {
+    label: 'About',
+    href: '/about',
   },
 ];
 

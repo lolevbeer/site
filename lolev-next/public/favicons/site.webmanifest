@@ -1,7 +1,7 @@
 {
   "name": "Lolev Beer",
   "short_name": "Lolev",
-  "start_url": "lolev.beer"
+  "start_url": "/",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",

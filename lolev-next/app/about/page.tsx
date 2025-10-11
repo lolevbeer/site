@@ -12,7 +12,7 @@ export default function AboutPage() {
         <section className="mb-12">
           <h2 className="text-2xl font-semibold mb-4">Our Philosophy</h2>
           <p className="mb-4">
-            We believe that beer should be thoughtful and stimulating. Each beer we create is intended to engage your senses, crafted with meticulous attention to flavor, balance, and the overall experience. We don't chase trends or brew for the sake of variety—instead, we focus on creating beers that are purposeful, refined, and worth savoring.
+            We focus on creating beers that are purposeful, refined, and worth savoring.
           </p>
           <p className="mb-4">
             Our approach combines traditional brewing techniques with modern innovation, always in service of flavor and quality. We source the finest ingredients, obsess over every detail of the brewing process, and constantly refine our recipes to achieve the perfect balance in every glass.
