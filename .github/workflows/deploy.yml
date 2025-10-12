@@ -50,6 +50,12 @@ jobs:
         working-directory: ./lolev-next
         run: pnpm install --frozen-lockfile
 
+      - name: Copy beer images for build
+        run: |
+          rm -rf lolev-next/public/images/beer
+          mkdir -p lolev-next/public/images/beer
+          cp assets/beer/*.webp lolev-next/public/images/beer/
+
       - name: Build with Next.js
         working-directory: ./lolev-next
         run: pnpm run build
