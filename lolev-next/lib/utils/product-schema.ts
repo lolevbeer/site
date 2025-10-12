@@ -68,12 +68,12 @@ export interface PropertyValueJsonLd {
  */
 function getAvailabilityStatus(beer: Beer): string {
   // If on draft at either location
-  if (beer.lawrencevilleDraft || beer.zelienopleDraft) {
+  if (beer.availability?.lawrenceville?.tap || beer.availability?.zelienople?.tap) {
     return 'https://schema.org/InStock';
   }
 
   // If available in cans
-  if (beer.lawrencevilleCans || beer.zelienopleCans) {
+  if (beer.availability?.cansAvailable) {
     return 'https://schema.org/InStock';
   }
 
@@ -97,8 +97,8 @@ function generateOffers(beer: Beer): OfferJsonLd[] {
   const baseUrl = 'https://lolev.beer';
 
   // Draft offers
-  if (beer.lawrencevilleDraft || beer.zelienopleDraft) {
-    offers.push({
+  if (beer.availability?.lawrenceville?.tap || beer.availability?.zelienople?.tap || beer.pricing?.draftPrice) {
+    const offer: OfferJsonLd = {
       '@type': 'Offer',
       availability: 'https://schema.org/InStock',
       priceCurrency: 'USD',
@@ -109,13 +109,18 @@ function generateOffers(beer: Beer): OfferJsonLd[] {
         name: 'Lolev Beer',
         url: baseUrl
       }
-    });
+    };
+    if (beer.pricing?.draftPrice) {
+      offer.price = beer.pricing.draftPrice.toString();
+    }
+    offers.push(offer);
   }
 
   // Can offers with pricing
-  if (beer.canPrice && (beer.lawrencevilleCans || beer.zelienopleCans)) {
+  const canPrice = beer.pricing?.canSingle || beer.pricing?.cansSingle;
+  if (canPrice && beer.availability?.cansAvailable) {
     // Parse price (e.g., "$16" or "16")
-    const priceMatch = beer.canPrice.toString().match(/\$?(\d+(?:\.\d{2})?)/);
+    const priceMatch = canPrice.toString().match(/\$?(\d+(?:\.\d{2})?)/);
     if (priceMatch) {
       offers.push({
         '@type': 'Offer',
@@ -165,27 +170,27 @@ function generateAdditionalProperties(beer: Beer): PropertyValueJsonLd[] {
     });
   }
 
-  if (beer.ibu) {
-    properties.push({
-      '@type': 'PropertyValue',
-      name: 'International Bitterness Units',
-      value: beer.ibu
-    });
-  }
-
-  if (beer.style) {
+  if (beer.type) {
     properties.push({
       '@type': 'PropertyValue',
       name: 'Beer Style',
-      value: beer.style
+      value: beer.type
     });
   }
 
-  if (beer.recipeNumber) {
+  if (beer.recipe) {
     properties.push({
       '@type': 'PropertyValue',
       name: 'Recipe Number',
-      value: beer.recipeNumber
+      value: beer.recipe
+    });
+  }
+
+  if (beer.hops) {
+    properties.push({
+      '@type': 'PropertyValue',
+      name: 'Hops',
+      value: beer.hops
     });
   }
 

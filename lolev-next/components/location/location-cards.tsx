@@ -4,8 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { MapPin, Clock, Phone } from 'lucide-react';
+import { MapPin, Phone } from 'lucide-react';
 import { Location } from '@/lib/types/location';
 import { LOCATIONS_DATA } from '@/lib/config/locations';
 import { fetchCSV } from '@/lib/utils/csv';
@@ -57,17 +56,6 @@ export function LocationCards() {
     return todayData?.hours || 'Closed';
   };
 
-  const getFullSchedule = (locationHours: HoursData[]) => {
-    if (!locationHours || locationHours.length === 0) return [];
-
-    const dayOrder = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    return locationHours
-      .sort((a, b) => {
-        const aIndex = dayOrder.indexOf(a.name);
-        const bIndex = dayOrder.indexOf(b.name);
-        return aIndex - bIndex;
-      });
-  };
 
   const locations = [
     {

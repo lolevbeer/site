@@ -161,11 +161,6 @@ export function transformEventCSV(row: EventCSVRow, location: Location): Brewery
     return isNaN(num) ? undefined : num;
   };
 
-  // Parse boolean values
-  const parseBoolean = (value: string | undefined): boolean => {
-    return value?.toLowerCase() === 'true' || value === '1';
-  };
-
   // Determine event type from vendor or title
   const getEventType = (vendor: string, title?: string): EventType => {
     const text = `${vendor} ${title || ''}`.toLowerCase();
@@ -209,12 +204,6 @@ export function transformEventCSV(row: EventCSVRow, location: Location): Brewery
  * Transform food vendor CSV row to FoodVendorSchedule object
  */
 export function transformFoodCSV(row: FoodCSVRow, location: Location): FoodVendorSchedule {
-  // Parse number values
-  const parseNumber = (value: string | undefined): number | undefined => {
-    if (!value || value === '') return undefined;
-    const num = parseInt(value, 10);
-    return isNaN(num) ? undefined : num;
-  };
 
   // Map day string to DayOfWeek enum
   const getDayOfWeek = (day: string): DayOfWeek => {
@@ -333,7 +322,8 @@ export function transformFoodFromCSV(csvText: string, location: Location): FoodV
 /**
  * Utility function to read and transform CSV files (for server-side use)
  */
-export async function loadCSVData(filePath: string): Promise<string> {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function loadCSVData(_filePath: string): Promise<string> {
   // This would be used on the server side to read CSV files
   // In a real implementation, you'd use fs.readFile or similar
   throw new Error('loadCSVData should be implemented on the server side');
@@ -425,7 +415,7 @@ export const validators = {
   },
 };
 
-export default {
+const transformers = {
   transformBeerCSV,
   transformEventCSV,
   transformFoodCSV,
@@ -436,3 +426,5 @@ export default {
   transformAllCSVData,
   validators,
 };
+
+export default transformers;

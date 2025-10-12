@@ -37,7 +37,6 @@ import { Switch } from '@/components/ui/switch';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { useLocationContext } from '@/components/location/location-provider';
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
 
 interface BeerPageContentProps {

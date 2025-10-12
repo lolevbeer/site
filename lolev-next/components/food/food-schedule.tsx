@@ -8,7 +8,6 @@
 import React from 'react';
 import { FoodVendorSchedule } from '@/lib/types/food';
 import { LocationDisplayNames } from '@/lib/types/location';
-import { useLocationContext } from '@/components/location/location-provider';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScheduleCard } from '@/components/ui/schedule-card';
 import { cn } from '@/lib/utils';
@@ -33,7 +32,6 @@ export function FoodSchedule({
   loading = false,
   maxItems = 12
 }: FoodScheduleProps) {
-  const { currentLocation } = useLocationContext();
 
   const renderVendorCard = (schedule: FoodVendorSchedule, dateStr: string) => {
     return (

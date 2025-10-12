@@ -38,7 +38,7 @@ function generateBreadcrumbs(pathname: string): BreadcrumbSegment[] {
   ];
 
   let currentPath = '';
-  segments.forEach((segment, index) => {
+  segments.forEach((segment) => {
     currentPath += `/${segment}`;
 
     // Use custom label if available, otherwise format the segment
@@ -81,8 +81,8 @@ export function PageBreadcrumbs({ customSegments, className }: PageBreadcrumbsPr
 
       <Breadcrumb className={className}>
         <BreadcrumbList>
-          {breadcrumbs.map((crumb, index) => {
-            const isLast = index === breadcrumbs.length - 1;
+          {breadcrumbs.map((crumb) => {
+            const isLast = breadcrumbs.indexOf(crumb) === breadcrumbs.length - 1;
 
             return (
               <div key={crumb.href} className="contents">

@@ -74,38 +74,15 @@ export default async function Home() {
     getUpcomingFood('zelienople'),
   ]);
 
-  // Combine all events and food for JSON-LD
-  const allEvents = [...lawrencevilleEvents, ...zelienopleEvents];
-  const allFood = [...lawrencevilleFood, ...zelienopleFood];
-
-  // Filter out invalid events and food before generating JSON-LD
-  const validEvents = allEvents.filter(event => event && event.title && event.date && event.location);
-  const validFood = allFood.filter(food => food && food.vendor && food.date && food.location);
-
-  // Generate JSON-LD for upcoming events and food
-  const eventsJsonLd = validEvents.length > 0 ? {
-    '@context': 'https://schema.org',
-    '@type': 'ItemList',
-    itemListElement: validEvents.map((event, index) => ({
-      '@type': 'ListItem',
-      position: index + 1,
-      item: generateEventJsonLd(event)
-    }))
-  } : null;
-
-  const foodJsonLd = validFood.length > 0 ? {
-    '@context': 'https://schema.org',
-    '@type': 'ItemList',
-    itemListElement: validFood.map((food, index) => ({
-      '@type': 'ListItem',
-      position: index + 1,
-      item: generateFoodEventJsonLd(food)
-    }))
-  } : null;
-
   // Generate LocalBusiness and Organization schemas
   const localBusinessSchemas = generateAllLocalBusinessSchemas();
   const organizationSchema = generateOrganizationSchema();
+
+  // Generate Event JSON-LD for upcoming events and food
+  const allEvents = [...lawrencevilleEvents, ...zelienopleEvents];
+  const allFood = [...lawrencevilleFood, ...zelienopleFood];
+  const eventSchemas = allEvents.map(event => generateEventJsonLd(event));
+  const foodSchemas = allFood.map(food => generateFoodEventJsonLd(food));
 
   return (
     <>
@@ -116,9 +93,14 @@ export default async function Home() {
       ))}
       {/* Organization schema */}
       <JsonLd data={organizationSchema} />
-      {/* Events and Food */}
-      {eventsJsonLd && <JsonLd data={eventsJsonLd} />}
-      {foodJsonLd && <JsonLd data={foodJsonLd} />}
+      {/* Event schemas */}
+      {eventSchemas.map((schema, index) => (
+        <JsonLd key={`event-${index}`} data={schema} />
+      ))}
+      {/* Food event schemas */}
+      {foodSchemas.map((schema, index) => (
+        <JsonLd key={`food-${index}`} data={schema} />
+      ))}
 
       <div className="min-h-screen">
         <HeroSection availableBeers={availableBeers} />

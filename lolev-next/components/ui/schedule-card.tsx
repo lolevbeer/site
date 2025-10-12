@@ -7,7 +7,7 @@
 
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Calendar, Clock, MapPin, Users, LucideIcon } from 'lucide-react';
+import { Calendar, Clock, MapPin, Users } from 'lucide-react';
 import { formatTime, formatDate } from '@/lib/utils/formatters';
 
 interface ScheduleCardProps {

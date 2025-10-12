@@ -3,11 +3,13 @@
  * Fetches and parses CSV files with caching
  */
 
+import { cache } from 'react';
 import Papa from 'papaparse';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
 import { logger } from '@/lib/utils/logger';
 import { GlassType } from '@/lib/types/beer';
+import { Location } from '@/lib/types/location';
 
 interface BeerRow {
   variant: string;
@@ -75,8 +77,9 @@ function parseCSV<T>(csvText: string): T[] {
 
 /**
  * Get all available beers (beers that are currently on tap or in cans)
+ * Cached for deduplication across requests
  */
-export async function getAvailableBeers(): Promise<{ variant: string; name: string }[]> {
+export const getAvailableBeers = cache(async (): Promise<{ variant: string; name: string }[]> => {
   try {
     const [lawrencevilleDraftText, zelienopleDraftText, lawrencevilleCansText, zelienopleCansText, beerText] = await Promise.all([
       readCSV('lawrenceville-draft.csv'),
@@ -129,12 +132,13 @@ export async function getAvailableBeers(): Promise<{ variant: string; name: stri
     logger.error('Error loading available beers', error);
     return [];
   }
-}
+});
 
 /**
  * Get draft beers for a specific location
+ * Cached for deduplication across requests
  */
-export async function getDraftBeers(location: 'lawrenceville' | 'zelienople') {
+export const getDraftBeers = cache(async (location: 'lawrenceville' | 'zelienople') => {
   try {
     const [draftText, cansText] = await Promise.all([
       readCSV(`${location}-draft.csv`),
@@ -185,12 +189,13 @@ export async function getDraftBeers(location: 'lawrenceville' | 'zelienople') {
     logger.error(`Error loading draft beers for ${location}`, error);
     return [];
   }
-}
+});
 
 /**
  * Get enriched can data for a specific location
+ * Cached for deduplication across requests
  */
-export async function getEnrichedCans(location: 'lawrenceville' | 'zelienople') {
+export const getEnrichedCans = cache(async (location: 'lawrenceville' | 'zelienople') => {
   try {
     const [cansText, beerText, draftText] = await Promise.all([
       readCSV(`${location}-cans.csv`),
@@ -236,12 +241,13 @@ export async function getEnrichedCans(location: 'lawrenceville' | 'zelienople') 
     logger.error(`Error loading cans for ${location}`, error);
     return [];
   }
-}
+});
 
 /**
  * Get upcoming events for a specific location
+ * Cached for deduplication across requests
  */
-export async function getUpcomingEvents(location: 'lawrenceville' | 'zelienople') {
+export const getUpcomingEvents = cache(async (location: 'lawrenceville' | 'zelienople') => {
   try {
     const eventsText = await readCSV(`${location}-events.csv`);
     const eventsData = parseCSV<EventRow>(eventsText);
@@ -267,7 +273,8 @@ export async function getUpcomingEvents(location: 'lawrenceville' | 'zelienople'
         time: row.time || '',
         attendees: row.attendees || '',
         site: row.site || '',
-        end: row.end || ''
+        end: row.end || '',
+        location: location === 'lawrenceville' ? Location.LAWRENCEVILLE : Location.ZELIENOPLE
       }));
 
     // Sort by date
@@ -284,12 +291,13 @@ export async function getUpcomingEvents(location: 'lawrenceville' | 'zelienople'
     logger.error(`Error loading events for ${location}`, error);
     return [];
   }
-}
+});
 
 /**
  * Get upcoming food vendors for a specific location
+ * Cached for deduplication across requests
  */
-export async function getUpcomingFood(location: 'lawrenceville' | 'zelienople') {
+export const getUpcomingFood = cache(async (location: 'lawrenceville' | 'zelienople') => {
   try {
     const foodText = await readCSV(`${location}-food.csv`);
     const foodData = parseCSV<FoodRow>(foodText);
@@ -314,7 +322,8 @@ export async function getUpcomingFood(location: 'lawrenceville' | 'zelienople') 
         date: row.date,
         time: row.time || '',
         site: row.site || '',
-        day: row.day || ''
+        day: row.day || '',
+        location: location === 'lawrenceville' ? Location.LAWRENCEVILLE : Location.ZELIENOPLE
       }));
 
     // Sort by date
@@ -331,4 +340,4 @@ export async function getUpcomingFood(location: 'lawrenceville' | 'zelienople') 
     logger.error(`Error loading food for ${location}`, error);
     return [];
   }
-}
+});

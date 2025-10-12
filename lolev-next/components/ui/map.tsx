@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Map, {
   Marker,
   NavigationControl,
@@ -12,9 +12,9 @@ import Map, {
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPin, Navigation, Phone, Clock, ExternalLink } from 'lucide-react';
+import { MapPin, Navigation, Phone, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Location, LocationDisplayNames } from '@/lib/types/location';
+import { Location } from '@/lib/types/location';
 import { useTheme } from 'next-themes';
 
 // You'll need to add your Mapbox access token to your environment variables
@@ -90,8 +90,8 @@ export function MapComponent({
   initialZoom = 10,
   style = 'streets'
 }: MapComponentProps) {
-  const mapRef = useRef<any>(null);
   const { theme } = useTheme();
+  const mapRef = React.useRef<any>(null);
   const [viewport, setViewport] = useState({
     latitude: 40.6322, // Center between the two locations
     longitude: -80.0472,

@@ -5,7 +5,7 @@
 
 'use client';
 
-import React, { createContext, useContext, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode, useMemo } from 'react';
 import { Location, LocationInfo, LocationFeature } from '@/lib/types/location';
 import { useLocation, useLocationHours, useLocationComparison } from '@/lib/hooks/use-location';
 
@@ -65,7 +65,8 @@ export function LocationProvider({ children }: LocationProviderProps) {
   const hoursState = useLocationHours();
   const comparisonState = useLocationComparison();
 
-  const contextValue: LocationContextValue = {
+  // Memoize context value to prevent unnecessary re-renders
+  const contextValue: LocationContextValue = useMemo(() => ({
     // Core state from useLocation
     currentLocation: locationState.currentLocation,
     locationInfo: locationState.locationInfo,
@@ -83,7 +84,7 @@ export function LocationProvider({ children }: LocationProviderProps) {
 
     // Comparison state
     comparison: comparisonState,
-  };
+  }), [locationState, hoursState, comparisonState]);
 
   return (
     <LocationContext.Provider value={contextValue}>
@@ -109,25 +110,17 @@ export function useLocationContext(): LocationContextValue {
 /**
  * Hook to access location state with optional default location
  * Provides a safe way to access location context with fallbacks
+ *
+ * @deprecated This function is not currently used and has been disabled
+ * due to React Hooks violations. Use useLocationContext() instead.
  */
-export function useLocationState(fallbackLocation?: Location) {
-  const context = useContext(LocationContext);
-
-  if (!context) {
-    if (fallbackLocation) {
-      // Return minimal state with fallback
-      const { useLocation: useLocationHook } = require('@/lib/hooks/use-location');
-      const state = useLocationHook();
-      return {
-        ...state,
-        currentLocation: fallbackLocation,
-      };
-    }
-    throw new Error('useLocationState must be used within a LocationProvider or provide a fallbackLocation');
-  }
-
-  return context;
-}
+// export function useLocationState(fallbackLocation?: Location) {
+//   const context = useContext(LocationContext);
+//   if (!context) {
+//     throw new Error('useLocationState must be used within a LocationProvider');
+//   }
+//   return context;
+// }
 
 /**
  * Higher-order component to provide location context

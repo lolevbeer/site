@@ -9,7 +9,7 @@ interface MarqueeProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const Marquee = React.forwardRef<HTMLDivElement, MarqueeProps>(
-  ({ className, children, speed = 30, ...props }, ref) => {
+  ({ className, children, ...props }, ref) => {
     return (
       <div
         ref={ref}

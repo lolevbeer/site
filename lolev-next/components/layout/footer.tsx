@@ -5,11 +5,10 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { SocialLinks } from './social-links';
 import { Logo } from '@/components/ui/logo';
-import { Location, LocationDisplayNames, type LocationInfo, type LocationHours } from '@/lib/types';
+import { Location, type LocationInfo, type LocationHours } from '@/lib/types';
 import { LOCATIONS_DATA } from '@/lib/config/locations';
-import { MapPin, Clock, Phone, Mail, ExternalLink } from 'lucide-react';
+import { MapPin, Clock, Phone, Mail } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useLocationContext } from '@/components/location/location-provider';
 import { format24to12Hour } from '@/lib/utils/formatters';
 import { navigationItems } from './navigation';
 

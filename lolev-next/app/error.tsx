@@ -26,7 +26,7 @@ export default function Error({
         <div className="space-y-3">
           <h1 className="text-4xl font-bold">Something went wrong</h1>
           <p className="text-lg text-muted-foreground">
-            We encountered an unexpected error. Don't worry, your data is safe.
+            We encountered an unexpected error. Don&apos;t worry, your data is safe.
           </p>
         </div>
 

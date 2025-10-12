@@ -5,7 +5,7 @@
 import { Location } from '@/lib/types/location';
 import { FoodVendor, FoodSchedule } from '@/lib/types/food';
 import { fetchCSV } from './csv';
-import { getTodayEST, isTodayEST, isFutureOrTodayEST } from './date';
+import { getTodayEST, isTodayEST } from './date';
 
 export interface FoodCSVRow {
   vendor: string;
@@ -147,8 +147,6 @@ export async function loadFoodFromCSV(): Promise<{
       fetchCSV<FoodCSVRow>('lawrenceville-food.csv'),
       fetchCSV<FoodCSVRow>('zelienople-food.csv')
     ]);
-
-    const todayEST = getTodayEST();
 
     const vendorsMap = new Map<string, FoodVendor>();
     const schedules: FoodSchedule[] = [];

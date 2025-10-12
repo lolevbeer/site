@@ -27,7 +27,7 @@ export default function GlobalError({
             <div className="space-y-3">
               <h1 className="text-4xl font-bold">Something went wrong</h1>
               <p className="text-lg text-muted-foreground">
-                We encountered an unexpected error. Don't worry, your data is safe.
+                We encountered an unexpected error. Don&apos;t worry, your data is safe.
               </p>
             </div>
 
@@ -38,12 +38,12 @@ export default function GlobalError({
               >
                 Try Again
               </button>
-              <a
+              <Link
                 href="/"
                 className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-11 px-8"
               >
                 Go Home
-              </a>
+              </Link>
             </div>
           </div>
         </div>

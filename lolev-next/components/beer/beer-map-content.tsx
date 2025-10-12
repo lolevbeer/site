@@ -1,20 +1,16 @@
 'use client';
 
-import React, { Suspense } from 'react';
+import React from 'react';
 import dynamic from 'next/dynamic';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
+import { MapLoadingSkeleton } from '@/lib/utils/lazy-load';
 
-// Lazy load the map component
+// Lazy load the map component - no SSR for better performance
 const DistributorMap = dynamic(
   () => import('@/components/ui/distributor-map').then(mod => mod.DistributorMap),
   {
     ssr: false,
-    loading: () => (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
-      </div>
-    )
+    loading: () => <MapLoadingSkeleton />
   }
 );
 

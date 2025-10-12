@@ -48,9 +48,6 @@ export function getTodayEST(): string {
  * IMPORTANT: Treat the date string as already being in EST/EDT
  */
 export function toESTDate(dateString: string): Date {
-  // Parse the date string components
-  const [year, month, day] = dateString.split('-').map(Number);
-
   // Create date at noon EST to avoid timezone edge cases
   // We use a specific time string to ensure it's interpreted as EST
   const dateAtNoonEST = new Date(`${dateString}T12:00:00-05:00`);

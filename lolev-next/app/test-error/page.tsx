@@ -41,7 +41,7 @@ function ErrorThrower() {
   }
 
   return (
-    <Button onClick={() => setShouldThrow(true)} variant="destructive">
+    <Button onClick={() => setShouldThrow(true)} variant="default">
       Throw Real Error (close dev overlay to see error boundary)
     </Button>
   );

@@ -61,10 +61,6 @@ interface GeoFeature {
   };
 }
 
-interface GeoJSON {
-  type: 'FeatureCollection';
-  features: GeoFeature[];
-}
 
 interface LocationWithDistance extends GeoFeature {
   distance?: number;
@@ -128,7 +124,6 @@ export function DistributorMap({
   // Refs
   const mapRef = useRef<any>(null);
   const selectedCardRef = useRef<HTMLDivElement>(null);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   // Update viewport when search location changes
   useEffect(() => {
@@ -212,14 +207,6 @@ export function DistributorMap({
           longitude: coords.longitude,
           zoom: MAP_CONFIG.LOCATION_ZOOM
         });
-
-        // Scroll list to top
-        if (scrollAreaRef.current) {
-          const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
-          if (scrollContainer) {
-            scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
-          }
-        }
 
         toast.success(`Showing ${maxPoints} nearest locations`);
       }
@@ -458,7 +445,7 @@ export function DistributorMap({
           mobileView === 'list' ? "w-full" : "hidden md:block"
         )}>
           {locationsWithDistance.length > 0 ? (
-            <ScrollArea className="h-full" ref={scrollAreaRef}>
+            <ScrollArea className="h-full">
               <div className="p-4 space-y-3">
                 {locationsWithDistance.map((location) => {
                   const isSelected = selectedLocation?.properties.uniqueId === location.properties.uniqueId;

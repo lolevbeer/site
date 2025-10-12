@@ -52,8 +52,8 @@ export function LocationSelector({
   const {
     currentLocation,
     setLocation,
-    isOpen,
-    isClient
+    isClient,
+    isOpen
   } = useLocationContext();
 
   // Handle location change
@@ -74,8 +74,6 @@ export function LocationSelector({
       </div>
     );
   }
-
-  const currentLocationInfo = getLocationInfo(currentLocation);
 
   return (
     <Select

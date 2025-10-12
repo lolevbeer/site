@@ -8,12 +8,11 @@
 import React, { useState, useMemo } from 'react';
 import { BreweryEvent, EventType, EventStatus } from '@/lib/types/event';
 import { Location, LocationDisplayNames } from '@/lib/types/location';
-import { useLocationContext } from '@/components/location/location-provider';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ChevronLeft, ChevronRight, Calendar, Clock, MapPin, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, MapPin, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface EventCalendarProps {
@@ -47,12 +46,7 @@ export function EventCalendar({
   selectedLocation: parentSelectedLocation,
   onLocationChange
 }: EventCalendarProps) {
-  const { currentLocation } = useLocationContext();
   const [currentWeek, setCurrentWeek] = useState(getStartOfWeek(new Date()));
-  const [localSelectedLocation, setLocalSelectedLocation] = useState<Location | undefined>(undefined);
-
-  // Use parent location state if provided, otherwise use local state
-  const selectedLocation = parentSelectedLocation !== undefined ? parentSelectedLocation : localSelectedLocation;
 
   // Get start of week (Sunday)
   function getStartOfWeek(date: Date): Date {

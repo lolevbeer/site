@@ -83,16 +83,24 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Favicons */}
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" href="/favicons/favicon-16x16.png" type="image/png" sizes="16x16" />
         <link rel="icon" href="/favicons/favicon-32x32.png" type="image/png" sizes="32x32" />
         <link rel="apple-touch-icon" href="/favicons/apple-touch-icon.png" />
         <link rel="manifest" href="/favicons/site.webmanifest" />
+
+        {/* PWA Meta Tags */}
         <meta name="theme-color" content="#8B5A3C" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="LoL Brewing" />
         <meta name="mobile-web-app-capable" content="yes" />
+
+        {/* Resource Hints for Performance */}
+        <link rel="preconnect" href="https://api.mapbox.com" />
+        <link rel="dns-prefetch" href="https://api.mapbox.com" />
+
         {/* Preload critical resources for faster LCP */}
         <link rel="preload" href="/images/bar.jpg" as="image" fetchPriority="high" />
       </head>

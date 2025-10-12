@@ -14,7 +14,6 @@ import { Location, LocationDisplayNames } from '@/lib/types/location';
 import { useLocationContext } from './location-provider';
 import { ALL_LOCATIONS, getLocationInfo, isLocationOpen } from '@/lib/config/locations';
 import { MapPin, Clock, CheckCircle } from 'lucide-react';
-import { format24to12Hour } from '@/lib/utils/formatters';
 
 interface LocationTabsProps {
   className?: string;
@@ -35,7 +34,7 @@ export function LocationTabs({
   orientation = 'horizontal',
   syncWithGlobalState = false
 }: LocationTabsProps) {
-  const { currentLocation, setLocation, isClient } = useLocationContext();
+  const { currentLocation, setLocation } = useLocationContext();
 
   // When syncing with global state, always use currentLocation as the controlled value
   // to prevent switching between controlled/uncontrolled modes during hydration

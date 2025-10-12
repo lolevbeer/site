@@ -1,89 +1,65 @@
 /**
- * Dynamic sitemap generation for Next.js
- * Automatically includes all static and dynamic routes
+ * Static sitemap generation for Next.js
  * @see https://nextjs.org/docs/app/api-reference/file-conventions/metadata/sitemap
  */
 
 import { MetadataRoute } from 'next';
-import { getAllBeersFromCSV } from '@/lib/utils/beer-csv';
-import { loadEventsFromCSV } from '@/lib/utils/events';
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://lolev.beer';
-  const currentDate = new Date().toISOString();
-
-  // Fetch dynamic data
-  const [beers, events] = await Promise.all([
-    getAllBeersFromCSV().catch(() => []),
-    loadEventsFromCSV().catch(() => [])
-  ]);
-
-  // Static routes with priorities and change frequencies
-  const staticRoutes: MetadataRoute.Sitemap = [
+export default function sitemap(): MetadataRoute.Sitemap {
+  return [
     {
-      url: baseUrl,
-      lastModified: currentDate,
+      url: 'https://lolev.beer',
+      lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 1.0,
     },
     {
-      url: `${baseUrl}/beer`,
-      lastModified: currentDate,
+      url: 'https://lolev.beer/beer',
+      lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/beer-map`,
-      lastModified: currentDate,
+      url: 'https://lolev.beer/beer-map',
+      lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/events`,
-      lastModified: currentDate,
+      url: 'https://lolev.beer/events',
+      lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.9,
     },
     {
-      url: `${baseUrl}/food`,
-      lastModified: currentDate,
+      url: 'https://lolev.beer/food',
+      lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/about`,
-      lastModified: currentDate,
+      url: 'https://lolev.beer/about',
+      lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.7,
     },
     {
-      url: `${baseUrl}/faq`,
-      lastModified: currentDate,
+      url: 'https://lolev.beer/faq',
+      lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.7,
     },
     {
-      url: `${baseUrl}/privacy`,
-      lastModified: currentDate,
+      url: 'https://lolev.beer/privacy',
+      lastModified: new Date(),
       changeFrequency: 'yearly',
       priority: 0.3,
     },
     {
-      url: `${baseUrl}/terms`,
-      lastModified: currentDate,
+      url: 'https://lolev.beer/terms',
+      lastModified: new Date(),
       changeFrequency: 'yearly',
       priority: 0.3,
     },
   ];
-
-  // Dynamic beer routes
-  const beerRoutes: MetadataRoute.Sitemap = beers.map((beer) => ({
-    url: `${baseUrl}/beer/${beer.variant}`,
-    lastModified: currentDate,
-    changeFrequency: 'weekly' as const,
-    priority: 0.7,
-  }));
-
-  // Combine all routes
-  return [...staticRoutes, ...beerRoutes];
 }

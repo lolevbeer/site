@@ -3,7 +3,7 @@
  * This file provides sample/mock data for events and food vendors
  */
 
-import { BreweryEvent, EventStatus, EventType } from '@/lib/types/event';
+import { BreweryEvent } from '@/lib/types/event';
 import { FoodVendor } from '@/lib/types/food';
 import { Location } from '@/lib/types/location';
 
@@ -25,7 +25,8 @@ export function getSampleDataByLocation(location: Location, data: any[]): any[] 
 export const sampleFoodVendors: FoodVendor[] = [];
 
 // Export function for food vendors by location
-export function getFoodVendorsByLocation(location: Location): FoodVendor[] {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function getFoodVendorsByLocation(_location: Location): FoodVendor[] {
   // TODO: Filter by location when FoodVendor type includes location-specific data
   // For now, return all vendors as they may serve at both locations
   return sampleFoodVendors;

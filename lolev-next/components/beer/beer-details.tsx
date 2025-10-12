@@ -9,7 +9,7 @@ import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import Papa from 'papaparse';
-import { Beer, GlassType } from '@/lib/types/beer';
+import { Beer } from '@/lib/types/beer';
 import { useLocationContext } from '@/components/location/location-provider';
 import {
   Card,
@@ -28,15 +28,7 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import {
-  Beer as BeerIcon,
-  Wine,
-  GlassWater,
-  Flame,
-  ClipboardList,
-  Tag,
-  Package,
   CircleX,
-  ExternalLink,
 } from 'lucide-react';
 import { UntappdIcon } from '@/components/icons/untappd-icon';
 
@@ -45,31 +37,8 @@ interface BeerDetailsProps {
   className?: string;
 }
 
-function getGlassIcon(glass: GlassType): React.ComponentType<{ className?: string }> {
-  switch (glass) {
-    case GlassType.PINT:
-      return BeerIcon;
-    case GlassType.TEKU:
-      return Wine;
-    case GlassType.STEIN:
-      return GlassWater;
-    default:
-      return BeerIcon;
-  }
-}
-
-function getGlassDescription(glass: GlassType): string {
-  switch (glass) {
-    case GlassType.PINT:
-      return 'Served in a classic pint glass';
-    case GlassType.TEKU:
-      return 'Served in a Teku glass to enhance aromatics';
-    case GlassType.STEIN:
-      return 'Served in a traditional stein';
-    default:
-      return 'Served in appropriate glassware';
-  }
-}
+// Helper functions removed - currently unused but kept for future reference
+// getGlassIcon() and getGlassDescription() can be re-added if needed
 
 function getBeerImagePath(beer: Beer): string | null {
   if (!beer.image) {

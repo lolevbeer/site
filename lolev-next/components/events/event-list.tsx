@@ -12,11 +12,9 @@ import { useLocationContext } from '@/components/location/location-provider';
 import { EventCard } from './event-card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Select } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, Filter, Search, SortAsc, SortDesc, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatTime, parseLocalDate } from '@/lib/utils/formatters';
 
@@ -46,6 +44,8 @@ export function EventList({
   showFilters = true,
   variant = 'default',
   initialFilters = {},
+  // onEventClick parameter is accepted but not used in current implementation
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onEventClick,
   emptyMessage = 'No events found',
   maxItems,

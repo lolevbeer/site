@@ -14,6 +14,8 @@ interface JsonLdProps {
 /**
  * Component that renders a script tag with JSON-LD structured data
  * This helps search engines understand the content and display rich results
+ *
+ * Note: Using afterInteractive for app directory compatibility
  */
 export function JsonLd({ data }: JsonLdProps) {
   return (
@@ -21,7 +23,7 @@ export function JsonLd({ data }: JsonLdProps) {
       id={`json-ld-${JSON.stringify(data).substring(0, 20)}`}
       type="application/ld+json"
       dangerouslySetInnerHTML={{ __html: serializeJsonLd(data) }}
-      strategy="beforeInteractive"
+      strategy="afterInteractive"
     />
   );
 }

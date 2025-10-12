@@ -5,7 +5,6 @@ import { BreweryEvent } from '@/lib/types/event';
 import type { LocationFilter } from '@/lib/types/location';
 import { EventList } from '@/components/events/event-list';
 import { Button } from '@/components/ui/button';
-import { Mail, Phone } from 'lucide-react';
 import { loadEventsFromCSV } from '@/lib/utils/events';
 import { useLocationContext } from '@/components/location/location-provider';
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
@@ -17,7 +16,7 @@ interface EventsPageContentProps {
 }
 
 export function EventsPageContent({ initialEvents = [] }: EventsPageContentProps) {
-  const { currentLocation, setLocation } = useLocationContext();
+  const { currentLocation } = useLocationContext();
   // Cast to LocationFilter to allow comparison with 'all'
   const locationFilter = currentLocation as LocationFilter;
   const [events, setEvents] = useState<BreweryEvent[]>(initialEvents);
