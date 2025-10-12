@@ -313,12 +313,14 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
           </div>
 
           {/* Description */}
-          <div>
-            <h2 className="text-xl font-semibold mb-3">Description</h2>
-            <p>
-              {beer.description}
-            </p>
-          </div>
+          {beer.description && (
+            <div>
+              <h2 className="text-xl font-semibold mb-3">Description</h2>
+              <p>
+                {beer.description}
+              </p>
+            </div>
+          )}
 
           {/* Hops */}
           {beer.hops && (
