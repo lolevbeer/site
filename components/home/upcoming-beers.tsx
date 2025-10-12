@@ -73,9 +73,9 @@ export function UpcomingBeers() {
         ) : (
           <div className="max-w-4xl mx-auto space-y-1 text-center mb-8">
             {upcomingBeers.map((beer, index) => (
-              <div key={index} className="py-4">
+              <div key={index}>
                 {beer.variant ? (
-                  <Button asChild variant="ghost" size="sm" className="text-lg font-semibold">
+                  <Button asChild variant="ghost" size="sm" className="text-lg font-semibold h-auto py-0 px-2">
                     <Link href={`/beer/${beer.variant.toLowerCase()}`}>
                       {beer.displayName}
                     </Link>

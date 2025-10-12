@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useLocationContext } from '@/components/location/location-provider';
+import { getGlassIcon } from '@/lib/utils/beer-icons';
 
 interface Can {
   variant: string;
@@ -15,6 +16,7 @@ interface Can {
   abv?: string;
   image?: boolean;
   onDraft?: boolean;
+  glass?: string;
 }
 
 interface FeaturedCansProps {
@@ -90,15 +92,20 @@ export function FeaturedCans({ lawrencevilleCans, zelienopleCans }: FeaturedCans
                       <div className="flex-grow">
                         <div className="flex items-center justify-between mb-2">
                           <h3 className="text-lg font-semibold">{beer.name}</h3>
-                          {beer.onDraft && (
-                            <Badge variant="default" className="text-xs flex-shrink-0">
-                              Pouring
-                            </Badge>
-                          )}
+                          {beer.onDraft && (() => {
+                            const GlassIcon = getGlassIcon(beer.glass);
+                            return (
+                              <Badge variant="default" className="text-xs flex-shrink-0 flex items-center gap-1">
+                                <GlassIcon className="h-3 w-3" />
+                                Pouring
+                              </Badge>
+                            );
+                          })()}
                         </div>
-                        <div className="space-y-1 text-sm text-muted-foreground">
-                          <div>{beer.type}</div>
-                          <div>{beer.abv}% ABV</div>
+                        <div className="flex flex-wrap gap-1.5 mb-2">
+                          <Badge variant="outline" className="text-xs">
+                            {beer.type}
+                          </Badge>
                         </div>
                       </div>
                       <div className="mt-3">

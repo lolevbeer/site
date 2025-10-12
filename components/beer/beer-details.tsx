@@ -31,14 +31,12 @@ import {
   CircleX,
 } from 'lucide-react';
 import { UntappdIcon } from '@/components/icons/untappd-icon';
+import { getGlassIcon } from '@/lib/utils/beer-icons';
 
 interface BeerDetailsProps {
   beer: Beer;
   className?: string;
 }
-
-// Helper functions removed - currently unused but kept for future reference
-// getGlassIcon() and getGlassDescription() can be re-added if needed
 
 function getBeerImagePath(beer: Beer): string | null {
   if (!beer.image) {
@@ -131,6 +129,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
   const imagePath = getBeerImagePath(beer);
   const availability = getAvailabilityInfo(beer);
   const pricing = getPricingInfo(beer);
+  const GlassIcon = getGlassIcon(beer.glass);
   const [tapLocations, setTapLocations] = useState<string[]>([]);
   const [canLocations, setCanLocations] = useState<string[]>([]);
   const [isLoadingLocations, setIsLoadingLocations] = useState(true);
@@ -265,14 +264,14 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
           </div>
 
           {/* Quick Stats */}
-          <Card className="shadow-none border-0 p-0 dark:bg-transparent">
+          <Card className="shadow-none border-0 p-0 bg-transparent">
             <CardContent className="p-0 space-y-0">
               <SpecificationRow
                 label="Style"
                 value={beer.type}
               />
               <SpecificationRow
-                label="ABV"
+                label="Alc by Vol"
                 value={formatAbv(beer.abv)}
               />
               {beer.recipe && (
@@ -291,20 +290,15 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
           <div>
             <h1 className="text-3xl font-bold mb-2">{beer.name}</h1>
             <div className="flex items-center gap-2 mb-4 flex-wrap">
-              <Badge variant="outline" className="text-sm">
-                {beer.type}
-              </Badge>
-              <Badge variant="outline" className="text-sm">
-                {formatAbv(beer.abv)} ABV
-              </Badge>
               {availability.isDraft && (
-                <Badge variant="default" className="text-sm">
+                <Badge variant="default" className="text-sm flex items-center gap-1">
+                  <GlassIcon className="h-3.5 w-3.5" />
                   Pouring
                 </Badge>
               )}
               {availability.isCanned && (
-                <Badge variant="outline" className="text-sm">
-                  Cans
+                <Badge variant="default" className="text-sm">
+                  Cans Available
                 </Badge>
               )}
               {pricing.hasSale && (
@@ -334,10 +328,10 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
             </div>
           )}
 
-          {/* Availability and Pricing - Two Columns */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Availability and Pricing */}
+          <div className="space-y-6">
             {/* Availability */}
-            <Card className="shadow-none border-0 p-0 dark:bg-transparent">
+            <Card className="shadow-none border-0 p-0 bg-transparent">
               <CardHeader className="p-0 pb-4">
                 <CardTitle className="text-lg">Availability</CardTitle>
               </CardHeader>
@@ -373,7 +367,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
 
             {/* Pricing */}
             {((tapLocations.length > 0 && pricing.draftPrice) || (canLocations.length > 0 && pricing.fourPackPrice)) && (
-              <Card className="shadow-none border-0 p-0 dark:bg-transparent">
+              <Card className="shadow-none border-0 p-0 bg-transparent">
                 <CardHeader className="p-0 pb-4">
                   <CardTitle className="text-lg flex items-center gap-2">
                     Pricing

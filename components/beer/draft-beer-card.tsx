@@ -7,29 +7,17 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Beer, GlassType } from '@/lib/types/beer';
+import { Beer } from '@/lib/types/beer';
 import { useLocationContext } from '@/components/location/location-provider';
-import { PintIcon, SteinIcon, TekuIcon } from '@/components/icons';
 import { formatAbv, getBeerSlug } from '@/lib/utils/formatters';
+import { getGlassIcon } from '@/lib/utils/beer-icons';
+import { Badge } from '@/components/ui/badge';
 
 interface DraftBeerCardProps {
   beer: Beer;
   showLocation?: boolean;
   className?: string;
   priority?: boolean;
-}
-
-function getGlassIcon(glass: GlassType): React.ComponentType<{ className?: string }> {
-  switch (glass) {
-    case GlassType.PINT:
-      return PintIcon;
-    case GlassType.TEKU:
-      return TekuIcon;
-    case GlassType.STEIN:
-      return SteinIcon;
-    default:
-      return PintIcon;
-  }
 }
 
 export const DraftBeerCard = React.memo(function DraftBeerCard({
@@ -59,7 +47,11 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
           {/* Beer Info */}
           <div className="flex-grow min-w-0">
             <h3 className="text-lg font-semibold leading-tight truncate">{beer.name}</h3>
-            <div className="text-sm text-muted-foreground mt-0.5">{beer.type}</div>
+            <div className="mt-1">
+              <Badge variant="outline" className="text-xs">
+                {beer.type}
+              </Badge>
+            </div>
             {beer.hops && (
               <div className="text-xs text-muted-foreground/70 mt-1 truncate">
                 {beer.hops}

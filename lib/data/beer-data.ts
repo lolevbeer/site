@@ -232,7 +232,8 @@ export const getEnrichedCans = cache(async (location: 'lawrenceville' | 'zelieno
           type: row.type || beerDetails?.type || '',
           abv: row.abv || beerDetails?.abv || '',
           image: beerDetails?.image === 'TRUE',
-          onDraft: onDraftSet.has(row.variant.toLowerCase())
+          onDraft: onDraftSet.has(row.variant.toLowerCase()),
+          glass: beerDetails?.glass
         };
       });
 

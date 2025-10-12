@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useLocationContext } from '@/components/location/location-provider';
+import { getGlassIcon } from '@/lib/utils/beer-icons';
 
 interface CanBeer {
   variant: string;
@@ -17,6 +18,7 @@ interface CanBeer {
   fourPackPrice: string;
   image: boolean;
   onDraft: boolean;
+  glass?: string;
 }
 
 interface CansGridProps {
@@ -69,7 +71,8 @@ export function CansGrid({ maxItems }: CansGridProps) {
               name: row.name,
               type: row.type,
               abv: row.abv,
-              image: row.image === 'TRUE'
+              image: row.image === 'TRUE',
+              glass: row.glass
             });
           }
         });
@@ -168,15 +171,22 @@ export function CansGrid({ maxItems }: CansGridProps) {
                   <div className="flex-grow">
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="text-lg font-semibold">{beer.name}</h3>
-                      {beer.onDraft && (
-                        <Badge variant="default" className="text-xs flex-shrink-0">
-                          Pouring
-                        </Badge>
-                      )}
+                      {beer.onDraft && (() => {
+                        const GlassIcon = getGlassIcon(beer.glass);
+                        return (
+                          <Badge variant="default" className="text-xs flex-shrink-0 flex items-center gap-1">
+                            <GlassIcon className="h-3 w-3" />
+                            Pouring
+                          </Badge>
+                        );
+                      })()}
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      <Badge variant="outline" className="text-xs">
+                        {beer.type}
+                      </Badge>
                     </div>
                     <div className="space-y-1 text-sm text-muted-foreground">
-                      <div>{beer.type}</div>
-                      <div>{beer.abv}% ABV</div>
                       {beer.fourPackPrice && (
                         <div className="font-semibold text-foreground mt-2">
                           4 Pack {beer.fourPackPrice}
