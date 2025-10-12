@@ -13,100 +13,12 @@ export interface EventCSVRow {
   attendees: string;
   site: string;
   end: string;
-}
-
-// Helper function to determine event type from vendor/title
-function getEventType(vendor: string): EventType {
-  const v = vendor.toLowerCase();
-  if (v.includes('trivia')) return EventType.TRIVIA;
-  if (v.includes('music') || v.includes('band') || v.includes('acoustic')) return EventType.LIVE_MUSIC;
-  if (v.includes('comedy') || v.includes('stand up') || v.includes('standup')) return EventType.SPECIAL;
-  if (v.includes('market') || v.includes('pop up')) return EventType.SPECIAL;
-  if (v.includes('karaoke')) return EventType.SPECIAL;
-  if (v.includes('open mic')) return EventType.LIVE_MUSIC;
-  if (v.includes('tour')) return EventType.BREWERY_TOUR;
-  if (v.includes('taco')) return EventType.FOOD_TRUCK;
-  if (v.includes('ukulele') || v.includes('ukelele')) return EventType.LIVE_MUSIC;
-  if (v.includes('run club') || v.includes('yoga') || v.includes('cycle')) return EventType.SPECIAL;
-  if (v.includes('game') || v.includes('dungeons')) return EventType.TRIVIA;
-  if (v.includes('dating') || v.includes('singles')) return EventType.SPECIAL;
-  if (v.includes('fest') || v.includes('festival') || v.includes('oktoberfest')) return EventType.SPECIAL;
-  return EventType.SPECIAL;
+  type?: string;
+  description?: string;
+  title?: string;
 }
 
 import { parseTimeRange, parseLocalDate } from '@/lib/utils/formatters';
-
-/**
- * Generate a unique event ID from date and vendor
- */
-function generateEventId(date: string, vendor: string, location: Location): string {
-  const dateStr = date.replace(/[^0-9]/g, '');
-  const vendorStr = vendor.toLowerCase().replace(/[^a-z0-9]/g, '-').substring(0, 30);
-  const locStr = location === Location.LAWRENCEVILLE ? 'lv' : 'zel';
-  return `${locStr}-${dateStr}-${vendorStr}`;
-}
-
-/**
- * Create a description from vendor name
- */
-function createDescription(vendor: string, type: EventType): string {
-  const baseDesc = vendor;
-
-  switch (type) {
-    case EventType.TRIVIA:
-      return `Join us for ${baseDesc}. Test your knowledge and win prizes!`;
-    case EventType.LIVE_MUSIC:
-      return `Live performance by ${baseDesc}. Enjoy great music with your favorite beer!`;
-    case EventType.FOOD_TRUCK:
-      return `${baseDesc} will be serving delicious food. Perfect pairing with our craft beers!`;
-    case EventType.SPECIAL:
-      return `Special event: ${baseDesc}`;
-    case EventType.BREWERY_TOUR:
-      return `${baseDesc}. Take a behind-the-scenes look at our brewing process.`;
-    default:
-      return baseDesc;
-  }
-}
-
-/**
- * Generate tags based on event type and vendor
- */
-function generateTags(vendor: string, type: EventType): string[] {
-  const tags: string[] = [];
-  const v = vendor.toLowerCase();
-
-  // Add type-based tags
-  switch (type) {
-    case EventType.TRIVIA:
-      tags.push('trivia', 'fun', 'prizes');
-      break;
-    case EventType.LIVE_MUSIC:
-      tags.push('music', 'live', 'entertainment');
-      break;
-    case EventType.FOOD_TRUCK:
-      tags.push('food', 'dining');
-      break;
-    case EventType.SPECIAL:
-      tags.push('special');
-      break;
-    case EventType.BREWERY_TOUR:
-      tags.push('tour', 'educational');
-      break;
-  }
-
-  // Add specific tags based on vendor
-  if (v.includes('weekly') || v.includes('tuesday') || v.includes('wednesday')) {
-    tags.push('weekly');
-  }
-  if (v.includes('local')) {
-    tags.push('local');
-  }
-  if (v.includes('acoustic')) {
-    tags.push('acoustic');
-  }
-
-  return [...new Set(tags)]; // Remove duplicates
-}
 
 /**
  * Parse a single CSV row into a BreweryEvent
@@ -124,22 +36,26 @@ function parseEventRow(row: EventCSVRow, location: Location): BreweryEvent | nul
   // Parse time
   const { time, endTime } = parseTimeRange(row.time);
 
-  // Determine event type
-  const type = getEventType(row.vendor);
+  // Generate simple ID from date and vendor
+  const dateStr = row.date.replace(/[^0-9]/g, '');
+  const vendorStr = row.vendor.toLowerCase().replace(/[^a-z0-9]/g, '-').substring(0, 30);
+  const locStr = location === Location.LAWRENCEVILLE ? 'lv' : 'zel';
+  const id = `${locStr}-${dateStr}-${vendorStr}`;
+
+  // Use type from CSV or default to SPECIAL_EVENT
+  const type = (row.type as EventType) || EventType.SPECIAL_EVENT;
 
   // Create event object
-  // Store date in YYYY-MM-DD format to avoid timezone issues
   const event: BreweryEvent = {
-    id: generateEventId(row.date, row.vendor, location),
-    title: row.vendor,
-    description: createDescription(row.vendor, type),
-    date: row.date, // Keep original YYYY-MM-DD format
+    id,
+    title: row.title || row.vendor,
+    description: row.description || row.vendor,
+    date: row.date,
     time,
     vendor: row.vendor,
     type,
     status: EventStatus.SCHEDULED,
-    location,
-    tags: generateTags(row.vendor, type)
+    location
   };
 
   // Add optional fields
