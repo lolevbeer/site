@@ -4,10 +4,10 @@ vespero,TRUE,Vespero,FALSE,Czech Dark Lager,5.8,4.25,16
 samo,FALSE,Samo,FALSE,Pilsner,4.8,4.00,15
 sever,TRUE,Sever,FALSE,Pumpkin Stout,5.7,4.50,17
 glyphs-ii,TRUE,Glyphs II,FALSE,Pale Ale,5.1,4.50,17
-lupula,TRUE,Lupula,FALSE,India Pale Ale,7,4.50,17
-double-lupula,TRUE,Double Lupula,FALSE,Double IPA,8.4,5.25,20
-ddh-akko,FALSE,DDH Akko,FALSE,India Pale Ale,7,5.25,20
-ddh-taupo,TRUE,DDH Taupō,FALSE,India Pale Ale,7,5.25,20
-sono,TRUE,Sono,FALSE,Double IPA,7.6,5.75,22
-priscus-ii,FALSE,Priscus II,FALSE,Double IPA,8.3,5.75,22
-kamo,TRUE,Kamo,FALSE,Double IPA,8,5.75,22
+lupula,TRUE,Lupula,FALSE,IPA,7,4.50,17
+double-lupula,TRUE,Double Lupula,FALSE,DIPA,8.4,5.25,20
+ddh-akko,FALSE,DDH Akko,FALSE,IPA,7,5.25,20
+ddh-taupo,TRUE,DDH Taupō,FALSE,IPA,7,5.25,20
+sono,TRUE,Sono,FALSE,DIPA,7.6,5.75,22
+priscus-ii,FALSE,Priscus II,FALSE,DIPA,8.3,5.75,22
+kamo,TRUE,Kamo,FALSE,DIPA,8,5.75,22
