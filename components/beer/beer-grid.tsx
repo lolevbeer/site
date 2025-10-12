@@ -139,7 +139,7 @@ function SortControls({
         <select
           value={sortOptions?.sortBy || 'name'}
           onChange={(e) => handleSortByChange(e.target.value as BeerSortBy)}
-          className="text-sm border rounded-md px-2 py-1 bg-background"
+          className="text-base border rounded-md px-2 py-1 bg-background"
         >
           <option value="name">Name</option>
           <option value="type">Style</option>
