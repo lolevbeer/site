@@ -9,14 +9,14 @@ import React, { useState, useMemo } from 'react';
 import { BreweryEvent, EventType, EventStatus, EventFilters, EventSortOptions } from '@/lib/types/event';
 import { Location, LocationDisplayNames } from '@/lib/types/location';
 import { useLocationContext } from '@/components/location/location-provider';
-import { EventCard, EventCardSkeleton } from './event-card';
+import { EventCard } from './event-card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Select } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, Filter, Search, SortAsc, SortDesc, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { formatTime, parseLocalDate } from '@/lib/utils/formatters';
 
 interface EventListProps {
   events: BreweryEvent[];
@@ -44,6 +44,8 @@ export function EventList({
   showFilters = true,
   variant = 'default',
   initialFilters = {},
+  // onEventClick parameter is accepted but not used in current implementation
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onEventClick,
   emptyMessage = 'No events found',
   maxItems,
@@ -106,7 +108,7 @@ export function EventList({
 
       switch (sortOptions.sortBy) {
         case 'date':
-          comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
+          comparison = parseLocalDate(a.date).getTime() - parseLocalDate(b.date).getTime();
           break;
         case 'title':
           comparison = a.title.localeCompare(b.title);
@@ -138,7 +140,7 @@ export function EventList({
     tomorrow.setDate(tomorrow.getDate() + 1);
 
     return filteredAndSortedEvents.filter(event => {
-      const eventDate = new Date(event.date);
+      const eventDate = parseLocalDate(event.date);
       eventDate.setHours(0, 0, 0, 0);
       return eventDate >= tomorrow;  // Only events from tomorrow onwards
     });
@@ -146,10 +148,13 @@ export function EventList({
 
   // Get today's events
   const todaysEvents = useMemo(() => {
-    const today = new Date().toDateString();
-    return filteredAndSortedEvents.filter(event =>
-      new Date(event.date).toDateString() === today
-    );
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return filteredAndSortedEvents.filter(event => {
+      const eventDate = parseLocalDate(event.date);
+      eventDate.setHours(0, 0, 0, 0);
+      return eventDate.getTime() === today.getTime();
+    });
   }, [filteredAndSortedEvents]);
 
   const hasActiveFilters = searchQuery || selectedTypes.length > 0 ||
@@ -185,7 +190,7 @@ export function EventList({
       return (
         <div className={layoutType !== 'list' ? "grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" : "space-y-4"}>
           {Array.from({ length: layoutType !== 'list' ? 4 : 3 }).map((_, i) => (
-            <EventCardSkeleton key={i} variant={variant} />
+            <div key={i} className="bg-card rounded-xl border shadow-sm animate-pulse h-64" />
           ))}
         </div>
       );
@@ -194,7 +199,6 @@ export function EventList({
     if (eventsToRender.length === 0) {
       return (
         <div className="text-center py-12">
-          <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <h3 className="text-lg font-semibold mb-2">No Events Found</h3>
           <p className="text-muted-foreground mb-4">{emptyMessage}</p>
           {hasActiveFilters && (
@@ -219,9 +223,7 @@ export function EventList({
             <EventCard
               key={event.id || `${event.title}-${event.date}`}
               event={event}
-              variant={variant}
-              showLocation={showLocationFilter}
-              onEventClick={onEventClick}
+              currentLocation={event.location}
             />
           ))}
         </div>
@@ -229,16 +231,19 @@ export function EventList({
     }
 
     if (layoutType === 'grid') {
-      // Fixed 4-column grid for Upcoming events
+      // Adaptive grid for Upcoming events - full width for fewer than 6 items
       return (
-        <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className={cn(
+          "grid gap-4",
+          eventsToRender.length < 6
+            ? "grid-cols-1"
+            : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+        )}>
           {eventsToRender.map(event => (
             <EventCard
               key={event.id || `${event.title}-${event.date}`}
               event={event}
-              variant={variant}
-              showLocation={showLocationFilter}
-              onEventClick={onEventClick}
+              currentLocation={event.location}
             />
           ))}
         </div>
@@ -254,9 +259,7 @@ export function EventList({
           <EventCard
             key={event.id || `${event.title}-${event.date}`}
             event={event}
-            variant={variant}
-            showLocation={showLocationFilter}
-            onEventClick={onEventClick}
+            currentLocation={event.location}
           />
         ))}
       </div>
@@ -270,12 +273,10 @@ export function EventList({
         <div className="space-y-4">
           {/* Search Bar */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search events..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
             />
           </div>
 
@@ -287,7 +288,6 @@ export function EventList({
               onClick={() => setShowFiltersPanel(!showFiltersPanel)}
               className="flex items-center gap-1"
             >
-              <Filter className="h-3 w-3" />
               Filters
               {hasActiveFilters && (
                 <Badge variant="secondary" className="ml-1 text-xs">
@@ -302,6 +302,19 @@ export function EventList({
 
             {/* Location Filter and Sort Options on the right */}
             <div className="flex items-center gap-2 ml-auto">
+              {/* Sort Button */}
+              <Button
+                variant={sortOptions.sortBy === 'date' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => toggleSort('date')}
+                className="flex items-center gap-1"
+              >
+                Date
+                {sortOptions.sortBy === 'date' && (
+                  sortOptions.order === 'asc' ? ' ↑' : ' ↓'
+                )}
+              </Button>
+
               {/* Location Filter */}
               {parentSelectedLocation !== undefined && onLocationChange && (
                 <Tabs
@@ -320,21 +333,6 @@ export function EventList({
                   </TabsList>
                 </Tabs>
               )}
-
-              {/* Sort Button */}
-              <Button
-                variant={sortOptions.sortBy === 'date' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => toggleSort('date')}
-                className="flex items-center gap-1"
-              >
-                Date
-                {sortOptions.sortBy === 'date' && (
-                  sortOptions.order === 'asc'
-                    ? <SortAsc className="h-3 w-3" />
-                    : <SortDesc className="h-3 w-3" />
-                )}
-              </Button>
             </div>
 
             {hasActiveFilters && (
@@ -344,7 +342,6 @@ export function EventList({
                 onClick={clearFilters}
                 className="flex items-center gap-1 text-muted-foreground"
               >
-                <X className="h-3 w-3" />
                 Clear
               </Button>
             )}
@@ -376,28 +373,33 @@ export function EventList({
 
       {/* Today's Events Section */}
       {todaysEvents.length > 0 && !maxItems && (
-        <div>
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Today's Events
-          </h2>
-          {renderEvents(todaysEvents, 'adaptive-grid')}
-        </div>
+        <Card className="shadow-none">
+          <CardContent className="p-6">
+            <h2 className="text-2xl font-bold mb-4 text-center">Today's Event{todaysEvents.length !== 1 ? 's' : ''}</h2>
+            <div className="flex flex-col gap-3">
+              {todaysEvents.map(event => (
+                <div key={event.id || `${event.title}-${event.date}`} className="text-center">
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="font-semibold">{event.title}</span>
+                    {event.time && (
+                      <span className="text-sm text-muted-foreground">@ {formatTime(event.time.split('-')[0].trim())}</span>
+                    )}
+                  </div>
+                  {showLocationFilter && (
+                    <div className="text-sm text-muted-foreground">
+                      {LocationDisplayNames[event.location]}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Main Events List */}
       <div>
-        {todaysEvents.length > 0 && !maxItems ? (
-          <h2 className="text-xl font-semibold mb-4">Upcoming Events</h2>
-        ) : !maxItems && (
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">Events</h2>
-            <span className="text-sm text-muted-foreground">
-              {filteredAndSortedEvents.length} event{filteredAndSortedEvents.length !== 1 ? 's' : ''}
-            </span>
-          </div>
-        )}
-        {renderEvents(maxItems ? filteredAndSortedEvents : upcomingEvents, todaysEvents.length > 0 && !maxItems ? 'grid' : 'list')}
+        {renderEvents(maxItems ? filteredAndSortedEvents : upcomingEvents, 'grid')}
       </div>
 
       {/* Load More Button */}

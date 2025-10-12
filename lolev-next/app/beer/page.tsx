@@ -5,7 +5,7 @@
 
 import { Metadata } from 'next';
 import { BeerPageContent } from '@/components/beer/beer-page-content';
-import { beers } from '@/lib/data/beer-data';
+import { getAllBeersFromCSV } from '@/lib/utils/beer-csv';
 
 export const metadata: Metadata = {
   title: 'Our Beers | Love of Lev Brewery',
@@ -18,9 +18,12 @@ export const metadata: Metadata = {
   }
 };
 
-export default function BeerPage() {
+export default async function BeerPage() {
+  // Get all beers from CSV
+  const allBeers = await getAllBeersFromCSV();
+
   // Filter out beers that should be hidden
-  const availableBeers = beers.filter(beer => !beer.availability?.hideFromSite);
+  const availableBeers = allBeers.filter(beer => !beer.availability?.hideFromSite);
 
   return <BeerPageContent beers={availableBeers} />;
 }

@@ -18,50 +18,6 @@ export interface FoodVendor {
   featured?: boolean;
 }
 
-// Helper function to parse time strings
-function parseVendorTime(timeStr: string): { startTime?: string; endTime?: string } {
-  if (!timeStr) return {};
-
-  // Handle formats like "4-9pm" or "5-9"
-  const match = timeStr.match(/(\d{1,2}):?(\d{2})?\s*-\s*(\d{1,2}):?(\d{2})?\s*(pm|am)?/i);
-  if (match) {
-    let start = match[1];
-    let end = match[3];
-    const period = match[5];
-
-    if (match[2]) start += `:${match[2]}`;
-    else start += ':00';
-
-    if (match[4]) end += `:${match[4]}`;
-    else end += ':00';
-
-    if (period) {
-      start += ` ${period.toUpperCase()}`;
-      end += ` ${period.toUpperCase()}`;
-    }
-
-    return { startTime: start, endTime: end };
-  }
-
-  return { startTime: timeStr };
-}
-
-// Helper function to determine cuisine type from vendor name
-function getCuisineType(vendorName: string): string {
-  const name = vendorName.toLowerCase();
-  if (name.includes('taco') || name.includes('rincón')) return 'Mexican';
-  if (name.includes('pizza')) return 'Pizza';
-  if (name.includes('bbq') || name.includes('bar-b-q')) return 'BBQ';
-  if (name.includes('gyro') || name.includes('greek')) return 'Greek';
-  if (name.includes('sushi') || name.includes('hibachi')) return 'Japanese';
-  if (name.includes('indian') || name.includes('billu')) return 'Indian';
-  if (name.includes('burger') || name.includes('hot dog')) return 'American';
-  if (name.includes('deli')) return 'Deli';
-  if (name.includes('ice cream')) return 'Dessert';
-  if (name.includes('bulgogi') || name.includes('korean') || name.includes('mandu')) return 'Korean';
-  if (name.includes('chinese') || name.includes('lotus')) return 'Asian';
-  return 'Various';
-}
 
 // Current and upcoming food vendors from Lawrenceville
 export const lawrencevilleFoodVendors: FoodVendor[] = [

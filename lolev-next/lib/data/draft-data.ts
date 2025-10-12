@@ -3,7 +3,8 @@
  * Auto-generated from _data/lawrenceville-draft.csv and zelienople-draft.csv
  */
 
-import { Beer, BeerVariant, BeerType, BeerGlass, Location } from '@/lib/types/beer';
+import { BeerVariant, GlassType } from '@/lib/types/beer';
+import { Location } from '@/lib/types/location';
 
 export interface DraftBeer {
   tap: number;
@@ -11,7 +12,7 @@ export interface DraftBeer {
   name: string;
   type: string;
   abv: number;
-  glass: BeerGlass;
+  glass: GlassType;
   price: number;
   description: string;
   hops?: string;
@@ -28,7 +29,7 @@ export const lawrencevilleDraftBeers: DraftBeer[] = [
     name: 'Vespero',
     type: 'Czech Dark Lager',
     abv: 5.8,
-    glass: BeerGlass.STEIN,
+    glass: GlassType.STEIN,
     price: 6,
     description: 'Roasted chestnut, chocolate and raisin. Ruby hue and a hint of noble hops.',
     hops: 'Saaz',
@@ -42,7 +43,7 @@ export const lawrencevilleDraftBeers: DraftBeer[] = [
     name: 'Verus',
     type: 'India Pale Ale',
     abv: 7,
-    glass: BeerGlass.PINT,
+    glass: GlassType.PINT,
     price: 7,
     description: 'Tropical fruit notes balanced with pear, melon, blueberry and citrus.',
     hops: 'Erebus™, Calypso™, Citra®',
@@ -56,7 +57,7 @@ export const lawrencevilleDraftBeers: DraftBeer[] = [
     name: 'Sonnen',
     type: 'Märzen',
     abv: 5.4,
-    glass: BeerGlass.STEIN,
+    glass: GlassType.STEIN,
     price: 6,
     description: 'Plush tan head, a subtle sweetness of toasted malt, medium body.',
     location: Location.LAWRENCEVILLE,
@@ -69,7 +70,7 @@ export const lawrencevilleDraftBeers: DraftBeer[] = [
     name: 'Prismatic',
     type: 'India Pale Ale',
     abv: 7,
-    glass: BeerGlass.PINT,
+    glass: GlassType.PINT,
     price: 7,
     description: 'Pineapple, vanilla, tangerine, melon.',
     hops: 'El Dorado®, Idaho 7™, Citra®',
@@ -83,7 +84,7 @@ export const lawrencevilleDraftBeers: DraftBeer[] = [
     name: 'Priscus II',
     type: 'Double IPA',
     abv: 8.3,
-    glass: BeerGlass.PINT,
+    glass: GlassType.PINT,
     price: 9,
     description: 'Hop saturated variant. Sauvignon blanc, blueberry and citrus.',
     hops: 'Motueka CGX, Nelson Sauvin™, Citra®',
@@ -97,7 +98,7 @@ export const lawrencevilleDraftBeers: DraftBeer[] = [
     name: 'DDH Lupula',
     type: 'India Pale Ale',
     abv: 7,
-    glass: BeerGlass.PINT,
+    glass: GlassType.PINT,
     price: 8,
     description: 'Double dry hopped Lupula. Notes of Pineapple, mango, and grapefruit. Aromatic.',
     hops: 'Motueka™, Moutere™, Riwaka™',
@@ -111,7 +112,7 @@ export const lawrencevilleDraftBeers: DraftBeer[] = [
     name: 'Akko',
     type: 'India Pale Ale',
     abv: 7,
-    glass: BeerGlass.PINT,
+    glass: GlassType.PINT,
     price: 7,
     description: 'Pineapple and orange mango, notes of peach ring candies.',
     hops: 'Comet, Galaxy®, Citra®',
@@ -125,7 +126,7 @@ export const lawrencevilleDraftBeers: DraftBeer[] = [
     name: 'Double Lupula',
     type: 'Double IPA',
     abv: 8.4,
-    glass: BeerGlass.PINT,
+    glass: GlassType.PINT,
     price: 8,
     description: 'More hops, more malt, more everything. Everything Lupula is and more.',
     hops: 'Motueka™, Moutere™, Riwaka™',
@@ -139,7 +140,7 @@ export const lawrencevilleDraftBeers: DraftBeer[] = [
     name: 'Rubico',
     type: 'Double IPA',
     abv: 8.5,
-    glass: BeerGlass.PINT,
+    glass: GlassType.PINT,
     price: 8,
     description: 'Pineapple, peach rings, bubblegum, strawberry and citrus.',
     hops: 'Mosaic®, Galaxy®, Citra®',
@@ -153,7 +154,7 @@ export const lawrencevilleDraftBeers: DraftBeer[] = [
     name: 'Faust',
     type: 'Imperial Plum Saison',
     abv: 9.3,
-    glass: BeerGlass.TEKU,
+    glass: GlassType.TEKU,
     price: 10,
     description: 'Unfiltered 2025 vintage. Slightly sour, dry and oaky. Aged 18 months in oak foeders on our house microflora and conditioned on plums.',
     location: Location.LAWRENCEVILLE,

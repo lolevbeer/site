@@ -9,158 +9,26 @@ const nextConfig = {
     },
   },
 
+  // Static export for GitHub Pages
+  output: 'export',
+
   // Image optimization configuration
   images: {
-    formats: ['image/webp', 'image/avif'],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    unoptimized: true, // Required for static export
+    formats: ['image/avif', 'image/webp'],
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    domains: [
-      'next.lolev.beer',
-      'lolev.beer',
-      'images.unsplash.com',
-      'res.cloudinary.com',
-      'untappd.akamaized.net',
-      'assets.untappd.com'
-    ],
+    minimumCacheTTL: 60,
+    // Add external domains here if loading images from external sources
     remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**.lolev.beer',
-      },
-      {
-        protocol: 'https',
-        hostname: 'images.unsplash.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'res.cloudinary.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'untappd.akamaized.net',
-      },
-      {
-        protocol: 'https',
-        hostname: 'assets.untappd.com',
-      }
+      // Example: { protocol: 'https', hostname: 'example.com' }
     ],
-    dangerouslyAllowSVG: true,
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
-  },
-
-  // Security headers
-  async headers() {
-    return [
-      {
-        source: '/(.*)',
-        headers: [
-          {
-            key: 'X-DNS-Prefetch-Control',
-            value: 'on'
-          },
-          {
-            key: 'Strict-Transport-Security',
-            value: 'max-age=63072000; includeSubDomains; preload'
-          },
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff'
-          },
-          {
-            key: 'X-Frame-Options',
-            value: 'DENY'
-          },
-          {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block'
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin'
-          },
-          {
-            key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=()'
-          },
-        ],
-      },
-      {
-        source: '/api/(.*)',
-        headers: [
-          {
-            key: 'Access-Control-Allow-Origin',
-            value: process.env.NODE_ENV === 'development' ? '*' : 'https://next.lolev.beer'
-          },
-          {
-            key: 'Access-Control-Allow-Methods',
-            value: 'GET, POST, PUT, DELETE, OPTIONS'
-          },
-          {
-            key: 'Access-Control-Allow-Headers',
-            value: 'Content-Type, Authorization, X-Requested-With'
-          },
-          {
-            key: 'Access-Control-Max-Age',
-            value: '86400'
-          }
-        ]
-      }
-    ];
-  },
-
-  // Redirects for legacy URLs
-  async redirects() {
-    return [
-      {
-        source: '/home',
-        destination: '/',
-        permanent: true,
-      },
-      {
-        source: '/beers',
-        destination: '/beer',
-        permanent: true,
-      },
-      {
-        source: '/about',
-        destination: '/',
-        permanent: false,
-      },
-      {
-        source: '/taproom',
-        destination: '/',
-        permanent: false,
-      },
-      {
-        source: '/contact',
-        destination: '/',
-        permanent: false,
-      }
-    ];
-  },
-
-  // URL rewrites
-  async rewrites() {
-    return [
-      {
-        source: '/sitemap.xml',
-        destination: '/api/sitemap',
-      },
-      {
-        source: '/robots.txt',
-        destination: '/api/robots',
-      },
-      {
-        source: '/feed.xml',
-        destination: '/api/feed',
-      }
-    ];
   },
 
   // Environment variables
   env: {
     NEXT_PUBLIC_APP_ENV: process.env.NODE_ENV || 'development',
-    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || 'https://next.lolev.beer',
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || 'https://lolev.beer',
   },
 
   // Build optimization
@@ -168,8 +36,33 @@ const nextConfig = {
     removeConsole: process.env.NODE_ENV === 'production',
   },
 
-  // Output configuration
-  output: 'standalone',
+  // Experimental features for performance
+  experimental: {
+    optimizePackageImports: [
+      'lucide-react',
+      '@radix-ui/react-icons',
+      'date-fns',
+      '@radix-ui/react-dialog',
+      '@radix-ui/react-dropdown-menu',
+      '@radix-ui/react-popover',
+      '@radix-ui/react-select',
+      '@radix-ui/react-tabs',
+      '@radix-ui/react-tooltip',
+      '@radix-ui/react-accordion',
+      '@radix-ui/react-scroll-area',
+      '@radix-ui/react-slider',
+      '@radix-ui/react-switch',
+      '@radix-ui/react-toggle',
+      '@radix-ui/react-toggle-group',
+      '@radix-ui/react-separator',
+      '@radix-ui/react-label',
+      '@radix-ui/react-slot',
+    ],
+    scrollRestoration: true,
+  },
+
+  // Static export enabled for GitHub Pages deployment
+  // The build will generate an 'out/' directory with static HTML files
 
   // Performance optimizations
   compress: true,
@@ -184,15 +77,20 @@ const nextConfig = {
       use: ['@svgr/webpack']
     });
 
-    // Bundle analyzer (only in development)
-    if (dev && process.env.ANALYZE === 'true') {
-      const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
-      config.plugins.push(
-        new BundleAnalyzerPlugin({
-          analyzerMode: 'server',
-          openAnalyzer: true,
-        })
-      );
+    // Bundle analyzer for both dev and production
+    if (process.env.ANALYZE === 'true' && !isServer) {
+      try {
+        const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
+        config.plugins.push(
+          new BundleAnalyzerPlugin({
+            analyzerMode: dev ? 'server' : 'static',
+            reportFilename: './analyze.html',
+            openAnalyzer: dev,
+          })
+        );
+      } catch (e) {
+        console.warn('webpack-bundle-analyzer not installed, skipping bundle analysis');
+      }
     }
 
     return config;
@@ -200,12 +98,12 @@ const nextConfig = {
 
   // TypeScript configuration
   typescript: {
-    ignoreBuildErrors: true, // Temporarily ignore TypeScript errors during build
+    ignoreBuildErrors: false, // Enable TypeScript checking during build
   },
 
   // ESLint configuration
   eslint: {
-    ignoreDuringBuilds: true, // Temporarily ignore ESLint errors during build
+    ignoreDuringBuilds: false, // Enable ESLint checking during build
   },
 
   // Logging

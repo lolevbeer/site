@@ -1,18 +1,24 @@
 @import "tailwindcss";
+@import "mapbox-gl/dist/mapbox-gl.css";
 
 @theme {
+  /* Dark mode configuration */
+  --dark-mode: class;
+
   /* Light mode colors */
   --color-background: #ffffff;
   --color-foreground: #1d1d1f;
   --color-card: #ffffff;
   --color-card-foreground: #1d1d1f;
+  --color-card-interactive: #fafafa;
+  --color-card-interactive-foreground: #1d1d1f;
   --color-popover: #ffffff;
   --color-popover-foreground: #1d1d1f;
-  --color-primary: #0071e3;
+  --color-primary: #1d1d1f;
   --color-primary-foreground: #ffffff;
   --color-secondary: #f5f5f7;
   --color-secondary-foreground: #1d1d1f;
-  --color-muted: #86868b;
+  --color-muted: oklch(95.5% 0 0);
   --color-muted-foreground: #86868b;
   --color-accent: #0071e3;
   --color-accent-foreground: #ffffff;
@@ -53,6 +59,19 @@
   --radius-lg: 0.75rem;
   --radius-xl: 1rem;
   --radius-full: 9999px;
+
+  /* Max-width utilities (preserve Tailwind defaults) */
+  --max-width-xs: 20rem;
+  --max-width-sm: 24rem;
+  --max-width-md: 28rem;
+  --max-width-lg: 32rem;
+  --max-width-xl: 36rem;
+  --max-width-2xl: 42rem;
+  --max-width-3xl: 48rem;
+  --max-width-4xl: 56rem;
+  --max-width-5xl: 64rem;
+  --max-width-6xl: 72rem;
+  --max-width-7xl: 80rem;
 }
 
 @layer base {
@@ -65,13 +84,15 @@
     --color-foreground: #f5f5f7;
     --color-card: #1d1d1f;
     --color-card-foreground: #f5f5f7;
+    --color-card-interactive: #1d1d1f;
+    --color-card-interactive-foreground: #f5f5f7;
     --color-popover: #1d1d1f;
     --color-popover-foreground: #f5f5f7;
-    --color-primary: #0a84ff;
-    --color-primary-foreground: #ffffff;
+    --color-primary: #ffffff;
+    --color-primary-foreground: #000000;
     --color-secondary: #2c2c2e;
     --color-secondary-foreground: #f5f5f7;
-    --color-muted: #48484a;
+    --color-muted: #2c2c2e;
     --color-muted-foreground: #98989d;
     --color-accent: #0a84ff;
     --color-accent-foreground: #ffffff;
@@ -107,11 +128,7 @@
   /* Clean links */
   a {
     text-decoration: none;
-    transition: opacity 0.2s;
-  }
-
-  a:hover {
-    opacity: 0.7;
+    transition: color 0.2s ease-in-out;
   }
 
   /* Clean buttons */
@@ -201,5 +218,14 @@
 
   .animate-marquee {
     animation: marquee linear infinite;
+  }
+
+  /* Hide scrollbar utility for carousel */
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }

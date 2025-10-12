@@ -8,12 +8,11 @@
 import React, { useState, useMemo } from 'react';
 import { BreweryEvent, EventType, EventStatus } from '@/lib/types/event';
 import { Location, LocationDisplayNames } from '@/lib/types/location';
-import { useLocationContext } from '@/components/location/location-provider';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ChevronLeft, ChevronRight, Calendar, Clock, MapPin, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, MapPin, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface EventCalendarProps {
@@ -23,6 +22,8 @@ interface EventCalendarProps {
   onEventClick?: (event: BreweryEvent) => void;
   onDateClick?: (date: Date) => void;
   showAddEvent?: boolean;
+  selectedLocation?: Location | 'all';
+  onLocationChange?: (location: Location | 'all') => void;
 }
 
 interface CalendarDay {
@@ -41,11 +42,11 @@ export function EventCalendar({
   showLocationFilter = true,
   onEventClick,
   onDateClick,
-  showAddEvent = false
+  showAddEvent = false,
+  selectedLocation: parentSelectedLocation,
+  onLocationChange
 }: EventCalendarProps) {
-  const { currentLocation } = useLocationContext();
   const [currentWeek, setCurrentWeek] = useState(getStartOfWeek(new Date()));
-  const [selectedLocation, setSelectedLocation] = useState<Location | undefined>(undefined);
 
   // Get start of week (Sunday)
   function getStartOfWeek(date: Date): Date {
@@ -59,7 +60,6 @@ export function EventCalendar({
 
   // Generate week days
   const weekDays = useMemo(() => {
-    console.log('EventCalendar received events:', events.length, events);
     const days: CalendarDay[] = [];
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -74,11 +74,7 @@ export function EventCalendar({
         eventDate.setHours(0, 0, 0, 0);
 
         // Filter by date
-        const matches = eventDate.getTime() === date.getTime();
-        if (i === 0 && matches) {
-          console.log('Event found for date:', date.toDateString(), event);
-        }
-        return matches;
+        return eventDate.getTime() === date.getTime();
       });
 
       days.push({
@@ -124,22 +120,24 @@ export function EventCalendar({
 
   const getEventTypeColor = (type: EventType) => {
     const colors = {
-      [EventType.TRIVIA]: 'bg-blue-100 text-blue-800 border-blue-200',
-      [EventType.LIVE_MUSIC]: 'bg-purple-100 text-purple-800 border-purple-200',
-      [EventType.GAME_NIGHT]: 'bg-green-100 text-green-800 border-green-200',
-      [EventType.SPECIAL_EVENT]: 'bg-red-100 text-red-800 border-red-200',
-      [EventType.MARKET]: 'bg-orange-100 text-orange-800 border-orange-200',
-      [EventType.SPORTS]: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      [EventType.ENTERTAINMENT]: 'bg-pink-100 text-pink-800 border-pink-200',
-      [EventType.PRIVATE_EVENT]: 'bg-gray-100 text-gray-800 border-gray-200',
-      [EventType.BREWERY_TOUR]: 'bg-amber-100 text-amber-800 border-amber-200',
-      [EventType.TASTING]: 'bg-indigo-100 text-indigo-800 border-indigo-200',
-      [EventType.FOOD_PAIRING]: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-      [EventType.COMMUNITY]: 'bg-cyan-100 text-cyan-800 border-cyan-200',
-      [EventType.SEASONAL]: 'bg-violet-100 text-violet-800 border-violet-200',
-      [EventType.RECURRING]: 'bg-slate-100 text-slate-800 border-slate-200',
+      [EventType.TRIVIA]: 'bg-blue-100 dark:bg-blue-900/30 text-gray-900 dark:text-gray-100 border-blue-200 dark:border-blue-700',
+      [EventType.LIVE_MUSIC]: 'bg-purple-100 dark:bg-purple-900/30 text-gray-900 dark:text-gray-100 border-purple-200 dark:border-purple-700',
+      [EventType.GAME_NIGHT]: 'bg-green-100 dark:bg-green-900/30 text-gray-900 dark:text-gray-100 border-green-200 dark:border-green-700',
+      [EventType.SPECIAL_EVENT]: 'bg-red-100 dark:bg-red-900/30 text-gray-900 dark:text-gray-100 border-red-200 dark:border-red-700',
+      [EventType.SPECIAL]: 'bg-red-100 dark:bg-red-900/30 text-gray-900 dark:text-gray-100 border-red-200 dark:border-red-700',
+      [EventType.MARKET]: 'bg-orange-100 dark:bg-orange-900/30 text-gray-900 dark:text-gray-100 border-orange-200 dark:border-orange-700',
+      [EventType.SPORTS]: 'bg-yellow-100 dark:bg-yellow-900/30 text-gray-900 dark:text-gray-100 border-yellow-200 dark:border-yellow-700',
+      [EventType.ENTERTAINMENT]: 'bg-pink-100 dark:bg-pink-900/30 text-gray-900 dark:text-gray-100 border-pink-200 dark:border-pink-700',
+      [EventType.PRIVATE_EVENT]: 'bg-gray-100 dark:bg-gray-900/30 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-700',
+      [EventType.BREWERY_TOUR]: 'bg-amber-100 dark:bg-amber-900/30 text-gray-900 dark:text-gray-100 border-amber-200 dark:border-amber-700',
+      [EventType.TASTING]: 'bg-indigo-100 dark:bg-indigo-900/30 text-gray-900 dark:text-gray-100 border-indigo-200 dark:border-indigo-700',
+      [EventType.FOOD_PAIRING]: 'bg-emerald-100 dark:bg-emerald-900/30 text-gray-900 dark:text-gray-100 border-emerald-200 dark:border-emerald-700',
+      [EventType.FOOD_TRUCK]: 'bg-emerald-100 dark:bg-emerald-900/30 text-gray-900 dark:text-gray-100 border-emerald-200 dark:border-emerald-700',
+      [EventType.COMMUNITY]: 'bg-cyan-100 dark:bg-cyan-900/30 text-gray-900 dark:text-gray-100 border-cyan-200 dark:border-cyan-700',
+      [EventType.SEASONAL]: 'bg-violet-100 dark:bg-violet-900/30 text-gray-900 dark:text-gray-100 border-violet-200 dark:border-violet-700',
+      [EventType.RECURRING]: 'bg-slate-100 dark:bg-slate-900/30 text-gray-900 dark:text-gray-100 border-slate-200 dark:border-slate-700',
     };
-    return colors[type] || 'bg-gray-100 text-gray-800 border-gray-200';
+    return colors[type] || 'bg-gray-100 dark:bg-gray-900/30 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-700';
   };
 
   const weekRange = useMemo(() => {
@@ -188,12 +186,25 @@ export function EventCalendar({
           </div>
         </div>
 
-        {showAddEvent && (
-          <Button size="sm" className="flex items-center gap-1">
-            <Plus className="h-3 w-3" />
-            Add Event
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {/* Location Filter */}
+          {parentSelectedLocation !== undefined && onLocationChange && (
+            <Tabs value={parentSelectedLocation} onValueChange={(value) => onLocationChange(value as Location | 'all')}>
+              <TabsList className="grid grid-cols-3">
+                <TabsTrigger value="all">All</TabsTrigger>
+                <TabsTrigger value={Location.LAWRENCEVILLE}>Lawrenceville</TabsTrigger>
+                <TabsTrigger value={Location.ZELIENOPLE}>Zelienople</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          )}
+
+          {showAddEvent && (
+            <Button size="sm" className="flex items-center gap-1">
+              <Plus className="h-3 w-3" />
+              Add Event
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Week Range */}
@@ -217,10 +228,10 @@ export function EventCalendar({
           <Card
             key={index}
             className={cn(
-              'min-h-[200px] p-3 cursor-pointer transition-all duration-200 hover:shadow-md',
-              day.isToday && 'ring-2 ring-blue-500 ring-opacity-50 bg-blue-50',
+              'min-h-[200px] p-3 cursor-pointer transition-all duration-200 hover:shadow-md border',
+              day.isToday && 'ring-2 ring-blue-500 bg-blue-50/50 dark:bg-blue-950/20',
               !day.isCurrentMonth && 'opacity-50',
-              day.events.length === 0 && 'bg-muted/30'
+              day.events.length === 0 && 'bg-gray-50/50 dark:bg-muted/30'
             )}
             onClick={() => onDateClick?.(day.date)}
           >
@@ -229,7 +240,7 @@ export function EventCalendar({
               <div className="flex items-center justify-between">
                 <span className={cn(
                   'text-sm font-medium',
-                  day.isToday && 'text-blue-600 font-bold'
+                  day.isToday && 'text-blue-600 dark:text-blue-400 font-bold'
                 )}>
                   {day.date.getDate()}
                 </span>
@@ -246,7 +257,7 @@ export function EventCalendar({
                   <div
                     key={eventIndex}
                     className={cn(
-                      'text-xs p-2 rounded border cursor-pointer transition-colors hover:opacity-80',
+                      'text-xs p-2 rounded border cursor-pointer transition-all hover:shadow-sm',
                       getEventTypeColor(event.type),
                       event.status === EventStatus.CANCELLED && 'opacity-50 line-through'
                     )}
@@ -258,7 +269,7 @@ export function EventCalendar({
                     <div className="font-medium truncate">
                       {event.title}
                     </div>
-                    <div className="flex items-center gap-1 text-xs opacity-75">
+                    <div className="flex items-center gap-1 text-xs opacity-70 dark:opacity-75">
                       <Clock className="h-2 w-2" />
                       {formatTime(event.time)}
                       {showLocationFilter && (
@@ -295,14 +306,19 @@ export function EventCalendar({
       {/* Legend */}
       <div className="flex items-center justify-center flex-wrap gap-2 pt-4 border-t">
         <span className="text-sm font-medium text-muted-foreground">Event Types:</span>
-        {Object.values(EventType).slice(0, 6).map(type => (
-          <div key={type} className="flex items-center gap-1">
-            <div className={cn('w-3 h-3 rounded', getEventTypeColor(type).split(' ')[0])} />
-            <span className="text-xs">
-              {type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-            </span>
-          </div>
-        ))}
+        {Object.values(EventType).slice(0, 6).map(type => {
+          const colorClasses = getEventTypeColor(type).split(' ');
+          const bgClass = colorClasses.find((c: string) => c.startsWith('bg-')) || '';
+          const darkBgClass = colorClasses.find((c: string) => c.startsWith('dark:bg-')) || '';
+          return (
+            <div key={type} className="flex items-center gap-1">
+              <div className={cn('w-3 h-3 rounded border', bgClass, darkBgClass)} />
+              <span className="text-xs text-muted-foreground">
+                {type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+              </span>
+            </div>
+          );
+        })}
         <span className="text-xs text-muted-foreground">+{Object.values(EventType).length - 6} more</span>
       </div>
     </div>

@@ -5,12 +5,17 @@
 
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { Beer } from '@/lib/types/beer';
-import { BeerCard } from './beer-card';
-import { Search, Filter, X, ChevronDown, ArrowUpDown } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import React, { useState, useMemo, useCallback } from 'react';
+import { Beer, BeerStyle } from '@/lib/types/beer';
+import type { LocationFilter } from '@/lib/types/location';
+import { BeerCard } from '@/components/beer/beer-card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Search, Filter, X, ChevronDown, ArrowUpDown, SignalLow, SignalMedium, SignalHigh, RotateCcw } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { useBeerFilters } from '@/lib/hooks/use-beer-filters';
+import { ABV_LEVELS, type ABVLevel } from '@/lib/constants/beer-filters';
 import {
   Select,
   SelectContent,
@@ -26,14 +31,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
 
 interface BeerPageContentProps {
   beers: Beer[];
@@ -42,77 +46,105 @@ interface BeerPageContentProps {
 type SortOption = 'name' | 'abv-asc' | 'abv-desc' | 'type';
 
 export function BeerPageContent({ beers }: BeerPageContentProps) {
-  const [searchTerm, setSearchTerm] = useState('');
+  // Beer page always shows all beers regardless of location filter
+  const locationFilter = 'all' as LocationFilter;
+
+  // Use shared filtering hook
+  const {
+    filteredBeers: hookFilteredBeers,
+    filters,
+    setFilters,
+    clearFilters: hookClearFilters,
+  } = useBeerFilters({
+    beers,
+    locationFilter,
+  });
+
+  // Local UI state
   const [selectedType, setSelectedType] = useState<string>('all');
-  const [selectedGlass, setSelectedGlass] = useState<string>('all');
-  const [abvRange, setAbvRange] = useState<[number, number]>([0, 15]);
-  const [showOnTap, setShowOnTap] = useState(false);
-  const [showInCans, setShowInCans] = useState(false);
-  const [showGlutenFree, setShowGlutenFree] = useState(false);
+  const [abvLevels, setAbvLevels] = useState<ABVLevel[]>([]);
+  const [showOnTap, setShowOnTap] = useState(true);
+  const [showInCans, setShowInCans] = useState(true);
   const [sortBy, setSortBy] = useState<SortOption>('name');
   const [showFilters, setShowFilters] = useState(false);
 
-  // Get unique beer types and glasses
+  // Handle ABV level changes
+  const handleABVLevelsChange = useCallback((values: string[]) => {
+    const levels = values as ABVLevel[];
+    setAbvLevels(levels);
+
+    // Update filters with ABV range based on selected levels
+    if (levels.length === 0) {
+      setFilters(prev => ({ ...prev, abvRange: undefined }));
+    } else {
+      // Get the min of all selected levels and max of all selected levels
+      const ranges = levels.map(level => {
+        const levelData = Object.values(ABV_LEVELS).find(l => l.value === level);
+        return levelData ? { min: levelData.min, max: levelData.max } : null;
+      }).filter(Boolean) as { min: number; max: number }[];
+
+      if (ranges.length > 0) {
+        const min = Math.min(...ranges.map(r => r.min));
+        const max = Math.max(...ranges.map(r => r.max));
+        setFilters(prev => ({ ...prev, abvRange: { min, max } }));
+      }
+    }
+  }, [setFilters]);
+
+  // Handle search changes
+  const handleSearchChange = useCallback((value: string) => {
+    setFilters(prev => ({ ...prev, search: value || undefined }));
+  }, [setFilters]);
+
+  // Get unique beer types from filtered beers
   const beerTypes = useMemo(() => {
     const types = new Set<string>();
-    beers.forEach(beer => {
+    hookFilteredBeers.forEach(beer => {
       if (beer.type) types.add(beer.type);
     });
     return Array.from(types).sort();
-  }, [beers]);
+  }, [hookFilteredBeers]);
 
-  const glassTypes = useMemo(() => {
-    const glasses = new Set<string>();
-    beers.forEach(beer => {
-      if (beer.glass) glasses.add(beer.glass);
-    });
-    return Array.from(glasses).sort();
-  }, [beers]);
+  // Handle type filter changes
+  const handleTypeChange = useCallback((type: string) => {
+    setSelectedType(type);
+    if (type === 'all') {
+      setFilters(prev => ({ ...prev, style: undefined }));
+    } else {
+      // Type is coming from beer data which uses string types, cast to BeerStyle
+      setFilters(prev => ({ ...prev, style: [type as BeerStyle] }));
+    }
+  }, [setFilters]);
 
-  // Filter and sort beers
+  // Apply additional local filters (availability toggles) and sorting
   const filteredBeers = useMemo(() => {
-    let filtered = beers.filter(beer => {
-      // Search filter
-      if (searchTerm && !beer.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-          !beer.description?.toLowerCase().includes(searchTerm.toLowerCase()) &&
-          !beer.type?.toLowerCase().includes(searchTerm.toLowerCase())) {
-        return false;
-      }
+    let filtered = [...hookFilteredBeers];
 
-      // Type filter
-      if (selectedType !== 'all' && beer.type !== selectedType) {
-        return false;
-      }
+    // Apply availability toggle filters (on tap / in cans)
+    // Only skip filtering if BOTH are disabled (show all beers)
+    if (showOnTap || showInCans) {
+      filtered = filtered.filter(beer => {
+        // Check availability at ANY location (Lawrenceville OR Zelienople)
+        const isOnTapAnywhere = !!(
+          beer.availability?.lawrenceville?.tap ||
+          beer.availability?.zelienople?.tap
+        );
 
-      // Glass filter
-      if (selectedGlass !== 'all' && beer.glass !== selectedGlass) {
-        return false;
-      }
+        const isInCansAnywhere = !!(
+          beer.availability?.lawrenceville?.cansAvailable ||
+          beer.availability?.zelienople?.cansAvailable
+        );
 
-      // ABV filter
-      if (beer.abv < abvRange[0] || beer.abv > abvRange[1]) {
-        return false;
-      }
+        const matchesOnTap = showOnTap && isOnTapAnywhere;
+        const matchesInCans = showInCans && isInCansAnywhere;
 
-      // On tap filter
-      if (showOnTap && !beer.availability?.tap) {
-        return false;
-      }
+        // Show beer if it matches ANY of the enabled filters
+        return matchesOnTap || matchesInCans;
+      });
+    }
+    // If both are disabled, show all beers (no filtering)
 
-      // In cans filter
-      if (showInCans && !beer.availability?.cansAvailable) {
-        return false;
-      }
-
-      // Gluten free filter
-      if (showGlutenFree && !beer.glutenFree) {
-        return false;
-      }
-
-      return true;
-    });
-
-    // Sort
+    // Apply sorting
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'abv-asc':
@@ -128,53 +160,46 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
     });
 
     return filtered;
-  }, [beers, searchTerm, selectedType, selectedGlass, abvRange, showOnTap, showInCans, showGlutenFree, sortBy]);
+  }, [hookFilteredBeers, showOnTap, showInCans, sortBy]);
 
-  const clearFilters = () => {
-    setSearchTerm('');
+  const clearFilters = useCallback(() => {
+    hookClearFilters();
     setSelectedType('all');
-    setSelectedGlass('all');
-    setAbvRange([0, 15]);
-    setShowOnTap(false);
-    setShowInCans(false);
-    setShowGlutenFree(false);
+    setAbvLevels([]);
+    setShowOnTap(true);
+    setShowInCans(true);
     setSortBy('name');
-  };
+  }, [hookClearFilters]);
 
-  const activeFilterCount = [
+  const localActiveFilterCount = [
     selectedType !== 'all',
-    selectedGlass !== 'all',
-    abvRange[0] !== 0 || abvRange[1] !== 15,
-    showOnTap,
-    showInCans,
-    showGlutenFree,
+    abvLevels.length > 0,
+    // Only count as active if different from defaults (both on)
+    (!showOnTap || !showInCans),
   ].filter(Boolean).length;
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <PageBreadcrumbs className="mb-6" />
       {/* Page Header */}
       <div className="mb-8">
         <h1 className="text-4xl font-bold mb-4">Our Beers</h1>
-        <p className="text-lg">
-          Discover our handcrafted selection of beers, from hoppy IPAs to rich stouts.
-          Each beer is brewed with care using the finest ingredients and traditional techniques.
-        </p>
       </div>
 
       {/* Sort and Mobile Filter Controls */}
       <div className="flex items-center justify-between mb-6">
         {/* Mobile Filter Toggle */}
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
           onClick={() => setShowFilters(!showFilters)}
-          className="lg:hidden"
+          className="lg:hidden bg-secondary"
         >
           <Filter className="h-4 w-4 mr-2" />
           Filters
-          {activeFilterCount > 0 && (
+          {localActiveFilterCount > 0 && (
             <Badge variant="secondary" className="ml-2">
-              {activeFilterCount}
+              {localActiveFilterCount}
             </Badge>
           )}
         </Button>
@@ -182,7 +207,7 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
         {/* Sort Dropdown - Always visible */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="min-w-[140px] ml-auto">
+            <Button variant="ghost" size="sm" className="min-w-[140px] ml-auto bg-secondary">
               <ArrowUpDown className="mr-2 h-4 w-4" />
               Sort by
               <ChevronDown className="ml-auto h-4 w-4" />
@@ -193,25 +218,19 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => setSortBy('name')}
-              className={cn("cursor-pointer", sortBy === 'name' && "bg-accent")}
+              className={cn("cursor-pointer", sortBy === 'name' && "bg-muted")}
             >
               Name (A-Z)
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => setSortBy('type')}
-              className={cn("cursor-pointer", sortBy === 'type' && "bg-accent")}
-            >
-              Type
-            </DropdownMenuItem>
-            <DropdownMenuItem
               onClick={() => setSortBy('abv-asc')}
-              className={cn("cursor-pointer", sortBy === 'abv-asc' && "bg-accent")}
+              className={cn("cursor-pointer", sortBy === 'abv-asc' && "bg-muted")}
             >
               ABV (Low to High)
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => setSortBy('abv-desc')}
-              className={cn("cursor-pointer", sortBy === 'abv-desc' && "bg-accent")}
+              className={cn("cursor-pointer", sortBy === 'abv-desc' && "bg-muted")}
             >
               ABV (High to Low)
             </DropdownMenuItem>
@@ -221,20 +240,32 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
 
       {/* Mobile Filters */}
       {showFilters && (
-        <Card className="lg:hidden mb-6">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base">Filters</CardTitle>
+        <Card className="lg:hidden mb-6 border-0 shadow-none dark:bg-transparent">
+          <CardHeader className="p-0">
+            <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                {activeFilterCount > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={clearFilters}
-                    className="h-auto p-1 text-xs"
-                  >
-                    Clear all
-                  </Button>
+                <CardTitle className="text-base">Filters</CardTitle>
+                <span className="text-sm text-muted-foreground">
+                  {filteredBeers.length} {filteredBeers.length === 1 ? 'beer' : 'beers'}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                {localActiveFilterCount > 0 && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={clearFilters}
+                        className="h-auto p-1"
+                      >
+                        <RotateCcw className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Reset filters</p>
+                    </TooltipContent>
+                  </Tooltip>
                 )}
                 <Button
                   variant="ghost"
@@ -246,30 +277,27 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
                 </Button>
               </div>
             </div>
-            <div className="text-sm text-muted-foreground mt-2">
-              {filteredBeers.length} {filteredBeers.length === 1 ? 'beer' : 'beers'}
-            </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="p-0 space-y-4">
             {/* Mobile search */}
             <div className="relative">
               <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="search"
                 placeholder="Search beers..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8"
+                value={filters.search || ''}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                className="pl-8 bg-secondary"
               />
             </div>
 
             {/* Mobile type filter */}
-            <Select value={selectedType} onValueChange={setSelectedType}>
-              <SelectTrigger>
-                <SelectValue placeholder="All types" />
+            <Select value={selectedType} onValueChange={handleTypeChange}>
+              <SelectTrigger className="w-full bg-secondary">
+                <SelectValue placeholder="Filter Styles" className="text-muted-foreground/60 placeholder:text-muted-foreground/60" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All types</SelectItem>
+                <SelectItem value="all">Filter Styles</SelectItem>
                 {beerTypes.map(type => (
                   <SelectItem key={type} value={type}>
                     {type}
@@ -285,7 +313,7 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
                 size="sm"
                 onClick={() => setShowOnTap(!showOnTap)}
               >
-                On Tap
+                Pouring
               </Button>
               <Button
                 variant={showInCans ? "default" : "outline"}
@@ -294,13 +322,49 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
               >
                 In Cans
               </Button>
-              <Button
-                variant={showGlutenFree ? "default" : "outline"}
-                size="sm"
-                onClick={() => setShowGlutenFree(!showGlutenFree)}
+            </div>
+
+            {/* Mobile ABV filters */}
+            <div>
+              <Label className="text-sm mb-2 block">Alc by Volume</Label>
+              <ToggleGroup
+                type="multiple"
+                variant="outline"
+                value={abvLevels}
+                onValueChange={handleABVLevelsChange}
+                className="justify-start"
               >
-                Gluten Free
-              </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <ToggleGroupItem value="low" aria-label="Low ABV (0-5%)">
+                      <SignalLow className="h-4 w-4" />
+                    </ToggleGroupItem>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Low (0-5%)</p>
+                  </TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <ToggleGroupItem value="medium" aria-label="Medium ABV (5-7%)">
+                      <SignalMedium className="h-4 w-4" />
+                    </ToggleGroupItem>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Medium (5-7%)</p>
+                  </TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <ToggleGroupItem value="high" aria-label="High ABV (7%+)">
+                      <SignalHigh className="h-4 w-4" />
+                    </ToggleGroupItem>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>High (7%+)</p>
+                  </TooltipContent>
+                </Tooltip>
+              </ToggleGroup>
             </div>
           </CardContent>
         </Card>
@@ -309,52 +373,57 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Filters Sidebar - Desktop */}
         <div className="hidden lg:block">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>Filters</span>
-                {activeFilterCount > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={clearFilters}
-                    className="h-auto p-0 text-xs"
-                  >
-                    Clear all
-                  </Button>
+          <Card className="border-0 shadow-none dark:bg-transparent">
+            <CardHeader className="pl-0">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CardTitle>Filters</CardTitle>
+                  <span className="text-sm text-muted-foreground">
+                    {filteredBeers.length} {filteredBeers.length === 1 ? 'beer' : 'beers'}
+                  </span>
+                </div>
+                {localActiveFilterCount > 0 && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={clearFilters}
+                        className="h-auto p-0"
+                      >
+                        <RotateCcw className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Reset filters</p>
+                    </TooltipContent>
+                  </Tooltip>
                 )}
-              </CardTitle>
-              <div className="text-sm text-muted-foreground mt-2">
-                {filteredBeers.length} {filteredBeers.length === 1 ? 'beer' : 'beers'}
               </div>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 pl-0">
               {/* Search */}
-              <div className="space-y-2">
-                <Label>Search</Label>
+              <div>
                 <div className="relative">
                   <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     type="search"
                     placeholder="Search beers..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-8"
+                    value={filters.search || ''}
+                    onChange={(e) => handleSearchChange(e.target.value)}
+                    className="pl-8 bg-secondary"
                   />
                 </div>
               </div>
 
-              <Separator />
-
               {/* Type Filter */}
-              <div className="space-y-2">
-                <Label>Type</Label>
-                <Select value={selectedType} onValueChange={setSelectedType}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All types" />
+              <div>
+                <Select value={selectedType} onValueChange={handleTypeChange}>
+                  <SelectTrigger className="w-full bg-secondary">
+                    <SelectValue placeholder="Filter Styles" className="text-muted-foreground/60 placeholder:text-muted-foreground/60" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All types</SelectItem>
+                    <SelectItem value="all">Filter Styles</SelectItem>
                     {beerTypes.map(type => (
                       <SelectItem key={type} value={type}>
                         {type}
@@ -364,91 +433,87 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
                 </Select>
               </div>
 
-              {/* Glass Filter */}
-              <div className="space-y-2">
-                <Label>Glass</Label>
-                <Select value={selectedGlass} onValueChange={setSelectedGlass}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="All glasses" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All glasses</SelectItem>
-                    {glassTypes.map(glass => (
-                      <SelectItem key={glass} value={glass}>
-                        {glass}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* ABV Range */}
-              <div className="space-y-2">
-                <Label>ABV: {abvRange[0]}% - {abvRange[1]}%</Label>
-                <Slider
-                  min={0}
-                  max={15}
-                  step={0.5}
-                  value={abvRange}
-                  onValueChange={(value) => setAbvRange(value as [number, number])}
-                  className="w-full"
-                />
-              </div>
-
-              <Separator />
-
               {/* Availability Filters */}
               <div className="space-y-3">
-                <Label>Availability</Label>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <label htmlFor="on-tap" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                      On Tap
-                    </label>
-                    <Switch
-                      id="on-tap"
-                      checked={showOnTap}
-                      onCheckedChange={setShowOnTap}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <label htmlFor="in-cans" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                      In Cans
-                    </label>
-                    <Switch
-                      id="in-cans"
-                      checked={showInCans}
-                      onCheckedChange={setShowInCans}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <label htmlFor="gluten-free" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                      Gluten Free
-                    </label>
-                    <Switch
-                      id="gluten-free"
-                      checked={showGlutenFree}
-                      onCheckedChange={setShowGlutenFree}
-                    />
-                  </div>
+                <div className="flex items-center justify-between">
+                  <label htmlFor="on-tap" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    Pouring
+                  </label>
+                  <Switch
+                    id="on-tap"
+                    checked={showOnTap}
+                    onCheckedChange={setShowOnTap}
+                  />
                 </div>
+                <div className="flex items-center justify-between">
+                  <label htmlFor="in-cans" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    In Cans
+                  </label>
+                  <Switch
+                    id="in-cans"
+                    checked={showInCans}
+                    onCheckedChange={setShowInCans}
+                  />
+                </div>
+              </div>
+
+              {/* ABV Levels */}
+              <div className="space-y-3">
+                <Label>Alc by Volume</Label>
+                <ToggleGroup
+                  type="multiple"
+                  variant="outline"
+                  value={abvLevels}
+                  onValueChange={handleABVLevelsChange}
+                  className="justify-start"
+                >
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <ToggleGroupItem value="low" aria-label="Low ABV (0-5%)">
+                        <SignalLow className="h-4 w-4" />
+                      </ToggleGroupItem>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Low (0-5%)</p>
+                    </TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <ToggleGroupItem value="medium" aria-label="Medium ABV (5-7%)">
+                        <SignalMedium className="h-4 w-4" />
+                      </ToggleGroupItem>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Medium (5-7%)</p>
+                    </TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <ToggleGroupItem value="high" aria-label="High ABV (7%+)">
+                        <SignalHigh className="h-4 w-4" />
+                      </ToggleGroupItem>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>High (7%+)</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </ToggleGroup>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Main Content */}
+        {/* Main Content - Using Homepage Beer Card Style */}
         <div className="lg:col-span-3">
           {/* Beer Grid */}
           {filteredBeers.length > 0 ? (
-            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-              {filteredBeers.map((beer) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" suppressHydrationWarning>
+              {filteredBeers.map((beer, index) => (
                 <BeerCard
-                  key={beer.variant}
+                  key={`${beer.variant}-${index}`}
                   beer={beer}
+                  variant="minimal"
                   showLocation={false}
-                  showPricing={false}
-                  showAvailability={true}
                 />
               ))}
             </div>

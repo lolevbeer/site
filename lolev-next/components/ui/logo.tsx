@@ -20,16 +20,24 @@ export function Logo({
   );
 }
 
+interface LogoWithTextProps {
+  className?: string;
+  logoWidth?: number;
+  logoHeight?: number;
+  textClassName?: string;
+  priority?: boolean;
+}
+
 export function LogoWithText({
   className = "",
   logoWidth = 32,
   logoHeight = 35,
   textClassName = "",
-}: LogoProps & { textClassName?: string }) {
+}: LogoWithTextProps) {
   return (
     <div className={cn("flex items-center gap-2", className)}>
       <Logo width={logoWidth} height={logoHeight} />
-      <span className={cn("font-bold text-xl", textClassName)}>Lolev Beer</span>
+      <span className={cn("font-bold text-xl text-foreground", textClassName)}>Lolev Beer</span>
     </div>
   );
 }

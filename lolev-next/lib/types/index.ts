@@ -15,13 +15,16 @@ export type {
   BeerSortOptions,
   BeerPricing,
   BeerAvailability,
+  BeerVariant,
+  BeerType,
+  BeerGlass,
+  BeerSortBy,
+  BeerSortOrder,
 } from './beer';
 
 export {
   GlassType,
   BeerStyle,
-  type BeerSortBy,
-  type BeerSortOrder,
 } from './beer';
 
 // Location types
@@ -36,6 +39,7 @@ export type {
   LocationSelection,
   LocationKey,
   LocationValue,
+  LocationFilter,
 } from './location';
 
 export {
@@ -132,9 +136,9 @@ export interface BaseSortOptions {
 export interface UserPreferences {
   preferredLocation?: Location;
   favoriteBeers?: string[];
-  dietaryRestrictions?: DietaryOption[];
-  eventNotifications?: EventNotificationPreferences;
-  foodNotifications?: FoodVendorNotificationPreferences;
+  dietaryRestrictions?: string[];
+  eventNotifications?: Record<string, boolean>;
+  foodNotifications?: Record<string, boolean>;
 }
 
 // Form validation types

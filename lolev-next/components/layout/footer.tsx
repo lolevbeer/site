@@ -1,30 +1,24 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { SocialLinks } from './social-links';
 import { Logo } from '@/components/ui/logo';
-import { Location, LocationDisplayNames, type LocationInfo, type LocationHours } from '@/lib/types';
+import { Location, type LocationInfo, type LocationHours } from '@/lib/types';
 import { LOCATIONS_DATA } from '@/lib/config/locations';
-import { MapPin, Clock, Phone, Mail, ExternalLink } from 'lucide-react';
+import { MapPin, Clock, Phone, Mail } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-/**
- * Format time from 24-hour to 12-hour format
- */
-function formatTime(time: string): string {
-  const [hours, minutes] = time.split(':').map(Number);
-  const ampm = hours >= 12 ? 'PM' : 'AM';
-  const displayHours = hours % 12 || 12;
-  return `${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
-}
+import { format24to12Hour } from '@/lib/utils/formatters';
+import { navigationItems } from './navigation';
 
 /**
  * Get day name from hours key
  */
-function getDayName(day: keyof LocationHours): string {
-  const dayNames = {
+type DayOfWeek = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+
+function getDayName(day: DayOfWeek): string {
+  const dayNames: Record<DayOfWeek, string> = {
     monday: 'Monday',
     tuesday: 'Tuesday',
     wednesday: 'Wednesday',
@@ -41,7 +35,7 @@ function getDayName(day: keyof LocationHours): string {
  */
 function HoursDisplay({ hours }: { hours: LocationHours }) {
   const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-  const today = dayNames[new Date().getDay()] as keyof LocationHours;
+  const today = dayNames[new Date().getDay()] as DayOfWeek;
 
   return (
     <div className="space-y-1 text-sm">
@@ -49,7 +43,7 @@ function HoursDisplay({ hours }: { hours: LocationHours }) {
         if (day === 'notes') return null;
 
         const isToday = day === today;
-        const dayName = getDayName(day as keyof LocationHours);
+        const dayName = getDayName(day as DayOfWeek);
 
         return (
           <div
@@ -63,7 +57,7 @@ function HoursDisplay({ hours }: { hours: LocationHours }) {
             <span>
               {dayHours.closed
                 ? 'Closed'
-                : `${formatTime(dayHours.open)} - ${formatTime(dayHours.close)}`
+                : `${format24to12Hour(dayHours.open)} - ${format24to12Hour(dayHours.close)}`
               }
             </span>
           </div>
@@ -84,33 +78,34 @@ function HoursDisplay({ hours }: { hours: LocationHours }) {
 function LocationInfo({ location }: { location: LocationInfo }) {
   return (
     <div className="space-y-4">
+      {/* Hours */}
+      <div className="flex items-start space-x-3">
+        <Clock className="h-5 w-5 mt-0.5 text-muted-foreground flex-shrink-0" />
+        <div className="flex-1">
+          <p className="font-semibold mb-2">Hours</p>
+          <HoursDisplay hours={location.hours} />
+        </div>
+      </div>
+
       {/* Address */}
       <div className="flex items-start space-x-3">
         <MapPin className="h-5 w-5 mt-0.5 text-muted-foreground flex-shrink-0" />
         <div>
-          <p className="font-semibold">{location.name}</p>
+          <p className="font-semibold">Lolev {location.name}</p>
           <p className="text-sm text-muted-foreground">
             {location.address}
             <br />
             {location.city}, {location.state} {location.zipCode}
           </p>
           {location.mapUrl && (
-            <Button
-              variant="link"
-              size="sm"
-              asChild
-              className="h-auto p-0 text-xs"
+            <Link
+              href={location.mapUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors mt-2 inline-block underline-offset-4 hover:underline"
             >
-              <Link
-                href={location.mapUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center space-x-1"
-              >
-                <span>View on Maps</span>
-                <ExternalLink className="h-3 w-3" />
-              </Link>
-            </Button>
+              View on Maps
+            </Link>
           )}
         </div>
       </div>
@@ -140,116 +135,73 @@ function LocationInfo({ location }: { location: LocationInfo }) {
           </div>
         )}
       </div>
-
-      {/* Hours */}
-      <div className="flex items-start space-x-3">
-        <Clock className="h-5 w-5 mt-0.5 text-muted-foreground flex-shrink-0" />
-        <div className="flex-1">
-          <p className="font-semibold mb-2">Hours</p>
-          <HoursDisplay hours={location.hours} />
-        </div>
-      </div>
     </div>
   );
 }
 
 /**
- * Main footer component with location selector and information
+ * Main footer component with both locations displayed
  */
 export function Footer() {
-  const [selectedLocation, setSelectedLocation] = useState<Location>(Location.LAWRENCEVILLE);
-
   return (
-    <footer className="border-t bg-transparent">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-          {/* Brand and Description */}
-          <div className="lg:col-span-1">
-            <Logo className="mb-4" />
-            <p className="text-sm text-muted-foreground mb-4">
-              Craft brewery with locations in Lawrenceville and Zelienople,
-              Pennsylvania. Serving exceptional beer and building community.
-            </p>
-            <SocialLinks size="sm" />
-          </div>
-
-          {/* Quick Links */}
+    <footer className="bg-background">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid gap-12 md:grid-cols-3">
+          {/* Lawrenceville Location */}
           <div>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link href="/beer-map" className="text-muted-foreground hover:text-foreground">
-                  Beer Map
-                </Link>
-              </li>
-              <li>
-                <Link href="/events" className="text-muted-foreground hover:text-foreground">
-                  Events
-                </Link>
-              </li>
-              <li>
-                <Link href="/food" className="text-muted-foreground hover:text-foreground">
-                  Food Trucks
-                </Link>
-              </li>
-              <li>
-                <Link href="/about" className="text-muted-foreground hover:text-foreground">
-                  About Us
-                </Link>
-              </li>
-              <li>
-                <Link href="/contact" className="text-muted-foreground hover:text-foreground">
-                  Contact
-                </Link>
-              </li>
-            </ul>
+            <h3 className="font-semibold mb-4 text-center md:text-left">Lawrenceville</h3>
+            <LocationInfo location={LOCATIONS_DATA[Location.LAWRENCEVILLE]} />
           </div>
 
-          {/* Location Selector and Info */}
-          <div className="lg:col-span-2">
-            <div className="mb-4">
-              <h3 className="font-semibold mb-3">Visit Us</h3>
-              <div className="inline-flex items-center p-1 bg-secondary rounded-lg">
-                <button
-                  onClick={() => setSelectedLocation(Location.LAWRENCEVILLE)}
-                  className={cn(
-                    "px-4 py-2 text-sm font-medium rounded-md transition-all",
-                    selectedLocation === Location.LAWRENCEVILLE
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  Lawrenceville
-                </button>
-                <button
-                  onClick={() => setSelectedLocation(Location.ZELIENOPLE)}
-                  className={cn(
-                    "px-4 py-2 text-sm font-medium rounded-md transition-all",
-                    selectedLocation === Location.ZELIENOPLE
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  Zelienople
-                </button>
-              </div>
-            </div>
+          {/* Zelienople Location */}
+          <div>
+            <h3 className="font-semibold mb-4 text-center md:text-left">Zelienople</h3>
+            <LocationInfo location={LOCATIONS_DATA[Location.ZELIENOPLE]} />
+          </div>
 
-            <LocationInfo location={LOCATIONS_DATA[selectedLocation]} />
+          {/* Brand and Links */}
+          <div className="flex flex-col">
+            <p className="text-sm text-muted-foreground mb-6">
+              Craft brewery serving purposeful beer and building community in the Pittsburgh area.
+            </p>
+
+            <ul className="space-y-2 text-sm mb-6">
+              {navigationItems.map((item) => (
+                <li key={item.href}>
+                  <Link href={item.href} className="text-muted-foreground hover:text-foreground transition-colors">
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+
+            <Logo className="py-12 text-muted-foreground" />
+
+            <SocialLinks size="sm" className="mt-auto w-full" />
           </div>
         </div>
 
         {/* Bottom footer */}
-        <div className="mt-8 pt-8 border-t flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
+        <div className="mt-12 pt-8 border-t flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
           <p className="text-sm text-muted-foreground">
             © {new Date().getFullYear()} Lolev Beer. All rights reserved.
           </p>
-          <div className="flex space-x-4 text-sm">
-            <Link href="/privacy" className="text-muted-foreground hover:text-foreground">
-              Privacy Policy
-            </Link>
-            <Link href="/terms" className="text-muted-foreground hover:text-foreground">
-              Terms of Service
-            </Link>
+          <div className="flex flex-wrap gap-2 justify-center">
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/faq">
+                FAQ
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/privacy">
+                Privacy Policy
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/terms">
+                Terms of Service
+              </Link>
+            </Button>
           </div>
         </div>
       </div>

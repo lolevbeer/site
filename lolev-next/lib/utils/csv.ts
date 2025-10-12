@@ -3,6 +3,39 @@
  */
 
 /**
+ * Parse CSV line handling quoted fields properly
+ */
+function parseCSVLine(line: string): string[] {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+
+    if (char === '"') {
+      inQuotes = !inQuotes;
+    } else if (char === ',' && !inQuotes) {
+      result.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+
+  // Don't forget the last field
+  result.push(current.trim());
+
+  // Remove surrounding quotes from fields
+  return result.map(field => {
+    if (field.startsWith('"') && field.endsWith('"')) {
+      return field.slice(1, -1);
+    }
+    return field;
+  });
+}
+
+/**
  * Parse CSV string into array of objects
  */
 export function parseCSV<T = Record<string, any>>(csvText: string): T[] {
@@ -10,12 +43,12 @@ export function parseCSV<T = Record<string, any>>(csvText: string): T[] {
   if (lines.length === 0) return [];
 
   // Parse headers
-  const headers = lines[0].split(',').map(h => h.trim());
+  const headers = parseCSVLine(lines[0]);
 
   // Parse data rows
   const data: T[] = [];
   for (let i = 1; i < lines.length; i++) {
-    const values = lines[i].split(',').map(v => v.trim());
+    const values = parseCSVLine(lines[i]);
     const row: any = {};
 
     headers.forEach((header, index) => {

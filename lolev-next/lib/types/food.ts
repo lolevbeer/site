@@ -88,8 +88,6 @@ export interface FoodVendorDetailed {
   image?: string;
   /** Whether vendor is currently active */
   active: boolean;
-  /** Vendor rating (1-5) */
-  rating?: number;
   /** Popular menu items */
   popularItems?: string[];
   /** Price range (1-4: $, $$, $$$, $$$$) */
@@ -181,8 +179,6 @@ export interface FoodVendor {
   description?: string;
   /** Popular items */
   popular?: string[];
-  /** Rating */
-  rating?: number;
   /** Active status */
   isActive?: boolean;
 }
@@ -236,7 +232,7 @@ export interface FoodVendorFilters {
 /**
  * Food vendor sorting options
  */
-export type FoodVendorSortBy = 'name' | 'date' | 'rating' | 'priceRange';
+export type FoodVendorSortBy = 'name' | 'date' | 'priceRange';
 export type FoodVendorSortOrder = 'asc' | 'desc';
 
 export interface FoodVendorSortOptions {

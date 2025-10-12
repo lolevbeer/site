@@ -5,6 +5,7 @@
 import { Location } from '@/lib/types/location';
 import { FoodVendor, FoodSchedule } from '@/lib/types/food';
 import { fetchCSV } from './csv';
+import { getTodayEST, isTodayEST } from './date';
 
 export interface FoodCSVRow {
   vendor: string;
@@ -85,9 +86,23 @@ function parseFoodRow(row: FoodCSVRow, location: Location): { vendor: FoodVendor
   }
 
   const vendorId = generateVendorId(row.vendor);
-  const { start, end } = row.start && row.finish
-    ? { start: row.start, end: row.finish }
-    : parseTimeString(row.time);
+
+  // Handle time parsing - use start/finish if available, otherwise parse time string
+  let start: string, end: string;
+  if (row.start && row.finish) {
+    // Use explicit start/finish times
+    start = row.start;
+    end = row.finish;
+  } else if (row.time) {
+    // Parse time string
+    const parsed = parseTimeString(row.time);
+    start = parsed.start;
+    end = parsed.end;
+  } else {
+    // Default times when no time is specified
+    start = '5:00 PM';
+    end = '9:00 PM';
+  }
 
   // Create vendor
   const vendor: FoodVendor = {
@@ -97,7 +112,6 @@ function parseFoodRow(row: FoodCSVRow, location: Location): { vendor: FoodVendor
     website: row.site || undefined,
     description: `Enjoy delicious ${inferCuisineType(row.vendor)} cuisine from ${row.vendor}.`,
     popular: [],
-    rating: 4.5, // Default rating
     isActive: true
   };
 
@@ -113,7 +127,7 @@ function parseFoodRow(row: FoodCSVRow, location: Location): { vendor: FoodVendor
         startTime: start,
         endTime: end,
         location,
-        notes: row.day ? `Every ${row.day}` : undefined
+        notes: undefined
       };
     }
   }
@@ -166,11 +180,12 @@ export async function loadFoodFromCSV(): Promise<{
     // Filter to recent and upcoming schedules (within 60 days past and all future)
     const sixtyDaysAgo = new Date();
     sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+    const sixtyDaysAgoStr = `${sixtyDaysAgo.getFullYear()}-${String(sixtyDaysAgo.getMonth() + 1).padStart(2, '0')}-${String(sixtyDaysAgo.getDate()).padStart(2, '0')}`;
 
     const filteredSchedules = schedules.filter(schedule => {
-      const scheduleDate = new Date(schedule.date);
-      return scheduleDate >= sixtyDaysAgo;
-    }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      const scheduleDateStr = schedule.date.split('T')[0];
+      return scheduleDateStr >= sixtyDaysAgoStr;
+    }).sort((a, b) => a.date.localeCompare(b.date));
 
     return {
       vendors: Array.from(vendorsMap.values()),
@@ -187,16 +202,9 @@ export async function loadFoodFromCSV(): Promise<{
  */
 export async function getTodaysFoodTrucks(location: Location): Promise<FoodSchedule[]> {
   const { schedules } = await loadFoodFromCSV();
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
 
   return schedules.filter(schedule => {
-    const scheduleDate = new Date(schedule.date);
-    return schedule.location === location &&
-           scheduleDate >= today &&
-           scheduleDate < tomorrow;
+    return schedule.location === location && isTodayEST(schedule.date);
   });
 }
 
@@ -205,15 +213,15 @@ export async function getTodaysFoodTrucks(location: Location): Promise<FoodSched
  */
 export async function getUpcomingFoodTrucks(location: Location): Promise<FoodSchedule[]> {
   const { schedules } = await loadFoodFromCSV();
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const nextWeek = new Date(today);
+  const todayEST = getTodayEST();
+  const nextWeek = new Date(todayEST);
   nextWeek.setDate(nextWeek.getDate() + 7);
+  const nextWeekStr = nextWeek.toISOString().split('T')[0];
 
   return schedules.filter(schedule => {
-    const scheduleDate = new Date(schedule.date);
+    const scheduleDateStr = schedule.date.split('T')[0];
     return schedule.location === location &&
-           scheduleDate >= today &&
-           scheduleDate <= nextWeek;
+           scheduleDateStr >= todayEST &&
+           scheduleDateStr <= nextWeekStr;
   });
 }

@@ -6,7 +6,8 @@
 'use client';
 
 import React, { useState, useCallback, useMemo } from 'react';
-import { BeerFilters, BeerStyle } from '@/lib/types/beer';
+import type { BeerFilters } from '@/lib/types/beer';
+import { BeerStyle } from '@/lib/types/beer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -51,6 +52,7 @@ function SearchInput({
           onClick={() => onChange('')}
           className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
           type="button"
+          aria-label="Clear search"
         >
           ✕
         </button>
@@ -119,6 +121,15 @@ function StyleFilter({
               variant="secondary"
               className="text-xs cursor-pointer hover:bg-secondary/80"
               onClick={() => toggleStyle(style)}
+              role="button"
+              tabIndex={0}
+              aria-label={`Remove ${style} filter`}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  toggleStyle(style);
+                }
+              }}
             >
               {style} ✕
             </Badge>
@@ -218,7 +229,7 @@ function AvailabilityFilter({
 }) {
   const options = [
     { value: 'all', label: 'All' },
-    { value: 'draft', label: 'On Tap' },
+    { value: 'draft', label: 'Pouring' },
     { value: 'cans', label: 'Cans Available' },
   ] as const;
 
@@ -329,7 +340,7 @@ export function BeerFilters({
   }, [onFiltersChange]);
 
   return (
-    <Card className={className}>
+    <Card className={`shadow-none ${className}`}>
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">Filter Beers</CardTitle>

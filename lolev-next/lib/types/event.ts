@@ -13,6 +13,7 @@ export enum EventType {
   LIVE_MUSIC = 'live_music',
   GAME_NIGHT = 'game_night',
   SPECIAL_EVENT = 'special_event',
+  SPECIAL = 'special', // Alias for special events
   MARKET = 'market',
   SPORTS = 'sports',
   ENTERTAINMENT = 'entertainment',
@@ -20,6 +21,7 @@ export enum EventType {
   BREWERY_TOUR = 'brewery_tour',
   TASTING = 'tasting',
   FOOD_PAIRING = 'food_pairing',
+  FOOD_TRUCK = 'food_truck', // Food truck events
   COMMUNITY = 'community',
   SEASONAL = 'seasonal',
   RECURRING = 'recurring',

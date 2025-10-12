@@ -44,29 +44,45 @@ export enum BeerStyle {
  */
 export interface BeerPricing {
   /** Draft price per glass */
-  draftPrice?: string;
+  draftPrice?: number;
   /** Single can price */
-  canSingle?: string;
+  canSingle?: number;
   /** Four-pack price */
-  fourPack?: string;
+  fourPack?: number;
   /** Single can price (alternative field name) */
-  cansSingle?: string;
+  cansSingle?: number;
   /** Sale price indicator */
   salePrice?: boolean;
+}
+
+/**
+ * Location-specific beer availability
+ */
+export interface LocationBeerAvailability {
+  /** Tap number if on draft */
+  tap?: string;
+  /** Whether beer is available in cans */
+  cansAvailable?: boolean;
+  /** Whether single cans are available */
+  singleCanAvailable?: boolean;
 }
 
 /**
  * Beer availability information
  */
 export interface BeerAvailability {
-  /** Whether beer is available in cans */
+  /** Whether beer is available in cans (any location) */
   cansAvailable?: boolean;
-  /** Whether single cans are available */
+  /** Whether single cans are available (any location) */
   singleCanAvailable?: boolean;
   /** Whether beer should be hidden from the website */
   hideFromSite?: boolean;
-  /** Tap number if on draft */
+  /** Tap number if on draft (any location) */
   tap?: string;
+  /** Lawrenceville location availability */
+  lawrenceville?: LocationBeerAvailability;
+  /** Zelienople location availability */
+  zelienople?: LocationBeerAvailability;
 }
 
 /**
@@ -189,3 +205,10 @@ export interface BeerSortOptions {
   sortBy: BeerSortBy;
   order: BeerSortOrder;
 }
+
+/**
+ * Type aliases for backwards compatibility
+ */
+export type BeerVariant = string; // Beer variant/slug identifier
+export type BeerType = BeerStyle; // Alias for BeerStyle
+export type BeerGlass = GlassType; // Alias for GlassType
