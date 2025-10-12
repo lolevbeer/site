@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>titlescylla Contact</title>
+  <link rel="stylesheet" href="/assets/main.css">
+  <link href='https://fonts.googleapis.com/css?family=Poppins:200,300,400,700' rel='stylesheet' type='text/css'>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="apple-touch-icon" href="/assets/Lolev_W_no_text.png">
+  <script src='https://unpkg.com/qr-code-styling@1.5.0/lib/qr-code-styling.js'></script>
+</head>
+
+<body>
+  <section class="qr-code">
+    <div id="qr"></div>
+    <script type="text/javascript">
+      const qrCode = new QRCodeStyling({
+          type: "svg",
+          data: "https://lolev.beer/beer/scylla",
+          width: 50,
+          height: 50,
+          dotsOptions: {
+            color: "#000",
+            type: "dots"
+          },
+          backgroundOptions: {
+            color: "#FFFFFF",
+          },
+          imageOptions: {
+            crossOrigin: "anonymous",
+            margin: 0,
+            imageSize: 0.4,
+            margin: 10,
+          },
+          qrOptions: {
+            typeNumber: 0,
+            errorCorrectionLevel: 'L',
+          },
+          cornersSquareOptions: {
+            type: 'dots'
+          }
+      });
+      qrCode.append(document.getElementById("qr"));
+      qrCode.download({ name: "scylla-qr", extension: "svg" });
+    </script>
+    <a href="/beer/scylla">
+      <h3>scylla</h3>
+      <span>Imperial Stout</span>
+    </a>
+  </section>
+</body>
+</html>
