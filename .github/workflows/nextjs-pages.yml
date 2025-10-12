@@ -52,11 +52,26 @@ jobs:
         working-directory: ./lolev-next
         run: pnpm install --frozen-lockfile
 
+      - name: Sync data files to Next.js public folder
+        run: |
+          echo "Copying updated data files from _data/ to lolev-next/public/data/"
+          mkdir -p lolev-next/public/data
+          cp -v _data/*.csv lolev-next/public/data/ || true
+          cp -v _data/*.json lolev-next/public/data/ || true
+          cp -v _data/*.yml lolev-next/public/data/ || true
+          echo "Copying map data from assets/"
+          cp -v assets/processed_geo_data.json lolev-next/public/data/ || true
+          cp -v assets/ny_geo_data.json lolev-next/public/data/ || true
+          echo "Data sync complete"
+
       - name: Copy beer images for build
         run: |
           rm -rf lolev-next/public/images/beer
           mkdir -p lolev-next/public/images/beer
           cp assets/beer/*.webp lolev-next/public/images/beer/
+          cp assets/beer/*.png lolev-next/public/images/beer/
+          echo "Copied $(ls lolev-next/public/images/beer/*.webp | wc -l) webp files"
+          echo "Copied $(ls lolev-next/public/images/beer/*.png | wc -l) png files"
 
       - name: Build with Next.js
         working-directory: ./lolev-next
