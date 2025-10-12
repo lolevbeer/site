@@ -49,7 +49,7 @@ function SearchInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+        className="w-full px-3 py-2 text-base border border-input rounded-md bg-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
         aria-label="Search beers by name or description"
       />
       {value && (
@@ -204,7 +204,7 @@ function ABVRangeFilter({
             min="0"
             max="20"
             step="0.1"
-            className="w-full px-2 py-1 text-sm border border-input rounded bg-background"
+            className="w-full px-2 py-1 text-base border border-input rounded bg-background"
             aria-label="Minimum ABV percentage"
           />
         </div>
@@ -220,7 +220,7 @@ function ABVRangeFilter({
             min="0"
             max="20"
             step="0.1"
-            className="w-full px-2 py-1 text-sm border border-input rounded bg-background"
+            className="w-full px-2 py-1 text-base border border-input rounded bg-background"
             aria-label="Maximum ABV percentage"
           />
         </div>
