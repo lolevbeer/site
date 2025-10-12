@@ -64,7 +64,9 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
         <div className="flex h-full flex-col">
           {/* Location Switcher */}
           <div className="px-6 py-4">
-            <LocationTabs syncWithGlobalState={true} />
+            <div className="flex justify-end">
+              <LocationTabs syncWithGlobalState={true} />
+            </div>
           </div>
 
           {/* Navigation */}
@@ -78,12 +80,12 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
 
           {/* Social Links and Footer */}
           <div className="px-6 py-4">
-            <div className="mb-4">
-              <SocialLinks size="sm" className="w-full" />
+            <div className="mb-4 flex justify-end">
+              <SocialLinks size="sm" />
             </div>
 
             {/* Quick contact info */}
-            <div className="text-xs text-muted-foreground">
+            <div className="text-xs text-muted-foreground text-right">
               <p className="font-medium">Lolev Beer</p>
               <p>Lawrenceville & Zelienople</p>
             </div>

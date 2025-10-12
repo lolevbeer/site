@@ -73,7 +73,7 @@ export function Navigation({
             className={cn(
               "relative transition-all duration-200 ease-in-out whitespace-nowrap",
               vertical
-                ? "flex items-center rounded-md px-3 py-2 text-sm font-medium"
+                ? "flex items-center justify-end rounded-md px-3 py-2 text-sm font-medium w-full"
                 : "text-sm font-medium",
               isActive
                 ? vertical
