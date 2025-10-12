@@ -124,7 +124,7 @@ export function FeaturedCans({ lawrencevilleCans, zelienopleCans }: FeaturedCans
         <div className="text-center">
           <Button asChild variant="default" size="lg">
             <Link href="/beer">
-              View All Beers
+              View All Beer
             </Link>
           </Button>
         </div>

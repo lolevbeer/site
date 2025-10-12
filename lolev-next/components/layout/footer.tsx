@@ -187,7 +187,12 @@ export function Footer() {
           <p className="text-sm text-muted-foreground">
             © {new Date().getFullYear()} Lolev Beer. All rights reserved.
           </p>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2 justify-center">
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/faq">
+                FAQ
+              </Link>
+            </Button>
             <Button asChild variant="ghost" size="sm">
               <Link href="/privacy">
                 Privacy Policy

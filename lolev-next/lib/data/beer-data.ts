@@ -7,6 +7,7 @@ import Papa from 'papaparse';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
 import { logger } from '@/lib/utils/logger';
+import { GlassType } from '@/lib/types/beer';
 
 interface BeerRow {
   variant: string;
@@ -147,21 +148,36 @@ export async function getDraftBeers(location: 'lawrenceville' | 'zelienople') {
       if (row.variant) cansSet.add(row.variant.toLowerCase());
     });
 
+    // Helper to convert glass string to GlassType
+    const getGlassType = (glass?: string): GlassType => {
+      if (!glass) return GlassType.PINT;
+      const normalized = glass.toLowerCase();
+      if (normalized === 'teku') return GlassType.TEKU;
+      if (normalized === 'stein') return GlassType.STEIN;
+      return GlassType.PINT;
+    };
+
     // Parse draft beers
     const draftData = parseCSV<DraftBeerRow>(draftText);
     const beers = draftData
       .filter(row => row.variant)
       .map(row => ({
-        tap: row.tap || '',
         variant: row.variant,
         name: row.name || '',
         type: row.type || '',
-        abv: row.abv || '',
-        glass: row.glass || '',
-        price: row.price || '',
+        abv: parseFloat(row.abv || '0'),
+        glass: getGlassType(row.glass),
         description: row.description || '',
         image: row.image === 'TRUE',
-        cansAvailable: cansSet.has(row.variant.toLowerCase())
+        glutenFree: false,
+        pricing: {
+          draftPrice: row.price ? parseFloat(row.price) : undefined,
+        },
+        availability: {
+          cansAvailable: cansSet.has(row.variant.toLowerCase()),
+          tap: row.tap,
+          hideFromSite: false,
+        },
       }));
 
     return beers;

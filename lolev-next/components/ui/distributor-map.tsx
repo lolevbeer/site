@@ -457,10 +457,10 @@ export function DistributorMap({
           "md:w-1/2",
           mobileView === 'list' ? "w-full" : "hidden md:block"
         )}>
-          <ScrollArea className="h-full" ref={scrollAreaRef}>
-            <div className="p-4 space-y-3">
-              {locationsWithDistance.length > 0 ? (
-                locationsWithDistance.map((location) => {
+          {locationsWithDistance.length > 0 ? (
+            <ScrollArea className="h-full" ref={scrollAreaRef}>
+              <div className="p-4 space-y-3">
+                {locationsWithDistance.map((location) => {
                   const isSelected = selectedLocation?.properties.uniqueId === location.properties.uniqueId;
                   return (
                     <LocationCard
@@ -473,9 +473,11 @@ export function DistributorMap({
                       innerRef={isSelected ? selectedCardRef : undefined}
                     />
                   );
-                })
-              ) : (
-                <div className="flex items-center justify-center h-full">
+                })}
+              </div>
+            </ScrollArea>
+          ) : (
+            <div className="flex items-center justify-center h-full p-4">
                   {searchTerm ? (
                     <Empty>
                       <EmptyHeader>
@@ -519,10 +521,8 @@ export function DistributorMap({
                       </EmptyContent>
                     </Empty>
                   )}
-                </div>
-              )}
             </div>
-          </ScrollArea>
+          )}
         </div>
       </div>
     </div>

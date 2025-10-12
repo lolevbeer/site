@@ -10,6 +10,8 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
+import { JsonLd } from '@/components/seo/json-ld';
+import { generateBreadcrumbSchema } from '@/lib/utils/breadcrumb-schema';
 
 interface BreadcrumbSegment {
   label: string;
@@ -22,6 +24,7 @@ const pathLabels: Record<string, string> = {
   'events': 'Events',
   'food': 'Food',
   'about': 'About',
+  'faq': 'FAQ',
   'privacy': 'Privacy Policy',
   'terms': 'Terms of Service',
 };
@@ -68,28 +71,36 @@ export function PageBreadcrumbs({ customSegments, className }: PageBreadcrumbsPr
 
   const breadcrumbs = customSegments || generateBreadcrumbs(pathname);
 
-  return (
-    <Breadcrumb className={className}>
-      <BreadcrumbList>
-        {breadcrumbs.map((crumb, index) => {
-          const isLast = index === breadcrumbs.length - 1;
+  // Generate BreadcrumbList schema for SEO
+  const breadcrumbSchema = generateBreadcrumbSchema(breadcrumbs);
 
-          return (
-            <div key={crumb.href} className="contents">
-              <BreadcrumbItem>
-                {isLast ? (
-                  <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
-                ) : (
-                  <BreadcrumbLink asChild>
-                    <Link href={crumb.href}>{crumb.label}</Link>
-                  </BreadcrumbLink>
-                )}
-              </BreadcrumbItem>
-              {!isLast && <BreadcrumbSeparator />}
-            </div>
-          );
-        })}
-      </BreadcrumbList>
-    </Breadcrumb>
+  return (
+    <>
+      {/* Add BreadcrumbList JSON-LD for SEO */}
+      <JsonLd data={breadcrumbSchema} />
+
+      <Breadcrumb className={className}>
+        <BreadcrumbList>
+          {breadcrumbs.map((crumb, index) => {
+            const isLast = index === breadcrumbs.length - 1;
+
+            return (
+              <div key={crumb.href} className="contents">
+                <BreadcrumbItem>
+                  {isLast ? (
+                    <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
+                  ) : (
+                    <BreadcrumbLink asChild>
+                      <Link href={crumb.href}>{crumb.label}</Link>
+                    </BreadcrumbLink>
+                  )}
+                </BreadcrumbItem>
+                {!isLast && <BreadcrumbSeparator />}
+              </div>
+            );
+          })}
+        </BreadcrumbList>
+      </Breadcrumb>
+    </>
   );
 }

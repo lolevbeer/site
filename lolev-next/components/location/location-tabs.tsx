@@ -37,7 +37,9 @@ export function LocationTabs({
 }: LocationTabsProps) {
   const { currentLocation, setLocation, isClient } = useLocationContext();
 
-  const controlledValue = syncWithGlobalState && isClient ? currentLocation : value;
+  // When syncing with global state, always use currentLocation as the controlled value
+  // to prevent switching between controlled/uncontrolled modes during hydration
+  const controlledValue = syncWithGlobalState ? currentLocation : value;
   const controlledDefaultValue = syncWithGlobalState ? currentLocation : defaultValue;
 
   const handleValueChange = (newValue: string) => {

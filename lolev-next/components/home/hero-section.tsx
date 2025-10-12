@@ -95,7 +95,7 @@ export function HeroSection({ availableBeers }: HeroSectionProps) {
         </p>
         <Button asChild variant="default" size="lg" className="mt-2 md:mt-6">
           <Link href="/about">
-            More About Lolev
+            About Lolev
           </Link>
         </Button>
       </div>

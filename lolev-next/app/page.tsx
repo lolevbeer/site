@@ -9,6 +9,9 @@ import {
   getUpcomingEvents,
   getUpcomingFood,
 } from '@/lib/data/beer-data';
+import { JsonLd } from '@/components/seo/json-ld';
+import { generateEventJsonLd, generateFoodEventJsonLd } from '@/lib/utils/json-ld';
+import { generateAllLocalBusinessSchemas, generateOrganizationSchema } from '@/lib/utils/local-business-schema';
 
 // Lazy load below-the-fold components
 const FeaturedCans = dynamic(() => import('@/components/home/featured-cans').then(mod => ({ default: mod.FeaturedCans })), {
@@ -71,27 +74,73 @@ export default async function Home() {
     getUpcomingFood('zelienople'),
   ]);
 
+  // Combine all events and food for JSON-LD
+  const allEvents = [...lawrencevilleEvents, ...zelienopleEvents];
+  const allFood = [...lawrencevilleFood, ...zelienopleFood];
+
+  // Filter out invalid events and food before generating JSON-LD
+  const validEvents = allEvents.filter(event => event && event.title && event.date && event.location);
+  const validFood = allFood.filter(food => food && food.vendor && food.date && food.location);
+
+  // Generate JSON-LD for upcoming events and food
+  const eventsJsonLd = validEvents.length > 0 ? {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    itemListElement: validEvents.map((event, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      item: generateEventJsonLd(event)
+    }))
+  } : null;
+
+  const foodJsonLd = validFood.length > 0 ? {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    itemListElement: validFood.map((food, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      item: generateFoodEventJsonLd(food)
+    }))
+  } : null;
+
+  // Generate LocalBusiness and Organization schemas
+  const localBusinessSchemas = generateAllLocalBusinessSchemas();
+  const organizationSchema = generateOrganizationSchema();
+
   return (
-    <div className="min-h-screen">
-      <HeroSection availableBeers={availableBeers} />
-      <FeaturedBeers
-        lawrencevilleBeers={lawrencevilleBeers}
-        zelienopleBeers={zelienopleBeers}
-      />
-      <FeaturedCans
-        lawrencevilleCans={lawrencevilleCans}
-        zelienopleCans={zelienopleCans}
-      />
-      <UpcomingFood
-        lawrencevilleFood={lawrencevilleFood}
-        zelienopleFood={zelienopleFood}
-      />
-      <UpcomingEvents
-        lawrencevilleEvents={lawrencevilleEvents}
-        zelienopleEvents={zelienopleEvents}
-      />
-      <UpcomingBeers />
-      <LocationsSection />
-    </div>
+    <>
+      {/* Add JSON-LD structured data for SEO */}
+      {/* LocalBusiness schemas for both brewery locations */}
+      {localBusinessSchemas.map((schema, index) => (
+        <JsonLd key={`local-business-${index}`} data={schema} />
+      ))}
+      {/* Organization schema */}
+      <JsonLd data={organizationSchema} />
+      {/* Events and Food */}
+      {eventsJsonLd && <JsonLd data={eventsJsonLd} />}
+      {foodJsonLd && <JsonLd data={foodJsonLd} />}
+
+      <div className="min-h-screen">
+        <HeroSection availableBeers={availableBeers} />
+        <FeaturedBeers
+          lawrencevilleBeers={lawrencevilleBeers}
+          zelienopleBeers={zelienopleBeers}
+        />
+        <FeaturedCans
+          lawrencevilleCans={lawrencevilleCans}
+          zelienopleCans={zelienopleCans}
+        />
+        <UpcomingFood
+          lawrencevilleFood={lawrencevilleFood}
+          zelienopleFood={zelienopleFood}
+        />
+        <UpcomingEvents
+          lawrencevilleEvents={lawrencevilleEvents}
+          zelienopleEvents={zelienopleEvents}
+        />
+        <UpcomingBeers />
+        <LocationsSection />
+      </div>
+    </>
   );
 }

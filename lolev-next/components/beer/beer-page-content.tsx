@@ -5,16 +5,17 @@
 
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { Beer } from '@/lib/types/beer';
+import React, { useState, useMemo, useCallback } from 'react';
+import { Beer, BeerStyle } from '@/lib/types/beer';
 import type { LocationFilter } from '@/lib/types/location';
+import { BeerCard } from '@/components/beer/beer-card';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Search, Filter, X, ChevronDown, ArrowUpDown, SignalLow, SignalMedium, SignalHigh, RotateCcw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { useBeerFilters } from '@/lib/hooks/use-beer-filters';
+import { ABV_LEVELS, type ABVLevel } from '@/lib/constants/beer-filters';
 import {
   Select,
   SelectContent,
@@ -32,7 +33,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Label } from '@/components/ui/label';
 import { CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
@@ -46,13 +46,22 @@ interface BeerPageContentProps {
 
 type SortOption = 'name' | 'abv-asc' | 'abv-desc' | 'type';
 
-type ABVLevel = 'low' | 'medium' | 'high';
-
 export function BeerPageContent({ beers }: BeerPageContentProps) {
-  const { currentLocation } = useLocationContext();
-  // Cast to LocationFilter to allow comparison with 'all'
-  const locationFilter = currentLocation as LocationFilter;
-  const [searchTerm, setSearchTerm] = useState('');
+  // Beer page always shows all beers regardless of location filter
+  const locationFilter = 'all' as LocationFilter;
+
+  // Use shared filtering hook
+  const {
+    filteredBeers: hookFilteredBeers,
+    filters,
+    setFilters,
+    clearFilters: hookClearFilters,
+  } = useBeerFilters({
+    beers,
+    locationFilter,
+  });
+
+  // Local UI state
   const [selectedType, setSelectedType] = useState<string>('all');
   const [abvLevels, setAbvLevels] = useState<ABVLevel[]>([]);
   const [showOnTap, setShowOnTap] = useState(true);
@@ -60,144 +69,83 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
   const [sortBy, setSortBy] = useState<SortOption>('name');
   const [showFilters, setShowFilters] = useState(false);
 
-  // Filter beers by location first
-  const locationFilteredBeers = useMemo(() => {
-    if (locationFilter === 'all') {
-      return beers;
+  // Handle ABV level changes
+  const handleABVLevelsChange = useCallback((values: string[]) => {
+    const levels = values as ABVLevel[];
+    setAbvLevels(levels);
+
+    // Update filters with ABV range based on selected levels
+    if (levels.length === 0) {
+      setFilters(prev => ({ ...prev, abvRange: undefined }));
+    } else {
+      // Get the min of all selected levels and max of all selected levels
+      const ranges = levels.map(level => {
+        const levelData = Object.values(ABV_LEVELS).find(l => l.value === level);
+        return levelData ? { min: levelData.min, max: levelData.max } : null;
+      }).filter(Boolean) as { min: number; max: number }[];
+
+      if (ranges.length > 0) {
+        const min = Math.min(...ranges.map(r => r.min));
+        const max = Math.max(...ranges.map(r => r.max));
+        setFilters(prev => ({ ...prev, abvRange: { min, max } }));
+      }
     }
+  }, [setFilters]);
 
-    // If both availability filters are disabled, show all beers (no availability filtering)
-    if (!showOnTap && !showInCans) {
-      return beers;
-    }
+  // Handle search changes
+  const handleSearchChange = useCallback((value: string) => {
+    setFilters(prev => ({ ...prev, search: value || undefined }));
+  }, [setFilters]);
 
-    return beers.filter(beer => {
-      // Check if beer is available at current location (on tap or in cans)
-      return beer.availability?.[locationFilter]?.tap ||
-             beer.availability?.[locationFilter]?.cansAvailable;
-    });
-  }, [beers, locationFilter, showOnTap, showInCans]);
-
-  // ABV level ranges
-  const getABVRange = (level: ABVLevel): [number, number] => {
-    switch (level) {
-      case 'low':
-        return [0, 5];
-      case 'medium':
-        return [5, 7];
-      case 'high':
-        return [7, 15];
-    }
-  };
-
-  const handleABVLevelsChange = (values: string[]) => {
-    setAbvLevels(values as ABVLevel[]);
-  };
-
-  // Get unique beer types based on current filters (excluding type filter itself)
+  // Get unique beer types from filtered beers
   const beerTypes = useMemo(() => {
     const types = new Set<string>();
-
-    // Filter beers by current filters (excluding type)
-    const filtered = locationFilteredBeers.filter(beer => {
-      // Search filter
-      if (searchTerm && !beer.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-          !beer.description?.toLowerCase().includes(searchTerm.toLowerCase()) &&
-          !beer.type?.toLowerCase().includes(searchTerm.toLowerCase())) {
-        return false;
-      }
-
-      // ABV filter
-      if (abvLevels.length > 0) {
-        const matchesAnyLevel = abvLevels.some(level => {
-          const [min, max] = getABVRange(level);
-          return beer.abv >= min && beer.abv < max;
-        });
-        if (!matchesAnyLevel) {
-          return false;
-        }
-      }
-
-      // Availability filter
-      const hasAvailabilityFilter = showOnTap || showInCans;
-      if (hasAvailabilityFilter) {
-        // Check location-specific availability if a location is selected
-        const availability = locationFilter !== 'all'
-          ? beer.availability?.[locationFilter]
-          : beer.availability;
-
-        const matchesOnTap = showOnTap && availability?.tap;
-        const matchesInCans = showInCans && availability?.cansAvailable;
-        if (!matchesOnTap && !matchesInCans) {
-          return false;
-        }
-      }
-
-      return true;
-    });
-
-    // Extract unique types from filtered beers
-    filtered.forEach(beer => {
+    hookFilteredBeers.forEach(beer => {
       if (beer.type) types.add(beer.type);
     });
-
     return Array.from(types).sort();
-  }, [locationFilteredBeers, searchTerm, abvLevels, showOnTap, showInCans, locationFilter]);
+  }, [hookFilteredBeers]);
 
-  // Reset selected type if it's no longer available in filtered types
-  React.useEffect(() => {
-    if (selectedType !== 'all' && !beerTypes.includes(selectedType)) {
-      setSelectedType('all');
+  // Handle type filter changes
+  const handleTypeChange = useCallback((type: string) => {
+    setSelectedType(type);
+    if (type === 'all') {
+      setFilters(prev => ({ ...prev, style: undefined }));
+    } else {
+      // Type is coming from beer data which uses string types, cast to BeerStyle
+      setFilters(prev => ({ ...prev, style: [type as BeerStyle] }));
     }
-  }, [beerTypes, selectedType]);
+  }, [setFilters]);
 
-  // Filter and sort beers
+  // Apply additional local filters (availability toggles) and sorting
   const filteredBeers = useMemo(() => {
-    let filtered = locationFilteredBeers.filter(beer => {
-      // Search filter
-      if (searchTerm && !beer.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-          !beer.description?.toLowerCase().includes(searchTerm.toLowerCase()) &&
-          !beer.type?.toLowerCase().includes(searchTerm.toLowerCase())) {
-        return false;
-      }
+    let filtered = [...hookFilteredBeers];
 
-      // Type filter
-      if (selectedType !== 'all' && beer.type !== selectedType) {
-        return false;
-      }
+    // Apply availability toggle filters (on tap / in cans)
+    // Only skip filtering if BOTH are disabled (show all beers)
+    if (showOnTap || showInCans) {
+      filtered = filtered.filter(beer => {
+        // Check availability at ANY location (Lawrenceville OR Zelienople)
+        const isOnTapAnywhere = !!(
+          beer.availability?.lawrenceville?.tap ||
+          beer.availability?.zelienople?.tap
+        );
 
-      // ABV filter - if levels selected, check if beer matches any level
-      if (abvLevels.length > 0) {
-        const matchesAnyLevel = abvLevels.some(level => {
-          const [min, max] = getABVRange(level);
-          return beer.abv >= min && beer.abv < max;
-        });
-        if (!matchesAnyLevel) {
-          return false;
-        }
-      }
+        const isInCansAnywhere = !!(
+          beer.availability?.lawrenceville?.cansAvailable ||
+          beer.availability?.zelienople?.cansAvailable
+        );
 
-      // Availability filter - show beers that match ANY enabled availability option
-      const hasAvailabilityFilter = showOnTap || showInCans;
-      if (hasAvailabilityFilter) {
-        // Check location-specific availability if a location is selected
-        const availability = locationFilter !== 'all'
-          ? beer.availability?.[locationFilter]
-          : beer.availability;
+        const matchesOnTap = showOnTap && isOnTapAnywhere;
+        const matchesInCans = showInCans && isInCansAnywhere;
 
-        const matchesOnTap = showOnTap && availability?.tap;
-        const matchesInCans = showInCans && availability?.cansAvailable;
+        // Show beer if it matches ANY of the enabled filters
+        return matchesOnTap || matchesInCans;
+      });
+    }
+    // If both are disabled, show all beers (no filtering)
 
-        // If neither condition matches, filter out the beer
-        if (!matchesOnTap && !matchesInCans) {
-          return false;
-        }
-      }
-
-      return true;
-    });
-
-    // Sort
+    // Apply sorting
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'abv-asc':
@@ -213,18 +161,18 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
     });
 
     return filtered;
-  }, [locationFilteredBeers, searchTerm, selectedType, abvLevels, showOnTap, showInCans, sortBy, locationFilter]);
+  }, [hookFilteredBeers, showOnTap, showInCans, sortBy]);
 
-  const clearFilters = () => {
-    setSearchTerm('');
+  const clearFilters = useCallback(() => {
+    hookClearFilters();
     setSelectedType('all');
     setAbvLevels([]);
     setShowOnTap(true);
     setShowInCans(true);
     setSortBy('name');
-  };
+  }, [hookClearFilters]);
 
-  const activeFilterCount = [
+  const localActiveFilterCount = [
     selectedType !== 'all',
     abvLevels.length > 0,
     // Only count as active if different from defaults (both on)
@@ -250,9 +198,9 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
         >
           <Filter className="h-4 w-4 mr-2" />
           Filters
-          {activeFilterCount > 0 && (
+          {localActiveFilterCount > 0 && (
             <Badge variant="secondary" className="ml-2">
-              {activeFilterCount}
+              {localActiveFilterCount}
             </Badge>
           )}
         </Button>
@@ -303,7 +251,7 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                {activeFilterCount > 0 && (
+                {localActiveFilterCount > 0 && (
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
@@ -338,14 +286,14 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
               <Input
                 type="search"
                 placeholder="Search beers..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={filters.search || ''}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 className="pl-8 bg-secondary"
               />
             </div>
 
             {/* Mobile type filter */}
-            <Select value={selectedType} onValueChange={setSelectedType}>
+            <Select value={selectedType} onValueChange={handleTypeChange}>
               <SelectTrigger className="w-full bg-secondary">
                 <SelectValue placeholder="Filter Styles" className="text-muted-foreground/60 placeholder:text-muted-foreground/60" />
               </SelectTrigger>
@@ -435,7 +383,7 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
                     {filteredBeers.length} {filteredBeers.length === 1 ? 'beer' : 'beers'}
                   </span>
                 </div>
-                {activeFilterCount > 0 && (
+                {localActiveFilterCount > 0 && (
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
@@ -462,8 +410,8 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
                   <Input
                     type="search"
                     placeholder="Search beers..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    value={filters.search || ''}
+                    onChange={(e) => handleSearchChange(e.target.value)}
                     className="pl-8 bg-secondary"
                   />
                 </div>
@@ -471,7 +419,7 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
 
               {/* Type Filter */}
               <div>
-                <Select value={selectedType} onValueChange={setSelectedType}>
+                <Select value={selectedType} onValueChange={handleTypeChange}>
                   <SelectTrigger className="w-full bg-secondary">
                     <SelectValue placeholder="Filter Styles" className="text-muted-foreground/60 placeholder:text-muted-foreground/60" />
                   </SelectTrigger>
@@ -562,51 +510,12 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
           {filteredBeers.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" suppressHydrationWarning>
               {filteredBeers.map((beer, index) => (
-                <Link key={`${beer.variant}-${index}`} href={`/beer/${beer.variant.toLowerCase()}`} className="group">
-                  <Card className="overflow-hidden hover:shadow-lg transition-shadow flex flex-col border-0 h-full cursor-pointer bg-[var(--color-card-interactive)]">
-                    <div className={`relative h-48 w-full flex-shrink-0 ${beer.image ? 'bg-gradient-to-b from-muted/5 to-background/20' : ''}`}>
-                      {beer.image ? (
-                        <Image
-                          src={`/images/beer/${beer.variant.toLowerCase()}.webp`}
-                          alt={beer.name}
-                          fill
-                          className="object-contain p-4"
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-                          onError={(e) => {
-                            e.currentTarget.parentElement!.style.display = 'none';
-                          }}
-                        />
-                      ) : (
-                        <div className="flex items-center justify-center h-full">
-                          <div className="text-center px-4">
-                            <div className="text-2xl font-bold text-muted-foreground/30 mb-2">
-                              {beer.name}
-                            </div>
-                            <div className="text-sm text-muted-foreground/30">
-                              {beer.type}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    <CardContent className="p-4 flex flex-col flex-grow">
-                      <div className="flex-grow">
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="text-lg font-semibold">{beer.name}</h3>
-                        </div>
-                        <div className="space-y-1 text-sm text-muted-foreground">
-                          <div>{beer.type}</div>
-                          <div>{beer.abv}% ABV</div>
-                        </div>
-                      </div>
-                      <div className="mt-3">
-                        <Button variant="ghost" size="sm" className="w-full pointer-events-none">
-                          View Details
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
+                <BeerCard
+                  key={`${beer.variant}-${index}`}
+                  beer={beer}
+                  variant="minimal"
+                  showLocation={false}
+                />
               ))}
             </div>
           ) : (

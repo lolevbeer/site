@@ -30,6 +30,10 @@ const navigationItems: NavItem[] = [
     label: 'About',
     href: '/about',
   },
+  {
+    label: 'FAQ',
+    href: '/faq',
+  },
 ];
 
 interface NavigationProps {

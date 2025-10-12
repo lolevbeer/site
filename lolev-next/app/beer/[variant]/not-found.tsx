@@ -9,7 +9,7 @@ export default function NotFound() {
         Sorry, we couldn't find the beer you're looking for.
       </p>
       <Button asChild>
-        <Link href="/beer">View All Beers</Link>
+        <Link href="/beer">View All Beer</Link>
       </Button>
     </div>
   );

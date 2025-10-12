@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation';
 import { getBeerByVariant, getAllBeersFromCSV } from '@/lib/utils/beer-csv';
 import { BeerDetails } from '@/components/beer/beer-details';
 import { mergeBeerDataWithCans } from '@/lib/utils/merge-beer-data';
+import { JsonLd } from '@/components/seo/json-ld';
+import { generateProductSchema } from '@/lib/utils/product-schema';
 
 interface BeerPageProps {
   params: Promise<{
@@ -21,10 +23,10 @@ export async function generateMetadata({ params }: BeerPageProps): Promise<Metad
   }
 
   return {
-    title: `${beer.name} | Lolev Beer`,
+    title: `${beer.name} | ${beer.type}`,
     description: beer.description,
     openGraph: {
-      title: `${beer.name} | Lolev Beer`,
+      title: `${beer.name} | ${beer.type} | Lolev Beer`,
       description: beer.description,
       type: 'website',
     },
@@ -49,9 +51,17 @@ export default async function BeerPage({ params }: BeerPageProps) {
   // Merge with latest can availability data
   const beer = await mergeBeerDataWithCans(baseBeer);
 
+  // Generate Product schema for SEO
+  const productSchema = generateProductSchema(beer);
+
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <BeerDetails beer={beer} />
-    </div>
+    <>
+      {/* Add Product JSON-LD for SEO */}
+      <JsonLd data={productSchema} />
+
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <BeerDetails beer={beer} />
+      </div>
+    </>
   );
 }

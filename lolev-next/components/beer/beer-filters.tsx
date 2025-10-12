@@ -52,6 +52,7 @@ function SearchInput({
           onClick={() => onChange('')}
           className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
           type="button"
+          aria-label="Clear search"
         >
           ✕
         </button>
@@ -120,6 +121,15 @@ function StyleFilter({
               variant="secondary"
               className="text-xs cursor-pointer hover:bg-secondary/80"
               onClick={() => toggleStyle(style)}
+              role="button"
+              tabIndex={0}
+              aria-label={`Remove ${style} filter`}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  toggleStyle(style);
+                }
+              }}
             >
               {style} ✕
             </Badge>

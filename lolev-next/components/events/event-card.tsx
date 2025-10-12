@@ -23,7 +23,7 @@ interface EventCardProps {
   className?: string;
 }
 
-export function EventCard({
+export const EventCard = React.memo(function EventCard({
   event,
   currentLocation,
   className
@@ -43,6 +43,6 @@ export function EventCard({
       className={className}
     />
   );
-}
+});
 
 export default EventCard;

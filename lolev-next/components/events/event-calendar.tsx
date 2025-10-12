@@ -66,7 +66,6 @@ export function EventCalendar({
 
   // Generate week days
   const weekDays = useMemo(() => {
-    console.log('EventCalendar received events:', events.length, events);
     const days: CalendarDay[] = [];
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -81,11 +80,7 @@ export function EventCalendar({
         eventDate.setHours(0, 0, 0, 0);
 
         // Filter by date
-        const matches = eventDate.getTime() === date.getTime();
-        if (i === 0 && matches) {
-          console.log('Event found for date:', date.toDateString(), event);
-        }
-        return matches;
+        return eventDate.getTime() === date.getTime();
       });
 
       days.push({

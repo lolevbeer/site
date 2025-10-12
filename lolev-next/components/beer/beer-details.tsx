@@ -151,6 +151,12 @@ function SpecificationRow({
   );
 }
 
+// Type for CSV row data
+interface CsvRow {
+  variant?: string;
+  [key: string]: string | undefined;
+}
+
 export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
   const { currentLocation } = useLocationContext();
   const imagePath = getBeerImagePath(beer);
@@ -158,9 +164,14 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
   const pricing = getPricingInfo(beer);
   const [tapLocations, setTapLocations] = useState<string[]>([]);
   const [canLocations, setCanLocations] = useState<string[]>([]);
+  const [isLoadingLocations, setIsLoadingLocations] = useState(true);
+  const [locationError, setLocationError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchLocations = async () => {
+      setIsLoadingLocations(true);
+      setLocationError(null);
+
       try {
         const [lawrencevilleDraftRes, zelienopleDraftRes, lawrencevilleCansRes, zelienopleCansRes] = await Promise.all([
           fetch('/data/lawrenceville-draft.csv'),
@@ -176,35 +187,39 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
           zelienopleCansRes.text()
         ]);
 
-        // Parse CSVs with papaparse
-        const lawrencevilleDraft = Papa.parse(lawrencevilleDraftText, { header: true });
-        const zelienopleDraft = Papa.parse(zelienopleDraftText, { header: true });
-        const lawrencevilleCans = Papa.parse(lawrencevilleCansText, { header: true });
-        const zelienopleCans = Papa.parse(zelienopleCansText, { header: true });
+        // Parse CSVs with papaparse - type the results properly
+        const lawrencevilleDraft = Papa.parse<CsvRow>(lawrencevilleDraftText, { header: true });
+        const zelienopleDraft = Papa.parse<CsvRow>(zelienopleDraftText, { header: true });
+        const lawrencevilleCans = Papa.parse<CsvRow>(lawrencevilleCansText, { header: true });
+        const zelienopleCans = Papa.parse<CsvRow>(zelienopleCansText, { header: true });
 
         const tapLocs: string[] = [];
         const canLocs: string[] = [];
+        const beerVariantLower = beer.variant.toLowerCase();
 
-        // Check draft availability
-        if (lawrencevilleDraft.data.some((row: any) => row.variant?.toLowerCase() === beer.variant.toLowerCase())) {
+        // Check draft availability with proper typing
+        if (lawrencevilleDraft.data.some((row) => row.variant?.toLowerCase() === beerVariantLower)) {
           tapLocs.push('Lawrenceville');
         }
-        if (zelienopleDraft.data.some((row: any) => row.variant?.toLowerCase() === beer.variant.toLowerCase())) {
+        if (zelienopleDraft.data.some((row) => row.variant?.toLowerCase() === beerVariantLower)) {
           tapLocs.push('Zelienople');
         }
 
-        // Check can availability
-        if (lawrencevilleCans.data.some((row: any) => row.variant?.toLowerCase() === beer.variant.toLowerCase())) {
+        // Check can availability with proper typing
+        if (lawrencevilleCans.data.some((row) => row.variant?.toLowerCase() === beerVariantLower)) {
           canLocs.push('Lawrenceville');
         }
-        if (zelienopleCans.data.some((row: any) => row.variant?.toLowerCase() === beer.variant.toLowerCase())) {
+        if (zelienopleCans.data.some((row) => row.variant?.toLowerCase() === beerVariantLower)) {
           canLocs.push('Zelienople');
         }
 
         setTapLocations(tapLocs);
         setCanLocations(canLocs);
       } catch (error) {
-        // Error fetching location data - show empty states
+        console.error('Error fetching beer location data:', error);
+        setLocationError('Unable to load location information. Please try again later.');
+      } finally {
+        setIsLoadingLocations(false);
       }
     };
 
@@ -358,23 +373,32 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
                 <CardTitle className="text-lg">Availability</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
-                <div className="space-y-2">
-                  {tapLocations.length > 0 && (
-                    <p className="text-sm text-muted-foreground">
-                      • Pouring at {tapLocations.join(' and ')}
-                    </p>
-                  )}
-                  {canLocations.length > 0 && (
-                    <p className="text-sm text-muted-foreground">
-                      • Cans available at {canLocations.join(' and ')}
-                    </p>
-                  )}
-                  {tapLocations.length === 0 && canLocations.length === 0 && (
-                    <p className="text-sm text-muted-foreground">
-                      Not currently available in Lawrenceville or Zelienople
-                    </p>
-                  )}
-                </div>
+                {isLoadingLocations ? (
+                  <div className="space-y-2 animate-pulse">
+                    <div className="h-4 bg-muted rounded w-3/4"></div>
+                    <div className="h-4 bg-muted rounded w-2/3"></div>
+                  </div>
+                ) : locationError ? (
+                  <p className="text-sm text-destructive">{locationError}</p>
+                ) : (
+                  <div className="space-y-2">
+                    {tapLocations.length > 0 && (
+                      <p className="text-sm text-muted-foreground">
+                        • Pouring at {tapLocations.join(' and ')}
+                      </p>
+                    )}
+                    {canLocations.length > 0 && (
+                      <p className="text-sm text-muted-foreground">
+                        • Cans available at {canLocations.join(' and ')}
+                      </p>
+                    )}
+                    {tapLocations.length === 0 && canLocations.length === 0 && (
+                      <p className="text-sm text-muted-foreground">
+                        Not currently available in Lawrenceville or Zelienople
+                      </p>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
 

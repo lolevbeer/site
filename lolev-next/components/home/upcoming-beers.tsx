@@ -93,7 +93,7 @@ export function UpcomingBeers() {
 
         <div className="text-center">
           <Button asChild variant="default" size="lg">
-            <Link href="/beer">View All Beers</Link>
+            <Link href="/beer">View All Beer</Link>
           </Button>
         </div>
       </div>

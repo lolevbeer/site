@@ -123,7 +123,7 @@ export function MapControls({
                 onClick={() => onNearbyLocationClick(location)}
               >
                 {capitalizeName(location.name).substring(0, 25)}
-                {location.distance && <span className="ml-1 opacity-75">({location.distance.toFixed(1)}mi)</span>}
+                {location.distance !== undefined && <span className="ml-1 opacity-75">({location.distance.toFixed(1)}mi)</span>}
               </Badge>
             ))}
           </div>

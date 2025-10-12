@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Toaster } from "@/components/ui/sonner";
+import { ErrorBoundary } from "@/components/error-boundary";
 
 // Reduce font weights to only what's needed (saves ~150-200KB)
 const poppins = Poppins({
@@ -98,21 +99,23 @@ export default function RootLayout({
       <body
         className={`${poppins.variable} antialiased min-h-screen flex flex-col font-poppins`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <LocationProvider>
-            <Header />
-            <main className="flex-1">
-              {children}
-            </main>
-            <Footer />
-            <Toaster />
-          </LocationProvider>
-        </ThemeProvider>
+        <ErrorBoundary>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <LocationProvider>
+              <Header />
+              <main className="flex-1">
+                {children}
+              </main>
+              <Footer />
+              <Toaster />
+            </LocationProvider>
+          </ThemeProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

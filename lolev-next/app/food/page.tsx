@@ -7,6 +7,8 @@ import { FoodSchedule as FoodScheduleComponent } from '@/components/food/food-sc
 import { Button } from '@/components/ui/button';
 import { useLocationContext } from '@/components/location/location-provider';
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
+import { JsonLd } from '@/components/seo/json-ld';
+import { generateFoodEventJsonLd } from '@/lib/utils/json-ld';
 
 export default function FoodPage() {
   const { currentLocation } = useLocationContext();
@@ -56,37 +58,66 @@ export default function FoodPage() {
       });
   }, [schedules, vendors, currentLocation]);
 
+  // Generate JSON-LD for all food vendor schedules
+  const foodEventsJsonLd = useMemo(() => {
+    if (vendorSchedules.length === 0) return null;
+
+    // Filter out invalid schedules
+    const validSchedules = vendorSchedules.filter(
+      schedule => schedule && schedule.vendor && schedule.date && schedule.location
+    );
+
+    if (validSchedules.length === 0) return null;
+
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      itemListElement: validSchedules.map((schedule, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        item: generateFoodEventJsonLd(schedule)
+      }))
+    };
+  }, [vendorSchedules]);
+
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <PageBreadcrumbs className="mb-6" />
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold tracking-tight">Food</h1>
-      </div>
+    <>
+      {/* Add JSON-LD structured data for SEO */}
+      {!loading && foodEventsJsonLd && (
+        <JsonLd data={foodEventsJsonLd} />
+      )}
 
-      <FoodScheduleComponent
-        schedules={vendorSchedules}
-        onVendorClick={(schedule) => schedule.site && window.open(schedule.site, '_blank')}
-        showLocationFilter={false}
-        maxItems={12}
-        loading={loading}
-      />
+      <div className="container mx-auto px-4 py-8">
+        <PageBreadcrumbs className="mb-6" />
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold tracking-tight">Food</h1>
+        </div>
 
-      <div className="text-center space-y-3 pt-12 mt-12">
-        <h2 className="text-lg font-semibold">Food Truck Partner?</h2>
-        <div className="flex justify-center gap-4 flex-wrap">
-          <Button variant="ghost" size="sm" asChild>
-            <a href="mailto:events@lolev.beer">
-              events@lolev.beer
-            </a>
-          </Button>
-          <Button variant="ghost" size="sm" asChild>
-            <a href="tel:4123368965">
-              (412) 336-8965
-            </a>
-          </Button>
+        <FoodScheduleComponent
+          schedules={vendorSchedules}
+          onVendorClick={(schedule) => schedule.site && window.open(schedule.site, '_blank')}
+          showLocationFilter={false}
+          maxItems={12}
+          loading={loading}
+        />
+
+        <div className="text-center space-y-3 pt-12 mt-12">
+          <h2 className="text-lg font-semibold">Food Truck Partner?</h2>
+          <div className="flex justify-center gap-4 flex-wrap">
+            <Button variant="ghost" size="sm" asChild>
+              <a href="mailto:events@lolev.beer">
+                events@lolev.beer
+              </a>
+            </Button>
+            <Button variant="ghost" size="sm" asChild>
+              <a href="tel:4123368965">
+                (412) 336-8965
+              </a>
+            </Button>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

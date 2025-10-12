@@ -257,11 +257,13 @@ export function parseCSV<T>(csvText: string): T[] {
   for (let i = 1; i < lines.length; i++) {
     const values = parseCSVLine(lines[i]);
     if (values.length === headers.length) {
-      const row: any = {};
+      // Build object dynamically from headers and values
+      const row: Record<string, string> = {};
       headers.forEach((header, index) => {
         row[header] = values[index];
       });
-      rows.push(row);
+      // Type assertion is safe here as T should be a Record<string, string> compatible type
+      rows.push(row as T);
     }
   }
 
