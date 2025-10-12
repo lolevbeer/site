@@ -1,5 +1,5 @@
 variant,cansAvailable,name,salePrice,type,abv,cansSingle,fourPack
-rooted,TRUE,Rooted,FALSE,Mexican Lager,4,4.00,15
+rooted,FALSE,Rooted,FALSE,Mexican Lager,4,4.00,15
 vespero,TRUE,Vespero,FALSE,Czech Dark Lager,5.8,4.25,16
 samo,FALSE,Samo,FALSE,Pilsner,4.8,4.00,15
 sever,TRUE,Sever,FALSE,Pumpkin Stout,5.7,4.50,17
