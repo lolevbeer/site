@@ -6,6 +6,7 @@
 import Papa from 'papaparse';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
+import { logger } from '@/lib/utils/logger';
 
 interface BeerRow {
   variant: string;
@@ -124,7 +125,7 @@ export async function getAvailableBeers(): Promise<{ variant: string; name: stri
 
     return beersWithImages;
   } catch (error) {
-    console.error('Error loading available beers:', error);
+    logger.error('Error loading available beers', error);
     return [];
   }
 }
@@ -165,7 +166,7 @@ export async function getDraftBeers(location: 'lawrenceville' | 'zelienople') {
 
     return beers;
   } catch (error) {
-    console.error(`Error loading draft beers for ${location}:`, error);
+    logger.error(`Error loading draft beers for ${location}`, error);
     return [];
   }
 }
@@ -216,7 +217,7 @@ export async function getEnrichedCans(location: 'lawrenceville' | 'zelienople') 
 
     return enrichedCans;
   } catch (error) {
-    console.error(`Error loading cans for ${location}:`, error);
+    logger.error(`Error loading cans for ${location}`, error);
     return [];
   }
 }
@@ -264,7 +265,7 @@ export async function getUpcomingEvents(location: 'lawrenceville' | 'zelienople'
 
     return upcomingEvents.slice(0, 3);
   } catch (error) {
-    console.error(`Error loading events for ${location}:`, error);
+    logger.error(`Error loading events for ${location}`, error);
     return [];
   }
 }
@@ -311,7 +312,7 @@ export async function getUpcomingFood(location: 'lawrenceville' | 'zelienople') 
 
     return upcomingFood.slice(0, 3);
   } catch (error) {
-    console.error(`Error loading food for ${location}:`, error);
+    logger.error(`Error loading food for ${location}`, error);
     return [];
   }
 }

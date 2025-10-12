@@ -21,7 +21,7 @@ interface LocationTabsProps {
   defaultValue?: Location;
   value?: Location;
   onValueChange?: (location: Location) => void;
-  children: ReactNode;
+  children?: ReactNode;
   orientation?: 'horizontal' | 'vertical';
   syncWithGlobalState?: boolean;
 }

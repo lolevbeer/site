@@ -16,8 +16,10 @@ import { navigationItems } from './navigation';
 /**
  * Get day name from hours key
  */
-function getDayName(day: keyof LocationHours): string {
-  const dayNames = {
+type DayOfWeek = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+
+function getDayName(day: DayOfWeek): string {
+  const dayNames: Record<DayOfWeek, string> = {
     monday: 'Monday',
     tuesday: 'Tuesday',
     wednesday: 'Wednesday',
@@ -34,7 +36,7 @@ function getDayName(day: keyof LocationHours): string {
  */
 function HoursDisplay({ hours }: { hours: LocationHours }) {
   const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-  const today = dayNames[new Date().getDay()] as keyof LocationHours;
+  const today = dayNames[new Date().getDay()] as DayOfWeek;
 
   return (
     <div className="space-y-1 text-sm">
@@ -42,7 +44,7 @@ function HoursDisplay({ hours }: { hours: LocationHours }) {
         if (day === 'notes') return null;
 
         const isToday = day === today;
-        const dayName = getDayName(day as keyof LocationHours);
+        const dayName = getDayName(day as DayOfWeek);
 
         return (
           <div
@@ -160,6 +162,10 @@ export function Footer() {
 
           {/* Brand and Links */}
           <div className="flex flex-col">
+            <p className="text-sm text-muted-foreground mb-6">
+              Craft brewery serving purposeful beer and building community in the Pittsburgh area.
+            </p>
+
             <ul className="space-y-2 text-sm mb-6">
               {navigationItems.map((item) => (
                 <li key={item.href}>
@@ -169,10 +175,6 @@ export function Footer() {
                 </li>
               ))}
             </ul>
-
-            <p className="text-sm text-muted-foreground mb-6">
-              Craft brewery serving purposeful beer and building community in the Pittsburgh area.
-            </p>
 
             <Logo className="py-12 text-muted-foreground" />
 

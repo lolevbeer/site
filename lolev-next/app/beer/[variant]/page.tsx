@@ -5,9 +5,9 @@ import { BeerDetails } from '@/components/beer/beer-details';
 import { mergeBeerDataWithCans } from '@/lib/utils/merge-beer-data';
 
 interface BeerPageProps {
-  params: {
+  params: Promise<{
     variant: string;
-  };
+  }>;
 }
 
 export async function generateMetadata({ params }: BeerPageProps): Promise<Metadata> {
@@ -50,7 +50,7 @@ export default async function BeerPage({ params }: BeerPageProps) {
   const beer = await mergeBeerDataWithCans(baseBeer);
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 max-w-4xl">
       <BeerDetails beer={beer} />
     </div>
   );

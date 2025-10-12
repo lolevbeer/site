@@ -6,7 +6,8 @@
 'use client';
 
 import React, { useState, useCallback, useMemo } from 'react';
-import { BeerFilters, BeerStyle } from '@/lib/types/beer';
+import type { BeerFilters } from '@/lib/types/beer';
+import { BeerStyle } from '@/lib/types/beer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

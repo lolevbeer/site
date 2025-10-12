@@ -3,6 +3,7 @@
 import React, { Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
 
 // Lazy load the map component
 const DistributorMap = dynamic(
@@ -20,6 +21,7 @@ const DistributorMap = dynamic(
 export function BeerMapContent() {
   return (
     <div className="container mx-auto px-4 py-8">
+      <PageBreadcrumbs className="mb-6" />
       {/* Page Header */}
       <div className="text-center mb-8">
         <h1 className="text-4xl md:text-5xl font-bold">
@@ -32,10 +34,8 @@ export function BeerMapContent() {
         <DistributorMap
           height={700}
           showSearch={true}
-          showFilters={true}
           initialZoom={6.5}
           maxPoints={10}
-          forceSplitView={true}
         />
       </div>
     </div>

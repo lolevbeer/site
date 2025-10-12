@@ -76,10 +76,9 @@ export class BeerService {
     if (cached) return cached;
 
     const allBeers = await this.getAll();
-    const filtered = allBeers.filter(beer =>
-      beer.locations?.includes(location) || !beer.locations
-    );
-    return setCached(cacheKey, filtered);
+    // TODO: Filter by location when Beer type includes location-specific data
+    // For now, return all beers as they may be available at both locations
+    return setCached(cacheKey, allBeers);
   }
 
   static async getByVariant(variant: string): Promise<Beer | null> {
@@ -186,7 +185,7 @@ export class FoodVendorService {
 
   static async getActive(): Promise<FoodVendor[]> {
     const allVendors = await this.getAll();
-    return allVendors.filter(vendor => vendor.active);
+    return allVendors.filter(vendor => vendor.isActive);
   }
 
   static async getByLocation(location: Location): Promise<FoodVendor[]> {
@@ -195,10 +194,9 @@ export class FoodVendorService {
     if (cached) return cached;
 
     const allVendors = await this.getAll();
-    const filtered = allVendors.filter(vendor =>
-      vendor.locations?.includes(location) || !vendor.locations
-    );
-    return setCached(cacheKey, filtered);
+    // TODO: Filter by location when FoodVendor type includes location-specific data
+    // For now, return all vendors as they may serve at both locations
+    return setCached(cacheKey, allVendors);
   }
 
   static async getById(id: string): Promise<FoodVendor | null> {
@@ -250,7 +248,8 @@ export class DataService {
       todayEvents: events,
       availableBeers: beers.length,
       onTap: beers.filter(b => b.availability.tap).length,
-      newArrivals: beers.filter(b => b.isNew).length
+      // TODO: Add isNew field to Beer type to track new arrivals
+      newArrivals: 0
     };
   }
 

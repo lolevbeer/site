@@ -44,7 +44,7 @@ function getGlassIcon(glass: GlassType): React.ComponentType<{ className?: strin
 }
 
 function getBeerImagePath(beer: Beer): string | null {
-  if (!beer.image || beer.image === false || beer.image === 'FALSE') {
+  if (!beer.image) {
     return null;
   }
   return `/images/beer/${beer.variant}.webp`;

@@ -9,6 +9,7 @@ import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Beer } from '@/lib/types/beer';
+import type { LocationFilter } from '@/lib/types/location';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -37,6 +38,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { useLocationContext } from '@/components/location/location-provider';
+import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
 
 interface BeerPageContentProps {
   beers: Beer[];
@@ -48,6 +50,8 @@ type ABVLevel = 'low' | 'medium' | 'high';
 
 export function BeerPageContent({ beers }: BeerPageContentProps) {
   const { currentLocation } = useLocationContext();
+  // Cast to LocationFilter to allow comparison with 'all'
+  const locationFilter = currentLocation as LocationFilter;
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<string>('all');
   const [abvLevels, setAbvLevels] = useState<ABVLevel[]>([]);
@@ -58,15 +62,21 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
 
   // Filter beers by location first
   const locationFilteredBeers = useMemo(() => {
-    if (currentLocation === 'all') {
+    if (locationFilter === 'all') {
       return beers;
     }
+
+    // If both availability filters are disabled, show all beers (no availability filtering)
+    if (!showOnTap && !showInCans) {
+      return beers;
+    }
+
     return beers.filter(beer => {
       // Check if beer is available at current location (on tap or in cans)
-      return beer.availability?.[currentLocation]?.tap ||
-             beer.availability?.[currentLocation]?.cansAvailable;
+      return beer.availability?.[locationFilter]?.tap ||
+             beer.availability?.[locationFilter]?.cansAvailable;
     });
-  }, [beers, currentLocation]);
+  }, [beers, locationFilter, showOnTap, showInCans]);
 
   // ABV level ranges
   const getABVRange = (level: ABVLevel): [number, number] => {
@@ -112,8 +122,8 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
       const hasAvailabilityFilter = showOnTap || showInCans;
       if (hasAvailabilityFilter) {
         // Check location-specific availability if a location is selected
-        const availability = currentLocation !== 'all'
-          ? beer.availability?.[currentLocation]
+        const availability = locationFilter !== 'all'
+          ? beer.availability?.[locationFilter]
           : beer.availability;
 
         const matchesOnTap = showOnTap && availability?.tap;
@@ -132,7 +142,7 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
     });
 
     return Array.from(types).sort();
-  }, [locationFilteredBeers, searchTerm, abvLevels, showOnTap, showInCans, getABVRange]);
+  }, [locationFilteredBeers, searchTerm, abvLevels, showOnTap, showInCans, locationFilter]);
 
   // Reset selected type if it's no longer available in filtered types
   React.useEffect(() => {
@@ -171,8 +181,8 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
       const hasAvailabilityFilter = showOnTap || showInCans;
       if (hasAvailabilityFilter) {
         // Check location-specific availability if a location is selected
-        const availability = currentLocation !== 'all'
-          ? beer.availability?.[currentLocation]
+        const availability = locationFilter !== 'all'
+          ? beer.availability?.[locationFilter]
           : beer.availability;
 
         const matchesOnTap = showOnTap && availability?.tap;
@@ -203,7 +213,7 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
     });
 
     return filtered;
-  }, [locationFilteredBeers, searchTerm, selectedType, abvLevels, showOnTap, showInCans, sortBy, getABVRange]);
+  }, [locationFilteredBeers, searchTerm, selectedType, abvLevels, showOnTap, showInCans, sortBy, locationFilter]);
 
   const clearFilters = () => {
     setSearchTerm('');
@@ -223,6 +233,7 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <PageBreadcrumbs className="mb-6" />
       {/* Page Header */}
       <div className="mb-8">
         <h1 className="text-4xl font-bold mb-4">Our Beers</h1>
@@ -282,7 +293,7 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
 
       {/* Mobile Filters */}
       {showFilters && (
-        <Card className="lg:hidden mb-6 border-0 shadow-none">
+        <Card className="lg:hidden mb-6 border-0 shadow-none dark:bg-transparent">
           <CardHeader className="p-0">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
@@ -336,7 +347,7 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
             {/* Mobile type filter */}
             <Select value={selectedType} onValueChange={setSelectedType}>
               <SelectTrigger className="w-full bg-secondary">
-                <SelectValue placeholder="Filter Styles" />
+                <SelectValue placeholder="Filter Styles" className="text-muted-foreground/60 placeholder:text-muted-foreground/60" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Filter Styles</SelectItem>
@@ -415,8 +426,8 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Filters Sidebar - Desktop */}
         <div className="hidden lg:block">
-          <Card className="border-0 shadow-none">
-            <CardHeader>
+          <Card className="border-0 shadow-none dark:bg-transparent">
+            <CardHeader className="pl-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <CardTitle>Filters</CardTitle>
@@ -443,7 +454,7 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
                 )}
               </div>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-6 pl-0">
               {/* Search */}
               <div>
                 <div className="relative">
@@ -462,7 +473,7 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
               <div>
                 <Select value={selectedType} onValueChange={setSelectedType}>
                   <SelectTrigger className="w-full bg-secondary">
-                    <SelectValue placeholder="Filter Styles" />
+                    <SelectValue placeholder="Filter Styles" className="text-muted-foreground/60 placeholder:text-muted-foreground/60" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Filter Styles</SelectItem>

@@ -3,7 +3,8 @@
  * Auto-generated from _data/lawrenceville-cans.csv and zelienople-cans.csv
  */
 
-import { BeerVariant, Location } from '@/lib/types/beer';
+import { BeerVariant } from '@/lib/types/beer';
+import { Location } from '@/lib/types/location';
 
 export interface CannedBeer {
   variant: BeerVariant;

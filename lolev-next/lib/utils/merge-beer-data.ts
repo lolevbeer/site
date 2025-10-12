@@ -10,8 +10,8 @@ import { Beer } from '@/lib/types/beer';
 interface CanData {
   variant: string;
   cansAvailable: boolean;
-  cansSingle?: string;
-  fourPack?: string;
+  cansSingle?: number;
+  fourPack?: number;
   salePrice?: boolean;
 }
 
@@ -28,11 +28,17 @@ async function fetchCanData(location: 'lawrenceville' | 'zelienople'): Promise<M
     parsed.data.forEach((row: any) => {
       const variant = row.variant?.toLowerCase();
       if (variant) {
+        const parsePrice = (value: string | undefined): number | undefined => {
+          if (!value || value === '') return undefined;
+          const num = parseFloat(value);
+          return isNaN(num) ? undefined : num;
+        };
+
         canDataMap.set(variant, {
           variant,
           cansAvailable: row.cansAvailable === 'TRUE',
-          cansSingle: row.cansSingle,
-          fourPack: row.fourPack,
+          cansSingle: parsePrice(row.cansSingle),
+          fourPack: parsePrice(row.fourPack),
           salePrice: row.salePrice === 'TRUE',
         });
       }

@@ -73,10 +73,10 @@ export function Navigation({
                 : "text-sm font-medium",
               isActive
                 ? vertical
-                  ? "bg-accent text-accent-foreground"
+                  ? "bg-secondary text-foreground"
                   : "text-foreground font-semibold"
                 : vertical
-                  ? "text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                  ? "text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
                   : "text-foreground hover:text-muted-foreground"
             )}
           >

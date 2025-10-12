@@ -44,13 +44,13 @@ export enum BeerStyle {
  */
 export interface BeerPricing {
   /** Draft price per glass */
-  draftPrice?: string;
+  draftPrice?: number;
   /** Single can price */
-  canSingle?: string;
+  canSingle?: number;
   /** Four-pack price */
-  fourPack?: string;
+  fourPack?: number;
   /** Single can price (alternative field name) */
-  cansSingle?: string;
+  cansSingle?: number;
   /** Sale price indicator */
   salePrice?: boolean;
 }
@@ -205,3 +205,10 @@ export interface BeerSortOptions {
   sortBy: BeerSortBy;
   order: BeerSortOrder;
 }
+
+/**
+ * Type aliases for backwards compatibility
+ */
+export type BeerVariant = string; // Beer variant/slug identifier
+export type BeerType = BeerStyle; // Alias for BeerStyle
+export type BeerGlass = GlassType; // Alias for GlassType

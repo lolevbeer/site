@@ -25,19 +25,18 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
       }
     };
 
-    const originalStyle = window.getComputedStyle(document.body).overflow;
-
     if (isOpen) {
       document.addEventListener('keydown', handleEscape);
+      // Store the current overflow value before changing it
+      const originalOverflow = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = originalStyle;
-    }
 
-    return () => {
-      document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = originalStyle;
-    };
+      return () => {
+        document.removeEventListener('keydown', handleEscape);
+        // Restore to the stored value or empty string to use CSS default
+        document.body.style.overflow = originalOverflow;
+      };
+    }
   }, [isOpen, onClose]);
 
   return (
@@ -55,7 +54,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
       {/* Mobile Menu Panel */}
       <div
         className={cn(
-          "fixed top-16 right-0 z-50 h-[calc(100vh-4rem)] w-full bg-background border-l shadow-lg transition-transform duration-300 ease-in-out md:hidden overflow-hidden",
+          "fixed top-16 right-0 z-50 h-[calc(100vh-4rem)] w-full bg-background shadow-lg transition-transform duration-300 ease-in-out md:hidden overflow-hidden",
           isOpen ? "translate-x-0" : "translate-x-full"
         )}
         role="dialog"
@@ -64,10 +63,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
       >
         <div className="flex h-full flex-col">
           {/* Location Switcher */}
-          <div className="border-b px-6 py-4">
-            <h3 className="mb-3 text-sm font-semibold text-muted-foreground">
-              Location
-            </h3>
+          <div className="px-6 py-4">
             <LocationTabs syncWithGlobalState={true} />
           </div>
 
@@ -81,12 +77,9 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
           </div>
 
           {/* Social Links and Footer */}
-          <div className="border-t px-6 py-4">
+          <div className="px-6 py-4">
             <div className="mb-4">
-              <h3 className="mb-3 text-sm font-semibold text-muted-foreground">
-                Follow Us
-              </h3>
-              <SocialLinks size="sm" />
+              <SocialLinks size="sm" className="w-full" />
             </div>
 
             {/* Quick contact info */}

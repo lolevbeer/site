@@ -22,17 +22,21 @@ app.prepare().then(() => {
       const parsedUrl = parse(req.url, true);
       await handle(req, res, parsedUrl);
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.error('Error occurred handling', req.url, err);
       res.statusCode = 500;
       res.end('Internal server error');
     }
   })
     .once('error', (err) => {
+      // eslint-disable-next-line no-console
       console.error(err);
       process.exit(1);
     })
     .listen(port, () => {
+      // eslint-disable-next-line no-console
       console.log(`> Ready on https://${hostname}:${port}`);
+      // eslint-disable-next-line no-console
       console.log(`> Access your site at https://lolev.dev:${port}`);
     });
 });

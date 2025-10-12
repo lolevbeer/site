@@ -67,12 +67,12 @@ const nextConfig = {
 
   // TypeScript configuration
   typescript: {
-    ignoreBuildErrors: true, // Temporarily ignore TypeScript errors during build
+    ignoreBuildErrors: false, // Enable TypeScript checking during build
   },
 
   // ESLint configuration
   eslint: {
-    ignoreDuringBuilds: true, // Temporarily ignore ESLint errors during build
+    ignoreDuringBuilds: false, // Enable ESLint checking during build
   },
 
   // Logging

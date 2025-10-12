@@ -143,6 +143,11 @@ export function isLocationOpen(location: Location, date?: Date): boolean {
 
   const dayHours = locationInfo.hours[dayOfWeek];
 
+  // Type guard: notes is a string, not DayHours
+  if (typeof dayHours === 'string' || !dayHours) {
+    return false;
+  }
+
   if (dayHours.closed) {
     return false;
   }
@@ -161,7 +166,16 @@ export function getFormattedHours(location: Location, day: keyof LocationInfo['h
   const locationInfo = getLocationInfo(location);
   const dayHours = locationInfo.hours[day];
 
-  if (day === 'notes') return dayHours as string;
+  // Type guard: check if this is the notes field first
+  if (day === 'notes') {
+    return (dayHours as string) || '';
+  }
+
+  // Type guard: ensure dayHours is DayHours, not string
+  if (typeof dayHours === 'string' || !dayHours) {
+    return 'Closed';
+  }
+
   if (dayHours.closed) return 'Closed';
 
   const formatTime = (time: string) => {
@@ -186,6 +200,11 @@ export function getNextOpeningTime(location: Location): { day: string; time: str
     const dayIndex = (now.getDay() + i) % 7;
     const dayName = days[dayIndex] as keyof typeof locationInfo.hours;
     const dayHours = locationInfo.hours[dayName];
+
+    // Type guard: ensure dayHours is DayHours, not string
+    if (typeof dayHours === 'string' || !dayHours) {
+      continue;
+    }
 
     if (!dayHours.closed) {
       const dayDisplayName = dayName.charAt(0).toUpperCase() + dayName.slice(1);
@@ -220,7 +239,7 @@ export function locationHasFeature(location: Location, feature: LocationFeature)
 export function getAllAvailableFeatures(): LocationFeature[] {
   const allFeatures = new Set<LocationFeature>();
   Object.values(LOCATION_FEATURES).forEach(features => {
-    features.forEach(feature => allFeatures.add(feature));
+    features.forEach((feature: LocationFeature) => allFeatures.add(feature));
   });
   return Array.from(allFeatures);
 }

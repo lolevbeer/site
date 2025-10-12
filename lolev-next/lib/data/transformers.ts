@@ -137,9 +137,9 @@ export function transformBeerCSV(row: BeerCSVRow): Beer {
     recipe: parseNumber(row.recipe),
     hops: row.hops,
     pricing: {
-      draftPrice: row.draftPrice,
-      canSingle: row.canSingle,
-      fourPack: row.fourPack,
+      draftPrice: parseNumber(row.draftPrice),
+      canSingle: parseNumber(row.canSingle),
+      fourPack: parseNumber(row.fourPack),
     },
     availability: {
       cansAvailable: parseBoolean(row.cansAvailable),
@@ -201,7 +201,6 @@ export function transformEventCSV(row: EventCSVRow, location: Location): Brewery
     type: row.type ? (row.type as EventType) : getEventType(row.vendor, row.title),
     status: row.status ? (row.status as EventStatus) : EventStatus.SCHEDULED,
     location,
-    featured: parseBoolean(row.featured),
     price: row.price,
   };
 }

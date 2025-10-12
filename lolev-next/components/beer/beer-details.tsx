@@ -72,7 +72,7 @@ function getGlassDescription(glass: GlassType): string {
 }
 
 function getBeerImagePath(beer: Beer): string | null {
-  if (!beer.image || beer.image === false || beer.image === 'FALSE') {
+  if (!beer.image) {
     return null;
   }
   return `/images/beer/${beer.variant}.webp`;
@@ -118,16 +118,16 @@ function getAvailabilityInfo(beer: Beer): {
 }
 
 function getPricingInfo(beer: Beer): {
-  draftPrice?: string;
-  singlePrice?: string;
-  fourPackPrice?: string;
+  draftPrice?: number;
+  singlePrice?: number;
+  fourPackPrice?: number;
   hasSale: boolean;
 } {
   return {
     draftPrice: beer.pricing.draftPrice,
     singlePrice: beer.pricing.canSingle || beer.pricing.cansSingle,
     fourPackPrice: beer.pricing.fourPack,
-    hasSale: beer.pricing.salePrice === 'TRUE' || beer.pricing.salePrice === true,
+    hasSale: beer.pricing.salePrice === true,
   };
 }
 
@@ -204,7 +204,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
         setTapLocations(tapLocs);
         setCanLocations(canLocs);
       } catch (error) {
-        console.error('Error fetching locations:', error);
+        // Error fetching location data - show empty states
       }
     };
 
@@ -281,7 +281,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
           </div>
 
           {/* Quick Stats */}
-          <Card className="shadow-none border-0 p-0">
+          <Card className="shadow-none border-0 p-0 dark:bg-transparent">
             <CardContent className="p-0 space-y-0">
               <SpecificationRow
                 label="Style"
@@ -310,7 +310,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
               <Badge variant="outline" className="text-sm">
                 {beer.type}
               </Badge>
-              <Badge variant="secondary" className="text-sm">
+              <Badge variant="outline" className="text-sm">
                 {formatAbv(beer.abv)} ABV
               </Badge>
               {availability.isDraft && (
@@ -353,7 +353,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
           {/* Availability and Pricing - Two Columns */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Availability */}
-            <Card className="shadow-none border-0 p-0">
+            <Card className="shadow-none border-0 p-0 dark:bg-transparent">
               <CardHeader className="p-0 pb-4">
                 <CardTitle className="text-lg">Availability</CardTitle>
               </CardHeader>
@@ -380,7 +380,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
 
             {/* Pricing */}
             {((tapLocations.length > 0 && pricing.draftPrice) || (canLocations.length > 0 && pricing.fourPackPrice)) && (
-              <Card className="shadow-none border-0 p-0">
+              <Card className="shadow-none border-0 p-0 dark:bg-transparent">
                 <CardHeader className="p-0 pb-4">
                   <CardTitle className="text-lg flex items-center gap-2">
                     Pricing

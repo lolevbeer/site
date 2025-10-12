@@ -6,6 +6,7 @@ import { loadFoodFromCSV } from '@/lib/utils/food';
 import { FoodSchedule as FoodScheduleComponent } from '@/components/food/food-schedule';
 import { Button } from '@/components/ui/button';
 import { useLocationContext } from '@/components/location/location-provider';
+import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
 
 export default function FoodPage() {
   const { currentLocation } = useLocationContext();
@@ -58,6 +59,7 @@ export default function FoodPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <PageBreadcrumbs className="mb-6" />
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold tracking-tight">Food</h1>
       </div>

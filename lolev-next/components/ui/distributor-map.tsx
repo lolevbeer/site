@@ -115,7 +115,11 @@ export function DistributorMap({
   const [selectedLocation, setSelectedLocation] = useState<GeoFeature | null>(null);
   const [clickedLocation, setClickedLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [mobileView, setMobileView] = useState<'map' | 'list'>('map');
-  const [viewport, setViewport] = useState({
+  const [viewport, setViewport] = useState<{
+    latitude: number;
+    longitude: number;
+    zoom: number;
+  }>({
     latitude: MAP_CONFIG.DEFAULT_CENTER.latitude,
     longitude: MAP_CONFIG.DEFAULT_CENTER.longitude,
     zoom: initialZoom

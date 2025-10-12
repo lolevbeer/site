@@ -26,5 +26,7 @@ export const sampleFoodVendors: FoodVendor[] = [];
 
 // Export function for food vendors by location
 export function getFoodVendorsByLocation(location: Location): FoodVendor[] {
-  return sampleFoodVendors.filter(vendor => vendor.locations?.includes(location));
+  // TODO: Filter by location when FoodVendor type includes location-specific data
+  // For now, return all vendors as they may serve at both locations
+  return sampleFoodVendors;
 }

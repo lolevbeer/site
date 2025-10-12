@@ -6,10 +6,14 @@
 'use client';
 
 import React from 'react';
-import { Badge, BadgeProps } from '@/components/ui/badge';
+import { Badge, badgeVariants } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { EventStatus } from '@/lib/types/event';
 import { LucideIcon } from 'lucide-react';
+import type { VariantProps } from "class-variance-authority";
+
+// Derive BadgeProps from the Badge component
+type BadgeProps = React.ComponentProps<"div"> & VariantProps<typeof badgeVariants>;
 
 export type BadgeVariant = 'default' | 'secondary' | 'destructive' | 'outline';
 

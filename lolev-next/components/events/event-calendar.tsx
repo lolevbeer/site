@@ -135,6 +135,7 @@ export function EventCalendar({
       [EventType.LIVE_MUSIC]: 'bg-purple-100 dark:bg-purple-900/30 text-gray-900 dark:text-gray-100 border-purple-200 dark:border-purple-700',
       [EventType.GAME_NIGHT]: 'bg-green-100 dark:bg-green-900/30 text-gray-900 dark:text-gray-100 border-green-200 dark:border-green-700',
       [EventType.SPECIAL_EVENT]: 'bg-red-100 dark:bg-red-900/30 text-gray-900 dark:text-gray-100 border-red-200 dark:border-red-700',
+      [EventType.SPECIAL]: 'bg-red-100 dark:bg-red-900/30 text-gray-900 dark:text-gray-100 border-red-200 dark:border-red-700',
       [EventType.MARKET]: 'bg-orange-100 dark:bg-orange-900/30 text-gray-900 dark:text-gray-100 border-orange-200 dark:border-orange-700',
       [EventType.SPORTS]: 'bg-yellow-100 dark:bg-yellow-900/30 text-gray-900 dark:text-gray-100 border-yellow-200 dark:border-yellow-700',
       [EventType.ENTERTAINMENT]: 'bg-pink-100 dark:bg-pink-900/30 text-gray-900 dark:text-gray-100 border-pink-200 dark:border-pink-700',
@@ -142,6 +143,7 @@ export function EventCalendar({
       [EventType.BREWERY_TOUR]: 'bg-amber-100 dark:bg-amber-900/30 text-gray-900 dark:text-gray-100 border-amber-200 dark:border-amber-700',
       [EventType.TASTING]: 'bg-indigo-100 dark:bg-indigo-900/30 text-gray-900 dark:text-gray-100 border-indigo-200 dark:border-indigo-700',
       [EventType.FOOD_PAIRING]: 'bg-emerald-100 dark:bg-emerald-900/30 text-gray-900 dark:text-gray-100 border-emerald-200 dark:border-emerald-700',
+      [EventType.FOOD_TRUCK]: 'bg-emerald-100 dark:bg-emerald-900/30 text-gray-900 dark:text-gray-100 border-emerald-200 dark:border-emerald-700',
       [EventType.COMMUNITY]: 'bg-cyan-100 dark:bg-cyan-900/30 text-gray-900 dark:text-gray-100 border-cyan-200 dark:border-cyan-700',
       [EventType.SEASONAL]: 'bg-violet-100 dark:bg-violet-900/30 text-gray-900 dark:text-gray-100 border-violet-200 dark:border-violet-700',
       [EventType.RECURRING]: 'bg-slate-100 dark:bg-slate-900/30 text-gray-900 dark:text-gray-100 border-slate-200 dark:border-slate-700',
@@ -317,8 +319,8 @@ export function EventCalendar({
         <span className="text-sm font-medium text-muted-foreground">Event Types:</span>
         {Object.values(EventType).slice(0, 6).map(type => {
           const colorClasses = getEventTypeColor(type).split(' ');
-          const bgClass = colorClasses.find(c => c.startsWith('bg-')) || '';
-          const darkBgClass = colorClasses.find(c => c.startsWith('dark:bg-')) || '';
+          const bgClass = colorClasses.find((c: string) => c.startsWith('bg-')) || '';
+          const darkBgClass = colorClasses.find((c: string) => c.startsWith('dark:bg-')) || '';
           return (
             <div key={type} className="flex items-center gap-1">
               <div className={cn('w-3 h-3 rounded border', bgClass, darkBgClass)} />

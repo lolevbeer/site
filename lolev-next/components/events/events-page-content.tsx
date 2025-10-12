@@ -2,11 +2,13 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { BreweryEvent } from '@/lib/types/event';
+import type { LocationFilter } from '@/lib/types/location';
 import { EventList } from '@/components/events/event-list';
 import { Button } from '@/components/ui/button';
 import { Mail, Phone } from 'lucide-react';
 import { loadEventsFromCSV } from '@/lib/utils/events';
 import { useLocationContext } from '@/components/location/location-provider';
+import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
 
 interface EventsPageContentProps {
   initialEvents?: BreweryEvent[];
@@ -14,6 +16,8 @@ interface EventsPageContentProps {
 
 export function EventsPageContent({ initialEvents = [] }: EventsPageContentProps) {
   const { currentLocation, setLocation } = useLocationContext();
+  // Cast to LocationFilter to allow comparison with 'all'
+  const locationFilter = currentLocation as LocationFilter;
   const [events, setEvents] = useState<BreweryEvent[]>(initialEvents);
   const [loading, setLoading] = useState(true);
 
@@ -42,14 +46,15 @@ export function EventsPageContent({ initialEvents = [] }: EventsPageContentProps
 
   // Filter events by location with useMemo to ensure proper updates
   const filteredEvents = useMemo(() => {
-    console.log('Filtering events for location:', currentLocation);
-    return currentLocation === 'all'
+    console.log('Filtering events for location:', locationFilter);
+    return locationFilter === 'all'
       ? events
-      : events.filter(event => event.location === currentLocation);
-  }, [events, currentLocation]);
+      : events.filter(event => event.location === locationFilter);
+  }, [events, locationFilter]);
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <PageBreadcrumbs className="mb-6" />
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold tracking-tight">Events</h1>
       </div>

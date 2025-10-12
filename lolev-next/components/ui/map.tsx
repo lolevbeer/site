@@ -181,7 +181,9 @@ export function MapComponent({
         reuseMaps
         onError={(evt) => {
           console.error('Map error:', evt);
-          if (evt.error?.status === 403) {
+          // Check error message for common issues
+          const errorMsg = evt.error?.message || '';
+          if (errorMsg.includes('401') || errorMsg.includes('403')) {
             setMapError('Invalid Mapbox token. Please check your API key.');
           } else {
             setMapError('Failed to load map. Please try again later.');
@@ -238,7 +240,7 @@ export function MapComponent({
             onClose={() => setSelectedMarker(null)}
             closeButton={true}
             closeOnClick={false}
-            offsetTop={-10}
+            offset={-10}
           >
             <div className="p-2 min-w-[250px]">
               <h3 className="font-semibold text-sm mb-2">{selectedMarker.name}</h3>

@@ -160,7 +160,12 @@ export interface LocationInfoWithCoordinates extends LocationInfo {
  * Location utility types
  */
 export type LocationKey = keyof typeof Location;
-export type LocationValue = Location[LocationKey];
+export type LocationValue = Location;
+
+/**
+ * Location filter type - includes 'all' for showing all locations
+ */
+export type LocationFilter = Location | 'all';
 
 /**
  * Location selection interface for forms

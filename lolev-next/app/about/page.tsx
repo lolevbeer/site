@@ -1,9 +1,11 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
 
 export default function AboutPage() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <PageBreadcrumbs className="mb-6" />
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold tracking-tight mb-4">About Lolev</h1>
       </div>

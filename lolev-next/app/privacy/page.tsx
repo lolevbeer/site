@@ -1,7 +1,10 @@
+import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
+
 export default function PrivacyPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto space-y-6">
+        <PageBreadcrumbs className="mb-6" />
         <div className="text-center">
           <h1 className="text-3xl font-bold text-foreground">Privacy Policy</h1>
           <p className="text-sm text-muted-foreground mt-2">
