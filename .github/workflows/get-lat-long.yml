@@ -38,8 +38,8 @@ jobs:
           BING: ${{ vars.BING }}
           SARENE_LOCATIONS: ${{ vars.SARENE_LOCATIONS }}
         run: |
-          cd assets
-          python process_json.py
+          cd public/data
+          python ../../assets/process_json.py
           git config --local user.email "info@lolev.beer"
           git config --local user.name "Map Manager"
           git add processed_geo_data.json ny_geo_data.json

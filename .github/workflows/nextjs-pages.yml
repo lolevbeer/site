@@ -36,7 +36,6 @@ jobs:
 
       - name: Get pnpm store directory
         shell: bash
-        working-directory: ./lolev-next
         run: |
           echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
 
@@ -44,37 +43,14 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('lolev-next/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
       - name: Install dependencies
-        working-directory: ./lolev-next
         run: pnpm install --frozen-lockfile
 
-      - name: Sync data files to Next.js public folder
-        run: |
-          echo "Copying updated data files from _data/ to lolev-next/public/data/"
-          mkdir -p lolev-next/public/data
-          cp -v _data/*.csv lolev-next/public/data/ || true
-          cp -v _data/*.json lolev-next/public/data/ || true
-          cp -v _data/*.yml lolev-next/public/data/ || true
-          echo "Copying map data from assets/"
-          cp -v assets/processed_geo_data.json lolev-next/public/data/ || true
-          cp -v assets/ny_geo_data.json lolev-next/public/data/ || true
-          echo "Data sync complete"
-
-      - name: Copy beer images for build
-        run: |
-          rm -rf lolev-next/public/images/beer
-          mkdir -p lolev-next/public/images/beer
-          cp assets/beer/*.webp lolev-next/public/images/beer/
-          cp assets/beer/*.png lolev-next/public/images/beer/
-          echo "Copied $(ls lolev-next/public/images/beer/*.webp | wc -l) webp files"
-          echo "Copied $(ls lolev-next/public/images/beer/*.png | wc -l) png files"
-
       - name: Build with Next.js
-        working-directory: ./lolev-next
         run: pnpm run build
         env:
           NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN: ${{ secrets.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN }}
@@ -82,23 +58,23 @@ jobs:
       - name: Verify build output
         run: |
           echo "=== Build Output Directory ==="
-          ls -la lolev-next/out/
+          ls -la out/
           echo ""
           echo "=== Checking for location images ==="
-          ls -lh lolev-next/out/images/Lawrenceville-front.jpg
-          ls -lh lolev-next/out/images/Zelienople-interior.jpg
-          ls -lh lolev-next/out/images/bar.jpg
+          ls -lh out/images/Lawrenceville-front.jpg
+          ls -lh out/images/Zelienople-interior.jpg
+          ls -lh out/images/bar.jpg
           echo ""
           echo "=== Checking beer images count ==="
-          ls lolev-next/out/images/beer/*.webp | wc -l
+          ls out/images/beer/*.webp | wc -l
           echo ""
           echo "=== Verifying no symlinks in output ==="
-          find lolev-next/out -type l || echo "No symlinks found (good!)"
+          find out -type l || echo "No symlinks found (good!)"
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: lolev-next/out
+          path: out
 
   deploy:
     environment:

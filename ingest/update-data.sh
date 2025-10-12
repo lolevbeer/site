@@ -15,7 +15,7 @@ set -o pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-DATA_DIR="$REPO_ROOT/_data"
+DATA_DIR="$REPO_ROOT/public/data"
 
 mkdir -p "$DATA_DIR"
 cd "$DATA_DIR" || exit 1

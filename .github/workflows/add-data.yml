@@ -35,6 +35,6 @@ jobs:
         run: |
           git config --local user.email "lolevbeer@gmail.com"
           git config --local user.name "Lolev Manager"
-          git add _data/*.csv
-          git diff-index --quiet HEAD -- _data/*.csv || git commit -m "Sync Data from google sheets"
+          git add public/data/*.csv
+          git diff-index --quiet HEAD -- public/data/*.csv || git commit -m "Sync Data from google sheets"
           git push
