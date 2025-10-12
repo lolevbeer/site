@@ -3,7 +3,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useLocationContext } from '@/components/location/location-provider';
-import { BeerCard } from '@/components/beer/beer-card';
+import { DraftBeerCard } from '@/components/beer/draft-beer-card';
 import type { Beer } from '@/lib/types/beer';
 import Link from 'next/link';
 
@@ -45,13 +45,11 @@ export function FeaturedBeers({ lawrencevilleBeers, zelienopleBeers }: FeaturedB
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8" suppressHydrationWarning>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8" suppressHydrationWarning>
           {featuredBeers.map((beer, index) => (
-            <BeerCard
+            <DraftBeerCard
               key={`${beer.variant}-${index}`}
               beer={beer}
-              variant="minimal"
-              showInlineBadges={true}
               showLocation={false}
               priority={index === 0}
             />
