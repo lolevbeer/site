@@ -44,9 +44,6 @@ export default function FAQPage() {
           <h1 className="text-4xl font-bold tracking-tight mb-4">
             Frequently Asked Questions
           </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Find answers to common questions about visiting Lolev Beer, our locations, events, and more.
-          </p>
         </div>
 
         {/* FAQ Accordion */}
@@ -69,9 +66,6 @@ export default function FAQPage() {
         <div className="pt-12">
           <div className="text-center mb-8">
             <h2 className="text-2xl font-semibold mb-4">Still have questions?</h2>
-            <p className="text-muted-foreground mb-6">
-              We're here to help! Reach out to us or explore more about Lolev Beer.
-            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
