@@ -158,6 +158,66 @@
       scroll-behavior: smooth;
     }
   }
+
+  /* Accessibility: Screen reader only content */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  /* Enhanced focus indicators for WCAG 2.4.7 & 2.2 (2.4.13) */
+  /* WCAG 2.2 requires: 2px minimum thickness, 3:1 contrast ratio */
+  *:focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
+
+  /* High contrast focus for interactive elements - WCAG 2.2 compliant */
+  /* Outline: 3px solid ensures visible focus indicator */
+  /* Box-shadow adds additional visual emphasis and meets 3:1 contrast */
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible,
+  [role="button"]:focus-visible,
+  [role="link"]:focus-visible,
+  [tabindex]:not([tabindex="-1"]):focus-visible {
+    outline: 3px solid var(--color-ring);
+    outline-offset: 2px;
+    /* Light mode: Blue (#0071e3) on white - contrast > 3:1 ✅ */
+    box-shadow: 0 0 0 5px rgba(0, 113, 227, 0.15);
+  }
+
+  .dark a:focus-visible,
+  .dark button:focus-visible,
+  .dark input:focus-visible,
+  .dark textarea:focus-visible,
+  .dark select:focus-visible,
+  .dark [role="button"]:focus-visible,
+  .dark [role="link"]:focus-visible,
+  .dark [tabindex]:not([tabindex="-1"]):focus-visible {
+    /* Dark mode: Blue (#0a84ff) on black - contrast > 3:1 ✅ */
+    box-shadow: 0 0 0 5px rgba(10, 132, 255, 0.25);
+  }
+
+  /* Ensure keyboard focus is always visible */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* WCAG 2.2 (2.4.12): Prevent sticky header from obscuring focus */
+  /* Scroll focused elements into view with padding */
+  *:focus-visible {
+    scroll-margin-top: 80px; /* Header height + buffer */
+  }
 }
 
 /* Utility classes for Apple-style design */

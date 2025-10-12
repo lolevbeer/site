@@ -51,7 +51,6 @@ export function FeaturedBeers({ lawrencevilleBeers, zelienopleBeers }: FeaturedB
               key={`${beer.variant}-${index}`}
               beer={beer}
               showLocation={false}
-              priority={index === 0}
             />
           ))}
         </div>

@@ -70,7 +70,7 @@ const nextConfig = {
   generateEtags: true,
 
   // Webpack configuration
-  webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
+  webpack: (config, { dev, isServer }) => {
     // SVG handling
     config.module.rules.push({
       test: /\.svg$/,
@@ -80,6 +80,7 @@ const nextConfig = {
     // Bundle analyzer for both dev and production
     if (process.env.ANALYZE === 'true' && !isServer) {
       try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
         const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
         config.plugins.push(
           new BundleAnalyzerPlugin({
@@ -88,7 +89,7 @@ const nextConfig = {
             openAnalyzer: dev,
           })
         );
-      } catch (e) {
+      } catch {
         console.warn('webpack-bundle-analyzer not installed, skipping bundle analysis');
       }
     }

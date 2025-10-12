@@ -32,7 +32,7 @@ export function HeroSection({ availableBeers }: HeroSectionProps) {
       <div className="absolute inset-0 z-0">
         <Image
           src="/images/bar.jpg"
-          alt="Bar background"
+          alt="Interior view of Lolev Beer taproom showing bar area with craft beer taps"
           fill
           className="object-cover object-center"
           priority
@@ -56,6 +56,7 @@ export function HeroSection({ availableBeers }: HeroSectionProps) {
                 slidesToScroll: "auto",
               }}
               className="w-full"
+              aria-label="Available beers carousel"
             >
               <CarouselContent className="-ml-4">
                 {availableBeers.length > 0 ? (
@@ -65,7 +66,7 @@ export function HeroSection({ availableBeers }: HeroSectionProps) {
                         <div className="relative h-16 w-16 md:h-24 md:w-24 overflow-hidden rounded-lg bg-transparent transition-transform group-hover:scale-105">
                           <Image
                             src={`/images/beer/${beer.variant}.webp`}
-                            alt={beer.name}
+                            alt={`${beer.name} beer can`}
                             fill
                             className="object-contain"
                             sizes="(max-width: 768px) 64px, 96px"

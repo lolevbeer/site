@@ -3,6 +3,8 @@
  * Centralized export file for all TypeScript type definitions
  */
 
+import React from 'react';
+
 // Beer types
 export type {
   Beer,
@@ -170,7 +172,7 @@ export interface UIState {
 export interface NavItem {
   label: string;
   href: string;
-  icon?: string;
+  icon?: React.ComponentType<{ className?: string }>;
   children?: NavItem[];
   external?: boolean;
 }

@@ -352,14 +352,15 @@ export function EventList({
             <div className="border rounded-lg p-4 space-y-4 bg-muted/30">
               {/* Event Type Filter */}
               <div>
-                <label className="text-sm font-medium mb-2 block">Event Types</label>
-                <div className="flex gap-2 flex-wrap">
+                <div className="text-sm font-medium mb-2" id="event-types-label">Event Types</div>
+                <div className="flex gap-2 flex-wrap" role="group" aria-labelledby="event-types-label">
                   {Object.values(EventType).map(type => (
                     <Button
                       key={type}
                       variant={selectedTypes.includes(type) ? 'default' : 'outline'}
                       size="sm"
                       onClick={() => toggleEventType(type)}
+                      aria-pressed={selectedTypes.includes(type)}
                     >
                       {type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                     </Button>

@@ -198,6 +198,11 @@ export function Footer() {
               </Link>
             </Button>
             <Button asChild variant="ghost" size="sm">
+              <Link href="/accessibility">
+                Accessibility
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" size="sm">
               <Link href="/terms">
                 Terms of Service
               </Link>

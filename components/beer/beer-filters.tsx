@@ -40,12 +40,17 @@ function SearchInput({
 }) {
   return (
     <div className="relative">
+      <label htmlFor="beer-search" className="sr-only">
+        Search beers
+      </label>
       <input
+        id="beer-search"
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         className="w-full px-3 py-2 text-sm border border-input rounded-md bg-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+        aria-label="Search beers by name or description"
       />
       {value && (
         <button
@@ -188,8 +193,11 @@ function ABVRangeFilter({
 
       <div className="grid grid-cols-2 gap-2">
         <div>
-          <label className="text-xs text-muted-foreground">Min %</label>
+          <label htmlFor="abv-min" className="text-xs text-muted-foreground">
+            Min %
+          </label>
           <input
+            id="abv-min"
             type="number"
             value={localRange.min}
             onChange={(e) => handleMinChange(e.target.value)}
@@ -197,11 +205,15 @@ function ABVRangeFilter({
             max="20"
             step="0.1"
             className="w-full px-2 py-1 text-sm border border-input rounded bg-background"
+            aria-label="Minimum ABV percentage"
           />
         </div>
         <div>
-          <label className="text-xs text-muted-foreground">Max %</label>
+          <label htmlFor="abv-max" className="text-xs text-muted-foreground">
+            Max %
+          </label>
           <input
+            id="abv-max"
             type="number"
             value={localRange.max}
             onChange={(e) => handleMaxChange(e.target.value)}
@@ -209,6 +221,7 @@ function ABVRangeFilter({
             max="20"
             step="0.1"
             className="w-full px-2 py-1 text-sm border border-input rounded bg-background"
+            aria-label="Maximum ABV percentage"
           />
         </div>
       </div>

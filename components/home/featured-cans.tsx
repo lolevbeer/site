@@ -67,7 +67,7 @@ export function FeaturedCans({ lawrencevilleCans, zelienopleCans }: FeaturedCans
                       {beer.image ? (
                         <Image
                           src={`/images/beer/${beer.variant.toLowerCase()}.webp`}
-                          alt={beer.name}
+                          alt={`${beer.name} - ${beer.type || 'Craft beer'} can`}
                           fill
                           className="object-contain p-4"
                           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"

@@ -254,10 +254,11 @@ export function EventCalendar({
               {/* Events */}
               <div className="space-y-1">
                 {day.events.slice(0, 3).map((event, eventIndex) => (
-                  <div
+                  <button
                     key={eventIndex}
+                    type="button"
                     className={cn(
-                      'text-xs p-2 rounded border cursor-pointer transition-all hover:shadow-sm',
+                      'w-full text-left text-xs p-2 rounded border cursor-pointer transition-all hover:shadow-sm',
                       getEventTypeColor(event.type),
                       event.status === EventStatus.CANCELLED && 'opacity-50 line-through'
                     )}
@@ -265,6 +266,7 @@ export function EventCalendar({
                       e.stopPropagation();
                       onEventClick?.(event);
                     }}
+                    aria-label={`Event: ${event.title} at ${formatTime(event.time)}`}
                   >
                     <div className="font-medium truncate">
                       {event.title}
@@ -281,7 +283,7 @@ export function EventCalendar({
                         </>
                       )}
                     </div>
-                  </div>
+                  </button>
                 ))}
 
                 {/* Show more indicator */}

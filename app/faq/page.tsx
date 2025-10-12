@@ -66,7 +66,7 @@ export default function FAQPage() {
         </div>
 
         {/* Quick Links Section */}
-        <div className="border-t pt-12">
+        <div className="pt-12">
           <div className="text-center mb-8">
             <h2 className="text-2xl font-semibold mb-4">Still have questions?</h2>
             <p className="text-muted-foreground mb-6">

@@ -80,12 +80,12 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
 
           {/* Social Links and Footer */}
           <div className="px-6 py-4">
-            <div className="mb-4 flex justify-end">
+            <div className="mb-4 flex justify-center">
               <SocialLinks size="sm" />
             </div>
 
             {/* Quick contact info */}
-            <div className="text-xs text-muted-foreground text-right">
+            <div className="text-xs text-muted-foreground text-center">
               <p className="font-medium">Lolev Beer</p>
               <p>Lawrenceville & Zelienople</p>
             </div>

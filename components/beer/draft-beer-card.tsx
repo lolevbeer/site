@@ -9,7 +9,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Beer } from '@/lib/types/beer';
 import { useLocationContext } from '@/components/location/location-provider';
-import { formatAbv, getBeerSlug } from '@/lib/utils/formatters';
+import { getBeerSlug } from '@/lib/utils/formatters';
 import { getGlassIcon } from '@/lib/utils/beer-icons';
 import { Badge } from '@/components/ui/badge';
 
@@ -17,14 +17,12 @@ interface DraftBeerCardProps {
   beer: Beer;
   showLocation?: boolean;
   className?: string;
-  priority?: boolean;
 }
 
 export const DraftBeerCard = React.memo(function DraftBeerCard({
   beer,
   showLocation = true,
-  className = '',
-  priority = false
+  className = ''
 }: DraftBeerCardProps) {
   const { currentLocation } = useLocationContext();
   const beerSlug = getBeerSlug(beer);

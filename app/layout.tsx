@@ -7,6 +7,7 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Toaster } from "@/components/ui/sonner";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { SkipNav } from "@/components/ui/skip-nav";
 
 // Reduce font weights to only what's needed (saves ~150-200KB)
 const poppins = Poppins({
@@ -115,8 +116,9 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <LocationProvider>
+              <SkipNav />
               <Header />
-              <main className="flex-1">
+              <main id="main-content" className="flex-1">
                 {children}
               </main>
               <Footer />

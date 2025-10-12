@@ -1,0 +1,29 @@
+{
+  "defaults": {
+    "timeout": 10000,
+    "wait": 1000,
+    "chromeLaunchConfig": {
+      "args": [
+        "--no-sandbox",
+        "--disable-setuid-sandbox"
+      ]
+    },
+    "standard": "WCAG2AA",
+    "runners": [
+      "axe"
+    ],
+    "ignore": [
+      "notice",
+      "warning"
+    ]
+  },
+  "urls": [
+    "http://localhost:3000",
+    "http://localhost:3000/beer",
+    "http://localhost:3000/events",
+    "http://localhost:3000/about",
+    "http://localhost:3000/faq",
+    "http://localhost:3000/privacy",
+    "http://localhost:3000/terms"
+  ]
+}
