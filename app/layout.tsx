@@ -33,6 +33,11 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+  },
   metadataBase: new URL("https://next.lolev.beer"),
   alternates: {
     canonical: "/",
