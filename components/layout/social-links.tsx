@@ -87,7 +87,7 @@ const socialLinks: SocialLink[] = [
   },
   {
     name: 'Untappd',
-    href: 'https://untappd.com/lolevbeer',
+    href: 'https://untappd.com/lolev',
     icon: UntappdIcon,
     color: 'hover:text-foreground',
     label: 'Rate our beers on Untappd',
