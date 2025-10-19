@@ -1,7 +1,7 @@
 variant,cansAvailable,name,salePrice,type,abv,cansSingle,fourPack
 ,FALSE,,FALSE,,,,
 vespero,TRUE,Vespero,FALSE,Czech Dark Lager,5.8,4.25,16
-sonnen,TRUE,Sonnen,FALSE,Märzen,5.4,4.50,17
+sonnen,FALSE,Sonnen,FALSE,Märzen,5.4,4.50,17
 ,FALSE,,FALSE,,,,
 glyphs-ii,TRUE,Glyphs II,FALSE,Pale Ale,5.1,4.50,17
 lupula,TRUE,Lupula,FALSE,India Pale Ale,7,4.50,17
