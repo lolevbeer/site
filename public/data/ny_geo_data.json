@@ -1005,7 +1005,7 @@
             "properties": {
                 "id": 63,
                 "Name": "rochester yacht club",
-                "address": "Rochester Yacht Club, 5555, Saint Paul Boulevard, Summerville, City of Rochester, Monroe County, New York, 14617, United States of America",
+                "address": "Rochester Yacht Club, 5555, Saint Paul Boulevard, Summerville, City of Rochester, Monroe County, New York, 14617, United States",
                 "customerType": "Recreation"
             }
         },
@@ -1117,7 +1117,7 @@
             "properties": {
                 "id": 70,
                 "Name": "fattey beer company",
-                "address": "Adventure Place, Manhattan Square, City of Rochester, Monroe County, New York, 14607, United States",
+                "address": "Adventure Place, Manhattan Square, City of Rochester, Monroe County, New York, 14607, United States of America",
                 "customerType": "Retail"
             }
         },
