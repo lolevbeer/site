@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useLocationContext } from '@/components/location/location-provider';
 import { getGlassIcon } from '@/lib/utils/beer-icons';
+import { useLocationFilteredData } from '@/lib/hooks/use-location-filtered-data';
 
 interface Can {
   variant: string;
@@ -25,28 +25,10 @@ interface FeaturedCansProps {
 }
 
 export function FeaturedCans({ lawrencevilleCans, zelienopleCans }: FeaturedCansProps) {
-  const { currentLocation } = useLocationContext();
-  const [isHydrated, setIsHydrated] = useState(false);
-
-  // Track hydration to prevent mismatch
-  useEffect(() => {
-    setIsHydrated(true);
-  }, []);
-
-  // Filter cans based on current location
-  // Always show lawrenceville before hydration to prevent mismatch
-  const featuredCans = useMemo(() => {
-    if (!isHydrated) {
-      return lawrencevilleCans;
-    }
-    if (currentLocation === 'lawrenceville') {
-      return lawrencevilleCans;
-    } else if (currentLocation === 'zelienople') {
-      return zelienopleCans;
-    }
-    // Show both locations when 'all' is selected
-    return [...lawrencevilleCans, ...zelienopleCans];
-  }, [currentLocation, lawrencevilleCans, zelienopleCans, isHydrated]);
+  const featuredCans = useLocationFilteredData({
+    lawrencevilleData: lawrencevilleCans,
+    zelienopleData: zelienopleCans
+  });
 
   return (
     <section className="py-16 lg:py-24 bg-background">

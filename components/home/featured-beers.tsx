@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
-import { useLocationContext } from '@/components/location/location-provider';
 import { DraftBeerCard } from '@/components/beer/draft-beer-card';
 import type { Beer } from '@/lib/types/beer';
 import Link from 'next/link';
+import { useLocationFilteredData } from '@/lib/hooks/use-location-filtered-data';
 
 interface FeaturedBeersProps {
   lawrencevilleBeers: Beer[];
@@ -13,28 +13,10 @@ interface FeaturedBeersProps {
 }
 
 export function FeaturedBeers({ lawrencevilleBeers, zelienopleBeers }: FeaturedBeersProps) {
-  const { currentLocation } = useLocationContext();
-  const [isHydrated, setIsHydrated] = useState(false);
-
-  // Track hydration to prevent mismatch
-  useEffect(() => {
-    setIsHydrated(true);
-  }, []);
-
-  // Filter beers based on current location
-  // Always show lawrenceville before hydration to prevent mismatch
-  const featuredBeers = useMemo(() => {
-    if (!isHydrated) {
-      return lawrencevilleBeers;
-    }
-    if (currentLocation === 'lawrenceville') {
-      return lawrencevilleBeers;
-    } else if (currentLocation === 'zelienople') {
-      return zelienopleBeers;
-    }
-    // Show both locations when 'all' is selected
-    return [...lawrencevilleBeers, ...zelienopleBeers];
-  }, [currentLocation, lawrencevilleBeers, zelienopleBeers, isHydrated]);
+  const featuredBeers = useLocationFilteredData({
+    lawrencevilleData: lawrencevilleBeers,
+    zelienopleData: zelienopleBeers
+  });
 
   return (
     <section className="py-16 lg:py-24 bg-background">

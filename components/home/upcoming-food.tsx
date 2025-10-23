@@ -1,10 +1,11 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Calendar, Clock, MapPin } from 'lucide-react';
+import { useLocationFilteredData } from '@/lib/hooks/use-location-filtered-data';
 
 interface FoodVendor {
   vendor: string;
@@ -20,21 +21,33 @@ interface UpcomingFoodProps {
 }
 
 export function UpcomingFood({ lawrencevilleFood, zelienopleFood }: UpcomingFoodProps) {
-  // Combine and sort food from both locations, take first 3
-  const allFood = [
-    ...lawrencevilleFood.map(f => ({ ...f, location: 'lawrenceville' })),
-    ...zelienopleFood.map(f => ({ ...f, location: 'zelienople' }))
-  ];
-
-  allFood.sort((a, b) => {
-    const [yearA, monthA, dayA] = a.date.split('-').map(Number);
-    const [yearB, monthB, dayB] = b.date.split('-').map(Number);
-    const dateA = new Date(yearA, monthA - 1, dayA);
-    const dateB = new Date(yearB, monthB - 1, dayB);
-    return dateA.getTime() - dateB.getTime();
+  // Filter by location first
+  const filteredFood = useLocationFilteredData({
+    lawrencevilleData: lawrencevilleFood,
+    zelienopleData: zelienopleFood
   });
 
-  const upcomingFood = allFood.slice(0, 3);
+  // Sort and take first 3
+  const upcomingFood = useMemo(() => {
+    const foodWithLocation = filteredFood.map((f, index) => {
+      // Determine location based on which array the item came from
+      const isFromLawrenceville = lawrencevilleFood.includes(f as FoodVendor);
+      return {
+        ...f,
+        location: isFromLawrenceville ? 'lawrenceville' as const : 'zelienople' as const
+      };
+    });
+
+    foodWithLocation.sort((a, b) => {
+      const [yearA, monthA, dayA] = a.date.split('-').map(Number);
+      const [yearB, monthB, dayB] = b.date.split('-').map(Number);
+      const dateA = new Date(yearA, monthA - 1, dayA);
+      const dateB = new Date(yearB, monthB - 1, dayB);
+      return dateA.getTime() - dateB.getTime();
+    });
+
+    return foodWithLocation.slice(0, 3);
+  }, [filteredFood, lawrencevilleFood]);
 
   if (upcomingFood.length === 0) {
     return null;

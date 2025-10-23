@@ -1,10 +1,11 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { EventCard } from '@/components/events/event-card';
 import { parseLocalDate } from '@/lib/utils/formatters';
+import { useLocationFilteredData } from '@/lib/hooks/use-location-filtered-data';
 
 interface Event {
   date: string;
@@ -21,19 +22,31 @@ interface UpcomingEventsProps {
 }
 
 export function UpcomingEvents({ lawrencevilleEvents, zelienopleEvents }: UpcomingEventsProps) {
-  // Combine and sort events from both locations, take first 3
-  const allEvents = [
-    ...lawrencevilleEvents.map(e => ({ ...e, location: 'lawrenceville' })),
-    ...zelienopleEvents.map(e => ({ ...e, location: 'zelienople' }))
-  ];
-
-  allEvents.sort((a, b) => {
-    const dateA = parseLocalDate(a.date);
-    const dateB = parseLocalDate(b.date);
-    return dateA.getTime() - dateB.getTime();
+  // Filter by location first
+  const filteredEvents = useLocationFilteredData({
+    lawrencevilleData: lawrencevilleEvents,
+    zelienopleData: zelienopleEvents
   });
 
-  const upcomingEvents = allEvents.slice(0, 3);
+  // Sort and take first 3
+  const upcomingEvents = useMemo(() => {
+    const eventsWithLocation = filteredEvents.map((e) => {
+      // Determine location based on which array the item came from
+      const isFromLawrenceville = lawrencevilleEvents.includes(e as Event);
+      return {
+        ...e,
+        location: isFromLawrenceville ? 'lawrenceville' as const : 'zelienople' as const
+      };
+    });
+
+    eventsWithLocation.sort((a, b) => {
+      const dateA = parseLocalDate(a.date);
+      const dateB = parseLocalDate(b.date);
+      return dateA.getTime() - dateB.getTime();
+    });
+
+    return eventsWithLocation.slice(0, 3);
+  }, [filteredEvents, lawrencevilleEvents]);
 
   return (
     <section className="py-16 lg:py-24">

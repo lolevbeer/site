@@ -240,7 +240,7 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
 
       {/* Mobile Filters */}
       {showFilters && (
-        <Card className="lg:hidden mb-6 border-0 shadow-none dark:bg-transparent">
+        <Card className="lg:hidden mb-6 border-0 shadow-none bg-transparent">
           <CardHeader className="p-0">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
@@ -325,14 +325,14 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
             </div>
 
             {/* Mobile ABV filters */}
-            <div>
-              <Label className="text-sm mb-2 block">Alc by Volume</Label>
+            <div className="flex items-center justify-between gap-3">
+              <Label className="text-sm whitespace-nowrap">Alc by Volume</Label>
               <ToggleGroup
                 type="multiple"
                 variant="outline"
                 value={abvLevels}
                 onValueChange={handleABVLevelsChange}
-                className="justify-start"
+                className="justify-end"
               >
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -373,7 +373,7 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Filters Sidebar - Desktop */}
         <div className="hidden lg:block">
-          <Card className="border-0 shadow-none dark:bg-transparent">
+          <Card className="border-0 shadow-none bg-transparent">
             <CardHeader className="pl-0">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -458,14 +458,14 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
               </div>
 
               {/* ABV Levels */}
-              <div className="space-y-3">
-                <Label>Alc by Volume</Label>
+              <div className="flex items-center justify-between gap-3">
+                <Label className="whitespace-nowrap">Alc by Volume</Label>
                 <ToggleGroup
                   type="multiple"
                   variant="outline"
                   value={abvLevels}
                   onValueChange={handleABVLevelsChange}
-                  className="justify-start"
+                  className="justify-end"
                 >
                   <Tooltip>
                     <TooltipTrigger asChild>

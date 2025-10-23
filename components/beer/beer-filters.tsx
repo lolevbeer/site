@@ -176,26 +176,10 @@ function ABVRangeFilter({
   }, [onABVRangeChange]);
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h4 className="text-sm font-medium">ABV Range</h4>
-        {abvRange && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={clearRange}
-            className="h-auto py-1 px-2 text-xs"
-          >
-            Clear
-          </Button>
-        )}
-      </div>
-
-      <div className="grid grid-cols-2 gap-2">
-        <div>
-          <label htmlFor="abv-min" className="text-xs text-muted-foreground">
-            Min %
-          </label>
+    <div className="space-y-2">
+      <div className="flex items-center justify-between gap-3">
+        <h4 className="text-sm font-medium whitespace-nowrap">Alc by Volume</h4>
+        <div className="flex items-center gap-2">
           <input
             id="abv-min"
             type="number"
@@ -204,14 +188,11 @@ function ABVRangeFilter({
             min="0"
             max="20"
             step="0.1"
-            className="w-full px-2 py-1 text-base border border-input rounded bg-background"
+            className="w-16 px-2 py-1 text-sm border border-input rounded bg-background"
             aria-label="Minimum ABV percentage"
+            placeholder="Min"
           />
-        </div>
-        <div>
-          <label htmlFor="abv-max" className="text-xs text-muted-foreground">
-            Max %
-          </label>
+          <span className="text-muted-foreground text-sm">-</span>
           <input
             id="abv-max"
             type="number"
@@ -220,15 +201,27 @@ function ABVRangeFilter({
             min="0"
             max="20"
             step="0.1"
-            className="w-full px-2 py-1 text-base border border-input rounded bg-background"
+            className="w-16 px-2 py-1 text-sm border border-input rounded bg-background"
             aria-label="Maximum ABV percentage"
+            placeholder="Max"
           />
+          {abvRange && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearRange}
+              className="h-auto py-1 px-2 text-xs"
+            >
+              Clear
+            </Button>
+          )}
         </div>
       </div>
-
-      <div className="text-xs text-muted-foreground text-center">
-        {localRange.min}% - {localRange.max}%
-      </div>
+      {(localRange.min > 0 || localRange.max < 15) && (
+        <div className="text-xs text-muted-foreground text-right">
+          {localRange.min}% - {localRange.max}%
+        </div>
+      )}
     </div>
   );
 }
@@ -247,26 +240,22 @@ function AvailabilityFilter({
   ] as const;
 
   return (
-    <div className="space-y-3">
-      <h4 className="text-sm font-medium">Availability</h4>
-
-      <div className="space-y-2">
-        {options.map((option) => (
-          <label
-            key={option.value}
-            className="flex items-center space-x-2 cursor-pointer hover:bg-muted/50 p-1 rounded"
-          >
-            <input
-              type="radio"
-              name="availability"
-              value={option.value}
-              checked={availability === option.value || (!availability && option.value === 'all')}
-              onChange={() => onAvailabilityChange(option.value === 'all' ? undefined : option.value)}
-              className="w-4 h-4 text-primary border-gray-300 focus:ring-primary focus:ring-2"
-            />
-            <span className="text-sm">{option.label}</span>
-          </label>
-        ))}
+    <div>
+      <div className="flex items-center justify-between gap-3">
+        <h4 className="text-sm font-medium whitespace-nowrap">Availability</h4>
+        <div className="flex gap-1.5">
+          {options.map((option) => (
+            <Button
+              key={option.value}
+              variant={availability === option.value || (!availability && option.value === 'all') ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => onAvailabilityChange(option.value === 'all' ? undefined : option.value)}
+              className="text-xs px-2.5 h-8"
+            >
+              {option.label}
+            </Button>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -353,7 +342,7 @@ export function BeerFilters({
   }, [onFiltersChange]);
 
   return (
-    <Card className={`shadow-none ${className}`}>
+    <Card className={`shadow-none bg-transparent border-border ${className}`}>
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">Filter Beers</CardTitle>
