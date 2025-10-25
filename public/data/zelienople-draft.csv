@@ -2,7 +2,7 @@ tap,variant,singleCanAvailable,name,type,abv,glass,price,description,image,hops
 1,Vespero,FALSE,Vespero,Czech Dark Lager,5.8,stein,6,"Roasted chestnut, chocolate and raisin. Ruby hue and a hint of noble hops.",TRUE,Saaz
 2,Lumina,FALSE,Lumina,West Coast Imperial Pilsner,6.5,stein,7,"Notes of apricot, pear and lemongrass.",FALSE,"Motueka™, El Dorado®"
 3,grandar,FALSE,Grandar,Imperial Pilsner,6.6,stein,7,"Crackery sweetness balanced with hops, floral and herbal notes that finish with a subtle citrus. Step mashed and hopped with nobles.",TRUE,"Hallertau Mittelfrüh, Saaz"
-4,Glyphs-ii,FALSE,Glyphs II,Pale Ale,5.1,pint,7,Vibrant tropical fruit and citrus layers with a pillowy soft body.,TRUE,
+4,Glyphs-ii,FALSE,Glyphs II,Pale Ale,5.1,pint,7,Vibrant tropical fruit and citrus layers with a pillowy soft body.,TRUE,"Krush HyperBoost™, Citra® DynaBoost™, Riwaka™, Citra®"
 5,verus,FALSE,Verus,India Pale Ale,7,pint,7,"Tropical fruit notes balanced with pear, melon, blueberry and citrus.",TRUE,"Erebus™, Calypso™, Citra®"
 6,ddh-Lupula,FALSE,DDH Lupula,India Pale Ale,7,pint,8,"Double dry hopped Lupula. Notes of Pineapple, mango, and grapefruit. Aromatic.",TRUE,"Motueka™, Moutere™, Riwaka™"
 7,ddh-akko,FALSE,DDH Akko,India Pale Ale,7,pint,8,"Double dry hopped variant of Akko. Pineapple and orange mango, bursting with peach ring candies. ",TRUE,"Mega Motueka, Nelson Sauvin™, Citra®, Galaxy®"
@@ -10,5 +10,5 @@ tap,variant,singleCanAvailable,name,type,abv,glass,price,description,image,hops
 9,Kamo,FALSE,Kamo,Double IPA,8,teku,9,,TRUE,"Freestyle Southern Cross, Freestyle Riwaka™, Citra DynaBoost™, Citra®"
 10,priscus-ii,FALSE,Priscus II,Double IPA,8.3,teku,9,"Hop saturated variant. Sauvignon blanc, blueberry and citrus.",TRUE,"Motueka CGX, Nelson Sauvin™, Citra®"
 11,sever,FALSE,Sever,Pumpkin Stout,5.7,teku,7,"Dark roast coffee and pumpkin pie in a rich quaffable stout. Conditioned freshly-roasted Brazilian coffee beans from Temper Coffee Roasters.
-.",TRUE,"Krush HyperBoost™, Citra® DynaBoost™, Riwaka™, Citra®"
+.",TRUE,
 12,faust-unfiltered-25,FALSE,Faust,Plum Saison,6.7,teku,10,"Unfiltered 2025 vintage. Slightly sour, dry and oaky. Aged 18 months in oak foeders on our house microflora and conditioned on plums.",FALSE,
