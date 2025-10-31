@@ -93,9 +93,9 @@ sever,Sever,Pumpkin Stout,,5.7,teku,$7,$4.50,$17,"Dark roast coffee and pumpkin 
 .",,FALSE,TRUE,FALSE,,90,
 glyphs-ii,Glyphs II,Pale Ale,,5.1,pint,$7,$4.50,$17,Vibrant tropical fruit and citrus layers with a pillowy soft body.,,FALSE,TRUE,FALSE,,91,"Krush HyperBoost™, Citra® DynaBoost™, Riwaka™, Citra®"
 kamo,Kamo,Double IPA,,8,teku,$9,$5.75,$22,,,FALSE,TRUE,FALSE,,92,"Freestyle Southern Cross, Freestyle Riwaka™, Citra DynaBoost™, Citra®"
-lumina,Lumina,West Coast Imperial Pilsner,,6.5,stein,$7,,,"Notes of apricot, pear and lemongrass.",,FALSE,FALSE,FALSE,,93,"Motueka™, El Dorado®"
-ora,Ora,Zwickelbier,,4.5,stein,$7,,,Unfiltered golden pilsner spunded slowly for natural carbonation. Gentle malt plushness with noble hops.,,FALSE,FALSE,FALSE,,94,
-origen,Origen,Double IPA,,7.8,pint,,,,,,FALSE,TRUE,FALSE,,95,
+lumina,Lumina,West Coast Imperial Pilsner,,6.5,stein,$7,$5.75,$22,"Notes of apricot, pear and lemongrass.",,FALSE,FALSE,FALSE,,93,"Motueka™, El Dorado®"
+ora,Ora,Zwickelbier,,4.5,stein,$7,$5.75,$22,Unfiltered golden pilsner spunded slowly for natural carbonation. Gentle malt plushness with noble hops.,,FALSE,FALSE,FALSE,,94,
+origen,Origen,Double IPA,,7.8,pint,$9,$5.75,$22,,,FALSE,TRUE,FALSE,,95,
 ,,,,,,,,,,,FALSE,FALSE,FALSE,,96,
 ,,,,,,,,,,,FALSE,FALSE,FALSE,,97,
 ,,,,,,,,,,,FALSE,FALSE,FALSE,,98,
