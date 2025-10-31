@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - master
+    paths-ignore:
+      - 'public/data/*.csv'
   repository_dispatch:
     types: [update-data]
   workflow_dispatch:  # Allows manual triggering
@@ -37,4 +39,5 @@ jobs:
           git config --local user.name "Lolev Manager"
           git add public/data/*.csv
           git diff-index --quiet HEAD -- public/data/*.csv || git commit -m "Sync Data from google sheets"
+          git pull --rebase origin master
           git push
