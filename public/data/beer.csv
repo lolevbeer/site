@@ -80,7 +80,7 @@ costilla,Costilla,Mexican Dark Lager,,4.8,stein,$6,$4.00,$15,Dark with toffee an
 daltonico,Daltonico,Black IPA,,6.8,pint,$7,$4.50,$17,"Slightly roasty body, with notes of subtle pine, citrus, with chocolate undertones.",,FALSE,TRUE,FALSE,,79,"Cascade CGX™, Erebus™, Idaho 7™, Nelson Sauvin™"
 akko,Akko,India Pale Ale,,7,pint,$7,$4.50,$17,"Pineapple and orange mango, notes of peach ring candies. ",,FALSE,TRUE,FALSE,,80,"Comet, Galaxy®, Citra®"
 wairu,Wairua,India Pale Ale,,7,pint,$7,$4.50,$17,"Collaboration with our friends at Swiftwater Brewing. Pineapple, juicy citrus, mango, and stone fruit.",,FALSE,TRUE,TRUE,,,"Wai-iti™, Citra®, Motueka™, Moutere™, Riwaka™"
-edo,Edo,Japanese Rice Lager,,4.5,stein,$6,$4.00,$15,"Crisp, gentle, and easy drinking from a rice malt base, this lager has floral and herbal notes, finishing dry and refreshingly smooth.",,FALSE,TRUE,FALSE,,81,Hallertau Mittelfrüh
+edo,Edo,Japanese Rice Lager,,4.5,stein,$7,$4.00,$15,"Crisp, gentle, and easy drinking from a rice malt base, this lager has floral and herbal notes, finishing dry and refreshingly smooth.",,FALSE,TRUE,FALSE,,81,Hallertau Mittelfrüh
 phokas,Phokas,India Pale Ale,,6,pint,$7,$4.50,$17,"Tropical and citrusy with hints of pine and white grape. Light, juicy, and easy-drinking.",,FALSE,FALSE,FALSE,,82,"Mosaic®, Nelson Sauvin™, Idaho 7™"
 ddh-taupo,DDH Taupō,India Pale Ale,,7,pint,$8,$5.25,$20,"Double dry hopped variant of Taupō. Tropical passion fruit, red grapefruit, and zested orange.",,FALSE,TRUE,FALSE,,83,"Wakatu™, Riwaka™, Citra®, Simcoe®"
 ddh-akko,DDH Akko,India Pale Ale,,7,pint,$8,$5.25,$20,"Double dry hopped variant of Akko. Pineapple and orange mango, bursting with peach ring candies. ",,FALSE,TRUE,FALSE,,84,"Mega Motueka, Nelson Sauvin™, Citra®, Galaxy®"
@@ -95,3 +95,13 @@ glyphs-ii,Glyphs II,Pale Ale,,5.1,pint,$7,$4.50,$17,Vibrant tropical fruit and c
 kamo,Kamo,Double IPA,,8,teku,$9,$5.75,$22,,,FALSE,TRUE,FALSE,,92,"Freestyle Southern Cross, Freestyle Riwaka™, Citra DynaBoost™, Citra®"
 lumina,Lumina,West Coast Imperial Pilsner,,6.5,stein,$7,,,"Notes of apricot, pear and lemongrass.",,FALSE,FALSE,FALSE,,93,"Motueka™, El Dorado®"
 ora,Ora,Zwickelbier,,4.5,stein,$7,,,Unfiltered golden pilsner spunded slowly for natural carbonation. Gentle malt plushness with noble hops.,,FALSE,FALSE,FALSE,,94,
+origen,Origen,Double IPA,,7.8,pint,,,,,,FALSE,TRUE,FALSE,,95,
+,,,,,,,,,,,FALSE,FALSE,FALSE,,96,
+,,,,,,,,,,,FALSE,FALSE,FALSE,,97,
+,,,,,,,,,,,FALSE,FALSE,FALSE,,98,
+,,,,,,,,,,,FALSE,FALSE,FALSE,,99,
+,,,,,,,,,,,FALSE,FALSE,FALSE,,100,
+,,,,,,,,,,,FALSE,FALSE,FALSE,,101,
+,,,,,,,,,,,FALSE,FALSE,FALSE,,102,
+,,,,,,,,,,,FALSE,FALSE,FALSE,,103,
+,,,,,,,,,,,FALSE,FALSE,FALSE,,104,
