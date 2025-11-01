@@ -13,8 +13,9 @@ const nextConfig = {
   // Static export for GitHub Pages
   output: 'export',
 
-  // Disable trailing slashes to match standard URL behavior
-  trailingSlash: false,
+  // Enable trailing slashes for GitHub Pages compatibility
+  // This ensures URLs work with or without trailing slashes
+  trailingSlash: true,
 
   // Image optimization configuration
   images: {
