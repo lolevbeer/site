@@ -1,7 +1,7 @@
 variant,cansAvailable,name,salePrice,type,abv,cansSingle,fourPack
 vespero,TRUE,Vespero,FALSE,Czech Dark Lager,5.8,4.25,16
 verus,TRUE,Verus,FALSE,India Pale Ale,7,4.50,17
-glyphs-ii,TRUE,Glyphs II,FALSE,Pale Ale,5.1,4.50,17
+glyphs-ii,FALSE,Glyphs II,FALSE,Pale Ale,5.1,4.50,17
 lupula,TRUE,Lupula,FALSE,India Pale Ale,7,4.50,17
 ddh-taupo,TRUE,DDH Taupō,FALSE,India Pale Ale,7,5.25,20
 prismatic,TRUE,Prismatic,FALSE,India Pale Ale,7,4.50,17
