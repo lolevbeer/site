@@ -4,13 +4,14 @@
  */
 
 import { cache } from 'react';
-import { readFile } from 'fs/promises';
+import { readFile, access } from 'fs/promises';
 import { join } from 'path';
 import { logger } from '@/lib/utils/logger';
 import { GlassType } from '@/lib/types/beer';
 import { Location } from '@/lib/types/location';
 import { parseCSV } from '@/lib/utils/csv';
 import { compareDateStrings } from '@/lib/utils/date';
+import { constants } from 'fs';
 
 interface BeerRow {
   variant: string;
@@ -67,6 +68,17 @@ async function readCSV(filename: string): Promise<string> {
   return await readFile(filePath, 'utf-8');
 }
 
+// Helper to check if a beer image exists
+async function imageExists(variant: string): Promise<boolean> {
+  const imagePath = join(process.cwd(), 'public', 'images', 'beer', `${variant}.webp`);
+  try {
+    await access(imagePath, constants.F_OK);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 
 /**
  * Get all available beers (beers that are currently on tap or in cans)
@@ -108,17 +120,22 @@ export const getAvailableBeers = cache(async (): Promise<{ variant: string; name
 
     // Parse beer.csv and filter for available beers with images
     const beerData = parseCSV<BeerRow>(beerText);
-    const beersWithImages = beerData
-      .filter(row =>
-        row.variant &&
-        availableVariants.has(row.variant.toLowerCase()) &&
-        (row.image === true || row.image?.toString().toUpperCase() === 'TRUE') &&
-        (row.hideFromSite !== true && row.hideFromSite?.toString().toUpperCase() !== 'TRUE')
-      )
-      .map(row => ({
-        variant: row.variant,
-        name: row.name
-      }));
+
+    // Filter for available beers that are not hidden
+    const availableBeersData = beerData.filter(row =>
+      row.variant &&
+      availableVariants.has(row.variant.toLowerCase()) &&
+      row.hideFromSite?.toString().toUpperCase() !== 'TRUE'
+    );
+
+    // Check which beers have actual image files
+    const beersWithImagesPromises = availableBeersData.map(async (row) => {
+      const hasImage = await imageExists(row.variant);
+      return hasImage ? { variant: row.variant, name: row.name } : null;
+    });
+
+    const beersWithImages = (await Promise.all(beersWithImagesPromises))
+      .filter((beer): beer is { variant: string; name: string } => beer !== null);
 
     return beersWithImages;
   } catch (error) {
@@ -156,27 +173,33 @@ export const getDraftBeers = cache(async (location: 'lawrenceville' | 'zelienopl
 
     // Parse draft beers
     const draftData = parseCSV<DraftBeerRow>(draftText);
-    const beers = draftData
-      .filter(row => row.variant)
-      .map(row => ({
-        variant: row.variant,
-        name: row.name || '',
-        type: row.type || '',
-        abv: parseFloat(row.abv || '0'),
-        glass: getGlassType(row.glass),
-        description: row.description || '',
-        image: row.image === true || row.image?.toString().toUpperCase() === 'TRUE',
-        glutenFree: false,
-        pricing: {
-          draftPrice: row.price ? parseFloat(row.price) : undefined,
-        },
-        availability: {
-          cansAvailable: cansSet.has(row.variant.toLowerCase()),
-          tap: row.tap,
-          hideFromSite: false,
-        },
-      }));
 
+    // Check which beers have images
+    const beersPromises = draftData
+      .filter(row => row.variant)
+      .map(async (row) => {
+        const hasImage = await imageExists(row.variant);
+        return {
+          variant: row.variant,
+          name: row.name || '',
+          type: row.type || '',
+          abv: parseFloat(row.abv || '0'),
+          glass: getGlassType(row.glass),
+          description: row.description || '',
+          image: hasImage,
+          glutenFree: false,
+          pricing: {
+            draftPrice: row.price ? parseFloat(row.price) : undefined,
+          },
+          availability: {
+            cansAvailable: cansSet.has(row.variant.toLowerCase()),
+            tap: row.tap,
+            hideFromSite: false,
+          },
+        };
+      });
+
+    const beers = await Promise.all(beersPromises);
     return beers;
   } catch (error) {
     logger.error(`Error loading draft beers for ${location}`, error);
@@ -215,21 +238,23 @@ export const getEnrichedCans = cache(async (location: 'lawrenceville' | 'zelieno
     });
 
     // Enrich cans with beer details and draft status
-    const enrichedCans = cansData
+    const enrichedCansPromises = cansData
       .filter(row => row.variant)
-      .map(row => {
+      .map(async (row) => {
         const beerDetails = beerMap.get(row.variant.toLowerCase());
+        const hasImage = await imageExists(row.variant);
         return {
           variant: row.variant,
           name: row.name || beerDetails?.name || '',
           type: row.type || beerDetails?.type || '',
           abv: row.abv || beerDetails?.abv || '',
-          image: beerDetails?.image === true || beerDetails?.image?.toString().toUpperCase() === 'TRUE',
+          image: hasImage,
           onDraft: onDraftSet.has(row.variant.toLowerCase()),
           glass: beerDetails?.glass
         };
       });
 
+    const enrichedCans = await Promise.all(enrichedCansPromises);
     return enrichedCans;
   } catch (error) {
     logger.error(`Error loading cans for ${location}`, error);
