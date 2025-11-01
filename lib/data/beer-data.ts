@@ -112,8 +112,8 @@ export const getAvailableBeers = cache(async (): Promise<{ variant: string; name
       .filter(row =>
         row.variant &&
         availableVariants.has(row.variant.toLowerCase()) &&
-        (row.image === 'TRUE' || row.image === true) &&
-        row.hideFromSite !== 'TRUE' && row.hideFromSite !== true
+        row.image === 'TRUE' &&
+        row.hideFromSite !== 'TRUE'
       )
       .map(row => ({
         variant: row.variant,
@@ -165,7 +165,7 @@ export const getDraftBeers = cache(async (location: 'lawrenceville' | 'zelienopl
         abv: parseFloat(row.abv || '0'),
         glass: getGlassType(row.glass),
         description: row.description || '',
-        image: row.image === 'TRUE' || row.image === true,
+        image: row.image === 'TRUE',
         glutenFree: false,
         pricing: {
           draftPrice: row.price ? parseFloat(row.price) : undefined,
@@ -224,7 +224,7 @@ export const getEnrichedCans = cache(async (location: 'lawrenceville' | 'zelieno
           name: row.name || beerDetails?.name || '',
           type: row.type || beerDetails?.type || '',
           abv: row.abv || beerDetails?.abv || '',
-          image: beerDetails?.image === 'TRUE' || beerDetails?.image === true,
+          image: beerDetails?.image === 'TRUE',
           onDraft: onDraftSet.has(row.variant.toLowerCase()),
           glass: beerDetails?.glass
         };
