@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Turbopack configuration (for dev mode with next dev --turbo)
   turbopack: {
     rules: {
       "*.svg": {
@@ -11,6 +12,9 @@ const nextConfig = {
 
   // Static export for GitHub Pages
   output: 'export',
+
+  // Disable trailing slashes to match standard URL behavior
+  trailingSlash: false,
 
   // Image optimization configuration
   images: {
@@ -40,7 +44,6 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: [
       'lucide-react',
-      '@radix-ui/react-icons',
       'date-fns',
       '@radix-ui/react-dialog',
       '@radix-ui/react-dropdown-menu',
@@ -69,9 +72,9 @@ const nextConfig = {
   poweredByHeader: false,
   generateEtags: true,
 
-  // Webpack configuration
+  // Webpack configuration (for production builds)
   webpack: (config, { dev, isServer }) => {
-    // SVG handling
+    // SVG handling with @svgr/webpack (used in production builds)
     config.module.rules.push({
       test: /\.svg$/,
       use: ['@svgr/webpack']

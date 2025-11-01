@@ -34,21 +34,21 @@ function parseHoursString(hoursStr: string): { open: string; close: string; clos
   const [openStr, closeStr] = hoursStr.split(' - ').map(s => s.trim());
 
   const convertTo24h = (timeStr: string): string => {
-    timeStr = timeStr.toLowerCase();
+    const normalized = timeStr.toLowerCase();
+    if (normalized === 'noon') return '12:00';
+    if (normalized === '12am' || normalized === 'midnight') return '00:00';
 
-    if (timeStr === 'noon') return '12:00';
-    if (timeStr === '12am' || timeStr === 'midnight') return '00:00';
-
-    const match = timeStr.match(/(\d{1,2})(am|pm)/);
+    const match = normalized.match(/(\d{1,2})(am|pm)/);
     if (!match) return '00:00';
 
-    let hours = parseInt(match[1]);
-    const period = match[2];
+    const hours = parseInt(match[1]);
+    const isPM = match[2] === 'pm';
 
-    if (period === 'am' && hours === 12) hours = 0;
-    if (period === 'pm' && hours !== 12) hours += 12;
+    const hour24 = hours === 12
+      ? (isPM ? 12 : 0)
+      : (isPM ? hours + 12 : hours);
 
-    return `${hours.toString().padStart(2, '0')}:00`;
+    return `${hour24.toString().padStart(2, '0')}:00`;
   };
 
   return {

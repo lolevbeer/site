@@ -2,45 +2,25 @@
  * Date utilities for handling EST/EDT timezone
  */
 
+import { toZonedTime, format } from 'date-fns-tz';
+
+const EST_TIMEZONE = 'America/New_York';
+
 /**
  * Get current date in EST/EDT timezone
  */
 export function getESTDate(): Date {
   const now = new Date();
-  // Get the components in EST/EDT timezone
-  const options: Intl.DateTimeFormatOptions = {
-    timeZone: "America/New_York",
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  };
-  const parts = new Intl.DateTimeFormat('en-US', options).formatToParts(now);
-
-  const year = parseInt(parts.find(p => p.type === 'year')?.value || '0');
-  const month = parseInt(parts.find(p => p.type === 'month')?.value || '0');
-  const day = parseInt(parts.find(p => p.type === 'day')?.value || '0');
-
-  return new Date(year, month - 1, day, 12, 0, 0);
+  const estDate = toZonedTime(now, EST_TIMEZONE);
+  estDate.setHours(12, 0, 0, 0);
+  return estDate;
 }
 
 /**
  * Get today's date string in EST/EDT (YYYY-MM-DD format)
  */
 export function getTodayEST(): string {
-  const now = new Date();
-  const options: Intl.DateTimeFormatOptions = {
-    timeZone: "America/New_York",
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  };
-  const parts = new Intl.DateTimeFormat('en-US', options).formatToParts(now);
-
-  const year = parts.find(p => p.type === 'year')?.value || '';
-  const month = parts.find(p => p.type === 'month')?.value || '';
-  const day = parts.find(p => p.type === 'day')?.value || '';
-
-  return `${year}-${month}-${day}`;
+  return format(toZonedTime(new Date(), EST_TIMEZONE), 'yyyy-MM-dd', { timeZone: EST_TIMEZONE });
 }
 
 /**
@@ -77,10 +57,7 @@ export function isFutureOrTodayEST(dateString: string): boolean {
  */
 export function getDayOfWeekEST(dateString: string): string {
   const date = toESTDate(dateString.split('T')[0]);
-  return date.toLocaleDateString('en-US', {
-    weekday: 'long',
-    timeZone: 'America/New_York'
-  });
+  return format(date, 'EEEE', { timeZone: EST_TIMEZONE });
 }
 
 /**
@@ -88,11 +65,17 @@ export function getDayOfWeekEST(dateString: string): string {
  */
 export function formatDateEST(dateString: string): string {
   const date = toESTDate(dateString.split('T')[0]);
-  return date.toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    timeZone: 'America/New_York'
-  });
+  return format(date, 'EEEE, MMMM d, yyyy', { timeZone: EST_TIMEZONE });
+}
+
+/**
+ * Compare two date strings in YYYY-MM-DD format
+ * Returns negative if a < b, positive if a > b, 0 if equal
+ */
+export function compareDateStrings(a: string, b: string): number {
+  const [yearA, monthA, dayA] = a.split('-').map(Number);
+  const [yearB, monthB, dayB] = b.split('-').map(Number);
+  const dateA = new Date(yearA, monthA - 1, dayA);
+  const dateB = new Date(yearB, monthB - 1, dayB);
+  return dateA.getTime() - dateB.getTime();
 }

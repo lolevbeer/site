@@ -4,12 +4,13 @@
  */
 
 import { cache } from 'react';
-import Papa from 'papaparse';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
 import { logger } from '@/lib/utils/logger';
 import { GlassType } from '@/lib/types/beer';
 import { Location } from '@/lib/types/location';
+import { parseCSV } from '@/lib/utils/csv';
+import { compareDateStrings } from '@/lib/utils/date';
 
 interface BeerRow {
   variant: string;
@@ -66,14 +67,6 @@ async function readCSV(filename: string): Promise<string> {
   return await readFile(filePath, 'utf-8');
 }
 
-// Parse CSV with PapaParse
-function parseCSV<T>(csvText: string): T[] {
-  const result = Papa.parse<T>(csvText, {
-    header: true,
-    skipEmptyLines: true
-  });
-  return result.data;
-}
 
 /**
  * Get all available beers (beers that are currently on tap or in cans)
@@ -119,8 +112,8 @@ export const getAvailableBeers = cache(async (): Promise<{ variant: string; name
       .filter(row =>
         row.variant &&
         availableVariants.has(row.variant.toLowerCase()) &&
-        row.image === 'TRUE' &&
-        row.hideFromSite !== 'TRUE'
+        (row.image === 'TRUE' || row.image === true) &&
+        row.hideFromSite !== 'TRUE' && row.hideFromSite !== true
       )
       .map(row => ({
         variant: row.variant,
@@ -172,7 +165,7 @@ export const getDraftBeers = cache(async (location: 'lawrenceville' | 'zelienopl
         abv: parseFloat(row.abv || '0'),
         glass: getGlassType(row.glass),
         description: row.description || '',
-        image: row.image === 'TRUE',
+        image: row.image === 'TRUE' || row.image === true,
         glutenFree: false,
         pricing: {
           draftPrice: row.price ? parseFloat(row.price) : undefined,
@@ -231,7 +224,7 @@ export const getEnrichedCans = cache(async (location: 'lawrenceville' | 'zelieno
           name: row.name || beerDetails?.name || '',
           type: row.type || beerDetails?.type || '',
           abv: row.abv || beerDetails?.abv || '',
-          image: beerDetails?.image === 'TRUE',
+          image: beerDetails?.image === 'TRUE' || beerDetails?.image === true,
           onDraft: onDraftSet.has(row.variant.toLowerCase()),
           glass: beerDetails?.glass
         };
@@ -279,13 +272,7 @@ export const getUpcomingEvents = cache(async (location: 'lawrenceville' | 'zelie
       }));
 
     // Sort by date
-    upcomingEvents.sort((a, b) => {
-      const [yearA, monthA, dayA] = a.date.split('-').map(Number);
-      const [yearB, monthB, dayB] = b.date.split('-').map(Number);
-      const dateA = new Date(yearA, monthA - 1, dayA);
-      const dateB = new Date(yearB, monthB - 1, dayB);
-      return dateA.getTime() - dateB.getTime();
-    });
+    upcomingEvents.sort((a, b) => compareDateStrings(a.date, b.date));
 
     return upcomingEvents.slice(0, 3);
   } catch (error) {
@@ -328,13 +315,7 @@ export const getUpcomingFood = cache(async (location: 'lawrenceville' | 'zelieno
       }));
 
     // Sort by date
-    upcomingFood.sort((a, b) => {
-      const [yearA, monthA, dayA] = a.date.split('-').map(Number);
-      const [yearB, monthB, dayB] = b.date.split('-').map(Number);
-      const dateA = new Date(yearA, monthA - 1, dayA);
-      const dateB = new Date(yearB, monthB - 1, dayB);
-      return dateA.getTime() - dateB.getTime();
-    });
+    upcomingFood.sort((a, b) => compareDateStrings(a.date, b.date));
 
     return upcomingFood.slice(0, 3);
   } catch (error) {

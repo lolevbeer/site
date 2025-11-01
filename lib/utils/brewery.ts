@@ -1,14 +1,3 @@
-import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
-
-/**
- * Brewery-specific className utility function
- * Merges Tailwind classes with brewery theme support
- */
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
-
 /**
  * Beer type to badge color mapping
  */

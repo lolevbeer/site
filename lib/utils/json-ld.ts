@@ -170,20 +170,15 @@ function getOrganizer(): OrganizationJsonLd {
  * Convert event status to schema.org EventStatus
  */
 function getEventStatus(status: EventStatus): string {
-  switch (status) {
-    case EventStatus.SCHEDULED:
-      return 'https://schema.org/EventScheduled';
-    case EventStatus.CANCELLED:
-      return 'https://schema.org/EventCancelled';
-    case EventStatus.POSTPONED:
-      return 'https://schema.org/EventPostponed';
-    case EventStatus.SOLD_OUT:
-      return 'https://schema.org/EventScheduled'; // Scheduled but sold out
-    case EventStatus.COMPLETED:
-      return 'https://schema.org/EventScheduled';
-    default:
-      return 'https://schema.org/EventScheduled';
-  }
+  const statusMap: Record<EventStatus, string> = {
+    [EventStatus.CANCELLED]: 'https://schema.org/EventCancelled',
+    [EventStatus.POSTPONED]: 'https://schema.org/EventPostponed',
+    [EventStatus.SCHEDULED]: 'https://schema.org/EventScheduled',
+    [EventStatus.SOLD_OUT]: 'https://schema.org/EventScheduled',
+    [EventStatus.COMPLETED]: 'https://schema.org/EventScheduled',
+    [EventStatus.DRAFT]: 'https://schema.org/EventScheduled',
+  };
+  return statusMap[status] || 'https://schema.org/EventScheduled';
 }
 
 /**
@@ -268,6 +263,22 @@ interface CSVFood {
 }
 
 /**
+ * Create base event JSON-LD structure with common fields
+ */
+function createBaseEventJsonLd(name: string, location: Location): EventJsonLd {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Event',
+    name,
+    startDate: new Date().toISOString(),
+    eventStatus: 'https://schema.org/EventScheduled',
+    eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+    location: getLocationPlace(location),
+    organizer: getOrganizer()
+  };
+}
+
+/**
  * Generate JSON-LD for a BreweryEvent or CSV Event
  */
 export function generateEventJsonLd(event: BreweryEvent | CSVEvent): EventJsonLd {
@@ -276,115 +287,55 @@ export function generateEventJsonLd(event: BreweryEvent | CSVEvent): EventJsonLd
 
   if (isCSVEvent) {
     const csvEvent = event as CSVEvent;
-    // Convert CSV event to JSON-LD
     const { startDate, endDate } = toISO8601(csvEvent.date, csvEvent.time, csvEvent.end);
+    const jsonLd = createBaseEventJsonLd(csvEvent.vendor || 'Event at Lolev Beer', csvEvent.location || Location.LAWRENCEVILLE);
 
-    const jsonLd: EventJsonLd = {
-      '@context': 'https://schema.org',
-      '@type': 'Event',
-      name: csvEvent.vendor || 'Event at Lolev Beer',
-      startDate,
-      eventStatus: 'https://schema.org/EventScheduled',
-      eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-      location: getLocationPlace(csvEvent.location || Location.LAWRENCEVILLE),
-      organizer: getOrganizer()
-    };
-
-    if (endDate) {
-      jsonLd.endDate = endDate;
-    }
-
+    jsonLd.startDate = startDate;
+    if (endDate) jsonLd.endDate = endDate;
     if (csvEvent.site) {
       jsonLd.url = csvEvent.site;
-      jsonLd.performer = {
-        '@type': 'Organization',
-        name: csvEvent.vendor,
-        url: csvEvent.site
-      };
+      jsonLd.performer = { '@type': 'Organization', name: csvEvent.vendor, url: csvEvent.site };
     } else if (csvEvent.vendor) {
-      jsonLd.performer = {
-        '@type': 'Organization',
-        name: csvEvent.vendor
-      };
+      jsonLd.performer = { '@type': 'Organization', name: csvEvent.vendor };
     }
 
     return jsonLd;
   }
 
   // Original BreweryEvent handling
-  // Validate required fields
   if (!event || !event.title || !event.date) {
     console.warn('Invalid event data for JSON-LD generation', event);
-    // Return minimal valid schema
-    return {
-      '@context': 'https://schema.org',
-      '@type': 'Event',
-      name: 'Event at Lolev Beer',
-      startDate: new Date().toISOString(),
-      eventStatus: 'https://schema.org/EventScheduled',
-      eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-      location: getLocationPlace(Location.LAWRENCEVILLE),
-      organizer: getOrganizer()
-    };
+    return createBaseEventJsonLd('Event at Lolev Beer', Location.LAWRENCEVILLE);
   }
 
   const { startDate, endDate } = toISO8601(event.date, event.time, event.endTime);
+  const jsonLd = createBaseEventJsonLd(event.title, event.location);
 
-  const jsonLd: EventJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Event',
-    name: event.title,
-    description: event.description,
-    startDate,
-    eventStatus: getEventStatus(event.status),
-    eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-    location: getLocationPlace(event.location),
-    organizer: getOrganizer()
-  };
+  jsonLd.description = event.description;
+  jsonLd.startDate = startDate;
+  jsonLd.eventStatus = getEventStatus(event.status);
+  if (endDate) jsonLd.endDate = endDate;
+  if (event.image) jsonLd.image = event.image;
+  if (event.site) jsonLd.url = event.site;
 
-  if (endDate) {
-    jsonLd.endDate = endDate;
-  }
-
-  if (event.image) {
-    jsonLd.image = event.image;
-  }
-
-  if (event.site) {
-    jsonLd.url = event.site;
-  }
-
+  // Add offers
   if (event.price) {
     const priceMatch = event.price.match(/\$?(\d+(?:\.\d{2})?)/);
     jsonLd.offers = {
       '@type': 'Offer',
       price: priceMatch ? priceMatch[1] : '0',
       priceCurrency: 'USD',
-      availability: event.status === EventStatus.SOLD_OUT
-        ? 'https://schema.org/SoldOut'
-        : 'https://schema.org/InStock',
-      validFrom: new Date().toISOString()
+      availability: event.status === EventStatus.SOLD_OUT ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock',
+      validFrom: new Date().toISOString(),
+      ...(event.site && { url: event.site })
     };
-    if (event.site) {
-      jsonLd.offers.url = event.site;
-    }
   } else {
-    // Free event
-    jsonLd.offers = {
-      '@type': 'Offer',
-      price: '0',
-      priceCurrency: 'USD',
-      availability: 'https://schema.org/InStock'
-    };
+    jsonLd.offers = { '@type': 'Offer', price: '0', priceCurrency: 'USD', availability: 'https://schema.org/InStock' };
   }
 
   // Add performer if it's a music or entertainment event
   if (event.vendor && event.vendor !== event.title) {
-    jsonLd.performer = {
-      '@type': 'Organization',
-      name: event.vendor,
-      url: event.site
-    };
+    jsonLd.performer = { '@type': 'Organization', name: event.vendor, url: event.site };
   }
 
   return jsonLd;
@@ -399,112 +350,44 @@ export function generateFoodEventJsonLd(schedule: FoodVendorSchedule | CSVFood):
 
   if (isCSVFood) {
     const csvFood = schedule as CSVFood;
-    // Validate required fields
     if (!csvFood.vendor || !csvFood.date) {
       console.warn('Invalid CSV food data for JSON-LD generation', csvFood);
-      return {
-        '@context': 'https://schema.org',
-        '@type': 'Event',
-        name: 'Food at Lolev Beer',
-        startDate: new Date().toISOString(),
-        eventStatus: 'https://schema.org/EventScheduled',
-        eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-        location: getLocationPlace(Location.LAWRENCEVILLE),
-        organizer: getOrganizer()
-      };
+      return createBaseEventJsonLd('Food at Lolev Beer', Location.LAWRENCEVILLE);
     }
 
     const { startDate } = toISO8601(csvFood.date, csvFood.time);
+    const jsonLd = createBaseEventJsonLd(`${csvFood.vendor} at Lolev Beer`, csvFood.location || Location.LAWRENCEVILLE);
 
-    const jsonLd: EventJsonLd = {
-      '@context': 'https://schema.org',
-      '@type': 'Event',
-      name: `${csvFood.vendor} at Lolev Beer`,
-      startDate,
-      eventStatus: 'https://schema.org/EventScheduled',
-      eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-      location: getLocationPlace(csvFood.location || Location.LAWRENCEVILLE),
-      organizer: getOrganizer(),
-      offers: {
-        '@type': 'Offer',
-        availability: 'https://schema.org/InStock'
-      }
-    };
-
-    if (csvFood.site) {
-      jsonLd.url = csvFood.site;
-      jsonLd.performer = {
-        '@type': 'Organization',
-        name: csvFood.vendor,
-        url: csvFood.site
-      };
-    } else {
-      jsonLd.performer = {
-        '@type': 'Organization',
-        name: csvFood.vendor
-      };
-    }
+    jsonLd.startDate = startDate;
+    jsonLd.offers = { '@type': 'Offer', availability: 'https://schema.org/InStock' };
+    jsonLd.performer = csvFood.site
+      ? { '@type': 'Organization', name: csvFood.vendor, url: csvFood.site }
+      : { '@type': 'Organization', name: csvFood.vendor };
+    if (csvFood.site) jsonLd.url = csvFood.site;
 
     return jsonLd;
   }
 
   // Original FoodVendorSchedule handling
   const foodSchedule = schedule as FoodVendorSchedule;
-
-  // Validate required fields
   if (!foodSchedule.vendor || !foodSchedule.date) {
     console.warn('Invalid food schedule data for JSON-LD generation', foodSchedule);
-    return {
-      '@context': 'https://schema.org',
-      '@type': 'Event',
-      name: 'Food at Lolev Beer',
-      startDate: new Date().toISOString(),
-      eventStatus: 'https://schema.org/EventScheduled',
-      eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-      location: getLocationPlace(Location.LAWRENCEVILLE),
-      organizer: getOrganizer()
-    };
+    return createBaseEventJsonLd('Food at Lolev Beer', Location.LAWRENCEVILLE);
   }
 
   const { startDate, endDate } = toISO8601(foodSchedule.date, foodSchedule.start, foodSchedule.finish);
-
-  // Safely get location name
   const locationInfo = foodSchedule.location ? LOCATIONS_DATA[foodSchedule.location] : null;
   const locationName = locationInfo?.name || 'our location';
+  const jsonLd = createBaseEventJsonLd(`${foodSchedule.vendor} at Lolev Beer`, foodSchedule.location);
 
-  const jsonLd: EventJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Event',
-    name: `${foodSchedule.vendor} at Lolev Beer`,
-    description: foodSchedule.notes || `${foodSchedule.vendor} will be serving food at Lolev Beer ${locationName}`,
-    startDate,
-    eventStatus: 'https://schema.org/EventScheduled',
-    eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-    location: getLocationPlace(foodSchedule.location),
-    organizer: getOrganizer(),
-    offers: {
-      '@type': 'Offer',
-      availability: 'https://schema.org/InStock'
-    }
-  };
-
-  if (endDate) {
-    jsonLd.endDate = endDate;
-  }
-
-  if (foodSchedule.site) {
-    jsonLd.url = foodSchedule.site;
-    jsonLd.performer = {
-      '@type': 'Organization',
-      name: foodSchedule.vendor,
-      url: foodSchedule.site
-    };
-  } else {
-    jsonLd.performer = {
-      '@type': 'Organization',
-      name: foodSchedule.vendor
-    };
-  }
+  jsonLd.description = foodSchedule.notes || `${foodSchedule.vendor} will be serving food at Lolev Beer ${locationName}`;
+  jsonLd.startDate = startDate;
+  if (endDate) jsonLd.endDate = endDate;
+  jsonLd.offers = { '@type': 'Offer', availability: 'https://schema.org/InStock' };
+  jsonLd.performer = foodSchedule.site
+    ? { '@type': 'Organization', name: foodSchedule.vendor, url: foodSchedule.site }
+    : { '@type': 'Organization', name: foodSchedule.vendor };
+  if (foodSchedule.site) jsonLd.url = foodSchedule.site;
 
   return jsonLd;
 }

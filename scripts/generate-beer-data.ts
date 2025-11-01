@@ -6,6 +6,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import Papa from 'papaparse';
 
 const CSV_PATH = path.join(process.cwd(), 'public', 'data', 'beer.csv');
 const OUTPUT_PATH = path.join(process.cwd(), 'lib', 'data', 'beer-data.ts');
@@ -30,48 +31,12 @@ interface CSVBeer {
   hops: string;
 }
 
-function parseCSVLine(line: string): string[] {
-  const result: string[] = [];
-  let current = '';
-  let inQuotes = false;
-
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i];
-    if (char === '"') {
-      inQuotes = !inQuotes;
-    } else if (char === ',' && !inQuotes) {
-      result.push(current);
-      current = '';
-    } else {
-      current += char;
-    }
-  }
-  result.push(current);
-  return result;
-}
-
 function parseCSV(csvText: string): CSVBeer[] {
-  const lines = csvText.split('\n');
-  const headers = parseCSVLine(lines[0]);
-  const beers: CSVBeer[] = [];
-
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
-
-    const values = parseCSVLine(line);
-    const beer: any = {};
-
-    headers.forEach((header, index) => {
-      beer[header] = values[index] || '';
-    });
-
-    if (beer.variant) {
-      beers.push(beer as CSVBeer);
-    }
-  }
-
-  return beers;
+  const result = Papa.parse<CSVBeer>(csvText, {
+    header: true,
+    skipEmptyLines: true
+  });
+  return result.data.filter(beer => beer.variant);
 }
 
 function generateTypeScriptCode(beers: CSVBeer[]): string {

@@ -71,7 +71,7 @@ export function CansGrid({ maxItems }: CansGridProps) {
               name: row.name,
               type: row.type,
               abv: row.abv,
-              image: row.image === 'TRUE',
+              image: row.image === 'TRUE' || row.image === true,
               glass: row.glass
             });
           }

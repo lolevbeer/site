@@ -98,75 +98,8 @@ export {
   type FoodVendorSortOrder,
 } from './food';
 
-// Utility types for common patterns
-export type ID = string | number;
-export type Timestamp = string;
-export type URL = string;
-export type Email = string;
-export type PhoneNumber = string;
-
-// API response types
-export interface APIResponse<T = any> {
-  data: T;
-  success: boolean;
-  message?: string;
-  error?: string;
-  timestamp: Timestamp;
-}
-
-export interface PaginatedResponse<T = any> {
-  data: T[];
-  total: number;
-  page: number;
-  limit: number;
-  hasMore: boolean;
-}
-
-// Common filter and sort interfaces
-export interface BaseFilters {
-  search?: string;
-  limit?: number;
-  offset?: number;
-}
-
-export interface BaseSortOptions {
-  sortBy: string;
-  order: 'asc' | 'desc';
-}
-
-// User preference types
-export interface UserPreferences {
-  preferredLocation?: Location;
-  favoriteBeers?: string[];
-  dietaryRestrictions?: string[];
-  eventNotifications?: Record<string, boolean>;
-  foodNotifications?: Record<string, boolean>;
-}
-
-// Form validation types
-export interface ValidationError {
-  field: string;
-  message: string;
-  code?: string;
-}
-
-export interface FormState<T = any> {
-  data: T;
-  errors: ValidationError[];
-  isValid: boolean;
-  isSubmitting: boolean;
-  isDirty: boolean;
-}
-
 // Theme and UI types
 export type ThemeMode = 'light' | 'dark' | 'auto';
-
-export interface UIState {
-  theme: ThemeMode;
-  sidebarOpen: boolean;
-  mobileMenuOpen: boolean;
-  loading: boolean;
-}
 
 // Navigation types
 export interface NavItem {
@@ -175,25 +108,6 @@ export interface NavItem {
   icon?: React.ComponentType<{ className?: string }>;
   children?: NavItem[];
   external?: boolean;
-}
-
-// SEO types
-export interface SEOData {
-  title: string;
-  description: string;
-  keywords?: string[];
-  image?: string;
-  canonical?: string;
-  noIndex?: boolean;
-}
-
-// Analytics types
-export interface AnalyticsEvent {
-  name: string;
-  properties?: Record<string, any>;
-  timestamp: Timestamp;
-  userId?: string;
-  sessionId?: string;
 }
 
 // Configuration types

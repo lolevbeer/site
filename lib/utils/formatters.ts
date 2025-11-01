@@ -10,48 +10,37 @@ import { CuisineType, DietaryOption, FoodVendorType } from '@/lib/types/food';
 /**
  * Time formatting utilities
  */
-export function formatTime(timeString: string): string {
+export function formatTime(timeString: string, options: { compact?: boolean } = {}): string {
   if (!timeString) return '';
 
-  // Handle various formats (e.g., "7pm", "7:00 PM", "19:00")
   try {
-    if (timeString.includes(':')) {
-      const [time, period] = timeString.split(/\s*(AM|PM|am|pm)\s*/);
-      if (period) {
-        // Already has AM/PM - format to compact version
-        const [hours, minutes] = time.split(':');
-        const hour = parseInt(hours);
-        const mins = parseInt(minutes);
-        const ampm = period.toLowerCase();
-        // Only show minutes if they're not :00
-        if (mins === 0) {
-          return `${hour}${ampm}`;
-        }
-        return `${hour}:${minutes.padStart(2, '0')}${ampm}`;
-      }
-      // 24-hour format
-      const [hours, minutes] = time.split(':');
-      const hour = parseInt(hours);
-      const mins = parseInt(minutes);
+    // Handle already formatted 12-hour time (e.g., "7:00 PM", "7pm")
+    const match12h = timeString.match(/(\d{1,2})(?::(\d{2}))?\s*(AM|PM|am|pm)/i);
+    if (match12h) {
+      const hour = parseInt(match12h[1]);
+      const mins = parseInt(match12h[2] || '0');
+      const ampm = match12h[3].toLowerCase();
+      return mins === 0 && options.compact
+        ? `${hour}${ampm}`
+        : `${hour}:${mins.toString().padStart(2, '0')}${ampm}`;
+    }
+
+    // Handle 24-hour format (e.g., "19:00")
+    const match24h = timeString.match(/(\d{1,2}):(\d{2})/);
+    if (match24h) {
+      const hour = parseInt(match24h[1]);
+      const mins = parseInt(match24h[2]);
       const ampm = hour >= 12 ? 'pm' : 'am';
       const hour12 = hour % 12 || 12;
-      // Only show minutes if they're not :00
-      if (mins === 0) {
-        return `${hour12}${ampm}`;
-      }
-      return `${hour12}:${minutes.padStart(2, '0')}${ampm}`;
+      return mins === 0 && options.compact
+        ? `${hour12}${ampm}`
+        : `${hour12}:${mins.toString().padStart(2, '0')}${ampm}`;
     }
+
     return timeString.toLowerCase();
   } catch {
     return timeString;
   }
-}
-
-export function format24to12Hour(time: string): string {
-  const [hours, minutes] = time.split(':').map(Number);
-  const ampm = hours >= 12 ? 'PM' : 'AM';
-  const displayHours = hours % 12 || 12;
-  return `${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
 }
 
 export function parseTimeRange(timeString: string): { time: string; endTime?: string } {
@@ -172,54 +161,37 @@ export function getBeerPricing(beer: Beer): string {
 }
 
 /**
- * Event-specific formatters
- */
-export function formatEventType(type: EventType): string {
-  return String(type).replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-}
-
-export function getEventStatusVariant(status: EventStatus): 'default' | 'secondary' | 'destructive' | 'outline' {
-  switch (status) {
-    case EventStatus.CANCELLED:
-      return 'destructive';
-    case EventStatus.SOLD_OUT:
-      return 'secondary';
-    case EventStatus.POSTPONED:
-      return 'outline';
-    default:
-      return 'default';
-  }
-}
-
-export function formatEventStatus(status: EventStatus): string {
-  return status.replace('_', ' ').toUpperCase();
-}
-
-/**
- * Food vendor formatters
- */
-export function formatCuisineType(cuisine: CuisineType): string {
-  if (!cuisine) return 'Street Food';
-  return String(cuisine).replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-}
-
-export function formatDietaryOption(option: DietaryOption): string {
-  if (!option) return '';
-  return String(option).replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-}
-
-export function formatVendorType(type: FoodVendorType): string {
-  if (!type) return 'Food Truck';
-  return String(type).replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-}
-
-/**
- * Generic enum formatter
+ * Generic enum formatter - converts SNAKE_CASE to Title Case
  */
 export function formatEnum(value: string | undefined, defaultValue = ''): string {
   if (!value) return defaultValue;
   return value.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 }
+
+/**
+ * Event-specific formatters
+ */
+export const formatEventType = (type: EventType) => formatEnum(String(type));
+export const formatEventStatus = (status: EventStatus) => formatEnum(status).toUpperCase();
+
+export function getEventStatusVariant(status: EventStatus): 'default' | 'secondary' | 'destructive' | 'outline' {
+  const variants: Record<EventStatus, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+    [EventStatus.CANCELLED]: 'destructive',
+    [EventStatus.SOLD_OUT]: 'secondary',
+    [EventStatus.POSTPONED]: 'outline',
+    [EventStatus.SCHEDULED]: 'default',
+    [EventStatus.COMPLETED]: 'default',
+    [EventStatus.DRAFT]: 'outline',
+  };
+  return variants[status] || 'default';
+}
+
+/**
+ * Food vendor formatters
+ */
+export const formatCuisineType = (cuisine: CuisineType) => formatEnum(String(cuisine), 'Street Food');
+export const formatDietaryOption = (option: DietaryOption) => formatEnum(String(option));
+export const formatVendorType = (type: FoodVendorType) => formatEnum(String(type), 'Food Truck');
 
 /**
  * Glass type icon mapper
