@@ -51,7 +51,7 @@ export function HeroSection({ availableBeers }: HeroSectionProps) {
           <div className="w-full max-w-5xl mx-auto px-4 md:px-12">
             <Carousel
               opts={{
-                align: "center",
+                align: "start",
                 loop: true,
                 slidesToScroll: "auto",
               }}
@@ -61,7 +61,7 @@ export function HeroSection({ availableBeers }: HeroSectionProps) {
               <CarouselContent className="-ml-4">
                 {availableBeers.length > 0 ? (
                   availableBeers.map((beer) => (
-                    <CarouselItem key={beer.variant} className="pl-4 basis-1/4 sm:basis-1/5 md:basis-1/4 lg:basis-1/6 xl:basis-1/8">
+                    <CarouselItem key={beer.variant} className="pl-4 basis-1/4 sm:basis-1/5 md:basis-1/4 lg:basis-1/6 xl:basis-1/8 2xl:basis-1/8">
                       <Link href={`/beer/${getBeerSlug(beer)}`} className="group flex justify-center">
                         <div className="relative h-16 w-16 md:h-24 md:w-24 overflow-hidden rounded-lg bg-transparent transition-transform group-hover:scale-105">
                           <Image
