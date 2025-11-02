@@ -4,7 +4,7 @@ verus,TRUE,Verus,FALSE,India Pale Ale,7,4.50,17
 glyphs-ii,FALSE,Glyphs II,FALSE,Pale Ale,5.1,4.50,17
 lupula,TRUE,Lupula,FALSE,India Pale Ale,7,4.50,17
 ddh-taupo,TRUE,DDH Taupō,FALSE,India Pale Ale,7,5.25,20
-prismatic,TRUE,Prismatic,FALSE,India Pale Ale,7,4.50,17
+prismatic,FALSE,Prismatic,FALSE,India Pale Ale,7,4.50,17
 kamo,TRUE,Kamo,FALSE,Double IPA,8,5.75,22
 ddh-akko,TRUE,DDH Akko,FALSE,India Pale Ale,7,5.25,20
 origen,TRUE,Origen,FALSE,Double IPA,7.8,5.75,22
