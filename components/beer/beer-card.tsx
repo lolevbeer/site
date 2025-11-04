@@ -8,6 +8,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Beer, GlassType } from '@/lib/types/beer';
+import { Location } from '@/lib/types/location';
 import { useLocationContext } from '@/components/location/location-provider';
 import { BaseCard, CardSkeleton } from '@/components/ui/base-card';
 import { StatusBadge, StatusBadgeGroup } from '@/components/ui/status-badge';
@@ -116,7 +117,7 @@ export const BeerCard = React.memo(function BeerCard({
                         </Badge>
                       </HoverCardTrigger>
                       <HoverCardContent side="top" className="w-auto p-2">
-                        <p className="text-xs">Available at {currentLocation === 'all' ? 'selected location' : currentLocation === 'lawrenceville' ? 'Lawrenceville' : 'Zelienople'}</p>
+                        <p className="text-xs">Available at {currentLocation === Location.LAWRENCEVILLE ? 'Lawrenceville' : 'Zelienople'}</p>
                       </HoverCardContent>
                     </HoverCard>
                   )}
