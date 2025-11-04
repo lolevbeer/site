@@ -4,6 +4,7 @@ import React from 'react';
 import dynamic from 'next/dynamic';
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
 import { MapLoadingSkeleton } from '@/lib/utils/lazy-load';
+import { HoursPanel } from '@/components/location/hours-panel';
 
 // Lazy load the map component - no SSR for better performance
 const DistributorMap = dynamic(
@@ -33,6 +34,11 @@ export function BeerMapContent() {
           initialZoom={6.5}
           maxPoints={10}
         />
+      </div>
+
+      {/* Hours Panel */}
+      <div className="mt-8">
+        <HoursPanel />
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ import React from 'react';
 import dynamic from 'next/dynamic';
 import { HeroSection } from '@/components/home/hero-section';
 import { FeaturedBeers } from '@/components/home/featured-beers';
+import { QuickInfoCards } from '@/components/home/quick-info-cards';
 import {
   getAvailableBeers,
   getDraftBeers,
@@ -34,7 +35,7 @@ const LocationCards = dynamic(() => import('@/components/location/location-cards
   loading: () => <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-pulse" />,
 });
 
-function LocationsSection() {
+function LocationsSection({ beerCount }: { beerCount?: { lawrenceville: number; zelienople: number } }) {
   return (
     <section className="py-16 lg:py-24 bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -44,7 +45,7 @@ function LocationsSection() {
           </h2>
         </div>
 
-        <LocationCards />
+        <LocationCards beerCount={beerCount} />
       </div>
     </section>
   );
@@ -84,6 +85,18 @@ export default async function Home() {
   const eventSchemas = allEvents.map(event => generateEventJsonLd(event));
   const foodSchemas = allFood.map(food => generateFoodEventJsonLd(food));
 
+  // Prepare data for quick info cards
+  const nextEvent = allEvents.length > 0 ? {
+    name: allEvents[0].vendor,
+    date: allEvents[0].date,
+    location: allEvents[0].location
+  } : null;
+
+  const beerCount = {
+    lawrenceville: lawrencevilleBeers.length,
+    zelienople: zelienopleBeers.length
+  };
+
   return (
     <>
       {/* Add JSON-LD structured data for SEO */}
@@ -104,24 +117,50 @@ export default async function Home() {
 
       <div className="min-h-screen">
         <HeroSection availableBeers={availableBeers} />
+
+        {/* Vertical spacing between major sections */}
+        <div className="py-8 md:py-12" />
+
+        {/* Quick Info Cards */}
+        <section className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <QuickInfoCards beerCount={beerCount} nextEvent={nextEvent} />
+        </section>
+
+        <div className="py-8 md:py-12" />
+
         <FeaturedBeers
           lawrencevilleBeers={lawrencevilleBeers}
           zelienopleBeers={zelienopleBeers}
         />
+
+        <div className="py-8 md:py-12" />
+
         <FeaturedCans
           lawrencevilleCans={lawrencevilleCans}
           zelienopleCans={zelienopleCans}
         />
+
+        <div className="py-8 md:py-12" />
+
         <UpcomingFood
           lawrencevilleFood={lawrencevilleFood}
           zelienopleFood={zelienopleFood}
         />
+
+        <div className="py-8 md:py-12" />
+
         <UpcomingEvents
           lawrencevilleEvents={lawrencevilleEvents}
           zelienopleEvents={zelienopleEvents}
         />
+
+        <div className="py-8 md:py-12" />
+
         <UpcomingBeers />
-        <LocationsSection />
+
+        <div className="py-8 md:py-12" />
+
+        <LocationsSection beerCount={beerCount} />
       </div>
     </>
   );

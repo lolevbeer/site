@@ -6,14 +6,20 @@
 'use client';
 
 import React from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { Beer, GlassType } from '@/lib/types/beer';
 import { useLocationContext } from '@/components/location/location-provider';
 import { BaseCard, CardSkeleton } from '@/components/ui/base-card';
 import { StatusBadge, StatusBadgeGroup } from '@/components/ui/status-badge';
 import { Button } from '@/components/ui/button';
-import { Beer as BeerIcon, Wine, GlassWater } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Beer as BeerIcon, Wine, GlassWater, MapPin } from 'lucide-react';
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from '@/components/ui/hover-card';
+import { BeerImage } from './beer-image';
 import {
   formatAbv,
   getBeerSlug,
@@ -45,13 +51,6 @@ function getGlassIcon(glass: GlassType): React.ComponentType<{ className?: strin
   }
 }
 
-function getBeerImagePath(beer: Beer): string | null {
-  if (!beer.image) {
-    return null;
-  }
-  return `/images/beer/${beer.variant}.webp`;
-}
-
 export const BeerCard = React.memo(function BeerCard({
   beer,
   showLocation = true,
@@ -64,7 +63,6 @@ export const BeerCard = React.memo(function BeerCard({
 }: BeerCardProps) {
   const { currentLocation } = useLocationContext();
   const beerSlug = getBeerSlug(beer);
-  const imagePath = getBeerImagePath(beer);
 
   // Don't show beer if it's hidden from site
   if (beer.availability.hideFromSite) {
@@ -76,32 +74,12 @@ export const BeerCard = React.memo(function BeerCard({
     return (
       <Link href={showLocation ? `/${currentLocation}/beer/${beerSlug}` : `/beer/${beerSlug}`} className="group">
         <div className={`overflow-hidden hover:shadow-lg transition-shadow flex flex-col border-0 h-full cursor-pointer bg-[var(--color-card-interactive)] rounded-lg ${className}`}>
-          <div className={`relative h-48 w-full flex-shrink-0 ${beer.image ? 'bg-gradient-to-b from-muted/5 to-background/20' : ''}`}>
-            {imagePath ? (
-              <Image
-                src={imagePath}
-                alt={beer.name}
-                fill
-                className="object-contain p-4"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-                priority={priority}
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
-            ) : (
-              <div className="flex items-center justify-center h-full">
-                <div className="text-center px-4">
-                  <div className="text-2xl font-bold text-muted-foreground/30 mb-2">
-                    {beer.name}
-                  </div>
-                  <div className="text-sm text-muted-foreground/30">
-                    {beer.type}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+          <BeerImage
+            beer={beer}
+            className="relative h-48 w-full flex-shrink-0"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+            priority={priority}
+          />
           <div className="p-4 flex flex-col flex-grow">
             <div className="flex-grow">
               <div className="flex items-start justify-between mb-2 gap-2">
@@ -125,6 +103,30 @@ export const BeerCard = React.memo(function BeerCard({
                 <div>{beer.type}</div>
                 <div>{formatAbv(beer.abv)} ABV</div>
               </div>
+
+              {/* Location badges - show where beer is available */}
+              {!showLocation && (
+                <div className="flex gap-1.5 mt-2 flex-wrap">
+                  {beer.availability.tap && (
+                    <HoverCard openDelay={200}>
+                      <HoverCardTrigger asChild>
+                        <Badge variant="secondary" className="text-xs cursor-help">
+                          <MapPin className="h-3 w-3 mr-1" />
+                          On Tap
+                        </Badge>
+                      </HoverCardTrigger>
+                      <HoverCardContent side="top" className="w-auto p-2">
+                        <p className="text-xs">Available at {currentLocation === 'all' ? 'selected location' : currentLocation === 'lawrenceville' ? 'Lawrenceville' : 'Zelienople'}</p>
+                      </HoverCardContent>
+                    </HoverCard>
+                  )}
+                  {beer.availability.cansAvailable && (
+                    <Badge variant="outline" className="text-xs">
+                      Cans Available
+                    </Badge>
+                  )}
+                </div>
+              )}
             </div>
             <div className="mt-3">
               <Button variant="ghost" size="sm" className="w-full pointer-events-none">
@@ -139,28 +141,17 @@ export const BeerCard = React.memo(function BeerCard({
 
   const renderHeader = (beer: Beer) => (
     <>
-      <div className="relative aspect-square w-full mb-4 overflow-hidden rounded-lg">
-        {imagePath ? (
-          <Image
-            src={imagePath}
-            alt={`${beer.name} beer`}
-            fill
-            className="object-contain transition-transform duration-200 group-hover:scale-105"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            priority={priority}
-            loading={priority ? undefined : "lazy"}
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-muted">
-            <span className="text-gray-400 dark:text-gray-500 font-medium">No Image</span>
-          </div>
-        )}
-        {beer.glutenFree && (
-          <div className="absolute top-2 right-2">
-            <StatusBadge status="gluten_free" type="beer" size="sm" />
-          </div>
-        )}
-      </div>
+      <BeerImage
+        beer={beer}
+        className="aspect-square w-full mb-4 rounded-lg"
+        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+        priority={priority}
+      />
+      {beer.glutenFree && (
+        <div className="absolute top-2 right-2 z-10">
+          <StatusBadge status="gluten_free" type="beer" size="sm" />
+        </div>
+      )}
       <div>
         <h3 className="font-semibold text-lg line-clamp-2 min-h-[2.5rem]">
           {beer.name}

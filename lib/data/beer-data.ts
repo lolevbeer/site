@@ -20,6 +20,7 @@ interface BeerRow {
   abv?: string;
   image?: string;
   hideFromSite?: string;
+  recipe?: string;
   [key: string]: any;
 }
 
@@ -128,14 +129,17 @@ export const getAvailableBeers = cache(async (): Promise<{ variant: string; name
       row.hideFromSite?.toString().toUpperCase() !== 'TRUE'
     );
 
-    // Check which beers have actual image files
+    // Check which beers have actual image files and include recipe value
     const beersWithImagesPromises = availableBeersData.map(async (row) => {
       const hasImage = await imageExists(row.variant);
-      return hasImage ? { variant: row.variant, name: row.name } : null;
+      return hasImage ? { variant: row.variant, name: row.name, recipe: parseInt(row.recipe || '0') } : null;
     });
 
     const beersWithImages = (await Promise.all(beersWithImagesPromises))
-      .filter((beer): beer is { variant: string; name: string } => beer !== null);
+      .filter((beer): beer is { variant: string; name: string; recipe: number } => beer !== null);
+
+    // Sort by recipe value descending (highest to lowest)
+    beersWithImages.sort((a, b) => b.recipe - a.recipe);
 
     return beersWithImages;
   } catch (error) {

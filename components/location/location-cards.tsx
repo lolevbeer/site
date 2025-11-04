@@ -4,7 +4,9 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
-import { MapPin, Phone } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { MapPin, Phone, Beer } from 'lucide-react';
 import { Location } from '@/lib/types/location';
 import { LOCATIONS_DATA } from '@/lib/config/locations';
 import { fetchCSV } from '@/lib/utils/csv';
@@ -20,7 +22,11 @@ interface LocationHoursState {
   [Location.ZELIENOPLE]: HoursData[];
 }
 
-export function LocationCards() {
+interface LocationCardsProps {
+  beerCount?: { lawrenceville: number; zelienople: number };
+}
+
+export function LocationCards({ beerCount }: LocationCardsProps = {}) {
   const [hoursData, setHoursData] = useState<LocationHoursState | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -92,7 +98,18 @@ export function LocationCards() {
                   quality={85}
                   sizes="(max-width: 768px) 100vw, 50vw"
                 />
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-between p-6">
+                  {/* Top: Tap Count Badge */}
+                  {beerCount && (
+                    <div className="self-end">
+                      <Badge variant="secondary" className="bg-white/90 text-black hover:bg-white text-sm font-semibold">
+                        <Beer className="h-3.5 w-3.5 mr-1.5" />
+                        {id === Location.LAWRENCEVILLE ? beerCount.lawrenceville : beerCount.zelienople} on tap
+                      </Badge>
+                    </div>
+                  )}
+
+                  {/* Center: Location Name & Hours */}
                   <div className="text-center text-white">
                     <h3 className="text-2xl font-bold mb-2 drop-shadow-lg">{displayName}</h3>
                     {loading ? (
@@ -103,6 +120,19 @@ export function LocationCards() {
                       </p>
                     )}
                   </div>
+
+                  {/* Bottom: View Menu Button */}
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="bg-white/90 text-black hover:bg-white"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      window.location.href = `/${id}/beer`;
+                    }}
+                  >
+                    View Menu
+                  </Button>
                 </div>
               </>
             ) : (

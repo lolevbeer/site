@@ -4,6 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { Beer, MapPin } from 'lucide-react';
 import {
   Carousel,
   CarouselContent,
@@ -11,6 +12,12 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '@/components/ui/carousel';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface Beer {
   variant: string;
@@ -49,44 +56,53 @@ export function HeroSection({ availableBeers }: HeroSectionProps) {
         </h1>
         <section className="flex flex-col items-center justify-center gap-4 md:gap-8 rounded-xl py-4 md:py-8 w-full">
           <div className="w-full max-w-5xl mx-auto px-4 md:px-12">
-            <Carousel
-              opts={{
-                align: "start",
-                loop: true,
-                slidesToScroll: "auto",
-              }}
-              className="w-full"
-              aria-label="Available beers carousel"
-            >
-              <CarouselContent className="-ml-4">
-                {availableBeers.length > 0 ? (
-                  availableBeers.map((beer) => (
-                    <CarouselItem key={beer.variant} className="pl-4 basis-1/4 sm:basis-1/5 md:basis-1/4 lg:basis-1/6 xl:basis-1/8 2xl:basis-1/8">
-                      <Link href={`/beer/${getBeerSlug(beer)}`} className="group flex justify-center">
-                        <div className="relative h-16 w-16 md:h-24 md:w-24 overflow-hidden rounded-lg bg-transparent transition-transform group-hover:scale-105">
-                          <Image
-                            src={`/images/beer/${beer.variant}.webp`}
-                            alt={`${beer.name} beer can`}
-                            fill
-                            className="object-contain"
-                            sizes="(max-width: 768px) 64px, 96px"
-                            loading="lazy"
-                          />
-                        </div>
-                      </Link>
+            <TooltipProvider delayDuration={200}>
+              <Carousel
+                opts={{
+                  align: "start",
+                  loop: true,
+                  slidesToScroll: "auto",
+                }}
+                className="w-full"
+                aria-label="Available beers carousel"
+              >
+                <CarouselContent className="-ml-4">
+                  {availableBeers.length > 0 ? (
+                    availableBeers.map((beer) => (
+                      <CarouselItem key={beer.variant} className="pl-4 basis-1/4 sm:basis-1/5 md:basis-1/4 lg:basis-1/6 xl:basis-1/8 2xl:basis-1/8">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Link href={`/beer/${getBeerSlug(beer)}`} className="group flex justify-center">
+                              <div className="relative h-16 w-16 md:h-24 md:w-24 overflow-hidden rounded-lg bg-transparent transition-transform duration-200 group-hover:scale-110">
+                                <Image
+                                  src={`/images/beer/${beer.variant}.webp`}
+                                  alt={`${beer.name} beer can`}
+                                  fill
+                                  className="object-contain"
+                                  sizes="(max-width: 768px) 64px, 96px"
+                                  loading="lazy"
+                                />
+                              </div>
+                            </Link>
+                          </TooltipTrigger>
+                          <TooltipContent side="bottom" className="bg-popover text-popover-foreground border-0" sideOffset={5}>
+                            <p className="font-semibold text-sm">{beer.name}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </CarouselItem>
+                    ))
+                  ) : (
+                    <CarouselItem className="pl-4">
+                      <div className="h-16 md:h-24 flex items-center justify-center">
+                        <p className="text-muted-foreground text-sm">Loading available beers...</p>
+                      </div>
                     </CarouselItem>
-                  ))
-                ) : (
-                  <CarouselItem className="pl-4">
-                    <div className="h-16 md:h-24 flex items-center justify-center">
-                      <p className="text-muted-foreground text-sm">Loading available beers...</p>
-                    </div>
-                  </CarouselItem>
-                )}
-              </CarouselContent>
-              <CarouselPrevious className="hidden md:flex" />
-              <CarouselNext className="hidden md:flex" />
-            </Carousel>
+                  )}
+                </CarouselContent>
+                <CarouselPrevious className="hidden md:flex border-0 bg-transparent hover:bg-muted/50 shadow-none" />
+                <CarouselNext className="hidden md:flex border-0 bg-transparent hover:bg-muted/50 shadow-none" />
+              </Carousel>
+            </TooltipProvider>
           </div>
         </section>
         <p className="mt-0 mb-0 text-balance text-base md:text-lg text-foreground max-w-4xl px-4">
@@ -94,11 +110,27 @@ export function HeroSection({ availableBeers }: HeroSectionProps) {
           <br /><br />
           We believe that beer should be thoughtful and stimulating. Each beer we create is intended to engage your senses, crafted with attention to flavor, balance, and the experience.
         </p>
-        <Button asChild variant="default" size="lg" className="mt-2 md:mt-6">
-          <Link href="/about">
-            About Lolev
-          </Link>
-        </Button>
+
+        {/* Primary CTAs */}
+        <div className="flex flex-col sm:flex-row gap-3 md:gap-4 mt-6 md:mt-8 justify-center items-center">
+          <Button asChild variant="default" size="lg" className="gap-2 min-w-[160px]">
+            <Link href="/beer">
+              <Beer className="h-4 w-4" />
+              Explore Beers
+            </Link>
+          </Button>
+          <Button asChild variant="outline" size="lg" className="gap-2 min-w-[160px] backdrop-blur-md bg-transparent">
+            <Link href="/beer-map">
+              <MapPin className="h-4 w-4" />
+              Find a Location
+            </Link>
+          </Button>
+          <Button asChild variant="ghost" size="lg" className="min-w-[160px] backdrop-blur-md bg-transparent">
+            <Link href="/about">
+              Learn Our Story
+            </Link>
+          </Button>
+        </div>
       </div>
     </div>
   );

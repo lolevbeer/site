@@ -154,9 +154,20 @@ export function isLocationOpen(location: Location, date?: Date): boolean {
 
   const currentTime = now.getHours() * 100 + now.getMinutes();
   const openTime = parseInt(dayHours.open.replace(':', ''));
-  const closeTime = parseInt(dayHours.close.replace(':', ''));
+  let closeTime = parseInt(dayHours.close.replace(':', ''));
 
-  return currentTime >= openTime && currentTime <= closeTime;
+  // Handle midnight closing (00:00) - treat as 24:00 (2400)
+  if (closeTime === 0) {
+    closeTime = 2400;
+  }
+
+  // If closing time is less than opening time, it crosses midnight
+  if (closeTime < openTime) {
+    // e.g., open at 16:00, close at 02:00 next day
+    return currentTime >= openTime || currentTime <= closeTime;
+  }
+
+  return currentTime >= openTime && currentTime < closeTime;
 }
 
 /**
