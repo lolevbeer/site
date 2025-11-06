@@ -1,13 +1,12 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 
 /**
- * Component to track page views on client-side navigation
- * This ensures SPA navigation is tracked in Google Analytics
+ * Internal component that uses useSearchParams
  */
-export function PageViewTracker() {
+function PageViewTrackerInternal() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -23,4 +22,17 @@ export function PageViewTracker() {
   }, [pathname, searchParams]);
 
   return null;
+}
+
+/**
+ * Component to track page views on client-side navigation
+ * This ensures SPA navigation is tracked in Google Analytics
+ * Wrapped in Suspense for Next.js 16 compatibility
+ */
+export function PageViewTracker() {
+  return (
+    <Suspense fallback={null}>
+      <PageViewTrackerInternal />
+    </Suspense>
+  );
 }

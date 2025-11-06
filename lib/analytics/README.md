@@ -95,6 +95,7 @@ trackEvent('custom_event_name', {
 2. **PageViewTracker** (`components/analytics/page-view-tracker.tsx`)
    - Tracks SPA navigation automatically
    - Integrated into root layout
+   - Wrapped in Suspense boundary (Next.js 16 requirement)
 
 3. **TrackedLink** (`components/analytics/tracked-link.tsx`)
    - Drop-in replacement for Next.js Link
