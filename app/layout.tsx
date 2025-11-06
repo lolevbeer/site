@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 import { LocationProvider } from "@/components/location/location-provider";
@@ -17,9 +17,15 @@ const poppins = Poppins({
   preload: true,
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+};
+
 export const metadata: Metadata = {
   title: {
-    default: "Lolev Beer - Craft Beer in Pittsburgh",
+    default: "Lolev Beer - Craft Brewery in Pittsburgh",
     template: "%s | Lolev Beer"
   },
   description: "Experience exceptional craft beer at Lolev Beer with locations in Lawrenceville and Zelienople. Fresh brews, local food, and community events.",
@@ -31,11 +37,6 @@ export const metadata: Metadata = {
     email: false,
     address: false,
     telephone: false,
-  },
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
   },
   metadataBase: new URL("https://next.lolev.beer"),
   alternates: {
