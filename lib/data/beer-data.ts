@@ -10,7 +10,7 @@ import { logger } from '@/lib/utils/logger';
 import { GlassType } from '@/lib/types/beer';
 import { Location } from '@/lib/types/location';
 import { parseCSV } from '@/lib/utils/csv';
-import { compareDateStrings } from '@/lib/utils/date';
+import { compareDateStrings, getTodayEST } from '@/lib/utils/date';
 import { constants } from 'fs';
 
 interface BeerRow {
@@ -190,6 +190,7 @@ export const getDraftBeers = cache(async (location: 'lawrenceville' | 'zelienopl
           abv: parseFloat(row.abv || '0'),
           glass: getGlassType(row.glass),
           description: row.description || '',
+          hops: row.hops || undefined,
           image: hasImage,
           glutenFree: false,
           pricing: {
@@ -254,11 +255,16 @@ export const getEnrichedCans = cache(async (location: 'lawrenceville' | 'zelieno
           abv: row.abv || beerDetails?.abv || '',
           image: hasImage,
           onDraft: onDraftSet.has(row.variant.toLowerCase()),
-          glass: beerDetails?.glass
+          glass: beerDetails?.glass,
+          recipe: beerDetails?.recipe ? parseInt(beerDetails.recipe) : 0
         };
       });
 
     const enrichedCans = await Promise.all(enrichedCansPromises);
+
+    // Sort by recipe number descending (newest/highest recipe first)
+    enrichedCans.sort((a, b) => b.recipe - a.recipe);
+
     return enrichedCans;
   } catch (error) {
     logger.error(`Error loading cans for ${location}`, error);
@@ -275,20 +281,17 @@ export const getUpcomingEvents = cache(async (location: 'lawrenceville' | 'zelie
     const eventsText = await readCSV(`${location}-events.csv`);
     const eventsData = parseCSV<EventRow>(eventsText);
 
-    // Get today's date at midnight local time
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Get today's date in EST timezone (YYYY-MM-DD format)
+    const todayEST = getTodayEST();
 
-    // Filter for today and future events
+    // Filter for today and future events using EST timezone
     const upcomingEvents = eventsData
       .filter(row => {
         if (!row.date || !row.vendor) return false;
 
-        const [year, month, day] = row.date.split('-').map(Number);
-        if (!year || !month || !day) return false;
-
-        const eventDate = new Date(year, month - 1, day);
-        return eventDate >= today;
+        // Compare date strings directly (YYYY-MM-DD format)
+        const eventDateStr = row.date.split('T')[0];
+        return eventDateStr >= todayEST;
       })
       .map(row => ({
         date: row.date,
@@ -319,20 +322,17 @@ export const getUpcomingFood = cache(async (location: 'lawrenceville' | 'zelieno
     const foodText = await readCSV(`${location}-food.csv`);
     const foodData = parseCSV<FoodRow>(foodText);
 
-    // Get today's date at midnight local time
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Get today's date in EST timezone (YYYY-MM-DD format)
+    const todayEST = getTodayEST();
 
-    // Filter for today and future food vendors
+    // Filter for today and future food vendors using EST timezone
     const upcomingFood = foodData
       .filter(row => {
         if (!row.vendor || !row.date) return false;
 
-        const [year, month, day] = row.date.split('-').map(Number);
-        if (!year || !month || !day) return false;
-
-        const vendorDate = new Date(year, month - 1, day);
-        return vendorDate >= today;
+        // Compare date strings directly (YYYY-MM-DD format)
+        const vendorDateStr = row.date.split('T')[0];
+        return vendorDateStr >= todayEST;
       })
       .map(row => ({
         vendor: row.vendor,

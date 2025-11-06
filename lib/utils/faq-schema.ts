@@ -86,7 +86,7 @@ export const breweryFAQs: FAQItem[] = [
   },
   {
     question: 'Can I buy beer to take home?',
-    answer: 'Yes! We sell cans and growler fills of select beers to go. Check our Beer page to see which beers are currently available in cans at each location.'
+    answer: 'Yes! We sell cans and bottles of select beers to go. Check our Beer page to see which beers are currently available in cans at each location.'
   },
   {
     question: 'Where can I find your beer in stores?',
@@ -114,6 +114,6 @@ export const breweryFAQs: FAQItem[] = [
   },
   {
     question: 'How do I stay updated on new beer releases and events?',
-    answer: 'Follow us on social media (Instagram @lolevbeer), check our website regularly, or sign up for our newsletter. Our Events and Food pages are updated weekly with upcoming activities.'
+    answer: 'Follow us on Instagram @lolevbeer, check our website regularly, or sign up for our newsletter. Our Events and Food pages are updated weekly with upcoming activities.'
   }
 ];

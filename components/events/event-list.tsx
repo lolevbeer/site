@@ -374,7 +374,7 @@ export function EventList({
 
       {/* Today's Events Section */}
       {todaysEvents.length > 0 && !maxItems && (
-        <Card className="shadow-none">
+        <Card className="shadow-none border-2 border-black">
           <CardContent className="p-6">
             <h2 className="text-2xl font-bold mb-4 text-center">Today's Event{todaysEvents.length !== 1 ? 's' : ''}</h2>
             <div className="flex flex-col gap-3">

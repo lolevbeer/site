@@ -10,6 +10,7 @@ import {
   LocationDisplayNames,
   LocationData
 } from '@/lib/types/location';
+import { getCurrentESTDateTime, getDayOfWeekEST, getTodayEST } from '@/lib/utils/date';
 
 /**
  * Default location when no preference is set
@@ -33,7 +34,7 @@ const lawrencevilleInfo: LocationInfo = {
   zipCode: '15201',
   phone: '(412) 336-8965',
   email: 'info@lolev.beer',
-  mapUrl: 'https://share.google/6DHKHO4c2nZOMfAho',
+  mapUrl: 'https://www.google.com/maps/place/Lolev+Beer/@40.4816854,-79.9539243,115m/data=!3m1!1e3!4m6!3m5!1s0x8834f326312e16b9:0x333ef823676989b4!8m2!3d40.4816217!4d-79.9538576!16s%2Fg%2F11snh_567n?entry=ttu&g_ep=EgoyMDI1MTEwNC4xIKXMDSoASAFQAw%3D%3D',
   hours: {
     monday: { open: '16:00', close: '22:00' },
     tuesday: { open: '16:00', close: '22:00' },
@@ -72,7 +73,7 @@ const zelienopleInfo: LocationInfo = {
   state: 'PA',
   zipCode: '16063',
   website: 'https://brewery.com/zelienople',
-  mapUrl: 'https://share.google/joEL4NcPAo96qgWnQ',
+  mapUrl: 'https://www.google.com/maps/place/Lolev+Zelienople/@40.7951959,-80.1380706,147m/data=!3m1!1e3!4m6!3m5!1s0x88347fadb692e2ed:0xfe6860215987e498!8m2!3d40.7952085!4d-80.1377104!16s%2Fg%2F11y91skx6n?entry=ttu&g_ep=EgoyMDI1MTEwNC4xIKXMDSoASAFQAw%3D%3D',
   hours: {
     monday: { open: '17:00', close: '22:00' },
     tuesday: { open: '17:00', close: '22:00' },
@@ -134,11 +135,12 @@ export function getLocationByValue(value: string): Location | null {
 }
 
 /**
- * Check if a location is currently open based on current time
+ * Check if a location is currently open based on current time in EST
  */
 export function isLocationOpen(location: Location, date?: Date): boolean {
   const locationInfo = getLocationInfo(location);
-  const now = date || new Date();
+  // Use EST timezone for determining current time
+  const now = date || getCurrentESTDateTime();
   const dayOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][now.getDay()] as keyof typeof locationInfo.hours;
 
   const dayHours = locationInfo.hours[dayOfWeek];
@@ -200,11 +202,11 @@ export function getFormattedHours(location: Location, day: keyof LocationInfo['h
 }
 
 /**
- * Get next opening time for a location
+ * Get next opening time for a location using EST timezone
  */
 export function getNextOpeningTime(location: Location): { day: string; time: string } | null {
   const locationInfo = getLocationInfo(location);
-  const now = new Date();
+  const now = getCurrentESTDateTime();
   const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
   for (let i = 1; i <= 7; i++) {

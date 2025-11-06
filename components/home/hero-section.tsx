@@ -54,8 +54,8 @@ export function HeroSection({ availableBeers }: HeroSectionProps) {
         <h1 className="mb-0 text-balance font-bold text-4xl md:text-6xl lg:text-7xl xl:text-[5.25rem]">
           Lolev Beer
         </h1>
-        <section className="flex flex-col items-center justify-center gap-4 md:gap-8 rounded-xl py-4 md:py-8 w-full">
-          <div className="w-full max-w-5xl mx-auto px-4 md:px-12">
+        <section className="flex flex-col items-center justify-center gap-4 md:gap-8 rounded-xl py-8 md:py-12 w-full overflow-visible">
+          <div className="w-full max-w-5xl mx-auto px-4 md:px-12 overflow-visible">
             <TooltipProvider delayDuration={200}>
               <Carousel
                 opts={{
@@ -73,7 +73,7 @@ export function HeroSection({ availableBeers }: HeroSectionProps) {
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Link href={`/beer/${getBeerSlug(beer)}`} className="group flex justify-center">
-                              <div className="relative h-16 w-16 md:h-24 md:w-24 overflow-hidden rounded-lg bg-transparent transition-transform duration-200 group-hover:scale-110">
+                              <div className="relative h-16 w-16 md:h-24 md:w-24 rounded-lg bg-transparent">
                                 <Image
                                   src={`/images/beer/${beer.variant}.webp`}
                                   alt={`${beer.name} beer can`}
@@ -113,21 +113,19 @@ export function HeroSection({ availableBeers }: HeroSectionProps) {
 
         {/* Primary CTAs */}
         <div className="flex flex-col sm:flex-row gap-3 md:gap-4 mt-6 md:mt-8 justify-center items-center">
-          <Button asChild variant="default" size="lg" className="gap-2 min-w-[160px]">
+          <Button asChild variant="outline" size="lg" className="min-w-[160px] backdrop-blur-md bg-transparent">
             <Link href="/beer">
-              <Beer className="h-4 w-4" />
               Explore Beers
             </Link>
           </Button>
-          <Button asChild variant="outline" size="lg" className="gap-2 min-w-[160px] backdrop-blur-md bg-transparent">
+          <Button asChild variant="default" size="lg" className="min-w-[160px]">
             <Link href="/beer-map">
-              <MapPin className="h-4 w-4" />
-              Find a Location
+              Find Lolev
             </Link>
           </Button>
-          <Button asChild variant="ghost" size="lg" className="min-w-[160px] backdrop-blur-md bg-transparent">
+          <Button asChild variant="outline" size="lg" className="min-w-[160px] backdrop-blur-md bg-transparent">
             <Link href="/about">
-              Learn Our Story
+              Our Story
             </Link>
           </Button>
         </div>

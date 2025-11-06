@@ -24,7 +24,7 @@ export function HoursPanel({ locations = [Location.LAWRENCEVILLE, Location.ZELIE
   const currentDay = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][now.getDay()];
 
   return (
-    <Card className={cn("p-6", className)}>
+    <Card className={cn("p-0 border-0 shadow-none", className)}>
       <div className="flex items-center gap-2 mb-4">
         <Clock className="h-5 w-5 text-primary" />
         <h2 className="text-2xl font-bold">Hours & Locations</h2>
@@ -37,14 +37,14 @@ export function HoursPanel({ locations = [Location.LAWRENCEVILLE, Location.ZELIE
           const todayHours = getFormattedHours(location, currentDay as keyof typeof locationInfo.hours);
 
           return (
-            <AccordionItem key={location} value={location}>
+            <AccordionItem key={location} value={location} className="border-0">
               <AccordionTrigger className="hover:no-underline">
                 <div className="flex items-center justify-between w-full pr-4">
                   <div className="flex items-center gap-3">
                     <MapPin className="h-4 w-4 text-muted-foreground" />
                     <div className="text-left">
-                      <div className="font-semibold">{LocationDisplayNames[location]}</div>
-                      <div className="text-sm text-muted-foreground">{locationInfo.address}</div>
+                      <div className="font-semibold">Lolev {LocationDisplayNames[location]}</div>
+                      <div className="text-sm text-muted-foreground">{locationInfo.address}, {locationInfo.city}, {locationInfo.state} {locationInfo.zipCode}</div>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -60,7 +60,7 @@ export function HoursPanel({ locations = [Location.LAWRENCEVILLE, Location.ZELIE
               <AccordionContent>
                 <div className="pt-4 pl-7 space-y-2">
                   {/* Today's hours - shown on mobile */}
-                  <div className="sm:hidden mb-3 pb-3 border-b">
+                  <div className="sm:hidden mb-3 pb-3">
                     <div className="flex justify-between items-center">
                       <span className="font-medium">Today</span>
                       <span className="text-muted-foreground">{todayHours}</span>
@@ -82,7 +82,6 @@ export function HoursPanel({ locations = [Location.LAWRENCEVILLE, Location.ZELIE
                       >
                         <span className="capitalize">
                           {day}
-                          {isToday && <span className="text-primary text-xs ml-2">(Today)</span>}
                         </span>
                         <span className="text-muted-foreground">{hours}</span>
                       </div>
@@ -90,7 +89,7 @@ export function HoursPanel({ locations = [Location.LAWRENCEVILLE, Location.ZELIE
                   })}
 
                   {/* Contact info */}
-                  <div className="pt-4 mt-4 border-t space-y-2">
+                  <div className="pt-4 mt-4 space-y-2">
                     {locationInfo.phone && (
                       <div className="text-sm">
                         <span className="text-muted-foreground">Phone: </span>

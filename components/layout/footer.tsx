@@ -162,7 +162,7 @@ export function Footer() {
           {/* Brand and Links */}
           <div className="flex flex-col">
             <p className="text-sm text-muted-foreground mb-6">
-              Craft brewery serving purposeful beer and building community in the Pittsburgh area.
+              Haze • Crispy • Funky • Oaked
             </p>
 
             <ul className="space-y-2 text-sm mb-6">
@@ -182,7 +182,7 @@ export function Footer() {
         </div>
 
         {/* Bottom footer */}
-        <div className="mt-12 pt-8 border-t flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
+        <div className="mt-12 pt-8 flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
           <p className="text-sm text-muted-foreground">
             © {new Date().getFullYear()} Lolev Beer. All rights reserved.
           </p>

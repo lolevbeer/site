@@ -86,7 +86,7 @@ export function FoodSchedule({
     <div className={cn('space-y-6', className)}>
       {/* Today's Food Section */}
       {todaysFood.length > 0 && (
-        <Card className="shadow-none">
+        <Card className="shadow-none border-2 border-black">
           <CardContent className="p-6">
             <h2 className="text-2xl font-bold mb-4 text-center">Today's Food</h2>
             <div className="flex flex-col gap-3">

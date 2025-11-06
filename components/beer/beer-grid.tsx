@@ -213,6 +213,7 @@ export function BeerGrid({
               showLocation={showLocation}
               showPricing={showPricing}
               showAvailability={showAvailability}
+              variant="minimal"
             />
           ))
         ) : (

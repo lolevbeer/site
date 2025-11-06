@@ -55,7 +55,25 @@ export default function FAQPage() {
                   {faq.question}
                 </AccordionTrigger>
                 <AccordionContent className="text-muted-foreground">
-                  {faq.answer}
+                  {faq.question === 'Where can I find your beer in stores?' ? (
+                    <div>
+                      Our beers are distributed throughout the Pittsburgh area and select locations in Pennsylvania, New York, and Ohio. Use our{' '}
+                      <Button asChild variant="default" size="sm" className="inline-flex">
+                        <Link href="/beer-map">Beer Map</Link>
+                      </Button>{' '}
+                      to find the nearest retailer carrying Lolev Beer.
+                    </div>
+                  ) : faq.question === 'How do I stay updated on new beer releases and events?' ? (
+                    <div>
+                      Follow us on social media (Instagram{' '}
+                      <a href="https://instagram.com/lolevbeer" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">
+                        @lolevbeer
+                      </a>
+                      ), check our website regularly, or sign up for our newsletter. Our Events and Food pages are updated weekly with upcoming activities.
+                    </div>
+                  ) : (
+                    faq.answer
+                  )}
                 </AccordionContent>
               </AccordionItem>
             ))}
@@ -70,16 +88,16 @@ export default function FAQPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             {/* Contact Card */}
-            <div className="border rounded-lg p-6 space-y-4">
+            <div className="rounded-lg p-6 space-y-4 text-center">
               <h3 className="text-lg font-semibold mb-4">Contact Us</h3>
               <div className="space-y-3">
-                <Button variant="ghost" size="sm" asChild className="w-full justify-start">
+                <Button variant="ghost" size="sm" asChild className="w-full justify-center">
                   <a href="mailto:info@lolev.beer" className="flex items-center gap-2">
                     <Mail className="h-4 w-4" />
                     info@lolev.beer
                   </a>
                 </Button>
-                <Button variant="ghost" size="sm" asChild className="w-full justify-start">
+                <Button variant="ghost" size="sm" asChild className="w-full justify-center">
                   <a href="tel:4123368965" className="flex items-center gap-2">
                     <Phone className="h-4 w-4" />
                     (412) 336-8965
@@ -89,18 +107,18 @@ export default function FAQPage() {
             </div>
 
             {/* Locations Card */}
-            <div className="border rounded-lg p-6 space-y-4">
+            <div className="rounded-lg p-6 space-y-4 text-center">
               <h3 className="text-lg font-semibold mb-4">Our Locations</h3>
               <div className="space-y-3 text-sm">
-                <div className="flex items-start gap-2">
-                  <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                <div className="flex flex-col items-center gap-2">
+                  <MapPin className="h-4 w-4 flex-shrink-0" />
                   <div>
                     <p className="font-medium">Lawrenceville</p>
                     <p className="text-muted-foreground">5247 Butler Street<br />Pittsburgh, PA 15201</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-2">
-                  <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                <div className="flex flex-col items-center gap-2">
+                  <MapPin className="h-4 w-4 flex-shrink-0" />
                   <div>
                     <p className="font-medium">Zelienople</p>
                     <p className="text-muted-foreground">111 South Main Street<br />Zelienople, PA 16063</p>

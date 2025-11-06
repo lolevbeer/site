@@ -14,7 +14,7 @@ import { BaseCard, CardSkeleton } from '@/components/ui/base-card';
 import { StatusBadge, StatusBadgeGroup } from '@/components/ui/status-badge';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Beer as BeerIcon, Wine, GlassWater, MapPin } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import {
   HoverCard,
   HoverCardContent,
@@ -27,6 +27,7 @@ import {
   getBeerAvailability,
   getBeerPricing
 } from '@/lib/utils/formatters';
+import { getGlassIcon } from '@/lib/utils/beer-icons';
 
 interface BeerCardProps {
   beer: Beer;
@@ -37,19 +38,6 @@ interface BeerCardProps {
   variant?: 'full' | 'compact' | 'minimal';
   showInlineBadges?: boolean;
   priority?: boolean;
-}
-
-function getGlassIcon(glass: GlassType): React.ComponentType<{ className?: string }> {
-  switch (glass) {
-    case GlassType.PINT:
-      return BeerIcon;
-    case GlassType.TEKU:
-      return Wine;
-    case GlassType.STEIN:
-      return GlassWater;
-    default:
-      return BeerIcon;
-  }
 }
 
 export const BeerCard = React.memo(function BeerCard({
@@ -70,73 +58,47 @@ export const BeerCard = React.memo(function BeerCard({
     return null;
   }
 
-  // Minimal variant uses simple card structure without BaseCard
+  // Minimal variant uses simple card structure without BaseCard - matches homepage cans style
   if (variant === 'minimal') {
+    const GlassIcon = getGlassIcon(beer.glass);
     return (
-      <Link href={showLocation ? `/${currentLocation}/beer/${beerSlug}` : `/beer/${beerSlug}`} className="group">
-        <div className={`overflow-hidden hover:shadow-lg transition-shadow flex flex-col border-0 h-full cursor-pointer bg-[var(--color-card-interactive)] rounded-lg ${className}`}>
+      <div className="group flex flex-col">
+        <div className="relative h-64 w-full flex-shrink-0 mb-4">
           <BeerImage
             beer={beer}
-            className="relative h-48 w-full flex-shrink-0"
+            className="w-full h-full"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
             priority={priority}
           />
-          <div className="p-4 flex flex-col flex-grow">
-            <div className="flex-grow">
-              <div className="flex items-start justify-between mb-2 gap-2">
-                <h3 className="text-lg font-semibold">{beer.name}</h3>
-                {showInlineBadges && (
-                  <div className="flex gap-1 flex-shrink-0 items-center">
-                    {beer.availability.cansAvailable && (
-                      <span className="inline-flex items-center rounded-md bg-primary text-primary-foreground px-2 py-1 text-xs font-medium whitespace-nowrap">
-                        Cans
-                      </span>
-                    )}
-                    {beer.availability.tap && (
-                      <span className="inline-flex items-center rounded-md bg-secondary text-secondary-foreground px-2 py-1 text-xs font-medium whitespace-nowrap">
-                        Tap {beer.availability.tap}
-                      </span>
-                    )}
+        </div>
+        <div className="mb-3">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <h3 className="text-lg font-semibold text-center">{beer.name}</h3>
+          </div>
+          <div className="flex items-center justify-center gap-2 flex-wrap">
+            <Badge variant="outline" className="text-xs">
+              {beer.type}
+            </Badge>
+            {beer.availability.tap && (
+              <HoverCard openDelay={200}>
+                <HoverCardTrigger asChild>
+                  <div className="inline-flex items-center justify-center cursor-help">
+                    <GlassIcon className="h-4 w-4" />
                   </div>
-                )}
-              </div>
-              <div className="space-y-1 text-sm text-muted-foreground">
-                <div>{beer.type}</div>
-                <div>{formatAbv(beer.abv)} ABV</div>
-              </div>
-
-              {/* Location badges - show where beer is available */}
-              {!showLocation && (
-                <div className="flex gap-1.5 mt-2 flex-wrap">
-                  {beer.availability.tap && (
-                    <HoverCard openDelay={200}>
-                      <HoverCardTrigger asChild>
-                        <Badge variant="secondary" className="text-xs cursor-help">
-                          <MapPin className="h-3 w-3 mr-1" />
-                          On Tap
-                        </Badge>
-                      </HoverCardTrigger>
-                      <HoverCardContent side="top" className="w-auto p-2">
-                        <p className="text-xs">Available at {currentLocation === Location.LAWRENCEVILLE ? 'Lawrenceville' : 'Zelienople'}</p>
-                      </HoverCardContent>
-                    </HoverCard>
-                  )}
-                  {beer.availability.cansAvailable && (
-                    <Badge variant="outline" className="text-xs">
-                      Cans Available
-                    </Badge>
-                  )}
-                </div>
-              )}
-            </div>
-            <div className="mt-3">
-              <Button variant="ghost" size="sm" className="w-full pointer-events-none">
-                View Details
-              </Button>
-            </div>
+                </HoverCardTrigger>
+                <HoverCardContent side="top" className="w-auto p-2">
+                  <p className="text-xs">Pouring</p>
+                </HoverCardContent>
+              </HoverCard>
+            )}
           </div>
         </div>
-      </Link>
+        <Button asChild variant="outline" size="default" className="w-full">
+          <Link href={showLocation ? `/${currentLocation}/beer/${beerSlug}` : `/beer/${beerSlug}`}>
+            View Details
+          </Link>
+        </Button>
+      </div>
     );
   }
 

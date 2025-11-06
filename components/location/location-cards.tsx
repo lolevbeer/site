@@ -83,102 +83,65 @@ export function LocationCards({ beerCount }: LocationCardsProps = {}) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
       {locations.map(({ id, data, gradient, displayName, image }) => (
-        <Link key={id} href={data.mapUrl || '#'} target="_blank" rel="noopener noreferrer" className="group flex">
-          <Card className="overflow-hidden flex flex-col border-0 hover:shadow-lg transition-shadow cursor-pointer w-full bg-[var(--color-card-interactive)]">
-            <div className="aspect-video relative">
+        <div key={id} className="flex flex-col relative pb-16">
+          {/* Location Image */}
+          <div className="aspect-video relative mb-6">
             {image ? (
-              <>
-                <Image
-                  src={image}
-                  alt={`${displayName} location`}
-                  fill
-                  className="object-cover"
-                  priority={id === Location.LAWRENCEVILLE}
-                  fetchPriority={id === Location.LAWRENCEVILLE ? "high" : "low"}
-                  quality={85}
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                />
-                <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-between p-6">
-                  {/* Top: Tap Count Badge */}
-                  {beerCount && (
-                    <div className="self-end">
-                      <Badge variant="secondary" className="bg-white/90 text-black hover:bg-white text-sm font-semibold">
-                        <Beer className="h-3.5 w-3.5 mr-1.5" />
-                        {id === Location.LAWRENCEVILLE ? beerCount.lawrenceville : beerCount.zelienople} on tap
-                      </Badge>
-                    </div>
-                  )}
-
-                  {/* Center: Location Name & Hours */}
-                  <div className="text-center text-white">
-                    <h3 className="text-2xl font-bold mb-2 drop-shadow-lg">{displayName}</h3>
-                    {loading ? (
-                      <p className="text-lg drop-shadow-md">Loading hours...</p>
-                    ) : (
-                      <p className="text-lg font-medium drop-shadow-md">
-                        Today: {hoursData && getTodayHours(hoursData[id])}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Bottom: View Menu Button */}
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="bg-white/90 text-black hover:bg-white"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      window.location.href = `/${id}/beer`;
-                    }}
-                  >
-                    View Menu
-                  </Button>
-                </div>
-              </>
+              <Image
+                src={image}
+                alt={`${displayName} location`}
+                fill
+                className="object-cover rounded-lg"
+                priority={id === Location.LAWRENCEVILLE}
+                fetchPriority={id === Location.LAWRENCEVILLE ? "high" : "low"}
+                quality={85}
+                sizes="(max-width: 768px) 100vw, 50vw"
+              />
             ) : (
-              <div className={`h-full bg-gradient-to-br ${gradient}`}>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center text-gray-800">
-                    <h3 className="text-2xl font-bold mb-2">{displayName}</h3>
-                    {loading ? (
-                      <p className="text-lg">Loading hours...</p>
-                    ) : (
-                      <p className="text-lg font-medium">
-                        Today: {hoursData && getTodayHours(hoursData[id])}
-                      </p>
-                    )}
-                  </div>
-                </div>
+              <div className={`h-full bg-gradient-to-br ${gradient} rounded-lg`} />
+            )}
+          </div>
+
+          {/* Location Info */}
+          <div className="flex flex-col items-center text-center space-y-4">
+            <h3 className="text-2xl font-bold">{displayName}</h3>
+
+            {/* Today's Hours */}
+            <div className="text-muted-foreground">
+              {loading ? (
+                <p>Loading hours...</p>
+              ) : (
+                <p className="font-medium">
+                  Today: {hoursData && getTodayHours(hoursData[id])}
+                </p>
+              )}
+            </div>
+
+            {/* Address */}
+            <div className="text-muted-foreground">
+              <p>{data.address}</p>
+              <p>{data.city}, {data.state} {data.zipCode}</p>
+            </div>
+
+            {/* Phone */}
+            {data.phone && (
+              <div className="text-muted-foreground">
+                <a href={`tel:${data.phone}`} className="hover:underline">
+                  {data.phone}
+                </a>
               </div>
             )}
           </div>
-          <CardContent className="p-6 flex flex-col flex-grow">
-            <div className="flex-grow flex flex-col items-center justify-center text-center">
-              <h3 className="text-xl font-semibold mb-4">{displayName} Taproom</h3>
-              <div className="space-y-3 text-muted-foreground">
-                {/* Address */}
-                <div className="flex items-start gap-2 justify-center">
-                  <MapPin className="h-5 w-5 mt-0.5 text-primary" />
-                  <div>
-                    <p>{data.address}</p>
-                    <p className="text-sm">{data.city}, {data.state} {data.zipCode}</p>
-                  </div>
-                </div>
 
-                {/* Phone */}
-                {data.phone && (
-                  <div className="flex items-start gap-2 justify-center">
-                    <Phone className="h-5 w-5 mt-0.5 text-primary" />
-                    <div>
-                      {data.phone}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        </Link>
+          {/* Map Link Button - Positioned absolutely at bottom */}
+          <div className="absolute bottom-0 left-0 right-0 flex justify-center">
+            <Button asChild variant="outline" size="default" className="w-full max-w-xs">
+              <Link href={data.mapUrl || '#'} target="_blank" rel="noopener noreferrer">
+                Get Directions
+              </Link>
+            </Button>
+          </div>
+        </div>
       ))}
     </div>
   );

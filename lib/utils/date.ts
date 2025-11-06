@@ -17,6 +17,13 @@ export function getESTDate(): Date {
 }
 
 /**
+ * Get current date and time in EST/EDT timezone
+ */
+export function getCurrentESTDateTime(): Date {
+  return toZonedTime(new Date(), EST_TIMEZONE);
+}
+
+/**
  * Get today's date string in EST/EDT (YYYY-MM-DD format)
  */
 export function getTodayEST(): string {

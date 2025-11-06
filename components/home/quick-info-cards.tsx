@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Location } from '@/lib/types/location';
 import { getLocationInfo, isLocationOpen, getFormattedHours } from '@/lib/config/locations';
 import { cn } from '@/lib/utils';
+import { getTodayEST, getDayOfWeekEST, toESTDate } from '@/lib/utils/date';
 
 interface QuickInfoCardsProps {
   beerCount?: { lawrenceville: number; zelienople: number };
@@ -16,8 +17,9 @@ interface QuickInfoCardsProps {
 }
 
 export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCardsProps) {
-  const now = new Date();
-  const currentDay = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][now.getDay()];
+  // Get current day in EST timezone
+  const todayEST = getTodayEST();
+  const currentDay = getDayOfWeekEST(todayEST).toLowerCase();
 
   // Get hours for both locations
   const lawrencevilleInfo = getLocationInfo(Location.LAWRENCEVILLE);
@@ -27,28 +29,34 @@ export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCar
   const lawrencevilleHours = getFormattedHours(Location.LAWRENCEVILLE, currentDay as keyof typeof lawrencevilleInfo.hours);
   const zelienopleHours = getFormattedHours(Location.ZELIENOPLE, currentDay as keyof typeof zelienopleInfo.hours);
 
-  // Format next event date
+  // Format next event date using EST timezone
   const formatEventDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const eventDate = new Date(date);
-    eventDate.setHours(0, 0, 0, 0);
+    const todayEST = getTodayEST();
+    const eventDateStr = dateStr.split('T')[0]; // Get YYYY-MM-DD part
 
-    const diffDays = Math.floor((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    // Calculate day difference
+    const todayDate = new Date(todayEST);
+    const eventDate = new Date(eventDateStr);
+    const diffDays = Math.floor((eventDate.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24));
 
     if (diffDays === 0) return 'Today';
     if (diffDays === 1) return 'Tomorrow';
-    if (diffDays < 7) return date.toLocaleDateString('en-US', { weekday: 'long' });
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    if (diffDays < 7) {
+      const dayName = getDayOfWeekEST(eventDateStr);
+      return dayName;
+    }
+
+    // Format as "Mon 15" or "Jan 15"
+    const date = toESTDate(eventDateStr);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/New_York' });
   };
 
   return (
     <div className={cn("grid grid-cols-1 md:grid-cols-3 gap-4", className)}>
       {/* On Tap Now Card */}
       <Link href="/beer" className="group">
-        <Card className="p-5 h-full transition-all hover:scale-[1.02] cursor-pointer border-0">
-          <div className="flex items-center gap-3 mb-3">
+        <Card className="p-5 h-full transition-colors cursor-pointer border-0 hover:bg-secondary shadow-none text-center">
+          <div className="flex items-center justify-center gap-3 mb-3">
             <Beer className="h-5 w-5 text-primary" />
             <h3 className="text-xl font-bold">On Tap Now</h3>
           </div>
@@ -67,8 +75,8 @@ export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCar
 
       {/* Hours Today Card */}
       <Link href="/beer-map" className="group">
-        <Card className="p-5 h-full transition-all hover:scale-[1.02] cursor-pointer border-0">
-          <div className="flex items-center gap-3 mb-3">
+        <Card className="p-5 h-full transition-colors cursor-pointer border-0 hover:bg-secondary shadow-none text-center">
+          <div className="flex items-center justify-center gap-3 mb-3">
             <Clock className="h-5 w-5 text-primary" />
             <h3 className="text-xl font-bold">Hours Today</h3>
           </div>
@@ -87,8 +95,8 @@ export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCar
 
       {/* Next Event Card */}
       <Link href="/events" className="group">
-        <Card className="p-5 h-full transition-all hover:scale-[1.02] cursor-pointer border-0">
-          <div className="flex items-center gap-3 mb-3">
+        <Card className="p-5 h-full transition-colors cursor-pointer border-0 hover:bg-secondary shadow-none text-center">
+          <div className="flex items-center justify-center gap-3 mb-3">
             <Calendar className="h-5 w-5 text-primary" />
             <h3 className="text-xl font-bold">
               {nextEvent ? 'Next Event' : 'Upcoming Events'}

@@ -43,61 +43,55 @@ export function FeaturedCans({ lawrencevilleCans, zelienopleCans }: FeaturedCans
           {featuredCans.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" suppressHydrationWarning>
               {featuredCans.map((beer, index) => (
-                <Link key={`${beer.variant}-${index}`} href={`/beer/${beer.variant.toLowerCase()}`} className="group">
-                  <Card className="overflow-hidden hover:shadow-lg transition-shadow flex flex-col border-0 h-full cursor-pointer bg-[var(--color-card-interactive)]">
-                    <div className={`relative h-48 w-full flex-shrink-0 ${beer.image ? 'bg-gradient-to-b from-muted/5 to-background/20' : ''}`}>
-                      {beer.image ? (
-                        <Image
-                          src={`/images/beer/${beer.variant.toLowerCase()}.webp`}
-                          alt={`${beer.name} - ${beer.type || 'Craft beer'} can`}
-                          fill
-                          className="object-contain p-4"
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                          }}
-                        />
-                      ) : (
-                        <div className="flex items-center justify-center h-full">
-                          <div className="text-center px-4">
-                            <div className="text-2xl font-bold text-muted-foreground/30 mb-2">
-                              {beer.name}
-                            </div>
-                            <div className="text-sm text-muted-foreground/30">
-                              {beer.type}
-                            </div>
+                <div key={`${beer.variant}-${index}`} className="group flex flex-col">
+                  <div className="relative h-64 w-full flex-shrink-0 mb-4">
+                    {beer.image ? (
+                      <Image
+                        src={`/images/beer/${beer.variant.toLowerCase()}.webp`}
+                        alt={`${beer.name} - ${beer.type || 'Craft beer'} can`}
+                        fill
+                        className="object-contain"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center h-full">
+                        <div className="text-center px-4">
+                          <div className="text-2xl font-bold text-muted-foreground/30 mb-2">
+                            {beer.name}
+                          </div>
+                          <div className="text-sm text-muted-foreground/30">
+                            {beer.type}
                           </div>
                         </div>
-                      )}
-                    </div>
-                    <CardContent className="p-4 flex flex-col flex-grow">
-                      <div className="flex-grow">
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="text-lg font-semibold">{beer.name}</h3>
-                          {beer.onDraft && (() => {
-                            const GlassIcon = getGlassIcon(beer.glass);
-                            return (
-                              <Badge variant="default" className="text-xs flex-shrink-0 flex items-center gap-1">
-                                <GlassIcon className="h-3 w-3" />
-                                Pouring
-                              </Badge>
-                            );
-                          })()}
-                        </div>
-                        <div className="flex flex-wrap gap-1.5 mb-2">
-                          <Badge variant="outline" className="text-xs">
-                            {beer.type}
+                      </div>
+                    )}
+                  </div>
+                  <div className="mb-3">
+                    <div className="flex items-center justify-center gap-2 flex-wrap mb-2">
+                      <h3 className="text-lg font-semibold">{beer.name}</h3>
+                      <Badge variant="outline" className="text-xs">
+                        {beer.type}
+                      </Badge>
+                      {beer.onDraft && (() => {
+                        const GlassIcon = getGlassIcon(beer.glass);
+                        return (
+                          <Badge variant="default" className="text-xs flex-shrink-0 flex items-center gap-1">
+                            <GlassIcon className="h-3 w-3" />
+                            Pouring
                           </Badge>
-                        </div>
-                      </div>
-                      <div className="mt-3">
-                        <Button variant="ghost" size="sm" className="w-full pointer-events-none">
-                          View Details
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                  <Button asChild variant="outline" size="default" className="w-full">
+                    <Link href={`/beer/${beer.variant.toLowerCase()}`}>
+                      View Details
+                    </Link>
+                  </Button>
+                </div>
               ))}
             </div>
           ) : (

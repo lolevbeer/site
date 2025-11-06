@@ -26,6 +26,11 @@ export function BeerMapContent() {
         </h1>
       </div>
 
+      {/* Hours Panel */}
+      <div className="mb-8">
+        <HoursPanel />
+      </div>
+
       {/* Distributor Map */}
       <div className="rounded-xl overflow-hidden border" style={{ height: '700px', position: 'relative' }}>
         <DistributorMap
@@ -34,11 +39,6 @@ export function BeerMapContent() {
           initialZoom={6.5}
           maxPoints={10}
         />
-      </div>
-
-      {/* Hours Panel */}
-      <div className="mt-8">
-        <HoursPanel />
       </div>
     </div>
   );

@@ -34,27 +34,34 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
   }
 
   return (
-    <Link href={showLocation ? `/${currentLocation}/beer/${beerSlug}` : `/beer/${beerSlug}`} className="group">
-      <div className={`overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-200 cursor-pointer bg-[var(--color-card-interactive)] rounded-lg border-0 ${className}`}>
-        <div className="flex items-center gap-4 p-4">
+    <Link href={showLocation ? `/${currentLocation}/beer/${beerSlug}` : `/beer/${beerSlug}`} className="group block">
+      <div className={`overflow-hidden transition-colors duration-200 cursor-pointer rounded-lg hover:bg-secondary h-[120.5px] ${className}`}>
+        <div className="flex items-center gap-4 p-4 h-full">
           {/* Glass Icon */}
           <div className="flex-shrink-0">
             <GlassIcon className="h-12 w-12 text-muted-foreground/40 group-hover:text-muted-foreground/60 transition-colors" />
           </div>
 
           {/* Beer Info */}
-          <div className="flex-grow min-w-0">
-            <h3 className="text-lg font-semibold leading-tight truncate">{beer.name}</h3>
-            <div className="mt-1">
-              <Badge variant="outline" className="text-xs">
+          <div className="flex-grow min-w-0 flex flex-col justify-center">
+            <div className="flex items-baseline gap-2 mb-1">
+              <h3 className="text-lg font-semibold leading-tight truncate">{beer.name}</h3>
+              <Badge variant="outline" className="text-xs flex-shrink-0">
                 {beer.type}
               </Badge>
             </div>
-            {beer.hops && (
-              <div className="text-xs text-muted-foreground/70 mt-1 truncate">
-                {beer.hops}
-              </div>
-            )}
+            <div className="min-h-[3.5rem]">
+              {beer.description && (
+                <p className="text-sm text-muted-foreground/80 line-clamp-2 mb-1">
+                  {beer.description}
+                </p>
+              )}
+              {beer.hops && (
+                <p className="text-xs text-muted-foreground/70 truncate">
+                  <span className="font-medium">Hops:</span> {beer.hops}
+                </p>
+              )}
+            </div>
           </div>
 
           {/* ABV */}

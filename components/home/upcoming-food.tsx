@@ -66,7 +66,7 @@ export function UpcomingFood({ lawrencevilleFood, zelienopleFood }: UpcomingFood
           {upcomingFood.map((food, index) => (
             <Card
               key={index}
-              className={`overflow-hidden hover:shadow-lg transition-shadow border-0 ${food.site ? 'cursor-pointer bg-[var(--color-card-interactive)]' : ''}`}
+              className={`overflow-hidden transition-colors border-0 shadow-none ${food.site ? 'cursor-pointer hover:bg-secondary' : ''}`}
               onClick={() => food.site && window.open(food.site, '_blank')}
             >
               <CardContent className="p-6">
