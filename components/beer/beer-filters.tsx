@@ -11,6 +11,7 @@ import { BeerStyle } from '@/lib/types/beer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { trackBeerFilter, trackSearch } from '@/lib/analytics/events';
 
 interface BeerFiltersProps {
   filters: BeerFilters;
@@ -75,8 +76,10 @@ function StyleFilter({
 }) {
   const toggleStyle = useCallback((style: BeerStyle) => {
     if (selectedStyles.includes(style)) {
+      trackBeerFilter('style_remove', style);
       onStylesChange(selectedStyles.filter(s => s !== style));
     } else {
+      trackBeerFilter('style_add', style);
       onStylesChange([...selectedStyles, style]);
     }
   }, [selectedStyles, onStylesChange]);
@@ -249,7 +252,10 @@ function AvailabilityFilter({
               key={option.value}
               variant={availability === option.value || (!availability && option.value === 'all') ? 'default' : 'outline'}
               size="sm"
-              onClick={() => onAvailabilityChange(option.value === 'all' ? undefined : option.value)}
+              onClick={() => {
+                trackBeerFilter('availability', option.value);
+                onAvailabilityChange(option.value === 'all' ? undefined : option.value);
+              }}
               className="text-xs px-2.5 h-8"
             >
               {option.label}
@@ -303,11 +309,14 @@ export function BeerFilters({
   }, [filters]);
 
   const handleSearchChange = useCallback((search: string) => {
+    if (search && search.length >= 3) {
+      trackSearch(search, filteredCount || 0);
+    }
     onFiltersChange({
       ...filters,
       search: search || undefined,
     });
-  }, [filters, onFiltersChange]);
+  }, [filters, onFiltersChange, filteredCount]);
 
   const handleStylesChange = useCallback((styles: BeerStyle[]) => {
     onFiltersChange({

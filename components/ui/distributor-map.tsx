@@ -30,6 +30,7 @@ import { useLocationSearch } from '@/lib/hooks/use-location-search';
 import { MapControls } from '@/components/map/map-controls';
 import { LocationCard } from '@/components/map/location-card';
 import { useTheme } from 'next-themes';
+import { trackMapInteraction } from '@/lib/analytics/events';
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || '';
 
@@ -197,6 +198,7 @@ export function DistributorMap({
 
   // Handle geolocation
   const handleGeolocate = useCallback(() => {
+    trackMapInteraction('geolocate');
     setSearchTerm('');
     setClickedLocation(null);
 
@@ -216,6 +218,7 @@ export function DistributorMap({
   // Handle location click
   const handleLocationClick = useCallback((location: GeoFeature, fromMap: boolean = false) => {
     const [lng, lat] = location.geometry.coordinates;
+    trackMapInteraction('location_click', location.properties.Name);
     setSelectedLocation(location);
 
     // If clicking from map with no context, set clicked location to show nearby

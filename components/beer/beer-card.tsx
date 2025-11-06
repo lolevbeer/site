@@ -26,6 +26,7 @@ import {
   getBeerPricing
 } from '@/lib/utils/formatters';
 import { getGlassIcon } from '@/lib/utils/beer-icons';
+import { trackBeerView } from '@/lib/analytics/events';
 
 interface BeerCardProps {
   beer: Beer;
@@ -90,7 +91,10 @@ export const BeerCard = React.memo(function BeerCard({
           </div>
         </div>
         <Button asChild variant="outline" size="default" className="w-full">
-          <Link href={showLocation ? `/${currentLocation}/beer/${beerSlug}` : `/beer/${beerSlug}`}>
+          <Link
+            href={showLocation ? `/${currentLocation}/beer/${beerSlug}` : `/beer/${beerSlug}`}
+            onClick={() => trackBeerView(beer.name, beer.type)}
+          >
             View Details
           </Link>
         </Button>
@@ -179,6 +183,7 @@ export const BeerCard = React.memo(function BeerCard({
         <Link
           href={showLocation ? `/${currentLocation}/beer/${beerSlug}` : `/beer/${beerSlug}`}
           className="no-underline"
+          onClick={() => trackBeerView(beer.name, beer.type)}
         >
           Details
         </Link>

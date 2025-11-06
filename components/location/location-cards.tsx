@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Location } from '@/lib/types/location';
 import { LOCATIONS_DATA } from '@/lib/config/locations';
 import { fetchCSV } from '@/lib/utils/csv';
+import { trackDirections } from '@/lib/analytics/events';
 
 interface HoursData {
   name: string;
@@ -131,7 +132,12 @@ export function LocationCards() {
           {/* Map Link Button - Positioned absolutely at bottom */}
           <div className="absolute bottom-0 left-0 right-0 flex justify-center">
             <Button asChild variant="outline" size="default" className="w-full max-w-xs">
-              <Link href={data.mapUrl || '#'} target="_blank" rel="noopener noreferrer">
+              <Link
+                href={data.mapUrl || '#'}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => trackDirections(displayName)}
+              >
                 Get Directions
               </Link>
             </Button>

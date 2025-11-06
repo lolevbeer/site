@@ -7,6 +7,8 @@ import { ConditionalLayout } from "@/components/layout/conditional-layout";
 import { Toaster } from "@/components/ui/sonner";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { SkipNav } from "@/components/ui/skip-nav";
+import { GoogleAnalytics } from "@/components/analytics/google-analytics";
+import { PageViewTracker } from "@/components/analytics/page-view-tracker";
 
 // Reduce font weights to only what's needed (saves ~150-200KB)
 const poppins = Poppins({
@@ -110,6 +112,7 @@ export default function RootLayout({
         {/* Preload critical resources for faster LCP */}
         <link rel="preload" href="/images/bar.jpg" as="image" fetchPriority="high" />
       </head>
+      <GoogleAnalytics />
       <body
         className={`${poppins.variable} antialiased min-h-screen flex flex-col font-poppins`}
       >
@@ -123,6 +126,7 @@ export default function RootLayout({
             storageKey="lolev-theme"
           >
             <LocationProvider>
+              <PageViewTracker />
               <SkipNav />
               <ConditionalLayout>
                 {children}

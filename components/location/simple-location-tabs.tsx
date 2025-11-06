@@ -12,6 +12,7 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { Location, LocationDisplayNames } from '@/lib/types/location';
 import { useLocationContext } from './location-provider';
 import { ALL_LOCATIONS, isLocationOpen } from '@/lib/config/locations';
+import { trackLocationSwitch } from '@/lib/analytics/events';
 
 interface SimpleLocationTabsProps {
   children?: ReactNode;
@@ -36,6 +37,7 @@ export function SimpleLocationTabs({
 
   const handleLocationChange = (value: string) => {
     const location = value as Location;
+    trackLocationSwitch(currentLocation, location);
     setLocation(location);
     onLocationChange?.(location);
   };

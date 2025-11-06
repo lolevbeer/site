@@ -21,8 +21,9 @@ const nextConfig = {
     unoptimized: true, // Required for static export
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    imageSizes: [32, 48, 64, 96, 128, 256, 384], // Removed 16 (Next.js 16 default change)
     minimumCacheTTL: 60,
+    qualities: [75, 85, 90, 100], // Next.js 16 requirement: explicitly define allowed quality values
     // Add external domains here if loading images from external sources
     remotePatterns: [
       // Example: { protocol: 'https', hostname: 'example.com' }
@@ -103,11 +104,6 @@ const nextConfig = {
   // TypeScript configuration
   typescript: {
     ignoreBuildErrors: false, // Enable TypeScript checking during build
-  },
-
-  // ESLint configuration
-  eslint: {
-    ignoreDuringBuilds: false, // Enable ESLint checking during build
   },
 
   // Logging

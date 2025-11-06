@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 import { Location, LocationDisplayNames } from '@/lib/types/location';
 import { useLocationContext } from './location-provider';
 import { ALL_LOCATIONS, getLocationInfo } from '@/lib/config/locations';
+import { trackLocationSwitch } from '@/lib/analytics/events';
 
 interface LocationSelectorProps {
   /** Custom className for styling */
@@ -60,6 +61,7 @@ export function LocationSelector({
   const handleLocationChange = (value: string) => {
     const location = value as Location;
     if (Object.values(Location).includes(location)) {
+      trackLocationSwitch(currentLocation, location);
       setLocation(location);
     }
   };
@@ -219,9 +221,14 @@ export function LocationToggle({
     ? Location.ZELIENOPLE
     : Location.LAWRENCEVILLE;
 
+  const handleToggle = () => {
+    trackLocationSwitch(currentLocation, otherLocation);
+    toggleLocation();
+  };
+
   return (
     <button
-      onClick={toggleLocation}
+      onClick={handleToggle}
       className={cn(
         "inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-colors",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
