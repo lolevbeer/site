@@ -1,10 +1,10 @@
 "tap","variant","singleCanAvailable","name","type","abv","glass","price","description","image","hops"
 "1","sever","FALSE","Sever","Pumpkin Stout","5.7","teku","7","Dark roast coffee and pumpkin pie in a rich quaffable stout. Conditioned freshly-roasted Brazilian coffee beans from Temper Coffee Roasters.
 .","TRUE",""
-"2","Ora","FALSE","Ora","Zwickelbier","4.5","stein","7","Unfiltered golden pilsner spunded slowly for natural carbonation. Gentle malt plushness with noble hops.","FALSE","Citra®,"
+"2","Ora","FALSE","Ora","Zwickelbier","4.5","stein","7","Unfiltered golden pilsner spunded slowly for natural carbonation. Gentle malt plushness with noble hops.","FALSE",""
 "3","lumina","FALSE","Lumina","West Coast Imperial Pilsner","6.5","stein","7","Notes of apricot, pear and lemongrass.","FALSE","Motueka™, El Dorado®"
 "4","grandar","FALSE","Grandar","Imperial Pilsner","6.6","stein","7","Crackery sweetness balanced with hops, floral and herbal notes that finish with a subtle citrus. Step mashed and hopped with nobles.","TRUE","Hallertau Mittelfrüh, Saaz"
-"5","glyphs-ii","FALSE","Glyphs II","Pale Ale","5.1","pint","7","Vibrant tropical fruit and citrus layers with a pillowy soft body.","TRUE","Krush HyperBoost™, Citra® DynaBoost™, Riwaka™, Citra®"
+"5","glyphs-ii","FALSE","Glyphs II","Pale Ale","5.1","pint","7","","TRUE","Krush HyperBoost™, Citra® DynaBoost™, Riwaka™, Citra®"
 "6","ddh-lupula","FALSE","DDH Lupula","India Pale Ale","7","pint","8","Double dry hopped Lupula. Notes of Pineapple, mango, and grapefruit. Aromatic.","TRUE","Motueka™, Moutere™, Riwaka™"
 "7","sono","FALSE","Sono","Double IPA","7.6","pint","9","","TRUE","Citra® HyperBoost™, Citra® DynaBoost™, Dolcita™"
 "8","origen","FALSE","Origen","Double IPA","7.8","teku","9","","TRUE","Citra®, Rakau, Nelson Sauvin, Southern Cross, Southern Cross SubZero Hop Kief®"
