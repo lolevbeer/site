@@ -113,7 +113,7 @@ export function HeroSection({ availableBeers }: HeroSectionProps) {
 
         {/* Primary CTAs */}
         <div className="flex flex-col sm:flex-row gap-3 md:gap-4 mt-6 md:mt-8 justify-center items-center">
-          <Button asChild variant="outline" size="lg" className="min-w-[160px] backdrop-blur-md bg-transparent">
+          <Button asChild variant="outline" size="lg" className="min-w-[160px] backdrop-blur-md bg-transparent border-white hover:bg-white/10">
             <Link href="/beer">
               Explore Beers
             </Link>
@@ -123,7 +123,7 @@ export function HeroSection({ availableBeers }: HeroSectionProps) {
               Find Lolev
             </Link>
           </Button>
-          <Button asChild variant="outline" size="lg" className="min-w-[160px] backdrop-blur-md bg-transparent">
+          <Button asChild variant="outline" size="lg" className="min-w-[160px] backdrop-blur-md bg-transparent border-white hover:bg-white/10">
             <Link href="/about">
               Our Story
             </Link>

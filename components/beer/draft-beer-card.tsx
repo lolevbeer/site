@@ -44,7 +44,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
 
           {/* Beer Info */}
           <div className="flex-grow min-w-0 flex flex-col justify-center">
-            <div className="flex items-baseline gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-1">
               <h3 className="text-lg font-semibold leading-tight truncate">{beer.name}</h3>
               <Badge variant="outline" className="text-xs flex-shrink-0">
                 {beer.type}
