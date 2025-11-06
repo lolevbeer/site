@@ -4,7 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Beer } from 'lucide-react';
+import { Beer, MapPin } from 'lucide-react';
 import {
   Carousel,
   CarouselContent,

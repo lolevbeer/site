@@ -4,7 +4,6 @@ import React from 'react';
 import Link from 'next/link';
 import { Beer, Clock, Calendar } from 'lucide-react';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Location } from '@/lib/types/location';
 import { getLocationInfo, isLocationOpen, getFormattedHours } from '@/lib/config/locations';
 import { cn } from '@/lib/utils';
@@ -24,8 +23,6 @@ export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCar
   // Get hours for both locations
   const lawrencevilleInfo = getLocationInfo(Location.LAWRENCEVILLE);
   const zelienopleInfo = getLocationInfo(Location.ZELIENOPLE);
-  const lawrencevilleOpen = isLocationOpen(Location.LAWRENCEVILLE);
-  const zelienopleOpen = isLocationOpen(Location.ZELIENOPLE);
   const lawrencevilleHours = getFormattedHours(Location.LAWRENCEVILLE, currentDay as keyof typeof lawrencevilleInfo.hours);
   const zelienopleHours = getFormattedHours(Location.ZELIENOPLE, currentDay as keyof typeof zelienopleInfo.hours);
 

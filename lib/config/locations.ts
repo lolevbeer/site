@@ -10,7 +10,7 @@ import {
   LocationDisplayNames,
   LocationData
 } from '@/lib/types/location';
-import { getCurrentESTDateTime, getDayOfWeekEST, getTodayEST } from '@/lib/utils/date';
+import { getCurrentESTDateTime } from '@/lib/utils/date';
 
 /**
  * Default location when no preference is set

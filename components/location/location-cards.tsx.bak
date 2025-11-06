@@ -6,6 +6,7 @@ import Image from 'next/image';
 
 
 import { Button } from '@/components/ui/button';
+import { MapPin, Phone, Beer } from 'lucide-react';
 import { Location } from '@/lib/types/location';
 import { LOCATIONS_DATA } from '@/lib/config/locations';
 import { fetchCSV } from '@/lib/utils/csv';
@@ -21,7 +22,11 @@ interface LocationHoursState {
   [Location.ZELIENOPLE]: HoursData[];
 }
 
-export function LocationCards() {
+interface LocationCardsProps {
+  beerCount?: { lawrenceville: number; zelienople: number };
+}
+
+export function LocationCards({ beerCount }: LocationCardsProps = {}) {
   const [hoursData, setHoursData] = useState<LocationHoursState | null>(null);
   const [loading, setLoading] = useState(true);
 

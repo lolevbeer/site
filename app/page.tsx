@@ -1,7 +1,6 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import { HomeContent } from '@/components/home/home-content';
-import { FeaturedBeers } from '@/components/home/featured-beers';
 import { MarketingText } from '@/components/home/marketing-text';
 import {
   getAvailableBeers,
@@ -36,7 +35,7 @@ const LocationCards = dynamic(() => import('@/components/location/location-cards
   loading: () => <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-pulse" />,
 });
 
-function LocationsSection({ beerCount }: { beerCount?: { lawrenceville: number; zelienople: number } }) {
+function LocationsSection() {
   return (
     <section className="py-16 lg:py-24 bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -46,7 +45,7 @@ function LocationsSection({ beerCount }: { beerCount?: { lawrenceville: number; 
           </h2>
         </div>
 
-        <LocationCards beerCount={beerCount} />
+        <LocationCards />
       </div>
     </section>
   );
@@ -177,7 +176,7 @@ export default async function Home() {
 
         <div className="py-8 md:py-12" />
 
-        <LocationsSection beerCount={beerCount} />
+        <LocationsSection />
       </HomeContent>
     </>
   );

@@ -7,14 +7,12 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Beer, GlassType } from '@/lib/types/beer';
-import { Location } from '@/lib/types/location';
+import { Beer } from '@/lib/types/beer';
 import { useLocationContext } from '@/components/location/location-provider';
 import { BaseCard, CardSkeleton } from '@/components/ui/base-card';
 import { StatusBadge, StatusBadgeGroup } from '@/components/ui/status-badge';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MapPin } from 'lucide-react';
 import {
   HoverCard,
   HoverCardContent,
@@ -36,7 +34,6 @@ interface BeerCardProps {
   showAvailability?: boolean;
   className?: string;
   variant?: 'full' | 'compact' | 'minimal';
-  showInlineBadges?: boolean;
   priority?: boolean;
 }
 
@@ -47,7 +44,6 @@ export const BeerCard = React.memo(function BeerCard({
   showAvailability = true,
   className = '',
   variant = 'full',
-  showInlineBadges = false,
   priority = false
 }: BeerCardProps) {
   const { currentLocation } = useLocationContext();
