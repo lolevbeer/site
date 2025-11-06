@@ -55,7 +55,7 @@ export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCar
     <div className={cn("grid grid-cols-1 md:grid-cols-3 gap-4", className)}>
       {/* On Tap Now Card */}
       <Link href="/beer" className="group">
-        <Card className="p-5 h-full transition-colors cursor-pointer border-0 hover:bg-secondary shadow-none text-center">
+        <Card className="p-5 h-full transition-colors cursor-pointer border-0 hover:bg-secondary shadow-none text-center bg-transparent dark:bg-transparent">
           <div className="flex items-center justify-center gap-3 mb-3">
             <Beer className="h-5 w-5 text-primary" />
             <h3 className="text-xl font-bold">On Tap Now</h3>
@@ -75,7 +75,7 @@ export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCar
 
       {/* Hours Today Card */}
       <Link href="/beer-map" className="group">
-        <Card className="p-5 h-full transition-colors cursor-pointer border-0 hover:bg-secondary shadow-none text-center">
+        <Card className="p-5 h-full transition-colors cursor-pointer border-0 hover:bg-secondary shadow-none text-center bg-transparent dark:bg-transparent">
           <div className="flex items-center justify-center gap-3 mb-3">
             <Clock className="h-5 w-5 text-primary" />
             <h3 className="text-xl font-bold">Hours Today</h3>
@@ -95,7 +95,7 @@ export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCar
 
       {/* Next Event Card */}
       <Link href="/events" className="group">
-        <Card className="p-5 h-full transition-colors cursor-pointer border-0 hover:bg-secondary shadow-none text-center">
+        <Card className="p-5 h-full transition-colors cursor-pointer border-0 hover:bg-secondary shadow-none text-center bg-transparent dark:bg-transparent">
           <div className="flex items-center justify-center gap-3 mb-3">
             <Calendar className="h-5 w-5 text-primary" />
             <h3 className="text-xl font-bold">

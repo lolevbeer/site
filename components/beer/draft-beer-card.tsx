@@ -36,14 +36,14 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
   return (
     <Link href={showLocation ? `/${currentLocation}/beer/${beerSlug}` : `/beer/${beerSlug}`} className="group block">
       <div className={`overflow-hidden transition-colors duration-200 cursor-pointer rounded-lg hover:bg-secondary h-[120.5px] ${className}`}>
-        <div className="flex items-center gap-4 p-4 h-full">
+        <div className="flex items-start gap-4 p-4 h-full">
           {/* Glass Icon */}
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 pt-1">
             <GlassIcon className="h-12 w-12 text-muted-foreground/40 group-hover:text-muted-foreground/60 transition-colors" />
           </div>
 
           {/* Beer Info */}
-          <div className="flex-grow min-w-0 flex flex-col justify-center">
+          <div className="flex-grow min-w-0 flex flex-col">
             <div className="flex items-center gap-2 mb-1">
               <h3 className="text-lg font-semibold leading-tight truncate">{beer.name}</h3>
               <Badge variant="outline" className="text-xs flex-shrink-0">
@@ -65,7 +65,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
           </div>
 
           {/* ABV */}
-          <div className="flex-shrink-0 text-right">
+          <div className="flex-shrink-0 text-right pt-1">
             <div className="text-lg font-semibold text-foreground">
               {beer.abv}%
             </div>

@@ -3,8 +3,7 @@ import { Poppins } from "next/font/google";
 import "./globals.css";
 import { LocationProvider } from "@/components/location/location-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
-import { Header } from "@/components/layout/header";
-import { Footer } from "@/components/layout/footer";
+import { ConditionalLayout } from "@/components/layout/conditional-layout";
 import { Toaster } from "@/components/ui/sonner";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { SkipNav } from "@/components/ui/skip-nav";
@@ -124,11 +123,9 @@ export default function RootLayout({
           >
             <LocationProvider>
               <SkipNav />
-              <Header />
-              <main id="main-content" className="flex-1">
+              <ConditionalLayout>
                 {children}
-              </main>
-              <Footer />
+              </ConditionalLayout>
               <Toaster />
             </LocationProvider>
           </ThemeProvider>

@@ -24,7 +24,7 @@ export function HoursPanel({ locations = [Location.LAWRENCEVILLE, Location.ZELIE
   const currentDay = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][now.getDay()];
 
   return (
-    <Card className={cn("p-0 border-0 shadow-none", className)}>
+    <Card className={cn("p-0 border-0 shadow-none bg-transparent dark:bg-transparent", className)}>
       <div className="flex items-center gap-2 mb-4">
         <Clock className="h-5 w-5 text-primary" />
         <h2 className="text-2xl font-bold">Hours & Locations</h2>

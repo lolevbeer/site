@@ -35,7 +35,7 @@ export function ScheduleCard({
 }: ScheduleCardProps) {
   return (
     <Card
-      className={`overflow-hidden border-0 shadow-none transition-colors ${site ? 'cursor-pointer hover:bg-secondary' : ''} ${className || ''}`}
+      className={`overflow-hidden border-0 shadow-none transition-colors bg-transparent dark:bg-transparent ${site ? 'cursor-pointer hover:bg-secondary' : ''} ${className || ''}`}
       onClick={() => site && window.open(site, '_blank')}
     >
       <CardContent className="p-6">

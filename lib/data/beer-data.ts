@@ -41,6 +41,7 @@ interface CanRow {
   name?: string;
   type?: string;
   abv?: string;
+  fourPack?: string;
   [key: string]: any;
 }
 
@@ -256,7 +257,8 @@ export const getEnrichedCans = cache(async (location: 'lawrenceville' | 'zelieno
           image: hasImage,
           onDraft: onDraftSet.has(row.variant.toLowerCase()),
           glass: beerDetails?.glass,
-          recipe: beerDetails?.recipe ? parseInt(beerDetails.recipe) : 0
+          recipe: beerDetails?.recipe ? parseInt(beerDetails.recipe) : 0,
+          fourPack: row.fourPack
         };
       });
 

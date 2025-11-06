@@ -1,8 +1,7 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
-import { HeroSection } from '@/components/home/hero-section';
+import { HomeContent } from '@/components/home/home-content';
 import { FeaturedBeers } from '@/components/home/featured-beers';
-import { QuickInfoCards } from '@/components/home/quick-info-cards';
 import {
   getAvailableBeers,
   getDraftBeers,
@@ -115,24 +114,15 @@ export default async function Home() {
         <JsonLd key={`food-${index}`} data={schema} />
       ))}
 
-      <div className="min-h-screen">
-        <HeroSection availableBeers={availableBeers} />
-
-        {/* Vertical spacing between major sections */}
-        <div className="py-8 md:py-12" />
-
-        {/* Quick Info Cards */}
-        <section className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <QuickInfoCards beerCount={beerCount} nextEvent={nextEvent} />
-        </section>
-
-        <div className="py-8 md:py-12" />
-
-        <FeaturedBeers
-          lawrencevilleBeers={lawrencevilleBeers}
-          zelienopleBeers={zelienopleBeers}
-        />
-
+      <HomeContent
+        availableBeers={availableBeers}
+        lawrencevilleBeers={lawrencevilleBeers}
+        zelienopleBeers={zelienopleBeers}
+        lawrencevilleCans={lawrencevilleCans}
+        zelienopleCans={zelienopleCans}
+        beerCount={beerCount}
+        nextEvent={nextEvent}
+      >
         <div className="py-8 md:py-12" />
 
         <FeaturedCans
@@ -161,7 +151,7 @@ export default async function Home() {
         <div className="py-8 md:py-12" />
 
         <LocationsSection beerCount={beerCount} />
-      </div>
+      </HomeContent>
     </>
   );
 }
