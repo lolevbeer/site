@@ -21,8 +21,8 @@ interface GeoJSON {
 }
 
 const DATA_SOURCES = {
-  PA: '/processed_geo_data.json',
-  NY: '/ny_geo_data.json',
+  PA: '/data/processed_geo_data.json',
+  NY: '/data/ny_geo_data.json',
 } as const;
 
 export function useMapData() {
