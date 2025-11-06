@@ -278,7 +278,7 @@ export const getEnrichedCans = cache(async (location: 'lawrenceville' | 'zelieno
  * Get upcoming events for a specific location
  * Cached for deduplication across requests
  */
-export const getUpcomingEvents = cache(async (location: 'lawrenceville' | 'zelienople') => {
+export const getUpcomingEvents = cache(async (location: 'lawrenceville' | 'zelienople', limit: number = 3) => {
   try {
     const eventsText = await readCSV(`${location}-events.csv`);
     const eventsData = parseCSV<EventRow>(eventsText);
@@ -308,9 +308,37 @@ export const getUpcomingEvents = cache(async (location: 'lawrenceville' | 'zelie
     // Sort by date
     upcomingEvents.sort((a, b) => compareDateStrings(a.date, b.date));
 
-    return upcomingEvents.slice(0, 3);
+    return upcomingEvents.slice(0, limit);
   } catch (error) {
     logger.error(`Error loading events for ${location}`, error);
+    return [];
+  }
+});
+
+/**
+ * Get upcoming beer releases
+ * Cached for deduplication across requests
+ */
+export const getUpcomingBeers = cache(async () => {
+  try {
+    const comingText = await readCSV('coming.csv');
+    const comingData = parseCSV<{ type?: string; variant?: string; tempName?: string }>(comingText);
+
+    const upcomingBeers = comingData
+      .filter(row => row.type || row.variant || row.tempName)
+      .map(row => {
+        const displayName = row.type || row.tempName || row.variant || '';
+        return {
+          type: row.type || '',
+          variant: row.variant || '',
+          tempName: row.tempName || '',
+          displayName
+        };
+      });
+
+    return upcomingBeers;
+  } catch (error) {
+    logger.error('Error loading upcoming beers', error);
     return [];
   }
 });
@@ -319,7 +347,7 @@ export const getUpcomingEvents = cache(async (location: 'lawrenceville' | 'zelie
  * Get upcoming food vendors for a specific location
  * Cached for deduplication across requests
  */
-export const getUpcomingFood = cache(async (location: 'lawrenceville' | 'zelienople') => {
+export const getUpcomingFood = cache(async (location: 'lawrenceville' | 'zelienople', limit: number = 3) => {
   try {
     const foodText = await readCSV(`${location}-food.csv`);
     const foodData = parseCSV<FoodRow>(foodText);
@@ -348,7 +376,7 @@ export const getUpcomingFood = cache(async (location: 'lawrenceville' | 'zelieno
     // Sort by date
     upcomingFood.sort((a, b) => compareDateStrings(a.date, b.date));
 
-    return upcomingFood.slice(0, 3);
+    return upcomingFood.slice(0, limit);
   } catch (error) {
     logger.error(`Error loading food for ${location}`, error);
     return [];

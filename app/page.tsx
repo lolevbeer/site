@@ -2,12 +2,14 @@ import React from 'react';
 import dynamic from 'next/dynamic';
 import { HomeContent } from '@/components/home/home-content';
 import { FeaturedBeers } from '@/components/home/featured-beers';
+import { MarketingText } from '@/components/home/marketing-text';
 import {
   getAvailableBeers,
   getDraftBeers,
   getEnrichedCans,
   getUpcomingEvents,
   getUpcomingFood,
+  getUpcomingBeers,
 } from '@/lib/data/beer-data';
 import { JsonLd } from '@/components/seo/json-ld';
 import { generateEventJsonLd, generateFoodEventJsonLd } from '@/lib/utils/json-ld';
@@ -62,16 +64,28 @@ export default async function Home() {
     zelienopleEvents,
     lawrencevilleFood,
     zelienopleFood,
+    upcomingBeersData,
+    // Marketing data with more results
+    lawrencevilleEventsMarketing,
+    zelienopleEventsMarketing,
+    lawrencevilleFoodMarketing,
+    zelienopleFoodMarketing,
   ] = await Promise.all([
     getAvailableBeers(),
     getDraftBeers('lawrenceville'),
     getDraftBeers('zelienople'),
     getEnrichedCans('lawrenceville'),
     getEnrichedCans('zelienople'),
-    getUpcomingEvents('lawrenceville'),
-    getUpcomingEvents('zelienople'),
-    getUpcomingFood('lawrenceville'),
-    getUpcomingFood('zelienople'),
+    getUpcomingEvents('lawrenceville', 3),
+    getUpcomingEvents('zelienople', 3),
+    getUpcomingFood('lawrenceville', 3),
+    getUpcomingFood('zelienople', 3),
+    getUpcomingBeers(),
+    // Fetch 10 items for marketing view
+    getUpcomingEvents('lawrenceville', 10),
+    getUpcomingEvents('zelienople', 10),
+    getUpcomingFood('lawrenceville', 10),
+    getUpcomingFood('zelienople', 10),
   ]);
 
   // Generate LocalBusiness and Organization schemas
@@ -113,6 +127,19 @@ export default async function Home() {
       {foodSchemas.map((schema, index) => (
         <JsonLd key={`food-${index}`} data={schema} />
       ))}
+
+      {/* Marketing Text Overlay */}
+      <MarketingText
+        lawrencevilleBeers={lawrencevilleBeers}
+        zelienopleBeers={zelienopleBeers}
+        lawrencevilleCans={lawrencevilleCans}
+        zelienopleCans={zelienopleCans}
+        lawrencevilleEvents={lawrencevilleEventsMarketing}
+        zelienopleEvents={zelienopleEventsMarketing}
+        lawrencevilleFood={lawrencevilleFoodMarketing}
+        zelienopleFood={zelienopleFoodMarketing}
+        upcomingBeers={upcomingBeersData}
+      />
 
       <HomeContent
         availableBeers={availableBeers}
