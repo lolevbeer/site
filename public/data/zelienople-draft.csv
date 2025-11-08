@@ -1,7 +1,7 @@
 tap,variant,singleCanAvailable,name,type,abv,glass,price,description,image,hops
 1,lumina,FALSE,Lumina,West Coast Imperial Pilsner,6.5,stein,7,"Notes of apricot, pear and lemongrass.",FALSE,"Motueka, El Dorado"
 2,grandar,FALSE,Grandar,Imperial Pilsner,6.6,stein,7,"Crackery sweetness balanced with hops, floral and herbal notes that finish with a subtle citrus. Step mashed and hopped with nobles.",TRUE,"Hallertau Mittelfrüh, Saaz"
-3,glyphs-ii,FALSE,Glyphs II,Pale Ale,5.1,pint,7,,TRUE,"Krush HyperBoost, Citra DynaBoost, Riwaka, Citra"
+3,ora,FALSE,Ora,Zwickelbier,4.5,stein,7,Unfiltered golden pilsner spunded slowly for natural carbonation. Gentle malt plushness with noble hops.,FALSE,
 4,prismatic,FALSE,Prismatic,India Pale Ale,7,pint,7,"Pineapple, vanilla, tangerine, melon.",TRUE,"El Dorado, Idaho 7, Citra"
 5,rubico-ii,FALSE,Rubico II,Double IPA,8.6,teku,9,"Pillowy soft with a full, creamy body, ripe mango, passionfruit, and juicy peach.
 ",TRUE,"Citra, Galaxy"
