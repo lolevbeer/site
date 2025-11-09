@@ -4182,14 +4182,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -80.0530874,
-                    40.6134403
+                    -80.054459560361,
+                    40.612882723142
                 ]
             },
             "properties": {
                 "id": 267,
                 "Name": "wexford beer",
-                "address": "Wexford Beer, 10624, Perry Highway, Pine Township, Allegheny County, Pennsylvania, 15090, United States of America",
+                "address": "10624 PERRY HWY, WEXFORD, PA, 15090",
                 "customerType": "Home-D"
             }
         },
