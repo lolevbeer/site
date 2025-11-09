@@ -38,10 +38,10 @@ export function ScheduleCard({
       className={`overflow-hidden border-0 shadow-none transition-colors bg-transparent dark:bg-transparent ${site ? 'cursor-pointer hover:bg-secondary' : ''} ${className || ''}`}
       onClick={() => site && window.open(site, '_blank')}
     >
-      <CardContent className="p-6">
+      <CardContent className="p-6 text-center">
         <h3 className="text-xl font-semibold mb-2">{title}</h3>
 
-        <div className="space-y-2 text-sm text-muted-foreground">
+        <div className="space-y-2 text-sm text-muted-foreground flex flex-col items-center">
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
             <span>{formatDate(date, 'full')}</span>

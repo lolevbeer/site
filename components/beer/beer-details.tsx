@@ -8,7 +8,6 @@
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import Papa from 'papaparse';
 import { Beer } from '@/lib/types/beer';
 import { useLocationContext } from '@/components/location/location-provider';
 import {
@@ -29,6 +28,7 @@ import {
 } from '@/components/ui/breadcrumb';
 import {
   CircleX,
+  Pencil,
 } from 'lucide-react';
 import { UntappdIcon } from '@/components/icons/untappd-icon';
 import { getGlassIcon } from '@/lib/utils/beer-icons';
@@ -36,13 +36,28 @@ import { getGlassIcon } from '@/lib/utils/beer-icons';
 interface BeerDetailsProps {
   beer: Beer;
   className?: string;
+  isAuthenticated?: boolean;
 }
 
-function getBeerImagePath(beer: Beer): string | null {
-  if (!beer.image) {
-    return null;
+function getBeerImagePath(beer: any): string | null {
+  // Check if beer has an image object from Payload
+  if (beer.image && typeof beer.image === 'object') {
+    // Try to use the card size first
+    if (beer.image.sizes?.card?.url) {
+      return beer.image.sizes.card.url;
+    }
+    // Fall back to the main URL
+    if (beer.image.url) {
+      return beer.image.url;
+    }
   }
-  return `/images/beer/${beer.variant}.webp`;
+
+  // Legacy fallback: if image is a string or boolean, try static path
+  if (beer.image && beer.variant) {
+    return `/images/beer/${beer.variant}.webp`;
+  }
+
+  return null;
 }
 
 function formatAbv(abv: number): string {
@@ -60,13 +75,13 @@ function getAvailabilityInfo(beer: Beer): {
   let isDraft = false;
   let isCanned = false;
 
-  if (beer.availability.tap) {
+  if (beer.availability?.tap) {
     details.push(`Pouring ${beer.availability.tap}`);
     status = 'Pouring';
     isDraft = true;
   }
 
-  if (beer.availability.cansAvailable) {
+  if (beer.availability?.cansAvailable) {
     details.push('Cans available for purchase');
     isCanned = true;
     if (!isDraft) {
@@ -76,7 +91,7 @@ function getAvailabilityInfo(beer: Beer): {
     }
   }
 
-  if (beer.availability.singleCanAvailable) {
+  if (beer.availability?.singleCanAvailable) {
     details.push('Single cans available');
     isCanned = true;
   }
@@ -84,17 +99,18 @@ function getAvailabilityInfo(beer: Beer): {
   return { status, details, isDraft, isCanned };
 }
 
-function getPricingInfo(beer: Beer): {
+function getPricingInfo(beer: any): {
   draftPrice?: number;
   singlePrice?: number;
   fourPackPrice?: number;
   hasSale: boolean;
 } {
   return {
-    draftPrice: beer.pricing.draftPrice,
-    singlePrice: beer.pricing.canSingle || beer.pricing.cansSingle,
-    fourPackPrice: beer.pricing.fourPack,
-    hasSale: beer.pricing.salePrice === true,
+    // Support both Payload structure (beer.draftPrice) and legacy structure (beer.pricing.draftPrice)
+    draftPrice: beer.draftPrice ?? beer.pricing?.draftPrice,
+    singlePrice: beer.canSingle ?? beer.pricing?.canSingle ?? beer.pricing?.cansSingle,
+    fourPackPrice: beer.fourPack ?? beer.pricing?.fourPack,
+    hasSale: beer.salePrice === true || beer.pricing?.salePrice === true,
   };
 }
 
@@ -118,13 +134,7 @@ function SpecificationRow({
   );
 }
 
-// Type for CSV row data
-interface CsvRow {
-  variant?: string;
-  [key: string]: string | undefined;
-}
-
-export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
+export function BeerDetails({ beer, className = '', isAuthenticated = false }: BeerDetailsProps) {
   const { currentLocation } = useLocationContext();
   const imagePath = getBeerImagePath(beer);
   const availability = getAvailabilityInfo(beer);
@@ -136,49 +146,55 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
   const [locationError, setLocationError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Don't fetch locations if beer ID is missing
+    if (!beer.id) {
+      setIsLoadingLocations(false);
+      setTapLocations([]);
+      setCanLocations([]);
+      return;
+    }
+
     const fetchLocations = async () => {
       setIsLoadingLocations(true);
       setLocationError(null);
 
       try {
-        const [lawrencevilleDraftRes, zelienopleDraftRes, lawrencevilleCansRes, zelienopleCansRes] = await Promise.all([
-          fetch('/data/lawrenceville-draft.csv'),
-          fetch('/data/zelienople-draft.csv'),
-          fetch('/data/lawrenceville-cans.csv'),
-          fetch('/data/zelienople-cans.csv')
-        ]);
+        // Query Payload CMS for menus containing this beer
+        const response = await fetch(
+          `/api/menus?where[items.beer][equals]=${beer.id}&depth=2&limit=100`
+        );
 
-        const [lawrencevilleDraftText, zelienopleDraftText, lawrencevilleCansText, zelienopleCansText] = await Promise.all([
-          lawrencevilleDraftRes.text(),
-          zelienopleDraftRes.text(),
-          lawrencevilleCansRes.text(),
-          zelienopleCansRes.text()
-        ]);
+        if (!response.ok) {
+          throw new Error('Failed to fetch menus');
+        }
 
-        // Parse CSVs with papaparse - type the results properly
-        const lawrencevilleDraft = Papa.parse<CsvRow>(lawrencevilleDraftText, { header: true });
-        const zelienopleDraft = Papa.parse<CsvRow>(zelienopleDraftText, { header: true });
-        const lawrencevilleCans = Papa.parse<CsvRow>(lawrencevilleCansText, { header: true });
-        const zelienopleCans = Papa.parse<CsvRow>(zelienopleCansText, { header: true });
-
+        const data = await response.json();
         const tapLocs: string[] = [];
         const canLocs: string[] = [];
-        const beerVariantLower = beer.variant.toLowerCase();
 
-        // Check draft availability with proper typing
-        if (lawrencevilleDraft.data.some((row) => row.variant?.toLowerCase() === beerVariantLower)) {
-          tapLocs.push('Lawrenceville');
-        }
-        if (zelienopleDraft.data.some((row) => row.variant?.toLowerCase() === beerVariantLower)) {
-          tapLocs.push('Zelienople');
-        }
+        // Process menus to extract location availability
+        if (data.docs && Array.isArray(data.docs)) {
+          data.docs.forEach((menu: any) => {
+            // Check if this beer is in the menu items
+            const hasBeer = menu.items?.some((item: any) => {
+              const beerId = typeof item.beer === 'string' ? item.beer : item.beer?.id;
+              return beerId === beer.id;
+            });
 
-        // Check can availability with proper typing
-        if (lawrencevilleCans.data.some((row) => row.variant?.toLowerCase() === beerVariantLower)) {
-          canLocs.push('Lawrenceville');
-        }
-        if (zelienopleCans.data.some((row) => row.variant?.toLowerCase() === beerVariantLower)) {
-          canLocs.push('Zelienople');
+            if (hasBeer && menu.location) {
+              const locationName = typeof menu.location === 'string'
+                ? menu.location
+                : menu.location?.name;
+
+              if (locationName && !tapLocs.includes(locationName) && !canLocs.includes(locationName)) {
+                if (menu.type === 'draft') {
+                  tapLocs.push(locationName);
+                } else if (menu.type === 'cans') {
+                  canLocs.push(locationName);
+                }
+              }
+            }
+          });
         }
 
         setTapLocations(tapLocs);
@@ -192,10 +208,10 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
     };
 
     fetchLocations();
-  }, [beer.variant]);
+  }, [beer.id]);
 
   // Don't render if beer is hidden from site
-  if (beer.availability.hideFromSite) {
+  if (beer.availability?.hideFromSite) {
     return (
       <div className={`flex flex-col items-center justify-center py-12 text-center ${className}`}>
         <CircleX className="h-16 w-16 mb-4 text-muted-foreground" />
@@ -261,6 +277,14 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
                 Gluten Free
               </Badge>
             )}
+            {pricing.hasSale && (
+              <Badge
+                variant="destructive"
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-lg px-4 py-2"
+              >
+                Just Released
+              </Badge>
+            )}
           </div>
 
           {/* Quick Stats */}
@@ -288,15 +312,34 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
         <div className="space-y-6">
           {/* Header */}
           <div>
-            <h1 className="text-3xl font-bold mb-2">{beer.name}</h1>
+            <div className="flex items-start justify-between gap-4 mb-2">
+              <h1 className="text-3xl font-bold">{beer.name}</h1>
+              {isAuthenticated && beer.id && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  asChild
+                  className="shrink-0"
+                >
+                  <a
+                    href={`/admin/collections/beers/${beer.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Edit
+                  </a>
+                </Button>
+              )}
+            </div>
             <div className="flex items-center gap-2 mb-4 flex-wrap">
-              {availability.isDraft && (
+              {tapLocations.length > 0 && (
                 <Badge variant="default" className="text-sm flex items-center gap-1">
                   <GlassIcon className="h-3.5 w-3.5" />
                   Pouring
                 </Badge>
               )}
-              {availability.isCanned && (
+              {canLocations.length > 0 && (
                 <Badge variant="default" className="text-sm">
                   Cans Available
                 </Badge>

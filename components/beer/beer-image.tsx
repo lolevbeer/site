@@ -28,7 +28,6 @@ export function BeerImage({ beer, className, priority = false, sizes }: BeerImag
         "flex flex-col items-center justify-center bg-gradient-to-b from-muted/30 to-muted/10 dark:from-muted/10 dark:to-muted/5",
         className
       )}>
-        <BeerIcon className="h-12 w-12 text-muted-foreground/40 mb-2" />
         <div className="text-center px-4">
           <p className="text-sm font-semibold text-muted-foreground/70 line-clamp-2">{beer.name}</p>
           {beer.type && (

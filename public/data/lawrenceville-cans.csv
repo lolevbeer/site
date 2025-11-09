@@ -1,11 +1,11 @@
 variant,cansAvailable,name,salePrice,type,abv,cansSingle,fourPack
 vespero,TRUE,Vespero,FALSE,Czech Dark Lager,5.8,4.25,16
 verus,TRUE,Verus,FALSE,India Pale Ale,7,4.50,17
-akko,TRUE,Akko,FALSE,India Pale Ale,7,4.50,17
+,FALSE,,FALSE,,,,
 lupula,TRUE,Lupula,FALSE,India Pale Ale,7,4.50,17
-ddh-taupo,TRUE,DDH Taupō,TRUE,India Pale Ale,7,5.25,20
-capax,TRUE,Capax,FALSE,Double IPA,8.1,5.75,22
-edge,TRUE,Edge,FALSE,West Coast IPA,7.7,5.75,22
+ddh-taupo,TRUE,DDH Taupō,FALSE,India Pale Ale,7,5.25,20
+,FALSE,,FALSE,,,,
+kamo,TRUE,Kamo,FALSE,Double IPA,8,5.75,22
 rubico-ii,TRUE,Rubico II,FALSE,Double IPA,8.6,5.75,22
-harvest,TRUE,Harvest,FALSE,Double IPA,8,5.75,22
+origen,TRUE,Origen,FALSE,Double IPA,7.8,5.75,22
 grandar,TRUE,Grandar,FALSE,Imperial Pilsner,6.6,4.25,16

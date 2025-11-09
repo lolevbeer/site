@@ -24,7 +24,16 @@
     ],
     "paths": {
       "@/*": [
+        "./*"
+      ],
+      "@/src/*": [
         "./src/*"
+      ],
+      "@/components/*": [
+        "./components/*"
+      ],
+      "@/lib/*": [
+        "./lib/*"
       ],
       "@payload-config": [
         "./src/payload.config.ts"

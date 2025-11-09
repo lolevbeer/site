@@ -28,6 +28,11 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
+<<<<<<< HEAD
+=======
+    "@monaco-editor/react": "4.6.0",
+    "@payloadcms/db-mongodb": "^3.62.1",
+>>>>>>> d6567796 (feat: implement complete brewery website with Payload CMS integration)
     "@payloadcms/db-postgres": "3.62.1",
     "@payloadcms/next": "3.62.1",
     "@payloadcms/richtext-lexical": "3.62.1",
@@ -48,17 +53,29 @@
     "@radix-ui/react-toggle": "^1.1.10",
     "@radix-ui/react-toggle-group": "^1.1.11",
     "@radix-ui/react-tooltip": "^1.2.8",
+<<<<<<< HEAD
+=======
+    "@types/diff": "^8.0.0",
+>>>>>>> d6567796 (feat: implement complete brewery website with Payload CMS integration)
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "cross-env": "^7.0.3",
     "date-fns": "^4.1.0",
     "date-fns-tz": "^3.2.0",
+<<<<<<< HEAD
+=======
+    "diff": "^8.0.2",
+>>>>>>> d6567796 (feat: implement complete brewery website with Payload CMS integration)
     "dotenv": "16.4.7",
     "embla-carousel-react": "^8.6.0",
     "graphql": "^16.8.1",
     "lucide-react": "^0.544.0",
     "mapbox-gl": "^3.15.0",
+<<<<<<< HEAD
+=======
+    "monaco-editor": "0.52.0",
+>>>>>>> d6567796 (feat: implement complete brewery website with Payload CMS integration)
     "next": "15.4.4",
     "next-themes": "^0.4.6",
     "papaparse": "^5.5.3",

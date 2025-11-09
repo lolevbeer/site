@@ -18,19 +18,17 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-
-interface Beer {
-  variant: string;
-  name: string;
-}
+import type { Beer as PayloadBeer, Media } from '@/src/payload-types';
 
 interface HeroSectionProps {
-  availableBeers: Beer[];
+  availableBeers: PayloadBeer[];
 }
 
 export function HeroSection({ availableBeers }: HeroSectionProps) {
-  const getBeerSlug = (beer: Beer) => {
-    return beer.variant.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  const getImageUrl = (beer: PayloadBeer): string | null => {
+    if (!beer.image) return null;
+    const image = typeof beer.image === 'object' ? beer.image : null;
+    return image?.url || null;
   };
 
   return (
@@ -68,29 +66,34 @@ export function HeroSection({ availableBeers }: HeroSectionProps) {
               >
                 <CarouselContent className="-ml-4">
                   {availableBeers.length > 0 ? (
-                    availableBeers.map((beer) => (
-                      <CarouselItem key={beer.variant} className="pl-4 basis-1/4 sm:basis-1/5 md:basis-1/4 lg:basis-1/6 xl:basis-1/8 2xl:basis-1/8">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Link href={`/beer/${getBeerSlug(beer)}`} className="group flex justify-center">
-                              <div className="relative h-16 w-16 md:h-24 md:w-24 rounded-lg bg-transparent">
-                                <Image
-                                  src={`/images/beer/${beer.variant}.webp`}
-                                  alt={`${beer.name} beer can`}
-                                  fill
-                                  className="object-contain"
-                                  sizes="(max-width: 768px) 64px, 96px"
-                                  loading="lazy"
-                                />
-                              </div>
-                            </Link>
-                          </TooltipTrigger>
-                          <TooltipContent side="bottom" className="bg-popover text-popover-foreground border-0" sideOffset={5}>
-                            <p className="font-semibold text-sm">{beer.name}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </CarouselItem>
-                    ))
+                    availableBeers.map((beer) => {
+                      const imageUrl = getImageUrl(beer);
+                      if (!imageUrl) return null;
+
+                      return (
+                        <CarouselItem key={beer.id} className="pl-4 basis-1/4 sm:basis-1/5 md:basis-1/4 lg:basis-1/6 xl:basis-1/8 2xl:basis-1/8">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Link href={`/beer/${beer.slug}`} className="group flex justify-center">
+                                <div className="relative h-16 w-16 md:h-24 md:w-24 rounded-lg bg-transparent">
+                                  <Image
+                                    src={imageUrl}
+                                    alt={`${beer.name} beer can`}
+                                    fill
+                                    className="object-contain"
+                                    sizes="(max-width: 768px) 64px, 96px"
+                                    loading="lazy"
+                                  />
+                                </div>
+                              </Link>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom" className="bg-popover text-popover-foreground border-0" sideOffset={5}>
+                              <p className="font-semibold text-sm">{beer.name}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </CarouselItem>
+                      );
+                    })
                   ) : (
                     <CarouselItem className="pl-4">
                       <div className="h-16 md:h-24 flex items-center justify-center">

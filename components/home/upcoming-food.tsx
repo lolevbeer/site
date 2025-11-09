@@ -56,22 +56,22 @@ export function UpcomingFood({ lawrencevilleFood, zelienopleFood }: UpcomingFood
   return (
     <section className="py-16 lg:py-24 bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
+        <div className="text-center mb-12 flex justify-center">
           <h2 className="text-3xl lg:text-4xl font-bold mb-4">
             Upcoming Food
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 justify-items-center">
           {upcomingFood.map((food, index) => (
             <Card
               key={index}
               className={`overflow-hidden transition-colors border-0 shadow-none bg-transparent dark:bg-transparent ${food.site ? 'cursor-pointer hover:bg-secondary' : ''}`}
               onClick={() => food.site && window.open(food.site, '_blank')}
             >
-              <CardContent className="p-6">
+              <CardContent className="p-6 text-center">
                 <h3 className="text-xl font-semibold mb-2">{food.vendor}</h3>
-                <div className="space-y-2 text-sm text-muted-foreground">
+                <div className="space-y-2 text-sm text-muted-foreground flex flex-col items-center">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
                     <span>{(() => {

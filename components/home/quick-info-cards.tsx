@@ -54,19 +54,24 @@ export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCar
       <Link href="/beer" className="group">
         <Card className="p-5 h-full transition-colors cursor-pointer border-0 hover:bg-secondary shadow-none text-center bg-transparent dark:bg-transparent">
           <div className="flex items-center justify-center gap-3 mb-3">
-            <Beer className="h-5 w-5 text-primary" />
             <h3 className="text-xl font-bold">On Tap Now</h3>
           </div>
-          <p className="text-sm text-muted-foreground">
-            {beerCount ? (
-              <span className="space-y-0.5">
-                <span className="block">{beerCount.lawrenceville} beers in Lawrenceville</span>
-                <span className="block">{beerCount.zelienople} beers in Zelienople</span>
-              </span>
-            ) : (
-              'Explore our current selection'
-            )}
-          </p>
+          {beerCount ? (
+            <div className="text-sm text-muted-foreground space-y-2">
+              <div className="text-center">
+                <div className="text-lg font-medium text-foreground">Lawrenceville</div>
+                <div>{beerCount.lawrenceville} beers</div>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-medium text-foreground">Zelienople</div>
+                <div>{beerCount.zelienople} beers</div>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Explore our current selection
+            </p>
+          )}
         </Card>
       </Link>
 
@@ -74,17 +79,16 @@ export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCar
       <Link href="/beer-map" className="group">
         <Card className="p-5 h-full transition-colors cursor-pointer border-0 hover:bg-secondary shadow-none text-center bg-transparent dark:bg-transparent">
           <div className="flex items-center justify-center gap-3 mb-3">
-            <Clock className="h-5 w-5 text-primary" />
             <h3 className="text-xl font-bold">Hours Today</h3>
           </div>
-          <div className="text-sm text-muted-foreground space-y-1">
-            <div className="flex justify-between">
-              <span>Lawrenceville:</span>
-              <span className="font-medium">{lawrencevilleHours}</span>
+          <div className="text-sm text-muted-foreground space-y-2">
+            <div className="text-center">
+              <div className="text-lg font-medium text-foreground">Lawrenceville</div>
+              <div>{lawrencevilleHours}</div>
             </div>
-            <div className="flex justify-between">
-              <span>Zelienople:</span>
-              <span className="font-medium">{zelienopleHours}</span>
+            <div className="text-center">
+              <div className="text-lg font-medium text-foreground">Zelienople</div>
+              <div>{zelienopleHours}</div>
             </div>
           </div>
         </Card>
@@ -94,14 +98,13 @@ export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCar
       <Link href="/events" className="group">
         <Card className="p-5 h-full transition-colors cursor-pointer border-0 hover:bg-secondary shadow-none text-center bg-transparent dark:bg-transparent">
           <div className="flex items-center justify-center gap-3 mb-3">
-            <Calendar className="h-5 w-5 text-primary" />
-            <h3 className="text-xl font-bold">
+            <h3 className="text-2xl font-bold">
               {nextEvent ? 'Next Event' : 'Upcoming Events'}
             </h3>
           </div>
           {nextEvent ? (
             <div className="text-sm text-muted-foreground space-y-1">
-              <p className="font-medium text-foreground line-clamp-2">{nextEvent.name}</p>
+              <p className="text-lg font-medium text-foreground line-clamp-2">{nextEvent.name}</p>
               <p>{formatEventDate(nextEvent.date)} at {nextEvent.location === Location.LAWRENCEVILLE ? 'Lawrenceville' : 'Zelienople'}</p>
             </div>
           ) : (

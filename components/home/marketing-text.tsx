@@ -52,10 +52,10 @@ interface SimpleFood {
 }
 
 interface MarketingTextProps {
-  lawrencevilleBeers: Beer[];
-  zelienopleBeers: Beer[];
-  lawrencevilleCans: SimpleBeer[];
-  zelienopleCans: SimpleBeer[];
+  lawrencevilleBeers: Beer[] | any; // Can be Beer[] or Menu object
+  zelienopleBeers: Beer[] | any; // Can be Beer[] or Menu object
+  lawrencevilleCans: SimpleBeer[] | any; // Can be SimpleBeer[] or Menu object
+  zelienopleCans: SimpleBeer[] | any; // Can be SimpleBeer[] or Menu object
   lawrencevilleEvents: (BreweryEvent | SimpleEvent)[];
   zelienopleEvents: (BreweryEvent | SimpleEvent)[];
   lawrencevilleFood: (FoodVendorSchedule | SimpleFood)[];
@@ -75,6 +75,33 @@ export function MarketingText({
   upcomingBeers,
 }: MarketingTextProps) {
   const [isVisible, setIsVisible] = useState(false);
+
+  // Helper to convert Menu to Beer array
+  const convertMenuToBeers = (menuData: any): (Beer | SimpleBeer)[] => {
+    if (!menuData) return [];
+    if (Array.isArray(menuData)) return menuData;
+    if (!menuData.items) return [];
+
+    return menuData.items
+      .map((item: any) => {
+        const beer = item.beer;
+        if (!beer) return null;
+
+        return {
+          variant: beer.slug || beer.variant,
+          name: beer.name,
+          type: beer.style?.name || beer.style || beer.type || '',
+          abv: beer.abv || 0,
+        };
+      })
+      .filter(Boolean);
+  };
+
+  // Convert Menu objects to arrays
+  const lawrencevilleBeersArray = convertMenuToBeers(lawrencevilleBeers);
+  const zelienopleBeersArray = convertMenuToBeers(zelienopleBeers);
+  const lawrencevilleCansArray = convertMenuToBeers(lawrencevilleCans);
+  const zelienopleCansArray = convertMenuToBeers(zelienopleCans);
 
   useEffect(() => {
     const checkHash = () => {
@@ -164,7 +191,7 @@ export function MarketingText({
               {/* Lawrenceville Draft */}
               <div>
                 <div className="mb-2">{toBoldUnicode('LAWRENCEVILLE - ON DRAFT')}</div>
-                {lawrencevilleBeers.map((beer) => (
+                {lawrencevilleBeersArray.map((beer) => (
                   <div key={beer.variant}>{formatBeer(beer)}</div>
                 ))}
               </div>
@@ -174,7 +201,7 @@ export function MarketingText({
               {/* Zelienople Draft */}
               <div>
                 <div className="mb-2">{toBoldUnicode('ZELIENOPLE - ON DRAFT')}</div>
-                {zelienopleBeers.map((beer) => (
+                {zelienopleBeersArray.map((beer) => (
                   <div key={beer.variant}>{formatBeer(beer)}</div>
                 ))}
               </div>
@@ -198,7 +225,7 @@ export function MarketingText({
               {/* Lawrenceville Cans */}
               <div>
                 <div className="mb-2">{toBoldUnicode('LAWRENCEVILLE - CANS')}</div>
-                {lawrencevilleCans.map((beer) => (
+                {lawrencevilleCansArray.map((beer) => (
                   <div key={beer.variant}>{formatBeer(beer)}</div>
                 ))}
               </div>
@@ -208,7 +235,7 @@ export function MarketingText({
               {/* Zelienople Cans */}
               <div>
                 <div className="mb-2">{toBoldUnicode('ZELIENOPLE - CANS')}</div>
-                {zelienopleCans.map((beer) => (
+                {zelienopleCansArray.map((beer) => (
                   <div key={beer.variant}>{formatBeer(beer)}</div>
                 ))}
               </div>

@@ -7,7 +7,6 @@ import { SocialLinks } from './social-links';
 import { Logo } from '@/components/ui/logo';
 import { Location, type LocationInfo, type LocationHours } from '@/lib/types';
 import { LOCATIONS_DATA } from '@/lib/config/locations';
-import { MapPin, Clock, Phone, Mail } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatTime } from '@/lib/utils/formatters';
 import { navigationItems } from './navigation';
@@ -78,61 +77,49 @@ function HoursDisplay({ hours }: { hours: LocationHours }) {
 function LocationInfo({ location }: { location: LocationInfo }) {
   return (
     <div className="space-y-4">
-      {/* Hours */}
-      <div className="flex items-start space-x-3">
-        <Clock className="h-5 w-5 mt-0.5 text-muted-foreground flex-shrink-0" />
-        <div className="flex-1">
-          <p className="font-semibold mb-2">Hours</p>
-          <HoursDisplay hours={location.hours} />
-        </div>
+      {/* Address */}
+      <div>
+        <p className="font-semibold">Lolev {location.name}</p>
+        <p className="text-sm text-muted-foreground">
+          {location.address}
+          <br />
+          {location.city}, {location.state} {location.zipCode}
+        </p>
+        {location.mapUrl && (
+          <Link
+            href={location.mapUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors mt-2 inline-block underline-offset-4 hover:underline"
+          >
+            View on Maps
+          </Link>
+        )}
       </div>
 
-      {/* Address */}
-      <div className="flex items-start space-x-3">
-        <MapPin className="h-5 w-5 mt-0.5 text-muted-foreground flex-shrink-0" />
-        <div>
-          <p className="font-semibold">Lolev {location.name}</p>
-          <p className="text-sm text-muted-foreground">
-            {location.address}
-            <br />
-            {location.city}, {location.state} {location.zipCode}
-          </p>
-          {location.mapUrl && (
-            <Link
-              href={location.mapUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors mt-2 inline-block underline-offset-4 hover:underline"
-            >
-              View on Maps
-            </Link>
-          )}
-        </div>
+      {/* Hours */}
+      <div>
+        <p className="font-semibold mb-2">Hours</p>
+        <HoursDisplay hours={location.hours} />
       </div>
 
       {/* Contact */}
-      <div className="space-y-2">
+      <div className="space-y-2 text-sm">
         {location.phone && (
-          <div className="flex items-center space-x-3">
-            <Phone className="h-4 w-4 text-muted-foreground" />
-            <Link
-              href={`tel:${location.phone}`}
-              className="text-sm hover:underline"
-            >
-              {location.phone}
-            </Link>
-          </div>
+          <Link
+            href={`tel:${location.phone}`}
+            className="block hover:underline"
+          >
+            {location.phone}
+          </Link>
         )}
         {location.email && (
-          <div className="flex items-center space-x-3">
-            <Mail className="h-4 w-4 text-muted-foreground" />
-            <Link
-              href={`mailto:${location.email}`}
-              className="text-sm hover:underline"
-            >
-              {location.email}
-            </Link>
-          </div>
+          <Link
+            href={`mailto:${location.email}`}
+            className="block hover:underline"
+          >
+            {location.email}
+          </Link>
         )}
       </div>
     </div>
@@ -149,23 +136,21 @@ export function Footer() {
         <div className="grid gap-12 md:grid-cols-3">
           {/* Lawrenceville Location */}
           <div>
-            <h3 className="font-semibold mb-4 text-center md:text-left">Lawrenceville</h3>
             <LocationInfo location={LOCATIONS_DATA[Location.LAWRENCEVILLE]} />
           </div>
 
           {/* Zelienople Location */}
           <div>
-            <h3 className="font-semibold mb-4 text-center md:text-left">Zelienople</h3>
             <LocationInfo location={LOCATIONS_DATA[Location.ZELIENOPLE]} />
           </div>
 
           {/* Brand and Links */}
-          <div className="flex flex-col">
+          <div className="flex flex-col items-center">
             <p className="text-sm text-muted-foreground mb-6">
               Haze • Crispy • Funky • Oaked
             </p>
 
-            <ul className="space-y-2 text-sm mb-6">
+            <ul className="space-y-2 text-sm mb-6 text-center">
               {navigationItems.map((item) => (
                 <li key={item.href}>
                   <Link href={item.href} className="text-muted-foreground hover:text-foreground transition-colors">

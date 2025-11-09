@@ -69,6 +69,12 @@ export interface Config {
   collections: {
     users: User;
     media: Media;
+    styles: Style;
+    beers: Beer;
+    events: Event;
+    food: Food;
+    locations: Location;
+    menus: Menu;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -78,16 +84,26 @@ export interface Config {
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    styles: StylesSelect<false> | StylesSelect<true>;
+    beers: BeersSelect<false> | BeersSelect<true>;
+    events: EventsSelect<false> | EventsSelect<true>;
+    food: FoodSelect<false> | FoodSelect<true>;
+    locations: LocationsSelect<false> | LocationsSelect<true>;
+    menus: MenusSelect<false> | MenusSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
   };
   db: {
-    defaultIDType: number;
+    defaultIDType: string;
   };
-  globals: {};
-  globalsSelect: {};
+  globals: {
+    'coming-soon': ComingSoon;
+  };
+  globalsSelect: {
+    'coming-soon': ComingSoonSelect<false> | ComingSoonSelect<true>;
+  };
   locale: null;
   user: User & {
     collection: 'users';
@@ -120,7 +136,8 @@ export interface UserAuthOperations {
  * via the `definition` "users".
  */
 export interface User {
-  id: number;
+  id: string;
+  name?: string | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -144,7 +161,10 @@ export interface User {
  * via the `definition` "media".
  */
 export interface Media {
-  id: number;
+  id: string;
+  /**
+   * Alternative text for the image (for accessibility)
+   */
   alt: string;
   updatedAt: string;
   createdAt: string;
@@ -157,13 +177,264 @@ export interface Media {
   height?: number | null;
   focalX?: number | null;
   focalY?: number | null;
+  sizes?: {
+    card?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+  };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "styles".
+ */
+export interface Style {
+  id: string;
+  /**
+   * Beer style name (e.g., IPA, Stout, Pale Ale)
+   */
+  name: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "beers".
+ */
+export interface Beer {
+  id: string;
+  glass: 'pint' | 'stein' | 'teku';
+  /**
+   * Alcohol by volume percentage
+   */
+  abv: number;
+  /**
+   * Draft price in dollars (e.g., 7)
+   */
+  draftPrice: number;
+  /**
+   * Four pack price (e.g., 15)
+   */
+  fourPack?: number | null;
+  /**
+   * Auto-calculated from four pack price
+   */
+  canSingle?: number | null;
+  /**
+   * UPC barcode
+   */
+  upc?: string | null;
+  /**
+   * Auto-generated from name, but you can override it manually
+   */
+  slug: string;
+  /**
+   * Auto-incremented recipe number
+   */
+  recipe?: number | null;
+  hideFromSite?: boolean | null;
+  name: string;
+  /**
+   * Beer style
+   */
+  style: string | Style;
+  /**
+   * Beer image (recommended: 2500x2500px)
+   */
+  image?: (string | null) | Media;
+  description?: string | null;
+  /**
+   * Hop varieties used
+   */
+  hops?: string | null;
+  /**
+   * Untappd URL
+   */
+  untappd?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "events".
+ */
+export interface Event {
+  id: string;
+  /**
+   * Event or vendor name
+   */
+  vendor: string;
+  date: string;
+  /**
+   * Time range (e.g., "4-9pm" or "7:30pm")
+   */
+  time?: string | null;
+  /**
+   * End time if different format needed
+   */
+  endTime?: string | null;
+  location: string | Location;
+  visibility: 'public' | 'private';
+  /**
+   * Website or social media link
+   */
+  site?: string | null;
+  /**
+   * Event description (optional)
+   */
+  description?: string | null;
+  /**
+   * Expected or registered attendees
+   */
+  attendees?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "locations".
+ */
+export interface Location {
+  id: string;
+  /**
+   * Is this location currently active?
+   */
+  active?: boolean | null;
+  name: string;
+  /**
+   * Auto-generated from name (lowercase, spaces to dashes)
+   */
+  slug?: string | null;
+  basicInfo?: {
+    phone?: string | null;
+    email?: string | null;
+  };
+  address?: {
+    street?: string | null;
+    city?: string | null;
+    state?: string | null;
+    zip?: string | null;
+  };
+  monday?: {
+    open?: string | null;
+    close?: string | null;
+  };
+  tuesday?: {
+    open?: string | null;
+    close?: string | null;
+  };
+  wednesday?: {
+    open?: string | null;
+    close?: string | null;
+  };
+  thursday?: {
+    open?: string | null;
+    close?: string | null;
+  };
+  friday?: {
+    open?: string | null;
+    close?: string | null;
+  };
+  saturday?: {
+    open?: string | null;
+    close?: string | null;
+  };
+  sunday?: {
+    open?: string | null;
+    close?: string | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "food".
+ */
+export interface Food {
+  id: string;
+  /**
+   * Food vendor name
+   */
+  vendor: string;
+  date: string;
+  /**
+   * Service time (e.g., "4-9pm")
+   */
+  time: string;
+  location: string | Location;
+  /**
+   * Website or social media link
+   */
+  site?: string | null;
+  /**
+   * Day of week
+   */
+  day?: ('Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday') | null;
+  /**
+   * Start time (e.g., "4pm")
+   */
+  start?: string | null;
+  /**
+   * End time (e.g., "9pm")
+   */
+  finish?: string | null;
+  /**
+   * Week number
+   */
+  week?: number | null;
+  /**
+   * Day number (1-7)
+   */
+  dayNumber?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "menus".
+ */
+export interface Menu {
+  id: string;
+  /**
+   * Menu name (e.g., "Lawrenceville Draft Menu")
+   */
+  name: string;
+  /**
+   * Menu description
+   */
+  description?: string | null;
+  /**
+   * Required to generate menu URL
+   */
+  location: string | Location;
+  type: 'cans' | 'draft' | 'other';
+  /**
+   * Auto-generated from location and type, but you can override it manually
+   */
+  url: string;
+  items: {
+    beer: string | Beer;
+    /**
+     * Sale Price
+     */
+    price?: string | null;
+    id?: string | null;
+  }[];
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
-  id: number;
+  id: string;
   key: string;
   data:
     | {
@@ -180,20 +451,44 @@ export interface PayloadKv {
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
-  id: number;
+  id: string;
   document?:
     | ({
         relationTo: 'users';
-        value: number | User;
+        value: string | User;
       } | null)
     | ({
         relationTo: 'media';
-        value: number | Media;
+        value: string | Media;
+      } | null)
+    | ({
+        relationTo: 'styles';
+        value: string | Style;
+      } | null)
+    | ({
+        relationTo: 'beers';
+        value: string | Beer;
+      } | null)
+    | ({
+        relationTo: 'events';
+        value: string | Event;
+      } | null)
+    | ({
+        relationTo: 'food';
+        value: string | Food;
+      } | null)
+    | ({
+        relationTo: 'locations';
+        value: string | Location;
+      } | null)
+    | ({
+        relationTo: 'menus';
+        value: string | Menu;
       } | null);
   globalSlug?: string | null;
   user: {
     relationTo: 'users';
-    value: number | User;
+    value: string | User;
   };
   updatedAt: string;
   createdAt: string;
@@ -203,10 +498,10 @@ export interface PayloadLockedDocument {
  * via the `definition` "payload-preferences".
  */
 export interface PayloadPreference {
-  id: number;
+  id: string;
   user: {
     relationTo: 'users';
-    value: number | User;
+    value: string | User;
   };
   key?: string | null;
   value?:
@@ -226,7 +521,7 @@ export interface PayloadPreference {
  * via the `definition` "payload-migrations".
  */
 export interface PayloadMigration {
-  id: number;
+  id: string;
   name?: string | null;
   batch?: number | null;
   updatedAt: string;
@@ -237,6 +532,7 @@ export interface PayloadMigration {
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
+  name?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -271,6 +567,176 @@ export interface MediaSelect<T extends boolean = true> {
   height?: T;
   focalX?: T;
   focalY?: T;
+  sizes?:
+    | T
+    | {
+        card?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+      };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "styles_select".
+ */
+export interface StylesSelect<T extends boolean = true> {
+  name?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "beers_select".
+ */
+export interface BeersSelect<T extends boolean = true> {
+  glass?: T;
+  abv?: T;
+  draftPrice?: T;
+  fourPack?: T;
+  canSingle?: T;
+  upc?: T;
+  slug?: T;
+  recipe?: T;
+  hideFromSite?: T;
+  name?: T;
+  style?: T;
+  image?: T;
+  description?: T;
+  hops?: T;
+  untappd?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "events_select".
+ */
+export interface EventsSelect<T extends boolean = true> {
+  vendor?: T;
+  date?: T;
+  time?: T;
+  endTime?: T;
+  location?: T;
+  visibility?: T;
+  site?: T;
+  description?: T;
+  attendees?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "food_select".
+ */
+export interface FoodSelect<T extends boolean = true> {
+  vendor?: T;
+  date?: T;
+  time?: T;
+  location?: T;
+  site?: T;
+  day?: T;
+  start?: T;
+  finish?: T;
+  week?: T;
+  dayNumber?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "locations_select".
+ */
+export interface LocationsSelect<T extends boolean = true> {
+  active?: T;
+  name?: T;
+  slug?: T;
+  basicInfo?:
+    | T
+    | {
+        phone?: T;
+        email?: T;
+      };
+  address?:
+    | T
+    | {
+        street?: T;
+        city?: T;
+        state?: T;
+        zip?: T;
+      };
+  monday?:
+    | T
+    | {
+        open?: T;
+        close?: T;
+      };
+  tuesday?:
+    | T
+    | {
+        open?: T;
+        close?: T;
+      };
+  wednesday?:
+    | T
+    | {
+        open?: T;
+        close?: T;
+      };
+  thursday?:
+    | T
+    | {
+        open?: T;
+        close?: T;
+      };
+  friday?:
+    | T
+    | {
+        open?: T;
+        close?: T;
+      };
+  saturday?:
+    | T
+    | {
+        open?: T;
+        close?: T;
+      };
+  sunday?:
+    | T
+    | {
+        open?: T;
+        close?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "menus_select".
+ */
+export interface MenusSelect<T extends boolean = true> {
+  name?: T;
+  description?: T;
+  location?: T;
+  type?: T;
+  url?: T;
+  items?:
+    | T
+    | {
+        beer?: T;
+        price?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -311,6 +777,44 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coming-soon".
+ */
+export interface ComingSoon {
+  id: string;
+  beers?:
+    | {
+        /**
+         * Select the beer this entry refers to
+         */
+        beer?: (string | null) | Beer;
+        /**
+         * Select the beer style
+         */
+        style?: (string | null) | Style;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "coming-soon_select".
+ */
+export interface ComingSoonSelect<T extends boolean = true> {
+  beers?:
+    | T
+    | {
+        beer?: T;
+        style?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

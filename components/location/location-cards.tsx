@@ -1,62 +1,71 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 
-
 import { Button } from '@/components/ui/button';
-import { Location } from '@/lib/types/location';
+import { Location, type LocationHours } from '@/lib/types/location';
 import { LOCATIONS_DATA } from '@/lib/config/locations';
-import { fetchCSV } from '@/lib/utils/csv';
 import { trackDirections } from '@/lib/analytics/events';
+import { formatTime } from '@/lib/utils/formatters';
+import { cn } from '@/lib/utils';
 
-interface HoursData {
-  name: string;
-  hours: string;
-  'day-code': string;
+type DayOfWeek = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+
+function getDayName(day: DayOfWeek): string {
+  const dayNames: Record<DayOfWeek, string> = {
+    monday: 'Monday',
+    tuesday: 'Tuesday',
+    wednesday: 'Wednesday',
+    thursday: 'Thursday',
+    friday: 'Friday',
+    saturday: 'Saturday',
+    sunday: 'Sunday',
+  };
+  return dayNames[day];
 }
 
-interface LocationHoursState {
-  [Location.LAWRENCEVILLE]: HoursData[];
-  [Location.ZELIENOPLE]: HoursData[];
+function HoursDisplay({ hours }: { hours: LocationHours }) {
+  const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const today = dayNames[new Date().getDay()] as DayOfWeek;
+
+  return (
+    <div className="space-y-1 text-sm">
+      {Object.entries(hours).map(([day, dayHours]) => {
+        if (day === 'notes') return null;
+
+        const isToday = day === today;
+        const dayName = getDayName(day as DayOfWeek);
+
+        return (
+          <div
+            key={day}
+            className={cn(
+              'flex justify-between',
+              isToday && 'font-semibold text-primary'
+            )}
+          >
+            <span>{dayName}</span>
+            <span>
+              {dayHours.closed
+                ? 'Closed'
+                : `${formatTime(dayHours.open)} - ${formatTime(dayHours.close)}`
+              }
+            </span>
+          </div>
+        );
+      })}
+      {hours.notes && (
+        <p className="mt-2 text-xs text-muted-foreground italic">
+          {hours.notes}
+        </p>
+      )}
+    </div>
+  );
 }
 
 export function LocationCards() {
-  const [hoursData, setHoursData] = useState<LocationHoursState | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const loadHours = async () => {
-      try {
-        const [lawrencevilleHours, zelienopleHours] = await Promise.all([
-          fetchCSV<HoursData>('lawrenceville-hours.csv'),
-          fetchCSV<HoursData>('zelienople-hours.csv')
-        ]);
-
-        setHoursData({
-          [Location.LAWRENCEVILLE]: lawrencevilleHours,
-          [Location.ZELIENOPLE]: zelienopleHours
-        });
-      } catch (error) {
-        console.error('Error loading hours:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadHours();
-  }, []);
-
-  const getTodayHours = (locationHours: HoursData[]) => {
-    if (!locationHours || locationHours.length === 0) return 'Hours not available';
-
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const today = days[new Date().getDay()];
-    const todayData = locationHours.find(h => h.name === today);
-
-    return todayData?.hours || 'Closed';
-  };
 
 
   const locations = [
@@ -102,21 +111,16 @@ export function LocationCards() {
           <div className="flex flex-col items-center text-center space-y-4">
             <h3 className="text-2xl font-bold">{displayName}</h3>
 
-            {/* Today's Hours */}
-            <div className="text-muted-foreground">
-              {loading ? (
-                <p>Loading hours...</p>
-              ) : (
-                <p className="font-medium">
-                  Today: {hoursData && getTodayHours(hoursData[id])}
-                </p>
-              )}
-            </div>
-
             {/* Address */}
-            <div className="text-muted-foreground">
+            <div className="text-muted-foreground text-lg">
               <p>{data.address}</p>
               <p>{data.city}, {data.state} {data.zipCode}</p>
+            </div>
+
+            {/* Hours */}
+            <div className="w-full max-w-xs">
+              <p className="font-semibold mb-2">Hours</p>
+              <HoursDisplay hours={data.hours} />
             </div>
 
             {/* Phone */}
@@ -131,7 +135,7 @@ export function LocationCards() {
 
           {/* Map Link Button - Positioned absolutely at bottom */}
           <div className="absolute bottom-0 left-0 right-0 flex justify-center">
-            <Button asChild variant="outline" size="default" className="w-full max-w-xs">
+            <Button asChild variant="default" size="default" className="w-full max-w-xs">
               <Link
                 href={data.mapUrl || '#'}
                 target="_blank"

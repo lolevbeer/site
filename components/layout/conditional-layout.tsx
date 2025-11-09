@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { usePathname } from 'next/navigation';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 
@@ -9,23 +10,14 @@ interface ConditionalLayoutProps {
 }
 
 export function ConditionalLayout({ children }: ConditionalLayoutProps) {
-  const [hideLayout, setHideLayout] = useState(false);
+  const pathname = usePathname();
 
-  useEffect(() => {
-    const checkHash = () => {
-      const hash = window.location.hash;
-      setHideLayout(hash === '#draft' || hash === '#cans');
-    };
+  // Check if we're on an admin route or menu display route
+  const isAdminRoute = pathname?.startsWith('/admin') || pathname?.startsWith('/api');
+  const isMenuRoute = pathname?.startsWith('/m/');
 
-    checkHash();
-    window.addEventListener('hashchange', checkHash);
-
-    return () => {
-      window.removeEventListener('hashchange', checkHash);
-    };
-  }, []);
-
-  if (hideLayout) {
+  // Don't render layout for admin/api routes or menu display routes
+  if (isAdminRoute || isMenuRoute) {
     return <main id="main-content" className="h-screen">{children}</main>;
   }
 

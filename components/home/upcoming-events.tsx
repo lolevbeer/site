@@ -51,13 +51,13 @@ export function UpcomingEvents({ lawrencevilleEvents, zelienopleEvents }: Upcomi
   return (
     <section className="py-16 lg:py-24">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
+        <div className="text-center mb-12 flex justify-center">
           <h2 className="text-3xl lg:text-4xl font-bold mb-4">
             Upcoming Events
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 justify-items-center">
           {upcomingEvents.map((event, index) => (
             <EventCard
               key={index}

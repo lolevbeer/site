@@ -35,7 +35,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
 
   return (
     <Link href={showLocation ? `/${currentLocation}/beer/${beerSlug}` : `/beer/${beerSlug}`} className="group block">
-      <div className={`overflow-hidden transition-colors duration-200 cursor-pointer rounded-lg hover:bg-secondary h-[120.5px] ${className}`}>
+      <div className={`overflow-hidden transition-colors duration-200 cursor-pointer rounded-lg hover:bg-secondary sm:h-[120.5px] ${className}`}>
         <div className="flex items-start gap-4 p-4 h-full">
           {/* Glass Icon */}
           <div className="flex-shrink-0 pt-1">
@@ -44,11 +44,18 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
 
           {/* Beer Info */}
           <div className="flex-grow min-w-0 flex flex-col">
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-1">
               <h3 className="text-lg font-semibold leading-tight truncate">{beer.name}</h3>
-              <Badge variant="outline" className="text-xs flex-shrink-0">
-                {beer.type}
-              </Badge>
+              <div className="flex gap-1 flex-wrap">
+                {beer.isJustReleased && (
+                  <Badge variant="default" className="text-xs flex-shrink-0 w-fit">
+                    Just Released
+                  </Badge>
+                )}
+                <Badge variant="outline" className="text-xs flex-shrink-0 w-fit">
+                  {beer.type}
+                </Badge>
+              </div>
             </div>
             <div className="min-h-[3.5rem]">
               {beer.description && (
