@@ -1558,6 +1558,22 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
+                    -75.505476781209,
+                    40.218408022975
+                ]
+            },
+            "properties": {
+                "id": 99,
+                "Name": "epps beverage",
+                "address": "80 W RIDGE PIKE, ROYERSFORD, PA, 19468",
+                "customerType": "Home-D"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
                     -80.239948914436,
                     40.441226475827
                 ]
