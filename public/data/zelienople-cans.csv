@@ -8,6 +8,6 @@ sever,FALSE,Sever,FALSE,Pumpkin Stout,5.7,4.50,17
 ddh-taupo,TRUE,DDH Taupō,FALSE,India Pale Ale,7,5.25,20
 origen,TRUE,Origen,FALSE,Double IPA,7.8,5.75,22
 kamo,FALSE,Kamo,FALSE,Double IPA,8,5.75,22
-lupula,TRUE,Lupula,FALSE,India Pale Ale,7,4.50,17
+lupula,FALSE,Lupula,FALSE,India Pale Ale,7,4.50,17
 prismatic,TRUE,Prismatic,FALSE,India Pale Ale,7,4.50,17
 rubico-ii,TRUE,Rubico II,FALSE,Double IPA,8.6,5.75,22
