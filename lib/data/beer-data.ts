@@ -38,6 +38,7 @@ interface DraftBeerRow {
 
 interface CanRow {
   variant: string;
+  cansAvailable?: boolean;
   name?: string;
   type?: string;
   abv?: string;
@@ -114,10 +115,10 @@ export const getAvailableBeers = cache(async (): Promise<{ variant: string; name
     const zelienopleCans = parseCSV<CanRow>(zelienopleCansText);
 
     lawrencevilleCans.forEach(row => {
-      if (row.variant) availableVariants.add(row.variant.toLowerCase());
+      if (row.variant && row.cansAvailable === true) availableVariants.add(row.variant.toLowerCase());
     });
     zelienopleCans.forEach(row => {
-      if (row.variant) availableVariants.add(row.variant.toLowerCase());
+      if (row.variant && row.cansAvailable === true) availableVariants.add(row.variant.toLowerCase());
     });
 
     // Parse beer.csv and filter for available beers with images
@@ -164,7 +165,7 @@ export const getDraftBeers = cache(async (location: 'lawrenceville' | 'zelienopl
     const cansData = parseCSV<CanRow>(cansText);
     const cansSet = new Set<string>();
     cansData.forEach(row => {
-      if (row.variant) cansSet.add(row.variant.toLowerCase());
+      if (row.variant && row.cansAvailable === true) cansSet.add(row.variant.toLowerCase());
     });
 
     // Helper to convert glass string to GlassType
@@ -245,7 +246,7 @@ export const getEnrichedCans = cache(async (location: 'lawrenceville' | 'zelieno
 
     // Enrich cans with beer details and draft status
     const enrichedCansPromises = cansData
-      .filter(row => row.variant)
+      .filter(row => row.variant && row.cansAvailable === true)
       .map(async (row) => {
         const beerDetails = beerMap.get(row.variant.toLowerCase());
         const hasImage = await imageExists(row.variant);

@@ -82,7 +82,7 @@ export function CansGrid({ maxItems }: CansGridProps) {
         // Parse Lawrenceville cans
         const lawrencevilleCansData = Papa.parse(lawrencevilleCansText, { header: true });
         const lawrencevilleCans: CanBeer[] = lawrencevilleCansData.data
-          .filter((row: any) => row.variant)
+          .filter((row: any) => row.variant && row.cansAvailable === true)
           .map((row: any) => {
             const beerInfo = beerMap.get(row.variant.toLowerCase());
             if (beerInfo) {
@@ -99,7 +99,7 @@ export function CansGrid({ maxItems }: CansGridProps) {
         // Parse Zelienople cans
         const zelienopleCansData = Papa.parse(zelienopleCansText, { header: true });
         const zelienopleCans: CanBeer[] = zelienopleCansData.data
-          .filter((row: any) => row.variant)
+          .filter((row: any) => row.variant && row.cansAvailable === true)
           .map((row: any) => {
             const beerInfo = beerMap.get(row.variant.toLowerCase());
             if (beerInfo) {
