@@ -1334,6 +1334,22 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
+                    -80.141687944183,
+                    40.61351988734
+                ]
+            },
+            "properties": {
+                "id": 84,
+                "Name": "creekside beer",
+                "address": "2175 BIG SEWICKLEY CREEK RD, SEWICKLEY, PA, 15143",
+                "customerType": "Home-D"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
                     -79.669920416053,
                     40.425139038448
                 ]
