@@ -1,7 +1,7 @@
 "tap","variant","singleCanAvailable","name","type","abv","glass","price","description","image","hops"
 "1","sever","FALSE","Sever","Pumpkin Stout","5.7","teku","7","Dark roast coffee and pumpkin pie in a rich quaffable stout. Conditioned freshly-roasted Brazilian coffee beans from Temper Coffee Roasters.
 .","TRUE",""
-"2","sono","FALSE","Sono","Double IPA","7.6","pint","9","","TRUE","Citra HyperBoost, Citra DynaBoost, Dolcita"
+"2","","FALSE","","","","","","","",""
 "3","lumina","FALSE","Lumina","West Coast Imperial Pilsner","6.5","stein","7","Notes of apricot, pear and lemongrass.","FALSE","Motueka, El Dorado"
 "4","","FALSE","","","","","","","",""
 "5","ora","FALSE","Ora","Zwickelbier","4.5","stein","7","Unfiltered golden pilsner spunded slowly for natural carbonation. Gentle malt plushness with noble hops.","FALSE",""
