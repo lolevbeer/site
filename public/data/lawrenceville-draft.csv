@@ -1,13 +1,12 @@
 "tap","variant","singleCanAvailable","name","type","abv","glass","price","description","image","hops"
 "1","sever","FALSE","Sever","Pumpkin Stout","5.7","teku","7","Dark roast coffee and pumpkin pie in a rich quaffable stout. Conditioned freshly-roasted Brazilian coffee beans from Temper Coffee Roasters.
 .","TRUE",""
-"2","","FALSE","","","","","","","",""
+"2","capax","FALSE","Capax","Double IPA","8.1","teku","9","Apricot, mango and white wine.","TRUE","Citra, Rakau, Wakatu, Rakau Hop Kief"
 "3","lumina","FALSE","Lumina","West Coast Imperial Pilsner","6.5","stein","7","Notes of apricot, pear and lemongrass.","FALSE","Motueka, El Dorado"
 "4","","FALSE","","","","","","","",""
 "5","ora","FALSE","Ora","Zwickelbier","4.5","stein","7","Unfiltered golden pilsner spunded slowly for natural carbonation. Gentle malt plushness with noble hops.","FALSE",""
 "6","akko","FALSE","Akko","India Pale Ale","7","pint","7","Pineapple and orange mango, notes of peach ring candies. ","TRUE","Comet, Galaxy, Citra"
-"7","rubico-ii","FALSE","Rubico II","Double IPA","8.6","teku","9","Pillowy soft with a full, creamy body, ripe mango, passionfruit, and juicy peach.
-","TRUE","Citra, Galaxy"
+"7","rubico-ii","FALSE","Rubico II","Double IPA","8.6","teku","9","Pillowy soft with a full, creamy body, ripe mango, passionfruit, and juicy peach.","TRUE","Citra, Galaxy"
 "8","origen","FALSE","Origen","Double IPA","7.8","teku","9","","TRUE","Citra, Rakau, Nelson Sauvin, Southern Cross, Southern Cross SubZero Hop Kief"
 "9","edge","FALSE","Edge","West Coast IPA","7.7","pint","9","","FALSE","Cascade, Mosaic, Simcoe, El Dorado, Centennial Hyperboost"
 "10","priscus-ii","FALSE","Priscus II","Double IPA","8.3","pint","9","","TRUE","Motueka CGX, Nelson Sauvin, Citra"
