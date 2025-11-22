@@ -998,14 +998,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -77.6055307,
-                    43.2534066
+                    -77.6042337,
+                    43.2545645
                 ]
             },
             "properties": {
                 "id": 63,
                 "Name": "rochester yacht club",
-                "address": "Rochester Yacht Club, 5555, Saint Paul Boulevard, Summerville, City of Rochester, Monroe County, New York, 14617, United States of America",
+                "address": "5555, Saint Paul Boulevard, Summerville, City of Rochester, Monroe County, New York, 14617, United States of America",
                 "customerType": "Recreation"
             }
         },
