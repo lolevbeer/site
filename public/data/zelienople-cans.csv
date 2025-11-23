@@ -1,5 +1,5 @@
 variant,cansAvailable,name,salePrice,type,abv,cansSingle,fourPack
-sonnen,TRUE,Sonnen,FALSE,Märzen,5.4,4.50,17
+sonnen,FALSE,Sonnen,FALSE,Märzen,5.4,4.50,17
 edge,TRUE,Edge,FALSE,West Coast IPA,7.7,5.75,22
 grandar,TRUE,Grandar,FALSE,Imperial Pilsner,6.6,4.25,16
 vespero,TRUE,Vespero,FALSE,Czech Dark Lager,5.8,4.25,16
