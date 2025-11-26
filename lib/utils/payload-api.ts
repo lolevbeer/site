@@ -6,7 +6,7 @@
 import { getPayload } from 'payload'
 import config from '@/src/payload.config'
 import { cache } from 'react'
-import type { Beer as PayloadBeer, Menu as PayloadMenu, Style, Media, HolidayHour, Location as PayloadLocation } from '@/src/payload-types'
+import type { Beer as PayloadBeer, Menu as PayloadMenu, Style, Media, HolidayHour, Location as PayloadLocation, Event as PayloadEvent, Food as PayloadFood } from '@/src/payload-types'
 import { logger } from '@/lib/utils/logger'
 
 /**
@@ -633,5 +633,114 @@ export const getAllLocationsWeeklyHours = cache(async (): Promise<Map<string, We
   } catch (error) {
     logger.error('Error fetching all locations weekly hours', error)
     return new Map()
+  }
+})
+
+/**
+ * Get upcoming events for a location from Payload
+ * Returns events with date >= today, sorted by date ascending
+ */
+export const getUpcomingEventsFromPayload = cache(async (locationSlug: string, limit: number = 10): Promise<PayloadEvent[]> => {
+  try {
+    const payload = await getPayloadInstance()
+
+    // Get location ID from slug
+    const locationResult = await payload.find({
+      collection: 'locations',
+      where: {
+        slug: { equals: locationSlug },
+      },
+      limit: 1,
+    })
+
+    if (locationResult.docs.length === 0) {
+      logger.warn(`Location not found: ${locationSlug}`)
+      return []
+    }
+
+    const locationId = locationResult.docs[0].id
+
+    // Get today's date at midnight EST
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const todayStr = today.toISOString()
+
+    const result = await payload.find({
+      collection: 'events',
+      where: {
+        and: [
+          {
+            location: { equals: locationId },
+          },
+          {
+            date: { greater_than_equal: todayStr },
+          },
+          {
+            visibility: { equals: 'public' },
+          },
+        ],
+      },
+      sort: 'date',
+      limit,
+      depth: 1,
+    })
+
+    return result.docs
+  } catch (error) {
+    logger.error(`Error fetching events for location: ${locationSlug}`, error)
+    return []
+  }
+})
+
+/**
+ * Get upcoming food vendors for a location from Payload
+ * Returns food entries with date >= today, sorted by date ascending
+ */
+export const getUpcomingFoodFromPayload = cache(async (locationSlug: string, limit: number = 10): Promise<PayloadFood[]> => {
+  try {
+    const payload = await getPayloadInstance()
+
+    // Get location ID from slug
+    const locationResult = await payload.find({
+      collection: 'locations',
+      where: {
+        slug: { equals: locationSlug },
+      },
+      limit: 1,
+    })
+
+    if (locationResult.docs.length === 0) {
+      logger.warn(`Location not found: ${locationSlug}`)
+      return []
+    }
+
+    const locationId = locationResult.docs[0].id
+
+    // Get today's date at midnight EST
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const todayStr = today.toISOString()
+
+    const result = await payload.find({
+      collection: 'food',
+      where: {
+        and: [
+          {
+            location: { equals: locationId },
+          },
+          {
+            date: { greater_than_equal: todayStr },
+          },
+        ],
+      },
+      sort: 'date',
+      limit,
+      depth: 1,
+    })
+
+    return result.docs
+  } catch (error) {
+    logger.error(`Error fetching food for location: ${locationSlug}`, error)
+    return []
   }
 })

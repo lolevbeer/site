@@ -4,11 +4,24 @@ import React, { useState, useRef } from 'react'
 import { Gutter } from '@payloadcms/ui'
 import { format } from 'date-fns-tz'
 
+interface FieldChange {
+  field: string
+  from: any
+  to: any
+}
+
+interface MenuChanges {
+  added: number
+  removed: number
+  priceChanges: number
+}
+
 interface LogEntry {
   id: number
   type: 'status' | 'event' | 'food' | 'beer' | 'menu' | 'error' | 'complete'
   message: string
   timestamp: Date
+  changes?: FieldChange[] | MenuChanges
 }
 
 type CollectionType = 'events' | 'food' | 'beers' | 'menus'
@@ -30,8 +43,8 @@ export const SyncViewClient: React.FC = () => {
   const logIdRef = useRef(0)
   const logsEndRef = useRef<HTMLDivElement>(null)
 
-  const addLog = (type: LogEntry['type'], message: string) => {
-    setLogs(prev => [...prev, { id: logIdRef.current++, type, message, timestamp: new Date() }])
+  const addLog = (type: LogEntry['type'], message: string, changes?: LogEntry['changes']) => {
+    setLogs(prev => [...prev, { id: logIdRef.current++, type, message, timestamp: new Date(), changes }])
     setTimeout(() => logsEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
   }
 
@@ -107,16 +120,16 @@ export const SyncViewClient: React.FC = () => {
                     addLog('status', data.message)
                     break
                   case 'event':
-                    addLog('event', `Event: ${data.vendor} (${data.date}) - ${data.location}`)
+                    addLog('event', `Event: ${data.vendor} (${data.date}) - ${data.location}`, data.changes)
                     break
                   case 'food':
-                    addLog('food', `Food: ${data.vendor} (${data.date}) - ${data.location}`)
+                    addLog('food', `Food: ${data.vendor} (${data.date}) - ${data.location}`, data.changes)
                     break
                   case 'beer':
-                    addLog('beer', `Beer: ${data.name} (${data.style})`)
+                    addLog('beer', `Beer: ${data.name} (${data.style})`, data.changes)
                     break
                   case 'menu':
-                    addLog('menu', `Menu: ${data.location} ${data.type} - ${data.itemCount} items`)
+                    addLog('menu', `Menu: ${data.location} ${data.type} - ${data.itemCount} items`, data.changes)
                     break
                   case 'error':
                     addLog('error', data.message)
@@ -331,25 +344,71 @@ export const SyncViewClient: React.FC = () => {
               lineHeight: '1.6',
             }}>
               {logs.map(log => (
-                <div
-                  key={log.id}
-                  style={{
-                    display: 'flex',
-                    gap: '8px',
-                    ...Object.fromEntries([getLogClasses(log.type).split(': ')].map(([k, v]) => [k, v]))
-                  }}
-                >
-                  <span style={{ color: '#484f58', flexShrink: 0 }}>
-                    {format(log.timestamp, 'HH:mm:ss', { timeZone: 'America/New_York' })}
-                  </span>
-                  <span style={{ flexShrink: 0 }}>{getLogIcon(log.type)}</span>
-                  <span style={{
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap'
-                  }}>
-                    {log.message}
-                  </span>
+                <div key={log.id} style={{ marginBottom: log.changes ? '8px' : '0' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      gap: '8px',
+                      ...Object.fromEntries([getLogClasses(log.type).split(': ')].map(([k, v]) => [k, v]))
+                    }}
+                  >
+                    <span style={{ color: '#484f58', flexShrink: 0 }}>
+                      {format(log.timestamp, 'HH:mm:ss', { timeZone: 'America/New_York' })}
+                    </span>
+                    <span style={{ flexShrink: 0 }}>{getLogIcon(log.type)}</span>
+                    <span style={{
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      {log.message}
+                    </span>
+                  </div>
+                  {log.changes && (
+                    <div style={{
+                      marginLeft: '80px',
+                      marginTop: '4px',
+                      padding: '8px 12px',
+                      backgroundColor: '#1c2128',
+                      borderRadius: '4px',
+                      borderLeft: '3px solid #3b82f6',
+                      fontSize: '11px',
+                    }}>
+                      {Array.isArray(log.changes) ? (
+                        // Field changes for events, food, beers
+                        (log.changes as FieldChange[]).map((change, i, arr) => (
+                          <div key={i} style={{ display: 'flex', gap: '8px', marginBottom: i < arr.length - 1 ? '4px' : 0 }}>
+                            <span style={{ color: '#8b949e', minWidth: '80px' }}>{change.field}:</span>
+                            <span style={{ color: '#f87171', textDecoration: 'line-through' }}>
+                              {change.from === null ? '(empty)' : String(change.from)}
+                            </span>
+                            <span style={{ color: '#6b7280' }}>→</span>
+                            <span style={{ color: '#4ade80' }}>
+                              {change.to === null ? '(empty)' : String(change.to)}
+                            </span>
+                          </div>
+                        ))
+                      ) : (
+                        // Menu changes summary
+                        (() => {
+                          const menuChanges = log.changes as MenuChanges
+                          return (
+                            <div style={{ display: 'flex', gap: '16px' }}>
+                              {menuChanges.added > 0 && (
+                                <span style={{ color: '#4ade80' }}>+{menuChanges.added} added</span>
+                              )}
+                              {menuChanges.removed > 0 && (
+                                <span style={{ color: '#f87171' }}>-{menuChanges.removed} removed</span>
+                              )}
+                              {menuChanges.priceChanges > 0 && (
+                                <span style={{ color: '#fbbf24' }}>{menuChanges.priceChanges} price changes</span>
+                              )}
+                            </div>
+                          )
+                        })()
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
               <div ref={logsEndRef} />

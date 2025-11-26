@@ -10,7 +10,7 @@ import { logger } from '@/lib/utils/logger';
 import { GlassType } from '@/lib/types/beer';
 import { Location } from '@/lib/types/location';
 import { parseCSV } from '@/lib/utils/csv';
-import { compareDateStrings, getTodayEST } from '@/lib/utils/date';
+import { compareDateStrings } from '@/lib/utils/date';
 import { constants } from 'fs';
 
 interface BeerRow {
@@ -45,24 +45,6 @@ interface CanRow {
   [key: string]: any;
 }
 
-interface EventRow {
-  date: string;
-  vendor: string;
-  time?: string;
-  attendees?: string;
-  site?: string;
-  end?: string;
-  [key: string]: any;
-}
-
-interface FoodRow {
-  vendor: string;
-  date: string;
-  time?: string;
-  site?: string;
-  day?: string;
-  [key: string]: any;
-}
 
 // Helper to read CSV from public directory
 async function readCSV(filename: string): Promise<string> {
@@ -276,39 +258,24 @@ export const getEnrichedCans = cache(async (location: 'lawrenceville' | 'zelieno
 
 /**
  * Get upcoming events for a specific location
- * Cached for deduplication across requests
+ * Fetches from Payload CMS
  */
 export const getUpcomingEvents = cache(async (location: 'lawrenceville' | 'zelienople', limit: number = 3) => {
   try {
-    const eventsText = await readCSV(`${location}-events.csv`);
-    const eventsData = parseCSV<EventRow>(eventsText);
+    // Import here to avoid circular dependency
+    const { getUpcomingEventsFromPayload } = await import('@/lib/utils/payload-api');
+    const events = await getUpcomingEventsFromPayload(location, limit);
 
-    // Get today's date in EST timezone (YYYY-MM-DD format)
-    const todayEST = getTodayEST();
-
-    // Filter for today and future events using EST timezone
-    const upcomingEvents = eventsData
-      .filter(row => {
-        if (!row.date || !row.vendor) return false;
-
-        // Compare date strings directly (YYYY-MM-DD format)
-        const eventDateStr = row.date.split('T')[0];
-        return eventDateStr >= todayEST;
-      })
-      .map(row => ({
-        date: row.date,
-        vendor: row.vendor,
-        time: row.time || '',
-        attendees: row.attendees || '',
-        site: row.site || '',
-        end: row.end || '',
-        location: location === 'lawrenceville' ? Location.LAWRENCEVILLE : Location.ZELIENOPLE
-      }));
-
-    // Sort by date
-    upcomingEvents.sort((a, b) => compareDateStrings(a.date, b.date));
-
-    return upcomingEvents.slice(0, limit);
+    // Transform to expected format
+    return events.map(event => ({
+      date: event.date,
+      vendor: event.vendor,
+      time: event.time || '',
+      attendees: event.attendees?.toString() || '',
+      site: event.site || '',
+      end: event.endTime || '',
+      location: location === 'lawrenceville' ? Location.LAWRENCEVILLE : Location.ZELIENOPLE
+    }));
   } catch (error) {
     logger.error(`Error loading events for ${location}`, error);
     return [];
@@ -345,38 +312,23 @@ export const getUpcomingBeers = cache(async () => {
 
 /**
  * Get upcoming food vendors for a specific location
- * Cached for deduplication across requests
+ * Fetches from Payload CMS
  */
 export const getUpcomingFood = cache(async (location: 'lawrenceville' | 'zelienople', limit: number = 3) => {
   try {
-    const foodText = await readCSV(`${location}-food.csv`);
-    const foodData = parseCSV<FoodRow>(foodText);
+    // Import here to avoid circular dependency
+    const { getUpcomingFoodFromPayload } = await import('@/lib/utils/payload-api');
+    const food = await getUpcomingFoodFromPayload(location, limit);
 
-    // Get today's date in EST timezone (YYYY-MM-DD format)
-    const todayEST = getTodayEST();
-
-    // Filter for today and future food vendors using EST timezone
-    const upcomingFood = foodData
-      .filter(row => {
-        if (!row.vendor || !row.date) return false;
-
-        // Compare date strings directly (YYYY-MM-DD format)
-        const vendorDateStr = row.date.split('T')[0];
-        return vendorDateStr >= todayEST;
-      })
-      .map(row => ({
-        vendor: row.vendor,
-        date: row.date,
-        time: row.time || '',
-        site: row.site || '',
-        day: row.day || '',
-        location: location === 'lawrenceville' ? Location.LAWRENCEVILLE : Location.ZELIENOPLE
-      }));
-
-    // Sort by date
-    upcomingFood.sort((a, b) => compareDateStrings(a.date, b.date));
-
-    return upcomingFood.slice(0, limit);
+    // Transform to expected format
+    return food.map(item => ({
+      vendor: item.vendor,
+      date: item.date,
+      time: item.time || '',
+      site: item.site || '',
+      day: item.day || '',
+      location: location === 'lawrenceville' ? Location.LAWRENCEVILLE : Location.ZELIENOPLE
+    }));
   } catch (error) {
     logger.error(`Error loading food for ${location}`, error);
     return [];

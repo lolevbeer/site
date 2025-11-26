@@ -130,7 +130,8 @@ function parsePrice(price: string): number | undefined {
 // ============ IMAGE UTILITIES ============
 async function findBeerImage(variant: string): Promise<string | null> {
   const imageDir = path.join(process.cwd(), 'public', 'images', 'beer')
-  const extensions = ['.webp', '.png', '.jpg', '.jpeg']
+  // Prioritize PNG as source format - Payload will convert to webp with all sizes
+  const extensions = ['.png', '.jpg', '.jpeg', '.webp']
 
   for (const ext of extensions) {
     const imagePath = path.join(imageDir, `${variant}${ext}`)

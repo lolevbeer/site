@@ -48,11 +48,14 @@ export function parseTimeRange(timeString: string): { time: string; endTime?: st
  */
 
 /**
- * Parse a date string in YYYY-MM-DD format without timezone conversion
+ * Parse a date string in YYYY-MM-DD or ISO 8601 format without timezone conversion
  * This prevents dates from shifting due to timezone offsets
+ * Handles both "2024-12-25" and "2024-12-25T00:00:00.000Z" formats
  */
 export function parseLocalDate(dateString: string): Date {
-  const [year, month, day] = dateString.split('-').map(Number);
+  // Extract just the date portion (YYYY-MM-DD) from ISO strings
+  const datePart = dateString.split('T')[0];
+  const [year, month, day] = datePart.split('-').map(Number);
   return new Date(year, month - 1, day);
 }
 
