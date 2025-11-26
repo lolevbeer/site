@@ -26,7 +26,7 @@ terra,Terra,Saison,,7.5,teku,$7,,,"Orange zest, marmalade, and grapefruit. Flora
 1-onsite,Onsite I,Raspberry Smoothie Sour,,6.2,teku,$8,,,Onsite I is the first of our pilot program. A raspberry fruited smoothie sour. No lactose.,,FALSE,FALSE,FALSE,5474677,25,
 demeter,Demeter,Barleywine,,10.5,teku,$9,$5.75,$22,"Cognac, candied orange, and caramel.",850051366071,FALSE,TRUE,FALSE,5385429,26,
 flux,Flux,India Pale Ale,,7,pint,$7,$4.50,$17,"Bubble gum, papaya, blueberry, and dank citrus. Aromas of cannabis, grapefruit, stonefruit, and orange zest.",850051366064,FALSE,TRUE,FALSE,5371340,27,"Simcoe, Comet, Strata"
-remo,Remo,Ultra Light Rice Ale,,3.4,lager,$5,,,"Light, citrus-forward summer crusher.",,FALSE,FALSE,FALSE,5385438,28,
+remo,Remo,Ultra Light Rice Ale,,3.4,stein,$5,,,"Light, citrus-forward summer crusher.",,FALSE,FALSE,FALSE,5385438,28,
 sonnen,Sonnen,Märzen,oktoberfest,5.4,stein,$6,$4.50,$17,"Plush tan head, a subtle sweetness of toasted malt, medium body.",850051366095,FALSE,TRUE,FALSE,,29,
 iroh,Iroh,Matcha Lager,,4.9,teku,$8,$4.50,$17,Subtle matcha and citrus.,850051366149,FALSE,TRUE,FALSE,5456132,30,
 revada,Revada,Smoothie Sour,,6.8,teku,$9,$6.00,$23,"Conditioned on strawberries, blueberries & hibiscus. Thicc and tart. Vibrant pink and full bodied.",850051366101,FALSE,TRUE,FALSE,,31,
@@ -39,7 +39,7 @@ grandar,Grandar,Imperial Pilsner,,6.6,stein,$7,$4.25,$16,"Crackery sweetness bal
 levenator,Levenator,Doppelbock,,7.8,pint,$8,$4.25,$16,"Rich malt flavor with notes of toasted caramel, dark fruit, and chocolate.",850051366095,FALSE,TRUE,FALSE,,38,
 rubico,Rubico,Double IPA,,8.5,pint,$8,$5.25,$20,"Pineapple, peach rings, bubblegum, strawberry and citrus.",850051366156,FALSE,TRUE,FALSE,,39,"Mosaic, Galaxy, Citra"
 orban,Orban,Imperial Stout,,10.5,teku,$9,$5.50,$21,"Caramel, orange, dark chocolate and vanilla. Conditioned on cracked Madagascar vanilla beans and Cocoa nibs.",850051366163,FALSE,TRUE,FALSE,,40,
-severina,Severina,Cookie Brown Ale,,5.3,lager,$5,$4.25,$16,"Infused with Amaretti cookies. Notes of ginger, cinnamon, and caramel. Collab with Severina for the Lawrenceville Cookie Tour.",,FALSE,FALSE,FALSE,,41,
+severina,Severina,Cookie Brown Ale,,5.3,stein,$5,$4.25,$16,"Infused with Amaretti cookies. Notes of ginger, cinnamon, and caramel. Collab with Severina for the Lawrenceville Cookie Tour.",,FALSE,FALSE,FALSE,,41,
 double-lupula,Double Lupula,Double IPA,,8.4,pint,$8,$5.25,$20,"More hops, more malt, more everything. Everything Lupula is and more.",850051366170,FALSE,TRUE,FALSE,,42,"Motueka, Moutere, Riwaka"
 prismatic,Prismatic,India Pale Ale,,7,pint,$7,$4.50,$17,"Pineapple, vanilla, tangerine, melon.",850051366064,FALSE,TRUE,FALSE,,43,"El Dorado, Idaho 7, Citra"
 vespero,Vespero,Czech Dark Lager,,5.8,stein,$6,$4.25,$16,"Roasted chestnut, chocolate and raisin. Ruby hue and a hint of noble hops.",850051366187,FALSE,TRUE,FALSE,,44,Saaz
@@ -89,8 +89,7 @@ ddh-lupula,DDH Lupula,India Pale Ale,,7,pint,$8,$5.25,$20,,,FALSE,TRUE,FALSE,,86
 faust-unfiltered-25,Faust,Plum Saison,,6.7,teku,$10,,,"Unfiltered 2025 vintage. Slightly sour, dry and oaky. Aged 18 months in oak foeders on our house microflora and conditioned on plums.",,FALSE,FALSE,FALSE,,87,
 priscus-ii,Priscus II,Double IPA,,8.3,pint,$9,$5.75,$22,,,FALSE,TRUE,FALSE,,88,"Motueka CGX, Nelson Sauvin, Citra"
 sono,Sono,Double IPA,,7.6,pint,$9,$5.75,$22,,,FALSE,TRUE,FALSE,,89,"Citra HyperBoost, Citra DynaBoost, Dolcita"
-sever,Sever,Pumpkin Stout,,5.7,teku,$7,$4.50,$17,"Dark roast coffee and pumpkin pie in a rich quaffable stout. Conditioned freshly-roasted Brazilian coffee beans from Temper Coffee Roasters.
-.",,FALSE,TRUE,FALSE,,90,
+sever,Sever,Pumpkin Stout,,5.7,teku,$7,$4.50,$17,Dark roast coffee and pumpkin pie in a rich quaffable stout. Conditioned freshly-roasted Brazilian coffee beans from Temper Coffee Roasters.,,FALSE,TRUE,FALSE,,90,
 glyphs-ii,Glyphs II,Pale Ale,,5.1,pint,$7,$4.50,$17,,,FALSE,TRUE,FALSE,,91,"Krush HyperBoost, Citra DynaBoost, Riwaka, Citra"
 kamo,Kamo,Double IPA,,8,teku,$9,$5.75,$22,,,FALSE,TRUE,FALSE,,92,"Freestyle Southern Cross, Freestyle Riwaka, Citra DynaBoost, Citra"
 lumina,Lumina,West Coast Imperial Pilsner,,6.5,stein,$7,$5.75,$22,"Notes of apricot, pear and lemongrass.",,FALSE,FALSE,FALSE,,93,"Motueka, El Dorado"
