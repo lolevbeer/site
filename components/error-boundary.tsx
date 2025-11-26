@@ -61,7 +61,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                 <CardTitle>Something went wrong</CardTitle>
               </div>
               <CardDescription>
-                We encountered an unexpected error. Don't worry, your data is safe.
+                We encountered an unexpected error. Don&apos;t worry, your data is safe.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">

@@ -102,7 +102,7 @@ export function UpcomingFood({ lawrencevilleFood, zelienopleFood }: UpcomingFood
         </div>
 
         <div className="text-center">
-          <Button asChild variant="default" size="lg">
+          <Button asChild variant="outline" size="lg">
             <Link href="/food">
               View All
             </Link>

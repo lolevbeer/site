@@ -1,11 +1,12 @@
 /**
  * Custom hook for location state management
- * Provides location state with localStorage persistence and helper functions
+ * Provides location state with localStorage persistence, URL sync, and helper functions
  */
 
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useQueryState, parseAsString } from 'nuqs';
 import { Location, LocationInfo } from '@/lib/types/location';
 import {
   DEFAULT_LOCATION,
@@ -81,26 +82,43 @@ function saveLocationToStorage(location: Location): void {
 
 /**
  * Custom hook for managing location state
+ * Syncs location between URL params, localStorage, and React state
  */
 export function useLocation(): UseLocationReturn {
   const [currentLocation, setCurrentLocationState] = useState<Location>(DEFAULT_LOCATION);
   const [isClient, setIsClient] = useState(false);
 
-  // Initialize from localStorage on client mount
+  // URL state for location - allows sharing URLs with location preset
+  const [urlLocation, setUrlLocation] = useQueryState('loc', parseAsString);
+
+  // Initialize from URL param first, then localStorage on client mount
   useEffect(() => {
     setIsClient(true);
+
+    // Priority: URL param > localStorage > default
+    if (urlLocation) {
+      const locationFromUrl = getLocationByValue(urlLocation);
+      if (locationFromUrl) {
+        setCurrentLocationState(locationFromUrl);
+        saveLocationToStorage(locationFromUrl);
+        return;
+      }
+    }
+
     const storedLocation = getStoredLocation();
     setCurrentLocationState(storedLocation);
-  }, []);
+  }, [urlLocation]);
 
   // Get current location info
   const locationInfo = getLocationInfo(currentLocation);
 
-  // Set location with persistence
+  // Set location with persistence (localStorage + URL)
   const setLocation = useCallback((location: Location) => {
     setCurrentLocationState(location);
     saveLocationToStorage(location);
-  }, []);
+    // Update URL param for shareable links
+    setUrlLocation(location);
+  }, [setUrlLocation]);
 
   // Toggle between locations
   const toggleLocation = useCallback(() => {

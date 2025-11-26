@@ -34,7 +34,7 @@ interface BeerCardProps {
   showPricing?: boolean;
   showAvailability?: boolean;
   className?: string;
-  variant?: 'full' | 'compact' | 'minimal';
+  variant?: 'full' | 'minimal';
   priority?: boolean;
 }
 
@@ -58,9 +58,15 @@ export const BeerCard = React.memo(function BeerCard({
   // Minimal variant uses simple card structure without BaseCard - matches homepage cans style
   if (variant === 'minimal') {
     const GlassIcon = getGlassIcon(beer.glass);
+    const beerHref = showLocation ? `/${currentLocation}/beer/${beerSlug}` : `/beer/${beerSlug}`;
+
     return (
-      <div className="group flex flex-col">
-        <div className="relative h-64 w-full flex-shrink-0 mb-4">
+      <Link
+        href={beerHref}
+        onClick={() => trackBeerView(beer.name, beer.type)}
+        className="group flex flex-col cursor-pointer"
+      >
+        <div className="relative h-64 w-full flex-shrink-0 mb-4 transition-transform duration-200 group-hover:scale-[1.02]">
           <BeerImage
             beer={beer}
             className="w-full h-full"
@@ -79,9 +85,9 @@ export const BeerCard = React.memo(function BeerCard({
             {beer.availability.tap && (
               <HoverCard openDelay={200}>
                 <HoverCardTrigger asChild>
-                  <div className="inline-flex items-center justify-center cursor-help">
+                  <span className="inline-flex items-center justify-center cursor-help" onClick={(e) => e.preventDefault()}>
                     <GlassIcon className="h-4 w-4" />
-                  </div>
+                  </span>
                 </HoverCardTrigger>
                 <HoverCardContent side="top" className="w-auto p-2">
                   <p className="text-xs">Pouring</p>
@@ -90,15 +96,10 @@ export const BeerCard = React.memo(function BeerCard({
             )}
           </div>
         </div>
-        <Button asChild variant="outline" size="default" className="w-full">
-          <Link
-            href={showLocation ? `/${currentLocation}/beer/${beerSlug}` : `/beer/${beerSlug}`}
-            onClick={() => trackBeerView(beer.name, beer.type)}
-          >
-            View Details
-          </Link>
+        <Button variant="outline" className="w-full group-hover:bg-muted/50" tabIndex={-1}>
+          View Details
         </Button>
-      </div>
+      </Link>
     );
   }
 
@@ -136,30 +137,28 @@ export const BeerCard = React.memo(function BeerCard({
         {beer.description}
       </p>
 
-      {beer.hops && variant === 'full' && (
+      {beer.hops && (
         <div>
           <p className="text-xs font-medium text-muted-foreground mb-1">Hops:</p>
           <p className="text-sm">{beer.hops}</p>
         </div>
       )}
 
-      {variant === 'full' && (
-        <div className="space-y-2">
-          {showAvailability && (
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Available:</span>
-              <span className="font-medium">{getBeerAvailability(beer)}</span>
-            </div>
-          )}
+      <div className="space-y-2">
+        {showAvailability && (
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Available:</span>
+            <span className="font-medium">{getBeerAvailability(beer)}</span>
+          </div>
+        )}
 
-          {showPricing && (
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Pricing:</span>
-              <span className="font-medium">{getBeerPricing(beer)}</span>
-            </div>
-          )}
-        </div>
-      )}
+        {showPricing && (
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Pricing:</span>
+            <span className="font-medium">{getBeerPricing(beer)}</span>
+          </div>
+        )}
+      </div>
     </>
   );
 
@@ -191,13 +190,10 @@ export const BeerCard = React.memo(function BeerCard({
     </div>
   );
 
-  // Map our variants to BaseCard variants
-  const baseCardVariant = variant === 'full' ? 'detailed' : variant;
-
   return (
     <BaseCard
       item={beer}
-      variant={baseCardVariant}
+      variant="detailed"
       className={`group ${className}`}
       renderHeader={renderHeader}
       renderContent={renderContent}
@@ -209,7 +205,7 @@ export const BeerCard = React.memo(function BeerCard({
 export const BeerCardSkeleton = React.memo(function BeerCardSkeleton({
   variant = 'full'
 }: {
-  variant?: 'full' | 'compact' | 'minimal'
+  variant?: 'full' | 'minimal'
 }) {
   if (variant === 'minimal') {
     return (
@@ -224,9 +220,7 @@ export const BeerCardSkeleton = React.memo(function BeerCardSkeleton({
       </div>
     );
   }
-  // Map our variants to BaseCard skeleton variants
-  const baseCardVariant = variant === 'full' ? 'detailed' : variant;
-  return <CardSkeleton variant={baseCardVariant} lines={4} />;
+  return <CardSkeleton variant="detailed" lines={4} />;
 });
 
 export default BeerCard;

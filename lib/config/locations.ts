@@ -195,6 +195,9 @@ export function getFormattedHours(location: Location, day: keyof LocationInfo['h
     const [hours, minutes] = time.split(':').map(Number);
     const ampm = hours >= 12 ? 'PM' : 'AM';
     const displayHours = hours % 12 || 12;
+    if (minutes === 0) {
+      return `${displayHours} ${ampm}`;
+    }
     return `${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
   };
 

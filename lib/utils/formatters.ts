@@ -10,56 +10,36 @@ import { CuisineType, DietaryOption, FoodVendorType } from '@/lib/types/food';
 /**
  * Time formatting utilities
  */
+function convertTo12Hour(hour: number, mins: number, compact = false): string {
+  const ampm = hour >= 12 ? 'pm' : 'am';
+  const hour12 = hour % 12 || 12;
+  return mins === 0 && compact ? `${hour12}${ampm}` : `${hour12}:${mins.toString().padStart(2, '0')}${ampm}`;
+}
+
 export function formatTime(timeString: string, options: { compact?: boolean } = {}): string {
   if (!timeString) return '';
 
-  try {
-    // Handle already formatted 12-hour time (e.g., "7:00 PM", "7pm")
-    const match12h = timeString.match(/(\d{1,2})(?::(\d{2}))?\s*(AM|PM|am|pm)/i);
-    if (match12h) {
-      const hour = parseInt(match12h[1]);
-      const mins = parseInt(match12h[2] || '0');
-      const ampm = match12h[3].toLowerCase();
-      return mins === 0 && options.compact
-        ? `${hour}${ampm}`
-        : `${hour}:${mins.toString().padStart(2, '0')}${ampm}`;
-    }
-
-    // Handle 24-hour format (e.g., "19:00")
-    const match24h = timeString.match(/(\d{1,2}):(\d{2})/);
-    if (match24h) {
-      const hour = parseInt(match24h[1]);
-      const mins = parseInt(match24h[2]);
-      const ampm = hour >= 12 ? 'pm' : 'am';
-      const hour12 = hour % 12 || 12;
-      return mins === 0 && options.compact
-        ? `${hour12}${ampm}`
-        : `${hour12}:${mins.toString().padStart(2, '0')}${ampm}`;
-    }
-
-    return timeString.toLowerCase();
-  } catch {
-    return timeString;
+  const match12h = timeString.match(/(\d{1,2})(?::(\d{2}))?\s*(AM|PM|am|pm)/i);
+  if (match12h) {
+    return convertTo12Hour(parseInt(match12h[1]), parseInt(match12h[2] || '0'), options.compact);
   }
+
+  const match24h = timeString.match(/(\d{1,2}):(\d{2})/);
+  if (match24h) {
+    return convertTo12Hour(parseInt(match24h[1]), parseInt(match24h[2]), options.compact);
+  }
+
+  return timeString.toLowerCase();
 }
 
 export function parseTimeRange(timeString: string): { time: string; endTime?: string } {
   if (!timeString) return { time: '' };
 
-  // Handle time ranges like "7pm-10pm" or "7:00 PM - 10:00 PM"
-  const rangeSeparators = [' - ', '-', ' to ', '–'];
-
-  for (const separator of rangeSeparators) {
-    if (timeString.includes(separator)) {
-      const [startTime, endTime] = timeString.split(separator).map(t => t.trim());
-      return {
-        time: formatTime(startTime),
-        endTime: formatTime(endTime)
-      };
-    }
+  const parts = timeString.split(/\s*(?:-|–| to )\s*/);
+  if (parts.length === 2) {
+    return { time: formatTime(parts[0]), endTime: formatTime(parts[1]) };
   }
 
-  // Single time, no range
   return { time: formatTime(timeString) };
 }
 
@@ -119,8 +99,42 @@ export function formatPriceRange(priceRange?: number): string {
 /**
  * Beer-specific formatters
  */
-export function formatAbv(abv: number): string {
-  return `${abv.toFixed(1)}%`;
+export function formatAbv(abv: number, includeLabel = false): string {
+  return `${abv.toFixed(1)}%${includeLabel ? ' ABV' : ''}`;
+}
+
+/**
+ * Date comparison helpers for filtering events/schedules
+ */
+export function isToday(dateString: string): boolean {
+  const date = parseLocalDate(dateString.split('T')[0]);
+  const today = new Date();
+  return date.toDateString() === today.toDateString();
+}
+
+export function isFuture(dateString: string): boolean {
+  const date = parseLocalDate(dateString.split('T')[0]);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  date.setHours(0, 0, 0, 0);
+  return date.getTime() > today.getTime();
+}
+
+export function isTodayOrFuture(dateString: string): boolean {
+  const date = parseLocalDate(dateString.split('T')[0]);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  date.setHours(0, 0, 0, 0);
+  return date.getTime() >= today.getTime();
+}
+
+export function partitionByDate<T extends { date: string }>(
+  items: T[]
+): { today: T[]; upcoming: T[] } {
+  return {
+    today: items.filter(item => isToday(item.date)),
+    upcoming: items.filter(item => isFuture(item.date)),
+  };
 }
 
 export function getBeerSlug(beer: Beer): string {
@@ -128,51 +142,35 @@ export function getBeerSlug(beer: Beer): string {
 }
 
 export function getBeerAvailability(beer: Beer): string {
-  const availability = [];
-
-  if (beer.availability.tap) {
-    availability.push(`Tap ${beer.availability.tap}`);
-  }
-  if (beer.availability.cansAvailable) {
-    availability.push('Cans');
-  }
-  if (beer.availability.singleCanAvailable) {
-    availability.push('Singles');
-  }
-
-  return availability.length > 0 ? availability.join(' • ') : 'Limited';
+  const items = [
+    beer.availability.tap && `Tap ${beer.availability.tap}`,
+    beer.availability.cansAvailable && 'Cans',
+    beer.availability.singleCanAvailable && 'Singles'
+  ].filter(Boolean);
+  return items.length > 0 ? items.join(' • ') : 'Limited';
 }
 
 export function getBeerPricing(beer: Beer): string {
-  const pricing = [];
-
-  if (beer.pricing.draftPrice) {
-    pricing.push(`Draft ${formatPrice(beer.pricing.draftPrice)}`);
-  }
-  if (beer.pricing.canSingle || beer.pricing.cansSingle) {
-    const singlePrice = beer.pricing.canSingle || beer.pricing.cansSingle;
-    pricing.push(`Single ${formatPrice(singlePrice)}`);
-  }
-  if (beer.pricing.fourPack) {
-    pricing.push(`4 Pack ${formatPrice(beer.pricing.fourPack)}`);
-  }
-
-  return pricing.length > 0 ? pricing.join(' • ') : 'See store';
+  const items = [
+    beer.pricing.draftPrice && `Draft ${formatPrice(beer.pricing.draftPrice)}`,
+    (beer.pricing.canSingle || beer.pricing.cansSingle) && `Single ${formatPrice(beer.pricing.canSingle || beer.pricing.cansSingle)}`,
+    beer.pricing.fourPack && `4 Pack ${formatPrice(beer.pricing.fourPack)}`
+  ].filter(Boolean);
+  return items.length > 0 ? items.join(' • ') : 'See store';
 }
 
 /**
  * Generic enum formatter - converts SNAKE_CASE to Title Case
  */
 export function formatEnum(value: string | undefined, defaultValue = ''): string {
-  if (!value) return defaultValue;
-  return value.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  return value ? value.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : defaultValue;
 }
 
 /**
  * Event-specific formatters
  */
 export const formatEventType = (type: EventType) => formatEnum(String(type));
-export const formatEventStatus = (status: EventStatus) => formatEnum(status).toUpperCase();
+export const formatEventStatus = (status: EventStatus) => formatEnum(status);
 
 export function getEventStatusVariant(status: EventStatus): 'default' | 'secondary' | 'destructive' | 'outline' {
   const variants: Record<EventStatus, 'default' | 'secondary' | 'destructive' | 'outline'> = {

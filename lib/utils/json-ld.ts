@@ -104,31 +104,8 @@ export interface OfferJsonLd {
  * Get location Place data for JSON-LD
  */
 function getLocationPlace(location: Location): PlaceJsonLd {
-  // Default to Lawrenceville if location is invalid
-  const validLocation = location || Location.LAWRENCEVILLE;
-  const locationInfo = LOCATIONS_DATA[validLocation];
-  const coordinates = LOCATION_COORDINATES[validLocation];
-
-  // Fallback in case location data is still missing
-  if (!locationInfo) {
-    return {
-      '@type': 'Place',
-      name: 'Lolev Beer',
-      address: {
-        '@type': 'PostalAddress',
-        streetAddress: '5247 Butler Street',
-        addressLocality: 'Pittsburgh',
-        addressRegion: 'PA',
-        postalCode: '15201',
-        addressCountry: 'US'
-      },
-      geo: {
-        '@type': 'GeoCoordinates',
-        latitude: 40.4649,
-        longitude: -79.9603
-      }
-    };
-  }
+  const locationInfo = LOCATIONS_DATA[location || Location.LAWRENCEVILLE];
+  const coordinates = LOCATION_COORDINATES[location || Location.LAWRENCEVILLE];
 
   return {
     '@type': 'Place',
@@ -173,10 +150,6 @@ function getEventStatus(status: EventStatus): string {
   const statusMap: Record<EventStatus, string> = {
     [EventStatus.CANCELLED]: 'https://schema.org/EventCancelled',
     [EventStatus.POSTPONED]: 'https://schema.org/EventPostponed',
-    [EventStatus.SCHEDULED]: 'https://schema.org/EventScheduled',
-    [EventStatus.SOLD_OUT]: 'https://schema.org/EventScheduled',
-    [EventStatus.COMPLETED]: 'https://schema.org/EventScheduled',
-    [EventStatus.DRAFT]: 'https://schema.org/EventScheduled',
   };
   return statusMap[status] || 'https://schema.org/EventScheduled';
 }
@@ -186,21 +159,15 @@ function getEventStatus(status: EventStatus): string {
  */
 function parseTime(timeStr: string): { hours: number; minutes: number } {
   const match = timeStr.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
-  if (!match) return { hours: 18, minutes: 0 }; // Default to 6pm
+  if (!match) return { hours: 18, minutes: 0 };
 
   let hours = parseInt(match[1]);
-  const minutes = match[2] ? parseInt(match[2]) : 0;
+  const minutes = parseInt(match[2] || '0');
   const meridiem = match[3]?.toLowerCase();
 
-  // Convert to 24-hour format
-  if (meridiem === 'pm' && hours !== 12) {
-    hours += 12;
-  } else if (meridiem === 'am' && hours === 12) {
-    hours = 0;
-  } else if (!meridiem && hours < 12) {
-    // Assume PM for times without meridiem if less than 12
-    hours += 12;
-  }
+  if (meridiem === 'pm' && hours !== 12) hours += 12;
+  else if (meridiem === 'am' && hours === 12) hours = 0;
+  else if (!meridiem && hours < 12) hours += 12;
 
   return { hours, minutes };
 }
@@ -211,30 +178,21 @@ function parseTime(timeStr: string): { hours: number; minutes: number } {
 function toISO8601(date: string, time?: string, endTime?: string): { startDate: string; endDate?: string } {
   const eventDate = parseLocalDate(date);
 
-  if (!time) {
-    // If no time specified, use the date only
-    return {
-      startDate: eventDate.toISOString().split('T')[0]
-    };
-  }
+  if (!time) return { startDate: eventDate.toISOString().split('T')[0] };
 
   const { hours, minutes } = parseTime(time);
   eventDate.setHours(hours, minutes, 0, 0);
 
-  const startDate = eventDate.toISOString();
-  let endDateStr: string | undefined;
+  const result = { startDate: eventDate.toISOString(), endDate: undefined as string | undefined };
 
   if (endTime) {
     const endEventDate = new Date(eventDate);
-    const endParsed = parseTime(endTime);
-    endEventDate.setHours(endParsed.hours, endParsed.minutes, 0, 0);
-    endDateStr = endEventDate.toISOString();
+    const { hours: endHours, minutes: endMinutes } = parseTime(endTime);
+    endEventDate.setHours(endHours, endMinutes, 0, 0);
+    result.endDate = endEventDate.toISOString();
   }
 
-  return {
-    startDate,
-    endDate: endDateStr
-  };
+  return result;
 }
 
 /**
@@ -265,12 +223,12 @@ interface CSVFood {
 /**
  * Create base event JSON-LD structure with common fields
  */
-function createBaseEventJsonLd(name: string, location: Location): EventJsonLd {
+function createBaseEventJsonLd(name: string, location: Location, startDate = new Date().toISOString()): EventJsonLd {
   return {
     '@context': 'https://schema.org',
     '@type': 'Event',
     name,
-    startDate: new Date().toISOString(),
+    startDate,
     eventStatus: 'https://schema.org/EventScheduled',
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
     location: getLocationPlace(location),

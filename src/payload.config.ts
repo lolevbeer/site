@@ -13,8 +13,10 @@ import { Beers } from './collections/Beers'
 import { Events } from './collections/Events'
 import { Food } from './collections/Food'
 import { Locations } from './collections/Locations'
+import { HolidayHours } from './collections/HolidayHours'
 import { Menus } from './collections/Menus'
 import { ComingSoon } from './globals/ComingSoon'
+import { SiteContent } from './globals/SiteContent'
 import { syncGoogleSheets } from './endpoints/sync-google-sheets'
 
 const filename = fileURLToPath(import.meta.url)
@@ -26,12 +28,30 @@ export default buildConfig({
     importMap: {
       baseDir: path.resolve(dirname),
     },
+    components: {
+      graphics: {
+        Logo: './components/AdminLogo#AdminLogo',
+        Icon: './components/AdminLogo#AdminIcon',
+      },
+      providers: ['./components/AdminNavLink#AdminNavLink'],
+      actions: ['./components/ViewSiteLink#ViewSiteLink'],
+      afterNavLinks: ['./components/SyncNavLink#SyncNavLink'],
+      views: {
+        syncGoogleSheets: {
+          Component: './components/SyncView#SyncView',
+          path: '/sync',
+          meta: {
+            title: 'Sync Google Sheets',
+          },
+        },
+      },
+    },
   },
-  collections: [Users, Media, Styles, Beers, Events, Food, Locations, Menus],
+  collections: [Users, Media, Styles, Beers, Events, Food, Locations, HolidayHours, Menus],
   cookieOptions: {
     maxAge: 72 * 60 * 60, // 72 hours in seconds
   },
-  globals: [ComingSoon],
+  globals: [ComingSoon, SiteContent],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {

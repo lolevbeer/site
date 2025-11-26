@@ -1,6 +1,7 @@
 import React from "react";
 import type { Metadata, Viewport } from "next";
 import { Poppins } from "next/font/google";
+import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import { LocationProvider } from "@/components/location/location-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { ConditionalLayout } from "@/components/layout/conditional-layout";
@@ -9,6 +10,7 @@ import { ErrorBoundary } from "@/components/error-boundary";
 import { SkipNav } from "@/components/ui/skip-nav";
 import { GoogleAnalytics } from "@/components/analytics/google-analytics";
 import { PageViewTracker } from "@/components/analytics/page-view-tracker";
+import { getAllLocations, getWeeklyHoursWithHolidays, type WeeklyHoursDay } from "@/lib/utils/payload-api";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -83,11 +85,21 @@ export const metadata: Metadata = {
   },
 };
 
-export default function AppLayout({
+export default async function AppLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Fetch weekly hours with holiday overrides for footer
+  const locations = await getAllLocations();
+  const weeklyHoursEntries = await Promise.all(
+    locations.map(async (location) => {
+      const hours = await getWeeklyHoursWithHolidays(location.id);
+      return [location.slug || location.id, hours] as const;
+    })
+  );
+  const weeklyHours: Record<string, WeeklyHoursDay[]> = Object.fromEntries(weeklyHoursEntries);
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -123,14 +135,16 @@ export default function AppLayout({
             themes={['light', 'dark']}
             storageKey="lolev-theme"
           >
-            <LocationProvider>
-              <PageViewTracker />
-              <SkipNav />
-              <ConditionalLayout>
-                {children}
-              </ConditionalLayout>
-              <Toaster />
-            </LocationProvider>
+            <NuqsAdapter>
+              <LocationProvider>
+                <PageViewTracker />
+                <SkipNav />
+                <ConditionalLayout weeklyHours={weeklyHours}>
+                  {children}
+                </ConditionalLayout>
+                <Toaster />
+              </LocationProvider>
+            </NuqsAdapter>
           </ThemeProvider>
         </ErrorBoundary>
       </body>

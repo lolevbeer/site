@@ -13,9 +13,29 @@ export const Media: CollectionConfig = {
     mimeTypes: ['image/png', 'image/jpg', 'image/jpeg', 'image/webp'],
     imageSizes: [
       {
+        name: 'thumbnail',
+        width: 150,
+        height: 150,
+        position: 'centre',
+        crop: 'attention',
+        formatOptions: {
+          format: 'webp',
+        },
+      },
+      {
         name: 'card',
-        width: 250,
-        height: 250,
+        width: 500,
+        height: 500,
+        position: 'centre',
+        crop: 'attention',
+        formatOptions: {
+          format: 'webp',
+        },
+      },
+      {
+        name: 'detail',
+        width: 1200,
+        height: 1200,
         position: 'centre',
         crop: 'attention',
         formatOptions: {

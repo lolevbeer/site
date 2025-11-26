@@ -1,6 +1,5 @@
 import { getMenuByUrl } from '@/lib/utils/payload-api'
-import { FeaturedBeers } from '@/components/home/featured-beers'
-import { FeaturedCans } from '@/components/home/featured-cans'
+import { FeaturedBeers, FeaturedCans } from '@/components/home/featured-menu'
 import { notFound } from 'next/navigation'
 
 interface MenuPageProps {

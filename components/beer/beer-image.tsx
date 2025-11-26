@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { Beer as BeerIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface BeerImageProps {
@@ -19,7 +18,8 @@ interface BeerImageProps {
 
 export function BeerImage({ beer, className, priority = false, sizes }: BeerImageProps) {
   const [imageError, setImageError] = useState(false);
-  const imagePath = `/images/beer/${beer.variant}.webp`;
+  // Use PNG for high resolution (2500x2500) instead of webp (386x405)
+  const imagePath = `/images/beer/${beer.variant}.png`;
 
   // Show fallback if image flag is false or if image failed to load
   if (!beer.image || imageError) {

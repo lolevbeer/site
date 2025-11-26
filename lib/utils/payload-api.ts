@@ -6,7 +6,7 @@
 import { getPayload } from 'payload'
 import config from '@/src/payload.config'
 import { cache } from 'react'
-import type { Beer as PayloadBeer, Menu as PayloadMenu, Style, Media } from '@/src/payload-types'
+import type { Beer as PayloadBeer, Menu as PayloadMenu, Style, Media, HolidayHour, Location as PayloadLocation } from '@/src/payload-types'
 import { logger } from '@/lib/utils/logger'
 
 /**
@@ -127,11 +127,6 @@ export const getDraftMenu = cache(async (locationSlug: string): Promise<PayloadM
     const menus = await getMenusByLocation(locationSlug)
     const draftMenu = menus.find(menu => menu.type === 'draft') || null
 
-    // Debug logging
-    if (draftMenu) {
-      console.log(`🍺 Draft menu for ${locationSlug}: ${draftMenu.items?.length || 0} items`)
-    }
-
     return draftMenu
   } catch (error) {
     logger.error(`Error fetching draft menu for location: ${locationSlug}`, error)
@@ -146,11 +141,6 @@ export const getCansMenu = cache(async (locationSlug: string): Promise<PayloadMe
   try {
     const menus = await getMenusByLocation(locationSlug)
     const cansMenu = menus.find(menu => menu.type === 'cans') || null
-
-    // Debug logging
-    if (cansMenu) {
-      console.log(`📦 Cans menu for ${locationSlug}: ${cansMenu.items?.length || 0} items`)
-    }
 
     // Sort menu items by beer recipe (descending - newest first)
     if (cansMenu && cansMenu.items) {
@@ -266,6 +256,8 @@ export function getImageUrl(image: string | Media | null | undefined): string | 
   return image.url || undefined
 }
 
+// getBeerImageUrl moved to formatters.ts for client-side compatibility
+
 /**
  * Get available beers from all location menus
  * Returns unique beers that appear on any published menu
@@ -333,5 +325,313 @@ export const getComingSoonBeers = cache(async () => {
   } catch (error) {
     logger.error('Error fetching coming soon beers', error)
     return []
+  }
+})
+
+/**
+ * Fetch a global by slug
+ */
+export const fetchGlobal = cache(async (slug: string) => {
+  try {
+    const payload = await getPayloadInstance()
+    const result = await payload.findGlobal({
+      slug,
+      depth: 0,
+    })
+    return result
+  } catch (error) {
+    logger.error(`Error fetching global: ${slug}`, error)
+    return null
+  }
+})
+
+/**
+ * Get holiday hours override for a specific location and date
+ * Returns the override if one exists, null otherwise
+ */
+export const getHolidayHours = cache(async (locationId: string, date: Date): Promise<HolidayHour | null> => {
+  try {
+    const payload = await getPayloadInstance()
+
+    // Format date to match Payload date storage (YYYY-MM-DD)
+    const dateStr = date.toISOString().split('T')[0]
+
+    const result = await payload.find({
+      collection: 'holiday-hours',
+      where: {
+        and: [
+          {
+            locations: {
+              contains: locationId,
+            },
+          },
+          {
+            date: {
+              equals: dateStr,
+            },
+          },
+        ],
+      },
+      limit: 1,
+      depth: 1,
+    })
+
+    return result.docs[0] || null
+  } catch (error) {
+    logger.error(`Error fetching holiday hours for location ${locationId} on ${date}`, error)
+    return null
+  }
+})
+
+/**
+ * Get all holiday hours for a location (upcoming and recent)
+ * Useful for displaying a list of special hours
+ */
+export const getHolidayHoursForLocation = cache(async (locationId: string): Promise<HolidayHour[]> => {
+  try {
+    const payload = await getPayloadInstance()
+
+    // Get overrides from 30 days ago to future
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+    const dateStr = thirtyDaysAgo.toISOString().split('T')[0]
+
+    const result = await payload.find({
+      collection: 'holiday-hours',
+      where: {
+        and: [
+          {
+            locations: {
+              contains: locationId,
+            },
+          },
+          {
+            date: {
+              greater_than_equal: dateStr,
+            },
+          },
+        ],
+      },
+      sort: 'date',
+      limit: 100,
+      depth: 1,
+    })
+
+    return result.docs
+  } catch (error) {
+    logger.error(`Error fetching holiday hours for location ${locationId}`, error)
+    return []
+  }
+})
+
+/**
+ * Get location by slug with holiday hours check for today
+ * Returns location data with any applicable holiday hours override
+ */
+export const getLocationWithHolidayHours = cache(async (locationSlug: string, date?: Date): Promise<{
+  location: PayloadLocation | null
+  holidayHours: HolidayHour | null
+}> => {
+  try {
+    const payload = await getPayloadInstance()
+
+    const locationResult = await payload.find({
+      collection: 'locations',
+      where: {
+        slug: {
+          equals: locationSlug,
+        },
+      },
+      limit: 1,
+    })
+
+    const location = locationResult.docs[0] || null
+
+    if (!location) {
+      return { location: null, holidayHours: null }
+    }
+
+    // Check for override on the specified date (or today)
+    const checkDate = date || new Date()
+    const holidayHours = await getHolidayHours(location.id, checkDate)
+
+    return { location, holidayHours }
+  } catch (error) {
+    logger.error(`Error fetching location with holiday hours: ${locationSlug}`, error)
+    return { location: null, holidayHours: null }
+  }
+})
+
+export type DayOfWeek = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday'
+
+export interface WeeklyHoursDay {
+  day: DayOfWeek
+  date: Date
+  open: string | null
+  close: string | null
+  closed: boolean
+  holidayName?: string
+  note?: string
+  timezone?: string
+}
+
+/**
+ * Get the current week's hours for a location with holiday overrides applied
+ * Returns an array of 7 days starting from Monday of the current week
+ */
+export const getWeeklyHoursWithHolidays = cache(async (locationId: string): Promise<WeeklyHoursDay[]> => {
+  try {
+    const payload = await getPayloadInstance()
+
+    // Get the location
+    const locationResult = await payload.find({
+      collection: 'locations',
+      where: {
+        id: {
+          equals: locationId,
+        },
+      },
+      limit: 1,
+    })
+
+    const location = locationResult.docs[0]
+    if (!location) {
+      return []
+    }
+
+    // Calculate the start of the current week (Monday)
+    const now = new Date()
+    const dayOfWeek = now.getDay()
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
+    const monday = new Date(now)
+    monday.setDate(now.getDate() + mondayOffset)
+    monday.setHours(0, 0, 0, 0)
+
+    // Calculate the end of the week (Sunday)
+    const sunday = new Date(monday)
+    sunday.setDate(monday.getDate() + 6)
+
+    // Format dates for query
+    const startDateStr = monday.toISOString().split('T')[0]
+    const endDateStr = sunday.toISOString().split('T')[0]
+
+    // Get all holiday hours for this location within this week
+    const holidayResult = await payload.find({
+      collection: 'holiday-hours',
+      where: {
+        and: [
+          {
+            locations: {
+              contains: locationId,
+            },
+          },
+          {
+            date: {
+              greater_than_equal: startDateStr,
+            },
+          },
+          {
+            date: {
+              less_than_equal: endDateStr,
+            },
+          },
+        ],
+      },
+      limit: 7,
+      depth: 0,
+    })
+
+    // Create a map of holiday overrides by date string
+    const holidayMap = new Map<string, HolidayHour>()
+    for (const holiday of holidayResult.docs) {
+      const dateStr = holiday.date.split('T')[0]
+      holidayMap.set(dateStr, holiday)
+    }
+
+    // Build the weekly hours array
+    const days: DayOfWeek[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+    const weeklyHours: WeeklyHoursDay[] = []
+
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(monday)
+      date.setDate(monday.getDate() + i)
+      const dateStr = date.toISOString().split('T')[0]
+      const dayName = days[i]
+
+      // Check if there's a holiday override for this day
+      const holiday = holidayMap.get(dateStr)
+      const timezone = location.timezone || 'America/New_York'
+
+      if (holiday) {
+        // Use holiday hours
+        if (holiday.type === 'closed') {
+          weeklyHours.push({
+            day: dayName,
+            date,
+            open: null,
+            close: null,
+            closed: true,
+            holidayName: holiday.name,
+            note: holiday.note || undefined,
+            timezone,
+          })
+        } else {
+          // Modified hours
+          weeklyHours.push({
+            day: dayName,
+            date,
+            open: holiday.hours?.open || null,
+            close: holiday.hours?.close || null,
+            closed: false,
+            holidayName: holiday.name,
+            note: holiday.note || undefined,
+            timezone,
+          })
+        }
+      } else {
+        // Use regular hours from location
+        const regularHours = location[dayName] as { open?: string | null; close?: string | null } | undefined
+        const hasHours = regularHours?.open && regularHours?.close
+
+        weeklyHours.push({
+          day: dayName,
+          date,
+          open: regularHours?.open || null,
+          close: regularHours?.close || null,
+          closed: !hasHours,
+          timezone,
+        })
+      }
+    }
+
+    return weeklyHours
+  } catch (error) {
+    logger.error(`Error fetching weekly hours with holidays for location ${locationId}`, error)
+    return []
+  }
+})
+
+/**
+ * Get weekly hours for all active locations
+ * Returns a map of location slug to weekly hours
+ */
+export const getAllLocationsWeeklyHours = cache(async (): Promise<Map<string, WeeklyHoursDay[]>> => {
+  try {
+    const locations = await getAllLocations()
+    const hoursMap = new Map<string, WeeklyHoursDay[]>()
+
+    await Promise.all(
+      locations.map(async (location) => {
+        const weeklyHours = await getWeeklyHoursWithHolidays(location.id)
+        if (location.slug) {
+          hoursMap.set(location.slug, weeklyHours)
+        }
+      })
+    )
+
+    return hoursMap
+  } catch (error) {
+    logger.error('Error fetching all locations weekly hours', error)
+    return new Map()
   }
 })

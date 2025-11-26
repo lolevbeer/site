@@ -74,6 +74,7 @@ export interface Config {
     events: Event;
     food: Food;
     locations: Location;
+    'holiday-hours': HolidayHour;
     menus: Menu;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
@@ -89,6 +90,7 @@ export interface Config {
     events: EventsSelect<false> | EventsSelect<true>;
     food: FoodSelect<false> | FoodSelect<true>;
     locations: LocationsSelect<false> | LocationsSelect<true>;
+    'holiday-hours': HolidayHoursSelect<false> | HolidayHoursSelect<true>;
     menus: MenusSelect<false> | MenusSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -100,9 +102,11 @@ export interface Config {
   };
   globals: {
     'coming-soon': ComingSoon;
+    'site-content': SiteContent;
   };
   globalsSelect: {
     'coming-soon': ComingSoonSelect<false> | ComingSoonSelect<true>;
+    'site-content': SiteContentSelect<false> | SiteContentSelect<true>;
   };
   locale: null;
   user: User & {
@@ -178,7 +182,23 @@ export interface Media {
   focalX?: number | null;
   focalY?: number | null;
   sizes?: {
+    thumbnail?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
     card?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    detail?: {
       url?: string | null;
       width?: number | null;
       height?: number | null;
@@ -292,6 +312,10 @@ export interface Event {
    * Expected or registered attendees
    */
   attendees?: number | null;
+  /**
+   * Where this record originated
+   */
+  source?: ('payload' | 'google-sheets') | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -306,6 +330,10 @@ export interface Location {
    */
   active?: boolean | null;
   name: string;
+  /**
+   * Timezone for this location's hours
+   */
+  timezone?: ('America/New_York' | 'America/Chicago' | 'America/Denver' | 'America/Los_Angeles') | null;
   /**
    * Auto-generated from name (lowercase, spaces to dashes)
    */
@@ -391,6 +419,54 @@ export interface Food {
    * Day number (1-7)
    */
   dayNumber?: number | null;
+  /**
+   * Where this record originated
+   */
+  source?: ('payload' | 'google-sheets') | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Holiday and special hours overrides for locations
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "holiday-hours".
+ */
+export interface HolidayHour {
+  id: string;
+  /**
+   * Name for this override (e.g., "Christmas Day", "New Year's Eve")
+   */
+  name: string;
+  /**
+   * Which location(s) this override applies to
+   */
+  locations: (string | Location)[];
+  /**
+   * The date this override applies to
+   */
+  date: string;
+  /**
+   * Type of override
+   */
+  type: 'closed' | 'modified';
+  /**
+   * Override hours (only used when type is "Modified Hours")
+   */
+  hours?: {
+    /**
+     * Opening time
+     */
+    open?: string | null;
+    /**
+     * Closing time
+     */
+    close?: string | null;
+  };
+  /**
+   * Optional note to display (e.g., "Closed for the holiday")
+   */
+  note?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -482,6 +558,10 @@ export interface PayloadLockedDocument {
         value: string | Location;
       } | null)
     | ({
+        relationTo: 'holiday-hours';
+        value: string | HolidayHour;
+      } | null)
+    | ({
         relationTo: 'menus';
         value: string | Menu;
       } | null);
@@ -570,7 +650,27 @@ export interface MediaSelect<T extends boolean = true> {
   sizes?:
     | T
     | {
+        thumbnail?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
         card?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        detail?:
           | T
           | {
               url?: T;
@@ -629,6 +729,7 @@ export interface EventsSelect<T extends boolean = true> {
   site?: T;
   description?: T;
   attendees?: T;
+  source?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -647,6 +748,7 @@ export interface FoodSelect<T extends boolean = true> {
   finish?: T;
   week?: T;
   dayNumber?: T;
+  source?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -657,6 +759,7 @@ export interface FoodSelect<T extends boolean = true> {
 export interface LocationsSelect<T extends boolean = true> {
   active?: T;
   name?: T;
+  timezone?: T;
   slug?: T;
   basicInfo?:
     | T
@@ -714,6 +817,25 @@ export interface LocationsSelect<T extends boolean = true> {
         open?: T;
         close?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "holiday-hours_select".
+ */
+export interface HolidayHoursSelect<T extends boolean = true> {
+  name?: T;
+  locations?: T;
+  date?: T;
+  type?: T;
+  hours?:
+    | T
+    | {
+        open?: T;
+        close?: T;
+      };
+  note?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -802,6 +924,19 @@ export interface ComingSoon {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-content".
+ */
+export interface SiteContent {
+  id: string;
+  heroDescription?: string | null;
+  errorMessage?: string | null;
+  todaysEventsTitle?: string | null;
+  todaysFoodTitle?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "coming-soon_select".
  */
 export interface ComingSoonSelect<T extends boolean = true> {
@@ -812,6 +947,19 @@ export interface ComingSoonSelect<T extends boolean = true> {
         style?: T;
         id?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-content_select".
+ */
+export interface SiteContentSelect<T extends boolean = true> {
+  heroDescription?: T;
+  errorMessage?: T;
+  todaysEventsTitle?: T;
+  todaysFoodTitle?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

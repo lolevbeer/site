@@ -9,6 +9,9 @@ export const Food: CollectionConfig = {
   admin: {
     useAsTitle: 'vendor',
     defaultColumns: ['vendor', 'date', 'location', 'time'],
+    pagination: {
+      defaultLimit: 100,
+    },
   },
   fields: [
     {
@@ -94,6 +97,19 @@ export const Food: CollectionConfig = {
       type: 'number',
       admin: {
         description: 'Day number (1-7)',
+      },
+    },
+    {
+      name: 'source',
+      type: 'select',
+      defaultValue: 'payload',
+      options: [
+        { label: 'Payload', value: 'payload' },
+        { label: 'Google Sheets', value: 'google-sheets' },
+      ],
+      admin: {
+        position: 'sidebar',
+        description: 'Where this record originated',
       },
     },
   ],

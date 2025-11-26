@@ -44,7 +44,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
       {/* Backdrop */}
       <div
         className={cn(
-          "fixed top-16 left-0 right-0 bottom-0 z-40 bg-black/10 transition-opacity duration-300 md:hidden",
+          "fixed top-16 left-0 right-0 bottom-0 z-40 bg-black/10 transition-opacity duration-200 md:hidden",
           isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         )}
         onClick={onClose}
@@ -54,7 +54,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
       {/* Mobile Menu Panel */}
       <div
         className={cn(
-          "fixed top-16 right-0 z-50 h-[calc(100vh-4rem)] w-full bg-background shadow-lg transition-transform duration-300 ease-in-out md:hidden overflow-hidden",
+          "fixed top-16 right-0 z-50 h-[calc(100vh-4rem)] w-full bg-background shadow-lg transition-transform duration-200 ease-out md:hidden overflow-hidden",
           isOpen ? "translate-x-0" : "translate-x-full"
         )}
         role="dialog"

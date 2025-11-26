@@ -11,17 +11,52 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Location, LocationDisplayNames } from '@/lib/types/location';
-import { getLocationInfo, isLocationOpen, getFormattedHours } from '@/lib/config/locations';
+import { getLocationInfo, isLocationOpen } from '@/lib/config/locations';
 import { cn } from '@/lib/utils';
+import type { WeeklyHoursDay, DayOfWeek } from '@/lib/utils/payload-api';
+
+function formatTime(time: string | null, timezone: string = 'America/New_York'): string {
+  if (!time) return '';
+  // Handle ISO date strings from Payload (time only fields store as full ISO)
+  if (time.includes('T')) {
+    const date = new Date(time);
+    const minutes = date.getMinutes();
+    return date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: minutes === 0 ? undefined : '2-digit',
+      hour12: true,
+      timeZone: timezone,
+    });
+  }
+  // Handle HH:mm format (legacy/fallback)
+  const [hours, minutes] = time.split(':').map(Number);
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const displayHours = hours % 12 || 12;
+  if (minutes === 0) {
+    return `${displayHours} ${ampm}`;
+  }
+  return `${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+}
+
+function formatHoursString(dayData: WeeklyHoursDay): string {
+  if (dayData.closed) return 'Closed';
+  return `${formatTime(dayData.open, dayData.timezone)} - ${formatTime(dayData.close, dayData.timezone)}`;
+}
 
 interface HoursPanelProps {
   locations?: Location[];
+  weeklyHours?: Record<string, WeeklyHoursDay[]>;
   className?: string;
 }
 
-export function HoursPanel({ locations = [Location.LAWRENCEVILLE, Location.ZELIENOPLE], className }: HoursPanelProps) {
+export function HoursPanel({
+  locations = [Location.LAWRENCEVILLE, Location.ZELIENOPLE],
+  weeklyHours,
+  className
+}: HoursPanelProps) {
   const now = new Date();
-  const currentDay = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][now.getDay()];
+  const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const currentDay = dayNames[now.getDay()] as DayOfWeek;
 
   return (
     <Card className={cn("p-0 border-0 shadow-none bg-transparent dark:bg-transparent", className)}>
@@ -34,7 +69,9 @@ export function HoursPanel({ locations = [Location.LAWRENCEVILLE, Location.ZELIE
         {locations.map((location) => {
           const locationInfo = getLocationInfo(location);
           const isOpen = isLocationOpen(location);
-          const todayHours = getFormattedHours(location, currentDay as keyof typeof locationInfo.hours);
+          const locationWeeklyHours = weeklyHours?.[location];
+          const todayData = locationWeeklyHours?.find(d => d.day === currentDay);
+          const todayHours = todayData ? formatHoursString(todayData) : 'Hours not available';
 
           return (
             <AccordionItem key={location} value={location} className="border-0">
@@ -68,25 +105,46 @@ export function HoursPanel({ locations = [Location.LAWRENCEVILLE, Location.ZELIE
                   </div>
 
                   {/* Weekly schedule */}
-                  {(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const).map((day) => {
-                    const hours = getFormattedHours(location, day);
-                    const isToday = day === currentDay;
+                  {locationWeeklyHours ? (
+                    <>
+                      {locationWeeklyHours.some(d => d.holidayName) && (
+                        <div className="flex items-center gap-1.5 mb-2 pb-2 border-b border-border">
+                          <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
+                            ⚠ Special hours this week
+                          </span>
+                        </div>
+                      )}
+                      {locationWeeklyHours.map((dayData) => {
+                        const isToday = dayData.day === currentDay;
+                        const isSpecial = !!dayData.holidayName;
 
-                    return (
-                      <div
-                        key={day}
-                        className={cn(
-                          "flex justify-between items-center py-1.5 px-2 rounded",
-                          isToday && "bg-primary/5 font-medium"
-                        )}
-                      >
-                        <span className="capitalize">
-                          {day}
-                        </span>
-                        <span className="text-muted-foreground">{hours}</span>
-                      </div>
-                    );
-                  })}
+                        return (
+                          <div
+                            key={dayData.day}
+                            className={cn(
+                              "flex justify-between items-center py-1.5 px-2 rounded",
+                              isToday && "bg-primary/5 font-medium",
+                              isSpecial && !isToday && "text-amber-600 dark:text-amber-400"
+                            )}
+                          >
+                            <span className="capitalize flex items-center gap-2">
+                              {dayData.day}
+                              {dayData.holidayName && (
+                                <Badge variant="outline" className="text-xs py-0 px-1.5 border-amber-500 text-amber-600 dark:text-amber-400">
+                                  {dayData.holidayName}
+                                </Badge>
+                              )}
+                            </span>
+                            <span className={cn(!isSpecial && "text-muted-foreground")}>
+                              {formatHoursString(dayData)}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Hours not available</p>
+                  )}
 
                   {/* Contact info */}
                   <div className="pt-4 mt-4 space-y-2">

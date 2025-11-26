@@ -43,6 +43,20 @@ export const Locations: CollectionConfig = {
       unique: true,
     },
     {
+      name: 'timezone',
+      type: 'select',
+      defaultValue: 'America/New_York',
+      options: [
+        { label: 'Eastern Time (EST/EDT)', value: 'America/New_York' },
+        { label: 'Central Time (CST/CDT)', value: 'America/Chicago' },
+        { label: 'Mountain Time (MST/MDT)', value: 'America/Denver' },
+        { label: 'Pacific Time (PST/PDT)', value: 'America/Los_Angeles' },
+      ],
+      admin: {
+        description: 'Timezone for this location\'s hours',
+      },
+    },
+    {
       name: 'slug',
       type: 'text',
       admin: {

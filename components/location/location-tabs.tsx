@@ -1,6 +1,6 @@
 /**
  * Location Tabs Component
- * Simplified tab component for location-based content
+ * Tab component for switching between brewery locations
  */
 
 'use client';
@@ -17,65 +17,51 @@ import { MapPin, Clock, CheckCircle } from 'lucide-react';
 
 interface LocationTabsProps {
   className?: string;
-  defaultValue?: Location;
-  value?: Location;
-  onValueChange?: (location: Location) => void;
   children?: ReactNode;
-  orientation?: 'horizontal' | 'vertical';
   syncWithGlobalState?: boolean;
 }
 
 export function LocationTabs({
   className,
-  defaultValue,
-  value,
-  onValueChange,
   children,
-  orientation = 'horizontal',
   syncWithGlobalState = false
 }: LocationTabsProps) {
-  const { currentLocation, setLocation } = useLocationContext();
-
-  // When syncing with global state, always use currentLocation as the controlled value
-  // to prevent switching between controlled/uncontrolled modes during hydration
-  const controlledValue = syncWithGlobalState ? currentLocation : value;
-  const controlledDefaultValue = syncWithGlobalState ? currentLocation : defaultValue;
+  const { currentLocation, setLocation, isClient } = useLocationContext();
 
   const handleValueChange = (newValue: string) => {
     const location = newValue as Location;
-    if (Object.values(Location).includes(location)) {
-      if (syncWithGlobalState) {
-        setLocation(location);
-      }
-      onValueChange?.(location);
+    if (syncWithGlobalState && Object.values(Location).includes(location)) {
+      setLocation(location);
     }
   };
 
-  // Use controlled or uncontrolled mode, not both
-  const tabsProps = controlledValue !== undefined
-    ? { value: controlledValue, onValueChange: handleValueChange }
-    : { defaultValue: controlledDefaultValue || Location.LAWRENCEVILLE, onValueChange: handleValueChange };
+  // Prevent hydration mismatch by not rendering until client-side
+  if (!isClient) {
+    return (
+      <div className={cn("w-full", className)}>
+        <div className="grid w-fit mx-auto grid-cols-2 h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground">
+          {ALL_LOCATIONS.map((location) => (
+            <div
+              key={location}
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium"
+            >
+              {LocationDisplayNames[location]}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Tabs
-      {...tabsProps}
-      orientation={orientation}
+      value={currentLocation}
+      onValueChange={handleValueChange}
       className={cn("w-full", className)}
-      suppressHydrationWarning
     >
-      <TabsList className={cn(
-        "grid w-fit mx-auto",
-        orientation === 'horizontal' ? "grid-cols-2" : "grid-rows-2 h-auto flex-col"
-      )}>
+      <TabsList className="grid w-fit mx-auto grid-cols-2">
         {ALL_LOCATIONS.map((location) => (
-          <TabsTrigger
-            key={location}
-            value={location}
-            className={cn(
-              "text-sm font-medium",
-              orientation === 'vertical' && "justify-start"
-            )}
-          >
+          <TabsTrigger key={location} value={location} className="text-sm font-medium">
             {LocationDisplayNames[location]}
           </TabsTrigger>
         ))}

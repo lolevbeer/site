@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
-import { formatTime, parseLocalDate } from '@/lib/utils/formatters';
+import { formatTime, parseLocalDate, isToday, isFuture } from '@/lib/utils/formatters';
 
 interface EventListProps {
   events: BreweryEvent[];
@@ -132,30 +132,17 @@ export function EventList({
     return filtered;
   }, [events, selectedLocation, searchQuery, selectedTypes, sortOptions, maxItems]);
 
-  // Get upcoming events (today and future)
-  const upcomingEvents = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    return filteredAndSortedEvents.filter(event => {
-      const eventDate = parseLocalDate(event.date);
-      eventDate.setHours(0, 0, 0, 0);
-      return eventDate >= tomorrow;  // Only events from tomorrow onwards
-    });
-  }, [filteredAndSortedEvents]);
+  // Get upcoming events (tomorrow onwards)
+  const upcomingEvents = useMemo(() =>
+    filteredAndSortedEvents.filter(event => isFuture(event.date)),
+    [filteredAndSortedEvents]
+  );
 
   // Get today's events
-  const todaysEvents = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return filteredAndSortedEvents.filter(event => {
-      const eventDate = parseLocalDate(event.date);
-      eventDate.setHours(0, 0, 0, 0);
-      return eventDate.getTime() === today.getTime();
-    });
-  }, [filteredAndSortedEvents]);
+  const todaysEvents = useMemo(() =>
+    filteredAndSortedEvents.filter(event => isToday(event.date)),
+    [filteredAndSortedEvents]
+  );
 
   const hasActiveFilters = searchQuery || selectedTypes.length > 0 ||
     (showLocationFilter && selectedLocation !== currentLocation);
@@ -199,8 +186,15 @@ export function EventList({
     if (eventsToRender.length === 0) {
       return (
         <div className="text-center py-12">
+          <div className="text-4xl mb-4">📅</div>
           <h3 className="text-lg font-semibold mb-2">No Events Found</h3>
-          <p className="text-muted-foreground mb-4">{emptyMessage}</p>
+          <p className="text-muted-foreground mb-4">
+            {searchQuery
+              ? `No events matching "${searchQuery}"`
+              : selectedTypes.length > 0
+              ? `No ${selectedTypes.join(' or ')} events found`
+              : emptyMessage}
+          </p>
           {hasActiveFilters && (
             <Button variant="outline" onClick={clearFilters}>
               Clear Filters
@@ -376,7 +370,7 @@ export function EventList({
       {todaysEvents.length > 0 && !maxItems && (
         <Card className="shadow-none border-2 border-black">
           <CardContent className="p-6">
-            <h2 className="text-2xl font-bold mb-4 text-center">Today's Event{todaysEvents.length !== 1 ? 's' : ''}</h2>
+            <h2 className="text-2xl font-bold mb-4 text-center">Today&apos;s Event{todaysEvents.length !== 1 ? 's' : ''}</h2>
             <div className="flex flex-col gap-3">
               {todaysEvents.map(event => (
                 <div key={event.id || `${event.title}-${event.date}`} className="text-center">

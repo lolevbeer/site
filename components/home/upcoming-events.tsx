@@ -68,7 +68,7 @@ export function UpcomingEvents({ lawrencevilleEvents, zelienopleEvents }: Upcomi
         </div>
 
         <div className="text-center">
-          <Button asChild variant="default" size="lg">
+          <Button asChild variant="outline" size="lg">
             <Link href="/events">
               View All
             </Link>

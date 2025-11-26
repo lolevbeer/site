@@ -5,7 +5,7 @@
 
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Beer } from '@/lib/types/beer';
@@ -32,6 +32,15 @@ import {
 } from 'lucide-react';
 import { UntappdIcon } from '@/components/icons/untappd-icon';
 import { getGlassIcon } from '@/lib/utils/beer-icons';
+import { formatAbv } from '@/lib/utils/formatters';
+
+function getBeerImagePath(beer: { slug?: string; image?: unknown }): string | null {
+  // Only return image path if there's actually a Payload image
+  if (beer.image && typeof beer.image === 'object' && 'url' in beer.image) {
+    return beer.image.url as string;
+  }
+  return null;
+}
 
 interface BeerDetailsProps {
   beer: Beer;
@@ -39,62 +48,21 @@ interface BeerDetailsProps {
   isAuthenticated?: boolean;
 }
 
-function getBeerImagePath(beer: any): string | null {
-  // Check if beer has an image object from Payload
-  if (beer.image && typeof beer.image === 'object') {
-    // Try to use the card size first
-    if (beer.image.sizes?.card?.url) {
-      return beer.image.sizes.card.url;
-    }
-    // Fall back to the main URL
-    if (beer.image.url) {
-      return beer.image.url;
-    }
-  }
+function getAvailabilityInfo(beer: Beer) {
+  const { tap, cansAvailable, singleCanAvailable } = beer.availability ?? {};
+  const isDraft = !!tap;
+  const isCanned = !!(cansAvailable || singleCanAvailable);
 
-  // Legacy fallback: if image is a string or boolean, try static path
-  if (beer.image && beer.variant) {
-    return `/images/beer/${beer.variant}.webp`;
-  }
+  const details = [
+    tap && `Pouring ${tap}`,
+    cansAvailable && 'Cans available for purchase',
+    singleCanAvailable && 'Single cans available',
+  ].filter(Boolean) as string[];
 
-  return null;
-}
-
-function formatAbv(abv: number): string {
-  return `${abv.toFixed(1)}%`;
-}
-
-function getAvailabilityInfo(beer: Beer): {
-  status: string;
-  details: string[];
-  isDraft: boolean;
-  isCanned: boolean;
-} {
-  const details: string[] = [];
-  let status = 'Limited Availability';
-  let isDraft = false;
-  let isCanned = false;
-
-  if (beer.availability?.tap) {
-    details.push(`Pouring ${beer.availability.tap}`);
-    status = 'Pouring';
-    isDraft = true;
-  }
-
-  if (beer.availability?.cansAvailable) {
-    details.push('Cans available for purchase');
-    isCanned = true;
-    if (!isDraft) {
-      status = 'Cans Available';
-    } else {
-      status = 'Pouring & Cans';
-    }
-  }
-
-  if (beer.availability?.singleCanAvailable) {
-    details.push('Single cans available');
-    isCanned = true;
-  }
+  const status = isDraft && isCanned ? 'Pouring & Cans'
+    : isDraft ? 'Pouring'
+    : isCanned ? 'Cans Available'
+    : 'Limited Availability';
 
   return { status, details, isDraft, isCanned };
 }
@@ -144,6 +112,11 @@ export function BeerDetails({ beer, className = '', isAuthenticated = false }: B
   const [canLocations, setCanLocations] = useState<string[]>([]);
   const [isLoadingLocations, setIsLoadingLocations] = useState(true);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [imageError, setImageError] = useState(false);
+
+  const handleImageError = useCallback(() => {
+    setImageError(true);
+  }, []);
 
   useEffect(() => {
     // Don't fetch locations if beer ID is missing
@@ -254,19 +227,23 @@ export function BeerDetails({ beer, className = '', isAuthenticated = false }: B
       <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-8 mb-8">
         {/* Beer Image and Quick Stats */}
         <div className="space-y-4">
-          <div className="relative aspect-square w-full overflow-hidden rounded-xl">
-            {imagePath ? (
+          <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-gradient-to-b from-muted/30 to-muted/10 dark:from-muted/10 dark:to-muted/5">
+            {imagePath && !imageError ? (
               <Image
                 src={imagePath}
                 alt={`${beer.name} beer`}
                 fill
                 className="object-contain"
-                sizes="(max-width: 768px) 100vw, 350px"
+                sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 800px"
                 priority
+                onError={handleImageError}
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <span className="text-gray-400 dark:text-gray-500 font-medium text-lg">No Image</span>
+              <div className="w-full h-full flex flex-col items-center justify-center text-center px-4">
+                <p className="text-lg font-semibold text-muted-foreground/70">{beer.name}</p>
+                {beer.type && (
+                  <p className="text-sm text-muted-foreground/50 mt-1">{beer.type}</p>
+                )}
               </div>
             )}
             {beer.glutenFree && (

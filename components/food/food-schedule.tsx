@@ -11,7 +11,7 @@ import { LocationDisplayNames } from '@/lib/types/location';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScheduleCard } from '@/components/ui/schedule-card';
 import { cn } from '@/lib/utils';
-import { formatTime } from '@/lib/utils/formatters';
+import { formatTime, isToday, isFuture, isTodayOrFuture } from '@/lib/utils/formatters';
 
 interface FoodScheduleProps {
   schedules: FoodVendorSchedule[];
@@ -47,40 +47,14 @@ export function FoodSchedule({
   };
 
   // Filter and sort schedules to show upcoming food trucks
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
   const upcomingSchedules = schedules
-    .filter(schedule => {
-      // Filter to show today and future dates
-      const [year, month, day] = schedule.date.split('T')[0].split('-').map(Number);
-      const scheduleDate = new Date(year, month - 1, day);
-      scheduleDate.setHours(0, 0, 0, 0);
-
-      return scheduleDate >= today;
-    })
-    .sort((a, b) => {
-      // Sort by date
-      const dateA = new Date(a.date.split('T')[0]);
-      const dateB = new Date(b.date.split('T')[0]);
-      return dateA.getTime() - dateB.getTime();
-    })
+    .filter(schedule => isTodayOrFuture(schedule.date))
+    .sort((a, b) => new Date(a.date.split('T')[0]).getTime() - new Date(b.date.split('T')[0]).getTime())
     .slice(0, maxItems);
 
   // Separate today's and upcoming
-  const todaysFood = upcomingSchedules.filter(schedule => {
-    const [year, month, day] = schedule.date.split('T')[0].split('-').map(Number);
-    const scheduleDate = new Date(year, month - 1, day);
-    scheduleDate.setHours(0, 0, 0, 0);
-    return scheduleDate.getTime() === today.getTime();
-  });
-
-  const upcomingFood = upcomingSchedules.filter(schedule => {
-    const [year, month, day] = schedule.date.split('T')[0].split('-').map(Number);
-    const scheduleDate = new Date(year, month - 1, day);
-    scheduleDate.setHours(0, 0, 0, 0);
-    return scheduleDate.getTime() > today.getTime();
-  });
+  const todaysFood = upcomingSchedules.filter(schedule => isToday(schedule.date));
+  const upcomingFood = upcomingSchedules.filter(schedule => isFuture(schedule.date));
 
   return (
     <div className={cn('space-y-6', className)}>
@@ -88,7 +62,7 @@ export function FoodSchedule({
       {todaysFood.length > 0 && (
         <Card className="shadow-none border-2 border-black">
           <CardContent className="p-6">
-            <h2 className="text-2xl font-bold mb-4 text-center">Today's Food</h2>
+            <h2 className="text-2xl font-bold mb-4 text-center">Today&apos;s Food</h2>
             <div className="flex flex-col gap-3">
               {todaysFood.map((schedule, index) => (
                 <div key={index} className="text-center">

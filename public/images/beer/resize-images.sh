@@ -16,7 +16,7 @@ for file in *-*\.png *.png; do
   fi
 
   if [[ ! -f "$(basename "$file" .png).webp" || "$file" -nt "$(basename "$file" .png).webp" ]]; then
-    cwebp -q 100 -resize 386 405 -crop 330 300 1930 2025 "$file" -o "$(basename "$file" .png).webp"
+    cwebp -q 90 -resize 1200 1260 -crop 330 300 1930 2025 "$file" -o "$(basename "$file" .png).webp"
   fi
 
   if [[ ! -f "$(basename "$file" .png)-small.webp" || "$file" -nt "$(basename "$file" .png)-white.webp" ]]; then

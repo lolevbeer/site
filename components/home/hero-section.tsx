@@ -4,7 +4,6 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Beer } from 'lucide-react';
 import {
   Carousel,
   CarouselContent,
@@ -18,19 +17,21 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import type { Beer as PayloadBeer, Media } from '@/src/payload-types';
+import type { Beer as PayloadBeer } from '@/src/payload-types';
 
 interface HeroSectionProps {
   availableBeers: PayloadBeer[];
+  heroDescription?: string;
 }
 
-export function HeroSection({ availableBeers }: HeroSectionProps) {
-  const getImageUrl = (beer: PayloadBeer): string | null => {
-    if (!beer.image) return null;
-    const image = typeof beer.image === 'object' ? beer.image : null;
-    return image?.url || null;
-  };
+function getBeerImageUrl(beer: PayloadBeer): string | null {
+  if (beer.image && typeof beer.image === 'object' && 'url' in beer.image) {
+    return beer.image.url as string;
+  }
+  return null;
+}
 
+export function HeroSection({ availableBeers, heroDescription }: HeroSectionProps) {
   return (
     <div className="relative flex flex-col gap-8 md:gap-16 px-4 md:px-8 py-16 md:py-24 text-center min-h-[600px] md:min-h-[700px]">
       {/* Background image */}
@@ -67,7 +68,7 @@ export function HeroSection({ availableBeers }: HeroSectionProps) {
                 <CarouselContent className="-ml-4">
                   {availableBeers.length > 0 ? (
                     availableBeers.map((beer) => {
-                      const imageUrl = getImageUrl(beer);
+                      const imageUrl = getBeerImageUrl(beer);
                       if (!imageUrl) return null;
 
                       return (
@@ -108,11 +109,11 @@ export function HeroSection({ availableBeers }: HeroSectionProps) {
             </TooltipProvider>
           </div>
         </section>
-        <p className="mt-0 mb-0 text-balance text-base md:text-lg text-foreground max-w-4xl px-4">
-          Brewed in Pittsburgh's vibrant Lawrenceville neighborhood, housed in a historic building that has stood since 1912. Lolev focuses on modern ales, expressive lagers and oak-aged beer.
-          <br /><br />
-          We believe that beer should be thoughtful and stimulating. Each beer we create is intended to engage your senses, crafted with attention to flavor, balance, and the experience.
-        </p>
+        {heroDescription && (
+          <p className="mt-0 mb-0 text-balance text-base md:text-lg text-foreground max-w-4xl px-4 whitespace-pre-line">
+            {heroDescription}
+          </p>
+        )}
 
         {/* Primary CTAs */}
         <div className="flex flex-col sm:flex-row gap-3 md:gap-4 mt-6 md:mt-8 justify-center items-center">

@@ -31,43 +31,7 @@ export function getBeerBadgeClass(beerType: string): string {
   return beerTypeBadges[normalizedType] || "beer-badge-amber";
 }
 
-/**
- * Format ABV percentage
- */
-export function formatABV(abv: number): string {
-  return `${abv.toFixed(1)}% ABV`;
-}
-
-/**
- * Format IBU (International Bitterness Units)
- */
-export function formatIBU(ibu: number): string {
-  return `${Math.round(ibu)} IBU`;
-}
-
-/**
- * Format SRM (Standard Reference Method) color
- */
-export function formatSRM(srm: number): string {
-  return `${Math.round(srm)} SRM`;
-}
-
-/**
- * Get beer color description from SRM value
- */
-export function getBeerColorDescription(srm: number): string {
-  if (srm <= 3) return "Pale Straw";
-  if (srm <= 6) return "Straw";
-  if (srm <= 9) return "Pale Gold";
-  if (srm <= 14) return "Deep Gold";
-  if (srm <= 17) return "Pale Amber";
-  if (srm <= 20) return "Medium Amber";
-  if (srm <= 24) return "Deep Amber";
-  if (srm <= 29) return "Amber Brown";
-  if (srm <= 35) return "Brown";
-  if (srm <= 40) return "Dark Brown";
-  return "Black";
-}
+// formatABV removed - use formatAbv(abv, true) from formatters.ts instead
 
 /**
  * Get beer style category
@@ -109,17 +73,6 @@ export function getBeerStrength(abv: number): string {
 }
 
 /**
- * Calculate bitterness description from IBU
- */
-export function getBitternessDescription(ibu: number): string {
-  if (ibu < 20) return "Mild";
-  if (ibu < 35) return "Balanced";
-  if (ibu < 50) return "Hoppy";
-  if (ibu < 70) return "Bitter";
-  return "Very Bitter";
-}
-
-/**
  * Brewery-specific responsive image sizes
  */
 export const breweryImageSizes = {
@@ -127,31 +80,4 @@ export const breweryImageSizes = {
   card: "(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw",
   thumbnail: "(max-width: 640px) 50vw, (max-width: 768px) 33vw, 200px",
   logo: "200px",
-} as const;
-
-/**
- * Common brewery grid layouts
- */
-export const breweryLayouts = {
-  beerGrid: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6",
-  featureGrid: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8",
-  heroGrid: "grid grid-cols-1 lg:grid-cols-2 gap-12 items-center",
-  statsGrid: "grid grid-cols-2 md:grid-cols-4 gap-6",
-} as const;
-
-/**
- * Animation delay utilities for staggered animations
- */
-export function getStaggerDelay(index: number, baseDelay = 0.1): string {
-  return `${baseDelay * index}s`;
-}
-
-/**
- * Generate brewery-themed gradient backgrounds
- */
-export const breweryGradients = {
-  primary: "bg-gradient-to-br from-brewery-primary/20 to-brewery-secondary/20",
-  accent: "bg-gradient-to-br from-brewery-accent/20 to-beer-golden/20",
-  dark: "bg-gradient-to-br from-brewery-dark/90 to-brewery-dark",
-  beer: "bg-gradient-to-br from-beer-amber/20 to-beer-golden/20",
 } as const;

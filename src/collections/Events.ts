@@ -5,6 +5,9 @@ export const Events: CollectionConfig = {
   admin: {
     useAsTitle: 'vendor',
     defaultColumns: ['vendor', 'date', 'location', 'visibility'],
+    pagination: {
+      defaultLimit: 100,
+    },
   },
   fields: [
     {
@@ -77,6 +80,19 @@ export const Events: CollectionConfig = {
       type: 'number',
       admin: {
         description: 'Expected or registered attendees',
+      },
+    },
+    {
+      name: 'source',
+      type: 'select',
+      defaultValue: 'payload',
+      options: [
+        { label: 'Payload', value: 'payload' },
+        { label: 'Google Sheets', value: 'google-sheets' },
+      ],
+      admin: {
+        position: 'sidebar',
+        description: 'Where this record originated',
       },
     },
   ],

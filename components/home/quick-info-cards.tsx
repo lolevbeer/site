@@ -4,27 +4,56 @@ import React from 'react';
 import Link from 'next/link';
 import { Beer, Clock, Calendar } from 'lucide-react';
 import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Location } from '@/lib/types/location';
-import { getLocationInfo, isLocationOpen, getFormattedHours } from '@/lib/config/locations';
 import { cn } from '@/lib/utils';
 import { getTodayEST, getDayOfWeekEST, toESTDate } from '@/lib/utils/date';
+import type { WeeklyHoursDay, DayOfWeek } from '@/lib/utils/payload-api';
+
+function formatTime(time: string | null, timezone: string = 'America/New_York'): string {
+  if (!time) return '';
+  if (time.includes('T')) {
+    const date = new Date(time);
+    const minutes = date.getMinutes();
+    return date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: minutes === 0 ? undefined : '2-digit',
+      hour12: true,
+      timeZone: timezone,
+    });
+  }
+  const [hours, minutes] = time.split(':').map(Number);
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const displayHours = hours % 12 || 12;
+  if (minutes === 0) {
+    return `${displayHours} ${ampm}`;
+  }
+  return `${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+}
+
+function formatHoursString(dayData: WeeklyHoursDay): string {
+  if (dayData.closed) return 'Closed';
+  return `${formatTime(dayData.open, dayData.timezone)} - ${formatTime(dayData.close, dayData.timezone)}`;
+}
 
 interface QuickInfoCardsProps {
   beerCount?: { lawrenceville: number; zelienople: number };
   nextEvent?: { name: string; date: string; location: Location } | null;
+  weeklyHours?: Record<string, WeeklyHoursDay[]>;
   className?: string;
 }
 
-export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCardsProps) {
+export function QuickInfoCards({ beerCount, nextEvent, weeklyHours, className }: QuickInfoCardsProps) {
   // Get current day in EST timezone
   const todayEST = getTodayEST();
-  const currentDay = getDayOfWeekEST(todayEST).toLowerCase();
+  const currentDay = getDayOfWeekEST(todayEST).toLowerCase() as DayOfWeek;
 
-  // Get hours for both locations
-  const lawrencevilleInfo = getLocationInfo(Location.LAWRENCEVILLE);
-  const zelienopleInfo = getLocationInfo(Location.ZELIENOPLE);
-  const lawrencevilleHours = getFormattedHours(Location.LAWRENCEVILLE, currentDay as keyof typeof lawrencevilleInfo.hours);
-  const zelienopleHours = getFormattedHours(Location.ZELIENOPLE, currentDay as keyof typeof zelienopleInfo.hours);
+  // Get today's hours from weeklyHours (with holiday support)
+  const lawrencevilleTodayData = weeklyHours?.['lawrenceville']?.find(d => d.day === currentDay);
+  const zelienopleTodayData = weeklyHours?.['zelienople']?.find(d => d.day === currentDay);
+
+  const lawrencevilleHours = lawrencevilleTodayData ? formatHoursString(lawrencevilleTodayData) : 'Hours not available';
+  const zelienopleHours = zelienopleTodayData ? formatHoursString(zelienopleTodayData) : 'Hours not available';
 
   // Format next event date using EST timezone
   const formatEventDate = (dateStr: string) => {
@@ -83,12 +112,30 @@ export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCar
           </div>
           <div className="text-sm text-muted-foreground space-y-2">
             <div className="text-center">
-              <div className="text-lg font-medium text-foreground">Lawrenceville</div>
-              <div>{lawrencevilleHours}</div>
+              <div className="text-lg font-medium text-foreground flex items-center justify-center gap-2">
+                Lawrenceville
+                {lawrencevilleTodayData?.holidayName && (
+                  <Badge variant="outline" className="text-[10px] py-0 px-1 border-amber-500 text-amber-600 dark:text-amber-400">
+                    {lawrencevilleTodayData.holidayName}
+                  </Badge>
+                )}
+              </div>
+              <div className={lawrencevilleTodayData?.holidayName ? 'text-amber-600 dark:text-amber-400' : ''}>
+                {lawrencevilleHours}
+              </div>
             </div>
             <div className="text-center">
-              <div className="text-lg font-medium text-foreground">Zelienople</div>
-              <div>{zelienopleHours}</div>
+              <div className="text-lg font-medium text-foreground flex items-center justify-center gap-2">
+                Zelienople
+                {zelienopleTodayData?.holidayName && (
+                  <Badge variant="outline" className="text-[10px] py-0 px-1 border-amber-500 text-amber-600 dark:text-amber-400">
+                    {zelienopleTodayData.holidayName}
+                  </Badge>
+                )}
+              </div>
+              <div className={zelienopleTodayData?.holidayName ? 'text-amber-600 dark:text-amber-400' : ''}>
+                {zelienopleHours}
+              </div>
             </div>
           </div>
         </Card>

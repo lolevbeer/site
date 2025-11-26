@@ -3,13 +3,14 @@
 import React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { SocialLinks } from './social-links';
 import { Logo } from '@/components/ui/logo';
 import { Location, type LocationInfo, type LocationHours } from '@/lib/types';
 import { LOCATIONS_DATA } from '@/lib/config/locations';
 import { cn } from '@/lib/utils';
-import { formatTime } from '@/lib/utils/formatters';
 import { navigationItems } from './navigation';
+import type { WeeklyHoursDay } from '@/lib/utils/payload-api';
 
 /**
  * Get day name from hours key
@@ -29,44 +30,74 @@ function getDayName(day: DayOfWeek): string {
   return dayNames[day];
 }
 
+function formatTime(time: string | null, timezone: string = 'America/New_York'): string {
+  if (!time) return '';
+  if (time.includes('T')) {
+    const date = new Date(time);
+    const minutes = date.getMinutes();
+    return date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: minutes === 0 ? undefined : '2-digit',
+      hour12: true,
+      timeZone: timezone,
+    });
+  }
+  const [hours, minutes] = time.split(':').map(Number);
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const displayHours = hours % 12 || 12;
+  if (minutes === 0) {
+    return `${displayHours} ${ampm}`;
+  }
+  return `${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+}
+
 /**
- * Hours display component
+ * Hours display component with holiday support
  */
-function HoursDisplay({ hours }: { hours: LocationHours }) {
+function HoursDisplay({ weeklyHours }: { weeklyHours: WeeklyHoursDay[] }) {
   const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
   const today = dayNames[new Date().getDay()] as DayOfWeek;
+  const hasSpecialHours = weeklyHours.some(d => d.holidayName);
 
   return (
     <div className="space-y-1 text-sm">
-      {Object.entries(hours).map(([day, dayHours]) => {
-        if (day === 'notes') return null;
-
-        const isToday = day === today;
-        const dayName = getDayName(day as DayOfWeek);
+      {hasSpecialHours && (
+        <div className="flex items-center gap-1.5 mb-2 pb-2 border-b border-border">
+          <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
+            Special hours this week
+          </span>
+        </div>
+      )}
+      {weeklyHours.map((dayData) => {
+        const isToday = dayData.day === today;
+        const isSpecial = !!dayData.holidayName;
 
         return (
           <div
-            key={day}
+            key={dayData.day}
             className={cn(
-              'flex justify-between',
-              isToday && 'font-semibold text-primary'
+              'flex justify-between items-center gap-2',
+              isToday && 'font-semibold text-primary',
+              isSpecial && !isToday && 'text-amber-600 dark:text-amber-400'
             )}
           >
-            <span>{dayName}</span>
+            <span className="flex items-center gap-1">
+              {getDayName(dayData.day)}
+              {dayData.holidayName && (
+                <Badge variant="outline" className="text-[10px] py-0 px-1 border-amber-500 text-amber-600 dark:text-amber-400">
+                  {dayData.holidayName}
+                </Badge>
+              )}
+            </span>
             <span>
-              {dayHours.closed
+              {dayData.closed
                 ? 'Closed'
-                : `${formatTime(dayHours.open)} - ${formatTime(dayHours.close)}`
+                : `${formatTime(dayData.open, dayData.timezone)} - ${formatTime(dayData.close, dayData.timezone)}`
               }
             </span>
           </div>
         );
       })}
-      {hours.notes && (
-        <p className="mt-2 text-xs text-muted-foreground italic">
-          {hours.notes}
-        </p>
-      )}
     </div>
   );
 }
@@ -74,7 +105,7 @@ function HoursDisplay({ hours }: { hours: LocationHours }) {
 /**
  * Location info component
  */
-function LocationInfo({ location }: { location: LocationInfo }) {
+function LocationInfoSection({ location, weeklyHours }: { location: LocationInfo; weeklyHours?: WeeklyHoursDay[] }) {
   return (
     <div className="space-y-4">
       {/* Address */}
@@ -100,7 +131,11 @@ function LocationInfo({ location }: { location: LocationInfo }) {
       {/* Hours */}
       <div>
         <p className="font-semibold mb-2">Hours</p>
-        <HoursDisplay hours={location.hours} />
+        {weeklyHours ? (
+          <HoursDisplay weeklyHours={weeklyHours} />
+        ) : (
+          <p className="text-sm text-muted-foreground">Hours not available</p>
+        )}
       </div>
 
       {/* Contact */}
@@ -126,22 +161,32 @@ function LocationInfo({ location }: { location: LocationInfo }) {
   );
 }
 
+interface FooterProps {
+  weeklyHours?: Record<string, WeeklyHoursDay[]>;
+}
+
 /**
  * Main footer component with both locations displayed
  */
-export function Footer() {
+export function Footer({ weeklyHours }: FooterProps) {
   return (
     <footer className="bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid gap-12 md:grid-cols-3">
           {/* Lawrenceville Location */}
           <div>
-            <LocationInfo location={LOCATIONS_DATA[Location.LAWRENCEVILLE]} />
+            <LocationInfoSection
+              location={LOCATIONS_DATA[Location.LAWRENCEVILLE]}
+              weeklyHours={weeklyHours?.['lawrenceville']}
+            />
           </div>
 
           {/* Zelienople Location */}
           <div>
-            <LocationInfo location={LOCATIONS_DATA[Location.ZELIENOPLE]} />
+            <LocationInfoSection
+              location={LOCATIONS_DATA[Location.ZELIENOPLE]}
+              weeklyHours={weeklyHours?.['zelienople']}
+            />
           </div>
 
           {/* Brand and Links */}

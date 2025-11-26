@@ -5,13 +5,12 @@ import Link from 'next/link';
 import Image from 'next/image';
 
 import { Button } from '@/components/ui/button';
-import { Location, type LocationHours } from '@/lib/types/location';
+import { Badge } from '@/components/ui/badge';
+import { Location } from '@/lib/types/location';
 import { LOCATIONS_DATA } from '@/lib/config/locations';
 import { trackDirections } from '@/lib/analytics/events';
-import { formatTime } from '@/lib/utils/formatters';
 import { cn } from '@/lib/utils';
-
-type DayOfWeek = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+import type { WeeklyHoursDay, DayOfWeek } from '@/lib/utils/payload-api';
 
 function getDayName(day: DayOfWeek): string {
   const dayNames: Record<DayOfWeek, string> = {
@@ -26,46 +25,82 @@ function getDayName(day: DayOfWeek): string {
   return dayNames[day];
 }
 
-function HoursDisplay({ hours }: { hours: LocationHours }) {
+function formatTime(time: string | null, timezone: string = 'America/New_York'): string {
+  if (!time) return '';
+  // Handle ISO date strings from Payload (time only fields store as full ISO)
+  if (time.includes('T')) {
+    const date = new Date(time);
+    const minutes = date.getMinutes();
+    return date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: minutes === 0 ? undefined : '2-digit',
+      hour12: true,
+      timeZone: timezone,
+    });
+  }
+  // Handle HH:mm format (legacy/fallback)
+  const [hours, minutes] = time.split(':').map(Number);
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const displayHours = hours % 12 || 12;
+  if (minutes === 0) {
+    return `${displayHours} ${ampm}`;
+  }
+  return `${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+}
+
+function HoursDisplay({ weeklyHours }: { weeklyHours: WeeklyHoursDay[] }) {
   const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
   const today = dayNames[new Date().getDay()] as DayOfWeek;
+  const hasSpecialHours = weeklyHours.some(d => d.holidayName);
 
   return (
     <div className="space-y-1 text-sm">
-      {Object.entries(hours).map(([day, dayHours]) => {
-        if (day === 'notes') return null;
-
-        const isToday = day === today;
-        const dayName = getDayName(day as DayOfWeek);
+      {hasSpecialHours && (
+        <div className="flex items-center justify-center gap-1.5 mb-2 pb-2 border-b border-border">
+          <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
+            ⚠ Special hours this week
+          </span>
+        </div>
+      )}
+      {weeklyHours.map((dayData) => {
+        const isToday = dayData.day === today;
+        const isSpecial = !!dayData.holidayName;
 
         return (
           <div
-            key={day}
+            key={dayData.day}
             className={cn(
-              'flex justify-between',
-              isToday && 'font-semibold text-primary'
+              'flex justify-between items-center gap-2',
+              isToday && 'font-semibold text-primary',
+              isSpecial && !isToday && 'text-amber-600 dark:text-amber-400'
             )}
           >
-            <span>{dayName}</span>
+            <span className="flex items-center gap-2">
+              {getDayName(dayData.day)}
+              {dayData.holidayName && (
+                <Badge variant="outline" className="text-xs py-0 px-1.5 border-amber-500 text-amber-600 dark:text-amber-400">
+                  {dayData.holidayName}
+                </Badge>
+              )}
+            </span>
             <span>
-              {dayHours.closed
+              {dayData.closed
                 ? 'Closed'
-                : `${formatTime(dayHours.open)} - ${formatTime(dayHours.close)}`
+                : `${formatTime(dayData.open, dayData.timezone)} - ${formatTime(dayData.close, dayData.timezone)}`
               }
             </span>
           </div>
         );
       })}
-      {hours.notes && (
-        <p className="mt-2 text-xs text-muted-foreground italic">
-          {hours.notes}
-        </p>
-      )}
     </div>
   );
 }
 
-export function LocationCards() {
+interface LocationCardsProps {
+  weeklyHours?: Record<string, WeeklyHoursDay[]>;
+}
+
+export function LocationCards({ weeklyHours }: LocationCardsProps) {
 
 
   const locations = [
@@ -120,7 +155,11 @@ export function LocationCards() {
             {/* Hours */}
             <div className="w-full max-w-xs">
               <p className="font-semibold mb-2">Hours</p>
-              <HoursDisplay hours={data.hours} />
+              {weeklyHours && weeklyHours[id] ? (
+                <HoursDisplay weeklyHours={weeklyHours[id]} />
+              ) : (
+                <p className="text-sm text-muted-foreground">Hours not available</p>
+              )}
             </div>
 
             {/* Phone */}

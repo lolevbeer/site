@@ -8,7 +8,7 @@ export default function NotFound() {
       <p className="text-muted-foreground mb-8">
         Sorry, we couldn't find the beer you're looking for.
       </p>
-      <Button asChild>
+      <Button asChild variant="outline">
         <Link href="/beer">View All Beer</Link>
       </Button>
     </div>

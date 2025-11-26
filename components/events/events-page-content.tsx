@@ -70,8 +70,16 @@ export function EventsPageContent({ initialEvents = [] }: EventsPageContentProps
             Loading events...
           </div>
         ) : filteredEvents.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            No upcoming events at this location.
+          <div className="text-center py-12">
+            <div className="text-4xl mb-4">📅</div>
+            <h3 className="text-lg font-semibold mb-2">No Upcoming Events</h3>
+            <p className="text-muted-foreground">
+              {locationFilter === 'lawrenceville'
+                ? 'No upcoming events at Lawrenceville. Check back soon!'
+                : locationFilter === 'zelienople'
+                ? 'No upcoming events at Zelienople. Check back soon!'
+                : 'No upcoming events scheduled. Check back soon for live music, trivia, and more!'}
+            </p>
           </div>
         ) : (
           <EventList

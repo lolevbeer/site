@@ -59,7 +59,7 @@ export function UpcomingBeers({ comingSoonBeers }: UpcomingBeersProps) {
         </div>
 
         <div className="text-center">
-          <Button asChild variant="default" size="lg">
+          <Button asChild variant="outline" size="lg">
             <Link href="/beer">View All Beer</Link>
           </Button>
         </div>
