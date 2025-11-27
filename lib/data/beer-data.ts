@@ -285,25 +285,20 @@ export const getUpcomingEvents = cache(async (location: 'lawrenceville' | 'zelie
 /**
  * Get upcoming beer releases
  * Cached for deduplication across requests
+ * Uses static data to avoid filesystem access in serverless environments
  */
 export const getUpcomingBeers = cache(async () => {
   try {
-    const comingText = await readCSV('coming.csv');
-    const comingData = parseCSV<{ type?: string; variant?: string; tempName?: string }>(comingText);
+    // Import static data instead of reading CSV file
+    // This works in Vercel's serverless environment
+    const { comingSoonBeers } = await import('@/lib/data/coming-soon-data');
 
-    const upcomingBeers = comingData
-      .filter(row => row.type || row.variant || row.tempName)
-      .map(row => {
-        const displayName = row.type || row.tempName || row.variant || '';
-        return {
-          type: row.type || '',
-          variant: row.variant || '',
-          tempName: row.tempName || '',
-          displayName
-        };
-      });
-
-    return upcomingBeers;
+    return comingSoonBeers.map(beer => ({
+      type: beer.type,
+      variant: beer.variant || '',
+      tempName: beer.tempName || '',
+      displayName: beer.name
+    }));
   } catch (error) {
     logger.error('Error loading upcoming beers', error);
     return [];
