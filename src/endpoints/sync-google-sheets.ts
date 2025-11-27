@@ -5,9 +5,6 @@
 
 import type { PayloadHandler } from 'payload'
 import { diffJson } from 'diff'
-import path from 'path'
-import fs from 'fs/promises'
-import fsSync from 'fs'
 import { slugify } from '../collections/utils/generateUniqueSlug'
 
 interface StreamController {
@@ -130,13 +127,16 @@ function parsePrice(price: string): number | undefined {
 }
 
 // ============ IMAGE UTILITIES ============
-async function findBeerImage(variant: string): Promise<string | null> {
-  const imageDir = path.join(process.cwd(), 'public', 'images', 'beer')
-  // Only use PNG source files - Payload will convert to webp with all sizes
-  const imagePath = path.join(imageDir, `${variant}.png`)
+const IMAGE_BASE_URL = 'https://lolev.beer/images/beer'
+
+async function checkBeerImageExists(variant: string): Promise<string | null> {
+  const imageUrl = `${IMAGE_BASE_URL}/${variant}.png`
   try {
-    await fs.access(imagePath)
-    return imagePath
+    const response = await fetch(imageUrl, { method: 'HEAD' })
+    if (response.ok) {
+      return imageUrl
+    }
+    return null
   } catch {
     return null
   }
@@ -145,11 +145,11 @@ async function findBeerImage(variant: string): Promise<string | null> {
 async function uploadBeerImage(
   payload: any,
   variant: string,
-  imagePath: string,
+  imageUrl: string,
   stream: StreamController
 ): Promise<string | null> {
   try {
-    // Delete any existing media for this variant (force re-upload from PNG)
+    // Delete any existing media for this variant
     const existingMedia = await payload.find({
       collection: 'media',
       where: {
@@ -163,31 +163,20 @@ async function uploadBeerImage(
       stream.send('status', { message: `Deleted old media for ${variant}` })
     }
 
-    // Also delete any existing files on disk for this variant
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads')
-    try {
-      const files = await fs.readdir(uploadsDir)
-      for (const file of files) {
-        if (file.startsWith(variant + '.') || file.startsWith(variant + '-')) {
-          await fs.unlink(path.join(uploadsDir, file))
-          stream.send('status', { message: `Deleted file ${file}` })
-        }
-      }
-    } catch {
-      // Ignore errors reading/deleting files
+    // Fetch the image from the remote URL
+    stream.send('status', { message: `Fetching image for ${variant} from ${imageUrl}...` })
+    const response = await fetch(imageUrl)
+    if (!response.ok) {
+      throw new Error(`Failed to fetch image: ${response.status}`)
     }
 
-    // Read the file buffer
-    stream.send('status', { message: `Reading image file for ${variant}...` })
-    const fileBuffer = fsSync.readFileSync(imagePath)
-    const filename = path.basename(imagePath)
+    const arrayBuffer = await response.arrayBuffer()
+    const fileBuffer = Buffer.from(arrayBuffer)
+    const filename = `${variant}.png`
 
-    stream.send('status', { message: `Image loaded: ${fileBuffer.length} bytes, filename: ${filename}` })
+    stream.send('status', { message: `Image fetched: ${fileBuffer.length} bytes` })
 
-    // Try using the uploadFile API if available on payload.local
-    stream.send('status', { message: `Creating media entry for ${variant}...` })
-
-    // Payload 3.x local API - try the working approach from the script
+    // Create media document
     const fileData = {
       data: fileBuffer,
       name: filename,
@@ -195,34 +184,18 @@ async function uploadBeerImage(
       mimetype: 'image/png',
     }
 
-    try {
-      const media = await payload.create({
-        collection: 'media',
-        data: {
-          alt: `${variant} beer can`,
-        },
-        file: fileData as any,
-      })
+    const media = await payload.create({
+      collection: 'media',
+      data: {
+        alt: `${variant} beer can`,
+      },
+      file: fileData as any,
+    })
 
-      stream.send('status', { message: `✅ Uploaded image for ${variant}` })
-      return media.id
-    } catch (fileError: any) {
-      // If file approach fails, try filePath as fallback
-      stream.send('status', { message: `File object failed, trying filePath: ${fileError.message}` })
-
-      const media = await payload.create({
-        collection: 'media',
-        data: {
-          alt: `${variant} beer can`,
-        },
-        filePath: imagePath,
-      })
-
-      stream.send('status', { message: `✅ Uploaded image for ${variant} via filePath` })
-      return media.id
-    }
+    stream.send('status', { message: `✅ Uploaded image for ${variant}` })
+    return media.id
   } catch (error: any) {
-    const errorMsg = error?.stack || error?.message || String(error)
+    const errorMsg = error?.message || String(error)
     stream.send('error', { message: `❌ Failed to upload image for ${variant}: ${errorMsg}` })
     return null
   }
@@ -513,11 +486,11 @@ async function syncBeers(payload: any, stream: StreamController, dryRun: boolean
       const validGlasses = ['pint', 'stein', 'teku']
       const glass = validGlasses.includes(beer.glass?.toLowerCase()) ? beer.glass.toLowerCase() : 'pint'
 
-      // Check for image file - use the original variant for image lookup
+      // Check for image at lolev.beer - use the original variant for image lookup
       let imageId: string | undefined = undefined
-      const imagePath = await findBeerImage(beer.variant) || await findBeerImage(slug)
+      const imageUrl = await checkBeerImageExists(beer.variant) || await checkBeerImageExists(slug)
 
-      if (imagePath) {
+      if (imageUrl) {
         // Check if existing beer already has an image
         const existingBeer = existing.docs[0]
         const hasExistingImage = existingBeer?.image &&
@@ -525,7 +498,7 @@ async function syncBeers(payload: any, stream: StreamController, dryRun: boolean
 
         if (!hasExistingImage && !dryRun) {
           // Upload the image
-          imageId = await uploadBeerImage(payload, beer.variant, imagePath, stream) || undefined
+          imageId = await uploadBeerImage(payload, beer.variant, imageUrl, stream) || undefined
           if (imageId) {
             results.imagesAdded++
           }
