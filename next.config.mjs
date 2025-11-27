@@ -26,6 +26,8 @@ const nextConfig = {
 
   experimental: {
     scrollRestoration: true,
+    // Optimize webpack caching
+    webpackBuildWorker: true,
   },
 
   webpack: (webpackConfig) => {
@@ -41,8 +43,19 @@ const nextConfig = {
       use: ['@svgr/webpack']
     })
 
+    // Enable filesystem caching for faster rebuilds
+    webpackConfig.cache = {
+      type: 'filesystem',
+      allowCollectingMemory: true,
+      buildDependencies: {
+        config: [import.meta.url],
+      },
+    }
+
     return webpackConfig
   },
 }
 
-export default withPayload(nextConfig, { devBundleServerPackages: false })
+export default withPayload(nextConfig, {
+  devBundleServerPackages: false,
+})

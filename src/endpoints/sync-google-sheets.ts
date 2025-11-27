@@ -176,21 +176,13 @@ async function uploadBeerImage(
       // Ignore errors reading/deleting files
     }
 
-    // Read the PNG file
-    const fileBuffer = await fs.readFile(imagePath)
-
-    // Create media document
+    // Create media document using Payload's expected file format
     const media = await payload.create({
       collection: 'media',
       data: {
         alt: `${variant} beer can`,
       },
-      file: {
-        data: fileBuffer,
-        name: `${variant}.png`,
-        mimetype: 'image/png',
-        size: fileBuffer.length,
-      },
+      filePath: imagePath,
     })
 
     stream.send('status', { message: `Uploaded image for ${variant}` })

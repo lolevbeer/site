@@ -35,12 +35,22 @@ export async function generateMetadata({ params }: BeerPageProps): Promise<Metad
   };
 }
 
+// Limit static generation to popular beers only
+// Others will be generated on-demand and cached
 export async function generateStaticParams() {
   const beers = await getAllBeersFromPayload();
-  return beers.map((beer) => ({
-    variant: beer.slug,
-  }));
+
+  // Only pre-render top 10 beers (adjust as needed)
+  // Others will be generated on first request
+  return beers
+    .slice(0, 10)
+    .map((beer) => ({
+      variant: beer.slug,
+    }));
 }
+
+// Enable ISR with 1 hour revalidation
+export const revalidate = 3600;
 
 export default async function BeerPage({ params }: BeerPageProps) {
   const { variant } = await params;
