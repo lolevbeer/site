@@ -177,31 +177,50 @@ async function uploadBeerImage(
       // Ignore errors reading/deleting files
     }
 
-    // Read the file buffer (use sync to match working import script)
+    // Read the file buffer
     stream.send('status', { message: `Reading image file for ${variant}...` })
     const fileBuffer = fsSync.readFileSync(imagePath)
+    const filename = path.basename(imagePath)
 
-    stream.send('status', { message: `Image loaded: ${fileBuffer.length} bytes` })
+    stream.send('status', { message: `Image loaded: ${fileBuffer.length} bytes, filename: ${filename}` })
 
+    // Try using the uploadFile API if available on payload.local
+    stream.send('status', { message: `Creating media entry for ${variant}...` })
+
+    // Payload 3.x local API - try the working approach from the script
     const fileData = {
       data: fileBuffer,
-      name: `${variant}.png`,
+      name: filename,
       size: fileBuffer.length,
       mimetype: 'image/png',
     }
 
-    // Create media document with file buffer and proper MIME type
-    stream.send('status', { message: `Creating media entry for ${variant}...` })
-    const media = await payload.create({
-      collection: 'media',
-      data: {
-        alt: `${variant} beer can`,
-      },
-      file: fileData as any,
-    })
+    try {
+      const media = await payload.create({
+        collection: 'media',
+        data: {
+          alt: `${variant} beer can`,
+        },
+        file: fileData as any,
+      })
 
-    stream.send('status', { message: `✅ Uploaded image for ${variant}` })
-    return media.id
+      stream.send('status', { message: `✅ Uploaded image for ${variant}` })
+      return media.id
+    } catch (fileError: any) {
+      // If file approach fails, try filePath as fallback
+      stream.send('status', { message: `File object failed, trying filePath: ${fileError.message}` })
+
+      const media = await payload.create({
+        collection: 'media',
+        data: {
+          alt: `${variant} beer can`,
+        },
+        filePath: imagePath,
+      })
+
+      stream.send('status', { message: `✅ Uploaded image for ${variant} via filePath` })
+      return media.id
+    }
   } catch (error: any) {
     const errorMsg = error?.stack || error?.message || String(error)
     stream.send('error', { message: `❌ Failed to upload image for ${variant}: ${errorMsg}` })
