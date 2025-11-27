@@ -7,6 +7,7 @@ import type { PayloadHandler } from 'payload'
 import { diffJson } from 'diff'
 import path from 'path'
 import fs from 'fs/promises'
+import fsSync from 'fs'
 import { slugify } from '../collections/utils/generateUniqueSlug'
 
 interface StreamController {
@@ -176,28 +177,34 @@ async function uploadBeerImage(
       // Ignore errors reading/deleting files
     }
 
-    // Read the file buffer
-    const fileBuffer = await fs.readFile(imagePath)
-    const filename = path.basename(imagePath)
+    // Read the file buffer (use sync to match working import script)
+    stream.send('status', { message: `Reading image file for ${variant}...` })
+    const fileBuffer = fsSync.readFileSync(imagePath)
+
+    stream.send('status', { message: `Image loaded: ${fileBuffer.length} bytes` })
+
+    const fileData = {
+      data: fileBuffer,
+      name: `${variant}.png`,
+      size: fileBuffer.length,
+      mimetype: 'image/png',
+    }
 
     // Create media document with file buffer and proper MIME type
+    stream.send('status', { message: `Creating media entry for ${variant}...` })
     const media = await payload.create({
       collection: 'media',
       data: {
         alt: `${variant} beer can`,
       },
-      file: {
-        data: fileBuffer,
-        mimetype: 'image/png',
-        name: filename,
-        size: fileBuffer.length,
-      },
+      file: fileData as any,
     })
 
-    stream.send('status', { message: `Uploaded image for ${variant}` })
+    stream.send('status', { message: `✅ Uploaded image for ${variant}` })
     return media.id
   } catch (error: any) {
-    stream.send('error', { message: `Failed to upload image for ${variant}: ${error.message}` })
+    const errorMsg = error?.stack || error?.message || String(error)
+    stream.send('error', { message: `❌ Failed to upload image for ${variant}: ${errorMsg}` })
     return null
   }
 }
