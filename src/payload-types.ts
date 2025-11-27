@@ -100,6 +100,7 @@ export interface Config {
   db: {
     defaultIDType: string;
   };
+  fallbackLocale: null;
   globals: {
     'coming-soon': ComingSoon;
     'site-content': SiteContent;

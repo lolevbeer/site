@@ -32,6 +32,7 @@
     "@payloadcms/db-mongodb": "3.65.0",
     "@payloadcms/next": "3.65.0",
     "@payloadcms/richtext-lexical": "3.65.0",
+    "@payloadcms/storage-vercel-blob": "^3.65.0",
     "@payloadcms/ui": "3.65.0",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-dialog": "^1.1.15",
