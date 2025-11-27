@@ -29,9 +29,14 @@ const nextConfig = {
 
   experimental: {
     scrollRestoration: true,
-    // Optimize webpack caching
     webpackBuildWorker: true,
+    // Parallelize static page generation
+    parallelServerBuildTraces: true,
+    parallelServerCompiles: true,
   },
+
+  // Optimize module transpilation
+  transpilePackages: ['@payloadcms/richtext-lexical'],
 
   webpack: (webpackConfig) => {
     webpackConfig.resolve.extensionAlias = {
