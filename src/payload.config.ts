@@ -22,10 +22,26 @@ import { syncGoogleSheets } from './endpoints/sync-google-sheets'
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
+// Determine the correct server URL for production
+const getServerURL = () => {
+  // Use explicit URL if set
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return process.env.NEXT_PUBLIC_APP_URL
+  }
+
+  // Use Vercel URL in production
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`
+  }
+
+  // Fallback to localhost
+  return 'http://localhost:3000'
+}
+
 export default buildConfig({
-  serverURL: process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : 'http://localhost:3000'),
+  // Use empty string to make Payload use relative URLs for API calls
+  // This prevents issues with client-side fetching in production
+  serverURL: '',
   cors: [
     process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
     ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
@@ -40,8 +56,14 @@ export default buildConfig({
     graphQL: '/api/graphql',
     graphQLPlayground: '/api/graphql-playground',
   },
+  cookiePrefix: 'payload',
   admin: {
     user: Users.slug,
+    autoLogin: process.env.NODE_ENV === 'development' ? {
+      email: 'dev@payloadcms.com',
+      password: 'test',
+      prefillOnly: true,
+    } : false,
     importMap: {
       baseDir: path.resolve(dirname),
     },
