@@ -1,7 +1,7 @@
 tap,variant,singleCanAvailable,name,type,abv,glass,price,description,image,hops
 1,lumina,FALSE,Lumina,West Coast Imperial Pilsner,6.5,stein,7,"Notes of apricot, pear and lemongrass.",FALSE,"Motueka, El Dorado"
 2,grandar,FALSE,Grandar,Imperial Pilsner,6.6,stein,7,"Crackery sweetness balanced with hops, floral and herbal notes that finish with a subtle citrus. Step mashed and hopped with nobles.",TRUE,"Hallertau Mittelfrüh, Saaz"
-3,ora,FALSE,Ora,Zwickelbier,4.5,stein,7,Unfiltered golden pilsner spunded slowly for natural carbonation. Gentle malt plushness with noble hops.,FALSE,
+3,glyphs-ii,FALSE,Glyphs II,Pale Ale,5.1,pint,7,,TRUE,"Krush HyperBoost, Citra DynaBoost, Riwaka, Citra"
 4,edge,FALSE,Edge,West Coast IPA,7.7,pint,9,,TRUE,"Cascade, Mosaic, Simcoe, El Dorado, Centennial Hyperboost"
 5,rubico-ii,FALSE,Rubico II,Double IPA,8.6,teku,9,"Pillowy soft with a full, creamy body, ripe mango, passionfruit, and juicy peach.",TRUE,"Citra, Galaxy"
 6,ddh-Lupula,FALSE,DDH Lupula,India Pale Ale,7,pint,8,,TRUE,"Motueka, Moutere, Riwaka"
@@ -10,4 +10,4 @@ tap,variant,singleCanAvailable,name,type,abv,glass,price,description,image,hops
 9,kamo,FALSE,Kamo,Double IPA,8,teku,9,,TRUE,"Freestyle Southern Cross, Freestyle Riwaka, Citra DynaBoost, Citra"
 10,harvest,FALSE,Harvest,Double IPA,8,teku,9,Gooseberry with vinous and tropical fruit character. Bright lime and passionfruit notes.,TRUE,"Citra, Motueka, Nelson Sauvin, Maui Nelson Hop Kief"
 11,sever,FALSE,Sever,Pumpkin Stout,5.7,teku,7,Dark roast coffee and pumpkin pie in a rich quaffable stout. Conditioned freshly-roasted Brazilian coffee beans from Temper Coffee Roasters.,TRUE,
-12,faust-unfiltered-25,FALSE,Faust,Plum Saison,6.7,teku,10,"Unfiltered 2025 vintage. Slightly sour, dry and oaky. Aged 18 months in oak foeders on our house microflora and conditioned on plums.",FALSE,
+12,faust-unfiltered-25,FALSE,,,,,,,,
