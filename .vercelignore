@@ -1,0 +1,9 @@
+# Reduce build cache size
+.git
+*.md
+!README.md
+test-results
+playwright-report
+coverage
+.env*
+*.log
