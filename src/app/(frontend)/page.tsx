@@ -2,17 +2,11 @@ import React from 'react';
 import dynamic from 'next/dynamic';
 import { HomeContent } from '@/components/home/home-content';
 import { MarketingText } from '@/components/home/marketing-text';
-import {
-  getUpcomingEvents,
-  getUpcomingFood,
-  getUpcomingBeers,
-} from '@/lib/data/beer-data';
-import { getDraftMenu, getCansMenu, getAvailableBeersFromMenus, getComingSoonBeers, getAllLocations, getWeeklyHoursWithHolidays, type WeeklyHoursDay } from '@/lib/utils/payload-api';
+import { Spacer } from '@/components/ui/spacer';
+import { getHomePageData } from '@/lib/utils/homepage-data';
 import { JsonLd } from '@/components/seo/json-ld';
 import { generateEventJsonLd, generateFoodEventJsonLd } from '@/lib/utils/json-ld';
-import { generateAllLocalBusinessSchemas, generateOrganizationSchema } from '@/lib/utils/local-business-schema';
-import { isAuthenticated } from '@/lib/utils/auth';
-import { getSiteContent } from '@/lib/utils/site-content';
+import { generateLocalBusinessSchemas, generateOrganizationSchema } from '@/lib/utils/local-business-schema';
 
 // Lazy load below-the-fold components
 const FeaturedCans = dynamic(() => import('@/components/home/featured-menu').then(mod => ({ default: mod.FeaturedCans })), {
@@ -33,79 +27,14 @@ const UpcomingEvents = dynamic(() => import('@/components/home/upcoming-events')
 
 
 export default async function Home() {
-  // Fetch all data in parallel on the server
-  const [
-    availableBeers,
-    lawrencevilleDraftMenu,
-    zelienopleDraftMenu,
-    lawrencevilleCansMenu,
-    zelienopleCansMenu,
-    lawrencevilleEvents,
-    zelienopleEvents,
-    lawrencevilleFood,
-    zelienopleFood,
-    upcomingBeersData,
-    comingSoonBeers,
-    // Marketing data with more results
-    lawrencevilleEventsMarketing,
-    zelienopleEventsMarketing,
-    lawrencevilleFoodMarketing,
-    zelienopleFoodMarketing,
-    authenticated,
-    siteContent,
-    locations,
-  ] = await Promise.all([
-    getAvailableBeersFromMenus(),
-    getDraftMenu('lawrenceville'),
-    getDraftMenu('zelienople'),
-    getCansMenu('lawrenceville'),
-    getCansMenu('zelienople'),
-    getUpcomingEvents('lawrenceville', 3),
-    getUpcomingEvents('zelienople', 3),
-    getUpcomingFood('lawrenceville', 3),
-    getUpcomingFood('zelienople', 3),
-    getUpcomingBeers(),
-    getComingSoonBeers(),
-    // Fetch 10 items for marketing view
-    getUpcomingEvents('lawrenceville', 10),
-    getUpcomingEvents('zelienople', 10),
-    getUpcomingFood('lawrenceville', 10),
-    getUpcomingFood('zelienople', 10),
-    isAuthenticated(),
-    getSiteContent(),
-    getAllLocations(),
-  ]);
+  // Fetch all homepage data in a single consolidated operation
+  const data = await getHomePageData();
 
-  // Fetch weekly hours for each location (with holiday overrides)
-  const weeklyHoursEntries = await Promise.all(
-    locations.map(async (location) => {
-      const hours = await getWeeklyHoursWithHolidays(location.id);
-      return [location.slug || location.id, hours] as const;
-    })
-  );
-  const weeklyHours: Record<string, WeeklyHoursDay[]> = Object.fromEntries(weeklyHoursEntries);
-
-  // Generate LocalBusiness and Organization schemas
-  const localBusinessSchemas = generateAllLocalBusinessSchemas();
+  // Generate schemas for SEO
+  const localBusinessSchemas = generateLocalBusinessSchemas(data.locations);
   const organizationSchema = generateOrganizationSchema();
-
-  // Generate Event JSON-LD for upcoming events and food
-  const allEvents = [...lawrencevilleEvents, ...zelienopleEvents];
-  const allFood = [...lawrencevilleFood, ...zelienopleFood];
-  const eventSchemas = allEvents.map(event => generateEventJsonLd(event));
-  const foodSchemas = allFood.map(food => generateFoodEventJsonLd(food));
-
-  // Prepare data for quick info cards
-  const nextEvent = allEvents.length > 0 ? {
-    name: allEvents[0].vendor,
-    date: allEvents[0].date,
-    location: allEvents[0].location
-  } : null;
-
-  const beerCount = {
-    lawrenceville: lawrencevilleDraftMenu?.items?.length || 0,
-    zelienople: zelienopleDraftMenu?.items?.length || 0
-  };
+  const eventSchemas = data.allEvents.map(event => generateEventJsonLd(event));
+  const foodSchemas = data.allFood.map(food => generateFoodEventJsonLd(food));
 
   return (
     <>
@@ -127,53 +56,46 @@ export default async function Home() {
 
       {/* Marketing Text Overlay */}
       <MarketingText
-        lawrencevilleBeers={lawrencevilleDraftMenu}
-        zelienopleBeers={zelienopleDraftMenu}
-        lawrencevilleCans={lawrencevilleCansMenu}
-        zelienopleCans={zelienopleCansMenu}
-        lawrencevilleEvents={lawrencevilleEventsMarketing}
-        zelienopleEvents={zelienopleEventsMarketing}
-        lawrencevilleFood={lawrencevilleFoodMarketing}
-        zelienopleFood={zelienopleFoodMarketing}
-        upcomingBeers={upcomingBeersData}
+        draftMenusByLocation={data.draftMenusByLocation}
+        cansMenusByLocation={data.cansMenusByLocation}
+        eventsByLocation={data.eventsMarketingByLocation}
+        foodByLocation={data.foodMarketingByLocation}
+        upcomingBeers={data.upcomingBeersData}
       />
 
       <HomeContent
-        availableBeers={availableBeers}
-        lawrencevilleBeers={lawrencevilleDraftMenu}
-        zelienopleBeers={zelienopleDraftMenu}
-        beerCount={beerCount}
-        nextEvent={nextEvent}
-        isAuthenticated={authenticated}
-        heroDescription={siteContent.heroDescription}
-        weeklyHours={weeklyHours}
+        availableBeers={data.availableBeers}
+        draftMenus={data.allDraftMenus}
+        beerCount={data.beerCount}
+        nextEvent={data.nextEvent}
+        isAuthenticated={data.authenticated}
+        heroDescription={data.siteContent.heroDescription}
+        weeklyHours={data.weeklyHours}
       >
-        <div className="py-8 md:py-12" />
+        <Spacer />
 
         <FeaturedCans
-          menus={[lawrencevilleCansMenu, zelienopleCansMenu].filter((m): m is NonNullable<typeof m> => m !== null)}
-          isAuthenticated={authenticated}
+          menus={data.allCansMenus}
+          isAuthenticated={data.authenticated}
         />
 
-        <div className="py-8 md:py-12" />
+        <Spacer />
 
         <UpcomingFood
-          lawrencevilleFood={lawrencevilleFood}
-          zelienopleFood={zelienopleFood}
-          isAuthenticated={authenticated}
+          foodByLocation={data.foodByLocation}
+          isAuthenticated={data.authenticated}
         />
 
-        <div className="py-8 md:py-12" />
+        <Spacer />
 
         <UpcomingEvents
-          lawrencevilleEvents={lawrencevilleEvents}
-          zelienopleEvents={zelienopleEvents}
-          isAuthenticated={authenticated}
+          eventsByLocation={data.eventsByLocation}
+          isAuthenticated={data.authenticated}
         />
 
-        <div className="py-8 md:py-12" />
+        <Spacer />
 
-        <UpcomingBeers comingSoonBeers={comingSoonBeers} isAuthenticated={authenticated} />
+        <UpcomingBeers comingSoonBeers={data.comingSoonBeers} isAuthenticated={data.authenticated} />
       </HomeContent>
     </>
   );
