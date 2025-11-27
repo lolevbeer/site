@@ -9,6 +9,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Beer } from '@/lib/types/beer';
+import type { Menu, Beer as PayloadBeer } from '@/src/payload-types';
 import { useLocationContext } from '@/components/location/location-provider';
 import {
   Card,
@@ -67,7 +68,7 @@ function getAvailabilityInfo(beer: Beer) {
   return { status, details, isDraft, isCanned };
 }
 
-function getPricingInfo(beer: any): {
+function getPricingInfo(beer: Beer | (PayloadBeer & { pricing?: Beer['pricing']; salePrice?: boolean })): {
   draftPrice?: number;
   singlePrice?: number;
   fourPackPrice?: number;
@@ -75,10 +76,10 @@ function getPricingInfo(beer: any): {
 } {
   return {
     // Support both Payload structure (beer.draftPrice) and legacy structure (beer.pricing.draftPrice)
-    draftPrice: beer.draftPrice ?? beer.pricing?.draftPrice,
-    singlePrice: beer.canSingle ?? beer.pricing?.canSingle ?? beer.pricing?.cansSingle,
-    fourPackPrice: beer.fourPack ?? beer.pricing?.fourPack,
-    hasSale: beer.salePrice === true || beer.pricing?.salePrice === true,
+    draftPrice: 'draftPrice' in beer ? beer.draftPrice : beer.pricing?.draftPrice,
+    singlePrice: ('canSingle' in beer ? beer.canSingle : undefined) ?? beer.pricing?.canSingle ?? beer.pricing?.cansSingle,
+    fourPackPrice: ('fourPack' in beer ? beer.fourPack : undefined) ?? beer.pricing?.fourPack,
+    hasSale: ('salePrice' in beer && beer.salePrice === true) || beer.pricing?.salePrice === true,
   };
 }
 
@@ -147,9 +148,9 @@ export function BeerDetails({ beer, className = '', isAuthenticated = false }: B
 
         // Process menus to extract location availability
         if (data.docs && Array.isArray(data.docs)) {
-          data.docs.forEach((menu: any) => {
+          data.docs.forEach((menu: Menu) => {
             // Check if this beer is in the menu items
-            const hasBeer = menu.items?.some((item: any) => {
+            const hasBeer = menu.items?.some((item) => {
               const beerId = typeof item.beer === 'string' ? item.beer : item.beer?.id;
               return beerId === beer.id;
             });

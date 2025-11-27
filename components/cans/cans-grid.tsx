@@ -26,6 +26,21 @@ interface CansGridProps {
   maxItems?: number;
 }
 
+interface CSVRow {
+  variant?: string;
+  fourPack?: string;
+  [key: string]: string | undefined;
+}
+
+interface BeerCSVRow extends CSVRow {
+  name?: string;
+  type?: string;
+  abv?: string;
+  image?: string;
+  glass?: string;
+  recipe?: string;
+}
+
 export function CansGrid({ maxItems }: CansGridProps) {
   const { currentLocation } = useLocationContext();
   const [cans, setCans] = useState<CanBeer[]>([]);
@@ -51,28 +66,28 @@ export function CansGrid({ maxItems }: CansGridProps) {
         ]);
 
         // Parse draft CSVs to track which beers are on draft
-        const lawrencevilleDraftData = Papa.parse(lawrencevilleDraftText, { header: true });
-        const zelienopleDraftData = Papa.parse(zelienopleDraftText, { header: true });
+        const lawrencevilleDraftData = Papa.parse<CSVRow>(lawrencevilleDraftText, { header: true });
+        const zelienopleDraftData = Papa.parse<CSVRow>(zelienopleDraftText, { header: true });
 
         const onDraftSet = new Set<string>();
-        lawrencevilleDraftData.data.forEach((row: any) => {
+        lawrencevilleDraftData.data.forEach((row: CSVRow) => {
           if (row.variant) onDraftSet.add(row.variant.toLowerCase());
         });
-        zelienopleDraftData.data.forEach((row: any) => {
+        zelienopleDraftData.data.forEach((row: CSVRow) => {
           if (row.variant) onDraftSet.add(row.variant.toLowerCase());
         });
 
         // Parse beer.csv
-        const beerData = Papa.parse(beerText, { header: true });
-        const beerMap = new Map();
-        beerData.data.forEach((row: any) => {
+        const beerData = Papa.parse<BeerCSVRow>(beerText, { header: true });
+        const beerMap = new Map<string, Omit<CanBeer, 'fourPackPrice' | 'onDraft'>>();
+        beerData.data.forEach((row: BeerCSVRow) => {
           if (row.variant) {
             beerMap.set(row.variant.toLowerCase(), {
               variant: row.variant,
-              name: row.name,
-              type: row.type,
-              abv: row.abv,
-              image: row.image === 'TRUE' || row.image === true,
+              name: row.name || '',
+              type: row.type || '',
+              abv: row.abv || '',
+              image: row.image === 'TRUE' || row.image === 'true',
               glass: row.glass,
               recipe: row.recipe ? parseInt(row.recipe) : 0
             });
@@ -80,38 +95,38 @@ export function CansGrid({ maxItems }: CansGridProps) {
         });
 
         // Parse Lawrenceville cans
-        const lawrencevilleCansData = Papa.parse(lawrencevilleCansText, { header: true });
+        const lawrencevilleCansData = Papa.parse<CSVRow>(lawrencevilleCansText, { header: true });
         const lawrencevilleCans: CanBeer[] = lawrencevilleCansData.data
-          .filter((row: any) => row.variant)
-          .map((row: any) => {
-            const beerInfo = beerMap.get(row.variant.toLowerCase());
+          .filter((row: CSVRow) => row.variant)
+          .map((row: CSVRow) => {
+            const beerInfo = beerMap.get(row.variant!.toLowerCase());
             if (beerInfo) {
               return {
                 ...beerInfo,
                 fourPackPrice: row.fourPack ? `$${row.fourPack}` : '',
-                onDraft: onDraftSet.has(row.variant.toLowerCase())
+                onDraft: onDraftSet.has(row.variant!.toLowerCase())
               };
             }
             return null;
           })
-          .filter(Boolean) as CanBeer[];
+          .filter((beer): beer is CanBeer => beer !== null);
 
         // Parse Zelienople cans
-        const zelienopleCansData = Papa.parse(zelienopleCansText, { header: true });
+        const zelienopleCansData = Papa.parse<CSVRow>(zelienopleCansText, { header: true });
         const zelienopleCans: CanBeer[] = zelienopleCansData.data
-          .filter((row: any) => row.variant)
-          .map((row: any) => {
-            const beerInfo = beerMap.get(row.variant.toLowerCase());
+          .filter((row: CSVRow) => row.variant)
+          .map((row: CSVRow) => {
+            const beerInfo = beerMap.get(row.variant!.toLowerCase());
             if (beerInfo) {
               return {
                 ...beerInfo,
                 fourPackPrice: row.fourPack ? `$${row.fourPack}` : '',
-                onDraft: onDraftSet.has(row.variant.toLowerCase())
+                onDraft: onDraftSet.has(row.variant!.toLowerCase())
               };
             }
             return null;
           })
-          .filter(Boolean) as CanBeer[];
+          .filter((beer): beer is CanBeer => beer !== null);
 
         // Set cans based on location
         const selectedCans = currentLocation === 'lawrenceville'

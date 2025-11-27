@@ -151,7 +151,7 @@ export default async function Home() {
         <div className="py-8 md:py-12" />
 
         <FeaturedCans
-          menus={[lawrencevilleCansMenu, zelienopleCansMenu].filter(Boolean)}
+          menus={[lawrencevilleCansMenu, zelienopleCansMenu].filter((m): m is NonNullable<typeof m> => m !== null)}
           isAuthenticated={authenticated}
         />
 

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Beer } from '@/lib/types/beer';
+import type { Beer as PayloadBeer } from '@/src/payload-types';
 import { BreweryEvent } from '@/lib/types/event';
 import { FoodVendorSchedule } from '@/lib/types/food';
 import { formatAbv } from '@/lib/utils/formatters';
@@ -51,11 +52,23 @@ interface SimpleFood {
   day?: string;
 }
 
+interface MenuItem {
+  beer: string | Beer | PayloadBeer;
+  price?: string | null;
+  id?: string | null;
+}
+
+interface MenuData {
+  items?: MenuItem[];
+}
+
+type BeerInput = Beer[] | MenuData | null;
+
 interface MarketingTextProps {
-  lawrencevilleBeers: Beer[] | any; // Can be Beer[] or Menu object
-  zelienopleBeers: Beer[] | any; // Can be Beer[] or Menu object
-  lawrencevilleCans: SimpleBeer[] | any; // Can be SimpleBeer[] or Menu object
-  zelienopleCans: SimpleBeer[] | any; // Can be SimpleBeer[] or Menu object
+  lawrencevilleBeers: BeerInput;
+  zelienopleBeers: BeerInput;
+  lawrencevilleCans: BeerInput;
+  zelienopleCans: BeerInput;
   lawrencevilleEvents: (BreweryEvent | SimpleEvent)[];
   zelienopleEvents: (BreweryEvent | SimpleEvent)[];
   lawrencevilleFood: (FoodVendorSchedule | SimpleFood)[];
@@ -77,24 +90,29 @@ export function MarketingText({
   const [isVisible, setIsVisible] = useState(false);
 
   // Helper to convert Menu to Beer array
-  const convertMenuToBeers = (menuData: any): (Beer | SimpleBeer)[] => {
+  const convertMenuToBeers = (menuData: BeerInput): (Beer | SimpleBeer)[] => {
     if (!menuData) return [];
     if (Array.isArray(menuData)) return menuData;
     if (!menuData.items) return [];
 
     return menuData.items
-      .map((item: any) => {
+      .map((item: MenuItem) => {
         const beer = item.beer;
-        if (!beer) return null;
+        if (!beer || typeof beer === 'string') return null;
+
+        // Handle both Payload Beer (with slug) and regular Beer (with variant)
+        const beerObj = beer as Beer & { slug?: string; style?: { name?: string } | string };
 
         return {
-          variant: beer.slug || beer.variant,
-          name: beer.name,
-          type: beer.style?.name || beer.style || beer.type || '',
-          abv: beer.abv || 0,
+          variant: beerObj.slug || beerObj.variant,
+          name: beerObj.name,
+          type: typeof beerObj.style === 'object' && beerObj.style?.name
+            ? beerObj.style.name
+            : (typeof beerObj.style === 'string' ? beerObj.style : beerObj.type || ''),
+          abv: beerObj.abv || 0,
         };
       })
-      .filter(Boolean);
+      .filter((beer): beer is NonNullable<typeof beer> => beer !== null);
   };
 
   // Convert Menu objects to arrays

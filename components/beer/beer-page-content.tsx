@@ -8,8 +8,7 @@
 
 import React, { useMemo, useCallback } from 'react';
 import { useQueryState, parseAsString, parseAsArrayOf, parseAsBoolean } from 'nuqs';
-import { Beer, BeerStyle } from '@/lib/types/beer';
-import type { LocationFilter } from '@/lib/types/location';
+import { Beer } from '@/lib/types/beer';
 import { BeerCard } from '@/components/beer/beer-card';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -65,7 +64,7 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
   const [abvLevels, setAbvLevels] = useQueryState('abv', abvLevelsParser.withDefault([]));
   const [showOnTap, setShowOnTap] = useQueryState('tap', parseAsBoolean.withDefault(true));
   const [showInCans, setShowInCans] = useQueryState('cans', parseAsBoolean.withDefault(true));
-  const [sortBy, setSortBy] = useQueryState<SortOption>('sort', parseAsString.withDefault('recipe') as any);
+  const [sortBy, setSortBy] = useQueryState('sort', parseAsString.withDefault('recipe'));
 
   // Local UI state (not in URL)
   const [showFilters, setShowFilters] = React.useState(false);

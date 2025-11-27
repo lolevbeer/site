@@ -9,51 +9,66 @@ import { getGlassIcon } from '@/lib/utils/beer-icons';
 import { useLocationContext } from '@/components/location/location-provider';
 import { DraftBeerCard } from '@/components/beer/draft-beer-card';
 import { Pencil } from 'lucide-react';
+import type { Menu, Beer as PayloadBeer, Style } from '@/src/payload-types';
+import type { Beer } from '@/lib/types/beer';
 
 type MenuType = 'draft' | 'cans';
 
 interface MenuItem {
   variant: string;
   name: string;
-  type?: string;
+  type: string;
   abv?: string;
+  description: string;
+  glutenFree: boolean;
   image?: boolean;
   onDraft?: boolean;
   glass?: string;
   fourPack?: string;
   isJustReleased?: boolean;
-  _sourceLocationSlug?: string;
-  [key: string]: any;
+  recipe?: number;
+  pricing: {
+    draftPrice?: number;
+  };
+  availability: {
+    hideFromSite?: boolean;
+  };
+  slug?: string;
+  style?: string | Style;
+  [key: string]: unknown;
 }
 
 interface FeaturedMenuProps {
   menuType: MenuType;
-  menu?: any; // Single menu for fullscreen mode
-  menus?: any[]; // Array of menus from different locations
+  menu?: Menu;
+  menus?: Menu[];
   isAuthenticated?: boolean;
 }
 
 // Shared logic to convert menu items
-function convertMenuItems(menuData: any): MenuItem[] {
+function convertMenuItems(menuData: Menu): MenuItem[] {
   if (!menuData?.items) return [];
 
   const location = typeof menuData.location === 'object' ? menuData.location : null;
   const locationSlug = location?.slug;
 
   const items = menuData.items
-    .map((item: any) => {
-      const beer = item.beer;
+    .map((item) => {
+      const beer = typeof item.beer === 'object' ? item.beer : null;
       if (!beer || !beer.slug) return null;
 
+      const style = typeof beer.style === 'object' ? beer.style : null;
+
       return {
-        ...beer,
         variant: beer.slug,
         name: beer.name,
-        type: beer.style?.name || beer.style || '',
-        abv: beer.abv?.toString() || '',
+        type: style?.name || (typeof beer.style === 'string' ? beer.style : '') || '',
+        abv: beer.abv?.toString() || '0',
+        description: beer.description || '',
+        glutenFree: false,
         image: !!beer.image,
         glass: beer.glass || 'pint',
-        fourPack: beer.fourPack || item.price,
+        fourPack: beer.fourPack?.toString() || item.price || undefined,
         recipe: beer.recipe || 0,
         pricing: {
           draftPrice: item.price ? parseFloat(String(item.price).replace('$', '')) : undefined,
@@ -61,23 +76,24 @@ function convertMenuItems(menuData: any): MenuItem[] {
         availability: {
           hideFromSite: beer.hideFromSite || false,
         },
-        _sourceLocationSlug: locationSlug,
+        slug: beer.slug,
+        style: beer.style,
       };
     })
-    .filter(Boolean);
+    .filter((item): item is NonNullable<typeof item> => item !== null);
 
   // Mark items with highest recipe number as "just released"
-  const maxRecipe = Math.max(...items.map((i: any) => i.recipe || 0));
-  return items.map((item: any) => ({
+  const maxRecipe = Math.max(...items.map((i) => i.recipe || 0));
+  return items.map((item) => ({
     ...item,
     isJustReleased: item.recipe === maxRecipe && maxRecipe > 0,
   }));
 }
 
-// Filter items by location
-function filterByLocation(items: MenuItem[], currentLocation: string): MenuItem[] {
-  if (currentLocation === 'all') return items;
-  return items.filter(item => item._sourceLocationSlug === currentLocation);
+// Filter items by location - removed since we can't track source location anymore
+// All items from the menu are already location-specific
+function filterByLocation(items: MenuItem[], _currentLocation: string): MenuItem[] {
+  return items;
 }
 
 // Admin edit buttons component
@@ -86,7 +102,7 @@ function AdminEditButtons({
   currentLocation,
   isAuthenticated
 }: {
-  menusArray: any[];
+  menusArray: Menu[];
   currentLocation: string;
   isAuthenticated?: boolean;
 }) {
@@ -242,7 +258,7 @@ export function FeaturedMenu({ menuType, menu, menus = [], isAuthenticated }: Fe
               menuType === 'draft' ? (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 max-w-none" suppressHydrationWarning>
                   {displayItems.map((item, index) => (
-                    <DraftBeerCard key={`${item.variant}-${index}`} beer={item as any} showLocation={false} />
+                    <DraftBeerCard key={`${item.variant}-${index}`} beer={item as unknown as Beer} showLocation={false} />
                   ))}
                 </div>
               ) : (
@@ -283,7 +299,7 @@ export function FeaturedMenu({ menuType, menu, menus = [], isAuthenticated }: Fe
             menuType === 'draft' ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4" suppressHydrationWarning>
                 {displayItems.map((item, index) => (
-                  <DraftBeerCard key={`${item.variant}-${index}`} beer={item as any} showLocation={false} />
+                  <DraftBeerCard key={`${item.variant}-${index}`} beer={item as unknown as Beer} showLocation={false} />
                 ))}
               </div>
             ) : (
