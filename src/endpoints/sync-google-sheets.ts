@@ -845,7 +845,10 @@ async function runSync(
 }
 
 export const syncGoogleSheets: PayloadHandler = async (req) => {
-  const { payload, user } = req
+  const { user } = req
+  // Use getPayloadHMR to get a proper Payload instance that supports file uploads
+  const { getPayloadHMR } = await import('@payloadcms/next/utilities')
+  const payload = await getPayloadHMR({ config: (await import('@payload-config')).default })
 
   if (!user) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
