@@ -34,6 +34,12 @@ export default buildConfig({
     process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
     ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
   ].filter(Boolean),
+  routes: {
+    api: '/api',
+    admin: '/admin',
+    graphQL: '/api/graphql',
+    graphQLPlayground: '/api/graphql-playground',
+  },
   admin: {
     user: Users.slug,
     importMap: {
