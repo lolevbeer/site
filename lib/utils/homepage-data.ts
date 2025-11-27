@@ -15,7 +15,7 @@ import {
   getUpcomingFoodFromPayload,
   type WeeklyHoursDay,
 } from './payload-api';
-import { getUpcomingBeers } from '@/lib/data/beer-data';
+import { getUpcomingBeers } from '@/lib/data/beer-data'; // Still uses CSV for now (static data)
 import { isAuthenticated } from './auth';
 import { getSiteContent } from './site-content';
 import { arrayToLocationMap } from './array-helpers';
@@ -124,7 +124,10 @@ export const getHomePageData = cache(async (): Promise<HomePageData> => {
       ? {
           name: allEvents[0].vendor,
           date: allEvents[0].date,
-          location: allEvents[0].location,
+          // Extract location slug/name from either string ID or hydrated object
+          location: typeof allEvents[0].location === 'string'
+            ? allEvents[0].location
+            : (allEvents[0].location?.slug || allEvents[0].location?.name || ''),
         }
       : null;
 

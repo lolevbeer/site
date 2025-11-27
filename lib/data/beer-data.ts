@@ -1,6 +1,18 @@
 /**
  * Server-side data fetching utilities for beer data
  * Fetches and parses CSV files with caching
+ *
+ * @deprecated Most functions have been superseded by Payload CMS equivalents in lib/utils/payload-api.ts
+ *
+ * MIGRATION GUIDE:
+ * - getAvailableBeers() → Use getAvailableBeersFromMenus() from payload-api.ts
+ * - getDraftBeers() → Use getDraftMenu() from payload-api.ts
+ * - getEnrichedCans() → Use getCansMenu() from payload-api.ts
+ * - getUpcomingEvents() → Use getUpcomingEventsFromPayload() from payload-api.ts (aliased as getUpcomingEvents)
+ * - getUpcomingFood() → Use getUpcomingFoodFromPayload() from payload-api.ts (aliased as getUpcomingFood)
+ * - getUpcomingBeers() → Still used for static coming-soon data (to be migrated to Payload global)
+ *
+ * TODO: Remove this file entirely once all functions are migrated to Payload CMS
  */
 
 import { cache } from 'react';
@@ -8,7 +20,7 @@ import { readFile, access } from 'fs/promises';
 import { join } from 'path';
 import { logger } from '@/lib/utils/logger';
 import { GlassType } from '@/lib/types/beer';
-import { Location } from '@/lib/types/location';
+import type { LocationSlug } from '@/lib/types/location';
 import { parseCSV } from '@/lib/utils/csv';
 import { compareDateStrings } from '@/lib/utils/date';
 import { constants } from 'fs';
@@ -260,7 +272,7 @@ export const getEnrichedCans = cache(async (location: 'lawrenceville' | 'zelieno
  * Get upcoming events for a specific location
  * Fetches from Payload CMS
  */
-export const getUpcomingEvents = cache(async (location: 'lawrenceville' | 'zelienople', limit: number = 3) => {
+export const getUpcomingEvents = cache(async (location: LocationSlug, limit: number = 3) => {
   try {
     // Import here to avoid circular dependency
     const { getUpcomingEventsFromPayload } = await import('@/lib/utils/payload-api');
@@ -274,7 +286,7 @@ export const getUpcomingEvents = cache(async (location: 'lawrenceville' | 'zelie
       attendees: event.attendees?.toString() || '',
       site: event.site || '',
       end: event.endTime || '',
-      location: location === 'lawrenceville' ? Location.LAWRENCEVILLE : Location.ZELIENOPLE
+      location: location
     }));
   } catch (error) {
     logger.error(`Error loading events for ${location}`, error);
@@ -309,7 +321,7 @@ export const getUpcomingBeers = cache(async () => {
  * Get upcoming food vendors for a specific location
  * Fetches from Payload CMS
  */
-export const getUpcomingFood = cache(async (location: 'lawrenceville' | 'zelienople', limit: number = 3) => {
+export const getUpcomingFood = cache(async (location: LocationSlug, limit: number = 3) => {
   try {
     // Import here to avoid circular dependency
     const { getUpcomingFoodFromPayload } = await import('@/lib/utils/payload-api');
@@ -322,7 +334,7 @@ export const getUpcomingFood = cache(async (location: 'lawrenceville' | 'zelieno
       time: item.time || '',
       site: item.site || '',
       day: item.day || '',
-      location: location === 'lawrenceville' ? Location.LAWRENCEVILLE : Location.ZELIENOPLE
+      location: location
     }));
   } catch (error) {
     logger.error(`Error loading food for ${location}`, error);

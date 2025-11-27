@@ -6,7 +6,8 @@
 import { getPayload } from 'payload'
 import config from '@/src/payload.config'
 import { cache } from 'react'
-import type { Beer as PayloadBeer, Menu as PayloadMenu, Style, Media, HolidayHour, Location as PayloadLocation, Event as PayloadEvent, Food as PayloadFood } from '@/src/payload-types'
+import type { Beer as PayloadBeer, Menu as PayloadMenu, Style, Media, HolidayHour, Event as PayloadEvent, Food as PayloadFood } from '@/src/payload-types'
+import type { PayloadLocation } from '@/lib/types/location'
 import { logger } from '@/lib/utils/logger'
 
 /**
@@ -744,3 +745,19 @@ export const getUpcomingFoodFromPayload = cache(async (locationSlug: string, lim
     return []
   }
 })
+
+// ============ BACKWARD COMPATIBILITY ALIASES ============
+// Export aliases for functions that were previously in lib/data/beer-data.ts
+// This allows gradual migration without breaking existing imports
+
+/**
+ * @deprecated Use getUpcomingEventsFromPayload directly
+ * Alias for backward compatibility with lib/data/beer-data.ts
+ */
+export const getUpcomingEvents = getUpcomingEventsFromPayload
+
+/**
+ * @deprecated Use getUpcomingFoodFromPayload directly
+ * Alias for backward compatibility with lib/data/beer-data.ts
+ */
+export const getUpcomingFood = getUpcomingFoodFromPayload
