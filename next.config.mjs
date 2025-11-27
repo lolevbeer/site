@@ -47,9 +47,6 @@ const nextConfig = {
     webpackConfig.cache = {
       type: 'filesystem',
       allowCollectingMemory: true,
-      buildDependencies: {
-        config: [import.meta.url],
-      },
     }
 
     return webpackConfig
