@@ -5,7 +5,7 @@
 
 'use client';
 
-import React, { createContext, useContext, ReactNode, useMemo } from 'react';
+import React, { createContext, useContext, ReactNode, useMemo, Suspense } from 'react';
 import { Location, LocationInfo, LocationFeature } from '@/lib/types/location';
 import { useLocation, useLocationHours, useLocationComparison } from '@/lib/hooks/use-location';
 
@@ -57,10 +57,10 @@ interface LocationProviderProps {
 }
 
 /**
- * Location Context Provider Component
- * Wraps the application to provide location state globally
+ * Inner provider component that uses hooks requiring useSearchParams
+ * This is wrapped in Suspense to support static generation
  */
-export function LocationProvider({ children }: LocationProviderProps) {
+function LocationProviderInner({ children }: LocationProviderProps) {
   const locationState = useLocation();
   const hoursState = useLocationHours();
   const comparisonState = useLocationComparison();
@@ -90,6 +90,19 @@ export function LocationProvider({ children }: LocationProviderProps) {
     <LocationContext.Provider value={contextValue}>
       {children}
     </LocationContext.Provider>
+  );
+}
+
+/**
+ * Location Context Provider Component
+ * Wraps the application to provide location state globally
+ * Wrapped in Suspense for Next.js 15 compatibility with useSearchParams
+ */
+export function LocationProvider({ children }: LocationProviderProps) {
+  return (
+    <Suspense fallback={null}>
+      <LocationProviderInner>{children}</LocationProviderInner>
+    </Suspense>
   );
 }
 

@@ -48,9 +48,6 @@ export default buildConfig({
     },
   },
   collections: [Users, Media, Styles, Beers, Events, Food, Locations, HolidayHours, Menus],
-  cookieOptions: {
-    maxAge: 72 * 60 * 60, // 72 hours in seconds
-  },
   globals: [ComingSoon, SiteContent],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',

@@ -26,10 +26,10 @@ export async function generateMetadata({ params }: BeerPageProps): Promise<Metad
 
   return {
     title: `${beer.name} | ${styleName}`,
-    description: beer.description,
+    description: beer.description ?? undefined,
     openGraph: {
       title: `${beer.name} | ${styleName} | Lolev Beer`,
-      description: beer.description,
+      description: beer.description ?? undefined,
       type: 'website',
     },
   };
@@ -54,7 +54,8 @@ export default async function BeerPage({ params }: BeerPageProps) {
   const authenticated = await isAuthenticated();
 
   // Generate Product schema for SEO
-  const productSchema = generateProductSchema(beer);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const productSchema = generateProductSchema(beer as any);
 
   return (
     <>
@@ -62,7 +63,8 @@ export default async function BeerPage({ params }: BeerPageProps) {
       <JsonLd data={productSchema} />
 
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <BeerDetails beer={beer} isAuthenticated={authenticated} />
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+        <BeerDetails beer={beer as any} isAuthenticated={authenticated} />
       </div>
     </>
   );

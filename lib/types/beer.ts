@@ -89,6 +89,8 @@ export interface BeerAvailability {
  * Main beer interface representing all beer properties
  */
 export interface Beer {
+  /** Unique database ID (from Payload CMS) */
+  id?: string;
   /** Unique variant identifier */
   variant: string;
   /** Display name of the beer */
@@ -115,6 +117,8 @@ export interface Beer {
   recipe?: number;
   /** Hops used in brewing */
   hops?: string;
+  /** Whether this is a recently released beer */
+  isJustReleased?: boolean;
   /** Pricing information */
   pricing: BeerPricing;
   /** Availability information */

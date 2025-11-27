@@ -24,7 +24,7 @@ const DEFAULT_CONTENT: SiteContent = {
  */
 export async function getSiteContent(): Promise<SiteContent> {
   try {
-    const content = await fetchGlobal('site-content');
+    const content = await fetchGlobal('site-content') as SiteContent | null;
     return {
       heroDescription: content?.heroDescription,
       errorMessage: content?.errorMessage,

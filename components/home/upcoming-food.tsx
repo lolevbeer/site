@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, MapPin } from 'lucide-react';
+import { Calendar, Clock, MapPin, Pencil } from 'lucide-react';
 import { useLocationFilteredData } from '@/lib/hooks/use-location-filtered-data';
 
 interface FoodVendor {
@@ -18,9 +18,10 @@ interface FoodVendor {
 interface UpcomingFoodProps {
   lawrencevilleFood: FoodVendor[];
   zelienopleFood: FoodVendor[];
+  isAuthenticated?: boolean;
 }
 
-export function UpcomingFood({ lawrencevilleFood, zelienopleFood }: UpcomingFoodProps) {
+export function UpcomingFood({ lawrencevilleFood, zelienopleFood, isAuthenticated }: UpcomingFoodProps) {
   // Filter by location first
   const filteredFood = useLocationFilteredData({
     lawrencevilleData: lawrencevilleFood,
@@ -39,10 +40,9 @@ export function UpcomingFood({ lawrencevilleFood, zelienopleFood }: UpcomingFood
     });
 
     foodWithLocation.sort((a, b) => {
-      const [yearA, monthA, dayA] = a.date.split('-').map(Number);
-      const [yearB, monthB, dayB] = b.date.split('-').map(Number);
-      const dateA = new Date(yearA, monthA - 1, dayA);
-      const dateB = new Date(yearB, monthB - 1, dayB);
+      // Handle both ISO strings and YYYY-MM-DD format
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
       return dateA.getTime() - dateB.getTime();
     });
 
@@ -56,10 +56,23 @@ export function UpcomingFood({ lawrencevilleFood, zelienopleFood }: UpcomingFood
   return (
     <section className="py-16 lg:py-24 bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12 flex justify-center">
-          <h2 className="text-3xl lg:text-4xl font-bold mb-4">
-            Upcoming Food
-          </h2>
+        <div className="text-center mb-12">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex-1" />
+            <h2 className="text-3xl lg:text-4xl font-bold">
+              Upcoming Food
+            </h2>
+            <div className="flex-1 flex justify-end">
+              {isAuthenticated && (
+                <Button asChild variant="outline" size="sm">
+                  <a href="/admin/collections/food" target="_blank" rel="noopener noreferrer">
+                    <Pencil className="h-4 w-4 mr-1" />
+                    Edit
+                  </a>
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 justify-items-center">
@@ -75,17 +88,17 @@ export function UpcomingFood({ lawrencevilleFood, zelienopleFood }: UpcomingFood
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4" />
                     <span>{(() => {
-                      const [year, month, day] = food.date.split('-').map(Number);
-                      const date = new Date(year, month - 1, day);
+                      const date = new Date(food.date);
                       return date.toLocaleDateString('en-US', {
                         weekday: 'long',
                         month: 'long',
                         day: 'numeric',
-                        year: 'numeric'
+                        year: 'numeric',
+                        timeZone: 'America/New_York'
                       });
                     })()}</span>
                   </div>
-                  {food.time && (
+                  {food.time && food.time !== 'TBD' && (
                     <div className="flex items-center gap-2">
                       <Clock className="h-4 w-4" />
                       <span>{food.time}</span>

@@ -9,8 +9,8 @@ import type { WeeklyHoursDay } from '@/lib/utils/payload-api';
 
 interface HomeContentProps {
   availableBeers: any[];
-  lawrencevilleBeers: any[];
-  zelienopleBeers: any[];
+  lawrencevilleBeers: any;
+  zelienopleBeers: any;
   beerCount: { lawrenceville: number; zelienople: number };
   nextEvent: any;
   children: React.ReactNode;
@@ -51,7 +51,7 @@ export function HomeContent({
 
       {/* Quick Info Cards */}
       <section className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <QuickInfoCards beerCount={beerCount} nextEvent={nextEvent} weeklyHours={weeklyHours} />
+        <QuickInfoCards beerCount={beerCount} nextEvent={nextEvent} />
       </section>
 
       <div className="py-8 md:py-12" />

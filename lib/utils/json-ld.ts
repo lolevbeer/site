@@ -147,9 +147,13 @@ function getOrganizer(): OrganizationJsonLd {
  * Convert event status to schema.org EventStatus
  */
 function getEventStatus(status: EventStatus): string {
-  const statusMap: Record<EventStatus, string> = {
+  const statusMap: Partial<Record<EventStatus, string>> = {
     [EventStatus.CANCELLED]: 'https://schema.org/EventCancelled',
     [EventStatus.POSTPONED]: 'https://schema.org/EventPostponed',
+    [EventStatus.SCHEDULED]: 'https://schema.org/EventScheduled',
+    [EventStatus.SOLD_OUT]: 'https://schema.org/EventScheduled',
+    [EventStatus.COMPLETED]: 'https://schema.org/EventScheduled',
+    [EventStatus.DRAFT]: 'https://schema.org/EventScheduled',
   };
   return statusMap[status] || 'https://schema.org/EventScheduled';
 }

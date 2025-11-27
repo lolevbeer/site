@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { EventCard } from '@/components/events/event-card';
 import { parseLocalDate } from '@/lib/utils/formatters';
 import { useLocationFilteredData } from '@/lib/hooks/use-location-filtered-data';
+import { Pencil } from 'lucide-react';
 
 interface Event {
   date: string;
@@ -19,9 +20,10 @@ interface Event {
 interface UpcomingEventsProps {
   lawrencevilleEvents: Event[];
   zelienopleEvents: Event[];
+  isAuthenticated?: boolean;
 }
 
-export function UpcomingEvents({ lawrencevilleEvents, zelienopleEvents }: UpcomingEventsProps) {
+export function UpcomingEvents({ lawrencevilleEvents, zelienopleEvents, isAuthenticated }: UpcomingEventsProps) {
   // Filter by location first
   const filteredEvents = useLocationFilteredData({
     lawrencevilleData: lawrencevilleEvents,
@@ -51,10 +53,23 @@ export function UpcomingEvents({ lawrencevilleEvents, zelienopleEvents }: Upcomi
   return (
     <section className="py-16 lg:py-24">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12 flex justify-center">
-          <h2 className="text-3xl lg:text-4xl font-bold mb-4">
-            Upcoming Events
-          </h2>
+        <div className="text-center mb-12">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex-1" />
+            <h2 className="text-3xl lg:text-4xl font-bold">
+              Upcoming Events
+            </h2>
+            <div className="flex-1 flex justify-end">
+              {isAuthenticated && (
+                <Button asChild variant="outline" size="sm">
+                  <a href="/admin/collections/events" target="_blank" rel="noopener noreferrer">
+                    <Pencil className="h-4 w-4 mr-1" />
+                    Edit
+                  </a>
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 justify-items-center">

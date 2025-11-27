@@ -70,7 +70,7 @@ export async function loadHoursFromCSV(): Promise<Record<Location, LocationHours
   const parseLocationHours = (data: HoursCSVRow[]): LocationHours => {
     const hours = Object.fromEntries(
       Object.values(dayMapping).map(day => [day, closedDay])
-    ) as LocationHours;
+    ) as unknown as LocationHours;
 
     data.forEach(row => {
       const dayKey = dayMapping[row.name];

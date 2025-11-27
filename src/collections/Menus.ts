@@ -161,7 +161,6 @@ export const Menus: CollectionConfig = {
       required: true,
       admin: {
         initCollapsed: false,
-        pagination: false, // Disable pagination to show all items
       },
       fields: [
         {
@@ -175,6 +174,8 @@ export const Menus: CollectionConfig = {
               admin: {
                 width: '66%',
                 sortOptions: 'name',
+                allowCreate: false,
+                description: 'Search by name or slug',
               },
             },
             {

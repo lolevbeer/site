@@ -335,7 +335,7 @@ export const fetchGlobal = cache(async (slug: string) => {
   try {
     const payload = await getPayloadInstance()
     const result = await payload.findGlobal({
-      slug,
+      slug: slug as 'coming-soon' | 'site-content',
       depth: 0,
     })
     return result

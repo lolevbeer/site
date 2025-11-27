@@ -127,11 +127,6 @@ function CanCard({ item, fullscreen = false }: { item: MenuItem; fullscreen?: bo
         style={{ width: 'calc(20% - 16px)', minWidth: '180px', maxWidth: '220px' }}
       >
         <div className="relative w-full transition-transform duration-200 group-hover:scale-[1.02]" style={{ height: 'calc(45vh - 80px)', maxHeight: '380px' }}>
-          {item.isJustReleased && (
-            <Badge variant="default" className="absolute top-2 left-1/2 -translate-x-1/2 -ml-[5px] text-xs z-10">
-              Just Released
-            </Badge>
-          )}
           {item.image ? (
             <Image
               src={`/images/beer/${item.variant.toLowerCase()}.png`}
@@ -150,6 +145,11 @@ function CanCard({ item, fullscreen = false }: { item: MenuItem; fullscreen?: bo
             </div>
           )}
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 pointer-events-none" style={{ marginLeft: '-11px', marginTop: 'calc(40px + 10em)' }}>
+            {item.isJustReleased && (
+              <Badge variant="default" className="text-xs mb-1">
+                Just Released
+              </Badge>
+            )}
             <h3 className="text-xl font-bold bg-background/95 px-3 py-2 rounded shadow-lg whitespace-nowrap">
               {item.name}{item.fourPack && ` • $${item.fourPack}/pack`}
             </h3>
@@ -172,11 +172,6 @@ function CanCard({ item, fullscreen = false }: { item: MenuItem; fullscreen?: bo
       className="group flex flex-col cursor-pointer"
     >
       <div className="relative h-64 w-full flex-shrink-0 mb-4 transition-transform duration-200 group-hover:scale-[1.02]">
-        {item.isJustReleased && (
-          <Badge variant="default" className="absolute top-2 left-1/2 -translate-x-1/2 -ml-[5px] text-xs z-10">
-            Just Released
-          </Badge>
-        )}
         {item.image ? (
           <Image
             src={`/images/beer/${item.variant.toLowerCase()}.png`}
@@ -193,6 +188,11 @@ function CanCard({ item, fullscreen = false }: { item: MenuItem; fullscreen?: bo
               <div className="text-sm text-muted-foreground/30">{item.type}</div>
             </div>
           </div>
+        )}
+        {item.isJustReleased && (
+          <Badge variant="default" className="absolute -bottom-3 left-1/2 -translate-x-1/2 text-xs">
+            Just Released
+          </Badge>
         )}
       </div>
       <div className="mb-3">
@@ -269,9 +269,12 @@ export function FeaturedMenu({ menuType, menu, menus = [], isAuthenticated }: Fe
     <section className="py-16 lg:py-24 bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <div className="flex items-center justify-center gap-4 mb-4">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex-1" />
             <h2 className="text-3xl lg:text-4xl font-bold">{title}</h2>
-            <AdminEditButtons menusArray={menus} currentLocation={currentLocation} isAuthenticated={isAuthenticated} />
+            <div className="flex-1 flex justify-end">
+              <AdminEditButtons menusArray={menus} currentLocation={currentLocation} isAuthenticated={isAuthenticated} />
+            </div>
           </div>
         </div>
 

@@ -10,7 +10,12 @@ export const Media: CollectionConfig = {
   },
   upload: {
     staticDir: 'public/uploads',
+    staticURL: '/uploads',
     mimeTypes: ['image/png', 'image/jpg', 'image/jpeg', 'image/webp'],
+    disableLocalStorage: false,
+    formatOptions: {
+      format: 'png',
+    },
     imageSizes: [
       {
         name: 'thumbnail',
@@ -43,9 +48,6 @@ export const Media: CollectionConfig = {
         },
       },
     ],
-    formatOptions: {
-      format: 'webp',
-    },
   },
   fields: [
     {

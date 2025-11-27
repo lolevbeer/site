@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { Pencil } from 'lucide-react';
 import type { Beer, Style } from '@/src/payload-types';
 
 interface ComingSoonBeer {
@@ -10,9 +11,10 @@ interface ComingSoonBeer {
 
 interface UpcomingBeersProps {
   comingSoonBeers?: ComingSoonBeer[];
+  isAuthenticated?: boolean;
 }
 
-export function UpcomingBeers({ comingSoonBeers }: UpcomingBeersProps) {
+export function UpcomingBeers({ comingSoonBeers, isAuthenticated }: UpcomingBeersProps) {
   // Don't show section if no upcoming beers
   if (!comingSoonBeers || comingSoonBeers.length === 0) {
     return null;
@@ -22,9 +24,22 @@ export function UpcomingBeers({ comingSoonBeers }: UpcomingBeersProps) {
     <section className="py-16 lg:py-24 bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className="text-3xl lg:text-4xl font-bold mb-4">
-            Up Next
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex-1" />
+            <h2 className="text-3xl lg:text-4xl font-bold">
+              Up Next
+            </h2>
+            <div className="flex-1 flex justify-end">
+              {isAuthenticated && (
+                <Button asChild variant="outline" size="sm">
+                  <a href="/admin/globals/coming-soon" target="_blank" rel="noopener noreferrer">
+                    <Pencil className="h-4 w-4 mr-1" />
+                    Edit
+                  </a>
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="max-w-4xl mx-auto space-y-1 text-center mb-8">

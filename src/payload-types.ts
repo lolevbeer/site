@@ -494,6 +494,9 @@ export interface Menu {
    */
   url: string;
   items: {
+    /**
+     * Search by name or slug
+     */
     beer: string | Beer;
     /**
      * Sale Price

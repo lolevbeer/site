@@ -29,7 +29,7 @@
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@monaco-editor/react": "4.6.0",
-    "@payloadcms/db-postgres": "3.62.1",
+    "@payloadcms/db-mongodb": "3.62.1",
     "@payloadcms/next": "3.62.1",
     "@payloadcms/richtext-lexical": "3.62.1",
     "@payloadcms/ui": "3.62.1",
@@ -108,7 +108,7 @@
     "webpack-bundle-analyzer": "^4.10.2"
   },
   "engines": {
-    "node": "^18.20.2 || >=20.9.0",
+    "node": ">=24",
     "pnpm": "^9 || ^10"
   },
   "pnpm": {

@@ -160,6 +160,7 @@ export default async function Home() {
         <UpcomingFood
           lawrencevilleFood={lawrencevilleFood}
           zelienopleFood={zelienopleFood}
+          isAuthenticated={authenticated}
         />
 
         <div className="py-8 md:py-12" />
@@ -167,11 +168,12 @@ export default async function Home() {
         <UpcomingEvents
           lawrencevilleEvents={lawrencevilleEvents}
           zelienopleEvents={zelienopleEvents}
+          isAuthenticated={authenticated}
         />
 
         <div className="py-8 md:py-12" />
 
-        <UpcomingBeers comingSoonBeers={comingSoonBeers} />
+        <UpcomingBeers comingSoonBeers={comingSoonBeers} isAuthenticated={authenticated} />
       </HomeContent>
     </>
   );

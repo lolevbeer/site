@@ -7,6 +7,7 @@ import type { PayloadHandler } from 'payload'
 import { diffJson } from 'diff'
 import path from 'path'
 import fs from 'fs/promises'
+import { slugify } from '../collections/utils/generateUniqueSlug'
 
 interface StreamController {
   send: (event: string, data: any) => void;
@@ -130,19 +131,14 @@ function parsePrice(price: string): number | undefined {
 // ============ IMAGE UTILITIES ============
 async function findBeerImage(variant: string): Promise<string | null> {
   const imageDir = path.join(process.cwd(), 'public', 'images', 'beer')
-  // Prioritize PNG as source format - Payload will convert to webp with all sizes
-  const extensions = ['.png', '.jpg', '.jpeg', '.webp']
-
-  for (const ext of extensions) {
-    const imagePath = path.join(imageDir, `${variant}${ext}`)
-    try {
-      await fs.access(imagePath)
-      return imagePath
-    } catch {
-      // File doesn't exist, try next extension
-    }
+  // Only use PNG source files - Payload will convert to webp with all sizes
+  const imagePath = path.join(imageDir, `${variant}.png`)
+  try {
+    await fs.access(imagePath)
+    return imagePath
+  } catch {
+    return null
   }
-  return null
 }
 
 async function uploadBeerImage(
@@ -152,25 +148,36 @@ async function uploadBeerImage(
   stream: StreamController
 ): Promise<string | null> {
   try {
-    // Check if media already exists
+    // Delete any existing media for this variant (force re-upload from PNG)
     const existingMedia = await payload.find({
       collection: 'media',
       where: {
         filename: { contains: variant },
       },
-      limit: 1,
+      limit: 10,
     })
 
-    if (existingMedia.docs.length > 0) {
-      return existingMedia.docs[0].id
+    for (const media of existingMedia.docs) {
+      await payload.delete({ collection: 'media', id: media.id })
+      stream.send('status', { message: `Deleted old media for ${variant}` })
     }
 
-    // Read the file
+    // Also delete any existing files on disk for this variant
+    const uploadsDir = path.join(process.cwd(), 'public', 'uploads')
+    try {
+      const files = await fs.readdir(uploadsDir)
+      for (const file of files) {
+        if (file.startsWith(variant + '.') || file.startsWith(variant + '-')) {
+          await fs.unlink(path.join(uploadsDir, file))
+          stream.send('status', { message: `Deleted file ${file}` })
+        }
+      }
+    } catch {
+      // Ignore errors reading/deleting files
+    }
+
+    // Read the PNG file
     const fileBuffer = await fs.readFile(imagePath)
-    const ext = path.extname(imagePath)
-    const mimeType = ext === '.webp' ? 'image/webp' :
-                     ext === '.png' ? 'image/png' :
-                     ext === '.jpg' || ext === '.jpeg' ? 'image/jpeg' : 'image/webp'
 
     // Create media document
     const media = await payload.create({
@@ -180,8 +187,8 @@ async function uploadBeerImage(
       },
       file: {
         data: fileBuffer,
-        name: `${variant}${ext}`,
-        mimetype: mimeType,
+        name: `${variant}.png`,
+        mimetype: 'image/png',
         size: fileBuffer.length,
       },
     })
@@ -439,27 +446,49 @@ async function syncBeers(payload: any, stream: StreamController, dryRun: boolean
         if (!dryRun) {
           const newStyle = await payload.create({ collection: 'styles', data: { name: beer.type } })
           styleId = newStyle.id
-          styleMap.set(beer.type.toLowerCase(), styleId)
+          styleMap.set(beer.type.toLowerCase(), styleId as string)
         } else {
           stream.send('status', { message: `Would create style: ${beer.type}` })
           styleId = 'dry-run-placeholder'
         }
       }
 
-      const existing = await payload.find({
+      // Use the sheet's variant as the slug (curated), or generate from name for new entries
+      const sheetVariant = beer.variant?.toLowerCase().trim()
+      const slug = sheetVariant || slugify(beer.name)
+
+      // Skip beers that can't generate a valid slug
+      if (!slug) {
+        stream.send('error', { message: `Beer "${beer.name}" has no variant and cannot generate a valid slug, skipping` })
+        results.skipped++
+        continue
+      }
+
+      // Look up existing beer by slug or name
+      let existing = await payload.find({
         collection: 'beers',
-        where: { slug: { equals: beer.variant } },
+        where: { slug: { equals: slug } },
         limit: 1,
         depth: 1,
       })
+
+      // Try looking up by name to prevent duplicates
+      if (existing.docs.length === 0) {
+        existing = await payload.find({
+          collection: 'beers',
+          where: { name: { equals: beer.name } },
+          limit: 1,
+          depth: 1,
+        })
+      }
 
       // Validate glass type - only allow valid options, default to 'pint'
       const validGlasses = ['pint', 'stein', 'teku']
       const glass = validGlasses.includes(beer.glass?.toLowerCase()) ? beer.glass.toLowerCase() : 'pint'
 
-      // Check for image file
+      // Check for image file - use the original variant for image lookup
       let imageId: string | undefined = undefined
-      const imagePath = await findBeerImage(beer.variant)
+      const imagePath = await findBeerImage(beer.variant) || await findBeerImage(slug)
 
       if (imagePath) {
         // Check if existing beer already has an image
@@ -480,7 +509,7 @@ async function syncBeers(payload: any, stream: StreamController, dryRun: boolean
 
       const beerData: Record<string, any> = {
         name: beer.name,
-        slug: beer.variant,
+        slug: slug,
         style: styleId as string,
         abv: beer.abv ? parseFloat(beer.abv) : undefined,
         glass,
@@ -502,6 +531,7 @@ async function syncBeers(payload: any, stream: StreamController, dryRun: boolean
         const existingDoc = existing.docs[0]
         const incomingForCompare = {
           name: beer.name,
+          slug: slug,
           abv: beerData.abv ?? null,
           glass,
           draftPrice: beerData.draftPrice ?? null,
@@ -512,6 +542,7 @@ async function syncBeers(payload: any, stream: StreamController, dryRun: boolean
         }
         const existingForCompare = {
           name: existingDoc.name,
+          slug: existingDoc.slug,
           abv: existingDoc.abv ?? null,
           glass: existingDoc.glass,
           draftPrice: existingDoc.draftPrice ?? null,
@@ -520,7 +551,7 @@ async function syncBeers(payload: any, stream: StreamController, dryRun: boolean
           hops: existingDoc.hops || null,
           hideFromSite: existingDoc.hideFromSite ?? false,
         }
-        const changes = computeChanges(existingForCompare, incomingForCompare, ['name', 'abv', 'glass', 'draftPrice', 'fourPack', 'description', 'hops', 'hideFromSite'])
+        const changes = computeChanges(existingForCompare, incomingForCompare, ['name', 'slug', 'abv', 'glass', 'draftPrice', 'fourPack', 'description', 'hops', 'hideFromSite'])
 
         // Also check if we're adding an image
         const addingImage = imageId && !existingDoc.image
@@ -601,7 +632,9 @@ async function syncMenus(payload: any, stream: StreamController, dryRun: boolean
         // Build menu items array
         const menuItems: { beer: string; price?: string }[] = []
         for (const item of items) {
-          const beerId = beerMap.get(item.variant.toLowerCase())
+          // Use variant directly as slug (matches beer import logic)
+          const itemSlug = item.variant.toLowerCase().trim()
+          const beerId = beerMap.get(itemSlug)
           if (!beerId) {
             stream.send('error', { message: `Beer "${item.variant}" not found for ${locationSlug} ${menuType}` })
             continue
@@ -699,6 +732,37 @@ async function syncMenus(payload: any, stream: StreamController, dryRun: boolean
   return results
 }
 
+// ============ LOCATION SEED DATA ============
+const LOCATION_SEED_DATA = {
+  lawrenceville: {
+    name: 'Lawrenceville',
+    active: true,
+    timezone: 'America/New_York',
+    basicInfo: {
+      phone: '(412) 336-8965',
+      email: 'info@lolev.beer',
+    },
+    address: {
+      street: '5247 Butler Street',
+      city: 'Pittsburgh',
+      state: 'PA',
+      zip: '15201',
+    },
+  },
+  zelienople: {
+    name: 'Zelienople',
+    active: true,
+    timezone: 'America/New_York',
+    basicInfo: {},
+    address: {
+      street: '111 South Main Street',
+      city: 'Zelienople',
+      state: 'PA',
+      zip: '16063',
+    },
+  },
+}
+
 // ============ MAIN SYNC ============
 async function runSync(
   payload: any,
@@ -708,11 +772,30 @@ async function runSync(
 ) {
   const results: Record<string, { imported: number; updated: number; skipped: number; errors: number; imagesAdded?: number }> = {}
 
-  // Get location IDs
+  // Get location IDs, create locations if they don't exist
   const locations = await payload.find({ collection: 'locations', limit: 10 })
   const locationMap = new Map<string, string>()
   for (const loc of locations.docs) {
     locationMap.set(loc.slug, loc.id)
+  }
+
+  // Ensure required locations exist
+  for (const [slug, seedData] of Object.entries(LOCATION_SEED_DATA)) {
+    if (!locationMap.has(slug)) {
+      if (!dryRun) {
+        stream.send('status', { message: `Creating missing location: ${seedData.name}` })
+        const newLocation = await payload.create({
+          collection: 'locations',
+          data: seedData,
+        })
+        locationMap.set(newLocation.slug, newLocation.id)
+        stream.send('status', { message: `Created location: ${seedData.name} (${newLocation.slug})` })
+      } else {
+        stream.send('status', { message: `Would create missing location: ${seedData.name}` })
+        // Use placeholder for dry run
+        locationMap.set(slug, 'dry-run-placeholder')
+      }
+    }
   }
 
   if (collections.includes('events')) {

@@ -65,7 +65,7 @@ async function regenerateAllImages() {
         await payload.create({
           collection: 'media',
           data: {
-            alt: media.alt || filename,
+            alt: media.alt ?? filename,
           },
           file: fileData as any,
         })

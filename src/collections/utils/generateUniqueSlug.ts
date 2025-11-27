@@ -1,24 +1,41 @@
-import type { PayloadRequest } from 'payload'
+import type { CollectionSlug, PayloadRequest } from 'payload'
+
+/**
+ * Transliterate diacritics to ASCII equivalents
+ * e.g., ō → o, ü → u, é → e, ñ → n
+ */
+export function transliterate(str: string): string {
+  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+}
+
+/**
+ * Generate a URL-safe slug from a string
+ * Transliterates diacritics, lowercases, and replaces non-alphanumeric with dashes
+ */
+export function slugify(str: string): string {
+  return transliterate(str)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
 
 /**
  * Generates a unique slug from a name by:
- * 1. Converting to lowercase
- * 2. Replacing non-alphanumeric characters with dashes
- * 3. Removing leading/trailing dashes
- * 4. Appending an incrementing number if the slug already exists
+ * 1. Transliterating diacritics to ASCII (ō → o, etc.)
+ * 2. Converting to lowercase
+ * 3. Replacing non-alphanumeric characters with dashes
+ * 4. Removing leading/trailing dashes
+ * 5. Appending an incrementing number if the slug already exists
  */
 export async function generateUniqueSlug(
   name: string,
-  collection: string,
+  collection: CollectionSlug,
   req: PayloadRequest,
   operation: 'create' | 'update',
   currentDocId?: string | number,
 ): Promise<string> {
   // Generate base slug from name
-  const baseSlug = name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
+  const baseSlug = slugify(name)
 
   // Check for uniqueness and append number if needed
   let slug = baseSlug
