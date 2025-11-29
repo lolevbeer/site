@@ -1,6 +1,6 @@
 variant,cansAvailable,name,salePrice,type,abv,cansSingle,fourPack
 ,TRUE,,FALSE,,,,
-grandar,TRUE,Grandar,FALSE,Imperial Pilsner,6.6,4.25,16
+,TRUE,,FALSE,,,,
 vespero,TRUE,Vespero,FALSE,Czech Dark Lager,5.8,4.25,16
 verus,TRUE,Verus,FALSE,India Pale Ale,7,4.50,17
 lupula,TRUE,Lupula,FALSE,India Pale Ale,7,4.50,17

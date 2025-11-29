@@ -10,4 +10,4 @@ tap,variant,singleCanAvailable,name,type,abv,glass,price,description,image,hops
 9,kamo,FALSE,Kamo,Double IPA,8,teku,9,,TRUE,"Freestyle Southern Cross, Freestyle Riwaka, Citra DynaBoost, Citra"
 10,harvest,FALSE,Harvest,Double IPA,8,teku,9,Gooseberry with vinous and tropical fruit character. Bright lime and passionfruit notes.,TRUE,"Citra, Motueka, Nelson Sauvin, Maui Nelson Hop Kief"
 11,sever,FALSE,Sever,Pumpkin Stout,5.7,teku,7,Dark roast coffee and pumpkin pie in a rich quaffable stout. Conditioned freshly-roasted Brazilian coffee beans from Temper Coffee Roasters.,TRUE,
-12,faust-unfiltered-25,FALSE,,,,,,,,
+12,faust-25,FALSE,Faust 25,Plum Saison,6.7,teku,10,"Unfiltered 2025 vintage. Slightly sour, dry and oaky. Aged 18 months in oak foeders on our house microflora and conditioned on plums.",FALSE,
