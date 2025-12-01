@@ -461,7 +461,7 @@
             "properties": {
                 "id": 29,
                 "Name": "beercode",
-                "address": "Starbucks, 1000, Airport Boulevard, Pittsburgh, Allegheny County, Pennsylvania, 15231, United States of America",
+                "address": "Starbucks, 1000, Airport Boulevard, Pittsburgh, Allegheny County, Pennsylvania, 15231, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -1309,7 +1309,7 @@
             "properties": {
                 "id": 83,
                 "Name": "dave and busters north hills",
-                "address": "Dave & Buster's, 6260, Northway Mall Drive, The Block Northway, Pittsburgh, Allegheny County, Pennsylvania, 15237, United States of America",
+                "address": "Dave & Buster's, 6260, Northway Mall Drive, The Block Northway, Pittsburgh, Allegheny County, Pennsylvania, 15237, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -1325,7 +1325,7 @@
             "properties": {
                 "id": 84,
                 "Name": "dee jay's wexford",
-                "address": "Dee Jay's BBQ Ribs & Grille, 2602, Brandt School Road, Franklin Park, Allegheny County, Pennsylvania, 15090, United States of America",
+                "address": "Dee Jay's BBQ Ribs & Grille, 2602, Brandt School Road, Franklin Park, Allegheny County, Pennsylvania, 15090, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -1677,7 +1677,7 @@
             "properties": {
                 "id": 106,
                 "Name": "giant eagle 67 - mcintyre square",
-                "address": "Giant Eagle, 8080, McIntyre Square Drive, McIntyre Square, Pittsburgh, Allegheny County, Pennsylvania, 15237, United States of America",
+                "address": "Giant Eagle, 8080, McIntyre Square Drive, McIntyre Square, Pittsburgh, Allegheny County, Pennsylvania, 15237, United States",
                 "customerType": "Grocery"
             }
         },
@@ -1693,7 +1693,7 @@
             "properties": {
                 "id": 107,
                 "Name": "giant eagle 97 - penn ave",
-                "address": "6310, Penn Avenue, East Liberty, Pittsburgh, Allegheny County, Pennsylvania, 15206, United States of America",
+                "address": "6310, Penn Avenue, East Liberty, Pittsburgh, Allegheny County, Pennsylvania, 15206, United States",
                 "customerType": "Grocery"
             }
         },
@@ -1965,7 +1965,7 @@
             "properties": {
                 "id": 124,
                 "Name": "house of brews pgh",
-                "address": "The House of Brews, 1108, Park Manor Boulevard, Robinson Township, Allegheny County, Pennsylvania, 15244, United States of America",
+                "address": "The House of Brews, 1108, Park Manor Boulevard, Robinson Township, Allegheny County, Pennsylvania, 15244, United States",
                 "customerType": "Home-D"
             }
         },
@@ -1981,7 +1981,7 @@
             "properties": {
                 "id": 125,
                 "Name": "industry public house north fayette",
-                "address": "Industry Public House, 140, Andrew Drive, Pittsburgh, Allegheny County, Pennsylvania, 15275, United States of America",
+                "address": "Industry Public House, 140, Andrew Drive, Pittsburgh, Allegheny County, Pennsylvania, 15275, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -2141,7 +2141,7 @@
             "properties": {
                 "id": 135,
                 "Name": "kuhn's mcknight",
-                "address": "Hong Hot Pot, 4801, McKnight Road, Berkeley Hills, Pittsburgh, Allegheny County, Pennsylvania, 15237, United States of America",
+                "address": "Hong Hot Pot, 4801, McKnight Road, Berkeley Hills, Pittsburgh, Allegheny County, Pennsylvania, 15237, United States",
                 "customerType": "Grocery"
             }
         },
@@ -2557,7 +2557,7 @@
             "properties": {
                 "id": 162,
                 "Name": "narcisi winery",
-                "address": "Narcisi Winery, 4578, Gibsonia Road, West Deer Township, Allegheny County, Pennsylvania, 15044, United States of America",
+                "address": "Narcisi Winery, 4578, Gibsonia Road, West Deer Township, Allegheny County, Pennsylvania, 15044, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -2621,7 +2621,7 @@
             "properties": {
                 "id": 166,
                 "Name": "otb boathouse",
-                "address": "Venture Outdoors, 10301, Pearce Mill Road, McCandless, Allegheny County, Pennsylvania, 15101, United States of America",
+                "address": "Venture Outdoors, 10301, Pearce Mill Road, McCandless, Allegheny County, Pennsylvania, 15101, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -2749,7 +2749,7 @@
             "properties": {
                 "id": 174,
                 "Name": "pig and fire",
-                "address": "Pig and Fire House of Barbeque, 1445, Washington Road, Hill Church, North Strabane Township, Washington County, Pennsylvania, 15301, United States of America",
+                "address": "Pig and Fire House of Barbeque, 1445, Washington Road, Hill Church, North Strabane Township, Washington County, Pennsylvania, 15301, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -2877,7 +2877,7 @@
             "properties": {
                 "id": 182,
                 "Name": "rival",
-                "address": "Rival, 1595, Washington Pike, Neville Park, Woodville, Bridgeville, Allegheny County, Pennsylvania, 15106, United States of America",
+                "address": "Rival, 1595, Washington Pike, Neville Park, Woodville, Bridgeville, Allegheny County, Pennsylvania, 15106, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -3485,7 +3485,7 @@
             "properties": {
                 "id": 220,
                 "Name": "the beer trap",
-                "address": "The Beer Trap, 2614, Brandt School Road, Franklin Park, Allegheny County, Pennsylvania, 15090, United States of America",
+                "address": "The Beer Trap, 2614, Brandt School Road, Franklin Park, Allegheny County, Pennsylvania, 15090, United States",
                 "customerType": "Supplier"
             }
         },
@@ -3613,7 +3613,7 @@
             "properties": {
                 "id": 228,
                 "Name": "the stables",
-                "address": "The Stables, 160, Park Road, Eagle, Upper Uwchlan Township, Chester County, Pennsylvania, 19425, United States of America",
+                "address": "The Stables, 160, Park Road, Eagle, Upper Uwchlan Township, Chester County, Pennsylvania, 19425, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -3725,7 +3725,7 @@
             "properties": {
                 "id": 235,
                 "Name": "wegmans bethlehem",
-                "address": "5000, Wegmans Drive, Hanover Highlands, Shimer, Bethlehem, Northampton County, Pennsylvania, 18017, United States of America",
+                "address": "5000, Wegmans Drive, Hanover Highlands, Shimer, Bethlehem, Northampton County, Pennsylvania, 18017, United States",
                 "customerType": "Grocery"
             }
         },
@@ -3741,7 +3741,7 @@
             "properties": {
                 "id": 236,
                 "Name": "wegmans collegeville",
-                "address": "Wegmans Pharmacy, 600, Commerce Drive, Providence Town Center, Collegeville, Montgomery County, Pennsylvania, 19426, United States of America",
+                "address": "Wegmans Pharmacy, 600, Commerce Drive, Providence Town Center, Collegeville, Montgomery County, Pennsylvania, 19426, United States",
                 "customerType": "Grocery"
             }
         },
@@ -3757,7 +3757,7 @@
             "properties": {
                 "id": 238,
                 "Name": "wegmans king of prussia",
-                "address": "Market Street, King of Prussia Town Center, Lafayette Park, King of Prussia, Upper Merion Township, Montgomery County, Pennsylvania, 19087, United States of America",
+                "address": "Market Street, King of Prussia Town Center, Lafayette Park, King of Prussia, Upper Merion Township, Montgomery County, Pennsylvania, 19087, United States",
                 "customerType": "Grocery"
             }
         },
@@ -3773,7 +3773,7 @@
             "properties": {
                 "id": 239,
                 "Name": "wegmans lancaster",
-                "address": "Wegmans, 2000, Crossings Boulevard, The Crossings at Conestoga Creek, Manheim Township, Lancaster County, Pennsylvania, 17601, United States of America",
+                "address": "Wegmans, 2000, Crossings Boulevard, The Crossings at Conestoga Creek, Manheim Township, Lancaster County, Pennsylvania, 17601, United States",
                 "customerType": "Grocery"
             }
         },
@@ -3805,7 +3805,7 @@
             "properties": {
                 "id": 242,
                 "Name": "wegmans warrington",
-                "address": "Wegmans, 1405, Main Street, Valley Square, Neshaminy, Warrington Township, Bucks County, Pennsylvania, 18976, United States of America",
+                "address": "Wegmans, 1405, Main Street, Valley Square, Neshaminy, Warrington Township, Bucks County, Pennsylvania, 18976, United States",
                 "customerType": "Grocery"
             }
         },

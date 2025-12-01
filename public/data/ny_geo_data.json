@@ -141,7 +141,7 @@
             "properties": {
                 "id": 8,
                 "Name": "wegman's #03 empire",
-                "address": "1950, Empire Boulevard, Baytowne, Town of Penfield, Monroe County, New York, 14580, United States of America",
+                "address": "1950, Empire Boulevard, Baytowne, Town of Penfield, Monroe County, New York, 14580, United States",
                 "customerType": "Grocery"
             }
         },
@@ -701,7 +701,7 @@
             "properties": {
                 "id": 44,
                 "Name": "a+ mini market",
-                "address": "APlus, 900, South Washington Street, Concrest, Town/Village of East Rochester, Monroe County, New York, 14445, United States of America",
+                "address": "APlus, 900, South Washington Street, Concrest, Town/Village of East Rochester, Monroe County, New York, 14445, United States",
                 "customerType": "Convenience"
             }
         },
@@ -877,7 +877,7 @@
             "properties": {
                 "id": 55,
                 "Name": "ember woodfire grill",
-                "address": "Ember Woodfire Grill, 21, Commercial Street, Village of Livonia, Town of Livonia, Livingston County, New York, 14487, United States of America",
+                "address": "Ember Woodfire Grill, 21, Commercial Street, Village of Livonia, Town of Livonia, Livingston County, New York, 14487, United States",
                 "customerType": "Bar"
             }
         },
@@ -1005,7 +1005,7 @@
             "properties": {
                 "id": 63,
                 "Name": "rochester yacht club",
-                "address": "Rochester Yacht Club, 5555, Saint Paul Boulevard, Summerville, City of Rochester, Monroe County, New York, 14617, United States of America",
+                "address": "Rochester Yacht Club, 5555, Saint Paul Boulevard, Summerville, City of Rochester, Monroe County, New York, 14617, United States",
                 "customerType": "Recreation"
             }
         },
@@ -1117,7 +1117,7 @@
             "properties": {
                 "id": 70,
                 "Name": "fattey beer company",
-                "address": "Adventure Place, Manhattan Square, City of Rochester, Monroe County, New York, 14607, United States of America",
+                "address": "Adventure Place, Manhattan Square, City of Rochester, Monroe County, New York, 14607, United States",
                 "customerType": "Retail"
             }
         },
@@ -1181,7 +1181,7 @@
             "properties": {
                 "id": 74,
                 "Name": "club at clifton llc",
-                "address": "Clifton Springs Country Club, 2721, Manchester-Hopewell Townline Road, Town of Manchester, Town of Hopewell, Ontario County, New York, 14432, United States of America",
+                "address": "Clifton Springs Country Club, 2721, Manchester-Hopewell Townline Road, Town of Manchester, Town of Hopewell, Ontario County, New York, 14432, United States",
                 "customerType": "Golf"
             }
         },
