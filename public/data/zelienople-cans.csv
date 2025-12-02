@@ -6,7 +6,7 @@ verus,TRUE,Verus,FALSE,India Pale Ale,7,4.50,17
 lupula,TRUE,Lupula,FALSE,India Pale Ale,7,4.50,17
 akko,TRUE,Akko,FALSE,India Pale Ale,7,4.50,17
 edge,TRUE,Edge,FALSE,West Coast IPA,7.7,5.75,22
-,TRUE,,FALSE,,,,
+double-lupula,TRUE,Double Lupula,FALSE,Double IPA,8.4,5.25,20
 origen,TRUE,Origen,FALSE,Double IPA,7.8,5.75,22
 harvest,TRUE,Harvest,FALSE,Double IPA,8,5.75,22
 capax,TRUE,Capax,FALSE,Double IPA,8.1,5.75,22
