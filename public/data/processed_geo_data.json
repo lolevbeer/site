@@ -438,6 +438,22 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
+                    -80.2459995,
+                    40.4952421
+                ]
+            },
+            "properties": {
+                "id": 28,
+                "Name": "beercode",
+                "address": "Starbucks, 1000, Airport Boulevard, Pittsburgh, Allegheny County, Pennsylvania, 15231, United States",
+                "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
                     -75.610813098175,
                     39.95939448643
                 ]
@@ -1238,6 +1254,38 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
+                    -80.0204674,
+                    40.5502017
+                ]
+            },
+            "properties": {
+                "id": 80,
+                "Name": "dave and busters north hills",
+                "address": "Dave & Buster's, 6260, Northway Mall Drive, The Block Northway, Pittsburgh, Allegheny County, Pennsylvania, 15237, United States",
+                "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -80.0912048,
+                    40.615012
+                ]
+            },
+            "properties": {
+                "id": 81,
+                "Name": "dee jay's wexford",
+                "address": "Dee Jay's BBQ Ribs & Grille, 2602, Brandt School Road, Franklin Park, Allegheny County, Pennsylvania, 15090, United States",
+                "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
                     -76.76913886739,
                     39.973500166444
                 ]
@@ -1558,6 +1606,38 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
+                    -80.0185523,
+                    40.555328
+                ]
+            },
+            "properties": {
+                "id": 102,
+                "Name": "giant eagle 67 - mcintyre square",
+                "address": "Giant Eagle, 8080, McIntyre Square Drive, McIntyre Square, Pittsburgh, Allegheny County, Pennsylvania, 15237, United States",
+                "customerType": "Grocery"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -79.9190498,
+                    40.4587162
+                ]
+            },
+            "properties": {
+                "id": 103,
+                "Name": "giant eagle 97 - penn ave",
+                "address": "6310, Penn Avenue, East Liberty, Pittsburgh, Allegheny County, Pennsylvania, 15206, United States",
+                "customerType": "Grocery"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
                     -75.150844479151,
                     40.101040924568
                 ]
@@ -1782,6 +1862,38 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
+                    -80.1625271,
+                    40.4529257
+                ]
+            },
+            "properties": {
+                "id": 118,
+                "Name": "house of brews pgh",
+                "address": "The House of Brews, 1108, Park Manor Boulevard, Robinson Township, Allegheny County, Pennsylvania, 15244, United States",
+                "customerType": "Home-D"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -80.1768511,
+                    40.4519373
+                ]
+            },
+            "properties": {
+                "id": 119,
+                "Name": "industry public house north fayette",
+                "address": "Industry Public House, 140, Andrew Drive, Pittsburgh, Allegheny County, Pennsylvania, 15275, United States",
+                "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
                     -79.985598002427,
                     40.451027947688
                 ]
@@ -1919,6 +2031,22 @@
                 "Name": "klingers at the airport",
                 "address": "2385 BERNVILLE RD, READING, PA, 19605",
                 "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -80.006533,
+                    40.5226822
+                ]
+            },
+            "properties": {
+                "id": 129,
+                "Name": "kuhn's mcknight",
+                "address": "Hong Hot Pot, 4801, McKnight Road, Berkeley Hills, Pittsburgh, Allegheny County, Pennsylvania, 15237, United States",
+                "customerType": "Grocery"
             }
         },
         {
@@ -2310,6 +2438,22 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
+                    -79.8943813,
+                    40.6093357
+                ]
+            },
+            "properties": {
+                "id": 155,
+                "Name": "narcisi winery",
+                "address": "Narcisi Winery, 4578, Gibsonia Road, West Deer Township, Allegheny County, Pennsylvania, 15044, United States",
+                "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
                     -75.600876852558,
                     40.657200225815
                 ]
@@ -2350,6 +2494,22 @@
                 "id": 167,
                 "Name": "otb at hastings",
                 "address": "1595 mayview rd, bridgeville, pa 15017",
+                "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -80.0074329,
+                    40.6047463
+                ]
+            },
+            "properties": {
+                "id": 159,
+                "Name": "otb boathouse",
+                "address": "Venture Outdoors, 10301, Pearce Mill Road, McCandless, Allegheny County, Pennsylvania, 15101, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -2470,6 +2630,22 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
+                    -80.1952845,
+                    40.213939
+                ]
+            },
+            "properties": {
+                "id": 167,
+                "Name": "pig and fire",
+                "address": "Pig and Fire House of Barbeque, 1445, Washington Road, Hill Church, North Strabane Township, Washington County, Pennsylvania, 15301, United States",
+                "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
                     -75.377051862077,
                     40.630983230531
                 ]
@@ -2574,6 +2750,22 @@
                 "id": 174,
                 "Name": "reds good news",
                 "address": "542 BROOKLINE BLVD, PITTSBURGH, PA, 15226",
+                "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -80.0945907,
+                    40.3823424
+                ]
+            },
+            "properties": {
+                "id": 175,
+                "Name": "rival",
+                "address": "Rival, 1595, Washington Pike, Neville Park, Woodville, Bridgeville, Allegheny County, Pennsylvania, 15106, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -3174,6 +3366,22 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
+                    -80.0912273,
+                    40.6152112
+                ]
+            },
+            "properties": {
+                "id": 214,
+                "Name": "the beer trap",
+                "address": "The Beer Trap, 2614, Brandt School Road, Franklin Park, Allegheny County, Pennsylvania, 15090, United States",
+                "customerType": "Supplier"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
                     -79.944955875031,
                     40.616606692757
                 ]
@@ -3302,6 +3510,22 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
+                    -75.6901631,
+                    40.080151
+                ]
+            },
+            "properties": {
+                "id": 223,
+                "Name": "the stables",
+                "address": "The Stables, 160, Park Road, Eagle, Upper Uwchlan Township, Chester County, Pennsylvania, 19425, United States",
+                "customerType": "Restaurant"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
                     -80.110015,
                     40.683357
                 ]
@@ -3406,6 +3630,38 @@
                 "id": 230,
                 "Name": "wegmans allentown",
                 "address": "3900 W TILGHMAN ST, ALLENTOWN, PA, 18104",
+                "customerType": "Grocery"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -75.3889334,
+                    40.6653909
+                ]
+            },
+            "properties": {
+                "id": 231,
+                "Name": "wegmans bethlehem",
+                "address": "5000, Wegmans Drive, Hanover Highlands, Shimer, Bethlehem, Northampton County, Pennsylvania, 18017, United States",
+                "customerType": "Grocery"
+            }
+        },
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -75.4836506,
+                    40.164504
+                ]
+            },
+            "properties": {
+                "id": 232,
+                "Name": "wegmans collegeville",
+                "address": "Wegmans Pharmacy, 600, Commerce Drive, Providence Town Center, Collegeville, Montgomery County, Pennsylvania, 19426, United States",
                 "customerType": "Grocery"
             }
         },
