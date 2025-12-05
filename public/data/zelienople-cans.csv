@@ -1,12 +1,12 @@
 variant,cansAvailable,name,salePrice,type,abv,cansSingle,fourPack
-,TRUE,,FALSE,,,,
-,TRUE,,FALSE,,,,
+edo,TRUE,Edo,FALSE,Japanese Rice Lager,4.5,4.00,15
 vespero,TRUE,Vespero,FALSE,Czech Dark Lager,5.8,4.25,16
-verus,TRUE,Verus,FALSE,India Pale Ale,7,4.50,17
+tides,TRUE,Tides,FALSE,India Pale Ale,7.5,4.50,17
 lupula,TRUE,Lupula,FALSE,India Pale Ale,7,4.50,17
 akko,TRUE,Akko,FALSE,India Pale Ale,7,4.50,17
 edge,TRUE,Edge,FALSE,West Coast IPA,7.7,5.75,22
 ,TRUE,,FALSE,,,,
+double-lupula,TRUE,Double Lupula,FALSE,Double IPA,8.4,5.25,20
 origen,TRUE,Origen,FALSE,Double IPA,7.8,5.75,22
 harvest,TRUE,Harvest,FALSE,Double IPA,8,5.75,22
 capax,TRUE,Capax,FALSE,Double IPA,8.1,5.75,22

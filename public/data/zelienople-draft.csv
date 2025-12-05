@@ -1,13 +1,13 @@
 tap,variant,singleCanAvailable,name,type,abv,glass,price,description,image,hops
 1,lumina,FALSE,Lumina,West Coast Imperial Pilsner,6.5,stein,7,"Notes of apricot, pear and lemongrass.",FALSE,"Motueka, El Dorado"
 2,grandar,FALSE,Grandar,Imperial Pilsner,6.6,stein,7,"Crackery sweetness balanced with hops, floral and herbal notes that finish with a subtle citrus. Step mashed and hopped with nobles.",TRUE,"Hallertau Mittelfrüh, Saaz"
-3,akko,FALSE,Akko,India Pale Ale,7,pint,7,"Pineapple and orange mango, notes of peach ring candies. ",TRUE,"Comet, Galaxy, Citra"
-4,,FALSE,,,,,,,,
-5,rubico-ii,FALSE,Rubico II,Double IPA,8.6,teku,9,"Pillowy soft with a full, creamy body, ripe mango, passionfruit, and juicy peach.",TRUE,"Citra, Galaxy"
-6,ddh-Lupula,FALSE,DDH Lupula,India Pale Ale,7,pint,8,,TRUE,"Motueka, Moutere, Riwaka"
+3,edo,FALSE,Edo,Japanese Rice Lager,4.5,stein,7,"Crisp, gentle, and easy drinking from a rice malt base, this lager has floral and herbal notes, finishing dry and refreshingly smooth.",TRUE,Hallertau Mittelfrüh
+4,akko,FALSE,Akko,India Pale Ale,7,pint,7,"Pineapple and orange mango, notes of peach ring candies. ",TRUE,"Comet, Galaxy, Citra"
+5,tides,FALSE,Tides,India Pale Ale,7.5,pint,7,"Mango, passionfruit, lime zest, citrus, and blueberry.",TRUE,"El Dorado, Simcoe, Mosaic, Citra"
+6,rubico-ii,FALSE,Rubico II,Double IPA,8.6,teku,9,"Pillowy soft with a full, creamy body, ripe mango, passionfruit, and juicy peach.",TRUE,"Citra, Galaxy"
 7,origen,FALSE,Origen,Double IPA,7.8,teku,9,,TRUE,"Citra, Rakau, Nelson Sauvin, Southern Cross, Southern Cross SubZero Hop Kief"
 8,capax,FALSE,Capax,Double IPA,8.1,teku,9,"Apricot, mango and white wine.",TRUE,"Citra, Rakau, Wakatu, Rakau Hop Kief"
-9,kamo,FALSE,Kamo,Double IPA,8,teku,9,,TRUE,"Freestyle Southern Cross, Freestyle Riwaka, Citra DynaBoost, Citra"
+9,double-lupula,FALSE,Double Lupula,Double IPA,8.4,pint,8,"More hops, more malt, more everything. Everything Lupula is and more.",TRUE,"Motueka, Moutere, Riwaka"
 10,harvest,FALSE,Harvest,Double IPA,8,teku,9,Gooseberry with vinous and tropical fruit character. Bright lime and passionfruit notes.,TRUE,"Citra, Motueka, Nelson Sauvin, Maui Nelson Hop Kief"
-11,sever,FALSE,Sever,Pumpkin Stout,5.7,teku,7,Dark roast coffee and pumpkin pie in a rich quaffable stout. Conditioned freshly-roasted Brazilian coffee beans from Temper Coffee Roasters.,TRUE,
+11,,FALSE,,,,,,,,
 12,faust-25,FALSE,Faust 25,Plum Saison,6.7,teku,10,"Unfiltered 2025 vintage. Slightly sour, dry and oaky. Aged 18 months in oak foeders on our house microflora and conditioned on plums.",FALSE,
