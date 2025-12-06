@@ -1,7 +1,7 @@
 variant,cansAvailable,name,salePrice,type,abv,cansSingle,fourPack
 edo-anniversary,TRUE,Edo,FALSE,Japanese Rice Lager,4.3,4.00,15
 vespero,TRUE,Vespero,FALSE,Czech Dark Lager,5.8,4.25,16
-tides-ii,TRUE,Tides II,FALSE,India Pale Ale,7.5,4.75,18
+tides-ii,TRUE,,FALSE,,,,
 lupula,TRUE,Lupula,FALSE,India Pale Ale,7,4.50,17
 akko,TRUE,Akko,FALSE,India Pale Ale,7,4.50,17
 edge,TRUE,Edge,FALSE,West Coast IPA,7.7,5.75,22
