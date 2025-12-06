@@ -136,7 +136,7 @@ export default async function AppLayout({
             storageKey="lolev-theme"
           >
             <NuqsAdapter>
-              <LocationProvider>
+              <LocationProvider locations={locations}>
                 <PageViewTracker />
                 <SkipNav />
                 <ConditionalLayout weeklyHours={weeklyHours}>

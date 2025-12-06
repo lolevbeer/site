@@ -6,8 +6,7 @@
 
 import { BreweryEvent, EventStatus } from '@/lib/types/event';
 import { FoodVendorSchedule } from '@/lib/types/food';
-import { Location } from '@/lib/types/location';
-import { LOCATIONS_DATA, LOCATION_COORDINATES } from '@/lib/config/locations';
+import type { LocationSlug, PayloadLocation } from '@/lib/types/location';
 import { parseLocalDate } from './formatters';
 
 /**
@@ -101,29 +100,52 @@ export interface OfferJsonLd {
 }
 
 /**
- * Get location Place data for JSON-LD
+ * Get location Place data for JSON-LD from PayloadLocation
  */
-function getLocationPlace(location: Location): PlaceJsonLd {
-  const locationInfo = LOCATIONS_DATA[location || Location.LAWRENCEVILLE];
-  const coordinates = LOCATION_COORDINATES[location || Location.LAWRENCEVILLE];
-
-  return {
+function getLocationPlaceFromPayload(location: PayloadLocation): PlaceJsonLd {
+  const place: PlaceJsonLd = {
     '@type': 'Place',
-    name: `Lolev Beer - ${locationInfo.name}`,
+    name: `Lolev Beer - ${location.name}`,
     address: {
       '@type': 'PostalAddress',
-      streetAddress: locationInfo.address,
-      addressLocality: locationInfo.city,
-      addressRegion: locationInfo.state,
-      postalCode: locationInfo.zipCode,
+      streetAddress: location.address?.street || '',
+      addressLocality: location.address?.city || '',
+      addressRegion: location.address?.state || 'PA',
+      postalCode: location.address?.zip || '',
       addressCountry: 'US'
-    },
-    geo: {
+    }
+  };
+
+  if (location.coordinates?.latitude && location.coordinates?.longitude) {
+    place.geo = {
       '@type': 'GeoCoordinates',
-      latitude: coordinates.lat,
-      longitude: coordinates.lng
-    },
-    telephone: locationInfo.phone
+      latitude: location.coordinates.latitude,
+      longitude: location.coordinates.longitude
+    };
+  }
+
+  if (location.basicInfo?.phone) {
+    place.telephone = location.basicInfo.phone;
+  }
+
+  return place;
+}
+
+/**
+ * Get a default place for when no location is available
+ */
+function getDefaultPlace(): PlaceJsonLd {
+  return {
+    '@type': 'Place',
+    name: 'Lolev Beer',
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: '',
+      addressLocality: '',
+      addressRegion: 'PA',
+      postalCode: '',
+      addressCountry: 'US'
+    }
   };
 }
 
@@ -209,7 +231,7 @@ interface CSVEvent {
   attendees?: string;
   site?: string;
   end?: string;
-  location?: Location; // Added to track which location
+  location?: LocationSlug;
 }
 
 /**
@@ -221,13 +243,26 @@ interface CSVFood {
   time?: string;
   site?: string;
   day?: string;
-  location?: Location; // Added to track which location
+  location?: LocationSlug;
 }
+
+/**
+ * Location lookup map for JSON-LD generation
+ */
+type LocationLookup = Map<LocationSlug, PayloadLocation>;
 
 /**
  * Create base event JSON-LD structure with common fields
  */
-function createBaseEventJsonLd(name: string, location: Location, startDate = new Date().toISOString()): EventJsonLd {
+function createBaseEventJsonLd(
+  name: string,
+  locationSlug: LocationSlug | undefined,
+  locationLookup: LocationLookup,
+  startDate = new Date().toISOString()
+): EventJsonLd {
+  const location = locationSlug ? locationLookup.get(locationSlug) : undefined;
+  const place = location ? getLocationPlaceFromPayload(location) : getDefaultPlace();
+
   return {
     '@context': 'https://schema.org',
     '@type': 'Event',
@@ -235,22 +270,31 @@ function createBaseEventJsonLd(name: string, location: Location, startDate = new
     startDate,
     eventStatus: 'https://schema.org/EventScheduled',
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-    location: getLocationPlace(location),
+    location: place,
     organizer: getOrganizer()
   };
 }
 
 /**
  * Generate JSON-LD for a BreweryEvent or CSV Event
+ * @param event - The event data
+ * @param locationLookup - Map of location slugs to PayloadLocation objects
  */
-export function generateEventJsonLd(event: BreweryEvent | CSVEvent): EventJsonLd {
+export function generateEventJsonLd(
+  event: BreweryEvent | CSVEvent,
+  locationLookup: LocationLookup = new Map()
+): EventJsonLd {
   // Check if it's a CSV event (has vendor instead of title)
   const isCSVEvent = 'vendor' in event && !('title' in event);
 
   if (isCSVEvent) {
     const csvEvent = event as CSVEvent;
     const { startDate, endDate } = toISO8601(csvEvent.date, csvEvent.time, csvEvent.end);
-    const jsonLd = createBaseEventJsonLd(csvEvent.vendor || 'Event at Lolev Beer', csvEvent.location || Location.LAWRENCEVILLE);
+    const jsonLd = createBaseEventJsonLd(
+      csvEvent.vendor || 'Event at Lolev Beer',
+      csvEvent.location,
+      locationLookup
+    );
 
     jsonLd.startDate = startDate;
     if (endDate) jsonLd.endDate = endDate;
@@ -265,39 +309,40 @@ export function generateEventJsonLd(event: BreweryEvent | CSVEvent): EventJsonLd
   }
 
   // Original BreweryEvent handling
-  if (!event || !event.title || !event.date) {
+  const breweryEvent = event as BreweryEvent;
+  if (!breweryEvent || !breweryEvent.title || !breweryEvent.date) {
     console.warn('Invalid event data for JSON-LD generation', event);
-    return createBaseEventJsonLd('Event at Lolev Beer', Location.LAWRENCEVILLE);
+    return createBaseEventJsonLd('Event at Lolev Beer', undefined, locationLookup);
   }
 
-  const { startDate, endDate } = toISO8601(event.date, event.time, event.endTime);
-  const jsonLd = createBaseEventJsonLd(event.title, event.location);
+  const { startDate, endDate } = toISO8601(breweryEvent.date, breweryEvent.time, breweryEvent.endTime);
+  const jsonLd = createBaseEventJsonLd(breweryEvent.title, breweryEvent.location, locationLookup);
 
-  jsonLd.description = event.description;
+  jsonLd.description = breweryEvent.description;
   jsonLd.startDate = startDate;
-  jsonLd.eventStatus = getEventStatus(event.status);
+  jsonLd.eventStatus = getEventStatus(breweryEvent.status);
   if (endDate) jsonLd.endDate = endDate;
-  if (event.image) jsonLd.image = event.image;
-  if (event.site) jsonLd.url = event.site;
+  if (breweryEvent.image) jsonLd.image = breweryEvent.image;
+  if (breweryEvent.site) jsonLd.url = breweryEvent.site;
 
   // Add offers
-  if (event.price) {
-    const priceMatch = event.price.match(/\$?(\d+(?:\.\d{2})?)/);
+  if (breweryEvent.price) {
+    const priceMatch = breweryEvent.price.match(/\$?(\d+(?:\.\d{2})?)/);
     jsonLd.offers = {
       '@type': 'Offer',
       price: priceMatch ? priceMatch[1] : '0',
       priceCurrency: 'USD',
-      availability: event.status === EventStatus.SOLD_OUT ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock',
+      availability: breweryEvent.status === EventStatus.SOLD_OUT ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock',
       validFrom: new Date().toISOString(),
-      ...(event.site && { url: event.site })
+      ...(breweryEvent.site && { url: breweryEvent.site })
     };
   } else {
     jsonLd.offers = { '@type': 'Offer', price: '0', priceCurrency: 'USD', availability: 'https://schema.org/InStock' };
   }
 
   // Add performer if it's a music or entertainment event
-  if (event.vendor && event.vendor !== event.title) {
-    jsonLd.performer = { '@type': 'Organization', name: event.vendor, url: event.site };
+  if (breweryEvent.vendor && breweryEvent.vendor !== breweryEvent.title) {
+    jsonLd.performer = { '@type': 'Organization', name: breweryEvent.vendor, url: breweryEvent.site };
   }
 
   return jsonLd;
@@ -305,8 +350,13 @@ export function generateEventJsonLd(event: BreweryEvent | CSVEvent): EventJsonLd
 
 /**
  * Generate JSON-LD for a FoodVendorSchedule or CSV Food (treat as an event)
+ * @param schedule - The food schedule data
+ * @param locationLookup - Map of location slugs to PayloadLocation objects
  */
-export function generateFoodEventJsonLd(schedule: FoodVendorSchedule | CSVFood): EventJsonLd {
+export function generateFoodEventJsonLd(
+  schedule: FoodVendorSchedule | CSVFood,
+  locationLookup: LocationLookup = new Map()
+): EventJsonLd {
   // Check if it's CSV food data (simpler structure)
   const isCSVFood = 'day' in schedule || (!('start' in schedule) && !('finish' in schedule));
 
@@ -314,11 +364,15 @@ export function generateFoodEventJsonLd(schedule: FoodVendorSchedule | CSVFood):
     const csvFood = schedule as CSVFood;
     if (!csvFood.vendor || !csvFood.date) {
       console.warn('Invalid CSV food data for JSON-LD generation', csvFood);
-      return createBaseEventJsonLd('Food at Lolev Beer', Location.LAWRENCEVILLE);
+      return createBaseEventJsonLd('Food at Lolev Beer', undefined, locationLookup);
     }
 
     const { startDate } = toISO8601(csvFood.date, csvFood.time);
-    const jsonLd = createBaseEventJsonLd(`${csvFood.vendor} at Lolev Beer`, csvFood.location || Location.LAWRENCEVILLE);
+    const jsonLd = createBaseEventJsonLd(
+      `${csvFood.vendor} at Lolev Beer`,
+      csvFood.location,
+      locationLookup
+    );
 
     jsonLd.startDate = startDate;
     jsonLd.offers = { '@type': 'Offer', availability: 'https://schema.org/InStock' };
@@ -334,13 +388,17 @@ export function generateFoodEventJsonLd(schedule: FoodVendorSchedule | CSVFood):
   const foodSchedule = schedule as FoodVendorSchedule;
   if (!foodSchedule.vendor || !foodSchedule.date) {
     console.warn('Invalid food schedule data for JSON-LD generation', foodSchedule);
-    return createBaseEventJsonLd('Food at Lolev Beer', Location.LAWRENCEVILLE);
+    return createBaseEventJsonLd('Food at Lolev Beer', undefined, locationLookup);
   }
 
   const { startDate, endDate } = toISO8601(foodSchedule.date, foodSchedule.start, foodSchedule.finish);
-  const locationInfo = foodSchedule.location ? LOCATIONS_DATA[foodSchedule.location] : null;
-  const locationName = locationInfo?.name || 'our location';
-  const jsonLd = createBaseEventJsonLd(`${foodSchedule.vendor} at Lolev Beer`, foodSchedule.location);
+  const location = foodSchedule.location ? locationLookup.get(foodSchedule.location) : undefined;
+  const locationName = location?.name || 'our location';
+  const jsonLd = createBaseEventJsonLd(
+    `${foodSchedule.vendor} at Lolev Beer`,
+    foodSchedule.location,
+    locationLookup
+  );
 
   jsonLd.description = foodSchedule.notes || `${foodSchedule.vendor} will be serving food at Lolev Beer ${locationName}`;
   jsonLd.startDate = startDate;
@@ -357,8 +415,13 @@ export function generateFoodEventJsonLd(schedule: FoodVendorSchedule | CSVFood):
 /**
  * Generate multiple events as an ItemList
  * Useful for event listing pages
+ * @param events - Array of events
+ * @param locationLookup - Map of location slugs to PayloadLocation objects
  */
-export function generateEventListJsonLd(events: BreweryEvent[]): object {
+export function generateEventListJsonLd(
+  events: BreweryEvent[],
+  locationLookup: LocationLookup = new Map()
+): object {
   // Filter out invalid events
   const validEvents = events.filter(event => event && event.title && event.date && event.location);
 
@@ -377,9 +440,16 @@ export function generateEventListJsonLd(events: BreweryEvent[]): object {
     itemListElement: validEvents.map((event, index) => ({
       '@type': 'ListItem',
       position: index + 1,
-      item: generateEventJsonLd(event)
+      item: generateEventJsonLd(event, locationLookup)
     }))
   };
+}
+
+/**
+ * Create a location lookup map from an array of PayloadLocations
+ */
+export function createLocationLookup(locations: PayloadLocation[]): LocationLookup {
+  return new Map(locations.map(loc => [loc.slug || loc.id, loc]));
 }
 
 /**

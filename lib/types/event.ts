@@ -3,7 +3,7 @@
  * Based on CSV data schema from _data/*-events.csv files
  */
 
-import { Location } from './location';
+import type { LocationSlug } from './location';
 
 /**
  * Event types/categories
@@ -77,7 +77,7 @@ export interface BaseEvent {
   /** Event status */
   status: EventStatus;
   /** Location where the event takes place */
-  location: Location;
+  location: LocationSlug;
 }
 
 /**
@@ -141,7 +141,7 @@ export interface EventTime {
  */
 export interface EventFilters {
   /** Filter by location */
-  location?: Location;
+  location?: LocationSlug;
   /** Filter by event type */
   type?: EventType[];
   /** Filter by date range */
@@ -231,7 +231,7 @@ export interface EventNotificationPreferences {
   /** Event types to notify about */
   eventTypes: EventType[];
   /** Preferred locations */
-  locations: Location[];
+  locations: LocationSlug[];
   /** How far in advance to notify (in hours) */
   advanceNotice: number;
 }

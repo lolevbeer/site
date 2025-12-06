@@ -4,7 +4,7 @@
  */
 
 import { BeerVariant, GlassType } from '@/lib/types/beer';
-import { Location } from '@/lib/types/location';
+import type { LocationSlug } from '@/lib/types/location';
 
 export interface DraftBeer {
   tap: number;
@@ -16,7 +16,7 @@ export interface DraftBeer {
   price: number;
   description: string;
   hops?: string;
-  location: Location;
+  location: LocationSlug;
   hasImage?: boolean;
   singleCanAvailable?: boolean;
 }
@@ -33,7 +33,7 @@ export const lawrencevilleDraftBeers: DraftBeer[] = [
     price: 6,
     description: 'Roasted chestnut, chocolate and raisin. Ruby hue and a hint of noble hops.',
     hops: 'Saaz',
-    location: Location.LAWRENCEVILLE,
+    location: 'lawrenceville',
     hasImage: true,
     singleCanAvailable: false
   },
@@ -47,7 +47,7 @@ export const lawrencevilleDraftBeers: DraftBeer[] = [
     price: 7,
     description: 'Tropical fruit notes balanced with pear, melon, blueberry and citrus.',
     hops: 'Erebus™, Calypso™, Citra®',
-    location: Location.LAWRENCEVILLE,
+    location: 'lawrenceville',
     hasImage: true,
     singleCanAvailable: false
   },
@@ -60,7 +60,7 @@ export const lawrencevilleDraftBeers: DraftBeer[] = [
     glass: GlassType.STEIN,
     price: 6,
     description: 'Plush tan head, a subtle sweetness of toasted malt, medium body.',
-    location: Location.LAWRENCEVILLE,
+    location: 'lawrenceville',
     hasImage: true,
     singleCanAvailable: false
   },
@@ -74,7 +74,7 @@ export const lawrencevilleDraftBeers: DraftBeer[] = [
     price: 7,
     description: 'Pineapple, vanilla, tangerine, melon.',
     hops: 'El Dorado®, Idaho 7™, Citra®',
-    location: Location.LAWRENCEVILLE,
+    location: 'lawrenceville',
     hasImage: true,
     singleCanAvailable: false
   },
@@ -88,7 +88,7 @@ export const lawrencevilleDraftBeers: DraftBeer[] = [
     price: 9,
     description: 'Hop saturated variant. Sauvignon blanc, blueberry and citrus.',
     hops: 'Motueka CGX, Nelson Sauvin™, Citra®',
-    location: Location.LAWRENCEVILLE,
+    location: 'lawrenceville',
     hasImage: true,
     singleCanAvailable: false
   },
@@ -102,7 +102,7 @@ export const lawrencevilleDraftBeers: DraftBeer[] = [
     price: 8,
     description: 'Double dry hopped Lupula. Notes of Pineapple, mango, and grapefruit. Aromatic.',
     hops: 'Motueka™, Moutere™, Riwaka™',
-    location: Location.LAWRENCEVILLE,
+    location: 'lawrenceville',
     hasImage: true,
     singleCanAvailable: false
   },
@@ -116,7 +116,7 @@ export const lawrencevilleDraftBeers: DraftBeer[] = [
     price: 7,
     description: 'Pineapple and orange mango, notes of peach ring candies.',
     hops: 'Comet, Galaxy®, Citra®',
-    location: Location.LAWRENCEVILLE,
+    location: 'lawrenceville',
     hasImage: true,
     singleCanAvailable: false
   },
@@ -130,7 +130,7 @@ export const lawrencevilleDraftBeers: DraftBeer[] = [
     price: 8,
     description: 'More hops, more malt, more everything. Everything Lupula is and more.',
     hops: 'Motueka™, Moutere™, Riwaka™',
-    location: Location.LAWRENCEVILLE,
+    location: 'lawrenceville',
     hasImage: true,
     singleCanAvailable: false
   },
@@ -144,7 +144,7 @@ export const lawrencevilleDraftBeers: DraftBeer[] = [
     price: 8,
     description: 'Pineapple, peach rings, bubblegum, strawberry and citrus.',
     hops: 'Mosaic®, Galaxy®, Citra®',
-    location: Location.LAWRENCEVILLE,
+    location: 'lawrenceville',
     hasImage: true,
     singleCanAvailable: false
   },
@@ -157,7 +157,7 @@ export const lawrencevilleDraftBeers: DraftBeer[] = [
     glass: GlassType.TEKU,
     price: 10,
     description: 'Unfiltered 2025 vintage. Slightly sour, dry and oaky. Aged 18 months in oak foeders on our house microflora and conditioned on plums.',
-    location: Location.LAWRENCEVILLE,
+    location: 'lawrenceville',
     hasImage: false,
     singleCanAvailable: false
   }
@@ -173,12 +173,12 @@ export const draftBeers: DraftBeer[] = [
 ];
 
 // Get draft beers by location
-export function getDraftBeersByLocation(location: Location): DraftBeer[] {
+export function getDraftBeersByLocation(location: LocationSlug): DraftBeer[] {
   return draftBeers.filter(beer => beer.location === location);
 }
 
 // Get current tap list for a location
-export function getTapList(location: Location): DraftBeer[] {
+export function getTapList(location: LocationSlug): DraftBeer[] {
   return getDraftBeersByLocation(location).sort((a, b) => a.tap - b.tap);
 }
 

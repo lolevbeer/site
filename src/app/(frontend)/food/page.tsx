@@ -11,7 +11,7 @@ import { JsonLd } from '@/components/seo/json-ld';
 import { generateFoodEventJsonLd } from '@/lib/utils/json-ld';
 
 export default function FoodPage() {
-  const { currentLocation } = useLocationContext();
+  const { currentLocation, locations } = useLocationContext();
   const [vendors, setVendors] = useState<FoodVendor[]>([]);
   const [schedules, setSchedules] = useState<FoodSchedule[]>([]);
   const [loading, setLoading] = useState(true);
@@ -19,7 +19,8 @@ export default function FoodPage() {
   useEffect(() => {
     const loadFood = async () => {
       try {
-        const { vendors: csvVendors, schedules: csvSchedules } = await loadFoodFromCSV();
+        const locationSlugs = locations.map(loc => loc.slug || loc.id);
+        const { vendors: csvVendors, schedules: csvSchedules } = await loadFoodFromCSV(locationSlugs);
         setVendors(csvVendors);
         setSchedules(csvSchedules);
       } catch (error) {
@@ -29,8 +30,10 @@ export default function FoodPage() {
       }
     };
 
-    loadFood();
-  }, [currentLocation]);
+    if (locations.length > 0) {
+      loadFood();
+    }
+  }, [locations]);
 
   const vendorSchedules: FoodVendorSchedule[] = useMemo(() => {
     return schedules

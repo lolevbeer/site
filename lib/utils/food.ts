@@ -2,7 +2,7 @@
  * Food truck utility functions for loading and parsing food schedules from CSV
  */
 
-import { Location } from '@/lib/types/location';
+import type { LocationSlug } from '@/lib/types/location';
 import { FoodVendor, FoodSchedule } from '@/lib/types/food';
 import { fetchCSV } from './csv';
 import { getTodayEST, isTodayEST } from './date';
@@ -79,7 +79,7 @@ function inferCuisineType(vendor: string): string {
 /**
  * Parse food CSV row into vendor and schedule
  */
-function parseFoodRow(row: FoodCSVRow, location: Location): { vendor: FoodVendor | null; schedule: FoodSchedule | null } {
+function parseFoodRow(row: FoodCSVRow, location: LocationSlug): { vendor: FoodVendor | null; schedule: FoodSchedule | null } {
   // Skip empty rows
   if (!row.vendor) {
     return { vendor: null, schedule: null };
@@ -138,44 +138,37 @@ function parseFoodRow(row: FoodCSVRow, location: Location): { vendor: FoodVendor
 /**
  * Load food vendors and schedules from CSV files
  */
-export async function loadFoodFromCSV(): Promise<{
+export async function loadFoodFromCSV(locationSlugs: LocationSlug[]): Promise<{
   vendors: FoodVendor[];
   schedules: FoodSchedule[];
 }> {
   try {
-    const [lawrencevilleFood, zelienopleFood] = await Promise.all([
-      fetchCSV<FoodCSVRow>('lawrenceville-food.csv'),
-      fetchCSV<FoodCSVRow>('zelienople-food.csv')
-    ]);
-
     const vendorsMap = new Map<string, FoodVendor>();
     const schedules: FoodSchedule[] = [];
 
-    // Process Lawrenceville food data
-    lawrencevilleFood.forEach(row => {
-      const { vendor, schedule } = parseFoodRow(row, Location.LAWRENCEVILLE);
-      if (vendor) {
-        vendorsMap.set(vendor.id, vendor);
-      }
-      if (schedule) {
-        schedules.push(schedule);
-      }
-    });
-
-    // Process Zelienople food data
-    zelienopleFood.forEach(row => {
-      const { vendor, schedule } = parseFoodRow(row, Location.ZELIENOPLE);
-      if (vendor) {
-        // Merge if vendor already exists
-        const existing = vendorsMap.get(vendor.id);
-        if (!existing) {
-          vendorsMap.set(vendor.id, vendor);
+    // Load food data for each location
+    await Promise.all(
+      locationSlugs.map(async slug => {
+        try {
+          const foodData = await fetchCSV<FoodCSVRow>(`${slug}-food.csv`);
+          foodData.forEach(row => {
+            const { vendor, schedule } = parseFoodRow(row, slug);
+            if (vendor) {
+              // Merge if vendor already exists
+              const existing = vendorsMap.get(vendor.id);
+              if (!existing) {
+                vendorsMap.set(vendor.id, vendor);
+              }
+            }
+            if (schedule) {
+              schedules.push(schedule);
+            }
+          });
+        } catch {
+          // Silently ignore missing files
         }
-      }
-      if (schedule) {
-        schedules.push(schedule);
-      }
-    });
+      })
+    );
 
     // Filter to recent and upcoming schedules (within 60 days past and all future)
     const sixtyDaysAgo = new Date();
@@ -200,19 +193,19 @@ export async function loadFoodFromCSV(): Promise<{
 /**
  * Get today's food trucks for a location
  */
-export async function getTodaysFoodTrucks(location: Location): Promise<FoodSchedule[]> {
-  const { schedules } = await loadFoodFromCSV();
+export async function getTodaysFoodTrucks(locationSlug: LocationSlug, locationSlugs: LocationSlug[]): Promise<FoodSchedule[]> {
+  const { schedules } = await loadFoodFromCSV(locationSlugs);
 
   return schedules.filter(schedule => {
-    return schedule.location === location && isTodayEST(schedule.date);
+    return schedule.location === locationSlug && isTodayEST(schedule.date);
   });
 }
 
 /**
  * Get upcoming food trucks for a location (next 7 days)
  */
-export async function getUpcomingFoodTrucks(location: Location): Promise<FoodSchedule[]> {
-  const { schedules } = await loadFoodFromCSV();
+export async function getUpcomingFoodTrucks(locationSlug: LocationSlug, locationSlugs: LocationSlug[]): Promise<FoodSchedule[]> {
+  const { schedules } = await loadFoodFromCSV(locationSlugs);
   const todayEST = getTodayEST();
   const nextWeek = new Date(todayEST);
   nextWeek.setDate(nextWeek.getDate() + 7);
@@ -220,7 +213,7 @@ export async function getUpcomingFoodTrucks(location: Location): Promise<FoodSch
 
   return schedules.filter(schedule => {
     const scheduleDateStr = schedule.date.split('T')[0];
-    return schedule.location === location &&
+    return schedule.location === locationSlug &&
            scheduleDateStr >= todayEST &&
            scheduleDateStr <= nextWeekStr;
   });

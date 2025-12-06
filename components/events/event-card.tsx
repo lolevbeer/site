@@ -7,6 +7,7 @@
 
 import React from 'react';
 import { ScheduleCard } from '@/components/ui/schedule-card';
+import { useLocationContext } from '@/components/location/location-provider';
 
 interface EventCardProps {
   event: {
@@ -28,8 +29,11 @@ export const EventCard = React.memo(function EventCard({
   currentLocation,
   className
 }: EventCardProps) {
+  const { locations } = useLocationContext();
   const displayName = event.vendor || event.title || 'Event';
-  const locationName = currentLocation === 'zelienople' ? 'Zelienople' : 'Lawrenceville';
+  // Find location name from context or use the slug as fallback
+  const location = locations.find(loc => (loc.slug || loc.id) === currentLocation);
+  const locationName = location?.name || currentLocation || '';
 
   return (
     <ScheduleCard

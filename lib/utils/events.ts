@@ -2,7 +2,7 @@
  * Events utility functions for loading and parsing events from CSV
  */
 
-import { Location } from '@/lib/types/location';
+import type { LocationSlug } from '@/lib/types/location';
 import { BreweryEvent, EventType, EventStatus } from '@/lib/types/event';
 import { fetchCSV } from './csv';
 
@@ -23,7 +23,7 @@ import { parseTimeRange, parseLocalDate } from '@/lib/utils/formatters';
 /**
  * Parse a single CSV row into a BreweryEvent
  */
-function parseEventRow(row: EventCSVRow, location: Location): BreweryEvent | null {
+function parseEventRow(row: EventCSVRow, location: LocationSlug): BreweryEvent | null {
   // Skip invalid or empty rows
   if (!row.date || !row.vendor) return null;
 
@@ -39,7 +39,7 @@ function parseEventRow(row: EventCSVRow, location: Location): BreweryEvent | nul
   // Generate simple ID from date and vendor
   const dateStr = row.date.replace(/[^0-9]/g, '');
   const vendorStr = row.vendor.toLowerCase().replace(/[^a-z0-9]/g, '-').substring(0, 30);
-  const locStr = location === Location.LAWRENCEVILLE ? 'lv' : 'zel';
+  const locStr = location.substring(0, 3);
   const id = `${locStr}-${dateStr}-${vendorStr}`;
 
   // Use type from CSV or default to SPECIAL_EVENT
@@ -75,27 +75,27 @@ function parseEventRow(row: EventCSVRow, location: Location): BreweryEvent | nul
 }
 
 /**
- * Load events from CSV files
+ * Load events from CSV files for specific locations
  */
-export async function loadEventsFromCSV(): Promise<BreweryEvent[]> {
+export async function loadEventsFromCSV(locationSlugs: LocationSlug[]): Promise<BreweryEvent[]> {
   try {
-    const [lawrencevilleEvents, zelienopleEvents] = await Promise.all([
-      fetchCSV<EventCSVRow>('lawrenceville-events.csv'),
-      fetchCSV<EventCSVRow>('zelienople-events.csv')
-    ]);
+    const allEvents: BreweryEvent[] = [];
 
-    // Parse Lawrenceville events
-    const lvEvents = lawrencevilleEvents
-      .map(row => parseEventRow(row, Location.LAWRENCEVILLE))
-      .filter((event): event is BreweryEvent => event !== null);
+    // Load events for each location
+    const results = await Promise.all(
+      locationSlugs.map(async slug => {
+        try {
+          const events = await fetchCSV<EventCSVRow>(`${slug}-events.csv`);
+          return events
+            .map(row => parseEventRow(row, slug))
+            .filter((event): event is BreweryEvent => event !== null);
+        } catch {
+          return [];
+        }
+      })
+    );
 
-    // Parse Zelienople events
-    const zelEvents = zelienopleEvents
-      .map(row => parseEventRow(row, Location.ZELIENOPLE))
-      .filter((event): event is BreweryEvent => event !== null);
-
-    // Combine all events
-    const allEvents = [...lvEvents, ...zelEvents];
+    results.forEach(events => allEvents.push(...events));
 
     // Filter to show only future events or recent past events (within 30 days)
     const thirtyDaysAgo = new Date();
@@ -117,7 +117,7 @@ export async function loadEventsFromCSV(): Promise<BreweryEvent[]> {
 /**
  * Get events for a specific location
  */
-export async function getLocationEvents(location: Location): Promise<BreweryEvent[]> {
-  const allEvents = await loadEventsFromCSV();
-  return allEvents.filter(event => event.location === location);
+export async function getLocationEvents(locationSlug: LocationSlug, locationSlugs: LocationSlug[]): Promise<BreweryEvent[]> {
+  const allEvents = await loadEventsFromCSV(locationSlugs);
+  return allEvents.filter(event => event.location === locationSlug);
 }

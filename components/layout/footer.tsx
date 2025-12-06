@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { SocialLinks } from './social-links';
 import { Logo } from '@/components/ui/logo';
-import { Location, type LocationInfo, type LocationHours } from '@/lib/types';
-import { LOCATIONS_DATA } from '@/lib/config/locations';
+import type { LocationSlug, PayloadLocation } from '@/lib/types/location';
+import { useLocationContext } from '@/components/location/location-provider';
 import { cn } from '@/lib/utils';
 import { navigationItems } from './navigation';
 import type { WeeklyHoursDay } from '@/lib/utils/payload-api';
@@ -105,20 +105,25 @@ function HoursDisplay({ weeklyHours }: { weeklyHours: WeeklyHoursDay[] }) {
 /**
  * Location info component
  */
-function LocationInfoSection({ location, weeklyHours }: { location: LocationInfo; weeklyHours?: WeeklyHoursDay[] }) {
+function LocationInfoSection({ location, weeklyHours }: { location: PayloadLocation; weeklyHours?: WeeklyHoursDay[] }) {
+  // Construct map URL from location data
+  const mapUrl = location.address?.street && location.address?.city && location.address?.state
+    ? `https://maps.google.com/?q=${encodeURIComponent(`${location.address.street}, ${location.address.city}, ${location.address.state}`)}`
+    : undefined;
+
   return (
     <div className="space-y-4">
       {/* Address */}
       <div>
         <p className="font-semibold">Lolev {location.name}</p>
         <p className="text-sm text-muted-foreground">
-          {location.address}
+          {location.address?.street}
           <br />
-          {location.city}, {location.state} {location.zipCode}
+          {location.address?.city}, {location.address?.state} {location.address?.zip}
         </p>
-        {location.mapUrl && (
+        {mapUrl && (
           <Link
-            href={location.mapUrl}
+            href={mapUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="text-xs text-muted-foreground hover:text-foreground transition-colors mt-2 inline-block underline-offset-4 hover:underline"
@@ -140,20 +145,20 @@ function LocationInfoSection({ location, weeklyHours }: { location: LocationInfo
 
       {/* Contact */}
       <div className="space-y-2 text-sm">
-        {location.phone && (
+        {location.basicInfo?.phone && (
           <Link
-            href={`tel:${location.phone}`}
+            href={`tel:${location.basicInfo.phone}`}
             className="block hover:underline"
           >
-            {location.phone}
+            {location.basicInfo.phone}
           </Link>
         )}
-        {location.email && (
+        {location.basicInfo?.email && (
           <Link
-            href={`mailto:${location.email}`}
+            href={`mailto:${location.basicInfo.email}`}
             className="block hover:underline"
           >
-            {location.email}
+            {location.basicInfo.email}
           </Link>
         )}
       </div>
@@ -166,28 +171,30 @@ interface FooterProps {
 }
 
 /**
- * Main footer component with both locations displayed
+ * Main footer component with all active locations displayed
  */
 export function Footer({ weeklyHours }: FooterProps) {
+  const { locations } = useLocationContext();
+
+  // Filter to only active locations
+  const activeLocations = locations.filter(loc => loc.active !== false);
+
   return (
     <footer className="bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid gap-12 md:grid-cols-3">
-          {/* Lawrenceville Location */}
-          <div>
-            <LocationInfoSection
-              location={LOCATIONS_DATA[Location.LAWRENCEVILLE]}
-              weeklyHours={weeklyHours?.['lawrenceville']}
-            />
-          </div>
-
-          {/* Zelienople Location */}
-          <div>
-            <LocationInfoSection
-              location={LOCATIONS_DATA[Location.ZELIENOPLE]}
-              weeklyHours={weeklyHours?.['zelienople']}
-            />
-          </div>
+          {/* Dynamic Location Sections */}
+          {activeLocations.map((location) => {
+            const locationKey = (location.slug || location.id) as LocationSlug;
+            return (
+              <div key={locationKey}>
+                <LocationInfoSection
+                  location={location}
+                  weeklyHours={weeklyHours?.[locationKey]}
+                />
+              </div>
+            );
+          })}
 
           {/* Brand and Links */}
           <div className="flex flex-col items-center">

@@ -7,7 +7,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { BreweryEvent, EventType, EventStatus, EventFilters, EventSortOptions } from '@/lib/types/event';
-import { Location, LocationDisplayNames } from '@/lib/types/location';
+import type { LocationSlug } from '@/lib/types/location';
 import { useLocationContext } from '@/components/location/location-provider';
 import { EventCard } from './event-card';
 import { Button } from '@/components/ui/button';
@@ -29,8 +29,8 @@ interface EventListProps {
   onEventClick?: (event: BreweryEvent) => void;
   emptyMessage?: string;
   maxItems?: number;
-  selectedLocation?: Location | 'all';
-  onLocationChange?: (location: Location | 'all') => void;
+  selectedLocation?: LocationSlug | 'all';
+  onLocationChange?: (location: LocationSlug | 'all') => void;
 }
 
 /**
@@ -52,12 +52,18 @@ export function EventList({
   selectedLocation: parentSelectedLocation,
   onLocationChange
 }: EventListProps) {
-  const { currentLocation } = useLocationContext();
+  const { currentLocation, locations } = useLocationContext();
   const [searchQuery, setSearchQuery] = useState(initialFilters.search || '');
   const [selectedTypes, setSelectedTypes] = useState<EventType[]>(initialFilters.type || []);
-  const [internalSelectedLocation, setInternalSelectedLocation] = useState<Location | undefined>(
+  const [internalSelectedLocation, setInternalSelectedLocation] = useState<LocationSlug | undefined>(
     showLocationFilter ? initialFilters.location || currentLocation : currentLocation
   );
+
+  // Helper to get location name
+  const getLocationName = (slug: LocationSlug): string => {
+    const location = locations.find(loc => (loc.slug || loc.id) === slug);
+    return location?.name || slug;
+  };
 
   // Use parent location if provided, otherwise use internal state
   const selectedLocation = parentSelectedLocation !== undefined ?
@@ -313,17 +319,19 @@ export function EventList({
               {parentSelectedLocation !== undefined && onLocationChange && (
                 <Tabs
                   value={parentSelectedLocation}
-                  onValueChange={(value) => onLocationChange(value as Location | 'all')}
+                  onValueChange={(value) => onLocationChange(value as LocationSlug | 'all')}
                   className="w-auto"
                 >
-                  <TabsList className="grid w-fit grid-cols-3">
+                  <TabsList className={cn("grid w-fit", `grid-cols-${locations.length + 1}`)}>
                     <TabsTrigger value="all">All</TabsTrigger>
-                    <TabsTrigger value={Location.LAWRENCEVILLE}>
-                      {LocationDisplayNames[Location.LAWRENCEVILLE]}
-                    </TabsTrigger>
-                    <TabsTrigger value={Location.ZELIENOPLE}>
-                      {LocationDisplayNames[Location.ZELIENOPLE]}
-                    </TabsTrigger>
+                    {locations.map(location => {
+                      const slug = location.slug || location.id;
+                      return (
+                        <TabsTrigger key={slug} value={slug}>
+                          {location.name}
+                        </TabsTrigger>
+                      );
+                    })}
                   </TabsList>
                 </Tabs>
               )}
@@ -382,7 +390,7 @@ export function EventList({
                   </div>
                   {showLocationFilter && (
                     <div className="text-sm text-muted-foreground">
-                      {LocationDisplayNames[event.location]}
+                      {getLocationName(event.location)}
                     </div>
                   )}
                 </div>

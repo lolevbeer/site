@@ -7,13 +7,14 @@
 
 import React, { useState, useMemo } from 'react';
 import { BreweryEvent, EventType, EventStatus } from '@/lib/types/event';
-import { Location, LocationDisplayNames } from '@/lib/types/location';
+import type { LocationSlug } from '@/lib/types/location';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ChevronLeft, ChevronRight, Clock, MapPin, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useLocationContext } from '@/components/location/location-provider';
 
 interface EventCalendarProps {
   events: BreweryEvent[];
@@ -22,8 +23,8 @@ interface EventCalendarProps {
   onEventClick?: (event: BreweryEvent) => void;
   onDateClick?: (date: Date) => void;
   showAddEvent?: boolean;
-  selectedLocation?: Location | 'all';
-  onLocationChange?: (location: Location | 'all') => void;
+  selectedLocation?: LocationSlug | 'all';
+  onLocationChange?: (location: LocationSlug | 'all') => void;
 }
 
 interface CalendarDay {
@@ -46,7 +47,14 @@ export function EventCalendar({
   selectedLocation: parentSelectedLocation,
   onLocationChange
 }: EventCalendarProps) {
+  const { locations } = useLocationContext();
   const [currentWeek, setCurrentWeek] = useState(getStartOfWeek(new Date()));
+
+  // Helper to get location name
+  const getLocationName = (slug: LocationSlug): string => {
+    const location = locations.find(loc => (loc.slug || loc.id) === slug);
+    return location?.name || slug;
+  };
 
   // Get start of week (Sunday)
   function getStartOfWeek(date: Date): Date {
@@ -189,11 +197,17 @@ export function EventCalendar({
         <div className="flex items-center gap-2">
           {/* Location Filter */}
           {parentSelectedLocation !== undefined && onLocationChange && (
-            <Tabs value={parentSelectedLocation} onValueChange={(value) => onLocationChange(value as Location | 'all')}>
-              <TabsList className="grid grid-cols-3">
+            <Tabs value={parentSelectedLocation} onValueChange={(value) => onLocationChange(value as LocationSlug | 'all')}>
+              <TabsList className={cn("grid", `grid-cols-${locations.length + 1}`)}>
                 <TabsTrigger value="all">All</TabsTrigger>
-                <TabsTrigger value={Location.LAWRENCEVILLE}>Lawrenceville</TabsTrigger>
-                <TabsTrigger value={Location.ZELIENOPLE}>Zelienople</TabsTrigger>
+                {locations.map(location => {
+                  const slug = location.slug || location.id;
+                  return (
+                    <TabsTrigger key={slug} value={slug}>
+                      {location.name}
+                    </TabsTrigger>
+                  );
+                })}
               </TabsList>
             </Tabs>
           )}
@@ -278,7 +292,7 @@ export function EventCalendar({
                         <>
                           <MapPin className="h-2 w-2 ml-1" />
                           <span className="truncate">
-                            {LocationDisplayNames[event.location]}
+                            {getLocationName(event.location)}
                           </span>
                         </>
                       )}

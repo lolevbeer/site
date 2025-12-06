@@ -1,57 +1,30 @@
 /**
  * Location type definitions for the brewery website
- * Based on the two brewery locations: Lawrenceville and Zelienople
+ * Locations are now dynamically loaded from the database
  */
 
+import type { Location as BasePayloadLocation } from '@/src/payload-types';
+
 /**
- * Enum for brewery locations
+ * Extended Payload Location type that includes coordinates
+ * (coordinates field will be added to Payload CMS schema)
  */
-export enum Location {
-  LAWRENCEVILLE = 'lawrenceville',
-  ZELIENOPLE = 'zelienople',
+export interface PayloadLocation extends BasePayloadLocation {
+  coordinates?: {
+    latitude?: number | null;
+    longitude?: number | null;
+  } | null;
 }
 
 /**
- * Display names for locations
+ * Location slug type - string identifier from database
  */
-export const LocationDisplayNames: Record<Location, string> = {
-  [Location.LAWRENCEVILLE]: 'Lawrenceville',
-  [Location.ZELIENOPLE]: 'Zelienople',
-};
+export type LocationSlug = string;
 
 /**
- * Location-specific information interface
+ * Location filter type - includes 'all' for showing all locations
  */
-export interface LocationInfo {
-  /** Location identifier */
-  location: Location;
-  /** Display name */
-  name: string;
-  /** Street address */
-  address: string;
-  /** City */
-  city: string;
-  /** State */
-  state: string;
-  /** ZIP code */
-  zipCode: string;
-  /** Phone number */
-  phone?: string;
-  /** Email address */
-  email?: string;
-  /** Website URL */
-  website?: string;
-  /** Google Maps URL or coordinates */
-  mapUrl?: string;
-  /** Operating hours */
-  hours: LocationHours;
-  /** Location-specific features */
-  features?: LocationFeature[];
-  /** Parking information */
-  parking?: string;
-  /** Public transportation access */
-  publicTransport?: string;
-}
+export type LocationFilter = LocationSlug | 'all';
 
 /**
  * Daily hours interface
@@ -119,19 +92,11 @@ export const LocationFeatureDisplayNames: Record<LocationFeature, string> = {
 };
 
 /**
- * Location-specific data interface for filtering
- */
-export interface LocationData<T> {
-  [Location.LAWRENCEVILLE]: T;
-  [Location.ZELIENOPLE]: T;
-}
-
-/**
  * Distance calculation interface
  */
 export interface LocationDistance {
-  /** Location identifier */
-  location: Location;
+  /** Location slug */
+  location: LocationSlug;
   /** Distance in miles */
   distance: number;
   /** Estimated travel time */
@@ -149,32 +114,78 @@ export interface LocationCoordinates {
 }
 
 /**
- * Extended location info with coordinates
- */
-export interface LocationInfoWithCoordinates extends LocationInfo {
-  /** Geographic coordinates */
-  coordinates: LocationCoordinates;
-}
-
-/**
- * Location utility types
- */
-export type LocationKey = keyof typeof Location;
-export type LocationValue = Location;
-
-/**
- * Location filter type - includes 'all' for showing all locations
- */
-export type LocationFilter = Location | 'all';
-
-/**
  * Location selection interface for forms
  */
 export interface LocationSelection {
-  /** Selected location */
-  location: Location;
+  /** Selected location slug */
+  location: LocationSlug;
   /** Whether this is the user's preferred location */
   isPreferred?: boolean;
   /** Last visit date */
   lastVisit?: Date;
+}
+
+/**
+ * Simplified location info derived from Payload Location
+ */
+export interface LocationInfo {
+  /** Location ID */
+  id: string;
+  /** Location slug */
+  slug: string;
+  /** Display name */
+  name: string;
+  /** Whether location is active */
+  active: boolean;
+  /** Street address */
+  address?: string;
+  /** City */
+  city?: string;
+  /** State */
+  state?: string;
+  /** ZIP code */
+  zipCode?: string;
+  /** Phone number */
+  phone?: string;
+  /** Email address */
+  email?: string;
+  /** Timezone */
+  timezone?: string;
+  /** Google Maps URL */
+  mapUrl?: string;
+}
+
+/**
+ * Convert Payload Location to simplified LocationInfo
+ */
+export function toLocationInfo(location: PayloadLocation): LocationInfo {
+  const address = location.address?.street || undefined;
+  const city = location.address?.city || undefined;
+  const state = location.address?.state || undefined;
+  const zipCode = location.address?.zip || undefined;
+
+  // Generate Google Maps URL
+  let mapUrl: string | undefined;
+  if (location.coordinates?.latitude && location.coordinates?.longitude) {
+    mapUrl = `https://www.google.com/maps/dir/?api=1&destination=${location.coordinates.latitude},${location.coordinates.longitude}`;
+  } else if (address && city && state) {
+    mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+      `${address}, ${city}, ${state} ${zipCode || ''}`
+    )}`;
+  }
+
+  return {
+    id: location.id,
+    slug: location.slug || location.id,
+    name: location.name,
+    active: location.active ?? true,
+    address,
+    city,
+    state,
+    zipCode,
+    phone: location.basicInfo?.phone || undefined,
+    email: location.basicInfo?.email || undefined,
+    timezone: location.timezone || 'America/New_York',
+    mapUrl,
+  };
 }

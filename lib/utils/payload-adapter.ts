@@ -3,7 +3,8 @@
  * Bridges the gap between Payload schema and existing app interfaces
  */
 
-import type { Beer as PayloadBeer, Menu as PayloadMenu, Style, Media, Location as PayloadLocation } from '@/src/payload-types'
+import type { Beer as PayloadBeer, Menu as PayloadMenu, Style, Media } from '@/src/payload-types'
+import type { PayloadLocation } from '@/lib/types/location'
 import type { Beer, DraftBeer, CannedBeer } from '@/lib/types/beer'
 import { GlassType, BeerStyle } from '@/lib/types/beer'
 import { access, constants } from 'fs/promises'
@@ -185,24 +186,18 @@ export async function getBeersWithAvailability(
         beer.availability.singleCanAvailable = false
       }
 
-      // Update location-specific availability
-      if (locationSlug === 'lawrenceville') {
-        if (!beer.availability.lawrenceville) {
-          beer.availability.lawrenceville = {}
+      // Update location-specific availability dynamically
+      if (locationSlug) {
+        // Initialize location availability if not present
+        const existingLocAvail = beer.availability[locationSlug]
+        if (!existingLocAvail || typeof existingLocAvail !== 'object') {
+          beer.availability[locationSlug] = {}
         }
+        const locAvail = beer.availability[locationSlug] as { tap?: string; cansAvailable?: boolean }
         if (menu.type === 'draft') {
-          beer.availability.lawrenceville.tap = (i + 1).toString()
+          locAvail.tap = (i + 1).toString()
         } else if (menu.type === 'cans') {
-          beer.availability.lawrenceville.cansAvailable = true
-        }
-      } else if (locationSlug === 'zelienople') {
-        if (!beer.availability.zelienople) {
-          beer.availability.zelienople = {}
-        }
-        if (menu.type === 'draft') {
-          beer.availability.zelienople.tap = (i + 1).toString()
-        } else if (menu.type === 'cans') {
-          beer.availability.zelienople.cansAvailable = true
+          locAvail.cansAvailable = true
         }
       }
     }

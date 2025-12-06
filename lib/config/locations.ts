@@ -1,21 +1,10 @@
 /**
- * Location configuration and data for brewery locations
- * Contains all location-specific information including hours, features, and contact details
+ * Location configuration and utilities
+ * Locations are now dynamically loaded from the database
  */
 
-import {
-  Location,
-  LocationInfo,
-  LocationFeature,
-  LocationDisplayNames,
-  LocationData
-} from '@/lib/types/location';
+import { type PayloadLocation, type LocationSlug, type LocationInfo, toLocationInfo, type DayHours } from '@/lib/types/location';
 import { getCurrentESTDateTime } from '@/lib/utils/date';
-
-/**
- * Default location when no preference is set
- */
-export const DEFAULT_LOCATION = Location.LAWRENCEVILLE;
 
 /**
  * LocalStorage key for persisting user's location preference
@@ -23,134 +12,46 @@ export const DEFAULT_LOCATION = Location.LAWRENCEVILLE;
 export const LOCATION_STORAGE_KEY = 'brewery-location-preference';
 
 /**
- * Complete location information for Lawrenceville brewery
+ * Extract hours from Payload Location for a specific day
  */
-const lawrencevilleInfo: LocationInfo = {
-  location: Location.LAWRENCEVILLE,
-  name: LocationDisplayNames[Location.LAWRENCEVILLE],
-  address: '5247 Butler Street',
-  city: 'Pittsburgh',
-  state: 'PA',
-  zipCode: '15201',
-  phone: '(412) 336-8965',
-  email: 'info@lolev.beer',
-  mapUrl: 'https://www.google.com/maps/place/Lolev+Beer/@40.4816854,-79.9539243,115m/data=!3m1!1e3!4m6!3m5!1s0x8834f326312e16b9:0x333ef823676989b4!8m2!3d40.4816217!4d-79.9538576!16s%2Fg%2F11snh_567n?entry=ttu&g_ep=EgoyMDI1MTEwNC4xIKXMDSoASAFQAw%3D%3D',
-  hours: {
-    monday: { open: '16:00', close: '22:00' },
-    tuesday: { open: '16:00', close: '22:00' },
-    wednesday: { open: '16:00', close: '22:00' },
-    thursday: { open: '16:00', close: '22:00' },
-    friday: { open: '12:00', close: '00:00' },
-    saturday: { open: '12:00', close: '00:00' },
-    sunday: { open: '12:00', close: '21:00' }
-  },
-  features: [
-    LocationFeature.OUTDOOR_SEATING,
-    LocationFeature.PET_FRIENDLY,
-    LocationFeature.FAMILY_FRIENDLY,
-    LocationFeature.LIVE_MUSIC,
-    LocationFeature.FOOD_TRUCKS,
-    LocationFeature.PRIVATE_EVENTS,
-    LocationFeature.TOURS,
-    LocationFeature.MERCHANDISE,
-    LocationFeature.GROWLERS,
-    LocationFeature.TAKEOUT,
-    LocationFeature.WIFI,
-    LocationFeature.ACCESSIBILITY
-  ],
-  parking: 'Street parking available.',
-  publicTransport: 'Served by Port Authority buses. Lawrenceville bus stops within 2 blocks.'
-};
+function extractDayHours(location: PayloadLocation, day: string): DayHours | null {
+  const dayData = location[day as keyof PayloadLocation] as { open?: string; close?: string } | undefined;
 
-/**
- * Complete location information for Zelienople brewery
- */
-const zelienopleInfo: LocationInfo = {
-  location: Location.ZELIENOPLE,
-  name: LocationDisplayNames[Location.ZELIENOPLE],
-  address: '111 South Main Street',
-  city: 'Zelienople',
-  state: 'PA',
-  zipCode: '16063',
-  website: 'https://brewery.com/zelienople',
-  mapUrl: 'https://www.google.com/maps/place/Lolev+Zelienople/@40.7951959,-80.1380706,147m/data=!3m1!1e3!4m6!3m5!1s0x88347fadb692e2ed:0xfe6860215987e498!8m2!3d40.7952085!4d-80.1377104!16s%2Fg%2F11y91skx6n?entry=ttu&g_ep=EgoyMDI1MTEwNC4xIKXMDSoASAFQAw%3D%3D',
-  hours: {
-    monday: { open: '17:00', close: '22:00' },
-    tuesday: { open: '17:00', close: '22:00' },
-    wednesday: { open: '17:00', close: '22:00' },
-    thursday: { open: '17:00', close: '22:00' },
-    friday: { open: '12:00', close: '00:00' },
-    saturday: { open: '12:00', close: '00:00' },
-    sunday: { open: '12:00', close: '21:00' }
-  },
-  features: [
-    LocationFeature.OUTDOOR_SEATING,
-    LocationFeature.PET_FRIENDLY,
-    LocationFeature.FAMILY_FRIENDLY,
-    LocationFeature.FOOD_TRUCKS,
-    LocationFeature.PRIVATE_EVENTS,
-    LocationFeature.TOURS,
-    LocationFeature.MERCHANDISE,
-    LocationFeature.GROWLERS,
-    LocationFeature.DELIVERY,
-    LocationFeature.TAKEOUT,
-    LocationFeature.WIFI,
-    LocationFeature.ACCESSIBILITY
-  ],
-  parking: 'Free parking lot adjacent to building. Additional street parking on Main Street.',
-  publicTransport: 'Limited public transportation. Private vehicle recommended.'
-};
-
-/**
- * Centralized location data mapping
- */
-export const LOCATIONS_DATA: LocationData<LocationInfo> = {
-  [Location.LAWRENCEVILLE]: lawrencevilleInfo,
-  [Location.ZELIENOPLE]: zelienopleInfo,
-};
-
-/**
- * Array of all available locations for iteration
- */
-export const ALL_LOCATIONS = Object.values(Location);
-
-/**
- * Array of location info objects for easy access
- */
-export const ALL_LOCATION_INFO = ALL_LOCATIONS.map(location => LOCATIONS_DATA[location]);
-
-/**
- * Get location information by location enum
- */
-export function getLocationInfo(location: Location): LocationInfo {
-  return LOCATIONS_DATA[location];
-}
-
-/**
- * Get location by string value (useful for URL params, form inputs, etc.)
- */
-export function getLocationByValue(value: string): Location | null {
-  const location = Object.values(Location).find(loc => loc === value);
-  return location || null;
-}
-
-/**
- * Check if a location is currently open based on current time in EST
- */
-export function isLocationOpen(location: Location, date?: Date): boolean {
-  const locationInfo = getLocationInfo(location);
-  // Use EST timezone for determining current time
-  const now = date || getCurrentESTDateTime();
-  const dayOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][now.getDay()] as keyof typeof locationInfo.hours;
-
-  const dayHours = locationInfo.hours[dayOfWeek];
-
-  // Type guard: notes is a string, not DayHours
-  if (typeof dayHours === 'string' || !dayHours) {
-    return false;
+  if (!dayData?.open || !dayData?.close) {
+    return null;
   }
 
-  if (dayHours.closed) {
+  // Payload stores times as ISO date strings, extract time portion
+  const parseTime = (isoString: string): string => {
+    try {
+      const date = new Date(isoString);
+      const hours = date.getUTCHours().toString().padStart(2, '0');
+      const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+      return `${hours}:${minutes}`;
+    } catch {
+      return '00:00';
+    }
+  };
+
+  return {
+    open: parseTime(dayData.open),
+    close: parseTime(dayData.close),
+    closed: false,
+  };
+}
+
+/**
+ * Check if a location is currently open based on current time
+ */
+export function isLocationOpenNow(location: PayloadLocation, date?: Date): boolean {
+  const timezone = location.timezone || 'America/New_York';
+  const now = date || getCurrentESTDateTime();
+  const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const dayOfWeek = days[now.getDay()];
+
+  const dayHours = extractDayHours(location, dayOfWeek);
+
+  if (!dayHours || dayHours.closed) {
     return false;
   }
 
@@ -165,7 +66,6 @@ export function isLocationOpen(location: Location, date?: Date): boolean {
 
   // If closing time is less than opening time, it crosses midnight
   if (closeTime < openTime) {
-    // e.g., open at 16:00, close at 02:00 next day
     return currentTime >= openTime || currentTime <= closeTime;
   }
 
@@ -175,21 +75,12 @@ export function isLocationOpen(location: Location, date?: Date): boolean {
 /**
  * Get formatted hours string for a specific day
  */
-export function getFormattedHours(location: Location, day: keyof LocationInfo['hours']): string {
-  const locationInfo = getLocationInfo(location);
-  const dayHours = locationInfo.hours[day];
+export function getFormattedHoursForDay(location: PayloadLocation, day: string): string {
+  const dayHours = extractDayHours(location, day);
 
-  // Type guard: check if this is the notes field first
-  if (day === 'notes') {
-    return (dayHours as string) || '';
-  }
-
-  // Type guard: ensure dayHours is DayHours, not string
-  if (typeof dayHours === 'string' || !dayHours) {
+  if (!dayHours || dayHours.closed) {
     return 'Closed';
   }
-
-  if (dayHours.closed) return 'Closed';
 
   const formatTime = (time: string) => {
     const [hours, minutes] = time.split(':').map(Number);
@@ -205,28 +96,22 @@ export function getFormattedHours(location: Location, day: keyof LocationInfo['h
 }
 
 /**
- * Get next opening time for a location using EST timezone
+ * Get next opening time for a location
  */
-export function getNextOpeningTime(location: Location): { day: string; time: string } | null {
-  const locationInfo = getLocationInfo(location);
+export function getNextOpeningTimeForLocation(location: PayloadLocation): { day: string; time: string } | null {
   const now = getCurrentESTDateTime();
   const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
   for (let i = 1; i <= 7; i++) {
     const dayIndex = (now.getDay() + i) % 7;
-    const dayName = days[dayIndex] as keyof typeof locationInfo.hours;
-    const dayHours = locationInfo.hours[dayName];
+    const dayName = days[dayIndex];
+    const dayHours = extractDayHours(location, dayName);
 
-    // Type guard: ensure dayHours is DayHours, not string
-    if (typeof dayHours === 'string' || !dayHours) {
-      continue;
-    }
-
-    if (!dayHours.closed) {
+    if (dayHours && !dayHours.closed) {
       const dayDisplayName = dayName.charAt(0).toUpperCase() + dayName.slice(1);
       return {
         day: i === 1 ? 'Tomorrow' : dayDisplayName,
-        time: getFormattedHours(location, dayName)
+        time: getFormattedHoursForDay(location, dayName)
       };
     }
   }
@@ -235,35 +120,60 @@ export function getNextOpeningTime(location: Location): { day: string; time: str
 }
 
 /**
- * Location-specific feature availability
+ * Get all hours for a location as an array
  */
-export const LOCATION_FEATURES: LocationData<LocationFeature[]> = {
-  [Location.LAWRENCEVILLE]: lawrencevilleInfo.features || [],
-  [Location.ZELIENOPLE]: zelienopleInfo.features || [],
-};
+export function getAllHoursForLocation(location: PayloadLocation): Array<{
+  day: string;
+  hours: string;
+  isToday: boolean;
+}> {
+  const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+  const today = new Date();
+  const todayIndex = today.getDay();
+  const todayName = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][todayIndex];
 
-/**
- * Check if a location has a specific feature
- */
-export function locationHasFeature(location: Location, feature: LocationFeature): boolean {
-  return LOCATION_FEATURES[location].includes(feature);
+  return days.map(day => ({
+    day: day.charAt(0).toUpperCase() + day.slice(1),
+    hours: getFormattedHoursForDay(location, day),
+    isToday: day === todayName
+  }));
 }
 
 /**
- * Get all features available across both locations
+ * Get the default location slug (first active location)
  */
-export function getAllAvailableFeatures(): LocationFeature[] {
-  const allFeatures = new Set<LocationFeature>();
-  Object.values(LOCATION_FEATURES).forEach(features => {
-    features.forEach((feature: LocationFeature) => allFeatures.add(feature));
-  });
-  return Array.from(allFeatures);
+export function getDefaultLocationSlug(locations: PayloadLocation[]): LocationSlug {
+  const activeLocations = locations.filter(loc => loc.active !== false);
+  return activeLocations[0]?.slug || activeLocations[0]?.id || '';
 }
 
 /**
- * Location coordinates for mapping (if needed in the future)
+ * Find a location by slug from an array of locations
  */
-export const LOCATION_COORDINATES: LocationData<{ lat: number; lng: number }> = {
-  [Location.LAWRENCEVILLE]: { lat: 40.4649, lng: -79.9603 },
-  [Location.ZELIENOPLE]: { lat: 40.7937, lng: -80.1384 },
-};
+export function findLocationBySlug(locations: PayloadLocation[], slug: LocationSlug): PayloadLocation | undefined {
+  return locations.find(loc => loc.slug === slug || loc.id === slug);
+}
+
+/**
+ * Validate if a slug is a valid location
+ */
+export function isValidLocationSlug(locations: PayloadLocation[], slug: string): boolean {
+  return locations.some(loc => loc.slug === slug || loc.id === slug);
+}
+
+/**
+ * Get display name for a location slug
+ */
+export function getLocationDisplayName(locations: PayloadLocation[], slug: LocationSlug): string {
+  const location = findLocationBySlug(locations, slug);
+  return location?.name || slug;
+}
+
+/**
+ * Convert array of Payload Locations to LocationInfo array
+ */
+export function toLocationInfoArray(locations: PayloadLocation[]): LocationInfo[] {
+  return locations
+    .filter(loc => loc.active !== false)
+    .map(toLocationInfo);
+}

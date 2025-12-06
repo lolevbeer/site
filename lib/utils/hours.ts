@@ -2,7 +2,7 @@
  * Hours utility functions for loading and formatting location hours from CSV
  */
 
-import { Location } from '@/lib/types/location';
+import type { LocationSlug } from '@/lib/types/location';
 import { fetchCSV } from './csv';
 
 export interface HoursCSVRow {
@@ -52,13 +52,10 @@ function parseHoursString(hoursStr: string): { open: string; close: string; clos
 }
 
 /**
- * Load hours data from CSV files
+ * Load hours data from CSV files for a specific location
  */
-export async function loadHoursFromCSV(): Promise<Record<Location, LocationHours>> {
-  const [lawrencevilleHours, zelienopleHours] = await Promise.all([
-    fetchCSV<HoursCSVRow>('lawrenceville-hours.csv'),
-    fetchCSV<HoursCSVRow>('zelienople-hours.csv')
-  ]);
+export async function loadHoursFromCSV(locationSlug: LocationSlug): Promise<LocationHours> {
+  const hoursData = await fetchCSV<HoursCSVRow>(`${locationSlug}-hours.csv`);
 
   const dayMapping: Record<string, keyof LocationHours> = {
     Mon: 'monday', Tue: 'tuesday', Wed: 'wednesday', Thu: 'thursday',
@@ -67,29 +64,53 @@ export async function loadHoursFromCSV(): Promise<Record<Location, LocationHours
 
   const closedDay = { open: '00:00', close: '00:00', closed: true };
 
-  const parseLocationHours = (data: HoursCSVRow[]): LocationHours => {
-    const hours = Object.fromEntries(
-      Object.values(dayMapping).map(day => [day, closedDay])
-    ) as unknown as LocationHours;
+  const hours = Object.fromEntries(
+    Object.values(dayMapping).map(day => [day, closedDay])
+  ) as unknown as LocationHours;
 
-    data.forEach(row => {
-      const dayKey = dayMapping[row.name];
-      if (dayKey) hours[dayKey] = parseHoursString(row.hours);
-    });
+  hoursData.forEach(row => {
+    const dayKey = dayMapping[row.name];
+    if (dayKey) hours[dayKey] = parseHoursString(row.hours);
+  });
 
-    return hours;
-  };
+  return hours;
+}
 
-  return {
-    [Location.LAWRENCEVILLE]: parseLocationHours(lawrencevilleHours),
-    [Location.ZELIENOPLE]: parseLocationHours(zelienopleHours)
-  };
+/**
+ * Load hours data from CSV files for multiple locations
+ */
+export async function loadAllHoursFromCSV(locationSlugs: LocationSlug[]): Promise<Record<LocationSlug, LocationHours>> {
+  const results = await Promise.all(
+    locationSlugs.map(async slug => {
+      try {
+        const hours = await loadHoursFromCSV(slug);
+        return [slug, hours] as [LocationSlug, LocationHours];
+      } catch {
+        // Return default closed hours if file doesn't exist
+        const closedDay = { open: '00:00', close: '00:00', closed: true };
+        return [slug, {
+          monday: closedDay,
+          tuesday: closedDay,
+          wednesday: closedDay,
+          thursday: closedDay,
+          friday: closedDay,
+          saturday: closedDay,
+          sunday: closedDay
+        }] as [LocationSlug, LocationHours];
+      }
+    })
+  );
+
+  return Object.fromEntries(results);
 }
 
 /**
  * Get hours for a specific location
  */
-export async function getLocationHours(location: Location): Promise<LocationHours | null> {
-  const allHours = await loadHoursFromCSV();
-  return allHours[location] || null;
+export async function getLocationHours(locationSlug: LocationSlug): Promise<LocationHours | null> {
+  try {
+    return await loadHoursFromCSV(locationSlug);
+  } catch {
+    return null;
+  }
 }

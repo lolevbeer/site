@@ -42,39 +42,54 @@ interface BeerCSVRow extends CSVRow {
 }
 
 export function CansGrid({ maxItems }: CansGridProps) {
-  const { currentLocation } = useLocationContext();
+  const { currentLocation, locations } = useLocationContext();
   const [cans, setCans] = useState<CanBeer[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchCans = async () => {
       try {
-        const [lawrencevilleCansRes, zelienopleCansRes, lawrencevilleDraftRes, zelienopleDraftRes, beerRes] = await Promise.all([
-          fetch('/data/lawrenceville-cans.csv'),
-          fetch('/data/zelienople-cans.csv'),
-          fetch('/data/lawrenceville-draft.csv'),
-          fetch('/data/zelienople-draft.csv'),
-          fetch('/data/beer.csv')
+        // Get location slugs dynamically from context
+        const locationSlugs = locations.map(loc => loc.slug || loc.id);
+
+        // Fetch cans and draft CSVs for all locations, plus beer data
+        const cansPromises = locationSlugs.map(slug => fetch(`/data/${slug}-cans.csv`).catch(() => null));
+        const draftPromises = locationSlugs.map(slug => fetch(`/data/${slug}-draft.csv`).catch(() => null));
+        const beerPromise = fetch('/data/beer.csv');
+
+        const [cansResponses, draftResponses, beerRes] = await Promise.all([
+          Promise.all(cansPromises),
+          Promise.all(draftPromises),
+          beerPromise
         ]);
 
-        const [lawrencevilleCansText, zelienopleCansText, lawrencevilleDraftText, zelienopleDraftText, beerText] = await Promise.all([
-          lawrencevilleCansRes.text(),
-          zelienopleCansRes.text(),
-          lawrencevilleDraftRes.text(),
-          zelienopleDraftRes.text(),
-          beerRes.text()
-        ]);
+        // Parse text from successful responses
+        const cansTexts = await Promise.all(
+          cansResponses.map(async (res, i) => {
+            if (res?.ok) {
+              return { slug: locationSlugs[i], text: await res.text() };
+            }
+            return null;
+          })
+        );
+        const draftTexts = await Promise.all(
+          draftResponses.map(async (res, i) => {
+            if (res?.ok) {
+              return { slug: locationSlugs[i], text: await res.text() };
+            }
+            return null;
+          })
+        );
+        const beerText = await beerRes.text();
 
-        // Parse draft CSVs to track which beers are on draft
-        const lawrencevilleDraftData = Papa.parse<CSVRow>(lawrencevilleDraftText, { header: true });
-        const zelienopleDraftData = Papa.parse<CSVRow>(zelienopleDraftText, { header: true });
-
+        // Build on-draft set from all locations
         const onDraftSet = new Set<string>();
-        lawrencevilleDraftData.data.forEach((row: CSVRow) => {
-          if (row.variant) onDraftSet.add(row.variant.toLowerCase());
-        });
-        zelienopleDraftData.data.forEach((row: CSVRow) => {
-          if (row.variant) onDraftSet.add(row.variant.toLowerCase());
+        draftTexts.forEach(item => {
+          if (!item) return;
+          const draftData = Papa.parse<CSVRow>(item.text, { header: true });
+          draftData.data.forEach((row: CSVRow) => {
+            if (row.variant) onDraftSet.add(row.variant.toLowerCase());
+          });
         });
 
         // Parse beer.csv
@@ -94,46 +109,41 @@ export function CansGrid({ maxItems }: CansGridProps) {
           }
         });
 
-        // Parse Lawrenceville cans
-        const lawrencevilleCansData = Papa.parse<CSVRow>(lawrencevilleCansText, { header: true });
-        const lawrencevilleCans: CanBeer[] = lawrencevilleCansData.data
-          .filter((row: CSVRow) => row.variant)
-          .map((row: CSVRow) => {
-            const beerInfo = beerMap.get(row.variant!.toLowerCase());
-            if (beerInfo) {
-              return {
-                ...beerInfo,
-                fourPackPrice: row.fourPack ? `$${row.fourPack}` : '',
-                onDraft: onDraftSet.has(row.variant!.toLowerCase())
-              };
-            }
-            return null;
-          })
-          .filter((beer): beer is CanBeer => beer !== null);
+        // Parse cans for each location
+        const cansByLocation: Record<string, CanBeer[]> = {};
+        cansTexts.forEach(item => {
+          if (!item) return;
+          const { slug, text } = item;
+          const cansData = Papa.parse<CSVRow>(text, { header: true });
+          cansByLocation[slug] = cansData.data
+            .filter((row: CSVRow) => row.variant)
+            .map((row: CSVRow) => {
+              const beerInfo = beerMap.get(row.variant!.toLowerCase());
+              if (beerInfo) {
+                return {
+                  ...beerInfo,
+                  fourPackPrice: row.fourPack ? `$${row.fourPack}` : '',
+                  onDraft: onDraftSet.has(row.variant!.toLowerCase())
+                };
+              }
+              return null;
+            })
+            .filter((beer): beer is CanBeer => beer !== null);
+        });
 
-        // Parse Zelienople cans
-        const zelienopleCansData = Papa.parse<CSVRow>(zelienopleCansText, { header: true });
-        const zelienopleCans: CanBeer[] = zelienopleCansData.data
-          .filter((row: CSVRow) => row.variant)
-          .map((row: CSVRow) => {
-            const beerInfo = beerMap.get(row.variant!.toLowerCase());
-            if (beerInfo) {
-              return {
-                ...beerInfo,
-                fourPackPrice: row.fourPack ? `$${row.fourPack}` : '',
-                onDraft: onDraftSet.has(row.variant!.toLowerCase())
-              };
-            }
-            return null;
-          })
-          .filter((beer): beer is CanBeer => beer !== null);
-
-        // Set cans based on location
-        const selectedCans = currentLocation === 'lawrenceville'
-          ? lawrencevilleCans
-          : currentLocation === 'zelienople'
-          ? zelienopleCans
-          : [...lawrencevilleCans, ...zelienopleCans];
+        // Select cans based on current location filter
+        let selectedCans: CanBeer[];
+        if (currentLocation === 'all') {
+          // Combine all locations, dedupe by variant
+          const seen = new Set<string>();
+          selectedCans = Object.values(cansByLocation).flat().filter(beer => {
+            if (seen.has(beer.variant.toLowerCase())) return false;
+            seen.add(beer.variant.toLowerCase());
+            return true;
+          });
+        } else {
+          selectedCans = cansByLocation[currentLocation] || [];
+        }
 
         // Sort by recipe number descending (newest/highest recipe first)
         selectedCans.sort((a, b) => (b.recipe || 0) - (a.recipe || 0));
@@ -146,8 +156,10 @@ export function CansGrid({ maxItems }: CansGridProps) {
       }
     };
 
-    fetchCans();
-  }, [currentLocation, maxItems]);
+    if (locations.length > 0) {
+      fetchCans();
+    }
+  }, [currentLocation, locations, maxItems]);
 
   return (
     <>

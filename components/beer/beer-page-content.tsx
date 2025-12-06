@@ -140,13 +140,19 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
     // Apply availability toggle filters (on tap / in cans)
     if (showOnTap || showInCans) {
       filtered = filtered.filter(beer => {
+        // Check tap availability - either top-level or at any location
         const isOnTapAnywhere = !!(
-          beer.availability?.lawrenceville?.tap ||
-          beer.availability?.zelienople?.tap
+          beer.availability?.tap ||
+          Object.values(beer.availability || {}).some(
+            val => typeof val === 'object' && val !== null && 'tap' in val && val.tap
+          )
         );
+        // Check cans availability - either top-level or at any location
         const isInCansAnywhere = !!(
-          beer.availability?.lawrenceville?.cansAvailable ||
-          beer.availability?.zelienople?.cansAvailable
+          beer.availability?.cansAvailable ||
+          Object.values(beer.availability || {}).some(
+            val => typeof val === 'object' && val !== null && 'cansAvailable' in val && val.cansAvailable
+          )
         );
 
         const matchesOnTap = showOnTap && isOnTapAnywhere;

@@ -6,8 +6,8 @@ import Image from 'next/image';
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Location } from '@/lib/types/location';
-import { LOCATIONS_DATA } from '@/lib/config/locations';
+import type { LocationSlug } from '@/lib/types/location';
+import { useLocationContext } from '@/components/location/location-provider';
 import { trackDirections } from '@/lib/analytics/events';
 import { cn } from '@/lib/utils';
 import type { WeeklyHoursDay, DayOfWeek } from '@/lib/utils/payload-api';
@@ -101,92 +101,110 @@ interface LocationCardsProps {
 }
 
 export function LocationCards({ weeklyHours }: LocationCardsProps) {
+  const { locations } = useLocationContext();
 
-
-  const locations = [
-    {
-      id: Location.LAWRENCEVILLE,
-      data: LOCATIONS_DATA[Location.LAWRENCEVILLE],
+  // Static visual configuration by location slug
+  const locationStyles: Record<string, { gradient: string; image: string }> = {
+    'lawrenceville': {
       gradient: 'from-amber-200 to-orange-300',
-      displayName: 'Lawrenceville',
       image: '/images/Lawrenceville-front.jpg'
     },
-    {
-      id: Location.ZELIENOPLE,
-      data: LOCATIONS_DATA[Location.ZELIENOPLE],
+    'zelienople': {
       gradient: 'from-green-200 to-blue-300',
-      displayName: 'Zelienople',
       image: '/images/Zelienople-interior.jpg'
     }
-  ];
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
-      {locations.map(({ id, data, gradient, displayName, image }) => (
-        <div key={id} className="flex flex-col relative pb-16">
-          {/* Location Image */}
-          <div className="aspect-video relative mb-6">
-            {image ? (
-              <Image
-                src={image}
-                alt={`${displayName} location`}
-                fill
-                className="object-cover rounded-lg"
-                priority={id === Location.LAWRENCEVILLE}
-                fetchPriority={id === Location.LAWRENCEVILLE ? "high" : "low"}
-                quality={85}
-                sizes="(max-width: 768px) 100vw, 50vw"
-              />
-            ) : (
-              <div className={`h-full bg-gradient-to-br ${gradient} rounded-lg`} />
-            )}
-          </div>
+      {locations.map((location, index) => {
+        const locationKey = location.slug || location.id;
+        const styles = locationStyles[locationKey.toLowerCase()] || {
+          gradient: 'from-blue-200 to-purple-300',
+          image: ''
+        };
 
-          {/* Location Info */}
-          <div className="flex flex-col items-center text-center space-y-4">
-            <h3 className="text-2xl font-bold">{displayName}</h3>
+        // Generate Google Maps URL if coordinates are available
+        const mapUrl = location.coordinates?.latitude && location.coordinates?.longitude
+          ? `https://www.google.com/maps/dir/?api=1&destination=${location.coordinates.latitude},${location.coordinates.longitude}`
+          : location.address?.street && location.address?.city && location.address?.state
+            ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                `${location.address.street}, ${location.address.city}, ${location.address.state} ${location.address.zip || ''}`
+              )}`
+            : '#';
 
-            {/* Address */}
-            <div className="text-muted-foreground text-lg">
-              <p>{data.address}</p>
-              <p>{data.city}, {data.state} {data.zipCode}</p>
-            </div>
-
-            {/* Hours */}
-            <div className="w-full max-w-xs">
-              <p className="font-semibold mb-2">Hours</p>
-              {weeklyHours && weeklyHours[id] ? (
-                <HoursDisplay weeklyHours={weeklyHours[id]} />
+        return (
+          <div key={locationKey} className="flex flex-col relative pb-16">
+            {/* Location Image */}
+            <div className="aspect-video relative mb-6">
+              {styles.image ? (
+                <Image
+                  src={styles.image}
+                  alt={`${location.name} location`}
+                  fill
+                  className="object-cover rounded-lg"
+                  priority={index === 0}
+                  fetchPriority={index === 0 ? "high" : "low"}
+                  quality={85}
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                />
               ) : (
-                <p className="text-sm text-muted-foreground">Hours not available</p>
+                <div className={`h-full bg-gradient-to-br ${styles.gradient} rounded-lg`} />
               )}
             </div>
 
-            {/* Phone */}
-            {data.phone && (
-              <div className="text-muted-foreground">
-                <a href={`tel:${data.phone}`} className="hover:underline">
-                  {data.phone}
-                </a>
-              </div>
-            )}
-          </div>
+            {/* Location Info */}
+            <div className="flex flex-col items-center text-center space-y-4">
+              <h3 className="text-2xl font-bold">{location.name}</h3>
 
-          {/* Map Link Button - Positioned absolutely at bottom */}
-          <div className="absolute bottom-0 left-0 right-0 flex justify-center">
-            <Button asChild variant="default" size="default" className="w-full max-w-xs">
-              <Link
-                href={data.mapUrl || '#'}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => trackDirections(displayName)}
-              >
-                Get Directions
-              </Link>
-            </Button>
+              {/* Address */}
+              {location.address && (
+                <div className="text-muted-foreground text-lg">
+                  <p>{location.address.street}</p>
+                  <p>
+                    {location.address.city}
+                    {location.address.state && `, ${location.address.state}`}
+                    {location.address.zip && ` ${location.address.zip}`}
+                  </p>
+                </div>
+              )}
+
+              {/* Hours */}
+              <div className="w-full max-w-xs">
+                <p className="font-semibold mb-2">Hours</p>
+                {weeklyHours && weeklyHours[locationKey] ? (
+                  <HoursDisplay weeklyHours={weeklyHours[locationKey]} />
+                ) : (
+                  <p className="text-sm text-muted-foreground">Hours not available</p>
+                )}
+              </div>
+
+              {/* Phone */}
+              {location.basicInfo?.phone && (
+                <div className="text-muted-foreground">
+                  <a href={`tel:${location.basicInfo.phone}`} className="hover:underline">
+                    {location.basicInfo.phone}
+                  </a>
+                </div>
+              )}
+            </div>
+
+            {/* Map Link Button - Positioned absolutely at bottom */}
+            <div className="absolute bottom-0 left-0 right-0 flex justify-center">
+              <Button asChild variant="default" size="default" className="w-full max-w-xs">
+                <Link
+                  href={mapUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => trackDirections(location.name)}
+                >
+                  Get Directions
+                </Link>
+              </Button>
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

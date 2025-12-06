@@ -74,7 +74,7 @@ export const SyncViewClient: React.FC = () => {
 
       const response = await fetch(`/api/sync-google-sheets?${params.toString()}`, {
         method: 'POST',
-        credentials: 'include',
+        credentials: 'same-origin',
       })
 
       if (!response.ok) {

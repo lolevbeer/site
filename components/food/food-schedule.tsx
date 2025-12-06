@@ -7,11 +7,12 @@
 
 import React from 'react';
 import { FoodVendorSchedule } from '@/lib/types/food';
-import { LocationDisplayNames } from '@/lib/types/location';
+import type { LocationSlug } from '@/lib/types/location';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScheduleCard } from '@/components/ui/schedule-card';
 import { cn } from '@/lib/utils';
 import { formatTime, isToday, isFuture, isTodayOrFuture } from '@/lib/utils/formatters';
+import { useLocationContext } from '@/components/location/location-provider';
 
 interface FoodScheduleProps {
   schedules: FoodVendorSchedule[];
@@ -32,6 +33,12 @@ export function FoodSchedule({
   loading = false,
   maxItems = 12
 }: FoodScheduleProps) {
+  const { locations } = useLocationContext();
+
+  const getLocationName = (slug: LocationSlug): string => {
+    const location = locations.find(loc => (loc.slug || loc.id) === slug);
+    return location?.name || slug;
+  };
 
   const renderVendorCard = (schedule: FoodVendorSchedule, dateStr: string) => {
     return (
@@ -40,7 +47,7 @@ export function FoodSchedule({
         title={schedule.vendor}
         date={dateStr}
         time={schedule.time}
-        location={showLocationFilter ? LocationDisplayNames[schedule.location] : undefined}
+        location={showLocationFilter ? getLocationName(schedule.location) : undefined}
         site={schedule.site}
       />
     );
@@ -74,7 +81,7 @@ export function FoodSchedule({
                   </div>
                   {showLocationFilter && (
                     <div className="text-sm text-muted-foreground">
-                      {LocationDisplayNames[schedule.location]}
+                      {getLocationName(schedule.location)}
                     </div>
                   )}
                 </div>

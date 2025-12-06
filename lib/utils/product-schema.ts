@@ -67,8 +67,13 @@ export interface PropertyValueJsonLd {
  * Get availability status based on beer data
  */
 function getAvailabilityStatus(beer: Beer): string {
-  // If on draft at either location
-  if (beer.availability?.lawrenceville?.tap || beer.availability?.zelienople?.tap) {
+  // If on draft at any location (check top-level or any location-specific availability)
+  if (
+    beer.availability?.tap ||
+    Object.values(beer.availability || {}).some(
+      val => typeof val === 'object' && val !== null && 'tap' in val && val.tap
+    )
+  ) {
     return 'https://schema.org/InStock';
   }
 
@@ -96,8 +101,11 @@ function generateOffers(beer: Beer): OfferJsonLd[] {
   const offers: OfferJsonLd[] = [];
   const baseUrl = 'https://lolev.beer';
 
-  // Draft offers
-  if (beer.availability?.lawrenceville?.tap || beer.availability?.zelienople?.tap || beer.pricing?.draftPrice) {
+  // Draft offers - check if on tap anywhere or has draft price
+  const isOnTapAnywhere = beer.availability?.tap || Object.values(beer.availability || {}).some(
+    val => typeof val === 'object' && val !== null && 'tap' in val && val.tap
+  );
+  if (isOnTapAnywhere || beer.pricing?.draftPrice) {
     const offer: OfferJsonLd = {
       '@type': 'Offer',
       availability: 'https://schema.org/InStock',

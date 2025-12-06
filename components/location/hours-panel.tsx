@@ -10,9 +10,11 @@ import {
 } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { Location, LocationDisplayNames } from '@/lib/types/location';
-import { getLocationInfo, isLocationOpen } from '@/lib/config/locations';
+import type { LocationSlug, PayloadLocation } from '@/lib/types/location';
+import { toLocationInfo } from '@/lib/types/location';
+import { isLocationOpenNow } from '@/lib/config/locations';
 import { cn } from '@/lib/utils';
+import { useLocationContext } from './location-provider';
 import type { WeeklyHoursDay, DayOfWeek } from '@/lib/utils/payload-api';
 
 function formatTime(time: string | null, timezone: string = 'America/New_York'): string {
@@ -44,16 +46,15 @@ function formatHoursString(dayData: WeeklyHoursDay): string {
 }
 
 interface HoursPanelProps {
-  locations?: Location[];
   weeklyHours?: Record<string, WeeklyHoursDay[]>;
   className?: string;
 }
 
 export function HoursPanel({
-  locations = [Location.LAWRENCEVILLE, Location.ZELIENOPLE],
   weeklyHours,
   className
 }: HoursPanelProps) {
+  const { locations } = useLocationContext();
   const now = new Date();
   const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
   const currentDay = dayNames[now.getDay()] as DayOfWeek;
@@ -67,21 +68,24 @@ export function HoursPanel({
 
       <Accordion type="single" collapsible className="w-full">
         {locations.map((location) => {
-          const locationInfo = getLocationInfo(location);
-          const isOpen = isLocationOpen(location);
-          const locationWeeklyHours = weeklyHours?.[location];
+          const slug = location.slug || location.id;
+          const locationInfo = toLocationInfo(location);
+          const isOpen = isLocationOpenNow(location);
+          const locationWeeklyHours = weeklyHours?.[slug];
           const todayData = locationWeeklyHours?.find(d => d.day === currentDay);
           const todayHours = todayData ? formatHoursString(todayData) : 'Hours not available';
 
           return (
-            <AccordionItem key={location} value={location} className="border-0">
+            <AccordionItem key={slug} value={slug} className="border-0">
               <AccordionTrigger className="hover:no-underline">
                 <div className="flex items-center justify-between w-full pr-4">
                   <div className="flex items-center gap-3">
                     <MapPin className="h-4 w-4 text-muted-foreground" />
                     <div className="text-left">
-                      <div className="font-semibold">Lolev {LocationDisplayNames[location]}</div>
-                      <div className="text-sm text-muted-foreground">{locationInfo.address}, {locationInfo.city}, {locationInfo.state} {locationInfo.zipCode}</div>
+                      <div className="font-semibold">Lolev {location.name}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {locationInfo.address}, {locationInfo.city}, {locationInfo.state} {locationInfo.zipCode}
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">

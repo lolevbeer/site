@@ -8,6 +8,12 @@ const mround = (value: number, multiple: number): number => {
 
 export const Beers: CollectionConfig = {
   slug: 'beers',
+  access: {
+    read: () => true,
+    create: ({ req: { user } }) => !!user,
+    update: ({ req: { user } }) => !!user,
+    delete: ({ req: { user } }) => !!user,
+  },
   admin: {
     useAsTitle: 'name',
     listSearchableFields: ['name', 'slug'],

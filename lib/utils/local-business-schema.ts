@@ -5,8 +5,7 @@
  * @see https://developers.google.com/search/docs/appearance/structured-data/local-business
  */
 
-import { Location } from '@/lib/types/location';
-import { LOCATIONS_DATA, LOCATION_COORDINATES } from '@/lib/config/locations';
+import type { PayloadLocation } from '@/lib/types/location';
 
 /**
  * Schema.org LocalBusiness type
@@ -23,7 +22,7 @@ export interface LocalBusinessJsonLd {
   telephone?: string;
   email?: string;
   address: PostalAddressJsonLd;
-  geo: GeoCoordinatesJsonLd;
+  geo?: GeoCoordinatesJsonLd;
   openingHoursSpecification: OpeningHoursSpecificationJsonLd[];
   priceRange?: string;
   servesCuisine?: string[];
@@ -70,24 +69,40 @@ export interface AggregateRatingJsonLd {
   reviewCount: string;
 }
 
+interface DayHours {
+  open?: string;
+  close?: string;
+}
+
+/**
+ * Extract time from ISO string
+ */
+function parseTime(isoString: string): string {
+  try {
+    const date = new Date(isoString);
+    const hours = date.getUTCHours().toString().padStart(2, '0');
+    const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
+  } catch {
+    return '00:00';
+  }
+}
+
 /**
  * Convert day hours to OpeningHoursSpecification
  */
-function generateOpeningHours(location: Location): OpeningHoursSpecificationJsonLd[] {
-  const locationInfo = LOCATIONS_DATA[location];
-  const hours = locationInfo.hours;
-
+function generateOpeningHours(location: PayloadLocation): OpeningHoursSpecificationJsonLd[] {
   // Group days with same hours
   const hoursMap = new Map<string, string[]>();
 
-  const dayNames: Array<keyof typeof hours> = [
-    'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'
-  ];
+  const dayNames = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
   dayNames.forEach(day => {
-    const dayHours = hours[day];
-    if (typeof dayHours !== 'string' && dayHours && !dayHours.closed) {
-      const key = `${dayHours.open}-${dayHours.close}`;
+    const dayData = location[day as keyof PayloadLocation] as DayHours | undefined;
+    if (dayData?.open && dayData?.close) {
+      const opens = parseTime(dayData.open);
+      const closes = parseTime(dayData.close);
+      const key = `${opens}-${closes}`;
       const existing = hoursMap.get(key) || [];
       const capitalizedDay = day.charAt(0).toUpperCase() + day.slice(1);
       existing.push(capitalizedDay);
@@ -110,17 +125,15 @@ function generateOpeningHours(location: Location): OpeningHoursSpecificationJson
 /**
  * Generate LocalBusiness schema for a brewery location
  */
-export function generateLocalBusinessSchema(location: Location): LocalBusinessJsonLd {
-  const locationInfo = LOCATIONS_DATA[location];
-  const coordinates = LOCATION_COORDINATES[location];
-  const locationName = locationInfo.name;
+export function generateLocalBusinessSchema(location: PayloadLocation): LocalBusinessJsonLd {
+  const slug = location.slug || location.id;
   const baseUrl = 'https://lolev.beer';
 
   const schema: LocalBusinessJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'BreweryOrDistillery',
-    '@id': `${baseUrl}#${location}`,
-    name: `Lolev Beer - ${locationName}`,
+    '@id': `${baseUrl}#${slug}`,
+    name: `Lolev Beer - ${location.name}`,
     description: 'Craft brewery serving purposeful beer and building community in the Pittsburgh area. Offering modern ales, expressive lagers, and oak-aged beer.',
     image: [
       `${baseUrl}/images/og-image.jpg`,
@@ -131,16 +144,11 @@ export function generateLocalBusinessSchema(location: Location): LocalBusinessJs
     url: baseUrl,
     address: {
       '@type': 'PostalAddress',
-      streetAddress: locationInfo.address,
-      addressLocality: locationInfo.city,
-      addressRegion: locationInfo.state,
-      postalCode: locationInfo.zipCode,
+      streetAddress: location.address?.street || '',
+      addressLocality: location.address?.city || '',
+      addressRegion: location.address?.state || 'PA',
+      postalCode: location.address?.zip || '',
       addressCountry: 'US'
-    },
-    geo: {
-      '@type': 'GeoCoordinates',
-      latitude: coordinates.lat,
-      longitude: coordinates.lng
     },
     openingHoursSpecification: generateOpeningHours(location),
     priceRange: '$$',
@@ -154,43 +162,42 @@ export function generateLocalBusinessSchema(location: Location): LocalBusinessJs
     ]
   };
 
+  // Add geo coordinates if available
+  if (location.coordinates?.latitude && location.coordinates?.longitude) {
+    schema.geo = {
+      '@type': 'GeoCoordinates',
+      latitude: location.coordinates.latitude,
+      longitude: location.coordinates.longitude
+    };
+  }
+
   // Add telephone if available
-  if (locationInfo.phone) {
-    schema.telephone = locationInfo.phone;
+  if (location.basicInfo?.phone) {
+    schema.telephone = location.basicInfo.phone;
   }
 
   // Add email if available
-  if (locationInfo.email) {
-    schema.email = locationInfo.email;
-  }
-
-  // Add amenity features based on location features
-  if (locationInfo.features && locationInfo.features.length > 0) {
-    schema.amenityFeature = locationInfo.features.map(feature => ({
-      '@type': 'LocationFeatureSpecification',
-      name: feature.replace(/_/g, ' '),
-      value: true
-    }));
+  if (location.basicInfo?.email) {
+    schema.email = location.basicInfo.email;
   }
 
   return schema;
 }
 
 /**
- * Generate combined LocalBusiness schema for both locations
+ * Generate LocalBusiness schemas for all locations
  */
-export function generateAllLocalBusinessSchemas(): LocalBusinessJsonLd[] {
-  return [
-    generateLocalBusinessSchema(Location.LAWRENCEVILLE),
-    generateLocalBusinessSchema(Location.ZELIENOPLE)
-  ];
+export function generateLocalBusinessSchemas(locations: PayloadLocation[]): LocalBusinessJsonLd[] {
+  return locations
+    .filter(loc => loc.active !== false)
+    .map(generateLocalBusinessSchema);
 }
 
 /**
- * Generate Organization schema linking both locations
+ * Generate Organization schema linking all locations
  */
-export function generateOrganizationSchema(): object {
-  return {
+export function generateOrganizationSchema(locations?: PayloadLocation[]): object {
+  const baseSchema = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     '@id': 'https://lolev.beer#organization',
@@ -198,26 +205,37 @@ export function generateOrganizationSchema(): object {
     alternateName: 'Love of Learning Brewing Company',
     url: 'https://lolev.beer',
     logo: 'https://lolev.beer/images/og-image.jpg',
-    description: 'Craft brewery with locations in Lawrenceville and Zelienople, Pennsylvania. Specializing in modern ales, expressive lagers, and oak-aged beer.',
+    description: 'Craft brewery in Pennsylvania. Specializing in modern ales, expressive lagers, and oak-aged beer.',
     foundingDate: '2012',
     email: 'info@lolev.beer',
-    telephone: '(412) 336-8965',
     sameAs: [
       'https://www.facebook.com/lolevbeer',
       'https://www.instagram.com/lolevbeer',
       'https://twitter.com/loveoflearningbrewing'
-    ],
-    address: {
-      '@type': 'PostalAddress',
-      streetAddress: '5247 Butler Street',
-      addressLocality: 'Pittsburgh',
-      addressRegion: 'PA',
-      postalCode: '15201',
-      addressCountry: 'US'
-    },
-    location: [
-      { '@id': 'https://lolev.beer#lawrenceville' },
-      { '@id': 'https://lolev.beer#zelienople' }
     ]
   };
+
+  // Add location references if provided
+  if (locations && locations.length > 0) {
+    const firstLocation = locations.find(loc => loc.active !== false);
+    if (firstLocation) {
+      return {
+        ...baseSchema,
+        telephone: firstLocation.basicInfo?.phone || '(412) 336-8965',
+        address: {
+          '@type': 'PostalAddress',
+          streetAddress: firstLocation.address?.street || '',
+          addressLocality: firstLocation.address?.city || '',
+          addressRegion: firstLocation.address?.state || 'PA',
+          postalCode: firstLocation.address?.zip || '',
+          addressCountry: 'US'
+        },
+        location: locations
+          .filter(loc => loc.active !== false)
+          .map(loc => ({ '@id': `https://lolev.beer#${loc.slug || loc.id}` }))
+      };
+    }
+  }
+
+  return baseSchema;
 }

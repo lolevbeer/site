@@ -69,8 +69,9 @@ export interface LocationBeerAvailability {
 
 /**
  * Beer availability information
+ * Location-specific availability is accessed dynamically via string index
  */
-export interface BeerAvailability {
+export interface BeerAvailability extends Record<string, LocationBeerAvailability | boolean | string | undefined> {
   /** Whether beer is available in cans (any location) */
   cansAvailable?: boolean;
   /** Whether single cans are available (any location) */
@@ -79,10 +80,19 @@ export interface BeerAvailability {
   hideFromSite?: boolean;
   /** Tap number if on draft (any location) */
   tap?: string;
-  /** Lawrenceville location availability */
-  lawrenceville?: LocationBeerAvailability;
-  /** Zelienople location availability */
-  zelienople?: LocationBeerAvailability;
+}
+
+/**
+ * Helper to safely get location availability
+ */
+export function getLocationAvailability(availability: BeerAvailability | undefined, locationSlug: string): LocationBeerAvailability | undefined {
+  if (!availability) return undefined;
+  const value = availability[locationSlug];
+  // Check if it's a LocationBeerAvailability object (has tap or cansAvailable)
+  if (value && typeof value === 'object' && ('tap' in value || 'cansAvailable' in value)) {
+    return value as LocationBeerAvailability;
+  }
+  return undefined;
 }
 
 /**

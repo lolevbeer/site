@@ -4,7 +4,7 @@
  */
 
 import { BeerVariant } from '@/lib/types/beer';
-import { Location } from '@/lib/types/location';
+import type { LocationSlug } from '@/lib/types/location';
 
 export interface CannedBeer {
   variant: BeerVariant;
@@ -14,7 +14,7 @@ export interface CannedBeer {
   cansAvailable: boolean;
   singlePrice: number;
   fourPackPrice: number;
-  location: Location;
+  location: LocationSlug;
   onSale?: boolean;
 }
 
@@ -28,7 +28,7 @@ export const lawrencevilleCannedBeers: CannedBeer[] = [
     cansAvailable: true,
     singlePrice: 4.00,
     fourPackPrice: 15,
-    location: Location.LAWRENCEVILLE,
+    location: 'lawrenceville',
     onSale: false
   },
   {
@@ -39,7 +39,7 @@ export const lawrencevilleCannedBeers: CannedBeer[] = [
     cansAvailable: true,
     singlePrice: 4.00,
     fourPackPrice: 15,
-    location: Location.LAWRENCEVILLE,
+    location: 'lawrenceville',
     onSale: false
   },
   {
@@ -50,7 +50,7 @@ export const lawrencevilleCannedBeers: CannedBeer[] = [
     cansAvailable: true,
     singlePrice: 4.50,
     fourPackPrice: 17,
-    location: Location.LAWRENCEVILLE,
+    location: 'lawrenceville',
     onSale: false
   },
   {
@@ -61,7 +61,7 @@ export const lawrencevilleCannedBeers: CannedBeer[] = [
     cansAvailable: false,
     singlePrice: 4.50,
     fourPackPrice: 17,
-    location: Location.LAWRENCEVILLE,
+    location: 'lawrenceville',
     onSale: false
   },
   {
@@ -72,7 +72,7 @@ export const lawrencevilleCannedBeers: CannedBeer[] = [
     cansAvailable: true,
     singlePrice: 5.75,
     fourPackPrice: 22,
-    location: Location.LAWRENCEVILLE,
+    location: 'lawrenceville',
     onSale: false
   },
   {
@@ -83,7 +83,7 @@ export const lawrencevilleCannedBeers: CannedBeer[] = [
     cansAvailable: true,
     singlePrice: 5.25,
     fourPackPrice: 20,
-    location: Location.LAWRENCEVILLE,
+    location: 'lawrenceville',
     onSale: false
   },
   {
@@ -94,7 +94,7 @@ export const lawrencevilleCannedBeers: CannedBeer[] = [
     cansAvailable: true,
     singlePrice: 5.25,
     fourPackPrice: 20,
-    location: Location.LAWRENCEVILLE,
+    location: 'lawrenceville',
     onSale: false
   },
   {
@@ -105,7 +105,7 @@ export const lawrencevilleCannedBeers: CannedBeer[] = [
     cansAvailable: true,
     singlePrice: 5.25,
     fourPackPrice: 20,
-    location: Location.LAWRENCEVILLE,
+    location: 'lawrenceville',
     onSale: false
   },
   {
@@ -116,7 +116,7 @@ export const lawrencevilleCannedBeers: CannedBeer[] = [
     cansAvailable: true,
     singlePrice: 5.25,
     fourPackPrice: 20,
-    location: Location.LAWRENCEVILLE,
+    location: 'lawrenceville',
     onSale: false
   },
   {
@@ -127,7 +127,7 @@ export const lawrencevilleCannedBeers: CannedBeer[] = [
     cansAvailable: true,
     singlePrice: 5.25,
     fourPackPrice: 20,
-    location: Location.LAWRENCEVILLE,
+    location: 'lawrenceville',
     onSale: false
   },
   {
@@ -138,7 +138,7 @@ export const lawrencevilleCannedBeers: CannedBeer[] = [
     cansAvailable: true,
     singlePrice: 5.25,
     fourPackPrice: 20,
-    location: Location.LAWRENCEVILLE,
+    location: 'lawrenceville',
     onSale: false
   }
 ];
@@ -153,12 +153,12 @@ export const cannedBeers: CannedBeer[] = [
 ];
 
 // Get canned beers by location
-export function getCannedBeersByLocation(location: Location): CannedBeer[] {
+export function getCannedBeersByLocation(location: LocationSlug): CannedBeer[] {
   return cannedBeers.filter(beer => beer.location === location);
 }
 
 // Get available canned beers
-export function getAvailableCans(location?: Location): CannedBeer[] {
+export function getAvailableCans(location?: LocationSlug): CannedBeer[] {
   let beers = cannedBeers.filter(beer => beer.cansAvailable);
   if (location) {
     beers = beers.filter(beer => beer.location === location);

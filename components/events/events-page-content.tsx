@@ -16,7 +16,7 @@ interface EventsPageContentProps {
 }
 
 export function EventsPageContent({ initialEvents = [] }: EventsPageContentProps) {
-  const { currentLocation } = useLocationContext();
+  const { currentLocation, locations } = useLocationContext();
   // Cast to LocationFilter to allow comparison with 'all'
   const locationFilter = currentLocation as LocationFilter;
   const [events, setEvents] = useState<BreweryEvent[]>(initialEvents);
@@ -25,7 +25,8 @@ export function EventsPageContent({ initialEvents = [] }: EventsPageContentProps
   useEffect(() => {
     const loadEvents = async () => {
       try {
-        const csvEvents = await loadEventsFromCSV();
+        const locationSlugs = locations.map(loc => loc.slug || loc.id);
+        const csvEvents = await loadEventsFromCSV(locationSlugs);
         if (csvEvents.length > 0) {
           setEvents(csvEvents);
         }
@@ -37,8 +38,10 @@ export function EventsPageContent({ initialEvents = [] }: EventsPageContentProps
       }
     };
 
-    loadEvents();
-  }, []);
+    if (locations.length > 0) {
+      loadEvents();
+    }
+  }, [locations]);
   const handleEventClick = (event: BreweryEvent) => {
     if (event.site) {
       window.open(event.site, '_blank');
@@ -74,10 +77,8 @@ export function EventsPageContent({ initialEvents = [] }: EventsPageContentProps
             <div className="text-4xl mb-4">📅</div>
             <h3 className="text-lg font-semibold mb-2">No Upcoming Events</h3>
             <p className="text-muted-foreground">
-              {locationFilter === 'lawrenceville'
-                ? 'No upcoming events at Lawrenceville. Check back soon!'
-                : locationFilter === 'zelienople'
-                ? 'No upcoming events at Zelienople. Check back soon!'
+              {locationFilter !== 'all'
+                ? `No upcoming events at ${locations.find(l => (l.slug || l.id) === locationFilter)?.name || locationFilter}. Check back soon!`
                 : 'No upcoming events scheduled. Check back soon for live music, trivia, and more!'}
             </p>
           </div>

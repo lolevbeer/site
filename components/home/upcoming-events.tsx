@@ -5,8 +5,9 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { EventCard } from '@/components/events/event-card';
 import { parseLocalDate } from '@/lib/utils/formatters';
-import { useLocationFilteredData } from '@/lib/hooks/use-location-filtered-data';
+import { useLocationFilteredData, type LocationData } from '@/lib/hooks/use-location-filtered-data';
 import { Pencil } from 'lucide-react';
+import type { LocationSlug } from '@/lib/types/location';
 
 interface Event {
   date: string;
@@ -15,40 +16,49 @@ interface Event {
   attendees?: string;
   site?: string;
   end?: string;
+  location?: LocationSlug;
 }
 
 interface UpcomingEventsProps {
-  lawrencevilleEvents: Event[];
-  zelienopleEvents: Event[];
+  /** Events organized by location slug */
+  eventsByLocation: Record<string, Event[]>;
   isAuthenticated?: boolean;
 }
 
-export function UpcomingEvents({ lawrencevilleEvents, zelienopleEvents, isAuthenticated }: UpcomingEventsProps) {
-  // Filter by location first
-  const filteredEvents = useLocationFilteredData({
-    lawrencevilleData: lawrencevilleEvents,
-    zelienopleData: zelienopleEvents
-  });
+export function UpcomingEvents({ eventsByLocation, isAuthenticated }: UpcomingEventsProps) {
+  // Add location to each event
+  const eventsWithLocation = useMemo(() => {
+    const allEvents: (Event & { location: LocationSlug })[] = [];
+    for (const [locationSlug, events] of Object.entries(eventsByLocation)) {
+      for (const event of events) {
+        allEvents.push({ ...event, location: locationSlug });
+      }
+    }
+    return allEvents;
+  }, [eventsByLocation]);
+
+  // Create data structure for location filtering
+  const dataByLocation = useMemo(() => {
+    const result: LocationData<Event & { location: LocationSlug }> = {};
+    for (const [locationSlug, events] of Object.entries(eventsByLocation)) {
+      result[locationSlug] = events.map(e => ({ ...e, location: locationSlug }));
+    }
+    return result;
+  }, [eventsByLocation]);
+
+  // Filter by current location
+  const filteredEvents = useLocationFilteredData({ dataByLocation });
 
   // Sort and take first 3
   const upcomingEvents = useMemo(() => {
-    const eventsWithLocation = filteredEvents.map((e) => {
-      // Determine location based on which array the item came from
-      const isFromLawrenceville = lawrencevilleEvents.includes(e as Event);
-      return {
-        ...e,
-        location: isFromLawrenceville ? 'lawrenceville' as const : 'zelienople' as const
-      };
-    });
-
-    eventsWithLocation.sort((a, b) => {
+    const sorted = [...filteredEvents].sort((a, b) => {
       const dateA = parseLocalDate(a.date);
       const dateB = parseLocalDate(b.date);
       return dateA.getTime() - dateB.getTime();
     });
 
-    return eventsWithLocation.slice(0, 3);
-  }, [filteredEvents, lawrencevilleEvents]);
+    return sorted.slice(0, 3);
+  }, [filteredEvents]);
 
   return (
     <section className="py-16 lg:py-24">

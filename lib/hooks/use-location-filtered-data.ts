@@ -1,22 +1,28 @@
 /**
  * Custom hook for filtering data by location with hydration safety
- * Extracts the common pattern used in FeaturedBeers, FeaturedCans, etc.
+ * Works with dynamically loaded locations from the database
  */
 
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
 import { useLocationContext } from '@/components/location/location-provider';
+import type { LocationSlug } from '@/lib/types/location';
+
+/**
+ * Data organized by location slug
+ */
+export type LocationData<T> = Record<LocationSlug, T[]>;
 
 interface UseLocationFilteredDataOptions<T> {
-  lawrencevilleData: T[];
-  zelienopleData: T[];
+  /** Data organized by location slug */
+  dataByLocation: LocationData<T>;
   /**
-   * If true, always shows Lawrenceville data before hydration.
+   * If true, shows data from the first available location before hydration.
    * If false, shows an empty array before hydration.
    * Default: true
    */
-  defaultToLawrenceville?: boolean;
+  showDefaultBeforeHydration?: boolean;
 }
 
 /**
@@ -25,17 +31,18 @@ interface UseLocationFilteredDataOptions<T> {
  * @example
  * ```tsx
  * const filteredBeers = useLocationFilteredData({
- *   lawrencevilleData: lawrencevilleBeers,
- *   zelienopleData: zelienopleBeers
+ *   dataByLocation: {
+ *     'lawrenceville': lawrencevilleBeers,
+ *     'zelienople': zelienopleBeers
+ *   }
  * });
  * ```
  */
 export function useLocationFilteredData<T>({
-  lawrencevilleData,
-  zelienopleData,
-  defaultToLawrenceville = true
+  dataByLocation,
+  showDefaultBeforeHydration = true
 }: UseLocationFilteredDataOptions<T>): T[] {
-  const { currentLocation } = useLocationContext();
+  const { currentLocation, locations } = useLocationContext();
   const [isHydrated, setIsHydrated] = useState(false);
 
   // Track hydration to prevent mismatch
@@ -43,22 +50,51 @@ export function useLocationFilteredData<T>({
     setIsHydrated(true);
   }, []);
 
+  // Get the default location slug (first active location)
+  const defaultLocationSlug = useMemo(() => {
+    const activeLocations = locations.filter(loc => loc.active !== false);
+    return activeLocations[0]?.slug || activeLocations[0]?.id || '';
+  }, [locations]);
+
   // Filter data based on current location
-  // Always show lawrenceville (or empty array) before hydration to prevent mismatch
   const filteredData = useMemo(() => {
     if (!isHydrated) {
-      return defaultToLawrenceville ? lawrencevilleData : [];
+      return showDefaultBeforeHydration ? (dataByLocation[defaultLocationSlug] || []) : [];
     }
 
-    if (currentLocation === 'lawrenceville') {
-      return lawrencevilleData;
-    } else if (currentLocation === 'zelienople') {
-      return zelienopleData;
+    // If 'all' or no location, return all data combined
+    if (!currentLocation || currentLocation === 'all') {
+      return Object.values(dataByLocation).flat();
     }
 
-    // Show both locations when 'all' is selected
-    return [...lawrencevilleData, ...zelienopleData];
-  }, [currentLocation, lawrencevilleData, zelienopleData, isHydrated, defaultToLawrenceville]);
+    // Return data for the selected location
+    return dataByLocation[currentLocation] || [];
+  }, [currentLocation, dataByLocation, isHydrated, showDefaultBeforeHydration, defaultLocationSlug]);
 
   return filteredData;
+}
+
+// Legacy interface for backward compatibility during migration
+interface LegacyUseLocationFilteredDataOptions<T> {
+  lawrencevilleData: T[];
+  zelienopleData: T[];
+  defaultToLawrenceville?: boolean;
+}
+
+/**
+ * Legacy hook for backward compatibility
+ * @deprecated Use the new useLocationFilteredData with dataByLocation instead
+ */
+export function useLocationFilteredDataLegacy<T>({
+  lawrencevilleData,
+  zelienopleData,
+  defaultToLawrenceville = true
+}: LegacyUseLocationFilteredDataOptions<T>): T[] {
+  return useLocationFilteredData({
+    dataByLocation: {
+      'lawrenceville': lawrencevilleData,
+      'zelienople': zelienopleData
+    },
+    showDefaultBeforeHydration: defaultToLawrenceville
+  });
 }

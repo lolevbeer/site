@@ -5,7 +5,7 @@
 
 import { BreweryEvent } from '@/lib/types/event';
 import { FoodVendor } from '@/lib/types/food';
-import { Location } from '@/lib/types/location';
+import type { LocationSlug } from '@/lib/types/location';
 
 // Sample events data
 export const sampleEvents: BreweryEvent[] = [];
@@ -17,7 +17,7 @@ export function getUpcomingEvents(events: BreweryEvent[] = sampleEvents): Brewer
 }
 
 // Get sample data by location
-export function getSampleDataByLocation(location: Location, data: any[]): any[] {
+export function getSampleDataByLocation(location: LocationSlug, data: any[]): any[] {
   return data.filter(item => item.location === location);
 }
 
@@ -26,7 +26,7 @@ export const sampleFoodVendors: FoodVendor[] = [];
 
 // Export function for food vendors by location
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function getFoodVendorsByLocation(_location: Location): FoodVendor[] {
+export function getFoodVendorsByLocation(_location: LocationSlug): FoodVendor[] {
   // TODO: Filter by location when FoodVendor type includes location-specific data
   // For now, return all vendors as they may serve at both locations
   return sampleFoodVendors;

@@ -35,6 +35,7 @@ interface MenuItem {
   };
   slug?: string;
   style?: string | Style;
+  locationSlug?: string;
   [key: string]: unknown;
 }
 
@@ -78,6 +79,7 @@ function convertMenuItems(menuData: Menu): MenuItem[] {
         },
         slug: beer.slug,
         style: beer.style,
+        locationSlug: locationSlug || undefined,
       };
     })
     .filter((item): item is NonNullable<typeof item> => item !== null);
@@ -90,10 +92,14 @@ function convertMenuItems(menuData: Menu): MenuItem[] {
   }));
 }
 
-// Filter items by location - removed since we can't track source location anymore
-// All items from the menu are already location-specific
-function filterByLocation(items: MenuItem[], _currentLocation: string): MenuItem[] {
-  return items;
+// Filter items by location based on the menu's location
+function filterByLocation(items: MenuItem[], currentLocation: string): MenuItem[] {
+  // If no location is selected or 'all', return all items
+  if (!currentLocation || currentLocation === 'all') {
+    return items;
+  }
+  // Filter to only items from the selected location
+  return items.filter(item => item.locationSlug === currentLocation);
 }
 
 // Admin edit buttons component

@@ -10,9 +10,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { Location, LocationDisplayNames } from '@/lib/types/location';
+import type { LocationSlug, PayloadLocation } from '@/lib/types/location';
+import { toLocationInfo } from '@/lib/types/location';
 import { useLocationContext } from './location-provider';
-import { ALL_LOCATIONS, getLocationInfo, isLocationOpen } from '@/lib/config/locations';
+import { isLocationOpenNow } from '@/lib/config/locations';
 import { MapPin, Clock, CheckCircle } from 'lucide-react';
 
 interface LocationTabsProps {
@@ -26,12 +27,11 @@ export function LocationTabs({
   children,
   syncWithGlobalState = false
 }: LocationTabsProps) {
-  const { currentLocation, setLocation, isClient } = useLocationContext();
+  const { currentLocation, setLocation, isClient, locations } = useLocationContext();
 
   const handleValueChange = (newValue: string) => {
-    const location = newValue as Location;
-    if (syncWithGlobalState && Object.values(Location).includes(location)) {
-      setLocation(location);
+    if (syncWithGlobalState) {
+      setLocation(newValue);
     }
   };
 
@@ -40,14 +40,17 @@ export function LocationTabs({
     return (
       <div className={cn("w-full", className)}>
         <div className="grid w-fit mx-auto grid-cols-2 h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground">
-          {ALL_LOCATIONS.map((location) => (
-            <div
-              key={location}
-              className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium"
-            >
-              {LocationDisplayNames[location]}
-            </div>
-          ))}
+          {locations.map((location) => {
+            const slug = location.slug || location.id;
+            return (
+              <div
+                key={slug}
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium"
+              >
+                {location.name}
+              </div>
+            );
+          })}
         </div>
       </div>
     );
@@ -60,11 +63,14 @@ export function LocationTabs({
       className={cn("w-full", className)}
     >
       <TabsList className="grid w-fit mx-auto grid-cols-2">
-        {ALL_LOCATIONS.map((location) => (
-          <TabsTrigger key={location} value={location} className="text-sm font-medium">
-            {LocationDisplayNames[location]}
-          </TabsTrigger>
-        ))}
+        {locations.map((location) => {
+          const slug = location.slug || location.id;
+          return (
+            <TabsTrigger key={slug} value={slug} className="text-sm font-medium">
+              {location.name}
+            </TabsTrigger>
+          );
+        })}
       </TabsList>
       {children}
     </Tabs>
@@ -72,7 +78,7 @@ export function LocationTabs({
 }
 
 interface LocationTabContentProps {
-  location: Location;
+  location: LocationSlug;
   children: ReactNode;
   className?: string;
 }
@@ -90,7 +96,7 @@ export function LocationTabContent({
 }
 
 interface LocationInfoCardProps {
-  location: Location;
+  location: PayloadLocation;
   className?: string;
   showHours?: boolean;
   showContact?: boolean;
@@ -103,8 +109,8 @@ export function LocationInfoCard({
   showContact = true
 }: LocationInfoCardProps) {
   const { hours } = useLocationContext();
-  const locationInfo = getLocationInfo(location);
-  const locationIsOpen = isLocationOpen(location);
+  const locationInfo = toLocationInfo(location);
+  const locationIsOpen = isLocationOpenNow(location);
 
   return (
     <Card className={className}>
@@ -112,10 +118,12 @@ export function LocationInfoCard({
         <div className="flex items-start justify-between">
           <div>
             <CardTitle className="text-lg">
-              {LocationDisplayNames[location]}
+              {location.name}
             </CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              {locationInfo.address}, {locationInfo.city}, {locationInfo.state} {locationInfo.zipCode}
+              {locationInfo.address && locationInfo.city && locationInfo.state && locationInfo.zipCode && (
+                `${locationInfo.address}, ${locationInfo.city}, ${locationInfo.state} ${locationInfo.zipCode}`
+              )}
             </p>
           </div>
           <StatusBadge
@@ -149,11 +157,6 @@ export function LocationInfoCard({
                   <span>{day.hours}</span>
                 </div>
               ))}
-              {locationInfo.hours.notes && (
-                <p className="text-xs text-muted-foreground mt-2 pt-2 border-t">
-                  {locationInfo.hours.notes}
-                </p>
-              )}
             </div>
           </div>
         )}
@@ -185,12 +188,6 @@ export function LocationInfoCard({
                   >
                     {locationInfo.email}
                   </a>
-                </div>
-              )}
-              {locationInfo.parking && (
-                <div>
-                  <span className="text-muted-foreground">Parking: </span>
-                  <span className="text-xs">{locationInfo.parking}</span>
                 </div>
               )}
             </div>

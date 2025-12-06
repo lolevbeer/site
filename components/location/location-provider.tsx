@@ -1,20 +1,28 @@
 /**
  * Location Context Provider
  * Provides global location state management throughout the application
+ * Locations are dynamically loaded from the database
  */
 
 'use client';
 
 import React, { createContext, useContext, ReactNode, useMemo, Suspense } from 'react';
-import { Location, LocationInfo, LocationFeature } from '@/lib/types/location';
-import { useLocation, useLocationHours, useLocationComparison } from '@/lib/hooks/use-location';
+import { type PayloadLocation, type LocationSlug, type LocationInfo } from '@/lib/types/location';
+import { useLocation, useLocationHours } from '@/lib/hooks/use-location';
+import {
+  isLocationOpenNow,
+  getAllHoursForLocation,
+  getNextOpeningTimeForLocation,
+} from '@/lib/config/locations';
 
 interface LocationContextValue {
   // Core location state
-  currentLocation: Location;
-  locationInfo: LocationInfo;
-  setLocation: (location: Location) => void;
-  toggleLocation: () => void;
+  currentLocation: LocationSlug;
+  currentLocationData: PayloadLocation | null;
+  locationInfo: LocationInfo | null;
+  locations: PayloadLocation[];
+  setLocation: (slug: LocationSlug) => void;
+  cycleLocation: () => void;
 
   // Status information
   isOpen: boolean;
@@ -22,13 +30,13 @@ interface LocationContextValue {
   nextOpening: { day: string; time: string } | null;
 
   // Helper functions
-  hasFeature: (feature: LocationFeature) => boolean;
-  getLocation: (location: Location) => LocationInfo;
+  getLocationBySlug: (slug: LocationSlug) => PayloadLocation | undefined;
+  getLocationInfo: (slug: LocationSlug) => LocationInfo | null;
   isClient: boolean;
 
   // Hours management
   hours: {
-    getHoursForDay: (day: keyof LocationInfo['hours']) => string;
+    getHoursForDay: (day: string) => string;
     getAllHours: () => Array<{
       day: string;
       hours: string;
@@ -37,54 +45,43 @@ interface LocationContextValue {
     isOpen: boolean;
     nextOpening: { day: string; time: string } | null;
   };
-
-  // Location comparison
-  comparison: {
-    compareFeatures: () => {
-      common: LocationFeature[];
-      lawrencevilleOnly: LocationFeature[];
-      zelienopleOnly: LocationFeature[];
-    };
-    getOtherLocation: () => Location;
-    currentLocation: Location;
-  };
 }
 
 const LocationContext = createContext<LocationContextValue | null>(null);
 
 interface LocationProviderProps {
   children: ReactNode;
+  /** Locations fetched from the database (passed from server) */
+  locations: PayloadLocation[];
 }
 
 /**
  * Inner provider component that uses hooks requiring useSearchParams
  * This is wrapped in Suspense to support static generation
  */
-function LocationProviderInner({ children }: LocationProviderProps) {
-  const locationState = useLocation();
-  const hoursState = useLocationHours();
-  const comparisonState = useLocationComparison();
+function LocationProviderInner({ children, locations }: LocationProviderProps) {
+  const locationState = useLocation(locations);
+  const hoursState = useLocationHours(locations);
 
   // Memoize context value to prevent unnecessary re-renders
   const contextValue: LocationContextValue = useMemo(() => ({
     // Core state from useLocation
     currentLocation: locationState.currentLocation,
+    currentLocationData: locationState.currentLocationData,
     locationInfo: locationState.locationInfo,
+    locations: locationState.locations,
     setLocation: locationState.setLocation,
-    toggleLocation: locationState.toggleLocation,
+    cycleLocation: locationState.cycleLocation,
     isOpen: locationState.isOpen,
     todaysHours: locationState.todaysHours,
     nextOpening: locationState.nextOpening,
-    hasFeature: locationState.hasFeature as (feature: LocationFeature) => boolean,
-    getLocation: locationState.getLocation,
+    getLocationBySlug: locationState.getLocationBySlug,
+    getLocationInfo: locationState.getLocationInfo,
     isClient: locationState.isClient,
 
     // Hours state
     hours: hoursState,
-
-    // Comparison state
-    comparison: comparisonState,
-  }), [locationState, hoursState, comparisonState]);
+  }), [locationState, hoursState]);
 
   return (
     <LocationContext.Provider value={contextValue}>
@@ -98,10 +95,10 @@ function LocationProviderInner({ children }: LocationProviderProps) {
  * Wraps the application to provide location state globally
  * Wrapped in Suspense for Next.js 15 compatibility with useSearchParams
  */
-export function LocationProvider({ children }: LocationProviderProps) {
+export function LocationProvider({ children, locations }: LocationProviderProps) {
   return (
     <Suspense fallback={null}>
-      <LocationProviderInner>{children}</LocationProviderInner>
+      <LocationProviderInner locations={locations}>{children}</LocationProviderInner>
     </Suspense>
   );
 }
@@ -121,28 +118,13 @@ export function useLocationContext(): LocationContextValue {
 }
 
 /**
- * Hook to access location state with optional default location
- * Provides a safe way to access location context with fallbacks
- *
- * @deprecated This function is not currently used and has been disabled
- * due to React Hooks violations. Use useLocationContext() instead.
- */
-// export function useLocationState(fallbackLocation?: Location) {
-//   const context = useContext(LocationContext);
-//   if (!context) {
-//     throw new Error('useLocationState must be used within a LocationProvider');
-//   }
-//   return context;
-// }
-
-/**
  * Higher-order component to provide location context
  */
-export function withLocationProvider<P extends object>(
+export function withLocationProvider<P extends { locations: PayloadLocation[] }>(
   Component: React.ComponentType<P>
 ): React.ComponentType<P> {
   const WrappedComponent = (props: P) => (
-    <LocationProvider>
+    <LocationProvider locations={props.locations}>
       <Component {...props} />
     </LocationProvider>
   );
@@ -156,23 +138,23 @@ export function withLocationProvider<P extends object>(
  * Component to conditionally render content based on location
  */
 interface LocationConditionalProps {
-  location?: Location | Location[];
+  locationSlug?: LocationSlug | LocationSlug[];
   fallback?: ReactNode;
   children: ReactNode;
 }
 
 export function LocationConditional({
-  location,
+  locationSlug,
   fallback = null,
   children
 }: LocationConditionalProps) {
   const { currentLocation } = useLocationContext();
 
-  if (!location) {
+  if (!locationSlug) {
     return <>{children}</>;
   }
 
-  const targetLocations = Array.isArray(location) ? location : [location];
+  const targetLocations = Array.isArray(locationSlug) ? locationSlug : [locationSlug];
   const shouldRender = targetLocations.includes(currentLocation);
 
   return shouldRender ? <>{children}</> : <>{fallback}</>;
@@ -182,26 +164,17 @@ export function LocationConditional({
  * Component to render location-specific content
  */
 interface LocationSpecificProps {
-  lawrenceville?: ReactNode;
-  zelienople?: ReactNode;
+  content: Record<LocationSlug, ReactNode>;
   fallback?: ReactNode;
 }
 
 export function LocationSpecific({
-  lawrenceville,
-  zelienople,
+  content,
   fallback = null
 }: LocationSpecificProps) {
   const { currentLocation } = useLocationContext();
 
-  switch (currentLocation) {
-    case Location.LAWRENCEVILLE:
-      return lawrenceville ? <>{lawrenceville}</> : <>{fallback}</>;
-    case Location.ZELIENOPLE:
-      return zelienople ? <>{zelienople}</> : <>{fallback}</>;
-    default:
-      return <>{fallback}</>;
-  }
+  return <>{content[currentLocation] || fallback}</>;
 }
 
 /**
@@ -210,14 +183,13 @@ export function LocationSpecific({
 export function useLocationRouting() {
   const { currentLocation, setLocation } = useLocationContext();
 
-  const getLocationPath = (path: string, location?: Location) => {
-    const targetLocation = location || currentLocation;
+  const getLocationPath = (path: string, slug?: LocationSlug) => {
+    const targetLocation = slug || currentLocation;
     return `/${targetLocation}${path.startsWith('/') ? path : `/${path}`}`;
   };
 
-  const navigateWithLocation = (path: string, location?: Location) => {
-    const locationPath = getLocationPath(path, location);
-    // This would integrate with Next.js router
+  const navigateWithLocation = (path: string, slug?: LocationSlug) => {
+    const locationPath = getLocationPath(path, slug);
     return locationPath;
   };
 

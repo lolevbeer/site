@@ -3,7 +3,7 @@
  * Based on CSV data schema from _data/*-food.csv files
  */
 
-import { Location } from './location';
+import type { LocationSlug } from './location';
 
 /**
  * Food vendor types/categories
@@ -134,7 +134,7 @@ export interface FoodVendorSchedule {
   /** Day number (1-7, where 1 is Sunday) */
   dayNumber: number;
   /** Location where vendor will be */
-  location: Location;
+  location: LocationSlug;
   /** Special notes or announcements */
   notes?: string;
   /** Whether this is a special event */
@@ -158,7 +158,7 @@ export interface FoodSchedule {
   /** End time */
   endTime: string;
   /** Location */
-  location: Location;
+  location: LocationSlug;
   /** Optional notes */
   notes?: string;
 }
@@ -204,7 +204,7 @@ export interface FoodScheduleTime {
  */
 export interface FoodVendorFilters {
   /** Filter by location */
-  location?: Location;
+  location?: LocationSlug;
   /** Filter by cuisine type */
   cuisineTypes?: CuisineType[];
   /** Filter by date range */
@@ -251,7 +251,7 @@ export interface WeeklyFoodSchedule {
   /** Week number */
   weekNumber: number;
   /** Schedule by location */
-  schedule: Record<Location, DailyFoodSchedule[]>;
+  schedule: Record<LocationSlug, DailyFoodSchedule[]>;
   /** Total vendor appearances for the week */
   totalVendors: number;
 }
@@ -298,7 +298,7 @@ export interface FoodVendorStats {
     count: number;
   }>;
   /** Vendors by location */
-  vendorsByLocation: Record<Location, number>;
+  vendorsByLocation: Record<LocationSlug, number>;
   /** Average appearances per vendor */
   averageAppearances: number;
   /** Most frequent vendors */
@@ -319,7 +319,7 @@ export interface FoodVendorNotificationPreferences {
   /** Preferred cuisine types */
   cuisineTypes: CuisineType[];
   /** Preferred locations */
-  locations: Location[];
+  locations: LocationSlug[];
   /** Preferred vendors */
   favoriteVendors: string[];
   /** How far in advance to notify (in hours) */

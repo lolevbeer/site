@@ -5,7 +5,9 @@ import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Calendar, Clock, MapPin, Pencil } from 'lucide-react';
-import { useLocationFilteredData } from '@/lib/hooks/use-location-filtered-data';
+import { useLocationFilteredData, type LocationData } from '@/lib/hooks/use-location-filtered-data';
+import { useLocationContext } from '@/components/location/location-provider';
+import type { LocationSlug } from '@/lib/types/location';
 
 interface FoodVendor {
   vendor: string;
@@ -13,41 +15,46 @@ interface FoodVendor {
   time?: string;
   site?: string;
   day?: string;
+  location?: LocationSlug;
 }
 
 interface UpcomingFoodProps {
-  lawrencevilleFood: FoodVendor[];
-  zelienopleFood: FoodVendor[];
+  /** Food organized by location slug */
+  foodByLocation: Record<string, FoodVendor[]>;
   isAuthenticated?: boolean;
 }
 
-export function UpcomingFood({ lawrencevilleFood, zelienopleFood, isAuthenticated }: UpcomingFoodProps) {
-  // Filter by location first
-  const filteredFood = useLocationFilteredData({
-    lawrencevilleData: lawrencevilleFood,
-    zelienopleData: zelienopleFood
-  });
+export function UpcomingFood({ foodByLocation, isAuthenticated }: UpcomingFoodProps) {
+  const { locations } = useLocationContext();
+
+  // Create data structure for location filtering with location attached
+  const dataByLocation = useMemo(() => {
+    const result: LocationData<FoodVendor & { location: LocationSlug }> = {};
+    for (const [locationSlug, foods] of Object.entries(foodByLocation)) {
+      result[locationSlug] = foods.map(f => ({ ...f, location: locationSlug }));
+    }
+    return result;
+  }, [foodByLocation]);
+
+  // Filter by current location
+  const filteredFood = useLocationFilteredData({ dataByLocation });
 
   // Sort and take first 3
   const upcomingFood = useMemo(() => {
-    const foodWithLocation = filteredFood.map((f, index) => {
-      // Determine location based on which array the item came from
-      const isFromLawrenceville = lawrencevilleFood.includes(f as FoodVendor);
-      return {
-        ...f,
-        location: isFromLawrenceville ? 'lawrenceville' as const : 'zelienople' as const
-      };
-    });
-
-    foodWithLocation.sort((a, b) => {
-      // Handle both ISO strings and YYYY-MM-DD format
+    const sorted = [...filteredFood].sort((a, b) => {
       const dateA = new Date(a.date);
       const dateB = new Date(b.date);
       return dateA.getTime() - dateB.getTime();
     });
 
-    return foodWithLocation.slice(0, 3);
-  }, [filteredFood, lawrencevilleFood]);
+    return sorted.slice(0, 3);
+  }, [filteredFood]);
+
+  // Helper to get location display name
+  const getLocationDisplayName = (slug: LocationSlug): string => {
+    const location = locations.find(loc => loc.slug === slug || loc.id === slug);
+    return location?.name || slug;
+  };
 
   if (upcomingFood.length === 0) {
     return null;
@@ -106,7 +113,7 @@ export function UpcomingFood({ lawrencevilleFood, zelienopleFood, isAuthenticate
                   )}
                   <div className="flex items-center gap-2">
                     <MapPin className="h-4 w-4" />
-                    <span>{food.location === 'zelienople' ? 'Zelienople' : 'Lawrenceville'}</span>
+                    <span>{getLocationDisplayName(food.location)}</span>
                   </div>
                 </div>
               </CardContent>

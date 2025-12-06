@@ -31,24 +31,21 @@ export {
 
 // Location types
 export type {
+  LocationSlug,
   LocationInfo,
-  LocationInfoWithCoordinates,
   LocationHours,
   DayHours,
-  LocationData,
   LocationDistance,
   LocationCoordinates,
   LocationSelection,
-  LocationKey,
-  LocationValue,
   LocationFilter,
+  PayloadLocation,
 } from './location';
 
 export {
-  Location,
-  LocationDisplayNames,
   LocationFeature,
   LocationFeatureDisplayNames,
+  toLocationInfo,
 } from './location';
 
 // Event types

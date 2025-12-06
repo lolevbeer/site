@@ -4,8 +4,8 @@
  */
 
 import { Beer } from '@/lib/types/beer';
-import { getAllBeersFromPayload, getBeerBySlug, getMenusByLocation } from './payload-api';
-import { convertPayloadBeer, getBeersWithAvailability } from './payload-adapter';
+import { getAllBeersFromPayload, getBeerBySlug, getMenusByLocation, getAllLocations } from './payload-api';
+import { getBeersWithAvailability } from './payload-adapter';
 import { cache } from 'react';
 
 /**
@@ -15,14 +15,16 @@ export const getAllBeersFromCSV = cache(async (): Promise<Beer[]> => {
   // Get all beers from Payload
   const payloadBeers = await getAllBeersFromPayload();
 
-  // Get menus for both locations
-  const [lawrencevilleMenus, zelienopleMenus] = await Promise.all([
-    getMenusByLocation('lawrenceville'),
-    getMenusByLocation('zelienople'),
-  ]);
+  // Get all locations from database
+  const locations = await getAllLocations();
+  const locationSlugs = locations.map(loc => loc.slug || loc.id);
+
+  // Get menus for all locations dynamically
+  const menuPromises = locationSlugs.map(slug => getMenusByLocation(slug));
+  const menusByLocation = await Promise.all(menuPromises);
 
   // Combine all menus
-  const allMenus = [...lawrencevilleMenus, ...zelienopleMenus];
+  const allMenus = menusByLocation.flat();
 
   // Convert and enrich beers with menu data
   const beers = await getBeersWithAvailability(payloadBeers, allMenus);
@@ -37,13 +39,15 @@ export async function getBeerByVariant(variant: string): Promise<Beer | null> {
   const beer = await getBeerBySlug(variant);
   if (!beer) return null;
 
-  // Get menu data to enrich availability
-  const [lawrencevilleMenus, zelienopleMenus] = await Promise.all([
-    getMenusByLocation('lawrenceville'),
-    getMenusByLocation('zelienople'),
-  ]);
+  // Get all locations from database
+  const locations = await getAllLocations();
+  const locationSlugs = locations.map(loc => loc.slug || loc.id);
 
-  const allMenus = [...lawrencevilleMenus, ...zelienopleMenus];
+  // Get menus for all locations dynamically
+  const menuPromises = locationSlugs.map(slug => getMenusByLocation(slug));
+  const menusByLocation = await Promise.all(menuPromises);
+
+  const allMenus = menusByLocation.flat();
   const beersWithAvailability = await getBeersWithAvailability([beer], allMenus);
 
   return beersWithAvailability[0] || null;

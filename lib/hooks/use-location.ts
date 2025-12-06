@@ -1,43 +1,48 @@
 /**
  * Custom hook for location state management
  * Provides location state with localStorage persistence, URL sync, and helper functions
+ * Locations are now dynamically loaded from the database
  */
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useQueryState, parseAsString } from 'nuqs';
-import { Location, LocationInfo } from '@/lib/types/location';
+import { type PayloadLocation, type LocationSlug, type LocationInfo, toLocationInfo } from '@/lib/types/location';
 import {
-  DEFAULT_LOCATION,
   LOCATION_STORAGE_KEY,
-  getLocationInfo,
-  getLocationByValue,
-  isLocationOpen,
-  getFormattedHours,
-  getNextOpeningTime,
-  locationHasFeature
+  isLocationOpenNow,
+  getFormattedHoursForDay,
+  getNextOpeningTimeForLocation,
+  getAllHoursForLocation,
+  getDefaultLocationSlug,
+  findLocationBySlug,
+  isValidLocationSlug,
 } from '@/lib/config/locations';
 
-interface UseLocationReturn {
-  /** Current selected location */
-  currentLocation: Location;
+export interface UseLocationReturn {
+  /** Current selected location slug */
+  currentLocation: LocationSlug;
+  /** Current location data from Payload */
+  currentLocationData: PayloadLocation | null;
   /** Location information for current location */
-  locationInfo: LocationInfo;
+  locationInfo: LocationInfo | null;
+  /** All available locations */
+  locations: PayloadLocation[];
   /** Set the current location and persist to localStorage */
-  setLocation: (location: Location) => void;
-  /** Switch to the other location */
-  toggleLocation: () => void;
+  setLocation: (slug: LocationSlug) => void;
+  /** Switch to the next location */
+  cycleLocation: () => void;
   /** Whether the current location is open now */
   isOpen: boolean;
   /** Formatted hours for today */
   todaysHours: string;
   /** Next opening time if currently closed */
   nextOpening: { day: string; time: string } | null;
-  /** Check if current location has a specific feature */
-  hasFeature: (feature: string) => boolean;
-  /** Get location info by location enum */
-  getLocation: (location: Location) => LocationInfo;
+  /** Get location data by slug */
+  getLocationBySlug: (slug: LocationSlug) => PayloadLocation | undefined;
+  /** Get location info by slug */
+  getLocationInfo: (slug: LocationSlug) => LocationInfo | null;
   /** Whether we're on the client (hydration check) */
   isClient: boolean;
 }
@@ -45,36 +50,33 @@ interface UseLocationReturn {
 /**
  * Get location preference from localStorage with fallback
  */
-function getStoredLocation(): Location {
-  if (typeof window === 'undefined') {
-    return DEFAULT_LOCATION;
+function getStoredLocation(locations: PayloadLocation[]): LocationSlug {
+  if (typeof window === 'undefined' || locations.length === 0) {
+    return getDefaultLocationSlug(locations);
   }
 
   try {
     const stored = localStorage.getItem(LOCATION_STORAGE_KEY);
-    if (stored) {
-      const location = getLocationByValue(stored);
-      if (location) {
-        return location;
-      }
+    if (stored && isValidLocationSlug(locations, stored)) {
+      return stored;
     }
   } catch (error) {
     console.warn('Failed to read location from localStorage:', error);
   }
 
-  return DEFAULT_LOCATION;
+  return getDefaultLocationSlug(locations);
 }
 
 /**
  * Save location preference to localStorage
  */
-function saveLocationToStorage(location: Location): void {
+function saveLocationToStorage(slug: LocationSlug): void {
   if (typeof window === 'undefined') {
     return;
   }
 
   try {
-    localStorage.setItem(LOCATION_STORAGE_KEY, location);
+    localStorage.setItem(LOCATION_STORAGE_KEY, slug);
   } catch (error) {
     console.warn('Failed to save location to localStorage:', error);
   }
@@ -83,9 +85,12 @@ function saveLocationToStorage(location: Location): void {
 /**
  * Custom hook for managing location state
  * Syncs location between URL params, localStorage, and React state
+ *
+ * @param locations - Array of locations from the database (passed from server)
  */
-export function useLocation(): UseLocationReturn {
-  const [currentLocation, setCurrentLocationState] = useState<Location>(DEFAULT_LOCATION);
+export function useLocation(locations: PayloadLocation[] = []): UseLocationReturn {
+  const defaultSlug = useMemo(() => getDefaultLocationSlug(locations), [locations]);
+  const [currentLocation, setCurrentLocationState] = useState<LocationSlug>(defaultSlug);
   const [isClient, setIsClient] = useState(false);
 
   // URL state for location - allows sharing URLs with location preset
@@ -95,70 +100,96 @@ export function useLocation(): UseLocationReturn {
   useEffect(() => {
     setIsClient(true);
 
+    if (locations.length === 0) return;
+
     // Priority: URL param > localStorage > default
-    if (urlLocation) {
-      const locationFromUrl = getLocationByValue(urlLocation);
-      if (locationFromUrl) {
-        setCurrentLocationState(locationFromUrl);
-        saveLocationToStorage(locationFromUrl);
-        return;
-      }
+    if (urlLocation && isValidLocationSlug(locations, urlLocation)) {
+      setCurrentLocationState(urlLocation);
+      saveLocationToStorage(urlLocation);
+      return;
     }
 
-    const storedLocation = getStoredLocation();
+    const storedLocation = getStoredLocation(locations);
     setCurrentLocationState(storedLocation);
-  }, [urlLocation]);
+  }, [urlLocation, locations]);
+
+  // Get current location data
+  const currentLocationData = useMemo(
+    () => findLocationBySlug(locations, currentLocation) || null,
+    [locations, currentLocation]
+  );
 
   // Get current location info
-  const locationInfo = getLocationInfo(currentLocation);
+  const locationInfo = useMemo(
+    () => currentLocationData ? toLocationInfo(currentLocationData) : null,
+    [currentLocationData]
+  );
 
   // Set location with persistence (localStorage + URL)
-  const setLocation = useCallback((location: Location) => {
-    setCurrentLocationState(location);
-    saveLocationToStorage(location);
-    // Update URL param for shareable links
-    setUrlLocation(location);
-  }, [setUrlLocation]);
+  const setLocation = useCallback((slug: LocationSlug) => {
+    if (!isValidLocationSlug(locations, slug)) return;
+    setCurrentLocationState(slug);
+    saveLocationToStorage(slug);
+    setUrlLocation(slug);
+  }, [locations, setUrlLocation]);
 
-  // Toggle between locations
-  const toggleLocation = useCallback(() => {
-    const newLocation = currentLocation === Location.LAWRENCEVILLE
-      ? Location.ZELIENOPLE
-      : Location.LAWRENCEVILLE;
-    setLocation(newLocation);
-  }, [currentLocation, setLocation]);
+  // Cycle to next location
+  const cycleLocation = useCallback(() => {
+    const activeLocations = locations.filter(loc => loc.active !== false);
+    if (activeLocations.length <= 1) return;
+
+    const currentIndex = activeLocations.findIndex(
+      loc => loc.slug === currentLocation || loc.id === currentLocation
+    );
+    const nextIndex = (currentIndex + 1) % activeLocations.length;
+    const nextSlug = activeLocations[nextIndex].slug || activeLocations[nextIndex].id;
+    setLocation(nextSlug);
+  }, [locations, currentLocation, setLocation]);
 
   // Check if current location is open
-  const isOpen = isLocationOpen(currentLocation);
+  const isOpen = useMemo(
+    () => currentLocationData ? isLocationOpenNow(currentLocationData) : false,
+    [currentLocationData]
+  );
 
   // Get today's hours
-  const today = new Date();
-  const dayOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][today.getDay()] as keyof LocationInfo['hours'];
-  const todaysHours = getFormattedHours(currentLocation, dayOfWeek);
+  const todaysHours = useMemo(() => {
+    if (!currentLocationData) return 'Hours unavailable';
+    const today = new Date();
+    const dayOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][today.getDay()];
+    return getFormattedHoursForDay(currentLocationData, dayOfWeek);
+  }, [currentLocationData]);
 
   // Get next opening time if closed
-  const nextOpening = isOpen ? null : getNextOpeningTime(currentLocation);
+  const nextOpening = useMemo(
+    () => currentLocationData && !isOpen ? getNextOpeningTimeForLocation(currentLocationData) : null,
+    [currentLocationData, isOpen]
+  );
 
-  // Helper to check if current location has feature
-  const hasFeature = useCallback((feature: string) => {
-    return locationHasFeature(currentLocation, feature as any);
-  }, [currentLocation]);
+  // Helper to get location data by slug
+  const getLocationBySlug = useCallback(
+    (slug: LocationSlug) => findLocationBySlug(locations, slug),
+    [locations]
+  );
 
-  // Helper to get any location info
-  const getLocation = useCallback((location: Location) => {
-    return getLocationInfo(location);
-  }, []);
+  // Helper to get location info by slug
+  const getLocationInfo = useCallback((slug: LocationSlug): LocationInfo | null => {
+    const loc = findLocationBySlug(locations, slug);
+    return loc ? toLocationInfo(loc) : null;
+  }, [locations]);
 
   return {
     currentLocation,
+    currentLocationData,
     locationInfo,
+    locations,
     setLocation,
-    toggleLocation,
+    cycleLocation,
     isOpen,
     todaysHours,
     nextOpening,
-    hasFeature,
-    getLocation,
+    getLocationBySlug,
+    getLocationInfo,
     isClient
   };
 }
@@ -166,75 +197,25 @@ export function useLocation(): UseLocationReturn {
 /**
  * Hook specifically for getting hours information
  */
-export function useLocationHours(location?: Location) {
-  const { currentLocation } = useLocation();
-  const targetLocation = location || currentLocation;
+export function useLocationHours(locations: PayloadLocation[], locationSlug?: LocationSlug) {
+  const { currentLocation, getLocationBySlug } = useLocation(locations);
+  const targetSlug = locationSlug || currentLocation;
+  const targetLocation = getLocationBySlug(targetSlug);
 
-  const getHoursForDay = useCallback((day: keyof LocationInfo['hours']) => {
-    return getFormattedHours(targetLocation, day);
+  const getHoursForDay = useCallback((day: string) => {
+    if (!targetLocation) return 'Hours unavailable';
+    return getFormattedHoursForDay(targetLocation, day);
   }, [targetLocation]);
 
   const getAllHours = useCallback(() => {
-    const days: (keyof LocationInfo['hours'])[] = [
-      'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'
-    ];
-
-    return days.map(day => ({
-      day: day.charAt(0).toUpperCase() + day.slice(1),
-      hours: getHoursForDay(day),
-      isToday: day === ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][new Date().getDay()]
-    }));
-  }, [getHoursForDay]);
+    if (!targetLocation) return [];
+    return getAllHoursForLocation(targetLocation);
+  }, [targetLocation]);
 
   return {
     getHoursForDay,
     getAllHours,
-    isOpen: isLocationOpen(targetLocation),
-    nextOpening: getNextOpeningTime(targetLocation)
-  };
-}
-
-/**
- * Hook for location comparison
- */
-export function useLocationComparison() {
-  const { currentLocation } = useLocation();
-
-  const compareFeatures = useCallback(() => {
-    const lawrencevilleInfo = getLocationInfo(Location.LAWRENCEVILLE);
-    const zelienopleInfo = getLocationInfo(Location.ZELIENOPLE);
-
-    const lawrencevilleFeatures = new Set(lawrencevilleInfo.features || []);
-    const zelienopleFeatures = new Set(zelienopleInfo.features || []);
-
-    const commonFeatures = [...lawrencevilleFeatures].filter(feature =>
-      zelienopleFeatures.has(feature)
-    );
-
-    const lawrencevilleOnly = [...lawrencevilleFeatures].filter(feature =>
-      !zelienopleFeatures.has(feature)
-    );
-
-    const zelienopleOnly = [...zelienopleFeatures].filter(feature =>
-      !lawrencevilleFeatures.has(feature)
-    );
-
-    return {
-      common: commonFeatures,
-      lawrencevilleOnly,
-      zelienopleOnly
-    };
-  }, []);
-
-  const getOtherLocation = useCallback(() => {
-    return currentLocation === Location.LAWRENCEVILLE
-      ? Location.ZELIENOPLE
-      : Location.LAWRENCEVILLE;
-  }, [currentLocation]);
-
-  return {
-    compareFeatures,
-    getOtherLocation,
-    currentLocation
+    isOpen: targetLocation ? isLocationOpenNow(targetLocation) : false,
+    nextOpening: targetLocation ? getNextOpeningTimeForLocation(targetLocation) : null
   };
 }

@@ -4,7 +4,8 @@
  */
 
 import { useState, useMemo, useCallback } from 'react';
-import type { Beer, BeerFilters } from '@/lib/types/beer';
+import type { Beer, BeerFilters, LocationBeerAvailability } from '@/lib/types/beer';
+import { getLocationAvailability } from '@/lib/types/beer';
 import type { LocationFilter } from '@/lib/types/location';
 
 export interface UseBeerFiltersOptions {
@@ -61,10 +62,8 @@ export function useBeerFilters({
 
     return beers.filter(beer => {
       // Check if beer is available at current location (on tap or in cans)
-      return (
-        beer.availability?.[locationFilter]?.tap ||
-        beer.availability?.[locationFilter]?.cansAvailable
-      );
+      const locAvail = getLocationAvailability(beer.availability, locationFilter);
+      return locAvail?.tap || locAvail?.cansAvailable;
     });
   }, [beers, locationFilter]);
 
@@ -102,15 +101,16 @@ export function useBeerFilters({
     // Availability filter
     if (filters.availability && filters.availability !== 'all') {
       result = result.filter(beer => {
-        const availability =
-          locationFilter !== 'all'
-            ? beer.availability?.[locationFilter]
-            : beer.availability;
+        // For location-specific filter, use the helper; for 'all', use top-level availability
+        const locAvail = locationFilter !== 'all'
+          ? getLocationAvailability(beer.availability, locationFilter)
+          : undefined;
+        const topAvail = beer.availability;
 
         if (filters.availability === 'draft') {
-          return !!availability?.tap;
+          return locationFilter !== 'all' ? !!locAvail?.tap : !!topAvail?.tap;
         } else if (filters.availability === 'cans') {
-          return !!availability?.cansAvailable;
+          return locationFilter !== 'all' ? !!locAvail?.cansAvailable : !!topAvail?.cansAvailable;
         }
         return true;
       });

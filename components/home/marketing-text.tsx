@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Beer } from '@/lib/types/beer';
-import type { Beer as PayloadBeer } from '@/src/payload-types';
+import type { Beer as PayloadBeer, Menu as PayloadMenu } from '@/src/payload-types';
 import { BreweryEvent } from '@/lib/types/event';
 import { FoodVendorSchedule } from '@/lib/types/food';
 import { formatAbv } from '@/lib/utils/formatters';
 import { Button } from '@/components/ui/button';
+import { useLocationContext } from '@/components/location/location-provider';
 
 // Convert text to sans-serif bold Unicode characters (only used in marketing view)
 function toBoldUnicode(text: string): string {
@@ -52,59 +53,41 @@ interface SimpleFood {
   day?: string;
 }
 
-interface MenuItem {
-  beer: string | Beer | PayloadBeer;
-  price?: string | null;
-  id?: string | null;
-}
-
-interface MenuData {
-  items?: MenuItem[];
-}
-
-type BeerInput = Beer[] | MenuData | null;
-
 interface MarketingTextProps {
-  lawrencevilleBeers: BeerInput;
-  zelienopleBeers: BeerInput;
-  lawrencevilleCans: BeerInput;
-  zelienopleCans: BeerInput;
-  lawrencevilleEvents: (BreweryEvent | SimpleEvent)[];
-  zelienopleEvents: (BreweryEvent | SimpleEvent)[];
-  lawrencevilleFood: (FoodVendorSchedule | SimpleFood)[];
-  zelienopleFood: (FoodVendorSchedule | SimpleFood)[];
+  /** Draft menus by location slug */
+  draftMenusByLocation: Record<string, PayloadMenu | null>;
+  /** Cans menus by location slug */
+  cansMenusByLocation: Record<string, PayloadMenu | null>;
+  /** Events by location slug */
+  eventsByLocation: Record<string, (BreweryEvent | SimpleEvent)[]>;
+  /** Food by location slug */
+  foodByLocation: Record<string, (FoodVendorSchedule | SimpleFood)[]>;
   upcomingBeers: UpcomingBeer[];
 }
 
 export function MarketingText({
-  lawrencevilleBeers,
-  zelienopleBeers,
-  lawrencevilleCans,
-  zelienopleCans,
-  lawrencevilleEvents,
-  zelienopleEvents,
-  lawrencevilleFood,
-  zelienopleFood,
+  draftMenusByLocation,
+  cansMenusByLocation,
+  eventsByLocation,
+  foodByLocation,
   upcomingBeers,
 }: MarketingTextProps) {
   const [isVisible, setIsVisible] = useState(false);
+  const { locations } = useLocationContext();
 
   // Helper to convert Menu to Beer array
-  const convertMenuToBeers = (menuData: BeerInput): (Beer | SimpleBeer)[] => {
-    if (!menuData) return [];
-    if (Array.isArray(menuData)) return menuData;
-    if (!menuData.items) return [];
+  const convertMenuToBeers = (menuData: PayloadMenu | null): SimpleBeer[] => {
+    if (!menuData?.items) return [];
 
     return menuData.items
-      .map((item: MenuItem) => {
+      .map((item) => {
         const beer = item.beer;
         if (!beer || typeof beer === 'string') return null;
 
-        // Handle both Payload Beer (with slug) and regular Beer (with variant)
-        const beerObj = beer as Beer & { slug?: string; style?: { name?: string } | string };
+        const beerObj = beer as PayloadBeer & { variant?: string; type?: string };
 
         return {
-          variant: beerObj.slug || beerObj.variant,
+          variant: beerObj.slug || beerObj.variant || '',
           name: beerObj.name,
           type: typeof beerObj.style === 'object' && beerObj.style?.name
             ? beerObj.style.name
@@ -115,11 +98,22 @@ export function MarketingText({
       .filter((beer): beer is NonNullable<typeof beer> => beer !== null);
   };
 
-  // Convert Menu objects to arrays
-  const lawrencevilleBeersArray = convertMenuToBeers(lawrencevilleBeers);
-  const zelienopleBeersArray = convertMenuToBeers(zelienopleBeers);
-  const lawrencevilleCansArray = convertMenuToBeers(lawrencevilleCans);
-  const zelienopleCansArray = convertMenuToBeers(zelienopleCans);
+  // Convert menus to beer arrays by location
+  const draftBeersByLocation = useMemo(() => {
+    const result: Record<string, SimpleBeer[]> = {};
+    for (const [slug, menu] of Object.entries(draftMenusByLocation)) {
+      result[slug] = convertMenuToBeers(menu);
+    }
+    return result;
+  }, [draftMenusByLocation]);
+
+  const cansBeersByLocation = useMemo(() => {
+    const result: Record<string, SimpleBeer[]> = {};
+    for (const [slug, menu] of Object.entries(cansMenusByLocation)) {
+      result[slug] = convertMenuToBeers(menu);
+    }
+    return result;
+  }, [cansMenusByLocation]);
 
   useEffect(() => {
     const checkHash = () => {
@@ -134,7 +128,7 @@ export function MarketingText({
 
   if (!isVisible) return null;
 
-  const formatBeer = (beer: Beer | SimpleBeer) => {
+  const formatBeer = (beer: SimpleBeer) => {
     const abv = typeof beer.abv === 'string' ? parseFloat(beer.abv) : beer.abv;
     return `${beer.name} • ${beer.type} • ${formatAbv(abv)}`;
   };
@@ -159,25 +153,23 @@ export function MarketingText({
   const now = new Date();
   now.setHours(0, 0, 0, 0);
 
-  const upcomingLawrencevilleEvents = lawrencevilleEvents
-    .filter(event => new Date(event.date) >= now)
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .slice(0, 10);
+  // Process events and food for each location
+  const processedEventsByLocation: Record<string, (BreweryEvent | SimpleEvent)[]> = {};
+  const processedFoodByLocation: Record<string, (FoodVendorSchedule | SimpleFood)[]> = {};
 
-  const upcomingZelienopleEvents = zelienopleEvents
-    .filter(event => new Date(event.date) >= now)
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .slice(0, 10);
+  for (const [slug, events] of Object.entries(eventsByLocation)) {
+    processedEventsByLocation[slug] = events
+      .filter(event => new Date(event.date) >= now)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .slice(0, 10);
+  }
 
-  const upcomingLawrencevilleFood = lawrencevilleFood
-    .filter(food => new Date(food.date) >= now)
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .slice(0, 10);
-
-  const upcomingZelienopleFood = zelienopleFood
-    .filter(food => new Date(food.date) >= now)
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .slice(0, 10);
+  for (const [slug, foods] of Object.entries(foodByLocation)) {
+    processedFoodByLocation[slug] = foods
+      .filter(food => new Date(food.date) >= now)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .slice(0, 10);
+  }
 
   const copySectionToClipboard = (sectionId: string) => {
     const textElement = document.getElementById(sectionId);
@@ -185,6 +177,12 @@ export function MarketingText({
       const text = textElement.innerText;
       navigator.clipboard.writeText(text);
     }
+  };
+
+  // Get location display name
+  const getLocationName = (slug: string): string => {
+    const location = locations.find(loc => loc.slug === slug || loc.id === slug);
+    return location?.name || slug.toUpperCase();
   };
 
   return (
@@ -206,23 +204,17 @@ export function MarketingText({
               Copy Draft
             </Button>
             <div id="draft-section">
-              {/* Lawrenceville Draft */}
-              <div>
-                <div className="mb-2">{toBoldUnicode('LAWRENCEVILLE - ON DRAFT')}</div>
-                {lawrencevilleBeersArray.map((beer) => (
-                  <div key={beer.variant}>{formatBeer(beer)}</div>
-                ))}
-              </div>
-
-              <div className="my-6" />
-
-              {/* Zelienople Draft */}
-              <div>
-                <div className="mb-2">{toBoldUnicode('ZELIENOPLE - ON DRAFT')}</div>
-                {zelienopleBeersArray.map((beer) => (
-                  <div key={beer.variant}>{formatBeer(beer)}</div>
-                ))}
-              </div>
+              {Object.entries(draftBeersByLocation).map(([slug, beers], index) => (
+                <React.Fragment key={slug}>
+                  {index > 0 && <div className="my-6" />}
+                  <div>
+                    <div className="mb-2">{toBoldUnicode(`${getLocationName(slug).toUpperCase()} - ON DRAFT`)}</div>
+                    {beers.map((beer) => (
+                      <div key={beer.variant}>{formatBeer(beer)}</div>
+                    ))}
+                  </div>
+                </React.Fragment>
+              ))}
             </div>
           </div>
 
@@ -240,23 +232,17 @@ export function MarketingText({
               Copy Cans
             </Button>
             <div id="cans-section">
-              {/* Lawrenceville Cans */}
-              <div>
-                <div className="mb-2">{toBoldUnicode('LAWRENCEVILLE - CANS')}</div>
-                {lawrencevilleCansArray.map((beer) => (
-                  <div key={beer.variant}>{formatBeer(beer)}</div>
-                ))}
-              </div>
-
-              <div className="my-6" />
-
-              {/* Zelienople Cans */}
-              <div>
-                <div className="mb-2">{toBoldUnicode('ZELIENOPLE - CANS')}</div>
-                {zelienopleCansArray.map((beer) => (
-                  <div key={beer.variant}>{formatBeer(beer)}</div>
-                ))}
-              </div>
+              {Object.entries(cansBeersByLocation).map(([slug, beers], index) => (
+                <React.Fragment key={slug}>
+                  {index > 0 && <div className="my-6" />}
+                  <div>
+                    <div className="mb-2">{toBoldUnicode(`${getLocationName(slug).toUpperCase()} - CANS`)}</div>
+                    {beers.map((beer) => (
+                      <div key={beer.variant}>{formatBeer(beer)}</div>
+                    ))}
+                  </div>
+                </React.Fragment>
+              ))}
             </div>
           </div>
 
@@ -274,53 +260,39 @@ export function MarketingText({
               Copy Upcoming
             </Button>
             <div id="upcoming-section">
-              {/* Lawrenceville Events */}
-              {upcomingLawrencevilleEvents.length > 0 && (
-                <div>
-                  <div className="mb-2">{toBoldUnicode('LAWRENCEVILLE - UPCOMING EVENTS')}</div>
-                  {upcomingLawrencevilleEvents.map((event, index) => (
-                    <div key={`${event.date}-${index}`}>{formatEvent(event)}</div>
-                  ))}
-                </div>
-              )}
+              {/* Events by location */}
+              {Object.entries(processedEventsByLocation).map(([slug, events], index) => (
+                events.length > 0 && (
+                  <React.Fragment key={`events-${slug}`}>
+                    {index > 0 && <div className="my-6" />}
+                    <div>
+                      <div className="mb-2">{toBoldUnicode(`${getLocationName(slug).toUpperCase()} - UPCOMING EVENTS`)}</div>
+                      {events.map((event, eventIndex) => (
+                        <div key={`${event.date}-${eventIndex}`}>{formatEvent(event)}</div>
+                      ))}
+                    </div>
+                  </React.Fragment>
+                )
+              ))}
 
-              {upcomingLawrencevilleEvents.length > 0 && <div className="my-6" />}
+              {Object.values(processedEventsByLocation).some(events => events.length > 0) && <div className="my-6" />}
 
-              {/* Zelienople Events */}
-              {upcomingZelienopleEvents.length > 0 && (
-                <div>
-                  <div className="mb-2">{toBoldUnicode('ZELIENOPLE - UPCOMING EVENTS')}</div>
-                  {upcomingZelienopleEvents.map((event, index) => (
-                    <div key={`${event.date}-${index}`}>{formatEvent(event)}</div>
-                  ))}
-                </div>
-              )}
+              {/* Food by location */}
+              {Object.entries(processedFoodByLocation).map(([slug, foods], index) => (
+                foods.length > 0 && (
+                  <React.Fragment key={`food-${slug}`}>
+                    {index > 0 && <div className="my-6" />}
+                    <div>
+                      <div className="mb-2">{toBoldUnicode(`${getLocationName(slug).toUpperCase()} - UPCOMING FOOD`)}</div>
+                      {foods.map((food, foodIndex) => (
+                        <div key={`${food.date}-${foodIndex}`}>{formatFood(food)}</div>
+                      ))}
+                    </div>
+                  </React.Fragment>
+                )
+              ))}
 
-              {upcomingZelienopleEvents.length > 0 && <div className="my-6" />}
-
-              {/* Lawrenceville Food */}
-              {upcomingLawrencevilleFood.length > 0 && (
-                <div>
-                  <div className="mb-2">{toBoldUnicode('LAWRENCEVILLE - UPCOMING FOOD')}</div>
-                  {upcomingLawrencevilleFood.map((food, index) => (
-                    <div key={`${food.date}-${index}`}>{formatFood(food)}</div>
-                  ))}
-                </div>
-              )}
-
-              {upcomingLawrencevilleFood.length > 0 && <div className="my-6" />}
-
-              {/* Zelienople Food */}
-              {upcomingZelienopleFood.length > 0 && (
-                <div>
-                  <div className="mb-2">{toBoldUnicode('ZELIENOPLE - UPCOMING FOOD')}</div>
-                  {upcomingZelienopleFood.map((food, index) => (
-                    <div key={`${food.date}-${index}`}>{formatFood(food)}</div>
-                  ))}
-                </div>
-              )}
-
-              {upcomingZelienopleFood.length > 0 && <div className="my-6" />}
+              {Object.values(processedFoodByLocation).some(foods => foods.length > 0) && <div className="my-6" />}
 
               {/* Upcoming Beer Releases */}
               {upcomingBeers.length > 0 && (

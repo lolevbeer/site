@@ -14,7 +14,8 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MapPin, Navigation, Phone, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Location } from '@/lib/types/location';
+import type { LocationSlug, PayloadLocation } from '@/lib/types/location';
+import { useLocationContext } from '@/components/location/location-provider';
 import { useTheme } from 'next-themes';
 
 // You'll need to add your Mapbox access token to your environment variables
@@ -23,7 +24,7 @@ const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || '';
 export interface LocationMarker {
   id: string;
   name: string;
-  location: Location;
+  slug: LocationSlug;
   latitude: number;
   longitude: number;
   address: string;
@@ -35,52 +36,18 @@ export interface LocationMarker {
   description?: string;
 }
 
-// Default brewery locations
-const defaultLocations: LocationMarker[] = [
-  {
-    id: 'lawrenceville',
-    name: 'Love of Lev - Lawrenceville',
-    location: Location.LAWRENCEVILLE,
-    latitude: 40.4698,
-    longitude: -79.9576,
-    address: '5104 Butler St',
-    city: 'Pittsburgh',
-    state: 'PA',
-    zipCode: '15201',
-    phone: '(412) 336-8965',
-    hours: 'Mon-Thu: 4pm-10pm, Fri-Sat: 12pm-11pm, Sun: 12pm-8pm',
-    description: 'Our original location in the heart of Lawrenceville'
-  },
-  {
-    id: 'zelienople',
-    name: 'Love of Lev - Zelienople',
-    location: Location.ZELIENOPLE,
-    latitude: 40.7945,
-    longitude: -80.1367,
-    address: '120 N Main St',
-    city: 'Zelienople',
-    state: 'PA',
-    zipCode: '16063',
-    phone: '(724) 772-2532',
-    hours: 'Mon-Thu: 4pm-9pm, Fri-Sat: 12pm-10pm, Sun: 12pm-7pm',
-    description: 'Our second location in historic downtown Zelienople'
-  }
-];
-
 interface MapComponentProps {
-  locations?: LocationMarker[];
   className?: string;
   height?: string | number;
   showControls?: boolean;
   showPopups?: boolean;
-  selectedLocation?: Location;
-  onLocationSelect?: (location: Location) => void;
+  selectedLocation?: LocationSlug;
+  onLocationSelect?: (location: LocationSlug) => void;
   initialZoom?: number;
   style?: 'streets' | 'satellite' | 'light' | 'dark';
 }
 
 export function MapComponent({
-  locations = defaultLocations,
   className,
   height = 400,
   showControls = true,
@@ -91,10 +58,37 @@ export function MapComponent({
   style = 'streets'
 }: MapComponentProps) {
   const { theme } = useTheme();
+  const { locations: payloadLocations } = useLocationContext();
   const mapRef = React.useRef<any>(null);
+
+  // Convert PayloadLocations to LocationMarkers
+  const locations: LocationMarker[] = payloadLocations
+    .filter(loc => loc.coordinates?.latitude && loc.coordinates?.longitude)
+    .map(loc => ({
+      id: loc.id,
+      name: `Lolev Beer - ${loc.name}`,
+      slug: loc.slug || loc.id,
+      latitude: loc.coordinates!.latitude!,
+      longitude: loc.coordinates!.longitude!,
+      address: loc.address?.street || '',
+      city: loc.address?.city || '',
+      state: loc.address?.state || 'PA',
+      zipCode: loc.address?.zip || '',
+      phone: loc.basicInfo?.phone ?? undefined,
+      description: `Our location in ${loc.address?.city || loc.name}`
+    }));
+
+  // Calculate center point
+  const centerLat = locations.length > 0
+    ? locations.reduce((sum, loc) => sum + loc.latitude, 0) / locations.length
+    : 40.6322;
+  const centerLng = locations.length > 0
+    ? locations.reduce((sum, loc) => sum + loc.longitude, 0) / locations.length
+    : -80.0472;
+
   const [viewport, setViewport] = useState({
-    latitude: 40.6322, // Center between the two locations
-    longitude: -80.0472,
+    latitude: centerLat,
+    longitude: centerLng,
     zoom: initialZoom
   });
   const [selectedMarker, setSelectedMarker] = useState<LocationMarker | null>(null);
@@ -110,7 +104,7 @@ export function MapComponent({
 
   useEffect(() => {
     if (selectedLocation) {
-      const location = locations.find(l => l.location === selectedLocation);
+      const location = locations.find(l => l.slug === selectedLocation);
       if (location) {
         setViewport({
           latitude: location.latitude,
@@ -130,7 +124,7 @@ export function MapComponent({
       longitude: location.longitude,
       zoom: 14
     });
-    onLocationSelect?.(location.location);
+    onLocationSelect?.(location.slug);
   };
 
   const handleGetDirections = (location: LocationMarker) => {
@@ -163,6 +157,20 @@ export function MapComponent({
           <p className="text-sm text-muted-foreground mb-4">{mapError}</p>
           <p className="text-xs text-muted-foreground">
             Please check your Mapbox token in .env.local
+          </p>
+        </div>
+      </Card>
+    );
+  }
+
+  if (locations.length === 0) {
+    return (
+      <Card className={cn('flex items-center justify-center', className)} style={{ height }}>
+        <div className="text-center p-8">
+          <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground mb-2">No locations available</p>
+          <p className="text-sm text-muted-foreground">
+            Location coordinates not configured
           </p>
         </div>
       </Card>
@@ -299,25 +307,21 @@ export function MapComponent({
 
 // Simplified map for smaller spaces
 export function SimpleMap({
-  location,
+  locationSlug,
   height = 300,
   className
 }: {
-  location: Location;
+  locationSlug: LocationSlug;
   height?: number;
   className?: string;
 }) {
-  const locationData = defaultLocations.find(l => l.location === location);
-
-  if (!locationData) return null;
-
   return (
     <MapComponent
-      locations={[locationData]}
       height={height}
       className={className}
       showControls={false}
       showPopups={false}
+      selectedLocation={locationSlug}
       initialZoom={15}
     />
   );

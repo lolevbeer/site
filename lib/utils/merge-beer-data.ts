@@ -18,9 +18,9 @@ interface CanData {
 /**
  * Fetch and parse can data for a location
  */
-async function fetchCanData(location: 'lawrenceville' | 'zelienople'): Promise<Map<string, CanData>> {
+async function fetchCanData(locationSlug: string): Promise<Map<string, CanData>> {
   try {
-    const filePath = join(process.cwd(), 'public', 'data', `${location}-cans.csv`);
+    const filePath = join(process.cwd(), 'public', 'data', `${locationSlug}-cans.csv`);
     const text = await readFile(filePath, 'utf-8');
     const parsed = Papa.parse(text, { header: true });
     const canDataMap = new Map<string, CanData>();
@@ -46,29 +46,39 @@ async function fetchCanData(location: 'lawrenceville' | 'zelienople'): Promise<M
 
     return canDataMap;
   } catch (error) {
-    console.error(`Error fetching can data for ${location}:`, error);
+    console.error(`Error fetching can data for ${locationSlug}:`, error);
     return new Map();
   }
 }
 
 /**
- * Merge beer data with can availability from both locations
+ * Merge beer data with can availability from all locations
+ * @param beer - The beer to merge data for
+ * @param locationSlugs - List of location slugs to check for can data
  */
-export async function mergeBeerDataWithCans(beer: Beer): Promise<Beer> {
-  const [lawrencevilleData, zelienopleData] = await Promise.all([
-    fetchCanData('lawrenceville'),
-    fetchCanData('zelienople'),
-  ]);
+export async function mergeBeerDataWithCans(beer: Beer, locationSlugs: string[] = []): Promise<Beer> {
+  // Fetch can data for all locations
+  const canDataByLocation = await Promise.all(
+    locationSlugs.map(async slug => ({
+      slug,
+      data: await fetchCanData(slug)
+    }))
+  );
 
-  // Check both locations for can availability
-  const lawrencevilleCan = lawrencevilleData.get(beer.variant.toLowerCase());
-  const zelienopleCan = zelienopleData.get(beer.variant.toLowerCase());
+  // Check all locations for can availability
+  let cansAvailable = false;
+  let canData: CanData | undefined;
 
-  // Merge the data
-  const cansAvailable = !!(lawrencevilleCan?.cansAvailable || zelienopleCan?.cansAvailable);
-
-  // Prefer lawrenceville pricing if available, otherwise use zelienople
-  const canData = lawrencevilleCan?.cansAvailable ? lawrencevilleCan : zelienopleCan;
+  for (const { data } of canDataByLocation) {
+    const locationCanData = data.get(beer.variant.toLowerCase());
+    if (locationCanData?.cansAvailable) {
+      cansAvailable = true;
+      // Use first available pricing data found
+      if (!canData) {
+        canData = locationCanData;
+      }
+    }
+  }
 
   return {
     ...beer,

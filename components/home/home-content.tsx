@@ -7,14 +7,15 @@ import { QuickInfoCards } from '@/components/home/quick-info-cards';
 import { LocationCards } from '@/components/location/location-cards';
 import type { WeeklyHoursDay } from '@/lib/utils/payload-api';
 import type { Beer as PayloadBeer, Menu as PayloadMenu } from '@/src/payload-types';
-import type { Location } from '@/lib/types/location';
+import type { LocationSlug } from '@/lib/types/location';
 
 interface HomeContentProps {
   availableBeers: PayloadBeer[];
-  lawrencevilleBeers: PayloadMenu | null;
-  zelienopleBeers: PayloadMenu | null;
-  beerCount: { lawrenceville: number; zelienople: number };
-  nextEvent: { name: string; date: string; location: Location } | null;
+  /** All draft menus from all locations */
+  draftMenus: PayloadMenu[];
+  /** Beer count by location slug */
+  beerCount: Record<string, number>;
+  nextEvent: { name: string; date: string; location: LocationSlug } | null;
   children: React.ReactNode;
   isAuthenticated?: boolean;
   heroDescription?: string;
@@ -23,8 +24,7 @@ interface HomeContentProps {
 
 export function HomeContent({
   availableBeers,
-  lawrencevilleBeers,
-  zelienopleBeers,
+  draftMenus,
   beerCount,
   nextEvent,
   children,
@@ -59,7 +59,7 @@ export function HomeContent({
       <div className="py-8 md:py-12" />
 
       <FeaturedBeers
-        menus={[lawrencevilleBeers, zelienopleBeers].filter((m): m is PayloadMenu => m !== null)}
+        menus={draftMenus}
         isAuthenticated={isAuthenticated}
       />
 

@@ -3,17 +3,26 @@
 import React from 'react';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
-import { Location } from '@/lib/types/location';
+import type { LocationSlug } from '@/lib/types/location';
 import { cn } from '@/lib/utils';
 import { getTodayEST, getDayOfWeekEST, toESTDate } from '@/lib/utils/date';
+import { useLocationContext } from '@/components/location/location-provider';
 
 interface QuickInfoCardsProps {
-  beerCount?: { lawrenceville: number; zelienople: number };
-  nextEvent?: { name: string; date: string; location: Location } | null;
+  beerCount?: Record<string, number>;
+  nextEvent?: { name: string; date: string; location: LocationSlug } | null;
   className?: string;
 }
 
 export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCardsProps) {
+  const { locations } = useLocationContext();
+
+  // Get location name from slug
+  const getLocationName = (slug: LocationSlug): string => {
+    const location = locations.find(loc => (loc.slug || loc.id) === slug);
+    return location?.name || slug;
+  };
+
   // Format next event date using EST timezone
   const formatEventDate = (dateStr: string) => {
     const todayEST = getTodayEST();
@@ -44,16 +53,19 @@ export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCar
           <div className="flex items-center justify-center gap-3 mb-3">
             <h3 className="text-xl font-bold">On Tap Now</h3>
           </div>
-          {beerCount ? (
+          {beerCount && Object.keys(beerCount).length > 0 ? (
             <div className="text-sm text-muted-foreground space-y-2">
-              <div className="text-center">
-                <div className="text-lg font-medium text-foreground">Lawrenceville</div>
-                <div>{beerCount.lawrenceville} beers</div>
-              </div>
-              <div className="text-center">
-                <div className="text-lg font-medium text-foreground">Zelienople</div>
-                <div>{beerCount.zelienople} beers</div>
-              </div>
+              {locations.map(location => {
+                const slug = location.slug || location.id;
+                const count = beerCount[slug];
+                if (count === undefined) return null;
+                return (
+                  <div key={slug} className="text-center">
+                    <div className="text-lg font-medium text-foreground">{location.name}</div>
+                    <div>{count} beers</div>
+                  </div>
+                );
+              })}
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">
@@ -74,7 +86,7 @@ export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCar
           {nextEvent ? (
             <div className="text-sm text-muted-foreground space-y-1">
               <p className="text-lg font-medium text-foreground line-clamp-2">{nextEvent.name}</p>
-              <p>{formatEventDate(nextEvent.date)} at {nextEvent.location === Location.LAWRENCEVILLE ? 'Lawrenceville' : 'Zelienople'}</p>
+              <p>{formatEventDate(nextEvent.date)} at {getLocationName(nextEvent.location)}</p>
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">

@@ -16,9 +16,8 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { Location, LocationDisplayNames } from '@/lib/types/location';
+import { LocationSlug } from '@/lib/types/location';
 import { useLocationContext } from './location-provider';
-import { ALL_LOCATIONS, getLocationInfo } from '@/lib/config/locations';
 import { trackLocationSwitch } from '@/lib/analytics/events';
 
 interface LocationSelectorProps {
@@ -35,7 +34,7 @@ interface LocationSelectorProps {
   /** Placeholder text */
   placeholder?: string;
   /** Custom trigger content */
-  renderTrigger?: (currentLocation: Location, isOpen: boolean) => React.ReactNode;
+  renderTrigger?: (currentLocation: LocationSlug, isOpen: boolean) => React.ReactNode;
 }
 
 /**
@@ -52,6 +51,8 @@ export function LocationSelector({
 }: LocationSelectorProps) {
   const {
     currentLocation,
+    currentLocationData,
+    locations,
     setLocation,
     isClient,
     isOpen
@@ -59,11 +60,9 @@ export function LocationSelector({
 
   // Handle location change
   const handleLocationChange = (value: string) => {
-    const location = value as Location;
-    if (Object.values(Location).includes(location)) {
-      trackLocationSwitch(currentLocation, location);
-      setLocation(location);
-    }
+    const slug = value as LocationSlug;
+    trackLocationSwitch(currentLocation, slug);
+    setLocation(slug);
   };
 
   // Don't render until client-side hydration is complete
@@ -98,7 +97,7 @@ export function LocationSelector({
                 compact ? "h-3 w-3" : "h-4 w-4"
               )} />
               <span className="font-medium">
-                {LocationDisplayNames[currentLocation]}
+                {currentLocationData?.name || currentLocation}
               </span>
               {showStatus && (
                 <Badge
@@ -133,14 +132,14 @@ export function LocationSelector({
         )}
       </SelectTrigger>
       <SelectContent>
-        {ALL_LOCATIONS.map((location) => {
-          const locationInfo = getLocationInfo(location);
+        {locations.filter(loc => loc.active).map((location) => {
+          const locationSlug = (location.slug || location.id) as LocationSlug;
           const locationIsOpen = isOpen; // This would be calculated per location in a real app
 
           return (
             <SelectItem
-              key={location}
-              value={location}
+              key={location.id}
+              value={locationSlug}
               className="cursor-pointer"
             >
               <div className="flex w-full items-start justify-between gap-3">
@@ -148,7 +147,7 @@ export function LocationSelector({
                   <div className="flex items-center gap-2">
                     <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                     <span className="font-medium">
-                      {LocationDisplayNames[location]}
+                      {location.name}
                     </span>
                     {showStatus && (
                       <Badge
@@ -162,9 +161,11 @@ export function LocationSelector({
                       </Badge>
                     )}
                   </div>
-                  {showAddress && (
+                  {showAddress && location.address && (
                     <div className="mt-1 text-sm text-muted-foreground pl-6">
-                      {locationInfo.address}, {locationInfo.city}
+                      {location.address.street && location.address.city && (
+                        `${location.address.street}, ${location.address.city}`
+                      )}
                     </div>
                   )}
                 </div>
@@ -205,7 +206,7 @@ export function LocationToggle({
   showLabel = true,
   variant = "outline"
 }: LocationToggleProps) {
-  const { currentLocation, toggleLocation, isClient } = useLocationContext();
+  const { currentLocation, locations, cycleLocation, isClient } = useLocationContext();
 
   if (!isClient) {
     return (
@@ -217,13 +218,18 @@ export function LocationToggle({
     );
   }
 
-  const otherLocation = currentLocation === Location.LAWRENCEVILLE
-    ? Location.ZELIENOPLE
-    : Location.LAWRENCEVILLE;
+  // Find the next location in the cycle
+  const activeLocations = locations.filter(loc => loc.active);
+  const currentIndex = activeLocations.findIndex(loc => (loc.slug || loc.id) === currentLocation);
+  const nextIndex = (currentIndex + 1) % activeLocations.length;
+  const nextLocation = activeLocations[nextIndex];
+  const nextLocationSlug = (nextLocation?.slug || nextLocation?.id) as LocationSlug;
 
   const handleToggle = () => {
-    trackLocationSwitch(currentLocation, otherLocation);
-    toggleLocation();
+    if (nextLocationSlug) {
+      trackLocationSwitch(currentLocation, nextLocationSlug);
+      cycleLocation();
+    }
   };
 
   return (
@@ -240,9 +246,9 @@ export function LocationToggle({
       )}
     >
       <MapPin className="h-4 w-4" />
-      {showLabel && (
+      {showLabel && nextLocation && (
         <span>
-          Switch to {LocationDisplayNames[otherLocation]}
+          Switch to {nextLocation.name}
         </span>
       )}
     </button>
@@ -265,6 +271,7 @@ export function LocationStatus({
 }: LocationStatusProps) {
   const {
     currentLocation,
+    currentLocationData,
     isOpen,
     todaysHours,
     nextOpening,
@@ -284,7 +291,7 @@ export function LocationStatus({
       {showLocation && (
         <Badge variant="outline" className="font-medium">
           <MapPin className="mr-1 h-3 w-3" />
-          {LocationDisplayNames[currentLocation]}
+          {currentLocationData?.name || currentLocation}
         </Badge>
       )}
       <Badge

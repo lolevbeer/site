@@ -3,7 +3,7 @@
  * Replaces hardcoded lawrenceville/zelienople pattern
  */
 
-import type { Location as PayloadLocation } from '@/src/payload-types'
+import type { PayloadLocation } from '@/lib/types/location'
 import type { Beer } from './beer'
 
 /**
