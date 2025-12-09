@@ -534,14 +534,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -80.066846278019,
-                    40.311276045452
+                    -80.0661604,
+                    40.3116621
                 ]
             },
             "properties": {
                 "id": 34,
                 "Name": "bethel beer",
-                "address": "441 MCMURRAY RD, BETHEL PARK, PA, 15102",
+                "address": "Bethel Beer and More, 441, McMurray Road, Jewell, Bethel Park, Allegheny County, Pennsylvania, 15102, United States",
                 "customerType": "Supplier"
             }
         },
@@ -3903,22 +3903,6 @@
                 "Name": "whole foods wynnewood",
                 "address": "15 E WYNNEWOOD RD, WYNNEWOOD, PA, 19096",
                 "customerType": "Grocery"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -76.188337598741,
-                    40.36597628858
-                ]
-            },
-            "properties": {
-                "id": 250,
-                "Name": "womelsdorf beverage",
-                "address": "440 N 3RD ST, WOMELSDORF, PA, 19567",
-                "customerType": "Home-D"
             }
         },
         {
