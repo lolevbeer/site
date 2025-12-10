@@ -1,39 +1,4 @@
-import dynamic from 'next/dynamic';
 import React from 'react';
-
-/**
- * Create a lazily loaded component with better type safety
- * @param importFn - Function that imports the component
- * @param options - Dynamic import options
- */
-export function createLazyComponent<T extends React.ComponentType<Record<string, unknown>>>(
-  importFn: () => Promise<{ default: T } | T>,
-  options?: {
-    ssr?: boolean;
-    loading?: () => React.ReactNode;
-  }
-) {
-  return dynamic(
-    () => importFn().then(mod => ('default' in mod ? mod : { default: mod as T })),
-    {
-      ssr: options?.ssr ?? true,
-      loading: options?.loading,
-    }
-  );
-}
-
-/**
- * Common loading skeleton for lazy loaded components
- */
-export function LoadingSkeleton({ height = '400px' }: { height?: string }) {
-  return (
-    <div
-      className="animate-pulse bg-muted rounded-lg"
-      style={{ height }}
-      aria-label="Loading..."
-    />
-  );
-}
 
 /**
  * Map loading skeleton

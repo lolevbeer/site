@@ -14,7 +14,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MapPin, Navigation, Phone, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { LocationSlug, PayloadLocation } from '@/lib/types/location';
+import type { LocationSlug } from '@/lib/types/location';
 import { useLocationContext } from '@/components/location/location-provider';
 import { useTheme } from 'next-themes';
 

@@ -1,4 +1,8 @@
-import type { CollectionConfig } from 'payload'
+import type { CollectionConfig, Access } from 'payload'
+
+const isAdminOrEditor: Access = ({ req: { user } }) => {
+  return user?.role === 'admin' || user?.role === 'editor'
+}
 
 export const Menus: CollectionConfig = {
   slug: 'menus',
@@ -14,8 +18,8 @@ export const Menus: CollectionConfig = {
   },
   access: {
     read: ({ req: { user } }) => {
-      // Admins can read all menus (including drafts)
-      if (user) {
+      // Admins/editors can read all menus (including drafts)
+      if (user?.role === 'admin' || user?.role === 'editor') {
         return true
       }
       // Public can only read published menus
@@ -25,9 +29,9 @@ export const Menus: CollectionConfig = {
         },
       }
     },
-    create: () => true,
-    update: () => true,
-    delete: () => true,
+    create: isAdminOrEditor,
+    update: isAdminOrEditor,
+    delete: isAdminOrEditor,
   },
   versions: {
     drafts: true,
@@ -35,7 +39,7 @@ export const Menus: CollectionConfig = {
   },
   hooks: {
     beforeChange: [
-      async ({ data, req, operation }) => {
+      async ({ data, req }) => {
         // Auto-generate URL if not provided or empty
         if ((!data.url || data.url.trim() === '') && data.location && data.type) {
           // Fetch location name
@@ -75,7 +79,7 @@ export const Menus: CollectionConfig = {
                     originalItem: item,
                     recipe: beer?.recipe || 0
                   }
-                } catch (error) {
+                } catch (_error) {
                   return {
                     originalItem: item,
                     recipe: 0
@@ -152,6 +156,15 @@ export const Menus: CollectionConfig = {
       required: true,
       admin: {
         description: 'Auto-generated from location and type, but you can override it manually',
+        position: 'sidebar',
+      },
+    },
+    {
+      name: 'sheetUrl',
+      label: 'Google Sheet URL',
+      type: 'text',
+      admin: {
+        description: 'Google Sheets CSV export URL for syncing this menu (optional)',
         position: 'sidebar',
       },
     },

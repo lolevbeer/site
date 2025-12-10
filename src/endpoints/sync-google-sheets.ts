@@ -29,7 +29,7 @@ function computeChanges(existing: Record<string, any>, incoming: Record<string, 
   return changes
 }
 
-type CollectionType = 'events' | 'food' | 'beers' | 'menus'
+type CollectionType = 'events' | 'food' | 'beers' | 'menus' | 'hours' | 'distributors'
 
 const SHEETS_CONFIG = {
   events: {
@@ -50,6 +50,10 @@ const SHEETS_CONFIG = {
       lawrenceville: process.env.GOOGLE_CSV_LAWRENCEVILLE_DRAFT || '',
       zelienople: process.env.GOOGLE_CSV_ZELIENOPLE_DRAFT || '',
     },
+  },
+  distributors: {
+    pa: process.env.GOOGLE_CSV_DISTRIBUTORS_PA || '',
+    ny: process.env.GOOGLE_CSV_DISTRIBUTORS_NY || '',
   },
 }
 
@@ -608,10 +612,22 @@ async function syncMenus(payload: any, stream: StreamController, dryRun: boolean
     beerMap.set(beer.slug.toLowerCase(), beer.id)
   }
 
+  // Get all existing menus to check for per-document sheetUrl
+  const existingMenus = await payload.find({ collection: 'menus', limit: 100, depth: 1 })
+  const menuSheetUrls = new Map<string, string>()
+  for (const menu of existingMenus.docs) {
+    if (menu.sheetUrl) {
+      menuSheetUrls.set(menu.url, menu.sheetUrl)
+    }
+  }
+
   for (const menuType of ['cans', 'draft'] as const) {
     const menuConfig = SHEETS_CONFIG.menus[menuType]
 
-    for (const [locationSlug, url] of Object.entries(menuConfig)) {
+    for (const [locationSlug, envUrl] of Object.entries(menuConfig)) {
+      const menuUrl = `${locationSlug}-${menuType}`
+      // Prefer per-document sheetUrl, fall back to environment variable
+      const url = menuSheetUrls.get(menuUrl) || envUrl
       if (!url) continue
 
       const locationId = locationMap.get(locationSlug)
@@ -620,7 +636,8 @@ async function syncMenus(payload: any, stream: StreamController, dryRun: boolean
         continue
       }
 
-      stream.send('status', { message: `Fetching ${locationSlug} ${menuType} menu...` })
+      const sourceNote = menuSheetUrls.get(menuUrl) ? '(from document)' : '(from env)'
+      stream.send('status', { message: `Fetching ${locationSlug} ${menuType} menu ${sourceNote}...` })
 
       try {
         const rows = await fetchCSV(url)
@@ -732,6 +749,356 @@ async function syncMenus(payload: any, stream: StreamController, dryRun: boolean
   return results
 }
 
+// ============ SYNC HOURS ============
+/**
+ * Get timezone offset in hours for a given IANA timezone
+ * Returns offset to ADD to local time to get UTC (e.g., EST = +5, EDT = +4)
+ */
+function getTimezoneOffsetHours(timezone: string): number {
+  // For EST/EDT (America/New_York), we need to determine if DST is in effect
+  // Use a reference date to get the offset
+  const now = new Date()
+  const utcDate = new Date(now.toLocaleString('en-US', { timeZone: 'UTC' }))
+  const tzDate = new Date(now.toLocaleString('en-US', { timeZone: timezone }))
+  return (utcDate.getTime() - tzDate.getTime()) / (1000 * 60 * 60)
+}
+
+/**
+ * Parse time string (e.g., "4:00 PM", "16:00", "4pm", "noon", "midnight") to ISO date string for Payload time-only field
+ * Times are interpreted as being in the specified timezone
+ */
+function parseTimeToISO(timeStr: string, timezone: string = 'America/New_York'): string | null {
+  if (!timeStr || timeStr.toLowerCase() === 'closed') return null
+
+  // Clean up the string
+  const cleaned = timeStr.trim().toLowerCase()
+
+  let hours = 0
+  let minutes = 0
+
+  // Handle special keywords
+  if (cleaned === 'noon' || cleaned === '12noon' || cleaned === '12 noon') {
+    hours = 12
+    minutes = 0
+  } else if (cleaned === 'midnight' || cleaned === '12am' || cleaned === '12 am') {
+    hours = 0
+    minutes = 0
+  } else {
+    // Try parsing "4:00 PM" or "4:00pm" or "4pm" format
+    const ampmMatch = cleaned.match(/^(\d{1,2}):?(\d{2})?\s*(am|pm)?$/i)
+    if (ampmMatch) {
+      hours = parseInt(ampmMatch[1])
+      minutes = ampmMatch[2] ? parseInt(ampmMatch[2]) : 0
+      const isPM = ampmMatch[3]?.toLowerCase() === 'pm'
+
+      if (isPM && hours !== 12) hours += 12
+      if (!isPM && hours === 12) hours = 0
+    } else {
+      // Try 24-hour format "16:00"
+      const militaryMatch = cleaned.match(/^(\d{1,2}):(\d{2})$/)
+      if (militaryMatch) {
+        hours = parseInt(militaryMatch[1])
+        minutes = parseInt(militaryMatch[2])
+      } else {
+        return null
+      }
+    }
+  }
+
+  // Get timezone offset and adjust hours to UTC
+  const offsetHours = getTimezoneOffsetHours(timezone)
+
+  // Create date with local time, then adjust for timezone
+  // We store as UTC but the time represents the local timezone
+  const date = new Date('2000-01-01T00:00:00Z')
+  date.setUTCHours(hours + offsetHours, minutes, 0, 0)
+  return date.toISOString()
+}
+
+async function syncHours(payload: any, stream: StreamController, dryRun: boolean) {
+  const results = { imported: 0, updated: 0, skipped: 0, errors: 0 }
+
+  // Get all locations that have a hoursSheetUrl
+  const locations = await payload.find({ collection: 'locations', limit: 50 })
+
+  for (const location of locations.docs) {
+    const sheetUrl = location.hoursSheetUrl
+    if (!sheetUrl) {
+      stream.send('status', { message: `${location.name}: No hours sheet URL configured, skipping` })
+      continue
+    }
+
+    // Get location timezone (default to America/New_York)
+    const timezone = location.timezone || 'America/New_York'
+    stream.send('status', { message: `Fetching hours for ${location.name} (${timezone})...` })
+
+    try {
+      const rows = await fetchCSV(sheetUrl)
+
+      if (rows.length === 0) {
+        stream.send('error', { message: `${location.name}: No data in hours sheet` })
+        results.errors++
+        continue
+      }
+
+      // Expected CSV format: day, open, close (or: day, hours with "4pm - 10pm" format)
+      const dayNames = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+      const hoursUpdate: Record<string, { open?: string | null; close?: string | null }> = {}
+      const changes: FieldChange[] = []
+
+      for (const row of rows) {
+        // Normalize day name - check common column names
+        const dayRaw = (row.day || row.dayofweek || row.dayname || row.name || '').toLowerCase().trim()
+        const day = dayNames.find(d => dayRaw.startsWith(d.substring(0, 3)))
+
+        if (!day) continue
+
+        let openTime: string | null = null
+        let closeTime: string | null = null
+
+        // Check for separate open/close columns
+        if (row.open !== undefined && row.close !== undefined) {
+          openTime = parseTimeToISO(row.open, timezone)
+          closeTime = parseTimeToISO(row.close, timezone)
+        }
+        // Check for combined "hours" column like "4pm - 10pm"
+        else if (row.hours) {
+          const hoursParts = row.hours.split(/[-–]/).map((s: string) => s.trim())
+          if (hoursParts.length === 2) {
+            openTime = parseTimeToISO(hoursParts[0], timezone)
+            closeTime = parseTimeToISO(hoursParts[1], timezone)
+          } else if (row.hours.toLowerCase() === 'closed') {
+            openTime = null
+            closeTime = null
+          }
+        }
+
+        hoursUpdate[day] = { open: openTime, close: closeTime }
+
+        // Compare with existing
+        const existingDay = location[day] as { open?: string; close?: string } | undefined
+        const existingOpen = existingDay?.open || null
+        const existingClose = existingDay?.close || null
+
+        if (existingOpen !== openTime || existingClose !== closeTime) {
+          changes.push({
+            field: day,
+            from: existingOpen && existingClose ? `${existingOpen} - ${existingClose}` : 'not set',
+            to: openTime && closeTime ? `${openTime} - ${closeTime}` : 'closed/not set',
+          })
+        }
+      }
+
+      if (changes.length === 0) {
+        results.skipped++
+        stream.send('hours', {
+          action: 'unchanged',
+          location: location.name,
+        })
+        continue
+      }
+
+      if (!dryRun) {
+        await payload.update({
+          collection: 'locations',
+          id: location.id,
+          data: hoursUpdate,
+        })
+      }
+
+      results.updated++
+      stream.send('hours', {
+        action: dryRun ? 'would update' : 'updated',
+        location: location.name,
+        changes,
+      })
+
+    } catch (error: any) {
+      stream.send('error', { message: `Error syncing ${location.name} hours: ${error.message}` })
+      results.errors++
+    }
+  }
+
+  return results
+}
+
+// ============ SYNC DISTRIBUTORS ============
+interface GeoFeature {
+  type: 'Feature'
+  geometry: {
+    type: 'Point'
+    coordinates: [number, number] // [longitude, latitude]
+  }
+  properties: {
+    id: number
+    Name: string
+    address: string
+    customerType: string
+  }
+}
+
+interface GeoJSON {
+  type: 'FeatureCollection'
+  features: GeoFeature[]
+}
+
+// Load GeoJSON from public folder
+async function loadGeoJSON(region: string): Promise<GeoJSON | null> {
+  try {
+    const fs = await import('fs/promises')
+    const path = await import('path')
+    const filePath = path.join(process.cwd(), 'public', `${region.toLowerCase()}_geo_data.json`)
+    const content = await fs.readFile(filePath, 'utf-8')
+    return JSON.parse(content) as GeoJSON
+  } catch {
+    return null
+  }
+}
+
+// Normalize customer type to valid enum values
+function normalizeCustomerType(type: string): 'Retail' | 'On Premise' | 'Home-D' {
+  const typeLower = type.toLowerCase()
+  if (typeLower.includes('bar') || typeLower.includes('restaurant') || typeLower.includes('hotel') ||
+      typeLower.includes('brewery') || typeLower.includes('catering') || typeLower.includes('six pack')) {
+    return 'On Premise'
+  }
+  if (typeLower.includes('home') || typeLower.includes('delivery') || typeLower === 'home-d') {
+    return 'Home-D'
+  }
+  // Retail, Liquor Store, Grocery, Supplier, etc.
+  return 'Retail'
+}
+
+// Parse address into components
+function parseAddress(fullAddress: string): { street: string; city?: string; state?: string; zip?: string } {
+  // Format: "2756 W 12TH ST, ERIE, PA, 16505"
+  const parts = fullAddress.split(',').map(p => p.trim())
+  if (parts.length >= 4) {
+    return {
+      street: parts[0],
+      city: parts[1],
+      state: parts[2],
+      zip: parts[3],
+    }
+  } else if (parts.length === 3) {
+    // "Street, City, State Zip"
+    const stateZip = parts[2].split(' ')
+    return {
+      street: parts[0],
+      city: parts[1],
+      state: stateZip[0],
+      zip: stateZip[1],
+    }
+  }
+  return { street: fullAddress }
+}
+
+async function syncDistributors(payload: any, stream: StreamController, dryRun: boolean) {
+  const results = { imported: 0, updated: 0, skipped: 0, errors: 0 }
+  const regions = ['pa', 'ny']
+
+  for (const region of regions) {
+    stream.send('status', { message: `Loading ${region.toUpperCase()} distributors from geo data...` })
+
+    const geoData = await loadGeoJSON(region)
+    if (!geoData) {
+      stream.send('error', { message: `Could not load ${region}_geo_data.json` })
+      results.errors++
+      continue
+    }
+
+    const features = geoData.features.filter(f => f.properties.Name && f.geometry.coordinates)
+    stream.send('status', { message: `Processing ${features.length} ${region.toUpperCase()} distributors...` })
+
+    for (const feature of features) {
+      const { Name, address, customerType } = feature.properties
+      const [lng, lat] = feature.geometry.coordinates
+
+      if (!lng || !lat || isNaN(lng) || isNaN(lat)) {
+        stream.send('error', { message: `Invalid coordinates for "${Name}"` })
+        results.skipped++
+        continue
+      }
+
+      // Check for existing distributor by name and region
+      const existing = await payload.find({
+        collection: 'distributors',
+        where: {
+          and: [
+            { name: { equals: Name } },
+            { region: { equals: region.toUpperCase() } },
+          ],
+        },
+        limit: 1,
+      })
+
+      const normalizedType = normalizeCustomerType(customerType)
+      const addressParts = parseAddress(address)
+
+      const distributorData = {
+        name: Name,
+        address: addressParts.street,
+        city: addressParts.city,
+        state: addressParts.state || region.toUpperCase(),
+        zip: addressParts.zip,
+        customerType: normalizedType,
+        region: region.toUpperCase(),
+        location: [lng, lat], // Point field: [longitude, latitude]
+        active: true,
+        source: 'google-sheets' as const,
+      }
+
+      if (existing.docs.length > 0) {
+        const existingDoc = existing.docs[0]
+        const existingLocation = existingDoc.location || [0, 0]
+        const incomingForCompare = {
+          address: addressParts.street || null,
+          customerType: normalizedType,
+          lat,
+          lng,
+        }
+        const existingForCompare = {
+          address: existingDoc.address || null,
+          customerType: existingDoc.customerType,
+          lat: existingLocation[1],
+          lng: existingLocation[0],
+        }
+        const changes = computeChanges(existingForCompare, incomingForCompare, ['address', 'customerType', 'lat', 'lng'])
+
+        if (changes.length === 0) {
+          results.skipped++
+          continue
+        }
+
+        if (!dryRun) {
+          await payload.update({ collection: 'distributors', id: existingDoc.id, data: distributorData })
+        }
+        results.updated++
+        stream.send('distributor', {
+          action: dryRun ? 'would update' : 'updated',
+          name: Name,
+          region: region.toUpperCase(),
+          changes,
+        })
+        continue
+      }
+
+      if (!dryRun) {
+        await payload.create({ collection: 'distributors', data: distributorData })
+      }
+      results.imported++
+      stream.send('distributor', {
+        action: dryRun ? 'would import' : 'imported',
+        name: Name,
+        region: region.toUpperCase(),
+        customerType: normalizedType,
+      })
+    }
+  }
+
+  return results
+}
+
 // ============ LOCATION SEED DATA ============
 const LOCATION_SEED_DATA = {
   lawrenceville: {
@@ -814,6 +1181,14 @@ async function runSync(
     results.menus = await syncMenus(payload, stream, dryRun, locationMap)
   }
 
+  if (collections.includes('hours')) {
+    results.hours = await syncHours(payload, stream, dryRun)
+  }
+
+  if (collections.includes('distributors')) {
+    results.distributors = await syncDistributors(payload, stream, dryRun)
+  }
+
   return results
 }
 
@@ -822,7 +1197,7 @@ export const syncGoogleSheets: PayloadHandler = async (req) => {
   const dryRun = url.searchParams.get('dryRun') === 'true'
   const collectionsParam = url.searchParams.get('collections') || 'events,food'
   const collections = collectionsParam.split(',').filter(c =>
-    ['events', 'food', 'beers', 'menus'].includes(c)
+    ['events', 'food', 'beers', 'menus', 'hours', 'distributors'].includes(c)
   ) as CollectionType[]
 
   // Use getPayloadHMR for file upload support

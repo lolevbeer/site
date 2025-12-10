@@ -60,7 +60,7 @@ export default async function Home() {
         cansMenusByLocation={data.cansMenusByLocation}
         eventsByLocation={data.eventsMarketingByLocation}
         foodByLocation={data.foodMarketingByLocation}
-        upcomingBeers={data.upcomingBeersData}
+        comingSoonBeers={data.comingSoonBeers}
       />
 
       <HomeContent
@@ -70,6 +70,7 @@ export default async function Home() {
         nextEvent={data.nextEvent}
         isAuthenticated={data.authenticated}
         heroDescription={data.siteContent.heroDescription}
+        heroImageUrl={data.siteContent.heroImageUrl}
         weeklyHours={data.weeklyHours}
       >
         <Spacer />

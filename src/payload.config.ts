@@ -15,6 +15,7 @@ import { Food } from './collections/Food'
 import { Locations } from './collections/Locations'
 import { HolidayHours } from './collections/HolidayHours'
 import { Menus } from './collections/Menus'
+import { Distributors } from './collections/Distributors'
 import { ComingSoon } from './globals/ComingSoon'
 import { SiteContent } from './globals/SiteContent'
 import { syncGoogleSheets } from './endpoints/sync-google-sheets'
@@ -22,34 +23,14 @@ import { syncGoogleSheets } from './endpoints/sync-google-sheets'
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
-// Determine the correct server URL for production
-const getServerURL = () => {
-  // Use explicit URL if set
-  if (process.env.NEXT_PUBLIC_APP_URL) {
-    return process.env.NEXT_PUBLIC_APP_URL
-  }
-
-  // Use Vercel URL in production
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`
-  }
-
-  // Fallback to localhost
-  return 'http://localhost:3000'
-}
-
 export default buildConfig({
-  // Use empty string to make Payload use relative URLs for API calls
-  // This prevents issues with client-side fetching in production
-  serverURL: '',
-  cors: [
-    process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-    ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
-  ].filter(Boolean),
+  // Empty serverURL means Payload uses relative URLs - works on any port
+  serverURL: process.env.NEXT_PUBLIC_APP_URL || '',
+  cors: '*', // Allow all origins in development, tighten in production if needed
   csrf: [
-    process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
-    ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
-  ].filter(Boolean),
+    process.env.NEXT_PUBLIC_APP_URL,
+    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
+  ].filter(Boolean) as string[],
   routes: {
     api: '/api',
     admin: '/admin',
@@ -86,7 +67,7 @@ export default buildConfig({
       },
     },
   },
-  collections: [Users, Media, Styles, Beers, Events, Food, Locations, HolidayHours, Menus],
+  collections: [Users, Media, Styles, Beers, Events, Food, Locations, HolidayHours, Menus, Distributors],
   globals: [ComingSoon, SiteContent],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',

@@ -1,7 +1,17 @@
-import type { CollectionConfig } from 'payload'
+import type { CollectionConfig, Access } from 'payload'
+
+const isAdminOrEditor: Access = ({ req: { user } }) => {
+  return user?.role === 'admin' || user?.role === 'editor'
+}
 
 export const Events: CollectionConfig = {
   slug: 'events',
+  access: {
+    read: () => true,
+    create: isAdminOrEditor,
+    update: isAdminOrEditor,
+    delete: isAdminOrEditor,
+  },
   admin: {
     useAsTitle: 'vendor',
     defaultColumns: ['vendor', 'date', 'location', 'visibility'],

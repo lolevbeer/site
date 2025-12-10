@@ -14,6 +14,15 @@ export const SiteContent: GlobalConfig = {
           label: 'Hero Section',
           fields: [
             {
+              name: 'heroImage',
+              type: 'upload',
+              relationTo: 'media',
+              label: 'Hero Background Image',
+              admin: {
+                description: 'Background image for the homepage hero section (recommended: 1920x1080px or larger)',
+              },
+            },
+            {
               name: 'heroDescription',
               type: 'textarea',
               label: 'Hero Description',

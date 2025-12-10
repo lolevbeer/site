@@ -1,12 +1,20 @@
-import type { CollectionConfig } from 'payload'
+import type { CollectionConfig, Access } from 'payload'
+
+// Check if user is admin or editor
+const isAdminOrEditor: Access = ({ req: { user } }) => {
+  return user?.role === 'admin' || user?.role === 'editor'
+}
 
 export const Media: CollectionConfig = {
   slug: 'media',
   admin: {
-    hidden: true,
+    // hidden: true, // Temporarily unhidden to debug upload field issue
   },
   access: {
     read: () => true,
+    create: isAdminOrEditor,
+    update: isAdminOrEditor,
+    delete: isAdminOrEditor,
   },
   upload: {
     staticDir: 'public/uploads',

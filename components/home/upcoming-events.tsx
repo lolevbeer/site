@@ -27,7 +27,7 @@ interface UpcomingEventsProps {
 
 export function UpcomingEvents({ eventsByLocation, isAuthenticated }: UpcomingEventsProps) {
   // Add location to each event
-  const eventsWithLocation = useMemo(() => {
+  const _eventsWithLocation = useMemo(() => {
     const allEvents: (Event & { location: LocationSlug })[] = [];
     for (const [locationSlug, events] of Object.entries(eventsByLocation)) {
       for (const event of events) {

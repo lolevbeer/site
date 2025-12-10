@@ -28,6 +28,14 @@ const eslintConfig = [
           caughtErrorsIgnorePattern: '^(_|ignore)',
         },
       ],
+      'react/no-unescaped-entities': 'off',
+    },
+  },
+  {
+    // Disable html-link-for-pages in Payload admin components (they use their own routing)
+    files: ['src/components/AdminLogo.tsx', 'src/components/SyncNavLink.tsx'],
+    rules: {
+      '@next/next/no-html-link-for-pages': 'off',
     },
   },
   {

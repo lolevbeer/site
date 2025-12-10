@@ -1,11 +1,10 @@
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { BreweryEvent } from '@/lib/types/event';
-import type { LocationFilter } from '@/lib/types/location';
+import { BreweryEvent, EventType, EventStatus } from '@/lib/types/event';
+import type { LocationFilter, LocationSlug } from '@/lib/types/location';
 import { EventList } from '@/components/events/event-list';
 import { Button } from '@/components/ui/button';
-import { loadEventsFromCSV } from '@/lib/utils/events';
 import { useLocationContext } from '@/components/location/location-provider';
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
 import { JsonLd } from '@/components/seo/json-ld';
@@ -13,6 +12,61 @@ import { generateEventListJsonLd } from '@/lib/utils/json-ld';
 
 interface EventsPageContentProps {
   initialEvents?: BreweryEvent[];
+}
+
+/**
+ * Fetch events from Payload API for all locations
+ */
+async function fetchEventsFromPayload(): Promise<BreweryEvent[]> {
+  try {
+    // Get today's date at midnight for filtering
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayStr = today.toISOString();
+
+    // Fetch all public events from today onwards using Payload REST API
+    const params = new URLSearchParams({
+      'where[visibility][equals]': 'public',
+      'where[date][greater_than_equal]': todayStr,
+      sort: 'date',
+      limit: '100',
+      depth: '1',
+    });
+
+    const response = await fetch(`/api/events?${params.toString()}`);
+    if (!response.ok) {
+      console.error('Failed to fetch events:', response.status);
+      return [];
+    }
+
+    const data = await response.json();
+    const events = data.docs || [];
+
+    // Transform Payload events to BreweryEvent format
+    return events.map((event: { id: string; vendor: string; description?: string; date: string; time?: string; endTime?: string; location?: { slug?: string } | string; site?: string; attendees?: number }) => {
+      const locationSlug = typeof event.location === 'object'
+        ? event.location?.slug
+        : undefined;
+
+      return {
+        id: event.id,
+        title: event.vendor,
+        description: event.description || event.vendor,
+        date: event.date.split('T')[0],
+        time: event.time || '',
+        endTime: event.endTime,
+        vendor: event.vendor,
+        type: EventType.SPECIAL_EVENT,
+        status: EventStatus.SCHEDULED,
+        location: locationSlug as LocationSlug,
+        site: event.site,
+        attendees: event.attendees,
+      };
+    });
+  } catch (error) {
+    console.error('Error fetching events from Payload:', error);
+    return [];
+  }
 }
 
 export function EventsPageContent({ initialEvents = [] }: EventsPageContentProps) {
@@ -25,23 +79,17 @@ export function EventsPageContent({ initialEvents = [] }: EventsPageContentProps
   useEffect(() => {
     const loadEvents = async () => {
       try {
-        const locationSlugs = locations.map(loc => loc.slug || loc.id);
-        const csvEvents = await loadEventsFromCSV(locationSlugs);
-        if (csvEvents.length > 0) {
-          setEvents(csvEvents);
-        }
+        const payloadEvents = await fetchEventsFromPayload();
+        setEvents(payloadEvents);
       } catch (error) {
         console.error('Error loading events:', error);
-        // Keep initial events if CSV loading fails
       } finally {
         setLoading(false);
       }
     };
 
-    if (locations.length > 0) {
-      loadEvents();
-    }
-  }, [locations]);
+    loadEvents();
+  }, []);
   const handleEventClick = (event: BreweryEvent) => {
     if (event.site) {
       window.open(event.site, '_blank');

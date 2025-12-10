@@ -9,11 +9,6 @@
 import React, { createContext, useContext, ReactNode, useMemo, Suspense } from 'react';
 import { type PayloadLocation, type LocationSlug, type LocationInfo } from '@/lib/types/location';
 import { useLocation, useLocationHours } from '@/lib/hooks/use-location';
-import {
-  isLocationOpenNow,
-  getAllHoursForLocation,
-  getNextOpeningTimeForLocation,
-} from '@/lib/config/locations';
 
 interface LocationContextValue {
   // Core location state

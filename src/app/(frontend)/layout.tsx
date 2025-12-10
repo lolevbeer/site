@@ -120,9 +120,6 @@ export default async function AppLayout({
         {/* Resource Hints for Performance */}
         <link rel="preconnect" href="https://api.mapbox.com" />
         <link rel="dns-prefetch" href="https://api.mapbox.com" />
-
-        {/* Preload critical resources for faster LCP */}
-        <link rel="preload" href="/images/bar.jpg" as="image" fetchPriority="high" />
       </head>
       <body className={`${poppins.variable} antialiased min-h-screen flex flex-col font-poppins`}>
         <GoogleAnalytics />

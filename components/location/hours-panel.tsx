@@ -10,7 +10,6 @@ import {
 } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import type { LocationSlug, PayloadLocation } from '@/lib/types/location';
 import { toLocationInfo } from '@/lib/types/location';
 import { isLocationOpenNow } from '@/lib/config/locations';
 import { cn } from '@/lib/utils';

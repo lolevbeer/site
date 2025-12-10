@@ -4,29 +4,25 @@
  */
 
 import { fetchGlobal } from './payload-api';
+import { getMediaUrl } from './formatters';
 
 export interface SiteContent {
   heroDescription?: string;
+  heroImageUrl?: string | null;
   errorMessage?: string;
   todaysEventsTitle?: string;
   todaysFoodTitle?: string;
 }
-
-const DEFAULT_CONTENT: SiteContent = {
-  heroDescription: "Brewed in Pittsburgh's vibrant Lawrenceville neighborhood, housed in a historic building that has stood since 1912. Lolev focuses on modern ales, expressive lagers and oak-aged beer.\n\nWe believe that beer should be thoughtful and stimulating. Each beer we create is intended to engage your senses, crafted with attention to flavor, balance, and the experience.",
-  errorMessage: "We encountered an unexpected error. Don't worry, your data is safe.",
-  todaysEventsTitle: "Today's Event",
-  todaysFoodTitle: "Today's Food",
-};
 
 /**
  * Fetch site content from Payload CMS
  */
 export async function getSiteContent(): Promise<SiteContent> {
   try {
-    const content = await fetchGlobal('site-content') as SiteContent | null;
+    const content = await fetchGlobal('site-content', 2) as any | null;
     return {
       heroDescription: content?.heroDescription,
+      heroImageUrl: getMediaUrl(content?.heroImage),
       errorMessage: content?.errorMessage,
       todaysEventsTitle: content?.todaysEventsTitle,
       todaysFoodTitle: content?.todaysFoodTitle,

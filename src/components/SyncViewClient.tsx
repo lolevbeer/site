@@ -18,19 +18,21 @@ interface MenuChanges {
 
 interface LogEntry {
   id: number
-  type: 'status' | 'event' | 'food' | 'beer' | 'menu' | 'error' | 'complete'
+  type: 'status' | 'event' | 'food' | 'beer' | 'menu' | 'hours' | 'distributor' | 'error' | 'complete'
   message: string
   timestamp: Date
   changes?: FieldChange[] | MenuChanges
 }
 
-type CollectionType = 'events' | 'food' | 'beers' | 'menus'
+type CollectionType = 'events' | 'food' | 'beers' | 'menus' | 'hours' | 'distributors'
 
 interface SyncResults {
   events?: { imported: number; updated: number; skipped: number; errors: number }
   food?: { imported: number; updated: number; skipped: number; errors: number }
   beers?: { imported: number; updated: number; skipped: number; errors: number }
   menus?: { imported: number; updated: number; skipped: number; errors: number }
+  hours?: { imported: number; updated: number; skipped: number; errors: number }
+  distributors?: { imported: number; updated: number; skipped: number; errors: number }
   dryRun?: boolean
 }
 
@@ -131,6 +133,12 @@ export const SyncViewClient: React.FC = () => {
                   case 'menu':
                     addLog('menu', `Menu: ${data.location} ${data.type} - ${data.itemCount} items`, data.changes)
                     break
+                  case 'hours':
+                    addLog('hours', `Hours: ${data.location} - ${data.action}`, data.changes)
+                    break
+                  case 'distributor':
+                    addLog('distributor', `Distributor: ${data.name} (${data.region}) - ${data.action}`, data.changes)
+                    break
                   case 'error':
                     addLog('error', data.message)
                     break
@@ -167,6 +175,8 @@ export const SyncViewClient: React.FC = () => {
       case 'food': return 'color: #c084fc'
       case 'beer': return 'color: #fbbf24'
       case 'menu': return 'color: #34d399'
+      case 'hours': return 'color: #f472b6'
+      case 'distributor': return 'color: #fb923c'
       case 'error': return 'color: #f87171'
       case 'complete': return 'color: #4ade80'
       default: return 'color: var(--theme-elevation-400)'
@@ -179,6 +189,8 @@ export const SyncViewClient: React.FC = () => {
       case 'food': return '✓'
       case 'beer': return '✓'
       case 'menu': return '✓'
+      case 'hours': return '✓'
+      case 'distributor': return '✓'
       case 'error': return '✗'
       case 'complete': return '●'
       default: return '→'
@@ -190,6 +202,8 @@ export const SyncViewClient: React.FC = () => {
     food: 'Food',
     beers: 'Beers',
     menus: 'Menus',
+    hours: 'Hours',
+    distributors: 'Distributors',
   }
 
   const collectionColors: Record<CollectionType, string> = {
@@ -197,6 +211,8 @@ export const SyncViewClient: React.FC = () => {
     food: '#c084fc',
     beers: '#fbbf24',
     menus: '#34d399',
+    hours: '#f472b6',
+    distributors: '#fb923c',
   }
 
   return (
@@ -462,6 +478,22 @@ export const SyncViewClient: React.FC = () => {
                   label="Menus"
                   color="#34d399"
                   data={results.menus}
+                  dryRun={results.dryRun}
+                />
+              )}
+              {results.hours && (
+                <ResultCard
+                  label="Hours"
+                  color="#f472b6"
+                  data={results.hours}
+                  dryRun={results.dryRun}
+                />
+              )}
+              {results.distributors && (
+                <ResultCard
+                  label="Distributors"
+                  color="#fb923c"
+                  data={results.distributors}
                   dryRun={results.dryRun}
                 />
               )}

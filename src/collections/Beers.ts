@@ -1,4 +1,4 @@
-import type { CollectionConfig } from 'payload'
+import type { CollectionConfig, Access } from 'payload'
 import { generateUniqueSlug } from './utils/generateUniqueSlug'
 
 // Helper function to round to nearest 0.25 (like Excel's MROUND)
@@ -6,13 +6,17 @@ const mround = (value: number, multiple: number): number => {
   return Math.round(value / multiple) * multiple
 }
 
+const isAdminOrEditor: Access = ({ req: { user } }) => {
+  return user?.role === 'admin' || user?.role === 'editor'
+}
+
 export const Beers: CollectionConfig = {
   slug: 'beers',
   access: {
     read: () => true,
-    create: ({ req: { user } }) => !!user,
-    update: ({ req: { user } }) => !!user,
-    delete: ({ req: { user } }) => !!user,
+    create: isAdminOrEditor,
+    update: isAdminOrEditor,
+    delete: isAdminOrEditor,
   },
   admin: {
     useAsTitle: 'name',

@@ -6,7 +6,6 @@ import Image from 'next/image';
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import type { LocationSlug } from '@/lib/types/location';
 import { useLocationContext } from '@/components/location/location-provider';
 import { trackDirections } from '@/lib/analytics/events';
 import { cn } from '@/lib/utils';
@@ -100,29 +99,34 @@ interface LocationCardsProps {
   weeklyHours?: Record<string, WeeklyHoursDay[]>;
 }
 
+// Helper to get image URL from Payload media relation
+function getImageUrl(image: unknown): string | null {
+  if (!image) return null;
+  if (typeof image === 'string') return image;
+  if (typeof image === 'object' && image !== null && 'url' in image) {
+    return (image as { url?: string }).url || null;
+  }
+  return null;
+}
+
 export function LocationCards({ weeklyHours }: LocationCardsProps) {
   const { locations } = useLocationContext();
 
-  // Static visual configuration by location slug
-  const locationStyles: Record<string, { gradient: string; image: string }> = {
-    'lawrenceville': {
-      gradient: 'from-amber-200 to-orange-300',
-      image: '/images/Lawrenceville-front.jpg'
-    },
-    'zelienople': {
-      gradient: 'from-green-200 to-blue-300',
-      image: '/images/Zelienople-interior.jpg'
-    }
-  };
+  // Fallback gradients by index when no image available
+  const fallbackGradients = [
+    'from-amber-200 to-orange-300',
+    'from-green-200 to-blue-300',
+    'from-blue-200 to-purple-300',
+    'from-rose-200 to-pink-300',
+  ];
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
       {locations.map((location, index) => {
         const locationKey = location.slug || location.id;
-        const styles = locationStyles[locationKey.toLowerCase()] || {
-          gradient: 'from-blue-200 to-purple-300',
-          image: ''
-        };
+        // Get image from CMS (images.card field)
+        const cardImage = getImageUrl(location.images?.card);
+        const fallbackGradient = fallbackGradients[index % fallbackGradients.length];
 
         // Generate Google Maps URL if coordinates are available
         const mapUrl = location.coordinates?.latitude && location.coordinates?.longitude
@@ -137,9 +141,9 @@ export function LocationCards({ weeklyHours }: LocationCardsProps) {
           <div key={locationKey} className="flex flex-col relative pb-16">
             {/* Location Image */}
             <div className="aspect-video relative mb-6">
-              {styles.image ? (
+              {cardImage ? (
                 <Image
-                  src={styles.image}
+                  src={cardImage}
                   alt={`${location.name} location`}
                   fill
                   className="object-cover rounded-lg"
@@ -149,7 +153,7 @@ export function LocationCards({ weeklyHours }: LocationCardsProps) {
                   sizes="(max-width: 768px) 100vw, 50vw"
                 />
               ) : (
-                <div className={`h-full bg-gradient-to-br ${styles.gradient} rounded-lg`} />
+                <div className={`h-full bg-gradient-to-br ${fallbackGradient} rounded-lg`} />
               )}
             </div>
 

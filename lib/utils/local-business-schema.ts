@@ -6,6 +6,8 @@
  */
 
 import type { PayloadLocation } from '@/lib/types/location';
+import type { PostalAddressJsonLd, GeoCoordinatesJsonLd } from './json-ld';
+import { getMediaUrl } from './formatters';
 
 /**
  * Schema.org LocalBusiness type
@@ -33,21 +35,6 @@ export interface LocalBusinessJsonLd {
   amenityFeature?: AmenityFeatureJsonLd[];
   sameAs?: string[];
   aggregateRating?: AggregateRatingJsonLd;
-}
-
-export interface PostalAddressJsonLd {
-  '@type': 'PostalAddress';
-  streetAddress: string;
-  addressLocality: string;
-  addressRegion: string;
-  postalCode: string;
-  addressCountry: string;
-}
-
-export interface GeoCoordinatesJsonLd {
-  '@type': 'GeoCoordinates';
-  latitude: number;
-  longitude: number;
 }
 
 export interface OpeningHoursSpecificationJsonLd {
@@ -129,17 +116,20 @@ export function generateLocalBusinessSchema(location: PayloadLocation): LocalBus
   const slug = location.slug || location.id;
   const baseUrl = 'https://lolev.beer';
 
+  // Build images array from CMS data with fallback
+  const images: string[] = [`${baseUrl}/images/og-image.jpg`];
+  const heroImage = getMediaUrl(location.images?.hero);
+  const cardImage = getMediaUrl(location.images?.card);
+  if (heroImage) images.push(heroImage);
+  if (cardImage) images.push(cardImage);
+
   const schema: LocalBusinessJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'BreweryOrDistillery',
     '@id': `${baseUrl}#${slug}`,
     name: `Lolev Beer - ${location.name}`,
     description: 'Craft brewery serving purposeful beer and building community in the Pittsburgh area. Offering modern ales, expressive lagers, and oak-aged beer.',
-    image: [
-      `${baseUrl}/images/og-image.jpg`,
-      `${baseUrl}/images/bar.jpg`,
-      `${baseUrl}/images/fermentors.jpg`
-    ],
+    image: images,
     logo: `${baseUrl}/images/og-image.jpg`,
     url: baseUrl,
     address: {

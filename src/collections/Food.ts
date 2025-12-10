@@ -1,7 +1,17 @@
-import type { CollectionConfig } from 'payload'
+import type { CollectionConfig, Access } from 'payload'
+
+const isAdminOrEditor: Access = ({ req: { user } }) => {
+  return user?.role === 'admin' || user?.role === 'editor'
+}
 
 export const Food: CollectionConfig = {
   slug: 'food',
+  access: {
+    read: () => true,
+    create: isAdminOrEditor,
+    update: isAdminOrEditor,
+    delete: isAdminOrEditor,
+  },
   labels: {
     singular: 'Food',
     plural: 'Food',

@@ -20,10 +20,14 @@ interface GeoJSON {
   features: GeoFeature[];
 }
 
-const DATA_SOURCES = {
-  PA: '/data/processed_geo_data.json',
-  NY: '/data/ny_geo_data.json',
-} as const;
+interface PayloadDistributor {
+  id: string;
+  name: string;
+  address: string;
+  customerType: string;
+  region: string;
+  location: [number, number]; // [longitude, latitude]
+}
 
 export function useMapData() {
   const [geoData, setGeoData] = useState<GeoJSON | null>(null);
@@ -33,40 +37,45 @@ export function useMapData() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [paResponse, nyResponse] = await Promise.all([
-          fetch(DATA_SOURCES.PA),
-          fetch(DATA_SOURCES.NY)
-        ]);
+        // Fetch distributors from Payload API
+        const params = new URLSearchParams({
+          'where[active][equals]': 'true',
+          limit: '1000',
+          depth: '0',
+        });
 
-        const [paData, nyData] = await Promise.all([
-          paResponse.json(),
-          nyResponse.json()
-        ]) as [GeoJSON, GeoJSON];
+        const response = await fetch(`/api/distributors?${params.toString()}`);
 
-        // Add unique IDs
-        const paFeatures = paData.features.map((feature, index) => ({
-          ...feature,
+        if (!response.ok) {
+          throw new Error(`Failed to fetch distributors: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const distributors: PayloadDistributor[] = data.docs || [];
+
+        // Transform Payload distributors to GeoJSON format
+        const features: GeoFeature[] = distributors.map((dist, index) => ({
+          type: 'Feature' as const,
+          geometry: {
+            type: 'Point' as const,
+            coordinates: dist.location, // Already [longitude, latitude]
+          },
           properties: {
-            ...feature.properties,
-            uniqueId: `pa_${feature.properties.id}_${index}`
-          }
-        }));
-
-        const nyFeatures = nyData.features.map((feature, index) => ({
-          ...feature,
-          properties: {
-            ...feature.properties,
-            uniqueId: `ny_${feature.properties.id}_${index}`
-          }
+            id: index,
+            Name: dist.name,
+            address: dist.address,
+            customerType: dist.customerType,
+            uniqueId: dist.id,
+          },
         }));
 
         setGeoData({
           type: 'FeatureCollection',
-          features: [...paFeatures, ...nyFeatures]
+          features,
         });
         setLoading(false);
       } catch (err) {
-        console.error('Error loading geo data:', err);
+        console.error('Error loading distributor data:', err);
         setError('Failed to load location data');
         setLoading(false);
       }

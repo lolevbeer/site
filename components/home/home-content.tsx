@@ -19,6 +19,7 @@ interface HomeContentProps {
   children: React.ReactNode;
   isAuthenticated?: boolean;
   heroDescription?: string;
+  heroImageUrl?: string | null;
   weeklyHours?: Record<string, WeeklyHoursDay[]>;
 }
 
@@ -30,11 +31,12 @@ export function HomeContent({
   children,
   isAuthenticated = false,
   heroDescription,
+  heroImageUrl,
   weeklyHours,
 }: HomeContentProps) {
   return (
     <div className="min-h-screen">
-      <HeroSection availableBeers={availableBeers} heroDescription={heroDescription} />
+      <HeroSection availableBeers={availableBeers} heroDescription={heroDescription} heroImageUrl={heroImageUrl} />
 
       {/* Our Locations - right after hero */}
       <section className="py-16 lg:py-24 bg-background">

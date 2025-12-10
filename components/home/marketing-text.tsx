@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { Beer } from '@/lib/types/beer';
 import type { Beer as PayloadBeer, Menu as PayloadMenu } from '@/src/payload-types';
 import { BreweryEvent } from '@/lib/types/event';
 import { FoodVendorSchedule } from '@/lib/types/food';
@@ -25,11 +24,15 @@ function toBoldUnicode(text: string): string {
   return text.split('').map(char => boldMap[char] || char).join('');
 }
 
-interface UpcomingBeer {
-  type: string;
-  variant: string;
-  tempName: string;
-  displayName: string;
+interface ComingSoonBeer {
+  beer?: {
+    name: string;
+    slug: string;
+    style?: { name: string } | string;
+  } | string;
+  style?: {
+    name: string;
+  } | string;
 }
 
 interface SimpleBeer {
@@ -62,7 +65,7 @@ interface MarketingTextProps {
   eventsByLocation: Record<string, (BreweryEvent | SimpleEvent)[]>;
   /** Food by location slug */
   foodByLocation: Record<string, (FoodVendorSchedule | SimpleFood)[]>;
-  upcomingBeers: UpcomingBeer[];
+  comingSoonBeers: ComingSoonBeer[];
 }
 
 export function MarketingText({
@@ -70,7 +73,7 @@ export function MarketingText({
   cansMenusByLocation,
   eventsByLocation,
   foodByLocation,
-  upcomingBeers,
+  comingSoonBeers,
 }: MarketingTextProps) {
   const [isVisible, setIsVisible] = useState(false);
   const { locations } = useLocationContext();
@@ -295,12 +298,18 @@ export function MarketingText({
               {Object.values(processedFoodByLocation).some(foods => foods.length > 0) && <div className="my-6" />}
 
               {/* Upcoming Beer Releases */}
-              {upcomingBeers.length > 0 && (
+              {comingSoonBeers.length > 0 && (
                 <div>
                   <div className="mb-2">{toBoldUnicode('UPCOMING BEER RELEASES')}</div>
-                  {upcomingBeers.map((beer, index) => (
-                    <div key={index}>{beer.displayName}</div>
-                  ))}
+                  {comingSoonBeers.map((item, index) => {
+                    // Get beer name from relationship or use style name
+                    const beerName = typeof item.beer === 'object' && item.beer?.name
+                      ? item.beer.name
+                      : typeof item.style === 'object' && item.style?.name
+                        ? item.style.name
+                        : 'Coming Soon';
+                    return <div key={index}>{beerName}</div>;
+                  })}
                 </div>
               )}
             </div>

@@ -1,6 +1,7 @@
 # System Specification: LOLEV Beer Website
 
 **Created**: 2025-12-06
+**Updated**: 2025-12-07
 **Status**: Current State Documentation
 **Purpose**: Complete specification of existing functionality
 
@@ -245,6 +246,44 @@ Admin staff need to manage brewery locations and their hours.
 2. **Given** logged-in admin, **When** they edit hours, **Then** they can set open/close for each day of week
 3. **Given** hours updated, **When** public site loads, **Then** new hours are displayed
 4. **Given** holiday hours needed, **When** admin creates holiday entry, **Then** holiday hours override regular hours on that date
+5. **Given** logged-in admin, **When** they upload location images, **Then** card and hero images are stored in CMS
+6. **Given** logged-in admin, **When** they set Hours Google Sheet URL, **Then** hours can be synced from that sheet
+
+---
+
+### User Story 16 - Admin: Sync Hours from Google Sheets (Priority: P2)
+
+Admin staff need to sync location hours from Google Sheets for easy bulk updates.
+
+**Why this priority**: Enables non-technical staff to update hours via familiar spreadsheet tools.
+
+**Independent Test**: Configure hours sheet URL on location, run sync, verify hours updated.
+
+**Acceptance Scenarios**:
+
+1. **Given** location has hoursSheetUrl configured, **When** admin runs hours sync, **Then** hours are fetched from Google Sheet
+2. **Given** hours sheet has "name,hours" format, **When** synced, **Then** times like "4pm - 10pm" are parsed correctly
+3. **Given** hours sheet has "noon" or "midnight", **When** synced, **Then** special times are parsed correctly
+4. **Given** location has timezone set, **When** hours synced, **Then** times are stored respecting that timezone
+5. **Given** no hoursSheetUrl configured, **When** sync runs, **Then** location is skipped with message
+6. **Given** hours unchanged, **When** sync runs, **Then** location shows "unchanged" status
+
+---
+
+### User Story 17 - Admin: Per-Document Sheet URLs (Priority: P3)
+
+Each CMS document can reference its own Google Sheet for syncing.
+
+**Why this priority**: Enables explicit, auditable data source tracking per document.
+
+**Independent Test**: Set sheetUrl on menu document, run sync, verify that URL is used.
+
+**Acceptance Scenarios**:
+
+1. **Given** menu has sheetUrl configured, **When** menu sync runs, **Then** that URL is used instead of environment variable
+2. **Given** location has hoursSheetUrl configured, **When** hours sync runs, **Then** that URL is used
+3. **Given** no document-level URL configured, **When** sync runs, **Then** falls back to environment variable
+4. **Given** sync in progress, **When** viewing logs, **Then** shows "(from document)" or "(from env)" indicator
 
 ---
 
@@ -323,17 +362,23 @@ Search engines need structured data to properly index the brewery.
 - **FR-018**: System MUST support draft versioning for beers and menus
 - **FR-019**: System MUST allow marking beers as hidden from public site
 - **FR-020**: System MUST support holiday hours overrides per location
+- **FR-021**: System MUST support per-document Google Sheet URLs for menus and hours
+- **FR-022**: System MUST sync location hours from Google Sheets with timezone support
+- **FR-023**: System MUST support CMS-managed images for locations (card/hero)
+- **FR-024**: System MUST support CMS-managed hero image for homepage
+- **FR-025**: System MUST parse flexible time formats (4pm, noon, midnight, 4:00 PM)
 
 ### Key Entities
 
 - **Beer**: Name, slug, style, ABV, description, image, pricing (draft/four-pack/single), recipe number, Untappd link, availability, hidden flag
-- **Location**: Name, slug, address, phone, email, timezone, weekly hours schedule, active flag
-- **Menu**: Name, type (draft/cans), location relationship, URL, items array (beer + price)
+- **Location**: Name, slug, address, phone, email, timezone, weekly hours schedule, active flag, **images (card/hero)**, **hoursSheetUrl**
+- **Menu**: Name, type (draft/cans), location relationship, URL, items array (beer + price), **sheetUrl**
 - **Event**: Vendor/title, date, time, end time, location, site URL, description, visibility
 - **Food**: Vendor, date, time, location, site URL
 - **Style**: Name (beer style reference)
 - **HolidayHours**: Date, location, open/close times (or closed flag)
-- **User**: Email, password (admin authentication)
+- **User**: Email, password, **role (admin/editor)** (admin authentication)
+- **SiteContent** (Global): heroDescription, **heroImage**, errorMessage, todaysEventsTitle, todaysFoodTitle
 
 ---
 
@@ -412,6 +457,8 @@ Google Sheets → Sync Endpoint → Payload CMS (MongoDB)
 - Auto-generated URL
 - Auto-sorted items (cans by recipe desc)
 - Draft versioning enabled
+- **sheetUrl**: Per-document Google Sheet URL for syncing
+- Role-based access (admin/editor)
 
 ### Locations Collection
 - Address fields (street, city, state, zip)
@@ -419,6 +466,9 @@ Google Sheets → Sync Endpoint → Payload CMS (MongoDB)
 - Weekly hours (Mon-Sun with open/close)
 - Timezone support
 - Active flag
+- **images.card**: Card image for location displays
+- **images.hero**: Hero/banner image for location
+- **hoursSheetUrl**: Google Sheet URL for syncing hours
 
 ### Events Collection
 - Date/time fields
@@ -442,6 +492,24 @@ Google Sheets → Sync Endpoint → Payload CMS (MongoDB)
 | `/api/menu-by-url/[url]` | GET | Fetch menu by URL slug |
 | `/api/[...slug]` | * | Payload REST API |
 | `/api/graphql` | POST | Payload GraphQL API |
+
+### Sync Endpoint Collections
+
+The sync endpoint (`/api/sync-google-sheets`) supports the following collections via the `collections` query parameter:
+
+| Collection | Source | Notes |
+|------------|--------|-------|
+| `events` | Environment variables | Per-location CSV URLs |
+| `food` | Environment variables | Per-location CSV URLs |
+| `beers` | Environment variable | Single CSV URL |
+| `menus` | Document `sheetUrl` or env | Prefers per-document URL |
+| `hours` | Document `hoursSheetUrl` | Per-location, timezone-aware |
+
+**Hours CSV Format** (supported columns):
+- `name` or `day`: Day name (Mon, Tuesday, etc.)
+- `hours`: Combined format ("4pm - 10pm") or
+- `open`/`close`: Separate columns
+- Special values: "noon", "midnight", "closed"
 
 ---
 

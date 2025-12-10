@@ -10,14 +10,13 @@ export const SyncNavLink: React.FC = () => {
 
   return (
     <NavGroup label="Tools">
-      <div>
-        <a
-          href="/admin/sync"
-          className={`nav-group__link ${isActive ? 'nav-group__link--active' : ''}`}
-        >
-          <span className="nav-group__link-label">Sync</span>
-        </a>
-      </div>
+      <a
+        href="/admin/sync"
+        className={`nav__link${isActive ? ' nav__link--active' : ''}`}
+        id="nav-sync"
+      >
+        <span className="nav__link-label">Sync</span>
+      </a>
     </NavGroup>
   )
 }

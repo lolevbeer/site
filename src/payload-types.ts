@@ -76,6 +76,7 @@ export interface Config {
     locations: Location;
     'holiday-hours': HolidayHour;
     menus: Menu;
+    distributors: Distributor;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -92,6 +93,7 @@ export interface Config {
     locations: LocationsSelect<false> | LocationsSelect<true>;
     'holiday-hours': HolidayHoursSelect<false> | HolidayHoursSelect<true>;
     menus: MenusSelect<false> | MenusSelect<true>;
+    distributors: DistributorsSelect<false> | DistributorsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -143,6 +145,10 @@ export interface UserAuthOperations {
 export interface User {
   id: string;
   name?: string | null;
+  /**
+   * Admins can manage users and all content. Editors can manage content only.
+   */
+  role: 'admin' | 'editor';
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -339,6 +345,10 @@ export interface Location {
    * Auto-generated from name (lowercase, spaces to dashes)
    */
   slug?: string | null;
+  /**
+   * Google Sheets CSV export URL for syncing hours (optional)
+   */
+  hoursSheetUrl?: string | null;
   basicInfo?: {
     phone?: string | null;
     email?: string | null;
@@ -348,6 +358,16 @@ export interface Location {
     city?: string | null;
     state?: string | null;
     zip?: string | null;
+  };
+  images?: {
+    /**
+     * Image shown on location cards (recommended: 800x600px)
+     */
+    card?: (string | null) | Media;
+    /**
+     * Hero/banner image for this location (recommended: 1920x1080px)
+     */
+    hero?: (string | null) | Media;
   };
   monday?: {
     open?: string | null;
@@ -494,6 +514,10 @@ export interface Menu {
    * Auto-generated from location and type, but you can override it manually
    */
   url: string;
+  /**
+   * Google Sheets CSV export URL for syncing this menu (optional)
+   */
+  sheetUrl?: string | null;
   items: {
     /**
      * Search by name or slug
@@ -508,6 +532,66 @@ export interface Menu {
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "distributors".
+ */
+export interface Distributor {
+  id: string;
+  /**
+   * Business or location name
+   */
+  name: string;
+  /**
+   * Full street address
+   */
+  address: string;
+  /**
+   * City name
+   */
+  city?: string | null;
+  /**
+   * State abbreviation (e.g., PA, NY)
+   */
+  state?: string | null;
+  /**
+   * ZIP code
+   */
+  zip?: string | null;
+  /**
+   * Type of customer/location
+   */
+  customerType: 'Retail' | 'On Premise' | 'Home-D';
+  /**
+   * Geographic region
+   */
+  region?: ('PA' | 'NY' | 'OH' | 'WV') | null;
+  /**
+   * Geographic coordinates [longitude, latitude]
+   *
+   * @minItems 2
+   * @maxItems 2
+   */
+  location: [number, number];
+  /**
+   * Contact phone number
+   */
+  phone?: string | null;
+  /**
+   * Website URL
+   */
+  website?: string | null;
+  /**
+   * Whether this location is currently active
+   */
+  active?: boolean | null;
+  /**
+   * Where this record originated
+   */
+  source?: ('payload' | 'google-sheets') | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -568,6 +652,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'menus';
         value: string | Menu;
+      } | null)
+    | ({
+        relationTo: 'distributors';
+        value: string | Distributor;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -617,6 +705,7 @@ export interface PayloadMigration {
  */
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
+  role?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -765,6 +854,7 @@ export interface LocationsSelect<T extends boolean = true> {
   name?: T;
   timezone?: T;
   slug?: T;
+  hoursSheetUrl?: T;
   basicInfo?:
     | T
     | {
@@ -778,6 +868,12 @@ export interface LocationsSelect<T extends boolean = true> {
         city?: T;
         state?: T;
         zip?: T;
+      };
+  images?:
+    | T
+    | {
+        card?: T;
+        hero?: T;
       };
   monday?:
     | T
@@ -853,6 +949,7 @@ export interface MenusSelect<T extends boolean = true> {
   location?: T;
   type?: T;
   url?: T;
+  sheetUrl?: T;
   items?:
     | T
     | {
@@ -863,6 +960,26 @@ export interface MenusSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "distributors_select".
+ */
+export interface DistributorsSelect<T extends boolean = true> {
+  name?: T;
+  address?: T;
+  city?: T;
+  state?: T;
+  zip?: T;
+  customerType?: T;
+  region?: T;
+  location?: T;
+  phone?: T;
+  website?: T;
+  active?: T;
+  source?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -932,6 +1049,10 @@ export interface ComingSoon {
  */
 export interface SiteContent {
   id: string;
+  /**
+   * Background image for the homepage hero section (recommended: 1920x1080px or larger)
+   */
+  heroImage?: (string | null) | Media;
   heroDescription?: string | null;
   errorMessage?: string | null;
   todaysEventsTitle?: string | null;
@@ -960,6 +1081,7 @@ export interface ComingSoonSelect<T extends boolean = true> {
  * via the `definition` "site-content_select".
  */
 export interface SiteContentSelect<T extends boolean = true> {
+  heroImage?: T;
   heroDescription?: T;
   errorMessage?: T;
   todaysEventsTitle?: T;

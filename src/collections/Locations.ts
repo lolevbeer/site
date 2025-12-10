@@ -1,5 +1,10 @@
-import type { CollectionConfig } from 'payload'
+import type { CollectionConfig, Access } from 'payload'
 import { generateUniqueSlug } from './utils/generateUniqueSlug'
+
+// Check if user is admin or editor
+const isAdminOrEditor: Access = ({ req: { user } }) => {
+  return user?.role === 'admin' || user?.role === 'editor'
+}
 
 export const Locations: CollectionConfig = {
   slug: 'locations',
@@ -7,7 +12,10 @@ export const Locations: CollectionConfig = {
     useAsTitle: 'name',
   },
   access: {
-    read: () => true,
+    read: () => true, // Public read access
+    create: isAdminOrEditor,
+    update: isAdminOrEditor,
+    delete: isAdminOrEditor,
   },
   hooks: {
     beforeChange: [
@@ -66,6 +74,15 @@ export const Locations: CollectionConfig = {
       },
     },
     {
+      name: 'hoursSheetUrl',
+      type: 'text',
+      label: 'Hours Google Sheet URL',
+      admin: {
+        description: 'Google Sheets CSV export URL for syncing hours (optional)',
+        position: 'sidebar',
+      },
+    },
+    {
       name: 'basicInfo',
       type: 'group',
       label: 'Contact Information',
@@ -105,6 +122,29 @@ export const Locations: CollectionConfig = {
         {
           name: 'zip',
           type: 'text',
+        },
+      ],
+    },
+    {
+      name: 'images',
+      type: 'group',
+      label: 'Location Images',
+      fields: [
+        {
+          name: 'card',
+          type: 'upload',
+          relationTo: 'media',
+          admin: {
+            description: 'Image shown on location cards (recommended: 800x600px)',
+          },
+        },
+        {
+          name: 'hero',
+          type: 'upload',
+          relationTo: 'media',
+          admin: {
+            description: 'Hero/banner image for this location (recommended: 1920x1080px)',
+          },
         },
       ],
     },

@@ -22,6 +22,7 @@ import type { Beer as PayloadBeer } from '@/src/payload-types';
 interface HeroSectionProps {
   availableBeers: PayloadBeer[];
   heroDescription?: string;
+  heroImageUrl?: string | null;
 }
 
 function getBeerImageUrl(beer: PayloadBeer): string | null {
@@ -31,20 +32,24 @@ function getBeerImageUrl(beer: PayloadBeer): string | null {
   return null;
 }
 
-export function HeroSection({ availableBeers, heroDescription }: HeroSectionProps) {
+export function HeroSection({ availableBeers, heroDescription, heroImageUrl }: HeroSectionProps) {
   return (
     <div className="relative flex flex-col gap-8 md:gap-16 px-4 md:px-8 py-16 md:py-24 text-center min-h-[600px] md:min-h-[700px]">
       {/* Background image */}
       <div className="absolute inset-0 z-0">
-        <Image
-          src="/images/bar.jpg"
-          alt="Interior view of Lolev Beer taproom showing bar area with craft beer taps"
-          fill
-          className="object-cover object-center"
-          priority
-          fetchPriority="high"
-          quality={90}
-        />
+        {heroImageUrl ? (
+          <Image
+            src={heroImageUrl}
+            alt="Interior view of Lolev Beer taproom showing bar area with craft beer taps"
+            fill
+            className="object-cover object-center"
+            priority
+            fetchPriority="high"
+            quality={90}
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-amber-900/20 to-orange-800/30" />
+        )}
         {/* Overlay for better text readability */}
         <div className="absolute inset-0 bg-background/80 backdrop-blur-[2px]" />
       </div>

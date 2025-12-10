@@ -106,7 +106,7 @@ function SpecificationRow({
 export function BeerDetails({ beer, className = '', isAuthenticated = false }: BeerDetailsProps) {
   const { currentLocation } = useLocationContext();
   const imagePath = getBeerImagePath(beer);
-  const availability = getAvailabilityInfo(beer);
+  const _availability = getAvailabilityInfo(beer);
   const pricing = getPricingInfo(beer);
   const GlassIcon = getGlassIcon(beer.glass);
   const [tapLocations, setTapLocations] = useState<string[]>([]);

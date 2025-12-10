@@ -4,7 +4,7 @@
  */
 
 import { useState, useMemo, useCallback } from 'react';
-import type { Beer, BeerFilters, LocationBeerAvailability } from '@/lib/types/beer';
+import type { Beer, BeerFilters } from '@/lib/types/beer';
 import { getLocationAvailability } from '@/lib/types/beer';
 import type { LocationFilter } from '@/lib/types/location';
 

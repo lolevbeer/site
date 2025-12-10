@@ -9,7 +9,7 @@ import { getGlassIcon } from '@/lib/utils/beer-icons';
 import { useLocationContext } from '@/components/location/location-provider';
 import { DraftBeerCard } from '@/components/beer/draft-beer-card';
 import { Pencil } from 'lucide-react';
-import type { Menu, Beer as PayloadBeer, Style } from '@/src/payload-types';
+import type { Menu, Style } from '@/src/payload-types';
 import type { Beer } from '@/lib/types/beer';
 
 type MenuType = 'draft' | 'cans';

@@ -3,9 +3,9 @@
  * Bridges the gap between Payload schema and existing app interfaces
  */
 
-import type { Beer as PayloadBeer, Menu as PayloadMenu, Style, Media } from '@/src/payload-types'
+import type { Beer as PayloadBeer, Menu as PayloadMenu, Style } from '@/src/payload-types'
 import type { PayloadLocation } from '@/lib/types/location'
-import type { Beer, DraftBeer, CannedBeer } from '@/lib/types/beer'
+import type { Beer } from '@/lib/types/beer'
 import { GlassType, BeerStyle } from '@/lib/types/beer'
 import { access, constants } from 'fs/promises'
 import { join } from 'path'
@@ -45,7 +45,7 @@ function getLocationSlug(location: string | PayloadLocation | undefined): string
 /**
  * Convert Payload Beer to app Beer interface
  */
-export async function convertPayloadBeer(payloadBeer: PayloadBeer): Promise<Beer> {
+async function convertPayloadBeer(payloadBeer: PayloadBeer): Promise<Beer> {
   const styleName = getStyleName(payloadBeer.style)
   const variant = payloadBeer.slug || payloadBeer.name.toLowerCase().replace(/\s+/g, '-')
   const hasImage = await imageExists(variant)
@@ -58,7 +58,7 @@ export async function convertPayloadBeer(payloadBeer: PayloadBeer): Promise<Beer
     glass: payloadBeer.glass as GlassType,
     description: payloadBeer.description || '',
     upc: payloadBeer.upc || undefined,
-    glutenFree: false, // Not in Payload schema yet
+    glutenFree: false,
     image: hasImage,
     untappd: payloadBeer.untappd ? parseInt(payloadBeer.untappd) : undefined,
     recipe: payloadBeer.recipe || undefined,
@@ -71,78 +71,12 @@ export async function convertPayloadBeer(payloadBeer: PayloadBeer): Promise<Beer
       salePrice: false,
     },
     availability: {
-      cansAvailable: false, // Will be determined from menus
+      cansAvailable: false,
       singleCanAvailable: false,
       hideFromSite: payloadBeer.hideFromSite || false,
-      tap: undefined, // Will be determined from menus
+      tap: undefined,
     },
   }
-}
-
-/**
- * Convert Payload Menu items to Draft Beers
- */
-export async function convertMenuToDraftBeers(menu: PayloadMenu): Promise<DraftBeer[]> {
-  if (!menu.items || menu.type !== 'draft') {
-    return []
-  }
-
-  const draftBeers: DraftBeer[] = []
-
-  for (let i = 0; i < menu.items.length; i++) {
-    const item = menu.items[i]
-    const beer = typeof item.beer === 'string' ? null : item.beer as PayloadBeer
-
-    if (!beer) continue
-
-    const baseBeer = await convertPayloadBeer(beer)
-    const tapNumber = (i + 1).toString() // Use array index as tap number
-
-    draftBeers.push({
-      ...baseBeer,
-      tap: tapNumber,
-      price: item.price || baseBeer.pricing.draftPrice?.toString() || '',
-      pricing: {
-        ...baseBeer.pricing,
-        draftPrice: item.price ? parseFloat(item.price) : baseBeer.pricing.draftPrice,
-      },
-    })
-  }
-
-  return draftBeers
-}
-
-/**
- * Convert Payload Menu items to Canned Beers
- */
-export async function convertMenuToCannedBeers(menu: PayloadMenu): Promise<CannedBeer[]> {
-  if (!menu.items || menu.type !== 'cans') {
-    return []
-  }
-
-  const cannedBeers: CannedBeer[] = []
-
-  for (const item of menu.items) {
-    const beer = typeof item.beer === 'string' ? null : item.beer as PayloadBeer
-
-    if (!beer) continue
-
-    const baseBeer = await convertPayloadBeer(beer)
-
-    cannedBeers.push({
-      ...baseBeer,
-      cansAvailable: true,
-      cansSingle: beer.canSingle?.toString() || '',
-      fourPack: beer.fourPack?.toString() || '',
-      availability: {
-        ...baseBeer.availability,
-        cansAvailable: true,
-        singleCanAvailable: false,
-      },
-    })
-  }
-
-  return cannedBeers
 }
 
 /**
@@ -188,7 +122,6 @@ export async function getBeersWithAvailability(
 
       // Update location-specific availability dynamically
       if (locationSlug) {
-        // Initialize location availability if not present
         const existingLocAvail = beer.availability[locationSlug]
         if (!existingLocAvail || typeof existingLocAvail !== 'object') {
           beer.availability[locationSlug] = {}

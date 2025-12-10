@@ -15,7 +15,6 @@ import {
   getUpcomingFoodFromPayload,
   type WeeklyHoursDay,
 } from './payload-api';
-import { getUpcomingBeers } from '@/lib/data/beer-data'; // Still uses CSV for now (static data)
 import { isAuthenticated } from './auth';
 import { getSiteContent } from './site-content';
 import { arrayToLocationMap } from './array-helpers';
@@ -25,8 +24,7 @@ export interface HomePageData {
   // Core data
   locations: PayloadLocation[];
   availableBeers: PayloadBeer[];
-  upcomingBeersData: any[]; // From CSV (coming-soon-data.ts)
-  comingSoonBeers: any[]; // From Payload
+  comingSoonBeers: any[]; // From Payload global
   authenticated: boolean;
   siteContent: any;
 
@@ -54,11 +52,10 @@ export interface HomePageData {
  */
 export const getHomePageData = cache(async (): Promise<HomePageData> => {
   // Step 1: Fetch location-independent data in parallel
-  const [locations, availableBeers, upcomingBeersData, comingSoonBeers, authenticated, siteContent] =
+  const [locations, availableBeers, comingSoonBeers, authenticated, siteContent] =
     await Promise.all([
       getAllLocations(),
       getAvailableBeersFromMenus(),
-      getUpcomingBeers(),
       getComingSoonBeers(),
       isAuthenticated(),
       getSiteContent(),
@@ -136,7 +133,6 @@ export const getHomePageData = cache(async (): Promise<HomePageData> => {
     // Core data
     locations,
     availableBeers,
-    upcomingBeersData,
     comingSoonBeers,
     authenticated,
     siteContent,

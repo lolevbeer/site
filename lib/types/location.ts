@@ -7,7 +7,7 @@ import type { Location as BasePayloadLocation } from '@/src/payload-types';
 
 /**
  * Extended Payload Location type that includes coordinates
- * (coordinates field will be added to Payload CMS schema)
+ * The images field is now part of BasePayloadLocation from generated types
  */
 export interface PayloadLocation extends BasePayloadLocation {
   coordinates?: {

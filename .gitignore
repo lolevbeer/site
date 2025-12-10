@@ -60,3 +60,4 @@ next-env.d.ts
 !/public/images
 /public/images/*
 !/public/images/beer
+!/public/*_geo_data.json

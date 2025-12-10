@@ -332,12 +332,12 @@ export const getComingSoonBeers = cache(async () => {
 /**
  * Fetch a global by slug
  */
-export const fetchGlobal = cache(async (slug: string) => {
+export const fetchGlobal = cache(async (slug: string, depth: number = 0) => {
   try {
     const payload = await getPayloadInstance()
     const result = await payload.findGlobal({
       slug: slug as 'coming-soon' | 'site-content',
-      depth: 0,
+      depth,
     })
     return result
   } catch (error) {

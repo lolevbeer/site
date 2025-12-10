@@ -24,7 +24,7 @@ import {
   SheetTrigger,
   SheetClose,
 } from '@/components/ui/sheet';
-import { ABV_LEVELS, type ABVLevel } from '@/lib/constants/beer-filters';
+import { ABV_LEVELS } from '@/lib/constants/beer-filters';
 import {
   Select,
   SelectContent,
@@ -52,7 +52,7 @@ interface BeerPageContentProps {
   beers: Beer[];
 }
 
-type SortOption = 'name' | 'abv-asc' | 'abv-desc' | 'type' | 'recipe';
+type _SortOption = 'name' | 'abv-asc' | 'abv-desc' | 'type' | 'recipe';
 
 // nuqs parsers for URL state
 const abvLevelsParser = parseAsArrayOf(parseAsString);
