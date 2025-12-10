@@ -14,7 +14,7 @@ const nextConfig = {
   },
 
   env: {
-    NEXT_PUBLIC_SERVER_URL: process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL
+    NEXT_PUBLIC_SERVER_URL: process.env.VERCEL_URL
       ? `https://${process.env.VERCEL_URL}`
       : 'http://localhost:3000',
   },
