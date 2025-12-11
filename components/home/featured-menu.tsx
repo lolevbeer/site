@@ -21,7 +21,8 @@ interface MenuItem {
   abv?: string;
   description: string;
   glutenFree: boolean;
-  image?: boolean;
+  /** Image URL from Payload CMS Media, or undefined if no image */
+  imageUrl?: string;
   onDraft?: boolean;
   glass?: string;
   fourPack?: string;
@@ -46,6 +47,27 @@ interface FeaturedMenuProps {
   isAuthenticated?: boolean;
 }
 
+/**
+ * Extract image URL from Payload Media object
+ * Makes URL relative to work with any domain/port
+ */
+function getImageUrl(image: unknown): string | undefined {
+  if (!image) return undefined;
+  if (typeof image === 'string') return undefined; // Just an ID, not populated
+
+  const media = image as { url?: string | null };
+  if (!media.url) return undefined;
+
+  // Make URL relative if it's absolute
+  if (media.url.startsWith('/')) return media.url;
+  try {
+    const parsed = new URL(media.url);
+    return parsed.pathname;
+  } catch {
+    return media.url;
+  }
+}
+
 // Shared logic to convert menu items
 function convertMenuItems(menuData: Menu): MenuItem[] {
   if (!menuData?.items) return [];
@@ -67,7 +89,7 @@ function convertMenuItems(menuData: Menu): MenuItem[] {
         abv: beer.abv?.toString() || '0',
         description: beer.description || '',
         glutenFree: false,
-        image: !!beer.image,
+        imageUrl: getImageUrl(beer.image),
         glass: beer.glass || 'pint',
         fourPack: beer.fourPack?.toString() || item.price || undefined,
         recipe: beer.recipe || 0,
@@ -141,6 +163,29 @@ function AdminEditButtons({
 function CanCard({ item, fullscreen = false }: { item: MenuItem; fullscreen?: boolean }) {
   const GlassIcon = getGlassIcon(item.glass);
 
+  // Shared image rendering logic
+  const renderImage = (heightClass?: string) => {
+    if (item.imageUrl) {
+      return (
+        <Image
+          src={item.imageUrl}
+          alt={`${item.name} - ${item.type || 'Craft beer'} can`}
+          fill
+          className="object-contain"
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+        />
+      );
+    }
+    return (
+      <div className={`flex items-center justify-center ${heightClass || 'h-full'}`}>
+        <div className="text-center px-4">
+          <div className="text-2xl font-bold text-muted-foreground/30 mb-2">{item.name}</div>
+          <div className="text-sm text-muted-foreground/30">{item.type}</div>
+        </div>
+      </div>
+    );
+  };
+
   if (fullscreen) {
     return (
       <Link
@@ -149,23 +194,7 @@ function CanCard({ item, fullscreen = false }: { item: MenuItem; fullscreen?: bo
         style={{ width: 'calc(20% - 16px)', minWidth: '180px', maxWidth: '220px' }}
       >
         <div className="relative w-full transition-transform duration-200 group-hover:scale-[1.02]" style={{ height: 'calc(45vh - 80px)', maxHeight: '380px' }}>
-          {item.image ? (
-            <Image
-              src={`/images/beer/${item.variant.toLowerCase()}.png`}
-              alt={`${item.name} - ${item.type || 'Craft beer'} can`}
-              fill
-              className="object-contain"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-              onError={(e) => { e.currentTarget.style.display = 'none'; }}
-            />
-          ) : (
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center px-4">
-                <div className="text-2xl font-bold text-muted-foreground/30 mb-2">{item.name}</div>
-                <div className="text-sm text-muted-foreground/30">{item.type}</div>
-              </div>
-            </div>
-          )}
+          {renderImage()}
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 pointer-events-none" style={{ marginLeft: '-11px', marginTop: 'calc(40px + 10em)' }}>
             {item.isJustReleased && (
               <Badge variant="default" className="text-xs mb-1">
@@ -194,23 +223,7 @@ function CanCard({ item, fullscreen = false }: { item: MenuItem; fullscreen?: bo
       className="group flex flex-col cursor-pointer"
     >
       <div className="relative h-64 w-full flex-shrink-0 mb-4 transition-transform duration-200 group-hover:scale-[1.02]">
-        {item.image ? (
-          <Image
-            src={`/images/beer/${item.variant.toLowerCase()}.png`}
-            alt={`${item.name} - ${item.type || 'Craft beer'} can`}
-            fill
-            className="object-contain"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-            onError={(e) => { e.currentTarget.style.display = 'none'; }}
-          />
-        ) : (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center px-4">
-              <div className="text-2xl font-bold text-muted-foreground/30 mb-2">{item.name}</div>
-              <div className="text-sm text-muted-foreground/30">{item.type}</div>
-            </div>
-          </div>
-        )}
+        {renderImage()}
         {item.isJustReleased && (
           <Badge variant="default" className="absolute -bottom-3 left-1/2 -translate-x-1/2 text-xs">
             Just Released

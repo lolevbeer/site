@@ -3,24 +3,42 @@
  * Bridges the gap between Payload schema and existing app interfaces
  */
 
-import type { Beer as PayloadBeer, Menu as PayloadMenu, Style } from '@/src/payload-types'
+import type { Beer as PayloadBeer, Menu as PayloadMenu, Style, Media } from '@/src/payload-types'
 import type { PayloadLocation } from '@/lib/types/location'
 import type { Beer } from '@/lib/types/beer'
 import { GlassType, BeerStyle } from '@/lib/types/beer'
-import { access, constants } from 'fs/promises'
-import { join } from 'path'
 
 /**
- * Check if a beer image exists in the public directory
+ * Normalize a Payload media URL to be relative (domain/port agnostic)
+ * This handles URLs like "http://localhost:3002/api/media/file/hades.png"
+ * and converts them to "/api/media/file/hades.png"
  */
-async function imageExists(variant: string): Promise<boolean> {
-  const imagePath = join(process.cwd(), 'public', 'images', 'beer', `${variant}.webp`)
+function normalizeMediaUrl(url: string): string {
+  // If already relative, return as-is
+  if (url.startsWith('/')) return url
+
   try {
-    await access(imagePath, constants.F_OK)
-    return true
+    const parsed = new URL(url)
+    // Return just the pathname (e.g., "/api/media/file/hades.png")
+    return parsed.pathname
   } catch {
-    return false
+    // If URL parsing fails, return original
+    return url
   }
+}
+
+/**
+ * Get image URL from Payload beer's image field
+ * Returns a relative URL path if image is a Media object with url, otherwise false
+ * URLs are normalized to be relative to work with any domain/port
+ */
+function getImageFromPayload(image: PayloadBeer['image']): string | boolean {
+  if (!image) return false
+  if (typeof image === 'string') return false // Just an ID reference, not populated
+  // It's a Media object
+  const media = image as Media
+  if (media.url) return normalizeMediaUrl(media.url)
+  return false
 }
 
 /**
@@ -45,12 +63,13 @@ function getLocationSlug(location: string | PayloadLocation | undefined): string
 /**
  * Convert Payload Beer to app Beer interface
  */
-async function convertPayloadBeer(payloadBeer: PayloadBeer): Promise<Beer> {
+function convertPayloadBeer(payloadBeer: PayloadBeer): Beer {
   const styleName = getStyleName(payloadBeer.style)
   const variant = payloadBeer.slug || payloadBeer.name.toLowerCase().replace(/\s+/g, '-')
-  const hasImage = await imageExists(variant)
+  const image = getImageFromPayload(payloadBeer.image)
 
   return {
+    id: payloadBeer.id,
     variant,
     name: payloadBeer.name,
     type: styleName as BeerStyle,
@@ -59,7 +78,7 @@ async function convertPayloadBeer(payloadBeer: PayloadBeer): Promise<Beer> {
     description: payloadBeer.description || '',
     upc: payloadBeer.upc || undefined,
     glutenFree: false,
-    image: hasImage,
+    image,
     untappd: payloadBeer.untappd ? parseInt(payloadBeer.untappd) : undefined,
     recipe: payloadBeer.recipe || undefined,
     hops: payloadBeer.hops || undefined,
@@ -83,15 +102,15 @@ async function convertPayloadBeer(payloadBeer: PayloadBeer): Promise<Beer> {
  * Get beers with availability data from menus
  * Enriches base beer data with menu/location information
  */
-export async function getBeersWithAvailability(
+export function getBeersWithAvailability(
   beers: PayloadBeer[],
   menus: PayloadMenu[]
-): Promise<Beer[]> {
+): Beer[] {
   const beerMap = new Map<string, Beer>()
 
   // First convert all beers
   for (const payloadBeer of beers) {
-    const beer = await convertPayloadBeer(payloadBeer)
+    const beer = convertPayloadBeer(payloadBeer)
     beerMap.set(beer.variant.toLowerCase(), beer)
   }
 

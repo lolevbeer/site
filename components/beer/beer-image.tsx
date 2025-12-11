@@ -9,20 +9,47 @@ interface BeerImageProps {
     variant: string;
     name: string;
     type?: string;
-    image?: boolean;
+    /** Can be a boolean (true = use local PNG) or a URL string from Payload CMS */
+    image?: boolean | string;
   };
   className?: string;
   priority?: boolean;
   sizes?: string;
 }
 
+/**
+ * Normalize a URL to be relative (domain/port agnostic)
+ * Converts "http://localhost:3002/api/media/file/hades.png" to "/api/media/file/hades.png"
+ */
+function normalizeUrl(url: string): string {
+  if (url.startsWith('/')) return url;
+  try {
+    const parsed = new URL(url);
+    return parsed.pathname;
+  } catch {
+    return url;
+  }
+}
+
+/**
+ * Get the image path for a beer
+ * - If image is a URL string, normalize it to be relative
+ * - If image is true, use the local PNG file
+ * - If image is false/undefined, return null
+ */
+function getImagePath(beer: BeerImageProps['beer']): string | null {
+  if (!beer.image) return null;
+  if (typeof beer.image === 'string') return normalizeUrl(beer.image);
+  // image is true, use local PNG
+  return `/images/beer/${beer.variant}.png`;
+}
+
 export function BeerImage({ beer, className, priority = false, sizes }: BeerImageProps) {
   const [imageError, setImageError] = useState(false);
-  // Use PNG for high resolution (2500x2500) instead of webp (386x405)
-  const imagePath = `/images/beer/${beer.variant}.png`;
+  const imagePath = getImagePath(beer);
 
-  // Show fallback if image flag is false or if image failed to load
-  if (!beer.image || imageError) {
+  // Show fallback if no image or if image failed to load
+  if (!imagePath || imageError) {
     return (
       <div className={cn(
         "flex flex-col items-center justify-center bg-gradient-to-b from-muted/30 to-muted/10 dark:from-muted/10 dark:to-muted/5",

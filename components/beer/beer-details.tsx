@@ -35,11 +35,47 @@ import { UntappdIcon } from '@/components/icons/untappd-icon';
 import { getGlassIcon } from '@/lib/utils/beer-icons';
 import { formatAbv } from '@/lib/utils/formatters';
 
-function getBeerImagePath(beer: { slug?: string; image?: unknown }): string | null {
-  // Only return image path if there's actually a Payload image
-  if (beer.image && typeof beer.image === 'object' && 'url' in beer.image) {
-    return beer.image.url as string;
+/**
+ * Normalize a URL to be relative (domain/port agnostic)
+ * Converts "http://localhost:3002/api/media/file/hades.png" to "/api/media/file/hades.png"
+ */
+function normalizeUrl(url: string): string {
+  if (url.startsWith('/')) return url;
+  try {
+    const parsed = new URL(url);
+    return parsed.pathname;
+  } catch {
+    return url;
   }
+}
+
+/**
+ * Get image URL from beer
+ * Supports both:
+ * - Payload Beer objects with image as Media relation
+ * - Converted Beer objects where image is already a URL string
+ * - Boolean (true = use local PNG, false = no image)
+ * URLs are normalized to be relative to work with any domain/port
+ */
+function getBeerImagePath(beer: { slug?: string; variant?: string; image?: unknown }): string | null {
+  if (!beer.image) return null;
+
+  // Already a URL string (from payload-adapter conversion or direct URL)
+  if (typeof beer.image === 'string') return normalizeUrl(beer.image);
+
+  // Boolean true means use local PNG file
+  if (beer.image === true) {
+    const slug = beer.slug || beer.variant;
+    if (slug) return `/images/beer/${slug}.png`;
+    return null;
+  }
+
+  // Payload Media object with url property
+  if (typeof beer.image === 'object' && beer.image !== null && 'url' in beer.image) {
+    const url = (beer.image as { url?: string | null }).url;
+    return url ? normalizeUrl(url) : null;
+  }
+
   return null;
 }
 

@@ -94,7 +94,8 @@ export interface Beer {
   description: string;
   upc?: string;
   glutenFree: boolean;
-  image: boolean;
+  /** Can be a boolean (true = use local PNG), or a URL string from Payload CMS */
+  image: boolean | string;
   untappd?: number;
   recipe?: number;
   hops?: string;

@@ -27,7 +27,7 @@ export const getAllBeersFromCSV = cache(async (): Promise<Beer[]> => {
   const allMenus = menusByLocation.flat();
 
   // Convert and enrich beers with menu data
-  const beers = await getBeersWithAvailability(payloadBeers, allMenus);
+  const beers = getBeersWithAvailability(payloadBeers, allMenus);
 
   return beers;
 });
@@ -48,7 +48,7 @@ export async function getBeerByVariant(variant: string): Promise<Beer | null> {
   const menusByLocation = await Promise.all(menuPromises);
 
   const allMenus = menusByLocation.flat();
-  const beersWithAvailability = await getBeersWithAvailability([beer], allMenus);
+  const beersWithAvailability = getBeersWithAvailability([beer], allMenus);
 
   return beersWithAvailability[0] || null;
 }
