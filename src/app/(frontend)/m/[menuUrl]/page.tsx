@@ -1,6 +1,10 @@
 import { getMenuByUrl } from '@/lib/utils/payload-api'
-import { FeaturedBeers, FeaturedCans } from '@/components/home/featured-menu'
+import { LiveMenu } from '@/components/menu/live-menu'
 import { notFound } from 'next/navigation'
+
+// ISR: Revalidate every minute as fallback for initial page load
+// SSE handles real-time updates after hydration
+export const revalidate = 60
 
 interface MenuPageProps {
   params: Promise<{
@@ -16,25 +20,16 @@ export default async function MenuPage({ params }: MenuPageProps) {
     notFound()
   }
 
-  // Render based on menu type
-  if (menu.type === 'draft') {
-    return (
-      <div className="h-screen w-screen overflow-hidden flex flex-col">
-        <FeaturedBeers menu={menu} />
-      </div>
-    )
+  // For 'other' type or unknown, return 404
+  if (menu.type !== 'draft' && menu.type !== 'cans') {
+    notFound()
   }
 
-  if (menu.type === 'cans') {
-    return (
-      <div className="h-screen w-screen overflow-hidden flex flex-col">
-        <FeaturedCans menu={menu} />
-      </div>
-    )
-  }
-
-  // For 'other' type or unknown
-  return notFound()
+  // Use LiveMenu for real-time updates via SSE
+  // - Single persistent connection per display
+  // - Updates within 5 seconds of Payload changes
+  // - Auto-reconnects if connection drops
+  return <LiveMenu menuUrl={menuUrl} initialMenu={menu} />
 }
 
 // Generate metadata

@@ -5,6 +5,7 @@
 
 import { Metadata } from 'next';
 import { BeerMapContent } from '@/components/beer/beer-map-content';
+import { getAllLocations, getWeeklyHoursWithHolidays, type WeeklyHoursDay } from '@/lib/utils/payload-api';
 
 export const metadata: Metadata = {
   title: 'Find Us | Love of Lev Brewery',
@@ -17,6 +18,16 @@ export const metadata: Metadata = {
   }
 };
 
-export default function BeerMapPage() {
-  return <BeerMapContent />;
+export default async function BeerMapPage() {
+  // Fetch locations and weekly hours
+  const locations = await getAllLocations();
+  const weeklyHoursEntries = await Promise.all(
+    locations.map(async (location) => {
+      const hours = await getWeeklyHoursWithHolidays(location.id);
+      return [location.slug, hours] as [string, WeeklyHoursDay[]];
+    })
+  );
+  const weeklyHours: Record<string, WeeklyHoursDay[]> = Object.fromEntries(weeklyHoursEntries);
+
+  return <BeerMapContent weeklyHours={weeklyHours} />;
 }

@@ -8,6 +8,9 @@ import { JsonLd } from '@/components/seo/json-ld';
 import { generateEventJsonLd, generateFoodEventJsonLd } from '@/lib/utils/json-ld';
 import { generateLocalBusinessSchemas, generateOrganizationSchema } from '@/lib/utils/local-business-schema';
 
+// ISR: Revalidate every 5 minutes as fallback (on-demand revalidation handles immediate updates)
+export const revalidate = 300;
+
 // Lazy load below-the-fold components
 const FeaturedCans = dynamic(() => import('@/components/home/featured-menu').then(mod => ({ default: mod.FeaturedCans })), {
   loading: () => <div className="py-16 lg:py-24 bg-background h-96 animate-pulse" />,

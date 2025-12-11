@@ -9,6 +9,7 @@ import { getGlassIcon } from '@/lib/utils/beer-icons';
 import { useLocationContext } from '@/components/location/location-provider';
 import { DraftBeerCard } from '@/components/beer/draft-beer-card';
 import { Pencil } from 'lucide-react';
+import { useAnimatedList, getAnimationClass } from '@/lib/hooks/use-animated-list';
 import type { Menu, Style } from '@/src/payload-types';
 import type { Beer } from '@/lib/types/beer';
 
@@ -28,6 +29,8 @@ interface MenuItem {
   fourPack?: string;
   isJustReleased?: boolean;
   recipe?: number;
+  hops?: string;
+  tap?: number;
   pricing: {
     draftPrice?: number;
   };
@@ -37,6 +40,10 @@ interface MenuItem {
   slug?: string;
   style?: string | Style;
   locationSlug?: string;
+  /** Manual "Just Released" flag from Payload */
+  justReleased?: boolean;
+  /** Beer creation date for auto "Just Released" logic */
+  createdAt?: string;
   [key: string]: unknown;
 }
 
@@ -45,6 +52,8 @@ interface FeaturedMenuProps {
   menu?: Menu;
   menus?: Menu[];
   isAuthenticated?: boolean;
+  /** Enable enter/exit animations for live updates */
+  animated?: boolean;
 }
 
 /**
@@ -68,6 +77,16 @@ function getImageUrl(image: unknown): string | undefined {
   }
 }
 
+// Check if a date is within the last N days
+function isWithinDays(dateStr: string | undefined, days: number): boolean {
+  if (!dateStr) return false;
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+  return diffDays <= days;
+}
+
 // Shared logic to convert menu items
 function convertMenuItems(menuData: Menu): MenuItem[] {
   if (!menuData?.items) return [];
@@ -76,7 +95,7 @@ function convertMenuItems(menuData: Menu): MenuItem[] {
   const locationSlug = location?.slug;
 
   const items = menuData.items
-    .map((item) => {
+    .map((item, index) => {
       const beer = typeof item.beer === 'object' ? item.beer : null;
       if (!beer || !beer.slug) return null;
 
@@ -93,6 +112,8 @@ function convertMenuItems(menuData: Menu): MenuItem[] {
         glass: beer.glass || 'pint',
         fourPack: beer.fourPack?.toString() || item.price || undefined,
         recipe: beer.recipe || 0,
+        hops: beer.hops || undefined,
+        tap: index + 1, // 1-based tap/draft number from position in menu
         pricing: {
           draftPrice: item.price ? parseFloat(String(item.price).replace('$', '')) : undefined,
         },
@@ -102,15 +123,23 @@ function convertMenuItems(menuData: Menu): MenuItem[] {
         slug: beer.slug,
         style: beer.style,
         locationSlug: locationSlug || undefined,
+        // Store these for "just released" logic
+        justReleased: (beer as { justReleased?: boolean }).justReleased || false,
+        createdAt: beer.createdAt,
       };
     })
     .filter((item): item is NonNullable<typeof item> => item !== null);
 
-  // Mark items with highest recipe number as "just released"
-  const maxRecipe = Math.max(...items.map((i) => i.recipe || 0));
+  // "Just Released" logic:
+  // 1. If any beer has justReleased manually set, only mark those
+  // 2. Otherwise, mark beers created within the last 2 weeks
+  const hasManualJustReleased = items.some((i) => i.justReleased);
+
   return items.map((item) => ({
     ...item,
-    isJustReleased: item.recipe === maxRecipe && maxRecipe > 0,
+    isJustReleased: hasManualJustReleased
+      ? item.justReleased
+      : isWithinDays(item.createdAt, 14),
   }));
 }
 
@@ -190,28 +219,30 @@ function CanCard({ item, fullscreen = false }: { item: MenuItem; fullscreen?: bo
     return (
       <Link
         href={`/beer/${item.variant.toLowerCase()}`}
-        className="group flex-shrink-0 cursor-pointer"
-        style={{ width: 'calc(20% - 16px)', minWidth: '180px', maxWidth: '220px' }}
+        className="group cursor-pointer flex flex-col"
       >
-        <div className="relative w-full transition-transform duration-200 group-hover:scale-[1.02]" style={{ height: 'calc(45vh - 80px)', maxHeight: '380px' }}>
+        <div className="relative aspect-square w-full transition-transform duration-200 group-hover:scale-[1.02]">
           {renderImage()}
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 pointer-events-none" style={{ marginLeft: '-11px', marginTop: 'calc(40px + 10em)' }}>
-            {item.isJustReleased && (
-              <Badge variant="default" className="text-xs mb-1">
-                Just Released
-              </Badge>
-            )}
-            <h3 className="text-xl font-bold bg-background/95 px-3 py-2 rounded shadow-lg whitespace-nowrap">
-              {item.name}{item.fourPack && ` • $${item.fourPack}/pack`}
-            </h3>
-            <Badge variant="outline" className="text-sm bg-background/95">{item.type}</Badge>
-            {item.onDraft && (
-              <Badge variant="default" className="text-sm flex-shrink-0 flex items-center gap-1">
-                <GlassIcon className="h-4 w-4" />
-                Pouring
-              </Badge>
-            )}
-          </div>
+          {item.isJustReleased && (
+            <Badge variant="default" className="absolute -bottom-3 left-1/2 -translate-x-1/2 text-xs">
+              Just Released
+            </Badge>
+          )}
+        </div>
+        <div className="flex flex-col items-center gap-1 mt-4 text-center">
+          <h3 className="text-lg font-bold leading-tight">
+            {item.name}
+          </h3>
+          <Badge variant="outline" className="text-xs">{item.type}</Badge>
+          {item.fourPack && (
+            <span className="text-base font-semibold">${item.fourPack} <span className="text-sm font-normal text-muted-foreground">/ 4pk</span></span>
+          )}
+          {item.onDraft && (
+            <Badge variant="default" className="text-xs flex items-center gap-1">
+              <GlassIcon className="h-3 w-3" />
+              Pouring
+            </Badge>
+          )}
         </div>
       </Link>
     );
@@ -249,7 +280,7 @@ function CanCard({ item, fullscreen = false }: { item: MenuItem; fullscreen?: bo
   );
 }
 
-export function FeaturedMenu({ menuType, menu, menus = [], isAuthenticated }: FeaturedMenuProps) {
+export function FeaturedMenu({ menuType, menu, menus = [], isAuthenticated, animated = false }: FeaturedMenuProps) {
   const { currentLocation } = useLocationContext();
   const title = menuType === 'draft' ? 'Draft' : 'Cans';
   const emptyMessage = menuType === 'draft'
@@ -264,8 +295,17 @@ export function FeaturedMenu({ menuType, menu, menus = [], isAuthenticated }: Fe
   );
   const displayItems = menu?.items ? convertMenuItems(menu) : filteredItems;
 
+  // Animated items for live updates (only when animated prop is true)
+  const animatedItems = useAnimatedList(displayItems, {
+    getKey: (item) => item.variant,
+    exitDuration: 500,
+  });
+
   // Fullscreen menu mode (for /m/[menuUrl] pages)
   if (menu) {
+    // Use animated items when animations are enabled
+    const itemsToRender = animated ? animatedItems : displayItems.map(item => ({ item, state: 'stable' as const, key: item.variant }));
+
     return (
       <section className="h-full flex flex-col bg-background overflow-hidden">
         <div className="w-full px-4 sm:px-6 lg:px-8 flex-1 flex flex-col py-8">
@@ -273,17 +313,57 @@ export function FeaturedMenu({ menuType, menu, menus = [], isAuthenticated }: Fe
             <h2 className="text-3xl lg:text-4xl font-bold">{menu?.name || title}</h2>
           </div>
           <div className="flex-1 overflow-y-auto px-4">
-            {displayItems.length > 0 ? (
+            {itemsToRender.length > 0 ? (
               menuType === 'draft' ? (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 max-w-none" suppressHydrationWarning>
-                  {displayItems.map((item, index) => (
-                    <DraftBeerCard key={`${item.variant}-${index}`} beer={item as unknown as Beer} showLocation={false} />
-                  ))}
-                </div>
+                // Split items into two columns: 1-6 left, 7-12 right (column-first ordering)
+                (() => {
+                  const midpoint = Math.ceil(itemsToRender.length / 2);
+                  const leftColumn = itemsToRender.slice(0, midpoint);
+                  const rightColumn = itemsToRender.slice(midpoint);
+
+                  // Column header component
+                  const ColumnHeader = () => (
+                    <div className="flex items-center gap-6 px-4 py-2 border-b-2 border-border mb-2 text-xs uppercase tracking-wider text-muted-foreground/70 font-semibold">
+                      <div className="min-w-[80px]">Tap</div>
+                      <div className="flex-grow">Beer</div>
+                      <div className="flex gap-6">
+                        <div className="min-w-[50px] text-center">ABV</div>
+                        <div className="min-w-[50px] text-center">Price</div>
+                      </div>
+                    </div>
+                  );
+
+                  return (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 max-w-none h-full" suppressHydrationWarning>
+                      <div className="flex flex-col h-full">
+                        <ColumnHeader />
+                        <div className="flex flex-col flex-1">
+                          {leftColumn.map(({ item, state, key }, idx) => (
+                            <div key={key} className={`flex-1 ${animated ? getAnimationClass(state) : ''}`}>
+                              <DraftBeerCard beer={item as unknown as Beer} showLocation={false} index={idx} showTapAndPrice />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="flex flex-col h-full">
+                        <ColumnHeader />
+                        <div className="flex flex-col flex-1">
+                          {rightColumn.map(({ item, state, key }, idx) => (
+                            <div key={key} className={`flex-1 ${animated ? getAnimationClass(state) : ''}`}>
+                              <DraftBeerCard beer={item as unknown as Beer} showLocation={false} index={idx} showTapAndPrice />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()
               ) : (
-                <div className="flex flex-wrap justify-center gap-y-14 gap-x-4 max-w-none" suppressHydrationWarning>
-                  {displayItems.map((item, index) => (
-                    <CanCard key={`${item.variant}-${index}`} item={item} fullscreen />
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 max-w-none" suppressHydrationWarning>
+                  {itemsToRender.map(({ item, state, key }) => (
+                    <div key={key} className={animated ? getAnimationClass(state) : ''}>
+                      <CanCard item={item} fullscreen />
+                    </div>
                   ))}
                 </div>
               )
@@ -349,9 +429,9 @@ export function FeaturedMenu({ menuType, menu, menus = [], isAuthenticated }: Fe
 
 // Convenience exports for backward compatibility
 export function FeaturedBeers(props: Omit<FeaturedMenuProps, 'menuType'>) {
-  return <FeaturedMenu {...props} menuType="draft" />;
+  return <FeaturedMenu {...props} menuType="draft" animated={props.animated} />;
 }
 
 export function FeaturedCans(props: Omit<FeaturedMenuProps, 'menuType'>) {
-  return <FeaturedMenu {...props} menuType="cans" />;
+  return <FeaturedMenu {...props} menuType="cans" animated={props.animated} />;
 }

@@ -5,6 +5,7 @@ import path from 'path'
 import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
 import sharp from 'sharp'
+import { revalidationPlugin } from './plugins/revalidation-plugin'
 
 import { Users } from './collections/Users'
 import { Media } from './collections/Media'
@@ -79,6 +80,7 @@ export default buildConfig({
   }),
   sharp,
   plugins: [
+    revalidationPlugin,
     vercelBlobStorage({
       collections: {
         media: true,

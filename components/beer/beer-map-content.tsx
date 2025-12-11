@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
 import { MapLoadingSkeleton } from '@/lib/utils/lazy-load';
 import { HoursPanel } from '@/components/location/hours-panel';
+import type { WeeklyHoursDay } from '@/lib/utils/payload-api';
 
 // Lazy load the map component - no SSR for better performance
 const DistributorMap = dynamic(
@@ -15,7 +16,11 @@ const DistributorMap = dynamic(
   }
 );
 
-export function BeerMapContent() {
+interface BeerMapContentProps {
+  weeklyHours?: Record<string, WeeklyHoursDay[]>;
+}
+
+export function BeerMapContent({ weeklyHours }: BeerMapContentProps) {
   return (
     <div className="container mx-auto px-4 py-8">
       <PageBreadcrumbs className="mb-6" />
@@ -28,7 +33,7 @@ export function BeerMapContent() {
 
       {/* Hours Panel */}
       <div className="mb-8">
-        <HoursPanel />
+        <HoursPanel weeklyHours={weeklyHours} />
       </div>
 
       {/* Distributor Map */}

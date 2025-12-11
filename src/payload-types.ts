@@ -264,6 +264,10 @@ export interface Beer {
    */
   recipe?: number | null;
   hideFromSite?: boolean | null;
+  /**
+   * Mark as "Just Released". If no beers have this set, beers created within 2 weeks are auto-marked.
+   */
+  justReleased?: boolean | null;
   name: string;
   /**
    * Beer style
@@ -798,6 +802,7 @@ export interface BeersSelect<T extends boolean = true> {
   slug?: T;
   recipe?: T;
   hideFromSite?: T;
+  justReleased?: T;
   name?: T;
   style?: T;
   image?: T;

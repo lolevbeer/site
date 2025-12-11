@@ -99,6 +99,8 @@ export interface Beer {
   untappd?: number;
   recipe?: number;
   hops?: string;
+  /** Tap/draft number (position in menu) */
+  tap?: number | string;
   isJustReleased?: boolean;
   pricing: BeerPricing;
   availability: BeerAvailability;

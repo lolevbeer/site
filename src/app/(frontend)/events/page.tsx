@@ -5,7 +5,9 @@
 
 import { Metadata } from 'next';
 import { EventsPageContent } from '@/components/events/events-page-content';
-// Events will be loaded dynamically from CSV
+
+// ISR: Revalidate every 5 minutes as fallback (on-demand revalidation handles immediate updates)
+export const revalidate = 300;
 
 export const metadata: Metadata = {
   title: 'Events | Lolev Beer',

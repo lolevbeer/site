@@ -169,6 +169,15 @@ export const Beers: CollectionConfig = {
       },
     },
     {
+      name: 'justReleased',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        position: 'sidebar',
+        description: 'Mark as "Just Released". If no beers have this set, beers created within 2 weeks are auto-marked.',
+      },
+    },
+    {
       name: 'name',
       type: 'text',
       required: true,

@@ -1,4 +1,5 @@
 import type { CollectionConfig, Access } from 'payload'
+import { APIError } from 'payload'
 
 const isAdminOrEditor: Access = ({ req: { user } }) => {
   return user?.role === 'admin' || user?.role === 'editor'
@@ -38,6 +39,25 @@ export const Menus: CollectionConfig = {
     maxPerDoc: 50, // Keep only the last 50 versions per document
   },
   hooks: {
+    beforeValidate: [
+      ({ data }) => {
+        if (!data?.items || !Array.isArray(data.items)) return data
+
+        const beerIds = (data.items as Array<{ beer?: string | { id?: string } }>)
+          .map((item) => {
+            if (!item?.beer) return null
+            return typeof item.beer === 'string' ? item.beer : item.beer?.id
+          })
+          .filter(Boolean)
+
+        const uniqueIds = new Set(beerIds)
+        if (uniqueIds.size !== beerIds.length) {
+          throw new APIError('Duplicate beer detected - each beer can only appear once on the menu', 400)
+        }
+
+        return data
+      },
+    ],
     beforeChange: [
       async ({ data, req }) => {
         // Auto-generate URL if not provided or empty
@@ -77,27 +97,27 @@ export const Menus: CollectionConfig = {
                   })
                   return {
                     originalItem: item,
-                    recipe: beer?.recipe || 0
+                    recipe: beer?.recipe || 0,
                   }
                 } catch (_error) {
                   return {
                     originalItem: item,
-                    recipe: 0
+                    recipe: 0,
                   }
                 }
               }
               return {
                 originalItem: item,
-                recipe: 0
+                recipe: 0,
               }
-            })
+            }),
           )
 
           // Sort by recipe number (descending)
           itemsWithRecipe.sort((a, b) => b.recipe - a.recipe)
 
           // Extract sorted items back to original structure
-          data.items = itemsWithRecipe.map(item => item.originalItem)
+          data.items = itemsWithRecipe.map((item) => item.originalItem)
         }
 
         return data
