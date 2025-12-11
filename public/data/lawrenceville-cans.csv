@@ -1,6 +1,6 @@
 variant,cansAvailable,name,salePrice,type,abv,cansSingle,fourPack
 edo-anniversary,TRUE,Edo Anniversary,FALSE,Japanese Rice Lager,4.3,4.00,15
-vespero,TRUE,Vespero,FALSE,Czech Dark Lager,5.8,4.25,16
+,TRUE,,FALSE,,,,
 akko,TRUE,Akko,FALSE,India Pale Ale,7,4.50,17
 lupula,TRUE,Lupula,FALSE,India Pale Ale,7,4.50,17
 double-lupula-anniversary,TRUE,Double Lupula Anniversary,FALSE,Double IPA,8.5,5.50,21
