@@ -13,6 +13,7 @@ export const LOCATION_STORAGE_KEY = 'brewery-location-preference';
 
 /**
  * Extract hours from Payload Location for a specific day
+ * Parses ISO time strings in the location's timezone for proper comparison
  */
 function extractDayHours(location: PayloadLocation, day: string): DayHours | null {
   const dayData = location[day as keyof PayloadLocation] as { open?: string; close?: string } | undefined;
@@ -21,13 +22,21 @@ function extractDayHours(location: PayloadLocation, day: string): DayHours | nul
     return null;
   }
 
-  // Payload stores times as ISO date strings, extract time portion
+  const timezone = location.timezone || 'America/New_York';
+
+  // Payload stores times as ISO date strings
+  // We need to extract the time in the location's timezone for proper open/closed comparison
   const parseTime = (isoString: string): string => {
     try {
       const date = new Date(isoString);
-      const hours = date.getUTCHours().toString().padStart(2, '0');
-      const minutes = date.getUTCMinutes().toString().padStart(2, '0');
-      return `${hours}:${minutes}`;
+      // Format as HH:mm in the location's timezone
+      const timeString = date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+        timeZone: timezone,
+      });
+      return timeString;
     } catch {
       return '00:00';
     }
