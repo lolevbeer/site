@@ -390,14 +390,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -79.9583628,
-                    40.4765922
+                    -79.958387807167,
+                    40.476533667667
                 ]
             },
             "properties": {
                 "id": 25,
                 "Name": "beer on butler",
-                "address": "4809, Blackberry Way, Central Lawrenceville, Pittsburgh, Allegheny County, Pennsylvania, 15201, United States",
+                "address": "4809 BLACKBERRY WAY, PITTSBURGH, PA, 15201",
                 "customerType": "Home-D"
             }
         },
