@@ -942,14 +942,13 @@ interface GeoJSON {
   features: GeoFeature[]
 }
 
-// Load GeoJSON from public folder
-async function loadGeoJSON(region: string): Promise<GeoJSON | null> {
+// Load GeoJSON via HTTP (filesystem not available on Vercel serverless)
+async function loadGeoJSON(region: string, baseUrl: string): Promise<GeoJSON | null> {
   try {
-    const fs = await import('fs/promises')
-    const path = await import('path')
-    const filePath = path.join(process.cwd(), 'public', `${region.toLowerCase()}_geo_data.json`)
-    const content = await fs.readFile(filePath, 'utf-8')
-    return JSON.parse(content) as GeoJSON
+    const url = `${baseUrl}/${region.toLowerCase()}_geo_data.json`
+    const response = await fetch(url)
+    if (!response.ok) return null
+    return (await response.json()) as GeoJSON
   } catch {
     return null
   }
@@ -993,14 +992,14 @@ function parseAddress(fullAddress: string): { street: string; city?: string; sta
   return { street: fullAddress }
 }
 
-async function syncDistributors(payload: any, stream: StreamController, dryRun: boolean) {
+async function syncDistributors(payload: any, stream: StreamController, dryRun: boolean, baseUrl: string) {
   const results = { imported: 0, updated: 0, skipped: 0, errors: 0 }
   const regions = ['pa', 'ny']
 
   for (const region of regions) {
     stream.send('status', { message: `Loading ${region.toUpperCase()} distributors from geo data...` })
 
-    const geoData = await loadGeoJSON(region)
+    const geoData = await loadGeoJSON(region, baseUrl)
     if (!geoData) {
       stream.send('error', { message: `Could not load ${region}_geo_data.json` })
       results.errors++
@@ -1135,7 +1134,8 @@ async function runSync(
   payload: any,
   stream: StreamController,
   dryRun: boolean,
-  collections: CollectionType[]
+  collections: CollectionType[],
+  baseUrl: string
 ) {
   const results: Record<string, { imported: number; updated: number; skipped: number; errors: number; imagesAdded?: number }> = {}
 
@@ -1186,7 +1186,7 @@ async function runSync(
   }
 
   if (collections.includes('distributors')) {
-    results.distributors = await syncDistributors(payload, stream, dryRun)
+    results.distributors = await syncDistributors(payload, stream, dryRun, baseUrl)
   }
 
   return results
@@ -1199,6 +1199,11 @@ export const syncGoogleSheets: PayloadHandler = async (req) => {
   const collections = collectionsParam.split(',').filter(c =>
     ['events', 'food', 'beers', 'menus', 'hours', 'distributors'].includes(c)
   ) as CollectionType[]
+
+  // Get base URL from request headers
+  const host = req.headers.get('host') || 'localhost:3000'
+  const protocol = req.headers.get('x-forwarded-proto') || 'http'
+  const baseUrl = `${protocol}://${host}`
 
   // Use getPayloadHMR for file upload support
   const { getPayloadHMR } = await import('@payloadcms/next/utilities')
@@ -1215,7 +1220,7 @@ export const syncGoogleSheets: PayloadHandler = async (req) => {
       try {
         send('status', { message: dryRun ? 'Starting preview...' : 'Starting sync...' })
 
-        const results = await runSync(payload, { send }, dryRun, collections)
+        const results = await runSync(payload, { send }, dryRun, collections, baseUrl)
 
         send('complete', {
           success: true,

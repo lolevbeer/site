@@ -39,7 +39,7 @@ interface SyncResults {
 export const SyncViewClient: React.FC = () => {
   const [syncing, setSyncing] = useState(false)
   const [dryRun, setDryRun] = useState(true)
-  const [selectedCollections, setSelectedCollections] = useState<CollectionType[]>(['events', 'food', 'beers', 'menus'])
+  const [selectedCollections, setSelectedCollections] = useState<CollectionType[]>([])
   const [logs, setLogs] = useState<LogEntry[]>([])
   const [results, setResults] = useState<SyncResults | null>(null)
   const logIdRef = useRef(0)

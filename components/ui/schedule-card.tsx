@@ -46,12 +46,12 @@ export function ScheduleCard({
             <Calendar className="h-4 w-4" />
             <span>{formatDate(date, 'full')}</span>
           </div>
-          {time && (
+          {time && time.toLowerCase() !== 'tbd' && (
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
               <span>
                 {formatTime(time.trim())}
-                {endTime && `-${formatTime(endTime.trim())}`}
+                {endTime && endTime.toLowerCase() !== 'tbd' && `-${formatTime(endTime.trim())}`}
               </span>
             </div>
           )}
