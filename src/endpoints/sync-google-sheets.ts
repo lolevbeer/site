@@ -943,14 +943,16 @@ interface GeoJSON {
 }
 
 // Load GeoJSON via HTTP (filesystem not available on Vercel serverless)
-async function loadGeoJSON(region: string, baseUrl: string): Promise<GeoJSON | null> {
+async function loadGeoJSON(region: string, baseUrl: string): Promise<{ data: GeoJSON | null; error?: string; url?: string }> {
+  const url = `${baseUrl}/${region.toLowerCase()}_geo_data.json`
   try {
-    const url = `${baseUrl}/${region.toLowerCase()}_geo_data.json`
     const response = await fetch(url)
-    if (!response.ok) return null
-    return (await response.json()) as GeoJSON
-  } catch {
-    return null
+    if (!response.ok) {
+      return { data: null, error: `HTTP ${response.status}: ${response.statusText}`, url }
+    }
+    return { data: (await response.json()) as GeoJSON, url }
+  } catch (err) {
+    return { data: null, error: err instanceof Error ? err.message : String(err), url }
   }
 }
 
@@ -999,9 +1001,9 @@ async function syncDistributors(payload: any, stream: StreamController, dryRun: 
   for (const region of regions) {
     stream.send('status', { message: `Loading ${region.toUpperCase()} distributors from geo data...` })
 
-    const geoData = await loadGeoJSON(region, baseUrl)
+    const { data: geoData, error, url } = await loadGeoJSON(region, baseUrl)
     if (!geoData) {
-      stream.send('error', { message: `Could not load ${region}_geo_data.json` })
+      stream.send('error', { message: `Could not load ${region}_geo_data.json - ${error || 'unknown error'} (URL: ${url})` })
       results.errors++
       continue
     }
