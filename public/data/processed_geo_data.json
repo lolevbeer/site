@@ -1558,22 +1558,6 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -79.9190498,
-                    40.4587162
-                ]
-            },
-            "properties": {
-                "id": 99,
-                "Name": "giant eagle 97 - penn ave",
-                "address": "6310, Penn Avenue, East Liberty, Pittsburgh, Allegheny County, Pennsylvania, 15206, United States",
-                "customerType": "Grocery"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
                     -75.150844479151,
                     40.101040924568
                 ]
@@ -2335,22 +2319,6 @@
                 "Name": "myrna's brew'ry outlet",
                 "address": "827 CARL AVE, NEW KENSINGTON, PA, 15068",
                 "customerType": "Home-D"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
-                    -79.8943813,
-                    40.6093357
-                ]
-            },
-            "properties": {
-                "id": 149,
-                "Name": "narcisi winery",
-                "address": "Narcisi Winery, 4578, Gibsonia Road, West Deer Township, Allegheny County, Pennsylvania, 15044, United States",
-                "customerType": "Restaurant"
             }
         },
         {
