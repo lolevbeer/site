@@ -43,7 +43,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
         <div className={`overflow-hidden transition-colors duration-200 cursor-pointer hover:bg-secondary/50 h-full bg-background ${className}`}>
           <div className="flex items-center h-full" style={{ gap: '1.5vh', padding: '0 1vh' }}>
             {/* Tap Number and Glass Icon */}
-            <div className="flex-shrink-0 flex items-center justify-between" style={{ minWidth: '12vh' }}>
+            <div className="flex-shrink-0 flex items-center justify-between" style={{ minWidth: '7vh' }}>
               {beer.tap && (
                 <span className="font-bold text-primary tabular-nums" style={{ fontSize: '2.2vh' }}>{beer.tap}</span>
               )}
@@ -67,12 +67,12 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
               </div>
               <div className="flex flex-col" style={{ gap: '0.2vh' }}>
                 {beer.description && (
-                  <p className="text-muted-foreground/60 line-clamp-3 leading-tight" style={{ fontSize: '1.4vh' }}>
+                  <p className="text-foreground/70 line-clamp-3 leading-tight" style={{ fontSize: '1.4vh' }}>
                     {beer.description}
                   </p>
                 )}
                 {beer.hops && (
-                  <p className="text-muted-foreground/50 truncate leading-tight" style={{ fontSize: '1.2vh' }}>
+                  <p className="text-foreground/70 truncate leading-tight" style={{ fontSize: '1.4vh' }}>
                     <span className="font-medium">Hops:</span> {beer.hops}
                   </p>
                 )}
@@ -82,7 +82,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
             {/* ABV and Price - Right aligned */}
             <div className="flex-shrink-0 flex items-center" style={{ gap: '2vh' }}>
               <div className="text-center" style={{ minWidth: '5vh' }}>
-                <div className="font-bold text-foreground tabular-nums" style={{ fontSize: '2.5vh' }}>
+                <div className="font-bold text-foreground/70 tabular-nums" style={{ fontSize: '2.5vh' }}>
                   {beer.abv}%
                 </div>
               </div>

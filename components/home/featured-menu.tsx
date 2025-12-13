@@ -224,22 +224,26 @@ function CanCard({ item, fullscreen = false }: { item: MenuItem; fullscreen?: bo
         <div className="relative aspect-square w-full transition-transform duration-200 group-hover:scale-[1.02]">
           {renderImage()}
           {item.isJustReleased && (
-            <Badge variant="default" className="absolute -bottom-3 left-1/2 -translate-x-1/2 text-xs">
+            <Badge variant="default" className="absolute left-1/2 -translate-x-1/2" style={{ bottom: '-0.8vh', fontSize: '1.3vh' }}>
               Just Released
             </Badge>
           )}
         </div>
-        <div className="flex flex-col items-center gap-1 mt-4 text-center">
-          <h3 className="text-lg font-bold leading-tight">
+        <div className="flex flex-col items-center text-center" style={{ gap: '0.5vh', marginTop: '1.5vh' }}>
+          <h3 className="font-bold leading-tight" style={{ fontSize: '2vh' }}>
             {item.name}
           </h3>
-          <Badge variant="outline" className="text-xs">{item.type}</Badge>
+          <Badge variant="outline" style={{ fontSize: '1.3vh' }}>{item.type}</Badge>
           {item.fourPack && (
-            <span className="text-base font-semibold">${item.fourPack} <span className="text-sm font-normal text-muted-foreground">/ 4pk</span></span>
+            <span className="font-semibold" style={{ fontSize: '1.8vh' }}>
+              ${item.fourPack} <span className="font-normal text-foreground/70" style={{ fontSize: '1.4vh' }}>/ 4pk</span>
+            </span>
           )}
           {item.onDraft && (
-            <Badge variant="default" className="text-xs flex items-center gap-1">
-              <GlassIcon className="h-3 w-3" />
+            <Badge variant="default" className="flex items-center" style={{ fontSize: '1.3vh', gap: '0.3vh' }}>
+              <div style={{ height: '1.5vh', width: '1.5vh' }}>
+                <GlassIcon className="w-full h-full" />
+              </div>
               Pouring
             </Badge>
           )}
@@ -308,7 +312,7 @@ export function FeaturedMenu({ menuType, menu, menus = [], isAuthenticated, anim
 
     return (
       <section className="h-full flex flex-col bg-background overflow-hidden">
-        <div className="w-full flex-1 flex flex-col" style={{ padding: '2vh 2vw' }}>
+        <div className="w-full flex-1 flex flex-col" style={{ padding: '2vh 2vw 0.5vh 2vw' }}>
           <div className="text-center flex-shrink-0" style={{ marginBottom: '2vh' }}>
             <h2 className="font-bold" style={{ fontSize: '4vh' }}>{menu?.name || title}</h2>
           </div>
@@ -327,32 +331,34 @@ export function FeaturedMenu({ menuType, menu, menus = [], isAuthenticated, anim
                       className="flex items-center border-b-2 border-border uppercase tracking-wider text-muted-foreground/70 font-semibold"
                       style={{ gap: '1.5vh', padding: '0.5vh 1vh', marginBottom: '0.5vh', fontSize: '1.2vh' }}
                     >
-                      <div style={{ minWidth: '8vh' }}>Tap</div>
+                      <div style={{ minWidth: '7vh' }}>Tap</div>
                       <div className="flex-grow">Beer</div>
                       <div className="flex" style={{ gap: '2vh' }}>
                         <div className="text-center" style={{ minWidth: '5vh' }}>ABV</div>
-                        <div className="text-center" style={{ minWidth: '5vh' }}>Price</div>
+                        <div className="text-center" style={{ minWidth: '6vh' }}>Price</div>
                       </div>
                     </div>
                   );
 
                   return (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 max-w-none h-full" style={{ gap: '2vw' }} suppressHydrationWarning>
-                      <div className="flex flex-col h-full">
+                    <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] max-w-none h-full" style={{ gap: '2vw' }} suppressHydrationWarning>
+                      <div className="flex flex-col h-full min-w-0">
                         <ColumnHeader />
-                        <div className="flex flex-col flex-1">
+                        <div className="flex flex-col flex-1 min-w-0">
                           {leftColumn.map(({ item, state, key }) => (
-                            <div key={key} className={`flex-1 ${animated ? getAnimationClass(state) : ''}`}>
+                            <div key={key} className={`flex-1 min-w-0 ${animated ? getAnimationClass(state) : ''}`}>
                               <DraftBeerCard beer={item as unknown as Beer} showLocation={false} showTapAndPrice />
                             </div>
                           ))}
                         </div>
                       </div>
-                      <div className="flex flex-col h-full">
+                      {/* Vertical divider */}
+                      <div className="hidden lg:block w-0.5 bg-border" />
+                      <div className="flex flex-col h-full min-w-0">
                         <ColumnHeader />
-                        <div className="flex flex-col flex-1">
+                        <div className="flex flex-col flex-1 min-w-0">
                           {rightColumn.map(({ item, state, key }) => (
-                            <div key={key} className={`flex-1 ${animated ? getAnimationClass(state) : ''}`}>
+                            <div key={key} className={`flex-1 min-w-0 ${animated ? getAnimationClass(state) : ''}`}>
                               <DraftBeerCard beer={item as unknown as Beer} showLocation={false} showTapAndPrice />
                             </div>
                           ))}
@@ -362,7 +368,7 @@ export function FeaturedMenu({ menuType, menu, menus = [], isAuthenticated, anim
                   );
                 })()
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 max-w-none" suppressHydrationWarning>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-4 max-w-none" style={{ rowGap: '7vh' }} suppressHydrationWarning>
                   {itemsToRender.map(({ item, state, key }) => (
                     <div key={key} className={animated ? getAnimationClass(state) : ''}>
                       <CanCard item={item} fullscreen />
