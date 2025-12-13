@@ -17,8 +17,6 @@ interface DraftBeerCardProps {
   beer: Beer;
   showLocation?: boolean;
   className?: string;
-  /** Index for zebra striping */
-  index?: number;
   /** Show tap number and pricing (for fullscreen menu displays) */
   showTapAndPrice?: boolean;
 }
@@ -27,7 +25,6 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
   beer,
   showLocation = true,
   className = '',
-  index = 0,
   showTapAndPrice = false
 }: DraftBeerCardProps) {
   const { currentLocation } = useLocationContext();
@@ -39,18 +36,77 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
     return null;
   }
 
-  // Zebra striping - alternating subtle backgrounds
-  const rowBg = index % 2 === 0 ? 'bg-background' : 'bg-muted/30';
+  // Fullscreen mode uses viewport-relative sizing
+  if (showTapAndPrice) {
+    return (
+      <Link href={`/beer/${beerSlug}`} className="group block h-full">
+        <div className={`overflow-hidden transition-colors duration-200 cursor-pointer hover:bg-secondary/50 h-full bg-background ${className}`}>
+          <div className="flex items-center h-full" style={{ gap: '1.5vh', padding: '0 1vh' }}>
+            {/* Tap Number and Glass Icon */}
+            <div className="flex-shrink-0 flex items-center justify-between" style={{ minWidth: '12vh' }}>
+              {beer.tap && (
+                <span className="font-bold text-primary tabular-nums" style={{ fontSize: '2.2vh' }}>{beer.tap}</span>
+              )}
+              <div style={{ height: '5vh', width: '5vh' }}>
+                <GlassIcon className="w-full h-full text-muted-foreground/50 group-hover:text-muted-foreground/70 transition-colors" />
+              </div>
+            </div>
 
+            {/* Beer Info - Main content */}
+            <div className="flex-grow min-w-0 flex flex-col" style={{ gap: '0.3vh' }}>
+              <div className="flex items-center flex-wrap" style={{ gap: '1vh' }}>
+                <h3 className="font-bold leading-tight truncate" style={{ fontSize: '2.2vh' }}>{beer.name}</h3>
+                <Badge variant="outline" className="flex-shrink-0 font-normal" style={{ fontSize: '1.3vh' }}>
+                  {beer.type}
+                </Badge>
+                {beer.isJustReleased && (
+                  <Badge variant="default" className="flex-shrink-0" style={{ fontSize: '1.3vh' }}>
+                    Just Released
+                  </Badge>
+                )}
+              </div>
+              <div className="flex flex-col" style={{ gap: '0.2vh' }}>
+                {beer.description && (
+                  <p className="text-muted-foreground/60 line-clamp-3 leading-tight" style={{ fontSize: '1.4vh' }}>
+                    {beer.description}
+                  </p>
+                )}
+                {beer.hops && (
+                  <p className="text-muted-foreground/50 truncate leading-tight" style={{ fontSize: '1.2vh' }}>
+                    <span className="font-medium">Hops:</span> {beer.hops}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* ABV and Price - Right aligned */}
+            <div className="flex-shrink-0 flex items-center" style={{ gap: '2vh' }}>
+              <div className="text-center" style={{ minWidth: '5vh' }}>
+                <div className="font-bold text-foreground tabular-nums" style={{ fontSize: '2.5vh' }}>
+                  {beer.abv}%
+                </div>
+              </div>
+              {beer.pricing?.draftPrice && (
+                <div className="text-center" style={{ minWidth: '6vh' }}>
+                  <div className="font-bold text-primary tabular-nums" style={{ fontSize: '3.5vh' }}>
+                    ${beer.pricing.draftPrice}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </Link>
+    );
+  }
+
+  // Standard mode with Tailwind classes
   return (
     <Link href={showLocation ? `/${currentLocation}/beer/${beerSlug}` : `/beer/${beerSlug}`} className="group block h-full">
-      <div className={`overflow-hidden transition-colors duration-200 cursor-pointer hover:bg-secondary/50 h-full min-h-[80px] ${rowBg} ${className}`}>
+      <div className={`overflow-hidden transition-colors duration-200 cursor-pointer hover:bg-secondary/50 h-full min-h-[80px] bg-background ${className}`}>
         <div className="flex items-center gap-6 px-4 h-full">
           {/* Tap Number and Glass Icon */}
           <div className="flex-shrink-0 flex items-center gap-3">
-            {showTapAndPrice && beer.tap && (
-              <span className="text-4xl font-bold text-primary tabular-nums">{beer.tap}</span>
-            )}
             <GlassIcon className="h-8 w-8 text-muted-foreground/50 group-hover:text-muted-foreground/70 transition-colors" />
           </div>
 
@@ -84,17 +140,10 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
           {/* ABV and Price - Right aligned */}
           <div className="flex-shrink-0 flex items-center gap-6">
             <div className="text-center">
-              <div className={`${showTapAndPrice ? 'text-2xl' : 'text-lg'} font-bold text-foreground tabular-nums`}>
+              <div className="text-lg font-bold text-foreground tabular-nums">
                 {beer.abv}%
               </div>
             </div>
-            {showTapAndPrice && beer.pricing?.draftPrice && (
-              <div className="text-center min-w-[50px]">
-                <div className="text-2xl font-bold text-primary tabular-nums">
-                  ${beer.pricing.draftPrice}
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>

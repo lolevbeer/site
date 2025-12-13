@@ -308,11 +308,11 @@ export function FeaturedMenu({ menuType, menu, menus = [], isAuthenticated, anim
 
     return (
       <section className="h-full flex flex-col bg-background overflow-hidden">
-        <div className="w-full px-4 sm:px-6 lg:px-8 flex-1 flex flex-col py-8">
-          <div className="text-center mb-6 flex-shrink-0">
-            <h2 className="text-3xl lg:text-4xl font-bold">{menu?.name || title}</h2>
+        <div className="w-full flex-1 flex flex-col" style={{ padding: '2vh 2vw' }}>
+          <div className="text-center flex-shrink-0" style={{ marginBottom: '2vh' }}>
+            <h2 className="font-bold" style={{ fontSize: '4vh' }}>{menu?.name || title}</h2>
           </div>
-          <div className="flex-1 overflow-y-auto px-4">
+          <div className="flex-1 overflow-y-auto" style={{ padding: '0 1vw' }}>
             {itemsToRender.length > 0 ? (
               menuType === 'draft' ? (
                 // Split items into two columns: 1-6 left, 7-12 right (column-first ordering)
@@ -321,26 +321,29 @@ export function FeaturedMenu({ menuType, menu, menus = [], isAuthenticated, anim
                   const leftColumn = itemsToRender.slice(0, midpoint);
                   const rightColumn = itemsToRender.slice(midpoint);
 
-                  // Column header component
+                  // Column header component with viewport-relative sizing
                   const ColumnHeader = () => (
-                    <div className="flex items-center gap-6 px-4 py-2 border-b-2 border-border mb-2 text-xs uppercase tracking-wider text-muted-foreground/70 font-semibold">
-                      <div className="min-w-[80px]">Tap</div>
+                    <div
+                      className="flex items-center border-b-2 border-border uppercase tracking-wider text-muted-foreground/70 font-semibold"
+                      style={{ gap: '1.5vh', padding: '0.5vh 1vh', marginBottom: '0.5vh', fontSize: '1.2vh' }}
+                    >
+                      <div style={{ minWidth: '8vh' }}>Tap</div>
                       <div className="flex-grow">Beer</div>
-                      <div className="flex gap-6">
-                        <div className="min-w-[50px] text-center">ABV</div>
-                        <div className="min-w-[50px] text-center">Price</div>
+                      <div className="flex" style={{ gap: '2vh' }}>
+                        <div className="text-center" style={{ minWidth: '5vh' }}>ABV</div>
+                        <div className="text-center" style={{ minWidth: '5vh' }}>Price</div>
                       </div>
                     </div>
                   );
 
                   return (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 max-w-none h-full" suppressHydrationWarning>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 max-w-none h-full" style={{ gap: '2vw' }} suppressHydrationWarning>
                       <div className="flex flex-col h-full">
                         <ColumnHeader />
                         <div className="flex flex-col flex-1">
-                          {leftColumn.map(({ item, state, key }, idx) => (
+                          {leftColumn.map(({ item, state, key }) => (
                             <div key={key} className={`flex-1 ${animated ? getAnimationClass(state) : ''}`}>
-                              <DraftBeerCard beer={item as unknown as Beer} showLocation={false} index={idx} showTapAndPrice />
+                              <DraftBeerCard beer={item as unknown as Beer} showLocation={false} showTapAndPrice />
                             </div>
                           ))}
                         </div>
@@ -348,9 +351,9 @@ export function FeaturedMenu({ menuType, menu, menus = [], isAuthenticated, anim
                       <div className="flex flex-col h-full">
                         <ColumnHeader />
                         <div className="flex flex-col flex-1">
-                          {rightColumn.map(({ item, state, key }, idx) => (
+                          {rightColumn.map(({ item, state, key }) => (
                             <div key={key} className={`flex-1 ${animated ? getAnimationClass(state) : ''}`}>
-                              <DraftBeerCard beer={item as unknown as Beer} showLocation={false} index={idx} showTapAndPrice />
+                              <DraftBeerCard beer={item as unknown as Beer} showLocation={false} showTapAndPrice />
                             </div>
                           ))}
                         </div>
