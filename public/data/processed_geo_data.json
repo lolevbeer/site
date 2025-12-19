@@ -1814,14 +1814,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -80.156564741629,
-                    40.273593773822
+                    -80.083904036584,
+                    40.27908359593
                 ]
             },
             "properties": {
                 "id": 115,
                 "Name": "heislers market",
-                "address": "601 W MCMURRAY RD, MCMURRAY, PA, 15317",
+                "address": "601 E MCMURRAY RD, MCMURRAY, PA, 15317",
                 "customerType": "Restaurant"
             }
         },
