@@ -7,7 +7,7 @@ akko,TRUE,Akko,FALSE,India Pale Ale,7,4.50,17
 edge,TRUE,Edge,FALSE,West Coast IPA,7.7,5.75,22
 double-lupula-anniversary,TRUE,Double Lupula Three Years,FALSE,Double IPA,8.5,5.75,22
 origen,TRUE,Origen,FALSE,Double IPA,7.8,5.75,22
-harvest,TRUE,Harvest,FALSE,Double IPA,8,5.75,22
+harvest,FALSE,Harvest,FALSE,Double IPA,8,5.75,22
 capax,TRUE,Capax,FALSE,Double IPA,8.1,5.75,22
 rubico-ii,TRUE,Rubico II,FALSE,Double IPA,8.6,5.75,22
 hades,TRUE,Hades,FALSE,Ultra Hopped Triple IPA,9.7,6.25,24
