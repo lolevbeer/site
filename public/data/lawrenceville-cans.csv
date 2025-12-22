@@ -1,7 +1,7 @@
 variant,cansAvailable,name,salePrice,type,abv,cansSingle,fourPack
 edo-anniversary,TRUE,Edo Three Years,FALSE,Japanese Rice Lager,4.3,4.00,15
 tyrus,TRUE,Tyrus,FALSE,Double IPA,8.3,5.75,22
-akko,TRUE,Akko,FALSE,India Pale Ale,7,4.50,17
+akko,FALSE,Akko,FALSE,India Pale Ale,7,4.50,17
 lupula,TRUE,Lupula,FALSE,India Pale Ale,7,4.50,17
 double-lupula-anniversary,TRUE,Double Lupula Three Years,FALSE,Double IPA,8.5,5.75,22
 capax,TRUE,Capax,FALSE,Double IPA,8.1,5.75,22
