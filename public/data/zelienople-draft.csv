@@ -6,7 +6,7 @@ tap,variant,singleCanAvailable,name,type,abv,glass,price,description,image,hops
 5,tides-ii-anniversary,FALSE,Tides II,India Pale Ale,7.5,pint,8,,TRUE,"Citra, Mosaic, Idaho 7, Estate Grown Comet"
 6,rubico-ii,FALSE,Rubico II,Double IPA,8.6,pint,9,"Pillowy soft with a full, creamy body, ripe mango, passionfruit, and juicy peach.",TRUE,"Citra, Galaxy"
 7,tyrus,FALSE,Tyrus,Double IPA,8.3,teku,9,,TRUE,"Nelson Sauvin, Pacific Sunrise, Simcoe Hyperboost, Maui Nelson SubZero Hop Kief"
-8,capax,FALSE,Capax,Double IPA,8.1,teku,9,"Apricot, mango and white wine.",TRUE,"Citra, Rakau, Wakatu, Rakau Hop Kief"
+8,akis,FALSE,Akis,Pale Ale,4.5,pint,8,,TRUE,"Citra, NZ Cascade, Cascade CGX, Nelson Sauvin"
 9,double-lupula-anniversary,FALSE,Double Lupula,Double IPA,8.5,teku,9,,TRUE,"Motueka, Moutere, Riwaka"
 10,harvest,FALSE,Harvest,Double IPA,8,teku,9,Gooseberry with vinous and tropical fruit character. Bright lime and passionfruit notes.,TRUE,"Citra, Motueka, Nelson Sauvin, Maui Nelson Hop Kief"
 11,hades,FALSE,Hades,Ultra Hopped Triple IPA,9.7,teku,6,Half Pour. Our favorite hop lots of the year.,TRUE,"Citra, Cascade CGX, Nelson Sauvin, Motueka, Motueka Sub Zero Hop Kief"
