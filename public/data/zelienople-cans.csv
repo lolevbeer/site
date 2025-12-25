@@ -5,8 +5,8 @@ akis,TRUE,Akis,FALSE,Pale Ale,4.5,4.50,17
 akko,TRUE,Akko,FALSE,India Pale Ale,7,4.50,17
 lupula,TRUE,Lupula,FALSE,India Pale Ale,7,4.50,17
 edge,TRUE,Edge,FALSE,West Coast IPA,7.7,5.75,22
-double-lupula-anniversary,FALSE,Double Lupula,FALSE,Double IPA,8.5,5.75,22
-origen,FALSE,Origen,FALSE,Double IPA,7.8,5.75,22
+,FALSE,,FALSE,,,,
+,FALSE,,FALSE,,,,
 tyrus,TRUE,Tyrus,FALSE,Double IPA,8.3,5.75,22
 capax,TRUE,Capax,FALSE,Double IPA,8.1,5.75,22
 rubico-ii,TRUE,Rubico II,FALSE,Double IPA,8.6,5.75,22
