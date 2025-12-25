@@ -518,14 +518,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -80.066846278019,
-                    40.311276045452
+                    -80.0661604,
+                    40.3116621
                 ]
             },
             "properties": {
                 "id": 33,
                 "Name": "bethel beer",
-                "address": "441 MCMURRAY RD, BETHEL PARK, PA, 15102",
+                "address": "Bethel Beer and More, 441, McMurray Road, Jewell, Bethel Park, Allegheny County, Pennsylvania, 15102, United States",
                 "customerType": "Supplier"
             }
         },
@@ -2310,14 +2310,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -79.631318911578,
-                    40.412726117854
+                    -79.6313767,
+                    40.4127635
                 ]
             },
             "properties": {
                 "id": 148,
                 "Name": "my daily brew",
-                "address": "5690 WILLIAM PENN HWY, EXPORT, PA, 15632",
+                "address": "5690, William Penn Highway, West Export, Murrysville, Westmoreland County, Pennsylvania, 15632, United States",
                 "customerType": "Liquor Store"
             }
         },
