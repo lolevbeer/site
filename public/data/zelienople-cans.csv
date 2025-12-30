@@ -2,12 +2,12 @@ variant,cansAvailable,name,salePrice,type,abv,cansSingle,fourPack
 edo-anniversary,TRUE,Edo,FALSE,Japanese Rice Lager,4.3,4.00,15
 samo,TRUE,Samo,FALSE,Pilsner,4.8,4.00,15
 akis,TRUE,Akis,FALSE,Pale Ale,4.5,4.50,17
-akko,TRUE,Akko,FALSE,India Pale Ale,7,4.50,17
+akko,FALSE,Akko,FALSE,India Pale Ale,7,4.50,17
 lupula,TRUE,Lupula,FALSE,India Pale Ale,7,4.50,17
 edge,TRUE,Edge,FALSE,West Coast IPA,7.7,5.75,22
-,FALSE,,FALSE,,,,
-,FALSE,,FALSE,,,,
+,TRUE,,FALSE,,,,
+,TRUE,,FALSE,,,,
 tyrus,FALSE,Tyrus,FALSE,Double IPA,8.3,5.75,22
 capax,TRUE,Capax,FALSE,Double IPA,8.1,5.75,22
 rubico-ii,TRUE,Rubico II,FALSE,Double IPA,8.6,5.75,22
-hades,TRUE,Hades,FALSE,Ultra Hopped Triple IPA,9.7,6.25,24
+hades,FALSE,Hades,FALSE,Ultra Hopped Triple IPA,9.7,6.25,24
