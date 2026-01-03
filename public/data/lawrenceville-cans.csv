@@ -5,8 +5,8 @@ samo,TRUE,Samo,FALSE,Pilsner,4.8,4.00,15
 grandar,TRUE,Grandar,FALSE,Imperial Pilsner,6.6,4.25,16
 lupula,TRUE,Lupula,FALSE,India Pale Ale,7,4.50,17
 edge,TRUE,Edge,FALSE,West Coast IPA,7.7,5.75,22
-capax,TRUE,Capax,FALSE,Double IPA,8.1,5.75,22
+capax,FALSE,Capax,FALSE,Double IPA,8.1,5.75,22
 tyrus,TRUE,Tyrus,FALSE,Double IPA,8.3,5.75,22
-double-lupula-anniversary,FALSE,Double Lupula,FALSE,Double IPA,8.5,5.75,22
-hades,FALSE,Hades,FALSE,Ultra Hopped Triple IPA,9.7,6.25,24
+,FALSE,,FALSE,,,,
+,FALSE,,FALSE,,,,
 ,FALSE,,FALSE,,,,
