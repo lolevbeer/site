@@ -470,22 +470,6 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -80.2459995,
-                    40.4952421
-                ]
-            },
-            "properties": {
-                "id": 30,
-                "Name": "beercode",
-                "address": "Starbucks, 1000, Airport Boulevard, Pittsburgh, Allegheny County, Pennsylvania, 15231, United States",
-                "customerType": "Restaurant"
-            }
-        },
-        {
-            "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [
                     -75.610813098175,
                     39.95939448643
                 ]
@@ -2262,14 +2246,14 @@
             "geometry": {
                 "type": "Point",
                 "coordinates": [
-                    -79.54571313128,
-                    40.303375690043
+                    -79.5457651,
+                    40.3034271
                 ]
             },
             "properties": {
                 "id": 145,
                 "Name": "oliver's pourhouse",
-                "address": "8 N PENNSYLVANIA AVE, GREENSBURG, PA, 15601",
+                "address": "8, North Pennsylvania Avenue, Greensburg, Westmoreland County, Pennsylvania, 15601, United States",
                 "customerType": "Restaurant"
             }
         },
@@ -2519,7 +2503,7 @@
                 "type": "Point",
                 "coordinates": [
                     -80.0945907,
-                    40.3823424
+                    40.3823425
                 ]
             },
             "properties": {
@@ -3357,7 +3341,7 @@
             "properties": {
                 "id": 216,
                 "Name": "wegmans yardley",
-                "address": "Wegmans, 925, Vansant Drive, Yardley, Bucks County, Pennsylvania, United States",
+                "address": "Wegmans, 925, Vansant Drive, Yardley, Bucks County, Pennsylvania, 18940, United States",
                 "customerType": "Grocery"
             }
         },
