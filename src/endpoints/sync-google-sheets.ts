@@ -1,6 +1,6 @@
 /**
  * Payload endpoint to sync from Google Sheets (SSE streaming)
- * Supports: Events, Food, Beers, Menus (Cans/Draft)
+ * Supports: Events, Food, Beers, Menus (Cans/Draft), Hours
  */
 
 import type { PayloadHandler } from 'payload'
@@ -29,17 +29,10 @@ function computeChanges(existing: Record<string, any>, incoming: Record<string, 
   return changes
 }
 
-type CollectionType = 'events' | 'food' | 'beers' | 'menus' | 'hours' | 'distributors'
+type CollectionType = 'events' | 'food' | 'beers' | 'menus' | 'hours' | 'recalc'
 
+// Beer and menu URLs still use env vars (not location-specific)
 const SHEETS_CONFIG = {
-  events: {
-    lawrenceville: process.env.GOOGLE_CSV_EVENTS_LAWRENCEVILLE || '',
-    zelienople: process.env.GOOGLE_CSV_EVENTS_ZELIENOPLE || '',
-  },
-  food: {
-    lawrenceville: process.env.GOOGLE_CSV_FOOD_LAWRENCEVILLE || '',
-    zelienople: process.env.GOOGLE_CSV_FOOD_ZELIENOPLE || '',
-  },
   beers: process.env.GOOGLE_CSV_BEER || '',
   menus: {
     cans: {
@@ -50,10 +43,6 @@ const SHEETS_CONFIG = {
       lawrenceville: process.env.GOOGLE_CSV_LAWRENCEVILLE_DRAFT || '',
       zelienople: process.env.GOOGLE_CSV_ZELIENOPLE_DRAFT || '',
     },
-  },
-  distributors: {
-    pa: process.env.GOOGLE_CSV_DISTRIBUTORS_PA || '',
-    ny: process.env.GOOGLE_CSV_DISTRIBUTORS_NY || '',
   },
 }
 
@@ -128,6 +117,80 @@ function parsePrice(price: string): number | undefined {
   if (!price) return undefined
   const num = parseFloat(price.replace(/[$,]/g, ''))
   return isNaN(num) ? undefined : num
+}
+
+function parseTimeWithDate(timeStr: string, date: Date): string | undefined {
+  if (!timeStr) return undefined
+
+  let cleaned = timeStr.trim().toLowerCase()
+
+  // Handle time ranges like "7-9pm", "1pm-4pm", "1:00-4:00pm", "4-12am" - extract just the start time
+  const rangeMatch = cleaned.match(/^(\d{1,2}(?::\d{2})?)\s*(am|pm)?\s*[-–]\s*(\d{1,2})(?::\d{2})?\s*(am|pm)?$/i)
+  if (rangeMatch) {
+    const startPart = rangeMatch[1]
+    const startAmPm = rangeMatch[2]?.toLowerCase()
+    const endHour = parseInt(rangeMatch[3])
+    const endAmPm = rangeMatch[4]?.toLowerCase()
+    const startHour = parseInt(startPart)
+
+    let ampm = startAmPm || ''
+
+    if (!startAmPm && endAmPm) {
+      // Special case: "4-12am" means 4pm to midnight, not 4am to midnight
+      // If end is 12am (midnight), start is PM
+      if (endHour === 12 && endAmPm === 'am') {
+        ampm = 'pm'
+      } else if (startHour <= endHour || startHour === 12) {
+        // Normal case: inherit from end time
+        ampm = endAmPm
+      } else {
+        // Crossing noon: if end is PM and start > end, start is AM
+        // e.g., "11-2pm" → 11am to 2pm
+        ampm = endAmPm === 'pm' ? 'am' : 'pm'
+      }
+    }
+
+    cleaned = startPart + ampm
+  }
+
+  let hours = 0
+  let minutes = 0
+
+  // Handle special keywords
+  if (cleaned === 'noon' || cleaned === '12noon' || cleaned === '12 noon') {
+    hours = 12
+  } else if (cleaned === 'midnight' || cleaned === '12am' || cleaned === '12 am') {
+    hours = 0
+  } else {
+    // Try parsing "4:00 PM" or "4:00pm" or "4pm" format
+    const ampmMatch = cleaned.match(/^(\d{1,2}):?(\d{2})?\s*(am|pm)?$/i)
+    if (ampmMatch) {
+      hours = parseInt(ampmMatch[1])
+      minutes = ampmMatch[2] ? parseInt(ampmMatch[2]) : 0
+      const ampmSpec = ampmMatch[3]?.toLowerCase()
+
+      // If no AM/PM specified, assume PM for hours 1-11 (typical brewery/event hours)
+      // 12 without AM/PM is assumed to be noon (12pm)
+      const isPM = ampmSpec === 'pm' || (!ampmSpec && hours >= 1 && hours <= 12)
+
+      if (isPM && hours !== 12) hours += 12
+      if (ampmSpec === 'am' && hours === 12) hours = 0
+    } else {
+      // Try 24-hour format "16:00"
+      const militaryMatch = cleaned.match(/^(\d{1,2}):(\d{2})$/)
+      if (militaryMatch) {
+        hours = parseInt(militaryMatch[1])
+        minutes = parseInt(militaryMatch[2])
+      } else {
+        return undefined
+      }
+    }
+  }
+
+  // Combine date with parsed time
+  const combined = new Date(date)
+  combined.setHours(hours, minutes, 0, 0)
+  return combined.toISOString()
 }
 
 // ============ IMAGE UTILITIES ============
@@ -206,101 +269,189 @@ async function uploadBeerImage(
 }
 
 // ============ SYNC EVENTS ============
-async function syncEvents(payload: any, stream: StreamController, dryRun: boolean, locationMap: Map<string, string>) {
+async function syncEvents(payload: any, stream: StreamController, dryRun: boolean, locations: any[]) {
   const results = { imported: 0, updated: 0, skipped: 0, errors: 0 }
 
-  for (const [locationSlug, url] of Object.entries(SHEETS_CONFIG.events)) {
-    if (!url) continue
+  for (const location of locations) {
+    const locationSlug = location.slug
+    const locationId = location.id
+    const sheets = location.googleSheets || {}
 
-    const locationId = locationMap.get(locationSlug)
-    if (!locationId) {
-      stream.send('error', { message: `Location "${locationSlug}" not found` })
+    // Process both public and private event sheets
+    const sheetUrls = [
+      { url: sheets.eventsPublic, visibility: 'public' },
+      { url: sheets.eventsPrivate, visibility: 'private' },
+    ].filter(s => s.url)
+
+    if (sheetUrls.length === 0) {
+      stream.send('status', { message: `${location.name}: No event sheets configured, skipping` })
       continue
     }
 
-    stream.send('status', { message: `Fetching ${locationSlug} events...` })
+    for (const { url, visibility } of sheetUrls) {
+      stream.send('status', { message: `Fetching ${location.name} ${visibility} events...` })
 
-    try {
-      const rows = await fetchCSV(url)
-      const events = rows.filter(r => r.date && r.vendor)
+      try {
+        const rows = await fetchCSV(url)
 
-      stream.send('status', { message: `Processing ${events.length} ${locationSlug} events...` })
+        // Handle both 'vendor' (public) and 'name' (private) columns
+        const events = rows.filter(r => r.date && (r.vendor || r.name))
 
-      for (const event of events) {
-        const date = parseDate(event.date)
-        if (!date) {
-          results.skipped++
-          continue
-        }
+        stream.send('status', { message: `Processing ${events.length} ${location.name} ${visibility} events...` })
 
-        const existing = await payload.find({
-          collection: 'events',
-          where: {
-            and: [
-              { vendor: { equals: event.vendor } },
-              { date: { equals: date.toISOString() } },
-              { location: { equals: locationId } },
-            ],
-          },
-          limit: 1,
-        })
+        for (const event of events) {
+          try {
+            const date = parseDate(event.date)
+            if (!date || isNaN(date.getTime())) {
+              stream.send('status', { message: `Skipping event with invalid date: ${event.date}` })
+              results.skipped++
+              continue
+            }
 
-        const eventData = {
-          vendor: event.vendor,
-          date: date.toISOString(),
-          time: event.time || undefined,
-          endTime: event.end || undefined,
-          location: locationId,
-          visibility: 'public',
-          site: event.site || undefined,
-          attendees: event.attendees ? parseInt(event.attendees) : undefined,
-          source: 'google-sheets' as const,
-        }
+            // Use 'vendor' or 'name' as organizer
+            const organizer = event.vendor || event.name
+            if (!organizer) {
+              results.skipped++
+              continue
+            }
 
-        if (existing.docs.length > 0) {
-          const existingDoc = existing.docs[0]
-          const incomingForCompare = {
-            time: event.time || null,
-            endTime: event.end || null,
-            site: event.site || null,
-            attendees: event.attendees ? parseInt(event.attendees) : null,
+            const dateISO = date.toISOString()
+
+            const existing = await payload.find({
+              collection: 'events',
+              where: {
+                and: [
+                  { organizer: { equals: organizer } },
+                  { date: { equals: dateISO } },
+                  { location: { equals: locationId } },
+                ],
+              },
+              limit: 1,
+            })
+
+          // Parse attendees - handle "30", "80-100", "up to 50" formats
+          let attendees: number | undefined
+          const attendeesStr = event.attendees || event['number of people']
+          if (attendeesStr) {
+            const match = attendeesStr.match(/(\d+)/)
+            if (match) {
+              attendees = parseInt(match[1])
+            }
           }
-          const existingForCompare = {
-            time: existingDoc.time,
-            endTime: existingDoc.endTime,
-            site: existingDoc.site,
-            attendees: existingDoc.attendees,
-          }
-          const changes = computeChanges(existingForCompare, incomingForCompare, ['time', 'endTime', 'site', 'attendees'])
 
-          if (changes.length === 0) {
-            results.skipped++
+          const eventData: Record<string, any> = {
+            organizer,
+            date: dateISO,
+            location: locationId,
+            visibility: visibility as 'public' | 'private',
+            site: event.site || undefined,
+            attendees,
+          }
+
+          // Handle time fields - some have separate start/end, some have ranges like "7-9pm"
+          const timeStr = event.time || ''
+          const endStr = event.end || ''
+
+          // Check if time contains a range (e.g., "7-9pm", "4-10pm", "7:30pm-9:30pm", "4-12am")
+          const rangeMatch = timeStr.match(/^(.+?)[-–](.+)$/)
+          if (rangeMatch && !endStr) {
+            // Time is a range, parse both parts
+            let startPart = rangeMatch[1].trim()
+            const endPart = rangeMatch[2].trim()
+
+            // If start time doesn't have am/pm but end time does, determine the right one
+            const hasStartAmPm = /am|pm/i.test(startPart)
+            if (!hasStartAmPm) {
+              const endAmPmMatch = endPart.match(/(\d+)\s*(am|pm)/i)
+              if (endAmPmMatch) {
+                const endHour = parseInt(endAmPmMatch[1])
+                const endAmPm = endAmPmMatch[2].toLowerCase()
+                // Special case: "4-12am" means 4pm to midnight
+                if (endHour === 12 && endAmPm === 'am') {
+                  startPart = startPart + 'pm'
+                } else {
+                  startPart = startPart + endAmPm
+                }
+              }
+            }
+
+            eventData.startTime = parseTimeToISO(startPart)
+            eventData.endTime = parseTimeToISO(endPart)
+          } else {
+            // Separate start and end
+            if (timeStr) {
+              eventData.startTime = parseTimeToISO(timeStr)
+            }
+            if (endStr) {
+              eventData.endTime = parseTimeToISO(endStr)
+            }
+          }
+
+          // Private event fields
+          if (visibility === 'private') {
+            eventData.pointOfContact = event['point of contact'] || undefined
+            eventData.email = event['contact info']?.includes('@') ? event['contact info'] : undefined
+            eventData.otherInfo = event['other info'] || undefined
+          }
+
+          if (existing.docs.length > 0) {
+            const existingDoc = existing.docs[0]
+            const incomingForCompare = {
+              startTime: eventData.startTime || null,
+              endTime: eventData.endTime || null,
+              site: event.site || null,
+              attendees: attendees ?? null,
+              visibility,
+              pointOfContact: eventData.pointOfContact || null,
+              email: eventData.email || null,
+              otherInfo: eventData.otherInfo || null,
+            }
+            const existingForCompare = {
+              startTime: existingDoc.startTime || null,
+              endTime: existingDoc.endTime || null,
+              site: existingDoc.site || null,
+              attendees: existingDoc.attendees ?? null,
+              visibility: existingDoc.visibility,
+              pointOfContact: existingDoc.pointOfContact || null,
+              email: existingDoc.email || null,
+              otherInfo: existingDoc.otherInfo || null,
+            }
+            const changes = computeChanges(existingForCompare, incomingForCompare, ['startTime', 'endTime', 'site', 'attendees', 'visibility', 'pointOfContact', 'email', 'otherInfo'])
+
+            if (changes.length === 0) {
+              results.skipped++
+              continue
+            }
+
+            if (!dryRun) {
+              await payload.update({ collection: 'events', id: existingDoc.id, data: eventData })
+            }
+            results.updated++
+            stream.send('event', {
+              action: dryRun ? 'would update' : 'updated',
+              organizer,
+              date: event.date,
+              location: locationSlug,
+              visibility,
+              changes,
+            })
             continue
           }
 
           if (!dryRun) {
-            await payload.update({ collection: 'events', id: existingDoc.id, data: eventData })
+            await payload.create({ collection: 'events', data: eventData })
           }
-          results.updated++
-          stream.send('event', {
-            action: dryRun ? 'would update' : 'updated',
-            vendor: event.vendor,
-            date: event.date,
-            location: locationSlug,
-            changes,
-          })
-          continue
+          results.imported++
+          stream.send('event', { action: dryRun ? 'would import' : 'imported', organizer, date: event.date, location: locationSlug, visibility })
+          } catch (eventError: any) {
+            stream.send('error', { message: `Error processing event "${event.vendor || event.name}" (${event.date}): ${eventError.message}` })
+            results.errors++
+          }
         }
-
-        if (!dryRun) {
-          await payload.create({ collection: 'events', data: eventData })
-        }
-        results.imported++
-        stream.send('event', { action: dryRun ? 'would import' : 'imported', vendor: event.vendor, date: event.date, location: locationSlug })
+      } catch (error: any) {
+        stream.send('error', { message: `Error syncing ${location.name} ${visibility} events: ${error.message}` })
+        results.errors++
       }
-    } catch (error: any) {
-      stream.send('error', { message: `Error syncing ${locationSlug} events: ${error.message}` })
-      results.errors++
     }
   }
 
@@ -308,25 +459,85 @@ async function syncEvents(payload: any, stream: StreamController, dryRun: boolea
 }
 
 // ============ SYNC FOOD ============
-async function syncFood(payload: any, stream: StreamController, dryRun: boolean, locationMap: Map<string, string>) {
-  const results = { imported: 0, updated: 0, skipped: 0, errors: 0 }
+async function syncFood(payload: any, stream: StreamController, dryRun: boolean, locations: any[]) {
+  const results = { imported: 0, updated: 0, skipped: 0, errors: 0, vendorsCreated: 0 }
 
-  for (const [locationSlug, url] of Object.entries(SHEETS_CONFIG.food)) {
-    if (!url) continue
+  // Cache for vendor lookups
+  const vendorCache = new Map<string, string>()
 
-    const locationId = locationMap.get(locationSlug)
-    if (!locationId) {
-      stream.send('error', { message: `Location "${locationSlug}" not found` })
+  // Helper to get or create vendor
+  async function getOrCreateVendor(vendorName: string, site?: string): Promise<string | null> {
+    if (!vendorName) return null
+
+    const cacheKey = vendorName.toLowerCase().trim()
+    if (vendorCache.has(cacheKey)) {
+      return vendorCache.get(cacheKey)!
+    }
+
+    // Look up existing vendor
+    const existing = await payload.find({
+      collection: 'food-vendors',
+      where: { name: { equals: vendorName } },
+      limit: 1,
+    })
+
+    if (existing.docs.length > 0) {
+      const vendorId = existing.docs[0].id
+      vendorCache.set(cacheKey, vendorId)
+
+      // Update site if provided and different
+      if (site && site !== existing.docs[0].site) {
+        if (!dryRun) {
+          await payload.update({
+            collection: 'food-vendors',
+            id: vendorId,
+            data: { site },
+          })
+        }
+        stream.send('vendor', { action: dryRun ? 'would update' : 'updated', name: vendorName, site })
+      }
+
+      return vendorId
+    }
+
+    // Create new vendor
+    if (!dryRun) {
+      const newVendor = await payload.create({
+        collection: 'food-vendors',
+        data: {
+          name: vendorName,
+          site: site || undefined,
+        },
+      })
+      vendorCache.set(cacheKey, newVendor.id)
+      results.vendorsCreated++
+      stream.send('vendor', { action: 'created', name: vendorName })
+      return newVendor.id
+    } else {
+      results.vendorsCreated++
+      stream.send('vendor', { action: 'would create', name: vendorName })
+      return 'dry-run-id'
+    }
+  }
+
+  for (const location of locations) {
+    const locationSlug = location.slug
+    const locationId = location.id
+    const sheets = location.googleSheets || {}
+
+    const url = sheets.food
+    if (!url) {
+      stream.send('status', { message: `${location.name}: No food sheet configured, skipping` })
       continue
     }
 
-    stream.send('status', { message: `Fetching ${locationSlug} food...` })
+    stream.send('status', { message: `Fetching ${location.name} food...` })
 
     try {
       const rows = await fetchCSV(url)
       const foods = rows.filter(r => r.vendor && r.date)
 
-      stream.send('status', { message: `Processing ${foods.length} ${locationSlug} food entries...` })
+      stream.send('status', { message: `Processing ${foods.length} ${location.name} food entries...` })
 
       for (const food of foods) {
         const date = parseDate(food.date)
@@ -335,11 +546,19 @@ async function syncFood(payload: any, stream: StreamController, dryRun: boolean,
           continue
         }
 
+        // Get or create the vendor
+        const vendorId = await getOrCreateVendor(food.vendor, food.site)
+        if (!vendorId) {
+          results.skipped++
+          continue
+        }
+
+        // Find existing food entry by vendor relationship, date, and location
         const existing = await payload.find({
           collection: 'food',
           where: {
             and: [
-              { vendor: { equals: food.vendor } },
+              { vendor: { equals: vendorId } },
               { date: { equals: date.toISOString() } },
               { location: { equals: locationId } },
             ],
@@ -347,37 +566,27 @@ async function syncFood(payload: any, stream: StreamController, dryRun: boolean,
           limit: 1,
         })
 
+        // Parse start time from CSV (e.g., "4pm", "4:00 PM", "16:00", "1-4pm")
+        // Try 'start' column first, then fall back to 'time' column
+        const timeValue = food.start || food.time
+        const startTime = timeValue ? parseTimeWithDate(timeValue, date) : undefined
+
         const foodData = {
-          vendor: food.vendor,
+          vendor: vendorId,
           date: date.toISOString(),
-          time: food.time || 'TBD',
           location: locationId,
-          site: food.site || undefined,
-          day: food.day || undefined,
-          start: food.start || undefined,
-          finish: food.finish || undefined,
-          week: food.week ? parseInt(food.week) : undefined,
-          dayNumber: food.daynumber ? parseInt(food.daynumber) : undefined,
-          source: 'google-sheets' as const,
+          startTime: startTime,
         }
 
         if (existing.docs.length > 0) {
           const existingDoc = existing.docs[0]
           const incomingForCompare = {
-            time: food.time || 'TBD',
-            site: food.site || null,
-            day: food.day || null,
-            start: food.start || null,
-            finish: food.finish || null,
+            startTime: startTime || null,
           }
           const existingForCompare = {
-            time: existingDoc.time,
-            site: existingDoc.site,
-            day: existingDoc.day,
-            start: existingDoc.start,
-            finish: existingDoc.finish,
+            startTime: existingDoc.startTime || null,
           }
-          const changes = computeChanges(existingForCompare, incomingForCompare, ['time', 'site', 'day', 'start', 'finish'])
+          const changes = computeChanges(existingForCompare, incomingForCompare, ['startTime'])
 
           if (changes.length === 0) {
             results.skipped++
@@ -405,7 +614,7 @@ async function syncFood(payload: any, stream: StreamController, dryRun: boolean,
         stream.send('food', { action: dryRun ? 'would import' : 'imported', vendor: food.vendor, date: food.date, location: locationSlug })
       }
     } catch (error: any) {
-      stream.send('error', { message: `Error syncing ${locationSlug} food: ${error.message}` })
+      stream.send('error', { message: `Error syncing ${location.name} food: ${error.message}` })
       results.errors++
     }
   }
@@ -647,7 +856,7 @@ async function syncMenus(payload: any, stream: StreamController, dryRun: boolean
         stream.send('status', { message: `Processing ${items.length} ${locationSlug} ${menuType} items...` })
 
         // Build menu items array
-        const menuItems: { beer: string; price?: string }[] = []
+        const menuItems: { product: { relationTo: 'beers' | 'products'; value: string } }[] = []
         for (const item of items) {
           // Use variant directly as slug (matches beer import logic)
           const itemSlug = item.variant.toLowerCase().trim()
@@ -657,10 +866,7 @@ async function syncMenus(payload: any, stream: StreamController, dryRun: boolean
             continue
           }
 
-          const price = item.saleprice && item.saleprice !== 'FALSE' ? item.saleprice :
-                       item.price ? item.price : undefined
-
-          menuItems.push({ beer: beerId, price })
+          menuItems.push({ product: { relationTo: 'beers', value: beerId } })
         }
 
         // Find existing menu
@@ -685,35 +891,43 @@ async function syncMenus(payload: any, stream: StreamController, dryRun: boolean
           const existingDoc = existing.docs[0]
           // Check if items changed
           const existingItems = existingDoc.items || []
-          const existingNormalized = existingItems.map((i: any) => ({
-            beer: typeof i.beer === 'object' ? i.beer.id : i.beer,
-            price: i.price || null
-          }))
+          const existingNormalized = existingItems.map((i: any) => {
+            // Handle new polymorphic product field
+            const product = i.product
+            if (product?.relationTo && product?.value) {
+              const id = typeof product.value === 'object' ? product.value.id : product.value
+              return { product: `${product.relationTo}:${id}` }
+            }
+            // Handle old beer field (for backwards compatibility)
+            if (i.beer) {
+              const beerId = typeof i.beer === 'object' ? i.beer.id : i.beer
+              return { product: `beers:${beerId}` }
+            }
+            return { product: null }
+          })
           const incomingNormalized = menuItems.map(i => ({
-            beer: i.beer,
-            price: i.price || null
+            product: `${i.product.relationTo}:${i.product.value}`,
           }))
 
           // Use diffJson to compute actual differences
           const diff = diffJson(existingNormalized, incomingNormalized)
           const hasChanges = diff.some(part => part.added || part.removed)
 
-          if (!hasChanges) {
+          // Also check if any items use the old 'beer' field and need migration to 'product'
+          const needsMigration = existingItems.some((i: any) => i.beer && !i.product)
+
+          if (!hasChanges && !needsMigration) {
             results.skipped++
             continue
           }
 
           // Compute human-readable changes
           const added = incomingNormalized.filter(inc =>
-            !existingNormalized.some((ex: any) => ex.beer === inc.beer)
+            !existingNormalized.some((ex: any) => ex.product === inc.product)
           )
           const removed = existingNormalized.filter((ex: any) =>
-            !incomingNormalized.some(inc => inc.beer === ex.beer)
+            !incomingNormalized.some(inc => inc.product === ex.product)
           )
-          const priceChanges = incomingNormalized.filter(inc => {
-            const ex = existingNormalized.find((e: any) => e.beer === inc.beer)
-            return ex && ex.price !== inc.price
-          })
 
           if (!dryRun) {
             await payload.update({ collection: 'menus', id: existingDoc.id, data: menuData })
@@ -727,7 +941,7 @@ async function syncMenus(payload: any, stream: StreamController, dryRun: boolean
             changes: {
               added: added.length,
               removed: removed.length,
-              priceChanges: priceChanges.length,
+              migrated: needsMigration,
             },
           })
           continue
@@ -789,10 +1003,14 @@ function parseTimeToISO(timeStr: string, timezone: string = 'America/New_York'):
     if (ampmMatch) {
       hours = parseInt(ampmMatch[1])
       minutes = ampmMatch[2] ? parseInt(ampmMatch[2]) : 0
-      const isPM = ampmMatch[3]?.toLowerCase() === 'pm'
+      const ampmSpec = ampmMatch[3]?.toLowerCase()
+
+      // If no AM/PM specified, assume PM for hours 1-11 (typical brewery/event hours)
+      // 12 without AM/PM is assumed to be noon (12pm)
+      const isPM = ampmSpec === 'pm' || (!ampmSpec && hours >= 1 && hours <= 12)
 
       if (isPM && hours !== 12) hours += 12
-      if (!isPM && hours === 12) hours = 0
+      if (ampmSpec === 'am' && hours === 12) hours = 0
     } else {
       // Try 24-hour format "16:00"
       const militaryMatch = cleaned.match(/^(\d{1,2}):(\d{2})$/)
@@ -815,14 +1033,12 @@ function parseTimeToISO(timeStr: string, timezone: string = 'America/New_York'):
   return date.toISOString()
 }
 
-async function syncHours(payload: any, stream: StreamController, dryRun: boolean) {
+async function syncHours(payload: any, stream: StreamController, dryRun: boolean, locations: any[]) {
   const results = { imported: 0, updated: 0, skipped: 0, errors: 0 }
 
-  // Get all locations that have a hoursSheetUrl
-  const locations = await payload.find({ collection: 'locations', limit: 50 })
-
-  for (const location of locations.docs) {
-    const sheetUrl = location.hoursSheetUrl
+  for (const location of locations) {
+    // Use new googleSheets.hours or fall back to legacy hoursSheetUrl
+    const sheetUrl = location.googleSheets?.hours || location.hoursSheetUrl
     if (!sheetUrl) {
       stream.send('status', { message: `${location.name}: No hours sheet URL configured, skipping` })
       continue
@@ -922,184 +1138,6 @@ async function syncHours(payload: any, stream: StreamController, dryRun: boolean
   return results
 }
 
-// ============ SYNC DISTRIBUTORS ============
-interface GeoFeature {
-  type: 'Feature'
-  geometry: {
-    type: 'Point'
-    coordinates: [number, number] // [longitude, latitude]
-  }
-  properties: {
-    id: number
-    Name: string
-    address: string
-    customerType: string
-  }
-}
-
-interface GeoJSON {
-  type: 'FeatureCollection'
-  features: GeoFeature[]
-}
-
-// Load GeoJSON via HTTP (filesystem not available on Vercel serverless)
-async function loadGeoJSON(region: string, baseUrl: string): Promise<{ data: GeoJSON | null; error?: string; url?: string }> {
-  const url = `${baseUrl}/${region.toLowerCase()}_geo_data.json`
-  try {
-    const response = await fetch(url)
-    if (!response.ok) {
-      return { data: null, error: `HTTP ${response.status}: ${response.statusText}`, url }
-    }
-    return { data: (await response.json()) as GeoJSON, url }
-  } catch (err) {
-    return { data: null, error: err instanceof Error ? err.message : String(err), url }
-  }
-}
-
-// Normalize customer type to valid enum values
-function normalizeCustomerType(type: string): 'Retail' | 'On Premise' | 'Home-D' {
-  const typeLower = type.toLowerCase()
-  if (typeLower.includes('bar') || typeLower.includes('restaurant') || typeLower.includes('hotel') ||
-      typeLower.includes('brewery') || typeLower.includes('catering') || typeLower.includes('six pack')) {
-    return 'On Premise'
-  }
-  if (typeLower.includes('home') || typeLower.includes('delivery') || typeLower === 'home-d') {
-    return 'Home-D'
-  }
-  // Retail, Liquor Store, Grocery, Supplier, etc.
-  return 'Retail'
-}
-
-// Parse address into components
-function parseAddress(fullAddress: string): { street: string; city?: string; state?: string; zip?: string } {
-  // Format: "2756 W 12TH ST, ERIE, PA, 16505"
-  const parts = fullAddress.split(',').map(p => p.trim())
-  if (parts.length >= 4) {
-    return {
-      street: parts[0],
-      city: parts[1],
-      state: parts[2],
-      zip: parts[3],
-    }
-  } else if (parts.length === 3) {
-    // "Street, City, State Zip"
-    const stateZip = parts[2].split(' ')
-    return {
-      street: parts[0],
-      city: parts[1],
-      state: stateZip[0],
-      zip: stateZip[1],
-    }
-  }
-  return { street: fullAddress }
-}
-
-async function syncDistributors(payload: any, stream: StreamController, dryRun: boolean, baseUrl: string) {
-  const results = { imported: 0, updated: 0, skipped: 0, errors: 0 }
-  const regions = ['pa', 'ny']
-
-  for (const region of regions) {
-    stream.send('status', { message: `Loading ${region.toUpperCase()} distributors from geo data...` })
-
-    const { data: geoData, error, url } = await loadGeoJSON(region, baseUrl)
-    if (!geoData) {
-      stream.send('error', { message: `Could not load ${region}_geo_data.json - ${error || 'unknown error'} (URL: ${url})` })
-      results.errors++
-      continue
-    }
-
-    const features = geoData.features.filter(f => f.properties.Name && f.geometry.coordinates)
-    stream.send('status', { message: `Processing ${features.length} ${region.toUpperCase()} distributors...` })
-
-    for (const feature of features) {
-      const { Name, address, customerType } = feature.properties
-      const [lng, lat] = feature.geometry.coordinates
-
-      if (!lng || !lat || isNaN(lng) || isNaN(lat)) {
-        stream.send('error', { message: `Invalid coordinates for "${Name}"` })
-        results.skipped++
-        continue
-      }
-
-      // Check for existing distributor by name and region
-      const existing = await payload.find({
-        collection: 'distributors',
-        where: {
-          and: [
-            { name: { equals: Name } },
-            { region: { equals: region.toUpperCase() } },
-          ],
-        },
-        limit: 1,
-      })
-
-      const normalizedType = normalizeCustomerType(customerType)
-      const addressParts = parseAddress(address)
-
-      const distributorData = {
-        name: Name,
-        address: addressParts.street,
-        city: addressParts.city,
-        state: addressParts.state || region.toUpperCase(),
-        zip: addressParts.zip,
-        customerType: normalizedType,
-        region: region.toUpperCase(),
-        location: [lng, lat], // Point field: [longitude, latitude]
-        active: true,
-        source: 'google-sheets' as const,
-      }
-
-      if (existing.docs.length > 0) {
-        const existingDoc = existing.docs[0]
-        const existingLocation = existingDoc.location || [0, 0]
-        const incomingForCompare = {
-          address: addressParts.street || null,
-          customerType: normalizedType,
-          lat,
-          lng,
-        }
-        const existingForCompare = {
-          address: existingDoc.address || null,
-          customerType: existingDoc.customerType,
-          lat: existingLocation[1],
-          lng: existingLocation[0],
-        }
-        const changes = computeChanges(existingForCompare, incomingForCompare, ['address', 'customerType', 'lat', 'lng'])
-
-        if (changes.length === 0) {
-          results.skipped++
-          continue
-        }
-
-        if (!dryRun) {
-          await payload.update({ collection: 'distributors', id: existingDoc.id, data: distributorData })
-        }
-        results.updated++
-        stream.send('distributor', {
-          action: dryRun ? 'would update' : 'updated',
-          name: Name,
-          region: region.toUpperCase(),
-          changes,
-        })
-        continue
-      }
-
-      if (!dryRun) {
-        await payload.create({ collection: 'distributors', data: distributorData })
-      }
-      results.imported++
-      stream.send('distributor', {
-        action: dryRun ? 'would import' : 'imported',
-        name: Name,
-        region: region.toUpperCase(),
-        customerType: normalizedType,
-      })
-    }
-  }
-
-  return results
-}
-
 // ============ LOCATION SEED DATA ============
 const LOCATION_SEED_DATA = {
   lawrenceville: {
@@ -1136,15 +1174,17 @@ async function runSync(
   payload: any,
   stream: StreamController,
   dryRun: boolean,
-  collections: CollectionType[],
-  baseUrl: string
+  collections: CollectionType[]
 ) {
   const results: Record<string, { imported: number; updated: number; skipped: number; errors: number; imagesAdded?: number }> = {}
 
-  // Get location IDs, create locations if they don't exist
-  const locations = await payload.find({ collection: 'locations', limit: 10 })
+  // Get all locations with their sheet URLs
+  let locationsResult = await payload.find({ collection: 'locations', limit: 50 })
+  let allLocations = [...locationsResult.docs]
+
+  // Build locationMap for menus (still uses slugs)
   const locationMap = new Map<string, string>()
-  for (const loc of locations.docs) {
+  for (const loc of allLocations) {
     locationMap.set(loc.slug, loc.id)
   }
 
@@ -1158,21 +1198,21 @@ async function runSync(
           data: seedData,
         })
         locationMap.set(newLocation.slug, newLocation.id)
+        allLocations.push(newLocation)
         stream.send('status', { message: `Created location: ${seedData.name} (${newLocation.slug})` })
       } else {
         stream.send('status', { message: `Would create missing location: ${seedData.name}` })
-        // Use placeholder for dry run
         locationMap.set(slug, 'dry-run-placeholder')
       }
     }
   }
 
   if (collections.includes('events')) {
-    results.events = await syncEvents(payload, stream, dryRun, locationMap)
+    results.events = await syncEvents(payload, stream, dryRun, allLocations)
   }
 
   if (collections.includes('food')) {
-    results.food = await syncFood(payload, stream, dryRun, locationMap)
+    results.food = await syncFood(payload, stream, dryRun, allLocations)
   }
 
   if (collections.includes('beers')) {
@@ -1184,13 +1224,64 @@ async function runSync(
   }
 
   if (collections.includes('hours')) {
-    results.hours = await syncHours(payload, stream, dryRun)
+    results.hours = await syncHours(payload, stream, dryRun, allLocations)
   }
 
-  if (collections.includes('distributors')) {
-    results.distributors = await syncDistributors(payload, stream, dryRun, baseUrl)
+  if (collections.includes('recalc')) {
+    results.recalc = await recalculateBeerFields(payload, stream, dryRun)
   }
 
+  return results
+}
+
+// ============ RECALCULATE BEER FIELDS ============
+async function recalculateBeerFields(payload: any, stream: StreamController, dryRun: boolean) {
+  const results = { imported: 0, updated: 0, skipped: 0, errors: 0 }
+
+  stream.send('status', { message: 'Fetching all beers for recalculation...' })
+
+  try {
+    const beersResult = await payload.find({
+      collection: 'beers',
+      limit: 1000,
+      depth: 0,
+    })
+
+    stream.send('status', { message: `Recalculating fields for ${beersResult.docs.length} beers...` })
+
+    for (const beer of beersResult.docs) {
+      try {
+        // Skip beers with halfPourOnly enabled - they use manual pricing
+        if (beer.halfPourOnly) {
+          stream.send('status', { message: `Skipping ${beer.name} (half pour only enabled)` })
+          results.skipped++
+          continue
+        }
+
+        if (!dryRun) {
+          // Simply update the beer - the beforeChange hook will recalculate fields
+          await payload.update({
+            collection: 'beers',
+            id: beer.id,
+            data: {
+              draftPrice: beer.draftPrice,
+              fourPack: beer.fourPack,
+            },
+          })
+        }
+        results.updated++
+        stream.send('status', { message: `${dryRun ? 'Would recalculate' : 'Recalculated'}: ${beer.name}` })
+      } catch (error: any) {
+        stream.send('error', { message: `Error recalculating ${beer.name}: ${error.message}` })
+        results.errors++
+      }
+    }
+  } catch (error: any) {
+    stream.send('error', { message: `Error fetching beers: ${error.message}` })
+    results.errors++
+  }
+
+  stream.send('status', { message: `Recalculation complete: ${results.updated} updated, ${results.skipped} skipped, ${results.errors} errors` })
   return results
 }
 
@@ -1199,13 +1290,8 @@ export const syncGoogleSheets: PayloadHandler = async (req) => {
   const dryRun = url.searchParams.get('dryRun') === 'true'
   const collectionsParam = url.searchParams.get('collections') || 'events,food'
   const collections = collectionsParam.split(',').filter(c =>
-    ['events', 'food', 'beers', 'menus', 'hours', 'distributors'].includes(c)
+    ['events', 'food', 'beers', 'menus', 'hours', 'recalc'].includes(c)
   ) as CollectionType[]
-
-  // Get base URL from request headers
-  const host = req.headers.get('host') || 'localhost:3000'
-  const protocol = req.headers.get('x-forwarded-proto') || 'http'
-  const baseUrl = `${protocol}://${host}`
 
   // Use getPayloadHMR for file upload support
   const { getPayloadHMR } = await import('@payloadcms/next/utilities')
@@ -1222,7 +1308,7 @@ export const syncGoogleSheets: PayloadHandler = async (req) => {
       try {
         send('status', { message: dryRun ? 'Starting preview...' : 'Starting sync...' })
 
-        const results = await runSync(payload, { send }, dryRun, collections, baseUrl)
+        const results = await runSync(payload, { send }, dryRun, collections)
 
         send('complete', {
           success: true,

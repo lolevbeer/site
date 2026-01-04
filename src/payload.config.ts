@@ -13,13 +13,20 @@ import { Styles } from './collections/Styles'
 import { Beers } from './collections/Beers'
 import { Events } from './collections/Events'
 import { Food } from './collections/Food'
+import { FoodVendors } from './collections/FoodVendors'
 import { Locations } from './collections/Locations'
 import { HolidayHours } from './collections/HolidayHours'
 import { Menus } from './collections/Menus'
 import { Distributors } from './collections/Distributors'
+import { Products } from './collections/Products'
 import { ComingSoon } from './globals/ComingSoon'
+import { RecurringFood } from './globals/RecurringFood'
 import { SiteContent } from './globals/SiteContent'
 import { syncGoogleSheets } from './endpoints/sync-google-sheets'
+import { importFoodVendorsCSV } from './endpoints/import-food-vendors-csv'
+import { importDistributors } from './endpoints/import-distributors'
+import { importLakeBeverageCSV } from './endpoints/import-lake-beverage-csv'
+import { updateDistributorUrls } from './endpoints/update-distributor-urls'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -68,8 +75,8 @@ export default buildConfig({
       },
     },
   },
-  collections: [Users, Media, Styles, Beers, Events, Food, Locations, HolidayHours, Menus, Distributors],
-  globals: [ComingSoon, SiteContent],
+  collections: [Users, Media, Styles, Beers, Products, Events, Food, FoodVendors, Locations, HolidayHours, Menus, Distributors],
+  globals: [ComingSoon, RecurringFood, SiteContent],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
@@ -93,6 +100,26 @@ export default buildConfig({
       path: '/sync-google-sheets',
       method: 'post',
       handler: syncGoogleSheets,
+    },
+    {
+      path: '/import-food-vendors-csv',
+      method: 'post',
+      handler: importFoodVendorsCSV,
+    },
+    {
+      path: '/import-distributors',
+      method: 'post',
+      handler: importDistributors,
+    },
+    {
+      path: '/import-lake-beverage-csv',
+      method: 'post',
+      handler: importLakeBeverageCSV,
+    },
+    {
+      path: '/update-distributor-urls',
+      method: 'post',
+      handler: updateDistributorUrls,
     },
   ],
 })
