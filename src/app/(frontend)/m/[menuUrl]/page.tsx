@@ -1,10 +1,11 @@
-import { getMenuByUrl } from '@/lib/utils/payload-api'
+import { getMenuByUrlFresh } from '@/lib/utils/payload-api'
 import { LiveMenu } from '@/components/menu/live-menu'
 import { notFound } from 'next/navigation'
 
-// ISR: Revalidate every minute as fallback for initial page load
+// Menu pages must always be fresh - no caching
 // SSE handles real-time updates after hydration
-export const revalidate = 60
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 interface MenuPageProps {
   params: Promise<{
@@ -14,14 +15,14 @@ interface MenuPageProps {
 
 export default async function MenuPage({ params }: MenuPageProps) {
   const { menuUrl } = await params
-  const menu = await getMenuByUrl(menuUrl)
+  const menu = await getMenuByUrlFresh(menuUrl)
 
   if (!menu) {
     notFound()
   }
 
-  // For 'other' type or unknown, return 404
-  if (menu.type !== 'draft' && menu.type !== 'cans') {
+  // For unknown types, return 404
+  if (menu.type !== 'draft' && menu.type !== 'cans' && menu.type !== 'other') {
     notFound()
   }
 
@@ -35,7 +36,7 @@ export default async function MenuPage({ params }: MenuPageProps) {
 // Generate metadata
 export async function generateMetadata({ params }: MenuPageProps) {
   const { menuUrl } = await params
-  const menu = await getMenuByUrl(menuUrl)
+  const menu = await getMenuByUrlFresh(menuUrl)
 
   if (!menu) {
     return {

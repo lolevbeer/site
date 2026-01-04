@@ -227,6 +227,41 @@ export const getMenuByUrl = async (url: string): Promise<PayloadMenu | null> => 
 }
 
 /**
+ * Get menu by URL slug - UNCACHED version for real-time updates
+ * Used by SSE endpoints and menu display pages that need immediate updates
+ */
+export const getMenuByUrlFresh = async (url: string): Promise<PayloadMenu | null> => {
+  try {
+    const payload = await getPayload({ config })
+
+    const result = await payload.find({
+      collection: 'menus',
+      where: {
+        and: [
+          {
+            url: {
+              equals: url,
+            },
+          },
+          {
+            _status: {
+              equals: 'published',
+            },
+          },
+        ],
+      },
+      depth: 3, // Include location, beers, and beer relations (style, image)
+      limit: 1,
+    })
+
+    return result.docs[0] || null
+  } catch (error) {
+    logger.error(`Error fetching menu by URL (fresh): ${url}`, error)
+    return null
+  }
+}
+
+/**
  * Get all active locations from Payload
  * Cached until 'locations' tag is invalidated
  */
