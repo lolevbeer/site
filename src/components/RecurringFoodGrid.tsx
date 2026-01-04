@@ -3,6 +3,13 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useField, RelationshipInput, useModal, ConfirmationModal } from '@payloadcms/ui'
 import type { ValueWithRelation } from 'payload'
+import {
+  getActiveLocations,
+  getFoodVendorsByIds,
+  getUpcomingFoodForLocation,
+  type SimpleLocation,
+  type FoodEvent,
+} from '@/src/actions/admin-data'
 
 const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const
 const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -23,11 +30,8 @@ type SchedulesData = Record<string, LocationSchedule>
 // Exclusions structure: { [locationId]: string[] }
 type ExclusionsData = Record<string, string[]>
 
-interface Location {
-  id: string
-  name: string
-  slug: string
-}
+// Using SimpleLocation from server actions
+type Location = SimpleLocation
 
 // Get all occurrences of a specific week/day combo for the next N months
 function getUpcomingDates(dayIndex: number, weekOccurrence: number, monthsAhead: number = 6): Date[] {
@@ -586,16 +590,15 @@ export const RecurringFoodGrid: React.FC = () => {
   const safeSchedules = schedules || {}
   const safeExclusions = exclusions || {}
 
-  // Fetch active locations
+  // Fetch active locations using server action
   useEffect(() => {
     const fetchLocations = async () => {
       try {
-        const response = await fetch('/api/locations?where[active][equals]=true&sort=name')
-        const data = await response.json()
+        const locations = await getActiveLocations()
 
-        if (data.docs && data.docs.length > 0) {
-          setLocations(data.docs)
-          setActiveTab(data.docs[0].id)
+        if (locations.length > 0) {
+          setLocations(locations)
+          setActiveTab(locations[0].id)
         }
       } catch (error) {
         console.error('Error fetching locations:', error)

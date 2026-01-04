@@ -32,10 +32,10 @@ const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
 export default buildConfig({
-  // Empty serverURL means Payload uses relative URLs - works on any port
-  serverURL: process.env.NEXT_PUBLIC_APP_URL || '',
-  cors: '*', // Allow all origins in development, tighten in production if needed
-  csrf: false, // Disable CSRF protection - safe because we use cookie-based auth, not tokens
+  // Empty serverURL = relative URLs, works on any domain (preview URLs, custom domains, etc.)
+  serverURL: '',
+  cors: '*', // Allow all origins
+  csrf: [], // Empty array disables CSRF protection
   routes: {
     api: '/api',
     admin: '/admin',
