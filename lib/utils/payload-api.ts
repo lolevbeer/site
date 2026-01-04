@@ -8,7 +8,7 @@ import { getPayload } from 'payload'
 import config from '@/src/payload.config'
 import { cache } from 'react'
 import { unstable_cache } from 'next/cache'
-import type { Beer as PayloadBeer, Menu as PayloadMenu, Style, HolidayHour, Event as PayloadEvent, Food as PayloadFood } from '@/src/payload-types'
+import type { Beer as PayloadBeer, Menu as PayloadMenu, Style, HolidayHour, Event as PayloadEvent, Food as PayloadFood, Distributor } from '@/src/payload-types'
 import type { PayloadLocation } from '@/lib/types/location'
 import { logger } from '@/lib/utils/logger'
 import { CACHE_TAGS } from '@/lib/utils/cache'
@@ -1137,3 +1137,80 @@ export const getUpcomingEvents = getUpcomingEventsFromPayload
  * Alias for backward compatibility with lib/data/beer-data.ts
  */
 export const getUpcomingFood = getUpcomingFoodFromPayload
+
+// ============ DISTRIBUTOR DATA ============
+
+/**
+ * GeoJSON types for distributor map data
+ */
+export interface DistributorGeoFeature {
+  type: 'Feature'
+  geometry: {
+    type: 'Point'
+    coordinates: [number, number] // [longitude, latitude]
+  }
+  properties: {
+    id: number
+    Name: string
+    address: string
+    customerType: string
+    uniqueId: string
+  }
+}
+
+export interface DistributorGeoJSON {
+  type: 'FeatureCollection'
+  features: DistributorGeoFeature[]
+}
+
+/**
+ * Get all active distributors as GeoJSON
+ * Cached for 1 hour (distributors don't change frequently)
+ */
+export const getAllDistributorsGeoJSON = unstable_cache(
+  async (): Promise<DistributorGeoJSON> => {
+    try {
+      const payload = await getPayload({ config })
+
+      const result = await payload.find({
+        collection: 'distributors',
+        limit: 2000,
+        where: {
+          active: {
+            equals: true,
+          },
+        },
+        depth: 0,
+      })
+
+      const features: DistributorGeoFeature[] = result.docs
+        .filter((dist): dist is Distributor & { location: [number, number] } =>
+          Array.isArray(dist.location) && dist.location.length === 2
+        )
+        .map((dist, index) => ({
+          type: 'Feature' as const,
+          geometry: {
+            type: 'Point' as const,
+            coordinates: dist.location,
+          },
+          properties: {
+            id: index,
+            Name: dist.name,
+            address: dist.address,
+            customerType: dist.customerType || 'Retail',
+            uniqueId: dist.id,
+          },
+        }))
+
+      return {
+        type: 'FeatureCollection',
+        features,
+      }
+    } catch (error) {
+      logger.error('Error fetching distributors from Payload', error)
+      return { type: 'FeatureCollection', features: [] }
+    }
+  },
+  ['all-distributors-geojson'],
+  { tags: [CACHE_TAGS.distributors], revalidate: 3600 }
+)

@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
 import { MapLoadingSkeleton } from '@/lib/utils/lazy-load';
 import { HoursPanel } from '@/components/location/hours-panel';
-import type { WeeklyHoursDay } from '@/lib/utils/payload-api';
+import type { WeeklyHoursDay, DistributorGeoJSON } from '@/lib/utils/payload-api';
 
 // Lazy load the map component - no SSR for better performance
 const DistributorMap = dynamic(
@@ -18,9 +18,10 @@ const DistributorMap = dynamic(
 
 interface BeerMapContentProps {
   weeklyHours?: Record<string, WeeklyHoursDay[]>;
+  distributorData?: DistributorGeoJSON;
 }
 
-export function BeerMapContent({ weeklyHours }: BeerMapContentProps) {
+export function BeerMapContent({ weeklyHours, distributorData }: BeerMapContentProps) {
   return (
     <div className="container mx-auto px-4 py-8">
       <PageBreadcrumbs className="mb-6" />
@@ -37,12 +38,13 @@ export function BeerMapContent({ weeklyHours }: BeerMapContentProps) {
       </div>
 
       {/* Distributor Map */}
-      <div className="rounded-xl overflow-hidden border" style={{ height: '700px', position: 'relative' }}>
+      <div className="overflow-hidden" style={{ height: '700px', position: 'relative' }}>
         <DistributorMap
           height={700}
           showSearch={true}
           initialZoom={6.5}
           maxPoints={10}
+          initialData={distributorData}
         />
       </div>
     </div>

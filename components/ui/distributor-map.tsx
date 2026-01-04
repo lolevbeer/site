@@ -27,8 +27,10 @@ import { toast } from 'sonner';
 import { useMapData } from '@/lib/hooks/use-map-data';
 import { useGeolocation } from '@/lib/hooks/use-geolocation';
 import { useLocationSearch } from '@/lib/hooks/use-location-search';
+import { useLocationPreferences } from '@/lib/hooks/use-location-preferences';
 import { MapControls } from '@/components/map/map-controls';
 import { LocationCard } from '@/components/map/location-card';
+import { LocationListSkeleton } from '@/components/map/location-card-skeleton';
 import { useTheme } from 'next-themes';
 import { trackMapInteraction } from '@/lib/analytics/events';
 
@@ -67,12 +69,18 @@ interface LocationWithDistance extends GeoFeature {
   distance?: number;
 }
 
+interface GeoJSON {
+  type: 'FeatureCollection';
+  features: GeoFeature[];
+}
+
 interface DistributorMapProps {
   className?: string;
   height?: string | number;
   showSearch?: boolean;
   initialZoom?: number;
   maxPoints?: number;
+  initialData?: GeoJSON;
 }
 
 const customerTypeColors: Record<string, string> = {
@@ -100,18 +108,29 @@ export function DistributorMap({
   height = 600,
   showSearch = true,
   initialZoom = 7,
-  maxPoints = 20
+  maxPoints = 20,
+  initialData
 }: DistributorMapProps) {
-  // Use custom hooks
-  const { geoData, loading, error } = useMapData();
+  // Use custom hooks - skip fetch if initialData provided
+  const { geoData: fetchedData, loading: fetchLoading, error: fetchError } = useMapData();
   const { userLocation, getUserLocation } = useGeolocation();
   const { searchTerm, setSearchTerm, searchLocation, isSearching } = useLocationSearch();
   const { theme } = useTheme();
+
+  // Location preferences for persistence
+  const { preferences, isLoaded: prefsLoaded, saveGeolocationPreference, saveSearchPreference } = useLocationPreferences();
+
+  // Use initialData if provided, otherwise use fetched data
+  const geoData = initialData || fetchedData;
+  const loading = !initialData && fetchLoading;
+  const error = !initialData ? fetchError : null;
 
   // Component state
   const [selectedLocation, setSelectedLocation] = useState<GeoFeature | null>(null);
   const [clickedLocation, setClickedLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [mobileView, setMobileView] = useState<'map' | 'list'>('map');
+  const [distanceFromLabel, setDistanceFromLabel] = useState<string | null>(null);
+  const [hasAppliedPrefs, setHasAppliedPrefs] = useState(false);
   const [viewport, setViewport] = useState<{
     latitude: number;
     longitude: number;
@@ -126,6 +145,34 @@ export function DistributorMap({
   const mapRef = useRef<any>(null);
   const selectedCardRef = useRef<HTMLDivElement>(null);
 
+  // Apply saved preferences on initial load
+  useEffect(() => {
+    if (prefsLoaded && !hasAppliedPrefs && preferences && geoData) {
+      setHasAppliedPrefs(true);
+
+      if (preferences.coordinates) {
+        // Set viewport to saved location
+        setViewport({
+          latitude: preferences.coordinates.latitude,
+          longitude: preferences.coordinates.longitude,
+          zoom: MAP_CONFIG.LOCATION_ZOOM
+        });
+
+        // Set clicked location to enable distance calculations
+        setClickedLocation(preferences.coordinates);
+
+        // Set label based on preference type
+        if (preferences.type === 'geolocation') {
+          setDistanceFromLabel('your last location');
+        } else if (preferences.type === 'search' && preferences.searchTerm) {
+          const term = preferences.searchTerm;
+          setDistanceFromLabel(term.length > 20 ? term.substring(0, 20) + '...' : term);
+          setSearchTerm(term);
+        }
+      }
+    }
+  }, [prefsLoaded, hasAppliedPrefs, preferences, geoData, setSearchTerm]);
+
   // Update viewport when search location changes
   useEffect(() => {
     if (searchLocation) {
@@ -135,8 +182,18 @@ export function DistributorMap({
         longitude: searchLocation.longitude,
         zoom: MAP_CONFIG.LOCATION_ZOOM
       });
+      // Set distance label based on search term (zipcode or address)
+      const trimmedSearch = searchTerm.trim();
+      if (/^\d{5}$/.test(trimmedSearch)) {
+        setDistanceFromLabel(trimmedSearch);
+      } else {
+        // Truncate long addresses
+        setDistanceFromLabel(trimmedSearch.length > 20 ? trimmedSearch.substring(0, 20) + '...' : trimmedSearch);
+      }
+      // Save search preference
+      saveSearchPreference(trimmedSearch, searchLocation);
     }
-  }, [searchLocation]);
+  }, [searchLocation, searchTerm, saveSearchPreference]);
 
   // Scroll to selected item
   useEffect(() => {
@@ -209,11 +266,13 @@ export function DistributorMap({
           longitude: coords.longitude,
           zoom: MAP_CONFIG.LOCATION_ZOOM
         });
-
+        setDistanceFromLabel('you');
+        // Save geolocation preference
+        saveGeolocationPreference(coords);
         toast.success(`Showing ${maxPoints} nearest locations`);
       }
     );
-  }, [getUserLocation, setSearchTerm, maxPoints]);
+  }, [getUserLocation, setSearchTerm, maxPoints, saveGeolocationPreference]);
 
   // Handle location click
   const handleLocationClick = useCallback((location: GeoFeature, fromMap: boolean = false) => {
@@ -225,6 +284,9 @@ export function DistributorMap({
     if (fromMap && !searchLocation && !userLocation) {
       setClickedLocation({ latitude: lat, longitude: lng });
       setSearchTerm('');
+      // Truncate name for label
+      const name = location.properties.Name;
+      setDistanceFromLabel(name.length > 20 ? name.substring(0, 20) + '...' : name);
     }
 
     // Switch to list view on mobile to show selection
@@ -264,13 +326,29 @@ export function DistributorMap({
   }
 
   if (loading) {
+    const containerHeight = typeof height === 'number' ? `${height}px` : height;
     return (
-      <Card className={cn('flex items-center justify-center', className)} style={{ height }}>
-        <div className="text-center p-8">
-          <div className="animate-spin h-12 w-12 border-4 border-primary/30 border-t-primary rounded-full mx-auto mb-4" />
-          <p className="text-muted-foreground font-medium">Loading locations...</p>
+      <div className={cn('flex flex-col', className)} style={{ height: containerHeight, width: '100%' }}>
+        {/* Skeleton Controls */}
+        <Card className="border-0 flex-shrink-0 shadow-none">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-24 bg-muted animate-pulse rounded" />
+            <div className="h-4 w-20 bg-muted animate-pulse rounded" />
+          </div>
+        </Card>
+        {/* Skeleton Split View */}
+        <div className="flex flex-1 relative h-full overflow-hidden">
+          <div className="hidden md:flex md:w-1/2 h-full items-center justify-center bg-muted/30">
+            <div className="text-center">
+              <div className="animate-spin h-8 w-8 border-4 border-primary/30 border-t-primary rounded-full mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">Loading map...</p>
+            </div>
+          </div>
+          <div className="w-full md:w-1/2 h-full overflow-hidden">
+            <LocationListSkeleton count={8} />
+          </div>
         </div>
-      </Card>
+      </div>
     );
   }
 
@@ -309,13 +387,14 @@ export function DistributorMap({
         mobileView={mobileView}
         onMobileViewChange={setMobileView}
         showSearch={showSearch}
+        distanceFromLabel={distanceFromLabel}
       />
 
       {/* Split View */}
       <div className="flex flex-1 relative h-full overflow-hidden">
         {/* Map Side */}
         <div className={cn(
-          "h-full relative border-r",
+          "h-full relative",
           "md:w-1/2",
           mobileView === 'map' ? "w-full" : "hidden md:block"
         )}>
@@ -458,6 +537,7 @@ export function DistributorMap({
                       name={location.properties.Name}
                       address={location.properties.address}
                       distance={location.distance}
+                      distanceFromLabel={distanceFromLabel}
                       isSelected={isSelected}
                       onClick={() => handleLocationClick(location)}
                       innerRef={isSelected ? selectedCardRef : undefined}
@@ -468,17 +548,29 @@ export function DistributorMap({
             </ScrollArea>
           ) : (
             <div className="flex items-center justify-center h-full p-4">
-                  {searchTerm ? (
+                  {searchTerm && !searchLocation ? (
                     <Empty>
                       <EmptyHeader>
                         <EmptyMedia variant="icon">
                           <Search className="h-10 w-10" />
                         </EmptyMedia>
-                        <EmptyTitle>No locations found</EmptyTitle>
+                        <EmptyTitle>No matches for "{searchTerm}"</EmptyTitle>
                         <EmptyDescription>
-                          Try searching for a different name or address
+                          We couldn't find any stores or bars matching that name.
+                          Try a different search or use your location instead.
                         </EmptyDescription>
                       </EmptyHeader>
+                      <EmptyContent>
+                        <div className="flex gap-2">
+                          <Button onClick={() => setSearchTerm('')} variant="outline" size="sm">
+                            Clear Search
+                          </Button>
+                          <Button onClick={handleGeolocate} variant="default" size="sm">
+                            <Locate className="h-4 w-4 mr-1" />
+                            Near Me
+                          </Button>
+                        </div>
+                      </EmptyContent>
                     </Empty>
                   ) : (searchLocation || userLocation) ? (
                     <Empty>
@@ -486,11 +578,17 @@ export function DistributorMap({
                         <EmptyMedia variant="icon">
                           <MapPin className="h-10 w-10" />
                         </EmptyMedia>
-                        <EmptyTitle>No locations nearby</EmptyTitle>
+                        <EmptyTitle>No retailers in this area</EmptyTitle>
                         <EmptyDescription>
-                          Try expanding your search area or search by name
+                          We don't have any distribution partners near {distanceFromLabel || 'this location'} yet.
+                          Try searching a different area or check back soon!
                         </EmptyDescription>
                       </EmptyHeader>
+                      <EmptyContent>
+                        <Button onClick={() => { setSearchTerm(''); setDistanceFromLabel(null); }} variant="outline" size="sm">
+                          Search Different Area
+                        </Button>
+                      </EmptyContent>
                     </Empty>
                   ) : (
                     <Empty>
@@ -500,13 +598,14 @@ export function DistributorMap({
                         </EmptyMedia>
                         <EmptyTitle>Find Lolev Near You</EmptyTitle>
                         <EmptyDescription>
-                          Use "Near Me" or search by location, zipcode, or address to find nearby retailers
+                          Discover bars, restaurants, and stores that carry our beer.
+                          Search by zipcode, city, or use your current location.
                         </EmptyDescription>
                       </EmptyHeader>
                       <EmptyContent>
                         <Button onClick={handleGeolocate} variant="default">
                           <Locate className="h-4 w-4 mr-2" />
-                          Near Me
+                          Use My Location
                         </Button>
                       </EmptyContent>
                     </Empty>

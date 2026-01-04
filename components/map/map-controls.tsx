@@ -23,6 +23,7 @@ interface MapControlsProps {
   mobileView: 'map' | 'list';
   onMobileViewChange: (view: 'map' | 'list') => void;
   showSearch?: boolean;
+  distanceFromLabel?: string | null;
 }
 
 const capitalizeName = (name: string) => {
@@ -44,10 +45,11 @@ export function MapControls({
   onNearbyLocationClick,
   mobileView,
   onMobileViewChange,
-  showSearch = true
+  showSearch = true,
+  distanceFromLabel
 }: MapControlsProps) {
   return (
-    <Card className="rounded-b-none border-0 border-b p-4 flex-shrink-0 shadow-none">
+    <Card className="border-0 flex-shrink-0 shadow-none pb-4">
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -110,22 +112,29 @@ export function MapControls({
         )}
 
         {nearbyLocations.length > 0 && (
-          <div className="flex items-center gap-2 overflow-x-auto">
-            <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap">
-              <MapPin className="h-3 w-3 inline mr-1" />
-              Nearest:
-            </span>
-            {nearbyLocations.map((location) => (
-              <Badge
-                key={location.uniqueId}
-                variant="secondary"
-                className="cursor-pointer hover:bg-primary hover:text-primary-foreground text-xs whitespace-nowrap"
-                onClick={() => onNearbyLocationClick(location)}
-              >
-                {capitalizeName(location.name).substring(0, 25)}
-                {location.distance !== undefined && <span className="ml-1 opacity-75">({location.distance.toFixed(1)}mi)</span>}
-              </Badge>
-            ))}
+          <div className="flex flex-col gap-2">
+            {distanceFromLabel && (
+              <span className="text-xs text-muted-foreground">
+                Distances from <span className="font-medium text-foreground">{distanceFromLabel}</span>
+              </span>
+            )}
+            <div className="flex items-center gap-2 overflow-x-auto">
+              <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap">
+                <MapPin className="h-3 w-3 inline mr-1" />
+                Nearest:
+              </span>
+              {nearbyLocations.map((location) => (
+                <Badge
+                  key={location.uniqueId}
+                  variant="secondary"
+                  className="cursor-pointer hover:bg-primary hover:text-primary-foreground text-xs whitespace-nowrap"
+                  onClick={() => onNearbyLocationClick(location)}
+                >
+                  {capitalizeName(location.name).substring(0, 25)}
+                  {location.distance !== undefined && <span className="ml-1 opacity-75">({location.distance.toFixed(1)}mi)</span>}
+                </Badge>
+              ))}
+            </div>
           </div>
         )}
       </div>

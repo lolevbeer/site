@@ -17,6 +17,7 @@ export const CACHE_TAGS = {
   comingSoon: 'coming-soon',
   siteContent: 'site-content',
   homepage: 'homepage',
+  distributors: 'distributors',
 } as const
 
 export type CacheTag = (typeof CACHE_TAGS)[keyof typeof CACHE_TAGS]
@@ -61,6 +62,7 @@ export const COLLECTION_CACHE_MAP: Record<string, CacheTag[]> = {
   locations: [CACHE_TAGS.locations, CACHE_TAGS.homepage, CACHE_TAGS.menus],
   styles: [CACHE_TAGS.styles, CACHE_TAGS.beers],
   'holiday-hours': [CACHE_TAGS.holidayHours, CACHE_TAGS.locations, CACHE_TAGS.homepage],
+  distributors: [CACHE_TAGS.distributors],
 }
 
 /**

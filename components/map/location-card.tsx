@@ -8,6 +8,7 @@ interface LocationCardProps {
   name: string;
   address: string;
   distance?: number;
+  distanceFromLabel?: string | null;
   isSelected: boolean;
   onClick: () => void;
   innerRef?: React.Ref<HTMLDivElement>;
@@ -25,6 +26,7 @@ export function LocationCard({
   name,
   address,
   distance,
+  distanceFromLabel,
   isSelected,
   onClick,
   innerRef
@@ -48,7 +50,7 @@ export function LocationCard({
           </p>
           {distance !== undefined && (
             <span className="text-xs font-medium text-primary mt-1 inline-block">
-              {distance.toFixed(1)} mi away
+              {distance.toFixed(1)} mi{distanceFromLabel ? ` from ${distanceFromLabel}` : ' away'}
             </span>
           )}
         </div>
