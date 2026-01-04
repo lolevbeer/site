@@ -71,8 +71,10 @@ export interface Config {
     media: Media;
     styles: Style;
     beers: Beer;
+    products: Product;
     events: Event;
     food: Food;
+    'food-vendors': FoodVendor;
     locations: Location;
     'holiday-hours': HolidayHour;
     menus: Menu;
@@ -88,8 +90,10 @@ export interface Config {
     media: MediaSelect<false> | MediaSelect<true>;
     styles: StylesSelect<false> | StylesSelect<true>;
     beers: BeersSelect<false> | BeersSelect<true>;
+    products: ProductsSelect<false> | ProductsSelect<true>;
     events: EventsSelect<false> | EventsSelect<true>;
     food: FoodSelect<false> | FoodSelect<true>;
+    'food-vendors': FoodVendorsSelect<false> | FoodVendorsSelect<true>;
     locations: LocationsSelect<false> | LocationsSelect<true>;
     'holiday-hours': HolidayHoursSelect<false> | HolidayHoursSelect<true>;
     menus: MenusSelect<false> | MenusSelect<true>;
@@ -105,10 +109,12 @@ export interface Config {
   fallbackLocale: null;
   globals: {
     'coming-soon': ComingSoon;
+    'recurring-food': RecurringFood;
     'site-content': SiteContent;
   };
   globalsSelect: {
     'coming-soon': ComingSoonSelect<false> | ComingSoonSelect<true>;
+    'recurring-food': RecurringFoodSelect<false> | RecurringFoodSelect<true>;
     'site-content': SiteContentSelect<false> | SiteContentSelect<true>;
   };
   locale: null;
@@ -146,9 +152,14 @@ export interface User {
   id: string;
   name?: string | null;
   /**
-   * Admins can manage users and all content. Editors can manage content only.
+   * Assign to specific locations. If set, bartenders can only access menus for these locations.
    */
-  role: 'admin' | 'editor';
+  locations?: (string | Location)[] | null;
+  /**
+   * Admins can manage users and all content. Event/Beer/Food Managers can manage their respective collections. Bartenders can update menus. Users can have multiple roles.
+   */
+  roles: ('admin' | 'event-manager' | 'beer-manager' | 'food-manager' | 'bartender')[];
+  role?: ('admin' | 'event-manager' | 'beer-manager' | 'food-manager' | 'bartender') | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -166,6 +177,101 @@ export interface User {
       }[]
     | null;
   password?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "locations".
+ */
+export interface Location {
+  id: string;
+  /**
+   * Is this location currently active?
+   */
+  active?: boolean | null;
+  name: string;
+  /**
+   * Timezone for this location's hours
+   */
+  timezone?: ('America/New_York' | 'America/Chicago' | 'America/Denver' | 'America/Los_Angeles') | null;
+  /**
+   * Auto-generated from name (lowercase, spaces to dashes)
+   */
+  slug?: string | null;
+  /**
+   * CSV export URLs for syncing data from Google Sheets
+   */
+  googleSheets?: {
+    /**
+     * Public events (concerts, trivia, etc.)
+     */
+    eventsPublic?: string | null;
+    /**
+     * Private events (rentals, corporate, etc.)
+     */
+    eventsPrivate?: string | null;
+    /**
+     * Food truck schedule
+     */
+    food?: string | null;
+    /**
+     * Operating hours schedule
+     */
+    hours?: string | null;
+  };
+  /**
+   * Deprecated - use Google Sheets Import URLs instead
+   */
+  hoursSheetUrl?: string | null;
+  basicInfo?: {
+    phone?: string | null;
+    email?: string | null;
+  };
+  address?: {
+    street?: string | null;
+    city?: string | null;
+    state?: string | null;
+    zip?: string | null;
+  };
+  images?: {
+    /**
+     * Image shown on location cards (recommended: 800x600px)
+     */
+    card?: (string | null) | Media;
+    /**
+     * Hero/banner image for this location (recommended: 1920x1080px)
+     */
+    hero?: (string | null) | Media;
+  };
+  monday?: {
+    open?: string | null;
+    close?: string | null;
+  };
+  tuesday?: {
+    open?: string | null;
+    close?: string | null;
+  };
+  wednesday?: {
+    open?: string | null;
+    close?: string | null;
+  };
+  thursday?: {
+    open?: string | null;
+    close?: string | null;
+  };
+  friday?: {
+    open?: string | null;
+    close?: string | null;
+  };
+  saturday?: {
+    open?: string | null;
+    close?: string | null;
+  };
+  sunday?: {
+    open?: string | null;
+    close?: string | null;
+  };
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -244,6 +350,14 @@ export interface Beer {
    */
   draftPrice: number;
   /**
+   * Enable to manually set half pour price (disables auto-calculation)
+   */
+  halfPourOnly?: boolean | null;
+  /**
+   * Auto-calculated unless "Half Pour Only" is enabled
+   */
+  halfPour?: number | null;
+  /**
    * Four pack price (e.g., 15)
    */
   fourPack?: number | null;
@@ -292,115 +406,60 @@ export interface Beer {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "events".
+ * via the `definition` "products".
  */
-export interface Event {
+export interface Product {
   id: string;
+  name: string;
   /**
-   * Event or vendor name
+   * Press "Enter" or "Tab" after entering option to add another
    */
-  vendor: string;
-  date: string;
+  options?: string[] | null;
   /**
-   * Time range (e.g., "4-9pm" or "7:30pm")
+   * Alcohol by volume (%)
    */
-  time?: string | null;
+  abv?: number | null;
   /**
-   * End time if different format needed
+   * Display price (e.g., "$5.00")
    */
-  endTime?: string | null;
-  location: string | Location;
-  visibility: 'public' | 'private';
-  /**
-   * Website or social media link
-   */
-  site?: string | null;
-  /**
-   * Event description (optional)
-   */
-  description?: string | null;
-  /**
-   * Expected or registered attendees
-   */
-  attendees?: number | null;
-  /**
-   * Where this record originated
-   */
-  source?: ('payload' | 'google-sheets') | null;
+  price?: string | null;
   updatedAt: string;
   createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "locations".
+ * via the `definition` "events".
  */
-export interface Location {
+export interface Event {
   id: string;
   /**
-   * Is this location currently active?
+   * Public events will be displayed on the site
    */
-  active?: boolean | null;
-  name: string;
+  visibility: 'public' | 'private';
   /**
-   * Timezone for this location's hours
+   * If this is a public event, this will be listed on the website
    */
-  timezone?: ('America/New_York' | 'America/Chicago' | 'America/Denver' | 'America/Los_Angeles') | null;
+  organizer: string;
+  date: string;
+  startTime?: string | null;
+  endTime?: string | null;
+  location: string | Location;
   /**
-   * Auto-generated from name (lowercase, spaces to dashes)
+   * This will be linked on the website
    */
-  slug?: string | null;
+  site?: string | null;
+  description?: string | null;
   /**
-   * Google Sheets CSV export URL for syncing hours (optional)
+   * Expected or registered attendees
    */
-  hoursSheetUrl?: string | null;
-  basicInfo?: {
-    phone?: string | null;
-    email?: string | null;
-  };
-  address?: {
-    street?: string | null;
-    city?: string | null;
-    state?: string | null;
-    zip?: string | null;
-  };
-  images?: {
-    /**
-     * Image shown on location cards (recommended: 800x600px)
-     */
-    card?: (string | null) | Media;
-    /**
-     * Hero/banner image for this location (recommended: 1920x1080px)
-     */
-    hero?: (string | null) | Media;
-  };
-  monday?: {
-    open?: string | null;
-    close?: string | null;
-  };
-  tuesday?: {
-    open?: string | null;
-    close?: string | null;
-  };
-  wednesday?: {
-    open?: string | null;
-    close?: string | null;
-  };
-  thursday?: {
-    open?: string | null;
-    close?: string | null;
-  };
-  friday?: {
-    open?: string | null;
-    close?: string | null;
-  };
-  saturday?: {
-    open?: string | null;
-    close?: string | null;
-  };
-  sunday?: {
-    open?: string | null;
-    close?: string | null;
-  };
+  attendees?: number | null;
+  pointOfContact?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  /**
+   * Additional information for private event
+   */
+  otherInfo?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -411,43 +470,30 @@ export interface Location {
 export interface Food {
   id: string;
   /**
-   * Food vendor name
+   * Select food vendor
    */
-  vendor: string;
+  vendor: string | FoodVendor;
+  /**
+   * Auto-populated vendor name for display
+   */
+  vendorName?: string | null;
   date: string;
-  /**
-   * Service time (e.g., "4-9pm")
-   */
-  time: string;
   location: string | Location;
-  /**
-   * Website or social media link
-   */
+  startTime?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "food-vendors".
+ */
+export interface FoodVendor {
+  id: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
   site?: string | null;
-  /**
-   * Day of week
-   */
-  day?: ('Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday') | null;
-  /**
-   * Start time (e.g., "4pm")
-   */
-  start?: string | null;
-  /**
-   * End time (e.g., "9pm")
-   */
-  finish?: string | null;
-  /**
-   * Week number
-   */
-  week?: number | null;
-  /**
-   * Day number (1-7)
-   */
-  dayNumber?: number | null;
-  /**
-   * Where this record originated
-   */
-  source?: ('payload' | 'google-sheets') | null;
+  logo?: (string | null) | Media;
   updatedAt: string;
   createdAt: string;
 }
@@ -523,12 +569,17 @@ export interface Menu {
    */
   sheetUrl?: string | null;
   items: {
+    product:
+      | {
+          relationTo: 'beers';
+          value: string | Beer;
+        }
+      | {
+          relationTo: 'products';
+          value: string | Product;
+        };
     /**
-     * Search by name or slug
-     */
-    beer: string | Beer;
-    /**
-     * Sale Price
+     * Sale Price (optional override)
      */
     price?: string | null;
     id?: string | null;
@@ -566,11 +617,11 @@ export interface Distributor {
   /**
    * Type of customer/location
    */
-  customerType: 'Retail' | 'On Premise' | 'Home-D';
+  customerType?: ('Retail' | 'On Premise' | 'Home-D') | null;
   /**
    * Geographic region
    */
-  region?: ('PA' | 'NY' | 'OH' | 'WV') | null;
+  region?: ('NY' | 'OH' | 'PA' | 'WV') | null;
   /**
    * Geographic coordinates [longitude, latitude]
    *
@@ -590,10 +641,6 @@ export interface Distributor {
    * Whether this location is currently active
    */
   active?: boolean | null;
-  /**
-   * Where this record originated
-   */
-  source?: ('payload' | 'google-sheets') | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -638,12 +685,20 @@ export interface PayloadLockedDocument {
         value: string | Beer;
       } | null)
     | ({
+        relationTo: 'products';
+        value: string | Product;
+      } | null)
+    | ({
         relationTo: 'events';
         value: string | Event;
       } | null)
     | ({
         relationTo: 'food';
         value: string | Food;
+      } | null)
+    | ({
+        relationTo: 'food-vendors';
+        value: string | FoodVendor;
       } | null)
     | ({
         relationTo: 'locations';
@@ -709,6 +764,8 @@ export interface PayloadMigration {
  */
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
+  locations?: T;
+  roles?: T;
   role?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -796,6 +853,8 @@ export interface BeersSelect<T extends boolean = true> {
   glass?: T;
   abv?: T;
   draftPrice?: T;
+  halfPourOnly?: T;
+  halfPour?: T;
   fourPack?: T;
   canSingle?: T;
   upc?: T;
@@ -815,19 +874,34 @@ export interface BeersSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "products_select".
+ */
+export interface ProductsSelect<T extends boolean = true> {
+  name?: T;
+  options?: T;
+  abv?: T;
+  price?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "events_select".
  */
 export interface EventsSelect<T extends boolean = true> {
-  vendor?: T;
+  visibility?: T;
+  organizer?: T;
   date?: T;
-  time?: T;
+  startTime?: T;
   endTime?: T;
   location?: T;
-  visibility?: T;
   site?: T;
   description?: T;
   attendees?: T;
-  source?: T;
+  pointOfContact?: T;
+  email?: T;
+  phone?: T;
+  otherInfo?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -837,16 +911,23 @@ export interface EventsSelect<T extends boolean = true> {
  */
 export interface FoodSelect<T extends boolean = true> {
   vendor?: T;
+  vendorName?: T;
   date?: T;
-  time?: T;
   location?: T;
+  startTime?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "food-vendors_select".
+ */
+export interface FoodVendorsSelect<T extends boolean = true> {
+  name?: T;
+  email?: T;
+  phone?: T;
   site?: T;
-  day?: T;
-  start?: T;
-  finish?: T;
-  week?: T;
-  dayNumber?: T;
-  source?: T;
+  logo?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -859,6 +940,14 @@ export interface LocationsSelect<T extends boolean = true> {
   name?: T;
   timezone?: T;
   slug?: T;
+  googleSheets?:
+    | T
+    | {
+        eventsPublic?: T;
+        eventsPrivate?: T;
+        food?: T;
+        hours?: T;
+      };
   hoursSheetUrl?: T;
   basicInfo?:
     | T
@@ -958,7 +1047,7 @@ export interface MenusSelect<T extends boolean = true> {
   items?:
     | T
     | {
-        beer?: T;
+        product?: T;
         price?: T;
         id?: T;
       };
@@ -982,7 +1071,6 @@ export interface DistributorsSelect<T extends boolean = true> {
   phone?: T;
   website?: T;
   active?: T;
-  source?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1050,6 +1138,39 @@ export interface ComingSoon {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "recurring-food".
+ */
+export interface RecurringFood {
+  id: string;
+  /**
+   * Recurring food schedules by location ID
+   */
+  schedules?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Excluded dates by location ID
+   */
+  exclusions?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "site-content".
  */
 export interface SiteContent {
@@ -1062,6 +1183,14 @@ export interface SiteContent {
   errorMessage?: string | null;
   todaysEventsTitle?: string | null;
   todaysFoodTitle?: string | null;
+  /**
+   * Sixth City/Encompass8 QuickLink URL for PA distributors
+   */
+  distributorPaUrl?: string | null;
+  /**
+   * Sixth City/Encompass8 QuickLink URL for OH distributors
+   */
+  distributorOhUrl?: string | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -1083,6 +1212,17 @@ export interface ComingSoonSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "recurring-food_select".
+ */
+export interface RecurringFoodSelect<T extends boolean = true> {
+  schedules?: T;
+  exclusions?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "site-content_select".
  */
 export interface SiteContentSelect<T extends boolean = true> {
@@ -1091,6 +1231,8 @@ export interface SiteContentSelect<T extends boolean = true> {
   errorMessage?: T;
   todaysEventsTitle?: T;
   todaysFoodTitle?: T;
+  distributorPaUrl?: T;
+  distributorOhUrl?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

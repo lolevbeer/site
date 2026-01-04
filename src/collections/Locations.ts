@@ -1,10 +1,6 @@
-import type { CollectionConfig, Access } from 'payload'
+import type { CollectionConfig } from 'payload'
 import { generateUniqueSlug } from './utils/generateUniqueSlug'
-
-// Check if user is admin or editor
-const isAdminOrEditor: Access = ({ req: { user } }) => {
-  return user?.role === 'admin' || user?.role === 'editor'
-}
+import { adminAccess } from '@/src/access/roles'
 
 export const Locations: CollectionConfig = {
   slug: 'locations',
@@ -13,9 +9,9 @@ export const Locations: CollectionConfig = {
   },
   access: {
     read: () => true, // Public read access
-    create: isAdminOrEditor,
-    update: isAdminOrEditor,
-    delete: isAdminOrEditor,
+    create: adminAccess,
+    update: adminAccess,
+    delete: adminAccess,
   },
   hooks: {
     beforeChange: [
@@ -74,12 +70,56 @@ export const Locations: CollectionConfig = {
       },
     },
     {
+      name: 'googleSheets',
+      type: 'group',
+      label: 'Google Sheets Import URLs',
+      admin: {
+        description: 'CSV export URLs for syncing data from Google Sheets',
+      },
+      fields: [
+        {
+          name: 'eventsPublic',
+          type: 'text',
+          label: 'Events Sheet (Public)',
+          admin: {
+            description: 'Public events (concerts, trivia, etc.)',
+          },
+        },
+        {
+          name: 'eventsPrivate',
+          type: 'text',
+          label: 'Events Sheet (Private)',
+          admin: {
+            description: 'Private events (rentals, corporate, etc.)',
+          },
+        },
+        {
+          name: 'food',
+          type: 'text',
+          label: 'Food Sheet',
+          admin: {
+            description: 'Food truck schedule',
+          },
+        },
+        {
+          name: 'hours',
+          type: 'text',
+          label: 'Hours Sheet',
+          admin: {
+            description: 'Operating hours schedule',
+          },
+        },
+      ],
+    },
+    // Legacy field - keeping for backwards compatibility
+    {
       name: 'hoursSheetUrl',
       type: 'text',
-      label: 'Hours Google Sheet URL',
+      label: 'Hours Google Sheet URL (Legacy)',
       admin: {
-        description: 'Google Sheets CSV export URL for syncing hours (optional)',
+        description: 'Deprecated - use Google Sheets Import URLs instead',
         position: 'sidebar',
+        condition: (data) => !!data?.hoursSheetUrl, // Only show if has value
       },
     },
     {

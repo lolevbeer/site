@@ -34,50 +34,8 @@ import {
 import { UntappdIcon } from '@/components/icons/untappd-icon';
 import { getGlassIcon } from '@/lib/utils/beer-icons';
 import { formatAbv } from '@/lib/utils/formatters';
-
-/**
- * Normalize a URL to be relative (domain/port agnostic)
- * Converts "http://localhost:3002/api/media/file/hades.png" to "/api/media/file/hades.png"
- */
-function normalizeUrl(url: string): string {
-  if (url.startsWith('/')) return url;
-  try {
-    const parsed = new URL(url);
-    return parsed.pathname;
-  } catch {
-    return url;
-  }
-}
-
-/**
- * Get image URL from beer
- * Supports both:
- * - Payload Beer objects with image as Media relation
- * - Converted Beer objects where image is already a URL string
- * - Boolean (true = use local PNG, false = no image)
- * URLs are normalized to be relative to work with any domain/port
- */
-function getBeerImagePath(beer: { slug?: string; variant?: string; image?: unknown }): string | null {
-  if (!beer.image) return null;
-
-  // Already a URL string (from payload-adapter conversion or direct URL)
-  if (typeof beer.image === 'string') return normalizeUrl(beer.image);
-
-  // Boolean true means use local PNG file
-  if (beer.image === true) {
-    const slug = beer.slug || beer.variant;
-    if (slug) return `/images/beer/${slug}.png`;
-    return null;
-  }
-
-  // Payload Media object with url property
-  if (typeof beer.image === 'object' && beer.image !== null && 'url' in beer.image) {
-    const url = (beer.image as { url?: string | null }).url;
-    return url ? normalizeUrl(url) : null;
-  }
-
-  return null;
-}
+import { getBeerImageUrl } from '@/lib/utils/media-utils';
+import { menuItemHasBeer } from '@/lib/utils/menu-item-utils';
 
 interface BeerDetailsProps {
   beer: Beer;
@@ -141,7 +99,7 @@ function SpecificationRow({
 
 export function BeerDetails({ beer, className = '', isAuthenticated = false }: BeerDetailsProps) {
   const { currentLocation } = useLocationContext();
-  const imagePath = getBeerImagePath(beer);
+  const imagePath = getBeerImageUrl(beer.image, beer.variant);
   const _availability = getAvailabilityInfo(beer);
   const pricing = getPricingInfo(beer);
   const GlassIcon = getGlassIcon(beer.glass);
@@ -169,9 +127,9 @@ export function BeerDetails({ beer, className = '', isAuthenticated = false }: B
       setLocationError(null);
 
       try {
-        // Query Payload CMS for menus containing this beer
+        // Query Payload CMS for all published menus (we'll filter client-side for the beer)
         const response = await fetch(
-          `/api/menus?where[items.beer][equals]=${beer.id}&depth=2&limit=100`
+          `/api/menus?where[_status][equals]=published&depth=2&limit=100`
         );
 
         if (!response.ok) {
@@ -186,10 +144,7 @@ export function BeerDetails({ beer, className = '', isAuthenticated = false }: B
         if (data.docs && Array.isArray(data.docs)) {
           data.docs.forEach((menu: Menu) => {
             // Check if this beer is in the menu items
-            const hasBeer = menu.items?.some((item) => {
-              const beerId = typeof item.beer === 'string' ? item.beer : item.beer?.id;
-              return beerId === beer.id;
-            });
+            const hasBeer = beer.id && menu.items?.some((item) => menuItemHasBeer(item, beer.id!));
 
             if (hasBeer && menu.location) {
               const locationName = typeof menu.location === 'string'

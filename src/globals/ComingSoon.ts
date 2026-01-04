@@ -1,10 +1,15 @@
 import type { GlobalConfig } from 'payload'
+import { adminAccess } from '@/src/access/roles'
 
 export const ComingSoon: GlobalConfig = {
   slug: 'coming-soon',
   label: 'Coming Soon',
+  admin: {
+    group: 'Settings',
+  },
   access: {
     read: () => true,
+    update: adminAccess,
   },
   fields: [
     {

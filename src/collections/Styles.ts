@@ -1,18 +1,16 @@
-import type { CollectionConfig, Access } from 'payload'
-
-const isAdminOrEditor: Access = ({ req: { user } }) => {
-  return user?.role === 'admin' || user?.role === 'editor'
-}
+import type { CollectionConfig } from 'payload'
+import { adminAccess, beerManagerAccess } from '@/src/access/roles'
 
 export const Styles: CollectionConfig = {
   slug: 'styles',
   access: {
     read: () => true,
-    create: isAdminOrEditor,
-    update: isAdminOrEditor,
-    delete: isAdminOrEditor,
+    create: beerManagerAccess,
+    update: beerManagerAccess,
+    delete: adminAccess,
   },
   admin: {
+    hidden: true,
     useAsTitle: 'name',
     defaultColumns: ['name'],
     pagination: {

@@ -1,25 +1,10 @@
-import type { CollectionConfig, Access, FieldAccess } from 'payload'
-
-// Check if user is an admin (collection-level)
-const isAdmin: Access = ({ req: { user } }) => {
-  return user?.role === 'admin'
-}
-
-// Check if user is an admin (field-level)
-const isAdminField: FieldAccess = ({ req: { user } }) => {
-  return user?.role === 'admin'
-}
-
-// Check if user is admin or editor (currently unused but available for future use)
-const _isAdminOrEditor: Access = ({ req: { user } }) => {
-  return user?.role === 'admin' || user?.role === 'editor'
-}
-
-// Check if user is accessing their own record
-const isAdminOrSelf: Access = ({ req: { user }, id }) => {
-  if (user?.role === 'admin') return true
-  return user?.id === id
-}
+import type { CollectionConfig } from 'payload'
+import {
+  adminAccess,
+  adminFieldAccess,
+  adminOrSelfAccess,
+  hasRole,
+} from '@/src/access/roles'
 
 export const Users: CollectionConfig = {
   slug: 'users',
@@ -31,10 +16,10 @@ export const Users: CollectionConfig = {
     useAsTitle: 'email',
   },
   access: {
-    read: isAdminOrSelf,
-    create: isAdmin,
-    update: isAdminOrSelf,
-    delete: isAdmin,
+    read: adminOrSelfAccess,
+    create: adminAccess,
+    update: adminOrSelfAccess,
+    delete: adminAccess,
     admin: ({ req: { user } }) => Boolean(user), // Must be logged in to access admin
   },
   fields: [
@@ -43,20 +28,53 @@ export const Users: CollectionConfig = {
       type: 'text',
     },
     {
-      name: 'role',
+      name: 'locations',
+      type: 'relationship',
+      relationTo: 'locations',
+      hasMany: true,
+      admin: {
+        description: 'Assign to specific locations. If set, bartenders can only access menus for these locations.',
+        condition: (data) => data?.roles?.includes('bartender'),
+      },
+    },
+    {
+      name: 'roles',
       type: 'select',
+      hasMany: true,
       required: true,
-      defaultValue: 'editor',
+      defaultValue: ['bartender'],
       options: [
         { label: 'Admin', value: 'admin' },
-        { label: 'Editor', value: 'editor' },
+        { label: 'Event Manager', value: 'event-manager' },
+        { label: 'Beer Manager', value: 'beer-manager' },
+        { label: 'Food Manager', value: 'food-manager' },
+        { label: 'Bartender', value: 'bartender' },
       ],
       admin: {
-        description: 'Admins can manage users and all content. Editors can manage content only.',
+        position: 'sidebar',
+        description:
+          'Admins can manage users and all content. Event/Beer/Food Managers can manage their respective collections. Bartenders can update menus. Users can have multiple roles.',
       },
       access: {
         // Only admins can change roles
-        update: isAdminField,
+        update: adminFieldAccess,
+      },
+    },
+    // Legacy field - kept for backwards compatibility during migration
+    // Remove this field after all users have been migrated to 'roles'
+    {
+      name: 'role',
+      type: 'select',
+      options: [
+        { label: 'Admin', value: 'admin' },
+        { label: 'Event Manager', value: 'event-manager' },
+        { label: 'Beer Manager', value: 'beer-manager' },
+        { label: 'Food Manager', value: 'food-manager' },
+        { label: 'Bartender', value: 'bartender' },
+      ],
+      admin: {
+        hidden: true, // Hide from UI - only used for migration
+        position: 'sidebar',
       },
     },
   ],

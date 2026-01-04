@@ -1,22 +1,19 @@
-import type { CollectionConfig, Access } from 'payload'
+import type { CollectionConfig } from 'payload'
 import { generateUniqueSlug } from './utils/generateUniqueSlug'
+import { adminAccess, beerManagerAccess } from '@/src/access/roles'
 
 // Helper function to round to nearest 0.25 (like Excel's MROUND)
 const mround = (value: number, multiple: number): number => {
   return Math.round(value / multiple) * multiple
 }
 
-const isAdminOrEditor: Access = ({ req: { user } }) => {
-  return user?.role === 'admin' || user?.role === 'editor'
-}
-
 export const Beers: CollectionConfig = {
   slug: 'beers',
   access: {
     read: () => true,
-    create: isAdminOrEditor,
-    update: isAdminOrEditor,
-    delete: isAdminOrEditor,
+    create: beerManagerAccess,
+    update: beerManagerAccess,
+    delete: adminAccess, // Beer Managers can only archive, not delete
   },
   admin: {
     useAsTitle: 'name',
@@ -41,6 +38,12 @@ export const Beers: CollectionConfig = {
         // Compute canSingle from fourPack: MROUND((fourPack/4) + 0.25, 0.25)
         if (data.fourPack && typeof data.fourPack === 'number') {
           data.canSingle = mround((data.fourPack / 4) + 0.25, 0.25)
+        }
+
+        // Compute halfPour from draftPrice: round(draftPrice / 2) + 1
+        // Skip auto-calculation if halfPourOnly is enabled (manual override)
+        if (data.draftPrice && typeof data.draftPrice === 'number' && !data.halfPourOnly) {
+          data.halfPour = Math.round(data.draftPrice / 2) + 1
         }
 
         // Auto-generate slug from name if not provided or empty
@@ -108,6 +111,24 @@ export const Beers: CollectionConfig = {
       required: true,
       admin: {
         description: 'Draft price in dollars (e.g., 7)',
+        position: 'sidebar',
+        step: 0.25,
+      },
+    },
+    {
+      name: 'halfPourOnly',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        description: 'Enable to manually set half pour price (disables auto-calculation)',
+        position: 'sidebar',
+      },
+    },
+    {
+      name: 'halfPour',
+      type: 'number',
+      admin: {
+        description: 'Auto-calculated unless "Half Pour Only" is enabled',
         position: 'sidebar',
         step: 0.25,
       },

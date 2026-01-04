@@ -8,10 +8,11 @@ import { getPayload } from 'payload'
 import config from '@/src/payload.config'
 import { cache } from 'react'
 import { unstable_cache } from 'next/cache'
-import type { Beer as PayloadBeer, Menu as PayloadMenu, Style, Media, HolidayHour, Event as PayloadEvent, Food as PayloadFood } from '@/src/payload-types'
+import type { Beer as PayloadBeer, Menu as PayloadMenu, Style, HolidayHour, Event as PayloadEvent, Food as PayloadFood } from '@/src/payload-types'
 import type { PayloadLocation } from '@/lib/types/location'
 import { logger } from '@/lib/utils/logger'
 import { CACHE_TAGS } from '@/lib/utils/cache'
+import { extractBeerFromMenuItem } from './menu-item-utils'
 
 /**
  * Get Payload instance (request-scoped cache only)
@@ -169,8 +170,8 @@ export const getCansMenu = async (locationSlug: string): Promise<PayloadMenu | n
     // Sort menu items by beer recipe (descending - newest first)
     if (cansMenu && cansMenu.items) {
       cansMenu.items.sort((a, b) => {
-        const beerA = typeof a.beer === 'object' ? a.beer : null
-        const beerB = typeof b.beer === 'object' ? b.beer : null
+        const beerA = extractBeerFromMenuItem(a)
+        const beerB = extractBeerFromMenuItem(b)
         const recipeA = beerA?.recipe || 0
         const recipeB = beerB?.recipe || 0
         return recipeB - recipeA
@@ -288,14 +289,8 @@ export function getStyleName(style: string | Style): string {
   return style.name
 }
 
-/**
- * Helper to get image URL from Beer image field
- */
-export function getImageUrl(image: string | Media | null | undefined): string | undefined {
-  if (!image) return undefined
-  if (typeof image === 'string') return image
-  return image.url || undefined
-}
+// Re-export getMediaUrl as getImageUrl for backward compatibility
+export { getMediaUrl as getImageUrl } from './media-utils'
 
 // getBeerImageUrl moved to formatters.ts for client-side compatibility
 
@@ -328,7 +323,7 @@ export const getAvailableBeersFromMenus = unstable_cache(
         if (!menu.items) continue
 
         for (const item of menu.items) {
-          const beer = typeof item.beer === 'object' ? item.beer : null
+          const beer = extractBeerFromMenuItem(item)
           if (!beer) continue
 
           // Skip beers that are hidden from site
@@ -856,6 +851,240 @@ export const getUpcomingFoodFromPayload = async (locationSlug: string, limit: nu
     [`food-${locationSlug}-${limit}-${todayKey}`],
     { tags: [CACHE_TAGS.food, CACHE_TAGS.locations], revalidate: 300 }
   )()
+}
+
+// ============ RECURRING FOOD ============
+
+const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const
+const weeks = ['first', 'second', 'third', 'fourth', 'fifth'] as const
+
+type Day = (typeof days)[number]
+type Week = (typeof weeks)[number]
+
+type LocationSchedule = Partial<Record<Day, Partial<Record<Week, string | null>>>>
+type SchedulesData = Record<string, LocationSchedule>
+type ExclusionsData = Record<string, string[]>
+
+interface RecurringFoodGlobal {
+  schedules: SchedulesData
+  exclusions: ExclusionsData
+}
+
+/**
+ * Calculate upcoming occurrences of a specific week/day combo
+ * e.g., "2nd Tuesday" -> next N dates that are the 2nd Tuesday of their month
+ */
+function getUpcomingDatesForSlot(dayIndex: number, weekOccurrence: number, monthsAhead: number = 6): Date[] {
+  const dates: Date[] = []
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const startMonth = today.getMonth()
+  const startYear = today.getFullYear()
+
+  for (let i = 0; i < monthsAhead; i++) {
+    const month = (startMonth + i) % 12
+    const year = startYear + Math.floor((startMonth + i) / 12)
+
+    const firstOfMonth = new Date(year, month, 1)
+    const firstDayOfMonth = firstOfMonth.getDay()
+
+    let firstOccurrence = dayIndex - firstDayOfMonth + 1
+    if (firstOccurrence <= 0) firstOccurrence += 7
+
+    const targetDay = firstOccurrence + (weekOccurrence - 1) * 7
+    const targetDate = new Date(year, month, targetDay)
+
+    if (targetDate.getMonth() === month && targetDate >= today) {
+      dates.push(targetDate)
+    }
+  }
+
+  return dates
+}
+
+/**
+ * Get the recurring food global configuration
+ * Cached until 'recurring-food' tag is invalidated
+ */
+export const getRecurringFoodGlobal = unstable_cache(
+  async (): Promise<RecurringFoodGlobal> => {
+    try {
+      const payload = await getPayload({ config })
+      const result = await payload.findGlobal({
+        slug: 'recurring-food',
+      })
+      return {
+        schedules: (result as any).schedules || {},
+        exclusions: (result as any).exclusions || {},
+      }
+    } catch (error) {
+      logger.error('Error fetching recurring food global', error)
+      return { schedules: {}, exclusions: {} }
+    }
+  },
+  ['recurring-food-global'],
+  { tags: [CACHE_TAGS.food], revalidate: 300 }
+)
+
+export interface RecurringFoodEntry {
+  id: string
+  vendor: {
+    id: string
+    name: string
+    site?: string | null
+  }
+  date: string
+  time?: string
+  location: string
+  isRecurring: true
+  dayOfWeek: string
+  weekOfMonth: string
+}
+
+/**
+ * Get upcoming recurring food vendors for a location
+ * Expands recurring schedules into specific dates
+ * Cached until 'food' tag is invalidated
+ */
+export const getUpcomingRecurringFood = async (
+  locationSlug: string,
+  limit: number = 10,
+  monthsAhead: number = 3
+): Promise<RecurringFoodEntry[]> => {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const todayKey = today.toISOString().split('T')[0]
+
+  return unstable_cache(
+    async (): Promise<RecurringFoodEntry[]> => {
+      try {
+        const payload = await getPayload({ config })
+
+        // Get location ID from slug
+        const locationResult = await payload.find({
+          collection: 'locations',
+          where: { slug: { equals: locationSlug } },
+          limit: 1,
+        })
+
+        if (locationResult.docs.length === 0) {
+          logger.warn(`Location not found: ${locationSlug}`)
+          return []
+        }
+
+        const location = locationResult.docs[0]
+        const locationId = location.id
+
+        // Get recurring food global
+        const recurringFood = await getRecurringFoodGlobal()
+        const locationSchedule = recurringFood.schedules[locationId] || {}
+        const locationExclusions = recurringFood.exclusions[locationId] || []
+
+        // Collect all vendor IDs to fetch in batch
+        const vendorIds = new Set<string>()
+        for (const day of days) {
+          for (const week of weeks) {
+            const vendorId = locationSchedule[day]?.[week]
+            if (vendorId) vendorIds.add(vendorId)
+          }
+        }
+
+        // Fetch all vendors in one request
+        const vendorMap: Record<string, { id: string; name: string; site?: string | null }> = {}
+        if (vendorIds.size > 0) {
+          const vendorResult = await payload.find({
+            collection: 'food-vendors',
+            where: {
+              id: { in: Array.from(vendorIds) },
+            },
+            limit: vendorIds.size,
+          })
+          for (const vendor of vendorResult.docs) {
+            vendorMap[vendor.id] = {
+              id: vendor.id,
+              name: vendor.name,
+              site: vendor.site,
+            }
+          }
+        }
+
+        // Generate upcoming dates for each scheduled slot
+        const entries: RecurringFoodEntry[] = []
+        const currentToday = new Date()
+        currentToday.setHours(0, 0, 0, 0)
+
+        for (let dayIndex = 0; dayIndex < days.length; dayIndex++) {
+          const day = days[dayIndex]
+          for (let weekIndex = 0; weekIndex < weeks.length; weekIndex++) {
+            const week = weeks[weekIndex]
+            const vendorId = locationSchedule[day]?.[week]
+
+            if (vendorId && vendorMap[vendorId]) {
+              const upcomingDates = getUpcomingDatesForSlot(dayIndex, weekIndex + 1, monthsAhead)
+
+              for (const date of upcomingDates) {
+                const dateKey = date.toISOString().split('T')[0]
+
+                // Skip if this date is excluded
+                if (locationExclusions.includes(dateKey)) continue
+
+                entries.push({
+                  id: `recurring-${locationId}-${day}-${week}-${dateKey}`,
+                  vendor: vendorMap[vendorId],
+                  date: dateKey,
+                  location: locationId,
+                  isRecurring: true,
+                  dayOfWeek: day,
+                  weekOfMonth: week,
+                })
+              }
+            }
+          }
+        }
+
+        // Sort by date and limit
+        entries.sort((a, b) => a.date.localeCompare(b.date))
+        return entries.slice(0, limit)
+      } catch (error) {
+        logger.error(`Error fetching recurring food for location: ${locationSlug}`, error)
+        return []
+      }
+    },
+    [`recurring-food-${locationSlug}-${limit}-${monthsAhead}-${todayKey}`],
+    { tags: [CACHE_TAGS.food, CACHE_TAGS.locations], revalidate: 300 }
+  )()
+}
+
+/**
+ * Get combined food (individual + recurring) for a location
+ * Merges and deduplicates by date
+ */
+export const getCombinedUpcomingFood = async (
+  locationSlug: string,
+  limit: number = 10
+): Promise<(PayloadFood | RecurringFoodEntry)[]> => {
+  const [individual, recurring] = await Promise.all([
+    getUpcomingFoodFromPayload(locationSlug, limit),
+    getUpcomingRecurringFood(locationSlug, limit),
+  ])
+
+  // Create a set of dates that have individual food scheduled
+  const individualDates = new Set(
+    individual.map((f) => (typeof f.date === 'string' ? f.date.split('T')[0] : ''))
+  )
+
+  // Filter out recurring entries that conflict with individual entries
+  const filteredRecurring = recurring.filter((r) => !individualDates.has(r.date))
+
+  // Combine and sort
+  const combined = [...individual, ...filteredRecurring]
+  combined.sort((a, b) => {
+    const dateA = 'isRecurring' in a ? a.date : (typeof a.date === 'string' ? a.date.split('T')[0] : '')
+    const dateB = 'isRecurring' in b ? b.date : (typeof b.date === 'string' ? b.date.split('T')[0] : '')
+    return dateA.localeCompare(dateB)
+  })
+
+  return combined.slice(0, limit)
 }
 
 // ============ BACKWARD COMPATIBILITY ALIASES ============

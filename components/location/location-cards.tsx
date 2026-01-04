@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { useLocationContext } from '@/components/location/location-provider';
 import { trackDirections } from '@/lib/analytics/events';
 import { cn } from '@/lib/utils';
+import { getLocationImageUrl } from '@/lib/utils/media-utils';
 import type { WeeklyHoursDay, DayOfWeek } from '@/lib/utils/payload-api';
 
 function getDayName(day: DayOfWeek): string {
@@ -99,16 +100,6 @@ interface LocationCardsProps {
   weeklyHours?: Record<string, WeeklyHoursDay[]>;
 }
 
-// Helper to get image URL from Payload media relation
-function getImageUrl(image: unknown): string | null {
-  if (!image) return null;
-  if (typeof image === 'string') return image;
-  if (typeof image === 'object' && image !== null && 'url' in image) {
-    return (image as { url?: string }).url || null;
-  }
-  return null;
-}
-
 export function LocationCards({ weeklyHours }: LocationCardsProps) {
   const { locations } = useLocationContext();
 
@@ -125,7 +116,7 @@ export function LocationCards({ weeklyHours }: LocationCardsProps) {
       {locations.map((location, index) => {
         const locationKey = location.slug || location.id;
         // Get image from CMS (images.card field)
-        const cardImage = getImageUrl(location.images?.card);
+        const cardImage = getLocationImageUrl(location.images?.card);
         const fallbackGradient = fallbackGradients[index % fallbackGradients.length];
 
         // Generate Google Maps URL if coordinates are available

@@ -1,24 +1,21 @@
-import type { CollectionConfig, Access } from 'payload'
-
-const isAdminOrEditor: Access = ({ req: { user } }) => {
-  return user?.role === 'admin' || user?.role === 'editor'
-}
+import type { CollectionConfig } from 'payload'
+import { foodManagerAccess } from '@/src/access/roles'
 
 export const Food: CollectionConfig = {
   slug: 'food',
   access: {
     read: () => true,
-    create: isAdminOrEditor,
-    update: isAdminOrEditor,
-    delete: isAdminOrEditor,
+    create: foodManagerAccess,
+    update: foodManagerAccess,
+    delete: foodManagerAccess,
   },
   labels: {
     singular: 'Food',
     plural: 'Food',
   },
   admin: {
-    useAsTitle: 'vendor',
-    defaultColumns: ['vendor', 'date', 'location', 'time'],
+    useAsTitle: 'vendorName',
+    defaultColumns: ['vendor', 'date', 'location', 'startTime'],
     pagination: {
       defaultLimit: 100,
     },
@@ -26,10 +23,34 @@ export const Food: CollectionConfig = {
   fields: [
     {
       name: 'vendor',
-      type: 'text',
+      type: 'relationship',
+      relationTo: 'food-vendors',
       required: true,
       admin: {
-        description: 'Food vendor name',
+        description: 'Select food vendor',
+        sortOptions: 'name',
+      },
+    },
+    {
+      name: 'vendorName',
+      type: 'text',
+      admin: {
+        hidden: true,
+        description: 'Auto-populated vendor name for display',
+      },
+      hooks: {
+        beforeChange: [
+          async ({ data, req }) => {
+            if (data?.vendor) {
+              const vendorDoc = await req.payload.findByID({
+                collection: 'food-vendors',
+                id: typeof data.vendor === 'object' ? data.vendor.id : data.vendor,
+              })
+              return vendorDoc?.name || ''
+            }
+            return ''
+          },
+        ],
       },
     },
     {
@@ -38,17 +59,10 @@ export const Food: CollectionConfig = {
       required: true,
       index: true,
       admin: {
+        position: 'sidebar',
         date: {
           displayFormat: 'MMM d, yyyy',
         },
-      },
-    },
-    {
-      name: 'time',
-      type: 'text',
-      required: true,
-      admin: {
-        description: 'Service time (e.g., "4-9pm")',
       },
     },
     {
@@ -59,67 +73,23 @@ export const Food: CollectionConfig = {
       hasMany: false,
     },
     {
-      name: 'site',
-      type: 'text',
-      admin: {
-        description: 'Website or social media link',
-      },
-    },
-    {
-      name: 'day',
-      type: 'select',
-      options: [
-        { label: 'Monday', value: 'Monday' },
-        { label: 'Tuesday', value: 'Tuesday' },
-        { label: 'Wednesday', value: 'Wednesday' },
-        { label: 'Thursday', value: 'Thursday' },
-        { label: 'Friday', value: 'Friday' },
-        { label: 'Saturday', value: 'Saturday' },
-        { label: 'Sunday', value: 'Sunday' },
-      ],
-      admin: {
-        description: 'Day of week',
-      },
-    },
-    {
-      name: 'start',
-      type: 'text',
-      admin: {
-        description: 'Start time (e.g., "4pm")',
-      },
-    },
-    {
-      name: 'finish',
-      type: 'text',
-      admin: {
-        description: 'End time (e.g., "9pm")',
-      },
-    },
-    {
-      name: 'week',
-      type: 'number',
-      admin: {
-        description: 'Week number',
-      },
-    },
-    {
-      name: 'dayNumber',
-      type: 'number',
-      admin: {
-        description: 'Day number (1-7)',
-      },
-    },
-    {
-      name: 'source',
-      type: 'select',
-      defaultValue: 'payload',
-      options: [
-        { label: 'Payload', value: 'payload' },
-        { label: 'Google Sheets', value: 'google-sheets' },
-      ],
+      name: 'startTime',
+      type: 'date',
       admin: {
         position: 'sidebar',
-        description: 'Where this record originated',
+        date: {
+          pickerAppearance: 'timeOnly',
+          displayFormat: 'h:mm a',
+        },
+      },
+    },
+    {
+      name: 'dateWarning',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: './components/FoodDateWarning#FoodDateWarning',
+        },
       },
     },
   ],

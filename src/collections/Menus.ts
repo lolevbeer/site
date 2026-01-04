@@ -1,8 +1,33 @@
-import type { CollectionConfig, Access } from 'payload'
+import type { CollectionConfig, Access, Where } from 'payload'
 import { APIError } from 'payload'
+import { adminAccess, hasRole } from '@/src/access/roles'
 
-const isAdminOrEditor: Access = ({ req: { user } }) => {
-  return user?.role === 'admin' || user?.role === 'editor'
+/**
+ * Get location IDs from user's assigned locations
+ */
+function getUserLocationIds(user: any): string[] | null {
+  if (!user?.locations || !Array.isArray(user.locations) || user.locations.length === 0) {
+    return null
+  }
+  return user.locations.map((loc: any) => (typeof loc === 'object' ? loc.id : loc))
+}
+
+const canUpdateMenus: Access = ({ req: { user } }) => {
+  if (hasRole(user, 'admin')) return true
+  if (hasRole(user, 'bartender')) {
+    // If bartender has assigned locations, restrict to those locations' menus
+    const locationIds = getUserLocationIds(user)
+    if (locationIds) {
+      return {
+        location: {
+          in: locationIds,
+        },
+      }
+    }
+    // Bartender without assigned locations can update all menus
+    return true
+  }
+  return false
 }
 
 export const Menus: CollectionConfig = {
@@ -18,9 +43,19 @@ export const Menus: CollectionConfig = {
     },
   },
   access: {
-    read: ({ req: { user } }) => {
-      // Admins/editors can read all menus (including drafts)
-      if (user?.role === 'admin' || user?.role === 'editor') {
+    read: ({ req: { user } }): boolean | Where => {
+      // Admins can read all menus (including drafts)
+      if (hasRole(user, 'admin')) return true
+      // Bartenders can read all menus, but if assigned to locations, only those locations' menus
+      if (hasRole(user, 'bartender')) {
+        const locationIds = getUserLocationIds(user)
+        if (locationIds) {
+          return {
+            location: {
+              in: locationIds,
+            },
+          }
+        }
         return true
       }
       // Public can only read published menus
@@ -30,9 +65,9 @@ export const Menus: CollectionConfig = {
         },
       }
     },
-    create: isAdminOrEditor,
-    update: isAdminOrEditor,
-    delete: isAdminOrEditor,
+    create: adminAccess,
+    update: canUpdateMenus,
+    delete: adminAccess,
   },
   versions: {
     drafts: true,
@@ -43,16 +78,24 @@ export const Menus: CollectionConfig = {
       ({ data }) => {
         if (!data?.items || !Array.isArray(data.items)) return data
 
-        const beerIds = (data.items as Array<{ beer?: string | { id?: string } }>)
+        // Check for duplicate products (polymorphic - could be beer or product)
+        const productIds = (
+          data.items as Array<{ product?: { relationTo: string; value: string | { id?: string } } }>
+        )
           .map((item) => {
-            if (!item?.beer) return null
-            return typeof item.beer === 'string' ? item.beer : item.beer?.id
+            if (!item?.product) return null
+            const value = item.product.value
+            const id = typeof value === 'string' ? value : value?.id
+            return `${item.product.relationTo}:${id}`
           })
           .filter(Boolean)
 
-        const uniqueIds = new Set(beerIds)
-        if (uniqueIds.size !== beerIds.length) {
-          throw new APIError('Duplicate beer detected - each beer can only appear once on the menu', 400)
+        const uniqueIds = new Set(productIds)
+        if (uniqueIds.size !== productIds.length) {
+          throw new APIError(
+            'Duplicate item detected - each item can only appear once on the menu',
+            400,
+          )
         }
 
         return data
@@ -88,27 +131,32 @@ export const Menus: CollectionConfig = {
           // Fetch full beer data for sorting but preserve original item structure
           const itemsWithRecipe = await Promise.all(
             data.items.map(async (item: any) => {
-              const beerId = typeof item.beer === 'string' ? item.beer : item.beer?.id
-              if (beerId) {
-                try {
-                  const beer = await req.payload.findByID({
-                    collection: 'beers',
-                    id: beerId,
-                  })
-                  return {
-                    originalItem: item,
-                    recipe: beer?.recipe || 0,
-                  }
-                } catch (_error) {
-                  return {
-                    originalItem: item,
-                    recipe: 0,
+              // Handle polymorphic relationship - only sort beers by recipe
+              const product = item.product
+              if (product?.relationTo === 'beers') {
+                const beerId = typeof product.value === 'string' ? product.value : product.value?.id
+                if (beerId) {
+                  try {
+                    const beer = await req.payload.findByID({
+                      collection: 'beers',
+                      id: beerId,
+                    })
+                    return {
+                      originalItem: item,
+                      recipe: beer?.recipe || 0,
+                    }
+                  } catch (_error) {
+                    return {
+                      originalItem: item,
+                      recipe: 0,
+                    }
                   }
                 }
               }
+              // Products (non-beers) sort at the end
               return {
                 originalItem: item,
-                recipe: 0,
+                recipe: -1,
               }
             }),
           )
@@ -200,22 +248,23 @@ export const Menus: CollectionConfig = {
           type: 'row',
           fields: [
             {
-              name: 'beer',
+              name: 'product',
               type: 'relationship',
-              relationTo: 'beers',
+              relationTo: ['beers', 'products'],
               required: true,
               admin: {
                 width: '66%',
-                sortOptions: 'name',
-                allowCreate: false,
-                description: 'Search by name or slug',
+                sortOptions: {
+                  beers: 'name',
+                  products: 'name',
+                },
               },
             },
             {
               name: 'price',
               type: 'text',
               admin: {
-                description: 'Sale Price',
+                description: 'Sale Price (optional override)',
                 width: '33%',
               },
             },

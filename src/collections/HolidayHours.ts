@@ -1,8 +1,5 @@
-import type { CollectionConfig, Access } from 'payload'
-
-const isAdminOrEditor: Access = ({ req: { user } }) => {
-  return user?.role === 'admin' || user?.role === 'editor'
-}
+import type { CollectionConfig } from 'payload'
+import { adminAccess } from '@/src/access/roles'
 
 export const HolidayHours: CollectionConfig = {
   slug: 'holiday-hours',
@@ -18,9 +15,9 @@ export const HolidayHours: CollectionConfig = {
   },
   access: {
     read: () => true,
-    create: isAdminOrEditor,
-    update: isAdminOrEditor,
-    delete: isAdminOrEditor,
+    create: adminAccess,
+    update: adminAccess,
+    delete: adminAccess,
   },
   fields: [
     {

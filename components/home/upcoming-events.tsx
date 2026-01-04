@@ -1,47 +1,29 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { SectionHeader } from '@/components/ui/section-header';
 import { EventCard } from '@/components/events/event-card';
 import { parseLocalDate } from '@/lib/utils/formatters';
 import { useLocationFilteredData, type LocationData } from '@/lib/hooks/use-location-filtered-data';
-import { Pencil } from 'lucide-react';
-import type { LocationSlug } from '@/lib/types/location';
+import { useSortedItems } from '@/lib/hooks/use-sorted-items';
+import type { Event as PayloadEvent } from '@/src/payload-types';
 
-interface Event {
-  date: string;
-  vendor: string;
-  time?: string;
-  attendees?: string;
-  site?: string;
-  end?: string;
-  location?: LocationSlug;
-}
+type EventWithLocationSlug = PayloadEvent & { locationSlug: string };
 
 interface UpcomingEventsProps {
   /** Events organized by location slug */
-  eventsByLocation: Record<string, Event[]>;
+  eventsByLocation: Record<string, PayloadEvent[]>;
   isAuthenticated?: boolean;
 }
 
 export function UpcomingEvents({ eventsByLocation, isAuthenticated }: UpcomingEventsProps) {
-  // Add location to each event
-  const _eventsWithLocation = useMemo(() => {
-    const allEvents: (Event & { location: LocationSlug })[] = [];
-    for (const [locationSlug, events] of Object.entries(eventsByLocation)) {
-      for (const event of events) {
-        allEvents.push({ ...event, location: locationSlug });
-      }
-    }
-    return allEvents;
-  }, [eventsByLocation]);
-
   // Create data structure for location filtering
   const dataByLocation = useMemo(() => {
-    const result: LocationData<Event & { location: LocationSlug }> = {};
-    for (const [locationSlug, events] of Object.entries(eventsByLocation)) {
-      result[locationSlug] = events.map(e => ({ ...e, location: locationSlug }));
+    const result: LocationData<EventWithLocationSlug> = {};
+    for (const [slug, events] of Object.entries(eventsByLocation)) {
+      result[slug] = events.map(e => ({ ...e, locationSlug: slug }));
     }
     return result;
   }, [eventsByLocation]);
@@ -49,45 +31,34 @@ export function UpcomingEvents({ eventsByLocation, isAuthenticated }: UpcomingEv
   // Filter by current location
   const filteredEvents = useLocationFilteredData({ dataByLocation });
 
-  // Sort and take first 3
-  const upcomingEvents = useMemo(() => {
-    const sorted = [...filteredEvents].sort((a, b) => {
-      const dateA = parseLocalDate(a.date);
-      const dateB = parseLocalDate(b.date);
-      return dateA.getTime() - dateB.getTime();
-    });
+  // Date parser for events (uses parseLocalDate for proper timezone handling)
+  const getEventDate = useCallback((e: EventWithLocationSlug) => parseLocalDate(e.date), []);
 
-    return sorted.slice(0, 3);
-  }, [filteredEvents]);
+  // Sort and take first 3
+  const upcomingEvents = useSortedItems(filteredEvents, {
+    getDate: getEventDate,
+    limit: 3,
+  });
+
+  if (upcomingEvents.length === 0) {
+    return null;
+  }
 
   return (
     <section className="py-16 lg:py-24">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex-1" />
-            <h2 className="text-3xl lg:text-4xl font-bold">
-              Upcoming Events
-            </h2>
-            <div className="flex-1 flex justify-end">
-              {isAuthenticated && (
-                <Button asChild variant="outline" size="sm">
-                  <a href="/admin/collections/events" target="_blank" rel="noopener noreferrer">
-                    <Pencil className="h-4 w-4 mr-1" />
-                    Edit
-                  </a>
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
+        <SectionHeader
+          title="Upcoming Events"
+          adminUrl="/admin/collections/events"
+          isAuthenticated={isAuthenticated}
+        />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 justify-items-center">
           {upcomingEvents.map((event, index) => (
             <EventCard
               key={index}
               event={event}
-              currentLocation={event.location}
+              currentLocation={event.locationSlug}
             />
           ))}
         </div>

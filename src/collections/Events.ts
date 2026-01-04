@@ -1,31 +1,56 @@
-import type { CollectionConfig, Access } from 'payload'
-
-const isAdminOrEditor: Access = ({ req: { user } }) => {
-  return user?.role === 'admin' || user?.role === 'editor'
-}
+import type { CollectionConfig } from 'payload'
+import { eventManagerAccess, hasRole } from '@/src/access/roles'
 
 export const Events: CollectionConfig = {
   slug: 'events',
   access: {
-    read: () => true,
-    create: isAdminOrEditor,
-    update: isAdminOrEditor,
-    delete: isAdminOrEditor,
+    read: ({ req: { user } }) => {
+      // Admins and event managers can read all events
+      if (hasRole(user, ['admin', 'event-manager'])) {
+        return true
+      }
+      // Public can only read public events
+      return {
+        visibility: {
+          equals: 'public',
+        },
+      }
+    },
+    create: eventManagerAccess,
+    update: eventManagerAccess,
+    delete: eventManagerAccess,
   },
   admin: {
-    useAsTitle: 'vendor',
-    defaultColumns: ['vendor', 'date', 'location', 'visibility'],
+    useAsTitle: 'organizer',
+    defaultColumns: ['organizer', 'date', 'location', 'visibility'],
     pagination: {
       defaultLimit: 100,
     },
   },
   fields: [
     {
-      name: 'vendor',
+      name: 'visibility',
+      type: 'select',
+      required: true,
+      defaultValue: 'public',
+      options: [
+        { label: 'Public', value: 'public' },
+        { label: 'Private', value: 'private' },
+      ],
+      index: true,
+      admin: {
+        position: 'sidebar',
+        description: 'Public events will be displayed on the site',
+      },
+    },
+    {
+      name: 'organizer',
+      label: 'Name of Event',
       type: 'text',
       required: true,
+      index: true,
       admin: {
-        description: 'Event or vendor name',
+        description: 'If this is a public event, this will be listed on the website',
       },
     },
     {
@@ -40,18 +65,31 @@ export const Events: CollectionConfig = {
       },
     },
     {
-      name: 'time',
-      type: 'text',
-      admin: {
-        description: 'Time range (e.g., "4-9pm" or "7:30pm")',
-      },
-    },
-    {
-      name: 'endTime',
-      type: 'text',
-      admin: {
-        description: 'End time if different format needed',
-      },
+      type: 'row',
+      fields: [
+        {
+          name: 'startTime',
+          type: 'date',
+          admin: {
+            width: '50%',
+            date: {
+              pickerAppearance: 'timeOnly',
+              displayFormat: 'h:mm a',
+            },
+          },
+        },
+        {
+          name: 'endTime',
+          type: 'date',
+          admin: {
+            width: '50%',
+            date: {
+              pickerAppearance: 'timeOnly',
+              displayFormat: 'h:mm a',
+            },
+          },
+        },
+      ],
     },
     {
       name: 'location',
@@ -59,50 +97,69 @@ export const Events: CollectionConfig = {
       relationTo: 'locations',
       required: true,
       hasMany: false,
+      admin: {
+        position: 'sidebar',
+      },
     },
     {
-      name: 'visibility',
-      type: 'select',
-      required: true,
-      defaultValue: 'public',
-      options: [
-        { label: 'Public', value: 'public' },
-        { label: 'Private', value: 'private' },
-      ],
-      index: true,
+      name: 'dateWarning',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: './components/EventDateWarning#EventDateWarning',
+        },
+      },
     },
     {
       name: 'site',
       type: 'text',
       admin: {
-        description: 'Website or social media link',
+        description: 'This will be linked on the website',
+        condition: (data) => data?.visibility !== 'private',
+        position: 'sidebar',
       },
     },
     {
       name: 'description',
       type: 'textarea',
-      admin: {
-        description: 'Event description (optional)',
-      },
     },
     {
       name: 'attendees',
       type: 'number',
       admin: {
         description: 'Expected or registered attendees',
+        position: 'sidebar',
       },
     },
     {
-      name: 'source',
-      type: 'select',
-      defaultValue: 'payload',
-      options: [
-        { label: 'Payload', value: 'payload' },
-        { label: 'Google Sheets', value: 'google-sheets' },
-      ],
+      name: 'pointOfContact',
+      type: 'text',
       admin: {
         position: 'sidebar',
-        description: 'Where this record originated',
+      },
+    },
+    {
+      name: 'email',
+      type: 'email',
+      admin: {
+        position: 'sidebar',
+      },
+    },
+    {
+      name: 'phone',
+      type: 'text',
+      admin: {
+        condition: (data) => data?.visibility === 'private',
+        position: 'sidebar',
+      },
+    },
+    {
+      name: 'otherInfo',
+      type: 'textarea',
+      admin: {
+        description: 'Additional information for private event',
+        condition: (data) => data?.visibility === 'private',
+        position: 'sidebar',
       },
     },
   ],

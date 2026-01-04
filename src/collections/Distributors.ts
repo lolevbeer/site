@@ -1,16 +1,13 @@
-import type { CollectionConfig, Access } from 'payload'
-
-const isAdminOrEditor: Access = ({ req: { user } }) => {
-  return user?.role === 'admin' || user?.role === 'editor'
-}
+import type { CollectionConfig } from 'payload'
+import { adminAccess } from '@/src/access/roles'
 
 export const Distributors: CollectionConfig = {
   slug: 'distributors',
   access: {
     read: () => true,
-    create: isAdminOrEditor,
-    update: isAdminOrEditor,
-    delete: isAdminOrEditor,
+    create: adminAccess,
+    update: adminAccess,
+    delete: adminAccess,
   },
   admin: {
     useAsTitle: 'name',
@@ -60,7 +57,6 @@ export const Distributors: CollectionConfig = {
     {
       name: 'customerType',
       type: 'select',
-      required: true,
       defaultValue: 'Retail',
       options: [
         { label: 'Retail', value: 'Retail' },
@@ -77,9 +73,9 @@ export const Distributors: CollectionConfig = {
       type: 'select',
       defaultValue: 'PA',
       options: [
-        { label: 'Pennsylvania', value: 'PA' },
         { label: 'New York', value: 'NY' },
         { label: 'Ohio', value: 'OH' },
+        { label: 'Pennsylvania', value: 'PA' },
         { label: 'West Virginia', value: 'WV' },
       ],
       index: true,
@@ -116,19 +112,6 @@ export const Distributors: CollectionConfig = {
       admin: {
         description: 'Whether this location is currently active',
         position: 'sidebar',
-      },
-    },
-    {
-      name: 'source',
-      type: 'select',
-      defaultValue: 'payload',
-      options: [
-        { label: 'Payload', value: 'payload' },
-        { label: 'Google Sheets', value: 'google-sheets' },
-      ],
-      admin: {
-        position: 'sidebar',
-        description: 'Where this record originated',
       },
     },
   ],

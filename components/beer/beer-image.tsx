@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
+import { getBeerImageUrl } from '@/lib/utils/media-utils';
 
 interface BeerImageProps {
   beer: {
@@ -17,36 +18,9 @@ interface BeerImageProps {
   sizes?: string;
 }
 
-/**
- * Normalize a URL to be relative (domain/port agnostic)
- * Converts "http://localhost:3002/api/media/file/hades.png" to "/api/media/file/hades.png"
- */
-function normalizeUrl(url: string): string {
-  if (url.startsWith('/')) return url;
-  try {
-    const parsed = new URL(url);
-    return parsed.pathname;
-  } catch {
-    return url;
-  }
-}
-
-/**
- * Get the image path for a beer
- * - If image is a URL string, normalize it to be relative
- * - If image is true, use the local PNG file
- * - If image is false/undefined, return null
- */
-function getImagePath(beer: BeerImageProps['beer']): string | null {
-  if (!beer.image) return null;
-  if (typeof beer.image === 'string') return normalizeUrl(beer.image);
-  // image is true, use local PNG
-  return `/images/beer/${beer.variant}.png`;
-}
-
 export function BeerImage({ beer, className, priority = false, sizes }: BeerImageProps) {
   const [imageError, setImageError] = useState(false);
-  const imagePath = getImagePath(beer);
+  const imagePath = getBeerImageUrl(beer.image, beer.variant);
 
   // Show fallback if no image or if image failed to load
   if (!imagePath || imageError) {

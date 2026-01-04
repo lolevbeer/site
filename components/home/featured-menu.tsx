@@ -10,6 +10,8 @@ import { useLocationContext } from '@/components/location/location-provider';
 import { DraftBeerCard } from '@/components/beer/draft-beer-card';
 import { Pencil } from 'lucide-react';
 import { useAnimatedList, getAnimationClass } from '@/lib/hooks/use-animated-list';
+import { getMediaUrl } from '@/lib/utils/media-utils';
+import { extractBeerFromMenuItem, extractProductFromMenuItem } from '@/lib/utils/menu-item-utils';
 import type { Menu, Style } from '@/src/payload-types';
 import type { Beer } from '@/lib/types/beer';
 
@@ -56,27 +58,6 @@ interface FeaturedMenuProps {
   animated?: boolean;
 }
 
-/**
- * Extract image URL from Payload Media object
- * Makes URL relative to work with any domain/port
- */
-function getImageUrl(image: unknown): string | undefined {
-  if (!image) return undefined;
-  if (typeof image === 'string') return undefined; // Just an ID, not populated
-
-  const media = image as { url?: string | null };
-  if (!media.url) return undefined;
-
-  // Make URL relative if it's absolute
-  if (media.url.startsWith('/')) return media.url;
-  try {
-    const parsed = new URL(media.url);
-    return parsed.pathname;
-  } catch {
-    return media.url;
-  }
-}
-
 // Check if a date is within the last N days
 function isWithinDays(dateStr: string | undefined, days: number): boolean {
   if (!dateStr) return false;
@@ -96,23 +77,63 @@ function convertMenuItems(menuData: Menu): MenuItem[] {
 
   const items = menuData.items
     .map((item, index) => {
-      const beer = typeof item.beer === 'object' ? item.beer : null;
-      if (!beer || !beer.slug) return null;
+      // Try to extract beer first
+      const beer = extractBeerFromMenuItem(item);
+
+      // If not a beer, check if it's a product
+      if (!beer) {
+        const prod = extractProductFromMenuItem(item);
+        if (prod) {
+          return {
+            variant: String(prod.id || `product-${index}`),
+            name: String(prod.name || 'Unknown Product'),
+            type: Array.isArray(prod.options) ? prod.options.join(', ') : String(prod.options || ''),
+            abv: prod.abv ? String(prod.abv) : '',
+            description: '',
+            glutenFree: false,
+            imageUrl: undefined,
+            glass: 'pint',
+            fourPack: String(prod.price || item.price || ''),
+            recipe: 0,
+            hops: undefined,
+            tap: index + 1,
+            pricing: {
+              draftPrice: item.price
+                ? parseFloat(String(item.price).replace('$', ''))
+                : prod.price
+                  ? parseFloat(String(prod.price).replace('$', ''))
+                  : undefined,
+            },
+            availability: {
+              hideFromSite: false,
+            },
+            slug: String(prod.id || `product-${index}`),
+            style: undefined,
+            locationSlug: locationSlug ? String(locationSlug) : undefined,
+            justReleased: false,
+            createdAt: prod.createdAt,
+          };
+        }
+        return null;
+      }
+
+      if (!beer.slug) return null;
 
       const style = typeof beer.style === 'object' ? beer.style : null;
+      const styleName = style?.name || (typeof beer.style === 'string' ? beer.style : '');
 
       return {
-        variant: beer.slug,
-        name: beer.name,
-        type: style?.name || (typeof beer.style === 'string' ? beer.style : '') || '',
-        abv: beer.abv?.toString() || '0',
-        description: beer.description || '',
+        variant: String(beer.slug),
+        name: String(beer.name || ''),
+        type: String(styleName || ''),
+        abv: beer.abv ? String(beer.abv) : '0',
+        description: String(beer.description || ''),
         glutenFree: false,
-        imageUrl: getImageUrl(beer.image),
-        glass: beer.glass || 'pint',
-        fourPack: beer.fourPack?.toString() || item.price || undefined,
+        imageUrl: getMediaUrl(beer.image),
+        glass: String(beer.glass || 'pint'),
+        fourPack: beer.fourPack ? String(beer.fourPack) : (item.price ? String(item.price) : undefined),
         recipe: beer.recipe || 0,
-        hops: beer.hops || undefined,
+        hops: beer.hops ? String(beer.hops) : undefined,
         tap: index + 1, // 1-based tap/draft number from position in menu
         pricing: {
           draftPrice: item.price ? parseFloat(String(item.price).replace('$', '')) : undefined,
@@ -120,9 +141,9 @@ function convertMenuItems(menuData: Menu): MenuItem[] {
         availability: {
           hideFromSite: beer.hideFromSite || false,
         },
-        slug: beer.slug,
-        style: beer.style,
-        locationSlug: locationSlug || undefined,
+        slug: String(beer.slug),
+        style: styleName, // Pass as string, not object
+        locationSlug: locationSlug ? String(locationSlug) : undefined,
         // Store these for "just released" logic
         justReleased: (beer as { justReleased?: boolean }).justReleased || false,
         createdAt: beer.createdAt,
@@ -326,15 +347,16 @@ export function FeaturedMenu({ menuType, menu, menus = [], isAuthenticated, anim
                   const rightColumn = itemsToRender.slice(midpoint);
 
                   // Column header component with viewport-relative sizing
+                  const isOtherMenu = menu?.type === 'other';
                   const ColumnHeader = () => (
                     <div
                       className="flex items-center border-b-2 border-border uppercase tracking-wider text-muted-foreground/70 font-semibold"
                       style={{ gap: '1.5vh', padding: '0.5vh 1vh', marginBottom: '0.5vh', fontSize: '1.2vh' }}
                     >
-                      <div style={{ minWidth: '7vh' }}>Tap</div>
-                      <div className="flex-grow">Beer</div>
+                      {!isOtherMenu && <div style={{ minWidth: '7vh' }}>Tap</div>}
+                      <div className="flex-grow">{isOtherMenu ? 'Item' : 'Beer'}</div>
                       <div className="flex" style={{ gap: '2vh' }}>
-                        <div className="text-center" style={{ minWidth: '5vh' }}>ABV</div>
+                        {!isOtherMenu && <div className="text-center" style={{ minWidth: '5vh' }}>ABV</div>}
                         <div className="text-center" style={{ minWidth: '6vh' }}>Price</div>
                       </div>
                     </div>
@@ -347,7 +369,7 @@ export function FeaturedMenu({ menuType, menu, menus = [], isAuthenticated, anim
                         <div className="flex flex-col flex-1 min-w-0">
                           {leftColumn.map(({ item, state, key }) => (
                             <div key={key} className={`flex-1 min-w-0 ${animated ? getAnimationClass(state) : ''}`}>
-                              <DraftBeerCard beer={item as unknown as Beer} showLocation={false} showTapAndPrice />
+                              <DraftBeerCard beer={item as unknown as Beer} showLocation={false} showTapAndPrice showGlass={!isOtherMenu} showTap={!isOtherMenu} showAbv={!isOtherMenu} showJustReleased={!isOtherMenu} />
                             </div>
                           ))}
                         </div>
@@ -359,7 +381,7 @@ export function FeaturedMenu({ menuType, menu, menus = [], isAuthenticated, anim
                         <div className="flex flex-col flex-1 min-w-0">
                           {rightColumn.map(({ item, state, key }) => (
                             <div key={key} className={`flex-1 min-w-0 ${animated ? getAnimationClass(state) : ''}`}>
-                              <DraftBeerCard beer={item as unknown as Beer} showLocation={false} showTapAndPrice />
+                              <DraftBeerCard beer={item as unknown as Beer} showLocation={false} showTapAndPrice showGlass={!isOtherMenu} showTap={!isOtherMenu} showAbv={!isOtherMenu} showJustReleased={!isOtherMenu} />
                             </div>
                           ))}
                         </div>

@@ -3,42 +3,20 @@
  * Bridges the gap between Payload schema and existing app interfaces
  */
 
-import type { Beer as PayloadBeer, Menu as PayloadMenu, Style, Media } from '@/src/payload-types'
+import type { Beer as PayloadBeer, Menu as PayloadMenu, Style } from '@/src/payload-types'
 import type { PayloadLocation } from '@/lib/types/location'
 import type { Beer } from '@/lib/types/beer'
 import { GlassType, BeerStyle } from '@/lib/types/beer'
-
-/**
- * Normalize a Payload media URL to be relative (domain/port agnostic)
- * This handles URLs like "http://localhost:3002/api/media/file/hades.png"
- * and converts them to "/api/media/file/hades.png"
- */
-function normalizeMediaUrl(url: string): string {
-  // If already relative, return as-is
-  if (url.startsWith('/')) return url
-
-  try {
-    const parsed = new URL(url)
-    // Return just the pathname (e.g., "/api/media/file/hades.png")
-    return parsed.pathname
-  } catch {
-    // If URL parsing fails, return original
-    return url
-  }
-}
+import { getMediaUrl } from './media-utils'
+import { extractBeerFromMenuItem } from './menu-item-utils'
 
 /**
  * Get image URL from Payload beer's image field
  * Returns a relative URL path if image is a Media object with url, otherwise false
- * URLs are normalized to be relative to work with any domain/port
  */
 function getImageFromPayload(image: PayloadBeer['image']): string | boolean {
-  if (!image) return false
-  if (typeof image === 'string') return false // Just an ID reference, not populated
-  // It's a Media object
-  const media = image as Media
-  if (media.url) return normalizeMediaUrl(media.url)
-  return false
+  const url = getMediaUrl(image)
+  return url || false
 }
 
 /**
@@ -122,8 +100,8 @@ export function getBeersWithAvailability(
 
     for (let i = 0; i < menu.items.length; i++) {
       const item = menu.items[i]
-      const payloadBeer = typeof item.beer === 'string' ? null : item.beer as PayloadBeer
 
+      const payloadBeer = extractBeerFromMenuItem(item)
       if (!payloadBeer) continue
 
       const variant = (payloadBeer.slug || payloadBeer.name.toLowerCase().replace(/\s+/g, '-')).toLowerCase()

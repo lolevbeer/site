@@ -1,10 +1,15 @@
 import type { GlobalConfig } from 'payload'
+import { adminAccess } from '@/src/access/roles'
 
 export const SiteContent: GlobalConfig = {
   slug: 'site-content',
   label: 'Site Content',
+  admin: {
+    group: 'Settings',
+  },
   access: {
     read: () => true,
+    update: adminAccess,
   },
   fields: [
     {
@@ -53,6 +58,27 @@ export const SiteContent: GlobalConfig = {
               type: 'text',
               label: "Today's Food Title",
               defaultValue: "Today's Food",
+            },
+          ],
+        },
+        {
+          label: 'Distributor Import',
+          fields: [
+            {
+              name: 'distributorPaUrl',
+              type: 'text',
+              label: 'Pennsylvania JSON URL',
+              admin: {
+                description: 'Sixth City/Encompass8 QuickLink URL for PA distributors',
+              },
+            },
+            {
+              name: 'distributorOhUrl',
+              type: 'text',
+              label: 'Ohio JSON URL',
+              admin: {
+                description: 'Sixth City/Encompass8 QuickLink URL for OH distributors',
+              },
             },
           ],
         },
