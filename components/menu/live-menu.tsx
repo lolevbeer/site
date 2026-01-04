@@ -43,5 +43,14 @@ export function LiveMenu({ menuUrl, initialMenu }: LiveMenuProps) {
     )
   }
 
+  // 'other' type renders like draft
+  if (displayMenu.type === 'other') {
+    return (
+      <div className="h-screen w-screen overflow-hidden flex flex-col">
+        <FeaturedBeers menu={displayMenu} animated />
+      </div>
+    )
+  }
+
   return null
 }

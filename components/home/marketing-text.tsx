@@ -5,6 +5,7 @@ import type { Beer as PayloadBeer, Menu as PayloadMenu } from '@/src/payload-typ
 import { BreweryEvent } from '@/lib/types/event';
 import { FoodVendorSchedule } from '@/lib/types/food';
 import { formatAbv } from '@/lib/utils/formatters';
+import { extractBeerFromMenuItem } from '@/lib/utils/menu-item-utils';
 import { Button } from '@/components/ui/button';
 import { useLocationContext } from '@/components/location/location-provider';
 
@@ -84,8 +85,8 @@ export function MarketingText({
 
     return menuData.items
       .map((item) => {
-        const beer = item.beer;
-        if (!beer || typeof beer === 'string') return null;
+        const beer = extractBeerFromMenuItem(item);
+        if (!beer) return null;
 
         const beerObj = beer as PayloadBeer & { variant?: string; type?: string };
 
@@ -149,8 +150,9 @@ export function MarketingText({
     const date = new Date(food.date);
     const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
     const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    const time = food.time ? ` (${food.time.trim()})` : '';
-    return `${dayName}, ${dateStr} • ${food.vendor}${time}`;
+    const time = food.time ? ` (${food.time})` : '';
+    const vendorName = typeof food.vendor === 'object' ? (food.vendor as any)?.name : food.vendor;
+    return `${dayName}, ${dateStr} • ${vendorName}${time}`;
   };
 
   const now = new Date();
