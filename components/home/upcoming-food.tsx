@@ -15,6 +15,7 @@ interface FoodVendor {
   vendor: string | { id?: string; name?: string; site?: string | null };
   date: string;
   time?: string;
+  startTime?: string; // PayloadFood uses startTime
   site?: string | null;
   day?: string;
   location?: LocationSlug | { slug?: string } | string;
@@ -97,10 +98,10 @@ export function UpcomingFood({ foodByLocation, isAuthenticated }: UpcomingFoodPr
                       });
                     })()}</span>
                   </div>
-                  {food.time && (
+                  {(food.time || food.startTime) && (
                     <div className="flex items-center gap-2">
                       <Clock className="h-4 w-4" />
-                      <span>{food.time}</span>
+                      <span>{food.time || (food.startTime ? new Date(food.startTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' }) : '')}</span>
                     </div>
                   )}
                   <div className="flex items-center gap-2">
