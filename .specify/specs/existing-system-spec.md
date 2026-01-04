@@ -1,7 +1,7 @@
 # System Specification: LOLEV Beer Website
 
 **Created**: 2025-12-06
-**Updated**: 2025-12-07
+**Updated**: 2026-01-04
 **Status**: Current State Documentation
 **Purpose**: Complete specification of existing functionality
 
@@ -80,14 +80,16 @@ A visitor wants to know which food vendors will be at the brewery and when.
 
 **Why this priority**: Food availability influences visit decisions.
 
-**Independent Test**: Navigate to /food, see upcoming food vendor schedule by location.
+**Independent Test**: Navigate to /food, see upcoming food vendor schedule by location (including recurring schedules).
 
 **Acceptance Scenarios**:
 
-1. **Given** a visitor on food page, **When** page loads, **Then** upcoming food vendors are displayed by date
+1. **Given** a visitor on food page, **When** page loads, **Then** upcoming food vendors are displayed by date (merged from individual entries and recurring schedules)
 2. **Given** food scheduled at both locations, **When** visitor selects location filter, **Then** only that location's food schedule appears
 3. **Given** a food vendor has a website, **When** visitor clicks vendor, **Then** external site opens in new tab
 4. **Given** visitor on homepage, **When** they view "Upcoming Food" section, **Then** they see next scheduled food vendors
+5. **Given** a recurring food schedule exists, **When** page loads, **Then** recurring entries are expanded into dated entries
+6. **Given** an individual food entry and recurring entry for the same date, **When** page loads, **Then** individual entry takes priority
 
 ---
 
@@ -138,9 +140,10 @@ Staff want to display beer menus on TVs/screens at the brewery.
 **Acceptance Scenarios**:
 
 1. **Given** a valid menu URL, **When** /m/[url] is accessed, **Then** full-screen menu is displayed
-2. **Given** a draft menu, **When** displayed, **Then** tap list with prices is shown
+2. **Given** a draft menu, **When** displayed, **Then** tap list with tap numbers, glass icons, ABV, and prices is shown
 3. **Given** a cans menu, **When** displayed, **Then** packaged beer list with four-pack prices is shown
-4. **Given** menu items change in CMS, **When** display refreshes, **Then** updated menu is shown
+4. **Given** an "other" menu, **When** displayed, **Then** simplified item list with name, options badges, and prices is shown (no tap, glass, ABV, or Just Released badges)
+5. **Given** menu items change in CMS, **When** display refreshes, **Then** updated menu is shown
 
 ---
 
@@ -218,7 +221,7 @@ Admin staff need to create and manage brewery events.
 
 ### User Story 12 - Admin: Manage Food Schedule (Priority: P2)
 
-Admin staff need to manage food vendor schedules.
+Admin staff need to manage food vendor schedules (both individual entries and recurring schedules).
 
 **Why this priority**: Food scheduling is operational necessity.
 
@@ -229,6 +232,10 @@ Admin staff need to manage food vendor schedules.
 1. **Given** logged-in admin, **When** they create food entry, **Then** they can set vendor, date, time, location
 2. **Given** food entry created, **When** public food page loads, **Then** vendor appears in schedule
 3. **Given** food vendor has website, **When** saved with URL, **Then** URL is clickable on public site
+4. **Given** logged-in admin, **When** they open Recurring Food global, **Then** they see tabs for each active location
+5. **Given** a new location is added, **When** admin opens Recurring Food, **Then** new tab appears automatically
+6. **Given** admin sets vendor for "1st Monday" at a location, **When** food page loads, **Then** recurring entries appear for each 1st Monday
+7. **Given** admin adds exclusion date, **When** food page loads, **Then** that date's recurring entry is not shown
 
 ---
 
@@ -347,6 +354,7 @@ Search engines need structured data to properly index the brewery.
 - **FR-005**: System MUST persist user location preference in localStorage
 - **FR-006**: System MUST support URL-based location selection via query parameter
 - **FR-007**: System MUST render full-screen menu displays at /m/[url] routes
+- **FR-007a**: "Other" type menus MUST display simplified layout (item name, options badges, price only - no tap, glass, ABV, or Just Released)
 - **FR-008**: System MUST provide beer detail pages at /beer/[variant] routes
 - **FR-009**: System MUST generate JSON-LD structured data for SEO
 - **FR-010**: System MUST provide dynamic sitemap.xml
@@ -372,13 +380,18 @@ Search engines need structured data to properly index the brewery.
 
 - **Beer**: Name, slug, style, ABV, description, image, pricing (draft/four-pack/single), recipe number, Untappd link, availability, hidden flag
 - **Location**: Name, slug, address, phone, email, timezone, weekly hours schedule, active flag, **images (card/hero)**, **hoursSheetUrl**
-- **Menu**: Name, type (draft/cans), location relationship, URL, items array (beer + price), **sheetUrl**
+- **Menu**: Name, type (draft/cans/other), location relationship, URL, items array (beer/product + price), **sheetUrl**
+- **Product**: Name, options (hasMany text), ABV, price, tags (hasMany text) - for non-beer menu items
 - **Event**: Vendor/title, date, time, end time, location, site URL, description, visibility
 - **Food**: Vendor, date, time, location, site URL
 - **Style**: Name (beer style reference)
 - **HolidayHours**: Date, location, open/close times (or closed flag)
-- **User**: Email, password, **role (admin/editor)** (admin authentication)
+- **User**: Email, password, **roles** array (admin, event-manager, beer-manager, food-manager, bartender)
 - **SiteContent** (Global): heroDescription, **heroImage**, errorMessage, todaysEventsTitle, todaysFoodTitle
+- **FoodVendor**: Name, website URL, email, phone, logo - represents food vendor businesses
+- **RecurringFood** (Global): JSON-based schedules and exclusions keyed by location ID:
+  - `schedules`: `{ [locationId]: { [day]: { [week]: vendorId } } }`
+  - `exclusions`: `{ [locationId]: string[] }`
 
 ---
 
@@ -459,6 +472,16 @@ Google Sheets → Sync Endpoint → Payload CMS (MongoDB)
 - Draft versioning enabled
 - **sheetUrl**: Per-document Google Sheet URL for syncing
 - Role-based access (admin/editor)
+- Polymorphic product field: can reference beers OR products
+- Inline creation disabled for products (Payload CMS limitation workaround)
+
+### Products Collection
+- Name (required)
+- Options: hasMany text field for size/variations (displayed as individual badges)
+- ABV: optional alcohol percentage
+- Price: display price
+- Tags: hasMany text field for categorization
+- Used for non-beer items on "other" type menus
 
 ### Locations Collection
 - Address fields (street, city, state, zip)
@@ -480,7 +503,75 @@ Google Sheets → Sync Endpoint → Payload CMS (MongoDB)
 - Date/time fields
 - Location relationship
 - Source tracking
-- Vendor website link
+- Vendor relationship (to FoodVendors collection)
+- Vendor website link (override)
+
+### Food Vendors Collection
+- Name (required)
+- Website URL
+- Email
+- Phone
+- Logo (image upload)
+- Used for both individual food entries and recurring schedules
+
+### Recurring Food Global
+- Location-agnostic architecture (tabs generated dynamically from active locations)
+- JSON `schedules` field: `{ [locationId]: { [day]: { [week]: vendorId } } }`
+- JSON `exclusions` field: `{ [locationId]: string[] }`
+- Custom grid UI component for admin management
+- Per-location exclusion dates
+- Frontend displays expanded recurring entries merged with individual Food docs
+
+---
+
+## User Roles & Permissions
+
+The system uses role-based access control (RBAC) with the following roles:
+
+### Roles
+
+| Role | Description |
+|------|-------------|
+| **Admin** | Full access to all collections, users, and settings |
+| **Event Manager** | Can create, update, and delete events only |
+| **Beer Manager** | Can create/update beers and styles (no delete) |
+| **Food Manager** | Can manage food, food vendors, and recurring food |
+| **Bartender** | Can update menus only (no create/delete) |
+
+### Permissions Matrix
+
+| Collection | Admin | Event Manager | Beer Manager | Food Manager | Bartender |
+|------------|-------|---------------|--------------|--------------|-----------|
+| **Users** | Full | - | - | - | - |
+| **Events** | Full | Full | - | - | - |
+| **Beers** | Full | - | Create/Update | - | - |
+| **Styles** | Full | - | Create/Update | - | - |
+| **Food** | Full | - | - | Full | - |
+| **Food Vendors** | Full | - | - | Full | - |
+| **Recurring Food** | Full | - | - | Update | - |
+| **Menus** | Full | - | - | - | Update |
+| **Locations** | Full | - | - | - | - |
+| **Distributors** | Full | - | - | - | - |
+| **Media** | Full | Create | Create | Create | Create |
+| **Holiday Hours** | Full | - | - | - | - |
+| **Site Content** | Update | - | - | - | - |
+| **Coming Soon** | Update | - | - | - | - |
+
+**Legend:**
+- **Full** = Create, Update, Delete
+- **Create/Update** = No delete (archive only)
+- **Update** = Update only (no create/delete)
+- **Create** = Create only (no update/delete)
+- **-** = No access (read-only like public)
+
+### Access Control Notes
+
+- All logged-in users can upload media (create)
+- Only Admin can update or delete media
+- Beer Manager cannot delete beers or styles (use hideFromSite to archive)
+- Food Manager can update Recurring Food global but not create/delete
+- Bartender role is default for new users
+- Only Admin can change user roles
 
 ---
 
