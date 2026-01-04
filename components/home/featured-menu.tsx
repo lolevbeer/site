@@ -5,6 +5,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
+import { Beer as BeerIconLucide, Package } from 'lucide-react';
 import { getGlassIcon } from '@/lib/utils/beer-icons';
 import { useLocationContext } from '@/components/location/location-provider';
 import { DraftBeerCard } from '@/components/beer/draft-beer-card';
@@ -399,10 +401,15 @@ export function FeaturedMenu({ menuType, menu, menus = [], isAuthenticated, anim
                 </div>
               )
             ) : (
-              <div className="text-center py-12">
-                <p className="text-xl font-semibold mb-2">No {menuType === 'draft' ? 'beers' : 'cans'} available</p>
-                <p className="text-muted-foreground">{emptyMessage}</p>
-              </div>
+              <Empty>
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    {menuType === 'draft' ? <BeerIconLucide className="h-6 w-6" /> : <Package className="h-6 w-6" />}
+                  </EmptyMedia>
+                  <EmptyTitle>No {menuType === 'draft' ? 'beers' : 'cans'} available</EmptyTitle>
+                  <EmptyDescription>{emptyMessage}</EmptyDescription>
+                </EmptyHeader>
+              </Empty>
             )}
           </div>
         </div>
@@ -440,11 +447,15 @@ export function FeaturedMenu({ menuType, menu, menus = [], isAuthenticated, anim
               </div>
             )
           ) : (
-            <div className="text-center py-12">
-              <div className="text-4xl mb-4">{menuType === 'draft' ? '🍺' : '🥫'}</div>
-              <p className="text-xl font-semibold mb-2">No {menuType === 'draft' ? 'beers on draft' : 'cans available'}</p>
-              <p className="text-muted-foreground">{emptyMessage}</p>
-            </div>
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  {menuType === 'draft' ? <BeerIconLucide className="h-6 w-6" /> : <Package className="h-6 w-6" />}
+                </EmptyMedia>
+                <EmptyTitle>No {menuType === 'draft' ? 'beers on draft' : 'cans available'}</EmptyTitle>
+                <EmptyDescription>{emptyMessage}</EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           )}
         </div>
 

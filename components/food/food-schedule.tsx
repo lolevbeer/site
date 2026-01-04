@@ -10,9 +10,11 @@ import { FoodVendorSchedule } from '@/lib/types/food';
 import type { LocationSlug } from '@/lib/types/location';
 import { Card, CardContent } from '@/components/ui/card';
 import { ScheduleCard } from '@/components/ui/schedule-card';
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
 import { cn } from '@/lib/utils';
 import { formatTime, isToday, isFuture, isTodayOrFuture } from '@/lib/utils/formatters';
 import { useLocationContext } from '@/components/location/location-provider';
+import { UtensilsCrossed } from 'lucide-react';
 
 interface FoodScheduleProps {
   schedules: FoodVendorSchedule[];
@@ -95,7 +97,14 @@ export function FoodSchedule({
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="bg-card rounded-xl border shadow-sm animate-pulse h-64" />
+            <div key={i} className="p-6 text-center animate-pulse">
+              <div className="h-6 bg-muted rounded w-3/4 mx-auto mb-4" />
+              <div className="space-y-3 flex flex-col items-center">
+                <div className="h-4 bg-muted rounded w-40" />
+                <div className="h-4 bg-muted rounded w-24" />
+                <div className="h-4 bg-muted rounded w-28" />
+              </div>
+            </div>
           ))}
         </div>
       ) : upcomingFood.length > 0 ? (
@@ -109,12 +118,17 @@ export function FoodSchedule({
         </div>
       ) : (
         !todaysFood.length && (
-          <Card className="p-8 text-center border-0">
-            <h3 className="text-lg font-semibold mb-2">No Food Trucks Scheduled</h3>
-            <p className="text-muted-foreground">
-              Check back soon for upcoming food truck schedules!
-            </p>
-          </Card>
+          <Empty className="border-0">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <UtensilsCrossed />
+              </EmptyMedia>
+              <EmptyTitle>No Food Trucks Scheduled</EmptyTitle>
+              <EmptyDescription>
+                Check back soon for upcoming food truck schedules!
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         )
       )}
     </div>

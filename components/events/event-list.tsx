@@ -14,6 +14,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty';
+import { Calendar } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 import { formatTime, parseLocalDate, isToday, isFuture } from '@/lib/utils/formatters';
@@ -191,22 +193,28 @@ export function EventList({
 
     if (eventsToRender.length === 0) {
       return (
-        <div className="text-center py-12">
-          <div className="text-4xl mb-4">📅</div>
-          <h3 className="text-lg font-semibold mb-2">No Events Found</h3>
-          <p className="text-muted-foreground mb-4">
-            {searchQuery
-              ? `No events matching "${searchQuery}"`
-              : selectedTypes.length > 0
-              ? `No ${selectedTypes.join(' or ')} events found`
-              : emptyMessage}
-          </p>
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <Calendar className="h-6 w-6" />
+            </EmptyMedia>
+            <EmptyTitle>No Events Found</EmptyTitle>
+            <EmptyDescription>
+              {searchQuery
+                ? `No events matching "${searchQuery}"`
+                : selectedTypes.length > 0
+                ? `No ${selectedTypes.join(' or ')} events found`
+                : emptyMessage}
+            </EmptyDescription>
+          </EmptyHeader>
           {hasActiveFilters && (
-            <Button variant="outline" onClick={clearFilters}>
-              Clear Filters
-            </Button>
+            <EmptyContent>
+              <Button variant="outline" onClick={clearFilters}>
+                Clear Filters
+              </Button>
+            </EmptyContent>
           )}
-        </div>
+        </Empty>
       );
     }
 

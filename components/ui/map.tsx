@@ -12,7 +12,8 @@ import Map, {
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPin, Navigation, Phone, Clock } from 'lucide-react';
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
+import { MapPin, Navigation, Phone, Clock, AlertTriangle, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { LocationSlug } from '@/lib/types/location';
 import { useLocationContext } from '@/components/location/location-provider';
@@ -136,44 +137,49 @@ export function MapComponent({
 
   if (!MAPBOX_TOKEN) {
     return (
-      <Card className={cn('flex items-center justify-center', className)} style={{ height }}>
-        <div className="text-center p-8">
-          <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground mb-2">Map token not configured</p>
-          <p className="text-sm text-muted-foreground">
+      <Empty className={cn(className)} style={{ height }}>
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <Settings className="h-6 w-6" />
+          </EmptyMedia>
+          <EmptyTitle>Map token not configured</EmptyTitle>
+          <EmptyDescription>
             Please add your Mapbox token to the .env.local file
-          </p>
-        </div>
-      </Card>
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     );
   }
 
   if (mapError) {
     return (
-      <Card className={cn('flex items-center justify-center', className)} style={{ height }}>
-        <div className="text-center p-8">
-          <MapPin className="h-12 w-12 text-destructive mx-auto mb-4" />
-          <p className="text-destructive font-medium mb-2">Map Error</p>
-          <p className="text-sm text-muted-foreground mb-4">{mapError}</p>
-          <p className="text-xs text-muted-foreground">
-            Please check your Mapbox token in .env.local
-          </p>
-        </div>
-      </Card>
+      <Empty className={cn(className)} style={{ height }}>
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <AlertTriangle className="h-6 w-6" />
+          </EmptyMedia>
+          <EmptyTitle>Map Error</EmptyTitle>
+          <EmptyDescription>
+            {mapError}. Please check your Mapbox token in .env.local
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     );
   }
 
   if (locations.length === 0) {
     return (
-      <Card className={cn('flex items-center justify-center', className)} style={{ height }}>
-        <div className="text-center p-8">
-          <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground mb-2">No locations available</p>
-          <p className="text-sm text-muted-foreground">
+      <Empty className={cn(className)} style={{ height }}>
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <MapPin className="h-6 w-6" />
+          </EmptyMedia>
+          <EmptyTitle>No locations available</EmptyTitle>
+          <EmptyDescription>
             Location coordinates not configured
-          </p>
-        </div>
-      </Card>
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     );
   }
 

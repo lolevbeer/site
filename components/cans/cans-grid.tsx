@@ -7,6 +7,8 @@ import Papa from 'papaparse';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
+import { Package } from 'lucide-react';
 import { useLocationContext } from '@/components/location/location-provider';
 import { getGlassIcon } from '@/lib/utils/beer-icons';
 
@@ -224,12 +226,17 @@ export function CansGrid({ maxItems }: CansGridProps) {
           ))}
         </div>
       ) : (
-        <div className="text-center py-12">
-          <p className="text-xl font-semibold mb-2">No cans available</p>
-          <p className="text-muted-foreground">
-            Check back soon for cans to take home.
-          </p>
-        </div>
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <Package className="h-6 w-6" />
+            </EmptyMedia>
+            <EmptyTitle>No cans available</EmptyTitle>
+            <EmptyDescription>
+              Check back soon for cans to take home.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       )}
     </>
   );

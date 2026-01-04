@@ -8,6 +8,8 @@
 import React from 'react';
 import { Beer, BeerSortOptions, BeerSortBy, BeerSortOrder } from '@/lib/types/beer';
 import { BeerCard } from './beer-card';
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
+import { Beer as BeerIcon, AlertTriangle } from 'lucide-react';
 
 interface BeerGridProps {
   beers: Beer[];
@@ -83,25 +85,29 @@ function LoadingGrid() {
 
 function EmptyState({ message }: { message: string }) {
   return (
-    <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
-      <div className="text-6xl mb-4">🍺</div>
-      <h3 className="text-lg font-semibold mb-2">No Beers Found</h3>
-      <p className="text-muted-foreground max-w-md">
-        {message}
-      </p>
-    </div>
+    <Empty className="col-span-full">
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <BeerIcon className="h-6 w-6" />
+        </EmptyMedia>
+        <EmptyTitle>No Beers Found</EmptyTitle>
+        <EmptyDescription>{message}</EmptyDescription>
+      </EmptyHeader>
+    </Empty>
   );
 }
 
 function ErrorState({ error }: { error: string }) {
   return (
-    <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
-      <div className="text-6xl mb-4">⚠️</div>
-      <h3 className="text-lg font-semibold mb-2">Error Loading Beers</h3>
-      <p className="text-muted-foreground max-w-md">
-        {error}
-      </p>
-    </div>
+    <Empty className="col-span-full">
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <AlertTriangle className="h-6 w-6" />
+        </EmptyMedia>
+        <EmptyTitle>Error Loading Beers</EmptyTitle>
+        <EmptyDescription>{error}</EmptyDescription>
+      </EmptyHeader>
+    </Empty>
   );
 }
 

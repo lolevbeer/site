@@ -13,7 +13,8 @@ import { BeerCard } from '@/components/beer/beer-card';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Search, Filter, ChevronDown, ArrowUpDown, SignalLow, SignalMedium, SignalHigh, RotateCcw } from 'lucide-react';
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty';
+import { Search, Filter, ChevronDown, ArrowUpDown, SignalLow, SignalMedium, SignalHigh, RotateCcw, Beer as BeerIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import {
   Sheet,
@@ -533,11 +534,13 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
               ))}
             </div>
           ) : (
-            <Card className="text-center py-12">
-              <CardContent>
-                <div className="text-4xl mb-4">🍺</div>
-                <h3 className="text-lg font-semibold mb-2">No Beers Found</h3>
-                <p className="text-muted-foreground mb-4">
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <BeerIcon className="h-6 w-6" />
+                </EmptyMedia>
+                <EmptyTitle>No Beers Found</EmptyTitle>
+                <EmptyDescription>
                   {search && selectedType !== 'all'
                     ? `No ${selectedType} beers matching "${search}"`
                     : search
@@ -545,12 +548,14 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
                     : selectedType !== 'all'
                     ? `No ${selectedType} beers available with current filters`
                     : 'No beers match your current filters'}
-                </p>
+                </EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
                 <Button variant="outline" onClick={clearFilters}>
                   Clear all filters
                 </Button>
-              </CardContent>
-            </Card>
+              </EmptyContent>
+            </Empty>
           )}
         </div>
       </div>

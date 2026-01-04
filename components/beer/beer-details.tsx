@@ -27,6 +27,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty';
 import {
   CircleX,
   Pencil,
@@ -178,18 +179,24 @@ export function BeerDetails({ beer, className = '', isAuthenticated = false }: B
   // Don't render if beer is hidden from site
   if (beer.availability?.hideFromSite) {
     return (
-      <div className={`flex flex-col items-center justify-center py-12 text-center ${className}`}>
-        <CircleX className="h-16 w-16 mb-4 text-muted-foreground" />
-        <h2 className="text-2xl font-bold mb-2">Beer Not Available</h2>
-        <p>
-          This beer is currently not available on our website.
-        </p>
-        <Button asChild>
-          <Link href={`/${currentLocation}/beer`}>
-            Browse Available Beers
-          </Link>
-        </Button>
-      </div>
+      <Empty className={className}>
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <CircleX className="h-6 w-6" />
+          </EmptyMedia>
+          <EmptyTitle>Beer Not Available</EmptyTitle>
+          <EmptyDescription>
+            This beer is currently not available on our website.
+          </EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <Button asChild>
+            <Link href={`/${currentLocation}/beer`}>
+              Browse Available Beers
+            </Link>
+          </Button>
+        </EmptyContent>
+      </Empty>
     );
   }
 

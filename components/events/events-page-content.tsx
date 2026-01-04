@@ -5,6 +5,8 @@ import { BreweryEvent, EventType, EventStatus } from '@/lib/types/event';
 import type { LocationFilter, LocationSlug } from '@/lib/types/location';
 import { EventList } from '@/components/events/event-list';
 import { Button } from '@/components/ui/button';
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
+import { Calendar } from 'lucide-react';
 import { useLocationContext } from '@/components/location/location-provider';
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
 import { JsonLd } from '@/components/seo/json-ld';
@@ -43,19 +45,19 @@ async function fetchEventsFromPayload(): Promise<BreweryEvent[]> {
     const events = data.docs || [];
 
     // Transform Payload events to BreweryEvent format
-    return events.map((event: { id: string; vendor: string; description?: string; date: string; time?: string; endTime?: string; location?: { slug?: string } | string; site?: string; attendees?: number }) => {
+    return events.map((event: { id: string; organizer: string; description?: string; date: string; startTime?: string; endTime?: string; location?: { slug?: string } | string; site?: string; attendees?: number }) => {
       const locationSlug = typeof event.location === 'object'
         ? event.location?.slug
         : undefined;
 
       return {
         id: event.id,
-        title: event.vendor,
-        description: event.description || event.vendor,
+        title: event.organizer,
+        description: event.description || event.organizer,
         date: event.date.split('T')[0],
-        time: event.time || '',
+        time: event.startTime || '',
         endTime: event.endTime,
-        vendor: event.vendor,
+        vendor: event.organizer,
         type: EventType.SPECIAL_EVENT,
         status: EventStatus.SCHEDULED,
         location: locationSlug as LocationSlug,
@@ -121,15 +123,19 @@ export function EventsPageContent({ initialEvents = [] }: EventsPageContentProps
             Loading events...
           </div>
         ) : filteredEvents.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-4xl mb-4">📅</div>
-            <h3 className="text-lg font-semibold mb-2">No Upcoming Events</h3>
-            <p className="text-muted-foreground">
-              {locationFilter !== 'all'
-                ? `No upcoming events at ${locations.find(l => (l.slug || l.id) === locationFilter)?.name || locationFilter}. Check back soon!`
-                : 'No upcoming events scheduled. Check back soon for live music, trivia, and more!'}
-            </p>
-          </div>
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <Calendar className="h-6 w-6" />
+              </EmptyMedia>
+              <EmptyTitle>No Upcoming Events</EmptyTitle>
+              <EmptyDescription>
+                {locationFilter !== 'all'
+                  ? `No upcoming events at ${locations.find(l => (l.slug || l.id) === locationFilter)?.name || locationFilter}. Check back soon!`
+                  : 'No upcoming events scheduled. Check back soon for live music, trivia, and more!'}
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         ) : (
           <EventList
             key={`events-${currentLocation}`}
