@@ -12,8 +12,9 @@ import {
   getAllLocations,
   getWeeklyHoursWithHolidays,
   getUpcomingEventsFromPayload,
-  getUpcomingFoodFromPayload,
+  getCombinedUpcomingFood,
   type WeeklyHoursDay,
+  type RecurringFoodEntry,
 } from './payload-api';
 import { isAuthenticated } from './auth';
 import { getSiteContent } from './site-content';
@@ -77,11 +78,12 @@ export const getHomePageData = cache(async (): Promise<HomePageData> => {
     Promise.all(locationSlugs.map((slug) => getDraftMenu(slug))),
     Promise.all(locationSlugs.map((slug) => getCansMenu(slug))),
     // Events and food (3 items for main display)
+    // Food now includes both individual and recurring entries
     Promise.all(locationSlugs.map((slug) => getUpcomingEventsFromPayload(slug, 3))),
-    Promise.all(locationSlugs.map((slug) => getUpcomingFoodFromPayload(slug, 3))),
+    Promise.all(locationSlugs.map((slug) => getCombinedUpcomingFood(slug, 3))),
     // Events and food (10 items for marketing overlay)
     Promise.all(locationSlugs.map((slug) => getUpcomingEventsFromPayload(slug, 10))),
-    Promise.all(locationSlugs.map((slug) => getUpcomingFoodFromPayload(slug, 10))),
+    Promise.all(locationSlugs.map((slug) => getCombinedUpcomingFood(slug, 10))),
   ]);
 
   // Step 4: Transform arrays into location-keyed objects (DRY with helper)
@@ -119,7 +121,7 @@ export const getHomePageData = cache(async (): Promise<HomePageData> => {
   const nextEvent =
     allEvents.length > 0
       ? {
-          name: allEvents[0].vendor,
+          name: allEvents[0].organizer,
           date: allEvents[0].date,
           // Extract location slug/name from either string ID or hydrated object
           location: typeof allEvents[0].location === 'string'

@@ -16,8 +16,30 @@ function convertTo12Hour(hour: number, mins: number, compact = false): string {
   return mins === 0 && compact ? `${hour12}${ampm}` : `${hour12}:${mins.toString().padStart(2, '0')}${ampm}`;
 }
 
-export function formatTime(timeString: string, options: { compact?: boolean } = {}): string {
+export function formatTime(timeString: string, options: { compact?: boolean; timezone?: string } = {}): string {
   if (!timeString) return '';
+
+  // Handle ISO date strings (e.g., "2000-01-01T23:00:00.000Z")
+  // Payload stores time-only fields as ISO dates with a reference date
+  if (timeString.includes('T') && timeString.includes(':')) {
+    try {
+      const date = new Date(timeString);
+      if (!isNaN(date.getTime())) {
+        // Format in the specified timezone (default to America/New_York for EST/EDT)
+        const tz = options.timezone || 'America/New_York';
+        const formatted = date.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true,
+          timeZone: tz,
+        });
+        // Convert to lowercase format (e.g., "7:00 PM" -> "7:00pm")
+        return formatted.toLowerCase().replace(/\s/g, '');
+      }
+    } catch {
+      // Fall through to other parsing methods
+    }
+  }
 
   const match12h = timeString.match(/(\d{1,2})(?::(\d{2}))?\s*(AM|PM|am|pm)/i);
   if (match12h) {

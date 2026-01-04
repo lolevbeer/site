@@ -83,21 +83,15 @@ export default async function Home() {
           isAuthenticated={data.authenticated}
         />
 
-        <Spacer />
-
         <UpcomingFood
           foodByLocation={data.foodByLocation}
           isAuthenticated={data.authenticated}
         />
 
-        <Spacer />
-
         <UpcomingEvents
           eventsByLocation={data.eventsByLocation}
           isAuthenticated={data.authenticated}
         />
-
-        <Spacer />
 
         <UpcomingBeers comingSoonBeers={data.comingSoonBeers} isAuthenticated={data.authenticated} />
       </HomeContent>
