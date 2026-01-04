@@ -38,7 +38,7 @@ levenator,Levenator,Doppelbock,,7.8,pint,$8,$4.25,$16,"Rich malt flavor with not
 rubico,Rubico,Double IPA,,8.5,pint,$8,$5.25,$20,"Pineapple, peach rings, bubblegum, strawberry and citrus.",850051366156,FALSE,TRUE,FALSE,,39,"Mosaic, Galaxy, Citra"
 orban,Orban,Imperial Stout,,10.5,teku,$9,$5.50,$21,"Caramel, orange, dark chocolate and vanilla. Conditioned on cracked Madagascar vanilla beans and Cocoa nibs.",850051366163,FALSE,TRUE,FALSE,,40,
 severina,Severina,Cookie Brown Ale,,5.3,stein,$5,$4.25,$16,"Infused with Amaretti cookies. Notes of ginger, cinnamon, and caramel. Collab with Severina for the Lawrenceville Cookie Tour.",,FALSE,FALSE,FALSE,,41,
-double-lupula,Double Lupula,Double IPA,,8.4,pint,$8,$5.25,$20,"More hops, more malt, more everything. Everything Lupula is and more.",850051366170,FALSE,TRUE,FALSE,,42,"Motueka, Moutere, Riwaka"
+double-lupula,Double Lupula,Double IPA,,8.4,pint,$9,$5.25,$20,"More hops, more malt, more everything. Everything Lupula is and more.",850051366170,FALSE,TRUE,FALSE,,42,"Motueka, Moutere, Riwaka"
 prismatic,Prismatic,India Pale Ale,,7,pint,$7,$4.50,$17,"Pineapple, vanilla, tangerine, melon.",850051366064,FALSE,TRUE,FALSE,,43,"El Dorado, Idaho 7, Citra"
 vespero,Vespero,Czech Dark Lager,,5.8,stein,$6,$4.25,$16,"Roasted chestnut, chocolate and raisin. Ruby hue and a hint of noble hops.",850051366187,FALSE,TRUE,FALSE,,44,Saaz
 altamir,Altamir,India Pale Ale,,6.5,pint,$7,$4.50,$17,"Berry, Citrus, and floral.",,FALSE,FALSE,FALSE,,45,"Citra, Amarillo, El Dorado, Belma"
