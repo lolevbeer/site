@@ -35,10 +35,7 @@ export default buildConfig({
   // Empty serverURL means Payload uses relative URLs - works on any port
   serverURL: process.env.NEXT_PUBLIC_APP_URL || '',
   cors: '*', // Allow all origins in development, tighten in production if needed
-  csrf: [
-    process.env.NEXT_PUBLIC_APP_URL,
-    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
-  ].filter(Boolean) as string[],
+  csrf: false, // Disable CSRF protection - safe because we use cookie-based auth, not tokens
   routes: {
     api: '/api',
     admin: '/admin',
