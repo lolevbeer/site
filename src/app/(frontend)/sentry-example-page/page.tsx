@@ -2,8 +2,13 @@
 
 import * as Sentry from '@sentry/nextjs';
 import { Button } from '@/components/ui/button';
+import { notFound } from 'next/navigation';
 
 export default function SentryExamplePage() {
+  // Disable in production
+  if (process.env.NODE_ENV === 'production') {
+    notFound();
+  }
   const throwClientError = () => {
     // @ts-expect-error - intentional error for Sentry testing
     myUndefinedFunction();
