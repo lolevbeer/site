@@ -11,6 +11,7 @@ import { useLocationContext } from '@/components/location/location-provider';
 import { cn } from '@/lib/utils';
 import { navigationItems } from './navigation';
 import type { WeeklyHoursDay } from '@/lib/utils/payload-api';
+import { ThemeSwitcher } from '@/components/ui/theme-switcher';
 
 /**
  * Get day name from hours key
@@ -220,9 +221,12 @@ export function Footer({ weeklyHours }: FooterProps) {
 
         {/* Bottom footer */}
         <div className="mt-12 pt-8 flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
-          <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} Lolev Beer. All rights reserved.
-          </p>
+          <div className="flex items-center gap-4">
+            <p className="text-sm text-muted-foreground">
+              © {new Date().getFullYear()} Lolev Beer. All rights reserved.
+            </p>
+            <ThemeSwitcher />
+          </div>
           <div className="flex flex-wrap gap-2 justify-center">
             <Button asChild variant="ghost" size="sm">
               <Link href="/faq">
@@ -242,6 +246,11 @@ export function Footer({ weeklyHours }: FooterProps) {
             <Button asChild variant="ghost" size="sm">
               <Link href="/terms">
                 Terms of Service
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/admin">
+                Login
               </Link>
             </Button>
           </div>

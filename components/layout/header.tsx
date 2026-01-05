@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { Menu, X } from 'lucide-react';
 import { Navigation } from './navigation';
 import { MobileMenu } from './mobile-menu';
@@ -38,12 +37,10 @@ export function Header() {
               <LocationTabs syncWithGlobalState={true}>
                 {/* Location tabs in header */}
               </LocationTabs>
-              <ThemeToggle />
             </div>
 
-            {/* Mobile menu button and theme toggle */}
+            {/* Mobile menu button */}
             <div className="flex items-center gap-2 md:hidden">
-              <ThemeToggle />
               <Button
                 variant="ghost"
                 size="icon"
