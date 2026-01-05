@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 
 export default function SentryExamplePage() {
   const throwClientError = () => {
-    throw new Error('Sentry Example Frontend Error');
+    // @ts-expect-error - intentional error for Sentry testing
+    myUndefinedFunction();
   };
 
   const captureManualError = () => {
