@@ -19,6 +19,6 @@ Sentry.init({
     Sentry.replayIntegration(),
   ],
 
-  // Don't send errors in development
+  // Only send errors in production
   enabled: process.env.NODE_ENV === "production",
 });
