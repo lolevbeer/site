@@ -37,6 +37,8 @@ interface MenuItem {
   tap?: number;
   pricing: {
     draftPrice?: number;
+    halfPour?: number;
+    halfPourOnly?: boolean;
   };
   availability: {
     hideFromSite?: boolean;
@@ -138,7 +140,11 @@ function convertMenuItems(menuData: Menu): MenuItem[] {
         hops: beer.hops ? String(beer.hops) : undefined,
         tap: index + 1, // 1-based tap/draft number from position in menu
         pricing: {
-          draftPrice: item.price ? parseFloat(String(item.price).replace('$', '')) : undefined,
+          draftPrice: item.price
+            ? parseFloat(String(item.price).replace('$', ''))
+            : beer.draftPrice,
+          halfPour: beer.halfPour ?? undefined,
+          halfPourOnly: beer.halfPourOnly || false,
         },
         availability: {
           hideFromSite: beer.hideFromSite || false,
@@ -359,7 +365,8 @@ export function FeaturedMenu({ menuType, menu, menus = [], isAuthenticated, anim
                       <div className="flex-grow">{isOtherMenu ? 'Item' : 'Beer'}</div>
                       <div className="flex" style={{ gap: '2vh' }}>
                         {!isOtherMenu && <div className="text-center" style={{ minWidth: '5vh' }}>ABV</div>}
-                        <div className="text-center" style={{ minWidth: '6vh' }}>Price</div>
+                        <div className="text-center" style={{ minWidth: '6vh' }}>Half</div>
+                        <div className="text-center" style={{ minWidth: '6vh' }}>Full</div>
                       </div>
                     </div>
                   );

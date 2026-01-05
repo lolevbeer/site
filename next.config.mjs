@@ -89,9 +89,18 @@ export default withSentryConfig(payloadConfig, {
   // Upload source maps for better stack traces
   widenClientFileUpload: true,
 
-  // Automatically tree-shake Sentry logger statements to reduce bundle size
-  disableLogger: true,
-
   // Hide source maps from browser devtools in production
   hideSourceMaps: true,
+
+  // Tree-shake Sentry debug logging to reduce bundle size
+  bundleSizeOptimizations: {
+    excludeDebugStatements: true,
+  },
+
+  // Disable automatic instrumentation to avoid webpack conflicts
+  webpack: {
+    autoInstrumentServerFunctions: false,
+    autoInstrumentMiddleware: false,
+    autoInstrumentAppDirectory: false,
+  },
 })
