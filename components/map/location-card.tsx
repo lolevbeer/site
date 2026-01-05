@@ -31,14 +31,26 @@ export function LocationCard({
   onClick,
   innerRef
 }: LocationCardProps) {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onClick();
+    }
+  };
+
   return (
     <Card
       ref={innerRef}
       className={cn(
         "p-3 cursor-pointer transition-all border-0 shadow-none bg-[var(--color-card-interactive)]",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         isSelected ? "bg-primary/5" : "hover:bg-muted/50"
       )}
       onClick={onClick}
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
+      role="button"
+      aria-pressed={isSelected}
     >
       <div className="flex items-center justify-between gap-3">
         <div className="flex-1 min-w-0">

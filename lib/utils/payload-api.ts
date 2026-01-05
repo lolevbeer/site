@@ -1184,14 +1184,17 @@ export const getAllDistributorsGeoJSON = unstable_cache(
       })
 
       const features: DistributorGeoFeature[] = result.docs
-        .filter((dist): dist is Distributor & { location: [number, number] } =>
-          Array.isArray(dist.location) && dist.location.length === 2
-        )
+        .filter((dist) => {
+          // Filter out distributors without valid coordinates
+          if (!dist.location) return false
+          if (Array.isArray(dist.location) && dist.location.length === 2) return true
+          return false
+        })
         .map((dist, index) => ({
           type: 'Feature' as const,
           geometry: {
             type: 'Point' as const,
-            coordinates: dist.location,
+            coordinates: dist.location as [number, number],
           },
           properties: {
             id: index,

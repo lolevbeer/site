@@ -1286,6 +1286,14 @@ async function recalculateBeerFields(payload: any, stream: StreamController, dry
 }
 
 export const syncGoogleSheets: PayloadHandler = async (req) => {
+  // Check for authenticated admin user
+  if (!req.user) {
+    return new Response(JSON.stringify({ error: 'Authentication required' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
   const url = new URL(req.url || '', 'http://localhost')
   const dryRun = url.searchParams.get('dryRun') === 'true'
   const collectionsParam = url.searchParams.get('collections') || 'events,food'

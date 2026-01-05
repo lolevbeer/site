@@ -2,6 +2,12 @@
 
 import React, { useEffect, useState } from 'react'
 import { useAllFormFields, useDocumentInfo } from '@payloadcms/ui'
+import {
+  getEventsOnDate,
+  getFoodOnDateRange,
+  getRecurringFoodData,
+  getFoodVendor,
+} from '@/src/actions/admin-data'
 
 const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const
 const weekKeys = ['first', 'second', 'third', 'fourth', 'fifth'] as const
@@ -51,25 +57,17 @@ export const EventDateWarning: React.FC = () => {
       try {
         const date = new Date(dateValue)
         const dateOnly = dateValue.split('T')[0]
-        const startOfDay = `${dateOnly}T00:00:00.000Z`
-        const endOfDay = `${dateOnly}T23:59:59.999Z`
 
-        // Check other events
+        // Check other events using local API
         const eventConflicting: ConflictingEvent[] = []
         try {
-          const response = await fetch(
-            `/api/events?where[date][greater_than_equal]=${startOfDay}&where[date][less_than_equal]=${endOfDay}&where[location][equals]=${locationValue}&depth=0&limit=100`,
-          )
-          const data = await response.json()
-
-          if (data.docs && data.docs.length > 0) {
-            for (const doc of data.docs) {
-              if (currentDocId && doc.id === currentDocId) continue
-              eventConflicting.push({
-                organizer: doc.organizer || 'Unknown',
-                visibility: doc.visibility || 'public',
-              })
-            }
+          const events = await getEventsOnDate(dateValue, locationValue)
+          for (const doc of events) {
+            if (currentDocId && doc.id === currentDocId) continue
+            eventConflicting.push({
+              organizer: doc.organizer,
+              visibility: doc.visibility,
+            })
           }
         } catch (error) {
           console.error('Error checking events:', error)
@@ -79,16 +77,15 @@ export const EventDateWarning: React.FC = () => {
         // Check food vendors
         const vendors: FoodVendor[] = []
 
-        // Check recurring food using location ID
+        // Check recurring food using local API
         try {
           const dayName = getDayName(date)
           const weekOccurrence = getWeekOccurrence(date)
           const weekKey = weekKeys[weekOccurrence - 1]
 
-          const response = await fetch('/api/globals/recurring-food?depth=1')
-          const data = await response.json()
+          const data = await getRecurringFoodData()
 
-          // New data structure: data.schedules[locationId][dayName][weekKey]
+          // Data structure: data.schedules[locationId][dayName][weekKey]
           const vendorId = data.schedules?.[locationValue]?.[dayName]?.[weekKey]
 
           if (vendorId) {
@@ -97,33 +94,21 @@ export const EventDateWarning: React.FC = () => {
             const isExcluded = exclusions.includes(dateOnly)
 
             if (!isExcluded) {
-              // Fetch vendor name
-              try {
-                const vendorResponse = await fetch(`/api/food-vendors/${vendorId}`)
-                const vendorData = await vendorResponse.json()
-                const vendorName = vendorData.name || 'Unknown vendor'
-                vendors.push({ name: vendorName, type: 'recurring' })
-              } catch {
-                vendors.push({ name: 'Unknown vendor', type: 'recurring' })
-              }
+              // Fetch vendor name using local API
+              const vendor = await getFoodVendor(vendorId)
+              const vendorName = vendor?.name || 'Unknown vendor'
+              vendors.push({ name: vendorName, type: 'recurring' })
             }
           }
         } catch (error) {
           console.error('Error checking recurring food:', error)
         }
 
-        // Check individual food events
+        // Check individual food events using local API
         try {
-          const foodResponse = await fetch(
-            `/api/food?where[date][greater_than_equal]=${startOfDay}&where[date][less_than_equal]=${endOfDay}&where[location][equals]=${locationValue}&depth=1&limit=100`,
-          )
-          const foodData = await foodResponse.json()
-
-          if (foodData.docs && foodData.docs.length > 0) {
-            for (const doc of foodData.docs) {
-              const vendorName = doc.vendor?.name || doc.vendorName || 'Unknown vendor'
-              vendors.push({ name: vendorName, type: 'individual' })
-            }
+          const foodDocs = await getFoodOnDateRange(dateValue, locationValue)
+          for (const doc of foodDocs) {
+            vendors.push({ name: doc.vendorName, type: 'individual' })
           }
         } catch (error) {
           console.error('Error checking individual food:', error)

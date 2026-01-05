@@ -26,6 +26,7 @@ export const Food: CollectionConfig = {
       type: 'relationship',
       relationTo: 'food-vendors',
       required: true,
+      index: true,
       admin: {
         description: 'Select food vendor',
         sortOptions: 'name',
@@ -71,6 +72,7 @@ export const Food: CollectionConfig = {
       relationTo: 'locations',
       required: true,
       hasMany: false,
+      index: true,
     },
     {
       name: 'startTime',

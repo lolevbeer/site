@@ -1,6 +1,0 @@
-User-agent: *
-Disallow: /inventory
-Disallow: /distributors
-Disallow: /sarene
-Disallow: /qr/*
-Disallow: /barcode/*

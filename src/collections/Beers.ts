@@ -208,6 +208,7 @@ export const Beers: CollectionConfig = {
       type: 'relationship',
       relationTo: 'styles',
       required: true,
+      index: true,
       admin: {
         description: 'Beer style',
       },

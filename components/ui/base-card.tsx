@@ -40,14 +40,24 @@ export function BaseCard<T>({
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (onClick && !isDisabled && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault();
+      onClick(item);
+    }
+  };
+
+  const isInteractive = onClick && !isDisabled;
+
   const cardClasses = cn(
     'transition-all duration-200',
     {
       'hover:shadow-md': !isDisabled,
-      'hover:shadow-lg cursor-pointer': onClick && !isDisabled,
-      'bg-[var(--color-card-interactive)]': onClick && !isDisabled,
+      'hover:shadow-lg cursor-pointer': isInteractive,
+      'bg-[var(--color-card-interactive)]': isInteractive,
       'opacity-75': isDisabled,
       'ring-2 ring-blue-500 ring-opacity-50': isHighlighted,
+      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2': isInteractive,
       'p-3': variant === 'compact',
       'p-4': variant === 'default',
       'p-6': variant === 'detailed'
@@ -59,6 +69,9 @@ export function BaseCard<T>({
     <Card
       className={cardClasses}
       onClick={handleClick}
+      onKeyDown={isInteractive ? handleKeyDown : undefined}
+      tabIndex={isInteractive ? 0 : undefined}
+      role={isInteractive ? 'button' : undefined}
       data-testid={testId}
     >
       <div className={cn(

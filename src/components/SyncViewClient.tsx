@@ -3,6 +3,8 @@
 import React, { useState, useRef } from 'react'
 import { Gutter } from '@payloadcms/ui'
 import { format } from 'date-fns-tz'
+import { getSiteContentData } from '@/src/actions/admin-data'
+import { parseSSEStream, isSSEResponse } from '@/lib/utils/sse-parser'
 
 interface FieldChange {
   field: string
@@ -90,10 +92,9 @@ export const SyncViewClient: React.FC = () => {
   const [recalcResults, setRecalcResults] = useState<{ updated: number; skipped: number; errors: number } | null>(null)
   const [recalcLogs, setRecalcLogs] = useState<string[]>([])
 
-  // Load distributor URLs on mount
+  // Load distributor URLs on mount using local API
   React.useEffect(() => {
-    fetch('/api/globals/site-content/')
-      .then(res => res.json())
+    getSiteContentData()
       .then(data => {
         setPaUrl(data.distributorPaUrl || '')
         setOhUrl(data.distributorOhUrl || '')
@@ -142,79 +143,23 @@ export const SyncViewClient: React.FC = () => {
         return
       }
 
-      const reader = response.body?.getReader()
-      if (!reader) {
-        addLog('error', 'No response body')
-        setSyncing(false)
-        return
-      }
-
-      const decoder = new TextDecoder()
-      let buffer = ''
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-
-        buffer += decoder.decode(value, { stream: true })
-
-        const lines = buffer.split('\n')
-        buffer = lines.pop() || ''
-
-        let currentEvent = ''
-        let currentData = ''
-
-        for (const line of lines) {
-          if (line.startsWith('event: ')) {
-            currentEvent = line.slice(7)
-          } else if (line.startsWith('data: ')) {
-            currentData = line.slice(6)
-
-            if (currentEvent && currentData) {
-              try {
-                const data = JSON.parse(currentData)
-
-                switch (currentEvent) {
-                  case 'status':
-                    addLog('status', data.message)
-                    break
-                  case 'event':
-                    addLog('event', `Event: ${data.organizer} (${data.date}) - ${data.location}`, data.changes)
-                    break
-                  case 'food':
-                    addLog('food', `Food: ${data.vendor} (${data.date}) - ${data.location}`, data.changes)
-                    break
-                  case 'beer':
-                    addLog('beer', `Beer: ${data.name} (${data.style})`, data.changes)
-                    break
-                  case 'menu':
-                    addLog('menu', `Menu: ${data.location} ${data.type} - ${data.itemCount} items`, data.changes)
-                    break
-                  case 'hours':
-                    addLog('hours', `Hours: ${data.location} - ${data.action}`, data.changes)
-                    break
-                  case 'error':
-                    addLog('error', data.message)
-                    break
-                  case 'complete':
-                    if (data.success) {
-                      setResults({ ...data.results, dryRun: data.dryRun })
-                      addLog('complete', data.dryRun ? 'Preview complete!' : 'Sync complete!')
-                    } else {
-                      addLog('error', `Sync failed: ${data.error}`)
-                    }
-                    break
-                }
-              } catch {
-                // Ignore parse errors
-              }
-
-              currentEvent = ''
-              currentData = ''
-            }
+      await parseSSEStream(response, {
+        status: (data: any) => addLog('status', data.message),
+        event: (data: any) => addLog('event', `Event: ${data.organizer} (${data.date}) - ${data.location}`, data.changes),
+        food: (data: any) => addLog('food', `Food: ${data.vendor} (${data.date}) - ${data.location}`, data.changes),
+        beer: (data: any) => addLog('beer', `Beer: ${data.name} (${data.style})`, data.changes),
+        menu: (data: any) => addLog('menu', `Menu: ${data.location} ${data.type} - ${data.itemCount} items`, data.changes),
+        hours: (data: any) => addLog('hours', `Hours: ${data.location} - ${data.action}`, data.changes),
+        error: (data: any) => addLog('error', data.message),
+        complete: (data: any) => {
+          if (data.success) {
+            setResults({ ...data.results, dryRun: data.dryRun })
+            addLog('complete', data.dryRun ? 'Preview complete!' : 'Sync complete!')
+          } else {
+            addLog('error', `Sync failed: ${data.error}`)
           }
-        }
-      }
+        },
+      })
     } catch (error: any) {
       addLog('error', `Connection error: ${error.message}`)
     } finally {
@@ -301,8 +246,7 @@ export const SyncViewClient: React.FC = () => {
       })
 
       // Check if it's a JSON error response (non-streaming)
-      const contentType = response.headers.get('content-type') || ''
-      if (contentType.includes('application/json')) {
+      if (!isSSEResponse(response)) {
         const data = await response.json()
         const details: string[] = []
         if (data.error) details.push(`Error: ${data.error}`)
@@ -318,67 +262,20 @@ export const SyncViewClient: React.FC = () => {
         return
       }
 
-      // Handle streaming response
-      const reader = response.body?.getReader()
-      if (!reader) {
-        setDistResults({
-          region: region.toUpperCase(),
-          imported: 0,
-          skipped: 0,
-          errors: 1,
-          details: ['No response body'],
-        })
-        setDistImporting(null)
-        return
-      }
-
-      const decoder = new TextDecoder()
-      let buffer = ''
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-
-        buffer += decoder.decode(value, { stream: true })
-        const lines = buffer.split('\n')
-        buffer = lines.pop() || ''
-
-        let currentEvent = ''
-        let currentData = ''
-
-        for (const line of lines) {
-          if (line.startsWith('event: ')) {
-            currentEvent = line.slice(7)
-          } else if (line.startsWith('data: ')) {
-            currentData = line.slice(6)
-
-            if (currentEvent && currentData) {
-              try {
-                const data = JSON.parse(currentData)
-
-                if (currentEvent === 'progress') {
-                  setDistProgress(data)
-                } else if (currentEvent === 'item') {
-                  setDistLiveDetails(prev => [...prev.slice(-49), data.message]) // Keep last 50
-                } else if (currentEvent === 'complete') {
-                  setDistResults({
-                    region: region.toUpperCase(),
-                    imported: data.imported || 0,
-                    skipped: data.skipped || 0,
-                    errors: data.errors || 0,
-                    details: data.details || [],
-                  })
-                  setDistProgress(null)
-                }
-              } catch {
-                // Ignore parse errors
-              }
-              currentEvent = ''
-              currentData = ''
-            }
-          }
-        }
-      }
+      await parseSSEStream(response, {
+        progress: (data: any) => setDistProgress(data),
+        item: (data: any) => setDistLiveDetails(prev => [...prev.slice(-49), data.message]),
+        complete: (data: any) => {
+          setDistResults({
+            region: region.toUpperCase(),
+            imported: data.imported || 0,
+            skipped: data.skipped || 0,
+            errors: data.errors || 0,
+            details: data.details || [],
+          })
+          setDistProgress(null)
+        },
+      })
     } catch (error: any) {
       setDistResults({
         region: region.toUpperCase(),
@@ -424,65 +321,19 @@ export const SyncViewClient: React.FC = () => {
         return
       }
 
-      // Handle streaming response
-      const reader = response.body?.getReader()
-      if (!reader) {
-        setLakeResults({
-          region: 'NY',
-          imported: 0,
-          skipped: 0,
-          errors: 1,
-          details: ['No response body'],
-        })
-        setLakeUploading(false)
-        return
-      }
-
-      const decoder = new TextDecoder()
-      let buffer = ''
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-
-        buffer += decoder.decode(value, { stream: true })
-        const lines = buffer.split('\n')
-        buffer = lines.pop() || ''
-
-        let currentEvent = ''
-        let currentData = ''
-
-        for (const line of lines) {
-          if (line.startsWith('event: ')) {
-            currentEvent = line.slice(7)
-          } else if (line.startsWith('data: ')) {
-            currentData = line.slice(6)
-
-            if (currentEvent && currentData) {
-              try {
-                const data = JSON.parse(currentData)
-
-                if (currentEvent === 'progress') {
-                  setLakeProgress(data)
-                } else if (currentEvent === 'complete') {
-                  setLakeResults({
-                    region: 'NY',
-                    imported: data.imported || 0,
-                    skipped: data.skipped || 0,
-                    errors: data.errors || 0,
-                    details: data.details || [],
-                  })
-                  setLakeProgress(null)
-                }
-              } catch {
-                // Ignore parse errors
-              }
-              currentEvent = ''
-              currentData = ''
-            }
-          }
-        }
-      }
+      await parseSSEStream(response, {
+        progress: (data: any) => setLakeProgress(data),
+        complete: (data: any) => {
+          setLakeResults({
+            region: 'NY',
+            imported: data.imported || 0,
+            skipped: data.skipped || 0,
+            errors: data.errors || 0,
+            details: data.details || [],
+          })
+          setLakeProgress(null)
+        },
+      })
     } catch (error: any) {
       setLakeResults({
         region: 'NY',
@@ -521,55 +372,15 @@ export const SyncViewClient: React.FC = () => {
         return
       }
 
-      const reader = response.body?.getReader()
-      if (!reader) {
-        setRecalcLogs(prev => [...prev, 'Error: No response body'])
-        setRecalcRunning(false)
-        return
-      }
-
-      const decoder = new TextDecoder()
-      let buffer = ''
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-
-        buffer += decoder.decode(value, { stream: true })
-        const lines = buffer.split('\n')
-        buffer = lines.pop() || ''
-
-        let currentEvent = ''
-        let currentData = ''
-
-        for (const line of lines) {
-          if (line.startsWith('event: ')) {
-            currentEvent = line.slice(7)
-          } else if (line.startsWith('data: ')) {
-            currentData = line.slice(6)
-
-            if (currentEvent && currentData) {
-              try {
-                const data = JSON.parse(currentData)
-
-                if (currentEvent === 'status') {
-                  setRecalcLogs(prev => [...prev.slice(-99), data.message])
-                } else if (currentEvent === 'error') {
-                  setRecalcLogs(prev => [...prev.slice(-99), `Error: ${data.message}`])
-                } else if (currentEvent === 'complete') {
-                  if (data.results?.recalc) {
-                    setRecalcResults(data.results.recalc)
-                  }
-                }
-              } catch {
-                // Ignore parse errors
-              }
-              currentEvent = ''
-              currentData = ''
-            }
+      await parseSSEStream(response, {
+        status: (data: any) => setRecalcLogs(prev => [...prev.slice(-99), data.message]),
+        error: (data: any) => setRecalcLogs(prev => [...prev.slice(-99), `Error: ${data.message}`]),
+        complete: (data: any) => {
+          if (data.results?.recalc) {
+            setRecalcResults(data.results.recalc)
           }
-        }
-      }
+        },
+      })
     } catch (error: any) {
       setRecalcLogs(prev => [...prev, `Error: ${error.message || 'Recalculation failed'}`])
     } finally {

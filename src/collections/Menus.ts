@@ -128,38 +128,43 @@ export const Menus: CollectionConfig = {
 
         // Auto-sort items by recipe number (descending - newest first) for cans menus only
         if (data.type === 'cans' && data.items && Array.isArray(data.items)) {
-          // Fetch full beer data for sorting but preserve original item structure
-          const itemsWithRecipe = await Promise.all(
-            data.items.map(async (item: any) => {
-              // Handle polymorphic relationship - only sort beers by recipe
-              const product = item.product
-              if (product?.relationTo === 'beers') {
-                const beerId = typeof product.value === 'string' ? product.value : product.value?.id
-                if (beerId) {
-                  try {
-                    const beer = await req.payload.findByID({
-                      collection: 'beers',
-                      id: beerId,
-                    })
-                    return {
-                      originalItem: item,
-                      recipe: beer?.recipe || 0,
-                    }
-                  } catch (_error) {
-                    return {
-                      originalItem: item,
-                      recipe: 0,
-                    }
-                  }
-                }
+          // Collect all beer IDs for batch query (fixes N+1)
+          const beerIds: string[] = []
+          const itemBeerMap: Map<number, string> = new Map()
+
+          data.items.forEach((item: any, index: number) => {
+            const product = item.product
+            if (product?.relationTo === 'beers') {
+              const beerId = typeof product.value === 'string' ? product.value : product.value?.id
+              if (beerId) {
+                beerIds.push(beerId)
+                itemBeerMap.set(index, beerId)
               }
-              // Products (non-beers) sort at the end
-              return {
-                originalItem: item,
-                recipe: -1,
-              }
-            }),
-          )
+            }
+          })
+
+          // Single batch query for all beers
+          const recipeMap: Map<string, number> = new Map()
+          if (beerIds.length > 0) {
+            const beers = await req.payload.find({
+              collection: 'beers',
+              where: { id: { in: beerIds } },
+              limit: beerIds.length,
+            })
+            beers.docs.forEach((beer) => {
+              recipeMap.set(beer.id, beer.recipe || 0)
+            })
+          }
+
+          // Build items with recipe numbers
+          const itemsWithRecipe = data.items.map((item: any, index: number) => {
+            const beerId = itemBeerMap.get(index)
+            if (beerId) {
+              return { originalItem: item, recipe: recipeMap.get(beerId) || 0 }
+            }
+            // Products (non-beers) sort at the end
+            return { originalItem: item, recipe: -1 }
+          })
 
           // Sort by recipe number (descending)
           itemsWithRecipe.sort((a, b) => b.recipe - a.recipe)
@@ -196,6 +201,7 @@ export const Menus: CollectionConfig = {
       relationTo: 'locations',
       hasMany: false,
       required: true,
+      index: true,
       admin: {
         position: 'sidebar',
         description: 'Required to generate menu URL',

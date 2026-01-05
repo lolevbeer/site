@@ -97,6 +97,7 @@ export const Events: CollectionConfig = {
       relationTo: 'locations',
       required: true,
       hasMany: false,
+      index: true,
       admin: {
         position: 'sidebar',
       },

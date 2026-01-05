@@ -20,13 +20,13 @@ export function ConditionalLayout({ children, weeklyHours }: ConditionalLayoutPr
 
   // Don't render layout for admin/api routes or menu display routes
   if (isAdminRoute || isMenuRoute) {
-    return <main id="main-content" className="h-screen">{children}</main>;
+    return <main id="main-content" tabIndex={-1} className="h-screen outline-none">{children}</main>;
   }
 
   return (
     <>
       <Header />
-      <main id="main-content" className="flex-1">
+      <main id="main-content" tabIndex={-1} className="flex-1 outline-none">
         {children}
       </main>
       <Footer weeklyHours={weeklyHours} />

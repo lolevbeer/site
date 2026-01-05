@@ -13,6 +13,27 @@ import { PageViewTracker } from "@/components/analytics/page-view-tracker";
 import { getAllLocations, getWeeklyHoursWithHolidays, type WeeklyHoursDay } from "@/lib/utils/payload-api";
 import "./globals.css";
 
+/**
+ * Get the base URL for metadata.
+ * Priority: NEXT_PUBLIC_SITE_URL > VERCEL_PROJECT_PRODUCTION_URL > VERCEL_URL > fallback
+ */
+function getBaseUrl(): string {
+  // Explicit site URL (set in production)
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    return process.env.NEXT_PUBLIC_SITE_URL
+  }
+  // Vercel production URL (e.g., lolev.beer if custom domain configured)
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+  }
+  // Vercel preview/branch URL (auto-generated)
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`
+  }
+  // Local development fallback
+  return 'http://localhost:3000'
+}
+
 const poppins = Poppins({
   weight: ['400', '600', '700'],
   variable: "--font-poppins",
@@ -42,14 +63,14 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL("https://next.lolev.beer"),
+  metadataBase: new URL(getBaseUrl()),
   alternates: {
     canonical: "/",
   },
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://next.lolev.beer",
+    url: getBaseUrl(),
     title: "Lolev Beer - Craft Beer in Pittsburgh",
     description: "Experience exceptional craft beer at Lolev Beer with locations in Lawrenceville and Zelienople. Fresh brews, local food, and community events.",
     siteName: "Lolev Beer",

@@ -31,11 +31,22 @@ import { updateDistributorUrls } from './endpoints/update-distributor-urls'
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
+// Allowed origins for CORS and CSRF
+const allowedOrigins = [
+  'https://lolev.beer',
+  'https://www.lolev.beer',
+  // Vercel preview deployments
+  ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
+  ...(process.env.VERCEL_PROJECT_PRODUCTION_URL ? [`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`] : []),
+  // Local development
+  ...(process.env.NODE_ENV === 'development' ? ['http://localhost:3000'] : []),
+]
+
 export default buildConfig({
   // Empty serverURL = relative URLs, works on any domain (preview URLs, custom domains, etc.)
   serverURL: '',
-  cors: '*', // Allow all origins
-  csrf: [], // Empty array disables CSRF protection
+  cors: allowedOrigins,
+  csrf: allowedOrigins,
   routes: {
     api: '/api',
     admin: '/admin',

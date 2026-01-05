@@ -17,9 +17,14 @@ const CACHE_TAGS = {
   food: 'food',
   locations: 'locations',
   styles: 'styles',
+  distributors: 'distributors',
+  'food-vendors': 'food-vendors',
+  products: 'products',
   'holiday-hours': 'holiday-hours',
   'coming-soon': 'coming-soon',
   'site-content': 'site-content',
+  'recurring-food': 'recurring-food',
+  'distributor-settings': 'distributor-settings',
 } as const
 
 type CacheTag = (typeof CACHE_TAGS)[keyof typeof CACHE_TAGS]
@@ -33,6 +38,9 @@ const COLLECTION_CACHE_MAP: Record<string, CacheTag[]> = {
   food: ['food'],
   locations: ['locations', 'menus'], // Locations affect menus
   styles: ['styles', 'beers'], // Styles affect beer displays
+  distributors: ['distributors'],
+  'food-vendors': ['food-vendors', 'food'], // Food vendors affect food displays
+  products: ['products', 'menus'], // Products affect menu displays
   'holiday-hours': ['holiday-hours', 'locations'],
 }
 
@@ -40,6 +48,8 @@ const COLLECTION_CACHE_MAP: Record<string, CacheTag[]> = {
 const GLOBAL_CACHE_MAP: Record<string, CacheTag[]> = {
   'coming-soon': ['coming-soon'],
   'site-content': ['site-content'],
+  'recurring-food': ['recurring-food', 'food'],
+  'distributor-settings': ['distributor-settings', 'distributors'],
 }
 
 // Paths to revalidate for each collection
@@ -50,6 +60,9 @@ const COLLECTION_PATHS: Record<string, string[]> = {
   food: ['/', '/food'],
   locations: ['/'],
   styles: ['/beer'],
+  distributors: ['/beer-map'],
+  'food-vendors': ['/food'],
+  products: ['/'],
   'holiday-hours': ['/'],
 }
 

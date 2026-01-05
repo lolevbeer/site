@@ -2,6 +2,11 @@
 
 import React, { useEffect, useState } from 'react'
 import { useAllFormFields, useDocumentInfo } from '@payloadcms/ui'
+import {
+  getRecurringFoodData,
+  getFoodVendor,
+  getFoodOnDate,
+} from '@/src/actions/admin-data'
 
 const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const
 const weekKeys = ['first', 'second', 'third', 'fourth', 'fifth'] as const
@@ -49,13 +54,12 @@ export const FoodDateWarning: React.FC = () => {
         const weekKey = weekKeys[weekOccurrence - 1]
         const dateKey = date.toISOString().split('T')[0]
 
-        // Check recurring vendors using location ID
+        // Check recurring vendors using local API
         if (weekKey) {
           try {
-            const response = await fetch('/api/globals/recurring-food?depth=1')
-            const data = await response.json()
+            const data = await getRecurringFoodData()
 
-            // New data structure: data.schedules[locationId][dayName][weekKey]
+            // Data structure: data.schedules[locationId][dayName][weekKey]
             const vendorId = data.schedules?.[locationValue]?.[dayName]?.[weekKey]
 
             if (vendorId) {
@@ -64,15 +68,10 @@ export const FoodDateWarning: React.FC = () => {
               const isExcluded = exclusions.includes(dateKey)
 
               if (!isExcluded) {
-                // Fetch vendor name
-                try {
-                  const vendorResponse = await fetch(`/api/food-vendors/${vendorId}`)
-                  const vendorData = await vendorResponse.json()
-                  const vendorName = vendorData.name || 'Unknown vendor'
-                  newWarnings.push({ type: 'recurring', vendorName })
-                } catch {
-                  newWarnings.push({ type: 'recurring', vendorName: 'Unknown vendor' })
-                }
+                // Fetch vendor name using local API
+                const vendor = await getFoodVendor(vendorId)
+                const vendorName = vendor?.name || 'Unknown vendor'
+                newWarnings.push({ type: 'recurring', vendorName })
               }
             }
           } catch (error) {
@@ -80,21 +79,15 @@ export const FoodDateWarning: React.FC = () => {
           }
         }
 
-        // Check individual food events
+        // Check individual food events using local API
         try {
-          const foodResponse = await fetch(
-            `/api/food?where[date][equals]=${dateValue}&where[location][equals]=${locationValue}&depth=1`,
-          )
-          const foodData = await foodResponse.json()
+          const foodDocs = await getFoodOnDate(dateValue, locationValue)
 
-          if (foodData.docs && foodData.docs.length > 0) {
-            for (const doc of foodData.docs) {
-              // Skip if this is the current document being edited
-              if (currentDocId && doc.id === currentDocId) continue
+          for (const doc of foodDocs) {
+            // Skip if this is the current document being edited
+            if (currentDocId && doc.id === currentDocId) continue
 
-              const vendorName = doc.vendor?.name || doc.vendorName || 'Unknown vendor'
-              newWarnings.push({ type: 'individual', vendorName })
-            }
+            newWarnings.push({ type: 'individual', vendorName: doc.vendorName })
           }
         } catch (error) {
           console.error('Error checking individual food events:', error)

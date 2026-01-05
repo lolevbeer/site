@@ -153,33 +153,25 @@ const DatesList: React.FC<DatesListProps> = ({ locationId, schedules, exclusions
     return dates
   }, [locationSchedule])
 
-  // Fetch individual food events
+  // Fetch individual food events using server action (local API)
   useEffect(() => {
     const fetchIndividualEvents = async () => {
       try {
-        const today = new Date()
-        const todayStr = today.toISOString().split('T')[0]
+        const foodEvents = await getUpcomingFoodForLocation(locationId)
 
-        const response = await fetch(
-          `/api/food?where[location][equals]=${locationId}&where[date][greater_than_equal]=${todayStr}&depth=1&limit=100&sort=date`,
-        )
-        const data = await response.json()
-
-        if (data.docs) {
-          const events: ScheduledDate[] = data.docs.map((doc: any) => {
-            const date = new Date(doc.date)
-            return {
-              date,
-              dayIndex: date.getDay(),
-              weekIndex: Math.ceil(date.getDate() / 7) - 1,
-              vendorId: doc.vendor?.id || doc.vendor,
-              vendorName: doc.vendor?.name || doc.vendorName,
-              type: 'individual' as const,
-              foodDocId: doc.id,
-            }
-          })
-          setIndividualFoodEvents(events)
-        }
+        const events: ScheduledDate[] = foodEvents.map((doc) => {
+          const date = new Date(doc.date)
+          return {
+            date,
+            dayIndex: date.getDay(),
+            weekIndex: Math.ceil(date.getDate() / 7) - 1,
+            vendorId: doc.vendorId,
+            vendorName: doc.vendorName,
+            type: 'individual' as const,
+            foodDocId: doc.id,
+          }
+        })
+        setIndividualFoodEvents(events)
       } catch (error) {
         console.error('Error fetching individual food events:', error)
       }
@@ -202,19 +194,12 @@ const DatesList: React.FC<DatesListProps> = ({ locationId, schedules, exclusions
     if (vendorIds.length === 0) return
 
     const fetchVendors = async () => {
-      const names: Record<string, string> = {}
-      await Promise.all(
-        vendorIds.map(async (id) => {
-          try {
-            const res = await fetch(`/api/food-vendors/${id}`)
-            const data = await res.json()
-            names[id] = data.name || 'Unknown'
-          } catch {
-            names[id] = 'Unknown'
-          }
-        }),
-      )
-      setVendorNames(names)
+      try {
+        const names = await getFoodVendorsByIds(vendorIds)
+        setVendorNames(names)
+      } catch (error) {
+        console.error('Error fetching vendor names:', error)
+      }
     }
 
     fetchVendors()

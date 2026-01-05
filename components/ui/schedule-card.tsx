@@ -33,10 +33,22 @@ export function ScheduleCard({
   className,
   additionalInfo
 }: ScheduleCardProps) {
+  const handleClick = () => site && window.open(site, '_blank');
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (site && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault();
+      window.open(site, '_blank');
+    }
+  };
+
   return (
     <Card
-      className={`overflow-hidden border-0 shadow-none transition-colors bg-transparent dark:bg-transparent ${site ? 'cursor-pointer hover:bg-secondary' : ''} ${className || ''}`}
-      onClick={() => site && window.open(site, '_blank')}
+      className={`overflow-hidden border-0 shadow-none transition-colors bg-transparent dark:bg-transparent ${site ? 'cursor-pointer hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2' : ''} ${className || ''}`}
+      onClick={handleClick}
+      onKeyDown={site ? handleKeyDown : undefined}
+      tabIndex={site ? 0 : undefined}
+      role={site ? 'link' : undefined}
+      aria-label={site ? `${title} - opens in new window` : undefined}
     >
       <CardContent className="p-6 text-center">
         <h3 className="text-xl font-semibold mb-2">{title}</h3>
