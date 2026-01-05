@@ -43,6 +43,8 @@ export enum BeerStyle {
  */
 export interface BeerPricing {
   draftPrice?: number;
+  halfPour?: number;
+  halfPourOnly?: boolean;
   canSingle?: number;
   fourPack?: number;
   cansSingle?: number;

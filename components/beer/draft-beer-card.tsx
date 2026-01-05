@@ -108,8 +108,17 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                   )}
                 </div>
               )}
+              {/* Half pour price - always render column for alignment */}
               <div className="text-center" style={{ minWidth: '6vh' }}>
-                {beer.pricing?.draftPrice && (
+                {beer.pricing?.halfPour && (
+                  <div className="font-bold text-primary tabular-nums" style={{ fontSize: '3.8vh' }}>
+                    ${beer.pricing.halfPour}
+                  </div>
+                )}
+              </div>
+              {/* Full price - always render column, show value if not halfPourOnly */}
+              <div className="text-center" style={{ minWidth: '6vh' }}>
+                {!beer.pricing?.halfPourOnly && beer.pricing?.draftPrice && (
                   <div className="font-bold text-primary tabular-nums" style={{ fontSize: '3.8vh' }}>
                     ${beer.pricing.draftPrice}
                   </div>

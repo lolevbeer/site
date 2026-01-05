@@ -27,6 +27,7 @@ import { importFoodVendorsCSV } from './endpoints/import-food-vendors-csv'
 import { importDistributors } from './endpoints/import-distributors'
 import { importLakeBeverageCSV } from './endpoints/import-lake-beverage-csv'
 import { updateDistributorUrls } from './endpoints/update-distributor-urls'
+import { recalculateBeerPrices } from './endpoints/recalculate-beer-prices'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -128,6 +129,11 @@ export default buildConfig({
       path: '/update-distributor-urls',
       method: 'post',
       handler: updateDistributorUrls,
+    },
+    {
+      path: '/recalculate-beer-prices',
+      method: 'post',
+      handler: recalculateBeerPrices,
     },
   ],
 })

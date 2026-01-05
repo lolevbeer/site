@@ -26,7 +26,7 @@ interface LogEntry {
   changes?: FieldChange[] | MenuChanges
 }
 
-type CollectionType = 'events' | 'food' | 'beers' | 'menus' | 'hours' | 'recalc'
+type CollectionType = 'events' | 'food' | 'beers' | 'menus' | 'hours'
 
 interface SyncResults {
   events?: { imported: number; updated: number; skipped: number; errors: number }
@@ -34,7 +34,6 @@ interface SyncResults {
   beers?: { imported: number; updated: number; skipped: number; errors: number }
   menus?: { imported: number; updated: number; skipped: number; errors: number }
   hours?: { imported: number; updated: number; skipped: number; errors: number }
-  recalc?: { updated: number; skipped: number; errors: number }
   dryRun?: boolean
 }
 
@@ -359,9 +358,8 @@ export const SyncViewClient: React.FC = () => {
     try {
       const params = new URLSearchParams()
       if (recalcDryRun) params.set('dryRun', 'true')
-      params.set('collections', 'recalc')
 
-      const response = await fetch(`/api/sync-google-sheets?${params.toString()}`, {
+      const response = await fetch(`/api/recalculate-beer-prices?${params.toString()}`, {
         method: 'POST',
         credentials: 'same-origin',
       })
@@ -376,8 +374,8 @@ export const SyncViewClient: React.FC = () => {
         status: (data: any) => setRecalcLogs(prev => [...prev.slice(-99), data.message]),
         error: (data: any) => setRecalcLogs(prev => [...prev.slice(-99), `Error: ${data.message}`]),
         complete: (data: any) => {
-          if (data.results?.recalc) {
-            setRecalcResults(data.results.recalc)
+          if (data.results) {
+            setRecalcResults(data.results)
           }
         },
       })

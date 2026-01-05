@@ -6,6 +6,7 @@
 import type { PayloadHandler } from 'payload'
 import { diffJson } from 'diff'
 import { slugify } from '../collections/utils/generateUniqueSlug'
+import { getUserFromRequest } from './auth-helper'
 
 interface StreamController {
   send: (event: string, data: any) => void;
@@ -29,7 +30,7 @@ function computeChanges(existing: Record<string, any>, incoming: Record<string, 
   return changes
 }
 
-type CollectionType = 'events' | 'food' | 'beers' | 'menus' | 'hours' | 'recalc'
+type CollectionType = 'events' | 'food' | 'beers' | 'menus' | 'hours'
 
 // Beer and menu URLs still use env vars (not location-specific)
 const SHEETS_CONFIG = {
@@ -1227,83 +1228,23 @@ async function runSync(
     results.hours = await syncHours(payload, stream, dryRun, allLocations)
   }
 
-  if (collections.includes('recalc')) {
-    results.recalc = await recalculateBeerFields(payload, stream, dryRun)
-  }
-
-  return results
-}
-
-// ============ RECALCULATE BEER FIELDS ============
-async function recalculateBeerFields(payload: any, stream: StreamController, dryRun: boolean) {
-  const results = { imported: 0, updated: 0, skipped: 0, errors: 0 }
-
-  stream.send('status', { message: 'Fetching all beers for recalculation...' })
-
-  try {
-    const beersResult = await payload.find({
-      collection: 'beers',
-      limit: 1000,
-      depth: 0,
-    })
-
-    stream.send('status', { message: `Recalculating fields for ${beersResult.docs.length} beers...` })
-
-    for (const beer of beersResult.docs) {
-      try {
-        // Skip beers with halfPourOnly enabled - they use manual pricing
-        if (beer.halfPourOnly) {
-          stream.send('status', { message: `Skipping ${beer.name} (half pour only enabled)` })
-          results.skipped++
-          continue
-        }
-
-        if (!dryRun) {
-          // Simply update the beer - the beforeChange hook will recalculate fields
-          await payload.update({
-            collection: 'beers',
-            id: beer.id,
-            data: {
-              draftPrice: beer.draftPrice,
-              fourPack: beer.fourPack,
-            },
-          })
-        }
-        results.updated++
-        stream.send('status', { message: `${dryRun ? 'Would recalculate' : 'Recalculated'}: ${beer.name}` })
-      } catch (error: any) {
-        stream.send('error', { message: `Error recalculating ${beer.name}: ${error.message}` })
-        results.errors++
-      }
-    }
-  } catch (error: any) {
-    stream.send('error', { message: `Error fetching beers: ${error.message}` })
-    results.errors++
-  }
-
-  stream.send('status', { message: `Recalculation complete: ${results.updated} updated, ${results.skipped} skipped, ${results.errors} errors` })
   return results
 }
 
 export const syncGoogleSheets: PayloadHandler = async (req) => {
-  // Check for authenticated admin user
-  if (!req.user) {
-    return new Response(JSON.stringify({ error: 'Authentication required' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json' },
-    })
+  const { payload } = req
+  const user = req.user ?? await getUserFromRequest(req, payload)
+
+  if (!user) {
+    return Response.json({ error: 'Authentication required' }, { status: 401 })
   }
 
   const url = new URL(req.url || '', 'http://localhost')
   const dryRun = url.searchParams.get('dryRun') === 'true'
   const collectionsParam = url.searchParams.get('collections') || 'events,food'
   const collections = collectionsParam.split(',').filter(c =>
-    ['events', 'food', 'beers', 'menus', 'hours', 'recalc'].includes(c)
+    ['events', 'food', 'beers', 'menus', 'hours'].includes(c)
   ) as CollectionType[]
-
-  // Use getPayloadHMR for file upload support
-  const { getPayloadHMR } = await import('@payloadcms/next/utilities')
-  const payload = await getPayloadHMR({ config: (await import('@payload-config')).default })
 
   const encoder = new TextEncoder()
 
