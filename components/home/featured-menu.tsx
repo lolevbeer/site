@@ -232,6 +232,7 @@ function CanCard({ item, fullscreen = false }: { item: MenuItem; fullscreen?: bo
           fill
           className="object-contain"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+          unoptimized
         />
       );
     }
@@ -251,7 +252,7 @@ function CanCard({ item, fullscreen = false }: { item: MenuItem; fullscreen?: bo
         href={`/beer/${item.variant.toLowerCase()}`}
         className="group cursor-pointer flex flex-col"
       >
-        <div className="relative w-full transition-transform duration-200 group-hover:scale-[1.02]" style={{ height: '28vh' }}>
+        <div className="relative w-full bg-transparent transition-transform duration-200 group-hover:scale-[1.02]" style={{ height: '28vh' }}>
           {renderImage()}
           {item.isJustReleased && (
             <Badge variant="default" className="absolute left-1/2 -translate-x-1/2" style={{ bottom: '-0.8vh', fontSize: '1.3vh' }}>
@@ -266,7 +267,7 @@ function CanCard({ item, fullscreen = false }: { item: MenuItem; fullscreen?: bo
           <Badge variant="outline" style={{ fontSize: '1.3vh' }}>{item.type}</Badge>
           {item.fourPack && (
             <span className="font-semibold" style={{ fontSize: '1.8vh' }}>
-              ${item.fourPack} <span className="font-normal text-foreground/70" style={{ fontSize: '1.4vh' }}>• Four Pack</span>
+              ${item.fourPack} <span className="font-semibold text-foreground/70" style={{ fontSize: '1.4vh' }}>• Four Pack</span>
             </span>
           )}
           {item.onDraft && (
@@ -287,7 +288,7 @@ function CanCard({ item, fullscreen = false }: { item: MenuItem; fullscreen?: bo
       href={`/beer/${item.variant.toLowerCase()}`}
       className="group flex flex-col cursor-pointer"
     >
-      <div className="relative h-64 w-full flex-shrink-0 mb-4 transition-transform duration-200 group-hover:scale-[1.02]">
+      <div className="relative h-64 w-full flex-shrink-0 mb-4 bg-transparent transition-transform duration-200 group-hover:scale-[1.02]">
         {renderImage()}
         {item.isJustReleased && (
           <Badge variant="default" className="absolute -bottom-3 left-1/2 -translate-x-1/2 text-xs">
@@ -343,7 +344,7 @@ export function FeaturedMenu({ menuType, menu, menus = [], isAuthenticated, anim
     return (
       <section className="h-full flex flex-col bg-background overflow-hidden">
         <div className="w-full flex-1 flex flex-col" style={{ padding: '2vh 2vw 0.5vh 2vw' }}>
-          <div className="text-center flex-shrink-0" style={{ marginBottom: '2vh' }}>
+          <div className="text-center flex-shrink-0" style={{ marginBottom: '5vh' }}>
             <h2 className="font-bold" style={{ fontSize: '4vh' }}>{menu?.name || title}</h2>
           </div>
           <div className="flex-1 overflow-y-auto" style={{ padding: '0 1vw' }}>

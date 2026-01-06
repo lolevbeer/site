@@ -5,6 +5,10 @@ import crypto from 'crypto'
 // Poll interval in milliseconds (2 seconds for near-instant updates)
 const POLL_INTERVAL_MS = 2000
 
+// In dev mode, close connections after 30s to prevent blocking compilation
+const DEV_TIMEOUT_MS = 30000
+const isDev = process.env.NODE_ENV === 'development'
+
 /**
  * Generate hash from menu data to detect changes
  * Includes updatedAt, item count, and item IDs/prices for comprehensive change detection
@@ -57,9 +61,21 @@ export async function GET(
   const encoder = new TextEncoder()
   let lastHash = ''
   let isActive = true
+  let devTimeout: NodeJS.Timeout | null = null
 
   const stream = new ReadableStream({
     async start(controller) {
+      // In dev mode, auto-close after timeout to prevent blocking compilation
+      if (isDev) {
+        devTimeout = setTimeout(() => {
+          if (isActive) {
+            isActive = false
+            controller.enqueue(encoder.encode(`event: reconnect\ndata: {"reason": "dev-timeout"}\n\n`))
+            controller.close()
+          }
+        }, DEV_TIMEOUT_MS)
+      }
+
       // Send initial menu data
       try {
         const menu = await getMenuByUrlFresh(url)
@@ -109,6 +125,7 @@ export async function GET(
     },
     cancel() {
       isActive = false
+      if (devTimeout) clearTimeout(devTimeout)
     }
   })
 

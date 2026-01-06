@@ -73,7 +73,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
               <div className="flex items-center flex-wrap" style={{ gap: '1vh' }}>
                 <h3 className="font-bold leading-tight truncate" style={{ fontSize: '2.5vh' }}>{beer.name}</h3>
                 {beer.type && beer.type.split(', ').map((option, i) => (
-                  <Badge key={i} variant="outline" className="flex-shrink-0 font-normal" style={{ fontSize: '1.5vh' }}>
+                  <Badge key={i} variant="outline" className="flex-shrink-0" style={{ fontSize: '1.5vh' }}>
                     {option}
                   </Badge>
                 ))}
@@ -153,7 +153,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                 </Badge>
               )}
               {beer.type && beer.type.split(', ').map((option, i) => (
-                <Badge key={i} variant="outline" className="text-sm flex-shrink-0 font-normal">
+                <Badge key={i} variant="outline" className="text-sm flex-shrink-0">
                   {option}
                 </Badge>
               ))}

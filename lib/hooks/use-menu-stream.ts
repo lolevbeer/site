@@ -72,6 +72,14 @@ export function useMenuStream(
         }
       })
 
+      // Handle server-initiated reconnect (e.g., dev mode timeout)
+      es.addEventListener('reconnect', () => {
+        es.close()
+        reconnectTimeoutRef.current = setTimeout(() => {
+          connect()
+        }, reconnectDelay)
+      })
+
       es.onerror = () => {
         setIsConnected(false)
         es.close()

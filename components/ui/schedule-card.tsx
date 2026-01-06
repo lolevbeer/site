@@ -42,7 +42,7 @@ export function ScheduleCard({
 
   return (
     <Card
-      className={`overflow-hidden border-0 shadow-none transition-colors bg-transparent dark:bg-transparent ${site ? 'cursor-pointer hover:bg-secondary/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2' : ''} ${className || ''}`}
+      className={`overflow-hidden border-0 shadow-none transition-colors ${site ? 'bg-secondary cursor-pointer hover:bg-secondary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2' : 'bg-transparent'} ${className || ''}`}
       onClick={handleClick}
       onKeyDown={site ? handleKeyDown : undefined}
       tabIndex={site ? 0 : undefined}
