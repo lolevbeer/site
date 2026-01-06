@@ -49,8 +49,8 @@ export async function generateStaticParams() {
     }));
 }
 
-// Enable ISR with 1 hour revalidation
-export const revalidate = 3600;
+// Force dynamic rendering since we check authentication (uses cookies)
+export const dynamic = 'force-dynamic';
 
 export default async function BeerPage({ params }: BeerPageProps) {
   const { variant } = await params;
