@@ -1,4 +1,6 @@
 import type { PayloadHandler } from 'payload'
+import { getUserFromRequest } from './auth-helper'
+import { geocode } from './geocode'
 
 interface DistributorRow {
   CustomerName: string
@@ -69,26 +71,6 @@ function parseAddress(combined: string, defaultState: string): ParsedAddress | n
   return null
 }
 
-async function geocodeAddress(address: string): Promise<[number, number] | null> {
-  const encoded = encodeURIComponent(address)
-  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encoded}&limit=1`
-
-  try {
-    const response = await fetch(url, {
-      headers: { 'User-Agent': 'LolevBeer-Import/1.0' },
-    })
-
-    if (!response.ok) return null
-
-    const data = await response.json()
-    if (data.length === 0) return null
-
-    return [parseFloat(data[0].lon), parseFloat(data[0].lat)]
-  } catch {
-    return null
-  }
-}
-
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
@@ -139,7 +121,8 @@ const DEFAULT_COORDS: Record<string, [number, number]> = {
 }
 
 export const importDistributors: PayloadHandler = async (req) => {
-  const { payload, user } = req
+  const { payload } = req
+  const user = req.user ?? await getUserFromRequest(req, payload)
 
   if (!user || !user.roles?.includes('admin')) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
@@ -222,7 +205,7 @@ export const importDistributors: PayloadHandler = async (req) => {
 
         // Geocode
         const fullAddress = `${parsed.street}, ${parsed.city}, ${parsed.state} ${parsed.zip}`.trim()
-        const coords = await geocodeAddress(fullAddress)
+        const coords = await geocode(fullAddress)
         const location = coords || DEFAULT_COORDS[regionUpper]
 
         try {

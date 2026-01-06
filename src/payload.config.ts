@@ -28,6 +28,7 @@ import { importDistributors } from './endpoints/import-distributors'
 import { importLakeBeverageCSV } from './endpoints/import-lake-beverage-csv'
 import { updateDistributorUrls } from './endpoints/update-distributor-urls'
 import { recalculateBeerPrices } from './endpoints/recalculate-beer-prices'
+import { regeocodeDistributors } from './endpoints/regeocode-distributors'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -134,6 +135,11 @@ export default buildConfig({
       path: '/recalculate-beer-prices',
       method: 'post',
       handler: recalculateBeerPrices,
+    },
+    {
+      path: '/regeocode-distributors',
+      method: 'post',
+      handler: regeocodeDistributors,
     },
   ],
 })

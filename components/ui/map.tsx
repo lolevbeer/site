@@ -58,7 +58,7 @@ export function MapComponent({
   initialZoom = 10,
   style = 'streets'
 }: MapComponentProps) {
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
   const { locations: payloadLocations } = useLocationContext();
   const mapRef = React.useRef<any>(null);
 
@@ -97,7 +97,7 @@ export function MapComponent({
 
   // Map style URLs - auto-switch between light/dark based on theme
   const mapStyles = {
-    streets: theme === 'dark' ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/streets-v12',
+    streets: resolvedTheme === 'dark' ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/streets-v12',
     satellite: 'mapbox://styles/mapbox/satellite-streets-v12',
     light: 'mapbox://styles/mapbox/light-v11',
     dark: 'mapbox://styles/mapbox/dark-v11'
