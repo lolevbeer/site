@@ -251,7 +251,7 @@ function CanCard({ item, fullscreen = false }: { item: MenuItem; fullscreen?: bo
         href={`/beer/${item.variant.toLowerCase()}`}
         className="group cursor-pointer flex flex-col"
       >
-        <div className="relative aspect-square w-full transition-transform duration-200 group-hover:scale-[1.02]">
+        <div className="relative w-full transition-transform duration-200 group-hover:scale-[1.02]" style={{ height: '28vh' }}>
           {renderImage()}
           {item.isJustReleased && (
             <Badge variant="default" className="absolute left-1/2 -translate-x-1/2" style={{ bottom: '-0.8vh', fontSize: '1.3vh' }}>
@@ -400,7 +400,7 @@ export function FeaturedMenu({ menuType, menu, menus = [], isAuthenticated, anim
                   );
                 })()
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-4 max-w-none" style={{ rowGap: '7vh' }} suppressHydrationWarning>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-4 max-w-none" style={{ rowGap: '4vh' }} suppressHydrationWarning>
                   {itemsToRender.map(({ item, state, key }) => (
                     <div key={key} className={animated ? getAnimationClass(state) : ''}>
                       <CanCard item={item} fullscreen />

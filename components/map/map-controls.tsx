@@ -51,11 +51,40 @@ export function MapControls({
   return (
     <Card className="border-0 flex-shrink-0 shadow-none pb-4 bg-transparent overflow-visible">
       <div className="flex flex-col gap-3">
+        {/* Mobile: Search full width, then Near Me + Toggle on second row */}
+        {/* Desktop: All on one row */}
+
+        {/* Mobile search - full width */}
+        {showSearch && (
+          <div className="relative group md:hidden">
+            {isSearching ? (
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 z-10">
+                <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
+              </div>
+            ) : (
+              <Search className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-all duration-200 z-10 ${searchTerm ? 'search-active text-primary' : 'group-focus-within:text-foreground'}`} />
+            )}
+            <Input
+              placeholder="Search location..."
+              value={searchTerm}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="pl-9 h-10 bg-secondary border-0 transition-all duration-200 focus:bg-background focus:shadow-sm focus:ring-1 focus:ring-primary/20"
+            />
+            {hasSearchLocation && (
+              <Badge variant="secondary" className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] py-0">
+                <MapPin className="h-2 w-2 mr-1" />
+                Location
+              </Badge>
+            )}
+          </div>
+        )}
+
+        {/* Controls row - mobile: Near Me + Toggle, desktop: Search + Near Me + count */}
         <div className="flex items-center justify-between gap-3">
-          {/* Search + Near Me integrated */}
           <div className="flex items-center gap-2 flex-1 min-w-0">
+            {/* Desktop search - inline */}
             {showSearch && (
-              <div className="relative group flex-1 max-w-sm p-1">
+              <div className="relative group hidden md:block flex-1 max-w-sm">
                 {isSearching ? (
                   <div className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 z-10">
                     <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
@@ -78,10 +107,10 @@ export function MapControls({
               </div>
             )}
             <Button
-              variant="ghost"
+              variant="default"
               size="sm"
               onClick={onNearMeClick}
-              className="h-8 bg-secondary shrink-0"
+              className="h-8 shrink-0"
             >
               <Locate className="h-4 w-4 mr-1" />
               Near Me

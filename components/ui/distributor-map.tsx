@@ -15,6 +15,8 @@ import type { CircleLayer } from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { MapPin, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
@@ -488,15 +490,16 @@ export function DistributorMap({
           mobileView === 'list' ? "w-full" : "hidden md:block"
         )}>
           <ScrollArea className="h-full">
-            <div className="p-4 space-y-3">
+            <div className="py-4 md:pt-0 md:px-4 space-y-3">
               {listLocations.length > 0 ? (
                 <>
                   {!referenceLocation && (
-                    <div className="text-center py-2 px-3 bg-muted/50 rounded-lg mb-3">
-                      <p className="text-sm text-muted-foreground">
+                    <Alert className="mb-3 border-amber-200 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/20">
+                      <Info className="h-4 w-4 text-amber-200 dark:text-amber-800" />
+                      <AlertDescription className="text-muted-foreground">
                         Enter a location or use "Near Me" to see distances
-                      </p>
-                    </div>
+                      </AlertDescription>
+                    </Alert>
                   )}
                   {listLocations.map((location, index) => {
                     const isSelected = selectedLocation?.properties.uniqueId === location.properties.uniqueId;
