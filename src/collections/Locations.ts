@@ -1,12 +1,13 @@
 import type { CollectionConfig } from 'payload'
 import { generateUniqueSlug } from './utils/generateUniqueSlug'
-import { adminAccess } from '@/src/access/roles'
+import { adminAccess, isAdmin } from '@/src/access/roles'
 
 export const Locations: CollectionConfig = {
   slug: 'locations',
   admin: {
     group: 'Settings',
     useAsTitle: 'name',
+    hideAPIURL: true,
   },
   access: {
     read: () => true, // Public read access
@@ -111,17 +112,6 @@ export const Locations: CollectionConfig = {
           },
         },
       ],
-    },
-    // Legacy field - keeping for backwards compatibility
-    {
-      name: 'hoursSheetUrl',
-      type: 'text',
-      label: 'Hours Google Sheet URL (Legacy)',
-      admin: {
-        description: 'Deprecated - use Google Sheets Import URLs instead',
-        position: 'sidebar',
-        condition: (data) => !!data?.hoursSheetUrl, // Only show if has value
-      },
     },
     {
       name: 'basicInfo',

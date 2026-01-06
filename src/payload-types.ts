@@ -362,10 +362,6 @@ export interface Location {
      */
     hours?: string | null;
   };
-  /**
-   * Deprecated - use Google Sheets Import URLs instead
-   */
-  hoursSheetUrl?: string | null;
   basicInfo?: {
     phone?: string | null;
     email?: string | null;
@@ -929,7 +925,6 @@ export interface LocationsSelect<T extends boolean = true> {
         food?: T;
         hours?: T;
       };
-  hoursSheetUrl?: T;
   basicInfo?:
     | T
     | {

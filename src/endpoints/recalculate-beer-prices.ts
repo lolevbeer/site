@@ -1,5 +1,6 @@
 import type { PayloadHandler } from 'payload'
 import { getUserFromRequest } from './auth-helper'
+import { isAdmin } from '@/src/access/roles'
 
 export const recalculateBeerPrices: PayloadHandler = async (req) => {
   const { payload } = req
@@ -7,6 +8,10 @@ export const recalculateBeerPrices: PayloadHandler = async (req) => {
 
   if (!user) {
     return Response.json({ error: 'Authentication required' }, { status: 401 })
+  }
+
+  if (!isAdmin(user)) {
+    return Response.json({ error: 'Admin access required' }, { status: 403 })
   }
 
   const url = new URL(req.url || '', 'http://localhost')

@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { foodManagerAccess } from '@/src/access/roles'
+import { foodManagerAccess, isAdmin } from '@/src/access/roles'
 
 export const FoodVendors: CollectionConfig = {
   slug: 'food-vendors',
@@ -16,6 +16,7 @@ export const FoodVendors: CollectionConfig = {
   admin: {
     group: 'Food & Events',
     useAsTitle: 'name',
+    hideAPIURL: true,
     defaultColumns: ['name', 'email', 'phone', 'site'],
   },
   fields: [
@@ -28,10 +29,16 @@ export const FoodVendors: CollectionConfig = {
     {
       name: 'email',
       type: 'email',
+      admin: {
+        position: 'sidebar',
+      },
     },
     {
       name: 'phone',
       type: 'text',
+      admin: {
+        position: 'sidebar',
+      },
     },
     {
       name: 'site',

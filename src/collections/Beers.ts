@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import { generateUniqueSlug } from './utils/generateUniqueSlug'
-import { adminAccess, beerManagerAccess } from '@/src/access/roles'
+import { adminAccess, beerManagerAccess, isAdmin } from '@/src/access/roles'
 
 // Helper function to round to nearest 0.25 (like Excel's MROUND)
 const mround = (value: number, multiple: number): number => {
@@ -18,6 +18,7 @@ export const Beers: CollectionConfig = {
   admin: {
     group: 'Back of House',
     useAsTitle: 'name',
+    hideAPIURL: true,
     listSearchableFields: ['name', 'slug'],
     defaultColumns: ['name', 'slug', 'style', 'abv', 'hideFromSite'],
     pagination: {

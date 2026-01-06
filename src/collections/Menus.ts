@@ -1,6 +1,6 @@
 import type { CollectionConfig, Access, Where } from 'payload'
 import { APIError } from 'payload'
-import { adminAccess, hasRole } from '@/src/access/roles'
+import { adminAccess, adminFieldAccess, hasRole, isAdmin } from '@/src/access/roles'
 
 /**
  * Get location IDs from user's assigned locations
@@ -35,6 +35,7 @@ export const Menus: CollectionConfig = {
   admin: {
     group: 'Front of House',
     useAsTitle: 'description',
+    hideAPIURL: true,
     defaultColumns: ['description', 'location', 'type', '_status'],
     preview: (doc) => {
       if (doc?.url) {
@@ -183,6 +184,9 @@ export const Menus: CollectionConfig = {
       name: 'name',
       type: 'text',
       required: true,
+      access: {
+        update: adminFieldAccess,
+      },
       admin: {
         description: 'Menu name (e.g., "Lawrenceville Draft Menu")',
         position: 'sidebar',
@@ -191,6 +195,9 @@ export const Menus: CollectionConfig = {
     {
       name: 'description',
       type: 'textarea',
+      access: {
+        update: adminFieldAccess,
+      },
       admin: {
         description: 'Menu description',
         position: 'sidebar',
@@ -203,6 +210,9 @@ export const Menus: CollectionConfig = {
       hasMany: false,
       required: true,
       index: true,
+      access: {
+        update: adminFieldAccess,
+      },
       admin: {
         position: 'sidebar',
         description: 'Required to generate menu URL',
@@ -218,6 +228,9 @@ export const Menus: CollectionConfig = {
         { label: 'Other', value: 'other' },
       ],
       index: true,
+      access: {
+        update: adminFieldAccess,
+      },
       admin: {
         position: 'sidebar',
       },
@@ -229,6 +242,9 @@ export const Menus: CollectionConfig = {
       unique: true,
       index: true,
       required: true,
+      access: {
+        update: adminFieldAccess,
+      },
       admin: {
         description: 'Auto-generated from location and type, but you can override it manually',
         position: 'sidebar',
@@ -238,6 +254,9 @@ export const Menus: CollectionConfig = {
       name: 'sheetUrl',
       label: 'Google Sheet URL',
       type: 'text',
+      access: {
+        update: adminFieldAccess,
+      },
       admin: {
         description: 'Google Sheets CSV export URL for syncing this menu (optional)',
         position: 'sidebar',

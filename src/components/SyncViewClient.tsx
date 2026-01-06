@@ -54,7 +54,11 @@ interface DistributorImportResult {
   details: string[]
 }
 
-export const SyncViewClient: React.FC = () => {
+interface SyncViewClientProps {
+  isAdmin: boolean
+}
+
+export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
   const [syncing, setSyncing] = useState(false)
   const [dryRun, setDryRun] = useState(true)
   const [selectedCollections, setSelectedCollections] = useState<CollectionType[]>([])
@@ -1615,7 +1619,8 @@ export const SyncViewClient: React.FC = () => {
           )}
         </div>
 
-        {/* Beer Utilities Section */}
+        {/* Beer Utilities Section - Admin Only */}
+        {isAdmin && (
         <div style={{
           marginTop: '48px',
           paddingTop: '24px',
@@ -1771,6 +1776,7 @@ export const SyncViewClient: React.FC = () => {
             </div>
           )}
         </div>
+        )}
 
         <style>{`
           @keyframes spin {

@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { foodManagerAccess } from '@/src/access/roles'
+import { foodManagerAccess, isAdmin } from '@/src/access/roles'
 
 export const Food: CollectionConfig = {
   slug: 'food',
@@ -16,6 +16,7 @@ export const Food: CollectionConfig = {
   admin: {
     group: 'Food & Events',
     useAsTitle: 'vendorName',
+    hideAPIURL: true,
     defaultColumns: ['vendor', 'date', 'location', 'startTime'],
     pagination: {
       defaultLimit: 100,
