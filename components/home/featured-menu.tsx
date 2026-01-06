@@ -373,7 +373,7 @@ export function FeaturedMenu({ menuType, menu, menus = [], isAuthenticated, anim
                   );
 
                   return (
-                    <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] max-w-none h-full" style={{ gap: '2vw' }} suppressHydrationWarning>
+                    <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] max-w-none h-full" style={{ gap: '2vw' }} suppressHydrationWarning>
                       <div className="flex flex-col h-full min-w-0">
                         <ColumnHeader />
                         <div className="flex flex-col flex-1 min-w-0">
@@ -385,7 +385,7 @@ export function FeaturedMenu({ menuType, menu, menus = [], isAuthenticated, anim
                         </div>
                       </div>
                       {/* Vertical divider */}
-                      <div className="hidden lg:block w-0.5 bg-border" />
+                      <div className="hidden md:block w-0.5 bg-border" />
                       <div className="flex flex-col h-full min-w-0">
                         <ColumnHeader />
                         <div className="flex flex-col flex-1 min-w-0">
