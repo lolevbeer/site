@@ -224,31 +224,6 @@ function toISO8601(date: string, time?: string, endTime?: string): { startDate: 
 }
 
 /**
- * CSV Event data structure (from beer-data.ts)
- */
-interface CSVEvent {
-  date: string;
-  vendor: string;
-  time?: string;
-  attendees?: string;
-  site?: string;
-  end?: string;
-  location?: LocationSlug;
-}
-
-/**
- * CSV Food data structure (from beer-data.ts)
- */
-interface CSVFood {
-  vendor: string;
-  date: string;
-  time?: string;
-  site?: string;
-  day?: string;
-  location?: LocationSlug;
-}
-
-/**
  * Location lookup map for JSON-LD generation
  */
 type LocationLookup = Map<LocationSlug, PayloadLocation>;
@@ -278,39 +253,65 @@ function createBaseEventJsonLd(
 }
 
 /**
- * Generate JSON-LD for a BreweryEvent or CSV Event
+ * Payload Event format (from Events collection)
+ */
+interface PayloadEvent {
+  organizer: string;
+  date: string;
+  startTime?: string;
+  endTime?: string;
+  location?: { slug?: string; id?: string } | string;
+  site?: string;
+  description?: string;
+}
+
+/**
+ * Generate JSON-LD for a BreweryEvent or Payload Event
  * @param event - The event data
  * @param locationLookup - Map of location slugs to PayloadLocation objects
  */
 export function generateEventJsonLd(
-  event: BreweryEvent | CSVEvent,
+  event: BreweryEvent | PayloadEvent,
   locationLookup: LocationLookup = new Map()
 ): EventJsonLd {
-  // Check if it's a CSV event (has vendor instead of title)
-  const isCSVEvent = 'vendor' in event && !('title' in event);
+  // Check if it's a Payload event (has organizer field instead of title)
+  const isPayloadEvent = 'organizer' in event && !('title' in event);
 
-  if (isCSVEvent) {
-    const csvEvent = event as CSVEvent;
-    const { startDate, endDate } = toISO8601(csvEvent.date, csvEvent.time, csvEvent.end);
+  if (isPayloadEvent) {
+    const payloadEvent = event as PayloadEvent;
+    if (!payloadEvent.organizer || !payloadEvent.date) {
+      console.warn('Invalid Payload event data for JSON-LD generation', event);
+      return createBaseEventJsonLd('Event at Lolev Beer', undefined, locationLookup);
+    }
+
+    // Extract location slug from relationship
+    const locationSlug = typeof payloadEvent.location === 'object'
+      ? (payloadEvent.location?.slug || payloadEvent.location?.id) as LocationSlug | undefined
+      : payloadEvent.location as LocationSlug | undefined;
+
+    const { startDate, endDate } = toISO8601(
+      payloadEvent.date,
+      payloadEvent.startTime,
+      payloadEvent.endTime
+    );
+
     const jsonLd = createBaseEventJsonLd(
-      csvEvent.vendor || 'Event at Lolev Beer',
-      csvEvent.location,
-      locationLookup
+      payloadEvent.organizer,
+      locationSlug,
+      locationLookup,
+      startDate
     );
 
     jsonLd.startDate = startDate;
     if (endDate) jsonLd.endDate = endDate;
-    if (csvEvent.site) {
-      jsonLd.url = csvEvent.site;
-      jsonLd.performer = { '@type': 'Organization', name: csvEvent.vendor, url: csvEvent.site };
-    } else if (csvEvent.vendor) {
-      jsonLd.performer = { '@type': 'Organization', name: csvEvent.vendor };
-    }
+    if (payloadEvent.description) jsonLd.description = payloadEvent.description;
+    if (payloadEvent.site) jsonLd.url = payloadEvent.site;
+    jsonLd.offers = { '@type': 'Offer', price: '0', priceCurrency: 'USD', availability: 'https://schema.org/InStock' };
 
     return jsonLd;
   }
 
-  // Original BreweryEvent handling
+  // BreweryEvent handling
   const breweryEvent = event as BreweryEvent;
   if (!breweryEvent || !breweryEvent.title || !breweryEvent.date) {
     console.warn('Invalid event data for JSON-LD generation', event);
@@ -351,42 +352,73 @@ export function generateEventJsonLd(
 }
 
 /**
- * Generate JSON-LD for a FoodVendorSchedule or CSV Food (treat as an event)
- * @param schedule - The food schedule data
+ * Payload Food format (from Food collection or RecurringFood expansion)
+ */
+interface PayloadFoodData {
+  vendor?: { id?: string; name?: string; site?: string | null } | string;
+  vendorName?: string;
+  date: string;
+  location?: { slug?: string; id?: string } | string;
+  startTime?: string;
+  isRecurring?: boolean;
+}
+
+/**
+ * Generate JSON-LD for food vendor schedule (treats as an event)
+ * @param schedule - The food schedule data (Payload format or FoodVendorSchedule)
  * @param locationLookup - Map of location slugs to PayloadLocation objects
  */
 export function generateFoodEventJsonLd(
-  schedule: FoodVendorSchedule | CSVFood,
+  schedule: FoodVendorSchedule | PayloadFoodData,
   locationLookup: LocationLookup = new Map()
 ): EventJsonLd {
-  // Check if it's CSV food data (simpler structure)
-  const isCSVFood = 'day' in schedule || (!('start' in schedule) && !('finish' in schedule));
+  // Check if it's Payload food data (has vendor as object or vendorName)
+  const isPayloadFood = typeof (schedule as PayloadFoodData).vendor === 'object' ||
+    'vendorName' in schedule ||
+    'isRecurring' in schedule;
 
-  if (isCSVFood) {
-    const csvFood = schedule as CSVFood;
-    if (!csvFood.vendor || !csvFood.date) {
-      console.warn('Invalid CSV food data for JSON-LD generation', csvFood);
+  if (isPayloadFood) {
+    const payloadFood = schedule as PayloadFoodData;
+
+    // Extract vendor name from either vendor object or vendorName field
+    const vendorName = typeof payloadFood.vendor === 'object'
+      ? payloadFood.vendor?.name
+      : payloadFood.vendorName || 'Food Vendor';
+
+    const vendorSite = typeof payloadFood.vendor === 'object'
+      ? payloadFood.vendor?.site || undefined
+      : undefined;
+
+    if (!vendorName || !payloadFood.date) {
+      console.warn('Invalid Payload food data for JSON-LD generation', schedule);
       return createBaseEventJsonLd('Food at Lolev Beer', undefined, locationLookup);
     }
 
-    const { startDate } = toISO8601(csvFood.date, csvFood.time);
+    // Extract location slug from relationship
+    const locationSlug = typeof payloadFood.location === 'object'
+      ? (payloadFood.location?.slug || payloadFood.location?.id) as LocationSlug | undefined
+      : payloadFood.location as LocationSlug | undefined;
+
+    const { startDate } = toISO8601(payloadFood.date, payloadFood.startTime);
+
     const jsonLd = createBaseEventJsonLd(
-      `${csvFood.vendor} at Lolev Beer`,
-      csvFood.location,
-      locationLookup
+      `${vendorName} at Lolev Beer`,
+      locationSlug,
+      locationLookup,
+      startDate
     );
 
     jsonLd.startDate = startDate;
     jsonLd.offers = { '@type': 'Offer', availability: 'https://schema.org/InStock' };
-    jsonLd.performer = csvFood.site
-      ? { '@type': 'Organization', name: csvFood.vendor, url: csvFood.site }
-      : { '@type': 'Organization', name: csvFood.vendor };
-    if (csvFood.site) jsonLd.url = csvFood.site;
+    jsonLd.performer = vendorSite
+      ? { '@type': 'Organization', name: vendorName, url: vendorSite }
+      : { '@type': 'Organization', name: vendorName };
+    if (vendorSite) jsonLd.url = vendorSite;
 
     return jsonLd;
   }
 
-  // Original FoodVendorSchedule handling
+  // FoodVendorSchedule handling (legacy format)
   const foodSchedule = schedule as FoodVendorSchedule;
   if (!foodSchedule.vendor || !foodSchedule.date) {
     console.warn('Invalid food schedule data for JSON-LD generation', foodSchedule);
