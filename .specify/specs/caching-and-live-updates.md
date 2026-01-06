@@ -1,8 +1,8 @@
 # Feature Specification: Caching and Live Menu Updates
 
 **Feature Branch**: `payload`
-**Created**: 2024-12-10
-**Updated**: 2024-12-11
+**Created**: 2025-12-10
+**Updated**: 2025-12-11
 **Status**: Implemented (with known limitations)
 **Input**: User description: "Optimize site caching with Payload CMS revalidation and add live updates to menu displays"
 

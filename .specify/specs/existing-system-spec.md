@@ -1,7 +1,7 @@
 # System Specification: LOLEV Beer Website
 
 **Created**: 2025-12-06
-**Updated**: 2026-01-04
+**Updated**: 2026-01-06
 **Status**: Current State Documentation
 **Purpose**: Complete specification of existing functionality
 
@@ -417,7 +417,7 @@ Search engines need structured data to properly index the brewery.
 
 | Layer | Technology |
 |-------|------------|
-| Framework | Next.js 15.5.6 (App Router) |
+| Framework | Next.js 15.5.9 (App Router) |
 | Runtime | React 19.2.0 |
 | Language | TypeScript 5.9.3 |
 | CMS | Payload CMS 3.65.0 |
