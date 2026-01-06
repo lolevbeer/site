@@ -28,11 +28,9 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty';
-import {
-  CircleX,
-  Pencil,
-} from 'lucide-react';
+import { CircleX } from 'lucide-react';
 import { UntappdIcon } from '@/components/icons/untappd-icon';
+import { AdminEditButton } from './admin-edit-button';
 import { getGlassIcon } from '@/lib/utils/beer-icons';
 import { formatAbv } from '@/lib/utils/formatters';
 import { getBeerImageUrl } from '@/lib/utils/media-utils';
@@ -41,7 +39,6 @@ import { menuItemHasBeer } from '@/lib/utils/menu-item-utils';
 interface BeerDetailsProps {
   beer: Beer;
   className?: string;
-  isAuthenticated?: boolean;
 }
 
 function getAvailabilityInfo(beer: Beer) {
@@ -98,7 +95,7 @@ function SpecificationRow({
   );
 }
 
-export function BeerDetails({ beer, className = '', isAuthenticated = false }: BeerDetailsProps) {
+export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
   const { currentLocation } = useLocationContext();
   const imagePath = getBeerImageUrl(beer.image, beer.variant);
   const _availability = getAvailabilityInfo(beer);
@@ -290,23 +287,7 @@ export function BeerDetails({ beer, className = '', isAuthenticated = false }: B
           <div>
             <div className="flex items-start justify-between gap-4 mb-2">
               <h1 className="text-3xl font-bold">{beer.name}</h1>
-              {isAuthenticated && beer.id && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  asChild
-                  className="shrink-0"
-                >
-                  <a
-                    href={`/admin/collections/beers/${beer.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Pencil className="h-4 w-4 mr-2" />
-                    Edit
-                  </a>
-                </Button>
-              )}
+              {beer.id && <AdminEditButton beerId={beer.id} />}
             </div>
             <div className="flex items-center gap-2 mb-4 flex-wrap">
               {tapLocations.length > 0 && (

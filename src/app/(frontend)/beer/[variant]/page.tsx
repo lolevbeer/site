@@ -4,7 +4,6 @@ import { getBeerBySlug, getAllBeersFromPayload } from '@/lib/utils/payload-api';
 import { BeerDetails } from '@/components/beer/beer-details';
 import { JsonLd } from '@/components/seo/json-ld';
 import { generateProductSchema } from '@/lib/utils/product-schema';
-import { isAuthenticated } from '@/lib/utils/auth';
 
 interface BeerPageProps {
   params: Promise<{
@@ -49,8 +48,8 @@ export async function generateStaticParams() {
     }));
 }
 
-// Force dynamic rendering since we check authentication (uses cookies)
-export const dynamic = 'force-dynamic';
+// Enable ISR with 1 hour revalidation
+export const revalidate = 3600;
 
 export default async function BeerPage({ params }: BeerPageProps) {
   const { variant } = await params;
@@ -59,9 +58,6 @@ export default async function BeerPage({ params }: BeerPageProps) {
   if (!beer) {
     notFound();
   }
-
-  // Check if user is authenticated
-  const authenticated = await isAuthenticated();
 
   // Generate Product schema for SEO
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -74,7 +70,7 @@ export default async function BeerPage({ params }: BeerPageProps) {
 
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        <BeerDetails beer={beer as any} isAuthenticated={authenticated} />
+        <BeerDetails beer={beer as any} />
       </div>
     </>
   );
