@@ -400,7 +400,7 @@ export function FeaturedMenu({ menuType, menu, menus = [], isAuthenticated, anim
                   );
                 })()
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-4 max-w-none" style={{ rowGap: '4vh' }} suppressHydrationWarning>
+                <div className="grid gap-x-4 max-w-none" style={{ gridTemplateColumns: `repeat(${Math.ceil(itemsToRender.length / 2)}, 1fr)`, rowGap: '4vh' }} suppressHydrationWarning>
                   {itemsToRender.map(({ item, state, key }) => (
                     <div key={key} className={animated ? getAnimationClass(state) : ''}>
                       <CanCard item={item} fullscreen />
