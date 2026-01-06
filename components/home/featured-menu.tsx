@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
+import { ScrollReveal } from '@/components/ui/scroll-reveal';
 import { Beer as BeerIconLucide, Package } from 'lucide-react';
 import { getGlassIcon } from '@/lib/utils/beer-icons';
 import { useLocationContext } from '@/components/location/location-provider';
@@ -428,15 +429,17 @@ export function FeaturedMenu({ menuType, menu, menus = [], isAuthenticated, anim
   return (
     <section className="py-16 lg:py-24 bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex-1" />
-            <h2 className="text-3xl lg:text-4xl font-bold">{title}</h2>
-            <div className="flex-1 flex justify-end">
-              <AdminEditButtons menusArray={menus} currentLocation={currentLocation} isAuthenticated={isAuthenticated} />
+        <ScrollReveal>
+          <div className="text-center mb-12">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex-1" />
+              <h2 className="text-3xl lg:text-4xl font-bold">{title}</h2>
+              <div className="flex-1 flex justify-end">
+                <AdminEditButtons menusArray={menus} currentLocation={currentLocation} isAuthenticated={isAuthenticated} />
+              </div>
             </div>
           </div>
-        </div>
+        </ScrollReveal>
 
         <div className="mb-8">
           {displayItems.length > 0 ? (

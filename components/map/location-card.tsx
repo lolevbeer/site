@@ -42,9 +42,12 @@ export function LocationCard({
     <Card
       ref={innerRef}
       className={cn(
-        "p-3 cursor-pointer transition-all border-0 shadow-none bg-[var(--color-card-interactive)]",
+        "p-3 cursor-pointer border-0 bg-[var(--color-card-interactive)]",
+        "transition-all duration-200 ease-out",
+        "hover:shadow-md hover:shadow-black/5 dark:hover:shadow-black/20",
+        "hover:-translate-y-0.5",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-        isSelected ? "bg-primary/5" : "hover:bg-muted/50"
+        isSelected ? "bg-primary/5 shadow-sm" : "hover:bg-muted/50"
       )}
       onClick={onClick}
       onKeyDown={handleKeyDown}
@@ -57,7 +60,7 @@ export function LocationCard({
           <h4 className="font-semibold text-sm truncate">
             {capitalizeName(name)}
           </h4>
-          <p className="text-xs text-muted-foreground mt-1 uppercase">
+          <p className="text-xs text-muted-foreground mt-1">
             {address}
           </p>
           {distance !== undefined && (

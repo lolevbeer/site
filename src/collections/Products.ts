@@ -4,6 +4,7 @@ import { adminAccess, beerManagerAccess } from '@/src/access/roles'
 export const Products: CollectionConfig = {
   slug: 'products',
   admin: {
+    group: 'Front of House',
     useAsTitle: 'name',
     defaultColumns: ['name', 'price', 'category'],
   },

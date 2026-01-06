@@ -18,7 +18,7 @@ export const RecurringFood: GlobalConfig = {
   slug: 'recurring-food',
   label: 'Recurring Food',
   admin: {
-    group: 'Settings',
+    group: 'Food & Events',
   },
   access: {
     read: () => true,

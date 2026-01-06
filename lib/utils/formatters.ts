@@ -10,13 +10,14 @@ import { CuisineType, DietaryOption, FoodVendorType } from '@/lib/types/food';
 /**
  * Time formatting utilities
  */
-function convertTo12Hour(hour: number, mins: number, compact = false): string {
+function convertTo12Hour(hour: number, mins: number): string {
   const ampm = hour >= 12 ? 'pm' : 'am';
   const hour12 = hour % 12 || 12;
-  return mins === 0 && compact ? `${hour12}${ampm}` : `${hour12}:${mins.toString().padStart(2, '0')}${ampm}`;
+  // Drop :00 for times on the hour (e.g., "7pm" instead of "7:00pm")
+  return mins === 0 ? `${hour12}${ampm}` : `${hour12}:${mins.toString().padStart(2, '0')}${ampm}`;
 }
 
-export function formatTime(timeString: string, options: { compact?: boolean; timezone?: string } = {}): string {
+export function formatTime(timeString: string, options: { timezone?: string } = {}): string {
   if (!timeString) return '';
 
   // Handle ISO date strings (e.g., "2000-01-01T23:00:00.000Z")
@@ -34,7 +35,8 @@ export function formatTime(timeString: string, options: { compact?: boolean; tim
           timeZone: tz,
         });
         // Convert to lowercase format (e.g., "7:00 PM" -> "7:00pm")
-        return formatted.toLowerCase().replace(/\s/g, '');
+        // Drop :00 for times on the hour (e.g., "7:00pm" -> "7pm")
+        return formatted.toLowerCase().replace(/\s/g, '').replace(/:00(am|pm)$/, '$1');
       }
     } catch {
       // Fall through to other parsing methods
@@ -43,12 +45,12 @@ export function formatTime(timeString: string, options: { compact?: boolean; tim
 
   const match12h = timeString.match(/(\d{1,2})(?::(\d{2}))?\s*(AM|PM|am|pm)/i);
   if (match12h) {
-    return convertTo12Hour(parseInt(match12h[1]), parseInt(match12h[2] || '0'), options.compact);
+    return convertTo12Hour(parseInt(match12h[1]), parseInt(match12h[2] || '0'));
   }
 
   const match24h = timeString.match(/(\d{1,2}):(\d{2})/);
   if (match24h) {
-    return convertTo12Hour(parseInt(match24h[1]), parseInt(match24h[2]), options.compact);
+    return convertTo12Hour(parseInt(match24h[1]), parseInt(match24h[2]));
   }
 
   return timeString.toLowerCase();

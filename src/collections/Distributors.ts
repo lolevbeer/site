@@ -10,6 +10,7 @@ export const Distributors: CollectionConfig = {
     delete: adminAccess,
   },
   admin: {
+    group: 'Settings',
     useAsTitle: 'name',
     defaultColumns: ['name', 'address', 'customerType', 'region'],
     pagination: {

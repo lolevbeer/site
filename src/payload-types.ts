@@ -67,18 +67,18 @@ export interface Config {
   };
   blocks: {};
   collections: {
-    users: User;
-    media: Media;
-    styles: Style;
     beers: Beer;
+    styles: Style;
+    menus: Menu;
     products: Product;
     events: Event;
     food: Food;
     'food-vendors': FoodVendor;
+    users: User;
     locations: Location;
     'holiday-hours': HolidayHour;
-    menus: Menu;
     distributors: Distributor;
+    media: Media;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -86,18 +86,18 @@ export interface Config {
   };
   collectionsJoins: {};
   collectionsSelect: {
-    users: UsersSelect<false> | UsersSelect<true>;
-    media: MediaSelect<false> | MediaSelect<true>;
-    styles: StylesSelect<false> | StylesSelect<true>;
     beers: BeersSelect<false> | BeersSelect<true>;
+    styles: StylesSelect<false> | StylesSelect<true>;
+    menus: MenusSelect<false> | MenusSelect<true>;
     products: ProductsSelect<false> | ProductsSelect<true>;
     events: EventsSelect<false> | EventsSelect<true>;
     food: FoodSelect<false> | FoodSelect<true>;
     'food-vendors': FoodVendorsSelect<false> | FoodVendorsSelect<true>;
+    users: UsersSelect<false> | UsersSelect<true>;
     locations: LocationsSelect<false> | LocationsSelect<true>;
     'holiday-hours': HolidayHoursSelect<false> | HolidayHoursSelect<true>;
-    menus: MenusSelect<false> | MenusSelect<true>;
     distributors: DistributorsSelect<false> | DistributorsSelect<true>;
+    media: MediaSelect<false> | MediaSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -143,196 +143,6 @@ export interface UserAuthOperations {
     email: string;
     password: string;
   };
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users".
- */
-export interface User {
-  id: string;
-  name?: string | null;
-  /**
-   * Assign to specific locations. If set, bartenders can only access menus for these locations.
-   */
-  locations?: (string | Location)[] | null;
-  /**
-   * Admins can manage users and all content. Event/Beer/Food Managers can manage their respective collections. Bartenders can update menus. Users can have multiple roles.
-   */
-  roles: ('admin' | 'event-manager' | 'beer-manager' | 'food-manager' | 'bartender')[];
-  role?: ('admin' | 'event-manager' | 'beer-manager' | 'food-manager' | 'bartender') | null;
-  updatedAt: string;
-  createdAt: string;
-  email: string;
-  resetPasswordToken?: string | null;
-  resetPasswordExpiration?: string | null;
-  salt?: string | null;
-  hash?: string | null;
-  loginAttempts?: number | null;
-  lockUntil?: string | null;
-  sessions?:
-    | {
-        id: string;
-        createdAt?: string | null;
-        expiresAt: string;
-      }[]
-    | null;
-  password?: string | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "locations".
- */
-export interface Location {
-  id: string;
-  /**
-   * Is this location currently active?
-   */
-  active?: boolean | null;
-  name: string;
-  /**
-   * Timezone for this location's hours
-   */
-  timezone?: ('America/New_York' | 'America/Chicago' | 'America/Denver' | 'America/Los_Angeles') | null;
-  /**
-   * Auto-generated from name (lowercase, spaces to dashes)
-   */
-  slug?: string | null;
-  /**
-   * CSV export URLs for syncing data from Google Sheets
-   */
-  googleSheets?: {
-    /**
-     * Public events (concerts, trivia, etc.)
-     */
-    eventsPublic?: string | null;
-    /**
-     * Private events (rentals, corporate, etc.)
-     */
-    eventsPrivate?: string | null;
-    /**
-     * Food truck schedule
-     */
-    food?: string | null;
-    /**
-     * Operating hours schedule
-     */
-    hours?: string | null;
-  };
-  /**
-   * Deprecated - use Google Sheets Import URLs instead
-   */
-  hoursSheetUrl?: string | null;
-  basicInfo?: {
-    phone?: string | null;
-    email?: string | null;
-  };
-  address?: {
-    street?: string | null;
-    city?: string | null;
-    state?: string | null;
-    zip?: string | null;
-  };
-  images?: {
-    /**
-     * Image shown on location cards (recommended: 800x600px)
-     */
-    card?: (string | null) | Media;
-    /**
-     * Hero/banner image for this location (recommended: 1920x1080px)
-     */
-    hero?: (string | null) | Media;
-  };
-  monday?: {
-    open?: string | null;
-    close?: string | null;
-  };
-  tuesday?: {
-    open?: string | null;
-    close?: string | null;
-  };
-  wednesday?: {
-    open?: string | null;
-    close?: string | null;
-  };
-  thursday?: {
-    open?: string | null;
-    close?: string | null;
-  };
-  friday?: {
-    open?: string | null;
-    close?: string | null;
-  };
-  saturday?: {
-    open?: string | null;
-    close?: string | null;
-  };
-  sunday?: {
-    open?: string | null;
-    close?: string | null;
-  };
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "media".
- */
-export interface Media {
-  id: string;
-  /**
-   * Alternative text for the image (for accessibility)
-   */
-  alt: string;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
-  sizes?: {
-    thumbnail?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-    card?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-    detail?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-  };
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "styles".
- */
-export interface Style {
-  id: string;
-  /**
-   * Beer style name (e.g., IPA, Stout, Pale Ale)
-   */
-  name: string;
-  updatedAt: string;
-  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -403,6 +213,220 @@ export interface Beer {
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "styles".
+ */
+export interface Style {
+  id: string;
+  /**
+   * Beer style name (e.g., IPA, Stout, Pale Ale)
+   */
+  name: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "media".
+ */
+export interface Media {
+  id: string;
+  /**
+   * Alternative text for the image (for accessibility)
+   */
+  alt: string;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+  sizes?: {
+    thumbnail?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    card?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    detail?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+  };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "menus".
+ */
+export interface Menu {
+  id: string;
+  /**
+   * Menu name (e.g., "Lawrenceville Draft Menu")
+   */
+  name: string;
+  /**
+   * Menu description
+   */
+  description?: string | null;
+  /**
+   * Required to generate menu URL
+   */
+  location: string | Location;
+  type: 'cans' | 'draft' | 'other';
+  /**
+   * Auto-generated from location and type, but you can override it manually
+   */
+  url: string;
+  /**
+   * Google Sheets CSV export URL for syncing this menu (optional)
+   */
+  sheetUrl?: string | null;
+  items: {
+    product:
+      | {
+          relationTo: 'beers';
+          value: string | Beer;
+        }
+      | {
+          relationTo: 'products';
+          value: string | Product;
+        };
+    /**
+     * Sale Price (optional override)
+     */
+    price?: string | null;
+    id?: string | null;
+  }[];
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "locations".
+ */
+export interface Location {
+  id: string;
+  /**
+   * Is this location currently active?
+   */
+  active?: boolean | null;
+  name: string;
+  /**
+   * Timezone for this location's hours
+   */
+  timezone?: ('America/New_York' | 'America/Chicago' | 'America/Denver' | 'America/Los_Angeles') | null;
+  /**
+   * Auto-generated from name (lowercase, spaces to dashes)
+   */
+  slug?: string | null;
+  /**
+   * CSV export URLs for syncing data from Google Sheets
+   */
+  googleSheets?: {
+    /**
+     * Public events (concerts, trivia, etc.)
+     */
+    eventsPublic?: string | null;
+    /**
+     * Private events (rentals, corporate, etc.)
+     */
+    eventsPrivate?: string | null;
+    /**
+     * Food truck schedule
+     */
+    food?: string | null;
+    /**
+     * Operating hours schedule
+     */
+    hours?: string | null;
+  };
+  /**
+   * Deprecated - use Google Sheets Import URLs instead
+   */
+  hoursSheetUrl?: string | null;
+  basicInfo?: {
+    phone?: string | null;
+    email?: string | null;
+  };
+  address?: {
+    street?: string | null;
+    city?: string | null;
+    state?: string | null;
+    zip?: string | null;
+    /**
+     * Custom Google Maps or directions link for this location
+     */
+    directionsUrl?: string | null;
+  };
+  /**
+   * Longitude, Latitude (e.g. -79.960098, 40.465372)
+   *
+   * @minItems 2
+   * @maxItems 2
+   */
+  coordinates?: [number, number] | null;
+  images?: {
+    /**
+     * Image shown on location cards (recommended: 800x600px)
+     */
+    card?: (string | null) | Media;
+    /**
+     * Hero/banner image for this location (recommended: 1920x1080px)
+     */
+    hero?: (string | null) | Media;
+  };
+  monday?: {
+    open?: string | null;
+    close?: string | null;
+  };
+  tuesday?: {
+    open?: string | null;
+    close?: string | null;
+  };
+  wednesday?: {
+    open?: string | null;
+    close?: string | null;
+  };
+  thursday?: {
+    open?: string | null;
+    close?: string | null;
+  };
+  friday?: {
+    open?: string | null;
+    close?: string | null;
+  };
+  saturday?: {
+    open?: string | null;
+    close?: string | null;
+  };
+  sunday?: {
+    open?: string | null;
+    close?: string | null;
+  };
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -498,6 +522,40 @@ export interface FoodVendor {
   createdAt: string;
 }
 /**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "users".
+ */
+export interface User {
+  id: string;
+  name?: string | null;
+  /**
+   * Assign to specific locations. If set, bartenders can only access menus for these locations.
+   */
+  locations?: (string | Location)[] | null;
+  /**
+   * Admins can manage users and all content. Event/Beer/Food Managers can manage their respective collections. Bartenders can update menus. Users can have multiple roles.
+   */
+  roles: ('admin' | 'event-manager' | 'beer-manager' | 'food-manager' | 'bartender')[];
+  role?: ('admin' | 'event-manager' | 'beer-manager' | 'food-manager' | 'bartender') | null;
+  updatedAt: string;
+  createdAt: string;
+  email: string;
+  resetPasswordToken?: string | null;
+  resetPasswordExpiration?: string | null;
+  salt?: string | null;
+  hash?: string | null;
+  loginAttempts?: number | null;
+  lockUntil?: string | null;
+  sessions?:
+    | {
+        id: string;
+        createdAt?: string | null;
+        expiresAt: string;
+      }[]
+    | null;
+  password?: string | null;
+}
+/**
  * Holiday and special hours overrides for locations
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -540,53 +598,6 @@ export interface HolidayHour {
   note?: string | null;
   updatedAt: string;
   createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "menus".
- */
-export interface Menu {
-  id: string;
-  /**
-   * Menu name (e.g., "Lawrenceville Draft Menu")
-   */
-  name: string;
-  /**
-   * Menu description
-   */
-  description?: string | null;
-  /**
-   * Required to generate menu URL
-   */
-  location: string | Location;
-  type: 'cans' | 'draft' | 'other';
-  /**
-   * Auto-generated from location and type, but you can override it manually
-   */
-  url: string;
-  /**
-   * Google Sheets CSV export URL for syncing this menu (optional)
-   */
-  sheetUrl?: string | null;
-  items: {
-    product:
-      | {
-          relationTo: 'beers';
-          value: string | Beer;
-        }
-      | {
-          relationTo: 'products';
-          value: string | Product;
-        };
-    /**
-     * Sale Price (optional override)
-     */
-    price?: string | null;
-    id?: string | null;
-  }[];
-  updatedAt: string;
-  createdAt: string;
-  _status?: ('draft' | 'published') | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -669,20 +680,16 @@ export interface PayloadLockedDocument {
   id: string;
   document?:
     | ({
-        relationTo: 'users';
-        value: string | User;
-      } | null)
-    | ({
-        relationTo: 'media';
-        value: string | Media;
+        relationTo: 'beers';
+        value: string | Beer;
       } | null)
     | ({
         relationTo: 'styles';
         value: string | Style;
       } | null)
     | ({
-        relationTo: 'beers';
-        value: string | Beer;
+        relationTo: 'menus';
+        value: string | Menu;
       } | null)
     | ({
         relationTo: 'products';
@@ -701,6 +708,10 @@ export interface PayloadLockedDocument {
         value: string | FoodVendor;
       } | null)
     | ({
+        relationTo: 'users';
+        value: string | User;
+      } | null)
+    | ({
         relationTo: 'locations';
         value: string | Location;
       } | null)
@@ -709,12 +720,12 @@ export interface PayloadLockedDocument {
         value: string | HolidayHour;
       } | null)
     | ({
-        relationTo: 'menus';
-        value: string | Menu;
-      } | null)
-    | ({
         relationTo: 'distributors';
         value: string | Distributor;
+      } | null)
+    | ({
+        relationTo: 'media';
+        value: string | Media;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -760,93 +771,6 @@ export interface PayloadMigration {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users_select".
- */
-export interface UsersSelect<T extends boolean = true> {
-  name?: T;
-  locations?: T;
-  roles?: T;
-  role?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  email?: T;
-  resetPasswordToken?: T;
-  resetPasswordExpiration?: T;
-  salt?: T;
-  hash?: T;
-  loginAttempts?: T;
-  lockUntil?: T;
-  sessions?:
-    | T
-    | {
-        id?: T;
-        createdAt?: T;
-        expiresAt?: T;
-      };
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "media_select".
- */
-export interface MediaSelect<T extends boolean = true> {
-  alt?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  url?: T;
-  thumbnailURL?: T;
-  filename?: T;
-  mimeType?: T;
-  filesize?: T;
-  width?: T;
-  height?: T;
-  focalX?: T;
-  focalY?: T;
-  sizes?:
-    | T
-    | {
-        thumbnail?:
-          | T
-          | {
-              url?: T;
-              width?: T;
-              height?: T;
-              mimeType?: T;
-              filesize?: T;
-              filename?: T;
-            };
-        card?:
-          | T
-          | {
-              url?: T;
-              width?: T;
-              height?: T;
-              mimeType?: T;
-              filesize?: T;
-              filename?: T;
-            };
-        detail?:
-          | T
-          | {
-              url?: T;
-              width?: T;
-              height?: T;
-              mimeType?: T;
-              filesize?: T;
-              filename?: T;
-            };
-      };
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "styles_select".
- */
-export interface StylesSelect<T extends boolean = true> {
-  name?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "beers_select".
  */
 export interface BeersSelect<T extends boolean = true> {
@@ -868,6 +792,37 @@ export interface BeersSelect<T extends boolean = true> {
   description?: T;
   hops?: T;
   untappd?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "styles_select".
+ */
+export interface StylesSelect<T extends boolean = true> {
+  name?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "menus_select".
+ */
+export interface MenusSelect<T extends boolean = true> {
+  name?: T;
+  description?: T;
+  location?: T;
+  type?: T;
+  url?: T;
+  sheetUrl?: T;
+  items?:
+    | T
+    | {
+        product?: T;
+        price?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -933,6 +888,32 @@ export interface FoodVendorsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "users_select".
+ */
+export interface UsersSelect<T extends boolean = true> {
+  name?: T;
+  locations?: T;
+  roles?: T;
+  role?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  email?: T;
+  resetPasswordToken?: T;
+  resetPasswordExpiration?: T;
+  salt?: T;
+  hash?: T;
+  loginAttempts?: T;
+  lockUntil?: T;
+  sessions?:
+    | T
+    | {
+        id?: T;
+        createdAt?: T;
+        expiresAt?: T;
+      };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "locations_select".
  */
 export interface LocationsSelect<T extends boolean = true> {
@@ -962,7 +943,9 @@ export interface LocationsSelect<T extends boolean = true> {
         city?: T;
         state?: T;
         zip?: T;
+        directionsUrl?: T;
       };
+  coordinates?: T;
   images?:
     | T
     | {
@@ -1035,28 +1018,6 @@ export interface HolidayHoursSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "menus_select".
- */
-export interface MenusSelect<T extends boolean = true> {
-  name?: T;
-  description?: T;
-  location?: T;
-  type?: T;
-  url?: T;
-  sheetUrl?: T;
-  items?:
-    | T
-    | {
-        product?: T;
-        price?: T;
-        id?: T;
-      };
-  updatedAt?: T;
-  createdAt?: T;
-  _status?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "distributors_select".
  */
 export interface DistributorsSelect<T extends boolean = true> {
@@ -1073,6 +1034,58 @@ export interface DistributorsSelect<T extends boolean = true> {
   active?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "media_select".
+ */
+export interface MediaSelect<T extends boolean = true> {
+  alt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
+  sizes?:
+    | T
+    | {
+        thumbnail?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        card?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        detail?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+      };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

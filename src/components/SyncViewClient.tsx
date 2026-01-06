@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useRef } from 'react'
-import { Gutter } from '@payloadcms/ui'
+import { Gutter, SetStepNav } from '@payloadcms/ui'
 import { format } from 'date-fns-tz'
 import { getSiteContentData } from '@/src/actions/admin-data'
 import { parseSSEStream, isSSEResponse } from '@/lib/utils/sse-parser'
@@ -530,6 +530,7 @@ export const SyncViewClient: React.FC = () => {
 
   return (
     <Gutter>
+      <SetStepNav nav={[{ label: 'Sync' }]} />
       <div style={{ maxWidth: '900px', paddingTop: '24px', paddingBottom: '48px' }}>
         {/* Header */}
         <div style={{ marginBottom: '24px' }}>

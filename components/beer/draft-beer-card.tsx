@@ -134,7 +134,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
   // Standard mode with Tailwind classes
   return (
     <Link href={showLocation ? `/${currentLocation}/beer/${beerSlug}` : `/beer/${beerSlug}`} className="group block h-full">
-      <div className={`overflow-hidden transition-colors duration-200 cursor-pointer hover:bg-secondary/50 h-full min-h-[80px] bg-background ${className}`}>
+      <div className={`overflow-hidden transition-colors duration-200 cursor-pointer hover:bg-secondary/50 h-full min-h-[80px] bg-background rounded-lg ${className}`}>
         <div className="flex items-center gap-6 px-4 h-full">
           {/* Tap Number and Glass Icon */}
           {showGlass && (

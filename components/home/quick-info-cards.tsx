@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { ArrowRight } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import type { LocationSlug } from '@/lib/types/location';
 import { cn } from '@/lib/utils';
@@ -49,9 +50,10 @@ export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCar
     <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-4", className)}>
       {/* On Tap Now Card */}
       <Link href="/beer" className="group">
-        <Card className="p-5 h-full transition-colors cursor-pointer border-0 hover:bg-secondary shadow-none text-center bg-transparent dark:bg-transparent">
-          <div className="flex items-center justify-center gap-3 mb-3">
-            <h3 className="text-xl font-bold">On Tap Now</h3>
+        <Card className="p-5 h-full transition-all cursor-pointer border border-border/50 hover:border-border hover:shadow-sm shadow-none text-center bg-transparent dark:bg-transparent relative">
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <h3 className="text-2xl font-bold">On Tap Now</h3>
+            <ArrowRight className="h-5 w-5 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
           </div>
           {beerCount && Object.keys(beerCount).length > 0 ? (
             <div className="text-sm text-muted-foreground space-y-2">
@@ -77,11 +79,10 @@ export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCar
 
       {/* Next Event Card */}
       <Link href="/events" className="group">
-        <Card className="p-5 h-full transition-colors cursor-pointer border-0 hover:bg-secondary shadow-none text-center bg-transparent dark:bg-transparent">
-          <div className="flex items-center justify-center gap-3 mb-3">
-            <h3 className="text-2xl font-bold">
-              {nextEvent ? 'Next Event' : 'Upcoming Events'}
-            </h3>
+        <Card className="p-5 h-full transition-all cursor-pointer border border-border/50 hover:border-border hover:shadow-sm shadow-none text-center bg-transparent dark:bg-transparent relative">
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <h3 className="text-2xl font-bold">{nextEvent ? 'Next Event' : 'Upcoming Events'}</h3>
+            <ArrowRight className="h-5 w-5 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
           </div>
           {nextEvent ? (
             <div className="text-sm text-muted-foreground space-y-1">

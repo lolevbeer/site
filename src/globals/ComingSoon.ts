@@ -5,7 +5,7 @@ export const ComingSoon: GlobalConfig = {
   slug: 'coming-soon',
   label: 'Coming Soon',
   admin: {
-    group: 'Settings',
+    group: 'Back of House',
   },
   access: {
     read: () => true,

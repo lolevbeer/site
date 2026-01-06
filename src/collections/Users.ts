@@ -13,6 +13,7 @@ export const Users: CollectionConfig = {
     tokenExpiration: 604800,
   },
   admin: {
+    group: 'Settings',
     useAsTitle: 'email',
   },
   access: {

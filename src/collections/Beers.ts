@@ -16,6 +16,7 @@ export const Beers: CollectionConfig = {
     delete: adminAccess, // Beer Managers can only archive, not delete
   },
   admin: {
+    group: 'Back of House',
     useAsTitle: 'name',
     listSearchableFields: ['name', 'slug'],
     defaultColumns: ['name', 'slug', 'style', 'abv', 'hideFromSite'],

@@ -33,6 +33,7 @@ const canUpdateMenus: Access = ({ req: { user } }) => {
 export const Menus: CollectionConfig = {
   slug: 'menus',
   admin: {
+    group: 'Front of House',
     useAsTitle: 'description',
     defaultColumns: ['description', 'location', 'type', '_status'],
     preview: (doc) => {

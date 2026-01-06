@@ -21,6 +21,7 @@ export const Events: CollectionConfig = {
     delete: eventManagerAccess,
   },
   admin: {
+    group: 'Food & Events',
     useAsTitle: 'organizer',
     defaultColumns: ['organizer', 'date', 'location', 'visibility'],
     pagination: {

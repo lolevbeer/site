@@ -15,7 +15,6 @@ import type { CircleLayer } from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MapPin, Locate, Navigation } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
@@ -38,7 +37,7 @@ const MAP_CONFIG = {
   DETAIL_ZOOM: 14,
   EARTH_RADIUS_MILES: 3959,
   NEARBY_PREVIEW_COUNT: 3,
-  MAX_LIST_ITEMS: 50,
+  MAX_LIST_ITEMS: 20,
 } as const;
 
 interface GeoFeature {
@@ -231,9 +230,10 @@ export function DistributorMap({
     type: 'circle',
     source: 'distributors',
     paint: {
-      'circle-radius': 3,
+      'circle-radius': 4,
       'circle-color': resolvedTheme === 'dark' ? '#ffffff' : '#000000',
-      'circle-stroke-width': 0,
+      'circle-stroke-width': 1,
+      'circle-stroke-color': resolvedTheme === 'dark' ? '#000000' : '#ffffff',
     },
   }), [resolvedTheme]);
 
@@ -333,7 +333,6 @@ export function DistributorMap({
     return (
       <Card className={cn('flex items-center justify-center', className)} style={{ height }}>
         <div className="text-center p-8">
-          <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <p className="text-muted-foreground">Map token not configured</p>
         </div>
       </Card>
@@ -369,7 +368,6 @@ export function DistributorMap({
     return (
       <Card className={cn('flex items-center justify-center', className)} style={{ height }}>
         <div className="text-center p-8">
-          <MapPin className="h-12 w-12 text-destructive mx-auto mb-4" />
           <p className="text-destructive font-medium">{error}</p>
         </div>
       </Card>
@@ -474,7 +472,6 @@ export function DistributorMap({
                       className="w-full h-8 text-xs"
                       onClick={() => window.open(getDirectionsUrl(popupLocation.properties.address), '_blank')}
                     >
-                      <Navigation className="h-3 w-3 mr-1.5" />
                       Get Directions
                     </Button>
                   </div>
@@ -497,24 +494,28 @@ export function DistributorMap({
                   {!referenceLocation && (
                     <div className="text-center py-2 px-3 bg-muted/50 rounded-lg mb-3">
                       <p className="text-sm text-muted-foreground">
-                        <Locate className="h-4 w-4 inline mr-1" />
                         Enter a location or use "Near Me" to see distances
                       </p>
                     </div>
                   )}
-                  {listLocations.map((location) => {
+                  {listLocations.map((location, index) => {
                     const isSelected = selectedLocation?.properties.uniqueId === location.properties.uniqueId;
                     return (
-                      <LocationCard
+                      <div
                         key={location.properties.uniqueId || location.properties.id}
-                        name={location.properties.Name}
-                        address={location.properties.address}
-                        distance={location.distance}
-                        distanceFromLabel={referenceLocation?.label || null}
-                        isSelected={isSelected}
-                        onClick={() => handleCardClick(location)}
-                        innerRef={isSelected ? selectedCardRef : undefined}
-                      />
+                        className="animate-stagger-in opacity-0"
+                        style={{ animationDelay: `${Math.min(index * 50, 400)}ms` }}
+                      >
+                        <LocationCard
+                          name={location.properties.Name}
+                          address={location.properties.address}
+                          distance={location.distance}
+                          distanceFromLabel={referenceLocation?.label || null}
+                          isSelected={isSelected}
+                          onClick={() => handleCardClick(location)}
+                          innerRef={isSelected ? selectedCardRef : undefined}
+                        />
+                      </div>
                     );
                   })}
                   {locationsWithDistance.length > MAP_CONFIG.MAX_LIST_ITEMS && (
@@ -526,7 +527,6 @@ export function DistributorMap({
               ) : (
                 <div className="flex items-center justify-center h-full py-12">
                   <div className="text-center">
-                    <MapPin className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
                     <p className="text-muted-foreground">No locations found</p>
                     {searchTerm && (
                       <Button

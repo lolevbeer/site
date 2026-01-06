@@ -149,10 +149,10 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
                 ? menu.location
                 : menu.location?.name;
 
-              if (locationName && !tapLocs.includes(locationName) && !canLocs.includes(locationName)) {
-                if (menu.type === 'draft') {
+              if (locationName) {
+                if (menu.type === 'draft' && !tapLocs.includes(locationName)) {
                   tapLocs.push(locationName);
-                } else if (menu.type === 'cans') {
+                } else if (menu.type === 'cans' && !canLocs.includes(locationName)) {
                   canLocs.push(locationName);
                 }
               }
@@ -293,12 +293,17 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
               {tapLocations.length > 0 && (
                 <Badge variant="default" className="text-sm flex items-center gap-1">
                   <GlassIcon className="h-3.5 w-3.5" />
-                  Pouring
+                  On Draft
                 </Badge>
               )}
               {canLocations.length > 0 && (
                 <Badge variant="default" className="text-sm">
                   Cans Available
+                </Badge>
+              )}
+              {!isLoadingLocations && tapLocations.length > 0 && canLocations.length === 0 && (
+                <Badge variant="outline" className="text-sm text-muted-foreground border-muted-foreground/50">
+                  No Cans
                 </Badge>
               )}
               {pricing.hasSale && (
@@ -349,12 +354,17 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
                   <div className="space-y-2">
                     {tapLocations.length > 0 && (
                       <p className="text-sm text-muted-foreground">
-                        • Pouring at {tapLocations.join(' and ')}
+                        • On draft at {tapLocations.join(' and ')}
                       </p>
                     )}
                     {canLocations.length > 0 && (
                       <p className="text-sm text-muted-foreground">
                         • Cans available at {canLocations.join(' and ')}
+                      </p>
+                    )}
+                    {tapLocations.length > 0 && canLocations.length === 0 && (
+                      <p className="text-sm text-amber-600 dark:text-amber-400 font-medium">
+                        • No cans available at this time — draft only
                       </p>
                     )}
                     {tapLocations.length === 0 && canLocations.length === 0 && (

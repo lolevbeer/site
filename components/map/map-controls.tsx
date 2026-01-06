@@ -49,67 +49,73 @@ export function MapControls({
   distanceFromLabel
 }: MapControlsProps) {
   return (
-    <Card className="border-0 flex-shrink-0 shadow-none pb-4">
+    <Card className="border-0 flex-shrink-0 shadow-none pb-4 bg-transparent overflow-visible">
       <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between gap-3">
+          {/* Search + Near Me integrated */}
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            {showSearch && (
+              <div className="relative group flex-1 max-w-sm p-1">
+                {isSearching ? (
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 z-10">
+                    <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
+                  </div>
+                ) : (
+                  <Search className={`absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-all duration-200 z-10 ${searchTerm ? 'search-active text-primary' : 'group-focus-within:text-foreground'}`} />
+                )}
+                <Input
+                  placeholder="Search location..."
+                  value={searchTerm}
+                  onChange={(e) => onSearchChange(e.target.value)}
+                  className="pl-9 h-8 bg-secondary border-0 transition-all duration-200 focus:bg-background focus:shadow-sm focus:ring-1 focus:ring-primary/20"
+                />
+                {hasSearchLocation && (
+                  <Badge variant="secondary" className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] py-0">
+                    <MapPin className="h-2 w-2 mr-1" />
+                    Location
+                  </Badge>
+                )}
+              </div>
+            )}
             <Button
               variant="ghost"
               size="sm"
               onClick={onNearMeClick}
-              className="h-8 bg-secondary"
+              className="h-8 bg-secondary shrink-0"
             >
               <Locate className="h-4 w-4 mr-1" />
               Near Me
             </Button>
-            <span className="text-sm text-muted-foreground">
+            <span className="text-sm text-muted-foreground whitespace-nowrap hidden sm:inline">
               {locationCount} locations
             </span>
           </div>
-          {/* Mobile view toggle */}
-          <div className="flex md:hidden gap-1">
-            <Button
-              variant={mobileView === 'map' ? 'default' : 'outline'}
-              size="sm"
+          {/* Mobile view toggle - segmented control */}
+          <div className="flex md:hidden p-1 bg-secondary rounded-lg shrink-0">
+            <button
               onClick={() => onMobileViewChange('map')}
-              className="h-8 px-3"
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200 ${
+                mobileView === 'map'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
             >
               <MapIcon className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={mobileView === 'list' ? 'default' : 'outline'}
-              size="sm"
+              <span>Map</span>
+            </button>
+            <button
               onClick={() => onMobileViewChange('list')}
-              className="h-8 px-3"
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200 ${
+                mobileView === 'list'
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
             >
               <List className="h-4 w-4" />
-            </Button>
+              <span>List</span>
+            </button>
           </div>
         </div>
-
-        {showSearch && (
-          <div className="relative">
-            {isSearching ? (
-              <div className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4">
-                <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
-              </div>
-            ) : (
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            )}
-            <Input
-              placeholder="Search by name, zipcode, or address..."
-              value={searchTerm}
-              onChange={(e) => onSearchChange(e.target.value)}
-              className="pl-8 h-8 bg-secondary"
-            />
-            {hasSearchLocation && (
-              <Badge variant="secondary" className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] py-0">
-                <MapPin className="h-2 w-2 mr-1" />
-                Location
-              </Badge>
-            )}
-          </div>
-        )}
 
         {nearbyLocations.length > 0 && (
           <div className="flex flex-col gap-2">

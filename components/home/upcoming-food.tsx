@@ -5,8 +5,9 @@ import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { SectionHeader } from '@/components/ui/section-header';
-import { Calendar, Clock, MapPin } from 'lucide-react';
+import { ScrollReveal } from '@/components/ui/scroll-reveal';
 import { useLocationFilteredData, type LocationData } from '@/lib/hooks/use-location-filtered-data';
+import { formatDate, formatTime } from '@/lib/utils/formatters';
 import { useSortedItems } from '@/lib/hooks/use-sorted-items';
 import { useLocationContext } from '@/components/location/location-provider';
 import type { LocationSlug } from '@/lib/types/location';
@@ -66,11 +67,13 @@ export function UpcomingFood({ foodByLocation, isAuthenticated }: UpcomingFoodPr
   return (
     <section className="py-16 lg:py-24 bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <SectionHeader
-          title="Upcoming Food"
-          adminUrl="/admin/collections/food"
-          isAuthenticated={isAuthenticated}
-        />
+        <ScrollReveal>
+          <SectionHeader
+            title="Upcoming Food"
+            adminUrl="/admin/collections/food"
+            isAuthenticated={isAuthenticated}
+          />
+        </ScrollReveal>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 justify-items-center">
           {upcomingFood.map((food, index) => {
@@ -79,35 +82,17 @@ export function UpcomingFood({ foodByLocation, isAuthenticated }: UpcomingFoodPr
             return (
             <Card
               key={index}
-              className={`overflow-hidden transition-colors border-0 shadow-none bg-transparent dark:bg-transparent ${vendorSite ? 'cursor-pointer hover:bg-secondary' : ''}`}
+              className={`overflow-hidden transition-colors border-0 shadow-none bg-transparent dark:bg-transparent ${vendorSite ? 'cursor-pointer hover:bg-secondary/50' : ''}`}
               onClick={() => vendorSite && window.open(vendorSite, '_blank')}
             >
               <CardContent className="p-6 text-center">
                 <h3 className="text-xl font-semibold mb-2">{vendorName}</h3>
-                <div className="space-y-2 text-sm text-muted-foreground flex flex-col items-center">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    <span>{(() => {
-                      const date = new Date(food.date);
-                      return date.toLocaleDateString('en-US', {
-                        weekday: 'long',
-                        month: 'long',
-                        day: 'numeric',
-                        year: 'numeric',
-                        timeZone: 'America/New_York'
-                      });
-                    })()}</span>
-                  </div>
+                <div className="space-y-1 text-sm text-muted-foreground flex flex-col items-center">
+                  <span>{formatDate(food.date, 'full')}</span>
                   {(food.time || food.startTime) && (
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
-                      <span>{food.time || (food.startTime ? new Date(food.startTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' }) : '')}</span>
-                    </div>
+                    <span>{food.time ? formatTime(food.time) : (food.startTime ? formatTime(food.startTime) : '')}</span>
                   )}
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4" />
-                    <span>{getLocationDisplayName(food.location)}</span>
-                  </div>
+                  <span>{getLocationDisplayName(food.location)}</span>
                 </div>
               </CardContent>
             </Card>

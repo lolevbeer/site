@@ -5,6 +5,7 @@ import { adminAccess } from '@/src/access/roles'
 export const Locations: CollectionConfig = {
   slug: 'locations',
   admin: {
+    group: 'Settings',
     useAsTitle: 'name',
   },
   access: {
@@ -163,7 +164,24 @@ export const Locations: CollectionConfig = {
           name: 'zip',
           type: 'text',
         },
+        {
+          name: 'directionsUrl',
+          type: 'text',
+          label: 'Directions URL',
+          admin: {
+            description: 'Custom Google Maps or directions link for this location',
+          },
+        },
       ],
+    },
+    {
+      name: 'coordinates',
+      type: 'point',
+      label: 'Coordinates',
+      admin: {
+        position: 'sidebar',
+        description: 'Longitude, Latitude (e.g. -79.960098, 40.465372)',
+      },
     },
     {
       name: 'images',

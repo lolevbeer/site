@@ -324,6 +324,66 @@
     transition: transform 0.4s ease-out, opacity 0.4s ease-out;
   }
 
+  /* Staggered entry animation for lists */
+  @keyframes stagger-in {
+    0% {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-stagger-in {
+    animation: stagger-in 0.4s ease-out forwards;
+  }
+
+  /* Search icon pulse animation */
+  @keyframes search-pulse {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.1);
+    }
+  }
+
+  .search-active {
+    animation: search-pulse 0.3s ease-out;
+  }
+
+  /* Scroll reveal animation */
+  .scroll-reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+  }
+
+  .scroll-reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Subtle glow pulse for CTAs */
+  @keyframes glow-pulse {
+    0%, 100% {
+      box-shadow: 0 0 0 0 transparent;
+    }
+    50% {
+      box-shadow: 0 0 20px 4px oklch(0.5 0.05 0 / 0.2);
+    }
+  }
+
+  .dark .animate-glow-pulse {
+    --glow-color: oklch(0.9 0.05 0 / 0.15);
+  }
+
+  .animate-glow-pulse {
+    animation: glow-pulse 3s ease-in-out infinite;
+  }
+
   /* Hide scrollbar utility for carousel */
   .scrollbar-hide::-webkit-scrollbar {
     display: none;

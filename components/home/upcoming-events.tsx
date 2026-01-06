@@ -4,6 +4,7 @@ import React, { useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { SectionHeader } from '@/components/ui/section-header';
+import { ScrollReveal } from '@/components/ui/scroll-reveal';
 import { EventCard } from '@/components/events/event-card';
 import { parseLocalDate } from '@/lib/utils/formatters';
 import { useLocationFilteredData, type LocationData } from '@/lib/hooks/use-location-filtered-data';
@@ -47,11 +48,13 @@ export function UpcomingEvents({ eventsByLocation, isAuthenticated }: UpcomingEv
   return (
     <section className="py-16 lg:py-24">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <SectionHeader
-          title="Upcoming Events"
-          adminUrl="/admin/collections/events"
-          isAuthenticated={isAuthenticated}
-        />
+        <ScrollReveal>
+          <SectionHeader
+            title="Upcoming Events"
+            adminUrl="/admin/collections/events"
+            isAuthenticated={isAuthenticated}
+          />
+        </ScrollReveal>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 justify-items-center">
           {upcomingEvents.map((event, index) => (

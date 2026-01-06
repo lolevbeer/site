@@ -116,11 +116,13 @@ function getLocationPlaceFromPayload(location: PayloadLocation): PlaceJsonLd {
     }
   };
 
-  if (location.coordinates?.latitude && location.coordinates?.longitude) {
+  // coordinates is a point field: [longitude, latitude]
+  if (location.coordinates && location.coordinates.length === 2) {
+    const [lng, lat] = location.coordinates;
     place.geo = {
       '@type': 'GeoCoordinates',
-      latitude: location.coordinates.latitude,
-      longitude: location.coordinates.longitude
+      latitude: lat,
+      longitude: lng
     };
   }
 

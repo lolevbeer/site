@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { Clock, MapPin } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
@@ -9,7 +8,6 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
 import { toLocationInfo } from '@/lib/types/location';
 import { isLocationOpenNow } from '@/lib/config/locations';
 import { cn } from '@/lib/utils';
@@ -59,12 +57,7 @@ export function HoursPanel({
   const currentDay = dayNames[now.getDay()] as DayOfWeek;
 
   return (
-    <Card className={cn("p-0 border-0 shadow-none bg-transparent dark:bg-transparent", className)}>
-      <div className="flex items-center gap-2 mb-4">
-        <Clock className="h-5 w-5 text-primary" />
-        <h2 className="text-2xl font-bold">Hours & Locations</h2>
-      </div>
-
+    <div className={cn("", className)}>
       <Accordion type="single" collapsible className="w-full">
         {locations.map((location) => {
           const slug = location.slug || location.id;
@@ -75,46 +68,26 @@ export function HoursPanel({
           const todayHours = todayData ? formatHoursString(todayData) : 'Hours not available';
 
           return (
-            <AccordionItem key={slug} value={slug} className="border-0">
-              <AccordionTrigger className="hover:no-underline">
+            <AccordionItem key={slug} value={slug} className="border-0 border-b border-border/50 last:border-b-0">
+              <AccordionTrigger className="hover:no-underline py-4">
                 <div className="flex items-center justify-between w-full pr-4">
-                  <div className="flex items-center gap-3">
-                    <MapPin className="h-4 w-4 text-muted-foreground" />
-                    <div className="text-left">
-                      <div className="font-semibold">Lolev {location.name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {locationInfo.address}, {locationInfo.city}, {locationInfo.state} {locationInfo.zipCode}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Badge variant={isOpen ? "default" : "secondary"} className="ml-2">
-                      {isOpen ? "Open Now" : "Closed"}
-                    </Badge>
-                    <div className="text-sm text-muted-foreground hidden sm:block">
+                  <div className="text-left">
+                    <div className="font-semibold">{location.name}</div>
+                    <div className="text-sm text-muted-foreground">
                       {todayHours}
+                      {isOpen && <span className="text-green-600 dark:text-green-400 ml-2">Open</span>}
                     </div>
                   </div>
                 </div>
               </AccordionTrigger>
               <AccordionContent>
-                <div className="pt-4 pl-7 space-y-2">
-                  {/* Today's hours - shown on mobile */}
-                  <div className="sm:hidden mb-3 pb-3">
-                    <div className="flex justify-between items-center">
-                      <span className="font-medium">Today</span>
-                      <span className="text-muted-foreground">{todayHours}</span>
-                    </div>
-                  </div>
-
+                <div className="pt-2 space-y-1">
                   {/* Weekly schedule */}
                   {locationWeeklyHours ? (
                     <>
                       {locationWeeklyHours.some(d => d.holidayName) && (
-                        <div className="flex items-center gap-1.5 mb-2 pb-2 border-b border-border">
-                          <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
-                            ⚠ Special hours this week
-                          </span>
+                        <div className="text-xs text-orange-600 dark:text-orange-400 mb-2">
+                          Special hours this week
                         </div>
                       )}
                       {locationWeeklyHours.map((dayData) => {
@@ -125,20 +98,16 @@ export function HoursPanel({
                           <div
                             key={dayData.day}
                             className={cn(
-                              "flex justify-between items-center py-1.5 px-2 rounded",
-                              isToday && "bg-primary/5 font-medium",
-                              isSpecial && !isToday && "text-amber-600 dark:text-amber-400"
+                              "flex justify-between items-center text-sm",
+                              isToday && "font-medium",
+                              isSpecial && "text-orange-600 dark:text-orange-400"
                             )}
                           >
-                            <span className="capitalize flex items-center gap-2">
-                              {dayData.day}
-                              {dayData.holidayName && (
-                                <Badge variant="outline" className="text-xs py-0 px-1.5 border-amber-500 text-amber-600 dark:text-amber-400">
-                                  {dayData.holidayName}
-                                </Badge>
-                              )}
+                            <span className="capitalize">
+                              {dayData.day.slice(0, 3)}
+                              {dayData.holidayName && ` (${dayData.holidayName})`}
                             </span>
-                            <span className={cn(!isSpecial && "text-muted-foreground")}>
+                            <span className={cn(!isToday && !isSpecial && "text-muted-foreground")}>
                               {formatHoursString(dayData)}
                             </span>
                           </div>
@@ -150,26 +119,20 @@ export function HoursPanel({
                   )}
 
                   {/* Contact info */}
-                  <div className="pt-4 mt-4 space-y-2">
+                  <div className="pt-3 mt-2 space-y-1 text-sm text-muted-foreground">
                     {locationInfo.phone && (
-                      <div className="text-sm">
-                        <span className="text-muted-foreground">Phone: </span>
-                        <a href={`tel:${locationInfo.phone}`} className="hover:underline">
-                          {locationInfo.phone}
-                        </a>
-                      </div>
-                    )}
-                    <div className="text-sm">
-                      <span className="text-muted-foreground">Address: </span>
-                      <a
-                        href={locationInfo.mapUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hover:underline"
-                      >
-                        {locationInfo.address}, {locationInfo.city}, {locationInfo.state} {locationInfo.zipCode}
+                      <a href={`tel:${locationInfo.phone}`} className="block hover:text-foreground">
+                        {locationInfo.phone}
                       </a>
-                    </div>
+                    )}
+                    <a
+                      href={locationInfo.mapUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block hover:text-foreground"
+                    >
+                      {locationInfo.address}, {locationInfo.city}
+                    </a>
                   </div>
                 </div>
               </AccordionContent>
@@ -177,6 +140,6 @@ export function HoursPanel({
           );
         })}
       </Accordion>
-    </Card>
+    </div>
   );
 }

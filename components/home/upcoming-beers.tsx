@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { SectionHeader } from '@/components/ui/section-header';
+import { ScrollReveal } from '@/components/ui/scroll-reveal';
 import Link from 'next/link';
 import type { Beer, Style } from '@/src/payload-types';
 
@@ -30,11 +31,13 @@ export function UpcomingBeers({ comingSoonBeers, isAuthenticated }: UpcomingBeer
   return (
     <section className="py-16 lg:py-24 bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <SectionHeader
-          title="Up Next"
-          adminUrl="/admin/globals/coming-soon"
-          isAuthenticated={isAuthenticated}
-        />
+        <ScrollReveal>
+          <SectionHeader
+            title="Up Next"
+            adminUrl="/admin/globals/coming-soon"
+            isAuthenticated={isAuthenticated}
+          />
+        </ScrollReveal>
 
         <div className="max-w-4xl mx-auto space-y-1 text-center mb-8">
           {validItems.map((item, index) => {

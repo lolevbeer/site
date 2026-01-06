@@ -14,6 +14,7 @@ export const Food: CollectionConfig = {
     plural: 'Food',
   },
   admin: {
+    group: 'Food & Events',
     useAsTitle: 'vendorName',
     defaultColumns: ['vendor', 'date', 'location', 'startTime'],
     pagination: {

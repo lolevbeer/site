@@ -107,10 +107,11 @@ function HoursDisplay({ weeklyHours }: { weeklyHours: WeeklyHoursDay[] }) {
  * Location info component
  */
 function LocationInfoSection({ location, weeklyHours }: { location: PayloadLocation; weeklyHours?: WeeklyHoursDay[] }) {
-  // Construct map URL from location data
-  const mapUrl = location.address?.street && location.address?.city && location.address?.state
-    ? `https://maps.google.com/?q=${encodeURIComponent(`${location.address.street}, ${location.address.city}, ${location.address.state}`)}`
-    : undefined;
+  // Use custom directions URL if provided, otherwise construct from address
+  const mapUrl = location.address?.directionsUrl
+    || (location.address?.street && location.address?.city && location.address?.state
+      ? `https://maps.google.com/?q=${encodeURIComponent(`${location.address.street}, ${location.address.city}, ${location.address.state}`)}`
+      : undefined);
 
   return (
     <div className="space-y-4">
