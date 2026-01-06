@@ -266,7 +266,7 @@ function CanCard({ item, fullscreen = false }: { item: MenuItem; fullscreen?: bo
           <Badge variant="outline" style={{ fontSize: '1.3vh' }}>{item.type}</Badge>
           {item.fourPack && (
             <span className="font-semibold" style={{ fontSize: '1.8vh' }}>
-              ${item.fourPack} <span className="font-normal text-foreground/70" style={{ fontSize: '1.4vh' }}>/ 4pk</span>
+              ${item.fourPack} <span className="font-normal text-foreground/70" style={{ fontSize: '1.4vh' }}>• Four Pack</span>
             </span>
           )}
           {item.onDraft && (
@@ -359,7 +359,7 @@ export function FeaturedMenu({ menuType, menu, menus = [], isAuthenticated, anim
                   const isOtherMenu = menu?.type === 'other';
                   const ColumnHeader = () => (
                     <div
-                      className="flex items-center border-b-2 border-border uppercase tracking-wider text-muted-foreground/70 font-semibold"
+                      className="flex items-center border-b-2 border-border uppercase tracking-wider text-foreground font-bold"
                       style={{ gap: '1.5vh', padding: '0.5vh 1vh', marginBottom: '0.5vh', fontSize: '1.2vh' }}
                     >
                       {!isOtherMenu && <div style={{ minWidth: '7vh' }}>Tap</div>}
