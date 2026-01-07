@@ -71,14 +71,14 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
             {/* Beer Info - Main content */}
             <div className="flex-grow min-w-0 flex flex-col" style={{ gap: '0.3vh' }}>
               <div className="flex items-center flex-wrap" style={{ gap: '1vh' }}>
-                <h3 className="font-bold leading-tight truncate" style={{ fontSize: '2.5vh' }}>{beer.name}</h3>
+                <h3 className="font-bold leading-tight truncate" style={{ fontSize: '3vh' }}>{beer.name}</h3>
                 {beer.type && beer.type.split(', ').map((option, i) => (
-                  <Badge key={i} variant="outline" className="flex-shrink-0" style={{ fontSize: '1.5vh' }}>
+                  <Badge key={i} variant="outline" className="flex-shrink-0" style={{ fontSize: '1.8vh' }}>
                     {option}
                   </Badge>
                 ))}
                 {showJustReleased && beer.isJustReleased && (
-                  <Badge variant="default" className="flex-shrink-0" style={{ fontSize: '1.5vh' }}>
+                  <Badge variant="default" className="flex-shrink-0" style={{ fontSize: '1.8vh' }}>
                     Just Released
                   </Badge>
                 )}
@@ -90,7 +90,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                   </p>
                 )}
                 {beer.hops && (
-                  <p className="text-foreground/70 truncate leading-tight" style={{ fontSize: '1.6vh' }}>
+                  <p className="text-foreground/70 line-clamp-2 leading-tight" style={{ fontSize: '1.6vh' }}>
                     <span className="font-medium">Hops:</span> {beer.hops}
                   </p>
                 )}

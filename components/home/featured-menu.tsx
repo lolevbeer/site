@@ -261,10 +261,10 @@ function CanCard({ item, fullscreen = false }: { item: MenuItem; fullscreen?: bo
           )}
         </div>
         <div className="flex flex-col items-center text-center" style={{ gap: '0.5vh', marginTop: '1.5vh' }}>
-          <h3 className="font-bold leading-tight" style={{ fontSize: '2vh' }}>
+          <h3 className="font-bold leading-tight" style={{ fontSize: '2.8vh' }}>
             {item.name}
           </h3>
-          <Badge variant="outline" style={{ fontSize: '1.3vh' }}>{item.type}</Badge>
+          <Badge variant="outline" style={{ fontSize: '1.6vh' }}>{item.type}</Badge>
           {item.fourPack && (
             <span className="font-semibold" style={{ fontSize: '1.8vh' }}>
               ${item.fourPack} <span className="font-semibold text-foreground/70" style={{ fontSize: '1.4vh' }}>• Four Pack</span>

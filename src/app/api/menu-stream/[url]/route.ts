@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { getMenuByUrlFresh } from '@/lib/utils/payload-api'
+import { getPittsburghTheme } from '@/lib/utils/pittsburgh-time'
 import crypto from 'crypto'
 
 // Poll interval in milliseconds (2 seconds for near-instant updates)
@@ -60,6 +61,7 @@ export async function GET(
 
   const encoder = new TextEncoder()
   let lastHash = ''
+  let lastTheme = ''
   let isActive = true
   let devTimeout: NodeJS.Timeout | null = null
 
@@ -88,6 +90,10 @@ export async function GET(
         lastHash = generateHash(menu)
         controller.enqueue(encoder.encode(`event: menu\ndata: ${JSON.stringify(menu)}\n\n`))
 
+        // Send initial theme
+        lastTheme = getPittsburghTheme()
+        controller.enqueue(encoder.encode(`event: theme\ndata: {"theme": "${lastTheme}"}\n\n`))
+
         // Poll for changes (server-side polling with uncached queries)
         const checkForUpdates = async () => {
           if (!isActive) return
@@ -100,6 +106,13 @@ export async function GET(
             if (currentHash !== lastHash) {
               lastHash = currentHash
               controller.enqueue(encoder.encode(`event: menu\ndata: ${JSON.stringify(currentMenu)}\n\n`))
+            }
+
+            // Check for theme changes (sunrise/sunset)
+            const currentTheme = getPittsburghTheme()
+            if (currentTheme !== lastTheme) {
+              lastTheme = currentTheme
+              controller.enqueue(encoder.encode(`event: theme\ndata: {"theme": "${currentTheme}"}\n\n`))
             }
 
             // Send heartbeat to keep connection alive

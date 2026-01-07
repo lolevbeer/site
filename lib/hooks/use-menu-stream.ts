@@ -63,6 +63,20 @@ export function useMenuStream(
         }
       })
 
+      // Listen for theme changes (Pittsburgh sunrise/sunset)
+      es.addEventListener('theme', (event) => {
+        try {
+          const data = JSON.parse(event.data) as { theme: 'light' | 'dark' }
+          if (data.theme === 'dark') {
+            document.documentElement.classList.add('dark')
+          } else {
+            document.documentElement.classList.remove('dark')
+          }
+        } catch (err) {
+          console.error('Failed to parse theme data:', err)
+        }
+      })
+
       es.addEventListener('error', (event) => {
         try {
           const data = JSON.parse((event as MessageEvent).data)
