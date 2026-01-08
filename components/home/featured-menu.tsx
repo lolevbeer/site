@@ -267,7 +267,7 @@ function CanCard({ item, fullscreen = false }: { item: MenuItem; fullscreen?: bo
           <Badge variant="outline" style={{ fontSize: '1.6vh' }}>{item.type}</Badge>
           {item.fourPack && (
             <span className="font-semibold" style={{ fontSize: '1.8vh' }}>
-              ${item.fourPack} <span className="font-semibold text-foreground/70" style={{ fontSize: '1.4vh' }}>• Four Pack</span>
+              ${item.fourPack} <span className="font-semibold text-foreground-muted" style={{ fontSize: '1.4vh' }}>• Four Pack</span>
             </span>
           )}
           {item.onDraft && (
