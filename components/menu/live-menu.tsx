@@ -1,6 +1,5 @@
 'use client'
 
-import { useEffect } from 'react'
 import { useMenuStream } from '@/lib/hooks/use-menu-stream'
 import { FeaturedBeers, FeaturedCans } from '@/components/home/featured-menu'
 import type { Menu } from '@/src/payload-types'
@@ -10,6 +9,36 @@ interface LiveMenuProps {
   initialMenu: Menu
 }
 
+// Light mode CSS variables
+const lightVars = {
+  '--color-background': '#ffffff',
+  '--color-foreground': '#1d1d1f',
+  '--color-card': '#ffffff',
+  '--color-card-foreground': '#1d1d1f',
+  '--color-primary': '#1d1d1f',
+  '--color-primary-foreground': '#ffffff',
+  '--color-secondary': '#f5f5f7',
+  '--color-secondary-foreground': '#1d1d1f',
+  '--color-muted': 'oklch(95.5% 0 0)',
+  '--color-muted-foreground': '#86868b',
+  '--color-border': '#d2d2d7',
+} as React.CSSProperties
+
+// Dark mode CSS variables
+const darkVars = {
+  '--color-background': '#000000',
+  '--color-foreground': '#f5f5f7',
+  '--color-card': '#1d1d1f',
+  '--color-card-foreground': '#f5f5f7',
+  '--color-primary': '#ffffff',
+  '--color-primary-foreground': '#000000',
+  '--color-secondary': '#2c2c2e',
+  '--color-secondary-foreground': '#f5f5f7',
+  '--color-muted': '#2c2c2e',
+  '--color-muted-foreground': '#98989d',
+  '--color-border': '#38383a',
+} as React.CSSProperties
+
 /**
  * Live-updating menu display component
  *
@@ -17,7 +46,7 @@ interface LiveMenuProps {
  * - Polls every 2 seconds for near-instant updates
  * - Cache is invalidated on-demand when menu is updated in Payload
  * - Much more cost-effective than SSE on Vercel (no persistent connections)
- * - Applies dark mode directly via class on container (bypasses next-themes for reliability)
+ * - Applies dark mode via inline CSS variables for maximum browser compatibility
  */
 export function LiveMenu({ menuUrl, initialMenu }: LiveMenuProps) {
   const { menu, theme } = useMenuStream(menuUrl, initialMenu, {
@@ -28,18 +57,12 @@ export function LiveMenu({ menuUrl, initialMenu }: LiveMenuProps) {
   // Use streamed menu if available, otherwise fall back to initial
   const displayMenu = menu || initialMenu
 
-  // Apply dark class to html element directly for proper CSS variable inheritance
-  useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark')
-    } else {
-      document.documentElement.classList.remove('dark')
-    }
-  }, [theme])
+  // Apply CSS variables directly - bypasses .dark class for browser compatibility
+  const themeVars = theme === 'dark' ? darkVars : lightVars
 
   if (displayMenu.type === 'draft') {
     return (
-      <div className="h-screen w-screen overflow-hidden flex flex-col">
+      <div className="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground" style={themeVars}>
         <FeaturedBeers menu={displayMenu} animated />
       </div>
     )
@@ -47,7 +70,7 @@ export function LiveMenu({ menuUrl, initialMenu }: LiveMenuProps) {
 
   if (displayMenu.type === 'cans') {
     return (
-      <div className="h-screen w-screen overflow-hidden flex flex-col">
+      <div className="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground" style={themeVars}>
         <FeaturedCans menu={displayMenu} animated />
       </div>
     )
@@ -56,7 +79,7 @@ export function LiveMenu({ menuUrl, initialMenu }: LiveMenuProps) {
   // 'other' type renders like draft
   if (displayMenu.type === 'other') {
     return (
-      <div className="h-screen w-screen overflow-hidden flex flex-col">
+      <div className="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground" style={themeVars}>
         <FeaturedBeers menu={displayMenu} animated />
       </div>
     )
