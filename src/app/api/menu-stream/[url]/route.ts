@@ -49,8 +49,9 @@ export async function GET(
       )
     }
 
-    // Get current theme for dark mode
-    const theme = getPittsburghTheme()
+    // Determine theme: use manual override if set, otherwise use Pittsburgh time
+    const themeMode = menu.themeMode || 'auto'
+    const theme = themeMode === 'auto' ? getPittsburghTheme() : themeMode
 
     return NextResponse.json(
       {

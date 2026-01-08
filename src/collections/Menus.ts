@@ -265,6 +265,24 @@ export const Menus: CollectionConfig = {
       },
     },
     {
+      name: 'themeMode',
+      label: 'Theme Mode',
+      type: 'select',
+      defaultValue: 'auto',
+      options: [
+        { label: 'Auto (Pittsburgh time)', value: 'auto' },
+        { label: 'Always Light', value: 'light' },
+        { label: 'Always Dark', value: 'dark' },
+      ],
+      access: {
+        update: adminFieldAccess,
+      },
+      admin: {
+        description: 'Override automatic day/night theme switching',
+        position: 'sidebar',
+      },
+    },
+    {
       name: 'items',
       type: 'array',
       required: true,

@@ -302,6 +302,10 @@ export interface Menu {
    * Google Sheets CSV export URL for syncing this menu (optional)
    */
   sheetUrl?: string | null;
+  /**
+   * Override automatic day/night theme switching
+   */
+  themeMode?: ('auto' | 'light' | 'dark') | null;
   items: {
     product:
       | {
@@ -812,6 +816,7 @@ export interface MenusSelect<T extends boolean = true> {
   type?: T;
   url?: T;
   sheetUrl?: T;
+  themeMode?: T;
   items?:
     | T
     | {
