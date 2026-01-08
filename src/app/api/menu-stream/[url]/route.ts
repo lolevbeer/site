@@ -53,11 +53,14 @@ export async function GET(
     const themeMode = menu.themeMode || 'auto'
     const theme = themeMode === 'auto' ? getPittsburghTheme() : themeMode
 
+    // Use menu's updatedAt as timestamp so it only changes when menu actually changes
+    const timestamp = menu.updatedAt ? new Date(menu.updatedAt).getTime() : Date.now()
+
     return NextResponse.json(
       {
         menu,
         theme,
-        timestamp: Date.now(),
+        timestamp,
       },
       {
         headers: {

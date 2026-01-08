@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { useTheme } from 'next-themes'
 import type { Menu } from '@/src/payload-types'
 
 interface UseMenuStreamOptions {
@@ -40,6 +41,7 @@ export function useMenuStream(
   options: UseMenuStreamOptions = {}
 ): UseMenuStreamResult {
   const { enabled = true, pollInterval = 2000 } = options
+  const { setTheme } = useTheme()
 
   const [menu, setMenu] = useState<Menu | null>(initialMenu)
   const [isConnected, setIsConnected] = useState(false)
@@ -47,6 +49,7 @@ export function useMenuStream(
 
   const pollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const lastTimestampRef = useRef<number>(0)
+  const lastThemeRef = useRef<string | null>(null)
 
   const poll = useCallback(async () => {
     if (!menuUrl || !enabled) return
@@ -66,13 +69,13 @@ export function useMenuStream(
       if (data.timestamp !== lastTimestampRef.current) {
         lastTimestampRef.current = data.timestamp
         setMenu(data.menu)
+      }
 
-        // Apply theme
-        if (data.theme === 'dark') {
-          document.documentElement.classList.add('dark')
-        } else {
-          document.documentElement.classList.remove('dark')
-        }
+      // Apply theme only if it changed (separate from timestamp to avoid flicker)
+      if (data.theme !== lastThemeRef.current) {
+        lastThemeRef.current = data.theme
+        // Use next-themes setTheme to keep state in sync
+        setTheme(data.theme)
       }
 
       setIsConnected(true)
@@ -86,7 +89,7 @@ export function useMenuStream(
     if (enabled) {
       pollTimeoutRef.current = setTimeout(poll, pollInterval)
     }
-  }, [menuUrl, enabled, pollInterval])
+  }, [menuUrl, enabled, pollInterval, setTheme])
 
   // Start polling on mount
   useEffect(() => {

@@ -107,6 +107,13 @@
     @apply border-border;
   }
 
+  /* Smooth theme color transitions for elements using theme colors */
+  [class*="bg-"],
+  [class*="text-"],
+  [class*="border-"] {
+    transition: background-color 2s ease-in-out, color 2s ease-in-out, border-color 2s ease-in-out !important;
+  }
+
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-poppins), 'Poppins', system-ui, sans-serif;
@@ -321,7 +328,7 @@
   }
 
   .menu-item-stable {
-    transition: transform 0.4s ease-out, opacity 0.4s ease-out;
+    transition: transform 0.4s ease-out, opacity 0.4s ease-out, background-color 2s ease-in-out, border-color 2s ease-in-out, color 2s ease-in-out;
   }
 
   /* Staggered entry animation for lists */
