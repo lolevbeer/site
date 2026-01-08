@@ -274,6 +274,9 @@ export const Menus: CollectionConfig = {
         { label: 'Always Light', value: 'light' },
         { label: 'Always Dark', value: 'dark' },
       ],
+      access: {
+        update: adminFieldAccess,
+      },
       admin: {
         description: 'Override automatic day/night theme switching',
         position: 'sidebar',
