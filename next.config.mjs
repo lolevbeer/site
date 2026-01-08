@@ -5,6 +5,21 @@ import { withSentryConfig } from '@sentry/nextjs'
 const nextConfig = {
   trailingSlash: true,
 
+  // Add caching headers for media files to reduce blob transfer
+  async headers() {
+    return [
+      {
+        source: '/api/media/file/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable', // 1 year, immutable (filenames are unique)
+          },
+        ],
+      },
+    ]
+  },
+
   eslint: {
     ignoreDuringBuilds: true,
   },
