@@ -367,8 +367,8 @@ export function FeaturedMenu({ menuType, menu, menus = [], isAuthenticated, anim
                       <div className="flex-grow">{isOtherMenu ? 'Item' : 'Beer'}</div>
                       <div className="flex" style={{ gap: '2vh' }}>
                         {!isOtherMenu && <div className="text-center" style={{ minWidth: '5vh' }}>ABV</div>}
-                        <div className="text-center" style={{ minWidth: '6vh' }}>Half</div>
-                        <div className="text-center" style={{ minWidth: '6vh' }}>Full</div>
+                        {!isOtherMenu && <div className="text-center" style={{ minWidth: '6vh' }}>Half</div>}
+                        <div className="text-center" style={{ minWidth: '6vh' }}>{isOtherMenu ? 'Price' : 'Full'}</div>
                       </div>
                     </div>
                   );
