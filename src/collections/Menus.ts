@@ -1,6 +1,7 @@
 import type { CollectionConfig, Access, Where } from 'payload'
 import { APIError } from 'payload'
 import { adminAccess, adminFieldAccess, hasRole, isAdmin } from '@/src/access/roles'
+import { revalidateMenuCache } from '@/src/hooks/revalidate-menu'
 
 /**
  * Get location IDs from user's assigned locations
@@ -76,6 +77,7 @@ export const Menus: CollectionConfig = {
     maxPerDoc: 50, // Keep only the last 50 versions per document
   },
   hooks: {
+    afterChange: [revalidateMenuCache],
     beforeValidate: [
       ({ data }) => {
         if (!data?.items || !Array.isArray(data.items)) return data

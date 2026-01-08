@@ -1,51 +1,37 @@
-import { NextRequest } from 'next/server'
-import { getMenuByUrlFresh } from '@/lib/utils/payload-api'
+import { NextRequest, NextResponse } from 'next/server'
+import { getMenuByUrl } from '@/lib/utils/payload-api'
 import { getPittsburghTheme } from '@/lib/utils/pittsburgh-time'
-import crypto from 'crypto'
-
-// Poll interval in milliseconds (2 seconds for near-instant updates)
-const POLL_INTERVAL_MS = 2000
-
-// In dev mode, close connections after 30s to prevent blocking compilation
-const DEV_TIMEOUT_MS = 30000
-const isDev = process.env.NODE_ENV === 'development'
+import { unstable_cache } from 'next/cache'
+import { CACHE_TAGS } from '@/lib/utils/cache'
 
 /**
- * Generate hash from menu data to detect changes
- * Includes updatedAt, item count, and item IDs/prices for comprehensive change detection
+ * Cached menu fetch with tag-based invalidation
+ * Cache is invalidated by the revalidateMenuCache hook when menu is updated
  */
-function generateHash(menu: {
-  updatedAt?: string
-  items?: Array<{
-    id?: string | null
-    product?: { relationTo: string; value: unknown }
-    price?: string | null
-  }>
-}): string {
-  // Build a content string from all relevant data
-  const itemsHash = (menu.items || [])
-    .map(item => {
-      // Extract product ID from the polymorphic relation
-      const productValue = item.product?.value
-      const productId = typeof productValue === 'object' && productValue !== null
-        ? (productValue as { id?: string }).id
-        : productValue
-      return `${item.id || ''}-${productId || ''}-${item.price || ''}`
-    })
-    .join('|')
-
-  const content = `${menu.updatedAt || ''}-${menu.items?.length || 0}-${itemsHash}`
-  return crypto.createHash('md5').update(content).digest('hex').slice(0, 16)
-}
+const getCachedMenu = (url: string) =>
+  unstable_cache(
+    async () => {
+      const menu = await getMenuByUrl(url)
+      return menu
+    },
+    [`menu-stream-${url}`],
+    {
+      tags: [CACHE_TAGS.menus, `menu-${url}`],
+      revalidate: 60, // Fallback revalidation every 60 seconds
+    }
+  )()
 
 /**
- * SSE endpoint for real-time menu updates
+ * Menu polling endpoint
  *
- * Uses Server-Sent Events to push menu updates to clients.
- * Vercel Edge has a 30s timeout, so clients auto-reconnect.
- * This is much more efficient than polling for many displays.
+ * Returns menu data as JSON with caching headers.
+ * Cache is invalidated on-demand when menu is updated in Payload.
+ * Client polls this endpoint every 1-2 seconds for near-instant updates.
  *
- * Uses uncached getMenuByUrlFresh for immediate updates when content changes.
+ * This is much more cost-effective than SSE because:
+ * - Cached responses don't use CPU (served from edge cache)
+ * - Only actual menu changes trigger fresh DB queries
+ * - No persistent connections keeping functions alive
  */
 export async function GET(
   request: NextRequest,
@@ -53,101 +39,37 @@ export async function GET(
 ) {
   const { url } = await params
 
-  // Check for SSE support
-  const accept = request.headers.get('Accept')
-  if (!accept?.includes('text/event-stream')) {
-    return new Response('SSE not supported', { status: 400 })
-  }
+  try {
+    const menu = await getCachedMenu(url)
 
-  const encoder = new TextEncoder()
-  let lastHash = ''
-  let lastTheme = ''
-  let isActive = true
-  let devTimeout: NodeJS.Timeout | null = null
-
-  const stream = new ReadableStream({
-    async start(controller) {
-      // In dev mode, auto-close after timeout to prevent blocking compilation
-      if (isDev) {
-        devTimeout = setTimeout(() => {
-          if (isActive) {
-            isActive = false
-            controller.enqueue(encoder.encode(`event: reconnect\ndata: {"reason": "dev-timeout"}\n\n`))
-            controller.close()
-          }
-        }, DEV_TIMEOUT_MS)
-      }
-
-      // Send initial menu data
-      try {
-        const menu = await getMenuByUrlFresh(url)
-        if (!menu) {
-          controller.enqueue(encoder.encode(`event: error\ndata: {"error": "Menu not found"}\n\n`))
-          controller.close()
-          return
-        }
-
-        lastHash = generateHash(menu)
-        controller.enqueue(encoder.encode(`event: menu\ndata: ${JSON.stringify(menu)}\n\n`))
-
-        // Send initial theme
-        lastTheme = getPittsburghTheme()
-        controller.enqueue(encoder.encode(`event: theme\ndata: {"theme": "${lastTheme}"}\n\n`))
-
-        // Poll for changes (server-side polling with uncached queries)
-        const checkForUpdates = async () => {
-          if (!isActive) return
-
-          try {
-            const currentMenu = await getMenuByUrlFresh(url)
-            if (!currentMenu) return
-
-            const currentHash = generateHash(currentMenu)
-            if (currentHash !== lastHash) {
-              lastHash = currentHash
-              controller.enqueue(encoder.encode(`event: menu\ndata: ${JSON.stringify(currentMenu)}\n\n`))
-            }
-
-            // Check for theme changes (sunrise/sunset)
-            const currentTheme = getPittsburghTheme()
-            if (currentTheme !== lastTheme) {
-              lastTheme = currentTheme
-              controller.enqueue(encoder.encode(`event: theme\ndata: {"theme": "${currentTheme}"}\n\n`))
-            }
-
-            // Send heartbeat to keep connection alive
-            controller.enqueue(encoder.encode(`: heartbeat\n\n`))
-          } catch (error) {
-            console.error('SSE update check error:', error)
-          }
-
-          // Schedule next check if still active
-          if (isActive) {
-            setTimeout(checkForUpdates, POLL_INTERVAL_MS)
-          }
-        }
-
-        // Start checking for updates after initial send
-        setTimeout(checkForUpdates, POLL_INTERVAL_MS)
-
-      } catch (error) {
-        console.error('SSE start error:', error)
-        controller.enqueue(encoder.encode(`event: error\ndata: {"error": "Internal server error"}\n\n`))
-        controller.close()
-      }
-    },
-    cancel() {
-      isActive = false
-      if (devTimeout) clearTimeout(devTimeout)
+    if (!menu) {
+      return NextResponse.json(
+        { error: 'Menu not found' },
+        { status: 404 }
+      )
     }
-  })
 
-  return new Response(stream, {
-    headers: {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache, no-transform',
-      'Connection': 'keep-alive',
-      'X-Accel-Buffering': 'no', // Disable nginx buffering
-    },
-  })
+    // Get current theme for dark mode
+    const theme = getPittsburghTheme()
+
+    return NextResponse.json(
+      {
+        menu,
+        theme,
+        timestamp: Date.now(),
+      },
+      {
+        headers: {
+          // Allow caching at edge, but revalidate frequently
+          'Cache-Control': 'public, s-maxage=2, stale-while-revalidate=10',
+        },
+      }
+    )
+  } catch (error) {
+    console.error('Menu fetch error:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch menu' },
+      { status: 500 }
+    )
+  }
 }

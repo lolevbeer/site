@@ -12,16 +12,15 @@ interface LiveMenuProps {
 /**
  * Live-updating menu display component
  *
- * Uses Server-Sent Events (SSE) for real-time updates.
- * - Single persistent connection per display
- * - Updates within 5 seconds of Payload changes
- * - Auto-reconnects if connection drops
- * - Much more efficient than polling for many displays
+ * Uses polling against a cached endpoint for real-time updates.
+ * - Polls every 2 seconds for near-instant updates
+ * - Cache is invalidated on-demand when menu is updated in Payload
+ * - Much more cost-effective than SSE on Vercel (no persistent connections)
  */
 export function LiveMenu({ menuUrl, initialMenu }: LiveMenuProps) {
   const { menu } = useMenuStream(menuUrl, initialMenu, {
     enabled: true,
-    reconnectDelay: 1000,
+    pollInterval: 2000,
   })
 
   // Use streamed menu if available, otherwise fall back to initial
