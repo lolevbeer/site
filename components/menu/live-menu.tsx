@@ -13,6 +13,7 @@ interface LiveMenuProps {
 const lightVars = {
   '--color-background': '#ffffff',
   '--color-foreground': '#1d1d1f',
+  '--color-foreground-muted': '#6e6e73',
   '--color-card': '#ffffff',
   '--color-card-foreground': '#1d1d1f',
   '--color-primary': '#1d1d1f',
@@ -28,6 +29,7 @@ const lightVars = {
 const darkVars = {
   '--color-background': '#000000',
   '--color-foreground': '#f5f5f7',
+  '--color-foreground-muted': '#acacae',
   '--color-card': '#1d1d1f',
   '--color-card-foreground': '#f5f5f7',
   '--color-primary': '#ffffff',

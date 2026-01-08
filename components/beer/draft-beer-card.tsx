@@ -85,12 +85,12 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
               </div>
               <div className="flex flex-col" style={{ gap: '0.2vh' }}>
                 {beer.description && (
-                  <p className="text-foreground/70 line-clamp-3 leading-tight" style={{ fontSize: '1.6vh' }}>
+                  <p className="text-foreground-muted line-clamp-3 leading-tight" style={{ fontSize: '1.6vh' }}>
                     {beer.description}
                   </p>
                 )}
                 {beer.hops && (
-                  <p className="text-foreground/70 line-clamp-2 leading-tight" style={{ fontSize: '1.6vh' }}>
+                  <p className="text-foreground-muted line-clamp-2 leading-tight" style={{ fontSize: '1.6vh' }}>
                     <span className="font-medium">Hops:</span> {beer.hops}
                   </p>
                 )}
@@ -102,7 +102,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
               {showAbv && (
                 <div className="text-center" style={{ minWidth: '5vh' }}>
                   {beer.abv && (
-                    <div className="font-bold text-foreground/70 tabular-nums" style={{ fontSize: '2.8vh' }}>
+                    <div className="font-bold text-foreground-muted tabular-nums" style={{ fontSize: '2.8vh' }}>
                       {beer.abv}%
                     </div>
                   )}
