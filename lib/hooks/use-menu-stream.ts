@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { useTheme } from 'next-themes'
 import type { Menu } from '@/src/payload-types'
 
 interface UseMenuStreamOptions {
@@ -13,6 +12,7 @@ interface UseMenuStreamOptions {
 
 interface UseMenuStreamResult {
   menu: Menu | null
+  theme: 'light' | 'dark'
   isConnected: boolean
   error: Error | null
 }
@@ -41,15 +41,14 @@ export function useMenuStream(
   options: UseMenuStreamOptions = {}
 ): UseMenuStreamResult {
   const { enabled = true, pollInterval = 2000 } = options
-  const { setTheme } = useTheme()
 
   const [menu, setMenu] = useState<Menu | null>(initialMenu)
+  const [theme, setThemeState] = useState<'light' | 'dark'>('light')
   const [isConnected, setIsConnected] = useState(false)
   const [error, setError] = useState<Error | null>(null)
 
   const pollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const lastTimestampRef = useRef<number>(0)
-  const lastThemeRef = useRef<string | null>(null)
 
   const poll = useCallback(async () => {
     if (!menuUrl || !enabled) return
@@ -71,12 +70,8 @@ export function useMenuStream(
         setMenu(data.menu)
       }
 
-      // Apply theme only if it changed (separate from timestamp to avoid flicker)
-      if (data.theme !== lastThemeRef.current) {
-        lastThemeRef.current = data.theme
-        // Use next-themes setTheme to keep state in sync
-        setTheme(data.theme)
-      }
+      // Always update theme state (component handles transitions)
+      setThemeState(data.theme)
 
       setIsConnected(true)
       setError(null)
@@ -89,7 +84,7 @@ export function useMenuStream(
     if (enabled) {
       pollTimeoutRef.current = setTimeout(poll, pollInterval)
     }
-  }, [menuUrl, enabled, pollInterval, setTheme])
+  }, [menuUrl, enabled, pollInterval])
 
   // Start polling on mount
   useEffect(() => {
@@ -114,5 +109,5 @@ export function useMenuStream(
     }
   }, [initialMenu])
 
-  return { menu, isConnected, error }
+  return { menu, theme, isConnected, error }
 }
