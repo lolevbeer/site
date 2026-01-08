@@ -71,26 +71,26 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
             {/* Beer Info - Main content */}
             <div className="flex-grow min-w-0 flex flex-col" style={{ gap: '0.3vh' }}>
               <div className="flex items-center flex-wrap" style={{ gap: '1vh' }}>
-                <h3 className="font-bold leading-tight truncate" style={{ fontSize: '2.5vh' }}>{beer.name}</h3>
+                <h3 className="font-bold leading-tight truncate" style={{ fontSize: '3vh' }}>{beer.name}</h3>
                 {beer.type && beer.type.split(', ').map((option, i) => (
-                  <Badge key={i} variant="outline" className="flex-shrink-0 font-normal" style={{ fontSize: '1.5vh' }}>
+                  <Badge key={i} variant="outline" className="flex-shrink-0" style={{ fontSize: '1.8vh' }}>
                     {option}
                   </Badge>
                 ))}
                 {showJustReleased && beer.isJustReleased && (
-                  <Badge variant="default" className="flex-shrink-0" style={{ fontSize: '1.5vh' }}>
+                  <Badge variant="default" className="flex-shrink-0" style={{ fontSize: '1.8vh' }}>
                     Just Released
                   </Badge>
                 )}
               </div>
               <div className="flex flex-col" style={{ gap: '0.2vh' }}>
                 {beer.description && (
-                  <p className="text-foreground/70 line-clamp-3 leading-tight" style={{ fontSize: '1.6vh' }}>
+                  <p className="text-foreground-muted line-clamp-3 leading-tight" style={{ fontSize: '1.6vh' }}>
                     {beer.description}
                   </p>
                 )}
                 {beer.hops && (
-                  <p className="text-foreground/70 truncate leading-tight" style={{ fontSize: '1.6vh' }}>
+                  <p className="text-foreground-muted line-clamp-2 leading-tight" style={{ fontSize: '1.6vh' }}>
                     <span className="font-medium">Hops:</span> {beer.hops}
                   </p>
                 )}
@@ -102,14 +102,23 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
               {showAbv && (
                 <div className="text-center" style={{ minWidth: '5vh' }}>
                   {beer.abv && (
-                    <div className="font-bold text-foreground/70 tabular-nums" style={{ fontSize: '2.8vh' }}>
+                    <div className="font-bold text-foreground-muted tabular-nums" style={{ fontSize: '2.8vh' }}>
                       {beer.abv}%
                     </div>
                   )}
                 </div>
               )}
+              {/* Half pour price - always render column for alignment */}
               <div className="text-center" style={{ minWidth: '6vh' }}>
-                {beer.pricing?.draftPrice && (
+                {beer.pricing?.halfPour && (
+                  <div className="font-bold text-primary tabular-nums" style={{ fontSize: '3.8vh' }}>
+                    ${beer.pricing.halfPour}
+                  </div>
+                )}
+              </div>
+              {/* Full price - always render column, show value if not halfPourOnly */}
+              <div className="text-center" style={{ minWidth: '6vh' }}>
+                {!beer.pricing?.halfPourOnly && beer.pricing?.draftPrice && (
                   <div className="font-bold text-primary tabular-nums" style={{ fontSize: '3.8vh' }}>
                     ${beer.pricing.draftPrice}
                   </div>
@@ -125,7 +134,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
   // Standard mode with Tailwind classes
   return (
     <Link href={showLocation ? `/${currentLocation}/beer/${beerSlug}` : `/beer/${beerSlug}`} className="group block h-full">
-      <div className={`overflow-hidden transition-colors duration-200 cursor-pointer hover:bg-secondary/50 h-full min-h-[80px] bg-background ${className}`}>
+      <div className={`overflow-hidden transition-colors duration-200 cursor-pointer hover:bg-secondary/50 h-full min-h-[80px] bg-background rounded-lg ${className}`}>
         <div className="flex items-center gap-6 px-4 h-full">
           {/* Tap Number and Glass Icon */}
           {showGlass && (
@@ -144,7 +153,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                 </Badge>
               )}
               {beer.type && beer.type.split(', ').map((option, i) => (
-                <Badge key={i} variant="outline" className="text-sm flex-shrink-0 font-normal">
+                <Badge key={i} variant="outline" className="text-sm flex-shrink-0">
                   {option}
                 </Badge>
               ))}

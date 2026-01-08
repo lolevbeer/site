@@ -13,7 +13,9 @@ export const Users: CollectionConfig = {
     tokenExpiration: 604800,
   },
   admin: {
+    group: 'Settings',
     useAsTitle: 'email',
+    hideAPIURL: true,
   },
   access: {
     read: adminOrSelfAccess,
@@ -26,6 +28,9 @@ export const Users: CollectionConfig = {
     {
       name: 'name',
       type: 'text',
+      admin: {
+        position: 'sidebar',
+      },
     },
     {
       name: 'locations',

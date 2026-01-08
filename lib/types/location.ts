@@ -6,15 +6,10 @@
 import type { Location as BasePayloadLocation } from '@/src/payload-types';
 
 /**
- * Extended Payload Location type that includes coordinates
- * The images field is now part of BasePayloadLocation from generated types
+ * Extended Payload Location type
+ * coordinates is now a point field: [longitude, latitude]
  */
-export interface PayloadLocation extends BasePayloadLocation {
-  coordinates?: {
-    latitude?: number | null;
-    longitude?: number | null;
-  } | null;
-}
+export type PayloadLocation = BasePayloadLocation;
 
 /**
  * Location slug type - string identifier from database
@@ -164,10 +159,14 @@ export function toLocationInfo(location: PayloadLocation): LocationInfo {
   const state = location.address?.state || undefined;
   const zipCode = location.address?.zip || undefined;
 
-  // Generate Google Maps URL
+  // Use custom directions URL if provided, otherwise generate Google Maps URL
+  // coordinates is a point field: [longitude, latitude]
   let mapUrl: string | undefined;
-  if (location.coordinates?.latitude && location.coordinates?.longitude) {
-    mapUrl = `https://www.google.com/maps/dir/?api=1&destination=${location.coordinates.latitude},${location.coordinates.longitude}`;
+  if (location.address?.directionsUrl) {
+    mapUrl = location.address.directionsUrl;
+  } else if (location.coordinates && location.coordinates.length === 2) {
+    const [lng, lat] = location.coordinates;
+    mapUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
   } else if (address && city && state) {
     mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
       `${address}, ${city}, ${state} ${zipCode || ''}`

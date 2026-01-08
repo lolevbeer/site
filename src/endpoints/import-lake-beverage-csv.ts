@@ -1,4 +1,6 @@
 import type { PayloadHandler } from 'payload'
+import { getUserFromRequest } from './auth-helper'
+import { geocode } from './geocode'
 
 interface ParsedRow {
   name: string
@@ -74,23 +76,6 @@ function formatPhone(phone: string): string {
   return phone
 }
 
-async function geocodeAddress(address: string): Promise<[number, number] | null> {
-  const encoded = encodeURIComponent(address)
-  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encoded}&limit=1`
-
-  try {
-    const response = await fetch(url, {
-      headers: { 'User-Agent': 'LolevBeer-Import/1.0' },
-    })
-    if (!response.ok) return null
-    const data = await response.json()
-    if (data.length === 0) return null
-    return [parseFloat(data[0].lon), parseFloat(data[0].lat)]
-  } catch {
-    return null
-  }
-}
-
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
@@ -98,7 +83,8 @@ function sleep(ms: number): Promise<void> {
 const DEFAULT_COORDS: [number, number] = [-77.6109, 43.1566]
 
 export const importLakeBeverageCSV: PayloadHandler = async (req) => {
-  const { payload, user } = req
+  const { payload } = req
+  const user = req.user ?? await getUserFromRequest(req, payload)
 
   if (!user || !user.roles?.includes('admin')) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
@@ -161,7 +147,7 @@ export const importLakeBeverageCSV: PayloadHandler = async (req) => {
 
           // Geocode
           const fullAddress = `${row.address}, ${row.city}, ${row.state} ${row.zip}`.trim()
-          const coords = await geocodeAddress(fullAddress)
+          const coords = await geocode(fullAddress)
           const location = coords || DEFAULT_COORDS
 
           if (!coords) {

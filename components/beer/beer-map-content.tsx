@@ -27,13 +27,14 @@ export function BeerMapContent({ weeklyHours, distributorData }: BeerMapContentP
       <PageBreadcrumbs className="mb-6" />
       {/* Page Header */}
       <div className="text-center mb-8">
-        <h1 className="text-4xl md:text-5xl font-bold">
+        <h1 className="text-4xl md:text-5xl font-bold mb-2">
           Where to find us
         </h1>
+        <div className="w-16 h-1 bg-primary mx-auto rounded-full" />
       </div>
 
       {/* Hours Panel */}
-      <div className="mb-8">
+      <div className="mb-8 max-w-md mx-auto">
         <HoursPanel weeklyHours={weeklyHours} />
       </div>
 
@@ -42,7 +43,7 @@ export function BeerMapContent({ weeklyHours, distributorData }: BeerMapContentP
         <DistributorMap
           height={700}
           showSearch={true}
-          initialZoom={6.5}
+          initialZoom={5}
           maxPoints={10}
           initialData={distributorData}
         />

@@ -1,16 +1,18 @@
 import type { CollectionConfig } from 'payload'
-import { adminAccess, beerManagerAccess } from '@/src/access/roles'
+import { adminAccess, hasRole, isAdmin } from '@/src/access/roles'
 
 export const Products: CollectionConfig = {
   slug: 'products',
   admin: {
+    group: 'Front of House',
     useAsTitle: 'name',
+    hideAPIURL: true,
     defaultColumns: ['name', 'price', 'category'],
   },
   access: {
     read: () => true,
-    create: beerManagerAccess,
-    update: beerManagerAccess,
+    create: ({ req: { user } }) => hasRole(user, ['admin', 'beer-manager', 'bartender']),
+    update: ({ req: { user } }) => hasRole(user, ['admin', 'beer-manager', 'bartender']),
     delete: adminAccess,
   },
   fields: [
@@ -25,6 +27,7 @@ export const Products: CollectionConfig = {
       hasMany: true,
       admin: {
         description: 'Press "Enter" or "Tab" after entering option to add another',
+        position: 'sidebar',
       },
     },
     {
@@ -33,6 +36,7 @@ export const Products: CollectionConfig = {
       admin: {
         description: 'Alcohol by volume (%)',
         step: 0.1,
+        position: 'sidebar',
       },
     },
     {

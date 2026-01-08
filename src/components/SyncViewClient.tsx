@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useRef } from 'react'
-import { Gutter } from '@payloadcms/ui'
+import { Gutter, SetStepNav } from '@payloadcms/ui'
 import { format } from 'date-fns-tz'
 import { getSiteContentData } from '@/src/actions/admin-data'
 import { parseSSEStream, isSSEResponse } from '@/lib/utils/sse-parser'
@@ -26,7 +26,7 @@ interface LogEntry {
   changes?: FieldChange[] | MenuChanges
 }
 
-type CollectionType = 'events' | 'food' | 'beers' | 'menus' | 'hours' | 'recalc'
+type CollectionType = 'events' | 'food' | 'beers' | 'menus' | 'hours'
 
 interface SyncResults {
   events?: { imported: number; updated: number; skipped: number; errors: number }
@@ -34,7 +34,6 @@ interface SyncResults {
   beers?: { imported: number; updated: number; skipped: number; errors: number }
   menus?: { imported: number; updated: number; skipped: number; errors: number }
   hours?: { imported: number; updated: number; skipped: number; errors: number }
-  recalc?: { updated: number; skipped: number; errors: number }
   dryRun?: boolean
 }
 
@@ -55,7 +54,11 @@ interface DistributorImportResult {
   details: string[]
 }
 
-export const SyncViewClient: React.FC = () => {
+interface SyncViewClientProps {
+  isAdmin: boolean
+}
+
+export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
   const [syncing, setSyncing] = useState(false)
   const [dryRun, setDryRun] = useState(true)
   const [selectedCollections, setSelectedCollections] = useState<CollectionType[]>([])
@@ -91,6 +94,13 @@ export const SyncViewClient: React.FC = () => {
   const [recalcDryRun, setRecalcDryRun] = useState(true)
   const [recalcResults, setRecalcResults] = useState<{ updated: number; skipped: number; errors: number } | null>(null)
   const [recalcLogs, setRecalcLogs] = useState<string[]>([])
+
+  // Re-geocode distributors state
+  const [regeocodeRunning, setRegeocodeRunning] = useState(false)
+  const [regeocodeDryRun, setRegeocodeDryRun] = useState(true)
+  const [regeocodeResults, setRegeocodeResults] = useState<{ checked: number; suspicious: number; fixed: number; failed: number; distributors?: any[] } | null>(null)
+  const [regeocodeProgress, setRegeocodeProgress] = useState<{ current: number; total: number; name: string; percent: number } | null>(null)
+  const [regeocodeLogs, setRegeocodeLogs] = useState<string[]>([])
 
   // Load distributor URLs on mount using local API
   React.useEffect(() => {
@@ -359,9 +369,8 @@ export const SyncViewClient: React.FC = () => {
     try {
       const params = new URLSearchParams()
       if (recalcDryRun) params.set('dryRun', 'true')
-      params.set('collections', 'recalc')
 
-      const response = await fetch(`/api/sync-google-sheets?${params.toString()}`, {
+      const response = await fetch(`/api/recalculate-beer-prices?${params.toString()}`, {
         method: 'POST',
         credentials: 'same-origin',
       })
@@ -376,8 +385,8 @@ export const SyncViewClient: React.FC = () => {
         status: (data: any) => setRecalcLogs(prev => [...prev.slice(-99), data.message]),
         error: (data: any) => setRecalcLogs(prev => [...prev.slice(-99), `Error: ${data.message}`]),
         complete: (data: any) => {
-          if (data.results?.recalc) {
-            setRecalcResults(data.results.recalc)
+          if (data.results) {
+            setRecalcResults(data.results)
           }
         },
       })
@@ -385,6 +394,76 @@ export const SyncViewClient: React.FC = () => {
       setRecalcLogs(prev => [...prev, `Error: ${error.message || 'Recalculation failed'}`])
     } finally {
       setRecalcRunning(false)
+    }
+  }
+
+  const handleRegeocodeDistributors = async () => {
+    setRegeocodeRunning(true)
+    setRegeocodeResults(null)
+    setRegeocodeProgress(null)
+    setRegeocodeLogs([])
+
+    try {
+      const params = new URLSearchParams()
+      if (regeocodeDryRun) params.set('dryRun', 'true')
+
+      const response = await fetch(`/api/regeocode-distributors?${params.toString()}`, {
+        method: 'POST',
+        credentials: 'same-origin',
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        setRegeocodeResults({
+          checked: 0,
+          suspicious: 0,
+          fixed: 0,
+          failed: 1,
+        })
+        setRegeocodeLogs([`Error: ${data.error || 'Request failed'}`])
+        setRegeocodeRunning(false)
+        return
+      }
+
+      // Check if it's SSE or JSON response
+      const contentType = response.headers.get('content-type') || ''
+      if (contentType.includes('text/event-stream')) {
+        await parseSSEStream(response, {
+          progress: (data: any) => setRegeocodeProgress(data),
+          item: (data: any) => {
+            const msg = data.status === 'fixed'
+              ? `Fixed: ${data.name}`
+              : data.status === 'skipped'
+                ? `Skipped: ${data.name} - ${data.note}`
+                : `Failed: ${data.name} - ${data.note || data.error}`
+            setRegeocodeLogs(prev => [...prev.slice(-99), msg])
+          },
+          complete: (data: any) => {
+            setRegeocodeResults({
+              checked: data.checked || 0,
+              suspicious: data.suspicious || 0,
+              fixed: data.fixed || 0,
+              failed: data.failed || 0,
+            })
+            setRegeocodeProgress(null)
+          },
+        })
+      } else {
+        // JSON response (dry run or no suspicious found)
+        const data = await response.json()
+        setRegeocodeResults({
+          checked: data.checked || 0,
+          suspicious: data.suspicious || 0,
+          fixed: data.fixed || 0,
+          failed: 0,
+          distributors: data.distributors,
+        })
+      }
+    } catch (error: any) {
+      setRegeocodeLogs(prev => [...prev, `Error: ${error.message || 'Re-geocode failed'}`])
+    } finally {
+      setRegeocodeRunning(false)
+      setRegeocodeProgress(null)
     }
   }
 
@@ -455,6 +534,7 @@ export const SyncViewClient: React.FC = () => {
 
   return (
     <Gutter>
+      <SetStepNav nav={[{ label: 'Sync' }]} />
       <div style={{ maxWidth: '900px', paddingTop: '24px', paddingBottom: '48px' }}>
         {/* Header */}
         <div style={{ marginBottom: '24px' }}>
@@ -1309,11 +1389,238 @@ export const SyncViewClient: React.FC = () => {
                   </div>
                 )}
               </div>
+
+              {/* Fix Bad Coordinates Section */}
+              <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--theme-elevation-150)' }}>
+                <h3 style={{
+                  fontSize: '16px',
+                  fontWeight: 600,
+                  marginBottom: '8px',
+                  color: 'var(--theme-text)'
+                }}>
+                  Fix Bad Coordinates
+                </h3>
+                <p style={{
+                  fontSize: '13px',
+                  color: 'var(--theme-elevation-600)',
+                  marginBottom: '12px'
+                }}>
+                  Find and re-geocode distributors that have default/fallback coordinates (Pittsburgh, Columbus, or Rochester center)
+                </p>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <button
+                    onClick={handleRegeocodeDistributors}
+                    disabled={regeocodeRunning}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '8px 16px',
+                      fontSize: '13px',
+                      fontWeight: 500,
+                      borderRadius: '4px',
+                      border: 'none',
+                      cursor: regeocodeRunning ? 'not-allowed' : 'pointer',
+                      opacity: regeocodeRunning ? 0.6 : 1,
+                      backgroundColor: regeocodeDryRun ? '#a855f7' : 'var(--theme-success-500)',
+                      color: 'white',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    {regeocodeRunning && (
+                      <svg
+                        style={{ animation: 'spin 1s linear infinite', width: '14px', height: '14px' }}
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          style={{ opacity: 0.25 }}
+                          cx="12" cy="12" r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                          fill="none"
+                        />
+                        <path
+                          style={{ opacity: 0.75 }}
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        />
+                      </svg>
+                    )}
+                    {regeocodeRunning ? (regeocodeDryRun ? 'Scanning...' : 'Fixing...') : (regeocodeDryRun ? 'Find Bad Coords' : 'Fix Bad Coords')}
+                  </button>
+                  <label style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    fontSize: '13px',
+                    color: 'var(--theme-text)',
+                    cursor: 'pointer',
+                  }}>
+                    <input
+                      type="checkbox"
+                      checked={regeocodeDryRun}
+                      onChange={(e) => setRegeocodeDryRun(e.target.checked)}
+                      disabled={regeocodeRunning}
+                      style={{ width: '14px', height: '14px', cursor: 'pointer' }}
+                    />
+                    Dry run (preview only)
+                  </label>
+                </div>
+
+                {/* Progress Bar */}
+                {regeocodeProgress && (
+                  <div style={{ marginTop: '16px' }}>
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      fontSize: '13px',
+                      marginBottom: '6px',
+                      color: 'var(--theme-elevation-600)',
+                    }}>
+                      <span style={{
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        maxWidth: '70%',
+                      }}>
+                        {regeocodeProgress.name}
+                      </span>
+                      <span>{regeocodeProgress.current} / {regeocodeProgress.total} ({regeocodeProgress.percent}%)</span>
+                    </div>
+                    <div style={{
+                      height: '8px',
+                      backgroundColor: 'var(--theme-elevation-150)',
+                      borderRadius: '4px',
+                      overflow: 'hidden',
+                    }}>
+                      <div style={{
+                        height: '100%',
+                        width: `${regeocodeProgress.percent}%`,
+                        backgroundColor: '#a855f7',
+                        borderRadius: '4px',
+                        transition: 'width 0.3s ease',
+                      }} />
+                    </div>
+                  </div>
+                )}
+
+                {/* Log Console */}
+                {regeocodeLogs.length > 0 && (
+                  <div style={{
+                    marginTop: '12px',
+                    maxHeight: '150px',
+                    overflowY: 'auto',
+                    fontSize: '12px',
+                    fontFamily: 'monospace',
+                    backgroundColor: '#0d1117',
+                    padding: '12px',
+                    borderRadius: '4px',
+                    border: '1px solid #30363d',
+                  }}>
+                    {regeocodeLogs.map((log, i) => (
+                      <div key={i} style={{
+                        color: log.startsWith('Fixed')
+                          ? '#4ade80'
+                          : log.startsWith('Failed') || log.startsWith('Error')
+                            ? '#f87171'
+                            : '#8b949e',
+                        marginBottom: '2px',
+                      }}>
+                        {log}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Results */}
+                {regeocodeResults && (
+                  <div style={{
+                    marginTop: '16px',
+                    borderRadius: '8px',
+                    border: regeocodeResults.fixed > 0 || regeocodeResults.suspicious === 0
+                      ? '1px solid var(--theme-success-400)'
+                      : '1px solid var(--theme-elevation-400)',
+                    backgroundColor: regeocodeResults.fixed > 0 || regeocodeResults.suspicious === 0
+                      ? 'var(--theme-success-50)'
+                      : 'var(--theme-elevation-50)',
+                    padding: '16px',
+                  }}>
+                    <div style={{
+                      fontSize: '14px',
+                      fontWeight: 600,
+                      marginBottom: '8px',
+                      color: regeocodeResults.fixed > 0 || regeocodeResults.suspicious === 0
+                        ? 'var(--theme-success-700)'
+                        : 'var(--theme-elevation-700)',
+                    }}>
+                      {regeocodeDryRun ? 'Scan Results' : 'Fix Results'}
+                    </div>
+                    <div style={{ display: 'flex', gap: '16px', fontSize: '14px', flexWrap: 'wrap' }}>
+                      <span style={{ color: 'var(--theme-elevation-600)' }}>
+                        {regeocodeResults.checked} checked
+                      </span>
+                      <span style={{ color: regeocodeResults.suspicious > 0 ? '#f59e0b' : 'var(--theme-success-500)' }}>
+                        {regeocodeResults.suspicious} with bad coords
+                      </span>
+                      {!regeocodeDryRun && regeocodeResults.fixed > 0 && (
+                        <span style={{ color: 'var(--theme-success-500)' }}>
+                          {regeocodeResults.fixed} fixed
+                        </span>
+                      )}
+                      {!regeocodeDryRun && regeocodeResults.failed > 0 && (
+                        <span style={{ color: 'var(--theme-error-500)' }}>
+                          {regeocodeResults.failed} failed
+                        </span>
+                      )}
+                    </div>
+                    {/* List of distributors with bad coords (dry run) */}
+                    {regeocodeDryRun && regeocodeResults.distributors && regeocodeResults.distributors.length > 0 && (
+                      <div style={{
+                        marginTop: '12px',
+                        maxHeight: '200px',
+                        overflowY: 'auto',
+                        fontSize: '12px',
+                        fontFamily: 'monospace',
+                        backgroundColor: 'var(--theme-bg)',
+                        padding: '12px',
+                        borderRadius: '4px',
+                        border: '1px solid var(--theme-elevation-150)',
+                      }}>
+                        {regeocodeResults.distributors.map((dist: any, i: number) => (
+                          <div key={i} style={{ marginBottom: '8px', color: 'var(--theme-elevation-600)' }}>
+                            <strong style={{ color: 'var(--theme-text)' }}>{dist.name}</strong>
+                            <br />
+                            <span style={{ fontSize: '11px' }}>
+                              Address: {dist.address === '(missing)' ? <span style={{ color: '#f87171' }}>(missing)</span> : dist.address}
+                            </span>
+                            <br />
+                            <span style={{ fontSize: '11px' }}>
+                              City: {dist.city === '(missing)' ? <span style={{ color: '#f87171' }}>(missing)</span> : dist.city},
+                              State: {dist.state === '(missing)' ? <span style={{ color: '#f87171' }}>(missing)</span> : dist.state},
+                              Zip: {dist.zip === '(missing)' ? <span style={{ color: '#f87171' }}>(missing)</span> : dist.zip}
+                            </span>
+                            {dist.fullAddress && (
+                              <>
+                                <br />
+                                <span style={{ fontSize: '10px', color: '#8b949e' }}>
+                                  Will geocode: "{dist.fullAddress}"
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </>
           )}
         </div>
 
-        {/* Beer Utilities Section */}
+        {/* Beer Utilities Section - Admin Only */}
+        {isAdmin && (
         <div style={{
           marginTop: '48px',
           paddingTop: '24px',
@@ -1469,6 +1776,7 @@ export const SyncViewClient: React.FC = () => {
             </div>
           )}
         </div>
+        )}
 
         <style>{`
           @keyframes spin {

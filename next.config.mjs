@@ -5,6 +5,21 @@ import { withSentryConfig } from '@sentry/nextjs'
 const nextConfig = {
   trailingSlash: true,
 
+  // Add caching headers for media files to reduce blob transfer
+  async headers() {
+    return [
+      {
+        source: '/api/media/file/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable', // 1 year, immutable (filenames are unique)
+          },
+        ],
+      },
+    ]
+  },
+
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -89,9 +104,18 @@ export default withSentryConfig(payloadConfig, {
   // Upload source maps for better stack traces
   widenClientFileUpload: true,
 
-  // Automatically tree-shake Sentry logger statements to reduce bundle size
-  disableLogger: true,
-
   // Hide source maps from browser devtools in production
   hideSourceMaps: true,
+
+  // Tree-shake Sentry debug logging to reduce bundle size
+  bundleSizeOptimizations: {
+    excludeDebugStatements: true,
+  },
+
+  // Disable automatic instrumentation to avoid webpack conflicts
+  webpack: {
+    autoInstrumentServerFunctions: false,
+    autoInstrumentMiddleware: false,
+    autoInstrumentAppDirectory: false,
+  },
 })

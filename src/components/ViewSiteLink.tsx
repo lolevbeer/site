@@ -5,10 +5,8 @@ import React from 'react'
 export const ViewSiteLink: React.FC = () => {
   return (
     <a
-      href="/"
-      target="_blank"
-      rel="noopener noreferrer"
-      title="View Site"
+      href="/admin"
+      title="Admin Home"
       style={{
         display: 'flex',
         alignItems: 'center',

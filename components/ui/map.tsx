@@ -35,6 +35,7 @@ export interface LocationMarker {
   phone?: string;
   hours?: string;
   description?: string;
+  directionsUrl?: string;
 }
 
 interface MapComponentProps {
@@ -58,26 +59,31 @@ export function MapComponent({
   initialZoom = 10,
   style = 'streets'
 }: MapComponentProps) {
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
   const { locations: payloadLocations } = useLocationContext();
   const mapRef = React.useRef<any>(null);
 
   // Convert PayloadLocations to LocationMarkers
+  // coordinates is a point field: [longitude, latitude]
   const locations: LocationMarker[] = payloadLocations
-    .filter(loc => loc.coordinates?.latitude && loc.coordinates?.longitude)
-    .map(loc => ({
-      id: loc.id,
-      name: `Lolev Beer - ${loc.name}`,
-      slug: loc.slug || loc.id,
-      latitude: loc.coordinates!.latitude!,
-      longitude: loc.coordinates!.longitude!,
-      address: loc.address?.street || '',
-      city: loc.address?.city || '',
-      state: loc.address?.state || 'PA',
-      zipCode: loc.address?.zip || '',
-      phone: loc.basicInfo?.phone ?? undefined,
-      description: `Our location in ${loc.address?.city || loc.name}`
-    }));
+    .filter(loc => loc.coordinates && loc.coordinates.length === 2)
+    .map(loc => {
+      const [lng, lat] = loc.coordinates!;
+      return {
+        id: loc.id,
+        name: `Lolev Beer - ${loc.name}`,
+        slug: loc.slug || loc.id,
+        latitude: lat,
+        longitude: lng,
+        address: loc.address?.street || '',
+        city: loc.address?.city || '',
+        state: loc.address?.state || 'PA',
+        zipCode: loc.address?.zip || '',
+        phone: loc.basicInfo?.phone ?? undefined,
+        description: `Our location in ${loc.address?.city || loc.name}`,
+        directionsUrl: loc.address?.directionsUrl ?? undefined
+      };
+    });
 
   // Calculate center point
   const centerLat = locations.length > 0
@@ -97,7 +103,7 @@ export function MapComponent({
 
   // Map style URLs - auto-switch between light/dark based on theme
   const mapStyles = {
-    streets: theme === 'dark' ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/streets-v12',
+    streets: resolvedTheme === 'dark' ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/streets-v12',
     satellite: 'mapbox://styles/mapbox/satellite-streets-v12',
     light: 'mapbox://styles/mapbox/light-v11',
     dark: 'mapbox://styles/mapbox/dark-v11'
@@ -129,7 +135,7 @@ export function MapComponent({
   };
 
   const handleGetDirections = (location: LocationMarker) => {
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+    const url = location.directionsUrl || `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
       `${location.address}, ${location.city}, ${location.state} ${location.zipCode}`
     )}`;
     window.open(url, '_blank');

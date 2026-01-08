@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { eventManagerAccess, hasRole } from '@/src/access/roles'
+import { eventManagerAccess, hasRole, isAdmin } from '@/src/access/roles'
 
 export const Events: CollectionConfig = {
   slug: 'events',
@@ -21,7 +21,9 @@ export const Events: CollectionConfig = {
     delete: eventManagerAccess,
   },
   admin: {
+    group: 'Food & Events',
     useAsTitle: 'organizer',
+    hideAPIURL: true,
     defaultColumns: ['organizer', 'date', 'location', 'visibility'],
     pagination: {
       defaultLimit: 100,

@@ -31,7 +31,7 @@ export default function SentryExamplePage() {
       </p>
 
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
-        <Button onClick={throwClientError} variant="destructive">
+        <Button onClick={throwClientError} variant="default">
           Throw Client Error
         </Button>
         <Button onClick={captureManualError} variant="outline">

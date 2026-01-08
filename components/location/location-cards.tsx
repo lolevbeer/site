@@ -119,32 +119,38 @@ export function LocationCards({ weeklyHours }: LocationCardsProps) {
         const cardImage = getLocationImageUrl(location.images?.card);
         const fallbackGradient = fallbackGradients[index % fallbackGradients.length];
 
-        // Generate Google Maps URL if coordinates are available
-        const mapUrl = location.coordinates?.latitude && location.coordinates?.longitude
-          ? `https://www.google.com/maps/dir/?api=1&destination=${location.coordinates.latitude},${location.coordinates.longitude}`
-          : location.address?.street && location.address?.city && location.address?.state
-            ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                `${location.address.street}, ${location.address.city}, ${location.address.state} ${location.address.zip || ''}`
-              )}`
-            : '#';
+        // Use custom directions URL if provided, otherwise generate from coordinates/address
+        // coordinates is a point field: [longitude, latitude]
+        const mapUrl = location.address?.directionsUrl
+          || (location.coordinates && location.coordinates.length === 2
+            ? `https://www.google.com/maps/dir/?api=1&destination=${location.coordinates[1]},${location.coordinates[0]}`
+            : location.address?.street && location.address?.city && location.address?.state
+              ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                  `${location.address.street}, ${location.address.city}, ${location.address.state} ${location.address.zip || ''}`
+                )}`
+              : '#');
 
         return (
-          <div key={locationKey} className="flex flex-col relative pb-16">
+          <div
+            key={locationKey}
+            className="flex flex-col relative pb-16 animate-stagger-in opacity-0"
+            style={{ animationDelay: `${index * 100}ms` }}
+          >
             {/* Location Image */}
-            <div className="aspect-video relative mb-6">
+            <div className="aspect-video relative mb-6 group overflow-hidden rounded-lg">
               {cardImage ? (
                 <Image
                   src={cardImage}
                   alt={`${location.name} location`}
                   fill
-                  className="object-cover rounded-lg"
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
                   priority={index === 0}
                   fetchPriority={index === 0 ? "high" : "low"}
                   quality={85}
                   sizes="(max-width: 768px) 100vw, 50vw"
                 />
               ) : (
-                <div className={`h-full bg-gradient-to-br ${fallbackGradient} rounded-lg`} />
+                <div className={`h-full bg-gradient-to-br ${fallbackGradient}`} />
               )}
             </div>
 

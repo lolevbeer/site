@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { adminAccess } from '@/src/access/roles'
+import { adminAccess, isAdmin } from '@/src/access/roles'
 
 export const Distributors: CollectionConfig = {
   slug: 'distributors',
@@ -10,7 +10,9 @@ export const Distributors: CollectionConfig = {
     delete: adminAccess,
   },
   admin: {
+    group: 'Settings',
     useAsTitle: 'name',
+    hideAPIURL: true,
     defaultColumns: ['name', 'address', 'customerType', 'region'],
     pagination: {
       defaultLimit: 100,

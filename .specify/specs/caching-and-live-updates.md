@@ -1,9 +1,9 @@
 # Feature Specification: Caching and Live Menu Updates
 
 **Feature Branch**: `payload`
-**Created**: 2024-12-10
-**Updated**: 2024-12-11
-**Status**: Implemented (with known limitations)
+**Created**: 2025-12-10
+**Updated**: 2026-01-08
+**Status**: Implemented (SSE replaced with cached polling)
 **Input**: User description: "Optimize site caching with Payload CMS revalidation and add live updates to menu displays"
 
 ## User Scenarios & Testing *(mandatory)*
@@ -27,16 +27,16 @@ When a staff member updates a menu in Payload CMS admin (adding/removing beers, 
 
 ### User Story 2 - Efficient Resource Usage (Priority: P2)
 
-Menu displays (TVs in taproom) should receive updates efficiently without excessive bandwidth or server load, staying within Vercel free tier limits.
+Menu displays (TVs in taproom) should receive updates efficiently without excessive bandwidth or server load, minimizing Vercel "Fluid Active CPU" costs.
 
-**Why this priority**: 20+ displays running 24/7 need to be resource-efficient and stay within free tier (100K requests/month).
+**Why this priority**: 20+ displays running 24/7 need to be cost-effective. SSE was keeping serverless functions alive 24/7 (high CPU cost).
 
-**Independent Test**: Verify SSE connections in Network tab - should show single persistent connection per display.
+**Independent Test**: Verify Network tab shows regular polling requests that return quickly (not persistent connections).
 
 **Acceptance Scenarios**:
 
-1. **Given** a menu display is connected via SSE, **When** menu content has not changed, **Then** only heartbeat messages are sent (minimal bandwidth)
-2. **Given** 20 displays are connected, **When** 1 hour passes, **Then** total Vercel requests stay minimal (reconnects only)
+1. **Given** a menu display is polling, **When** menu content has not changed, **Then** cached responses are served from edge (no CPU cost)
+2. **Given** 20 displays are polling, **When** 1 hour passes, **Then** most requests hit edge cache (minimal function invocations)
 
 ---
 
@@ -85,11 +85,11 @@ When beers, locations, events, or other content changes in Payload, all affected
 
 - **FR-001**: System MUST invalidate relevant Next.js cache tags when Payload content changes
 - **FR-002**: System MUST use `unstable_cache` with tags for all Payload data fetching functions
-- **FR-003**: Menu pages MUST use Server-Sent Events (SSE) for real-time updates
-- **FR-004**: SSE endpoint MUST check for changes every 5 seconds server-side
-- **FR-005**: SSE client MUST auto-reconnect on connection drop (Vercel 30s timeout)
+- **FR-003**: Menu pages MUST poll a cached endpoint for real-time updates
+- **FR-004**: Menu endpoint MUST return cached responses (edge cache) for cost efficiency
+- **FR-005**: Payload afterChange hook MUST trigger cache revalidation when menu is updated
 - **FR-006**: System MUST have ISR fallback times for all cached pages
-- **FR-007**: Revalidation hooks MUST be centralized in a Payload plugin (not scattered across collections)
+- **FR-007**: Revalidation endpoint MUST be secured with REVALIDATE_SECRET token
 - **FR-008**: Menu items MUST animate on enter (slide from right + scale bounce) and exit (slide left + fade)
 - **FR-009**: Menu collection MUST prevent duplicate beers via beforeValidate hook
 - **FR-010**: Animation hook MUST handle rapid add/remove cycles without duplicate key errors
@@ -97,17 +97,17 @@ When beers, locations, events, or other content changes in Payload, all affected
 ### Key Entities
 
 - **Cache Tags**: Logical tags (`beers`, `menus`, `events`, etc.) that group cached data
-- **SSE Stream**: Server-Sent Events connection for real-time menu updates
+- **Revalidation Endpoint**: `/api/revalidate/menu` - called by Payload afterChange hook to invalidate cache
 - **ISR Revalidate Times**: Fallback refresh intervals per page type
 
 ## Success Criteria *(mandatory)*
 
 ### Measurable Outcomes
 
-- **SC-001**: Menu changes in Payload are visible on display screens within 5 seconds
-- **SC-002**: SSE connections show single persistent connection per display (not repeated requests)
+- **SC-001**: Menu changes in Payload are visible on display screens within 2-3 seconds
+- **SC-002**: Polling requests return cached responses (x-vercel-cache: HIT) when menu unchanged
 - **SC-003**: Homepage TTFB under 300ms on Vercel (cached)
-- **SC-004**: 20 displays stay within Vercel free tier limits (100K requests/month)
+- **SC-004**: Vercel "Fluid Active CPU" stays minimal (cached responses don't use CPU)
 - **SC-005**: All Payload collections trigger appropriate cache invalidation on change
 
 ## Implementation Summary
@@ -116,33 +116,47 @@ When beers, locations, events, or other content changes in Payload, all affected
 
 ```
 ┌─────────────────┐     afterChange hook     ┌─────────────────┐
-│  Payload CMS    │ ─────────────────────────▶│ revalidateTag() │
-│  (Collections)  │                           │ revalidatePath()│
+│  Payload CMS    │ ─────────────────────────▶│ /api/revalidate │
+│  (Menus)        │                           │     /menu       │
 └─────────────────┘                           └─────────────────┘
                                                        │
                                                        ▼
-┌─────────────────┐     unstable_cache        ┌─────────────────┐
-│  Data Fetching  │ ◀─────────────────────────│   Next.js       │
-│  (payload-api)  │       with tags           │   Data Cache    │
+                                              ┌─────────────────┐
+                                              │ revalidateTag() │
+                                              │   (menus tag)   │
+                                              └─────────────────┘
+                                                       │
+                                                       ▼
+┌─────────────────┐     poll every 2s         ┌─────────────────┐
+│  Menu Displays  │ ─────────────────────────▶│ /api/menu-stream│
+│  (Browser)      │                           │   (cached JSON) │
 └─────────────────┘                           └─────────────────┘
                                                        │
                                                        ▼
-┌─────────────────┐     Server-Sent Events    ┌─────────────────┐
-│  Menu Displays  │ ◀─────────────────────────│   SSE Endpoint  │
-│  (Browser)      │   (persistent connection) │   (5s polling)  │
-└─────────────────┘                           └─────────────────┘
+                                              ┌─────────────────┐
+                                              │  Edge Cache     │
+                                              │  (HIT = free)   │
+                                              └─────────────────┘
 ```
 
-### Why SSE over Polling?
+### Why Cached Polling over SSE?
 
-| Approach | Requests/month (20 displays) | Free Tier Fit |
-|----------|------------------------------|---------------|
-| Polling (5s) | ~5.2M | ❌ Way over |
-| Polling (30s) | ~864K | ❌ Over by 8x |
-| Polling (5min) | ~86K | ✅ Fits |
-| **SSE** | ~40K (reconnects only) | ✅ **Best** |
+**Problem with SSE on Vercel**: SSE keeps serverless functions alive continuously, consuming "Fluid Active CPU" even when idle. With 4+ displays running 24/7, this became expensive.
 
-SSE uses a single persistent connection per display. The server checks for changes every 5 seconds internally, but this doesn't count as Vercel requests - only the initial connection and reconnects do.
+| Approach | CPU Usage | Cost |
+|----------|-----------|------|
+| **SSE (old)** | Continuous (functions stay alive) | High |
+| **Cached Polling (new)** | Only on cache MISS | Very Low |
+
+**How cached polling works**:
+1. Client polls `/api/menu-stream/[url]` every 2 seconds
+2. Endpoint returns cached JSON (edge cache HIT = no CPU)
+3. When menu is saved in Payload, afterChange hook calls `/api/revalidate/menu`
+4. Revalidation invalidates cache tag
+5. Next poll gets fresh data (cache MISS = one DB query)
+6. Subsequent polls hit cache again
+
+**Result**: 99%+ of requests hit edge cache (nearly free). Only actual menu changes trigger function execution.
 
 ### Files Created
 
@@ -150,9 +164,10 @@ SSE uses a single persistent connection per display. The server checks for chang
 |------|---------|
 | `lib/utils/cache.ts` | Cache tag constants and utilities |
 | `src/plugins/revalidation-plugin.ts` | Centralized Payload revalidation hooks |
-| `src/app/api/menu-stream/[url]/route.ts` | SSE endpoint for real-time menu updates |
-| `lib/hooks/use-menu-stream.ts` | Client-side SSE hook with auto-reconnect |
-| `lib/hooks/use-menu-polling.ts` | Client-side polling hook (fallback/alternative) |
+| `src/app/api/menu-stream/[url]/route.ts` | Cached JSON endpoint for menu polling |
+| `src/app/api/revalidate/menu/route.ts` | Revalidation endpoint called by Payload hook |
+| `src/hooks/revalidate-menu.ts` | Payload afterChange hook for cache invalidation |
+| `lib/hooks/use-menu-stream.ts` | Client-side polling hook |
 | `lib/hooks/use-animated-list.ts` | Tracks item enter/exit states for CSS animations |
 | `components/menu/live-menu.tsx` | Live-updating menu display component |
 
@@ -163,13 +178,13 @@ SSE uses a single persistent connection per display. The server checks for chang
 | `src/payload.config.ts` | Added revalidationPlugin |
 | `lib/utils/payload-api.ts` | Replaced React cache() with unstable_cache + tags |
 | `src/app/api/menu-by-url/[url]/route.ts` | Added ETag support for conditional requests |
-| `src/app/(frontend)/m/[menuUrl]/page.tsx` | Uses LiveMenu component with SSE |
+| `src/app/(frontend)/m/[menuUrl]/page.tsx` | Uses LiveMenu component with polling |
 | `src/app/(frontend)/page.tsx` | Added `revalidate = 300` |
 | `src/app/(frontend)/beer/page.tsx` | Added `revalidate = 3600` |
 | `src/app/(frontend)/events/page.tsx` | Added `revalidate = 300` |
 | `src/app/(frontend)/globals.css` | Added menu-item-enter/exit CSS keyframe animations |
 | `components/home/featured-menu.tsx` | Added `animated` prop and animation class application |
-| `src/collections/Menus.ts` | Added beforeValidate hook to prevent duplicate beers |
+| `src/collections/Menus.ts` | Added afterChange hook for cache revalidation, beforeValidate for duplicate prevention |
 | `src/collections/Beers.ts` | Added `justReleased` checkbox for manual "Just Released" flag |
 | `components/beer/draft-beer-card.tsx` | Added `showTapAndPrice` prop, zebra striping for TV menu displays |
 | `lib/types/beer.ts` | Added `tap` property to Beer interface |
@@ -194,32 +209,38 @@ SSE uses a single persistent connection per display. The server checks for chang
 |------|-----------------|-----------|
 | Homepage (`/`) | 300s (5 min) | Balance freshness with performance |
 | Beer listing (`/beer`) | 3600s (1 hr) | Beer catalog changes infrequently |
-| Menu display (`/m/[url]`) | 60s (1 min) | SSE handles real-time; ISR is fallback |
+| Menu display (`/m/[url]`) | 60s (1 min) | Polling handles real-time; ISR is fallback |
+| Menu API (`/api/menu-stream`) | 2s edge + 60s data | Edge cache + on-demand revalidation |
 | Events (`/events`) | 300s (5 min) | Events are time-sensitive |
 
-### SSE Connection Lifecycle
+### Polling Lifecycle
 
 ```
-Browser                          Server
-   │                                │
-   │──── GET /api/menu-stream/x ───▶│
-   │                                │
-   │◀─── event: menu (full data) ───│
-   │                                │
-   │◀─── : heartbeat ───────────────│  (every 5s)
-   │◀─── : heartbeat ───────────────│
-   │                                │
-   │     [menu updated in Payload]  │
-   │                                │
-   │◀─── event: menu (new data) ────│
-   │                                │
-   │◀─── : heartbeat ───────────────│
-   │                                │
-   │     [Vercel 30s timeout]       │
-   │                                │
-   │──── reconnect ─────────────────▶│
-   │◀─── event: menu (current) ─────│
-   │                                │
+Browser                          Server                         Payload Admin
+   │                                │                                │
+   │──── GET /api/menu-stream/x ───▶│                                │
+   │◀─── JSON (cached) ─────────────│  ← Edge cache HIT              │
+   │                                │                                │
+   │  [2 seconds later]             │                                │
+   │                                │                                │
+   │──── GET /api/menu-stream/x ───▶│                                │
+   │◀─── JSON (cached) ─────────────│  ← Edge cache HIT              │
+   │                                │                                │
+   │                                │     [admin saves menu] ────────│
+   │                                │                                │
+   │                                │◀─── POST /api/revalidate/menu ─│
+   │                                │     revalidateTag('menus')     │
+   │                                │                                │
+   │  [2 seconds later]             │                                │
+   │                                │                                │
+   │──── GET /api/menu-stream/x ───▶│                                │
+   │◀─── JSON (fresh) ──────────────│  ← Cache MISS, DB query        │
+   │                                │                                │
+   │  [2 seconds later]             │                                │
+   │                                │                                │
+   │──── GET /api/menu-stream/x ───▶│                                │
+   │◀─── JSON (cached) ─────────────│  ← Edge cache HIT              │
+   │                                │                                │
 ```
 
 ### Menu Item Animations
@@ -255,37 +276,22 @@ CSS-based animations using `useAnimatedList` hook:
 
 ## Known Limitations
 
-### SSE Does Not Detect Beer Content Changes
+### Beer Content Changes Require Menu Save
 
-**Issue**: The SSE endpoint's change detection hash only checks `menu.updatedAt` and `menu.items.length`. If a beer's details (name, description, image, price on the beer record) are edited without modifying the menu itself, SSE will not push an update.
+**Issue**: If a beer's details (name, description, image, price on the beer record) are edited without modifying the menu itself, the menu cache is not invalidated.
 
-**Current behavior**:
-```ts
-// Only detects menu document changes, not nested beer changes
-const content = `${menu.updatedAt || ''}-${menu.items?.length || 0}`
-```
+**Workaround**: After editing a beer, touch the menu (reorder items or republish) to trigger cache revalidation.
 
-**Workaround**: After editing a beer, touch the menu (reorder items or republish) to trigger an update.
+**Future fix**: Add afterChange hook to Beers collection that also revalidates menus cache tag.
 
-**Future fix**: Hash should include beer `updatedAt` timestamps or use Payload's afterChange hook on beers to notify connected menu streams.
+### Environment Variable Required for Production
+
+**Issue**: The revalidation endpoint should be secured with `REVALIDATE_SECRET` env var.
+
+**Setup**: Add `REVALIDATE_SECRET` to Vercel environment variables with a random string. The Payload hook will send this token in the `x-revalidate-token` header.
 
 ### Duplicate Beer Validation
 
 **Issue**: The `beforeValidate` hook in Menus.ts should prevent duplicate beers, but edge cases may exist where duplicates slip through (possibly related to draft/publish workflow or relationship population timing).
-
-**Validation logic** (Menus.ts lines 42-59):
-```ts
-beforeValidate: [
-  ({ data }) => {
-    const beerIds = data.items?.map(item =>
-      typeof item.beer === 'string' ? item.beer : item.beer?.id
-    ).filter(Boolean)
-
-    if (new Set(beerIds).size !== beerIds.length) {
-      throw new APIError('Duplicate beer detected...', 400)
-    }
-  }
-]
-```
 
 **Status**: Under investigation - validation should work but user reported adding duplicate beers without error.

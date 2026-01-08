@@ -7,7 +7,6 @@
 
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Calendar, Clock, MapPin, Users } from 'lucide-react';
 import { formatTime, formatDate } from '@/lib/utils/formatters';
 
 interface ScheduleCardProps {
@@ -43,7 +42,7 @@ export function ScheduleCard({
 
   return (
     <Card
-      className={`overflow-hidden border-0 shadow-none transition-colors bg-transparent dark:bg-transparent ${site ? 'cursor-pointer hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2' : ''} ${className || ''}`}
+      className={`overflow-hidden border-0 shadow-none transition-colors ${site ? 'bg-secondary cursor-pointer hover:bg-secondary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2' : 'bg-transparent'} ${className || ''}`}
       onClick={handleClick}
       onKeyDown={site ? handleKeyDown : undefined}
       tabIndex={site ? 0 : undefined}
@@ -53,32 +52,16 @@ export function ScheduleCard({
       <CardContent className="p-6 text-center">
         <h3 className="text-xl font-semibold mb-2">{title}</h3>
 
-        <div className="space-y-2 text-sm text-muted-foreground flex flex-col items-center">
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
-            <span>{formatDate(date, 'full')}</span>
-          </div>
+        <div className="space-y-1 text-sm text-muted-foreground flex flex-col items-center">
+          <span>{formatDate(date, 'full')}</span>
           {time && time.toLowerCase() !== 'tbd' && (
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              <span>
-                {formatTime(time.trim())}
-                {endTime && endTime.toLowerCase() !== 'tbd' && `-${formatTime(endTime.trim())}`}
-              </span>
-            </div>
+            <span>
+              {formatTime(time.trim())}
+              {endTime && endTime.toLowerCase() !== 'tbd' && `–${formatTime(endTime.trim())}`}
+            </span>
           )}
-          {location && (
-            <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4" />
-              <span>{location}</span>
-            </div>
-          )}
-          {attendees && attendees !== '' && (
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              <span>{attendees} attending</span>
-            </div>
-          )}
+          {location && <span>{location}</span>}
+          {attendees && attendees !== '' && <span>{attendees} attending</span>}
           {additionalInfo}
         </div>
       </CardContent>

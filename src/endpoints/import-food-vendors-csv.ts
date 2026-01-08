@@ -1,8 +1,10 @@
 import type { PayloadHandler } from 'payload'
 import { parse } from 'csv-parse/sync'
+import { getUserFromRequest } from './auth-helper'
 
 export const importFoodVendorsCSV: PayloadHandler = async (req) => {
-  const { payload, user } = req
+  const { payload } = req
+  const user = req.user ?? await getUserFromRequest(req, payload)
 
   if (!user || (!user.roles?.includes('admin') && !user.roles?.includes('food-manager'))) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })

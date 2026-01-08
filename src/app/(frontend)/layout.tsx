@@ -150,6 +150,7 @@ export default async function AppLayout({
             attribute="class"
             defaultTheme="system"
             enableSystem
+            enableColorScheme={false}
             disableTransitionOnChange
             themes={['light', 'dark']}
             storageKey="lolev-theme"

@@ -27,6 +27,8 @@ import { importFoodVendorsCSV } from './endpoints/import-food-vendors-csv'
 import { importDistributors } from './endpoints/import-distributors'
 import { importLakeBeverageCSV } from './endpoints/import-lake-beverage-csv'
 import { updateDistributorUrls } from './endpoints/update-distributor-urls'
+import { recalculateBeerPrices } from './endpoints/recalculate-beer-prices'
+import { regeocodeDistributors } from './endpoints/regeocode-distributors'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -39,7 +41,7 @@ const allowedOrigins = [
   ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
   ...(process.env.VERCEL_PROJECT_PRODUCTION_URL ? [`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`] : []),
   // Local development
-  ...(process.env.NODE_ENV === 'development' ? ['http://localhost:3000'] : []),
+  ...(process.env.NODE_ENV === 'development' ? ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002'] : []),
 ]
 
 export default buildConfig({
@@ -70,7 +72,7 @@ export default buildConfig({
         Icon: './components/AdminLogo#AdminIcon',
       },
       providers: ['./components/AdminNavLink#AdminNavLink'],
-      actions: ['./components/ViewSiteLink#ViewSiteLink'],
+      actions: [],
       afterNavLinks: ['./components/SyncNavLink#SyncNavLink'],
       views: {
         syncGoogleSheets: {
@@ -83,8 +85,32 @@ export default buildConfig({
       },
     },
   },
-  collections: [Users, Media, Styles, Beers, Products, Events, Food, FoodVendors, Locations, HolidayHours, Menus, Distributors],
-  globals: [ComingSoon, RecurringFood, SiteContent],
+  collections: [
+    // Back of House
+    Beers,
+    Styles,
+    // Front of House
+    Menus,
+    Products,
+    // Food & Events
+    Events,
+    Food,
+    FoodVendors,
+    // Settings (last)
+    Users,
+    Locations,
+    HolidayHours,
+    Distributors,
+    Media,
+  ],
+  globals: [
+    // Back of House
+    ComingSoon,
+    // Food & Events
+    RecurringFood,
+    // Settings (last)
+    SiteContent,
+  ],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
@@ -128,6 +154,16 @@ export default buildConfig({
       path: '/update-distributor-urls',
       method: 'post',
       handler: updateDistributorUrls,
+    },
+    {
+      path: '/recalculate-beer-prices',
+      method: 'post',
+      handler: recalculateBeerPrices,
+    },
+    {
+      path: '/regeocode-distributors',
+      method: 'post',
+      handler: regeocodeDistributors,
     },
   ],
 })

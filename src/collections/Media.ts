@@ -9,6 +9,7 @@ export const Media: CollectionConfig = {
   slug: 'media',
   admin: {
     hidden: true, // Temporarily unhidden to debug upload field issue
+    hideAPIURL: true,
   },
   access: {
     read: () => true,

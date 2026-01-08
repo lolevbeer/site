@@ -20,6 +20,7 @@
   --color-secondary-foreground: #1d1d1f;
   --color-muted: oklch(95.5% 0 0);
   --color-muted-foreground: #86868b;
+  --color-foreground-muted: #6e6e73;
   --color-accent: #0071e3;
   --color-accent-foreground: #ffffff;
   --color-destructive: #ff3b30;
@@ -94,6 +95,7 @@
     --color-secondary-foreground: #f5f5f7;
     --color-muted: #2c2c2e;
     --color-muted-foreground: #98989d;
+    --color-foreground-muted: #acacae;
     --color-accent: #0a84ff;
     --color-accent-foreground: #ffffff;
     --color-destructive: #ff453a;
@@ -105,6 +107,13 @@
 
   * {
     @apply border-border;
+  }
+
+  /* Smooth theme color transitions for elements using theme colors */
+  [class*="bg-"],
+  [class*="text-"],
+  [class*="border-"] {
+    transition: background-color 2s ease-in-out, color 2s ease-in-out, border-color 2s ease-in-out !important;
   }
 
   body {
@@ -321,7 +330,67 @@
   }
 
   .menu-item-stable {
-    transition: transform 0.4s ease-out, opacity 0.4s ease-out;
+    transition: transform 0.4s ease-out, opacity 0.4s ease-out, background-color 2s ease-in-out, border-color 2s ease-in-out, color 2s ease-in-out;
+  }
+
+  /* Staggered entry animation for lists */
+  @keyframes stagger-in {
+    0% {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-stagger-in {
+    animation: stagger-in 0.4s ease-out forwards;
+  }
+
+  /* Search icon pulse animation */
+  @keyframes search-pulse {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.1);
+    }
+  }
+
+  .search-active {
+    animation: search-pulse 0.3s ease-out;
+  }
+
+  /* Scroll reveal animation */
+  .scroll-reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+  }
+
+  .scroll-reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Subtle glow pulse for CTAs */
+  @keyframes glow-pulse {
+    0%, 100% {
+      box-shadow: 0 0 0 0 transparent;
+    }
+    50% {
+      box-shadow: 0 0 20px 4px oklch(0.5 0.05 0 / 0.2);
+    }
+  }
+
+  .dark .animate-glow-pulse {
+    --glow-color: oklch(0.9 0.05 0 / 0.15);
+  }
+
+  .animate-glow-pulse {
+    animation: glow-pulse 3s ease-in-out infinite;
   }
 
   /* Hide scrollbar utility for carousel */
@@ -332,4 +401,21 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+}
+
+/* Mapbox popup overrides - use shadcn styling */
+.mapboxgl-popup-content {
+  padding: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  border: none !important;
+}
+
+.mapboxgl-popup-tip {
+  display: none !important;
+}
+
+.mapboxgl-popup-close-button {
+  display: none !important;
 }

@@ -2,7 +2,6 @@ import React from 'react';
 import dynamic from 'next/dynamic';
 import { HomeContent } from '@/components/home/home-content';
 import { MarketingText } from '@/components/home/marketing-text';
-import { Spacer } from '@/components/ui/spacer';
 import { getHomePageData } from '@/lib/utils/homepage-data';
 import { JsonLd } from '@/components/seo/json-ld';
 import { generateEventJsonLd, generateFoodEventJsonLd } from '@/lib/utils/json-ld';
@@ -76,8 +75,6 @@ export default async function Home() {
         heroImageUrl={data.siteContent.heroImageUrl}
         weeklyHours={data.weeklyHours}
       >
-        <Spacer />
-
         <FeaturedCans
           menus={data.allCansMenus}
           isAuthenticated={data.authenticated}

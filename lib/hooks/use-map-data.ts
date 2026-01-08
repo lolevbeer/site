@@ -26,7 +26,8 @@ interface PayloadDistributor {
   address: string;
   customerType: string;
   region: string;
-  location: [number, number]; // [longitude, latitude]
+  // Payload point field can be array or object
+  location: [number, number] | { type: 'Point'; coordinates: [number, number] } | null;
 }
 
 export function useMapData() {
@@ -53,21 +54,48 @@ export function useMapData() {
         const data = await response.json();
         const distributors: PayloadDistributor[] = data.docs || [];
 
-        // Transform Payload distributors to GeoJSON format
-        const features: GeoFeature[] = distributors.map((dist, index) => ({
-          type: 'Feature' as const,
-          geometry: {
-            type: 'Point' as const,
-            coordinates: dist.location, // Already [longitude, latitude]
-          },
-          properties: {
-            id: index,
-            Name: dist.name,
-            address: dist.address,
-            customerType: dist.customerType,
-            uniqueId: dist.id,
-          },
-        }));
+        // Helper to extract coordinates from Payload point field
+        const getCoords = (loc: PayloadDistributor['location']): [number, number] | null => {
+          if (!loc) return null;
+          // Handle GeoJSON format: { type: 'Point', coordinates: [lng, lat] }
+          if (typeof loc === 'object' && 'coordinates' in loc && Array.isArray(loc.coordinates)) {
+            return loc.coordinates;
+          }
+          // Handle array format: [lng, lat]
+          if (Array.isArray(loc) && loc.length >= 2) {
+            return [loc[0], loc[1]];
+          }
+          return null;
+        };
+
+        // Filter out distributors with invalid coordinates and transform to GeoJSON
+        const features: GeoFeature[] = distributors
+          .map((dist) => ({ dist, coords: getCoords(dist.location) }))
+          .filter(({ coords }) => {
+            if (!coords) return false;
+            const [lng, lat] = coords;
+            // Validate coordinate ranges
+            return (
+              typeof lng === 'number' && typeof lat === 'number' &&
+              !isNaN(lng) && !isNaN(lat) &&
+              lng >= -180 && lng <= 180 &&
+              lat >= -90 && lat <= 90
+            );
+          })
+          .map(({ dist, coords }, index) => ({
+            type: 'Feature' as const,
+            geometry: {
+              type: 'Point' as const,
+              coordinates: coords!,
+            },
+            properties: {
+              id: index,
+              Name: dist.name,
+              address: dist.address,
+              customerType: dist.customerType,
+              uniqueId: dist.id,
+            },
+          }));
 
         setGeoData({
           type: 'FeatureCollection',

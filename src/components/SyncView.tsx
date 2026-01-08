@@ -4,12 +4,16 @@ import { DefaultTemplate } from '@payloadcms/next/templates'
 import React from 'react'
 
 import { SyncViewClient } from './SyncViewClient'
+import { isAdmin } from '@/src/access/roles'
 
 export const SyncView: React.FC<AdminViewServerProps> = ({
   initPageResult,
   params,
   searchParams,
 }) => {
+  const user = initPageResult.req.user
+  const userIsAdmin = isAdmin(user)
+
   return (
     <DefaultTemplate
       i18n={initPageResult.req.i18n}
@@ -18,10 +22,10 @@ export const SyncView: React.FC<AdminViewServerProps> = ({
       payload={initPageResult.req.payload}
       permissions={initPageResult.permissions}
       searchParams={searchParams}
-      user={initPageResult.req.user || undefined}
+      user={user || undefined}
       visibleEntities={initPageResult.visibleEntities}
     >
-      <SyncViewClient />
+      <SyncViewClient isAdmin={userIsAdmin} />
     </DefaultTemplate>
   )
 }

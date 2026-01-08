@@ -4,7 +4,6 @@ import { getBeerBySlug, getAllBeersFromPayload } from '@/lib/utils/payload-api';
 import { BeerDetails } from '@/components/beer/beer-details';
 import { JsonLd } from '@/components/seo/json-ld';
 import { generateProductSchema } from '@/lib/utils/product-schema';
-import { isAuthenticated } from '@/lib/utils/auth';
 
 interface BeerPageProps {
   params: Promise<{
@@ -60,9 +59,6 @@ export default async function BeerPage({ params }: BeerPageProps) {
     notFound();
   }
 
-  // Check if user is authenticated
-  const authenticated = await isAuthenticated();
-
   // Generate Product schema for SEO
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const productSchema = generateProductSchema(beer as any);
@@ -74,7 +70,7 @@ export default async function BeerPage({ params }: BeerPageProps) {
 
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        <BeerDetails beer={beer as any} isAuthenticated={authenticated} />
+        <BeerDetails beer={beer as any} />
       </div>
     </>
   );

@@ -58,6 +58,10 @@ next-env.d.ts
 # Public assets (served from external storage)
 /public/*
 !/public/images
+!/public/uploads
+!/public/favicons
 /public/images/*
 !/public/images/beer
 !/public/*_geo_data.json
+
+.playwright-mcp

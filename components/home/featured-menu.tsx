@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
+import { ScrollReveal } from '@/components/ui/scroll-reveal';
 import { Beer as BeerIconLucide, Package } from 'lucide-react';
 import { getGlassIcon } from '@/lib/utils/beer-icons';
 import { useLocationContext } from '@/components/location/location-provider';
@@ -37,6 +38,8 @@ interface MenuItem {
   tap?: number;
   pricing: {
     draftPrice?: number;
+    halfPour?: number;
+    halfPourOnly?: boolean;
   };
   availability: {
     hideFromSite?: boolean;
@@ -138,7 +141,11 @@ function convertMenuItems(menuData: Menu): MenuItem[] {
         hops: beer.hops ? String(beer.hops) : undefined,
         tap: index + 1, // 1-based tap/draft number from position in menu
         pricing: {
-          draftPrice: item.price ? parseFloat(String(item.price).replace('$', '')) : undefined,
+          draftPrice: item.price
+            ? parseFloat(String(item.price).replace('$', ''))
+            : beer.draftPrice,
+          halfPour: beer.halfPour ?? undefined,
+          halfPourOnly: beer.halfPourOnly || false,
         },
         availability: {
           hideFromSite: beer.hideFromSite || false,
@@ -225,6 +232,7 @@ function CanCard({ item, fullscreen = false }: { item: MenuItem; fullscreen?: bo
           fill
           className="object-contain"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+          unoptimized
         />
       );
     }
@@ -244,7 +252,7 @@ function CanCard({ item, fullscreen = false }: { item: MenuItem; fullscreen?: bo
         href={`/beer/${item.variant.toLowerCase()}`}
         className="group cursor-pointer flex flex-col"
       >
-        <div className="relative aspect-square w-full transition-transform duration-200 group-hover:scale-[1.02]">
+        <div className="relative w-full bg-transparent transition-transform duration-200 group-hover:scale-[1.02]" style={{ height: '28vh' }}>
           {renderImage()}
           {item.isJustReleased && (
             <Badge variant="default" className="absolute left-1/2 -translate-x-1/2" style={{ bottom: '-0.8vh', fontSize: '1.3vh' }}>
@@ -253,13 +261,13 @@ function CanCard({ item, fullscreen = false }: { item: MenuItem; fullscreen?: bo
           )}
         </div>
         <div className="flex flex-col items-center text-center" style={{ gap: '0.5vh', marginTop: '1.5vh' }}>
-          <h3 className="font-bold leading-tight" style={{ fontSize: '2vh' }}>
+          <h3 className="font-bold leading-tight" style={{ fontSize: '2.8vh' }}>
             {item.name}
           </h3>
-          <Badge variant="outline" style={{ fontSize: '1.3vh' }}>{item.type}</Badge>
+          <Badge variant="outline" style={{ fontSize: '1.6vh' }}>{item.type}</Badge>
           {item.fourPack && (
             <span className="font-semibold" style={{ fontSize: '1.8vh' }}>
-              ${item.fourPack} <span className="font-normal text-foreground/70" style={{ fontSize: '1.4vh' }}>/ 4pk</span>
+              ${item.fourPack} <span className="font-semibold text-foreground/70" style={{ fontSize: '1.4vh' }}>• Four Pack</span>
             </span>
           )}
           {item.onDraft && (
@@ -280,7 +288,7 @@ function CanCard({ item, fullscreen = false }: { item: MenuItem; fullscreen?: bo
       href={`/beer/${item.variant.toLowerCase()}`}
       className="group flex flex-col cursor-pointer"
     >
-      <div className="relative h-64 w-full flex-shrink-0 mb-4 transition-transform duration-200 group-hover:scale-[1.02]">
+      <div className="relative h-64 w-full flex-shrink-0 mb-4 bg-transparent transition-transform duration-200 group-hover:scale-[1.02]">
         {renderImage()}
         {item.isJustReleased && (
           <Badge variant="default" className="absolute -bottom-3 left-1/2 -translate-x-1/2 text-xs">
@@ -336,7 +344,7 @@ export function FeaturedMenu({ menuType, menu, menus = [], isAuthenticated, anim
     return (
       <section className="h-full flex flex-col bg-background overflow-hidden">
         <div className="w-full flex-1 flex flex-col" style={{ padding: '2vh 2vw 0.5vh 2vw' }}>
-          <div className="text-center flex-shrink-0" style={{ marginBottom: '2vh' }}>
+          <div className="text-center flex-shrink-0" style={{ marginBottom: '5vh' }}>
             <h2 className="font-bold" style={{ fontSize: '4vh' }}>{menu?.name || title}</h2>
           </div>
           <div className="flex-1 overflow-y-auto" style={{ padding: '0 1vw' }}>
@@ -352,20 +360,21 @@ export function FeaturedMenu({ menuType, menu, menus = [], isAuthenticated, anim
                   const isOtherMenu = menu?.type === 'other';
                   const ColumnHeader = () => (
                     <div
-                      className="flex items-center border-b-2 border-border uppercase tracking-wider text-muted-foreground/70 font-semibold"
+                      className="flex items-center border-b-2 border-border uppercase tracking-wider text-foreground font-bold"
                       style={{ gap: '1.5vh', padding: '0.5vh 1vh', marginBottom: '0.5vh', fontSize: '1.2vh' }}
                     >
                       {!isOtherMenu && <div style={{ minWidth: '7vh' }}>Tap</div>}
                       <div className="flex-grow">{isOtherMenu ? 'Item' : 'Beer'}</div>
                       <div className="flex" style={{ gap: '2vh' }}>
                         {!isOtherMenu && <div className="text-center" style={{ minWidth: '5vh' }}>ABV</div>}
-                        <div className="text-center" style={{ minWidth: '6vh' }}>Price</div>
+                        {!isOtherMenu && <div className="text-center" style={{ minWidth: '6vh' }}>Half</div>}
+                        <div className="text-center" style={{ minWidth: '6vh' }}>{isOtherMenu ? 'Price' : 'Full'}</div>
                       </div>
                     </div>
                   );
 
                   return (
-                    <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] max-w-none h-full" style={{ gap: '2vw' }} suppressHydrationWarning>
+                    <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] max-w-none h-full" style={{ gap: '2vw' }} suppressHydrationWarning>
                       <div className="flex flex-col h-full min-w-0">
                         <ColumnHeader />
                         <div className="flex flex-col flex-1 min-w-0">
@@ -377,7 +386,7 @@ export function FeaturedMenu({ menuType, menu, menus = [], isAuthenticated, anim
                         </div>
                       </div>
                       {/* Vertical divider */}
-                      <div className="hidden lg:block w-0.5 bg-border" />
+                      <div className="hidden md:block w-0.5 bg-border" />
                       <div className="flex flex-col h-full min-w-0">
                         <ColumnHeader />
                         <div className="flex flex-col flex-1 min-w-0">
@@ -392,7 +401,7 @@ export function FeaturedMenu({ menuType, menu, menus = [], isAuthenticated, anim
                   );
                 })()
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-4 max-w-none" style={{ rowGap: '7vh' }} suppressHydrationWarning>
+                <div className="grid gap-x-4 max-w-none" style={{ gridTemplateColumns: `repeat(${Math.ceil(itemsToRender.length / 2)}, 1fr)`, rowGap: '4vh' }} suppressHydrationWarning>
                   {itemsToRender.map(({ item, state, key }) => (
                     <div key={key} className={animated ? getAnimationClass(state) : ''}>
                       <CanCard item={item} fullscreen />
@@ -421,15 +430,17 @@ export function FeaturedMenu({ menuType, menu, menus = [], isAuthenticated, anim
   return (
     <section className="py-16 lg:py-24 bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex-1" />
-            <h2 className="text-3xl lg:text-4xl font-bold">{title}</h2>
-            <div className="flex-1 flex justify-end">
-              <AdminEditButtons menusArray={menus} currentLocation={currentLocation} isAuthenticated={isAuthenticated} />
+        <ScrollReveal>
+          <div className="text-center mb-12">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex-1" />
+              <h2 className="text-3xl lg:text-4xl font-bold">{title}</h2>
+              <div className="flex-1 flex justify-end">
+                <AdminEditButtons menusArray={menus} currentLocation={currentLocation} isAuthenticated={isAuthenticated} />
+              </div>
             </div>
           </div>
-        </div>
+        </ScrollReveal>
 
         <div className="mb-8">
           {displayItems.length > 0 ? (

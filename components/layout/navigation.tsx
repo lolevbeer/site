@@ -107,9 +107,9 @@ export function Navigation({
             onClick={onItemClick}
             aria-current={isActive ? "page" : undefined}
             className={cn(
-              "relative transition-all duration-200 ease-in-out whitespace-nowrap text-sm font-medium",
+              "relative transition-all duration-200 ease-in-out whitespace-nowrap text-sm font-semibold",
               isActive
-                ? "text-foreground font-semibold"
+                ? "text-foreground"
                 : "text-foreground hover:text-muted-foreground"
             )}
           >

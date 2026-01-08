@@ -51,14 +51,17 @@ export function HeroSection({ availableBeers, heroDescription, heroImageUrl }: H
           <div className="w-full h-full bg-gradient-to-br from-amber-900/20 to-orange-800/30" />
         )}
         {/* Overlay for better text readability */}
-        <div className="absolute inset-0 bg-background/80 backdrop-blur-[2px]" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/50 backdrop-blur-[2px]" />
       </div>
 
       <div className="relative z-10 flex flex-col items-center justify-center gap-6 md:gap-8">
-        <h1 className="mb-0 text-balance font-bold text-4xl md:text-6xl lg:text-7xl xl:text-[5.25rem]">
+        <h1 className="mb-0 text-balance font-bold text-4xl md:text-6xl lg:text-7xl xl:text-[5.25rem] animate-stagger-in opacity-0">
           Lolev Beer
         </h1>
-        <section className="flex flex-col items-center justify-center gap-4 md:gap-8 rounded-xl py-8 md:py-12 w-full overflow-visible">
+        <section
+          className="flex flex-col items-center justify-center gap-4 md:gap-8 rounded-xl py-8 md:py-12 w-full overflow-visible animate-stagger-in opacity-0"
+          style={{ animationDelay: '100ms' }}
+        >
           <div className="w-full max-w-5xl mx-auto px-4 md:px-12 overflow-visible">
             <TooltipProvider delayDuration={200}>
               <Carousel
@@ -81,12 +84,12 @@ export function HeroSection({ availableBeers, heroDescription, heroImageUrl }: H
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Link href={`/beer/${beer.slug}`} className="group flex justify-center">
-                                <div className="relative h-16 w-16 md:h-24 md:w-24 rounded-lg bg-transparent">
+                                <div className="relative h-16 w-16 md:h-24 md:w-24 rounded-lg bg-transparent transition-transform duration-200 ease-out group-hover:-translate-y-1 group-hover:scale-105">
                                   <Image
                                     src={imageUrl}
                                     alt={`${beer.name} beer can`}
                                     fill
-                                    className="object-contain"
+                                    className="object-contain drop-shadow-sm group-hover:drop-shadow-md transition-[filter] duration-200"
                                     sizes="(max-width: 768px) 64px, 96px"
                                     loading="lazy"
                                   />
@@ -115,24 +118,30 @@ export function HeroSection({ availableBeers, heroDescription, heroImageUrl }: H
           </div>
         </section>
         {heroDescription && (
-          <p className="mt-0 mb-0 text-balance text-base md:text-lg text-foreground max-w-4xl px-4 whitespace-pre-line">
+          <p
+            className="mt-0 mb-0 text-balance text-base md:text-lg text-foreground max-w-4xl px-4 whitespace-pre-line animate-stagger-in opacity-0"
+            style={{ animationDelay: '200ms' }}
+          >
             {heroDescription}
           </p>
         )}
 
         {/* Primary CTAs */}
-        <div className="flex flex-col sm:flex-row gap-3 md:gap-4 mt-6 md:mt-8 justify-center items-center">
-          <Button asChild variant="default" size="lg" className="min-w-[160px]">
+        <div
+          className="flex flex-col sm:flex-row gap-3 md:gap-4 mt-6 md:mt-8 justify-center items-center animate-stagger-in opacity-0"
+          style={{ animationDelay: '300ms' }}
+        >
+          <Button asChild variant="default" size="lg" className="min-w-[180px] text-base animate-glow-pulse">
             <Link href="/beer-map">
               Find Lolev
             </Link>
           </Button>
-          <Button asChild variant="default" size="lg" className="min-w-[160px]">
+          <Button asChild variant="outline" size="lg" className="min-w-[140px]">
             <a href="https://squareup.com/customer-programs/enroll/ce5WC6LoELBr?utm_source=lolevwebsite" target="_blank" rel="noopener noreferrer">
-              Join Newsletter
+              Newsletter
             </a>
           </Button>
-          <Button asChild variant="outline" size="lg" className="min-w-[160px] backdrop-blur-md bg-transparent border-white hover:bg-white/10">
+          <Button asChild variant="ghost" size="lg" className="min-w-[140px]">
             <Link href="/about">
               Our Story
             </Link>
