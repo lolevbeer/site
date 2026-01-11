@@ -15,8 +15,22 @@ import { Pencil } from 'lucide-react';
 import { useAnimatedList, getAnimationClass } from '@/lib/hooks/use-animated-list';
 import { getMediaUrl } from '@/lib/utils/media-utils';
 import { extractBeerFromMenuItem, extractProductFromMenuItem } from '@/lib/utils/menu-item-utils';
-import type { Menu, Style } from '@/src/payload-types';
+import type { Menu, Style, Location } from '@/src/payload-types';
 import type { Beer } from '@/lib/types/beer';
+
+// Format the lines cleaned date nicely
+function formatLinesCleanedDate(dateStr: string | null | undefined): string | null {
+  if (!dateStr) return null;
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  // Add relative context
+  if (diffDays === 0) return `Draft lines cleaned today`;
+  if (diffDays === 1) return `Draft lines cleaned 1 day ago`;
+  return `Draft lines cleaned ${diffDays} days ago`;
+}
 
 type MenuType = 'draft' | 'cans';
 
@@ -341,10 +355,19 @@ export function FeaturedMenu({ menuType, menu, menus = [], isAuthenticated, anim
     // Use animated items when animations are enabled
     const itemsToRender = animated ? animatedItems : displayItems.map(item => ({ item, state: 'stable' as const, key: item.variant }));
 
+    // Get lines cleaned date from location for draft menus
+    const location = typeof menu?.location === 'object' ? menu.location as Location : null;
+    const linesCleanedText = menuType === 'draft' ? formatLinesCleanedDate(location?.linesLastCleaned) : null;
+
     return (
-      <section className="h-full flex flex-col bg-background overflow-hidden">
-        <div className="w-full flex-1 flex flex-col" style={{ padding: '2vh 2vw 0.5vh 2vw' }}>
-          <div className="text-center flex-shrink-0" style={{ marginBottom: '5vh' }}>
+      <section className="h-full flex flex-col bg-background overflow-hidden relative">
+        {linesCleanedText && (
+          <p className="absolute text-foreground" style={{ fontSize: '1.7vh', top: '3.5vh', right: '1vw' }}>
+            {linesCleanedText}
+          </p>
+        )}
+        <div className="w-full flex-1 flex flex-col" style={{ padding: '0 0 0.5vh 0' }}>
+          <div className="text-center flex-shrink-0" style={{ marginBottom: '3vh', marginTop: '2vh' }}>
             <h2 className="font-bold" style={{ fontSize: '4vh' }}>{menu?.name || title}</h2>
           </div>
           <div className="flex-1 overflow-y-auto" style={{ padding: '0 1vw' }}>

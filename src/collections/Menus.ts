@@ -77,7 +77,42 @@ export const Menus: CollectionConfig = {
     maxPerDoc: 50, // Keep only the last 50 versions per document
   },
   hooks: {
-    afterChange: [revalidateMenuCache],
+    afterChange: [
+      revalidateMenuCache,
+      // Sync linesLastCleaned to the location
+      async ({ data, req }) => {
+        if (data?.linesLastCleaned && data?.location) {
+          const locationId = typeof data.location === 'object' ? data.location.id : data.location
+          if (locationId) {
+            try {
+              await req.payload.update({
+                collection: 'locations',
+                id: locationId,
+                data: {
+                  linesLastCleaned: data.linesLastCleaned,
+                },
+              })
+            } catch (error) {
+              // Silently fail if user doesn't have permission to update location
+              console.error('Failed to sync linesLastCleaned to location:', error)
+            }
+          }
+        }
+        return data
+      },
+    ],
+    afterRead: [
+      // Populate linesLastCleaned from location
+      async ({ doc, req }) => {
+        if (doc?.location) {
+          const location = typeof doc.location === 'object' ? doc.location : null
+          if (location?.linesLastCleaned) {
+            doc.linesLastCleaned = location.linesLastCleaned
+          }
+        }
+        return doc
+      },
+    ],
     beforeValidate: [
       ({ data }) => {
         if (!data?.items || !Array.isArray(data.items)) return data
@@ -280,6 +315,20 @@ export const Menus: CollectionConfig = {
       admin: {
         description: 'Override automatic day/night theme switching',
         position: 'sidebar',
+      },
+    },
+    {
+      name: 'linesLastCleaned',
+      type: 'date',
+      label: 'Draft Lines Last Cleaned',
+      admin: {
+        description: 'Updates the location\'s lines cleaned date. Displayed on draft menus.',
+        position: 'sidebar',
+        condition: (data) => data?.type === 'draft',
+        date: {
+          pickerAppearance: 'dayOnly',
+          displayFormat: 'MMM d, yyyy',
+        },
       },
     },
     {

@@ -306,6 +306,10 @@ export interface Menu {
    * Override automatic day/night theme switching
    */
   themeMode?: ('auto' | 'light' | 'dark') | null;
+  /**
+   * Updates the location's lines cleaned date. Displayed on draft menus.
+   */
+  linesLastCleaned?: string | null;
   items: {
     product:
       | {
@@ -387,6 +391,10 @@ export interface Location {
    * @maxItems 2
    */
   coordinates?: [number, number] | null;
+  /**
+   * Date when draft lines were last cleaned
+   */
+  linesLastCleaned?: string | null;
   images?: {
     /**
      * Image shown on location cards (recommended: 800x600px)
@@ -817,6 +825,7 @@ export interface MenusSelect<T extends boolean = true> {
   url?: T;
   sheetUrl?: T;
   themeMode?: T;
+  linesLastCleaned?: T;
   items?:
     | T
     | {
@@ -946,6 +955,7 @@ export interface LocationsSelect<T extends boolean = true> {
         directionsUrl?: T;
       };
   coordinates?: T;
+  linesLastCleaned?: T;
   images?:
     | T
     | {

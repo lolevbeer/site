@@ -1,6 +1,34 @@
-import type { CollectionConfig } from 'payload'
+import type { CollectionConfig, Access, FieldAccess } from 'payload'
 import { generateUniqueSlug } from './utils/generateUniqueSlug'
-import { adminAccess, isAdmin } from '@/src/access/roles'
+import { adminAccess, adminFieldAccess, isAdmin, hasRole } from '@/src/access/roles'
+
+/**
+ * Get location IDs from user's assigned locations
+ */
+function getUserLocationIds(user: any): string[] | null {
+  if (!user?.locations || !Array.isArray(user.locations) || user.locations.length === 0) {
+    return null
+  }
+  return user.locations.map((loc: any) => (typeof loc === 'object' ? loc.id : loc))
+}
+
+/**
+ * Allow admins full access, bartenders can update their assigned locations
+ */
+const canUpdateLocation: Access = ({ req: { user } }) => {
+  if (isAdmin(user)) return true
+  if (hasRole(user, 'bartender')) {
+    const locationIds = getUserLocationIds(user)
+    if (locationIds) {
+      return {
+        id: {
+          in: locationIds,
+        },
+      }
+    }
+  }
+  return false
+}
 
 export const Locations: CollectionConfig = {
   slug: 'locations',
@@ -12,7 +40,7 @@ export const Locations: CollectionConfig = {
   access: {
     read: () => true, // Public read access
     create: adminAccess,
-    update: adminAccess,
+    update: canUpdateLocation,
     delete: adminAccess,
   },
   hooks: {
@@ -38,6 +66,9 @@ export const Locations: CollectionConfig = {
       name: 'active',
       type: 'checkbox',
       defaultValue: true,
+      access: {
+        update: adminFieldAccess,
+      },
       admin: {
         description: 'Is this location currently active?',
       },
@@ -47,6 +78,9 @@ export const Locations: CollectionConfig = {
       type: 'text',
       required: true,
       unique: true,
+      access: {
+        update: adminFieldAccess,
+      },
     },
     {
       name: 'timezone',
@@ -58,6 +92,9 @@ export const Locations: CollectionConfig = {
         { label: 'Mountain Time (MST/MDT)', value: 'America/Denver' },
         { label: 'Pacific Time (PST/PDT)', value: 'America/Los_Angeles' },
       ],
+      access: {
+        update: adminFieldAccess,
+      },
       admin: {
         description: 'Timezone for this location\'s hours',
       },
@@ -75,6 +112,9 @@ export const Locations: CollectionConfig = {
       name: 'googleSheets',
       type: 'group',
       label: 'Google Sheets Import URLs',
+      access: {
+        update: adminFieldAccess,
+      },
       admin: {
         description: 'CSV export URLs for syncing data from Google Sheets',
       },
@@ -117,6 +157,9 @@ export const Locations: CollectionConfig = {
       name: 'basicInfo',
       type: 'group',
       label: 'Contact Information',
+      access: {
+        update: adminFieldAccess,
+      },
       admin: {
         position: 'sidebar',
       },
@@ -134,6 +177,9 @@ export const Locations: CollectionConfig = {
     {
       name: 'address',
       type: 'group',
+      access: {
+        update: adminFieldAccess,
+      },
       admin: {
         position: 'sidebar',
       },
@@ -168,15 +214,33 @@ export const Locations: CollectionConfig = {
       name: 'coordinates',
       type: 'point',
       label: 'Coordinates',
+      access: {
+        update: adminFieldAccess,
+      },
       admin: {
         position: 'sidebar',
         description: 'Longitude, Latitude (e.g. -79.960098, 40.465372)',
       },
     },
     {
+      name: 'linesLastCleaned',
+      type: 'date',
+      label: 'Draft Lines Last Cleaned',
+      admin: {
+        description: 'Date when draft lines were last cleaned',
+        date: {
+          pickerAppearance: 'dayOnly',
+          displayFormat: 'MMM d, yyyy',
+        },
+      },
+    },
+    {
       name: 'images',
       type: 'group',
       label: 'Location Images',
+      access: {
+        update: adminFieldAccess,
+      },
       fields: [
         {
           name: 'card',
@@ -198,6 +262,9 @@ export const Locations: CollectionConfig = {
     },
     {
       type: 'tabs',
+      admin: {
+        condition: (data, siblingData, { user }) => isAdmin(user),
+      },
       tabs: [
         {
           name: 'monday',
