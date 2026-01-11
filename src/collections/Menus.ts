@@ -1,4 +1,4 @@
-import type { CollectionConfig, Access, Where } from 'payload'
+import type { CollectionConfig, Access, FieldAccess, Where } from 'payload'
 import { APIError } from 'payload'
 import { adminAccess, adminFieldAccess, hasRole, isAdmin } from '@/src/access/roles'
 import { revalidateMenuCache } from '@/src/hooks/revalidate-menu'
@@ -13,9 +13,16 @@ function getUserLocationIds(user: any): string[] | null {
   return user.locations.map((loc: any) => (typeof loc === 'object' ? loc.id : loc))
 }
 
+/**
+ * Field access: Admin or Lead Bartender can update
+ */
+const leadBartenderFieldAccess: FieldAccess = ({ req: { user } }) => {
+  return hasRole(user, ['admin', 'lead-bartender'])
+}
+
 const canUpdateMenus: Access = ({ req: { user } }) => {
   if (hasRole(user, 'admin')) return true
-  if (hasRole(user, 'bartender')) {
+  if (hasRole(user, ['bartender', 'lead-bartender'])) {
     // If bartender has assigned locations, restrict to those locations' menus
     const locationIds = getUserLocationIds(user)
     if (locationIds) {
@@ -218,6 +225,33 @@ export const Menus: CollectionConfig = {
   },
   fields: [
     {
+      name: 'linesLastCleaned',
+      type: 'date',
+      label: 'Draft Lines Last Cleaned',
+      access: {
+        update: leadBartenderFieldAccess,
+      },
+      admin: {
+        position: 'sidebar',
+        condition: (data) => data?.type === 'draft',
+        date: {
+          pickerAppearance: 'dayOnly',
+          displayFormat: 'MMM d, yyyy',
+        },
+      },
+    },
+    {
+      name: 'markLinesCleanedButton',
+      type: 'ui',
+      admin: {
+        position: 'sidebar',
+        condition: (data, siblingData, { user }) => data?.type === 'draft' && hasRole(user, ['admin', 'lead-bartender']),
+        components: {
+          Field: '@/src/components/admin/MarkLinesCleanedButton#MarkLinesCleanedButton',
+        },
+      },
+    },
+    {
       name: 'name',
       type: 'text',
       required: true,
@@ -315,20 +349,6 @@ export const Menus: CollectionConfig = {
       admin: {
         description: 'Override automatic day/night theme switching',
         position: 'sidebar',
-      },
-    },
-    {
-      name: 'linesLastCleaned',
-      type: 'date',
-      label: 'Draft Lines Last Cleaned',
-      admin: {
-        description: 'Updates the location\'s lines cleaned date. Displayed on draft menus.',
-        position: 'sidebar',
-        condition: (data) => data?.type === 'draft',
-        date: {
-          pickerAppearance: 'dayOnly',
-          displayFormat: 'MMM d, yyyy',
-        },
       },
     },
     {

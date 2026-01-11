@@ -281,6 +281,7 @@ export interface Media {
  */
 export interface Menu {
   id: string;
+  linesLastCleaned?: string | null;
   /**
    * Menu name (e.g., "Lawrenceville Draft Menu")
    */
@@ -306,10 +307,6 @@ export interface Menu {
    * Override automatic day/night theme switching
    */
   themeMode?: ('auto' | 'light' | 'dark') | null;
-  /**
-   * Updates the location's lines cleaned date. Displayed on draft menus.
-   */
-  linesLastCleaned?: string | null;
   items: {
     product:
       | {
@@ -336,6 +333,7 @@ export interface Menu {
  */
 export interface Location {
   id: string;
+  linesLastCleaned?: string | null;
   /**
    * Is this location currently active?
    */
@@ -391,10 +389,6 @@ export interface Location {
    * @maxItems 2
    */
   coordinates?: [number, number] | null;
-  /**
-   * Date when draft lines were last cleaned
-   */
-  linesLastCleaned?: string | null;
   images?: {
     /**
      * Image shown on location cards (recommended: 800x600px)
@@ -541,10 +535,10 @@ export interface User {
    */
   locations?: (string | Location)[] | null;
   /**
-   * Admins can manage users and all content. Event/Beer/Food Managers can manage their respective collections. Bartenders can update menus. Users can have multiple roles.
+   * Admins can manage users and all content. Event/Beer/Food Managers can manage their respective collections. Lead Bartenders can update line cleaning dates. Bartenders can update menus. Users can have multiple roles.
    */
-  roles: ('admin' | 'event-manager' | 'beer-manager' | 'food-manager' | 'bartender')[];
-  role?: ('admin' | 'event-manager' | 'beer-manager' | 'food-manager' | 'bartender') | null;
+  roles: ('admin' | 'event-manager' | 'beer-manager' | 'food-manager' | 'lead-bartender' | 'bartender')[];
+  role?: ('admin' | 'event-manager' | 'beer-manager' | 'food-manager' | 'lead-bartender' | 'bartender') | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -818,6 +812,7 @@ export interface StylesSelect<T extends boolean = true> {
  * via the `definition` "menus_select".
  */
 export interface MenusSelect<T extends boolean = true> {
+  linesLastCleaned?: T;
   name?: T;
   description?: T;
   location?: T;
@@ -825,7 +820,6 @@ export interface MenusSelect<T extends boolean = true> {
   url?: T;
   sheetUrl?: T;
   themeMode?: T;
-  linesLastCleaned?: T;
   items?:
     | T
     | {
@@ -927,6 +921,7 @@ export interface UsersSelect<T extends boolean = true> {
  * via the `definition` "locations_select".
  */
 export interface LocationsSelect<T extends boolean = true> {
+  linesLastCleaned?: T;
   active?: T;
   name?: T;
   timezone?: T;
@@ -955,7 +950,6 @@ export interface LocationsSelect<T extends boolean = true> {
         directionsUrl?: T;
       };
   coordinates?: T;
-  linesLastCleaned?: T;
   images?:
     | T
     | {

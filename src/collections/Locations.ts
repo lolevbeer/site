@@ -3,6 +3,13 @@ import { generateUniqueSlug } from './utils/generateUniqueSlug'
 import { adminAccess, adminFieldAccess, isAdmin, hasRole } from '@/src/access/roles'
 
 /**
+ * Field access: Admin or Lead Bartender can update
+ */
+const leadBartenderFieldAccess: FieldAccess = ({ req: { user } }) => {
+  return hasRole(user, ['admin', 'lead-bartender'])
+}
+
+/**
  * Get location IDs from user's assigned locations
  */
 function getUserLocationIds(user: any): string[] | null {
@@ -13,11 +20,11 @@ function getUserLocationIds(user: any): string[] | null {
 }
 
 /**
- * Allow admins full access, bartenders can update their assigned locations
+ * Allow admins full access, lead-bartenders can update their assigned locations
  */
 const canUpdateLocation: Access = ({ req: { user } }) => {
   if (isAdmin(user)) return true
-  if (hasRole(user, 'bartender')) {
+  if (hasRole(user, 'lead-bartender')) {
     const locationIds = getUserLocationIds(user)
     if (locationIds) {
       return {
@@ -62,6 +69,32 @@ export const Locations: CollectionConfig = {
     ],
   },
   fields: [
+    {
+      name: 'linesLastCleaned',
+      type: 'date',
+      label: 'Draft Lines Last Cleaned',
+      access: {
+        update: leadBartenderFieldAccess,
+      },
+      admin: {
+        position: 'sidebar',
+        date: {
+          pickerAppearance: 'dayOnly',
+          displayFormat: 'MMM d, yyyy',
+        },
+      },
+    },
+    {
+      name: 'markLinesCleanedButton',
+      type: 'ui',
+      admin: {
+        position: 'sidebar',
+        condition: (data, siblingData, { user }) => hasRole(user, ['admin', 'lead-bartender']),
+        components: {
+          Field: '@/src/components/admin/MarkLinesCleanedButton#MarkLinesCleanedButton',
+        },
+      },
+    },
     {
       name: 'active',
       type: 'checkbox',
@@ -220,18 +253,6 @@ export const Locations: CollectionConfig = {
       admin: {
         position: 'sidebar',
         description: 'Longitude, Latitude (e.g. -79.960098, 40.465372)',
-      },
-    },
-    {
-      name: 'linesLastCleaned',
-      type: 'date',
-      label: 'Draft Lines Last Cleaned',
-      admin: {
-        description: 'Date when draft lines were last cleaned',
-        date: {
-          pickerAppearance: 'dayOnly',
-          displayFormat: 'MMM d, yyyy',
-        },
       },
     },
     {

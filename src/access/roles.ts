@@ -4,7 +4,7 @@ import type { User } from '@/src/payload-types'
 /**
  * Role types available in the system
  */
-export type Role = 'admin' | 'event-manager' | 'beer-manager' | 'food-manager' | 'bartender'
+export type Role = 'admin' | 'event-manager' | 'beer-manager' | 'food-manager' | 'lead-bartender' | 'bartender'
 
 /**
  * Check if a user has any of the specified roles

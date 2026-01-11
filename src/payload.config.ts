@@ -71,7 +71,10 @@ export default buildConfig({
         Logo: './components/AdminLogo#AdminLogo',
         Icon: './components/AdminLogo#AdminIcon',
       },
-      providers: ['./components/AdminNavLink#AdminNavLink'],
+      providers: [
+        './components/AdminNavLink#AdminNavLink',
+        './components/admin/LinesCleanedAlert#LinesCleanedAlert',
+      ],
       actions: [],
       afterNavLinks: ['./components/SyncNavLink#SyncNavLink'],
       views: {
