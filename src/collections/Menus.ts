@@ -112,7 +112,20 @@ export const Menus: CollectionConfig = {
       // Populate linesLastCleaned from location
       async ({ doc, req }) => {
         if (doc?.location) {
-          const location = typeof doc.location === 'object' ? doc.location : null
+          let location = typeof doc.location === 'object' ? doc.location : null
+
+          // Fetch location if it's just an ID
+          if (!location && typeof doc.location === 'string') {
+            try {
+              location = await req.payload.findByID({
+                collection: 'locations',
+                id: doc.location,
+              })
+            } catch {
+              // Silently fail if location not found
+            }
+          }
+
           if (location?.linesLastCleaned) {
             doc.linesLastCleaned = location.linesLastCleaned
           }
