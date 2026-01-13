@@ -86,9 +86,9 @@ export const Menus: CollectionConfig = {
   hooks: {
     afterChange: [
       revalidateMenuCache,
-      // Sync linesLastCleaned to the location
+      // Sync linesLastCleaned to the location (draft menus only)
       async ({ data, req }) => {
-        if (data?.linesLastCleaned && data?.location) {
+        if (data?.type === 'draft' && data?.linesLastCleaned && data?.location) {
           const locationId = typeof data.location === 'object' ? data.location.id : data.location
           if (locationId) {
             try {
@@ -109,9 +109,9 @@ export const Menus: CollectionConfig = {
       },
     ],
     afterRead: [
-      // Populate linesLastCleaned from location
+      // Populate linesLastCleaned from location (draft menus only)
       async ({ doc, req }) => {
-        if (doc?.location) {
+        if (doc?.type === 'draft' && doc?.location) {
           let location = typeof doc.location === 'object' ? doc.location : null
 
           // Fetch location if it's just an ID

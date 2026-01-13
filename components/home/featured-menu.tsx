@@ -355,9 +355,9 @@ export function FeaturedMenu({ menuType, menu, menus = [], isAuthenticated, anim
     // Use animated items when animations are enabled
     const itemsToRender = animated ? animatedItems : displayItems.map(item => ({ item, state: 'stable' as const, key: item.variant }));
 
-    // Get lines cleaned date from location for draft menus
+    // Get lines cleaned date from location for draft menus only (not 'other' or 'cans')
     const location = typeof menu?.location === 'object' ? menu.location as Location : null;
-    const linesCleanedText = menuType === 'draft' ? formatLinesCleanedDate(location?.linesLastCleaned) : null;
+    const linesCleanedText = menu?.type === 'draft' ? formatLinesCleanedDate(location?.linesLastCleaned) : null;
 
     return (
       <section className="h-full flex flex-col bg-background overflow-hidden relative">
