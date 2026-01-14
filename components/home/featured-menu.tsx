@@ -405,7 +405,7 @@ export function FeaturedMenu({ menuType, menu, menus = [], animated = false, ite
                       <div className="flex" style={{ gap: '2vh' }}>
                         {!isOtherMenu && <div className="text-center" style={{ minWidth: '5vh' }}>ABV</div>}
                         {!isOtherMenu && <div className="text-center" style={{ minWidth: '6vh' }}>Half</div>}
-                        <div className="text-center" style={{ minWidth: '6vh' }}>{isOtherMenu ? 'Price' : 'Full'}</div>
+                        <div className="text-center">{isOtherMenu ? 'Price' : 'Full'}</div>
                       </div>
                     </div>
                   );
