@@ -969,7 +969,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
           ) : (
             <>
               {/* URL Inputs */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px', maxWidth: '450px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
                 <div>
                   <label style={{
                     display: 'block',
@@ -980,14 +980,14 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                   }}>
                     Pennsylvania JSON URL
                   </label>
-                  <div style={{ display: 'flex', gap: '8px' }}>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                     <input
                       type="text"
                       value={paUrl}
                       onChange={(e) => setPaUrl(e.target.value)}
-                      placeholder="https://sixthcity.encompass8.com/..."
+                      placeholder="Paste URL..."
                       style={{
-                        flex: 1,
+                        width: '280px',
                         padding: '6px 10px',
                         fontSize: '12px',
                         borderRadius: '4px',
@@ -1017,14 +1017,14 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                   }}>
                     Ohio JSON URL
                   </label>
-                  <div style={{ display: 'flex', gap: '8px' }}>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                     <input
                       type="text"
                       value={ohUrl}
                       onChange={(e) => setOhUrl(e.target.value)}
-                      placeholder="https://sixthcity.encompass8.com/..."
+                      placeholder="Paste URL..."
                       style={{
-                        flex: 1,
+                        width: '280px',
                         padding: '6px 10px',
                         fontSize: '12px',
                         borderRadius: '4px',
