@@ -111,7 +111,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
             {/* ABV and Price - Right aligned */}
             <div className="flex-shrink-0 flex items-center" style={{ gap: '2vh' }}>
               {showAbv && (
-                <div className="text-center" style={{ minWidth: '5vh' }}>
+                <div className="text-center" style={{ minWidth: '7vh' }}>
                   {beer.abv && (
                     <div className="font-bold text-foreground-muted tabular-nums" style={{ fontSize: '2.8vh' }}>
                       {beer.abv}%
@@ -120,7 +120,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                 </div>
               )}
               {/* Half pour price - always render column for alignment */}
-              <div className="text-center" style={{ minWidth: '6vh' }}>
+              <div className="text-center" style={{ minWidth: '8vh' }}>
                 {beer.pricing?.halfPour && (
                   <div className="font-bold tabular-nums transition-colors duration-500" style={{ fontSize: '3.8vh', color: accentColor }}>
                     ${beer.pricing.halfPour}
