@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -231,10 +231,21 @@ function AdminEditButtons({
 /** Can card component for cans display */
 function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fullscreen?: boolean; accentColor?: string }) {
   const GlassIcon = getGlassIcon(item.glass);
+  const [imageError, setImageError] = useState(false);
+
+  // Fallback content when no image or image failed to load
+  const renderFallback = (heightClass?: string) => (
+    <div className={`flex items-center justify-center ${heightClass || 'h-full'}`} role="img" aria-label={`${item.name} - ${item.type || 'Craft beer'}`}>
+      <div className="text-center px-4">
+        <div className="text-2xl font-bold text-muted-foreground/70 mb-2">{item.name}</div>
+        <div className="text-sm text-muted-foreground/70">{item.type}</div>
+      </div>
+    </div>
+  );
 
   // Shared image rendering logic
   const renderImage = (heightClass?: string) => {
-    if (item.imageUrl) {
+    if (item.imageUrl && !imageError) {
       return (
         <Image
           src={item.imageUrl}
@@ -243,17 +254,11 @@ function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fu
           className="object-contain"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
           unoptimized
+          onError={() => setImageError(true)}
         />
       );
     }
-    return (
-      <div className={`flex items-center justify-center ${heightClass || 'h-full'}`}>
-        <div className="text-center px-4">
-          <div className="text-2xl font-bold text-muted-foreground/30 mb-2">{item.name}</div>
-          <div className="text-sm text-muted-foreground/30">{item.type}</div>
-        </div>
-      </div>
-    );
+    return renderFallback(heightClass);
   };
 
   if (fullscreen) {
@@ -271,19 +276,19 @@ function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fu
           )}
         </div>
         <div className="flex flex-col items-center text-center" style={{ gap: '0.5vh', marginTop: '1.5vh' }}>
-          <h3 className="font-bold leading-tight transition-colors duration-500" style={{ fontSize: '2.8vh', color: accentColor }}>
+          <h3 className="font-bold leading-tight transition-colors duration-[250ms]" style={{ fontSize: '2.8vh', color: accentColor }}>
             {item.name}
           </h3>
           <div className="flex items-center" style={{ gap: '0.8vh' }}>
             <Badge variant="outline" style={{ fontSize: '1.6vh' }}>{item.type}</Badge>
             {item.untappdRating && item.untappdRating > 0 && (
-              <span className="flex items-center text-amber-500" style={{ fontSize: '1.6vh', gap: '0.3vh' }}>
+              <span className="flex items-center text-amber-500 font-bold" style={{ fontSize: '1.6vh', gap: '0.3vh' }}>
                 ★ {item.untappdRating.toFixed(2)}
               </span>
             )}
           </div>
           {item.fourPack && (
-            <span className="font-semibold transition-colors duration-500" style={{ fontSize: '1.8vh', color: accentColor }}>
+            <span className="font-semibold transition-colors duration-[250ms]" style={{ fontSize: '1.8vh', color: accentColor }}>
               ${item.fourPack} <span className="font-semibold text-foreground-muted" style={{ fontSize: '1.4vh' }}>• Four Pack</span>
             </span>
           )}
@@ -318,7 +323,7 @@ function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fu
           <h3 className="text-lg font-semibold">{item.name}</h3>
           <Badge variant="outline" className="text-xs">{item.type}</Badge>
           {item.untappdRating && item.untappdRating > 0 && (
-            <span className="text-xs text-amber-500 flex items-center gap-0.5">
+            <span className="text-xs text-amber-500 flex items-center gap-0.5 font-bold">
               ★ {item.untappdRating.toFixed(2)}
             </span>
           )}

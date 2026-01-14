@@ -445,27 +445,23 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
 
           {/* External Links */}
           {beer.untappd && (
-            <div className="flex items-center gap-3">
-              <Button variant="ghost" asChild>
-                <a
-                  href={`https://untappd.com${typeof beer.untappd === 'string' && beer.untappd.startsWith('/') ? '' : '/b/-/'}${beer.untappd}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="no-underline"
-                >
-                  <>
-                    <UntappdIcon className="h-5 w-5" />
-                    Untappd
-                  </>
-                </a>
-              </Button>
-              {beer.untappdRating && beer.untappdRating > 0 && (
-                <span className="text-muted-foreground flex items-center gap-1.5">
-                  <span className="text-amber-500">★</span>
-                  <span className="font-medium">{beer.untappdRating.toFixed(2)}</span>
-                </span>
-              )}
-            </div>
+            <Button variant="ghost" asChild>
+              <a
+                href={`https://untappd.com${typeof beer.untappd === 'string' && beer.untappd.startsWith('/') ? '' : '/b/-/'}${beer.untappd}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="no-underline"
+              >
+                <UntappdIcon className="h-5 w-5" />
+                Untappd
+                {beer.untappdRating && beer.untappdRating > 0 && (
+                  <span className="text-amber-500 flex items-center gap-1 font-bold">
+                    <span>★</span>
+                    <span>{beer.untappdRating.toFixed(2)}</span>
+                  </span>
+                )}
+              </a>
+            </Button>
           )}
         </div>
       </div>
@@ -475,44 +471,52 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
         <div className="mt-8">
           <h2 className="text-2xl font-bold mb-6">Reviews</h2>
           <div className="space-y-4">
-            {beer.positiveReviews.map((review, index) => (
-              <div key={review.url || index} className="flex gap-4 py-4 border-b border-border/40 last:border-b-0">
-                {review.image && (
-                  <div className="relative w-24 h-24 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
-                    <Image
-                      src={review.image}
-                      alt={`Review photo by ${review.username}`}
-                      fill
-                      className="object-cover"
-                      sizes="96px"
-                    />
-                  </div>
-                )}
-                <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
-                  <span className="font-medium">{review.username}</span>
-                  <span className="flex items-center gap-0.5 text-amber-500 text-sm">
-                    <span>★</span>
-                    <span>{review.rating.toFixed(1)}</span>
-                  </span>
-                  {review.date && (
-                    <span className="text-xs text-muted-foreground/70">
-                      {formatReviewDate(review.date)}
+            {beer.positiveReviews.map((review, index) => {
+              const content = (
+                <>
+                  {review.image && (
+                    <div className="relative w-24 h-24 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
+                      <Image
+                        src={review.image}
+                        alt={`Review photo by ${review.username}`}
+                        fill
+                        className="object-cover"
+                        sizes="96px"
+                      />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
+                    <span className="font-medium">{review.username}</span>
+                    <span className="flex items-center gap-0.5 text-amber-500 text-sm font-bold">
+                      <span>★</span>
+                      <span>{review.rating.toFixed(1)}</span>
                     </span>
-                  )}
-                  <span className="text-sm text-muted-foreground">— {review.text}</span>
-                  {review.url && (
-                    <a
-                      href={review.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-muted-foreground/70 hover:text-foreground transition-colors"
-                    >
-                      ↗
-                    </a>
-                  )}
+                    {review.date && (
+                      <span className="text-xs text-muted-foreground/70">
+                        {formatReviewDate(review.date)}
+                      </span>
+                    )}
+                    <span className="text-sm text-muted-foreground">{review.text.length > 100 || review.text.includes('\n') ? review.text : `— ${review.text}`}</span>
+                  </div>
+                </>
+              );
+
+              return review.url ? (
+                <a
+                  key={review.url}
+                  href={review.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex gap-4 py-4 border-b border-border/40 last:border-b-0 cursor-pointer no-underline"
+                >
+                  {content}
+                </a>
+              ) : (
+                <div key={index} className="flex gap-4 py-4 border-b border-border/40 last:border-b-0">
+                  {content}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

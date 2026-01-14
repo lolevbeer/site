@@ -3,6 +3,12 @@
 import * as React from 'react';
 import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 function MonitorIcon({ className }: { className?: string }) {
   return (
@@ -79,9 +85,9 @@ export function ThemeSwitcher({ className }: ThemeSwitcherProps) {
   }, []);
 
   const options: { value: Theme; icon: React.ReactNode; label: string }[] = [
-    { value: 'system', icon: <MonitorIcon />, label: 'system' },
-    { value: 'light', icon: <SunIcon />, label: 'light' },
-    { value: 'dark', icon: <MoonIcon />, label: 'dark' },
+    { value: 'system', icon: <MonitorIcon />, label: 'System' },
+    { value: 'light', icon: <SunIcon />, label: 'Light Mode' },
+    { value: 'dark', icon: <MoonIcon />, label: 'Dark Mode' },
   ];
 
   // Prevent hydration mismatch - show skeleton until mounted
@@ -103,37 +109,46 @@ export function ThemeSwitcher({ className }: ThemeSwitcherProps) {
   const currentTheme = theme || 'system';
 
   return (
-    <fieldset className={cn('inline-flex rounded-md bg-muted p-0.5', className)}>
-      <legend className="sr-only">Select a display theme:</legend>
-      {options.map((option) => {
-        const isSelected = currentTheme === option.value;
-        return (
-          <span key={option.value} className="h-full">
-            <input
-              aria-label={option.label}
-              type="radio"
-              name="theme-switcher"
-              value={option.value}
-              checked={isSelected}
-              onChange={() => setTheme(option.value)}
-              id={`theme-switch-${option.value}`}
-              className="sr-only peer"
-            />
-            <label
-              htmlFor={`theme-switch-${option.value}`}
-              className={cn(
-                'flex items-center justify-center w-8 h-8 rounded-md cursor-pointer transition-colors',
-                isSelected
-                  ? 'bg-background text-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
-            >
-              <span className="sr-only">{option.label}</span>
-              {option.icon}
-            </label>
-          </span>
-        );
-      })}
-    </fieldset>
+    <TooltipProvider delayDuration={300}>
+      <fieldset className={cn('inline-flex rounded-md bg-muted p-0.5', className)}>
+        <legend className="sr-only">Select a display theme:</legend>
+        {options.map((option) => {
+          const isSelected = currentTheme === option.value;
+          return (
+            <Tooltip key={option.value}>
+              <TooltipTrigger asChild>
+                <span className="h-full">
+                  <input
+                    aria-label={option.label}
+                    type="radio"
+                    name="theme-switcher"
+                    value={option.value}
+                    checked={isSelected}
+                    onChange={() => setTheme(option.value)}
+                    id={`theme-switch-${option.value}`}
+                    className="sr-only peer"
+                  />
+                  <label
+                    htmlFor={`theme-switch-${option.value}`}
+                    className={cn(
+                      'flex items-center justify-center w-8 h-8 rounded-md cursor-pointer transition-colors',
+                      isSelected
+                        ? 'bg-background text-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    <span className="sr-only">{option.label}</span>
+                    {option.icon}
+                  </label>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                <p>{option.label}</p>
+              </TooltipContent>
+            </Tooltip>
+          );
+        })}
+      </fieldset>
+    </TooltipProvider>
   );
 }

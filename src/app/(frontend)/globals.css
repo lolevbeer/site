@@ -110,10 +110,11 @@
   }
 
   /* Smooth theme color transitions for elements using theme colors */
-  [class*="bg-"],
-  [class*="text-"],
-  [class*="border-"] {
-    transition: background-color 2s ease-in-out, color 2s ease-in-out, border-color 2s ease-in-out !important;
+  /* Exclude interactive elements (buttons, tabs, links) which need instant feedback */
+  [class*="bg-"]:not(button):not([role="tab"]):not(a),
+  [class*="text-"]:not(button):not([role="tab"]):not(a),
+  [class*="border-"]:not(button):not([role="tab"]):not(a) {
+    transition: background-color 0.5s ease-in-out, color 0.5s ease-in-out, border-color 0.5s ease-in-out !important;
   }
 
   body {

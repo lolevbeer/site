@@ -125,13 +125,12 @@ export function useLocation(locations: PayloadLocation[] = []): UseLocationRetur
     [currentLocationData]
   );
 
-  // Set location with persistence (localStorage + URL)
+  // Set location with persistence (localStorage only - URL sync is slow)
   const setLocation = useCallback((slug: LocationSlug) => {
     if (!isValidLocationSlug(locations, slug)) return;
     setCurrentLocationState(slug);
     saveLocationToStorage(slug);
-    setUrlLocation(slug);
-  }, [locations, setUrlLocation]);
+  }, [locations]);
 
   // Cycle to next location
   const cycleLocation = useCallback(() => {

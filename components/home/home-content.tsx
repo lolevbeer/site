@@ -14,6 +14,8 @@ interface HomeContentProps {
   availableBeers: PayloadBeer[];
   /** All draft menus from all locations */
   draftMenus: PayloadMenu[];
+  /** All cans menus from all locations */
+  cansMenus: PayloadMenu[];
   /** Beer count by location slug */
   beerCount: Record<string, number>;
   nextEvent: { name: string; date: string; location: LocationSlug } | null;
@@ -26,6 +28,7 @@ interface HomeContentProps {
 export function HomeContent({
   availableBeers,
   draftMenus,
+  cansMenus,
   beerCount,
   nextEvent,
   children,
@@ -35,7 +38,7 @@ export function HomeContent({
 }: HomeContentProps) {
   return (
     <div className="min-h-screen">
-      <HeroSection availableBeers={availableBeers} heroDescription={heroDescription} heroImageUrl={heroImageUrl} />
+      <HeroSection availableBeers={availableBeers} cansMenus={cansMenus} heroDescription={heroDescription} heroImageUrl={heroImageUrl} />
 
       {/* Our Locations - right after hero */}
       <section className="py-16 lg:py-24 bg-background">

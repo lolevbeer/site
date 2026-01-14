@@ -70,6 +70,7 @@ export default async function Home(): Promise<React.ReactElement> {
       <HomeContent
         availableBeers={data.availableBeers}
         draftMenus={data.allDraftMenus}
+        cansMenus={data.allCansMenus}
         beerCount={data.beerCount}
         nextEvent={data.nextEvent}
         heroDescription={data.siteContent.heroDescription}

@@ -84,7 +84,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                   </Badge>
                 ))}
                 {showRating && beer.untappdRating && beer.untappdRating > 0 && (
-                  <span className="flex items-center text-amber-500 flex-shrink-0" style={{ fontSize: '1.8vh', gap: '0.3vh' }}>
+                  <span className="flex items-center text-amber-500 flex-shrink-0 font-bold" style={{ fontSize: '1.8vh', gap: '0.3vh' }}>
                     ★ {beer.untappdRating.toFixed(2)}
                   </span>
                 )}
@@ -169,7 +169,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                 </Badge>
               ))}
               {showRating && beer.untappdRating && beer.untappdRating > 0 && (
-                <span className="text-sm text-amber-500 flex items-center gap-0.5 flex-shrink-0">
+                <span className="text-sm text-amber-500 flex items-center gap-0.5 flex-shrink-0 font-bold">
                   ★ {beer.untappdRating.toFixed(2)}
                 </span>
               )}
