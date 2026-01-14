@@ -647,47 +647,15 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
             ))}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <button
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <Button
               onClick={handleSync}
               disabled={syncing || selectedCollections.length === 0}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '10px 16px',
-                fontSize: '14px',
-                fontWeight: 500,
-                borderRadius: '4px',
-                border: 'none',
-                cursor: syncing || selectedCollections.length === 0 ? 'not-allowed' : 'pointer',
-                opacity: syncing || selectedCollections.length === 0 ? 0.6 : 1,
-                backgroundColor: dryRun ? 'var(--theme-elevation-500)' : 'var(--theme-success-500)',
-                color: 'white',
-                transition: 'all 0.15s',
-              }}
+              buttonStyle={dryRun ? 'secondary' : 'primary'}
+              size="small"
             >
-              {syncing && (
-                <svg
-                  style={{ animation: 'spin 1s linear infinite', width: '16px', height: '16px' }}
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    style={{ opacity: 0.25 }}
-                    cx="12" cy="12" r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                    fill="none"
-                  />
-                  <path
-                    style={{ opacity: 0.75 }}
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
-              )}
               {syncing ? (dryRun ? 'Previewing...' : 'Syncing...') : (dryRun ? 'Preview' : 'Sync Now')}
-            </button>
+            </Button>
             <label style={{
               display: 'flex',
               alignItems: 'center',
@@ -1059,24 +1027,14 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                         color: 'var(--theme-text)',
                       }}
                     />
-                    <button
+                    <Button
                       onClick={() => importDistributors('pa')}
                       disabled={!paUrl || distImporting !== null}
-                      style={{
-                        padding: '8px 16px',
-                        fontSize: '13px',
-                        fontWeight: 500,
-                        borderRadius: '4px',
-                        border: 'none',
-                        cursor: !paUrl || distImporting !== null ? 'not-allowed' : 'pointer',
-                        opacity: !paUrl || distImporting !== null ? 0.6 : 1,
-                        backgroundColor: '#fb923c',
-                        color: 'white',
-                        whiteSpace: 'nowrap',
-                      }}
+                      buttonStyle="primary"
+                      size="small"
                     >
                       {distImporting === 'pa' ? 'Importing...' : 'Import PA'}
-                    </button>
+                    </Button>
                   </div>
                 </div>
 
@@ -1106,46 +1064,27 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                         color: 'var(--theme-text)',
                       }}
                     />
-                    <button
+                    <Button
                       onClick={() => importDistributors('oh')}
                       disabled={!ohUrl || distImporting !== null}
-                      style={{
-                        padding: '8px 16px',
-                        fontSize: '13px',
-                        fontWeight: 500,
-                        borderRadius: '4px',
-                        border: 'none',
-                        cursor: !ohUrl || distImporting !== null ? 'not-allowed' : 'pointer',
-                        opacity: !ohUrl || distImporting !== null ? 0.6 : 1,
-                        backgroundColor: '#fb923c',
-                        color: 'white',
-                        whiteSpace: 'nowrap',
-                      }}
+                      buttonStyle="primary"
+                      size="small"
                     >
                       {distImporting === 'oh' ? 'Importing...' : 'Import OH'}
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <button
+                <Button
                   onClick={saveDistributorUrls}
                   disabled={urlsSaving}
-                  style={{
-                    padding: '8px 16px',
-                    fontSize: '13px',
-                    fontWeight: 500,
-                    borderRadius: '4px',
-                    border: '1px solid var(--theme-elevation-300)',
-                    cursor: urlsSaving ? 'not-allowed' : 'pointer',
-                    opacity: urlsSaving ? 0.6 : 1,
-                    backgroundColor: 'transparent',
-                    color: 'var(--theme-text)',
-                  }}
+                  buttonStyle="secondary"
+                  size="small"
                 >
                   {urlsSaving ? 'Saving...' : 'Save URLs'}
-                </button>
+                </Button>
                 {urlsSaveStatus === 'success' && (
                   <span style={{ color: 'var(--theme-success-500)', fontSize: '13px' }}>Saved!</span>
                 )}
@@ -1465,47 +1404,15 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                   Find and re-geocode distributors that have default/fallback coordinates (Pittsburgh, Columbus, or Rochester center)
                 </p>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <button
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                  <Button
                     onClick={handleRegeocodeDistributors}
                     disabled={regeocodeRunning}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      padding: '8px 16px',
-                      fontSize: '13px',
-                      fontWeight: 500,
-                      borderRadius: '4px',
-                      border: 'none',
-                      cursor: regeocodeRunning ? 'not-allowed' : 'pointer',
-                      opacity: regeocodeRunning ? 0.6 : 1,
-                      backgroundColor: regeocodeDryRun ? '#a855f7' : 'var(--theme-success-500)',
-                      color: 'white',
-                      transition: 'all 0.15s',
-                    }}
+                    buttonStyle={regeocodeDryRun ? 'secondary' : 'primary'}
+                    size="small"
                   >
-                    {regeocodeRunning && (
-                      <svg
-                        style={{ animation: 'spin 1s linear infinite', width: '14px', height: '14px' }}
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          style={{ opacity: 0.25 }}
-                          cx="12" cy="12" r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                          fill="none"
-                        />
-                        <path
-                          style={{ opacity: 0.75 }}
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        />
-                      </svg>
-                    )}
                     {regeocodeRunning ? (regeocodeDryRun ? 'Scanning...' : 'Fixing...') : (regeocodeDryRun ? 'Find Bad Coords' : 'Fix Bad Coords')}
-                  </button>
+                  </Button>
                   <label style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -1699,47 +1606,15 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
             Recalculate auto-computed beer fields (Half Pour, Can Single prices)
           </p>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <button
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <Button
               onClick={handleRecalculateBeerFields}
               disabled={recalcRunning}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '10px 16px',
-                fontSize: '14px',
-                fontWeight: 500,
-                borderRadius: '4px',
-                border: 'none',
-                cursor: recalcRunning ? 'not-allowed' : 'pointer',
-                opacity: recalcRunning ? 0.6 : 1,
-                backgroundColor: recalcDryRun ? '#fbbf24' : 'var(--theme-success-500)',
-                color: recalcDryRun ? '#000' : 'white',
-                transition: 'all 0.15s',
-              }}
+              buttonStyle={recalcDryRun ? 'secondary' : 'primary'}
+              size="small"
             >
-              {recalcRunning && (
-                <svg
-                  style={{ animation: 'spin 1s linear infinite', width: '16px', height: '16px' }}
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    style={{ opacity: 0.25 }}
-                    cx="12" cy="12" r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                    fill="none"
-                  />
-                  <path
-                    style={{ opacity: 0.75 }}
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
-              )}
               {recalcRunning ? (recalcDryRun ? 'Previewing...' : 'Recalculating...') : (recalcDryRun ? 'Preview Recalculation' : 'Recalculate All')}
-            </button>
+            </Button>
             <label style={{
               display: 'flex',
               alignItems: 'center',
