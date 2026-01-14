@@ -987,7 +987,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                       onChange={(e) => setPaUrl(e.target.value)}
                       placeholder="Paste URL..."
                       style={{
-                        width: '500px',
+                        width: '600px',
                         padding: '6px 10px',
                         fontSize: '12px',
                         borderRadius: '4px',
@@ -1024,7 +1024,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                       onChange={(e) => setOhUrl(e.target.value)}
                       placeholder="Paste URL..."
                       style={{
-                        width: '500px',
+                        width: '600px',
                         padding: '6px 10px',
                         fontSize: '12px',
                         borderRadius: '4px',
