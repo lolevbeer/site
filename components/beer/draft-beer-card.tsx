@@ -128,7 +128,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                 )}
               </div>
               {/* Full price - always render column, show value if not halfPourOnly */}
-              <div className="text-center" style={{ minWidth: '6vh' }}>
+              <div className="text-center">
                 {!beer.pricing?.halfPourOnly && beer.pricing?.draftPrice && (
                   <div className="font-bold tabular-nums transition-colors duration-500" style={{ fontSize: '3.8vh', color: accentColor }}>
                     ${beer.pricing.draftPrice}
