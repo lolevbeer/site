@@ -110,11 +110,14 @@
   }
 
   /* Smooth theme color transitions for elements using theme colors */
-  /* Exclude interactive elements (buttons, tabs, links) which need instant feedback */
-  [class*="bg-"]:not(button):not([role="tab"]):not(a),
-  [class*="text-"]:not(button):not([role="tab"]):not(a),
-  [class*="border-"]:not(button):not([role="tab"]):not(a) {
-    transition: background-color 0.5s ease-in-out, color 0.5s ease-in-out, border-color 0.5s ease-in-out !important;
+  /* Exclude interactive elements (buttons, tabs, links, header) which need instant feedback */
+  /* Use transition-property instead of shorthand to avoid overriding transform/opacity transitions */
+  [class*="bg-"]:not(button):not([role="tab"]):not(a):not(header):not(header *),
+  [class*="text-"]:not(button):not([role="tab"]):not(a):not(header):not(header *),
+  [class*="border-"]:not(button):not([role="tab"]):not(a):not(header):not(header *) {
+    transition-property: background-color, color, border-color;
+    transition-duration: 0.5s;
+    transition-timing-function: ease-in-out;
   }
 
   body {

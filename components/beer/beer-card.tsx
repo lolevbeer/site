@@ -64,7 +64,7 @@ export const BeerCard = React.memo(function BeerCard({
       <Link
         href={beerHref}
         onClick={() => trackBeerView(beer.name, beer.type)}
-        className="group flex flex-col cursor-pointer"
+        className="group flex flex-col cursor-pointer transition-transform duration-200 hover:-translate-y-1"
       >
         <div className="relative h-64 w-full flex-shrink-0 mb-4 transition-transform duration-200 group-hover:scale-[1.02]">
           <BeerImage
@@ -96,7 +96,7 @@ export const BeerCard = React.memo(function BeerCard({
             )}
           </div>
         </div>
-        <Button variant="outline" className="w-full group-hover:bg-muted/50" tabIndex={-1}>
+        <Button variant="outline" className="w-full group-hover:bg-muted/50 hover:translate-y-0" tabIndex={-1}>
           View Details
         </Button>
       </Link>
@@ -177,7 +177,7 @@ export const BeerCard = React.memo(function BeerCard({
         asChild
         variant="outline"
         size="sm"
-        className="ml-auto"
+        className="ml-auto hover:translate-y-0"
       >
         <Link
           href={showLocation ? `/${currentLocation}/beer/${beerSlug}` : `/beer/${beerSlug}`}

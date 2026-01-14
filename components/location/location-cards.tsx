@@ -166,14 +166,20 @@ export function LocationCards({ weeklyHours }: LocationCardsProps) {
 
               {/* Address */}
               {location.address && (
-                <div className="text-muted-foreground text-lg">
+                <a
+                  href={mapUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground text-lg hover:text-foreground hover:underline transition-colors"
+                  onClick={() => trackDirections(location.name)}
+                >
                   <p>{location.address.street}</p>
                   <p>
                     {location.address.city}
                     {location.address.state && `, ${location.address.state}`}
                     {location.address.zip && ` ${location.address.zip}`}
                   </p>
-                </div>
+                </a>
               )}
 
               {/* Hours */}
