@@ -17,6 +17,7 @@ import { getMediaUrl } from '@/lib/utils/media-utils';
 import { extractBeerFromMenuItem, extractProductFromMenuItem } from '@/lib/utils/menu-item-utils';
 import type { Menu, Style, Location } from '@/src/payload-types';
 import type { Beer } from '@/lib/types/beer';
+import { Logo } from '@/components/ui/logo';
 
 /** Parse price string to number, removing '$' prefix if present */
 function parsePrice(price: string | number | null | undefined): number | undefined {
@@ -368,13 +369,19 @@ export function FeaturedMenu({ menuType, menu, menus = [], animated = false, ite
 
     return (
       <section className="h-full flex flex-col bg-background overflow-hidden relative">
+        {/* Logo floated top right */}
+        <div className="absolute" style={{ top: '1.5vh', right: '1.5vw' }}>
+          <Logo width={48} height={52} />
+        </div>
         {linesCleanedText && (
-          <p className="absolute text-foreground" style={{ fontSize: '1.7vh', top: '3.5vh', right: '1vw' }}>
+          <p className="absolute text-foreground" style={{ fontSize: '1.5vh', top: '7vh', right: '1.5vw' }}>
             {linesCleanedText}
           </p>
         )}
         <div className="w-full flex-1 flex flex-col" style={{ padding: '0 0 0.5vh 0' }}>
-          <div className="text-center flex-shrink-0" style={{ marginBottom: '3vh', marginTop: '2vh' }}>
+          <div className="flex items-center justify-center flex-shrink-0" style={{ marginBottom: '3vh', marginTop: '2vh', gap: '1.5vh' }}>
+            <span className="font-medium text-foreground-muted" style={{ fontSize: '2.5vh' }}>Lolev Beer</span>
+            <span className="text-foreground-muted" style={{ fontSize: '2.5vh' }}>•</span>
             <h2 className="font-bold" style={{ fontSize: '4vh' }}>{menu?.name || title}</h2>
           </div>
           <div className="flex-1 overflow-y-auto" style={{ padding: '0 1vw' }}>
