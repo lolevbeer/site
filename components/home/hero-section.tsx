@@ -101,7 +101,7 @@ export function HeroSection({ availableBeers, cansMenus, heroDescription, heroIm
                 className="w-full"
                 aria-label="Available beers carousel"
               >
-                <CarouselContent className="-ml-4">
+                <CarouselContent className="-ml-4 justify-center">
                   {availableBeers.length > 0 ? (
                     availableBeers.map((beer) => {
                       const imageUrl = getBeerImageUrl(beer);
