@@ -25,10 +25,9 @@ interface FoodVendor {
 interface UpcomingFoodProps {
   /** Food organized by location slug */
   foodByLocation: Record<string, FoodVendor[]>;
-  isAuthenticated?: boolean;
 }
 
-export function UpcomingFood({ foodByLocation, isAuthenticated }: UpcomingFoodProps) {
+export function UpcomingFood({ foodByLocation }: UpcomingFoodProps) {
   const { locations } = useLocationContext();
 
   // Create data structure for location filtering with location attached
@@ -71,7 +70,6 @@ export function UpcomingFood({ foodByLocation, isAuthenticated }: UpcomingFoodPr
           <SectionHeader
             title="Upcoming Food"
             adminUrl="/admin/collections/food"
-            isAuthenticated={isAuthenticated}
           />
         </ScrollReveal>
 

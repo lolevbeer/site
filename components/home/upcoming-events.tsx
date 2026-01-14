@@ -16,10 +16,9 @@ type EventWithLocationSlug = PayloadEvent & { locationSlug: string };
 interface UpcomingEventsProps {
   /** Events organized by location slug */
   eventsByLocation: Record<string, PayloadEvent[]>;
-  isAuthenticated?: boolean;
 }
 
-export function UpcomingEvents({ eventsByLocation, isAuthenticated }: UpcomingEventsProps) {
+export function UpcomingEvents({ eventsByLocation }: UpcomingEventsProps) {
   // Create data structure for location filtering
   const dataByLocation = useMemo(() => {
     const result: LocationData<EventWithLocationSlug> = {};
@@ -52,7 +51,6 @@ export function UpcomingEvents({ eventsByLocation, isAuthenticated }: UpcomingEv
           <SectionHeader
             title="Upcoming Events"
             adminUrl="/admin/collections/events"
-            isAuthenticated={isAuthenticated}
           />
         </ScrollReveal>
 

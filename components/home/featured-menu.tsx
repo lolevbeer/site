@@ -13,6 +13,7 @@ import { useLocationContext } from '@/components/location/location-provider';
 import { DraftBeerCard } from '@/components/beer/draft-beer-card';
 import { Pencil } from 'lucide-react';
 import { useAnimatedList, getAnimationClass } from '@/lib/hooks/use-animated-list';
+import { useAuth } from '@/lib/hooks/use-auth';
 import { getMediaUrl } from '@/lib/utils/media-utils';
 import { extractBeerFromMenuItem, extractProductFromMenuItem } from '@/lib/utils/menu-item-utils';
 import type { Menu, Style, Location } from '@/src/payload-types';
@@ -72,7 +73,6 @@ interface FeaturedMenuProps {
   menuType: MenuType;
   menu?: Menu;
   menus?: Menu[];
-  isAuthenticated?: boolean;
   /** Enable enter/exit animations for live updates */
   animated?: boolean;
 }
@@ -201,12 +201,11 @@ function filterByLocation(items: MenuItem[], currentLocation: string): MenuItem[
 function AdminEditButtons({
   menusArray,
   currentLocation,
-  isAuthenticated
 }: {
   menusArray: Menu[];
   currentLocation: string;
-  isAuthenticated?: boolean;
 }) {
+  const { isAuthenticated } = useAuth();
   if (!isAuthenticated) return null;
 
   return (
@@ -329,7 +328,7 @@ function CanCard({ item, fullscreen = false }: { item: MenuItem; fullscreen?: bo
   );
 }
 
-export function FeaturedMenu({ menuType, menu, menus = [], isAuthenticated, animated = false }: FeaturedMenuProps) {
+export function FeaturedMenu({ menuType, menu, menus = [], animated = false }: FeaturedMenuProps) {
   const { currentLocation } = useLocationContext();
   const title = menuType === 'draft' ? 'Draft' : 'Cans';
   const emptyMessage = menuType === 'draft'
@@ -459,7 +458,7 @@ export function FeaturedMenu({ menuType, menu, menus = [], isAuthenticated, anim
               <div className="flex-1" />
               <h2 className="text-3xl lg:text-4xl font-bold">{title}</h2>
               <div className="flex-1 flex justify-end">
-                <AdminEditButtons menusArray={menus} currentLocation={currentLocation} isAuthenticated={isAuthenticated} />
+                <AdminEditButtons menusArray={menus} currentLocation={currentLocation} />
               </div>
             </div>
           </div>

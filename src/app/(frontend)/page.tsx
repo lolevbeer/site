@@ -70,27 +70,17 @@ export default async function Home() {
         draftMenus={data.allDraftMenus}
         beerCount={data.beerCount}
         nextEvent={data.nextEvent}
-        isAuthenticated={data.authenticated}
         heroDescription={data.siteContent.heroDescription}
         heroImageUrl={data.siteContent.heroImageUrl}
         weeklyHours={data.weeklyHours}
       >
-        <FeaturedCans
-          menus={data.allCansMenus}
-          isAuthenticated={data.authenticated}
-        />
+        <FeaturedCans menus={data.allCansMenus} />
 
-        <UpcomingFood
-          foodByLocation={data.foodByLocation}
-          isAuthenticated={data.authenticated}
-        />
+        <UpcomingFood foodByLocation={data.foodByLocation} />
 
-        <UpcomingEvents
-          eventsByLocation={data.eventsByLocation}
-          isAuthenticated={data.authenticated}
-        />
+        <UpcomingEvents eventsByLocation={data.eventsByLocation} />
 
-        <UpcomingBeers comingSoonBeers={data.comingSoonBeers} isAuthenticated={data.authenticated} />
+        <UpcomingBeers comingSoonBeers={data.comingSoonBeers} />
       </HomeContent>
     </>
   );
