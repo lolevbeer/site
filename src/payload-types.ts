@@ -281,6 +281,7 @@ export interface Media {
  */
 export interface Menu {
   id: string;
+  linesLastCleaned?: string | null;
   /**
    * Menu name (e.g., "Lawrenceville Draft Menu")
    */
@@ -332,6 +333,7 @@ export interface Menu {
  */
 export interface Location {
   id: string;
+  linesLastCleaned?: string | null;
   /**
    * Is this location currently active?
    */
@@ -533,10 +535,10 @@ export interface User {
    */
   locations?: (string | Location)[] | null;
   /**
-   * Admins can manage users and all content. Event/Beer/Food Managers can manage their respective collections. Bartenders can update menus. Users can have multiple roles.
+   * Admins can manage users and all content. Event/Beer/Food Managers can manage their respective collections. Lead Bartenders can update line cleaning dates. Bartenders can update menus. Users can have multiple roles.
    */
-  roles: ('admin' | 'event-manager' | 'beer-manager' | 'food-manager' | 'bartender')[];
-  role?: ('admin' | 'event-manager' | 'beer-manager' | 'food-manager' | 'bartender') | null;
+  roles: ('admin' | 'event-manager' | 'beer-manager' | 'food-manager' | 'lead-bartender' | 'bartender')[];
+  role?: ('admin' | 'event-manager' | 'beer-manager' | 'food-manager' | 'lead-bartender' | 'bartender') | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -810,6 +812,7 @@ export interface StylesSelect<T extends boolean = true> {
  * via the `definition` "menus_select".
  */
 export interface MenusSelect<T extends boolean = true> {
+  linesLastCleaned?: T;
   name?: T;
   description?: T;
   location?: T;
@@ -918,6 +921,7 @@ export interface UsersSelect<T extends boolean = true> {
  * via the `definition` "locations_select".
  */
 export interface LocationsSelect<T extends boolean = true> {
+  linesLastCleaned?: T;
   active?: T;
   name?: T;
   timezone?: T;

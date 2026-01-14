@@ -18,7 +18,6 @@ interface HomeContentProps {
   beerCount: Record<string, number>;
   nextEvent: { name: string; date: string; location: LocationSlug } | null;
   children: React.ReactNode;
-  isAuthenticated?: boolean;
   heroDescription?: string;
   heroImageUrl?: string | null;
   weeklyHours?: Record<string, WeeklyHoursDay[]>;
@@ -30,7 +29,6 @@ export function HomeContent({
   beerCount,
   nextEvent,
   children,
-  isAuthenticated = false,
   heroDescription,
   heroImageUrl,
   weeklyHours,
@@ -60,10 +58,7 @@ export function HomeContent({
         </ScrollReveal>
       </section>
 
-      <FeaturedBeers
-        menus={draftMenus}
-        isAuthenticated={isAuthenticated}
-      />
+      <FeaturedBeers menus={draftMenus} />
 
       {children}
     </div>

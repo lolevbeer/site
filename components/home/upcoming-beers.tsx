@@ -12,10 +12,9 @@ interface ComingSoonBeer {
 
 interface UpcomingBeersProps {
   comingSoonBeers?: ComingSoonBeer[];
-  isAuthenticated?: boolean;
 }
 
-export function UpcomingBeers({ comingSoonBeers, isAuthenticated }: UpcomingBeersProps) {
+export function UpcomingBeers({ comingSoonBeers }: UpcomingBeersProps) {
   // Filter to only items with valid beer or style data
   const validItems = (comingSoonBeers || []).filter(item => {
     const beer = typeof item.beer === 'object' ? item.beer : null;
@@ -35,7 +34,6 @@ export function UpcomingBeers({ comingSoonBeers, isAuthenticated }: UpcomingBeer
           <SectionHeader
             title="Up Next"
             adminUrl="/admin/globals/coming-soon"
-            isAuthenticated={isAuthenticated}
           />
         </ScrollReveal>
 

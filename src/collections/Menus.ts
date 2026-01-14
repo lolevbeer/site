@@ -1,4 +1,4 @@
-import type { CollectionConfig, Access, Where } from 'payload'
+import type { CollectionConfig, Access, FieldAccess, Where } from 'payload'
 import { APIError } from 'payload'
 import { adminAccess, adminFieldAccess, hasRole, isAdmin } from '@/src/access/roles'
 import { revalidateMenuCache } from '@/src/hooks/revalidate-menu'
@@ -13,9 +13,16 @@ function getUserLocationIds(user: any): string[] | null {
   return user.locations.map((loc: any) => (typeof loc === 'object' ? loc.id : loc))
 }
 
+/**
+ * Field access: Admin or Lead Bartender can update
+ */
+const leadBartenderFieldAccess: FieldAccess = ({ req: { user } }) => {
+  return hasRole(user, ['admin', 'lead-bartender'])
+}
+
 const canUpdateMenus: Access = ({ req: { user } }) => {
   if (hasRole(user, 'admin')) return true
-  if (hasRole(user, 'bartender')) {
+  if (hasRole(user, ['bartender', 'lead-bartender'])) {
     // If bartender has assigned locations, restrict to those locations' menus
     const locationIds = getUserLocationIds(user)
     if (locationIds) {
@@ -77,7 +84,55 @@ export const Menus: CollectionConfig = {
     maxPerDoc: 50, // Keep only the last 50 versions per document
   },
   hooks: {
-    afterChange: [revalidateMenuCache],
+    afterChange: [
+      revalidateMenuCache,
+      // Sync linesLastCleaned to the location (draft menus only)
+      async ({ data, req }) => {
+        if (data?.type === 'draft' && data?.linesLastCleaned && data?.location) {
+          const locationId = typeof data.location === 'object' ? data.location.id : data.location
+          if (locationId) {
+            try {
+              await req.payload.update({
+                collection: 'locations',
+                id: locationId,
+                data: {
+                  linesLastCleaned: data.linesLastCleaned,
+                },
+              })
+            } catch (error) {
+              // Silently fail if user doesn't have permission to update location
+              console.error('Failed to sync linesLastCleaned to location:', error)
+            }
+          }
+        }
+        return data
+      },
+    ],
+    afterRead: [
+      // Populate linesLastCleaned from location (draft menus only)
+      async ({ doc, req }) => {
+        if (doc?.type === 'draft' && doc?.location) {
+          let location = typeof doc.location === 'object' ? doc.location : null
+
+          // Fetch location if it's just an ID
+          if (!location && typeof doc.location === 'string') {
+            try {
+              location = await req.payload.findByID({
+                collection: 'locations',
+                id: doc.location,
+              })
+            } catch {
+              // Silently fail if location not found
+            }
+          }
+
+          if (location?.linesLastCleaned) {
+            doc.linesLastCleaned = location.linesLastCleaned
+          }
+        }
+        return doc
+      },
+    ],
     beforeValidate: [
       ({ data }) => {
         if (!data?.items || !Array.isArray(data.items)) return data
@@ -182,6 +237,33 @@ export const Menus: CollectionConfig = {
     ],
   },
   fields: [
+    {
+      name: 'linesLastCleaned',
+      type: 'date',
+      label: 'Draft Lines Last Cleaned',
+      access: {
+        update: leadBartenderFieldAccess,
+      },
+      admin: {
+        position: 'sidebar',
+        condition: (data) => data?.type === 'draft',
+        date: {
+          pickerAppearance: 'dayOnly',
+          displayFormat: 'MMM d, yyyy',
+        },
+      },
+    },
+    {
+      name: 'markLinesCleanedButton',
+      type: 'ui',
+      admin: {
+        position: 'sidebar',
+        condition: (data, siblingData, { user }) => data?.type === 'draft' && hasRole(user, ['admin', 'lead-bartender']),
+        components: {
+          Field: '@/src/components/admin/MarkLinesCleanedButton#MarkLinesCleanedButton',
+        },
+      },
+    },
     {
       name: 'name',
       type: 'text',

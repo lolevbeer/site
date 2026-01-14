@@ -39,7 +39,7 @@ export const Users: CollectionConfig = {
       hasMany: true,
       admin: {
         description: 'Assign to specific locations. If set, bartenders can only access menus for these locations.',
-        condition: (data) => data?.roles?.includes('bartender'),
+        condition: (data) => data?.roles?.includes('bartender') || data?.roles?.includes('lead-bartender'),
       },
     },
     {
@@ -53,12 +53,13 @@ export const Users: CollectionConfig = {
         { label: 'Event Manager', value: 'event-manager' },
         { label: 'Beer Manager', value: 'beer-manager' },
         { label: 'Food Manager', value: 'food-manager' },
+        { label: 'Lead Bartender', value: 'lead-bartender' },
         { label: 'Bartender', value: 'bartender' },
       ],
       admin: {
         position: 'sidebar',
         description:
-          'Admins can manage users and all content. Event/Beer/Food Managers can manage their respective collections. Bartenders can update menus. Users can have multiple roles.',
+          'Admins can manage users and all content. Event/Beer/Food Managers can manage their respective collections. Lead Bartenders can update line cleaning dates. Bartenders can update menus. Users can have multiple roles.',
       },
       access: {
         // Only admins can change roles
@@ -75,6 +76,7 @@ export const Users: CollectionConfig = {
         { label: 'Event Manager', value: 'event-manager' },
         { label: 'Beer Manager', value: 'beer-manager' },
         { label: 'Food Manager', value: 'food-manager' },
+        { label: 'Lead Bartender', value: 'lead-bartender' },
         { label: 'Bartender', value: 'bartender' },
       ],
       admin: {

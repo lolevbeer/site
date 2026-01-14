@@ -16,7 +16,6 @@ import {
   type WeeklyHoursDay,
   type RecurringFoodEntry,
 } from './payload-api';
-import { isAuthenticated } from './auth';
 import { getSiteContent } from './site-content';
 import { arrayToLocationMap } from './array-helpers';
 import type { Menu as PayloadMenu, Beer as PayloadBeer, Location as PayloadLocation } from '@/src/payload-types';
@@ -53,14 +52,17 @@ export interface HomePageData {
  */
 export const getHomePageData = cache(async (): Promise<HomePageData> => {
   // Step 1: Fetch location-independent data in parallel
-  const [locations, availableBeers, comingSoonBeers, authenticated, siteContent] =
+  // Note: Authentication is checked client-side to keep the page static/cached
+  const [locations, availableBeers, comingSoonBeers, siteContent] =
     await Promise.all([
       getAllLocations(),
       getAvailableBeersFromMenus(),
       getComingSoonBeers(),
-      isAuthenticated(),
       getSiteContent(),
     ]);
+
+  // Auth is now handled client-side to avoid cookies() breaking static generation
+  const authenticated = false;
 
   // Step 2: Extract location slugs for dynamic fetching
   const locationSlugs = locations.map((loc) => loc.slug || loc.id);

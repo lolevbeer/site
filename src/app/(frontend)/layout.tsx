@@ -11,6 +11,7 @@ import { ErrorBoundary } from "@/components/error-boundary";
 import { SkipNav } from "@/components/ui/skip-nav";
 import { GoogleAnalytics } from "@/components/analytics/google-analytics";
 import { PageViewTracker } from "@/components/analytics/page-view-tracker";
+import { AuthProvider } from "@/lib/hooks/use-auth";
 import { getAllLocations, getWeeklyHoursWithHolidays, type WeeklyHoursDay } from "@/lib/utils/payload-api";
 import "./globals.css";
 
@@ -158,12 +159,14 @@ export default async function AppLayout({
             <AutoThemeSwitcher />
             <NuqsAdapter>
               <LocationProvider locations={locations}>
-                <PageViewTracker />
-                <SkipNav />
-                <ConditionalLayout weeklyHours={weeklyHours}>
-                  {children}
-                </ConditionalLayout>
-                <Toaster />
+                <AuthProvider>
+                  <PageViewTracker />
+                  <SkipNav />
+                  <ConditionalLayout weeklyHours={weeklyHours}>
+                    {children}
+                  </ConditionalLayout>
+                  <Toaster />
+                </AuthProvider>
               </LocationProvider>
             </NuqsAdapter>
           </ThemeProvider>
