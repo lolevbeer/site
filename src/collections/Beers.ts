@@ -7,6 +7,28 @@ const mround = (value: number, multiple: number): number => {
   return Math.round(value / multiple) * multiple
 }
 
+// Fetch Untappd rating from beer page
+async function fetchUntappdRating(url: string): Promise<number | null> {
+  try {
+    const fullUrl = url.startsWith('http') ? url : `https://untappd.com${url}`
+    const response = await fetch(fullUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+      },
+    })
+    if (!response.ok) return null
+    const html = await response.text()
+    const match = html.match(/<div[^>]*class="caps"[^>]*data-rating="([^"]+)"/)
+    if (match?.[1]) {
+      const rating = parseFloat(match[1])
+      return isNaN(rating) ? null : rating
+    }
+    return null
+  } catch {
+    return null
+  }
+}
+
 export const Beers: CollectionConfig = {
   slug: 'beers',
   access: {
@@ -73,6 +95,14 @@ export const Beers: CollectionConfig = {
             data.recipe = lastBeer.docs[0].recipe + 1
           } else {
             data.recipe = 1
+          }
+        }
+
+        // Auto-fetch Untappd rating when URL is set/changed
+        if (data.untappd && data.untappd !== originalDoc?.untappd) {
+          const rating = await fetchUntappdRating(data.untappd)
+          if (rating !== null) {
+            data.untappdRating = rating
           }
         }
 
@@ -235,10 +265,28 @@ export const Beers: CollectionConfig = {
       },
     },
     {
+      name: 'untappdFetcher',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '@/src/components/admin/UntappdFetcher#UntappdFetcher',
+        },
+      },
+    },
+    {
       name: 'untappd',
       type: 'text',
       admin: {
-        description: 'Untappd URL',
+        description: 'Untappd URL (e.g., /b/lolev-beer-lupula/123456)',
+      },
+    },
+    {
+      name: 'untappdRating',
+      type: 'number',
+      admin: {
+        description: 'Untappd rating (auto-fetched from Untappd URL)',
+        readOnly: true,
+        step: 0.01,
       },
     },
   ],
