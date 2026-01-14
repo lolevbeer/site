@@ -8,6 +8,7 @@
  */
 
 import type { PayloadHandler } from 'payload'
+import { getUserFromRequest } from './auth-helper'
 
 // Expected format: /b/lolev-beer-something/123456
 const VALID_UNTAPPD_URL_PATTERN = /^\/b\/[a-z0-9-]+\/\d+$/i
@@ -164,8 +165,9 @@ async function fetchUntappdData(url: string): Promise<UntappdData> {
 }
 
 export const syncUntappdRatings: PayloadHandler = async (req) => {
-  // Check authentication
-  if (!req.user) {
+  // Check authentication with fallback for Vercel
+  const user = req.user ?? await getUserFromRequest(req, req.payload)
+  if (!user) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
