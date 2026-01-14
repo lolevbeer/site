@@ -39,6 +39,7 @@ const dirname = path.dirname(filename)
 const allowedOrigins = [
   'https://lolev.beer',
   'https://www.lolev.beer',
+  'https://new.lolev.beer',
   // Vercel preview deployments
   ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
   ...(process.env.VERCEL_PROJECT_PRODUCTION_URL
