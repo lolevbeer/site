@@ -59,7 +59,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
     return (
       <Link href={`/beer/${beerSlug}`} className="group block h-full">
         <div className={`overflow-hidden transition-colors duration-200 cursor-pointer hover:bg-secondary/50 h-full bg-background ${className}`}>
-          <div className="flex items-center h-full" style={{ gap: '1vh', padding: '0 1vh' }}>
+          <div className="flex items-center h-full" style={{ gap: '1vh' }}>
             {/* Tap Number and Glass Icon */}
             {(showTap || showGlass) && (
               <div className="flex-shrink-0 flex items-center justify-between" style={{ minWidth: showGlass ? '7vh' : '3vh' }}>
