@@ -61,18 +61,19 @@ export function LiveMenu({ menuUrl, initialMenu }: LiveMenuProps) {
   // Use streamed menu if available, otherwise fall back to initial
   const displayMenu = menu || initialMenu
 
-  // Generate random light colors that cycle on each poll (dark mode only)
+  // Generate random light colors that cycle every ~30 seconds (dark mode only)
+  const colorSeed = Math.floor(pollCount / 15)
   const itemColors = useMemo(() => {
     const itemCount = displayMenu.items?.length || 0
     if (itemCount === 0 || theme !== 'dark') return undefined
 
-    // Generate colors with pollCount as part of the seed for variety
+    // Generate colors with a slower-changing seed for smoother transitions
     return randomColor({
       count: itemCount,
       luminosity: 'light',
-      seed: pollCount,
+      seed: colorSeed,
     })
-  }, [displayMenu.items?.length, theme, pollCount])
+  }, [displayMenu.items?.length, theme, colorSeed])
 
   // Apply CSS variables directly - bypasses .dark class for browser compatibility
   const themeVars = theme === 'dark' ? darkVars : lightVars
