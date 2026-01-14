@@ -142,8 +142,8 @@ export function HeroSection({ availableBeers, cansMenus, heroDescription, heroIm
                     </CarouselItem>
                   )}
                 </CarouselContent>
-                <CarouselPrevious className="hidden md:flex border-0 bg-transparent hover:bg-muted/50 shadow-none" />
-                <CarouselNext className="hidden md:flex border-0 bg-transparent hover:bg-muted/50 shadow-none" />
+                <CarouselPrevious className="hidden md:flex border-0 bg-transparent hover:bg-muted/50 shadow-none" hideWhenDisabled />
+                <CarouselNext className="hidden md:flex border-0 bg-transparent hover:bg-muted/50 shadow-none" hideWhenDisabled />
               </Carousel>
             </TooltipProvider>
           </div>

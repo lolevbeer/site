@@ -175,9 +175,12 @@ function CarouselPrevious({
   className,
   variant = "outline",
   size = "icon",
+  hideWhenDisabled = false,
   ...props
-}: React.ComponentProps<typeof Button>) {
+}: React.ComponentProps<typeof Button> & { hideWhenDisabled?: boolean }) {
   const { orientation, scrollPrev, canScrollPrev } = useCarousel()
+
+  if (hideWhenDisabled && !canScrollPrev) return null
 
   return (
     <Button
@@ -205,9 +208,12 @@ function CarouselNext({
   className,
   variant = "outline",
   size = "icon",
+  hideWhenDisabled = false,
   ...props
-}: React.ComponentProps<typeof Button>) {
+}: React.ComponentProps<typeof Button> & { hideWhenDisabled?: boolean }) {
   const { orientation, scrollNext, canScrollNext } = useCarousel()
+
+  if (hideWhenDisabled && !canScrollNext) return null
 
   return (
     <Button
