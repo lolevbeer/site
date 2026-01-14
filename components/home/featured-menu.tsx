@@ -370,17 +370,17 @@ export function FeaturedMenu({ menuType, menu, menus = [], animated = false, ite
     return (
       <section className="h-full flex flex-col bg-background overflow-hidden relative">
         {/* Logo floated top right */}
-        <div className="absolute" style={{ top: '1.5vh', right: '1.5vw' }}>
+        <div className="absolute" style={{ top: '1.5vh', right: '1vw' }}>
           <Logo width={48} height={52} />
         </div>
         {linesCleanedText && (
-          <p className="absolute text-foreground" style={{ fontSize: '1.5vh', top: '7vh', right: '1.5vw' }}>
+          <p className="absolute text-foreground" style={{ fontSize: '1.5vh', top: '7vh', right: '1vw' }}>
             {linesCleanedText}
           </p>
         )}
         <div className="w-full flex-1 flex flex-col" style={{ padding: '0 0 0.5vh 0' }}>
           <div className="flex items-center flex-shrink-0" style={{ marginBottom: '3vh', marginTop: '2vh' }}>
-            <span className="font-bold text-foreground-muted" style={{ fontSize: '4vh', marginLeft: '1.5vw' }}>Lolev Beer</span>
+            <span className="font-bold text-foreground-muted" style={{ fontSize: '4vh', marginLeft: '1vw' }}>Lolev Beer</span>
             <h2 className="font-bold flex-1 text-center" style={{ fontSize: '4vh' }}>{menu?.name || title}</h2>
             <div style={{ width: '6vw' }} /> {/* Spacer to balance the left text */}
           </div>
