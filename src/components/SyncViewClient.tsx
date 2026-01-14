@@ -858,7 +858,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
             Upload a CSV file with columns: vendor, social, contact, phone
           </p>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <input
               ref={csvInputRef}
               type="file"
@@ -868,45 +868,14 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
               style={{ display: 'none' }}
               id="csv-upload"
             />
-            <label
-              htmlFor="csv-upload"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '10px 16px',
-                fontSize: '14px',
-                fontWeight: 500,
-                borderRadius: '4px',
-                border: 'none',
-                cursor: csvUploading ? 'not-allowed' : 'pointer',
-                opacity: csvUploading ? 0.6 : 1,
-                backgroundColor: 'var(--theme-elevation-500)',
-                color: 'white',
-                transition: 'all 0.15s',
-              }}
+            <Button
+              onClick={() => csvInputRef.current?.click()}
+              disabled={csvUploading}
+              buttonStyle="secondary"
+              size="small"
             >
-              {csvUploading && (
-                <svg
-                  style={{ animation: 'spin 1s linear infinite', width: '16px', height: '16px' }}
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    style={{ opacity: 0.25 }}
-                    cx="12" cy="12" r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                    fill="none"
-                  />
-                  <path
-                    style={{ opacity: 0.75 }}
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
-              )}
               {csvUploading ? 'Uploading...' : 'Choose CSV File'}
-            </label>
+            </Button>
           </div>
 
           {/* CSV Results */}
@@ -1239,7 +1208,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                   Upload CSV with columns: Retail Accounts, Address, City, Account #, State, Zip Code, Phone
                 </p>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <input
                     ref={lakeInputRef}
                     type="file"
@@ -1249,45 +1218,14 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                     style={{ display: 'none' }}
                     id="lake-csv-upload"
                   />
-                  <label
-                    htmlFor="lake-csv-upload"
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      padding: '8px 16px',
-                      fontSize: '13px',
-                      fontWeight: 500,
-                      borderRadius: '4px',
-                      border: 'none',
-                      cursor: lakeUploading ? 'not-allowed' : 'pointer',
-                      opacity: lakeUploading ? 0.6 : 1,
-                      backgroundColor: '#60a5fa',
-                      color: 'white',
-                      transition: 'all 0.15s',
-                    }}
+                  <Button
+                    onClick={() => lakeInputRef.current?.click()}
+                    disabled={lakeUploading}
+                    buttonStyle="secondary"
+                    size="small"
                   >
-                    {lakeUploading && (
-                      <svg
-                        style={{ animation: 'spin 1s linear infinite', width: '14px', height: '14px' }}
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          style={{ opacity: 0.25 }}
-                          cx="12" cy="12" r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                          fill="none"
-                        />
-                        <path
-                          style={{ opacity: 0.75 }}
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        />
-                      </svg>
-                    )}
                     {lakeUploading ? 'Importing...' : 'Upload CSV'}
-                  </label>
+                  </Button>
                 </div>
 
                 {/* Progress Bar */}
