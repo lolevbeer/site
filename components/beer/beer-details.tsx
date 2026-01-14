@@ -488,28 +488,26 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
                     />
                   </div>
                 )}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-medium">{review.username}</span>
-                    <span className="flex items-center gap-0.5 text-amber-500 text-sm">
-                      <span>★</span>
-                      <span>{review.rating.toFixed(1)}</span>
+                <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
+                  <span className="font-medium">{review.username}</span>
+                  <span className="flex items-center gap-0.5 text-amber-500 text-sm">
+                    <span>★</span>
+                    <span>{review.rating.toFixed(1)}</span>
+                  </span>
+                  {review.date && (
+                    <span className="text-xs text-muted-foreground/70">
+                      {formatReviewDate(review.date)}
                     </span>
-                    {review.date && (
-                      <span className="text-xs text-muted-foreground/70">
-                        {formatReviewDate(review.date)}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-sm text-muted-foreground">{review.text}</p>
+                  )}
+                  <span className="text-sm text-muted-foreground">— {review.text}</span>
                   {review.url && (
                     <a
                       href={review.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-xs text-muted-foreground/70 hover:text-foreground transition-colors mt-1 inline-block"
+                      className="text-xs text-muted-foreground/70 hover:text-foreground transition-colors"
                     >
-                      View on Untappd
+                      ↗
                     </a>
                   )}
                 </div>
