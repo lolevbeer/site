@@ -969,14 +969,14 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
           ) : (
             <>
               {/* URL Inputs */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px', maxWidth: '600px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px', maxWidth: '450px' }}>
                 <div>
                   <label style={{
                     display: 'block',
-                    fontSize: '13px',
+                    fontSize: '12px',
                     fontWeight: 500,
                     color: 'var(--theme-elevation-600)',
-                    marginBottom: '4px',
+                    marginBottom: '2px',
                   }}>
                     Pennsylvania JSON URL
                   </label>
@@ -985,11 +985,11 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                       type="text"
                       value={paUrl}
                       onChange={(e) => setPaUrl(e.target.value)}
-                      placeholder="https://sixthcity.encompass8.com/QuickLink?QuickKey=..."
+                      placeholder="https://sixthcity.encompass8.com/..."
                       style={{
                         flex: 1,
-                        padding: '8px 12px',
-                        fontSize: '13px',
+                        padding: '6px 10px',
+                        fontSize: '12px',
                         borderRadius: '4px',
                         border: '1px solid var(--theme-elevation-200)',
                         backgroundColor: 'var(--theme-input-bg)',
@@ -1010,10 +1010,10 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                 <div>
                   <label style={{
                     display: 'block',
-                    fontSize: '13px',
+                    fontSize: '12px',
                     fontWeight: 500,
                     color: 'var(--theme-elevation-600)',
-                    marginBottom: '4px',
+                    marginBottom: '2px',
                   }}>
                     Ohio JSON URL
                   </label>
@@ -1022,11 +1022,11 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                       type="text"
                       value={ohUrl}
                       onChange={(e) => setOhUrl(e.target.value)}
-                      placeholder="https://sixthcity.encompass8.com/QuickLink?QuickKey=..."
+                      placeholder="https://sixthcity.encompass8.com/..."
                       style={{
                         flex: 1,
-                        padding: '8px 12px',
-                        fontSize: '13px',
+                        padding: '6px 10px',
+                        fontSize: '12px',
                         borderRadius: '4px',
                         border: '1px solid var(--theme-elevation-200)',
                         backgroundColor: 'var(--theme-input-bg)',
