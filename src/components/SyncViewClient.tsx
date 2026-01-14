@@ -1000,7 +1000,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
           ) : (
             <>
               {/* URL Inputs */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px', maxWidth: '600px' }}>
                 <div>
                   <label style={{
                     display: 'block',
