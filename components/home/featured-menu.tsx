@@ -373,16 +373,16 @@ export function FeaturedMenu({ menuType, menu, menus = [], animated = false, ite
         <div className="absolute" style={{ top: '1.5vh', right: '1vw' }}>
           <Logo width={48} height={52} />
         </div>
-        {linesCleanedText && (
-          <p className="absolute text-foreground" style={{ fontSize: '1.5vh', top: '7vh', right: '1vw' }}>
-            {linesCleanedText}
-          </p>
-        )}
         {/* Lolev Beer text top left */}
         <span className="absolute font-bold text-foreground-muted" style={{ fontSize: '4vh', top: '2vh', left: '1vw' }}>Lolev Beer</span>
         <div className="w-full flex-1 flex flex-col" style={{ padding: '0 0 0.5vh 0' }}>
-          <div className="text-center flex-shrink-0" style={{ marginBottom: '3vh', marginTop: '2vh' }}>
+          <div className="text-center flex-shrink-0" style={{ marginBottom: '2vh', marginTop: '2vh' }}>
             <h2 className="font-bold" style={{ fontSize: '4vh' }}>{menu?.name || title}</h2>
+            {linesCleanedText && (
+              <p className="text-foreground-muted" style={{ fontSize: '1.8vh', marginTop: '0.5vh' }}>
+                {linesCleanedText}
+              </p>
+            )}
           </div>
           <div className="flex-1 overflow-y-auto" style={{ padding: '0 1vw' }}>
             {itemsToRender.length > 0 ? (
