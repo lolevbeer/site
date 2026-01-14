@@ -494,8 +494,8 @@ export function DistributorMap({
               {listLocations.length > 0 ? (
                 <>
                   {!referenceLocation && (
-                    <Alert className="mb-3 border-amber-200 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/20">
-                      <Info className="h-4 w-4 text-amber-200 dark:text-amber-800" />
+                    <Alert className="mb-3 border-amber-200 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/30">
+                      <Info className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                       <AlertDescription className="text-muted-foreground">
                         Enter a location or use "Near Me" to see distances
                       </AlertDescription>

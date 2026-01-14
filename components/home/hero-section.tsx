@@ -94,7 +94,7 @@ export function HeroSection({ availableBeers, cansMenus, heroDescription, heroIm
             <TooltipProvider delayDuration={200}>
               <Carousel
                 opts={{
-                  align: "start",
+                  align: "center",
                   loop: true,
                   slidesToScroll: "auto",
                 }}
