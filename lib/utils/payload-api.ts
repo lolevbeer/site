@@ -59,25 +59,21 @@ export const getAllBeersFromPayload = unstable_cache(
 export const getBeerBySlug = async (slug: string): Promise<PayloadBeer | null> => {
   return unstable_cache(
     async (): Promise<PayloadBeer | null> => {
-      try {
-        const payload = await getPayload({ config })
+      const payload = await getPayload({ config })
 
-        const result = await payload.find({
-          collection: 'beers',
-          where: {
-            slug: {
-              equals: slug,
-            },
+      const result = await payload.find({
+        collection: 'beers',
+        where: {
+          slug: {
+            equals: slug,
           },
-          limit: 1,
-          depth: 2,
-        })
+        },
+        limit: 1,
+        depth: 2,
+      })
 
-        return result.docs[0] || null
-      } catch (error) {
-        logger.error(`Error fetching beer by slug: ${slug}`, error)
-        return null
-      }
+      // Return null for "not found" (cacheable), but let errors throw (not cached)
+      return result.docs[0] || null
     },
     [`beer-${slug}`],
     { tags: [CACHE_TAGS.beers], revalidate: 3600 }

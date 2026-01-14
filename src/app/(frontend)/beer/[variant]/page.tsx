@@ -13,7 +13,16 @@ interface BeerPageProps {
 
 export async function generateMetadata({ params }: BeerPageProps): Promise<Metadata> {
   const { variant } = await params;
-  const beer = await getBeerBySlug(variant);
+
+  let beer;
+  try {
+    beer = await getBeerBySlug(variant);
+  } catch {
+    // Database error - return generic title
+    return {
+      title: 'Beer Not Found | Lolev Beer',
+    };
+  }
 
   if (!beer) {
     return {
@@ -53,7 +62,14 @@ export const revalidate = 3600;
 
 export default async function BeerPage({ params }: BeerPageProps) {
   const { variant } = await params;
-  const beer = await getBeerBySlug(variant);
+
+  let beer;
+  try {
+    beer = await getBeerBySlug(variant);
+  } catch {
+    // Database error - show not found page
+    notFound();
+  }
 
   if (!beer) {
     notFound();
