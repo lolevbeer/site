@@ -378,11 +378,11 @@ export function FeaturedMenu({ menuType, menu, menus = [], animated = false, ite
             {linesCleanedText}
           </p>
         )}
+        {/* Lolev Beer text top left */}
+        <span className="absolute font-bold text-foreground-muted" style={{ fontSize: '4vh', top: '2vh', left: '1vw' }}>Lolev Beer</span>
         <div className="w-full flex-1 flex flex-col" style={{ padding: '0 0 0.5vh 0' }}>
-          <div className="flex items-center flex-shrink-0" style={{ marginBottom: '3vh', marginTop: '2vh' }}>
-            <span className="font-bold text-foreground-muted" style={{ fontSize: '4vh', marginLeft: '1vw' }}>Lolev Beer</span>
-            <h2 className="font-bold flex-1 text-center" style={{ fontSize: '4vh' }}>{menu?.name || title}</h2>
-            <div style={{ width: '6vw' }} /> {/* Spacer to balance the left text */}
+          <div className="text-center flex-shrink-0" style={{ marginBottom: '3vh', marginTop: '2vh' }}>
+            <h2 className="font-bold" style={{ fontSize: '4vh' }}>{menu?.name || title}</h2>
           </div>
           <div className="flex-1 overflow-y-auto" style={{ padding: '0 1vw' }}>
             {itemsToRender.length > 0 ? (
