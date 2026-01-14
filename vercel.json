@@ -1,5 +1,10 @@
 {
   "regions": ["iad1"],
+  "functions": {
+    "src/app/(payload)/api/[...slug]/route.ts": {
+      "maxDuration": 300
+    }
+  },
   "headers": [
     {
       "source": "/api/(.*)",

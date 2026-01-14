@@ -3,8 +3,11 @@ import * as Sentry from "@sentry/nextjs";
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
 
-  // Performance monitoring
-  tracesSampleRate: 1.0,
+  // Performance monitoring - sample 20% of transactions in production
+  tracesSampleRate: 0.2,
+
+  // Server profiling - sample 20% of profiled transactions
+  profilesSampleRate: 0.2,
 
   // Enable logs
   enableLogs: true,

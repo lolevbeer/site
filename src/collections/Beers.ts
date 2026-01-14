@@ -7,8 +7,17 @@ const mround = (value: number, multiple: number): number => {
   return Math.round(value / multiple) * multiple
 }
 
-// Fetch Untappd rating from beer page
-async function fetchUntappdRating(url: string): Promise<number | null> {
+interface UntappdReview {
+  username: string
+  rating: number
+  text: string
+  date?: string
+  url?: string
+  image?: string
+}
+
+// Fetch Untappd rating, rating count, and positive reviews from beer page
+async function fetchUntappdData(url: string): Promise<{ rating: number | null; ratingCount: number | null; positiveReviews: UntappdReview[] }> {
   try {
     const fullUrl = url.startsWith('http') ? url : `https://untappd.com${url}`
     const response = await fetch(fullUrl, {
@@ -16,16 +25,72 @@ async function fetchUntappdRating(url: string): Promise<number | null> {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
       },
     })
-    if (!response.ok) return null
+    if (!response.ok) return { rating: null, ratingCount: null, positiveReviews: [] }
     const html = await response.text()
-    const match = html.match(/<div[^>]*class="caps"[^>]*data-rating="([^"]+)"/)
-    if (match?.[1]) {
-      const rating = parseFloat(match[1])
-      return isNaN(rating) ? null : rating
+
+    // Extract rating
+    let rating: number | null = null
+    const ratingMatch = html.match(/<div[^>]*class="caps"[^>]*data-rating="([^"]+)"/)
+    if (ratingMatch?.[1]) {
+      const parsed = parseFloat(ratingMatch[1])
+      if (!isNaN(parsed)) rating = parsed
     }
-    return null
+
+    // Extract rating count (e.g., "3,381 Ratings")
+    let ratingCount: number | null = null
+    const countMatch = html.match(/([\d,]+)\s*Ratings/i)
+    if (countMatch?.[1]) {
+      const parsed = parseInt(countMatch[1].replace(/,/g, ''), 10)
+      if (!isNaN(parsed)) ratingCount = parsed
+    }
+
+    // Extract positive reviews (4.5+ with text)
+    const positiveReviews: UntappdReview[] = []
+    // Match each checkin item block: <div class="item " id="checkin_123456" ...>...</div>
+    const checkinRegex = /<div[^>]*class="item\s*"[^>]*id="checkin_(\d+)"[^>]*>([\s\S]*?)(?=<div[^>]*class="item\s*"[^>]*id="checkin_|$)/gi
+    let checkinMatch
+
+    while ((checkinMatch = checkinRegex.exec(html)) !== null) {
+      const checkinId = checkinMatch[1]
+      const checkinHtml = checkinMatch[2]
+
+      // Extract rating from caps div: <div class="caps " data-rating="4.5">
+      const checkinRatingMatch = checkinHtml.match(/<div[^>]*class="caps[^"]*"[^>]*data-rating="([\d.]+)"/)
+      if (!checkinRatingMatch) continue
+
+      const checkinRating = parseFloat(checkinRatingMatch[1])
+      if (isNaN(checkinRating) || checkinRating < 4.5) continue
+
+      // Extract comment text: <p class="comment-text" id="translate_...">text</p>
+      const commentMatch = checkinHtml.match(/<p[^>]*class="comment-text"[^>]*>([\s\S]*?)<\/p>/i)
+      if (!commentMatch || !commentMatch[1].trim()) continue
+
+      const text = commentMatch[1].trim()
+
+      // Extract username: <a href="/user/..." class="user">Name</a>
+      const usernameMatch = checkinHtml.match(/<a[^>]*class="user"[^>]*>([^<]+)<\/a>/i)
+      const username = usernameMatch ? usernameMatch[1].trim() : 'Anonymous'
+
+      // Build checkin URL from the ID and username
+      const userMatch = checkinHtml.match(/href="(\/user\/[^"]+)"[^>]*class="user"/)
+      const url = userMatch
+        ? `https://untappd.com${userMatch[1]}/checkin/${checkinId}`
+        : `https://untappd.com/user/checkin/${checkinId}`
+
+      // Extract date: <a class="time...">date</a>
+      const dateMatch = checkinHtml.match(/<a[^>]*class="time[^"]*"[^>]*>([^<]+)<\/a>/i)
+      const date = dateMatch ? dateMatch[1].trim() : undefined
+
+      // Extract image: <p class="photo">...<img src="...">...</p>
+      const imageMatch = checkinHtml.match(/<p[^>]*class="photo"[^>]*>[\s\S]*?<img[^>]*src="([^"]+)"/)
+      const image = imageMatch ? imageMatch[1] : undefined
+
+      positiveReviews.push({ username, rating: checkinRating, text, date, url, image })
+    }
+
+    return { rating, ratingCount, positiveReviews }
   } catch {
-    return null
+    return { rating: null, ratingCount: null, positiveReviews: [] }
   }
 }
 
@@ -100,9 +165,19 @@ export const Beers: CollectionConfig = {
 
         // Auto-fetch Untappd rating when URL is set/changed
         if (data.untappd && data.untappd !== originalDoc?.untappd) {
-          const rating = await fetchUntappdRating(data.untappd)
+          const { rating, ratingCount, positiveReviews } = await fetchUntappdData(data.untappd)
           if (rating !== null) {
             data.untappdRating = rating
+          }
+          if (ratingCount !== null) {
+            data.untappdRatingCount = ratingCount
+          }
+          if (positiveReviews.length > 0) {
+            // Merge with existing reviews, using URL as unique key
+            const existingReviews = (originalDoc?.positiveReviews as UntappdReview[]) || []
+            const existingUrls = new Set(existingReviews.map(r => r.url).filter(Boolean))
+            const newReviews = positiveReviews.filter(r => r.url && !existingUrls.has(r.url))
+            data.positiveReviews = [...existingReviews, ...newReviews]
           }
         }
 
@@ -231,27 +306,37 @@ export const Beers: CollectionConfig = {
       },
     },
     {
-      name: 'name',
-      type: 'text',
-      required: true,
-    },
-    {
-      name: 'style',
-      type: 'relationship',
-      relationTo: 'styles',
-      required: true,
-      index: true,
-      admin: {
-        description: 'Beer style',
-      },
-    },
-    {
-      name: 'image',
-      type: 'upload',
-      relationTo: 'media',
-      admin: {
-        description: 'Beer image (recommended: 2500x2500px)',
-      },
+      type: 'row',
+      fields: [
+        {
+          name: 'name',
+          type: 'text',
+          required: true,
+          admin: {
+            width: '25%',
+          },
+        },
+        {
+          name: 'style',
+          type: 'relationship',
+          relationTo: 'styles',
+          required: true,
+          index: true,
+          admin: {
+            description: 'Beer style',
+            width: '25%',
+          },
+        },
+        {
+          name: 'image',
+          type: 'upload',
+          relationTo: 'media',
+          admin: {
+            description: 'Beer image (recommended: 2500x2500px)',
+            width: '50%',
+          },
+        },
+      ],
     },
     {
       name: 'description',
@@ -274,19 +359,43 @@ export const Beers: CollectionConfig = {
       },
     },
     {
-      name: 'untappd',
-      type: 'text',
-      admin: {
-        description: 'Untappd URL (e.g., /b/lolev-beer-lupula/123456)',
-      },
+      type: 'row',
+      fields: [
+        {
+          name: 'untappd',
+          type: 'text',
+          admin: {
+            description: 'Untappd URL (e.g., /b/lolev-beer-lupula/123456)',
+            width: '50%',
+          },
+        },
+        {
+          name: 'untappdRating',
+          type: 'number',
+          admin: {
+            description: 'Rating (auto-fetched)',
+            readOnly: true,
+            step: 0.01,
+            width: '25%',
+          },
+        },
+        {
+          name: 'untappdRatingCount',
+          type: 'number',
+          admin: {
+            description: 'Rating count (auto-fetched)',
+            readOnly: true,
+            width: '25%',
+          },
+        },
+      ],
     },
     {
-      name: 'untappdRating',
-      type: 'number',
+      name: 'positiveReviews',
+      type: 'json',
       admin: {
-        description: 'Untappd rating (auto-fetched from Untappd URL)',
+        description: 'Positive reviews (4.5+ with text) from Untappd - auto-fetched',
         readOnly: true,
-        step: 0.01,
       },
     },
   ],

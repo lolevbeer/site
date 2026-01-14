@@ -95,6 +95,41 @@ function SpecificationRow({
   );
 }
 
+function formatReviewDate(dateStr: string): string {
+  // Try to parse the date string
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) {
+    // If parsing fails, return the original string
+    return dateStr;
+  }
+
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffSeconds = Math.floor(diffMs / 1000);
+  const diffMinutes = Math.floor(diffSeconds / 60);
+  const diffHours = Math.floor(diffMinutes / 60);
+  const diffDays = Math.floor(diffHours / 24);
+  const diffWeeks = Math.floor(diffDays / 7);
+  const diffMonths = Math.floor(diffDays / 30);
+  const diffYears = Math.floor(diffDays / 365);
+
+  if (diffMinutes < 1) {
+    return 'just now';
+  } else if (diffMinutes < 60) {
+    return `${diffMinutes} minute${diffMinutes === 1 ? '' : 's'} ago`;
+  } else if (diffHours < 24) {
+    return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
+  } else if (diffDays < 7) {
+    return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
+  } else if (diffWeeks < 4) {
+    return `${diffWeeks} week${diffWeeks === 1 ? '' : 's'} ago`;
+  } else if (diffMonths < 12) {
+    return `${diffMonths} month${diffMonths === 1 ? '' : 's'} ago`;
+  } else {
+    return `${diffYears} year${diffYears === 1 ? '' : 's'} ago`;
+  }
+}
+
 export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
   const { currentLocation } = useLocationContext();
   const imagePath = getBeerImageUrl(beer.image, beer.variant);
@@ -410,10 +445,10 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
 
           {/* External Links */}
           {beer.untappd && (
-            <div>
+            <div className="flex items-center gap-3">
               <Button variant="ghost" asChild>
                 <a
-                  href={`https://untappd.com/b/-/${beer.untappd}`}
+                  href={`https://untappd.com${typeof beer.untappd === 'string' && beer.untappd.startsWith('/') ? '' : '/b/-/'}${beer.untappd}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="no-underline"
@@ -424,10 +459,65 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
                   </>
                 </a>
               </Button>
+              {beer.untappdRating && beer.untappdRating > 0 && (
+                <span className="text-muted-foreground flex items-center gap-1.5">
+                  <span className="text-amber-500">★</span>
+                  <span className="font-medium">{beer.untappdRating.toFixed(2)}</span>
+                </span>
+              )}
             </div>
           )}
         </div>
       </div>
+
+      {/* Reviews Section */}
+      {beer.positiveReviews && beer.positiveReviews.length > 0 && (
+        <div className="mt-8">
+          <h2 className="text-2xl font-bold mb-6">Reviews</h2>
+          <div className="space-y-4">
+            {beer.positiveReviews.map((review, index) => (
+              <div key={review.url || index} className="flex gap-4 py-4 border-b border-border/40 last:border-b-0">
+                {review.image && (
+                  <div className="relative w-24 h-24 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
+                    <Image
+                      src={review.image}
+                      alt={`Review photo by ${review.username}`}
+                      fill
+                      className="object-cover"
+                      sizes="96px"
+                    />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-medium">{review.username}</span>
+                    <span className="flex items-center gap-0.5 text-amber-500 text-sm">
+                      <span>★</span>
+                      <span>{review.rating.toFixed(1)}</span>
+                    </span>
+                    {review.date && (
+                      <span className="text-xs text-muted-foreground/70">
+                        {formatReviewDate(review.date)}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground">{review.text}</p>
+                  {review.url && (
+                    <a
+                      href={review.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-muted-foreground/70 hover:text-foreground transition-colors mt-1 inline-block"
+                    >
+                      View on Untappd
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

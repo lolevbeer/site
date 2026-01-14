@@ -1,14 +1,21 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
+import type { Metadata } from 'next';
 import { HomeContent } from '@/components/home/home-content';
 import { MarketingText } from '@/components/home/marketing-text';
 import { getHomePageData } from '@/lib/utils/homepage-data';
 import { JsonLd } from '@/components/seo/json-ld';
 import { generateEventJsonLd, generateFoodEventJsonLd } from '@/lib/utils/json-ld';
-import { generateLocalBusinessSchemas, generateOrganizationSchema } from '@/lib/utils/local-business-schema';
+import { generateLocalBusinessSchemas, generateOrganizationSchema, generateWebSiteSchema } from '@/lib/utils/local-business-schema';
 
 // ISR: Revalidate every 5 minutes as fallback (on-demand revalidation handles immediate updates)
 export const revalidate = 300;
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: '/',
+  },
+};
 
 // Lazy load below-the-fold components
 const FeaturedCans = dynamic(() => import('@/components/home/featured-menu').then(mod => ({ default: mod.FeaturedCans })), {
@@ -27,36 +34,31 @@ const UpcomingEvents = dynamic(() => import('@/components/home/upcoming-events')
   loading: () => <div className="py-16 lg:py-24 h-96 animate-pulse" />,
 });
 
-
-export default async function Home() {
-  // Fetch all homepage data in a single consolidated operation
+export default async function Home(): Promise<React.ReactElement> {
   const data = await getHomePageData();
 
-  // Generate schemas for SEO
+  // Generate SEO schemas
   const localBusinessSchemas = generateLocalBusinessSchemas(data.locations);
   const organizationSchema = generateOrganizationSchema();
+  const webSiteSchema = generateWebSiteSchema();
   const eventSchemas = data.allEvents.map(event => generateEventJsonLd(event));
   const foodSchemas = data.allFood.map(food => generateFoodEventJsonLd(food));
 
   return (
     <>
-      {/* Add JSON-LD structured data for SEO */}
-      {/* LocalBusiness schemas for both brewery locations */}
+      {/* JSON-LD structured data for SEO */}
       {localBusinessSchemas.map((schema, index) => (
         <JsonLd key={`local-business-${index}`} data={schema} />
       ))}
-      {/* Organization schema */}
       <JsonLd data={organizationSchema} />
-      {/* Event schemas */}
+      <JsonLd data={webSiteSchema} />
       {eventSchemas.map((schema, index) => (
         <JsonLd key={`event-${index}`} data={schema} />
       ))}
-      {/* Food event schemas */}
       {foodSchemas.map((schema, index) => (
         <JsonLd key={`food-${index}`} data={schema} />
       ))}
 
-      {/* Marketing Text Overlay */}
       <MarketingText
         draftMenusByLocation={data.draftMenusByLocation}
         cansMenusByLocation={data.cansMenusByLocation}

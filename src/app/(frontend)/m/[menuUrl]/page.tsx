@@ -2,10 +2,9 @@ import { getMenuByUrlFresh } from '@/lib/utils/payload-api'
 import { LiveMenu } from '@/components/menu/live-menu'
 import { notFound } from 'next/navigation'
 
-// Menu pages must always be fresh - no caching
-// SSE handles real-time updates after hydration
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
+// Use ISR with 60s revalidation for initial load performance
+// SSE handles real-time updates after hydration, so stale initial data is fine
+export const revalidate = 60
 
 interface MenuPageProps {
   params: Promise<{

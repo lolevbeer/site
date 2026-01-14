@@ -11,6 +11,9 @@ import {
   getAllDistributorsGeoJSON,
   type WeeklyHoursDay,
 } from '@/lib/utils/payload-api'
+import { JsonLd } from '@/components/seo/json-ld'
+import { generateLocalBusinessSchemas } from '@/lib/utils/local-business-schema'
+import { generateBreadcrumbSchema } from '@/lib/utils/breadcrumb-schema'
 
 export const metadata: Metadata = {
   title: 'Find Us | Lolev Beer',
@@ -47,5 +50,20 @@ export default async function BeerMapPage() {
   )
   const weeklyHours: Record<string, WeeklyHoursDay[]> = Object.fromEntries(weeklyHoursEntries)
 
-  return <BeerMapContent weeklyHours={weeklyHours} distributorData={distributorData} />
+  // Generate JSON-LD schemas for SEO
+  const locationSchemas = generateLocalBusinessSchemas(locations)
+  const breadcrumbSchema = generateBreadcrumbSchema([
+    { label: 'Home', href: '/' },
+    { label: 'Find Us', href: '/beer-map' },
+  ])
+
+  return (
+    <>
+      {locationSchemas.map((schema, index) => (
+        <JsonLd key={index} data={schema} />
+      ))}
+      <JsonLd data={breadcrumbSchema} />
+      <BeerMapContent weeklyHours={weeklyHours} distributorData={distributorData} />
+    </>
+  )
 }

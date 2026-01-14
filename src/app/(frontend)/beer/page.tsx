@@ -6,6 +6,8 @@
 import { Metadata } from 'next'
 import { BeerPageContent } from '@/components/beer/beer-page-content'
 import { getAllBeersFromCSV } from '@/lib/utils/beer-csv'
+import { JsonLd } from '@/components/seo/json-ld'
+import { generateBeerListSchema } from '@/lib/utils/product-schema'
 
 // ISR: Revalidate every hour as fallback (on-demand revalidation handles immediate updates)
 export const revalidate = 3600
@@ -25,6 +27,9 @@ export const metadata: Metadata = {
     'DIPA',
     'Hazy IPA',
   ],
+  alternates: {
+    canonical: '/beer',
+  },
   openGraph: {
     title: 'Our Beers | Lolev Beer',
     description: 'Discover our handcrafted selection of craft beers',
@@ -39,5 +44,14 @@ export default async function BeerPage() {
   // Filter out beers that should be hidden
   const availableBeers = allBeers.filter((beer) => !beer.availability?.hideFromSite)
 
-  return <BeerPageContent beers={availableBeers} />
+  // Generate ItemList schema for SEO
+  const beerListSchema = generateBeerListSchema(availableBeers)
+
+  return (
+    <>
+      {/* JSON-LD structured data for beer collection */}
+      <JsonLd data={beerListSchema} />
+      <BeerPageContent beers={availableBeers} />
+    </>
+  )
 }

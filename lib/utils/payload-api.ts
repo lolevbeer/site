@@ -8,7 +8,7 @@ import { getPayload } from 'payload'
 import config from '@/src/payload.config'
 import { cache } from 'react'
 import { unstable_cache } from 'next/cache'
-import type { Beer as PayloadBeer, Menu as PayloadMenu, Style, HolidayHour, Event as PayloadEvent, Food as PayloadFood, Distributor } from '@/src/payload-types'
+import type { Beer as PayloadBeer, Menu as PayloadMenu, Style, HolidayHour, Event as PayloadEvent, Food as PayloadFood, Distributor, Faq } from '@/src/payload-types'
 import type { PayloadLocation } from '@/lib/types/location'
 import { logger } from '@/lib/utils/logger'
 import { CACHE_TAGS } from '@/lib/utils/cache'
@@ -1212,4 +1212,36 @@ export const getAllDistributorsGeoJSON = unstable_cache(
   },
   ['all-distributors-geojson'],
   { tags: [CACHE_TAGS.distributors], revalidate: 3600 }
+)
+
+// ============ FAQ DATA ============
+
+/**
+ * Get all active FAQs from Payload, sorted by order
+ * Cached until 'faqs' tag is invalidated
+ */
+export const getActiveFAQs = unstable_cache(
+  async (): Promise<Faq[]> => {
+    try {
+      const payload = await getPayload({ config })
+
+      const result = await payload.find({
+        collection: 'faqs',
+        where: {
+          active: {
+            equals: true,
+          },
+        },
+        sort: 'order',
+        limit: 100,
+      })
+
+      return result.docs
+    } catch (error) {
+      logger.error('Error fetching FAQs from Payload', error)
+      return []
+    }
+  },
+  ['active-faqs'],
+  { tags: [CACHE_TAGS.faqs], revalidate: 3600 }
 )

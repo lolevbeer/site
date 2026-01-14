@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useRef } from 'react'
-import { Gutter, SetStepNav } from '@payloadcms/ui'
+import { Gutter, SetStepNav, Button, Banner, Pill } from '@payloadcms/ui'
 import { format } from 'date-fns-tz'
 import { getSiteContentData } from '@/src/actions/admin-data'
 import { parseSSEStream, isSSEResponse } from '@/lib/utils/sse-parser'
@@ -101,6 +101,13 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
   const [regeocodeResults, setRegeocodeResults] = useState<{ checked: number; suspicious: number; fixed: number; failed: number; distributors?: any[] } | null>(null)
   const [regeocodeProgress, setRegeocodeProgress] = useState<{ current: number; total: number; name: string; percent: number } | null>(null)
   const [regeocodeLogs, setRegeocodeLogs] = useState<string[]>([])
+
+  // Untappd sync state
+  const [untappdRunning, setUntappdRunning] = useState(false)
+  const [untappdDryRun, setUntappdDryRun] = useState(true)
+  const [untappdResults, setUntappdResults] = useState<{ total: number; refreshed: number; updated: number; skipped: number; errors: number } | null>(null)
+  const [untappdProgress, setUntappdProgress] = useState<{ current: number; total: number; name: string; percent: number } | null>(null)
+  const [untappdLogs, setUntappdLogs] = useState<string[]>([])
 
   // Load distributor URLs on mount using local API
   React.useEffect(() => {
@@ -464,6 +471,56 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
     } finally {
       setRegeocodeRunning(false)
       setRegeocodeProgress(null)
+    }
+  }
+
+  const handleUntappdSync = async () => {
+    setUntappdRunning(true)
+    setUntappdResults(null)
+    setUntappdProgress(null)
+    setUntappdLogs([])
+
+    try {
+      const params = new URLSearchParams()
+      if (untappdDryRun) params.set('dryRun', 'true')
+
+      const response = await fetch(`/api/sync-untappd-ratings?${params.toString()}`, {
+        method: 'POST',
+        credentials: 'same-origin',
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        setUntappdLogs([`Error: ${data.error || 'Request failed'}`])
+        setUntappdRunning(false)
+        return
+      }
+
+      await parseSSEStream(response, {
+        status: (data: any) => setUntappdLogs(prev => [...prev.slice(-99), data.message]),
+        progress: (data: any) => setUntappdProgress(data),
+        item: (data: any) => {
+          const statusIcon = data.status === 'refreshed' ? '✓'
+            : data.status === 'updated' || data.status === 'new' ? '+'
+            : data.status === 'error' ? '✗'
+            : data.status === 'multiple' ? '?'
+            : data.status === 'not-found' ? '○'
+            : '→'
+          setUntappdLogs(prev => [...prev.slice(-99), `${statusIcon} ${data.name}: ${data.message}`])
+        },
+        error: (data: any) => setUntappdLogs(prev => [...prev.slice(-99), `Error: ${data.message}`]),
+        complete: (data: any) => {
+          if (data.results) {
+            setUntappdResults(data.results)
+          }
+          setUntappdProgress(null)
+        },
+      })
+    } catch (error: any) {
+      setUntappdLogs(prev => [...prev, `Error: ${error.message || 'Sync failed'}`])
+    } finally {
+      setUntappdRunning(false)
+      setUntappdProgress(null)
     }
   }
 
@@ -1775,6 +1832,145 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
               </div>
             </div>
           )}
+
+          {/* Untappd Sync Section */}
+          <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--theme-elevation-150)' }}>
+            <h3 style={{
+              fontSize: '16px',
+              fontWeight: 600,
+              marginBottom: '8px',
+              color: 'var(--theme-text)'
+            }}>
+              Sync Untappd Ratings
+            </h3>
+            <p style={{
+              fontSize: '13px',
+              color: 'var(--theme-elevation-600)',
+              marginBottom: '12px'
+            }}>
+              Bulk update Untappd ratings for all beers. Invalid URLs will be searched and fixed automatically.
+            </p>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+              <Button
+                onClick={handleUntappdSync}
+                disabled={untappdRunning}
+                buttonStyle={untappdDryRun ? 'secondary' : 'primary'}
+                size="small"
+              >
+                {untappdRunning ? (untappdDryRun ? 'Previewing...' : 'Syncing...') : (untappdDryRun ? 'Preview Sync' : 'Sync Now')}
+              </Button>
+              <label style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: '13px',
+                color: 'var(--theme-text)',
+                cursor: 'pointer',
+              }}>
+                <input
+                  type="checkbox"
+                  checked={untappdDryRun}
+                  onChange={(e) => setUntappdDryRun(e.target.checked)}
+                  disabled={untappdRunning}
+                  style={{ width: '14px', height: '14px', cursor: 'pointer' }}
+                />
+                Dry run (preview only)
+              </label>
+            </div>
+
+            {/* Progress Bar */}
+            {untappdProgress && (
+              <div style={{ marginTop: '16px' }}>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  fontSize: '13px',
+                  marginBottom: '6px',
+                  color: 'var(--theme-elevation-600)',
+                }}>
+                  <span style={{
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    maxWidth: '70%',
+                  }}>
+                    {untappdProgress.name}
+                  </span>
+                  <span>{untappdProgress.current} / {untappdProgress.total} ({untappdProgress.percent}%)</span>
+                </div>
+                <div style={{
+                  height: '8px',
+                  backgroundColor: 'var(--theme-elevation-150)',
+                  borderRadius: '4px',
+                  overflow: 'hidden',
+                }}>
+                  <div style={{
+                    height: '100%',
+                    width: `${untappdProgress.percent}%`,
+                    backgroundColor: '#f59e0b',
+                    borderRadius: '4px',
+                    transition: 'width 0.3s ease',
+                  }} />
+                </div>
+              </div>
+            )}
+
+            {/* Log Console */}
+            {untappdLogs.length > 0 && (
+              <div style={{
+                marginTop: '12px',
+                maxHeight: '200px',
+                overflowY: 'auto',
+                fontSize: '12px',
+                fontFamily: 'monospace',
+                backgroundColor: '#0d1117',
+                padding: '12px',
+                borderRadius: '4px',
+                border: '1px solid #30363d',
+              }}>
+                {untappdLogs.map((log, i) => (
+                  <div key={i} style={{
+                    color: log.startsWith('✓')
+                      ? '#4ade80'
+                      : log.startsWith('+')
+                        ? '#60a5fa'
+                        : log.startsWith('✗') || log.startsWith('Error')
+                          ? '#f87171'
+                          : log.startsWith('?')
+                            ? '#fbbf24'
+                            : log.startsWith('○')
+                              ? '#6b7280'
+                              : '#8b949e',
+                    marginBottom: '2px',
+                  }}>
+                    {log}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Results */}
+            {untappdResults && (
+              <Banner
+                type={untappdResults.errors > 0 ? 'error' : 'success'}
+                style={{ marginTop: '16px' }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                  <strong>{untappdDryRun ? 'Preview Results' : 'Sync Complete'}</strong>
+                  <Pill pillStyle="light">{untappdResults.total} total</Pill>
+                  <Pill pillStyle="success">{untappdResults.refreshed} refreshed</Pill>
+                  {untappdResults.updated > 0 && (
+                    <Pill pillStyle="warning">{untappdResults.updated} fixed</Pill>
+                  )}
+                  <Pill pillStyle="light">{untappdResults.skipped} skipped</Pill>
+                  {untappdResults.errors > 0 && (
+                    <Pill pillStyle="error">{untappdResults.errors} errors</Pill>
+                  )}
+                </div>
+              </Banner>
+            )}
+          </div>
         </div>
         )}
 

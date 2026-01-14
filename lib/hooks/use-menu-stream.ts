@@ -15,6 +15,8 @@ interface UseMenuStreamResult {
   theme: 'light' | 'dark'
   isConnected: boolean
   error: Error | null
+  /** Increments on each successful poll - useful for cycling effects */
+  pollCount: number
 }
 
 interface MenuResponse {
@@ -46,6 +48,7 @@ export function useMenuStream(
   const [theme, setThemeState] = useState<'light' | 'dark'>('light')
   const [isConnected, setIsConnected] = useState(false)
   const [error, setError] = useState<Error | null>(null)
+  const [pollCount, setPollCount] = useState(0)
 
   const pollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const lastTimestampRef = useRef<number>(0)
@@ -75,6 +78,7 @@ export function useMenuStream(
 
       setIsConnected(true)
       setError(null)
+      setPollCount(prev => prev + 1)
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to fetch menu'))
       setIsConnected(false)
@@ -109,5 +113,5 @@ export function useMenuStream(
     }
   }, [initialMenu])
 
-  return { menu, theme, isConnected, error }
+  return { menu, theme, isConnected, error, pollCount }
 }

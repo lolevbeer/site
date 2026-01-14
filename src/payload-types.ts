@@ -78,6 +78,7 @@ export interface Config {
     locations: Location;
     'holiday-hours': HolidayHour;
     distributors: Distributor;
+    faqs: Faq;
     media: Media;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
@@ -97,6 +98,7 @@ export interface Config {
     locations: LocationsSelect<false> | LocationsSelect<true>;
     'holiday-hours': HolidayHoursSelect<false> | HolidayHoursSelect<true>;
     distributors: DistributorsSelect<false> | DistributorsSelect<true>;
+    faqs: FaqsSelect<false> | FaqsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -207,9 +209,29 @@ export interface Beer {
    */
   hops?: string | null;
   /**
-   * Untappd URL
+   * Untappd URL (e.g., /b/lolev-beer-lupula/123456)
    */
   untappd?: string | null;
+  /**
+   * Rating (auto-fetched)
+   */
+  untappdRating?: number | null;
+  /**
+   * Rating count (auto-fetched)
+   */
+  untappdRatingCount?: number | null;
+  /**
+   * Positive reviews (4.5+ with text) from Untappd - auto-fetched
+   */
+  positiveReviews?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -658,6 +680,33 @@ export interface Distributor {
   createdAt: string;
 }
 /**
+ * Additional FAQs that will be appended to the default FAQs on the FAQ page.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "faqs".
+ */
+export interface Faq {
+  id: string;
+  /**
+   * The question being asked
+   */
+  question: string;
+  /**
+   * The answer to the question
+   */
+  answer: string;
+  /**
+   * Lower numbers appear first. Default FAQs start at 0, so use 100+ to append at the end.
+   */
+  order?: number | null;
+  /**
+   * Uncheck to hide this FAQ from the site
+   */
+  active?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
@@ -724,6 +773,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'distributors';
         value: string | Distributor;
+      } | null)
+    | ({
+        relationTo: 'faqs';
+        value: string | Faq;
       } | null)
     | ({
         relationTo: 'media';
@@ -794,6 +847,9 @@ export interface BeersSelect<T extends boolean = true> {
   description?: T;
   hops?: T;
   untappd?: T;
+  untappdRating?: T;
+  untappdRatingCount?: T;
+  positiveReviews?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -1035,6 +1091,18 @@ export interface DistributorsSelect<T extends boolean = true> {
   location?: T;
   phone?: T;
   website?: T;
+  active?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "faqs_select".
+ */
+export interface FaqsSelect<T extends boolean = true> {
+  question?: T;
+  answer?: T;
+  order?: T;
   active?: T;
   updatedAt?: T;
   createdAt?: T;

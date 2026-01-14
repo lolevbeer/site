@@ -1,5 +1,7 @@
 import { Metadata } from 'next';
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
+import { JsonLd } from '@/components/seo/json-ld';
+import { generateBreadcrumbSchema, generateWebPageSchema } from '@/lib/utils/breadcrumb-schema';
 
 export const metadata: Metadata = {
   title: 'Accessibility Statement',
@@ -14,9 +16,23 @@ export const metadata: Metadata = {
 export default function AccessibilityPage() {
   const lastUpdated = 'October 12, 2025';
 
+  const breadcrumbSchema = generateBreadcrumbSchema([
+    { label: 'Home', href: '/' },
+    { label: 'Accessibility', href: '/accessibility' }
+  ]);
+  const webPageSchema = generateWebPageSchema({
+    name: 'Accessibility Statement',
+    description: 'Lolev Beer website conforms to WCAG 2.2 Level AA standards for web accessibility.',
+    path: '/accessibility',
+    dateModified: '2025-10-12'
+  });
+
   return (
-    <div className="container mx-auto px-4 py-8 max-w-3xl">
-      <PageBreadcrumbs className="mb-6" />
+    <>
+      <JsonLd data={breadcrumbSchema} />
+      <JsonLd data={webPageSchema} />
+      <div className="container mx-auto px-4 py-8 max-w-3xl">
+        <PageBreadcrumbs className="mb-6" />
 
       <h1 className="text-4xl font-bold tracking-tight mb-8">Accessibility Statement</h1>
 
@@ -69,7 +85,8 @@ export default function AccessibilityPage() {
         <section className="pt-8 border-t text-sm text-muted-foreground">
           <p><strong>Last updated:</strong> {lastUpdated}</p>
         </section>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

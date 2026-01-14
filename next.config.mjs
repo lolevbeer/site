@@ -1,9 +1,14 @@
 import { withPayload } from '@payloadcms/next/withPayload'
 import { withSentryConfig } from '@sentry/nextjs'
+import bundleAnalyzer from '@next/bundle-analyzer'
+
+const withBundleAnalyzer = bundleAnalyzer({
+  enabled: process.env.ANALYZE === 'true',
+})
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  trailingSlash: true,
+  // trailingSlash: true, // Disabled: causes POST body loss on redirects for Payload API
 
   // Add caching headers for media files to reduce blob transfer
   async headers() {
@@ -50,6 +55,10 @@ const nextConfig = {
         protocol: 'https',
         hostname: '*.lolev.beer',
       },
+      {
+        protocol: 'https',
+        hostname: 'images.untp.beer',
+      },
     ],
   },
 
@@ -95,7 +104,9 @@ const payloadConfig = withPayload(nextConfig, {
   devBundleServerPackages: false,
 })
 
-export default withSentryConfig(payloadConfig, {
+const analyzedConfig = withBundleAnalyzer(payloadConfig)
+
+export default withSentryConfig(analyzedConfig, {
   // Suppresses source map uploading logs during build
   silent: true,
   org: "lolev-beer",

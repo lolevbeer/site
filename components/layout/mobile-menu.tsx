@@ -69,25 +69,20 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
             </div>
           </div>
 
-          {/* Navigation */}
-          <div className="flex-1 overflow-y-auto px-6 py-6">
+          {/* Navigation - centered and fills available space */}
+          <div className="flex-1 flex flex-col justify-center">
             <Navigation
               vertical
               onItemClick={onClose}
-              className="space-y-2"
+              showIcons={false}
+              size="large"
             />
           </div>
 
-          {/* Social Links and Footer */}
-          <div className="px-6 py-4">
-            <div className="mb-4 flex justify-center">
+          {/* Footer with social links */}
+          <div className="px-6 py-6">
+            <div className="flex justify-center">
               <SocialLinks size="sm" />
-            </div>
-
-            {/* Quick contact info */}
-            <div className="text-xs text-muted-foreground text-center">
-              <p className="font-medium">Lolev Beer</p>
-              <p>Lawrenceville & Zelienople</p>
             </div>
           </div>
         </div>

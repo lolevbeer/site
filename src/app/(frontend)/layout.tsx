@@ -1,19 +1,21 @@
-import React from "react";
-import type { Metadata, Viewport } from "next";
-import { Poppins } from "next/font/google";
-import { NuqsAdapter } from 'nuqs/adapters/next/app';
-import { LocationProvider } from "@/components/location/location-provider";
-import { ThemeProvider } from "@/components/providers/theme-provider";
-import { AutoThemeSwitcher } from "@/components/providers/auto-theme-switcher";
-import { ConditionalLayout } from "@/components/layout/conditional-layout";
-import { Toaster } from "@/components/ui/sonner";
-import { ErrorBoundary } from "@/components/error-boundary";
-import { SkipNav } from "@/components/ui/skip-nav";
-import { GoogleAnalytics } from "@/components/analytics/google-analytics";
-import { PageViewTracker } from "@/components/analytics/page-view-tracker";
-import { AuthProvider } from "@/lib/hooks/use-auth";
-import { getAllLocations, getWeeklyHoursWithHolidays, type WeeklyHoursDay } from "@/lib/utils/payload-api";
-import "./globals.css";
+import React from 'react'
+import type { Metadata, Viewport } from 'next'
+import type { ReactNode } from 'react'
+import { Poppins } from 'next/font/google'
+import { NuqsAdapter } from 'nuqs/adapters/next/app'
+import { LocationProvider } from '@/components/location/location-provider'
+import { ThemeProvider } from '@/components/providers/theme-provider'
+import { AutoThemeSwitcher } from '@/components/providers/auto-theme-switcher'
+import { ConditionalLayout } from '@/components/layout/conditional-layout'
+import { Toaster } from '@/components/ui/sonner'
+import { ErrorBoundary } from '@/components/error-boundary'
+import { SkipNav } from '@/components/ui/skip-nav'
+import { GoogleAnalytics } from '@/components/analytics/google-analytics'
+import { PageViewTracker } from '@/components/analytics/page-view-tracker'
+import { AuthProvider } from '@/lib/hooks/use-auth'
+import { getAllLocations } from '@/lib/utils/payload-api'
+import { getWeeklyHoursForLocations } from '@/lib/utils/homepage-data'
+import './globals.css'
 
 /**
  * Get the base URL for metadata.
@@ -38,59 +40,69 @@ function getBaseUrl(): string {
 
 const poppins = Poppins({
   weight: ['400', '600', '700'],
-  variable: "--font-poppins",
-  subsets: ["latin"],
+  variable: '--font-poppins',
+  subsets: ['latin'],
   display: 'swap',
   preload: true,
-});
+})
 
 export const viewport: Viewport = {
-  width: "device-width",
+  width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
-};
+}
 
 export const metadata: Metadata = {
   title: {
-    default: "Lolev Beer - Craft Brewery in Pittsburgh",
-    template: "%s | Lolev Beer"
+    default: 'Lolev Beer - Craft Brewery in Pittsburgh',
+    template: '%s | Lolev Beer',
   },
-  description: "Experience exceptional craft beer at Lolev Beer with locations in Lawrenceville and Zelienople. Fresh brews, local food, and community events.",
-  keywords: ["craft beer", "brewery", "Pittsburgh", "Lawrenceville", "Zelienople", "local beer", "IPA", "stout", "ale"],
-  authors: [{ name: "Lolev Beer" }],
-  creator: "Lolev Beer",
-  publisher: "Lolev Beer",
+  description:
+    'Experience exceptional craft beer at Lolev Beer with locations in Lawrenceville and Zelienople. Fresh brews, local food, and community events.',
+  keywords: [
+    'craft beer',
+    'brewery',
+    'Pittsburgh',
+    'Lawrenceville',
+    'Zelienople',
+    'local beer',
+    'IPA',
+    'stout',
+    'ale',
+  ],
+  authors: [{ name: 'Lolev Beer' }],
+  creator: 'Lolev Beer',
+  publisher: 'Lolev Beer',
   formatDetection: {
     email: false,
     address: false,
     telephone: false,
   },
   metadataBase: new URL(getBaseUrl()),
-  alternates: {
-    canonical: "/",
-  },
   openGraph: {
-    type: "website",
-    locale: "en_US",
+    type: 'website',
+    locale: 'en_US',
     url: getBaseUrl(),
-    title: "Lolev Beer - Craft Beer in Pittsburgh",
-    description: "Experience exceptional craft beer at Lolev Beer with locations in Lawrenceville and Zelienople. Fresh brews, local food, and community events.",
-    siteName: "Lolev Beer",
+    title: 'Lolev Beer - Craft Beer in Pittsburgh',
+    description:
+      'Experience exceptional craft beer at Lolev Beer with locations in Lawrenceville and Zelienople. Fresh brews, local food, and community events.',
+    siteName: 'Lolev Beer',
     images: [
       {
-        url: "/images/og-image.jpg",
+        url: '/images/og-image.png',
         width: 1200,
         height: 630,
-        alt: "Lolev Beer - Craft Beer",
+        alt: 'Lolev Beer - Craft Beer',
       },
     ],
   },
   twitter: {
-    card: "summary_large_image",
-    title: "Lolev Beer - Craft Beer in Pittsburgh",
-    description: "Experience exceptional craft beer at Lolev Beer with locations in Lawrenceville and Zelienople. Fresh brews, local food, and community events.",
-    images: ["/images/og-image.jpg"],
-    creator: "@loveoflearningbrewing",
+    card: 'summary_large_image',
+    title: 'Lolev Beer - Craft Beer in Pittsburgh',
+    description:
+      'Experience exceptional craft beer at Lolev Beer with locations in Lawrenceville and Zelienople. Fresh brews, local food, and community events.',
+    images: ['/images/og-image.png'],
+    creator: '@lolevbeer',
   },
   robots: {
     index: true,
@@ -98,30 +110,24 @@ export const metadata: Metadata = {
     googleBot: {
       index: true,
       follow: true,
-      "max-video-preview": -1,
-      "max-image-preview": "large",
-      "max-snippet": -1,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
     },
   },
   verification: {
     google: process.env.GOOGLE_SITE_VERIFICATION,
   },
-};
+}
 
 export default async function AppLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
-}>) {
-  // Fetch weekly hours with holiday overrides for footer
-  const locations = await getAllLocations();
-  const weeklyHoursEntries = await Promise.all(
-    locations.map(async (location) => {
-      const hours = await getWeeklyHoursWithHolidays(location.id);
-      return [location.slug || location.id, hours] as const;
-    })
-  );
-  const weeklyHours: Record<string, WeeklyHoursDay[]> = Object.fromEntries(weeklyHoursEntries);
+  children: ReactNode
+}>): Promise<React.ReactElement> {
+  // Fetch locations and weekly hours for footer
+  const locations = await getAllLocations()
+  const weeklyHours = await getWeeklyHoursForLocations(locations)
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -162,9 +168,7 @@ export default async function AppLayout({
                 <AuthProvider>
                   <PageViewTracker />
                   <SkipNav />
-                  <ConditionalLayout weeklyHours={weeklyHours}>
-                    {children}
-                  </ConditionalLayout>
+                  <ConditionalLayout weeklyHours={weeklyHours}>{children}</ConditionalLayout>
                   <Toaster />
                 </AuthProvider>
               </LocationProvider>
@@ -173,5 +177,5 @@ export default async function AppLayout({
         </ErrorBoundary>
       </body>
     </html>
-  );
+  )
 }

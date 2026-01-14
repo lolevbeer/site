@@ -13,6 +13,8 @@ export function UntappdFetcher() {
   const { value: beerName } = useField<string>({ path: 'name' })
   const { value: untappdUrl, setValue: setUntappdUrl } = useField<string>({ path: 'untappd' })
   const { setValue: setUntappdRating } = useField<number>({ path: 'untappdRating' })
+  const { setValue: setUntappdRatingCount } = useField<number>({ path: 'untappdRatingCount' })
+  const { value: existingReviews, setValue: setPositiveReviews } = useField<Array<{ url?: string }>>({ path: 'positiveReviews' })
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -88,6 +90,17 @@ export function UntappdFetcher() {
 
       if (data.rating !== null) {
         setUntappdRating(data.rating)
+        if (data.ratingCount !== null) {
+          setUntappdRatingCount(data.ratingCount)
+        }
+        if (data.positiveReviews && data.positiveReviews.length > 0) {
+          // Merge with existing reviews, using URL as unique key
+          const existing = existingReviews || []
+          const existingUrls = new Set(existing.map((r: { url?: string }) => r.url).filter(Boolean))
+          const newReviews = data.positiveReviews.filter((r: { url?: string }) => r.url && !existingUrls.has(r.url))
+          const merged = [...existing, ...newReviews]
+          setPositiveReviews(merged)
+        }
       } else {
         setError('Could not find rating on page')
       }

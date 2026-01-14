@@ -4,6 +4,7 @@ import { getBeerBySlug, getAllBeersFromPayload } from '@/lib/utils/payload-api';
 import { BeerDetails } from '@/components/beer/beer-details';
 import { JsonLd } from '@/components/seo/json-ld';
 import { generateProductSchema } from '@/lib/utils/product-schema';
+import { generateBreadcrumbSchema } from '@/lib/utils/breadcrumb-schema';
 
 interface BeerPageProps {
   params: Promise<{
@@ -78,11 +79,17 @@ export default async function BeerPage({ params }: BeerPageProps) {
   // Generate Product schema for SEO
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const productSchema = generateProductSchema(beer as any);
+  const breadcrumbSchema = generateBreadcrumbSchema([
+    { label: 'Home', href: '/' },
+    { label: 'Beer', href: '/beer' },
+    { label: beer.name, href: `/beer/${beer.slug}` }
+  ]);
 
   return (
     <>
       {/* Add Product JSON-LD for SEO */}
       <JsonLd data={productSchema} />
+      <JsonLd data={breadcrumbSchema} />
 
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}

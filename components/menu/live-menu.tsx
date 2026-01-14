@@ -1,8 +1,10 @@
 'use client'
 
+import { useMemo } from 'react'
 import { useMenuStream } from '@/lib/hooks/use-menu-stream'
 import { FeaturedBeers, FeaturedCans } from '@/components/home/featured-menu'
 import type { Menu } from '@/src/payload-types'
+import randomColor from 'randomcolor'
 
 interface LiveMenuProps {
   menuUrl: string
@@ -51,7 +53,7 @@ const darkVars = {
  * - Applies dark mode via inline CSS variables for maximum browser compatibility
  */
 export function LiveMenu({ menuUrl, initialMenu }: LiveMenuProps) {
-  const { menu, theme } = useMenuStream(menuUrl, initialMenu, {
+  const { menu, theme, pollCount } = useMenuStream(menuUrl, initialMenu, {
     enabled: true,
     pollInterval: 2000,
   })
@@ -59,13 +61,26 @@ export function LiveMenu({ menuUrl, initialMenu }: LiveMenuProps) {
   // Use streamed menu if available, otherwise fall back to initial
   const displayMenu = menu || initialMenu
 
+  // Generate random light colors that cycle on each poll (dark mode only)
+  const itemColors = useMemo(() => {
+    const itemCount = displayMenu.items?.length || 0
+    if (itemCount === 0 || theme !== 'dark') return undefined
+
+    // Generate colors with pollCount as part of the seed for variety
+    return randomColor({
+      count: itemCount,
+      luminosity: 'light',
+      seed: pollCount,
+    })
+  }, [displayMenu.items?.length, theme, pollCount])
+
   // Apply CSS variables directly - bypasses .dark class for browser compatibility
   const themeVars = theme === 'dark' ? darkVars : lightVars
 
   if (displayMenu.type === 'draft') {
     return (
       <div className="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground" style={themeVars}>
-        <FeaturedBeers menu={displayMenu} animated />
+        <FeaturedBeers menu={displayMenu} animated itemColors={itemColors} />
       </div>
     )
   }
@@ -73,7 +88,7 @@ export function LiveMenu({ menuUrl, initialMenu }: LiveMenuProps) {
   if (displayMenu.type === 'cans') {
     return (
       <div className="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground" style={themeVars}>
-        <FeaturedCans menu={displayMenu} animated />
+        <FeaturedCans menu={displayMenu} animated itemColors={itemColors} />
       </div>
     )
   }
@@ -82,7 +97,7 @@ export function LiveMenu({ menuUrl, initialMenu }: LiveMenuProps) {
   if (displayMenu.type === 'other') {
     return (
       <div className="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground" style={themeVars}>
-        <FeaturedBeers menu={displayMenu} animated />
+        <FeaturedBeers menu={displayMenu} animated itemColors={itemColors} />
       </div>
     )
   }

@@ -1,9 +1,21 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
+import { JsonLd } from '@/components/seo/json-ld';
+import { generateOrganizationSchema } from '@/lib/utils/local-business-schema';
+import { generateBreadcrumbSchema } from '@/lib/utils/breadcrumb-schema';
 
 export default function AboutPage() {
+  const organizationSchema = generateOrganizationSchema();
+  const breadcrumbSchema = generateBreadcrumbSchema([
+    { label: 'Home', href: '/' },
+    { label: 'About', href: '/about' }
+  ]);
+
   return (
+    <>
+      <JsonLd data={organizationSchema} />
+      <JsonLd data={breadcrumbSchema} />
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <PageBreadcrumbs className="mb-6" />
       <div className="text-center mb-12">
@@ -47,5 +59,6 @@ export default function AboutPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }

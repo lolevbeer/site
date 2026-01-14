@@ -27,6 +27,10 @@ interface DraftBeerCardProps {
   showAbv?: boolean;
   /** Show Just Released badge (default: true) */
   showJustReleased?: boolean;
+  /** Show Untappd rating (default: false for menu displays, true for homepage) */
+  showRating?: boolean;
+  /** Accent color for the beer name (dark mode cycling effect) */
+  accentColor?: string;
 }
 
 export const DraftBeerCard = React.memo(function DraftBeerCard({
@@ -37,7 +41,9 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
   showGlass = true,
   showTap = true,
   showAbv = true,
-  showJustReleased = true
+  showJustReleased = true,
+  showRating = false,
+  accentColor
 }: DraftBeerCardProps) {
   const { currentLocation } = useLocationContext();
   const beerSlug = getBeerSlug(beer);
@@ -71,12 +77,17 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
             {/* Beer Info - Main content */}
             <div className="flex-grow min-w-0 flex flex-col" style={{ gap: '0.3vh' }}>
               <div className="flex items-center flex-wrap" style={{ gap: '1vh' }}>
-                <h3 className="font-bold leading-tight truncate" style={{ fontSize: '3vh' }}>{beer.name}</h3>
+                <h3 className="font-bold leading-tight truncate transition-colors duration-500" style={{ fontSize: '3vh', color: accentColor }}>{beer.name}</h3>
                 {beer.type && beer.type.split(', ').map((option, i) => (
                   <Badge key={i} variant="outline" className="flex-shrink-0" style={{ fontSize: '1.8vh' }}>
                     {option}
                   </Badge>
                 ))}
+                {showRating && beer.untappdRating && beer.untappdRating > 0 && (
+                  <span className="flex items-center text-amber-500 flex-shrink-0" style={{ fontSize: '1.8vh', gap: '0.3vh' }}>
+                    ★ {beer.untappdRating.toFixed(2)}
+                  </span>
+                )}
                 {showJustReleased && beer.isJustReleased && (
                   <Badge variant="default" className="flex-shrink-0" style={{ fontSize: '1.8vh' }}>
                     Just Released
@@ -111,7 +122,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
               {/* Half pour price - always render column for alignment */}
               <div className="text-center" style={{ minWidth: '6vh' }}>
                 {beer.pricing?.halfPour && (
-                  <div className="font-bold text-primary tabular-nums" style={{ fontSize: '3.8vh' }}>
+                  <div className="font-bold tabular-nums transition-colors duration-500" style={{ fontSize: '3.8vh', color: accentColor }}>
                     ${beer.pricing.halfPour}
                   </div>
                 )}
@@ -119,7 +130,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
               {/* Full price - always render column, show value if not halfPourOnly */}
               <div className="text-center" style={{ minWidth: '6vh' }}>
                 {!beer.pricing?.halfPourOnly && beer.pricing?.draftPrice && (
-                  <div className="font-bold text-primary tabular-nums" style={{ fontSize: '3.8vh' }}>
+                  <div className="font-bold tabular-nums transition-colors duration-500" style={{ fontSize: '3.8vh', color: accentColor }}>
                     ${beer.pricing.draftPrice}
                   </div>
                 )}
@@ -157,6 +168,11 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                   {option}
                 </Badge>
               ))}
+              {showRating && beer.untappdRating && beer.untappdRating > 0 && (
+                <span className="text-sm text-amber-500 flex items-center gap-0.5 flex-shrink-0">
+                  ★ {beer.untappdRating.toFixed(2)}
+                </span>
+              )}
             </div>
             <div className="flex flex-col gap-0.5">
               {beer.description && (
