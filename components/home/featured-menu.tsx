@@ -422,7 +422,7 @@ export function FeaturedMenu({ menuType, menu, menus = [], animated = false, ite
                         <div className="flex flex-col flex-1 min-w-0">
                           {leftColumn.map(({ item, state, key }, idx) => (
                             <div key={key} className={`flex-1 min-w-0 ${animated ? getAnimationClass(state) : ''}`}>
-                              <DraftBeerCard beer={item as unknown as Beer} showLocation={false} showTapAndPrice showGlass={!isOtherMenu} showTap={!isOtherMenu} showAbv={!isOtherMenu} showJustReleased={!isOtherMenu} accentColor={itemColors?.[idx]} />
+                              <DraftBeerCard beer={item as unknown as Beer} showLocation={false} showTapAndPrice showGlass={!isOtherMenu} showTap={!isOtherMenu} showAbv={!isOtherMenu} showJustReleased={!isOtherMenu} showRating accentColor={itemColors?.[idx]} />
                             </div>
                           ))}
                         </div>
@@ -434,7 +434,7 @@ export function FeaturedMenu({ menuType, menu, menus = [], animated = false, ite
                         <div className="flex flex-col flex-1 min-w-0">
                           {rightColumn.map(({ item, state, key }, idx) => (
                             <div key={key} className={`flex-1 min-w-0 ${animated ? getAnimationClass(state) : ''}`}>
-                              <DraftBeerCard beer={item as unknown as Beer} showLocation={false} showTapAndPrice showGlass={!isOtherMenu} showTap={!isOtherMenu} showAbv={!isOtherMenu} showJustReleased={!isOtherMenu} accentColor={itemColors?.[midpoint + idx]} />
+                              <DraftBeerCard beer={item as unknown as Beer} showLocation={false} showTapAndPrice showGlass={!isOtherMenu} showTap={!isOtherMenu} showAbv={!isOtherMenu} showJustReleased={!isOtherMenu} showRating accentColor={itemColors?.[midpoint + idx]} />
                             </div>
                           ))}
                         </div>
