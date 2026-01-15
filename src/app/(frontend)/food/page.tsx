@@ -91,7 +91,7 @@ async function getFoodData(): Promise<FoodVendorSchedule[]> {
     },
     sort: 'date',
     limit: 100,
-    depth: 1,
+    depth: 2,
   });
 
   // Fetch recurring food global
@@ -180,7 +180,7 @@ async function getFoodData(): Promise<FoodVendorSchedule[]> {
         id: { in: Array.from(vendorIds) },
       },
       limit: vendorIds.size,
-      depth: 1,
+      depth: 2,
     });
 
     for (const vendor of vendorsResult.docs) {

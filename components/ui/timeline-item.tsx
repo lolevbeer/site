@@ -69,13 +69,13 @@ export function TimelineItem({
     >
       {/* Image */}
       {imageUrl && (
-        <div className="relative w-12 h-12 flex-shrink-0 rounded-full overflow-hidden bg-muted">
+        <div className="relative w-16 h-16 flex-shrink-0 rounded-full overflow-hidden bg-muted">
           <Image
             src={imageUrl}
             alt={`${title} logo`}
             fill
             className="object-cover"
-            sizes="48px"
+            sizes="64px"
           />
         </div>
       )}
