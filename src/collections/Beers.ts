@@ -44,7 +44,7 @@ async function fetchUntappdData(url: string): Promise<{ rating: number | null; r
       if (!isNaN(parsed)) ratingCount = parsed
     }
 
-    // Extract positive reviews (4.5+ with text)
+    // Extract reviews that Lolev has toasted (liked)
     const positiveReviews: UntappdReview[] = []
     // Match each checkin item block: <div class="item " id="checkin_123456" ...>...</div>
     const checkinRegex = /<div[^>]*class="item\s*"[^>]*id="checkin_(\d+)"[^>]*>([\s\S]*?)(?=<div[^>]*class="item\s*"[^>]*id="checkin_|$)/gi
@@ -54,18 +54,19 @@ async function fetchUntappdData(url: string): Promise<{ rating: number | null; r
       const checkinId = checkinMatch[1]
       const checkinHtml = checkinMatch[2]
 
+      // Check if Lolev has toasted this checkin (brewery ID 519872)
+      // Look for Lolev toast within the toast-list span
+      const toastListMatch = checkinHtml.match(/<span[^>]*class="toast-list"[^>]*>([\s\S]*?)<\/span>/i)
+      const hasLolevToast = toastListMatch && toastListMatch[1].includes('href="/brewery/519872"')
+      if (!hasLolevToast) continue
+
       // Extract rating from caps div: <div class="caps " data-rating="4.5">
       const checkinRatingMatch = checkinHtml.match(/<div[^>]*class="caps[^"]*"[^>]*data-rating="([\d.]+)"/)
-      if (!checkinRatingMatch) continue
-
-      const checkinRating = parseFloat(checkinRatingMatch[1])
-      if (isNaN(checkinRating) || checkinRating < 4.5) continue
+      const checkinRating = checkinRatingMatch ? parseFloat(checkinRatingMatch[1]) : 0
 
       // Extract comment text: <p class="comment-text" id="translate_...">text</p>
       const commentMatch = checkinHtml.match(/<p[^>]*class="comment-text"[^>]*>([\s\S]*?)<\/p>/i)
-      if (!commentMatch || !commentMatch[1].trim()) continue
-
-      const text = commentMatch[1].trim()
+      const text = commentMatch ? commentMatch[1].trim() : ''
 
       // Extract username: <a href="/user/..." class="user">Name</a>
       const usernameMatch = checkinHtml.match(/<a[^>]*class="user"[^>]*>([^<]+)<\/a>/i)
@@ -394,7 +395,7 @@ export const Beers: CollectionConfig = {
       name: 'positiveReviews',
       type: 'json',
       admin: {
-        description: 'Positive reviews (4.5+ with text) from Untappd - auto-fetched',
+        description: 'Reviews toasted by Lolev from Untappd - auto-fetched',
         readOnly: true,
       },
     },
