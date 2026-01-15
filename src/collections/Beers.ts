@@ -1,97 +1,11 @@
 import type { CollectionConfig } from 'payload'
 import { generateUniqueSlug } from './utils/generateUniqueSlug'
 import { adminAccess, beerManagerAccess, isAdmin } from '@/src/access/roles'
+import { fetchUntappdData, type UntappdReview } from '@/src/utils/untappd'
 
 // Helper function to round to nearest 0.25 (like Excel's MROUND)
 const mround = (value: number, multiple: number): number => {
   return Math.round(value / multiple) * multiple
-}
-
-interface UntappdReview {
-  username: string
-  rating: number
-  text: string
-  date?: string
-  url?: string
-  image?: string
-}
-
-// Fetch Untappd rating, rating count, and positive reviews from beer page
-async function fetchUntappdData(url: string): Promise<{ rating: number | null; ratingCount: number | null; positiveReviews: UntappdReview[] }> {
-  try {
-    const fullUrl = url.startsWith('http') ? url : `https://untappd.com${url}`
-    const response = await fetch(fullUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
-      },
-    })
-    if (!response.ok) return { rating: null, ratingCount: null, positiveReviews: [] }
-    const html = await response.text()
-
-    // Extract rating
-    let rating: number | null = null
-    const ratingMatch = html.match(/<div[^>]*class="caps"[^>]*data-rating="([^"]+)"/)
-    if (ratingMatch?.[1]) {
-      const parsed = parseFloat(ratingMatch[1])
-      if (!isNaN(parsed)) rating = parsed
-    }
-
-    // Extract rating count (e.g., "3,381 Ratings")
-    let ratingCount: number | null = null
-    const countMatch = html.match(/([\d,]+)\s*Ratings/i)
-    if (countMatch?.[1]) {
-      const parsed = parseInt(countMatch[1].replace(/,/g, ''), 10)
-      if (!isNaN(parsed)) ratingCount = parsed
-    }
-
-    // Extract reviews that Lolev has toasted (liked)
-    const positiveReviews: UntappdReview[] = []
-    // Match each checkin item block: <div class="item " id="checkin_123456" ...>...</div>
-    const checkinRegex = /<div[^>]*class="item\s*"[^>]*id="checkin_(\d+)"[^>]*>([\s\S]*?)(?=<div[^>]*class="item\s*"[^>]*id="checkin_|$)/gi
-    let checkinMatch
-
-    while ((checkinMatch = checkinRegex.exec(html)) !== null) {
-      const checkinId = checkinMatch[1]
-      const checkinHtml = checkinMatch[2]
-
-      // Check if Lolev has toasted this checkin (brewery ID 519872)
-      // Look for Lolev toast link with class "user-toasts" linking to brewery
-      const hasLolevToast = /class="user-toasts[^"]*"[^>]*href="\/brewery\/519872"/.test(checkinHtml)
-      if (!hasLolevToast) continue
-
-      // Extract rating from caps div: <div class="caps " data-rating="4.5">
-      const checkinRatingMatch = checkinHtml.match(/<div[^>]*class="caps[^"]*"[^>]*data-rating="([\d.]+)"/)
-      const checkinRating = checkinRatingMatch ? parseFloat(checkinRatingMatch[1]) : 0
-
-      // Extract comment text: <p class="comment-text" id="translate_...">text</p>
-      const commentMatch = checkinHtml.match(/<p[^>]*class="comment-text"[^>]*>([\s\S]*?)<\/p>/i)
-      const text = commentMatch ? commentMatch[1].trim() : ''
-
-      // Extract username: <a href="/user/..." class="user">Name</a>
-      const usernameMatch = checkinHtml.match(/<a[^>]*class="user"[^>]*>([^<]+)<\/a>/i)
-      const username = usernameMatch ? usernameMatch[1].trim() : 'Anonymous'
-
-      // Build checkin URL from the ID and username
-      const userMatch = checkinHtml.match(/href="(\/user\/[^"]+)"[^>]*class="user"/)
-      const url = userMatch
-        ? `https://untappd.com${userMatch[1]}/checkin/${checkinId}`
-        : `https://untappd.com/user/checkin/${checkinId}`
-
-      // Extract date: <a class="time...">date</a>
-      const dateMatch = checkinHtml.match(/<a[^>]*class="time[^"]*"[^>]*>([^<]+)<\/a>/i)
-      const date = dateMatch ? dateMatch[1].trim() : undefined
-
-      // Extract image: <p class="photo">...<img src="...">...</p>
-      const imageMatch = checkinHtml.match(/<p[^>]*class="photo"[^>]*>[\s\S]*?<img[^>]*src="([^"]+)"/)
-      const image = imageMatch ? imageMatch[1] : undefined
-
-      positiveReviews.push({ username, rating: checkinRating, text, date, url, image })
-    }
-
-    return { rating, ratingCount, positiveReviews }
-  } catch {
-    return { rating: null, ratingCount: null, positiveReviews: [] }
-  }
 }
 
 export const Beers: CollectionConfig = {
