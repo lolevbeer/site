@@ -118,7 +118,7 @@ async function fetchUntappdData(url: string): Promise<UntappdData> {
     if (!isNaN(parsed)) ratingCount = parsed
   }
 
-  // Extract positive reviews (4.5+ with text)
+  // Extract reviews that Lolev has toasted (liked)
   const positiveReviews: UntappdReview[] = []
   const checkinRegex = /<div[^>]*class="item\s*"[^>]*id="checkin_(\d+)"[^>]*>([\s\S]*?)(?=<div[^>]*class="item\s*"[^>]*id="checkin_|$)/gi
   let checkinMatch
@@ -127,18 +127,17 @@ async function fetchUntappdData(url: string): Promise<UntappdData> {
     const checkinId = checkinMatch[1]
     const checkinHtml = checkinMatch[2]
 
+    // Check if Lolev has toasted this checkin (brewery ID 519872)
+    const hasLolevToast = /class="user-toasts[^"]*"[^>]*href="\/brewery\/519872"/.test(checkinHtml)
+    if (!hasLolevToast) continue
+
     // Extract rating from caps div
     const checkinRatingMatch = checkinHtml.match(/<div[^>]*class="caps[^"]*"[^>]*data-rating="([\d.]+)"/)
-    if (!checkinRatingMatch) continue
-
-    const checkinRating = parseFloat(checkinRatingMatch[1])
-    if (isNaN(checkinRating) || checkinRating < 4.5) continue
+    const checkinRating = checkinRatingMatch ? parseFloat(checkinRatingMatch[1]) : 0
 
     // Extract comment text
     const commentMatch = checkinHtml.match(/<p[^>]*class="comment-text"[^>]*>([\s\S]*?)<\/p>/i)
-    if (!commentMatch || !commentMatch[1].trim()) continue
-
-    const text = commentMatch[1].trim()
+    const text = commentMatch ? commentMatch[1].trim() : ''
 
     // Extract username
     const usernameMatch = checkinHtml.match(/<a[^>]*class="user"[^>]*>([^<]+)<\/a>/i)
