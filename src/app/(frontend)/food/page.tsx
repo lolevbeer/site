@@ -50,7 +50,7 @@ function getUpcomingDatesForSlot(dayIndex: number, weekOccurrence: number, month
 
 interface PayloadFoodEntry {
   id: string;
-  vendor: string | { id: string; name: string; site?: string | null };
+  vendor: string | { id: string; name: string; site?: string | null; logo?: string | { url?: string } | null };
   date: string;
   time: string;
   start?: string;
@@ -123,6 +123,9 @@ async function getFoodData(): Promise<FoodVendorSchedule[]> {
 
     const vendorName = typeof entry.vendor === 'object' ? entry.vendor.name : entry.vendor;
     const vendorSite = entry.site || (typeof entry.vendor === 'object' ? entry.vendor.site : undefined);
+    const vendorLogo = typeof entry.vendor === 'object' && entry.vendor.logo
+      ? (typeof entry.vendor.logo === 'object' ? entry.vendor.logo?.url : entry.vendor.logo)
+      : undefined;
 
     const dateStr = entry.date.split('T')[0];
     const [year, month, day] = dateStr.split('-').map(Number);
@@ -141,6 +144,7 @@ async function getFoodData(): Promise<FoodVendorSchedule[]> {
       date: dateStr,
       time: entry.time || '',
       site: vendorSite ?? undefined,
+      logoUrl: vendorLogo ?? undefined,
       day: DayOfWeek[dayOfWeek.toUpperCase() as keyof typeof DayOfWeek],
       start: entry.start || entry.time?.split('-')[0]?.trim() || '',
       finish: entry.finish || entry.time?.split('-')[1]?.trim() || '',
@@ -167,7 +171,7 @@ async function getFoodData(): Promise<FoodVendorSchedule[]> {
   }
 
   // Fetch vendor details
-  const vendorMap: Record<string, { id: string; name: string; site?: string | null }> = {};
+  const vendorMap: Record<string, { id: string; name: string; site?: string | null; logoUrl?: string }> = {};
   if (vendorIds.size > 0) {
     const vendorsResult = await payload.find({
       collection: 'food-vendors',
@@ -175,13 +179,18 @@ async function getFoodData(): Promise<FoodVendorSchedule[]> {
         id: { in: Array.from(vendorIds) },
       },
       limit: vendorIds.size,
+      depth: 1,
     });
 
     for (const vendor of vendorsResult.docs) {
+      const logoUrl = vendor.logo
+        ? (typeof vendor.logo === 'object' ? (vendor.logo as { url?: string })?.url : vendor.logo)
+        : undefined;
       vendorMap[vendor.id] = {
         id: vendor.id,
         name: vendor.name,
         site: vendor.site,
+        logoUrl: logoUrl ?? undefined,
       };
     }
   }
@@ -222,6 +231,7 @@ async function getFoodData(): Promise<FoodVendorSchedule[]> {
               date: dateKey,
               time: '',
               site: vendor.site ?? undefined,
+              logoUrl: vendor.logoUrl,
               day: DayOfWeek[dayOfWeek.toUpperCase() as keyof typeof DayOfWeek],
               start: '',
               finish: '',

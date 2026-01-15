@@ -870,7 +870,7 @@ export const getUpcomingFoodFromPayload = async (locationSlug: string, limit: nu
           },
           sort: 'date',
           limit,
-          depth: 1,
+          depth: 2,
         })
 
         return result.docs
@@ -963,6 +963,7 @@ export interface RecurringFoodEntry {
     id: string
     name: string
     site?: string | null
+    logo?: string | { url?: string } | null
   }
   date: string
   time?: string
@@ -1021,7 +1022,7 @@ export const getUpcomingRecurringFood = async (
         }
 
         // Fetch all vendors in one request
-        const vendorMap: Record<string, { id: string; name: string; site?: string | null }> = {}
+        const vendorMap: Record<string, { id: string; name: string; site?: string | null; logo?: string | { url?: string } | null }> = {}
         if (vendorIds.size > 0) {
           const vendorResult = await payload.find({
             collection: 'food-vendors',
@@ -1029,12 +1030,14 @@ export const getUpcomingRecurringFood = async (
               id: { in: Array.from(vendorIds) },
             },
             limit: vendorIds.size,
+            depth: 2,
           })
           for (const vendor of vendorResult.docs) {
             vendorMap[vendor.id] = {
               id: vendor.id,
               name: vendor.name,
               site: vendor.site,
+              logo: vendor.logo as string | { url?: string } | null | undefined,
             }
           }
         }

@@ -2,6 +2,7 @@
 
 import React, { useMemo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { SectionHeader } from '@/components/ui/section-header';
@@ -13,7 +14,12 @@ import { useLocationContext } from '@/components/location/location-provider';
 import type { LocationSlug } from '@/lib/types/location';
 
 interface FoodVendor {
-  vendor: string | { id?: string; name?: string; site?: string | null };
+  vendor: string | {
+    id?: string;
+    name?: string;
+    site?: string | null;
+    logo?: string | { url?: string } | null;
+  };
   date: string;
   time?: string;
   startTime?: string; // PayloadFood uses startTime
@@ -70,20 +76,36 @@ export function UpcomingFood({ foodByLocation }: UpcomingFoodProps): React.React
           {upcomingFood.map((food, index) => {
             const vendorName = typeof food.vendor === 'object' ? food.vendor?.name : food.vendor;
             const vendorSite = food.site || (typeof food.vendor === 'object' ? food.vendor?.site : undefined);
+            const vendorLogo = typeof food.vendor === 'object' && food.vendor?.logo
+              ? (typeof food.vendor.logo === 'object' ? food.vendor.logo?.url : food.vendor.logo)
+              : undefined;
             const timeDisplay = food.time || food.startTime;
 
             return (
               <Card
                 key={index}
-                className={`overflow-hidden transition-colors border border-border shadow-none bg-transparent ${vendorSite ? 'cursor-pointer hover:bg-secondary' : ''}`}
+                className={`overflow-hidden transition-colors shadow-none bg-transparent ${vendorSite ? 'border border-border cursor-pointer hover:bg-secondary' : ''}`}
                 onClick={vendorSite ? () => window.open(vendorSite, '_blank') : undefined}
               >
-                <CardContent className="p-6 text-center">
-                  <h3 className="text-xl font-semibold mb-2">{vendorName}</h3>
-                  <div className="space-y-1 text-sm text-muted-foreground flex flex-col items-center">
-                    <span>{formatDate(food.date, 'full')}</span>
-                    {timeDisplay && <span>{formatTime(timeDisplay)}</span>}
-                    <span>{getLocationDisplayName(food.location)}</span>
+                <CardContent className={`p-4 ${vendorLogo ? 'flex items-center gap-4' : 'text-center py-6'}`}>
+                  {vendorLogo && (
+                    <div className="relative w-16 h-16 flex-shrink-0 rounded-full overflow-hidden bg-muted">
+                      <Image
+                        src={vendorLogo}
+                        alt={`${vendorName} logo`}
+                        fill
+                        className="object-cover"
+                        sizes="64px"
+                      />
+                    </div>
+                  )}
+                  <div className={vendorLogo ? 'flex-1 min-w-0' : ''}>
+                    <h3 className="text-lg font-semibold">{vendorName}</h3>
+                    <div className="text-sm text-muted-foreground">
+                      <span>{formatDate(food.date, 'full')}</span>
+                      {timeDisplay && <span> • {formatTime(timeDisplay)}</span>}
+                      <span> • {getLocationDisplayName(food.location)}</span>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

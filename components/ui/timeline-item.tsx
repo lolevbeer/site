@@ -6,6 +6,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { formatTime } from '@/lib/utils/formatters';
 
@@ -16,6 +17,7 @@ interface TimelineItemProps {
   location?: string;
   description?: string;
   site?: string;
+  imageUrl?: string;
   className?: string;
 }
 
@@ -26,6 +28,7 @@ export function TimelineItem({
   location,
   description,
   site,
+  imageUrl,
   className
 }: TimelineItemProps) {
   const handleClick = () => {
@@ -53,10 +56,10 @@ export function TimelineItem({
     <div
       className={cn(
         'group relative flex items-stretch gap-4 p-4 rounded-lg',
-        'border border-border bg-transparent',
         'transition-all duration-200',
-        site && 'cursor-pointer hover:bg-secondary hover:-translate-y-0.5',
-        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+        site
+          ? 'border border-border cursor-pointer hover:bg-secondary hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+          : 'border-transparent',
         className
       )}
       onClick={site ? handleClick : undefined}
@@ -64,6 +67,18 @@ export function TimelineItem({
       tabIndex={site ? 0 : undefined}
       role={site ? 'link' : undefined}
     >
+      {/* Image */}
+      {imageUrl && (
+        <div className="relative w-12 h-12 flex-shrink-0 rounded-full overflow-hidden bg-muted">
+          <Image
+            src={imageUrl}
+            alt={`${title} logo`}
+            fill
+            className="object-cover"
+            sizes="48px"
+          />
+        </div>
+      )}
       {/* Content */}
       <div className="flex-1 min-w-0">
         <h4 className="font-semibold text-base leading-tight">

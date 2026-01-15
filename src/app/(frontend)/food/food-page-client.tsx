@@ -53,6 +53,7 @@ export function FoodPageClient({ initialSchedules }: FoodPageClientProps) {
               endTime={schedule.finish}
               location={getLocationName(schedule.location)}
               site={schedule.site}
+              imageUrl={schedule.logoUrl}
             />
           )}
           emptyState={

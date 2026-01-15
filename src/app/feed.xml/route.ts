@@ -37,13 +37,23 @@ export async function GET() {
   }
 
   try {
-    events = await getUpcomingEvents();
+    // Fetch events from both locations
+    const [lawrencevilleEvents, zelienopleEvents] = await Promise.all([
+      getUpcomingEvents('lawrenceville', 10),
+      getUpcomingEvents('zelienople', 10),
+    ]);
+    events = [...lawrencevilleEvents, ...zelienopleEvents];
   } catch (error) {
     console.error('Error fetching events for RSS:', error);
   }
 
   try {
-    food = await getUpcomingFood();
+    // Fetch food from both locations
+    const [lawrencevilleFood, zelienopleFood] = await Promise.all([
+      getUpcomingFood('lawrenceville', 10),
+      getUpcomingFood('zelienople', 10),
+    ]);
+    food = [...lawrencevilleFood, ...zelienopleFood];
   } catch (error) {
     console.error('Error fetching food for RSS:', error);
   }
