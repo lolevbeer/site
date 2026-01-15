@@ -7,20 +7,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@/src/payload.config'
+import { fetchUntappdData, type UntappdReview } from '@/src/utils/untappd'
 
 interface UntappdSearchResult {
   name: string
   url: string
   brewery?: string
-}
-
-interface UntappdReview {
-  username: string
-  rating: number
-  text: string
-  date?: string
-  url?: string
-  image?: string
 }
 
 interface UntappdRatingResult {
@@ -141,39 +133,14 @@ function parseSearchResults(html: string): UntappdSearchResult[] {
 }
 
 /**
- * Fetch rating from an Untappd beer page
+ * Fetch rating from an Untappd beer page using shared utility
  */
 async function fetchRating(url: string): Promise<NextResponse> {
   try {
-    // Ensure URL is absolute
-    const fullUrl = url.startsWith('http') ? url : `https://untappd.com${url}`
-
-    const response = await fetch(fullUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
-      },
-      next: { revalidate: 3600 }, // Cache for 1 hour
-    })
-
-    if (!response.ok) {
-      return NextResponse.json(
-        { error: `Untappd returned ${response.status}` },
-        { status: response.status }
-      )
-    }
-
-    const html = await response.text()
-    const { rating, ratingCount, positiveReviews } = parseUntappdData(html)
+    const { rating, ratingCount, positiveReviews } = await fetchUntappdData(url)
 
     // Log for debugging
     console.log(`Untappd fetch for ${url}: rating=${rating}, ratingCount=${ratingCount}, reviews=${positiveReviews.length}`)
-    if (positiveReviews.length === 0) {
-      // Check if there are any checkin divs at all
-      const checkinCount = (html.match(/<div class="checkin">/g) || []).length
-      console.log(`Found ${checkinCount} checkin divs in HTML`)
-    }
 
     return NextResponse.json({ rating, ratingCount, positiveReviews, url } as UntappdRatingResult)
   } catch (error) {
@@ -183,99 +150,4 @@ async function fetchRating(url: string): Promise<NextResponse> {
       { status: 500 }
     )
   }
-}
-
-/**
- * Parse rating, rating count, and positive reviews from Untappd beer page HTML
- * Looking for: <div class="caps" data-rating="4.25"> and "X,XXX Ratings"
- * Also extracts check-ins with ratings >= 4.5 that have comment text
- */
-function parseUntappdData(html: string): { rating: number | null; ratingCount: number | null; positiveReviews: UntappdReview[] } {
-  // Extract rating
-  let rating: number | null = null
-
-  // Match: <div class="caps" data-rating="4.25">
-  const ratingMatch = html.match(/<div[^>]*class="caps"[^>]*data-rating="([^"]+)"/)
-  if (ratingMatch && ratingMatch[1]) {
-    const parsed = parseFloat(ratingMatch[1])
-    if (!isNaN(parsed)) {
-      rating = parsed
-    }
-  }
-
-  // Alternative: try to find rating in different format
-  if (rating === null) {
-    const altMatch = html.match(/data-rating="([\d.]+)"/)
-    if (altMatch && altMatch[1]) {
-      const parsed = parseFloat(altMatch[1])
-      if (!isNaN(parsed)) {
-        rating = parsed
-      }
-    }
-  }
-
-  // Extract rating count (e.g., "3,381 Ratings")
-  let ratingCount: number | null = null
-  const countMatch = html.match(/([\d,]+)\s*Ratings/i)
-  if (countMatch && countMatch[1]) {
-    const parsed = parseInt(countMatch[1].replace(/,/g, ''), 10)
-    if (!isNaN(parsed)) {
-      ratingCount = parsed
-    }
-  }
-
-  // Extract positive reviews (4.5+ with text)
-  const positiveReviews: UntappdReview[] = []
-
-  // Match each checkin item block: <div class="item " id="checkin_123456" ...>...</div>
-  // Use the checkin ID to find the end boundary
-  const checkinRegex = /<div[^>]*class="item\s*"[^>]*id="checkin_(\d+)"[^>]*>([\s\S]*?)(?=<div[^>]*class="item\s*"[^>]*id="checkin_|$)/gi
-  let checkinMatch
-
-  while ((checkinMatch = checkinRegex.exec(html)) !== null) {
-    const checkinId = checkinMatch[1]
-    const checkinHtml = checkinMatch[2]
-
-    // Extract rating from caps div: <div class="caps " data-rating="4.5">
-    const checkinRatingMatch = checkinHtml.match(/<div[^>]*class="caps[^"]*"[^>]*data-rating="([\d.]+)"/)
-    if (!checkinRatingMatch) continue
-
-    const checkinRating = parseFloat(checkinRatingMatch[1])
-    if (isNaN(checkinRating) || checkinRating < 4.5) continue
-
-    // Extract comment text: <p class="comment-text" id="translate_...">text</p>
-    const commentMatch = checkinHtml.match(/<p[^>]*class="comment-text"[^>]*>([\s\S]*?)<\/p>/i)
-    if (!commentMatch || !commentMatch[1].trim()) continue
-
-    const text = commentMatch[1].trim()
-
-    // Extract username: <a href="/user/..." class="user">Name</a>
-    const usernameMatch = checkinHtml.match(/<a[^>]*class="user"[^>]*>([^<]+)<\/a>/i)
-    const username = usernameMatch ? usernameMatch[1].trim() : 'Anonymous'
-
-    // Build checkin URL from the ID and username
-    const userMatch = checkinHtml.match(/href="(\/user\/[^"]+)"[^>]*class="user"/)
-    const checkinUrl = userMatch
-      ? `https://untappd.com${userMatch[1]}/checkin/${checkinId}`
-      : `https://untappd.com/user/checkin/${checkinId}`
-
-    // Extract date: <a class="time...">date</a>
-    const dateMatch = checkinHtml.match(/<a[^>]*class="time[^"]*"[^>]*>([^<]+)<\/a>/i)
-    const date = dateMatch ? dateMatch[1].trim() : undefined
-
-    // Extract image: <p class="photo">...<img src="...">...</p>
-    const imageMatch = checkinHtml.match(/<p[^>]*class="photo"[^>]*>[\s\S]*?<img[^>]*src="([^"]+)"/)
-    const image = imageMatch ? imageMatch[1] : undefined
-
-    positiveReviews.push({
-      username,
-      rating: checkinRating,
-      text,
-      date,
-      url: checkinUrl,
-      image,
-    })
-  }
-
-  return { rating, ratingCount, positiveReviews }
 }
