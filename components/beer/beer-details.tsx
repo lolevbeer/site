@@ -60,25 +60,6 @@ function getStyleName(beer: Beer | PayloadBeer): string {
   return '';
 }
 
-function getAvailabilityInfo(beer: Beer) {
-  const { tap, cansAvailable, singleCanAvailable } = beer.availability ?? {};
-  const isDraft = !!tap;
-  const isCanned = !!(cansAvailable || singleCanAvailable);
-
-  const details = [
-    tap && `Pouring ${tap}`,
-    cansAvailable && 'Cans available for purchase',
-    singleCanAvailable && 'Single cans available',
-  ].filter(Boolean) as string[];
-
-  const status = isDraft && isCanned ? 'Pouring & Cans'
-    : isDraft ? 'Pouring'
-    : isCanned ? 'Cans Available'
-    : 'Limited Availability';
-
-  return { status, details, isDraft, isCanned };
-}
-
 function getPricingInfo(beer: Beer | (PayloadBeer & { pricing?: Beer['pricing']; salePrice?: boolean })): {
   draftPrice?: number;
   singlePrice?: number;
@@ -115,44 +96,31 @@ function SpecificationRow({
 }
 
 function formatReviewDate(dateStr: string): string {
-  // Try to parse the date string
   const date = new Date(dateStr);
   if (isNaN(date.getTime())) {
-    // If parsing fails, return the original string
     return dateStr;
   }
 
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffSeconds = Math.floor(diffMs / 1000);
-  const diffMinutes = Math.floor(diffSeconds / 60);
+  const diffMs = Date.now() - date.getTime();
+  const diffMinutes = Math.floor(diffMs / 60000);
   const diffHours = Math.floor(diffMinutes / 60);
   const diffDays = Math.floor(diffHours / 24);
-  const diffWeeks = Math.floor(diffDays / 7);
-  const diffMonths = Math.floor(diffDays / 30);
-  const diffYears = Math.floor(diffDays / 365);
 
-  if (diffMinutes < 1) {
-    return 'just now';
-  } else if (diffMinutes < 60) {
-    return `${diffMinutes} minute${diffMinutes === 1 ? '' : 's'} ago`;
-  } else if (diffHours < 24) {
-    return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
-  } else if (diffDays < 7) {
-    return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
-  } else if (diffWeeks < 4) {
-    return `${diffWeeks} week${diffWeeks === 1 ? '' : 's'} ago`;
-  } else if (diffMonths < 12) {
-    return `${diffMonths} month${diffMonths === 1 ? '' : 's'} ago`;
-  } else {
-    return `${diffYears} year${diffYears === 1 ? '' : 's'} ago`;
-  }
+  const formatUnit = (value: number, unit: string): string =>
+    `${value} ${unit}${value === 1 ? '' : 's'} ago`;
+
+  if (diffMinutes < 1) return 'just now';
+  if (diffMinutes < 60) return formatUnit(diffMinutes, 'minute');
+  if (diffHours < 24) return formatUnit(diffHours, 'hour');
+  if (diffDays < 7) return formatUnit(diffDays, 'day');
+  if (diffDays < 28) return formatUnit(Math.floor(diffDays / 7), 'week');
+  if (diffDays < 365) return formatUnit(Math.floor(diffDays / 30), 'month');
+  return formatUnit(Math.floor(diffDays / 365), 'year');
 }
 
 export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
   const { currentLocation } = useLocationContext();
   const imagePath = getBeerImageUrl(beer.image, beer.variant);
-  const _availability = getAvailabilityInfo(beer);
   const pricing = getPricingInfo(beer);
   const GlassIcon = getGlassIcon(beer.glass);
   const [tapLocations, setTapLocations] = useState<string[]>([]);

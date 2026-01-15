@@ -49,6 +49,7 @@ export const BeerCard = React.memo(function BeerCard({
 }: BeerCardProps) {
   const { currentLocation } = useLocationContext();
   const beerSlug = getBeerSlug(beer);
+  const GlassIcon = getGlassIcon(beer.glass);
 
   // Don't show beer if it's hidden from site
   if (beer.availability.hideFromSite) {
@@ -57,7 +58,6 @@ export const BeerCard = React.memo(function BeerCard({
 
   // Minimal variant uses simple card structure without BaseCard - matches homepage cans style
   if (variant === 'minimal') {
-    const GlassIcon = getGlassIcon(beer.glass);
     const beerHref = showLocation ? `/${currentLocation}/beer/${beerSlug}` : `/beer/${beerSlug}`;
 
     return (
@@ -135,7 +135,7 @@ export const BeerCard = React.memo(function BeerCard({
             )}
           </div>
           <div className="flex items-center gap-1">
-            {React.createElement(getGlassIcon(beer.glass), { className: "h-4 w-4" })}
+            <GlassIcon className="h-4 w-4" />
             <span>{formatAbv(beer.abv)} ABV</span>
           </div>
         </div>
