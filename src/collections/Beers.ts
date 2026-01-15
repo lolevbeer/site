@@ -308,7 +308,7 @@ export const Beers: CollectionConfig = {
       name: 'positiveReviews',
       type: 'json',
       admin: {
-        description: 'Reviews toasted by Lolev from Untappd - auto-fetched',
+        description: 'MGR agent approved reviews',
         readOnly: true,
       },
     },
