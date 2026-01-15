@@ -64,9 +64,10 @@ export async function fetchUntappdData(url: string): Promise<UntappdData> {
       const checkinRatingMatch = checkinHtml.match(/<div[^>]*class="caps[^"]*"[^>]*data-rating="([\d.]+)"/)
       const checkinRating = checkinRatingMatch ? parseFloat(checkinRatingMatch[1]) : 0
 
-      // Extract comment text
+      // Extract comment text - skip reviews without comments
       const commentMatch = checkinHtml.match(/<p[^>]*class="comment-text"[^>]*>([\s\S]*?)<\/p>/i)
       const text = commentMatch ? commentMatch[1].trim() : ''
+      if (!text) continue
 
       // Extract username
       const usernameMatch = checkinHtml.match(/<a[^>]*class="user"[^>]*>([^<]+)<\/a>/i)
