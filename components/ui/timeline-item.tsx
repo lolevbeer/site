@@ -119,7 +119,7 @@ export function TimelineItem({
       {/* Image Dialog */}
       {imageUrl && (
         <Dialog open={imageDialogOpen} onOpenChange={setImageDialogOpen}>
-          <DialogContent className="sm:max-w-md p-2">
+          <DialogContent className="sm:max-w-lg p-4">
             <DialogTitle className="sr-only">{title}</DialogTitle>
             <div className="relative w-full aspect-square">
               <Image

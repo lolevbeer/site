@@ -134,7 +134,7 @@ export function UpcomingFood({ foodByLocation }: UpcomingFoodProps): React.React
 
       {/* Image Dialog */}
       <Dialog open={!!expandedImage} onOpenChange={(open) => !open && setExpandedImage(null)}>
-        <DialogContent className="sm:max-w-md p-2">
+        <DialogContent className="sm:max-w-lg p-4">
           <DialogTitle className="sr-only">{expandedImage?.name}</DialogTitle>
           {expandedImage && (
             <>
