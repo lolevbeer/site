@@ -53,6 +53,12 @@ export function formatTime(timeString: string, options: { timezone?: string } = 
     return convertTo12Hour(parseInt(match24h[1]), parseInt(match24h[2]));
   }
 
+  // Handle 4-digit military time without colon (e.g., "2000" -> 8pm, "0800" -> 8am)
+  const matchMilitary = timeString.match(/^(\d{2})(\d{2})$/);
+  if (matchMilitary) {
+    return convertTo12Hour(parseInt(matchMilitary[1]), parseInt(matchMilitary[2]));
+  }
+
   return timeString.toLowerCase();
 }
 
@@ -145,6 +151,13 @@ export function isFuture(dateString: string): boolean {
   today.setHours(0, 0, 0, 0);
   date.setHours(0, 0, 0, 0);
   return date.getTime() > today.getTime();
+}
+
+export function isTomorrow(dateString: string): boolean {
+  const date = parseLocalDate(dateString.split('T')[0]);
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  return date.toDateString() === tomorrow.toDateString();
 }
 
 export function isTodayOrFuture(dateString: string): boolean {
