@@ -17,8 +17,11 @@ export enum GlassType {
 export enum BeerStyle {
   PALE_ALE = 'Pale Ale',
   INDIA_PALE_ALE = 'India Pale Ale',
-  DOUBLE_IPA = 'Double IPA',
+  DOUBLE_IPA = 'Double IPA (DIPA)',
   SESSION_IPA = 'Session IPA',
+  HAZE = 'Haze',
+  HOP_SATURATED_ALE = 'Hop Saturated Ale',
+  ULTRA_HOPPED_ALE = 'Ultra Hopped Ale',
   IMPERIAL_STOUT = 'Imperial Stout',
   BOCK = 'Bock',
   SPARKLING_HOP_WATER = 'Sparkling Hop Water',

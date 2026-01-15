@@ -152,11 +152,22 @@ export function DistributorMap({
         label
       });
 
-      setViewport({
-        latitude: searchLocation.latitude,
-        longitude: searchLocation.longitude,
-        zoom: MAP_CONFIG.LOCATION_ZOOM
-      });
+      // Smooth fly to search location
+      if (mapRef.current) {
+        mapRef.current.flyTo({
+          center: [searchLocation.longitude, searchLocation.latitude],
+          zoom: MAP_CONFIG.LOCATION_ZOOM,
+          duration: 1500,
+          curve: 1.42,
+          easing: (t: number) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
+        });
+      } else {
+        setViewport({
+          latitude: searchLocation.latitude,
+          longitude: searchLocation.longitude,
+          zoom: MAP_CONFIG.LOCATION_ZOOM
+        });
+      }
     }
   }, [searchLocation, searchTerm]);
 
@@ -226,16 +237,26 @@ export function DistributorMap({
     };
   }, [geoData]);
 
-  // Layer styles - theme aware
+  // Layer styles - theme aware with smooth transitions
   const pointLayer: CircleLayer = useMemo(() => ({
     id: 'distributor-points',
     type: 'circle',
     source: 'distributors',
     paint: {
-      'circle-radius': 4,
+      'circle-radius': [
+        'interpolate',
+        ['linear'],
+        ['zoom'],
+        5, 3,
+        10, 5,
+        15, 8
+      ],
       'circle-color': resolvedTheme === 'dark' ? '#ffffff' : '#000000',
       'circle-stroke-width': 1,
       'circle-stroke-color': resolvedTheme === 'dark' ? '#000000' : '#ffffff',
+      'circle-opacity': 0.85,
+      'circle-radius-transition': { duration: 300 },
+      'circle-opacity-transition': { duration: 300 },
     },
   }), [resolvedTheme]);
 
@@ -245,10 +266,20 @@ export function DistributorMap({
     source: 'distributors',
     filter: ['==', ['get', 'uniqueId'], selectedLocation?.properties.uniqueId || ''],
     paint: {
-      'circle-radius': 6,
+      'circle-radius': [
+        'interpolate',
+        ['linear'],
+        ['zoom'],
+        5, 6,
+        10, 10,
+        15, 14
+      ],
       'circle-color': '#ea580c',
-      'circle-stroke-width': 1,
+      'circle-stroke-width': 2,
       'circle-stroke-color': '#ffffff',
+      'circle-opacity': 1,
+      'circle-radius-transition': { duration: 300 },
+      'circle-stroke-width-transition': { duration: 300 },
     },
   }), [selectedLocation]);
 
@@ -264,11 +295,22 @@ export function DistributorMap({
         label: 'you'
       });
 
-      setViewport({
-        latitude: coords.latitude,
-        longitude: coords.longitude,
-        zoom: MAP_CONFIG.LOCATION_ZOOM
-      });
+      // Smooth fly to user location
+      if (mapRef.current) {
+        mapRef.current.flyTo({
+          center: [coords.longitude, coords.latitude],
+          zoom: MAP_CONFIG.LOCATION_ZOOM,
+          duration: 1500,
+          curve: 1.42,
+          easing: (t: number) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
+        });
+      } else {
+        setViewport({
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+          zoom: MAP_CONFIG.LOCATION_ZOOM
+        });
+      }
 
       toast.success('Showing nearest locations');
     });
@@ -307,7 +349,9 @@ export function DistributorMap({
       mapRef.current.flyTo({
         center: [lng, lat],
         zoom: MAP_CONFIG.DETAIL_ZOOM,
-        duration: 1000
+        duration: 1200,
+        curve: 1.42,
+        easing: (t: number) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
       });
     }
   }, []);
@@ -407,9 +451,9 @@ export function DistributorMap({
       <div className="flex flex-1 relative h-full overflow-hidden">
         {/* Map Side */}
         <div className={cn(
-          "h-full relative",
+          "h-full relative transition-all duration-300 ease-out",
           "md:w-1/2",
-          mobileView === 'map' ? "w-full" : "hidden md:block"
+          mobileView === 'map' ? "w-full opacity-100" : "hidden md:block md:opacity-100"
         )}>
           <Map
             ref={mapRef}
@@ -447,9 +491,9 @@ export function DistributorMap({
                 closeButton={false}
                 closeOnClick={false}
                 offset={10}
-                className="!p-0 [&_.mapboxgl-popup-content]:!p-0 [&_.mapboxgl-popup-content]:!bg-transparent [&_.mapboxgl-popup-content]:!shadow-none [&_.mapboxgl-popup-content]:!border-none [&_.mapboxgl-popup-content]:!rounded-none [&_.mapboxgl-popup-tip]:!hidden"
+                className="!p-0 [&_.mapboxgl-popup-content]:!p-0 [&_.mapboxgl-popup-content]:!bg-transparent [&_.mapboxgl-popup-content]:!shadow-none [&_.mapboxgl-popup-content]:!border-none [&_.mapboxgl-popup-content]:!rounded-none [&_.mapboxgl-popup-tip]:!hidden animate-in fade-in-0 zoom-in-95 duration-200"
               >
-                <Card className="min-w-[220px] max-w-[280px] shadow-lg border">
+                <Card className="min-w-[220px] max-w-[280px] shadow-lg border animate-in slide-in-from-top-2 duration-300">
                   <div className="p-3">
                     <div className="flex items-start justify-between gap-2 mb-1">
                       <h3 className="font-semibold text-sm leading-tight">
@@ -485,17 +529,17 @@ export function DistributorMap({
 
         {/* List Side */}
         <div className={cn(
-          "h-full overflow-hidden",
+          "h-full overflow-hidden transition-all duration-300 ease-out",
           "md:w-1/2",
-          mobileView === 'list' ? "w-full" : "hidden md:block"
+          mobileView === 'list' ? "w-full opacity-100" : "hidden md:block md:opacity-100"
         )}>
           <ScrollArea className="h-full">
             <div className="py-4 md:pt-0 md:px-4 space-y-3">
               {listLocations.length > 0 ? (
                 <>
                   {!referenceLocation && (
-                    <Alert className="mb-3 border-amber-200 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/30">
-                      <Info className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                    <Alert className="mb-3 border-border bg-transparent">
+                      <Info className="h-4 w-4 text-muted-foreground" />
                       <AlertDescription className="text-muted-foreground">
                         Enter a location or use "Near Me" to see distances
                       </AlertDescription>

@@ -66,7 +66,7 @@ export function UpcomingFood({ foodByLocation }: UpcomingFoodProps): React.React
           />
         </ScrollReveal>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 justify-items-center">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {upcomingFood.map((food, index) => {
             const vendorName = typeof food.vendor === 'object' ? food.vendor?.name : food.vendor;
             const vendorSite = food.site || (typeof food.vendor === 'object' ? food.vendor?.site : undefined);
@@ -75,7 +75,7 @@ export function UpcomingFood({ foodByLocation }: UpcomingFoodProps): React.React
             return (
               <Card
                 key={index}
-                className={`overflow-hidden transition-colors border-0 shadow-none bg-transparent dark:bg-transparent ${vendorSite ? 'cursor-pointer hover:bg-secondary/50' : ''}`}
+                className={`overflow-hidden transition-colors border border-border shadow-none bg-transparent ${vendorSite ? 'cursor-pointer hover:bg-secondary' : ''}`}
                 onClick={vendorSite ? () => window.open(vendorSite, '_blank') : undefined}
               >
                 <CardContent className="p-6 text-center">

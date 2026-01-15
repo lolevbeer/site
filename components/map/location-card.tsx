@@ -42,11 +42,11 @@ export function LocationCard({
     <Card
       ref={innerRef}
       className={cn(
-        "p-3 cursor-pointer border-0 bg-[var(--color-card-interactive)]",
+        "p-3 cursor-pointer border border-border bg-transparent shadow-none",
         "transition-all duration-200 ease-out",
-        "hover:-translate-y-0.5",
+        "hover:-translate-y-0.5 hover:bg-secondary",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-        isSelected ? "bg-primary/5" : "hover:bg-muted/50"
+        isSelected && "bg-secondary"
       )}
       onClick={onClick}
       onKeyDown={handleKeyDown}

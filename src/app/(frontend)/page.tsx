@@ -7,6 +7,7 @@ import { getHomePageData } from '@/lib/utils/homepage-data';
 import { JsonLd } from '@/components/seo/json-ld';
 import { generateEventJsonLd, generateFoodEventJsonLd } from '@/lib/utils/json-ld';
 import { generateLocalBusinessSchemas, generateOrganizationSchema, generateWebSiteSchema } from '@/lib/utils/local-business-schema';
+import { generateFullMenuSchema } from '@/lib/utils/menu-schema';
 
 // ISR: Revalidate every 5 minutes as fallback (on-demand revalidation handles immediate updates)
 export const revalidate = 300;
@@ -41,6 +42,7 @@ export default async function Home(): Promise<React.ReactElement> {
   const localBusinessSchemas = generateLocalBusinessSchemas(data.locations);
   const organizationSchema = generateOrganizationSchema();
   const webSiteSchema = generateWebSiteSchema();
+  const menuSchema = generateFullMenuSchema(data.availableBeers);
   const eventSchemas = data.allEvents.map(event => generateEventJsonLd(event));
   const foodSchemas = data.allFood.map(food => generateFoodEventJsonLd(food));
 
@@ -52,6 +54,7 @@ export default async function Home(): Promise<React.ReactElement> {
       ))}
       <JsonLd data={organizationSchema} />
       <JsonLd data={webSiteSchema} />
+      <JsonLd data={menuSchema} />
       {eventSchemas.map((schema, index) => (
         <JsonLd key={`event-${index}`} data={schema} />
       ))}

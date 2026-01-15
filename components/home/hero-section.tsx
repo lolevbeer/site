@@ -159,20 +159,20 @@ export function HeroSection({ availableBeers, cansMenus, heroDescription, heroIm
 
         {/* Primary CTAs */}
         <div
-          className="flex flex-col sm:flex-row gap-3 md:gap-4 mt-6 md:mt-8 justify-center items-center animate-stagger-in opacity-0"
+          className="flex flex-col sm:flex-row gap-3 md:gap-4 mt-6 md:mt-8 justify-center items-center w-full px-4 sm:px-0 animate-stagger-in opacity-0"
           style={{ animationDelay: '300ms' }}
         >
-          <Button asChild variant="default" size="lg" className="min-w-[180px] text-base animate-glow-pulse">
+          <Button asChild variant="default" size="lg" className="w-full sm:w-auto sm:min-w-[160px] text-base animate-glow-pulse">
             <Link href="/beer-map">
               Find Lolev
             </Link>
           </Button>
-          <Button asChild variant="outline" size="lg" className="min-w-[140px]">
+          <Button asChild variant="outline" size="lg" className="w-full sm:w-auto sm:min-w-[160px]">
             <a href="https://squareup.com/customer-programs/enroll/ce5WC6LoELBr?utm_source=lolevwebsite" target="_blank" rel="noopener noreferrer">
               Newsletter
             </a>
           </Button>
-          <Button asChild variant="ghost" size="lg" className="min-w-[140px]">
+          <Button asChild variant="ghost" size="lg" className="w-full sm:w-auto sm:min-w-[160px]">
             <Link href="/about">
               Our Story
             </Link>

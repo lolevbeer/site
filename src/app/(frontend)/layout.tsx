@@ -149,6 +149,9 @@ export default async function AppLayout({
         {/* Resource Hints for Performance */}
         <link rel="preconnect" href="https://api.mapbox.com" />
         <link rel="dns-prefetch" href="https://api.mapbox.com" />
+
+        {/* RSS Feed Autodiscovery */}
+        <link rel="alternate" type="application/rss+xml" title="Lolev Beer RSS Feed" href="/feed.xml" />
       </head>
       <body className={`${poppins.variable} antialiased min-h-screen flex flex-col font-poppins`}>
         <GoogleAnalytics />

@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/accordion';
 import { JsonLd } from '@/components/seo/json-ld';
 import { breweryFAQs, generateFAQSchema, type FAQItem } from '@/lib/utils/faq-schema';
+import { generateFAQSpeakableSchema } from '@/lib/utils/speakable-schema';
 import { getActiveFAQs } from '@/lib/utils/payload-api';
 import { Mail, Phone, MapPin } from 'lucide-react';
 
@@ -82,11 +83,13 @@ export default async function FAQPage() {
 
   // Generate FAQ schema for SEO
   const faqSchema = generateFAQSchema(allFAQs);
+  const speakableSchema = generateFAQSpeakableSchema();
 
   return (
     <>
       {/* Add FAQ JSON-LD for SEO */}
       <JsonLd data={faqSchema} />
+      <JsonLd data={speakableSchema} />
 
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <PageBreadcrumbs className="mb-6" />
@@ -105,7 +108,7 @@ export default async function FAQPage() {
                 <AccordionTrigger className="text-left">
                   {faq.question}
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground">
+                <AccordionContent className="text-muted-foreground" data-speakable="faq-answer">
                   <FAQAnswer question={faq.question} answer={faq.answer} />
                 </AccordionContent>
               </AccordionItem>

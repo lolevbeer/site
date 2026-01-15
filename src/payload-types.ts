@@ -221,7 +221,7 @@ export interface Beer {
    */
   untappdRatingCount?: number | null;
   /**
-   * Positive reviews (4.5+ with text) from Untappd - auto-fetched
+   * MGR agent approved reviews
    */
   positiveReviews?:
     | {
