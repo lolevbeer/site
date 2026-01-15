@@ -123,8 +123,15 @@ async function getFoodData(): Promise<FoodVendorSchedule[]> {
 
     const vendorName = typeof entry.vendor === 'object' ? entry.vendor.name : entry.vendor;
     const vendorSite = entry.site || (typeof entry.vendor === 'object' ? entry.vendor.site : undefined);
-    const vendorLogo = typeof entry.vendor === 'object' && entry.vendor.logo
-      ? (typeof entry.vendor.logo === 'object' ? entry.vendor.logo?.url : entry.vendor.logo)
+    const vendorLogoRaw = typeof entry.vendor === 'object' ? entry.vendor.logo : undefined;
+    const vendorLogo = vendorLogoRaw
+      ? (typeof vendorLogoRaw === 'object' && vendorLogoRaw?.url
+          ? vendorLogoRaw.url
+          : typeof vendorLogoRaw === 'string' && vendorLogoRaw.startsWith('/')
+            ? vendorLogoRaw
+            : typeof vendorLogoRaw === 'string'
+              ? `/api/media/file/${vendorLogoRaw}`
+              : undefined)
       : undefined;
 
     const dateStr = entry.date.split('T')[0];
@@ -183,8 +190,15 @@ async function getFoodData(): Promise<FoodVendorSchedule[]> {
     });
 
     for (const vendor of vendorsResult.docs) {
-      const logoUrl = vendor.logo
-        ? (typeof vendor.logo === 'object' ? (vendor.logo as { url?: string })?.url : vendor.logo)
+      const logoRaw = vendor.logo;
+      const logoUrl = logoRaw
+        ? (typeof logoRaw === 'object' && (logoRaw as { url?: string })?.url
+            ? (logoRaw as { url?: string }).url
+            : typeof logoRaw === 'string' && logoRaw.startsWith('/')
+              ? logoRaw
+              : typeof logoRaw === 'string'
+                ? `/api/media/file/${logoRaw}`
+                : undefined)
         : undefined;
       vendorMap[vendor.id] = {
         id: vendor.id,

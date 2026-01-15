@@ -76,8 +76,15 @@ export function UpcomingFood({ foodByLocation }: UpcomingFoodProps): React.React
           {upcomingFood.map((food, index) => {
             const vendorName = typeof food.vendor === 'object' ? food.vendor?.name : food.vendor;
             const vendorSite = food.site || (typeof food.vendor === 'object' ? food.vendor?.site : undefined);
-            const vendorLogo = typeof food.vendor === 'object' && food.vendor?.logo
-              ? (typeof food.vendor.logo === 'object' ? food.vendor.logo?.url : food.vendor.logo)
+            const vendorLogoRaw = typeof food.vendor === 'object' ? food.vendor?.logo : undefined;
+            const vendorLogo = vendorLogoRaw
+              ? (typeof vendorLogoRaw === 'object' && vendorLogoRaw?.url
+                  ? vendorLogoRaw.url
+                  : typeof vendorLogoRaw === 'string' && vendorLogoRaw.startsWith('/')
+                    ? vendorLogoRaw
+                    : typeof vendorLogoRaw === 'string'
+                      ? `/api/media/file/${vendorLogoRaw}`
+                      : undefined)
               : undefined;
             const timeDisplay = food.time || food.startTime;
 
