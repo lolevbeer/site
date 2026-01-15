@@ -11,6 +11,7 @@ import { useLocationFilteredData, type LocationData } from '@/lib/hooks/use-loca
 import { formatDate, formatTime } from '@/lib/utils/formatters';
 import { useSortedItems } from '@/lib/hooks/use-sorted-items';
 import { useLocationContext } from '@/components/location/location-provider';
+import { getMediaUrl } from '@/lib/utils/media-utils';
 import type { LocationSlug } from '@/lib/types/location';
 
 interface FoodVendor {
@@ -76,15 +77,8 @@ export function UpcomingFood({ foodByLocation }: UpcomingFoodProps): React.React
           {upcomingFood.map((food, index) => {
             const vendorName = typeof food.vendor === 'object' ? food.vendor?.name : food.vendor;
             const vendorSite = food.site || (typeof food.vendor === 'object' ? food.vendor?.site : undefined);
-            const vendorLogoRaw = typeof food.vendor === 'object' ? food.vendor?.logo : undefined;
-            const vendorLogo = vendorLogoRaw
-              ? (typeof vendorLogoRaw === 'object' && vendorLogoRaw?.url
-                  ? vendorLogoRaw.url
-                  : typeof vendorLogoRaw === 'string' && vendorLogoRaw.startsWith('/')
-                    ? vendorLogoRaw
-                    : typeof vendorLogoRaw === 'string'
-                      ? `/api/media/file/${vendorLogoRaw}`
-                      : undefined)
+            const vendorLogo = typeof food.vendor === 'object'
+              ? getMediaUrl(food.vendor?.logo)
               : undefined;
             const timeDisplay = food.time || food.startTime;
 

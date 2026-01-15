@@ -4,6 +4,7 @@ import config from '@/src/payload.config';
 import { JsonLd } from '@/components/seo/json-ld';
 import { FoodPageClient } from './food-page-client';
 import { FoodVendorSchedule, DayOfWeek } from '@/lib/types/food';
+import { getMediaUrl } from '@/lib/utils/media-utils';
 
 export const metadata: Metadata = {
   title: 'Food | Lolev Beer',
@@ -123,15 +124,8 @@ async function getFoodData(): Promise<FoodVendorSchedule[]> {
 
     const vendorName = typeof entry.vendor === 'object' ? entry.vendor.name : entry.vendor;
     const vendorSite = entry.site || (typeof entry.vendor === 'object' ? entry.vendor.site : undefined);
-    const vendorLogoRaw = typeof entry.vendor === 'object' ? entry.vendor.logo : undefined;
-    const vendorLogo = vendorLogoRaw
-      ? (typeof vendorLogoRaw === 'object' && vendorLogoRaw?.url
-          ? vendorLogoRaw.url
-          : typeof vendorLogoRaw === 'string' && vendorLogoRaw.startsWith('/')
-            ? vendorLogoRaw
-            : typeof vendorLogoRaw === 'string'
-              ? `/api/media/file/${vendorLogoRaw}`
-              : undefined)
+    const vendorLogo = typeof entry.vendor === 'object'
+      ? getMediaUrl(entry.vendor.logo)
       : undefined;
 
     const dateStr = entry.date.split('T')[0];
@@ -190,21 +184,11 @@ async function getFoodData(): Promise<FoodVendorSchedule[]> {
     });
 
     for (const vendor of vendorsResult.docs) {
-      const logoRaw = vendor.logo;
-      const logoUrl = logoRaw
-        ? (typeof logoRaw === 'object' && (logoRaw as { url?: string })?.url
-            ? (logoRaw as { url?: string }).url
-            : typeof logoRaw === 'string' && logoRaw.startsWith('/')
-              ? logoRaw
-              : typeof logoRaw === 'string'
-                ? `/api/media/file/${logoRaw}`
-                : undefined)
-        : undefined;
       vendorMap[vendor.id] = {
         id: vendor.id,
         name: vendor.name,
         site: vendor.site,
-        logoUrl: logoUrl ?? undefined,
+        logoUrl: getMediaUrl(vendor.logo),
       };
     }
   }
