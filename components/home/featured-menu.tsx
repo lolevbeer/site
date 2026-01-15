@@ -283,7 +283,7 @@ function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fu
             <Badge variant="outline" style={{ fontSize: '1.6vh' }}>{item.type}</Badge>
             {item.untappdRating && item.untappdRating > 0 && (
               <span className="flex items-center text-amber-500 font-bold" style={{ fontSize: '1.6vh', gap: '0.3vh' }}>
-                ★ {item.untappdRating.toFixed(2)}
+                {item.untappdRating.toFixed(2)}/5
               </span>
             )}
           </div>
@@ -324,7 +324,7 @@ function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fu
           <Badge variant="outline" className="text-xs">{item.type}</Badge>
           {item.untappdRating && item.untappdRating > 0 && (
             <span className="text-xs text-amber-500 flex items-center gap-0.5 font-bold">
-              ★ {item.untappdRating.toFixed(2)}
+              {item.untappdRating.toFixed(2)}/5
             </span>
           )}
           {item.onDraft && (

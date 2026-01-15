@@ -9,7 +9,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Beer } from '@/lib/types/beer';
-import type { Menu, Beer as PayloadBeer } from '@/src/payload-types';
+import type { Menu, Beer as PayloadBeer, Style } from '@/src/payload-types';
 import { useLocationContext } from '@/components/location/location-provider';
 import {
   Card,
@@ -39,6 +39,25 @@ import { menuItemHasBeer } from '@/lib/utils/menu-item-utils';
 interface BeerDetailsProps {
   beer: Beer;
   className?: string;
+}
+
+/**
+ * Extract style name from beer data
+ * Handles both legacy Beer.type and Payload Beer.style (which can be string ID or Style object)
+ */
+function getStyleName(beer: Beer | PayloadBeer): string {
+  // Check for Payload Beer style field first (relationship to styles collection)
+  if ('style' in beer && beer.style) {
+    if (typeof beer.style === 'string') {
+      return beer.style;
+    }
+    return (beer.style as Style).name || '';
+  }
+  // Fall back to legacy type field
+  if ('type' in beer && beer.type) {
+    return typeof beer.type === 'string' ? beer.type : '';
+  }
+  return '';
 }
 
 function getAvailabilityInfo(beer: Beer) {
@@ -298,10 +317,12 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
           {/* Quick Stats */}
           <Card className="shadow-none border-0 p-0 bg-transparent">
             <CardContent className="p-0 space-y-0">
-              <SpecificationRow
-                label="Style"
-                value={beer.type}
-              />
+              {getStyleName(beer) && (
+                <SpecificationRow
+                  label="Style"
+                  value={getStyleName(beer)}
+                />
+              )}
               <SpecificationRow
                 label="Alc by Vol"
                 value={formatAbv(beer.abv)}
@@ -445,7 +466,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
 
           {/* External Links */}
           {beer.untappd && (
-            <Button variant="ghost" asChild>
+            <Button variant="outline" asChild>
               <a
                 href={`https://untappd.com${typeof beer.untappd === 'string' && beer.untappd.startsWith('/') ? '' : '/b/-/'}${beer.untappd}`}
                 target="_blank"
@@ -455,9 +476,8 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
                 <UntappdIcon className="h-5 w-5" />
                 Untappd
                 {beer.untappdRating && beer.untappdRating > 0 && (
-                  <span className="text-amber-500 flex items-center gap-1 font-bold">
-                    <span>★</span>
-                    <span>{beer.untappdRating.toFixed(2)}</span>
+                  <span className="text-amber-500 font-bold">
+                    {beer.untappdRating.toFixed(2)}/5
                   </span>
                 )}
               </a>
@@ -485,18 +505,16 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
                       />
                     </div>
                   )}
-                  <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
-                    <span className="font-medium">{review.username}</span>
-                    <span className="flex items-center gap-0.5 text-amber-500 text-sm font-bold">
-                      <span>★</span>
-                      <span>{review.rating.toFixed(1)}</span>
-                    </span>
-                    {review.date && (
-                      <span className="text-xs text-muted-foreground/70">
-                        {formatReviewDate(review.date)}
-                      </span>
-                    )}
-                    <span className="text-sm text-muted-foreground">{review.text.length > 100 || review.text.includes('\n') ? review.text : `— ${review.text}`}</span>
+                  <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+                    <div className="flex items-center gap-1">
+                      <span className="font-medium">{review.username}</span>
+                      {review.date && (
+                        <span className="text-xs text-muted-foreground/70">
+                          • {formatReviewDate(review.date)}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-sm text-muted-foreground">{review.text}</span>
                   </div>
                 </>
               );
