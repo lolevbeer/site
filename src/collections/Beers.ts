@@ -55,9 +55,8 @@ async function fetchUntappdData(url: string): Promise<{ rating: number | null; r
       const checkinHtml = checkinMatch[2]
 
       // Check if Lolev has toasted this checkin (brewery ID 519872)
-      // Look for Lolev toast within the toast-list span
-      const toastListMatch = checkinHtml.match(/<span[^>]*class="toast-list"[^>]*>([\s\S]*?)<\/span>/i)
-      const hasLolevToast = toastListMatch && toastListMatch[1].includes('href="/brewery/519872"')
+      // Look for Lolev toast link with class "user-toasts" linking to brewery
+      const hasLolevToast = /class="user-toasts[^"]*"[^>]*href="\/brewery\/519872"/.test(checkinHtml)
       if (!hasLolevToast) continue
 
       // Extract rating from caps div: <div class="caps " data-rating="4.5">
