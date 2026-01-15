@@ -8,7 +8,6 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { formatTime } from '@/lib/utils/formatters';
-import { ExternalLink } from 'lucide-react';
 
 interface TimelineItemProps {
   title: string;
@@ -46,8 +45,8 @@ export function TimelineItem({
 
   const timeDisplay = hasTime ? (
     endTime && endTime.toLowerCase() !== 'tbd'
-      ? `${formatTime(time.split('-')[0].trim())}–${formatTime(endTime.trim())}`
-      : formatTime(time.split('-')[0].trim())
+      ? `${formatTime(time)}–${formatTime(endTime)}`
+      : formatTime(time)
   ) : null;
 
   return (
@@ -67,14 +66,9 @@ export function TimelineItem({
     >
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-2">
-          <h4 className="font-semibold text-base leading-tight">
-            {title}
-          </h4>
-          {site && (
-            <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 mt-0.5" />
-          )}
-        </div>
+        <h4 className="font-semibold text-base leading-tight">
+          {title}
+        </h4>
         {(location || timeDisplay) && (
           <p className="text-sm text-muted-foreground mt-1">
             {location}
