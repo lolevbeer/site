@@ -18,6 +18,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from '@/components/ui/hover-card';
+import { formatRating } from '@/lib/utils/formatters';
 import { BeerImage } from './beer-image';
 import {
   formatAbv,
@@ -82,9 +83,9 @@ export const BeerCard = React.memo(function BeerCard({
             <Badge variant="outline" className="text-xs">
               {beer.type}
             </Badge>
-            {beer.untappdRating && beer.untappdRating > 0 && (
+            {(beer.untappdRating ?? 0) > 0 && (
               <span className="text-xs text-amber-500 font-bold">
-                {beer.untappdRating.toFixed(2)}/5
+                {formatRating(beer.untappdRating)}/5
               </span>
             )}
             {beer.availability.tap && (
@@ -128,9 +129,9 @@ export const BeerCard = React.memo(function BeerCard({
         <div className="flex items-center justify-between text-sm text-muted-foreground mt-1">
           <div className="flex items-center gap-2">
             <span className="font-medium">{beer.type}</span>
-            {beer.untappdRating && beer.untappdRating > 0 && (
+            {(beer.untappdRating ?? 0) > 0 && (
               <span className="text-amber-500 font-bold">
-                {beer.untappdRating.toFixed(2)}/5
+                {formatRating(beer.untappdRating)}/5
               </span>
             )}
           </div>

@@ -137,6 +137,16 @@ export function formatAbv(abv: number, includeLabel = false): string {
 }
 
 /**
+ * Format a rating value, removing trailing zeros
+ * e.g., 4.00 → "4", 4.40 → "4.4", 4.25 → "4.25"
+ * Returns empty string for 0 or falsy values
+ */
+export function formatRating(rating: number | null | undefined): string {
+  if (!rating) return '';
+  return rating.toFixed(2).replace(/\.?0+$/, '');
+}
+
+/**
  * Date comparison helpers for filtering events/schedules
  */
 export function isToday(dateString: string): boolean {

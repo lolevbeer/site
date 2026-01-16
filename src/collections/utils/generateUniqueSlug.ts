@@ -60,12 +60,14 @@ export async function generateUniqueSlug(
         where,
         limit: 1,
         draft: false,
+        overrideAccess: true,
       }),
       req.payload.find({
         collection,
         where,
         limit: 1,
         draft: true,
+        overrideAccess: true,
       }),
     ])
 

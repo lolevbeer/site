@@ -32,7 +32,7 @@ import { CircleX } from 'lucide-react';
 import { UntappdIcon } from '@/components/icons/untappd-icon';
 import { AdminEditButton } from './admin-edit-button';
 import { getGlassIcon } from '@/lib/utils/beer-icons';
-import { formatAbv } from '@/lib/utils/formatters';
+import { formatAbv, formatRating } from '@/lib/utils/formatters';
 import { getBeerImageUrl } from '@/lib/utils/media-utils';
 import { menuItemHasBeer } from '@/lib/utils/menu-item-utils';
 
@@ -443,9 +443,9 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
               >
                 <UntappdIcon className="h-5 w-5" />
                 Untappd
-                {beer.untappdRating && beer.untappdRating > 0 && (
+                {(beer.untappdRating ?? 0) > 0 && (
                   <span className="text-amber-500 font-bold">
-                    {beer.untappdRating.toFixed(2)}/5
+                    {formatRating(beer.untappdRating)}/5
                   </span>
                 )}
               </a>

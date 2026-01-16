@@ -9,7 +9,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Beer } from '@/lib/types/beer';
 import { useLocationContext } from '@/components/location/location-provider';
-import { getBeerSlug } from '@/lib/utils/formatters';
+import { getBeerSlug, formatRating } from '@/lib/utils/formatters';
 import { getGlassIcon } from '@/lib/utils/beer-icons';
 import { Badge } from '@/components/ui/badge';
 
@@ -83,10 +83,16 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                     {option}
                   </Badge>
                 ))}
-                {showRating && beer.untappdRating && beer.untappdRating > 0 && (
-                  <span className="flex items-center text-amber-500 flex-shrink-0 font-bold" style={{ fontSize: '1.8vh', gap: '0.3vh' }}>
-                    {beer.untappdRating.toFixed(2)}/5
-                  </span>
+                {showRating && (
+                  (beer.untappdRating ?? 0) > 0 ? (
+                    <span className="flex items-center text-amber-500 flex-shrink-0 font-bold" style={{ fontSize: '1.8vh', gap: '0.3vh' }}>
+                      {formatRating(beer.untappdRating)}/5
+                    </span>
+                  ) : (
+                    <span className="flex items-center text-muted-foreground flex-shrink-0 font-bold" style={{ fontSize: '1.8vh' }}>
+                      Needs Ratings
+                    </span>
+                  )
                 )}
                 {showJustReleased && beer.isJustReleased && (
                   <Badge variant="default" className="flex-shrink-0" style={{ fontSize: '1.8vh' }}>
@@ -168,10 +174,16 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                   {option}
                 </Badge>
               ))}
-              {showRating && beer.untappdRating && beer.untappdRating > 0 && (
-                <span className="text-sm text-amber-500 flex items-center gap-0.5 flex-shrink-0 font-bold">
-                  {beer.untappdRating.toFixed(2)}/5
-                </span>
+              {showRating && (
+                (beer.untappdRating ?? 0) > 0 ? (
+                  <span className="text-sm text-amber-500 flex items-center gap-0.5 flex-shrink-0 font-bold">
+                    {formatRating(beer.untappdRating)}/5
+                  </span>
+                ) : (
+                  <span className="text-sm text-muted-foreground flex-shrink-0 font-bold">
+                    Needs Ratings
+                  </span>
+                )
               )}
             </div>
             <div className="flex flex-col gap-0.5">

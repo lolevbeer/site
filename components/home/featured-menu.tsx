@@ -9,6 +9,7 @@ import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/
 import { ScrollReveal } from '@/components/ui/scroll-reveal';
 import { Beer as BeerIconLucide, Package, Pencil } from 'lucide-react';
 import { getGlassIcon } from '@/lib/utils/beer-icons';
+import { formatRating } from '@/lib/utils/formatters';
 import { useLocationContext } from '@/components/location/location-provider';
 import { DraftBeerCard } from '@/components/beer/draft-beer-card';
 import { useAnimatedList, getAnimationClass } from '@/lib/hooks/use-animated-list';
@@ -281,9 +282,13 @@ function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fu
           </h3>
           <div className="flex items-center" style={{ gap: '0.8vh' }}>
             <Badge variant="outline" style={{ fontSize: '1.6vh' }}>{item.type}</Badge>
-            {item.untappdRating && item.untappdRating > 0 && (
+            {(item.untappdRating ?? 0) > 0 ? (
               <span className="flex items-center text-amber-500 font-bold" style={{ fontSize: '1.6vh', gap: '0.3vh' }}>
-                {item.untappdRating.toFixed(2)}/5
+                {formatRating(item.untappdRating)}/5
+              </span>
+            ) : (
+              <span className="flex items-center text-muted-foreground font-bold" style={{ fontSize: '1.6vh' }}>
+                Needs Ratings
               </span>
             )}
           </div>
@@ -322,9 +327,13 @@ function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fu
         <div className="flex items-center justify-center gap-2 flex-wrap mb-2">
           <h3 className="text-lg font-semibold">{item.name}</h3>
           <Badge variant="outline" className="text-xs">{item.type}</Badge>
-          {item.untappdRating && item.untappdRating > 0 && (
+          {(item.untappdRating ?? 0) > 0 ? (
             <span className="text-xs text-amber-500 flex items-center gap-0.5 font-bold">
-              {item.untappdRating.toFixed(2)}/5
+              {formatRating(item.untappdRating)}/5
+            </span>
+          ) : (
+            <span className="text-xs text-muted-foreground font-bold">
+              Needs Ratings
             </span>
           )}
           {item.onDraft && (

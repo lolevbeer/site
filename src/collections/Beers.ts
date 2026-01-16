@@ -68,6 +68,7 @@ export const Beers: CollectionConfig = {
             collection: 'beers',
             sort: '-recipe',
             limit: 1,
+            overrideAccess: true,
           })
 
           if (lastBeer.docs.length > 0 && lastBeer.docs[0].recipe) {
