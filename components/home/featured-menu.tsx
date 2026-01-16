@@ -177,9 +177,11 @@ function convertMenuItems(menuData: Menu): MenuItem[] {
     .filter((item): item is NonNullable<typeof item> => item !== null);
 
   // "Just Released" logic:
-  // 1. If any beer has justReleased manually set, only mark those
+  // 1. If any beer GLOBALLY has justReleased manually set, only mark those
   // 2. Otherwise, mark beers created within the last 2 weeks
-  const hasManualJustReleased = items.some((i) => i.justReleased);
+  // Check global flag from menu data (set by server), fall back to local check
+  const hasGlobalJustReleased = (menuData as { _hasGlobalJustReleased?: boolean })._hasGlobalJustReleased;
+  const hasManualJustReleased = hasGlobalJustReleased ?? items.some((i) => i.justReleased);
 
   return items.map((item) => ({
     ...item,

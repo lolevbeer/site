@@ -1,4 +1,4 @@
-import { getMenuByUrlFresh } from '@/lib/utils/payload-api'
+import { getMenuByUrlFresh, hasAnyBeerJustReleased } from '@/lib/utils/payload-api'
 import { LiveMenu } from '@/components/menu/live-menu'
 import { notFound } from 'next/navigation'
 
@@ -14,7 +14,10 @@ interface MenuPageProps {
 
 export default async function MenuPage({ params }: MenuPageProps) {
   const { menuUrl } = await params
-  const menu = await getMenuByUrlFresh(menuUrl)
+  const [menu, hasGlobalJustReleased] = await Promise.all([
+    getMenuByUrlFresh(menuUrl),
+    hasAnyBeerJustReleased(),
+  ])
 
   if (!menu) {
     notFound()
@@ -25,11 +28,14 @@ export default async function MenuPage({ params }: MenuPageProps) {
     notFound()
   }
 
+  // Add flag to menu for initial render
+  const menuWithFlag = { ...menu, _hasGlobalJustReleased: hasGlobalJustReleased }
+
   // Use LiveMenu for real-time updates via SSE
   // - Single persistent connection per display
   // - Updates within 5 seconds of Payload changes
   // - Auto-reconnects if connection drops
-  return <LiveMenu menuUrl={menuUrl} initialMenu={menu} />
+  return <LiveMenu menuUrl={menuUrl} initialMenu={menuWithFlag} />
 }
 
 // Generate metadata

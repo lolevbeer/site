@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getMenuByUrl } from '@/lib/utils/payload-api'
+import { getMenuByUrl, hasAnyBeerJustReleased } from '@/lib/utils/payload-api'
 import crypto from 'crypto'
 
 /**
@@ -17,7 +17,10 @@ export async function GET(
 ) {
   try {
     const { url } = await params
-    const menu = await getMenuByUrl(url)
+    const [menu, hasGlobalJustReleased] = await Promise.all([
+      getMenuByUrl(url),
+      hasAnyBeerJustReleased(),
+    ])
 
     if (!menu) {
       return NextResponse.json(
@@ -25,6 +28,9 @@ export async function GET(
         { status: 404 }
       )
     }
+
+    // Add global just released flag to menu response
+    const menuWithFlag = { ...menu, _hasGlobalJustReleased: hasGlobalJustReleased }
 
     // Generate ETag from menu content
     const etag = generateETag(menu)
@@ -43,7 +49,7 @@ export async function GET(
     }
 
     // Return full response with ETag
-    return NextResponse.json(menu, {
+    return NextResponse.json(menuWithFlag, {
       headers: {
         'ETag': etag,
         'Cache-Control': 'private, no-cache, must-revalidate',

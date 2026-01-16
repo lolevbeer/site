@@ -23,6 +23,36 @@ const getPayloadInstance = cache(async () => {
 })
 
 /**
+ * Check if any beer globally has justReleased flag set
+ * Used to determine "Just Released" display logic
+ * Cached until 'beers' tag is invalidated
+ */
+export const hasAnyBeerJustReleased = unstable_cache(
+  async (): Promise<boolean> => {
+    try {
+      const payload = await getPayload({ config })
+
+      const result = await payload.find({
+        collection: 'beers',
+        limit: 1,
+        where: {
+          justReleased: {
+            equals: true,
+          },
+        },
+      })
+
+      return result.docs.length > 0
+    } catch (error) {
+      logger.error('Error checking justReleased beers', error)
+      return false
+    }
+  },
+  ['any-beer-just-released'],
+  { tags: [CACHE_TAGS.beers], revalidate: 300 }
+)
+
+/**
  * Get all beers from Payload
  * Cached until 'beers' tag is invalidated
  */
