@@ -22,7 +22,7 @@ const lightVars = {
   '--color-primary-foreground': '#ffffff',
   '--color-secondary': '#f5f5f7',
   '--color-secondary-foreground': '#1d1d1f',
-  '--color-muted': 'oklch(95.5% 0 0)',
+  '--color-muted': '#f2f2f2',
   '--color-muted-foreground': '#86868b',
   '--color-border': '#d2d2d7',
 } as React.CSSProperties
