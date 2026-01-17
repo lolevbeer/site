@@ -463,6 +463,7 @@ export interface Location {
 export interface Product {
   id: string;
   name: string;
+  description?: string | null;
   /**
    * Press "Enter" or "Tab" after entering option to add another
    */
@@ -898,6 +899,7 @@ export interface MenusSelect<T extends boolean = true> {
  */
 export interface ProductsSelect<T extends boolean = true> {
   name?: T;
+  description?: T;
   options?: T;
   abv?: T;
   price?: T;
