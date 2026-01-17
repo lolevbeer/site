@@ -98,32 +98,25 @@ function EventCard({ event, accentColor }: { event: BreweryEvent; accentColor?: 
   const isTomorrow = dateDisplay === 'Tomorrow'
 
   return (
-    <div className="flex items-center bg-background border-b border-border" style={{ padding: '2vh 2vw', gap: '2vw' }}>
-      {/* Date column */}
-      <div className="flex-shrink-0 text-center" style={{ minWidth: '12vh' }}>
-        <div
-          className={`font-bold ${isToday ? 'text-primary' : isTomorrow ? 'text-amber-500' : 'text-foreground-muted'}`}
-          style={{ fontSize: '2.5vh' }}
-        >
-          {dateDisplay}
-        </div>
-        {timeDisplay && (
-          <div className="text-foreground-muted" style={{ fontSize: '1.8vh' }}>
-            {timeDisplay}
-          </div>
-        )}
-      </div>
-
-      {/* Event info */}
+    <div className="flex items-center bg-background" style={{ padding: '1.5vh 2vw', gap: '1.5vw' }}>
+      {/* Event info with inline date */}
       <div className="flex-grow min-w-0">
-        <h3
-          className="font-bold leading-tight truncate transition-colors duration-500"
-          style={{ fontSize: '3vh', color: accentColor }}
-        >
-          {event.title}
-        </h3>
+        <div className="flex items-center flex-wrap" style={{ gap: '1.5vh' }}>
+          <h3
+            className="font-bold leading-tight transition-colors duration-500"
+            style={{ fontSize: '3vh', color: accentColor }}
+          >
+            {event.title}
+          </h3>
+          <span
+            className={`font-semibold ${isToday ? 'text-primary' : isTomorrow ? 'text-amber-500' : 'text-foreground-muted'}`}
+            style={{ fontSize: '2.2vh' }}
+          >
+            {dateDisplay}{timeDisplay && ` @ ${timeDisplay}`}
+          </span>
+        </div>
         {event.description && event.description !== event.title && (
-          <p className="text-foreground-muted line-clamp-1" style={{ fontSize: '1.8vh' }}>
+          <p className="text-foreground-muted line-clamp-1" style={{ fontSize: '1.8vh', marginTop: '0.3vh' }}>
             {event.description}
           </p>
         )}
