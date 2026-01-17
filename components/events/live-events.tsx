@@ -98,29 +98,26 @@ function EventCard({ event, accentColor }: { event: BreweryEvent; accentColor?: 
   const isTomorrow = dateDisplay === 'Tomorrow'
 
   return (
-    <div className="flex items-center bg-background" style={{ padding: '1.5vh 2vw', gap: '1.5vw' }}>
-      {/* Event info with inline date */}
-      <div className="flex-grow min-w-0">
-        <div className="flex items-center flex-wrap" style={{ gap: '1.5vh' }}>
-          <h3
-            className="font-bold leading-tight transition-colors duration-500"
-            style={{ fontSize: '3vh', color: accentColor }}
-          >
-            {event.title}
-          </h3>
-          <span
-            className={`font-semibold ${isToday ? 'text-primary' : isTomorrow ? 'text-amber-500' : 'text-foreground-muted'}`}
-            style={{ fontSize: '2.2vh' }}
-          >
-            {dateDisplay}{timeDisplay && ` @ ${timeDisplay}`}
-          </span>
-        </div>
-        {event.description && event.description !== event.title && (
-          <p className="text-foreground-muted line-clamp-1" style={{ fontSize: '1.8vh', marginTop: '0.3vh' }}>
-            {event.description}
-          </p>
-        )}
+    <div className="w-full text-center" style={{ padding: '1.5vh 2vw' }}>
+      <div className="flex items-center justify-center flex-wrap" style={{ gap: '1.5vh' }}>
+        <h3
+          className="font-bold leading-tight transition-colors duration-500"
+          style={{ fontSize: '3vh', color: accentColor }}
+        >
+          {event.title}
+        </h3>
+        <span
+          className={`font-semibold ${isToday ? 'text-primary' : isTomorrow ? 'text-amber-500' : 'text-foreground-muted'}`}
+          style={{ fontSize: '2.2vh' }}
+        >
+          {dateDisplay}{timeDisplay && ` @ ${timeDisplay}`}
+        </span>
       </div>
+      {event.description && event.description !== event.title && (
+        <p className="text-foreground-muted line-clamp-1" style={{ fontSize: '1.8vh', marginTop: '0.3vh' }}>
+          {event.description}
+        </p>
+      )}
     </div>
   )
 }
@@ -177,9 +174,9 @@ export function LiveEvents({ location, initialEvents, initialLocationName }: Liv
             </p>
           </div>
 
-          <div className="flex-1 overflow-y-auto" style={{ padding: '0 1vw' }}>
+          <div className="flex-1 overflow-y-auto flex flex-col items-center" style={{ padding: '0 1vw' }}>
             {events.length > 0 ? (
-              <div className="flex flex-col">
+              <div className="flex flex-col items-center w-full max-w-4xl">
                 {events.map((event, idx) => (
                   <EventCard
                     key={event.id || idx}
