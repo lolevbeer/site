@@ -74,11 +74,26 @@ function formatEventDate(dateStr: string): string {
 
 /**
  * Format time for display
+ * Handles both ISO date strings and HH:MM format
  */
 function formatTime(time: string): string {
   if (!time) return ''
 
-  const [hours, minutes] = time.split(':').map(Number)
+  let hours: number
+  let minutes: number
+
+  // Check if it's an ISO date string
+  if (time.includes('T')) {
+    const date = new Date(time)
+    hours = date.getHours()
+    minutes = date.getMinutes()
+  } else {
+    // Assume HH:MM format
+    const parts = time.split(':').map(Number)
+    hours = parts[0]
+    minutes = parts[1] || 0
+  }
+
   const period = hours >= 12 ? 'PM' : 'AM'
   const displayHours = hours % 12 || 12
 
