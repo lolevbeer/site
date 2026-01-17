@@ -53,6 +53,7 @@ interface MenuItem {
   onDraft?: boolean;
   glass?: string;
   fourPack?: string;
+  bottlePrice?: string;
   isJustReleased?: boolean;
   recipe?: number;
   hops?: string;
@@ -153,6 +154,7 @@ function convertMenuItems(menuData: Menu): MenuItem[] {
         imageUrl: getMediaUrl(beer.image),
         glass: String(beer.glass || 'pint'),
         fourPack: beer.fourPack ? String(beer.fourPack) : (item.price ? String(item.price) : undefined),
+        bottlePrice: (beer as { bottlePrice?: number }).bottlePrice ? String((beer as { bottlePrice?: number }).bottlePrice) : undefined,
         recipe: beer.recipe || 0,
         hops: beer.hops ? String(beer.hops) : undefined,
         tap: index + 1, // 1-based tap/draft number from position in menu
@@ -297,6 +299,11 @@ function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fu
           {item.fourPack && (
             <span className="font-semibold transition-colors duration-[250ms]" style={{ fontSize: '1.8vh', color: accentColor }}>
               ${item.fourPack} <span className="font-semibold text-foreground-muted" style={{ fontSize: '1.4vh' }}>• Four Pack</span>
+            </span>
+          )}
+          {item.bottlePrice && (
+            <span className="font-semibold transition-colors duration-[250ms]" style={{ fontSize: '1.8vh', color: accentColor }}>
+              ${item.bottlePrice} <span className="font-semibold text-foreground-muted" style={{ fontSize: '1.4vh' }}>• Bottle</span>
             </span>
           )}
           {item.onDraft && (

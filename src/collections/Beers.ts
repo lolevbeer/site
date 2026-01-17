@@ -165,6 +165,15 @@ export const Beers: CollectionConfig = {
       },
     },
     {
+      name: 'bottlePrice',
+      type: 'number',
+      admin: {
+        description: 'Bottle price (e.g., 12)',
+        position: 'sidebar',
+        step: 0.25,
+      },
+    },
+    {
       name: 'canSingle',
       type: 'number',
       admin: {
