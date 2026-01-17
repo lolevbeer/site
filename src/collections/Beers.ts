@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { revalidateTag } from 'next/cache'
 import { generateUniqueSlug } from './utils/generateUniqueSlug'
 import { adminAccess, beerManagerAccess, isAdmin } from '@/src/access/roles'
 import { fetchUntappdData, type UntappdReview } from '@/src/utils/untappd'
@@ -97,6 +98,33 @@ export const Beers: CollectionConfig = {
         }
 
         return data
+      },
+    ],
+    afterChange: [
+      async ({ doc, req }) => {
+        // Find all menus containing this beer and revalidate their caches
+        try {
+          const menus = await req.payload.find({
+            collection: 'menus',
+            where: {
+              'items.product.value': { equals: doc.id },
+            },
+            limit: 100,
+            depth: 0,
+          })
+
+          // Revalidate each menu's specific cache tag
+          for (const menu of menus.docs) {
+            if (menu.url) {
+              revalidateTag(`menu-${menu.url}`)
+            }
+          }
+        } catch (error) {
+          // Don't block the save if revalidation fails
+          console.error('Beer menu revalidation error:', error)
+        }
+
+        return doc
       },
     ],
   },
