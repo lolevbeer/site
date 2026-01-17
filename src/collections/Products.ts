@@ -22,6 +22,10 @@ export const Products: CollectionConfig = {
       required: true,
     },
     {
+      name: 'description',
+      type: 'textarea',
+    },
+    {
       name: 'options',
       type: 'text',
       hasMany: true,
