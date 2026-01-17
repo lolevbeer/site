@@ -174,6 +174,10 @@ export interface Beer {
    */
   fourPack?: number | null;
   /**
+   * Bottle price (e.g., 12)
+   */
+  bottlePrice?: number | null;
+  /**
    * Auto-calculated from four pack price
    */
   canSingle?: number | null;
@@ -835,6 +839,7 @@ export interface BeersSelect<T extends boolean = true> {
   halfPourOnly?: T;
   halfPour?: T;
   fourPack?: T;
+  bottlePrice?: T;
   canSingle?: T;
   upc?: T;
   slug?: T;
