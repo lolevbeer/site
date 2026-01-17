@@ -115,7 +115,7 @@ function convertMenuItems(menuData: Menu): MenuItem[] {
             name: String(prod.name || 'Unknown Product'),
             type: Array.isArray(prod.options) ? prod.options.join(', ') : String(prod.options || ''),
             abv: prod.abv ? String(prod.abv) : '',
-            description: '',
+            description: String((prod as { description?: string }).description || ''),
             glutenFree: false,
             imageUrl: undefined,
             glass: 'pint',
