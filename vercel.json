@@ -81,11 +81,6 @@
       "source": "/beers",
       "destination": "/beer",
       "permanent": true
-    },
-    {
-      "source": "/about",
-      "destination": "/",
-      "permanent": false
     }
   ],
   "rewrites": [
