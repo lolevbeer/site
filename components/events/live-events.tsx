@@ -174,7 +174,7 @@ export function LiveEvents({ location, initialEvents, initialLocationName }: Liv
             </p>
           </div>
 
-          <div className="flex-1 overflow-y-auto flex flex-col items-center" style={{ padding: '0 1vw' }}>
+          <div className="flex-1 overflow-y-auto flex flex-col items-center justify-center" style={{ padding: '0 1vw' }}>
             {events.length > 0 ? (
               <div className="flex flex-col items-center w-full max-w-4xl">
                 {events.map((event, idx) => (
