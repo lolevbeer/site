@@ -122,9 +122,6 @@
       "sharp",
       "esbuild",
       "unrs-resolver"
-    ],
-    "overrides": {
-      "next": "15.5.9"
-    }
+    ]
   }
 }
