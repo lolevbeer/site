@@ -1,7 +1,16 @@
 {
   "regions": ["iad1"],
+  "crons": [
+    {
+      "path": "/api/cron/sync-untappd",
+      "schedule": "0 6 * * *"
+    }
+  ],
   "functions": {
     "src/app/(payload)/api/[...slug]/route.ts": {
+      "maxDuration": 300
+    },
+    "src/app/api/cron/sync-untappd/route.ts": {
       "maxDuration": 300
     }
   },
