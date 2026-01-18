@@ -189,7 +189,7 @@ function convertMenuItems(menuData: Menu): MenuItem[] {
     ...item,
     isJustReleased: hasManualJustReleased
       ? item.justReleased
-      : isWithinDays(item.createdAt, 14),
+      : isWithinDays(item.createdAt, 7),
   }));
 }
 
