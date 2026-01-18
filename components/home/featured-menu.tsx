@@ -391,15 +391,11 @@ export function FeaturedMenu({ menuType, menu, menus = [], animated = false, ite
     const linesCleanedText = menu?.type === 'draft' ? formatLinesCleanedDate(location?.linesLastCleaned) : null;
 
     return (
-      <section className="h-full flex flex-col bg-background overflow-hidden relative">
-        {/* Logo floated top right */}
-        <div className="absolute" style={{ top: '1.5vh', right: '1vw' }}>
-          <Logo width={48} height={52} />
-        </div>
-        {/* Lolev Beer text top left */}
-        <span className="absolute font-bold text-foreground-muted" style={{ fontSize: '4vh', top: '2vh', left: '1vw' }}>Lolev Beer</span>
-        <div className="w-full flex-1 flex flex-col" style={{ padding: '0 0 0.5vh 0' }}>
-          <div className="text-center flex-shrink-0" style={{ marginBottom: '2vh', marginTop: '2vh' }}>
+      <section className="h-full flex flex-col bg-background overflow-hidden">
+        {/* Header row with Lolev Beer, menu title, and logo aligned */}
+        <div className="flex items-center justify-between flex-shrink-0" style={{ padding: '2vh 1vw', marginBottom: '0.5vh' }}>
+          <span className="font-bold text-foreground-muted" style={{ fontSize: '4vh' }}>Lolev Beer</span>
+          <div className="text-center">
             <h2 className="font-bold" style={{ fontSize: '4vh' }}>{menu?.name || title}</h2>
             {linesCleanedText && (
               <p className="text-foreground-muted" style={{ fontSize: '1.8vh', marginTop: '0.5vh' }}>
@@ -407,6 +403,9 @@ export function FeaturedMenu({ menuType, menu, menus = [], animated = false, ite
               </p>
             )}
           </div>
+          <Logo width={48} height={52} />
+        </div>
+        <div className="w-full flex-1 flex flex-col" style={{ padding: '0 0 0.5vh 0' }}>
           <div className="flex-1 overflow-y-auto" style={{ padding: '0 1vw' }}>
             {itemsToRender.length > 0 ? (
               menuType === 'draft' ? (

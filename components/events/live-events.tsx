@@ -168,19 +168,11 @@ export function LiveEvents({ location, initialEvents, initialLocationName }: Liv
 
   return (
     <div className="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground" style={themeVars}>
-      <section className="h-full flex flex-col bg-background overflow-hidden relative">
-        {/* Logo floated top right */}
-        <div className="absolute" style={{ top: '1.5vh', right: '1vw' }}>
-          <Logo width={48} height={52} />
-        </div>
-
-        {/* Lolev Beer text top left */}
-        <span className="absolute font-bold text-foreground-muted" style={{ fontSize: '4vh', top: '2vh', left: '1vw' }}>
-          Lolev Beer
-        </span>
-
-        <div className="w-full flex-1 flex flex-col" style={{ padding: '0 0 0.5vh 0' }}>
-          <div className="text-center flex-shrink-0" style={{ marginBottom: '2vh', marginTop: '2vh' }}>
+      <section className="h-full flex flex-col bg-background overflow-hidden">
+        {/* Header row with Lolev Beer, title, and logo aligned */}
+        <div className="flex items-center justify-between flex-shrink-0" style={{ padding: '2vh 1vw', marginBottom: '0.5vh' }}>
+          <span className="font-bold text-foreground-muted" style={{ fontSize: '4vh' }}>Lolev Beer</span>
+          <div className="text-center">
             <h2 className="font-bold" style={{ fontSize: '4vh' }}>
               Upcoming Events
             </h2>
@@ -188,6 +180,9 @@ export function LiveEvents({ location, initialEvents, initialLocationName }: Liv
               {locationName}
             </p>
           </div>
+          <Logo width={48} height={52} />
+        </div>
+        <div className="w-full flex-1 flex flex-col" style={{ padding: '0 0 0.5vh 0' }}>
 
           <div className="flex-1 overflow-y-auto flex flex-col items-center justify-center" style={{ padding: '0 1vw' }}>
             {events.length > 0 ? (
