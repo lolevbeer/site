@@ -118,20 +118,23 @@ function LocationInfoSection({ location, weeklyHours }: { location: PayloadLocat
       {/* Address */}
       <div>
         <p className="font-semibold">Lolev {location.name}</p>
-        <p className="text-sm text-muted-foreground">
-          {location.address?.street}
-          <br />
-          {location.address?.city}, {location.address?.state} {location.address?.zip}
-        </p>
-        {mapUrl && (
-          <Link
+        {mapUrl ? (
+          <a
             href={mapUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors mt-2 inline-block underline-offset-4 hover:underline"
+            className="text-sm text-muted-foreground hover:text-foreground hover:underline transition-colors block"
           >
-            View on Maps
-          </Link>
+            {location.address?.street}
+            <br />
+            {location.address?.city}, {location.address?.state} {location.address?.zip}
+          </a>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            {location.address?.street}
+            <br />
+            {location.address?.city}, {location.address?.state} {location.address?.zip}
+          </p>
         )}
       </div>
 

@@ -9,7 +9,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Beer } from '@/lib/types/beer';
-import type { Menu, Beer as PayloadBeer } from '@/src/payload-types';
+import type { Menu, Beer as PayloadBeer, Style } from '@/src/payload-types';
 import { useLocationContext } from '@/components/location/location-provider';
 import {
   Card,
@@ -32,7 +32,7 @@ import { CircleX } from 'lucide-react';
 import { UntappdIcon } from '@/components/icons/untappd-icon';
 import { AdminEditButton } from './admin-edit-button';
 import { getGlassIcon } from '@/lib/utils/beer-icons';
-import { formatAbv } from '@/lib/utils/formatters';
+import { formatAbv, formatRating } from '@/lib/utils/formatters';
 import { getBeerImageUrl } from '@/lib/utils/media-utils';
 import { menuItemHasBeer } from '@/lib/utils/menu-item-utils';
 
@@ -41,23 +41,23 @@ interface BeerDetailsProps {
   className?: string;
 }
 
-function getAvailabilityInfo(beer: Beer) {
-  const { tap, cansAvailable, singleCanAvailable } = beer.availability ?? {};
-  const isDraft = !!tap;
-  const isCanned = !!(cansAvailable || singleCanAvailable);
-
-  const details = [
-    tap && `Pouring ${tap}`,
-    cansAvailable && 'Cans available for purchase',
-    singleCanAvailable && 'Single cans available',
-  ].filter(Boolean) as string[];
-
-  const status = isDraft && isCanned ? 'Pouring & Cans'
-    : isDraft ? 'Pouring'
-    : isCanned ? 'Cans Available'
-    : 'Limited Availability';
-
-  return { status, details, isDraft, isCanned };
+/**
+ * Extract style name from beer data
+ * Handles both legacy Beer.type and Payload Beer.style (which can be string ID or Style object)
+ */
+function getStyleName(beer: Beer | PayloadBeer): string {
+  // Check for Payload Beer style field first (relationship to styles collection)
+  if ('style' in beer && beer.style) {
+    if (typeof beer.style === 'string') {
+      return beer.style;
+    }
+    return (beer.style as Style).name || '';
+  }
+  // Fall back to legacy type field
+  if ('type' in beer && beer.type) {
+    return typeof beer.type === 'string' ? beer.type : '';
+  }
+  return '';
 }
 
 function getPricingInfo(beer: Beer | (PayloadBeer & { pricing?: Beer['pricing']; salePrice?: boolean })): {
@@ -95,10 +95,32 @@ function SpecificationRow({
   );
 }
 
+function formatReviewDate(dateStr: string): string {
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) {
+    return dateStr;
+  }
+
+  const diffMs = Date.now() - date.getTime();
+  const diffMinutes = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMinutes / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  const formatUnit = (value: number, unit: string): string =>
+    `${value} ${unit}${value === 1 ? '' : 's'} ago`;
+
+  if (diffMinutes < 1) return 'just now';
+  if (diffMinutes < 60) return formatUnit(diffMinutes, 'minute');
+  if (diffHours < 24) return formatUnit(diffHours, 'hour');
+  if (diffDays < 7) return formatUnit(diffDays, 'day');
+  if (diffDays < 28) return formatUnit(Math.floor(diffDays / 7), 'week');
+  if (diffDays < 365) return formatUnit(Math.floor(diffDays / 30), 'month');
+  return formatUnit(Math.floor(diffDays / 365), 'year');
+}
+
 export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
   const { currentLocation } = useLocationContext();
   const imagePath = getBeerImageUrl(beer.image, beer.variant);
-  const _availability = getAvailabilityInfo(beer);
   const pricing = getPricingInfo(beer);
   const GlassIcon = getGlassIcon(beer.glass);
   const [tapLocations, setTapLocations] = useState<string[]>([]);
@@ -263,10 +285,12 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
           {/* Quick Stats */}
           <Card className="shadow-none border-0 p-0 bg-transparent">
             <CardContent className="p-0 space-y-0">
-              <SpecificationRow
-                label="Style"
-                value={beer.type}
-              />
+              {getStyleName(beer) && (
+                <SpecificationRow
+                  label="Style"
+                  value={getStyleName(beer)}
+                />
+              )}
               <SpecificationRow
                 label="Alc by Vol"
                 value={formatAbv(beer.abv)}
@@ -410,24 +434,78 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
 
           {/* External Links */}
           {beer.untappd && (
-            <div>
-              <Button variant="ghost" asChild>
-                <a
-                  href={`https://untappd.com/b/-/${beer.untappd}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="no-underline"
-                >
-                  <>
-                    <UntappdIcon className="h-5 w-5" />
-                    Untappd
-                  </>
-                </a>
-              </Button>
-            </div>
+            <Button variant="outline" asChild>
+              <a
+                href={`https://untappd.com${typeof beer.untappd === 'string' && beer.untappd.startsWith('/') ? '' : '/b/-/'}${beer.untappd}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="no-underline"
+              >
+                <UntappdIcon className="h-5 w-5" />
+                Untappd
+                {(beer.untappdRating ?? 0) > 0 && (
+                  <span className="text-amber-500 font-bold">
+                    {formatRating(beer.untappdRating)}/5
+                  </span>
+                )}
+              </a>
+            </Button>
           )}
         </div>
       </div>
+
+      {/* Reviews Section */}
+      {beer.positiveReviews && beer.positiveReviews.length > 0 && (
+        <div className="mt-8">
+          <h2 className="text-2xl font-bold mb-6">Reviews</h2>
+          <div className="space-y-4">
+            {beer.positiveReviews.map((review, index) => {
+              const content = (
+                <>
+                  {review.image && (
+                    <div className="relative w-24 h-24 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
+                      <Image
+                        src={review.image}
+                        alt={`Review photo by ${review.username}`}
+                        fill
+                        className="object-cover"
+                        sizes="96px"
+                      />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+                    <div className="flex items-center gap-1">
+                      <span className="font-medium">{review.username}</span>
+                      {review.date && (
+                        <span className="text-xs text-muted-foreground/70">
+                          • {formatReviewDate(review.date)}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-sm text-muted-foreground">{review.text}</span>
+                  </div>
+                </>
+              );
+
+              return review.url ? (
+                <a
+                  key={review.url}
+                  href={review.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex gap-4 py-4 border-b border-border/40 last:border-b-0 cursor-pointer no-underline"
+                >
+                  {content}
+                </a>
+              ) : (
+                <div key={index} className="flex gap-4 py-4 border-b border-border/40 last:border-b-0">
+                  {content}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

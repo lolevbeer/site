@@ -50,7 +50,7 @@ export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCar
     <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-4", className)}>
       {/* On Tap Now Card */}
       <Link href="/beer" className="group">
-        <Card className="p-6 lg:p-8 h-full transition-all cursor-pointer border-0 shadow-none text-center bg-secondary hover:bg-secondary/80 relative">
+        <Card className="p-6 lg:p-8 h-full transition-all cursor-pointer shadow-none text-center bg-transparent border border-border hover:bg-secondary relative">
           <div className="flex items-center justify-center gap-2 mb-4">
             <h3 className="text-3xl lg:text-4xl font-bold">On Tap Now</h3>
             <ArrowRight className="h-6 w-6 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
@@ -79,7 +79,7 @@ export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCar
 
       {/* Next Event Card */}
       <Link href="/events" className="group">
-        <Card className="p-6 lg:p-8 h-full transition-all cursor-pointer border-0 shadow-none text-center bg-secondary hover:bg-secondary/80 relative">
+        <Card className="p-6 lg:p-8 h-full transition-all cursor-pointer shadow-none text-center bg-transparent border border-border hover:bg-secondary relative">
           <div className="flex items-center justify-center gap-2 mb-4">
             <h3 className="text-3xl lg:text-4xl font-bold">{nextEvent ? 'Next Event' : 'Upcoming Events'}</h3>
             <ArrowRight className="h-6 w-6 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />

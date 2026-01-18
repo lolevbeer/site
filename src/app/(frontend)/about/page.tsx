@@ -1,9 +1,24 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
+import { JsonLd } from '@/components/seo/json-ld';
+import { generateOrganizationSchema } from '@/lib/utils/local-business-schema';
+import { generateBreadcrumbSchema } from '@/lib/utils/breadcrumb-schema';
+import { generateAboutSpeakableSchema } from '@/lib/utils/speakable-schema';
 
 export default function AboutPage() {
+  const organizationSchema = generateOrganizationSchema();
+  const breadcrumbSchema = generateBreadcrumbSchema([
+    { label: 'Home', href: '/' },
+    { label: 'About', href: '/about' }
+  ]);
+  const speakableSchema = generateAboutSpeakableSchema();
+
   return (
+    <>
+      <JsonLd data={organizationSchema} />
+      <JsonLd data={breadcrumbSchema} />
+      <JsonLd data={speakableSchema} />
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <PageBreadcrumbs className="mb-6" />
       <div className="text-center mb-12">
@@ -11,7 +26,7 @@ export default function AboutPage() {
       </div>
 
       <div className="prose prose-lg dark:prose-invert mx-auto">
-        <section className="mb-12">
+        <section className="mb-12" data-speakable="philosophy">
           <h2 className="text-2xl font-semibold mb-4">Our Philosophy</h2>
           <p className="mb-4">
             We focus on creating beers that are purposeful and refined.
@@ -21,7 +36,7 @@ export default function AboutPage() {
           </p>
         </section>
 
-        <section className="mb-12">
+        <section className="mb-12" data-speakable="locations">
           <h2 className="text-2xl font-semibold mb-4">Our Locations</h2>
           <p className="mb-4">
             Our flagship location in Lawrenceville is both our production brewery and taproom, where visitors can experience our beers in the space where they're created. We also have a taproom in Zelienople. A building which previously housed a Barq's bottling facility until the 1970s.
@@ -47,5 +62,6 @@ export default function AboutPage() {
         </div>
       </div>
     </div>
+    </>
   );
 }

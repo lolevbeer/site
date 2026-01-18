@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useRef } from 'react'
-import { Gutter, SetStepNav } from '@payloadcms/ui'
+import { Gutter, SetStepNav, Button, Banner, Pill } from '@payloadcms/ui'
 import { format } from 'date-fns-tz'
 import { getSiteContentData } from '@/src/actions/admin-data'
 import { parseSSEStream, isSSEResponse } from '@/lib/utils/sse-parser'
@@ -101,6 +101,13 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
   const [regeocodeResults, setRegeocodeResults] = useState<{ checked: number; suspicious: number; fixed: number; failed: number; distributors?: any[] } | null>(null)
   const [regeocodeProgress, setRegeocodeProgress] = useState<{ current: number; total: number; name: string; percent: number } | null>(null)
   const [regeocodeLogs, setRegeocodeLogs] = useState<string[]>([])
+
+  // Untappd sync state
+  const [untappdRunning, setUntappdRunning] = useState(false)
+  const [untappdDryRun, setUntappdDryRun] = useState(true)
+  const [untappdResults, setUntappdResults] = useState<{ total: number; refreshed: number; updated: number; skipped: number; errors: number } | null>(null)
+  const [untappdProgress, setUntappdProgress] = useState<{ current: number; total: number; name: string; percent: number } | null>(null)
+  const [untappdLogs, setUntappdLogs] = useState<string[]>([])
 
   // Load distributor URLs on mount using local API
   React.useEffect(() => {
@@ -467,6 +474,56 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
     }
   }
 
+  const handleUntappdSync = async () => {
+    setUntappdRunning(true)
+    setUntappdResults(null)
+    setUntappdProgress(null)
+    setUntappdLogs([])
+
+    try {
+      const params = new URLSearchParams()
+      if (untappdDryRun) params.set('dryRun', 'true')
+
+      const response = await fetch(`/api/sync-untappd-ratings?${params.toString()}`, {
+        method: 'POST',
+        credentials: 'same-origin',
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        setUntappdLogs([`Error: ${data.error || 'Request failed'}`])
+        setUntappdRunning(false)
+        return
+      }
+
+      await parseSSEStream(response, {
+        status: (data: any) => setUntappdLogs(prev => [...prev.slice(-99), data.message]),
+        progress: (data: any) => setUntappdProgress(data),
+        item: (data: any) => {
+          const statusIcon = data.status === 'refreshed' ? '✓'
+            : data.status === 'updated' || data.status === 'new' ? '+'
+            : data.status === 'error' ? '✗'
+            : data.status === 'multiple' ? '?'
+            : data.status === 'not-found' ? '○'
+            : '→'
+          setUntappdLogs(prev => [...prev.slice(-99), `${statusIcon} ${data.name}: ${data.message}`])
+        },
+        error: (data: any) => setUntappdLogs(prev => [...prev.slice(-99), `Error: ${data.message}`]),
+        complete: (data: any) => {
+          if (data.results) {
+            setUntappdResults(data.results)
+          }
+          setUntappdProgress(null)
+        },
+      })
+    } catch (error: any) {
+      setUntappdLogs(prev => [...prev, `Error: ${error.message || 'Sync failed'}`])
+    } finally {
+      setUntappdRunning(false)
+      setUntappdProgress(null)
+    }
+  }
+
   const handleCSVUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -590,47 +647,15 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
             ))}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <button
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <Button
               onClick={handleSync}
               disabled={syncing || selectedCollections.length === 0}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '10px 16px',
-                fontSize: '14px',
-                fontWeight: 500,
-                borderRadius: '4px',
-                border: 'none',
-                cursor: syncing || selectedCollections.length === 0 ? 'not-allowed' : 'pointer',
-                opacity: syncing || selectedCollections.length === 0 ? 0.6 : 1,
-                backgroundColor: dryRun ? 'var(--theme-elevation-500)' : 'var(--theme-success-500)',
-                color: 'white',
-                transition: 'all 0.15s',
-              }}
+              buttonStyle={dryRun ? 'secondary' : 'primary'}
+              size="small"
             >
-              {syncing && (
-                <svg
-                  style={{ animation: 'spin 1s linear infinite', width: '16px', height: '16px' }}
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    style={{ opacity: 0.25 }}
-                    cx="12" cy="12" r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                    fill="none"
-                  />
-                  <path
-                    style={{ opacity: 0.75 }}
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
-              )}
               {syncing ? (dryRun ? 'Previewing...' : 'Syncing...') : (dryRun ? 'Preview' : 'Sync Now')}
-            </button>
+            </Button>
             <label style={{
               display: 'flex',
               alignItems: 'center',
@@ -833,7 +858,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
             Upload a CSV file with columns: vendor, social, contact, phone
           </p>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <input
               ref={csvInputRef}
               type="file"
@@ -843,45 +868,14 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
               style={{ display: 'none' }}
               id="csv-upload"
             />
-            <label
-              htmlFor="csv-upload"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '10px 16px',
-                fontSize: '14px',
-                fontWeight: 500,
-                borderRadius: '4px',
-                border: 'none',
-                cursor: csvUploading ? 'not-allowed' : 'pointer',
-                opacity: csvUploading ? 0.6 : 1,
-                backgroundColor: 'var(--theme-elevation-500)',
-                color: 'white',
-                transition: 'all 0.15s',
-              }}
+            <Button
+              onClick={() => csvInputRef.current?.click()}
+              disabled={csvUploading}
+              buttonStyle="secondary"
+              size="small"
             >
-              {csvUploading && (
-                <svg
-                  style={{ animation: 'spin 1s linear infinite', width: '16px', height: '16px' }}
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    style={{ opacity: 0.25 }}
-                    cx="12" cy="12" r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                    fill="none"
-                  />
-                  <path
-                    style={{ opacity: 0.75 }}
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
-              )}
               {csvUploading ? 'Uploading...' : 'Choose CSV File'}
-            </label>
+            </Button>
           </div>
 
           {/* CSV Results */}
@@ -975,120 +969,91 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
           ) : (
             <>
               {/* URL Inputs */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
                 <div>
                   <label style={{
                     display: 'block',
-                    fontSize: '13px',
+                    fontSize: '12px',
                     fontWeight: 500,
                     color: 'var(--theme-elevation-600)',
-                    marginBottom: '4px',
+                    marginBottom: '2px',
                   }}>
                     Pennsylvania JSON URL
                   </label>
-                  <div style={{ display: 'flex', gap: '8px' }}>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                     <input
                       type="text"
                       value={paUrl}
                       onChange={(e) => setPaUrl(e.target.value)}
-                      placeholder="https://sixthcity.encompass8.com/QuickLink?QuickKey=..."
+                      placeholder="Paste URL..."
                       style={{
-                        flex: 1,
-                        padding: '8px 12px',
-                        fontSize: '13px',
+                        width: '600px',
+                        padding: '6px 10px',
+                        fontSize: '12px',
                         borderRadius: '4px',
                         border: '1px solid var(--theme-elevation-200)',
                         backgroundColor: 'var(--theme-input-bg)',
                         color: 'var(--theme-text)',
                       }}
                     />
-                    <button
+                    <Button
                       onClick={() => importDistributors('pa')}
                       disabled={!paUrl || distImporting !== null}
-                      style={{
-                        padding: '8px 16px',
-                        fontSize: '13px',
-                        fontWeight: 500,
-                        borderRadius: '4px',
-                        border: 'none',
-                        cursor: !paUrl || distImporting !== null ? 'not-allowed' : 'pointer',
-                        opacity: !paUrl || distImporting !== null ? 0.6 : 1,
-                        backgroundColor: '#fb923c',
-                        color: 'white',
-                        whiteSpace: 'nowrap',
-                      }}
+                      buttonStyle="primary"
+                      size="small"
                     >
                       {distImporting === 'pa' ? 'Importing...' : 'Import PA'}
-                    </button>
+                    </Button>
                   </div>
                 </div>
 
                 <div>
                   <label style={{
                     display: 'block',
-                    fontSize: '13px',
+                    fontSize: '12px',
                     fontWeight: 500,
                     color: 'var(--theme-elevation-600)',
-                    marginBottom: '4px',
+                    marginBottom: '2px',
                   }}>
                     Ohio JSON URL
                   </label>
-                  <div style={{ display: 'flex', gap: '8px' }}>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                     <input
                       type="text"
                       value={ohUrl}
                       onChange={(e) => setOhUrl(e.target.value)}
-                      placeholder="https://sixthcity.encompass8.com/QuickLink?QuickKey=..."
+                      placeholder="Paste URL..."
                       style={{
-                        flex: 1,
-                        padding: '8px 12px',
-                        fontSize: '13px',
+                        width: '600px',
+                        padding: '6px 10px',
+                        fontSize: '12px',
                         borderRadius: '4px',
                         border: '1px solid var(--theme-elevation-200)',
                         backgroundColor: 'var(--theme-input-bg)',
                         color: 'var(--theme-text)',
                       }}
                     />
-                    <button
+                    <Button
                       onClick={() => importDistributors('oh')}
                       disabled={!ohUrl || distImporting !== null}
-                      style={{
-                        padding: '8px 16px',
-                        fontSize: '13px',
-                        fontWeight: 500,
-                        borderRadius: '4px',
-                        border: 'none',
-                        cursor: !ohUrl || distImporting !== null ? 'not-allowed' : 'pointer',
-                        opacity: !ohUrl || distImporting !== null ? 0.6 : 1,
-                        backgroundColor: '#fb923c',
-                        color: 'white',
-                        whiteSpace: 'nowrap',
-                      }}
+                      buttonStyle="primary"
+                      size="small"
                     >
                       {distImporting === 'oh' ? 'Importing...' : 'Import OH'}
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <button
+                <Button
                   onClick={saveDistributorUrls}
                   disabled={urlsSaving}
-                  style={{
-                    padding: '8px 16px',
-                    fontSize: '13px',
-                    fontWeight: 500,
-                    borderRadius: '4px',
-                    border: '1px solid var(--theme-elevation-300)',
-                    cursor: urlsSaving ? 'not-allowed' : 'pointer',
-                    opacity: urlsSaving ? 0.6 : 1,
-                    backgroundColor: 'transparent',
-                    color: 'var(--theme-text)',
-                  }}
+                  buttonStyle="secondary"
+                  size="small"
                 >
                   {urlsSaving ? 'Saving...' : 'Save URLs'}
-                </button>
+                </Button>
                 {urlsSaveStatus === 'success' && (
                   <span style={{ color: 'var(--theme-success-500)', fontSize: '13px' }}>Saved!</span>
                 )}
@@ -1243,7 +1208,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                   Upload CSV with columns: Retail Accounts, Address, City, Account #, State, Zip Code, Phone
                 </p>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <input
                     ref={lakeInputRef}
                     type="file"
@@ -1253,45 +1218,14 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                     style={{ display: 'none' }}
                     id="lake-csv-upload"
                   />
-                  <label
-                    htmlFor="lake-csv-upload"
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      padding: '8px 16px',
-                      fontSize: '13px',
-                      fontWeight: 500,
-                      borderRadius: '4px',
-                      border: 'none',
-                      cursor: lakeUploading ? 'not-allowed' : 'pointer',
-                      opacity: lakeUploading ? 0.6 : 1,
-                      backgroundColor: '#60a5fa',
-                      color: 'white',
-                      transition: 'all 0.15s',
-                    }}
+                  <Button
+                    onClick={() => lakeInputRef.current?.click()}
+                    disabled={lakeUploading}
+                    buttonStyle="secondary"
+                    size="small"
                   >
-                    {lakeUploading && (
-                      <svg
-                        style={{ animation: 'spin 1s linear infinite', width: '14px', height: '14px' }}
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          style={{ opacity: 0.25 }}
-                          cx="12" cy="12" r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                          fill="none"
-                        />
-                        <path
-                          style={{ opacity: 0.75 }}
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        />
-                      </svg>
-                    )}
                     {lakeUploading ? 'Importing...' : 'Upload CSV'}
-                  </label>
+                  </Button>
                 </div>
 
                 {/* Progress Bar */}
@@ -1408,47 +1342,15 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                   Find and re-geocode distributors that have default/fallback coordinates (Pittsburgh, Columbus, or Rochester center)
                 </p>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <button
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                  <Button
                     onClick={handleRegeocodeDistributors}
                     disabled={regeocodeRunning}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      padding: '8px 16px',
-                      fontSize: '13px',
-                      fontWeight: 500,
-                      borderRadius: '4px',
-                      border: 'none',
-                      cursor: regeocodeRunning ? 'not-allowed' : 'pointer',
-                      opacity: regeocodeRunning ? 0.6 : 1,
-                      backgroundColor: regeocodeDryRun ? '#a855f7' : 'var(--theme-success-500)',
-                      color: 'white',
-                      transition: 'all 0.15s',
-                    }}
+                    buttonStyle={regeocodeDryRun ? 'secondary' : 'primary'}
+                    size="small"
                   >
-                    {regeocodeRunning && (
-                      <svg
-                        style={{ animation: 'spin 1s linear infinite', width: '14px', height: '14px' }}
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          style={{ opacity: 0.25 }}
-                          cx="12" cy="12" r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                          fill="none"
-                        />
-                        <path
-                          style={{ opacity: 0.75 }}
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        />
-                      </svg>
-                    )}
                     {regeocodeRunning ? (regeocodeDryRun ? 'Scanning...' : 'Fixing...') : (regeocodeDryRun ? 'Find Bad Coords' : 'Fix Bad Coords')}
-                  </button>
+                  </Button>
                   <label style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -1642,47 +1544,15 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
             Recalculate auto-computed beer fields (Half Pour, Can Single prices)
           </p>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <button
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+            <Button
               onClick={handleRecalculateBeerFields}
               disabled={recalcRunning}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '10px 16px',
-                fontSize: '14px',
-                fontWeight: 500,
-                borderRadius: '4px',
-                border: 'none',
-                cursor: recalcRunning ? 'not-allowed' : 'pointer',
-                opacity: recalcRunning ? 0.6 : 1,
-                backgroundColor: recalcDryRun ? '#fbbf24' : 'var(--theme-success-500)',
-                color: recalcDryRun ? '#000' : 'white',
-                transition: 'all 0.15s',
-              }}
+              buttonStyle={recalcDryRun ? 'secondary' : 'primary'}
+              size="small"
             >
-              {recalcRunning && (
-                <svg
-                  style={{ animation: 'spin 1s linear infinite', width: '16px', height: '16px' }}
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    style={{ opacity: 0.25 }}
-                    cx="12" cy="12" r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                    fill="none"
-                  />
-                  <path
-                    style={{ opacity: 0.75 }}
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
-              )}
               {recalcRunning ? (recalcDryRun ? 'Previewing...' : 'Recalculating...') : (recalcDryRun ? 'Preview Recalculation' : 'Recalculate All')}
-            </button>
+            </Button>
             <label style={{
               display: 'flex',
               alignItems: 'center',
@@ -1775,6 +1645,145 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
               </div>
             </div>
           )}
+
+          {/* Untappd Sync Section */}
+          <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--theme-elevation-150)' }}>
+            <h3 style={{
+              fontSize: '16px',
+              fontWeight: 600,
+              marginBottom: '8px',
+              color: 'var(--theme-text)'
+            }}>
+              Sync Untappd Ratings
+            </h3>
+            <p style={{
+              fontSize: '13px',
+              color: 'var(--theme-elevation-600)',
+              marginBottom: '12px'
+            }}>
+              Bulk update Untappd ratings for all beers. Invalid URLs will be searched and fixed automatically.
+            </p>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+              <Button
+                onClick={handleUntappdSync}
+                disabled={untappdRunning}
+                buttonStyle={untappdDryRun ? 'secondary' : 'primary'}
+                size="small"
+              >
+                {untappdRunning ? (untappdDryRun ? 'Previewing...' : 'Syncing...') : (untappdDryRun ? 'Preview Sync' : 'Sync Now')}
+              </Button>
+              <label style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: '13px',
+                color: 'var(--theme-text)',
+                cursor: 'pointer',
+              }}>
+                <input
+                  type="checkbox"
+                  checked={untappdDryRun}
+                  onChange={(e) => setUntappdDryRun(e.target.checked)}
+                  disabled={untappdRunning}
+                  style={{ width: '14px', height: '14px', cursor: 'pointer' }}
+                />
+                Dry run (preview only)
+              </label>
+            </div>
+
+            {/* Progress Bar */}
+            {untappdProgress && (
+              <div style={{ marginTop: '16px' }}>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  fontSize: '13px',
+                  marginBottom: '6px',
+                  color: 'var(--theme-elevation-600)',
+                }}>
+                  <span style={{
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    maxWidth: '70%',
+                  }}>
+                    {untappdProgress.name}
+                  </span>
+                  <span>{untappdProgress.current} / {untappdProgress.total} ({untappdProgress.percent}%)</span>
+                </div>
+                <div style={{
+                  height: '8px',
+                  backgroundColor: 'var(--theme-elevation-150)',
+                  borderRadius: '4px',
+                  overflow: 'hidden',
+                }}>
+                  <div style={{
+                    height: '100%',
+                    width: `${untappdProgress.percent}%`,
+                    backgroundColor: '#f59e0b',
+                    borderRadius: '4px',
+                    transition: 'width 0.3s ease',
+                  }} />
+                </div>
+              </div>
+            )}
+
+            {/* Log Console */}
+            {untappdLogs.length > 0 && (
+              <div style={{
+                marginTop: '12px',
+                maxHeight: '200px',
+                overflowY: 'auto',
+                fontSize: '12px',
+                fontFamily: 'monospace',
+                backgroundColor: '#0d1117',
+                padding: '12px',
+                borderRadius: '4px',
+                border: '1px solid #30363d',
+              }}>
+                {untappdLogs.map((log, i) => (
+                  <div key={i} style={{
+                    color: log.startsWith('✓')
+                      ? '#4ade80'
+                      : log.startsWith('+')
+                        ? '#60a5fa'
+                        : log.startsWith('✗') || log.startsWith('Error')
+                          ? '#f87171'
+                          : log.startsWith('?')
+                            ? '#fbbf24'
+                            : log.startsWith('○')
+                              ? '#6b7280'
+                              : '#8b949e',
+                    marginBottom: '2px',
+                  }}>
+                    {log}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Results */}
+            {untappdResults && (
+              <Banner
+                type={untappdResults.errors > 0 ? 'error' : 'success'}
+                style={{ marginTop: '16px' }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                  <strong>{untappdDryRun ? 'Preview Results' : 'Sync Complete'}</strong>
+                  <Pill pillStyle="light">{untappdResults.total} total</Pill>
+                  <Pill pillStyle="success">{untappdResults.refreshed} refreshed</Pill>
+                  {untappdResults.updated > 0 && (
+                    <Pill pillStyle="warning">{untappdResults.updated} fixed</Pill>
+                  )}
+                  <Pill pillStyle="light">{untappdResults.skipped} skipped</Pill>
+                  {untappdResults.errors > 0 && (
+                    <Pill pillStyle="error">{untappdResults.errors} errors</Pill>
+                  )}
+                </div>
+              </Banner>
+            )}
+          </div>
         </div>
         )}
 

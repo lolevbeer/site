@@ -3,7 +3,6 @@
  * Used for SEO and rich results in search engines
  */
 
-import Script from 'next/script';
 import { serializeJsonLd } from '@/lib/utils/json-ld';
 
 interface JsonLdProps {
@@ -15,15 +14,14 @@ interface JsonLdProps {
  * Component that renders a script tag with JSON-LD structured data
  * This helps search engines understand the content and display rich results
  *
- * Note: Using afterInteractive for app directory compatibility
+ * Uses a plain script tag (not next/script) to ensure it's in the initial HTML
+ * that search engine crawlers can see without JavaScript execution
  */
 export function JsonLd({ data }: JsonLdProps) {
   return (
-    <Script
-      id={`json-ld-${JSON.stringify(data).substring(0, 20)}`}
+    <script
       type="application/ld+json"
       dangerouslySetInnerHTML={{ __html: serializeJsonLd(data) }}
-      strategy="afterInteractive"
     />
   );
 }

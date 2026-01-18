@@ -88,6 +88,8 @@ export interface FoodVendorSchedule {
   time: string;
   /** Vendor website or social media link */
   site?: string;
+  /** Vendor logo URL */
+  logoUrl?: string;
   /** Day of the week */
   day: DayOfWeek;
   /** Start time (24-hour format) */
@@ -100,6 +102,8 @@ export interface FoodVendorSchedule {
   dayNumber: number;
   /** Location where vendor will be */
   location: LocationSlug;
+  /** Location display name */
+  locationName?: string;
   /** Special notes or announcements */
   notes?: string;
   /** Whether this is a special event */

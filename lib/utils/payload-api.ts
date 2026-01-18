@@ -8,7 +8,7 @@ import { getPayload } from 'payload'
 import config from '@/src/payload.config'
 import { cache } from 'react'
 import { unstable_cache } from 'next/cache'
-import type { Beer as PayloadBeer, Menu as PayloadMenu, Style, HolidayHour, Event as PayloadEvent, Food as PayloadFood, Distributor } from '@/src/payload-types'
+import type { Beer as PayloadBeer, Menu as PayloadMenu, Style, HolidayHour, Event as PayloadEvent, Food as PayloadFood, Distributor, Faq } from '@/src/payload-types'
 import type { PayloadLocation } from '@/lib/types/location'
 import { logger } from '@/lib/utils/logger'
 import { CACHE_TAGS } from '@/lib/utils/cache'
@@ -21,6 +21,36 @@ import { extractBeerFromMenuItem } from './menu-item-utils'
 const getPayloadInstance = cache(async () => {
   return await getPayload({ config })
 })
+
+/**
+ * Check if any beer globally has justReleased flag set
+ * Used to determine "Just Released" display logic
+ * Cached until 'beers' tag is invalidated
+ */
+export const hasAnyBeerJustReleased = unstable_cache(
+  async (): Promise<boolean> => {
+    try {
+      const payload = await getPayload({ config })
+
+      const result = await payload.find({
+        collection: 'beers',
+        limit: 1,
+        where: {
+          justReleased: {
+            equals: true,
+          },
+        },
+      })
+
+      return result.docs.length > 0
+    } catch (error) {
+      logger.error('Error checking justReleased beers', error)
+      return false
+    }
+  },
+  ['any-beer-just-released'],
+  { tags: [CACHE_TAGS.beers], revalidate: 300 }
+)
 
 /**
  * Get all beers from Payload
@@ -59,25 +89,21 @@ export const getAllBeersFromPayload = unstable_cache(
 export const getBeerBySlug = async (slug: string): Promise<PayloadBeer | null> => {
   return unstable_cache(
     async (): Promise<PayloadBeer | null> => {
-      try {
-        const payload = await getPayload({ config })
+      const payload = await getPayload({ config })
 
-        const result = await payload.find({
-          collection: 'beers',
-          where: {
-            slug: {
-              equals: slug,
-            },
+      const result = await payload.find({
+        collection: 'beers',
+        where: {
+          slug: {
+            equals: slug,
           },
-          limit: 1,
-          depth: 2,
-        })
+        },
+        limit: 1,
+        depth: 2,
+      })
 
-        return result.docs[0] || null
-      } catch (error) {
-        logger.error(`Error fetching beer by slug: ${slug}`, error)
-        return null
-      }
+      // Return null for "not found" (cacheable), but let errors throw (not cached)
+      return result.docs[0] || null
     },
     [`beer-${slug}`],
     { tags: [CACHE_TAGS.beers], revalidate: 3600 }
@@ -874,7 +900,7 @@ export const getUpcomingFoodFromPayload = async (locationSlug: string, limit: nu
           },
           sort: 'date',
           limit,
-          depth: 1,
+          depth: 2,
         })
 
         return result.docs
@@ -967,6 +993,7 @@ export interface RecurringFoodEntry {
     id: string
     name: string
     site?: string | null
+    logo?: string | { url?: string } | null
   }
   date: string
   time?: string
@@ -1025,7 +1052,7 @@ export const getUpcomingRecurringFood = async (
         }
 
         // Fetch all vendors in one request
-        const vendorMap: Record<string, { id: string; name: string; site?: string | null }> = {}
+        const vendorMap: Record<string, { id: string; name: string; site?: string | null; logo?: string | { url?: string } | null }> = {}
         if (vendorIds.size > 0) {
           const vendorResult = await payload.find({
             collection: 'food-vendors',
@@ -1033,12 +1060,14 @@ export const getUpcomingRecurringFood = async (
               id: { in: Array.from(vendorIds) },
             },
             limit: vendorIds.size,
+            depth: 2,
           })
           for (const vendor of vendorResult.docs) {
             vendorMap[vendor.id] = {
               id: vendor.id,
               name: vendor.name,
               site: vendor.site,
+              logo: vendor.logo as string | { url?: string } | null | undefined,
             }
           }
         }
@@ -1216,4 +1245,36 @@ export const getAllDistributorsGeoJSON = unstable_cache(
   },
   ['all-distributors-geojson'],
   { tags: [CACHE_TAGS.distributors], revalidate: 3600 }
+)
+
+// ============ FAQ DATA ============
+
+/**
+ * Get all active FAQs from Payload, sorted by order
+ * Cached until 'faqs' tag is invalidated
+ */
+export const getActiveFAQs = unstable_cache(
+  async (): Promise<Faq[]> => {
+    try {
+      const payload = await getPayload({ config })
+
+      const result = await payload.find({
+        collection: 'faqs',
+        where: {
+          active: {
+            equals: true,
+          },
+        },
+        sort: 'order',
+        limit: 100,
+      })
+
+      return result.docs
+    } catch (error) {
+      logger.error('Error fetching FAQs from Payload', error)
+      return []
+    }
+  },
+  ['active-faqs'],
+  { tags: [CACHE_TAGS.faqs], revalidate: 3600 }
 )

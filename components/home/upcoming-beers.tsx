@@ -1,8 +1,8 @@
 import React from 'react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { SectionHeader } from '@/components/ui/section-header';
 import { ScrollReveal } from '@/components/ui/scroll-reveal';
-import Link from 'next/link';
 import type { Beer, Style } from '@/src/payload-types';
 
 interface ComingSoonBeer {
@@ -14,15 +14,25 @@ interface UpcomingBeersProps {
   comingSoonBeers?: ComingSoonBeer[];
 }
 
-export function UpcomingBeers({ comingSoonBeers }: UpcomingBeersProps) {
-  // Filter to only items with valid beer or style data
-  const validItems = (comingSoonBeers || []).filter(item => {
-    const beer = typeof item.beer === 'object' ? item.beer : null;
-    const style = typeof item.style === 'object' ? item.style : null;
-    return (beer && beer.slug) || style;
-  });
+/** Extract beer object if populated, null otherwise */
+function extractBeer(item: ComingSoonBeer): Beer | null {
+  return typeof item.beer === 'object' ? item.beer : null;
+}
 
-  // Don't show section if no valid upcoming beers
+/** Extract style object if populated, null otherwise */
+function extractStyle(item: ComingSoonBeer): Style | null {
+  return typeof item.style === 'object' ? item.style : null;
+}
+
+export function UpcomingBeers({ comingSoonBeers = [] }: UpcomingBeersProps): React.ReactElement | null {
+  // Filter and normalize items with valid beer or style data
+  const validItems = comingSoonBeers
+    .map(item => ({
+      beer: extractBeer(item),
+      style: extractStyle(item),
+    }))
+    .filter(({ beer, style }) => beer?.slug || style);
+
   if (validItems.length === 0) {
     return null;
   }
@@ -38,30 +48,17 @@ export function UpcomingBeers({ comingSoonBeers }: UpcomingBeersProps) {
         </ScrollReveal>
 
         <div className="max-w-4xl mx-auto space-y-1 text-center mb-8">
-          {validItems.map((item, index) => {
-            const beer = typeof item.beer === 'object' ? item.beer : null;
-            const style = typeof item.style === 'object' ? item.style : null;
-
-            // If beer is selected, show beer name and link (no style display)
-            if (beer && beer.slug) {
-              return (
-                <div key={index}>
-                  <Button asChild variant="ghost" size="sm" className="text-lg font-semibold h-auto py-0 px-2">
-                    <Link href={`/beer/${beer.slug}`}>
-                      {beer.name}
-                    </Link>
-                  </Button>
-                </div>
-              );
-            }
-
-            // Style is selected, show style name without link
-            return (
-              <div key={index}>
-                <h3 className="font-semibold text-lg">{style!.name}</h3>
-              </div>
-            );
-          })}
+          {validItems.map(({ beer, style }, index) => (
+            <div key={index}>
+              {beer?.slug ? (
+                <Button asChild variant="ghost" size="sm" className="text-lg font-semibold h-auto py-0 px-2">
+                  <Link href={`/beer/${beer.slug}`}>{beer.name}</Link>
+                </Button>
+              ) : (
+                <h3 className="font-semibold text-lg">{style?.name}</h3>
+              )}
+            </div>
+          ))}
         </div>
 
         <div className="text-center">

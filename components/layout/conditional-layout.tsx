@@ -14,12 +14,13 @@ interface ConditionalLayoutProps {
 export function ConditionalLayout({ children, weeklyHours }: ConditionalLayoutProps) {
   const pathname = usePathname();
 
-  // Check if we're on an admin route or menu display route
+  // Check if we're on an admin route or fullscreen display route
   const isAdminRoute = pathname?.startsWith('/admin') || pathname?.startsWith('/api');
   const isMenuRoute = pathname?.startsWith('/m/');
+  const isEventsDisplayRoute = pathname?.startsWith('/e/');
 
-  // Don't render layout for admin/api routes or menu display routes
-  if (isAdminRoute || isMenuRoute) {
+  // Don't render layout for admin/api routes or fullscreen display routes
+  if (isAdminRoute || isMenuRoute || isEventsDisplayRoute) {
     return <main id="main-content" tabIndex={-1} className="h-screen outline-none">{children}</main>;
   }
 

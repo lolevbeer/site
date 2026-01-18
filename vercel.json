@@ -1,5 +1,19 @@
 {
   "regions": ["iad1"],
+  "crons": [
+    {
+      "path": "/api/cron/sync-untappd",
+      "schedule": "0 6 * * *"
+    }
+  ],
+  "functions": {
+    "src/app/(payload)/api/[...slug]/route.ts": {
+      "maxDuration": 300
+    },
+    "src/app/api/cron/sync-untappd/route.ts": {
+      "maxDuration": 300
+    }
+  },
   "headers": [
     {
       "source": "/api/(.*)",
@@ -76,11 +90,6 @@
       "source": "/beers",
       "destination": "/beer",
       "permanent": true
-    },
-    {
-      "source": "/about",
-      "destination": "/",
-      "permanent": false
     }
   ],
   "rewrites": [

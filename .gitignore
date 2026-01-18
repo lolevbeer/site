@@ -65,3 +65,4 @@ next-env.d.ts
 !/public/*_geo_data.json
 
 .playwright-mcp
+.env*.local

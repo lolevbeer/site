@@ -19,6 +19,7 @@ import { HolidayHours } from './collections/HolidayHours'
 import { Menus } from './collections/Menus'
 import { Distributors } from './collections/Distributors'
 import { Products } from './collections/Products'
+import { FAQs } from './collections/FAQs'
 import { ComingSoon } from './globals/ComingSoon'
 import { RecurringFood } from './globals/RecurringFood'
 import { SiteContent } from './globals/SiteContent'
@@ -29,6 +30,7 @@ import { importLakeBeverageCSV } from './endpoints/import-lake-beverage-csv'
 import { updateDistributorUrls } from './endpoints/update-distributor-urls'
 import { recalculateBeerPrices } from './endpoints/recalculate-beer-prices'
 import { regeocodeDistributors } from './endpoints/regeocode-distributors'
+import { syncUntappdRatings } from './endpoints/sync-untappd-ratings'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -37,11 +39,16 @@ const dirname = path.dirname(filename)
 const allowedOrigins = [
   'https://lolev.beer',
   'https://www.lolev.beer',
+  'https://new.lolev.beer',
   // Vercel preview deployments
   ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
-  ...(process.env.VERCEL_PROJECT_PRODUCTION_URL ? [`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`] : []),
+  ...(process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? [`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`]
+    : []),
   // Local development
-  ...(process.env.NODE_ENV === 'development' ? ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002'] : []),
+  ...(process.env.NODE_ENV === 'development'
+    ? ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://127.0.0.1:3000', 'http://0.0.0.0:3000']
+    : []),
 ]
 
 export default buildConfig({
@@ -68,11 +75,11 @@ export default buildConfig({
         { rel: 'apple-touch-icon', url: '/favicons/apple-touch-icon.png' },
       ],
     },
-    autoLogin: process.env.NODE_ENV === 'development' ? {
-      email: 'dev@payloadcms.com',
-      password: 'test',
-      prefillOnly: true,
-    } : false,
+    // autoLogin: process.env.NODE_ENV === 'development' ? {
+    //   email: 'dev@payloadcms.com',
+    //   password: 'test',
+    //   prefillOnly: true,
+    // } : false,
     importMap: {
       baseDir: path.resolve(dirname),
     },
@@ -114,6 +121,7 @@ export default buildConfig({
     Locations,
     HolidayHours,
     Distributors,
+    FAQs,
     Media,
   ],
   globals: [
@@ -177,6 +185,11 @@ export default buildConfig({
       path: '/regeocode-distributors',
       method: 'post',
       handler: regeocodeDistributors,
+    },
+    {
+      path: '/sync-untappd-ratings',
+      method: 'post',
+      handler: syncUntappdRatings,
     },
   ],
 })

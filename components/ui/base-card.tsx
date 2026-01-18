@@ -52,8 +52,8 @@ export function BaseCard<T>({
   const cardClasses = cn(
     'transition-all duration-200',
     {
-      'hover:shadow-md': !isDisabled,
-      'hover:shadow-lg cursor-pointer': isInteractive,
+      'hover:shadow-md hover:-translate-y-1': !isDisabled,
+      'hover:shadow-lg hover:-translate-y-1.5 cursor-pointer': isInteractive,
       'bg-[var(--color-card-interactive)]': isInteractive,
       'opacity-75': isDisabled,
       'ring-2 ring-blue-500 ring-opacity-50': isHighlighted,

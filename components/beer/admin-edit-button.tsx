@@ -1,23 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Pencil } from 'lucide-react';
+import { useAuth } from '@/lib/hooks/use-auth';
 
 interface AdminEditButtonProps {
   beerId: string;
 }
 
 export function AdminEditButton({ beerId }: AdminEditButtonProps) {
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { isAuthenticated, isLoading } = useAuth();
 
-  useEffect(() => {
-    // Check if user has payload-token cookie (simple client-side check)
-    const hasToken = document.cookie.includes('payload-token');
-    setIsAdmin(hasToken);
-  }, []);
-
-  if (!isAdmin) return null;
+  // Don't render while loading or if not authenticated
+  if (isLoading || !isAuthenticated) return null;
 
   return (
     <Button

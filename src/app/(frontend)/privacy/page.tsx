@@ -1,18 +1,34 @@
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
+import { JsonLd } from '@/components/seo/json-ld';
+import { generateBreadcrumbSchema, generateWebPageSchema } from '@/lib/utils/breadcrumb-schema';
 
 export default function PrivacyPage() {
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <PageBreadcrumbs className="mb-6" />
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-foreground">Privacy Policy</h1>
-          <p className="text-sm text-muted-foreground mt-2">
-            Last updated: October 2, 2025
-          </p>
-        </div>
+  const breadcrumbSchema = generateBreadcrumbSchema([
+    { label: 'Home', href: '/' },
+    { label: 'Privacy Policy', href: '/privacy' }
+  ]);
+  const webPageSchema = generateWebPageSchema({
+    name: 'Privacy Policy',
+    description: 'Lolev Beer privacy policy explaining how we collect, use, and safeguard your information.',
+    path: '/privacy',
+    dateModified: '2025-10-02'
+  });
 
-        <div className="space-y-4">
+  return (
+    <>
+      <JsonLd data={breadcrumbSchema} />
+      <JsonLd data={webPageSchema} />
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto space-y-6">
+          <PageBreadcrumbs className="mb-6" />
+          <div className="text-center">
+            <h1 className="text-3xl font-bold text-foreground">Privacy Policy</h1>
+            <p className="text-sm text-muted-foreground mt-2">
+              Last updated: October 2, 2025
+            </p>
+          </div>
+
+          <div className="space-y-4">
           <section>
             <p className="text-muted-foreground">
               Lolev Beer is committed to protecting your privacy. This policy explains how we collect, use, and safeguard your information when you visit lolev.beer.
@@ -52,8 +68,9 @@ export default function PrivacyPage() {
               <p>Phone: <a href="tel:4123368965" className="text-primary hover:underline">(412) 336-8965</a></p>
             </div>
           </section>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

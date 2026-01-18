@@ -1,7 +1,8 @@
 /**
- * BreadcrumbList schema generation
+ * BreadcrumbList and WebPage schema generation
  * Helps with navigation display in search results
  * @see https://schema.org/BreadcrumbList
+ * @see https://schema.org/WebPage
  * @see https://developers.google.com/search/docs/appearance/structured-data/breadcrumb
  */
 
@@ -50,5 +51,51 @@ export function generateBreadcrumbSchema(
 
       return item;
     })
+  };
+}
+
+/**
+ * Schema.org WebPage type
+ */
+export interface WebPageJsonLd {
+  '@context': 'https://schema.org';
+  '@type': 'WebPage';
+  '@id': string;
+  name: string;
+  description?: string;
+  url: string;
+  isPartOf?: { '@id': string };
+  about?: { '@id': string };
+  dateModified?: string;
+  inLanguage?: string;
+}
+
+export interface WebPageOptions {
+  name: string;
+  description?: string;
+  path: string;
+  dateModified?: string;
+}
+
+/**
+ * Generate WebPage JSON-LD schema
+ */
+export function generateWebPageSchema(
+  options: WebPageOptions,
+  baseUrl: string = 'https://lolev.beer'
+): WebPageJsonLd {
+  const url = `${baseUrl}${options.path}`;
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    '@id': `${url}#webpage`,
+    name: options.name,
+    description: options.description,
+    url,
+    isPartOf: { '@id': `${baseUrl}#website` },
+    about: { '@id': `${baseUrl}#organization` },
+    dateModified: options.dateModified,
+    inLanguage: 'en-US'
   };
 }

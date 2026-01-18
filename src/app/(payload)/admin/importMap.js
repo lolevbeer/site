@@ -1,3 +1,4 @@
+import { UntappdFetcher as UntappdFetcher_98d9a61c943279a91d72840260fe5c0b } from '@/src/components/admin/UntappdFetcher'
 import { MarkLinesCleanedButton as MarkLinesCleanedButton_f5f2df171d50f30cf104614de4c760a1 } from '@/src/components/admin/MarkLinesCleanedButton'
 import { EventDateWarning as EventDateWarning_ceb08b3b2912cb840ec0a7cae7cd13ed } from '../../../components/EventDateWarning'
 import { FoodDateWarning as FoodDateWarning_91c1c655713f1f06387e201ec7e2c9e1 } from '../../../components/FoodDateWarning'
@@ -11,6 +12,7 @@ import { VercelBlobClientUploadHandler as VercelBlobClientUploadHandler_16c82c5e
 import { SyncView as SyncView_c23504be653ff4cfe56b71cd946ad683 } from '../../../components/SyncView'
 
 export const importMap = {
+  "@/src/components/admin/UntappdFetcher#UntappdFetcher": UntappdFetcher_98d9a61c943279a91d72840260fe5c0b,
   "@/src/components/admin/MarkLinesCleanedButton#MarkLinesCleanedButton": MarkLinesCleanedButton_f5f2df171d50f30cf104614de4c760a1,
   "./components/EventDateWarning#EventDateWarning": EventDateWarning_ceb08b3b2912cb840ec0a7cae7cd13ed,
   "./components/FoodDateWarning#FoodDateWarning": FoodDateWarning_91c1c655713f1f06387e201ec7e2c9e1,

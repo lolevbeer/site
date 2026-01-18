@@ -18,6 +18,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from '@/components/ui/hover-card';
+import { formatRating } from '@/lib/utils/formatters';
 import { BeerImage } from './beer-image';
 import {
   formatAbv,
@@ -49,6 +50,7 @@ export const BeerCard = React.memo(function BeerCard({
 }: BeerCardProps) {
   const { currentLocation } = useLocationContext();
   const beerSlug = getBeerSlug(beer);
+  const GlassIcon = getGlassIcon(beer.glass);
 
   // Don't show beer if it's hidden from site
   if (beer.availability.hideFromSite) {
@@ -57,14 +59,13 @@ export const BeerCard = React.memo(function BeerCard({
 
   // Minimal variant uses simple card structure without BaseCard - matches homepage cans style
   if (variant === 'minimal') {
-    const GlassIcon = getGlassIcon(beer.glass);
     const beerHref = showLocation ? `/${currentLocation}/beer/${beerSlug}` : `/beer/${beerSlug}`;
 
     return (
       <Link
         href={beerHref}
         onClick={() => trackBeerView(beer.name, beer.type)}
-        className="group flex flex-col cursor-pointer"
+        className="group flex flex-col cursor-pointer transition-transform duration-200 hover:-translate-y-1"
       >
         <div className="relative h-64 w-full flex-shrink-0 mb-4 transition-transform duration-200 group-hover:scale-[1.02]">
           <BeerImage
@@ -82,6 +83,11 @@ export const BeerCard = React.memo(function BeerCard({
             <Badge variant="outline" className="text-xs">
               {beer.type}
             </Badge>
+            {(beer.untappdRating ?? 0) > 0 && (
+              <span className="text-xs text-amber-500 font-bold">
+                {formatRating(beer.untappdRating)}/5
+              </span>
+            )}
             {beer.availability.tap && (
               <HoverCard openDelay={200}>
                 <HoverCardTrigger asChild>
@@ -96,7 +102,7 @@ export const BeerCard = React.memo(function BeerCard({
             )}
           </div>
         </div>
-        <Button variant="outline" className="w-full group-hover:bg-muted/50" tabIndex={-1}>
+        <Button variant="outline" className="w-full group-hover:bg-muted/50 hover:translate-y-0" tabIndex={-1}>
           View Details
         </Button>
       </Link>
@@ -121,9 +127,16 @@ export const BeerCard = React.memo(function BeerCard({
           {beer.name}
         </h3>
         <div className="flex items-center justify-between text-sm text-muted-foreground mt-1">
-          <span className="font-medium">{beer.type}</span>
+          <div className="flex items-center gap-2">
+            <span className="font-medium">{beer.type}</span>
+            {(beer.untappdRating ?? 0) > 0 && (
+              <span className="text-amber-500 font-bold">
+                {formatRating(beer.untappdRating)}/5
+              </span>
+            )}
+          </div>
           <div className="flex items-center gap-1">
-            {React.createElement(getGlassIcon(beer.glass), { className: "h-4 w-4" })}
+            <GlassIcon className="h-4 w-4" />
             <span>{formatAbv(beer.abv)} ABV</span>
           </div>
         </div>
@@ -177,7 +190,7 @@ export const BeerCard = React.memo(function BeerCard({
         asChild
         variant="outline"
         size="sm"
-        className="ml-auto"
+        className="ml-auto hover:translate-y-0"
       >
         <Link
           href={showLocation ? `/${currentLocation}/beer/${beerSlug}` : `/beer/${beerSlug}`}

@@ -51,6 +51,10 @@ interface NavigationProps {
   onItemClick?: () => void;
   /** Whether to show in vertical layout (mobile) */
   vertical?: boolean;
+  /** Whether to show icons (default: true) */
+  showIcons?: boolean;
+  /** Size variant for mobile */
+  size?: 'default' | 'large';
 }
 
 /**
@@ -59,7 +63,9 @@ interface NavigationProps {
 export function Navigation({
   className,
   onItemClick,
-  vertical = false
+  vertical = false,
+  showIcons = true,
+  size = 'default'
 }: NavigationProps) {
   const pathname = usePathname();
 
@@ -67,8 +73,9 @@ export function Navigation({
     <nav
       className={cn(
         vertical
-          ? "flex flex-col space-y-1"
+          ? "flex flex-col"
           : "flex items-center space-x-2 lg:space-x-4 xl:space-x-6",
+        vertical && size === 'large' ? "space-y-0" : vertical && "space-y-1",
         className
       )}
       aria-label="Main navigation"
@@ -81,11 +88,12 @@ export function Navigation({
           return (
             <Button
               key={item.href}
-              variant="secondary"
+              variant="ghost"
               asChild
               className={cn(
-                "w-full justify-start",
-                isActive && "bg-primary text-primary-foreground"
+                "w-full justify-center rounded-none",
+                size === 'large' && "h-auto py-5 text-2xl font-bold",
+                isActive && "bg-primary/10 text-primary"
               )}
             >
               <Link
@@ -93,7 +101,7 @@ export function Navigation({
                 onClick={onItemClick}
                 aria-current={isActive ? "page" : undefined}
               >
-                {IconComponent && <IconComponent className="mr-2 h-4 w-4" />}
+                {showIcons && IconComponent && <IconComponent className="mr-2 h-4 w-4" />}
                 {item.label}
               </Link>
             </Button>

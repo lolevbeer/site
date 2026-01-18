@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -102,6 +102,11 @@ interface LocationCardsProps {
 
 export function LocationCards({ weeklyHours }: LocationCardsProps) {
   const { locations } = useLocationContext();
+  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
+
+  const handleImageError = (locationKey: string) => {
+    setImageErrors(prev => new Set(prev).add(locationKey));
+  };
 
   // Fallback gradients by index when no image available
   const fallbackGradients = [
@@ -138,19 +143,20 @@ export function LocationCards({ weeklyHours }: LocationCardsProps) {
           >
             {/* Location Image */}
             <div className="aspect-video relative mb-6 group overflow-hidden rounded-lg">
-              {cardImage ? (
+              {cardImage && !imageErrors.has(locationKey) ? (
                 <Image
                   src={cardImage}
                   alt={`${location.name} location`}
                   fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  className="object-cover transition-transform duration-[250ms] group-hover:scale-105"
                   priority={index === 0}
                   fetchPriority={index === 0 ? "high" : "low"}
                   quality={85}
                   sizes="(max-width: 768px) 100vw, 50vw"
+                  onError={() => handleImageError(locationKey)}
                 />
               ) : (
-                <div className={`h-full bg-gradient-to-br ${fallbackGradient}`} />
+                <div className={`h-full bg-gradient-to-br ${fallbackGradient}`} aria-hidden="true" />
               )}
             </div>
 
@@ -160,14 +166,20 @@ export function LocationCards({ weeklyHours }: LocationCardsProps) {
 
               {/* Address */}
               {location.address && (
-                <div className="text-muted-foreground text-lg">
+                <a
+                  href={mapUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground text-lg hover:text-foreground hover:underline transition-colors"
+                  onClick={() => trackDirections(location.name)}
+                >
                   <p>{location.address.street}</p>
                   <p>
                     {location.address.city}
                     {location.address.state && `, ${location.address.state}`}
                     {location.address.zip && ` ${location.address.zip}`}
                   </p>
-                </div>
+                </a>
               )}
 
               {/* Hours */}

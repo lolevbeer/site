@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -17,10 +17,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import type { Beer as PayloadBeer } from '@/src/payload-types';
+import type { Beer as PayloadBeer, Menu as PayloadMenu } from '@/src/payload-types';
+import { extractBeerFromMenuItem } from '@/lib/utils/menu-item-utils';
 
 interface HeroSectionProps {
   availableBeers: PayloadBeer[];
+  cansMenus: PayloadMenu[];
   heroDescription?: string;
   heroImageUrl?: string | null;
 }
@@ -32,7 +34,33 @@ function getBeerImageUrl(beer: PayloadBeer): string | null {
   return null;
 }
 
-export function HeroSection({ availableBeers, heroDescription, heroImageUrl }: HeroSectionProps) {
+export function HeroSection({ availableBeers, cansMenus, heroDescription, heroImageUrl }: HeroSectionProps) {
+  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
+  const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
+
+  const handleImageError = (beerId: string) => {
+    setImageErrors(prev => new Set(prev).add(beerId));
+  };
+
+  const handleImageLoad = (beerId: string) => {
+    setLoadedImages(prev => new Set(prev).add(beerId));
+  };
+
+  // Build a set of beer IDs that are available in cans menus (memoized)
+  const cansAvailableBeerIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const menu of cansMenus) {
+      if (!menu.items) continue;
+      for (const item of menu.items) {
+        const beer = extractBeerFromMenuItem(item);
+        if (beer?.id) {
+          ids.add(beer.id);
+        }
+      }
+    }
+    return ids;
+  }, [cansMenus]);
+
   return (
     <div className="relative flex flex-col gap-8 md:gap-16 px-4 md:px-8 py-16 md:py-24 text-center min-h-[600px] md:min-h-[700px]">
       {/* Background image */}
@@ -66,18 +94,19 @@ export function HeroSection({ availableBeers, heroDescription, heroImageUrl }: H
             <TooltipProvider delayDuration={200}>
               <Carousel
                 opts={{
-                  align: "start",
+                  align: "center",
                   loop: true,
                   slidesToScroll: "auto",
                 }}
                 className="w-full"
                 aria-label="Available beers carousel"
               >
-                <CarouselContent className="-ml-4">
+                <CarouselContent className="-ml-4 justify-center">
                   {availableBeers.length > 0 ? (
                     availableBeers.map((beer) => {
                       const imageUrl = getBeerImageUrl(beer);
-                      if (!imageUrl) return null;
+                      // Skip beers not in cans menus, without images, or with failed images
+                      if (!cansAvailableBeerIds.has(beer.id) || !imageUrl || imageErrors.has(beer.id)) return null;
 
                       return (
                         <CarouselItem key={beer.id} className="pl-4 basis-1/4 sm:basis-1/5 md:basis-1/4 lg:basis-1/6 xl:basis-1/8 2xl:basis-1/8">
@@ -89,9 +118,11 @@ export function HeroSection({ availableBeers, heroDescription, heroImageUrl }: H
                                     src={imageUrl}
                                     alt={`${beer.name} beer can`}
                                     fill
-                                    className="object-contain drop-shadow-sm group-hover:drop-shadow-md transition-[filter] duration-200"
+                                    className={`object-contain drop-shadow-sm group-hover:drop-shadow-md transition-all duration-200 ${loadedImages.has(beer.id) ? 'opacity-100' : 'opacity-0'}`}
                                     sizes="(max-width: 768px) 64px, 96px"
                                     loading="lazy"
+                                    onLoad={() => handleImageLoad(beer.id)}
+                                    onError={() => handleImageError(beer.id)}
                                   />
                                 </div>
                               </Link>
@@ -111,8 +142,8 @@ export function HeroSection({ availableBeers, heroDescription, heroImageUrl }: H
                     </CarouselItem>
                   )}
                 </CarouselContent>
-                <CarouselPrevious className="hidden md:flex border-0 bg-transparent hover:bg-muted/50 shadow-none" />
-                <CarouselNext className="hidden md:flex border-0 bg-transparent hover:bg-muted/50 shadow-none" />
+                <CarouselPrevious className="hidden md:flex border-0 bg-transparent hover:bg-muted/50 shadow-none" hideWhenDisabled />
+                <CarouselNext className="hidden md:flex border-0 bg-transparent hover:bg-muted/50 shadow-none" hideWhenDisabled />
               </Carousel>
             </TooltipProvider>
           </div>
@@ -128,20 +159,20 @@ export function HeroSection({ availableBeers, heroDescription, heroImageUrl }: H
 
         {/* Primary CTAs */}
         <div
-          className="flex flex-col sm:flex-row gap-3 md:gap-4 mt-6 md:mt-8 justify-center items-center animate-stagger-in opacity-0"
+          className="flex flex-col sm:flex-row gap-3 md:gap-4 mt-6 md:mt-8 justify-center items-center w-full px-4 sm:px-0 animate-stagger-in opacity-0"
           style={{ animationDelay: '300ms' }}
         >
-          <Button asChild variant="default" size="lg" className="min-w-[180px] text-base animate-glow-pulse">
+          <Button asChild variant="default" size="lg" className="w-full sm:w-auto sm:min-w-[160px] text-base animate-glow-pulse">
             <Link href="/beer-map">
               Find Lolev
             </Link>
           </Button>
-          <Button asChild variant="outline" size="lg" className="min-w-[140px]">
+          <Button asChild variant="outline" size="lg" className="w-full sm:w-auto sm:min-w-[160px]">
             <a href="https://squareup.com/customer-programs/enroll/ce5WC6LoELBr?utm_source=lolevwebsite" target="_blank" rel="noopener noreferrer">
               Newsletter
             </a>
           </Button>
-          <Button asChild variant="ghost" size="lg" className="min-w-[140px]">
+          <Button asChild variant="ghost" size="lg" className="w-full sm:w-auto sm:min-w-[160px]">
             <Link href="/about">
               Our Story
             </Link>

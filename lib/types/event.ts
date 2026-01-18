@@ -66,6 +66,7 @@ export interface BreweryEvent extends BaseEvent {
   price?: string;
   ageRestriction?: string;
   requirements?: string[];
+  locationName?: string;
 }
 
 /**

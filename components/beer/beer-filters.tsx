@@ -5,7 +5,7 @@
 
 'use client';
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import type { BeerFilters } from '@/lib/types/beer';
 import { BeerStyle } from '@/lib/types/beer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -189,6 +189,11 @@ function ABVRangeFilter({
   const [localRange, setLocalRange] = useState<ABVRange>(
     abvRange || DEFAULT_ABV_RANGE
   );
+
+  // Sync local state with prop when it changes externally (e.g., clear all filters)
+  useEffect(() => {
+    setLocalRange(abvRange || DEFAULT_ABV_RANGE);
+  }, [abvRange]);
 
   const handleMinChange = useCallback((value: string) => {
     const min = parseFloat(value) || 0;

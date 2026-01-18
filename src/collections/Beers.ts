@@ -1,6 +1,8 @@
 import type { CollectionConfig } from 'payload'
+import { revalidateTag } from 'next/cache'
 import { generateUniqueSlug } from './utils/generateUniqueSlug'
 import { adminAccess, beerManagerAccess, isAdmin } from '@/src/access/roles'
+import { fetchUntappdData, type UntappdReview } from '@/src/utils/untappd'
 
 // Helper function to round to nearest 0.25 (like Excel's MROUND)
 const mround = (value: number, multiple: number): number => {
@@ -67,6 +69,7 @@ export const Beers: CollectionConfig = {
             collection: 'beers',
             sort: '-recipe',
             limit: 1,
+            overrideAccess: true,
           })
 
           if (lastBeer.docs.length > 0 && lastBeer.docs[0].recipe) {
@@ -76,7 +79,52 @@ export const Beers: CollectionConfig = {
           }
         }
 
+        // Auto-fetch Untappd rating when URL is set/changed
+        if (data.untappd && data.untappd !== originalDoc?.untappd) {
+          const { rating, ratingCount, positiveReviews } = await fetchUntappdData(data.untappd)
+          if (rating !== null) {
+            data.untappdRating = rating
+          }
+          if (ratingCount !== null) {
+            data.untappdRatingCount = ratingCount
+          }
+          if (positiveReviews.length > 0) {
+            // Merge with existing reviews, using URL as unique key
+            const existingReviews = (originalDoc?.positiveReviews as UntappdReview[]) || []
+            const existingUrls = new Set(existingReviews.map(r => r.url).filter(Boolean))
+            const newReviews = positiveReviews.filter(r => r.url && !existingUrls.has(r.url))
+            data.positiveReviews = [...existingReviews, ...newReviews]
+          }
+        }
+
         return data
+      },
+    ],
+    afterChange: [
+      async ({ doc, req }) => {
+        // Find all menus containing this beer and revalidate their caches
+        try {
+          const menus = await req.payload.find({
+            collection: 'menus',
+            where: {
+              'items.product.value': { equals: doc.id },
+            },
+            limit: 100,
+            depth: 0,
+          })
+
+          // Revalidate each menu's specific cache tag
+          for (const menu of menus.docs) {
+            if (menu.url) {
+              revalidateTag(`menu-${menu.url}`)
+            }
+          }
+        } catch (error) {
+          // Don't block the save if revalidation fails
+          console.error('Beer menu revalidation error:', error)
+        }
+
+        return doc
       },
     ],
   },
@@ -145,6 +193,15 @@ export const Beers: CollectionConfig = {
       },
     },
     {
+      name: 'bottlePrice',
+      type: 'number',
+      admin: {
+        description: 'Bottle price (e.g., 12)',
+        position: 'sidebar',
+        step: 0.25,
+      },
+    },
+    {
       name: 'canSingle',
       type: 'number',
       admin: {
@@ -201,27 +258,37 @@ export const Beers: CollectionConfig = {
       },
     },
     {
-      name: 'name',
-      type: 'text',
-      required: true,
-    },
-    {
-      name: 'style',
-      type: 'relationship',
-      relationTo: 'styles',
-      required: true,
-      index: true,
-      admin: {
-        description: 'Beer style',
-      },
-    },
-    {
-      name: 'image',
-      type: 'upload',
-      relationTo: 'media',
-      admin: {
-        description: 'Beer image (recommended: 2500x2500px)',
-      },
+      type: 'row',
+      fields: [
+        {
+          name: 'name',
+          type: 'text',
+          required: true,
+          admin: {
+            width: '25%',
+          },
+        },
+        {
+          name: 'style',
+          type: 'relationship',
+          relationTo: 'styles',
+          required: true,
+          index: true,
+          admin: {
+            description: 'Beer style',
+            width: '25%',
+          },
+        },
+        {
+          name: 'image',
+          type: 'upload',
+          relationTo: 'media',
+          admin: {
+            description: 'Beer image (recommended: 2500x2500px)',
+            width: '50%',
+          },
+        },
+      ],
     },
     {
       name: 'description',
@@ -235,10 +302,52 @@ export const Beers: CollectionConfig = {
       },
     },
     {
-      name: 'untappd',
-      type: 'text',
+      name: 'untappdFetcher',
+      type: 'ui',
       admin: {
-        description: 'Untappd URL',
+        components: {
+          Field: '@/src/components/admin/UntappdFetcher#UntappdFetcher',
+        },
+      },
+    },
+    {
+      type: 'row',
+      fields: [
+        {
+          name: 'untappd',
+          type: 'text',
+          admin: {
+            description: 'Untappd URL (e.g., /b/lolev-beer-lupula/123456)',
+            width: '50%',
+          },
+        },
+        {
+          name: 'untappdRating',
+          type: 'number',
+          admin: {
+            description: 'Rating (auto-fetched)',
+            readOnly: true,
+            step: 0.01,
+            width: '25%',
+          },
+        },
+        {
+          name: 'untappdRatingCount',
+          type: 'number',
+          admin: {
+            description: 'Rating count (auto-fetched)',
+            readOnly: true,
+            width: '25%',
+          },
+        },
+      ],
+    },
+    {
+      name: 'positiveReviews',
+      type: 'json',
+      admin: {
+        description: 'MGR agent approved reviews',
+        readOnly: true,
       },
     },
   ],

@@ -175,9 +175,12 @@ function CarouselPrevious({
   className,
   variant = "outline",
   size = "icon",
+  hideWhenDisabled = false,
   ...props
-}: React.ComponentProps<typeof Button>) {
+}: React.ComponentProps<typeof Button> & { hideWhenDisabled?: boolean }) {
   const { orientation, scrollPrev, canScrollPrev } = useCarousel()
+
+  if (hideWhenDisabled && !canScrollPrev) return null
 
   return (
     <Button
@@ -187,8 +190,8 @@ function CarouselPrevious({
       className={cn(
         "absolute size-8 rounded-full", // 32x32px ✅ WCAG 2.2 (24px minimum)
         orientation === "horizontal"
-          ? "top-1/2 -left-12 -translate-y-1/2"
-          : "-top-12 left-1/2 -translate-x-1/2 rotate-90",
+          ? "top-1/2 -left-12 !-translate-y-1/2 hover:!-translate-y-1/2"
+          : "-top-12 left-1/2 !-translate-x-1/2 hover:!-translate-x-1/2 rotate-90",
         className
       )}
       disabled={!canScrollPrev}
@@ -205,9 +208,12 @@ function CarouselNext({
   className,
   variant = "outline",
   size = "icon",
+  hideWhenDisabled = false,
   ...props
-}: React.ComponentProps<typeof Button>) {
+}: React.ComponentProps<typeof Button> & { hideWhenDisabled?: boolean }) {
   const { orientation, scrollNext, canScrollNext } = useCarousel()
+
+  if (hideWhenDisabled && !canScrollNext) return null
 
   return (
     <Button
@@ -217,8 +223,8 @@ function CarouselNext({
       className={cn(
         "absolute size-8 rounded-full", // 32x32px ✅ WCAG 2.2 (24px minimum)
         orientation === "horizontal"
-          ? "top-1/2 -right-12 -translate-y-1/2"
-          : "-bottom-12 left-1/2 -translate-x-1/2 rotate-90",
+          ? "top-1/2 -right-12 !-translate-y-1/2 hover:!-translate-y-1/2"
+          : "-bottom-12 left-1/2 !-translate-x-1/2 hover:!-translate-x-1/2 rotate-90",
         className
       )}
       disabled={!canScrollNext}

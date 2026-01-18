@@ -17,8 +17,11 @@ export enum GlassType {
 export enum BeerStyle {
   PALE_ALE = 'Pale Ale',
   INDIA_PALE_ALE = 'India Pale Ale',
-  DOUBLE_IPA = 'Double IPA',
+  DOUBLE_IPA = 'Double IPA (DIPA)',
   SESSION_IPA = 'Session IPA',
+  HAZE = 'Haze',
+  HOP_SATURATED_ALE = 'Hop Saturated Ale',
+  ULTRA_HOPPED_ALE = 'Ultra Hopped Ale',
   IMPERIAL_STOUT = 'Imperial Stout',
   BOCK = 'Bock',
   SPARKLING_HOP_WATER = 'Sparkling Hop Water',
@@ -83,6 +86,18 @@ export function getLocationAvailability(availability: BeerAvailability | undefin
 }
 
 /**
+ * Untappd review from a check-in
+ */
+export interface UntappdReview {
+  username: string;
+  rating: number;
+  text: string;
+  date?: string;
+  url?: string;
+  image?: string;
+}
+
+/**
  * Main beer interface representing all beer properties
  */
 export interface Beer {
@@ -98,7 +113,10 @@ export interface Beer {
   glutenFree: boolean;
   /** Can be a boolean (true = use local PNG), or a URL string from Payload CMS */
   image: boolean | string;
-  untappd?: number;
+  untappd?: number | string;
+  untappdRating?: number | null;
+  untappdRatingCount?: number | null;
+  positiveReviews?: UntappdReview[];
   recipe?: number;
   hops?: string;
   /** Tap/draft number (position in menu) */
