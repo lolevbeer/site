@@ -63,8 +63,8 @@ export const Beers: CollectionConfig = {
           )
         }
 
-        // Auto-increment recipe number for new beers
-        if (operation === 'create' && !data.recipe) {
+        // Auto-increment recipe number for new beers (always, even when cloning)
+        if (operation === 'create') {
           const lastBeer = await req.payload.find({
             collection: 'beers',
             sort: '-recipe',
@@ -237,7 +237,7 @@ export const Beers: CollectionConfig = {
       admin: {
         description: 'Auto-incremented recipe number',
         position: 'sidebar',
-        readOnly: true,
+        readOnly: ({ req }) => !isAdmin({ req }),
       },
     },
     {
