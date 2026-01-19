@@ -240,6 +240,7 @@ export const Beers: CollectionConfig = {
       admin: {
         description: 'Auto-incremented recipe number (admin-editable)',
         position: 'sidebar',
+        readOnly: false,
       },
     },
     {
