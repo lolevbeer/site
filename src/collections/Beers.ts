@@ -234,13 +234,9 @@ export const Beers: CollectionConfig = {
     {
       name: 'recipe',
       type: 'number',
-      access: {
-        update: isAdmin,
-      },
       admin: {
-        description: 'Auto-incremented recipe number (admin-editable)',
+        description: 'Auto-incremented recipe number',
         position: 'sidebar',
-        readOnly: false,
       },
     },
     {

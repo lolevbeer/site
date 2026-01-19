@@ -190,7 +190,7 @@ export interface Beer {
    */
   slug: string;
   /**
-   * Auto-incremented recipe number (admin-editable)
+   * Auto-incremented recipe number
    */
   recipe?: number | null;
   hideFromSite?: boolean | null;
