@@ -234,6 +234,7 @@ export const Beers: CollectionConfig = {
     {
       name: 'recipe',
       type: 'number',
+      unique: true,
       admin: {
         description: 'Auto-incremented recipe number',
         position: 'sidebar',
