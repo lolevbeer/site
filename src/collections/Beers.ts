@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { APIError } from 'payload'
 import { revalidateTag } from 'next/cache'
 import { generateUniqueSlug } from './utils/generateUniqueSlug'
 import { adminAccess, beerManagerAccess, isAdmin } from '@/src/access/roles'
@@ -92,7 +93,10 @@ export const Beers: CollectionConfig = {
           })
 
           if (existing.docs.length > 0) {
-            throw new Error(`Recipe number ${data.recipe} is already in use by "${existing.docs[0].name}"`)
+            throw new APIError(
+              `Recipe number ${data.recipe} is already in use by "${existing.docs[0].name}"`,
+              400,
+            )
           }
         }
 
