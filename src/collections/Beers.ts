@@ -79,6 +79,23 @@ export const Beers: CollectionConfig = {
           }
         }
 
+        // Validate recipe number is unique (on create or when changed)
+        if (data.recipe !== undefined && data.recipe !== originalDoc?.recipe) {
+          const existing = await req.payload.find({
+            collection: 'beers',
+            where: {
+              recipe: { equals: data.recipe },
+              id: { not_equals: originalDoc?.id },
+            },
+            limit: 1,
+            overrideAccess: true,
+          })
+
+          if (existing.docs.length > 0) {
+            throw new Error(`Recipe number ${data.recipe} is already in use by "${existing.docs[0].name}"`)
+          }
+        }
+
         // Auto-fetch Untappd rating when URL is set/changed
         if (data.untappd && data.untappd !== originalDoc?.untappd) {
           const { rating, ratingCount, positiveReviews } = await fetchUntappdData(data.untappd)
