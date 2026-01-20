@@ -459,7 +459,10 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
         <div className="mt-8">
           <h2 className="text-2xl font-bold mb-6">Reviews</h2>
           <div className="space-y-4">
-            {beer.positiveReviews.map((review, index) => {
+            {[...beer.positiveReviews].sort((a, b) => {
+              if (!a.date || !b.date) return 0;
+              return new Date(b.date).getTime() - new Date(a.date).getTime();
+            }).map((review, index) => {
               const content = (
                 <>
                   {review.image && (
