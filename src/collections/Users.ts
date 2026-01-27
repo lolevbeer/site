@@ -1,9 +1,12 @@
 import type { CollectionConfig } from 'payload'
+import { APIError } from 'payload'
 import {
   adminAccess,
   adminFieldAccess,
   adminOrSelfAccess,
   hasRole,
+  isAdmin,
+  leadBartenderAccess,
 } from '@/src/access/roles'
 
 export const Users: CollectionConfig = {
@@ -19,10 +22,29 @@ export const Users: CollectionConfig = {
   },
   access: {
     read: adminOrSelfAccess,
-    create: adminAccess,
+    create: leadBartenderAccess,
     update: adminOrSelfAccess,
     delete: adminAccess,
     admin: ({ req: { user } }) => Boolean(user), // Must be logged in to access admin
+  },
+  hooks: {
+    beforeChange: [
+      ({ data, req, operation }) => {
+        if (operation !== 'create') return data
+        if (isAdmin(req.user)) return data
+        if (!hasRole(req.user, 'lead-bartender')) return data
+
+        // Lead bartenders can only create users with 'bartender' role
+        const roles: string[] = data.roles || []
+        const onlyBartenderRole = roles.length > 0 && roles.every((role) => role === 'bartender')
+
+        if (!onlyBartenderRole) {
+          throw new APIError('Lead Bartenders can only create users with the Bartender role', 403)
+        }
+
+        return data
+      },
+    ],
   },
   fields: [
     {
@@ -62,7 +84,9 @@ export const Users: CollectionConfig = {
           'Admins can manage users and all content. Event/Beer/Food Managers can manage their respective collections. Lead Bartenders can update line cleaning dates. Bartenders can update menus. Users can have multiple roles.',
       },
       access: {
-        // Only admins can change roles
+        // Lead bartenders can set roles on create (validated by hook to only allow 'bartender')
+        // Only admins can change roles on existing users
+        create: ({ req: { user } }) => hasRole(user, ['admin', 'lead-bartender']),
         update: adminFieldAccess,
       },
     },

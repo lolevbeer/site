@@ -95,3 +95,11 @@ export const eventManagerAccess: Access = ({ req: { user } }) => {
 export const foodManagerAccess: Access = ({ req: { user } }) => {
   return hasRole(user, ['admin', 'food-manager'])
 }
+
+/**
+ * Access control: User must have admin or lead-bartender role
+ * Used for creating bartender users
+ */
+export const leadBartenderAccess: Access = ({ req: { user } }) => {
+  return hasRole(user, ['admin', 'lead-bartender'])
+}
