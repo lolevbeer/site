@@ -368,7 +368,9 @@ export const Beers: CollectionConfig = {
       type: 'json',
       admin: {
         description: 'MGR agent approved reviews',
-        readOnly: true,
+        components: {
+          Field: '@/src/components/admin/ReviewManager#ReviewManager',
+        },
       },
     },
   ],

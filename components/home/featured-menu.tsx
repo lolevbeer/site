@@ -16,6 +16,7 @@ import { useAnimatedList, getAnimationClass } from '@/lib/hooks/use-animated-lis
 import { useAuth } from '@/lib/hooks/use-auth';
 import { getMediaUrl } from '@/lib/utils/media-utils';
 import { extractBeerFromMenuItem, extractProductFromMenuItem } from '@/lib/utils/menu-item-utils';
+import { getTodayEST } from '@/lib/utils/date';
 import type { Menu, Style, Location } from '@/src/payload-types';
 import type { Beer } from '@/lib/types/beer';
 import { Logo } from '@/components/ui/logo';
@@ -29,14 +30,16 @@ function parsePrice(price: string | number | null | undefined): number | undefin
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
-/** Format the lines cleaned date as a relative description */
+/** Format the lines cleaned date as a relative description using EST timezone */
 function formatLinesCleanedDate(dateStr: string | null | undefined): string | null {
   if (!dateStr) return null;
-  const diffDays = Math.floor((Date.now() - new Date(dateStr).getTime()) / MS_PER_DAY);
 
-  if (diffDays === 0) return 'Draft lines cleaned today';
-  if (diffDays === 1) return 'Draft lines cleaned 1 day ago';
-  return `Draft lines cleaned ${diffDays} days ago`;
+  const todayMs = new Date(`${getTodayEST()}T12:00:00`).getTime();
+  const cleanedMs = new Date(`${dateStr.split('T')[0]}T12:00:00`).getTime();
+  const diffDays = Math.round((todayMs - cleanedMs) / MS_PER_DAY);
+
+  const daysText = diffDays === 0 ? 'today' : `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
+  return `Draft lines cleaned ${daysText}`;
 }
 
 type MenuType = 'draft' | 'cans';
@@ -393,8 +396,10 @@ export function FeaturedMenu({ menuType, menu, menus = [], animated = false, ite
     return (
       <section className="h-full flex flex-col bg-background overflow-hidden">
         {/* Header row with Lolev Beer, menu title, and logo aligned */}
-        <div className="flex items-center justify-between flex-shrink-0" style={{ padding: '2vh 1vw', marginBottom: '0.5vh' }}>
-          <span className="font-bold text-foreground-muted" style={{ fontSize: '4vh' }}>Lolev Beer</span>
+        <div className="flex items-center flex-shrink-0" style={{ padding: '2vh 1vw', marginBottom: '0.5vh' }}>
+          <div className="flex-1">
+            <span className="font-bold text-foreground-muted" style={{ fontSize: '4vh' }}>Lolev Beer</span>
+          </div>
           <div className="text-center">
             <h2 className="font-bold" style={{ fontSize: '4vh' }}>{menu?.name || title}</h2>
             {linesCleanedText && (
@@ -403,7 +408,9 @@ export function FeaturedMenu({ menuType, menu, menus = [], animated = false, ite
               </p>
             )}
           </div>
-          <Logo width={48} height={52} />
+          <div className="flex-1 flex justify-end">
+            <Logo width={48} height={52} />
+          </div>
         </div>
         <div className="w-full flex-1 flex flex-col" style={{ padding: '0 0 0.5vh 0' }}>
           <div className="flex-1 overflow-y-auto" style={{ padding: '0 1vw' }}>
