@@ -2,7 +2,7 @@
 
 import { useField, FieldLabel } from '@payloadcms/ui'
 import type { JSONFieldClientProps } from 'payload'
-import { Trash2 } from 'lucide-react'
+import { Eye, EyeOff } from 'lucide-react'
 
 interface UntappdReview {
   username: string
@@ -11,6 +11,7 @@ interface UntappdReview {
   date?: string
   url?: string
   image?: string
+  hidden?: boolean
 }
 
 export function ReviewManager(props: JSONFieldClientProps) {
@@ -19,8 +20,10 @@ export function ReviewManager(props: JSONFieldClientProps) {
 
   const reviews = value || []
 
-  const handleDelete = (index: number) => {
-    const updated = reviews.filter((_, i) => i !== index)
+  const toggleHidden = (index: number) => {
+    const updated = reviews.map((review, i) =>
+      i === index ? { ...review, hidden: !review.hidden } : review
+    )
     setValue(updated)
   }
 
@@ -49,16 +52,21 @@ export function ReviewManager(props: JSONFieldClientProps) {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
         <FieldLabel label={field.label || field.name} path={path} />
         <span style={{ fontSize: '12px', color: 'var(--theme-elevation-500)' }}>
-          {reviews.length} review{reviews.length !== 1 ? 's' : ''}
+          {reviews.filter(r => !r.hidden).length} visible / {reviews.length} total
         </span>
       </div>
       {reviews.length === 0 ? (
         <div style={{ padding: '16px', color: 'var(--theme-elevation-500)', fontStyle: 'italic' }}>
           No reviews yet
         </div>
-      ) : reviews.map((review, index) => (
+      ) : [...reviews]
+        .map((review, idx) => ({ ...review, _idx: idx }))
+        .sort((a, b) => {
+          if (!a.date || !b.date) return 0
+          return new Date(b.date).getTime() - new Date(a.date).getTime()
+        }).map((review) => (
         <div
-          key={review.url || `${review.username}-${review.date}-${index}`}
+          key={review.url || `${review.username}-${review.date}-${review._idx}`}
           style={{
             display: 'flex',
             alignItems: 'flex-start',
@@ -66,6 +74,7 @@ export function ReviewManager(props: JSONFieldClientProps) {
             padding: '10px 12px',
             borderBottom: '1px solid var(--theme-elevation-100)',
             gap: '12px',
+            opacity: review.hidden ? 0.5 : 1,
           }}
         >
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -78,10 +87,7 @@ export function ReviewManager(props: JSONFieldClientProps) {
             }}>
               <span style={{ fontWeight: 600 }}>{review.username}</span>
               {review.date && (
-                <span style={{
-                  fontSize: '12px',
-                  color: 'var(--theme-elevation-500)'
-                }}>
+                <span style={{ fontSize: '12px', color: 'var(--theme-elevation-500)' }}>
                   {formatRelativeTime(review.date)}
                 </span>
               )}
@@ -94,38 +100,36 @@ export function ReviewManager(props: JSONFieldClientProps) {
               }}>
                 ★ {review.rating.toFixed(1)}
               </span>
+              {review.hidden && (
+                <span style={{
+                  fontSize: '11px',
+                  color: 'var(--theme-error-500)',
+                  fontWeight: 500
+                }}>
+                  Hidden
+                </span>
+              )}
             </div>
             {review.text && (
-              <div style={{
-                fontSize: '13px',
-                color: 'var(--theme-elevation-700)',
-                lineHeight: '1.4'
-              }}>
+              <div style={{ fontSize: '13px', color: 'var(--theme-elevation-700)', lineHeight: '1.4' }}>
                 {truncateText(review.text)}
               </div>
             )}
           </div>
           <button
             type="button"
-            onClick={() => handleDelete(index)}
+            onClick={() => toggleHidden(review._idx)}
             style={{
               background: 'none',
               border: 'none',
               cursor: 'pointer',
               padding: '4px',
-              color: 'var(--theme-elevation-400)',
-              transition: 'color 0.15s ease',
+              color: review.hidden ? 'var(--theme-success-500)' : 'var(--theme-elevation-400)',
               flexShrink: 0,
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = 'var(--theme-error-500)'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = 'var(--theme-elevation-400)'
-            }}
-            title="Remove review"
+            title={review.hidden ? 'Show review' : 'Hide review'}
           >
-            <Trash2 size={16} />
+            {review.hidden ? <Eye size={16} /> : <EyeOff size={16} />}
           </button>
         </div>
       ))}

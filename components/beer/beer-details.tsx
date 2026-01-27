@@ -455,14 +455,16 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
       </div>
 
       {/* Reviews Section */}
-      {beer.positiveReviews && beer.positiveReviews.length > 0 && (
+      {beer.positiveReviews && beer.positiveReviews.filter((r: { hidden?: boolean }) => !r.hidden).length > 0 && (
         <div className="mt-8">
           <h2 className="text-2xl font-bold mb-6">Reviews</h2>
           <div className="space-y-4">
-            {[...beer.positiveReviews].sort((a, b) => {
-              if (!a.date || !b.date) return 0;
-              return new Date(b.date).getTime() - new Date(a.date).getTime();
-            }).map((review, index) => {
+            {[...beer.positiveReviews]
+              .filter((r: { hidden?: boolean }) => !r.hidden)
+              .sort((a, b) => {
+                if (!a.date || !b.date) return 0;
+                return new Date(b.date).getTime() - new Date(a.date).getTime();
+              }).map((review, index) => {
               const content = (
                 <>
                   {review.image && (
