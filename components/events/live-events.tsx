@@ -3,12 +3,17 @@
 import { useMemo } from 'react'
 import { useEventsStream } from '@/lib/hooks/use-events-stream'
 import { Logo } from '@/components/ui/logo'
+import { FeaturedCans } from '@/components/home/featured-menu'
 import type { BreweryEvent } from '@/lib/types/event'
+import type { FoodItem } from '@/src/app/(frontend)/e/[location]/page'
+import type { PayloadMenu } from '@/lib/utils/payload-api'
 import randomColor from 'randomcolor'
 
 interface LiveEventsProps {
   location: string
   initialEvents: BreweryEvent[]
+  initialFood?: FoodItem[]
+  cansMenu?: PayloadMenu | null
   initialLocationName: string
 }
 
@@ -138,9 +143,38 @@ function EventCard({ event, accentColor }: { event: BreweryEvent; accentColor?: 
 }
 
 /**
+ * Food card for large display
+ */
+function FoodCard({ food, accentColor }: { food: FoodItem; accentColor?: string }) {
+  const dateDisplay = formatEventDate(food.date)
+  const timeDisplay = food.time ? formatTime(food.time) : ''
+  const isToday = dateDisplay === 'Today'
+  const isTomorrow = dateDisplay === 'Tomorrow'
+
+  return (
+    <div className="w-full text-center" style={{ padding: '1.5vh 2vw' }}>
+      <div className="flex items-center justify-center flex-wrap" style={{ gap: '1.5vh' }}>
+        <h3
+          className="font-bold leading-tight transition-colors duration-500"
+          style={{ fontSize: '3vh', color: accentColor }}
+        >
+          {food.vendor}
+        </h3>
+        <span
+          className={`font-semibold ${isToday ? 'text-primary' : isTomorrow ? 'text-amber-500' : 'text-foreground-muted'}`}
+          style={{ fontSize: '2.2vh' }}
+        >
+          {dateDisplay}{timeDisplay && ` @ ${timeDisplay}`}
+        </span>
+      </div>
+    </div>
+  )
+}
+
+/**
  * Live-updating events display component for large displays
  */
-export function LiveEvents({ location, initialEvents, initialLocationName }: LiveEventsProps) {
+export function LiveEvents({ location, initialEvents, initialFood = [], cansMenu, initialLocationName }: LiveEventsProps) {
   const { events, locationName, theme, pollCount } = useEventsStream(
     location,
     initialEvents,
@@ -151,10 +185,37 @@ export function LiveEvents({ location, initialEvents, initialLocationName }: Liv
     }
   )
 
+  // For now, food is static (not polled) - could add useFoodStream later
+  const food = initialFood
+
+  // Combine events and food into a single sorted list
+  type DisplayItem = { type: 'event'; data: BreweryEvent } | { type: 'food'; data: FoodItem }
+  const combinedItems = useMemo(() => {
+    const items: DisplayItem[] = [
+      ...events.map((e) => ({ type: 'event' as const, data: e })),
+      ...food.map((f) => ({ type: 'food' as const, data: f })),
+    ]
+    return items.sort((a, b) => a.data.date.localeCompare(b.data.date))
+  }, [events, food])
+
+  // Dynamic title based on content
+  const hasEvents = events.length > 0
+  const hasFood = food.length > 0
+  const hasContent = hasEvents || hasFood
+  const title = hasContent
+    ? (hasEvents && hasFood
+        ? 'Upcoming Food & Events'
+        : hasFood
+          ? 'Upcoming Food'
+          : 'Upcoming Events')
+    : cansMenu
+      ? 'Cans'
+      : 'Upcoming Events'
+
   // Generate random light colors that cycle every ~30 seconds (dark mode only)
   const colorSeed = Math.floor(pollCount / 6)
   const itemColors = useMemo(() => {
-    const itemCount = events.length
+    const itemCount = combinedItems.length
     if (itemCount === 0 || theme !== 'dark') return undefined
 
     return randomColor({
@@ -162,7 +223,7 @@ export function LiveEvents({ location, initialEvents, initialLocationName }: Liv
       luminosity: 'light',
       seed: colorSeed,
     })
-  }, [events.length, theme, colorSeed])
+  }, [combinedItems.length, theme, colorSeed])
 
   const themeVars = theme === 'dark' ? darkVars : lightVars
 
@@ -170,36 +231,50 @@ export function LiveEvents({ location, initialEvents, initialLocationName }: Liv
     <div className="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground" style={themeVars}>
       <section className="h-full flex flex-col bg-background overflow-hidden">
         {/* Header row with Lolev Beer, title, and logo aligned */}
-        <div className="flex items-center justify-between flex-shrink-0" style={{ padding: '2vh 1vw', marginBottom: '0.5vh' }}>
-          <span className="font-bold text-foreground-muted" style={{ fontSize: '4vh' }}>Lolev Beer</span>
+        <div className="flex items-center flex-shrink-0" style={{ padding: '2vh 1vw', marginBottom: '0.5vh' }}>
+          <div className="flex-1">
+            <span className="font-bold text-foreground-muted" style={{ fontSize: '4vh' }}>Lolev Beer</span>
+          </div>
           <div className="text-center">
             <h2 className="font-bold" style={{ fontSize: '4vh' }}>
-              Upcoming Events
+              {title}
             </h2>
             <p className="text-foreground-muted" style={{ fontSize: '2vh' }}>
               {locationName}
             </p>
           </div>
-          <Logo width={48} height={52} />
+          <div className="flex-1 flex justify-end">
+            <Logo width={48} height={52} />
+          </div>
         </div>
         <div className="w-full flex-1 flex flex-col" style={{ padding: '0 0 0.5vh 0' }}>
 
           <div className="flex-1 overflow-y-auto flex flex-col items-center justify-center" style={{ padding: '0 1vw' }}>
-            {events.length > 0 ? (
+            {combinedItems.length > 0 ? (
               <div className="flex flex-col items-center w-full max-w-4xl">
-                {events.map((event, idx) => (
-                  <EventCard
-                    key={event.id || idx}
-                    event={event}
-                    accentColor={itemColors?.[idx]}
-                  />
+                {combinedItems.map((item, idx) => (
+                  item.type === 'event' ? (
+                    <EventCard
+                      key={`event-${item.data.id || idx}`}
+                      event={item.data}
+                      accentColor={itemColors?.[idx]}
+                    />
+                  ) : (
+                    <FoodCard
+                      key={`food-${item.data.id || idx}`}
+                      food={item.data}
+                      accentColor={itemColors?.[idx]}
+                    />
+                  )
                 ))}
               </div>
+            ) : cansMenu ? (
+              <FeaturedCans menu={cansMenu} hideHeader />
             ) : (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center">
                   <p className="text-foreground-muted" style={{ fontSize: '2.5vh' }}>
-                    No upcoming events scheduled
+                    No upcoming food or events scheduled
                   </p>
                   <p className="text-foreground-muted" style={{ fontSize: '1.8vh', marginTop: '1vh' }}>
                     Check back soon!

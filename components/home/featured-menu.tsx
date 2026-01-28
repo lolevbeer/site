@@ -89,6 +89,8 @@ interface FeaturedMenuProps {
   animated?: boolean;
   /** Random colors to apply to items (dark mode only, cycles on poll) */
   itemColors?: string[];
+  /** Hide header when embedding in another component */
+  hideHeader?: boolean;
 }
 
 /** Check if a date is within the last N days */
@@ -363,7 +365,7 @@ function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fu
   );
 }
 
-export function FeaturedMenu({ menuType, menu, menus = [], animated = false, itemColors }: FeaturedMenuProps) {
+export function FeaturedMenu({ menuType, menu, menus = [], animated = false, itemColors, hideHeader = false }: FeaturedMenuProps) {
   const { currentLocation } = useLocationContext();
   const title = menuType === 'draft' ? 'Draft' : 'Cans';
   const emptyMessage = menuType === 'draft'
@@ -396,22 +398,24 @@ export function FeaturedMenu({ menuType, menu, menus = [], animated = false, ite
     return (
       <section className="h-full flex flex-col bg-background overflow-hidden">
         {/* Header row with Lolev Beer, menu title, and logo aligned */}
-        <div className="flex items-center flex-shrink-0" style={{ padding: '2vh 1vw', marginBottom: '0.5vh' }}>
-          <div className="flex-1">
-            <span className="font-bold text-foreground-muted" style={{ fontSize: '4vh' }}>Lolev Beer</span>
+        {!hideHeader && (
+          <div className="flex items-center flex-shrink-0" style={{ padding: '2vh 1vw', marginBottom: '0.5vh' }}>
+            <div className="flex-1">
+              <span className="font-bold text-foreground-muted" style={{ fontSize: '4vh' }}>Lolev Beer</span>
+            </div>
+            <div className="text-center">
+              <h2 className="font-bold" style={{ fontSize: '4vh' }}>{menu?.name || title}</h2>
+              {linesCleanedText && (
+                <p className="text-foreground-muted" style={{ fontSize: '1.8vh', marginTop: '0.5vh' }}>
+                  {linesCleanedText}
+                </p>
+              )}
+            </div>
+            <div className="flex-1 flex justify-end">
+              <Logo width={48} height={52} />
+            </div>
           </div>
-          <div className="text-center">
-            <h2 className="font-bold" style={{ fontSize: '4vh' }}>{menu?.name || title}</h2>
-            {linesCleanedText && (
-              <p className="text-foreground-muted" style={{ fontSize: '1.8vh', marginTop: '0.5vh' }}>
-                {linesCleanedText}
-              </p>
-            )}
-          </div>
-          <div className="flex-1 flex justify-end">
-            <Logo width={48} height={52} />
-          </div>
-        </div>
+        )}
         <div className="w-full flex-1 flex flex-col" style={{ padding: '0 0 0.5vh 0' }}>
           <div className="flex-1 overflow-y-auto" style={{ padding: '0 1vw' }}>
             {itemsToRender.length > 0 ? (
