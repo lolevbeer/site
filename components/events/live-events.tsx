@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
+import Image from 'next/image'
 import { useEventsStream } from '@/lib/hooks/use-events-stream'
 import { Logo } from '@/components/ui/logo'
 import { FeaturedCans } from '@/components/home/featured-menu'
@@ -154,6 +155,17 @@ function FoodCard({ food, accentColor }: { food: FoodItem; accentColor?: string 
   return (
     <div className="w-full text-center" style={{ padding: '1.5vh 2vw' }}>
       <div className="flex items-center justify-center flex-wrap" style={{ gap: '1.5vh' }}>
+        {food.logoUrl && (
+          <div className="relative rounded-full overflow-hidden bg-muted flex-shrink-0" style={{ width: '4vh', height: '4vh' }}>
+            <Image
+              src={food.logoUrl}
+              alt={`${food.vendor} logo`}
+              fill
+              className="object-cover"
+              sizes="48px"
+            />
+          </div>
+        )}
         <h3
           className="font-bold leading-tight transition-colors duration-500"
           style={{ fontSize: '3vh', color: accentColor }}
@@ -195,7 +207,7 @@ export function LiveEvents({ location, initialEvents, initialFood = [], cansMenu
       ...events.map((e) => ({ type: 'event' as const, data: e })),
       ...food.map((f) => ({ type: 'food' as const, data: f })),
     ]
-    return items.sort((a, b) => a.data.date.localeCompare(b.data.date))
+    return items.sort((a, b) => a.data.date.localeCompare(b.data.date)).slice(0, 10)
   }, [events, food])
 
   // Dynamic title based on content
