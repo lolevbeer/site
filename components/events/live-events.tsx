@@ -235,11 +235,11 @@ export function LiveEvents({ location, initialEvents, initialFood = [], cansMenu
           <div className="flex-1">
             <span className="font-bold text-foreground-muted" style={{ fontSize: '4vh' }}>Lolev Beer</span>
           </div>
-          <div className="text-center">
+          <div className="flex-1 text-center">
             <h2 className="font-bold" style={{ fontSize: '4vh' }}>
               {title}
             </h2>
-            <p className="text-foreground-muted" style={{ fontSize: '2vh' }}>
+            <p className="text-foreground-muted" style={{ fontSize: '1.8vh', marginTop: '0.5vh' }}>
               {locationName}
             </p>
           </div>

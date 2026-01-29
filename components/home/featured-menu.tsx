@@ -78,6 +78,8 @@ interface MenuItem {
   createdAt?: string;
   /** Untappd rating (0-5 scale) */
   untappdRating?: number | null;
+  /** True when this slot has no product assigned (empty tap) */
+  isEmpty?: boolean;
   [key: string]: unknown;
 }
 
@@ -141,7 +143,20 @@ function convertMenuItems(menuData: Menu): MenuItem[] {
             createdAt: prod.createdAt,
           };
         }
-        return null;
+        // Empty slot — no product assigned (represents an empty tap)
+        return {
+          variant: `empty-${index}`,
+          name: '',
+          type: '',
+          abv: '',
+          description: '',
+          glutenFree: false,
+          glass: 'pint',
+          tap: index + 1,
+          pricing: {},
+          availability: { hideFromSite: false },
+          isEmpty: true,
+        };
       }
 
       if (!beer.slug) return null;
@@ -181,7 +196,7 @@ function convertMenuItems(menuData: Menu): MenuItem[] {
         untappdRating: (beer as { untappdRating?: number | null }).untappdRating ?? null,
       };
     })
-    .filter((item): item is NonNullable<typeof item> => item !== null);
+    .filter((item): item is NonNullable<typeof item> => item !== null && !item.isEmpty);
 
   // "Just Released" logic:
   // 1. If any beer GLOBALLY has justReleased manually set, only mark those
@@ -403,7 +418,7 @@ export function FeaturedMenu({ menuType, menu, menus = [], animated = false, ite
             <div className="flex-1">
               <span className="font-bold text-foreground-muted" style={{ fontSize: '4vh' }}>Lolev Beer</span>
             </div>
-            <div className="text-center">
+            <div className="flex-1 text-center">
               <h2 className="font-bold" style={{ fontSize: '4vh' }}>{menu?.name || title}</h2>
               {linesCleanedText && (
                 <p className="text-foreground-muted" style={{ fontSize: '1.8vh', marginTop: '0.5vh' }}>

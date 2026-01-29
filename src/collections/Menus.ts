@@ -138,13 +138,15 @@ export const Menus: CollectionConfig = {
         if (!data?.items || !Array.isArray(data.items)) return data
 
         // Check for duplicate products (polymorphic - could be beer or product)
+        // Skip empty slots (items without a product) which represent empty taps
         const productIds = (
-          data.items as Array<{ product?: { relationTo: string; value: string | { id?: string } } }>
+          data.items as Array<{ product?: { relationTo: string; value: string | { id?: string } } | null }>
         )
           .map((item) => {
             if (!item?.product) return null
             const value = item.product.value
             const id = typeof value === 'string' ? value : value?.id
+            if (!id) return null
             return `${item.product.relationTo}:${id}`
           })
           .filter(Boolean)
@@ -379,7 +381,7 @@ export const Menus: CollectionConfig = {
               name: 'product',
               type: 'relationship',
               relationTo: ['beers', 'products'],
-              required: true,
+              required: false,
               admin: {
                 width: '66%',
                 sortOptions: {

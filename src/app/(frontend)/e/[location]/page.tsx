@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation'
 import { BreweryEvent, EventType, EventStatus } from '@/lib/types/event'
 import type { LocationSlug } from '@/lib/types/location'
 import { getMediaUrl } from '@/lib/utils/media-utils'
-import { getCansMenu } from '@/lib/utils/payload-api'
+import { getCansMenu, getCombinedUpcomingFood } from '@/lib/utils/payload-api'
 import type { PayloadMenu } from '@/lib/utils/payload-api'
 
 // Force dynamic rendering to avoid DB connection during build
@@ -76,8 +76,8 @@ async function getDataByLocation(locationSlug: string): Promise<{
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
-  // Fetch events, food, and cans menu in parallel
-  const [eventsResult, foodResult, cansMenu] = await Promise.all([
+  // Fetch events, food (individual + recurring), and cans menu in parallel
+  const [eventsResult, combinedFood, cansMenu] = await Promise.all([
     payload.find({
       collection: 'events',
       where: {
@@ -89,16 +89,7 @@ async function getDataByLocation(locationSlug: string): Promise<{
       limit: 20,
       depth: 1,
     }),
-    payload.find({
-      collection: 'food',
-      where: {
-        date: { greater_than_equal: today.toISOString() },
-        location: { equals: location.id },
-      },
-      sort: 'date',
-      limit: 20,
-      depth: 2,
-    }),
+    getCombinedUpcomingFood(locationSlug.toLowerCase(), 20),
     getCansMenu(locationSlug.toLowerCase()),
   ])
 
@@ -122,18 +113,20 @@ async function getDataByLocation(locationSlug: string): Promise<{
     }
   })
 
-  const food: FoodItem[] = (foodResult.docs as unknown as PayloadFoodEntry[]).map((entry) => {
-    const vendorName = typeof entry.vendor === 'object' ? entry.vendor.name : entry.vendor
+  const food: FoodItem[] = combinedFood.map((entry) => {
+    const vendorName = typeof entry.vendor === 'object' ? entry.vendor.name : String(entry.vendor)
     const vendorSite = typeof entry.vendor === 'object' ? entry.vendor.site : undefined
     const vendorLogo = typeof entry.vendor === 'object' ? getMediaUrl(entry.vendor.logo) : undefined
+    const dateStr = typeof entry.date === 'string' ? entry.date.split('T')[0] : entry.date
+    const time = 'startTime' in entry ? (entry as PayloadFoodEntry).startTime : ('time' in entry ? entry.time : undefined)
 
     return {
-      id: entry.id,
-      vendor: vendorName,
-      date: entry.date.split('T')[0],
-      time: entry.startTime,
-      site: vendorSite ?? undefined,
-      logoUrl: vendorLogo ?? undefined,
+      id: typeof entry.id === 'string' ? entry.id : String(entry.id),
+      vendor: vendorName ?? 'Unknown',
+      date: dateStr,
+      time: time,
+      site: (vendorSite as string) ?? undefined,
+      logoUrl: (vendorLogo as string) ?? undefined,
     }
   })
 

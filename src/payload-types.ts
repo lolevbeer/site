@@ -334,15 +334,15 @@ export interface Menu {
    */
   themeMode?: ('auto' | 'light' | 'dark') | null;
   items: {
-    product:
-      | {
+    product?:
+      | ({
           relationTo: 'beers';
           value: string | Beer;
-        }
-      | {
+        } | null)
+      | ({
           relationTo: 'products';
           value: string | Product;
-        };
+        } | null);
     /**
      * Sale Price (optional override)
      */
