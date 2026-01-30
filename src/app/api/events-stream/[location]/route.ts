@@ -18,6 +18,7 @@ interface PayloadEvent {
   site?: string
   attendees?: number
   visibility?: string
+  tags?: string[]
   updatedAt?: string
 }
 
@@ -76,6 +77,7 @@ const getCachedEvents = (locationSlug: string) =>
           locationName: eventLocation?.name || location.name,
           site: event.site,
           attendees: event.attendees,
+          tags: event.tags,
         }
       })
 
