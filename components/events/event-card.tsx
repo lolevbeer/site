@@ -43,6 +43,7 @@ export const EventCard = React.memo(function EventCard({
       endTime={event.endTime ?? undefined}
       location={locationName}
       attendees={event.attendees ?? undefined}
+      tags={event.tags}
       site={event.site ?? undefined}
       className={className}
     />

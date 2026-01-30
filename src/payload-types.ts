@@ -501,6 +501,7 @@ export interface Event {
    * This will be linked on the website
    */
   site?: string | null;
+  tags?: ('music' | 'utensils' | 'puzzle' | 'sports' | 'beer-release' | 'mic-vocal')[] | null;
   description?: string | null;
   /**
    * Expected or registered attendees
@@ -918,6 +919,7 @@ export interface EventsSelect<T extends boolean = true> {
   endTime?: T;
   location?: T;
   site?: T;
+  tags?: T;
   description?: T;
   attendees?: T;
   pointOfContact?: T;

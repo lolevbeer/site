@@ -123,6 +123,22 @@ export const Events: CollectionConfig = {
       },
     },
     {
+      name: 'tags',
+      type: 'select',
+      hasMany: true,
+      options: [
+        { label: 'Music', value: 'music' },
+        { label: 'Food', value: 'utensils' },
+        { label: 'Games', value: 'puzzle' },
+        { label: 'Sports', value: 'sports' },
+        { label: 'Beer Release', value: 'beer-release' },
+        { label: 'Karaoke', value: 'mic-vocal' },
+      ],
+      admin: {
+        position: 'sidebar',
+      },
+    },
+    {
       name: 'description',
       type: 'textarea',
     },

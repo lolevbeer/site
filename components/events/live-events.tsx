@@ -9,6 +9,16 @@ import type { BreweryEvent } from '@/lib/types/event'
 import type { FoodItem } from '@/src/app/(frontend)/e/[location]/page'
 import type { PayloadMenu } from '@/lib/utils/payload-api'
 import randomColor from 'randomcolor'
+import { Music, Utensils, Puzzle, Trophy, Beer, MicVocal, type LucideIcon } from 'lucide-react'
+
+const tagIcons: Record<string, LucideIcon> = {
+  music: Music,
+  utensils: Utensils,
+  puzzle: Puzzle,
+  sports: Trophy,
+  'beer-release': Beer,
+  'mic-vocal': MicVocal,
+}
 
 interface LiveEventsProps {
   location: string
@@ -121,6 +131,10 @@ function EventCard({ event, accentColor }: { event: BreweryEvent; accentColor?: 
   return (
     <div className="w-full text-center" style={{ padding: '1.5vh 2vw' }}>
       <div className="flex items-center justify-center flex-wrap" style={{ gap: '1.5vh' }}>
+        {event.tags?.map((tag) => {
+          const Icon = tagIcons[tag]
+          return Icon ? <Icon key={tag} style={{ width: '3vh', height: '3vh', color: accentColor }} /> : null
+        })}
         <h3
           className="font-bold leading-tight transition-colors duration-500"
           style={{ fontSize: '3vh', color: accentColor }}

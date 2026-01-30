@@ -28,6 +28,7 @@ interface PayloadEvent {
   site?: string
   attendees?: number
   visibility?: string
+  tags?: string[]
 }
 
 interface PayloadFoodEntry {
@@ -110,6 +111,7 @@ async function getDataByLocation(locationSlug: string): Promise<{
       locationName: eventLocation?.name || location.name,
       site: event.site,
       attendees: event.attendees,
+      tags: event.tags,
     }
   })
 

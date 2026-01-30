@@ -54,6 +54,7 @@ export function EventsPageClient({ initialEvents }: EventsPageClientProps) {
               endTime={event.endTime}
               location={getLocationName(event.location)}
               description={event.description !== event.title ? event.description : undefined}
+              tags={event.tags}
               site={event.site}
             />
           )}

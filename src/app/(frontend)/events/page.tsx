@@ -36,6 +36,7 @@ interface PayloadEvent {
   site?: string;
   attendees?: number;
   visibility?: string;
+  tags?: string[];
 }
 
 /**
@@ -80,6 +81,7 @@ async function getEvents(): Promise<BreweryEvent[]> {
       locationName,
       site: event.site,
       attendees: event.attendees,
+      tags: event.tags,
     };
   });
 }
