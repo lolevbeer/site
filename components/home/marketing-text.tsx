@@ -141,8 +141,9 @@ export function MarketingText({
     const date = new Date(event.date);
     const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
     const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    const title = ('title' in event && event.title) || event.vendor || 'Event';
-    const time = event.time ? ` (${event.time.trim()})` : '';
+    const title = ('organizer' in event && event.organizer) || ('title' in event && event.title) || event.vendor || 'Event';
+    const timeVal = event.time || ('startTime' in event && event.startTime) || '';
+    const time = timeVal ? ` (${String(timeVal).trim()})` : '';
     return `${dayName}, ${dateStr} • ${title}${time}`;
   };
 
