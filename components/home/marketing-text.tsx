@@ -142,8 +142,19 @@ export function MarketingText({
     const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
     const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     const title = ('organizer' in event && event.organizer) || ('title' in event && event.title) || event.vendor || 'Event';
-    const timeVal = event.time || ('startTime' in event && event.startTime) || '';
-    const time = timeVal ? ` (${String(timeVal).trim()})` : '';
+    let time = '';
+    const rawTime = event.time || ('startTime' in event ? event.startTime : null);
+    if (rawTime && typeof rawTime === 'string') {
+      // startTime from Payload is an ISO string where only the time matters
+      if (rawTime.includes('T')) {
+        const parsed = new Date(rawTime);
+        if (!isNaN(parsed.getTime())) {
+          time = ` (${parsed.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' })})`;
+        }
+      } else {
+        time = ` (${rawTime.trim()})`;
+      }
+    }
     return `${dayName}, ${dateStr} • ${title}${time}`;
   };
 
