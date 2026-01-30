@@ -8,7 +8,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Beer } from '@/lib/types/beer';
 import type { Menu, Beer as PayloadBeer, Style } from '@/src/payload-types';
 import { useLocationContext } from '@/components/location/location-provider';
 import {
@@ -36,42 +35,30 @@ import { formatAbv, formatRating } from '@/lib/utils/formatters';
 import { getBeerImageUrl } from '@/lib/utils/media-utils';
 import { menuItemHasBeer } from '@/lib/utils/menu-item-utils';
 
+type BeerReview = { username: string; text: string; date?: string; url?: string; image?: string; hidden?: boolean };
+
 interface BeerDetailsProps {
-  beer: Beer;
+  beer: PayloadBeer;
   className?: string;
 }
 
-/**
- * Extract style name from beer data
- * Handles both legacy Beer.type and Payload Beer.style (which can be string ID or Style object)
- */
-function getStyleName(beer: Beer | PayloadBeer): string {
-  // Check for Payload Beer style field first (relationship to styles collection)
-  if ('style' in beer && beer.style) {
-    if (typeof beer.style === 'string') {
-      return beer.style;
-    }
-    return (beer.style as Style).name || '';
-  }
-  // Fall back to legacy type field
-  if ('type' in beer && beer.type) {
-    return typeof beer.type === 'string' ? beer.type : '';
-  }
-  return '';
+function getStyleName(beer: PayloadBeer): string {
+  if (!beer.style) return '';
+  if (typeof beer.style === 'string') return beer.style;
+  return (beer.style as Style).name || '';
 }
 
-function getPricingInfo(beer: Beer | (PayloadBeer & { pricing?: Beer['pricing']; salePrice?: boolean })): {
+function getPricingInfo(beer: PayloadBeer): {
   draftPrice?: number;
-  singlePrice?: number;
-  fourPackPrice?: number;
+  singlePrice?: number | null;
+  fourPackPrice?: number | null;
   hasSale: boolean;
 } {
   return {
-    // Support both Payload structure (beer.draftPrice) and legacy structure (beer.pricing.draftPrice)
-    draftPrice: 'draftPrice' in beer ? beer.draftPrice : beer.pricing?.draftPrice,
-    singlePrice: ('canSingle' in beer ? beer.canSingle : undefined) ?? beer.pricing?.canSingle ?? beer.pricing?.cansSingle,
-    fourPackPrice: ('fourPack' in beer ? beer.fourPack : undefined) ?? beer.pricing?.fourPack,
-    hasSale: ('salePrice' in beer && beer.salePrice === true) || beer.pricing?.salePrice === true,
+    draftPrice: beer.draftPrice,
+    singlePrice: beer.canSingle,
+    fourPackPrice: beer.fourPack,
+    hasSale: beer.justReleased === true,
   };
 }
 
@@ -120,7 +107,7 @@ function formatReviewDate(dateStr: string): string {
 
 export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
   const { currentLocation } = useLocationContext();
-  const imagePath = getBeerImageUrl(beer.image, beer.variant);
+  const imagePath = getBeerImageUrl(beer.image, beer.slug);
   const pricing = getPricingInfo(beer);
   const GlassIcon = getGlassIcon(beer.glass);
   const [tapLocations, setTapLocations] = useState<string[]>([]);
@@ -196,7 +183,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
   }, [beer.id]);
 
   // Don't render if beer is hidden from site
-  if (beer.availability?.hideFromSite) {
+  if (beer.hideFromSite) {
     return (
       <Empty className={className}>
         <EmptyHeader>
@@ -259,18 +246,10 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center text-center px-4">
                 <p className="text-lg font-semibold text-muted-foreground/70">{beer.name}</p>
-                {beer.type && (
-                  <p className="text-sm text-muted-foreground/50 mt-1">{beer.type}</p>
+                {getStyleName(beer) && (
+                  <p className="text-sm text-muted-foreground/50 mt-1">{getStyleName(beer)}</p>
                 )}
               </div>
-            )}
-            {beer.glutenFree && (
-              <Badge
-                variant="secondary"
-                className="absolute top-4 right-4 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
-              >
-                Gluten Free
-              </Badge>
             )}
             {pricing.hasSale && (
               <Badge
@@ -336,9 +315,6 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
                 </Badge>
               )}
             </div>
-            {beer.options && (
-              <p className="text-muted-foreground mb-4">{beer.options}</p>
-            )}
           </div>
 
           {/* Description */}
@@ -455,12 +431,12 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
       </div>
 
       {/* Reviews Section */}
-      {beer.positiveReviews && beer.positiveReviews.filter((r: { hidden?: boolean }) => !r.hidden).length > 0 && (
+      {Array.isArray(beer.positiveReviews) && (beer.positiveReviews as BeerReview[]).filter((r) => !r.hidden).length > 0 && (
         <div className="mt-8">
           <h2 className="text-2xl font-bold mb-6">Reviews</h2>
           <div className="space-y-4">
-            {[...beer.positiveReviews]
-              .filter((r: { hidden?: boolean }) => !r.hidden)
+            {[...(beer.positiveReviews as BeerReview[])]
+              .filter((r) => !r.hidden)
               .sort((a, b) => {
                 if (!a.date || !b.date) return 0;
                 return new Date(b.date).getTime() - new Date(a.date).getTime();
