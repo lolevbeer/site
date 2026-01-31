@@ -139,8 +139,9 @@ export function MarketingText({
 
   const formatEvent = (event: BreweryEvent | SimpleEvent) => {
     const date = new Date(event.date);
-    const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
-    const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const tz = { timeZone: 'America/New_York' } as const;
+    const dayName = date.toLocaleDateString('en-US', { weekday: 'long', ...tz });
+    const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', ...tz });
     const title = ('organizer' in event && event.organizer) || ('title' in event && event.title) || event.vendor || 'Event';
     let time = '';
     const rawTime = event.time || ('startTime' in event ? event.startTime : null);
@@ -160,8 +161,9 @@ export function MarketingText({
 
   const formatFood = (food: FoodVendorSchedule | SimpleFood) => {
     const date = new Date(food.date);
-    const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
-    const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const tz = { timeZone: 'America/New_York' } as const;
+    const dayName = date.toLocaleDateString('en-US', { weekday: 'long', ...tz });
+    const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', ...tz });
     const time = food.time ? ` (${food.time})` : '';
     const vendorName = typeof food.vendor === 'object' ? (food.vendor as any)?.name : food.vendor;
     return `${dayName}, ${dateStr} • ${vendorName}${time}`;
