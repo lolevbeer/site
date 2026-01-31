@@ -137,11 +137,10 @@ export function MarketingText({
     return `${beer.name} • ${beer.type} • ${formatAbv(abv)}`;
   };
 
-  const formatEvent = (event: BreweryEvent | SimpleEvent) => {
+  const formatEvent = (event: BreweryEvent | SimpleEvent, timezone: string) => {
     const date = new Date(event.date);
-    const tz = { timeZone: 'America/New_York' } as const;
-    const dayName = date.toLocaleDateString('en-US', { weekday: 'long', ...tz });
-    const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', ...tz });
+    const dayName = date.toLocaleDateString('en-US', { weekday: 'long', timeZone: timezone });
+    const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: timezone });
     const title = ('organizer' in event && event.organizer) || ('title' in event && event.title) || event.vendor || 'Event';
     let time = '';
     const rawTime = event.time || ('startTime' in event ? event.startTime : null);
@@ -150,7 +149,7 @@ export function MarketingText({
       if (rawTime.includes('T')) {
         const parsed = new Date(rawTime);
         if (!isNaN(parsed.getTime())) {
-          time = ` (${parsed.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York' })})`;
+          time = ` (${parsed.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: timezone })})`;
         }
       } else {
         time = ` (${rawTime.trim()})`;
@@ -159,11 +158,10 @@ export function MarketingText({
     return `${dayName}, ${dateStr} • ${title}${time}`;
   };
 
-  const formatFood = (food: FoodVendorSchedule | SimpleFood) => {
+  const formatFood = (food: FoodVendorSchedule | SimpleFood, timezone: string) => {
     const date = new Date(food.date);
-    const tz = { timeZone: 'America/New_York' } as const;
-    const dayName = date.toLocaleDateString('en-US', { weekday: 'long', ...tz });
-    const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', ...tz });
+    const dayName = date.toLocaleDateString('en-US', { weekday: 'long', timeZone: timezone });
+    const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: timezone });
     const time = food.time ? ` (${food.time})` : '';
     const vendorName = typeof food.vendor === 'object' ? (food.vendor as any)?.name : food.vendor;
     return `${dayName}, ${dateStr} • ${vendorName}${time}`;
@@ -202,6 +200,12 @@ export function MarketingText({
   const getLocationName = (slug: string): string => {
     const location = locations.find(loc => loc.slug === slug || loc.id === slug);
     return location?.name || slug.toUpperCase();
+  };
+
+  // Get timezone for a location slug
+  const getLocationTimezone = (slug: string): string => {
+    const location = locations.find(loc => loc.slug === slug || loc.id === slug);
+    return location?.timezone || 'America/New_York';
   };
 
   return (
@@ -287,7 +291,7 @@ export function MarketingText({
                     <div>
                       <div className="mb-2">{toBoldUnicode(`${getLocationName(slug).toUpperCase()} - UPCOMING EVENTS`)}</div>
                       {events.map((event, eventIndex) => (
-                        <div key={`${event.date}-${eventIndex}`}>{formatEvent(event)}</div>
+                        <div key={`${event.date}-${eventIndex}`}>{formatEvent(event, getLocationTimezone(slug))}</div>
                       ))}
                     </div>
                   </React.Fragment>
@@ -304,7 +308,7 @@ export function MarketingText({
                     <div>
                       <div className="mb-2">{toBoldUnicode(`${getLocationName(slug).toUpperCase()} - UPCOMING FOOD`)}</div>
                       {foods.map((food, foodIndex) => (
-                        <div key={`${food.date}-${foodIndex}`}>{formatFood(food)}</div>
+                        <div key={`${food.date}-${foodIndex}`}>{formatFood(food, getLocationTimezone(slug))}</div>
                       ))}
                     </div>
                   </React.Fragment>
