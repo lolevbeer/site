@@ -76,6 +76,7 @@ interface RecurringFoodExclusions {
  * Fetch all food data server-side
  */
 async function getFoodData(): Promise<FoodVendorSchedule[]> {
+  try {
   const payload = await getPayload({ config });
 
   const today = new Date();
@@ -249,6 +250,10 @@ async function getFoodData(): Promise<FoodVendorSchedule[]> {
   combined.sort((a, b) => a.date.localeCompare(b.date));
 
   return combined;
+  } catch (error) {
+    console.error('Failed to fetch food data:', error);
+    return [];
+  }
 }
 
 /**
