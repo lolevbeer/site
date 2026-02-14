@@ -8,6 +8,7 @@ import { formatAbv } from '@/lib/utils/formatters';
 import { extractBeerFromMenuItem } from '@/lib/utils/menu-item-utils';
 import { Button } from '@/components/ui/button';
 import { useLocationContext } from '@/components/location/location-provider';
+import { getLocationDisplayName } from '@/lib/config/locations';
 
 // Convert text to sans-serif bold Unicode characters (only used in marketing view)
 function toBoldUnicode(text: string): string {
@@ -163,7 +164,7 @@ export function MarketingText({
     const dayName = date.toLocaleDateString('en-US', { weekday: 'long', timeZone: timezone });
     const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: timezone });
     const time = food.time ? ` (${food.time})` : '';
-    const vendorName = typeof food.vendor === 'object' ? (food.vendor as any)?.name : food.vendor;
+    const vendorName = typeof food.vendor === 'object' ? (food.vendor as { name?: string })?.name : food.vendor;
     return `${dayName}, ${dateStr} • ${vendorName}${time}`;
   };
 
@@ -196,11 +197,7 @@ export function MarketingText({
     }
   };
 
-  // Get location display name
-  const getLocationName = (slug: string): string => {
-    const location = locations.find(loc => loc.slug === slug || loc.id === slug);
-    return location?.name || slug.toUpperCase();
-  };
+  const getLocationName = (slug: string): string => getLocationDisplayName(locations, slug);
 
   // Get timezone for a location slug
   const getLocationTimezone = (slug: string): string => {

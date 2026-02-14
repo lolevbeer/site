@@ -6,6 +6,7 @@
 import { fetchGlobal } from './payload-api';
 import { getMediaUrl } from './formatters';
 import { logger } from '@/lib/utils/logger';
+import type { SiteContent as PayloadSiteContent } from '@/src/payload-types';
 
 export interface SiteContent {
   heroDescription?: string;
@@ -20,13 +21,13 @@ export interface SiteContent {
  */
 export async function getSiteContent(): Promise<SiteContent> {
   try {
-    const content = await fetchGlobal('site-content', 2) as any | null;
+    const content = await fetchGlobal('site-content', 2) as PayloadSiteContent | null;
     return {
-      heroDescription: content?.heroDescription,
+      heroDescription: content?.heroDescription ?? undefined,
       heroImageUrl: getMediaUrl(content?.heroImage),
-      errorMessage: content?.errorMessage,
-      todaysEventsTitle: content?.todaysEventsTitle,
-      todaysFoodTitle: content?.todaysFoodTitle,
+      errorMessage: content?.errorMessage ?? undefined,
+      todaysEventsTitle: content?.todaysEventsTitle ?? undefined,
+      todaysFoodTitle: content?.todaysFoodTitle ?? undefined,
     };
   } catch (error) {
     logger.error('Failed to fetch site content:', error);

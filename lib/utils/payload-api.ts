@@ -974,8 +974,8 @@ export const getRecurringFoodGlobal = async (): Promise<RecurringFoodGlobal> => 
           slug: 'recurring-food',
         })
         return {
-          schedules: (result as any).schedules || {},
-          exclusions: (result as any).exclusions || {},
+          schedules: (result as RecurringFoodGlobal).schedules || {},
+          exclusions: (result as RecurringFoodGlobal).exclusions || {},
         }
       },
       ['recurring-food-global'],

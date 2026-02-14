@@ -15,6 +15,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ChevronLeft, ChevronRight, Clock, MapPin, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLocationContext } from '@/components/location/location-provider';
+import { getLocationDisplayName } from '@/lib/config/locations';
 
 interface EventCalendarProps {
   events: BreweryEvent[];
@@ -50,11 +51,7 @@ export function EventCalendar({
   const { locations } = useLocationContext();
   const [currentWeek, setCurrentWeek] = useState(getStartOfWeek(new Date()));
 
-  // Helper to get location name
-  const getLocationName = (slug: LocationSlug): string => {
-    const location = locations.find(loc => (loc.slug || loc.id) === slug);
-    return location?.name || slug;
-  };
+  const getLocationName = (slug: LocationSlug): string => getLocationDisplayName(locations, slug);
 
   // Get start of week (Sunday)
   function getStartOfWeek(date: Date): Date {

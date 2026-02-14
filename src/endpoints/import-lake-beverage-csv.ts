@@ -112,7 +112,7 @@ export const importLakeBeverageCSV: PayloadHandler = async (req) => {
     const encoder = new TextEncoder()
     const stream = new ReadableStream({
       async start(controller) {
-        const send = (event: string, data: any) => {
+        const send = (event: string, data: Record<string, unknown>) => {
           controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`))
         }
 
@@ -173,9 +173,10 @@ export const importLakeBeverageCSV: PayloadHandler = async (req) => {
             details.push(`Imported: ${row.name}`)
             send('item', { name: row.name, action: 'imported', geocoded: !!coords })
             imported++
-          } catch (error: any) {
-            details.push(`Error: "${row.name}" - ${error.message}`)
-            send('item', { name: row.name, action: 'error', error: error.message })
+          } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : 'Unknown error'
+            details.push(`Error: "${row.name}" - ${message}`)
+            send('item', { name: row.name, action: 'error', error: message })
             errors++
           }
 
@@ -202,7 +203,8 @@ export const importLakeBeverageCSV: PayloadHandler = async (req) => {
         Connection: 'keep-alive',
       },
     })
-  } catch (error: any) {
-    return Response.json({ error: error.message || 'Import failed' }, { status: 500 })
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Import failed'
+    return Response.json({ error: message }, { status: 500 })
   }
 }

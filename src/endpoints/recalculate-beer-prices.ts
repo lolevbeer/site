@@ -21,7 +21,7 @@ export const recalculateBeerPrices: PayloadHandler = async (req) => {
 
   const stream = new ReadableStream({
     async start(controller) {
-      const send = (event: string, data: any) => {
+      const send = (event: string, data: Record<string, unknown>) => {
         controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`))
       }
 
@@ -60,17 +60,19 @@ export const recalculateBeerPrices: PayloadHandler = async (req) => {
             }
             results.updated++
             send('status', { message: `${dryRun ? 'Would recalculate' : 'Recalculated'}: ${beer.name}` })
-          } catch (error: any) {
-            send('error', { message: `Error recalculating ${beer.name}: ${error.message}` })
+          } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : 'Unknown error'
+            send('error', { message: `Error recalculating ${beer.name}: ${message}` })
             results.errors++
           }
         }
 
         send('status', { message: `Complete: ${results.updated} updated, ${results.skipped} skipped, ${results.errors} errors` })
         send('complete', { success: true, results, dryRun })
-      } catch (error: any) {
-        send('error', { message: error.message })
-        send('complete', { success: false, error: error.message })
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unknown error'
+        send('error', { message })
+        send('complete', { success: false, error: message })
       } finally {
         controller.close()
       }

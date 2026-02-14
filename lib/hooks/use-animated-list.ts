@@ -168,12 +168,14 @@ export function useAnimatedList<T>(
     // Update previous keys for next comparison
     prevKeysRef.current = currentKeys
 
+    // Copy ref to local variable for cleanup
+    const timeouts = timeoutsRef.current
+
     // Cleanup on unmount
     return () => {
-      timeoutsRef.current.forEach(timeout => clearTimeout(timeout))
-      timeoutsRef.current.clear()
+      timeouts.forEach(timeout => clearTimeout(timeout))
+      timeouts.clear()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentKeysString, enterDuration, exitDuration])
 
   return animatedItems

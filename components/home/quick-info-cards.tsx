@@ -8,6 +8,7 @@ import type { LocationSlug } from '@/lib/types/location';
 import { cn } from '@/lib/utils';
 import { getTodayEST, getDayOfWeekEST, toESTDate } from '@/lib/utils/date';
 import { useLocationContext } from '@/components/location/location-provider';
+import { getLocationDisplayName } from '@/lib/config/locations';
 
 interface QuickInfoCardsProps {
   beerCount?: Record<string, number>;
@@ -17,12 +18,6 @@ interface QuickInfoCardsProps {
 
 export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCardsProps) {
   const { locations } = useLocationContext();
-
-  // Get location name from slug
-  const getLocationName = (slug: LocationSlug): string => {
-    const location = locations.find(loc => (loc.slug || loc.id) === slug);
-    return location?.name || slug;
-  };
 
   // Format next event date using EST timezone
   const formatEventDate = (dateStr: string) => {
@@ -87,7 +82,7 @@ export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCar
           {nextEvent ? (
             <div className="text-sm text-muted-foreground space-y-1">
               <p className="text-lg font-medium text-foreground line-clamp-2">{nextEvent.name}</p>
-              <p>{formatEventDate(nextEvent.date)} at {getLocationName(nextEvent.location)}</p>
+              <p>{formatEventDate(nextEvent.date)} at {getLocationDisplayName(locations, nextEvent.location)}</p>
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">

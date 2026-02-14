@@ -1,5 +1,6 @@
 import type { CollectionConfig, Access, FieldAccess, Where } from 'payload'
 import { APIError } from 'payload'
+import type { User } from '@/src/payload-types'
 import { adminAccess, adminFieldAccess, hasRole } from '@/src/access/roles'
 import { revalidateMenuCache } from '@/src/hooks/revalidate-menu'
 import { logger } from '@/lib/utils/logger'
@@ -7,11 +8,11 @@ import { logger } from '@/lib/utils/logger'
 /**
  * Get location IDs from user's assigned locations
  */
-function getUserLocationIds(user: any): string[] | null {
+function getUserLocationIds(user: User | null): string[] | null {
   if (!user?.locations || !Array.isArray(user.locations) || user.locations.length === 0) {
     return null
   }
-  return user.locations.map((loc: any) => (typeof loc === 'object' ? loc.id : loc))
+  return user.locations.map((loc: string | { id: string }) => (typeof loc === 'object' ? loc.id : loc))
 }
 
 /**
@@ -194,7 +195,7 @@ export const Menus: CollectionConfig = {
           const beerIds: string[] = []
           const itemBeerMap: Map<number, string> = new Map()
 
-          data.items.forEach((item: any, index: number) => {
+          data.items.forEach((item: { product?: { relationTo: string; value: string | { id?: string } } | null }, index: number) => {
             const product = item.product
             if (product?.relationTo === 'beers') {
               const beerId = typeof product.value === 'string' ? product.value : product.value?.id
@@ -219,7 +220,7 @@ export const Menus: CollectionConfig = {
           }
 
           // Build items with recipe numbers
-          const itemsWithRecipe = data.items.map((item: any, index: number) => {
+          const itemsWithRecipe = data.items.map((item: { product?: { relationTo: string; value: string | { id?: string } } | null }, index: number) => {
             const beerId = itemBeerMap.get(index)
             if (beerId) {
               return { originalItem: item, recipe: recipeMap.get(beerId) || 0 }

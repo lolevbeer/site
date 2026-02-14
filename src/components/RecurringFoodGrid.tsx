@@ -131,8 +131,8 @@ const DatesList: React.FC<DatesListProps> = ({ locationId, schedules, exclusions
   )
   const { openModal, closeModal } = useModal()
 
-  const locationExclusions = exclusions[locationId] || []
-  const locationSchedule = schedules[locationId] || {}
+  const locationExclusions = useMemo(() => exclusions[locationId] || [], [exclusions, locationId])
+  const locationSchedule = useMemo(() => schedules[locationId] || {}, [schedules, locationId])
 
   const recurringDates = useMemo(() => {
     const dates: ScheduledDate[] = []

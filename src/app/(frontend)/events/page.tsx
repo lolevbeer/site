@@ -8,8 +8,10 @@ import { getPayload } from 'payload';
 import config from '@/src/payload.config';
 import { JsonLd } from '@/components/seo/json-ld';
 import { EventsPageClient } from './events-page-client';
-import { BreweryEvent, EventType, EventStatus } from '@/lib/types/event';
-import type { LocationSlug } from '@/lib/types/location';
+import { BreweryEvent } from '@/lib/types/event';
+import { transformPayloadEventToBreweryEvent, getAllLocations } from '@/lib/utils/payload-api';
+import { getTodayMidnightISO } from '@/lib/utils/date';
+import { createLocationLookup, generateEventListJsonLd } from '@/lib/utils/json-ld';
 
 // ISR: Revalidate every 5 minutes
 export const revalidate = 300;
@@ -25,120 +27,38 @@ export const metadata: Metadata = {
   }
 };
 
-interface PayloadEvent {
-  id: string;
-  organizer: string;
-  description?: string;
-  date: string;
-  startTime?: string;
-  endTime?: string;
-  location?: { slug?: string; name?: string; id?: string } | string;
-  site?: string;
-  attendees?: number;
-  visibility?: string;
-  tags?: string[];
-}
-
 /**
  * Fetch events server-side
  */
 async function getEvents(): Promise<BreweryEvent[]> {
   const payload = await getPayload({ config });
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const todayStr = getTodayMidnightISO();
 
   const result = await payload.find({
     collection: 'events',
     where: {
       visibility: { equals: 'public' },
-      date: { greater_than_equal: today.toISOString() },
+      date: { greater_than_equal: todayStr },
     },
     sort: 'date',
     limit: 100,
     depth: 1,
   });
 
-  return (result.docs as PayloadEvent[]).map((event) => {
-    const locationSlug = typeof event.location === 'object'
-      ? event.location?.slug
-      : undefined;
-    const locationName = typeof event.location === 'object'
-      ? event.location?.name
-      : undefined;
-
-    return {
-      id: event.id,
-      title: event.organizer,
-      description: event.description || event.organizer,
-      date: event.date.split('T')[0],
-      time: event.startTime || '',
-      endTime: event.endTime,
-      vendor: event.organizer,
-      type: EventType.SPECIAL_EVENT,
-      status: EventStatus.SCHEDULED,
-      location: locationSlug as LocationSlug,
-      locationName,
-      site: event.site,
-      attendees: event.attendees,
-      tags: event.tags,
-    };
-  });
-}
-
-/**
- * Generate JSON-LD for events
- */
-function generateEventsJsonLd(events: BreweryEvent[]) {
-  if (events.length === 0) return null;
-
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'ItemList',
-    itemListElement: events.map((event, index) => {
-      const locationName = event.locationName ||
-        (event.location === 'lawrenceville' ? 'Lolev Beer - Lawrenceville' : 'Lolev Beer - Zelienople');
-
-      const locationAddress = event.location === 'lawrenceville'
-        ? '115 43rd St, Pittsburgh, PA 15201'
-        : '148 S Main St, Zelienople, PA 16063';
-
-      return {
-        '@type': 'ListItem',
-        position: index + 1,
-        item: {
-          '@type': 'Event',
-          name: event.title,
-          description: event.description,
-          startDate: event.time
-            ? `${event.date}T${event.time}`
-            : event.date,
-          ...(event.endTime && { endDate: `${event.date}T${event.endTime}` }),
-          eventStatus: 'https://schema.org/EventScheduled',
-          eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-          location: {
-            '@type': 'Place',
-            name: locationName,
-            address: {
-              '@type': 'PostalAddress',
-              streetAddress: locationAddress,
-            },
-          },
-          organizer: {
-            '@type': 'Organization',
-            name: 'Lolev Beer',
-            url: 'https://lolev.beer',
-          },
-          ...(event.site && { url: event.site }),
-        },
-      };
-    }),
-  };
+  return result.docs.map((event) =>
+    transformPayloadEventToBreweryEvent(event)
+  );
 }
 
 export default async function EventsPage() {
-  const events = await getEvents();
-  const jsonLd = generateEventsJsonLd(events);
+  const [events, locations] = await Promise.all([
+    getEvents(),
+    getAllLocations(),
+  ]);
+  const locationLookup = createLocationLookup(locations);
+
+  const jsonLd = events.length > 0 ? generateEventListJsonLd(events, locationLookup) : null;
 
   return (
     <>

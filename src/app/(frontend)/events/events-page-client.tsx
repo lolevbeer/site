@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
 import { Calendar } from 'lucide-react';
 import { useLocationContext } from '@/components/location/location-provider';
+import { getLocationDisplayName } from '@/lib/config/locations';
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
 import { TimelineList } from '@/components/ui/timeline-list';
 import { TimelineItem } from '@/components/ui/timeline-item';
@@ -19,12 +20,6 @@ interface EventsPageClientProps {
 export function EventsPageClient({ initialEvents }: EventsPageClientProps) {
   const { currentLocation, locations } = useLocationContext();
   const locationFilter = currentLocation as LocationFilter;
-
-  // Get location name from slug
-  const getLocationName = (slug: string): string => {
-    const location = locations.find(loc => (loc.slug || loc.id) === slug);
-    return location?.name || slug;
-  };
 
   // Filter events by location and sort by date
   const filteredEvents = useMemo(() => {
@@ -52,7 +47,7 @@ export function EventsPageClient({ initialEvents }: EventsPageClientProps) {
               title={event.title}
               time={event.time}
               endTime={event.endTime}
-              location={getLocationName(event.location)}
+              location={getLocationDisplayName(locations, event.location)}
               description={event.description !== event.title ? event.description : undefined}
               tags={event.tags}
               site={event.site}

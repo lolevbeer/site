@@ -10,7 +10,7 @@ import Map, {
   Source,
   Layer
 } from 'react-map-gl/mapbox';
-import type { MapMouseEvent } from 'react-map-gl/mapbox';
+import type { MapMouseEvent, MapRef } from 'react-map-gl/mapbox';
 import type { CircleLayer } from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Card } from '@/components/ui/card';
@@ -133,7 +133,7 @@ export function DistributorMap({
   });
 
   // Refs
-  const mapRef = useRef<any>(null);
+  const mapRef = useRef<MapRef>(null);
   const selectedCardRef = useRef<HTMLDivElement>(null);
 
   // Update reference location when search location changes
@@ -318,7 +318,7 @@ export function DistributorMap({
 
   // Handle map click on points
   const handleMapClick = useCallback((event: MapMouseEvent) => {
-    const features = (event as any).features;
+    const features = event.features;
     if (!features || features.length === 0) {
       setPopupLocation(null);
       return;

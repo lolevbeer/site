@@ -29,8 +29,9 @@ export const updateDistributorUrls: PayloadHandler = async (req) => {
     })
 
     return Response.json({ success: true })
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error('Failed to update distributor URLs:', error)
-    return Response.json({ error: error.message || 'Failed to update' }, { status: 500 })
+    const message = error instanceof Error ? error.message : 'Failed to update'
+    return Response.json({ error: message }, { status: 500 })
   }
 }
