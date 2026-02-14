@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useField, Button, Banner } from '@payloadcms/ui'
+import { logger } from '@/lib/utils/logger'
 
 interface SearchResult {
   name: string
@@ -57,7 +58,7 @@ export function UntappdFetcher() {
       }
     } catch (err) {
       setError('Failed to connect to Untappd')
-      console.error(err)
+      logger.error('Error occurred', err)
     } finally {
       setLoading(false)
     }
@@ -106,7 +107,7 @@ export function UntappdFetcher() {
       }
     } catch (err) {
       setError('Failed to fetch rating')
-      console.error(err)
+      logger.error('Error occurred', err)
     } finally {
       setLoading(false)
     }

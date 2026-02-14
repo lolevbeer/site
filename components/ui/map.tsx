@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/lib/utils/logger';
 import Map, {
   Marker,
   NavigationControl,
@@ -200,7 +201,7 @@ export function MapComponent({
         style={{ width: '100%', height: '100%' }}
         reuseMaps
         onError={(evt) => {
-          console.error('Map error:', evt);
+          logger.error('Map error:', evt);
           // Check error message for common issues
           const errorMsg = evt.error?.message || '';
           if (errorMsg.includes('401') || errorMsg.includes('403')) {

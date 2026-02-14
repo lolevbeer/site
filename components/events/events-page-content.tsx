@@ -11,6 +11,7 @@ import { useLocationContext } from '@/components/location/location-provider';
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
 import { JsonLd } from '@/components/seo/json-ld';
 import { generateEventListJsonLd } from '@/lib/utils/json-ld';
+import { logger } from '@/lib/utils/logger';
 
 interface EventsPageContentProps {
   initialEvents?: BreweryEvent[];
@@ -37,7 +38,7 @@ async function fetchEventsFromPayload(): Promise<BreweryEvent[]> {
 
     const response = await fetch(`/api/events?${params.toString()}`);
     if (!response.ok) {
-      console.error('Failed to fetch events:', response.status);
+      logger.error('Failed to fetch events:', undefined, { status: response.status });
       return [];
     }
 
@@ -66,7 +67,7 @@ async function fetchEventsFromPayload(): Promise<BreweryEvent[]> {
       };
     });
   } catch (error) {
-    console.error('Error fetching events from Payload:', error);
+    logger.error('Error fetching events from Payload:', error);
     return [];
   }
 }
@@ -84,7 +85,7 @@ export function EventsPageContent({ initialEvents = [] }: EventsPageContentProps
         const payloadEvents = await fetchEventsFromPayload();
         setEvents(payloadEvents);
       } catch (error) {
-        console.error('Error loading events:', error);
+        logger.error('Error loading events:', error);
       } finally {
         setLoading(false);
       }

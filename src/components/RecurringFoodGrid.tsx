@@ -10,6 +10,7 @@ import {
   type SimpleLocation,
   type FoodEvent,
 } from '@/src/actions/admin-data'
+import { logger } from '@/lib/utils/logger'
 
 const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const
 const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -173,7 +174,7 @@ const DatesList: React.FC<DatesListProps> = ({ locationId, schedules, exclusions
         })
         setIndividualFoodEvents(events)
       } catch (error) {
-        console.error('Error fetching individual food events:', error)
+        logger.error('Error fetching individual food events:', error)
       }
     }
 
@@ -198,7 +199,7 @@ const DatesList: React.FC<DatesListProps> = ({ locationId, schedules, exclusions
         const names = await getFoodVendorsByIds(vendorIds)
         setVendorNames(names)
       } catch (error) {
-        console.error('Error fetching vendor names:', error)
+        logger.error('Error fetching vendor names:', error)
       }
     }
 
@@ -586,7 +587,7 @@ export const RecurringFoodGrid: React.FC = () => {
           setActiveTab(locations[0].id)
         }
       } catch (error) {
-        console.error('Error fetching locations:', error)
+        logger.error('Error fetching locations:', error)
       } finally {
         setLoading(false)
       }

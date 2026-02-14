@@ -2,6 +2,7 @@ import type { CollectionConfig, Access, FieldAccess, Where } from 'payload'
 import { APIError } from 'payload'
 import { adminAccess, adminFieldAccess, hasRole, isAdmin } from '@/src/access/roles'
 import { revalidateMenuCache } from '@/src/hooks/revalidate-menu'
+import { logger } from '@/lib/utils/logger'
 
 /**
  * Get location IDs from user's assigned locations
@@ -101,7 +102,7 @@ export const Menus: CollectionConfig = {
               })
             } catch (error) {
               // Silently fail if user doesn't have permission to update location
-              console.error('Failed to sync linesLastCleaned to location:', error)
+              logger.error('Failed to sync linesLastCleaned to location:', error)
             }
           }
         }

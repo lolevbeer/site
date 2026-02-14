@@ -4,23 +4,10 @@ import config from '@/src/payload.config'
 import { getPittsburghTheme } from '@/lib/utils/pittsburgh-time'
 import { unstable_cache } from 'next/cache'
 import { CACHE_TAGS } from '@/lib/utils/cache'
-import { BreweryEvent, EventType, EventStatus } from '@/lib/types/event'
-import type { LocationSlug } from '@/lib/types/location'
-
-interface PayloadEvent {
-  id: string
-  organizer: string
-  description?: string
-  date: string
-  startTime?: string
-  endTime?: string
-  location?: { slug?: string; name?: string; id?: string } | string
-  site?: string
-  attendees?: number
-  visibility?: string
-  tags?: string[]
-  updatedAt?: string
-}
+import { BreweryEvent } from '@/lib/types/event'
+import { transformPayloadEventToBreweryEvent } from '@/lib/utils/payload-api'
+import { getTodayMidnightISO } from '@/lib/utils/date'
+import { logger } from '@/lib/utils/logger'
 
 /**
  * Cached events fetch with tag-based invalidation
@@ -30,8 +17,7 @@ const getCachedEvents = (locationSlug: string) =>
     async () => {
       const payload = await getPayload({ config })
 
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
+      const todayStr = getTodayMidnightISO()
 
       // Get location ID from slug
       const locationResult = await payload.find({
@@ -52,7 +38,7 @@ const getCachedEvents = (locationSlug: string) =>
         collection: 'events',
         where: {
           visibility: { equals: 'public' },
-          date: { greater_than_equal: today.toISOString() },
+          date: { greater_than_equal: todayStr },
           location: { equals: location.id },
         },
         sort: 'date',
@@ -60,26 +46,9 @@ const getCachedEvents = (locationSlug: string) =>
         depth: 1,
       })
 
-      const events: BreweryEvent[] = (result.docs as PayloadEvent[]).map((event) => {
-        const eventLocation = typeof event.location === 'object' ? event.location : null
-
-        return {
-          id: event.id,
-          title: event.organizer,
-          description: event.description || event.organizer,
-          date: event.date.split('T')[0],
-          time: event.startTime || '',
-          endTime: event.endTime,
-          vendor: event.organizer,
-          type: EventType.SPECIAL_EVENT,
-          status: EventStatus.SCHEDULED,
-          location: (eventLocation?.slug || locationSlug) as LocationSlug,
-          locationName: eventLocation?.name || location.name,
-          site: event.site,
-          attendees: event.attendees,
-          tags: event.tags,
-        }
-      })
+      const events: BreweryEvent[] = result.docs.map((event) =>
+        transformPayloadEventToBreweryEvent(event, locationSlug, location.name)
+      )
 
       // Get most recent updatedAt for timestamp
       const latestUpdate = result.docs.reduce((latest, doc) => {
@@ -135,7 +104,7 @@ export async function GET(
       }
     )
   } catch (error) {
-    console.error('Events fetch error:', error)
+    logger.error('Events fetch error:', error)
     return NextResponse.json(
       { error: 'Failed to fetch events' },
       { status: 500 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@/src/payload.config'
 import { fetchUntappdData } from '@/src/utils/untappd'
+import { logger } from '@/lib/utils/logger'
 
 /**
  * Cron job to sync Untappd ratings for all beers
@@ -78,7 +79,7 @@ export async function GET(request: NextRequest) {
         // Small delay to avoid rate limiting
         await new Promise(resolve => setTimeout(resolve, 500))
       } catch (error) {
-        console.error(`Error updating beer ${beer.name}:`, error)
+        logger.error(`Error updating beer ${beer.name}:`, error)
         results.errors++
       }
     }
@@ -89,7 +90,7 @@ export async function GET(request: NextRequest) {
       timestamp: new Date().toISOString(),
     })
   } catch (error) {
-    console.error('Untappd sync cron error:', error)
+    logger.error('Untappd sync cron error:', error)
     return NextResponse.json(
       { error: 'Failed to sync Untappd ratings' },
       { status: 500 }

@@ -5,6 +5,7 @@
 import { cookies } from 'next/headers'
 import { getPayload } from 'payload'
 import config from '@/src/payload.config'
+import { logger } from '@/lib/utils/logger'
 
 /**
  * Check if the current user is authenticated
@@ -32,7 +33,7 @@ export async function isAuthenticated(): Promise<boolean> {
     return !!user
   } catch (error) {
     // If verification fails, user is not authenticated
-    console.error('❌ Auth verification failed:', error)
+    logger.error('Auth verification failed:', error)
     return false
   }
 }

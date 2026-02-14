@@ -5,6 +5,7 @@ import { Gutter, SetStepNav, Button, Banner, Pill } from '@payloadcms/ui'
 import { format } from 'date-fns-tz'
 import { getSiteContentData } from '@/src/actions/admin-data'
 import { parseSSEStream, isSSEResponse } from '@/lib/utils/sse-parser'
+import { logger } from '@/lib/utils/logger'
 
 interface FieldChange {
   field: string
@@ -224,14 +225,14 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
 
       if (!response.ok) {
         const data = await response.json()
-        console.error('Failed to save URLs:', response.status, data.error)
+        logger.error('Failed to save URLs:', undefined, { status: response.status, error: data.error })
         setUrlsSaveStatus('error')
       } else {
         setUrlsSaveStatus('success')
         setTimeout(() => setUrlsSaveStatus('idle'), 3000)
       }
     } catch (error) {
-      console.error('Failed to save URLs:', error)
+      logger.error('Failed to save URLs:', error)
       setUrlsSaveStatus('error')
     } finally {
       setUrlsSaving(false)

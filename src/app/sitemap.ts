@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next'
 import { getAllBeersFromPayload, getAllLocations } from '@/lib/utils/payload-api'
+import { logger } from '@/lib/utils/logger'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL
@@ -84,7 +85,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.7,
       }))
   } catch (error) {
-    console.error('Error fetching beers for sitemap:', error)
+    logger.error('Error fetching beers for sitemap:', error)
   }
 
   // Location pages (if they exist)
@@ -100,7 +101,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         priority: 0.8,
       }))
   } catch (error) {
-    console.error('Error fetching locations for sitemap:', error)
+    logger.error('Error fetching locations for sitemap:', error)
   }
 
   return [...staticPages, ...beerPages, ...locationPages]

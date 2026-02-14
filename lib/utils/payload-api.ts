@@ -9,10 +9,13 @@ import config from '@/src/payload.config'
 import { cache } from 'react'
 import { unstable_cache } from 'next/cache'
 import type { Beer as PayloadBeer, Menu as PayloadMenu, Style, HolidayHour, Event as PayloadEvent, Food as PayloadFood, Distributor, Faq } from '@/src/payload-types'
-import type { PayloadLocation } from '@/lib/types/location'
+import type { PayloadLocation, LocationSlug } from '@/lib/types/location'
+import { BreweryEvent, EventType, EventStatus } from '@/lib/types/event'
 import { logger } from '@/lib/utils/logger'
 import { CACHE_TAGS } from '@/lib/utils/cache'
 import { extractBeerFromMenuItem } from './menu-item-utils'
+import { getMediaUrl } from './media-utils'
+import { getTodayEST, getTodayMidnightISO } from './date'
 
 /**
  * Get Payload instance (request-scoped cache only)
@@ -358,8 +361,57 @@ export function getStyleName(style: string | Style): string {
   return style.name
 }
 
-// Re-export getMediaUrl as getImageUrl for backward compatibility
-export { getMediaUrl as getImageUrl } from './media-utils'
+/**
+ * Transform a Payload Event document into a BreweryEvent.
+ * Handles polymorphic location field extraction.
+ */
+export function transformPayloadEventToBreweryEvent(
+  event: PayloadEvent,
+  fallbackLocationSlug?: string,
+  fallbackLocationName?: string,
+): BreweryEvent {
+  const eventLocation = typeof event.location === 'object' ? event.location : null
+
+  return {
+    id: event.id,
+    title: event.organizer,
+    description: event.description || event.organizer,
+    date: event.date.split('T')[0],
+    time: event.startTime || '',
+    endTime: event.endTime,
+    vendor: event.organizer,
+    type: EventType.SPECIAL_EVENT,
+    status: EventStatus.SCHEDULED,
+    location: (eventLocation?.slug || fallbackLocationSlug) as LocationSlug,
+    locationName: eventLocation?.name || fallbackLocationName,
+    site: event.site,
+    attendees: event.attendees,
+    tags: event.tags,
+  }
+}
+
+/**
+ * Extract vendor info from a polymorphic vendor field.
+ * Handles both object (populated) and string (ID-only) vendor references.
+ */
+export function extractVendorInfo(
+  vendor: unknown,
+  fallbackSite?: string | null,
+): { name: string; site?: string; logoUrl?: string } {
+  if (typeof vendor === 'object' && vendor !== null && 'name' in vendor) {
+    const v = vendor as { name: string; site?: string | null; logo?: unknown }
+    return {
+      name: v.name,
+      site: (fallbackSite || v.site) ?? undefined,
+      logoUrl: getMediaUrl(v.logo) ?? undefined,
+    }
+  }
+  return {
+    name: String(vendor ?? ''),
+    site: fallbackSite ?? undefined,
+  }
+}
+
 
 // getBeerImageUrl moved to formatters.ts for client-side compatibility
 
@@ -800,10 +852,7 @@ export const getAllLocationsWeeklyHours = async (): Promise<Map<string, WeeklyHo
  * Cached until 'events' tag is invalidated
  */
 export const getUpcomingEventsFromPayload = async (locationSlug: string, limit: number = 10): Promise<PayloadEvent[]> => {
-  // Use today's date as part of cache key to ensure fresh data each day
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const todayKey = today.toISOString().split('T')[0]
+  const todayKey = getTodayEST()
 
   try {
     return await unstable_cache(
@@ -826,10 +875,7 @@ export const getUpcomingEventsFromPayload = async (locationSlug: string, limit: 
 
         const locationId = locationResult.docs[0].id
 
-        // Get today's date at midnight EST
-        const currentToday = new Date()
-        currentToday.setHours(0, 0, 0, 0)
-        const todayStr = currentToday.toISOString()
+        const todayStr = getTodayMidnightISO()
 
         const result = await payload.find({
           collection: 'events',
@@ -868,10 +914,7 @@ export const getUpcomingEventsFromPayload = async (locationSlug: string, limit: 
  * Cached until 'food' tag is invalidated
  */
 export const getUpcomingFoodFromPayload = async (locationSlug: string, limit: number = 10): Promise<PayloadFood[]> => {
-  // Use today's date as part of cache key to ensure fresh data each day
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const todayKey = today.toISOString().split('T')[0]
+  const todayKey = getTodayEST()
 
   try {
     return await unstable_cache(
@@ -894,10 +937,7 @@ export const getUpcomingFoodFromPayload = async (locationSlug: string, limit: nu
 
         const locationId = locationResult.docs[0].id
 
-        // Get today's date at midnight EST
-        const currentToday = new Date()
-        currentToday.setHours(0, 0, 0, 0)
-        const todayStr = currentToday.toISOString()
+        const todayStr = getTodayMidnightISO()
 
         const result = await payload.find({
           collection: 'food',
@@ -1028,9 +1068,7 @@ export const getUpcomingRecurringFood = async (
   limit: number = 10,
   monthsAhead: number = 3
 ): Promise<RecurringFoodEntry[]> => {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const todayKey = today.toISOString().split('T')[0]
+  const todayKey = getTodayEST()
 
   try {
     return await unstable_cache(
@@ -1170,17 +1208,6 @@ export const getCombinedUpcomingFood = async (
 // Export aliases for functions that were previously in lib/data/beer-data.ts
 // This allows gradual migration without breaking existing imports
 
-/**
- * @deprecated Use getUpcomingEventsFromPayload directly
- * Alias for backward compatibility with lib/data/beer-data.ts
- */
-export const getUpcomingEvents = getUpcomingEventsFromPayload
-
-/**
- * @deprecated Use getUpcomingFoodFromPayload directly
- * Alias for backward compatibility with lib/data/beer-data.ts
- */
-export const getUpcomingFood = getUpcomingFoodFromPayload
 
 // ============ DISTRIBUTOR DATA ============
 

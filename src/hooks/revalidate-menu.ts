@@ -1,5 +1,6 @@
 import type { CollectionAfterChangeHook } from 'payload'
 import type { Menu } from '@/src/payload-types'
+import { logger } from '@/lib/utils/logger'
 
 /**
  * After a menu is changed, trigger cache revalidation
@@ -29,11 +30,11 @@ export const revalidateMenuCache: CollectionAfterChangeHook<Menu> = async ({
       })
 
       if (!response.ok) {
-        console.error('Menu revalidation failed:', await response.text())
+        logger.error('Menu revalidation failed:', undefined, { responseBody: await response.text() })
       }
     } catch (error) {
       // Don't block the save operation if revalidation fails
-      console.error('Menu revalidation error:', error)
+      logger.error('Menu revalidation error:', error)
     }
   }
 

@@ -1,5 +1,6 @@
 import type { PayloadHandler } from 'payload'
 import { getUserFromRequest } from './auth-helper'
+import { logger } from '@/lib/utils/logger'
 
 export const updateDistributorUrls: PayloadHandler = async (req) => {
   const { payload } = req
@@ -29,7 +30,7 @@ export const updateDistributorUrls: PayloadHandler = async (req) => {
 
     return Response.json({ success: true })
   } catch (error: any) {
-    console.error('Failed to update distributor URLs:', error)
+    logger.error('Failed to update distributor URLs:', error)
     return Response.json({ error: error.message || 'Failed to update' }, { status: 500 })
   }
 }

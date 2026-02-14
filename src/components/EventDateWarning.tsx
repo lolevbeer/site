@@ -8,6 +8,7 @@ import {
   getRecurringFoodData,
   getFoodVendor,
 } from '@/src/actions/admin-data'
+import { logger } from '@/lib/utils/logger'
 
 const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const
 const weekKeys = ['first', 'second', 'third', 'fourth', 'fifth'] as const
@@ -70,7 +71,7 @@ export const EventDateWarning: React.FC = () => {
             })
           }
         } catch (error) {
-          console.error('Error checking events:', error)
+          logger.error('Error checking events:', error)
         }
         setEventConflicts(eventConflicting)
 
@@ -101,7 +102,7 @@ export const EventDateWarning: React.FC = () => {
             }
           }
         } catch (error) {
-          console.error('Error checking recurring food:', error)
+          logger.error('Error checking recurring food:', error)
         }
 
         // Check individual food events using local API
@@ -111,12 +112,12 @@ export const EventDateWarning: React.FC = () => {
             vendors.push({ name: doc.vendorName, type: 'individual' })
           }
         } catch (error) {
-          console.error('Error checking individual food:', error)
+          logger.error('Error checking individual food:', error)
         }
 
         setFoodVendors(vendors)
       } catch (error) {
-        console.error('Error checking date conflicts:', error)
+        logger.error('Error checking date conflicts:', error)
         setEventConflicts([])
         setFoodVendors([])
       } finally {

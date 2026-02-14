@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@/src/payload.config'
 import { fetchUntappdData, type UntappdReview } from '@/src/utils/untappd'
+import { logger } from '@/lib/utils/logger'
 
 interface UntappdSearchResult {
   name: string
@@ -85,7 +86,7 @@ async function searchUntappd(query: string): Promise<NextResponse> {
 
     return NextResponse.json({ results, searchUrl })
   } catch (error) {
-    console.error('Error searching Untappd:', error)
+    logger.error('Error searching Untappd:', error)
     return NextResponse.json(
       { error: 'Failed to search Untappd' },
       { status: 500 }
@@ -144,7 +145,7 @@ async function fetchRating(url: string): Promise<NextResponse> {
 
     return NextResponse.json({ rating, ratingCount, positiveReviews, url } as UntappdRatingResult)
   } catch (error) {
-    console.error('Error fetching Untappd rating:', error)
+    logger.error('Error fetching Untappd rating:', error)
     return NextResponse.json(
       { error: 'Failed to fetch rating' },
       { status: 500 }

@@ -5,6 +5,7 @@
 
 import { fetchGlobal } from './payload-api';
 import { getMediaUrl } from './formatters';
+import { logger } from '@/lib/utils/logger';
 
 export interface SiteContent {
   heroDescription?: string;
@@ -28,7 +29,7 @@ export async function getSiteContent(): Promise<SiteContent> {
       todaysFoodTitle: content?.todaysFoodTitle,
     };
   } catch (error) {
-    console.error('Failed to fetch site content:', error);
+    logger.error('Failed to fetch site content:', error);
     return {};
   }
 }

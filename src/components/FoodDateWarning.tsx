@@ -7,6 +7,7 @@ import {
   getFoodVendor,
   getFoodOnDate,
 } from '@/src/actions/admin-data'
+import { logger } from '@/lib/utils/logger'
 
 const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const
 const weekKeys = ['first', 'second', 'third', 'fourth', 'fifth'] as const
@@ -75,7 +76,7 @@ export const FoodDateWarning: React.FC = () => {
               }
             }
           } catch (error) {
-            console.error('Error checking recurring vendors:', error)
+            logger.error('Error checking recurring vendors:', error)
           }
         }
 
@@ -90,12 +91,12 @@ export const FoodDateWarning: React.FC = () => {
             newWarnings.push({ type: 'individual', vendorName: doc.vendorName })
           }
         } catch (error) {
-          console.error('Error checking individual food events:', error)
+          logger.error('Error checking individual food events:', error)
         }
 
         setWarnings(newWarnings)
       } catch (error) {
-        console.error('Error checking vendors:', error)
+        logger.error('Error checking vendors:', error)
         setWarnings([])
       } finally {
         setLoading(false)
