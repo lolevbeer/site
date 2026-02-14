@@ -68,17 +68,11 @@ function formatEventDate(dateStr: string): string {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
-  const tomorrow = new Date(today)
-  tomorrow.setDate(tomorrow.getDate() + 1)
-
   const eventDate = new Date(date)
   eventDate.setHours(0, 0, 0, 0)
 
   if (eventDate.getTime() === today.getTime()) {
     return 'Today'
-  }
-  if (eventDate.getTime() === tomorrow.getTime()) {
-    return 'Tomorrow'
   }
 
   return date.toLocaleDateString('en-US', {
@@ -126,7 +120,6 @@ function EventCard({ event, accentColor }: { event: BreweryEvent; accentColor?: 
   const dateDisplay = formatEventDate(event.date)
   const timeDisplay = formatTime(event.time)
   const isToday = dateDisplay === 'Today'
-  const isTomorrow = dateDisplay === 'Tomorrow'
 
   return (
     <div className="w-full text-center" style={{ padding: '1.5vh 2vw' }}>
@@ -142,7 +135,7 @@ function EventCard({ event, accentColor }: { event: BreweryEvent; accentColor?: 
           {event.title}
         </h3>
         <span
-          className={`font-semibold ${isToday ? 'text-primary' : isTomorrow ? 'text-amber-500' : 'text-foreground-muted'}`}
+          className={`font-semibold ${isToday ? 'text-amber-500' : 'text-foreground-muted'}`}
           style={{ fontSize: '2.2vh' }}
         >
           {dateDisplay}{timeDisplay && ` @ ${timeDisplay}`}
@@ -164,7 +157,6 @@ function FoodCard({ food, accentColor }: { food: FoodItem; accentColor?: string 
   const dateDisplay = formatEventDate(food.date)
   const timeDisplay = food.time ? formatTime(food.time) : ''
   const isToday = dateDisplay === 'Today'
-  const isTomorrow = dateDisplay === 'Tomorrow'
 
   return (
     <div className="w-full text-center" style={{ padding: '1.5vh 2vw' }}>
@@ -187,7 +179,7 @@ function FoodCard({ food, accentColor }: { food: FoodItem; accentColor?: string 
           {food.vendor}
         </h3>
         <span
-          className={`font-semibold ${isToday ? 'text-primary' : isTomorrow ? 'text-amber-500' : 'text-foreground-muted'}`}
+          className={`font-semibold ${isToday ? 'text-amber-500' : 'text-foreground-muted'}`}
           style={{ fontSize: '2.2vh' }}
         >
           {dateDisplay}{timeDisplay && ` @ ${timeDisplay}`}
