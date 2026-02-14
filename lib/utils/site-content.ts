@@ -4,7 +4,7 @@
  */
 
 import { fetchGlobal } from './payload-api';
-import { getMediaUrl } from './formatters';
+import { getMediaUrl } from './media-utils';
 import { logger } from '@/lib/utils/logger';
 import type { SiteContent as PayloadSiteContent } from '@/src/payload-types';
 

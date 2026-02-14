@@ -17,7 +17,11 @@ import {
 } from './payload-api';
 import { getSiteContent } from './site-content';
 import { arrayToLocationMap } from './array-helpers';
-import type { Menu as PayloadMenu, Beer as PayloadBeer, Location as PayloadLocation } from '@/src/payload-types';
+import type { Menu as PayloadMenu, Beer as PayloadBeer, Event as PayloadEvent, Location as PayloadLocation } from '@/src/payload-types';
+
+/** Inferred types from API functions */
+type ComingSoonEntry = Awaited<ReturnType<typeof getComingSoonBeers>>[number];
+type CombinedFood = Awaited<ReturnType<typeof getCombinedUpcomingFood>>[number];
 
 /** Next event summary for quick info display */
 export interface NextEventInfo {
@@ -26,40 +30,31 @@ export interface NextEventInfo {
   location: string;
 }
 
-/** Event item with location info */
-interface EventItem {
-  organizer: string;
-  date: string;
-  location: string | { slug?: string; name?: string };
-}
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
 export interface HomePageData {
   // Core data
   locations: PayloadLocation[];
   availableBeers: PayloadBeer[];
-  comingSoonBeers: any[];
+  comingSoonBeers: ComingSoonEntry[];
   authenticated: boolean;
   siteContent: Awaited<ReturnType<typeof getSiteContent>>;
 
   // Location-specific data
   draftMenusByLocation: Record<string, PayloadMenu | null>;
   cansMenusByLocation: Record<string, PayloadMenu | null>;
-  eventsByLocation: Record<string, any[]>;
-  foodByLocation: Record<string, any[]>;
-  eventsMarketingByLocation: Record<string, any[]>;
-  foodMarketingByLocation: Record<string, any[]>;
+  eventsByLocation: Record<string, PayloadEvent[]>;
+  foodByLocation: Record<string, CombinedFood[]>;
+  eventsMarketingByLocation: Record<string, PayloadEvent[]>;
+  foodMarketingByLocation: Record<string, CombinedFood[]>;
   weeklyHours: Record<string, WeeklyHoursDay[]>;
 
   // Derived data for components
   allDraftMenus: PayloadMenu[];
   allCansMenus: PayloadMenu[];
   beerCount: Record<string, number>;
-  allEvents: any[];
-  allFood: any[];
+  allEvents: PayloadEvent[];
+  allFood: CombinedFood[];
   nextEvent: NextEventInfo | null;
 }
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
 /**
  * Fetch weekly hours for all locations.
@@ -78,15 +73,14 @@ export async function getWeeklyHoursForLocations(
 }
 
 /** Extract next event info from array of events */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function deriveNextEvent(events: any[]): NextEventInfo | null {
+function deriveNextEvent(events: PayloadEvent[]): NextEventInfo | null {
   if (events.length === 0) return null;
 
-  const event = events[0] as EventItem;
+  const event = events[0];
   const location = event.location;
-  const locationSlug = typeof location === 'string'
-    ? location
-    : location?.slug || location?.name || '';
+  const locationSlug = typeof location === 'object'
+    ? (location.slug || location.name || '')
+    : (typeof location === 'string' ? location : '');
 
   return {
     name: event.organizer,

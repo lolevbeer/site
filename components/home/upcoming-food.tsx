@@ -21,14 +21,14 @@ interface FoodVendor {
     id?: string;
     name?: string;
     site?: string | null;
-    logo?: string | { url?: string } | null;
+    logo?: unknown;
   };
   date: string;
-  time?: string;
-  startTime?: string; // PayloadFood uses startTime
+  time?: string | null;
+  startTime?: string | null;
   site?: string | null;
   day?: string;
-  location?: LocationSlug | { slug?: string } | string;
+  location?: LocationSlug | { slug?: string | null } | string;
 }
 
 interface UpcomingFoodProps {

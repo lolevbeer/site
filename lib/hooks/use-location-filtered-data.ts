@@ -57,7 +57,7 @@ export function useLocationFilteredData<T>({
   }, [locations]);
 
   // Filter data based on current location
-  const filteredData = useMemo(() => {
+  return useMemo(() => {
     if (!isHydrated) {
       return showDefaultBeforeHydration ? (dataByLocation[defaultLocationSlug] || []) : [];
     }
@@ -70,6 +70,4 @@ export function useLocationFilteredData<T>({
     // Return data for the selected location
     return dataByLocation[currentLocation] || [];
   }, [currentLocation, dataByLocation, isHydrated, showDefaultBeforeHydration, defaultLocationSlug]);
-
-  return filteredData;
 }

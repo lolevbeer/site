@@ -53,7 +53,6 @@ function extractDayHours(location: PayloadLocation, day: string): DayHours | nul
  * Check if a location is currently open based on current time
  */
 export function isLocationOpenNow(location: PayloadLocation, date?: Date): boolean {
-  const _timezone = location.timezone || 'America/New_York';
   const now = date || getCurrentESTDateTime();
   const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
   const dayOfWeek = days[now.getDay()];

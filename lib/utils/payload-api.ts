@@ -173,42 +173,28 @@ export const getMenusByLocation = async (locationSlug: string): Promise<PayloadM
 /**
  * Get draft menu for a location
  */
-export const getDraftMenu = async (locationSlug: string): Promise<PayloadMenu | null> => {
-  try {
-    const menus = await getMenusByLocation(locationSlug)
-    const draftMenu = menus.find(menu => menu.type === 'draft') || null
-
-    return draftMenu
-  } catch (error) {
-    logger.error(`Error fetching draft menu for location: ${locationSlug}`, error)
-    return null
-  }
+export async function getDraftMenu(locationSlug: string): Promise<PayloadMenu | null> {
+  const menus = await getMenusByLocation(locationSlug)
+  return menus.find(menu => menu.type === 'draft') || null
 }
 
 /**
  * Get cans menu for a location
  */
-export const getCansMenu = async (locationSlug: string): Promise<PayloadMenu | null> => {
-  try {
-    const menus = await getMenusByLocation(locationSlug)
-    const cansMenu = menus.find(menu => menu.type === 'cans') || null
+export async function getCansMenu(locationSlug: string): Promise<PayloadMenu | null> {
+  const menus = await getMenusByLocation(locationSlug)
+  const cansMenu = menus.find(menu => menu.type === 'cans') || null
 
-    // Sort menu items by beer recipe (descending - newest first)
-    if (cansMenu && cansMenu.items) {
-      cansMenu.items.sort((a, b) => {
-        const beerA = extractBeerFromMenuItem(a)
-        const beerB = extractBeerFromMenuItem(b)
-        const recipeA = beerA?.recipe || 0
-        const recipeB = beerB?.recipe || 0
-        return recipeB - recipeA
-      })
-    }
-
-    return cansMenu
-  } catch (error) {
-    logger.error(`Error fetching cans menu for location: ${locationSlug}`, error)
-    return null
+  // Sort menu items by beer recipe (descending - newest first)
+  if (cansMenu?.items) {
+    cansMenu.items.sort((a, b) => {
+      const recipeA = extractBeerFromMenuItem(a)?.recipe || 0
+      const recipeB = extractBeerFromMenuItem(b)?.recipe || 0
+      return recipeB - recipeA
+    })
   }
+
+  return cansMenu
 }
 
 /**
@@ -1148,11 +1134,6 @@ export const getCombinedUpcomingFood = async (
 
   return combined.slice(0, limit)
 }
-
-// ============ BACKWARD COMPATIBILITY ALIASES ============
-// Export aliases for functions that were previously in lib/data/beer-data.ts
-// This allows gradual migration without breaking existing imports
-
 
 // ============ DISTRIBUTOR DATA ============
 

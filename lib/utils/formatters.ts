@@ -191,14 +191,3 @@ export function getBeerPricing(beer: Beer): string {
   return items.length > 0 ? items.join(' • ') : 'See store';
 }
 
-/**
- * Extract URL from Payload media relation
- */
-export function getMediaUrl(media: unknown): string | null {
-  if (!media) return null;
-  if (typeof media === 'string') return null; // Just an ID, not populated
-  if (typeof media === 'object' && media !== null && 'url' in media) {
-    return (media as { url?: string }).url || null;
-  }
-  return null;
-}

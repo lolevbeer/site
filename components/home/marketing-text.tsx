@@ -1,9 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
-import type { Beer as PayloadBeer, Menu as PayloadMenu } from '@/src/payload-types';
-import { BreweryEvent } from '@/lib/types/event';
-import { FoodVendorSchedule } from '@/lib/types/food';
+import type { Beer as PayloadBeer, Menu as PayloadMenu, Event as PayloadEvent } from '@/src/payload-types';
 import { formatAbv } from '@/lib/utils/formatters';
 import { extractBeerFromMenuItem } from '@/lib/utils/menu-item-utils';
 import { Button } from '@/components/ui/button';
@@ -30,11 +28,11 @@ interface ComingSoonBeer {
   beer?: {
     name: string;
     slug: string;
-    style?: { name: string } | string;
-  } | string;
+    style?: { name: string } | string | null;
+  } | string | null;
   style?: {
     name: string;
-  } | string;
+  } | string | null;
 }
 
 interface SimpleBeer {
@@ -44,18 +42,11 @@ interface SimpleBeer {
   abv: string | number;
 }
 
-interface SimpleEvent {
-  date: string;
-  vendor: string;
-  time?: string;
-  site?: string;
-}
-
-interface SimpleFood {
-  vendor: string;
+/** Minimal food shape covering both PayloadFood and RecurringFoodEntry */
+interface MarketingFood {
+  vendor: string | { name?: string; id?: string };
   date: string;
   time?: string;
-  day?: string;
 }
 
 interface MarketingTextProps {
@@ -64,9 +55,9 @@ interface MarketingTextProps {
   /** Cans menus by location slug */
   cansMenusByLocation: Record<string, PayloadMenu | null>;
   /** Events by location slug */
-  eventsByLocation: Record<string, (BreweryEvent | SimpleEvent)[]>;
+  eventsByLocation: Record<string, PayloadEvent[]>;
   /** Food by location slug */
-  foodByLocation: Record<string, (FoodVendorSchedule | SimpleFood)[]>;
+  foodByLocation: Record<string, MarketingFood[]>;
   comingSoonBeers: ComingSoonBeer[];
 }
 
@@ -138,33 +129,32 @@ export function MarketingText({
     return `${beer.name} • ${beer.type} • ${formatAbv(abv)}`;
   };
 
-  const formatEvent = (event: BreweryEvent | SimpleEvent, timezone: string) => {
+  const formatEvent = (event: PayloadEvent, timezone: string) => {
     const date = new Date(event.date);
     const dayName = date.toLocaleDateString('en-US', { weekday: 'long', timeZone: timezone });
     const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: timezone });
-    const title = ('organizer' in event && event.organizer) || ('title' in event && event.title) || event.vendor || 'Event';
+    const title = event.organizer || 'Event';
     let time = '';
-    const rawTime = event.time || ('startTime' in event ? event.startTime : null);
-    if (rawTime && typeof rawTime === 'string') {
+    if (event.startTime && typeof event.startTime === 'string') {
       // startTime from Payload is an ISO string where only the time matters
-      if (rawTime.includes('T')) {
-        const parsed = new Date(rawTime);
+      if (event.startTime.includes('T')) {
+        const parsed = new Date(event.startTime);
         if (!isNaN(parsed.getTime())) {
           time = ` (${parsed.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: timezone })})`;
         }
       } else {
-        time = ` (${rawTime.trim()})`;
+        time = ` (${event.startTime.trim()})`;
       }
     }
     return `${dayName}, ${dateStr} • ${title}${time}`;
   };
 
-  const formatFood = (food: FoodVendorSchedule | SimpleFood, timezone: string) => {
+  const formatFood = (food: MarketingFood, timezone: string) => {
     const date = new Date(food.date);
     const dayName = date.toLocaleDateString('en-US', { weekday: 'long', timeZone: timezone });
     const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: timezone });
     const time = food.time ? ` (${food.time})` : '';
-    const vendorName = typeof food.vendor === 'object' ? (food.vendor as { name?: string })?.name : food.vendor;
+    const vendorName = typeof food.vendor === 'object' ? food.vendor?.name : food.vendor;
     return `${dayName}, ${dateStr} • ${vendorName}${time}`;
   };
 
@@ -172,8 +162,8 @@ export function MarketingText({
   now.setHours(0, 0, 0, 0);
 
   // Process events and food for each location
-  const processedEventsByLocation: Record<string, (BreweryEvent | SimpleEvent)[]> = {};
-  const processedFoodByLocation: Record<string, (FoodVendorSchedule | SimpleFood)[]> = {};
+  const processedEventsByLocation: Record<string, PayloadEvent[]> = {};
+  const processedFoodByLocation: Record<string, MarketingFood[]> = {};
 
   for (const [slug, events] of Object.entries(eventsByLocation)) {
     processedEventsByLocation[slug] = events

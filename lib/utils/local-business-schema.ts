@@ -7,7 +7,7 @@
 
 import type { PayloadLocation } from '@/lib/types/location'
 import type { PostalAddressJsonLd, GeoCoordinatesJsonLd } from './json-ld'
-import { getMediaUrl } from './formatters'
+import { getMediaUrl } from './media-utils'
 
 /**
  * Schema.org LocalBusiness type
