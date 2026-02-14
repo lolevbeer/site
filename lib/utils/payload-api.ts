@@ -8,7 +8,9 @@ import { getPayload } from 'payload'
 import config from '@/src/payload.config'
 import { cache } from 'react'
 import { unstable_cache } from 'next/cache'
-import type { Beer as PayloadBeer, Menu as PayloadMenu, Style, HolidayHour, Event as PayloadEvent, Food as PayloadFood, Distributor, Faq } from '@/src/payload-types'
+import type { Beer as PayloadBeer, Menu, Style, HolidayHour, Event as PayloadEvent, Food as PayloadFood, Distributor, Faq } from '@/src/payload-types'
+
+export type PayloadMenu = Menu
 import type { PayloadLocation, LocationSlug } from '@/lib/types/location'
 import { BreweryEvent, EventType, EventStatus } from '@/lib/types/event'
 import { logger } from '@/lib/utils/logger'
@@ -368,15 +370,15 @@ export function transformPayloadEventToBreweryEvent(
     description: event.description || event.organizer,
     date: event.date.split('T')[0],
     time: event.startTime || '',
-    endTime: event.endTime,
+    endTime: event.endTime ?? undefined,
     vendor: event.organizer,
     type: EventType.SPECIAL_EVENT,
     status: EventStatus.SCHEDULED,
     location: (eventLocation?.slug || fallbackLocationSlug) as LocationSlug,
     locationName: eventLocation?.name || fallbackLocationName,
-    site: event.site,
-    attendees: event.attendees,
-    tags: event.tags,
+    site: event.site ?? undefined,
+    attendees: event.attendees ?? undefined,
+    tags: event.tags ?? undefined,
   }
 }
 

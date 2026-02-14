@@ -61,7 +61,7 @@ export interface BaseEvent {
 export interface BreweryEvent extends BaseEvent {
   vendor: string;
   end?: string | number;
-  tags?: string[];
+  tags?: ('music' | 'utensils' | 'puzzle' | 'sports' | 'beer-release' | 'mic-vocal')[];
   image?: string;
   price?: string;
   ageRestriction?: string;

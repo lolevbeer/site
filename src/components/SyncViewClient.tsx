@@ -1766,9 +1766,9 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
 
             {/* Results */}
             {untappdResults && (
+              <div style={{ marginTop: '16px' }}>
               <Banner
                 type={untappdResults.errors > 0 ? 'error' : 'success'}
-                style={{ marginTop: '16px' }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                   <strong>{untappdDryRun ? 'Preview Results' : 'Sync Complete'}</strong>
@@ -1783,6 +1783,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                   )}
                 </div>
               </Banner>
+              </div>
             )}
           </div>
         </div>
