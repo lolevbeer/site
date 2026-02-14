@@ -176,6 +176,7 @@ export function useAnimatedList<T>(
       timeouts.forEach(timeout => clearTimeout(timeout))
       timeouts.clear()
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- items/getKey are captured via currentKeysString to avoid re-running on every render
   }, [currentKeysString, enterDuration, exitDuration])
 
   return animatedItems
