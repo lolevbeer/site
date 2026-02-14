@@ -1,6 +1,6 @@
 import type { CollectionConfig, Access, FieldAccess, Where } from 'payload'
 import { APIError } from 'payload'
-import { adminAccess, adminFieldAccess, hasRole, isAdmin } from '@/src/access/roles'
+import { adminAccess, adminFieldAccess, hasRole } from '@/src/access/roles'
 import { revalidateMenuCache } from '@/src/hooks/revalidate-menu'
 import { logger } from '@/lib/utils/logger'
 

@@ -192,13 +192,6 @@ export function getBeerPricing(beer: Beer): string {
 }
 
 /**
- * Generic enum formatter - converts SNAKE_CASE to Title Case
- */
-function formatEnum(value: string | undefined, defaultValue = ''): string {
-  return value ? value.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : defaultValue;
-}
-
-/**
  * Extract URL from Payload media relation
  */
 export function getMediaUrl(media: unknown): string | null {

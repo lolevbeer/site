@@ -2,7 +2,7 @@ import type { CollectionConfig } from 'payload'
 import { APIError } from 'payload'
 import { revalidateTag } from 'next/cache'
 import { generateUniqueSlug } from './utils/generateUniqueSlug'
-import { adminAccess, beerManagerAccess, isAdmin } from '@/src/access/roles'
+import { adminAccess, beerManagerAccess } from '@/src/access/roles'
 import { fetchUntappdData, type UntappdReview } from '@/src/utils/untappd'
 import { logger } from '@/lib/utils/logger'
 

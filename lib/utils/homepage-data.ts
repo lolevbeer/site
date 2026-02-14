@@ -14,7 +14,6 @@ import {
   getUpcomingEventsFromPayload,
   getCombinedUpcomingFood,
   type WeeklyHoursDay,
-  type RecurringFoodEntry,
 } from './payload-api';
 import { getSiteContent } from './site-content';
 import { arrayToLocationMap } from './array-helpers';

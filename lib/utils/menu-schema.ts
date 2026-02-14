@@ -5,8 +5,6 @@
  * @see https://schema.org/MenuItem
  */
 
-import type { Beer as PayloadBeer } from '@/src/payload-types';
-
 /** Minimal beer interface for menu schema generation */
 interface MenuBeer {
   name: string;

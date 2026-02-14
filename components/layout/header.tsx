@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
 import { Navigation } from './navigation';
 import { MobileMenu } from './mobile-menu';
 import { LogoWithText } from '@/components/ui/logo';

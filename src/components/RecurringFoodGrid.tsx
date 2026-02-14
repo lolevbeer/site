@@ -8,7 +8,6 @@ import {
   getFoodVendorsByIds,
   getUpcomingFoodForLocation,
   type SimpleLocation,
-  type FoodEvent,
 } from '@/src/actions/admin-data'
 import { logger } from '@/lib/utils/logger'
 

@@ -7,7 +7,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { Badge } from '@/components/ui/badge';
 import { toLocationInfo } from '@/lib/types/location';
 import { isLocationOpenNow } from '@/lib/config/locations';
 import { cn } from '@/lib/utils';

@@ -1180,8 +1180,8 @@ async function runSync(
   const results: Record<string, { imported: number; updated: number; skipped: number; errors: number; imagesAdded?: number }> = {}
 
   // Get all locations with their sheet URLs
-  let locationsResult = await payload.find({ collection: 'locations', limit: 50 })
-  let allLocations = [...locationsResult.docs]
+  const locationsResult = await payload.find({ collection: 'locations', limit: 50 })
+  const allLocations = [...locationsResult.docs]
 
   // Build locationMap for menus (still uses slugs)
   const locationMap = new Map<string, string>()

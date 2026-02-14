@@ -3,7 +3,7 @@
  * Locations are now dynamically loaded from the database
  */
 
-import { type PayloadLocation, type LocationSlug, type LocationInfo, toLocationInfo, type DayHours } from '@/lib/types/location';
+import { type PayloadLocation, type LocationSlug, type DayHours } from '@/lib/types/location';
 import { getCurrentESTDateTime } from '@/lib/utils/date';
 
 /**

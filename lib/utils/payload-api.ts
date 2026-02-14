@@ -6,26 +6,17 @@
 
 import { getPayload } from 'payload'
 import config from '@/src/payload.config'
-import { cache } from 'react'
 import { unstable_cache } from 'next/cache'
-import type { Beer as PayloadBeer, Menu, Style, HolidayHour, Event as PayloadEvent, Food as PayloadFood, Distributor, Faq } from '@/src/payload-types'
+import type { Beer as PayloadBeer, Menu, HolidayHour, Event as PayloadEvent, Food as PayloadFood, Faq } from '@/src/payload-types'
 
 export type PayloadMenu = Menu
-import type { PayloadLocation, LocationSlug } from '@/lib/types/location'
+import type { LocationSlug } from '@/lib/types/location'
 import { BreweryEvent, EventType, EventStatus } from '@/lib/types/event'
 import { logger } from '@/lib/utils/logger'
 import { CACHE_TAGS } from '@/lib/utils/cache'
 import { extractBeerFromMenuItem } from './menu-item-utils'
 import { getMediaUrl } from './media-utils'
 import { getTodayEST, getTodayMidnightISO } from './date'
-
-/**
- * Get Payload instance (request-scoped cache only)
- * This uses React cache since it's per-request and shouldn't persist
- */
-const getPayloadInstance = cache(async () => {
-  return await getPayload({ config })
-})
 
 /**
  * Check if any beer globally has justReleased flag set

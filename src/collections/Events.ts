@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { eventManagerAccess, hasRole, isAdmin } from '@/src/access/roles'
+import { eventManagerAccess, hasRole } from '@/src/access/roles'
 
 export const Events: CollectionConfig = {
   slug: 'events',
