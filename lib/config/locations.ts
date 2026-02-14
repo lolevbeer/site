@@ -178,11 +178,3 @@ export function getLocationDisplayName(locations: PayloadLocation[], slug: Locat
   return location?.name || slug;
 }
 
-/**
- * Convert array of Payload Locations to LocationInfo array
- */
-export function toLocationInfoArray(locations: PayloadLocation[]): LocationInfo[] {
-  return locations
-    .filter(loc => loc.active !== false)
-    .map(toLocationInfo);
-}

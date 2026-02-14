@@ -75,18 +75,6 @@ export const speakableConfigs = {
 };
 
 /**
- * Generate speakable schema for homepage
- */
-export function generateHomeSpeakableSchema(): SpeakableJsonLd {
-  const baseUrl = 'https://lolev.beer';
-  return generateSpeakableSchema(
-    speakableConfigs.home.name,
-    baseUrl,
-    speakableConfigs.home.selectors
-  );
-}
-
-/**
  * Generate speakable schema for FAQ page
  */
 export function generateFAQSpeakableSchema(): SpeakableJsonLd {
@@ -110,14 +98,3 @@ export function generateAboutSpeakableSchema(): SpeakableJsonLd {
   );
 }
 
-/**
- * Generate speakable schema for individual beer page
- */
-export function generateBeerSpeakableSchema(beerName: string, beerSlug: string): SpeakableJsonLd {
-  const baseUrl = 'https://lolev.beer';
-  return generateSpeakableSchema(
-    `${beerName} - Lolev Beer`,
-    `${baseUrl}/beer/${beerSlug}`,
-    speakableConfigs.beer.selectors
-  );
-}

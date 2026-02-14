@@ -352,16 +352,6 @@ export const getAllStyles = async () => {
 }
 
 /**
- * Helper to get style name from Beer style field
- */
-export function getStyleName(style: string | Style): string {
-  if (typeof style === 'string') {
-    return style
-  }
-  return style.name
-}
-
-/**
  * Transform a Payload Event document into a BreweryEvent.
  * Handles polymorphic location field extraction.
  */
@@ -614,44 +604,6 @@ export const getHolidayHoursForLocation = async (locationId: string): Promise<Ho
   } catch (error) {
     logger.error(`Error fetching holiday hours for location ${locationId}`, error)
     return []
-  }
-}
-
-/**
- * Get location by slug with holiday hours check for today
- * Returns location data with any applicable holiday hours override
- */
-export const getLocationWithHolidayHours = async (locationSlug: string, date?: Date): Promise<{
-  location: PayloadLocation | null
-  holidayHours: HolidayHour | null
-}> => {
-  try {
-    const payload = await getPayloadInstance()
-
-    const locationResult = await payload.find({
-      collection: 'locations',
-      where: {
-        slug: {
-          equals: locationSlug,
-        },
-      },
-      limit: 1,
-    })
-
-    const location = locationResult.docs[0] || null
-
-    if (!location) {
-      return { location: null, holidayHours: null }
-    }
-
-    // Check for override on the specified date (or today)
-    const checkDate = date || new Date()
-    const holidayHours = await getHolidayHours(location.id, checkDate)
-
-    return { location, holidayHours }
-  } catch (error) {
-    logger.error(`Error fetching location with holiday hours: ${locationSlug}`, error)
-    return { location: null, holidayHours: null }
   }
 }
 
