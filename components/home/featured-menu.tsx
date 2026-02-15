@@ -446,14 +446,14 @@ export function FeaturedMenu({ menuType, menu, menus = [], animated = false, ite
                   const ColumnHeader = () => (
                     <div
                       className="flex items-center border-b-2 border-border uppercase tracking-wider text-foreground font-bold"
-                      style={{ gap: '1.5vh', marginBottom: '0.5vh', fontSize: '1.2vh' }}
+                      style={{ gap: '1vh', marginBottom: '0.5vh', fontSize: '1.2vh' }}
                     >
                       {!isOtherMenu && <div style={{ minWidth: '7vh' }}>Tap</div>}
                       <div className="flex-grow">{isOtherMenu ? 'Item' : 'Beer'}</div>
                       <div className="flex" style={{ gap: '2vh' }}>
                         {!isOtherMenu && <div className="text-center" style={{ minWidth: '7vh' }}>ABV</div>}
                         {!isOtherMenu && <div className="text-center" style={{ minWidth: '8vh' }}>Half</div>}
-                        <div className="text-center">{isOtherMenu ? 'Price' : 'Full'}</div>
+                        <div className="text-center" style={{ minWidth: '8vh' }}>{isOtherMenu ? 'Price' : 'Full'}</div>
                       </div>
                     </div>
                   );
