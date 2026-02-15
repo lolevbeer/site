@@ -56,11 +56,10 @@ export function formatDateEST(dateString: string): string {
 }
 
 /**
- * Get an ISO string representing the start of today in EST/EDT.
- * Returns "YYYY-MM-DDT00:00:00.000Z" where the date portion is the current date in EST.
+ * Get an ISO string representing the start of today in EST/EDT, converted to UTC.
  * Suitable for Payload CMS queries with `greater_than_equal`.
  */
 export function getTodayMidnightISO(): string {
-  return `${getTodayEST()}T00:00:00.000Z`;
+  return new Date(`${getTodayEST()}T00:00:00-05:00`).toISOString();
 }
 
