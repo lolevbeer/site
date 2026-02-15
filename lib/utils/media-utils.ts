@@ -9,9 +9,16 @@ import { normalizeUrl } from './url-utils'
  * Type for Payload Media objects
  * Matches the essential fields from Payload's Media collection
  */
+type MediaSize = 'thumbnail' | 'card' | 'detail'
+
+interface MediaSizeObject {
+  url?: string | null
+}
+
 interface MediaObject {
   url?: string | null
   thumbnailURL?: string | null
+  sizes?: Partial<Record<MediaSize, MediaSizeObject>>
 }
 
 /**
@@ -26,7 +33,7 @@ interface MediaObject {
  * @param media - The media field value (string ID, Media object, null, or undefined)
  * @returns The normalized URL string, or undefined if not available
  */
-export function getMediaUrl(media: unknown): string | undefined {
+export function getMediaUrl(media: unknown, size?: MediaSize): string | undefined {
   if (!media) return undefined
 
   // Just an ID reference, not a populated Media object
@@ -34,7 +41,15 @@ export function getMediaUrl(media: unknown): string | undefined {
 
   // Check if it's a Media object with a url property
   if (typeof media === 'object' && media !== null && 'url' in media) {
-    const url = (media as MediaObject).url
+    const obj = media as MediaObject
+
+    // Try the requested size first
+    if (size) {
+      const sizedUrl = obj.sizes?.[size]?.url
+      if (sizedUrl) return normalizeUrl(sizedUrl)
+    }
+
+    const url = obj.url
     if (!url) return undefined
     return normalizeUrl(url)
   }

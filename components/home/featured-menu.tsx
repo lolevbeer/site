@@ -171,7 +171,7 @@ function convertMenuItems(menuData: Menu): MenuItem[] {
         abv: beer.abv ? String(beer.abv) : '0',
         description: String(beer.description || ''),
         glutenFree: false,
-        imageUrl: getMediaUrl(beer.image),
+        imageUrl: getMediaUrl(beer.image, 'card'),
         glass: String(beer.glass || 'pint'),
         fourPack: beer.fourPack ? String(beer.fourPack) : (item.price ? String(item.price) : undefined),
         bottlePrice: (beer as { bottlePrice?: number }).bottlePrice ? String((beer as { bottlePrice?: number }).bottlePrice) : undefined,
@@ -278,7 +278,6 @@ function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fu
           fill
           className="object-contain"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-          unoptimized
           onError={() => setImageError(true)}
         />
       );
