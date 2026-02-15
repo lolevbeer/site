@@ -54,14 +54,44 @@ export async function GET(
     const themeMode = menu.themeMode || 'auto'
     const theme = themeMode === 'auto' ? getPittsburghTheme() : themeMode
 
-    // Use menu's updatedAt as timestamp so it only changes when menu actually changes
-    const timestamp = menu.updatedAt ? new Date(menu.updatedAt).getTime() : Date.now()
+    // Use the max of menu's updatedAt and all populated item updatedAt timestamps
+    // so changes to beers/products are detected even if the menu document itself hasn't changed
+    let timestamp = menu.updatedAt ? new Date(menu.updatedAt).getTime() : Date.now()
+
+    if (menu.items) {
+      for (const item of menu.items) {
+        const product = item.product?.value
+        if (product && typeof product === 'object' && 'updatedAt' in product) {
+          const itemTimestamp = new Date(product.updatedAt as string).getTime()
+          if (itemTimestamp > timestamp) {
+            timestamp = itemTimestamp
+          }
+        }
+      }
+    }
+
+    const deployId = process.env.NEXT_PUBLIC_DEPLOY_ID || ''
+
+    // If client sent a `since` timestamp and nothing has changed, return a minimal response
+    const since = request.nextUrl.searchParams.get('since')
+    if (since && Number(since) === timestamp) {
+      return NextResponse.json(
+        { changed: false, theme, timestamp, deployId },
+        {
+          headers: {
+            'Cache-Control': 'public, s-maxage=2, stale-while-revalidate=10',
+          },
+        }
+      )
+    }
 
     return NextResponse.json(
       {
+        changed: true,
         menu,
         theme,
         timestamp,
+        deployId,
       },
       {
         headers: {

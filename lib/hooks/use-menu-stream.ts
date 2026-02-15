@@ -19,11 +19,22 @@ interface UseMenuStreamResult {
   pollCount: number
 }
 
-interface MenuResponse {
+interface MenuResponseFull {
+  changed: true
   menu: Menu
   theme: 'light' | 'dark'
   timestamp: number
+  deployId?: string
 }
+
+interface MenuResponseNoChange {
+  changed: false
+  theme: 'light' | 'dark'
+  timestamp: number
+  deployId?: string
+}
+
+type MenuResponse = MenuResponseFull | MenuResponseNoChange
 
 /**
  * Hook for real-time menu updates via polling
@@ -52,12 +63,14 @@ export function useMenuStream(
 
   const pollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const lastTimestampRef = useRef<number>(0)
+  const deployIdRef = useRef<string | null>(null)
 
   const poll = useCallback(async () => {
     if (!menuUrl || !enabled) return
 
     try {
-      const response = await fetch(`/api/menu-stream/${menuUrl}`, {
+      const since = lastTimestampRef.current || ''
+      const response = await fetch(`/api/menu-stream/${menuUrl}${since ? `?since=${since}` : ''}`, {
         cache: 'no-store', // Let the server handle caching
       })
 
@@ -67,8 +80,18 @@ export function useMenuStream(
 
       const data: MenuResponse = await response.json()
 
-      // Only update if data has changed
-      if (data.timestamp !== lastTimestampRef.current) {
+      // Detect new deployment and force a full page reload
+      if (data.deployId) {
+        if (deployIdRef.current === null) {
+          deployIdRef.current = data.deployId
+        } else if (data.deployId !== deployIdRef.current) {
+          window.location.reload()
+          return
+        }
+      }
+
+      // Only update menu state when server indicates data has changed
+      if (data.changed) {
         lastTimestampRef.current = data.timestamp
         setMenu(data.menu)
       }

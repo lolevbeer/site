@@ -38,6 +38,7 @@ const nextConfig = {
     NEXT_PUBLIC_SERVER_URL: process.env.VERCEL_URL
       ? `https://${process.env.VERCEL_URL}`
       : process.env.NEXT_PUBLIC_APP_URL || '',
+    NEXT_PUBLIC_DEPLOY_ID: process.env.VERCEL_GIT_COMMIT_SHA || `local-${Date.now()}`,
   },
 
   images: {
