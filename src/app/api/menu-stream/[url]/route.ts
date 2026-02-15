@@ -79,7 +79,7 @@ export async function GET(
         { changed: false, theme, timestamp, deployId },
         {
           headers: {
-            'Cache-Control': 'public, s-maxage=2, stale-while-revalidate=10',
+            'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=30',
           },
         }
       )
@@ -96,7 +96,7 @@ export async function GET(
       {
         headers: {
           // Allow caching at edge, but revalidate frequently
-          'Cache-Control': 'public, s-maxage=2, stale-while-revalidate=10',
+          'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=30',
         },
       }
     )
