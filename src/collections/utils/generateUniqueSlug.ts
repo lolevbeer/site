@@ -1,4 +1,4 @@
-import type { CollectionSlug, PayloadRequest } from 'payload'
+import type { CollectionSlug, PayloadRequest, Where } from 'payload'
 
 /**
  * Transliterate diacritics to ASCII equivalents
@@ -44,7 +44,7 @@ export async function generateUniqueSlug(
 
   while (!isUnique) {
     // Check if slug exists (excluding current document and its revisions)
-    const where: any = {
+    const where: Where = {
       slug: { equals: slug },
     }
 

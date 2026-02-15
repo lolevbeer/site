@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { foodManagerAccess, isAdmin } from '@/src/access/roles'
+import { foodManagerAccess } from '@/src/access/roles'
 
 export const Food: CollectionConfig = {
   slug: 'food',

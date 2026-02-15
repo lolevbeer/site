@@ -5,11 +5,12 @@ import { Gutter, SetStepNav, Button, Banner, Pill } from '@payloadcms/ui'
 import { format } from 'date-fns-tz'
 import { getSiteContentData } from '@/src/actions/admin-data'
 import { parseSSEStream, isSSEResponse } from '@/lib/utils/sse-parser'
+import { logger } from '@/lib/utils/logger'
 
 interface FieldChange {
   field: string
-  from: any
-  to: any
+  from: unknown
+  to: unknown
 }
 
 interface MenuChanges {
@@ -54,6 +55,25 @@ interface DistributorImportResult {
   details: string[]
 }
 
+interface RegeocodeDistributor {
+  name: string
+  address: string
+  city: string
+  state: string
+  zip: string
+  fullAddress?: string
+}
+
+// Record type for SSE data payloads (parsed from JSON)
+type SSEData = Record<string, unknown>
+
+interface ProgressData {
+  current: number
+  total: number
+  name: string
+  percent: number
+}
+
 interface SyncViewClientProps {
   isAdmin: boolean
 }
@@ -80,13 +100,13 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
   const [urlsSaveStatus, setUrlsSaveStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [distImporting, setDistImporting] = useState<'pa' | 'oh' | null>(null)
   const [distResults, setDistResults] = useState<DistributorImportResult | null>(null)
-  const [distProgress, setDistProgress] = useState<{ current: number; total: number; name: string; percent: number } | null>(null)
+  const [distProgress, setDistProgress] = useState<ProgressData | null>(null)
   const [distLiveDetails, setDistLiveDetails] = useState<string[]>([])
 
   // Lake Beverage CSV import state
   const [lakeUploading, setLakeUploading] = useState(false)
   const [lakeResults, setLakeResults] = useState<DistributorImportResult | null>(null)
-  const [lakeProgress, setLakeProgress] = useState<{ current: number; total: number; name: string; percent: number } | null>(null)
+  const [lakeProgress, setLakeProgress] = useState<ProgressData | null>(null)
   const lakeInputRef = useRef<HTMLInputElement>(null)
 
   // Recalculate beer fields state
@@ -98,15 +118,15 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
   // Re-geocode distributors state
   const [regeocodeRunning, setRegeocodeRunning] = useState(false)
   const [regeocodeDryRun, setRegeocodeDryRun] = useState(true)
-  const [regeocodeResults, setRegeocodeResults] = useState<{ checked: number; suspicious: number; fixed: number; failed: number; distributors?: any[] } | null>(null)
-  const [regeocodeProgress, setRegeocodeProgress] = useState<{ current: number; total: number; name: string; percent: number } | null>(null)
+  const [regeocodeResults, setRegeocodeResults] = useState<{ checked: number; suspicious: number; fixed: number; failed: number; distributors?: RegeocodeDistributor[] } | null>(null)
+  const [regeocodeProgress, setRegeocodeProgress] = useState<ProgressData | null>(null)
   const [regeocodeLogs, setRegeocodeLogs] = useState<string[]>([])
 
   // Untappd sync state
   const [untappdRunning, setUntappdRunning] = useState(false)
   const [untappdDryRun, setUntappdDryRun] = useState(true)
   const [untappdResults, setUntappdResults] = useState<{ total: number; refreshed: number; updated: number; skipped: number; errors: number } | null>(null)
-  const [untappdProgress, setUntappdProgress] = useState<{ current: number; total: number; name: string; percent: number } | null>(null)
+  const [untappdProgress, setUntappdProgress] = useState<ProgressData | null>(null)
   const [untappdLogs, setUntappdLogs] = useState<string[]>([])
 
   // Load distributor URLs on mount using local API
@@ -161,24 +181,25 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
       }
 
       await parseSSEStream(response, {
-        status: (data: any) => addLog('status', data.message),
-        event: (data: any) => addLog('event', `Event: ${data.organizer} (${data.date}) - ${data.location}`, data.changes),
-        food: (data: any) => addLog('food', `Food: ${data.vendor} (${data.date}) - ${data.location}`, data.changes),
-        beer: (data: any) => addLog('beer', `Beer: ${data.name} (${data.style})`, data.changes),
-        menu: (data: any) => addLog('menu', `Menu: ${data.location} ${data.type} - ${data.itemCount} items`, data.changes),
-        hours: (data: any) => addLog('hours', `Hours: ${data.location} - ${data.action}`, data.changes),
-        error: (data: any) => addLog('error', data.message),
-        complete: (data: any) => {
+        status: (raw: unknown) => { const data = raw as SSEData; addLog('status', data.message as string) },
+        event: (raw: unknown) => { const data = raw as SSEData; addLog('event', `Event: ${data.organizer} (${data.date}) - ${data.location}`, data.changes as FieldChange[]) },
+        food: (raw: unknown) => { const data = raw as SSEData; addLog('food', `Food: ${data.vendor} (${data.date}) - ${data.location}`, data.changes as FieldChange[]) },
+        beer: (raw: unknown) => { const data = raw as SSEData; addLog('beer', `Beer: ${data.name} (${data.style})`, data.changes as FieldChange[]) },
+        menu: (raw: unknown) => { const data = raw as SSEData; addLog('menu', `Menu: ${data.location} ${data.type} - ${data.itemCount} items`, data.changes as MenuChanges) },
+        hours: (raw: unknown) => { const data = raw as SSEData; addLog('hours', `Hours: ${data.location} - ${data.action}`, data.changes as FieldChange[]) },
+        error: (raw: unknown) => { const data = raw as SSEData; addLog('error', data.message as string) },
+        complete: (raw: unknown) => {
+          const data = raw as SSEData
           if (data.success) {
-            setResults({ ...data.results, dryRun: data.dryRun })
+            setResults({ ...(data.results as SyncResults), dryRun: data.dryRun as boolean })
             addLog('complete', data.dryRun ? 'Preview complete!' : 'Sync complete!')
           } else {
             addLog('error', `Sync failed: ${data.error}`)
           }
         },
       })
-    } catch (error: any) {
-      addLog('error', `Connection error: ${error.message}`)
+    } catch (error: unknown) {
+      addLog('error', `Connection error: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setSyncing(false)
     }
@@ -224,14 +245,14 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
 
       if (!response.ok) {
         const data = await response.json()
-        console.error('Failed to save URLs:', response.status, data.error)
+        logger.error('Failed to save URLs:', undefined, { status: response.status, error: data.error })
         setUrlsSaveStatus('error')
       } else {
         setUrlsSaveStatus('success')
         setTimeout(() => setUrlsSaveStatus('idle'), 3000)
       }
     } catch (error) {
-      console.error('Failed to save URLs:', error)
+      logger.error('Failed to save URLs:', error)
       setUrlsSaveStatus('error')
     } finally {
       setUrlsSaving(false)
@@ -280,26 +301,27 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
       }
 
       await parseSSEStream(response, {
-        progress: (data: any) => setDistProgress(data),
-        item: (data: any) => setDistLiveDetails(prev => [...prev.slice(-49), data.message]),
-        complete: (data: any) => {
+        progress: (raw: unknown) => { setDistProgress(raw as ProgressData) },
+        item: (raw: unknown) => { const data = raw as SSEData; setDistLiveDetails(prev => [...prev.slice(-49), data.message as string]) },
+        complete: (raw: unknown) => {
+          const data = raw as SSEData
           setDistResults({
             region: region.toUpperCase(),
-            imported: data.imported || 0,
-            skipped: data.skipped || 0,
-            errors: data.errors || 0,
-            details: data.details || [],
+            imported: (data.imported as number) || 0,
+            skipped: (data.skipped as number) || 0,
+            errors: (data.errors as number) || 0,
+            details: (data.details as string[]) || [],
           })
           setDistProgress(null)
         },
       })
-    } catch (error: any) {
+    } catch (error: unknown) {
       setDistResults({
         region: region.toUpperCase(),
         imported: 0,
         skipped: 0,
         errors: 1,
-        details: [`Network error: ${error.message || 'Import failed'}`],
+        details: [`Network error: ${error instanceof Error ? error.message : 'Import failed'}`],
       })
     } finally {
       setDistImporting(null)
@@ -339,25 +361,26 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
       }
 
       await parseSSEStream(response, {
-        progress: (data: any) => setLakeProgress(data),
-        complete: (data: any) => {
+        progress: (raw: unknown) => { setLakeProgress(raw as ProgressData) },
+        complete: (raw: unknown) => {
+          const data = raw as SSEData
           setLakeResults({
             region: 'NY',
-            imported: data.imported || 0,
-            skipped: data.skipped || 0,
-            errors: data.errors || 0,
-            details: data.details || [],
+            imported: (data.imported as number) || 0,
+            skipped: (data.skipped as number) || 0,
+            errors: (data.errors as number) || 0,
+            details: (data.details as string[]) || [],
           })
           setLakeProgress(null)
         },
       })
-    } catch (error: any) {
+    } catch (error: unknown) {
       setLakeResults({
         region: 'NY',
         imported: 0,
         skipped: 0,
         errors: 1,
-        details: [error.message || 'Upload failed'],
+        details: [error instanceof Error ? error.message : 'Upload failed'],
       })
     } finally {
       setLakeUploading(false)
@@ -389,16 +412,17 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
       }
 
       await parseSSEStream(response, {
-        status: (data: any) => setRecalcLogs(prev => [...prev.slice(-99), data.message]),
-        error: (data: any) => setRecalcLogs(prev => [...prev.slice(-99), `Error: ${data.message}`]),
-        complete: (data: any) => {
+        status: (raw: unknown) => { const data = raw as SSEData; setRecalcLogs(prev => [...prev.slice(-99), data.message as string]) },
+        error: (raw: unknown) => { const data = raw as SSEData; setRecalcLogs(prev => [...prev.slice(-99), `Error: ${data.message}`]) },
+        complete: (raw: unknown) => {
+          const data = raw as SSEData
           if (data.results) {
-            setRecalcResults(data.results)
+            setRecalcResults(data.results as { updated: number; skipped: number; errors: number })
           }
         },
       })
-    } catch (error: any) {
-      setRecalcLogs(prev => [...prev, `Error: ${error.message || 'Recalculation failed'}`])
+    } catch (error: unknown) {
+      setRecalcLogs(prev => [...prev, `Error: ${error instanceof Error ? error.message : 'Recalculation failed'}`])
     } finally {
       setRecalcRunning(false)
     }
@@ -436,21 +460,23 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
       const contentType = response.headers.get('content-type') || ''
       if (contentType.includes('text/event-stream')) {
         await parseSSEStream(response, {
-          progress: (data: any) => setRegeocodeProgress(data),
-          item: (data: any) => {
+          progress: (raw: unknown) => { setRegeocodeProgress(raw as ProgressData) },
+          item: (raw: unknown) => {
+            const data = raw as SSEData
             const msg = data.status === 'fixed'
               ? `Fixed: ${data.name}`
               : data.status === 'skipped'
                 ? `Skipped: ${data.name} - ${data.note}`
                 : `Failed: ${data.name} - ${data.note || data.error}`
-            setRegeocodeLogs(prev => [...prev.slice(-99), msg])
+            setRegeocodeLogs(prev => [...prev.slice(-99), msg as string])
           },
-          complete: (data: any) => {
+          complete: (raw: unknown) => {
+            const data = raw as SSEData
             setRegeocodeResults({
-              checked: data.checked || 0,
-              suspicious: data.suspicious || 0,
-              fixed: data.fixed || 0,
-              failed: data.failed || 0,
+              checked: (data.checked as number) || 0,
+              suspicious: (data.suspicious as number) || 0,
+              fixed: (data.fixed as number) || 0,
+              failed: (data.failed as number) || 0,
             })
             setRegeocodeProgress(null)
           },
@@ -466,8 +492,8 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
           distributors: data.distributors,
         })
       }
-    } catch (error: any) {
-      setRegeocodeLogs(prev => [...prev, `Error: ${error.message || 'Re-geocode failed'}`])
+    } catch (error: unknown) {
+      setRegeocodeLogs(prev => [...prev, `Error: ${error instanceof Error ? error.message : 'Re-geocode failed'}`])
     } finally {
       setRegeocodeRunning(false)
       setRegeocodeProgress(null)
@@ -497,9 +523,10 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
       }
 
       await parseSSEStream(response, {
-        status: (data: any) => setUntappdLogs(prev => [...prev.slice(-99), data.message]),
-        progress: (data: any) => setUntappdProgress(data),
-        item: (data: any) => {
+        status: (raw: unknown) => { const data = raw as SSEData; setUntappdLogs(prev => [...prev.slice(-99), data.message as string]) },
+        progress: (raw: unknown) => { setUntappdProgress(raw as ProgressData) },
+        item: (raw: unknown) => {
+          const data = raw as SSEData
           const statusIcon = data.status === 'refreshed' ? '✓'
             : data.status === 'updated' || data.status === 'new' ? '+'
             : data.status === 'error' ? '✗'
@@ -508,16 +535,17 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
             : '→'
           setUntappdLogs(prev => [...prev.slice(-99), `${statusIcon} ${data.name}: ${data.message}`])
         },
-        error: (data: any) => setUntappdLogs(prev => [...prev.slice(-99), `Error: ${data.message}`]),
-        complete: (data: any) => {
+        error: (raw: unknown) => { const data = raw as SSEData; setUntappdLogs(prev => [...prev.slice(-99), `Error: ${data.message}`]) },
+        complete: (raw: unknown) => {
+          const data = raw as SSEData
           if (data.results) {
-            setUntappdResults(data.results)
+            setUntappdResults(data.results as { total: number; refreshed: number; updated: number; skipped: number; errors: number })
           }
           setUntappdProgress(null)
         },
       })
-    } catch (error: any) {
-      setUntappdLogs(prev => [...prev, `Error: ${error.message || 'Sync failed'}`])
+    } catch (error: unknown) {
+      setUntappdLogs(prev => [...prev, `Error: ${error instanceof Error ? error.message : 'Sync failed'}`])
     } finally {
       setUntappdRunning(false)
       setUntappdProgress(null)
@@ -555,14 +583,14 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
           details: [data.error || 'Upload failed'],
         })
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       setCsvResults({
         success: false,
         total: 0,
         created: 0,
         skipped: 0,
         errors: 1,
-        details: [error.message || 'Upload failed'],
+        details: [error instanceof Error ? error.message : 'Upload failed'],
       })
     } finally {
       setCsvUploading(false)
@@ -1489,7 +1517,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                         borderRadius: '4px',
                         border: '1px solid var(--theme-elevation-150)',
                       }}>
-                        {regeocodeResults.distributors.map((dist: any, i: number) => (
+                        {regeocodeResults.distributors.map((dist: RegeocodeDistributor, i: number) => (
                           <div key={i} style={{ marginBottom: '8px', color: 'var(--theme-elevation-600)' }}>
                             <strong style={{ color: 'var(--theme-text)' }}>{dist.name}</strong>
                             <br />
@@ -1765,9 +1793,9 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
 
             {/* Results */}
             {untappdResults && (
+              <div style={{ marginTop: '16px' }}>
               <Banner
                 type={untappdResults.errors > 0 ? 'error' : 'success'}
-                style={{ marginTop: '16px' }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                   <strong>{untappdDryRun ? 'Preview Results' : 'Sync Complete'}</strong>
@@ -1782,6 +1810,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                   )}
                 </div>
               </Banner>
+              </div>
             )}
           </div>
         </div>

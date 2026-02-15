@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@payloadcms/ui'
 import { Banner } from '@payloadcms/ui'
+import { logger } from '@/lib/utils/logger'
 
 interface Location {
   id: string
@@ -67,7 +68,7 @@ export function LinesCleanedAlert({ children }: { children: React.ReactNode }) {
 
         setAlerts(locationAlerts)
       } catch (error) {
-        console.error('Failed to fetch locations for lines cleaned alert:', error)
+        logger.error('Failed to fetch locations for lines cleaned alert:', error)
       } finally {
         setLoading(false)
       }

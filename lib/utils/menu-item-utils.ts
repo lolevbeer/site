@@ -51,7 +51,7 @@ export function extractBeerFromMenuItem(item: MenuItem | Record<string, unknown>
  * @param item - Menu item from Payload
  * @returns The Beer ID string if available, null otherwise
  */
-export function extractBeerIdFromMenuItem(item: MenuItem | Record<string, unknown>): string | null {
+function extractBeerIdFromMenuItem(item: MenuItem | Record<string, unknown>): string | null {
   // Handle new polymorphic product field
   if ('product' in item && item.product) {
     const product = item.product as PolymorphicProduct

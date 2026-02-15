@@ -94,7 +94,7 @@ export function useLocation(locations: PayloadLocation[] = []): UseLocationRetur
   const [isClient, setIsClient] = useState(false);
 
   // URL state for location - allows sharing URLs with location preset
-  const [urlLocation, setUrlLocation] = useQueryState('loc', parseAsString);
+  const [urlLocation, _setUrlLocation] = useQueryState('loc', parseAsString);
 
   // Initialize from URL param first, then localStorage on client mount
   useEffect(() => {

@@ -14,6 +14,7 @@ import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/
 import { cn } from '@/lib/utils';
 import { formatTime, isToday, isFuture, isTodayOrFuture } from '@/lib/utils/formatters';
 import { useLocationContext } from '@/components/location/location-provider';
+import { getLocationDisplayName } from '@/lib/config/locations';
 import { UtensilsCrossed } from 'lucide-react';
 
 interface FoodScheduleProps {
@@ -37,10 +38,7 @@ export function FoodSchedule({
 }: FoodScheduleProps) {
   const { locations } = useLocationContext();
 
-  const getLocationName = (slug: LocationSlug): string => {
-    const location = locations.find(loc => (loc.slug || loc.id) === slug);
-    return location?.name || slug;
-  };
+  const getLocationName = (slug: LocationSlug): string => getLocationDisplayName(locations, slug);
 
   const renderVendorCard = (schedule: FoodVendorSchedule, dateStr: string) => {
     return (

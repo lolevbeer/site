@@ -33,6 +33,12 @@ export function useAnimatedList<T>(
   // Stable key for dependency tracking
   const currentKeysString = useMemo(() => items.map(getKey).join(','), [items, getKey])
 
+  // Refs for latest values so the effect can access them without deps
+  const itemsRef = useRef(items)
+  itemsRef.current = items
+  const getKeyRef = useRef(getKey)
+  getKeyRef.current = getKey
+
   // Track previous keys (just keys, not items - items are in state)
   const prevKeysRef = useRef<Set<string>>(new Set())
   const isFirstRender = useRef(true)
@@ -46,16 +52,18 @@ export function useAnimatedList<T>(
   )
 
   useEffect(() => {
-    const currentKeys = new Set(items.map(getKey))
+    const currentItems = itemsRef.current
+    const currentGetKey = getKeyRef.current
+    const currentKeys = new Set(currentItems.map(currentGetKey))
 
     // First render: just set stable items, no animations
     if (isFirstRender.current) {
       isFirstRender.current = false
       prevKeysRef.current = currentKeys
-      setAnimatedItems(items.map(item => ({
+      setAnimatedItems(currentItems.map(item => ({
         item,
         state: 'stable',
-        key: getKey(item)
+        key: currentGetKey(item)
       })))
       return
     }
@@ -92,8 +100,8 @@ export function useAnimatedList<T>(
       const result: AnimatedItem<T>[] = []
 
       // Add all current items (entering or stable)
-      items.forEach(item => {
-        const key = getKey(item)
+      currentItems.forEach(item => {
+        const key = currentGetKey(item)
         result.push({
           item,
           state: enteringKeys.has(key) ? 'entering' : 'stable',
@@ -168,12 +176,14 @@ export function useAnimatedList<T>(
     // Update previous keys for next comparison
     prevKeysRef.current = currentKeys
 
+    // Copy ref to local variable for cleanup
+    const timeouts = timeoutsRef.current
+
     // Cleanup on unmount
     return () => {
-      timeoutsRef.current.forEach(timeout => clearTimeout(timeout))
-      timeoutsRef.current.clear()
+      timeouts.forEach(timeout => clearTimeout(timeout))
+      timeouts.clear()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentKeysString, enterDuration, exitDuration])
 
   return animatedItems

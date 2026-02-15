@@ -13,6 +13,7 @@ import { formatDate, formatTime } from '@/lib/utils/formatters';
 import { useSortedItems } from '@/lib/hooks/use-sorted-items';
 import { useLocationContext } from '@/components/location/location-provider';
 import { getMediaUrl } from '@/lib/utils/media-utils';
+import { getLocationDisplayName } from '@/lib/config/locations';
 import type { LocationSlug } from '@/lib/types/location';
 
 interface FoodVendor {
@@ -20,14 +21,14 @@ interface FoodVendor {
     id?: string;
     name?: string;
     site?: string | null;
-    logo?: string | { url?: string } | null;
+    logo?: unknown;
   };
   date: string;
-  time?: string;
-  startTime?: string; // PayloadFood uses startTime
+  time?: string | null;
+  startTime?: string | null;
   site?: string | null;
   day?: string;
-  location?: LocationSlug | { slug?: string } | string;
+  location?: LocationSlug | { slug?: string | null } | string;
 }
 
 interface UpcomingFoodProps {
@@ -53,12 +54,12 @@ export function UpcomingFood({ foodByLocation }: UpcomingFoodProps): React.React
   const upcomingFood = useSortedItems(filteredFood, { limit: 3 });
 
   /** Get location display name from slug or object */
-  function getLocationDisplayName(location: LocationSlug | { slug?: string; name?: string } | string | undefined): string {
+  function getLocationName(location: LocationSlug | { slug?: string; name?: string } | string | undefined): string {
     if (!location) return '';
     if (typeof location === 'object' && location.name) return location.name;
     const slug = typeof location === 'object' ? location.slug : location;
     if (!slug) return '';
-    return locations.find(l => l.slug === slug || l.id === slug)?.name || slug;
+    return getLocationDisplayName(locations, slug);
   }
 
   if (upcomingFood.length === 0) {
@@ -114,7 +115,7 @@ export function UpcomingFood({ foodByLocation }: UpcomingFoodProps): React.React
                     <div className="text-sm text-muted-foreground">
                       <span>{formatDate(food.date, 'full')}</span>
                       {timeDisplay && <span> • {formatTime(timeDisplay)}</span>}
-                      <span> • {getLocationDisplayName(food.location)}</span>
+                      <span> • {getLocationName(food.location)}</span>
                     </div>
                   </div>
                 </CardContent>

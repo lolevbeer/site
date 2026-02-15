@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { revalidateTag } from 'next/cache'
 import { CACHE_TAGS } from '@/lib/utils/cache'
+import { logger } from '@/lib/utils/logger'
 
 /**
  * Revalidation endpoint for menu cache
@@ -36,7 +37,7 @@ export async function POST(request: NextRequest) {
       timestamp: Date.now()
     })
   } catch (error) {
-    console.error('Revalidation error:', error)
+    logger.error('Revalidation error:', error)
     return NextResponse.json({ error: 'Revalidation failed' }, { status: 500 })
   }
 }

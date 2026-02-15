@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { logger } from '@/lib/utils/logger';
 
 interface GeoFeature {
   type: 'Feature';
@@ -103,7 +104,7 @@ export function useMapData() {
         });
         setLoading(false);
       } catch (err) {
-        console.error('Error loading distributor data:', err);
+        logger.error('Error loading distributor data:', err);
         setError('Failed to load location data');
         setLoading(false);
       }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getMenuByUrl, hasAnyBeerJustReleased } from '@/lib/utils/payload-api'
 import crypto from 'crypto'
+import { logger } from '@/lib/utils/logger'
 
 /**
  * Generate ETag from menu data
@@ -56,7 +57,7 @@ export async function GET(
       },
     })
   } catch (error) {
-    console.error('Error fetching menu:', error)
+    logger.error('Error fetching menu:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

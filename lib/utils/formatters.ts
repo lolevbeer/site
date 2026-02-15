@@ -3,9 +3,7 @@
  * Consolidates all formatting functions used across the application
  */
 
-import { GlassType, Beer } from '@/lib/types/beer';
-import { EventType, EventStatus } from '@/lib/types/event';
-import { CuisineType, DietaryOption, FoodVendorType } from '@/lib/types/food';
+import { Beer } from '@/lib/types/beer';
 
 /**
  * Time formatting utilities
@@ -62,17 +60,6 @@ export function formatTime(timeString: string, options: { timezone?: string } = 
   return timeString.toLowerCase();
 }
 
-export function parseTimeRange(timeString: string): { time: string; endTime?: string } {
-  if (!timeString) return { time: '' };
-
-  const parts = timeString.split(/\s*(?:-|–| to )\s*/);
-  if (parts.length === 2) {
-    return { time: formatTime(parts[0]), endTime: formatTime(parts[1]) };
-  }
-
-  return { time: formatTime(timeString) };
-}
-
 /**
  * Date formatting utilities
  */
@@ -119,14 +106,9 @@ export function formatDate(dateString: string, format: 'short' | 'long' | 'full'
 /**
  * Price formatting utilities
  */
-export function formatPrice(price: number | undefined): string {
+function formatPrice(price: number | undefined): string {
   if (!price) return '';
   return `$${price.toFixed(2).replace(/\.00$/, '')}`;
-}
-
-export function formatPriceRange(priceRange?: number): string {
-  if (!priceRange) return '';
-  return '$'.repeat(Math.min(priceRange, 4));
 }
 
 /**
@@ -209,62 +191,3 @@ export function getBeerPricing(beer: Beer): string {
   return items.length > 0 ? items.join(' • ') : 'See store';
 }
 
-/**
- * Generic enum formatter - converts SNAKE_CASE to Title Case
- */
-export function formatEnum(value: string | undefined, defaultValue = ''): string {
-  return value ? value.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : defaultValue;
-}
-
-/**
- * Event-specific formatters
- */
-export const formatEventType = (type: EventType) => formatEnum(String(type));
-export const formatEventStatus = (status: EventStatus) => formatEnum(status);
-
-export function getEventStatusVariant(status: EventStatus): 'default' | 'secondary' | 'destructive' | 'outline' {
-  const variants: Record<EventStatus, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-    [EventStatus.CANCELLED]: 'destructive',
-    [EventStatus.SOLD_OUT]: 'secondary',
-    [EventStatus.POSTPONED]: 'outline',
-    [EventStatus.SCHEDULED]: 'default',
-    [EventStatus.COMPLETED]: 'default',
-    [EventStatus.DRAFT]: 'outline',
-  };
-  return variants[status] || 'default';
-}
-
-/**
- * Food vendor formatters
- */
-export const formatCuisineType = (cuisine: CuisineType) => formatEnum(String(cuisine), 'Street Food');
-export const formatDietaryOption = (option: DietaryOption) => formatEnum(String(option));
-export const formatVendorType = (type: FoodVendorType) => formatEnum(String(type), 'Food Truck');
-
-/**
- * Glass type icon mapper
- */
-export function getGlassTypeIcon(glass: GlassType): string {
-  switch (glass) {
-    case GlassType.PINT:
-      return 'beer';
-    case GlassType.TEKU:
-      return 'wine';
-    case GlassType.STEIN:
-      return 'glass-water';
-    default:
-      return 'beer';
-  }
-}
-
-/**
- * Extract URL from Payload media relation
- */
-export function getMediaUrl(media: unknown): string | null {
-  if (!media) return null;
-  if (typeof media === 'string') return null; // Just an ID, not populated
-  if (typeof media === 'object' && media !== null && 'url' in media) {
-    return (media as { url?: string }).url || null;
-  }
-  return null;
-}

@@ -1,4 +1,5 @@
 import type { CollectionConfig, Access, FieldAccess } from 'payload'
+import type { User } from '@/src/payload-types'
 import { generateUniqueSlug } from './utils/generateUniqueSlug'
 import { adminAccess, adminFieldAccess, isAdmin, hasRole } from '@/src/access/roles'
 
@@ -12,11 +13,11 @@ const leadBartenderFieldAccess: FieldAccess = ({ req: { user } }) => {
 /**
  * Get location IDs from user's assigned locations
  */
-function getUserLocationIds(user: any): string[] | null {
+function getUserLocationIds(user: User | null): string[] | null {
   if (!user?.locations || !Array.isArray(user.locations) || user.locations.length === 0) {
     return null
   }
-  return user.locations.map((loc: any) => (typeof loc === 'object' ? loc.id : loc))
+  return user.locations.map((loc: string | { id: string }) => (typeof loc === 'object' ? loc.id : loc))
 }
 
 /**

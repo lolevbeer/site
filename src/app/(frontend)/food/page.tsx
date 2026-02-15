@@ -4,7 +4,11 @@ import config from '@/src/payload.config';
 import { JsonLd } from '@/components/seo/json-ld';
 import { FoodPageClient } from './food-page-client';
 import { FoodVendorSchedule, DayOfWeek } from '@/lib/types/food';
+import { extractVendorInfo, getAllLocations } from '@/lib/utils/payload-api';
 import { getMediaUrl } from '@/lib/utils/media-utils';
+import { getTodayMidnightISO } from '@/lib/utils/date';
+import { createLocationLookup, generateFoodEventJsonLd } from '@/lib/utils/json-ld';
+import { logger } from '@/lib/utils/logger';
 
 export const metadata: Metadata = {
   title: 'Food | Lolev Beer',
@@ -79,15 +83,14 @@ async function getFoodData(): Promise<FoodVendorSchedule[]> {
   try {
   const payload = await getPayload({ config });
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const todayStr = getTodayMidnightISO();
 
   // Fetch individual food entries
   const foodResult = await payload.find({
     collection: 'food',
     where: {
       date: {
-        greater_than_equal: today.toISOString(),
+        greater_than_equal: todayStr,
       },
     },
     sort: 'date',
@@ -123,11 +126,7 @@ async function getFoodData(): Promise<FoodVendorSchedule[]> {
     const locationSlug = typeof entry.location === 'object' ? entry.location?.slug : undefined;
     const locationName = typeof entry.location === 'object' ? entry.location?.name : undefined;
 
-    const vendorName = typeof entry.vendor === 'object' ? entry.vendor.name : entry.vendor;
-    const vendorSite = entry.site || (typeof entry.vendor === 'object' ? entry.vendor.site : undefined);
-    const vendorLogo = typeof entry.vendor === 'object'
-      ? getMediaUrl(entry.vendor.logo)
-      : undefined;
+    const { name: vendorName, site: vendorSite, logoUrl: vendorLogo } = extractVendorInfo(entry.vendor, entry.site);
 
     const dateStr = entry.date.split('T')[0];
     const [year, month, day] = dateStr.split('-').map(Number);
@@ -251,62 +250,30 @@ async function getFoodData(): Promise<FoodVendorSchedule[]> {
 
   return combined;
   } catch (error) {
-    console.error('Failed to fetch food data:', error);
+    logger.error('Failed to fetch food data:', error);
     return [];
   }
 }
 
-/**
- * Generate JSON-LD for food events
- */
-function generateFoodEventsJsonLd(schedules: FoodVendorSchedule[]) {
+export default async function FoodPage() {
+  const [schedules, locations] = await Promise.all([
+    getFoodData(),
+    getAllLocations(),
+  ]);
+  const locationLookup = createLocationLookup(locations);
+
   const validSchedules = schedules.filter(
     schedule => schedule && schedule.vendor && schedule.date && schedule.location
   );
-
-  if (validSchedules.length === 0) return null;
-
-  return {
+  const jsonLd = validSchedules.length > 0 ? {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
-    itemListElement: validSchedules.map((schedule, index) => {
-      const locationName = schedule.locationName ||
-        (schedule.location === 'lawrenceville' ? 'Lolev Beer - Lawrenceville' : 'Lolev Beer - Zelienople');
-
-      const locationAddress = schedule.location === 'lawrenceville'
-        ? '115 43rd St, Pittsburgh, PA 15201'
-        : '148 S Main St, Zelienople, PA 16063';
-
-      return {
-        '@type': 'ListItem',
-        position: index + 1,
-        item: {
-          '@type': 'FoodEvent',
-          name: `${schedule.vendor} at ${locationName}`,
-          startDate: schedule.date,
-          location: {
-            '@type': 'Place',
-            name: locationName,
-            address: {
-              '@type': 'PostalAddress',
-              streetAddress: locationAddress,
-            },
-          },
-          organizer: {
-            '@type': 'Organization',
-            name: 'Lolev Beer',
-            url: 'https://lolev.beer',
-          },
-          ...(schedule.site && { url: schedule.site }),
-        },
-      };
-    }),
-  };
-}
-
-export default async function FoodPage() {
-  const schedules = await getFoodData();
-  const jsonLd = generateFoodEventsJsonLd(schedules);
+    itemListElement: validSchedules.map((schedule, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      item: generateFoodEventJsonLd(schedule, locationLookup),
+    })),
+  } : null;
 
   return (
     <>

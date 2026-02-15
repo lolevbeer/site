@@ -3,7 +3,7 @@
  * Locations are now dynamically loaded from the database
  */
 
-import { type PayloadLocation, type LocationSlug, type LocationInfo, toLocationInfo, type DayHours } from '@/lib/types/location';
+import { type PayloadLocation, type LocationSlug, type DayHours } from '@/lib/types/location';
 import { getCurrentESTDateTime } from '@/lib/utils/date';
 
 /**
@@ -53,7 +53,6 @@ function extractDayHours(location: PayloadLocation, day: string): DayHours | nul
  * Check if a location is currently open based on current time
  */
 export function isLocationOpenNow(location: PayloadLocation, date?: Date): boolean {
-  const _timezone = location.timezone || 'America/New_York';
   const now = date || getCurrentESTDateTime();
   const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
   const dayOfWeek = days[now.getDay()];
@@ -178,11 +177,3 @@ export function getLocationDisplayName(locations: PayloadLocation[], slug: Locat
   return location?.name || slug;
 }
 
-/**
- * Convert array of Payload Locations to LocationInfo array
- */
-export function toLocationInfoArray(locations: PayloadLocation[]): LocationInfo[] {
-  return locations
-    .filter(loc => loc.active !== false)
-    .map(toLocationInfo);
-}

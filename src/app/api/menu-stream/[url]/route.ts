@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getMenuByUrl } from '@/lib/utils/payload-api'
+import { logger } from '@/lib/utils/logger'
 import { getPittsburghTheme } from '@/lib/utils/pittsburgh-time'
 import { unstable_cache } from 'next/cache'
 import { CACHE_TAGS } from '@/lib/utils/cache'
@@ -70,7 +71,7 @@ export async function GET(
       }
     )
   } catch (error) {
-    console.error('Menu fetch error:', error)
+    logger.error('Menu fetch error:', error)
     return NextResponse.json(
       { error: 'Failed to fetch menu' },
       { status: 500 }

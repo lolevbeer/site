@@ -5,7 +5,8 @@
  */
 
 import { NextResponse } from 'next/server';
-import { getAllBeersFromPayload, getUpcomingEvents, getUpcomingFood } from '@/lib/utils/payload-api';
+import { getAllBeersFromPayload, getUpcomingEventsFromPayload, getUpcomingFoodFromPayload, extractVendorInfo } from '@/lib/utils/payload-api';
+import { logger } from '@/lib/utils/logger';
 
 export const revalidate = 3600; // Revalidate every hour
 
@@ -27,35 +28,35 @@ export async function GET() {
 
   // Fetch content
   let beers: Awaited<ReturnType<typeof getAllBeersFromPayload>> = [];
-  let events: Awaited<ReturnType<typeof getUpcomingEvents>> = [];
-  let food: Awaited<ReturnType<typeof getUpcomingFood>> = [];
+  let events: Awaited<ReturnType<typeof getUpcomingEventsFromPayload>> = [];
+  let food: Awaited<ReturnType<typeof getUpcomingFoodFromPayload>> = [];
 
   try {
     beers = await getAllBeersFromPayload();
   } catch (error) {
-    console.error('Error fetching beers for RSS:', error);
+    logger.error('Error fetching beers for RSS:', error);
   }
 
   try {
     // Fetch events from both locations
     const [lawrencevilleEvents, zelienopleEvents] = await Promise.all([
-      getUpcomingEvents('lawrenceville', 10),
-      getUpcomingEvents('zelienople', 10),
+      getUpcomingEventsFromPayload('lawrenceville', 10),
+      getUpcomingEventsFromPayload('zelienople', 10),
     ]);
     events = [...lawrencevilleEvents, ...zelienopleEvents];
   } catch (error) {
-    console.error('Error fetching events for RSS:', error);
+    logger.error('Error fetching events for RSS:', error);
   }
 
   try {
     // Fetch food from both locations
     const [lawrencevilleFood, zelienopleFood] = await Promise.all([
-      getUpcomingFood('lawrenceville', 10),
-      getUpcomingFood('zelienople', 10),
+      getUpcomingFoodFromPayload('lawrenceville', 10),
+      getUpcomingFoodFromPayload('zelienople', 10),
     ]);
     food = [...lawrencevilleFood, ...zelienopleFood];
   } catch (error) {
-    console.error('Error fetching food for RSS:', error);
+    logger.error('Error fetching food for RSS:', error);
   }
 
   // Filter to visible beers and sort by recipe number (newest first)
@@ -103,7 +104,7 @@ export async function GET() {
   // Add food vendor items
   for (const vendor of food.slice(0, 10)) {
     const vendorDate = new Date(vendor.date);
-    const vendorName = typeof vendor.vendor === 'object' ? vendor.vendor?.name : vendor.vendorName || 'Food Vendor';
+    const vendorName = extractVendorInfo(vendor.vendor).name || vendor.vendorName || 'Food Vendor';
 
     items.push(`
     <item>

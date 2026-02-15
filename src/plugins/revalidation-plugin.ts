@@ -10,7 +10,7 @@ import { revalidatePath, revalidateTag } from 'next/cache'
 import type { Config, Plugin, CollectionConfig, GlobalConfig } from 'payload'
 
 // Cache tags for each collection/global
-const CACHE_TAGS = {
+const _CACHE_TAGS = {
   beers: 'beers',
   menus: 'menus',
   events: 'events',
@@ -27,7 +27,7 @@ const CACHE_TAGS = {
   'distributor-settings': 'distributor-settings',
 } as const
 
-type CacheTag = (typeof CACHE_TAGS)[keyof typeof CACHE_TAGS]
+type CacheTag = (typeof _CACHE_TAGS)[keyof typeof _CACHE_TAGS]
 
 // Collection to cache tags mapping
 // Defines which tags should be invalidated when a collection changes

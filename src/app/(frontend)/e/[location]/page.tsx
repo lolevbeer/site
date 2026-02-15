@@ -2,11 +2,10 @@ import { getPayload } from 'payload'
 import config from '@/src/payload.config'
 import { LiveEvents } from '@/components/events/live-events'
 import { notFound } from 'next/navigation'
-import { BreweryEvent, EventType, EventStatus } from '@/lib/types/event'
-import type { LocationSlug } from '@/lib/types/location'
-import { getMediaUrl } from '@/lib/utils/media-utils'
-import { getCansMenu, getCombinedUpcomingFood } from '@/lib/utils/payload-api'
+import { BreweryEvent } from '@/lib/types/event'
+import { getCansMenu, getCombinedUpcomingFood, transformPayloadEventToBreweryEvent, extractVendorInfo } from '@/lib/utils/payload-api'
 import type { PayloadMenu } from '@/lib/utils/payload-api'
+import { getTodayMidnightISO } from '@/lib/utils/date'
 
 // Force dynamic rendering to avoid DB connection during build
 export const dynamic = 'force-dynamic'
@@ -15,28 +14,6 @@ interface EventsDisplayPageProps {
   params: Promise<{
     location: string
   }>
-}
-
-interface PayloadEvent {
-  id: string
-  organizer: string
-  description?: string
-  date: string
-  startTime?: string
-  endTime?: string
-  location?: { slug?: string; name?: string; id?: string } | string
-  site?: string
-  attendees?: number
-  visibility?: string
-  tags?: string[]
-}
-
-interface PayloadFoodEntry {
-  id: string
-  vendor: string | { id: string; name: string; site?: string | null; logo?: string | { url?: string } | null }
-  date: string
-  startTime?: string
-  location?: { slug?: string; id?: string; name?: string } | string
 }
 
 export interface FoodItem {
@@ -74,8 +51,7 @@ async function getDataByLocation(locationSlug: string): Promise<{
 
   const location = locationResult.docs[0]
 
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
+  const todayStr = getTodayMidnightISO()
 
   // Fetch events, food (individual + recurring), and cans menu in parallel
   const [eventsResult, combinedFood, cansMenu] = await Promise.all([
@@ -83,7 +59,7 @@ async function getDataByLocation(locationSlug: string): Promise<{
       collection: 'events',
       where: {
         visibility: { equals: 'public' },
-        date: { greater_than_equal: today.toISOString() },
+        date: { greater_than_equal: todayStr },
         location: { equals: location.id },
       },
       sort: 'date',
@@ -94,41 +70,22 @@ async function getDataByLocation(locationSlug: string): Promise<{
     getCansMenu(locationSlug.toLowerCase()),
   ])
 
-  const events: BreweryEvent[] = (eventsResult.docs as PayloadEvent[]).map((event) => {
-    const eventLocation = typeof event.location === 'object' ? event.location : null
-
-    return {
-      id: event.id,
-      title: event.organizer,
-      description: event.description || event.organizer,
-      date: event.date.split('T')[0],
-      time: event.startTime || '',
-      endTime: event.endTime,
-      vendor: event.organizer,
-      type: EventType.SPECIAL_EVENT,
-      status: EventStatus.SCHEDULED,
-      location: (eventLocation?.slug || locationSlug) as LocationSlug,
-      locationName: eventLocation?.name || location.name,
-      site: event.site,
-      attendees: event.attendees,
-      tags: event.tags,
-    }
-  })
+  const events: BreweryEvent[] = eventsResult.docs.map((event) =>
+    transformPayloadEventToBreweryEvent(event, locationSlug, location.name)
+  )
 
   const food: FoodItem[] = combinedFood.map((entry) => {
-    const vendorName = typeof entry.vendor === 'object' ? entry.vendor.name : String(entry.vendor)
-    const vendorSite = typeof entry.vendor === 'object' ? entry.vendor.site : undefined
-    const vendorLogo = typeof entry.vendor === 'object' ? getMediaUrl(entry.vendor.logo) : undefined
+    const { name, site, logoUrl } = extractVendorInfo(entry.vendor)
     const dateStr = typeof entry.date === 'string' ? entry.date.split('T')[0] : entry.date
-    const time = 'startTime' in entry ? (entry as PayloadFoodEntry).startTime : ('time' in entry ? entry.time : undefined)
+    const time = ('startTime' in entry ? entry.startTime : ('time' in entry ? entry.time : undefined)) ?? undefined
 
     return {
       id: typeof entry.id === 'string' ? entry.id : String(entry.id),
-      vendor: vendorName ?? 'Unknown',
+      vendor: name || 'Unknown',
       date: dateStr,
       time: time,
-      site: (vendorSite as string) ?? undefined,
-      logoUrl: (vendorLogo as string) ?? undefined,
+      site,
+      logoUrl,
     }
   })
 

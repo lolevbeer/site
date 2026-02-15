@@ -1,4 +1,5 @@
 import type { PayloadHandler } from 'payload'
+import type { Distributor } from '@/src/payload-types'
 import { getUserFromRequest } from './auth-helper'
 import { geocodeAddress, geocodeFallback } from './geocode'
 
@@ -46,9 +47,9 @@ export const regeocodeDistributors: PayloadHandler = async (req) => {
   })
 
   // Find distributors with suspicious coordinates
-  const suspicious = allDistributors.docs.filter((dist: any) => {
+  const suspicious = allDistributors.docs.filter((dist) => {
     if (!dist.location || !dist.region) return false
-    return isSuspiciousCoordinate(dist.location as [number, number], dist.region)
+    return isSuspiciousCoordinate(dist.location, dist.region)
   })
 
   if (suspicious.length === 0) {
@@ -66,7 +67,7 @@ export const regeocodeDistributors: PayloadHandler = async (req) => {
       message: 'Dry run - no changes made',
       checked: allDistributors.docs.length,
       suspicious: suspicious.length,
-      distributors: suspicious.map((d: any) => {
+      distributors: suspicious.map((d) => {
         const addressParts = [d.address, d.city, d.state, d.zip].filter(Boolean)
         const fullAddress = addressParts.join(', ')
         return {
@@ -88,19 +89,19 @@ export const regeocodeDistributors: PayloadHandler = async (req) => {
   const encoder = new TextEncoder()
   const stream = new ReadableStream({
     async start(controller) {
-      const send = (event: string, data: any) => {
+      const send = (event: string, data: Record<string, unknown>) => {
         controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`))
       }
 
       let fixed = 0
       let failed = 0
-      const results: any[] = []
+      const results: Record<string, unknown>[] = []
       const total = suspicious.length
 
       send('progress', { current: 0, total, name: 'Starting...', percent: 0 })
 
       for (let i = 0; i < suspicious.length; i++) {
-        const dist = suspicious[i] as any
+        const dist = suspicious[i] as Distributor
         const percent = Math.round(((i + 1) / total) * 100)
 
         send('progress', { current: i + 1, total, name: dist.name, percent })
@@ -114,13 +115,13 @@ export const regeocodeDistributors: PayloadHandler = async (req) => {
 
         // If full address fails, try zip/city fallback
         if (!geocodeResult) {
-          geocodeResult = await geocodeFallback(dist.city, dist.state, dist.zip)
+          geocodeResult = await geocodeFallback(dist.city ?? '', dist.state ?? '', dist.zip ?? '')
         }
 
         if (geocodeResult) {
           const { coords, source } = geocodeResult
           // Verify the new coords aren't also default
-          if (!isSuspiciousCoordinate(coords, dist.region)) {
+          if (!isSuspiciousCoordinate(coords, dist.region ?? '')) {
             try {
               await payload.update({
                 collection: 'distributors',
@@ -140,12 +141,12 @@ export const regeocodeDistributors: PayloadHandler = async (req) => {
               results.push(result)
               send('item', { type: 'success', ...result })
               fixed++
-            } catch (error: any) {
+            } catch (error: unknown) {
               const result = {
                 id: dist.id,
                 name: dist.name,
                 address: fullAddress,
-                error: error.message,
+                error: error instanceof Error ? error.message : 'Unknown error',
                 status: 'error',
               }
               results.push(result)

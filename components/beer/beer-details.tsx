@@ -8,6 +8,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { logger } from '@/lib/utils/logger';
 import type { Menu, Beer as PayloadBeer, Style } from '@/src/payload-types';
 import { useLocationContext } from '@/components/location/location-provider';
 import {
@@ -172,7 +173,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
         setTapLocations(tapLocs);
         setCanLocations(canLocs);
       } catch (error) {
-        console.error('Error fetching beer location data:', error);
+        logger.error('Error fetching beer location data:', error);
         setLocationError('Unable to load location information. Please try again later.');
       } finally {
         setIsLoadingLocations(false);

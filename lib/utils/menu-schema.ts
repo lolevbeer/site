@@ -5,7 +5,16 @@
  * @see https://schema.org/MenuItem
  */
 
-import { Beer } from '@/lib/types/beer';
+/** Minimal beer interface for menu schema generation */
+interface MenuBeer {
+  name: string;
+  description?: string | null;
+  abv: number;
+  style?: string | { name: string } | unknown;
+  draftPrice?: number | null;
+  fourPack?: number | null;
+  glutenFree?: boolean | null;
+}
 
 export interface MenuItemJsonLd {
   '@type': 'MenuItem';
@@ -45,10 +54,7 @@ export interface MenuJsonLd {
 /**
  * Get style name from beer
  */
-function getBeerStyleName(beer: Beer & { style?: unknown }): string {
-  if (beer.type && typeof beer.type === 'string') {
-    return beer.type;
-  }
+function getBeerStyleName(beer: MenuBeer): string {
   if (beer.style) {
     if (typeof beer.style === 'string') return beer.style;
     if (typeof beer.style === 'object' && beer.style !== null && 'name' in beer.style) {
@@ -61,9 +67,8 @@ function getBeerStyleName(beer: Beer & { style?: unknown }): string {
 /**
  * Convert a beer to a MenuItem
  */
-function beerToMenuItem(beer: Beer & { style?: unknown; draftPrice?: number; fourPack?: number }): MenuItemJsonLd {
+function beerToMenuItem(beer: MenuBeer): MenuItemJsonLd {
   const styleName = getBeerStyleName(beer);
-  const draftPrice = beer.draftPrice || beer.pricing?.draftPrice;
 
   const menuItem: MenuItemJsonLd = {
     '@type': 'MenuItem',
@@ -71,10 +76,10 @@ function beerToMenuItem(beer: Beer & { style?: unknown; draftPrice?: number; fou
     description: beer.description || `${styleName} - ${beer.abv}% ABV`,
   };
 
-  if (draftPrice) {
+  if (beer.draftPrice) {
     menuItem.offers = {
       '@type': 'Offer',
-      price: draftPrice.toString(),
+      price: beer.draftPrice.toString(),
       priceCurrency: 'USD',
     };
   }
@@ -97,16 +102,13 @@ function beerToMenuItem(beer: Beer & { style?: unknown; draftPrice?: number; fou
  * Generate Menu schema for draft beers (tap list)
  */
 export function generateDraftMenuSchema(
-  beers: (Beer & { style?: unknown; draftPrice?: number })[],
+  beers: MenuBeer[],
   locationName?: string
 ): MenuJsonLd {
   const baseUrl = 'https://lolev.beer';
   const menuName = locationName
     ? `Lolev Beer ${locationName} Draft Menu`
     : 'Lolev Beer Draft Menu';
-
-  // Filter to only beers on tap
-  const draftBeers = beers.filter(beer => beer.availability?.tap);
 
   return {
     '@context': 'https://schema.org',
@@ -120,7 +122,7 @@ export function generateDraftMenuSchema(
         '@type': 'MenuSection',
         name: 'On Tap',
         description: 'Draft beers currently pouring',
-        hasMenuItem: draftBeers.map(beerToMenuItem),
+        hasMenuItem: beers.map(beerToMenuItem),
       },
     ],
   };
@@ -130,16 +132,13 @@ export function generateDraftMenuSchema(
  * Generate Menu schema for canned beers
  */
 export function generateCansMenuSchema(
-  beers: (Beer & { style?: unknown; fourPack?: number })[],
+  beers: MenuBeer[],
   locationName?: string
 ): MenuJsonLd {
   const baseUrl = 'https://lolev.beer';
   const menuName = locationName
     ? `Lolev Beer ${locationName} Cans Menu`
     : 'Lolev Beer Cans Menu';
-
-  // Filter to only beers available in cans
-  const cannedBeers = beers.filter(beer => beer.availability?.cansAvailable);
 
   return {
     '@context': 'https://schema.org',
@@ -153,13 +152,12 @@ export function generateCansMenuSchema(
         '@type': 'MenuSection',
         name: 'Cans To-Go',
         description: 'Beers available in cans',
-        hasMenuItem: cannedBeers.map(beer => {
-          const fourPackPrice = beer.fourPack || beer.pricing?.fourPack;
+        hasMenuItem: beers.map(beer => {
           const menuItem = beerToMenuItem(beer);
-          if (fourPackPrice) {
+          if (beer.fourPack) {
             menuItem.offers = {
               '@type': 'Offer',
-              price: fourPackPrice.toString(),
+              price: beer.fourPack.toString(),
               priceCurrency: 'USD',
             };
           }
@@ -174,7 +172,7 @@ export function generateCansMenuSchema(
  * Generate combined Menu schema with both draft and cans
  */
 export function generateFullMenuSchema(
-  beers: (Beer & { style?: unknown; draftPrice?: number; fourPack?: number })[],
+  beers: MenuBeer[],
   locationName?: string
 ): MenuJsonLd {
   const baseUrl = 'https://lolev.beer';
@@ -182,10 +180,12 @@ export function generateFullMenuSchema(
     ? `Lolev Beer ${locationName} Menu`
     : 'Lolev Beer Menu';
 
-  const draftBeers = beers.filter(beer => beer.availability?.tap);
-  const cannedBeers = beers.filter(beer => beer.availability?.cansAvailable);
-
   const sections: MenuSectionJsonLd[] = [];
+
+  // All beers with a draft price are on tap
+  const draftBeers = beers.filter(beer => beer.draftPrice);
+  // Beers with a fourPack price are available in cans
+  const cannedBeers = beers.filter(beer => beer.fourPack);
 
   if (draftBeers.length > 0) {
     sections.push({
@@ -202,12 +202,11 @@ export function generateFullMenuSchema(
       name: 'Cans To-Go',
       description: 'Beers available in cans',
       hasMenuItem: cannedBeers.map(beer => {
-        const fourPackPrice = beer.fourPack || beer.pricing?.fourPack;
         const menuItem = beerToMenuItem(beer);
-        if (fourPackPrice) {
+        if (beer.fourPack) {
           menuItem.offers = {
             '@type': 'Offer',
-            price: fourPackPrice.toString(),
+            price: beer.fourPack.toString(),
             priceCurrency: 'USD',
           };
         }

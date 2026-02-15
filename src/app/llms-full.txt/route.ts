@@ -7,6 +7,7 @@
 import { NextResponse } from 'next/server'
 import { getAllBeersFromPayload, getActiveFAQs } from '@/lib/utils/payload-api'
 import { breweryFAQs } from '@/lib/utils/faq-schema'
+import { logger } from '@/lib/utils/logger'
 
 export const revalidate = 3600 // Revalidate every hour
 
@@ -20,13 +21,13 @@ export async function GET() {
   try {
     beers = await getAllBeersFromPayload()
   } catch (error) {
-    console.error('Error fetching beers for llms-full.txt:', error)
+    logger.error('Error fetching beers for llms-full.txt:', error)
   }
 
   try {
     cmsFAQs = await getActiveFAQs()
   } catch (error) {
-    console.error('Error fetching FAQs for llms-full.txt:', error)
+    logger.error('Error fetching FAQs for llms-full.txt:', error)
   }
 
   // Filter visible beers and sort by name

@@ -6,21 +6,17 @@
 
 import { getPayload } from 'payload'
 import config from '@/src/payload.config'
-import { cache } from 'react'
 import { unstable_cache } from 'next/cache'
-import type { Beer as PayloadBeer, Menu as PayloadMenu, Style, HolidayHour, Event as PayloadEvent, Food as PayloadFood, Distributor, Faq } from '@/src/payload-types'
-import type { PayloadLocation } from '@/lib/types/location'
+import type { Beer as PayloadBeer, Menu, HolidayHour, Event as PayloadEvent, Food as PayloadFood, Faq } from '@/src/payload-types'
+
+export type PayloadMenu = Menu
+import type { LocationSlug } from '@/lib/types/location'
+import { BreweryEvent, EventType, EventStatus } from '@/lib/types/event'
 import { logger } from '@/lib/utils/logger'
 import { CACHE_TAGS } from '@/lib/utils/cache'
 import { extractBeerFromMenuItem } from './menu-item-utils'
-
-/**
- * Get Payload instance (request-scoped cache only)
- * This uses React cache since it's per-request and shouldn't persist
- */
-const getPayloadInstance = cache(async () => {
-  return await getPayload({ config })
-})
+import { getMediaUrl } from './media-utils'
+import { getTodayEST, getTodayMidnightISO } from './date'
 
 /**
  * Check if any beer globally has justReleased flag set
@@ -177,42 +173,28 @@ export const getMenusByLocation = async (locationSlug: string): Promise<PayloadM
 /**
  * Get draft menu for a location
  */
-export const getDraftMenu = async (locationSlug: string): Promise<PayloadMenu | null> => {
-  try {
-    const menus = await getMenusByLocation(locationSlug)
-    const draftMenu = menus.find(menu => menu.type === 'draft') || null
-
-    return draftMenu
-  } catch (error) {
-    logger.error(`Error fetching draft menu for location: ${locationSlug}`, error)
-    return null
-  }
+export async function getDraftMenu(locationSlug: string): Promise<PayloadMenu | null> {
+  const menus = await getMenusByLocation(locationSlug)
+  return menus.find(menu => menu.type === 'draft') || null
 }
 
 /**
  * Get cans menu for a location
  */
-export const getCansMenu = async (locationSlug: string): Promise<PayloadMenu | null> => {
-  try {
-    const menus = await getMenusByLocation(locationSlug)
-    const cansMenu = menus.find(menu => menu.type === 'cans') || null
+export async function getCansMenu(locationSlug: string): Promise<PayloadMenu | null> {
+  const menus = await getMenusByLocation(locationSlug)
+  const cansMenu = menus.find(menu => menu.type === 'cans') || null
 
-    // Sort menu items by beer recipe (descending - newest first)
-    if (cansMenu && cansMenu.items) {
-      cansMenu.items.sort((a, b) => {
-        const beerA = extractBeerFromMenuItem(a)
-        const beerB = extractBeerFromMenuItem(b)
-        const recipeA = beerA?.recipe || 0
-        const recipeB = beerB?.recipe || 0
-        return recipeB - recipeA
-      })
-    }
-
-    return cansMenu
-  } catch (error) {
-    logger.error(`Error fetching cans menu for location: ${locationSlug}`, error)
-    return null
+  // Sort menu items by beer recipe (descending - newest first)
+  if (cansMenu?.items) {
+    cansMenu.items.sort((a, b) => {
+      const recipeA = extractBeerFromMenuItem(a)?.recipe || 0
+      const recipeB = extractBeerFromMenuItem(b)?.recipe || 0
+      return recipeB - recipeA
+    })
   }
+
+  return cansMenu
 }
 
 /**
@@ -349,17 +331,56 @@ export const getAllStyles = async () => {
 }
 
 /**
- * Helper to get style name from Beer style field
+ * Transform a Payload Event document into a BreweryEvent.
+ * Handles polymorphic location field extraction.
  */
-export function getStyleName(style: string | Style): string {
-  if (typeof style === 'string') {
-    return style
+export function transformPayloadEventToBreweryEvent(
+  event: PayloadEvent,
+  fallbackLocationSlug?: string,
+  fallbackLocationName?: string,
+): BreweryEvent {
+  const eventLocation = typeof event.location === 'object' ? event.location : null
+
+  return {
+    id: event.id,
+    title: event.organizer,
+    description: event.description || event.organizer,
+    date: event.date.split('T')[0],
+    time: event.startTime || '',
+    endTime: event.endTime ?? undefined,
+    vendor: event.organizer,
+    type: EventType.SPECIAL_EVENT,
+    status: EventStatus.SCHEDULED,
+    location: (eventLocation?.slug || fallbackLocationSlug) as LocationSlug,
+    locationName: eventLocation?.name || fallbackLocationName,
+    site: event.site ?? undefined,
+    attendees: event.attendees ?? undefined,
+    tags: event.tags ?? undefined,
   }
-  return style.name
 }
 
-// Re-export getMediaUrl as getImageUrl for backward compatibility
-export { getMediaUrl as getImageUrl } from './media-utils'
+/**
+ * Extract vendor info from a polymorphic vendor field.
+ * Handles both object (populated) and string (ID-only) vendor references.
+ */
+export function extractVendorInfo(
+  vendor: unknown,
+  fallbackSite?: string | null,
+): { name: string; site?: string; logoUrl?: string } {
+  if (typeof vendor === 'object' && vendor !== null && 'name' in vendor) {
+    const v = vendor as { name: string; site?: string | null; logo?: unknown }
+    return {
+      name: v.name,
+      site: (fallbackSite || v.site) ?? undefined,
+      logoUrl: getMediaUrl(v.logo) ?? undefined,
+    }
+  }
+  return {
+    name: String(vendor ?? ''),
+    site: fallbackSite ?? undefined,
+  }
+}
+
 
 // getBeerImageUrl moved to formatters.ts for client-side compatibility
 
@@ -565,44 +586,6 @@ export const getHolidayHoursForLocation = async (locationId: string): Promise<Ho
   }
 }
 
-/**
- * Get location by slug with holiday hours check for today
- * Returns location data with any applicable holiday hours override
- */
-export const getLocationWithHolidayHours = async (locationSlug: string, date?: Date): Promise<{
-  location: PayloadLocation | null
-  holidayHours: HolidayHour | null
-}> => {
-  try {
-    const payload = await getPayloadInstance()
-
-    const locationResult = await payload.find({
-      collection: 'locations',
-      where: {
-        slug: {
-          equals: locationSlug,
-        },
-      },
-      limit: 1,
-    })
-
-    const location = locationResult.docs[0] || null
-
-    if (!location) {
-      return { location: null, holidayHours: null }
-    }
-
-    // Check for override on the specified date (or today)
-    const checkDate = date || new Date()
-    const holidayHours = await getHolidayHours(location.id, checkDate)
-
-    return { location, holidayHours }
-  } catch (error) {
-    logger.error(`Error fetching location with holiday hours: ${locationSlug}`, error)
-    return { location: null, holidayHours: null }
-  }
-}
-
 export type DayOfWeek = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday'
 
 export interface WeeklyHoursDay {
@@ -800,10 +783,7 @@ export const getAllLocationsWeeklyHours = async (): Promise<Map<string, WeeklyHo
  * Cached until 'events' tag is invalidated
  */
 export const getUpcomingEventsFromPayload = async (locationSlug: string, limit: number = 10): Promise<PayloadEvent[]> => {
-  // Use today's date as part of cache key to ensure fresh data each day
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const todayKey = today.toISOString().split('T')[0]
+  const todayKey = getTodayEST()
 
   try {
     return await unstable_cache(
@@ -826,10 +806,7 @@ export const getUpcomingEventsFromPayload = async (locationSlug: string, limit: 
 
         const locationId = locationResult.docs[0].id
 
-        // Get today's date at midnight EST
-        const currentToday = new Date()
-        currentToday.setHours(0, 0, 0, 0)
-        const todayStr = currentToday.toISOString()
+        const todayStr = getTodayMidnightISO()
 
         const result = await payload.find({
           collection: 'events',
@@ -868,10 +845,7 @@ export const getUpcomingEventsFromPayload = async (locationSlug: string, limit: 
  * Cached until 'food' tag is invalidated
  */
 export const getUpcomingFoodFromPayload = async (locationSlug: string, limit: number = 10): Promise<PayloadFood[]> => {
-  // Use today's date as part of cache key to ensure fresh data each day
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const todayKey = today.toISOString().split('T')[0]
+  const todayKey = getTodayEST()
 
   try {
     return await unstable_cache(
@@ -894,10 +868,7 @@ export const getUpcomingFoodFromPayload = async (locationSlug: string, limit: nu
 
         const locationId = locationResult.docs[0].id
 
-        // Get today's date at midnight EST
-        const currentToday = new Date()
-        currentToday.setHours(0, 0, 0, 0)
-        const todayStr = currentToday.toISOString()
+        const todayStr = getTodayMidnightISO()
 
         const result = await payload.find({
           collection: 'food',
@@ -989,8 +960,8 @@ export const getRecurringFoodGlobal = async (): Promise<RecurringFoodGlobal> => 
           slug: 'recurring-food',
         })
         return {
-          schedules: (result as any).schedules || {},
-          exclusions: (result as any).exclusions || {},
+          schedules: (result as RecurringFoodGlobal).schedules || {},
+          exclusions: (result as RecurringFoodGlobal).exclusions || {},
         }
       },
       ['recurring-food-global'],
@@ -1028,9 +999,7 @@ export const getUpcomingRecurringFood = async (
   limit: number = 10,
   monthsAhead: number = 3
 ): Promise<RecurringFoodEntry[]> => {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const todayKey = today.toISOString().split('T')[0]
+  const todayKey = getTodayEST()
 
   try {
     return await unstable_cache(
@@ -1165,22 +1134,6 @@ export const getCombinedUpcomingFood = async (
 
   return combined.slice(0, limit)
 }
-
-// ============ BACKWARD COMPATIBILITY ALIASES ============
-// Export aliases for functions that were previously in lib/data/beer-data.ts
-// This allows gradual migration without breaking existing imports
-
-/**
- * @deprecated Use getUpcomingEventsFromPayload directly
- * Alias for backward compatibility with lib/data/beer-data.ts
- */
-export const getUpcomingEvents = getUpcomingEventsFromPayload
-
-/**
- * @deprecated Use getUpcomingFoodFromPayload directly
- * Alias for backward compatibility with lib/data/beer-data.ts
- */
-export const getUpcomingFood = getUpcomingFoodFromPayload
 
 // ============ DISTRIBUTOR DATA ============
 

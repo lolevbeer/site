@@ -2,8 +2,9 @@ import type { CollectionConfig } from 'payload'
 import { APIError } from 'payload'
 import { revalidateTag } from 'next/cache'
 import { generateUniqueSlug } from './utils/generateUniqueSlug'
-import { adminAccess, beerManagerAccess, isAdmin } from '@/src/access/roles'
+import { adminAccess, beerManagerAccess } from '@/src/access/roles'
 import { fetchUntappdData, type UntappdReview } from '@/src/utils/untappd'
+import { logger } from '@/lib/utils/logger'
 
 // Helper function to round to nearest 0.25 (like Excel's MROUND)
 const mround = (value: number, multiple: number): number => {
@@ -142,7 +143,7 @@ export const Beers: CollectionConfig = {
           }
         } catch (error) {
           // Don't block the save if revalidation fails
-          console.error('Beer menu revalidation error:', error)
+          logger.error('Beer menu revalidation error:', error)
         }
 
         return doc
