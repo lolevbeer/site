@@ -6,7 +6,7 @@ import type { Menu } from '@/src/payload-types'
 interface UseMenuStreamOptions {
   /** Whether streaming is enabled (default: true) */
   enabled?: boolean
-  /** Poll interval in ms (default: 2000) */
+  /** Base poll interval in ms (default: 2000) */
   pollInterval?: number
 }
 
@@ -36,17 +36,24 @@ interface MenuResponseNoChange {
 
 type MenuResponse = MenuResponseFull | MenuResponseNoChange
 
+// Adaptive polling thresholds
+const SLOW_AFTER = 30 // no-change polls before slowing to medium
+const SLOWER_AFTER = 90 // no-change polls before slowing to slow
+const MEDIUM_MULTIPLIER = 2.5 // 2s -> 5s
+const SLOW_MULTIPLIER = 5 // 2s -> 10s
+
 /**
  * Hook for real-time menu updates via polling
  *
- * Uses polling against a cached endpoint for cost-effective updates.
- * The endpoint serves cached data (nearly free) until cache is invalidated
- * by Payload's afterChange hook when a menu is actually updated.
+ * Uses adaptive polling against a cached endpoint for cost-effective updates.
+ * Starts at the base interval, then slows down when no changes are detected.
+ * Snaps back to the base interval immediately when a change is detected.
  *
  * Much more cost-effective than SSE on Vercel:
  * - No persistent connections keeping functions alive
  * - Cached responses don't use CPU
  * - Only actual menu changes trigger fresh DB queries
+ * - Adaptive polling reduces idle-time origin hits by 50-80%
  */
 export function useMenuStream(
   menuUrl: string,
@@ -64,6 +71,13 @@ export function useMenuStream(
   const pollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const lastTimestampRef = useRef<number>(0)
   const deployIdRef = useRef<string | null>(null)
+  const noChangeCountRef = useRef<number>(0)
+
+  const getAdaptiveInterval = useCallback((noChangeCount: number) => {
+    if (noChangeCount >= SLOWER_AFTER) return pollInterval * SLOW_MULTIPLIER
+    if (noChangeCount >= SLOW_AFTER) return pollInterval * MEDIUM_MULTIPLIER
+    return pollInterval
+  }, [pollInterval])
 
   const poll = useCallback(async () => {
     if (!menuUrl || !enabled) return
@@ -94,6 +108,9 @@ export function useMenuStream(
       if (data.changed) {
         lastTimestampRef.current = data.timestamp
         setMenu(data.menu)
+        noChangeCountRef.current = 0 // Snap back to fast polling
+      } else {
+        noChangeCountRef.current += 1
       }
 
       // Always update theme state (component handles transitions)
@@ -107,11 +124,12 @@ export function useMenuStream(
       setIsConnected(false)
     }
 
-    // Schedule next poll
+    // Schedule next poll with adaptive interval
     if (enabled) {
-      pollTimeoutRef.current = setTimeout(poll, pollInterval)
+      const nextInterval = getAdaptiveInterval(noChangeCountRef.current)
+      pollTimeoutRef.current = setTimeout(poll, nextInterval)
     }
-  }, [menuUrl, enabled, pollInterval])
+  }, [menuUrl, enabled, pollInterval, getAdaptiveInterval])
 
   // Start polling on mount
   useEffect(() => {
