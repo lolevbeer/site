@@ -13,7 +13,7 @@ const getCachedMenu = (url: string) =>
   unstable_cache(
     async () => {
       const menu = await getMenuByUrl(url)
-      return menu
+      return { menu, _fetchedAt: Date.now() }
     },
     [`menu-stream-${url}`],
     {
@@ -41,14 +41,16 @@ export async function GET(
   const { url } = await params
 
   try {
-    const menu = await getCachedMenu(url)
+    const cached = await getCachedMenu(url)
 
-    if (!menu) {
+    if (!cached?.menu) {
       return NextResponse.json(
         { error: 'Menu not found' },
         { status: 404 }
       )
     }
+
+    const { menu, _fetchedAt } = cached
 
     // Determine theme: use manual override if set, otherwise use Pittsburgh time
     const themeMode = menu.themeMode || 'auto'
@@ -72,11 +74,15 @@ export async function GET(
 
     const deployId = process.env.NEXT_PUBLIC_DEPLOY_ID || ''
 
+    // Signal clients to poll faster when data was recently fetched fresh
+    // (indicates an editor is active — cache was busted by afterRead hook)
+    const warm = (Date.now() - _fetchedAt) < 60_000
+
     // If client sent a `since` timestamp and nothing has changed, return a minimal response
     const since = request.nextUrl.searchParams.get('since')
     if (since && Number(since) === timestamp) {
       return NextResponse.json(
-        { changed: false, theme, timestamp, deployId },
+        { changed: false, theme, timestamp, deployId, warm },
         {
           headers: {
             'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=30',
@@ -92,6 +98,7 @@ export async function GET(
         theme,
         timestamp,
         deployId,
+        warm,
       },
       {
         headers: {

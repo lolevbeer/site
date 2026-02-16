@@ -25,6 +25,7 @@ interface MenuResponseFull {
   theme: 'light' | 'dark'
   timestamp: number
   deployId?: string
+  warm?: boolean
 }
 
 interface MenuResponseNoChange {
@@ -32,6 +33,7 @@ interface MenuResponseNoChange {
   theme: 'light' | 'dark'
   timestamp: number
   deployId?: string
+  warm?: boolean
 }
 
 type MenuResponse = MenuResponseFull | MenuResponseNoChange
@@ -109,6 +111,9 @@ export function useMenuStream(
         lastTimestampRef.current = data.timestamp
         setMenu(data.menu)
         noChangeCountRef.current = 0 // Snap back to fast polling
+      } else if (data.warm) {
+        // Editor is active — snap back to fast polling to catch upcoming changes
+        noChangeCountRef.current = 0
       } else {
         noChangeCountRef.current += 1
       }

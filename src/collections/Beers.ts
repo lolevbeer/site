@@ -149,6 +149,33 @@ export const Beers: CollectionConfig = {
         return doc
       },
     ],
+    afterRead: [
+      async ({ doc, req, findMany }) => {
+        // When an admin views a single beer, revalidate menu caches so
+        // displays snap back to fast polling in anticipation of edits.
+        // Skip list views (findMany) to avoid N+1 queries.
+        if (req.user && !findMany) {
+          try {
+            const menus = await req.payload.find({
+              collection: 'menus',
+              where: {
+                'items.product.value': { equals: doc.id },
+              },
+              limit: 100,
+              depth: 0,
+            })
+            for (const menu of menus.docs) {
+              if (menu.url) {
+                revalidateTag(`menu-${menu.url}`)
+              }
+            }
+          } catch {
+            // Don't block the read
+          }
+        }
+        return doc
+      },
+    ],
   },
   fields: [
     {
