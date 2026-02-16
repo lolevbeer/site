@@ -6,7 +6,7 @@ import type { BreweryEvent } from '@/lib/types/event'
 interface UseEventsStreamOptions {
   /** Whether streaming is enabled (default: true) */
   enabled?: boolean
-  /** Poll interval in ms (default: 5000) */
+  /** Base poll interval in ms (default: 5000) */
   pollInterval?: number
 }
 
@@ -24,10 +24,17 @@ interface EventsResponse {
   locationName: string
   theme: 'light' | 'dark'
   timestamp: number
+  deployId?: string
 }
 
+// Adaptive polling thresholds
+const SLOW_AFTER = 30
+const SLOWER_AFTER = 90
+const MEDIUM_MULTIPLIER = 2.5
+const SLOW_MULTIPLIER = 5
+
 /**
- * Hook for real-time events updates via polling
+ * Hook for real-time events updates via adaptive polling
  */
 export function useEventsStream(
   location: string,
@@ -46,6 +53,14 @@ export function useEventsStream(
 
   const pollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const lastTimestampRef = useRef<number>(0)
+  const deployIdRef = useRef<string | null>(null)
+  const noChangeCountRef = useRef<number>(0)
+
+  const getAdaptiveInterval = useCallback((noChangeCount: number) => {
+    if (noChangeCount >= SLOWER_AFTER) return pollInterval * SLOW_MULTIPLIER
+    if (noChangeCount >= SLOW_AFTER) return pollInterval * MEDIUM_MULTIPLIER
+    return pollInterval
+  }, [pollInterval])
 
   const poll = useCallback(async () => {
     if (!location || !enabled) return
@@ -61,11 +76,24 @@ export function useEventsStream(
 
       const data: EventsResponse = await response.json()
 
+      // Detect new deployment and force a full page reload
+      if (data.deployId) {
+        if (deployIdRef.current === null) {
+          deployIdRef.current = data.deployId
+        } else if (data.deployId !== deployIdRef.current) {
+          window.location.reload()
+          return
+        }
+      }
+
       // Only update if data has changed
       if (data.timestamp !== lastTimestampRef.current) {
         lastTimestampRef.current = data.timestamp
         setEvents(data.events)
         setLocationName(data.locationName)
+        noChangeCountRef.current = 0
+      } else {
+        noChangeCountRef.current += 1
       }
 
       setThemeState(data.theme)
@@ -77,11 +105,12 @@ export function useEventsStream(
       setIsConnected(false)
     }
 
-    // Schedule next poll
+    // Schedule next poll with adaptive interval
     if (enabled) {
-      pollTimeoutRef.current = setTimeout(poll, pollInterval)
+      const nextInterval = getAdaptiveInterval(noChangeCountRef.current)
+      pollTimeoutRef.current = setTimeout(poll, nextInterval)
     }
-  }, [location, enabled, pollInterval])
+  }, [location, enabled, pollInterval, getAdaptiveInterval])
 
   // Start polling on mount
   useEffect(() => {

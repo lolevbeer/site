@@ -90,16 +90,19 @@ export async function GET(
 
     const theme = getPittsburghTheme()
 
+    const deployId = process.env.NEXT_PUBLIC_DEPLOY_ID || ''
+
     return NextResponse.json(
       {
         events: data.events,
         locationName: data.locationName,
         theme,
         timestamp: data.timestamp,
+        deployId,
       },
       {
         headers: {
-          'Cache-Control': 'public, s-maxage=2, stale-while-revalidate=10',
+          'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=30',
         },
       }
     )

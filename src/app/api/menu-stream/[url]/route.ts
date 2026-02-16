@@ -27,15 +27,15 @@ const getCachedMenu = (url: string) =>
  *
  * Returns menu data as JSON with caching headers.
  * Cache is invalidated on-demand when menu is updated in Payload.
- * Client polls this endpoint every 1-2 seconds for near-instant updates.
+ * Client polls this endpoint and compares timestamps to detect changes.
  *
- * This is much more cost-effective than SSE because:
- * - Cached responses don't use CPU (served from edge cache)
+ * Cost-effective design:
+ * - CDN caches one response per menu URL (no query params to fragment cache)
  * - Only actual menu changes trigger fresh DB queries
- * - No persistent connections keeping functions alive
+ * - Adaptive client polling reduces idle-time requests
  */
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ url: string }> }
 ) {
   const { url } = await params
@@ -78,22 +78,8 @@ export async function GET(
     // (indicates an editor is active — cache was busted by afterRead hook)
     const warm = (Date.now() - _fetchedAt) < 60_000
 
-    // If client sent a `since` timestamp and nothing has changed, return a minimal response
-    const since = request.nextUrl.searchParams.get('since')
-    if (since && Number(since) === timestamp) {
-      return NextResponse.json(
-        { changed: false, theme, timestamp, deployId, warm },
-        {
-          headers: {
-            'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=30',
-          },
-        }
-      )
-    }
-
     return NextResponse.json(
       {
-        changed: true,
         menu,
         theme,
         timestamp,
@@ -102,7 +88,6 @@ export async function GET(
       },
       {
         headers: {
-          // Allow caching at edge, but revalidate frequently
           'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=30',
         },
       }

@@ -19,24 +19,13 @@ interface UseMenuStreamResult {
   pollCount: number
 }
 
-interface MenuResponseFull {
-  changed: true
+interface MenuResponse {
   menu: Menu
   theme: 'light' | 'dark'
   timestamp: number
   deployId?: string
   warm?: boolean
 }
-
-interface MenuResponseNoChange {
-  changed: false
-  theme: 'light' | 'dark'
-  timestamp: number
-  deployId?: string
-  warm?: boolean
-}
-
-type MenuResponse = MenuResponseFull | MenuResponseNoChange
 
 // Adaptive polling thresholds
 const SLOW_AFTER = 30 // no-change polls before slowing to medium
@@ -49,13 +38,13 @@ const SLOW_MULTIPLIER = 5 // 2s -> 10s
  *
  * Uses adaptive polling against a cached endpoint for cost-effective updates.
  * Starts at the base interval, then slows down when no changes are detected.
- * Snaps back to the base interval immediately when a change is detected.
+ * Snaps back to the base interval immediately when a change is detected
+ * or when the server signals an editor is active (warm).
  *
- * Much more cost-effective than SSE on Vercel:
- * - No persistent connections keeping functions alive
- * - Cached responses don't use CPU
- * - Only actual menu changes trigger fresh DB queries
- * - Adaptive polling reduces idle-time origin hits by 50-80%
+ * Cost-effective design:
+ * - No query params, so all displays share one CDN cache entry per menu
+ * - Client-side timestamp comparison avoids unnecessary state updates
+ * - Adaptive polling reduces idle-time requests by 50-80%
  */
 export function useMenuStream(
   menuUrl: string,
@@ -85,8 +74,7 @@ export function useMenuStream(
     if (!menuUrl || !enabled) return
 
     try {
-      const since = lastTimestampRef.current || ''
-      const response = await fetch(`/api/menu-stream/${menuUrl}${since ? `?since=${since}` : ''}`, {
+      const response = await fetch(`/api/menu-stream/${menuUrl}`, {
         cache: 'no-store', // Let the server handle caching
       })
 
@@ -106,8 +94,8 @@ export function useMenuStream(
         }
       }
 
-      // Only update menu state when server indicates data has changed
-      if (data.changed) {
+      // Only update menu state when timestamp has changed
+      if (data.timestamp !== lastTimestampRef.current) {
         lastTimestampRef.current = data.timestamp
         setMenu(data.menu)
         noChangeCountRef.current = 0 // Snap back to fast polling
