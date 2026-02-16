@@ -1,4 +1,4 @@
-import type { CollectionConfig } from 'payload'
+import type { CollectionConfig, Payload } from 'payload'
 import { APIError } from 'payload'
 import { revalidateTag } from 'next/cache'
 import { generateUniqueSlug } from './utils/generateUniqueSlug'
@@ -6,9 +6,30 @@ import { adminAccess, beerManagerAccess } from '@/src/access/roles'
 import { fetchUntappdData, type UntappdReview } from '@/src/utils/untappd'
 import { logger } from '@/lib/utils/logger'
 
-// Helper function to round to nearest 0.25 (like Excel's MROUND)
-const mround = (value: number, multiple: number): number => {
+/** Round to nearest multiple (like Excel's MROUND) */
+function mround(value: number, multiple: number): number {
   return Math.round(value / multiple) * multiple
+}
+
+/**
+ * Find all menus containing a given beer and revalidate their CDN cache tags.
+ * Called from both afterChange (data updated) and afterRead (editor warm-up).
+ */
+async function revalidateMenusForBeer(
+  payload: Payload,
+  beerId: string | number,
+): Promise<void> {
+  const menus = await payload.find({
+    collection: 'menus',
+    where: { 'items.product.value': { equals: beerId } },
+    limit: 100,
+    depth: 0,
+  })
+  for (const menu of menus.docs) {
+    if (menu.url) {
+      revalidateTag(`menu-${menu.url}`)
+    }
+  }
 }
 
 export const Beers: CollectionConfig = {
@@ -124,28 +145,11 @@ export const Beers: CollectionConfig = {
     ],
     afterChange: [
       async ({ doc, req }) => {
-        // Find all menus containing this beer and revalidate their caches
         try {
-          const menus = await req.payload.find({
-            collection: 'menus',
-            where: {
-              'items.product.value': { equals: doc.id },
-            },
-            limit: 100,
-            depth: 0,
-          })
-
-          // Revalidate each menu's specific cache tag
-          for (const menu of menus.docs) {
-            if (menu.url) {
-              revalidateTag(`menu-${menu.url}`)
-            }
-          }
+          await revalidateMenusForBeer(req.payload, doc.id)
         } catch (error) {
-          // Don't block the save if revalidation fails
           logger.error('Beer menu revalidation error:', error)
         }
-
         return doc
       },
     ],
@@ -156,19 +160,7 @@ export const Beers: CollectionConfig = {
         // Skip list views (findMany) to avoid N+1 queries.
         if (req.user && !findMany) {
           try {
-            const menus = await req.payload.find({
-              collection: 'menus',
-              where: {
-                'items.product.value': { equals: doc.id },
-              },
-              limit: 100,
-              depth: 0,
-            })
-            for (const menu of menus.docs) {
-              if (menu.url) {
-                revalidateTag(`menu-${menu.url}`)
-              }
-            }
+            await revalidateMenusForBeer(req.payload, doc.id)
           } catch {
             // Don't block the read
           }

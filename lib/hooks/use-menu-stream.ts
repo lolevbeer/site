@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { usePolling } from './use-polling'
 import type { Menu } from '@/src/payload-types'
 
 interface UseMenuStreamOptions {
@@ -27,125 +27,24 @@ interface MenuResponse {
   warm?: boolean
 }
 
-// Adaptive polling thresholds
-const SLOW_AFTER = 30 // no-change polls before slowing to medium
-const SLOWER_AFTER = 90 // no-change polls before slowing to slow
-const MEDIUM_MULTIPLIER = 2.5 // 2s -> 5s
-const SLOW_MULTIPLIER = 5 // 2s -> 10s
-
 /**
- * Hook for real-time menu updates via polling
+ * Hook for real-time menu updates via adaptive polling.
  *
- * Uses adaptive polling against a cached endpoint for cost-effective updates.
- * Starts at the base interval, then slows down when no changes are detected.
- * Snaps back to the base interval immediately when a change is detected
- * or when the server signals an editor is active (warm).
- *
- * Cost-effective design:
- * - No query params, so all displays share one CDN cache entry per menu
- * - Client-side timestamp comparison avoids unnecessary state updates
- * - Adaptive polling reduces idle-time requests by 50-80%
+ * Wraps the generic usePolling hook with menu-specific data transformation.
+ * See usePolling for details on adaptive interval behavior, warm-up signals,
+ * and cost-effective CDN caching strategy.
  */
 export function useMenuStream(
   menuUrl: string,
   initialMenu: Menu | null,
   options: UseMenuStreamOptions = {}
 ): UseMenuStreamResult {
-  const { enabled = true, pollInterval = 2000 } = options
-
-  const [menu, setMenu] = useState<Menu | null>(initialMenu)
-  const [theme, setThemeState] = useState<'light' | 'dark'>('light')
-  const [isConnected, setIsConnected] = useState(false)
-  const [error, setError] = useState<Error | null>(null)
-  const [pollCount, setPollCount] = useState(0)
-
-  const pollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const lastTimestampRef = useRef<number>(0)
-  const deployIdRef = useRef<string | null>(null)
-  const noChangeCountRef = useRef<number>(0)
-
-  const getAdaptiveInterval = useCallback((noChangeCount: number) => {
-    if (noChangeCount >= SLOWER_AFTER) return pollInterval * SLOW_MULTIPLIER
-    if (noChangeCount >= SLOW_AFTER) return pollInterval * MEDIUM_MULTIPLIER
-    return pollInterval
-  }, [pollInterval])
-
-  const poll = useCallback(async () => {
-    if (!menuUrl || !enabled) return
-
-    try {
-      const response = await fetch(`/api/menu-stream/${menuUrl}`, {
-        cache: 'no-store', // Let the server handle caching
-      })
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`)
-      }
-
-      const data: MenuResponse = await response.json()
-
-      // Detect new deployment and force a full page reload
-      if (data.deployId) {
-        if (deployIdRef.current === null) {
-          deployIdRef.current = data.deployId
-        } else if (data.deployId !== deployIdRef.current) {
-          window.location.reload()
-          return
-        }
-      }
-
-      // Only update menu state when timestamp has changed
-      if (data.timestamp !== lastTimestampRef.current) {
-        lastTimestampRef.current = data.timestamp
-        setMenu(data.menu)
-        noChangeCountRef.current = 0 // Snap back to fast polling
-      } else if (data.warm) {
-        // Editor is active — snap back to fast polling to catch upcoming changes
-        noChangeCountRef.current = 0
-      } else {
-        noChangeCountRef.current += 1
-      }
-
-      // Always update theme state (component handles transitions)
-      setThemeState(data.theme)
-
-      setIsConnected(true)
-      setError(null)
-      setPollCount(prev => prev + 1)
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to fetch menu'))
-      setIsConnected(false)
-    }
-
-    // Schedule next poll with adaptive interval
-    if (enabled) {
-      const nextInterval = getAdaptiveInterval(noChangeCountRef.current)
-      pollTimeoutRef.current = setTimeout(poll, nextInterval)
-    }
-  }, [menuUrl, enabled, pollInterval, getAdaptiveInterval])
-
-  // Start polling on mount
-  useEffect(() => {
-    if (enabled && menuUrl) {
-      // Start polling immediately
-      poll()
-    }
-
-    return () => {
-      // Cleanup on unmount
-      if (pollTimeoutRef.current) {
-        clearTimeout(pollTimeoutRef.current)
-        pollTimeoutRef.current = null
-      }
-    }
-  }, [enabled, menuUrl, poll])
-
-  // Update menu when initialMenu changes (server re-render)
-  useEffect(() => {
-    if (initialMenu) {
-      setMenu(initialMenu)
-    }
-  }, [initialMenu])
+  const { data: menu, theme, isConnected, error, pollCount } = usePolling<Menu, MenuResponse>(
+    menuUrl ? `/api/menu-stream/${menuUrl}` : '',
+    initialMenu,
+    (response) => ({ data: response.menu, theme: response.theme }),
+    options
+  )
 
   return { menu, theme, isConnected, error, pollCount }
 }

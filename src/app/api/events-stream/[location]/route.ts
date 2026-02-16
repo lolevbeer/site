@@ -73,7 +73,7 @@ const getCachedEvents = (locationSlug: string) =>
  * Events polling endpoint for large displays
  */
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ location: string }> }
 ) {
   const { location } = await params
