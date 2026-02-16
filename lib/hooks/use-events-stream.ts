@@ -1,14 +1,7 @@
 'use client'
 
-import { usePolling } from './use-polling'
+import { usePolling, type UsePollingOptions } from './use-polling'
 import type { BreweryEvent } from '@/lib/types/event'
-
-interface UseEventsStreamOptions {
-  /** Whether streaming is enabled (default: true) */
-  enabled?: boolean
-  /** Base poll interval in ms (default: 5000) */
-  pollInterval?: number
-}
 
 interface UseEventsStreamResult {
   events: BreweryEvent[]
@@ -19,12 +12,13 @@ interface UseEventsStreamResult {
   pollCount: number
 }
 
-/** Domain data extracted from EventsResponse for state management */
+/** Domain data managed by the polling hook */
 interface EventsData {
   events: BreweryEvent[]
   locationName: string
 }
 
+/** Shape of the /api/events-stream response */
 interface EventsResponse {
   events: BreweryEvent[]
   locationName: string
@@ -43,18 +37,18 @@ export function useEventsStream(
   location: string,
   initialEvents: BreweryEvent[],
   initialLocationName: string,
-  options: UseEventsStreamOptions = {}
+  options: UsePollingOptions = {},
 ): UseEventsStreamResult {
   const initialData: EventsData = { events: initialEvents, locationName: initialLocationName }
 
   const { data, theme, isConnected, error, pollCount } = usePolling<EventsData, EventsResponse>(
     location ? `/api/events-stream/${location}` : '',
     initialData,
-    (response) => ({
-      data: { events: response.events, locationName: response.locationName },
-      theme: response.theme,
+    ({ events, locationName, theme: responseTheme }) => ({
+      data: { events, locationName },
+      theme: responseTheme,
     }),
-    options
+    options,
   )
 
   return {

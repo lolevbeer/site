@@ -10,11 +10,13 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 
-// Adaptive polling thresholds
-const SLOW_AFTER = 30 // no-change polls before slowing to medium
-const SLOWER_AFTER = 90 // no-change polls before slowing to slow
-const MEDIUM_MULTIPLIER = 2.5 // e.g. 2s -> 5s
-const SLOW_MULTIPLIER = 5 // e.g. 2s -> 10s
+/** No-change poll counts before slowing down */
+const SLOW_AFTER = 30
+const SLOWER_AFTER = 90
+
+/** Multipliers applied to the base poll interval at each slowdown tier */
+const MEDIUM_MULTIPLIER = 2.5
+const SLOW_MULTIPLIER = 5
 
 interface PollingResponse {
   timestamp: number
@@ -23,7 +25,7 @@ interface PollingResponse {
   warm?: boolean
 }
 
-interface UsePollingOptions {
+export interface UsePollingOptions {
   /** Whether polling is enabled (default: true) */
   enabled?: boolean
   /** Base poll interval in ms (default: 2000) */
@@ -40,7 +42,17 @@ interface UsePollingResult<T> {
 }
 
 /**
- * Generic adaptive polling hook
+ * Compute the next poll delay based on how many consecutive polls returned
+ * unchanged data. Slows from base -> 2.5x -> 5x as idle time increases.
+ */
+function getAdaptiveInterval(baseInterval: number, noChangeCount: number): number {
+  if (noChangeCount >= SLOWER_AFTER) return baseInterval * SLOW_MULTIPLIER
+  if (noChangeCount >= SLOW_AFTER) return baseInterval * MEDIUM_MULTIPLIER
+  return baseInterval
+}
+
+/**
+ * Generic adaptive polling hook.
  *
  * Polls a URL at an adaptive interval, slowing down when no changes are
  * detected and snapping back to the base interval when data changes or
@@ -49,17 +61,16 @@ interface UsePollingResult<T> {
  * Handles deploy detection (page reload on new deploy) and timestamp-based
  * change detection to avoid unnecessary state updates.
  *
- * @param url - API endpoint to poll (null/empty disables polling)
+ * @param url - API endpoint to poll (empty string disables polling)
  * @param initialData - Initial data to use before first successful poll (null if unavailable)
- * @param applyResponse - Callback to extract domain data and theme from the raw response.
- *   Return the new data value, or null to skip the update.
+ * @param applyResponse - Callback to extract domain data and theme from the raw response
  * @param options - Polling configuration
  */
 export function usePolling<T, R extends PollingResponse>(
   url: string,
   initialData: T | null,
   applyResponse: (response: R) => { data: T; theme: 'light' | 'dark' },
-  options: UsePollingOptions = {}
+  options: UsePollingOptions = {},
 ): UsePollingResult<T> {
   const { enabled = true, pollInterval = 2000 } = options
 
@@ -70,18 +81,14 @@ export function usePolling<T, R extends PollingResponse>(
   const [pollCount, setPollCount] = useState(0)
 
   const pollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const lastTimestampRef = useRef<number>(0)
+  const lastTimestampRef = useRef(0)
   const deployIdRef = useRef<string | null>(null)
-  const noChangeCountRef = useRef<number>(0)
+  const noChangeCountRef = useRef(0)
 
-  const getAdaptiveInterval = useCallback(
-    (noChangeCount: number): number => {
-      if (noChangeCount >= SLOWER_AFTER) return pollInterval * SLOW_MULTIPLIER
-      if (noChangeCount >= SLOW_AFTER) return pollInterval * MEDIUM_MULTIPLIER
-      return pollInterval
-    },
-    [pollInterval],
-  )
+  // Store applyResponse in a ref so poll() always uses the latest callback
+  // without needing it in the useCallback dependency array.
+  const applyResponseRef = useRef(applyResponse)
+  applyResponseRef.current = applyResponse
 
   const poll = useCallback(async () => {
     if (!url || !enabled) return
@@ -105,7 +112,7 @@ export function usePolling<T, R extends PollingResponse>(
         }
       }
 
-      const applied = applyResponse(raw)
+      const applied = applyResponseRef.current(raw)
 
       // Only update data state when timestamp has changed
       if (raw.timestamp !== lastTimestampRef.current) {
@@ -124,7 +131,7 @@ export function usePolling<T, R extends PollingResponse>(
 
       setIsConnected(true)
       setError(null)
-      setPollCount(prev => prev + 1)
+      setPollCount((prev) => prev + 1)
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Polling failed'))
       setIsConnected(false)
@@ -132,13 +139,11 @@ export function usePolling<T, R extends PollingResponse>(
 
     // Schedule next poll with adaptive interval
     if (enabled) {
-      const nextInterval = getAdaptiveInterval(noChangeCountRef.current)
+      const nextInterval = getAdaptiveInterval(pollInterval, noChangeCountRef.current)
       pollTimeoutRef.current = setTimeout(poll, nextInterval)
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [url, enabled, pollInterval, getAdaptiveInterval])
+  }, [url, enabled, pollInterval])
 
-  // Start polling on mount
   useEffect(() => {
     if (enabled && url) {
       poll()
