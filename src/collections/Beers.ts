@@ -133,7 +133,9 @@ export const Beers: CollectionConfig = {
             // Merge new reviews with existing, using URL as the dedup key
             const existing = (originalDoc?.positiveReviews as UntappdReview[]) || []
             const existingUrls = new Set(existing.map((r) => r.url).filter(Boolean))
-            const newReviews = fetched.positiveReviews.filter((r) => r.url && !existingUrls.has(r.url))
+            const newReviews = fetched.positiveReviews.filter(
+              (r) => r.url && !existingUrls.has(r.url),
+            )
             data.positiveReviews = [...existing, ...newReviews]
           }
         }

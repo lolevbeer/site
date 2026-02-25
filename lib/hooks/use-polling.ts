@@ -1,12 +1,14 @@
+'use client'
+
 /**
- * Generic adaptive polling hook extracted from use-menu-stream and use-events-stream.
+ * Shared adaptive polling hook for real-time display updates (menus, events).
  *
  * Cost-effective design:
  * - No query params, so all displays share one CDN cache entry per endpoint
  * - Client-side timestamp comparison avoids unnecessary state updates
  * - Adaptive polling reduces idle-time requests by 50-80%
+ * @module
  */
-'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 
@@ -63,7 +65,8 @@ function getAdaptiveInterval(baseInterval: number, noChangeCount: number): numbe
  *
  * @param url - API endpoint to poll (empty string disables polling)
  * @param initialData - Initial data to use before first successful poll (null if unavailable)
- * @param applyResponse - Callback to extract domain data and theme from the raw response
+ * @param applyResponse - Callback to extract domain data and theme from the raw response.
+ *   Must return `{ data, theme }` — null returns are not supported.
  * @param options - Polling configuration
  */
 export function usePolling<T, R extends PollingResponse>(

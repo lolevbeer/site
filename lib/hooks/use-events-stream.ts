@@ -1,5 +1,7 @@
 'use client'
 
+import { useMemo } from 'react'
+
 import { usePolling, type UsePollingOptions } from './use-polling'
 import type { BreweryEvent } from '@/lib/types/event'
 
@@ -25,6 +27,7 @@ interface EventsResponse {
   theme: 'light' | 'dark'
   timestamp: number
   deployId?: string
+  warm?: boolean
 }
 
 /**
@@ -39,7 +42,10 @@ export function useEventsStream(
   initialLocationName: string,
   options: UsePollingOptions = {},
 ): UseEventsStreamResult {
-  const initialData: EventsData = { events: initialEvents, locationName: initialLocationName }
+  const initialData = useMemo<EventsData>(
+    () => ({ events: initialEvents, locationName: initialLocationName }),
+    [initialEvents, initialLocationName],
+  )
 
   const { data, theme, isConnected, error, pollCount } = usePolling<EventsData, EventsResponse>(
     location ? `/api/events-stream/${location}` : '',
