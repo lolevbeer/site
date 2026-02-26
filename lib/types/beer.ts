@@ -12,34 +12,9 @@ export enum GlassType {
 }
 
 /**
- * Enum for beer types/styles
+ * Beer style name (dynamic - sourced from the Payload CMS styles collection)
  */
-export enum BeerStyle {
-  PALE_ALE = 'Pale Ale',
-  INDIA_PALE_ALE = 'India Pale Ale',
-  DOUBLE_IPA = 'Double IPA (DIPA)',
-  SESSION_IPA = 'Session IPA',
-  HAZE = 'Haze',
-  HOP_SATURATED_ALE = 'Hop Saturated Ale',
-  ULTRA_HOPPED_ALE = 'Ultra Hopped Ale',
-  IMPERIAL_STOUT = 'Imperial Stout',
-  BOCK = 'Bock',
-  SPARKLING_HOP_WATER = 'Sparkling Hop Water',
-  KOLSCH = 'Kölsch',
-  SAISON = 'Saison',
-  GRISETTE = 'Grisette',
-  SCOTCH_ALE = 'Scotch Ale',
-  DRY_IRISH_STOUT = 'Dry Irish Stout',
-  UNFILTERED_PILSNER = 'Unfiltered Pilsner',
-  CREAM_ALE = 'Cream Ale',
-  VIENNA_LAGER = 'Vienna Lager',
-  GOSE = 'Gose',
-  MATCHA_ALE = 'Matcha Ale',
-  CZECH_DARK_LAGER = 'Czech Dark Lager',
-  MARZEN = 'Märzen',
-  MEXICAN_LAGER = 'Mexican Lager',
-  PILSNER = 'Pilsner',
-}
+export type BeerStyle = string
 
 /**
  * Beer pricing information

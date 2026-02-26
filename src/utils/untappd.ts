@@ -1,6 +1,10 @@
 /**
- * Shared Untappd utilities for fetching beer data and reviews
+ * Shared Untappd utilities for fetching beer data and reviews.
+ * Uses HTML scraping (no official API) - fragile by nature.
+ * Includes rate-limit detection and error reporting via Sentry.
  */
+
+import * as Sentry from '@sentry/nextjs'
 
 export interface UntappdReview {
   username: string
@@ -17,10 +21,36 @@ export interface UntappdData {
   positiveReviews: UntappdReview[]
 }
 
+/** Tracks consecutive failures for circuit breaker logic */
+let consecutiveFailures = 0
+const MAX_CONSECUTIVE_FAILURES = 5
+
 /**
- * Fetch Untappd rating, rating count, and Lolev-toasted reviews from beer page
+ * Check if the circuit breaker is open (too many consecutive failures)
+ */
+export function isCircuitOpen(): boolean {
+  return consecutiveFailures >= MAX_CONSECUTIVE_FAILURES
+}
+
+/**
+ * Reset the circuit breaker (call after a successful request)
+ */
+export function resetCircuit(): void {
+  consecutiveFailures = 0
+}
+
+/**
+ * Fetch Untappd rating, rating count, and Lolev-toasted reviews from beer page.
+ * Includes rate-limit detection and circuit breaker pattern.
  */
 export async function fetchUntappdData(url: string): Promise<UntappdData> {
+  const emptyResult: UntappdData = { rating: null, ratingCount: null, positiveReviews: [] }
+
+  // Circuit breaker: skip requests if too many consecutive failures
+  if (isCircuitOpen()) {
+    return emptyResult
+  }
+
   try {
     const fullUrl = url.startsWith('http') ? url : `https://untappd.com${url}`
     const response = await fetch(fullUrl, {
@@ -28,8 +58,38 @@ export async function fetchUntappdData(url: string): Promise<UntappdData> {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
       },
     })
-    if (!response.ok) return { rating: null, ratingCount: null, positiveReviews: [] }
+
+    // Rate limit detection
+    if (response.status === 429) {
+      consecutiveFailures++
+      Sentry.captureMessage('Untappd rate limit hit', {
+        level: 'warning',
+        extra: { url: fullUrl, consecutiveFailures },
+      })
+      return emptyResult
+    }
+
+    if (!response.ok) {
+      consecutiveFailures++
+      if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+        Sentry.captureMessage('Untappd circuit breaker opened after consecutive failures', {
+          level: 'error',
+          extra: { url: fullUrl, status: response.status, consecutiveFailures },
+        })
+      }
+      return emptyResult
+    }
+
     const html = await response.text()
+
+    // Detect if Untappd changed their markup (no rating div found on a page that should have one)
+    const hasRatingDiv = html.includes('class="caps"')
+    if (!hasRatingDiv && html.length > 1000) {
+      Sentry.captureMessage('Untappd HTML structure may have changed - rating div not found', {
+        level: 'warning',
+        extra: { url: fullUrl, htmlLength: html.length },
+      })
+    }
 
     // Extract rating
     let rating: number | null = null
@@ -90,8 +150,19 @@ export async function fetchUntappdData(url: string): Promise<UntappdData> {
       positiveReviews.push({ username, rating: checkinRating, text, date, url: checkinUrl, image })
     }
 
+    // Success - reset circuit breaker
+    resetCircuit()
+
     return { rating, ratingCount, positiveReviews }
-  } catch {
+  } catch (error) {
+    consecutiveFailures++
+
+    if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+      Sentry.captureException(error, {
+        extra: { url, consecutiveFailures, context: 'Untappd scraper circuit breaker opened' },
+      })
+    }
+
     return { rating: null, ratingCount: null, positiveReviews: [] }
   }
 }

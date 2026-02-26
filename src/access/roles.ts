@@ -9,10 +9,6 @@ export type Role = 'admin' | 'event-manager' | 'beer-manager' | 'food-manager' |
 /**
  * Check if a user has any of the specified roles
  *
- * Supports both:
- * - New `roles` array field (hasMany)
- * - Legacy `role` string field (for backwards compatibility during migration)
- *
  * @param user - The user object (may be null/undefined)
  * @param roles - Single role or array of roles to check
  * @returns true if user has at least one of the specified roles
@@ -22,14 +18,8 @@ export function hasRole(user: User | null | undefined, roles: Role | Role[]): bo
 
   const checkRoles = Array.isArray(roles) ? roles : [roles]
 
-  // Check new `roles` array field
   if (user.roles && Array.isArray(user.roles) && user.roles.length > 0) {
     return checkRoles.some((role) => user.roles.includes(role))
-  }
-
-  // Backwards compatibility: check legacy `role` string field
-  if (user.role) {
-    return checkRoles.includes(user.role as Role)
   }
 
   return false

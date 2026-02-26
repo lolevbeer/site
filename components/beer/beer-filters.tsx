@@ -6,8 +6,7 @@
 'use client';
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import type { BeerFilters } from '@/lib/types/beer';
-import { BeerStyle } from '@/lib/types/beer';
+import type { BeerFilters, BeerStyle } from '@/lib/types/beer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -30,7 +29,8 @@ interface ABVRange {
   max: number;
 }
 
-const BEER_STYLES = Object.values(BeerStyle);
+// Note: This component is deprecated in favor of beer-page-content.tsx which derives styles dynamically
+const BEER_STYLES: string[] = [];
 
 const DEFAULT_ABV_RANGE: ABVRange = { min: 0, max: 15 };
 

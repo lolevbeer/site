@@ -185,13 +185,16 @@ export async function getCansMenu(locationSlug: string): Promise<PayloadMenu | n
   const menus = await getMenusByLocation(locationSlug)
   const cansMenu = menus.find(menu => menu.type === 'cans') || null
 
-  // Sort menu items by beer recipe (descending - newest first)
+  // Clone and sort to avoid mutating the cached object from unstable_cache
   if (cansMenu?.items) {
-    cansMenu.items.sort((a, b) => {
-      const recipeA = extractBeerFromMenuItem(a)?.recipe || 0
-      const recipeB = extractBeerFromMenuItem(b)?.recipe || 0
-      return recipeB - recipeA
-    })
+    return {
+      ...cansMenu,
+      items: [...cansMenu.items].sort((a, b) => {
+        const recipeA = extractBeerFromMenuItem(a)?.recipe || 0
+        const recipeB = extractBeerFromMenuItem(b)?.recipe || 0
+        return recipeB - recipeA
+      }),
+    }
   }
 
   return cansMenu

@@ -8,7 +8,7 @@ const isLoggedIn: Access = ({ req: { user } }) => {
 export const Media: CollectionConfig = {
   slug: 'media',
   admin: {
-    hidden: true, // Temporarily unhidden to debug upload field issue
+    hidden: true,
     hideAPIURL: true,
   },
   access: {

@@ -90,23 +90,5 @@ export const Users: CollectionConfig = {
         update: adminFieldAccess,
       },
     },
-    // Legacy field - kept for backwards compatibility during migration
-    // Remove this field after all users have been migrated to 'roles'
-    {
-      name: 'role',
-      type: 'select',
-      options: [
-        { label: 'Admin', value: 'admin' },
-        { label: 'Event Manager', value: 'event-manager' },
-        { label: 'Beer Manager', value: 'beer-manager' },
-        { label: 'Food Manager', value: 'food-manager' },
-        { label: 'Lead Bartender', value: 'lead-bartender' },
-        { label: 'Bartender', value: 'bartender' },
-      ],
-      admin: {
-        hidden: true, // Hide from UI - only used for migration
-        position: 'sidebar',
-      },
-    },
   ],
 }

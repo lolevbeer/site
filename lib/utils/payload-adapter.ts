@@ -6,7 +6,7 @@
 import type { Beer as PayloadBeer, Menu as PayloadMenu, Style } from '@/src/payload-types'
 import type { PayloadLocation } from '@/lib/types/location'
 import type { Beer } from '@/lib/types/beer'
-import { GlassType, BeerStyle } from '@/lib/types/beer'
+import { GlassType } from '@/lib/types/beer'
 import { getMediaUrl } from './media-utils'
 import { extractBeerFromMenuItem } from './menu-item-utils'
 
@@ -50,7 +50,7 @@ function convertPayloadBeer(payloadBeer: PayloadBeer): Beer {
     id: payloadBeer.id,
     variant,
     name: payloadBeer.name,
-    type: styleName as BeerStyle,
+    type: styleName,
     abv: payloadBeer.abv,
     glass: payloadBeer.glass as GlassType,
     description: payloadBeer.description || '',

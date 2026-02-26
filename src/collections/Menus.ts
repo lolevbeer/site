@@ -2,7 +2,6 @@ import type { CollectionConfig, Access, FieldAccess, Where } from 'payload'
 import { APIError } from 'payload'
 import type { User } from '@/src/payload-types'
 import { adminAccess, adminFieldAccess, hasRole } from '@/src/access/roles'
-import { revalidateMenuCache } from '@/src/hooks/revalidate-menu'
 import { logger } from '@/lib/utils/logger'
 
 /**
@@ -87,7 +86,6 @@ export const Menus: CollectionConfig = {
   },
   hooks: {
     afterChange: [
-      revalidateMenuCache,
       // Sync linesLastCleaned to the location (draft menus only)
       async ({ data, req }) => {
         if (data?.type === 'draft' && data?.linesLastCleaned && data?.location) {
