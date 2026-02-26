@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { Card } from '@/components/ui/card';
@@ -9,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { getTodayEST, getDayOfWeekEST, toESTDate } from '@/lib/utils/date';
 import { useLocationContext } from '@/components/location/location-provider';
 import { getLocationDisplayName } from '@/lib/config/locations';
+import { NewsletterForm } from '@/components/ui/newsletter-form';
 
 interface QuickInfoCardsProps {
   beerCount?: Record<string, number>;
@@ -22,9 +22,8 @@ export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCar
   // Format next event date using EST timezone
   const formatEventDate = (dateStr: string) => {
     const todayEST = getTodayEST();
-    const eventDateStr = dateStr.split('T')[0]; // Get YYYY-MM-DD part
+    const eventDateStr = dateStr.split('T')[0];
 
-    // Calculate day difference
     const todayDate = new Date(todayEST);
     const eventDate = new Date(eventDateStr);
     const diffDays = Math.floor((eventDate.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24));
@@ -32,8 +31,7 @@ export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCar
     if (diffDays === 0) return 'Today';
     if (diffDays === 1) return 'Tomorrow';
     if (diffDays < 7) {
-      const dayName = getDayOfWeekEST(eventDateStr);
-      return dayName;
+      return getDayOfWeekEST(eventDateStr);
     }
 
     // Format as "Mon 15" or "Jan 15"
@@ -42,7 +40,7 @@ export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCar
   };
 
   return (
-    <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-4", className)}>
+    <div className={cn("grid grid-cols-1 md:grid-cols-3 gap-4", className)}>
       {/* On Tap Now Card */}
       <Link href="/beer" className="group">
         <Card className="p-6 lg:p-8 h-full transition-all cursor-pointer shadow-none text-center bg-transparent border border-border hover:bg-secondary relative">
@@ -91,6 +89,13 @@ export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCar
           )}
         </Card>
       </Link>
+
+      {/* Newsletter Card */}
+      <Card className="p-6 lg:p-8 h-full shadow-none text-center bg-transparent border border-border flex flex-col items-center justify-center">
+        <h3 className="text-3xl lg:text-4xl font-bold mb-4">Newsletter</h3>
+        <p className="text-sm text-muted-foreground mb-4">Get updates on new beers and events</p>
+        <NewsletterForm heading="" compact />
+      </Card>
     </div>
   );
 }

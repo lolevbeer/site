@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,10 +11,8 @@ import { cn } from '@/lib/utils';
 import { navigationItems } from './navigation';
 import type { WeeklyHoursDay } from '@/lib/utils/payload-api';
 import { ThemeSwitcher } from '@/components/ui/theme-switcher';
+import { NewsletterForm } from '@/components/ui/newsletter-form';
 
-/**
- * Get day name from hours key
- */
 type DayOfWeek = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
 
 function getDayName(day: DayOfWeek): string {
@@ -52,9 +49,7 @@ function formatTime(time: string | null, timezone: string = 'America/New_York'):
   return `${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
 }
 
-/**
- * Hours display component with holiday support
- */
+/** Weekly hours table with holiday badge support */
 function HoursDisplay({ weeklyHours }: { weeklyHours: WeeklyHoursDay[] }) {
   const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
   const today = dayNames[new Date().getDay()] as DayOfWeek;
@@ -103,9 +98,7 @@ function HoursDisplay({ weeklyHours }: { weeklyHours: WeeklyHoursDay[] }) {
   );
 }
 
-/**
- * Location info component
- */
+/** Address, hours, and contact info for a single location */
 function LocationInfoSection({ location, weeklyHours }: { location: PayloadLocation; weeklyHours?: WeeklyHoursDay[] }) {
   // Use custom directions URL if provided, otherwise construct from address
   const mapUrl = location.address?.directionsUrl
@@ -192,12 +185,11 @@ export function Footer({ weeklyHours }: FooterProps) {
           {activeLocations.map((location) => {
             const locationKey = (location.slug || location.id) as LocationSlug;
             return (
-              <div key={locationKey}>
-                <LocationInfoSection
-                  location={location}
-                  weeklyHours={weeklyHours?.[locationKey]}
-                />
-              </div>
+              <LocationInfoSection
+                key={locationKey}
+                location={location}
+                weeklyHours={weeklyHours?.[locationKey]}
+              />
             );
           })}
 
@@ -221,6 +213,11 @@ export function Footer({ weeklyHours }: FooterProps) {
 
             <SocialLinks size="sm" className="mt-auto w-full" />
           </div>
+        </div>
+
+        {/* Newsletter */}
+        <div className="mt-12">
+          <NewsletterForm className="max-w-md mx-auto" />
         </div>
 
         {/* Bottom footer */}

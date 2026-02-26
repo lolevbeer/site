@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/tooltip';
 import type { Beer as PayloadBeer, Menu as PayloadMenu } from '@/src/payload-types';
 import { extractBeerFromMenuItem } from '@/lib/utils/menu-item-utils';
+import { Markdown } from '@/components/ui/markdown';
 
 interface HeroSectionProps {
   availableBeers: PayloadBeer[];
@@ -46,7 +47,7 @@ export function HeroSection({ availableBeers, cansMenus, heroDescription, heroIm
     setLoadedImages(prev => new Set(prev).add(beerId));
   };
 
-  // Build a set of beer IDs that are available in cans menus (memoized)
+  // Build a set of beer IDs available in cans menus
   const cansAvailableBeerIds = useMemo(() => {
     const ids = new Set<string>();
     for (const menu of cansMenus) {
@@ -78,8 +79,8 @@ export function HeroSection({ availableBeers, cansMenus, heroDescription, heroIm
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-amber-900/20 to-orange-800/30" />
         )}
-        {/* Overlay for better text readability */}
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-background/50 backdrop-blur-[2px]" />
+        {/* Theme-adaptive overlay: heavier at bottom for section transition, lighter at top to show photo */}
+        <div className="absolute inset-0 bg-gradient-to-t from-white via-white/60 to-white/20 dark:from-black dark:via-black/60 dark:to-black/20" />
       </div>
 
       <div className="relative z-10 flex flex-col items-center justify-center gap-6 md:gap-8">
@@ -113,13 +114,13 @@ export function HeroSection({ availableBeers, cansMenus, heroDescription, heroIm
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Link href={`/beer/${beer.slug}`} className="group flex justify-center">
-                                <div className="relative h-16 w-16 md:h-24 md:w-24 rounded-lg bg-transparent transition-transform duration-200 ease-out group-hover:-translate-y-1 group-hover:scale-105">
+                                <div className="relative h-24 w-24 md:h-36 md:w-36 rounded-lg bg-transparent transition-transform duration-200 ease-out group-hover:-translate-y-1 group-hover:scale-105">
                                   <Image
                                     src={imageUrl}
                                     alt={`${beer.name} beer can`}
                                     fill
-                                    className={`object-contain drop-shadow-sm group-hover:drop-shadow-md transition-all duration-200 ${loadedImages.has(beer.id) ? 'opacity-100' : 'opacity-0'}`}
-                                    sizes="(max-width: 768px) 64px, 96px"
+                                    className={`object-contain drop-shadow-lg group-hover:drop-shadow-xl transition-all duration-200 ${loadedImages.has(beer.id) ? 'opacity-100' : 'opacity-0'}`}
+                                    sizes="(max-width: 768px) 96px, 144px"
                                     loading={index < 5 ? "eager" : "lazy"}
                                     onLoad={() => handleImageLoad(beer.id)}
                                     onError={() => handleImageError(beer.id)}
@@ -136,7 +137,7 @@ export function HeroSection({ availableBeers, cansMenus, heroDescription, heroIm
                     })
                   ) : (
                     <CarouselItem className="pl-4">
-                      <div className="h-16 md:h-24 flex items-center justify-center">
+                      <div className="h-24 md:h-36 flex items-center justify-center">
                         <p className="text-muted-foreground text-sm">Loading available beers...</p>
                       </div>
                     </CarouselItem>
@@ -149,12 +150,9 @@ export function HeroSection({ availableBeers, cansMenus, heroDescription, heroIm
           </div>
         </section>
         {heroDescription && (
-          <p
-            className="mt-0 mb-0 text-balance text-base md:text-lg text-foreground max-w-4xl px-4 whitespace-pre-line animate-stagger-in opacity-0"
-            style={{ animationDelay: '200ms' }}
-          >
-            {heroDescription}
-          </p>
+          <div className="animate-stagger-in opacity-0 max-w-3xl px-4 text-center" style={{ animationDelay: '200ms' }}>
+            <Markdown className="prose-lg text-balance text-foreground">{heroDescription}</Markdown>
+          </div>
         )}
 
         {/* Primary CTAs */}
@@ -162,17 +160,12 @@ export function HeroSection({ availableBeers, cansMenus, heroDescription, heroIm
           className="flex flex-col sm:flex-row gap-3 md:gap-4 mt-6 md:mt-8 justify-center items-center w-full px-4 sm:px-0 animate-stagger-in opacity-0"
           style={{ animationDelay: '300ms' }}
         >
-          <Button asChild variant="default" size="lg" className="w-full sm:w-auto sm:min-w-[160px] text-base animate-glow-pulse">
+          <Button asChild variant="default" size="lg" className="w-full sm:w-auto sm:min-w-[160px] text-base">
             <Link href="/beer-map">
               Find Lolev
             </Link>
           </Button>
           <Button asChild variant="outline" size="lg" className="w-full sm:w-auto sm:min-w-[160px]">
-            <a href="https://squareup.com/customer-programs/enroll/ce5WC6LoELBr?utm_source=lolevwebsite" target="_blank" rel="noopener noreferrer">
-              Newsletter
-            </a>
-          </Button>
-          <Button asChild variant="ghost" size="lg" className="w-full sm:w-auto sm:min-w-[160px]">
             <Link href="/about">
               Our Story
             </Link>
