@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@/src/payload.config'
-import { fetchUntappdData } from '@/src/utils/untappd'
+import { fetchUntappdData, isCircuitOpen, resetCircuit } from '@/src/utils/untappd'
 import { logger } from '@/lib/utils/logger'
 
 /**
- * Cron job to sync Untappd ratings for all beers
- * Runs on a schedule configured in vercel.json
+ * Cron job to sync Untappd ratings for all beers.
+ * Runs on a schedule configured in vercel.json.
+ * Includes circuit breaker: stops fetching if too many consecutive failures.
  */
 export async function GET(request: NextRequest) {
   // Verify the request is from Vercel Cron
@@ -17,6 +18,9 @@ export async function GET(request: NextRequest) {
 
   try {
     const payload = await getPayload({ config })
+
+    // Reset circuit breaker at the start of each cron run
+    resetCircuit()
 
     // Fetch all beers with Untappd URLs
     const beers = await payload.find({
@@ -33,19 +37,29 @@ export async function GET(request: NextRequest) {
       updated: 0,
       skipped: 0,
       errors: 0,
+      circuitBroken: false,
     }
 
-    // Process each beer
     for (const beer of beers.docs) {
       if (!beer.untappd) {
         results.skipped++
         continue
       }
 
+      // Stop processing if circuit breaker tripped
+      if (isCircuitOpen()) {
+        results.circuitBroken = true
+        results.skipped += beers.docs.length - results.updated - results.skipped - results.errors
+        logger.warn('Untappd sync stopped: circuit breaker open', {
+          processed: results.updated + results.skipped + results.errors,
+          remaining: beers.docs.length - results.updated - results.skipped - results.errors,
+        })
+        break
+      }
+
       try {
         const { rating, ratingCount, positiveReviews } = await fetchUntappdData(beer.untappd)
 
-        // Only update if we got valid data
         if (rating !== null) {
           const updateData: Record<string, unknown> = {
             untappdRating: rating,
@@ -76,7 +90,7 @@ export async function GET(request: NextRequest) {
           results.skipped++
         }
 
-        // Small delay to avoid rate limiting
+        // Delay between requests to avoid rate limiting
         await new Promise(resolve => setTimeout(resolve, 500))
       } catch (error) {
         logger.error(`Error updating beer ${beer.name}:`, error)

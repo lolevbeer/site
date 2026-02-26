@@ -26,12 +26,11 @@ const nextConfig = {
   },
 
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
   },
 
   typescript: {
-    // Skip type checking during build (run separately in CI if needed)
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
 
   env: {

@@ -4,44 +4,13 @@ import { useMemo } from 'react'
 import { useMenuStream } from '@/lib/hooks/use-menu-stream'
 import { FeaturedBeers, FeaturedCans } from '@/components/home/featured-menu'
 import type { Menu } from '@/src/payload-types'
+import { getThemeVars } from '@/lib/utils/display-theme'
 import randomColor from 'randomcolor'
 
 interface LiveMenuProps {
   menuUrl: string
   initialMenu: Menu
 }
-
-// Light mode CSS variables
-const lightVars = {
-  '--color-background': '#ffffff',
-  '--color-foreground': '#1d1d1f',
-  '--color-foreground-muted': '#6e6e73',
-  '--color-card': '#ffffff',
-  '--color-card-foreground': '#1d1d1f',
-  '--color-primary': '#1d1d1f',
-  '--color-primary-foreground': '#ffffff',
-  '--color-secondary': '#f5f5f7',
-  '--color-secondary-foreground': '#1d1d1f',
-  '--color-muted': '#f2f2f2',
-  '--color-muted-foreground': '#86868b',
-  '--color-border': '#d2d2d7',
-} as React.CSSProperties
-
-// Dark mode CSS variables
-const darkVars = {
-  '--color-background': '#000000',
-  '--color-foreground': '#f5f5f7',
-  '--color-foreground-muted': '#acacae',
-  '--color-card': '#1d1d1f',
-  '--color-card-foreground': '#f5f5f7',
-  '--color-primary': '#ffffff',
-  '--color-primary-foreground': '#000000',
-  '--color-secondary': '#2c2c2e',
-  '--color-secondary-foreground': '#f5f5f7',
-  '--color-muted': '#2c2c2e',
-  '--color-muted-foreground': '#98989d',
-  '--color-border': '#38383a',
-} as React.CSSProperties
 
 /**
  * Live-updating menu display component
@@ -76,7 +45,7 @@ export function LiveMenu({ menuUrl, initialMenu }: LiveMenuProps) {
   }, [displayMenu.items?.length, theme, colorSeed])
 
   // Apply CSS variables directly - bypasses .dark class for browser compatibility
-  const themeVars = theme === 'dark' ? darkVars : lightVars
+  const themeVars = getThemeVars(theme)
 
   if (displayMenu.type === 'draft') {
     return (

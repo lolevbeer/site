@@ -17,7 +17,8 @@ export type {
   BeerSortOrder,
 } from './beer';
 
-export { GlassType, BeerStyle } from './beer';
+export { GlassType } from './beer';
+export type { BeerStyle } from './beer';
 
 // Location types
 export type {

@@ -1,6 +1,6 @@
 /**
- * Beer data utilities - now using Payload CMS
- * This file maintains backward compatibility with the old CSV-based API
+ * Beer data utilities using Payload CMS
+ * Fetches beers and enriches them with menu availability data
  */
 
 import { Beer } from '@/lib/types/beer';
@@ -9,41 +9,37 @@ import { getBeersWithAvailability } from './payload-adapter';
 import { cache } from 'react';
 
 /**
- * Get all beers from Payload CMS (replaces CSV)
+ * Get all beers from Payload CMS with availability data
  */
-export const getAllBeersFromCSV = cache(async (): Promise<Beer[]> => {
-  // Get all beers from Payload
+export const getAllBeers = cache(async (): Promise<Beer[]> => {
   const payloadBeers = await getAllBeersFromPayload();
 
-  // Get all locations from database
   const locations = await getAllLocations();
   const locationSlugs = locations.map(loc => loc.slug || loc.id);
 
-  // Get menus for all locations dynamically
   const menuPromises = locationSlugs.map(slug => getMenusByLocation(slug));
   const menusByLocation = await Promise.all(menuPromises);
 
-  // Combine all menus
   const allMenus = menusByLocation.flat();
 
-  // Convert and enrich beers with menu data
-  const beers = getBeersWithAvailability(payloadBeers, allMenus);
-
-  return beers;
+  return getBeersWithAvailability(payloadBeers, allMenus);
 });
 
 /**
- * Get beer by variant/slug from Payload CMS (replaces CSV)
+ * @deprecated Use getAllBeers instead
+ */
+export const getAllBeersFromCSV = getAllBeers;
+
+/**
+ * Get beer by variant/slug from Payload CMS with availability data
  */
 export async function getBeerByVariant(variant: string): Promise<Beer | null> {
   const beer = await getBeerBySlug(variant);
   if (!beer) return null;
 
-  // Get all locations from database
   const locations = await getAllLocations();
   const locationSlugs = locations.map(loc => loc.slug || loc.id);
 
-  // Get menus for all locations dynamically
   const menuPromises = locationSlugs.map(slug => getMenusByLocation(slug));
   const menusByLocation = await Promise.all(menuPromises);
 

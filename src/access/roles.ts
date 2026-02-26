@@ -7,11 +7,9 @@ import type { User } from '@/src/payload-types'
 export type Role = 'admin' | 'event-manager' | 'beer-manager' | 'food-manager' | 'lead-bartender' | 'bartender'
 
 /**
- * Check if a user has any of the specified roles
- *
- * Supports both:
- * - New `roles` array field (hasMany)
- * - Legacy `role` string field (for backwards compatibility during migration)
+ * Check if a user has any of the specified roles.
+ * Falls back to the legacy singular `role` field for users not yet migrated
+ * to the `roles` array. Remove the fallback after all users have been migrated.
  *
  * @param user - The user object (may be null/undefined)
  * @param roles - Single role or array of roles to check
@@ -22,7 +20,6 @@ export function hasRole(user: User | null | undefined, roles: Role | Role[]): bo
 
   const checkRoles = Array.isArray(roles) ? roles : [roles]
 
-  // Check new `roles` array field
   if (user.roles && Array.isArray(user.roles) && user.roles.length > 0) {
     return checkRoles.some((role) => user.roles.includes(role))
   }
