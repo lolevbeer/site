@@ -122,21 +122,21 @@ export const Beers: CollectionConfig = {
           }
         }
 
-        // Auto-fetch Untappd rating when URL is set/changed
+        // Auto-fetch Untappd rating when URL is set or changed
         if (data.untappd && data.untappd !== originalDoc?.untappd) {
-          const { rating, ratingCount, positiveReviews } = await fetchUntappdData(data.untappd)
-          if (rating !== null) {
-            data.untappdRating = rating
-          }
-          if (ratingCount !== null) {
-            data.untappdRatingCount = ratingCount
-          }
-          if (positiveReviews.length > 0) {
-            // Merge with existing reviews, using URL as unique key
-            const existingReviews = (originalDoc?.positiveReviews as UntappdReview[]) || []
-            const existingUrls = new Set(existingReviews.map(r => r.url).filter(Boolean))
-            const newReviews = positiveReviews.filter(r => r.url && !existingUrls.has(r.url))
-            data.positiveReviews = [...existingReviews, ...newReviews]
+          const fetched = await fetchUntappdData(data.untappd)
+
+          if (fetched.rating !== null) data.untappdRating = fetched.rating
+          if (fetched.ratingCount !== null) data.untappdRatingCount = fetched.ratingCount
+
+          if (fetched.positiveReviews.length > 0) {
+            // Merge new reviews with existing, using URL as the dedup key
+            const existing = (originalDoc?.positiveReviews as UntappdReview[]) || []
+            const existingUrls = new Set(existing.map((r) => r.url).filter(Boolean))
+            const newReviews = fetched.positiveReviews.filter(
+              (r) => r.url && !existingUrls.has(r.url),
+            )
+            data.positiveReviews = [...existing, ...newReviews]
           }
         }
 
