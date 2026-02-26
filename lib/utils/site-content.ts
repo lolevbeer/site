@@ -14,6 +14,8 @@ export interface SiteContent {
   errorMessage?: string;
   todaysEventsTitle?: string;
   todaysFoodTitle?: string;
+  aboutPhilosophy?: string;
+  aboutLocations?: string;
 }
 
 /**
@@ -28,6 +30,8 @@ export async function getSiteContent(): Promise<SiteContent> {
       errorMessage: content?.errorMessage ?? undefined,
       todaysEventsTitle: content?.todaysEventsTitle ?? undefined,
       todaysFoodTitle: content?.todaysFoodTitle ?? undefined,
+      aboutPhilosophy: content?.aboutPhilosophy ?? undefined,
+      aboutLocations: content?.aboutLocations ?? undefined,
     };
   } catch (error) {
     logger.error('Failed to fetch site content:', error);

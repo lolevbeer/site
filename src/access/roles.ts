@@ -20,13 +20,14 @@ export function hasRole(user: User | null | undefined, roles: Role | Role[]): bo
 
   const checkRoles = Array.isArray(roles) ? roles : [roles]
 
-  if (user.roles && Array.isArray(user.roles) && user.roles.length > 0) {
+  if (Array.isArray(user.roles) && user.roles.length > 0) {
     return checkRoles.some((role) => user.roles.includes(role))
   }
 
-  // Backwards compatibility: check legacy `role` string field
-  if (user.role) {
-    return checkRoles.includes(user.role as Role)
+  // Backwards compatibility: check legacy `role` string field for users not yet migrated
+  const legacyRole = (user as unknown as Record<string, unknown>).role as Role | undefined
+  if (legacyRole) {
+    return checkRoles.includes(legacyRole)
   }
 
   return false
