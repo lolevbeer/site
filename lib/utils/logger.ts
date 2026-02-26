@@ -6,8 +6,6 @@
 
 import * as Sentry from '@sentry/nextjs';
 
-type LogLevel = 'debug' | 'info' | 'warn' | 'error';
-
 interface LogContext {
   [key: string]: unknown;
 }
@@ -64,7 +62,7 @@ class Logger {
   /**
    * Send logs to Sentry in production
    */
-  private sendToMonitoring(level: LogLevel, message: string, context?: LogContext): void {
+  private sendToMonitoring(level: 'warn' | 'error', message: string, context?: LogContext): void {
     if (level === 'error') {
       const errorObj = context?.error instanceof Error
         ? context.error
@@ -74,7 +72,7 @@ class Logger {
         extra: context,
         tags: { logLevel: level },
       });
-    } else if (level === 'warn') {
+    } else {
       Sentry.captureMessage(message, {
         level: 'warning',
         extra: context,
@@ -82,9 +80,7 @@ class Logger {
     }
 
     // Also log to console for server log aggregation
-    if (level === 'error' || level === 'warn') {
-      console[level](`[${level.toUpperCase()}] ${message}`, context || '');
-    }
+    console[level](`[${level.toUpperCase()}] ${message}`, context || '');
   }
 
   /**

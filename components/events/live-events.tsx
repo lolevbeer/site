@@ -172,32 +172,32 @@ export function LiveEvents({ location, initialEvents, initialFood = [], cansMenu
     }
   )
 
-  // For now, food is static (not polled) - could add useFoodStream later
-  const food = initialFood
-
   // Combine events and food into a single sorted list
   type DisplayItem = { type: 'event'; data: BreweryEvent } | { type: 'food'; data: FoodItem }
   const combinedItems = useMemo(() => {
     const items: DisplayItem[] = [
       ...events.map((e) => ({ type: 'event' as const, data: e })),
-      ...food.map((f) => ({ type: 'food' as const, data: f })),
+      ...initialFood.map((f) => ({ type: 'food' as const, data: f })),
     ]
     return items.sort((a, b) => a.data.date.localeCompare(b.data.date)).slice(0, 10)
-  }, [events, food])
+  }, [events, initialFood])
 
   // Dynamic title based on content
   const hasEvents = events.length > 0
-  const hasFood = food.length > 0
-  const hasContent = hasEvents || hasFood
-  const title = hasContent
-    ? (hasEvents && hasFood
-        ? 'Upcoming Food & Events'
-        : hasFood
-          ? 'Upcoming Food'
-          : 'Upcoming Events')
-    : cansMenu
-      ? 'Cans'
-      : 'Upcoming Events'
+  const hasFood = initialFood.length > 0
+
+  let title: string
+  if (hasEvents && hasFood) {
+    title = 'Upcoming Food & Events'
+  } else if (hasFood) {
+    title = 'Upcoming Food'
+  } else if (hasEvents) {
+    title = 'Upcoming Events'
+  } else if (cansMenu) {
+    title = 'Cans'
+  } else {
+    title = 'Upcoming Events'
+  }
 
   // Generate random light colors that cycle every ~30 seconds (dark mode only)
   const colorSeed = Math.floor(pollCount / 6)
