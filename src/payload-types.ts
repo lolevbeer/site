@@ -566,7 +566,6 @@ export interface User {
    * Admins can manage users and all content. Event/Beer/Food Managers can manage their respective collections. Lead Bartenders can update line cleaning dates. Bartenders can update menus. Users can have multiple roles.
    */
   roles: ('admin' | 'event-manager' | 'beer-manager' | 'food-manager' | 'lead-bartender' | 'bartender')[];
-  role?: ('admin' | 'event-manager' | 'beer-manager' | 'food-manager' | 'lead-bartender' | 'bartender') | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -963,7 +962,6 @@ export interface UsersSelect<T extends boolean = true> {
   name?: T;
   locations?: T;
   roles?: T;
-  role?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -1274,6 +1272,8 @@ export interface SiteContent {
    */
   heroImage?: (string | null) | Media;
   heroDescription?: string | null;
+  aboutPhilosophy?: string | null;
+  aboutLocations?: string | null;
   errorMessage?: string | null;
   todaysEventsTitle?: string | null;
   todaysFoodTitle?: string | null;
@@ -1322,6 +1322,8 @@ export interface RecurringFoodSelect<T extends boolean = true> {
 export interface SiteContentSelect<T extends boolean = true> {
   heroImage?: T;
   heroDescription?: T;
+  aboutPhilosophy?: T;
+  aboutLocations?: T;
   errorMessage?: T;
   todaysEventsTitle?: T;
   todaysFoodTitle?: T;

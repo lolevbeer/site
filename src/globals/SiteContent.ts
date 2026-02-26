@@ -1,5 +1,10 @@
 import type { GlobalConfig } from 'payload'
 import { adminAccess } from '@/src/access/roles'
+import {
+  DEFAULT_HERO_DESCRIPTION,
+  DEFAULT_ABOUT_PHILOSOPHY,
+  DEFAULT_ABOUT_LOCATIONS,
+} from '@/lib/constants/site-content-defaults'
 
 export const SiteContent: GlobalConfig = {
   slug: 'site-content',
@@ -31,9 +36,32 @@ export const SiteContent: GlobalConfig = {
               name: 'heroDescription',
               type: 'textarea',
               label: 'Hero Description',
-              defaultValue: "Brewed in Pittsburgh's vibrant Lawrenceville neighborhood, housed in a historic building that has stood since 1912. Lolev focuses on modern ales, expressive lagers and oak-aged beer.\n\nWe believe that beer should be thoughtful and stimulating. Each beer we create is intended to engage your senses, crafted with attention to flavor, balance, and the experience.",
+              defaultValue: DEFAULT_HERO_DESCRIPTION,
               admin: {
                 rows: 4,
+              },
+            },
+          ],
+        },
+        {
+          label: 'About Page',
+          fields: [
+            {
+              name: 'aboutPhilosophy',
+              type: 'textarea',
+              label: 'Our Philosophy',
+              defaultValue: DEFAULT_ABOUT_PHILOSOPHY,
+              admin: {
+                rows: 6,
+              },
+            },
+            {
+              name: 'aboutLocations',
+              type: 'textarea',
+              label: 'Our Locations',
+              defaultValue: DEFAULT_ABOUT_LOCATIONS,
+              admin: {
+                rows: 6,
               },
             },
           ],
