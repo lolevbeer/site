@@ -1,5 +1,7 @@
 'use client'
 
+import { useMemo } from 'react'
+
 import { usePolling, type UsePollingOptions } from './use-polling'
 import type { Menu } from '@/src/payload-types'
 
@@ -33,9 +35,11 @@ export function useMenuStream(
   initialMenu: Menu | null,
   options: UsePollingOptions = {},
 ): UseMenuStreamResult {
+  const stableInitialMenu = useMemo(() => initialMenu, [initialMenu])
+
   const { data: menu, theme, isConnected, error, pollCount } = usePolling<Menu, MenuResponse>(
     menuUrl ? `/api/menu-stream/${menuUrl}` : '',
-    initialMenu,
+    stableInitialMenu,
     ({ menu: responseMenu, theme: responseTheme }) => ({
       data: responseMenu,
       theme: responseTheme,

@@ -1,4 +1,5 @@
-/** Handwritten "lolev beer" SVG logo, traced from the 2026 brand asset. */
+/** Inline SVG component for the handwritten "lolev beer" logo, traced from the 2026 brand asset. */
+
 export function HandwrittenLolevLogo({ className }: { className?: string }) {
   return (
     <svg
