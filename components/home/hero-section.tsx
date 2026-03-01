@@ -80,7 +80,7 @@ export function HeroSection({ availableBeers, cansMenus, heroDescription, heroIm
           <div className="w-full h-full bg-gradient-to-br from-amber-900/20 to-orange-800/30" />
         )}
         {/* Theme-adaptive overlay: heavier at bottom for section transition, lighter at top to show photo */}
-        <div className="absolute inset-0 bg-gradient-to-t from-white via-white/60 to-white/20 dark:from-black dark:via-black/60 dark:to-black/20" />
+        <div className="absolute inset-0 bg-gradient-to-t from-white via-white/70 to-white/80 dark:from-black dark:via-black/70 dark:to-black/80 backdrop-blur-[2px]" />
       </div>
 
       <div className="relative z-10 flex flex-col items-center justify-center gap-6 md:gap-8">
@@ -88,7 +88,7 @@ export function HeroSection({ availableBeers, cansMenus, heroDescription, heroIm
           Lolev Beer
         </h1>
         <section
-          className="flex flex-col items-center justify-center gap-4 md:gap-8 rounded-xl py-8 md:py-12 w-full overflow-visible animate-stagger-in opacity-0"
+          className="flex flex-col items-center justify-center gap-4 md:gap-8 rounded-xl py-4 md:py-6 w-full overflow-visible animate-stagger-in opacity-0"
           style={{ animationDelay: '100ms' }}
         >
           <div className="w-full max-w-5xl mx-auto px-4 md:px-12 overflow-visible">
@@ -114,12 +114,13 @@ export function HeroSection({ availableBeers, cansMenus, heroDescription, heroIm
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Link href={`/beer/${beer.slug}`} className="group flex justify-center">
-                                <div className="relative h-24 w-24 md:h-36 md:w-36 rounded-lg bg-transparent transition-transform duration-200 ease-out group-hover:-translate-y-1 group-hover:scale-105">
+                                <div className="rounded-lg bg-transparent transition-transform duration-200 ease-out group-hover:-translate-y-1 group-hover:scale-105">
                                   <Image
                                     src={imageUrl}
                                     alt={`${beer.name} beer can`}
-                                    fill
-                                    className={`object-contain drop-shadow-lg group-hover:drop-shadow-xl transition-all duration-200 ${loadedImages.has(beer.id) ? 'opacity-100' : 'opacity-0'}`}
+                                    width={144}
+                                    height={144}
+                                    className={`w-24 md:w-36 h-auto drop-shadow-lg group-hover:drop-shadow-xl transition-all duration-200 ${loadedImages.has(beer.id) ? 'opacity-100' : 'opacity-0'}`}
                                     sizes="(max-width: 768px) 96px, 144px"
                                     loading={index < 5 ? "eager" : "lazy"}
                                     onLoad={() => handleImageLoad(beer.id)}
@@ -128,7 +129,7 @@ export function HeroSection({ availableBeers, cansMenus, heroDescription, heroIm
                                 </div>
                               </Link>
                             </TooltipTrigger>
-                            <TooltipContent side="bottom" className="bg-popover text-popover-foreground border-0" sideOffset={5}>
+                            <TooltipContent side="bottom" className="bg-popover text-popover-foreground border-0" sideOffset={2}>
                               <p className="font-semibold text-sm">{beer.name}</p>
                             </TooltipContent>
                           </Tooltip>
@@ -150,8 +151,8 @@ export function HeroSection({ availableBeers, cansMenus, heroDescription, heroIm
           </div>
         </section>
         {heroDescription && (
-          <div className="animate-stagger-in opacity-0 max-w-3xl px-4 text-center" style={{ animationDelay: '200ms' }}>
-            <Markdown className="prose-lg text-balance text-foreground">{heroDescription}</Markdown>
+          <div className="animate-stagger-in opacity-0 max-w-4xl px-4 text-center" style={{ animationDelay: '200ms' }}>
+            <Markdown className="prose-lg text-balance text-foreground [&_p+p]:mt-6 [&_h2+p]:mt-6">{heroDescription}</Markdown>
           </div>
         )}
 

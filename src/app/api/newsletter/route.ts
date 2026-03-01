@@ -25,9 +25,9 @@ interface SquareCreateResponse {
   errors?: { code: string; detail: string }[];
 }
 
-async function squareFetch<T>(path: string, body: Record<string, unknown>): Promise<T> {
+async function squareFetch<T>(path: string, body: Record<string, unknown>, method: 'POST' | 'PUT' = 'POST'): Promise<T> {
   const res = await fetch(`${SQUARE_BASE_URL}${path}`, {
-    method: 'POST',
+    method,
     headers: {
       'Square-Version': '2024-11-20',
       'Authorization': `Bearer ${process.env.SQUARE_ACCESS_TOKEN}`,
@@ -70,13 +70,22 @@ export async function POST(request: Request) {
     });
 
     if (searchResult.customers?.length) {
-      // Already subscribed — return success (idempotent)
+      // Customer exists — ensure marketing is opted in
+      const existing = searchResult.customers[0];
+      await squareFetch<SquareCreateResponse>(`/v2/customers/${existing.id}`, {
+        preferences: {
+          email_unsubscribed: false,
+        },
+      }, 'PUT');
       return NextResponse.json({ success: true });
     }
 
-    // Create new customer
+    // Create new customer with marketing opted in
     const createResult = await squareFetch<SquareCreateResponse>('/v2/customers', {
       email_address: email.toLowerCase(),
+      preferences: {
+        email_unsubscribed: false,
+      },
     });
 
     if (createResult.errors?.length) {
