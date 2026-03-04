@@ -28,6 +28,7 @@ import {
 } from '@/lib/utils/formatters';
 import { getGlassIcon } from '@/lib/utils/beer-icons';
 import { trackBeerView } from '@/lib/analytics/events';
+import { TbdIcon, UntappdIcon } from '@/components/icons';
 
 interface BeerCardProps {
   beer: Beer;
@@ -78,13 +79,19 @@ export const BeerCard = React.memo(function BeerCard({
         <div className="mb-3">
           <div className="flex items-center justify-center gap-2 mb-2">
             <h3 className="text-lg font-semibold text-center">{beer.name}</h3>
+            {beer.topBeerDrops && (
+              <span role="link" className="cursor-pointer" onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(beer.topBeerDrops, '_blank', 'noopener,noreferrer'); }}>
+                <TbdIcon className="h-6 w-6 text-foreground hover:text-primary transition-colors" />
+              </span>
+            )}
           </div>
           <div className="flex items-center justify-center gap-2 flex-wrap">
             <Badge variant="outline" className="text-xs">
               {beer.type}
             </Badge>
             {(beer.untappdRating ?? 0) > 0 && (
-              <span className="text-xs text-amber-500 font-bold">
+              <span className="text-xs text-amber-500 font-bold flex items-center gap-0.5">
+                <UntappdIcon className="h-3.5 w-3.5" />
                 {formatRating(beer.untappdRating)}/5
               </span>
             )}
@@ -123,14 +130,22 @@ export const BeerCard = React.memo(function BeerCard({
         </div>
       )}
       <div>
-        <h3 className="font-semibold text-lg line-clamp-2 min-h-[2.5rem]">
-          {beer.name}
-        </h3>
+        <div className="flex items-center gap-2 min-h-[2.5rem]">
+          <h3 className="font-semibold text-lg line-clamp-2">
+            {beer.name}
+          </h3>
+          {beer.topBeerDrops && (
+            <span role="link" className="cursor-pointer" onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(beer.topBeerDrops, '_blank', 'noopener,noreferrer'); }}>
+              <TbdIcon className="h-6 w-6 flex-shrink-0 text-foreground hover:text-primary transition-colors" />
+            </span>
+          )}
+        </div>
         <div className="flex items-center justify-between text-sm text-muted-foreground mt-1">
           <div className="flex items-center gap-2">
             <span className="font-medium">{beer.type}</span>
             {(beer.untappdRating ?? 0) > 0 && (
-              <span className="text-amber-500 font-bold">
+              <span className="text-amber-500 font-bold flex items-center gap-0.5">
+                <UntappdIcon className="h-3.5 w-3.5" />
                 {formatRating(beer.untappdRating)}/5
               </span>
             )}

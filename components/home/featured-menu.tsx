@@ -20,6 +20,7 @@ import { getTodayEST } from '@/lib/utils/date';
 import type { Menu, Style, Location } from '@/src/payload-types';
 import type { Beer } from '@/lib/types/beer';
 import { Logo } from '@/components/ui/logo';
+import { TbdIcon, UntappdIcon } from '@/components/icons';
 
 /** Parse price string to number, removing '$' prefix if present */
 function parsePrice(price: string | number | null | undefined): number | undefined {
@@ -78,6 +79,8 @@ interface MenuItem {
   createdAt?: string;
   /** Untappd rating (0-5 scale) */
   untappdRating?: number | null;
+  /** Top Beer Drops URL */
+  topBeerDrops?: string;
   /** True when this slot has no product assigned (empty tap) */
   isEmpty?: boolean;
   [key: string]: unknown;
@@ -194,6 +197,8 @@ function convertMenuItems(menuData: Menu): MenuItem[] {
         createdAt: beer.createdAt,
         // Untappd rating
         untappdRating: (beer as { untappdRating?: number | null }).untappdRating ?? null,
+        // Top Beer Drops URL
+        topBeerDrops: (beer as { topBeerDrops?: string }).topBeerDrops || undefined,
       };
     })
     .filter((item): item is NonNullable<typeof item> => item !== null && !item.isEmpty);
@@ -300,13 +305,21 @@ function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fu
           )}
         </div>
         <div className="flex flex-col items-center text-center" style={{ gap: '0.5vh', marginTop: '1.5vh' }}>
-          <h3 className="font-bold leading-tight transition-colors duration-[250ms]" style={{ fontSize: '2.8vh', color: accentColor }}>
-            {item.name}
-          </h3>
+          <div className="flex items-center justify-center" style={{ gap: '0.5vh' }}>
+            <h3 className="font-bold leading-tight transition-colors duration-[250ms]" style={{ fontSize: '2.8vh', color: accentColor }}>
+              {item.name}
+            </h3>
+            {item.topBeerDrops && (
+              <span role="link" className="cursor-pointer" onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(item.topBeerDrops, '_blank', 'noopener,noreferrer'); }}>
+                <TbdIcon className="text-foreground hover:text-primary transition-colors" style={{ height: '3.2vh', width: '3.2vh' }} />
+              </span>
+            )}
+          </div>
           <div className="flex items-center" style={{ gap: '0.8vh' }}>
             <Badge variant="outline" style={{ fontSize: '1.6vh' }}>{item.type}</Badge>
             {(item.untappdRating ?? 0) > 0 ? (
               <span className="flex items-center text-amber-500 font-bold" style={{ fontSize: '1.6vh', gap: '0.3vh' }}>
+                <UntappdIcon style={{ height: '1.6vh', width: '1.6vh' }} />
                 {formatRating(item.untappdRating)}/5
               </span>
             ) : (
@@ -354,9 +367,15 @@ function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fu
       <div className="mb-3">
         <div className="flex items-center justify-center gap-2 flex-wrap mb-2">
           <h3 className="text-lg font-semibold">{item.name}</h3>
+          {item.topBeerDrops && (
+            <span role="link" className="cursor-pointer" onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(item.topBeerDrops, '_blank', 'noopener,noreferrer'); }}>
+              <TbdIcon className="h-6 w-6 text-foreground hover:text-primary transition-colors" />
+            </span>
+          )}
           <Badge variant="outline" className="text-xs">{item.type}</Badge>
           {(item.untappdRating ?? 0) > 0 ? (
             <span className="text-xs text-amber-500 flex items-center gap-0.5 font-bold">
+              <UntappdIcon className="h-3.5 w-3.5" />
               {formatRating(item.untappdRating)}/5
             </span>
           ) : (
