@@ -60,6 +60,7 @@ function convertPayloadBeer(payloadBeer: PayloadBeer): Beer {
     untappd: payloadBeer.untappd ? parseInt(payloadBeer.untappd) : undefined,
     recipe: payloadBeer.recipe || undefined,
     hops: payloadBeer.hops || undefined,
+    topBeerDrops: payloadBeer.topBeerDrops || undefined,
     pricing: {
       draftPrice: payloadBeer.draftPrice,
       canSingle: payloadBeer.canSingle || undefined,
