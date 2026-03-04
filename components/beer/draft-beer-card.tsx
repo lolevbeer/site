@@ -12,7 +12,8 @@ import { useLocationContext } from '@/components/location/location-provider';
 import { getBeerSlug, formatRating } from '@/lib/utils/formatters';
 import { getGlassIcon } from '@/lib/utils/beer-icons';
 import { Badge } from '@/components/ui/badge';
-import { TbdIcon, UntappdIcon } from '@/components/icons';
+import { UntappdIcon } from '@/components/icons';
+import { TopBeerDropsLink } from '@/components/beer/top-beer-drops-link';
 
 interface DraftBeerCardProps {
   beer: Beer;
@@ -80,9 +81,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
               <div className="flex items-center flex-wrap" style={{ gap: '1vh' }}>
                 <h3 className="font-bold leading-tight truncate transition-colors duration-500" style={{ fontSize: '3vh', color: accentColor }}>{beer.name}</h3>
                 {beer.topBeerDrops && (
-                  <span role="link" className="cursor-pointer" onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(beer.topBeerDrops, '_blank', 'noopener,noreferrer'); }}>
-                    <TbdIcon className="flex-shrink-0 text-foreground hover:text-primary transition-colors" style={{ height: '3.2vh', width: '3.2vh' }} />
-                  </span>
+                  <TopBeerDropsLink url={beer.topBeerDrops} className="flex-shrink-0 text-foreground hover:text-primary transition-colors" style={{ height: '3.2vh', width: '3.2vh' }} />
                 )}
                 {beer.type && beer.type.split(', ').map((option, i) => (
                   <Badge key={i} variant="outline" className="flex-shrink-0" style={{ fontSize: '1.8vh' }}>
@@ -172,9 +171,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
             <div className="flex items-center gap-3 flex-wrap">
               <h3 className="text-xl font-bold leading-tight truncate">{beer.name}</h3>
               {beer.topBeerDrops && (
-                <span role="link" className="cursor-pointer" onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(beer.topBeerDrops, '_blank', 'noopener,noreferrer'); }}>
-                  <TbdIcon className="h-6 w-6 flex-shrink-0 text-foreground hover:text-primary transition-colors" />
-                </span>
+                <TopBeerDropsLink url={beer.topBeerDrops} className="h-6 w-6 flex-shrink-0 text-foreground hover:text-primary transition-colors" />
               )}
               {showJustReleased && beer.isJustReleased && (
                 <Badge variant="default" className="text-xs flex-shrink-0">

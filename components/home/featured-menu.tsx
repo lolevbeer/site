@@ -20,7 +20,8 @@ import { getTodayEST } from '@/lib/utils/date';
 import type { Menu, Style, Location } from '@/src/payload-types';
 import type { Beer } from '@/lib/types/beer';
 import { Logo } from '@/components/ui/logo';
-import { TbdIcon, UntappdIcon } from '@/components/icons';
+import { UntappdIcon } from '@/components/icons';
+import { TopBeerDropsLink } from '@/components/beer/top-beer-drops-link';
 
 /** Parse price string to number, removing '$' prefix if present */
 function parsePrice(price: string | number | null | undefined): number | undefined {
@@ -195,10 +196,8 @@ function convertMenuItems(menuData: Menu): MenuItem[] {
         // Store these for "just released" logic
         justReleased: (beer as { justReleased?: boolean }).justReleased || false,
         createdAt: beer.createdAt,
-        // Untappd rating
-        untappdRating: (beer as { untappdRating?: number | null }).untappdRating ?? null,
-        // Top Beer Drops URL
-        topBeerDrops: (beer as { topBeerDrops?: string }).topBeerDrops || undefined,
+        untappdRating: beer.untappdRating ?? null,
+        topBeerDrops: beer.topBeerDrops || undefined,
       };
     })
     .filter((item): item is NonNullable<typeof item> => item !== null && !item.isEmpty);
@@ -310,9 +309,7 @@ function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fu
               {item.name}
             </h3>
             {item.topBeerDrops && (
-              <span role="link" className="cursor-pointer" onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(item.topBeerDrops, '_blank', 'noopener,noreferrer'); }}>
-                <TbdIcon className="text-foreground hover:text-primary transition-colors" style={{ height: '3.2vh', width: '3.2vh' }} />
-              </span>
+              <TopBeerDropsLink url={item.topBeerDrops} className="text-foreground hover:text-primary transition-colors" style={{ height: '3.2vh', width: '3.2vh' }} />
             )}
           </div>
           <div className="flex items-center" style={{ gap: '0.8vh' }}>
@@ -368,9 +365,7 @@ function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fu
         <div className="flex items-center justify-center gap-2 flex-wrap mb-2">
           <h3 className="text-lg font-semibold">{item.name}</h3>
           {item.topBeerDrops && (
-            <span role="link" className="cursor-pointer" onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(item.topBeerDrops, '_blank', 'noopener,noreferrer'); }}>
-              <TbdIcon className="h-6 w-6 text-foreground hover:text-primary transition-colors" />
-            </span>
+            <TopBeerDropsLink url={item.topBeerDrops} />
           )}
           <Badge variant="outline" className="text-xs">{item.type}</Badge>
           {(item.untappdRating ?? 0) > 0 ? (

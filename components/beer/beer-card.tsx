@@ -28,7 +28,8 @@ import {
 } from '@/lib/utils/formatters';
 import { getGlassIcon } from '@/lib/utils/beer-icons';
 import { trackBeerView } from '@/lib/analytics/events';
-import { TbdIcon, UntappdIcon } from '@/components/icons';
+import { UntappdIcon } from '@/components/icons';
+import { TopBeerDropsLink } from '@/components/beer/top-beer-drops-link';
 
 interface BeerCardProps {
   beer: Beer;
@@ -80,9 +81,7 @@ export const BeerCard = React.memo(function BeerCard({
           <div className="flex items-center justify-center gap-2 mb-2">
             <h3 className="text-lg font-semibold text-center">{beer.name}</h3>
             {beer.topBeerDrops && (
-              <span role="link" className="cursor-pointer" onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(beer.topBeerDrops, '_blank', 'noopener,noreferrer'); }}>
-                <TbdIcon className="h-6 w-6 text-foreground hover:text-primary transition-colors" />
-              </span>
+              <TopBeerDropsLink url={beer.topBeerDrops} />
             )}
           </div>
           <div className="flex items-center justify-center gap-2 flex-wrap">
@@ -135,9 +134,7 @@ export const BeerCard = React.memo(function BeerCard({
             {beer.name}
           </h3>
           {beer.topBeerDrops && (
-            <span role="link" className="cursor-pointer" onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(beer.topBeerDrops, '_blank', 'noopener,noreferrer'); }}>
-              <TbdIcon className="h-6 w-6 flex-shrink-0 text-foreground hover:text-primary transition-colors" />
-            </span>
+            <TopBeerDropsLink url={beer.topBeerDrops} className="h-6 w-6 flex-shrink-0 text-foreground hover:text-primary transition-colors" />
           )}
         </div>
         <div className="flex items-center justify-between text-sm text-muted-foreground mt-1">
