@@ -159,7 +159,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
     <Link href={showLocation ? `/${currentLocation}/beer/${beerSlug}` : `/beer/${beerSlug}`} className="group block h-full">
       <div className={`relative overflow-hidden transition-colors duration-200 cursor-pointer hover:bg-secondary/50 h-full min-h-[80px] bg-background rounded-lg ${className}`}>
         {showJustReleased && beer.isJustReleased && (
-          <Badge variant="default" className="absolute z-10 top-4 right-1 text-xs">
+          <Badge variant="default" className="absolute z-10 top-2 right-1 text-xs">
             Just Released
           </Badge>
         )}
