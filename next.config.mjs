@@ -1,9 +1,8 @@
 import { withPayload } from '@payloadcms/next/withPayload'
 import { withSentryConfig } from '@sentry/nextjs'
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // trailingSlash: true, // Disabled: causes POST body loss on redirects for Payload API
-
   // Add caching headers for media files to reduce blob transfer
   async headers() {
     return [
