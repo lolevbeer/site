@@ -15,36 +15,19 @@ export default function GlobalError({
   }, [error]);
 
   return (
-    <html lang="en">
-      <body>
-        <div style={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '2rem',
-          backgroundColor: '#0a0a0a',
-          color: '#fafafa',
-          fontFamily: 'system-ui, -apple-system, sans-serif',
-        }}>
-          <div style={{ textAlign: 'center', maxWidth: '400px' }}>
-            <h1 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '1rem' }}>
+    <html lang="en" className="dark">
+      <body className="bg-background text-foreground font-sans">
+        <div className="min-h-screen flex items-center justify-center p-8">
+          <div className="text-center max-w-md">
+            <h1 className="text-3xl font-bold mb-4">
               Something went wrong
             </h1>
-            <p style={{ color: '#a1a1aa', marginBottom: '2rem' }}>
+            <p className="text-muted-foreground mb-8">
               We encountered an unexpected error. Don&apos;t worry, your data is safe.
             </p>
             <button
               onClick={reset}
-              style={{
-                padding: '0.75rem 2rem',
-                backgroundColor: '#fafafa',
-                color: '#0a0a0a',
-                border: 'none',
-                borderRadius: '0.375rem',
-                cursor: 'pointer',
-                fontWeight: 500,
-              }}
+              className="px-8 py-3 bg-primary text-primary-foreground rounded-md font-medium hover:opacity-90 transition-opacity cursor-pointer"
             >
               Try Again
             </button>
