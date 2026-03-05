@@ -73,7 +73,7 @@ export const syncUntappdRatings: PayloadHandler = async (req) => {
   const encoder = new TextEncoder()
   const stream = new ReadableStream({
     async start(controller) {
-      const send = (event: string, data: any) => {
+      const send = (event: string, data: Record<string, unknown>) => {
         controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`))
       }
 
@@ -267,12 +267,12 @@ export const syncUntappdRatings: PayloadHandler = async (req) => {
                 })
               }
             }
-          } catch (err: any) {
+          } catch (err: unknown) {
             errors++
             send('item', {
               name: beer.name,
               status: 'error',
-              message: err.message || 'Unknown error',
+              message: err instanceof Error ? err.message : 'Unknown error',
             })
           }
         }
@@ -288,9 +288,10 @@ export const syncUntappdRatings: PayloadHandler = async (req) => {
             errors,
           },
         })
-      } catch (error: any) {
-        send('error', { message: error.message || 'Sync failed' })
-        send('complete', { success: false, error: error.message })
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Sync failed'
+        send('error', { message })
+        send('complete', { success: false, error: message })
       } finally {
         controller.close()
       }

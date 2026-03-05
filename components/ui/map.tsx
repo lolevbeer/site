@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { logger } from '@/lib/utils/logger';
 import Map, {
   Marker,
   NavigationControl,
@@ -9,6 +10,7 @@ import Map, {
   GeolocateControl,
   Popup
 } from 'react-map-gl/mapbox';
+import type { MapRef } from 'react-map-gl/mapbox';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -61,7 +63,7 @@ export function MapComponent({
 }: MapComponentProps) {
   const { resolvedTheme } = useTheme();
   const { locations: payloadLocations } = useLocationContext();
-  const mapRef = React.useRef<any>(null);
+  const mapRef = React.useRef<MapRef>(null);
 
   // Convert PayloadLocations to LocationMarkers
   // coordinates is a point field: [longitude, latitude]
@@ -200,7 +202,7 @@ export function MapComponent({
         style={{ width: '100%', height: '100%' }}
         reuseMaps
         onError={(evt) => {
-          console.error('Map error:', evt);
+          logger.error('Map error:', evt);
           // Check error message for common issues
           const errorMsg = evt.error?.message || '';
           if (errorMsg.includes('401') || errorMsg.includes('403')) {

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { logger } from '@/lib/utils/logger';
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || '';
 const SEARCH_DEBOUNCE = 800;
@@ -25,7 +26,7 @@ const geocodeLocation = async (query: string): Promise<Coordinates | null> => {
       return { latitude, longitude };
     }
   } catch (error) {
-    console.error('Geocoding error:', error);
+    logger.error('Geocoding error:', error);
   }
   return null;
 };

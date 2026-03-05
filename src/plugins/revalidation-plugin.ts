@@ -9,29 +9,9 @@
 import { revalidatePath, revalidateTag } from 'next/cache'
 import type { Config, Plugin, CollectionConfig, GlobalConfig } from 'payload'
 
-// Cache tags for each collection/global
-const CACHE_TAGS = {
-  beers: 'beers',
-  menus: 'menus',
-  events: 'events',
-  food: 'food',
-  locations: 'locations',
-  styles: 'styles',
-  distributors: 'distributors',
-  'food-vendors': 'food-vendors',
-  products: 'products',
-  'holiday-hours': 'holiday-hours',
-  'coming-soon': 'coming-soon',
-  'site-content': 'site-content',
-  'recurring-food': 'recurring-food',
-  'distributor-settings': 'distributor-settings',
-} as const
-
-type CacheTag = (typeof CACHE_TAGS)[keyof typeof CACHE_TAGS]
-
 // Collection to cache tags mapping
 // Defines which tags should be invalidated when a collection changes
-const COLLECTION_CACHE_MAP: Record<string, CacheTag[]> = {
+const COLLECTION_CACHE_MAP: Record<string, string[]> = {
   beers: ['beers', 'menus'], // Beers affect menu displays too
   menus: ['menus'],
   events: ['events'],
@@ -45,7 +25,7 @@ const COLLECTION_CACHE_MAP: Record<string, CacheTag[]> = {
 }
 
 // Global to cache tags mapping
-const GLOBAL_CACHE_MAP: Record<string, CacheTag[]> = {
+const GLOBAL_CACHE_MAP: Record<string, string[]> = {
   'coming-soon': ['coming-soon'],
   'site-content': ['site-content'],
   'recurring-food': ['recurring-food', 'food'],

@@ -1,43 +1,28 @@
+import { unstable_cache } from 'next/cache'
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
-import config from '@/src/payload.config'
-import { getPittsburghTheme } from '@/lib/utils/pittsburgh-time'
-import { unstable_cache } from 'next/cache'
-import { CACHE_TAGS } from '@/lib/utils/cache'
-import { BreweryEvent, EventType, EventStatus } from '@/lib/types/event'
-import type { LocationSlug } from '@/lib/types/location'
 
-interface PayloadEvent {
-  id: string
-  organizer: string
-  description?: string
-  date: string
-  startTime?: string
-  endTime?: string
-  location?: { slug?: string; name?: string; id?: string } | string
-  site?: string
-  attendees?: number
-  visibility?: string
-  updatedAt?: string
-}
+import config from '@/src/payload.config'
+import type { BreweryEvent } from '@/lib/types/event'
+import { CACHE_TAGS } from '@/lib/utils/cache'
+import { getTodayMidnightISO } from '@/lib/utils/date'
+import { logger } from '@/lib/utils/logger'
+import { transformPayloadEventToBreweryEvent } from '@/lib/utils/payload-api'
+import { getPittsburghTheme } from '@/lib/utils/pittsburgh-time'
 
 /**
- * Cached events fetch with tag-based invalidation
+ * Cached events fetch with tag-based invalidation.
+ * Cache is invalidated by the revalidation plugin when events are updated.
  */
 const getCachedEvents = (locationSlug: string) =>
   unstable_cache(
     async () => {
       const payload = await getPayload({ config })
+      const todayStr = getTodayMidnightISO()
 
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-
-      // Get location ID from slug
       const locationResult = await payload.find({
         collection: 'locations',
-        where: {
-          slug: { equals: locationSlug },
-        },
+        where: { slug: { equals: locationSlug } },
         limit: 1,
       })
 
@@ -51,7 +36,7 @@ const getCachedEvents = (locationSlug: string) =>
         collection: 'events',
         where: {
           visibility: { equals: 'public' },
-          date: { greater_than_equal: today.toISOString() },
+          date: { greater_than_equal: todayStr },
           location: { equals: location.id },
         },
         sort: 'date',
@@ -59,27 +44,10 @@ const getCachedEvents = (locationSlug: string) =>
         depth: 1,
       })
 
-      const events: BreweryEvent[] = (result.docs as PayloadEvent[]).map((event) => {
-        const eventLocation = typeof event.location === 'object' ? event.location : null
+      const events: BreweryEvent[] = result.docs.map((event) =>
+        transformPayloadEventToBreweryEvent(event, locationSlug, location.name),
+      )
 
-        return {
-          id: event.id,
-          title: event.organizer,
-          description: event.description || event.organizer,
-          date: event.date.split('T')[0],
-          time: event.startTime || '',
-          endTime: event.endTime,
-          vendor: event.organizer,
-          type: EventType.SPECIAL_EVENT,
-          status: EventStatus.SCHEDULED,
-          location: (eventLocation?.slug || locationSlug) as LocationSlug,
-          locationName: eventLocation?.name || location.name,
-          site: event.site,
-          attendees: event.attendees,
-        }
-      })
-
-      // Get most recent updatedAt for timestamp
       const latestUpdate = result.docs.reduce((latest, doc) => {
         const docTime = doc.updatedAt ? new Date(doc.updatedAt).getTime() : 0
         return docTime > latest ? docTime : latest
@@ -95,16 +63,17 @@ const getCachedEvents = (locationSlug: string) =>
     {
       tags: [CACHE_TAGS.events, `events-${locationSlug}`],
       revalidate: 60,
-    }
+    },
   )()
 
 /**
- * Events polling endpoint for large displays
+ * Events polling endpoint for large displays.
+ * Returns events data as JSON with edge-cache headers.
  */
 export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ location: string }> }
-) {
+  _request: NextRequest,
+  { params }: { params: Promise<{ location: string }> },
+): Promise<NextResponse> {
   const { location } = await params
 
   try {
@@ -113,30 +82,29 @@ export async function GET(
     if (!data) {
       return NextResponse.json(
         { error: 'Location not found' },
-        { status: 404 }
+        { status: 404 },
       )
     }
-
-    const theme = getPittsburghTheme()
 
     return NextResponse.json(
       {
         events: data.events,
         locationName: data.locationName,
-        theme,
+        theme: getPittsburghTheme(),
         timestamp: data.timestamp,
+        deployId: process.env.NEXT_PUBLIC_DEPLOY_ID || '',
       },
       {
         headers: {
-          'Cache-Control': 'public, s-maxage=2, stale-while-revalidate=10',
+          'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=30',
         },
-      }
+      },
     )
   } catch (error) {
-    console.error('Events fetch error:', error)
+    logger.error('Events fetch error:', error)
     return NextResponse.json(
       { error: 'Failed to fetch events' },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }

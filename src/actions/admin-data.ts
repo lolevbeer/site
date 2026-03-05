@@ -2,7 +2,7 @@
 
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import type { Location, Food, FoodVendor } from '@/src/payload-types'
+import type { FoodVendor } from '@/src/payload-types'
 
 /**
  * Server actions for admin components using the Payload Local API

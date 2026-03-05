@@ -7,6 +7,7 @@
 import { BreweryEvent, EventStatus } from '@/lib/types/event';
 import { FoodVendorSchedule } from '@/lib/types/food';
 import type { LocationSlug, PayloadLocation } from '@/lib/types/location';
+import type { Event as PayloadCmsEvent } from '@/src/payload-types';
 import { parseLocalDate } from './formatters';
 
 /**
@@ -253,32 +254,19 @@ function createBaseEventJsonLd(
 }
 
 /**
- * Payload Event format (from Events collection)
- */
-interface PayloadEvent {
-  organizer: string;
-  date: string;
-  startTime?: string;
-  endTime?: string;
-  location?: { slug?: string; id?: string } | string;
-  site?: string;
-  description?: string;
-}
-
-/**
  * Generate JSON-LD for a BreweryEvent or Payload Event
  * @param event - The event data
  * @param locationLookup - Map of location slugs to PayloadLocation objects
  */
 export function generateEventJsonLd(
-  event: BreweryEvent | PayloadEvent,
+  event: BreweryEvent | PayloadCmsEvent,
   locationLookup: LocationLookup = new Map()
 ): EventJsonLd {
   // Check if it's a Payload event (has organizer field instead of title)
   const isPayloadEvent = 'organizer' in event && !('title' in event);
 
   if (isPayloadEvent) {
-    const payloadEvent = event as PayloadEvent;
+    const payloadEvent = event as PayloadCmsEvent;
     if (!payloadEvent.organizer || !payloadEvent.date) {
       console.warn('Invalid Payload event data for JSON-LD generation', event);
       return createBaseEventJsonLd('Event at Lolev Beer', undefined, locationLookup);
@@ -291,8 +279,8 @@ export function generateEventJsonLd(
 
     const { startDate, endDate } = toISO8601(
       payloadEvent.date,
-      payloadEvent.startTime,
-      payloadEvent.endTime
+      payloadEvent.startTime ?? undefined,
+      payloadEvent.endTime ?? undefined
     );
 
     const jsonLd = createBaseEventJsonLd(
@@ -356,10 +344,10 @@ export function generateEventJsonLd(
  */
 interface PayloadFoodData {
   vendor?: { id?: string; name?: string; site?: string | null } | string;
-  vendorName?: string;
+  vendorName?: string | null;
   date: string;
-  location?: { slug?: string; id?: string } | string;
-  startTime?: string;
+  location?: { slug?: string | null; id?: string } | string;
+  startTime?: string | null;
   isRecurring?: boolean;
 }
 
@@ -399,7 +387,7 @@ export function generateFoodEventJsonLd(
       ? (payloadFood.location?.slug || payloadFood.location?.id) as LocationSlug | undefined
       : payloadFood.location as LocationSlug | undefined;
 
-    const { startDate } = toISO8601(payloadFood.date, payloadFood.startTime);
+    const { startDate } = toISO8601(payloadFood.date, payloadFood.startTime ?? undefined);
 
     const jsonLd = createBaseEventJsonLd(
       `${vendorName} at Lolev Beer`,

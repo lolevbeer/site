@@ -5,7 +5,7 @@
 
 import { Metadata } from 'next'
 import { BeerPageContent } from '@/components/beer/beer-page-content'
-import { getAllBeersFromCSV } from '@/lib/utils/beer-csv'
+import { getAllBeers } from '@/lib/utils/payload-beers'
 import { JsonLd } from '@/components/seo/json-ld'
 import { generateBeerListSchema } from '@/lib/utils/product-schema'
 
@@ -38,8 +38,7 @@ export const metadata: Metadata = {
 }
 
 export default async function BeerPage() {
-  // Get all beers from CSV
-  const allBeers = await getAllBeersFromCSV()
+  const allBeers = await getAllBeers()
 
   // Filter out beers that should be hidden
   const availableBeers = allBeers.filter((beer) => !beer.availability?.hideFromSite)

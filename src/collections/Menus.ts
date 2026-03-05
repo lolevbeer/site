@@ -1,16 +1,17 @@
 import type { CollectionConfig, Access, FieldAccess, Where } from 'payload'
 import { APIError } from 'payload'
-import { adminAccess, adminFieldAccess, hasRole, isAdmin } from '@/src/access/roles'
-import { revalidateMenuCache } from '@/src/hooks/revalidate-menu'
+import type { User } from '@/src/payload-types'
+import { adminAccess, adminFieldAccess, hasRole } from '@/src/access/roles'
+import { logger } from '@/lib/utils/logger'
 
 /**
  * Get location IDs from user's assigned locations
  */
-function getUserLocationIds(user: any): string[] | null {
+function getUserLocationIds(user: User | null): string[] | null {
   if (!user?.locations || !Array.isArray(user.locations) || user.locations.length === 0) {
     return null
   }
-  return user.locations.map((loc: any) => (typeof loc === 'object' ? loc.id : loc))
+  return user.locations.map((loc: string | { id: string }) => (typeof loc === 'object' ? loc.id : loc))
 }
 
 /**
@@ -85,7 +86,6 @@ export const Menus: CollectionConfig = {
   },
   hooks: {
     afterChange: [
-      revalidateMenuCache,
       // Sync linesLastCleaned to the location (draft menus only)
       async ({ data, req }) => {
         if (data?.type === 'draft' && data?.linesLastCleaned && data?.location) {
@@ -101,7 +101,7 @@ export const Menus: CollectionConfig = {
               })
             } catch (error) {
               // Silently fail if user doesn't have permission to update location
-              console.error('Failed to sync linesLastCleaned to location:', error)
+              logger.error('Failed to sync linesLastCleaned to location:', error)
             }
           }
         }
@@ -138,13 +138,15 @@ export const Menus: CollectionConfig = {
         if (!data?.items || !Array.isArray(data.items)) return data
 
         // Check for duplicate products (polymorphic - could be beer or product)
+        // Skip empty slots (items without a product) which represent empty taps
         const productIds = (
-          data.items as Array<{ product?: { relationTo: string; value: string | { id?: string } } }>
+          data.items as Array<{ product?: { relationTo: string; value: string | { id?: string } } | null }>
         )
           .map((item) => {
             if (!item?.product) return null
             const value = item.product.value
             const id = typeof value === 'string' ? value : value?.id
+            if (!id) return null
             return `${item.product.relationTo}:${id}`
           })
           .filter(Boolean)
@@ -191,7 +193,7 @@ export const Menus: CollectionConfig = {
           const beerIds: string[] = []
           const itemBeerMap: Map<number, string> = new Map()
 
-          data.items.forEach((item: any, index: number) => {
+          data.items.forEach((item: { product?: { relationTo: string; value: string | { id?: string } } | null }, index: number) => {
             const product = item.product
             if (product?.relationTo === 'beers') {
               const beerId = typeof product.value === 'string' ? product.value : product.value?.id
@@ -216,7 +218,7 @@ export const Menus: CollectionConfig = {
           }
 
           // Build items with recipe numbers
-          const itemsWithRecipe = data.items.map((item: any, index: number) => {
+          const itemsWithRecipe = data.items.map((item: { product?: { relationTo: string; value: string | { id?: string } } | null }, index: number) => {
             const beerId = itemBeerMap.get(index)
             if (beerId) {
               return { originalItem: item, recipe: recipeMap.get(beerId) || 0 }
@@ -379,7 +381,7 @@ export const Menus: CollectionConfig = {
               name: 'product',
               type: 'relationship',
               relationTo: ['beers', 'products'],
-              required: true,
+              required: false,
               admin: {
                 width: '66%',
                 sortOptions: {

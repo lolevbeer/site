@@ -4,7 +4,9 @@
  */
 
 import { fetchGlobal } from './payload-api';
-import { getMediaUrl } from './formatters';
+import { getMediaUrl } from './media-utils';
+import { logger } from '@/lib/utils/logger';
+import type { SiteContent as PayloadSiteContent } from '@/src/payload-types';
 
 export interface SiteContent {
   heroDescription?: string;
@@ -12,6 +14,8 @@ export interface SiteContent {
   errorMessage?: string;
   todaysEventsTitle?: string;
   todaysFoodTitle?: string;
+  aboutPhilosophy?: string;
+  aboutLocations?: string;
 }
 
 /**
@@ -19,16 +23,18 @@ export interface SiteContent {
  */
 export async function getSiteContent(): Promise<SiteContent> {
   try {
-    const content = await fetchGlobal('site-content', 2) as any | null;
+    const content = await fetchGlobal('site-content', 2) as PayloadSiteContent | null;
     return {
-      heroDescription: content?.heroDescription,
+      heroDescription: content?.heroDescription ?? undefined,
       heroImageUrl: getMediaUrl(content?.heroImage),
-      errorMessage: content?.errorMessage,
-      todaysEventsTitle: content?.todaysEventsTitle,
-      todaysFoodTitle: content?.todaysFoodTitle,
+      errorMessage: content?.errorMessage ?? undefined,
+      todaysEventsTitle: content?.todaysEventsTitle ?? undefined,
+      todaysFoodTitle: content?.todaysFoodTitle ?? undefined,
+      aboutPhilosophy: content?.aboutPhilosophy ?? undefined,
+      aboutLocations: content?.aboutLocations ?? undefined,
     };
   } catch (error) {
-    console.error('Failed to fetch site content:', error);
+    logger.error('Failed to fetch site content:', error);
     return {};
   }
 }

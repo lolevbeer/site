@@ -17,7 +17,8 @@ export type {
   BeerSortOrder,
 } from './beer';
 
-export { GlassType, BeerStyle } from './beer';
+export { GlassType } from './beer';
+export type { BeerStyle } from './beer';
 
 // Location types
 export type {
@@ -75,18 +76,3 @@ export interface NavItem {
   external?: boolean;
 }
 
-// Configuration types
-export interface AppConfig {
-  apiUrl: string;
-  environment: 'development' | 'staging' | 'production';
-  features: Record<string, boolean>;
-  analytics?: {
-    gtag?: string;
-    segment?: string;
-  };
-  social?: {
-    instagram?: string;
-    facebook?: string;
-    twitter?: string;
-  };
-}

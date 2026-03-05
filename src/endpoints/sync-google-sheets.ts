@@ -3,22 +3,23 @@
  * Supports: Events, Food, Beers, Menus (Cans/Draft), Hours
  */
 
-import type { PayloadHandler } from 'payload'
+import type { Payload, PayloadHandler } from 'payload'
+import type { Location, Event, Beer } from '../payload-types'
 import { diffJson } from 'diff'
 import { slugify } from '../collections/utils/generateUniqueSlug'
 import { getUserFromRequest } from './auth-helper'
 
 interface StreamController {
-  send: (event: string, data: any) => void;
+  send: (event: string, data: Record<string, unknown>) => void;
 }
 
 interface FieldChange {
   field: string
-  from: any
-  to: any
+  from: string | number | boolean | null
+  to: string | number | boolean | null
 }
 
-function computeChanges(existing: Record<string, any>, incoming: Record<string, any>, fields: string[]): FieldChange[] {
+function computeChanges(existing: Record<string, string | number | boolean | null>, incoming: Record<string, string | number | boolean | null>, fields: string[]): FieldChange[] {
   const changes: FieldChange[] = []
   for (const field of fields) {
     const from = normalize(existing[field])
@@ -109,7 +110,7 @@ function parseDate(dateStr: string): Date | null {
   return isNaN(date.getTime()) ? null : date
 }
 
-function normalize(val: any): any {
+function normalize(val: string | number | boolean | null | undefined): string | number | boolean | null {
   if (val === '' || val === undefined || val === null) return null
   return val
 }
@@ -211,7 +212,7 @@ async function checkBeerImageExists(variant: string): Promise<string | null> {
 }
 
 async function uploadBeerImage(
-  payload: any,
+  payload: Payload,
   variant: string,
   imageUrl: string,
   stream: StreamController
@@ -257,20 +258,20 @@ async function uploadBeerImage(
       data: {
         alt: `${variant} beer can`,
       },
-      file: fileData as any,
+      file: fileData,
     })
 
     stream.send('status', { message: `✅ Uploaded image for ${variant}` })
     return media.id
-  } catch (error: any) {
-    const errorMsg = error?.message || String(error)
-    stream.send('error', { message: `❌ Failed to upload image for ${variant}: ${errorMsg}` })
+  } catch (error: unknown) {
+    const errorMsg = error instanceof Error ? error.message : String(error)
+    stream.send('error', { message: `Failed to upload image for ${variant}: ${errorMsg}` })
     return null
   }
 }
 
 // ============ SYNC EVENTS ============
-async function syncEvents(payload: any, stream: StreamController, dryRun: boolean, locations: any[]) {
+async function syncEvents(payload: Payload, stream: StreamController, dryRun: boolean, locations: Location[]) {
   const results = { imported: 0, updated: 0, skipped: 0, errors: 0 }
 
   for (const location of locations) {
@@ -280,9 +281,9 @@ async function syncEvents(payload: any, stream: StreamController, dryRun: boolea
 
     // Process both public and private event sheets
     const sheetUrls = [
-      { url: sheets.eventsPublic, visibility: 'public' },
-      { url: sheets.eventsPrivate, visibility: 'private' },
-    ].filter(s => s.url)
+      { url: sheets.eventsPublic, visibility: 'public' as const },
+      { url: sheets.eventsPrivate, visibility: 'private' as const },
+    ].filter((s): s is { url: string; visibility: 'public' | 'private' } => !!s.url)
 
     if (sheetUrls.length === 0) {
       stream.send('status', { message: `${location.name}: No event sheets configured, skipping` })
@@ -340,13 +341,13 @@ async function syncEvents(payload: any, stream: StreamController, dryRun: boolea
             }
           }
 
-          const eventData: Record<string, any> = {
+          const eventData: Partial<Omit<Event, 'id' | 'updatedAt' | 'createdAt'>> & { organizer: string; date: string; location: string; visibility: 'public' | 'private' } = {
             organizer,
             date: dateISO,
             location: locationId,
-            visibility: visibility as 'public' | 'private',
+            visibility,
             site: event.site || undefined,
-            attendees,
+            attendees: attendees ?? undefined,
           }
 
           // Handle time fields - some have separate start/end, some have ranges like "7-9pm"
@@ -444,13 +445,13 @@ async function syncEvents(payload: any, stream: StreamController, dryRun: boolea
           }
           results.imported++
           stream.send('event', { action: dryRun ? 'would import' : 'imported', organizer, date: event.date, location: locationSlug, visibility })
-          } catch (eventError: any) {
-            stream.send('error', { message: `Error processing event "${event.vendor || event.name}" (${event.date}): ${eventError.message}` })
+          } catch (eventError: unknown) {
+            stream.send('error', { message: `Error processing event "${event.vendor || event.name}" (${event.date}): ${eventError instanceof Error ? eventError.message : String(eventError)}` })
             results.errors++
           }
         }
-      } catch (error: any) {
-        stream.send('error', { message: `Error syncing ${location.name} ${visibility} events: ${error.message}` })
+      } catch (error: unknown) {
+        stream.send('error', { message: `Error syncing ${location.name} ${visibility} events: ${error instanceof Error ? error.message : String(error)}` })
         results.errors++
       }
     }
@@ -460,7 +461,7 @@ async function syncEvents(payload: any, stream: StreamController, dryRun: boolea
 }
 
 // ============ SYNC FOOD ============
-async function syncFood(payload: any, stream: StreamController, dryRun: boolean, locations: any[]) {
+async function syncFood(payload: Payload, stream: StreamController, dryRun: boolean, locations: Location[]) {
   const results = { imported: 0, updated: 0, skipped: 0, errors: 0, vendorsCreated: 0 }
 
   // Cache for vendor lookups
@@ -614,8 +615,8 @@ async function syncFood(payload: any, stream: StreamController, dryRun: boolean,
         results.imported++
         stream.send('food', { action: dryRun ? 'would import' : 'imported', vendor: food.vendor, date: food.date, location: locationSlug })
       }
-    } catch (error: any) {
-      stream.send('error', { message: `Error syncing ${location.name} food: ${error.message}` })
+    } catch (error: unknown) {
+      stream.send('error', { message: `Error syncing ${location.name} food: ${error instanceof Error ? error.message : String(error)}` })
       results.errors++
     }
   }
@@ -624,7 +625,7 @@ async function syncFood(payload: any, stream: StreamController, dryRun: boolean,
 }
 
 // ============ SYNC BEERS ============
-async function syncBeers(payload: any, stream: StreamController, dryRun: boolean) {
+async function syncBeers(payload: Payload, stream: StreamController, dryRun: boolean) {
   const results = { imported: 0, updated: 0, skipped: 0, errors: 0, imagesAdded: 0 }
 
   const url = SHEETS_CONFIG.beers
@@ -721,19 +722,20 @@ async function syncBeers(payload: any, stream: StreamController, dryRun: boolean
         }
       }
 
-      const beerData: Record<string, any> = {
+      const beerData = {
         name: beer.name,
         slug: slug,
         style: styleId as string,
-        abv: beer.abv ? parseFloat(beer.abv) : undefined,
-        glass,
-        draftPrice: parsePrice(beer.draftprice),
+        abv: beer.abv ? parseFloat(beer.abv) : 0,
+        glass: glass as Beer['glass'],
+        draftPrice: parsePrice(beer.draftprice) ?? 0,
         fourPack: parsePrice(beer.fourpack),
         description: beer.description || undefined,
         hops: beer.hops || undefined,
         upc: beer.upc || undefined,
         untappd: beer.untappd || undefined,
         hideFromSite: beer.hidefromsite === 'TRUE',
+        image: undefined as string | undefined,
       }
 
       // Add image if we uploaded one
@@ -752,7 +754,7 @@ async function syncBeers(payload: any, stream: StreamController, dryRun: boolean
           fourPack: beerData.fourPack ?? null,
           description: beer.description || null,
           hops: beer.hops || null,
-          hideFromSite: beerData.hideFromSite,
+          hideFromSite: beerData.hideFromSite ?? false,
         }
         const existingForCompare = {
           name: existingDoc.name,
@@ -803,8 +805,8 @@ async function syncBeers(payload: any, stream: StreamController, dryRun: boolean
         hasImage: !!imageId,
       })
     }
-  } catch (error: any) {
-    stream.send('error', { message: `Error syncing beers: ${error.message}` })
+  } catch (error: unknown) {
+    stream.send('error', { message: `Error syncing beers: ${error instanceof Error ? error.message : String(error)}` })
     results.errors++
   }
 
@@ -812,7 +814,7 @@ async function syncBeers(payload: any, stream: StreamController, dryRun: boolean
 }
 
 // ============ SYNC MENUS ============
-async function syncMenus(payload: any, stream: StreamController, dryRun: boolean, locationMap: Map<string, string>) {
+async function syncMenus(payload: Payload, stream: StreamController, dryRun: boolean, locationMap: Map<string, string>) {
   const results = { imported: 0, updated: 0, skipped: 0, errors: 0 }
 
   // Get all beers for lookup
@@ -885,14 +887,21 @@ async function syncMenus(payload: any, stream: StreamController, dryRun: boolean
           type: menuType,
           url: menuUrl,
           items: menuItems,
-          _status: 'published',
+          _status: 'published' as const,
         }
 
         if (existing.docs.length > 0) {
           const existingDoc = existing.docs[0]
           // Check if items changed
           const existingItems = existingDoc.items || []
-          const existingNormalized = existingItems.map((i: any) => {
+          interface ExistingMenuItem {
+            product?: {
+              relationTo?: string
+              value?: string | { id: string }
+            }
+            beer?: string | { id: string }
+          }
+          const existingNormalized = (existingItems as ExistingMenuItem[]).map((i) => {
             // Handle new polymorphic product field
             const product = i.product
             if (product?.relationTo && product?.value) {
@@ -915,7 +924,7 @@ async function syncMenus(payload: any, stream: StreamController, dryRun: boolean
           const hasChanges = diff.some(part => part.added || part.removed)
 
           // Also check if any items use the old 'beer' field and need migration to 'product'
-          const needsMigration = existingItems.some((i: any) => i.beer && !i.product)
+          const needsMigration = (existingItems as ExistingMenuItem[]).some((i) => i.beer && !i.product)
 
           if (!hasChanges && !needsMigration) {
             results.skipped++
@@ -924,9 +933,9 @@ async function syncMenus(payload: any, stream: StreamController, dryRun: boolean
 
           // Compute human-readable changes
           const added = incomingNormalized.filter(inc =>
-            !existingNormalized.some((ex: any) => ex.product === inc.product)
+            !existingNormalized.some((ex) => ex.product === inc.product)
           )
-          const removed = existingNormalized.filter((ex: any) =>
+          const removed = existingNormalized.filter((ex) =>
             !incomingNormalized.some(inc => inc.product === ex.product)
           )
 
@@ -954,8 +963,8 @@ async function syncMenus(payload: any, stream: StreamController, dryRun: boolean
         results.imported++
         stream.send('menu', { action: dryRun ? 'would import' : 'imported', location: locationSlug, type: menuType, itemCount: menuItems.length })
 
-      } catch (error: any) {
-        stream.send('error', { message: `Error syncing ${locationSlug} ${menuType}: ${error.message}` })
+      } catch (error: unknown) {
+        stream.send('error', { message: `Error syncing ${locationSlug} ${menuType}: ${error instanceof Error ? error.message : String(error)}` })
         results.errors++
       }
     }
@@ -1034,12 +1043,11 @@ function parseTimeToISO(timeStr: string, timezone: string = 'America/New_York'):
   return date.toISOString()
 }
 
-async function syncHours(payload: any, stream: StreamController, dryRun: boolean, locations: any[]) {
+async function syncHours(payload: Payload, stream: StreamController, dryRun: boolean, locations: Location[]) {
   const results = { imported: 0, updated: 0, skipped: 0, errors: 0 }
 
   for (const location of locations) {
-    // Use new googleSheets.hours or fall back to legacy hoursSheetUrl
-    const sheetUrl = location.googleSheets?.hours || location.hoursSheetUrl
+    const sheetUrl = location.googleSheets?.hours
     if (!sheetUrl) {
       stream.send('status', { message: `${location.name}: No hours sheet URL configured, skipping` })
       continue
@@ -1093,7 +1101,8 @@ async function syncHours(payload: any, stream: StreamController, dryRun: boolean
         hoursUpdate[day] = { open: openTime, close: closeTime }
 
         // Compare with existing
-        const existingDay = location[day] as { open?: string; close?: string } | undefined
+        type DayKey = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday'
+        const existingDay = location[day as DayKey] as { open?: string | null; close?: string | null } | undefined
         const existingOpen = existingDay?.open || null
         const existingClose = existingDay?.close || null
 
@@ -1130,8 +1139,8 @@ async function syncHours(payload: any, stream: StreamController, dryRun: boolean
         changes,
       })
 
-    } catch (error: any) {
-      stream.send('error', { message: `Error syncing ${location.name} hours: ${error.message}` })
+    } catch (error: unknown) {
+      stream.send('error', { message: `Error syncing ${location.name} hours: ${error instanceof Error ? error.message : String(error)}` })
       results.errors++
     }
   }
@@ -1172,7 +1181,7 @@ const LOCATION_SEED_DATA = {
 
 // ============ MAIN SYNC ============
 async function runSync(
-  payload: any,
+  payload: Payload,
   stream: StreamController,
   dryRun: boolean,
   collections: CollectionType[]
@@ -1180,13 +1189,15 @@ async function runSync(
   const results: Record<string, { imported: number; updated: number; skipped: number; errors: number; imagesAdded?: number }> = {}
 
   // Get all locations with their sheet URLs
-  let locationsResult = await payload.find({ collection: 'locations', limit: 50 })
-  let allLocations = [...locationsResult.docs]
+  const locationsResult = await payload.find({ collection: 'locations', limit: 50 })
+  const allLocations = [...locationsResult.docs]
 
   // Build locationMap for menus (still uses slugs)
   const locationMap = new Map<string, string>()
   for (const loc of allLocations) {
-    locationMap.set(loc.slug, loc.id)
+    if (loc.slug) {
+      locationMap.set(loc.slug, loc.id)
+    }
   }
 
   // Ensure required locations exist
@@ -1196,9 +1207,11 @@ async function runSync(
         stream.send('status', { message: `Creating missing location: ${seedData.name}` })
         const newLocation = await payload.create({
           collection: 'locations',
-          data: seedData,
+          data: seedData as Omit<Location, 'id' | 'updatedAt' | 'createdAt'>,
         })
-        locationMap.set(newLocation.slug, newLocation.id)
+        if (newLocation.slug) {
+          locationMap.set(newLocation.slug, newLocation.id)
+        }
         allLocations.push(newLocation)
         stream.send('status', { message: `Created location: ${seedData.name} (${newLocation.slug})` })
       } else {
@@ -1250,7 +1263,7 @@ export const syncGoogleSheets: PayloadHandler = async (req) => {
 
   const stream = new ReadableStream({
     async start(controller) {
-      const send = (event: string, data: any) => {
+      const send = (event: string, data: Record<string, unknown>) => {
         controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`))
       }
 
@@ -1264,9 +1277,10 @@ export const syncGoogleSheets: PayloadHandler = async (req) => {
           results,
           dryRun,
         })
-      } catch (error: any) {
-        send('error', { message: error.message })
-        send('complete', { success: false, error: error.message })
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : String(error)
+        send('error', { message: errorMessage })
+        send('complete', { success: false, error: errorMessage })
       } finally {
         controller.close()
       }

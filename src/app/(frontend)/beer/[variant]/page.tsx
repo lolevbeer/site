@@ -77,8 +77,7 @@ export default async function BeerPage({ params }: BeerPageProps) {
   }
 
   // Generate Product schema for SEO
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const productSchema = generateProductSchema(beer as any);
+  const productSchema = generateProductSchema(beer);
   const breadcrumbSchema = generateBreadcrumbSchema([
     { label: 'Home', href: '/' },
     { label: 'Beer', href: '/beer' },
@@ -92,8 +91,7 @@ export default async function BeerPage({ params }: BeerPageProps) {
       <JsonLd data={breadcrumbSchema} />
 
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        <BeerDetails beer={beer as any} />
+        <BeerDetails beer={beer} />
       </div>
     </>
   );

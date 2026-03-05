@@ -1,4 +1,5 @@
 import type { PayloadHandler } from 'payload'
+import type { SiteContent } from '@/src/payload-types'
 import { getUserFromRequest } from './auth-helper'
 import { geocode } from './geocode'
 
@@ -109,8 +110,9 @@ async function fetchDistributors(url: string): Promise<FetchResult> {
       )
 
     return { rows: filtered }
-  } catch (error: any) {
-    return { rows: [], error: error.message || 'Unknown fetch error' }
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown fetch error'
+    return { rows: [], error: message }
   }
 }
 
@@ -139,7 +141,7 @@ export const importDistributors: PayloadHandler = async (req) => {
 
   // Get URL from site-content
   const siteContent = await payload.findGlobal({ slug: 'site-content' })
-  const jsonUrl = region === 'pa' ? (siteContent as any).distributorPaUrl : (siteContent as any).distributorOhUrl
+  const jsonUrl = region === 'pa' ? (siteContent as SiteContent).distributorPaUrl : (siteContent as SiteContent).distributorOhUrl
 
   if (!jsonUrl) {
     return Response.json({ error: `No URL configured for ${regionUpper}` }, { status: 400 })
@@ -161,7 +163,7 @@ export const importDistributors: PayloadHandler = async (req) => {
   const encoder = new TextEncoder()
   const stream = new ReadableStream({
     async start(controller) {
-      const send = (event: string, data: any) => {
+      const send = (event: string, data: Record<string, unknown>) => {
         controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`))
       }
 
@@ -227,8 +229,9 @@ export const importDistributors: PayloadHandler = async (req) => {
           details.push(msg)
           send('item', { type: 'success', message: msg })
           imported++
-        } catch (error: any) {
-          const msg = `Error: Failed to import "${row.CustomerName}" - ${error.message}`
+        } catch (error: unknown) {
+          const message = error instanceof Error ? error.message : 'Unknown error'
+          const msg = `Error: Failed to import "${row.CustomerName}" - ${message}`
           details.push(msg)
           send('item', { type: 'error', message: msg })
           errors++

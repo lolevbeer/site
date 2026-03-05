@@ -56,8 +56,10 @@ export function formatDateEST(dateString: string): string {
 }
 
 /**
- * Compare two date strings in YYYY-MM-DD format
+ * Get an ISO string representing the start of today in EST/EDT, converted to UTC.
+ * Suitable for Payload CMS queries with `greater_than_equal`.
  */
-export function compareDateStrings(a: string, b: string): number {
-  return a.localeCompare(b);
+export function getTodayMidnightISO(): string {
+  return new Date(`${getTodayEST()}T00:00:00-05:00`).toISOString();
 }
+

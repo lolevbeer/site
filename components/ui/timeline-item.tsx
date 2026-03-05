@@ -9,6 +9,16 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { formatTime } from '@/lib/utils/formatters';
+import { Music, Utensils, Puzzle, Trophy, Beer, MicVocal, type LucideIcon } from 'lucide-react';
+
+const tagIcons: Record<string, LucideIcon> = {
+  music: Music,
+  utensils: Utensils,
+  puzzle: Puzzle,
+  sports: Trophy,
+  'beer-release': Beer,
+  'mic-vocal': MicVocal,
+};
 import {
   Dialog,
   DialogContent,
@@ -21,6 +31,7 @@ interface TimelineItemProps {
   endTime?: string;
   location?: string;
   description?: string;
+  tags?: string[];
   site?: string;
   imageUrl?: string;
   className?: string;
@@ -32,6 +43,7 @@ export function TimelineItem({
   endTime,
   location,
   description,
+  tags,
   site,
   imageUrl,
   className
@@ -98,9 +110,15 @@ export function TimelineItem({
         )}
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <h4 className="font-semibold text-base leading-tight">
-          {title}
-        </h4>
+        <div className="flex items-center gap-1.5">
+          {tags?.map((tag) => {
+            const Icon = tagIcons[tag]
+            return Icon ? <Icon key={tag} className="h-4 w-4 text-muted-foreground flex-shrink-0" /> : null
+          })}
+          <h4 className="font-semibold text-base leading-tight">
+            {title}
+          </h4>
+        </div>
         {(location || timeDisplay) && (
           <p className="text-sm text-muted-foreground mt-1">
             {location}

@@ -1,12 +1,35 @@
-import type { CollectionConfig } from 'payload'
+import type { CollectionConfig, Payload } from 'payload'
+import { APIError } from 'payload'
 import { revalidateTag } from 'next/cache'
 import { generateUniqueSlug } from './utils/generateUniqueSlug'
-import { adminAccess, beerManagerAccess, isAdmin } from '@/src/access/roles'
+import { adminAccess, beerManagerAccess } from '@/src/access/roles'
 import { fetchUntappdData, type UntappdReview } from '@/src/utils/untappd'
+import { logger } from '@/lib/utils/logger'
 
-// Helper function to round to nearest 0.25 (like Excel's MROUND)
-const mround = (value: number, multiple: number): number => {
+/** Round to nearest multiple (like Excel's MROUND) */
+function mround(value: number, multiple: number): number {
   return Math.round(value / multiple) * multiple
+}
+
+/**
+ * Find all menus containing a given beer and revalidate their CDN cache tags.
+ * Called from both afterChange (data updated) and afterRead (editor warm-up).
+ */
+async function revalidateMenusForBeer(
+  payload: Payload,
+  beerId: string | number,
+): Promise<void> {
+  const menus = await payload.find({
+    collection: 'menus',
+    where: { 'items.product.value': { equals: beerId } },
+    limit: 100,
+    depth: 0,
+  })
+  for (const menu of menus.docs) {
+    if (menu.url) {
+      revalidateTag(`menu-${menu.url}`)
+    }
+  }
 }
 
 export const Beers: CollectionConfig = {
@@ -63,8 +86,8 @@ export const Beers: CollectionConfig = {
           )
         }
 
-        // Auto-increment recipe number for new beers
-        if (operation === 'create' && !data.recipe) {
+        // Auto-increment recipe number for new beers (always, even when cloning)
+        if (operation === 'create') {
           const lastBeer = await req.payload.find({
             collection: 'beers',
             sort: '-recipe',
@@ -79,21 +102,41 @@ export const Beers: CollectionConfig = {
           }
         }
 
-        // Auto-fetch Untappd rating when URL is set/changed
+        // Validate recipe number is unique (on create or when changed)
+        if (data.recipe !== undefined && data.recipe !== originalDoc?.recipe) {
+          const existing = await req.payload.find({
+            collection: 'beers',
+            where: {
+              recipe: { equals: data.recipe },
+              id: { not_equals: originalDoc?.id },
+            },
+            limit: 1,
+            overrideAccess: true,
+          })
+
+          if (existing.docs.length > 0) {
+            throw new APIError(
+              `Recipe number ${data.recipe} is already in use by "${existing.docs[0].name}"`,
+              400,
+            )
+          }
+        }
+
+        // Auto-fetch Untappd rating when URL is set or changed
         if (data.untappd && data.untappd !== originalDoc?.untappd) {
-          const { rating, ratingCount, positiveReviews } = await fetchUntappdData(data.untappd)
-          if (rating !== null) {
-            data.untappdRating = rating
-          }
-          if (ratingCount !== null) {
-            data.untappdRatingCount = ratingCount
-          }
-          if (positiveReviews.length > 0) {
-            // Merge with existing reviews, using URL as unique key
-            const existingReviews = (originalDoc?.positiveReviews as UntappdReview[]) || []
-            const existingUrls = new Set(existingReviews.map(r => r.url).filter(Boolean))
-            const newReviews = positiveReviews.filter(r => r.url && !existingUrls.has(r.url))
-            data.positiveReviews = [...existingReviews, ...newReviews]
+          const fetched = await fetchUntappdData(data.untappd)
+
+          if (fetched.rating !== null) data.untappdRating = fetched.rating
+          if (fetched.ratingCount !== null) data.untappdRatingCount = fetched.ratingCount
+
+          if (fetched.positiveReviews.length > 0) {
+            // Merge new reviews with existing, using URL as the dedup key
+            const existing = (originalDoc?.positiveReviews as UntappdReview[]) || []
+            const existingUrls = new Set(existing.map((r) => r.url).filter(Boolean))
+            const newReviews = fetched.positiveReviews.filter(
+              (r) => r.url && !existingUrls.has(r.url),
+            )
+            data.positiveReviews = [...existing, ...newReviews]
           }
         }
 
@@ -102,28 +145,26 @@ export const Beers: CollectionConfig = {
     ],
     afterChange: [
       async ({ doc, req }) => {
-        // Find all menus containing this beer and revalidate their caches
         try {
-          const menus = await req.payload.find({
-            collection: 'menus',
-            where: {
-              'items.product.value': { equals: doc.id },
-            },
-            limit: 100,
-            depth: 0,
-          })
-
-          // Revalidate each menu's specific cache tag
-          for (const menu of menus.docs) {
-            if (menu.url) {
-              revalidateTag(`menu-${menu.url}`)
-            }
-          }
+          await revalidateMenusForBeer(req.payload, doc.id)
         } catch (error) {
-          // Don't block the save if revalidation fails
-          console.error('Beer menu revalidation error:', error)
+          logger.error('Beer menu revalidation error:', error)
         }
-
+        return doc
+      },
+    ],
+    afterRead: [
+      async ({ doc, req, findMany }) => {
+        // When an admin views a single beer, revalidate menu caches so
+        // displays snap back to fast polling in anticipation of edits.
+        // Skip list views (findMany) to avoid N+1 queries.
+        if (req.user && !findMany) {
+          try {
+            await revalidateMenusForBeer(req.payload, doc.id)
+          } catch {
+            // Don't block the read
+          }
+        }
         return doc
       },
     ],
@@ -234,10 +275,10 @@ export const Beers: CollectionConfig = {
     {
       name: 'recipe',
       type: 'number',
+      unique: true,
       admin: {
         description: 'Auto-incremented recipe number',
         position: 'sidebar',
-        readOnly: true,
       },
     },
     {
@@ -311,6 +352,14 @@ export const Beers: CollectionConfig = {
       },
     },
     {
+      name: 'topBeerDrops',
+      type: 'text',
+      admin: {
+        description: 'Top Beer Drops URL (e.g., https://topbeerdrops.com/...)',
+        position: 'sidebar',
+      },
+    },
+    {
       type: 'row',
       fields: [
         {
@@ -347,7 +396,9 @@ export const Beers: CollectionConfig = {
       type: 'json',
       admin: {
         description: 'MGR agent approved reviews',
-        readOnly: true,
+        components: {
+          Field: '@/src/components/admin/ReviewManager#ReviewManager',
+        },
       },
     },
   ],

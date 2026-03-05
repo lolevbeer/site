@@ -68,9 +68,9 @@ export const importFoodVendorsCSV: PayloadHandler = async (req) => {
         })
         results.created++
         results.details.push(`Created: ${vendorName}`)
-      } catch (err: any) {
+      } catch (err: unknown) {
         results.errors++
-        results.details.push(`Error: ${vendorName} - ${err.message}`)
+        results.details.push(`Error: ${vendorName} - ${err instanceof Error ? err.message : 'Unknown error'}`)
       }
     }
 
@@ -79,7 +79,8 @@ export const importFoodVendorsCSV: PayloadHandler = async (req) => {
       total: records.length,
       ...results,
     })
-  } catch (error: any) {
-    return Response.json({ error: error.message }, { status: 500 })
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    return Response.json({ error: message }, { status: 500 })
   }
 }

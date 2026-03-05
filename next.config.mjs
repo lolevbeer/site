@@ -26,18 +26,18 @@ const nextConfig = {
   },
 
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
   },
 
   typescript: {
-    // Skip type checking during build (run separately in CI if needed)
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
 
   env: {
     NEXT_PUBLIC_SERVER_URL: process.env.VERCEL_URL
       ? `https://${process.env.VERCEL_URL}`
       : process.env.NEXT_PUBLIC_APP_URL || '',
+    NEXT_PUBLIC_DEPLOY_ID: process.env.VERCEL_GIT_COMMIT_SHA || `local-${Date.now()}`,
   },
 
   images: {
@@ -63,7 +63,9 @@ const nextConfig = {
   },
 
   compiler: {
-    removeConsole: process.env.NODE_ENV === 'production',
+    removeConsole: process.env.NODE_ENV === 'production'
+      ? { exclude: ['error', 'warn'] }
+      : false,
   },
 
   experimental: {

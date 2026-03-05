@@ -94,16 +94,16 @@ export function HeroSection({ availableBeers, cansMenus, heroDescription, heroIm
             <TooltipProvider delayDuration={200}>
               <Carousel
                 opts={{
-                  align: "center",
+                  align: "start",
                   loop: true,
                   slidesToScroll: "auto",
                 }}
                 className="w-full"
                 aria-label="Available beers carousel"
               >
-                <CarouselContent className="-ml-4 justify-center">
+                <CarouselContent className="-ml-4">
                   {availableBeers.length > 0 ? (
-                    availableBeers.map((beer) => {
+                    availableBeers.map((beer, index) => {
                       const imageUrl = getBeerImageUrl(beer);
                       // Skip beers not in cans menus, without images, or with failed images
                       if (!cansAvailableBeerIds.has(beer.id) || !imageUrl || imageErrors.has(beer.id)) return null;
@@ -120,7 +120,7 @@ export function HeroSection({ availableBeers, cansMenus, heroDescription, heroIm
                                     fill
                                     className={`object-contain drop-shadow-sm group-hover:drop-shadow-md transition-all duration-200 ${loadedImages.has(beer.id) ? 'opacity-100' : 'opacity-0'}`}
                                     sizes="(max-width: 768px) 64px, 96px"
-                                    loading="lazy"
+                                    loading={index < 5 ? "eager" : "lazy"}
                                     onLoad={() => handleImageLoad(beer.id)}
                                     onError={() => handleImageError(beer.id)}
                                   />

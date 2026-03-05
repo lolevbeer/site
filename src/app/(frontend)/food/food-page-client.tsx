@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
 import { UtensilsCrossed } from 'lucide-react';
 import { useLocationContext } from '@/components/location/location-provider';
+import { getLocationDisplayName } from '@/lib/config/locations';
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
 import { TimelineList } from '@/components/ui/timeline-list';
 import { TimelineItem } from '@/components/ui/timeline-item';
@@ -16,13 +17,7 @@ interface FoodPageClientProps {
 }
 
 export function FoodPageClient({ initialSchedules }: FoodPageClientProps) {
-  const { currentLocation, locations } = useLocationContext();
-
-  // Get location name from slug
-  const getLocationName = (slug: string): string => {
-    const location = locations.find(loc => (loc.slug || loc.id) === slug);
-    return location?.name || slug;
-  };
+  const { currentLocation, locations, cycleLocation } = useLocationContext();
 
   // Filter schedules by current location and sort by date
   const filteredSchedules = useMemo(() => {
@@ -35,6 +30,18 @@ export function FoodPageClient({ initialSchedules }: FoodPageClientProps) {
         id: `${schedule.vendor}-${schedule.date}`
       }));
   }, [initialSchedules, currentLocation]);
+
+  // Check if other locations have food (for empty state hint)
+  const otherLocationsWithFood = useMemo(() => {
+    const otherLocations = locations.filter(loc => {
+      const slug = loc.slug || loc.id;
+      return slug !== currentLocation && loc.active !== false;
+    });
+    return otherLocations.filter(loc => {
+      const slug = loc.slug || loc.id;
+      return initialSchedules.some(s => s.location === slug && isTodayOrFuture(s.date));
+    });
+  }, [initialSchedules, currentLocation, locations]);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -51,7 +58,7 @@ export function FoodPageClient({ initialSchedules }: FoodPageClientProps) {
               title={schedule.vendor}
               time={schedule.time || schedule.start}
               endTime={schedule.finish}
-              location={getLocationName(schedule.location)}
+              location={getLocationDisplayName(locations, schedule.location)}
               site={schedule.site}
               imageUrl={schedule.logoUrl}
             />
@@ -64,7 +71,19 @@ export function FoodPageClient({ initialSchedules }: FoodPageClientProps) {
                 </EmptyMedia>
                 <EmptyTitle>No Food Trucks Scheduled</EmptyTitle>
                 <EmptyDescription>
-                  Check back soon for upcoming food truck schedules!
+                  No upcoming food trucks at {getLocationDisplayName(locations, currentLocation)}.
+                  {otherLocationsWithFood.length > 0 && (
+                    <>
+                      {' '}
+                      <Button
+                        variant="link"
+                        className="h-auto p-0 text-base"
+                        onClick={cycleLocation}
+                      >
+                        Check {otherLocationsWithFood[0].name}
+                      </Button>
+                    </>
+                  )}
                 </EmptyDescription>
               </EmptyHeader>
             </Empty>

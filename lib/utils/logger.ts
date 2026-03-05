@@ -1,17 +1,17 @@
 /**
  * Logging utility for the application
- * Provides consistent logging across the codebase with environment-aware behavior
+ * Provides consistent logging across the codebase with environment-aware behavior.
+ * In production, errors and warnings are forwarded to Sentry.
  */
 
-type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+import * as Sentry from '@sentry/nextjs';
 
 interface LogContext {
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 class Logger {
   private isDevelopment = process.env.NODE_ENV === 'development';
-  private isClient = typeof window !== 'undefined';
 
   /**
    * Log debug information (only in development)
@@ -32,19 +32,18 @@ class Logger {
   }
 
   /**
-   * Log warnings (always logged, sent to monitoring in production)
+   * Log warnings (always logged, sent to Sentry in production)
    */
   warn(message: string, context?: LogContext): void {
     if (this.isDevelopment) {
       console.warn(`[WARN] ${message}`, context || '');
     } else {
-      // In production, send to error monitoring service
       this.sendToMonitoring('warn', message, context);
     }
   }
 
   /**
-   * Log errors (always logged, sent to monitoring in production)
+   * Log errors (always logged, sent to Sentry in production)
    */
   error(message: string, error?: Error | unknown, context?: LogContext): void {
     const errorInfo = error instanceof Error ? {
@@ -56,20 +55,32 @@ class Logger {
     if (this.isDevelopment) {
       console.error(`[ERROR] ${message}`, { ...errorInfo, ...context });
     } else {
-      // In production, send to error monitoring service
       this.sendToMonitoring('error', message, { ...errorInfo, ...context });
     }
   }
 
   /**
-   * Send logs to monitoring service in production
+   * Send logs to Sentry in production
    */
-  private sendToMonitoring(level: LogLevel, message: string, context?: LogContext): void {
-    // TODO: Integrate with Sentry or other monitoring service
-    // For now, only log errors to console in production (warnings and errors only)
-    if (level === 'error' || level === 'warn') {
-      console[level](`[${level.toUpperCase()}] ${message}`, context || '');
+  private sendToMonitoring(level: 'warn' | 'error', message: string, context?: LogContext): void {
+    if (level === 'error') {
+      const errorObj = context?.error instanceof Error
+        ? context.error
+        : new Error(message);
+
+      Sentry.captureException(errorObj, {
+        extra: context,
+        tags: { logLevel: level },
+      });
+    } else {
+      Sentry.captureMessage(message, {
+        level: 'warning',
+        extra: context,
+      });
     }
+
+    // Also log to console for server log aggregation
+    console[level](`[${level.toUpperCase()}] ${message}`, context || '');
   }
 
   /**

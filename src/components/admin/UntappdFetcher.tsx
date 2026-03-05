@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useField, Button, Banner } from '@payloadcms/ui'
+import { logger } from '@/lib/utils/logger'
 
 interface SearchResult {
   name: string
@@ -57,7 +58,7 @@ export function UntappdFetcher() {
       }
     } catch (err) {
       setError('Failed to connect to Untappd')
-      console.error(err)
+      logger.error('Error occurred', err)
     } finally {
       setLoading(false)
     }
@@ -106,7 +107,7 @@ export function UntappdFetcher() {
       }
     } catch (err) {
       setError('Failed to fetch rating')
-      console.error(err)
+      logger.error('Error occurred', err)
     } finally {
       setLoading(false)
     }
@@ -115,24 +116,26 @@ export function UntappdFetcher() {
   return (
     <div style={{ marginBottom: '20px' }}>
       {error && (
-        <Banner type="error" style={{ marginBottom: '10px' }}>
-          {error}
-        </Banner>
+        <div style={{ marginBottom: '10px' }}>
+          <Banner type="error">
+            {error}
+          </Banner>
+        </div>
       )}
 
       {searchResults && searchResults.length > 1 && (
         <div style={{ marginBottom: '10px', padding: '10px', background: 'var(--theme-elevation-100)', borderRadius: '4px' }}>
           <p style={{ marginBottom: '8px', fontWeight: 'bold' }}>Multiple results found. Select one:</p>
           {searchResults.map((result, index) => (
+            <span key={index} style={{ marginRight: '8px', marginBottom: '8px', display: 'inline-block' }}>
             <Button
-              key={index}
               buttonStyle="secondary"
               size="small"
               onClick={() => handleSelectResult(result)}
-              style={{ marginRight: '8px', marginBottom: '8px' }}
             >
               {result.name}
             </Button>
+            </span>
           ))}
         </div>
       )}

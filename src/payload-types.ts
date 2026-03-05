@@ -120,9 +120,10 @@ export interface Config {
     'site-content': SiteContentSelect<false> | SiteContentSelect<true>;
   };
   locale: null;
-  user: User & {
-    collection: 'users';
+  widgets: {
+    collections: CollectionsWidget;
   };
+  user: User;
   jobs: {
     tasks: unknown;
     workflows: unknown;
@@ -212,6 +213,10 @@ export interface Beer {
    * Hop varieties used
    */
   hops?: string | null;
+  /**
+   * Top Beer Drops URL (e.g., https://topbeerdrops.com/...)
+   */
+  topBeerDrops?: string | null;
   /**
    * Untappd URL (e.g., /b/lolev-beer-lupula/123456)
    */
@@ -334,15 +339,15 @@ export interface Menu {
    */
   themeMode?: ('auto' | 'light' | 'dark') | null;
   items: {
-    product:
-      | {
+    product?:
+      | ({
           relationTo: 'beers';
           value: string | Beer;
-        }
-      | {
+        } | null)
+      | ({
           relationTo: 'products';
           value: string | Product;
-        };
+        } | null);
     /**
      * Sale Price (optional override)
      */
@@ -501,6 +506,7 @@ export interface Event {
    * This will be linked on the website
    */
   site?: string | null;
+  tags?: ('music' | 'utensils' | 'puzzle' | 'sports' | 'beer-release' | 'mic-vocal')[] | null;
   description?: string | null;
   /**
    * Expected or registered attendees
@@ -565,7 +571,6 @@ export interface User {
    * Admins can manage users and all content. Event/Beer/Food Managers can manage their respective collections. Lead Bartenders can update line cleaning dates. Bartenders can update menus. Users can have multiple roles.
    */
   roles: ('admin' | 'event-manager' | 'beer-manager' | 'food-manager' | 'lead-bartender' | 'bartender')[];
-  role?: ('admin' | 'event-manager' | 'beer-manager' | 'food-manager' | 'lead-bartender' | 'bartender') | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -583,6 +588,7 @@ export interface User {
       }[]
     | null;
   password?: string | null;
+  collection: 'users';
 }
 /**
  * Holiday and special hours overrides for locations
@@ -852,6 +858,7 @@ export interface BeersSelect<T extends boolean = true> {
   image?: T;
   description?: T;
   hops?: T;
+  topBeerDrops?: T;
   untappd?: T;
   untappdRating?: T;
   untappdRatingCount?: T;
@@ -918,6 +925,7 @@ export interface EventsSelect<T extends boolean = true> {
   endTime?: T;
   location?: T;
   site?: T;
+  tags?: T;
   description?: T;
   attendees?: T;
   pointOfContact?: T;
@@ -961,7 +969,6 @@ export interface UsersSelect<T extends boolean = true> {
   name?: T;
   locations?: T;
   roles?: T;
-  role?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -1272,6 +1279,8 @@ export interface SiteContent {
    */
   heroImage?: (string | null) | Media;
   heroDescription?: string | null;
+  aboutPhilosophy?: string | null;
+  aboutLocations?: string | null;
   errorMessage?: string | null;
   todaysEventsTitle?: string | null;
   todaysFoodTitle?: string | null;
@@ -1320,6 +1329,8 @@ export interface RecurringFoodSelect<T extends boolean = true> {
 export interface SiteContentSelect<T extends boolean = true> {
   heroImage?: T;
   heroDescription?: T;
+  aboutPhilosophy?: T;
+  aboutLocations?: T;
   errorMessage?: T;
   todaysEventsTitle?: T;
   todaysFoodTitle?: T;
@@ -1328,6 +1339,16 @@ export interface SiteContentSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "collections_widget".
+ */
+export interface CollectionsWidget {
+  data?: {
+    [k: string]: unknown;
+  };
+  width: 'full';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

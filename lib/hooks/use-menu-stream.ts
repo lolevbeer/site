@@ -1,14 +1,9 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
-import type { Menu } from '@/src/payload-types'
+import { useMemo } from 'react'
 
-interface UseMenuStreamOptions {
-  /** Whether streaming is enabled (default: true) */
-  enabled?: boolean
-  /** Poll interval in ms (default: 2000) */
-  pollInterval?: number
-}
+import { usePolling, type UsePollingOptions } from './use-polling'
+import type { Menu } from '@/src/payload-types'
 
 interface UseMenuStreamResult {
   menu: Menu | null
@@ -19,99 +14,38 @@ interface UseMenuStreamResult {
   pollCount: number
 }
 
+/** Shape of the /api/menu-stream response */
 interface MenuResponse {
   menu: Menu
   theme: 'light' | 'dark'
   timestamp: number
+  deployId?: string
+  warm?: boolean
 }
 
 /**
- * Hook for real-time menu updates via polling
+ * Hook for real-time menu updates via adaptive polling.
  *
- * Uses polling against a cached endpoint for cost-effective updates.
- * The endpoint serves cached data (nearly free) until cache is invalidated
- * by Payload's afterChange hook when a menu is actually updated.
- *
- * Much more cost-effective than SSE on Vercel:
- * - No persistent connections keeping functions alive
- * - Cached responses don't use CPU
- * - Only actual menu changes trigger fresh DB queries
+ * Wraps the generic usePolling hook with menu-specific data transformation.
+ * See usePolling for details on adaptive interval behavior, warm-up signals,
+ * and cost-effective CDN caching strategy.
  */
 export function useMenuStream(
   menuUrl: string,
   initialMenu: Menu | null,
-  options: UseMenuStreamOptions = {}
+  options: UsePollingOptions = {},
 ): UseMenuStreamResult {
-  const { enabled = true, pollInterval = 2000 } = options
+  const stableInitialMenu = useMemo(() => initialMenu, [initialMenu])
 
-  const [menu, setMenu] = useState<Menu | null>(initialMenu)
-  const [theme, setThemeState] = useState<'light' | 'dark'>('light')
-  const [isConnected, setIsConnected] = useState(false)
-  const [error, setError] = useState<Error | null>(null)
-  const [pollCount, setPollCount] = useState(0)
-
-  const pollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const lastTimestampRef = useRef<number>(0)
-
-  const poll = useCallback(async () => {
-    if (!menuUrl || !enabled) return
-
-    try {
-      const response = await fetch(`/api/menu-stream/${menuUrl}`, {
-        cache: 'no-store', // Let the server handle caching
-      })
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`)
-      }
-
-      const data: MenuResponse = await response.json()
-
-      // Only update if data has changed
-      if (data.timestamp !== lastTimestampRef.current) {
-        lastTimestampRef.current = data.timestamp
-        setMenu(data.menu)
-      }
-
-      // Always update theme state (component handles transitions)
-      setThemeState(data.theme)
-
-      setIsConnected(true)
-      setError(null)
-      setPollCount(prev => prev + 1)
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to fetch menu'))
-      setIsConnected(false)
-    }
-
-    // Schedule next poll
-    if (enabled) {
-      pollTimeoutRef.current = setTimeout(poll, pollInterval)
-    }
-  }, [menuUrl, enabled, pollInterval])
-
-  // Start polling on mount
-  useEffect(() => {
-    if (enabled && menuUrl) {
-      // Start polling immediately
-      poll()
-    }
-
-    return () => {
-      // Cleanup on unmount
-      if (pollTimeoutRef.current) {
-        clearTimeout(pollTimeoutRef.current)
-        pollTimeoutRef.current = null
-      }
-    }
-  }, [enabled, menuUrl, poll])
-
-  // Update menu when initialMenu changes (server re-render)
-  useEffect(() => {
-    if (initialMenu) {
-      setMenu(initialMenu)
-    }
-  }, [initialMenu])
+  const { data: menu, theme, isConnected, error, pollCount } = usePolling<Menu, MenuResponse>(
+    menuUrl ? `/api/menu-stream/${menuUrl}` : '',
+    stableInitialMenu,
+    ({ menu: responseMenu, theme: responseTheme }) => ({
+      data: responseMenu,
+      theme: responseTheme,
+    }),
+    options,
+  )
 
   return { menu, theme, isConnected, error, pollCount }
 }

@@ -2,8 +2,10 @@ import { getPayload } from 'payload'
 import config from '@/src/payload.config'
 import { LiveEvents } from '@/components/events/live-events'
 import { notFound } from 'next/navigation'
-import { BreweryEvent, EventType, EventStatus } from '@/lib/types/event'
-import type { LocationSlug } from '@/lib/types/location'
+import { BreweryEvent } from '@/lib/types/event'
+import { getCansMenu, getCombinedUpcomingFood, transformPayloadEventToBreweryEvent, extractVendorInfo } from '@/lib/utils/payload-api'
+import type { PayloadMenu } from '@/lib/utils/payload-api'
+import { getTodayMidnightISO } from '@/lib/utils/date'
 
 // Force dynamic rendering to avoid DB connection during build
 export const dynamic = 'force-dynamic'
@@ -14,24 +16,22 @@ interface EventsDisplayPageProps {
   }>
 }
 
-interface PayloadEvent {
+export interface FoodItem {
   id: string
-  organizer: string
-  description?: string
+  vendor: string
   date: string
-  startTime?: string
-  endTime?: string
-  location?: { slug?: string; name?: string; id?: string } | string
+  time?: string
   site?: string
-  attendees?: number
-  visibility?: string
+  logoUrl?: string
 }
 
 /**
- * Fetch events for a specific location
+ * Fetch events, food, and cans menu for a specific location
  */
-async function getEventsByLocation(locationSlug: string): Promise<{
+async function getDataByLocation(locationSlug: string): Promise<{
   events: BreweryEvent[]
+  food: FoodItem[]
+  cansMenu: PayloadMenu | null
   locationName: string
 } | null> {
   const payload = await getPayload({ config })
@@ -51,50 +51,55 @@ async function getEventsByLocation(locationSlug: string): Promise<{
 
   const location = locationResult.docs[0]
 
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
+  const todayStr = getTodayMidnightISO()
 
-  const result = await payload.find({
-    collection: 'events',
-    where: {
-      visibility: { equals: 'public' },
-      date: { greater_than_equal: today.toISOString() },
-      location: { equals: location.id },
-    },
-    sort: 'date',
-    limit: 20,
-    depth: 1,
-  })
+  // Fetch events, food (individual + recurring), and cans menu in parallel
+  const [eventsResult, combinedFood, cansMenu] = await Promise.all([
+    payload.find({
+      collection: 'events',
+      where: {
+        visibility: { equals: 'public' },
+        date: { greater_than_equal: todayStr },
+        location: { equals: location.id },
+      },
+      sort: 'date',
+      limit: 20,
+      depth: 1,
+    }),
+    getCombinedUpcomingFood(locationSlug.toLowerCase(), 20),
+    getCansMenu(locationSlug.toLowerCase()),
+  ])
 
-  const events: BreweryEvent[] = (result.docs as PayloadEvent[]).map((event) => {
-    const eventLocation = typeof event.location === 'object' ? event.location : null
+  const events: BreweryEvent[] = eventsResult.docs.map((event) =>
+    transformPayloadEventToBreweryEvent(event, locationSlug, location.name)
+  )
+
+  const food: FoodItem[] = combinedFood.map((entry) => {
+    const { name, site, logoUrl } = extractVendorInfo(entry.vendor)
+    const dateStr = typeof entry.date === 'string' ? entry.date.split('T')[0] : entry.date
+    const time = ('startTime' in entry ? entry.startTime : ('time' in entry ? entry.time : undefined)) ?? undefined
 
     return {
-      id: event.id,
-      title: event.organizer,
-      description: event.description || event.organizer,
-      date: event.date.split('T')[0],
-      time: event.startTime || '',
-      endTime: event.endTime,
-      vendor: event.organizer,
-      type: EventType.SPECIAL_EVENT,
-      status: EventStatus.SCHEDULED,
-      location: (eventLocation?.slug || locationSlug) as LocationSlug,
-      locationName: eventLocation?.name || location.name,
-      site: event.site,
-      attendees: event.attendees,
+      id: typeof entry.id === 'string' ? entry.id : String(entry.id),
+      vendor: name || 'Unknown',
+      date: dateStr,
+      time: time,
+      site,
+      logoUrl,
     }
   })
 
   return {
     events,
+    food,
+    cansMenu,
     locationName: location.name,
   }
 }
 
 export default async function EventsDisplayPage({ params }: EventsDisplayPageProps) {
   const { location } = await params
-  const data = await getEventsByLocation(location)
+  const data = await getDataByLocation(location)
 
   if (!data) {
     notFound()
@@ -104,6 +109,8 @@ export default async function EventsDisplayPage({ params }: EventsDisplayPagePro
     <LiveEvents
       location={location.toLowerCase()}
       initialEvents={data.events}
+      initialFood={data.food}
+      cansMenu={data.cansMenu}
       initialLocationName={data.locationName}
     />
   )
@@ -111,16 +118,24 @@ export default async function EventsDisplayPage({ params }: EventsDisplayPagePro
 
 export async function generateMetadata({ params }: EventsDisplayPageProps) {
   const { location } = await params
-  const data = await getEventsByLocation(location)
+  const data = await getDataByLocation(location)
 
   if (!data) {
     return {
-      title: 'Events Not Found',
+      title: 'Not Found',
     }
   }
 
+  const hasEvents = data.events.length > 0
+  const hasFood = data.food.length > 0
+  const title = hasEvents && hasFood
+    ? `Food & Events - ${data.locationName}`
+    : hasFood
+      ? `Food - ${data.locationName}`
+      : `Events - ${data.locationName}`
+
   return {
-    title: `Events - ${data.locationName}`,
-    description: `Upcoming events at ${data.locationName}`,
+    title,
+    description: `Upcoming food and events at ${data.locationName}`,
   }
 }

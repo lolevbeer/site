@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { eventManagerAccess, hasRole, isAdmin } from '@/src/access/roles'
+import { eventManagerAccess, hasRole } from '@/src/access/roles'
 
 export const Events: CollectionConfig = {
   slug: 'events',
@@ -119,6 +119,22 @@ export const Events: CollectionConfig = {
       admin: {
         description: 'This will be linked on the website',
         condition: (data) => data?.visibility !== 'private',
+        position: 'sidebar',
+      },
+    },
+    {
+      name: 'tags',
+      type: 'select',
+      hasMany: true,
+      options: [
+        { label: 'Music', value: 'music' },
+        { label: 'Food', value: 'utensils' },
+        { label: 'Games', value: 'puzzle' },
+        { label: 'Sports', value: 'sports' },
+        { label: 'Beer Release', value: 'beer-release' },
+        { label: 'Karaoke', value: 'mic-vocal' },
+      ],
+      admin: {
         position: 'sidebar',
       },
     },

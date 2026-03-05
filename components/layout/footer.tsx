@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { SocialLinks } from './social-links';
-import { Logo } from '@/components/ui/logo';
+import { HandwrittenLolevLogo } from '@/components/icons';
 import type { LocationSlug, PayloadLocation } from '@/lib/types/location';
 import { useLocationContext } from '@/components/location/location-provider';
 import { cn } from '@/lib/utils';
@@ -217,7 +217,7 @@ export function Footer({ weeklyHours }: FooterProps) {
               ))}
             </ul>
 
-            <Logo className="py-12 text-muted-foreground" />
+            <HandwrittenLolevLogo className="py-12 w-48 text-muted-foreground" />
 
             <SocialLinks size="sm" className="mt-auto w-full" />
           </div>

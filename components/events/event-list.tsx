@@ -9,6 +9,7 @@ import React, { useState, useMemo } from 'react';
 import { BreweryEvent, EventType, EventStatus, EventFilters, EventSortOptions } from '@/lib/types/event';
 import type { LocationSlug } from '@/lib/types/location';
 import { useLocationContext } from '@/components/location/location-provider';
+import { getLocationDisplayName } from '@/lib/config/locations';
 import { EventCard } from './event-card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -61,11 +62,7 @@ export function EventList({
     showLocationFilter ? initialFilters.location || currentLocation : currentLocation
   );
 
-  // Helper to get location name
-  const getLocationName = (slug: LocationSlug): string => {
-    const location = locations.find(loc => (loc.slug || loc.id) === slug);
-    return location?.name || slug;
-  };
+  const getLocationName = (slug: LocationSlug): string => getLocationDisplayName(locations, slug);
 
   // Use parent location if provided, otherwise use internal state
   const selectedLocation = parentSelectedLocation !== undefined ?

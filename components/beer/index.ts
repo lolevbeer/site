@@ -14,5 +14,6 @@ export type {
   BeerFilters as BeerFiltersType,
   BeerSortOptions,
   BeerStyle,
-  GlassType,
 } from '@/lib/types/beer';
+
+export { GlassType } from '@/lib/types/beer';

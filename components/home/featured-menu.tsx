@@ -16,9 +16,12 @@ import { useAnimatedList, getAnimationClass } from '@/lib/hooks/use-animated-lis
 import { useAuth } from '@/lib/hooks/use-auth';
 import { getMediaUrl } from '@/lib/utils/media-utils';
 import { extractBeerFromMenuItem, extractProductFromMenuItem } from '@/lib/utils/menu-item-utils';
+import { getTodayEST } from '@/lib/utils/date';
 import type { Menu, Style, Location } from '@/src/payload-types';
 import type { Beer } from '@/lib/types/beer';
 import { Logo } from '@/components/ui/logo';
+import { UntappdIcon } from '@/components/icons';
+import { TopBeerDropsLink } from '@/components/beer/top-beer-drops-link';
 
 /** Parse price string to number, removing '$' prefix if present */
 function parsePrice(price: string | number | null | undefined): number | undefined {
@@ -29,14 +32,16 @@ function parsePrice(price: string | number | null | undefined): number | undefin
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
-/** Format the lines cleaned date as a relative description */
+/** Format the lines cleaned date as a relative description using EST timezone */
 function formatLinesCleanedDate(dateStr: string | null | undefined): string | null {
   if (!dateStr) return null;
-  const diffDays = Math.floor((Date.now() - new Date(dateStr).getTime()) / MS_PER_DAY);
 
-  if (diffDays === 0) return 'Draft lines cleaned today';
-  if (diffDays === 1) return 'Draft lines cleaned 1 day ago';
-  return `Draft lines cleaned ${diffDays} days ago`;
+  const todayMs = new Date(`${getTodayEST()}T12:00:00`).getTime();
+  const cleanedMs = new Date(`${dateStr.split('T')[0]}T12:00:00`).getTime();
+  const diffDays = Math.round((todayMs - cleanedMs) / MS_PER_DAY);
+
+  const daysText = diffDays === 0 ? 'today' : `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
+  return `Draft lines cleaned ${daysText}`;
 }
 
 type MenuType = 'draft' | 'cans';
@@ -75,6 +80,10 @@ interface MenuItem {
   createdAt?: string;
   /** Untappd rating (0-5 scale) */
   untappdRating?: number | null;
+  /** Top Beer Drops URL */
+  topBeerDrops?: string;
+  /** True when this slot has no product assigned (empty tap) */
+  isEmpty?: boolean;
   [key: string]: unknown;
 }
 
@@ -86,6 +95,8 @@ interface FeaturedMenuProps {
   animated?: boolean;
   /** Random colors to apply to items (dark mode only, cycles on poll) */
   itemColors?: string[];
+  /** Hide header when embedding in another component */
+  hideHeader?: boolean;
 }
 
 /** Check if a date is within the last N days */
@@ -136,7 +147,20 @@ function convertMenuItems(menuData: Menu): MenuItem[] {
             createdAt: prod.createdAt,
           };
         }
-        return null;
+        // Empty slot — no product assigned (represents an empty tap)
+        return {
+          variant: `empty-${index}`,
+          name: '',
+          type: '',
+          abv: '',
+          description: '',
+          glutenFree: false,
+          glass: 'pint',
+          tap: index + 1,
+          pricing: {},
+          availability: { hideFromSite: false },
+          isEmpty: true,
+        };
       }
 
       if (!beer.slug) return null;
@@ -151,7 +175,7 @@ function convertMenuItems(menuData: Menu): MenuItem[] {
         abv: beer.abv ? String(beer.abv) : '0',
         description: String(beer.description || ''),
         glutenFree: false,
-        imageUrl: getMediaUrl(beer.image),
+        imageUrl: getMediaUrl(beer.image, 'card'),
         glass: String(beer.glass || 'pint'),
         fourPack: beer.fourPack ? String(beer.fourPack) : (item.price ? String(item.price) : undefined),
         bottlePrice: (beer as { bottlePrice?: number }).bottlePrice ? String((beer as { bottlePrice?: number }).bottlePrice) : undefined,
@@ -172,11 +196,11 @@ function convertMenuItems(menuData: Menu): MenuItem[] {
         // Store these for "just released" logic
         justReleased: (beer as { justReleased?: boolean }).justReleased || false,
         createdAt: beer.createdAt,
-        // Untappd rating
-        untappdRating: (beer as { untappdRating?: number | null }).untappdRating ?? null,
+        untappdRating: beer.untappdRating ?? null,
+        topBeerDrops: beer.topBeerDrops || undefined,
       };
     })
-    .filter((item): item is NonNullable<typeof item> => item !== null);
+    .filter((item): item is NonNullable<typeof item> => item !== null && !item.isEmpty);
 
   // "Just Released" logic:
   // 1. If any beer GLOBALLY has justReleased manually set, only mark those
@@ -258,7 +282,6 @@ function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fu
           fill
           className="object-contain"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-          unoptimized
           onError={() => setImageError(true)}
         />
       );
@@ -281,13 +304,19 @@ function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fu
           )}
         </div>
         <div className="flex flex-col items-center text-center" style={{ gap: '0.5vh', marginTop: '1.5vh' }}>
-          <h3 className="font-bold leading-tight transition-colors duration-[250ms]" style={{ fontSize: '2.8vh', color: accentColor }}>
-            {item.name}
-          </h3>
+          <div className="flex items-center justify-center" style={{ gap: '0.5vh' }}>
+            <h3 className="font-bold leading-tight transition-colors duration-[250ms]" style={{ fontSize: '2.8vh', color: accentColor }}>
+              {item.name}
+            </h3>
+            {item.topBeerDrops && (
+              <TopBeerDropsLink url={item.topBeerDrops} className="text-foreground hover:text-primary transition-colors" style={{ height: '3.2vh', width: '3.2vh' }} />
+            )}
+          </div>
           <div className="flex items-center" style={{ gap: '0.8vh' }}>
             <Badge variant="outline" style={{ fontSize: '1.6vh' }}>{item.type}</Badge>
             {(item.untappdRating ?? 0) > 0 ? (
               <span className="flex items-center text-amber-500 font-bold" style={{ fontSize: '1.6vh', gap: '0.3vh' }}>
+                <UntappdIcon style={{ height: '1.6vh', width: '1.6vh' }} />
                 {formatRating(item.untappdRating)}/5
               </span>
             ) : (
@@ -335,9 +364,13 @@ function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fu
       <div className="mb-3">
         <div className="flex items-center justify-center gap-2 flex-wrap mb-2">
           <h3 className="text-lg font-semibold">{item.name}</h3>
+          {item.topBeerDrops && (
+            <TopBeerDropsLink url={item.topBeerDrops} />
+          )}
           <Badge variant="outline" className="text-xs">{item.type}</Badge>
           {(item.untappdRating ?? 0) > 0 ? (
             <span className="text-xs text-amber-500 flex items-center gap-0.5 font-bold">
+              <UntappdIcon className="h-3.5 w-3.5" />
               {formatRating(item.untappdRating)}/5
             </span>
           ) : (
@@ -360,7 +393,7 @@ function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fu
   );
 }
 
-export function FeaturedMenu({ menuType, menu, menus = [], animated = false, itemColors }: FeaturedMenuProps) {
+export function FeaturedMenu({ menuType, menu, menus = [], animated = false, itemColors, hideHeader = false }: FeaturedMenuProps) {
   const { currentLocation } = useLocationContext();
   const title = menuType === 'draft' ? 'Draft' : 'Cans';
   const emptyMessage = menuType === 'draft'
@@ -391,22 +424,27 @@ export function FeaturedMenu({ menuType, menu, menus = [], animated = false, ite
     const linesCleanedText = menu?.type === 'draft' ? formatLinesCleanedDate(location?.linesLastCleaned) : null;
 
     return (
-      <section className="h-full flex flex-col bg-background overflow-hidden relative">
-        {/* Logo floated top right */}
-        <div className="absolute" style={{ top: '1.5vh', right: '1vw' }}>
-          <Logo width={48} height={52} />
-        </div>
-        {/* Lolev Beer text top left */}
-        <span className="absolute font-bold text-foreground-muted" style={{ fontSize: '4vh', top: '2vh', left: '1vw' }}>Lolev Beer</span>
-        <div className="w-full flex-1 flex flex-col" style={{ padding: '0 0 0.5vh 0' }}>
-          <div className="text-center flex-shrink-0" style={{ marginBottom: '2vh', marginTop: '2vh' }}>
-            <h2 className="font-bold" style={{ fontSize: '4vh' }}>{menu?.name || title}</h2>
-            {linesCleanedText && (
-              <p className="text-foreground-muted" style={{ fontSize: '1.8vh', marginTop: '0.5vh' }}>
-                {linesCleanedText}
-              </p>
-            )}
+      <section className="h-full flex flex-col bg-background overflow-hidden">
+        {/* Header row with Lolev Beer, menu title, and logo aligned */}
+        {!hideHeader && (
+          <div className="flex items-center flex-shrink-0" style={{ padding: '2vh 1vw', marginBottom: '0.5vh' }}>
+            <div className="flex-1">
+              <span className="font-bold text-foreground-muted" style={{ fontSize: '4vh' }}>Lolev Beer</span>
+            </div>
+            <div className="flex-1 text-center">
+              <h2 className="font-bold" style={{ fontSize: '4vh' }}>{menu?.name || title}</h2>
+              {linesCleanedText && (
+                <p className="text-foreground-muted" style={{ fontSize: '1.8vh', marginTop: '0.5vh' }}>
+                  {linesCleanedText}
+                </p>
+              )}
+            </div>
+            <div className="flex-1 flex justify-end">
+              <Logo width={48} height={52} />
+            </div>
           </div>
+        )}
+        <div className="w-full flex-1 flex flex-col" style={{ padding: '0 0 0.5vh 0' }}>
           <div className="flex-1 overflow-y-auto" style={{ padding: '0 1vw' }}>
             {itemsToRender.length > 0 ? (
               menuType === 'draft' ? (
@@ -421,14 +459,14 @@ export function FeaturedMenu({ menuType, menu, menus = [], animated = false, ite
                   const ColumnHeader = () => (
                     <div
                       className="flex items-center border-b-2 border-border uppercase tracking-wider text-foreground font-bold"
-                      style={{ gap: '1.5vh', marginBottom: '0.5vh', fontSize: '1.2vh' }}
+                      style={{ gap: '1vh', marginBottom: '0.5vh', fontSize: '1.2vh' }}
                     >
                       {!isOtherMenu && <div style={{ minWidth: '7vh' }}>Tap</div>}
                       <div className="flex-grow">{isOtherMenu ? 'Item' : 'Beer'}</div>
                       <div className="flex" style={{ gap: '2vh' }}>
                         {!isOtherMenu && <div className="text-center" style={{ minWidth: '7vh' }}>ABV</div>}
                         {!isOtherMenu && <div className="text-center" style={{ minWidth: '8vh' }}>Half</div>}
-                        <div className="text-center">{isOtherMenu ? 'Price' : 'Full'}</div>
+                        <div className="text-center" style={{ minWidth: '8vh' }}>{isOtherMenu ? 'Price' : 'Full'}</div>
                       </div>
                     </div>
                   );
