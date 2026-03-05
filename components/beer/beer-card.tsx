@@ -78,19 +78,17 @@ export const BeerCard = React.memo(function BeerCard({
           />
         </div>
         <div className="mb-3">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <h3 className="text-lg font-semibold text-center">{beer.name}</h3>
-            {beer.topBeerDrops && (
-              <TopBeerDropsLink url={beer.topBeerDrops} />
-            )}
-          </div>
+          <h3 className="text-lg font-semibold text-center mb-2">{beer.name}</h3>
           <div className="flex items-center justify-center gap-2 flex-wrap">
             <Badge variant="outline" className="text-xs">
               {beer.type}
             </Badge>
+            {beer.topBeerDrops && (
+              <TopBeerDropsLink url={beer.topBeerDrops} />
+            )}
             {(beer.untappdRating ?? 0) > 0 && (
               <span className="text-xs text-amber-500 font-bold flex items-center gap-0.5">
-                <UntappdIcon className="h-3.5 w-3.5" />
+                <UntappdIcon className="h-6 w-6" />
                 {formatRating(beer.untappdRating)}/5
               </span>
             )}
@@ -129,20 +127,18 @@ export const BeerCard = React.memo(function BeerCard({
         </div>
       )}
       <div>
-        <div className="flex items-center gap-2 min-h-[2.5rem]">
-          <h3 className="font-semibold text-lg line-clamp-2">
-            {beer.name}
-          </h3>
-          {beer.topBeerDrops && (
-            <TopBeerDropsLink url={beer.topBeerDrops} className="h-6 w-6 flex-shrink-0 text-foreground hover:text-primary transition-colors" />
-          )}
-        </div>
+        <h3 className="font-semibold text-lg line-clamp-2 min-h-[2.5rem]">
+          {beer.name}
+        </h3>
         <div className="flex items-center justify-between text-sm text-muted-foreground mt-1">
           <div className="flex items-center gap-2">
             <span className="font-medium">{beer.type}</span>
+            {beer.topBeerDrops && (
+              <TopBeerDropsLink url={beer.topBeerDrops} className="h-6 w-6 flex-shrink-0 text-foreground hover:text-primary transition-colors" />
+            )}
             {(beer.untappdRating ?? 0) > 0 && (
               <span className="text-amber-500 font-bold flex items-center gap-0.5">
-                <UntappdIcon className="h-3.5 w-3.5" />
+                <UntappdIcon className="h-6 w-6" />
                 {formatRating(beer.untappdRating)}/5
               </span>
             )}
