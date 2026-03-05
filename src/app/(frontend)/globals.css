@@ -283,6 +283,110 @@
     }
   }
 
+  /* Menu item animations for live updates */
+  @keyframes menu-item-enter {
+    0% {
+      opacity: 0;
+      transform: translateX(150px) scale(0.8);
+    }
+    60% {
+      opacity: 1;
+      transform: translateX(-10px) scale(1.02);
+    }
+    100% {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+    }
+  }
+
+  @keyframes menu-item-exit {
+    0% {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+    }
+    40% {
+      opacity: 0.8;
+      transform: translateX(10px) scale(0.98);
+    }
+    100% {
+      opacity: 0;
+      transform: translateX(-150px) scale(0.8);
+    }
+  }
+
+  .menu-item-enter {
+    animation: menu-item-enter 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  .menu-item-exit {
+    animation: menu-item-exit 0.5s cubic-bezier(0.36, 0, 0.66, -0.56) forwards;
+    pointer-events: none;
+  }
+
+  .menu-item-stable {
+    transition: transform 0.4s ease-out, opacity 0.4s ease-out, background-color 2s ease-in-out, border-color 2s ease-in-out, color 2s ease-in-out;
+  }
+
+  /* Staggered entry animation for lists */
+  @keyframes stagger-in {
+    0% {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-stagger-in {
+    animation: stagger-in 0.4s ease-out forwards;
+  }
+
+  /* Search icon pulse animation */
+  @keyframes search-pulse {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.1);
+    }
+  }
+
+  .search-active {
+    animation: search-pulse 0.3s ease-out;
+  }
+
+  /* Scroll reveal animation */
+  .scroll-reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+  }
+
+  .scroll-reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Subtle glow pulse for CTAs */
+  @keyframes glow-pulse {
+    0%, 100% {
+      box-shadow: 0 0 0 0 transparent;
+    }
+    50% {
+      box-shadow: 0 0 20px 4px rgba(128, 128, 128, 0.2);
+    }
+  }
+
+  .dark .animate-glow-pulse {
+    --glow-color: rgba(255, 255, 255, 0.15);
+  }
+
+  .animate-glow-pulse {
+    animation: glow-pulse 3s ease-in-out infinite;
+  }
+
   /* Hide scrollbar utility for carousel */
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
