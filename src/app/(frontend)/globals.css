@@ -1,7 +1,11 @@
 @import "tailwindcss";
 @import "mapbox-gl/dist/mapbox-gl.css";
+@plugin "tailwindcss-animate";
 
 @theme {
+  /* Font family */
+  --font-poppins: var(--font-poppins), 'Poppins', system-ui, sans-serif;
+
   /* Dark mode configuration */
   --dark-mode: class;
 
@@ -281,19 +285,6 @@
     .container-max {
       padding: 0 2rem;
     }
-  }
-
-  @keyframes marquee {
-    from {
-      transform: translateX(0);
-    }
-    to {
-      transform: translateX(-50%);
-    }
-  }
-
-  .animate-marquee {
-    animation: marquee linear infinite;
   }
 
   /* Menu item animations for live updates */

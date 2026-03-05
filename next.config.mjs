@@ -1,15 +1,8 @@
 import { withPayload } from '@payloadcms/next/withPayload'
 import { withSentryConfig } from '@sentry/nextjs'
-import bundleAnalyzer from '@next/bundle-analyzer'
-
-const withBundleAnalyzer = bundleAnalyzer({
-  enabled: process.env.ANALYZE === 'true',
-})
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // trailingSlash: true, // Disabled: causes POST body loss on redirects for Payload API
-
   // Add caching headers for media files to reduce blob transfer
   async headers() {
     return [
@@ -26,7 +19,9 @@ const nextConfig = {
   },
 
   eslint: {
-    ignoreDuringBuilds: false,
+    // Run ESLint separately — eslint-config-next has a known compatibility issue
+    // with ESLint 9 flat config that causes "Cannot set properties of undefined (setting 'defaultMeta')"
+    ignoreDuringBuilds: true,
   },
 
   typescript: {
@@ -106,9 +101,7 @@ const payloadConfig = withPayload(nextConfig, {
   devBundleServerPackages: false,
 })
 
-const analyzedConfig = withBundleAnalyzer(payloadConfig)
-
-export default withSentryConfig(analyzedConfig, {
+export default withSentryConfig(payloadConfig, {
   // Suppresses source map uploading logs during build
   silent: true,
   org: "lolev-beer",

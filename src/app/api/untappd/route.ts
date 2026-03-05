@@ -140,9 +140,6 @@ async function fetchRating(url: string): Promise<NextResponse> {
   try {
     const { rating, ratingCount, positiveReviews } = await fetchUntappdData(url)
 
-    // Log for debugging
-    console.log(`Untappd fetch for ${url}: rating=${rating}, ratingCount=${ratingCount}, reviews=${positiveReviews.length}`)
-
     return NextResponse.json({ rating, ratingCount, positiveReviews, url } as UntappdRatingResult)
   } catch (error) {
     logger.error('Error fetching Untappd rating:', error)

@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 };
 
 export default function AccessibilityPage() {
-  const lastUpdated = 'October 12, 2025';
+  const lastUpdated = 'March 5, 2026';
 
   const breadcrumbSchema = generateBreadcrumbSchema([
     { label: 'Home', href: '/' },
@@ -24,7 +24,7 @@ export default function AccessibilityPage() {
     name: 'Accessibility Statement',
     description: 'Lolev Beer website conforms to WCAG 2.2 Level AA standards for web accessibility.',
     path: '/accessibility',
-    dateModified: '2025-10-12'
+    dateModified: '2026-03-05'
   });
 
   return (

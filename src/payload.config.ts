@@ -75,11 +75,6 @@ export default buildConfig({
         { rel: 'apple-touch-icon', url: '/favicons/apple-touch-icon.png' },
       ],
     },
-    // autoLogin: process.env.NODE_ENV === 'development' ? {
-    //   email: 'dev@payloadcms.com',
-    //   password: 'test',
-    //   prefillOnly: true,
-    // } : false,
     importMap: {
       baseDir: path.resolve(dirname),
     },

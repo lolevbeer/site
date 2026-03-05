@@ -1,38 +1,57 @@
-# Lolev Beer - Payload CMS
+# Lolev Beer
 
-This is a Payload CMS project for the Lolev Beer brewery website.
+Brewery website built with Next.js 15 and Payload CMS 3, deployed on Vercel.
 
-## Quick Start - Local Setup
-
-To spin up this project locally, follow these steps:
-
-### Development
+## Setup
 
 1. Clone the repo
-2. `cp .env.example .env` to copy the example environment variables
-3. Configure your database connection in `.env`
-4. `pnpm install && pnpm dev` to install dependencies and start the dev server
-5. Open `http://localhost:3000` to open the app in your browser
+2. `cp .env.example .env` and fill in your values
+3. `pnpm install && pnpm dev`
+4. Open `http://localhost:3000`
 
-Follow the on-screen instructions to login and create your first admin user.
+Payload admin is at `/admin`. Follow the on-screen instructions to create your first admin user.
 
-### Docker (Optional)
+## Tech Stack
 
-If you prefer to use Docker for local development:
-
-1. Modify the `DATABASE_URI` in your `.env` file
-2. Run `docker-compose up` to start the database (optionally pass `-d` to run in the background)
+- **Framework:** Next.js 15 (App Router)
+- **CMS:** Payload CMS 3 (MongoDB)
+- **Styling:** Tailwind CSS 4, shadcn/ui
+- **Maps:** Mapbox GL
+- **Monitoring:** Sentry
+- **Storage:** Vercel Blob
+- **Deployment:** Vercel
 
 ## Collections
 
-- **Users** - Auth-enabled collection with admin panel access
-- **Media** - Uploads enabled collection with pre-configured sizes
-- **Beers** - Beer catalog with styles, ABV, pricing
+- **Beers** - Beer catalog with styles, ABV, pricing, Untappd ratings
+- **Styles** - Beer style definitions
+- **Menus** - Draft and can menus per location
+- **Products** - Menu items linking beers to menus
 - **Events** - Brewery events calendar
 - **Food** - Food truck schedule
-- **Locations** - Brewery locations
-- **Menus** - Draft and can menus per location
+- **Food Vendors** - Food truck vendor directory
+- **Locations** - Brewery locations with hours
+- **Holiday Hours** - Holiday hour overrides
+- **Distributors** - Distribution partners with geocoded locations
+- **FAQs** - Frequently asked questions
+- **Media** - Image uploads (Vercel Blob storage)
+- **Users** - Admin users with role-based access
 
-## Questions
+## Globals
 
-If you have any issues or questions, reach out on [Discord](https://discord.com/invite/payload) or start a [GitHub discussion](https://github.com/payloadcms/payload/discussions).
+- **Coming Soon** - Upcoming beer announcements
+- **Recurring Food** - Weekly food truck schedule
+- **Site Content** - Editable site-wide content (about page, etc.)
+
+## Scripts
+
+```bash
+pnpm dev              # Start dev server
+pnpm build            # Production build
+pnpm type-check       # TypeScript check
+pnpm lint             # ESLint
+pnpm test:int         # Integration tests (vitest)
+pnpm test:e2e         # E2E tests (playwright)
+pnpm generate:types   # Regenerate Payload types
+pnpm generate:importmap  # Regenerate Payload import map
+```

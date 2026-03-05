@@ -25,10 +25,6 @@ export const getAllBeers = cache(async (): Promise<Beer[]> => {
   return getBeersWithAvailability(payloadBeers, allMenus);
 });
 
-/**
- * @deprecated Use getAllBeers instead
- */
-export const getAllBeersFromCSV = getAllBeers;
 
 /**
  * Get beer by variant/slug from Payload CMS with availability data

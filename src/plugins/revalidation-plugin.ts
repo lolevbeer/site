@@ -29,7 +29,6 @@ const GLOBAL_CACHE_MAP: Record<string, string[]> = {
   'coming-soon': ['coming-soon'],
   'site-content': ['site-content'],
   'recurring-food': ['recurring-food', 'food'],
-  'distributor-settings': ['distributor-settings', 'distributors'],
 }
 
 // Paths to revalidate for each collection

@@ -2,17 +2,8 @@
 
 # dependencies
 /node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
-.yarn/install-state.gz
-
-/.idea/*
-!/.idea/runConfigurations
+/.idea
+.vscode
 
 # testing
 /coverage
@@ -45,8 +36,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-.env
-
 /media
 
 # Playwright
@@ -62,7 +51,6 @@ next-env.d.ts
 !/public/favicons
 /public/images/*
 !/public/images/beer
-!/public/*_geo_data.json
 
 .playwright-mcp
 .env*.local
