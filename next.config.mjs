@@ -1,11 +1,5 @@
 import { withPayload } from '@payloadcms/next/withPayload'
 import { withSentryConfig } from '@sentry/nextjs'
-import bundleAnalyzer from '@next/bundle-analyzer'
-
-const withBundleAnalyzer = bundleAnalyzer({
-  enabled: process.env.ANALYZE === 'true',
-})
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // trailingSlash: true, // Disabled: causes POST body loss on redirects for Payload API
@@ -106,9 +100,7 @@ const payloadConfig = withPayload(nextConfig, {
   devBundleServerPackages: false,
 })
 
-const analyzedConfig = withBundleAnalyzer(payloadConfig)
-
-export default withSentryConfig(analyzedConfig, {
+export default withSentryConfig(payloadConfig, {
   // Suppresses source map uploading logs during build
   silent: true,
   org: "lolev-beer",

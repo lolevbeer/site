@@ -8,7 +8,6 @@
   "scripts": {
     "dev": "cross-env NODE_OPTIONS=--no-deprecation next dev -H 0.0.0.0",
     "build": "cross-env NODE_OPTIONS=\"--no-deprecation --max-old-space-size=8000\" next build",
-    "build:analyze": "ANALYZE=true cross-env NODE_OPTIONS=\"--no-deprecation --max-old-space-size=8000\" next build",
     "start": "cross-env NODE_OPTIONS=--no-deprecation next start",
     "lint": "cross-env NODE_OPTIONS=--no-deprecation next lint",
     "lint:fix": "eslint --fix",
@@ -74,7 +73,6 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.4",
-    "@next/bundle-analyzer": "^16.1.6",
     "@playwright/test": "1.58.2",
     "@svgr/webpack": "^8.1.0",
     "@tailwindcss/postcss": "^4.2.1",
@@ -96,8 +94,7 @@
     "tailwindcss-animate": "^1.0.7",
     "typescript": "5.9.3",
     "vite-tsconfig-paths": "6.1.1",
-    "vitest": "4.0.18",
-    "webpack-bundle-analyzer": "^5.2.0"
+    "vitest": "4.0.18"
   },
   "engines": {
     "node": ">=20",
