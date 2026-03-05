@@ -60,7 +60,12 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
   if (showTapAndPrice) {
     return (
       <Link href={`/beer/${beerSlug}`} className="group block h-full">
-        <div className={`overflow-hidden transition-colors duration-200 cursor-pointer hover:bg-secondary/50 h-full bg-background ${className}`}>
+        <div className={`relative overflow-hidden transition-colors duration-200 cursor-pointer hover:bg-secondary/50 h-full bg-background ${className}`}>
+          {showJustReleased && beer.isJustReleased && (
+            <Badge variant="default" className="absolute z-10" style={{ top: '3vh', right: '0.5vh', fontSize: '1.8vh' }}>
+              Just Released
+            </Badge>
+          )}
           <div className="flex items-center h-full" style={{ gap: '1vh' }}>
             {/* Tap Number and Glass Icon */}
             {(showTap || showGlass) && (
@@ -80,18 +85,18 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
             <div className="flex-grow min-w-0 flex flex-col" style={{ gap: '0.3vh' }}>
               <div className="flex items-center flex-wrap" style={{ gap: '1vh' }}>
                 <h3 className="font-bold leading-tight truncate transition-colors duration-500" style={{ fontSize: '3vh', color: accentColor }}>{beer.name}</h3>
-                {beer.topBeerDrops && (
-                  <TopBeerDropsLink url={beer.topBeerDrops} className="flex-shrink-0 text-foreground hover:text-primary transition-colors" style={{ height: '3.2vh', width: '3.2vh' }} />
-                )}
                 {beer.type && beer.type.split(', ').map((option, i) => (
                   <Badge key={i} variant="outline" className="flex-shrink-0" style={{ fontSize: '1.8vh' }}>
                     {option}
                   </Badge>
                 ))}
+                {beer.topBeerDrops && (
+                  <TopBeerDropsLink url={beer.topBeerDrops} className="flex-shrink-0 text-foreground hover:text-primary transition-colors" style={{ height: '3.2vh', width: '3.2vh' }} />
+                )}
                 {showRating && (
                   (beer.untappdRating ?? 0) > 0 ? (
                     <span className="flex items-center text-amber-500 flex-shrink-0 font-bold" style={{ fontSize: '1.8vh', gap: '0.3vh' }}>
-                      <UntappdIcon style={{ height: '1.8vh', width: '1.8vh' }} />
+                      <UntappdIcon style={{ height: '3.2vh', width: '3.2vh' }} />
                       {formatRating(beer.untappdRating)}/5
                     </span>
                   ) : (
@@ -99,11 +104,6 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                       Needs Ratings
                     </span>
                   )
-                )}
-                {showJustReleased && beer.isJustReleased && (
-                  <Badge variant="default" className="flex-shrink-0" style={{ fontSize: '1.8vh' }}>
-                    Just Released
-                  </Badge>
                 )}
               </div>
               <div className="flex flex-col" style={{ gap: '0.2vh' }}>
@@ -157,7 +157,12 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
   // Standard mode with Tailwind classes
   return (
     <Link href={showLocation ? `/${currentLocation}/beer/${beerSlug}` : `/beer/${beerSlug}`} className="group block h-full">
-      <div className={`overflow-hidden transition-colors duration-200 cursor-pointer hover:bg-secondary/50 h-full min-h-[80px] bg-background rounded-lg ${className}`}>
+      <div className={`relative overflow-hidden transition-colors duration-200 cursor-pointer hover:bg-secondary/50 h-full min-h-[80px] bg-background rounded-lg ${className}`}>
+        {showJustReleased && beer.isJustReleased && (
+          <Badge variant="default" className="absolute z-10 top-4 right-1 text-xs">
+            Just Released
+          </Badge>
+        )}
         <div className="flex items-center gap-6 px-4 h-full">
           {/* Tap Number and Glass Icon */}
           {showGlass && (
@@ -170,23 +175,18 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
           <div className="flex-grow min-w-0 flex flex-col gap-1">
             <div className="flex items-center gap-3 flex-wrap">
               <h3 className="text-xl font-bold leading-tight truncate">{beer.name}</h3>
-              {beer.topBeerDrops && (
-                <TopBeerDropsLink url={beer.topBeerDrops} className="h-6 w-6 flex-shrink-0 text-foreground hover:text-primary transition-colors" />
-              )}
-              {showJustReleased && beer.isJustReleased && (
-                <Badge variant="default" className="text-xs flex-shrink-0">
-                  Just Released
-                </Badge>
-              )}
               {beer.type && beer.type.split(', ').map((option, i) => (
                 <Badge key={i} variant="outline" className="text-sm flex-shrink-0">
                   {option}
                 </Badge>
               ))}
+              {beer.topBeerDrops && (
+                <TopBeerDropsLink url={beer.topBeerDrops} className="h-6 w-6 flex-shrink-0 text-foreground hover:text-primary transition-colors" />
+              )}
               {showRating && (
                 (beer.untappdRating ?? 0) > 0 ? (
                   <span className="text-sm text-amber-500 flex items-center gap-0.5 flex-shrink-0 font-bold">
-                    <UntappdIcon className="h-3.5 w-3.5" />
+                    <UntappdIcon className="h-6 w-6" />
                     {formatRating(beer.untappdRating)}/5
                   </span>
                 ) : (
