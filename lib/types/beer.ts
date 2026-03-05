@@ -92,6 +92,8 @@ export interface Beer {
   untappdRating?: number | null;
   untappdRatingCount?: number | null;
   positiveReviews?: UntappdReview[];
+  /** Top Beer Drops URL */
+  topBeerDrops?: string;
   recipe?: number;
   hops?: string;
   /** Tap/draft number (position in menu) */

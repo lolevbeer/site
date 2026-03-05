@@ -352,6 +352,14 @@ export const Beers: CollectionConfig = {
       },
     },
     {
+      name: 'topBeerDrops',
+      type: 'text',
+      admin: {
+        description: 'Top Beer Drops URL (e.g., https://topbeerdrops.com/...)',
+        position: 'sidebar',
+      },
+    },
+    {
       type: 'row',
       fields: [
         {

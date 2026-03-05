@@ -213,6 +213,10 @@ export interface Beer {
    */
   hops?: string | null;
   /**
+   * Top Beer Drops URL (e.g., https://topbeerdrops.com/...)
+   */
+  topBeerDrops?: string | null;
+  /**
    * Untappd URL (e.g., /b/lolev-beer-lupula/123456)
    */
   untappd?: string | null;
@@ -852,6 +856,7 @@ export interface BeersSelect<T extends boolean = true> {
   image?: T;
   description?: T;
   hops?: T;
+  topBeerDrops?: T;
   untappd?: T;
   untappdRating?: T;
   untappdRatingCount?: T;
