@@ -297,6 +297,17 @@ function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fu
       >
         <div className="relative w-full bg-transparent transition-transform duration-200 group-hover:scale-[1.02]" style={{ height: '28vh' }}>
           {renderImage()}
+          {(item.untappdRating ?? 0) > 0 && (
+            <div className="absolute z-10 bg-background/80 backdrop-blur-sm rounded-md flex items-center text-amber-500" style={{ bottom: '0.8vh', left: '0.8vh', padding: '0.3vh 0.6vh', gap: '0.3vh' }}>
+              <UntappdIcon style={{ height: '2.4vh', width: '2.4vh' }} />
+              <span className="font-bold" style={{ fontSize: '1.4vh' }}>{formatRating(item.untappdRating)}/5</span>
+            </div>
+          )}
+          {item.topBeerDrops && (
+            <div className="absolute z-10" style={{ bottom: '0.8vh', right: '0.8vh' }}>
+              <TopBeerDropsLink url={item.topBeerDrops} className="text-foreground hover:text-primary transition-colors drop-shadow-md" style={{ height: '3.2vh', width: '3.2vh' }} />
+            </div>
+          )}
           {item.isJustReleased && (
             <Badge variant="default" className="absolute left-1/2 -translate-x-1/2" style={{ bottom: '-0.8vh', fontSize: '1.3vh' }}>
               Just Released
@@ -309,19 +320,6 @@ function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fu
           </h3>
           <div className="flex items-center" style={{ gap: '0.8vh' }}>
             <Badge variant="outline" style={{ fontSize: '1.6vh' }}>{item.type}</Badge>
-            {item.topBeerDrops && (
-              <TopBeerDropsLink url={item.topBeerDrops} className="text-foreground hover:text-primary transition-colors" style={{ height: '3.2vh', width: '3.2vh' }} />
-            )}
-            {(item.untappdRating ?? 0) > 0 ? (
-              <span className="flex items-center text-amber-500 font-bold" style={{ fontSize: '1.6vh', gap: '0.3vh' }}>
-                <UntappdIcon style={{ height: '3.2vh', width: '3.2vh' }} />
-                {formatRating(item.untappdRating)}/5
-              </span>
-            ) : (
-              <span className="flex items-center text-muted-foreground font-bold" style={{ fontSize: '1.6vh' }}>
-                Needs Ratings
-              </span>
-            )}
           </div>
           {item.fourPack && (
             <span className="font-semibold transition-colors duration-[250ms]" style={{ fontSize: '1.8vh', color: accentColor }}>
@@ -353,6 +351,17 @@ function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fu
     >
       <div className="relative h-64 w-full flex-shrink-0 mb-4 bg-transparent transition-transform duration-200 group-hover:scale-[1.02]">
         {renderImage()}
+        {(item.untappdRating ?? 0) > 0 && (
+          <div className="absolute bottom-2 left-2 z-10 bg-background/80 backdrop-blur-sm rounded-md px-1.5 py-0.5 flex items-center gap-0.5 text-amber-500">
+            <UntappdIcon className="h-5 w-5" />
+            <span className="text-xs font-bold">{formatRating(item.untappdRating)}/5</span>
+          </div>
+        )}
+        {item.topBeerDrops && (
+          <div className="absolute bottom-2 right-2 z-10">
+            <TopBeerDropsLink url={item.topBeerDrops} className="h-7 w-7 text-foreground hover:text-primary transition-colors drop-shadow-md" />
+          </div>
+        )}
         {item.isJustReleased && (
           <Badge variant="default" className="absolute -bottom-3 left-1/2 -translate-x-1/2 text-xs">
             Just Released
@@ -363,19 +372,6 @@ function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fu
         <div className="flex items-center justify-center gap-2 flex-wrap mb-2">
           <h3 className="text-lg font-semibold">{item.name}</h3>
           <Badge variant="outline" className="text-xs">{item.type}</Badge>
-          {item.topBeerDrops && (
-            <TopBeerDropsLink url={item.topBeerDrops} />
-          )}
-          {(item.untappdRating ?? 0) > 0 ? (
-            <span className="text-xs text-amber-500 flex items-center gap-0.5 font-bold">
-              <UntappdIcon className="h-6 w-6" />
-              {formatRating(item.untappdRating)}/5
-            </span>
-          ) : (
-            <span className="text-xs text-muted-foreground font-bold">
-              Needs Ratings
-            </span>
-          )}
           {item.onDraft && (
             <Badge variant="default" className="text-xs flex-shrink-0 flex items-center gap-1">
               <GlassIcon className="h-3 w-3" />

@@ -95,9 +95,9 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                 )}
                 {showRating && (
                   (beer.untappdRating ?? 0) > 0 ? (
-                    <span className="flex items-center text-amber-500 flex-shrink-0 font-bold" style={{ fontSize: '1.8vh', gap: '0.3vh' }}>
+                    <span className="flex items-end text-amber-500 flex-shrink-0 font-bold leading-none" style={{ fontSize: '1.8vh', gap: '0.3vh' }}>
                       <UntappdIcon style={{ height: '3.2vh', width: '3.2vh' }} />
-                      {formatRating(beer.untappdRating)}/5
+                      <span className="leading-none">{formatRating(beer.untappdRating)}/5</span>
                     </span>
                   ) : (
                     <span className="flex items-center text-muted-foreground flex-shrink-0 font-bold" style={{ fontSize: '1.8vh' }}>
@@ -185,9 +185,9 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
               )}
               {showRating && (
                 (beer.untappdRating ?? 0) > 0 ? (
-                  <span className="text-sm text-amber-500 flex items-center gap-0.5 flex-shrink-0 font-bold">
+                  <span className="text-sm text-amber-500 flex items-end gap-0.5 flex-shrink-0 font-bold leading-none">
                     <UntappdIcon className="h-6 w-6" />
-                    {formatRating(beer.untappdRating)}/5
+                    <span className="leading-none">{formatRating(beer.untappdRating)}/5</span>
                   </span>
                 ) : (
                   <span className="text-sm text-muted-foreground flex-shrink-0 font-bold">

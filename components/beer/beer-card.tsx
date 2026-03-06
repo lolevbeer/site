@@ -76,6 +76,17 @@ export const BeerCard = React.memo(function BeerCard({
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
             priority={priority}
           />
+          {(beer.untappdRating ?? 0) > 0 && (
+            <div className="absolute bottom-2 left-2 z-10 bg-background/80 backdrop-blur-sm rounded-md px-1.5 py-0.5 flex items-center gap-0.5 text-amber-500">
+              <UntappdIcon className="h-5 w-5" />
+              <span className="text-xs font-bold">{formatRating(beer.untappdRating)}/5</span>
+            </div>
+          )}
+          {beer.topBeerDrops && (
+            <div className="absolute bottom-2 right-2 z-10">
+              <TopBeerDropsLink url={beer.topBeerDrops} className="h-7 w-7 text-foreground hover:text-primary transition-colors drop-shadow-md" />
+            </div>
+          )}
         </div>
         <div className="mb-3">
           <h3 className="text-lg font-semibold text-center mb-2">{beer.name}</h3>
@@ -83,15 +94,6 @@ export const BeerCard = React.memo(function BeerCard({
             <Badge variant="outline" className="text-xs">
               {beer.type}
             </Badge>
-            {beer.topBeerDrops && (
-              <TopBeerDropsLink url={beer.topBeerDrops} />
-            )}
-            {(beer.untappdRating ?? 0) > 0 && (
-              <span className="text-xs text-amber-500 font-bold flex items-center gap-0.5">
-                <UntappdIcon className="h-6 w-6" />
-                {formatRating(beer.untappdRating)}/5
-              </span>
-            )}
             {beer.availability.tap && (
               <HoverCard openDelay={200}>
                 <HoverCardTrigger asChild>
@@ -115,34 +117,36 @@ export const BeerCard = React.memo(function BeerCard({
 
   const renderHeader = (beer: Beer) => (
     <>
-      <BeerImage
-        beer={beer}
-        className="aspect-square w-full mb-4 rounded-lg"
-        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-        priority={priority}
-      />
-      {beer.glutenFree && (
-        <div className="absolute top-2 right-2 z-10">
-          <StatusBadge status="gluten_free" type="beer" size="sm" />
-        </div>
-      )}
+      <div className="relative">
+        <BeerImage
+          beer={beer}
+          className="aspect-square w-full mb-4 rounded-lg"
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          priority={priority}
+        />
+        {(beer.untappdRating ?? 0) > 0 && (
+          <div className="absolute bottom-6 left-2 z-10 bg-background/80 backdrop-blur-sm rounded-md px-1.5 py-0.5 flex items-center gap-0.5 text-amber-500">
+            <UntappdIcon className="h-5 w-5" />
+            <span className="text-xs font-bold">{formatRating(beer.untappdRating)}/5</span>
+          </div>
+        )}
+        {beer.topBeerDrops && (
+          <div className="absolute bottom-6 right-2 z-10">
+            <TopBeerDropsLink url={beer.topBeerDrops} className="h-7 w-7 text-foreground hover:text-primary transition-colors drop-shadow-md" />
+          </div>
+        )}
+        {beer.glutenFree && (
+          <div className="absolute top-2 right-2 z-10">
+            <StatusBadge status="gluten_free" type="beer" size="sm" />
+          </div>
+        )}
+      </div>
       <div>
         <h3 className="font-semibold text-lg line-clamp-2 min-h-[2.5rem]">
           {beer.name}
         </h3>
         <div className="flex items-center justify-between text-sm text-muted-foreground mt-1">
-          <div className="flex items-center gap-2">
-            <span className="font-medium">{beer.type}</span>
-            {beer.topBeerDrops && (
-              <TopBeerDropsLink url={beer.topBeerDrops} className="h-6 w-6 flex-shrink-0 text-foreground hover:text-primary transition-colors" />
-            )}
-            {(beer.untappdRating ?? 0) > 0 && (
-              <span className="text-amber-500 font-bold flex items-center gap-0.5">
-                <UntappdIcon className="h-6 w-6" />
-                {formatRating(beer.untappdRating)}/5
-              </span>
-            )}
-          </div>
+          <span className="font-medium">{beer.type}</span>
           <div className="flex items-center gap-1">
             <GlassIcon className="h-4 w-4" />
             <span>{formatAbv(beer.abv)} ABV</span>

@@ -58,6 +58,8 @@ function convertPayloadBeer(payloadBeer: PayloadBeer): Beer {
     glutenFree: false,
     image,
     untappd: payloadBeer.untappd ? parseInt(payloadBeer.untappd) : undefined,
+    untappdRating: payloadBeer.untappdRating ?? undefined,
+    untappdRatingCount: payloadBeer.untappdRatingCount ?? undefined,
     recipe: payloadBeer.recipe || undefined,
     hops: payloadBeer.hops || undefined,
     topBeerDrops: payloadBeer.topBeerDrops || undefined,
