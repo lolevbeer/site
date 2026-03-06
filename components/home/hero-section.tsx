@@ -37,14 +37,8 @@ function getBeerImageUrl(beer: PayloadBeer): string | null {
 
 export function HeroSection({ availableBeers, cansMenus, heroDescription, heroImageUrl }: HeroSectionProps) {
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
-  const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
-
   const handleImageError = (beerId: string) => {
     setImageErrors(prev => new Set(prev).add(beerId));
-  };
-
-  const handleImageLoad = (beerId: string) => {
-    setLoadedImages(prev => new Set(prev).add(beerId));
   };
 
   // Build a set of beer IDs that are available in cans menus (memoized)
@@ -89,11 +83,11 @@ export function HeroSection({ availableBeers, cansMenus, heroDescription, heroIm
             Lolev Beer
           </h1>
         </BlurFade>
-        <BlurFade delay={0.1}>
+        <BlurFade delay={0.1} className="w-full">
         <section
-          className="flex flex-col items-center justify-center gap-4 md:gap-8 rounded-xl py-8 md:py-12 w-full overflow-visible"
+          className="flex flex-col items-center justify-center gap-4 md:gap-8 rounded-xl py-8 md:py-12 w-full"
         >
-          <div className="w-full max-w-5xl mx-auto px-4 md:px-12 overflow-visible">
+          <div className="w-full max-w-5xl mx-auto px-4 md:px-12">
             <TooltipProvider delayDuration={200}>
               <Carousel
                 opts={{
@@ -121,10 +115,9 @@ export function HeroSection({ availableBeers, cansMenus, heroDescription, heroIm
                                     src={imageUrl}
                                     alt={`${beer.name} beer can`}
                                     fill
-                                    className={`object-contain drop-shadow-sm group-hover:drop-shadow-md transition-all duration-200 ${loadedImages.has(beer.id) ? 'opacity-100' : 'opacity-0'}`}
+                                    className="object-contain drop-shadow-sm group-hover:drop-shadow-md transition-all duration-200"
                                     sizes="(max-width: 768px) 64px, 96px"
                                     loading={index < 5 ? "eager" : "lazy"}
-                                    onLoad={() => handleImageLoad(beer.id)}
                                     onError={() => handleImageError(beer.id)}
                                   />
                                 </div>
