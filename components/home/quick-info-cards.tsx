@@ -19,7 +19,7 @@ interface QuickInfoCardsProps {
 
 /** Stylized calendar chip showing month + day */
 function CalendarChip({ dateStr }: { dateStr: string }) {
-  const date = toESTDate(dateStr.split('T')[0]);
+  const date = toESTDate(dateStr);
   const month = date.toLocaleDateString('en-US', { month: 'short', timeZone: 'America/New_York' });
   const day = date.toLocaleDateString('en-US', { day: 'numeric', timeZone: 'America/New_York' });
 
