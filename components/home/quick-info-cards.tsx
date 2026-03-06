@@ -63,7 +63,7 @@ export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCar
       {/* On Tap Now Card */}
       <MotionCard glow className="h-full">
         <Link href="/beer" className="group block h-full">
-          <Card className="p-6 lg:p-8 h-full transition-colors cursor-pointer shadow-none bg-transparent border border-border hover:bg-secondary/50 relative text-center">
+          <Card className="p-6 lg:p-8 h-full transition-colors cursor-pointer shadow-none bg-transparent border border-border hover:bg-secondary/50 relative text-center flex flex-col items-center justify-center">
             <h3 className="text-3xl lg:text-4xl font-bold mb-5">On Tap Now</h3>
             {hasBeers ? (
               <div className="flex items-center justify-center gap-6">
@@ -91,7 +91,7 @@ export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCar
       {/* Next Event Card */}
       <MotionCard glow className="h-full">
         <Link href="/events" className="group block h-full">
-          <Card className="p-6 lg:p-8 h-full transition-colors cursor-pointer shadow-none bg-transparent border border-border hover:bg-secondary/50 relative text-center">
+          <Card className="p-6 lg:p-8 h-full transition-colors cursor-pointer shadow-none bg-transparent border border-border hover:bg-secondary/50 relative text-center flex flex-col items-center justify-center">
             <h3 className="text-3xl lg:text-4xl font-bold mb-5">{nextEvent ? 'Next Event' : 'Upcoming Events'}</h3>
             {nextEvent ? (
               <div className="flex flex-col items-center gap-3">
