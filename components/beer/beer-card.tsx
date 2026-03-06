@@ -24,6 +24,7 @@ import { getGlassIcon } from '@/lib/utils/beer-icons';
 import { trackBeerView } from '@/lib/analytics/events';
 import { TopBeerDropsLink } from '@/components/beer/top-beer-drops-link';
 import { UntappdRating } from '@/components/beer/untappd-rating';
+import { MotionCard } from '@/components/motion';
 
 interface BeerCardProps {
   beer: Beer;
@@ -58,35 +59,37 @@ export const BeerCard = React.memo(function BeerCard({
     const beerHref = showLocation ? `/${currentLocation}/beer/${beerSlug}` : `/beer/${beerSlug}`;
 
     return (
-      <Link
-        href={beerHref}
-        onClick={() => trackBeerView(beer.name, beer.type)}
-        className="group flex flex-col cursor-pointer transition-transform duration-200 hover:-translate-y-1"
-      >
-        <div className="relative h-64 w-full flex-shrink-0 mb-4 transition-transform duration-200 group-hover:scale-[1.02]">
-          <BeerImage
-            beer={beer}
-            className="w-full h-full"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-            priority={priority}
-          />
-        </div>
-        <div className="mb-3">
-          <h3 className="text-xl font-semibold text-center mb-2">{beer.name}</h3>
-          <div className="flex items-center justify-center gap-2">
-            <UntappdRating rating={beer.untappdRating} />
-            <Badge variant="outline" className="text-xs">
-              {beer.type}
-            </Badge>
-            {beer.topBeerDrops && (
-              <TopBeerDropsLink url={beer.topBeerDrops} className="h-6 w-6 text-foreground hover:text-primary transition-colors" />
-            )}
+      <MotionCard glow>
+        <Link
+          href={beerHref}
+          onClick={() => trackBeerView(beer.name, beer.type)}
+          className="group flex flex-col cursor-pointer transition-transform duration-200"
+        >
+          <div className="relative h-64 w-full flex-shrink-0 mb-4 transition-transform duration-200">
+            <BeerImage
+              beer={beer}
+              className="w-full h-full"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+              priority={priority}
+            />
           </div>
-        </div>
-        <Button variant="outline" className="w-full group-hover:bg-muted/50 hover:translate-y-0" tabIndex={-1}>
-          View Details
-        </Button>
-      </Link>
+          <div className="mb-3">
+            <h3 className="text-xl font-semibold text-center mb-2">{beer.name}</h3>
+            <div className="flex items-center justify-center gap-2">
+              <UntappdRating rating={beer.untappdRating} />
+              <Badge variant="outline" className="text-xs">
+                {beer.type}
+              </Badge>
+              {beer.topBeerDrops && (
+                <TopBeerDropsLink url={beer.topBeerDrops} className="h-6 w-6 text-foreground hover:text-primary transition-colors" />
+              )}
+            </div>
+          </div>
+          <Button variant="outline" className="w-full group-hover:bg-muted/50 hover:translate-y-0" tabIndex={-1}>
+            View Details
+          </Button>
+        </Link>
+      </MotionCard>
     );
   }
 
@@ -186,14 +189,16 @@ export const BeerCard = React.memo(function BeerCard({
   );
 
   return (
-    <BaseCard
-      item={beer}
-      variant="detailed"
-      className={`group ${className}`}
-      renderHeader={renderHeader}
-      renderContent={renderContent}
-      renderFooter={renderFooter}
-    />
+    <MotionCard glow>
+      <BaseCard
+        item={beer}
+        variant="detailed"
+        className={`group hover:translate-y-0 ${className}`}
+        renderHeader={renderHeader}
+        renderContent={renderContent}
+        renderFooter={renderFooter}
+      />
+    </MotionCard>
   );
 });
 
