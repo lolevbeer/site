@@ -481,13 +481,13 @@ export function FeaturedMenu({ menuType, menu, menus = [], animated = false, ite
                 </div>
               )
             ) : (
-              <Empty>
+              <Empty className="border border-dashed border-border/60 rounded-xl p-8">
                 <EmptyHeader>
                   <EmptyMedia variant="icon">
                     {menuType === 'draft' ? <BeerIconLucide className="h-6 w-6" /> : <Package className="h-6 w-6" />}
                   </EmptyMedia>
-                  <EmptyTitle>No {menuType === 'draft' ? 'beers' : 'cans'} available</EmptyTitle>
-                  <EmptyDescription>{emptyMessage}</EmptyDescription>
+                  <EmptyTitle className="text-xl">No {menuType === 'draft' ? 'beers' : 'cans'} available</EmptyTitle>
+                  <EmptyDescription className="text-muted-foreground/70">{emptyMessage}</EmptyDescription>
                 </EmptyHeader>
               </Empty>
             )}
@@ -529,13 +529,13 @@ export function FeaturedMenu({ menuType, menu, menus = [], animated = false, ite
               </div>
             )
           ) : (
-            <Empty>
+            <Empty className="border border-dashed border-border/60 rounded-xl p-8">
               <EmptyHeader>
                 <EmptyMedia variant="icon">
                   {menuType === 'draft' ? <BeerIconLucide className="h-6 w-6" /> : <Package className="h-6 w-6" />}
                 </EmptyMedia>
-                <EmptyTitle>No {menuType === 'draft' ? 'beers on draft' : 'cans available'}</EmptyTitle>
-                <EmptyDescription>{emptyMessage}</EmptyDescription>
+                <EmptyTitle className="text-xl">No {menuType === 'draft' ? 'beers on draft' : 'cans available'}</EmptyTitle>
+                <EmptyDescription className="text-muted-foreground/70">{emptyMessage}</EmptyDescription>
               </EmptyHeader>
             </Empty>
           )}

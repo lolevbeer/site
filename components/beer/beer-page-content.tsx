@@ -538,13 +538,13 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
               ))}
             </StaggerChildren>
           ) : (
-            <Empty>
+            <Empty className="border border-dashed border-border/60 rounded-xl p-8">
               <EmptyHeader>
                 <EmptyMedia variant="icon">
                   <BeerIcon className="h-6 w-6" />
                 </EmptyMedia>
-                <EmptyTitle>No Beers Found</EmptyTitle>
-                <EmptyDescription>
+                <EmptyTitle className="text-xl">No Beers Found</EmptyTitle>
+                <EmptyDescription className="text-muted-foreground/70">
                   {search && selectedType !== 'all'
                     ? `No ${selectedType} beers matching "${search}"`
                     : search
@@ -555,7 +555,7 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
                 </EmptyDescription>
               </EmptyHeader>
               <EmptyContent>
-                <Button variant="outline" onClick={clearFilters}>
+                <Button variant="outline" className="btn-arrow" onClick={clearFilters}>
                   Clear all filters
                 </Button>
               </EmptyContent>

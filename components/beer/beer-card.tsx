@@ -209,13 +209,13 @@ export const BeerCardSkeleton = React.memo(function BeerCardSkeleton({
 }) {
   if (variant === 'minimal') {
     return (
-      <div className="overflow-hidden rounded-lg bg-card border animate-pulse">
-        <div className="relative h-48 w-full bg-muted" />
+      <div className="overflow-hidden rounded-lg bg-card border">
+        <div className="relative h-48 w-full shimmer" />
         <div className="p-4 space-y-3">
-          <div className="h-5 bg-muted rounded w-3/4" />
-          <div className="h-4 bg-muted rounded w-1/2" />
-          <div className="h-4 bg-muted rounded w-2/3" />
-          <div className="h-8 bg-muted rounded w-full" />
+          <div className="h-5 shimmer rounded w-3/4" />
+          <div className="h-4 shimmer rounded w-1/2" />
+          <div className="h-4 shimmer rounded w-2/3" />
+          <div className="h-8 shimmer rounded w-full" />
         </div>
       </div>
     );
