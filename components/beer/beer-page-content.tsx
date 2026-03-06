@@ -155,7 +155,7 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
             className="flex-1"
           >
             <ToggleGroupItem value="all">All</ToggleGroupItem>
-            <ToggleGroupItem value="tap">On Tap</ToggleGroupItem>
+            <ToggleGroupItem value="tap">Draft</ToggleGroupItem>
             <ToggleGroupItem value="cans">In Cans</ToggleGroupItem>
           </ToggleGroup>
 
