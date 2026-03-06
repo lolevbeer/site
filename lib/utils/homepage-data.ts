@@ -140,7 +140,8 @@ export const getHomePageData = cache(async (): Promise<HomePageData> => {
   const beerCount: Record<string, number> = Object.fromEntries(
     locationSlugs.map((slug) => [slug, draftMenusByLocation[slug]?.items?.length || 0])
   );
-  const allEvents = Object.values(eventsByLocation).flat();
+  const allEvents = Object.values(eventsByLocation).flat()
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   const allFood = Object.values(foodByLocation).flat();
   const nextEvent = deriveNextEvent(allEvents);
 
