@@ -359,7 +359,7 @@ function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fu
           )}
         </div>
       </div>
-      <Button variant="outline" className="w-full group-hover:bg-muted/50 hover:translate-y-0" tabIndex={-1}>
+      <Button variant="outline" className="w-full btn-arrow group-hover:bg-muted/50 hover:translate-y-0" tabIndex={-1}>
         View Details
       </Button>
     </Link>

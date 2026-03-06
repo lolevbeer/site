@@ -85,7 +85,7 @@ export function HeroSection({ availableBeers, cansMenus, heroDescription, heroIm
 
       <div className="relative z-10 flex flex-col items-center justify-center gap-6 md:gap-8">
         <BlurFade delay={0}>
-          <h1 className="mb-0 text-balance font-bold text-4xl md:text-6xl lg:text-7xl xl:text-[5.25rem] dark:bg-gradient-to-b dark:from-white dark:to-white/70 dark:bg-clip-text dark:text-transparent">
+          <h1 className="mb-0 text-balance font-bold tracking-tighter text-4xl md:text-6xl lg:text-7xl xl:text-[5.25rem] dark:bg-gradient-to-b dark:from-white dark:to-white/70 dark:bg-clip-text dark:text-transparent">
             Lolev Beer
           </h1>
         </BlurFade>

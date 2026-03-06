@@ -447,6 +447,16 @@
     opacity: 1;
     transform: translateX(0);
   }
+
+  /* Tighter tracking for display text */
+  .tracking-display {
+    letter-spacing: -0.03em;
+  }
+
+  /* Slightly looser for labels */
+  .tracking-label {
+    letter-spacing: 0.02em;
+  }
 }
 
 /* Mapbox popup overrides - use shadcn styling */
