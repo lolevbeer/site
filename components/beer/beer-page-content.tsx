@@ -121,9 +121,9 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
       </div>
 
       {/* Filter Bar */}
-      <div className="sticky top-16 z-20 glass rounded-lg p-3 mb-6 space-y-3">
-        {/* Search + Availability row */}
+      <div className="sticky top-16 z-20 glass rounded-lg p-3 mb-6">
         <div className="flex items-center gap-3">
+          {/* Search - 1/3 */}
           <div className="relative flex-1">
             <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -145,34 +145,35 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
             )}
           </div>
 
-          {/* Availability segmented control */}
+          {/* Availability - 1/3 */}
           <ToggleGroup
             type="single"
             value={availability}
             onValueChange={(val) => handleAvailabilityChange(val || 'all')}
             variant="outline"
             size="sm"
+            className="flex-1"
           >
             <ToggleGroupItem value="all">All</ToggleGroupItem>
             <ToggleGroupItem value="tap">On Tap</ToggleGroupItem>
             <ToggleGroupItem value="cans">In Cans</ToggleGroupItem>
           </ToggleGroup>
-        </div>
 
-        {/* Style dropdown */}
-        <Select value={selectedType} onValueChange={handleTypeChange}>
-          <SelectTrigger className="w-full bg-secondary">
-            <SelectValue placeholder="All Styles" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Styles</SelectItem>
-            {beerTypes.map(type => (
-              <SelectItem key={type} value={type}>
-                {type}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          {/* Style dropdown - 1/3 */}
+          <Select value={selectedType} onValueChange={handleTypeChange}>
+            <SelectTrigger className="flex-1 bg-secondary">
+              <SelectValue placeholder="All Styles" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Styles</SelectItem>
+              {beerTypes.map(type => (
+                <SelectItem key={type} value={type}>
+                  {type}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Beer Grid - Full width */}
