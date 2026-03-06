@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/tooltip';
 import type { Beer as PayloadBeer, Menu as PayloadMenu } from '@/src/payload-types';
 import { extractBeerFromMenuItem } from '@/lib/utils/menu-item-utils';
+import { getBeerImageUrl } from '@/lib/utils/media-utils';
 
 interface HeroSectionProps {
   availableBeers: PayloadBeer[];
@@ -28,39 +29,26 @@ interface HeroSectionProps {
   heroImageUrl?: string | null;
 }
 
-function getBeerImageUrl(beer: PayloadBeer): string | null {
-  if (beer.image && typeof beer.image === 'object' && 'url' in beer.image) {
-    return beer.image.url as string;
-  }
-  return null;
-}
-
 export function HeroSection({ availableBeers, cansMenus, heroDescription, heroImageUrl }: HeroSectionProps) {
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
-  const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
-
   const handleImageError = (beerId: string) => {
     setImageErrors(prev => new Set(prev).add(beerId));
   };
 
-  const handleImageLoad = (beerId: string) => {
-    setLoadedImages(prev => new Set(prev).add(beerId));
-  };
-
-  // Build a set of beer IDs that are available in cans menus (memoized)
-  const cansAvailableBeerIds = useMemo(() => {
-    const ids = new Set<string>();
+  // Pre-filter to beers in cans menus with valid images
+  const displayBeers = useMemo(() => {
+    const cansIds = new Set<string>();
     for (const menu of cansMenus) {
       if (!menu.items) continue;
       for (const item of menu.items) {
         const beer = extractBeerFromMenuItem(item);
-        if (beer?.id) {
-          ids.add(beer.id);
-        }
+        if (beer?.id) cansIds.add(beer.id);
       }
     }
-    return ids;
-  }, [cansMenus]);
+    return availableBeers
+      .filter(beer => cansIds.has(beer.id) && getBeerImageUrl(beer.image) && !imageErrors.has(beer.id))
+      .map(beer => ({ beer, imageUrl: getBeerImageUrl(beer.image)! }));
+  }, [availableBeers, cansMenus, imageErrors]);
 
   return (
     <div className="relative flex flex-col gap-8 md:gap-16 px-4 md:px-8 py-16 md:py-24 text-center min-h-[600px] md:min-h-[700px]">
@@ -89,11 +77,11 @@ export function HeroSection({ availableBeers, cansMenus, heroDescription, heroIm
             Lolev Beer
           </h1>
         </BlurFade>
-        <BlurFade delay={0.1}>
+        <BlurFade delay={0.1} className="w-full">
         <section
-          className="flex flex-col items-center justify-center gap-4 md:gap-8 rounded-xl py-8 md:py-12 w-full overflow-visible"
+          className="flex flex-col items-center justify-center gap-4 md:gap-8 rounded-xl py-8 md:py-12 w-full"
         >
-          <div className="w-full max-w-5xl mx-auto px-4 md:px-12 overflow-visible">
+          <div className="w-full max-w-5xl mx-auto px-4 md:px-12">
             <TooltipProvider delayDuration={200}>
               <Carousel
                 opts={{
@@ -105,38 +93,31 @@ export function HeroSection({ availableBeers, cansMenus, heroDescription, heroIm
                 aria-label="Available beers carousel"
               >
                 <CarouselContent className="-ml-4">
-                  {availableBeers.length > 0 ? (
-                    availableBeers.map((beer, index) => {
-                      const imageUrl = getBeerImageUrl(beer);
-                      // Skip beers not in cans menus, without images, or with failed images
-                      if (!cansAvailableBeerIds.has(beer.id) || !imageUrl || imageErrors.has(beer.id)) return null;
-
-                      return (
-                        <CarouselItem key={beer.id} className="pl-4 basis-1/4 sm:basis-1/5 md:basis-1/4 lg:basis-1/6 xl:basis-1/8 2xl:basis-1/8">
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Link href={`/beer/${beer.slug}`} className="group flex justify-center">
-                                <div className="relative h-16 w-16 md:h-24 md:w-24 rounded-lg bg-transparent transition-transform duration-200 ease-out group-hover:-translate-y-1 group-hover:scale-105">
-                                  <Image
-                                    src={imageUrl}
-                                    alt={`${beer.name} beer can`}
-                                    fill
-                                    className={`object-contain drop-shadow-sm group-hover:drop-shadow-md transition-all duration-200 ${loadedImages.has(beer.id) ? 'opacity-100' : 'opacity-0'}`}
-                                    sizes="(max-width: 768px) 64px, 96px"
-                                    loading={index < 5 ? "eager" : "lazy"}
-                                    onLoad={() => handleImageLoad(beer.id)}
-                                    onError={() => handleImageError(beer.id)}
-                                  />
-                                </div>
-                              </Link>
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom" className="bg-popover text-popover-foreground border-0" sideOffset={5}>
-                              <p className="font-semibold text-sm">{beer.name}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </CarouselItem>
-                      );
-                    })
+                  {displayBeers.length > 0 ? (
+                    displayBeers.map(({ beer, imageUrl }, index) => (
+                      <CarouselItem key={beer.id} className="pl-4 basis-1/4 sm:basis-1/5 md:basis-1/4 lg:basis-1/6 xl:basis-1/8 2xl:basis-1/8">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Link href={`/beer/${beer.slug}`} className="group flex justify-center">
+                              <div className="relative h-16 w-16 md:h-24 md:w-24 rounded-lg bg-transparent transition-transform duration-200 ease-out group-hover:-translate-y-1 group-hover:scale-105">
+                                <Image
+                                  src={imageUrl}
+                                  alt={`${beer.name} beer can`}
+                                  fill
+                                  className="object-contain drop-shadow-sm group-hover:drop-shadow-md transition-all duration-200"
+                                  sizes="(max-width: 768px) 64px, 96px"
+                                  loading={index < 5 ? "eager" : "lazy"}
+                                  onError={() => handleImageError(beer.id)}
+                                />
+                              </div>
+                            </Link>
+                          </TooltipTrigger>
+                          <TooltipContent side="bottom" className="bg-popover text-popover-foreground border-0" sideOffset={5}>
+                            <p className="font-semibold text-sm">{beer.name}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </CarouselItem>
+                    ))
                   ) : (
                     <CarouselItem className="pl-4">
                       <div className="h-16 md:h-24 flex items-center justify-center">
