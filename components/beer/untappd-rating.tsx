@@ -50,7 +50,7 @@ export function UntappdRating({
       style={style}
     >
       <UntappdIcon className="h-3.5 w-3.5 mx-0.5" style={iconStyle} />
-      <span className="font-bold">{formatRating(rating)}/5</span>
+      <span className="font-bold leading-none">{formatRating(rating)}/5</span>
     </span>
   );
 }
