@@ -5,6 +5,7 @@ import { HomeContent } from '@/components/home/home-content';
 import { MarketingText } from '@/components/home/marketing-text';
 import { getHomePageData } from '@/lib/utils/homepage-data';
 import { JsonLd } from '@/components/seo/json-ld';
+import { PageTransition } from '@/components/motion';
 import { generateEventJsonLd, generateFoodEventJsonLd } from '@/lib/utils/json-ld';
 import { generateLocalBusinessSchemas, generateOrganizationSchema, generateWebSiteSchema } from '@/lib/utils/local-business-schema';
 import { generateFullMenuSchema } from '@/lib/utils/menu-schema';
@@ -62,32 +63,34 @@ export default async function Home(): Promise<React.ReactElement> {
         <JsonLd key={`food-${index}`} data={schema} />
       ))}
 
-      <MarketingText
-        draftMenusByLocation={data.draftMenusByLocation}
-        cansMenusByLocation={data.cansMenusByLocation}
-        eventsByLocation={data.eventsMarketingByLocation}
-        foodByLocation={data.foodMarketingByLocation}
-        comingSoonBeers={data.comingSoonBeers}
-      />
+      <PageTransition>
+        <MarketingText
+          draftMenusByLocation={data.draftMenusByLocation}
+          cansMenusByLocation={data.cansMenusByLocation}
+          eventsByLocation={data.eventsMarketingByLocation}
+          foodByLocation={data.foodMarketingByLocation}
+          comingSoonBeers={data.comingSoonBeers}
+        />
 
-      <HomeContent
-        availableBeers={data.availableBeers}
-        draftMenus={data.allDraftMenus}
-        cansMenus={data.allCansMenus}
-        beerCount={data.beerCount}
-        nextEvent={data.nextEvent}
-        heroDescription={data.siteContent.heroDescription}
-        heroImageUrl={data.siteContent.heroImageUrl}
-        weeklyHours={data.weeklyHours}
-      >
-        <FeaturedCans menus={data.allCansMenus} />
+        <HomeContent
+          availableBeers={data.availableBeers}
+          draftMenus={data.allDraftMenus}
+          cansMenus={data.allCansMenus}
+          beerCount={data.beerCount}
+          nextEvent={data.nextEvent}
+          heroDescription={data.siteContent.heroDescription}
+          heroImageUrl={data.siteContent.heroImageUrl}
+          weeklyHours={data.weeklyHours}
+        >
+          <FeaturedCans menus={data.allCansMenus} />
 
-        <UpcomingFood foodByLocation={data.foodByLocation} />
+          <UpcomingFood foodByLocation={data.foodByLocation} />
 
-        <UpcomingEvents eventsByLocation={data.eventsByLocation} />
+          <UpcomingEvents eventsByLocation={data.eventsByLocation} />
 
-        <UpcomingBeers comingSoonBeers={data.comingSoonBeers} />
-      </HomeContent>
+          <UpcomingBeers comingSoonBeers={data.comingSoonBeers} />
+        </HomeContent>
+      </PageTransition>
     </>
   );
 }

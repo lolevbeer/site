@@ -8,6 +8,7 @@ import { extractVendorInfo, getAllLocations } from '@/lib/utils/payload-api';
 import { getMediaUrl } from '@/lib/utils/media-utils';
 import { getTodayMidnightISO } from '@/lib/utils/date';
 import { createLocationLookup, generateFoodEventJsonLd } from '@/lib/utils/json-ld';
+import { PageTransition } from '@/components/motion';
 import { logger } from '@/lib/utils/logger';
 
 export const metadata: Metadata = {
@@ -280,7 +281,9 @@ export default async function FoodPage() {
       {/* JSON-LD structured data for all locations */}
       {jsonLd && <JsonLd data={jsonLd} />}
 
-      <FoodPageClient initialSchedules={schedules} />
+      <PageTransition>
+        <FoodPageClient initialSchedules={schedules} />
+      </PageTransition>
     </>
   );
 }

@@ -48,6 +48,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
+import { PageTransition } from '@/components/motion';
 
 interface BeerPageContentProps {
   beers: Beer[];
@@ -203,6 +204,7 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
   ].filter(Boolean).length;
 
   return (
+    <PageTransition>
     <div className="container mx-auto px-4 py-8">
       <PageBreadcrumbs className="mb-6" />
       {/* Page Header */}
@@ -560,5 +562,6 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
         </div>
       </div>
     </div>
+    </PageTransition>
   );
 }

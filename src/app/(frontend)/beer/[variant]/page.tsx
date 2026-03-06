@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { getBeerBySlug, getAllBeersFromPayload } from '@/lib/utils/payload-api';
 import { BeerDetails } from '@/components/beer/beer-details';
 import { JsonLd } from '@/components/seo/json-ld';
+import { PageTransition } from '@/components/motion';
 import { generateProductSchema } from '@/lib/utils/product-schema';
 import { generateBreadcrumbSchema } from '@/lib/utils/breadcrumb-schema';
 
@@ -90,9 +91,11 @@ export default async function BeerPage({ params }: BeerPageProps) {
       <JsonLd data={productSchema} />
       <JsonLd data={breadcrumbSchema} />
 
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <BeerDetails beer={beer} />
-      </div>
+      <PageTransition>
+        <div className="container mx-auto px-4 py-8 max-w-4xl">
+          <BeerDetails beer={beer} />
+        </div>
+      </PageTransition>
     </>
   );
 }
