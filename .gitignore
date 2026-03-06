@@ -47,10 +47,10 @@ next-env.d.ts
 # Public assets (served from external storage)
 /public/*
 !/public/images
-!/public/uploads
 !/public/favicons
 /public/images/*
 !/public/images/beer
 
 .playwright-mcp
 .env*.local
+.claude/worktrees/
