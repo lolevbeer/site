@@ -4,6 +4,7 @@ import * as React from "react"
 import * as TabsPrimitive from "@radix-ui/react-tabs"
 import { LayoutGroup, motion, useReducedMotion } from "framer-motion"
 import { cn } from "@/lib/utils"
+import { EASE_OUT_SMOOTH } from "@/components/motion"
 
 /** Context to share a unique layoutId per TabsList instance */
 const TabsLayoutContext = React.createContext<string>("tab-indicator")
@@ -108,7 +109,7 @@ function TabsContent({
         <motion.div
           initial={{ opacity: 0, filter: 'blur(4px)' }}
           animate={{ opacity: 1, filter: 'blur(0px)' }}
-          transition={{ duration: 0.3, ease: [0.25, 0.4, 0.25, 1] }}
+          transition={{ duration: 0.3, ease: EASE_OUT_SMOOTH }}
         >
           {children}
         </motion.div>

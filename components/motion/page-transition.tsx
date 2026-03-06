@@ -1,29 +1,20 @@
 /**
  * PageTransition wrapper for route-level blur-to-sharp entrance.
+ * Delegates to BlurFade with page-appropriate defaults.
  */
 
 'use client';
 
-import { motion, useReducedMotion } from 'framer-motion';
+import { BlurFade } from './blur-fade';
 
 interface PageTransitionProps {
   children: React.ReactNode;
 }
 
 export function PageTransition({ children }: PageTransitionProps) {
-  const prefersReducedMotion = useReducedMotion();
-
-  if (prefersReducedMotion) {
-    return <div>{children}</div>;
-  }
-
   return (
-    <motion.div
-      initial={{ opacity: 0, filter: 'blur(8px)' }}
-      animate={{ opacity: 1, filter: 'blur(0px)' }}
-      transition={{ duration: 0.4, ease: [0.25, 0.4, 0.25, 1] }}
-    >
+    <BlurFade blur={8} duration={0.4} yOffset={0}>
       {children}
-    </motion.div>
+    </BlurFade>
   );
 }

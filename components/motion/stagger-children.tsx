@@ -6,6 +6,7 @@
 
 import { motion, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { EASE_OUT_SMOOTH } from './constants';
 
 interface StaggerChildrenProps {
   children: React.ReactNode;
@@ -37,7 +38,7 @@ const itemVariants = {
     scale: 1,
     transition: {
       duration: 0.5,
-      ease: [0.25, 0.4, 0.25, 1] as [number, number, number, number],
+      ease: EASE_OUT_SMOOTH,
     },
   },
 };
@@ -76,12 +77,6 @@ export function StaggerItem({
   children: React.ReactNode;
   className?: string;
 }) {
-  const prefersReducedMotion = useReducedMotion();
-
-  if (prefersReducedMotion) {
-    return <div className={cn(className)}>{children}</div>;
-  }
-
   return (
     <motion.div className={cn(className)} variants={itemVariants}>
       {children}

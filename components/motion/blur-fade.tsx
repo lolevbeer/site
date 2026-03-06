@@ -7,6 +7,7 @@
 
 import { motion, useReducedMotion, type Variants } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { EASE_OUT_SMOOTH } from './constants';
 
 interface BlurFadeProps {
   children: React.ReactNode;
@@ -62,7 +63,7 @@ export function BlurFade({
       transition={{
         delay,
         duration,
-        ease: [0.25, 0.4, 0.25, 1],
+        ease: EASE_OUT_SMOOTH,
       }}
     >
       {children}

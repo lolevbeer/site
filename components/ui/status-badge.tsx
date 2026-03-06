@@ -165,7 +165,7 @@ export function StatusBadge({
     >
       {'live' in config && config.live && (
         <span className="relative flex h-2 w-2 mr-1">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-75" />
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-75 [animation-iteration-count:3]" />
           <span className="relative inline-flex rounded-full h-2 w-2 bg-current" />
         </span>
       )}
