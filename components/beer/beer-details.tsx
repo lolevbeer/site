@@ -35,6 +35,7 @@ import { getGlassIcon } from '@/lib/utils/beer-icons';
 import { formatAbv, formatRating } from '@/lib/utils/formatters';
 import { getBeerImageUrl } from '@/lib/utils/media-utils';
 import { menuItemHasBeer } from '@/lib/utils/menu-item-utils';
+import { getPackagingType, getPackagingLabel, getNoPackagingLabel, getDraftOnlyMessage, getPackagingAtLocationsMessage } from '@/lib/utils/packaging-utils';
 
 type BeerReview = { username: string; text: string; date?: string; url?: string; image?: string; hidden?: boolean };
 
@@ -53,12 +54,14 @@ function getPricingInfo(beer: PayloadBeer): {
   draftPrice?: number;
   singlePrice?: number | null;
   fourPackPrice?: number | null;
+  bottlePrice?: number | null;
   hasSale: boolean;
 } {
   return {
     draftPrice: beer.draftPrice,
     singlePrice: beer.canSingle,
     fourPackPrice: beer.fourPack,
+    bottlePrice: beer.bottlePrice,
     hasSale: beer.justReleased === true,
   };
 }
@@ -111,6 +114,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
   const imagePath = getBeerImageUrl(beer.image, beer.slug);
   const pricing = getPricingInfo(beer);
   const GlassIcon = getGlassIcon(beer.glass);
+  const packagingType = getPackagingType(beer);
   const [tapLocations, setTapLocations] = useState<string[]>([]);
   const [canLocations, setCanLocations] = useState<string[]>([]);
   const [isLoadingLocations, setIsLoadingLocations] = useState(true);
@@ -302,12 +306,12 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
               )}
               {canLocations.length > 0 && (
                 <Badge variant="default" className="text-sm">
-                  Cans Available
+                  {getPackagingLabel(packagingType)}
                 </Badge>
               )}
               {!isLoadingLocations && tapLocations.length > 0 && canLocations.length === 0 && (
                 <Badge variant="outline" className="text-sm text-muted-foreground border-muted-foreground/50">
-                  No Cans
+                  {getNoPackagingLabel(packagingType)}
                 </Badge>
               )}
               {pricing.hasSale && (
@@ -360,12 +364,12 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
                     )}
                     {canLocations.length > 0 && (
                       <p className="text-sm text-muted-foreground">
-                        • Cans available at {canLocations.join(' and ')}
+                        • {getPackagingAtLocationsMessage(packagingType, canLocations)}
                       </p>
                     )}
                     {tapLocations.length > 0 && canLocations.length === 0 && (
                       <p className="text-sm text-amber-600 dark:text-amber-400 font-medium">
-                        • No cans available at this time — draft only
+                        • {getDraftOnlyMessage(packagingType)}
                       </p>
                     )}
                     {tapLocations.length === 0 && canLocations.length === 0 && (
@@ -379,7 +383,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
             </Card>
 
             {/* Pricing */}
-            {((tapLocations.length > 0 && pricing.draftPrice) || (canLocations.length > 0 && pricing.fourPackPrice)) && (
+            {((tapLocations.length > 0 && pricing.draftPrice) || (canLocations.length > 0 && (pricing.fourPackPrice || pricing.bottlePrice))) && (
               <Card className="shadow-none border-0 p-0 bg-transparent">
                 <CardHeader className="p-0 pb-4">
                   <CardTitle className="text-lg flex items-center gap-2">
@@ -401,6 +405,11 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
                     {canLocations.length > 0 && pricing.fourPackPrice && (
                       <p className="text-sm text-muted-foreground">
                         • 4 Pack ${pricing.fourPackPrice}
+                      </p>
+                    )}
+                    {canLocations.length > 0 && pricing.bottlePrice && (
+                      <p className="text-sm text-muted-foreground">
+                        • Bottle ${pricing.bottlePrice}
                       </p>
                     )}
                   </div>
