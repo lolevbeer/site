@@ -16,24 +16,6 @@ interface QuickInfoCardsProps {
   className?: string;
 }
 
-/** Stylized calendar chip showing month + day */
-function CalendarChip({ dateStr }: { dateStr: string }) {
-  const date = toESTDate(dateStr);
-  const month = date.toLocaleDateString('en-US', { month: 'short', timeZone: 'America/New_York' });
-  const day = date.toLocaleDateString('en-US', { day: 'numeric', timeZone: 'America/New_York' });
-
-  return (
-    <div className="flex flex-col items-center rounded-lg border border-border overflow-hidden w-14 flex-shrink-0">
-      <div className="bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider w-full text-center py-0.5">
-        {month}
-      </div>
-      <div className="text-2xl font-bold py-1">
-        {day}
-      </div>
-    </div>
-  );
-}
-
 export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCardsProps) {
   const { locations } = useLocationContext();
 
@@ -94,14 +76,11 @@ export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCar
           <Card className="p-6 lg:p-8 h-full transition-colors cursor-pointer shadow-none bg-transparent border border-border hover:bg-secondary/50 relative text-center flex flex-col items-center justify-center">
             <h3 className="text-3xl lg:text-4xl font-bold mb-5">{nextEvent ? 'Next Event' : 'Upcoming Events'}</h3>
             {nextEvent ? (
-              <div className="flex flex-col items-center gap-3">
-                <CalendarChip dateStr={nextEvent.date} />
-                <div>
-                  <p className="text-lg font-semibold text-foreground line-clamp-2 leading-tight">{nextEvent.name}</p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {formatEventDate(nextEvent.date)} at {getLocationDisplayName(locations, nextEvent.location)}
-                  </p>
-                </div>
+              <div className="flex flex-col items-center gap-1">
+                <p className="text-lg font-semibold text-foreground line-clamp-2 leading-tight">{nextEvent.name}</p>
+                <p className="text-sm text-muted-foreground">
+                  {formatEventDate(nextEvent.date)} · {getLocationDisplayName(locations, nextEvent.location)}
+                </p>
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
