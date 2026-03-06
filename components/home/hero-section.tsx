@@ -3,6 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { BlurFade } from '@/components/motion';
 import { Button } from '@/components/ui/button';
 import {
   Carousel,
@@ -83,12 +84,14 @@ export function HeroSection({ availableBeers, cansMenus, heroDescription, heroIm
       </div>
 
       <div className="relative z-10 flex flex-col items-center justify-center gap-6 md:gap-8">
-        <h1 className="mb-0 text-balance font-bold text-4xl md:text-6xl lg:text-7xl xl:text-[5.25rem] animate-stagger-in opacity-0">
-          Lolev Beer
-        </h1>
+        <BlurFade delay={0}>
+          <h1 className="mb-0 text-balance font-bold text-4xl md:text-6xl lg:text-7xl xl:text-[5.25rem] dark:bg-gradient-to-b dark:from-white dark:to-white/70 dark:bg-clip-text dark:text-transparent">
+            Lolev Beer
+          </h1>
+        </BlurFade>
+        <BlurFade delay={0.1}>
         <section
-          className="flex flex-col items-center justify-center gap-4 md:gap-8 rounded-xl py-8 md:py-12 w-full overflow-visible animate-stagger-in opacity-0"
-          style={{ animationDelay: '100ms' }}
+          className="flex flex-col items-center justify-center gap-4 md:gap-8 rounded-xl py-8 md:py-12 w-full overflow-visible"
         >
           <div className="w-full max-w-5xl mx-auto px-4 md:px-12 overflow-visible">
             <TooltipProvider delayDuration={200}>
@@ -148,19 +151,19 @@ export function HeroSection({ availableBeers, cansMenus, heroDescription, heroIm
             </TooltipProvider>
           </div>
         </section>
+        </BlurFade>
         {heroDescription && (
-          <p
-            className="mt-0 mb-0 text-balance text-base md:text-lg text-foreground max-w-4xl px-4 whitespace-pre-line animate-stagger-in opacity-0"
-            style={{ animationDelay: '200ms' }}
-          >
-            {heroDescription}
-          </p>
+          <BlurFade delay={0.2}>
+            <p className="mt-0 mb-0 text-balance text-base md:text-lg text-foreground max-w-4xl px-4 whitespace-pre-line">
+              {heroDescription}
+            </p>
+          </BlurFade>
         )}
 
         {/* Primary CTAs */}
+        <BlurFade delay={0.3}>
         <div
-          className="flex flex-col sm:flex-row gap-3 md:gap-4 mt-6 md:mt-8 justify-center items-center w-full px-4 sm:px-0 animate-stagger-in opacity-0"
-          style={{ animationDelay: '300ms' }}
+          className="flex flex-col sm:flex-row gap-3 md:gap-4 mt-6 md:mt-8 justify-center items-center w-full px-4 sm:px-0"
         >
           <Button asChild variant="default" size="lg" className="w-full sm:w-auto sm:min-w-[160px] text-base animate-glow-pulse">
             <Link href="/beer-map">
@@ -178,6 +181,7 @@ export function HeroSection({ availableBeers, cansMenus, heroDescription, heroIm
             </Link>
           </Button>
         </div>
+        </BlurFade>
       </div>
     </div>
   );

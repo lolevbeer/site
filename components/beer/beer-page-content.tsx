@@ -47,6 +47,7 @@ import { Switch } from '@/components/ui/switch';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { StaggerChildren, StaggerItem } from '@/components/motion';
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
 import { PageTransition } from '@/components/motion';
 
@@ -213,7 +214,7 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
       </div>
 
       {/* Sort and Mobile Filter Controls */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 sticky top-16 z-20 glass rounded-lg p-2">
         {/* Mobile Filter Toggle - Sheet */}
         <Sheet open={showFilters} onOpenChange={setShowFilters}>
           <SheetTrigger asChild>
@@ -525,16 +526,17 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
         <div className="lg:col-span-3">
           {/* Beer Grid */}
           {filteredBeers.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" suppressHydrationWarning>
+            <StaggerChildren inView className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {filteredBeers.map((beer, index) => (
-                <BeerCard
-                  key={`${beer.variant}-${index}`}
-                  beer={beer}
-                  variant="minimal"
-                  showLocation={false}
-                />
+                <StaggerItem key={`${beer.variant}-${index}`}>
+                  <BeerCard
+                    beer={beer}
+                    variant="minimal"
+                    showLocation={false}
+                  />
+                </StaggerItem>
               ))}
-            </div>
+            </StaggerChildren>
           ) : (
             <Empty>
               <EmptyHeader>
