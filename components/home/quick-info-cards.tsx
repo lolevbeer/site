@@ -2,7 +2,6 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import type { LocationSlug } from '@/lib/types/location';
 import { cn } from '@/lib/utils';
@@ -38,9 +37,7 @@ function CalendarChip({ dateStr }: { dateStr: string }) {
 export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCardsProps) {
   const { locations } = useLocationContext();
 
-  const totalBeers = beerCount
-    ? Object.values(beerCount).reduce((sum, n) => sum + n, 0)
-    : 0;
+  const hasBeers = beerCount && Object.values(beerCount).some(n => n > 0);
 
   // Format next event date using EST timezone
   const formatEventDate = (dateStr: string) => {
@@ -64,30 +61,23 @@ export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCar
   return (
     <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-4", className)}>
       {/* On Tap Now Card */}
-      <MotionCard glow>
-        <Link href="/beer" className="group block">
-          <Card className="p-6 lg:p-8 h-full transition-colors cursor-pointer shadow-none bg-transparent border border-border hover:bg-secondary/50 relative">
-            <div className="flex items-center justify-center gap-2 mb-5">
-              <h3 className="text-3xl lg:text-4xl font-bold">On Tap Now</h3>
-              <ArrowRight className="h-6 w-6 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
-            </div>
-            {totalBeers > 0 ? (
-              <div className="flex flex-col items-center gap-3">
-                <div className="text-5xl lg:text-6xl font-bold tabular-nums">{totalBeers}</div>
-                <div className="text-sm text-muted-foreground font-medium">beers on tap</div>
-                <div className="flex items-center justify-center gap-4 mt-1">
-                  {locations.map(location => {
-                    const slug = location.slug || location.id;
-                    const count = beerCount?.[slug];
-                    if (count === undefined) return null;
-                    return (
-                      <div key={slug} className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                        <span className="font-medium text-foreground">{count}</span>
-                        <span>{location.name}</span>
-                      </div>
-                    );
-                  })}
-                </div>
+      <MotionCard glow className="h-full">
+        <Link href="/beer" className="group block h-full">
+          <Card className="p-6 lg:p-8 h-full transition-colors cursor-pointer shadow-none bg-transparent border border-border hover:bg-secondary/50 relative text-center">
+            <h3 className="text-3xl lg:text-4xl font-bold mb-5">On Tap Now</h3>
+            {hasBeers ? (
+              <div className="flex items-center justify-center gap-6">
+                {locations.map(location => {
+                  const slug = location.slug || location.id;
+                  const count = beerCount?.[slug];
+                  if (count === undefined) return null;
+                  return (
+                    <div key={slug} className="flex flex-col items-center gap-1">
+                      <div className="text-4xl lg:text-5xl font-bold tabular-nums">{count}</div>
+                      <div className="text-sm text-muted-foreground font-medium">{location.name}</div>
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
@@ -99,17 +89,14 @@ export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCar
       </MotionCard>
 
       {/* Next Event Card */}
-      <MotionCard glow>
-        <Link href="/events" className="group block">
-          <Card className="p-6 lg:p-8 h-full transition-colors cursor-pointer shadow-none bg-transparent border border-border hover:bg-secondary/50 relative">
-            <div className="flex items-center justify-center gap-2 mb-5">
-              <h3 className="text-3xl lg:text-4xl font-bold">{nextEvent ? 'Next Event' : 'Upcoming Events'}</h3>
-              <ArrowRight className="h-6 w-6 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
-            </div>
+      <MotionCard glow className="h-full">
+        <Link href="/events" className="group block h-full">
+          <Card className="p-6 lg:p-8 h-full transition-colors cursor-pointer shadow-none bg-transparent border border-border hover:bg-secondary/50 relative text-center">
+            <h3 className="text-3xl lg:text-4xl font-bold mb-5">{nextEvent ? 'Next Event' : 'Upcoming Events'}</h3>
             {nextEvent ? (
-              <div className="flex items-center justify-center gap-4">
+              <div className="flex flex-col items-center gap-3">
                 <CalendarChip dateStr={nextEvent.date} />
-                <div className="text-left">
+                <div>
                   <p className="text-lg font-semibold text-foreground line-clamp-2 leading-tight">{nextEvent.name}</p>
                   <p className="text-sm text-muted-foreground mt-1">
                     {formatEventDate(nextEvent.date)} at {getLocationDisplayName(locations, nextEvent.location)}
