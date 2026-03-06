@@ -42,7 +42,7 @@ export function UntappdRating({
   return (
     <span
       className={cn(
-        'flex items-center gap-1 text-amber-500 text-sm',
+        'flex items-end text-amber-500 text-sm',
         variant === 'overlay' &&
           'bg-background/80 backdrop-blur-sm rounded-md px-1.5 py-0.5',
         className,
@@ -50,7 +50,7 @@ export function UntappdRating({
       style={style}
     >
       <UntappdIcon className="h-3.5 w-3.5 mx-0.5" style={iconStyle} />
-      <span className="font-bold">{formatRating(rating)}/5</span>
+      <span className="font-bold leading-none">{formatRating(rating)}/5</span>
     </span>
   );
 }

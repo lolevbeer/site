@@ -185,8 +185,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
               {showRating && (
                 <UntappdRating
                   rating={beer.untappdRating}
-                  className="flex-shrink-0 items-end text-lg leading-none"
-                  iconStyle={{ height: '1.5rem', width: '1.5rem' }}
+                  className="flex-shrink-0"
                   fallbackText="No Ratings"
                 />
               )}
