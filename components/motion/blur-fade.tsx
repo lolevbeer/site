@@ -5,7 +5,7 @@
 
 'use client';
 
-import { motion, type Variants } from 'framer-motion';
+import { motion, useReducedMotion, type Variants } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 interface BlurFadeProps {
@@ -44,6 +44,12 @@ export function BlurFade({
   inView = false,
   inViewMargin = '-50px',
 }: BlurFadeProps) {
+  const prefersReducedMotion = useReducedMotion();
+
+  if (prefersReducedMotion) {
+    return <div className={cn(className)}>{children}</div>;
+  }
+
   return (
     <motion.div
       className={cn(className)}

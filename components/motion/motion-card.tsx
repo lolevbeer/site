@@ -5,7 +5,7 @@
 
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 interface MotionCardProps {
@@ -25,6 +25,21 @@ export function MotionCard({
   className,
   glow = false,
 }: MotionCardProps) {
+  const prefersReducedMotion = useReducedMotion();
+
+  if (prefersReducedMotion) {
+    return (
+      <div
+        className={cn(
+          glow && 'dark:hover:shadow-[0_0_20px_rgba(255,149,0,0.08)] dark:hover:border-amber-500/10',
+          className,
+        )}
+      >
+        {children}
+      </div>
+    );
+  }
+
   return (
     <motion.div
       className={cn(

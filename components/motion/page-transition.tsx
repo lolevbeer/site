@@ -4,13 +4,19 @@
 
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 
 interface PageTransitionProps {
   children: React.ReactNode;
 }
 
 export function PageTransition({ children }: PageTransitionProps) {
+  const prefersReducedMotion = useReducedMotion();
+
+  if (prefersReducedMotion) {
+    return <div>{children}</div>;
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, filter: 'blur(8px)' }}
