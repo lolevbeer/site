@@ -40,7 +40,7 @@ export function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full bg-background transition-all duration-200">
+      <header className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-xl border-b border-border/50 transition-all duration-200">
         <div className="container mx-auto px-4 sm:px-4 lg:px-4">
           <div className={cn(
             "flex items-center justify-between transition-all duration-200",
