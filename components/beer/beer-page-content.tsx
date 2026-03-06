@@ -14,7 +14,15 @@ import { Button } from '@/components/ui/button';
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty';
 import { Search, X, Beer as BeerIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
 import { StaggerChildren, StaggerItem } from '@/components/motion';
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
 import { PageTransition } from '@/components/motion';
@@ -103,12 +111,6 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
     return filtered;
   }, [beers, search, selectedType, availability]);
 
-  const availabilityOptions = [
-    { value: 'all', label: 'All' },
-    { value: 'tap', label: 'On Tap' },
-    { value: 'cans', label: 'In Cans' },
-  ];
-
   return (
     <PageTransition>
     <div className="container mx-auto px-4 py-8">
@@ -143,53 +145,34 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
             )}
           </div>
 
-          {/* Availability pills */}
-          <div className="flex items-center rounded-lg border border-border bg-secondary p-0.5">
-            {availabilityOptions.map(option => (
-              <button
-                key={option.value}
-                onClick={() => handleAvailabilityChange(option.value)}
-                className={cn(
-                  "px-3 py-1.5 text-sm font-medium rounded-md transition-colors whitespace-nowrap",
-                  availability === option.value
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
+          {/* Availability segmented control */}
+          <ToggleGroup
+            type="single"
+            value={availability}
+            onValueChange={(val) => handleAvailabilityChange(val || 'all')}
+            variant="outline"
+            size="sm"
+          >
+            <ToggleGroupItem value="all">All</ToggleGroupItem>
+            <ToggleGroupItem value="tap">On Tap</ToggleGroupItem>
+            <ToggleGroupItem value="cans">In Cans</ToggleGroupItem>
+          </ToggleGroup>
         </div>
 
-        {/* Style pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 -mb-0.5 scrollbar-hide">
-          <button
-            onClick={() => handleTypeChange('all')}
-            className={cn(
-              "px-3 py-1 text-sm font-medium rounded-full border transition-colors whitespace-nowrap flex-shrink-0",
-              selectedType === 'all'
-                ? "bg-foreground text-background border-foreground"
-                : "bg-transparent text-muted-foreground border-border hover:text-foreground hover:border-foreground/30"
-            )}
-          >
-            All
-          </button>
-          {beerTypes.map(type => (
-            <button
-              key={type}
-              onClick={() => handleTypeChange(type)}
-              className={cn(
-                "px-3 py-1 text-sm font-medium rounded-full border transition-colors whitespace-nowrap flex-shrink-0",
-                selectedType === type
-                  ? "bg-foreground text-background border-foreground"
-                  : "bg-transparent text-muted-foreground border-border hover:text-foreground hover:border-foreground/30"
-              )}
-            >
-              {type}
-            </button>
-          ))}
-        </div>
+        {/* Style dropdown */}
+        <Select value={selectedType} onValueChange={handleTypeChange}>
+          <SelectTrigger className="w-full bg-secondary">
+            <SelectValue placeholder="All Styles" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Styles</SelectItem>
+            {beerTypes.map(type => (
+              <SelectItem key={type} value={type}>
+                {type}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Beer Grid - Full width */}
