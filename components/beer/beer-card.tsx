@@ -46,7 +46,6 @@ export const BeerCard = React.memo(function BeerCard({
   const { currentLocation } = useLocationContext();
   const beerSlug = getBeerSlug(beer);
 
-
   // Don't show beer if it's hidden from site
   if (beer.availability.hideFromSite) {
     return null;
