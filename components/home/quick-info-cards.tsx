@@ -26,8 +26,8 @@ export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCar
     const todayEST = getTodayEST();
     const eventDateStr = dateStr.split('T')[0];
 
-    const todayDate = new Date(todayEST);
-    const eventDate = new Date(eventDateStr);
+    const todayDate = toESTDate(todayEST);
+    const eventDate = toESTDate(eventDateStr);
     const diffDays = Math.floor((eventDate.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24));
 
     if (diffDays === 0) return 'Today';
