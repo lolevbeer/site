@@ -15,12 +15,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { BeerImage } from './beer-image';
 import {
-  formatAbv,
   getBeerSlug,
   getBeerAvailability,
   getBeerPricing
 } from '@/lib/utils/formatters';
-import { getGlassIcon } from '@/lib/utils/beer-icons';
 import { trackBeerView } from '@/lib/analytics/events';
 import { TopBeerDropsLink } from '@/components/beer/top-beer-drops-link';
 import { UntappdRating } from '@/components/beer/untappd-rating';
@@ -47,7 +45,7 @@ export const BeerCard = React.memo(function BeerCard({
 }: BeerCardProps) {
   const { currentLocation } = useLocationContext();
   const beerSlug = getBeerSlug(beer);
-  const GlassIcon = getGlassIcon(beer.glass);
+
 
   // Don't show beer if it's hidden from site
   if (beer.availability.hideFromSite) {
@@ -118,13 +116,7 @@ export const BeerCard = React.memo(function BeerCard({
         <h3 className="font-semibold text-lg line-clamp-2 min-h-[2.5rem]">
           {beer.name}
         </h3>
-        <div className="flex items-center justify-between text-sm text-muted-foreground mt-1">
-          <span className="font-medium">{beer.type}</span>
-          <div className="flex items-center gap-1">
-            <GlassIcon className="h-4 w-4" />
-            <span>{formatAbv(beer.abv)} ABV</span>
-          </div>
-        </div>
+        <p className="text-sm text-muted-foreground font-medium mt-1">{beer.type}</p>
       </div>
     </>
   );
