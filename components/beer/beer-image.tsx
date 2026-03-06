@@ -20,6 +20,7 @@ interface BeerImageProps {
 
 export function BeerImage({ beer, className, priority = false, sizes }: BeerImageProps) {
   const [imageError, setImageError] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const imagePath = getBeerImageUrl(beer.image, beer.variant);
 
   // Show fallback if no image or if image failed to load
@@ -44,15 +45,25 @@ export function BeerImage({ beer, className, priority = false, sizes }: BeerImag
       "relative bg-gradient-to-b from-background to-muted/30 dark:from-muted/10 dark:to-background",
       className
     )}>
-      <Image
-        src={imagePath}
-        alt={`${beer.name}${beer.type ? ` - ${beer.type}` : ''}`}
-        fill
-        className="object-contain"
-        priority={priority}
-        sizes={sizes}
-        onError={() => setImageError(true)}
-      />
+      <div
+        className="absolute inset-0"
+        style={{
+          filter: loaded ? 'blur(0px)' : 'blur(12px)',
+          transform: loaded ? 'scale(1)' : 'scale(1.02)',
+          transition: 'filter 0.5s ease-out, transform 0.5s ease-out',
+        }}
+      >
+        <Image
+          src={imagePath}
+          alt={`${beer.name}${beer.type ? ` - ${beer.type}` : ''}`}
+          fill
+          className="object-contain"
+          priority={priority}
+          sizes={sizes}
+          onError={() => setImageError(true)}
+          onLoad={() => setLoaded(true)}
+        />
+      </div>
     </div>
   );
 }

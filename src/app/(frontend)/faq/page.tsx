@@ -18,6 +18,7 @@ import { JsonLd } from '@/components/seo/json-ld';
 import { breweryFAQs, generateFAQSchema, type FAQItem } from '@/lib/utils/faq-schema';
 import { generateFAQSpeakableSchema } from '@/lib/utils/speakable-schema';
 import { getActiveFAQs } from '@/lib/utils/payload-api';
+import { PageTransition } from '@/components/motion';
 import { Mail, Phone, MapPin } from 'lucide-react';
 
 interface FAQAnswerProps {
@@ -91,6 +92,7 @@ export default async function FAQPage() {
       <JsonLd data={faqSchema} />
       <JsonLd data={speakableSchema} />
 
+      <PageTransition>
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <PageBreadcrumbs className="mb-6" />
 
@@ -181,6 +183,7 @@ export default async function FAQPage() {
           </div>
         </div>
       </div>
+      </PageTransition>
     </>
   );
 }

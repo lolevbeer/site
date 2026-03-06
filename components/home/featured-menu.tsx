@@ -9,7 +9,6 @@ import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/
 import { ScrollReveal } from '@/components/ui/scroll-reveal';
 import { Beer as BeerIconLucide, Package, Pencil } from 'lucide-react';
 import { getGlassIcon } from '@/lib/utils/beer-icons';
-import { formatRating } from '@/lib/utils/formatters';
 import { useLocationContext } from '@/components/location/location-provider';
 import { DraftBeerCard } from '@/components/beer/draft-beer-card';
 import { useAnimatedList, getAnimationClass } from '@/lib/hooks/use-animated-list';
@@ -20,8 +19,8 @@ import { getTodayEST } from '@/lib/utils/date';
 import type { Menu, Style, Location } from '@/src/payload-types';
 import type { Beer } from '@/lib/types/beer';
 import { Logo } from '@/components/ui/logo';
-import { UntappdIcon } from '@/components/icons';
 import { TopBeerDropsLink } from '@/components/beer/top-beer-drops-link';
+import { UntappdRating } from '@/components/beer/untappd-rating';
 
 /** Parse price string to number, removing '$' prefix if present */
 function parsePrice(price: string | number | null | undefined): number | undefined {
@@ -308,19 +307,10 @@ function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fu
             {item.name}
           </h3>
           <div className="flex items-center" style={{ gap: '0.8vh' }}>
+            <UntappdRating rating={item.untappdRating} style={{ gap: '0.3vh', fontSize: '1.8vh' }} iconStyle={{ height: '1.8vh', width: '1.8vh' }} />
             <Badge variant="outline" style={{ fontSize: '1.6vh' }}>{item.type}</Badge>
             {item.topBeerDrops && (
-              <TopBeerDropsLink url={item.topBeerDrops} className="text-foreground hover:text-primary transition-colors" style={{ height: '3.2vh', width: '3.2vh' }} />
-            )}
-            {(item.untappdRating ?? 0) > 0 ? (
-              <span className="flex items-center text-amber-500 font-bold" style={{ fontSize: '1.6vh', gap: '0.3vh' }}>
-                <UntappdIcon style={{ height: '3.2vh', width: '3.2vh' }} />
-                {formatRating(item.untappdRating)}/5
-              </span>
-            ) : (
-              <span className="flex items-center text-muted-foreground font-bold" style={{ fontSize: '1.6vh' }}>
-                Needs Ratings
-              </span>
+              <TopBeerDropsLink url={item.topBeerDrops} className="text-foreground hover:text-primary transition-colors drop-shadow-md" style={{ height: '2.2vh', width: '2.2vh' }} />
             )}
           </div>
           {item.fourPack && (
@@ -360,31 +350,16 @@ function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fu
         )}
       </div>
       <div className="mb-3">
-        <div className="flex items-center justify-center gap-2 flex-wrap mb-2">
-          <h3 className="text-lg font-semibold">{item.name}</h3>
+        <h3 className="text-xl font-semibold text-center mb-2">{item.name}</h3>
+        <div className="flex items-center justify-center gap-2">
+          <UntappdRating rating={item.untappdRating} />
           <Badge variant="outline" className="text-xs">{item.type}</Badge>
           {item.topBeerDrops && (
-            <TopBeerDropsLink url={item.topBeerDrops} />
-          )}
-          {(item.untappdRating ?? 0) > 0 ? (
-            <span className="text-xs text-amber-500 flex items-center gap-0.5 font-bold">
-              <UntappdIcon className="h-6 w-6" />
-              {formatRating(item.untappdRating)}/5
-            </span>
-          ) : (
-            <span className="text-xs text-muted-foreground font-bold">
-              Needs Ratings
-            </span>
-          )}
-          {item.onDraft && (
-            <Badge variant="default" className="text-xs flex-shrink-0 flex items-center gap-1">
-              <GlassIcon className="h-3 w-3" />
-              Pouring
-            </Badge>
+            <TopBeerDropsLink url={item.topBeerDrops} className="h-6 w-6 text-foreground hover:text-primary transition-colors" />
           )}
         </div>
       </div>
-      <Button variant="outline" className="w-full group-hover:bg-muted/50 hover:translate-y-0" tabIndex={-1}>
+      <Button variant="outline" className="w-full btn-arrow group-hover:bg-muted/50 hover:translate-y-0" tabIndex={-1}>
         View Details
       </Button>
     </Link>
@@ -506,13 +481,13 @@ export function FeaturedMenu({ menuType, menu, menus = [], animated = false, ite
                 </div>
               )
             ) : (
-              <Empty>
+              <Empty className="border border-dashed border-border/60 rounded-xl p-8">
                 <EmptyHeader>
                   <EmptyMedia variant="icon">
                     {menuType === 'draft' ? <BeerIconLucide className="h-6 w-6" /> : <Package className="h-6 w-6" />}
                   </EmptyMedia>
-                  <EmptyTitle>No {menuType === 'draft' ? 'beers' : 'cans'} available</EmptyTitle>
-                  <EmptyDescription>{emptyMessage}</EmptyDescription>
+                  <EmptyTitle className="text-xl">No {menuType === 'draft' ? 'beers' : 'cans'} available</EmptyTitle>
+                  <EmptyDescription className="text-muted-foreground/70">{emptyMessage}</EmptyDescription>
                 </EmptyHeader>
               </Empty>
             )}
@@ -554,13 +529,13 @@ export function FeaturedMenu({ menuType, menu, menus = [], animated = false, ite
               </div>
             )
           ) : (
-            <Empty>
+            <Empty className="border border-dashed border-border/60 rounded-xl p-8">
               <EmptyHeader>
                 <EmptyMedia variant="icon">
                   {menuType === 'draft' ? <BeerIconLucide className="h-6 w-6" /> : <Package className="h-6 w-6" />}
                 </EmptyMedia>
-                <EmptyTitle>No {menuType === 'draft' ? 'beers on draft' : 'cans available'}</EmptyTitle>
-                <EmptyDescription>{emptyMessage}</EmptyDescription>
+                <EmptyTitle className="text-xl">No {menuType === 'draft' ? 'beers on draft' : 'cans available'}</EmptyTitle>
+                <EmptyDescription className="text-muted-foreground/70">{emptyMessage}</EmptyDescription>
               </EmptyHeader>
             </Empty>
           )}

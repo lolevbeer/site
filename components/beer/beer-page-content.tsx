@@ -47,7 +47,9 @@ import { Switch } from '@/components/ui/switch';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { StaggerChildren, StaggerItem } from '@/components/motion';
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
+import { PageTransition } from '@/components/motion';
 
 interface BeerPageContentProps {
   beers: Beer[];
@@ -203,6 +205,7 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
   ].filter(Boolean).length;
 
   return (
+    <PageTransition>
     <div className="container mx-auto px-4 py-8">
       <PageBreadcrumbs className="mb-6" />
       {/* Page Header */}
@@ -211,7 +214,7 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
       </div>
 
       {/* Sort and Mobile Filter Controls */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 sticky top-16 z-20 glass rounded-lg p-2">
         {/* Mobile Filter Toggle - Sheet */}
         <Sheet open={showFilters} onOpenChange={setShowFilters}>
           <SheetTrigger asChild>
@@ -523,24 +526,25 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
         <div className="lg:col-span-3">
           {/* Beer Grid */}
           {filteredBeers.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" suppressHydrationWarning>
+            <StaggerChildren inView className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {filteredBeers.map((beer, index) => (
-                <BeerCard
-                  key={`${beer.variant}-${index}`}
-                  beer={beer}
-                  variant="minimal"
-                  showLocation={false}
-                />
+                <StaggerItem key={`${beer.variant}-${index}`}>
+                  <BeerCard
+                    beer={beer}
+                    variant="minimal"
+                    showLocation={false}
+                  />
+                </StaggerItem>
               ))}
-            </div>
+            </StaggerChildren>
           ) : (
-            <Empty>
+            <Empty className="border border-dashed border-border/60 rounded-xl p-8">
               <EmptyHeader>
                 <EmptyMedia variant="icon">
                   <BeerIcon className="h-6 w-6" />
                 </EmptyMedia>
-                <EmptyTitle>No Beers Found</EmptyTitle>
-                <EmptyDescription>
+                <EmptyTitle className="text-xl">No Beers Found</EmptyTitle>
+                <EmptyDescription className="text-muted-foreground/70">
                   {search && selectedType !== 'all'
                     ? `No ${selectedType} beers matching "${search}"`
                     : search
@@ -551,7 +555,7 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
                 </EmptyDescription>
               </EmptyHeader>
               <EmptyContent>
-                <Button variant="outline" onClick={clearFilters}>
+                <Button variant="outline" className="btn-arrow" onClick={clearFilters}>
                   Clear all filters
                 </Button>
               </EmptyContent>
@@ -560,5 +564,6 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
         </div>
       </div>
     </div>
+    </PageTransition>
   );
 }

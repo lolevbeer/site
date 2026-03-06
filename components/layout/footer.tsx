@@ -186,6 +186,7 @@ export function Footer({ weeklyHours }: FooterProps) {
 
   return (
     <footer className="bg-background">
+      <div className="gradient-separator" />
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid gap-12 md:grid-cols-3">
           {/* Dynamic Location Sections */}

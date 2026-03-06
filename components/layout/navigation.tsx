@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { NavItem } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -115,13 +116,20 @@ export function Navigation({
             onClick={onItemClick}
             aria-current={isActive ? "page" : undefined}
             className={cn(
-              "relative transition-all duration-200 ease-in-out whitespace-nowrap text-sm font-semibold",
+              "relative pb-1 transition-all duration-200 ease-in-out whitespace-nowrap text-sm font-semibold",
               isActive
                 ? "text-foreground"
                 : "text-foreground hover:text-muted-foreground"
             )}
           >
             {item.label}
+            {isActive && (
+              <motion.div
+                layoutId="nav-indicator"
+                className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
+                transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+              />
+            )}
           </Link>
         );
       })}

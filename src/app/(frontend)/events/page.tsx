@@ -12,6 +12,7 @@ import { BreweryEvent } from '@/lib/types/event';
 import { transformPayloadEventToBreweryEvent, getAllLocations } from '@/lib/utils/payload-api';
 import { getTodayMidnightISO } from '@/lib/utils/date';
 import { createLocationLookup, generateEventListJsonLd } from '@/lib/utils/json-ld';
+import { PageTransition } from '@/components/motion';
 
 // ISR: Revalidate every 5 minutes
 export const revalidate = 300;
@@ -65,7 +66,9 @@ export default async function EventsPage() {
       {/* JSON-LD structured data for all locations */}
       {jsonLd && <JsonLd data={jsonLd} />}
 
-      <EventsPageClient initialEvents={events} />
+      <PageTransition>
+        <EventsPageClient initialEvents={events} />
+      </PageTransition>
     </>
   );
 }

@@ -134,6 +134,19 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  /* Noise texture overlay for dark mode depth */
+  .dark body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.025;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 256px 256px;
+  }
+
   /* Clean typography */
   h1, h2, h3, h4, h5, h6 {
     font-weight: 600;
@@ -192,51 +205,38 @@
     border-width: 0;
   }
 
-  /* Enhanced focus indicators for WCAG 2.4.7 & 2.2 (2.4.13) */
-  /* WCAG 2.2 requires: 2px minimum thickness, 3:1 contrast ratio */
-  *:focus-visible {
-    outline: 2px solid var(--color-ring);
-    outline-offset: 2px;
+  /* Refined focus rings - Linear-inspired */
+  /* Double box-shadow creates an offset effect: inner ring matches background, */
+  /* outer ring uses accent color. The 1.5px gap between element and accent ring */
+  /* gives the subtle "offset" look. */
+  :focus-visible {
+    outline: 2px solid transparent;
+    box-shadow: 0 0 0 1.5px var(--color-background), 0 0 0 3px var(--color-accent);
   }
 
-  /* High contrast focus for interactive elements - WCAG 2.2 compliant */
-  /* Outline: 3px solid ensures visible focus indicator */
-  /* Box-shadow adds additional visual emphasis and meets 3:1 contrast */
-  a:focus-visible,
-  button:focus-visible,
-  input:focus-visible,
-  textarea:focus-visible,
-  select:focus-visible,
-  [role="button"]:focus-visible,
-  [role="link"]:focus-visible,
-  [tabindex]:not([tabindex="-1"]):focus-visible {
-    outline: 3px solid var(--color-ring);
-    outline-offset: 2px;
-    /* Light mode: Blue (#0071e3) on white - contrast > 3:1 ✅ */
-    box-shadow: 0 0 0 5px rgba(0, 113, 227, 0.15);
-  }
-
-  .dark a:focus-visible,
-  .dark button:focus-visible,
-  .dark input:focus-visible,
-  .dark textarea:focus-visible,
-  .dark select:focus-visible,
-  .dark [role="button"]:focus-visible,
-  .dark [role="link"]:focus-visible,
-  .dark [tabindex]:not([tabindex="-1"]):focus-visible {
-    /* Dark mode: Blue (#0a84ff) on black - contrast > 3:1 ✅ */
-    box-shadow: 0 0 0 5px rgba(10, 132, 255, 0.25);
-  }
-
-  /* Ensure keyboard focus is always visible */
+  /* Remove default outline for mouse/touch focus since we use box-shadow for keyboard */
   :focus:not(:focus-visible) {
     outline: none;
+    box-shadow: none;
   }
 
   /* WCAG 2.2 (2.4.12): Prevent sticky header from obscuring focus */
   /* Scroll focused elements into view with padding */
   *:focus-visible {
     scroll-margin-top: 80px; /* Header height + buffer */
+  }
+
+  /* Cursor refinements for interactive elements */
+  button:not(:disabled),
+  [role="button"]:not(:disabled),
+  [role="tab"],
+  summary {
+    cursor: pointer;
+  }
+
+  :disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
   }
 }
 
@@ -361,18 +361,6 @@
     animation: search-pulse 0.3s ease-out;
   }
 
-  /* Scroll reveal animation */
-  .scroll-reveal {
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-  }
-
-  .scroll-reveal.visible {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
   /* Subtle glow pulse for CTAs */
   @keyframes glow-pulse {
     0%, 100% {
@@ -398,6 +386,69 @@
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+
+  /* Ambient glow for interactive elements in dark mode */
+  .glow-amber {
+    @apply dark:shadow-[0_0_20px_rgba(255,149,0,0.12)];
+  }
+
+  .glow-accent {
+    @apply dark:shadow-[0_0_20px_rgba(10,132,255,0.12)];
+  }
+
+  /* Glassmorphic backdrop */
+  .glass {
+    @apply bg-background/80 backdrop-blur-xl border border-border/50;
+  }
+
+  /* Gradient separator */
+  .gradient-separator {
+    @apply h-px bg-gradient-to-r from-transparent via-border to-transparent;
+  }
+
+  /* Button hover arrow */
+  .btn-arrow::after {
+    content: '\2192';
+    display: inline-block;
+    margin-left: 0;
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: all 0.2s ease;
+  }
+
+  .btn-arrow:hover::after {
+    margin-left: 0.5rem;
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  /* Tighter tracking for display text */
+  .tracking-display {
+    letter-spacing: -0.03em;
+  }
+
+  /* Slightly looser for labels */
+  .tracking-label {
+    letter-spacing: 0.02em;
+  }
+
+  /* Shimmer skeleton loading effect */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      var(--color-muted) 0%,
+      var(--color-muted-foreground, #98989d) 50%,
+      var(--color-muted) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+    opacity: 0.15;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
   }
 }
 

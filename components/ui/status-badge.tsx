@@ -22,6 +22,8 @@ export interface StatusConfig {
   label: string;
   icon?: LucideIcon;
   className?: string;
+  /** Whether this status represents live availability and should show a pulsing dot */
+  live?: boolean;
 }
 
 /**
@@ -50,7 +52,8 @@ const STATUS_CONFIGS: Record<string, Record<string, StatusConfig>> = {
     available: {
       variant: 'default',
       label: 'Available',
-      className: 'bg-green-100 text-green-800 border-green-200'
+      className: 'bg-green-100 text-green-800 border-green-200',
+      live: true,
     },
     limited: {
       variant: 'secondary',
@@ -68,11 +71,13 @@ const STATUS_CONFIGS: Record<string, Record<string, StatusConfig>> = {
   beer: {
     on_tap: {
       variant: 'default',
-      label: 'Pouring'
+      label: 'Pouring',
+      live: true,
     },
     cans: {
       variant: 'outline',
-      label: 'Cans'
+      label: 'Cans',
+      live: true,
     },
     sale: {
       variant: 'destructive',
@@ -87,7 +92,8 @@ const STATUS_CONFIGS: Record<string, Record<string, StatusConfig>> = {
   vendor: {
     active: {
       variant: 'default',
-      label: 'Active'
+      label: 'Active',
+      live: true,
     },
     inactive: {
       variant: 'secondary',
@@ -157,6 +163,12 @@ export function StatusBadge({
       )}
       {...props}
     >
+      {'live' in config && config.live && (
+        <span className="relative flex h-2 w-2 mr-1">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-75 [animation-iteration-count:3]" />
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-current" />
+        </span>
+      )}
       {showIcon && IconComponent && (
         <IconComponent className={cn(
           'mr-1',

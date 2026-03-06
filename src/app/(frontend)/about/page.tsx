@@ -11,6 +11,7 @@ import { JsonLd } from '@/components/seo/json-ld';
 import { generateOrganizationSchema } from '@/lib/utils/local-business-schema';
 import { generateBreadcrumbSchema } from '@/lib/utils/breadcrumb-schema';
 import { generateAboutSpeakableSchema } from '@/lib/utils/speakable-schema';
+import { PageTransition } from '@/components/motion';
 import { getSiteContent } from '@/lib/utils/site-content';
 import {
   DEFAULT_ABOUT_PHILOSOPHY,
@@ -59,6 +60,7 @@ export default async function AboutPage() {
       <JsonLd data={organizationSchema} />
       <JsonLd data={breadcrumbSchema} />
       <JsonLd data={speakableSchema} />
+      <PageTransition>
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <PageBreadcrumbs className="mb-6" />
         <div className="text-center mb-12">
@@ -88,6 +90,7 @@ export default async function AboutPage() {
           </div>
         </div>
       </div>
+      </PageTransition>
     </>
   );
 }
