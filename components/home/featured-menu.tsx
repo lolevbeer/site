@@ -9,7 +9,6 @@ import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/
 import { ScrollReveal } from '@/components/ui/scroll-reveal';
 import { Beer as BeerIconLucide, Package, Pencil } from 'lucide-react';
 import { getGlassIcon } from '@/lib/utils/beer-icons';
-import { formatRating } from '@/lib/utils/formatters';
 import { useLocationContext } from '@/components/location/location-provider';
 import { DraftBeerCard } from '@/components/beer/draft-beer-card';
 import { useAnimatedList, getAnimationClass } from '@/lib/hooks/use-animated-list';
@@ -20,8 +19,8 @@ import { getTodayEST } from '@/lib/utils/date';
 import type { Menu, Style, Location } from '@/src/payload-types';
 import type { Beer } from '@/lib/types/beer';
 import { Logo } from '@/components/ui/logo';
-import { UntappdIcon } from '@/components/icons';
 import { TopBeerDropsLink } from '@/components/beer/top-beer-drops-link';
+import { UntappdRating } from '@/components/beer/untappd-rating';
 
 /** Parse price string to number, removing '$' prefix if present */
 function parsePrice(price: string | number | null | undefined): number | undefined {
@@ -297,17 +296,6 @@ function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fu
       >
         <div className="relative w-full bg-transparent transition-transform duration-200 group-hover:scale-[1.02]" style={{ height: '28vh' }}>
           {renderImage()}
-          {(item.untappdRating ?? 0) > 0 && (
-            <div className="absolute z-10 bg-background/80 backdrop-blur-sm rounded-md flex items-center text-amber-500" style={{ bottom: '0.8vh', left: '0.8vh', padding: '0.3vh 0.6vh', gap: '0.3vh' }}>
-              <UntappdIcon style={{ height: '2.4vh', width: '2.4vh' }} />
-              <span className="font-bold" style={{ fontSize: '1.4vh' }}>{formatRating(item.untappdRating)}/5</span>
-            </div>
-          )}
-          {item.topBeerDrops && (
-            <div className="absolute z-10" style={{ bottom: '0.8vh', right: '0.8vh' }}>
-              <TopBeerDropsLink url={item.topBeerDrops} className="text-foreground hover:text-primary transition-colors drop-shadow-md" style={{ height: '3.2vh', width: '3.2vh' }} />
-            </div>
-          )}
           {item.isJustReleased && (
             <Badge variant="default" className="absolute left-1/2 -translate-x-1/2" style={{ bottom: '-0.8vh', fontSize: '1.3vh' }}>
               Just Released
@@ -319,7 +307,11 @@ function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fu
             {item.name}
           </h3>
           <div className="flex items-center" style={{ gap: '0.8vh' }}>
+            <UntappdRating rating={item.untappdRating} style={{ gap: '0.3vh', fontSize: '1.8vh' }} iconStyle={{ height: '1.8vh', width: '1.8vh' }} />
             <Badge variant="outline" style={{ fontSize: '1.6vh' }}>{item.type}</Badge>
+            {item.topBeerDrops && (
+              <TopBeerDropsLink url={item.topBeerDrops} className="text-foreground hover:text-primary transition-colors drop-shadow-md" style={{ height: '2.2vh', width: '2.2vh' }} />
+            )}
           </div>
           {item.fourPack && (
             <span className="font-semibold transition-colors duration-[250ms]" style={{ fontSize: '1.8vh', color: accentColor }}>
@@ -351,17 +343,6 @@ function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fu
     >
       <div className="relative h-64 w-full flex-shrink-0 mb-4 bg-transparent transition-transform duration-200 group-hover:scale-[1.02]">
         {renderImage()}
-        {(item.untappdRating ?? 0) > 0 && (
-          <div className="absolute bottom-2 left-2 z-10 bg-background/80 backdrop-blur-sm rounded-md px-1.5 py-0.5 flex items-center gap-0.5 text-amber-500">
-            <UntappdIcon className="h-5 w-5" />
-            <span className="text-xs font-bold">{formatRating(item.untappdRating)}/5</span>
-          </div>
-        )}
-        {item.topBeerDrops && (
-          <div className="absolute bottom-2 right-2 z-10">
-            <TopBeerDropsLink url={item.topBeerDrops} className="h-7 w-7 text-foreground hover:text-primary transition-colors drop-shadow-md" />
-          </div>
-        )}
         {item.isJustReleased && (
           <Badge variant="default" className="absolute -bottom-3 left-1/2 -translate-x-1/2 text-xs">
             Just Released
@@ -369,14 +350,12 @@ function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fu
         )}
       </div>
       <div className="mb-3">
-        <div className="flex items-center justify-center gap-2 flex-wrap mb-2">
-          <h3 className="text-lg font-semibold">{item.name}</h3>
+        <h3 className="text-xl font-semibold text-center mb-2">{item.name}</h3>
+        <div className="flex items-center justify-center gap-2">
+          <UntappdRating rating={item.untappdRating} />
           <Badge variant="outline" className="text-xs">{item.type}</Badge>
-          {item.onDraft && (
-            <Badge variant="default" className="text-xs flex-shrink-0 flex items-center gap-1">
-              <GlassIcon className="h-3 w-3" />
-              Pouring
-            </Badge>
+          {item.topBeerDrops && (
+            <TopBeerDropsLink url={item.topBeerDrops} className="h-6 w-6 text-foreground hover:text-primary transition-colors" />
           )}
         </div>
       </div>

@@ -13,12 +13,6 @@ import { BaseCard, CardSkeleton } from '@/components/ui/base-card';
 import { StatusBadge, StatusBadgeGroup } from '@/components/ui/status-badge';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from '@/components/ui/hover-card';
-import { formatRating } from '@/lib/utils/formatters';
 import { BeerImage } from './beer-image';
 import {
   formatAbv,
@@ -28,8 +22,8 @@ import {
 } from '@/lib/utils/formatters';
 import { getGlassIcon } from '@/lib/utils/beer-icons';
 import { trackBeerView } from '@/lib/analytics/events';
-import { UntappdIcon } from '@/components/icons';
 import { TopBeerDropsLink } from '@/components/beer/top-beer-drops-link';
+import { UntappdRating } from '@/components/beer/untappd-rating';
 
 interface BeerCardProps {
   beer: Beer;
@@ -76,35 +70,16 @@ export const BeerCard = React.memo(function BeerCard({
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
             priority={priority}
           />
-          {(beer.untappdRating ?? 0) > 0 && (
-            <div className="absolute bottom-2 left-2 z-10 bg-background/80 backdrop-blur-sm rounded-md px-1.5 py-0.5 flex items-center gap-0.5 text-amber-500">
-              <UntappdIcon className="h-5 w-5" />
-              <span className="text-xs font-bold">{formatRating(beer.untappdRating)}/5</span>
-            </div>
-          )}
-          {beer.topBeerDrops && (
-            <div className="absolute bottom-2 right-2 z-10">
-              <TopBeerDropsLink url={beer.topBeerDrops} className="h-7 w-7 text-foreground hover:text-primary transition-colors drop-shadow-md" />
-            </div>
-          )}
         </div>
         <div className="mb-3">
-          <h3 className="text-lg font-semibold text-center mb-2">{beer.name}</h3>
-          <div className="flex items-center justify-center gap-2 flex-wrap">
+          <h3 className="text-xl font-semibold text-center mb-2">{beer.name}</h3>
+          <div className="flex items-center justify-center gap-2">
+            <UntappdRating rating={beer.untappdRating} />
             <Badge variant="outline" className="text-xs">
               {beer.type}
             </Badge>
-            {beer.availability.tap && (
-              <HoverCard openDelay={200}>
-                <HoverCardTrigger asChild>
-                  <span className="inline-flex items-center justify-center cursor-help" onClick={(e) => e.preventDefault()}>
-                    <GlassIcon className="h-4 w-4" />
-                  </span>
-                </HoverCardTrigger>
-                <HoverCardContent side="top" className="w-auto p-2">
-                  <p className="text-xs">Pouring</p>
-                </HoverCardContent>
-              </HoverCard>
+            {beer.topBeerDrops && (
+              <TopBeerDropsLink url={beer.topBeerDrops} className="h-6 w-6 text-foreground hover:text-primary transition-colors" />
             )}
           </div>
         </div>
@@ -124,12 +99,7 @@ export const BeerCard = React.memo(function BeerCard({
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           priority={priority}
         />
-        {(beer.untappdRating ?? 0) > 0 && (
-          <div className="absolute bottom-6 left-2 z-10 bg-background/80 backdrop-blur-sm rounded-md px-1.5 py-0.5 flex items-center gap-0.5 text-amber-500">
-            <UntappdIcon className="h-5 w-5" />
-            <span className="text-xs font-bold">{formatRating(beer.untappdRating)}/5</span>
-          </div>
-        )}
+        <UntappdRating rating={beer.untappdRating} variant="overlay" className="absolute bottom-6 left-2 z-10" />
         {beer.topBeerDrops && (
           <div className="absolute bottom-6 right-2 z-10">
             <TopBeerDropsLink url={beer.topBeerDrops} className="h-7 w-7 text-foreground hover:text-primary transition-colors drop-shadow-md" />

@@ -20,7 +20,7 @@ export const Media: CollectionConfig = {
   upload: {
     staticDir: 'public/uploads',
     mimeTypes: ['image/png', 'image/jpg', 'image/jpeg', 'image/webp'],
-    disableLocalStorage: false,
+    disableLocalStorage: !!process.env.BLOB_READ_WRITE_TOKEN,
     formatOptions: {
       format: 'png',
     },
