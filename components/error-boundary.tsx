@@ -4,6 +4,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle } from 'lucide-react';
+import * as Sentry from '@sentry/nextjs';
 import { logger } from '@/lib/utils/logger';
 
 interface ErrorBoundaryProps {
@@ -41,8 +42,8 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     // Call custom error handler if provided
     this.props.onError?.(error, errorInfo);
 
-    // In production, you would log to an error reporting service here
-    // Example: Sentry.captureException(error, { contexts: { react: errorInfo } });
+    // Report to Sentry in production
+    Sentry.captureException(error, { contexts: { react: { componentStack: errorInfo.componentStack } } });
   }
 
   render() {
