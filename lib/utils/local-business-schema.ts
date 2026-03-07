@@ -117,7 +117,7 @@ export function generateLocalBusinessSchema(location: PayloadLocation): LocalBus
   const baseUrl = 'https://lolev.beer'
 
   // Build images array from CMS data with fallback
-  const images: string[] = [`${baseUrl}/images/og-image.png`]
+  const images: string[] = [`${baseUrl}/images/beer/og-image.png`]
   const heroImage = getMediaUrl(location.images?.hero)
   const cardImage = getMediaUrl(location.images?.card)
   if (heroImage) images.push(heroImage)
@@ -131,7 +131,7 @@ export function generateLocalBusinessSchema(location: PayloadLocation): LocalBus
     description:
       'Craft brewery serving purposeful beer and building community in the Pittsburgh area. Offering modern ales, expressive lagers, and oak-aged beer.',
     image: images,
-    logo: `${baseUrl}/images/og-image.png`,
+    logo: `${baseUrl}/images/beer/og-image.png`,
     url: baseUrl,
     address: {
       '@type': 'PostalAddress',
@@ -192,7 +192,7 @@ export function generateOrganizationSchema(locations?: PayloadLocation[]): objec
     name: 'Lolev Beer',
     alternateName: 'Lolev Beer - A Brewery in Pittsburgh',
     url: 'https://lolev.beer',
-    logo: 'https://lolev.beer/images/og-image.png',
+    logo: 'https://lolev.beer/images/beer/og-image.png',
     description:
       'Craft brewery in Pennsylvania. Specializing in modern ales, expressive lagers, and oak-aged beer.',
     foundingDate: '2022',
