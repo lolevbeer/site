@@ -1,6 +1,13 @@
+import type { Metadata } from 'next';
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
 import { JsonLd } from '@/components/seo/json-ld';
 import { generateBreadcrumbSchema, generateWebPageSchema } from '@/lib/utils/breadcrumb-schema';
+
+export const metadata: Metadata = {
+  title: 'Privacy Policy',
+  description: 'Lolev Beer privacy policy explaining how we collect, use, and safeguard your information.',
+  alternates: { canonical: '/privacy' },
+};
 
 export default function PrivacyPage() {
   const breadcrumbSchema = generateBreadcrumbSchema([

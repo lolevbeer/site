@@ -28,6 +28,7 @@ export const metadata: Metadata = {
     'brewery map',
     'directions',
   ],
+  alternates: { canonical: '/beer-map' },
   openGraph: {
     title: 'Find Us | Lolev Beer',
     description: 'Visit us at our Lawrenceville or Zelienople locations',

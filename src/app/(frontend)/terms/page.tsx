@@ -1,6 +1,13 @@
+import type { Metadata } from 'next';
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
 import { JsonLd } from '@/components/seo/json-ld';
 import { generateBreadcrumbSchema, generateWebPageSchema } from '@/lib/utils/breadcrumb-schema';
+
+export const metadata: Metadata = {
+  title: 'Terms of Service',
+  description: 'Lolev Beer terms of service governing use of the lolev.beer website.',
+  alternates: { canonical: '/terms' },
+};
 
 export default function TermsPage() {
   const breadcrumbSchema = generateBreadcrumbSchema([
