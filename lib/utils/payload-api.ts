@@ -17,6 +17,7 @@ import { CACHE_TAGS } from '@/lib/utils/cache'
 import { extractBeerFromMenuItem } from './menu-item-utils'
 import { getMediaUrl } from './media-utils'
 import { getTodayEST, getTodayMidnightISO } from './date'
+import { formatAddress } from './formatters'
 
 /**
  * Check if any beer globally has justReleased flag set
@@ -1200,7 +1201,7 @@ export const getAllDistributorsGeoJSON = async (): Promise<DistributorGeoJSON> =
             properties: {
               id: index,
               Name: dist.name,
-              address: dist.address,
+              address: formatAddress(dist),
               customerType: dist.customerType || 'Retail',
               uniqueId: dist.id,
             },

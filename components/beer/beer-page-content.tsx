@@ -131,7 +131,7 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
               placeholder="Search beers..."
               value={search}
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="pl-8 bg-secondary"
+              className="pl-8 h-9 bg-secondary"
             />
             {search && (
               <button
@@ -151,12 +151,12 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
             value={availability}
             onValueChange={(val) => handleAvailabilityChange(val || 'all')}
             variant="outline"
-            size="sm"
+            size="default"
             className="flex-1"
           >
             <ToggleGroupItem value="all">All</ToggleGroupItem>
             <ToggleGroupItem value="tap">Draft</ToggleGroupItem>
-            <ToggleGroupItem value="cans">In Cans</ToggleGroupItem>
+            <ToggleGroupItem value="cans">To-Go</ToggleGroupItem>
           </ToggleGroup>
 
           {/* Style dropdown - 1/3 */}

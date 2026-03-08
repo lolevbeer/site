@@ -90,7 +90,7 @@ export const metadata: Metadata = {
     siteName: 'Lolev Beer',
     images: [
       {
-        url: '/images/og-image.png',
+        url: '/images/beer/og-image.png',
         width: 1200,
         height: 630,
         alt: 'Lolev Beer - Craft Beer',
@@ -102,7 +102,7 @@ export const metadata: Metadata = {
     title: 'Lolev Beer - Craft Beer in Pittsburgh',
     description:
       'Experience exceptional craft beer at Lolev Beer with locations in Lawrenceville and Zelienople. Fresh brews, local food, and community events.',
-    images: ['/images/og-image.png'],
+    images: ['/images/beer/og-image.png'],
     creator: '@lolevbeer',
   },
   robots: {
@@ -134,7 +134,6 @@ export default async function AppLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         {/* Favicons */}
-        <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" href="/favicons/favicon-16x16.png" type="image/png" sizes="16x16" />
         <link rel="icon" href="/favicons/favicon-32x32.png" type="image/png" sizes="32x32" />
         <link rel="apple-touch-icon" href="/favicons/apple-touch-icon.png" />

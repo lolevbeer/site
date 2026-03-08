@@ -1,9 +1,9 @@
 import React from 'react';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { MapPin, Search, Locate, Map as MapIcon, List } from 'lucide-react';
+import { capitalizeName } from '@/lib/utils/formatters';
 
 interface NearbyLocation {
   uniqueId: string;
@@ -26,14 +26,6 @@ interface MapControlsProps {
   distanceFromLabel?: string | null;
 }
 
-const capitalizeName = (name: string) => {
-  return name
-    .toLowerCase()
-    .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-};
-
 export function MapControls({
   searchTerm,
   onSearchChange,
@@ -49,7 +41,7 @@ export function MapControls({
   distanceFromLabel
 }: MapControlsProps) {
   return (
-    <Card className="border-0 flex-shrink-0 shadow-none pb-4 bg-transparent overflow-visible">
+    <div className="flex-shrink-0 p-1 pb-4">
       <div className="flex flex-col gap-3">
         {/* Mobile: Search full width, then Near Me + Toggle on second row */}
         {/* Desktop: All on one row */}
@@ -173,6 +165,6 @@ export function MapControls({
           </div>
         )}
       </div>
-    </Card>
+    </div>
   );
 }

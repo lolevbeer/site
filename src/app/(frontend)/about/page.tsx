@@ -19,7 +19,7 @@ import {
 } from '@/lib/constants/site-content-defaults';
 
 export const metadata: Metadata = {
-  title: 'About | Lolev Beer',
+  title: 'About',
   description: 'Learn about Lolev Beer, our brewing philosophy, and our locations in Lawrenceville and Zelienople.',
   keywords: ['about', 'brewery', 'philosophy', 'Lawrenceville', 'Zelienople', 'Pittsburgh brewery'],
   alternates: {

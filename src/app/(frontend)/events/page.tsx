@@ -18,7 +18,7 @@ import { PageTransition } from '@/components/motion';
 export const revalidate = 300;
 
 export const metadata: Metadata = {
-  title: 'Events | Lolev Beer',
+  title: 'Events',
   description: 'Discover upcoming events at Lolev Beer. From trivia nights to live music, find your next great experience at our Lawrenceville and Zelienople locations.',
   keywords: ['brewery events', 'trivia night', 'live music', 'Pittsburgh brewery', 'beer events'],
   openGraph: {

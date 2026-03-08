@@ -269,7 +269,7 @@ export function generateProductSchema(beer: ProductSchemaInput): ProductJsonLd {
     brand: {
       '@type': 'Brand',
       name: 'Lolev Beer',
-      logo: `${baseUrl}/images/og-image.png`,
+      logo: `${baseUrl}/images/beer/og-image.png`,
       url: baseUrl
     },
     category: getBeerCategory(beer),

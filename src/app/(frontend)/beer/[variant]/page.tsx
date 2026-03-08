@@ -22,13 +22,13 @@ export async function generateMetadata({ params }: BeerPageProps): Promise<Metad
   } catch {
     // Database error - return generic title
     return {
-      title: 'Beer Not Found | Lolev Beer',
+      title: 'Beer Not Found',
     };
   }
 
   if (!beer) {
     return {
-      title: 'Beer Not Found | Lolev Beer',
+      title: 'Beer Not Found',
     };
   }
 

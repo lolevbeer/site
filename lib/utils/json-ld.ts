@@ -160,7 +160,7 @@ function getOrganizer(): OrganizationJsonLd {
     '@type': 'Organization',
     name: 'Lolev Beer',
     url: 'https://lolev.beer',
-    logo: 'https://lolev.beer/images/og-image.png',
+    logo: 'https://lolev.beer/images/beer/og-image.png',
     sameAs: [
       'https://www.facebook.com/lolevbeer',
       'https://www.instagram.com/lolevbeer'

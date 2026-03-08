@@ -16,7 +16,7 @@ import { generateLocalBusinessSchemas } from '@/lib/utils/local-business-schema'
 import { generateBreadcrumbSchema } from '@/lib/utils/breadcrumb-schema'
 
 export const metadata: Metadata = {
-  title: 'Find Us | Lolev Beer',
+  title: 'Find Us',
   description:
     "Find Lolev's locations in Lawrenceville and Zelienople. Get directions, hours, and contact information for both brewery locations.",
   keywords: [
@@ -28,6 +28,7 @@ export const metadata: Metadata = {
     'brewery map',
     'directions',
   ],
+  alternates: { canonical: '/beer-map' },
   openGraph: {
     title: 'Find Us | Lolev Beer',
     description: 'Visit us at our Lawrenceville or Zelienople locations',

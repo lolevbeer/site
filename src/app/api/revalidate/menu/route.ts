@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     const authHeader = request.headers.get('x-revalidate-token')
     const expectedToken = process.env.REVALIDATE_SECRET
 
-    if (expectedToken && authHeader !== expectedToken) {
+    if (!expectedToken || authHeader !== expectedToken) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 

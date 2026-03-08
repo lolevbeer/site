@@ -127,7 +127,7 @@ export async function GET() {
     <lastBuildDate>${formatRFC822Date(new Date())}</lastBuildDate>
     <atom:link href="${baseUrl}/feed.xml" rel="self" type="application/rss+xml"/>
     <image>
-      <url>${baseUrl}/images/og-image.png</url>
+      <url>${baseUrl}/images/beer/og-image.png</url>
       <title>Lolev Beer</title>
       <link>${baseUrl}</link>
     </image>

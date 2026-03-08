@@ -52,5 +52,6 @@ export async function generateMetadata({ params }: MenuPageProps) {
   return {
     title: menu.name || `${menu.type} Menu`,
     description: menu.description || `View our ${menu.type} menu`,
+    alternates: { canonical: `/m/${menuUrl}` },
   }
 }

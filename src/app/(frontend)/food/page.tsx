@@ -12,7 +12,7 @@ import { PageTransition } from '@/components/motion';
 import { logger } from '@/lib/utils/logger';
 
 export const metadata: Metadata = {
-  title: 'Food | Lolev Beer',
+  title: 'Food',
   description: 'Food trucks and vendors at Lolev Beer in Lawrenceville and Zelienople',
 };
 

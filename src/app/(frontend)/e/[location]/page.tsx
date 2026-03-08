@@ -137,5 +137,6 @@ export async function generateMetadata({ params }: EventsDisplayPageProps) {
   return {
     title,
     description: `Upcoming food and events at ${data.locationName}`,
+    alternates: { canonical: `/e/${location}` },
   }
 }
