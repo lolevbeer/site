@@ -191,3 +191,27 @@ export function getBeerPricing(beer: Beer): string {
   return items.length > 0 ? items.join(' • ') : 'See store';
 }
 
+/**
+ * Title-case a name (e.g., "GIANT EAGLE" → "Giant Eagle")
+ */
+export function capitalizeName(name: string): string {
+  return name
+    .toLowerCase()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
+/**
+ * Format a US address from parts, omitting any missing fields.
+ * Returns e.g. "123 Main St, Pittsburgh, PA 15201"
+ */
+export function formatAddress(parts: { address?: string | null; city?: string | null; state?: string | null; zip?: string | null }): string {
+  const segments: string[] = []
+  if (parts.address) segments.push(parts.address)
+  const cityState = [parts.city, parts.state].filter(Boolean).join(', ')
+  const locale = [cityState, parts.zip].filter(Boolean).join(' ')
+  if (locale) segments.push(locale)
+  return segments.join(', ')
+}
+

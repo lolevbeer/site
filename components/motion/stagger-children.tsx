@@ -4,7 +4,8 @@
 
 'use client';
 
-import { motion, useReducedMotion } from 'framer-motion';
+import { useRef } from 'react';
+import { motion, useInView, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { EASE_OUT_SMOOTH } from './constants';
 
@@ -50,18 +51,22 @@ export function StaggerChildren({
   inView = false,
 }: StaggerChildrenProps) {
   const prefersReducedMotion = useReducedMotion();
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: '-50px' });
 
   if (prefersReducedMotion) {
     return <div className={cn(className)}>{children}</div>;
   }
 
+  // When inView, wait for viewport intersection; otherwise animate immediately
+  const animateState = inView && !isInView ? 'hidden' : 'visible';
+
   return (
     <motion.div
+      ref={inView ? ref : undefined}
       className={cn(className)}
       initial="hidden"
-      animate={inView ? undefined : 'visible'}
-      whileInView={inView ? 'visible' : undefined}
-      viewport={inView ? { once: true, margin: '-50px' } : undefined}
+      animate={animateState}
       custom={staggerDelay}
       variants={containerVariants}
     >

@@ -1,8 +1,8 @@
 import React from 'react';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Navigation } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { capitalizeName } from '@/lib/utils/formatters';
 
 interface LocationCardProps {
   name: string;
@@ -13,14 +13,6 @@ interface LocationCardProps {
   onClick: () => void;
   innerRef?: React.Ref<HTMLDivElement>;
 }
-
-const capitalizeName = (name: string) => {
-  return name
-    .toLowerCase()
-    .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-};
 
 export function LocationCard({
   name,
@@ -39,12 +31,12 @@ export function LocationCard({
   };
 
   return (
-    <Card
+    <div
       ref={innerRef}
       className={cn(
-        "p-3 cursor-pointer border border-border bg-transparent shadow-none",
+        "p-3 cursor-pointer rounded-md",
         "transition-all duration-200 ease-out",
-        "hover:-translate-y-0.5 hover:bg-secondary",
+        "hover:bg-secondary",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         isSelected && "bg-secondary"
       )}
@@ -90,6 +82,6 @@ export function LocationCard({
           Directions
         </Button>
       </div>
-    </Card>
+    </div>
   );
 }
