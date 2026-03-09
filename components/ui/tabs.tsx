@@ -31,7 +31,7 @@ function TabsList({
       <LayoutGroup>
         <TabsPrimitive.List
           className={cn(
-            "inline-flex h-10 items-center justify-center rounded-xl bg-muted/60 p-1 gap-0.5 text-muted-foreground dark:bg-muted/40",
+            "inline-flex h-10 items-center justify-center rounded-sm bg-black/[0.06] p-1 gap-0.5 text-muted-foreground dark:bg-muted/40",
             className
           )}
           {...props}
@@ -67,18 +67,18 @@ function TabsTrigger({
     <TabsPrimitive.Trigger
       ref={ref}
       className={cn(
-        "relative inline-flex items-center justify-center whitespace-nowrap rounded-lg px-4 py-1.5 text-sm font-medium text-muted-foreground cursor-pointer focus-visible:outline-none focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:text-foreground hover:text-foreground/70 transition-colors",
+        "relative inline-flex items-center justify-center whitespace-nowrap rounded-sm px-4 py-1.5 text-sm font-medium text-muted-foreground cursor-pointer focus-visible:outline-none focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:text-foreground hover:text-foreground/70 transition-colors",
         className
       )}
       {...props}
     >
       {isActive && (
         prefersReducedMotion ? (
-          <div className="absolute inset-0 rounded-lg bg-background shadow-sm dark:shadow-none dark:ring-1 dark:ring-border/50" />
+          <div className="absolute inset-0 rounded-sm bg-background" />
         ) : (
           <motion.div
             layoutId={layoutId}
-            className="absolute inset-0 rounded-lg bg-background shadow-sm dark:shadow-none dark:ring-1 dark:ring-border/50"
+            className="absolute inset-0 rounded-sm bg-background"
             transition={{ type: "spring", stiffness: 400, damping: 30 }}
           />
         )
