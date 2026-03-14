@@ -61,11 +61,6 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
     return (
       <Link href={`/beer/${beerSlug}`} className="group block h-full">
         <div className={`relative overflow-hidden transition-colors duration-200 cursor-pointer hover:bg-secondary/50 h-full bg-background ${className}`}>
-          {showJustReleased && beer.isJustReleased && (
-            <Badge variant="default" className="absolute z-10" style={{ top: '3vh', right: '0.5vh', fontSize: '1.8vh' }}>
-              Just Released
-            </Badge>
-          )}
           <div className="flex items-center h-full" style={{ gap: '1vh' }}>
             {/* Tap Number, Glass Icon, and Rating */}
             {(showTap || showGlass) && (
@@ -120,7 +115,12 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
             </div>
 
             {/* ABV and Price - Right aligned */}
-            <div className="flex-shrink-0 flex items-center" style={{ gap: '2vh' }}>
+            <div className="relative flex-shrink-0 flex items-center" style={{ gap: '2vh' }}>
+              {showJustReleased && beer.isJustReleased && (
+                <Badge variant="default" className="absolute z-10 right-0" style={{ bottom: '100%', marginBottom: '0.3vh', fontSize: '1.8vh' }}>
+                  Just Released
+                </Badge>
+              )}
               {showAbv && (
                 <div className="text-center" style={{ minWidth: '7vh' }}>
                   {beer.abv && (
