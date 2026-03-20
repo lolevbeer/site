@@ -18,6 +18,7 @@ import { extractBeerFromMenuItem, extractProductFromMenuItem } from '@/lib/utils
 import { getTodayEST } from '@/lib/utils/date';
 import type { Menu, Style, Location } from '@/src/payload-types';
 import type { Beer } from '@/lib/types/beer';
+import { getBeerBadgeLabel } from '@/lib/types/beer';
 import { Logo } from '@/components/ui/logo';
 import { TopBeerDropsLink } from '@/components/beer/top-beer-drops-link';
 import { UntappdRating } from '@/components/beer/untappd-rating';
@@ -59,6 +60,10 @@ interface MenuItem {
   fourPack?: string;
   bottlePrice?: string;
   isJustReleased?: boolean;
+  /** Beer from another brewery */
+  guestTap?: boolean;
+  /** Collaboration brew */
+  collab?: boolean;
   recipe?: number;
   hops?: string;
   tap?: number;
@@ -192,8 +197,10 @@ function convertMenuItems(menuData: Menu): MenuItem[] {
         slug: String(beer.slug),
         style: styleName, // Pass as string, not object
         locationSlug: locationSlug ? String(locationSlug) : undefined,
-        // Store these for "just released" logic
+        // Store these for badge logic (collab/guest tap override "just released")
         justReleased: (beer as { justReleased?: boolean }).justReleased || false,
+        guestTap: (beer as { guestTap?: boolean }).guestTap || false,
+        collab: (beer as { collab?: boolean }).collab || false,
         createdAt: beer.createdAt,
         untappdRating: beer.untappdRating ?? null,
         topBeerDrops: beer.topBeerDrops || undefined,
@@ -296,9 +303,9 @@ function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fu
       >
         <div className="relative w-full bg-transparent transition-transform duration-200 group-hover:scale-[1.02]" style={{ height: '28vh' }}>
           {renderImage()}
-          {item.isJustReleased && (
+          {getBeerBadgeLabel(item) && (
             <Badge variant="default" className="absolute left-1/2 -translate-x-1/2" style={{ bottom: '-0.8vh', fontSize: '1.3vh' }}>
-              Just Released
+              {getBeerBadgeLabel(item)}
             </Badge>
           )}
         </div>
@@ -343,9 +350,9 @@ function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fu
     >
       <div className="relative h-64 w-full flex-shrink-0 mb-4 bg-transparent transition-transform duration-200 group-hover:scale-[1.02]">
         {renderImage()}
-        {item.isJustReleased && (
+        {getBeerBadgeLabel(item) && (
           <Badge variant="default" className="absolute -bottom-3 left-1/2 -translate-x-1/2 text-xs">
-            Just Released
+            {getBeerBadgeLabel(item)}
           </Badge>
         )}
       </div>

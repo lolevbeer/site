@@ -199,6 +199,14 @@ export interface Beer {
    * Mark as "Just Released". If no beers have this set, beers created within 2 weeks are auto-marked.
    */
   justReleased?: boolean | null;
+  /**
+   * Beer from another brewery. Overrides "Just Released" badge with "Guest Tap".
+   */
+  guestTap?: boolean | null;
+  /**
+   * Collaboration brew with another brewery. Overrides "Just Released" badge with "Collab".
+   */
+  collab?: boolean | null;
   name: string;
   /**
    * Beer style
@@ -853,6 +861,8 @@ export interface BeersSelect<T extends boolean = true> {
   recipe?: T;
   hideFromSite?: T;
   justReleased?: T;
+  guestTap?: T;
+  collab?: T;
   name?: T;
   style?: T;
   image?: T;
