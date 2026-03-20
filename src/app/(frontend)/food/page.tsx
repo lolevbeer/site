@@ -118,15 +118,18 @@ async function getFoodData(): Promise<FoodVendorSchedule[]> {
     locationMap[loc.id] = { slug: loc.slug || '', name: loc.name };
   }
 
-  // Transform individual food entries
+  // Transform individual food entries.
+  // Track date+vendor per location so recurring entries are only suppressed
+  // when the same vendor already has an individual entry that day.
   const individualSchedules: FoodVendorSchedule[] = [];
-  const individualDatesByLocation: Record<string, Set<string>> = {};
+  const individualDateVendorsByLocation: Record<string, Set<string>> = {};
 
   for (const entry of foodResult.docs as unknown as PayloadFoodEntry[]) {
     const locId = typeof entry.location === 'object' ? entry.location?.id : entry.location;
     const locationSlug = typeof entry.location === 'object' ? entry.location?.slug : undefined;
     const locationName = typeof entry.location === 'object' ? entry.location?.name : undefined;
 
+    const vendorId = typeof entry.vendor === 'object' ? entry.vendor?.id : entry.vendor;
     const { name: vendorName, site: vendorSite, logoUrl: vendorLogo } = extractVendorInfo(entry.vendor, entry.site);
 
     const dateStr = entry.date.split('T')[0];
@@ -135,10 +138,10 @@ async function getFoodData(): Promise<FoodVendorSchedule[]> {
     const dayOfWeek = fullDayLabels[date.getDay()];
 
     if (locId) {
-      if (!individualDatesByLocation[locId]) {
-        individualDatesByLocation[locId] = new Set();
+      if (!individualDateVendorsByLocation[locId]) {
+        individualDateVendorsByLocation[locId] = new Set();
       }
-      individualDatesByLocation[locId].add(dateStr);
+      individualDateVendorsByLocation[locId].add(`${dateStr}::${vendorId}`);
     }
 
     individualSchedules.push({
@@ -220,8 +223,8 @@ async function getFoodData(): Promise<FoodVendorSchedule[]> {
             // Skip if excluded
             if (locationExclusions.includes(dateKey)) continue;
 
-            // Skip if individual food exists for this date at this location
-            if (individualDatesByLocation[locationId]?.has(dateKey)) continue;
+            // Skip if the same vendor already has an individual entry for this date at this location
+            if (individualDateVendorsByLocation[locationId]?.has(`${dateKey}::${vendorId}`)) continue;
 
             const dayOfWeek = fullDayLabels[date.getDay()];
 

@@ -57,6 +57,9 @@ function FAQAnswer({ question, answer }: FAQAnswerProps): ReactNode {
   return answer;
 }
 
+// ISR: revalidate every hour (FAQ content changes infrequently)
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
   title: 'FAQ | Frequently Asked Questions',
   description: 'Find answers to common questions about Lolev Beer including hours, locations, events, private bookings, beer styles, and more.',
