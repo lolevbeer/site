@@ -148,6 +148,8 @@ function convertMenuItems(menuData: Menu): MenuItem[] {
             style: undefined,
             locationSlug: locationSlug ? String(locationSlug) : undefined,
             justReleased: false,
+            guestTap: (prod as { guestTap?: boolean }).guestTap || false,
+            collab: (prod as { collab?: boolean }).collab || false,
             createdAt: prod.createdAt,
           };
         }
@@ -197,9 +199,8 @@ function convertMenuItems(menuData: Menu): MenuItem[] {
         slug: String(beer.slug),
         style: styleName, // Pass as string, not object
         locationSlug: locationSlug ? String(locationSlug) : undefined,
-        // Store these for badge logic (collab/guest tap override "just released")
+        // Store these for badge logic (collab overrides "just released")
         justReleased: (beer as { justReleased?: boolean }).justReleased || false,
-        guestTap: (beer as { guestTap?: boolean }).guestTap || false,
         collab: (beer as { collab?: boolean }).collab || false,
         createdAt: beer.createdAt,
         untappdRating: beer.untappdRating ?? null,

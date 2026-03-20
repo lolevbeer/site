@@ -299,16 +299,6 @@ export const Beers: CollectionConfig = {
       },
     },
     {
-      name: 'guestTap',
-      label: 'Guest Tap',
-      type: 'checkbox',
-      defaultValue: false,
-      admin: {
-        position: 'sidebar',
-        description: 'Beer from another brewery. Overrides "Just Released" badge with "Guest Tap".',
-      },
-    },
-    {
       name: 'collab',
       label: 'Collab',
       type: 'checkbox',

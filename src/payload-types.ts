@@ -200,10 +200,6 @@ export interface Beer {
    */
   justReleased?: boolean | null;
   /**
-   * Beer from another brewery. Overrides "Just Released" badge with "Guest Tap".
-   */
-  guestTap?: boolean | null;
-  /**
    * Collaboration brew with another brewery. Overrides "Just Released" badge with "Collab".
    */
   collab?: boolean | null;
@@ -489,6 +485,14 @@ export interface Product {
    * Display price (e.g., "$5.00")
    */
   price?: string | null;
+  /**
+   * Product from another brewery. Shows "Guest Tap" badge on menu.
+   */
+  guestTap?: boolean | null;
+  /**
+   * Collaboration product. Shows "Collab" badge on menu.
+   */
+  collab?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -861,7 +865,6 @@ export interface BeersSelect<T extends boolean = true> {
   recipe?: T;
   hideFromSite?: T;
   justReleased?: T;
-  guestTap?: T;
   collab?: T;
   name?: T;
   style?: T;
@@ -920,6 +923,8 @@ export interface ProductsSelect<T extends boolean = true> {
   options?: T;
   abv?: T;
   price?: T;
+  guestTap?: T;
+  collab?: T;
   updatedAt?: T;
   createdAt?: T;
 }
