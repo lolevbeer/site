@@ -18,6 +18,7 @@ import { extractBeerFromMenuItem, extractProductFromMenuItem } from '@/lib/utils
 import { getTodayEST } from '@/lib/utils/date';
 import type { Menu, Style, Location } from '@/src/payload-types';
 import type { Beer } from '@/lib/types/beer';
+import { getBeerBadgeLabel } from '@/lib/types/beer';
 import { Logo } from '@/components/ui/logo';
 import { TopBeerDropsLink } from '@/components/beer/top-beer-drops-link';
 import { UntappdRating } from '@/components/beer/untappd-rating';
@@ -59,6 +60,10 @@ interface MenuItem {
   fourPack?: string;
   bottlePrice?: string;
   isJustReleased?: boolean;
+  /** Beer from another brewery */
+  guestTap?: boolean;
+  /** Collaboration brew */
+  collab?: boolean;
   recipe?: number;
   hops?: string;
   tap?: number;
@@ -143,6 +148,8 @@ function convertMenuItems(menuData: Menu): MenuItem[] {
             style: undefined,
             locationSlug: locationSlug ? String(locationSlug) : undefined,
             justReleased: false,
+            guestTap: (prod as { guestTap?: boolean }).guestTap || false,
+            collab: (prod as { collab?: boolean }).collab || false,
             createdAt: prod.createdAt,
           };
         }
@@ -192,8 +199,9 @@ function convertMenuItems(menuData: Menu): MenuItem[] {
         slug: String(beer.slug),
         style: styleName, // Pass as string, not object
         locationSlug: locationSlug ? String(locationSlug) : undefined,
-        // Store these for "just released" logic
+        // Store these for badge logic (collab overrides "just released")
         justReleased: (beer as { justReleased?: boolean }).justReleased || false,
+        collab: (beer as { collab?: boolean }).collab || false,
         createdAt: beer.createdAt,
         untappdRating: beer.untappdRating ?? null,
         topBeerDrops: beer.topBeerDrops || undefined,
@@ -259,6 +267,7 @@ function AdminEditButtons({
 /** Can card component for cans display */
 function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fullscreen?: boolean; accentColor?: string }) {
   const GlassIcon = getGlassIcon(item.glass);
+  const badgeLabel = getBeerBadgeLabel(item);
   const [imageError, setImageError] = useState(false);
 
   // Fallback content when no image or image failed to load
@@ -296,9 +305,9 @@ function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fu
       >
         <div className="relative w-full bg-transparent transition-transform duration-200 group-hover:scale-[1.02]" style={{ height: '28vh' }}>
           {renderImage()}
-          {item.isJustReleased && (
+          {badgeLabel && (
             <Badge variant="default" className="absolute left-1/2 -translate-x-1/2" style={{ bottom: '-0.8vh', fontSize: '1.3vh' }}>
-              Just Released
+              {badgeLabel}
             </Badge>
           )}
         </div>
@@ -343,9 +352,9 @@ function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fu
     >
       <div className="relative h-64 w-full flex-shrink-0 mb-4 bg-transparent transition-transform duration-200 group-hover:scale-[1.02]">
         {renderImage()}
-        {item.isJustReleased && (
+        {badgeLabel && (
           <Badge variant="default" className="absolute -bottom-3 left-1/2 -translate-x-1/2 text-xs">
-            Just Released
+            {badgeLabel}
           </Badge>
         )}
       </div>
@@ -373,8 +382,8 @@ export function FeaturedMenu({ menuType, menu, menus = [], animated = false, ite
     ? 'No beers on draft right now. Check back soon!'
     : 'No cans available. Check back soon for cans to take home.';
 
-  // Convert and filter items
-  const allItems = menus.flatMap(convertMenuItems);
+  // Convert and filter items (memoize allItems so downstream useMemo can skip work)
+  const allItems = useMemo(() => menus.flatMap(convertMenuItems), [menus]);
   const filteredItems = useMemo(
     () => filterByLocation(allItems, currentLocation),
     [currentLocation, allItems]

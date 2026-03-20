@@ -199,6 +199,10 @@ export interface Beer {
    * Mark as "Just Released". If no beers have this set, beers created within 2 weeks are auto-marked.
    */
   justReleased?: boolean | null;
+  /**
+   * Collaboration brew with another brewery. Overrides "Just Released" badge with "Collab".
+   */
+  collab?: boolean | null;
   name: string;
   /**
    * Beer style
@@ -481,6 +485,14 @@ export interface Product {
    * Display price (e.g., "$5.00")
    */
   price?: string | null;
+  /**
+   * Product from another brewery. Shows "Guest Tap" badge on menu.
+   */
+  guestTap?: boolean | null;
+  /**
+   * Collaboration product. Shows "Collab" badge on menu.
+   */
+  collab?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -853,6 +865,7 @@ export interface BeersSelect<T extends boolean = true> {
   recipe?: T;
   hideFromSite?: T;
   justReleased?: T;
+  collab?: T;
   name?: T;
   style?: T;
   image?: T;
@@ -910,6 +923,8 @@ export interface ProductsSelect<T extends boolean = true> {
   options?: T;
   abv?: T;
   price?: T;
+  guestTap?: T;
+  collab?: T;
   updatedAt?: T;
   createdAt?: T;
 }

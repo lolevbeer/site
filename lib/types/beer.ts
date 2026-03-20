@@ -99,8 +99,23 @@ export interface Beer {
   /** Tap/draft number (position in menu) */
   tap?: number | string;
   isJustReleased?: boolean;
+  /** Beer from another brewery */
+  guestTap?: boolean;
+  /** Collaboration brew */
+  collab?: boolean;
   pricing: BeerPricing;
   availability: BeerAvailability;
+}
+
+/**
+ * Get the badge label for a beer. Collab and Guest Tap take priority over Just Released.
+ * Returns null if no badge should be shown.
+ */
+export function getBeerBadgeLabel(beer: { collab?: boolean; guestTap?: boolean; isJustReleased?: boolean }): string | null {
+  if (beer.collab) return 'Collab'
+  if (beer.guestTap) return 'Guest Tap'
+  if (beer.isJustReleased) return 'Just Released'
+  return null
 }
 
 /**

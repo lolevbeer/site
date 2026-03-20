@@ -50,5 +50,25 @@ export const Products: CollectionConfig = {
         description: 'Display price (e.g., "$5.00")',
       },
     },
+    {
+      name: 'guestTap',
+      label: 'Guest Tap',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        position: 'sidebar',
+        description: 'Product from another brewery. Shows "Guest Tap" badge on menu.',
+      },
+    },
+    {
+      name: 'collab',
+      label: 'Collab',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        position: 'sidebar',
+        description: 'Collaboration product. Shows "Collab" badge on menu.',
+      },
+    },
   ],
 }
