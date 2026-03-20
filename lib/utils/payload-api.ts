@@ -227,6 +227,7 @@ export const getMenuByUrl = async (url: string): Promise<PayloadMenu | null> => 
               },
             ],
           },
+          overrideAccess: true, // Bypass access control — we filter by _status ourselves
           depth: 3, // Include location, beers, and beer relations (style, image)
           limit: 1,
         })
@@ -266,6 +267,7 @@ export const getMenuByUrlFresh = async (url: string): Promise<PayloadMenu | null
           },
         ],
       },
+      overrideAccess: true, // Bypass access control — we filter by _status ourselves
       depth: 3, // Include location, beers, and beer relations (style, image)
       limit: 1,
     })
