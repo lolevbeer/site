@@ -382,8 +382,8 @@ export function FeaturedMenu({ menuType, menu, menus = [], animated = false, ite
     ? 'No beers on draft right now. Check back soon!'
     : 'No cans available. Check back soon for cans to take home.';
 
-  // Convert and filter items
-  const allItems = menus.flatMap(convertMenuItems);
+  // Convert and filter items (memoize allItems so downstream useMemo can skip work)
+  const allItems = useMemo(() => menus.flatMap(convertMenuItems), [menus]);
   const filteredItems = useMemo(
     () => filterByLocation(allItems, currentLocation),
     [currentLocation, allItems]
