@@ -103,7 +103,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                   {beer.hops && (
                     <span><span className="font-medium">Hops:</span> {beer.hops} </span>
                   )}
-                  {showRating && (
+                  {showRating && !(beer as unknown as { isProduct?: boolean }).isProduct && (
                     <UntappdRating
                       rating={beer.untappdRating}
                       className="leading-none inline-flex"
@@ -184,7 +184,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
               {beer.topBeerDrops && (
                 <TopBeerDropsLink url={beer.topBeerDrops} className="h-6 w-6 flex-shrink-0 text-foreground hover:text-primary transition-colors" />
               )}
-              {showRating && (
+              {showRating && !(beer as unknown as { isProduct?: boolean }).isProduct && (
                 <UntappdRating
                   rating={beer.untappdRating}
                   className="flex-shrink-0"
