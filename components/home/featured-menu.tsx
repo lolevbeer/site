@@ -267,6 +267,7 @@ function AdminEditButtons({
 /** Can card component for cans display */
 function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fullscreen?: boolean; accentColor?: string }) {
   const GlassIcon = getGlassIcon(item.glass);
+  const badgeLabel = getBeerBadgeLabel(item);
   const [imageError, setImageError] = useState(false);
 
   // Fallback content when no image or image failed to load
@@ -304,9 +305,9 @@ function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fu
       >
         <div className="relative w-full bg-transparent transition-transform duration-200 group-hover:scale-[1.02]" style={{ height: '28vh' }}>
           {renderImage()}
-          {getBeerBadgeLabel(item) && (
+          {badgeLabel && (
             <Badge variant="default" className="absolute left-1/2 -translate-x-1/2" style={{ bottom: '-0.8vh', fontSize: '1.3vh' }}>
-              {getBeerBadgeLabel(item)}
+              {badgeLabel}
             </Badge>
           )}
         </div>
@@ -351,9 +352,9 @@ function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fu
     >
       <div className="relative h-64 w-full flex-shrink-0 mb-4 bg-transparent transition-transform duration-200 group-hover:scale-[1.02]">
         {renderImage()}
-        {getBeerBadgeLabel(item) && (
+        {badgeLabel && (
           <Badge variant="default" className="absolute -bottom-3 left-1/2 -translate-x-1/2 text-xs">
-            {getBeerBadgeLabel(item)}
+            {badgeLabel}
           </Badge>
         )}
       </div>

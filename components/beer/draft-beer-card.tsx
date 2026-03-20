@@ -51,6 +51,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
   const { currentLocation } = useLocationContext();
   const beerSlug = getBeerSlug(beer);
   const GlassIcon = getGlassIcon(beer.glass);
+  const badgeLabel = showJustReleased ? getBeerBadgeLabel(beer) : null;
 
   // Don't show beer if it's hidden from site
   if (beer.availability.hideFromSite) {
@@ -117,9 +118,9 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
 
             {/* ABV and Price - Right aligned */}
             <div className="relative flex-shrink-0 flex items-center" style={{ gap: '2vh' }}>
-              {showJustReleased && getBeerBadgeLabel(beer) && (
+              {badgeLabel && (
                 <Badge variant="default" className="absolute z-10 right-0" style={{ bottom: '100%', marginBottom: '0.3vh', fontSize: '1.8vh' }}>
-                  {getBeerBadgeLabel(beer)}
+                  {badgeLabel}
                 </Badge>
               )}
               {showAbv && (
@@ -158,9 +159,9 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
   return (
     <Link href={showLocation ? `/${currentLocation}/beer/${beerSlug}` : `/beer/${beerSlug}`} className="group block h-full">
       <div className={`relative overflow-hidden transition-colors duration-200 cursor-pointer hover:bg-secondary/50 h-full min-h-[80px] bg-background rounded-lg ${className}`}>
-        {showJustReleased && getBeerBadgeLabel(beer) && (
+        {badgeLabel && (
           <Badge variant="default" className="absolute z-10 top-2 right-1 text-xs">
-            {getBeerBadgeLabel(beer)}
+            {badgeLabel}
           </Badge>
         )}
         <div className="flex items-center gap-6 px-4 h-full">
