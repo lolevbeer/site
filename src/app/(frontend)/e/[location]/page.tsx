@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { getPayload } from 'payload'
 import config from '@/src/payload.config'
 import { LiveEvents } from '@/components/events/live-events'
@@ -7,8 +8,12 @@ import { getCansMenu, getCombinedUpcomingFood, transformPayloadEventToBreweryEve
 import type { PayloadMenu } from '@/lib/utils/payload-api'
 import { getTodayMidnightISO } from '@/lib/utils/date'
 
-// Force dynamic rendering to avoid DB connection during build
-export const dynamic = 'force-dynamic'
+// ISR: cache for 60s, skip build-time pre-rendering (first request is dynamic, then cached)
+export const revalidate = 60
+
+export function generateStaticParams() {
+  return [] // Don't pre-render at build, but ISR-cache on first request
+}
 
 interface EventsDisplayPageProps {
   params: Promise<{
@@ -26,14 +31,15 @@ export interface FoodItem {
 }
 
 /**
- * Fetch events, food, and cans menu for a specific location
+ * Fetch events, food, and cans menu for a specific location.
+ * Wrapped with React cache() to deduplicate between generateMetadata and page render.
  */
-async function getDataByLocation(locationSlug: string): Promise<{
+const getDataByLocation = cache(async (locationSlug: string): Promise<{
   events: BreweryEvent[]
   food: FoodItem[]
   cansMenu: PayloadMenu | null
   locationName: string
-} | null> {
+} | null> => {
   const payload = await getPayload({ config })
 
   // Get location by slug
@@ -95,7 +101,7 @@ async function getDataByLocation(locationSlug: string): Promise<{
     cansMenu,
     locationName: location.name,
   }
-}
+})
 
 export default async function EventsDisplayPage({ params }: EventsDisplayPageProps) {
   const { location } = await params

@@ -18,6 +18,9 @@ import {
   DEFAULT_ABOUT_LOCATIONS,
 } from '@/lib/constants/site-content-defaults';
 
+// ISR: revalidate every hour (content changes infrequently)
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
   title: 'About',
   description: 'Learn about Lolev Beer, our brewing philosophy, and our locations in Lawrenceville and Zelienople.',

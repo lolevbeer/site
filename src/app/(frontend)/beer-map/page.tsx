@@ -15,6 +15,9 @@ import { JsonLd } from '@/components/seo/json-ld'
 import { generateLocalBusinessSchemas } from '@/lib/utils/local-business-schema'
 import { generateBreadcrumbSchema } from '@/lib/utils/breadcrumb-schema'
 
+// ISR: revalidate every hour (locations/distributors change infrequently)
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
   title: 'Find Us',
   description:

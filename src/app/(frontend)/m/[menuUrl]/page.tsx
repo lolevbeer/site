@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { getMenuByUrlFresh, hasAnyBeerJustReleased } from '@/lib/utils/payload-api'
 import { LiveMenu } from '@/components/menu/live-menu'
 import { notFound } from 'next/navigation'
@@ -5,6 +6,11 @@ import { notFound } from 'next/navigation'
 // Use ISR with 60s revalidation for initial load performance
 // SSE handles real-time updates after hydration, so stale initial data is fine
 export const revalidate = 60
+
+/**
+ * Cached menu fetch — deduplicates between generateMetadata and page render.
+ */
+const getCachedMenu = cache((url: string) => getMenuByUrlFresh(url))
 
 interface MenuPageProps {
   params: Promise<{
@@ -15,7 +21,7 @@ interface MenuPageProps {
 export default async function MenuPage({ params }: MenuPageProps) {
   const { menuUrl } = await params
   const [menu, hasGlobalJustReleased] = await Promise.all([
-    getMenuByUrlFresh(menuUrl),
+    getCachedMenu(menuUrl),
     hasAnyBeerJustReleased(),
   ])
 
@@ -41,7 +47,7 @@ export default async function MenuPage({ params }: MenuPageProps) {
 // Generate metadata
 export async function generateMetadata({ params }: MenuPageProps) {
   const { menuUrl } = await params
-  const menu = await getMenuByUrlFresh(menuUrl)
+  const menu = await getCachedMenu(menuUrl)
 
   if (!menu) {
     return {

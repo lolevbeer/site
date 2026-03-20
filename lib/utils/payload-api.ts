@@ -1120,13 +1120,21 @@ export const getCombinedUpcomingFood = async (
     getUpcomingRecurringFood(locationSlug, limit),
   ])
 
-  // Create a set of dates that have individual food scheduled
-  const individualDates = new Set(
-    individual.map((f) => (typeof f.date === 'string' ? f.date.split('T')[0] : ''))
+  // Build a set of date+vendor keys from individual entries so we only suppress
+  // a recurring entry when the same vendor already has an individual entry that day.
+  // This allows two different vendors on the same date (e.g. GS Sando + Cookey).
+  const individualDateVendors = new Set(
+    individual.map((f) => {
+      const date = typeof f.date === 'string' ? f.date.split('T')[0] : ''
+      const vendorId = typeof f.vendor === 'object' ? f.vendor?.id || '' : f.vendor || ''
+      return `${date}::${vendorId}`
+    })
   )
 
-  // Filter out recurring entries that conflict with individual entries
-  const filteredRecurring = recurring.filter((r) => !individualDates.has(r.date))
+  // Filter out recurring entries only when the same vendor has an individual entry on that date
+  const filteredRecurring = recurring.filter(
+    (r) => !individualDateVendors.has(`${r.date}::${r.vendor.id}`)
+  )
 
   // Combine and sort
   const combined = [...individual, ...filteredRecurring]

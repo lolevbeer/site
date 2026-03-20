@@ -17,6 +17,7 @@ import {
 } from './payload-api';
 import { getSiteContent } from './site-content';
 import { arrayToLocationMap } from './array-helpers';
+import { extractBeerFromMenuItem, extractProductFromMenuItem } from './menu-item-utils';
 import type { Menu as PayloadMenu, Beer as PayloadBeer, Event as PayloadEvent, Location as PayloadLocation } from '@/src/payload-types';
 
 /** Inferred types from API functions */
@@ -106,7 +107,7 @@ export const getHomePageData = cache(async (): Promise<HomePageData> => {
   const authenticated = false;
   const locationSlugs = locations.map((loc) => loc.slug || loc.id);
 
-  // Fetch location-specific data in parallel
+  // Fetch location-specific data in parallel (including weekly hours)
   const [
     draftMenuResults,
     cansMenuResults,
@@ -114,6 +115,7 @@ export const getHomePageData = cache(async (): Promise<HomePageData> => {
     foodResults,
     eventsMarketingResults,
     foodMarketingResults,
+    weeklyHours,
   ] = await Promise.all([
     Promise.all(locationSlugs.map((slug) => getDraftMenu(slug))),
     Promise.all(locationSlugs.map((slug) => getCansMenu(slug))),
@@ -121,6 +123,7 @@ export const getHomePageData = cache(async (): Promise<HomePageData> => {
     Promise.all(locationSlugs.map((slug) => getCombinedUpcomingFood(slug, 3))),
     Promise.all(locationSlugs.map((slug) => getUpcomingEventsFromPayload(slug, 10))),
     Promise.all(locationSlugs.map((slug) => getCombinedUpcomingFood(slug, 10))),
+    getWeeklyHoursForLocations(locations),
   ]);
 
   // Transform arrays into location-keyed objects
@@ -131,14 +134,19 @@ export const getHomePageData = cache(async (): Promise<HomePageData> => {
   const eventsMarketingByLocation = arrayToLocationMap(locationSlugs, eventsMarketingResults);
   const foodMarketingByLocation = arrayToLocationMap(locationSlugs, foodMarketingResults);
 
-  // Fetch weekly hours for each location
-  const weeklyHours = await getWeeklyHoursForLocations(locations);
-
   // Derive additional data needed by components
   const allDraftMenus = Object.values(draftMenusByLocation).filter((m): m is PayloadMenu => m !== null);
   const allCansMenus = Object.values(cansMenusByLocation).filter((m): m is PayloadMenu => m !== null);
   const beerCount: Record<string, number> = Object.fromEntries(
-    locationSlugs.map((slug) => [slug, draftMenusByLocation[slug]?.items?.length || 0])
+    locationSlugs.map((slug) => {
+      const items = draftMenusByLocation[slug]?.items;
+      if (!items) return [slug, 0];
+      // Only count items that have a beer or product assigned (exclude empty tap slots)
+      const filledCount = items.filter(
+        (item) => extractBeerFromMenuItem(item) !== null || extractProductFromMenuItem(item) !== null
+      ).length;
+      return [slug, filledCount];
+    })
   );
   const allEvents = Object.values(eventsByLocation).flat()
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
