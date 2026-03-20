@@ -151,6 +151,7 @@ function convertMenuItems(menuData: Menu): MenuItem[] {
             guestTap: (prod as { guestTap?: boolean }).guestTap || false,
             collab: (prod as { collab?: boolean }).collab || false,
             createdAt: prod.createdAt,
+            isProduct: true,
           };
         }
         // Empty slot — no product assigned (represents an empty tap)
@@ -316,7 +317,7 @@ function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fu
             {item.name}
           </h3>
           <div className="flex items-center" style={{ gap: '0.8vh' }}>
-            <UntappdRating rating={item.untappdRating} style={{ gap: '0.3vh', fontSize: '1.8vh' }} iconStyle={{ height: '1.8vh', width: '1.8vh' }} />
+            {!item.isProduct && <UntappdRating rating={item.untappdRating} style={{ gap: '0.3vh', fontSize: '1.8vh' }} iconStyle={{ height: '1.8vh', width: '1.8vh' }} />}
             <Badge variant="outline" style={{ fontSize: '1.6vh' }}>{item.type}</Badge>
             {item.topBeerDrops && (
               <TopBeerDropsLink url={item.topBeerDrops} className="text-foreground hover:text-primary transition-colors drop-shadow-md" style={{ height: '2.2vh', width: '2.2vh' }} />
@@ -361,7 +362,7 @@ function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fu
       <div className="mb-3">
         <h3 className="text-xl font-semibold text-center mb-2">{item.name}</h3>
         <div className="flex items-center justify-center gap-2">
-          <UntappdRating rating={item.untappdRating} />
+          {!item.isProduct && <UntappdRating rating={item.untappdRating} />}
           <Badge variant="outline" className="text-xs">{item.type}</Badge>
           {item.topBeerDrops && (
             <TopBeerDropsLink url={item.topBeerDrops} className="h-6 w-6 text-foreground hover:text-primary transition-colors" />
