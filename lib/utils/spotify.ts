@@ -37,7 +37,6 @@ async function getAccessToken(refreshToken: string): Promise<string | null> {
     return null
   }
 
-  // Check cache
   const cached = tokenCache.get(refreshToken)
   if (cached && cached.expiresAt > Date.now() + 60_000) {
     return cached.accessToken
@@ -65,7 +64,6 @@ async function getAccessToken(refreshToken: string): Promise<string | null> {
     const accessToken = data.access_token as string
     const expiresIn = (data.expires_in as number) || 3600
 
-    // Cache the token
     tokenCache.set(refreshToken, {
       accessToken,
       expiresAt: Date.now() + expiresIn * 1000,
@@ -181,7 +179,8 @@ export async function exchangeCodeForTokens(code: string): Promise<{ accessToken
       accessToken: data.access_token,
       refreshToken: data.refresh_token,
     }
-  } catch {
+  } catch (error) {
+    logger.error('Spotify code exchange error:', error)
     return null
   }
 }

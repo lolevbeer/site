@@ -30,7 +30,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to exchange authorization code' }, { status: 500 })
   }
 
-  // Find the location and store the refresh token
   try {
     const payload = await getPayload({ config })
     const locations = await payload.find({

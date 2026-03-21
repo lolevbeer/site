@@ -43,8 +43,13 @@ export function useMenuStream(
   const [nowPlaying, setNowPlaying] = useState<NowPlaying | null>(null)
 
   const applyResponse = useCallback(({ menu: responseMenu, theme: responseTheme, nowPlaying: np }: MenuResponse) => {
-    // Update nowPlaying on every poll (changes independently of menu timestamp)
-    setNowPlaying(np ?? null)
+    setNowPlaying(prev => {
+      const next = np ?? null
+      if (prev?.trackName === next?.trackName && prev?.artistName === next?.artistName && prev?.isPlaying === next?.isPlaying) {
+        return prev
+      }
+      return next
+    })
     return { data: responseMenu, theme: responseTheme }
   }, [])
 

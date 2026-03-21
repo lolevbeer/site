@@ -8,6 +8,58 @@ import { unstable_cache } from 'next/cache'
 import { CACHE_TAGS } from '@/lib/utils/cache'
 import { getNowPlaying, type NowPlaying } from '@/lib/utils/spotify'
 
+/** In-memory cache for location refresh tokens (rarely changes) */
+const refreshTokenCache = new Map<string, { token: string | null; expiresAt: number }>()
+const TOKEN_CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+
+/** In-memory cache for now playing results (avoid hammering Spotify) */
+const nowPlayingCache = new Map<string, { data: NowPlaying | null; expiresAt: number }>()
+const NOW_PLAYING_CACHE_TTL = 10 * 1000 // 10 seconds
+
+/**
+ * Get Spotify now playing for a menu's location.
+ * Caches the refresh token lookup (5min) and the now playing result (10s).
+ */
+async function getLocationNowPlaying(
+  location: string | { id: string; spotifyRefreshToken?: string | null } | null | undefined
+): Promise<NowPlaying | null> {
+  try {
+    const locationId = typeof location === 'object' ? location?.id : location
+    if (!locationId) return null
+
+    // Check refresh token cache
+    let refreshToken: string | null = null
+    const cachedToken = refreshTokenCache.get(locationId)
+    if (cachedToken && cachedToken.expiresAt > Date.now()) {
+      refreshToken = cachedToken.token
+    } else {
+      const payload = await getPayload({ config: payloadConfig })
+      const loc = await payload.findByID({
+        collection: 'locations',
+        id: locationId,
+        overrideAccess: true,
+      })
+      refreshToken = loc?.spotifyRefreshToken || null
+      refreshTokenCache.set(locationId, { token: refreshToken, expiresAt: Date.now() + TOKEN_CACHE_TTL })
+    }
+
+    if (!refreshToken) return null
+
+    // Check now playing cache
+    const cachedNowPlaying = nowPlayingCache.get(locationId)
+    if (cachedNowPlaying && cachedNowPlaying.expiresAt > Date.now()) {
+      return cachedNowPlaying.data
+    }
+
+    const result = await getNowPlaying(refreshToken)
+    nowPlayingCache.set(locationId, { data: result, expiresAt: Date.now() + NOW_PLAYING_CACHE_TTL })
+    return result
+  } catch (err) {
+    logger.error('Spotify fetch error in menu-stream:', err)
+    return null
+  }
+}
+
 /**
  * Cached menu fetch with tag-based invalidation
  * Cache is invalidated by the revalidateMenuCache hook when menu is updated
@@ -81,26 +133,8 @@ export async function GET(
     // (indicates an editor is active — cache was busted by afterRead hook)
     const warm = (Date.now() - _fetchedAt) < 60_000
 
-    // Fetch Spotify now playing for this menu's location (non-blocking, fails silently)
-    let nowPlaying: NowPlaying | null = null
-    try {
-      const locationId = typeof menu.location === 'object' ? menu.location?.id : menu.location
-      if (locationId) {
-        const payload = await getPayload({ config: payloadConfig })
-        const location = await payload.findByID({
-          collection: 'locations',
-          id: locationId,
-          overrideAccess: true,
-        })
-        const refreshToken = location?.spotifyRefreshToken
-        if (refreshToken) {
-          nowPlaying = await getNowPlaying(refreshToken)
-        }
-      }
-    } catch (err) {
-      // Spotify errors should never break menu delivery
-      logger.error('Spotify fetch error in menu-stream:', err)
-    }
+    // Fetch Spotify now playing, cached 10s to avoid hammering the API
+    const nowPlaying = await getLocationNowPlaying(menu.location)
 
     return NextResponse.json(
       {
