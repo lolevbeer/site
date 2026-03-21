@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getPayload } from 'payload'
+import payloadConfig from '@/src/payload.config'
 import { getMenuByUrl } from '@/lib/utils/payload-api'
 import { logger } from '@/lib/utils/logger'
 import { getPittsburghTheme } from '@/lib/utils/pittsburgh-time'
 import { unstable_cache } from 'next/cache'
 import { CACHE_TAGS } from '@/lib/utils/cache'
+import { getNowPlaying, type NowPlaying } from '@/lib/utils/spotify'
 
 /**
  * Cached menu fetch with tag-based invalidation
@@ -78,6 +81,27 @@ export async function GET(
     // (indicates an editor is active — cache was busted by afterRead hook)
     const warm = (Date.now() - _fetchedAt) < 60_000
 
+    // Fetch Spotify now playing for this menu's location (non-blocking, fails silently)
+    let nowPlaying: NowPlaying | null = null
+    try {
+      const locationId = typeof menu.location === 'object' ? menu.location?.id : menu.location
+      if (locationId) {
+        const payload = await getPayload({ config: payloadConfig })
+        const location = await payload.findByID({
+          collection: 'locations',
+          id: locationId,
+          overrideAccess: true,
+        })
+        const refreshToken = location?.spotifyRefreshToken
+        if (refreshToken) {
+          nowPlaying = await getNowPlaying(refreshToken)
+        }
+      }
+    } catch (err) {
+      // Spotify errors should never break menu delivery
+      logger.error('Spotify fetch error in menu-stream:', err)
+    }
+
     return NextResponse.json(
       {
         menu,
@@ -85,6 +109,7 @@ export async function GET(
         timestamp,
         deployId,
         warm,
+        nowPlaying,
       },
       {
         headers: {

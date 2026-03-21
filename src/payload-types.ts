@@ -424,6 +424,10 @@ export interface Location {
    * @maxItems 2
    */
   coordinates?: [number, number] | null;
+  /**
+   * OAuth refresh token for this location's Spotify account
+   */
+  spotifyRefreshToken?: string | null;
   images?: {
     /**
      * Image shown on location cards (recommended: 800x600px)
@@ -1035,6 +1039,7 @@ export interface LocationsSelect<T extends boolean = true> {
         directionsUrl?: T;
       };
   coordinates?: T;
+  spotifyRefreshToken?: T;
   images?:
     | T
     | {

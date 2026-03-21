@@ -257,6 +257,19 @@ export const Locations: CollectionConfig = {
       },
     },
     {
+      name: 'spotifyRefreshToken',
+      type: 'text',
+      label: 'Spotify Refresh Token',
+      access: {
+        read: adminFieldAccess,
+        update: adminFieldAccess,
+      },
+      admin: {
+        position: 'sidebar',
+        description: 'OAuth refresh token for this location\'s Spotify account. Use /api/spotify/authorize?location=<slug> to link.',
+      },
+    },
+    {
       name: 'images',
       type: 'group',
       label: 'Location Images',
