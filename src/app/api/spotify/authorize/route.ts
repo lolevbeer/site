@@ -18,5 +18,21 @@ export async function GET(request: NextRequest) {
   }
 
   const authUrl = getSpotifyAuthUrl(locationSlug)
+
+  // Add ?debug=1 to see the generated URL without redirecting
+  if (request.nextUrl.searchParams.get('debug')) {
+    const url = new URL(authUrl)
+    return NextResponse.json({
+      authUrl,
+      redirect_uri: url.searchParams.get('redirect_uri'),
+      client_id: url.searchParams.get('client_id') ? '***set***' : '***missing***',
+      env: {
+        SPOTIFY_REDIRECT_URI: process.env.SPOTIFY_REDIRECT_URI ? '***set***' : undefined,
+        NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL || undefined,
+        VERCEL_PROJECT_PRODUCTION_URL: process.env.VERCEL_PROJECT_PRODUCTION_URL || undefined,
+      },
+    })
+  }
+
   return NextResponse.redirect(authUrl)
 }
