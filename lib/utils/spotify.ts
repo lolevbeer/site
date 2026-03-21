@@ -123,17 +123,21 @@ export async function getNowPlaying(refreshToken: string): Promise<NowPlaying | 
 /**
  * Build the Spotify authorization URL for linking a location.
  */
-/** Get the canonical site URL for OAuth redirects (always use production domain) */
-function getSiteUrl(): string {
-  return process.env.NEXT_PUBLIC_SITE_URL
+/**
+ * Get the canonical site URL for OAuth redirects.
+ * Spotify requires HTTPS, so we always use the production domain for OAuth.
+ * Set SPOTIFY_REDIRECT_URI to override (e.g. for staging).
+ */
+function getSpotifyRedirectBase(): string {
+  return process.env.SPOTIFY_REDIRECT_URI
+    || process.env.NEXT_PUBLIC_SITE_URL
     || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : '')
-    || process.env.NEXT_PUBLIC_SERVER_URL
-    || 'http://localhost:3000'
+    || 'https://lolev.beer'
 }
 
 export function getSpotifyAuthUrl(locationSlug: string): string {
   const clientId = process.env.SPOTIFY_CLIENT_ID
-  const redirectUri = `${getSiteUrl()}/api/spotify/callback`
+  const redirectUri = `${getSpotifyRedirectBase()}/api/spotify/callback`
 
   const params = new URLSearchParams({
     response_type: 'code',
@@ -152,7 +156,7 @@ export function getSpotifyAuthUrl(locationSlug: string): string {
 export async function exchangeCodeForTokens(code: string): Promise<{ accessToken: string; refreshToken: string } | null> {
   const clientId = process.env.SPOTIFY_CLIENT_ID
   const clientSecret = process.env.SPOTIFY_CLIENT_SECRET
-  const redirectUri = `${getSiteUrl()}/api/spotify/callback`
+  const redirectUri = `${getSpotifyRedirectBase()}/api/spotify/callback`
 
   if (!clientId || !clientSecret) return null
 
