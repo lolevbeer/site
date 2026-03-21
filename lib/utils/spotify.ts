@@ -132,7 +132,7 @@ function getSpotifyRedirectBase(): string {
   return process.env.SPOTIFY_REDIRECT_URI
     || process.env.NEXT_PUBLIC_SITE_URL
     || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : '')
-    || 'https://lolev.beer'
+    || 'https://new.lolev.beer'
 }
 
 export function getSpotifyAuthUrl(locationSlug: string): string {
