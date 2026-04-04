@@ -611,14 +611,14 @@ export interface WeeklyHoursDay {
  * Cached until 'locations' or 'holiday-hours' tags are invalidated
  */
 export const getWeeklyHoursWithHolidays = async (locationId: string): Promise<WeeklyHoursDay[]> => {
-  // Calculate week start for cache key
-  const now = new Date()
-  const dayOfWeek = now.getDay()
+  // Calculate week start for cache key using EST to avoid UTC/local mismatch
+  const nowEST = getCurrentESTDateTime()
+  const dayOfWeek = nowEST.getDay()
   const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
-  const monday = new Date(now)
-  monday.setDate(now.getDate() + mondayOffset)
+  const monday = new Date(nowEST)
+  monday.setDate(nowEST.getDate() + mondayOffset)
   monday.setHours(0, 0, 0, 0)
-  const weekKey = monday.toISOString().split('T')[0]
+  const weekKey = formatDateYMD(monday)
 
   try {
     return await unstable_cache(
@@ -650,13 +650,17 @@ export const getWeeklyHoursWithHolidays = async (locationId: string): Promise<We
         currentMonday.setDate(estNow.getDate() + currentMondayOffset)
         currentMonday.setHours(0, 0, 0, 0)
 
-        // Calculate the end of the week (Sunday)
+        // Calculate the end of the week (Sunday) and the exclusive upper bound (next Monday)
         const sunday = new Date(currentMonday)
         sunday.setDate(currentMonday.getDate() + 6)
+        // Use next Monday as exclusive upper bound so holidays stored at any time on Sunday
+        // (e.g. noon UTC) are not cut off by a midnight-UTC less_than_equal boundary
+        const nextMonday = new Date(sunday)
+        nextMonday.setDate(sunday.getDate() + 1)
 
         // Format dates for query using YYYY-MM-DD to avoid UTC conversion issues
         const startDateStr = formatDateYMD(currentMonday)
-        const endDateStr = formatDateYMD(sunday)
+        const afterEndDateStr = formatDateYMD(nextMonday)
 
         // Get all holiday hours for this location within this week
         const holidayResult = await payload.find({
@@ -675,7 +679,7 @@ export const getWeeklyHoursWithHolidays = async (locationId: string): Promise<We
               },
               {
                 date: {
-                  less_than_equal: endDateStr,
+                  less_than: afterEndDateStr,
                 },
               },
             ],
