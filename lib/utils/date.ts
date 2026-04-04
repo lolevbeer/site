@@ -42,6 +42,14 @@ export function isFutureOrTodayEST(dateString: string): boolean {
 }
 
 /**
+ * Format a Date object as YYYY-MM-DD using its local year/month/day
+ * (no UTC conversion, so the date won't shift near midnight)
+ */
+export function formatDateYMD(date: Date): string {
+  return format(date, 'yyyy-MM-dd');
+}
+
+/**
  * Get day of week name for a date string in EST/EDT
  */
 export function getDayOfWeekEST(dateString: string): string {
