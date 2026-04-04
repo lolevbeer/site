@@ -16,7 +16,7 @@ import { logger } from '@/lib/utils/logger'
 import { CACHE_TAGS } from '@/lib/utils/cache'
 import { extractBeerFromMenuItem } from './menu-item-utils'
 import { getMediaUrl } from './media-utils'
-import { getTodayEST, getTodayMidnightISO } from './date'
+import { getTodayEST, getTodayMidnightISO, getCurrentESTDateTime } from './date'
 import { formatAddress } from './formatters'
 
 /**
@@ -642,21 +642,22 @@ export const getWeeklyHoursWithHolidays = async (locationId: string): Promise<We
           return []
         }
 
-        // Calculate the start of the current week (Monday)
-        const currentNow = new Date()
-        const currentDayOfWeek = currentNow.getDay()
+        // Calculate the start of the current week (Monday) using EST/EDT
+        const estNow = getCurrentESTDateTime()
+        const currentDayOfWeek = estNow.getDay()
         const currentMondayOffset = currentDayOfWeek === 0 ? -6 : 1 - currentDayOfWeek
-        const currentMonday = new Date(currentNow)
-        currentMonday.setDate(currentNow.getDate() + currentMondayOffset)
+        const currentMonday = new Date(estNow)
+        currentMonday.setDate(estNow.getDate() + currentMondayOffset)
         currentMonday.setHours(0, 0, 0, 0)
 
         // Calculate the end of the week (Sunday)
         const sunday = new Date(currentMonday)
         sunday.setDate(currentMonday.getDate() + 6)
 
-        // Format dates for query
-        const startDateStr = currentMonday.toISOString().split('T')[0]
-        const endDateStr = sunday.toISOString().split('T')[0]
+        // Format dates for query using YYYY-MM-DD to avoid UTC conversion issues
+        const pad = (n: number) => n.toString().padStart(2, '0')
+        const startDateStr = `${currentMonday.getFullYear()}-${pad(currentMonday.getMonth() + 1)}-${pad(currentMonday.getDate())}`
+        const endDateStr = `${sunday.getFullYear()}-${pad(sunday.getMonth() + 1)}-${pad(sunday.getDate())}`
 
         // Get all holiday hours for this location within this week
         const holidayResult = await payload.find({
@@ -698,7 +699,7 @@ export const getWeeklyHoursWithHolidays = async (locationId: string): Promise<We
         for (let i = 0; i < 7; i++) {
           const date = new Date(currentMonday)
           date.setDate(currentMonday.getDate() + i)
-          const dateStr = date.toISOString().split('T')[0]
+          const dateStr = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
           const dayName = days[i]
 
           // Check if there's a holiday override for this day
