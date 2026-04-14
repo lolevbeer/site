@@ -59,7 +59,7 @@
     "lucide-react": "^0.577.0",
     "mapbox-gl": "^3.19.1",
     "monaco-editor": "0.55.1",
-    "next": "15.5.14",
+    "next": "15.5.15",
     "next-themes": "^0.4.6",
     "nuqs": "^2.8.9",
     "payload": "3.79.0",
@@ -108,7 +108,7 @@
       "unrs-resolver"
     ],
     "overrides": {
-      "next": "15.5.14",
+      "next": "15.5.15",
       "undici": ">=6.23.0",
       "ajv": ">=8.18.0"
     }
