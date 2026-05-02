@@ -3,7 +3,6 @@
 import { useMemo } from 'react'
 import { useMenuStream } from '@/lib/hooks/use-menu-stream'
 import { FeaturedBeers, FeaturedCans } from '@/components/home/featured-menu'
-import { NowPlaying } from '@/components/menu/now-playing'
 import type { Menu } from '@/src/payload-types'
 import { getThemeVars } from '@/lib/utils/display-theme'
 import randomColor from 'randomcolor'
@@ -23,7 +22,7 @@ interface LiveMenuProps {
  * - Applies dark mode via inline CSS variables for maximum browser compatibility
  */
 export function LiveMenu({ menuUrl, initialMenu }: LiveMenuProps) {
-  const { menu, theme, pollCount, nowPlaying } = useMenuStream(menuUrl, initialMenu, {
+  const { menu, theme, pollCount } = useMenuStream(menuUrl, initialMenu, {
     enabled: true,
     pollInterval: 2000,
   })
@@ -48,15 +47,27 @@ export function LiveMenu({ menuUrl, initialMenu }: LiveMenuProps) {
   // Apply CSS variables directly - bypasses .dark class for browser compatibility
   const themeVars = getThemeVars(theme)
 
-  const menuContent = displayMenu.type === 'cans'
-    ? <FeaturedCans menu={displayMenu} animated itemColors={itemColors} />
-    : <FeaturedBeers menu={displayMenu} animated itemColors={itemColors} />
-
-  if (displayMenu.type === 'draft' || displayMenu.type === 'cans' || displayMenu.type === 'other') {
+  if (displayMenu.type === 'draft') {
     return (
       <div className="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground" style={themeVars}>
-        {menuContent}
-        <NowPlaying nowPlaying={nowPlaying} />
+        <FeaturedBeers menu={displayMenu} animated itemColors={itemColors} />
+      </div>
+    )
+  }
+
+  if (displayMenu.type === 'cans') {
+    return (
+      <div className="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground" style={themeVars}>
+        <FeaturedCans menu={displayMenu} animated itemColors={itemColors} />
+      </div>
+    )
+  }
+
+  // 'other' type renders like draft
+  if (displayMenu.type === 'other') {
+    return (
+      <div className="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground" style={themeVars}>
+        <FeaturedBeers menu={displayMenu} animated itemColors={itemColors} />
       </div>
     )
   }
