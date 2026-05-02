@@ -9,6 +9,7 @@ export enum GlassType {
   PINT = 'pint',
   TEKU = 'teku',
   STEIN = 'stein',
+  UHA = 'uha',
 }
 
 /**

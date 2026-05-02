@@ -3,4 +3,5 @@ export { PintIcon } from './pint-icon';
 export { SteinIcon } from './stein-icon';
 export { TbdIcon } from './tbd-icon';
 export { TekuIcon } from './teku-icon';
+export { UhaIcon } from './uha-icon';
 export { UntappdIcon } from './untappd-icon';

@@ -153,7 +153,7 @@ export interface UserAuthOperations {
  */
 export interface Beer {
   id: string;
-  glass: 'pint' | 'stein' | 'teku';
+  glass: 'pint' | 'stein' | 'teku' | 'uha';
   /**
    * Alcohol by volume percentage
    */
