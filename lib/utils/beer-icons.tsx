@@ -4,26 +4,19 @@
  */
 
 import React from 'react';
-import { PintIcon, SteinIcon, TekuIcon } from '@/components/icons';
+import { PintIcon, SteinIcon, TekuIcon, UhaIcon } from '@/components/icons';
 import { GlassType } from '@/lib/types/beer';
 
-/**
- * Get the appropriate glass icon component based on glass type
- */
-export function getGlassIcon(glass?: GlassType | string): React.ComponentType<{ className?: string }> {
-  const glassType = typeof glass === 'string' ? glass.toLowerCase() : glass;
+type GlassIcon = React.ComponentType<{ className?: string }>;
 
-  switch (glassType) {
-    case GlassType.PINT:
-    case 'pint':
-      return PintIcon;
-    case GlassType.TEKU:
-    case 'teku':
-      return TekuIcon;
-    case GlassType.STEIN:
-    case 'stein':
-      return SteinIcon;
-    default:
-      return PintIcon;
-  }
+const GLASS_ICONS: Record<GlassType, GlassIcon> = {
+  [GlassType.PINT]: PintIcon,
+  [GlassType.TEKU]: TekuIcon,
+  [GlassType.STEIN]: SteinIcon,
+  [GlassType.UHA]: UhaIcon,
+};
+
+export function getGlassIcon(glass?: GlassType | string): GlassIcon {
+  const key = typeof glass === 'string' ? (glass.toLowerCase() as GlassType) : glass;
+  return (key && GLASS_ICONS[key]) ?? PintIcon;
 }

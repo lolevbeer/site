@@ -178,6 +178,7 @@ export const Beers: CollectionConfig = {
         { label: 'Pint', value: 'pint' },
         { label: 'Stein', value: 'stein' },
         { label: 'Teku', value: 'teku' },
+        { label: 'UHA', value: 'uha' },
       ],
       admin: {
         position: 'sidebar',

@@ -1,10 +1,9 @@
 'use client'
 
-import { useMemo, useState, useCallback } from 'react'
+import { useMemo } from 'react'
 
 import { usePolling, type UsePollingOptions } from './use-polling'
 import type { Menu } from '@/src/payload-types'
-import type { NowPlaying } from '@/lib/utils/spotify'
 
 interface UseMenuStreamResult {
   menu: Menu | null
@@ -13,8 +12,6 @@ interface UseMenuStreamResult {
   error: Error | null
   /** Increments on each successful poll - useful for cycling effects */
   pollCount: number
-  /** Currently playing Spotify track, if any */
-  nowPlaying: NowPlaying | null
 }
 
 /** Shape of the /api/menu-stream response */
@@ -24,7 +21,6 @@ interface MenuResponse {
   timestamp: number
   deployId?: string
   warm?: boolean
-  nowPlaying?: NowPlaying | null
 }
 
 /**
@@ -40,25 +36,16 @@ export function useMenuStream(
   options: UsePollingOptions = {},
 ): UseMenuStreamResult {
   const stableInitialMenu = useMemo(() => initialMenu, [initialMenu])
-  const [nowPlaying, setNowPlaying] = useState<NowPlaying | null>(null)
-
-  const applyResponse = useCallback(({ menu: responseMenu, theme: responseTheme, nowPlaying: np }: MenuResponse) => {
-    setNowPlaying(prev => {
-      const next = np ?? null
-      if (prev?.trackName === next?.trackName && prev?.artistName === next?.artistName && prev?.isPlaying === next?.isPlaying) {
-        return prev
-      }
-      return next
-    })
-    return { data: responseMenu, theme: responseTheme }
-  }, [])
 
   const { data: menu, theme, isConnected, error, pollCount } = usePolling<Menu, MenuResponse>(
     menuUrl ? `/api/menu-stream/${menuUrl}` : '',
     stableInitialMenu,
-    applyResponse,
+    ({ menu: responseMenu, theme: responseTheme }) => ({
+      data: responseMenu,
+      theme: responseTheme,
+    }),
     options,
   )
 
-  return { menu, theme, isConnected, error, pollCount, nowPlaying }
+  return { menu, theme, isConnected, error, pollCount }
 }
