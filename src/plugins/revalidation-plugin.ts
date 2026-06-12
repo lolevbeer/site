@@ -4,6 +4,12 @@
  * Automatically adds cache revalidation hooks to all collections and globals.
  * When content changes in Payload, the relevant Next.js cache tags are invalidated,
  * ensuring the frontend serves fresh data on the next request.
+ *
+ * IMPORTANT: Only register afterChange/afterDelete hooks here — never afterRead.
+ * Payload's admin form-state requests (stale-data check, document locking,
+ * relationship population) read docs through Next.js Server Actions, and calling
+ * revalidateTag/revalidatePath inside a Server Action forces the admin router to
+ * refetch the page — resetting the edit form mid-edit.
  */
 
 import { revalidatePath, revalidateTag } from 'next/cache'
@@ -144,14 +150,8 @@ export const revalidationPlugin: Plugin = (incomingConfig: Config): Config => {
       ...collection,
       hooks: {
         ...collection.hooks,
-        afterChange: [
-          ...(collection.hooks?.afterChange || []),
-          afterChangeHook,
-        ],
-        afterDelete: [
-          ...(collection.hooks?.afterDelete || []),
-          afterDeleteHook,
-        ],
+        afterChange: [...(collection.hooks?.afterChange || []), afterChangeHook],
+        afterDelete: [...(collection.hooks?.afterDelete || []), afterDeleteHook],
       },
     }
   })
@@ -169,10 +169,7 @@ export const revalidationPlugin: Plugin = (incomingConfig: Config): Config => {
       ...global,
       hooks: {
         ...global.hooks,
-        afterChange: [
-          ...(global.hooks?.afterChange || []),
-          afterChangeHook,
-        ],
+        afterChange: [...(global.hooks?.afterChange || []), afterChangeHook],
       },
     }
   })

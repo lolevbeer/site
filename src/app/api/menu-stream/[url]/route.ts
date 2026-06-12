@@ -19,7 +19,7 @@ const getCachedMenu = (url: string) =>
     {
       tags: [CACHE_TAGS.menus, `menu-${url}`],
       revalidate: 60, // Fallback revalidation every 60 seconds
-    }
+    },
   )()
 
 /**
@@ -34,20 +34,14 @@ const getCachedMenu = (url: string) =>
  * - Only actual menu changes trigger fresh DB queries
  * - Adaptive client polling reduces idle-time requests
  */
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ url: string }> }
-) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ url: string }> }) {
   const { url } = await params
 
   try {
     const cached = await getCachedMenu(url)
 
     if (!cached?.menu) {
-      return NextResponse.json(
-        { error: 'Menu not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Menu not found' }, { status: 404 })
     }
 
     const { menu, _fetchedAt } = cached
@@ -75,8 +69,9 @@ export async function GET(
     const deployId = process.env.NEXT_PUBLIC_DEPLOY_ID || ''
 
     // Signal clients to poll faster when data was recently fetched fresh
-    // (indicates an editor is active — cache was busted by afterRead hook)
-    const warm = (Date.now() - _fetchedAt) < 60_000
+    // (indicates a recent save busted the cache — an editor is likely still
+    // making changes, so displays snap back to fast polling)
+    const warm = Date.now() - _fetchedAt < 60_000
 
     return NextResponse.json(
       {
@@ -90,13 +85,10 @@ export async function GET(
         headers: {
           'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=30',
         },
-      }
+      },
     )
   } catch (error) {
     logger.error('Menu fetch error:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch menu' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to fetch menu' }, { status: 500 })
   }
 }

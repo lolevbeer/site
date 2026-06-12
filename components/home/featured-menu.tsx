@@ -1,134 +1,139 @@
-'use client';
+'use client'
 
-import { useMemo, useState } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
-import { ScrollReveal } from '@/components/ui/scroll-reveal';
-import { Beer as BeerIconLucide, Package, Pencil } from 'lucide-react';
-import { getGlassIcon } from '@/lib/utils/beer-icons';
-import { useLocationContext } from '@/components/location/location-provider';
-import { DraftBeerCard } from '@/components/beer/draft-beer-card';
-import { useAnimatedList, getAnimationClass } from '@/lib/hooks/use-animated-list';
-import { useAuth } from '@/lib/hooks/use-auth';
-import { getMediaUrl } from '@/lib/utils/media-utils';
-import { extractBeerFromMenuItem, extractProductFromMenuItem } from '@/lib/utils/menu-item-utils';
-import { getTodayEST } from '@/lib/utils/date';
-import type { Menu, Style, Location } from '@/src/payload-types';
-import type { Beer } from '@/lib/types/beer';
-import { getBeerBadgeLabel } from '@/lib/types/beer';
-import { Logo } from '@/components/ui/logo';
-import { TopBeerDropsLink } from '@/components/beer/top-beer-drops-link';
-import { UntappdRating } from '@/components/beer/untappd-rating';
+import { useMemo, useState } from 'react'
+import Image from 'next/image'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
+import { ScrollReveal } from '@/components/ui/scroll-reveal'
+import { Beer as BeerIconLucide, Package, Pencil } from 'lucide-react'
+import { getGlassIcon } from '@/lib/utils/beer-icons'
+import { useLocationContext } from '@/components/location/location-provider'
+import { DraftBeerCard } from '@/components/beer/draft-beer-card'
+import { useAnimatedList, getAnimationClass } from '@/lib/hooks/use-animated-list'
+import { useAuth } from '@/lib/hooks/use-auth'
+import { getMediaUrl } from '@/lib/utils/media-utils'
+import { extractBeerFromMenuItem, extractProductFromMenuItem } from '@/lib/utils/menu-item-utils'
+import { getTodayEST } from '@/lib/utils/date'
+import type { Menu, Style, Location } from '@/src/payload-types'
+import type { Beer } from '@/lib/types/beer'
+import { getBeerBadgeLabel } from '@/lib/types/beer'
+import { Logo } from '@/components/ui/logo'
+import { TopBeerDropsLink } from '@/components/beer/top-beer-drops-link'
+import { UntappdRating } from '@/components/beer/untappd-rating'
 
 /** Parse price string to number, removing '$' prefix if present */
 function parsePrice(price: string | number | null | undefined): number | undefined {
-  if (price == null) return undefined;
-  const parsed = parseFloat(String(price).replace('$', ''));
-  return isNaN(parsed) ? undefined : parsed;
+  if (price == null) return undefined
+  const parsed = parseFloat(String(price).replace('$', ''))
+  return isNaN(parsed) ? undefined : parsed
 }
 
-const MS_PER_DAY = 1000 * 60 * 60 * 24;
+const MS_PER_DAY = 1000 * 60 * 60 * 24
 
 /** Format the lines cleaned date as a relative description using EST timezone */
 function formatLinesCleanedDate(dateStr: string | null | undefined): string | null {
-  if (!dateStr) return null;
+  if (!dateStr) return null
 
-  const todayMs = new Date(`${getTodayEST()}T12:00:00`).getTime();
-  const cleanedMs = new Date(`${dateStr.split('T')[0]}T12:00:00`).getTime();
-  const diffDays = Math.round((todayMs - cleanedMs) / MS_PER_DAY);
+  const todayMs = new Date(`${getTodayEST()}T12:00:00`).getTime()
+  const cleanedMs = new Date(`${dateStr.split('T')[0]}T12:00:00`).getTime()
+  const diffDays = Math.round((todayMs - cleanedMs) / MS_PER_DAY)
 
-  const daysText = diffDays === 0 ? 'today' : `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
-  return `Draft lines cleaned ${daysText}`;
+  const daysText = diffDays === 0 ? 'today' : `${diffDays} day${diffDays === 1 ? '' : 's'} ago`
+  return `Draft lines cleaned ${daysText}`
 }
 
-type MenuType = 'draft' | 'cans';
+type MenuType = 'draft' | 'cans'
 
 interface MenuItem {
-  variant: string;
-  name: string;
-  type: string;
-  abv?: string;
-  description: string;
-  glutenFree: boolean;
+  variant: string
+  name: string
+  type: string
+  abv?: string
+  description: string
+  glutenFree: boolean
   /** Image URL from Payload CMS Media, or undefined if no image */
-  imageUrl?: string;
-  onDraft?: boolean;
-  glass?: string;
-  fourPack?: string;
-  bottlePrice?: string;
-  isJustReleased?: boolean;
+  imageUrl?: string
+  onDraft?: boolean
+  glass?: string
+  fourPack?: string
+  bottlePrice?: string
+  isJustReleased?: boolean
   /** Beer from another brewery */
-  guestTap?: boolean;
+  guestTap?: boolean
   /** Collaboration brew */
-  collab?: boolean;
-  recipe?: number;
-  hops?: string;
-  tap?: number;
+  collab?: boolean
+  recipe?: number
+  hops?: string
+  tap?: number
   pricing: {
-    draftPrice?: number;
-    halfPour?: number;
-    halfPourOnly?: boolean;
-  };
+    draftPrice?: number
+    halfPour?: number
+    halfPourOnly?: boolean
+  }
   availability: {
-    hideFromSite?: boolean;
-  };
-  slug?: string;
-  style?: string | Style;
-  locationSlug?: string;
+    hideFromSite?: boolean
+  }
+  slug?: string
+  style?: string | Style
+  locationSlug?: string
   /** Manual "Just Released" flag from Payload */
-  justReleased?: boolean;
+  justReleased?: boolean
   /** Beer creation date for auto "Just Released" logic */
-  createdAt?: string;
+  createdAt?: string
   /** Untappd rating (0-5 scale) */
-  untappdRating?: number | null;
+  untappdRating?: number | null
   /** Top Beer Drops URL */
-  topBeerDrops?: string;
+  topBeerDrops?: string
   /** True when this slot has no product assigned (empty tap) */
-  isEmpty?: boolean;
-  [key: string]: unknown;
+  isEmpty?: boolean
+  [key: string]: unknown
 }
 
 interface FeaturedMenuProps {
-  menuType: MenuType;
-  menu?: Menu;
-  menus?: Menu[];
+  menuType: MenuType
+  menu?: Menu
+  menus?: Menu[]
   /** Enable enter/exit animations for live updates */
-  animated?: boolean;
+  animated?: boolean
   /** Random colors to apply to items (dark mode only, cycles on poll) */
-  itemColors?: string[];
+  itemColors?: string[]
   /** Hide header when embedding in another component */
-  hideHeader?: boolean;
+  hideHeader?: boolean
 }
 
 /** Check if a date is within the last N days */
 function isWithinDays(dateStr: string | undefined, days: number): boolean {
-  if (!dateStr) return false;
-  return (Date.now() - new Date(dateStr).getTime()) / MS_PER_DAY <= days;
+  if (!dateStr) return false
+  return (Date.now() - new Date(dateStr).getTime()) / MS_PER_DAY <= days
 }
+
+/** Stable key extractor for useAnimatedList — module-level so the hook's memos can skip work */
+const getMenuItemKey = (item: MenuItem) => item.variant
 
 /** Convert Payload menu items to display-ready MenuItem format */
 function convertMenuItems(menuData: Menu): MenuItem[] {
-  if (!menuData?.items) return [];
+  if (!menuData?.items) return []
 
-  const location = typeof menuData.location === 'object' ? menuData.location : null;
-  const locationSlug = location?.slug;
+  const location = typeof menuData.location === 'object' ? menuData.location : null
+  const locationSlug = location?.slug
 
   const items = menuData.items
     .map((item, index) => {
       // Try to extract beer first
-      const beer = extractBeerFromMenuItem(item);
+      const beer = extractBeerFromMenuItem(item)
 
       // If not a beer, check if it's a product
       if (!beer) {
-        const prod = extractProductFromMenuItem(item);
+        const prod = extractProductFromMenuItem(item)
         if (prod) {
           return {
             variant: String(prod.id || `product-${index}`),
             name: String(prod.name || 'Unknown Product'),
-            type: Array.isArray(prod.options) ? prod.options.join(', ') : String(prod.options || ''),
+            type: Array.isArray(prod.options)
+              ? prod.options.join(', ')
+              : String(prod.options || ''),
             abv: prod.abv ? String(prod.abv) : '',
             description: String((prod as { description?: string }).description || ''),
             glutenFree: false,
@@ -152,7 +157,7 @@ function convertMenuItems(menuData: Menu): MenuItem[] {
             collab: (prod as { collab?: boolean }).collab || false,
             createdAt: prod.createdAt,
             isProduct: true,
-          };
+          }
         }
         // Empty slot — no product assigned (represents an empty tap)
         return {
@@ -167,13 +172,13 @@ function convertMenuItems(menuData: Menu): MenuItem[] {
           pricing: {},
           availability: { hideFromSite: false },
           isEmpty: true,
-        };
+        }
       }
 
-      if (!beer.slug) return null;
+      if (!beer.slug) return null
 
-      const style = typeof beer.style === 'object' ? beer.style : null;
-      const styleName = style?.name || (typeof beer.style === 'string' ? beer.style : '');
+      const style = typeof beer.style === 'object' ? beer.style : null
+      const styleName = style?.name || (typeof beer.style === 'string' ? beer.style : '')
 
       return {
         variant: String(beer.slug),
@@ -184,8 +189,14 @@ function convertMenuItems(menuData: Menu): MenuItem[] {
         glutenFree: false,
         imageUrl: getMediaUrl(beer.image, 'card'),
         glass: String(beer.glass || 'pint'),
-        fourPack: beer.fourPack ? String(beer.fourPack) : (item.price ? String(item.price) : undefined),
-        bottlePrice: (beer as { bottlePrice?: number }).bottlePrice ? String((beer as { bottlePrice?: number }).bottlePrice) : undefined,
+        fourPack: beer.fourPack
+          ? String(beer.fourPack)
+          : item.price
+            ? String(item.price)
+            : undefined,
+        bottlePrice: (beer as { bottlePrice?: number }).bottlePrice
+          ? String((beer as { bottlePrice?: number }).bottlePrice)
+          : undefined,
         recipe: beer.recipe || 0,
         hops: beer.hops ? String(beer.hops) : undefined,
         tap: index + 1, // 1-based tap/draft number from position in menu
@@ -206,29 +217,28 @@ function convertMenuItems(menuData: Menu): MenuItem[] {
         createdAt: beer.createdAt,
         untappdRating: beer.untappdRating ?? null,
         topBeerDrops: beer.topBeerDrops || undefined,
-      };
+      }
     })
-    .filter((item): item is NonNullable<typeof item> => item !== null && !item.isEmpty);
+    .filter((item): item is NonNullable<typeof item> => item !== null && !item.isEmpty)
 
   // "Just Released" logic:
   // 1. If any beer GLOBALLY has justReleased manually set, only mark those
   // 2. Otherwise, mark beers created within the last 2 weeks
   // Check global flag from menu data (set by server), fall back to local check
-  const hasGlobalJustReleased = (menuData as { _hasGlobalJustReleased?: boolean })._hasGlobalJustReleased;
-  const hasManualJustReleased = hasGlobalJustReleased ?? items.some((i) => i.justReleased);
+  const hasGlobalJustReleased = (menuData as { _hasGlobalJustReleased?: boolean })
+    ._hasGlobalJustReleased
+  const hasManualJustReleased = hasGlobalJustReleased ?? items.some((i) => i.justReleased)
 
   return items.map((item) => ({
     ...item,
-    isJustReleased: hasManualJustReleased
-      ? item.justReleased
-      : isWithinDays(item.createdAt, 7),
-  }));
+    isJustReleased: hasManualJustReleased ? item.justReleased : isWithinDays(item.createdAt, 7),
+  }))
 }
 
 /** Filter items by location (returns all if 'all' or unspecified) */
 function filterByLocation(items: MenuItem[], currentLocation: string): MenuItem[] {
-  if (!currentLocation || currentLocation === 'all') return items;
-  return items.filter(item => item.locationSlug === currentLocation);
+  if (!currentLocation || currentLocation === 'all') return items
+  return items.filter((item) => item.locationSlug === currentLocation)
 }
 
 /** Admin edit buttons for each menu location */
@@ -236,50 +246,66 @@ function AdminEditButtons({
   menusArray,
   currentLocation,
 }: {
-  menusArray: Menu[];
-  currentLocation: string;
+  menusArray: Menu[]
+  currentLocation: string
 }) {
-  const { isAuthenticated } = useAuth();
-  if (!isAuthenticated) return null;
+  const { isAuthenticated } = useAuth()
+  if (!isAuthenticated) return null
 
   return (
     <div className="flex gap-2">
       {menusArray.map((menuData) => {
-        if (!menuData?.id) return null;
-        const location = typeof menuData.location === 'object' ? menuData.location : null;
-        const locationSlug = location?.slug;
-        const locationName = location?.name;
-        if (!locationSlug) return null;
-        if (currentLocation !== 'all' && currentLocation !== locationSlug) return null;
+        if (!menuData?.id) return null
+        const location = typeof menuData.location === 'object' ? menuData.location : null
+        const locationSlug = location?.slug
+        const locationName = location?.name
+        if (!locationSlug) return null
+        if (currentLocation !== 'all' && currentLocation !== locationSlug) return null
 
         return (
           <Button key={menuData.id} asChild variant="outline" size="sm">
-            <a href={`/admin/collections/menus/${menuData.id}`} target="_blank" rel="noopener noreferrer">
+            <a
+              href={`/admin/collections/menus/${menuData.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               <Pencil className="h-4 w-4 mr-1" />
               {currentLocation === 'all' ? `Edit ${locationName}` : 'Edit'}
             </a>
           </Button>
-        );
+        )
       })}
     </div>
-  );
+  )
 }
 
 /** Can card component for cans display */
-function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fullscreen?: boolean; accentColor?: string }) {
-  const GlassIcon = getGlassIcon(item.glass);
-  const badgeLabel = getBeerBadgeLabel(item);
-  const [imageError, setImageError] = useState(false);
+function CanCard({
+  item,
+  fullscreen = false,
+  accentColor,
+}: {
+  item: MenuItem
+  fullscreen?: boolean
+  accentColor?: string
+}) {
+  const GlassIcon = getGlassIcon(item.glass)
+  const badgeLabel = getBeerBadgeLabel(item)
+  const [imageError, setImageError] = useState(false)
 
   // Fallback content when no image or image failed to load
   const renderFallback = (heightClass?: string) => (
-    <div className={`flex items-center justify-center ${heightClass || 'h-full'}`} role="img" aria-label={`${item.name} - ${item.type || 'Craft beer'}`}>
+    <div
+      className={`flex items-center justify-center ${heightClass || 'h-full'}`}
+      role="img"
+      aria-label={`${item.name} - ${item.type || 'Craft beer'}`}
+    >
       <div className="text-center px-4">
         <div className="text-2xl font-bold text-muted-foreground/70 mb-2">{item.name}</div>
         <div className="text-sm text-muted-foreground/70">{item.type}</div>
       </div>
     </div>
-  );
+  )
 
   // Shared image rendering logic
   const renderImage = (heightClass?: string) => {
@@ -293,10 +319,10 @@ function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fu
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
           onError={() => setImageError(true)}
         />
-      );
+      )
     }
-    return renderFallback(heightClass);
-  };
+    return renderFallback(heightClass)
+  }
 
   if (fullscreen) {
     return (
@@ -304,37 +330,78 @@ function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fu
         href={`/beer/${item.variant.toLowerCase()}`}
         className="group cursor-pointer flex flex-col"
       >
-        <div className="relative w-full bg-transparent transition-transform duration-200 group-hover:scale-[1.02]" style={{ height: '28vh' }}>
+        <div
+          className="relative w-full bg-transparent transition-transform duration-200 group-hover:scale-[1.02]"
+          style={{ height: '28vh' }}
+        >
           {renderImage()}
           {badgeLabel && (
-            <Badge variant="default" className="absolute left-1/2 -translate-x-1/2" style={{ bottom: '-0.8vh', fontSize: '1.3vh' }}>
+            <Badge
+              variant="default"
+              className="absolute left-1/2 -translate-x-1/2"
+              style={{ bottom: '-0.8vh', fontSize: '1.3vh' }}
+            >
               {badgeLabel}
             </Badge>
           )}
         </div>
-        <div className="flex flex-col items-center text-center" style={{ gap: '0.5vh', marginTop: '1.5vh' }}>
-          <h3 className="font-bold leading-tight transition-colors duration-[250ms]" style={{ fontSize: '2.8vh', color: accentColor }}>
+        <div
+          className="flex flex-col items-center text-center"
+          style={{ gap: '0.5vh', marginTop: '1.5vh' }}
+        >
+          <h3
+            className="font-bold leading-tight transition-colors duration-[250ms]"
+            style={{ fontSize: '2.8vh', color: accentColor }}
+          >
             {item.name}
           </h3>
           <div className="flex items-center" style={{ gap: '0.8vh' }}>
-            {!item.isProduct && <UntappdRating rating={item.untappdRating} style={{ gap: '0.3vh', fontSize: '1.8vh' }} iconStyle={{ height: '1.8vh', width: '1.8vh' }} />}
-            <Badge variant="outline" style={{ fontSize: '1.6vh' }}>{item.type}</Badge>
+            {!item.isProduct && (
+              <UntappdRating
+                rating={item.untappdRating}
+                style={{ gap: '0.3vh', fontSize: '1.8vh' }}
+                iconStyle={{ height: '1.8vh', width: '1.8vh' }}
+              />
+            )}
+            <Badge variant="outline" style={{ fontSize: '1.6vh' }}>
+              {item.type}
+            </Badge>
             {item.topBeerDrops && (
-              <TopBeerDropsLink url={item.topBeerDrops} className="text-foreground hover:text-primary transition-colors drop-shadow-md" style={{ height: '2.2vh', width: '2.2vh' }} />
+              <TopBeerDropsLink
+                url={item.topBeerDrops}
+                className="text-foreground hover:text-primary transition-colors drop-shadow-md"
+                style={{ height: '2.2vh', width: '2.2vh' }}
+              />
             )}
           </div>
           {item.fourPack && (
-            <span className="font-semibold transition-colors duration-[250ms]" style={{ fontSize: '1.8vh', color: accentColor }}>
-              ${item.fourPack} <span className="font-semibold text-foreground-muted" style={{ fontSize: '1.4vh' }}>• Four Pack</span>
+            <span
+              className="font-semibold transition-colors duration-[250ms]"
+              style={{ fontSize: '1.8vh', color: accentColor }}
+            >
+              ${item.fourPack}{' '}
+              <span className="font-semibold text-foreground-muted" style={{ fontSize: '1.4vh' }}>
+                • Four Pack
+              </span>
             </span>
           )}
           {item.bottlePrice && (
-            <span className="font-semibold transition-colors duration-[250ms]" style={{ fontSize: '1.8vh', color: accentColor }}>
-              ${item.bottlePrice} <span className="font-semibold text-foreground-muted" style={{ fontSize: '1.4vh' }}>• Bottle</span>
+            <span
+              className="font-semibold transition-colors duration-[250ms]"
+              style={{ fontSize: '1.8vh', color: accentColor }}
+            >
+              ${item.bottlePrice}{' '}
+              <span className="font-semibold text-foreground-muted" style={{ fontSize: '1.4vh' }}>
+                • Bottle
+              </span>
             </span>
           )}
           {item.onDraft && (
-            <Badge variant="default" className="flex items-center" style={{ fontSize: '1.3vh', gap: '0.3vh' }}>
+            <Badge
+              variant="default"
+              className="flex items-center"
+              style={{ fontSize: '1.3vh', gap: '0.3vh' }}
+            >
               <div style={{ height: '1.5vh', width: '1.5vh' }}>
                 <GlassIcon className="w-full h-full" />
               </div>
@@ -343,7 +410,7 @@ function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fu
           )}
         </div>
       </Link>
-    );
+    )
   }
 
   return (
@@ -363,61 +430,94 @@ function CanCard({ item, fullscreen = false, accentColor }: { item: MenuItem; fu
         <h3 className="text-xl font-semibold text-center mb-2">{item.name}</h3>
         <div className="flex items-center justify-center gap-2">
           {!item.isProduct && <UntappdRating rating={item.untappdRating} />}
-          <Badge variant="outline" className="text-xs">{item.type}</Badge>
+          <Badge variant="outline" className="text-xs">
+            {item.type}
+          </Badge>
           {item.topBeerDrops && (
-            <TopBeerDropsLink url={item.topBeerDrops} className="h-6 w-6 text-foreground hover:text-primary transition-colors" />
+            <TopBeerDropsLink
+              url={item.topBeerDrops}
+              className="h-6 w-6 text-foreground hover:text-primary transition-colors"
+            />
           )}
         </div>
       </div>
-      <Button variant="outline" className="w-full btn-arrow group-hover:bg-muted/50 hover:translate-y-0" tabIndex={-1}>
+      <Button
+        variant="outline"
+        className="w-full btn-arrow group-hover:bg-muted/50 hover:translate-y-0"
+        tabIndex={-1}
+      >
         View Details
       </Button>
     </Link>
-  );
+  )
 }
 
-export function FeaturedMenu({ menuType, menu, menus = [], animated = false, itemColors, hideHeader = false }: FeaturedMenuProps) {
-  const { currentLocation } = useLocationContext();
-  const title = menuType === 'draft' ? 'Draft' : 'Cans';
-  const emptyMessage = menuType === 'draft'
-    ? 'No beers on draft right now. Check back soon!'
-    : 'No cans available. Check back soon for cans to take home.';
+export function FeaturedMenu({
+  menuType,
+  menu,
+  menus = [],
+  animated = false,
+  itemColors,
+  hideHeader = false,
+}: FeaturedMenuProps) {
+  const { currentLocation } = useLocationContext()
+  const title = menuType === 'draft' ? 'Draft' : 'Cans'
+  const emptyMessage =
+    menuType === 'draft'
+      ? 'No beers on draft right now. Check back soon!'
+      : 'No cans available. Check back soon for cans to take home.'
 
   // Convert and filter items (memoize allItems so downstream useMemo can skip work)
-  const allItems = useMemo(() => menus.flatMap(convertMenuItems), [menus]);
+  const allItems = useMemo(() => menus.flatMap(convertMenuItems), [menus])
   const filteredItems = useMemo(
     () => filterByLocation(allItems, currentLocation),
-    [currentLocation, allItems]
-  );
-  const displayItems = menu?.items ? convertMenuItems(menu) : filteredItems;
+    [currentLocation, allItems],
+  )
+  const displayItems = useMemo(
+    () => (menu?.items ? convertMenuItems(menu) : filteredItems),
+    [menu, filteredItems],
+  )
 
   // Animated items for live updates (only when animated prop is true)
   const animatedItems = useAnimatedList(displayItems, {
-    getKey: (item) => item.variant,
+    getKey: getMenuItemKey,
     exitDuration: 500,
-  });
+  })
 
   // Fullscreen menu mode (for /m/[menuUrl] pages)
   if (menu) {
     // Use animated items when animations are enabled
-    const itemsToRender = animated ? animatedItems : displayItems.map(item => ({ item, state: 'stable' as const, key: item.variant }));
+    const itemsToRender = animated
+      ? animatedItems
+      : displayItems.map((item) => ({ item, state: 'stable' as const, key: item.variant }))
 
     // Get lines cleaned date from location for draft menus only (not 'other' or 'cans')
-    const location = typeof menu?.location === 'object' ? menu.location as Location : null;
-    const linesCleanedText = menu?.type === 'draft' ? formatLinesCleanedDate(location?.linesLastCleaned) : null;
+    const location = typeof menu?.location === 'object' ? (menu.location as Location) : null
+    const linesCleanedText =
+      menu?.type === 'draft' ? formatLinesCleanedDate(location?.linesLastCleaned) : null
 
     return (
       <section className="h-full flex flex-col bg-background overflow-hidden">
         {/* Header row with Lolev Beer, menu title, and logo aligned */}
         {!hideHeader && (
-          <div className="flex items-center flex-shrink-0" style={{ padding: '2vh 1vw', marginBottom: '0.5vh' }}>
+          <div
+            className="flex items-center flex-shrink-0"
+            style={{ padding: '2vh 1vw', marginBottom: '0.5vh' }}
+          >
             <div className="flex-1">
-              <span className="font-bold text-foreground-muted" style={{ fontSize: '4vh' }}>Lolev Beer</span>
+              <span className="font-bold text-foreground-muted" style={{ fontSize: '4vh' }}>
+                Lolev Beer
+              </span>
             </div>
             <div className="flex-1 text-center">
-              <h2 className="font-bold" style={{ fontSize: '4vh' }}>{menu?.name || title}</h2>
+              <h2 className="font-bold" style={{ fontSize: '4vh' }}>
+                {menu?.name || title}
+              </h2>
               {linesCleanedText && (
-                <p className="text-foreground-muted" style={{ fontSize: '1.8vh', marginTop: '0.5vh' }}>
+                <p
+                  className="text-foreground-muted"
+                  style={{ fontSize: '1.8vh', marginTop: '0.5vh' }}
+                >
                   {linesCleanedText}
                 </p>
               )}
@@ -433,12 +533,12 @@ export function FeaturedMenu({ menuType, menu, menus = [], animated = false, ite
               menuType === 'draft' ? (
                 // Split items into two columns: 1-6 left, 7-12 right (column-first ordering)
                 (() => {
-                  const midpoint = Math.ceil(itemsToRender.length / 2);
-                  const leftColumn = itemsToRender.slice(0, midpoint);
-                  const rightColumn = itemsToRender.slice(midpoint);
+                  const midpoint = Math.ceil(itemsToRender.length / 2)
+                  const leftColumn = itemsToRender.slice(0, midpoint)
+                  const rightColumn = itemsToRender.slice(midpoint)
 
                   // Column header component with viewport-relative sizing
-                  const isOtherMenu = menu?.type === 'other';
+                  const isOtherMenu = menu?.type === 'other'
                   const ColumnHeader = () => (
                     <div
                       className="flex items-center border-b-2 border-border uppercase tracking-wider text-foreground font-bold"
@@ -447,21 +547,48 @@ export function FeaturedMenu({ menuType, menu, menus = [], animated = false, ite
                       {!isOtherMenu && <div style={{ minWidth: '7vh' }}>Tap</div>}
                       <div className="flex-grow">{isOtherMenu ? 'Item' : 'Beer'}</div>
                       <div className="flex" style={{ gap: '2vh' }}>
-                        {!isOtherMenu && <div className="text-center" style={{ minWidth: '7vh' }}>ABV</div>}
-                        {!isOtherMenu && <div className="text-center" style={{ minWidth: '8vh' }}>Half</div>}
-                        <div className="text-center" style={{ minWidth: '8vh' }}>{isOtherMenu ? 'Price' : 'Full'}</div>
+                        {!isOtherMenu && (
+                          <div className="text-center" style={{ minWidth: '7vh' }}>
+                            ABV
+                          </div>
+                        )}
+                        {!isOtherMenu && (
+                          <div className="text-center" style={{ minWidth: '8vh' }}>
+                            Half
+                          </div>
+                        )}
+                        <div className="text-center" style={{ minWidth: '8vh' }}>
+                          {isOtherMenu ? 'Price' : 'Full'}
+                        </div>
                       </div>
                     </div>
-                  );
+                  )
 
                   return (
-                    <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] max-w-none h-full" style={{ gap: '2vw' }} suppressHydrationWarning>
+                    <div
+                      className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] max-w-none h-full"
+                      style={{ gap: '2vw' }}
+                      suppressHydrationWarning
+                    >
                       <div className="flex flex-col h-full min-w-0">
                         <ColumnHeader />
                         <div className="flex flex-col flex-1 min-w-0">
                           {leftColumn.map(({ item, state, key }, idx) => (
-                            <div key={key} className={`flex-1 min-w-0 ${animated ? getAnimationClass(state) : ''}`}>
-                              <DraftBeerCard beer={item as unknown as Beer} showLocation={false} showTapAndPrice showGlass={!isOtherMenu} showTap={!isOtherMenu} showAbv={!isOtherMenu} showJustReleased={!isOtherMenu} showRating={!isOtherMenu} accentColor={itemColors?.[idx]} />
+                            <div
+                              key={key}
+                              className={`flex-1 min-w-0 ${animated ? getAnimationClass(state) : ''}`}
+                            >
+                              <DraftBeerCard
+                                beer={item as unknown as Beer}
+                                showLocation={false}
+                                showTapAndPrice
+                                showGlass={!isOtherMenu}
+                                showTap={!isOtherMenu}
+                                showAbv={!isOtherMenu}
+                                showJustReleased={!isOtherMenu}
+                                showRating={!isOtherMenu}
+                                accentColor={itemColors?.[idx]}
+                              />
                             </div>
                           ))}
                         </div>
@@ -472,17 +599,37 @@ export function FeaturedMenu({ menuType, menu, menus = [], animated = false, ite
                         <ColumnHeader />
                         <div className="flex flex-col flex-1 min-w-0">
                           {rightColumn.map(({ item, state, key }, idx) => (
-                            <div key={key} className={`flex-1 min-w-0 ${animated ? getAnimationClass(state) : ''}`}>
-                              <DraftBeerCard beer={item as unknown as Beer} showLocation={false} showTapAndPrice showGlass={!isOtherMenu} showTap={!isOtherMenu} showAbv={!isOtherMenu} showJustReleased={!isOtherMenu} showRating={!isOtherMenu} accentColor={itemColors?.[midpoint + idx]} />
+                            <div
+                              key={key}
+                              className={`flex-1 min-w-0 ${animated ? getAnimationClass(state) : ''}`}
+                            >
+                              <DraftBeerCard
+                                beer={item as unknown as Beer}
+                                showLocation={false}
+                                showTapAndPrice
+                                showGlass={!isOtherMenu}
+                                showTap={!isOtherMenu}
+                                showAbv={!isOtherMenu}
+                                showJustReleased={!isOtherMenu}
+                                showRating={!isOtherMenu}
+                                accentColor={itemColors?.[midpoint + idx]}
+                              />
                             </div>
                           ))}
                         </div>
                       </div>
                     </div>
-                  );
+                  )
                 })()
               ) : (
-                <div className="grid gap-x-4 max-w-none" style={{ gridTemplateColumns: `repeat(${Math.ceil(itemsToRender.length / 2)}, 1fr)`, rowGap: '4vh' }} suppressHydrationWarning>
+                <div
+                  className="grid gap-x-4 max-w-none"
+                  style={{
+                    gridTemplateColumns: `repeat(${Math.ceil(itemsToRender.length / 2)}, 1fr)`,
+                    rowGap: '4vh',
+                  }}
+                  suppressHydrationWarning
+                >
                   {itemsToRender.map(({ item, state, key }, idx) => (
                     <div key={key} className={animated ? getAnimationClass(state) : ''}>
                       <CanCard item={item} fullscreen accentColor={itemColors?.[idx]} />
@@ -494,17 +641,25 @@ export function FeaturedMenu({ menuType, menu, menus = [], animated = false, ite
               <Empty className="border border-dashed border-border/60 rounded-xl p-8">
                 <EmptyHeader>
                   <EmptyMedia variant="icon">
-                    {menuType === 'draft' ? <BeerIconLucide className="h-6 w-6" /> : <Package className="h-6 w-6" />}
+                    {menuType === 'draft' ? (
+                      <BeerIconLucide className="h-6 w-6" />
+                    ) : (
+                      <Package className="h-6 w-6" />
+                    )}
                   </EmptyMedia>
-                  <EmptyTitle className="text-xl">No {menuType === 'draft' ? 'beers' : 'cans'} available</EmptyTitle>
-                  <EmptyDescription className="text-muted-foreground/70">{emptyMessage}</EmptyDescription>
+                  <EmptyTitle className="text-xl">
+                    No {menuType === 'draft' ? 'beers' : 'cans'} available
+                  </EmptyTitle>
+                  <EmptyDescription className="text-muted-foreground/70">
+                    {emptyMessage}
+                  </EmptyDescription>
                 </EmptyHeader>
               </Empty>
             )}
           </div>
         </div>
       </section>
-    );
+    )
   }
 
   // Homepage section mode
@@ -528,11 +683,19 @@ export function FeaturedMenu({ menuType, menu, menus = [], animated = false, ite
             menuType === 'draft' ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4" suppressHydrationWarning>
                 {displayItems.map((item, index) => (
-                  <DraftBeerCard key={`${item.variant}-${index}`} beer={item as unknown as Beer} showLocation={false} showRating />
+                  <DraftBeerCard
+                    key={`${item.variant}-${index}`}
+                    beer={item as unknown as Beer}
+                    showLocation={false}
+                    showRating
+                  />
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" suppressHydrationWarning>
+              <div
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+                suppressHydrationWarning
+              >
                 {displayItems.map((item, index) => (
                   <CanCard key={`${item.variant}-${index}`} item={item} />
                 ))}
@@ -542,10 +705,18 @@ export function FeaturedMenu({ menuType, menu, menus = [], animated = false, ite
             <Empty className="border border-dashed border-border/60 rounded-xl p-8">
               <EmptyHeader>
                 <EmptyMedia variant="icon">
-                  {menuType === 'draft' ? <BeerIconLucide className="h-6 w-6" /> : <Package className="h-6 w-6" />}
+                  {menuType === 'draft' ? (
+                    <BeerIconLucide className="h-6 w-6" />
+                  ) : (
+                    <Package className="h-6 w-6" />
+                  )}
                 </EmptyMedia>
-                <EmptyTitle className="text-xl">No {menuType === 'draft' ? 'beers on draft' : 'cans available'}</EmptyTitle>
-                <EmptyDescription className="text-muted-foreground/70">{emptyMessage}</EmptyDescription>
+                <EmptyTitle className="text-xl">
+                  No {menuType === 'draft' ? 'beers on draft' : 'cans available'}
+                </EmptyTitle>
+                <EmptyDescription className="text-muted-foreground/70">
+                  {emptyMessage}
+                </EmptyDescription>
               </EmptyHeader>
             </Empty>
           )}
@@ -558,15 +729,15 @@ export function FeaturedMenu({ menuType, menu, menus = [], animated = false, ite
         </div>
       </div>
     </section>
-  );
+  )
 }
 
 /** Convenience wrapper for draft beer menu */
 export function FeaturedBeers(props: Omit<FeaturedMenuProps, 'menuType'>): React.ReactElement {
-  return <FeaturedMenu {...props} menuType="draft" />;
+  return <FeaturedMenu {...props} menuType="draft" />
 }
 
 /** Convenience wrapper for cans menu */
 export function FeaturedCans(props: Omit<FeaturedMenuProps, 'menuType'>): React.ReactElement {
-  return <FeaturedMenu {...props} menuType="cans" />;
+  return <FeaturedMenu {...props} menuType="cans" />
 }

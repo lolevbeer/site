@@ -23,10 +23,13 @@ interface UseAnimatedListOptions<T> {
  * - Animation state lives ONLY in React state (no drift between refs and state)
  * - Timeouts are tracked and cleared to prevent races
  * - Functional state updates avoid stale closures
+ * - Key diffs drive ONLY animation state; item content is always taken from
+ *   the latest `items` prop, so in-place edits (e.g. a beer's hops changed in
+ *   the CMS) render immediately even when no key was added or removed
  */
 export function useAnimatedList<T>(
   items: T[],
-  options: UseAnimatedListOptions<T>
+  options: UseAnimatedListOptions<T>,
 ): AnimatedItem<T>[] {
   const { getKey, exitDuration = 500, enterDuration = 600 } = options
 
@@ -39,7 +42,8 @@ export function useAnimatedList<T>(
   const getKeyRef = useRef(getKey)
   getKeyRef.current = getKey
 
-  // Track previous keys (just keys, not items - items are in state)
+  // Track previous keys (state drives animation phases; item content is
+  // overlaid from the items prop at render time)
   const prevKeysRef = useRef<Set<string>>(new Set())
   const isFirstRender = useRef(true)
 
@@ -48,7 +52,7 @@ export function useAnimatedList<T>(
 
   // Main state: all items with their animation states
   const [animatedItems, setAnimatedItems] = useState<AnimatedItem<T>[]>(() =>
-    items.map(item => ({ item, state: 'stable' as AnimationState, key: getKey(item) }))
+    items.map((item) => ({ item, state: 'stable' as AnimationState, key: getKey(item) })),
   )
 
   useEffect(() => {
@@ -56,15 +60,11 @@ export function useAnimatedList<T>(
     const currentGetKey = getKeyRef.current
     const currentKeys = new Set(currentItems.map(currentGetKey))
 
-    // First render: just set stable items, no animations
+    // First render: state was already seeded by the useState initializer (and
+    // the render-time merge keeps content fresh) — just record the keys.
     if (isFirstRender.current) {
       isFirstRender.current = false
       prevKeysRef.current = currentKeys
-      setAnimatedItems(currentItems.map(item => ({
-        item,
-        state: 'stable',
-        key: currentGetKey(item)
-      })))
       return
     }
 
@@ -72,7 +72,7 @@ export function useAnimatedList<T>(
 
     // Find entering keys (in current but not in prev)
     const enteringKeys = new Set<string>()
-    currentKeys.forEach(key => {
+    currentKeys.forEach((key) => {
       if (!prevKeys.has(key)) {
         enteringKeys.add(key)
       }
@@ -80,14 +80,14 @@ export function useAnimatedList<T>(
 
     // Find exiting keys (in prev but not in current)
     const exitingKeys = new Set<string>()
-    prevKeys.forEach(key => {
+    prevKeys.forEach((key) => {
       if (!currentKeys.has(key)) {
         exitingKeys.add(key)
       }
     })
 
     // Cancel exit timeouts for items that are coming back
-    enteringKeys.forEach(key => {
+    enteringKeys.forEach((key) => {
       const exitTimeout = timeoutsRef.current.get(`exit-${key}`)
       if (exitTimeout) {
         clearTimeout(exitTimeout)
@@ -96,11 +96,11 @@ export function useAnimatedList<T>(
     })
 
     // Update state using functional update to get latest state
-    setAnimatedItems(prev => {
+    setAnimatedItems((prev) => {
       const result: AnimatedItem<T>[] = []
 
       // Add all current items (entering or stable)
-      currentItems.forEach(item => {
+      currentItems.forEach((item) => {
         const key = currentGetKey(item)
         result.push({
           item,
@@ -112,7 +112,7 @@ export function useAnimatedList<T>(
       // Preserve exiting items from previous state
       // This includes both newly exiting AND still-animating exits
       // BUT skip items that have come back (are in currentKeys)
-      prev.forEach(ai => {
+      prev.forEach((ai) => {
         // Skip if this item is now back in current items
         if (currentKeys.has(ai.key)) {
           return
@@ -123,7 +123,7 @@ export function useAnimatedList<T>(
 
         if (isNewlyExiting || isStillExiting) {
           // Don't add duplicates
-          if (!result.some(r => r.key === ai.key)) {
+          if (!result.some((r) => r.key === ai.key)) {
             result.push({
               ...ai,
               state: 'exiting',
@@ -136,7 +136,7 @@ export function useAnimatedList<T>(
     })
 
     // Handle entering timeouts
-    enteringKeys.forEach(key => {
+    enteringKeys.forEach((key) => {
       // Clear any existing timeout for this key
       const existingTimeout = timeoutsRef.current.get(`enter-${key}`)
       if (existingTimeout) {
@@ -145,11 +145,10 @@ export function useAnimatedList<T>(
 
       const timeout = setTimeout(() => {
         timeoutsRef.current.delete(`enter-${key}`)
-        setAnimatedItems(prev =>
-          prev.map(ai => ai.key === key && ai.state === 'entering'
-            ? { ...ai, state: 'stable' }
-            : ai
-          )
+        setAnimatedItems((prev) =>
+          prev.map((ai) =>
+            ai.key === key && ai.state === 'entering' ? { ...ai, state: 'stable' } : ai,
+          ),
         )
       }, enterDuration)
 
@@ -157,7 +156,7 @@ export function useAnimatedList<T>(
     })
 
     // Handle exiting timeouts
-    exitingKeys.forEach(key => {
+    exitingKeys.forEach((key) => {
       // Clear any existing timeout for this key
       const existingTimeout = timeoutsRef.current.get(`exit-${key}`)
       if (existingTimeout) {
@@ -167,7 +166,7 @@ export function useAnimatedList<T>(
       const timeout = setTimeout(() => {
         timeoutsRef.current.delete(`exit-${key}`)
         // Only remove the exiting version, not any version with this key
-        setAnimatedItems(prev => prev.filter(ai => !(ai.key === key && ai.state === 'exiting')))
+        setAnimatedItems((prev) => prev.filter((ai) => !(ai.key === key && ai.state === 'exiting')))
       }, exitDuration)
 
       timeoutsRef.current.set(`exit-${key}`, timeout)
@@ -181,12 +180,23 @@ export function useAnimatedList<T>(
 
     // Cleanup on unmount
     return () => {
-      timeouts.forEach(timeout => clearTimeout(timeout))
+      timeouts.forEach((timeout) => clearTimeout(timeout))
       timeouts.clear()
     }
   }, [currentKeysString, enterDuration, exitDuration])
 
-  return animatedItems
+  // The effect above only re-runs when keys change, so the items captured in
+  // state go stale when content changes under a stable key (e.g. polling
+  // delivers a beer with edited hops). Always render the latest item data for
+  // keys still present; exiting items keep their last-known content.
+  const latestItemsByKey = useMemo(
+    () => new Map(items.map((item) => [getKey(item), item])),
+    [items, getKey],
+  )
+  return animatedItems.map((ai) => {
+    const latest = latestItemsByKey.get(ai.key)
+    return latest === undefined || latest === ai.item ? ai : { ...ai, item: latest }
+  })
 }
 
 /**
