@@ -4,7 +4,7 @@ import React, { useState, useRef } from 'react'
 import { Gutter, SetStepNav, Button, Banner, Pill } from '@payloadcms/ui'
 import { format } from 'date-fns-tz'
 import { getSiteContentData } from '@/src/actions/admin-data'
-import { parseSSEStream, isSSEResponse } from '@/lib/utils/sse-parser'
+import { useSSEImport, type SSEData } from '@/lib/hooks/use-sse-import'
 import { logger } from '@/lib/utils/logger'
 
 interface FieldChange {
@@ -17,14 +17,6 @@ interface MenuChanges {
   added: number
   removed: number
   priceChanges: number
-}
-
-interface LogEntry {
-  id: number
-  type: 'status' | 'event' | 'food' | 'beer' | 'menu' | 'hours' | 'error' | 'complete'
-  message: string
-  timestamp: Date
-  changes?: FieldChange[] | MenuChanges
 }
 
 type CollectionType = 'events' | 'food' | 'beers' | 'menus' | 'hours'
@@ -55,6 +47,20 @@ interface DistributorImportResult {
   details: string[]
 }
 
+interface RecalcResults {
+  updated: number
+  skipped: number
+  errors: number
+}
+
+interface UntappdResults {
+  total: number
+  refreshed: number
+  updated: number
+  skipped: number
+  errors: number
+}
+
 interface RegeocodeDistributor {
   name: string
   address: string
@@ -64,14 +70,12 @@ interface RegeocodeDistributor {
   fullAddress?: string
 }
 
-// Record type for SSE data payloads (parsed from JSON)
-type SSEData = Record<string, unknown>
-
-interface ProgressData {
-  current: number
-  total: number
-  name: string
-  percent: number
+interface RegeocodeResults {
+  checked: number
+  suspicious: number
+  fixed: number
+  failed: number
+  distributors?: RegeocodeDistributor[]
 }
 
 interface SyncViewClientProps {
@@ -79,13 +83,40 @@ interface SyncViewClientProps {
 }
 
 export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
-  const [syncing, setSyncing] = useState(false)
   const [dryRun, setDryRun] = useState(true)
   const [selectedCollections, setSelectedCollections] = useState<CollectionType[]>([])
-  const [logs, setLogs] = useState<LogEntry[]>([])
-  const [results, setResults] = useState<SyncResults | null>(null)
-  const logIdRef = useRef(0)
   const logsEndRef = useRef<HTMLDivElement>(null)
+  // Google Sheets sync. Log entries carry the per-record field changes as
+  // `data` so the console can render before/after diffs.
+  const sheets = useSSEImport<SyncResults>({
+    logLimit: Infinity,
+    handlers: ({ appendLog, setResults }) => ({
+      event: raw => { const d = raw as SSEData; appendLog('event', `Event: ${d.organizer} (${d.date}) - ${d.location}`, d.changes) },
+      food: raw => { const d = raw as SSEData; appendLog('food', `Food: ${d.vendor} (${d.date}) - ${d.location}`, d.changes) },
+      beer: raw => { const d = raw as SSEData; appendLog('beer', `Beer: ${d.name} (${d.style})`, d.changes) },
+      menu: raw => { const d = raw as SSEData; appendLog('menu', `Menu: ${d.location} ${d.type} - ${d.itemCount} items`, d.changes) },
+      hours: raw => { const d = raw as SSEData; appendLog('hours', `Hours: ${d.location} - ${d.action}`, d.changes) },
+      error: raw => { const d = raw as SSEData; appendLog('error', String(d.message ?? '')) },
+      complete: raw => {
+        const d = raw as SSEData
+        if (d.success) {
+          setResults({ ...(d.results as SyncResults), dryRun: d.dryRun as boolean })
+          appendLog('complete', d.dryRun ? 'Preview complete!' : 'Sync complete!')
+        } else {
+          appendLog('error', `Sync failed: ${d.error}`)
+        }
+      },
+    }),
+    onJSON: (_data, response, { appendLog }) => { appendLog('error', `HTTP error: ${response.status}`) },
+    onException: (error, { appendLog }) => { appendLog('error', `Connection error: ${error instanceof Error ? error.message : 'Unknown error'}`) },
+  })
+
+  // Keep the console scrolled to the newest entry
+  React.useEffect(() => {
+    if (sheets.logs.length > 0) {
+      logsEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [sheets.logs])
 
   // CSV Import state
   const [csvUploading, setCsvUploading] = useState(false)
@@ -98,36 +129,107 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
   const [urlsLoading, setUrlsLoading] = useState(true)
   const [urlsSaving, setUrlsSaving] = useState(false)
   const [urlsSaveStatus, setUrlsSaveStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  // Which region is importing; per-run callbacks passed to dist.run() carry the
+  // region into results, so this only drives the buttons/live-feed visibility.
   const [distImporting, setDistImporting] = useState<'pa' | 'oh' | null>(null)
-  const [distResults, setDistResults] = useState<DistributorImportResult | null>(null)
-  const [distProgress, setDistProgress] = useState<ProgressData | null>(null)
-  const [distLiveDetails, setDistLiveDetails] = useState<string[]>([])
+  const dist = useSSEImport<DistributorImportResult>({
+    logLimit: 50,
+    handlers: ({ appendLog }) => ({
+      // Server item payloads carry their own type: 'success' | 'skip' | 'error'
+      item: raw => {
+        const data = raw as SSEData
+        appendLog(String(data.type ?? 'status'), String(data.message ?? ''))
+      },
+    }),
+  })
 
   // Lake Beverage CSV import state
-  const [lakeUploading, setLakeUploading] = useState(false)
-  const [lakeResults, setLakeResults] = useState<DistributorImportResult | null>(null)
-  const [lakeProgress, setLakeProgress] = useState<ProgressData | null>(null)
   const lakeInputRef = useRef<HTMLInputElement>(null)
+  const lake = useSSEImport<DistributorImportResult>({
+    getResults: data => ({
+      region: 'NY',
+      imported: (data.imported as number) || 0,
+      skipped: (data.skipped as number) || 0,
+      errors: (data.errors as number) || 0,
+      details: (data.details as string[]) || [],
+    }),
+    onJSON: (data, _response, { setResults }) => {
+      setResults({
+        region: 'NY',
+        imported: 0,
+        skipped: 0,
+        errors: 1,
+        details: [String(data.error || 'Upload failed')],
+      })
+    },
+    onException: (error, { setResults }) => {
+      setResults({
+        region: 'NY',
+        imported: 0,
+        skipped: 0,
+        errors: 1,
+        details: [error instanceof Error ? error.message : 'Upload failed'],
+      })
+    },
+  })
 
   // Recalculate beer fields state
-  const [recalcRunning, setRecalcRunning] = useState(false)
   const [recalcDryRun, setRecalcDryRun] = useState(true)
-  const [recalcResults, setRecalcResults] = useState<{ updated: number; skipped: number; errors: number } | null>(null)
-  const [recalcLogs, setRecalcLogs] = useState<string[]>([])
+  const recalc = useSSEImport<RecalcResults>({
+    getResults: data => (data.results as RecalcResults) ?? null,
+  })
 
   // Re-geocode distributors state
-  const [regeocodeRunning, setRegeocodeRunning] = useState(false)
   const [regeocodeDryRun, setRegeocodeDryRun] = useState(true)
-  const [regeocodeResults, setRegeocodeResults] = useState<{ checked: number; suspicious: number; fixed: number; failed: number; distributors?: RegeocodeDistributor[] } | null>(null)
-  const [regeocodeProgress, setRegeocodeProgress] = useState<ProgressData | null>(null)
-  const [regeocodeLogs, setRegeocodeLogs] = useState<string[]>([])
+  const regeocode = useSSEImport<RegeocodeResults>({
+    getResults: data => ({
+      checked: (data.checked as number) || 0,
+      suspicious: (data.suspicious as number) || 0,
+      fixed: (data.fixed as number) || 0,
+      failed: (data.failed as number) || 0,
+    }),
+    handlers: ({ appendLog }) => ({
+      item: raw => {
+        const data = raw as SSEData
+        if (data.status === 'fixed') appendLog('success', `Fixed: ${data.name}`)
+        else if (data.status === 'skipped') appendLog('status', `Skipped: ${data.name} - ${data.note}`)
+        else appendLog('error', `Failed: ${data.name} - ${data.note || data.error}`)
+      },
+    }),
+    onJSON: (data, response, { appendLog, setResults }) => {
+      if (!response.ok) {
+        setResults({ checked: 0, suspicious: 0, fixed: 0, failed: 1 })
+        appendLog('error', `Error: ${data.error || 'Request failed'}`)
+        return
+      }
+      // JSON success fallback: dry run report, or no suspicious coordinates found
+      setResults({
+        checked: (data.checked as number) || 0,
+        suspicious: (data.suspicious as number) || 0,
+        fixed: (data.fixed as number) || 0,
+        failed: 0,
+        distributors: data.distributors as RegeocodeDistributor[] | undefined,
+      })
+    },
+  })
 
   // Untappd sync state
-  const [untappdRunning, setUntappdRunning] = useState(false)
   const [untappdDryRun, setUntappdDryRun] = useState(true)
-  const [untappdResults, setUntappdResults] = useState<{ total: number; refreshed: number; updated: number; skipped: number; errors: number } | null>(null)
-  const [untappdProgress, setUntappdProgress] = useState<ProgressData | null>(null)
-  const [untappdLogs, setUntappdLogs] = useState<string[]>([])
+  const untappd = useSSEImport<UntappdResults>({
+    getResults: data => (data.results as UntappdResults) ?? null,
+    handlers: ({ appendLog }) => ({
+      item: raw => {
+        const data = raw as SSEData
+        const statusIcon = data.status === 'refreshed' ? '✓'
+          : data.status === 'updated' || data.status === 'new' ? '+'
+          : data.status === 'error' ? '✗'
+          : data.status === 'multiple' ? '?'
+          : data.status === 'not-found' ? '○'
+          : '→'
+        appendLog(String(data.status ?? 'item'), `${statusIcon} ${data.name}: ${data.message}`)
+      },
+    }),
+  })
 
   // Load distributor URLs on mount using local API
   React.useEffect(() => {
@@ -140,11 +242,6 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
       .finally(() => setUrlsLoading(false))
   }, [])
 
-  const addLog = (type: LogEntry['type'], message: string, changes?: LogEntry['changes']) => {
-    setLogs(prev => [...prev, { id: logIdRef.current++, type, message, timestamp: new Date(), changes }])
-    setTimeout(() => logsEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
-  }
-
   const toggleCollection = (collection: CollectionType) => {
     setSelectedCollections(prev =>
       prev.includes(collection)
@@ -155,57 +252,17 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
 
   const handleSync = async () => {
     if (selectedCollections.length === 0) {
-      addLog('error', 'Please select at least one collection to sync')
+      sheets.appendLog('error', 'Please select at least one collection to sync')
       return
     }
 
-    setSyncing(true)
-    setLogs([])
-    setResults(null)
-    logIdRef.current = 0
-
-    try {
-      const params = new URLSearchParams()
-      if (dryRun) params.set('dryRun', 'true')
-      params.set('collections', selectedCollections.join(','))
-
-      const response = await fetch(`/api/sync-google-sheets?${params.toString()}`, {
-        method: 'POST',
-        credentials: 'same-origin',
-      })
-
-      if (!response.ok) {
-        addLog('error', `HTTP error: ${response.status}`)
-        setSyncing(false)
-        return
-      }
-
-      await parseSSEStream(response, {
-        status: (raw: unknown) => { const data = raw as SSEData; addLog('status', data.message as string) },
-        event: (raw: unknown) => { const data = raw as SSEData; addLog('event', `Event: ${data.organizer} (${data.date}) - ${data.location}`, data.changes as FieldChange[]) },
-        food: (raw: unknown) => { const data = raw as SSEData; addLog('food', `Food: ${data.vendor} (${data.date}) - ${data.location}`, data.changes as FieldChange[]) },
-        beer: (raw: unknown) => { const data = raw as SSEData; addLog('beer', `Beer: ${data.name} (${data.style})`, data.changes as FieldChange[]) },
-        menu: (raw: unknown) => { const data = raw as SSEData; addLog('menu', `Menu: ${data.location} ${data.type} - ${data.itemCount} items`, data.changes as MenuChanges) },
-        hours: (raw: unknown) => { const data = raw as SSEData; addLog('hours', `Hours: ${data.location} - ${data.action}`, data.changes as FieldChange[]) },
-        error: (raw: unknown) => { const data = raw as SSEData; addLog('error', data.message as string) },
-        complete: (raw: unknown) => {
-          const data = raw as SSEData
-          if (data.success) {
-            setResults({ ...(data.results as SyncResults), dryRun: data.dryRun as boolean })
-            addLog('complete', data.dryRun ? 'Preview complete!' : 'Sync complete!')
-          } else {
-            addLog('error', `Sync failed: ${data.error}`)
-          }
-        },
-      })
-    } catch (error: unknown) {
-      addLog('error', `Connection error: ${error instanceof Error ? error.message : 'Unknown error'}`)
-    } finally {
-      setSyncing(false)
-    }
+    const params = new URLSearchParams()
+    if (dryRun) params.set('dryRun', 'true')
+    params.set('collections', selectedCollections.join(','))
+    await sheets.run(`/api/sync-google-sheets?${params.toString()}`)
   }
 
-  const getLogClasses = (type: LogEntry['type']) => {
+  const getLogClasses = (type: string) => {
     switch (type) {
       case 'status': return 'color: var(--theme-elevation-500)'
       case 'event': return 'color: #60a5fa'
@@ -219,7 +276,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
     }
   }
 
-  const getLogIcon = (type: LogEntry['type']) => {
+  const getLogIcon = (type: string) => {
     switch (type) {
       case 'event': return '✓'
       case 'food': return '✓'
@@ -262,7 +319,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
   const importDistributors = async (region: 'pa' | 'oh') => {
     const url = region === 'pa' ? paUrl : ohUrl
     if (!url) {
-      setDistResults({
+      dist.setResults({
         region: region.toUpperCase(),
         imported: 0,
         skipped: 0,
@@ -273,59 +330,40 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
     }
 
     setDistImporting(region)
-    setDistResults(null)
-    setDistProgress(null)
-    setDistLiveDetails([])
-
     try {
-      const response = await fetch(`/api/import-distributors?region=${region}`, {
-        method: 'POST',
-        credentials: 'same-origin',
-      })
-
-      // Check if it's a JSON error response (non-streaming)
-      if (!isSSEResponse(response)) {
-        const data = await response.json()
-        const details: string[] = []
-        if (data.error) details.push(`Error: ${data.error}`)
-        if (data.details) details.push(...data.details)
-        setDistResults({
+      await dist.run(`/api/import-distributors?region=${region}`, {
+        getResults: data => ({
           region: region.toUpperCase(),
-          imported: data.imported || 0,
-          skipped: data.skipped || 0,
-          errors: data.errors || 1,
-          details,
-        })
-        setDistImporting(null)
-        return
-      }
-
-      await parseSSEStream(response, {
-        progress: (raw: unknown) => { setDistProgress(raw as ProgressData) },
-        item: (raw: unknown) => { const data = raw as SSEData; setDistLiveDetails(prev => [...prev.slice(-49), data.message as string]) },
-        complete: (raw: unknown) => {
-          const data = raw as SSEData
-          setDistResults({
+          imported: (data.imported as number) || 0,
+          skipped: (data.skipped as number) || 0,
+          errors: (data.errors as number) || 0,
+          details: (data.details as string[]) || [],
+        }),
+        // JSON (non-streaming) responses are error payloads for this endpoint
+        onJSON: (data, _response, { setResults }) => {
+          const details: string[] = []
+          if (data.error) details.push(`Error: ${data.error}`)
+          if (data.details) details.push(...(data.details as string[]))
+          setResults({
             region: region.toUpperCase(),
             imported: (data.imported as number) || 0,
             skipped: (data.skipped as number) || 0,
-            errors: (data.errors as number) || 0,
-            details: (data.details as string[]) || [],
+            errors: (data.errors as number) || 1,
+            details,
           })
-          setDistProgress(null)
         },
-      })
-    } catch (error: unknown) {
-      setDistResults({
-        region: region.toUpperCase(),
-        imported: 0,
-        skipped: 0,
-        errors: 1,
-        details: [`Network error: ${error instanceof Error ? error.message : 'Import failed'}`],
+        onException: (error, { setResults }) => {
+          setResults({
+            region: region.toUpperCase(),
+            imported: 0,
+            skipped: 0,
+            errors: 1,
+            details: [`Network error: ${error instanceof Error ? error.message : 'Import failed'}`],
+          })
+        },
       })
     } finally {
       setDistImporting(null)
-      setDistProgress(null)
     }
   }
 
@@ -333,223 +371,33 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
     const file = e.target.files?.[0]
     if (!file) return
 
-    setLakeUploading(true)
-    setLakeResults(null)
-    setLakeProgress(null)
+    const formData = new FormData()
+    formData.append('file', file)
+    await lake.run('/api/import-lake-beverage-csv', { body: formData })
 
-    try {
-      const formData = new FormData()
-      formData.append('file', file)
-
-      const response = await fetch('/api/import-lake-beverage-csv', {
-        method: 'POST',
-        credentials: 'same-origin',
-        body: formData,
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        setLakeResults({
-          region: 'NY',
-          imported: 0,
-          skipped: 0,
-          errors: 1,
-          details: [data.error || 'Upload failed'],
-        })
-        setLakeUploading(false)
-        return
-      }
-
-      await parseSSEStream(response, {
-        progress: (raw: unknown) => { setLakeProgress(raw as ProgressData) },
-        complete: (raw: unknown) => {
-          const data = raw as SSEData
-          setLakeResults({
-            region: 'NY',
-            imported: (data.imported as number) || 0,
-            skipped: (data.skipped as number) || 0,
-            errors: (data.errors as number) || 0,
-            details: (data.details as string[]) || [],
-          })
-          setLakeProgress(null)
-        },
-      })
-    } catch (error: unknown) {
-      setLakeResults({
-        region: 'NY',
-        imported: 0,
-        skipped: 0,
-        errors: 1,
-        details: [error instanceof Error ? error.message : 'Upload failed'],
-      })
-    } finally {
-      setLakeUploading(false)
-      setLakeProgress(null)
-      if (lakeInputRef.current) {
-        lakeInputRef.current.value = ''
-      }
+    if (lakeInputRef.current) {
+      lakeInputRef.current.value = ''
     }
   }
 
+  // Default useSSEImport handlers cover this flow entirely:
+  // status/error events become log entries, `complete` carries the results.
   const handleRecalculateBeerFields = async () => {
-    setRecalcRunning(true)
-    setRecalcResults(null)
-    setRecalcLogs([])
-
-    try {
-      const params = new URLSearchParams()
-      if (recalcDryRun) params.set('dryRun', 'true')
-
-      const response = await fetch(`/api/recalculate-beer-prices?${params.toString()}`, {
-        method: 'POST',
-        credentials: 'same-origin',
-      })
-
-      if (!response.ok) {
-        setRecalcLogs(prev => [...prev, `Error: HTTP ${response.status}`])
-        setRecalcRunning(false)
-        return
-      }
-
-      await parseSSEStream(response, {
-        status: (raw: unknown) => { const data = raw as SSEData; setRecalcLogs(prev => [...prev.slice(-99), data.message as string]) },
-        error: (raw: unknown) => { const data = raw as SSEData; setRecalcLogs(prev => [...prev.slice(-99), `Error: ${data.message}`]) },
-        complete: (raw: unknown) => {
-          const data = raw as SSEData
-          if (data.results) {
-            setRecalcResults(data.results as { updated: number; skipped: number; errors: number })
-          }
-        },
-      })
-    } catch (error: unknown) {
-      setRecalcLogs(prev => [...prev, `Error: ${error instanceof Error ? error.message : 'Recalculation failed'}`])
-    } finally {
-      setRecalcRunning(false)
-    }
+    const params = new URLSearchParams()
+    if (recalcDryRun) params.set('dryRun', 'true')
+    await recalc.run(`/api/recalculate-beer-prices?${params.toString()}`)
   }
 
   const handleRegeocodeDistributors = async () => {
-    setRegeocodeRunning(true)
-    setRegeocodeResults(null)
-    setRegeocodeProgress(null)
-    setRegeocodeLogs([])
-
-    try {
-      const params = new URLSearchParams()
-      if (regeocodeDryRun) params.set('dryRun', 'true')
-
-      const response = await fetch(`/api/regeocode-distributors?${params.toString()}`, {
-        method: 'POST',
-        credentials: 'same-origin',
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        setRegeocodeResults({
-          checked: 0,
-          suspicious: 0,
-          fixed: 0,
-          failed: 1,
-        })
-        setRegeocodeLogs([`Error: ${data.error || 'Request failed'}`])
-        setRegeocodeRunning(false)
-        return
-      }
-
-      // Check if it's SSE or JSON response
-      const contentType = response.headers.get('content-type') || ''
-      if (contentType.includes('text/event-stream')) {
-        await parseSSEStream(response, {
-          progress: (raw: unknown) => { setRegeocodeProgress(raw as ProgressData) },
-          item: (raw: unknown) => {
-            const data = raw as SSEData
-            const msg = data.status === 'fixed'
-              ? `Fixed: ${data.name}`
-              : data.status === 'skipped'
-                ? `Skipped: ${data.name} - ${data.note}`
-                : `Failed: ${data.name} - ${data.note || data.error}`
-            setRegeocodeLogs(prev => [...prev.slice(-99), msg as string])
-          },
-          complete: (raw: unknown) => {
-            const data = raw as SSEData
-            setRegeocodeResults({
-              checked: (data.checked as number) || 0,
-              suspicious: (data.suspicious as number) || 0,
-              fixed: (data.fixed as number) || 0,
-              failed: (data.failed as number) || 0,
-            })
-            setRegeocodeProgress(null)
-          },
-        })
-      } else {
-        // JSON response (dry run or no suspicious found)
-        const data = await response.json()
-        setRegeocodeResults({
-          checked: data.checked || 0,
-          suspicious: data.suspicious || 0,
-          fixed: data.fixed || 0,
-          failed: 0,
-          distributors: data.distributors,
-        })
-      }
-    } catch (error: unknown) {
-      setRegeocodeLogs(prev => [...prev, `Error: ${error instanceof Error ? error.message : 'Re-geocode failed'}`])
-    } finally {
-      setRegeocodeRunning(false)
-      setRegeocodeProgress(null)
-    }
+    const params = new URLSearchParams()
+    if (regeocodeDryRun) params.set('dryRun', 'true')
+    await regeocode.run(`/api/regeocode-distributors?${params.toString()}`)
   }
 
   const handleUntappdSync = async () => {
-    setUntappdRunning(true)
-    setUntappdResults(null)
-    setUntappdProgress(null)
-    setUntappdLogs([])
-
-    try {
-      const params = new URLSearchParams()
-      if (untappdDryRun) params.set('dryRun', 'true')
-
-      const response = await fetch(`/api/sync-untappd-ratings?${params.toString()}`, {
-        method: 'POST',
-        credentials: 'same-origin',
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        setUntappdLogs([`Error: ${data.error || 'Request failed'}`])
-        setUntappdRunning(false)
-        return
-      }
-
-      await parseSSEStream(response, {
-        status: (raw: unknown) => { const data = raw as SSEData; setUntappdLogs(prev => [...prev.slice(-99), data.message as string]) },
-        progress: (raw: unknown) => { setUntappdProgress(raw as ProgressData) },
-        item: (raw: unknown) => {
-          const data = raw as SSEData
-          const statusIcon = data.status === 'refreshed' ? '✓'
-            : data.status === 'updated' || data.status === 'new' ? '+'
-            : data.status === 'error' ? '✗'
-            : data.status === 'multiple' ? '?'
-            : data.status === 'not-found' ? '○'
-            : '→'
-          setUntappdLogs(prev => [...prev.slice(-99), `${statusIcon} ${data.name}: ${data.message}`])
-        },
-        error: (raw: unknown) => { const data = raw as SSEData; setUntappdLogs(prev => [...prev.slice(-99), `Error: ${data.message}`]) },
-        complete: (raw: unknown) => {
-          const data = raw as SSEData
-          if (data.results) {
-            setUntappdResults(data.results as { total: number; refreshed: number; updated: number; skipped: number; errors: number })
-          }
-          setUntappdProgress(null)
-        },
-      })
-    } catch (error: unknown) {
-      setUntappdLogs(prev => [...prev, `Error: ${error instanceof Error ? error.message : 'Sync failed'}`])
-    } finally {
-      setUntappdRunning(false)
-      setUntappdProgress(null)
-    }
+    const params = new URLSearchParams()
+    if (untappdDryRun) params.set('dryRun', 'true')
+    await untappd.run(`/api/sync-untappd-ratings?${params.toString()}`)
   }
 
   const handleCSVUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -650,7 +498,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
               <button
                 key={collection}
                 onClick={() => toggleCollection(collection)}
-                disabled={syncing}
+                disabled={sheets.running}
                 style={{
                   padding: '6px 12px',
                   fontSize: '13px',
@@ -665,8 +513,8 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                   color: selectedCollections.includes(collection)
                     ? collectionColors[collection]
                     : 'var(--theme-elevation-500)',
-                  cursor: syncing ? 'not-allowed' : 'pointer',
-                  opacity: syncing ? 0.6 : 1,
+                  cursor: sheets.running ? 'not-allowed' : 'pointer',
+                  opacity: sheets.running ? 0.6 : 1,
                   transition: 'all 0.15s',
                 }}
               >
@@ -678,11 +526,11 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
             <Button
               onClick={handleSync}
-              disabled={syncing || selectedCollections.length === 0}
+              disabled={sheets.running || selectedCollections.length === 0}
               buttonStyle={dryRun ? 'secondary' : 'primary'}
               size="small"
             >
-              {syncing ? (dryRun ? 'Previewing...' : 'Syncing...') : (dryRun ? 'Preview' : 'Sync Now')}
+              {sheets.running ? (dryRun ? 'Previewing...' : 'Syncing...') : (dryRun ? 'Preview' : 'Sync Now')}
             </Button>
             <label style={{
               display: 'flex',
@@ -696,7 +544,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                 type="checkbox"
                 checked={dryRun}
                 onChange={(e) => setDryRun(e.target.checked)}
-                disabled={syncing}
+                disabled={sheets.running}
                 style={{ width: '16px', height: '16px', cursor: 'pointer' }}
               />
               Dry run (preview only)
@@ -705,7 +553,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
         </div>
 
         {/* Log Console */}
-        {logs.length > 0 && (
+        {sheets.logs.length > 0 && (
           <div style={{
             marginBottom: '24px',
             borderRadius: '8px',
@@ -730,8 +578,8 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
               fontSize: '12px',
               lineHeight: '1.6',
             }}>
-              {logs.map(log => (
-                <div key={log.id} style={{ marginBottom: log.changes ? '8px' : '0' }}>
+              {sheets.logs.map(log => (
+                <div key={log.id} style={{ marginBottom: log.data ? '8px' : '0' }}>
                   <div
                     style={{
                       display: 'flex',
@@ -751,7 +599,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                       {log.message}
                     </span>
                   </div>
-                  {log.changes && (
+                  {log.data != null && (
                     <div style={{
                       marginLeft: '80px',
                       marginTop: '4px',
@@ -761,9 +609,9 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                       borderLeft: '3px solid #3b82f6',
                       fontSize: '11px',
                     }}>
-                      {Array.isArray(log.changes) ? (
+                      {Array.isArray(log.data) ? (
                         // Field changes for events, food, beers
-                        (log.changes as FieldChange[]).map((change, i, arr) => (
+                        (log.data as FieldChange[]).map((change, i, arr) => (
                           <div key={i} style={{ display: 'flex', gap: '8px', marginBottom: i < arr.length - 1 ? '4px' : 0 }}>
                             <span style={{ color: '#8b949e', minWidth: '80px' }}>{change.field}:</span>
                             <span style={{ color: '#f87171', textDecoration: 'line-through' }}>
@@ -778,7 +626,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                       ) : (
                         // Menu changes summary
                         (() => {
-                          const menuChanges = log.changes as MenuChanges
+                          const menuChanges = log.data as MenuChanges
                           return (
                             <div style={{ display: 'flex', gap: '16px' }}>
                               {menuChanges.added > 0 && (
@@ -804,60 +652,60 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
         )}
 
         {/* Results Summary */}
-        {results && (
+        {sheets.results && (
           <div style={{
             borderRadius: '8px',
-            border: results.dryRun ? '1px solid var(--theme-elevation-400)' : '1px solid var(--theme-success-400)',
-            backgroundColor: results.dryRun ? 'var(--theme-elevation-50)' : 'var(--theme-success-50)',
+            border: sheets.results.dryRun ? '1px solid var(--theme-elevation-400)' : '1px solid var(--theme-success-400)',
+            backgroundColor: sheets.results.dryRun ? 'var(--theme-elevation-50)' : 'var(--theme-success-50)',
             padding: '24px',
           }}>
             <h3 style={{
               fontSize: '16px',
               fontWeight: 600,
-              color: results.dryRun ? 'var(--theme-elevation-700)' : 'var(--theme-success-700)',
+              color: sheets.results.dryRun ? 'var(--theme-elevation-700)' : 'var(--theme-success-700)',
               marginBottom: '16px',
             }}>
-              {results.dryRun ? 'Preview Results' : 'Sync Complete'}
+              {sheets.results.dryRun ? 'Preview Results' : 'Sync Complete'}
             </h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
-              {results.events && (
+              {sheets.results.events && (
                 <ResultCard
                   label="Events"
                   color="#60a5fa"
-                  data={results.events}
-                  dryRun={results.dryRun}
+                  data={sheets.results.events}
+                  dryRun={sheets.results.dryRun}
                 />
               )}
-              {results.food && (
+              {sheets.results.food && (
                 <ResultCard
                   label="Food"
                   color="#c084fc"
-                  data={results.food}
-                  dryRun={results.dryRun}
+                  data={sheets.results.food}
+                  dryRun={sheets.results.dryRun}
                 />
               )}
-              {results.beers && (
+              {sheets.results.beers && (
                 <ResultCard
                   label="Beers"
                   color="#fbbf24"
-                  data={results.beers}
-                  dryRun={results.dryRun}
+                  data={sheets.results.beers}
+                  dryRun={sheets.results.dryRun}
                 />
               )}
-              {results.menus && (
+              {sheets.results.menus && (
                 <ResultCard
                   label="Menus"
                   color="#34d399"
-                  data={results.menus}
-                  dryRun={results.dryRun}
+                  data={sheets.results.menus}
+                  dryRun={sheets.results.dryRun}
                 />
               )}
-              {results.hours && (
+              {sheets.results.hours && (
                 <ResultCard
                   label="Hours"
                   color="#f472b6"
-                  data={results.hours}
-                  dryRun={results.dryRun}
+                  data={sheets.results.hours}
+                  dryRun={sheets.results.dryRun}
                 />
               )}
             </div>
@@ -1091,7 +939,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
               </div>
 
               {/* Progress Bar for PA/OH Import */}
-              {distProgress && (
+              {dist.progress && (
                 <div style={{ marginTop: '16px' }}>
                   <div style={{
                     display: 'flex',
@@ -1106,9 +954,9 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                       whiteSpace: 'nowrap',
                       maxWidth: '70%',
                     }}>
-                      {distProgress.name}
+                      {dist.progress.name}
                     </span>
-                    <span>{distProgress.current} / {distProgress.total} ({distProgress.percent}%)</span>
+                    <span>{dist.progress.current} / {dist.progress.total} ({dist.progress.percent}%)</span>
                   </div>
                   <div style={{
                     height: '8px',
@@ -1118,7 +966,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                   }}>
                     <div style={{
                       height: '100%',
-                      width: `${distProgress.percent}%`,
+                      width: `${dist.progress.percent}%`,
                       backgroundColor: '#fb923c',
                       borderRadius: '4px',
                       transition: 'width 0.3s ease',
@@ -1128,7 +976,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
               )}
 
               {/* Live Details Feed */}
-              {distLiveDetails.length > 0 && distImporting && (
+              {dist.logs.length > 0 && distImporting && (
                 <div style={{
                   marginTop: '12px',
                   maxHeight: '150px',
@@ -1140,30 +988,30 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                   borderRadius: '4px',
                   border: '1px solid #30363d',
                 }}>
-                  {distLiveDetails.map((detail, i) => (
-                    <div key={i} style={{
-                      color: detail.startsWith('Error')
+                  {dist.logs.map(log => (
+                    <div key={log.id} style={{
+                      color: log.type === 'error'
                         ? '#f87171'
-                        : detail.startsWith('Imported')
+                        : log.type === 'success'
                           ? '#4ade80'
                           : '#8b949e',
                       marginBottom: '2px',
                     }}>
-                      {detail}
+                      {log.message}
                     </div>
                   ))}
                 </div>
               )}
 
               {/* Distributor Import Results */}
-              {distResults && (
+              {dist.results && (
                 <div style={{
                   marginTop: '16px',
                   borderRadius: '8px',
-                  border: distResults.errors > 0 && distResults.imported === 0
+                  border: dist.results.errors > 0 && dist.results.imported === 0
                     ? '1px solid var(--theme-error-400)'
                     : '1px solid var(--theme-success-400)',
-                  backgroundColor: distResults.errors > 0 && distResults.imported === 0
+                  backgroundColor: dist.results.errors > 0 && dist.results.imported === 0
                     ? 'var(--theme-error-50)'
                     : 'var(--theme-success-50)',
                   padding: '16px',
@@ -1172,26 +1020,26 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                     fontSize: '14px',
                     fontWeight: 600,
                     marginBottom: '8px',
-                    color: distResults.errors > 0 && distResults.imported === 0
+                    color: dist.results.errors > 0 && dist.results.imported === 0
                       ? 'var(--theme-error-700)'
                       : 'var(--theme-success-700)',
                   }}>
-                    {distResults.region} Import Results
+                    {dist.results.region} Import Results
                   </div>
                   <div style={{ display: 'flex', gap: '16px', fontSize: '14px', marginBottom: '12px' }}>
                     <span style={{ color: 'var(--theme-success-500)' }}>
-                      {distResults.imported} imported
+                      {dist.results.imported} imported
                     </span>
                     <span style={{ color: 'var(--theme-elevation-500)' }}>
-                      {distResults.skipped} skipped
+                      {dist.results.skipped} skipped
                     </span>
-                    {distResults.errors > 0 && (
+                    {dist.results.errors > 0 && (
                       <span style={{ color: 'var(--theme-error-500)' }}>
-                        {distResults.errors} errors
+                        {dist.results.errors} errors
                       </span>
                     )}
                   </div>
-                  {distResults.details.length > 0 && (
+                  {dist.results.details.length > 0 && (
                     <div style={{
                       maxHeight: '200px',
                       overflowY: 'auto',
@@ -1202,7 +1050,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                       borderRadius: '4px',
                       border: '1px solid var(--theme-elevation-150)',
                     }}>
-                      {distResults.details.map((detail, i) => (
+                      {dist.results.details.map((detail, i) => (
                         <div key={i} style={{
                           color: detail.startsWith('Error')
                             ? 'var(--theme-error-500)'
@@ -1242,22 +1090,22 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                     type="file"
                     accept=".csv"
                     onChange={handleLakeBeverageUpload}
-                    disabled={lakeUploading}
+                    disabled={lake.running}
                     style={{ display: 'none' }}
                     id="lake-csv-upload"
                   />
                   <Button
                     onClick={() => lakeInputRef.current?.click()}
-                    disabled={lakeUploading}
+                    disabled={lake.running}
                     buttonStyle="secondary"
                     size="small"
                   >
-                    {lakeUploading ? 'Importing...' : 'Upload CSV'}
+                    {lake.running ? 'Importing...' : 'Upload CSV'}
                   </Button>
                 </div>
 
                 {/* Progress Bar */}
-                {lakeProgress && (
+                {lake.progress && (
                   <div style={{ marginTop: '16px' }}>
                     <div style={{
                       display: 'flex',
@@ -1266,8 +1114,8 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                       marginBottom: '6px',
                       color: 'var(--theme-elevation-600)',
                     }}>
-                      <span>Processing: {lakeProgress.name}</span>
-                      <span>{lakeProgress.current} / {lakeProgress.total} ({lakeProgress.percent}%)</span>
+                      <span>Processing: {lake.progress.name}</span>
+                      <span>{lake.progress.current} / {lake.progress.total} ({lake.progress.percent}%)</span>
                     </div>
                     <div style={{
                       height: '8px',
@@ -1277,7 +1125,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                     }}>
                       <div style={{
                         height: '100%',
-                        width: `${lakeProgress.percent}%`,
+                        width: `${lake.progress.percent}%`,
                         backgroundColor: '#60a5fa',
                         borderRadius: '4px',
                         transition: 'width 0.3s ease',
@@ -1287,14 +1135,14 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                 )}
 
                 {/* Lake Beverage Results */}
-                {lakeResults && (
+                {lake.results && (
                   <div style={{
                     marginTop: '16px',
                     borderRadius: '8px',
-                    border: lakeResults.errors > 0 && lakeResults.imported === 0
+                    border: lake.results.errors > 0 && lake.results.imported === 0
                       ? '1px solid var(--theme-error-400)'
                       : '1px solid var(--theme-success-400)',
-                    backgroundColor: lakeResults.errors > 0 && lakeResults.imported === 0
+                    backgroundColor: lake.results.errors > 0 && lake.results.imported === 0
                       ? 'var(--theme-error-50)'
                       : 'var(--theme-success-50)',
                     padding: '16px',
@@ -1303,7 +1151,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                       fontSize: '14px',
                       fontWeight: 600,
                       marginBottom: '8px',
-                      color: lakeResults.errors > 0 && lakeResults.imported === 0
+                      color: lake.results.errors > 0 && lake.results.imported === 0
                         ? 'var(--theme-error-700)'
                         : 'var(--theme-success-700)',
                     }}>
@@ -1311,18 +1159,18 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                     </div>
                     <div style={{ display: 'flex', gap: '16px', fontSize: '14px', marginBottom: '12px' }}>
                       <span style={{ color: 'var(--theme-success-500)' }}>
-                        {lakeResults.imported} imported
+                        {lake.results.imported} imported
                       </span>
                       <span style={{ color: 'var(--theme-elevation-500)' }}>
-                        {lakeResults.skipped} skipped
+                        {lake.results.skipped} skipped
                       </span>
-                      {lakeResults.errors > 0 && (
+                      {lake.results.errors > 0 && (
                         <span style={{ color: 'var(--theme-error-500)' }}>
-                          {lakeResults.errors} errors
+                          {lake.results.errors} errors
                         </span>
                       )}
                     </div>
-                    {lakeResults.details.length > 0 && (
+                    {lake.results.details.length > 0 && (
                       <div style={{
                         maxHeight: '200px',
                         overflowY: 'auto',
@@ -1333,7 +1181,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                         borderRadius: '4px',
                         border: '1px solid var(--theme-elevation-150)',
                       }}>
-                        {lakeResults.details.map((detail, i) => (
+                        {lake.results.details.map((detail, i) => (
                           <div key={i} style={{
                             color: detail.startsWith('Error')
                               ? 'var(--theme-error-500)'
@@ -1373,11 +1221,11 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                   <Button
                     onClick={handleRegeocodeDistributors}
-                    disabled={regeocodeRunning}
+                    disabled={regeocode.running}
                     buttonStyle={regeocodeDryRun ? 'secondary' : 'primary'}
                     size="small"
                   >
-                    {regeocodeRunning ? (regeocodeDryRun ? 'Scanning...' : 'Fixing...') : (regeocodeDryRun ? 'Find Bad Coords' : 'Fix Bad Coords')}
+                    {regeocode.running ? (regeocodeDryRun ? 'Scanning...' : 'Fixing...') : (regeocodeDryRun ? 'Find Bad Coords' : 'Fix Bad Coords')}
                   </Button>
                   <label style={{
                     display: 'flex',
@@ -1391,7 +1239,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                       type="checkbox"
                       checked={regeocodeDryRun}
                       onChange={(e) => setRegeocodeDryRun(e.target.checked)}
-                      disabled={regeocodeRunning}
+                      disabled={regeocode.running}
                       style={{ width: '14px', height: '14px', cursor: 'pointer' }}
                     />
                     Dry run (preview only)
@@ -1399,7 +1247,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                 </div>
 
                 {/* Progress Bar */}
-                {regeocodeProgress && (
+                {regeocode.progress && (
                   <div style={{ marginTop: '16px' }}>
                     <div style={{
                       display: 'flex',
@@ -1414,9 +1262,9 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                         whiteSpace: 'nowrap',
                         maxWidth: '70%',
                       }}>
-                        {regeocodeProgress.name}
+                        {regeocode.progress.name}
                       </span>
-                      <span>{regeocodeProgress.current} / {regeocodeProgress.total} ({regeocodeProgress.percent}%)</span>
+                      <span>{regeocode.progress.current} / {regeocode.progress.total} ({regeocode.progress.percent}%)</span>
                     </div>
                     <div style={{
                       height: '8px',
@@ -1426,7 +1274,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                     }}>
                       <div style={{
                         height: '100%',
-                        width: `${regeocodeProgress.percent}%`,
+                        width: `${regeocode.progress.percent}%`,
                         backgroundColor: '#a855f7',
                         borderRadius: '4px',
                         transition: 'width 0.3s ease',
@@ -1436,7 +1284,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                 )}
 
                 {/* Log Console */}
-                {regeocodeLogs.length > 0 && (
+                {regeocode.logs.length > 0 && (
                   <div style={{
                     marginTop: '12px',
                     maxHeight: '150px',
@@ -1448,30 +1296,30 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                     borderRadius: '4px',
                     border: '1px solid #30363d',
                   }}>
-                    {regeocodeLogs.map((log, i) => (
-                      <div key={i} style={{
-                        color: log.startsWith('Fixed')
+                    {regeocode.logs.map(log => (
+                      <div key={log.id} style={{
+                        color: log.type === 'success'
                           ? '#4ade80'
-                          : log.startsWith('Failed') || log.startsWith('Error')
+                          : log.type === 'error'
                             ? '#f87171'
                             : '#8b949e',
                         marginBottom: '2px',
                       }}>
-                        {log}
+                        {log.message}
                       </div>
                     ))}
                   </div>
                 )}
 
                 {/* Results */}
-                {regeocodeResults && (
+                {regeocode.results && (
                   <div style={{
                     marginTop: '16px',
                     borderRadius: '8px',
-                    border: regeocodeResults.fixed > 0 || regeocodeResults.suspicious === 0
+                    border: regeocode.results.fixed > 0 || regeocode.results.suspicious === 0
                       ? '1px solid var(--theme-success-400)'
                       : '1px solid var(--theme-elevation-400)',
-                    backgroundColor: regeocodeResults.fixed > 0 || regeocodeResults.suspicious === 0
+                    backgroundColor: regeocode.results.fixed > 0 || regeocode.results.suspicious === 0
                       ? 'var(--theme-success-50)'
                       : 'var(--theme-elevation-50)',
                     padding: '16px',
@@ -1480,7 +1328,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                       fontSize: '14px',
                       fontWeight: 600,
                       marginBottom: '8px',
-                      color: regeocodeResults.fixed > 0 || regeocodeResults.suspicious === 0
+                      color: regeocode.results.fixed > 0 || regeocode.results.suspicious === 0
                         ? 'var(--theme-success-700)'
                         : 'var(--theme-elevation-700)',
                     }}>
@@ -1488,24 +1336,24 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                     </div>
                     <div style={{ display: 'flex', gap: '16px', fontSize: '14px', flexWrap: 'wrap' }}>
                       <span style={{ color: 'var(--theme-elevation-600)' }}>
-                        {regeocodeResults.checked} checked
+                        {regeocode.results.checked} checked
                       </span>
-                      <span style={{ color: regeocodeResults.suspicious > 0 ? '#f59e0b' : 'var(--theme-success-500)' }}>
-                        {regeocodeResults.suspicious} with bad coords
+                      <span style={{ color: regeocode.results.suspicious > 0 ? '#f59e0b' : 'var(--theme-success-500)' }}>
+                        {regeocode.results.suspicious} with bad coords
                       </span>
-                      {!regeocodeDryRun && regeocodeResults.fixed > 0 && (
+                      {!regeocodeDryRun && regeocode.results.fixed > 0 && (
                         <span style={{ color: 'var(--theme-success-500)' }}>
-                          {regeocodeResults.fixed} fixed
+                          {regeocode.results.fixed} fixed
                         </span>
                       )}
-                      {!regeocodeDryRun && regeocodeResults.failed > 0 && (
+                      {!regeocodeDryRun && regeocode.results.failed > 0 && (
                         <span style={{ color: 'var(--theme-error-500)' }}>
-                          {regeocodeResults.failed} failed
+                          {regeocode.results.failed} failed
                         </span>
                       )}
                     </div>
                     {/* List of distributors with bad coords (dry run) */}
-                    {regeocodeDryRun && regeocodeResults.distributors && regeocodeResults.distributors.length > 0 && (
+                    {regeocodeDryRun && regeocode.results.distributors && regeocode.results.distributors.length > 0 && (
                       <div style={{
                         marginTop: '12px',
                         maxHeight: '200px',
@@ -1517,7 +1365,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                         borderRadius: '4px',
                         border: '1px solid var(--theme-elevation-150)',
                       }}>
-                        {regeocodeResults.distributors.map((dist: RegeocodeDistributor, i: number) => (
+                        {regeocode.results.distributors.map((dist: RegeocodeDistributor, i: number) => (
                           <div key={i} style={{ marginBottom: '8px', color: 'var(--theme-elevation-600)' }}>
                             <strong style={{ color: 'var(--theme-text)' }}>{dist.name}</strong>
                             <br />
@@ -1575,11 +1423,11 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
             <Button
               onClick={handleRecalculateBeerFields}
-              disabled={recalcRunning}
+              disabled={recalc.running}
               buttonStyle={recalcDryRun ? 'secondary' : 'primary'}
               size="small"
             >
-              {recalcRunning ? (recalcDryRun ? 'Previewing...' : 'Recalculating...') : (recalcDryRun ? 'Preview Recalculation' : 'Recalculate All')}
+              {recalc.running ? (recalcDryRun ? 'Previewing...' : 'Recalculating...') : (recalcDryRun ? 'Preview Recalculation' : 'Recalculate All')}
             </Button>
             <label style={{
               display: 'flex',
@@ -1593,7 +1441,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                 type="checkbox"
                 checked={recalcDryRun}
                 onChange={(e) => setRecalcDryRun(e.target.checked)}
-                disabled={recalcRunning}
+                disabled={recalc.running}
                 style={{ width: '16px', height: '16px', cursor: 'pointer' }}
               />
               Dry run (preview only)
@@ -1601,7 +1449,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
           </div>
 
           {/* Recalc Log Console */}
-          {recalcLogs.length > 0 && (
+          {recalc.logs.length > 0 && (
             <div style={{
               marginTop: '16px',
               borderRadius: '8px',
@@ -1626,12 +1474,12 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                 fontSize: '12px',
                 lineHeight: '1.6',
               }}>
-                {recalcLogs.map((log, i) => (
-                  <div key={i} style={{
-                    color: log.startsWith('Error') ? '#f87171' : '#8b949e',
+                {recalc.logs.map(log => (
+                  <div key={log.id} style={{
+                    color: log.type === 'error' ? '#f87171' : '#8b949e',
                     marginBottom: '2px',
                   }}>
-                    {log}
+                    {log.message}
                   </div>
                 ))}
               </div>
@@ -1639,14 +1487,14 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
           )}
 
           {/* Recalc Results */}
-          {recalcResults && (
+          {recalc.results && (
             <div style={{
               marginTop: '16px',
               borderRadius: '8px',
-              border: recalcResults.errors > 0
+              border: recalc.results.errors > 0
                 ? '1px solid var(--theme-error-400)'
                 : '1px solid var(--theme-success-400)',
-              backgroundColor: recalcResults.errors > 0
+              backgroundColor: recalc.results.errors > 0
                 ? 'var(--theme-error-50)'
                 : 'var(--theme-success-50)',
               padding: '16px',
@@ -1655,7 +1503,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                 fontSize: '14px',
                 fontWeight: 600,
                 marginBottom: '8px',
-                color: recalcResults.errors > 0
+                color: recalc.results.errors > 0
                   ? 'var(--theme-error-700)'
                   : 'var(--theme-success-700)',
               }}>
@@ -1663,11 +1511,11 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
               </div>
               <div style={{ display: 'flex', gap: '16px', fontSize: '14px' }}>
                 <span style={{ color: 'var(--theme-success-500)' }}>
-                  {recalcResults.updated} {recalcDryRun ? 'would update' : 'updated'}
+                  {recalc.results.updated} {recalcDryRun ? 'would update' : 'updated'}
                 </span>
-                {recalcResults.errors > 0 && (
+                {recalc.results.errors > 0 && (
                   <span style={{ color: 'var(--theme-error-500)' }}>
-                    {recalcResults.errors} errors
+                    {recalc.results.errors} errors
                   </span>
                 )}
               </div>
@@ -1695,11 +1543,11 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
               <Button
                 onClick={handleUntappdSync}
-                disabled={untappdRunning}
+                disabled={untappd.running}
                 buttonStyle={untappdDryRun ? 'secondary' : 'primary'}
                 size="small"
               >
-                {untappdRunning ? (untappdDryRun ? 'Previewing...' : 'Syncing...') : (untappdDryRun ? 'Preview Sync' : 'Sync Now')}
+                {untappd.running ? (untappdDryRun ? 'Previewing...' : 'Syncing...') : (untappdDryRun ? 'Preview Sync' : 'Sync Now')}
               </Button>
               <label style={{
                 display: 'flex',
@@ -1713,7 +1561,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                   type="checkbox"
                   checked={untappdDryRun}
                   onChange={(e) => setUntappdDryRun(e.target.checked)}
-                  disabled={untappdRunning}
+                  disabled={untappd.running}
                   style={{ width: '14px', height: '14px', cursor: 'pointer' }}
                 />
                 Dry run (preview only)
@@ -1721,7 +1569,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
             </div>
 
             {/* Progress Bar */}
-            {untappdProgress && (
+            {untappd.progress && (
               <div style={{ marginTop: '16px' }}>
                 <div style={{
                   display: 'flex',
@@ -1736,9 +1584,9 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                     whiteSpace: 'nowrap',
                     maxWidth: '70%',
                   }}>
-                    {untappdProgress.name}
+                    {untappd.progress.name}
                   </span>
-                  <span>{untappdProgress.current} / {untappdProgress.total} ({untappdProgress.percent}%)</span>
+                  <span>{untappd.progress.current} / {untappd.progress.total} ({untappd.progress.percent}%)</span>
                 </div>
                 <div style={{
                   height: '8px',
@@ -1748,7 +1596,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                 }}>
                   <div style={{
                     height: '100%',
-                    width: `${untappdProgress.percent}%`,
+                    width: `${untappd.progress.percent}%`,
                     backgroundColor: '#f59e0b',
                     borderRadius: '4px',
                     transition: 'width 0.3s ease',
@@ -1758,7 +1606,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
             )}
 
             {/* Log Console */}
-            {untappdLogs.length > 0 && (
+            {untappd.logs.length > 0 && (
               <div style={{
                 marginTop: '12px',
                 maxHeight: '200px',
@@ -1770,43 +1618,43 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                 borderRadius: '4px',
                 border: '1px solid #30363d',
               }}>
-                {untappdLogs.map((log, i) => (
-                  <div key={i} style={{
-                    color: log.startsWith('✓')
+                {untappd.logs.map(log => (
+                  <div key={log.id} style={{
+                    color: log.type === 'refreshed'
                       ? '#4ade80'
-                      : log.startsWith('+')
+                      : log.type === 'updated' || log.type === 'new'
                         ? '#60a5fa'
-                        : log.startsWith('✗') || log.startsWith('Error')
+                        : log.type === 'error'
                           ? '#f87171'
-                          : log.startsWith('?')
+                          : log.type === 'multiple'
                             ? '#fbbf24'
-                            : log.startsWith('○')
+                            : log.type === 'not-found'
                               ? '#6b7280'
                               : '#8b949e',
                     marginBottom: '2px',
                   }}>
-                    {log}
+                    {log.message}
                   </div>
                 ))}
               </div>
             )}
 
             {/* Results */}
-            {untappdResults && (
+            {untappd.results && (
               <div style={{ marginTop: '16px' }}>
               <Banner
-                type={untappdResults.errors > 0 ? 'error' : 'success'}
+                type={untappd.results.errors > 0 ? 'error' : 'success'}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                   <strong>{untappdDryRun ? 'Preview Results' : 'Sync Complete'}</strong>
-                  <Pill pillStyle="light">{untappdResults.total} total</Pill>
-                  <Pill pillStyle="success">{untappdResults.refreshed} refreshed</Pill>
-                  {untappdResults.updated > 0 && (
-                    <Pill pillStyle="warning">{untappdResults.updated} fixed</Pill>
+                  <Pill pillStyle="light">{untappd.results.total} total</Pill>
+                  <Pill pillStyle="success">{untappd.results.refreshed} refreshed</Pill>
+                  {untappd.results.updated > 0 && (
+                    <Pill pillStyle="warning">{untappd.results.updated} fixed</Pill>
                   )}
-                  <Pill pillStyle="light">{untappdResults.skipped} skipped</Pill>
-                  {untappdResults.errors > 0 && (
-                    <Pill pillStyle="error">{untappdResults.errors} errors</Pill>
+                  <Pill pillStyle="light">{untappd.results.skipped} skipped</Pill>
+                  {untappd.results.errors > 0 && (
+                    <Pill pillStyle="error">{untappd.results.errors} errors</Pill>
                   )}
                 </div>
               </Banner>
