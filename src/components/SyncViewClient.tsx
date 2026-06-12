@@ -85,11 +85,8 @@ interface RegeocodeResults {
   distributors?: RegeocodeDistributor[]
 }
 
-interface SyncViewClientProps {
-  isAdmin: boolean
-}
-
-export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
+// No props: SyncView.tsx already gates this view to admins server-side.
+export const SyncViewClient: React.FC = () => {
   const [dryRun, setDryRun] = useState(true)
   const [selectedCollections, setSelectedCollections] = useState<CollectionType[]>([])
   const logsEndRef = useRef<HTMLDivElement>(null)
@@ -98,13 +95,31 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
   const sheets = useSSEImport<SyncResults>({
     logLimit: Infinity,
     handlers: ({ appendLog, setResults }) => ({
-      event: raw => { const d = raw as SSEData; appendLog('event', `Event: ${d.organizer} (${d.date}) - ${d.location}`, d.changes) },
-      food: raw => { const d = raw as SSEData; appendLog('food', `Food: ${d.vendor} (${d.date}) - ${d.location}`, d.changes) },
-      beer: raw => { const d = raw as SSEData; appendLog('beer', `Beer: ${d.name} (${d.style})`, d.changes) },
-      menu: raw => { const d = raw as SSEData; appendLog('menu', `Menu: ${d.location} ${d.type} - ${d.itemCount} items`, d.changes) },
-      hours: raw => { const d = raw as SSEData; appendLog('hours', `Hours: ${d.location} - ${d.action}`, d.changes) },
-      error: raw => { const d = raw as SSEData; appendLog('error', String(d.message ?? '')) },
-      complete: raw => {
+      event: (raw) => {
+        const d = raw as SSEData
+        appendLog('event', `Event: ${d.organizer} (${d.date}) - ${d.location}`, d.changes)
+      },
+      food: (raw) => {
+        const d = raw as SSEData
+        appendLog('food', `Food: ${d.vendor} (${d.date}) - ${d.location}`, d.changes)
+      },
+      beer: (raw) => {
+        const d = raw as SSEData
+        appendLog('beer', `Beer: ${d.name} (${d.style})`, d.changes)
+      },
+      menu: (raw) => {
+        const d = raw as SSEData
+        appendLog('menu', `Menu: ${d.location} ${d.type} - ${d.itemCount} items`, d.changes)
+      },
+      hours: (raw) => {
+        const d = raw as SSEData
+        appendLog('hours', `Hours: ${d.location} - ${d.action}`, d.changes)
+      },
+      error: (raw) => {
+        const d = raw as SSEData
+        appendLog('error', String(d.message ?? ''))
+      },
+      complete: (raw) => {
         const d = raw as SSEData
         if (d.success) {
           setResults({ ...(d.results as SyncResults), dryRun: d.dryRun as boolean })
@@ -114,8 +129,15 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
         }
       },
     }),
-    onJSON: (_data, response, { appendLog }) => { appendLog('error', `HTTP error: ${response.status}`) },
-    onException: (error, { appendLog }) => { appendLog('error', `Connection error: ${error instanceof Error ? error.message : 'Unknown error'}`) },
+    onJSON: (_data, response, { appendLog }) => {
+      appendLog('error', `HTTP error: ${response.status}`)
+    },
+    onException: (error, { appendLog }) => {
+      appendLog(
+        'error',
+        `Connection error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      )
+    },
   })
 
   // Keep the console scrolled to the newest entry
@@ -142,7 +164,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
     logLimit: 50,
     handlers: ({ appendLog }) => ({
       // Server item payloads carry their own type: 'success' | 'skip' | 'error'
-      item: raw => {
+      item: (raw) => {
         const data = raw as SSEData
         appendLog(String(data.type ?? 'status'), String(data.message ?? ''))
       },
@@ -152,7 +174,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
   // Lake Beverage CSV import state
   const lakeInputRef = useRef<HTMLInputElement>(null)
   const lake = useSSEImport<DistributorImportResult>({
-    getResults: data => ({
+    getResults: (data) => ({
       region: 'NY',
       imported: (data.imported as number) || 0,
       skipped: (data.skipped as number) || 0,
@@ -182,23 +204,24 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
   // Recalculate beer fields state
   const [recalcDryRun, setRecalcDryRun] = useState(true)
   const recalc = useSSEImport<RecalcResults>({
-    getResults: data => (data.results as RecalcResults) ?? null,
+    getResults: (data) => (data.results as RecalcResults) ?? null,
   })
 
   // Re-geocode distributors state
   const [regeocodeDryRun, setRegeocodeDryRun] = useState(true)
   const regeocode = useSSEImport<RegeocodeResults>({
-    getResults: data => ({
+    getResults: (data) => ({
       checked: (data.checked as number) || 0,
       suspicious: (data.suspicious as number) || 0,
       fixed: (data.fixed as number) || 0,
       failed: (data.failed as number) || 0,
     }),
     handlers: ({ appendLog }) => ({
-      item: raw => {
+      item: (raw) => {
         const data = raw as SSEData
         if (data.status === 'fixed') appendLog('success', `Fixed: ${data.name}`)
-        else if (data.status === 'skipped') appendLog('status', `Skipped: ${data.name} - ${data.note}`)
+        else if (data.status === 'skipped')
+          appendLog('status', `Skipped: ${data.name} - ${data.note}`)
         else appendLog('error', `Failed: ${data.name} - ${data.note || data.error}`)
       },
     }),
@@ -222,16 +245,22 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
   // Untappd sync state
   const [untappdDryRun, setUntappdDryRun] = useState(true)
   const untappd = useSSEImport<UntappdResults>({
-    getResults: data => (data.results as UntappdResults) ?? null,
+    getResults: (data) => (data.results as UntappdResults) ?? null,
     handlers: ({ appendLog }) => ({
-      item: raw => {
+      item: (raw) => {
         const data = raw as SSEData
-        const statusIcon = data.status === 'refreshed' ? '✓'
-          : data.status === 'updated' || data.status === 'new' ? '+'
-          : data.status === 'error' ? '✗'
-          : data.status === 'multiple' ? '?'
-          : data.status === 'not-found' ? '○'
-          : '→'
+        const statusIcon =
+          data.status === 'refreshed'
+            ? '✓'
+            : data.status === 'updated' || data.status === 'new'
+              ? '+'
+              : data.status === 'error'
+                ? '✗'
+                : data.status === 'multiple'
+                  ? '?'
+                  : data.status === 'not-found'
+                    ? '○'
+                    : '→'
         appendLog(String(data.status ?? 'item'), `${statusIcon} ${data.name}: ${data.message}`)
       },
     }),
@@ -240,7 +269,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
   // Load distributor URLs on mount using local API
   React.useEffect(() => {
     getSiteContentData()
-      .then(data => {
+      .then((data) => {
         setPaUrl(data.distributorPaUrl || '')
         setOhUrl(data.distributorOhUrl || '')
       })
@@ -249,10 +278,8 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
   }, [])
 
   const toggleCollection = (collection: CollectionType) => {
-    setSelectedCollections(prev =>
-      prev.includes(collection)
-        ? prev.filter(c => c !== collection)
-        : [...prev, collection]
+    setSelectedCollections((prev) =>
+      prev.includes(collection) ? prev.filter((c) => c !== collection) : [...prev, collection],
     )
   }
 
@@ -270,14 +297,22 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
 
   const getLogIcon = (type: string) => {
     switch (type) {
-      case 'event': return '✓'
-      case 'food': return '✓'
-      case 'beer': return '✓'
-      case 'menu': return '✓'
-      case 'hours': return '✓'
-      case 'error': return '✗'
-      case 'complete': return '●'
-      default: return '→'
+      case 'event':
+        return '✓'
+      case 'food':
+        return '✓'
+      case 'beer':
+        return '✓'
+      case 'menu':
+        return '✓'
+      case 'hours':
+        return '✓'
+      case 'error':
+        return '✗'
+      case 'complete':
+        return '●'
+      default:
+        return '→'
     }
   }
 
@@ -293,7 +328,10 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
 
       if (!response.ok) {
         const data = await response.json()
-        logger.error('Failed to save URLs:', undefined, { status: response.status, error: data.error })
+        logger.error('Failed to save URLs:', undefined, {
+          status: response.status,
+          error: data.error,
+        })
         toast.error('Failed to save distributor URLs')
       } else {
         toast.success('Distributor URLs saved')
@@ -322,7 +360,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
     setDistImporting(region)
     try {
       await dist.run(`/api/import-distributors?region=${region}`, {
-        getResults: data => ({
+        getResults: (data) => ({
           region: region.toUpperCase(),
           imported: (data.imported as number) || 0,
           skipped: (data.skipped as number) || 0,
@@ -469,10 +507,12 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
 
           {/* Collection Selection */}
           <div className="sync-view__pills">
-            {(Object.keys(collectionLabels) as CollectionType[]).map(collection => (
+            {(Object.keys(collectionLabels) as CollectionType[]).map((collection) => (
               <Pill
                 key={collection}
-                onClick={() => { if (!sheets.running) toggleCollection(collection) }}
+                onClick={() => {
+                  if (!sheets.running) toggleCollection(collection)
+                }}
                 pillStyle={selectedCollections.includes(collection) ? 'dark' : 'light'}
                 aria-checked={selectedCollections.includes(collection)}
               >
@@ -488,12 +528,18 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
               buttonStyle={dryRun ? 'secondary' : 'primary'}
               size="small"
             >
-              {sheets.running ? (dryRun ? 'Previewing...' : 'Syncing...') : (dryRun ? 'Preview' : 'Sync Now')}
+              {sheets.running
+                ? dryRun
+                  ? 'Previewing...'
+                  : 'Syncing...'
+                : dryRun
+                  ? 'Preview'
+                  : 'Sync Now'}
             </Button>
             <CheckboxInput
               id="sheets-dry-run"
               checked={dryRun}
-              onToggle={e => setDryRun(e.target.checked)}
+              onToggle={(e) => setDryRun(e.target.checked)}
               readOnly={sheets.running}
               label="Dry run (preview only)"
             />
@@ -505,8 +551,11 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
           <div className="sync-view__console">
             <div className="sync-view__console-header">Console Output</div>
             <div className="sync-view__console-body">
-              {sheets.logs.map(log => (
-                <div key={log.id} className={log.data != null ? 'sync-view__log-entry--with-diff' : undefined}>
+              {sheets.logs.map((log) => (
+                <div
+                  key={log.id}
+                  className={log.data != null ? 'sync-view__log-entry--with-diff' : undefined}
+                >
                   <div className={`sync-view__log-line sync-view__log-line--${log.type}`}>
                     <span className="sync-view__log-time">
                       {format(log.timestamp, 'HH:mm:ss', { timeZone: 'America/New_York' })}
@@ -516,39 +565,43 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                   </div>
                   {log.data != null && (
                     <div className="sync-view__log-diff">
-                      {Array.isArray(log.data) ? (
-                        // Field changes for events, food, beers
-                        (log.data as FieldChange[]).map((change, i) => (
-                          <div key={i} className="sync-view__diff-row">
-                            <span className="sync-view__diff-field">{change.field}:</span>
-                            <span className="sync-view__diff-from">
-                              {change.from === null ? '(empty)' : String(change.from)}
-                            </span>
-                            <span className="sync-view__diff-arrow">→</span>
-                            <span className="sync-view__diff-to">
-                              {change.to === null ? '(empty)' : String(change.to)}
-                            </span>
-                          </div>
-                        ))
-                      ) : (
-                        // Menu changes summary
-                        (() => {
-                          const menuChanges = log.data as MenuChanges
-                          return (
-                            <div className="sync-view__diff-summary">
-                              {menuChanges.added > 0 && (
-                                <span className="sync-view__log-line--success">+{menuChanges.added} added</span>
-                              )}
-                              {menuChanges.removed > 0 && (
-                                <span className="sync-view__log-line--error">-{menuChanges.removed} removed</span>
-                              )}
-                              {menuChanges.priceChanges > 0 && (
-                                <span className="sync-view__log-line--warning">{menuChanges.priceChanges} price changes</span>
-                              )}
+                      {Array.isArray(log.data)
+                        ? // Field changes for events, food, beers
+                          (log.data as FieldChange[]).map((change, i) => (
+                            <div key={i} className="sync-view__diff-row">
+                              <span className="sync-view__diff-field">{change.field}:</span>
+                              <span className="sync-view__diff-from">
+                                {change.from === null ? '(empty)' : String(change.from)}
+                              </span>
+                              <span className="sync-view__diff-arrow">→</span>
+                              <span className="sync-view__diff-to">
+                                {change.to === null ? '(empty)' : String(change.to)}
+                              </span>
                             </div>
-                          )
-                        })()
-                      )}
+                          ))
+                        : // Menu changes summary
+                          (() => {
+                            const menuChanges = log.data as MenuChanges
+                            return (
+                              <div className="sync-view__diff-summary">
+                                {menuChanges.added > 0 && (
+                                  <span className="sync-view__log-line--success">
+                                    +{menuChanges.added} added
+                                  </span>
+                                )}
+                                {menuChanges.removed > 0 && (
+                                  <span className="sync-view__log-line--error">
+                                    -{menuChanges.removed} removed
+                                  </span>
+                                )}
+                                {menuChanges.priceChanges > 0 && (
+                                  <span className="sync-view__log-line--warning">
+                                    {menuChanges.priceChanges} price changes
+                                  </span>
+                                )}
+                              </div>
+                            )
+                          })()}
                     </div>
                   )}
                 </div>
@@ -560,12 +613,14 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
 
         {/* Results Summary */}
         {sheets.results && (
-          <div className={`sync-view__results${sheets.results.dryRun ? ' sync-view__results--dry-run' : ''}`}>
+          <div
+            className={`sync-view__results${sheets.results.dryRun ? ' sync-view__results--dry-run' : ''}`}
+          >
             <h3 className="sync-view__results-title">
               {sheets.results.dryRun ? 'Preview Results' : 'Sync Complete'}
             </h3>
             <div className="sync-view__results-grid">
-              {(Object.keys(collectionLabels) as CollectionType[]).map(collection => {
+              {(Object.keys(collectionLabels) as CollectionType[]).map((collection) => {
                 const data = sheets.results?.[collection]
                 if (!data) return null
                 return (
@@ -617,7 +672,12 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
               stats={[
                 { count: csvResults.created, label: 'created', pillStyle: 'success' },
                 { count: csvResults.skipped, label: 'skipped', pillStyle: 'light' },
-                { count: csvResults.errors, label: 'errors', pillStyle: 'error', hideWhenZero: true },
+                {
+                  count: csvResults.errors,
+                  label: 'errors',
+                  pillStyle: 'error',
+                  hideWhenZero: true,
+                },
               ]}
               details={csvResults.details}
             />
@@ -637,7 +697,9 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
             <>
               {/* URL Inputs */}
               <div className="sync-view__url-field">
-                <label className="sync-view__url-label" htmlFor="dist-url-pa">Pennsylvania JSON URL</label>
+                <label className="sync-view__url-label" htmlFor="dist-url-pa">
+                  Pennsylvania JSON URL
+                </label>
                 <div className="sync-view__url-row">
                   <input
                     id="dist-url-pa"
@@ -659,7 +721,9 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
               </div>
 
               <div className="sync-view__url-field">
-                <label className="sync-view__url-label" htmlFor="dist-url-oh">Ohio JSON URL</label>
+                <label className="sync-view__url-label" htmlFor="dist-url-oh">
+                  Ohio JSON URL
+                </label>
                 <div className="sync-view__url-row">
                   <input
                     id="dist-url-oh"
@@ -705,7 +769,12 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                   stats={[
                     { count: dist.results.imported, label: 'imported', pillStyle: 'success' },
                     { count: dist.results.skipped, label: 'skipped', pillStyle: 'light' },
-                    { count: dist.results.errors, label: 'errors', pillStyle: 'error', hideWhenZero: true },
+                    {
+                      count: dist.results.errors,
+                      label: 'errors',
+                      pillStyle: 'error',
+                      hideWhenZero: true,
+                    },
                   ]}
                   details={dist.results.details}
                 />
@@ -715,7 +784,8 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
               <div className="sync-view__subsection">
                 <h3 className="sync-view__subsection-title">Lake Beverage (NY)</h3>
                 <p className="sync-view__description sync-view__description--small">
-                  Upload CSV with columns: Retail Accounts, Address, City, Account #, State, Zip Code, Phone
+                  Upload CSV with columns: Retail Accounts, Address, City, Account #, State, Zip
+                  Code, Phone
                 </p>
 
                 <div className="sync-view__controls">
@@ -747,7 +817,12 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                     stats={[
                       { count: lake.results.imported, label: 'imported', pillStyle: 'success' },
                       { count: lake.results.skipped, label: 'skipped', pillStyle: 'light' },
-                      { count: lake.results.errors, label: 'errors', pillStyle: 'error', hideWhenZero: true },
+                      {
+                        count: lake.results.errors,
+                        label: 'errors',
+                        pillStyle: 'error',
+                        hideWhenZero: true,
+                      },
                     ]}
                     details={lake.results.details}
                   />
@@ -758,7 +833,8 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
               <div className="sync-view__subsection">
                 <h3 className="sync-view__subsection-title">Fix Bad Coordinates</h3>
                 <p className="sync-view__description sync-view__description--small">
-                  Find and re-geocode distributors that have default/fallback coordinates (Pittsburgh, Columbus, or Rochester center)
+                  Find and re-geocode distributors that have default/fallback coordinates
+                  (Pittsburgh, Columbus, or Rochester center)
                 </p>
 
                 <div className="sync-view__controls">
@@ -768,12 +844,18 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                     buttonStyle={regeocodeDryRun ? 'secondary' : 'primary'}
                     size="small"
                   >
-                    {regeocode.running ? (regeocodeDryRun ? 'Scanning...' : 'Fixing...') : (regeocodeDryRun ? 'Find Bad Coords' : 'Fix Bad Coords')}
+                    {regeocode.running
+                      ? regeocodeDryRun
+                        ? 'Scanning...'
+                        : 'Fixing...'
+                      : regeocodeDryRun
+                        ? 'Find Bad Coords'
+                        : 'Fix Bad Coords'}
                   </Button>
                   <CheckboxInput
                     id="regeocode-dry-run"
                     checked={regeocodeDryRun}
-                    onToggle={e => setRegeocodeDryRun(e.target.checked)}
+                    onToggle={(e) => setRegeocodeDryRun(e.target.checked)}
                     readOnly={regeocode.running}
                     label="Dry run (preview only)"
                   />
@@ -786,7 +868,13 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                 {/* Results */}
                 {regeocode.results && (
                   <div className="sync-view__banner-wrap">
-                    <Banner type={regeocode.results.fixed > 0 || regeocode.results.suspicious === 0 ? 'success' : 'info'}>
+                    <Banner
+                      type={
+                        regeocode.results.fixed > 0 || regeocode.results.suspicious === 0
+                          ? 'success'
+                          : 'info'
+                      }
+                    >
                       <div className="sync-view__banner-row">
                         <strong>{regeocodeDryRun ? 'Scan Results' : 'Fix Results'}</strong>
                         <Pill pillStyle="light">{regeocode.results.checked} checked</Pill>
@@ -802,33 +890,57 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                       </div>
                     </Banner>
                     {/* List of distributors with bad coords (dry run) */}
-                    {regeocodeDryRun && regeocode.results.distributors && regeocode.results.distributors.length > 0 && (
-                      <div className="sync-view__details">
-                        {regeocode.results.distributors.map((dist_: RegeocodeDistributor, i: number) => (
-                          <div key={i} className="sync-view__detail-entry">
-                            <strong>{dist_.name}</strong>
-                            <br />
-                            <span className="sync-view__detail-line">
-                              Address: {dist_.address === '(missing)' ? <span className="sync-view__missing">(missing)</span> : dist_.address}
-                            </span>
-                            <br />
-                            <span className="sync-view__detail-line">
-                              City: {dist_.city === '(missing)' ? <span className="sync-view__missing">(missing)</span> : dist_.city},
-                              State: {dist_.state === '(missing)' ? <span className="sync-view__missing">(missing)</span> : dist_.state},
-                              Zip: {dist_.zip === '(missing)' ? <span className="sync-view__missing">(missing)</span> : dist_.zip}
-                            </span>
-                            {dist_.fullAddress && (
-                              <>
+                    {regeocodeDryRun &&
+                      regeocode.results.distributors &&
+                      regeocode.results.distributors.length > 0 && (
+                        <div className="sync-view__details">
+                          {regeocode.results.distributors.map(
+                            (dist_: RegeocodeDistributor, i: number) => (
+                              <div key={i} className="sync-view__detail-entry">
+                                <strong>{dist_.name}</strong>
                                 <br />
-                                <span className="sync-view__detail-note">
-                                  Will geocode: &quot;{dist_.fullAddress}&quot;
+                                <span className="sync-view__detail-line">
+                                  Address:{' '}
+                                  {dist_.address === '(missing)' ? (
+                                    <span className="sync-view__missing">(missing)</span>
+                                  ) : (
+                                    dist_.address
+                                  )}
                                 </span>
-                              </>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                                <br />
+                                <span className="sync-view__detail-line">
+                                  City:{' '}
+                                  {dist_.city === '(missing)' ? (
+                                    <span className="sync-view__missing">(missing)</span>
+                                  ) : (
+                                    dist_.city
+                                  )}
+                                  , State:{' '}
+                                  {dist_.state === '(missing)' ? (
+                                    <span className="sync-view__missing">(missing)</span>
+                                  ) : (
+                                    dist_.state
+                                  )}
+                                  , Zip:{' '}
+                                  {dist_.zip === '(missing)' ? (
+                                    <span className="sync-view__missing">(missing)</span>
+                                  ) : (
+                                    dist_.zip
+                                  )}
+                                </span>
+                                {dist_.fullAddress && (
+                                  <>
+                                    <br />
+                                    <span className="sync-view__detail-note">
+                                      Will geocode: &quot;{dist_.fullAddress}&quot;
+                                    </span>
+                                  </>
+                                )}
+                              </div>
+                            ),
+                          )}
+                        </div>
+                      )}
                   </div>
                 )}
               </div>
@@ -836,8 +948,7 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
           )}
         </div>
 
-        {/* Beer Utilities Section - Admin Only */}
-        {isAdmin && (
+        {/* Beer Utilities Section */}
         <div className="sync-view__section">
           <h2 className="sync-view__section-title">Beer Utilities</h2>
           <p className="sync-view__description">
@@ -851,12 +962,18 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
               buttonStyle={recalcDryRun ? 'secondary' : 'primary'}
               size="small"
             >
-              {recalc.running ? (recalcDryRun ? 'Previewing...' : 'Recalculating...') : (recalcDryRun ? 'Preview Recalculation' : 'Recalculate All')}
+              {recalc.running
+                ? recalcDryRun
+                  ? 'Previewing...'
+                  : 'Recalculating...'
+                : recalcDryRun
+                  ? 'Preview Recalculation'
+                  : 'Recalculate All'}
             </Button>
             <CheckboxInput
               id="recalc-dry-run"
               checked={recalcDryRun}
-              onToggle={e => setRecalcDryRun(e.target.checked)}
+              onToggle={(e) => setRecalcDryRun(e.target.checked)}
               readOnly={recalc.running}
               label="Dry run (preview only)"
             />
@@ -867,8 +984,11 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
             <div className="sync-view__console">
               <div className="sync-view__console-header">Console Output</div>
               <div className="sync-view__console-body sync-view__console-body--short">
-                {recalc.logs.map(log => (
-                  <div key={log.id} className={`sync-view__feed-line sync-view__log-line--${logTone(log.type)}`}>
+                {recalc.logs.map((log) => (
+                  <div
+                    key={log.id}
+                    className={`sync-view__feed-line sync-view__log-line--${logTone(log.type)}`}
+                  >
                     {log.message}
                   </div>
                 ))}
@@ -882,8 +1002,17 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
               title={recalcDryRun ? 'Preview Results' : 'Recalculation Complete'}
               isError={recalc.results.errors > 0}
               stats={[
-                { count: recalc.results.updated, label: recalcDryRun ? 'would update' : 'updated', pillStyle: 'success' },
-                { count: recalc.results.errors, label: 'errors', pillStyle: 'error', hideWhenZero: true },
+                {
+                  count: recalc.results.updated,
+                  label: recalcDryRun ? 'would update' : 'updated',
+                  pillStyle: 'success',
+                },
+                {
+                  count: recalc.results.errors,
+                  label: 'errors',
+                  pillStyle: 'error',
+                  hideWhenZero: true,
+                },
               ]}
             />
           )}
@@ -892,7 +1021,8 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
           <div className="sync-view__subsection">
             <h3 className="sync-view__subsection-title">Sync Untappd Ratings</h3>
             <p className="sync-view__description sync-view__description--small">
-              Bulk update Untappd ratings for all beers. Invalid URLs will be searched and fixed automatically.
+              Bulk update Untappd ratings for all beers. Invalid URLs will be searched and fixed
+              automatically.
             </p>
 
             <div className="sync-view__controls">
@@ -902,12 +1032,18 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                 buttonStyle={untappdDryRun ? 'secondary' : 'primary'}
                 size="small"
               >
-                {untappd.running ? (untappdDryRun ? 'Previewing...' : 'Syncing...') : (untappdDryRun ? 'Preview Sync' : 'Sync Now')}
+                {untappd.running
+                  ? untappdDryRun
+                    ? 'Previewing...'
+                    : 'Syncing...'
+                  : untappdDryRun
+                    ? 'Preview Sync'
+                    : 'Sync Now'}
               </Button>
               <CheckboxInput
                 id="untappd-dry-run"
                 checked={untappdDryRun}
-                onToggle={e => setUntappdDryRun(e.target.checked)}
+                onToggle={(e) => setUntappdDryRun(e.target.checked)}
                 readOnly={untappd.running}
                 label="Dry run (preview only)"
               />
@@ -925,15 +1061,24 @@ export const SyncViewClient: React.FC<SyncViewClientProps> = ({ isAdmin }) => {
                 stats={[
                   { count: untappd.results.total, label: 'total', pillStyle: 'light' },
                   { count: untappd.results.refreshed, label: 'refreshed', pillStyle: 'success' },
-                  { count: untappd.results.updated, label: 'fixed', pillStyle: 'warning', hideWhenZero: true },
+                  {
+                    count: untappd.results.updated,
+                    label: 'fixed',
+                    pillStyle: 'warning',
+                    hideWhenZero: true,
+                  },
                   { count: untappd.results.skipped, label: 'skipped', pillStyle: 'light' },
-                  { count: untappd.results.errors, label: 'errors', pillStyle: 'error', hideWhenZero: true },
+                  {
+                    count: untappd.results.errors,
+                    label: 'errors',
+                    pillStyle: 'error',
+                    hideWhenZero: true,
+                  },
                 ]}
               />
             )}
           </div>
         </div>
-        )}
       </div>
     </Gutter>
   )
@@ -972,7 +1117,9 @@ const ImportProgress: React.FC<{ progress: ProgressData }> = ({ progress }) => (
   <div className="sync-view__progress">
     <div className="sync-view__progress-meta">
       <span className="sync-view__progress-name">{progress.name}</span>
-      <span>{progress.current} / {progress.total} ({progress.percent}%)</span>
+      <span>
+        {progress.current} / {progress.total} ({progress.percent}%)
+      </span>
     </div>
     <div className="sync-view__progress-track">
       <div className="sync-view__progress-fill" style={{ width: `${progress.percent}%` }} />
@@ -983,8 +1130,11 @@ const ImportProgress: React.FC<{ progress: ProgressData }> = ({ progress }) => (
 /** Scrolling monospace feed of import log entries */
 const LogFeed: React.FC<{ logs: ImportLogEntry[]; tall?: boolean }> = ({ logs, tall }) => (
   <div className={`sync-view__feed${tall ? ' sync-view__feed--tall' : ''}`}>
-    {logs.map(log => (
-      <div key={log.id} className={`sync-view__feed-line sync-view__log-line--${logTone(log.type)}`}>
+    {logs.map((log) => (
+      <div
+        key={log.id}
+        className={`sync-view__feed-line sync-view__log-line--${logTone(log.type)}`}
+      >
         {log.message}
       </div>
     ))}
@@ -1008,8 +1158,8 @@ const ImportResultsBanner: React.FC<{
       <div className="sync-view__banner-row">
         <strong>{title}</strong>
         {stats
-          .filter(stat => !(stat.hideWhenZero && stat.count === 0))
-          .map(stat => (
+          .filter((stat) => !(stat.hideWhenZero && stat.count === 0))
+          .map((stat) => (
             <Pill key={stat.label} pillStyle={stat.pillStyle}>
               {stat.count} {stat.label}
             </Pill>
@@ -1049,9 +1199,7 @@ const ResultCard: React.FC<{
         </span>
       )}
       <span className="sync-view__stat--muted">{data.skipped} skipped</span>
-      {data.errors > 0 && (
-        <span className="sync-view__stat--error">{data.errors} errors</span>
-      )}
+      {data.errors > 0 && <span className="sync-view__stat--error">{data.errors} errors</span>}
     </div>
   </div>
 )

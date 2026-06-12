@@ -74,8 +74,10 @@ export interface UseSSEImportOptions<TResults> {
   logLimit?: number
 }
 
-export interface SSEImportRunOptions<TResults>
-  extends Pick<UseSSEImportOptions<TResults>, 'getResults' | 'handlers' | 'onJSON' | 'onException'> {
+export interface SSEImportRunOptions<TResults> extends Pick<
+  UseSSEImportOptions<TResults>,
+  'getResults' | 'handlers' | 'onJSON' | 'onException'
+> {
   /** Request body (e.g. FormData for CSV uploads) */
   body?: BodyInit
 }
@@ -94,7 +96,7 @@ export function useSSEImport<TResults>(options: UseSSEImportOptions<TResults> = 
 
   const appendLog = useCallback((type: string, message: string, data?: unknown) => {
     const logLimit = optionsRef.current.logLimit ?? 100
-    setLogs(prev => {
+    setLogs((prev) => {
       const next = [...prev, { id: logIdRef.current++, type, message, timestamp: new Date(), data }]
       return next.length > logLimit ? next.slice(next.length - logLimit) : next
     })
@@ -129,10 +131,11 @@ export function useSSEImport<TResults>(options: UseSSEImportOptions<TResults> = 
         }
 
         const defaultHandlers: SSEHandlers = {
-          status: raw => appendLog('status', String((raw as SSEData).message ?? '')),
-          progress: raw => setProgress(raw as ProgressData),
-          error: raw => appendLog('error', `Error: ${(raw as SSEData).message ?? 'Unknown error'}`),
-          complete: raw => {
+          status: (raw) => appendLog('status', String((raw as SSEData).message ?? '')),
+          progress: (raw) => setProgress(raw as ProgressData),
+          error: (raw) =>
+            appendLog('error', `Error: ${(raw as SSEData).message ?? 'Unknown error'}`),
+          complete: (raw) => {
             if (opts.getResults) setResults(opts.getResults(raw as SSEData))
           },
         }
