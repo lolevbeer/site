@@ -22,7 +22,7 @@ export function ReviewManager(props: JSONFieldClientProps) {
 
   const toggleHidden = (index: number) => {
     const updated = reviews.map((review, i) =>
-      i === index ? { ...review, hidden: !review.hidden } : review
+      i === index ? { ...review, hidden: !review.hidden } : review,
     )
     setValue(updated)
   }
@@ -49,90 +49,112 @@ export function ReviewManager(props: JSONFieldClientProps) {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '8px',
+        }}
+      >
         <FieldLabel label={field.label || field.name} path={path} />
         <span style={{ fontSize: '12px', color: 'var(--theme-elevation-500)' }}>
-          {reviews.filter(r => !r.hidden).length} visible / {reviews.length} total
+          {reviews.filter((r) => !r.hidden).length} visible / {reviews.length} total
         </span>
       </div>
       {reviews.length === 0 ? (
         <div style={{ padding: '16px', color: 'var(--theme-elevation-500)', fontStyle: 'italic' }}>
-          No reviews yet
+          Needs Reviews
         </div>
-      ) : [...reviews]
-        .map((review, idx) => ({ ...review, _idx: idx }))
-        .sort((a, b) => {
-          if (!a.date || !b.date) return 0
-          return new Date(b.date).getTime() - new Date(a.date).getTime()
-        }).map((review) => (
-        <div
-          key={review.url || `${review.username}-${review.date}-${review._idx}`}
-          style={{
-            display: 'flex',
-            alignItems: 'flex-start',
-            justifyContent: 'space-between',
-            padding: '10px 12px',
-            borderBottom: '1px solid var(--theme-elevation-100)',
-            gap: '12px',
-            opacity: review.hidden ? 0.5 : 1,
-          }}
-        >
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              marginBottom: '4px',
-              flexWrap: 'wrap'
-            }}>
-              <span style={{ fontWeight: 600 }}>{review.username}</span>
-              {review.date && (
-                <span style={{ fontSize: '12px', color: 'var(--theme-elevation-500)' }}>
-                  {formatRelativeTime(review.date)}
-                </span>
-              )}
-              <span style={{
-                fontSize: '12px',
-                color: 'var(--theme-elevation-500)',
-                background: 'var(--theme-elevation-50)',
-                padding: '2px 6px',
-                borderRadius: '4px'
-              }}>
-                ★ {review.rating.toFixed(1)}
-              </span>
-              {review.hidden && (
-                <span style={{
-                  fontSize: '11px',
-                  color: 'var(--theme-error-500)',
-                  fontWeight: 500
-                }}>
-                  Hidden
-                </span>
-              )}
-            </div>
-            {review.text && (
-              <div style={{ fontSize: '13px', color: 'var(--theme-elevation-700)', lineHeight: '1.4' }}>
-                {truncateText(review.text)}
+      ) : (
+        [...reviews]
+          .map((review, idx) => ({ ...review, _idx: idx }))
+          .sort((a, b) => {
+            if (!a.date || !b.date) return 0
+            return new Date(b.date).getTime() - new Date(a.date).getTime()
+          })
+          .map((review) => (
+            <div
+              key={review.url || `${review.username}-${review.date}-${review._idx}`}
+              style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                justifyContent: 'space-between',
+                padding: '10px 12px',
+                borderBottom: '1px solid var(--theme-elevation-100)',
+                gap: '12px',
+                opacity: review.hidden ? 0.5 : 1,
+              }}
+            >
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    marginBottom: '4px',
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  <span style={{ fontWeight: 600 }}>{review.username}</span>
+                  {review.date && (
+                    <span style={{ fontSize: '12px', color: 'var(--theme-elevation-500)' }}>
+                      {formatRelativeTime(review.date)}
+                    </span>
+                  )}
+                  <span
+                    style={{
+                      fontSize: '12px',
+                      color: 'var(--theme-elevation-500)',
+                      background: 'var(--theme-elevation-50)',
+                      padding: '2px 6px',
+                      borderRadius: '4px',
+                    }}
+                  >
+                    ★ {review.rating.toFixed(1)}
+                  </span>
+                  {review.hidden && (
+                    <span
+                      style={{
+                        fontSize: '11px',
+                        color: 'var(--theme-error-500)',
+                        fontWeight: 500,
+                      }}
+                    >
+                      Hidden
+                    </span>
+                  )}
+                </div>
+                {review.text && (
+                  <div
+                    style={{
+                      fontSize: '13px',
+                      color: 'var(--theme-elevation-700)',
+                      lineHeight: '1.4',
+                    }}
+                  >
+                    {truncateText(review.text)}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={() => toggleHidden(review._idx)}
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              padding: '4px',
-              color: review.hidden ? 'var(--theme-success-500)' : 'var(--theme-elevation-400)',
-              flexShrink: 0,
-            }}
-            title={review.hidden ? 'Show review' : 'Hide review'}
-          >
-            {review.hidden ? <Eye size={16} /> : <EyeOff size={16} />}
-          </button>
-        </div>
-      ))}
+              <button
+                type="button"
+                onClick={() => toggleHidden(review._idx)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  color: review.hidden ? 'var(--theme-success-500)' : 'var(--theme-elevation-400)',
+                  flexShrink: 0,
+                }}
+                title={review.hidden ? 'Show review' : 'Hide review'}
+              >
+                {review.hidden ? <Eye size={16} /> : <EyeOff size={16} />}
+              </button>
+            </div>
+          ))
+      )}
     </div>
   )
 }

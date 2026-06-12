@@ -3,21 +3,24 @@
  * Renders the Untappd icon + formatted rating, with optional overlay styling.
  */
 
-import { UntappdIcon } from '@/components/icons';
-import { formatRating } from '@/lib/utils/formatters';
-import { cn } from '@/lib/utils';
+import { UntappdIcon } from '@/components/icons'
+import { formatRating } from '@/lib/utils/formatters'
+import { cn } from '@/lib/utils'
 
 interface UntappdRatingProps {
-  rating: number | null | undefined;
+  rating: number | null | undefined
   /** Render as a frosted-glass overlay pill (for use inside positioned containers) */
-  variant?: 'inline' | 'overlay';
-  className?: string;
+  variant?: 'inline' | 'overlay'
+  className?: string
   /** Style overrides (e.g. vh-based sizing for TV displays) */
-  style?: React.CSSProperties;
+  style?: React.CSSProperties
   /** Icon style overrides for TV displays */
-  iconStyle?: React.CSSProperties;
-  /** Text to show when there is no rating. If omitted, renders nothing. */
-  fallbackText?: string;
+  iconStyle?: React.CSSProperties
+  /**
+   * Text to show when there is no rating, rendered with the same icon and
+   * amber styling as the rating itself. If omitted, renders nothing.
+   */
+  fallbackText?: string
 }
 
 export function UntappdRating({
@@ -28,29 +31,20 @@ export function UntappdRating({
   iconStyle,
   fallbackText,
 }: UntappdRatingProps) {
-  if ((rating ?? 0) <= 0) {
-    if (fallbackText) {
-      return (
-        <span className={cn('text-muted-foreground font-bold leading-none', className)} style={style}>
-          {fallbackText}
-        </span>
-      );
-    }
-    return null;
-  }
+  const text = (rating ?? 0) > 0 ? `${formatRating(rating)}/5` : fallbackText
+  if (!text) return null
 
   return (
     <span
       className={cn(
         'flex items-end text-amber-500 text-sm',
-        variant === 'overlay' &&
-          'bg-background/80 backdrop-blur-sm rounded-md px-1.5 py-0.5',
+        variant === 'overlay' && 'bg-background/80 backdrop-blur-sm rounded-md px-1.5 py-0.5',
         className,
       )}
       style={style}
     >
       <UntappdIcon className="h-3.5 w-3.5 mx-0.5" style={iconStyle} />
-      <span className="font-bold leading-none">{formatRating(rating)}/5</span>
+      <span className="font-bold leading-none">{text}</span>
     </span>
-  );
+  )
 }

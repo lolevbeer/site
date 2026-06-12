@@ -13,12 +13,14 @@ function mround(value: number, multiple: number): number {
 
 /**
  * Find all menus containing a given beer and revalidate their CDN cache tags.
- * Called from both afterChange (data updated) and afterRead (editor warm-up).
+ * Called from afterChange so menu displays pick up beer edits on their next poll.
+ *
+ * NOTE: This must never run from an afterRead hook. Payload's admin form-state
+ * requests (stale-data check, document locking, relationship population) read
+ * docs through Next.js Server Actions, and calling revalidateTag inside a
+ * Server Action forces the admin router to refetch — resetting the edit form.
  */
-async function revalidateMenusForBeer(
-  payload: Payload,
-  beerId: string | number,
-): Promise<void> {
+async function revalidateMenusForBeer(payload: Payload, beerId: string | number): Promise<void> {
   const menus = await payload.find({
     collection: 'menus',
     where: { 'items.product.value': { equals: beerId } },
@@ -64,7 +66,7 @@ export const Beers: CollectionConfig = {
       async ({ data, req, operation, originalDoc }) => {
         // Compute canSingle from fourPack: MROUND((fourPack/4) + 0.25, 0.25)
         if (data.fourPack && typeof data.fourPack === 'number') {
-          data.canSingle = mround((data.fourPack / 4) + 0.25, 0.25)
+          data.canSingle = mround(data.fourPack / 4 + 0.25, 0.25)
         }
 
         // Compute halfPour from draftPrice: round(draftPrice / 2) + 1
@@ -77,13 +79,7 @@ export const Beers: CollectionConfig = {
         if ((!data.slug || data.slug.trim() === '') && data.name && typeof data.name === 'string') {
           // For updates, use originalDoc.id; for creates, use data.id if available
           const docId = originalDoc?.id || data.id
-          data.slug = await generateUniqueSlug(
-            data.name,
-            'beers',
-            req,
-            operation,
-            docId,
-          )
+          data.slug = await generateUniqueSlug(data.name, 'beers', req, operation, docId)
         }
 
         // Auto-increment recipe number for new beers (always, even when cloning)
@@ -149,21 +145,6 @@ export const Beers: CollectionConfig = {
           await revalidateMenusForBeer(req.payload, doc.id)
         } catch (error) {
           logger.error('Beer menu revalidation error:', error)
-        }
-        return doc
-      },
-    ],
-    afterRead: [
-      async ({ doc, req, findMany }) => {
-        // When an admin views a single beer, revalidate menu caches so
-        // displays snap back to fast polling in anticipation of edits.
-        // Skip list views (findMany) to avoid N+1 queries.
-        if (req.user && !findMany) {
-          try {
-            await revalidateMenusForBeer(req.payload, doc.id)
-          } catch {
-            // Don't block the read
-          }
         }
         return doc
       },
@@ -296,7 +277,8 @@ export const Beers: CollectionConfig = {
       defaultValue: false,
       admin: {
         position: 'sidebar',
-        description: 'Mark as "Just Released". If no beers have this set, beers created within 2 weeks are auto-marked.',
+        description:
+          'Mark as "Just Released". If no beers have this set, beers created within 2 weeks are auto-marked.',
       },
     },
     {
@@ -306,7 +288,8 @@ export const Beers: CollectionConfig = {
       defaultValue: false,
       admin: {
         position: 'sidebar',
-        description: 'Collaboration brew with another brewery. Overrides "Just Released" badge with "Collab".',
+        description:
+          'Collaboration brew with another brewery. Overrides "Just Released" badge with "Collab".',
       },
     },
     {
