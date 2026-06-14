@@ -81,6 +81,8 @@ export interface Beer {
   variant: string;
   name: string;
   type: BeerStyle | string;
+  /** Optional single tag label (sourced from the Payload CMS tags collection) */
+  tag?: string;
   options?: string;
   abv: number;
   glass: GlassType;

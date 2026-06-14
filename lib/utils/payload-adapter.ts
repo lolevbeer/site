@@ -3,7 +3,7 @@
  * Bridges the gap between Payload schema and existing app interfaces
  */
 
-import type { Beer as PayloadBeer, Menu as PayloadMenu, Style } from '@/src/payload-types'
+import type { Beer as PayloadBeer, Menu as PayloadMenu, Style, Tag } from '@/src/payload-types'
 import type { PayloadLocation } from '@/lib/types/location'
 import type { Beer } from '@/lib/types/beer'
 import { GlassType } from '@/lib/types/beer'
@@ -30,6 +30,15 @@ function getStyleName(style: string | Style): string {
 }
 
 /**
+ * Get tag name from Payload tag field (optional, single relationship)
+ */
+function getTagName(tag: PayloadBeer['tag']): string | undefined {
+  if (!tag) return undefined
+  if (typeof tag === 'string') return tag
+  return (tag as Tag).name
+}
+
+/**
  * Get location slug from Payload location field
  */
 function getLocationSlug(location: string | PayloadLocation | undefined): string {
@@ -51,6 +60,7 @@ function convertPayloadBeer(payloadBeer: PayloadBeer): Beer {
     variant,
     name: payloadBeer.name,
     type: styleName,
+    tag: getTagName(payloadBeer.tag),
     abv: payloadBeer.abv,
     glass: payloadBeer.glass as GlassType,
     description: payloadBeer.description || '',
