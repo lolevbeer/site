@@ -69,6 +69,7 @@ export interface Config {
   collections: {
     beers: Beer;
     styles: Style;
+    tags: Tag;
     menus: Menu;
     products: Product;
     events: Event;
@@ -89,6 +90,7 @@ export interface Config {
   collectionsSelect: {
     beers: BeersSelect<false> | BeersSelect<true>;
     styles: StylesSelect<false> | StylesSelect<true>;
+    tags: TagsSelect<false> | TagsSelect<true>;
     menus: MenusSelect<false> | MenusSelect<true>;
     products: ProductsSelect<false> | ProductsSelect<true>;
     events: EventsSelect<false> | EventsSelect<true>;
@@ -212,6 +214,10 @@ export interface Beer {
    * Beer image (recommended: 2500x2500px)
    */
   image?: (string | null) | Media;
+  /**
+   * Optional tag (search existing or add a new one)
+   */
+  tag?: (string | null) | Tag;
   description?: string | null;
   /**
    * Hop varieties used
@@ -309,6 +315,19 @@ export interface Media {
       filename?: string | null;
     };
   };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tags".
+ */
+export interface Tag {
+  id: string;
+  /**
+   * Tag name (e.g., Seasonal, Limited, Award Winner)
+   */
+  name: string;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -762,6 +781,10 @@ export interface PayloadLockedDocument {
         value: string | Style;
       } | null)
     | ({
+        relationTo: 'tags';
+        value: string | Tag;
+      } | null)
+    | ({
         relationTo: 'menus';
         value: string | Menu;
       } | null)
@@ -869,6 +892,7 @@ export interface BeersSelect<T extends boolean = true> {
   name?: T;
   style?: T;
   image?: T;
+  tag?: T;
   description?: T;
   hops?: T;
   topBeerDrops?: T;
@@ -885,6 +909,15 @@ export interface BeersSelect<T extends boolean = true> {
  * via the `definition` "styles_select".
  */
 export interface StylesSelect<T extends boolean = true> {
+  name?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tags_select".
+ */
+export interface TagsSelect<T extends boolean = true> {
   name?: T;
   updatedAt?: T;
   createdAt?: T;

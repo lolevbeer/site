@@ -10,6 +10,7 @@ import { revalidationPlugin } from './plugins/revalidation-plugin'
 import { Users } from './collections/Users'
 import { Media } from './collections/Media'
 import { Styles } from './collections/Styles'
+import { Tags } from './collections/Tags'
 import { Beers } from './collections/Beers'
 import { Events } from './collections/Events'
 import { Food } from './collections/Food'
@@ -47,7 +48,13 @@ const allowedOrigins = [
     : []),
   // Local development
   ...(process.env.NODE_ENV === 'development'
-    ? ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://127.0.0.1:3000', 'http://0.0.0.0:3000']
+    ? [
+        'http://localhost:3000',
+        'http://localhost:3001',
+        'http://localhost:3002',
+        'http://127.0.0.1:3000',
+        'http://0.0.0.0:3000',
+      ]
     : []),
 ]
 
@@ -104,6 +111,7 @@ export default buildConfig({
     // Back of House
     Beers,
     Styles,
+    Tags,
     // Front of House
     Menus,
     Products,
