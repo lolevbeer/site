@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui/button'
 import { Pencil } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/use-auth'
+import { LocationCycleTitle } from '@/components/ui/location-cycle-title'
 
 interface SectionHeaderProps {
   /** The section title */
@@ -31,20 +32,16 @@ export function SectionHeader({
     <div className="text-center mb-12">
       <div className="flex items-center justify-between mb-4">
         <div className="flex-1" />
-        <h2 className="text-3xl lg:text-4xl font-bold">
-          {onTitleClick ? (
-            <button
-              type="button"
-              onClick={onTitleClick}
-              title="Switch location"
-              className="cursor-pointer transition-colors hover:text-primary"
-            >
-              {title}
-            </button>
-          ) : (
-            title
-          )}
-        </h2>
+        {onTitleClick ? (
+          <LocationCycleTitle
+            as="h2"
+            className="text-3xl lg:text-4xl font-bold"
+            title={title}
+            onCycle={onTitleClick}
+          />
+        ) : (
+          <h2 className="text-3xl lg:text-4xl font-bold">{title}</h2>
+        )}
         <div className="flex-1 flex justify-end">
           {isAuthenticated && adminUrl && (
             <Button asChild variant="outline" size="sm">

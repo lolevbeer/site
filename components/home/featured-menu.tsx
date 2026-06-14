@@ -10,6 +10,7 @@ import { ScrollReveal } from '@/components/ui/scroll-reveal'
 import { Beer as BeerIconLucide, Package, Pencil } from 'lucide-react'
 import { getGlassIcon } from '@/lib/utils/beer-icons'
 import { useLocationContext } from '@/components/location/location-provider'
+import { LocationCycleTitle } from '@/components/ui/location-cycle-title'
 import { DraftBeerCard } from '@/components/beer/draft-beer-card'
 import { useAnimatedList, getAnimationClass } from '@/lib/hooks/use-animated-list'
 import { useAuth } from '@/lib/hooks/use-auth'
@@ -672,16 +673,12 @@ export function FeaturedMenu({
           <div className="text-center mb-12">
             <div className="flex items-center justify-between mb-4">
               <div className="flex-1" />
-              <h2 className="text-3xl lg:text-4xl font-bold">
-                <button
-                  type="button"
-                  onClick={cycleLocation}
-                  title="Switch location"
-                  className="cursor-pointer transition-colors hover:text-primary"
-                >
-                  {sectionTitle}
-                </button>
-              </h2>
+              <LocationCycleTitle
+                as="h2"
+                className="text-3xl lg:text-4xl font-bold"
+                title={sectionTitle}
+                onCycle={cycleLocation}
+              />
               <div className="flex-1 flex justify-end">
                 <AdminEditButtons menusArray={menus} currentLocation={currentLocation} />
               </div>

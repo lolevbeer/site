@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
 import { UtensilsCrossed } from 'lucide-react'
 import { useLocationContext } from '@/components/location/location-provider'
+import { LocationCycleTitle } from '@/components/ui/location-cycle-title'
 import { getLocationDisplayName } from '@/lib/config/locations'
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs'
 import { TimelineList } from '@/components/ui/timeline-list'
@@ -47,16 +48,12 @@ export function FoodPageClient({ initialSchedules }: FoodPageClientProps) {
     <div className="container mx-auto px-4 py-8">
       <PageBreadcrumbs className="mb-6" />
       <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold tracking-tight">
-          <button
-            type="button"
-            onClick={cycleLocation}
-            title="Switch location"
-            className="cursor-pointer transition-colors hover:text-primary"
-          >
-            Food at {getLocationDisplayName(locations, currentLocation)}
-          </button>
-        </h1>
+        <LocationCycleTitle
+          as="h1"
+          className="text-4xl font-bold tracking-tight"
+          title={`Food at ${getLocationDisplayName(locations, currentLocation)}`}
+          onCycle={cycleLocation}
+        />
       </div>
 
       <div className="max-w-2xl mx-auto">
