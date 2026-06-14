@@ -1,69 +1,73 @@
-'use client';
+'use client'
 
-import React, { useMemo, useState } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { SectionHeader } from '@/components/ui/section-header';
-import { ScrollReveal } from '@/components/ui/scroll-reveal';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { useLocationFilteredData, type LocationData } from '@/lib/hooks/use-location-filtered-data';
-import { formatDate, formatTime } from '@/lib/utils/formatters';
-import { useSortedItems } from '@/lib/hooks/use-sorted-items';
-import { useLocationContext } from '@/components/location/location-provider';
-import { getMediaUrl } from '@/lib/utils/media-utils';
-import { getLocationDisplayName } from '@/lib/config/locations';
-import type { LocationSlug } from '@/lib/types/location';
+import React, { useMemo, useState } from 'react'
+import Link from 'next/link'
+import Image from 'next/image'
+import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { SectionHeader } from '@/components/ui/section-header'
+import { ScrollReveal } from '@/components/ui/scroll-reveal'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import { useLocationFilteredData, type LocationData } from '@/lib/hooks/use-location-filtered-data'
+import { formatDate, formatTime } from '@/lib/utils/formatters'
+import { useSortedItems } from '@/lib/hooks/use-sorted-items'
+import { useLocationContext } from '@/components/location/location-provider'
+import { getMediaUrl } from '@/lib/utils/media-utils'
+import { getLocationDisplayName } from '@/lib/config/locations'
+import type { LocationSlug } from '@/lib/types/location'
 
 interface FoodVendor {
-  vendor: string | {
-    id?: string;
-    name?: string;
-    site?: string | null;
-    logo?: unknown;
-  };
-  date: string;
-  time?: string | null;
-  startTime?: string | null;
-  site?: string | null;
-  day?: string;
-  location?: LocationSlug | { slug?: string | null } | string;
+  vendor:
+    | string
+    | {
+        id?: string
+        name?: string
+        site?: string | null
+        logo?: unknown
+      }
+  date: string
+  time?: string | null
+  startTime?: string | null
+  site?: string | null
+  day?: string
+  location?: LocationSlug | { slug?: string | null } | string
 }
 
 interface UpcomingFoodProps {
   /** Food organized by location slug */
-  foodByLocation: Record<string, FoodVendor[]>;
+  foodByLocation: Record<string, FoodVendor[]>
 }
 
 export function UpcomingFood({ foodByLocation }: UpcomingFoodProps): React.ReactElement | null {
-  const { locations } = useLocationContext();
-  const [expandedImage, setExpandedImage] = useState<{ url: string; name: string } | null>(null);
+  const { locations, currentLocationData, cycleLocation } = useLocationContext()
+  const [expandedImage, setExpandedImage] = useState<{ url: string; name: string } | null>(null)
 
   // Create data structure for location filtering with location attached
   const dataByLocation = useMemo(() => {
-    const result: LocationData<FoodVendor & { location: LocationSlug }> = {};
+    const result: LocationData<FoodVendor & { location: LocationSlug }> = {}
     for (const [locationSlug, foods] of Object.entries(foodByLocation)) {
-      result[locationSlug] = foods.map(f => ({ ...f, location: locationSlug }));
+      result[locationSlug] = foods.map((f) => ({ ...f, location: locationSlug }))
     }
-    return result;
-  }, [foodByLocation]);
+    return result
+  }, [foodByLocation])
 
   // Filter by current location and take first 3
-  const filteredFood = useLocationFilteredData({ dataByLocation });
-  const upcomingFood = useSortedItems(filteredFood, { limit: 3 });
+  const filteredFood = useLocationFilteredData({ dataByLocation })
+  const upcomingFood = useSortedItems(filteredFood, { limit: 3 })
 
   /** Get location display name from slug or object */
-  function getLocationName(location: LocationSlug | { slug?: string; name?: string } | string | undefined): string {
-    if (!location) return '';
-    if (typeof location === 'object' && location.name) return location.name;
-    const slug = typeof location === 'object' ? location.slug : location;
-    if (!slug) return '';
-    return getLocationDisplayName(locations, slug);
+  function getLocationName(
+    location: LocationSlug | { slug?: string; name?: string } | string | undefined,
+  ): string {
+    if (!location) return ''
+    if (typeof location === 'object' && location.name) return location.name
+    const slug = typeof location === 'object' ? location.slug : location
+    if (!slug) return ''
+    return getLocationDisplayName(locations, slug)
   }
 
   if (upcomingFood.length === 0) {
-    return null;
+    return null
   }
 
   return (
@@ -71,19 +75,22 @@ export function UpcomingFood({ foodByLocation }: UpcomingFoodProps): React.React
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal>
           <SectionHeader
-            title="Upcoming Food"
+            title={
+              currentLocationData?.name ? `Food at ${currentLocationData.name}` : 'Upcoming Food'
+            }
             adminUrl="/admin/collections/food"
+            onTitleClick={cycleLocation}
           />
         </ScrollReveal>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {upcomingFood.map((food, index) => {
-            const vendorName = typeof food.vendor === 'object' ? food.vendor?.name : food.vendor;
-            const vendorSite = food.site || (typeof food.vendor === 'object' ? food.vendor?.site : undefined);
-            const vendorLogo = typeof food.vendor === 'object'
-              ? getMediaUrl(food.vendor?.logo)
-              : undefined;
-            const timeDisplay = food.time || food.startTime;
+            const vendorName = typeof food.vendor === 'object' ? food.vendor?.name : food.vendor
+            const vendorSite =
+              food.site || (typeof food.vendor === 'object' ? food.vendor?.site : undefined)
+            const vendorLogo =
+              typeof food.vendor === 'object' ? getMediaUrl(food.vendor?.logo) : undefined
+            const timeDisplay = food.time || food.startTime
 
             return (
               <Card
@@ -91,13 +98,15 @@ export function UpcomingFood({ foodByLocation }: UpcomingFoodProps): React.React
                 className={`overflow-hidden transition-colors shadow-none bg-transparent ${vendorSite ? 'border border-border cursor-pointer hover:bg-secondary' : ''}`}
                 onClick={vendorSite ? () => window.open(vendorSite, '_blank') : undefined}
               >
-                <CardContent className={`p-4 ${vendorLogo ? 'flex items-center gap-4' : 'text-center py-6'}`}>
+                <CardContent
+                  className={`p-4 ${vendorLogo ? 'flex items-center gap-4' : 'text-center py-6'}`}
+                >
                   {vendorLogo && (
                     <button
                       type="button"
                       onClick={(e) => {
-                        e.stopPropagation();
-                        setExpandedImage({ url: vendorLogo, name: vendorName || 'Vendor' });
+                        e.stopPropagation()
+                        setExpandedImage({ url: vendorLogo, name: vendorName || 'Vendor' })
                       }}
                       className="relative w-16 h-16 flex-shrink-0 rounded-full overflow-hidden bg-muted cursor-zoom-in hover:ring-2 hover:ring-ring hover:ring-offset-2 transition-all"
                     >
@@ -120,15 +129,13 @@ export function UpcomingFood({ foodByLocation }: UpcomingFoodProps): React.React
                   </div>
                 </CardContent>
               </Card>
-            );
+            )
           })}
         </div>
 
         <div className="text-center">
           <Button asChild variant="outline" size="lg">
-            <Link href="/food">
-              View All
-            </Link>
+            <Link href="/food">View All</Link>
           </Button>
         </div>
       </div>
@@ -154,5 +161,5 @@ export function UpcomingFood({ foodByLocation }: UpcomingFoodProps): React.React
         </DialogContent>
       </Dialog>
     </section>
-  );
+  )
 }

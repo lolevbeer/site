@@ -1,42 +1,52 @@
-'use client';
+'use client'
 
-import React, { useMemo } from 'react';
-import { BreweryEvent } from '@/lib/types/event';
-import type { LocationFilter } from '@/lib/types/location';
-import { Button } from '@/components/ui/button';
-import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
-import { Calendar } from 'lucide-react';
-import { useLocationContext } from '@/components/location/location-provider';
-import { getLocationDisplayName } from '@/lib/config/locations';
-import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
-import { TimelineList } from '@/components/ui/timeline-list';
-import { TimelineItem } from '@/components/ui/timeline-item';
-import { isTodayOrFuture } from '@/lib/utils/formatters';
+import React, { useMemo } from 'react'
+import { BreweryEvent } from '@/lib/types/event'
+import type { LocationFilter } from '@/lib/types/location'
+import { Button } from '@/components/ui/button'
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
+import { Calendar } from 'lucide-react'
+import { useLocationContext } from '@/components/location/location-provider'
+import { getLocationDisplayName } from '@/lib/config/locations'
+import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs'
+import { TimelineList } from '@/components/ui/timeline-list'
+import { TimelineItem } from '@/components/ui/timeline-item'
+import { isTodayOrFuture } from '@/lib/utils/formatters'
 
 interface EventsPageClientProps {
-  initialEvents: BreweryEvent[];
+  initialEvents: BreweryEvent[]
 }
 
 export function EventsPageClient({ initialEvents }: EventsPageClientProps) {
-  const { currentLocation, locations } = useLocationContext();
-  const locationFilter = currentLocation as LocationFilter;
+  const { currentLocation, locations, cycleLocation } = useLocationContext()
+  const locationFilter = currentLocation as LocationFilter
 
   // Filter events by location and sort by date
   const filteredEvents = useMemo(() => {
-    const filtered = locationFilter === 'all'
-      ? initialEvents
-      : initialEvents.filter(event => event.location === locationFilter);
+    const filtered =
+      locationFilter === 'all'
+        ? initialEvents
+        : initialEvents.filter((event) => event.location === locationFilter)
 
     return filtered
-      .filter(event => isTodayOrFuture(event.date))
-      .sort((a, b) => a.date.localeCompare(b.date));
-  }, [initialEvents, locationFilter]);
+      .filter((event) => isTodayOrFuture(event.date))
+      .sort((a, b) => a.date.localeCompare(b.date))
+  }, [initialEvents, locationFilter])
 
   return (
     <div className="container mx-auto px-4 py-8">
       <PageBreadcrumbs className="mb-6" />
       <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold tracking-tight">Events</h1>
+        <h1 className="text-4xl font-bold tracking-tight">
+          <button
+            type="button"
+            onClick={cycleLocation}
+            title="Switch location"
+            className="cursor-pointer transition-colors hover:text-primary"
+          >
+            Events at {getLocationDisplayName(locations, currentLocation)}
+          </button>
+        </h1>
       </div>
 
       <div className="max-w-2xl mx-auto">
@@ -62,7 +72,7 @@ export function EventsPageClient({ initialEvents }: EventsPageClientProps) {
                 <EmptyTitle>No Upcoming Events</EmptyTitle>
                 <EmptyDescription>
                   {locationFilter !== 'all'
-                    ? `No upcoming events at ${locations.find(l => (l.slug || l.id) === locationFilter)?.name || locationFilter}. Check back soon!`
+                    ? `No upcoming events at ${locations.find((l) => (l.slug || l.id) === locationFilter)?.name || locationFilter}. Check back soon!`
                     : 'No upcoming events scheduled. Check back soon for live music, trivia, and more!'}
                 </EmptyDescription>
               </EmptyHeader>
@@ -75,17 +85,13 @@ export function EventsPageClient({ initialEvents }: EventsPageClientProps) {
         <h2 className="text-lg font-semibold">Book Private Event</h2>
         <div className="flex justify-center gap-4 flex-wrap">
           <Button variant="ghost" size="sm" asChild>
-            <a href="mailto:events@lolev.beer">
-              events@lolev.beer
-            </a>
+            <a href="mailto:events@lolev.beer">events@lolev.beer</a>
           </Button>
           <Button variant="ghost" size="sm" asChild>
-            <a href="tel:4123368965">
-              (412) 336-8965
-            </a>
+            <a href="tel:4123368965">(412) 336-8965</a>
           </Button>
         </div>
       </div>
     </div>
-  );
+  )
 }

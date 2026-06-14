@@ -460,8 +460,10 @@ export function FeaturedMenu({
   itemColors,
   hideHeader = false,
 }: FeaturedMenuProps) {
-  const { currentLocation } = useLocationContext()
+  const { currentLocation, currentLocationData, cycleLocation } = useLocationContext()
   const title = menuType === 'draft' ? 'Draft' : 'Cans'
+  // Homepage section heading is location-aware, e.g. "Draft at Lawrenceville".
+  const sectionTitle = currentLocationData?.name ? `${title} at ${currentLocationData.name}` : title
   const emptyMessage =
     menuType === 'draft'
       ? 'No beers on draft right now. Check back soon!'
@@ -670,7 +672,16 @@ export function FeaturedMenu({
           <div className="text-center mb-12">
             <div className="flex items-center justify-between mb-4">
               <div className="flex-1" />
-              <h2 className="text-3xl lg:text-4xl font-bold">{title}</h2>
+              <h2 className="text-3xl lg:text-4xl font-bold">
+                <button
+                  type="button"
+                  onClick={cycleLocation}
+                  title="Switch location"
+                  className="cursor-pointer transition-colors hover:text-primary"
+                >
+                  {sectionTitle}
+                </button>
+              </h2>
               <div className="flex-1 flex justify-end">
                 <AdminEditButtons menusArray={menus} currentLocation={currentLocation} />
               </div>

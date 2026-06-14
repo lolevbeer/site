@@ -1,47 +1,50 @@
-'use client';
+'use client'
 
-import React, { useMemo, useCallback } from 'react';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { SectionHeader } from '@/components/ui/section-header';
-import { ScrollReveal } from '@/components/ui/scroll-reveal';
-import { EventCard } from '@/components/events/event-card';
-import { parseLocalDate } from '@/lib/utils/formatters';
-import { useLocationFilteredData, type LocationData } from '@/lib/hooks/use-location-filtered-data';
-import { useSortedItems } from '@/lib/hooks/use-sorted-items';
-import type { Event as PayloadEvent } from '@/src/payload-types';
+import React, { useMemo, useCallback } from 'react'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { SectionHeader } from '@/components/ui/section-header'
+import { ScrollReveal } from '@/components/ui/scroll-reveal'
+import { EventCard } from '@/components/events/event-card'
+import { parseLocalDate } from '@/lib/utils/formatters'
+import { useLocationFilteredData, type LocationData } from '@/lib/hooks/use-location-filtered-data'
+import { useSortedItems } from '@/lib/hooks/use-sorted-items'
+import { useLocationContext } from '@/components/location/location-provider'
+import type { Event as PayloadEvent } from '@/src/payload-types'
 
-type EventWithLocationSlug = PayloadEvent & { locationSlug: string };
+type EventWithLocationSlug = PayloadEvent & { locationSlug: string }
 
 interface UpcomingEventsProps {
   /** Events organized by location slug */
-  eventsByLocation: Record<string, PayloadEvent[]>;
+  eventsByLocation: Record<string, PayloadEvent[]>
 }
 
 export function UpcomingEvents({ eventsByLocation }: UpcomingEventsProps) {
+  const { currentLocationData, cycleLocation } = useLocationContext()
+
   // Create data structure for location filtering
   const dataByLocation = useMemo(() => {
-    const result: LocationData<EventWithLocationSlug> = {};
+    const result: LocationData<EventWithLocationSlug> = {}
     for (const [slug, events] of Object.entries(eventsByLocation)) {
-      result[slug] = events.map(e => ({ ...e, locationSlug: slug }));
+      result[slug] = events.map((e) => ({ ...e, locationSlug: slug }))
     }
-    return result;
-  }, [eventsByLocation]);
+    return result
+  }, [eventsByLocation])
 
   // Filter by current location
-  const filteredEvents = useLocationFilteredData({ dataByLocation });
+  const filteredEvents = useLocationFilteredData({ dataByLocation })
 
   // Date parser for events (uses parseLocalDate for proper timezone handling)
-  const getEventDate = useCallback((e: EventWithLocationSlug) => parseLocalDate(e.date), []);
+  const getEventDate = useCallback((e: EventWithLocationSlug) => parseLocalDate(e.date), [])
 
   // Sort and take first 3
   const upcomingEvents = useSortedItems(filteredEvents, {
     getDate: getEventDate,
     limit: 3,
-  });
+  })
 
   if (upcomingEvents.length === 0) {
-    return null;
+    return null
   }
 
   return (
@@ -49,29 +52,28 @@ export function UpcomingEvents({ eventsByLocation }: UpcomingEventsProps) {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal>
           <SectionHeader
-            title="Upcoming Events"
+            title={
+              currentLocationData?.name
+                ? `Events at ${currentLocationData.name}`
+                : 'Upcoming Events'
+            }
             adminUrl="/admin/collections/events"
+            onTitleClick={cycleLocation}
           />
         </ScrollReveal>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {upcomingEvents.map((event, index) => (
-            <EventCard
-              key={index}
-              event={event}
-              currentLocation={event.locationSlug}
-            />
+            <EventCard key={index} event={event} currentLocation={event.locationSlug} />
           ))}
         </div>
 
         <div className="text-center">
           <Button asChild variant="outline" size="lg">
-            <Link href="/events">
-              View All
-            </Link>
+            <Link href="/events">View All</Link>
           </Button>
         </div>
       </div>
     </section>
-  );
+  )
 }

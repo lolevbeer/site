@@ -1,16 +1,18 @@
-'use client';
+'use client'
 
-import { Button } from '@/components/ui/button';
-import { Pencil } from 'lucide-react';
-import { useAuth } from '@/lib/hooks/use-auth';
+import { Button } from '@/components/ui/button'
+import { Pencil } from 'lucide-react'
+import { useAuth } from '@/lib/hooks/use-auth'
 
 interface SectionHeaderProps {
   /** The section title */
-  title: string;
+  title: string
   /** URL for the admin edit button */
-  adminUrl?: string;
+  adminUrl?: string
   /** Custom edit button label (defaults to "Edit") */
-  editLabel?: string;
+  editLabel?: string
+  /** When provided, the title renders as a button that runs this on click */
+  onTitleClick?: () => void
 }
 
 /**
@@ -21,14 +23,28 @@ export function SectionHeader({
   title,
   adminUrl,
   editLabel = 'Edit',
+  onTitleClick,
 }: SectionHeaderProps) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth()
 
   return (
     <div className="text-center mb-12">
       <div className="flex items-center justify-between mb-4">
         <div className="flex-1" />
-        <h2 className="text-3xl lg:text-4xl font-bold">{title}</h2>
+        <h2 className="text-3xl lg:text-4xl font-bold">
+          {onTitleClick ? (
+            <button
+              type="button"
+              onClick={onTitleClick}
+              title="Switch location"
+              className="cursor-pointer transition-colors hover:text-primary"
+            >
+              {title}
+            </button>
+          ) : (
+            title
+          )}
+        </h2>
         <div className="flex-1 flex justify-end">
           {isAuthenticated && adminUrl && (
             <Button asChild variant="outline" size="sm">
@@ -41,5 +57,5 @@ export function SectionHeader({
         </div>
       </div>
     </div>
-  );
+  )
 }
