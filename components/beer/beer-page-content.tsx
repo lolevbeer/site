@@ -35,6 +35,7 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
   const [search, setSearch] = useQueryState('q', { defaultValue: '' });
   const [availability, setAvailability] = useQueryState('avail', parseAsString.withDefault('all'));
   const [selectedType, setSelectedType] = useQueryState('style', { defaultValue: 'all' });
+  const [selectedTag, setSelectedTag] = useQueryState('tag', { defaultValue: 'all' });
 
   const beerTypes = useMemo(() => {
     const types = new Set<string>();
@@ -42,6 +43,14 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
       if (beer.type) types.add(beer.type);
     });
     return Array.from(types).sort();
+  }, [beers]);
+
+  const beerTags = useMemo(() => {
+    const tags = new Set<string>();
+    beers.forEach(beer => {
+      if (beer.tag) tags.add(beer.tag);
+    });
+    return Array.from(tags).sort();
   }, [beers]);
 
   const handleSearchChange = useCallback((value: string) => {
@@ -56,13 +65,18 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
     setSelectedType(type === 'all' ? null : type);
   }, [setSelectedType]);
 
+  const handleTagChange = useCallback((tag: string) => {
+    setSelectedTag(tag === 'all' ? null : tag);
+  }, [setSelectedTag]);
+
   const clearFilters = useCallback(() => {
     setSearch(null);
     setAvailability(null);
     setSelectedType(null);
-  }, [setSearch, setAvailability, setSelectedType]);
+    setSelectedTag(null);
+  }, [setSearch, setAvailability, setSelectedType, setSelectedTag]);
 
-  const hasActiveFilters = search || availability !== 'all' || selectedType !== 'all';
+  const hasActiveFilters = search || availability !== 'all' || selectedType !== 'all' || selectedTag !== 'all';
 
   const filteredBeers = useMemo(() => {
     let filtered = [...beers];
@@ -79,6 +93,10 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
 
     if (selectedType && selectedType !== 'all') {
       filtered = filtered.filter(beer => beer.type === selectedType);
+    }
+
+    if (selectedTag && selectedTag !== 'all') {
+      filtered = filtered.filter(beer => beer.tag === selectedTag);
     }
 
     if (availability === 'tap') {
@@ -109,7 +127,7 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
     });
 
     return filtered;
-  }, [beers, search, selectedType, availability]);
+  }, [beers, search, selectedType, selectedTag, availability]);
 
   return (
     <PageTransition>
@@ -173,6 +191,23 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
               ))}
             </SelectContent>
           </Select>
+
+          {/* Tag dropdown - only shown when beers have tags */}
+          {beerTags.length > 0 && (
+            <Select value={selectedTag} onValueChange={handleTagChange}>
+              <SelectTrigger className="flex-1 bg-secondary">
+                <SelectValue placeholder="All Tags" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Tags</SelectItem>
+                {beerTags.map(tag => (
+                  <SelectItem key={tag} value={tag}>
+                    {tag}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
       </div>
 

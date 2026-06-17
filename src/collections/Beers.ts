@@ -326,6 +326,18 @@ export const Beers: CollectionConfig = {
       ],
     },
     {
+      // Single-value tag: relationship gives a typeahead over existing tags
+      // plus inline "Add new" creation. hasMany defaults to false, so only
+      // one tag is allowed per beer.
+      name: 'tag',
+      type: 'relationship',
+      relationTo: 'tags',
+      index: true,
+      admin: {
+        description: 'Optional tag (search existing or add a new one)',
+      },
+    },
+    {
       name: 'description',
       type: 'textarea',
     },
