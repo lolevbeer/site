@@ -41,6 +41,8 @@ const allowedOrigins = [
   'https://lolev.beer',
   'https://www.lolev.beer',
   'https://new.lolev.beer',
+  // GitHub Pages site that fetches the beers API cross-origin
+  'https://lolevbeer.github.io',
   // Vercel preview deployments
   ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
   ...(process.env.VERCEL_PROJECT_PRODUCTION_URL
