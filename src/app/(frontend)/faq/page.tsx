@@ -113,7 +113,14 @@ export default async function FAQPage() {
                 <AccordionTrigger className="text-left">
                   {faq.question}
                 </AccordionTrigger>
-                <AccordionContent className="text-muted-foreground" data-speakable="faq-answer">
+                {/* forceMount keeps closed answers in the server HTML so crawlers
+                    and AI fetchers see the full Q&A; the closed state is hidden
+                    with CSS instead of being unmounted. */}
+                <AccordionContent
+                  forceMount
+                  className="text-muted-foreground data-[state=closed]:hidden"
+                  data-speakable="faq-answer"
+                >
                   <FAQAnswer question={faq.question} answer={faq.answer} />
                 </AccordionContent>
               </AccordionItem>

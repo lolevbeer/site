@@ -5,88 +5,91 @@
  * @see https://developers.google.com/search/docs/appearance/structured-data/product
  */
 
-import type { Beer as PayloadBeer } from '@/src/payload-types';
-import { Beer, UntappdReview } from '@/lib/types/beer';
+import type { Beer as PayloadBeer } from '@/src/payload-types'
+import { Beer, UntappdReview } from '@/lib/types/beer'
+import { getBeerImageUrl } from '@/lib/utils/media-utils'
 
 /**
  * Schema.org Product type
  */
 export interface ReviewJsonLd {
-  '@type': 'Review';
+  '@type': 'Review'
   author: {
-    '@type': 'Person';
-    name: string;
-  };
+    '@type': 'Person'
+    name: string
+  }
   reviewRating: {
-    '@type': 'Rating';
-    ratingValue: string;
-    bestRating: string;
-    worstRating: string;
-  };
-  reviewBody: string;
-  datePublished?: string;
-  url?: string;
+    '@type': 'Rating'
+    ratingValue: string
+    bestRating: string
+    worstRating: string
+  }
+  reviewBody: string
+  datePublished?: string
+  url?: string
 }
 
 export interface ProductJsonLd {
-  '@context': 'https://schema.org';
-  '@type': 'Product';
-  name: string;
-  description?: string;
-  image?: string | string[];
-  brand: BrandJsonLd;
-  category?: string;
-  offers?: OfferJsonLd | OfferJsonLd[];
-  aggregateRating?: AggregateRatingJsonLd;
-  review?: ReviewJsonLd[];
-  additionalProperty?: PropertyValueJsonLd[];
-  sku?: string;
-  gtin?: string;
+  '@context': 'https://schema.org'
+  '@type': 'Product'
+  name: string
+  description?: string
+  image?: string | string[]
+  brand: BrandJsonLd
+  category?: string
+  offers?: OfferJsonLd | OfferJsonLd[]
+  aggregateRating?: AggregateRatingJsonLd
+  review?: ReviewJsonLd[]
+  additionalProperty?: PropertyValueJsonLd[]
+  sku?: string
+  gtin?: string
 }
 
 export interface BrandJsonLd {
-  '@type': 'Brand';
-  name: string;
-  logo?: string;
-  url?: string;
+  '@type': 'Brand'
+  name: string
+  logo?: string
+  url?: string
 }
 
 export interface OfferJsonLd {
-  '@type': 'Offer';
-  price?: string;
-  priceCurrency?: string;
-  availability: string;
-  url?: string;
-  seller?: OrganizationJsonLd;
-  priceValidUntil?: string;
-  itemCondition?: string;
+  '@type': 'Offer'
+  price?: string
+  priceCurrency?: string
+  availability: string
+  url?: string
+  seller?: OrganizationJsonLd
+  priceValidUntil?: string
+  itemCondition?: string
 }
 
 export interface OrganizationJsonLd {
-  '@type': 'Organization';
-  name: string;
-  url?: string;
+  '@type': 'Organization'
+  name: string
+  url?: string
 }
 
 export interface AggregateRatingJsonLd {
-  '@type': 'AggregateRating';
-  ratingValue: string;
-  reviewCount: string;
-  bestRating?: string;
-  worstRating?: string;
+  '@type': 'AggregateRating'
+  ratingValue: string
+  reviewCount: string
+  bestRating?: string
+  worstRating?: string
 }
 
 export interface PropertyValueJsonLd {
-  '@type': 'PropertyValue';
-  name: string;
-  value: string | number;
+  '@type': 'PropertyValue'
+  name: string
+  value: string | number
 }
 
 /**
  * Input type for product schema generation.
  * Accepts either a Payload CMS Beer or the app-level Beer interface.
  */
-type ProductSchemaInput = (Beer & { style?: unknown; slug?: string; draftPrice?: number; fourPack?: number }) | PayloadBeer;
+type ProductSchemaInput =
+  | (Beer & { style?: unknown; slug?: string; draftPrice?: number; fourPack?: number })
+  | PayloadBeer
 
 /**
  * Get beer style name from either type field or style relationship
@@ -94,40 +97,50 @@ type ProductSchemaInput = (Beer & { style?: unknown; slug?: string; draftPrice?:
 function getBeerStyleName(beer: ProductSchemaInput): string {
   // Check for type field (app Beer interface)
   if ('type' in beer && beer.type && typeof beer.type === 'string') {
-    return beer.type;
+    return beer.type
   }
   // Check for style relationship (Payload beer)
   if ('style' in beer && beer.style) {
     if (typeof beer.style === 'string') {
-      return beer.style;
+      return beer.style
     }
     if (typeof beer.style === 'object' && beer.style !== null && 'name' in beer.style) {
-      return (beer.style as { name: string }).name;
+      return (beer.style as { name: string }).name
     }
   }
-  return 'Beer';
+  return 'Beer'
 }
 
 /**
  * Get beer category/style
  */
 function getBeerCategory(beer: ProductSchemaInput): string {
-  const styleName = getBeerStyleName(beer);
-  return `Craft Beer > ${styleName}`;
+  const styleName = getBeerStyleName(beer)
+  return `Craft Beer > ${styleName}`
 }
 
 /**
  * Generate offers array for a beer
  */
 function generateOffers(beer: ProductSchemaInput): OfferJsonLd[] {
-  const offers: OfferJsonLd[] = [];
-  const baseUrl = 'https://lolev.beer';
-  const beerSlug = ('slug' in beer ? beer.slug : undefined) || ('variant' in beer ? beer.variant : undefined) || beer.id;
+  const offers: OfferJsonLd[] = []
+  const baseUrl = 'https://lolev.beer'
+
+  // Rolling 90-day validity so Google doesn't warn about missing priceValidUntil.
+  const validUntil = new Date()
+  validUntil.setDate(validUntil.getDate() + 90)
+  const priceValidUntil = validUntil.toISOString().split('T')[0]
+  const beerSlug =
+    ('slug' in beer ? beer.slug : undefined) ||
+    ('variant' in beer ? beer.variant : undefined) ||
+    beer.id
 
   // Get draft price from either direct field (Payload) or pricing object (app Beer)
-  const draftPrice = beer.draftPrice || ('pricing' in beer ? beer.pricing?.draftPrice : undefined);
+  const draftPrice = beer.draftPrice || ('pricing' in beer ? beer.pricing?.draftPrice : undefined)
   // Get four pack price from either direct field (Payload) or pricing object (app Beer)
-  const fourPackPrice = ('fourPack' in beer ? beer.fourPack : undefined) || ('pricing' in beer ? beer.pricing?.fourPack : undefined);
+  const fourPackPrice =
+    ('fourPack' in beer ? beer.fourPack : undefined) ||
+    ('pricing' in beer ? beer.pricing?.fourPack : undefined)
 
   // Draft offer with price
   if (draftPrice) {
@@ -137,13 +150,14 @@ function generateOffers(beer: ProductSchemaInput): OfferJsonLd[] {
       priceCurrency: 'USD',
       availability: 'https://schema.org/InStock',
       itemCondition: 'https://schema.org/NewCondition',
+      priceValidUntil,
       url: `${baseUrl}/beer/${beerSlug}`,
       seller: {
         '@type': 'Organization',
         name: 'Lolev Beer',
-        url: baseUrl
-      }
-    });
+        url: baseUrl,
+      },
+    })
   }
 
   // Four pack offer with price
@@ -154,26 +168,27 @@ function generateOffers(beer: ProductSchemaInput): OfferJsonLd[] {
       priceCurrency: 'USD',
       availability: 'https://schema.org/InStock',
       itemCondition: 'https://schema.org/NewCondition',
+      priceValidUntil,
       url: `${baseUrl}/beer/${beerSlug}`,
       seller: {
         '@type': 'Organization',
         name: 'Lolev Beer',
-        url: baseUrl
-      }
-    });
+        url: baseUrl,
+      },
+    })
   }
 
   // If no offers with prices, don't add a priceless offer (Google requires price)
-  return offers;
+  return offers
 }
 
 /**
  * Convert date string to ISO format (YYYY-MM-DD)
  */
 function toISODate(dateStr: string): string | null {
-  const date = new Date(dateStr);
-  if (isNaN(date.getTime())) return null;
-  return date.toISOString().split('T')[0];
+  const date = new Date(dateStr)
+  if (isNaN(date.getTime())) return null
+  return date.toISOString().split('T')[0]
 }
 
 /**
@@ -194,72 +209,75 @@ function generateReviews(reviews: UntappdReview[]): ReviewJsonLd[] {
         worstRating: '1',
       },
       reviewBody: review.text,
-    };
+    }
 
     if (review.date) {
-      const isoDate = toISODate(review.date);
+      const isoDate = toISODate(review.date)
       if (isoDate) {
-        reviewData.datePublished = isoDate;
+        reviewData.datePublished = isoDate
       }
     }
 
     if (review.url) {
-      reviewData.url = review.url;
+      reviewData.url = review.url
     }
 
-    return reviewData;
-  });
+    return reviewData
+  })
 }
 
 /**
  * Generate additional properties for beer characteristics
  */
 function generateAdditionalProperties(beer: ProductSchemaInput): PropertyValueJsonLd[] {
-  const properties: PropertyValueJsonLd[] = [];
+  const properties: PropertyValueJsonLd[] = []
 
   if (beer.abv) {
     properties.push({
       '@type': 'PropertyValue',
       name: 'Alcohol By Volume',
-      value: `${beer.abv}%`
-    });
+      value: `${beer.abv}%`,
+    })
   }
 
-  const styleName = getBeerStyleName(beer);
+  const styleName = getBeerStyleName(beer)
   if (styleName && styleName !== 'Beer') {
     properties.push({
       '@type': 'PropertyValue',
       name: 'Beer Style',
-      value: styleName
-    });
+      value: styleName,
+    })
   }
 
   if (beer.recipe) {
     properties.push({
       '@type': 'PropertyValue',
       name: 'Recipe Number',
-      value: beer.recipe
-    });
+      value: beer.recipe,
+    })
   }
 
   if (beer.hops) {
     properties.push({
       '@type': 'PropertyValue',
       name: 'Hops',
-      value: beer.hops
-    });
+      value: beer.hops,
+    })
   }
 
-  return properties;
+  return properties
 }
 
 /**
  * Generate Product JSON-LD for a beer
  */
 export function generateProductSchema(beer: ProductSchemaInput): ProductJsonLd {
-  const baseUrl = 'https://lolev.beer';
-  const styleName = getBeerStyleName(beer);
-  const beerSlug = ('slug' in beer ? beer.slug : undefined) || ('variant' in beer ? beer.variant : undefined) || beer.id;
+  const baseUrl = 'https://lolev.beer'
+  const styleName = getBeerStyleName(beer)
+  const beerSlug =
+    ('slug' in beer ? beer.slug : undefined) ||
+    ('variant' in beer ? beer.variant : undefined) ||
+    beer.id
 
   const product: ProductJsonLd = {
     '@context': 'https://schema.org',
@@ -270,22 +288,24 @@ export function generateProductSchema(beer: ProductSchemaInput): ProductJsonLd {
       '@type': 'Brand',
       name: 'Lolev Beer',
       logo: `${baseUrl}/images/beer/og-image.png`,
-      url: baseUrl
+      url: baseUrl,
     },
     category: getBeerCategory(beer),
     additionalProperty: generateAdditionalProperties(beer),
-    sku: beerSlug
-  };
+    sku: beerSlug,
+  }
 
-  // Add image if available
-  if (beer.image) {
-    product.image = `${baseUrl}/images/beer/${beerSlug}.webp`;
+  // Add image if available. Resolve the real URL (local PNG, Payload Media, or
+  // Blob) via the shared helper, then make it absolute for schema.org.
+  const imageUrl = getBeerImageUrl(beer.image, typeof beerSlug === 'string' ? beerSlug : undefined)
+  if (imageUrl) {
+    product.image = imageUrl.startsWith('/') ? `${baseUrl}${imageUrl}` : imageUrl
   }
 
   // Add offers only if we have prices
-  const offers = generateOffers(beer);
+  const offers = generateOffers(beer)
   if (offers.length > 0) {
-    product.offers = offers;
+    product.offers = offers
   }
 
   // Add Untappd rating as aggregate rating
@@ -295,16 +315,20 @@ export function generateProductSchema(beer: ProductSchemaInput): ProductJsonLd {
       ratingValue: beer.untappdRating.toFixed(2),
       bestRating: '5',
       worstRating: '1',
-      reviewCount: beer.untappdRatingCount ? String(beer.untappdRatingCount) : '1'
-    };
+      reviewCount: beer.untappdRatingCount ? String(beer.untappdRatingCount) : '1',
+    }
   }
 
   // Add individual reviews (positiveReviews may be UntappdReview[] from app Beer or JSON from Payload)
-  if (beer.positiveReviews && Array.isArray(beer.positiveReviews) && beer.positiveReviews.length > 0) {
-    product.review = generateReviews(beer.positiveReviews as UntappdReview[]);
+  if (
+    beer.positiveReviews &&
+    Array.isArray(beer.positiveReviews) &&
+    beer.positiveReviews.length > 0
+  ) {
+    product.review = generateReviews(beer.positiveReviews as UntappdReview[])
   }
 
-  return product;
+  return product
 }
 
 /**
@@ -312,7 +336,7 @@ export function generateProductSchema(beer: ProductSchemaInput): ProductJsonLd {
  * This is an alternative that's more semantic for beverages
  */
 export function generateDrinkProductSchema(beer: Beer): object {
-  const baseProduct = generateProductSchema(beer);
+  const baseProduct = generateProductSchema(beer)
 
   return {
     ...baseProduct,
@@ -321,9 +345,9 @@ export function generateDrinkProductSchema(beer: Beer): object {
     manufacturer: {
       '@type': 'Organization',
       name: 'Lolev Beer',
-      url: 'https://lolev.beer'
-    }
-  };
+      url: 'https://lolev.beer',
+    },
+  }
 }
 
 /**
@@ -332,18 +356,18 @@ export function generateDrinkProductSchema(beer: Beer): object {
  * @see https://developers.google.com/search/docs/appearance/structured-data/carousel
  */
 export interface ItemListJsonLd {
-  '@context': 'https://schema.org';
-  '@type': 'ItemList';
-  name: string;
-  description: string;
-  numberOfItems: number;
-  itemListElement: ItemListElementJsonLd[];
+  '@context': 'https://schema.org'
+  '@type': 'ItemList'
+  name: string
+  description: string
+  numberOfItems: number
+  itemListElement: ItemListElementJsonLd[]
 }
 
 export interface ItemListElementJsonLd {
-  '@type': 'ListItem';
-  position: number;
-  item: ProductJsonLd;
+  '@type': 'ListItem'
+  position: number
+  item: ProductJsonLd
 }
 
 /**
@@ -355,12 +379,13 @@ export function generateBeerListSchema(beers: ProductSchemaInput[]): ItemListJso
     '@context': 'https://schema.org',
     '@type': 'ItemList',
     name: 'Lolev Beer Collection',
-    description: 'Explore our handcrafted selection of craft beers at Lolev Beer, a modern brewery in Pittsburgh.',
+    description:
+      'Explore our handcrafted selection of craft beers at Lolev Beer, a modern brewery in Pittsburgh.',
     numberOfItems: beers.length,
     itemListElement: beers.map((beer, index) => ({
       '@type': 'ListItem',
       position: index + 1,
-      item: generateProductSchema(beer)
-    }))
-  };
+      item: generateProductSchema(beer),
+    })),
+  }
 }

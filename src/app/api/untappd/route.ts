@@ -1,6 +1,8 @@
 /**
  * Untappd API routes for searching beers and fetching ratings
- * Scrapes Untappd website since their API requires approval
+ * Search goes through Untappd's public Algolia index (their search page is
+ * client-rendered); ratings are scraped from beer pages since their API
+ * requires approval.
  * Requires authentication - only accessible to logged in admin users
  */
 
@@ -58,79 +60,84 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({ error: 'Invalid action. Use "search" or "rating"' }, { status: 400 })
 }
 
+interface AlgoliaBeerHit {
+  bid: number
+  beer_name: string
+  beer_slug: string
+  brewery_name?: string
+}
+
 /**
- * Search Untappd for beers matching "lolev + query"
+ * Search Untappd for beers matching "lolev + query".
+ * Untappd's search page renders results client-side via Algolia, so we pull
+ * the public Algolia credentials from the page's UNTAPPD_SEARCH_CONFIG blob
+ * (they may rotate, so never hardcode them) and query the beer index directly.
  */
 async function searchUntappd(query: string): Promise<NextResponse> {
   try {
-    const searchUrl = `https://untappd.com/search?q=lolev+${encodeURIComponent(query)}`
+    const fullQuery = `lolev ${query}`
+    const searchUrl = `https://untappd.com/search?q=${encodeURIComponent(fullQuery)}`
 
-    const response = await fetch(searchUrl, {
+    const pageResponse = await fetch(searchUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'User-Agent':
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         'Accept-Language': 'en-US,en;q=0.5',
       },
       next: { revalidate: 0 }, // Don't cache search results
     })
 
-    if (!response.ok) {
+    if (!pageResponse.ok) {
       return NextResponse.json(
-        { error: `Untappd returned ${response.status}` },
-        { status: response.status }
+        { error: `Untappd returned ${pageResponse.status}` },
+        { status: pageResponse.status },
       )
     }
 
-    const html = await response.text()
-    const results = parseSearchResults(html)
+    const html = await pageResponse.text()
+    const configMatch = html.match(/"appId":"([^"]+)","searchKey":"([^"]+)"/)
+    if (!configMatch) {
+      logger.error('Untappd search config not found - page structure may have changed')
+      return NextResponse.json({ error: 'Untappd search config not found' }, { status: 502 })
+    }
+    const [, appId, searchKey] = configMatch
+
+    const algoliaResponse = await fetch(`https://${appId}-dsn.algolia.net/1/indexes/beer/query`, {
+      method: 'POST',
+      headers: {
+        'X-Algolia-Application-Id': appId,
+        'X-Algolia-API-Key': searchKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ params: `query=${encodeURIComponent(fullQuery)}&hitsPerPage=10` }),
+      next: { revalidate: 0 },
+    })
+
+    if (!algoliaResponse.ok) {
+      return NextResponse.json(
+        { error: `Untappd search returned ${algoliaResponse.status}` },
+        { status: algoliaResponse.status },
+      )
+    }
+
+    const data = await algoliaResponse.json()
+    const hits: AlgoliaBeerHit[] = data.hits ?? []
+
+    // Only include Lolev beers (slug contains the brewery name)
+    const results: UntappdSearchResult[] = hits
+      .filter((hit) => hit.beer_slug?.toLowerCase().includes('lolev'))
+      .map((hit) => ({
+        name: hit.beer_name,
+        url: `/b/${hit.beer_slug}/${hit.bid}`,
+        brewery: hit.brewery_name,
+      }))
 
     return NextResponse.json({ results, searchUrl })
   } catch (error) {
     logger.error('Error searching Untappd:', error)
-    return NextResponse.json(
-      { error: 'Failed to search Untappd' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to search Untappd' }, { status: 500 })
   }
-}
-
-/**
- * Parse search results from Untappd HTML
- * Looking for: <p class="name"><a href="/b/lolev-beer-ddh-lupula/6376909">DDH Lupula</a></p>
- */
-function parseSearchResults(html: string): UntappdSearchResult[] {
-  const results: UntappdSearchResult[] = []
-
-  // Match beer results: <p class="name"><a href="/b/...">Name</a></p>
-  const beerRegex = /<p class="name">\s*<a href="(\/b\/[^"]+)">([^<]+)<\/a>\s*<\/p>/gi
-  let match
-
-  while ((match = beerRegex.exec(html)) !== null) {
-    const url = match[1]
-    const name = match[2].trim()
-
-    // Only include Lolev beers (filter by URL containing "lolev")
-    if (url.toLowerCase().includes('lolev')) {
-      results.push({ name, url })
-    }
-  }
-
-  // Also try to get brewery info if available
-  // <p class="brewery"><a href="/lolev">Lolev Beer</a></p>
-  const breweryRegex = /<p class="brewery">\s*<a href="[^"]+">([^<]+)<\/a>\s*<\/p>/gi
-  const breweries: string[] = []
-  while ((match = breweryRegex.exec(html)) !== null) {
-    breweries.push(match[1].trim())
-  }
-
-  // Associate breweries with results if counts match
-  if (breweries.length === results.length) {
-    results.forEach((result, i) => {
-      result.brewery = breweries[i]
-    })
-  }
-
-  return results
 }
 
 /**
@@ -143,9 +150,6 @@ async function fetchRating(url: string): Promise<NextResponse> {
     return NextResponse.json({ rating, ratingCount, positiveReviews, url } as UntappdRatingResult)
   } catch (error) {
     logger.error('Error fetching Untappd rating:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch rating' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to fetch rating' }, { status: 500 })
   }
 }
