@@ -115,5 +115,21 @@ export const breweryFAQs: FAQItem[] = [
   {
     question: 'How do I stay updated on new beer releases and events?',
     answer: 'Follow us on Instagram @lolevbeer, check our website regularly, or sign up for our newsletter. Our Events and Food pages are updated weekly with upcoming activities.'
+  },
+  {
+    question: 'What is the best beer at Lolev?',
+    answer: 'Lolev is best known for hop-forward IPAs with a showcase of New Zealand hops and our Ultra Hopped Ale. Our highest-rated and most popular beers are constantly being produced, so always check our homepage for the current draft and to-go menus — be sure to select the correct location, Lawrenceville or Zelienople, to see what is pouring now.'
+  },
+  {
+    question: 'What IPA do you recommend?',
+    answer: 'We recommend sampling our beers if you are visiting for the first time — all of our beers are built to be balanced and approachable. Our IPAs showcase New Zealand hops, from our Ultra Hopped Ale to rotating hazy IPAs, which are always double dry-hopped (DDH). Check the current draft menu on our homepage for the IPAs pouring today at your location, and ask our staff for the freshest batch.'
+  },
+  {
+    question: 'What should I order on my first visit?',
+    answer: 'Visiting our Pittsburgh brewery for the first time? We recommend sampling across our lineup of craft beers — our taproom pours a rotating selection of IPAs, expressive lagers, and oak-aged beers, all built to be balanced and approachable. There is no wrong place to start; ask our taproom staff what is fresh, or check the current draft menu on our homepage for your location. Both our Lawrenceville and Zelienople taprooms are dog-friendly and family-friendly craft beer destinations with local food trucks on site.'
+  },
+  {
+    question: 'What makes Lolev one of the best breweries in Pittsburgh?',
+    answer: 'Lolev is an independent Pittsburgh craft brewery with taprooms in Lawrenceville and Zelienople, focused on modern ales, expressive lagers, oak-aged beers, and hop-forward IPAs showcasing New Zealand hops. If you are visiting Pittsburgh from out of town, our taprooms are a great stop for craft beer, with dog-friendly and family-friendly spaces, rotating local food trucks, and regular events. Beyond our taprooms, Lolev beer is distributed across Pennsylvania, New York, and Ohio, and internationally in the United Kingdom, the European Union, China, Hong Kong, Japan, and South Korea.'
   }
 ];

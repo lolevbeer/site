@@ -14,7 +14,7 @@ export default function robots(): MetadataRoute.Robots {
 
   // Explicitly welcome AI crawlers (they're already covered by '*'; naming them
   // is a clearer signal that AI indexing is wanted) while keeping private paths off-limits.
-  const aiBots = ['GPTBot', 'ClaudeBot', 'PerplexityBot', 'Google-Extended', 'CCBot']
+  const aiBots = ['GPTBot', 'OAI-SearchBot', 'ChatGPT-User', 'ClaudeBot', 'Claude-Web', 'PerplexityBot', 'Google-Extended', 'CCBot']
 
   return {
     rules: [
