@@ -3,10 +3,13 @@ import { getAllBeersFromPayload, getAllLocations } from '@/lib/utils/payload-api
 import { logger } from '@/lib/utils/logger'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL
-    || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : '')
-    || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '')
-    || 'https://lolev.beer'
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : '') ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '') ||
+    'https://lolev.beer'
 
   // Static pages
   const staticPages: MetadataRoute.Sitemap = [
@@ -77,10 +80,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const beers = await getAllBeersFromPayload()
     beerPages = beers
-      .filter(beer => beer.slug && !beer.hideFromSite)
-      .map(beer => ({
+      .filter((beer) => beer.slug && !beer.hideFromSite)
+      .map((beer) => ({
         url: `${baseUrl}/beer/${beer.slug}`,
-        lastModified: new Date(),
+        lastModified: beer.updatedAt ? new Date(beer.updatedAt) : new Date(),
         changeFrequency: 'weekly' as const,
         priority: 0.7,
       }))
@@ -93,10 +96,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const locations = await getAllLocations()
     locationPages = locations
-      .filter(loc => loc.active && loc.slug)
-      .map(loc => ({
+      .filter((loc) => loc.active && loc.slug)
+      .map((loc) => ({
         url: `${baseUrl}/${loc.slug}`,
-        lastModified: new Date(),
+        lastModified: loc.updatedAt ? new Date(loc.updatedAt) : new Date(),
         changeFrequency: 'daily' as const,
         priority: 0.8,
       }))

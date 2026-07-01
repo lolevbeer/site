@@ -50,7 +50,7 @@ const poppins = Poppins({
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
+  // No maximumScale — allow pinch-zoom (WCAG 2.2 SC 1.4.4).
 }
 
 export const metadata: Metadata = {
@@ -103,6 +103,7 @@ export const metadata: Metadata = {
     description:
       'Experience exceptional craft beer at Lolev Beer with locations in Lawrenceville and Zelienople. Fresh brews, local food, and community events.',
     images: ['/images/beer/og-image.png'],
+    site: '@lolevbeer',
     creator: '@lolevbeer',
   },
   robots: {
@@ -151,7 +152,12 @@ export default async function AppLayout({
         <link rel="dns-prefetch" href="https://api.mapbox.com" />
 
         {/* RSS Feed Autodiscovery */}
-        <link rel="alternate" type="application/rss+xml" title="Lolev Beer RSS Feed" href="/feed.xml" />
+        <link
+          rel="alternate"
+          type="application/rss+xml"
+          title="Lolev Beer RSS Feed"
+          href="/feed.xml"
+        />
       </head>
       <body className={`${poppins.variable} antialiased min-h-screen flex flex-col font-poppins`}>
         <GoogleAnalytics />
