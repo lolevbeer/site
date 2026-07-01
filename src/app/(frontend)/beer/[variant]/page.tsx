@@ -40,14 +40,16 @@ export async function generateMetadata({ params }: BeerPageProps): Promise<Metad
   // Per-beer OG image (relative path; metadataBase resolves it to absolute).
   const ogImage = getBeerImageUrl(beer.image, beer.slug)
 
+  const pageTitle = styleName ? `${beer.name} | ${styleName}` : beer.name
+
   return {
-    title: `${beer.name} | ${styleName}`,
+    title: pageTitle,
     description,
     alternates: {
       canonical: `/beer/${beer.slug}`,
     },
     openGraph: {
-      title: `${beer.name} | ${styleName} | Lolev Beer`,
+      title: `${pageTitle} | Lolev Beer`,
       description,
       type: 'website',
       url: `/beer/${beer.slug}`,

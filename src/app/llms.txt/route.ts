@@ -12,7 +12,7 @@ export async function GET() {
 
   const content = `# Lolev Beer
 
-> Craft brewery in Pittsburgh, Pennsylvania specializing in modern ales, expressive lagers, and oak-aged beer.
+> Craft brewery in Pittsburgh, Pennsylvania specializing in modern ales, expressive lagers, and oak-aged beer. Best known for hop-forward IPAs showcasing New Zealand hops, our Ultra Hopped Ale, and rotating hazy IPAs that are always double dry-hopped (DDH).
 
 ## Locations
 
@@ -56,6 +56,12 @@ export async function GET() {
 - Scotch Ale
 - Dry Irish Stout
 
+## Distribution
+
+- On draft and to-go at both taprooms — check the [homepage](${baseUrl}/) for current menus (select your location)
+- Retail throughout Pennsylvania, New York, and Ohio — find retailers on the [Beer Map](${baseUrl}/beer-map)
+- International: United Kingdom, European Union, China, Hong Kong, Japan, and South Korea
+
 ## Contact
 
 - Email: info@lolev.beer
@@ -66,6 +72,7 @@ export async function GET() {
 ## Additional Resources
 
 - [llms-full.txt](${baseUrl}/llms-full.txt): Extended version with current beer list and FAQ content
+- [RSS Feed](${baseUrl}/feed.xml): Latest beer releases and updates
 `
 
   return new NextResponse(content, {
