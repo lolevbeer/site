@@ -1,54 +1,56 @@
-'use client';
+'use client'
 
-import React, { useState, useMemo } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { BlurFade } from '@/components/motion';
-import { Button } from '@/components/ui/button';
+import React, { useState, useMemo } from 'react'
+import Image from 'next/image'
+import Link from 'next/link'
+import { BlurFade } from '@/components/motion'
+import { Button } from '@/components/ui/button'
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-} from '@/components/ui/carousel';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import type { Beer as PayloadBeer, Menu as PayloadMenu } from '@/src/payload-types';
-import { extractBeerFromMenuItem } from '@/lib/utils/menu-item-utils';
-import { getBeerImageUrl } from '@/lib/utils/media-utils';
+} from '@/components/ui/carousel'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import type { Beer as PayloadBeer, Menu as PayloadMenu } from '@/src/payload-types'
+import { extractBeerFromMenuItem } from '@/lib/utils/menu-item-utils'
+import { getBeerImageUrl } from '@/lib/utils/media-utils'
 
 interface HeroSectionProps {
-  availableBeers: PayloadBeer[];
-  cansMenus: PayloadMenu[];
-  heroDescription?: string;
-  heroImageUrl?: string | null;
+  availableBeers: PayloadBeer[]
+  cansMenus: PayloadMenu[]
+  heroDescription?: string
+  heroImageUrl?: string | null
 }
 
-export function HeroSection({ availableBeers, cansMenus, heroDescription, heroImageUrl }: HeroSectionProps) {
-  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
+export function HeroSection({
+  availableBeers,
+  cansMenus,
+  heroDescription,
+  heroImageUrl,
+}: HeroSectionProps) {
+  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set())
   const handleImageError = (beerId: string) => {
-    setImageErrors(prev => new Set(prev).add(beerId));
-  };
+    setImageErrors((prev) => new Set(prev).add(beerId))
+  }
 
   // Pre-filter to beers in cans menus with valid images
   const displayBeers = useMemo(() => {
-    const cansIds = new Set<string>();
+    const cansIds = new Set<string>()
     for (const menu of cansMenus) {
-      if (!menu.items) continue;
+      if (!menu.items) continue
       for (const item of menu.items) {
-        const beer = extractBeerFromMenuItem(item);
-        if (beer?.id) cansIds.add(beer.id);
+        const beer = extractBeerFromMenuItem(item)
+        if (beer?.id) cansIds.add(beer.id)
       }
     }
     return availableBeers
-      .filter(beer => cansIds.has(beer.id) && getBeerImageUrl(beer.image) && !imageErrors.has(beer.id))
-      .map(beer => ({ beer, imageUrl: getBeerImageUrl(beer.image)! }));
-  }, [availableBeers, cansMenus, imageErrors]);
+      .filter(
+        (beer) => cansIds.has(beer.id) && getBeerImageUrl(beer.image) && !imageErrors.has(beer.id),
+      )
+      .map((beer) => ({ beer, imageUrl: getBeerImageUrl(beer.image)! }))
+  }, [availableBeers, cansMenus, imageErrors])
 
   return (
     <div className="relative flex flex-col gap-8 md:gap-16 px-4 md:px-8 py-16 md:py-24 text-center min-h-[600px] md:min-h-[700px]">
@@ -62,7 +64,7 @@ export function HeroSection({ availableBeers, cansMenus, heroDescription, heroIm
             className="object-cover object-center"
             priority
             fetchPriority="high"
-            quality={90}
+            quality={70}
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-amber-900/20 to-orange-800/30" />
@@ -78,60 +80,77 @@ export function HeroSection({ availableBeers, cansMenus, heroDescription, heroIm
           </h1>
         </BlurFade>
         <BlurFade delay={0.1} className="w-full">
-        <section
-          className="flex flex-col items-center justify-center gap-4 md:gap-8 rounded-xl py-8 md:py-12 w-full"
-        >
-          <div className="w-full max-w-5xl mx-auto px-4 md:px-12">
-            <TooltipProvider delayDuration={200}>
-              <Carousel
-                opts={{
-                  align: "start",
-                  loop: true,
-                  slidesToScroll: "auto",
-                }}
-                className="w-full"
-                aria-label="Available beers carousel"
-              >
-                <CarouselContent className="-ml-4">
-                  {displayBeers.length > 0 ? (
-                    displayBeers.map(({ beer, imageUrl }, index) => (
-                      <CarouselItem key={beer.id} className="pl-4 basis-1/4 sm:basis-1/5 md:basis-1/4 lg:basis-1/6 xl:basis-1/8 2xl:basis-1/8">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Link href={`/beer/${beer.slug}`} className="group flex justify-center">
-                              <div className="relative h-16 w-16 md:h-24 md:w-24 rounded-lg bg-transparent transition-transform duration-200 ease-out group-hover:-translate-y-1 group-hover:scale-105">
-                                <Image
-                                  src={imageUrl}
-                                  alt={`${beer.name} beer can`}
-                                  fill
-                                  className="object-contain drop-shadow-sm group-hover:drop-shadow-md transition-all duration-200"
-                                  sizes="(max-width: 768px) 64px, 96px"
-                                  loading={index < 5 ? "eager" : "lazy"}
-                                  onError={() => handleImageError(beer.id)}
-                                />
-                              </div>
-                            </Link>
-                          </TooltipTrigger>
-                          <TooltipContent side="bottom" className="bg-popover text-popover-foreground border-0" sideOffset={5}>
-                            <p className="font-semibold text-sm">{beer.name}</p>
-                          </TooltipContent>
-                        </Tooltip>
+          <section className="flex flex-col items-center justify-center gap-4 md:gap-8 rounded-xl py-8 md:py-12 w-full">
+            <div className="w-full max-w-5xl mx-auto px-4 md:px-12">
+              <TooltipProvider delayDuration={200}>
+                <Carousel
+                  opts={{
+                    align: 'start',
+                    loop: true,
+                    slidesToScroll: 'auto',
+                  }}
+                  className="w-full"
+                  aria-label="Available beers carousel"
+                >
+                  <CarouselContent className="-ml-4">
+                    {displayBeers.length > 0 ? (
+                      displayBeers.map(({ beer, imageUrl }, index) => (
+                        <CarouselItem
+                          key={beer.id}
+                          className="pl-4 basis-1/4 sm:basis-1/5 md:basis-1/4 lg:basis-1/6 xl:basis-1/8 2xl:basis-1/8"
+                        >
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Link
+                                href={`/beer/${beer.slug}`}
+                                prefetch={false}
+                                className="group flex justify-center"
+                              >
+                                <div className="relative h-16 w-16 md:h-24 md:w-24 rounded-lg bg-transparent transition-transform duration-200 ease-out group-hover:-translate-y-1 group-hover:scale-105">
+                                  <Image
+                                    src={imageUrl}
+                                    alt={`${beer.name} beer can`}
+                                    fill
+                                    className="object-contain drop-shadow-sm group-hover:drop-shadow-md transition-all duration-200"
+                                    sizes="(max-width: 768px) 64px, 96px"
+                                    loading={index < 5 ? 'eager' : 'lazy'}
+                                    onError={() => handleImageError(beer.id)}
+                                  />
+                                </div>
+                              </Link>
+                            </TooltipTrigger>
+                            <TooltipContent
+                              side="bottom"
+                              className="bg-popover text-popover-foreground border-0"
+                              sideOffset={5}
+                            >
+                              <p className="font-semibold text-sm">{beer.name}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </CarouselItem>
+                      ))
+                    ) : (
+                      <CarouselItem className="pl-4">
+                        <div className="h-16 md:h-24 flex items-center justify-center">
+                          <p className="text-muted-foreground text-sm">
+                            Loading available beers...
+                          </p>
+                        </div>
                       </CarouselItem>
-                    ))
-                  ) : (
-                    <CarouselItem className="pl-4">
-                      <div className="h-16 md:h-24 flex items-center justify-center">
-                        <p className="text-muted-foreground text-sm">Loading available beers...</p>
-                      </div>
-                    </CarouselItem>
-                  )}
-                </CarouselContent>
-                <CarouselPrevious className="hidden md:flex border-0 bg-transparent hover:bg-muted/50 shadow-none" hideWhenDisabled />
-                <CarouselNext className="hidden md:flex border-0 bg-transparent hover:bg-muted/50 shadow-none" hideWhenDisabled />
-              </Carousel>
-            </TooltipProvider>
-          </div>
-        </section>
+                    )}
+                  </CarouselContent>
+                  <CarouselPrevious
+                    className="hidden md:flex border-0 bg-transparent hover:bg-muted/50 shadow-none"
+                    hideWhenDisabled
+                  />
+                  <CarouselNext
+                    className="hidden md:flex border-0 bg-transparent hover:bg-muted/50 shadow-none"
+                    hideWhenDisabled
+                  />
+                </Carousel>
+              </TooltipProvider>
+            </div>
+          </section>
         </BlurFade>
         {heroDescription && (
           <BlurFade delay={0.2}>
@@ -143,27 +162,39 @@ export function HeroSection({ availableBeers, cansMenus, heroDescription, heroIm
 
         {/* Primary CTAs */}
         <BlurFade delay={0.3}>
-        <div
-          className="flex flex-col sm:flex-row gap-3 md:gap-4 mt-6 md:mt-8 justify-center items-center w-full px-4 sm:px-0"
-        >
-          <Button asChild variant="default" size="lg" className="w-full sm:w-auto sm:min-w-[160px] text-base animate-glow-pulse">
-            <Link href="/beer-map">
-              Find Lolev
-            </Link>
-          </Button>
-          <Button asChild variant="outline" size="lg" className="w-full sm:w-auto sm:min-w-[160px]">
-            <a href="https://squareup.com/customer-programs/enroll/ce5WC6LoELBr?utm_source=lolevwebsite" target="_blank" rel="noopener noreferrer">
-              Newsletter
-            </a>
-          </Button>
-          <Button asChild variant="ghost" size="lg" className="w-full sm:w-auto sm:min-w-[160px]">
-            <Link href="/about">
-              Our Story
-            </Link>
-          </Button>
-        </div>
+          <div className="flex flex-col sm:flex-row gap-3 md:gap-4 mt-6 md:mt-8 justify-center items-center w-full px-4 sm:px-0">
+            <Button
+              asChild
+              variant="default"
+              size="lg"
+              className="w-full sm:w-auto sm:min-w-[160px] text-base animate-glow-pulse"
+            >
+              <Link href="/beer-map" prefetch={false}>
+                Find Lolev
+              </Link>
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              size="lg"
+              className="w-full sm:w-auto sm:min-w-[160px]"
+            >
+              <a
+                href="https://squareup.com/customer-programs/enroll/ce5WC6LoELBr?utm_source=lolevwebsite"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Newsletter
+              </a>
+            </Button>
+            <Button asChild variant="ghost" size="lg" className="w-full sm:w-auto sm:min-w-[160px]">
+              <Link href="/about" prefetch={false}>
+                Our Story
+              </Link>
+            </Button>
+          </div>
         </BlurFade>
       </div>
     </div>
-  );
+  )
 }

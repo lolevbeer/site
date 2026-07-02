@@ -5,6 +5,13 @@
   "license": "MIT",
   "type": "module",
   "private": true,
+  "browserslist": [
+    "chrome >= 109",
+    "edge >= 109",
+    "firefox >= 102",
+    "safari >= 15.6",
+    "ios_saf >= 15.6"
+  ],
   "scripts": {
     "dev": "cross-env NODE_OPTIONS=--no-deprecation next dev --turbopack -H 0.0.0.0",
     "build": "cross-env NODE_OPTIONS=\"--no-deprecation --max-old-space-size=8000\" next build",
