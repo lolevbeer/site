@@ -1,0 +1,48 @@
+diff --git a/dist/client/components/app-router.js b/dist/client/components/app-router.js
+index 6506e0b50da8bff30328fc3a1781151d1f430730..c5883cb4d01fcb1874f21d684be296ce5afcd96c 100644
+--- a/dist/client/components/app-router.js
++++ b/dist/client/components/app-router.js
+@@ -173,6 +173,19 @@ function Head(param) {
+  */ function Router(param) {
+     let { actionQueue, assetPrefix, globalError } = param;
+     const state = (0, _useactionqueue.useActionQueue)(actionQueue);
++    // PATCHED (lolev): workaround for facebook/react#33580 / vercel/next.js#63121.
++    // Rendering the rest of the router in a child component keeps the hook order
++    // stable when useActionQueue state changes mid-render (redirects), which
++    // otherwise throws "Rendered more hooks than during the previous render".
++    // Remove once Next ships a React build containing react#36911.
++    return /*#__PURE__*/ (0, _jsxruntime.jsx)(RouterContent, {
++        state: state,
++        assetPrefix: assetPrefix,
++        globalError: globalError
++    });
++}
++function RouterContent(param) {
++    let { state, assetPrefix, globalError } = param;
+     const { canonicalUrl } = state;
+     // Add memoized pathname/query for useSearchParams and usePathname.
+     const { searchParams, pathname } = (0, _react.useMemo)(()=>{
+diff --git a/dist/esm/client/components/app-router.js b/dist/esm/client/components/app-router.js
+index 8ce143c847ff95a8549da142dbf39c5441520757..dcd6f3f6c0a9b64f67906998accbd96c095c7252 100644
+--- a/dist/esm/client/components/app-router.js
++++ b/dist/esm/client/components/app-router.js
+@@ -147,6 +147,19 @@ function Head(param) {
+  */ function Router(param) {
+     let { actionQueue, assetPrefix, globalError } = param;
+     const state = useActionQueue(actionQueue);
++    // PATCHED (lolev): workaround for facebook/react#33580 / vercel/next.js#63121.
++    // Rendering the rest of the router in a child component keeps the hook order
++    // stable when useActionQueue state changes mid-render (redirects), which
++    // otherwise throws "Rendered more hooks than during the previous render".
++    // Remove once Next ships a React build containing react#36911.
++    return /*#__PURE__*/ _jsx(RouterContent, {
++        state: state,
++        assetPrefix: assetPrefix,
++        globalError: globalError
++    });
++}
++function RouterContent(param) {
++    let { state, assetPrefix, globalError } = param;
+     const { canonicalUrl } = state;
+     // Add memoized pathname/query for useSearchParams and usePathname.
+     const { searchParams, pathname } = useMemo(()=>{
