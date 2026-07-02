@@ -1,16 +1,16 @@
-'use client';
+'use client'
 
-import React, { useState } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
+import React, { useState } from 'react'
+import Link from 'next/link'
+import Image from 'next/image'
 
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { useLocationContext } from '@/components/location/location-provider';
-import { trackDirections } from '@/lib/analytics/events';
-import { cn } from '@/lib/utils';
-import { getLocationImageUrl } from '@/lib/utils/media-utils';
-import type { WeeklyHoursDay, DayOfWeek } from '@/lib/utils/payload-api';
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { useLocationContext } from '@/components/location/location-provider'
+import { trackDirections } from '@/lib/analytics/events'
+import { cn } from '@/lib/utils'
+import { getLocationImageUrl } from '@/lib/utils/media-utils'
+import type { WeeklyHoursDay, DayOfWeek } from '@/lib/utils/payload-api'
 
 function getDayName(day: DayOfWeek): string {
   const dayNames: Record<DayOfWeek, string> = {
@@ -21,37 +21,37 @@ function getDayName(day: DayOfWeek): string {
     friday: 'Friday',
     saturday: 'Saturday',
     sunday: 'Sunday',
-  };
-  return dayNames[day];
+  }
+  return dayNames[day]
 }
 
 function formatTime(time: string | null, timezone: string = 'America/New_York'): string {
-  if (!time) return '';
+  if (!time) return ''
   // Handle ISO date strings from Payload (time only fields store as full ISO)
   if (time.includes('T')) {
-    const date = new Date(time);
-    const minutes = date.getMinutes();
+    const date = new Date(time)
+    const minutes = date.getMinutes()
     return date.toLocaleTimeString('en-US', {
       hour: 'numeric',
       minute: minutes === 0 ? undefined : '2-digit',
       hour12: true,
       timeZone: timezone,
-    });
+    })
   }
   // Handle HH:mm format (legacy/fallback)
-  const [hours, minutes] = time.split(':').map(Number);
-  const ampm = hours >= 12 ? 'PM' : 'AM';
-  const displayHours = hours % 12 || 12;
+  const [hours, minutes] = time.split(':').map(Number)
+  const ampm = hours >= 12 ? 'PM' : 'AM'
+  const displayHours = hours % 12 || 12
   if (minutes === 0) {
-    return `${displayHours} ${ampm}`;
+    return `${displayHours} ${ampm}`
   }
-  return `${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+  return `${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`
 }
 
 function HoursDisplay({ weeklyHours }: { weeklyHours: WeeklyHoursDay[] }) {
-  const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-  const today = dayNames[new Date().getDay()] as DayOfWeek;
-  const hasSpecialHours = weeklyHours.some(d => d.holidayName);
+  const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+  const today = dayNames[new Date().getDay()] as DayOfWeek
+  const hasSpecialHours = weeklyHours.some((d) => d.holidayName)
 
   return (
     <div className="space-y-1 text-sm">
@@ -63,8 +63,8 @@ function HoursDisplay({ weeklyHours }: { weeklyHours: WeeklyHoursDay[] }) {
         </div>
       )}
       {weeklyHours.map((dayData) => {
-        const isToday = dayData.day === today;
-        const isSpecial = !!dayData.holidayName;
+        const isToday = dayData.day === today
+        const isSpecial = !!dayData.holidayName
 
         return (
           <div
@@ -72,13 +72,16 @@ function HoursDisplay({ weeklyHours }: { weeklyHours: WeeklyHoursDay[] }) {
             className={cn(
               'flex justify-between items-center gap-2',
               isToday && 'font-semibold text-primary',
-              isSpecial && !isToday && 'text-amber-600 dark:text-amber-400'
+              isSpecial && !isToday && 'text-amber-600 dark:text-amber-400',
             )}
           >
             <span className="flex items-center gap-2">
               {getDayName(dayData.day)}
               {dayData.holidayName && (
-                <Badge variant="outline" className="text-xs py-0 px-1.5 border-amber-500 text-amber-600 dark:text-amber-400">
+                <Badge
+                  variant="outline"
+                  className="text-xs py-0 px-1.5 border-amber-500 text-amber-600 dark:text-amber-400"
+                >
                   {dayData.holidayName}
                 </Badge>
               )}
@@ -86,27 +89,26 @@ function HoursDisplay({ weeklyHours }: { weeklyHours: WeeklyHoursDay[] }) {
             <span>
               {dayData.closed
                 ? 'Closed'
-                : `${formatTime(dayData.open, dayData.timezone)} - ${formatTime(dayData.close, dayData.timezone)}`
-              }
+                : `${formatTime(dayData.open, dayData.timezone)} - ${formatTime(dayData.close, dayData.timezone)}`}
             </span>
           </div>
-        );
+        )
       })}
     </div>
-  );
+  )
 }
 
 interface LocationCardsProps {
-  weeklyHours?: Record<string, WeeklyHoursDay[]>;
+  weeklyHours?: Record<string, WeeklyHoursDay[]>
 }
 
 export function LocationCards({ weeklyHours }: LocationCardsProps) {
-  const { locations } = useLocationContext();
-  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
+  const { locations } = useLocationContext()
+  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set())
 
   const handleImageError = (locationKey: string) => {
-    setImageErrors(prev => new Set(prev).add(locationKey));
-  };
+    setImageErrors((prev) => new Set(prev).add(locationKey))
+  }
 
   // Fallback gradients by index when no image available
   const fallbackGradients = [
@@ -114,26 +116,27 @@ export function LocationCards({ weeklyHours }: LocationCardsProps) {
     'from-green-200 to-blue-300',
     'from-blue-200 to-purple-300',
     'from-rose-200 to-pink-300',
-  ];
+  ]
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
       {locations.map((location, index) => {
-        const locationKey = location.slug || location.id;
+        const locationKey = location.slug || location.id
         // Get image from CMS (images.card field)
-        const cardImage = getLocationImageUrl(location.images?.card);
-        const fallbackGradient = fallbackGradients[index % fallbackGradients.length];
+        const cardImage = getLocationImageUrl(location.images?.card)
+        const fallbackGradient = fallbackGradients[index % fallbackGradients.length]
 
         // Use custom directions URL if provided, otherwise generate from coordinates/address
         // coordinates is a point field: [longitude, latitude]
-        const mapUrl = location.address?.directionsUrl
-          || (location.coordinates && location.coordinates.length === 2
+        const mapUrl =
+          location.address?.directionsUrl ||
+          (location.coordinates && location.coordinates.length === 2
             ? `https://www.google.com/maps/dir/?api=1&destination=${location.coordinates[1]},${location.coordinates[0]}`
             : location.address?.street && location.address?.city && location.address?.state
               ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                  `${location.address.street}, ${location.address.city}, ${location.address.state} ${location.address.zip || ''}`
+                  `${location.address.street}, ${location.address.city}, ${location.address.state} ${location.address.zip || ''}`,
                 )}`
-              : '#');
+              : '#')
 
         return (
           <div
@@ -150,13 +153,16 @@ export function LocationCards({ weeklyHours }: LocationCardsProps) {
                   fill
                   className="object-cover transition-transform duration-[250ms] group-hover:scale-105"
                   priority={index === 0}
-                  fetchPriority={index === 0 ? "high" : "low"}
-                  quality={85}
+                  fetchPriority={index === 0 ? 'high' : 'low'}
+                  quality={75}
                   sizes="(max-width: 768px) 100vw, 50vw"
                   onError={() => handleImageError(locationKey)}
                 />
               ) : (
-                <div className={`h-full bg-gradient-to-br ${fallbackGradient}`} aria-hidden="true" />
+                <div
+                  className={`h-full bg-gradient-to-br ${fallbackGradient}`}
+                  aria-hidden="true"
+                />
               )}
             </div>
 
@@ -216,8 +222,8 @@ export function LocationCards({ weeklyHours }: LocationCardsProps) {
               </Button>
             </div>
           </div>
-        );
+        )
       })}
     </div>
-  );
+  )
 }

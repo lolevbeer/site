@@ -69,6 +69,9 @@ const nextConfig = {
     // Parallelize static page generation
     parallelServerBuildTraces: true,
     parallelServerCompiles: true,
+    // ponytail: barrel tree-shaking to cut unused JS in shared chunks.
+    // Ceiling: if a chunk stays bloated, run @next/bundle-analyzer and split by hand.
+    optimizePackageImports: ['framer-motion', 'embla-carousel-react', 'lucide-react', 'date-fns', 'date-fns-tz'],
   },
 
   // Optimize module transpilation
