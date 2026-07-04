@@ -326,6 +326,48 @@ export const Beers: CollectionConfig = {
       ],
     },
     {
+      // Drop-zone + button that runs the PDF→texture pipeline in the admin
+      // browser and fills in labelBase/labelMetalness below.
+      name: 'labelTextures',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '@/src/components/admin/LabelTextureGenerator#LabelTextureGenerator',
+        },
+      },
+    },
+    {
+      type: 'row',
+      fields: [
+        {
+          name: 'labelBase',
+          type: 'upload',
+          relationTo: 'media',
+          admin: {
+            description: 'Generated 3D label texture (via the tool above)',
+            width: '50%',
+          },
+        },
+        {
+          name: 'labelMetalness',
+          type: 'upload',
+          relationTo: 'media',
+          admin: {
+            description: 'Generated metalness map (white = metallic foil)',
+            width: '50%',
+          },
+        },
+      ],
+    },
+    {
+      name: 'labelVideo',
+      type: 'upload',
+      relationTo: 'media',
+      admin: {
+        description: 'Generated label sweep video (WebM loop for menu displays)',
+      },
+    },
+    {
       // Single-value tag: relationship gives a typeahead over existing tags
       // plus inline "Add new" creation. hasMany defaults to false, so only
       // one tag is allowed per beer.

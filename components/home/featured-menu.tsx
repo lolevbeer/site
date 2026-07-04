@@ -55,6 +55,9 @@ interface MenuItem {
   glutenFree: boolean
   /** Image URL from Payload CMS Media, or undefined if no image */
   imageUrl?: string
+  /** Generated can sweep-video URL (beer.labelVideo); when present, can
+   *  menus play the looping 3D label rotation instead of the flat image. */
+  labelVideoUrl?: string
   onDraft?: boolean
   glass?: string
   fourPack?: string
@@ -188,6 +191,7 @@ function convertMenuItems(menuData: Menu): MenuItem[] {
         description: String(beer.description || ''),
         glutenFree: false,
         imageUrl: getMediaUrl(beer.image, 'card'),
+        labelVideoUrl: getMediaUrl(beer.labelVideo),
         glass: String(beer.glass || 'pint'),
         fourPack: beer.fourPack
           ? String(beer.fourPack)
@@ -309,6 +313,21 @@ function CanCard({
 
   // Shared image rendering logic
   const renderImage = (heightClass?: string) => {
+    // Baked 3D sweep available: play the looping can rotation. A muted
+    // <video> costs almost nothing on menu TVs, unlike per-item WebGL.
+    if (item.labelVideoUrl) {
+      return (
+        <video
+          src={item.labelVideoUrl}
+          className="absolute inset-0 h-full w-full object-contain"
+          muted
+          autoPlay
+          loop
+          playsInline
+          aria-label={`${item.name} - ${item.type || 'Craft beer'} rotating can`}
+        />
+      )
+    }
     if (item.imageUrl && !imageError) {
       return (
         <Image

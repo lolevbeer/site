@@ -19,7 +19,9 @@ export const Media: CollectionConfig = {
   },
   upload: {
     staticDir: 'public/uploads',
-    mimeTypes: ['image/png', 'image/jpg', 'image/jpeg', 'image/webp'],
+    // video/webm: generated can-label sweep loops (LabelTextureGenerator).
+    // Sharp/imageSizes only run on images, so videos pass through untouched.
+    mimeTypes: ['image/png', 'image/jpg', 'image/jpeg', 'image/webp', 'video/webm'],
     disableLocalStorage: !!process.env.BLOB_READ_WRITE_TOKEN,
     formatOptions: {
       format: 'png',

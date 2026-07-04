@@ -48,6 +48,7 @@ next-env.d.ts
 /public/*
 !/public/images
 !/public/favicons
+!/public/3d
 /public/images/*
 !/public/images/beer
 
