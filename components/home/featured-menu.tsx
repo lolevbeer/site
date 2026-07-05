@@ -104,6 +104,10 @@ interface FeaturedMenuProps {
   itemColors?: string[]
   /** Hide header when embedding in another component */
   hideHeader?: boolean
+  /** Play generated label sweep videos on can cards. Only enabled on /m/
+   *  menu displays (captive hardware, cached); public pages keep the flat
+   *  image to spare mobile visitors multi-MB video downloads. */
+  labelVideos?: boolean
 }
 
 /** Check if a date is within the last N days */
@@ -288,10 +292,12 @@ function CanCard({
   item,
   fullscreen = false,
   accentColor,
+  showLabelVideo = false,
 }: {
   item: MenuItem
   fullscreen?: boolean
   accentColor?: string
+  showLabelVideo?: boolean
 }) {
   const GlassIcon = getGlassIcon(item.glass)
   const badgeLabel = getBeerBadgeLabel(item)
@@ -315,7 +321,7 @@ function CanCard({
   const renderImage = (heightClass?: string) => {
     // Baked 3D sweep available: play the looping can rotation. A muted
     // <video> costs almost nothing on menu TVs, unlike per-item WebGL.
-    if (item.labelVideoUrl) {
+    if (showLabelVideo && item.labelVideoUrl) {
       return (
         <video
           src={item.labelVideoUrl}
@@ -478,6 +484,7 @@ export function FeaturedMenu({
   animated = false,
   itemColors,
   hideHeader = false,
+  labelVideos = false,
 }: FeaturedMenuProps) {
   const { currentLocation } = useLocationContext()
   const title = menuType === 'draft' ? 'Draft' : 'Cans'
@@ -651,7 +658,12 @@ export function FeaturedMenu({
                 >
                   {itemsToRender.map(({ item, state, key }, idx) => (
                     <div key={key} className={animated ? getAnimationClass(state) : ''}>
-                      <CanCard item={item} fullscreen accentColor={itemColors?.[idx]} />
+                      <CanCard
+                        item={item}
+                        fullscreen
+                        accentColor={itemColors?.[idx]}
+                        showLabelVideo={labelVideos}
+                      />
                     </div>
                   ))}
                 </div>
@@ -716,7 +728,11 @@ export function FeaturedMenu({
                 suppressHydrationWarning
               >
                 {displayItems.map((item, index) => (
-                  <CanCard key={`${item.variant}-${index}`} item={item} />
+                  <CanCard
+                    key={`${item.variant}-${index}`}
+                    item={item}
+                    showLabelVideo={labelVideos}
+                  />
                 ))}
               </div>
             )

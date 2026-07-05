@@ -29,19 +29,21 @@ export function BeerCan3D({ baseUrl, metalnessUrl, className = '' }: BeerCan3DPr
     let cleanup = () => {}
 
     ;(async () => {
-      const can = await createCanScene({
-        width: el.clientWidth,
-        height: el.clientHeight,
-        base: baseUrl,
-        metalness: metalnessUrl,
-        pixelRatio: Math.min(window.devicePixelRatio, 2),
-      })
+      const [can, { OrbitControls }] = await Promise.all([
+        createCanScene({
+          width: el.clientWidth,
+          height: el.clientHeight,
+          base: baseUrl,
+          metalness: metalnessUrl,
+          pixelRatio: Math.min(window.devicePixelRatio, 2),
+        }),
+        import('three/addons/controls/OrbitControls.js'),
+      ])
       if (disposed) {
         can.dispose()
         return
       }
 
-      const { OrbitControls } = await import('three/addons/controls/OrbitControls.js')
       const controls = new OrbitControls(can.camera, can.renderer.domElement)
       controls.enableDamping = true
       controls.enableZoom = false

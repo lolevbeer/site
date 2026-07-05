@@ -16,15 +16,17 @@ const DURATION_MS = 12000
 /** Fraction of the label's wrap angle to swing each way. 0.35 shows the
  *  label edge-to-edge without exposing the bare back of the can. */
 const SWEEP_RATIO = 0.35
-const BITS_PER_SECOND = 6_000_000
+// 2 Mbps is plenty for a 640×800 slow pan and keeps a 12s loop under ~3MB
+const BITS_PER_SECOND = 2_000_000
 
 export async function recordCanSweep(
   baseCanvas: HTMLCanvasElement,
   metalnessCanvas: HTMLCanvasElement,
 ): Promise<Blob> {
-  const mimeType = ['video/webm;codecs=vp9', 'video/webm'].find((m) =>
-    typeof MediaRecorder !== 'undefined' ? MediaRecorder.isTypeSupported(m) : false,
-  )
+  const mimeType =
+    typeof MediaRecorder === 'undefined'
+      ? undefined
+      : ['video/webm;codecs=vp9', 'video/webm'].find((m) => MediaRecorder.isTypeSupported(m))
   if (!mimeType) {
     throw new Error('This browser cannot record WebM video — use Chrome for label generation')
   }
@@ -50,7 +52,9 @@ export async function recordCanSweep(
   return new Promise<Blob>((resolve, reject) => {
     recorder.onstop = () => {
       can.dispose()
-      resolve(new Blob(chunks, { type: mimeType }))
+      // Bare container type (no ;codecs=…): must stay equal to the
+      // 'video/webm' entry in Media.ts's mimeTypes allowlist.
+      resolve(new Blob(chunks, { type: 'video/webm' }))
     }
     recorder.onerror = (e) => {
       can.dispose()

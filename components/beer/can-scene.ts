@@ -32,9 +32,7 @@ export interface CanSceneOptions {
 }
 
 export interface CanScene {
-  three: typeof import('three')
   renderer: import('three').WebGLRenderer
-  scene: import('three').Scene
   camera: import('three').PerspectiveCamera
   /** Label wrap angle in radians (how far around the can the label reaches). */
   wrap: number
@@ -68,7 +66,10 @@ export async function createCanScene({
   renderer.toneMappingExposure = 0.9
 
   // Built-in studio environment instead of captiva's 380KB studio.hdr
-  scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment()).texture
+  const pmrem = new THREE.PMREMGenerator(renderer)
+  const envTex = pmrem.fromScene(new RoomEnvironment()).texture
+  pmrem.dispose() // the render target lives on in envTex; the generator itself is done
+  scene.environment = envTex
   const key = new THREE.DirectionalLight(0xfff8f0, 2.5)
   key.position.set(1, 1, 1)
   const rim = new THREE.DirectionalLight(0xffffff, 1.5)
@@ -179,9 +180,7 @@ export async function createCanScene({
   scene.add(labelMesh)
 
   return {
-    three: THREE,
     renderer,
-    scene,
     camera,
     wrap,
     setAzimuth: (angle) => {
@@ -189,6 +188,19 @@ export async function createCanScene({
       camera.lookAt(0, 0, 0)
     },
     render: () => renderer.render(scene, camera),
-    dispose: () => renderer.dispose(),
+    dispose: () => {
+      // Free GPU resources, not just the renderer — the scene is rebuilt on
+      // every mount/prop change, so anything skipped here leaks VRAM.
+      scene.traverse((child) => {
+        const mesh = child as import('three').Mesh
+        if (mesh.isMesh) mesh.geometry.dispose()
+      })
+      for (const tex of [baseTex, metalTex, labelMat.alphaMap, labelMat.roughnessMap, envTex]) {
+        tex?.dispose()
+      }
+      metal.dispose()
+      labelMat.dispose()
+      renderer.dispose()
+    },
   }
 }

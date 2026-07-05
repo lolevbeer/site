@@ -58,7 +58,7 @@ export function LiveMenu({ menuUrl, initialMenu }: LiveMenuProps) {
   if (displayMenu.type === 'cans') {
     return (
       <div className="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground" style={themeVars}>
-        <FeaturedCans menu={displayMenu} animated itemColors={itemColors} />
+        <FeaturedCans menu={displayMenu} animated itemColors={itemColors} labelVideos />
       </div>
     )
   }
