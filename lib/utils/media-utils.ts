@@ -6,6 +6,13 @@
 import { normalizeUrl } from './url-utils'
 
 /**
+ * Container MIME type for generated can-label sweep videos. Single source of
+ * truth shared by the admin recorder (Blob type) and the Media collection's
+ * upload allowlist — they must match or uploads 400 after a full recording.
+ */
+export const LABEL_VIDEO_MIME = 'video/webm'
+
+/**
  * Type for Payload Media objects
  * Matches the essential fields from Payload's Media collection
  */

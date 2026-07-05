@@ -5,18 +5,35 @@
  * record-can-video (admin-side sweep video for menu displays).
  *
  * three.js is dynamically imported so neither consumer pays for it until
- * a can actually renders.
+ * a can actually renders (the type-only import below is erased at compile
+ * time and does not affect bundling).
  */
+import type { Mesh, PerspectiveCamera, WebGLRenderer } from 'three'
 
 // Geometry/material constants lifted from captiva's proven setup.
-export const CAN_HEIGHT = 0.12 // normalized model height in scene units
-export const CAMERA_DISTANCE = 0.275
+const CAN_HEIGHT = 0.12 // normalized model height in scene units
+const CAMERA_DISTANCE = 0.275
 const LABEL_HEIGHT_RATIO = 0.75
 const LABEL_OFFSET_RATIO = -0.02
 const LABEL_RADIUS_BUMP = 1.005 // label sits just off the can surface
 const MAX_WRAP_ANGLE = Math.PI * 1.8
 const FOIL_ROUGHNESS = 0.33
 const MATTE_ROUGHNESS = 0.8
+
+// Utility maps (rounded-corner alpha, roughness remap) don't need label-art
+// resolution — GPU texture filtering upscales them invisibly, while full-size
+// copies would cost tens of MB of RAM/VRAM each plus a multi-megapixel CPU
+// loop on every beer-page mount.
+const MAX_UTILITY_MAP_SIZE = 512
+
+/** Size a low-res utility canvas preserving the artwork's aspect ratio. */
+function utilityMapSize(w: number, h: number) {
+  const scale = Math.min(1, MAX_UTILITY_MAP_SIZE / Math.max(w, h))
+  return {
+    uw: Math.max(1, Math.round(w * scale)),
+    uh: Math.max(1, Math.round(h * scale)),
+  }
+}
 
 /** A texture source: a same-origin/CORS-safe image URL or an in-memory canvas. */
 export type TextureSource = string | HTMLCanvasElement
@@ -27,17 +44,19 @@ export interface CanSceneOptions {
   /** Label artwork (beer.labelBase URL, or the freshly generated canvas). */
   base: TextureSource
   /** Black/white metalness map; omit for a fully matte label. */
-  metalness?: TextureSource | null
+  metalness?: TextureSource
   pixelRatio?: number
 }
 
 export interface CanScene {
-  renderer: import('three').WebGLRenderer
-  camera: import('three').PerspectiveCamera
+  renderer: WebGLRenderer
+  camera: PerspectiveCamera
   /** Label wrap angle in radians (how far around the can the label reaches). */
   wrap: number
   /** Orbit the camera to the given azimuth (0 = facing the label center). */
   setAzimuth: (angle: number) => void
+  /** Resize the drawing buffer and camera to new element dimensions. */
+  setSize: (width: number, height: number) => void
   render: () => void
   dispose: () => void
 }
@@ -67,7 +86,9 @@ export async function createCanScene({
 
   // Built-in studio environment instead of captiva's 380KB studio.hdr
   const pmrem = new THREE.PMREMGenerator(renderer)
-  const envTex = pmrem.fromScene(new RoomEnvironment()).texture
+  const env = new RoomEnvironment()
+  const envTex = pmrem.fromScene(env).texture
+  env.dispose() // baked into envTex; free the source geometry/materials
   pmrem.dispose() // the render target lives on in envTex; the generator itself is done
   scene.environment = envTex
   const key = new THREE.DirectionalLight(0xfff8f0, 2.5)
@@ -99,9 +120,8 @@ export async function createCanScene({
     clearcoatRoughness: 0.1,
   })
   can.traverse((child) => {
-    if ((child as import('three').Mesh).isMesh) {
-      ;(child as import('three').Mesh).material = metal
-    }
+    const mesh = child as Mesh
+    if (mesh.isMesh) mesh.material = metal
   })
   const pre = new THREE.Box3().setFromObject(can).getSize(new THREE.Vector3())
   if (pre.y < Math.max(pre.x, pre.z)) can.rotation.x = -Math.PI / 2 // stand lying-down models up
@@ -128,15 +148,16 @@ export async function createCanScene({
   })
 
   // Rounded label corners, like a real sticker (captiva's alpha map)
+  const { uw: aw, uh: ah } = utilityMapSize(w, h)
   const alpha = document.createElement('canvas')
-  alpha.width = w
-  alpha.height = h
+  alpha.width = aw
+  alpha.height = ah
   const actx = alpha.getContext('2d')!
   actx.fillStyle = 'black'
-  actx.fillRect(0, 0, w, h)
+  actx.fillRect(0, 0, aw, ah)
   actx.fillStyle = 'white'
   actx.beginPath()
-  actx.roundRect(0, 0, w, h, Math.min(w, h) * 0.025)
+  actx.roundRect(0, 0, aw, ah, Math.min(aw, ah) * 0.025)
   actx.fill()
   labelMat.alphaMap = new THREE.CanvasTexture(alpha)
 
@@ -145,13 +166,16 @@ export async function createCanScene({
     labelMat.metalnessMap = metalTex
     labelMat.bumpMap = metalTex // foil sits slightly proud of the paper
     labelMat.bumpScale = 0.02
-    // Roughness from the mask: white (foil) → FOIL_ROUGHNESS, black → MATTE_ROUGHNESS
+    // Roughness from the mask: white (foil) → FOIL_ROUGHNESS, black →
+    // MATTE_ROUGHNESS. Downscaled first — roughness is low-frequency, and
+    // remapping the full 4MP mask would stall the main thread on mount.
+    const { uw: rw, uh: rh } = utilityMapSize(w, h)
     const rc = document.createElement('canvas')
-    rc.width = w
-    rc.height = h
+    rc.width = rw
+    rc.height = rh
     const rctx = rc.getContext('2d')!
-    rctx.drawImage(metalTex.image as CanvasImageSource, 0, 0, w, h)
-    const d = rctx.getImageData(0, 0, w, h)
+    rctx.drawImage(metalTex.image as CanvasImageSource, 0, 0, rw, rh)
+    const d = rctx.getImageData(0, 0, rw, rh)
     const matte = Math.round(MATTE_ROUGHNESS * 255)
     const foil = Math.round(FOIL_ROUGHNESS * 255)
     for (let i = 0; i < d.data.length; i += 4) {
@@ -187,12 +211,17 @@ export async function createCanScene({
       camera.position.set(CAMERA_DISTANCE * Math.sin(angle), 0, CAMERA_DISTANCE * Math.cos(angle))
       camera.lookAt(0, 0, 0)
     },
+    setSize: (newWidth, newHeight) => {
+      camera.aspect = newWidth / newHeight
+      camera.updateProjectionMatrix()
+      renderer.setSize(newWidth, newHeight)
+    },
     render: () => renderer.render(scene, camera),
     dispose: () => {
       // Free GPU resources, not just the renderer — the scene is rebuilt on
       // every mount/prop change, so anything skipped here leaks VRAM.
       scene.traverse((child) => {
-        const mesh = child as import('three').Mesh
+        const mesh = child as Mesh
         if (mesh.isMesh) mesh.geometry.dispose()
       })
       for (const tex of [baseTex, metalTex, labelMat.alphaMap, labelMat.roughnessMap, envTex]) {
@@ -201,6 +230,10 @@ export async function createCanScene({
       metal.dispose()
       labelMat.dispose()
       renderer.dispose()
+      // Actually release the GL context: SPA navigation across beer pages
+      // would otherwise accumulate zombie contexts (browsers cap ~8-16 per
+      // page) until the browser force-loses the oldest.
+      renderer.forceContextLoss()
     },
   }
 }

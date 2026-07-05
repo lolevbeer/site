@@ -7,6 +7,7 @@
  * texture-generation time.
  */
 import { createCanScene } from '@/components/beer/can-scene'
+import { LABEL_VIDEO_MIME } from '@/lib/utils/media-utils'
 
 /** Output size — tall portrait crop around the can, plenty for menu cards. */
 const WIDTH = 640
@@ -26,7 +27,9 @@ export async function recordCanSweep(
   const mimeType =
     typeof MediaRecorder === 'undefined'
       ? undefined
-      : ['video/webm;codecs=vp9', 'video/webm'].find((m) => MediaRecorder.isTypeSupported(m))
+      : [`${LABEL_VIDEO_MIME};codecs=vp9`, LABEL_VIDEO_MIME].find((m) =>
+          MediaRecorder.isTypeSupported(m),
+        )
   if (!mimeType) {
     throw new Error('This browser cannot record WebM video — use Chrome for label generation')
   }
@@ -52,9 +55,9 @@ export async function recordCanSweep(
   return new Promise<Blob>((resolve, reject) => {
     recorder.onstop = () => {
       can.dispose()
-      // Bare container type (no ;codecs=…): must stay equal to the
-      // 'video/webm' entry in Media.ts's mimeTypes allowlist.
-      resolve(new Blob(chunks, { type: 'video/webm' }))
+      // Bare container type (no ;codecs=…) so it matches the Media
+      // collection's upload allowlist exactly.
+      resolve(new Blob(chunks, { type: LABEL_VIDEO_MIME }))
     }
     recorder.onerror = (e) => {
       can.dispose()

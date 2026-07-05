@@ -36,7 +36,7 @@ import { AdminEditButton } from './admin-edit-button'
 import { getGlassIcon } from '@/lib/utils/beer-icons'
 import { BeerCan3D } from './beer-can-3d'
 import { formatAbv, formatRating } from '@/lib/utils/formatters'
-import { getBeerImageUrl } from '@/lib/utils/media-utils'
+import { getBeerImageUrl, getMediaUrl } from '@/lib/utils/media-utils'
 import { menuItemHasBeer } from '@/lib/utils/menu-item-utils'
 import {
   getPackagingType,
@@ -151,8 +151,8 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
   const imagePath = getBeerImageUrl(beer.image, beer.slug)
   // Generated 3D label textures (see LabelTextureGenerator in the admin).
   // When present, a spinning 3D can replaces the flat image below.
-  const canBaseUrl = getBeerImageUrl(beer.labelBase)
-  const canMetalnessUrl = getBeerImageUrl(beer.labelMetalness)
+  const canBaseUrl = getMediaUrl(beer.labelBase)
+  const canMetalnessUrl = getMediaUrl(beer.labelMetalness)
   const pricing = getPricingInfo(beer)
   const GlassIcon = getGlassIcon(beer.glass)
   const packagingType = getPackagingType(beer)
@@ -161,6 +161,8 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
   const [isLoadingLocations, setIsLoadingLocations] = useState(true)
   const [locationError, setLocationError] = useState<string | null>(null)
   const [imageError, setImageError] = useState(false)
+  // Flips when BeerCan3D has appended its canvas; fades the poster image out.
+  const [canReady, setCanReady] = useState(false)
 
   const handleImageError = useCallback(() => {
     setImageError(true)
@@ -273,13 +275,14 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
       <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-8 mb-8">
         {/* Beer Image and Quick Stats */}
         <div className="space-y-4">
-          <div className="group relative aspect-square w-full overflow-hidden rounded-xl bg-gradient-to-b from-muted/30 to-muted/10 dark:from-muted/10 dark:to-muted/5">
-            {/* 3D can appends its canvas only once fully loaded; has-[canvas]
-                then fades the flat poster image out underneath it. */}
+          <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-gradient-to-b from-muted/30 to-muted/10 dark:from-muted/10 dark:to-muted/5">
+            {/* Flat image is the poster (and LCP element); it fades once the
+                3D can reports ready, and stays if WebGL/assets fail. */}
             {canBaseUrl && (
               <BeerCan3D
                 baseUrl={canBaseUrl}
-                metalnessUrl={canMetalnessUrl ?? undefined}
+                metalnessUrl={canMetalnessUrl}
+                onReady={() => setCanReady(true)}
                 className="absolute inset-0 z-10"
               />
             )}
@@ -288,7 +291,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
                 src={imagePath}
                 alt={`${beer.name} beer`}
                 fill
-                className="object-contain transition-opacity duration-300 group-has-[canvas]:opacity-0"
+                className={`object-contain transition-opacity duration-300 ${canReady ? 'opacity-0' : ''}`}
                 sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 800px"
                 priority
                 onError={handleImageError}

@@ -6,26 +6,20 @@
  * Admin-only: runs once per label in the Payload admin browser (see
  * LabelTextureGenerator). Visitors only ever download the resulting PNGs.
  */
-// pdfjs-dist is loaded lazily (captiva's preloadPdfjs pattern): its module
-// scope constructs a DOMMatrix, which crashes during SSR — Next still
-// server-renders 'use client' components, so a top-level import would
-// evaluate pdf.js in Node. The dynamic import only runs in the browser,
-// on the Generate click.
-let pdfjsPromise: Promise<typeof import('pdfjs-dist')> | null = null
-
-function getPdfjs() {
-  if (!pdfjsPromise) {
-    pdfjsPromise = import('pdfjs-dist').then((lib) => {
-      // Bundled worker: emitted as a hashed same-origin asset, so it always
-      // matches the installed pdfjs-dist version.
-      lib.GlobalWorkerOptions.workerSrc = new URL(
-        'pdfjs-dist/build/pdf.worker.min.mjs',
-        import.meta.url,
-      ).toString()
-      return lib
-    })
-  }
-  return pdfjsPromise
+// pdfjs-dist is loaded lazily: its module scope constructs a DOMMatrix,
+// which crashes during SSR — Next still server-renders 'use client'
+// components, so a top-level import would evaluate pdf.js in Node. The
+// dynamic import only runs in the browser, on the Generate click. Repeat
+// calls hit the ESM module cache; re-assigning workerSrc is idempotent.
+async function getPdfjs() {
+  const lib = await import('pdfjs-dist')
+  // Bundled worker: emitted as a hashed same-origin asset, so it always
+  // matches the installed pdfjs-dist version.
+  lib.GlobalWorkerOptions.workerSrc = new URL(
+    'pdfjs-dist/build/pdf.worker.min.mjs',
+    import.meta.url,
+  ).toString()
+  return lib
 }
 
 /** Rasterization DPI for label PDFs (matches captiva's print-quality setting). */
@@ -88,19 +82,18 @@ export async function processLabelPdfs(
     // White-ish, unsaturated mask pixels = metallic foil; everything else matte.
     // Reading at the art's dimensions pads any 1px mismatch with transparent
     // black, which thresholds to matte.
-    const src = new Uint32Array(
-      mask.getContext('2d')!.getImageData(0, 0, width, height).data.buffer,
-    )
+    const src = mask.getContext('2d')!.getImageData(0, 0, width, height).data
     const out = ctx.createImageData(width, height)
-    const dst = new Uint32Array(out.data.buffer)
-    for (let i = 0; i < dst.length; i++) {
-      const p = src[i]
-      const r = p & 0xff
-      const g = (p >> 8) & 0xff
-      const b = (p >> 16) & 0xff
+    const dst = out.data
+    for (let i = 0; i < dst.length; i += 4) {
+      const r = src[i]
+      const g = src[i + 1]
+      const b = src[i + 2]
       const max = Math.max(r, g, b)
       const sat = max > 0 ? (max - Math.min(r, g, b)) / max : 0
-      dst[i] = max > 180 && sat < 0.15 ? 0xffffffff : 0xff000000
+      const v = max > 180 && sat < 0.15 ? 255 : 0
+      dst[i] = dst[i + 1] = dst[i + 2] = v
+      dst[i + 3] = 255
     }
     ctx.putImageData(out, 0, 0)
   }

@@ -83,22 +83,21 @@ export function LabelTextureGenerator() {
     setBusy(true)
     setStatus(null)
     try {
+      const name = slug || 'beer'
       const { baseCanvas, metalnessCanvas } = await processLabelPdfs(
         await artFile.arrayBuffer(),
         maskFile ? await maskFile.arrayBuffer() : null,
       )
-      setBase(await uploadPng(baseCanvas, `${slug || 'beer'}-label-base`))
-      setMetalness(await uploadPng(metalnessCanvas, `${slug || 'beer'}-label-metalness`))
+      const [baseId, metalnessId] = await Promise.all([
+        uploadPng(baseCanvas, `${name}-label-base`),
+        uploadPng(metalnessCanvas, `${name}-label-metalness`),
+      ])
+      setBase(baseId)
+      setMetalness(metalnessId)
       // Bake the menu-display sweep video (records in real time, ~12s)
       const { recordCanSweep } = await import('./record-can-video')
       const sweep = await recordCanSweep(baseCanvas, metalnessCanvas)
-      setVideo(
-        await uploadMedia(
-          sweep,
-          `${slug || 'beer'}-label-sweep.webm`,
-          `${slug || 'beer'} label sweep`,
-        ),
-      )
+      setVideo(await uploadMedia(sweep, `${name}-label-sweep.webm`, `${name} label sweep`))
       setStatus({
         type: 'success',
         msg: 'Textures + sweep video generated — save the beer to keep them',

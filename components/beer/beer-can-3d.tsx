@@ -16,10 +16,13 @@ interface BeerCan3DProps {
   baseUrl: string
   /** URL of the generated black/white metalness PNG (beer.labelMetalness). */
   metalnessUrl?: string
+  /** Fires once the scene is assembled and the canvas is in the DOM —
+   *  the parent uses this to fade out its poster image. */
+  onReady?: () => void
   className?: string
 }
 
-export function BeerCan3D({ baseUrl, metalnessUrl, className = '' }: BeerCan3DProps) {
+export function BeerCan3D({ baseUrl, metalnessUrl, onReady, className = '' }: BeerCan3DProps) {
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -51,28 +54,37 @@ export function BeerCan3D({ baseUrl, metalnessUrl, className = '' }: BeerCan3DPr
       controls.autoRotate = true
       controls.autoRotateSpeed = -2
 
-      // Append only now that the scene is fully assembled: BeerDetails hides
-      // its flat poster image via a has-[canvas] variant, so the canvas must
-      // not exist in the DOM until it has something to show.
+      // Append only once the scene is fully assembled so the first painted
+      // frame is a finished can, then tell the parent to drop its poster.
       el.appendChild(can.renderer.domElement)
+      onReady?.()
 
+      // rAF auto-pauses on hidden tabs but not scrolled-out elements; the
+      // observer stops rendering (GPU/battery) while the can is off-screen.
       let raf = 0
       const tick = () => {
         controls.update()
         can.render()
         raf = requestAnimationFrame(tick)
       }
-      tick()
+      const io = new IntersectionObserver(([entry]) => {
+        if (entry.isIntersecting) {
+          if (!raf) raf = requestAnimationFrame(tick)
+        } else {
+          cancelAnimationFrame(raf)
+          raf = 0
+        }
+      })
+      io.observe(el)
 
       const ro = new ResizeObserver(() => {
-        can.camera.aspect = el.clientWidth / el.clientHeight
-        can.camera.updateProjectionMatrix()
-        can.renderer.setSize(el.clientWidth, el.clientHeight)
+        can.setSize(el.clientWidth, el.clientHeight)
       })
       ro.observe(el)
 
       cleanup = () => {
         cancelAnimationFrame(raf)
+        io.disconnect()
         ro.disconnect()
         controls.dispose()
         can.renderer.domElement.remove()
