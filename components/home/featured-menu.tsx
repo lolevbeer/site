@@ -394,14 +394,9 @@ function CanCard({
           >
             {item.name}
           </h3>
+          {/* Rating sits with the price, not the style badge: long style names
+              ("Hazy India Pale Ale") plus the rating overflow narrow tiles. */}
           <div className="flex items-center" style={{ gap: '0.8vh' }}>
-            {!item.isProduct && (
-              <UntappdRating
-                rating={item.untappdRating}
-                style={{ gap: '0.3vh', fontSize: '1.8vh' }}
-                iconStyle={{ height: '1.8vh', width: '1.8vh' }}
-              />
-            )}
             <Badge variant="outline" style={{ fontSize: '1.6vh' }}>
               {item.type}
             </Badge>
@@ -413,27 +408,44 @@ function CanCard({
               />
             )}
           </div>
-          {item.fourPack && (
-            <span
-              className="font-semibold transition-colors duration-[250ms]"
-              style={{ fontSize: '1.8vh', color: accentColor }}
-            >
-              ${item.fourPack}{' '}
-              <span className="font-semibold text-foreground-muted" style={{ fontSize: '1.4vh' }}>
-                • Four Pack
-              </span>
-            </span>
-          )}
-          {item.bottlePrice && (
-            <span
-              className="font-semibold transition-colors duration-[250ms]"
-              style={{ fontSize: '1.8vh', color: accentColor }}
-            >
-              ${item.bottlePrice}{' '}
-              <span className="font-semibold text-foreground-muted" style={{ fontSize: '1.4vh' }}>
-                • Bottle
-              </span>
-            </span>
+          {(!item.isProduct || item.fourPack || item.bottlePrice) && (
+            <div className="flex items-center" style={{ gap: '0.8vh' }}>
+              {!item.isProduct && (
+                <UntappdRating
+                  rating={item.untappdRating}
+                  style={{ gap: '0.3vh', fontSize: '1.8vh' }}
+                  iconStyle={{ height: '1.8vh', width: '1.8vh' }}
+                />
+              )}
+              {item.fourPack && (
+                <span
+                  className="font-semibold transition-colors duration-[250ms]"
+                  style={{ fontSize: '1.8vh', color: accentColor }}
+                >
+                  ${item.fourPack}{' '}
+                  <span
+                    className="font-semibold text-foreground-muted"
+                    style={{ fontSize: '1.4vh' }}
+                  >
+                    • Four Pack
+                  </span>
+                </span>
+              )}
+              {item.bottlePrice && (
+                <span
+                  className="font-semibold transition-colors duration-[250ms]"
+                  style={{ fontSize: '1.8vh', color: accentColor }}
+                >
+                  ${item.bottlePrice}{' '}
+                  <span
+                    className="font-semibold text-foreground-muted"
+                    style={{ fontSize: '1.4vh' }}
+                  >
+                    • Bottle
+                  </span>
+                </span>
+              )}
+            </div>
           )}
           {item.onDraft && (
             <Badge
