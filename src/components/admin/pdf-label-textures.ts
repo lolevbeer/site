@@ -48,20 +48,12 @@ async function renderPdf(buffer: ArrayBuffer): Promise<HTMLCanvasElement> {
   return canvas
 }
 
-/** Encode a canvas as a PNG blob (shared by the texture uploads and the
- *  still capture — toBlob snapshots the pixels at call time). */
-export function canvasToPngBlob(canvas: HTMLCanvasElement): Promise<Blob> {
-  return new Promise((resolve, reject) =>
-    canvas.toBlob(
-      (b) => (b ? resolve(b) : reject(new Error('Canvas PNG encoding failed'))),
-      'image/png',
-    ),
-  )
-}
-
-/** Encode a canvas as a lossy WebP blob (keeps alpha). Used for the sprite
- *  sheet, whose PNG encoding blows past Vercel's ~4.5MB request-body limit
- *  (413) — WebP at q=0.9 is roughly an order of magnitude smaller. */
+/** Encode a canvas as a lossy WebP blob (keeps alpha; toBlob snapshots the
+ *  pixels at call time). Every generated upload (textures, still, sprite
+ *  sheet) goes through this: PNG encodings of the 4MP textures and the sprite
+ *  sheet blow past Vercel's ~4.5MB request-body limit (413) — WebP at q=0.9
+ *  is roughly an order of magnitude smaller. Payload's formatOptions
+ *  re-encodes to PNG server-side, so stored files stay PNG. */
 export function canvasToWebpBlob(canvas: HTMLCanvasElement, quality = 0.9): Promise<Blob> {
   return new Promise((resolve, reject) =>
     canvas.toBlob(

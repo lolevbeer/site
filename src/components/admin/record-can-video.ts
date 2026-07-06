@@ -1,10 +1,10 @@
 /**
  * Admin-side can renderer: builds the shared 3D scene (components/beer/
  * can-scene) once and bakes both visitor-facing artifacts — a high-res
- * transparent PNG still (beer.image) and a transparent WebP sprite sheet of the
- * can swung through one seamless left↔right↔left sweep (beer.labelVideo).
- * The sheet is WebP (not PNG) so the upload stays under Vercel's ~4.5MB
- * request-body limit.
+ * transparent still (beer.image) and a transparent sprite sheet of the can
+ * swung through one seamless left↔right↔left sweep (beer.labelVideo). Both
+ * encode as WebP so uploads stay under Vercel's ~4.5MB request-body limit
+ * (see canvasToWebpBlob).
  *
  * Menu displays animate the sprite sheet with a CSS steps() sweep rather than
  * a <video>: they run on Samsung Frame TVs whose browser decodes only one
@@ -15,7 +15,7 @@
  */
 import { createCanScene } from '@/components/beer/can-scene'
 import { CAN_SPRITE } from '@/lib/utils/media-utils'
-import { canvasToPngBlob, canvasToWebpBlob } from './pdf-label-textures'
+import { canvasToWebpBlob } from './pdf-label-textures'
 
 /** Still size — square, transparent background. */
 const STILL_SIZE = 1080
@@ -40,7 +40,7 @@ export async function generateCanRenders(
     // preserved across tasks (preserveDrawingBuffer is off).
     can.setAzimuth(0)
     can.render()
-    const still = await canvasToPngBlob(can.renderer.domElement)
+    const still = await canvasToWebpBlob(can.renderer.domElement)
 
     // Sprite sheet: CAN_SPRITE.frames views of the can, tiled row-major into a
     // cols×rows grid. Frame i sits at azimuth amp*sin(2π·i/frames) — sin starts
