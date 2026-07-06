@@ -25,12 +25,14 @@ export const LABEL_VIDEO_MIME = 'video/webm'
  * video cans showed one can plus black rectangles. A PNG sheet is a background
  * image (no video decoder, real transparency), so every can animates.
  *
- * Smoothness is frames / loop-seconds: 48 frames over 7.2s ≈ 6.7fps, enough for
+ * Smoothness is frames / loop-seconds: 72 frames over 7.2s = 10fps, smooth for
  * a gentle sway. Raising `frames` further is the lever for more smoothness, but
  * every can's sheet is a decoded bitmap held in TV RAM at once (decoded size is
  * pixel-count, not file-size), so frames trade off against frame resolution and
- * total memory — a menu of ~12 cans at 256×320×48 is ~190MB decoded. If cans
+ * total memory — a menu of ~12 cans at 256×320×72 is ~285MB decoded. If cans
  * start blanking on the TV that's RAM pressure: cut `frames` or the frame size.
+ * (Per-frame judder is 2π·amplitude/frames — independent of loopMs — so more
+ * frames or a smaller SWEEP_RATIO reduce it; a slower loop does not.)
  *
  * ponytail: a grid (not one long row) keeps the sheet well under 4096px so
  * older Tizen GPUs can upload the texture. Invariants (`cols*rows === frames`,
@@ -38,8 +40,8 @@ export const LABEL_VIDEO_MIME = 'video/webm'
  * in can-sprite.int.spec.ts.
  */
 export const CAN_SPRITE = {
-  frames: 48,
-  cols: 8,
+  frames: 72,
+  cols: 12,
   rows: 6,
   frameWidth: 256,
   frameHeight: 320,
