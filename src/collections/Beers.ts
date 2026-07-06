@@ -300,7 +300,7 @@ export const Beers: CollectionConfig = {
           type: 'text',
           required: true,
           admin: {
-            width: '25%',
+            width: '50%',
           },
         },
         {
@@ -311,16 +311,6 @@ export const Beers: CollectionConfig = {
           index: true,
           admin: {
             description: 'Beer style',
-            width: '25%',
-          },
-        },
-        {
-          name: 'image',
-          type: 'upload',
-          relationTo: 'media',
-          admin: {
-            description:
-              'Beer image (auto-filled by the 3D label tool; upload to override — recommended 2500x2500px)',
             width: '50%',
           },
         },
@@ -346,7 +336,7 @@ export const Beers: CollectionConfig = {
           relationTo: 'media',
           admin: {
             description: 'Generated 3D label texture (via the tool above)',
-            width: '33%',
+            width: '50%',
             // readOnly is UI-only: LabelTextureGenerator still populates the
             // value programmatically via useField().setValue
             readOnly: true,
@@ -358,8 +348,23 @@ export const Beers: CollectionConfig = {
           relationTo: 'media',
           admin: {
             description: 'Generated metalness map (white = metallic foil)',
-            width: '33%',
+            width: '50%',
             readOnly: true,
+          },
+        },
+      ],
+    },
+    {
+      type: 'row',
+      fields: [
+        {
+          name: 'image',
+          type: 'upload',
+          relationTo: 'media',
+          admin: {
+            description:
+              'Beer image (auto-filled by the 3D label tool; upload to override — recommended 2500x2500px)',
+            width: '50%',
           },
         },
         {
@@ -368,7 +373,7 @@ export const Beers: CollectionConfig = {
           relationTo: 'media',
           admin: {
             description: 'Generated label sweep video (WebM loop for menu displays)',
-            width: '33%',
+            width: '50%',
             readOnly: true,
           },
         },

@@ -211,10 +211,6 @@ export interface Beer {
    */
   style: string | Style;
   /**
-   * Beer image (auto-filled by the 3D label tool; upload to override — recommended 2500x2500px)
-   */
-  image?: (string | null) | Media;
-  /**
    * Generated 3D label texture (via the tool above)
    */
   labelBase?: (string | null) | Media;
@@ -222,6 +218,10 @@ export interface Beer {
    * Generated metalness map (white = metallic foil)
    */
   labelMetalness?: (string | null) | Media;
+  /**
+   * Beer image (auto-filled by the 3D label tool; upload to override — recommended 2500x2500px)
+   */
+  image?: (string | null) | Media;
   /**
    * Generated label sweep video (WebM loop for menu displays)
    */
@@ -903,9 +903,9 @@ export interface BeersSelect<T extends boolean = true> {
   collab?: T;
   name?: T;
   style?: T;
-  image?: T;
   labelBase?: T;
   labelMetalness?: T;
+  image?: T;
   labelVideo?: T;
   tag?: T;
   description?: T;
