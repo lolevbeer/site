@@ -3,22 +3,17 @@
  * Displays comprehensive beer information for individual beer pages
  */
 
-'use client';
+'use client'
 
-import React, { useEffect, useState, useCallback } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { logger } from '@/lib/utils/logger';
-import type { Menu, Beer as PayloadBeer, Style } from '@/src/payload-types';
-import { useLocationContext } from '@/components/location/location-provider';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import React, { useEffect, useState, useCallback } from 'react'
+import Image from 'next/image'
+import Link from 'next/link'
+import { logger } from '@/lib/utils/logger'
+import type { Menu, Beer as PayloadBeer, Style } from '@/src/payload-types'
+import { useLocationContext } from '@/components/location/location-provider'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -26,36 +21,57 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
-import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty';
-import { CircleX } from 'lucide-react';
-import { UntappdIcon } from '@/components/icons/untappd-icon';
-import { AdminEditButton } from './admin-edit-button';
-import { getGlassIcon } from '@/lib/utils/beer-icons';
-import { formatAbv, formatRating } from '@/lib/utils/formatters';
-import { getBeerImageUrl } from '@/lib/utils/media-utils';
-import { menuItemHasBeer } from '@/lib/utils/menu-item-utils';
-import { getPackagingType, getPackagingLabel, getNoPackagingLabel, getDraftOnlyMessage, getPackagingAtLocationsMessage } from '@/lib/utils/packaging-utils';
+} from '@/components/ui/breadcrumb'
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyContent,
+} from '@/components/ui/empty'
+import { CircleX } from 'lucide-react'
+import { UntappdIcon } from '@/components/icons/untappd-icon'
+import { AdminEditButton } from './admin-edit-button'
+import { getGlassIcon } from '@/lib/utils/beer-icons'
+import { BeerCan3D } from './beer-can-3d'
+import { formatAbv, formatRating } from '@/lib/utils/formatters'
+import { getBeerImageUrl, getMediaUrl } from '@/lib/utils/media-utils'
+import { menuItemHasBeer } from '@/lib/utils/menu-item-utils'
+import {
+  getPackagingType,
+  getPackagingLabel,
+  getNoPackagingLabel,
+  getDraftOnlyMessage,
+  getPackagingAtLocationsMessage,
+} from '@/lib/utils/packaging-utils'
 
-type BeerReview = { username: string; text: string; date?: string; url?: string; image?: string; hidden?: boolean };
+type BeerReview = {
+  username: string
+  text: string
+  date?: string
+  url?: string
+  image?: string
+  hidden?: boolean
+}
 
 interface BeerDetailsProps {
-  beer: PayloadBeer;
-  className?: string;
+  beer: PayloadBeer
+  className?: string
 }
 
 function getStyleName(beer: PayloadBeer): string {
-  if (!beer.style) return '';
-  if (typeof beer.style === 'string') return beer.style;
-  return (beer.style as Style).name || '';
+  if (!beer.style) return ''
+  if (typeof beer.style === 'string') return beer.style
+  return (beer.style as Style).name || ''
 }
 
 function getPricingInfo(beer: PayloadBeer): {
-  draftPrice?: number;
-  singlePrice?: number | null;
-  fourPackPrice?: number | null;
-  bottlePrice?: number | null;
-  hasSale: boolean;
+  draftPrice?: number
+  singlePrice?: number | null
+  fourPackPrice?: number | null
+  bottlePrice?: number | null
+  hasSale: boolean
 } {
   return {
     draftPrice: beer.draftPrice,
@@ -63,7 +79,7 @@ function getPricingInfo(beer: PayloadBeer): {
     fourPackPrice: beer.fourPack,
     bottlePrice: beer.bottlePrice,
     hasSale: beer.justReleased === true,
-  };
+  }
 }
 
 function SpecificationRow({
@@ -71,9 +87,9 @@ function SpecificationRow({
   value,
   icon: Icon,
 }: {
-  label: string;
-  value: string | number;
-  icon?: React.ComponentType<{ className?: string }>;
+  label: string
+  value: string | number
+  icon?: React.ComponentType<{ className?: string }>
 }) {
   return (
     <div className="flex items-center justify-between py-2 border-b border-border/40 last:border-b-0">
@@ -83,7 +99,7 @@ function SpecificationRow({
       </span>
       <span className="font-medium">{value}</span>
     </div>
-  );
+  )
 }
 
 /**
@@ -108,105 +124,110 @@ function stripReviewHtml(text: string): string {
 }
 
 function formatReviewDate(dateStr: string): string {
-  const date = new Date(dateStr);
+  const date = new Date(dateStr)
   if (isNaN(date.getTime())) {
-    return dateStr;
+    return dateStr
   }
 
-  const diffMs = Date.now() - date.getTime();
-  const diffMinutes = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMinutes / 60);
-  const diffDays = Math.floor(diffHours / 24);
+  const diffMs = Date.now() - date.getTime()
+  const diffMinutes = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMinutes / 60)
+  const diffDays = Math.floor(diffHours / 24)
 
   const formatUnit = (value: number, unit: string): string =>
-    `${value} ${unit}${value === 1 ? '' : 's'} ago`;
+    `${value} ${unit}${value === 1 ? '' : 's'} ago`
 
-  if (diffMinutes < 1) return 'just now';
-  if (diffMinutes < 60) return formatUnit(diffMinutes, 'minute');
-  if (diffHours < 24) return formatUnit(diffHours, 'hour');
-  if (diffDays < 7) return formatUnit(diffDays, 'day');
-  if (diffDays < 28) return formatUnit(Math.floor(diffDays / 7), 'week');
-  if (diffDays < 365) return formatUnit(Math.floor(diffDays / 30), 'month');
-  return formatUnit(Math.floor(diffDays / 365), 'year');
+  if (diffMinutes < 1) return 'just now'
+  if (diffMinutes < 60) return formatUnit(diffMinutes, 'minute')
+  if (diffHours < 24) return formatUnit(diffHours, 'hour')
+  if (diffDays < 7) return formatUnit(diffDays, 'day')
+  if (diffDays < 28) return formatUnit(Math.floor(diffDays / 7), 'week')
+  if (diffDays < 365) return formatUnit(Math.floor(diffDays / 30), 'month')
+  return formatUnit(Math.floor(diffDays / 365), 'year')
 }
 
 export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
-  const { currentLocation } = useLocationContext();
-  const imagePath = getBeerImageUrl(beer.image, beer.slug);
-  const pricing = getPricingInfo(beer);
-  const GlassIcon = getGlassIcon(beer.glass);
-  const packagingType = getPackagingType(beer);
-  const [tapLocations, setTapLocations] = useState<string[]>([]);
-  const [canLocations, setCanLocations] = useState<string[]>([]);
-  const [isLoadingLocations, setIsLoadingLocations] = useState(true);
-  const [locationError, setLocationError] = useState<string | null>(null);
-  const [imageError, setImageError] = useState(false);
+  const { currentLocation } = useLocationContext()
+  const imagePath = getBeerImageUrl(beer.image, beer.slug)
+  // Generated 3D label textures (see LabelTextureGenerator in the admin).
+  // When present, a spinning 3D can replaces the flat image below.
+  const canBaseUrl = getMediaUrl(beer.labelBase)
+  const canMetalnessUrl = getMediaUrl(beer.labelMetalness)
+  const pricing = getPricingInfo(beer)
+  const GlassIcon = getGlassIcon(beer.glass)
+  const packagingType = getPackagingType(beer)
+  const [tapLocations, setTapLocations] = useState<string[]>([])
+  const [canLocations, setCanLocations] = useState<string[]>([])
+  const [isLoadingLocations, setIsLoadingLocations] = useState(true)
+  const [locationError, setLocationError] = useState<string | null>(null)
+  const [imageError, setImageError] = useState(false)
+  // Flips when BeerCan3D has appended its canvas; fades the poster image out.
+  const [canReady, setCanReady] = useState(false)
 
   const handleImageError = useCallback(() => {
-    setImageError(true);
-  }, []);
+    setImageError(true)
+  }, [])
 
   useEffect(() => {
     // Don't fetch locations if beer ID is missing
     if (!beer.id) {
-      setIsLoadingLocations(false);
-      setTapLocations([]);
-      setCanLocations([]);
-      return;
+      setIsLoadingLocations(false)
+      setTapLocations([])
+      setCanLocations([])
+      return
     }
 
     const fetchLocations = async () => {
-      setIsLoadingLocations(true);
-      setLocationError(null);
+      setIsLoadingLocations(true)
+      setLocationError(null)
 
       try {
         // Query Payload CMS for all published menus (we'll filter client-side for the beer)
         const response = await fetch(
-          `/api/menus?where[_status][equals]=published&depth=2&limit=100`
-        );
+          `/api/menus?where[_status][equals]=published&depth=2&limit=100`,
+        )
 
         if (!response.ok) {
-          throw new Error('Failed to fetch menus');
+          throw new Error('Failed to fetch menus')
         }
 
-        const data = await response.json();
-        const tapLocs: string[] = [];
-        const canLocs: string[] = [];
+        const data = await response.json()
+        const tapLocs: string[] = []
+        const canLocs: string[] = []
 
         // Process menus to extract location availability
         if (data.docs && Array.isArray(data.docs)) {
           data.docs.forEach((menu: Menu) => {
             // Check if this beer is in the menu items
-            const hasBeer = beer.id && menu.items?.some((item) => menuItemHasBeer(item, beer.id!));
+            const hasBeer = beer.id && menu.items?.some((item) => menuItemHasBeer(item, beer.id!))
 
             if (hasBeer && menu.location) {
-              const locationName = typeof menu.location === 'string'
-                ? menu.location
-                : menu.location?.name;
+              const locationName =
+                typeof menu.location === 'string' ? menu.location : menu.location?.name
 
               if (locationName) {
                 if (menu.type === 'draft' && !tapLocs.includes(locationName)) {
-                  tapLocs.push(locationName);
+                  tapLocs.push(locationName)
                 } else if (menu.type === 'cans' && !canLocs.includes(locationName)) {
-                  canLocs.push(locationName);
+                  canLocs.push(locationName)
                 }
               }
             }
-          });
+          })
         }
 
-        setTapLocations(tapLocs);
-        setCanLocations(canLocs);
+        setTapLocations(tapLocs)
+        setCanLocations(canLocs)
       } catch (error) {
-        logger.error('Error fetching beer location data:', error);
-        setLocationError('Unable to load location information. Please try again later.');
+        logger.error('Error fetching beer location data:', error)
+        setLocationError('Unable to load location information. Please try again later.')
       } finally {
-        setIsLoadingLocations(false);
+        setIsLoadingLocations(false)
       }
-    };
+    }
 
-    fetchLocations();
-  }, [beer.id]);
+    fetchLocations()
+  }, [beer.id])
 
   // Don't render if beer is hidden from site
   if (beer.hideFromSite) {
@@ -217,19 +238,15 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
             <CircleX className="h-6 w-6" />
           </EmptyMedia>
           <EmptyTitle>Beer Not Available</EmptyTitle>
-          <EmptyDescription>
-            This beer is currently not available on our website.
-          </EmptyDescription>
+          <EmptyDescription>This beer is currently not available on our website.</EmptyDescription>
         </EmptyHeader>
         <EmptyContent>
           <Button asChild>
-            <Link href={`/${currentLocation}/beer`}>
-              Browse Available Beers
-            </Link>
+            <Link href={`/${currentLocation}/beer`}>Browse Available Beers</Link>
           </Button>
         </EmptyContent>
       </Empty>
-    );
+    )
   }
 
   return (
@@ -259,12 +276,22 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
         {/* Beer Image and Quick Stats */}
         <div className="space-y-4">
           <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-gradient-to-b from-muted/30 to-muted/10 dark:from-muted/10 dark:to-muted/5">
+            {/* Flat image is the poster (and LCP element); it fades once the
+                3D can reports ready, and stays if WebGL/assets fail. */}
+            {canBaseUrl && (
+              <BeerCan3D
+                baseUrl={canBaseUrl}
+                metalnessUrl={canMetalnessUrl}
+                onReady={() => setCanReady(true)}
+                className="absolute inset-0 z-10"
+              />
+            )}
             {imagePath && !imageError ? (
               <Image
                 src={imagePath}
                 alt={`${beer.name} beer`}
                 fill
-                className="object-contain"
+                className={`object-contain transition-opacity duration-300 ${canReady ? 'opacity-0' : ''}`}
                 sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 800px"
                 priority
                 onError={handleImageError}
@@ -280,7 +307,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
             {pricing.hasSale && (
               <Badge
                 variant="destructive"
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-lg px-4 py-2"
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-lg px-4 py-2 z-20"
               >
                 Just Released
               </Badge>
@@ -290,22 +317,9 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
           {/* Quick Stats */}
           <Card className="shadow-none border-0 p-0 bg-transparent">
             <CardContent className="p-0 space-y-0">
-              {getStyleName(beer) && (
-                <SpecificationRow
-                  label="Style"
-                  value={getStyleName(beer)}
-                />
-              )}
-              <SpecificationRow
-                label="Alc by Vol"
-                value={formatAbv(beer.abv)}
-              />
-              {beer.recipe && (
-                <SpecificationRow
-                  label="Recipe #"
-                  value={beer.recipe}
-                />
-              )}
+              {getStyleName(beer) && <SpecificationRow label="Style" value={getStyleName(beer)} />}
+              <SpecificationRow label="Alc by Vol" value={formatAbv(beer.abv)} />
+              {beer.recipe && <SpecificationRow label="Recipe #" value={beer.recipe} />}
             </CardContent>
           </Card>
         </div>
@@ -331,7 +345,10 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
                 </Badge>
               )}
               {!isLoadingLocations && tapLocations.length > 0 && canLocations.length === 0 && (
-                <Badge variant="outline" className="text-sm text-muted-foreground border-muted-foreground/50">
+                <Badge
+                  variant="outline"
+                  className="text-sm text-muted-foreground border-muted-foreground/50"
+                >
                   {getNoPackagingLabel(packagingType)}
                 </Badge>
               )}
@@ -347,9 +364,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
           {beer.description && (
             <div>
               <h2 className="text-xl font-semibold mb-3">Description</h2>
-              <p>
-                {beer.description}
-              </p>
+              <p>{beer.description}</p>
             </div>
           )}
 
@@ -404,7 +419,8 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
             </Card>
 
             {/* Pricing */}
-            {((tapLocations.length > 0 && pricing.draftPrice) || (canLocations.length > 0 && (pricing.fourPackPrice || pricing.bottlePrice))) && (
+            {((tapLocations.length > 0 && pricing.draftPrice) ||
+              (canLocations.length > 0 && (pricing.fourPackPrice || pricing.bottlePrice))) && (
               <Card className="shadow-none border-0 p-0 bg-transparent">
                 <CardHeader className="p-0 pb-4">
                   <CardTitle className="text-lg flex items-center gap-2">
@@ -419,9 +435,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
                 <CardContent className="p-0">
                   <div className="space-y-2">
                     {tapLocations.length > 0 && pricing.draftPrice && (
-                      <p className="text-sm text-muted-foreground">
-                        • Draft ${pricing.draftPrice}
-                      </p>
+                      <p className="text-sm text-muted-foreground">• Draft ${pricing.draftPrice}</p>
                     )}
                     {canLocations.length > 0 && pricing.fourPackPrice && (
                       <p className="text-sm text-muted-foreground">
@@ -462,64 +476,71 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
       </div>
 
       {/* Reviews Section */}
-      {Array.isArray(beer.positiveReviews) && (beer.positiveReviews as BeerReview[]).filter((r) => !r.hidden).length > 0 && (
-        <div className="mt-8">
-          <h2 className="text-2xl font-bold mb-6">Reviews</h2>
-          <div className="space-y-4">
-            {[...(beer.positiveReviews as BeerReview[])]
-              .filter((r) => !r.hidden)
-              .sort((a, b) => {
-                if (!a.date || !b.date) return 0;
-                return new Date(b.date).getTime() - new Date(a.date).getTime();
-              }).map((review, index) => {
-              const content = (
-                <>
-                  {review.image && (
-                    <div className="relative w-24 h-24 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
-                      <Image
-                        src={review.image}
-                        alt={`Review photo by ${review.username}`}
-                        fill
-                        className="object-cover"
-                        sizes="96px"
-                      />
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0 flex flex-col gap-0.5">
-                    <div className="flex items-center gap-1">
-                      <span className="font-medium">{review.username}</span>
-                      {review.date && (
-                        <span className="text-xs text-muted-foreground/70">
-                          • {formatReviewDate(review.date)}
-                        </span>
+      {Array.isArray(beer.positiveReviews) &&
+        (beer.positiveReviews as BeerReview[]).filter((r) => !r.hidden).length > 0 && (
+          <div className="mt-8">
+            <h2 className="text-2xl font-bold mb-6">Reviews</h2>
+            <div className="space-y-4">
+              {[...(beer.positiveReviews as BeerReview[])]
+                .filter((r) => !r.hidden)
+                .sort((a, b) => {
+                  if (!a.date || !b.date) return 0
+                  return new Date(b.date).getTime() - new Date(a.date).getTime()
+                })
+                .map((review, index) => {
+                  const content = (
+                    <>
+                      {review.image && (
+                        <div className="relative w-24 h-24 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
+                          <Image
+                            src={review.image}
+                            alt={`Review photo by ${review.username}`}
+                            fill
+                            className="object-cover"
+                            sizes="96px"
+                          />
+                        </div>
                       )}
-                    </div>
-                    <span className="text-sm text-muted-foreground">{stripReviewHtml(review.text)}</span>
-                  </div>
-                </>
-              );
+                      <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+                        <div className="flex items-center gap-1">
+                          <span className="font-medium">{review.username}</span>
+                          {review.date && (
+                            <span className="text-xs text-muted-foreground/70">
+                              • {formatReviewDate(review.date)}
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-sm text-muted-foreground">
+                          {stripReviewHtml(review.text)}
+                        </span>
+                      </div>
+                    </>
+                  )
 
-              return review.url ? (
-                <a
-                  key={review.url}
-                  href={review.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex gap-4 py-4 border-b border-border/40 last:border-b-0 cursor-pointer no-underline"
-                >
-                  {content}
-                </a>
-              ) : (
-                <div key={index} className="flex gap-4 py-4 border-b border-border/40 last:border-b-0">
-                  {content}
-                </div>
-              );
-            })}
+                  return review.url ? (
+                    <a
+                      key={review.url}
+                      href={review.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex gap-4 py-4 border-b border-border/40 last:border-b-0 cursor-pointer no-underline"
+                    >
+                      {content}
+                    </a>
+                  ) : (
+                    <div
+                      key={index}
+                      className="flex gap-4 py-4 border-b border-border/40 last:border-b-0"
+                    >
+                      {content}
+                    </div>
+                  )
+                })}
+            </div>
           </div>
-        </div>
-      )}
+        )}
     </div>
-  );
+  )
 }
 
-export default BeerDetails;
+export default BeerDetails

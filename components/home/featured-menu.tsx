@@ -55,6 +55,9 @@ interface MenuItem {
   glutenFree: boolean
   /** Image URL from Payload CMS Media, or undefined if no image */
   imageUrl?: string
+  /** Generated can sweep-video URL (beer.labelVideo). Only populated when
+   *  the menu enables labelVideos; CanCard plays it whenever present. */
+  labelVideoUrl?: string
   onDraft?: boolean
   glass?: string
   fourPack?: string
@@ -101,6 +104,10 @@ interface FeaturedMenuProps {
   itemColors?: string[]
   /** Hide header when embedding in another component */
   hideHeader?: boolean
+  /** Play generated label sweep videos on can cards. Only enabled on /m/
+   *  menu displays (captive hardware, cached); public pages keep the flat
+   *  image to spare mobile visitors multi-MB video downloads. */
+  labelVideos?: boolean
 }
 
 /** Check if a date is within the last N days */
@@ -113,7 +120,7 @@ function isWithinDays(dateStr: string | undefined, days: number): boolean {
 const getMenuItemKey = (item: MenuItem) => item.variant
 
 /** Convert Payload menu items to display-ready MenuItem format */
-function convertMenuItems(menuData: Menu): MenuItem[] {
+function convertMenuItems(menuData: Menu, labelVideos = false): MenuItem[] {
   if (!menuData?.items) return []
 
   const location = typeof menuData.location === 'object' ? menuData.location : null
@@ -188,6 +195,9 @@ function convertMenuItems(menuData: Menu): MenuItem[] {
         description: String(beer.description || ''),
         glutenFree: false,
         imageUrl: getMediaUrl(beer.image, 'card'),
+        // Gated here (not per render site) so public pages never even carry
+        // the multi-MB video URLs; CanCard plays a video iff the URL exists.
+        labelVideoUrl: labelVideos ? getMediaUrl(beer.labelVideo) : undefined,
         glass: String(beer.glass || 'pint'),
         fourPack: beer.fourPack
           ? String(beer.fourPack)
@@ -309,6 +319,21 @@ function CanCard({
 
   // Shared image rendering logic
   const renderImage = (heightClass?: string) => {
+    // Baked 3D sweep available: play the looping can rotation. A muted
+    // <video> costs almost nothing on menu TVs, unlike per-item WebGL.
+    if (item.labelVideoUrl) {
+      return (
+        <video
+          src={item.labelVideoUrl}
+          className="absolute inset-0 h-full w-full object-contain"
+          muted
+          autoPlay
+          loop
+          playsInline
+          aria-label={`${item.name} - ${item.type || 'Craft beer'} rotating can`}
+        />
+      )
+    }
     if (item.imageUrl && !imageError) {
       return (
         <Image
@@ -459,6 +484,7 @@ export function FeaturedMenu({
   animated = false,
   itemColors,
   hideHeader = false,
+  labelVideos = false,
 }: FeaturedMenuProps) {
   const { currentLocation } = useLocationContext()
   const title = menuType === 'draft' ? 'Draft' : 'Cans'
@@ -468,14 +494,17 @@ export function FeaturedMenu({
       : 'No cans available. Check back soon for cans to take home.'
 
   // Convert and filter items (memoize allItems so downstream useMemo can skip work)
-  const allItems = useMemo(() => menus.flatMap(convertMenuItems), [menus])
+  const allItems = useMemo(
+    () => menus.flatMap((m) => convertMenuItems(m, labelVideos)),
+    [menus, labelVideos],
+  )
   const filteredItems = useMemo(
     () => filterByLocation(allItems, currentLocation),
     [currentLocation, allItems],
   )
   const displayItems = useMemo(
-    () => (menu?.items ? convertMenuItems(menu) : filteredItems),
-    [menu, filteredItems],
+    () => (menu?.items ? convertMenuItems(menu, labelVideos) : filteredItems),
+    [menu, labelVideos, filteredItems],
   )
 
   // Animated items for live updates (only when animated prop is true)

@@ -23,7 +23,7 @@ Payload admin is at `/admin`. Follow the on-screen instructions to create your f
 
 ## Collections
 
-- **Beers** - Beer catalog with styles, ABV, pricing, Untappd ratings
+- **Beers** - Beer catalog with styles, ABV, pricing, Untappd ratings, and 3D can label textures (generated in the admin from label art + metallic-mask PDFs; rendered by `components/beer/beer-can-3d.tsx`)
 - **Styles** - Beer style definitions
 - **Menus** - Draft and can menus per location
 - **Products** - Menu items linking beers to menus

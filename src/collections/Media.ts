@@ -1,5 +1,6 @@
 import type { CollectionConfig, Access } from 'payload'
 import { adminAccess } from '@/src/access/roles'
+import { LABEL_VIDEO_MIME } from '@/lib/utils/media-utils'
 
 const isLoggedIn: Access = ({ req: { user } }) => {
   return Boolean(user)
@@ -19,7 +20,9 @@ export const Media: CollectionConfig = {
   },
   upload: {
     staticDir: 'public/uploads',
-    mimeTypes: ['image/png', 'image/jpg', 'image/jpeg', 'image/webp'],
+    // LABEL_VIDEO_MIME: generated can-label sweep loops (LabelTextureGenerator).
+    // Sharp/imageSizes only run on images, so videos pass through untouched.
+    mimeTypes: ['image/png', 'image/jpg', 'image/jpeg', 'image/webp', LABEL_VIDEO_MIME],
     disableLocalStorage: !!process.env.BLOB_READ_WRITE_TOKEN,
     formatOptions: {
       format: 'png',

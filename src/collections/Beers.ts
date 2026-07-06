@@ -1,4 +1,4 @@
-import type { CollectionConfig, Payload } from 'payload'
+import type { CollectionConfig, Field, Payload } from 'payload'
 import { APIError } from 'payload'
 import { revalidateTag } from 'next/cache'
 import { generateUniqueSlug } from './utils/generateUniqueSlug'
@@ -33,6 +33,24 @@ async function revalidateMenusForBeer(payload: Payload, beerId: string | number)
     }
   }
 }
+
+/**
+ * Upload field owned by the 3D label generator (labelBase/labelMetalness/
+ * labelVideo). admin.readOnly is UI-only — LabelTextureGenerator still
+ * populates the value programmatically via useField().setValue. Do NOT
+ * tighten these to field-level access.update: that would make generation
+ * silently stop persisting on save.
+ */
+const generatedUploadField = (name: string, description: string): Field => ({
+  name,
+  type: 'upload',
+  relationTo: 'media',
+  admin: {
+    description,
+    width: '50%',
+    readOnly: true,
+  },
+})
 
 export const Beers: CollectionConfig = {
   slug: 'beers',
@@ -300,7 +318,7 @@ export const Beers: CollectionConfig = {
           type: 'text',
           required: true,
           admin: {
-            width: '25%',
+            width: '50%',
           },
         },
         {
@@ -311,18 +329,45 @@ export const Beers: CollectionConfig = {
           index: true,
           admin: {
             description: 'Beer style',
-            width: '25%',
+            width: '50%',
           },
         },
+      ],
+    },
+    {
+      // Drop-zone + button that runs the PDF→texture pipeline in the admin
+      // browser and fills in labelBase/labelMetalness below.
+      name: 'labelTextures',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '@/src/components/admin/LabelTextureGenerator#LabelTextureGenerator',
+        },
+      },
+    },
+    {
+      type: 'row',
+      fields: [
+        generatedUploadField('labelBase', 'Generated 3D label texture (via the tool above)'),
+        generatedUploadField('labelMetalness', 'Generated metalness map (white = metallic foil)'),
+      ],
+    },
+    {
+      type: 'row',
+      fields: [
         {
           name: 'image',
           type: 'upload',
           relationTo: 'media',
           admin: {
-            description: 'Beer image (recommended: 2500x2500px)',
+            description: 'Beer image (auto-filled by the 3D label tool; upload to override)',
             width: '50%',
           },
         },
+        generatedUploadField(
+          'labelVideo',
+          'Generated label sweep video (WebM loop for menu displays)',
+        ),
       ],
     },
     {

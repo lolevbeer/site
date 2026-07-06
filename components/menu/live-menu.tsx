@@ -49,7 +49,10 @@ export function LiveMenu({ menuUrl, initialMenu }: LiveMenuProps) {
 
   if (displayMenu.type === 'draft') {
     return (
-      <div className="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground" style={themeVars}>
+      <div
+        className="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground"
+        style={themeVars}
+      >
         <FeaturedBeers menu={displayMenu} animated itemColors={itemColors} />
       </div>
     )
@@ -57,8 +60,11 @@ export function LiveMenu({ menuUrl, initialMenu }: LiveMenuProps) {
 
   if (displayMenu.type === 'cans') {
     return (
-      <div className="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground" style={themeVars}>
-        <FeaturedCans menu={displayMenu} animated itemColors={itemColors} />
+      <div
+        className="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground"
+        style={themeVars}
+      >
+        <FeaturedCans menu={displayMenu} animated itemColors={itemColors} labelVideos />
       </div>
     )
   }
@@ -66,7 +72,10 @@ export function LiveMenu({ menuUrl, initialMenu }: LiveMenuProps) {
   // 'other' type renders like draft
   if (displayMenu.type === 'other') {
     return (
-      <div className="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground" style={themeVars}>
+      <div
+        className="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground"
+        style={themeVars}
+      >
         <FeaturedBeers menu={displayMenu} animated itemColors={itemColors} />
       </div>
     )
