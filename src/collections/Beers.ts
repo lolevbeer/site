@@ -319,7 +319,8 @@ export const Beers: CollectionConfig = {
           type: 'upload',
           relationTo: 'media',
           admin: {
-            description: 'Beer image (recommended: 2500x2500px)',
+            description:
+              'Beer image (auto-filled by the 3D label tool; upload to override — recommended 2500x2500px)',
             width: '50%',
           },
         },

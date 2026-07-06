@@ -144,8 +144,12 @@ export async function createCanScene({
   const sctx = shadowCanvas.getContext('2d')!
   const paintShadow = (radius: number, stops: [number, string][]) => {
     const grad = sctx.createRadialGradient(
-      SHADOW_SIZE / 2, SHADOW_SIZE / 2, 0,
-      SHADOW_SIZE / 2, SHADOW_SIZE / 2, radius,
+      SHADOW_SIZE / 2,
+      SHADOW_SIZE / 2,
+      0,
+      SHADOW_SIZE / 2,
+      SHADOW_SIZE / 2,
+      radius,
     )
     for (const [offset, color] of stops) grad.addColorStop(offset, color)
     sctx.fillStyle = grad

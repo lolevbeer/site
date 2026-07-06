@@ -1,10 +1,12 @@
 'use client'
 
 /**
- * Admin field for generating 3D can-label textures + the menu sweep video.
- * Runs captiva's PDF→texture pipeline (see ./pdf-label-textures) in the
- * admin browser, uploads the results to the media collection, and wires
- * them into the beer's labelBase / labelMetalness / labelVideo fields.
+ * Admin field for generating 3D can-label textures, the beer image still,
+ * and the menu sweep video. Runs captiva's PDF→texture pipeline (see
+ * ./pdf-label-textures) in the admin browser, uploads the results to the
+ * media collection, and wires them into the beer's labelBase /
+ * labelMetalness / labelVideo / image fields (image stays editable so a
+ * hand-shot photo can override the render).
  * Built from Payload UI primitives (Dropzone/FieldLabel/Button/Banner) so
  * it matches the rest of the admin. Source PDFs are not stored — the
  * generated files are the canonical output.
@@ -70,6 +72,7 @@ export function LabelTextureGenerator() {
   const { setValue: setBase } = useField<string>({ path: 'labelBase' })
   const { setValue: setMetalness } = useField<string>({ path: 'labelMetalness' })
   const { setValue: setVideo } = useField<string>({ path: 'labelVideo' })
+  const { setValue: setImage } = useField<string>({ path: 'image' })
   const [artFile, setArtFile] = useState<File | null>(null)
   const [maskFile, setMaskFile] = useState<File | null>(null)
   const [busy, setBusy] = useState(false)
@@ -94,13 +97,18 @@ export function LabelTextureGenerator() {
       ])
       setBase(baseId)
       setMetalness(metalnessId)
-      // Bake the menu-display sweep video (records in real time, ~12s)
-      const { recordCanSweep } = await import('./record-can-video')
-      const sweep = await recordCanSweep(baseCanvas, metalnessCanvas)
-      setVideo(await uploadMedia(sweep, `${name}-label-sweep.webm`, `${name} label sweep`))
+      // Bake the beer image + menu sweep video (records in real time, ~12s)
+      const { generateCanRenders } = await import('./record-can-video')
+      const { still, sweep } = await generateCanRenders(baseCanvas, metalnessCanvas)
+      const [imageId, sweepId] = await Promise.all([
+        uploadMedia(still, `${name}-can.png`, `${name} can`),
+        uploadMedia(sweep, `${name}-label-sweep.webm`, `${name} label sweep`),
+      ])
+      setImage(imageId)
+      setVideo(sweepId)
       setStatus({
         type: 'success',
-        msg: 'Textures + sweep video generated — save the beer to keep them',
+        msg: 'Textures, can image + sweep video generated — save the beer to keep them',
       })
     } catch (err) {
       setStatus({ type: 'error', msg: err instanceof Error ? err.message : String(err) })

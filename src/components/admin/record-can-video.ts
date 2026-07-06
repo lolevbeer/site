@@ -1,15 +1,17 @@
 /**
- * Admin-side sweep-video recorder: renders the 3D can (shared scene from
- * components/beer/can-scene) and records one loop-perfect left↔right camera
- * sweep across the label as a WebM. Menu displays play the result as a
- * muted looping <video> — per-item WebGL would exceed browser context
- * limits and burn TV GPUs, so the rotation is baked here, once, at
- * texture-generation time.
+ * Admin-side can renderer: builds the shared 3D scene (components/beer/
+ * can-scene) once and bakes both visitor-facing artifacts — a high-res
+ * transparent PNG still (beer.image) and a loop-perfect left↔right sweep
+ * WebM (beer.labelVideo). Menu displays play the video as a muted looping
+ * <video>; per-item WebGL would exceed browser context limits and burn TV
+ * GPUs, so everything is rendered here, once, at texture-generation time.
  */
 import { createCanScene } from '@/components/beer/can-scene'
 import { LABEL_VIDEO_MIME } from '@/lib/utils/media-utils'
 
-/** Output size — tall portrait crop around the can, plenty for menu cards. */
+/** Still size — square, transparent background (Beers.image suggests 2500²). */
+const STILL_SIZE = 2000
+/** Video size — tall portrait crop around the can, plenty for menu cards. */
 const WIDTH = 640
 const HEIGHT = 800
 /** One full left→right→left sweep; sinusoidal, so the loop point is seamless. */
@@ -20,10 +22,10 @@ const SWEEP_RATIO = 0.35
 // 2 Mbps is plenty for a 640×800 slow pan and keeps a 12s loop under ~3MB
 const BITS_PER_SECOND = 2_000_000
 
-export async function recordCanSweep(
+export async function generateCanRenders(
   baseCanvas: HTMLCanvasElement,
   metalnessCanvas: HTMLCanvasElement,
-): Promise<Blob> {
+): Promise<{ still: Blob; sweep: Blob }> {
   const mimeType =
     typeof MediaRecorder === 'undefined'
       ? undefined
@@ -35,12 +37,33 @@ export async function recordCanSweep(
   }
 
   const can = await createCanScene({
-    width: WIDTH,
-    height: HEIGHT,
+    width: STILL_SIZE,
+    height: STILL_SIZE,
     base: baseCanvas,
     metalness: metalnessCanvas,
   })
 
+  // Still first: front view at high res, transparent background. toBlob must
+  // run in the same task as render() — the WebGL buffer isn't preserved
+  // across tasks (preserveDrawingBuffer is off).
+  let still: Blob
+  try {
+    can.setAzimuth(0)
+    can.render()
+    still = await new Promise<Blob>((resolve, reject) =>
+      can.renderer.domElement.toBlob(
+        (b) => (b ? resolve(b) : reject(new Error('Can still capture failed'))),
+        'image/png',
+      ),
+    )
+  } catch (err) {
+    can.dispose()
+    throw err
+  }
+
+  // Then the sweep at video resolution (captureStream must start after the
+  // resize so the recorded track has the final dimensions)
+  can.setSize(WIDTH, HEIGHT)
   const amplitude = can.wrap * SWEEP_RATIO
   can.setAzimuth(0)
   can.render()
@@ -52,7 +75,7 @@ export async function recordCanSweep(
     if (e.data.size > 0) chunks.push(e.data)
   }
 
-  return new Promise<Blob>((resolve, reject) => {
+  const sweep = await new Promise<Blob>((resolve, reject) => {
     recorder.onstop = () => {
       can.dispose()
       // Bare container type (no ;codecs=…) so it matches the Media
@@ -79,4 +102,6 @@ export async function recordCanSweep(
     }
     requestAnimationFrame(tick)
   })
+
+  return { still, sweep }
 }

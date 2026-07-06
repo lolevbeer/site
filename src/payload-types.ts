@@ -211,7 +211,7 @@ export interface Beer {
    */
   style: string | Style;
   /**
-   * Beer image (recommended: 2500x2500px)
+   * Beer image (auto-filled by the 3D label tool; upload to override — recommended 2500x2500px)
    */
   image?: (string | null) | Media;
   /**
