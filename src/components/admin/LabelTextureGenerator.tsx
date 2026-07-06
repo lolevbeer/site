@@ -93,12 +93,13 @@ export function LabelTextureGenerator() {
       ])
       setBase(baseId)
       setMetalness(metalnessId)
-      // Bake the beer image still + the can-rotation sprite sheet (both PNGs)
+      // Bake the beer image still (PNG) + the can-rotation sprite sheet (WebP,
+      // to stay under Vercel's request-body limit)
       const { generateCanRenders } = await import('./record-can-video')
       const { still, sprite } = await generateCanRenders(baseCanvas, metalnessCanvas)
       const [imageId, spriteId] = await Promise.all([
         uploadMedia(still, `${name}-can.png`, `${name} can`),
-        uploadMedia(sprite, `${name}-can-sprite.png`, `${name} can rotation`),
+        uploadMedia(sprite, `${name}-can-sprite.webp`, `${name} can rotation`),
       ])
       setImage(imageId)
       setSprite(spriteId)

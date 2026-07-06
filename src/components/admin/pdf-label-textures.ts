@@ -59,6 +59,19 @@ export function canvasToPngBlob(canvas: HTMLCanvasElement): Promise<Blob> {
   )
 }
 
+/** Encode a canvas as a lossy WebP blob (keeps alpha). Used for the sprite
+ *  sheet, whose PNG encoding blows past Vercel's ~4.5MB request-body limit
+ *  (413) — WebP at q=0.9 is roughly an order of magnitude smaller. */
+export function canvasToWebpBlob(canvas: HTMLCanvasElement, quality = 0.9): Promise<Blob> {
+  return new Promise((resolve, reject) =>
+    canvas.toBlob(
+      (b) => (b ? resolve(b) : reject(new Error('Canvas WebP encoding failed'))),
+      'image/webp',
+      quality,
+    ),
+  )
+}
+
 /**
  * Render the art PDF (and optional mask PDF) to canvases.
  *
