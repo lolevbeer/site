@@ -373,6 +373,10 @@ export interface Menu {
    * Override automatic day/night theme switching
    */
   themeMode?: ('auto' | 'light' | 'dark') | null;
+  /**
+   * Play the rotating-can animation on this display. Turn off to show static can images instead.
+   */
+  animateCans?: boolean | null;
   items: {
     product?:
       | ({
@@ -950,6 +954,7 @@ export interface MenusSelect<T extends boolean = true> {
   url?: T;
   sheetUrl?: T;
   themeMode?: T;
+  animateCans?: T;
   items?:
     | T
     | {

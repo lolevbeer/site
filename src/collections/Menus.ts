@@ -11,7 +11,9 @@ function getUserLocationIds(user: User | null): string[] | null {
   if (!user?.locations || !Array.isArray(user.locations) || user.locations.length === 0) {
     return null
   }
-  return user.locations.map((loc: string | { id: string }) => (typeof loc === 'object' ? loc.id : loc))
+  return user.locations.map((loc: string | { id: string }) =>
+    typeof loc === 'object' ? loc.id : loc,
+  )
 }
 
 /**
@@ -140,7 +142,9 @@ export const Menus: CollectionConfig = {
         // Check for duplicate products (polymorphic - could be beer or product)
         // Skip empty slots (items without a product) which represent empty taps
         const productIds = (
-          data.items as Array<{ product?: { relationTo: string; value: string | { id?: string } } | null }>
+          data.items as Array<{
+            product?: { relationTo: string; value: string | { id?: string } } | null
+          }>
         )
           .map((item) => {
             if (!item?.product) return null
@@ -193,16 +197,21 @@ export const Menus: CollectionConfig = {
           const beerIds: string[] = []
           const itemBeerMap: Map<number, string> = new Map()
 
-          data.items.forEach((item: { product?: { relationTo: string; value: string | { id?: string } } | null }, index: number) => {
-            const product = item.product
-            if (product?.relationTo === 'beers') {
-              const beerId = typeof product.value === 'string' ? product.value : product.value?.id
-              if (beerId) {
-                beerIds.push(beerId)
-                itemBeerMap.set(index, beerId)
+          data.items.forEach(
+            (
+              item: { product?: { relationTo: string; value: string | { id?: string } } | null },
+              index: number,
+            ) => {
+              const product = item.product
+              if (product?.relationTo === 'beers') {
+                const beerId = typeof product.value === 'string' ? product.value : product.value?.id
+                if (beerId) {
+                  beerIds.push(beerId)
+                  itemBeerMap.set(index, beerId)
+                }
               }
-            }
-          })
+            },
+          )
 
           // Single batch query for all beers
           const recipeMap: Map<string, number> = new Map()
@@ -218,14 +227,19 @@ export const Menus: CollectionConfig = {
           }
 
           // Build items with recipe numbers
-          const itemsWithRecipe = data.items.map((item: { product?: { relationTo: string; value: string | { id?: string } } | null }, index: number) => {
-            const beerId = itemBeerMap.get(index)
-            if (beerId) {
-              return { originalItem: item, recipe: recipeMap.get(beerId) || 0 }
-            }
-            // Products (non-beers) sort at the end
-            return { originalItem: item, recipe: -1 }
-          })
+          const itemsWithRecipe = data.items.map(
+            (
+              item: { product?: { relationTo: string; value: string | { id?: string } } | null },
+              index: number,
+            ) => {
+              const beerId = itemBeerMap.get(index)
+              if (beerId) {
+                return { originalItem: item, recipe: recipeMap.get(beerId) || 0 }
+              }
+              // Products (non-beers) sort at the end
+              return { originalItem: item, recipe: -1 }
+            },
+          )
 
           // Sort by recipe number (descending)
           itemsWithRecipe.sort((a, b) => b.recipe - a.recipe)
@@ -260,7 +274,8 @@ export const Menus: CollectionConfig = {
       type: 'ui',
       admin: {
         position: 'sidebar',
-        condition: (data, siblingData, { user }) => data?.type === 'draft' && hasRole(user, ['admin', 'lead-bartender']),
+        condition: (data, siblingData, { user }) =>
+          data?.type === 'draft' && hasRole(user, ['admin', 'lead-bartender']),
         components: {
           Field: '@/src/components/admin/MarkLinesCleanedButton#MarkLinesCleanedButton',
         },
@@ -364,6 +379,23 @@ export const Menus: CollectionConfig = {
       admin: {
         description: 'Override automatic day/night theme switching',
         position: 'sidebar',
+      },
+    },
+    {
+      name: 'animateCans',
+      label: 'Animate Cans',
+      type: 'checkbox',
+      defaultValue: true,
+      access: {
+        update: adminFieldAccess,
+      },
+      admin: {
+        position: 'sidebar',
+        // Only cans menus render the rotating-can sprite sheets, so the toggle
+        // is irrelevant on draft/other menus.
+        condition: (data) => data?.type === 'cans',
+        description:
+          'Play the rotating-can animation on this display. Turn off to show static can images instead.',
       },
     },
     {
