@@ -9,8 +9,8 @@
 import { createCanScene } from '@/components/beer/can-scene'
 import { LABEL_VIDEO_MIME } from '@/lib/utils/media-utils'
 
-/** Still size — square, transparent background (Beers.image suggests 2500²). */
-const STILL_SIZE = 2000
+/** Still size — square, transparent background. */
+const STILL_SIZE = 1080
 /** Video size — tall portrait crop around the can, plenty for menu cards. */
 const WIDTH = 640
 const HEIGHT = 800
