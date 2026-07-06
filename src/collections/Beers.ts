@@ -364,7 +364,10 @@ export const Beers: CollectionConfig = {
             width: '50%',
           },
         },
-        generatedUploadField('labelVideo', 'Generated label sweep video (WebM loop for menu displays)'),
+        generatedUploadField(
+          'labelVideo',
+          'Generated label sweep video (WebM loop for menu displays)',
+        ),
       ],
     },
     {
