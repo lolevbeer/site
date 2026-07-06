@@ -35,6 +35,40 @@ function utilityMapSize(w: number, h: number) {
   }
 }
 
+/** Drop-shadow sprite (captiva's _createDropShadow): a tight dark core plus
+ *  a wide faint falloff, painted as two stacked radial gradients. Content
+ *  depends only on constants, so it's painted once per page load and shared
+ *  by every scene (each scene still owns/disposes its own CanvasTexture). */
+let shadowSpriteCanvas: HTMLCanvasElement | null = null
+function getShadowSprite(): HTMLCanvasElement {
+  if (shadowSpriteCanvas) return shadowSpriteCanvas
+  const SIZE = 256
+  const canvas = document.createElement('canvas')
+  canvas.width = SIZE
+  canvas.height = SIZE
+  const ctx = canvas.getContext('2d')!
+  const paint = (radius: number, stops: [number, string][]) => {
+    const grad = ctx.createRadialGradient(SIZE / 2, SIZE / 2, 0, SIZE / 2, SIZE / 2, radius)
+    for (const [offset, color] of stops) grad.addColorStop(offset, color)
+    ctx.fillStyle = grad
+    ctx.fillRect(0, 0, SIZE, SIZE)
+  }
+  paint(SIZE * 0.18, [
+    [0, 'rgba(0, 0, 0, 1.0)'],
+    [0.5, 'rgba(0, 0, 0, 0.7)'],
+    [1, 'rgba(0, 0, 0, 0)'],
+  ])
+  paint(SIZE / 2, [
+    [0, 'rgba(0, 0, 0, 0.5)'],
+    [0.25, 'rgba(0, 0, 0, 0.3)'],
+    [0.5, 'rgba(0, 0, 0, 0.15)'],
+    [0.75, 'rgba(0, 0, 0, 0.04)'],
+    [1, 'rgba(0, 0, 0, 0)'],
+  ])
+  shadowSpriteCanvas = canvas
+  return canvas
+}
+
 /** A texture source: a same-origin/CORS-safe image URL or an in-memory canvas. */
 export type TextureSource = string | HTMLCanvasElement
 
@@ -134,40 +168,8 @@ export async function createCanScene({
   scene.add(can)
   const canRadius = (Math.max(size.x, size.z) / 2) * scale
 
-  // Soft drop shadow under the can (captiva's _createDropShadow): a tight
-  // dark core plus a wide faint falloff, painted as two stacked radial
-  // gradients on a small canvas and laid flat at the can's base.
-  const SHADOW_SIZE = 256
-  const shadowCanvas = document.createElement('canvas')
-  shadowCanvas.width = SHADOW_SIZE
-  shadowCanvas.height = SHADOW_SIZE
-  const sctx = shadowCanvas.getContext('2d')!
-  const paintShadow = (radius: number, stops: [number, string][]) => {
-    const grad = sctx.createRadialGradient(
-      SHADOW_SIZE / 2,
-      SHADOW_SIZE / 2,
-      0,
-      SHADOW_SIZE / 2,
-      SHADOW_SIZE / 2,
-      radius,
-    )
-    for (const [offset, color] of stops) grad.addColorStop(offset, color)
-    sctx.fillStyle = grad
-    sctx.fillRect(0, 0, SHADOW_SIZE, SHADOW_SIZE)
-  }
-  paintShadow(SHADOW_SIZE * 0.18, [
-    [0, 'rgba(0, 0, 0, 1.0)'],
-    [0.5, 'rgba(0, 0, 0, 0.7)'],
-    [1, 'rgba(0, 0, 0, 0)'],
-  ])
-  paintShadow(SHADOW_SIZE / 2, [
-    [0, 'rgba(0, 0, 0, 0.5)'],
-    [0.25, 'rgba(0, 0, 0, 0.3)'],
-    [0.5, 'rgba(0, 0, 0, 0.15)'],
-    [0.75, 'rgba(0, 0, 0, 0.04)'],
-    [1, 'rgba(0, 0, 0, 0)'],
-  ])
-  const shadowTex = new THREE.CanvasTexture(shadowCanvas)
+  // Soft drop shadow under the can, laid flat at its base (see getShadowSprite)
+  const shadowTex = new THREE.CanvasTexture(getShadowSprite())
   const shadowMat = new THREE.MeshBasicMaterial({
     map: shadowTex,
     transparent: true,

@@ -8,6 +8,7 @@
  */
 import { createCanScene } from '@/components/beer/can-scene'
 import { LABEL_VIDEO_MIME } from '@/lib/utils/media-utils'
+import { canvasToPngBlob } from './pdf-label-textures'
 
 /** Still size — square, transparent background. */
 const STILL_SIZE = 1080
@@ -43,65 +44,55 @@ export async function generateCanRenders(
     metalness: metalnessCanvas,
   })
 
-  // Still first: front view at high res, transparent background. toBlob must
-  // run in the same task as render() — the WebGL buffer isn't preserved
-  // across tasks (preserveDrawingBuffer is off).
-  let still: Blob
   try {
+    // Still first: front view at high res, transparent background. The blob
+    // encode must run in the same task as render() — the WebGL buffer isn't
+    // preserved across tasks (preserveDrawingBuffer is off).
     can.setAzimuth(0)
     can.render()
-    still = await new Promise<Blob>((resolve, reject) =>
-      can.renderer.domElement.toBlob(
-        (b) => (b ? resolve(b) : reject(new Error('Can still capture failed'))),
-        'image/png',
-      ),
-    )
-  } catch (err) {
-    can.dispose()
-    throw err
-  }
+    const still = await canvasToPngBlob(can.renderer.domElement)
 
-  // Then the sweep at video resolution (captureStream must start after the
-  // resize so the recorded track has the final dimensions)
-  can.setSize(WIDTH, HEIGHT)
-  const amplitude = can.wrap * SWEEP_RATIO
-  can.setAzimuth(0)
-  can.render()
+    // Then the sweep at video resolution (captureStream must start after
+    // the resize so the recorded track has the final dimensions)
+    can.setSize(WIDTH, HEIGHT)
+    const amplitude = can.wrap * SWEEP_RATIO
+    can.render()
 
-  const stream = can.renderer.domElement.captureStream(60)
-  const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: BITS_PER_SECOND })
-  const chunks: Blob[] = []
-  recorder.ondataavailable = (e) => {
-    if (e.data.size > 0) chunks.push(e.data)
-  }
-
-  const sweep = await new Promise<Blob>((resolve, reject) => {
-    recorder.onstop = () => {
-      can.dispose()
-      // Bare container type (no ;codecs=…) so it matches the Media
-      // collection's upload allowlist exactly.
-      resolve(new Blob(chunks, { type: LABEL_VIDEO_MIME }))
+    const stream = can.renderer.domElement.captureStream(60)
+    const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: BITS_PER_SECOND })
+    const chunks: Blob[] = []
+    recorder.ondataavailable = (e) => {
+      if (e.data.size > 0) chunks.push(e.data)
     }
-    recorder.onerror = (e) => {
-      can.dispose()
-      reject(new Error(`Video recording failed: ${String(e)}`))
-    }
-    recorder.start()
 
-    const start = performance.now()
-    const tick = () => {
-      const t = performance.now() - start
-      if (t >= DURATION_MS) {
-        recorder.stop()
-        return
+    const sweep = await new Promise<Blob>((resolve, reject) => {
+      recorder.onstop = () => {
+        // Bare container type (no ;codecs=…) so it matches the Media
+        // collection's upload allowlist exactly.
+        resolve(new Blob(chunks, { type: LABEL_VIDEO_MIME }))
       }
-      // sin() starts and ends at 0 with matching velocity → seamless loop
-      can.setAzimuth(amplitude * Math.sin((t / DURATION_MS) * Math.PI * 2))
-      can.render()
-      requestAnimationFrame(tick)
-    }
-    requestAnimationFrame(tick)
-  })
+      recorder.onerror = (e) => {
+        reject(new Error(`Video recording failed: ${String(e)}`))
+      }
+      recorder.start()
 
-  return { still, sweep }
+      const start = performance.now()
+      const tick = () => {
+        const t = performance.now() - start
+        if (t >= DURATION_MS) {
+          recorder.stop()
+          return
+        }
+        // sin() starts and ends at 0 with matching velocity → seamless loop
+        can.setAzimuth(amplitude * Math.sin((t / DURATION_MS) * Math.PI * 2))
+        can.render()
+        requestAnimationFrame(tick)
+      }
+      requestAnimationFrame(tick)
+    })
+
+    return { still, sweep }
+  } finally {
+    can.dispose()
+  }
 }

@@ -48,6 +48,17 @@ async function renderPdf(buffer: ArrayBuffer): Promise<HTMLCanvasElement> {
   return canvas
 }
 
+/** Encode a canvas as a PNG blob (shared by the texture uploads and the
+ *  still capture — toBlob snapshots the pixels at call time). */
+export function canvasToPngBlob(canvas: HTMLCanvasElement): Promise<Blob> {
+  return new Promise((resolve, reject) =>
+    canvas.toBlob(
+      (b) => (b ? resolve(b) : reject(new Error('Canvas PNG encoding failed'))),
+      'image/png',
+    ),
+  )
+}
+
 /**
  * Render the art PDF (and optional mask PDF) to canvases.
  *

@@ -219,7 +219,7 @@ export interface Beer {
    */
   labelMetalness?: (string | null) | Media;
   /**
-   * Beer image (auto-filled by the 3D label tool; upload to override — recommended 2500x2500px)
+   * Beer image (auto-filled by the 3D label tool; upload to override)
    */
   image?: (string | null) | Media;
   /**

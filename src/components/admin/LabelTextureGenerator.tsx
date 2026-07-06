@@ -13,7 +13,7 @@
  */
 import { useRef, useState } from 'react'
 import { Banner, Button, Dropzone, FieldLabel, useField } from '@payloadcms/ui'
-import { processLabelPdfs } from './pdf-label-textures'
+import { canvasToPngBlob, processLabelPdfs } from './pdf-label-textures'
 
 /** Create a media doc from a blob; returns the new doc id. */
 async function uploadMedia(blob: Blob, filename: string, alt: string): Promise<string> {
@@ -27,13 +27,7 @@ async function uploadMedia(blob: Blob, filename: string, alt: string): Promise<s
 
 /** Encode a canvas as PNG and create a media doc; returns the new doc id. */
 async function uploadPng(canvas: HTMLCanvasElement, alt: string): Promise<string> {
-  const blob = await new Promise<Blob>((resolve, reject) =>
-    canvas.toBlob(
-      (b) => (b ? resolve(b) : reject(new Error('Canvas PNG encoding failed'))),
-      'image/png',
-    ),
-  )
-  return uploadMedia(blob, `${alt}.png`, alt)
+  return uploadMedia(await canvasToPngBlob(canvas), `${alt}.png`, alt)
 }
 
 /** Payload-styled PDF picker: drag-and-drop zone with a browse button
