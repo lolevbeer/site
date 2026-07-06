@@ -2,7 +2,7 @@
 
 /**
  * Admin field for generating 3D can-label textures, the beer image still,
- * and the menu sweep video. Runs captiva's PDF→texture pipeline (see
+ * and the menu can-rotation sprite sheet. Runs captiva's PDF→texture pipeline (see
  * ./pdf-label-textures) in the admin browser, uploads the results to the
  * media collection, and wires them into the beer's labelBase /
  * labelMetalness / labelVideo / image fields (image stays editable so a
@@ -65,7 +65,9 @@ export function LabelTextureGenerator() {
   const { value: slug } = useField<string>({ path: 'slug' })
   const { setValue: setBase } = useField<string>({ path: 'labelBase' })
   const { setValue: setMetalness } = useField<string>({ path: 'labelMetalness' })
-  const { setValue: setVideo } = useField<string>({ path: 'labelVideo' })
+  // The `labelVideo` field now holds the can-rotation sprite sheet PNG (the
+  // field keeps its legacy name to avoid a schema migration).
+  const { setValue: setSprite } = useField<string>({ path: 'labelVideo' })
   const { setValue: setImage } = useField<string>({ path: 'image' })
   const [artFile, setArtFile] = useState<File | null>(null)
   const [maskFile, setMaskFile] = useState<File | null>(null)
@@ -91,18 +93,18 @@ export function LabelTextureGenerator() {
       ])
       setBase(baseId)
       setMetalness(metalnessId)
-      // Bake the beer image + menu sweep video (records in real time, ~12s)
+      // Bake the beer image still + the can-rotation sprite sheet (both PNGs)
       const { generateCanRenders } = await import('./record-can-video')
-      const { still, sweep } = await generateCanRenders(baseCanvas, metalnessCanvas)
-      const [imageId, sweepId] = await Promise.all([
+      const { still, sprite } = await generateCanRenders(baseCanvas, metalnessCanvas)
+      const [imageId, spriteId] = await Promise.all([
         uploadMedia(still, `${name}-can.png`, `${name} can`),
-        uploadMedia(sweep, `${name}-label-sweep.webm`, `${name} label sweep`),
+        uploadMedia(sprite, `${name}-can-sprite.png`, `${name} can rotation`),
       ])
       setImage(imageId)
-      setVideo(sweepId)
+      setSprite(spriteId)
       setStatus({
         type: 'success',
-        msg: 'Textures, can image + sweep video generated — save the beer to keep them',
+        msg: 'Textures, can image + rotation sprite generated — save the beer to keep them',
       })
     } catch (err) {
       setStatus({ type: 'error', msg: err instanceof Error ? err.message : String(err) })

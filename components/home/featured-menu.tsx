@@ -13,7 +13,7 @@ import { useLocationContext } from '@/components/location/location-provider'
 import { DraftBeerCard } from '@/components/beer/draft-beer-card'
 import { useAnimatedList, getAnimationClass } from '@/lib/hooks/use-animated-list'
 import { useAuth } from '@/lib/hooks/use-auth'
-import { getMediaUrl } from '@/lib/utils/media-utils'
+import { getMediaUrl, canSpriteAnimation } from '@/lib/utils/media-utils'
 import { extractBeerFromMenuItem, extractProductFromMenuItem } from '@/lib/utils/menu-item-utils'
 import { getTodayEST } from '@/lib/utils/date'
 import type { Menu, Style, Location } from '@/src/payload-types'
@@ -55,8 +55,9 @@ interface MenuItem {
   glutenFree: boolean
   /** Image URL from Payload CMS Media, or undefined if no image */
   imageUrl?: string
-  /** Generated can sweep-video URL (beer.labelVideo). Only populated when
-   *  the menu enables labelVideos; CanCard plays it whenever present. */
+  /** Can-rotation sprite sheet URL (beer.labelVideo — a PNG, not a video).
+   *  Only populated when the menu enables labelVideos; CanCard animates it
+   *  via CSS (see canSpriteAnimation) whenever present. */
   labelVideoUrl?: string
   onDraft?: boolean
   glass?: string
@@ -104,9 +105,9 @@ interface FeaturedMenuProps {
   itemColors?: string[]
   /** Hide header when embedding in another component */
   hideHeader?: boolean
-  /** Play generated label sweep videos on can cards. Only enabled on /m/
-   *  menu displays (captive hardware, cached); public pages keep the flat
-   *  image to spare mobile visitors multi-MB video downloads. */
+  /** Animate the generated can-rotation sprite sheet on can cards. Only enabled
+   *  on /m/ menu displays (captive hardware, cached); public pages keep the
+   *  flat image to spare mobile visitors the larger sprite-sheet download. */
   labelVideos?: boolean
 }
 
@@ -118,6 +119,15 @@ function isWithinDays(dateStr: string | undefined, days: number): boolean {
 
 /** Stable key extractor for useAnimatedList — module-level so the hook's memos can skip work */
 const getMenuItemKey = (item: MenuItem) => item.variant
+
+/** URL of a beer's can-rotation sprite sheet, or undefined. Only PNG sheets
+ *  qualify: pre-sprite records still hold a .webm in labelVideo, which can't be
+ *  a CSS background image, so those fall through to the still image until the
+ *  label is regenerated in the admin. */
+function spriteSheetUrl(labelVideo: unknown): string | undefined {
+  const url = getMediaUrl(labelVideo)
+  return url && /\.png($|\?)/i.test(url) ? url : undefined
+}
 
 /** Convert Payload menu items to display-ready MenuItem format */
 function convertMenuItems(menuData: Menu, labelVideos = false): MenuItem[] {
@@ -196,8 +206,8 @@ function convertMenuItems(menuData: Menu, labelVideos = false): MenuItem[] {
         glutenFree: false,
         imageUrl: getMediaUrl(beer.image, 'card'),
         // Gated here (not per render site) so public pages never even carry
-        // the multi-MB video URLs; CanCard plays a video iff the URL exists.
-        labelVideoUrl: labelVideos ? getMediaUrl(beer.labelVideo) : undefined,
+        // the sprite-sheet URL; CanCard animates it iff present.
+        labelVideoUrl: labelVideos ? spriteSheetUrl(beer.labelVideo) : undefined,
         glass: String(beer.glass || 'pint'),
         fourPack: beer.fourPack
           ? String(beer.fourPack)
@@ -319,19 +329,22 @@ function CanCard({
 
   // Shared image rendering logic
   const renderImage = (heightClass?: string) => {
-    // Baked 3D sweep available: play the looping can rotation. A muted
-    // <video> costs almost nothing on menu TVs, unlike per-item WebGL.
+    // Baked can rotation available: animate the sprite sheet with CSS. It's an
+    // alpha PNG driven by a steps() sweep — NOT a <video> — because the menu
+    // TVs (Samsung Frame, Tizen browser) decode only one video at a time and
+    // don't composite WebM alpha, so a grid of <video> cans showed one can plus
+    // black rectangles. See canSpriteAnimation / CAN_SPRITE. The flex wrapper
+    // centers the portrait frame the way object-contain did for the video.
     if (item.labelVideoUrl) {
       return (
-        <video
-          src={item.labelVideoUrl}
-          className="absolute inset-0 h-full w-full object-contain"
-          muted
-          autoPlay
-          loop
-          playsInline
-          aria-label={`${item.name} - ${item.type || 'Craft beer'} rotating can`}
-        />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div
+            className="h-full w-auto max-w-full"
+            style={canSpriteAnimation(item.labelVideoUrl)}
+            role="img"
+            aria-label={`${item.name} - ${item.type || 'Craft beer'} rotating can`}
+          />
+        </div>
       )
     }
     if (item.imageUrl && !imageError) {

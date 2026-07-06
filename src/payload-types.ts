@@ -223,7 +223,7 @@ export interface Beer {
    */
   image?: (string | null) | Media;
   /**
-   * Generated label sweep video (WebM loop for menu displays)
+   * Generated can-rotation sprite sheet (PNG; animated in CSS on menu displays)
    */
   labelVideo?: (string | null) | Media;
   /**

@@ -3,6 +3,7 @@
  * Consolidated image/media URL extraction for Payload CMS
  */
 
+import type { CSSProperties } from 'react'
 import { normalizeUrl } from './url-utils'
 
 /**
@@ -11,6 +12,64 @@ import { normalizeUrl } from './url-utils'
  * upload allowlist — they must match or uploads 400 after a full recording.
  */
 export const LABEL_VIDEO_MIME = 'video/webm'
+
+/**
+ * Layout of the generated can-rotation sprite sheet (stored in the beer's
+ * `labelVideo` field — a PNG, not a video, despite the legacy field name).
+ * The admin recorder tiles `frames` render frames left-to-right, top-to-bottom
+ * into a `cols`×`rows` grid; menu displays animate it with a CSS steps() sweep
+ * (see `canSpriteAnimation`) instead of a <video>.
+ *
+ * Why a sprite sheet: the menus run on Samsung Frame TVs whose browser decodes
+ * only one <video> at a time and does not composite WebM alpha — a grid of
+ * video cans showed one can plus black rectangles. A PNG sheet is a background
+ * image (no video decoder, real transparency), so every can animates.
+ *
+ * Smoothness is frames / loop-seconds: 48 frames over 7.2s ≈ 6.7fps, enough for
+ * a gentle sway. Raising `frames` further is the lever for more smoothness, but
+ * every can's sheet is a decoded bitmap held in TV RAM at once (decoded size is
+ * pixel-count, not file-size), so frames trade off against frame resolution and
+ * total memory — a menu of ~12 cans at 256×320×48 is ~190MB decoded. If cans
+ * start blanking on the TV that's RAM pressure: cut `frames` or the frame size.
+ *
+ * ponytail: a grid (not one long row) keeps the sheet well under 4096px so
+ * older Tizen GPUs can upload the texture. Invariants (`cols*rows === frames`,
+ * and `loopMs % rows === 0` so the two-axis animation can't drift) are asserted
+ * in can-sprite.int.spec.ts.
+ */
+export const CAN_SPRITE = {
+  frames: 48,
+  cols: 8,
+  rows: 6,
+  frameWidth: 256,
+  frameHeight: 320,
+  loopMs: 7200,
+} as const
+
+/**
+ * Inline-style values that animate a CAN_SPRITE sheet as a gentle back-and-
+ * forth can rotation. Kept pure (no JSX) so the geometry is unit-testable; the
+ * display spreads the result onto a div and pairs it with the `can-sprite-x`/
+ * `can-sprite-y` keyframes in globals.css.
+ *
+ * The steps() sweep walks a background-position sized to `cols`/`rows` copies
+ * of the element. The end positions overshoot 100% (`100*n/(n-1)`) so each
+ * discrete step lands exactly on a frame boundary — the classic sprite-sheet
+ * off-by-one correction. The x sweep completes one row per `loopMs/rows`, at
+ * which point the slower y sweep advances exactly one row.
+ */
+export function canSpriteAnimation(url: string): CSSProperties {
+  const { cols, rows, frameWidth, frameHeight, loopMs } = CAN_SPRITE
+  return {
+    backgroundImage: `url(${url})`,
+    backgroundRepeat: 'no-repeat',
+    backgroundSize: `${cols * 100}% ${rows * 100}%`,
+    aspectRatio: `${frameWidth} / ${frameHeight}`,
+    animation: `can-sprite-x ${loopMs / rows}ms steps(${cols}) infinite, can-sprite-y ${loopMs}ms steps(${rows}) infinite`,
+    ['--can-sprite-x-end' as string]: `${(100 * cols) / (cols - 1)}%`,
+    ['--can-sprite-y-end' as string]: `${(100 * rows) / (rows - 1)}%`,
+  } as CSSProperties
+}
 
 /**
  * Type for Payload Media objects
