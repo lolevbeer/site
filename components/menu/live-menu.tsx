@@ -64,7 +64,12 @@ export function LiveMenu({ menuUrl, initialMenu }: LiveMenuProps) {
         className="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground"
         style={themeVars}
       >
-        <FeaturedCans menu={displayMenu} animated itemColors={itemColors} labelVideos />
+        <FeaturedCans
+          menu={displayMenu}
+          animated
+          itemColors={itemColors}
+          labelVideos={displayMenu.animateCans ?? true}
+        />
       </div>
     )
   }

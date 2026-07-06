@@ -450,6 +450,19 @@
     0% { background-position: 200% 0; }
     100% { background-position: -200% 0; }
   }
+
+  /* Can-label rotation sprite sheet (see CAN_SPRITE / canSpriteAnimation in
+     lib/utils/media-utils). Two stepped background-position sweeps walk a
+     cols×rows grid of frames on an alpha PNG — used instead of a <video>
+     because the menu TVs (Samsung Frame) decode only one video at a time and
+     don't composite WebM alpha. The end positions come from inline custom
+     properties and overshoot 100% so each step lands on a frame boundary. */
+  @keyframes can-sprite-x {
+    to { background-position-x: var(--can-sprite-x-end); }
+  }
+  @keyframes can-sprite-y {
+    to { background-position-y: var(--can-sprite-y-end); }
+  }
 }
 
 /* Mapbox popup overrides - use shadcn styling */

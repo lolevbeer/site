@@ -366,7 +366,7 @@ export const Beers: CollectionConfig = {
         },
         generatedUploadField(
           'labelVideo',
-          'Generated label sweep video (WebM loop for menu displays)',
+          'Generated can-rotation sprite sheet (PNG; animated in CSS on menu displays)',
         ),
       ],
     },
