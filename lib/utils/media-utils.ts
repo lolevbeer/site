@@ -77,10 +77,7 @@ export function getMediaUrl(media: unknown, size?: MediaSize): string | undefine
  * @param slugOrVariant - Optional slug or variant for local image path fallback
  * @returns The image URL string, or null if not available
  */
-export function getBeerImageUrl(
-  image: unknown,
-  slugOrVariant?: string
-): string | null {
+export function getBeerImageUrl(image: unknown, slugOrVariant?: string): string | null {
   if (!image) return null
 
   // Already a URL string (from payload-adapter conversion or direct URL)

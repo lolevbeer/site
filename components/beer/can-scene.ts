@@ -132,6 +132,50 @@ export async function createCanScene({
   can.scale.setScalar(scale)
   can.position.copy(box.getCenter(new THREE.Vector3()).negate().multiplyScalar(scale))
   scene.add(can)
+  const canRadius = (Math.max(size.x, size.z) / 2) * scale
+
+  // Soft drop shadow under the can (captiva's _createDropShadow): a tight
+  // dark core plus a wide faint falloff, painted as two stacked radial
+  // gradients on a small canvas and laid flat at the can's base.
+  const SHADOW_SIZE = 256
+  const shadowCanvas = document.createElement('canvas')
+  shadowCanvas.width = SHADOW_SIZE
+  shadowCanvas.height = SHADOW_SIZE
+  const sctx = shadowCanvas.getContext('2d')!
+  const paintShadow = (radius: number, stops: [number, string][]) => {
+    const grad = sctx.createRadialGradient(
+      SHADOW_SIZE / 2, SHADOW_SIZE / 2, 0,
+      SHADOW_SIZE / 2, SHADOW_SIZE / 2, radius,
+    )
+    for (const [offset, color] of stops) grad.addColorStop(offset, color)
+    sctx.fillStyle = grad
+    sctx.fillRect(0, 0, SHADOW_SIZE, SHADOW_SIZE)
+  }
+  paintShadow(SHADOW_SIZE * 0.18, [
+    [0, 'rgba(0, 0, 0, 1.0)'],
+    [0.5, 'rgba(0, 0, 0, 0.7)'],
+    [1, 'rgba(0, 0, 0, 0)'],
+  ])
+  paintShadow(SHADOW_SIZE / 2, [
+    [0, 'rgba(0, 0, 0, 0.5)'],
+    [0.25, 'rgba(0, 0, 0, 0.3)'],
+    [0.5, 'rgba(0, 0, 0, 0.15)'],
+    [0.75, 'rgba(0, 0, 0, 0.04)'],
+    [1, 'rgba(0, 0, 0, 0)'],
+  ])
+  const shadowTex = new THREE.CanvasTexture(shadowCanvas)
+  const shadowMat = new THREE.MeshBasicMaterial({
+    map: shadowTex,
+    transparent: true,
+    depthWrite: false,
+  })
+  const shadowMesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(canRadius * 4, canRadius * 4),
+    shadowMat,
+  )
+  shadowMesh.rotation.x = -Math.PI / 2
+  shadowMesh.position.y = -CAN_HEIGHT / 2 - 0.0005
+  scene.add(shadowMesh)
 
   baseTex.colorSpace = THREE.SRGBColorSpace
   const maxAniso = renderer.capabilities.getMaxAnisotropy()
@@ -192,7 +236,7 @@ export async function createCanScene({
 
   // Label = open cylinder hugging the can; wrap angle from the artwork's
   // aspect ratio so its proportions are preserved
-  const radius = (Math.max(size.x, size.z) / 2) * scale * LABEL_RADIUS_BUMP
+  const radius = canRadius * LABEL_RADIUS_BUMP
   const labelHeight = CAN_HEIGHT * LABEL_HEIGHT_RATIO
   const wrap = Math.min((labelHeight * w) / h / radius, MAX_WRAP_ANGLE)
   const labelMesh = new THREE.Mesh(
@@ -224,11 +268,19 @@ export async function createCanScene({
         const mesh = child as Mesh
         if (mesh.isMesh) mesh.geometry.dispose()
       })
-      for (const tex of [baseTex, metalTex, labelMat.alphaMap, labelMat.roughnessMap, envTex]) {
+      for (const tex of [
+        baseTex,
+        metalTex,
+        labelMat.alphaMap,
+        labelMat.roughnessMap,
+        envTex,
+        shadowTex,
+      ]) {
         tex?.dispose()
       }
       metal.dispose()
       labelMat.dispose()
+      shadowMat.dispose()
       renderer.dispose()
       // Actually release the GL context: SPA navigation across beer pages
       // would otherwise accumulate zombie contexts (browsers cap ~8-16 per

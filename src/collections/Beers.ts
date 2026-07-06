@@ -345,7 +345,10 @@ export const Beers: CollectionConfig = {
           relationTo: 'media',
           admin: {
             description: 'Generated 3D label texture (via the tool above)',
-            width: '50%',
+            width: '33%',
+            // readOnly is UI-only: LabelTextureGenerator still populates the
+            // value programmatically via useField().setValue
+            readOnly: true,
           },
         },
         {
@@ -354,18 +357,21 @@ export const Beers: CollectionConfig = {
           relationTo: 'media',
           admin: {
             description: 'Generated metalness map (white = metallic foil)',
-            width: '50%',
+            width: '33%',
+            readOnly: true,
+          },
+        },
+        {
+          name: 'labelVideo',
+          type: 'upload',
+          relationTo: 'media',
+          admin: {
+            description: 'Generated label sweep video (WebM loop for menu displays)',
+            width: '33%',
+            readOnly: true,
           },
         },
       ],
-    },
-    {
-      name: 'labelVideo',
-      type: 'upload',
-      relationTo: 'media',
-      admin: {
-        description: 'Generated label sweep video (WebM loop for menu displays)',
-      },
     },
     {
       // Single-value tag: relationship gives a typeahead over existing tags
