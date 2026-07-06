@@ -120,13 +120,14 @@ function isWithinDays(dateStr: string | undefined, days: number): boolean {
 /** Stable key extractor for useAnimatedList — module-level so the hook's memos can skip work */
 const getMenuItemKey = (item: MenuItem) => item.variant
 
-/** URL of a beer's can-rotation sprite sheet, or undefined. Only PNG sheets
- *  qualify: pre-sprite records still hold a .webm in labelVideo, which can't be
- *  a CSS background image, so those fall through to the still image until the
- *  label is regenerated in the admin. */
+/** URL of a beer's can-rotation sprite sheet, or undefined. PNG and WebP
+ *  sheets qualify (sheets upload as WebP, but Payload's formatOptions may
+ *  re-encode to .png server-side): pre-sprite records still hold a .webm in
+ *  labelVideo, which can't be a CSS background image, so those fall through
+ *  to the still image until the label is regenerated in the admin. */
 function spriteSheetUrl(labelVideo: unknown): string | undefined {
   const url = getMediaUrl(labelVideo)
-  return url && /\.png($|\?)/i.test(url) ? url : undefined
+  return url && /\.(png|webp)($|\?)/i.test(url) ? url : undefined
 }
 
 /** Convert Payload menu items to display-ready MenuItem format */
