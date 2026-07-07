@@ -13,10 +13,10 @@ import type { Mesh, PerspectiveCamera, WebGLRenderer } from 'three'
 // Geometry/material constants lifted from captiva's proven setup.
 const CAN_HEIGHT = 0.12 // normalized model height in scene units
 const CAMERA_DISTANCE = 0.275
-const LABEL_HEIGHT_RATIO = 0.75
+const LABEL_HEIGHT_RATIO = 0.82
 const LABEL_OFFSET_RATIO = -0.02
 const LABEL_RADIUS_BUMP = 1.005 // label sits just off the can surface
-const MAX_WRAP_ANGLE = Math.PI * 1.8
+const MAX_WRAP_ANGLE = Math.PI * 1.95
 const FOIL_ROUGHNESS = 0.33
 const MATTE_ROUGHNESS = 0.8
 
