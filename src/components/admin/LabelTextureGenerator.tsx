@@ -13,7 +13,7 @@
  */
 import { useRef, useState } from 'react'
 import { Banner, Button, Dropzone, FieldLabel, useField } from '@payloadcms/ui'
-import { canvasToPngBlob, processLabelPdfs } from './pdf-label-textures'
+import { canvasToWebpBlob, processLabelPdfs } from './pdf-label-textures'
 
 /** Create a media doc from a blob; returns the new doc id. */
 async function uploadMedia(blob: Blob, filename: string, alt: string): Promise<string> {
@@ -25,9 +25,10 @@ async function uploadMedia(blob: Blob, filename: string, alt: string): Promise<s
   return (await res.json()).doc.id
 }
 
-/** Encode a canvas as PNG and create a media doc; returns the new doc id. */
-async function uploadPng(canvas: HTMLCanvasElement, alt: string): Promise<string> {
-  return uploadMedia(await canvasToPngBlob(canvas), `${alt}.png`, alt)
+/** Encode a canvas as WebP (to stay under Vercel's request-body limit) and
+ *  create a media doc; returns the new doc id. */
+async function uploadWebp(canvas: HTMLCanvasElement, alt: string): Promise<string> {
+  return uploadMedia(await canvasToWebpBlob(canvas), `${alt}.webp`, alt)
 }
 
 /** Payload-styled PDF picker: drag-and-drop zone with a browse button
@@ -88,17 +89,17 @@ export function LabelTextureGenerator() {
         maskFile ? await maskFile.arrayBuffer() : null,
       )
       const [baseId, metalnessId] = await Promise.all([
-        uploadPng(baseCanvas, `${name}-label-base`),
-        uploadPng(metalnessCanvas, `${name}-label-metalness`),
+        uploadWebp(baseCanvas, `${name}-label-base`),
+        uploadWebp(metalnessCanvas, `${name}-label-metalness`),
       ])
       setBase(baseId)
       setMetalness(metalnessId)
-      // Bake the beer image still (PNG) + the can-rotation sprite sheet (WebP,
+      // Bake the beer image still + the can-rotation sprite sheet (both WebP,
       // to stay under Vercel's request-body limit)
       const { generateCanRenders } = await import('./record-can-video')
       const { still, sprite } = await generateCanRenders(baseCanvas, metalnessCanvas)
       const [imageId, spriteId] = await Promise.all([
-        uploadMedia(still, `${name}-can.png`, `${name} can`),
+        uploadMedia(still, `${name}-can.webp`, `${name} can`),
         uploadMedia(sprite, `${name}-can-sprite.webp`, `${name} can rotation`),
       ])
       setImage(imageId)
