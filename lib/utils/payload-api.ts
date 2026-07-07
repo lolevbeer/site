@@ -246,6 +246,14 @@ export const getMenuByUrl = async (url: string): Promise<PayloadMenu | null> => 
 /**
  * Get menu by URL slug - UNCACHED version for real-time updates
  * Used by SSE endpoints and menu display pages that need immediate updates
+ *
+ * Returns null ONLY when the menu genuinely doesn't exist. A fetch failure
+ * (cold start, transient DB blip) throws rather than returning null: the
+ * display page (m/[menuUrl]) turns null into notFound(), and because that
+ * page is ISR (revalidate = 60), a 404 render gets cached and served to every
+ * display for up to a minute. A thrown error is never persisted to the route
+ * cache, so it self-heals on the next request and hits the segment's
+ * auto-reloading error boundary instead of poisoning the fleet with a 404.
  */
 export const getMenuByUrlFresh = async (url: string): Promise<PayloadMenu | null> => {
   try {
@@ -274,8 +282,9 @@ export const getMenuByUrlFresh = async (url: string): Promise<PayloadMenu | null
 
     return result.docs[0] || null
   } catch (error) {
+    // Rethrow: a transient failure must NOT render as notFound() (see JSDoc).
     logger.error(`Error fetching menu by URL (fresh): ${url}`, error)
-    return null
+    throw error
   }
 }
 
