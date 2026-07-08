@@ -10,13 +10,22 @@
  * error into `[]`/`null` would bake an empty render into the route cache and
  * serve it for the whole revalidate window (see the /m fix, commit 7160f57e).
  * A genuinely-empty result (e.g. location not found) is still returned normally
- * from inside the cached fn and remains cacheable.
+ * from inside the cached fn and remains cacheable. The one exception is
+ * hasAnyBeerJustReleased: it feeds a non-critical badge that is discarded after
+ * the first /m poll, so it degrades to `false` rather than blanking the display.
  */
 
 import { getPayload } from 'payload'
 import config from '@/src/payload.config'
 import { unstable_cache } from 'next/cache'
-import type { Beer as PayloadBeer, Menu, HolidayHour, Event as PayloadEvent, Food as PayloadFood, Faq } from '@/src/payload-types'
+import type {
+  Beer as PayloadBeer,
+  Menu,
+  HolidayHour,
+  Event as PayloadEvent,
+  Food as PayloadFood,
+  Faq,
+} from '@/src/payload-types'
 
 export type PayloadMenu = Menu
 import type { LocationSlug } from '@/lib/types/location'
@@ -52,11 +61,15 @@ export const hasAnyBeerJustReleased = async (): Promise<boolean> => {
         return result.docs.length > 0
       },
       ['any-beer-just-released'],
-      { tags: [CACHE_TAGS.beers], revalidate: 300 }
+      { tags: [CACHE_TAGS.beers], revalidate: 300 },
     )()
   } catch (error) {
     logger.error('Error checking justReleased beers', error)
-    throw error
+    // Non-critical badge flag (drives the "Just Released" highlight and is
+    // discarded after the first /m poll). Degrade gracefully instead of
+    // throwing — a transient blip here must not black out an unattended
+    // /m display via the auto-reloading error boundary.
+    return false
   }
 }
 
@@ -84,7 +97,7 @@ export const getAllBeersFromPayload = async (): Promise<PayloadBeer[]> => {
         return result.docs
       },
       ['all-beers'],
-      { tags: [CACHE_TAGS.beers], revalidate: 3600 } // 1 hour fallback
+      { tags: [CACHE_TAGS.beers], revalidate: 3600 }, // 1 hour fallback
     )()
   } catch (error) {
     logger.error('Error fetching beers from Payload', error)
@@ -116,7 +129,7 @@ export const getBeerBySlug = async (slug: string): Promise<PayloadBeer | null> =
       return result.docs[0] || null
     },
     [`beer-${slug}`],
-    { tags: [CACHE_TAGS.beers], revalidate: 3600 }
+    { tags: [CACHE_TAGS.beers], revalidate: 3600 },
   )()
 }
 
@@ -172,7 +185,7 @@ export const getMenusByLocation = async (locationSlug: string): Promise<PayloadM
         return menusResult.docs
       },
       [`menus-location-${locationSlug}`],
-      { tags: [CACHE_TAGS.menus, CACHE_TAGS.locations], revalidate: 300 } // 5 min fallback
+      { tags: [CACHE_TAGS.menus, CACHE_TAGS.locations], revalidate: 300 }, // 5 min fallback
     )()
   } catch (error) {
     logger.error(`Error fetching menus for location: ${locationSlug}`, error)
@@ -185,7 +198,7 @@ export const getMenusByLocation = async (locationSlug: string): Promise<PayloadM
  */
 export async function getDraftMenu(locationSlug: string): Promise<PayloadMenu | null> {
   const menus = await getMenusByLocation(locationSlug)
-  return menus.find(menu => menu.type === 'draft') || null
+  return menus.find((menu) => menu.type === 'draft') || null
 }
 
 /**
@@ -193,7 +206,7 @@ export async function getDraftMenu(locationSlug: string): Promise<PayloadMenu | 
  */
 export async function getCansMenu(locationSlug: string): Promise<PayloadMenu | null> {
   const menus = await getMenusByLocation(locationSlug)
-  const cansMenu = menus.find(menu => menu.type === 'cans') || null
+  const cansMenu = menus.find((menu) => menu.type === 'cans') || null
 
   // Clone and sort to avoid mutating the cached object from unstable_cache
   if (cansMenu?.items) {
@@ -244,7 +257,7 @@ export const getMenuByUrl = async (url: string): Promise<PayloadMenu | null> => 
         return result.docs[0] || null
       },
       [`menu-url-${url}`],
-      { tags: [CACHE_TAGS.menus], revalidate: 60 } // 1 min fallback for menus
+      { tags: [CACHE_TAGS.menus], revalidate: 60 }, // 1 min fallback for menus
     )()
   } catch (error) {
     logger.error(`Error fetching menu by URL: ${url}`, error)
@@ -320,7 +333,7 @@ export const getAllLocations = async () => {
         return result.docs
       },
       ['all-locations'],
-      { tags: [CACHE_TAGS.locations], revalidate: 3600 }
+      { tags: [CACHE_TAGS.locations], revalidate: 3600 },
     )()
   } catch (error) {
     logger.error('Error fetching locations from Payload', error)
@@ -346,7 +359,7 @@ export const getAllStyles = async () => {
         return result.docs
       },
       ['all-styles'],
-      { tags: [CACHE_TAGS.styles], revalidate: 3600 }
+      { tags: [CACHE_TAGS.styles], revalidate: 3600 },
     )()
   } catch (error) {
     logger.error('Error fetching styles from Payload', error)
@@ -405,7 +418,6 @@ export function extractVendorInfo(
   }
 }
 
-
 // getBeerImageUrl moved to formatters.ts for client-side compatibility
 
 /**
@@ -458,7 +470,7 @@ export const getAvailableBeersFromMenus = async (): Promise<PayloadBeer[]> => {
         return beers
       },
       ['available-beers-from-menus'],
-      { tags: [CACHE_TAGS.menus, CACHE_TAGS.beers], revalidate: 300 }
+      { tags: [CACHE_TAGS.menus, CACHE_TAGS.beers], revalidate: 300 },
     )()
   } catch (error) {
     logger.error('Error fetching available beers from menus', error)
@@ -484,7 +496,7 @@ export const getComingSoonBeers = async () => {
         return result.beers || []
       },
       ['coming-soon-beers'],
-      { tags: [CACHE_TAGS.comingSoon], revalidate: 300 }
+      { tags: [CACHE_TAGS.comingSoon], revalidate: 300 },
     )()
   } catch (error) {
     logger.error('Error fetching coming soon beers', error)
@@ -510,7 +522,7 @@ export const fetchGlobal = async (slug: string, depth: number = 0) => {
         return result
       },
       [`global-${slug}`],
-      { tags: [tag], revalidate: 300 }
+      { tags: [tag], revalidate: 300 },
     )()
   } catch (error) {
     logger.error(`Error fetching global: ${slug}`, error)
@@ -523,7 +535,10 @@ export const fetchGlobal = async (slug: string, depth: number = 0) => {
  * Returns the override if one exists, null otherwise
  * Cached until 'holiday-hours' tag is invalidated
  */
-export const getHolidayHours = async (locationId: string, date: Date): Promise<HolidayHour | null> => {
+export const getHolidayHours = async (
+  locationId: string,
+  date: Date,
+): Promise<HolidayHour | null> => {
   const dateStr = date.toISOString().split('T')[0]
 
   try {
@@ -554,7 +569,7 @@ export const getHolidayHours = async (locationId: string, date: Date): Promise<H
         return result.docs[0] || null
       },
       [`holiday-hours-${locationId}-${dateStr}`],
-      { tags: [CACHE_TAGS.holidayHours], revalidate: 300 }
+      { tags: [CACHE_TAGS.holidayHours], revalidate: 300 },
     )()
   } catch (error) {
     logger.error(`Error fetching holiday hours for location ${locationId} on ${date}`, error)
@@ -602,7 +617,7 @@ export const getHolidayHoursForLocation = async (locationId: string): Promise<Ho
         return result.docs
       },
       [`holiday-hours-location-${locationId}`],
-      { tags: [CACHE_TAGS.holidayHours], revalidate: 300 }
+      { tags: [CACHE_TAGS.holidayHours], revalidate: 300 },
     )()
   } catch (error) {
     logger.error(`Error fetching holiday hours for location ${locationId}`, error)
@@ -610,7 +625,8 @@ export const getHolidayHoursForLocation = async (locationId: string): Promise<Ho
   }
 }
 
-export type DayOfWeek = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday'
+export type DayOfWeek =
+  'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday'
 
 export interface WeeklyHoursDay {
   day: DayOfWeek
@@ -710,7 +726,15 @@ export const getWeeklyHoursWithHolidays = async (locationId: string): Promise<We
         }
 
         // Build the weekly hours array
-        const days: DayOfWeek[] = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+        const days: DayOfWeek[] = [
+          'monday',
+          'tuesday',
+          'wednesday',
+          'thursday',
+          'friday',
+          'saturday',
+          'sunday',
+        ]
         const weeklyHours: WeeklyHoursDay[] = []
 
         for (let i = 0; i < 7; i++) {
@@ -751,7 +775,8 @@ export const getWeeklyHoursWithHolidays = async (locationId: string): Promise<We
             }
           } else {
             // Use regular hours from location
-            const regularHours = location[dayName] as { open?: string | null; close?: string | null } | undefined
+            const regularHours = location[dayName] as
+              { open?: string | null; close?: string | null } | undefined
             const hasHours = regularHours?.open && regularHours?.close
 
             weeklyHours.push({
@@ -768,7 +793,7 @@ export const getWeeklyHoursWithHolidays = async (locationId: string): Promise<We
         return weeklyHours
       },
       [`weekly-hours-${locationId}-${weekKey}`],
-      { tags: [CACHE_TAGS.locations, CACHE_TAGS.holidayHours], revalidate: 300 }
+      { tags: [CACHE_TAGS.locations, CACHE_TAGS.holidayHours], revalidate: 300 },
     )()
   } catch (error) {
     logger.error(`Error fetching weekly hours with holidays for location ${locationId}`, error)
@@ -791,7 +816,7 @@ export const getAllLocationsWeeklyHours = async (): Promise<Map<string, WeeklyHo
         if (location.slug) {
           hoursMap.set(location.slug, weeklyHours)
         }
-      })
+      }),
     )
 
     return hoursMap
@@ -806,7 +831,10 @@ export const getAllLocationsWeeklyHours = async (): Promise<Map<string, WeeklyHo
  * Returns events with date >= today, sorted by date ascending
  * Cached until 'events' tag is invalidated
  */
-export const getUpcomingEventsFromPayload = async (locationSlug: string, limit: number = 10): Promise<PayloadEvent[]> => {
+export const getUpcomingEventsFromPayload = async (
+  locationSlug: string,
+  limit: number = 10,
+): Promise<PayloadEvent[]> => {
   const todayKey = getTodayEST()
 
   try {
@@ -855,7 +883,7 @@ export const getUpcomingEventsFromPayload = async (locationSlug: string, limit: 
         return result.docs
       },
       [`events-${locationSlug}-${limit}-${todayKey}`],
-      { tags: [CACHE_TAGS.events, CACHE_TAGS.locations], revalidate: 300 }
+      { tags: [CACHE_TAGS.events, CACHE_TAGS.locations], revalidate: 300 },
     )()
   } catch (error) {
     logger.error(`Error fetching events for location: ${locationSlug}`, error)
@@ -868,7 +896,10 @@ export const getUpcomingEventsFromPayload = async (locationSlug: string, limit: 
  * Returns food entries with date >= today, sorted by date ascending
  * Cached until 'food' tag is invalidated
  */
-export const getUpcomingFoodFromPayload = async (locationSlug: string, limit: number = 10): Promise<PayloadFood[]> => {
+export const getUpcomingFoodFromPayload = async (
+  locationSlug: string,
+  limit: number = 10,
+): Promise<PayloadFood[]> => {
   const todayKey = getTodayEST()
 
   try {
@@ -914,7 +945,7 @@ export const getUpcomingFoodFromPayload = async (locationSlug: string, limit: nu
         return result.docs
       },
       [`food-${locationSlug}-${limit}-${todayKey}`],
-      { tags: [CACHE_TAGS.food, CACHE_TAGS.locations], revalidate: 300 }
+      { tags: [CACHE_TAGS.food, CACHE_TAGS.locations], revalidate: 300 },
     )()
   } catch (error) {
     logger.error(`Error fetching food for location: ${locationSlug}`, error)
@@ -943,7 +974,11 @@ interface RecurringFoodGlobal {
  * Calculate upcoming occurrences of a specific week/day combo
  * e.g., "2nd Tuesday" -> next N dates that are the 2nd Tuesday of their month
  */
-function getUpcomingDatesForSlot(dayIndex: number, weekOccurrence: number, monthsAhead: number = 6): Date[] {
+function getUpcomingDatesForSlot(
+  dayIndex: number,
+  weekOccurrence: number,
+  monthsAhead: number = 6,
+): Date[] {
   const dates: Date[] = []
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -989,7 +1024,7 @@ export const getRecurringFoodGlobal = async (): Promise<RecurringFoodGlobal> => 
         }
       },
       ['recurring-food-global'],
-      { tags: [CACHE_TAGS.food], revalidate: 300 }
+      { tags: [CACHE_TAGS.food], revalidate: 300 },
     )()
   } catch (error) {
     logger.error('Error fetching recurring food global', error)
@@ -1021,7 +1056,7 @@ export interface RecurringFoodEntry {
 export const getUpcomingRecurringFood = async (
   locationSlug: string,
   limit: number = 10,
-  monthsAhead: number = 3
+  monthsAhead: number = 3,
 ): Promise<RecurringFoodEntry[]> => {
   const todayKey = getTodayEST()
 
@@ -1060,7 +1095,15 @@ export const getUpcomingRecurringFood = async (
         }
 
         // Fetch all vendors in one request
-        const vendorMap: Record<string, { id: string; name: string; site?: string | null; logo?: string | { url?: string } | null }> = {}
+        const vendorMap: Record<
+          string,
+          {
+            id: string
+            name: string
+            site?: string | null
+            logo?: string | { url?: string } | null
+          }
+        > = {}
         if (vendorIds.size > 0) {
           const vendorResult = await payload.find({
             collection: 'food-vendors',
@@ -1119,7 +1162,7 @@ export const getUpcomingRecurringFood = async (
         return entries.slice(0, limit)
       },
       [`recurring-food-${locationSlug}-${limit}-${monthsAhead}-${todayKey}`],
-      { tags: [CACHE_TAGS.food, CACHE_TAGS.locations], revalidate: 300 }
+      { tags: [CACHE_TAGS.food, CACHE_TAGS.locations], revalidate: 300 },
     )()
   } catch (error) {
     logger.error(`Error fetching recurring food for location: ${locationSlug}`, error)
@@ -1133,7 +1176,7 @@ export const getUpcomingRecurringFood = async (
  */
 export const getCombinedUpcomingFood = async (
   locationSlug: string,
-  limit: number = 10
+  limit: number = 10,
 ): Promise<(PayloadFood | RecurringFoodEntry)[]> => {
   const [individual, recurring] = await Promise.all([
     getUpcomingFoodFromPayload(locationSlug, limit),
@@ -1148,19 +1191,21 @@ export const getCombinedUpcomingFood = async (
       const date = typeof f.date === 'string' ? f.date.split('T')[0] : ''
       const vendorId = typeof f.vendor === 'object' ? f.vendor?.id || '' : f.vendor || ''
       return `${date}::${vendorId}`
-    })
+    }),
   )
 
   // Filter out recurring entries only when the same vendor has an individual entry on that date
   const filteredRecurring = recurring.filter(
-    (r) => !individualDateVendors.has(`${r.date}::${r.vendor.id}`)
+    (r) => !individualDateVendors.has(`${r.date}::${r.vendor.id}`),
   )
 
   // Combine and sort
   const combined = [...individual, ...filteredRecurring]
   combined.sort((a, b) => {
-    const dateA = 'isRecurring' in a ? a.date : (typeof a.date === 'string' ? a.date.split('T')[0] : '')
-    const dateB = 'isRecurring' in b ? b.date : (typeof b.date === 'string' ? b.date.split('T')[0] : '')
+    const dateA =
+      'isRecurring' in a ? a.date : typeof a.date === 'string' ? a.date.split('T')[0] : ''
+    const dateB =
+      'isRecurring' in b ? b.date : typeof b.date === 'string' ? b.date.split('T')[0] : ''
     return dateA.localeCompare(dateB)
   })
 
@@ -1241,7 +1286,7 @@ export const getAllDistributorsGeoJSON = async (): Promise<DistributorGeoJSON> =
         }
       },
       ['all-distributors-geojson'],
-      { tags: [CACHE_TAGS.distributors], revalidate: 3600 }
+      { tags: [CACHE_TAGS.distributors], revalidate: 3600 },
     )()
   } catch (error) {
     logger.error('Error fetching distributors from Payload', error)
@@ -1275,7 +1320,7 @@ export const getActiveFAQs = async (): Promise<Faq[]> => {
         return result.docs
       },
       ['active-faqs'],
-      { tags: [CACHE_TAGS.faqs], revalidate: 3600 }
+      { tags: [CACHE_TAGS.faqs], revalidate: 3600 },
     )()
   } catch (error) {
     logger.error('Error fetching FAQs from Payload', error)
