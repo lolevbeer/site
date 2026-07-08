@@ -144,6 +144,19 @@ export default buildConfig({
   },
   db: mongooseAdapter({
     url: process.env.DATABASE_URI || '',
+    // Serverless connection hardening. Each Vercel lambda opens its own Mongoose
+    // pool; the MongoDB driver default is maxPoolSize 100. A post-deploy ISR
+    // regeneration storm (many cold lambdas booting Payload at once) can then
+    // spike well past MongoDB's connection limit and surface as the transient
+    // fetch errors that used to poison the route cache (see PR #144). Cap the
+    // per-lambda pool small and let idle sockets close so warm-but-quiet
+    // instances don't hold connections open.
+    // ponytail: maxPoolSize 10 is ample for this low-traffic site; raise it only
+    // if a single instance ever needs more concurrent in-flight queries.
+    connectOptions: {
+      maxPoolSize: 10,
+      maxIdleTimeMS: 10000,
+    },
   }),
   sharp,
   plugins: [
