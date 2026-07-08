@@ -35,6 +35,6 @@ export async function getSiteContent(): Promise<SiteContent> {
     };
   } catch (error) {
     logger.error('Failed to fetch site content:', error);
-    return {};
+    throw error
   }
 }

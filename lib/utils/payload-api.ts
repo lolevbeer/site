@@ -2,6 +2,15 @@
  * Payload CMS API utility for fetching data
  * Server-side only - uses direct Payload access
  * Uses unstable_cache for cross-request caching with tag-based invalidation
+ *
+ * Error handling contract: these fetchers RETHROW on a fetch failure rather
+ * than returning an empty default. A thrown error is never persisted to the
+ * ISR/full-route cache, so a transient blip (e.g. a cold-start connection storm
+ * right after a Vercel deploy) self-heals on the next request. Swallowing the
+ * error into `[]`/`null` would bake an empty render into the route cache and
+ * serve it for the whole revalidate window (see the /m fix, commit 7160f57e).
+ * A genuinely-empty result (e.g. location not found) is still returned normally
+ * from inside the cached fn and remains cacheable.
  */
 
 import { getPayload } from 'payload'
@@ -47,7 +56,7 @@ export const hasAnyBeerJustReleased = async (): Promise<boolean> => {
     )()
   } catch (error) {
     logger.error('Error checking justReleased beers', error)
-    return false
+    throw error
   }
 }
 
@@ -79,7 +88,7 @@ export const getAllBeersFromPayload = async (): Promise<PayloadBeer[]> => {
     )()
   } catch (error) {
     logger.error('Error fetching beers from Payload', error)
-    return []
+    throw error
   }
 }
 
@@ -167,7 +176,7 @@ export const getMenusByLocation = async (locationSlug: string): Promise<PayloadM
     )()
   } catch (error) {
     logger.error(`Error fetching menus for location: ${locationSlug}`, error)
-    return []
+    throw error
   }
 }
 
@@ -239,7 +248,7 @@ export const getMenuByUrl = async (url: string): Promise<PayloadMenu | null> => 
     )()
   } catch (error) {
     logger.error(`Error fetching menu by URL: ${url}`, error)
-    return null
+    throw error
   }
 }
 
@@ -315,7 +324,7 @@ export const getAllLocations = async () => {
     )()
   } catch (error) {
     logger.error('Error fetching locations from Payload', error)
-    return []
+    throw error
   }
 }
 
@@ -341,7 +350,7 @@ export const getAllStyles = async () => {
     )()
   } catch (error) {
     logger.error('Error fetching styles from Payload', error)
-    return []
+    throw error
   }
 }
 
@@ -453,7 +462,7 @@ export const getAvailableBeersFromMenus = async (): Promise<PayloadBeer[]> => {
     )()
   } catch (error) {
     logger.error('Error fetching available beers from menus', error)
-    return []
+    throw error
   }
 }
 
@@ -479,7 +488,7 @@ export const getComingSoonBeers = async () => {
     )()
   } catch (error) {
     logger.error('Error fetching coming soon beers', error)
-    return []
+    throw error
   }
 }
 
@@ -505,7 +514,7 @@ export const fetchGlobal = async (slug: string, depth: number = 0) => {
     )()
   } catch (error) {
     logger.error(`Error fetching global: ${slug}`, error)
-    return null
+    throw error
   }
 }
 
@@ -549,7 +558,7 @@ export const getHolidayHours = async (locationId: string, date: Date): Promise<H
     )()
   } catch (error) {
     logger.error(`Error fetching holiday hours for location ${locationId} on ${date}`, error)
-    return null
+    throw error
   }
 }
 
@@ -597,7 +606,7 @@ export const getHolidayHoursForLocation = async (locationId: string): Promise<Ho
     )()
   } catch (error) {
     logger.error(`Error fetching holiday hours for location ${locationId}`, error)
-    return []
+    throw error
   }
 }
 
@@ -763,7 +772,7 @@ export const getWeeklyHoursWithHolidays = async (locationId: string): Promise<We
     )()
   } catch (error) {
     logger.error(`Error fetching weekly hours with holidays for location ${locationId}`, error)
-    return []
+    throw error
   }
 }
 
@@ -788,7 +797,7 @@ export const getAllLocationsWeeklyHours = async (): Promise<Map<string, WeeklyHo
     return hoursMap
   } catch (error) {
     logger.error('Error fetching all locations weekly hours', error)
-    return new Map()
+    throw error
   }
 }
 
@@ -850,7 +859,7 @@ export const getUpcomingEventsFromPayload = async (locationSlug: string, limit: 
     )()
   } catch (error) {
     logger.error(`Error fetching events for location: ${locationSlug}`, error)
-    return []
+    throw error
   }
 }
 
@@ -909,7 +918,7 @@ export const getUpcomingFoodFromPayload = async (locationSlug: string, limit: nu
     )()
   } catch (error) {
     logger.error(`Error fetching food for location: ${locationSlug}`, error)
-    return []
+    throw error
   }
 }
 
@@ -984,7 +993,7 @@ export const getRecurringFoodGlobal = async (): Promise<RecurringFoodGlobal> => 
     )()
   } catch (error) {
     logger.error('Error fetching recurring food global', error)
-    return { schedules: {}, exclusions: {} }
+    throw error
   }
 }
 
@@ -1114,7 +1123,7 @@ export const getUpcomingRecurringFood = async (
     )()
   } catch (error) {
     logger.error(`Error fetching recurring food for location: ${locationSlug}`, error)
-    return []
+    throw error
   }
 }
 
@@ -1236,7 +1245,7 @@ export const getAllDistributorsGeoJSON = async (): Promise<DistributorGeoJSON> =
     )()
   } catch (error) {
     logger.error('Error fetching distributors from Payload', error)
-    return { type: 'FeatureCollection', features: [] }
+    throw error
   }
 }
 
@@ -1270,6 +1279,6 @@ export const getActiveFAQs = async (): Promise<Faq[]> => {
     )()
   } catch (error) {
     logger.error('Error fetching FAQs from Payload', error)
-    return []
+    throw error
   }
 }
