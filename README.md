@@ -46,9 +46,13 @@ Payload admin is at `/admin`. Follow the on-screen instructions to create your f
 ## Slack bot
 
 `/lolevbeer menu` in Slack lists the menus with Edit buttons; the Edit modal
-swaps/adds/removes beers and publishes immediately (displays update via the
-revalidation hooks), then shows a confirmation. The beer typeahead excludes
-items already on the menu being edited. Handler: `src/app/api/slack/route.ts`.
+swaps/adds/removes beers. Submitting shows a "Publishing…" view and does the
+write in the background (Slack discards a submit response slower than 3s), then
+swaps the modal to a confirmation — or an error if the menu can't be published
+(not published, has unpublished admin changes, or was edited since the modal
+opened). Displays update via the revalidation hooks. The beer typeahead
+excludes items already on the menu being edited, except a row's own current
+pick so you can revert it. Handler: `src/app/api/slack/route.ts`.
 
 Slack app setup (one-time, at api.slack.com/apps):
 
@@ -58,6 +62,9 @@ Slack app setup (one-time, at api.slack.com/apps):
    same URL under Select Menus (options load URL).
 4. Set env vars: `SLACK_SIGNING_SECRET`, `SLACK_BOT_TOKEN`, and optionally
    `SLACK_ALLOWED_USER_IDS` (comma-separated; empty allows the whole workspace).
+   Leaving it empty means anyone in the workspace can edit and publish menus: the
+   bot writes as system (`overrideAccess`) and so bypasses Payload's
+   location-scoped roles — set the allowlist in any shared workspace.
 
 ## Scripts
 

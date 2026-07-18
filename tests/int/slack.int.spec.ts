@@ -1,6 +1,8 @@
 /**
- * Unit tests for the Slack bot helpers (src/utils/slack.ts):
- * request-signature verification and modal-state → menu-items rebuilding.
+ * Unit tests for the Slack bot helpers (src/utils/slack.ts): request-signature
+ * verification, modal-state → menu-items rebuilding, private_metadata parsing,
+ * and the Block Kit builders (edit modal, menu list, typeahead groups, the
+ * publish/publishing/error views). All pure — no Payload boot.
  */
 
 import { describe, it, expect } from 'vitest'
@@ -9,15 +11,48 @@ import {
   verifySlackSignature,
   rebuildMenuItems,
   parseProductValue,
+  parseMenuMetadata,
+  encodeMenuMetadata,
+  buildEditModalView,
+  buildMenuListMessage,
+  buildProductOptionGroups,
+  buildPublishedView,
+  buildPublishingView,
+  buildModalErrorView,
+  SLACK_IDS,
   type MenuItem,
   type SlackStateValues,
 } from '@/src/utils/slack'
+import type { Menu } from '@/src/payload-types'
 
 const SECRET = 'test-signing-secret'
 
 function sign(timestamp: string, rawBody: string): string {
   return `v0=${crypto.createHmac('sha256', SECRET).update(`v0:${timestamp}:${rawBody}`).digest('hex')}`
 }
+
+/** Minimal published Menu fixture; override only the fields a test asserts on. */
+function makeMenu(overrides: Partial<Menu> = {}): Menu {
+  return {
+    id: 'menu1',
+    name: 'Draft Menu',
+    location: 'loc1',
+    type: 'draft',
+    url: 'lawrenceville-draft',
+    items: [],
+    updatedAt: '2026-07-18T00:00:00.000Z',
+    createdAt: '2026-07-18T00:00:00.000Z',
+    _status: 'published',
+    ...overrides,
+  }
+}
+
+/** Builders return Record<string, unknown>; loosen it for nested assertions. */
+const loose = (v: Record<string, unknown>) => v as Record<string, any>
+
+/** True if `s` contains a lone (unpaired) UTF-16 surrogate — an ill-formed string. */
+const hasLoneSurrogate = (s: string) =>
+  /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/.test(s)
 
 describe('verifySlackSignature', () => {
   const now = 1_700_000_000
@@ -160,5 +195,152 @@ describe('rebuildMenuItems', () => {
       item_row9: { product: { selected_option: opt('beers|beer-a') } },
     }
     expect(rebuildMenuItems(populated, state)).toEqual(populated)
+  })
+
+  it('dedupes a re-added product (first wins) while preserving empty-tap rows', () => {
+    // A row already carrying beer-a, an empty tap (no product ref), then an add
+    // that re-selects beer-a. The duplicate add collapses onto the existing row;
+    // the empty tap has no ref so it survives untouched.
+    const original: MenuItem[] = [
+      { product: { relationTo: 'beers', value: 'beer-a' }, id: 'row1' },
+      { id: 'empty1' } as MenuItem,
+    ]
+    const state: SlackStateValues = {
+      add: { add_products: { selected_options: [opt('beers|beer-a')] } },
+    }
+    expect(rebuildMenuItems(original, state)).toEqual([
+      { product: { relationTo: 'beers', value: 'beer-a' }, id: 'row1' },
+      { id: 'empty1' },
+    ])
+  })
+})
+
+describe('parseMenuMetadata / encodeMenuMetadata', () => {
+  it('round-trips <id>|<updatedAt>', () => {
+    const menu = makeMenu({ id: 'menu42', updatedAt: '2026-07-18T12:00:00.000Z' })
+    expect(parseMenuMetadata(encodeMenuMetadata(menu))).toEqual({
+      menuId: 'menu42',
+      updatedAt: '2026-07-18T12:00:00.000Z',
+    })
+  })
+
+  it('tolerates a bare id from an older modal (updatedAt: null)', () => {
+    expect(parseMenuMetadata('bare-id-only')).toEqual({ menuId: 'bare-id-only', updatedAt: null })
+  })
+})
+
+describe('buildEditModalView', () => {
+  const menu = makeMenu({
+    id: 'menu1',
+    updatedAt: '2026-07-18T09:00:00.000Z',
+    items: [
+      { product: { relationTo: 'beers', value: 'beer-a' }, id: 'row1' },
+      { product: { relationTo: 'products', value: 'prod-b' }, id: 'row2' },
+    ],
+  })
+
+  it('keys item blocks on item_<rowId> and encodes initial_option as relationTo|id', () => {
+    const view = loose(buildEditModalView(menu))
+    expect(view.blocks[0].block_id).toBe('item_row1')
+    expect(view.blocks[0].element.action_id).toBe(SLACK_IDS.actionProduct)
+    expect(view.blocks[0].element.initial_option.value).toBe('beers|beer-a')
+    expect(view.blocks[1].block_id).toBe('item_row2')
+    expect(view.blocks[1].element.initial_option.value).toBe('products|prod-b')
+  })
+
+  it('encodes private_metadata as <id>|<updatedAt>', () => {
+    const view = loose(buildEditModalView(menu))
+    expect(view.private_metadata).toBe('menu1|2026-07-18T09:00:00.000Z')
+    expect(view.callback_id).toBe(SLACK_IDS.callbackMenuEdit)
+  })
+
+  it('includes the remove select only when the menu has items', () => {
+    const withItems = loose(buildEditModalView(menu))
+    const removeBlock = (withItems.blocks as Record<string, any>[]).find(
+      (b) => b.block_id === SLACK_IDS.blockRemove,
+    )
+    expect(removeBlock).toBeDefined()
+    expect(removeBlock!.element.options).toHaveLength(2)
+
+    const empty = loose(buildEditModalView(makeMenu({ items: [] })))
+    expect(
+      (empty.blocks as Record<string, any>[]).some((b) => b.block_id === SLACK_IDS.blockRemove),
+    ).toBe(false)
+    // The add select is always present.
+    expect(
+      (empty.blocks as Record<string, any>[]).some((b) => b.block_id === SLACK_IDS.blockAdd),
+    ).toBe(true)
+  })
+})
+
+describe('buildMenuListMessage', () => {
+  it('gives each menu an Edit button carrying its id', () => {
+    const message = loose(buildMenuListMessage([makeMenu({ id: 'm1', items: [{ id: 'x' }] })]))
+    expect(message.blocks[0].accessory.action_id).toBe(SLACK_IDS.actionEditMenu)
+    expect(message.blocks[0].accessory.value).toBe('m1')
+  })
+
+  it('escapes &, <, > in the menu label', () => {
+    const message = loose(buildMenuListMessage([makeMenu({ description: 'Hops & <Malt>' })]))
+    expect(message.blocks[0].text.text).toContain('*Hops &amp; &lt;Malt&gt;*')
+  })
+
+  it('returns the empty-list shape when there are no menus', () => {
+    expect(buildMenuListMessage([])).toEqual({
+      response_type: 'ephemeral',
+      text: 'No menus found.',
+    })
+  })
+})
+
+describe('buildProductOptionGroups', () => {
+  it('groups beers and products into option_groups', () => {
+    const result = loose(
+      buildProductOptionGroups([{ id: 'b1', name: 'Lupula' }], [{ id: 'p1', name: 'Merch' }]),
+    )
+    expect(result.option_groups).toHaveLength(2)
+    expect(result.option_groups[0].options[0].value).toBe('beers|b1')
+    expect(result.option_groups[1].options[0].value).toBe('products|p1')
+  })
+
+  it('returns { options: [] } (not option_groups) when both are empty', () => {
+    const result = buildProductOptionGroups([], [])
+    expect(result).toEqual({ options: [] })
+    expect(result).not.toHaveProperty('option_groups')
+  })
+
+  it('never splits a surrogate pair at the truncation boundary', () => {
+    // The emoji straddles UTF-16 index 74 (max-1 for the 75-char cap): a naive
+    // code-unit slice would emit a lone high surrogate. Array.from keeps it whole.
+    const name = 'a'.repeat(73) + '😀' + 'b'.repeat(30)
+    const result = loose(buildProductOptionGroups([{ id: 'b1', name }], []))
+    const text = result.option_groups[0].options[0].text.text as string
+    expect(hasLoneSurrogate(text)).toBe(false)
+    expect(text).toContain('😀')
+    expect(text.endsWith('…')).toBe(true)
+  })
+})
+
+describe('publish / publishing / error views', () => {
+  it('buildPublishedView reports the menu label and item count', () => {
+    const view = loose(buildPublishedView(makeMenu({ description: 'Tap List' }), 3))
+    expect(view.type).toBe('modal')
+    expect(view.title.text).toBe('Published ✓')
+    expect(view.blocks[0].text.text).toContain('*Tap List*')
+    expect(view.blocks[0].text.text).toContain('3 items')
+  })
+
+  it('buildPublishingView is a modal titled Publishing…', () => {
+    const view = loose(buildPublishingView('the menu'))
+    expect(view.type).toBe('modal')
+    expect(view.title.text).toBe('Publishing…')
+    expect(view.blocks[0].text.text).toContain('the menu')
+  })
+
+  it('buildModalErrorView is a modal that escapes the message', () => {
+    const view = loose(buildModalErrorView('Failed & <broke>'))
+    expect(view.type).toBe('modal')
+    expect(view.title.text).toBe('Publish failed')
+    expect(view.blocks[0].text.text).toBe('Failed &amp; &lt;broke&gt;')
   })
 })
