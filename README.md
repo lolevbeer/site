@@ -43,6 +43,21 @@ Payload admin is at `/admin`. Follow the on-screen instructions to create your f
 - **Recurring Food** - Weekly food truck schedule
 - **Site Content** - Editable site-wide content (about page, etc.)
 
+## Slack bot
+
+`/lolevbeer menu` in Slack lists the menus with Edit buttons; the Edit modal
+swaps/adds/removes beers and publishes immediately (displays update via the
+revalidation hooks). Handler: `src/app/api/slack/route.ts`.
+
+Slack app setup (one-time, at api.slack.com/apps):
+
+1. Create app → add bot token scope `commands`, install to workspace.
+2. Slash command `/lolevbeer` → request URL `https://lolev.beer/api/slack`.
+3. Interactivity & Shortcuts → ON, request URL `https://lolev.beer/api/slack`;
+   same URL under Select Menus (options load URL).
+4. Set env vars: `SLACK_SIGNING_SECRET`, `SLACK_BOT_TOKEN`, and optionally
+   `SLACK_ALLOWED_USER_IDS` (comma-separated; empty allows the whole workspace).
+
 ## Scripts
 
 ```bash
