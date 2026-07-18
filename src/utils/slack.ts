@@ -247,6 +247,24 @@ export function rebuildMenuItems(original: MenuItem[], state: SlackStateValues):
   return next
 }
 
+/** Confirmation view swapped into the modal after a successful publish. */
+export function buildPublishedView(menu: Menu, itemCount: number): Record<string, unknown> {
+  return {
+    type: 'modal',
+    title: { type: 'plain_text', text: 'Published ✓' },
+    close: { type: 'plain_text', text: 'Done' },
+    blocks: [
+      {
+        type: 'section',
+        text: {
+          type: 'mrkdwn',
+          text: `*${menuLabel(menu)}* is live with ${itemCount} items. Displays refresh on their next poll — <https://lolev.beer/m/${menu.url}|view menu>.`,
+        },
+      },
+    ],
+  }
+}
+
 /** Typeahead option groups for beers and products matching a query. */
 export function buildProductOptionGroups(
   beers: Pick<Beer, 'id' | 'name'>[],

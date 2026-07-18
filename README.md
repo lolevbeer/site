@@ -47,7 +47,8 @@ Payload admin is at `/admin`. Follow the on-screen instructions to create your f
 
 `/lolevbeer menu` in Slack lists the menus with Edit buttons; the Edit modal
 swaps/adds/removes beers and publishes immediately (displays update via the
-revalidation hooks). Handler: `src/app/api/slack/route.ts`.
+revalidation hooks), then shows a confirmation. The beer typeahead excludes
+items already on the menu being edited. Handler: `src/app/api/slack/route.ts`.
 
 Slack app setup (one-time, at api.slack.com/apps):
 

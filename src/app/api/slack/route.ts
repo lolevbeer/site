@@ -26,6 +26,7 @@ import config from '@/src/payload.config'
 import { logger } from '@/lib/utils/logger'
 import {
   buildEditModalView,
+  buildPublishedView,
   buildMenuListMessage,
   buildProductOptionGroups,
   rebuildMenuItems,
@@ -190,26 +191,45 @@ async function handleEditClick(interaction: SlackInteractionPayload): Promise<Ne
   return new NextResponse(null, { status: 200 })
 }
 
-/** Typeahead for the beer selects: search beers and products by name. */
+/**
+ * Typeahead for the beer selects: search beers and products by name,
+ * excluding what's already on the menu being edited — the Menus collection
+ * rejects duplicates, so offering them would only lead to a submit error.
+ */
 async function handleTypeahead(interaction: SlackInteractionPayload): Promise<NextResponse> {
   const query = interaction.value ?? ''
   const payload = await getPayload({ config })
-  const [beers, products] = await Promise.all([
+
+  const onMenu: Record<'beers' | 'products', string[]> = { beers: [], products: [] }
+  const menuId = interaction.view?.private_metadata
+  if (menuId) {
+    try {
+      const menu = await payload.findByID({ collection: 'menus', id: menuId, depth: 0 })
+      for (const item of menu.items ?? []) {
+        if (item.product && typeof item.product.value !== 'object') {
+          onMenu[item.product.relationTo].push(item.product.value)
+        }
+      }
+    } catch (error) {
+      logger.error('Slack typeahead menu lookup failed:', error)
+    }
+  }
+
+  const search = (collection: 'beers' | 'products', limit: number) =>
     payload.find({
-      collection: 'beers',
-      where: { name: { contains: query } },
-      limit: 50,
+      collection,
+      where: {
+        and: [
+          { name: { contains: query } },
+          ...(onMenu[collection].length > 0 ? [{ id: { not_in: onMenu[collection] } }] : []),
+        ],
+      },
+      limit,
       depth: 0,
       sort: 'name',
-    }),
-    payload.find({
-      collection: 'products',
-      where: { name: { contains: query } },
-      limit: 25,
-      depth: 0,
-      sort: 'name',
-    }),
-  ])
+    })
+
+  const [beers, products] = await Promise.all([search('beers', 50), search('products', 25)])
   return NextResponse.json(buildProductOptionGroups(beers.docs, products.docs))
 }
 
@@ -243,6 +263,11 @@ async function handleSubmit(interaction: SlackInteractionPayload): Promise<NextR
       data: { items, _status: 'published' },
     })
     logger.info(`Slack menu publish: menu=${menuId} slackUser=${interaction.user?.id ?? 'unknown'}`)
+    // Swap the modal to a confirmation instead of closing silently.
+    return NextResponse.json({
+      response_action: 'update',
+      view: buildPublishedView(menu, items.length),
+    })
   } catch (error) {
     logger.error('Slack menu update failed:', error)
     // Surface Payload validation messages (e.g. the duplicate-item check in
@@ -256,5 +281,4 @@ async function handleSubmit(interaction: SlackInteractionPayload): Promise<NextR
       errors: { add: message },
     })
   }
-  return NextResponse.json({ response_action: 'clear' })
 }
