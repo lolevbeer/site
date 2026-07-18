@@ -97,15 +97,15 @@ describe('rebuildMenuItems', () => {
 
   it('keeps items untouched when nothing changed (initial options resubmitted)', () => {
     const state: SlackStateValues = {
-      item_row1: { product: { type: 'external_select', selected_option: opt('beers|beer-a') } },
-      item_row2: { product: { type: 'external_select', selected_option: opt('beers|beer-b') } },
+      item_row1: { product: { selected_option: opt('beers|beer-a') } },
+      item_row2: { product: { selected_option: opt('beers|beer-b') } },
     }
     expect(rebuildMenuItems(items, state)).toEqual(items)
   })
 
   it('swaps a product in place and drops its stale price override', () => {
     const state: SlackStateValues = {
-      item_row1: { product: { type: 'external_select', selected_option: opt('beers|beer-c') } },
+      item_row1: { product: { selected_option: opt('beers|beer-c') } },
     }
     const result = rebuildMenuItems(items, state)
     expect(result[0]).toEqual({ product: { relationTo: 'beers', value: 'beer-c' } })
@@ -114,10 +114,9 @@ describe('rebuildMenuItems', () => {
 
   it('removes items by row id and appends additions', () => {
     const state: SlackStateValues = {
-      remove: { remove_items: { type: 'multi_static_select', selected_options: [opt('row1')] } },
+      remove: { remove_items: { selected_options: [opt('row1')] } },
       add: {
         add_products: {
-          type: 'multi_external_select',
           selected_options: [opt('products|prod-z')],
         },
       },
@@ -131,10 +130,10 @@ describe('rebuildMenuItems', () => {
     // (row0 already removed). Resubmitting the same state must be a no-op —
     // not remove whatever now sits at that position.
     const state: SlackStateValues = {
-      remove: { remove_items: { type: 'multi_static_select', selected_options: [opt('row0')] } },
-      item_row0: { product: { type: 'external_select', selected_option: opt('beers|beer-x') } },
-      item_row1: { product: { type: 'external_select', selected_option: opt('beers|beer-a') } },
-      item_row2: { product: { type: 'external_select', selected_option: opt('beers|beer-b') } },
+      remove: { remove_items: { selected_options: [opt('row0')] } },
+      item_row0: { product: { selected_option: opt('beers|beer-x') } },
+      item_row1: { product: { selected_option: opt('beers|beer-a') } },
+      item_row2: { product: { selected_option: opt('beers|beer-b') } },
     }
     expect(rebuildMenuItems(items, state)).toEqual(items)
   })
@@ -142,7 +141,7 @@ describe('rebuildMenuItems', () => {
   it('falls back to an index key for rows without an id', () => {
     const noIds = [{ product: { relationTo: 'beers', value: 'beer-a' } }] as MenuItem[]
     const state: SlackStateValues = {
-      item_i0: { product: { type: 'external_select', selected_option: opt('beers|beer-c') } },
+      item_i0: { product: { selected_option: opt('beers|beer-c') } },
     }
     expect(rebuildMenuItems(noIds, state)).toEqual([
       { product: { relationTo: 'beers', value: 'beer-c' } },
@@ -158,7 +157,7 @@ describe('rebuildMenuItems', () => {
       },
     ] as unknown as MenuItem[]
     const state: SlackStateValues = {
-      item_row9: { product: { type: 'external_select', selected_option: opt('beers|beer-a') } },
+      item_row9: { product: { selected_option: opt('beers|beer-a') } },
     }
     expect(rebuildMenuItems(populated, state)).toEqual(populated)
   })

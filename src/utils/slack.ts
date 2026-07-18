@@ -13,13 +13,12 @@ export type MenuItem = Menu['items'][number]
 
 /** Slack Block Kit option object */
 export interface SlackOption {
-  text: { type: 'plain_text'; text: string; emoji?: boolean }
+  text: { type: 'plain_text'; text: string }
   value: string
 }
 
 /** One element's submitted state inside view_submission's view.state.values */
 export interface SlackStateValue {
-  type: string
   selected_option?: SlackOption | null
   selected_options?: SlackOption[] | null
 }
@@ -78,6 +77,26 @@ export function parseProductValue(
   return { relationTo, value: id }
 }
 
+/** Absolute site origin for links posted into Slack. */
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://lolev.beer'
+
+/**
+ * The item's polymorphic product as a plain {relationTo, id} ref, whether the
+ * relationship is populated (object) or bare (id string). Single source for
+ * this unwrap — modal building, state rebuilding, and typeahead exclusion all
+ * key on it.
+ */
+export function productRef(
+  item: MenuItem,
+): { relationTo: 'beers' | 'products'; id: string } | null {
+  const product = item.product
+  if (!product?.value) return null
+  return {
+    relationTo: product.relationTo,
+    id: typeof product.value === 'object' ? String(product.value.id) : product.value,
+  }
+}
+
 /** Display name for a menu item's product (falls back for unpopulated docs). */
 export function productName(item: MenuItem): string {
   const doc = item.product?.value
@@ -85,12 +104,9 @@ export function productName(item: MenuItem): string {
   return 'Unknown item'
 }
 
-/** Human label for a menu: "Lawrenceville — Draft" (uses description when set). */
+/** Human label for a menu: description when set, else the required name. */
 export function menuLabel(menu: Menu): string {
-  if (menu.description) return menu.description
-  const location =
-    typeof menu.location === 'object' && menu.location ? menu.location.name : 'Unknown'
-  return `${location} — ${menu.type}`
+  return menu.description || menu.name
 }
 
 /** Ephemeral message listing all menus with an Edit button each. */
@@ -104,7 +120,7 @@ export function buildMenuListMessage(menus: Menu[]): Record<string, unknown> {
       type: 'section',
       text: {
         type: 'mrkdwn',
-        text: `*${menuLabel(menu)}*  ·  ${menu.items?.length ?? 0} items  ·  <https://lolev.beer/m/${menu.url}|view>`,
+        text: `*${menuLabel(menu)}*  ·  ${menu.items?.length ?? 0} items  ·  <${SITE_URL}/m/${menu.url}|view>`,
       },
       accessory: {
         type: 'button',
@@ -135,19 +151,8 @@ export function buildEditModalView(menu: Menu): Record<string, unknown> {
   // ponytail: Slack caps modals at 100 blocks / 100 options; tap lists are ~20.
   const items = (menu.items ?? []).slice(0, 90)
 
-  const itemOption = (item: MenuItem, i: number): SlackOption => ({
-    text: { type: 'plain_text', text: truncate(`${i + 1}. ${productName(item)}`, 75) },
-    value: itemKey(item, i),
-  })
-
   const blocks: Record<string, unknown>[] = items.map((item, i) => {
-    const parsed =
-      item.product && item.product.value
-        ? {
-            relationTo: item.product.relationTo,
-            id: typeof item.product.value === 'object' ? item.product.value.id : item.product.value,
-          }
-        : null
+    const ref = productRef(item)
     return {
       type: 'input',
       block_id: `item_${itemKey(item, i)}`,
@@ -158,11 +163,11 @@ export function buildEditModalView(menu: Menu): Record<string, unknown> {
         action_id: 'product',
         min_query_length: 2,
         placeholder: { type: 'plain_text', text: 'Search beers…' },
-        ...(parsed
+        ...(ref
           ? {
               initial_option: {
                 text: { type: 'plain_text', text: truncate(productName(item), 75) },
-                value: encodeProductValue(parsed.relationTo, String(parsed.id)),
+                value: encodeProductValue(ref.relationTo, ref.id),
               },
             }
           : {}),
@@ -193,7 +198,10 @@ export function buildEditModalView(menu: Menu): Record<string, unknown> {
         type: 'multi_static_select',
         action_id: 'remove_items',
         placeholder: { type: 'plain_text', text: 'Pick items to remove…' },
-        options: items.map(itemOption),
+        options: items.map((item, i) => ({
+          text: { type: 'plain_text', text: truncate(`${i + 1}. ${productName(item)}`, 75) },
+          value: itemKey(item, i),
+        })),
       },
     })
   }
@@ -225,17 +233,14 @@ export function rebuildMenuItems(original: MenuItem[], state: SlackStateValues):
   original.forEach((item, i) => {
     const key = itemKey(item, i)
     if (removed.has(key)) return
-    const selected = parseProductValue(state[`item_${key}`]?.product?.selected_option?.value)
+    const raw = state[`item_${key}`]?.product?.selected_option?.value
+    const selected = parseProductValue(raw)
     if (!selected) {
       next.push(item)
       return
     }
-    const currentId =
-      item.product && typeof item.product.value === 'object'
-        ? item.product.value.id
-        : item.product?.value
-    const unchanged =
-      item.product?.relationTo === selected.relationTo && String(currentId) === selected.value
+    const ref = productRef(item)
+    const unchanged = ref !== null && encodeProductValue(ref.relationTo, ref.id) === raw
     next.push(unchanged ? item : { product: selected })
   })
 
@@ -258,7 +263,7 @@ export function buildPublishedView(menu: Menu, itemCount: number): Record<string
         type: 'section',
         text: {
           type: 'mrkdwn',
-          text: `*${menuLabel(menu)}* is live with ${itemCount} items. Displays refresh on their next poll — <https://lolev.beer/m/${menu.url}|view menu>.`,
+          text: `*${menuLabel(menu)}* is live with ${itemCount} items. Displays refresh on their next poll — <${SITE_URL}/m/${menu.url}|view menu>.`,
         },
       },
     ],

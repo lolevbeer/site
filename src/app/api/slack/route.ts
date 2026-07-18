@@ -29,17 +29,19 @@ import {
   buildPublishedView,
   buildMenuListMessage,
   buildProductOptionGroups,
+  encodeProductValue,
+  productRef,
   rebuildMenuItems,
   verifySlackSignature,
   type SlackStateValues,
 } from '@/src/utils/slack'
 
+/** Handled types: block_actions, block_suggestion, view_submission. */
 interface SlackInteractionPayload {
-  type: 'block_actions' | 'view_submission' | 'block_suggestion' | string
+  type: string
   user?: { id: string }
   trigger_id?: string
   actions?: { action_id: string; value?: string }[]
-  action_id?: string
   value?: string
   view?: {
     callback_id?: string
@@ -58,19 +60,25 @@ function isAllowedUser(userId: string | undefined): boolean {
     .includes(userId)
 }
 
-/** Minimal Slack Web API client — plain fetch, no SDK needed. */
-async function slackApi(method: string, body: Record<string, unknown>): Promise<void> {
-  const res = await fetch(`https://slack.com/api/${method}`, {
+/**
+ * Minimal Slack HTTP client — plain fetch, no SDK needed. `target` is a Web
+ * API method name (bot token attached) or a full response_url; either way
+ * failures are logged here so no outbound Slack call can fail silently.
+ */
+async function slackApi(target: string, body: Record<string, unknown>): Promise<void> {
+  const isWebhook = target.startsWith('https://')
+  const res = await fetch(isWebhook ? target : `https://slack.com/api/${target}`, {
     method: 'POST',
     headers: {
       'content-type': 'application/json; charset=utf-8',
-      authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`,
+      ...(isWebhook ? {} : { authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}` }),
     },
     body: JSON.stringify(body),
   })
-  const json = (await res.json()) as { ok: boolean; error?: string }
-  if (!json.ok) {
-    logger.error(`Slack API ${method} failed: ${json.error}`)
+  // Web API failures are 200s with {"ok":false,...}; webhook failures are non-2xx.
+  const text = await res.text()
+  if (!res.ok || /"ok"\s*:\s*false/.test(text)) {
+    logger.error(`Slack ${target} failed: ${res.status} ${text.slice(0, 200)}`)
   }
 }
 
@@ -136,14 +144,10 @@ async function handleSlashCommand(params: URLSearchParams): Promise<NextResponse
         // submit force-publishes — listing drafts would let it leak them live.
         where: { _status: { equals: 'published' } },
         limit: 20,
-        depth: 1,
+        depth: 0, // the list message only needs description/name, url, item count
         sort: 'url',
       })
-      await fetch(responseUrl, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(buildMenuListMessage(menus.docs)),
-      })
+      await slackApi(responseUrl, buildMenuListMessage(menus.docs))
     } catch (error) {
       logger.error('Slack menu list failed:', error)
     }
@@ -181,7 +185,14 @@ async function handleEditClick(interaction: SlackInteractionPayload): Promise<Ne
     after(async () => {
       try {
         const payload = await getPayload({ config })
-        const menu = await payload.findByID({ collection: 'menus', id: menuId, depth: 1 })
+        const menu = await payload.findByID({
+          collection: 'menus',
+          id: menuId,
+          depth: 1,
+          // The modal only reads id + name from related docs — skip hydrating
+          // the full Beer schema (uploads, textures, reviews) per item.
+          populate: { beers: { name: true }, products: { name: true } },
+        })
         await slackApi('views.open', { trigger_id: triggerId, view: buildEditModalView(menu) })
       } catch (error) {
         logger.error('Slack edit_menu failed:', error)
@@ -198,39 +209,46 @@ async function handleEditClick(interaction: SlackInteractionPayload): Promise<Ne
  */
 async function handleTypeahead(interaction: SlackInteractionPayload): Promise<NextResponse> {
   const query = interaction.value ?? ''
-  const payload = await getPayload({ config })
-
-  const onMenu: Record<'beers' | 'products', string[]> = { beers: [], products: [] }
   const menuId = interaction.view?.private_metadata
-  if (menuId) {
-    try {
-      const menu = await payload.findByID({ collection: 'menus', id: menuId, depth: 0 })
-      for (const item of menu.items ?? []) {
-        if (item.product && typeof item.product.value !== 'object') {
-          onMenu[item.product.relationTo].push(item.product.value)
-        }
-      }
-    } catch (error) {
-      logger.error('Slack typeahead menu lookup failed:', error)
-    }
-  }
+  const payload = await getPayload({ config })
 
   const search = (collection: 'beers' | 'products', limit: number) =>
     payload.find({
       collection,
-      where: {
-        and: [
-          { name: { contains: query } },
-          ...(onMenu[collection].length > 0 ? [{ id: { not_in: onMenu[collection] } }] : []),
-        ],
-      },
+      where: { name: { contains: query } },
       limit,
       depth: 0,
       sort: 'name',
     })
 
-  const [beers, products] = await Promise.all([search('beers', 50), search('products', 25)])
-  return NextResponse.json(buildProductOptionGroups(beers.docs, products.docs))
+  // The menu read only feeds the exclusion filter, so all three queries run in
+  // parallel and the filter is applied in JS (limits over-fetched to cover it).
+  const [menu, beers, products] = await Promise.all([
+    menuId
+      ? payload.findByID({ collection: 'menus', id: menuId, depth: 0 }).catch((error) => {
+          logger.error('Slack typeahead menu lookup failed:', error)
+          return null
+        })
+      : null,
+    search('beers', 60),
+    search('products', 30),
+  ])
+
+  const onMenu = new Set(
+    (menu?.items ?? [])
+      .map((item) => productRef(item))
+      .filter((ref) => ref !== null)
+      .map((ref) => encodeProductValue(ref.relationTo, ref.id)),
+  )
+  const available = <T extends { id: string }>(docs: T[], relationTo: 'beers' | 'products') =>
+    docs.filter((doc) => !onMenu.has(encodeProductValue(relationTo, String(doc.id))))
+
+  return NextResponse.json(
+    buildProductOptionGroups(
+      available(beers.docs, 'beers').slice(0, 50),
+      available(products.docs, 'products').slice(0, 25),
+    ),
+  )
 }
 
 /** Modal submit → rebuild items from modal state and publish the menu. */
