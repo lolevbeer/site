@@ -15,6 +15,7 @@ import {
   encodeMenuMetadata,
   buildEditModalView,
   buildMenuListMessage,
+  buildPasswordResetMessage,
   buildProductOptionGroups,
   buildPublishedView,
   buildPublishingView,
@@ -288,6 +289,19 @@ describe('buildEditModalView', () => {
     expect(
       (empty.blocks as Record<string, any>[]).some((b) => b.block_id === SLACK_IDS.blockAdd),
     ).toBe(true)
+  })
+})
+
+describe('buildPasswordResetMessage', () => {
+  it('links to the admin reset route and stays ephemeral', () => {
+    const message = buildPasswordResetMessage('tok123') as {
+      response_type: string
+      text: string
+    }
+    // Ephemeral matters: the token is a bearer credential, so it must not be
+    // posted where the rest of the channel can read it.
+    expect(message.response_type).toBe('ephemeral')
+    expect(message.text).toContain('/admin/reset/tok123')
   })
 })
 

@@ -54,17 +54,40 @@ opened). Displays update via the revalidation hooks. The beer typeahead
 excludes items already on the menu being edited, except a row's own current
 pick so you can revert it. Handler: `src/app/api/slack/route.ts`.
 
+`/lolevbeer password` returns a one-time link to set a new admin password.
+There is no email service, so Payload's `forgotPassword` runs with
+`disableEmail: true` and the reset token is delivered over Slack instead, as an
+ephemeral message only the requester can see (valid 1 hour, single use). It is
+not gated by the menu allowlist, since it only ever acts on the caller's own
+account — but it does require that account to be linked (below).
+
+### Linking Slack accounts to site users
+
+Users have a `slackUserId` field. The bot resolves a Slack request to a Payload
+user by that field first, then falls back to matching the Slack profile email
+against the user's email — and on a match it stores the ID, so accounts link
+themselves the first time someone uses the bot. When the two addresses differ,
+an admin sets the Slack member ID by hand on the user in the admin panel.
+
+Menu reads and writes then run **as that Payload user**, so roles and
+location scoping are enforced by Payload itself rather than re-implemented in
+the Slack handler. A user with no linked account gets a message explaining how
+to link it. The identity always comes from Slack's verified profile, never from
+an email typed into the command.
+
 Slack app setup (one-time, at api.slack.com/apps):
 
-1. Create app → add bot token scope `commands`, install to workspace.
+1. Create app → add bot token scopes `commands` and `users:read.email`, install
+   to workspace. (`users:read.email` is what lets the bot match a Slack account
+   to a site user; without it, linking and `/lolevbeer password` fail.)
 2. Slash command `/lolevbeer` → request URL `https://lolev.beer/api/slack`.
 3. Interactivity & Shortcuts → ON, request URL `https://lolev.beer/api/slack`;
    same URL under Select Menus (options load URL).
 4. Set env vars: `SLACK_SIGNING_SECRET`, `SLACK_BOT_TOKEN`, and
    `SLACK_ALLOWED_USER_IDS` (comma-separated Slack user IDs allowed to edit
    menus). The allowlist is required — the bot denies all menu edits when it is
-   unset, because it writes as system (`overrideAccess`) and so bypasses
-   Payload's location-scoped roles.
+   unset. It is a coarse gate in front of Payload's own access control, not a
+   replacement for it.
 
 ## Scripts
 

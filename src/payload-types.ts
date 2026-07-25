@@ -614,6 +614,10 @@ export interface User {
   id: string;
   name?: string | null;
   /**
+   * Slack member ID (e.g. U01ABCDEF). Filled in automatically when the Slack profile email matches this account — set it manually only if the emails differ.
+   */
+  slackUserId?: string | null;
+  /**
    * Assign to specific locations. If set, bartenders can only access menus for these locations.
    */
   locations?: (string | Location)[] | null;
@@ -1038,6 +1042,7 @@ export interface FoodVendorsSelect<T extends boolean = true> {
  */
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
+  slackUserId?: T;
   locations?: T;
   roles?: T;
   updatedAt?: T;

@@ -24,11 +24,17 @@ interface PolymorphicProduct {
  * @param item - Menu item from Payload
  * @returns The Beer object if available and populated, null otherwise
  */
-export function extractBeerFromMenuItem(item: MenuItem | Record<string, unknown>): PayloadBeer | null {
+export function extractBeerFromMenuItem(
+  item: MenuItem | Record<string, unknown>,
+): PayloadBeer | null {
   // Handle new polymorphic product field
   if ('product' in item && item.product) {
     const product = item.product as PolymorphicProduct
-    if (product.relationTo === 'beers' && typeof product.value === 'object' && product.value !== null) {
+    if (
+      product.relationTo === 'beers' &&
+      typeof product.value === 'object' &&
+      product.value !== null
+    ) {
       return product.value as PayloadBeer
     }
   }
@@ -80,10 +86,16 @@ function extractBeerIdFromMenuItem(item: MenuItem | Record<string, unknown>): st
  * @param item - Menu item from Payload
  * @returns The Product object if available and populated, null otherwise
  */
-export function extractProductFromMenuItem(item: MenuItem | Record<string, unknown>): PayloadProduct | null {
+export function extractProductFromMenuItem(
+  item: MenuItem | Record<string, unknown>,
+): PayloadProduct | null {
   if ('product' in item && item.product) {
     const product = item.product as PolymorphicProduct
-    if (product.relationTo === 'products' && typeof product.value === 'object' && product.value !== null) {
+    if (
+      product.relationTo === 'products' &&
+      typeof product.value === 'object' &&
+      product.value !== null
+    ) {
       return product.value as PayloadProduct
     }
   }

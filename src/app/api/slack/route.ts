@@ -14,17 +14,21 @@
  * fire and the /m/ displays pick up changes on their next poll.
  *
  * Trust model: Slack's signing secret proves the request came from our app's
- * workspace; requests older than 5 min are rejected (replay). Optionally
- * SLACK_ALLOWED_USER_IDS (comma-separated) restricts who may use the bot.
- * Payload writes run as system (overrideAccess) — Slack users are not mapped
- * to Payload users.
+ * workspace; requests older than 5 min are rejected (replay).
+ * SLACK_ALLOWED_USER_IDS (comma-separated) gates menu editing and fails closed
+ * when unset. Menu reads and writes then run AS the requester's Payload user
+ * (resolved via resolvePayloadUser), so Payload's role and location-scoped
+ * access control is the real authority rather than a rule duplicated here.
+ * `/lolevbeer password` is deliberately outside the allowlist: it only ever
+ * acts on the caller's own account.
  *
  * Env: SLACK_SIGNING_SECRET (required), SLACK_BOT_TOKEN (required for the
- * modal), SLACK_ALLOWED_USER_IDS (optional). Setup steps are in README.md.
+ * modal and identity lookup), SLACK_ALLOWED_USER_IDS (required for menu
+ * editing). Setup steps are in README.md.
  */
 
 import { NextRequest, NextResponse, after } from 'next/server'
-import { getPayload, APIError } from 'payload'
+import { getPayload, APIError, type TypedUser } from 'payload'
 import config from '@/src/payload.config'
 import { logger } from '@/lib/utils/logger'
 import {
@@ -33,6 +37,7 @@ import {
   buildPublishedView,
   buildPublishingView,
   buildMenuListMessage,
+  buildPasswordResetMessage,
   buildProductOptionGroups,
   encodeProductValue,
   itemKey,
@@ -130,6 +135,111 @@ async function slackApi(target: string, body: Record<string, unknown>): Promise<
   }
 }
 
+/**
+ * The Slack account's workspace-verified profile email, or null. Requires the
+ * `users:read.email` bot scope. This is the only trusted way to tie a Slack
+ * identity to a site account — an email the user types is self-asserted and
+ * would let anyone request another account's reset link.
+ */
+async function slackUserEmail(slackUserId: string): Promise<string | null> {
+  const token = process.env.SLACK_BOT_TOKEN
+  if (!token) {
+    logger.error('SLACK_BOT_TOKEN is not configured')
+    return null
+  }
+  try {
+    const res = await fetch(
+      `https://slack.com/api/users.info?user=${encodeURIComponent(slackUserId)}`,
+      {
+        headers: { authorization: `Bearer ${token}` },
+        signal: AbortSignal.timeout(8000),
+      },
+    )
+    const data = (await res.json()) as {
+      ok?: boolean
+      error?: string
+      user?: { profile?: { email?: string } }
+    }
+    if (!data.ok) {
+      // missing_scope here means users:read.email was never granted.
+      logger.error(`Slack users.info failed: ${data.error}`)
+      return null
+    }
+    return data.user?.profile?.email ?? null
+  } catch (error) {
+    logger.error('Slack users.info request failed:', error)
+    return null
+  }
+}
+
+/**
+ * The Payload user behind a Slack account, or null when there is no match.
+ *
+ * Resolves by the stored `slackUserId` first, then falls back to matching the
+ * Slack profile email — and on a successful email match, claims the mapping so
+ * later lookups skip the Slack round trip and keep working if either address
+ * changes. Slack profile emails are workspace-verified and unique per
+ * workspace, so first-match claiming can't be raced by another member.
+ *
+ * The claim is a system write (overrideAccess): the field's update access is
+ * admin-only precisely so a logged-in user can't retarget someone else's
+ * mapping, but the bot establishing identity is not a privilege grant.
+ */
+async function resolvePayloadUser(
+  payload: Awaited<ReturnType<typeof getPayload>>,
+  slackUserId: string | undefined,
+): Promise<TypedUser | null> {
+  if (!slackUserId) return null
+
+  const byId = await payload.find({
+    collection: 'users',
+    where: { slackUserId: { equals: slackUserId } },
+    limit: 1,
+    depth: 0,
+    overrideAccess: true,
+  })
+  if (byId.docs[0]) return byId.docs[0] as TypedUser
+
+  const email = await slackUserEmail(slackUserId)
+  if (!email) return null
+
+  const byEmail = await payload.find({
+    collection: 'users',
+    where: { email: { equals: email } },
+    limit: 1,
+    depth: 0,
+    overrideAccess: true,
+  })
+  const user = byEmail.docs[0]
+  if (!user) return null
+
+  try {
+    await payload.update({
+      collection: 'users',
+      id: user.id,
+      data: { slackUserId },
+      depth: 0,
+      overrideAccess: true,
+    })
+  } catch (error) {
+    // A failed claim only costs a users.info call next time — the caller is
+    // already resolved, so don't fail their command over it.
+    logger.error(`Claiming slackUserId for user ${user.id} failed:`, error)
+  }
+  return user as TypedUser
+}
+
+/** Ephemeral reply explaining that no site account is linked to this Slack user. */
+function noAccountMessage(): Record<string, unknown> {
+  return {
+    response_type: 'ephemeral',
+    text:
+      'No Lolev site account is linked to your Slack profile. This happens when your ' +
+      'Slack email differs from your site login — ask an admin to set your Slack member ' +
+      'ID on your user in the admin panel.',
+  }
+}
+
 export async function POST(request: NextRequest) {
   const signingSecret = process.env.SLACK_SIGNING_SECRET
   if (!signingSecret) {
@@ -168,22 +278,14 @@ export async function POST(request: NextRequest) {
   return handleSlashCommand(params)
 }
 
-/** `/lolevbeer menu` → ephemeral menu list. Anything else → usage help. */
+/**
+ * `/lolevbeer menu` → ephemeral menu list (allowlisted users only).
+ * `/lolevbeer password` → one-time admin reset link for the caller's own
+ * account. Anything else → usage help.
+ */
 async function handleSlashCommand(params: URLSearchParams): Promise<NextResponse> {
-  if (!isAllowedUser(params.get('user_id') ?? undefined)) {
-    return NextResponse.json({
-      response_type: 'ephemeral',
-      text: 'Sorry, you are not authorized to manage menus.',
-    })
-  }
-
+  const slackUserId = params.get('user_id') ?? undefined
   const subcommand = (params.get('text') ?? '').trim().toLowerCase()
-  if (subcommand !== 'menu') {
-    return NextResponse.json({
-      response_type: 'ephemeral',
-      text: 'Usage: `/lolevbeer menu` — list and edit the beer menus.',
-    })
-  }
 
   // Ack now, deliver via response_url: Slack discards replies slower than 3s,
   // and a cold Payload + Mongo init can exceed that. response_url is good for
@@ -192,10 +294,45 @@ async function handleSlashCommand(params: URLSearchParams): Promise<NextResponse
   if (!responseUrl) {
     return NextResponse.json({ response_type: 'ephemeral', text: 'Missing response_url.' })
   }
+
+  // Outside the menu allowlist on purpose: this only ever issues a link for the
+  // caller's own account, and the people most likely to need it are exactly the
+  // ones locked out of the admin panel.
+  if (subcommand === 'password') {
+    after(() => sendPasswordResetLink(slackUserId, responseUrl))
+    return new NextResponse(null, { status: 200 })
+  }
+
+  if (subcommand !== 'menu') {
+    return NextResponse.json({
+      response_type: 'ephemeral',
+      text:
+        'Usage:\n' +
+        '• `/lolevbeer menu` — list and edit the beer menus.\n' +
+        '• `/lolevbeer password` — get a link to set a new admin password.',
+    })
+  }
+
+  if (!isAllowedUser(slackUserId)) {
+    return NextResponse.json({
+      response_type: 'ephemeral',
+      text: 'Sorry, you are not authorized to manage menus.',
+    })
+  }
+
   after(async () => {
     try {
       const payload = await getPayload({ config })
+      const user = await resolvePayloadUser(payload, slackUserId)
+      if (!user) {
+        await slackApi(responseUrl, noAccountMessage())
+        return
+      }
       const menus = await payload.find({
+        // Listed as the requester, so a location-scoped bartender sees only
+        // the menus they may actually edit.
+        user,
+        overrideAccess: false,
         collection: 'menus',
         // Only published menus: drafts aren't live displays, and the bot's
         // submit force-publishes — listing drafts would let it leak them live.
@@ -232,6 +369,51 @@ async function handleSlashCommand(params: URLSearchParams): Promise<NextResponse
     }
   })
   return new NextResponse(null, { status: 200 })
+}
+
+/**
+ * Issue a one-time password-reset link for the Slack caller's own site account.
+ *
+ * The account is resolved from the Slack identity (never from a typed email),
+ * so this can only ever target the requester. `disableEmail: true` makes
+ * Payload skip its mailer — which is the point, since there is no email
+ * service — and hand back the raw token for us to deliver over Slack instead.
+ * Re-running the command simply supersedes the previous token.
+ */
+async function sendPasswordResetLink(
+  slackUserId: string | undefined,
+  responseUrl: string,
+): Promise<void> {
+  try {
+    const payload = await getPayload({ config })
+    const user = await resolvePayloadUser(payload, slackUserId)
+    if (!user?.email) {
+      await slackApi(responseUrl, noAccountMessage())
+      return
+    }
+
+    const token = await payload.forgotPassword({
+      collection: 'users',
+      data: { email: user.email },
+      disableEmail: true,
+    })
+    // forgotPassword returns null for an unknown address rather than throwing.
+    // resolvePayloadUser already found this user, so null here means a race
+    // (deleted mid-request) — report it rather than posting a broken link.
+    if (!token) {
+      await slackApi(responseUrl, noAccountMessage())
+      return
+    }
+
+    await slackApi(responseUrl, buildPasswordResetMessage(token))
+    logger.info(`Slack password reset issued: user=${user.id} slackUser=${slackUserId}`)
+  } catch (error) {
+    logger.error('Slack password reset failed:', error)
+    await slackApi(responseUrl, {
+      response_type: 'ephemeral',
+      text: 'Could not create a reset link — try again, or ask an admin.',
+    })
+  }
 }
 
 async function handleInteraction(interaction: SlackInteractionPayload): Promise<NextResponse> {
@@ -282,9 +464,18 @@ async function handleEditClick(interaction: SlackInteractionPayload): Promise<Ne
     after(async () => {
       try {
         const payload = await getPayload({ config })
+        const user = await resolvePayloadUser(payload, interaction.user?.id)
+        if (!user) {
+          if (responseUrl) await slackApi(responseUrl, noAccountMessage())
+          return
+        }
         const menu = await payload.findByID({
           collection: 'menus',
           id: menuId,
+          // Opened as the requester: a menu they may not read (location scope)
+          // throws here rather than rendering an editor they can't submit.
+          user,
+          overrideAccess: false,
           depth: 1,
           // The modal only reads id + name from related docs — skip hydrating
           // the full Beer schema (uploads, textures, reviews) per item.
@@ -346,6 +537,10 @@ async function handleTypeahead(interaction: SlackInteractionPayload): Promise<Ne
     // private_metadata is now `<id>|<updatedAt>`; only the id is needed here.
     const { menuId } = parseMenuMetadata(interaction.view.private_metadata ?? '')
     const payload = await getPayload({ config })
+    // ponytail: this one stays a system read. It fires on every keystroke, and
+    // resolvePayloadUser costs a users query — while the data it returns
+    // (beer/product names, and the menu the user already has open) is public
+    // catalog content. The submit that follows is access-checked for real.
 
     const search = (collection: 'beers' | 'products', limit: number) =>
       payload.find({
@@ -429,6 +624,15 @@ async function handleSubmit(interaction: SlackInteractionPayload): Promise<NextR
       slackApi('views.update', { view_id: viewId, view: v })
     try {
       const payload = await getPayload({ config })
+      const user = await resolvePayloadUser(payload, interaction.user?.id)
+      if (!user) {
+        await updateView(
+          buildModalErrorView(
+            'No Lolev site account is linked to your Slack profile — ask an admin to link it.',
+          ),
+        )
+        return
+      }
       // Published base (what the modal was built from) and the latest version
       // (to spot unpublished admin drafts) in parallel.
       const [published, latest] = await Promise.all([
@@ -474,6 +678,11 @@ async function handleSubmit(interaction: SlackInteractionPayload): Promise<NextR
       await payload.update({
         collection: 'menus',
         id: menuId,
+        // Written as the requester so Payload's role and location-scoped access
+        // control decides — a bartender scoped elsewhere gets a 403 here, which
+        // the catch below renders as a modal error.
+        user,
+        overrideAccess: false,
         // type is included so the Menus beforeChange recipe-sort (gated on
         // data.type === 'cans') runs for Slack publishes like admin saves.
         data: { items, _status: 'published', type: published.type },

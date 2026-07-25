@@ -143,6 +143,22 @@ function menuLabel(menu: Menu): string {
   return menu.description || menu.name
 }
 
+/**
+ * Ephemeral message carrying a one-time admin password-reset link. Ephemeral
+ * because the token is a bearer credential: only the requester sees it, and it
+ * disappears from their client on reload. Payload's default token lifetime is
+ * one hour (forgotPassword expiration), and issuing a new one invalidates the
+ * previous link.
+ */
+export function buildPasswordResetMessage(token: string): Record<string, unknown> {
+  return {
+    response_type: 'ephemeral',
+    text:
+      `Set a new password: ${SITE_URL}/admin/reset/${token}\n` +
+      'The link expires in 1 hour and works once. Only you can see this message.',
+  }
+}
+
 /** Ephemeral message listing all menus with an Edit button each. */
 export function buildMenuListMessage(menus: Menu[]): Record<string, unknown> {
   if (menus.length === 0) {
