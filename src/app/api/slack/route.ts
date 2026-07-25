@@ -617,7 +617,8 @@ async function submitInvite(
     }
 
     // DM the invitee directly: chat.postMessage accepts a user id as the
-    // channel when the bot holds im:write.
+    // channel. Needs chat:write to post at all, plus im:write to open the DM
+    // conversation — im:write alone fails with missing_scope.
     const inviterName = interaction.user?.name || inviter.name || 'A teammate'
     const dmSent = await slackApi('chat.postMessage', {
       channel: invite.slackUserId,
@@ -885,13 +886,27 @@ async function handleSubmit(interaction: SlackInteractionPayload): Promise<NextR
       }
       // Published base (what the modal was built from) and the latest version
       // (to spot unpublished admin drafts) in parallel.
+      //
+      // disableErrors, not .catch(): a missing doc returns null while a real DB
+      // failure still throws. Swallowing both made a failed read look like "no
+      // draft exists", waving the guard below through and force-publishing over
+      // the very admin changes it exists to protect. Genuine failures now reach
+      // the outer catch and become a retry message instead.
       const [published, latest] = await Promise.all([
-        payload
-          .findByID({ collection: 'menus', id: menuId, depth: 0, draft: false })
-          .catch(() => null),
-        payload
-          .findByID({ collection: 'menus', id: menuId, depth: 0, draft: true })
-          .catch(() => null),
+        payload.findByID({
+          collection: 'menus',
+          id: menuId,
+          depth: 0,
+          draft: false,
+          disableErrors: true,
+        }),
+        payload.findByID({
+          collection: 'menus',
+          id: menuId,
+          depth: 0,
+          draft: true,
+          disableErrors: true,
+        }),
       ])
 
       if (!published || published._status !== 'published') {

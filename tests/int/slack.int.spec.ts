@@ -202,6 +202,21 @@ describe('rebuildMenuItems', () => {
     expect(rebuildMenuItems(populated, state)).toEqual(populated)
   })
 
+  it('turns a cleared select into an empty tap, but ignores an absent block', () => {
+    // The per-item blocks are optional, so clearing one submits the block with
+    // no selection — that's a deliberate "make this an empty tap". A block
+    // that's absent entirely is stale state and must leave the row alone;
+    // treating both as "keep" silently ignored the clear and still reported
+    // "Published ✓".
+    const state: SlackStateValues = {
+      item_row1: { product: { selected_option: null } },
+    }
+    expect(rebuildMenuItems(items, state)).toEqual([
+      { product: null }, // cleared → empty tap, price override dropped with it
+      items[1], // no block submitted → untouched
+    ])
+  })
+
   it('keeps duplicate per-row selects so Payload validation can reject them', () => {
     // Two rows swapped to the same beer must NOT be silently deduped — the
     // Menus beforeValidate rule rejects the publish so the user sees the error

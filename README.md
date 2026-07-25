@@ -91,8 +91,8 @@ Slack app setup (one-time, at api.slack.com/apps):
 
 1. **Create New App → From an app manifest** → pick the workspace → paste
    [`docs/slack-app-manifest.yml`](docs/slack-app-manifest.yml). That sets the
-   scopes (`commands`, `users:read`, `users:read.email`, `im:write`), the
-   `/lolevbeer` command,
+   scopes (`commands`, `users:read`, `users:read.email`, `chat:write`,
+   `im:write`), the `/lolevbeer` command,
    and all three request URLs in one step. Update that file rather than the
    dashboard when any of them change, so the repo stays the source of truth.
 2. **Install to Workspace.**

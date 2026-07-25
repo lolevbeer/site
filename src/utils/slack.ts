@@ -141,10 +141,22 @@ export function parseProductValue(
   return { relationTo, value: id }
 }
 
-/** Absolute site origin for links posted into Slack. */
+/**
+ * Absolute site origin for links posted into Slack. Same priority the frontend
+ * layout uses (getBaseUrl): explicit > production domain > per-deployment URL.
+ *
+ * VERCEL_PROJECT_PRODUCTION_URL must come before VERCEL_URL. VERCEL_URL is the
+ * deployment-specific hostname, which sits behind Vercel deployment protection —
+ * a password-reset link minted against it hands the recipient an auth wall and
+ * burns the one-time token.
+ */
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ??
-  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://lolev.beer')
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : 'https://lolev.beer')
 
 /**
  * The item's polymorphic product as a plain {relationTo, id} ref — delegates
@@ -447,6 +459,7 @@ export function buildEditModalView(menu: Menu): Record<string, unknown> {
  * Rebuild a menu's items array from the submitted modal state.
  * - `item_<rowId>` selects swap products in place (price override is kept only
  *   when the product is unchanged — a sale price for beer A is wrong for B).
+ *   Clearing one turns that row into an empty tap.
  * - `remove` drops items by row id.
  * - `add` appends new items at the end.
  * State entries whose row id no longer exists in `original` are ignored, so
@@ -467,11 +480,19 @@ export function rebuildMenuItems(original: MenuItem[], state: SlackStateValues):
   original.forEach((item, i) => {
     const key = itemKey(item, i)
     if (removed.has(key)) return
-    const raw =
-      state[`${SLACK_IDS.itemBlockPrefix}${key}`]?.[SLACK_IDS.actionProduct]?.selected_option?.value
+    // Distinguish "the user cleared this row" from "this row wasn't in the
+    // modal". The blocks are optional, so clearing a select submits the block
+    // with a null selection — that means an empty tap. A block missing entirely
+    // is stale state (the row didn't exist when the modal was built), which
+    // must leave the item alone. Collapsing the two would either ignore a
+    // deliberate clear or let a stale submit wipe a row.
+    const block = state[`${SLACK_IDS.itemBlockPrefix}${key}`]?.[SLACK_IDS.actionProduct]
+    const raw = block?.selected_option?.value
     const selected = parseProductValue(raw)
     if (!selected) {
-      next.push(item)
+      // Drop the price along with the product, as the swap case does: a price
+      // override belongs to the beer that was there, not to an empty tap.
+      next.push(block ? { product: null } : item)
       return
     }
     const ref = productRef(item)

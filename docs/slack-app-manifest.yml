@@ -14,7 +14,10 @@
 #                      Without both, every command fails: nothing can resolve to
 #                      a Payload user, so menu editing, invites, and password
 #                      resets all report "no linked account".
-#   im:write         — DM an invited teammate their set-password link
+#   chat:write       — post messages, including the invite DM. Required for
+#                      chat.postMessage; im:write below is NOT a substitute.
+#   im:write         — open the DM conversation with an invited teammate, so
+#                      chat.postMessage can address them by user id
 #
 # All three URLs point at the same endpoint; it dispatches on payload shape.
 # message_menu_options_url is the one that's easy to miss — without it the edit
@@ -29,7 +32,7 @@
 display_information:
   name: Lolev Beer
   description: Edit beer menus, invite teammates, and reset your admin password.
-  background_color: "#1a1a1a"
+  background_color: '#1a1a1a'
   long_description: |
     Runs the Lolev admin from Slack.
 
@@ -66,6 +69,7 @@ oauth_config:
       - commands
       - users:read
       - users:read.email
+      - chat:write
       - im:write
 
 settings:

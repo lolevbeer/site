@@ -131,26 +131,35 @@ async function searchUntappd(query: string): Promise<NextResponse> {
     const fullQuery = `lolev ${query}`
     const searchUrl = `https://untappd.com/search?q=${encodeURIComponent(fullQuery)}`
 
-    // A rotated app id changes the request hostname, so stale creds can
-    // surface as a thrown fetch (DNS failure), not just a 401/403 — treat any
-    // first-attempt failure as "creds may be stale" and try one refresh.
+    // Only re-scrape on an auth failure. Rotation is the one thing a refresh
+    // can fix, and the scrape 403s from datacenter IPs — so retrying a 429 or a
+    // transient 5xx can't succeed and would report the scrape's 403 as the
+    // cause, hiding the real rate-limit. A rotated app id also changes the
+    // request hostname, so a thrown fetch (DNS) counts as an auth failure too.
     // ponytail: refreshed creds live in per-lambda module state, so each cold
     // instance re-scrapes; persist them (env/KV) if rotation ever gets frequent.
-    let algoliaResponse: Response | null = null
-    try {
-      algoliaResponse = await queryAlgolia(fullQuery)
-    } catch {
-      algoliaResponse = null
+    // null = the request threw (DNS/network), distinct from an HTTP error.
+    const attempt = async (): Promise<Response | null> => {
+      try {
+        return await queryAlgolia(fullQuery)
+      } catch (error) {
+        logger.error('Algolia request failed:', error)
+        return null
+      }
     }
 
-    if (!algoliaResponse || !algoliaResponse.ok) {
+    let algoliaResponse = await attempt()
+    if (!algoliaResponse || algoliaResponse.status === 401 || algoliaResponse.status === 403) {
       const refreshError = await refreshAlgoliaCreds()
       if (refreshError) {
         return NextResponse.json({ error: refreshError.error }, { status: refreshError.status })
       }
-      algoliaResponse = await queryAlgolia(fullQuery)
+      algoliaResponse = await attempt()
     }
 
+    if (!algoliaResponse) {
+      return NextResponse.json({ error: 'Untappd search is unreachable' }, { status: 502 })
+    }
     if (!algoliaResponse.ok) {
       return NextResponse.json(
         { error: `Untappd search returned ${algoliaResponse.status}` },
