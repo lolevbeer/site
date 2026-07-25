@@ -23,7 +23,14 @@ const leadBartenderFieldAccess: FieldAccess = ({ req: { user } }) => {
   return hasRole(user, ['admin', 'lead-bartender'])
 }
 
-const canUpdateMenus: Access = ({ req: { user } }) => {
+/**
+ * Who may edit menus: admins anywhere, (lead) bartenders either everywhere or
+ * only at their assigned locations. Exported because the Slack bot asks the
+ * same question before opening its editor — `read` access falls through to
+ * "published only" for everyone, so listing a menu proves nothing about being
+ * able to publish it.
+ */
+export const canUpdateMenus: Access = ({ req: { user } }) => {
   if (hasRole(user, 'admin')) return true
   if (hasRole(user, ['bartender', 'lead-bartender'])) {
     // If bartender has assigned locations, restrict to those locations' menus

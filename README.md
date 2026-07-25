@@ -43,6 +43,95 @@ Payload admin is at `/admin`. Follow the on-screen instructions to create your f
 - **Recurring Food** - Weekly food truck schedule
 - **Site Content** - Editable site-wide content (about page, etc.)
 
+## Slack bot
+
+`/lolevbeer menu` in Slack lists the menus with Edit buttons; the Edit modal
+swaps/adds/removes beers. Submitting shows a "Publishing…" view and does the
+write in the background (Slack discards a submit response slower than 3s), then
+swaps the modal to a confirmation — or an error if the menu can't be published
+(not published, has unpublished admin changes, or was edited since the modal
+opened). Displays update via the revalidation hooks. The beer typeahead
+excludes items already on the menu being edited, except a row's own current
+pick so you can revert it. Handler: `src/app/api/slack/route.ts`.
+
+`/lolevbeer invite` opens a form to create an admin account for a teammate:
+pick them from a Slack member picker, set a name, roles, and (optionally)
+locations. The account is created **as the inviter**, so Payload's own rules
+decide — `Users.access.create` allows only admins and lead bartenders, and the
+collection's `beforeChange` hook caps lead bartenders at creating bartenders.
+A lead bartender who picks "Admin" gets Payload's rejection back in the modal;
+that rule is never restated in the Slack handler. Because the invitee is a
+Slack member rather than a typed email, accounts can only be created for people
+already in the workspace, the email is workspace-verified, and the new user is
+linked (`slackUserId`) from the start. They get a DM with a one-time link to set
+their password.
+
+`/lolevbeer password` returns a one-time link to set a new admin password.
+There is no email service, so Payload's `forgotPassword` runs with
+`disableEmail: true` and the reset token is delivered over Slack instead, as an
+ephemeral message only the requester can see (valid 1 hour, single use). It is
+not gated by the menu allowlist, since it only ever acts on the caller's own
+account — but it does require that account to be linked (below).
+
+### Linking Slack accounts to site users
+
+Users have a `slackUserId` field. The bot resolves a Slack request to a Payload
+user by that field first, then falls back to matching the Slack profile email
+against the user's email — and on a match it stores the ID, so accounts link
+themselves the first time someone uses the bot. When the two addresses differ,
+an admin sets the Slack member ID by hand on the user in the admin panel.
+
+Menu reads and writes then run **as that Payload user**, so roles and
+location scoping are enforced by Payload itself rather than re-implemented in
+the Slack handler. A user with no linked account gets a message explaining how
+to link it. The identity always comes from Slack's verified profile, never from
+an email typed into the command.
+
+Slack app setup (one-time, at api.slack.com/apps):
+
+1. **Create New App → From an app manifest** → pick the workspace → paste
+   [`docs/slack-app-manifest.yml`](docs/slack-app-manifest.yml). That sets the
+   scopes (`commands`, `users:read`, `users:read.email`, `chat:write`,
+   `im:write`), the `/lolevbeer` command,
+   and all three request URLs in one step. Update that file rather than the
+   dashboard when any of them change, so the repo stays the source of truth.
+2. **Install to Workspace.**
+3. Set env vars: `SLACK_SIGNING_SECRET` (Basic Information → App Credentials)
+   and `SLACK_BOT_TOKEN` (OAuth & Permissions → Bot User OAuth Token, `xoxb-…`),
+   then redeploy — env changes don't reach existing deployments. There is no
+   allowlist env var; see "Who can do what" below.
+4. Link yourself: the bot only acts as a linked site user, so confirm your Slack
+   profile email matches your admin account's email. If it doesn't, paste your
+   Slack member ID (Slack profile → ⋮ → Copy member ID) into **Slack member ID**
+   on your user. Everyone else can then be added with `/lolevbeer invite`.
+
+Verify with `/lolevbeer password` first — it exercises identity resolution end
+to end and proves the `users:read` + `users:read.email` scope pair is working.
+A `missing_scope` error in the logs means one of the two wasn't granted — Slack
+requires `users:read` to call `users.info` at all, and `users:read.email` only
+adds the email field to the response.
+
+Reset and menu links are built from `NEXT_PUBLIC_SITE_URL`, falling back to the
+per-deployment `VERCEL_URL`. Set it to `https://lolev.beer` in production so
+links point at the domain rather than a deployment hostname.
+
+### Who can do what
+
+Permissions come from the linked user's Payload roles, so staffing changes
+happen in the admin panel and take effect immediately — no env var, no redeploy:
+
+- **Edit menus** — admin, bartender, or lead bartender. Bartenders with
+  `locations` assigned can only edit those locations' menus, in Slack exactly as
+  in the admin panel (`Menus.access.update`).
+- **Invite teammates** — admin or lead bartender, with lead bartenders limited
+  to creating bartenders (`Users.access.create` plus the collection's
+  `beforeChange` hook).
+- **Reset your own password** — anyone with a linked account.
+
+Every request runs as the requester's Payload user, so these are the collections'
+own rules rather than a copy kept in the Slack handler. Someone with no linked
+account, or without the right role, gets a message saying so.
+
 ## Scripts
 
 ```bash

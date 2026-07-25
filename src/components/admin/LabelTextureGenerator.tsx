@@ -72,22 +72,27 @@ export function LabelTextureGenerator() {
   const { setValue: setImage } = useField<string>({ path: 'image' })
   const [artFile, setArtFile] = useState<File | null>(null)
   const [maskFile, setMaskFile] = useState<File | null>(null)
-  const [busy, setBusy] = useState(false)
+  // Non-null while generating: drives the progress bar + stage label.
+  const [progress, setProgress] = useState<{ pct: number; label: string } | null>(null)
   const [status, setStatus] = useState<{ type: 'error' | 'success'; msg: string } | null>(null)
+  const busy = progress !== null
 
   const generate = async () => {
     if (!artFile) {
       setStatus({ type: 'error', msg: 'Choose the label art PDF first' })
       return
     }
-    setBusy(true)
     setStatus(null)
+    // Stage weights are rough wall-clock shares; the sprite loop (72 frames)
+    // dominates and reports real per-frame progress.
+    setProgress({ pct: 0, label: 'Rendering label PDFs…' })
     try {
       const name = slug || 'beer'
       const { baseCanvas, metalnessCanvas } = await processLabelPdfs(
         await artFile.arrayBuffer(),
         maskFile ? await maskFile.arrayBuffer() : null,
       )
+      setProgress({ pct: 25, label: 'Uploading textures…' })
       const [baseId, metalnessId] = await Promise.all([
         uploadWebp(baseCanvas, `${name}-label-base`),
         uploadWebp(metalnessCanvas, `${name}-label-metalness`),
@@ -96,8 +101,18 @@ export function LabelTextureGenerator() {
       setMetalness(metalnessId)
       // Bake the beer image still + the can-rotation sprite sheet (both WebP,
       // to stay under Vercel's request-body limit)
+      setProgress({ pct: 35, label: 'Rendering can…' })
       const { generateCanRenders } = await import('./record-can-video')
-      const { still, sprite } = await generateCanRenders(baseCanvas, metalnessCanvas)
+      const { still, sprite } = await generateCanRenders(
+        baseCanvas,
+        metalnessCanvas,
+        (done, total) =>
+          setProgress({
+            pct: 35 + (done / total) * 55,
+            label: `Rendering sprite frames (${done}/${total})…`,
+          }),
+      )
+      setProgress({ pct: 90, label: 'Uploading can image + sprite…' })
       const [imageId, spriteId] = await Promise.all([
         uploadMedia(still, `${name}-can.webp`, `${name} can`),
         uploadMedia(sprite, `${name}-can-sprite.webp`, `${name} can rotation`),
@@ -111,7 +126,7 @@ export function LabelTextureGenerator() {
     } catch (err) {
       setStatus({ type: 'error', msg: err instanceof Error ? err.message : String(err) })
     } finally {
-      setBusy(false)
+      setProgress(null)
     }
   }
 
@@ -125,6 +140,12 @@ export function LabelTextureGenerator() {
           {busy ? 'Processing…' : 'Generate'}
         </Button>
       </div>
+      {progress && (
+        <div style={{ marginTop: '8px' }}>
+          <progress value={progress.pct} max={100} style={{ width: '100%', display: 'block' }} />
+          <small>{progress.label}</small>
+        </div>
+      )}
       {status && <Banner type={status.type}>{status.msg}</Banner>}
     </div>
   )

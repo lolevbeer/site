@@ -55,13 +55,35 @@ export const Users: CollectionConfig = {
       },
     },
     {
+      // Links a Slack account to this user so the /lolevbeer bot can act as
+      // them (see src/app/api/slack/route.ts). Claimed automatically the first
+      // time a Slack profile email matches this user's email; set it by hand
+      // when the two differ. Unique so two users can't map to one Slack account.
+      name: 'slackUserId',
+      type: 'text',
+      unique: true,
+      index: true,
+      admin: {
+        position: 'sidebar',
+        description:
+          'Slack member ID (e.g. U01ABCDEF). Filled in automatically when the Slack profile email matches this account — set it manually only if the emails differ.',
+      },
+      access: {
+        // Self-claim is a system write (overrideAccess); only admins may
+        // retarget an existing mapping, which would hand over this account.
+        update: adminFieldAccess,
+      },
+    },
+    {
       name: 'locations',
       type: 'relationship',
       relationTo: 'locations',
       hasMany: true,
       admin: {
-        description: 'Assign to specific locations. If set, bartenders can only access menus for these locations.',
-        condition: (data) => data?.roles?.includes('bartender') || data?.roles?.includes('lead-bartender'),
+        description:
+          'Assign to specific locations. If set, bartenders can only access menus for these locations.',
+        condition: (data) =>
+          data?.roles?.includes('bartender') || data?.roles?.includes('lead-bartender'),
       },
     },
     {

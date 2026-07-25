@@ -36,6 +36,37 @@ interface DraftBeerCardProps {
   accentColor?: string
 }
 
+/**
+ * Wraps a card in a link to the beer's detail page, or in a plain div when the
+ * beer is hidden from the site.
+ *
+ * hideFromSite beers (usually guest taps) still render on menus — the flag only
+ * removes them from the /beer catalog, detail pages, sitemap, and feeds (each
+ * enforces it separately). Since their /beer/<slug> page won't render, the card
+ * is shown without a link rather than dead-ending the click.
+ *
+ * Module scope, not inside DraftBeerCard: a component declared in a render body
+ * is a new type on every render, so React would remount the whole card subtree
+ * instead of reconciling it — reloading images and restarting transitions on the
+ * /m displays, which re-render on every poll tick.
+ */
+function CardWrapper({
+  href,
+  hidden,
+  children,
+}: {
+  href: string
+  hidden?: boolean
+  children: React.ReactNode
+}) {
+  if (hidden) return <div className="group block h-full">{children}</div>
+  return (
+    <Link href={href} className="group block h-full">
+      {children}
+    </Link>
+  )
+}
+
 export const DraftBeerCard = React.memo(function DraftBeerCard({
   beer,
   showLocation = true,
@@ -53,15 +84,10 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
   const GlassIcon = getGlassIcon(beer.glass)
   const badgeLabel = showJustReleased ? getBeerBadgeLabel(beer) : null
 
-  // Don't show beer if it's hidden from site
-  if (beer.availability.hideFromSite) {
-    return null
-  }
-
   // Fullscreen mode uses viewport-relative sizing
   if (showTapAndPrice) {
     return (
-      <Link href={`/beer/${beerSlug}`} className="group block h-full">
+      <CardWrapper href={`/beer/${beerSlug}`} hidden={beer.availability.hideFromSite}>
         <div
           className={`relative overflow-hidden transition-colors duration-200 cursor-pointer hover:bg-secondary/50 h-full bg-background ${className}`}
         >
@@ -197,15 +223,15 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
             </div>
           </div>
         </div>
-      </Link>
+      </CardWrapper>
     )
   }
 
   // Standard mode with Tailwind classes
   return (
-    <Link
+    <CardWrapper
       href={showLocation ? `/${currentLocation}/beer/${beerSlug}` : `/beer/${beerSlug}`}
-      className="group block h-full"
+      hidden={beer.availability.hideFromSite}
     >
       <div
         className={`relative overflow-hidden transition-colors duration-200 cursor-pointer hover:bg-secondary/50 h-full min-h-[80px] bg-background rounded-lg ${className}`}
@@ -269,7 +295,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
           )}
         </div>
       </div>
-    </Link>
+    </CardWrapper>
   )
 })
 

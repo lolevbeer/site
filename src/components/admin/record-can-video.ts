@@ -23,9 +23,32 @@ const STILL_SIZE = 1080
  *  label edge-to-edge without exposing the bare back of the can. */
 const SWEEP_RATIO = 0.35
 
+/** Render this many sprite frames between yields — often enough for a smooth
+ *  progress bar, rare enough that the yields don't dominate the render. */
+const YIELD_EVERY = 4
+
+/**
+ * Hand control back to the event loop so queued work (a progress repaint) can
+ * run. MessageChannel because it's the one macrotask source browsers don't
+ * throttle in background tabs: rAF is paused there and setTimeout is clamped to
+ * >=1s, either of which would stall this loop the moment the admin switches away.
+ */
+function yieldToBrowser(): Promise<void> {
+  return new Promise((resolve) => {
+    const channel = new MessageChannel()
+    channel.port1.onmessage = () => {
+      channel.port1.close()
+      resolve()
+    }
+    channel.port2.postMessage(undefined)
+  })
+}
+
 export async function generateCanRenders(
   baseCanvas: HTMLCanvasElement,
   metalnessCanvas: HTMLCanvasElement,
+  /** Called after each sprite frame renders, for progress UI. */
+  onProgress?: (done: number, total: number) => void,
 ): Promise<{ still: Blob; sprite: Blob }> {
   const can = await createCanScene({
     width: STILL_SIZE,
@@ -62,6 +85,15 @@ export async function generateCanRenders(
       const col = i % cols
       const row = Math.floor(i / cols)
       sctx.drawImage(can.renderer.domElement, col * frameWidth, row * frameHeight)
+      onProgress?.(i + 1, frames)
+      // Yield periodically so the progress UI can paint. Both obvious yields
+      // stall a backgrounded tab — rAF stops firing entirely, and setTimeout is
+      // clamped to >=1s — so this uses MessageChannel, which browsers don't
+      // throttle, and yields every YIELD_EVERY frames rather than all 72 to keep
+      // the overhead off the critical path. Safe: each frame's render() +
+      // drawImage happen in the same task above; only the WebGL buffer is
+      // task-sensitive, the 2D sheet persists across tasks.
+      if ((i + 1) % YIELD_EVERY === 0) await yieldToBrowser()
     }
     const sprite = await canvasToWebpBlob(sheet)
 

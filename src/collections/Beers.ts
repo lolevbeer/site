@@ -287,6 +287,8 @@ export const Beers: CollectionConfig = {
       defaultValue: false,
       admin: {
         position: 'sidebar',
+        description:
+          'Hide from the /beer catalog (and sitemap/feeds). Usually for guest beers. Does NOT hide the beer from menu displays (/m).',
       },
     },
     {

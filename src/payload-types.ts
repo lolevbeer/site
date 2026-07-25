@@ -196,6 +196,9 @@ export interface Beer {
    * Auto-incremented recipe number
    */
   recipe?: number | null;
+  /**
+   * Hide from the /beer catalog (and sitemap/feeds). Usually for guest beers. Does NOT hide the beer from menu displays (/m).
+   */
   hideFromSite?: boolean | null;
   /**
    * Mark as "Just Released". If no beers have this set, beers created within 2 weeks are auto-marked.
@@ -610,6 +613,10 @@ export interface FoodVendor {
 export interface User {
   id: string;
   name?: string | null;
+  /**
+   * Slack member ID (e.g. U01ABCDEF). Filled in automatically when the Slack profile email matches this account — set it manually only if the emails differ.
+   */
+  slackUserId?: string | null;
   /**
    * Assign to specific locations. If set, bartenders can only access menus for these locations.
    */
@@ -1035,6 +1042,7 @@ export interface FoodVendorsSelect<T extends boolean = true> {
  */
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
+  slackUserId?: T;
   locations?: T;
   roles?: T;
   updatedAt?: T;

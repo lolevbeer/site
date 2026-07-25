@@ -1,0 +1,85 @@
+# Slack app manifest for the /lolevbeer bot.
+#
+# Create the app in one step: api.slack.com/apps → Create New App → From an app
+# manifest → pick the workspace → paste this file.
+#
+# Keep this in sync with src/app/api/slack/route.ts. In particular, every scope
+# below is load-bearing:
+#   commands         — receive the /lolevbeer slash command
+#   users:read       — call users.info at all. Required alongside the scope
+#                      below: users:read.email does not imply it, and omitting
+#                      it fails with missing_scope.
+#   users:read.email — include the email field in that users.info response,
+#                      which is how Slack accounts are matched to site users.
+#                      Without both, every command fails: nothing can resolve to
+#                      a Payload user, so menu editing, invites, and password
+#                      resets all report "no linked account".
+#   chat:write       — post messages, including the invite DM. Required for
+#                      chat.postMessage; im:write below is NOT a substitute.
+#   im:write         — open the DM conversation with an invited teammate, so
+#                      chat.postMessage can address them by user id
+#
+# All three URLs point at the same endpoint; it dispatches on payload shape.
+# message_menu_options_url is the one that's easy to miss — without it the edit
+# modal opens but its beer typeahead returns nothing.
+#
+# After creating the app: copy the Signing Secret (Basic Information) and the
+# Bot User OAuth Token (OAuth & Permissions) into Vercel as SLACK_SIGNING_SECRET
+# and SLACK_BOT_TOKEN, then redeploy. Setup checklist: README → "Slack bot".
+#
+# Changing scopes later requires reinstalling the app to the workspace.
+
+display_information:
+  name: Lolev Beer
+  description: Edit beer menus, invite teammates, and reset your admin password.
+  background_color: '#1a1a1a'
+  long_description: |
+    Runs the Lolev admin from Slack.
+
+    /lolevbeer menu — list the published menus and edit them: swap a tap, add or
+    remove beers, and publish straight to the live /m/ displays.
+
+    /lolevbeer invite — create an admin account for a teammate and DM them a
+    link to set their password.
+
+    /lolevbeer password — get a one-time link to set a new password for your own
+    account.
+
+    Permissions come from your Lolev site account, not from Slack: editing menus
+    needs a bartender or admin role (and respects the locations you're assigned
+    to), and inviting needs admin or lead bartender. Your Slack account is
+    matched to your site account by email the first time you use the bot.
+
+features:
+  bot_user:
+    display_name: Lolev Beer
+    always_online: false
+  slash_commands:
+    - command: /lolevbeer
+      url: https://lolev.beer/api/slack
+      description: Edit beer menus, invite teammates, or reset your password
+      usage_hint: menu | invite | password
+      # The handler only reads a subcommand keyword, so leave Slack's text
+      # unescaped — escaping would mangle nothing useful here.
+      should_escape: false
+
+oauth_config:
+  scopes:
+    bot:
+      - commands
+      - users:read
+      - users:read.email
+      - chat:write
+      - im:write
+
+settings:
+  interactivity:
+    is_enabled: true
+    # Button clicks and modal submissions.
+    request_url: https://lolev.beer/api/slack
+    # Typeahead ("options load") for the beer selects — required, and separate
+    # from request_url above.
+    message_menu_options_url: https://lolev.beer/api/slack
+  org_deploy_enabled: false
+  socket_mode_enabled: false
+  token_rotation_enabled: false

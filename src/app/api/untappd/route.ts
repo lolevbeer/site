@@ -68,52 +68,98 @@ interface AlgoliaBeerHit {
 }
 
 /**
- * Search Untappd for beers matching "lolev + query".
- * Untappd's search page renders results client-side via Algolia, so we pull
- * the public Algolia credentials from the page's UNTAPPD_SEARCH_CONFIG blob
- * (they may rotate, so never hardcode them) and query the beer index directly.
+ * Untappd's public Algolia search credentials (visible to any browser on
+ * untappd.com/search). Seeded with the current values because scraping them
+ * from the search page 403s from datacenter IPs (Cloudflare bot protection);
+ * refreshAlgoliaCreds re-scrapes only if Algolia ever rejects these.
+ */
+let algoliaCreds = { appId: '9WBO4RQ3HO', searchKey: '1d347324d67ec472bb7132c66aead485' }
+
+/**
+ * Re-scrape Algolia credentials from Untappd's search page config blob.
+ * Only called when the cached creds are rejected (rotation). May itself fail
+ * with 403 when Cloudflare blocks the server's IP — callers surface that.
+ */
+async function refreshAlgoliaCreds(): Promise<{ error: string; status: number } | null> {
+  const pageResponse = await fetch('https://untappd.com/search?q=lolev', {
+    headers: {
+      'User-Agent':
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+      'Accept-Language': 'en-US,en;q=0.5',
+    },
+    next: { revalidate: 0 },
+  })
+
+  if (!pageResponse.ok) {
+    return { error: `Untappd returned ${pageResponse.status}`, status: pageResponse.status }
+  }
+
+  const html = await pageResponse.text()
+  const configMatch = html.match(/"appId":"([^"]+)","searchKey":"([^"]+)"/)
+  if (!configMatch) {
+    logger.error('Untappd search config not found - page structure may have changed')
+    return { error: 'Untappd search config not found', status: 502 }
+  }
+  algoliaCreds = { appId: configMatch[1], searchKey: configMatch[2] }
+  return null
+}
+
+/** Query Untappd's Algolia beer index directly (not behind Untappd's Cloudflare). */
+function queryAlgolia(fullQuery: string): Promise<Response> {
+  const { appId, searchKey } = algoliaCreds
+  return fetch(`https://${appId}-dsn.algolia.net/1/indexes/beer/query`, {
+    method: 'POST',
+    headers: {
+      'X-Algolia-Application-Id': appId,
+      'X-Algolia-API-Key': searchKey,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ params: `query=${encodeURIComponent(fullQuery)}&hitsPerPage=10` }),
+    next: { revalidate: 0 },
+  })
+}
+
+/**
+ * Search Untappd for beers matching "lolev + query" via their public Algolia
+ * index (their search page is client-rendered, so this is what the site itself
+ * uses). Cached credentials are used first; if Algolia rejects them (rotated),
+ * we re-scrape them from the search page and retry once.
  */
 async function searchUntappd(query: string): Promise<NextResponse> {
   try {
     const fullQuery = `lolev ${query}`
     const searchUrl = `https://untappd.com/search?q=${encodeURIComponent(fullQuery)}`
 
-    const pageResponse = await fetch(searchUrl, {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
-      },
-      next: { revalidate: 0 }, // Don't cache search results
-    })
-
-    if (!pageResponse.ok) {
-      return NextResponse.json(
-        { error: `Untappd returned ${pageResponse.status}` },
-        { status: pageResponse.status },
-      )
+    // Only re-scrape on an auth failure. Rotation is the one thing a refresh
+    // can fix, and the scrape 403s from datacenter IPs — so retrying a 429 or a
+    // transient 5xx can't succeed and would report the scrape's 403 as the
+    // cause, hiding the real rate-limit. A rotated app id also changes the
+    // request hostname, so a thrown fetch (DNS) counts as an auth failure too.
+    // ponytail: refreshed creds live in per-lambda module state, so each cold
+    // instance re-scrapes; persist them (env/KV) if rotation ever gets frequent.
+    // null = the request threw (DNS/network), distinct from an HTTP error.
+    const attempt = async (): Promise<Response | null> => {
+      try {
+        return await queryAlgolia(fullQuery)
+      } catch (error) {
+        logger.error('Algolia request failed:', error)
+        return null
+      }
     }
 
-    const html = await pageResponse.text()
-    const configMatch = html.match(/"appId":"([^"]+)","searchKey":"([^"]+)"/)
-    if (!configMatch) {
-      logger.error('Untappd search config not found - page structure may have changed')
-      return NextResponse.json({ error: 'Untappd search config not found' }, { status: 502 })
+    let algoliaResponse = await attempt()
+    if (!algoliaResponse || algoliaResponse.status === 401 || algoliaResponse.status === 403) {
+      const refreshError = await refreshAlgoliaCreds()
+      if (refreshError) {
+        return NextResponse.json({ error: refreshError.error }, { status: refreshError.status })
+      }
+      algoliaResponse = await attempt()
     }
-    const [, appId, searchKey] = configMatch
 
-    const algoliaResponse = await fetch(`https://${appId}-dsn.algolia.net/1/indexes/beer/query`, {
-      method: 'POST',
-      headers: {
-        'X-Algolia-Application-Id': appId,
-        'X-Algolia-API-Key': searchKey,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ params: `query=${encodeURIComponent(fullQuery)}&hitsPerPage=10` }),
-      next: { revalidate: 0 },
-    })
-
+    if (!algoliaResponse) {
+      return NextResponse.json({ error: 'Untappd search is unreachable' }, { status: 502 })
+    }
     if (!algoliaResponse.ok) {
       return NextResponse.json(
         { error: `Untappd search returned ${algoliaResponse.status}` },
