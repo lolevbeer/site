@@ -97,11 +97,25 @@ Slack app setup (one-time, at api.slack.com/apps):
 2. Slash command `/lolevbeer` → request URL `https://lolev.beer/api/slack`.
 3. Interactivity & Shortcuts → ON, request URL `https://lolev.beer/api/slack`;
    same URL under Select Menus (options load URL).
-4. Set env vars: `SLACK_SIGNING_SECRET`, `SLACK_BOT_TOKEN`, and
-   `SLACK_ALLOWED_USER_IDS` (comma-separated Slack user IDs allowed to edit
-   menus). The allowlist is required — the bot denies all menu edits when it is
-   unset. It is a coarse gate in front of Payload's own access control, not a
-   replacement for it.
+4. Set env vars: `SLACK_SIGNING_SECRET` and `SLACK_BOT_TOKEN`. There is no
+   allowlist env var — see "Who can do what" below.
+
+### Who can do what
+
+Permissions come from the linked user's Payload roles, so staffing changes
+happen in the admin panel and take effect immediately — no env var, no redeploy:
+
+- **Edit menus** — admin, bartender, or lead bartender. Bartenders with
+  `locations` assigned can only edit those locations' menus, in Slack exactly as
+  in the admin panel (`Menus.access.update`).
+- **Invite teammates** — admin or lead bartender, with lead bartenders limited
+  to creating bartenders (`Users.access.create` plus the collection's
+  `beforeChange` hook).
+- **Reset your own password** — anyone with a linked account.
+
+Every request runs as the requester's Payload user, so these are the collections'
+own rules rather than a copy kept in the Slack handler. Someone with no linked
+account, or without the right role, gets a message saying so.
 
 ## Scripts
 

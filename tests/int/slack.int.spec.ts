@@ -305,9 +305,7 @@ describe('invite modal', () => {
     const roleBlock = view.blocks.find((b) => b.block_id === SLACK_IDS.blockInviteRoles) as {
       element: { options: { value: string }[] }
     }
-    expect(roleBlock.element.options.map((o) => o.value)).toEqual(
-      INVITE_ROLES.map((r) => r.value),
-    )
+    expect(roleBlock.element.options.map((o) => o.value)).toEqual(INVITE_ROLES.map((r) => r.value))
   })
 
   it('omits the locations block when there are no locations', () => {
@@ -328,7 +326,9 @@ describe('invite modal', () => {
       [SLACK_IDS.blockInviteName]: { [SLACK_IDS.actionInviteName]: { value: '   ' } },
       [SLACK_IDS.blockInviteRoles]: {
         [SLACK_IDS.actionInviteRoles]: {
-          selected_options: [{ text: { type: 'plain_text', text: 'Bartender' }, value: 'bartender' }],
+          selected_options: [
+            { text: { type: 'plain_text', text: 'Bartender' }, value: 'bartender' },
+          ],
         },
       },
     }

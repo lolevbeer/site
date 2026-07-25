@@ -14,19 +14,16 @@
  * fire and the /m/ displays pick up changes on their next poll.
  *
  * Trust model: Slack's signing secret proves the request came from our app's
- * workspace; requests older than 5 min are rejected (replay).
- * SLACK_ALLOWED_USER_IDS (comma-separated) gates menu editing and fails closed
- * when unset. Menu reads and writes then run AS the requester's Payload user
- * (resolved via resolvePayloadUser), so Payload's role and location-scoped
- * access control is the real authority rather than a rule duplicated here.
- * `/lolevbeer password` and `/lolevbeer invite` are deliberately outside the
- * allowlist: the first only acts on the caller's own account, and the second is
- * authorized by the caller's own Payload account (Users.access.create is
- * admin/lead-bartender only), so Slack membership alone grants neither.
+ * workspace; requests older than 5 min are rejected (replay). Authorization is
+ * then entirely Payload's: every request resolves to the requester's Payload
+ * user (resolvePayloadUser) and runs as them, so menu editing needs an
+ * admin/bartender role (Menus.access.update, scoped to assigned locations) and
+ * inviting needs admin/lead-bartender (Users.access.create). Slack workspace
+ * membership by itself grants nothing, and no access rule is restated here
+ * where it could drift from the admin panel.
  *
- * Env: SLACK_SIGNING_SECRET (required), SLACK_BOT_TOKEN (required for the
- * modal and identity lookup), SLACK_ALLOWED_USER_IDS (required for menu
- * editing). Setup steps are in README.md.
+ * Env: SLACK_SIGNING_SECRET (required), SLACK_BOT_TOKEN (required for the modal
+ * and identity lookup). Setup steps are in README.md.
  */
 
 import { NextRequest, NextResponse, after } from 'next/server'
@@ -35,6 +32,7 @@ import crypto from 'crypto'
 import config from '@/src/payload.config'
 import { logger } from '@/lib/utils/logger'
 import { leadBartenderAccess } from '@/src/access/roles'
+import { canUpdateMenus } from '@/src/collections/Menus'
 import type { User } from '@/src/payload-types'
 import {
   buildEditModalView,
@@ -78,30 +76,17 @@ interface SlackInteractionPayload {
   }
 }
 
-// Warn just once per process (not per request) when the bot runs without an
-// allowlist, so the log isn't spammed on every interaction.
-let warnedNoAllowlist = false
-
-// Fails CLOSED when SLACK_ALLOWED_USER_IDS is unset: the bot writes as system,
-// bypassing Payload's location-scoped roles, so an accidentally dropped env var
-// must not silently open menu publishing to the whole workspace.
-function isAllowedUser(userId: string | undefined): boolean {
-  const allowlist = process.env.SLACK_ALLOWED_USER_IDS
-  if (!allowlist) {
-    if (!warnedNoAllowlist) {
-      warnedNoAllowlist = true
-      logger.warn(
-        'SLACK_ALLOWED_USER_IDS is unset — denying all Slack menu edits. Set it ' +
-          '(comma-separated Slack user ids) to allow specific users.',
-      )
-    }
-    return false
-  }
-  if (!userId) return false
-  return allowlist
-    .split(',')
-    .map((s) => s.trim())
-    .includes(userId)
+/**
+ * May this user edit menus? Calls the Menus collection's own `update` rule, so
+ * Slack and the admin panel agree by construction — including the per-location
+ * scoping that a flat list of Slack ids could never express.
+ *
+ * Checked explicitly rather than left to the write: `Menus.access.read` falls
+ * through to "published only" for everyone, so an unprivileged user could
+ * otherwise list menus and open an editor that only fails at publish.
+ */
+function canEditMenus(user: TypedUser): boolean {
+  return Boolean(canUpdateMenus({ req: { user } } as Parameters<typeof canUpdateMenus>[0]))
 }
 
 /**
@@ -248,6 +233,14 @@ function canCreateUsers(user: TypedUser): boolean {
   )
 }
 
+/** Ephemeral reply for a linked user whose role doesn't allow menu editing. */
+function notAuthorizedMessage(): Record<string, unknown> {
+  return {
+    response_type: 'ephemeral',
+    text: 'Your site account does not have permission to edit menus — ask an admin for the bartender role.',
+  }
+}
+
 /** Ephemeral reply explaining that no site account is linked to this Slack user. */
 function noAccountMessage(): Record<string, unknown> {
   return {
@@ -345,19 +338,16 @@ async function handleSlashCommand(params: URLSearchParams): Promise<NextResponse
     })
   }
 
-  if (!isAllowedUser(slackUserId)) {
-    return NextResponse.json({
-      response_type: 'ephemeral',
-      text: 'Sorry, you are not authorized to manage menus.',
-    })
-  }
-
   after(async () => {
     try {
       const payload = await getPayload({ config })
       const user = await resolvePayloadUser(payload, slackUserId)
       if (!user) {
         await slackApi(responseUrl, noAccountMessage())
+        return
+      }
+      if (!canEditMenus(user)) {
+        await slackApi(responseUrl, notAuthorizedMessage())
         return
       }
       const menus = await payload.find({
@@ -477,7 +467,14 @@ async function openInviteModal(
     // Locations populate the optional scoping select; an empty list just omits
     // the block, so a lookup failure degrades rather than blocking the invite.
     const locations = await payload
-      .find({ collection: 'locations', limit: 100, depth: 0, sort: 'name', user, overrideAccess: false })
+      .find({
+        collection: 'locations',
+        limit: 100,
+        depth: 0,
+        sort: 'name',
+        user,
+        overrideAccess: false,
+      })
       .catch((error) => {
         logger.error('Slack invite location lookup failed:', error)
         return null
@@ -641,25 +638,10 @@ async function handleInteraction(interaction: SlackInteractionPayload): Promise<
     return handleSubmit(interaction)
   }
 
-  if (!isAllowedUser(interaction.user?.id)) {
-    // A view_submission must not be silently acked — an empty 200 closes the
-    // modal as if the publish succeeded. Return a modal error so the user sees
-    // the denial.
-    if (interaction.type === 'view_submission') {
-      return NextResponse.json({
-        response_action: 'errors',
-        errors: { [SLACK_IDS.blockAdd]: 'You are not authorized to manage menus.' },
-      })
-    }
-    // block_suggestion comes from an open modal's typeahead and must be answered
-    // with an options list — an empty body renders a load error in the select.
-    if (interaction.type === 'block_suggestion') {
-      return NextResponse.json({ options: [] })
-    }
-    // block_actions has no response surface, so it stays a silent 200 ack.
-    return new NextResponse(null, { status: 200 })
-  }
-
+  // No blanket gate here: each handler resolves the requester to their Payload
+  // user and defers to Payload's access control, which is finer-grained than
+  // anything this layer could check (per-location menu scoping, role-capped
+  // invites) and can't drift from what the admin panel enforces.
   switch (interaction.type) {
     case 'block_actions':
       return handleEditClick(interaction)
@@ -691,6 +673,10 @@ async function handleEditClick(interaction: SlackInteractionPayload): Promise<Ne
         const user = await resolvePayloadUser(payload, interaction.user?.id)
         if (!user) {
           if (responseUrl) await slackApi(responseUrl, noAccountMessage())
+          return
+        }
+        if (!canEditMenus(user)) {
+          if (responseUrl) await slackApi(responseUrl, notAuthorizedMessage())
           return
         }
         const menu = await payload.findByID({
@@ -867,6 +853,14 @@ async function handleSubmit(interaction: SlackInteractionPayload): Promise<NextR
           buildModalErrorView(
             'No Lolev site account is linked to your Slack profile — ask an admin to link it.',
           ),
+        )
+        return
+      }
+      // Belt and braces: the update below is access-checked too, but catching
+      // it here yields a clearer message than Payload's generic Forbidden.
+      if (!canEditMenus(user)) {
+        await updateView(
+          buildModalErrorView('Your site account does not have permission to edit menus.'),
         )
         return
       }

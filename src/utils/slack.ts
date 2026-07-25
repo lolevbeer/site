@@ -538,7 +538,10 @@ export function buildPublishingView(label: string): Record<string, unknown> {
  * Terminal modal carrying a message — a failed publish by default, but the
  * invite flow reuses it for its own outcomes (including success) via `title`.
  */
-export function buildModalErrorView(message: string, title = 'Publish failed'): Record<string, unknown> {
+export function buildModalErrorView(
+  message: string,
+  title = 'Publish failed',
+): Record<string, unknown> {
   return {
     type: 'modal',
     title: { type: 'plain_text', text: title },
