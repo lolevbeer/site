@@ -26,6 +26,8 @@ const SWEEP_RATIO = 0.35
 export async function generateCanRenders(
   baseCanvas: HTMLCanvasElement,
   metalnessCanvas: HTMLCanvasElement,
+  /** Called after each sprite frame renders, for progress UI. */
+  onProgress?: (done: number, total: number) => void,
 ): Promise<{ still: Blob; sprite: Blob }> {
   const can = await createCanScene({
     width: STILL_SIZE,
@@ -62,6 +64,11 @@ export async function generateCanRenders(
       const col = i % cols
       const row = Math.floor(i / cols)
       sctx.drawImage(can.renderer.domElement, col * frameWidth, row * frameHeight)
+      onProgress?.(i + 1, frames)
+      // Yield to the browser so progress UI can paint. Safe: each frame's
+      // render() + drawImage happen in the same task above; only the WebGL
+      // buffer is task-sensitive, the 2D sheet persists across tasks.
+      await new Promise(requestAnimationFrame)
     }
     const sprite = await canvasToWebpBlob(sheet)
 
