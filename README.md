@@ -89,16 +89,27 @@ an email typed into the command.
 
 Slack app setup (one-time, at api.slack.com/apps):
 
-1. Create app → add bot token scopes `commands`, `users:read.email`, and
-   `im:write`, install to workspace. (`users:read.email` is what lets the bot
-   match a Slack account to a site user; without it, linking, invites, and
-   `/lolevbeer password` all fail. `im:write` is only needed to DM invitees
-   their setup link.)
-2. Slash command `/lolevbeer` → request URL `https://lolev.beer/api/slack`.
-3. Interactivity & Shortcuts → ON, request URL `https://lolev.beer/api/slack`;
-   same URL under Select Menus (options load URL).
-4. Set env vars: `SLACK_SIGNING_SECRET` and `SLACK_BOT_TOKEN`. There is no
-   allowlist env var — see "Who can do what" below.
+1. **Create New App → From an app manifest** → pick the workspace → paste
+   [`docs/slack-app-manifest.yml`](docs/slack-app-manifest.yml). That sets the
+   scopes (`commands`, `users:read.email`, `im:write`), the `/lolevbeer` command,
+   and all three request URLs in one step. Update that file rather than the
+   dashboard when any of them change, so the repo stays the source of truth.
+2. **Install to Workspace.**
+3. Set env vars: `SLACK_SIGNING_SECRET` (Basic Information → App Credentials)
+   and `SLACK_BOT_TOKEN` (OAuth & Permissions → Bot User OAuth Token, `xoxb-…`),
+   then redeploy — env changes don't reach existing deployments. There is no
+   allowlist env var; see "Who can do what" below.
+4. Link yourself: the bot only acts as a linked site user, so confirm your Slack
+   profile email matches your admin account's email. If it doesn't, paste your
+   Slack member ID (Slack profile → ⋮ → Copy member ID) into **Slack member ID**
+   on your user. Everyone else can then be added with `/lolevbeer invite`.
+
+Verify with `/lolevbeer password` first — it exercises identity resolution end
+to end and proves the `users:read.email` scope is working.
+
+Reset and menu links are built from `NEXT_PUBLIC_SITE_URL`, falling back to the
+per-deployment `VERCEL_URL`. Set it to `https://lolev.beer` in production so
+links point at the domain rather than a deployment hostname.
 
 ### Who can do what
 
