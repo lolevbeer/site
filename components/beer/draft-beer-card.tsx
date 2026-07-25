@@ -53,10 +53,9 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
   const GlassIcon = getGlassIcon(beer.glass)
   const badgeLabel = showJustReleased ? getBeerBadgeLabel(beer) : null
 
-  // Don't show beer if it's hidden from site
-  if (beer.availability.hideFromSite) {
-    return null
-  }
+  // NOTE: hideFromSite is intentionally NOT checked here — it only hides beers
+  // from the /beer catalog (filtered at the page level). Menu displays (/m/<id>)
+  // and the homepage draft list must still show hidden guest beers on tap.
 
   // Fullscreen mode uses viewport-relative sizing
   if (showTapAndPrice) {

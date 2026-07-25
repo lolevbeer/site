@@ -196,6 +196,9 @@ export interface Beer {
    * Auto-incremented recipe number
    */
   recipe?: number | null;
+  /**
+   * Hide from the /beer catalog (and sitemap/feeds). Usually for guest beers. Does NOT hide the beer from menu displays (/m).
+   */
   hideFromSite?: boolean | null;
   /**
    * Mark as "Just Released". If no beers have this set, beers created within 2 weeks are auto-marked.
