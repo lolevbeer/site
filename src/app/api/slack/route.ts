@@ -135,6 +135,12 @@ async function slackApi(target: string, body: Record<string, unknown>): Promise<
  * latter fails with missing_scope. This is the only trusted way to tie a Slack
  * identity to a site account — an email the user types is self-asserted and
  * would let anyone request another account's reset link.
+ *
+ * Lowercased and trimmed to match how Payload stores it (its auth email field
+ * normalizes in a beforeChange hook). Mongo's `equals` is case-sensitive, so
+ * without this a Slack profile reading "Ted@Example.com" would never match the
+ * stored "ted@example.com": that user would be told "no linked account" by
+ * every command, and never auto-link.
  */
 async function slackUserEmail(slackUserId: string): Promise<string | null> {
   const token = process.env.SLACK_BOT_TOKEN
@@ -161,7 +167,7 @@ async function slackUserEmail(slackUserId: string): Promise<string | null> {
       logger.error(`Slack users.info failed: ${data.error}`)
       return null
     }
-    return data.user?.profile?.email ?? null
+    return data.user?.profile?.email?.toLowerCase().trim() || null
   } catch (error) {
     logger.error('Slack users.info request failed:', error)
     return null
@@ -521,12 +527,14 @@ async function submitInvite(
   state: SlackStateValues,
   viewId: string | undefined,
 ): Promise<void> {
+  // buildModalErrorView defaults to the menu flow's "Publish failed" title.
+  const INVITE_FAILED = 'Invite failed'
   const updateView = (v: Record<string, unknown>) =>
     slackApi('views.update', { view_id: viewId, view: v })
   const invite = parseInviteSubmission(state)
   try {
     if (!invite.slackUserId) {
-      await updateView(buildModalErrorView('Pick the Slack member this account is for.'))
+      await updateView(buildModalErrorView('Pick the Slack member this account is for.', INVITE_FAILED))
       return
     }
 
@@ -534,7 +542,7 @@ async function submitInvite(
     const inviter = await resolvePayloadUser(payload, interaction.user?.id)
     if (!inviter) {
       await updateView(
-        buildModalErrorView('No Lolev site account is linked to your Slack profile.'),
+        buildModalErrorView('No Lolev site account is linked to your Slack profile.', INVITE_FAILED),
       )
       return
     }
@@ -544,6 +552,7 @@ async function submitInvite(
       await updateView(
         buildModalErrorView(
           "Could not read that member's Slack email — they may be a bot or guest account.",
+          INVITE_FAILED,
         ),
       )
       return
@@ -560,6 +569,7 @@ async function submitInvite(
       await updateView(
         buildModalErrorView(
           `${email} already has an account — they can run \`/lolevbeer password\` to get back in.`,
+          'Already has an account',
         ),
       )
       return
@@ -595,6 +605,7 @@ async function submitInvite(
       await updateView(
         buildModalErrorView(
           `Created ${email}, but could not generate their setup link — ask them to run \`/lolevbeer password\`.`,
+          'Account created',
         ),
       )
       return
@@ -627,7 +638,7 @@ async function submitInvite(
       error instanceof APIError && error.status < 500
         ? error.message
         : 'Creating the account failed — try again or use the admin panel.'
-    await updateView(buildModalErrorView(message))
+    await updateView(buildModalErrorView(message, INVITE_FAILED))
   }
 }
 
