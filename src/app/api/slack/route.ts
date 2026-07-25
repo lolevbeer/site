@@ -19,8 +19,10 @@
  * when unset. Menu reads and writes then run AS the requester's Payload user
  * (resolved via resolvePayloadUser), so Payload's role and location-scoped
  * access control is the real authority rather than a rule duplicated here.
- * `/lolevbeer password` is deliberately outside the allowlist: it only ever
- * acts on the caller's own account.
+ * `/lolevbeer password` and `/lolevbeer invite` are deliberately outside the
+ * allowlist: the first only acts on the caller's own account, and the second is
+ * authorized by the caller's own Payload account (Users.access.create is
+ * admin/lead-bartender only), so Slack membership alone grants neither.
  *
  * Env: SLACK_SIGNING_SECRET (required), SLACK_BOT_TOKEN (required for the
  * modal and identity lookup), SLACK_ALLOWED_USER_IDS (required for menu
@@ -29,16 +31,22 @@
 
 import { NextRequest, NextResponse, after } from 'next/server'
 import { getPayload, APIError, type TypedUser } from 'payload'
+import crypto from 'crypto'
 import config from '@/src/payload.config'
 import { logger } from '@/lib/utils/logger'
+import { leadBartenderAccess } from '@/src/access/roles'
+import type { User } from '@/src/payload-types'
 import {
   buildEditModalView,
   buildModalErrorView,
   buildPublishedView,
   buildPublishingView,
+  buildInviteDm,
+  buildInviteModalView,
   buildMenuListMessage,
   buildPasswordResetMessage,
   buildProductOptionGroups,
+  parseInviteSubmission,
   encodeProductValue,
   itemKey,
   parseMenuMetadata,
@@ -52,7 +60,7 @@ import {
 /** Handled types: block_actions, block_suggestion, view_submission. */
 interface SlackInteractionPayload {
   type: string
-  user?: { id: string }
+  user?: { id: string; name?: string }
   trigger_id?: string
   // block_actions carries the source message's response_url (good ~30 min), used
   // to post ephemeral follow-ups when the after() open has no modal to message.
@@ -229,6 +237,17 @@ async function resolvePayloadUser(
   return user as TypedUser
 }
 
+/**
+ * May this user create accounts? Calls the Users collection's own `create`
+ * access rule so the invite modal never opens for someone Payload would reject
+ * at submit time — and so the rule lives in exactly one place.
+ */
+function canCreateUsers(user: TypedUser): boolean {
+  return Boolean(
+    leadBartenderAccess({ req: { user } } as Parameters<typeof leadBartenderAccess>[0]),
+  )
+}
+
 /** Ephemeral reply explaining that no site account is linked to this Slack user. */
 function noAccountMessage(): Record<string, unknown> {
   return {
@@ -303,12 +322,25 @@ async function handleSlashCommand(params: URLSearchParams): Promise<NextResponse
     return new NextResponse(null, { status: 200 })
   }
 
+  // Not allowlist-gated: authority comes from the requester's own Payload
+  // account (Users.create is admin/lead-bartender only), so Slack membership
+  // alone can never create an account. See openInviteModal.
+  if (subcommand === 'invite') {
+    const triggerId = params.get('trigger_id')
+    if (!triggerId) {
+      return NextResponse.json({ response_type: 'ephemeral', text: 'Missing trigger_id.' })
+    }
+    after(() => openInviteModal(slackUserId, triggerId, responseUrl))
+    return new NextResponse(null, { status: 200 })
+  }
+
   if (subcommand !== 'menu') {
     return NextResponse.json({
       response_type: 'ephemeral',
       text:
         'Usage:\n' +
         '• `/lolevbeer menu` — list and edit the beer menus.\n' +
+        '• `/lolevbeer invite` — create an admin account for a teammate.\n' +
         '• `/lolevbeer password` — get a link to set a new admin password.',
     })
   }
@@ -416,7 +448,199 @@ async function sendPasswordResetLink(
   }
 }
 
+/**
+ * Open the invite modal, but only for a requester whose own Payload account may
+ * create users. The check is Payload's (`Users.access.create`), asked via
+ * canCreateUsers rather than re-stated here — the same rule the admin panel
+ * uses, so the two can't drift. Slack workspace membership grants nothing.
+ */
+async function openInviteModal(
+  slackUserId: string | undefined,
+  triggerId: string,
+  responseUrl: string,
+): Promise<void> {
+  try {
+    const payload = await getPayload({ config })
+    const user = await resolvePayloadUser(payload, slackUserId)
+    if (!user) {
+      await slackApi(responseUrl, noAccountMessage())
+      return
+    }
+    if (!canCreateUsers(user)) {
+      await slackApi(responseUrl, {
+        response_type: 'ephemeral',
+        text: 'Only admins and lead bartenders can create accounts.',
+      })
+      return
+    }
+
+    // Locations populate the optional scoping select; an empty list just omits
+    // the block, so a lookup failure degrades rather than blocking the invite.
+    const locations = await payload
+      .find({ collection: 'locations', limit: 100, depth: 0, sort: 'name', user, overrideAccess: false })
+      .catch((error) => {
+        logger.error('Slack invite location lookup failed:', error)
+        return null
+      })
+
+    const opened = await slackApi('views.open', {
+      trigger_id: triggerId,
+      view: buildInviteModalView(
+        (locations?.docs ?? []).map((l) => ({ id: String(l.id), name: l.name })),
+      ),
+    })
+    if (!opened) {
+      await slackApi(responseUrl, {
+        response_type: 'ephemeral',
+        text: 'Could not open the invite form — try `/lolevbeer invite` again.',
+      })
+    }
+  } catch (error) {
+    logger.error('Slack invite modal failed:', error)
+    await slackApi(responseUrl, {
+      response_type: 'ephemeral',
+      text: 'Could not open the invite form — try again.',
+    })
+  }
+}
+
+/**
+ * Create the invited user and DM them a link to set their password.
+ *
+ * The account is created AS the inviter (`overrideAccess: false`), so Payload
+ * decides: `Users.access.create` gates who may invite at all, and the
+ * collection's beforeChange hook caps lead bartenders at the bartender role —
+ * a lead bartender picking "Admin" gets Payload's own 403 message back in the
+ * modal rather than a rule maintained twice.
+ *
+ * The email comes from the invitee's verified Slack profile, never typed, so
+ * an account can't be minted for someone outside the workspace.
+ */
+async function submitInvite(
+  interaction: SlackInteractionPayload,
+  state: SlackStateValues,
+  viewId: string | undefined,
+): Promise<void> {
+  const updateView = (v: Record<string, unknown>) =>
+    slackApi('views.update', { view_id: viewId, view: v })
+  const invite = parseInviteSubmission(state)
+  try {
+    if (!invite.slackUserId) {
+      await updateView(buildModalErrorView('Pick the Slack member this account is for.'))
+      return
+    }
+
+    const payload = await getPayload({ config })
+    const inviter = await resolvePayloadUser(payload, interaction.user?.id)
+    if (!inviter) {
+      await updateView(
+        buildModalErrorView('No Lolev site account is linked to your Slack profile.'),
+      )
+      return
+    }
+
+    const email = await slackUserEmail(invite.slackUserId)
+    if (!email) {
+      await updateView(
+        buildModalErrorView(
+          "Could not read that member's Slack email — they may be a bot or guest account.",
+        ),
+      )
+      return
+    }
+
+    const existing = await payload.find({
+      collection: 'users',
+      where: { email: { equals: email } },
+      limit: 1,
+      depth: 0,
+      overrideAccess: true,
+    })
+    if (existing.docs[0]) {
+      await updateView(
+        buildModalErrorView(
+          `${email} already has an account — they can run \`/lolevbeer password\` to get back in.`,
+        ),
+      )
+      return
+    }
+
+    const created = await payload.create({
+      collection: 'users',
+      user: inviter,
+      overrideAccess: false,
+      depth: 0,
+      data: {
+        email,
+        name: invite.name ?? undefined,
+        // Validated by Payload against the collection's options, and by its
+        // beforeChange hook against what the inviter may grant.
+        roles: invite.roles as User['roles'],
+        locations: invite.locations.length > 0 ? invite.locations : undefined,
+        // Linked from birth: the invitee is a Slack member by construction, so
+        // the bot never has to email-match them later.
+        slackUserId: invite.slackUserId,
+        // Unusable placeholder — the account is only reachable via the reset
+        // link below, which is why it's generated rather than chosen here.
+        password: crypto.randomUUID(),
+      },
+    })
+
+    const token = await payload.forgotPassword({
+      collection: 'users',
+      data: { email },
+      disableEmail: true,
+    })
+    if (!token) {
+      await updateView(
+        buildModalErrorView(
+          `Created ${email}, but could not generate their setup link — ask them to run \`/lolevbeer password\`.`,
+        ),
+      )
+      return
+    }
+
+    // DM the invitee directly: chat.postMessage accepts a user id as the
+    // channel when the bot holds im:write.
+    const inviterName = interaction.user?.name || inviter.name || 'A teammate'
+    const dmSent = await slackApi('chat.postMessage', {
+      channel: invite.slackUserId,
+      ...buildInviteDm(token, inviterName),
+    })
+
+    logger.info(
+      `Slack invite: created=${created.id} email=${email} by=${inviter.id} slackUser=${interaction.user?.id} dm=${dmSent}`,
+    )
+    await updateView(
+      buildModalErrorView(
+        dmSent
+          ? `Invited ${email}. They have a DM with their setup link.`
+          : `Created ${email}, but the DM failed — ask them to run \`/lolevbeer password\`.`,
+        dmSent ? 'Invite sent ✓' : 'Account created',
+      ),
+    )
+  } catch (error) {
+    // Payload's access/hook rejections land here (e.g. a lead bartender
+    // choosing a role above bartender) — surface their message verbatim.
+    logger.error('Slack invite failed:', error)
+    const message =
+      error instanceof APIError && error.status < 500
+        ? error.message
+        : 'Creating the account failed — try again or use the admin panel.'
+    await updateView(buildModalErrorView(message))
+  }
+}
+
 async function handleInteraction(interaction: SlackInteractionPayload): Promise<NextResponse> {
+  // Invite submissions skip the menu allowlist: their authority is the
+  // requester's Payload account, re-checked by payload.create in submitInvite.
+  if (
+    interaction.type === 'view_submission' &&
+    interaction.view?.callback_id === SLACK_IDS.callbackInvite
+  ) {
+    return handleSubmit(interaction)
+  }
+
   if (!isAllowedUser(interaction.user?.id)) {
     // A view_submission must not be silently acked — an empty 200 closes the
     // modal as if the publish succeeded. Return a modal error so the user sees
@@ -611,7 +835,20 @@ async function handleTypeahead(interaction: SlackInteractionPayload): Promise<Ne
 async function handleSubmit(interaction: SlackInteractionPayload): Promise<NextResponse> {
   const view = interaction.view
   const state = view?.state?.values
-  if (view?.callback_id !== SLACK_IDS.callbackMenuEdit || !view.private_metadata || !state) {
+  if (!state) return new NextResponse(null, { status: 200 })
+
+  if (view?.callback_id === SLACK_IDS.callbackInvite) {
+    // Same ack-then-work shape as the menu publish: creating the user, minting
+    // the token, and DMing it all exceed Slack's 3s submit window.
+    const viewId = view.id
+    after(() => submitInvite(interaction, state, viewId))
+    return NextResponse.json({
+      response_action: 'update',
+      view: buildPublishingView('the invite'),
+    })
+  }
+
+  if (view?.callback_id !== SLACK_IDS.callbackMenuEdit || !view.private_metadata) {
     return new NextResponse(null, { status: 200 })
   }
 

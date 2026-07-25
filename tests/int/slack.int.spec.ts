@@ -14,9 +14,13 @@ import {
   parseMenuMetadata,
   encodeMenuMetadata,
   buildEditModalView,
+  buildInviteDm,
+  buildInviteModalView,
   buildMenuListMessage,
   buildPasswordResetMessage,
   buildProductOptionGroups,
+  parseInviteSubmission,
+  INVITE_ROLES,
   buildPublishedView,
   buildPublishingView,
   buildModalErrorView,
@@ -289,6 +293,59 @@ describe('buildEditModalView', () => {
     expect(
       (empty.blocks as Record<string, any>[]).some((b) => b.block_id === SLACK_IDS.blockAdd),
     ).toBe(true)
+  })
+})
+
+describe('invite modal', () => {
+  it('offers every role and lets Payload police who may grant what', () => {
+    // All roles are listed on purpose: the Users beforeChange hook decides
+    // whether the inviter may actually grant the one they picked, so the modal
+    // must not encode a second copy of that rule.
+    const view = buildInviteModalView([]) as { blocks: Record<string, unknown>[] }
+    const roleBlock = view.blocks.find((b) => b.block_id === SLACK_IDS.blockInviteRoles) as {
+      element: { options: { value: string }[] }
+    }
+    expect(roleBlock.element.options.map((o) => o.value)).toEqual(
+      INVITE_ROLES.map((r) => r.value),
+    )
+  })
+
+  it('omits the locations block when there are no locations', () => {
+    const view = buildInviteModalView([]) as { blocks: Record<string, unknown>[] }
+    expect(view.blocks.some((b) => b.block_id === SLACK_IDS.blockInviteLocations)).toBe(false)
+
+    const withLocations = buildInviteModalView([{ id: 'loc1', name: 'Lawrenceville' }]) as {
+      blocks: Record<string, unknown>[]
+    }
+    expect(withLocations.blocks.some((b) => b.block_id === SLACK_IDS.blockInviteLocations)).toBe(
+      true,
+    )
+  })
+
+  it('parses a submission, treating a blank name as unset', () => {
+    const state: SlackStateValues = {
+      [SLACK_IDS.blockInviteUser]: { [SLACK_IDS.actionInviteUser]: { selected_user: 'U123' } },
+      [SLACK_IDS.blockInviteName]: { [SLACK_IDS.actionInviteName]: { value: '   ' } },
+      [SLACK_IDS.blockInviteRoles]: {
+        [SLACK_IDS.actionInviteRoles]: {
+          selected_options: [{ text: { type: 'plain_text', text: 'Bartender' }, value: 'bartender' }],
+        },
+      },
+    }
+    expect(parseInviteSubmission(state)).toEqual({
+      slackUserId: 'U123',
+      name: null,
+      roles: ['bartender'],
+      locations: [],
+    })
+  })
+
+  it('DMs a setup link rather than posting the token in a channel', () => {
+    const dm = buildInviteDm('tok456', 'Ted') as { text: string }
+    expect(dm.text).toContain('/admin/reset/tok456')
+    expect(dm.text).toContain('Ted')
+    // No response_type: this goes to chat.postMessage as a DM, not a channel reply.
+    expect(dm).not.toHaveProperty('response_type')
   })
 })
 

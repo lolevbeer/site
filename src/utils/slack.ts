@@ -26,6 +26,10 @@ export interface SlackOption {
 export interface SlackStateValue {
   selected_option?: SlackOption | null
   selected_options?: SlackOption[] | null
+  /** users_select */
+  selected_user?: string | null
+  /** plain_text_input */
+  value?: string | null
 }
 
 export type SlackStateValues = Record<string, Record<string, SlackStateValue>>
@@ -44,7 +48,33 @@ export const SLACK_IDS = {
   blockAdd: 'add',
   blockRemove: 'remove',
   itemBlockPrefix: 'item_',
+  // Invite modal (/lolevbeer invite)
+  callbackInvite: 'user_invite',
+  blockInviteUser: 'invite_user',
+  actionInviteUser: 'invite_user_pick',
+  blockInviteName: 'invite_name',
+  actionInviteName: 'invite_name_input',
+  blockInviteRoles: 'invite_roles',
+  actionInviteRoles: 'invite_roles_pick',
+  blockInviteLocations: 'invite_locations',
+  actionInviteLocations: 'invite_locations_pick',
 } as const
+
+/**
+ * Roles offered in the invite modal — mirrors the Users collection's `roles`
+ * options. Every role is listed on purpose: the Users beforeChange hook is the
+ * authority on who may grant what (lead bartenders are capped at 'bartender'),
+ * and letting Payload reject the submit surfaces its real message instead of
+ * duplicating the rule here, where it could drift.
+ */
+export const INVITE_ROLES = [
+  { label: 'Admin', value: 'admin' },
+  { label: 'Event Manager', value: 'event-manager' },
+  { label: 'Beer Manager', value: 'beer-manager' },
+  { label: 'Food Manager', value: 'food-manager' },
+  { label: 'Lead Bartender', value: 'lead-bartender' },
+  { label: 'Bartender', value: 'bartender' },
+] as const
 
 const SIGNATURE_VERSION = 'v0'
 const MAX_TIMESTAMP_SKEW_SECONDS = 60 * 5
@@ -141,6 +171,130 @@ function productName(item: MenuItem): string {
 /** Human label for a menu: description when set, else the required name. */
 function menuLabel(menu: Menu): string {
   return menu.description || menu.name
+}
+
+/**
+ * Invite modal: pick a Slack member, name them, choose roles and (optionally)
+ * locations. The invitee is a Slack user picker rather than a typed email on
+ * purpose — it bounds who can be invited to the workspace, sources a verified
+ * address instead of a self-asserted one, and pre-links the new account.
+ */
+export function buildInviteModalView(
+  locations: { id: string; name: string }[],
+): Record<string, unknown> {
+  return {
+    type: 'modal',
+    callback_id: SLACK_IDS.callbackInvite,
+    title: { type: 'plain_text', text: 'Invite to admin' },
+    submit: { type: 'plain_text', text: 'Send invite' },
+    close: { type: 'plain_text', text: 'Cancel' },
+    blocks: [
+      {
+        type: 'input',
+        block_id: SLACK_IDS.blockInviteUser,
+        label: { type: 'plain_text', text: 'Slack member' },
+        element: {
+          type: 'users_select',
+          action_id: SLACK_IDS.actionInviteUser,
+          placeholder: { type: 'plain_text', text: 'Who is this account for?' },
+        },
+      },
+      {
+        type: 'input',
+        block_id: SLACK_IDS.blockInviteName,
+        optional: true,
+        label: { type: 'plain_text', text: 'Name' },
+        element: {
+          type: 'plain_text_input',
+          action_id: SLACK_IDS.actionInviteName,
+          placeholder: { type: 'plain_text', text: 'Defaults to their Slack name' },
+        },
+      },
+      {
+        type: 'input',
+        block_id: SLACK_IDS.blockInviteRoles,
+        label: { type: 'plain_text', text: 'Roles' },
+        element: {
+          type: 'multi_static_select',
+          action_id: SLACK_IDS.actionInviteRoles,
+          initial_options: [roleOption('bartender')],
+          options: INVITE_ROLES.map((r) => roleOption(r.value)),
+        },
+      },
+      // Only meaningful for (lead) bartenders, but Slack modals can't react to
+      // a select without a round trip; Payload ignores it for other roles.
+      ...(locations.length > 0
+        ? [
+            {
+              type: 'input',
+              block_id: SLACK_IDS.blockInviteLocations,
+              optional: true,
+              label: { type: 'plain_text', text: 'Locations' },
+              hint: {
+                type: 'plain_text',
+                text: 'Bartenders with locations set can only edit those menus. Leave empty for all.',
+              },
+              element: {
+                type: 'multi_static_select',
+                action_id: SLACK_IDS.actionInviteLocations,
+                options: locations.map((l) => ({
+                  text: { type: 'plain_text', text: l.name },
+                  value: String(l.id),
+                })),
+              },
+            },
+          ]
+        : []),
+    ],
+  }
+}
+
+/** Block Kit option for a role value, labelled from INVITE_ROLES. */
+function roleOption(value: string): SlackOption {
+  const role = INVITE_ROLES.find((r) => r.value === value)
+  return {
+    text: { type: 'plain_text', text: role?.label ?? value },
+    value,
+  }
+}
+
+/** The invite modal's submitted fields. `roles` is empty when none were picked. */
+export interface InviteSubmission {
+  slackUserId: string | null
+  name: string | null
+  roles: string[]
+  locations: string[]
+}
+
+/** Read the invite modal's submitted state into plain values. */
+export function parseInviteSubmission(state: SlackStateValues): InviteSubmission {
+  const block = (blockId: string, actionId: string) => state[blockId]?.[actionId]
+  const name = block(SLACK_IDS.blockInviteName, SLACK_IDS.actionInviteName)?.value?.trim()
+  return {
+    slackUserId:
+      block(SLACK_IDS.blockInviteUser, SLACK_IDS.actionInviteUser)?.selected_user ?? null,
+    name: name || null,
+    roles: (
+      block(SLACK_IDS.blockInviteRoles, SLACK_IDS.actionInviteRoles)?.selected_options ?? []
+    ).map((o) => o.value),
+    locations: (
+      block(SLACK_IDS.blockInviteLocations, SLACK_IDS.actionInviteLocations)?.selected_options ?? []
+    ).map((o) => o.value),
+  }
+}
+
+/**
+ * DM sent to a newly invited user: their one-time link to set a password.
+ * Delivered by DM rather than in-channel so the token isn't posted anywhere
+ * shared — see buildPasswordResetMessage for the same reasoning.
+ */
+export function buildInviteDm(token: string, inviterName: string): Record<string, unknown> {
+  return {
+    text:
+      `${inviterName} created a Lolev admin account for you. ` +
+      `Set your password: ${SITE_URL}/admin/reset/${token}\n` +
+      'The link expires in 1 hour — run `/lolevbeer password` for a fresh one.',
+  }
 }
 
 /**
@@ -374,17 +528,20 @@ export function buildPublishingView(label: string): Record<string, unknown> {
     blocks: [
       {
         type: 'section',
-        text: { type: 'mrkdwn', text: `Publishing ${escapeSlackText(label)} — hang tight.` },
+        text: { type: 'mrkdwn', text: `Working on ${escapeSlackText(label)} — hang tight.` },
       },
     ],
   }
 }
 
-/** Terminal view shown when a publish fails, carrying the failure message. */
-export function buildModalErrorView(message: string): Record<string, unknown> {
+/**
+ * Terminal modal carrying a message — a failed publish by default, but the
+ * invite flow reuses it for its own outcomes (including success) via `title`.
+ */
+export function buildModalErrorView(message: string, title = 'Publish failed'): Record<string, unknown> {
   return {
     type: 'modal',
-    title: { type: 'plain_text', text: 'Publish failed' },
+    title: { type: 'plain_text', text: title },
     close: { type: 'plain_text', text: 'Close' },
     blocks: [
       {

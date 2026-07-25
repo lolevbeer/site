@@ -80,8 +80,10 @@ export const Users: CollectionConfig = {
       relationTo: 'locations',
       hasMany: true,
       admin: {
-        description: 'Assign to specific locations. If set, bartenders can only access menus for these locations.',
-        condition: (data) => data?.roles?.includes('bartender') || data?.roles?.includes('lead-bartender'),
+        description:
+          'Assign to specific locations. If set, bartenders can only access menus for these locations.',
+        condition: (data) =>
+          data?.roles?.includes('bartender') || data?.roles?.includes('lead-bartender'),
       },
     },
     {

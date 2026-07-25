@@ -54,6 +54,18 @@ opened). Displays update via the revalidation hooks. The beer typeahead
 excludes items already on the menu being edited, except a row's own current
 pick so you can revert it. Handler: `src/app/api/slack/route.ts`.
 
+`/lolevbeer invite` opens a form to create an admin account for a teammate:
+pick them from a Slack member picker, set a name, roles, and (optionally)
+locations. The account is created **as the inviter**, so Payload's own rules
+decide — `Users.access.create` allows only admins and lead bartenders, and the
+collection's `beforeChange` hook caps lead bartenders at creating bartenders.
+A lead bartender who picks "Admin" gets Payload's rejection back in the modal;
+that rule is never restated in the Slack handler. Because the invitee is a
+Slack member rather than a typed email, accounts can only be created for people
+already in the workspace, the email is workspace-verified, and the new user is
+linked (`slackUserId`) from the start. They get a DM with a one-time link to set
+their password.
+
 `/lolevbeer password` returns a one-time link to set a new admin password.
 There is no email service, so Payload's `forgotPassword` runs with
 `disableEmail: true` and the reset token is delivered over Slack instead, as an
@@ -77,9 +89,11 @@ an email typed into the command.
 
 Slack app setup (one-time, at api.slack.com/apps):
 
-1. Create app → add bot token scopes `commands` and `users:read.email`, install
-   to workspace. (`users:read.email` is what lets the bot match a Slack account
-   to a site user; without it, linking and `/lolevbeer password` fail.)
+1. Create app → add bot token scopes `commands`, `users:read.email`, and
+   `im:write`, install to workspace. (`users:read.email` is what lets the bot
+   match a Slack account to a site user; without it, linking, invites, and
+   `/lolevbeer password` all fail. `im:write` is only needed to DM invitees
+   their setup link.)
 2. Slash command `/lolevbeer` → request URL `https://lolev.beer/api/slack`.
 3. Interactivity & Shortcuts → ON, request URL `https://lolev.beer/api/slack`;
    same URL under Select Menus (options load URL).
