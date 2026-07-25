@@ -130,7 +130,9 @@ async function slackApi(target: string, body: Record<string, unknown>): Promise<
 
 /**
  * The Slack account's workspace-verified profile email, or null. Requires the
- * `users:read.email` bot scope. This is the only trusted way to tie a Slack
+ * `users:read` and `users:read.email` bot scopes — the former to call
+ * users.info at all, the latter to get the email field back; granting only the
+ * latter fails with missing_scope. This is the only trusted way to tie a Slack
  * identity to a site account — an email the user types is self-asserted and
  * would let anyone request another account's reset link.
  */
@@ -154,7 +156,8 @@ async function slackUserEmail(slackUserId: string): Promise<string | null> {
       user?: { profile?: { email?: string } }
     }
     if (!data.ok) {
-      // missing_scope here means users:read.email was never granted.
+      // missing_scope here means users:read and/or users:read.email was never
+      // granted — reinstall the app after adding them (docs/slack-app-manifest.yml).
       logger.error(`Slack users.info failed: ${data.error}`)
       return null
     }

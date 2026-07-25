@@ -91,7 +91,8 @@ Slack app setup (one-time, at api.slack.com/apps):
 
 1. **Create New App → From an app manifest** → pick the workspace → paste
    [`docs/slack-app-manifest.yml`](docs/slack-app-manifest.yml). That sets the
-   scopes (`commands`, `users:read.email`, `im:write`), the `/lolevbeer` command,
+   scopes (`commands`, `users:read`, `users:read.email`, `im:write`), the
+   `/lolevbeer` command,
    and all three request URLs in one step. Update that file rather than the
    dashboard when any of them change, so the repo stays the source of truth.
 2. **Install to Workspace.**
@@ -105,7 +106,10 @@ Slack app setup (one-time, at api.slack.com/apps):
    on your user. Everyone else can then be added with `/lolevbeer invite`.
 
 Verify with `/lolevbeer password` first — it exercises identity resolution end
-to end and proves the `users:read.email` scope is working.
+to end and proves the `users:read` + `users:read.email` scope pair is working.
+A `missing_scope` error in the logs means one of the two wasn't granted — Slack
+requires `users:read` to call `users.info` at all, and `users:read.email` only
+adds the email field to the response.
 
 Reset and menu links are built from `NEXT_PUBLIC_SITE_URL`, falling back to the
 per-deployment `VERCEL_URL`. Set it to `https://lolev.beer` in production so

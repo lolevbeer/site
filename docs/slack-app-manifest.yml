@@ -6,11 +6,14 @@
 # Keep this in sync with src/app/api/slack/route.ts. In particular, every scope
 # below is load-bearing:
 #   commands         — receive the /lolevbeer slash command
-#   users:read.email — read a member's verified profile email, which is how
-#                      Slack accounts are matched to site users. Without it,
-#                      every command fails: nothing can resolve to a Payload
-#                      user, so menu editing, invites, and password resets all
-#                      report "no linked account".
+#   users:read       — call users.info at all. Required alongside the scope
+#                      below: users:read.email does not imply it, and omitting
+#                      it fails with missing_scope.
+#   users:read.email — include the email field in that users.info response,
+#                      which is how Slack accounts are matched to site users.
+#                      Without both, every command fails: nothing can resolve to
+#                      a Payload user, so menu editing, invites, and password
+#                      resets all report "no linked account".
 #   im:write         — DM an invited teammate their set-password link
 #
 # All three URLs point at the same endpoint; it dispatches on payload shape.
@@ -61,6 +64,7 @@ oauth_config:
   scopes:
     bot:
       - commands
+      - users:read
       - users:read.email
       - im:write
 
