@@ -534,7 +534,9 @@ async function submitInvite(
   const invite = parseInviteSubmission(state)
   try {
     if (!invite.slackUserId) {
-      await updateView(buildModalErrorView('Pick the Slack member this account is for.', INVITE_FAILED))
+      await updateView(
+        buildModalErrorView('Pick the Slack member this account is for.', INVITE_FAILED),
+      )
       return
     }
 
@@ -542,7 +544,10 @@ async function submitInvite(
     const inviter = await resolvePayloadUser(payload, interaction.user?.id)
     if (!inviter) {
       await updateView(
-        buildModalErrorView('No Lolev site account is linked to your Slack profile.', INVITE_FAILED),
+        buildModalErrorView(
+          'No Lolev site account is linked to your Slack profile.',
+          INVITE_FAILED,
+        ),
       )
       return
     }
