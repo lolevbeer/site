@@ -60,11 +60,11 @@ Slack app setup (one-time, at api.slack.com/apps):
 2. Slash command `/lolevbeer` → request URL `https://lolev.beer/api/slack`.
 3. Interactivity & Shortcuts → ON, request URL `https://lolev.beer/api/slack`;
    same URL under Select Menus (options load URL).
-4. Set env vars: `SLACK_SIGNING_SECRET`, `SLACK_BOT_TOKEN`, and optionally
-   `SLACK_ALLOWED_USER_IDS` (comma-separated; empty allows the whole workspace).
-   Leaving it empty means anyone in the workspace can edit and publish menus: the
-   bot writes as system (`overrideAccess`) and so bypasses Payload's
-   location-scoped roles — set the allowlist in any shared workspace.
+4. Set env vars: `SLACK_SIGNING_SECRET`, `SLACK_BOT_TOKEN`, and
+   `SLACK_ALLOWED_USER_IDS` (comma-separated Slack user IDs allowed to edit
+   menus). The allowlist is required — the bot denies all menu edits when it is
+   unset, because it writes as system (`overrideAccess`) and so bypasses
+   Payload's location-scoped roles.
 
 ## Scripts
 

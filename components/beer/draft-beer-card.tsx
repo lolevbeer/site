@@ -53,14 +53,23 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
   const GlassIcon = getGlassIcon(beer.glass)
   const badgeLabel = showJustReleased ? getBeerBadgeLabel(beer) : null
 
-  // NOTE: hideFromSite is intentionally NOT checked here — it only hides beers
-  // from the /beer catalog (filtered at the page level). Menu displays (/m/<id>)
-  // and the homepage draft list must still show hidden guest beers on tap.
+  // hideFromSite beers (usually guest taps) still render here — the flag only
+  // removes them from the /beer catalog, detail pages, sitemap, and feeds
+  // (each enforces it separately). Since their /beer/<slug> page won't render,
+  // the card is shown without a link instead of dead-ending the click.
+  const CardWrapper = ({ href, children }: { href: string; children: React.ReactNode }) =>
+    beer.availability.hideFromSite ? (
+      <div className="group block h-full">{children}</div>
+    ) : (
+      <Link href={href} className="group block h-full">
+        {children}
+      </Link>
+    )
 
   // Fullscreen mode uses viewport-relative sizing
   if (showTapAndPrice) {
     return (
-      <Link href={`/beer/${beerSlug}`} className="group block h-full">
+      <CardWrapper href={`/beer/${beerSlug}`}>
         <div
           className={`relative overflow-hidden transition-colors duration-200 cursor-pointer hover:bg-secondary/50 h-full bg-background ${className}`}
         >
@@ -196,16 +205,13 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
             </div>
           </div>
         </div>
-      </Link>
+      </CardWrapper>
     )
   }
 
   // Standard mode with Tailwind classes
   return (
-    <Link
-      href={showLocation ? `/${currentLocation}/beer/${beerSlug}` : `/beer/${beerSlug}`}
-      className="group block h-full"
-    >
+    <CardWrapper href={showLocation ? `/${currentLocation}/beer/${beerSlug}` : `/beer/${beerSlug}`}>
       <div
         className={`relative overflow-hidden transition-colors duration-200 cursor-pointer hover:bg-secondary/50 h-full min-h-[80px] bg-background rounded-lg ${className}`}
       >
@@ -268,7 +274,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
           )}
         </div>
       </div>
-    </Link>
+    </CardWrapper>
   )
 })
 

@@ -67,20 +67,22 @@ interface SlackInteractionPayload {
 
 // Warn just once per process (not per request) when the bot runs without an
 // allowlist, so the log isn't spammed on every interaction.
-let warnedOpenWorkspace = false
+let warnedNoAllowlist = false
 
+// Fails CLOSED when SLACK_ALLOWED_USER_IDS is unset: the bot writes as system,
+// bypassing Payload's location-scoped roles, so an accidentally dropped env var
+// must not silently open menu publishing to the whole workspace.
 function isAllowedUser(userId: string | undefined): boolean {
   const allowlist = process.env.SLACK_ALLOWED_USER_IDS
   if (!allowlist) {
-    if (!warnedOpenWorkspace) {
-      warnedOpenWorkspace = true
+    if (!warnedNoAllowlist) {
+      warnedNoAllowlist = true
       logger.warn(
-        'SLACK_ALLOWED_USER_IDS is unset — the Slack bot is open to the whole workspace and ' +
-          "bypasses Payload's location-scoped roles (it writes as system). Set " +
-          'SLACK_ALLOWED_USER_IDS (comma-separated user ids) to restrict who may edit menus.',
+        'SLACK_ALLOWED_USER_IDS is unset — denying all Slack menu edits. Set it ' +
+          '(comma-separated Slack user ids) to allow specific users.',
       )
     }
-    return true
+    return false
   }
   if (!userId) return false
   return allowlist
@@ -236,14 +238,19 @@ async function handleInteraction(interaction: SlackInteractionPayload): Promise<
   if (!isAllowedUser(interaction.user?.id)) {
     // A view_submission must not be silently acked — an empty 200 closes the
     // modal as if the publish succeeded. Return a modal error so the user sees
-    // the denial. block_actions/block_suggestion have no open modal to message,
-    // so they stay silent 200 acks.
+    // the denial.
     if (interaction.type === 'view_submission') {
       return NextResponse.json({
         response_action: 'errors',
         errors: { [SLACK_IDS.blockAdd]: 'You are not authorized to manage menus.' },
       })
     }
+    // block_suggestion comes from an open modal's typeahead and must be answered
+    // with an options list — an empty body renders a load error in the select.
+    if (interaction.type === 'block_suggestion') {
+      return NextResponse.json({ options: [] })
+    }
+    // block_actions has no response surface, so it stays a silent 200 ack.
     return new NextResponse(null, { status: 200 })
   }
 
@@ -467,7 +474,9 @@ async function handleSubmit(interaction: SlackInteractionPayload): Promise<NextR
       await payload.update({
         collection: 'menus',
         id: menuId,
-        data: { items, _status: 'published' },
+        // type is included so the Menus beforeChange recipe-sort (gated on
+        // data.type === 'cans') runs for Slack publishes like admin saves.
+        data: { items, _status: 'published', type: published.type },
         depth: 0, // the returned doc is discarded
       })
       logger.info(`Slack menu publish: menu=${menuId} slackUser=${slackUser}`)

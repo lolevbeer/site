@@ -8,6 +8,11 @@
 
 import crypto from 'crypto'
 import type { Menu, Beer, Product } from '@/src/payload-types'
+import {
+  extractBeerFromMenuItem,
+  extractProductFromMenuItem,
+  extractProductRefFromMenuItem,
+} from '@/lib/utils/menu-item-utils'
 
 export type MenuItem = Menu['items'][number]
 
@@ -112,20 +117,14 @@ const SITE_URL =
   (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://lolev.beer')
 
 /**
- * The item's polymorphic product as a plain {relationTo, id} ref, whether the
- * relationship is populated (object) or bare (id string). Single source for
- * this unwrap — modal building, state rebuilding, and typeahead exclusion all
- * key on it.
+ * The item's polymorphic product as a plain {relationTo, id} ref — delegates
+ * to the shared menu-item unwrap so legacy `beer`-field items and future
+ * schema changes are handled in one place (lib/utils/menu-item-utils).
  */
 export function productRef(
   item: MenuItem,
 ): { relationTo: 'beers' | 'products'; id: string } | null {
-  const product = item.product
-  if (!product?.value) return null
-  return {
-    relationTo: product.relationTo,
-    id: typeof product.value === 'object' ? String(product.value.id) : product.value,
-  }
+  return extractProductRefFromMenuItem(item)
 }
 
 /**
@@ -134,10 +133,9 @@ export function productRef(
  * unpopulated relationship (a bare id we couldn't hydrate) → 'Unknown item'.
  */
 function productName(item: MenuItem): string {
-  const doc = item.product?.value
-  if (doc == null) return 'Empty tap'
-  if (typeof doc === 'object') return doc.name
-  return 'Unknown item'
+  const doc = extractBeerFromMenuItem(item) ?? extractProductFromMenuItem(item)
+  if (doc) return doc.name
+  return productRef(item) ? 'Unknown item' : 'Empty tap'
 }
 
 /** Human label for a menu: description when set, else the required name. */
@@ -283,9 +281,10 @@ export function buildEditModalView(menu: Menu): Record<string, unknown> {
  * - `add` appends new items at the end.
  * State entries whose row id no longer exists in `original` are ignored, so
  * stale submissions degrade to no-ops instead of touching the wrong row.
- * The rebuilt array is then deduped by product ref (first occurrence wins) so
- * an add-resubmit is idempotent rather than a validation error; empty-tap rows
- * (no product ref) are never deduped away.
+ * Appended products already on the menu are skipped so an add-resubmit is
+ * idempotent; duplicates among the per-row selects are NOT deduped — the Menus
+ * beforeValidate rule rejects those so the user sees the error instead of a
+ * silently shrunken menu.
  */
 export function rebuildMenuItems(original: MenuItem[], state: SlackStateValues): MenuItem[] {
   const removed = new Set(
@@ -310,30 +309,26 @@ export function rebuildMenuItems(original: MenuItem[], state: SlackStateValues):
     next.push(unchanged ? item : { product: selected })
   })
 
+  // Skip appended products already on the menu, so a resubmit that re-adds an
+  // existing beer is idempotent instead of a 400. Only ADDS are deduped:
+  // duplicates among the per-row selects fall through to the Menus
+  // beforeValidate duplicate rule (src/collections/Menus.ts), which rejects the
+  // publish with a message the user can fix — silently dropping a row here
+  // would shrink the menu while reporting success.
+  const seen = new Set<string>()
+  for (const item of next) {
+    const ref = productRef(item)
+    if (ref) seen.add(encodeProductValue(ref.relationTo, ref.id))
+  }
   for (const option of state[SLACK_IDS.blockAdd]?.[SLACK_IDS.actionAddProducts]?.selected_options ??
     []) {
     const parsed = parseProductValue(option.value)
-    if (parsed) next.push({ product: parsed })
+    if (!parsed || seen.has(option.value)) continue
+    seen.add(option.value)
+    next.push({ product: parsed })
   }
 
-  // Dedupe by encoded product ref, keeping the first occurrence — mirrors the
-  // Menus beforeValidate duplicate rule (src/collections/Menus.ts) so a resubmit
-  // that re-adds an existing beer is idempotent instead of a 400. Rows with no
-  // product ref (empty taps) are always kept.
-  const seen = new Set<string>()
-  const deduped: MenuItem[] = []
-  for (const item of next) {
-    const ref = productRef(item)
-    if (!ref) {
-      deduped.push(item)
-      continue
-    }
-    const encoded = encodeProductValue(ref.relationTo, ref.id)
-    if (seen.has(encoded)) continue
-    seen.add(encoded)
-    deduped.push(item)
-  }
-  return deduped
+  return next
 }
 
 /** Confirmation view swapped into the modal after a successful publish. */

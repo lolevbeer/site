@@ -131,9 +131,19 @@ async function searchUntappd(query: string): Promise<NextResponse> {
     const fullQuery = `lolev ${query}`
     const searchUrl = `https://untappd.com/search?q=${encodeURIComponent(fullQuery)}`
 
-    let algoliaResponse = await queryAlgolia(fullQuery)
+    // A rotated app id changes the request hostname, so stale creds can
+    // surface as a thrown fetch (DNS failure), not just a 401/403 — treat any
+    // first-attempt failure as "creds may be stale" and try one refresh.
+    // ponytail: refreshed creds live in per-lambda module state, so each cold
+    // instance re-scrapes; persist them (env/KV) if rotation ever gets frequent.
+    let algoliaResponse: Response | null = null
+    try {
+      algoliaResponse = await queryAlgolia(fullQuery)
+    } catch {
+      algoliaResponse = null
+    }
 
-    if (algoliaResponse.status === 401 || algoliaResponse.status === 403) {
+    if (!algoliaResponse || !algoliaResponse.ok) {
       const refreshError = await refreshAlgoliaCreds()
       if (refreshError) {
         return NextResponse.json({ error: refreshError.error }, { status: refreshError.status })

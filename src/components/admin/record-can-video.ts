@@ -65,10 +65,12 @@ export async function generateCanRenders(
       const row = Math.floor(i / cols)
       sctx.drawImage(can.renderer.domElement, col * frameWidth, row * frameHeight)
       onProgress?.(i + 1, frames)
-      // Yield to the browser so progress UI can paint. Safe: each frame's
-      // render() + drawImage happen in the same task above; only the WebGL
-      // buffer is task-sensitive, the 2D sheet persists across tasks.
-      await new Promise(requestAnimationFrame)
+      // Yield to the browser so progress UI can paint. setTimeout, not rAF:
+      // browsers pause rAF in background tabs, which would stall the render if
+      // the admin switches away. Safe: each frame's render() + drawImage happen
+      // in the same task above; only the WebGL buffer is task-sensitive, the
+      // 2D sheet persists across tasks.
+      await new Promise((resolve) => setTimeout(resolve, 0))
     }
     const sprite = await canvasToWebpBlob(sheet)
 

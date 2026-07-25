@@ -92,6 +92,40 @@ export function extractProductFromMenuItem(item: MenuItem | Record<string, unkno
 }
 
 /**
+ * Extract the item's product as a plain {relationTo, id} ref, whether the
+ * relationship is populated (object) or bare (id string). Handles the
+ * legacy `beer` field like the other extractors. Single source for this
+ * unwrap — the Slack bot's modal building, state rebuilding, and typeahead
+ * exclusion all key on it.
+ */
+export function extractProductRefFromMenuItem(
+  item: MenuItem | Record<string, unknown>,
+): { relationTo: 'beers' | 'products'; id: string } | null {
+  if ('product' in item && item.product) {
+    const product = item.product as PolymorphicProduct
+    if (product.relationTo && product.value != null) {
+      return {
+        relationTo: product.relationTo,
+        id:
+          typeof product.value === 'object'
+            ? String((product.value as PayloadBeer | PayloadProduct).id)
+            : product.value,
+      }
+    }
+  }
+
+  // Backwards compatibility: old beer field
+  if ('beer' in item && item.beer) {
+    if (typeof item.beer === 'string') return { relationTo: 'beers', id: item.beer }
+    if (typeof item.beer === 'object' && 'id' in item.beer) {
+      return { relationTo: 'beers', id: String((item.beer as PayloadBeer).id) }
+    }
+  }
+
+  return null
+}
+
+/**
  * Check if a menu item contains a specific beer by ID
  *
  * @param item - Menu item from Payload

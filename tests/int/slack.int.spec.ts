@@ -197,6 +197,24 @@ describe('rebuildMenuItems', () => {
     expect(rebuildMenuItems(populated, state)).toEqual(populated)
   })
 
+  it('keeps duplicate per-row selects so Payload validation can reject them', () => {
+    // Two rows swapped to the same beer must NOT be silently deduped — the
+    // Menus beforeValidate rule rejects the publish so the user sees the error
+    // instead of a shrunken menu published with a success message.
+    const original: MenuItem[] = [
+      { product: { relationTo: 'beers', value: 'beer-a' }, id: 'row1' },
+      { product: { relationTo: 'beers', value: 'beer-b' }, id: 'row2' },
+    ]
+    const state: SlackStateValues = {
+      item_row1: { product: { selected_option: opt('beers|beer-c') } },
+      item_row2: { product: { selected_option: opt('beers|beer-c') } },
+    }
+    expect(rebuildMenuItems(original, state)).toEqual([
+      { product: { relationTo: 'beers', value: 'beer-c' } },
+      { product: { relationTo: 'beers', value: 'beer-c' } },
+    ])
+  })
+
   it('dedupes a re-added product (first wins) while preserving empty-tap rows', () => {
     // A row already carrying beer-a, an empty tap (no product ref), then an add
     // that re-selects beer-a. The duplicate add collapses onto the existing row;
