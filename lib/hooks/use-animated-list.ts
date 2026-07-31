@@ -175,15 +175,21 @@ export function useAnimatedList<T>(
     // Update previous keys for next comparison
     prevKeysRef.current = currentKeys
 
-    // Copy ref to local variable for cleanup
-    const timeouts = timeoutsRef.current
+    // No cleanup here: this effect re-runs on every key change, and clearing
+    // pending timeouts then would cancel a still-exiting item's removal
+    // timeout without rescheduling it (prevKeysRef has already advanced),
+    // stranding the invisible item in the list forever. Teardown happens in
+    // the unmount-only effect below.
+  }, [currentKeysString, enterDuration, exitDuration])
 
-    // Cleanup on unmount
+  // Clear all pending animation timeouts on unmount only
+  useEffect(() => {
+    const timeouts = timeoutsRef.current
     return () => {
       timeouts.forEach((timeout) => clearTimeout(timeout))
       timeouts.clear()
     }
-  }, [currentKeysString, enterDuration, exitDuration])
+  }, [])
 
   // The effect above only re-runs when keys change, so the items captured in
   // state go stale when content changes under a stable key (e.g. polling
