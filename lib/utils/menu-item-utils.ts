@@ -50,37 +50,6 @@ export function extractBeerFromMenuItem(
 }
 
 /**
- * Extract Beer ID from a menu item (useful for comparisons/lookups)
- *
- * Works whether the relation is populated (object) or just an ID (string)
- *
- * @param item - Menu item from Payload
- * @returns The Beer ID string if available, null otherwise
- */
-function extractBeerIdFromMenuItem(item: MenuItem | Record<string, unknown>): string | null {
-  // Handle new polymorphic product field
-  if ('product' in item && item.product) {
-    const product = item.product as PolymorphicProduct
-    if (product.relationTo === 'beers') {
-      if (typeof product.value === 'string') return product.value
-      if (typeof product.value === 'object' && product.value !== null && 'id' in product.value) {
-        return (product.value as PayloadBeer).id
-      }
-    }
-  }
-
-  // Backwards compatibility: old beer field
-  if ('beer' in item && item.beer) {
-    if (typeof item.beer === 'string') return item.beer
-    if (typeof item.beer === 'object' && item.beer !== null && 'id' in item.beer) {
-      return (item.beer as PayloadBeer).id
-    }
-  }
-
-  return null
-}
-
-/**
  * Extract a populated Product object from a menu item
  *
  * @param item - Menu item from Payload
@@ -145,5 +114,6 @@ export function extractProductRefFromMenuItem(
  * @returns true if the menu item contains the specified beer
  */
 export function menuItemHasBeer(item: MenuItem | Record<string, unknown>, beerId: string): boolean {
-  return extractBeerIdFromMenuItem(item) === beerId
+  const ref = extractProductRefFromMenuItem(item)
+  return ref?.relationTo === 'beers' && ref.id === beerId
 }
