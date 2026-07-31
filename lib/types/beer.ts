@@ -21,100 +21,95 @@ export type BeerStyle = string
  * Beer pricing information
  */
 export interface BeerPricing {
-  draftPrice?: number;
-  halfPour?: number;
-  halfPourOnly?: boolean;
-  canSingle?: number;
-  fourPack?: number;
-  cansSingle?: number;
-  salePrice?: boolean;
+  draftPrice?: number
+  halfPour?: number
+  halfPourOnly?: boolean
+  canSingle?: number
+  fourPack?: number
+  cansSingle?: number
+  salePrice?: boolean
 }
 
 /**
  * Location-specific beer availability
  */
 export interface LocationBeerAvailability {
-  tap?: string;
-  cansAvailable?: boolean;
-  singleCanAvailable?: boolean;
+  tap?: string
+  cansAvailable?: boolean
+  singleCanAvailable?: boolean
 }
 
 /**
  * Beer availability information
  */
-export interface BeerAvailability extends Record<string, LocationBeerAvailability | boolean | string | undefined> {
-  cansAvailable?: boolean;
-  singleCanAvailable?: boolean;
-  hideFromSite?: boolean;
-  tap?: string;
-}
-
-/**
- * Helper to safely get location availability
- */
-export function getLocationAvailability(availability: BeerAvailability | undefined, locationSlug: string): LocationBeerAvailability | undefined {
-  if (!availability) return undefined;
-  const value = availability[locationSlug];
-  if (value && typeof value === 'object' && ('tap' in value || 'cansAvailable' in value)) {
-    return value as LocationBeerAvailability;
-  }
-  return undefined;
+export interface BeerAvailability extends Record<
+  string,
+  LocationBeerAvailability | boolean | string | undefined
+> {
+  cansAvailable?: boolean
+  singleCanAvailable?: boolean
+  hideFromSite?: boolean
+  tap?: string
 }
 
 /**
  * Untappd review from a check-in
  */
 export interface UntappdReview {
-  username: string;
-  rating: number;
-  text: string;
-  date?: string;
-  url?: string;
-  image?: string;
+  username: string
+  rating: number
+  text: string
+  date?: string
+  url?: string
+  image?: string
 }
 
 /**
  * Main beer interface representing all beer properties
  */
 export interface Beer {
-  id?: string;
-  variant: string;
-  name: string;
-  type: BeerStyle | string;
+  id?: string
+  variant: string
+  name: string
+  type: BeerStyle | string
   /** Optional single tag label (sourced from the Payload CMS tags collection) */
-  tag?: string;
-  options?: string;
-  abv: number;
-  glass: GlassType;
-  description: string;
-  upc?: string;
-  glutenFree: boolean;
+  tag?: string
+  options?: string
+  abv: number
+  glass: GlassType
+  description: string
+  upc?: string
+  glutenFree: boolean
   /** Can be a boolean (true = use local PNG), or a URL string from Payload CMS */
-  image: boolean | string;
-  untappd?: number | string;
-  untappdRating?: number | null;
-  untappdRatingCount?: number | null;
-  positiveReviews?: UntappdReview[];
+  image: boolean | string
+  untappd?: number | string
+  untappdRating?: number | null
+  untappdRatingCount?: number | null
+  positiveReviews?: UntappdReview[]
   /** Top Beer Drops URL */
-  topBeerDrops?: string;
-  recipe?: number;
-  hops?: string;
+  topBeerDrops?: string
+  recipe?: number
+  hops?: string
   /** Tap/draft number (position in menu) */
-  tap?: number | string;
-  isJustReleased?: boolean;
+  tap?: number | string
+  isJustReleased?: boolean
   /** Beer from another brewery */
-  guestTap?: boolean;
+  guestTap?: boolean
   /** Collaboration brew */
-  collab?: boolean;
-  pricing: BeerPricing;
-  availability: BeerAvailability;
+  collab?: boolean
+  pricing: BeerPricing
+  availability: BeerAvailability
 }
 
 /**
  * Get the badge label for a beer. Collab and Guest Tap take priority over Just Released.
  * Returns null if no badge should be shown.
  */
-export function getBeerBadgeLabel(beer: { collab?: boolean; guestTap?: boolean; isJustReleased?: boolean }): string | null {
+export function getBeerBadgeLabel(beer: {
+  collab?: boolean
+  guestTap?: boolean
+  isJustReleased?: boolean
+}): string | null {
   if (beer.collab) return 'Collab'
   if (beer.guestTap) return 'Guest Tap'
   if (beer.isJustReleased) return 'Just Released'
@@ -125,37 +120,37 @@ export function getBeerBadgeLabel(beer: { collab?: boolean; guestTap?: boolean; 
  * Draft beer specific interface for tap list
  */
 export interface DraftBeer extends Beer {
-  tap: string;
-  price: string;
+  tap: string
+  price: string
 }
 
 /**
  * Canned beer specific interface
  */
 export interface CannedBeer extends Beer {
-  cansAvailable: boolean;
-  cansSingle: string;
-  fourPack: string;
+  cansAvailable: boolean
+  cansSingle: string
+  fourPack: string
 }
 
 /**
  * Beer filtering options
  */
 export interface BeerFilters {
-  style?: BeerStyle[];
-  abvRange?: { min: number; max: number };
-  availability?: 'draft' | 'cans' | 'all';
-  glutenFree?: boolean;
-  search?: string;
+  style?: BeerStyle[]
+  abvRange?: { min: number; max: number }
+  availability?: 'draft' | 'cans' | 'all'
+  glutenFree?: boolean
+  search?: string
 }
 
 /**
  * Beer sorting options
  */
-export type BeerSortBy = 'name' | 'abv' | 'type' | 'tap';
-export type BeerSortOrder = 'asc' | 'desc';
+export type BeerSortBy = 'name' | 'abv' | 'type' | 'tap'
+export type BeerSortOrder = 'asc' | 'desc'
 
 export interface BeerSortOptions {
-  sortBy: BeerSortBy;
-  order: BeerSortOrder;
+  sortBy: BeerSortBy
+  order: BeerSortOrder
 }

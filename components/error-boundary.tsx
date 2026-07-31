@@ -1,21 +1,21 @@
-'use client';
+'use client'
 
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertCircle } from 'lucide-react';
-import * as Sentry from '@sentry/nextjs';
-import { logger } from '@/lib/utils/logger';
+import React from 'react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { AlertCircle } from 'lucide-react'
+import * as Sentry from '@sentry/nextjs'
+import { logger } from '@/lib/utils/logger'
 
 interface ErrorBoundaryProps {
-  children: React.ReactNode;
-  fallback?: React.ReactNode;
-  onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
+  children: React.ReactNode
+  fallback?: React.ReactNode
+  onError?: (error: Error, errorInfo: React.ErrorInfo) => void
 }
 
 interface ErrorBoundaryState {
-  hasError: boolean;
-  error: Error | null;
+  hasError: boolean
+  error: Error | null
 }
 
 /**
@@ -24,33 +24,35 @@ interface ErrorBoundaryState {
  */
 export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
-    super(props);
-    this.state = { hasError: false, error: null };
+    super(props)
+    this.state = { hasError: false, error: null }
   }
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     // Update state so the next render will show the fallback UI
-    return { hasError: true, error };
+    return { hasError: true, error }
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // Log error to console in development
     if (process.env.NODE_ENV === 'development') {
-      logger.error('Error caught by boundary:', error, { errorInfo });
+      logger.error('Error caught by boundary:', error, { errorInfo })
     }
 
     // Call custom error handler if provided
-    this.props.onError?.(error, errorInfo);
+    this.props.onError?.(error, errorInfo)
 
     // Report to Sentry in production
-    Sentry.captureException(error, { contexts: { react: { componentStack: errorInfo.componentStack } } });
+    Sentry.captureException(error, {
+      contexts: { react: { componentStack: errorInfo.componentStack } },
+    })
   }
 
   render() {
     if (this.state.hasError) {
       // Custom fallback UI if provided
       if (this.props.fallback) {
-        return this.props.fallback;
+        return this.props.fallback
       }
 
       // Default fallback UI
@@ -77,49 +79,23 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
               <div className="flex gap-2">
                 <Button
                   onClick={() => {
-                    this.setState({ hasError: false, error: null });
+                    this.setState({ hasError: false, error: null })
                   }}
                   variant="outline"
                   className="flex-1"
                 >
                   Try Again
                 </Button>
-                <Button
-                  onClick={() => window.location.href = '/'}
-                  className="flex-1"
-                >
+                <Button onClick={() => (window.location.href = '/')} className="flex-1">
                   Go Home
                 </Button>
               </div>
             </CardContent>
           </Card>
         </div>
-      );
+      )
     }
 
-    return this.props.children;
+    return this.props.children
   }
-}
-
-/**
- * Section Error Boundary
- * Use this for smaller sections that shouldn't crash the entire page
- */
-export function SectionErrorBoundary({ children }: { children: React.ReactNode }) {
-  return (
-    <ErrorBoundary
-      fallback={
-        <Card className="border-destructive/50">
-          <CardContent className="py-8 text-center">
-            <AlertCircle className="h-8 w-8 text-destructive mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">
-              This section failed to load. Try refreshing the page.
-            </p>
-          </CardContent>
-        </Card>
-      }
-    >
-      {children}
-    </ErrorBoundary>
-  );
 }

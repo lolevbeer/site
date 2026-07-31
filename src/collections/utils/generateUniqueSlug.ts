@@ -4,7 +4,7 @@ import type { CollectionSlug, PayloadRequest, Where } from 'payload'
  * Transliterate diacritics to ASCII equivalents
  * e.g., ō → o, ü → u, é → e, ñ → n
  */
-export function transliterate(str: string): string {
+function transliterate(str: string): string {
   return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 }
 

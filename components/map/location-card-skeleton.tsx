@@ -1,7 +1,7 @@
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 
-export function LocationCardSkeleton() {
+function LocationCardSkeleton() {
   return (
     <Card className="p-3 border-0 shadow-none bg-[var(--color-card-interactive)]">
       <div className="flex items-center justify-between gap-3">
