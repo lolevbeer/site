@@ -185,7 +185,9 @@ export const getMenusByLocation = async (locationSlug: string): Promise<PayloadM
         return menusResult.docs
       },
       [`menus-location-${locationSlug}`],
-      { tags: [CACHE_TAGS.menus, CACHE_TAGS.locations], revalidate: 300 }, // 5 min fallback
+      // 'beers' keeps homepage featured menus fresh on beer edits now that the
+      // revalidation plugin no longer fires the broad 'menus' tag for beers.
+      { tags: [CACHE_TAGS.menus, CACHE_TAGS.locations, CACHE_TAGS.beers], revalidate: 300 }, // 5 min fallback
     )()
   } catch (error) {
     logger.error(`Error fetching menus for location: ${locationSlug}`, error)
@@ -225,7 +227,7 @@ export async function getCansMenu(locationSlug: string): Promise<PayloadMenu | n
 
 /**
  * Get menu by URL slug (e.g., 'lawrenceville-draft', 'zelienople-cans')
- * Cached until 'menus' tag is invalidated
+ * Cached until the 'menus' tag or this menu's own `menu-${url}` tag is invalidated
  */
 export const getMenuByUrl = async (url: string): Promise<PayloadMenu | null> => {
   try {
@@ -257,7 +259,10 @@ export const getMenuByUrl = async (url: string): Promise<PayloadMenu | null> => 
         return result.docs[0] || null
       },
       [`menu-url-${url}`],
-      { tags: [CACHE_TAGS.menus], revalidate: 60 }, // 1 min fallback for menus
+      // menu-${url} lets beer edits invalidate only the menus that contain the
+      // beer (see revalidateMenusForBeer in src/collections/Beers.ts) instead
+      // of nuking every menu via the broad 'menus' tag.
+      { tags: [CACHE_TAGS.menus, `menu-${url}`], revalidate: 60 }, // 1 min fallback for menus
     )()
   } catch (error) {
     logger.error(`Error fetching menu by URL: ${url}`, error)

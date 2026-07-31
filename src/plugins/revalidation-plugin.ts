@@ -18,7 +18,11 @@ import type { Config, Plugin, CollectionConfig, GlobalConfig } from 'payload'
 // Collection to cache tags mapping
 // Defines which tags should be invalidated when a collection changes
 const COLLECTION_CACHE_MAP: Record<string, string[]> = {
-  beers: ['beers', 'menus'], // Beers affect menu displays too
+  // Beer edits do NOT fire the broad 'menus' tag: Beers.afterChange
+  // (revalidateMenusForBeer) invalidates the precise `menu-${url}` tags of the
+  // menus that actually contain the beer. Caches that embed beer docs inside
+  // menu queries subscribe to 'beers' directly (see lib/utils/payload-api.ts).
+  beers: ['beers'],
   menus: ['menus'],
   events: ['events'],
   food: ['food'],
