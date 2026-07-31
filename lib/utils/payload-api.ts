@@ -226,38 +226,97 @@ export async function getCansMenu(locationSlug: string): Promise<PayloadMenu | n
 }
 
 /**
+ * Field narrowing for the populated relations in menu queries. Menus ship in
+ * every 2s poll response and every /m ISR render, so populated Beer/Product/
+ * Media docs carry only what the displays render — derived from
+ * convertMenuItems (components/home/featured-menu.tsx) and the poll route's
+ * updatedAt timestamp check. Notably excluded: positiveReviews (unbounded
+ * review array), the untappd/upc admin fields, and the labelBase/
+ * labelMetalness/labelTextures generator uploads.
+ */
+const MENU_POPULATE = {
+  beers: {
+    slug: true,
+    name: true,
+    style: true,
+    abv: true,
+    description: true,
+    image: true,
+    labelVideo: true,
+    glass: true,
+    fourPack: true,
+    bottlePrice: true,
+    recipe: true,
+    hops: true,
+    draftPrice: true,
+    halfPour: true,
+    halfPourOnly: true,
+    hideFromSite: true,
+    justReleased: true,
+    collab: true,
+    createdAt: true,
+    updatedAt: true,
+    untappdRating: true,
+    topBeerDrops: true,
+  },
+  products: {
+    name: true,
+    options: true,
+    abv: true,
+    description: true,
+    price: true,
+    guestTap: true,
+    collab: true,
+    createdAt: true,
+    updatedAt: true,
+  },
+  styles: { name: true },
+  // filename/prefix feed the Vercel Blob adapter's computed `url` — without
+  // them populated media docs come back with url: null.
+  media: { url: true, sizes: true, filename: true, prefix: true },
+  locations: { slug: true, name: true },
+} as const
+
+/**
+ * Shared query body for getMenuByUrl / getMenuByUrlFresh. Throws on transient
+ * failures — both callers depend on that (see getMenuByUrlFresh's JSDoc).
+ */
+async function findMenuByUrl(url: string): Promise<PayloadMenu | null> {
+  const payload = await getPayload({ config })
+
+  const result = await payload.find({
+    collection: 'menus',
+    where: {
+      and: [
+        {
+          url: {
+            equals: url,
+          },
+        },
+        {
+          _status: {
+            equals: 'published',
+          },
+        },
+      ],
+    },
+    overrideAccess: true, // Bypass access control — we filter by _status ourselves
+    depth: 3, // Include location, beers, and beer relations (style, image)
+    populate: MENU_POPULATE,
+    limit: 1,
+  })
+
+  return result.docs[0] || null
+}
+
+/**
  * Get menu by URL slug (e.g., 'lawrenceville-draft', 'zelienople-cans')
  * Cached until the 'menus' tag or this menu's own `menu-${url}` tag is invalidated
  */
 export const getMenuByUrl = async (url: string): Promise<PayloadMenu | null> => {
   try {
     return await unstable_cache(
-      async (): Promise<PayloadMenu | null> => {
-        const payload = await getPayload({ config })
-
-        const result = await payload.find({
-          collection: 'menus',
-          where: {
-            and: [
-              {
-                url: {
-                  equals: url,
-                },
-              },
-              {
-                _status: {
-                  equals: 'published',
-                },
-              },
-            ],
-          },
-          overrideAccess: true, // Bypass access control — we filter by _status ourselves
-          depth: 3, // Include location, beers, and beer relations (style, image)
-          limit: 1,
-        })
-
-        return result.docs[0] || null
-      },
+      () => findMenuByUrl(url),
       [`menu-url-${url}`],
       // menu-${url} lets beer edits invalidate only the menus that contain the
       // beer (see revalidateMenusForBeer in src/collections/Beers.ts) instead
@@ -284,30 +343,7 @@ export const getMenuByUrl = async (url: string): Promise<PayloadMenu | null> => 
  */
 export const getMenuByUrlFresh = async (url: string): Promise<PayloadMenu | null> => {
   try {
-    const payload = await getPayload({ config })
-
-    const result = await payload.find({
-      collection: 'menus',
-      where: {
-        and: [
-          {
-            url: {
-              equals: url,
-            },
-          },
-          {
-            _status: {
-              equals: 'published',
-            },
-          },
-        ],
-      },
-      overrideAccess: true, // Bypass access control — we filter by _status ourselves
-      depth: 3, // Include location, beers, and beer relations (style, image)
-      limit: 1,
-    })
-
-    return result.docs[0] || null
+    return await findMenuByUrl(url)
   } catch (error) {
     // Rethrow: a transient failure must NOT render as notFound() (see JSDoc).
     logger.error(`Error fetching menu by URL (fresh): ${url}`, error)
