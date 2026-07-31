@@ -54,11 +54,14 @@ export async function generateUniqueSlug(
     }
 
     // Check both published and draft versions
+    // Existence checks only — skip relation population and fetch just the slug
     const [published, drafts] = await Promise.all([
       req.payload.find({
         collection,
         where,
         limit: 1,
+        depth: 0,
+        select: { slug: true },
         draft: false,
         overrideAccess: true,
       }),
@@ -66,6 +69,8 @@ export async function generateUniqueSlug(
         collection,
         where,
         limit: 1,
+        depth: 0,
+        select: { slug: true },
         draft: true,
         overrideAccess: true,
       }),

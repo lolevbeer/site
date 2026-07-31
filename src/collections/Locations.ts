@@ -54,8 +54,13 @@ export const Locations: CollectionConfig = {
   hooks: {
     beforeChange: [
       async ({ data, req, operation, originalDoc }) => {
-        // Compute slug from name
-        if (data.name && typeof data.name === 'string') {
+        // Compute slug from name — only when the name changed or no slug
+        // exists yet, so unrelated saves skip the uniqueness queries.
+        if (
+          data.name &&
+          typeof data.name === 'string' &&
+          (data.name !== originalDoc?.name || !data.slug)
+        ) {
           data.slug = await generateUniqueSlug(
             data.name,
             'locations',

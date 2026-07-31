@@ -111,20 +111,22 @@ export const getHomePageData = cache(async (): Promise<HomePageData> => {
   const [
     draftMenuResults,
     cansMenuResults,
-    eventsResults,
-    foodResults,
     eventsMarketingResults,
     foodMarketingResults,
     weeklyHours,
   ] = await Promise.all([
     Promise.all(locationSlugs.map((slug) => getDraftMenu(slug))),
     Promise.all(locationSlugs.map((slug) => getCansMenu(slug))),
-    Promise.all(locationSlugs.map((slug) => getUpcomingEventsFromPayload(slug, 3))),
-    Promise.all(locationSlugs.map((slug) => getCombinedUpcomingFood(slug, 3))),
     Promise.all(locationSlugs.map((slug) => getUpcomingEventsFromPayload(slug, 10))),
     Promise.all(locationSlugs.map((slug) => getCombinedUpcomingFood(slug, 10))),
     getWeeklyHoursForLocations(locations),
   ]);
+
+  // The homepage sections show the first 3 of the same 10 the marketing
+  // sections fetch — slice instead of issuing a second query per location
+  // under a separate cache key.
+  const eventsResults = eventsMarketingResults.map((events) => events.slice(0, 3));
+  const foodResults = foodMarketingResults.map((food) => food.slice(0, 3));
 
   // Transform arrays into location-keyed objects
   const draftMenusByLocation = arrayToLocationMap(locationSlugs, draftMenuResults);
