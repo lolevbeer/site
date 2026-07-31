@@ -150,12 +150,10 @@ export const trackYourEvent = (param: string) => {
 };
 ```
 
-2. Export it from `lib/analytics/index.ts`
-
-3. Import and use in your component:
+2. Import and use in your component:
 
 ```typescript
-import { trackYourEvent } from '@/lib/analytics';
+import { trackYourEvent } from '@/lib/analytics/events';
 
 const handleAction = () => {
   trackYourEvent('value');
