@@ -32,7 +32,6 @@
     "test:a11y:quick": "pnpm lint && pnpm type-check"
   },
   "dependencies": {
-    "@monaco-editor/react": "4.7.0",
     "@payloadcms/db-mongodb": "3.79.1",
     "@payloadcms/next": "3.79.1",
     "@payloadcms/richtext-lexical": "3.79.1",
@@ -65,7 +64,6 @@
     "framer-motion": "^12.42.2",
     "lucide-react": "^0.577.0",
     "mapbox-gl": "^3.25.0",
-    "monaco-editor": "0.55.1",
     "next": "15.5.20",
     "next-themes": "^0.4.6",
     "nuqs": "^2.9.0",
@@ -78,8 +76,7 @@
     "sharp": "0.34.5",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.6.0",
-    "three": "^0.185.1",
-    "zod": "^4.4.3"
+    "three": "^0.185.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.5",
@@ -87,13 +84,11 @@
     "@svgr/webpack": "^8.1.0",
     "@tailwindcss/postcss": "^4.3.2",
     "@testing-library/react": "16.3.2",
-    "@types/geojson": "^7946.0.16",
     "@types/node": "^25.9.4",
     "@types/randomcolor": "^0.5.9",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "@types/three": "^0.185.0",
-    "@vercel/blob": "^2.5.0",
     "@vitejs/plugin-react": "5.1.4",
     "eslint": "^9.39.4",
     "eslint-config-next": "15.5.20",
