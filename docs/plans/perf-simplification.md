@@ -118,10 +118,15 @@ treat every deletion as [A] except monaco which is [V].
 
 **Task 5 — delete unused dependencies.**
 `monaco-editor`, `@monaco-editor/react` [V — zero references anywhere],
-`zod`, `@vercel/blob` (dev), `@types/geojson` (dev). `pnpm remove …`, then
+`zod`, `@vercel/blob` (dev). `pnpm remove …`, then
 full `pnpm build` to prove nothing broke.
 Do NOT remove: `@svgr/webpack` (next.config.mjs:90), `date-fns`
-(peer of date-fns-tz), `@types/randomcolor`.
+(peer of date-fns-tz), `@types/randomcolor`, `@types/geojson` — the last
+looks unused but mapbox-gl's `GeoJSONFeature` resolves against its ambient
+types; removing it breaks the Vercel type-check in
+`components/ui/distributor-map.tsx` while local tsc still passes via
+`skipLibCheck` (learned the hard way: removed in PR #151, restored in
+e2be4d0c).
 
 **Task 6 — delete dead files.**
 - `components/events/event-list.tsx` (453 lines, no importer)
