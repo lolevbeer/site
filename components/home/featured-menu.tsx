@@ -95,6 +95,42 @@ interface MenuItem {
   [key: string]: unknown
 }
 
+/** Column header for the fullscreen draft grid, with viewport-relative sizing.
+ *  Module scope on purpose: declaring it inside render created a new component
+ *  type each tick, unmounting/remounting both headers every poll. */
+function ColumnHeader({ isOtherMenu }: { isOtherMenu: boolean }) {
+  return (
+    <div
+      className="flex items-center border-b-2 border-border uppercase tracking-wider text-foreground font-bold"
+      style={{ gap: '1vh', marginBottom: '0.5vh', fontSize: '1.2vh' }}
+    >
+      {!isOtherMenu && <div style={{ minWidth: '7vh' }}>Tap</div>}
+      <div className="flex-grow">{isOtherMenu ? 'Item' : 'Beer'}</div>
+      <div className="flex" style={{ gap: '2vh' }}>
+        {!isOtherMenu && (
+          <div className="text-center" style={{ minWidth: '7vh' }}>
+            ABV
+          </div>
+        )}
+        {!isOtherMenu && (
+          <div className="text-center" style={{ minWidth: '8vh' }}>
+            Half
+          </div>
+        )}
+        <div className="text-center" style={{ minWidth: '8vh' }}>
+          {isOtherMenu ? 'Price' : 'Full'}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/** Stable default for the `menus` prop — a fresh `[]` default parameter would
+ *  change identity every render and defeat the allItems→filteredItems memo
+ *  chain (and DraftBeerCard's React.memo) on /m/* pages where `menus` is
+ *  never passed. */
+const NO_MENUS: Menu[] = []
+
 interface FeaturedMenuProps {
   menuType: MenuType
   menu?: Menu
@@ -506,7 +542,7 @@ function CanCard({
 export function FeaturedMenu({
   menuType,
   menu,
-  menus = [],
+  menus = NO_MENUS,
   animated = false,
   itemColors,
   hideHeader = false,
@@ -528,10 +564,13 @@ export function FeaturedMenu({
     () => filterByLocation(allItems, currentLocation),
     [currentLocation, allItems],
   )
-  const displayItems = useMemo(
-    () => (menu?.items ? convertMenuItems(menu, labelVideos) : filteredItems),
-    [menu, labelVideos, filteredItems],
+  // Fullscreen /m mode items memoized separately from the homepage chain so
+  // the `menu` branch never recomputes when `menus`/location filtering changes
+  const menuItems = useMemo(
+    () => (menu?.items ? convertMenuItems(menu, labelVideos) : null),
+    [menu, labelVideos],
   )
+  const displayItems = menuItems ?? filteredItems
 
   // Animated items for live updates (only when animated prop is true)
   const animatedItems = useAnimatedList(displayItems, {
@@ -592,32 +631,7 @@ export function FeaturedMenu({
                   const leftColumn = itemsToRender.slice(0, midpoint)
                   const rightColumn = itemsToRender.slice(midpoint)
 
-                  // Column header component with viewport-relative sizing
                   const isOtherMenu = menu?.type === 'other'
-                  const ColumnHeader = () => (
-                    <div
-                      className="flex items-center border-b-2 border-border uppercase tracking-wider text-foreground font-bold"
-                      style={{ gap: '1vh', marginBottom: '0.5vh', fontSize: '1.2vh' }}
-                    >
-                      {!isOtherMenu && <div style={{ minWidth: '7vh' }}>Tap</div>}
-                      <div className="flex-grow">{isOtherMenu ? 'Item' : 'Beer'}</div>
-                      <div className="flex" style={{ gap: '2vh' }}>
-                        {!isOtherMenu && (
-                          <div className="text-center" style={{ minWidth: '7vh' }}>
-                            ABV
-                          </div>
-                        )}
-                        {!isOtherMenu && (
-                          <div className="text-center" style={{ minWidth: '8vh' }}>
-                            Half
-                          </div>
-                        )}
-                        <div className="text-center" style={{ minWidth: '8vh' }}>
-                          {isOtherMenu ? 'Price' : 'Full'}
-                        </div>
-                      </div>
-                    </div>
-                  )
 
                   return (
                     <div
@@ -626,7 +640,7 @@ export function FeaturedMenu({
                       suppressHydrationWarning
                     >
                       <div className="flex flex-col h-full min-w-0">
-                        <ColumnHeader />
+                        <ColumnHeader isOtherMenu={isOtherMenu} />
                         <div className="flex flex-col flex-1 min-w-0">
                           {leftColumn.map(({ item, state, key }, idx) => (
                             <div
@@ -651,7 +665,7 @@ export function FeaturedMenu({
                       {/* Vertical divider */}
                       <div className="hidden md:block w-0.5 bg-border" />
                       <div className="flex flex-col h-full min-w-0">
-                        <ColumnHeader />
+                        <ColumnHeader isOtherMenu={isOtherMenu} />
                         <div className="flex flex-col flex-1 min-w-0">
                           {rightColumn.map(({ item, state, key }, idx) => (
                             <div
