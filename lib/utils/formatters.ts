@@ -3,61 +3,64 @@
  * Consolidates all formatting functions used across the application
  */
 
-import { Beer } from '@/lib/types/beer';
+import { Beer } from '@/lib/types/beer'
 
 /**
  * Time formatting utilities
  */
 function convertTo12Hour(hour: number, mins: number): string {
-  const ampm = hour >= 12 ? 'pm' : 'am';
-  const hour12 = hour % 12 || 12;
+  const ampm = hour >= 12 ? 'pm' : 'am'
+  const hour12 = hour % 12 || 12
   // Drop :00 for times on the hour (e.g., "7pm" instead of "7:00pm")
-  return mins === 0 ? `${hour12}${ampm}` : `${hour12}:${mins.toString().padStart(2, '0')}${ampm}`;
+  return mins === 0 ? `${hour12}${ampm}` : `${hour12}:${mins.toString().padStart(2, '0')}${ampm}`
 }
 
 export function formatTime(timeString: string, options: { timezone?: string } = {}): string {
-  if (!timeString) return '';
+  if (!timeString) return ''
 
   // Handle ISO date strings (e.g., "2000-01-01T23:00:00.000Z")
   // Payload stores time-only fields as ISO dates with a reference date
   if (timeString.includes('T') && timeString.includes(':')) {
     try {
-      const date = new Date(timeString);
+      const date = new Date(timeString)
       if (!isNaN(date.getTime())) {
         // Format in the specified timezone (default to America/New_York for EST/EDT)
-        const tz = options.timezone || 'America/New_York';
+        const tz = options.timezone || 'America/New_York'
         const formatted = date.toLocaleTimeString('en-US', {
           hour: 'numeric',
           minute: '2-digit',
           hour12: true,
           timeZone: tz,
-        });
+        })
         // Convert to lowercase format (e.g., "7:00 PM" -> "7:00pm")
         // Drop :00 for times on the hour (e.g., "7:00pm" -> "7pm")
-        return formatted.toLowerCase().replace(/\s/g, '').replace(/:00(am|pm)$/, '$1');
+        return formatted
+          .toLowerCase()
+          .replace(/\s/g, '')
+          .replace(/:00(am|pm)$/, '$1')
       }
     } catch {
       // Fall through to other parsing methods
     }
   }
 
-  const match12h = timeString.match(/(\d{1,2})(?::(\d{2}))?\s*(AM|PM|am|pm)/i);
+  const match12h = timeString.match(/(\d{1,2})(?::(\d{2}))?\s*(AM|PM|am|pm)/i)
   if (match12h) {
-    return convertTo12Hour(parseInt(match12h[1]), parseInt(match12h[2] || '0'));
+    return convertTo12Hour(parseInt(match12h[1]), parseInt(match12h[2] || '0'))
   }
 
-  const match24h = timeString.match(/(\d{1,2}):(\d{2})/);
+  const match24h = timeString.match(/(\d{1,2}):(\d{2})/)
   if (match24h) {
-    return convertTo12Hour(parseInt(match24h[1]), parseInt(match24h[2]));
+    return convertTo12Hour(parseInt(match24h[1]), parseInt(match24h[2]))
   }
 
   // Handle 4-digit military time without colon (e.g., "2000" -> 8pm, "0800" -> 8am)
-  const matchMilitary = timeString.match(/^(\d{2})(\d{2})$/);
+  const matchMilitary = timeString.match(/^(\d{2})(\d{2})$/)
   if (matchMilitary) {
-    return convertTo12Hour(parseInt(matchMilitary[1]), parseInt(matchMilitary[2]));
+    return convertTo12Hour(parseInt(matchMilitary[1]), parseInt(matchMilitary[2]))
   }
 
-  return timeString.toLowerCase();
+  return timeString.toLowerCase()
 }
 
 /**
@@ -71,13 +74,16 @@ export function formatTime(timeString: string, options: { timezone?: string } = 
  */
 export function parseLocalDate(dateString: string): Date {
   // Extract just the date portion (YYYY-MM-DD) from ISO strings
-  const datePart = dateString.split('T')[0];
-  const [year, month, day] = datePart.split('-').map(Number);
-  return new Date(year, month - 1, day);
+  const datePart = dateString.split('T')[0]
+  const [year, month, day] = datePart.split('-').map(Number)
+  return new Date(year, month - 1, day)
 }
 
-export function formatDate(dateString: string, format: 'short' | 'long' | 'full' = 'short'): string {
-  const date = parseLocalDate(dateString);
+export function formatDate(
+  dateString: string,
+  format: 'short' | 'long' | 'full' = 'short',
+): string {
+  const date = parseLocalDate(dateString)
 
   switch (format) {
     case 'full':
@@ -85,21 +91,21 @@ export function formatDate(dateString: string, format: 'short' | 'long' | 'full'
         weekday: 'long',
         year: 'numeric',
         month: 'long',
-        day: 'numeric'
-      });
+        day: 'numeric',
+      })
     case 'long':
       return date.toLocaleDateString('en-US', {
         weekday: 'short',
         month: 'long',
-        day: 'numeric'
-      });
+        day: 'numeric',
+      })
     case 'short':
     default:
       return date.toLocaleDateString('en-US', {
         weekday: 'short',
         month: 'short',
-        day: 'numeric'
-      });
+        day: 'numeric',
+      })
   }
 }
 
@@ -107,15 +113,15 @@ export function formatDate(dateString: string, format: 'short' | 'long' | 'full'
  * Price formatting utilities
  */
 function formatPrice(price: number | undefined): string {
-  if (!price) return '';
-  return `$${price.toFixed(2).replace(/\.00$/, '')}`;
+  if (!price) return ''
+  return `$${price.toFixed(2).replace(/\.00$/, '')}`
 }
 
 /**
  * Beer-specific formatters
  */
 export function formatAbv(abv: number, includeLabel = false): string {
-  return `${abv.toFixed(1)}%${includeLabel ? ' ABV' : ''}`;
+  return `${abv.toFixed(1)}%${includeLabel ? ' ABV' : ''}`
 }
 
 /**
@@ -124,71 +130,55 @@ export function formatAbv(abv: number, includeLabel = false): string {
  * Returns empty string for 0 or falsy values
  */
 export function formatRating(rating: number | null | undefined): string {
-  if (!rating) return '';
-  return rating.toFixed(2).replace(/\.?0+$/, '');
+  if (!rating) return ''
+  return rating.toFixed(2).replace(/\.?0+$/, '')
 }
 
 /**
  * Date comparison helpers for filtering events/schedules
  */
 export function isToday(dateString: string): boolean {
-  const date = parseLocalDate(dateString.split('T')[0]);
-  const today = new Date();
-  return date.toDateString() === today.toDateString();
-}
-
-export function isFuture(dateString: string): boolean {
-  const date = parseLocalDate(dateString.split('T')[0]);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  date.setHours(0, 0, 0, 0);
-  return date.getTime() > today.getTime();
+  const date = parseLocalDate(dateString.split('T')[0])
+  const today = new Date()
+  return date.toDateString() === today.toDateString()
 }
 
 export function isTomorrow(dateString: string): boolean {
-  const date = parseLocalDate(dateString.split('T')[0]);
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  return date.toDateString() === tomorrow.toDateString();
+  const date = parseLocalDate(dateString.split('T')[0])
+  const tomorrow = new Date()
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  return date.toDateString() === tomorrow.toDateString()
 }
 
 export function isTodayOrFuture(dateString: string): boolean {
-  const date = parseLocalDate(dateString.split('T')[0]);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  date.setHours(0, 0, 0, 0);
-  return date.getTime() >= today.getTime();
-}
-
-export function partitionByDate<T extends { date: string }>(
-  items: T[]
-): { today: T[]; upcoming: T[] } {
-  return {
-    today: items.filter(item => isToday(item.date)),
-    upcoming: items.filter(item => isFuture(item.date)),
-  };
+  const date = parseLocalDate(dateString.split('T')[0])
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  date.setHours(0, 0, 0, 0)
+  return date.getTime() >= today.getTime()
 }
 
 export function getBeerSlug(beer: Beer): string {
-  return beer.variant.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  return beer.variant.toLowerCase().replace(/[^a-z0-9]+/g, '-')
 }
 
 export function getBeerAvailability(beer: Beer): string {
   const items = [
     beer.availability.tap && `Tap ${beer.availability.tap}`,
     beer.availability.cansAvailable && 'Cans',
-    beer.availability.singleCanAvailable && 'Singles'
-  ].filter(Boolean);
-  return items.length > 0 ? items.join(' • ') : 'Limited';
+    beer.availability.singleCanAvailable && 'Singles',
+  ].filter(Boolean)
+  return items.length > 0 ? items.join(' • ') : 'Limited'
 }
 
 export function getBeerPricing(beer: Beer): string {
   const items = [
     beer.pricing.draftPrice && `Draft ${formatPrice(beer.pricing.draftPrice)}`,
-    (beer.pricing.canSingle || beer.pricing.cansSingle) && `Single ${formatPrice(beer.pricing.canSingle || beer.pricing.cansSingle)}`,
-    beer.pricing.fourPack && `4 Pack ${formatPrice(beer.pricing.fourPack)}`
-  ].filter(Boolean);
-  return items.length > 0 ? items.join(' • ') : 'See store';
+    (beer.pricing.canSingle || beer.pricing.cansSingle) &&
+      `Single ${formatPrice(beer.pricing.canSingle || beer.pricing.cansSingle)}`,
+    beer.pricing.fourPack && `4 Pack ${formatPrice(beer.pricing.fourPack)}`,
+  ].filter(Boolean)
+  return items.length > 0 ? items.join(' • ') : 'See store'
 }
 
 /**
@@ -198,15 +188,20 @@ export function capitalizeName(name: string): string {
   return name
     .toLowerCase()
     .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
 }
 
 /**
  * Format a US address from parts, omitting any missing fields.
  * Returns e.g. "123 Main St, Pittsburgh, PA 15201"
  */
-export function formatAddress(parts: { address?: string | null; city?: string | null; state?: string | null; zip?: string | null }): string {
+export function formatAddress(parts: {
+  address?: string | null
+  city?: string | null
+  state?: string | null
+  zip?: string | null
+}): string {
   const segments: string[] = []
   if (parts.address) segments.push(parts.address)
   const cityState = [parts.city, parts.state].filter(Boolean).join(', ')
@@ -214,4 +209,3 @@ export function formatAddress(parts: { address?: string | null; city?: string | 
   if (locale) segments.push(locale)
   return segments.join(', ')
 }
-

@@ -342,32 +342,6 @@ export const getAllLocations = async () => {
 }
 
 /**
- * Get all styles from Payload
- * Cached until 'styles' tag is invalidated
- */
-export const getAllStyles = async () => {
-  try {
-    return await unstable_cache(
-      async () => {
-        const payload = await getPayload({ config })
-
-        const result = await payload.find({
-          collection: 'styles',
-          sort: 'name',
-        })
-
-        return result.docs
-      },
-      ['all-styles'],
-      { tags: [CACHE_TAGS.styles], revalidate: 3600 },
-    )()
-  } catch (error) {
-    logger.error('Error fetching styles from Payload', error)
-    throw error
-  }
-}
-
-/**
  * Transform a Payload Event document into a BreweryEvent.
  * Handles polymorphic location field extraction.
  */
@@ -526,101 +500,6 @@ export const fetchGlobal = async (slug: string, depth: number = 0) => {
     )()
   } catch (error) {
     logger.error(`Error fetching global: ${slug}`, error)
-    throw error
-  }
-}
-
-/**
- * Get holiday hours override for a specific location and date
- * Returns the override if one exists, null otherwise
- * Cached until 'holiday-hours' tag is invalidated
- */
-export const getHolidayHours = async (
-  locationId: string,
-  date: Date,
-): Promise<HolidayHour | null> => {
-  const dateStr = date.toISOString().split('T')[0]
-
-  try {
-    return await unstable_cache(
-      async (): Promise<HolidayHour | null> => {
-        const payload = await getPayload({ config })
-
-        const result = await payload.find({
-          collection: 'holiday-hours',
-          where: {
-            and: [
-              {
-                locations: {
-                  contains: locationId,
-                },
-              },
-              {
-                date: {
-                  equals: dateStr,
-                },
-              },
-            ],
-          },
-          limit: 1,
-          depth: 1,
-        })
-
-        return result.docs[0] || null
-      },
-      [`holiday-hours-${locationId}-${dateStr}`],
-      { tags: [CACHE_TAGS.holidayHours], revalidate: 300 },
-    )()
-  } catch (error) {
-    logger.error(`Error fetching holiday hours for location ${locationId} on ${date}`, error)
-    throw error
-  }
-}
-
-/**
- * Get all holiday hours for a location (upcoming and recent)
- * Useful for displaying a list of special hours
- * Cached until 'holiday-hours' tag is invalidated
- */
-export const getHolidayHoursForLocation = async (locationId: string): Promise<HolidayHour[]> => {
-  try {
-    return await unstable_cache(
-      async (): Promise<HolidayHour[]> => {
-        const payload = await getPayload({ config })
-
-        // Get overrides from 30 days ago to future
-        const thirtyDaysAgo = new Date()
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-        const dateStr = thirtyDaysAgo.toISOString().split('T')[0]
-
-        const result = await payload.find({
-          collection: 'holiday-hours',
-          where: {
-            and: [
-              {
-                locations: {
-                  contains: locationId,
-                },
-              },
-              {
-                date: {
-                  greater_than_equal: dateStr,
-                },
-              },
-            ],
-          },
-          sort: 'date',
-          limit: 100,
-          depth: 1,
-        })
-
-        return result.docs
-      },
-      [`holiday-hours-location-${locationId}`],
-      { tags: [CACHE_TAGS.holidayHours], revalidate: 300 },
-    )()
-  } catch (error) {
-    logger.error(`Error fetching holiday hours for location ${locationId}`, error)
     throw error
   }
 }
@@ -797,31 +676,6 @@ export const getWeeklyHoursWithHolidays = async (locationId: string): Promise<We
     )()
   } catch (error) {
     logger.error(`Error fetching weekly hours with holidays for location ${locationId}`, error)
-    throw error
-  }
-}
-
-/**
- * Get weekly hours for all active locations
- * Returns a map of location slug to weekly hours
- */
-export const getAllLocationsWeeklyHours = async (): Promise<Map<string, WeeklyHoursDay[]>> => {
-  try {
-    const locations = await getAllLocations()
-    const hoursMap = new Map<string, WeeklyHoursDay[]>()
-
-    await Promise.all(
-      locations.map(async (location) => {
-        const weeklyHours = await getWeeklyHoursWithHolidays(location.id)
-        if (location.slug) {
-          hoursMap.set(location.slug, weeklyHours)
-        }
-      }),
-    )
-
-    return hoursMap
-  } catch (error) {
-    logger.error('Error fetching all locations weekly hours', error)
     throw error
   }
 }
@@ -1010,7 +864,7 @@ function getUpcomingDatesForSlot(
  * Get the recurring food global configuration
  * Cached until 'recurring-food' tag is invalidated
  */
-export const getRecurringFoodGlobal = async (): Promise<RecurringFoodGlobal> => {
+const getRecurringFoodGlobal = async (): Promise<RecurringFoodGlobal> => {
   try {
     return await unstable_cache(
       async (): Promise<RecurringFoodGlobal> => {
@@ -1053,7 +907,7 @@ export interface RecurringFoodEntry {
  * Expands recurring schedules into specific dates
  * Cached until 'food' tag is invalidated
  */
-export const getUpcomingRecurringFood = async (
+const getUpcomingRecurringFood = async (
   locationSlug: string,
   limit: number = 10,
   monthsAhead: number = 3,

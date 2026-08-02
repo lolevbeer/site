@@ -539,7 +539,7 @@ function CanCard({
   )
 }
 
-export function FeaturedMenu({
+function FeaturedMenu({
   menuType,
   menu,
   menus = NO_MENUS,

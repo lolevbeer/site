@@ -4,7 +4,7 @@
  */
 
 /** Light mode CSS variables for live displays */
-export const lightVars = {
+const lightVars = {
   '--color-background': '#ffffff',
   '--color-foreground': '#1d1d1f',
   '--color-foreground-muted': '#6e6e73',
@@ -20,7 +20,7 @@ export const lightVars = {
 } as React.CSSProperties
 
 /** Dark mode CSS variables for live displays */
-export const darkVars = {
+const darkVars = {
   '--color-background': '#000000',
   '--color-foreground': '#f5f5f7',
   '--color-foreground-muted': '#acacae',

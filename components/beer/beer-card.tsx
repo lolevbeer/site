@@ -3,35 +3,31 @@
  * Refactored to use BaseCard and shared utilities
  */
 
-'use client';
+'use client'
 
-import React from 'react';
-import Link from 'next/link';
-import { Beer } from '@/lib/types/beer';
-import { useLocationContext } from '@/components/location/location-provider';
-import { BaseCard, CardSkeleton } from '@/components/ui/base-card';
-import { StatusBadge, StatusBadgeGroup } from '@/components/ui/status-badge';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { BeerImage } from './beer-image';
-import {
-  getBeerSlug,
-  getBeerAvailability,
-  getBeerPricing
-} from '@/lib/utils/formatters';
-import { trackBeerView } from '@/lib/analytics/events';
-import { TopBeerDropsLink } from '@/components/beer/top-beer-drops-link';
-import { UntappdRating } from '@/components/beer/untappd-rating';
-import { MotionCard } from '@/components/motion';
+import React from 'react'
+import Link from 'next/link'
+import { Beer } from '@/lib/types/beer'
+import { useLocationContext } from '@/components/location/location-provider'
+import { BaseCard } from '@/components/ui/base-card'
+import { StatusBadge, StatusBadgeGroup } from '@/components/ui/status-badge'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { BeerImage } from './beer-image'
+import { getBeerSlug, getBeerAvailability, getBeerPricing } from '@/lib/utils/formatters'
+import { trackBeerView } from '@/lib/analytics/events'
+import { TopBeerDropsLink } from '@/components/beer/top-beer-drops-link'
+import { UntappdRating } from '@/components/beer/untappd-rating'
+import { MotionCard } from '@/components/motion'
 
 interface BeerCardProps {
-  beer: Beer;
-  showLocation?: boolean;
-  showPricing?: boolean;
-  showAvailability?: boolean;
-  className?: string;
-  variant?: 'full' | 'minimal';
-  priority?: boolean;
+  beer: Beer
+  showLocation?: boolean
+  showPricing?: boolean
+  showAvailability?: boolean
+  className?: string
+  variant?: 'full' | 'minimal'
+  priority?: boolean
 }
 
 export const BeerCard = React.memo(function BeerCard({
@@ -41,19 +37,19 @@ export const BeerCard = React.memo(function BeerCard({
   showAvailability = true,
   className = '',
   variant = 'full',
-  priority = false
+  priority = false,
 }: BeerCardProps) {
-  const { currentLocation } = useLocationContext();
-  const beerSlug = getBeerSlug(beer);
+  const { currentLocation } = useLocationContext()
+  const beerSlug = getBeerSlug(beer)
 
   // Don't show beer if it's hidden from site
   if (beer.availability.hideFromSite) {
-    return null;
+    return null
   }
 
   // Minimal variant uses simple card structure without BaseCard - matches homepage cans style
   if (variant === 'minimal') {
-    const beerHref = showLocation ? `/${currentLocation}/beer/${beerSlug}` : `/beer/${beerSlug}`;
+    const beerHref = showLocation ? `/${currentLocation}/beer/${beerSlug}` : `/beer/${beerSlug}`
 
     return (
       <MotionCard glow>
@@ -78,16 +74,23 @@ export const BeerCard = React.memo(function BeerCard({
                 {beer.type}
               </Badge>
               {beer.topBeerDrops && (
-                <TopBeerDropsLink url={beer.topBeerDrops} className="h-6 w-6 text-foreground hover:text-primary transition-colors" />
+                <TopBeerDropsLink
+                  url={beer.topBeerDrops}
+                  className="h-6 w-6 text-foreground hover:text-primary transition-colors"
+                />
               )}
             </div>
           </div>
-          <Button variant="outline" className="w-full btn-arrow group-hover:bg-muted/50 hover:translate-y-0" tabIndex={-1}>
+          <Button
+            variant="outline"
+            className="w-full btn-arrow group-hover:bg-muted/50 hover:translate-y-0"
+            tabIndex={-1}
+          >
             View Details
           </Button>
         </Link>
       </MotionCard>
-    );
+    )
   }
 
   const renderHeader = (beer: Beer) => (
@@ -99,10 +102,17 @@ export const BeerCard = React.memo(function BeerCard({
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           priority={priority}
         />
-        <UntappdRating rating={beer.untappdRating} variant="overlay" className="absolute bottom-6 left-2 z-10" />
+        <UntappdRating
+          rating={beer.untappdRating}
+          variant="overlay"
+          className="absolute bottom-6 left-2 z-10"
+        />
         {beer.topBeerDrops && (
           <div className="absolute bottom-6 right-2 z-10">
-            <TopBeerDropsLink url={beer.topBeerDrops} className="h-7 w-7 text-foreground hover:text-primary transition-colors drop-shadow-md" />
+            <TopBeerDropsLink
+              url={beer.topBeerDrops}
+              className="h-7 w-7 text-foreground hover:text-primary transition-colors drop-shadow-md"
+            />
           </div>
         )}
         {beer.glutenFree && (
@@ -112,19 +122,15 @@ export const BeerCard = React.memo(function BeerCard({
         )}
       </div>
       <div>
-        <h3 className="font-semibold text-lg line-clamp-2 min-h-[2.5rem]">
-          {beer.name}
-        </h3>
+        <h3 className="font-semibold text-lg line-clamp-2 min-h-[2.5rem]">{beer.name}</h3>
         <p className="text-sm text-muted-foreground font-medium mt-1">{beer.type}</p>
       </div>
     </>
-  );
+  )
 
   const renderContent = (beer: Beer) => (
     <>
-      <p className="text-sm text-muted-foreground line-clamp-3">
-        {beer.description}
-      </p>
+      <p className="text-sm text-muted-foreground line-clamp-3">{beer.description}</p>
 
       {beer.hops && (
         <div>
@@ -149,25 +155,28 @@ export const BeerCard = React.memo(function BeerCard({
         )}
       </div>
     </>
-  );
+  )
 
   const renderFooter = (beer: Beer) => (
     <div className="w-full flex items-center justify-between pt-4 border-t">
       <StatusBadgeGroup
         statuses={[
           ...(beer.availability.cansAvailable ? [{ status: 'cans', type: 'beer' as const }] : []),
-          ...(beer.availability.tap ? [{ status: 'on_tap', type: 'beer' as const, customLabel: `Tap ${beer.availability.tap}` }] : []),
-          ...(beer.pricing.salePrice ? [{ status: 'sale', type: 'beer' as const }] : [])
+          ...(beer.availability.tap
+            ? [
+                {
+                  status: 'on_tap',
+                  type: 'beer' as const,
+                  customLabel: `Tap ${beer.availability.tap}`,
+                },
+              ]
+            : []),
+          ...(beer.pricing.salePrice ? [{ status: 'sale', type: 'beer' as const }] : []),
         ]}
         size="sm"
       />
 
-      <Button
-        asChild
-        variant="outline"
-        size="sm"
-        className="ml-auto hover:translate-y-0"
-      >
+      <Button asChild variant="outline" size="sm" className="ml-auto hover:translate-y-0">
         <Link
           href={showLocation ? `/${currentLocation}/beer/${beerSlug}` : `/beer/${beerSlug}`}
           className="no-underline"
@@ -177,7 +186,7 @@ export const BeerCard = React.memo(function BeerCard({
         </Link>
       </Button>
     </div>
-  );
+  )
 
   return (
     <MotionCard glow>
@@ -190,28 +199,6 @@ export const BeerCard = React.memo(function BeerCard({
         renderFooter={renderFooter}
       />
     </MotionCard>
-  );
-});
-
-export const BeerCardSkeleton = React.memo(function BeerCardSkeleton({
-  variant = 'full'
-}: {
-  variant?: 'full' | 'minimal'
-}) {
-  if (variant === 'minimal') {
-    return (
-      <div className="overflow-hidden rounded-lg bg-card border">
-        <div className="relative h-48 w-full shimmer" />
-        <div className="p-4 space-y-3">
-          <div className="h-5 shimmer rounded w-3/4" />
-          <div className="h-4 shimmer rounded w-1/2" />
-          <div className="h-4 shimmer rounded w-2/3" />
-          <div className="h-8 shimmer rounded w-full" />
-        </div>
-      </div>
-    );
-  }
-  return <CardSkeleton variant="detailed" lines={4} />;
-});
-
-export default BeerCard;
+  )
+})
+export default BeerCard
