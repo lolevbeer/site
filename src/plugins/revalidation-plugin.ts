@@ -64,10 +64,17 @@ const COLLECTION_PATH_BUILDERS: Record<string, (doc: Record<string, unknown>) =>
 }
 
 /**
- * Creates the afterChange hook for a collection
+ * Creates the afterChange hook for a collection.
+ *
+ * Bulk writers (the Untappd cron, sheet sync) pass
+ * `context: { skipRevalidate: true }` so a 500-document loop doesn't fire
+ * this fan-out per write — they revalidate once after the loop instead.
  */
 function createCollectionAfterChangeHook(slug: string) {
-  return async ({ doc }: { doc: Record<string, unknown> }) => {
+  return async ({ doc, context }: { doc: Record<string, unknown>; context?: Record<string, unknown> }) => {
+    if (context?.skipRevalidate) {
+      return doc
+    }
     const tags = COLLECTION_CACHE_MAP[slug] || []
     const paths = COLLECTION_PATHS[slug] || []
     const pathBuilder = COLLECTION_PATH_BUILDERS[slug]
@@ -98,7 +105,10 @@ function createCollectionAfterChangeHook(slug: string) {
  * Creates the afterDelete hook for a collection
  */
 function createCollectionAfterDeleteHook(slug: string) {
-  return async ({ doc }: { doc: Record<string, unknown> }) => {
+  return async ({ doc, context }: { doc: Record<string, unknown>; context?: Record<string, unknown> }) => {
+    if (context?.skipRevalidate) {
+      return doc
+    }
     const tags = COLLECTION_CACHE_MAP[slug] || []
     const paths = COLLECTION_PATHS[slug] || []
 

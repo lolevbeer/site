@@ -4,6 +4,7 @@
  */
 
 import type { Payload, PayloadHandler } from 'payload'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import type { Location, Event, Beer } from '../payload-types'
 import { diffJson } from 'diff'
 import { slugify } from '../collections/utils/generateUniqueSlug'
@@ -782,7 +783,13 @@ async function syncBeers(payload: Payload, stream: StreamController, dryRun: boo
         }
 
         if (!dryRun) {
-          await payload.update({ collection: 'beers', id: existingDoc.id, data: beerData })
+          // Batched revalidation fires once after the loop (see below)
+          await payload.update({
+            collection: 'beers',
+            id: existingDoc.id,
+            data: beerData,
+            context: { skipRevalidate: true },
+          })
         }
         results.updated++
         stream.send('beer', {
@@ -795,7 +802,11 @@ async function syncBeers(payload: Payload, stream: StreamController, dryRun: boo
       }
 
       if (!dryRun) {
-        await payload.create({ collection: 'beers', data: beerData })
+        await payload.create({
+          collection: 'beers',
+          data: beerData,
+          context: { skipRevalidate: true },
+        })
       }
       results.imported++
       stream.send('beer', {
@@ -808,6 +819,15 @@ async function syncBeers(payload: Payload, stream: StreamController, dryRun: boo
   } catch (error: unknown) {
     stream.send('error', { message: `Error syncing beers: ${error instanceof Error ? error.message : String(error)}` })
     results.errors++
+  }
+
+  // One batched invalidation for the whole run instead of the per-write
+  // fan-out (each write passed context.skipRevalidate). Beers.afterChange
+  // still fires the precise menu-${url} tags per changed beer.
+  if (!dryRun && results.updated + results.imported > 0) {
+    revalidateTag('beers')
+    revalidatePath('/')
+    revalidatePath('/beer')
   }
 
   return results

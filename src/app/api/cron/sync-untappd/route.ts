@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { getPayload } from 'payload'
 import config from '@/src/payload.config'
 import { fetchUntappdData, isCircuitOpen, resetCircuit } from '@/src/utils/untappd'
@@ -61,6 +62,21 @@ export async function GET(request: NextRequest) {
         const { rating, ratingCount, positiveReviews } = await fetchUntappdData(beer.untappd)
 
         if (rating !== null) {
+          // Merge with existing reviews, using URL as unique key
+          const existingReviews = (beer.positiveReviews as { url?: string }[]) || []
+          const existingUrls = new Set(existingReviews.map(r => r.url).filter(Boolean))
+          const newReviews = positiveReviews.filter(r => r.url && !existingUrls.has(r.url))
+
+          const ratingChanged = rating !== beer.untappdRating
+          const countChanged = ratingCount !== null && ratingCount !== beer.untappdRatingCount
+
+          // Nothing changed — skip the write entirely so no hooks fire
+          if (!ratingChanged && !countChanged && newReviews.length === 0) {
+            results.skipped++
+            await new Promise(resolve => setTimeout(resolve, 500))
+            continue
+          }
+
           const updateData: Record<string, unknown> = {
             untappdRating: rating,
           }
@@ -69,20 +85,17 @@ export async function GET(request: NextRequest) {
             updateData.untappdRatingCount = ratingCount
           }
 
-          if (positiveReviews.length > 0) {
-            // Merge with existing reviews, using URL as unique key
-            const existingReviews = (beer.positiveReviews as { url?: string }[]) || []
-            const existingUrls = new Set(existingReviews.map(r => r.url).filter(Boolean))
-            const newReviews = positiveReviews.filter(r => r.url && !existingUrls.has(r.url))
-            if (newReviews.length > 0) {
-              updateData.positiveReviews = [...existingReviews, ...newReviews]
-            }
+          if (newReviews.length > 0) {
+            updateData.positiveReviews = [...existingReviews, ...newReviews]
           }
 
           await payload.update({
             collection: 'beers',
             id: beer.id,
             data: updateData,
+            // Batched revalidation fires once after the loop instead of the
+            // full tag/path fan-out per updated beer (see revalidation-plugin)
+            context: { skipRevalidate: true },
           })
 
           results.updated++
@@ -96,6 +109,15 @@ export async function GET(request: NextRequest) {
         logger.error(`Error updating beer ${beer.name}:`, error)
         results.errors++
       }
+    }
+
+    // One batched invalidation for the whole run. Note: Beers.afterChange
+    // still revalidates the precise menu-${url} tags per updated beer, so
+    // menu displays pick up rating changes.
+    if (results.updated > 0) {
+      revalidateTag('beers')
+      revalidatePath('/')
+      revalidatePath('/beer')
     }
 
     return NextResponse.json({
