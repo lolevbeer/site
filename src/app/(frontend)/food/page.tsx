@@ -93,32 +93,30 @@ async function getFoodData(): Promise<FoodVendorSchedule[]> {
 
     const todayStr = getTodayMidnightISO()
 
-    // Fetch individual food entries
-    const foodResult = await payload.find({
-      collection: 'food',
-      where: {
-        date: {
-          greater_than_equal: todayStr,
+    // Fetch food entries, recurring food global, and locations in parallel
+    const [foodResult, recurringFood, locationsResult] = await Promise.all([
+      payload.find({
+        collection: 'food',
+        where: {
+          date: {
+            greater_than_equal: todayStr,
+          },
         },
-      },
-      sort: 'date',
-      limit: 100,
-      depth: 2,
-    })
-
-    // Fetch recurring food global
-    const recurringFood = await payload.findGlobal({
-      slug: 'recurring-food',
-    })
-
-    // Fetch locations
-    const locationsResult = await payload.find({
-      collection: 'locations',
-      where: {
-        active: { equals: true },
-      },
-      limit: 100,
-    })
+        sort: 'date',
+        limit: 100,
+        depth: 2,
+      }),
+      payload.findGlobal({
+        slug: 'recurring-food',
+      }),
+      payload.find({
+        collection: 'locations',
+        where: {
+          active: { equals: true },
+        },
+        limit: 100,
+      }),
+    ])
 
     const locationMap: Record<string, { slug: string; name: string }> = {}
     for (const loc of locationsResult.docs) {

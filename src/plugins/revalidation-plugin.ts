@@ -32,6 +32,7 @@ const COLLECTION_CACHE_MAP: Record<string, string[]> = {
   'food-vendors': ['food-vendors', 'food'], // Food vendors affect food displays
   products: ['products', 'menus'], // Products affect menu displays
   'holiday-hours': ['holiday-hours', 'locations'],
+  faqs: ['faqs'],
 }
 
 // Global to cache tags mapping
@@ -53,6 +54,7 @@ const COLLECTION_PATHS: Record<string, string[]> = {
   'food-vendors': ['/food'],
   products: ['/'],
   'holiday-hours': ['/'],
+  faqs: ['/faq'],
 }
 
 // Dynamic path builders for collections with slugs

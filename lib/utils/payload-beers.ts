@@ -12,9 +12,10 @@ import { cache } from 'react'
  * Get all beers from Payload CMS with availability data
  */
 export const getAllBeers = cache(async (): Promise<Beer[]> => {
-  const payloadBeers = await getAllBeersFromPayload()
-
-  const locations = await getAllLocations()
+  const [payloadBeers, locations] = await Promise.all([
+    getAllBeersFromPayload(),
+    getAllLocations(),
+  ])
   const locationSlugs = locations.map((loc) => loc.slug || loc.id)
 
   const menuPromises = locationSlugs.map((slug) => getMenusByLocation(slug))
