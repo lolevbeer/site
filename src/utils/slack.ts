@@ -131,11 +131,42 @@ export function encodeProductValue(relationTo: 'beers' | 'products', id: string)
   return `${relationTo}|${id}`
 }
 
+/**
+ * The one name for "this slot is on the menu but has no beer" — shared by the
+ * Remove-items list, the per-item select's initial_option, and the clear option
+ * the typeahead offers, so the three can't drift into naming it differently.
+ */
+const EMPTY_TAP_LABEL = 'Empty tap'
+
+/**
+ * Sentinel option value meaning "keep this slot on the menu but with no beer".
+ * Carries no `|`, so it can never collide with an encodeProductValue result;
+ * parseProductValue rejects it outright and rebuildMenuItems then takes its
+ * existing "the user cleared this row" branch, writing the empty tap the Menus
+ * schema already supports.
+ *
+ * It exists because there was otherwise no way to blank a slot from Slack short
+ * of removing the row, so staff searched `"  "` instead — that matches nothing,
+ * and Slack renders the resulting empty option list as "There was a problem
+ * loading options", which reads as the integration being broken.
+ */
+export const EMPTY_TAP_VALUE = 'empty-tap'
+
+/** The option that clears a row, and the initial_option an already-clear row shows. */
+const emptyTapOption = () => ({
+  text: { type: 'plain_text', text: `${EMPTY_TAP_LABEL} — no beer on this line` },
+  value: EMPTY_TAP_VALUE,
+})
+
 /** Decode an option value back into a Payload polymorphic relationship. */
 export function parseProductValue(
   value: string | undefined | null,
 ): { relationTo: 'beers' | 'products'; value: string } | null {
   if (!value) return null
+  // Rejected on purpose rather than as a side effect of the allowlist below:
+  // this is the contract EMPTY_TAP_VALUE relies on, so it should survive that
+  // allowlist ever growing a third collection.
+  if (value === EMPTY_TAP_VALUE) return null
   const [relationTo, id] = value.split('|')
   if ((relationTo !== 'beers' && relationTo !== 'products') || !id) return null
   return { relationTo, value: id }
@@ -177,7 +208,7 @@ export function productRef(
 function productName(item: MenuItem): string {
   const doc = extractBeerFromMenuItem(item) ?? extractProductFromMenuItem(item)
   if (doc) return doc.name
-  return productRef(item) ? 'Unknown item' : 'Empty tap'
+  return productRef(item) ? 'Unknown item' : EMPTY_TAP_LABEL
 }
 
 /** Human label for a menu: description when set, else the required name. */
@@ -401,14 +432,18 @@ export function buildEditModalView(menu: Menu): Record<string, unknown> {
         action_id: SLACK_IDS.actionProduct,
         min_query_length: 2,
         placeholder: { type: 'plain_text', text: 'Search beers…' },
-        ...(ref
+        // An already-blank row shows the same "Empty tap" option a user would
+        // pick to blank it, so the state you can select is the state you see
+        // back — otherwise a deliberately cleared tap is indistinguishable from
+        // one nobody has filled in yet. Left untouched it resubmits
+        // EMPTY_TAP_VALUE, which rebuildMenuItems maps to the `product: null`
+        // the row already had.
+        initial_option: ref
           ? {
-              initial_option: {
-                text: { type: 'plain_text', text: truncate(productName(item), 75) },
-                value: encodeProductValue(ref.relationTo, ref.id),
-              },
+              text: { type: 'plain_text', text: truncate(productName(item), 75) },
+              value: encodeProductValue(ref.relationTo, ref.id),
             }
-          : {}),
+          : emptyTapOption(),
       },
     }
   })
@@ -576,10 +611,18 @@ export function buildModalErrorView(
   }
 }
 
-/** Typeahead option groups for beers and products matching a query. */
+/**
+ * Typeahead option groups for beers and products matching a query.
+ *
+ * `includeEmptyTap` appends the EMPTY_TAP_VALUE option (see there for why it
+ * exists) — per-item selects only, since clearing a row is meaningless in the
+ * multi-select that appends beers. It is offered for every query rather than
+ * only blank ones, so clearing a row never depends on guessing a search term.
+ */
 export function buildProductOptionGroups(
   beers: Pick<Beer, 'id' | 'name'>[],
   products: Pick<Product, 'id' | 'name'>[],
+  includeEmptyTap = false,
 ): Record<string, unknown> {
   const toOption = (relationTo: 'beers' | 'products', doc: { id: string; name: string }) => ({
     text: { type: 'plain_text', text: truncate(doc.name, 75) },
@@ -598,8 +641,15 @@ export function buildProductOptionGroups(
       options: products.map((p) => toOption('products', p)),
     })
   }
+  if (includeEmptyTap) {
+    groups.push({ label: { type: 'plain_text', text: 'Clear' }, options: [emptyTapOption()] })
+  }
   // No matches: Slack's documented empty-result shape is an empty `options`
-  // list, not an empty `option_groups`.
+  // list, not an empty `option_groups`. Reachable only for the add-beers
+  // multi-select now — Empty tap keeps per-item selects non-empty. Slack has no
+  // non-selectable "no matches" option, so the multi-select can still render
+  // this as "There was a problem loading options"; a selectable placeholder
+  // that publishes garbage would be worse.
   if (groups.length === 0) return { options: [] }
   return { option_groups: groups }
 }

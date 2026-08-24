@@ -19,6 +19,7 @@ import {
   buildMenuListMessage,
   buildPasswordResetMessage,
   buildProductOptionGroups,
+  EMPTY_TAP_VALUE,
   parseInviteSubmission,
   INVITE_ROLES,
   buildPublishedView,
@@ -124,6 +125,9 @@ describe('parseProductValue', () => {
     expect(parseProductValue('users|abc')).toBeNull()
     expect(parseProductValue('beers|')).toBeNull()
     expect(parseProductValue(undefined)).toBeNull()
+    // The contract the Empty tap option rides on: rejecting the sentinel is what
+    // sends rebuildMenuItems down its "user cleared this row" branch.
+    expect(parseProductValue(EMPTY_TAP_VALUE)).toBeNull()
   })
 })
 
@@ -286,6 +290,21 @@ describe('buildEditModalView', () => {
     expect(view.blocks[1].element.initial_option.value).toBe('products|prod-b')
   })
 
+  // The state you can select has to be the state you see back: without this, a
+  // deliberately blanked tap reopens looking identical to one nobody filled in.
+  it('shows an already-blank row as Empty tap, and resubmitting it is a no-op', () => {
+    const blank = makeMenu({ id: 'menu1', items: [{ product: null, id: 'row1' }] })
+    const view = loose(buildEditModalView(blank))
+    expect(view.blocks[0].element.initial_option.value).toBe(EMPTY_TAP_VALUE)
+
+    // Left untouched, Slack resubmits that initial_option — it must land back on
+    // `product: null` rather than being read as a product or a stale block.
+    const state = loose({
+      item_row1: { product: { selected_option: { value: EMPTY_TAP_VALUE } } },
+    }) as SlackStateValues
+    expect(rebuildMenuItems(blank.items as MenuItem[], state)).toEqual([{ product: null }])
+  })
+
   it('encodes private_metadata as <id>|<updatedAt>', () => {
     const view = loose(buildEditModalView(menu))
     expect(view.private_metadata).toBe('menu1|2026-07-18T09:00:00.000Z')
@@ -411,6 +430,21 @@ describe('buildProductOptionGroups', () => {
     const result = buildProductOptionGroups([], [])
     expect(result).toEqual({ options: [] })
     expect(result).not.toHaveProperty('option_groups')
+  })
+
+  // Regression: a per-item select whose matches were all already on the menu —
+  // or the `"  "` people typed hoping to clear a slot — returned an empty list,
+  // which Slack shows as "There was a problem loading options".
+  it('offers Empty tap for per-item selects even when nothing matches', () => {
+    const result = loose(buildProductOptionGroups([], [], true))
+    expect(result.option_groups).toHaveLength(1)
+    expect(result.option_groups[0].options[0].value).toBe(EMPTY_TAP_VALUE)
+    expect(result).not.toHaveProperty('options')
+  })
+
+  it('omits Empty tap from the add-beers multi-select', () => {
+    const result = loose(buildProductOptionGroups([{ id: 'b1', name: 'Lupula' }], []))
+    expect(result.option_groups).toHaveLength(1) // Beers only — no Clear group
   })
 
   it('never splits a surrogate pair at the truncation boundary', () => {
