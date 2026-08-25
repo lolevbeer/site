@@ -131,11 +131,7 @@ export function encodeProductValue(relationTo: 'beers' | 'products', id: string)
   return `${relationTo}|${id}`
 }
 
-/**
- * The one name for "this slot is on the menu but has no beer" — shared by the
- * Remove-items list, the per-item select's initial_option, and the clear option
- * the typeahead offers, so the three can't drift into naming it differently.
- */
+/** Shared label for a menu slot with no beer — keeps productName and the clear option in sync. */
 const EMPTY_TAP_LABEL = 'Empty tap'
 
 /**
@@ -153,8 +149,8 @@ const EMPTY_TAP_LABEL = 'Empty tap'
 export const EMPTY_TAP_VALUE = 'empty-tap'
 
 /** The option that clears a row, and the initial_option an already-clear row shows. */
-const emptyTapOption = () => ({
-  text: { type: 'plain_text', text: `${EMPTY_TAP_LABEL} — no beer on this line` },
+const EMPTY_TAP_OPTION: SlackOption = Object.freeze({
+  text: Object.freeze({ type: 'plain_text' as const, text: `${EMPTY_TAP_LABEL} — no beer on this line` }),
   value: EMPTY_TAP_VALUE,
 })
 
@@ -443,7 +439,7 @@ export function buildEditModalView(menu: Menu): Record<string, unknown> {
               text: { type: 'plain_text', text: truncate(productName(item), 75) },
               value: encodeProductValue(ref.relationTo, ref.id),
             }
-          : emptyTapOption(),
+          : EMPTY_TAP_OPTION,
       },
     }
   })
@@ -642,7 +638,7 @@ export function buildProductOptionGroups(
     })
   }
   if (includeEmptyTap) {
-    groups.push({ label: { type: 'plain_text', text: 'Clear' }, options: [emptyTapOption()] })
+    groups.push({ label: { type: 'plain_text', text: 'Clear' }, options: [EMPTY_TAP_OPTION] })
   }
   // No matches: Slack's documented empty-result shape is an empty `options`
   // list, not an empty `option_groups`. Reachable only for the add-beers
