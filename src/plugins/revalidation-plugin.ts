@@ -127,10 +127,17 @@ function createCollectionAfterDeleteHook(slug: string) {
 }
 
 /**
- * Creates the afterChange hook for a global
+ * Creates the afterChange hook for a global.
+ *
+ * Honors `context: { skipRevalidate: true }` like the collection hooks do —
+ * scripts and bulk writers run outside a Next.js request, where
+ * revalidateTag/revalidatePath throw ("static generation store missing").
  */
 function createGlobalAfterChangeHook(slug: string) {
-  return async ({ doc }: { doc: Record<string, unknown> }) => {
+  return async ({ doc, context }: { doc: Record<string, unknown>; context?: Record<string, unknown> }) => {
+    if (context?.skipRevalidate) {
+      return doc
+    }
     const tags = GLOBAL_CACHE_MAP[slug] || []
 
     // Revalidate tags

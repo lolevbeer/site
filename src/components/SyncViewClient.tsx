@@ -316,7 +316,8 @@ export const SyncViewClient: React.FC = () => {
     }
   }
 
-  const saveDistributorUrls = async () => {
+  /** Returns true when the save succeeded, so import can refuse to run against a stale URL. */
+  const saveDistributorUrls = async (): Promise<boolean> => {
     setUrlsSaving(true)
     try {
       const response = await fetch('/api/update-distributor-urls', {
@@ -333,12 +334,14 @@ export const SyncViewClient: React.FC = () => {
           error: data.error,
         })
         toast.error('Failed to save distributor URLs')
-      } else {
-        toast.success('Distributor URLs saved')
+        return false
       }
+      toast.success('Distributor URLs saved')
+      return true
     } catch (error) {
       logger.error('Failed to save URLs:', error)
       toast.error('Failed to save distributor URLs')
+      return false
     } finally {
       setUrlsSaving(false)
     }
@@ -356,6 +359,11 @@ export const SyncViewClient: React.FC = () => {
       })
       return
     }
+
+    // The server reads the URL from the saved global, not this form — save
+    // first so pasting a fresh QuickLink and clicking Import doesn't silently
+    // run the stale (likely expired) one.
+    if (!(await saveDistributorUrls())) return
 
     setDistImporting(region)
     try {

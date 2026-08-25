@@ -88,7 +88,22 @@ async function fetchDistributors(url: string): Promise<FetchResult> {
       return { rows: [], error: `HTTP ${response.status}: ${response.statusText}` }
     }
 
-    const data = await response.json()
+    // Encompass QuickLinks expire; an expired key returns a 200 HTML page
+    // ("This link expired on …"), which used to surface as a JSON parse error.
+    // Read as text first so the error can say what actually happened.
+    const text = await response.text()
+    let data
+    try {
+      data = JSON.parse(text)
+    } catch {
+      const expired = text.match(/expired on ([\d/]+)/i)
+      return {
+        rows: [],
+        error: expired
+          ? `QuickLink expired on ${expired[1]} — generate a new QuickLink in Encompass and save it above`
+          : `Response is not JSON (got: ${text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120)})`,
+      }
+    }
     const rows = data?.Export?.Table?.Row || []
 
     if (rows.length === 0) {
