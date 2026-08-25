@@ -748,7 +748,8 @@ async function handleEditClick(interaction: SlackInteractionPayload): Promise<Ne
  * what's already on the menu being edited — the Menus collection rejects
  * duplicates, so offering them would only lead to a submit error. Only the
  * menu-edit modal's product selects are served; a per-item select keeps its own
- * row's current product searchable so the user can revert to it. Any failure
+ * row's current product searchable so the user can revert to it, and offers an
+ * "Empty tap" option that blanks the line without deleting the row. Any failure
  * degrades to an empty option list rather than a 500 Slack renders as broken.
  */
 async function handleTypeahead(interaction: SlackInteractionPayload): Promise<NextResponse> {
@@ -803,9 +804,12 @@ async function handleTypeahead(interaction: SlackInteractionPayload): Promise<Ne
     // Revert support: for a per-item select (block_id `item_<rowKey>`), keep that
     // row's own current product searchable — exclude every other row's product
     // but not this one's, so the user can pick the original beer back.
+    // One row's select, rather than the multi-select that appends beers. Both
+    // the revert exemption below and the Empty tap option key off this: each
+    // only makes sense when the query targets a single existing row.
+    const isItemSelect = actionId === SLACK_IDS.actionProduct
     const revertKey =
-      actionId === SLACK_IDS.actionProduct &&
-      interaction.block_id?.startsWith(SLACK_IDS.itemBlockPrefix)
+      isItemSelect && interaction.block_id?.startsWith(SLACK_IDS.itemBlockPrefix)
         ? interaction.block_id.slice(SLACK_IDS.itemBlockPrefix.length)
         : null
 
@@ -823,6 +827,7 @@ async function handleTypeahead(interaction: SlackInteractionPayload): Promise<Ne
       buildProductOptionGroups(
         available(beers.docs, 'beers').slice(0, 50),
         available(products.docs, 'products').slice(0, 25),
+        isItemSelect,
       ),
     )
   } catch (error) {
