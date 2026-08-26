@@ -624,7 +624,10 @@ function FeaturedMenu({
             </div>
           </div>
         )}
-        <div className="w-full flex-1 flex flex-col" style={{ padding: '0 0 0.5vh 0' }}>
+        {/* 2.5vh of bottom padding roughly matches the header's 2vh top inset, so
+            the last row of prices doesn't sit flush against the bottom bezel.
+            The 1fr grid rows absorb it by shrinking the cans slightly. */}
+        <div className="w-full flex-1 flex flex-col" style={{ padding: '0 0 2.5vh 0' }}>
           <div className="flex-1 overflow-y-auto" style={{ padding: '0 1vw' }}>
             {itemsToRender.length > 0 ? (
               menuType === 'draft' ? (
