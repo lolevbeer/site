@@ -25,9 +25,7 @@
     "generate:importmap": "cross-env NODE_OPTIONS=--no-deprecation payload generate:importmap",
     "generate:types": "cross-env NODE_OPTIONS=--no-deprecation payload generate:types",
     "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
-    "test": "pnpm run test:int",
-    "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts",
-    "test:a11y:quick": "pnpm lint && pnpm type-check"
+    "test": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts"
   },
   "dependencies": {
     "@payloadcms/db-mongodb": "3.79.1",
@@ -94,6 +92,7 @@
     "vite-tsconfig-paths": "6.1.1",
     "vitest": "4.1.11"
   },
+  "packageManager": "pnpm@10.34.5",
   "engines": {
     "node": ">=20",
     "pnpm": "^9 || ^10"
