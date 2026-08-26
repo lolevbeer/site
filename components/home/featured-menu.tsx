@@ -424,12 +424,14 @@ function CanCard({
           className="flex flex-col items-center text-center flex-shrink-0"
           style={{ gap: '0.5vh', marginTop: '1.5vh' }}
         >
-          {/* Two lines are always reserved so every tile's text block is the same
-              height, which keeps the can images — and the badges pinned to their
-              bottom edge — aligned across a row whether or not a name wraps. */}
+          {/* Deliberately no reserved second line: reserving one kept can images
+              aligned when a name wrapped, but left a visible gap under every
+              single-line name — which is the common case at 16:9, where nothing
+              wraps. A name that does wrap now just sits its own can slightly
+              lower rather than taxing all thirteen others. */}
           <h3
             className="font-bold leading-tight transition-colors duration-[250ms]"
-            style={{ fontSize: '2.8vh', minHeight: '7vh', color: accentColor }}
+            style={{ fontSize: '2.8vh', color: accentColor }}
           >
             {item.name}
           </h3>
