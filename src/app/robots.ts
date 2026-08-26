@@ -10,7 +10,7 @@ export default function robots(): MetadataRoute.Robots {
     'https://lolev.beer'
 
   // Private/utility paths kept out of all crawlers, AI bots included.
-  const disallow = ['/inventory', '/distributors', '/sarene', '/qr/', '/barcode/', '/admin', '/m/']
+  const disallow = ['/admin', '/m/']
 
   // Explicitly welcome AI crawlers (they're already covered by '*'; naming them
   // is a clearer signal that AI indexing is wanted) while keeping private paths off-limits.
