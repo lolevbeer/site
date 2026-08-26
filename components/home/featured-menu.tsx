@@ -403,12 +403,12 @@ function CanCard({
     return (
       <Link
         href={`/beer/${item.variant.toLowerCase()}`}
-        className="group cursor-pointer flex flex-col"
+        className="can-tile group cursor-pointer flex flex-col h-full min-h-0"
       >
-        <div
-          className="relative w-full bg-transparent transition-transform duration-200 group-hover:scale-[1.02]"
-          style={{ height: '28vh' }}
-        >
+        {/* flex-1 min-h-0, not a fixed 28vh: the can takes whatever height is
+            left after the text block, so a name that wraps to two lines shrinks
+            the can instead of pushing the tile past the bottom of the screen. */}
+        <div className="relative w-full flex-1 min-h-0 bg-transparent transition-transform duration-200 group-hover:scale-[1.02]">
           {renderImage()}
           {badgeLabel && (
             <Badge
@@ -421,12 +421,17 @@ function CanCard({
           )}
         </div>
         <div
-          className="flex flex-col items-center text-center"
+          className="flex flex-col items-center text-center flex-shrink-0"
           style={{ gap: '0.5vh', marginTop: '1.5vh' }}
         >
+          {/* Deliberately no reserved second line: reserving one kept can images
+              aligned when a name wrapped, but left a visible gap under every
+              single-line name — which is the common case at 16:9, where nothing
+              wraps. A name that does wrap now just sits its own can slightly
+              lower rather than taxing all thirteen others. */}
           <h3
-            className="font-bold leading-tight transition-colors duration-[250ms]"
-            style={{ fontSize: '2.8vh', color: accentColor }}
+            className="can-tile-name font-bold leading-tight transition-colors duration-[250ms]"
+            style={{ color: accentColor }}
           >
             {item.name}
           </h3>
@@ -449,34 +454,29 @@ function CanCard({
               {!item.isProduct && (
                 <UntappdRating
                   rating={item.untappdRating}
-                  style={{ gap: '0.3vh', fontSize: '1.8vh' }}
-                  iconStyle={{ height: '1.8vh', width: '1.8vh' }}
+                  className="can-tile-price"
+                  style={{ gap: '0.3vh' }}
+                  iconStyle={{ height: '1em', width: '1em' }}
                 />
               )}
               {item.fourPack && (
                 <span
-                  className="font-semibold transition-colors duration-[250ms]"
-                  style={{ fontSize: '1.8vh', color: accentColor }}
+                  className="can-tile-price font-semibold transition-colors duration-[250ms]"
+                  style={{ color: accentColor }}
                 >
                   ${item.fourPack}{' '}
-                  <span
-                    className="font-semibold text-foreground-muted"
-                    style={{ fontSize: '1.4vh' }}
-                  >
+                  <span className="can-tile-price-sub font-semibold text-foreground-muted">
                     • Four Pack
                   </span>
                 </span>
               )}
               {item.bottlePrice && (
                 <span
-                  className="font-semibold transition-colors duration-[250ms]"
-                  style={{ fontSize: '1.8vh', color: accentColor }}
+                  className="can-tile-price font-semibold transition-colors duration-[250ms]"
+                  style={{ color: accentColor }}
                 >
                   ${item.bottlePrice}{' '}
-                  <span
-                    className="font-semibold text-foreground-muted"
-                    style={{ fontSize: '1.4vh' }}
-                  >
+                  <span className="can-tile-price-sub font-semibold text-foreground-muted">
                     • Bottle
                   </span>
                 </span>
@@ -621,7 +621,10 @@ function FeaturedMenu({
             </div>
           </div>
         )}
-        <div className="w-full flex-1 flex flex-col" style={{ padding: '0 0 0.5vh 0' }}>
+        {/* 2.5vh of bottom padding roughly matches the header's 2vh top inset, so
+            the last row of prices doesn't sit flush against the bottom bezel.
+            The 1fr grid rows absorb it by shrinking the cans slightly. */}
+        <div className="w-full flex-1 flex flex-col" style={{ padding: '0 0 2.5vh 0' }}>
           <div className="flex-1 overflow-y-auto" style={{ padding: '0 1vw' }}>
             {itemsToRender.length > 0 ? (
               menuType === 'draft' ? (
@@ -691,16 +694,28 @@ function FeaturedMenu({
                   )
                 })()
               ) : (
+                /* Two equal 1fr rows that split the available height, rather than
+                   a fixed per-tile vh budget. Tiles used to be sized 28vh image +
+                   vh-scaled text; once the column count grew past ~12 cans the
+                   names wrapped to two lines, each tile outgrew its fixed track,
+                   and the extra height was silently clipped by the section's
+                   overflow-hidden (the scroll container never saw it). Rows of
+                   minmax(0,1fr) plus a flex-1 can image mean wrapping costs
+                   image height instead of overflowing, at any item count. */
                 <div
-                  className="grid gap-x-4 max-w-none"
+                  className="grid gap-x-4 max-w-none h-full"
                   style={{
                     gridTemplateColumns: `repeat(${Math.ceil(itemsToRender.length / 2)}, 1fr)`,
-                    rowGap: '4vh',
+                    gridTemplateRows: 'repeat(2, minmax(0, 1fr))',
+                    rowGap: '2vh',
                   }}
                   suppressHydrationWarning
                 >
                   {itemsToRender.map(({ item, state, key }, idx) => (
-                    <div key={key} className={animated ? getAnimationClass(state) : ''}>
+                    <div
+                      key={key}
+                      className={`min-h-0 ${animated ? getAnimationClass(state) : ''}`}
+                    >
                       <CanCard item={item} fullscreen accentColor={itemColors?.[idx]} />
                     </div>
                   ))}
