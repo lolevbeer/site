@@ -140,7 +140,6 @@ pnpm build            # Production build
 pnpm type-check       # TypeScript check
 pnpm lint             # ESLint
 pnpm test:int         # Integration tests (vitest)
-pnpm test:e2e         # E2E tests (playwright)
 pnpm generate:types   # Regenerate Payload types
 pnpm generate:importmap  # Regenerate Payload import map
 ```
