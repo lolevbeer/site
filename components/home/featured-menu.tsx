@@ -403,7 +403,7 @@ function CanCard({
     return (
       <Link
         href={`/beer/${item.variant.toLowerCase()}`}
-        className="group cursor-pointer flex flex-col h-full min-h-0"
+        className="can-tile group cursor-pointer flex flex-col h-full min-h-0"
       >
         {/* flex-1 min-h-0, not a fixed 28vh: the can takes whatever height is
             left after the text block, so a name that wraps to two lines shrinks
@@ -430,8 +430,8 @@ function CanCard({
               wraps. A name that does wrap now just sits its own can slightly
               lower rather than taxing all thirteen others. */}
           <h3
-            className="font-bold leading-tight transition-colors duration-[250ms]"
-            style={{ fontSize: '2.8vh', color: accentColor }}
+            className="can-tile-name font-bold leading-tight transition-colors duration-[250ms]"
+            style={{ color: accentColor }}
           >
             {item.name}
           </h3>
@@ -454,34 +454,29 @@ function CanCard({
               {!item.isProduct && (
                 <UntappdRating
                   rating={item.untappdRating}
-                  style={{ gap: '0.3vh', fontSize: '1.8vh' }}
-                  iconStyle={{ height: '1.8vh', width: '1.8vh' }}
+                  className="can-tile-price"
+                  style={{ gap: '0.3vh' }}
+                  iconStyle={{ height: '1em', width: '1em' }}
                 />
               )}
               {item.fourPack && (
                 <span
-                  className="font-semibold transition-colors duration-[250ms]"
-                  style={{ fontSize: '1.8vh', color: accentColor }}
+                  className="can-tile-price font-semibold transition-colors duration-[250ms]"
+                  style={{ color: accentColor }}
                 >
                   ${item.fourPack}{' '}
-                  <span
-                    className="font-semibold text-foreground-muted"
-                    style={{ fontSize: '1.4vh' }}
-                  >
+                  <span className="can-tile-price-sub font-semibold text-foreground-muted">
                     • Four Pack
                   </span>
                 </span>
               )}
               {item.bottlePrice && (
                 <span
-                  className="font-semibold transition-colors duration-[250ms]"
-                  style={{ fontSize: '1.8vh', color: accentColor }}
+                  className="can-tile-price font-semibold transition-colors duration-[250ms]"
+                  style={{ color: accentColor }}
                 >
                   ${item.bottlePrice}{' '}
-                  <span
-                    className="font-semibold text-foreground-muted"
-                    style={{ fontSize: '1.4vh' }}
-                  >
+                  <span className="can-tile-price-sub font-semibold text-foreground-muted">
                     • Bottle
                   </span>
                 </span>

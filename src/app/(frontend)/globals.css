@@ -481,3 +481,45 @@
 .mapboxgl-popup-close-button {
   display: none !important;
 }
+/* Fullscreen cans menu (FeaturedCans): scale each beer name to its own column
+   width rather than the viewport height, so a long name ("Peregrine Falcon")
+   shrinks just enough to stay on one line once a large menu narrows the
+   columns. The bare 2.8vh is the fallback for the menu TVs (Samsung Frame),
+   whose browser may predate container query units; the @supports block only
+   tightens it where cqi is actually understood. Columns in a row are equal
+   width, so every name scales by the same factor and the row stays even. */
+.can-tile-name {
+  font-size: 2.8vh;
+}
+
+@supports (font-size: 1cqi) {
+  .can-tile {
+    container-type: inline-size;
+  }
+
+  .can-tile-name {
+    font-size: min(2.8vh, 12cqi);
+  }
+}
+
+/* Same treatment for the price row: "$24 • Four Pack" wrapping to a second
+   line was the other thing that made cans in a row sit at different heights
+   once the columns narrowed. The Untappd icon is sized in em so it tracks
+   whichever font-size wins. */
+.can-tile-price {
+  font-size: 1.8vh;
+}
+
+.can-tile-price-sub {
+  font-size: 1.4vh;
+}
+
+@supports (font-size: 1cqi) {
+  .can-tile-price {
+    font-size: min(1.8vh, 7.5cqi);
+  }
+
+  .can-tile-price-sub {
+    font-size: min(1.4vh, 6cqi);
+  }
+}
