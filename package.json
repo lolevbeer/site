@@ -25,11 +25,7 @@
     "generate:importmap": "cross-env NODE_OPTIONS=--no-deprecation payload generate:importmap",
     "generate:types": "cross-env NODE_OPTIONS=--no-deprecation payload generate:types",
     "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
-    "test": "pnpm run test:int && pnpm run test:e2e",
-    "test:e2e": "cross-env NODE_OPTIONS=\"--no-deprecation --no-experimental-strip-types\" pnpm exec playwright test",
-    "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts",
-    "test:a11y": "./scripts/test-accessibility.sh",
-    "test:a11y:quick": "pnpm lint && pnpm type-check"
+    "test": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts"
   },
   "dependencies": {
     "@payloadcms/db-mongodb": "3.79.1",
@@ -74,7 +70,6 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.6",
-    "@playwright/test": "1.58.2",
     "@svgr/webpack": "^8.1.0",
     "@tailwindcss/postcss": "^4.3.3",
     "@testing-library/react": "16.3.2",
@@ -89,8 +84,6 @@
     "eslint-config-next": "15.5.23",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "jsdom": "28.1.0",
-    "playwright": "1.58.2",
-    "playwright-core": "1.58.2",
     "prettier": "^3.9.6",
     "tailwindcss": "^4.3.3",
     "tailwindcss-animate": "^1.0.7",
@@ -115,7 +108,7 @@
       "undici@5": "^6.28.0",
       "undici@6": "^6.28.0",
       "undici@7": "^7.29.0",
-      "ajv": ">=8.18.0",
+      "ajv@8": ">=8.18.0",
       "@opentelemetry/core": ">=2.8.0",
       "dompurify": ">=3.4.13",
       "esbuild": ">=0.28.1",

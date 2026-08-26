@@ -1,0 +1,32 @@
+# Runs type-check, lint, and the vitest suite on every PR and push to main.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Cancel superseded runs on PR pushes; always let main runs finish.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # pnpm and node versions come from packageManager and engines.node in package.json.
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: package.json
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm type-check
+      # Run the remaining checks even when an earlier one fails, so one push
+      # surfaces every failure instead of one per CI cycle.
+      - run: pnpm lint
+        if: ${{ !cancelled() }}
+      - run: pnpm test
+        if: ${{ !cancelled() }}
