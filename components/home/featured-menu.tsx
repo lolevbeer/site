@@ -403,12 +403,12 @@ function CanCard({
     return (
       <Link
         href={`/beer/${item.variant.toLowerCase()}`}
-        className="group cursor-pointer flex flex-col"
+        className="group cursor-pointer flex flex-col h-full min-h-0"
       >
-        <div
-          className="relative w-full bg-transparent transition-transform duration-200 group-hover:scale-[1.02]"
-          style={{ height: '28vh' }}
-        >
+        {/* flex-1 min-h-0, not a fixed 28vh: the can takes whatever height is
+            left after the text block, so a name that wraps to two lines shrinks
+            the can instead of pushing the tile past the bottom of the screen. */}
+        <div className="relative w-full flex-1 min-h-0 bg-transparent transition-transform duration-200 group-hover:scale-[1.02]">
           {renderImage()}
           {badgeLabel && (
             <Badge
@@ -421,12 +421,15 @@ function CanCard({
           )}
         </div>
         <div
-          className="flex flex-col items-center text-center"
+          className="flex flex-col items-center text-center flex-shrink-0"
           style={{ gap: '0.5vh', marginTop: '1.5vh' }}
         >
+          {/* Two lines are always reserved so every tile's text block is the same
+              height, which keeps the can images — and the badges pinned to their
+              bottom edge — aligned across a row whether or not a name wraps. */}
           <h3
             className="font-bold leading-tight transition-colors duration-[250ms]"
-            style={{ fontSize: '2.8vh', color: accentColor }}
+            style={{ fontSize: '2.8vh', minHeight: '7vh', color: accentColor }}
           >
             {item.name}
           </h3>
@@ -691,16 +694,28 @@ function FeaturedMenu({
                   )
                 })()
               ) : (
+                /* Two equal 1fr rows that split the available height, rather than
+                   a fixed per-tile vh budget. Tiles used to be sized 28vh image +
+                   vh-scaled text; once the column count grew past ~12 cans the
+                   names wrapped to two lines, each tile outgrew its fixed track,
+                   and the extra height was silently clipped by the section's
+                   overflow-hidden (the scroll container never saw it). Rows of
+                   minmax(0,1fr) plus a flex-1 can image mean wrapping costs
+                   image height instead of overflowing, at any item count. */
                 <div
-                  className="grid gap-x-4 max-w-none"
+                  className="grid gap-x-4 max-w-none h-full"
                   style={{
                     gridTemplateColumns: `repeat(${Math.ceil(itemsToRender.length / 2)}, 1fr)`,
-                    rowGap: '4vh',
+                    gridTemplateRows: 'repeat(2, minmax(0, 1fr))',
+                    rowGap: '2vh',
                   }}
                   suppressHydrationWarning
                 >
                   {itemsToRender.map(({ item, state, key }, idx) => (
-                    <div key={key} className={animated ? getAnimationClass(state) : ''}>
+                    <div
+                      key={key}
+                      className={`min-h-0 ${animated ? getAnimationClass(state) : ''}`}
+                    >
                       <CanCard item={item} fullscreen accentColor={itemColors?.[idx]} />
                     </div>
                   ))}
