@@ -6,7 +6,13 @@ export interface UntappdSyncResult {
   total: number
   updated: number
   skipped: number
+  /** Retryable failures: rate limit, 5xx, network error. These fail the task. */
   errors: number
+  /**
+   * Permanently unreachable beer URLs (404/410). Reported and left for a human
+   * to fix, never failed over — see `PERMANENT_STATUSES` in `utils/untappd`.
+   */
+  unavailable: number
   circuitBroken: boolean
 }
 
@@ -27,10 +33,11 @@ export async function runUntappdRatingsSync(payload: Payload): Promise<UntappdSy
     updated: 0,
     skipped: 0,
     errors: 0,
+    unavailable: 0,
     circuitBroken: false,
   }
 
-  for (const beer of beers.docs) {
+  for (const [index, beer] of beers.docs.entries()) {
     if (!beer.untappd) {
       results.skipped++
       continue
@@ -38,16 +45,28 @@ export async function runUntappdRatingsSync(payload: Payload): Promise<UntappdSy
 
     if (isCircuitOpen()) {
       results.circuitBroken = true
-      results.skipped += beers.docs.length - results.updated - results.skipped - results.errors
-      logger.warn('Untappd sync stopped: circuit breaker open', {
-        processed: results.updated + results.skipped + results.errors,
-        remaining: beers.docs.length - results.updated - results.skipped - results.errors,
-      })
+      const processed = results.updated + results.skipped + results.errors + results.unavailable
+      const remaining = beers.docs.length - processed
+      logger.warn('Untappd sync stopped: circuit breaker open', { processed, remaining })
+      results.skipped += remaining
       break
     }
 
     try {
-      const { rating, ratingCount, positiveReviews } = await fetchUntappdData(beer.untappd)
+      const { rating, ratingCount, positiveReviews, failure } = await fetchUntappdData(
+        beer.untappd,
+      )
+
+      if (failure === 'permanent') {
+        logger.warn(`Untappd URL is unreachable for beer ${beer.name}`, { url: beer.untappd })
+        results.unavailable++
+        continue
+      }
+
+      if (failure) {
+        results.errors++
+        continue
+      }
 
       if (rating === null) {
         results.skipped++
@@ -85,10 +104,15 @@ export async function runUntappdRatingsSync(payload: Payload): Promise<UntappdSy
     } catch (error) {
       logger.error(`Error updating beer ${beer.name}:`, error)
       results.errors++
+    } finally {
+      // Untappd is scraped without an official API; keep requests deliberately
+      // slow. In `finally` so the skip paths above (`continue`) are paced too —
+      // a mostly-unchanged catalog would otherwise be scraped in a tight burst.
+      // Nothing follows the last beer, so don't pace it.
+      if (index < beers.docs.length - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 500))
+      }
     }
-
-    // Untappd is scraped without an official API; keep requests deliberately slow.
-    await new Promise((resolve) => setTimeout(resolve, 500))
   }
 
   return results
@@ -103,6 +127,7 @@ export const syncUntappdRatingsTask: TaskConfig = {
     { name: 'updated', type: 'number', required: true },
     { name: 'skipped', type: 'number', required: true },
     { name: 'errors', type: 'number', required: true },
+    { name: 'unavailable', type: 'number', required: true },
     { name: 'circuitBroken', type: 'checkbox', required: true },
   ],
   retries: {
@@ -110,5 +135,28 @@ export const syncUntappdRatingsTask: TaskConfig = {
     backoff: { type: 'exponential', delay: 60_000 },
   },
   schedule: [{ cron: '0 0 6 * * *', queue: 'maintenance' }],
-  handler: async ({ req }) => ({ output: await runUntappdRatingsSync(req.payload) }),
+  /**
+   * Throws only for *retryable* trouble — a rate limit, 5xx, network error, or
+   * the circuit breaker cutting the run short — so the `retries` above actually
+   * run instead of the job being recorded as a success over stale data.
+   *
+   * Permanently dead beer URLs (404/410) land in `unavailable` and are logged
+   * rather than thrown; see `PERMANENT_STATUSES` in `utils/untappd` for why.
+   */
+  handler: async ({ req }) => {
+    const output = await runUntappdRatingsSync(req.payload)
+
+    if (output.unavailable > 0) {
+      logger.warn(`Untappd sync finished with ${output.unavailable} unreachable beer URL(s)`)
+    }
+
+    if (output.errors > 0 || output.circuitBroken) {
+      throw new Error(
+        `Untappd sync incomplete: ${output.errors} retryable error(s), ${output.skipped} skipped` +
+          (output.circuitBroken ? ', circuit breaker opened' : ''),
+      )
+    }
+
+    return { output }
+  },
 }

@@ -7,7 +7,9 @@ import {
   hasRole,
   isAdmin,
   leadBartenderAccess,
+  leadBartenderFieldAccess,
 } from '@/src/access/roles'
+import { relationshipIds } from '@/src/utils/relationship-id'
 
 export const Users: CollectionConfig = {
   slug: 'users',
@@ -42,6 +44,24 @@ export const Users: CollectionConfig = {
           throw new APIError('Lead Bartenders can only create users with the Bartender role', 403)
         }
 
+        // A lead bartender may scope the new bartender, but only to locations
+        // they are themselves assigned to — menu access is location-scoped, so
+        // an unchecked assignment would hand out access they don't have.
+        const granted = relationshipIds(data.locations)
+        if (granted === null) {
+          throw new APIError('Locations must be a list of location IDs', 400)
+        }
+        if (granted.length === 0) return data
+
+        // Fail closed: an unreadable own-locations value grants nothing.
+        const own = new Set(relationshipIds(req.user?.locations) ?? [])
+        if (granted.some((id) => !own.has(id))) {
+          throw new APIError(
+            'Lead Bartenders can only assign locations they are assigned to themselves',
+            403,
+          )
+        }
+        data.locations = granted
         return data
       },
     ],
@@ -80,7 +100,10 @@ export const Users: CollectionConfig = {
       relationTo: 'locations',
       hasMany: true,
       access: {
-        create: adminFieldAccess,
+        // Lead bartenders may scope the bartenders they invite (capped by the
+        // beforeChange hook to their own locations); only admins may re-scope
+        // an existing user.
+        create: leadBartenderFieldAccess,
         update: adminFieldAccess,
       },
       admin: {
@@ -112,7 +135,7 @@ export const Users: CollectionConfig = {
       access: {
         // Lead bartenders can set roles on create (validated by hook to only allow 'bartender')
         // Only admins can change roles on existing users
-        create: ({ req: { user } }) => hasRole(user, ['admin', 'lead-bartender']),
+        create: leadBartenderFieldAccess,
         update: adminFieldAccess,
       },
     },

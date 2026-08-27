@@ -61,10 +61,13 @@ export async function down({ payload, req }: MigrateDownArgs): Promise<void> {
   }
 
   // Bulk where-based delete instead of one round trip per review.
+  // skipReviewSync: BeerReviews.afterDelete prunes each deleted review from the
+  // beer's legacy `positiveReviews` array, which would undo the arrays this
+  // migration just wrote back above.
   await payload.delete({
     collection: 'beer-reviews',
     where: { id: { exists: true } },
-    context: { skipRevalidate: true },
+    context: { skipRevalidate: true, skipReviewSync: true },
     overrideAccess: true,
     req,
   })

@@ -354,6 +354,26 @@ describe('invite modal', () => {
     )
   })
 
+  it('defaults grantable locations and warns that empty means no menu access', () => {
+    const view = buildInviteModalView([
+      { id: 'loc1', name: 'Lawrenceville' },
+      { id: 'loc2', name: 'Zelienople' },
+    ]) as {
+      blocks: {
+        block_id?: string
+        hint?: { text: string }
+        element?: { initial_options?: { value: string }[] }
+      }[]
+    }
+    const locations = view.blocks.find((b) => b.block_id === SLACK_IDS.blockInviteLocations)
+    expect(locations?.element?.initial_options?.map((option) => option.value)).toEqual([
+      'loc1',
+      'loc2',
+    ])
+    expect(locations?.hint?.text).toMatch(/cannot edit any menu/i)
+    expect(locations?.hint?.text).not.toMatch(/leave empty for all/i)
+  })
+
   it('parses a submission, treating a blank name as unset', () => {
     const state: SlackStateValues = {
       [SLACK_IDS.blockInviteUser]: { [SLACK_IDS.actionInviteUser]: { selected_user: 'U123' } },

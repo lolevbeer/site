@@ -56,11 +56,18 @@ const COLLECTION_PATHS: Record<string, string[]> = {
   styles: ['/beer'],
   distributors: ['/beer-map'],
   'food-vendors': ['/food'],
-  'recurring-food-schedules': ['/food'],
-  'recurring-food-exclusions': ['/food'],
+  'recurring-food-schedules': ['/', '/food'],
+  'recurring-food-exclusions': ['/', '/food'],
   products: ['/'],
   'holiday-hours': ['/'],
   faqs: ['/faq'],
+}
+
+// Nested route trees that need layout invalidation (every /e/[location] page
+// embeds recurring food via getCombinedUpcomingFood).
+const COLLECTION_LAYOUT_PATHS: Record<string, string[]> = {
+  'recurring-food-schedules': ['/e'],
+  'recurring-food-exclusions': ['/e'],
 }
 
 // Dynamic path builders for collections with slugs
@@ -69,15 +76,50 @@ const COLLECTION_PATH_BUILDERS: Record<string, (doc: Record<string, unknown>) =>
   menus: (doc) => (doc.url ? [`/m/${doc.url}`] : []),
 }
 
-/**
- * Invalidate every tag and static path registered for a collection.
- * For callers outside the hook system (e.g. the cron runner) that batch
- * writes with `skipRevalidate` and revalidate once afterwards — keeps the
- * cache map single-sourced here.
- */
-export function revalidateForCollection(slug: string): void {
+// Extra invalidation that only whole-collection batch runs need, so a
+// per-document hook doesn't pay for it. A single write already fires its own
+// `COLLECTION_PATH_BUILDERS` path and Beers.afterChange's precise
+// `menu-${url}` tags; a batch writer passes `context.skipRevalidate`, which
+// skips both, and has no doc to build a path from.
+const COLLECTION_BATCH_EXTRAS: Record<
+  string,
+  { tags?: string[]; paths?: Array<[string, 'page' | 'layout']> }
+> = {
+  beers: {
+    // getMenuByUrl subscribes to the broad 'menus' tag, not 'beers'.
+    tags: ['menus'],
+    // `/beer/[variant]` is a 3600s ISR route; invalidating the dynamic segment
+    // covers every beer page in one call, which is what a catalogue-wide batch
+    // wants anyway. Tag invalidation alone would leave them an hour stale.
+    paths: [['/beer/[variant]', 'page']],
+  },
+}
+
+function invalidateCollection(slug: string, doc?: Record<string, unknown>): void {
   ;(COLLECTION_CACHE_MAP[slug] || []).forEach((tag) => revalidateTag(tag))
   ;(COLLECTION_PATHS[slug] || []).forEach((path) => revalidatePath(path))
+  ;(COLLECTION_LAYOUT_PATHS[slug] || []).forEach((path) => revalidatePath(path, 'layout'))
+  if (!doc) return
+  const pathBuilder = COLLECTION_PATH_BUILDERS[slug]
+  if (pathBuilder) {
+    pathBuilder(doc).forEach((path) => revalidatePath(path))
+  }
+}
+
+/**
+ * Invalidate every tag and path a whole-collection batch needs — the static
+ * map plus `COLLECTION_BATCH_EXTRAS`. For callers outside the hook system
+ * (the cron runner, the sheet sync) that write with `skipRevalidate` and
+ * revalidate once afterwards, so the route and tag shapes stay single-sourced
+ * here rather than being hand-rolled per caller.
+ */
+export function revalidateForCollection(slug: string): void {
+  invalidateCollection(slug)
+
+  const extras = COLLECTION_BATCH_EXTRAS[slug]
+  if (!extras) return
+  extras.tags?.forEach((tag) => revalidateTag(tag))
+  extras.paths?.forEach(([path, type]) => revalidatePath(path, type))
 }
 
 /**
@@ -98,28 +140,7 @@ function createCollectionAfterChangeHook(slug: string) {
     if (context?.skipRevalidate) {
       return doc
     }
-    const tags = COLLECTION_CACHE_MAP[slug] || []
-    const paths = COLLECTION_PATHS[slug] || []
-    const pathBuilder = COLLECTION_PATH_BUILDERS[slug]
-
-    // Revalidate tags
-    tags.forEach((tag) => {
-      revalidateTag(tag)
-    })
-
-    // Revalidate static paths
-    paths.forEach((path) => {
-      revalidatePath(path)
-    })
-
-    // Revalidate dynamic paths
-    if (pathBuilder) {
-      const dynamicPaths = pathBuilder(doc)
-      dynamicPaths.forEach((path) => {
-        revalidatePath(path)
-      })
-    }
-
+    invalidateCollection(slug, doc)
     return doc
   }
 }
@@ -138,19 +159,7 @@ function createCollectionAfterDeleteHook(slug: string) {
     if (context?.skipRevalidate) {
       return doc
     }
-    const tags = COLLECTION_CACHE_MAP[slug] || []
-    const paths = COLLECTION_PATHS[slug] || []
-
-    // Revalidate tags
-    tags.forEach((tag) => {
-      revalidateTag(tag)
-    })
-
-    // Revalidate static paths
-    paths.forEach((path) => {
-      revalidatePath(path)
-    })
-
+    invalidateCollection(slug, doc)
     return doc
   }
 }

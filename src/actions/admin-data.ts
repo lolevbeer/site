@@ -4,7 +4,13 @@ import { getPayload } from 'payload'
 import type { Payload } from 'payload'
 import { headers } from 'next/headers'
 import config from '@payload-config'
-import { hasRole, type Role } from '@/src/access/roles'
+import {
+  EVENT_MANAGER_ROLES,
+  FOOD_MANAGER_ROLES,
+  hasRole,
+  SCHEDULE_READER_ROLES,
+  type Role,
+} from '@/src/access/roles'
 import type { FoodVendor, User } from '@/src/payload-types'
 import {
   dayBounds,
@@ -27,10 +33,6 @@ interface AuthorizedPayload {
   payload: Payload
   user: User
 }
-
-const FOOD_ADMIN_ROLES: Role[] = ['admin', 'food-manager']
-const EVENT_ADMIN_ROLES: Role[] = ['admin', 'event-manager']
-const SCHEDULE_READER_ROLES: Role[] = ['admin', 'event-manager', 'food-manager']
 
 async function getAuthorizedPayload(allowedRoles: Role[]): Promise<AuthorizedPayload> {
   const payload = await getPayload({ config })
@@ -108,10 +110,10 @@ export interface FoodEvent {
 }
 
 /**
- * Get all active locations
+ * Get all active locations.
  */
 export async function getActiveLocations(): Promise<SimpleLocation[]> {
-  const { payload, user } = await getAuthorizedPayload(FOOD_ADMIN_ROLES)
+  const { payload, user } = await getAuthorizedPayload(SCHEDULE_READER_ROLES)
 
   const result = await payload.find({
     collection: 'locations',
@@ -160,7 +162,7 @@ export async function getFoodVendorsByIds(ids: string[]): Promise<Record<string,
   if (ids.length > 100) throw new Error('Too many vendor IDs')
 
   const vendorIds = [...new Set(ids.map((id) => requireIdentifier(id, 'vendor ID')))]
-  const { payload, user } = await getAuthorizedPayload(FOOD_ADMIN_ROLES)
+  const { payload, user } = await getAuthorizedPayload(SCHEDULE_READER_ROLES)
   const names: Record<string, string> = {}
 
   // Single batch query instead of N individual queries
@@ -188,10 +190,10 @@ export async function getFoodVendorsByIds(ids: string[]): Promise<Record<string,
 }
 
 /**
- * Get upcoming food events for a location
+ * Get upcoming food events for a location.
  */
 export async function getUpcomingFoodForLocation(locationId: string): Promise<FoodEvent[]> {
-  const { payload, user } = await getAuthorizedPayload(FOOD_ADMIN_ROLES)
+  const { payload, user } = await getAuthorizedPayload(SCHEDULE_READER_ROLES)
   const validLocationId = requireIdentifier(locationId, 'location ID')
 
   const today = new Date()
@@ -251,7 +253,7 @@ export async function setRecurringFoodSchedule(
   occurrence: string,
   vendorId: string | null,
 ): Promise<void> {
-  const { payload, user } = await getAuthorizedPayload(FOOD_ADMIN_ROLES)
+  const { payload, user } = await getAuthorizedPayload(FOOD_MANAGER_ROLES)
   const validLocationId = requireIdentifier(locationId, 'location ID')
   const validDay = requireOneOf(day, recurringDays, 'recurring day')
   const validOccurrence = requireOneOf(occurrence, recurringOccurrences, 'recurring occurrence')
@@ -336,9 +338,10 @@ export async function setRecurringFoodExclusion(
   date: string,
   excluded: boolean,
 ): Promise<void> {
-  const { payload, user } = await getAuthorizedPayload(FOOD_ADMIN_ROLES)
+  const { payload, user } = await getAuthorizedPayload(FOOD_MANAGER_ROLES)
   const validLocationId = requireIdentifier(locationId, 'location ID')
-  const validDate = requireDateOnly(date)
+  const dateOnly = requireDateOnly(date)
+  const { start: startOfDay, end: endOfDay } = dayBounds(dateOnly)
   const legacy = await payload.findGlobal({
     slug: 'recurring-food',
     depth: 0,
@@ -352,8 +355,8 @@ export async function setRecurringFoodExclusion(
       legacyObject<RecurringFoodExclusionsData>(legacy.exclusions),
     )
     const current = new Set(exclusions[validLocationId] || [])
-    if (excluded) current.add(validDate)
-    else current.delete(validDate)
+    if (excluded) current.add(dateOnly)
+    else current.delete(dateOnly)
     exclusions[validLocationId] = [...current].sort()
 
     await payload.updateGlobal({
@@ -370,8 +373,8 @@ export async function setRecurringFoodExclusion(
     where: {
       and: [
         { location: { equals: validLocationId } },
-        { date: { greater_than_equal: dayBounds(validDate).start } },
-        { date: { less_than_equal: dayBounds(validDate).end } },
+        { date: { greater_than_equal: startOfDay } },
+        { date: { less_than_equal: endOfDay } },
       ],
     },
     depth: 0,
@@ -384,7 +387,7 @@ export async function setRecurringFoodExclusion(
   if (excluded && !current) {
     await payload.create({
       collection: 'recurring-food-exclusions',
-      data: { location: validLocationId, date: exclusionTimestamp(validDate) },
+      data: { location: validLocationId, date: exclusionTimestamp(dateOnly) },
       overrideAccess: false,
       user,
     })
@@ -399,20 +402,28 @@ export async function setRecurringFoodExclusion(
 }
 
 /**
- * Get food events for a specific date and location
+ * Get food events for a specific date and location.
+ *
+ * Queried as a whole-day range rather than an equality match: food dates are
+ * stored as timestamps (imports land at local noon), so `equals 'YYYY-MM-DD'`
+ * matches nothing and the conflict warning would silently never fire.
  */
 export async function getFoodOnDate(
   date: string,
   locationId: string,
 ): Promise<{ id: string; vendorId: string; vendorName: string }[]> {
-  const { payload, user } = await getAuthorizedPayload(FOOD_ADMIN_ROLES)
-  const dateOnly = requireDateOnly(date)
+  const { payload, user } = await getAuthorizedPayload(FOOD_MANAGER_ROLES)
+  const { start: startOfDay, end: endOfDay } = dayBounds(requireDateOnly(date))
   const validLocationId = requireIdentifier(locationId, 'location ID')
 
   const result = await payload.find({
     collection: 'food',
     where: {
-      and: [{ date: { equals: dateOnly } }, { location: { equals: validLocationId } }],
+      and: [
+        { date: { greater_than_equal: startOfDay } },
+        { date: { less_than_equal: endOfDay } },
+        { location: { equals: validLocationId } },
+      ],
     },
     depth: 1,
     limit: 100,
@@ -465,11 +476,10 @@ export interface EventOnDate {
  * Get events on a specific date for a location
  */
 export async function getEventsOnDate(dateStr: string, locationId: string): Promise<EventOnDate[]> {
-  const { payload, user } = await getAuthorizedPayload(EVENT_ADMIN_ROLES)
+  const { payload, user } = await getAuthorizedPayload(EVENT_MANAGER_ROLES)
   const validLocationId = requireIdentifier(locationId, 'location ID')
 
-  const dateOnly = requireDateOnly(dateStr)
-  const { start: startOfDay, end: endOfDay } = dayBounds(dateOnly)
+  const { start: startOfDay, end: endOfDay } = dayBounds(requireDateOnly(dateStr))
 
   const result = await payload.find({
     collection: 'events',
@@ -506,11 +516,10 @@ export async function getFoodOnDateRange(
   dateStr: string,
   locationId: string,
 ): Promise<FoodOnDateWithType[]> {
-  const { payload, user } = await getAuthorizedPayload(EVENT_ADMIN_ROLES)
+  const { payload, user } = await getAuthorizedPayload(EVENT_MANAGER_ROLES)
   const validLocationId = requireIdentifier(locationId, 'location ID')
 
-  const dateOnly = requireDateOnly(dateStr)
-  const { start: startOfDay, end: endOfDay } = dayBounds(dateOnly)
+  const { start: startOfDay, end: endOfDay } = dayBounds(requireDateOnly(dateStr))
 
   const result = await payload.find({
     collection: 'food',

@@ -52,4 +52,20 @@ describe('recurring food compatibility reads', () => {
     expect(state.schedules['location-1'].monday.first).toBe('vendor-1')
     expect(state.exclusions['location-1']).toEqual(['2026-08-31'])
   })
+
+  it('filters inactive schedules in the query so the row cap counts live rows only', async () => {
+    // Filtering after the fetch let archived rows consume the 1000-row limit
+    // and crowd out active schedules once a location had enough history.
+    const findGlobal = vi.fn(async () => ({ normalizedAt: '2026-08-26T00:00:00.000Z' }))
+    const find = vi.fn().mockResolvedValueOnce({ docs: [] }).mockResolvedValueOnce({ docs: [] })
+
+    await getRecurringFoodState({ findGlobal, find } as unknown as Payload)
+
+    expect(find).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collection: 'recurring-food-schedules',
+        where: { active: { equals: true } },
+      }),
+    )
+  })
 })

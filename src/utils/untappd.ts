@@ -19,7 +19,26 @@ export interface UntappdData {
   rating: number | null
   ratingCount: number | null
   positiveReviews: UntappdReview[]
+  /**
+   * Set when the request itself failed (rate limit, 5xx, network error, dead
+   * URL, or a skipped request because the circuit is open) rather than the page
+   * simply having no rating; absent on success. See `PERMANENT_STATUSES` for
+   * what separates the two kinds and why the distinction matters.
+   */
+  failure?: 'retryable' | 'permanent'
 }
+
+/**
+ * HTTP statuses treated as permanent for a single beer URL. Everything else —
+ * 429, 403, 5xx, network errors, an open circuit — is assumed transient and
+ * worth a retry.
+ *
+ * The split exists so batch callers never fail a whole run over a dead link.
+ * There is no "already synced today" short circuit, so a retry re-scrapes the
+ * entire catalogue (a request plus a pacing delay per beer) and still hits the
+ * same 404 — turning one stale URL into a job that never succeeds again.
+ */
+const PERMANENT_STATUSES = new Set([404, 410])
 
 /** Tracks consecutive failures for circuit breaker logic */
 let consecutiveFailures = 0
@@ -44,11 +63,17 @@ export function resetCircuit(): void {
  * Includes rate-limit detection and circuit breaker pattern.
  */
 export async function fetchUntappdData(url: string): Promise<UntappdData> {
-  const emptyResult: UntappdData = { rating: null, ratingCount: null, positiveReviews: [] }
+  const failed = (failure: 'retryable' | 'permanent'): UntappdData => ({
+    rating: null,
+    ratingCount: null,
+    positiveReviews: [],
+    failure,
+  })
 
-  // Circuit breaker: skip requests if too many consecutive failures
+  // Circuit breaker: skip requests if too many consecutive failures. The beer
+  // itself is fine — the run was cut short — so this is retryable.
   if (isCircuitOpen()) {
-    return emptyResult
+    return failed('retryable')
   }
 
   try {
@@ -66,10 +91,21 @@ export async function fetchUntappdData(url: string): Promise<UntappdData> {
         level: 'warning',
         extra: { url: fullUrl, consecutiveFailures },
       })
-      return emptyResult
+      return failed('retryable')
     }
 
     if (!response.ok) {
+      // A dead URL says nothing about Untappd's health, so it must not count
+      // toward the circuit breaker — five stale links would otherwise trip it
+      // and skip the rest of a perfectly healthy catalogue.
+      if (PERMANENT_STATUSES.has(response.status)) {
+        Sentry.captureMessage('Untappd beer URL is gone', {
+          level: 'warning',
+          extra: { url: fullUrl, status: response.status },
+        })
+        return failed('permanent')
+      }
+
       consecutiveFailures++
       if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
         Sentry.captureMessage('Untappd circuit breaker opened after consecutive failures', {
@@ -77,7 +113,7 @@ export async function fetchUntappdData(url: string): Promise<UntappdData> {
           extra: { url: fullUrl, status: response.status, consecutiveFailures },
         })
       }
-      return emptyResult
+      return failed('retryable')
     }
 
     const html = await response.text()
@@ -109,7 +145,8 @@ export async function fetchUntappdData(url: string): Promise<UntappdData> {
 
     // Extract reviews that Lolev has toasted (liked)
     const positiveReviews: UntappdReview[] = []
-    const checkinRegex = /<div[^>]*class="item\s*"[^>]*id="checkin_(\d+)"[^>]*>([\s\S]*?)(?=<div[^>]*class="item\s*"[^>]*id="checkin_|$)/gi
+    const checkinRegex =
+      /<div[^>]*class="item\s*"[^>]*id="checkin_(\d+)"[^>]*>([\s\S]*?)(?=<div[^>]*class="item\s*"[^>]*id="checkin_|$)/gi
     let checkinMatch
 
     while ((checkinMatch = checkinRegex.exec(html)) !== null) {
@@ -117,11 +154,15 @@ export async function fetchUntappdData(url: string): Promise<UntappdData> {
       const checkinHtml = checkinMatch[2]
 
       // Check if Lolev has toasted this checkin (brewery ID 519872)
-      const hasLolevToast = /class="user-toasts[^"]*"[^>]*href="\/brewery\/519872"/.test(checkinHtml)
+      const hasLolevToast = /class="user-toasts[^"]*"[^>]*href="\/brewery\/519872"/.test(
+        checkinHtml,
+      )
       if (!hasLolevToast) continue
 
       // Extract rating from caps div
-      const checkinRatingMatch = checkinHtml.match(/<div[^>]*class="caps[^"]*"[^>]*data-rating="([\d.]+)"/)
+      const checkinRatingMatch = checkinHtml.match(
+        /<div[^>]*class="caps[^"]*"[^>]*data-rating="([\d.]+)"/,
+      )
       const checkinRating = checkinRatingMatch ? parseFloat(checkinRatingMatch[1]) : 0
 
       // Extract comment text - skip reviews without comments
@@ -144,7 +185,9 @@ export async function fetchUntappdData(url: string): Promise<UntappdData> {
       const date = dateMatch ? dateMatch[1].trim() : undefined
 
       // Extract image
-      const imageMatch = checkinHtml.match(/<p[^>]*class="photo"[^>]*>[\s\S]*?<img[^>]*src="([^"]+)"/)
+      const imageMatch = checkinHtml.match(
+        /<p[^>]*class="photo"[^>]*>[\s\S]*?<img[^>]*src="([^"]+)"/,
+      )
       const image = imageMatch ? imageMatch[1] : undefined
 
       positiveReviews.push({ username, rating: checkinRating, text, date, url: checkinUrl, image })
@@ -163,6 +206,7 @@ export async function fetchUntappdData(url: string): Promise<UntappdData> {
       })
     }
 
-    return { rating: null, ratingCount: null, positiveReviews: [] }
+    // Network/parse errors are transient by assumption.
+    return failed('retryable')
   }
 }

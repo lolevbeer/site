@@ -217,10 +217,17 @@ function menuLabel(menu: Menu): string {
  * locations. The invitee is a Slack user picker rather than a typed email on
  * purpose — it bounds who can be invited to the workspace, sources a verified
  * address instead of a self-asserted one, and pre-links the new account.
+ *
+ * Offered locations are pre-selected: empty `locations` on a bartender is no
+ * menu access, not all-menu access.
  */
 export function buildInviteModalView(
   locations: { id: string; name: string }[],
 ): Record<string, unknown> {
+  const locationOptions: SlackOption[] = locations.map((location) => ({
+    text: { type: 'plain_text', text: location.name },
+    value: String(location.id),
+  }))
   return {
     type: 'modal',
     callback_id: SLACK_IDS.callbackInvite,
@@ -271,15 +278,13 @@ export function buildInviteModalView(
               label: { type: 'plain_text', text: 'Locations' },
               hint: {
                 type: 'plain_text',
-                text: 'Bartenders with locations set can only edit those menus. Leave empty for all.',
+                text: 'Required for menu access. Bartenders can only edit assigned locations; leave empty and they cannot edit any menu.',
               },
               element: {
                 type: 'multi_static_select',
                 action_id: SLACK_IDS.actionInviteLocations,
-                options: locations.map((l) => ({
-                  text: { type: 'plain_text', text: l.name },
-                  value: String(l.id),
-                })),
+                options: locationOptions,
+                initial_options: locationOptions,
               },
             },
           ]

@@ -22,8 +22,10 @@ export async function GET(request: NextRequest) {
     const run = await payload.jobs.run({ queue: QUEUE, limit: 1, sequential: true })
     const ranJobs = Object.keys(run.jobStatus || {}).length
 
-    // Job tasks intentionally avoid Next cache APIs so they also work from the
-    // Payload CLI. In the Vercel runner, invalidate once after any execution.
+    // Job tasks avoid Next cache APIs so they also work from the Payload CLI.
+    // In the Vercel runner, invalidate beers once after any execution — the
+    // batch shape (menus tag, `/beer/[variant]`) lives in the revalidation
+    // plugin so this route and the sheet sync can't drift apart.
     if (ranJobs > 0) {
       revalidateForCollection('beers')
     }

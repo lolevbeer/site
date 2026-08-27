@@ -10,6 +10,7 @@ import { SiteContent } from '@/src/globals/SiteContent'
 import { canRunGoogleSheetsSync } from '@/src/endpoints/sync-google-sheets'
 import { canRunUntappdSync } from '@/src/endpoints/sync-untappd-ratings'
 import { getAdminRelationshipID } from '@/src/components/admin/relationship-value'
+import { isFoodManager } from '@/src/access/roles'
 
 function userWith(roles: User['roles'], locations: User['locations'] = []): User {
   return {
@@ -81,14 +82,91 @@ describe('user assignment authorization', () => {
     throw new Error('Expected locations field access rules')
   }
 
-  it('prevents users and lead bartenders from changing location assignments', () => {
-    expect(callAccess(locationsField.access?.create, userWith(['lead-bartender']))).toBe(false)
+  it('prevents anyone but an admin from re-scoping an existing user', () => {
+    expect(callAccess(locationsField.access?.update, userWith(['lead-bartender']))).toBe(false)
     expect(callAccess(locationsField.access?.update, userWith(['bartender']))).toBe(false)
+    expect(callAccess(locationsField.access?.create, userWith(['bartender']))).toBe(false)
   })
 
   it('allows admins to set location assignments', () => {
     expect(callAccess(locationsField.access?.create, userWith(['admin']))).toBe(true)
     expect(callAccess(locationsField.access?.update, userWith(['admin']))).toBe(true)
+  })
+
+  it('lets food managers edit the Recurring Food grid and keeps event managers read-only', () => {
+    expect(isFoodManager(userWith(['admin']))).toBe(true)
+    expect(isFoodManager(userWith(['food-manager']))).toBe(true)
+    expect(isFoodManager(userWith(['event-manager']))).toBe(false)
+    expect(isFoodManager(userWith(['admin', 'event-manager']))).toBe(true)
+  })
+
+  it('lets a lead bartender scope the bartenders they invite', () => {
+    // Menu access is location-scoped and rejects unassigned bartenders, so an
+    // invite that drops the selected locations produces an unusable account.
+    expect(callAccess(locationsField.access?.create, userWith(['lead-bartender']))).toBe(true)
+  })
+
+  describe('lead bartender invite scoping', () => {
+    const beforeChange = Users.hooks?.beforeChange?.[0]
+    if (typeof beforeChange !== 'function') throw new Error('Expected a beforeChange hook')
+
+    const runHook = (data: Record<string, unknown>, user: User) =>
+      beforeChange({
+        data,
+        req: { user },
+        operation: 'create',
+      } as unknown as Parameters<typeof beforeChange>[0])
+
+    it('keeps locations the lead bartender is assigned to', () => {
+      const result = runHook(
+        { roles: ['bartender'], locations: ['location-1'] },
+        userWith(['lead-bartender'], ['location-1']),
+      )
+
+      expect(result).toMatchObject({ locations: ['location-1'] })
+    })
+
+    it('rejects locations the lead bartender does not hold', () => {
+      expect(() =>
+        runHook(
+          { roles: ['bartender'], locations: ['location-2'] },
+          userWith(['lead-bartender'], ['location-1']),
+        ),
+      ).toThrow(/only assign locations/i)
+    })
+
+    it('leaves admin invites untouched', () => {
+      const result = runHook(
+        { roles: ['bartender'], locations: ['location-2'] },
+        userWith(['admin'], ['location-1']),
+      )
+
+      expect(result).toMatchObject({ locations: ['location-2'] })
+    })
+
+    it('rejects a bare scalar instead of reading it as "nothing granted"', () => {
+      // `locations` is hasMany, but Payload's relationship validator accepts a
+      // scalar and Mongo casts it onto the array path — so a non-array value
+      // must be rejected rather than skipped, or the cap above is bypassed.
+      expect(() =>
+        runHook(
+          { roles: ['bartender'], locations: 'location-2' },
+          userWith(['lead-bartender'], ['location-1']),
+        ),
+      ).toThrow(/list of location IDs/i)
+    })
+
+    it('allows an invite with no locations at all', () => {
+      const result = runHook({ roles: ['bartender'] }, userWith(['lead-bartender'], ['location-1']))
+
+      expect(result).toMatchObject({ roles: ['bartender'] })
+    })
+
+    it('grants nothing when the lead bartender holds no locations', () => {
+      expect(() =>
+        runHook({ roles: ['bartender'], locations: ['location-1'] }, userWith(['lead-bartender'])),
+      ).toThrow(/only assign locations/i)
+    })
   })
 })
 

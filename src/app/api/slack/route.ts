@@ -31,7 +31,8 @@ import { getPayload, APIError, type TypedUser } from 'payload'
 import crypto from 'crypto'
 import config from '@/src/payload.config'
 import { logger } from '@/lib/utils/logger'
-import { leadBartenderAccess } from '@/src/access/roles'
+import { isAdmin, leadBartenderAccess } from '@/src/access/roles'
+import { relationshipIds } from '@/src/utils/relationship-id'
 import { canUpdateMenus } from '@/src/collections/Menus'
 import type { User } from '@/src/payload-types'
 import {
@@ -489,10 +490,22 @@ async function openInviteModal(
         return null
       })
 
+    // A lead bartender can only grant locations they hold themselves (capped
+    // by Users' beforeChange hook), so don't offer choices that would 403.
+    let selectableLocations = locations?.docs ?? []
+    if (!isAdmin(user)) {
+      // Same normalization the Users hook caps against, so the picker can't
+      // offer a location the invite would then reject.
+      const ownLocationIds = new Set(relationshipIds(user.locations) ?? [])
+      selectableLocations = selectableLocations.filter((location) =>
+        ownLocationIds.has(String(location.id)),
+      )
+    }
+
     const opened = await slackApi('views.open', {
       trigger_id: triggerId,
       view: buildInviteModalView(
-        (locations?.docs ?? []).map((l) => ({ id: String(l.id), name: l.name })),
+        selectableLocations.map((l) => ({ id: String(l.id), name: l.name })),
       ),
     })
     if (!opened) {

@@ -19,6 +19,13 @@ import { cache } from 'react'
 import { getPayload } from 'payload'
 import config from '@/src/payload.config'
 import { unstable_cache } from 'next/cache'
+import {
+  getRecurringFoodState,
+  recurringDays,
+  recurringOccurrences,
+  type RecurringFoodState,
+} from '@/src/utils/recurring-food'
+import { getPublicBeerReviews } from '@/src/utils/beer-reviews'
 import type {
   Beer as PayloadBeer,
   Menu,
@@ -132,7 +139,12 @@ export const getBeerBySlug = cache(async (slug: string): Promise<PayloadBeer | n
       })
 
       // Return null for "not found" (cacheable), but let errors throw (not cached)
-      return result.docs[0] || null
+      const beer = result.docs[0]
+      if (!beer) return null
+
+      const reviews = await getPublicBeerReviews(payload, beer.id)
+      if (reviews === null) return beer
+      return { ...beer, positiveReviews: reviews }
     },
     [`beer-${slug}`],
     { tags: [CACHE_TAGS.beers], revalidate: 3600 },
@@ -865,21 +877,6 @@ export const getUpcomingFoodFromPayload = async (
 
 // ============ RECURRING FOOD ============
 
-const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const
-const weeks = ['first', 'second', 'third', 'fourth', 'fifth'] as const
-
-type Day = (typeof days)[number]
-type Week = (typeof weeks)[number]
-
-type LocationSchedule = Partial<Record<Day, Partial<Record<Week, string | null>>>>
-type SchedulesData = Record<string, LocationSchedule>
-type ExclusionsData = Record<string, string[]>
-
-interface RecurringFoodGlobal {
-  schedules: SchedulesData
-  exclusions: ExclusionsData
-}
-
 /**
  * Calculate upcoming occurrences of a specific week/day combo
  * e.g., "2nd Tuesday" -> next N dates that are the 2nd Tuesday of their month
@@ -917,27 +914,29 @@ function getUpcomingDatesForSlot(
 }
 
 /**
- * Get the recurring food global configuration
- * Cached until 'recurring-food' tag is invalidated
+ * Get the recurring food configuration for public expansion.
+ *
+ * Reads through getRecurringFoodState, which returns the normalized
+ * recurring-food-schedules/-exclusions collections once the global's
+ * `normalizedAt` marker is set and the frozen legacy global before that. The
+ * admin grid writes through the same helper, so grid edits reach /food, the
+ * homepage, and the location event pages alike.
+ *
+ * Cached until the 'food' tag is invalidated (both normalized collections map
+ * to that tag in the revalidation plugin).
  */
-const getRecurringFoodGlobal = async (): Promise<RecurringFoodGlobal> => {
+const getRecurringFoodGlobal = async (): Promise<RecurringFoodState> => {
   try {
     return await unstable_cache(
-      async (): Promise<RecurringFoodGlobal> => {
+      async (): Promise<RecurringFoodState> => {
         const payload = await getPayload({ config })
-        const result = await payload.findGlobal({
-          slug: 'recurring-food',
-        })
-        return {
-          schedules: (result as RecurringFoodGlobal).schedules || {},
-          exclusions: (result as RecurringFoodGlobal).exclusions || {},
-        }
+        return getRecurringFoodState(payload, { overrideAccess: true })
       },
       ['recurring-food-global'],
       { tags: [CACHE_TAGS.food], revalidate: 300 },
     )()
   } catch (error) {
-    logger.error('Error fetching recurring food global', error)
+    logger.error('Error fetching recurring food schedules', error)
     throw error
   }
 }
@@ -997,8 +996,8 @@ const getUpcomingRecurringFood = async (
 
         // Collect all vendor IDs to fetch in batch
         const vendorIds = new Set<string>()
-        for (const day of days) {
-          for (const week of weeks) {
+        for (const day of recurringDays) {
+          for (const week of recurringOccurrences) {
             const vendorId = locationSchedule[day]?.[week]
             if (vendorId) vendorIds.add(vendorId)
           }
@@ -1035,34 +1034,26 @@ const getUpcomingRecurringFood = async (
 
         // Generate upcoming dates for each scheduled slot
         const entries: RecurringFoodEntry[] = []
-        const currentToday = new Date()
-        currentToday.setHours(0, 0, 0, 0)
 
-        for (let dayIndex = 0; dayIndex < days.length; dayIndex++) {
-          const day = days[dayIndex]
-          for (let weekIndex = 0; weekIndex < weeks.length; weekIndex++) {
-            const week = weeks[weekIndex]
+        for (const [dayIndex, day] of recurringDays.entries()) {
+          for (const [weekIndex, week] of recurringOccurrences.entries()) {
             const vendorId = locationSchedule[day]?.[week]
+            const vendor = vendorId ? vendorMap[vendorId] : undefined
+            if (!vendor) continue
 
-            if (vendorId && vendorMap[vendorId]) {
-              const upcomingDates = getUpcomingDatesForSlot(dayIndex, weekIndex + 1, monthsAhead)
+            for (const date of getUpcomingDatesForSlot(dayIndex, weekIndex + 1, monthsAhead)) {
+              const dateKey = date.toISOString().split('T')[0]
+              if (locationExclusions.includes(dateKey)) continue
 
-              for (const date of upcomingDates) {
-                const dateKey = date.toISOString().split('T')[0]
-
-                // Skip if this date is excluded
-                if (locationExclusions.includes(dateKey)) continue
-
-                entries.push({
-                  id: `recurring-${locationId}-${day}-${week}-${dateKey}`,
-                  vendor: vendorMap[vendorId],
-                  date: dateKey,
-                  location: locationId,
-                  isRecurring: true,
-                  dayOfWeek: day,
-                  weekOfMonth: week,
-                })
-              }
+              entries.push({
+                id: `recurring-${locationId}-${day}-${week}-${dateKey}`,
+                vendor,
+                date: dateKey,
+                location: locationId,
+                isRecurring: true,
+                dayOfWeek: day,
+                weekOfMonth: week,
+              })
             }
           }
         }

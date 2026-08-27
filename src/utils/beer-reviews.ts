@@ -102,6 +102,92 @@ export async function syncBeerReviews({
   return writes
 }
 
+/**
+ * Remove a deleted review from the beer's legacy `positiveReviews` JSON.
+ *
+ * The legacy array is a second copy of the same data that `syncBeerReviews`
+ * reads back, so leaving a deleted review in it would re-create the document —
+ * approved, since legacy entries carry no `hidden` flag — on the next Untappd
+ * sync that touches the beer. Pruning also keeps `getPublicBeerReviews`'s
+ * "no documents => not normalized yet" fallback honest: emptying a beer's
+ * review set now renders nothing instead of resurrecting the legacy list.
+ *
+ * Returns the beer's id and slug when the document was found, so the caller can
+ * revalidate its page without reading the same document a second time.
+ */
+export async function pruneLegacyReview({
+  beer,
+  payload,
+  req,
+  sourceUrl,
+}: {
+  beer: BeerReview['beer'] | null | undefined
+  payload: Payload
+  req?: PayloadRequest
+  sourceUrl: string | null | undefined
+}): Promise<{ id: string; slug?: string | null } | null> {
+  if (!beer || !sourceUrl) return null
+  const beerId = relationshipId(beer)
+  if (!beerId) return null
+
+  const doc = await payload.findByID({
+    collection: 'beers',
+    id: beerId,
+    depth: 0,
+    overrideAccess: true,
+    req,
+  })
+  if (!doc) return null
+
+  const legacy = doc.positiveReviews
+  if (Array.isArray(legacy)) {
+    const remaining = (legacy as LegacyUntappdReview[]).filter((review) => review.url !== sourceUrl)
+    if (remaining.length !== legacy.length) {
+      await payload.update({
+        collection: 'beers',
+        id: beerId,
+        data: { positiveReviews: remaining },
+        // skipReviewSync: this write *is* the review sync; re-entering it would
+        // immediately re-create the document we just deleted.
+        context: { skipRevalidate: true, skipReviewSync: true },
+        overrideAccess: true,
+        req,
+      })
+    }
+  }
+
+  return { id: String(doc.id), slug: doc.slug }
+}
+
+/**
+ * Public review list for one beer, in the legacy `positiveReviews` shape the
+ * beer page and product schema already render.
+ *
+ * Returns `null` when the beer has no normalized review documents at all, so
+ * callers can keep serving the legacy JSON until the normalization migration
+ * has run for that beer. Once documents exist they are authoritative:
+ * unapproving a beer-reviews document removes it from the public page and the
+ * Product schema, and deleting one prunes the legacy copy too
+ * (see `pruneLegacyReview`) so it cannot come back through the fallback.
+ */
+export async function getPublicBeerReviews(
+  payload: Payload,
+  beerId: string,
+): Promise<LegacyUntappdReview[] | null> {
+  const reviews = await payload.find({
+    collection: 'beer-reviews',
+    where: { beer: { equals: beerId } },
+    depth: 0,
+    limit: 100,
+    sort: '-reviewedAt',
+    overrideAccess: true,
+  })
+
+  if (reviews.docs.length === 0) return null
+
+  return reviews.docs.filter((review) => review.approved).map(reviewToLegacy)
+}
+
 export function reviewToLegacy(review: BeerReview): LegacyUntappdReview {
   return {
     username: review.reviewer,
