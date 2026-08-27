@@ -17,17 +17,10 @@ interface BeerPageProps {
 export async function generateMetadata({ params }: BeerPageProps): Promise<Metadata> {
   const { variant } = await params
 
-  let beer
-  try {
-    beer = await getBeerBySlug(variant)
-  } catch {
-    // Database error - return generic title
-    return {
-      title: 'Beer Not Found',
-    }
-  }
+  // Let Payload/DB errors reach error.tsx instead of looking like a 404.
+  const beer = await getBeerBySlug(variant)
 
-  if (!beer) {
+  if (!beer || beer.hideFromSite) {
     return {
       title: 'Beer Not Found',
     }
@@ -76,17 +69,9 @@ export const revalidate = 3600
 export default async function BeerPage({ params }: BeerPageProps) {
   const { variant } = await params
 
-  let beer
-  try {
-    beer = await getBeerBySlug(variant)
-  } catch {
-    // Database error - show not found page
-    notFound()
-  }
-
-  if (!beer) {
-    notFound()
-  }
+  // Let Payload/DB errors reach error.tsx instead of looking like a 404.
+  const beer = await getBeerBySlug(variant)
+  if (!beer || beer.hideFromSite) notFound()
 
   // Generate Product schema for SEO
   const productSchema = generateProductSchema(beer)

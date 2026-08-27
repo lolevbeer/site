@@ -15,6 +15,7 @@
  * the first /m poll, so it degrades to `false` rather than blanking the display.
  */
 
+import { cache } from 'react'
 import { getPayload } from 'payload'
 import config from '@/src/payload.config'
 import { unstable_cache } from 'next/cache'
@@ -108,8 +109,13 @@ export const getAllBeersFromPayload = async (): Promise<PayloadBeer[]> => {
 /**
  * Get beer by slug from Payload
  * Cached until 'beers' tag is invalidated
+ *
+ * Also wrapped in React cache() for per-request dedupe: generateMetadata and
+ * the page component both call this, and unstable_cache alone runs the Mongo
+ * find twice on concurrent cold misses (Next 15.5). cache() collapses the two
+ * calls of one request into a single lookup.
  */
-export const getBeerBySlug = async (slug: string): Promise<PayloadBeer | null> => {
+export const getBeerBySlug = cache(async (slug: string): Promise<PayloadBeer | null> => {
   return unstable_cache(
     async (): Promise<PayloadBeer | null> => {
       const payload = await getPayload({ config })
@@ -131,7 +137,7 @@ export const getBeerBySlug = async (slug: string): Promise<PayloadBeer | null> =
     [`beer-${slug}`],
     { tags: [CACHE_TAGS.beers], revalidate: 3600 },
   )()
-}
+})
 
 /**
  * Get menus for a specific location
@@ -354,8 +360,12 @@ export const getMenuByUrlFresh = async (url: string): Promise<PayloadMenu | null
 /**
  * Get all active locations from Payload
  * Cached until 'locations' tag is invalidated
+ *
+ * React cache() on top for per-request dedupe: several server components fetch
+ * locations concurrently in one render, and unstable_cache does not collapse
+ * in-flight calls on a cold miss (same reason as getBeerBySlug above).
  */
-export const getAllLocations = async () => {
+export const getAllLocations = cache(async () => {
   try {
     return await unstable_cache(
       async () => {
@@ -380,7 +390,7 @@ export const getAllLocations = async () => {
     logger.error('Error fetching locations from Payload', error)
     throw error
   }
-}
+})
 
 /**
  * Transform a Payload Event document into a BreweryEvent.
@@ -563,8 +573,13 @@ export interface WeeklyHoursDay {
  * Get the current week's hours for a location with holiday overrides applied
  * Returns an array of 7 days starting from Monday of the current week
  * Cached until 'locations' or 'holiday-hours' tags are invalidated
+ *
+ * React cache() on top for per-request dedupe: the footer and the page body
+ * both request hours for the same locations in one render.
  */
-export const getWeeklyHoursWithHolidays = async (locationId: string): Promise<WeeklyHoursDay[]> => {
+export const getWeeklyHoursWithHolidays = cache(async (
+  locationId: string,
+): Promise<WeeklyHoursDay[]> => {
   // Calculate week start for cache key
   const now = new Date()
   const dayOfWeek = now.getDay()
@@ -719,7 +734,7 @@ export const getWeeklyHoursWithHolidays = async (locationId: string): Promise<We
     logger.error(`Error fetching weekly hours with holidays for location ${locationId}`, error)
     throw error
   }
-}
+})
 
 /**
  * Get upcoming events for a location from Payload

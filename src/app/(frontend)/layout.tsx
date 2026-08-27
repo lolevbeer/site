@@ -1,6 +1,5 @@
-import React from 'react'
+import { Suspense, type ReactNode } from 'react'
 import type { Metadata, Viewport } from 'next'
-import type { ReactNode } from 'react'
 import { Poppins } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { NuqsAdapter } from 'nuqs/adapters/next/app'
@@ -14,6 +13,8 @@ import { SkipNav } from '@/components/ui/skip-nav'
 import { GoogleAnalytics } from '@/components/analytics/google-analytics'
 import { PageViewTracker } from '@/components/analytics/page-view-tracker'
 import { AuthProvider } from '@/lib/hooks/use-auth'
+import { Footer } from '@/components/layout/footer'
+import { MotionHydrationSentinel } from '@/components/motion/blur-fade'
 import { getAllLocations } from '@/lib/utils/payload-api'
 import { getWeeklyHoursForLocations } from '@/lib/utils/homepage-data'
 import './globals.css'
@@ -37,6 +38,20 @@ function getBaseUrl(): string {
   }
   // Local development fallback
   return 'http://localhost:3000'
+}
+
+/**
+ * Fetches the footer's per-location weekly hours and renders it into the
+ * footer slot. Rendered inside a `<Suspense>` boundary so the shell can
+ * stream before the hours resolve. Takes `locations` from the shell rather
+ * than re-fetching them, so this is one query, not two.
+ */
+async function FooterHours({
+  locations,
+}: {
+  locations: Awaited<ReturnType<typeof getAllLocations>>
+}): Promise<ReactNode> {
+  return <Footer weeklyHours={await getWeeklyHoursForLocations(locations)} />
 }
 
 const poppins = Poppins({
@@ -126,10 +141,11 @@ export default async function AppLayout({
   children,
 }: Readonly<{
   children: ReactNode
-}>): Promise<React.ReactElement> {
-  // Fetch locations and weekly hours for footer
+}>): Promise<ReactNode> {
+  // Locations feed LocationProvider (used throughout the app), so this fetch
+  // stays in the shell. Weekly hours are footer-only and are fetched inside
+  // <FooterHours>, suspended below, so they don't block the initial paint.
   const locations = await getAllLocations()
-  const weeklyHours = await getWeeklyHoursForLocations(locations)
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -176,8 +192,18 @@ export default async function AppLayout({
               <LocationProvider locations={locations}>
                 <AuthProvider>
                   <PageViewTracker />
+                  <MotionHydrationSentinel />
                   <SkipNav />
-                  <ConditionalLayout weeklyHours={weeklyHours}>{children}</ConditionalLayout>
+                  <ConditionalLayout
+                    footer={
+                      /* Bare <Footer /> so a hung hours query still ships a footer. */
+                      <Suspense fallback={<Footer />}>
+                        <FooterHours locations={locations} />
+                      </Suspense>
+                    }
+                  >
+                    {children}
+                  </ConditionalLayout>
                   <Toaster />
                   <Analytics />
                 </AuthProvider>

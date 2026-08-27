@@ -6,7 +6,7 @@
 'use client'
 
 import React from 'react'
-import Link from 'next/link'
+import { BeerLinkWrapper } from '@/components/beer/beer-link-wrapper'
 import { Beer } from '@/lib/types/beer'
 import { useLocationContext } from '@/components/location/location-provider'
 import { getBeerSlug } from '@/lib/utils/formatters'
@@ -36,37 +36,6 @@ interface DraftBeerCardProps {
   accentColor?: string
 }
 
-/**
- * Wraps a card in a link to the beer's detail page, or in a plain div when the
- * beer is hidden from the site.
- *
- * hideFromSite beers (usually guest taps) still render on menus — the flag only
- * removes them from the /beer catalog, detail pages, sitemap, and feeds (each
- * enforces it separately). Since their /beer/<slug> page won't render, the card
- * is shown without a link rather than dead-ending the click.
- *
- * Module scope, not inside DraftBeerCard: a component declared in a render body
- * is a new type on every render, so React would remount the whole card subtree
- * instead of reconciling it — reloading images and restarting transitions on the
- * /m displays, which re-render on every poll tick.
- */
-function CardWrapper({
-  href,
-  hidden,
-  children,
-}: {
-  href: string
-  hidden?: boolean
-  children: React.ReactNode
-}) {
-  if (hidden) return <div className="group block h-full">{children}</div>
-  return (
-    <Link href={href} className="group block h-full">
-      {children}
-    </Link>
-  )
-}
-
 export const DraftBeerCard = React.memo(function DraftBeerCard({
   beer,
   showLocation = true,
@@ -87,7 +56,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
   // Fullscreen mode uses viewport-relative sizing
   if (showTapAndPrice) {
     return (
-      <CardWrapper href={`/beer/${beerSlug}`} hidden={beer.availability.hideFromSite}>
+      <BeerLinkWrapper href={`/beer/${beerSlug}`} hidden={beer.availability.hideFromSite}>
         <div
           className={`relative overflow-hidden transition-colors duration-200 cursor-pointer hover:bg-secondary/50 h-full bg-background ${className}`}
         >
@@ -223,13 +192,13 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
             </div>
           </div>
         </div>
-      </CardWrapper>
+      </BeerLinkWrapper>
     )
   }
 
   // Standard mode with Tailwind classes
   return (
-    <CardWrapper
+    <BeerLinkWrapper
       href={showLocation ? `/${currentLocation}/beer/${beerSlug}` : `/beer/${beerSlug}`}
       hidden={beer.availability.hideFromSite}
     >
@@ -295,7 +264,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
           )}
         </div>
       </div>
-    </CardWrapper>
+    </BeerLinkWrapper>
   )
 })
 

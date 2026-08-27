@@ -3,21 +3,53 @@
  * Wraps children with a blur-to-sharp entrance animation using Framer Motion.
  */
 
-'use client';
+'use client'
 
-import { motion, useReducedMotion, type Variants } from 'framer-motion';
-import { cn } from '@/lib/utils';
-import { EASE_OUT_SMOOTH } from './constants';
+import { useEffect } from 'react'
+import { motion, useReducedMotion, type Variants } from 'framer-motion'
+import { cn } from '@/lib/utils'
+import { EASE_OUT_SMOOTH } from './constants'
+
+/**
+ * True after the first client commit of any BlurFade or MotionHydrationSentinel.
+ * Module-scoped (not React state) so a BlurFade mounted later — e.g. App Router
+ * swapping in a new tree on navigation — sees the value on its first render.
+ * A per-instance flag would stay false on every new tree and skip the entrance
+ * animation. Never reset in production.
+ */
+let hasAppHydrated = false
+
+function markAppHydrated() {
+  hasAppHydrated = true
+}
+
+/** Test-only: reset the hydration flag between cases. */
+export function __resetBlurFadeHydrationForTests() {
+  hasAppHydrated = false
+}
+
+/**
+ * Sole writer of `hasAppHydrated`, flipping it on the app's first client
+ * commit. Rendered once in `(frontend)/layout.tsx`, which is an ancestor of
+ * every BlurFade consumer — so the flag is set even on pages that render no
+ * BlurFade of their own (/privacy, /terms, /beer-map), which is exactly the
+ * case a per-BlurFade effect used to miss. Any new tree using BlurFade must
+ * stay under that layout, or mount this sentinel itself.
+ */
+export function MotionHydrationSentinel() {
+  useEffect(markAppHydrated, [])
+  return null
+}
 
 interface BlurFadeProps {
-  children: React.ReactNode;
-  className?: string;
-  delay?: number;
-  duration?: number;
-  blur?: number;
-  yOffset?: number;
-  inView?: boolean;
-  inViewMargin?: string;
+  children: React.ReactNode
+  className?: string
+  delay?: number
+  duration?: number
+  blur?: number
+  yOffset?: number
+  inView?: boolean
+  inViewMargin?: string
 }
 
 const variants: Variants = {
@@ -33,7 +65,7 @@ const variants: Variants = {
     y: 0,
     scale: 1,
   },
-};
+}
 
 export function BlurFade({
   children,
@@ -45,16 +77,23 @@ export function BlurFade({
   inView = false,
   inViewMargin = '-50px',
 }: BlurFadeProps) {
-  const prefersReducedMotion = useReducedMotion();
+  const prefersReducedMotion = useReducedMotion()
+  // First paint (SSR + the matching hydration render) must be visible:
+  // Framer Motion only reads `initial` on first commit. After the app has
+  // hydrated, later mounts start from "hidden" so client navigations still
+  // animate. Scroll-triggered (`inView`) content always starts hidden.
+  // MotionHydrationSentinel owns flipping the flag — see above.
 
   if (prefersReducedMotion) {
-    return <div className={cn(className)}>{children}</div>;
+    return <div className={cn(className)}>{children}</div>
   }
+
+  const animateFromHidden = inView || hasAppHydrated
 
   return (
     <motion.div
       className={cn(className)}
-      initial="hidden"
+      initial={animateFromHidden ? 'hidden' : false}
       animate={inView ? undefined : 'visible'}
       whileInView={inView ? 'visible' : undefined}
       viewport={inView ? { once: true, margin: inViewMargin } : undefined}
@@ -68,5 +107,5 @@ export function BlurFade({
     >
       {children}
     </motion.div>
-  );
+  )
 }

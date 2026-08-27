@@ -11,6 +11,7 @@ import { Beer as BeerIconLucide, Package, Pencil } from 'lucide-react'
 import { getGlassIcon } from '@/lib/utils/beer-icons'
 import { useLocationContext } from '@/components/location/location-provider'
 import { DraftBeerCard } from '@/components/beer/draft-beer-card'
+import { BeerLinkWrapper } from '@/components/beer/beer-link-wrapper'
 import { useAnimatedList, getAnimationClass } from '@/lib/hooks/use-animated-list'
 import { useAuth } from '@/lib/hooks/use-auth'
 import { getMediaUrl, canSpriteAnimation } from '@/lib/utils/media-utils'
@@ -399,10 +400,14 @@ function CanCard({
     return renderFallback(heightClass)
   }
 
+  const href = `/beer/${item.variant.toLowerCase()}`
+  const hidden = item.availability.hideFromSite
+
   if (fullscreen) {
     return (
-      <Link
-        href={`/beer/${item.variant.toLowerCase()}`}
+      <BeerLinkWrapper
+        href={href}
+        hidden={hidden}
         className="can-tile group cursor-pointer flex flex-col h-full min-h-0"
       >
         {/* flex-1 min-h-0, not a fixed 28vh: the can takes whatever height is
@@ -496,13 +501,14 @@ function CanCard({
             </Badge>
           )}
         </div>
-      </Link>
+      </BeerLinkWrapper>
     )
   }
 
   return (
-    <Link
-      href={`/beer/${item.variant.toLowerCase()}`}
+    <BeerLinkWrapper
+      href={href}
+      hidden={hidden}
       className="group flex flex-col cursor-pointer transition-transform duration-200 hover:-translate-y-1"
     >
       <div className="relative h-64 w-full flex-shrink-0 mb-4 bg-transparent transition-transform duration-200 group-hover:scale-[1.02]">
@@ -535,7 +541,7 @@ function CanCard({
       >
         View Details
       </Button>
-    </Link>
+    </BeerLinkWrapper>
   )
 }
 
