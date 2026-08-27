@@ -53,11 +53,10 @@ export const BeerCard = React.memo(function BeerCard({
 
     return (
       <MotionCard glow>
-        <Link
-          href={beerHref}
-          onClick={() => trackBeerView(beer.name, beer.type)}
-          className="group flex flex-col cursor-pointer transition-transform duration-200"
-        >
+        {/* Stretched link, not a wrapper: this card contains its own anchor (the
+            Top Beer Drops icon) and a View Details button, and nesting either
+            inside an <a> is invalid. See BeerLinkWrapper for the same pattern. */}
+        <div className="group relative flex flex-col cursor-pointer transition-transform duration-200">
           <div className="relative h-64 w-full flex-shrink-0 mb-4 transition-transform duration-200">
             <BeerImage
               beer={beer}
@@ -88,7 +87,13 @@ export const BeerCard = React.memo(function BeerCard({
           >
             View Details
           </Button>
-        </Link>
+          <Link
+            href={beerHref}
+            onClick={() => trackBeerView(beer.name, beer.type)}
+            aria-label={beer.name}
+            className="absolute inset-0 rounded-[inherit] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          />
+        </div>
       </MotionCard>
     )
   }
@@ -111,6 +116,7 @@ export const BeerCard = React.memo(function BeerCard({
           <div className="absolute bottom-6 right-2 z-10">
             <TopBeerDropsLink
               url={beer.topBeerDrops}
+              beerName={beer.name}
               className="h-7 w-7 text-foreground hover:text-primary transition-colors drop-shadow-md"
             />
           </div>

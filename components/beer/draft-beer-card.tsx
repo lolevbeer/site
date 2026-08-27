@@ -56,7 +56,11 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
   // Fullscreen mode uses viewport-relative sizing
   if (showTapAndPrice) {
     return (
-      <BeerLinkWrapper href={`/beer/${beerSlug}`} hidden={beer.availability.hideFromSite}>
+      <BeerLinkWrapper
+        href={`/beer/${beerSlug}`}
+        label={beer.name}
+        hidden={beer.availability.hideFromSite}
+      >
         <div
           className={`relative overflow-hidden transition-colors duration-200 cursor-pointer hover:bg-secondary/50 h-full bg-background ${className}`}
         >
@@ -108,6 +112,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                 {beer.topBeerDrops && (
                   <TopBeerDropsLink
                     url={beer.topBeerDrops}
+                    beerName={beer.name}
                     className="flex-shrink-0 text-foreground hover:text-primary transition-colors"
                     style={{ height: '3.2vh', width: '3.2vh' }}
                   />
@@ -200,6 +205,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
   return (
     <BeerLinkWrapper
       href={showLocation ? `/${currentLocation}/beer/${beerSlug}` : `/beer/${beerSlug}`}
+      label={beer.name}
       hidden={beer.availability.hideFromSite}
     >
       <div
@@ -231,6 +237,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
               {beer.topBeerDrops && (
                 <TopBeerDropsLink
                   url={beer.topBeerDrops}
+                  beerName={beer.name}
                   className="h-6 w-6 flex-shrink-0 text-foreground hover:text-primary transition-colors"
                 />
               )}

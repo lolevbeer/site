@@ -407,6 +407,7 @@ function CanCard({
     return (
       <BeerLinkWrapper
         href={href}
+        label={item.name}
         hidden={hidden}
         className="can-tile group cursor-pointer flex flex-col h-full min-h-0"
       >
@@ -449,6 +450,7 @@ function CanCard({
             {item.topBeerDrops && (
               <TopBeerDropsLink
                 url={item.topBeerDrops}
+                beerName={item.name}
                 className="text-foreground hover:text-primary transition-colors drop-shadow-md"
                 style={{ height: '2.2vh', width: '2.2vh' }}
               />
@@ -508,6 +510,7 @@ function CanCard({
   return (
     <BeerLinkWrapper
       href={href}
+      label={item.name}
       hidden={hidden}
       className="group flex flex-col cursor-pointer transition-transform duration-200 hover:-translate-y-1"
     >
@@ -529,6 +532,7 @@ function CanCard({
           {item.topBeerDrops && (
             <TopBeerDropsLink
               url={item.topBeerDrops}
+              beerName={item.name}
               className="h-6 w-6 text-foreground hover:text-primary transition-colors"
             />
           )}
