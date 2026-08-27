@@ -292,7 +292,9 @@ const MENU_POPULATE = {
   // filename/prefix feed the Vercel Blob adapter's computed `url` — without
   // them populated media docs come back with url: null.
   media: { url: true, sizes: true, filename: true, prefix: true },
-  locations: { slug: true, name: true },
+  // linesLastCleaned drives the "Draft lines cleaned N days ago" line on the
+  // /m draft displays (formatLinesCleanedDate in featured-menu.tsx).
+  locations: { slug: true, name: true, linesLastCleaned: true },
 } as const
 
 /**

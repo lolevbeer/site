@@ -16,13 +16,14 @@ import { useAnimatedList, getAnimationClass } from '@/lib/hooks/use-animated-lis
 import { useAuth } from '@/lib/hooks/use-auth'
 import { getMediaUrl, canSpriteAnimation } from '@/lib/utils/media-utils'
 import { extractBeerFromMenuItem, extractProductFromMenuItem } from '@/lib/utils/menu-item-utils'
-import { getTodayEST } from '@/lib/utils/date'
+import { getTodayEST, toESTDate } from '@/lib/utils/date'
 import type { Menu, Style, Location } from '@/src/payload-types'
 import type { Beer } from '@/lib/types/beer'
 import { getBeerBadgeLabel } from '@/lib/types/beer'
 import { Logo } from '@/components/ui/logo'
 import { TopBeerDropsLink } from '@/components/beer/top-beer-drops-link'
 import { UntappdRating } from '@/components/beer/untappd-rating'
+import { LINES_OVERDUE_DAYS } from '@/lib/utils/lines-cleaned'
 
 /** Parse price string to number, removing '$' prefix if present */
 function parsePrice(price: string | number | null | undefined): number | undefined {
@@ -33,13 +34,21 @@ function parsePrice(price: string | number | null | undefined): number | undefin
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24
 
-/** Format the lines cleaned date as a relative description using EST timezone */
+/**
+ * Format the lines cleaned date as a relative description using EST timezone,
+ * or null once the lines are overdue — a stale date is worse than no date on a
+ * customer-facing display. Counts EST calendar days, so at the
+ * LINES_OVERDUE_DAYS boundary it can differ by a day from the admin alert,
+ * which counts elapsed days from `Date.now()`.
+ */
 function formatLinesCleanedDate(dateStr: string | null | undefined): string | null {
   if (!dateStr) return null
 
-  const todayMs = new Date(`${getTodayEST()}T12:00:00`).getTime()
-  const cleanedMs = new Date(`${dateStr.split('T')[0]}T12:00:00`).getTime()
-  const diffDays = Math.round((todayMs - cleanedMs) / MS_PER_DAY)
+  const diffDays = Math.round(
+    (toESTDate(getTodayEST()).getTime() - toESTDate(dateStr).getTime()) / MS_PER_DAY,
+  )
+
+  if (diffDays >= LINES_OVERDUE_DAYS) return null
 
   const daysText = diffDays === 0 ? 'today' : `${diffDays} day${diffDays === 1 ? '' : 's'} ago`
   return `Draft lines cleaned ${daysText}`
@@ -581,6 +590,13 @@ function FeaturedMenu({
     [menu, labelVideos],
   )
   const displayItems = menuItems ?? filteredItems
+  // Memoized for the same reason as menuItems: the poll re-renders this
+  // component every 2s, and this value changes at most once a day.
+  const menuLocation = typeof menu?.location === 'object' ? (menu.location as Location) : null
+  const linesCleanedText = useMemo(
+    () => (menu?.type === 'draft' ? formatLinesCleanedDate(menuLocation?.linesLastCleaned) : null),
+    [menu?.type, menuLocation?.linesLastCleaned],
+  )
 
   // Animated items for live updates (only when animated prop is true)
   const animatedItems = useAnimatedList(displayItems, {
@@ -594,11 +610,6 @@ function FeaturedMenu({
     const itemsToRender = animated
       ? animatedItems
       : displayItems.map((item) => ({ item, state: 'stable' as const, key: item.variant }))
-
-    // Get lines cleaned date from location for draft menus only (not 'other' or 'cans')
-    const location = typeof menu?.location === 'object' ? (menu.location as Location) : null
-    const linesCleanedText =
-      menu?.type === 'draft' ? formatLinesCleanedDate(location?.linesLastCleaned) : null
 
     return (
       <section className="h-full flex flex-col bg-background overflow-hidden">
