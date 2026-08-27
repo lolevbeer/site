@@ -10,7 +10,11 @@ import { getTodayMidnightISO } from '@/lib/utils/date'
 import { createLocationLookup, generateFoodEventJsonLd } from '@/lib/utils/json-ld'
 import { PageTransition } from '@/components/motion'
 import { logger } from '@/lib/utils/logger'
-import { getRecurringFoodState } from '@/src/utils/recurring-food'
+import {
+  getRecurringFoodState,
+  recurringDays as days,
+  recurringOccurrences as weeks,
+} from '@/src/utils/recurring-food'
 
 export const metadata: Metadata = {
   title: 'Food',
@@ -21,8 +25,6 @@ export const metadata: Metadata = {
 // Revalidate every hour
 export const revalidate = 3600
 
-const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const
-const weeks = ['first', 'second', 'third', 'fourth', 'fifth'] as const
 const fullDayLabels = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
 /**

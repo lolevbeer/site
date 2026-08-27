@@ -1,5 +1,5 @@
 import type { GlobalConfig } from 'payload'
-import { foodManagerAccess, hasRole } from '@/src/access/roles'
+import { foodManagerAccess, hasRole, SCHEDULE_READER_ROLES } from '@/src/access/roles'
 
 /**
  * RecurringFood Global
@@ -21,7 +21,7 @@ export const RecurringFood: GlobalConfig = {
     group: 'Food & Events',
   },
   access: {
-    read: ({ req: { user } }) => hasRole(user, ['admin', 'event-manager', 'food-manager']),
+    read: ({ req: { user } }) => hasRole(user, SCHEDULE_READER_ROLES),
     update: foodManagerAccess,
   },
   fields: [

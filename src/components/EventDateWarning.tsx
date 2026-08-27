@@ -14,8 +14,7 @@ import {
   type AdminRelationshipValue,
 } from '@/src/components/admin/relationship-value'
 
-const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const
-const weekKeys = ['first', 'second', 'third', 'fourth', 'fifth'] as const
+import { recurringDays as days, recurringOccurrences as weekKeys } from '@/src/utils/recurring-food'
 
 function getWeekOccurrence(date: Date): number {
   const dayOfMonth = date.getDate()

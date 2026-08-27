@@ -7,13 +7,11 @@ import {
   getAdminRelationshipID,
   type AdminRelationshipValue,
 } from '@/src/components/admin/relationship-value'
-
-function daysSince(value: string | null): number | null {
-  if (!value) return null
-  const timestamp = Date.parse(value)
-  if (Number.isNaN(timestamp)) return null
-  return Math.floor((Date.now() - timestamp) / (1000 * 60 * 60 * 24))
-}
+import {
+  daysSinceCleaned,
+  LINES_OVERDUE_DAYS,
+  LINES_WARN_DAYS,
+} from '@/src/components/admin/lines-cleaned'
 
 export function MarkLinesCleanedButton() {
   const { id: docId, collectionSlug } = useDocumentInfo()
@@ -114,9 +112,10 @@ export function MarkLinesCleanedButton() {
     }
   }
 
-  const daysSinceCleaned = daysSince(lastCleaned)
-  const isOverdue = daysSinceCleaned !== null && daysSinceCleaned >= 15
-  const isReadyToClean = daysSinceCleaned !== null && daysSinceCleaned >= 7 && daysSinceCleaned < 15
+  const cleanedDays = daysSinceCleaned(lastCleaned)
+  const isOverdue = cleanedDays !== null && cleanedDays >= LINES_OVERDUE_DAYS
+  const isReadyToClean =
+    cleanedDays !== null && cleanedDays >= LINES_WARN_DAYS && cleanedDays < LINES_OVERDUE_DAYS
 
   return (
     <div style={{ marginTop: '-8px', width: '100%' }}>

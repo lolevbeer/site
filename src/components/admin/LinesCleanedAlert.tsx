@@ -6,6 +6,11 @@ import { Banner } from '@payloadcms/ui'
 import { logger } from '@/lib/utils/logger'
 import { hasRole } from '@/src/access/roles'
 import { getAdminRelationshipID } from '@/src/components/admin/relationship-value'
+import {
+  daysSinceCleaned,
+  LINES_OVERDUE_DAYS,
+  LINES_WARN_DAYS,
+} from '@/src/components/admin/lines-cleaned'
 import type { User } from '@/src/payload-types'
 
 interface Location {
@@ -21,20 +26,16 @@ function getAlertLevel(dateStr: string | null | undefined): {
   days: number
   dueDate: string | null
 } {
-  if (!dateStr) return { level: 'error', days: -1, dueDate: null }
+  const days = daysSinceCleaned(dateStr)
+  if (!dateStr || days === null) return { level: 'error', days: -1, dueDate: null }
 
-  const lastCleaned = new Date(dateStr)
-  const now = new Date()
-  const diffMs = now.getTime() - lastCleaned.getTime()
-  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-
-  // Calculate due date (15 days after last cleaned)
-  const dueDateObj = new Date(lastCleaned)
-  dueDateObj.setDate(dueDateObj.getDate() + 15)
+  // Calculate due date (LINES_OVERDUE_DAYS after last cleaned)
+  const dueDateObj = new Date(dateStr)
+  dueDateObj.setDate(dueDateObj.getDate() + LINES_OVERDUE_DAYS)
   const dueDate = dueDateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 
-  if (days >= 15) return { level: 'error', days, dueDate }
-  if (days >= 7) return { level: 'warning', days, dueDate }
+  if (days >= LINES_OVERDUE_DAYS) return { level: 'error', days, dueDate }
+  if (days >= LINES_WARN_DAYS) return { level: 'warning', days, dueDate }
   return { level: null, days, dueDate }
 }
 

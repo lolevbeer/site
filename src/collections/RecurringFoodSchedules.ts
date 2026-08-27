@@ -1,8 +1,7 @@
 import type { Access, CollectionConfig } from 'payload'
 import { foodManagerAccess, hasRole } from '@/src/access/roles'
 import { recurringDays, recurringOccurrences } from '@/src/utils/recurring-food'
-
-const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slice(1)
+import { capitalizeName } from '@/lib/utils/formatters'
 
 const canReadRecurringSchedules: Access = ({ req: { user } }) => {
   if (hasRole(user, ['admin', 'food-manager'])) return true
@@ -51,7 +50,7 @@ export const RecurringFoodSchedules: CollectionConfig = {
       name: 'day',
       type: 'select',
       required: true,
-      options: recurringDays.map((day) => ({ label: capitalize(day), value: day })),
+      options: recurringDays.map((day) => ({ label: capitalizeName(day), value: day })),
       index: true,
     },
     {
@@ -59,7 +58,7 @@ export const RecurringFoodSchedules: CollectionConfig = {
       type: 'select',
       required: true,
       options: recurringOccurrences.map((occurrence) => ({
-        label: capitalize(occurrence),
+        label: capitalizeName(occurrence),
         value: occurrence,
       })),
       index: true,
