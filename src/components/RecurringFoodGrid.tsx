@@ -74,8 +74,12 @@ function formatDate(date: Date): string {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-function toDateKey(date: Date): string {
-  return date.toISOString().split('T')[0]
+// Recurring dates are local calendar days, so persist the displayed day rather than a UTC shift.
+export function toDateKey(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
 }
 
 interface GridCellProps {
@@ -153,6 +157,7 @@ const DatesList: React.FC<DatesListProps> = ({
     vendorName: string
     isExcluded: boolean
   } | null>(null)
+  const mountedRootRef = useRef<HTMLDivElement | null>(null)
   const { openModal, closeModal } = useModal()
 
   const locationExclusions = useMemo(() => exclusions[locationId] || [], [exclusions, locationId])
@@ -177,10 +182,7 @@ const DatesList: React.FC<DatesListProps> = ({
     return dates
   }, [locationSchedule])
 
-  useEffect(() => {
-    setPendingToggle(null)
-    return () => closeModal(EXCLUSION_MODAL_SLUG)
-  }, [locationId, closeModal])
+  useEffect(() => () => closeModal(EXCLUSION_MODAL_SLUG), [closeModal])
 
   // Fetch individual food events using server action (local API)
   useEffect(() => {
@@ -230,15 +232,12 @@ const DatesList: React.FC<DatesListProps> = ({
 
   // Fetch vendor names for recurring events
   useEffect(() => {
-    let cancelled = false
     const vendorIds = [...new Set(recurringDates.map((d) => d.vendorId))]
     if (vendorIds.length === 0) {
-      setVendorNames({})
-      return () => {
-        cancelled = true
-      }
+      return
     }
 
+    let cancelled = false
     const fetchVendors = async () => {
       try {
         const names = await getFoodVendorsByIds(vendorIds)
@@ -266,7 +265,7 @@ const DatesList: React.FC<DatesListProps> = ({
   )
 
   const confirmToggleExclusion = useCallback(async () => {
-    if (!pendingToggle) return
+    if (!mountedRootRef.current || !pendingToggle) return
 
     const dateKey = toDateKey(pendingToggle.date)
     try {
@@ -341,9 +340,11 @@ const DatesList: React.FC<DatesListProps> = ({
       modalSlug={EXCLUSION_MODAL_SLUG}
       heading={pendingToggle?.isExcluded ? 'Remove Exclusion' : 'Exclude Event'}
       body={
-        pendingToggle?.isExcluded
-          ? `Are you sure you want to restore "${pendingToggle?.vendorName}" on ${pendingToggle ? formatDate(pendingToggle.date) : ''}?`
-          : `Are you sure you want to exclude "${pendingToggle?.vendorName}" on ${pendingToggle ? formatDate(pendingToggle.date) : ''}?`
+        pendingToggle
+          ? pendingToggle.isExcluded
+            ? `Are you sure you want to restore "${pendingToggle.vendorName}" on ${formatDate(pendingToggle.date)}?`
+            : `Are you sure you want to exclude "${pendingToggle.vendorName}" on ${formatDate(pendingToggle.date)}?`
+          : ''
       }
       confirmLabel={pendingToggle?.isExcluded ? 'Restore' : 'Exclude'}
       onConfirm={confirmToggleExclusion}
@@ -353,7 +354,10 @@ const DatesList: React.FC<DatesListProps> = ({
 
   if (scheduledDates.length === 0) {
     return (
-      <div style={{ padding: '20px 0', color: 'var(--theme-elevation-500)', fontSize: '14px' }}>
+      <div
+        ref={mountedRootRef}
+        style={{ padding: '20px 0', color: 'var(--theme-elevation-500)', fontSize: '14px' }}
+      >
         {exclusionModal}
         No vendors scheduled. Select vendors in the grid above to see upcoming dates.
       </div>
@@ -362,6 +366,7 @@ const DatesList: React.FC<DatesListProps> = ({
 
   return (
     <div
+      ref={mountedRootRef}
       style={{
         marginTop: '24px',
         paddingTop: '16px',
@@ -381,10 +386,13 @@ const DatesList: React.FC<DatesListProps> = ({
         >
           <strong style={{ color: 'var(--theme-warning-700)' }}>Conflicts:</strong>
           <div style={{ marginTop: '8px', fontSize: '13px', color: 'var(--theme-warning-800)' }}>
-            {conflicts.map((c, i) => (
-              <div key={i} style={{ marginBottom: '4px' }}>
-                <strong>{formatDate(c.date)}</strong>: {c.recurringVendor} (recurring) +{' '}
-                {c.individualVendor} (scheduled)
+            {conflicts.map((conflict) => (
+              <div
+                key={`${toDateKey(conflict.date)}-${conflict.recurringVendor}-${conflict.individualVendor}`}
+                style={{ marginBottom: '4px' }}
+              >
+                <strong>{formatDate(conflict.date)}</strong>: {conflict.recurringVendor} (recurring)
+                + {conflict.individualVendor} (scheduled)
               </div>
             ))}
           </div>
