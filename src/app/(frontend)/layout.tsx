@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { Suspense } from 'react'
 import type { Metadata, Viewport } from 'next'
 import type { ReactNode } from 'react'
 import { Poppins } from 'next/font/google'
@@ -14,6 +14,7 @@ import { SkipNav } from '@/components/ui/skip-nav'
 import { GoogleAnalytics } from '@/components/analytics/google-analytics'
 import { PageViewTracker } from '@/components/analytics/page-view-tracker'
 import { AuthProvider } from '@/lib/hooks/use-auth'
+import { Footer } from '@/components/layout/footer'
 import { getAllLocations } from '@/lib/utils/payload-api'
 import { getWeeklyHoursForLocations } from '@/lib/utils/homepage-data'
 import './globals.css'
@@ -37,6 +38,22 @@ function getBaseUrl(): string {
   }
   // Local development fallback
   return 'http://localhost:3000'
+}
+
+/**
+ * Fetches the footer's per-location weekly hours and renders it into the
+ * footer slot. Rendered inside a `<Suspense>` boundary so the shell can
+ * stream before these (sequential) fetches resolve — locations must be
+ * fetched first to know which location IDs to request hours for.
+ *
+ * `getAllLocations()` is called again here on purpose: it hits the same
+ * Next.js data cache as the call in `AppLayout`, so this is a cache read,
+ * not a second network/database round trip.
+ */
+async function FooterHours(): Promise<React.ReactElement> {
+  const locations = await getAllLocations()
+  const weeklyHours = await getWeeklyHoursForLocations(locations)
+  return <Footer weeklyHours={weeklyHours} />
 }
 
 const poppins = Poppins({
@@ -127,9 +144,10 @@ export default async function AppLayout({
 }: Readonly<{
   children: ReactNode
 }>): Promise<React.ReactElement> {
-  // Fetch locations and weekly hours for footer
+  // Locations feed LocationProvider (used throughout the app), so this fetch
+  // stays in the shell. Weekly hours are footer-only and are fetched inside
+  // <FooterHours>, suspended below, so they don't block the initial paint.
   const locations = await getAllLocations()
-  const weeklyHours = await getWeeklyHoursForLocations(locations)
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -177,7 +195,15 @@ export default async function AppLayout({
                 <AuthProvider>
                   <PageViewTracker />
                   <SkipNav />
-                  <ConditionalLayout weeklyHours={weeklyHours}>{children}</ConditionalLayout>
+                  <ConditionalLayout
+                    footer={
+                      <Suspense fallback={null}>
+                        <FooterHours />
+                      </Suspense>
+                    }
+                  >
+                    {children}
+                  </ConditionalLayout>
                   <Toaster />
                   <Analytics />
                 </AuthProvider>

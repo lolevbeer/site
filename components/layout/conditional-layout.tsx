@@ -3,15 +3,19 @@
 import React from 'react';
 import { usePathname } from 'next/navigation';
 import { Header } from '@/components/layout/header';
-import { Footer } from '@/components/layout/footer';
-import type { WeeklyHoursDay } from '@/lib/utils/payload-api';
 
 interface ConditionalLayoutProps {
   children: React.ReactNode;
-  weeklyHours?: Record<string, WeeklyHoursDay[]>;
+  /**
+   * Footer slot, rendered by the server layout (a `<Suspense>`-wrapped
+   * async component that fetches the footer's weekly hours). Passed as a
+   * node rather than raw data so this client component doesn't need to
+   * know how the footer's data is fetched.
+   */
+  footer: React.ReactNode;
 }
 
-export function ConditionalLayout({ children, weeklyHours }: ConditionalLayoutProps) {
+export function ConditionalLayout({ children, footer }: ConditionalLayoutProps) {
   const pathname = usePathname();
 
   // Check if we're on an admin route or fullscreen display route
@@ -30,7 +34,7 @@ export function ConditionalLayout({ children, weeklyHours }: ConditionalLayoutPr
       <main id="main-content" tabIndex={-1} className="flex-1 outline-none">
         {children}
       </main>
-      <Footer weeklyHours={weeklyHours} />
+      {footer}
     </>
   );
 }
