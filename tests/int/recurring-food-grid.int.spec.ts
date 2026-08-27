@@ -209,6 +209,52 @@ describe('RecurringFoodGrid location tabs', () => {
     expect(closeModal).toHaveBeenCalledWith('confirm-exclusion')
   })
 
+  it('locks only the date being saved, leaving the rest of the list clickable', async () => {
+    // A grid-wide lock meant a second edit could never be started, so the save
+    // queue stayed one deep and every selection cost a server round trip.
+    const pendingSave = deferred<void>()
+    getActiveLocationsMock.mockResolvedValue([
+      { id: 'loc-a', name: 'Lawrenceville', slug: 'lawrenceville' },
+    ])
+    getRecurringFoodDataMock.mockResolvedValue({
+      schedules: { 'loc-a': { sunday: { first: 'vendor-a' } } },
+      exclusions: {},
+    })
+    getUpcomingFoodForLocationMock.mockResolvedValue([])
+    getFoodVendorsByIdsMock.mockResolvedValue({ 'vendor-a': 'Lawrenceville Recurring' })
+    setRecurringFoodExclusionMock.mockReturnValue(pendingSave.promise)
+
+    render(createElement(RecurringFoodGrid))
+    const dates = await screen.findAllByRole('button', {
+      name: /Exclude Lawrenceville Recurring on/i,
+    })
+    expect(dates.length).toBeGreaterThan(1)
+
+    fireEvent.click(dates[0])
+    await screen.findByRole('button', { name: 'confirm-exclusion' })
+    const onConfirm = confirmationModalProps.at(-1)?.onConfirm
+    if (!onConfirm) throw new Error('Expected a confirmation handler')
+
+    // Leave the write in flight.
+    await act(async () => {
+      void onConfirm()
+      await Promise.resolve()
+    })
+
+    await waitFor(() => {
+      expect((dates[0] as HTMLButtonElement).disabled).toBe(true)
+    })
+    expect((dates[1] as HTMLButtonElement).disabled).toBe(false)
+
+    await act(async () => {
+      pendingSave.resolve()
+      await Promise.resolve()
+    })
+    await waitFor(() => {
+      expect((dates[0] as HTMLButtonElement).disabled).toBe(false)
+    })
+  })
+
   it('ignores a slower previous vendor-name fetch after switching tabs', async () => {
     const firstLocationVendors = deferred<Record<string, string>>()
     getActiveLocationsMock.mockResolvedValue([

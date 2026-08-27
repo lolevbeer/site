@@ -72,6 +72,9 @@ export async function getRecurringFoodState(
   const [scheduleResult, exclusionResult] = await Promise.all([
     payload.find({
       collection: 'recurring-food-schedules',
+      // Filter in the query, not after: the 1000-row cap must apply to active
+      // schedules, otherwise archived rows can crowd out live ones.
+      where: { active: { equals: true } },
       depth: 0,
       limit: 1000,
       sort: ['location', 'day', 'occurrence'],
@@ -88,7 +91,6 @@ export async function getRecurringFoodState(
 
   const schedules: RecurringFoodSchedulesData = {}
   for (const schedule of scheduleResult.docs) {
-    if (!schedule.active) continue
     const locationId = relationshipId(schedule.location)
     const vendorId = relationshipId(schedule.vendor)
 

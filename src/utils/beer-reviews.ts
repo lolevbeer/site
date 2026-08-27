@@ -103,6 +103,57 @@ export async function syncBeerReviews({
 }
 
 /**
+ * Remove a deleted review from the beer's legacy `positiveReviews` JSON.
+ *
+ * The legacy array is a second copy of the same data that `syncBeerReviews`
+ * reads back, so leaving a deleted review in it would re-create the document —
+ * approved, since legacy entries carry no `hidden` flag — on the next Untappd
+ * sync that touches the beer. Pruning also keeps `getPublicBeerReviews`'s
+ * "no documents => not normalized yet" fallback honest: emptying a beer's
+ * review set now renders nothing instead of resurrecting the legacy list.
+ */
+export async function pruneLegacyReview({
+  beer,
+  payload,
+  req,
+  sourceUrl,
+}: {
+  beer: BeerReview['beer'] | null | undefined
+  payload: Payload
+  req?: PayloadRequest
+  sourceUrl: string | null | undefined
+}): Promise<void> {
+  if (!beer || !sourceUrl) return
+  const beerId = relationshipId(beer)
+  if (!beerId) return
+
+  const doc = await payload.findByID({
+    collection: 'beers',
+    id: beerId,
+    depth: 0,
+    overrideAccess: true,
+    req,
+  })
+
+  const legacy = doc?.positiveReviews
+  if (!Array.isArray(legacy)) return
+
+  const remaining = (legacy as LegacyUntappdReview[]).filter((review) => review.url !== sourceUrl)
+  if (remaining.length === legacy.length) return
+
+  await payload.update({
+    collection: 'beers',
+    id: beerId,
+    data: { positiveReviews: remaining },
+    // skipReviewSync: this write *is* the review sync; re-entering it would
+    // immediately re-create the document we just deleted.
+    context: { skipRevalidate: true, skipReviewSync: true },
+    overrideAccess: true,
+    req,
+  })
+}
+
+/**
  * Public review list for one beer, in the legacy `positiveReviews` shape the
  * beer page and product schema already render.
  *
@@ -110,7 +161,8 @@ export async function syncBeerReviews({
  * callers can keep serving the legacy JSON until the normalization migration
  * has run for that beer. Once documents exist they are authoritative:
  * unapproving a beer-reviews document removes it from the public page and the
- * Product schema.
+ * Product schema, and deleting one prunes the legacy copy too
+ * (see `pruneLegacyReview`) so it cannot come back through the fallback.
  */
 export async function getPublicBeerReviews(
   payload: Payload,

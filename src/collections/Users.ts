@@ -9,9 +9,19 @@ import {
   leadBartenderAccess,
 } from '@/src/access/roles'
 
-/** Normalize a relationship value (ids or populated docs) to a list of ids. */
-function toLocationIds(value: unknown): string[] {
-  if (!Array.isArray(value)) return []
+/**
+ * Normalize a relationship value (ids or populated docs) to a list of ids.
+ *
+ * Returns `null` for a value that is neither absent nor an array. `locations`
+ * is `hasMany`, but Payload's relationship validator accepts a bare scalar
+ * (`Array.isArray(value) ? value : [value]`) and the Mongo adapter casts it
+ * onto the array path, so `locations: '<id>'` would reach the database as
+ * `['<id>']`. Reading that shape as "nothing granted" would let the cap below
+ * be skipped entirely, so callers must reject it instead.
+ */
+function toLocationIds(value: unknown): string[] | null {
+  if (value === undefined || value === null) return []
+  if (!Array.isArray(value)) return null
   return value
     .map((entry) =>
       typeof entry === 'object' && entry !== null
@@ -61,9 +71,13 @@ export const Users: CollectionConfig = {
         // they are themselves assigned to — menu access is location-scoped, so
         // an unchecked assignment would hand out access they don't have.
         const granted = toLocationIds(data.locations)
+        if (granted === null) {
+          throw new APIError('Locations must be a list of location IDs', 400)
+        }
         if (granted.length === 0) return data
 
-        const own = new Set(toLocationIds(req.user?.locations))
+        // Fail closed: an unreadable own-locations value grants nothing.
+        const own = new Set(toLocationIds(req.user?.locations) ?? [])
         if (granted.some((id) => !own.has(id))) {
           throw new APIError(
             'Lead Bartenders can only assign locations they are assigned to themselves',

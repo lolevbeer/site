@@ -143,6 +143,30 @@ describe('user assignment authorization', () => {
 
       expect(result).toMatchObject({ locations: ['location-2'] })
     })
+
+    it('rejects a bare scalar instead of reading it as "nothing granted"', () => {
+      // `locations` is hasMany, but Payload's relationship validator accepts a
+      // scalar and Mongo casts it onto the array path — so a non-array value
+      // must be rejected rather than skipped, or the cap above is bypassed.
+      expect(() =>
+        runHook(
+          { roles: ['bartender'], locations: 'location-2' },
+          userWith(['lead-bartender'], ['location-1']),
+        ),
+      ).toThrow(/list of location IDs/i)
+    })
+
+    it('allows an invite with no locations at all', () => {
+      const result = runHook({ roles: ['bartender'] }, userWith(['lead-bartender'], ['location-1']))
+
+      expect(result).toMatchObject({ roles: ['bartender'] })
+    })
+
+    it('grants nothing when the lead bartender holds no locations', () => {
+      expect(() =>
+        runHook({ roles: ['bartender'], locations: ['location-1'] }, userWith(['lead-bartender'])),
+      ).toThrow(/only assign locations/i)
+    })
   })
 })
 

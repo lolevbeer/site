@@ -50,11 +50,22 @@ const cronRequest = () =>
 
 const payload = { find, update } as unknown as Payload
 
+/** Transient failure (rate limit / 5xx / network): worth a retry. */
 const FAILED_UNTAPPD = {
   rating: null,
   ratingCount: null,
   positiveReviews: [],
   failed: true as const,
+  retryable: true as const,
+}
+
+/** Permanent failure (404/410 on a delisted beer): retrying cannot help. */
+const UNAVAILABLE_UNTAPPD = {
+  rating: null,
+  ratingCount: null,
+  positiveReviews: [],
+  failed: true as const,
+  retryable: false as const,
 }
 
 function beerDoc({
@@ -84,6 +95,12 @@ const RATE_LIMITED_BEER = beerDoc({
   id: 'b1',
   name: 'Rate limited',
   untappd: 'https://untappd.com/b/rate-limited',
+})
+
+const DEAD_URL_BEER = beerDoc({
+  id: 'b1',
+  name: 'Delisted',
+  untappd: 'https://untappd.com/b/gone',
 })
 
 async function runWithFakeTimers<T>(task: Promise<T>): Promise<T> {
@@ -190,6 +207,34 @@ describe('sync-untappd job task', () => {
     await assertion
   })
 
+  it('reports a permanently dead beer URL without counting it as a retryable error', async () => {
+    find.mockResolvedValue({ docs: [DEAD_URL_BEER] })
+    fetchUntappdData.mockResolvedValue(UNAVAILABLE_UNTAPPD)
+
+    await expect(runWithFakeTimers(runUntappdRatingsSync(payload))).resolves.toMatchObject({
+      updated: 0,
+      skipped: 0,
+      errors: 0,
+      unavailable: 1,
+    })
+    expect(update).not.toHaveBeenCalled()
+  })
+
+  it('does not fail the task over a dead URL, which no retry could fix', async () => {
+    // A 404 on one stale link used to fail every nightly run forever, and each
+    // retry re-scraped the whole catalogue to reach the same dead link.
+    find.mockResolvedValue({ docs: [DEAD_URL_BEER] })
+    fetchUntappdData.mockResolvedValue(UNAVAILABLE_UNTAPPD)
+
+    const handler = syncUntappdRatingsTask.handler as (args: {
+      req: { payload: Payload }
+    }) => Promise<{ output: { unavailable: number } }>
+
+    const result = handler({ req: { payload } })
+    await vi.runAllTimersAsync()
+    await expect(result).resolves.toMatchObject({ output: { unavailable: 1, errors: 0 } })
+  })
+
   it('does not write when ratings, counts, and reviews are unchanged', async () => {
     find.mockResolvedValue({
       docs: [beerDoc({ id: 'b1', name: 'Unchanged', untappd: 'https://untappd.com/b/unchanged' })],
@@ -218,7 +263,14 @@ describe('sync-untappd cron runner', () => {
     expect(handleSchedules).toHaveBeenCalledWith({ queue: 'maintenance' })
     expect(runJobs).toHaveBeenCalledWith({ queue: 'maintenance', limit: 1, sequential: true })
     expect(revalidateTag.mock.calls.map((call) => call[0]).sort()).toEqual(['beers', 'menus'])
-    expect(revalidatePath.mock.calls.map((call) => call[0]).sort()).toEqual(['/', '/beer'])
+    expect(revalidatePath.mock.calls.map((call) => call[0]).sort()).toEqual([
+      '/',
+      '/beer',
+      '/beer/[variant]',
+    ])
+    // The beer detail pages are 3600s ISR, so the dynamic segment must be
+    // invalidated as a route — a tag alone leaves last night's rating up.
+    expect(revalidatePath).toHaveBeenCalledWith('/beer/[variant]', 'page')
   })
 
   it('rejects a missing cron secret configuration', async () => {

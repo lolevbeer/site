@@ -82,6 +82,18 @@ export function toDateKey(date: Date): string {
   return `${year}-${month}-${day}`
 }
 
+/**
+ * Keys identifying a single in-flight write. Each control locks only on its own
+ * key, so one slow save never freezes the rest of the grid.
+ */
+function scheduleSaveKey(locationId: string, day: string, week: string): string {
+  return `${locationId}-${day}-${week}`
+}
+
+function exclusionSaveKey(locationId: string, dateKey: string): string {
+  return `exclusion-${locationId}-${dateKey}`
+}
+
 interface GridCellProps {
   value: string | null
   onChange: (vendorId: string | null) => void
@@ -136,7 +148,8 @@ interface DatesListProps {
   schedules: SchedulesData
   exclusions: ExclusionsData
   onExclusionChange: (locationId: string, date: string, excluded: boolean) => Promise<void>
-  saving: boolean
+  /** Keys of the writes currently in flight; see `saveKey` in the parent. */
+  pendingKeys: string[]
   readOnly: boolean
 }
 
@@ -147,7 +160,7 @@ const DatesList: React.FC<DatesListProps> = ({
   schedules,
   exclusions,
   onExclusionChange,
-  saving,
+  pendingKeys,
   readOnly,
 }) => {
   const [vendorNames, setVendorNames] = useState<Record<string, string>>({})
@@ -436,7 +449,12 @@ const DatesList: React.FC<DatesListProps> = ({
             {dates.map((item, idx) => {
               const excluded = item.type === 'recurring' && isExcluded(item.date)
               const isIndividual = item.type === 'individual'
-              const isDisabled = isIndividual || saving || readOnly
+              // Only the date being written is locked; the rest of the list
+              // stays clickable so the save queue can actually queue.
+              const isPending = pendingKeys.includes(
+                exclusionSaveKey(locationId, toDateKey(item.date)),
+              )
+              const isDisabled = isIndividual || isPending || readOnly
               const displayName = item.vendorName || vendorNames[item.vendorId] || '...'
               let backgroundColor = 'transparent'
               if (excluded) backgroundColor = 'var(--theme-error-50)'
@@ -533,7 +551,8 @@ interface LocationGridProps {
     vendorId: string | null,
   ) => Promise<void>
   onExclusionChange: (locationId: string, date: string, excluded: boolean) => Promise<void>
-  saving: boolean
+  /** Keys of the writes currently in flight; see `saveKey` helpers above. */
+  pendingKeys: string[]
   readOnly: boolean
 }
 
@@ -543,7 +562,7 @@ const LocationGrid: React.FC<LocationGridProps> = ({
   exclusions,
   onScheduleChange,
   onExclusionChange,
-  saving,
+  pendingKeys,
   readOnly,
 }) => {
   const locationSchedule = schedules[location.id] || {}
@@ -625,6 +644,7 @@ const LocationGrid: React.FC<LocationGridProps> = ({
                 </td>
                 {days.map((day) => {
                   const cellValue = locationSchedule[day]?.[week] || null
+                  const cellKey = scheduleSaveKey(location.id, day, week)
 
                   return (
                     <td
@@ -636,8 +656,10 @@ const LocationGrid: React.FC<LocationGridProps> = ({
                       <GridCell
                         value={cellValue}
                         onChange={(vendorId) => handleCellChange(day, week, vendorId)}
-                        cellKey={`${location.id}-${day}-${week}`}
-                        readOnly={readOnly || saving}
+                        cellKey={cellKey}
+                        // Only this cell locks while its own save is in flight,
+                        // so a run of quick edits queues instead of blocking.
+                        readOnly={readOnly || pendingKeys.includes(cellKey)}
                       />
                     </td>
                   )
@@ -652,7 +674,7 @@ const LocationGrid: React.FC<LocationGridProps> = ({
         schedules={schedules}
         exclusions={exclusions}
         onExclusionChange={onExclusionChange}
-        saving={saving}
+        pendingKeys={pendingKeys}
         readOnly={readOnly}
       />
     </div>
@@ -674,19 +696,30 @@ export const RecurringFoodGrid: React.FC = () => {
   const [exclusions, setExclusions] = useState<ExclusionsData>({})
   const [loading, setLoading] = useState(true)
   const [saveError, setSaveError] = useState<string | null>(null)
-  const [pendingSaves, setPendingSaves] = useState(0)
+  const [pendingKeys, setPendingKeys] = useState<string[]>([])
 
   /**
-   * Every write goes through one promise chain, and the controls are locked
-   * while it drains. Each cell edit is a read/modify/write of shared state (the
-   * whole legacy global before the migration, one schedule document after), so
-   * two overlapping saves can land out of order and leave storage on the older
-   * value — or, pre-migration, clobber an edit to a different cell entirely.
+   * Every write goes through one promise chain. Each cell edit is a
+   * read/modify/write of shared state (the whole legacy global before the
+   * migration, one schedule document after), so two overlapping saves can land
+   * out of order and leave storage on the older value — or, pre-migration,
+   * clobber an edit to a different cell entirely.
+   *
+   * Only the control whose own key is in flight is locked, not the whole grid:
+   * a global lock would stop a second edit from ever being started, leaving the
+   * queue permanently one-deep and forcing a server round trip between every
+   * selection.
    */
   const queueRef = useRef<Promise<unknown>>(Promise.resolve())
-  const enqueue = useCallback((task: () => Promise<void>): Promise<void> => {
-    setPendingSaves((count) => count + 1)
-    const next = queueRef.current.then(task).finally(() => setPendingSaves((count) => count - 1))
+  const enqueue = useCallback((key: string, task: () => Promise<void>): Promise<void> => {
+    setPendingKeys((keys) => [...keys, key])
+    const next = queueRef.current.then(task).finally(() =>
+      setPendingKeys((keys) => {
+        // Drop one occurrence only — the same cell may be queued twice.
+        const index = keys.indexOf(key)
+        return index === -1 ? keys : [...keys.slice(0, index), ...keys.slice(index + 1)]
+      }),
+    )
     // Keep the chain alive after a rejection so later edits still run; the
     // returned promise keeps the rejection for the caller.
     queueRef.current = next.catch(() => {})
@@ -738,7 +771,7 @@ export const RecurringFoodGrid: React.FC = () => {
         },
       }))
 
-      await enqueue(async () => {
+      await enqueue(scheduleSaveKey(locationId, day, week), async () => {
         try {
           await setRecurringFoodSchedule(locationId, day, week, vendorId)
         } catch (error) {
@@ -762,7 +795,7 @@ export const RecurringFoodGrid: React.FC = () => {
         return { ...current, [locationId]: [...dates].sort() }
       })
 
-      await enqueue(async () => {
+      await enqueue(exclusionSaveKey(locationId, date), async () => {
         try {
           await setRecurringFoodExclusion(locationId, date, excluded)
         } catch (error) {
@@ -858,7 +891,7 @@ export const RecurringFoodGrid: React.FC = () => {
             exclusions={exclusions}
             onScheduleChange={handleScheduleChange}
             onExclusionChange={handleExclusionChange}
-            saving={pendingSaves > 0}
+            pendingKeys={pendingKeys}
             readOnly={!canEdit}
           />
         </div>

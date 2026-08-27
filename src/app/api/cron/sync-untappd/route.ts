@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { revalidateTag } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { getPayload } from 'payload'
 import config from '@/src/payload.config'
 import { revalidateForCollection } from '@/src/plugins/revalidation-plugin'
@@ -28,9 +28,17 @@ export async function GET(request: NextRequest) {
     // extra 'menus' tag is needed because skipRevalidate also skips
     // Beers.afterChange's per-menu `menu-${url}` fan-out, and getMenuByUrl
     // subscribes to that broad tag rather than 'beers'.
+    //
+    // `/beer/[variant]` needs the route-level call as well: it is a 3600s ISR
+    // page, and revalidateForCollection has no doc to run the `/beer/${slug}`
+    // path builder against, so tag invalidation alone would leave every beer
+    // page showing the previous night's rating for up to an hour. Invalidating
+    // the dynamic segment covers all of them in one call, which is what a
+    // whole-catalogue batch wants anyway.
     if (ranJobs > 0) {
       revalidateForCollection('beers')
       revalidateTag('menus')
+      revalidatePath('/beer/[variant]', 'page')
     }
 
     return NextResponse.json({

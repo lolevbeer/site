@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { Payload } from 'payload'
-import { getPublicBeerReviews, syncBeerReviews } from '@/src/utils/beer-reviews'
+import { getPublicBeerReviews, pruneLegacyReview, syncBeerReviews } from '@/src/utils/beer-reviews'
 
 function payloadWith(existingDocs: unknown[] = []) {
   const find = vi.fn(async () => ({ docs: existingDocs }))
@@ -107,5 +107,53 @@ describe('public beer reviews', () => {
     const { payload } = payloadWith([nativeReview('a', false)])
 
     await expect(getPublicBeerReviews(payload, 'beer-1')).resolves.toEqual([])
+  })
+})
+
+describe('legacy review pruning on delete', () => {
+  function payloadWithBeer(positiveReviews: unknown) {
+    const findByID = vi.fn(async () => ({ id: 'beer-1', positiveReviews }))
+    const update = vi.fn(async () => ({}))
+    return { payload: { findByID, update } as unknown as Payload, findByID, update }
+  }
+
+  it('drops the deleted review from the beer legacy JSON so it cannot be re-created', async () => {
+    // Without this, the next Untappd sync that touches the beer would rebuild
+    // the document from `positiveReviews` — approved, since legacy entries
+    // carry no `hidden` flag — silently undoing the moderation.
+    const other = { ...sourceReview, url: 'https://untappd.com/checkin/keep' }
+    const { payload, update } = payloadWithBeer([sourceReview, other])
+
+    await pruneLegacyReview({ beer: 'beer-1', payload, sourceUrl: sourceReview.url })
+
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collection: 'beers',
+        id: 'beer-1',
+        data: { positiveReviews: [other] },
+        context: { skipRevalidate: true, skipReviewSync: true },
+      }),
+    )
+  })
+
+  it('leaves the beer untouched when the legacy JSON has no matching entry', async () => {
+    const { payload, update } = payloadWithBeer([sourceReview])
+
+    await pruneLegacyReview({
+      payload,
+      beer: 'beer-1',
+      sourceUrl: 'https://untappd.com/checkin/absent',
+    })
+
+    expect(update).not.toHaveBeenCalled()
+  })
+
+  it('ignores a review with no beer or source URL', async () => {
+    const { payload, findByID } = payloadWithBeer([sourceReview])
+
+    await pruneLegacyReview({ beer: null, payload, sourceUrl: sourceReview.url })
+    await pruneLegacyReview({ beer: 'beer-1', payload, sourceUrl: null })
+
+    expect(findByID).not.toHaveBeenCalled()
   })
 })

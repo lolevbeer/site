@@ -1,6 +1,8 @@
 import type { Access, CollectionConfig } from 'payload'
 import { beerManagerAccess, hasRole } from '@/src/access/roles'
+import { pruneLegacyReview } from '@/src/utils/beer-reviews'
 import { revalidateBeerPageForReview } from '@/src/utils/revalidate-beer-page'
+import { logger } from '@/lib/utils/logger'
 
 const canReadBeerReviews: Access = ({ req: { user } }) => {
   if (hasRole(user, ['admin', 'beer-manager'])) return true
@@ -40,6 +42,21 @@ export const BeerReviews: CollectionConfig = {
     ],
     afterDelete: [
       async ({ context, doc, req }) => {
+        // Drop the legacy copy first, otherwise the next Untappd sync that
+        // touches this beer re-creates the review from `beer.positiveReviews`.
+        if (!context?.skipReviewSync) {
+          try {
+            await pruneLegacyReview({
+              beer: doc.beer,
+              payload: req.payload,
+              req,
+              sourceUrl: doc.sourceUrl,
+            })
+          } catch (error) {
+            logger.error('Beer review legacy prune error:', error)
+          }
+        }
+
         if (context?.skipRevalidate) return doc
         await revalidateBeerPageForReview(req.payload, doc.beer)
         return doc

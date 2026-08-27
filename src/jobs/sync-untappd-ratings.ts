@@ -6,7 +6,14 @@ export interface UntappdSyncResult {
   total: number
   updated: number
   skipped: number
+  /** Retryable failures: rate limit, 5xx, network error. These fail the task. */
   errors: number
+  /**
+   * Permanently unreachable beer URLs (404/410). Reported and left for a human
+   * to fix, but never failed over — retrying a dead link only re-scrapes the
+   * whole catalogue to reach the same result.
+   */
+  unavailable: number
   circuitBroken: boolean
 }
 
@@ -27,8 +34,11 @@ export async function runUntappdRatingsSync(payload: Payload): Promise<UntappdSy
     updated: 0,
     skipped: 0,
     errors: 0,
+    unavailable: 0,
     circuitBroken: false,
   }
+
+  const settled = () => results.updated + results.skipped + results.errors + results.unavailable
 
   for (const beer of beers.docs) {
     if (!beer.untappd) {
@@ -38,19 +48,28 @@ export async function runUntappdRatingsSync(payload: Payload): Promise<UntappdSy
 
     if (isCircuitOpen()) {
       results.circuitBroken = true
-      results.skipped += beers.docs.length - results.updated - results.skipped - results.errors
+      // Compute before mutating results.skipped so the log reports real progress.
+      const remaining = beers.docs.length - settled()
       logger.warn('Untappd sync stopped: circuit breaker open', {
-        processed: results.updated + results.skipped + results.errors,
-        remaining: beers.docs.length - results.updated - results.skipped - results.errors,
+        processed: beers.docs.length - remaining,
+        remaining,
       })
+      results.skipped += remaining
       break
     }
 
     try {
-      const { rating, ratingCount, positiveReviews, failed } = await fetchUntappdData(beer.untappd)
+      const { rating, ratingCount, positiveReviews, failed, retryable } = await fetchUntappdData(
+        beer.untappd,
+      )
 
       if (failed) {
-        results.errors++
+        if (retryable === false) {
+          logger.warn(`Untappd URL is unreachable for beer ${beer.name}`, { url: beer.untappd })
+          results.unavailable++
+        } else {
+          results.errors++
+        }
         continue
       }
 
@@ -110,6 +129,7 @@ export const syncUntappdRatingsTask: TaskConfig = {
     { name: 'updated', type: 'number', required: true },
     { name: 'skipped', type: 'number', required: true },
     { name: 'errors', type: 'number', required: true },
+    { name: 'unavailable', type: 'number', required: true },
     { name: 'circuitBroken', type: 'checkbox', required: true },
   ],
   retries: {
@@ -118,17 +138,26 @@ export const syncUntappdRatingsTask: TaskConfig = {
   },
   schedule: [{ cron: '0 0 6 * * *', queue: 'maintenance' }],
   /**
-   * Throws when any beer failed to sync (rate limit, 5xx, network error) or the
-   * circuit breaker cut the run short, so the `retries` above actually run
-   * instead of the job being recorded as a success over stale data. Beers that
-   * already synced are skipped cheaply on the retry.
+   * Throws only for *retryable* trouble — a rate limit, 5xx, network error, or
+   * the circuit breaker cutting the run short — so the `retries` above actually
+   * run instead of the job being recorded as a success over stale data.
+   *
+   * Permanently dead beer URLs (404/410) land in `unavailable` and are logged
+   * rather than thrown: a retry re-scrapes every beer from scratch (there is no
+   * "already synced today" short circuit, and each beer costs a request plus a
+   * 500 ms pace), so failing over one stale link would triple the nightly load
+   * on Untappd and still never succeed until someone edits the URL.
    */
   handler: async ({ req }) => {
     const output = await runUntappdRatingsSync(req.payload)
 
+    if (output.unavailable > 0) {
+      logger.warn(`Untappd sync finished with ${output.unavailable} unreachable beer URL(s)`)
+    }
+
     if (output.errors > 0 || output.circuitBroken) {
       throw new Error(
-        `Untappd sync incomplete: ${output.errors} error(s), ${output.skipped} skipped` +
+        `Untappd sync incomplete: ${output.errors} retryable error(s), ${output.skipped} skipped` +
           (output.circuitBroken ? ', circuit breaker opened' : ''),
       )
     }
