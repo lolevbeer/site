@@ -5,6 +5,7 @@ import { useAuth } from '@payloadcms/ui'
 import { Banner } from '@payloadcms/ui'
 import { logger } from '@/lib/utils/logger'
 import { hasRole } from '@/src/access/roles'
+import { getAdminRelationshipID } from '@/src/components/admin/relationship-value'
 import type { User } from '@/src/payload-types'
 
 interface Location {
@@ -49,9 +50,9 @@ export function LinesCleanedAlert({ children }: { children: React.ReactNode }) {
   const assignedLocationIds = useMemo(
     () =>
       new Set(
-        (user?.locations || []).map((location) =>
-          typeof location === 'object' ? location.id : location,
-        ),
+        (user?.locations || [])
+          .map((location) => getAdminRelationshipID(location))
+          .filter((id): id is string => id !== null),
       ),
     [user?.locations],
   )

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { revalidatePath, revalidateTag } from 'next/cache'
 import { getPayload } from 'payload'
 import config from '@/src/payload.config'
+import { revalidateForCollection } from '@/src/plugins/revalidation-plugin'
 import { logger } from '@/lib/utils/logger'
 
 const QUEUE = 'maintenance'
@@ -25,9 +25,7 @@ export async function GET(request: NextRequest) {
     // Job tasks intentionally avoid Next cache APIs so they also work from the
     // Payload CLI. In the Vercel runner, invalidate once after any execution.
     if (ranJobs > 0) {
-      revalidateTag('beers')
-      revalidatePath('/')
-      revalidatePath('/beer')
+      revalidateForCollection('beers')
     }
 
     return NextResponse.json({

@@ -1,5 +1,6 @@
 import type { Payload } from 'payload'
-import type { RecurringFoodExclusion, RecurringFoodSchedule, User } from '@/src/payload-types'
+import type { RecurringFoodExclusion, User } from '@/src/payload-types'
+import { relationshipId } from '@/src/utils/relationship-id'
 
 export const recurringDays = [
   'sunday',
@@ -30,14 +31,19 @@ interface RecurringFoodQueryOptions {
   user?: User
 }
 
-function relationshipID(
-  value: RecurringFoodSchedule['location'] | RecurringFoodSchedule['vendor'],
-): string {
-  return typeof value === 'object' ? value.id : value
+/** Coerce a legacy global's untyped JSON field into a keyed record. */
+export function legacyObject<T>(value: unknown): T {
+  return value && typeof value === 'object' && !Array.isArray(value) ? (value as T) : ({} as T)
 }
 
-function legacyObject<T>(value: unknown): T {
-  return value && typeof value === 'object' && !Array.isArray(value) ? (value as T) : ({} as T)
+/** UTC day window for querying an exclusion stored as a datetime. */
+export function dayBounds(dateOnly: string): { start: string; end: string } {
+  return { start: `${dateOnly}T00:00:00.000Z`, end: `${dateOnly}T23:59:59.999Z` }
+}
+
+/** Canonical timestamp for writing a date-only exclusion (noon UTC avoids TZ drift). */
+export function exclusionTimestamp(dateOnly: string): string {
+  return `${dateOnly}T12:00:00.000Z`
 }
 
 export async function getRecurringFoodState(
@@ -49,12 +55,21 @@ export async function getRecurringFoodState(
     user: options.user,
   }
 
-  const [legacy, scheduleResult, exclusionResult] = await Promise.all([
-    payload.findGlobal({
-      slug: 'recurring-food',
-      depth: 0,
-      ...access,
-    }),
+  const legacy = await payload.findGlobal({
+    slug: 'recurring-food',
+    depth: 0,
+    ...access,
+  })
+
+  if (!legacy.normalizedAt) {
+    return {
+      schedules: legacyObject<RecurringFoodSchedulesData>(legacy.schedules),
+      exclusions: legacyObject<RecurringFoodExclusionsData>(legacy.exclusions),
+      usingLegacyData: true,
+    }
+  }
+
+  const [scheduleResult, exclusionResult] = await Promise.all([
     payload.find({
       collection: 'recurring-food-schedules',
       depth: 0,
@@ -71,19 +86,11 @@ export async function getRecurringFoodState(
     }),
   ])
 
-  if (!legacy.normalizedAt) {
-    return {
-      schedules: legacyObject<RecurringFoodSchedulesData>(legacy.schedules),
-      exclusions: legacyObject<RecurringFoodExclusionsData>(legacy.exclusions),
-      usingLegacyData: true,
-    }
-  }
-
   const schedules: RecurringFoodSchedulesData = {}
   for (const schedule of scheduleResult.docs) {
     if (!schedule.active) continue
-    const locationId = relationshipID(schedule.location)
-    const vendorId = relationshipID(schedule.vendor)
+    const locationId = relationshipId(schedule.location)
+    const vendorId = relationshipId(schedule.vendor)
 
     schedules[locationId] ??= {}
     schedules[locationId][schedule.day] ??= {}
@@ -92,7 +99,7 @@ export async function getRecurringFoodState(
 
   const exclusions: RecurringFoodExclusionsData = {}
   for (const exclusion of exclusionResult.docs as RecurringFoodExclusion[]) {
-    const locationId = relationshipID(exclusion.location)
+    const locationId = relationshipId(exclusion.location)
     exclusions[locationId] ??= []
     exclusions[locationId].push(exclusion.date.split('T')[0])
   }

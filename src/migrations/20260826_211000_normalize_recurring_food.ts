@@ -1,14 +1,13 @@
 import type { MigrateDownArgs, MigrateUpArgs } from '@payloadcms/db-mongodb'
 import {
+  exclusionTimestamp,
+  legacyObject,
   recurringDays,
   recurringOccurrences,
   type RecurringFoodExclusionsData,
   type RecurringFoodSchedulesData,
 } from '@/src/utils/recurring-food'
-
-function asObject<T>(value: unknown): T {
-  return value && typeof value === 'object' && !Array.isArray(value) ? (value as T) : ({} as T)
-}
+import { relationshipId } from '@/src/utils/relationship-id'
 
 export async function up({ payload, req }: MigrateUpArgs): Promise<void> {
   const legacy = await payload.findGlobal({
@@ -20,39 +19,47 @@ export async function up({ payload, req }: MigrateUpArgs): Promise<void> {
 
   if (legacy.normalizedAt) return
 
-  const schedules = asObject<RecurringFoodSchedulesData>(legacy.schedules)
-  const exclusions = asObject<RecurringFoodExclusionsData>(legacy.exclusions)
+  const schedules = legacyObject<RecurringFoodSchedulesData>(legacy.schedules)
+  const exclusions = legacyObject<RecurringFoodExclusionsData>(legacy.exclusions)
+
+  // Prefetch existing rows once instead of one existence query per slot/date.
+  const [existingSchedules, existingExclusions] = await Promise.all([
+    payload.find({
+      collection: 'recurring-food-schedules',
+      depth: 0,
+      limit: 10_000,
+      overrideAccess: true,
+      req,
+    }),
+    payload.find({
+      collection: 'recurring-food-exclusions',
+      depth: 0,
+      limit: 10_000,
+      overrideAccess: true,
+      req,
+    }),
+  ])
+  const scheduleKeys = new Set(
+    existingSchedules.docs.map((s) => `${relationshipId(s.location)}|${s.day}|${s.occurrence}`),
+  )
+  const exclusionKeys = new Set(
+    existingExclusions.docs.map((e) => `${relationshipId(e.location)}|${e.date.split('T')[0]}`),
+  )
 
   for (const [locationId, locationSchedule] of Object.entries(schedules)) {
     for (const day of recurringDays) {
       for (const occurrence of recurringOccurrences) {
         const vendorId = locationSchedule?.[day]?.[occurrence]
         if (!vendorId) continue
+        if (scheduleKeys.has(`${locationId}|${day}|${occurrence}`)) continue
 
-        const existing = await payload.find({
+        await payload.create({
           collection: 'recurring-food-schedules',
-          where: {
-            and: [
-              { location: { equals: locationId } },
-              { day: { equals: day } },
-              { occurrence: { equals: occurrence } },
-            ],
-          },
-          depth: 0,
-          limit: 1,
+          data: { location: locationId, vendor: vendorId, day, occurrence, active: true },
+          context: { skipRevalidate: true },
           overrideAccess: true,
           req,
         })
-
-        if (existing.docs.length === 0) {
-          await payload.create({
-            collection: 'recurring-food-schedules',
-            data: { location: locationId, vendor: vendorId, day, occurrence, active: true },
-            context: { skipRevalidate: true },
-            overrideAccess: true,
-            req,
-          })
-        }
       }
     }
   }
@@ -61,31 +68,15 @@ export async function up({ payload, req }: MigrateUpArgs): Promise<void> {
     for (const date of dates) {
       const dateOnly = date.split('T')[0]
       if (!/^\d{4}-\d{2}-\d{2}$/.test(dateOnly)) continue
+      if (exclusionKeys.has(`${locationId}|${dateOnly}`)) continue
 
-      const existing = await payload.find({
+      await payload.create({
         collection: 'recurring-food-exclusions',
-        where: {
-          and: [
-            { location: { equals: locationId } },
-            { date: { greater_than_equal: `${dateOnly}T00:00:00.000Z` } },
-            { date: { less_than_equal: `${dateOnly}T23:59:59.999Z` } },
-          ],
-        },
-        depth: 0,
-        limit: 1,
+        data: { location: locationId, date: exclusionTimestamp(dateOnly) },
+        context: { skipRevalidate: true },
         overrideAccess: true,
         req,
       })
-
-      if (existing.docs.length === 0) {
-        await payload.create({
-          collection: 'recurring-food-exclusions',
-          data: { location: locationId, date: `${dateOnly}T12:00:00.000Z` },
-          context: { skipRevalidate: true },
-          overrideAccess: true,
-          req,
-        })
-      }
     }
   }
 
@@ -120,17 +111,15 @@ export async function down({ payload, req }: MigrateDownArgs): Promise<void> {
 
   for (const schedule of scheduleResult.docs) {
     if (!schedule.active) continue
-    const locationId =
-      typeof schedule.location === 'object' ? schedule.location.id : schedule.location
-    const vendorId = typeof schedule.vendor === 'object' ? schedule.vendor.id : schedule.vendor
+    const locationId = relationshipId(schedule.location)
+    const vendorId = relationshipId(schedule.vendor)
     schedules[locationId] ??= {}
     schedules[locationId][schedule.day] ??= {}
     schedules[locationId][schedule.day][schedule.occurrence] = vendorId
   }
 
   for (const exclusion of exclusionResult.docs) {
-    const locationId =
-      typeof exclusion.location === 'object' ? exclusion.location.id : exclusion.location
+    const locationId = relationshipId(exclusion.location)
     exclusions[locationId] ??= []
     exclusions[locationId].push(exclusion.date.split('T')[0])
   }
@@ -143,22 +132,19 @@ export async function down({ payload, req }: MigrateDownArgs): Promise<void> {
     req,
   })
 
-  for (const schedule of scheduleResult.docs) {
-    await payload.delete({
-      collection: 'recurring-food-schedules',
-      id: schedule.id,
-      context: { skipRevalidate: true },
-      overrideAccess: true,
-      req,
-    })
-  }
-  for (const exclusion of exclusionResult.docs) {
-    await payload.delete({
-      collection: 'recurring-food-exclusions',
-      id: exclusion.id,
-      context: { skipRevalidate: true },
-      overrideAccess: true,
-      req,
-    })
-  }
+  // Bulk where-based deletes instead of one round trip per doc.
+  await payload.delete({
+    collection: 'recurring-food-schedules',
+    where: { id: { exists: true } },
+    context: { skipRevalidate: true },
+    overrideAccess: true,
+    req,
+  })
+  await payload.delete({
+    collection: 'recurring-food-exclusions',
+    where: { id: { exists: true } },
+    context: { skipRevalidate: true },
+    overrideAccess: true,
+    req,
+  })
 }

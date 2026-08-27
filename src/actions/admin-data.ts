@@ -7,7 +7,10 @@ import config from '@payload-config'
 import { hasRole, type Role } from '@/src/access/roles'
 import type { FoodVendor, User } from '@/src/payload-types'
 import {
+  dayBounds,
+  exclusionTimestamp,
   getRecurringFoodState,
+  legacyObject,
   recurringDays,
   recurringOccurrences,
   type RecurringFoodExclusionsData,
@@ -65,18 +68,11 @@ function requireDateOnly(value: string): string {
   return match[1]
 }
 
-function requireRecurringDay(value: string): (typeof recurringDays)[number] {
-  if (!recurringDays.includes(value as (typeof recurringDays)[number])) {
-    throw new Error('Invalid recurring day')
+function requireOneOf<T extends string>(value: string, options: readonly T[], label: string): T {
+  if (!options.includes(value as T)) {
+    throw new Error(`Invalid ${label}`)
   }
-  return value as (typeof recurringDays)[number]
-}
-
-function requireRecurringOccurrence(value: string): (typeof recurringOccurrences)[number] {
-  if (!recurringOccurrences.includes(value as (typeof recurringOccurrences)[number])) {
-    throw new Error('Invalid recurring occurrence')
-  }
-  return value as (typeof recurringOccurrences)[number]
+  return value as T
 }
 
 /**
@@ -257,8 +253,8 @@ export async function setRecurringFoodSchedule(
 ): Promise<void> {
   const { payload, user } = await getAuthorizedPayload(FOOD_ADMIN_ROLES)
   const validLocationId = requireIdentifier(locationId, 'location ID')
-  const validDay = requireRecurringDay(day)
-  const validOccurrence = requireRecurringOccurrence(occurrence)
+  const validDay = requireOneOf(day, recurringDays, 'recurring day')
+  const validOccurrence = requireOneOf(occurrence, recurringOccurrences, 'recurring occurrence')
   const validVendorId = vendorId === null ? null : requireIdentifier(vendorId, 'vendor ID')
   const legacy = await payload.findGlobal({
     slug: 'recurring-food',
@@ -268,8 +264,10 @@ export async function setRecurringFoodSchedule(
   })
 
   if (!legacy.normalizedAt) {
-    const state = await getRecurringFoodState(payload, { overrideAccess: false, user })
-    const schedules: RecurringFoodSchedulesData = structuredClone(state.schedules)
+    // The legacy global is already fetched — mutate its JSON directly.
+    const schedules: RecurringFoodSchedulesData = structuredClone(
+      legacyObject<RecurringFoodSchedulesData>(legacy.schedules),
+    )
     schedules[validLocationId] ??= {}
     schedules[validLocationId][validDay] ??= {}
     schedules[validLocationId][validDay][validOccurrence] = validVendorId
@@ -349,8 +347,10 @@ export async function setRecurringFoodExclusion(
   })
 
   if (!legacy.normalizedAt) {
-    const state = await getRecurringFoodState(payload, { overrideAccess: false, user })
-    const exclusions: RecurringFoodExclusionsData = structuredClone(state.exclusions)
+    // The legacy global is already fetched — mutate its JSON directly.
+    const exclusions: RecurringFoodExclusionsData = structuredClone(
+      legacyObject<RecurringFoodExclusionsData>(legacy.exclusions),
+    )
     const current = new Set(exclusions[validLocationId] || [])
     if (excluded) current.add(validDate)
     else current.delete(validDate)
@@ -370,8 +370,8 @@ export async function setRecurringFoodExclusion(
     where: {
       and: [
         { location: { equals: validLocationId } },
-        { date: { greater_than_equal: `${validDate}T00:00:00.000Z` } },
-        { date: { less_than_equal: `${validDate}T23:59:59.999Z` } },
+        { date: { greater_than_equal: dayBounds(validDate).start } },
+        { date: { less_than_equal: dayBounds(validDate).end } },
       ],
     },
     depth: 0,
@@ -384,7 +384,7 @@ export async function setRecurringFoodExclusion(
   if (excluded && !current) {
     await payload.create({
       collection: 'recurring-food-exclusions',
-      data: { location: validLocationId, date: `${validDate}T12:00:00.000Z` },
+      data: { location: validLocationId, date: exclusionTimestamp(validDate) },
       overrideAccess: false,
       user,
     })
@@ -469,8 +469,7 @@ export async function getEventsOnDate(dateStr: string, locationId: string): Prom
   const validLocationId = requireIdentifier(locationId, 'location ID')
 
   const dateOnly = requireDateOnly(dateStr)
-  const startOfDay = `${dateOnly}T00:00:00.000Z`
-  const endOfDay = `${dateOnly}T23:59:59.999Z`
+  const { start: startOfDay, end: endOfDay } = dayBounds(dateOnly)
 
   const result = await payload.find({
     collection: 'events',
@@ -511,8 +510,7 @@ export async function getFoodOnDateRange(
   const validLocationId = requireIdentifier(locationId, 'location ID')
 
   const dateOnly = requireDateOnly(dateStr)
-  const startOfDay = `${dateOnly}T00:00:00.000Z`
-  const endOfDay = `${dateOnly}T23:59:59.999Z`
+  const { start: startOfDay, end: endOfDay } = dayBounds(dateOnly)
 
   const result = await payload.find({
     collection: 'food',

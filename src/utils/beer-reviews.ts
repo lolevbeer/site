@@ -1,6 +1,7 @@
 import type { Payload, PayloadRequest } from 'payload'
 import type { BeerReview } from '@/src/payload-types'
 import type { UntappdReview } from '@/src/utils/untappd'
+import { relationshipId } from '@/src/utils/relationship-id'
 
 export interface LegacyUntappdReview extends UntappdReview {
   hidden?: boolean
@@ -75,7 +76,7 @@ export async function syncBeerReviews({
       continue
     }
 
-    const currentBeerId = typeof current.beer === 'object' ? current.beer.id : current.beer
+    const currentBeerId = relationshipId(current.beer)
     const hasChanged =
       currentBeerId !== beerId ||
       current.reviewer !== normalized.reviewer ||

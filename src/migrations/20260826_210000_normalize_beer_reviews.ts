@@ -1,5 +1,6 @@
 import type { MigrateDownArgs, MigrateUpArgs } from '@payloadcms/db-mongodb'
 import { reviewToLegacy, syncBeerReviews, type LegacyUntappdReview } from '@/src/utils/beer-reviews'
+import { relationshipId } from '@/src/utils/relationship-id'
 
 export async function up({ payload, req }: MigrateUpArgs): Promise<void> {
   let page = 1
@@ -42,7 +43,7 @@ export async function down({ payload, req }: MigrateDownArgs): Promise<void> {
   const reviewsByBeer = new Map<string, LegacyUntappdReview[]>()
 
   for (const review of reviews.docs) {
-    const beerId = typeof review.beer === 'object' ? review.beer.id : review.beer
+    const beerId = relationshipId(review.beer)
     const legacy = reviewsByBeer.get(beerId) || []
     legacy.push(reviewToLegacy(review))
     reviewsByBeer.set(beerId, legacy)
@@ -59,13 +60,12 @@ export async function down({ payload, req }: MigrateDownArgs): Promise<void> {
     })
   }
 
-  for (const review of reviews.docs) {
-    await payload.delete({
-      collection: 'beer-reviews',
-      id: review.id,
-      context: { skipRevalidate: true },
-      overrideAccess: true,
-      req,
-    })
-  }
+  // Bulk where-based delete instead of one round trip per review.
+  await payload.delete({
+    collection: 'beer-reviews',
+    where: { id: { exists: true } },
+    context: { skipRevalidate: true },
+    overrideAccess: true,
+    req,
+  })
 }

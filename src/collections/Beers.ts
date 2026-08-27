@@ -169,8 +169,13 @@ export const Beers: CollectionConfig = {
       },
     ],
     afterChange: [
-      async ({ context, doc, req }) => {
-        if (!context?.skipReviewSync && Array.isArray(doc.positiveReviews)) {
+      async ({ context, doc, previousDoc, req }) => {
+        // Only normalize reviews when the legacy JSON actually changed —
+        // ordinary edits (price, description, publish) skip the extra queries.
+        const reviewsChanged =
+          JSON.stringify(doc.positiveReviews ?? null) !==
+          JSON.stringify(previousDoc?.positiveReviews ?? null)
+        if (!context?.skipReviewSync && reviewsChanged && Array.isArray(doc.positiveReviews)) {
           try {
             await syncBeerReviews({
               beerId: doc.id,

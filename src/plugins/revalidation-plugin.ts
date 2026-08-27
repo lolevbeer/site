@@ -70,6 +70,17 @@ const COLLECTION_PATH_BUILDERS: Record<string, (doc: Record<string, unknown>) =>
 }
 
 /**
+ * Invalidate every tag and static path registered for a collection.
+ * For callers outside the hook system (e.g. the cron runner) that batch
+ * writes with `skipRevalidate` and revalidate once afterwards — keeps the
+ * cache map single-sourced here.
+ */
+export function revalidateForCollection(slug: string): void {
+  ;(COLLECTION_CACHE_MAP[slug] || []).forEach((tag) => revalidateTag(tag))
+  ;(COLLECTION_PATHS[slug] || []).forEach((path) => revalidatePath(path))
+}
+
+/**
  * Creates the afterChange hook for a collection.
  *
  * Bulk writers (the Untappd cron, sheet sync) pass
