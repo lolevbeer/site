@@ -62,29 +62,24 @@ export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCar
           {hasBeers ? (
             <>
               <div className="flex items-stretch justify-center">
-                {countedLocations.map(({ location, slug, count }, index) => {
-                  const isCurrent = slug === currentLocation;
-                  return (
-                    <Link
-                      key={slug}
-                      href={`/?loc=${slug}#draft`}
-                      aria-label={`See the ${count} beers on tap at ${location.name}`}
-                      className={cn(
-                        'group flex flex-col items-center gap-1 px-6 py-2 transition-colors hover:bg-secondary/50 active:bg-secondary',
-                        // Explicit border rather than divide-x: this Tailwind
-                        // setup does not emit the divide-* utilities.
-                        index > 0 && 'border-l border-border',
-                        isCurrent && 'bg-secondary/40'
-                      )}
-                      suppressHydrationWarning
-                    >
-                      <div className="text-4xl lg:text-5xl font-bold tabular-nums">{count}</div>
-                      <div className="text-sm text-muted-foreground font-medium group-hover:text-foreground transition-colors">
-                        {location.name}
-                      </div>
-                    </Link>
-                  );
-                })}
+                {countedLocations.map(({ location, slug, count }, index) => (
+                  <Link
+                    key={slug}
+                    href={`/?loc=${slug}#draft`}
+                    aria-label={`See the ${count} beers on tap at ${location.name}`}
+                    aria-current={slug === currentLocation ? 'true' : undefined}
+                    className={cn(
+                      'flex flex-col items-center gap-1 px-6 py-2 border-b-2 border-b-transparent hover:border-b-border aria-[current]:border-b-foreground',
+                      // Explicit border rather than divide-x: this Tailwind
+                      // setup does not emit the divide-* utilities.
+                      index > 0 && 'border-l border-l-border'
+                    )}
+                    suppressHydrationWarning
+                  >
+                    <div className="text-4xl lg:text-5xl font-bold tabular-nums">{count}</div>
+                    <div className="text-sm text-muted-foreground font-medium">{location.name}</div>
+                  </Link>
+                ))}
               </div>
               <Link
                 href="/beer"
