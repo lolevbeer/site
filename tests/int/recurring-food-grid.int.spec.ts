@@ -3,18 +3,24 @@
  * location's fetched dates, and a slower prior request must not overwrite
  * the tab that is now visible.
  */
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { createElement } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
+const { openModal, closeModal } = vi.hoisted(() => ({
+  openModal: vi.fn(),
+  closeModal: vi.fn(),
+}))
+
 vi.mock('@payloadcms/ui', () => ({
   Banner: ({ children }: { children: unknown }) => children,
-  ConfirmationModal: () => null,
+  ConfirmationModal: ({ onConfirm }: { onConfirm?: () => void }) =>
+    createElement('button', { type: 'button', onClick: onConfirm }, 'confirm-exclusion'),
   RelationshipInput: () => null,
   useAuth: () => ({
     user: { id: 'u1', roles: ['food-manager'], email: 'food@example.com' },
   }),
-  useModal: () => ({ openModal: vi.fn(), closeModal: vi.fn() }),
+  useModal: () => ({ openModal, closeModal }),
 }))
 
 vi.mock('@/src/actions/admin-data', () => ({
@@ -28,14 +34,18 @@ vi.mock('@/src/actions/admin-data', () => ({
 
 import {
   getActiveLocations,
+  getFoodVendorsByIds,
   getRecurringFoodData,
   getUpcomingFoodForLocation,
+  setRecurringFoodExclusion,
 } from '@/src/actions/admin-data'
 import { RecurringFoodGrid } from '@/src/components/RecurringFoodGrid'
 
 const getActiveLocationsMock = vi.mocked(getActiveLocations)
 const getRecurringFoodDataMock = vi.mocked(getRecurringFoodData)
 const getUpcomingFoodForLocationMock = vi.mocked(getUpcomingFoodForLocation)
+const getFoodVendorsByIdsMock = vi.mocked(getFoodVendorsByIds)
+const setRecurringFoodExclusionMock = vi.mocked(setRecurringFoodExclusion)
 
 function deferred<T>() {
   let resolve!: (value: T) => void
@@ -86,9 +96,36 @@ describe('RecurringFoodGrid location tabs', () => {
         vendorName: 'Lawrenceville Truck',
       },
     ])
-    await waitFor(() => {
-      expect(screen.queryByText(/Lawrenceville Truck/)).toBeNull()
+    await act(async () => {
+      await firstLocationFood.promise
     })
+    expect(screen.queryByText(/Lawrenceville Truck/)).toBeNull()
     expect(screen.getByText(/Zelie Truck/)).toBeTruthy()
+  })
+
+  it('does not apply a loc-A exclusion confirm after switching to loc-B', async () => {
+    getActiveLocationsMock.mockResolvedValue([
+      { id: 'loc-a', name: 'Lawrenceville', slug: 'lawrenceville' },
+      { id: 'loc-b', name: 'Zelienople', slug: 'zelienople' },
+    ])
+    getRecurringFoodDataMock.mockResolvedValue({
+      schedules: { 'loc-a': { sunday: { first: 'vendor-a' } } },
+      exclusions: {},
+    })
+    getUpcomingFoodForLocationMock.mockResolvedValue([])
+    getFoodVendorsByIdsMock.mockResolvedValue({ 'vendor-a': 'Lawrenceville Recurring' })
+
+    render(createElement(RecurringFoodGrid))
+    const exclude = await screen.findAllByRole('button', {
+      name: /Exclude Lawrenceville Recurring on/i,
+    })
+    fireEvent.click(exclude[0])
+    expect(openModal).toHaveBeenCalled()
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Zelienople' }))
+    expect(closeModal).toHaveBeenCalled()
+
+    fireEvent.click(screen.getByRole('button', { name: 'confirm-exclusion' }))
+    expect(setRecurringFoodExclusionMock).not.toHaveBeenCalled()
   })
 })

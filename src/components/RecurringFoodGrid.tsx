@@ -179,7 +179,7 @@ const DatesList: React.FC<DatesListProps> = ({
 
   useEffect(() => {
     setPendingToggle(null)
-    closeModal(EXCLUSION_MODAL_SLUG)
+    return () => closeModal(EXCLUSION_MODAL_SLUG)
   }, [locationId, closeModal])
 
   // Fetch individual food events using server action (local API)
@@ -187,7 +187,11 @@ const DatesList: React.FC<DatesListProps> = ({
     let cancelled = false
     setIndividualFoodEvents([])
 
-    if (!locationId) return
+    if (!locationId) {
+      return () => {
+        cancelled = true
+      }
+    }
 
     const fetchIndividualEvents = async () => {
       try {
@@ -230,7 +234,9 @@ const DatesList: React.FC<DatesListProps> = ({
     const vendorIds = [...new Set(recurringDates.map((d) => d.vendorId))]
     if (vendorIds.length === 0) {
       setVendorNames({})
-      return
+      return () => {
+        cancelled = true
+      }
     }
 
     const fetchVendors = async () => {
@@ -330,9 +336,25 @@ const DatesList: React.FC<DatesListProps> = ({
     return groups
   }, [scheduledDates])
 
+  const exclusionModal = (
+    <ConfirmationModal
+      modalSlug={EXCLUSION_MODAL_SLUG}
+      heading={pendingToggle?.isExcluded ? 'Remove Exclusion' : 'Exclude Event'}
+      body={
+        pendingToggle?.isExcluded
+          ? `Are you sure you want to restore "${pendingToggle?.vendorName}" on ${pendingToggle ? formatDate(pendingToggle.date) : ''}?`
+          : `Are you sure you want to exclude "${pendingToggle?.vendorName}" on ${pendingToggle ? formatDate(pendingToggle.date) : ''}?`
+      }
+      confirmLabel={pendingToggle?.isExcluded ? 'Restore' : 'Exclude'}
+      onConfirm={confirmToggleExclusion}
+      onCancel={cancelToggleExclusion}
+    />
+  )
+
   if (scheduledDates.length === 0) {
     return (
       <div style={{ padding: '20px 0', color: 'var(--theme-elevation-500)', fontSize: '14px' }}>
+        {exclusionModal}
         No vendors scheduled. Select vendors in the grid above to see upcoming dates.
       </div>
     )
@@ -346,18 +368,7 @@ const DatesList: React.FC<DatesListProps> = ({
         borderTop: '1px solid var(--theme-elevation-150)',
       }}
     >
-      <ConfirmationModal
-        modalSlug={EXCLUSION_MODAL_SLUG}
-        heading={pendingToggle?.isExcluded ? 'Remove Exclusion' : 'Exclude Event'}
-        body={
-          pendingToggle?.isExcluded
-            ? `Are you sure you want to restore "${pendingToggle?.vendorName}" on ${pendingToggle ? formatDate(pendingToggle.date) : ''}?`
-            : `Are you sure you want to exclude "${pendingToggle?.vendorName}" on ${pendingToggle ? formatDate(pendingToggle.date) : ''}?`
-        }
-        confirmLabel={pendingToggle?.isExcluded ? 'Restore' : 'Exclude'}
-        onConfirm={confirmToggleExclusion}
-        onCancel={cancelToggleExclusion}
-      />
+      {exclusionModal}
       {conflicts.length > 0 && (
         <div
           style={{
