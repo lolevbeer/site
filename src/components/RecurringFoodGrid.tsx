@@ -177,11 +177,22 @@ const DatesList: React.FC<DatesListProps> = ({
     return dates
   }, [locationSchedule])
 
+  useEffect(() => {
+    setPendingToggle(null)
+    closeModal(EXCLUSION_MODAL_SLUG)
+  }, [locationId, closeModal])
+
   // Fetch individual food events using server action (local API)
   useEffect(() => {
+    let cancelled = false
+    setIndividualFoodEvents([])
+
+    if (!locationId) return
+
     const fetchIndividualEvents = async () => {
       try {
         const foodEvents = await getUpcomingFoodForLocation(locationId)
+        if (cancelled) return
 
         const events: ScheduledDate[] = foodEvents.map((doc) => {
           const date = new Date(doc.date)
@@ -197,12 +208,13 @@ const DatesList: React.FC<DatesListProps> = ({
         })
         setIndividualFoodEvents(events)
       } catch (error) {
-        logger.error('Error fetching individual food events:', error)
+        if (!cancelled) logger.error('Error fetching individual food events:', error)
       }
     }
 
-    if (locationId) {
-      fetchIndividualEvents()
+    void fetchIndividualEvents()
+    return () => {
+      cancelled = true
     }
   }, [locationId])
 
@@ -214,19 +226,26 @@ const DatesList: React.FC<DatesListProps> = ({
 
   // Fetch vendor names for recurring events
   useEffect(() => {
+    let cancelled = false
     const vendorIds = [...new Set(recurringDates.map((d) => d.vendorId))]
-    if (vendorIds.length === 0) return
+    if (vendorIds.length === 0) {
+      setVendorNames({})
+      return
+    }
 
     const fetchVendors = async () => {
       try {
         const names = await getFoodVendorsByIds(vendorIds)
-        setVendorNames(names)
+        if (!cancelled) setVendorNames(names)
       } catch (error) {
-        logger.error('Error fetching vendor names:', error)
+        if (!cancelled) logger.error('Error fetching vendor names:', error)
       }
     }
 
-    fetchVendors()
+    void fetchVendors()
+    return () => {
+      cancelled = true
+    }
   }, [recurringDates])
 
   const requestToggleExclusion = useCallback(
@@ -814,6 +833,7 @@ export const RecurringFoodGrid: React.FC = () => {
           aria-labelledby={`recurring-food-tab-${activeLocation.id}`}
         >
           <LocationGrid
+            key={activeLocation.id} // remount so fetches and exclusion state cannot leak across tabs
             location={activeLocation}
             schedules={schedules}
             exclusions={exclusions}
