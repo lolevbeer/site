@@ -129,15 +129,7 @@ export function HeroSection({
                           </Tooltip>
                         </CarouselItem>
                       ))
-                    ) : (
-                      <CarouselItem className="pl-4">
-                        <div className="h-16 md:h-24 flex items-center justify-center">
-                          <p className="text-muted-foreground text-sm">
-                            Loading available beers...
-                          </p>
-                        </div>
-                      </CarouselItem>
-                    )}
+                    ) : null}
                   </CarouselContent>
                   <CarouselPrevious
                     className="hidden md:flex border-0 bg-transparent hover:bg-muted/50 shadow-none"
