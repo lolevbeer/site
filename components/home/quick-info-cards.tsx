@@ -61,23 +61,25 @@ export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCar
           <h3 className="text-3xl lg:text-4xl font-bold mb-5">On Tap Now</h3>
           {hasBeers ? (
             <>
-              <div className="flex items-stretch justify-center">
-                {countedLocations.map(({ location, slug, count }, index) => (
+              {/* Same segmented-control vocabulary as the header's LocationTabs:
+                  muted trough, selected item raised on the card background. */}
+              <div className="inline-grid grid-flow-col auto-cols-fr gap-0.5 rounded-sm bg-black/[0.06] p-1 text-muted-foreground dark:bg-muted/40">
+                {countedLocations.map(({ location, slug, count }) => (
                   <Link
                     key={slug}
                     href={`/?loc=${slug}#draft`}
                     aria-label={`See the ${count} beers on tap at ${location.name}`}
                     aria-current={slug === currentLocation ? 'true' : undefined}
                     className={cn(
-                      'flex flex-col items-center gap-1 px-6 py-2 border-b-2 border-b-transparent hover:border-b-border aria-[current]:border-b-foreground',
-                      // Explicit border rather than divide-x: this Tailwind
-                      // setup does not emit the divide-* utilities.
-                      index > 0 && 'border-l border-l-border'
+                      'flex flex-col items-center gap-1 rounded-sm px-6 py-3 transition-colors',
+                      slug === currentLocation
+                        ? 'bg-background text-foreground'
+                        : 'hover:text-foreground/70'
                     )}
                     suppressHydrationWarning
                   >
                     <div className="text-4xl lg:text-5xl font-bold tabular-nums">{count}</div>
-                    <div className="text-sm text-muted-foreground font-medium">{location.name}</div>
+                    <div className="text-sm font-medium">{location.name}</div>
                   </Link>
                 ))}
               </div>
