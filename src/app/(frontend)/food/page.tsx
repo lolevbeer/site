@@ -10,6 +10,7 @@ import { getTodayMidnightISO } from '@/lib/utils/date'
 import { createLocationLookup, generateFoodEventJsonLd } from '@/lib/utils/json-ld'
 import { PageTransition } from '@/components/motion'
 import { logger } from '@/lib/utils/logger'
+import { getRecurringFoodState } from '@/src/utils/recurring-food'
 
 export const metadata: Metadata = {
   title: 'Food',
@@ -93,7 +94,8 @@ async function getFoodData(): Promise<FoodVendorSchedule[]> {
 
     const todayStr = getTodayMidnightISO()
 
-    // Fetch food entries, recurring food global, and locations in parallel
+    // Fetch food entries, recurring schedules, and locations in parallel.
+    // The recurring helper falls back to the legacy global until its migration completes.
     const [foodResult, recurringFood, locationsResult] = await Promise.all([
       payload.find({
         collection: 'food',
@@ -106,9 +108,7 @@ async function getFoodData(): Promise<FoodVendorSchedule[]> {
         limit: 100,
         depth: 2,
       }),
-      payload.findGlobal({
-        slug: 'recurring-food',
-      }),
+      getRecurringFoodState(payload),
       payload.find({
         collection: 'locations',
         where: {
@@ -171,8 +171,8 @@ async function getFoodData(): Promise<FoodVendorSchedule[]> {
 
     // Collect vendor IDs from recurring schedules
     const vendorIds = new Set<string>()
-    const schedules = (recurringFood?.schedules || {}) as RecurringFoodSchedules
-    const exclusions = (recurringFood?.exclusions || {}) as RecurringFoodExclusions
+    const schedules = recurringFood.schedules as RecurringFoodSchedules
+    const exclusions = recurringFood.exclusions as RecurringFoodExclusions
 
     for (const locationId of Object.keys(schedules)) {
       const locationSchedule = schedules[locationId]

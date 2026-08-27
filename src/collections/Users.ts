@@ -79,9 +79,13 @@ export const Users: CollectionConfig = {
       type: 'relationship',
       relationTo: 'locations',
       hasMany: true,
+      access: {
+        create: adminFieldAccess,
+        update: adminFieldAccess,
+      },
       admin: {
         description:
-          'Assign to specific locations. If set, bartenders can only access menus for these locations.',
+          'Assign bartenders to the locations whose menus they may access. Users without an assignment cannot access menu drafts.',
         condition: (data) =>
           data?.roles?.includes('bartender') || data?.roles?.includes('lead-bartender'),
       },

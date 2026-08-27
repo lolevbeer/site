@@ -1,5 +1,5 @@
 import type { GlobalConfig } from 'payload'
-import { adminAccess } from '@/src/access/roles'
+import { adminAccess, adminFieldAccess } from '@/src/access/roles'
 import {
   DEFAULT_HERO_DESCRIPTION,
   DEFAULT_ABOUT_PHILOSOPHY,
@@ -29,7 +29,8 @@ export const SiteContent: GlobalConfig = {
               relationTo: 'media',
               label: 'Hero Background Image',
               admin: {
-                description: 'Background image for the homepage hero section (recommended: 1920x1080px or larger)',
+                description:
+                  'Background image for the homepage hero section (recommended: 1920x1080px or larger)',
               },
             },
             {
@@ -96,6 +97,9 @@ export const SiteContent: GlobalConfig = {
               name: 'distributorPaUrl',
               type: 'text',
               label: 'Pennsylvania JSON URL',
+              access: {
+                read: adminFieldAccess,
+              },
               admin: {
                 description: 'Sixth City/Encompass8 QuickLink URL for PA distributors',
               },
@@ -104,6 +108,9 @@ export const SiteContent: GlobalConfig = {
               name: 'distributorOhUrl',
               type: 'text',
               label: 'Ohio JSON URL',
+              access: {
+                read: adminFieldAccess,
+              },
               admin: {
                 description: 'Sixth City/Encompass8 QuickLink URL for OH distributors',
               },

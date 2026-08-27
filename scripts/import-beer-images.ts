@@ -75,11 +75,11 @@ async function importBeerImages() {
           data: {
             image: media.id,
           },
+          context: { skipRevalidate: true },
         })
 
         imported++
         console.log(`✅ ${imported} - Imported ${slug}\n`)
-
       } catch (error) {
         errors++
         console.error(`❌ Error importing ${beer.slug}:`, error)

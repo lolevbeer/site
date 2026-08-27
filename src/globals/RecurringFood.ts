@@ -1,5 +1,5 @@
 import type { GlobalConfig } from 'payload'
-import { foodManagerAccess } from '@/src/access/roles'
+import { foodManagerAccess, hasRole } from '@/src/access/roles'
 
 /**
  * RecurringFood Global
@@ -21,7 +21,7 @@ export const RecurringFood: GlobalConfig = {
     group: 'Food & Events',
   },
   access: {
-    read: () => true,
+    read: ({ req: { user } }) => hasRole(user, ['admin', 'event-manager', 'food-manager']),
     update: foodManagerAccess,
   },
   fields: [
@@ -41,6 +41,14 @@ export const RecurringFood: GlobalConfig = {
       admin: {
         hidden: true,
         description: 'Excluded dates by location ID',
+      },
+    },
+    {
+      name: 'normalizedAt',
+      type: 'date',
+      admin: {
+        hidden: true,
+        description: 'Set after legacy JSON data has been migrated to native collections.',
       },
     },
     {

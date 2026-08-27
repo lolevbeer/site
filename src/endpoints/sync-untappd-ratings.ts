@@ -10,9 +10,14 @@
 import type { PayloadHandler } from 'payload'
 import { getUserFromRequest } from './auth-helper'
 import { fetchUntappdData, type UntappdReview } from '@/src/utils/untappd'
+import { hasRole } from '@/src/access/roles'
+import type { User } from '@/src/payload-types'
 
 // Expected format: /b/lolev-beer-something/123456
 const VALID_UNTAPPD_URL_PATTERN = /^\/b\/[a-z0-9-]+\/\d+$/i
+
+export const canRunUntappdSync = (user: User | null | undefined): boolean =>
+  hasRole(user, ['admin', 'beer-manager'])
 
 interface SearchResult {
   name: string
@@ -61,9 +66,13 @@ async function searchUntappd(query: string): Promise<SearchResult[]> {
 
 export const syncUntappdRatings: PayloadHandler = async (req) => {
   // Check authentication with fallback for Vercel
-  const user = req.user ?? await getUserFromRequest(req, req.payload)
+  const user = req.user ?? (await getUserFromRequest(req, req.payload))
   if (!user) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  if (!canRunUntappdSync(user)) {
+    return Response.json({ error: 'Forbidden' }, { status: 403 })
   }
 
   const url = new URL(req.url || '', 'http://localhost')

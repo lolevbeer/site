@@ -136,10 +136,20 @@ account, or without the right role, gets a message saying so.
 
 ```bash
 pnpm dev              # Start dev server
-pnpm build            # Production build
+pnpm build            # Production build (runs pending migrations first on Vercel production)
 pnpm type-check       # TypeScript check
 pnpm lint             # ESLint
 pnpm test             # Tests (vitest)
+pnpm migrate          # Run pending Payload migrations against DATABASE_URI
+pnpm migrate:status   # Show which migrations have run
 pnpm generate:types   # Regenerate Payload types
 pnpm generate:importmap  # Regenerate Payload import map
 ```
+
+### Migrations on deploy
+
+`pnpm build` runs `migrate:prod` first, which executes `pnpm migrate` only when
+`VERCEL_ENV=production`. Preview and local builds skip it, so they never mutate
+the production database. A failing migration fails the build, so a deploy is
+never promoted with a half-applied migration — fix the migration and redeploy.
+Migrations live in `src/migrations/` and are registered in `src/migrations/index.ts`.

@@ -1,56 +1,137 @@
 'use client'
 
-import { useField, useDocumentInfo, Button, Banner } from '@payloadcms/ui'
+import { useEffect, useState } from 'react'
+import { Banner, Button, useDocumentInfo, useField } from '@payloadcms/ui'
+import { logger } from '@/lib/utils/logger'
+import {
+  getAdminRelationshipID,
+  type AdminRelationshipValue,
+} from '@/src/components/admin/relationship-value'
+
+function daysSince(value: string | null): number | null {
+  if (!value) return null
+  const timestamp = Date.parse(value)
+  if (Number.isNaN(timestamp)) return null
+  return Math.floor((Date.now() - timestamp) / (1000 * 60 * 60 * 24))
+}
 
 export function MarkLinesCleanedButton() {
-  const { value, setValue } = useField<string>({ path: 'linesLastCleaned' })
   const { id: docId, collectionSlug } = useDocumentInfo()
-  const { value: locationFieldValue } = useField<string>({ path: 'location' })
+  const { value: locationFieldValue } = useField<AdminRelationshipValue>({ path: 'location' })
+  const { value: locationFormValue, setValue: setLocationFormValue } = useField<string>({
+    path: 'linesLastCleaned',
+  })
+  const locationId =
+    collectionSlug === 'locations'
+      ? getAdminRelationshipID(docId)
+      : getAdminRelationshipID(locationFieldValue)
+  const [lastCleaned, setLastCleaned] = useState<string | null>(
+    collectionSlug === 'locations' ? locationFormValue || null : null,
+  )
+  const [loading, setLoading] = useState(collectionSlug !== 'locations')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleClick = () => {
-    const today = new Date().toISOString()
-    setValue(today)
+  useEffect(() => {
+    if (collectionSlug === 'locations') {
+      setLastCleaned(locationFormValue || null)
+      setLoading(false)
+      return
+    }
 
-    // Get location ID - either the doc ID (if editing location) or the location field (if editing menu)
-    const locationId = collectionSlug === 'locations' ? docId : locationFieldValue
+    if (!locationId) {
+      setLastCleaned(null)
+      setLoading(false)
+      return
+    }
 
-    // Dispatch event for optimistic update of global alert
-    if (locationId) {
-      window.dispatchEvent(new CustomEvent('linesCleanedUpdate', { detail: { locationId } }))
+    const controller = new AbortController()
+    const currentLocationId = locationId
+
+    async function loadLocation() {
+      setLoading(true)
+      setError(null)
+
+      try {
+        const response = await fetch(
+          `/api/locations/${encodeURIComponent(currentLocationId)}?depth=0`,
+          {
+            credentials: 'same-origin',
+            signal: controller.signal,
+          },
+        )
+
+        if (!response.ok) throw new Error(`Location request failed (${response.status})`)
+
+        const location = (await response.json()) as { linesLastCleaned?: string | null }
+        setLastCleaned(location.linesLastCleaned || null)
+      } catch (caught) {
+        if (caught instanceof DOMException && caught.name === 'AbortError') return
+        logger.error('Failed to load the line-cleaning date:', caught)
+        setError('Could not load the current line-cleaning date.')
+      } finally {
+        if (!controller.signal.aborted) setLoading(false)
+      }
+    }
+
+    void loadLocation()
+    return () => controller.abort()
+  }, [collectionSlug, locationFieldValue, locationFormValue, locationId])
+
+  async function handleClick() {
+    if (!locationId || saving) return
+
+    setSaving(true)
+    setError(null)
+    const cleanedAt = new Date().toISOString()
+
+    try {
+      const response = await fetch(`/api/locations/${encodeURIComponent(locationId)}`, {
+        method: 'PATCH',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ linesLastCleaned: cleanedAt }),
+      })
+
+      if (!response.ok) throw new Error(`Location update failed (${response.status})`)
+
+      const result = (await response.json()) as {
+        doc?: { linesLastCleaned?: string | null }
+        linesLastCleaned?: string | null
+      }
+      const savedValue = result.doc?.linesLastCleaned || result.linesLastCleaned || cleanedAt
+
+      setLastCleaned(savedValue)
+      if (collectionSlug === 'locations') setLocationFormValue(savedValue)
+      window.dispatchEvent(
+        new CustomEvent('linesCleanedUpdate', { detail: { locationId, cleanedAt: savedValue } }),
+      )
+    } catch (caught) {
+      logger.error('Failed to update the line-cleaning date:', caught)
+      setError('The line-cleaning date was not saved. Please try again.')
+    } finally {
+      setSaving(false)
     }
   }
 
-  // Calculate days since last cleaned
-  let daysSinceCleaned: number | null = null
-  if (value) {
-    const lastCleaned = new Date(value)
-    const now = new Date()
-    const diffMs = now.getTime() - lastCleaned.getTime()
-    daysSinceCleaned = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-  }
-
+  const daysSinceCleaned = daysSince(lastCleaned)
   const isOverdue = daysSinceCleaned !== null && daysSinceCleaned >= 15
   const isReadyToClean = daysSinceCleaned !== null && daysSinceCleaned >= 7 && daysSinceCleaned < 15
 
   return (
     <div style={{ marginTop: '-8px', width: '100%' }}>
-      {isOverdue && (
-        <Banner type="error">
-          OVERDUE - Lines need cleaning!
-        </Banner>
-      )}
-      {isReadyToClean && (
-        <Banner type="info">
-          Ready to be cleaned
-        </Banner>
-      )}
+      {error && <Banner type="error">{error}</Banner>}
+      {isOverdue && <Banner type="error">OVERDUE - Lines need cleaning!</Banner>}
+      {isReadyToClean && <Banner type="info">Ready to be cleaned</Banner>}
       <div style={{ width: '100%' }}>
         <Button
           buttonStyle="secondary"
+          disabled={!locationId || loading || saving}
+          onClick={() => void handleClick()}
           size="medium"
-          onClick={handleClick}
+          type="button"
         >
-          Lines Cleaned Today
+          {saving ? 'Saving…' : loading ? 'Loading…' : 'Lines Cleaned Today'}
         </Button>
       </div>
     </div>

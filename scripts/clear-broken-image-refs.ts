@@ -51,6 +51,7 @@ async function clearBrokenImageRefs() {
               data: {
                 image: null,
               },
+              context: { skipRevalidate: true },
             })
 
             cleared++

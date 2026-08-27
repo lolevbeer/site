@@ -68,6 +68,7 @@ export interface Config {
   blocks: {};
   collections: {
     beers: Beer;
+    'beer-reviews': BeerReview;
     styles: Style;
     tags: Tag;
     menus: Menu;
@@ -75,6 +76,8 @@ export interface Config {
     events: Event;
     food: Food;
     'food-vendors': FoodVendor;
+    'recurring-food-schedules': RecurringFoodSchedule;
+    'recurring-food-exclusions': RecurringFoodExclusion;
     users: User;
     locations: Location;
     'holiday-hours': HolidayHour;
@@ -82,13 +85,19 @@ export interface Config {
     faqs: Faq;
     media: Media;
     'payload-kv': PayloadKv;
+    'payload-jobs': PayloadJob;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
   };
-  collectionsJoins: {};
+  collectionsJoins: {
+    beers: {
+      reviews: 'beer-reviews';
+    };
+  };
   collectionsSelect: {
     beers: BeersSelect<false> | BeersSelect<true>;
+    'beer-reviews': BeerReviewsSelect<false> | BeerReviewsSelect<true>;
     styles: StylesSelect<false> | StylesSelect<true>;
     tags: TagsSelect<false> | TagsSelect<true>;
     menus: MenusSelect<false> | MenusSelect<true>;
@@ -96,6 +105,8 @@ export interface Config {
     events: EventsSelect<false> | EventsSelect<true>;
     food: FoodSelect<false> | FoodSelect<true>;
     'food-vendors': FoodVendorsSelect<false> | FoodVendorsSelect<true>;
+    'recurring-food-schedules': RecurringFoodSchedulesSelect<false> | RecurringFoodSchedulesSelect<true>;
+    'recurring-food-exclusions': RecurringFoodExclusionsSelect<false> | RecurringFoodExclusionsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     locations: LocationsSelect<false> | LocationsSelect<true>;
     'holiday-hours': HolidayHoursSelect<false> | HolidayHoursSelect<true>;
@@ -103,6 +114,7 @@ export interface Config {
     faqs: FaqsSelect<false> | FaqsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
+    'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -115,11 +127,13 @@ export interface Config {
     'coming-soon': ComingSoon;
     'recurring-food': RecurringFood;
     'site-content': SiteContent;
+    'payload-jobs-stats': PayloadJobsStat;
   };
   globalsSelect: {
     'coming-soon': ComingSoonSelect<false> | ComingSoonSelect<true>;
     'recurring-food': RecurringFoodSelect<false> | RecurringFoodSelect<true>;
     'site-content': SiteContentSelect<false> | SiteContentSelect<true>;
+    'payload-jobs-stats': PayloadJobsStatsSelect<false> | PayloadJobsStatsSelect<true>;
   };
   locale: null;
   widgets: {
@@ -127,7 +141,13 @@ export interface Config {
   };
   user: User;
   jobs: {
-    tasks: unknown;
+    tasks: {
+      syncUntappdRatings: TaskSyncUntappdRatings;
+      inline: {
+        input: unknown;
+        output: unknown;
+      };
+    };
     workflows: unknown;
   };
 }
@@ -255,7 +275,7 @@ export interface Beer {
    */
   untappdRatingCount?: number | null;
   /**
-   * MGR agent approved reviews
+   * Legacy review data retained temporarily for migration compatibility.
    */
   positiveReviews?:
     | {
@@ -266,6 +286,11 @@ export interface Beer {
     | number
     | boolean
     | null;
+  reviews?: {
+    docs?: (string | BeerReview)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -346,11 +371,35 @@ export interface Tag {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "beer-reviews".
+ */
+export interface BeerReview {
+  id: string;
+  beer: string | Beer;
+  reviewer: string;
+  rating: number;
+  text: string;
+  reviewedAt?: string | null;
+  /**
+   * Original date text supplied by Untappd when an exact timestamp is unavailable.
+   */
+  sourceDate?: string | null;
+  source: 'untappd';
+  sourceUrl: string;
+  externalImageUrl?: string | null;
+  /**
+   * Approved reviews can be included in public beer data.
+   */
+  approved: boolean;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "menus".
  */
 export interface Menu {
   id: string;
-  linesLastCleaned?: string | null;
   /**
    * Menu name (e.g., "Lawrenceville Draft Menu")
    */
@@ -608,6 +657,32 @@ export interface FoodVendor {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "recurring-food-schedules".
+ */
+export interface RecurringFoodSchedule {
+  id: string;
+  location: string | Location;
+  vendor: string | FoodVendor;
+  day: 'sunday' | 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday';
+  occurrence: 'first' | 'second' | 'third' | 'fourth' | 'fifth';
+  active: boolean;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "recurring-food-exclusions".
+ */
+export interface RecurringFoodExclusion {
+  id: string;
+  location: string | Location;
+  date: string;
+  reason?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
 export interface User {
@@ -618,7 +693,7 @@ export interface User {
    */
   slackUserId?: string | null;
   /**
-   * Assign to specific locations. If set, bartenders can only access menus for these locations.
+   * Assign bartenders to the locations whose menus they may access. Users without an assignment cannot access menu drafts.
    */
   locations?: (string | Location)[] | null;
   /**
@@ -790,6 +865,111 @@ export interface PayloadKv {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-jobs".
+ */
+export interface PayloadJob {
+  id: string;
+  /**
+   * Input data provided to the job
+   */
+  input?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  taskStatus?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  completedAt?: string | null;
+  totalTried?: number | null;
+  /**
+   * If hasError is true this job will not be retried
+   */
+  hasError?: boolean | null;
+  /**
+   * If hasError is true, this is the error that caused it
+   */
+  error?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Task execution log
+   */
+  log?:
+    | {
+        executedAt: string;
+        completedAt: string;
+        taskSlug: 'inline' | 'syncUntappdRatings';
+        taskID: string;
+        input?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        output?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        state: 'failed' | 'succeeded';
+        error?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        parent?: {
+          taskSlug?: ('inline' | 'syncUntappdRatings') | null;
+          taskID?: string | null;
+        };
+        id?: string | null;
+      }[]
+    | null;
+  taskSlug?: ('inline' | 'syncUntappdRatings') | null;
+  queue?: string | null;
+  waitUntil?: string | null;
+  processing?: boolean | null;
+  meta?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
@@ -798,6 +978,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'beers';
         value: string | Beer;
+      } | null)
+    | ({
+        relationTo: 'beer-reviews';
+        value: string | BeerReview;
       } | null)
     | ({
         relationTo: 'styles';
@@ -826,6 +1010,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'food-vendors';
         value: string | FoodVendor;
+      } | null)
+    | ({
+        relationTo: 'recurring-food-schedules';
+        value: string | RecurringFoodSchedule;
+      } | null)
+    | ({
+        relationTo: 'recurring-food-exclusions';
+        value: string | RecurringFoodExclusion;
       } | null)
     | ({
         relationTo: 'users';
@@ -926,9 +1118,28 @@ export interface BeersSelect<T extends boolean = true> {
   untappdRating?: T;
   untappdRatingCount?: T;
   positiveReviews?: T;
+  reviews?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "beer-reviews_select".
+ */
+export interface BeerReviewsSelect<T extends boolean = true> {
+  beer?: T;
+  reviewer?: T;
+  rating?: T;
+  text?: T;
+  reviewedAt?: T;
+  sourceDate?: T;
+  source?: T;
+  sourceUrl?: T;
+  externalImageUrl?: T;
+  approved?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -953,7 +1164,6 @@ export interface TagsSelect<T extends boolean = true> {
  * via the `definition` "menus_select".
  */
 export interface MenusSelect<T extends boolean = true> {
-  linesLastCleaned?: T;
   name?: T;
   description?: T;
   location?: T;
@@ -1033,6 +1243,30 @@ export interface FoodVendorsSelect<T extends boolean = true> {
   phone?: T;
   site?: T;
   logo?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "recurring-food-schedules_select".
+ */
+export interface RecurringFoodSchedulesSelect<T extends boolean = true> {
+  location?: T;
+  vendor?: T;
+  day?: T;
+  occurrence?: T;
+  active?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "recurring-food-exclusions_select".
+ */
+export interface RecurringFoodExclusionsSelect<T extends boolean = true> {
+  location?: T;
+  date?: T;
+  reason?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1259,6 +1493,44 @@ export interface PayloadKvSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-jobs_select".
+ */
+export interface PayloadJobsSelect<T extends boolean = true> {
+  input?: T;
+  taskStatus?: T;
+  completedAt?: T;
+  totalTried?: T;
+  hasError?: T;
+  error?: T;
+  log?:
+    | T
+    | {
+        executedAt?: T;
+        completedAt?: T;
+        taskSlug?: T;
+        taskID?: T;
+        input?: T;
+        output?: T;
+        state?: T;
+        error?: T;
+        parent?:
+          | T
+          | {
+              taskSlug?: T;
+              taskID?: T;
+            };
+        id?: T;
+      };
+  taskSlug?: T;
+  queue?: T;
+  waitUntil?: T;
+  processing?: T;
+  meta?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents_select".
  */
 export interface PayloadLockedDocumentsSelect<T extends boolean = true> {
@@ -1341,6 +1613,10 @@ export interface RecurringFood {
     | number
     | boolean
     | null;
+  /**
+   * Set after legacy JSON data has been migrated to native collections.
+   */
+  normalizedAt?: string | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -1373,6 +1649,24 @@ export interface SiteContent {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-jobs-stats".
+ */
+export interface PayloadJobsStat {
+  id: string;
+  stats?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "coming-soon_select".
  */
 export interface ComingSoonSelect<T extends boolean = true> {
@@ -1394,6 +1688,7 @@ export interface ComingSoonSelect<T extends boolean = true> {
 export interface RecurringFoodSelect<T extends boolean = true> {
   schedules?: T;
   exclusions?: T;
+  normalizedAt?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
@@ -1418,6 +1713,16 @@ export interface SiteContentSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payload-jobs-stats_select".
+ */
+export interface PayloadJobsStatsSelect<T extends boolean = true> {
+  stats?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "collections_widget".
  */
 export interface CollectionsWidget {
@@ -1425,6 +1730,20 @@ export interface CollectionsWidget {
     [k: string]: unknown;
   };
   width: 'full';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TaskSyncUntappdRatings".
+ */
+export interface TaskSyncUntappdRatings {
+  input?: unknown;
+  output: {
+    total: number;
+    updated: number;
+    skipped: number;
+    errors: number;
+    circuitBroken: boolean;
+  };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
