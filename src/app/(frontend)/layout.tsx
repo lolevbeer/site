@@ -197,7 +197,10 @@ export default async function AppLayout({
                   <SkipNav />
                   <ConditionalLayout
                     footer={
-                      <Suspense fallback={null}>
+                      /* Fallback is the footer WITHOUT hours (Footer renders
+                         "Hours not available" when weeklyHours is undefined) —
+                         a slow/hung hours query must not ship pages footerless. */
+                      <Suspense fallback={<Footer />}>
                         <FooterHours />
                       </Suspense>
                     }
