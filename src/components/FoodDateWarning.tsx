@@ -9,17 +9,11 @@ import {
   type AdminRelationshipValue,
 } from '@/src/components/admin/relationship-value'
 
-const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const
-const weekKeys = ['first', 'second', 'third', 'fourth', 'fifth'] as const
-
-function getWeekOccurrence(date: Date): number {
-  const dayOfMonth = date.getDate()
-  return Math.ceil(dayOfMonth / 7)
-}
-
-function getDayName(date: Date): string {
-  return days[date.getDay()]
-}
+import {
+  recurringDayName,
+  recurringOccurrences as weekKeys,
+  recurringWeekOccurrence,
+} from '@/src/utils/recurring-food'
 
 interface Warning {
   type: 'recurring' | 'individual'
@@ -49,8 +43,8 @@ export const FoodDateWarning: React.FC = () => {
 
       try {
         const date = new Date(dateValue)
-        const dayName = getDayName(date)
-        const weekOccurrence = getWeekOccurrence(date)
+        const dayName = recurringDayName(date)
+        const weekOccurrence = recurringWeekOccurrence(date)
         const weekKey = weekKeys[weekOccurrence - 1]
         const dateKey = date.toISOString().split('T')[0]
 
