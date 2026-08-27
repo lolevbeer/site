@@ -47,7 +47,12 @@ export async function runUntappdRatingsSync(payload: Payload): Promise<UntappdSy
     }
 
     try {
-      const { rating, ratingCount, positiveReviews } = await fetchUntappdData(beer.untappd)
+      const { rating, ratingCount, positiveReviews, failed } = await fetchUntappdData(beer.untappd)
+
+      if (failed) {
+        results.errors++
+        continue
+      }
 
       if (rating === null) {
         results.skipped++
@@ -85,10 +90,12 @@ export async function runUntappdRatingsSync(payload: Payload): Promise<UntappdSy
     } catch (error) {
       logger.error(`Error updating beer ${beer.name}:`, error)
       results.errors++
+    } finally {
+      // Untappd is scraped without an official API; keep requests deliberately
+      // slow. In `finally` so the skip paths above (`continue`) are paced too —
+      // a mostly-unchanged catalog would otherwise be scraped in a tight burst.
+      await new Promise((resolve) => setTimeout(resolve, 500))
     }
-
-    // Untappd is scraped without an official API; keep requests deliberately slow.
-    await new Promise((resolve) => setTimeout(resolve, 500))
   }
 
   return results
@@ -110,5 +117,22 @@ export const syncUntappdRatingsTask: TaskConfig = {
     backoff: { type: 'exponential', delay: 60_000 },
   },
   schedule: [{ cron: '0 0 6 * * *', queue: 'maintenance' }],
-  handler: async ({ req }) => ({ output: await runUntappdRatingsSync(req.payload) }),
+  /**
+   * Throws when any beer failed to sync (rate limit, 5xx, network error) or the
+   * circuit breaker cut the run short, so the `retries` above actually run
+   * instead of the job being recorded as a success over stale data. Beers that
+   * already synced are skipped cheaply on the retry.
+   */
+  handler: async ({ req }) => {
+    const output = await runUntappdRatingsSync(req.payload)
+
+    if (output.errors > 0 || output.circuitBroken) {
+      throw new Error(
+        `Untappd sync incomplete: ${output.errors} error(s), ${output.skipped} skipped` +
+          (output.circuitBroken ? ', circuit breaker opened' : ''),
+      )
+    }
+
+    return { output }
+  },
 }

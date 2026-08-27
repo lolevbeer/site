@@ -58,9 +58,12 @@ pick so you can revert it. Handler: `src/app/api/slack/route.ts`.
 pick them from a Slack member picker, set a name, roles, and (optionally)
 locations. The account is created **as the inviter**, so Payload's own rules
 decide — `Users.access.create` allows only admins and lead bartenders, and the
-collection's `beforeChange` hook caps lead bartenders at creating bartenders.
-A lead bartender who picks "Admin" gets Payload's rejection back in the modal;
-that rule is never restated in the Slack handler. Because the invitee is a
+collection's `beforeChange` hook caps lead bartenders at creating bartenders
+scoped to the inviter's own locations. A lead bartender who picks "Admin" gets
+Payload's rejection back in the modal; that rule is never restated in the Slack
+handler. The location picker only lists locations the inviter can grant, and the
+selection is preserved — menu access is location-scoped, so an invite that
+dropped it would produce a bartender who cannot edit any menu. Because the invitee is a
 Slack member rather than a typed email, accounts can only be created for people
 already in the workspace, the email is workspace-verified, and the new user is
 linked (`slackUserId`) from the start. They get a DM with a one-time link to set
@@ -120,12 +123,12 @@ links point at the domain rather than a deployment hostname.
 Permissions come from the linked user's Payload roles, so staffing changes
 happen in the admin panel and take effect immediately — no env var, no redeploy:
 
-- **Edit menus** — admin, bartender, or lead bartender. Bartenders with
-  `locations` assigned can only edit those locations' menus, in Slack exactly as
-  in the admin panel (`Menus.access.update`).
+- **Edit menus** — admin, or a bartender/lead bartender at their assigned
+  locations, in Slack exactly as in the admin panel (`Menus.access.update`).
+  A bartender with no `locations` assigned can edit nothing.
 - **Invite teammates** — admin or lead bartender, with lead bartenders limited
-  to creating bartenders (`Users.access.create` plus the collection's
-  `beforeChange` hook).
+  to creating bartenders at their own locations (`Users.access.create` plus the
+  collection's `beforeChange` hook).
 - **Reset your own password** — anyone with a linked account.
 
 Every request runs as the requester's Payload user, so these are the collections'

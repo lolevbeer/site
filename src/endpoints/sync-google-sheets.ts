@@ -903,10 +903,12 @@ async function syncBeers(payload: Payload, stream: StreamController, dryRun: boo
   }
 
   // One batched invalidation for the whole run instead of the per-write
-  // fan-out (each write passed context.skipRevalidate). Beers.afterChange
-  // still fires the precise menu-${url} tags per changed beer.
+  // fan-out (each write passed context.skipRevalidate, which also skips
+  // Beers.afterChange's per-menu menu-${url} tags). The 'menus' tag covers
+  // every menu cache entry at once, which is what those tags existed for.
   if (!dryRun && results.updated + results.imported > 0) {
     revalidateTag('beers')
+    revalidateTag('menus')
     revalidatePath('/')
     revalidatePath('/beer')
   }

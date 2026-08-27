@@ -24,8 +24,12 @@ export async function GET(request: NextRequest) {
 
     // Job tasks intentionally avoid Next cache APIs so they also work from the
     // Payload CLI. In the Vercel runner, invalidate once after any execution.
+    // 'menus' is included because the job writes beers with
+    // context.skipRevalidate, which also skips Beers.afterChange's per-menu
+    // menu-${url} fan-out — menu displays embed populated beer docs.
     if (ranJobs > 0) {
       revalidateForCollection('beers')
+      revalidateForCollection('menus')
     }
 
     return NextResponse.json({

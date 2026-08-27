@@ -102,6 +102,34 @@ export async function syncBeerReviews({
   return writes
 }
 
+/**
+ * Public review list for one beer, in the legacy `positiveReviews` shape the
+ * beer page and product schema already render.
+ *
+ * Returns `null` when the beer has no normalized review documents at all, so
+ * callers can keep serving the legacy JSON until the normalization migration
+ * has run for that beer. Once documents exist they are authoritative:
+ * unapproving a beer-reviews document removes it from the public page and the
+ * Product schema.
+ */
+export async function getPublicBeerReviews(
+  payload: Payload,
+  beerId: string,
+): Promise<LegacyUntappdReview[] | null> {
+  const reviews = await payload.find({
+    collection: 'beer-reviews',
+    where: { beer: { equals: beerId } },
+    depth: 0,
+    limit: 100,
+    sort: '-reviewedAt',
+    overrideAccess: true,
+  })
+
+  if (reviews.docs.length === 0) return null
+
+  return reviews.docs.filter((review) => review.approved).map(reviewToLegacy)
+}
+
 export function reviewToLegacy(review: BeerReview): LegacyUntappdReview {
   return {
     username: review.reviewer,

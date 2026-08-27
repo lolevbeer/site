@@ -19,6 +19,13 @@ export interface UntappdData {
   rating: number | null
   ratingCount: number | null
   positiveReviews: UntappdReview[]
+  /**
+   * True when the request itself failed (rate limit, 5xx, network error, or a
+   * skipped request because the circuit is open) rather than the page simply
+   * having no rating. Batch callers use it to distinguish "nothing to do" from
+   * "stale data" so a run with failures can be retried.
+   */
+  failed?: boolean
 }
 
 /** Tracks consecutive failures for circuit breaker logic */
@@ -44,7 +51,12 @@ export function resetCircuit(): void {
  * Includes rate-limit detection and circuit breaker pattern.
  */
 export async function fetchUntappdData(url: string): Promise<UntappdData> {
-  const emptyResult: UntappdData = { rating: null, ratingCount: null, positiveReviews: [] }
+  const emptyResult: UntappdData = {
+    rating: null,
+    ratingCount: null,
+    positiveReviews: [],
+    failed: true,
+  }
 
   // Circuit breaker: skip requests if too many consecutive failures
   if (isCircuitOpen()) {
@@ -163,6 +175,6 @@ export async function fetchUntappdData(url: string): Promise<UntappdData> {
       })
     }
 
-    return { rating: null, ratingCount: null, positiveReviews: [] }
+    return { ...emptyResult }
   }
 }

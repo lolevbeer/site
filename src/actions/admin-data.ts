@@ -108,10 +108,14 @@ export interface FoodEvent {
 }
 
 /**
- * Get all active locations
+ * Get all active locations.
+ *
+ * Authorized for every schedule reader, not just food managers: the Recurring
+ * Food global grants event managers read access, and its grid loads locations
+ * before it can render anything.
  */
 export async function getActiveLocations(): Promise<SimpleLocation[]> {
-  const { payload, user } = await getAuthorizedPayload(FOOD_ADMIN_ROLES)
+  const { payload, user } = await getAuthorizedPayload(SCHEDULE_READER_ROLES)
 
   const result = await payload.find({
     collection: 'locations',
@@ -160,7 +164,9 @@ export async function getFoodVendorsByIds(ids: string[]): Promise<Record<string,
   if (ids.length > 100) throw new Error('Too many vendor IDs')
 
   const vendorIds = [...new Set(ids.map((id) => requireIdentifier(id, 'vendor ID')))]
-  const { payload, user } = await getAuthorizedPayload(FOOD_ADMIN_ROLES)
+  // Read-only lookup used by the Recurring Food grid, which event managers may
+  // also view (see getActiveLocations).
+  const { payload, user } = await getAuthorizedPayload(SCHEDULE_READER_ROLES)
   const names: Record<string, string> = {}
 
   // Single batch query instead of N individual queries
@@ -188,10 +194,13 @@ export async function getFoodVendorsByIds(ids: string[]): Promise<Record<string,
 }
 
 /**
- * Get upcoming food events for a location
+ * Get upcoming food events for a location.
+ *
+ * Read-only, so it matches the Recurring Food global's reader roles rather than
+ * the food-manager-only write roles — its grid lists these dates on load.
  */
 export async function getUpcomingFoodForLocation(locationId: string): Promise<FoodEvent[]> {
-  const { payload, user } = await getAuthorizedPayload(FOOD_ADMIN_ROLES)
+  const { payload, user } = await getAuthorizedPayload(SCHEDULE_READER_ROLES)
   const validLocationId = requireIdentifier(locationId, 'location ID')
 
   const today = new Date()
@@ -399,7 +408,11 @@ export async function setRecurringFoodExclusion(
 }
 
 /**
- * Get food events for a specific date and location
+ * Get food events for a specific date and location.
+ *
+ * Queried as a whole-day range rather than an equality match: food dates are
+ * stored as timestamps (imports land at local noon), so `equals 'YYYY-MM-DD'`
+ * matches nothing and the conflict warning would silently never fire.
  */
 export async function getFoodOnDate(
   date: string,
@@ -412,7 +425,11 @@ export async function getFoodOnDate(
   const result = await payload.find({
     collection: 'food',
     where: {
-      and: [{ date: { equals: dateOnly } }, { location: { equals: validLocationId } }],
+      and: [
+        { date: { greater_than_equal: `${dateOnly}T00:00:00.000Z` } },
+        { date: { less_than_equal: `${dateOnly}T23:59:59.999Z` } },
+        { location: { equals: validLocationId } },
+      ],
     },
     depth: 1,
     limit: 100,

@@ -9,6 +9,18 @@ import {
   leadBartenderAccess,
 } from '@/src/access/roles'
 
+/** Normalize a relationship value (ids or populated docs) to a list of ids. */
+function toLocationIds(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+  return value
+    .map((entry) =>
+      typeof entry === 'object' && entry !== null
+        ? String((entry as { id?: string | number }).id ?? '')
+        : String(entry ?? ''),
+    )
+    .filter(Boolean)
+}
+
 export const Users: CollectionConfig = {
   slug: 'users',
   auth: {
@@ -40,6 +52,22 @@ export const Users: CollectionConfig = {
 
         if (!onlyBartenderRole) {
           throw new APIError('Lead Bartenders can only create users with the Bartender role', 403)
+        }
+
+        // A lead bartender may scope the new bartender, but only to locations
+        // they are themselves assigned to — menu access is location-scoped, so
+        // an unchecked assignment would hand out access they don't have.
+        const granted = toLocationIds(data.locations)
+        if (granted.length > 0) {
+          const own = new Set(toLocationIds(req.user?.locations))
+          const disallowed = granted.filter((id) => !own.has(id))
+          if (disallowed.length > 0) {
+            throw new APIError(
+              'Lead Bartenders can only assign locations they are assigned to themselves',
+              403,
+            )
+          }
+          data.locations = granted
         }
 
         return data
@@ -80,7 +108,10 @@ export const Users: CollectionConfig = {
       relationTo: 'locations',
       hasMany: true,
       access: {
-        create: adminFieldAccess,
+        // Lead bartenders may scope the bartenders they invite (capped by the
+        // beforeChange hook to their own locations); only admins may re-scope
+        // an existing user.
+        create: ({ req: { user } }) => hasRole(user, ['admin', 'lead-bartender']),
         update: adminFieldAccess,
       },
       admin: {

@@ -19,6 +19,8 @@ import { cache } from 'react'
 import { getPayload } from 'payload'
 import config from '@/src/payload.config'
 import { unstable_cache } from 'next/cache'
+import { getRecurringFoodState } from '@/src/utils/recurring-food'
+import { getPublicBeerReviews } from '@/src/utils/beer-reviews'
 import type {
   Beer as PayloadBeer,
   Menu,
@@ -132,7 +134,14 @@ export const getBeerBySlug = cache(async (slug: string): Promise<PayloadBeer | n
       })
 
       // Return null for "not found" (cacheable), but let errors throw (not cached)
-      return result.docs[0] || null
+      const beer = result.docs[0]
+      if (!beer) return null
+
+      // beer-reviews is the source of truth for what the public sees: only
+      // approved documents are surfaced. Falls back to the legacy JSON field
+      // only for beers that have no normalized reviews yet.
+      const reviews = await getPublicBeerReviews(payload, beer.id)
+      return reviews ? { ...beer, positiveReviews: reviews } : beer
     },
     [`beer-${slug}`],
     { tags: [CACHE_TAGS.beers], revalidate: 3600 },
@@ -917,27 +926,33 @@ function getUpcomingDatesForSlot(
 }
 
 /**
- * Get the recurring food global configuration
- * Cached until 'recurring-food' tag is invalidated
+ * Get the recurring food configuration for public expansion.
+ *
+ * Reads through getRecurringFoodState, which returns the normalized
+ * recurring-food-schedules/-exclusions collections once the global's
+ * `normalizedAt` marker is set and the frozen legacy global before that. The
+ * admin grid writes through the same helper, so grid edits reach /food, the
+ * homepage, and the location event pages alike.
+ *
+ * Cached until the 'food' tag is invalidated (both normalized collections map
+ * to that tag in the revalidation plugin).
  */
 const getRecurringFoodGlobal = async (): Promise<RecurringFoodGlobal> => {
   try {
     return await unstable_cache(
       async (): Promise<RecurringFoodGlobal> => {
         const payload = await getPayload({ config })
-        const result = await payload.findGlobal({
-          slug: 'recurring-food',
-        })
+        const state = await getRecurringFoodState(payload, { overrideAccess: true })
         return {
-          schedules: (result as RecurringFoodGlobal).schedules || {},
-          exclusions: (result as RecurringFoodGlobal).exclusions || {},
+          schedules: state.schedules as SchedulesData,
+          exclusions: state.exclusions,
         }
       },
       ['recurring-food-global'],
       { tags: [CACHE_TAGS.food], revalidate: 300 },
     )()
   } catch (error) {
-    logger.error('Error fetching recurring food global', error)
+    logger.error('Error fetching recurring food schedules', error)
     throw error
   }
 }

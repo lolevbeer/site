@@ -81,14 +81,60 @@ describe('user assignment authorization', () => {
     throw new Error('Expected locations field access rules')
   }
 
-  it('prevents users and lead bartenders from changing location assignments', () => {
-    expect(callAccess(locationsField.access?.create, userWith(['lead-bartender']))).toBe(false)
+  it('prevents anyone but an admin from re-scoping an existing user', () => {
+    expect(callAccess(locationsField.access?.update, userWith(['lead-bartender']))).toBe(false)
     expect(callAccess(locationsField.access?.update, userWith(['bartender']))).toBe(false)
+    expect(callAccess(locationsField.access?.create, userWith(['bartender']))).toBe(false)
   })
 
   it('allows admins to set location assignments', () => {
     expect(callAccess(locationsField.access?.create, userWith(['admin']))).toBe(true)
     expect(callAccess(locationsField.access?.update, userWith(['admin']))).toBe(true)
+  })
+
+  it('lets a lead bartender scope the bartenders they invite', () => {
+    // Menu access is location-scoped and rejects unassigned bartenders, so an
+    // invite that drops the selected locations produces an unusable account.
+    expect(callAccess(locationsField.access?.create, userWith(['lead-bartender']))).toBe(true)
+  })
+
+  describe('lead bartender invite scoping', () => {
+    const beforeChange = Users.hooks?.beforeChange?.[0]
+    if (typeof beforeChange !== 'function') throw new Error('Expected a beforeChange hook')
+
+    const runHook = (data: Record<string, unknown>, user: User) =>
+      beforeChange({
+        data,
+        req: { user },
+        operation: 'create',
+      } as unknown as Parameters<typeof beforeChange>[0])
+
+    it('keeps locations the lead bartender is assigned to', () => {
+      const result = runHook(
+        { roles: ['bartender'], locations: ['location-1'] },
+        userWith(['lead-bartender'], ['location-1']),
+      )
+
+      expect(result).toMatchObject({ locations: ['location-1'] })
+    })
+
+    it('rejects locations the lead bartender does not hold', () => {
+      expect(() =>
+        runHook(
+          { roles: ['bartender'], locations: ['location-2'] },
+          userWith(['lead-bartender'], ['location-1']),
+        ),
+      ).toThrow(/only assign locations/i)
+    })
+
+    it('leaves admin invites untouched', () => {
+      const result = runHook(
+        { roles: ['bartender'], locations: ['location-2'] },
+        userWith(['admin'], ['location-1']),
+      )
+
+      expect(result).toMatchObject({ locations: ['location-2'] })
+    })
   })
 })
 
