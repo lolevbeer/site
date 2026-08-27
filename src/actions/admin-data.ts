@@ -4,7 +4,13 @@ import { getPayload } from 'payload'
 import type { Payload } from 'payload'
 import { headers } from 'next/headers'
 import config from '@payload-config'
-import { hasRole, type Role } from '@/src/access/roles'
+import {
+  EVENT_MANAGER_ROLES,
+  FOOD_MANAGER_ROLES,
+  hasRole,
+  SCHEDULE_READER_ROLES,
+  type Role,
+} from '@/src/access/roles'
 import type { FoodVendor, User } from '@/src/payload-types'
 import {
   dayBounds,
@@ -27,11 +33,6 @@ interface AuthorizedPayload {
   payload: Payload
   user: User
 }
-
-const FOOD_ADMIN_ROLES: Role[] = ['admin', 'food-manager']
-const EVENT_ADMIN_ROLES: Role[] = ['admin', 'event-manager']
-/** Matches RecurringFood.access.read so the grid can load for event managers. */
-const SCHEDULE_READER_ROLES: Role[] = ['admin', 'event-manager', 'food-manager']
 
 async function getAuthorizedPayload(allowedRoles: Role[]): Promise<AuthorizedPayload> {
   const payload = await getPayload({ config })
@@ -252,7 +253,7 @@ export async function setRecurringFoodSchedule(
   occurrence: string,
   vendorId: string | null,
 ): Promise<void> {
-  const { payload, user } = await getAuthorizedPayload(FOOD_ADMIN_ROLES)
+  const { payload, user } = await getAuthorizedPayload(FOOD_MANAGER_ROLES)
   const validLocationId = requireIdentifier(locationId, 'location ID')
   const validDay = requireOneOf(day, recurringDays, 'recurring day')
   const validOccurrence = requireOneOf(occurrence, recurringOccurrences, 'recurring occurrence')
@@ -337,7 +338,7 @@ export async function setRecurringFoodExclusion(
   date: string,
   excluded: boolean,
 ): Promise<void> {
-  const { payload, user } = await getAuthorizedPayload(FOOD_ADMIN_ROLES)
+  const { payload, user } = await getAuthorizedPayload(FOOD_MANAGER_ROLES)
   const validLocationId = requireIdentifier(locationId, 'location ID')
   const dateOnly = requireDateOnly(date)
   const { start: startOfDay, end: endOfDay } = dayBounds(dateOnly)
@@ -411,7 +412,7 @@ export async function getFoodOnDate(
   date: string,
   locationId: string,
 ): Promise<{ id: string; vendorId: string; vendorName: string }[]> {
-  const { payload, user } = await getAuthorizedPayload(FOOD_ADMIN_ROLES)
+  const { payload, user } = await getAuthorizedPayload(FOOD_MANAGER_ROLES)
   const { start: startOfDay, end: endOfDay } = dayBounds(requireDateOnly(date))
   const validLocationId = requireIdentifier(locationId, 'location ID')
 
@@ -475,7 +476,7 @@ export interface EventOnDate {
  * Get events on a specific date for a location
  */
 export async function getEventsOnDate(dateStr: string, locationId: string): Promise<EventOnDate[]> {
-  const { payload, user } = await getAuthorizedPayload(EVENT_ADMIN_ROLES)
+  const { payload, user } = await getAuthorizedPayload(EVENT_MANAGER_ROLES)
   const validLocationId = requireIdentifier(locationId, 'location ID')
 
   const { start: startOfDay, end: endOfDay } = dayBounds(requireDateOnly(dateStr))
@@ -515,7 +516,7 @@ export async function getFoodOnDateRange(
   dateStr: string,
   locationId: string,
 ): Promise<FoodOnDateWithType[]> {
-  const { payload, user } = await getAuthorizedPayload(EVENT_ADMIN_ROLES)
+  const { payload, user } = await getAuthorizedPayload(EVENT_MANAGER_ROLES)
   const validLocationId = requireIdentifier(locationId, 'location ID')
 
   const { start: startOfDay, end: endOfDay } = dayBounds(requireDateOnly(dateStr))

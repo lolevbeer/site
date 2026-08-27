@@ -4,13 +4,12 @@
  */
 
 import type { Payload, PayloadHandler } from 'payload'
-import { revalidatePath, revalidateTag } from 'next/cache'
 import type { Location, Event, Beer, User } from '../payload-types'
 import { diffJson } from 'diff'
 import { slugify } from '../collections/utils/generateUniqueSlug'
 import { getUserFromRequest } from './auth-helper'
 import { hasRole } from '@/src/access/roles'
-import { CACHE_TAGS } from '@/lib/utils/cache'
+import { revalidateForCollection } from '@/src/plugins/revalidation-plugin'
 
 interface StreamController {
   send: (event: string, data: Record<string, unknown>) => void
@@ -904,14 +903,10 @@ async function syncBeers(payload: Payload, stream: StreamController, dryRun: boo
   }
 
   // One batched invalidation for the whole run instead of the per-write
-  // fan-out (each write passed context.skipRevalidate, which also skips
-  // Beers.afterChange's per-menu menu-${url} tags). The 'menus' tag covers
-  // every menu cache entry at once, which is what those tags existed for.
+  // fan-out (each write passed context.skipRevalidate). Shared with the
+  // Untappd cron so both batch writers invalidate the same set.
   if (!dryRun && results.updated + results.imported > 0) {
-    revalidateTag(CACHE_TAGS.beers)
-    revalidateTag(CACHE_TAGS.menus)
-    revalidatePath('/')
-    revalidatePath('/beer')
+    revalidateForCollection('beers')
   }
 
   return results

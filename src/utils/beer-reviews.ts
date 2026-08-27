@@ -111,6 +111,9 @@ export async function syncBeerReviews({
  * sync that touches the beer. Pruning also keeps `getPublicBeerReviews`'s
  * "no documents => not normalized yet" fallback honest: emptying a beer's
  * review set now renders nothing instead of resurrecting the legacy list.
+ *
+ * Returns the beer's id and slug when the document was found, so the caller can
+ * revalidate its page without reading the same document a second time.
  */
 export async function pruneLegacyReview({
   beer,
@@ -122,10 +125,10 @@ export async function pruneLegacyReview({
   payload: Payload
   req?: PayloadRequest
   sourceUrl: string | null | undefined
-}): Promise<void> {
-  if (!beer || !sourceUrl) return
+}): Promise<{ id: string; slug?: string | null } | null> {
+  if (!beer || !sourceUrl) return null
   const beerId = relationshipId(beer)
-  if (!beerId) return
+  if (!beerId) return null
 
   const doc = await payload.findByID({
     collection: 'beers',
@@ -134,23 +137,26 @@ export async function pruneLegacyReview({
     overrideAccess: true,
     req,
   })
+  if (!doc) return null
 
-  const legacy = doc?.positiveReviews
-  if (!Array.isArray(legacy)) return
+  const legacy = doc.positiveReviews
+  if (Array.isArray(legacy)) {
+    const remaining = (legacy as LegacyUntappdReview[]).filter((review) => review.url !== sourceUrl)
+    if (remaining.length !== legacy.length) {
+      await payload.update({
+        collection: 'beers',
+        id: beerId,
+        data: { positiveReviews: remaining },
+        // skipReviewSync: this write *is* the review sync; re-entering it would
+        // immediately re-create the document we just deleted.
+        context: { skipRevalidate: true, skipReviewSync: true },
+        overrideAccess: true,
+        req,
+      })
+    }
+  }
 
-  const remaining = (legacy as LegacyUntappdReview[]).filter((review) => review.url !== sourceUrl)
-  if (remaining.length === legacy.length) return
-
-  await payload.update({
-    collection: 'beers',
-    id: beerId,
-    data: { positiveReviews: remaining },
-    // skipReviewSync: this write *is* the review sync; re-entering it would
-    // immediately re-create the document we just deleted.
-    context: { skipRevalidate: true, skipReviewSync: true },
-    overrideAccess: true,
-    req,
-  })
+  return { id: String(doc.id), slug: doc.slug }
 }
 
 /**

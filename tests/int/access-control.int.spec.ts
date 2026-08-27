@@ -10,7 +10,7 @@ import { SiteContent } from '@/src/globals/SiteContent'
 import { canRunGoogleSheetsSync } from '@/src/endpoints/sync-google-sheets'
 import { canRunUntappdSync } from '@/src/endpoints/sync-untappd-ratings'
 import { getAdminRelationshipID } from '@/src/components/admin/relationship-value'
-import { canEditRecurringFood } from '@/src/access/roles'
+import { isFoodManager } from '@/src/access/roles'
 
 function userWith(roles: User['roles'], locations: User['locations'] = []): User {
   return {
@@ -94,10 +94,10 @@ describe('user assignment authorization', () => {
   })
 
   it('lets food managers edit the Recurring Food grid and keeps event managers read-only', () => {
-    expect(canEditRecurringFood(userWith(['admin']))).toBe(true)
-    expect(canEditRecurringFood(userWith(['food-manager']))).toBe(true)
-    expect(canEditRecurringFood(userWith(['event-manager']))).toBe(false)
-    expect(canEditRecurringFood(userWith(['admin', 'event-manager']))).toBe(true)
+    expect(isFoodManager(userWith(['admin']))).toBe(true)
+    expect(isFoodManager(userWith(['food-manager']))).toBe(true)
+    expect(isFoodManager(userWith(['event-manager']))).toBe(false)
+    expect(isFoodManager(userWith(['admin', 'event-manager']))).toBe(true)
   })
 
   it('lets a lead bartender scope the bartenders they invite', () => {

@@ -55,8 +55,7 @@ const FAILED_UNTAPPD = {
   rating: null,
   ratingCount: null,
   positiveReviews: [],
-  failed: true as const,
-  retryable: true as const,
+  failure: 'retryable' as const,
 }
 
 /** Permanent failure (404/410 on a delisted beer): retrying cannot help. */
@@ -64,8 +63,7 @@ const UNAVAILABLE_UNTAPPD = {
   rating: null,
   ratingCount: null,
   positiveReviews: [],
-  failed: true as const,
-  retryable: false as const,
+  failure: 'permanent' as const,
 }
 
 function beerDoc({
@@ -103,7 +101,8 @@ const DEAD_URL_BEER = beerDoc({
   untappd: 'https://untappd.com/b/gone',
 })
 
-async function runWithFakeTimers<T>(task: Promise<T>): Promise<T> {
+/** Drains the pending pacing timers (installed by `beforeEach`) so `task` can settle. */
+async function drainTimers<T>(task: Promise<T>): Promise<T> {
   await vi.runAllTimersAsync()
   return task
 }
@@ -138,7 +137,7 @@ describe('sync-untappd job task', () => {
     fetchUntappdData.mockResolvedValue({ rating: 4, ratingCount: 100, positiveReviews: [] })
     update.mockResolvedValue({})
 
-    await expect(runWithFakeTimers(runUntappdRatingsSync(payload))).resolves.toMatchObject({
+    await expect(drainTimers(runUntappdRatingsSync(payload))).resolves.toMatchObject({
       updated: 1,
       skipped: 1,
       errors: 0,
@@ -169,12 +168,14 @@ describe('sync-untappd job task', () => {
       .mockResolvedValueOnce({ rating: null, ratingCount: null, positiveReviews: [] })
 
     const started = Date.now()
-    await expect(runWithFakeTimers(runUntappdRatingsSync(payload))).resolves.toMatchObject({
+    await expect(drainTimers(runUntappdRatingsSync(payload))).resolves.toMatchObject({
       updated: 0,
       skipped: 2,
       errors: 0,
     })
-    expect(Date.now() - started).toBeGreaterThanOrEqual(900)
+    // Both beers take the skip path, and N beers pause N-1 times (nothing
+    // follows the last one), so one 500 ms pause proves skips are paced.
+    expect(Date.now() - started).toBeGreaterThanOrEqual(500)
   })
 
   it('counts failed requests as errors rather than silent skips', async () => {
@@ -183,7 +184,7 @@ describe('sync-untappd job task', () => {
     })
     fetchUntappdData.mockResolvedValue(FAILED_UNTAPPD)
 
-    await expect(runWithFakeTimers(runUntappdRatingsSync(payload))).resolves.toMatchObject({
+    await expect(drainTimers(runUntappdRatingsSync(payload))).resolves.toMatchObject({
       updated: 0,
       skipped: 0,
       errors: 1,
@@ -201,6 +202,8 @@ describe('sync-untappd job task', () => {
       req: { payload: Payload }
     }) => Promise<unknown>
 
+    // Inlined rather than using `drainTimers`: awaiting the drain before
+    // attaching `.rejects` would surface the rejection as unhandled.
     const result = handler({ req: { payload } })
     const assertion = expect(result).rejects.toThrow(/incomplete/i)
     await vi.runAllTimersAsync()
@@ -211,7 +214,7 @@ describe('sync-untappd job task', () => {
     find.mockResolvedValue({ docs: [DEAD_URL_BEER] })
     fetchUntappdData.mockResolvedValue(UNAVAILABLE_UNTAPPD)
 
-    await expect(runWithFakeTimers(runUntappdRatingsSync(payload))).resolves.toMatchObject({
+    await expect(drainTimers(runUntappdRatingsSync(payload))).resolves.toMatchObject({
       updated: 0,
       skipped: 0,
       errors: 0,
@@ -230,9 +233,9 @@ describe('sync-untappd job task', () => {
       req: { payload: Payload }
     }) => Promise<{ output: { unavailable: number } }>
 
-    const result = handler({ req: { payload } })
-    await vi.runAllTimersAsync()
-    await expect(result).resolves.toMatchObject({ output: { unavailable: 1, errors: 0 } })
+    await expect(drainTimers(handler({ req: { payload } }))).resolves.toMatchObject({
+      output: { unavailable: 1, errors: 0 },
+    })
   })
 
   it('does not write when ratings, counts, and reviews are unchanged', async () => {
@@ -241,7 +244,7 @@ describe('sync-untappd job task', () => {
     })
     fetchUntappdData.mockResolvedValue({ rating: 4, ratingCount: 100, positiveReviews: [] })
 
-    await expect(runWithFakeTimers(runUntappdRatingsSync(payload))).resolves.toMatchObject({
+    await expect(drainTimers(runUntappdRatingsSync(payload))).resolves.toMatchObject({
       updated: 0,
       skipped: 1,
     })

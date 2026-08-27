@@ -1,14 +1,13 @@
-import type { CollectionConfig, Access, FieldAccess } from 'payload'
+import type { CollectionConfig, Access } from 'payload'
 import type { User } from '@/src/payload-types'
 import { generateUniqueSlug } from './utils/generateUniqueSlug'
-import { adminAccess, adminFieldAccess, isAdmin, hasRole } from '@/src/access/roles'
-
-/**
- * Field access: Admin or Lead Bartender can update
- */
-const leadBartenderFieldAccess: FieldAccess = ({ req: { user } }) => {
-  return hasRole(user, ['admin', 'lead-bartender'])
-}
+import {
+  adminAccess,
+  adminFieldAccess,
+  isAdmin,
+  hasRole,
+  leadBartenderFieldAccess,
+} from '@/src/access/roles'
 
 /**
  * Get location IDs from user's assigned locations

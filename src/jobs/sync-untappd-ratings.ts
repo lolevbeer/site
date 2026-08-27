@@ -10,8 +10,7 @@ export interface UntappdSyncResult {
   errors: number
   /**
    * Permanently unreachable beer URLs (404/410). Reported and left for a human
-   * to fix, but never failed over — retrying a dead link only re-scrapes the
-   * whole catalogue to reach the same result.
+   * to fix, never failed over — see `PERMANENT_STATUSES` in `utils/untappd`.
    */
   unavailable: number
   circuitBroken: boolean
@@ -38,9 +37,7 @@ export async function runUntappdRatingsSync(payload: Payload): Promise<UntappdSy
     circuitBroken: false,
   }
 
-  const settled = () => results.updated + results.skipped + results.errors + results.unavailable
-
-  for (const beer of beers.docs) {
+  for (const [index, beer] of beers.docs.entries()) {
     if (!beer.untappd) {
       results.skipped++
       continue
@@ -48,28 +45,26 @@ export async function runUntappdRatingsSync(payload: Payload): Promise<UntappdSy
 
     if (isCircuitOpen()) {
       results.circuitBroken = true
-      // Compute before mutating results.skipped so the log reports real progress.
-      const remaining = beers.docs.length - settled()
-      logger.warn('Untappd sync stopped: circuit breaker open', {
-        processed: beers.docs.length - remaining,
-        remaining,
-      })
+      const processed = results.updated + results.skipped + results.errors + results.unavailable
+      const remaining = beers.docs.length - processed
+      logger.warn('Untappd sync stopped: circuit breaker open', { processed, remaining })
       results.skipped += remaining
       break
     }
 
     try {
-      const { rating, ratingCount, positiveReviews, failed, retryable } = await fetchUntappdData(
+      const { rating, ratingCount, positiveReviews, failure } = await fetchUntappdData(
         beer.untappd,
       )
 
-      if (failed) {
-        if (retryable === false) {
-          logger.warn(`Untappd URL is unreachable for beer ${beer.name}`, { url: beer.untappd })
-          results.unavailable++
-        } else {
-          results.errors++
-        }
+      if (failure === 'permanent') {
+        logger.warn(`Untappd URL is unreachable for beer ${beer.name}`, { url: beer.untappd })
+        results.unavailable++
+        continue
+      }
+
+      if (failure) {
+        results.errors++
         continue
       }
 
@@ -113,7 +108,10 @@ export async function runUntappdRatingsSync(payload: Payload): Promise<UntappdSy
       // Untappd is scraped without an official API; keep requests deliberately
       // slow. In `finally` so the skip paths above (`continue`) are paced too —
       // a mostly-unchanged catalog would otherwise be scraped in a tight burst.
-      await new Promise((resolve) => setTimeout(resolve, 500))
+      // Nothing follows the last beer, so don't pace it.
+      if (index < beers.docs.length - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 500))
+      }
     }
   }
 
@@ -143,10 +141,7 @@ export const syncUntappdRatingsTask: TaskConfig = {
    * run instead of the job being recorded as a success over stale data.
    *
    * Permanently dead beer URLs (404/410) land in `unavailable` and are logged
-   * rather than thrown: a retry re-scrapes every beer from scratch (there is no
-   * "already synced today" short circuit, and each beer costs a request plus a
-   * 500 ms pace), so failing over one stale link would triple the nightly load
-   * on Untappd and still never succeed until someone edits the URL.
+   * rather than thrown; see `PERMANENT_STATUSES` in `utils/untappd` for why.
    */
   handler: async ({ req }) => {
     const output = await runUntappdRatingsSync(req.payload)

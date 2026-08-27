@@ -76,6 +76,25 @@ const COLLECTION_PATH_BUILDERS: Record<string, (doc: Record<string, unknown>) =>
   menus: (doc) => (doc.url ? [`/m/${doc.url}`] : []),
 }
 
+// Extra invalidation that only whole-collection batch runs need, so a
+// per-document hook doesn't pay for it. A single write already fires its own
+// `COLLECTION_PATH_BUILDERS` path and Beers.afterChange's precise
+// `menu-${url}` tags; a batch writer passes `context.skipRevalidate`, which
+// skips both, and has no doc to build a path from.
+const COLLECTION_BATCH_EXTRAS: Record<
+  string,
+  { tags?: string[]; paths?: Array<[string, 'page' | 'layout']> }
+> = {
+  beers: {
+    // getMenuByUrl subscribes to the broad 'menus' tag, not 'beers'.
+    tags: ['menus'],
+    // `/beer/[variant]` is a 3600s ISR route; invalidating the dynamic segment
+    // covers every beer page in one call, which is what a catalogue-wide batch
+    // wants anyway. Tag invalidation alone would leave them an hour stale.
+    paths: [['/beer/[variant]', 'page']],
+  },
+}
+
 function invalidateCollection(slug: string, doc?: Record<string, unknown>): void {
   ;(COLLECTION_CACHE_MAP[slug] || []).forEach((tag) => revalidateTag(tag))
   ;(COLLECTION_PATHS[slug] || []).forEach((path) => revalidatePath(path))
@@ -88,13 +107,19 @@ function invalidateCollection(slug: string, doc?: Record<string, unknown>): void
 }
 
 /**
- * Invalidate every tag and static path registered for a collection.
- * For callers outside the hook system (e.g. the cron runner) that batch
- * writes with `skipRevalidate` and revalidate once afterwards — keeps the
- * cache map single-sourced here.
+ * Invalidate every tag and path a whole-collection batch needs — the static
+ * map plus `COLLECTION_BATCH_EXTRAS`. For callers outside the hook system
+ * (the cron runner, the sheet sync) that write with `skipRevalidate` and
+ * revalidate once afterwards, so the route and tag shapes stay single-sourced
+ * here rather than being hand-rolled per caller.
  */
 export function revalidateForCollection(slug: string): void {
   invalidateCollection(slug)
+
+  const extras = COLLECTION_BATCH_EXTRAS[slug]
+  if (!extras) return
+  extras.tags?.forEach((tag) => revalidateTag(tag))
+  extras.paths?.forEach(([path, type]) => revalidatePath(path, type))
 }
 
 /**

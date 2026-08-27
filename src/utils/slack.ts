@@ -212,13 +212,6 @@ function menuLabel(menu: Menu): string {
   return menu.description || menu.name
 }
 
-function locationOption(location: { id: string; name: string }): SlackOption {
-  return {
-    text: { type: 'plain_text', text: location.name },
-    value: String(location.id),
-  }
-}
-
 /**
  * Invite modal: pick a Slack member, name them, choose roles and (optionally)
  * locations. The invitee is a Slack user picker rather than a typed email on
@@ -231,7 +224,10 @@ function locationOption(location: { id: string; name: string }): SlackOption {
 export function buildInviteModalView(
   locations: { id: string; name: string }[],
 ): Record<string, unknown> {
-  const locationOptions = locations.map(locationOption)
+  const locationOptions: SlackOption[] = locations.map((location) => ({
+    text: { type: 'plain_text', text: location.name },
+    value: String(location.id),
+  }))
   return {
     type: 'modal',
     callback_id: SLACK_IDS.callbackInvite,

@@ -42,6 +42,22 @@ export function isAdmin(user: User | null | undefined): boolean {
 }
 
 /**
+ * Roles allowed to read recurring food schedule data — shared between the
+ * RecurringFood global's access control and the admin server actions so the
+ * two surfaces can't drift.
+ */
+export const SCHEDULE_READER_ROLES: Role[] = ['admin', 'event-manager', 'food-manager']
+
+/** Roles that may write Food, Food Vendors, and recurring food schedules. */
+export const FOOD_MANAGER_ROLES: Role[] = ['admin', 'food-manager']
+
+/** Roles that may write Events. */
+export const EVENT_MANAGER_ROLES: Role[] = ['admin', 'event-manager']
+
+/** Roles that may invite bartenders and assign them to locations. */
+export const LEAD_BARTENDER_ROLES: Role[] = ['admin', 'lead-bartender']
+
+/**
  * Access control: User must be an admin
  */
 export const adminAccess: Access = ({ req: { user } }) => {
@@ -66,7 +82,14 @@ export const authenticatedFieldAccess: FieldAccess = ({ req: { user } }) => {
  * Field access control: User must have admin or event-manager role
  */
 export const eventManagerFieldAccess: FieldAccess = ({ req: { user } }) => {
-  return hasRole(user, ['admin', 'event-manager'])
+  return hasRole(user, EVENT_MANAGER_ROLES)
+}
+
+/**
+ * Field access control: User must have admin or lead-bartender role
+ */
+export const leadBartenderFieldAccess: FieldAccess = ({ req: { user } }) => {
+  return hasRole(user, LEAD_BARTENDER_ROLES)
 }
 
 /**
@@ -106,22 +129,22 @@ export const beerManagerAccess: Access = ({ req: { user } }) => {
  * Access control: User must have admin or event-manager role
  */
 export const eventManagerAccess: Access = ({ req: { user } }) => {
-  return hasRole(user, ['admin', 'event-manager'])
+  return hasRole(user, EVENT_MANAGER_ROLES)
 }
 
-/** Roles that may write Recurring Food (matches RecurringFood.access.update). */
-export const FOOD_EDITOR_ROLES: Role[] = ['admin', 'food-manager']
-
-/** Whether the Recurring Food grid should be editable for this user. */
-export function canEditRecurringFood(user: User | null | undefined): boolean {
-  return hasRole(user, FOOD_EDITOR_ROLES)
+/**
+ * Whether this user may write food data — Food, Food Vendors, and the
+ * recurring food schedules and exclusions behind the admin grid.
+ */
+export function isFoodManager(user: User | null | undefined): boolean {
+  return hasRole(user, FOOD_MANAGER_ROLES)
 }
 
 /**
  * Access control: User must have admin or food-manager role
  */
 export const foodManagerAccess: Access = ({ req: { user } }) => {
-  return canEditRecurringFood(user)
+  return isFoodManager(user)
 }
 
 /**
@@ -129,5 +152,5 @@ export const foodManagerAccess: Access = ({ req: { user } }) => {
  * Used for creating bartender users
  */
 export const leadBartenderAccess: Access = ({ req: { user } }) => {
-  return hasRole(user, ['admin', 'lead-bartender'])
+  return hasRole(user, LEAD_BARTENDER_ROLES)
 }

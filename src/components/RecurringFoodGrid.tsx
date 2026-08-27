@@ -12,14 +12,15 @@ import {
   setRecurringFoodSchedule,
   type SimpleLocation,
 } from '@/src/actions/admin-data'
-import { canEditRecurringFood } from '@/src/access/roles'
+import { isFoodManager } from '@/src/access/roles'
+import { recurringDays as days, recurringOccurrences as weeks } from '@/src/utils/recurring-food'
+import { capitalizeName } from '@/lib/utils/formatters'
 import { logger } from '@/lib/utils/logger'
 import type { User } from '@/src/payload-types'
 
-const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const
 const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-const fullDayLabels = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-const weeks = ['first', 'second', 'third', 'fourth', 'fifth'] as const
+// Derived so the labels can't fall out of index alignment with `days`.
+const fullDayLabels = days.map(capitalizeName)
 const weekLabels = ['1', '2', '3', '4', '5']
 const weekOrdinals = ['1st', '2nd', '3rd', '4th', '5th']
 
@@ -148,8 +149,8 @@ interface DatesListProps {
   schedules: SchedulesData
   exclusions: ExclusionsData
   onExclusionChange: (locationId: string, date: string, excluded: boolean) => Promise<void>
-  /** Keys of the writes currently in flight; see `saveKey` in the parent. */
-  pendingKeys: string[]
+  /** Keys of the writes currently in flight; see `exclusionSaveKey` above. */
+  pendingKeys: ReadonlySet<string>
   readOnly: boolean
 }
 
@@ -200,13 +201,6 @@ const DatesList: React.FC<DatesListProps> = ({
   // Fetch individual food events using server action (local API)
   useEffect(() => {
     let cancelled = false
-    setIndividualFoodEvents([])
-
-    if (!locationId) {
-      return () => {
-        cancelled = true
-      }
-    }
 
     const fetchIndividualEvents = async () => {
       try {
@@ -451,9 +445,7 @@ const DatesList: React.FC<DatesListProps> = ({
               const isIndividual = item.type === 'individual'
               // Only the date being written is locked; the rest of the list
               // stays clickable so the save queue can actually queue.
-              const isPending = pendingKeys.includes(
-                exclusionSaveKey(locationId, toDateKey(item.date)),
-              )
+              const isPending = pendingKeys.has(exclusionSaveKey(locationId, toDateKey(item.date)))
               const isDisabled = isIndividual || isPending || readOnly
               const displayName = item.vendorName || vendorNames[item.vendorId] || '...'
               let backgroundColor = 'transparent'
@@ -551,8 +543,8 @@ interface LocationGridProps {
     vendorId: string | null,
   ) => Promise<void>
   onExclusionChange: (locationId: string, date: string, excluded: boolean) => Promise<void>
-  /** Keys of the writes currently in flight; see `saveKey` helpers above. */
-  pendingKeys: string[]
+  /** Keys of the writes currently in flight; see the `*SaveKey` helpers above. */
+  pendingKeys: ReadonlySet<string>
   readOnly: boolean
 }
 
@@ -659,7 +651,7 @@ const LocationGrid: React.FC<LocationGridProps> = ({
                         cellKey={cellKey}
                         // Only this cell locks while its own save is in flight,
                         // so a run of quick edits queues instead of blocking.
-                        readOnly={readOnly || pendingKeys.includes(cellKey)}
+                        readOnly={readOnly || pendingKeys.has(cellKey)}
                       />
                     </td>
                   )
@@ -689,14 +681,14 @@ const LocationGrid: React.FC<LocationGridProps> = ({
  */
 export const RecurringFoodGrid: React.FC = () => {
   const { user } = useAuth<User>()
-  const canEdit = canEditRecurringFood(user)
+  const canEdit = isFoodManager(user)
   const [locations, setLocations] = useState<Location[]>([])
   const [activeTab, setActiveTab] = useState<string>('')
   const [schedules, setSchedules] = useState<SchedulesData>({})
   const [exclusions, setExclusions] = useState<ExclusionsData>({})
   const [loading, setLoading] = useState(true)
   const [saveError, setSaveError] = useState<string | null>(null)
-  const [pendingKeys, setPendingKeys] = useState<string[]>([])
+  const [pendingKeys, setPendingKeys] = useState<ReadonlySet<string>>(() => new Set())
 
   /**
    * Every write goes through one promise chain. Each cell edit is a
@@ -712,12 +704,12 @@ export const RecurringFoodGrid: React.FC = () => {
    */
   const queueRef = useRef<Promise<unknown>>(Promise.resolve())
   const enqueue = useCallback((key: string, task: () => Promise<void>): Promise<void> => {
-    setPendingKeys((keys) => [...keys, key])
+    setPendingKeys((keys) => new Set(keys).add(key))
     const next = queueRef.current.then(task).finally(() =>
       setPendingKeys((keys) => {
-        // Drop one occurrence only — the same cell may be queued twice.
-        const index = keys.indexOf(key)
-        return index === -1 ? keys : [...keys.slice(0, index), ...keys.slice(index + 1)]
+        const remaining = new Set(keys)
+        remaining.delete(key)
+        return remaining
       }),
     )
     // Keep the chain alive after a rejection so later edits still run; the
@@ -756,6 +748,27 @@ export const RecurringFoodGrid: React.FC = () => {
     void load()
   }, [refreshData])
 
+  /**
+   * Queue one optimistic write. Callers apply their change to local state
+   * first; on failure this restores the server's version, reports it, and
+   * rethrows so a caller that renders its own confirmation (the exclusion
+   * modal) can stay open.
+   */
+  const save = useCallback(
+    (key: string, label: 'schedule' | 'exclusion', task: () => Promise<void>): Promise<void> =>
+      enqueue(key, async () => {
+        try {
+          await task()
+        } catch (error) {
+          logger.error(`Error saving recurring food ${label}:`, error)
+          setSaveError(`That ${label} change was not saved. The grid has been restored.`)
+          await refreshData()
+          throw error
+        }
+      }),
+    [enqueue, refreshData],
+  )
+
   const handleScheduleChange = useCallback(
     async (locationId: string, day: Day, week: Week, vendorId: string | null) => {
       if (!canEdit) return
@@ -771,17 +784,12 @@ export const RecurringFoodGrid: React.FC = () => {
         },
       }))
 
-      await enqueue(scheduleSaveKey(locationId, day, week), async () => {
-        try {
-          await setRecurringFoodSchedule(locationId, day, week, vendorId)
-        } catch (error) {
-          logger.error('Error saving recurring food schedule:', error)
-          setSaveError('That schedule change was not saved. The grid has been restored.')
-          await refreshData()
-        }
-      })
+      // Nothing to react to beyond the banner `save` already set.
+      await save(scheduleSaveKey(locationId, day, week), 'schedule', () =>
+        setRecurringFoodSchedule(locationId, day, week, vendorId),
+      ).catch(() => {})
     },
-    [canEdit, enqueue, refreshData],
+    [canEdit, save],
   )
 
   const handleExclusionChange = useCallback(
@@ -795,18 +803,11 @@ export const RecurringFoodGrid: React.FC = () => {
         return { ...current, [locationId]: [...dates].sort() }
       })
 
-      await enqueue(exclusionSaveKey(locationId, date), async () => {
-        try {
-          await setRecurringFoodExclusion(locationId, date, excluded)
-        } catch (error) {
-          logger.error('Error saving recurring food exclusion:', error)
-          setSaveError('That exclusion change was not saved. The grid has been restored.')
-          await refreshData()
-          throw error
-        }
-      })
+      await save(exclusionSaveKey(locationId, date), 'exclusion', () =>
+        setRecurringFoodExclusion(locationId, date, excluded),
+      )
     },
-    [canEdit, enqueue, refreshData],
+    [canEdit, save],
   )
 
   const activeLocation = useMemo(() => {

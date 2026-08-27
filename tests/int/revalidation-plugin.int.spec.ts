@@ -35,7 +35,12 @@ describe('revalidateForCollection', () => {
   it('keeps beer bulk invalidation on the beers list paths', () => {
     revalidateForCollection('beers')
 
-    expect(revalidateTag).toHaveBeenCalledWith('beers')
-    expect(revalidatePath.mock.calls.map((call) => call[0]).sort()).toEqual(['/', '/beer'])
+    expect(revalidateTag.mock.calls.map((call) => call[0]).sort()).toEqual(['beers', 'menus'])
+    expect(revalidatePath.mock.calls.map((call) => call[0]).sort()).toEqual([
+      '/',
+      '/beer',
+      '/beer/[variant]',
+    ])
+    expect(revalidatePath).toHaveBeenCalledWith('/beer/[variant]', 'page')
   })
 })

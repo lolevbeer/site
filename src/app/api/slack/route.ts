@@ -32,6 +32,7 @@ import crypto from 'crypto'
 import config from '@/src/payload.config'
 import { logger } from '@/lib/utils/logger'
 import { isAdmin, leadBartenderAccess } from '@/src/access/roles'
+import { relationshipIds } from '@/src/utils/relationship-id'
 import { canUpdateMenus } from '@/src/collections/Menus'
 import type { User } from '@/src/payload-types'
 import {
@@ -493,13 +494,9 @@ async function openInviteModal(
     // by Users' beforeChange hook), so don't offer choices that would 403.
     let selectableLocations = locations?.docs ?? []
     if (!isAdmin(user)) {
-      const assignedLocations = Array.isArray(user.locations) ? user.locations : []
-      const ownLocationIds = new Set(
-        assignedLocations.map((location) => {
-          if (typeof location === 'object' && location !== null) return String(location.id)
-          return String(location)
-        }),
-      )
+      // Same normalization the Users hook caps against, so the picker can't
+      // offer a location the invite would then reject.
+      const ownLocationIds = new Set(relationshipIds(user.locations) ?? [])
       selectableLocations = selectableLocations.filter((location) =>
         ownLocationIds.has(String(location.id)),
       )

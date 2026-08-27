@@ -20,27 +20,23 @@ export interface UntappdData {
   ratingCount: number | null
   positiveReviews: UntappdReview[]
   /**
-   * True when the request itself failed (rate limit, 5xx, network error, dead
+   * Set when the request itself failed (rate limit, 5xx, network error, dead
    * URL, or a skipped request because the circuit is open) rather than the page
-   * simply having no rating. Batch callers use it to distinguish "nothing to
-   * do" from "stale data".
+   * simply having no rating; absent on success. See `PERMANENT_STATUSES` for
+   * what separates the two kinds and why the distinction matters.
    */
-  failed?: boolean
-  /**
-   * Only meaningful when `failed` is true. True when retrying could plausibly
-   * succeed (rate limit, 5xx, network error, open circuit); false for a
-   * permanent client error such as a 404 on a delisted or mistyped beer URL.
-   *
-   * Batch callers must not fail a whole run over a non-retryable URL: the retry
-   * would re-scrape the entire catalogue and still hit the same dead link,
-   * turning one bad row into a job that never succeeds again.
-   */
-  retryable?: boolean
+  failure?: 'retryable' | 'permanent'
 }
 
 /**
  * HTTP statuses treated as permanent for a single beer URL. Everything else —
- * 429, 403, 5xx, network errors — is assumed transient and worth a retry.
+ * 429, 403, 5xx, network errors, an open circuit — is assumed transient and
+ * worth a retry.
+ *
+ * The split exists so batch callers never fail a whole run over a dead link.
+ * There is no "already synced today" short circuit, so a retry re-scrapes the
+ * entire catalogue (a request plus a pacing delay per beer) and still hits the
+ * same 404 — turning one stale URL into a job that never succeeds again.
  */
 const PERMANENT_STATUSES = new Set([404, 410])
 
@@ -67,18 +63,17 @@ export function resetCircuit(): void {
  * Includes rate-limit detection and circuit breaker pattern.
  */
 export async function fetchUntappdData(url: string): Promise<UntappdData> {
-  const failure = (retryable: boolean): UntappdData => ({
+  const failed = (failure: 'retryable' | 'permanent'): UntappdData => ({
     rating: null,
     ratingCount: null,
     positiveReviews: [],
-    failed: true,
-    retryable,
+    failure,
   })
 
   // Circuit breaker: skip requests if too many consecutive failures. The beer
   // itself is fine — the run was cut short — so this is retryable.
   if (isCircuitOpen()) {
-    return failure(true)
+    return failed('retryable')
   }
 
   try {
@@ -96,7 +91,7 @@ export async function fetchUntappdData(url: string): Promise<UntappdData> {
         level: 'warning',
         extra: { url: fullUrl, consecutiveFailures },
       })
-      return failure(true)
+      return failed('retryable')
     }
 
     if (!response.ok) {
@@ -108,7 +103,7 @@ export async function fetchUntappdData(url: string): Promise<UntappdData> {
           level: 'warning',
           extra: { url: fullUrl, status: response.status },
         })
-        return failure(false)
+        return failed('permanent')
       }
 
       consecutiveFailures++
@@ -118,7 +113,7 @@ export async function fetchUntappdData(url: string): Promise<UntappdData> {
           extra: { url: fullUrl, status: response.status, consecutiveFailures },
         })
       }
-      return failure(true)
+      return failed('retryable')
     }
 
     const html = await response.text()
@@ -212,6 +207,6 @@ export async function fetchUntappdData(url: string): Promise<UntappdData> {
     }
 
     // Network/parse errors are transient by assumption.
-    return failure(true)
+    return failed('retryable')
   }
 }
