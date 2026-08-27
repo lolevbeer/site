@@ -1,5 +1,6 @@
 import type { Access, CollectionConfig } from 'payload'
 import { beerManagerAccess, hasRole } from '@/src/access/roles'
+import { revalidateBeerPageForReview } from '@/src/utils/revalidate-beer-page'
 
 const canReadBeerReviews: Access = ({ req: { user } }) => {
   if (hasRole(user, ['admin', 'beer-manager'])) return true
@@ -28,6 +29,22 @@ export const BeerReviews: CollectionConfig = {
     create: beerManagerAccess,
     update: beerManagerAccess,
     delete: beerManagerAccess,
+  },
+  hooks: {
+    afterChange: [
+      async ({ context, doc, req }) => {
+        if (context?.skipRevalidate) return doc
+        await revalidateBeerPageForReview(req.payload, doc.beer)
+        return doc
+      },
+    ],
+    afterDelete: [
+      async ({ context, doc, req }) => {
+        if (context?.skipRevalidate) return doc
+        await revalidateBeerPageForReview(req.payload, doc.beer)
+        return doc
+      },
+    ],
   },
   fields: [
     {

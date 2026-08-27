@@ -109,11 +109,19 @@ export const eventManagerAccess: Access = ({ req: { user } }) => {
   return hasRole(user, ['admin', 'event-manager'])
 }
 
+/** Roles that may write Recurring Food (matches RecurringFood.access.update). */
+export const FOOD_EDITOR_ROLES: Role[] = ['admin', 'food-manager']
+
+/** Whether the Recurring Food grid should be editable for this user. */
+export function canEditRecurringFood(user: User | null | undefined): boolean {
+  return hasRole(user, FOOD_EDITOR_ROLES)
+}
+
 /**
  * Access control: User must have admin or food-manager role
  */
 export const foodManagerAccess: Access = ({ req: { user } }) => {
-  return hasRole(user, ['admin', 'food-manager'])
+  return canEditRecurringFood(user)
 }
 
 /**

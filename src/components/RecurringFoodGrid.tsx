@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Banner, ConfirmationModal, RelationshipInput, useModal } from '@payloadcms/ui'
+import { Banner, ConfirmationModal, RelationshipInput, useAuth, useModal } from '@payloadcms/ui'
 import type { ValueWithRelation } from 'payload'
 import {
   getActiveLocations,
@@ -12,7 +12,9 @@ import {
   setRecurringFoodSchedule,
   type SimpleLocation,
 } from '@/src/actions/admin-data'
+import { canEditRecurringFood } from '@/src/access/roles'
 import { logger } from '@/lib/utils/logger'
+import type { User } from '@/src/payload-types'
 
 const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const
 const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -104,8 +106,8 @@ const GridCell: React.FC<GridCellProps> = ({ value, onChange, cellKey, readOnly 
       path={`cell-${cellKey}`}
       relationTo={['food-vendors']}
       hasMany={false}
-      allowCreate={true}
-      allowEdit={true}
+      allowCreate={!readOnly}
+      allowEdit={!readOnly}
       value={valueWithRelation}
       onChange={handleChange}
       appearance="select"
@@ -131,6 +133,7 @@ interface DatesListProps {
   exclusions: ExclusionsData
   onExclusionChange: (locationId: string, date: string, excluded: boolean) => Promise<void>
   saving: boolean
+  readOnly: boolean
 }
 
 const EXCLUSION_MODAL_SLUG = 'confirm-exclusion'
@@ -141,6 +144,7 @@ const DatesList: React.FC<DatesListProps> = ({
   exclusions,
   onExclusionChange,
   saving,
+  readOnly,
 }) => {
   const [vendorNames, setVendorNames] = useState<Record<string, string>>({})
   const [individualFoodEvents, setIndividualFoodEvents] = useState<ScheduledDate[]>([])
@@ -365,16 +369,18 @@ const DatesList: React.FC<DatesListProps> = ({
         }}
       >
         Upcoming Dates
-        <span
-          style={{
-            fontWeight: 400,
-            fontSize: '12px',
-            color: 'var(--theme-elevation-400)',
-            marginLeft: '8px',
-          }}
-        >
-          (click to exclude)
-        </span>
+        {!readOnly && (
+          <span
+            style={{
+              fontWeight: 400,
+              fontSize: '12px',
+              color: 'var(--theme-elevation-400)',
+              marginLeft: '8px',
+            }}
+          >
+            (click to exclude)
+          </span>
+        )}
       </h4>
       <div style={{ fontSize: '13px', color: 'var(--theme-elevation-600)' }}>
         {Object.entries(groupedByMonth).map(([month, dates]) => (
@@ -392,14 +398,14 @@ const DatesList: React.FC<DatesListProps> = ({
             {dates.map((item, idx) => {
               const excluded = item.type === 'recurring' && isExcluded(item.date)
               const isIndividual = item.type === 'individual'
-              const isDisabled = isIndividual || saving
+              const isDisabled = isIndividual || saving || readOnly
               const displayName = item.vendorName || vendorNames[item.vendorId] || '...'
               let backgroundColor = 'transparent'
               if (excluded) backgroundColor = 'var(--theme-error-50)'
               else if (isIndividual) backgroundColor = 'var(--theme-elevation-100)'
 
               let ariaLabel: string | undefined
-              if (!isIndividual) {
+              if (!isIndividual && !readOnly) {
                 const action = excluded ? 'Restore' : 'Exclude'
                 ariaLabel = `${action} ${displayName} on ${formatDate(item.date)}`
               }
@@ -490,6 +496,7 @@ interface LocationGridProps {
   ) => Promise<void>
   onExclusionChange: (locationId: string, date: string, excluded: boolean) => Promise<void>
   saving: boolean
+  readOnly: boolean
 }
 
 const LocationGrid: React.FC<LocationGridProps> = ({
@@ -499,6 +506,7 @@ const LocationGrid: React.FC<LocationGridProps> = ({
   onScheduleChange,
   onExclusionChange,
   saving,
+  readOnly,
 }) => {
   const locationSchedule = schedules[location.id] || {}
 
@@ -591,7 +599,7 @@ const LocationGrid: React.FC<LocationGridProps> = ({
                         value={cellValue}
                         onChange={(vendorId) => handleCellChange(day, week, vendorId)}
                         cellKey={`${location.id}-${day}-${week}`}
-                        readOnly={saving}
+                        readOnly={readOnly || saving}
                       />
                     </td>
                   )
@@ -607,6 +615,7 @@ const LocationGrid: React.FC<LocationGridProps> = ({
         exclusions={exclusions}
         onExclusionChange={onExclusionChange}
         saving={saving}
+        readOnly={readOnly}
       />
     </div>
   )
@@ -615,10 +624,12 @@ const LocationGrid: React.FC<LocationGridProps> = ({
 /**
  * RecurringFoodGrid - Location-agnostic recurring food schedule manager
  *
- * Fetches locations dynamically and renders tabs for each. Edits save
- * immediately through authenticated actions backed by normalized collections.
+ * Event managers can read the grid (RecurringFood.access.read) but writes stay
+ * food-manager/admin, so the cells lock for viewers instead of 403ing on save.
  */
 export const RecurringFoodGrid: React.FC = () => {
+  const { user } = useAuth<User>()
+  const canEdit = canEditRecurringFood(user)
   const [locations, setLocations] = useState<Location[]>([])
   const [activeTab, setActiveTab] = useState<string>('')
   const [schedules, setSchedules] = useState<SchedulesData>({})
@@ -676,6 +687,7 @@ export const RecurringFoodGrid: React.FC = () => {
 
   const handleScheduleChange = useCallback(
     async (locationId: string, day: Day, week: Week, vendorId: string | null) => {
+      if (!canEdit) return
       setSaveError(null)
       setSchedules((current) => ({
         ...current,
@@ -698,11 +710,12 @@ export const RecurringFoodGrid: React.FC = () => {
         }
       })
     },
-    [enqueue, refreshData],
+    [canEdit, enqueue, refreshData],
   )
 
   const handleExclusionChange = useCallback(
     async (locationId: string, date: string, excluded: boolean) => {
+      if (!canEdit) return
       setSaveError(null)
       setExclusions((current) => {
         const dates = new Set(current[locationId] || [])
@@ -722,7 +735,7 @@ export const RecurringFoodGrid: React.FC = () => {
         }
       })
     },
-    [enqueue, refreshData],
+    [canEdit, enqueue, refreshData],
   )
 
   const activeLocation = useMemo(() => {
@@ -747,7 +760,11 @@ export const RecurringFoodGrid: React.FC = () => {
 
   return (
     <div>
-      <Banner type="info">Changes in this grid save immediately.</Banner>
+      <Banner type="info">
+        {canEdit
+          ? 'Changes in this grid save immediately.'
+          : 'View only — ask a food manager to change the schedule.'}
+      </Banner>
       {saveError && <Banner type="error">{saveError}</Banner>}
       {/* Tabs */}
       <div
@@ -803,6 +820,7 @@ export const RecurringFoodGrid: React.FC = () => {
             onScheduleChange={handleScheduleChange}
             onExclusionChange={handleExclusionChange}
             saving={pendingSaves > 0}
+            readOnly={!canEdit}
           />
         </div>
       )}

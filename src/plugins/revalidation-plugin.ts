@@ -56,17 +56,35 @@ const COLLECTION_PATHS: Record<string, string[]> = {
   styles: ['/beer'],
   distributors: ['/beer-map'],
   'food-vendors': ['/food'],
-  'recurring-food-schedules': ['/food'],
-  'recurring-food-exclusions': ['/food'],
+  'recurring-food-schedules': ['/', '/food'],
+  'recurring-food-exclusions': ['/', '/food'],
   products: ['/'],
   'holiday-hours': ['/'],
   faqs: ['/faq'],
+}
+
+// Nested route trees that need layout invalidation (every /e/[location] page
+// embeds recurring food via getCombinedUpcomingFood).
+const COLLECTION_LAYOUT_PATHS: Record<string, string[]> = {
+  'recurring-food-schedules': ['/e'],
+  'recurring-food-exclusions': ['/e'],
 }
 
 // Dynamic path builders for collections with slugs
 const COLLECTION_PATH_BUILDERS: Record<string, (doc: Record<string, unknown>) => string[]> = {
   beers: (doc) => (doc.slug ? [`/beer/${doc.slug}`] : []),
   menus: (doc) => (doc.url ? [`/m/${doc.url}`] : []),
+}
+
+function invalidateCollection(slug: string, doc?: Record<string, unknown>): void {
+  ;(COLLECTION_CACHE_MAP[slug] || []).forEach((tag) => revalidateTag(tag))
+  ;(COLLECTION_PATHS[slug] || []).forEach((path) => revalidatePath(path))
+  ;(COLLECTION_LAYOUT_PATHS[slug] || []).forEach((path) => revalidatePath(path, 'layout'))
+  if (!doc) return
+  const pathBuilder = COLLECTION_PATH_BUILDERS[slug]
+  if (pathBuilder) {
+    pathBuilder(doc).forEach((path) => revalidatePath(path))
+  }
 }
 
 /**
@@ -76,8 +94,7 @@ const COLLECTION_PATH_BUILDERS: Record<string, (doc: Record<string, unknown>) =>
  * cache map single-sourced here.
  */
 export function revalidateForCollection(slug: string): void {
-  ;(COLLECTION_CACHE_MAP[slug] || []).forEach((tag) => revalidateTag(tag))
-  ;(COLLECTION_PATHS[slug] || []).forEach((path) => revalidatePath(path))
+  invalidateCollection(slug)
 }
 
 /**
@@ -98,28 +115,7 @@ function createCollectionAfterChangeHook(slug: string) {
     if (context?.skipRevalidate) {
       return doc
     }
-    const tags = COLLECTION_CACHE_MAP[slug] || []
-    const paths = COLLECTION_PATHS[slug] || []
-    const pathBuilder = COLLECTION_PATH_BUILDERS[slug]
-
-    // Revalidate tags
-    tags.forEach((tag) => {
-      revalidateTag(tag)
-    })
-
-    // Revalidate static paths
-    paths.forEach((path) => {
-      revalidatePath(path)
-    })
-
-    // Revalidate dynamic paths
-    if (pathBuilder) {
-      const dynamicPaths = pathBuilder(doc)
-      dynamicPaths.forEach((path) => {
-        revalidatePath(path)
-      })
-    }
-
+    invalidateCollection(slug, doc)
     return doc
   }
 }
@@ -138,19 +134,7 @@ function createCollectionAfterDeleteHook(slug: string) {
     if (context?.skipRevalidate) {
       return doc
     }
-    const tags = COLLECTION_CACHE_MAP[slug] || []
-    const paths = COLLECTION_PATHS[slug] || []
-
-    // Revalidate tags
-    tags.forEach((tag) => {
-      revalidateTag(tag)
-    })
-
-    // Revalidate static paths
-    paths.forEach((path) => {
-      revalidatePath(path)
-    })
-
+    invalidateCollection(slug, doc)
     return doc
   }
 }

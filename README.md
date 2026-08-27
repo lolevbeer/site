@@ -61,9 +61,10 @@ decide — `Users.access.create` allows only admins and lead bartenders, and the
 collection's `beforeChange` hook caps lead bartenders at creating bartenders
 scoped to the inviter's own locations. A lead bartender who picks "Admin" gets
 Payload's rejection back in the modal; that rule is never restated in the Slack
-handler. The location picker only lists locations the inviter can grant, and the
-selection is preserved — menu access is location-scoped, so an invite that
-dropped it would produce a bartender who cannot edit any menu. Because the invitee is a
+handler. The location picker only lists locations the inviter can grant and starts
+with those selected. Menu access is location-scoped, so clearing the picker
+produces a bartender who cannot edit any menu — it does not mean all
+locations. Because the invitee is a
 Slack member rather than a typed email, accounts can only be created for people
 already in the workspace, the email is workspace-verified, and the new user is
 linked (`slackUserId`) from the start. They get a DM with a one-time link to set
