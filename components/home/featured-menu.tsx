@@ -11,6 +11,7 @@ import { Beer as BeerIconLucide, Package, Pencil } from 'lucide-react'
 import { getGlassIcon } from '@/lib/utils/beer-icons'
 import { useLocationContext } from '@/components/location/location-provider'
 import { DraftBeerCard } from '@/components/beer/draft-beer-card'
+import { BeerLinkWrapper } from '@/components/beer/beer-link-wrapper'
 import { useAnimatedList, getAnimationClass } from '@/lib/hooks/use-animated-list'
 import { useAuth } from '@/lib/hooks/use-auth'
 import { getMediaUrl, canSpriteAnimation } from '@/lib/utils/media-utils'
@@ -336,28 +337,6 @@ function AdminEditButtons({
   )
 }
 
-/** Module-scope so poll re-renders reconcile instead of remounting the tile.
- *  Hidden beers stay on the menu, but /beer/<slug> 404s, so they must not link
- *  (same rule as DraftBeerCard's CardWrapper). */
-function CanCardWrapper({
-  href,
-  hidden,
-  className,
-  children,
-}: {
-  href: string
-  hidden?: boolean
-  className: string
-  children: React.ReactNode
-}) {
-  if (hidden) return <div className={className}>{children}</div>
-  return (
-    <Link href={href} className={className}>
-      {children}
-    </Link>
-  )
-}
-
 /** Can card component for cans display */
 function CanCard({
   item,
@@ -426,7 +405,7 @@ function CanCard({
 
   if (fullscreen) {
     return (
-      <CanCardWrapper
+      <BeerLinkWrapper
         href={href}
         hidden={hidden}
         className="can-tile group cursor-pointer flex flex-col h-full min-h-0"
@@ -522,12 +501,12 @@ function CanCard({
             </Badge>
           )}
         </div>
-      </CanCardWrapper>
+      </BeerLinkWrapper>
     )
   }
 
   return (
-    <CanCardWrapper
+    <BeerLinkWrapper
       href={href}
       hidden={hidden}
       className="group flex flex-col cursor-pointer transition-transform duration-200 hover:-translate-y-1"
@@ -562,7 +541,7 @@ function CanCard({
       >
         View Details
       </Button>
-    </CanCardWrapper>
+    </BeerLinkWrapper>
   )
 }
 

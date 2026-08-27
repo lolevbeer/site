@@ -10,9 +10,11 @@ import { Skeleton } from '@/components/ui/skeleton'
 export default function Loading() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
+      {/* Breadcrumb (BeerDetails builds its own, ending in the beer name) */}
       <Skeleton className="h-4 w-48 mb-6" />
 
       <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-8 mb-8">
+        {/* Can image + quick stats */}
         <div className="space-y-4">
           <Skeleton className="aspect-square w-full rounded-xl" />
           <div className="space-y-3">
@@ -22,6 +24,7 @@ export default function Loading() {
           </div>
         </div>
 
+        {/* Name, badges, description */}
         <div className="space-y-6">
           <div className="space-y-3">
             <Skeleton className="h-10 w-2/3" />

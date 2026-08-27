@@ -4,17 +4,21 @@
  */
 
 import { Skeleton } from '@/components/ui/skeleton'
+import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs'
 
 export default function Loading() {
   return (
     <div className="container mx-auto px-4 py-8">
-      <Skeleton className="h-4 w-48 mb-6" />
+      {/* Real breadcrumbs — driven by usePathname, no data to wait for */}
+      <PageBreadcrumbs className="mb-6" />
 
+      {/* Page header */}
       <div className="text-center mb-8">
         <Skeleton className="h-10 w-64 mx-auto mb-4" />
         <Skeleton className="w-16 h-1 bg-primary mx-auto rounded-full" />
       </div>
 
+      {/* Hours panel */}
       <div className="mb-8 max-w-md mx-auto">
         <div className="border border-border rounded-lg p-6">
           <Skeleton className="h-6 w-32 mb-4" />
@@ -27,6 +31,7 @@ export default function Loading() {
         </div>
       </div>
 
+      {/* Map — matches the real page's 700px box so there's no shift on swap */}
       <div className="overflow-hidden rounded-lg" style={{ height: '700px', position: 'relative' }}>
         <Skeleton className="h-full w-full" />
       </div>

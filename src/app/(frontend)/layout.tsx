@@ -43,17 +43,15 @@ function getBaseUrl(): string {
 /**
  * Fetches the footer's per-location weekly hours and renders it into the
  * footer slot. Rendered inside a `<Suspense>` boundary so the shell can
- * stream before these (sequential) fetches resolve — locations must be
- * fetched first to know which location IDs to request hours for.
- *
- * `getAllLocations()` is called again here on purpose: it hits the same
- * Next.js data cache as the call in `AppLayout`, so this is a cache read,
- * not a second network/database round trip.
+ * stream before the hours resolve. Takes `locations` from the shell rather
+ * than re-fetching them, so this is one query, not two.
  */
-async function FooterHours(): Promise<ReactNode> {
-  const locations = await getAllLocations()
-  const weeklyHours = await getWeeklyHoursForLocations(locations)
-  return <Footer weeklyHours={weeklyHours} />
+async function FooterHours({
+  locations,
+}: {
+  locations: Awaited<ReturnType<typeof getAllLocations>>
+}): Promise<ReactNode> {
+  return <Footer weeklyHours={await getWeeklyHoursForLocations(locations)} />
 }
 
 const poppins = Poppins({
@@ -200,7 +198,7 @@ export default async function AppLayout({
                     footer={
                       /* Bare <Footer /> so a hung hours query still ships a footer. */
                       <Suspense fallback={<Footer />}>
-                        <FooterHours />
+                        <FooterHours locations={locations} />
                       </Suspense>
                     }
                   >

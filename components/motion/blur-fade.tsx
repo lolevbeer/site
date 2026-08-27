@@ -29,11 +29,12 @@ export function __resetBlurFadeHydrationForTests() {
 }
 
 /**
- * Flips `hasAppHydrated` on the app's first client commit. Rendered in the
- * root layout so pages with no BlurFade of their own (/privacy, /terms,
- * /beer-map) still mark hydration; otherwise the first client navigation
- * would not animate. BlurFade also sets the flag, for trees outside the
- * root layout.
+ * Sole writer of `hasAppHydrated`, flipping it on the app's first client
+ * commit. Rendered once in `(frontend)/layout.tsx`, which is an ancestor of
+ * every BlurFade consumer — so the flag is set even on pages that render no
+ * BlurFade of their own (/privacy, /terms, /beer-map), which is exactly the
+ * case a per-BlurFade effect used to miss. Any new tree using BlurFade must
+ * stay under that layout, or mount this sentinel itself.
  */
 export function MotionHydrationSentinel() {
   useEffect(markAppHydrated, [])
@@ -81,7 +82,7 @@ export function BlurFade({
   // Framer Motion only reads `initial` on first commit. After the app has
   // hydrated, later mounts start from "hidden" so client navigations still
   // animate. Scroll-triggered (`inView`) content always starts hidden.
-  useEffect(markAppHydrated, [])
+  // MotionHydrationSentinel owns flipping the flag — see above.
 
   if (prefersReducedMotion) {
     return <div className={cn(className)}>{children}</div>

@@ -1,20 +1,13 @@
 /**
- * Regression coverage for the SSR-blank-paint fix, and for the review round 1
- * finding that a per-instance "mounted" flag would permanently kill the
- * entrance animation on client-side route navigation.
+ * BlurFade (and PageTransition, which delegates to it) must render at final,
+ * visible styles in server HTML — that markup ships before React hydrates, so
+ * any `opacity:0` there is a blank first paint — yet still animate in from
+ * hidden on mounts created after hydration, e.g. App Router swapping in a
+ * fresh tree on a client-side route change.
  *
- * BlurFade (and PageTransition, which delegates to it) must:
- *  - render at final, visible styles in server HTML — no `opacity:0` /
- *    `filter:blur` — since that markup is what ships before React hydrates;
- *  - still animate in from hidden on every later mount, including ones
- *    created well after the app's first hydration (e.g. App Router swapping
- *    in a fresh PageTransition/BlurFade tree on a client-side route change).
- *
- * The SSR assertions use `renderToStaticMarkup`, which never runs effects,
- * so it reproduces exactly what a real Next.js SSR pass produces. The
- * hydration-propagation assertions use `@testing-library/react` (jsdom) to
- * actually mount/unmount instances and flip the module-level hydration flag,
- * via the test-only `__resetBlurFadeHydrationForTests` reset hook.
+ * `renderToStaticMarkup` never runs effects, so it reproduces a real SSR pass;
+ * the hydration cases use jsdom to actually commit components and flip the
+ * module-level flag, reset between cases via `__resetBlurFadeHydrationForTests`.
  */
 import { describe, it, expect, afterEach } from 'vitest'
 import { renderToStaticMarkup } from 'react-dom/server'
@@ -71,27 +64,11 @@ describe('BlurFade hydration-flag propagation across mounts', () => {
     expect(container.innerHTML).not.toMatch(/opacity:\s*0\b/)
   })
 
-  it('a later mount — e.g. a client-side route navigation — still animates in from hidden', () => {
-    // Mount and unmount one instance so its effect flips the module-level
-    // hydration flag, simulating "the app has already hydrated once".
-    const first = render(createElement(BlurFade, { children: createElement('h1', null, 'A') }))
-    first.unmount()
-
-    // A fresh BlurFade tree — e.g. App Router mounting a new
-    // PageTransition/BlurFade on navigation — must animate in, not render
-    // pre-animated, on this later mount too.
-    const { container } = render(
-      createElement(BlurFade, { children: createElement('h1', null, 'B') }),
-    )
-
-    expect(container.innerHTML).toMatch(/opacity:\s*0\b/)
-  })
-
-  it('MotionHydrationSentinel alone flips the flag: a BlurFade mounted after it animates in', () => {
-    // Simulates hard-loading a page with NO BlurFade (/privacy, /terms,
-    // /beer-map): only the root layout's sentinel mounts. A BlurFade mounted
-    // later — the first client-side navigation's destination — must still
-    // animate in from hidden rather than render pre-animated.
+  it('after the sentinel commits, a later mount still animates in from hidden', () => {
+    // The sentinel is the only writer of the flag, and it lives in the root
+    // layout — so this covers hard-loading a page with NO BlurFade (/privacy,
+    // /terms, /beer-map) and then client-navigating: the destination tree must
+    // animate in, not render pre-animated.
     render(createElement(MotionHydrationSentinel))
 
     const { container } = render(
@@ -99,5 +76,18 @@ describe('BlurFade hydration-flag propagation across mounts', () => {
     )
 
     expect(container.innerHTML).toMatch(/opacity:\s*0\b/)
+  })
+
+  it('without the sentinel, a BlurFade mount does not flip the flag for later mounts', () => {
+    // Guards the single-writer invariant: BlurFade deliberately no longer sets
+    // the flag itself, so a tree mounted outside the root layout keeps painting
+    // at SSR-visible styles rather than silently animating.
+    render(createElement(BlurFade, { children: createElement('h1', null, 'A') })).unmount()
+
+    const { container } = render(
+      createElement(BlurFade, { children: createElement('h1', null, 'B') }),
+    )
+
+    expect(container.innerHTML).not.toMatch(/opacity:\s*0\b/)
   })
 })

@@ -50,12 +50,13 @@ export function UpcomingBeers({ comingSoonBeers = [] }: UpcomingBeersProps): Rea
         <div className="max-w-4xl mx-auto space-y-1 text-center mb-8">
           {validItems.map(({ beer, style }, index) => (
             <div key={index}>
-              {beer?.slug ? (
+              {beer?.slug && !beer.hideFromSite ? (
                 <Button asChild variant="ghost" size="sm" className="text-lg font-semibold h-auto py-0 px-2">
                   <Link href={`/beer/${beer.slug}`}>{beer.name}</Link>
                 </Button>
               ) : (
-                <h3 className="font-semibold text-lg">{style?.name}</h3>
+                /* Hidden beers 404 on /beer/<slug>, so keep the name but drop the link */
+                <h3 className="font-semibold text-lg">{beer?.name ?? style?.name}</h3>
               )}
             </div>
           ))}
