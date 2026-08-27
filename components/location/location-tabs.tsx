@@ -24,8 +24,18 @@ interface LocationTabsProps {
   syncWithGlobalState?: boolean
 }
 
-const GROUP_CLASS =
-  'grid w-fit mx-auto grid-cols-2 h-10 items-center justify-center rounded-sm bg-black/[0.06] p-1 gap-0.5 text-muted-foreground dark:bg-muted/40'
+/** Shape and colour of the segmented control, shared with other surfaces that
+ *  offer the same location choice (see QuickInfoCards). Layout — sizing, column
+ *  count — stays with each call site. */
+export const SEGMENTED_TROUGH_CLASS =
+  'rounded-sm bg-black/[0.06] p-1 gap-0.5 text-muted-foreground dark:bg-muted/40'
+export const SEGMENTED_ITEM_SELECTED_CLASS = 'bg-background text-foreground'
+export const SEGMENTED_ITEM_IDLE_CLASS = 'text-muted-foreground hover:text-foreground/70'
+
+const GROUP_CLASS = cn(
+  'grid w-fit mx-auto grid-cols-2 h-10 items-center justify-center',
+  SEGMENTED_TROUGH_CLASS,
+)
 
 const ITEM_CLASS =
   'relative inline-flex items-center justify-center whitespace-nowrap rounded-sm px-4 py-1.5 text-sm font-medium cursor-pointer focus-visible:outline-none focus:outline-none transition-colors'
@@ -78,7 +88,7 @@ export function LocationTabs({
                 }}
                 className={cn(
                   ITEM_CLASS,
-                  isActive ? 'text-foreground' : 'text-muted-foreground hover:text-foreground/70',
+                  isActive ? 'text-foreground' : SEGMENTED_ITEM_IDLE_CLASS,
                 )}
               >
                 {isActive &&

@@ -562,7 +562,7 @@ function FeaturedMenu({
   const title = menuType === 'draft' ? 'Draft' : 'Cans'
   // The homepage list is filtered to one taproom, so the heading names it —
   // otherwise nothing on the page says which location you are looking at.
-  const locationName = currentLocation === 'all' ? null : currentLocationData?.name
+  const locationName = currentLocationData?.name
   const emptyMessage =
     menuType === 'draft'
       ? 'No beers on draft right now. Check back soon!'
@@ -759,16 +759,16 @@ function FeaturedMenu({
     )
   }
 
-  // Homepage section mode. The id is the scroll target for the On Tap Now card
-  // on the homepage; scroll-mt clears the sticky header.
+  // Homepage section mode. The id is the scroll target for the On Tap Now card;
+  // the sticky-header offset comes from html { scroll-padding-top } in globals.
   return (
-    <section id={menuType} className="py-16 lg:py-24 bg-background scroll-mt-20">
+    <section id={menuType} className="py-16 lg:py-24 bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal>
           <div className="text-center mb-12">
             <div className="flex items-center justify-between mb-4">
               <div className="flex-1" />
-              <h2 className="text-3xl lg:text-4xl font-bold" suppressHydrationWarning>
+              <h2 className="text-3xl lg:text-4xl font-bold">
                 {title}
                 {locationName && (
                   <span className="text-muted-foreground font-normal"> · {locationName}</span>

@@ -226,6 +226,12 @@
     scroll-margin-top: 80px; /* Header height + buffer */
   }
 
+  /* Same offset for hash targets (#draft, #main-content), so any anchor lands
+     below the sticky header instead of behind it. */
+  html {
+    scroll-padding-top: 80px;
+  }
+
   /* Cursor refinements for interactive elements */
   button:not(:disabled),
   [role="button"]:not(:disabled),

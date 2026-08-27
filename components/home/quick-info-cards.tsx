@@ -8,6 +8,11 @@ import { cn } from '@/lib/utils';
 import { getTodayEST, getDayOfWeekEST, toESTDate } from '@/lib/utils/date';
 import { useLocationContext } from '@/components/location/location-provider';
 import { getLocationDisplayName } from '@/lib/config/locations';
+import {
+  SEGMENTED_ITEM_IDLE_CLASS,
+  SEGMENTED_ITEM_SELECTED_CLASS,
+  SEGMENTED_TROUGH_CLASS,
+} from '@/components/location/location-tabs';
 import { MotionCard } from '@/components/motion';
 
 interface QuickInfoCardsProps {
@@ -17,18 +22,15 @@ interface QuickInfoCardsProps {
 }
 
 export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCardsProps) {
-  const { locations, currentLocation } = useLocationContext();
+  const { locations, currentLocation, setLocation } = useLocationContext();
 
   // One entry per location that reported a count, so the tiles and the
   // "any beers at all" check cannot disagree.
-  const countedLocations = locations
-    .map(location => {
-      const slug = location.slug || location.id;
-      return { location, slug, count: beerCount?.[slug] };
-    })
-    .filter((entry): entry is { location: typeof entry.location; slug: string; count: number } =>
-      entry.count !== undefined
-    );
+  const countedLocations = locations.flatMap(location => {
+    const slug = location.slug || location.id;
+    const count = beerCount?.[slug];
+    return count === undefined ? [] : [{ location, slug, count }];
+  });
   const hasBeers = countedLocations.some(({ count }) => count > 0);
 
   // Format next event date using EST timezone
@@ -52,52 +54,43 @@ export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCar
 
   return (
     <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-4", className)}>
-      {/* On Tap Now Card. Each location is its own link rather than the whole
-          card, so it is obvious you are picking one taproom or the other: the
-          `loc` param switches the location context (see use-location) and the
-          `#draft` hash lands on that location's draft list further down. */}
+      {/* On Tap Now Card. Each location is its own target rather than the whole
+          card, so it is obvious you are picking one taproom or the other. */}
       <MotionCard glow className="h-full">
         <Card className="p-6 lg:p-8 h-full shadow-none bg-transparent border border-border relative text-center flex flex-col items-center justify-center">
           <h3 className="text-3xl lg:text-4xl font-bold mb-5">On Tap Now</h3>
-          {hasBeers ? (
-            <>
-              {/* Same segmented-control vocabulary as the header's LocationTabs:
-                  muted trough, selected item raised on the card background. */}
-              <div className="inline-grid grid-flow-col auto-cols-fr gap-0.5 rounded-sm bg-black/[0.06] p-1 text-muted-foreground dark:bg-muted/40">
-                {countedLocations.map(({ location, slug, count }) => (
-                  <Link
+          {hasBeers && (
+            <div className={cn('inline-grid grid-flow-col auto-cols-fr', SEGMENTED_TROUGH_CLASS)}>
+              {countedLocations.map(({ location, slug, count }) => {
+                const isActive = slug === currentLocation;
+                return (
+                  <a
                     key={slug}
-                    href={`/?loc=${slug}#draft`}
+                    href="#draft"
+                    onClick={() => setLocation(slug)}
                     aria-label={`See the ${count} beers on tap at ${location.name}`}
-                    aria-current={slug === currentLocation ? 'true' : undefined}
+                    aria-current={isActive ? 'true' : undefined}
                     className={cn(
                       'flex flex-col items-center gap-1 rounded-sm px-6 py-3 transition-colors',
-                      slug === currentLocation
-                        ? 'bg-background text-foreground'
-                        : 'hover:text-foreground/70'
+                      isActive ? SEGMENTED_ITEM_SELECTED_CLASS : SEGMENTED_ITEM_IDLE_CLASS
                     )}
-                    suppressHydrationWarning
                   >
                     <div className="text-4xl lg:text-5xl font-bold tabular-nums">{count}</div>
                     <div className="text-sm font-medium">{location.name}</div>
-                  </Link>
-                ))}
-              </div>
-              <Link
-                href="/beer"
-                className="mt-5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                See all beers &rarr;
-              </Link>
-            </>
-          ) : (
-            <Link
-              href="/beer"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Explore our current selection
-            </Link>
+                  </a>
+                );
+              })}
+            </div>
           )}
+          <Link
+            href="/beer"
+            className={cn(
+              'text-sm text-muted-foreground hover:text-foreground transition-colors',
+              hasBeers && 'mt-5'
+            )}
+          >
+            {hasBeers ? <>See all beers &rarr;</> : 'Explore our current selection'}
+          </Link>
         </Card>
       </MotionCard>
 
