@@ -243,13 +243,16 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
               )}
             </div>
             <div className="flex flex-col gap-0.5">
+              {/* No /50 or /60 opacity here: fading muted-foreground put this
+                  body text at 2.45:1 and 3.1:1 against the dark background,
+                  under the 4.5:1 WCAG AA floor for text this size. */}
               {beer.description && (
-                <p className="text-sm text-muted-foreground/60 line-clamp-1 leading-tight">
+                <p className="text-sm text-muted-foreground line-clamp-1 leading-tight">
                   {beer.description}
                 </p>
               )}
               {beer.hops && (
-                <p className="text-xs text-muted-foreground/50 truncate leading-tight">
+                <p className="text-xs text-muted-foreground truncate leading-tight">
                   <span className="font-medium">Hops:</span> {beer.hops}
                 </p>
               )}

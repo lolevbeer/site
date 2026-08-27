@@ -298,9 +298,11 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
               />
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center text-center px-4">
-                <p className="text-lg font-semibold text-muted-foreground/70">{beer.name}</p>
+                {/* Full-strength muted-foreground: the /70 and /50 fades fell
+                    under the 4.5:1 AA contrast floor (see draft-beer-card). */}
+                <p className="text-lg font-semibold text-muted-foreground">{beer.name}</p>
                 {getStyleName(beer) && (
-                  <p className="text-sm text-muted-foreground/50 mt-1">{getStyleName(beer)}</p>
+                  <p className="text-sm text-muted-foreground mt-1">{getStyleName(beer)}</p>
                 )}
               </div>
             )}
