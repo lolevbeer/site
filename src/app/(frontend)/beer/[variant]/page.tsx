@@ -76,17 +76,11 @@ export const revalidate = 3600
 export default async function BeerPage({ params }: BeerPageProps) {
   const { variant } = await params
 
-  let beer
-  try {
-    beer = await getBeerBySlug(variant)
-  } catch {
-    // Database error - show not found page
-    notFound()
-  }
-
-  if (!beer) {
-    notFound()
-  }
+  // No try/catch: a thrown Payload/DB error must reach error.tsx,
+  // not masquerade as a 404 for a real product URL.
+  const beer = await getBeerBySlug(variant)
+  if (!beer) notFound()
+  if (beer.hideFromSite) notFound()
 
   // Generate Product schema for SEO
   const productSchema = generateProductSchema(beer)
