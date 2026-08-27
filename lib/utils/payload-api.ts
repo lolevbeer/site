@@ -15,6 +15,7 @@
  * the first /m poll, so it degrades to `false` rather than blanking the display.
  */
 
+import { cache } from 'react'
 import { getPayload } from 'payload'
 import config from '@/src/payload.config'
 import { unstable_cache } from 'next/cache'
@@ -108,8 +109,13 @@ export const getAllBeersFromPayload = async (): Promise<PayloadBeer[]> => {
 /**
  * Get beer by slug from Payload
  * Cached until 'beers' tag is invalidated
+ *
+ * Also wrapped in React cache() for per-request dedupe: generateMetadata and
+ * the page component both call this, and unstable_cache alone runs the Mongo
+ * find twice on concurrent cold misses (Next 15.5). cache() collapses the two
+ * calls of one request into a single lookup.
  */
-export const getBeerBySlug = async (slug: string): Promise<PayloadBeer | null> => {
+export const getBeerBySlug = cache(async (slug: string): Promise<PayloadBeer | null> => {
   return unstable_cache(
     async (): Promise<PayloadBeer | null> => {
       const payload = await getPayload({ config })
@@ -131,7 +137,7 @@ export const getBeerBySlug = async (slug: string): Promise<PayloadBeer | null> =
     [`beer-${slug}`],
     { tags: [CACHE_TAGS.beers], revalidate: 3600 },
   )()
-}
+})
 
 /**
  * Get menus for a specific location
