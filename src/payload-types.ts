@@ -1742,6 +1742,7 @@ export interface TaskSyncUntappdRatings {
     updated: number;
     skipped: number;
     errors: number;
+    unavailable: number;
     circuitBroken: boolean;
   };
 }
