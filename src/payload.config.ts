@@ -41,6 +41,15 @@ import { syncUntappdRatingsTask } from './jobs/sync-untappd-ratings'
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
+/**
+ * True when this config is being loaded by `payload migrate` / `migrate:status`
+ * rather than to serve requests. See the `transactionOptions` note on the db
+ * adapter below for why migrations opt out of transactions.
+ */
+const isMigrationCommand = process.argv.some(
+  (arg) => arg === 'migrate' || arg.startsWith('migrate:'),
+)
+
 // Allowed origins for CORS and CSRF
 const allowedOrigins = [
   'https://lolev.beer',
@@ -179,6 +188,23 @@ export default buildConfig({
   },
   db: mongooseAdapter({
     url: process.env.DATABASE_URI || '',
+    // Payload wraps an entire migration in one MongoDB transaction, but Atlas
+    // enforces transactionLifetimeLimitSeconds (60s by default) and kills any
+    // that outlive it. The normalization migrations page the whole beer and
+    // recurring-food catalogue with a round trip per document, which blows past
+    // that on a remote cluster and fails with NoSuchTransaction (code 251) —
+    // the writes roll back, so the migration can never finish.
+    //
+    // Every migration in src/migrations is written to be idempotent and
+    // resumable (syncBeerReviews upserts by sourceUrl, the recurring-food pass
+    // early-returns on normalizedAt and skips existing keys, and named
+    // createIndex is a no-op when the index exists), so per-migration atomicity
+    // buys nothing here — a partial run is simply re-run. Detecting the CLI
+    // rather than reading a flag keeps `pnpm migrate` working the same locally
+    // and inside the Vercel production build, with no env var to forget.
+    // Serving requests never boots through this path, so the app keeps
+    // transactional writes.
+    ...(isMigrationCommand ? { transactionOptions: false as const } : {}),
     // Serverless connection hardening. Each Vercel lambda opens its own Mongoose
     // pool; the MongoDB driver default is maxPoolSize 100. A post-deploy ISR
     // regeneration storm (many cold lambdas booting Payload at once) can then
