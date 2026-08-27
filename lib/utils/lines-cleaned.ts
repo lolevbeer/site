@@ -1,7 +1,10 @@
 /**
  * Shared line-cleaning cadence: days-since math and the warn/overdue
- * thresholds used by LinesCleanedAlert and MarkLinesCleanedButton, so the
- * cleaning schedule lives in exactly one place.
+ * thresholds, so the cleaning schedule lives in exactly one place. Read by the
+ * admin surfaces (LinesCleanedAlert, MarkLinesCleanedButton) and by the
+ * customer-facing /m draft displays (featured-menu.tsx) — it lives here rather
+ * than under src/components/admin so nothing pulls admin code into the public
+ * bundle.
  */
 
 export const LINES_WARN_DAYS = 7

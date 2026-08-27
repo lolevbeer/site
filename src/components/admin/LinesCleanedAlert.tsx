@@ -10,7 +10,7 @@ import {
   daysSinceCleaned,
   LINES_OVERDUE_DAYS,
   LINES_WARN_DAYS,
-} from '@/src/components/admin/lines-cleaned'
+} from '@/lib/utils/lines-cleaned'
 import type { User } from '@/src/payload-types'
 
 interface Location {

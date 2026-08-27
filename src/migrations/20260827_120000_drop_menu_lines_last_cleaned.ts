@@ -2,11 +2,11 @@
  * Drops the stale `linesLastCleaned` field from menu documents.
  *
  * The cleaning cadence moved onto Locations (see the shared thresholds in
- * src/components/admin/lines-cleaned.ts), but menus created before that still
+ * lib/utils/lines-cleaned.ts), but menus created before that still
  * carry the old copy in Mongo. Nothing reads it, yet it ships in every /m
  * render and every menu poll response.
  */
-import type { MigrateDownArgs, MigrateUpArgs } from '@payloadcms/db-mongodb'
+import type { MigrateUpArgs } from '@payloadcms/db-mongodb'
 
 export async function up({ payload }: MigrateUpArgs): Promise<void> {
   // No `session`: migrations run untransacted here (see 20260826_212000), and
@@ -22,7 +22,7 @@ export async function up({ payload }: MigrateUpArgs): Promise<void> {
   )
 }
 
-export async function down(_args: MigrateDownArgs): Promise<void> {
+export async function down(): Promise<void> {
   // No-op: the dropped values were already dead data with no source to restore
   // from. Locations.linesLastCleaned remains the single source of truth.
 }
