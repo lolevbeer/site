@@ -16,8 +16,10 @@ interface HomeContentProps {
   draftMenus: PayloadMenu[];
   /** All cans menus from all locations */
   cansMenus: PayloadMenu[];
-  /** Beer count by location slug */
+  /** Draft tap count by location slug */
   beerCount: Record<string, number>;
+  /** Cans count by location slug */
+  cansCount: Record<string, number>;
   nextEvent: { name: string; date: string; location: LocationSlug } | null;
   children: React.ReactNode;
   heroDescription?: string;
@@ -30,6 +32,7 @@ export function HomeContent({
   draftMenus,
   cansMenus,
   beerCount,
+  cansCount,
   nextEvent,
   children,
   heroDescription,
@@ -57,7 +60,7 @@ export function HomeContent({
       {/* Quick Info Cards */}
       <section className="py-16 lg:py-24 container mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal>
-          <QuickInfoCards beerCount={beerCount} nextEvent={nextEvent} />
+          <QuickInfoCards beerCount={beerCount} cansCount={cansCount} nextEvent={nextEvent} />
         </ScrollReveal>
       </section>
 

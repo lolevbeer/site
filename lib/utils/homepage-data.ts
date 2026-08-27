@@ -52,6 +52,7 @@ export interface HomePageData {
   allDraftMenus: PayloadMenu[];
   allCansMenus: PayloadMenu[];
   beerCount: Record<string, number>;
+  cansCount: Record<string, number>;
   allEvents: PayloadEvent[];
   allFood: CombinedFood[];
   nextEvent: NextEventInfo | null;
@@ -139,17 +140,23 @@ export const getHomePageData = cache(async (): Promise<HomePageData> => {
   // Derive additional data needed by components
   const allDraftMenus = Object.values(draftMenusByLocation).filter((m): m is PayloadMenu => m !== null);
   const allCansMenus = Object.values(cansMenusByLocation).filter((m): m is PayloadMenu => m !== null);
-  const beerCount: Record<string, number> = Object.fromEntries(
-    locationSlugs.map((slug) => {
-      const items = draftMenusByLocation[slug]?.items;
-      if (!items) return [slug, 0];
-      // Only count items that have a beer or product assigned (exclude empty tap slots)
-      const filledCount = items.filter(
-        (item) => extractBeerFromMenuItem(item) !== null || extractProductFromMenuItem(item) !== null
-      ).length;
-      return [slug, filledCount];
-    })
-  );
+  // Only count items that have a beer or product assigned (exclude empty slots)
+  const countFilledItems = (menusByLocation: Record<string, PayloadMenu | null>) =>
+    Object.fromEntries(
+      locationSlugs.map((slug) => {
+        const items = menusByLocation[slug]?.items;
+        if (!items) return [slug, 0];
+        return [
+          slug,
+          items.filter(
+            (item) =>
+              extractBeerFromMenuItem(item) !== null || extractProductFromMenuItem(item) !== null
+          ).length,
+        ];
+      })
+    ) as Record<string, number>;
+  const beerCount = countFilledItems(draftMenusByLocation);
+  const cansCount = countFilledItems(cansMenusByLocation);
   const allEvents = Object.values(eventsByLocation).flat()
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   const allFood = Object.values(foodByLocation).flat();
@@ -171,6 +178,7 @@ export const getHomePageData = cache(async (): Promise<HomePageData> => {
     allDraftMenus,
     allCansMenus,
     beerCount,
+    cansCount,
     allEvents,
     allFood,
     nextEvent,

@@ -17,22 +17,95 @@ import {
 import { MotionCard } from '@/components/motion';
 
 interface QuickInfoCardsProps {
+  /** Draft tap count by location slug */
   beerCount?: Record<string, number>;
+  /** Cans count by location slug */
+  cansCount?: Record<string, number>;
   nextEvent?: { name: string; date: string; location: LocationSlug } | null;
   className?: string;
 }
 
-export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCardsProps) {
+interface MenuCountCardProps {
+  title: string;
+  /** Count by location slug */
+  counts?: Record<string, number>;
+  /** id of the homepage section the tiles scroll to */
+  anchor: string;
+  ctaHref: string;
+  ctaLabel: string;
+  /** Reads "See the N <noun> at <location>" on each tile */
+  countNoun: string;
+}
+
+/**
+ * A count-per-location card. Each location is its own target rather than the
+ * whole card, so it is obvious you are picking one taproom or the other:
+ * choosing one switches the global location and scrolls to that section's
+ * list, which is already filtered to it.
+ */
+function MenuCountCard({
+  title,
+  counts,
+  anchor,
+  ctaHref,
+  ctaLabel,
+  countNoun,
+}: MenuCountCardProps) {
   const { locations, currentLocation, setLocation } = useLocationContext();
 
   // One entry per location that reported a count, so the tiles and the
-  // "any beers at all" check cannot disagree.
+  // "any at all" check cannot disagree.
   const countedLocations = locations.flatMap(location => {
     const slug = location.slug || location.id;
-    const count = beerCount?.[slug];
+    const count = counts?.[slug];
     return count === undefined ? [] : [{ location, slug, count }];
   });
-  const hasBeers = countedLocations.some(({ count }) => count > 0);
+  const hasAny = countedLocations.some(({ count }) => count > 0);
+
+  return (
+    <MotionCard glow className="h-full">
+      <Card className="p-6 lg:p-8 h-full shadow-none bg-transparent border border-border relative text-center flex flex-col items-center justify-center">
+        <h3 className="text-3xl lg:text-4xl font-bold mb-5">{title}</h3>
+        {hasAny && (
+          <div className={cn('inline-grid grid-flow-col auto-cols-fr', SEGMENTED_TROUGH_CLASS)}>
+            {countedLocations.map(({ location, slug, count }) => {
+              const isActive = slug === currentLocation;
+              return (
+                <a
+                  key={slug}
+                  href={`#${anchor}`}
+                  onClick={() => setLocation(slug)}
+                  aria-label={`See the ${count} ${countNoun} at ${location.name}`}
+                  aria-current={isActive ? 'true' : undefined}
+                  className={cn(
+                    'flex flex-col items-center gap-1 rounded-sm px-6 py-3 transition-colors',
+                    isActive ? SEGMENTED_ITEM_SELECTED_CLASS : SEGMENTED_ITEM_IDLE_CLASS
+                  )}
+                >
+                  <div className="text-4xl lg:text-5xl font-bold tabular-nums">{count}</div>
+                  <div className="text-sm font-medium">{location.name}</div>
+                </a>
+              );
+            })}
+          </div>
+        )}
+        {/* Same CTA as the section-level buttons further down the homepage,
+            ghost so it sits quietly inside the card. */}
+        <Button asChild variant="ghost" size="lg" className={cn(hasAny && 'mt-5')}>
+          <Link href={ctaHref}>{ctaLabel}</Link>
+        </Button>
+      </Card>
+    </MotionCard>
+  );
+}
+
+export function QuickInfoCards({
+  beerCount,
+  cansCount,
+  nextEvent,
+  className,
+}: QuickInfoCardsProps) {
+  const { locations } = useLocationContext();
 
   // Format next event date using EST timezone
   const formatEventDate = (dateStr: string) => {
@@ -54,42 +127,24 @@ export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCar
   };
 
   return (
-    <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-4", className)}>
-      {/* On Tap Now Card. Each location is its own target rather than the whole
-          card, so it is obvious you are picking one taproom or the other. */}
-      <MotionCard glow className="h-full">
-        <Card className="p-6 lg:p-8 h-full shadow-none bg-transparent border border-border relative text-center flex flex-col items-center justify-center">
-          <h3 className="text-3xl lg:text-4xl font-bold mb-5">On Tap Now</h3>
-          {hasBeers && (
-            <div className={cn('inline-grid grid-flow-col auto-cols-fr', SEGMENTED_TROUGH_CLASS)}>
-              {countedLocations.map(({ location, slug, count }) => {
-                const isActive = slug === currentLocation;
-                return (
-                  <a
-                    key={slug}
-                    href="#draft"
-                    onClick={() => setLocation(slug)}
-                    aria-label={`See the ${count} beers on tap at ${location.name}`}
-                    aria-current={isActive ? 'true' : undefined}
-                    className={cn(
-                      'flex flex-col items-center gap-1 rounded-sm px-6 py-3 transition-colors',
-                      isActive ? SEGMENTED_ITEM_SELECTED_CLASS : SEGMENTED_ITEM_IDLE_CLASS
-                    )}
-                  >
-                    <div className="text-4xl lg:text-5xl font-bold tabular-nums">{count}</div>
-                    <div className="text-sm font-medium">{location.name}</div>
-                  </a>
-                );
-              })}
-            </div>
-          )}
-          {/* Same CTA as the section-level "View All Beer" buttons further down
-              the homepage, ghost so it sits quietly inside the card. */}
-          <Button asChild variant="ghost" size="lg" className={cn(hasBeers && 'mt-5')}>
-            <Link href="/beer">View All Beer</Link>
-          </Button>
-        </Card>
-      </MotionCard>
+    <div className={cn("grid grid-cols-1 md:grid-cols-3 gap-4", className)}>
+      <MenuCountCard
+        title="On Tap Now"
+        counts={beerCount}
+        anchor="draft"
+        ctaHref="/beer?avail=tap"
+        ctaLabel="View All Beer"
+        countNoun="beers on tap"
+      />
+
+      <MenuCountCard
+        title="Cans To Go"
+        counts={cansCount}
+        anchor="cans"
+        ctaHref="/beer?avail=cans"
+        ctaLabel="View All Cans"
+        countNoun="cans"
+      />
 
       {/* Next Event Card */}
       <MotionCard glow className="h-full">
