@@ -394,6 +394,15 @@ const DatesList: React.FC<DatesListProps> = ({
               const isIndividual = item.type === 'individual'
               const isDisabled = isIndividual || saving
               const displayName = item.vendorName || vendorNames[item.vendorId] || '...'
+              let backgroundColor = 'transparent'
+              if (excluded) backgroundColor = 'var(--theme-error-50)'
+              else if (isIndividual) backgroundColor = 'var(--theme-elevation-100)'
+
+              let ariaLabel: string | undefined
+              if (!isIndividual) {
+                const action = excluded ? 'Restore' : 'Exclude'
+                ariaLabel = `${action} ${displayName} on ${formatDate(item.date)}`
+              }
 
               return (
                 <button
@@ -401,11 +410,7 @@ const DatesList: React.FC<DatesListProps> = ({
                   type="button"
                   disabled={isDisabled}
                   onClick={() => requestToggleExclusion(item.date, displayName)}
-                  aria-label={
-                    isIndividual
-                      ? undefined
-                      : `${excluded ? 'Restore' : 'Exclude'} ${displayName} on ${formatDate(item.date)}`
-                  }
+                  aria-label={ariaLabel}
                   style={{
                     display: 'block',
                     width: '100%',
@@ -417,11 +422,7 @@ const DatesList: React.FC<DatesListProps> = ({
                     color: 'inherit',
                     font: 'inherit',
                     textAlign: 'left',
-                    backgroundColor: excluded
-                      ? 'var(--theme-error-50)'
-                      : isIndividual
-                        ? 'var(--theme-elevation-100)'
-                        : 'transparent',
+                    backgroundColor,
                     opacity: excluded ? 0.6 : 1,
                     transition: 'all 0.15s ease',
                   }}

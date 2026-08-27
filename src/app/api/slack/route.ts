@@ -493,10 +493,12 @@ async function openInviteModal(
     // by Users' beforeChange hook), so don't offer choices that would 403.
     let selectableLocations = locations?.docs ?? []
     if (!isAdmin(user)) {
+      const assignedLocations = Array.isArray(user.locations) ? user.locations : []
       const ownLocationIds = new Set(
-        (Array.isArray(user.locations) ? user.locations : []).map((loc) =>
-          typeof loc === 'object' && loc !== null ? String(loc.id) : String(loc),
-        ),
+        assignedLocations.map((location) => {
+          if (typeof location === 'object' && location !== null) return String(location.id)
+          return String(location)
+        }),
       )
       selectableLocations = selectableLocations.filter((location) =>
         ownLocationIds.has(String(location.id)),

@@ -57,7 +57,13 @@ const FAILED_UNTAPPD = {
   failed: true as const,
 }
 
-function beerDoc(overrides: {
+function beerDoc({
+  id,
+  name,
+  untappd,
+  untappdRating = 4,
+  untappdRatingCount = 100,
+}: {
   id: string
   name: string
   untappd: string
@@ -65,12 +71,20 @@ function beerDoc(overrides: {
   untappdRatingCount?: number | null
 }) {
   return {
-    untappdRating: 4 as number | null,
-    untappdRatingCount: 100 as number | null,
+    id,
+    name,
+    untappd,
+    untappdRating,
+    untappdRatingCount,
     positiveReviews: [],
-    ...overrides,
   }
 }
+
+const RATE_LIMITED_BEER = beerDoc({
+  id: 'b1',
+  name: 'Rate limited',
+  untappd: 'https://untappd.com/b/rate-limited',
+})
 
 async function runWithFakeTimers<T>(task: Promise<T>): Promise<T> {
   await vi.runAllTimersAsync()
@@ -148,13 +162,7 @@ describe('sync-untappd job task', () => {
 
   it('counts failed requests as errors rather than silent skips', async () => {
     find.mockResolvedValue({
-      docs: [
-        beerDoc({
-          id: 'b1',
-          name: 'Rate limited',
-          untappd: 'https://untappd.com/b/rate-limited',
-        }),
-      ],
+      docs: [RATE_LIMITED_BEER],
     })
     fetchUntappdData.mockResolvedValue(FAILED_UNTAPPD)
 
@@ -168,13 +176,7 @@ describe('sync-untappd job task', () => {
 
   it('throws from the task handler so Payload runs its configured retries', async () => {
     find.mockResolvedValue({
-      docs: [
-        beerDoc({
-          id: 'b1',
-          name: 'Rate limited',
-          untappd: 'https://untappd.com/b/rate-limited',
-        }),
-      ],
+      docs: [RATE_LIMITED_BEER],
     })
     fetchUntappdData.mockResolvedValue(FAILED_UNTAPPD)
 
