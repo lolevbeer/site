@@ -83,9 +83,9 @@ export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCar
               })}
             </div>
           )}
-          {/* Same CTA treatment as the section-level "View All Beer" buttons
-              further down the homepage. */}
-          <Button asChild variant="outline" size="lg" className={cn(hasBeers && 'mt-5')}>
+          {/* Same CTA as the section-level "View All Beer" buttons further down
+              the homepage, ghost so it sits quietly inside the card. */}
+          <Button asChild variant="ghost" size="lg" className={cn(hasBeers && 'mt-5')}>
             <Link href="/beer">View All Beer</Link>
           </Button>
         </Card>
