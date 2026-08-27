@@ -10,6 +10,7 @@ import { getTodayMidnightISO } from '@/lib/utils/date'
 import { createLocationLookup, generateFoodEventJsonLd } from '@/lib/utils/json-ld'
 import { PageTransition } from '@/components/motion'
 import { logger } from '@/lib/utils/logger'
+import { capitalizeName } from '@/lib/utils/formatters'
 import {
   getRecurringFoodState,
   recurringDays as days,
@@ -25,7 +26,8 @@ export const metadata: Metadata = {
 // Revalidate every hour
 export const revalidate = 3600
 
-const fullDayLabels = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+// Derived so the labels can't fall out of index alignment with `days`.
+const fullDayLabels = days.map(capitalizeName)
 
 /**
  * Calculate upcoming occurrences of a specific week/day combo

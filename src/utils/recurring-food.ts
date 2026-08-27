@@ -14,6 +14,19 @@ export const recurringDays = [
 
 export const recurringOccurrences = ['first', 'second', 'third', 'fourth', 'fifth'] as const
 
+/**
+ * The `recurringDays` entry for a date. Lives here because the value only means
+ * anything against that array's ordering.
+ */
+export function recurringDayName(date: Date): (typeof recurringDays)[number] {
+  return recurringDays[date.getDay()]
+}
+
+/** Which occurrence of its weekday a date is within its month (1-5). */
+export function recurringWeekOccurrence(date: Date): number {
+  return Math.ceil(date.getDate() / 7)
+}
+
 export type RecurringFoodSchedulesData = Record<
   string,
   Record<string, Record<string, string | null>>

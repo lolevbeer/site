@@ -14,16 +14,11 @@ import {
   type AdminRelationshipValue,
 } from '@/src/components/admin/relationship-value'
 
-import { recurringDays as days, recurringOccurrences as weekKeys } from '@/src/utils/recurring-food'
-
-function getWeekOccurrence(date: Date): number {
-  const dayOfMonth = date.getDate()
-  return Math.ceil(dayOfMonth / 7)
-}
-
-function getDayName(date: Date): string {
-  return days[date.getDay()]
-}
+import {
+  recurringDayName,
+  recurringOccurrences as weekKeys,
+  recurringWeekOccurrence,
+} from '@/src/utils/recurring-food'
 
 interface ConflictingEvent {
   organizer: string
@@ -80,8 +75,8 @@ export const EventDateWarning: React.FC = () => {
 
         // Check recurring food using local API
         try {
-          const dayName = getDayName(date)
-          const weekOccurrence = getWeekOccurrence(date)
+          const dayName = recurringDayName(date)
+          const weekOccurrence = recurringWeekOccurrence(date)
           const weekKey = weekKeys[weekOccurrence - 1]
 
           const data = await getRecurringFoodData()
