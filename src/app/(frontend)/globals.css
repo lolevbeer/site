@@ -502,6 +502,19 @@
   }
 }
 
+/* No cqi (Samsung Frame TVs): the bare 2.8vh fallback can't shrink to the
+   column, so at high item counts a long name wraps to 2-3 lines and squeezes
+   the can image. Bound it to one ellipsized line instead. Scoped to the
+   non-cqi path so cqi browsers keep the width-scaling rules above untouched. */
+@supports not (font-size: 1cqi) {
+  .can-tile-name {
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
 /* Same treatment for the price row: "$24 • Four Pack" wrapping to a second
    line was the other thing that made cans in a row sit at different heights
    once the columns narrowed. The Untappd icon is sized in em so it tracks
