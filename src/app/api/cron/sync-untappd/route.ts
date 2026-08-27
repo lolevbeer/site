@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { getPayload } from 'payload'
 import config from '@/src/payload.config'
 import { revalidateForCollection } from '@/src/plugins/revalidation-plugin'
@@ -22,14 +23,14 @@ export async function GET(request: NextRequest) {
     const run = await payload.jobs.run({ queue: QUEUE, limit: 1, sequential: true })
     const ranJobs = Object.keys(run.jobStatus || {}).length
 
-    // Job tasks intentionally avoid Next cache APIs so they also work from the
-    // Payload CLI. In the Vercel runner, invalidate once after any execution.
-    // 'menus' is included because the job writes beers with
-    // context.skipRevalidate, which also skips Beers.afterChange's per-menu
-    // menu-${url} fan-out — menu displays embed populated beer docs.
+    // Job tasks avoid Next cache APIs so they also work from the Payload CLI.
+    // In the Vercel runner, invalidate beers once after any execution. The
+    // extra 'menus' tag is needed because skipRevalidate also skips
+    // Beers.afterChange's per-menu `menu-${url}` fan-out, and getMenuByUrl
+    // subscribes to that broad tag rather than 'beers'.
     if (ranJobs > 0) {
       revalidateForCollection('beers')
-      revalidateForCollection('menus')
+      revalidateTag('menus')
     }
 
     return NextResponse.json({
