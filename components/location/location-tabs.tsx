@@ -18,65 +18,70 @@ import { LayoutGroup, motion, useReducedMotion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { useLocationContext } from './location-provider'
 
+/** `sm` is for tight rows — the mobile header shares one line with the logo
+ *  mark and the hamburger. `default` is the full-size control. */
+export type SegmentedSize = 'sm' | 'default'
+
 interface LocationTabsProps {
   className?: string
   children?: ReactNode
   syncWithGlobalState?: boolean
+  /** Size of the control. Defaults to `default`; see {@link SegmentedSize}. */
+  size?: SegmentedSize
 }
 
 /** Shape and colour of the segmented control, shared with other surfaces that
  *  offer the same location choice (see QuickInfoCards). Layout — sizing, column
- *  count — stays with each call site. */
+ *  count — stays with each call site, which is why size is a prop rather than a
+ *  breakpoint baked in here. */
 export const SEGMENTED_TROUGH_CLASS =
   'rounded-sm bg-black/[0.06] p-1 gap-0.5 text-muted-foreground dark:bg-muted/40'
 export const SEGMENTED_ITEM_SELECTED_CLASS = 'bg-background text-foreground'
 export const SEGMENTED_ITEM_IDLE_CLASS = 'text-muted-foreground hover:text-foreground/70'
 
 const GROUP_CLASS = cn(
-  'grid w-fit mx-auto grid-cols-2 h-10 items-center justify-center',
+  'grid w-fit mx-auto grid-cols-2 items-center justify-center',
   SEGMENTED_TROUGH_CLASS,
 )
 
+const GROUP_SIZE_CLASS: Record<SegmentedSize, string> = {
+  sm: 'h-9',
+  default: 'h-10',
+}
+
 const ITEM_CLASS =
-  'relative inline-flex items-center justify-center whitespace-nowrap rounded-sm px-4 py-1.5 text-sm font-medium cursor-pointer focus-visible:outline-none focus:outline-none transition-colors'
+  'relative inline-flex items-center justify-center whitespace-nowrap rounded-sm py-1.5 font-medium cursor-pointer focus-visible:outline-none focus:outline-none transition-colors'
+
+const ITEM_SIZE_CLASS: Record<SegmentedSize, string> = {
+  sm: 'px-2.5 text-xs',
+  default: 'px-4 text-sm',
+}
 
 export function LocationTabs({
   className,
   children,
   syncWithGlobalState = false,
+  size = 'default',
 }: LocationTabsProps) {
   const { currentLocation, setLocation, isClient, locations } = useLocationContext()
   const layoutId = useId()
   const prefersReducedMotion = useReducedMotion()
 
-  // Prevent hydration mismatch by not rendering until client-side
-  if (!isClient) {
-    return (
-      <div className={cn('w-full', className)}>
-        <div className="grid w-fit mx-auto grid-cols-2 h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground">
-          {locations.map((location) => {
-            const slug = location.slug || location.id
-            return (
-              <div
-                key={slug}
-                className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium"
-              >
-                {location.name}
-              </div>
-            )
-          })}
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div className={cn('w-full', className)}>
-      <div role="group" aria-label="Choose location" className={GROUP_CLASS}>
+    <div className={className}>
+      <div
+        role="group"
+        aria-label="Choose location"
+        className={cn(GROUP_CLASS, GROUP_SIZE_CLASS[size])}
+      >
         <LayoutGroup>
           {locations.map((location) => {
             const slug = location.slug || location.id
-            const isActive = slug === currentLocation
+            // Nothing is selected until the client has resolved a location, so
+            // the server render and the first client render agree and hydration
+            // stays quiet. `isClient` is useState(false) + an effect, so it is
+            // false in both.
+            const isActive = isClient && slug === currentLocation
 
             return (
               <button
@@ -88,6 +93,7 @@ export function LocationTabs({
                 }}
                 className={cn(
                   ITEM_CLASS,
+                  ITEM_SIZE_CLASS[size],
                   isActive ? 'text-foreground' : SEGMENTED_ITEM_IDLE_CLASS,
                 )}
               >
