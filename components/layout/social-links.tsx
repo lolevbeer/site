@@ -127,7 +127,10 @@ export function SocialLinks({
   };
 
   return (
-    <div
+    // <nav>, not role="list": a list may contain only listitems, and these
+    // children are links — that combination failed axe's aria-required-children.
+    // A labelled nav landmark keeps the grouping without misdeclaring the role.
+    <nav
       className={cn(
         'flex items-center',
         direction === 'horizontal'
@@ -135,8 +138,7 @@ export function SocialLinks({
           : 'flex-col space-y-2',
         className
       )}
-      role="list"
-      aria-label="Social media links"
+      aria-label="Social media"
     >
       {socialLinks.map((social) => {
         const IconComponent = social.icon;
@@ -186,7 +188,7 @@ export function SocialLinks({
           </Button>
         );
       })}
-    </div>
+    </nav>
   );
 }
 
