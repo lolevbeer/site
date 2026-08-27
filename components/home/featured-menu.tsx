@@ -567,8 +567,11 @@ function FeaturedMenu({
   hideHeader = false,
   labelVideos = false,
 }: FeaturedMenuProps) {
-  const { currentLocation } = useLocationContext()
+  const { currentLocation, currentLocationData } = useLocationContext()
   const title = menuType === 'draft' ? 'Draft' : 'Cans'
+  // The homepage list is filtered to one taproom, so the heading names it —
+  // otherwise nothing on the page says which location you are looking at.
+  const locationName = currentLocationData?.name
   const emptyMessage =
     menuType === 'draft'
       ? 'No beers on draft right now. Check back soon!'
@@ -767,15 +770,21 @@ function FeaturedMenu({
     )
   }
 
-  // Homepage section mode
+  // Homepage section mode. The id is the scroll target for the On Tap Now card;
+  // the sticky-header offset comes from html { scroll-padding-top } in globals.
   return (
-    <section className="py-16 lg:py-24 bg-background">
+    <section id={menuType} className="py-16 lg:py-24 bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal>
           <div className="text-center mb-12">
             <div className="flex items-center justify-between mb-4">
               <div className="flex-1" />
-              <h2 className="text-3xl lg:text-4xl font-bold">{title}</h2>
+              <h2 className="text-3xl lg:text-4xl font-bold">
+                {title}
+                {locationName && (
+                  <span className="text-muted-foreground font-normal"> · {locationName}</span>
+                )}
+              </h2>
               <div className="flex-1 flex justify-end">
                 <AdminEditButtons menusArray={menus} currentLocation={currentLocation} />
               </div>

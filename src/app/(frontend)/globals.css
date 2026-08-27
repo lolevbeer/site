@@ -220,10 +220,13 @@
     box-shadow: none;
   }
 
-  /* WCAG 2.2 (2.4.12): Prevent sticky header from obscuring focus */
-  /* Scroll focused elements into view with padding */
-  *:focus-visible {
-    scroll-margin-top: 80px; /* Header height + buffer */
+  /* WCAG 2.2 (2.4.12): keep the sticky header from obscuring focus, and land
+     hash targets (#draft, #main-content) below it rather than behind it.
+     One rule on the scrollport covers both — scroll-padding here and
+     scroll-margin on the target are ADDITIVE, so pairing them offset focused
+     elements by 160px instead of the intended 80px. */
+  html {
+    scroll-padding-top: 80px; /* Header height + buffer */
   }
 
   /* Cursor refinements for interactive elements */
