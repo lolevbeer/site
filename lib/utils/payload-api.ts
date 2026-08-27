@@ -577,164 +577,164 @@ export interface WeeklyHoursDay {
  * React cache() on top for per-request dedupe: the footer and the page body
  * both request hours for the same locations in one render.
  */
-export const getWeeklyHoursWithHolidays = cache(async (
-  locationId: string,
-): Promise<WeeklyHoursDay[]> => {
-  // Calculate week start for cache key
-  const now = new Date()
-  const dayOfWeek = now.getDay()
-  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
-  const monday = new Date(now)
-  monday.setDate(now.getDate() + mondayOffset)
-  monday.setHours(0, 0, 0, 0)
-  const weekKey = monday.toISOString().split('T')[0]
+export const getWeeklyHoursWithHolidays = cache(
+  async (locationId: string): Promise<WeeklyHoursDay[]> => {
+    // Calculate week start for cache key
+    const now = new Date()
+    const dayOfWeek = now.getDay()
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
+    const monday = new Date(now)
+    monday.setDate(now.getDate() + mondayOffset)
+    monday.setHours(0, 0, 0, 0)
+    const weekKey = monday.toISOString().split('T')[0]
 
-  try {
-    return await unstable_cache(
-      async (): Promise<WeeklyHoursDay[]> => {
-        const payload = await getPayload({ config })
+    try {
+      return await unstable_cache(
+        async (): Promise<WeeklyHoursDay[]> => {
+          const payload = await getPayload({ config })
 
-        // Get the location
-        const locationResult = await payload.find({
-          collection: 'locations',
-          where: {
-            id: {
-              equals: locationId,
+          // Get the location
+          const locationResult = await payload.find({
+            collection: 'locations',
+            where: {
+              id: {
+                equals: locationId,
+              },
             },
-          },
-          limit: 1,
-        })
+            limit: 1,
+          })
 
-        const location = locationResult.docs[0]
-        if (!location) {
-          // Location not found is a valid cacheable result
-          return []
-        }
+          const location = locationResult.docs[0]
+          if (!location) {
+            // Location not found is a valid cacheable result
+            return []
+          }
 
-        // Calculate the start of the current week (Monday)
-        const currentNow = new Date()
-        const currentDayOfWeek = currentNow.getDay()
-        const currentMondayOffset = currentDayOfWeek === 0 ? -6 : 1 - currentDayOfWeek
-        const currentMonday = new Date(currentNow)
-        currentMonday.setDate(currentNow.getDate() + currentMondayOffset)
-        currentMonday.setHours(0, 0, 0, 0)
+          // Calculate the start of the current week (Monday)
+          const currentNow = new Date()
+          const currentDayOfWeek = currentNow.getDay()
+          const currentMondayOffset = currentDayOfWeek === 0 ? -6 : 1 - currentDayOfWeek
+          const currentMonday = new Date(currentNow)
+          currentMonday.setDate(currentNow.getDate() + currentMondayOffset)
+          currentMonday.setHours(0, 0, 0, 0)
 
-        // Calculate the end of the week (Sunday)
-        const sunday = new Date(currentMonday)
-        sunday.setDate(currentMonday.getDate() + 6)
+          // Calculate the end of the week (Sunday)
+          const sunday = new Date(currentMonday)
+          sunday.setDate(currentMonday.getDate() + 6)
 
-        // Format dates for query
-        const startDateStr = currentMonday.toISOString().split('T')[0]
-        const endDateStr = sunday.toISOString().split('T')[0]
+          // Format dates for query
+          const startDateStr = currentMonday.toISOString().split('T')[0]
+          const endDateStr = sunday.toISOString().split('T')[0]
 
-        // Get all holiday hours for this location within this week
-        const holidayResult = await payload.find({
-          collection: 'holiday-hours',
-          where: {
-            and: [
-              {
-                locations: {
-                  contains: locationId,
+          // Get all holiday hours for this location within this week
+          const holidayResult = await payload.find({
+            collection: 'holiday-hours',
+            where: {
+              and: [
+                {
+                  locations: {
+                    contains: locationId,
+                  },
                 },
-              },
-              {
-                date: {
-                  greater_than_equal: startDateStr,
+                {
+                  date: {
+                    greater_than_equal: startDateStr,
+                  },
                 },
-              },
-              {
-                date: {
-                  less_than_equal: endDateStr,
+                {
+                  date: {
+                    less_than_equal: endDateStr,
+                  },
                 },
-              },
-            ],
-          },
-          limit: 7,
-          depth: 0,
-        })
+              ],
+            },
+            limit: 7,
+            depth: 0,
+          })
 
-        // Create a map of holiday overrides by date string
-        const holidayMap = new Map<string, HolidayHour>()
-        for (const holiday of holidayResult.docs) {
-          const holidayDateStr = holiday.date.split('T')[0]
-          holidayMap.set(holidayDateStr, holiday)
-        }
+          // Create a map of holiday overrides by date string
+          const holidayMap = new Map<string, HolidayHour>()
+          for (const holiday of holidayResult.docs) {
+            const holidayDateStr = holiday.date.split('T')[0]
+            holidayMap.set(holidayDateStr, holiday)
+          }
 
-        // Build the weekly hours array
-        const days: DayOfWeek[] = [
-          'monday',
-          'tuesday',
-          'wednesday',
-          'thursday',
-          'friday',
-          'saturday',
-          'sunday',
-        ]
-        const weeklyHours: WeeklyHoursDay[] = []
+          // Build the weekly hours array
+          const days: DayOfWeek[] = [
+            'monday',
+            'tuesday',
+            'wednesday',
+            'thursday',
+            'friday',
+            'saturday',
+            'sunday',
+          ]
+          const weeklyHours: WeeklyHoursDay[] = []
 
-        for (let i = 0; i < 7; i++) {
-          const date = new Date(currentMonday)
-          date.setDate(currentMonday.getDate() + i)
-          const dateStr = date.toISOString().split('T')[0]
-          const dayName = days[i]
+          for (let i = 0; i < 7; i++) {
+            const date = new Date(currentMonday)
+            date.setDate(currentMonday.getDate() + i)
+            const dateStr = date.toISOString().split('T')[0]
+            const dayName = days[i]
 
-          // Check if there's a holiday override for this day
-          const holiday = holidayMap.get(dateStr)
-          const timezone = location.timezone || 'America/New_York'
+            // Check if there's a holiday override for this day
+            const holiday = holidayMap.get(dateStr)
+            const timezone = location.timezone || 'America/New_York'
 
-          if (holiday) {
-            // Use holiday hours
-            if (holiday.type === 'closed') {
-              weeklyHours.push({
-                day: dayName,
-                date,
-                open: null,
-                close: null,
-                closed: true,
-                holidayName: holiday.name,
-                note: holiday.note || undefined,
-                timezone,
-              })
+            if (holiday) {
+              // Use holiday hours
+              if (holiday.type === 'closed') {
+                weeklyHours.push({
+                  day: dayName,
+                  date,
+                  open: null,
+                  close: null,
+                  closed: true,
+                  holidayName: holiday.name,
+                  note: holiday.note || undefined,
+                  timezone,
+                })
+              } else {
+                // Modified hours
+                weeklyHours.push({
+                  day: dayName,
+                  date,
+                  open: holiday.hours?.open || null,
+                  close: holiday.hours?.close || null,
+                  closed: false,
+                  holidayName: holiday.name,
+                  note: holiday.note || undefined,
+                  timezone,
+                })
+              }
             } else {
-              // Modified hours
+              // Use regular hours from location
+              const regularHours = location[dayName] as
+                { open?: string | null; close?: string | null } | undefined
+              const hasHours = regularHours?.open && regularHours?.close
+
               weeklyHours.push({
                 day: dayName,
                 date,
-                open: holiday.hours?.open || null,
-                close: holiday.hours?.close || null,
-                closed: false,
-                holidayName: holiday.name,
-                note: holiday.note || undefined,
+                open: regularHours?.open || null,
+                close: regularHours?.close || null,
+                closed: !hasHours,
                 timezone,
               })
             }
-          } else {
-            // Use regular hours from location
-            const regularHours = location[dayName] as
-              { open?: string | null; close?: string | null } | undefined
-            const hasHours = regularHours?.open && regularHours?.close
-
-            weeklyHours.push({
-              day: dayName,
-              date,
-              open: regularHours?.open || null,
-              close: regularHours?.close || null,
-              closed: !hasHours,
-              timezone,
-            })
           }
-        }
 
-        return weeklyHours
-      },
-      [`weekly-hours-${locationId}-${weekKey}`],
-      { tags: [CACHE_TAGS.locations, CACHE_TAGS.holidayHours], revalidate: 300 },
-    )()
-  } catch (error) {
-    logger.error(`Error fetching weekly hours with holidays for location ${locationId}`, error)
-    throw error
-  }
-})
+          return weeklyHours
+        },
+        [`weekly-hours-${locationId}-${weekKey}`],
+        { tags: [CACHE_TAGS.locations, CACHE_TAGS.holidayHours], revalidate: 300 },
+      )()
+    } catch (error) {
+      logger.error(`Error fetching weekly hours with holidays for location ${locationId}`, error)
+      throw error
+    }
+  },
+)
 
 /**
  * Get upcoming events for a location from Payload

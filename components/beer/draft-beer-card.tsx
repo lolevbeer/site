@@ -56,7 +56,11 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
   // Fullscreen mode uses viewport-relative sizing
   if (showTapAndPrice) {
     return (
-      <BeerLinkWrapper href={`/beer/${beerSlug}`} hidden={beer.availability.hideFromSite}>
+      <BeerLinkWrapper
+        href={`/beer/${beerSlug}`}
+        label={beer.name}
+        hidden={beer.availability.hideFromSite}
+      >
         <div
           className={`relative overflow-hidden transition-colors duration-200 cursor-pointer hover:bg-secondary/50 h-full bg-background ${className}`}
         >
@@ -108,6 +112,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                 {beer.topBeerDrops && (
                   <TopBeerDropsLink
                     url={beer.topBeerDrops}
+                    beerName={beer.name}
                     className="flex-shrink-0 text-foreground hover:text-primary transition-colors"
                     style={{ height: '3.2vh', width: '3.2vh' }}
                   />
@@ -200,6 +205,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
   return (
     <BeerLinkWrapper
       href={showLocation ? `/${currentLocation}/beer/${beerSlug}` : `/beer/${beerSlug}`}
+      label={beer.name}
       hidden={beer.availability.hideFromSite}
     >
       <div
@@ -231,6 +237,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
               {beer.topBeerDrops && (
                 <TopBeerDropsLink
                   url={beer.topBeerDrops}
+                  beerName={beer.name}
                   className="h-6 w-6 flex-shrink-0 text-foreground hover:text-primary transition-colors"
                 />
               )}
@@ -243,13 +250,16 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
               )}
             </div>
             <div className="flex flex-col gap-0.5">
+              {/* No /50 or /60 opacity here: fading muted-foreground put this
+                  body text at 2.45:1 and 3.1:1 against the dark background,
+                  under the 4.5:1 WCAG AA floor for text this size. */}
               {beer.description && (
-                <p className="text-sm text-muted-foreground/60 line-clamp-1 leading-tight">
+                <p className="text-sm text-muted-foreground line-clamp-1 leading-tight">
                   {beer.description}
                 </p>
               )}
               {beer.hops && (
-                <p className="text-xs text-muted-foreground/50 truncate leading-tight">
+                <p className="text-xs text-muted-foreground truncate leading-tight">
                   <span className="font-medium">Hops:</span> {beer.hops}
                 </p>
               )}
