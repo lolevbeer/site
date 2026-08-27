@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import type { LocationSlug } from '@/lib/types/location';
 import { cn } from '@/lib/utils';
@@ -82,15 +83,11 @@ export function QuickInfoCards({ beerCount, nextEvent, className }: QuickInfoCar
               })}
             </div>
           )}
-          <Link
-            href="/beer"
-            className={cn(
-              'text-sm text-muted-foreground hover:text-foreground transition-colors',
-              hasBeers && 'mt-5'
-            )}
-          >
-            {hasBeers ? <>See all beers &rarr;</> : 'Explore our current selection'}
-          </Link>
+          {/* Same CTA treatment as the section-level "View All Beer" buttons
+              further down the homepage. */}
+          <Button asChild variant="outline" size="lg" className={cn(hasBeers && 'mt-5')}>
+            <Link href="/beer">View All Beer</Link>
+          </Button>
         </Card>
       </MotionCard>
 
