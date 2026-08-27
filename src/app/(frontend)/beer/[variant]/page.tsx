@@ -17,17 +17,12 @@ interface BeerPageProps {
 export async function generateMetadata({ params }: BeerPageProps): Promise<Metadata> {
   const { variant } = await params
 
-  let beer
-  try {
-    beer = await getBeerBySlug(variant)
-  } catch {
-    // Database error - return generic title
-    return {
-      title: 'Beer Not Found',
-    }
-  }
+  // No try/catch: a thrown Payload/DB error must propagate to error.tsx,
+  // not masquerade as a not-found page (same principle as the BeerPage component).
+  const beer = await getBeerBySlug(variant)
 
-  if (!beer) {
+  // Missing or hidden beers return minimal metadata
+  if (!beer || beer.hideFromSite) {
     return {
       title: 'Beer Not Found',
     }
