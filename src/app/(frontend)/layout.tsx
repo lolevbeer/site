@@ -15,6 +15,7 @@ import { GoogleAnalytics } from '@/components/analytics/google-analytics'
 import { PageViewTracker } from '@/components/analytics/page-view-tracker'
 import { AuthProvider } from '@/lib/hooks/use-auth'
 import { Footer } from '@/components/layout/footer'
+import { MotionHydrationSentinel } from '@/components/motion/blur-fade'
 import { getAllLocations } from '@/lib/utils/payload-api'
 import { getWeeklyHoursForLocations } from '@/lib/utils/homepage-data'
 import './globals.css'
@@ -194,6 +195,9 @@ export default async function AppLayout({
               <LocationProvider locations={locations}>
                 <AuthProvider>
                   <PageViewTracker />
+                  {/* Marks the app hydrated for BlurFade even when the first
+                      page renders no BlurFade of its own (see blur-fade.tsx) */}
+                  <MotionHydrationSentinel />
                   <SkipNav />
                   <ConditionalLayout
                     footer={

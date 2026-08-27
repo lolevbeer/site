@@ -26,6 +26,22 @@ export function __resetBlurFadeHydrationForTests() {
   hasAppHydrated = false
 }
 
+/**
+ * Null-rendering client component that flips the module-level hydration flag
+ * on the app's first client commit. Rendered once in the root layout so the
+ * flag flips even when the first page has no BlurFade of its own (e.g.
+ * /privacy, /terms, /beer-map) — without it, hard-loading such a page and
+ * then client-navigating left the first destination un-animated. BlurFade's
+ * own effect still sets the flag too, as belt-and-suspenders for trees
+ * rendered outside the root layout.
+ */
+export function MotionHydrationSentinel() {
+  useEffect(() => {
+    hasAppHydrated = true
+  }, [])
+  return null
+}
+
 interface BlurFadeProps {
   children: React.ReactNode
   className?: string

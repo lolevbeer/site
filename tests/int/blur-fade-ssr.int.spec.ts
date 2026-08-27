@@ -21,7 +21,10 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { render, cleanup } from '@testing-library/react'
 import { createElement } from 'react'
 import { BlurFade, PageTransition } from '@/components/motion'
-import { __resetBlurFadeHydrationForTests } from '@/components/motion/blur-fade'
+import {
+  __resetBlurFadeHydrationForTests,
+  MotionHydrationSentinel,
+} from '@/components/motion/blur-fade'
 
 describe('BlurFade / PageTransition SSR output', () => {
   it('BlurFade renders visible (no opacity:0) before the client has mounted', () => {
@@ -77,6 +80,20 @@ describe('BlurFade hydration-flag propagation across mounts', () => {
     // A fresh BlurFade tree — e.g. App Router mounting a new
     // PageTransition/BlurFade on navigation — must animate in, not render
     // pre-animated, on this later mount too.
+    const { container } = render(
+      createElement(BlurFade, { children: createElement('h1', null, 'B') }),
+    )
+
+    expect(container.innerHTML).toMatch(/opacity:\s*0\b/)
+  })
+
+  it('MotionHydrationSentinel alone flips the flag: a BlurFade mounted after it animates in', () => {
+    // Simulates hard-loading a page with NO BlurFade (/privacy, /terms,
+    // /beer-map): only the root layout's sentinel mounts. A BlurFade mounted
+    // later — the first client-side navigation's destination — must still
+    // animate in from hidden rather than render pre-animated.
+    render(createElement(MotionHydrationSentinel))
+
     const { container } = render(
       createElement(BlurFade, { children: createElement('h1', null, 'B') }),
     )
