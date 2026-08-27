@@ -4,7 +4,8 @@ import type { User } from '@/src/payload-types'
 /**
  * Role types available in the system
  */
-export type Role = 'admin' | 'event-manager' | 'beer-manager' | 'food-manager' | 'lead-bartender' | 'bartender'
+export type Role =
+  'admin' | 'event-manager' | 'beer-manager' | 'food-manager' | 'lead-bartender' | 'bartender'
 
 /**
  * Check if a user has any of the specified roles.
@@ -52,6 +53,27 @@ export const adminAccess: Access = ({ req: { user } }) => {
  */
 export const adminFieldAccess: FieldAccess = ({ req: { user } }) => {
   return isAdmin(user)
+}
+
+/**
+ * Field access control: User must be authenticated
+ */
+export const authenticatedFieldAccess: FieldAccess = ({ req: { user } }) => {
+  return Boolean(user)
+}
+
+/**
+ * Field access control: User must have admin or event-manager role
+ */
+export const eventManagerFieldAccess: FieldAccess = ({ req: { user } }) => {
+  return hasRole(user, ['admin', 'event-manager'])
+}
+
+/**
+ * Field access control: User must have admin or beer-manager role
+ */
+export const beerManagerFieldAccess: FieldAccess = ({ req: { user } }) => {
+  return hasRole(user, ['admin', 'beer-manager'])
 }
 
 /**

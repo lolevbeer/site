@@ -1,13 +1,13 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { useAllFormFields, useDocumentInfo } from '@payloadcms/ui'
-import {
-  getRecurringFoodData,
-  getFoodVendor,
-  getFoodOnDate,
-} from '@/src/actions/admin-data'
+import { useDocumentInfo, useFormFields } from '@payloadcms/ui'
+import { getRecurringFoodData, getFoodVendor, getFoodOnDate } from '@/src/actions/admin-data'
 import { logger } from '@/lib/utils/logger'
+import {
+  getAdminRelationshipID,
+  type AdminRelationshipValue,
+} from '@/src/components/admin/relationship-value'
 
 const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const
 const weekKeys = ['first', 'second', 'third', 'fourth', 'fifth'] as const
@@ -30,15 +30,14 @@ export const FoodDateWarning: React.FC = () => {
   const [warnings, setWarnings] = useState<Warning[]>([])
   const [loading, setLoading] = useState(false)
 
-  const [fields] = useAllFormFields()
   const { id: currentDocId } = useDocumentInfo()
-  const dateValue = fields['date']?.value as string | undefined
-  const locationRaw = fields['location']?.value as string | { id?: string } | undefined
-
-  // Extract location ID whether it's a string or object
-  const locationValue = typeof locationRaw === 'string' ? locationRaw : locationRaw?.id
+  const dateValue = useFormFields(([fields]) => fields.date?.value as string | undefined)
+  const locationRaw = useFormFields(([fields]) => fields.location?.value as AdminRelationshipValue)
+  const locationValue = getAdminRelationshipID(locationRaw)
 
   useEffect(() => {
+    let cancelled = false
+
     if (!dateValue || !locationValue) {
       setWarnings([])
       return
@@ -94,16 +93,19 @@ export const FoodDateWarning: React.FC = () => {
           logger.error('Error checking individual food events:', error)
         }
 
-        setWarnings(newWarnings)
+        if (!cancelled) setWarnings(newWarnings)
       } catch (error) {
         logger.error('Error checking vendors:', error)
-        setWarnings([])
+        if (!cancelled) setWarnings([])
       } finally {
-        setLoading(false)
+        if (!cancelled) setLoading(false)
       }
     }
 
-    checkVendors()
+    void checkVendors()
+    return () => {
+      cancelled = true
+    }
   }, [dateValue, locationValue, currentDocId])
 
   if (!dateValue || !locationValue || loading || warnings.length === 0) {

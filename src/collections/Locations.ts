@@ -17,7 +17,9 @@ function getUserLocationIds(user: User | null): string[] | null {
   if (!user?.locations || !Array.isArray(user.locations) || user.locations.length === 0) {
     return null
   }
-  return user.locations.map((loc: string | { id: string }) => (typeof loc === 'object' ? loc.id : loc))
+  return user.locations.map((loc: string | { id: string }) =>
+    typeof loc === 'object' ? loc.id : loc,
+  )
 }
 
 /**
@@ -135,7 +137,7 @@ export const Locations: CollectionConfig = {
         update: adminFieldAccess,
       },
       admin: {
-        description: 'Timezone for this location\'s hours',
+        description: "Timezone for this location's hours",
       },
     },
     {
@@ -152,6 +154,7 @@ export const Locations: CollectionConfig = {
       type: 'group',
       label: 'Google Sheets Import URLs',
       access: {
+        read: adminFieldAccess,
         update: adminFieldAccess,
       },
       admin: {

@@ -1,9 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '@payloadcms/ui'
 import { Banner } from '@payloadcms/ui'
 import { logger } from '@/lib/utils/logger'
+import { hasRole } from '@/src/access/roles'
+import type { User } from '@/src/payload-types'
 
 interface Location {
   id: string
@@ -13,7 +15,11 @@ interface Location {
 
 type AlertLevel = 'warning' | 'error' | null
 
-function getAlertLevel(dateStr: string | null | undefined): { level: AlertLevel; days: number; dueDate: string | null } {
+function getAlertLevel(dateStr: string | null | undefined): {
+  level: AlertLevel
+  days: number
+  dueDate: string | null
+} {
   if (!dateStr) return { level: 'error', days: -1, dueDate: null }
 
   const lastCleaned = new Date(dateStr)
@@ -32,12 +38,24 @@ function getAlertLevel(dateStr: string | null | undefined): { level: AlertLevel;
 }
 
 export function LinesCleanedAlert({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth()
-  const [alerts, setAlerts] = useState<Array<{ location: Location; level: AlertLevel; days: number; dueDate: string | null }>>([])
+  const { user } = useAuth<User>()
+  const [alerts, setAlerts] = useState<
+    Array<{ location: Location; level: AlertLevel; days: number; dueDate: string | null }>
+  >([])
   const [loading, setLoading] = useState(true)
 
-  // Check if user has permission to see this alert
-  const hasAccess = user?.roles?.includes('admin') || user?.roles?.includes('lead-bartender')
+  const isAdmin = hasRole(user, 'admin')
+  const isLeadBartender = hasRole(user, 'lead-bartender')
+  const assignedLocationIds = useMemo(
+    () =>
+      new Set(
+        (user?.locations || []).map((location) =>
+          typeof location === 'object' ? location.id : location,
+        ),
+      ),
+    [user?.locations],
+  )
+  const hasAccess = isAdmin || (isLeadBartender && assignedLocationIds.size > 0)
 
   useEffect(() => {
     if (!hasAccess) {
@@ -48,11 +66,20 @@ export function LinesCleanedAlert({ children }: { children: React.ReactNode }) {
     async function fetchLocations() {
       try {
         const res = await fetch('/api/locations?limit=100&depth=0')
-        const data = await res.json()
+        if (!res.ok) throw new Error(`Location request failed (${res.status})`)
 
-        const locationAlerts: Array<{ location: Location; level: AlertLevel; days: number; dueDate: string | null }> = []
+        const data = (await res.json()) as { docs?: Location[] }
+
+        const locationAlerts: Array<{
+          location: Location
+          level: AlertLevel
+          days: number
+          dueDate: string | null
+        }> = []
 
         for (const location of data.docs || []) {
+          if (!isAdmin && !assignedLocationIds.has(location.id)) continue
+
           const { level, days, dueDate } = getAlertLevel(location.linesLastCleaned)
           if (level) {
             locationAlerts.push({ location, level, days, dueDate })
@@ -76,27 +103,26 @@ export function LinesCleanedAlert({ children }: { children: React.ReactNode }) {
 
     fetchLocations()
 
-    // Listen for optimistic updates when lines are cleaned
+    // The button emits this event only after Payload confirms the update.
     const handleLinesCleanedUpdate = (event: Event) => {
       const customEvent = event as CustomEvent<{ locationId: string }>
       const locationId = customEvent.detail?.locationId
 
       if (locationId) {
-        // Optimistically remove this location from alerts immediately
-        setAlerts(prev => prev.filter(a => a.location.id !== locationId))
+        setAlerts((prev) => prev.filter((a) => a.location.id !== locationId))
       }
     }
 
     window.addEventListener('linesCleanedUpdate', handleLinesCleanedUpdate)
     return () => window.removeEventListener('linesCleanedUpdate', handleLinesCleanedUpdate)
-  }, [hasAccess])
+  }, [assignedLocationIds, hasAccess, isAdmin])
 
   if (!hasAccess || loading || alerts.length === 0) {
     return <>{children}</>
   }
 
-  const errorAlerts = alerts.filter(a => a.level === 'error')
-  const warningAlerts = alerts.filter(a => a.level === 'warning')
+  const errorAlerts = alerts.filter((a) => a.level === 'error')
+  const warningAlerts = alerts.filter((a) => a.level === 'warning')
 
   return (
     <>
@@ -114,8 +140,8 @@ export function LinesCleanedAlert({ children }: { children: React.ReactNode }) {
                 {a.location.name} ({a.days === -1 ? 'never cleaned' : `${a.days} days`})
                 {i < errorAlerts.length - 1 ? ', ' : ''}
               </span>
-            ))}
-            {' '}- Draft lines need cleaning immediately!
+            ))}{' '}
+            - Draft lines need cleaning immediately!
           </Banner>
         )}
         {warningAlerts.map((a) => (

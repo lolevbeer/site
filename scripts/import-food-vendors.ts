@@ -73,6 +73,7 @@ async function importFoodVendors() {
           phone: record.phone?.trim() || undefined,
           site: record.social?.trim() || undefined,
         },
+        context: { skipRevalidate: true },
       })
       console.log(`Created: ${vendorName}`)
       created++

@@ -57,11 +57,14 @@ function parseAddress(combined: string, defaultState: string): ParsedAddress | n
   }
 
   // Last resort: split by commas and hope for the best
-  const parts = combined.split(',').map(p => p.trim())
+  const parts = combined.split(',').map((p) => p.trim())
   if (parts.length >= 2) {
     const lastPart = parts[parts.length - 1]
     const zipMatch = lastPart.match(/(\d{5})/)
-    const cityPart = parts.length >= 3 ? parts[parts.length - 2] : parts[parts.length - 1].replace(/[A-Z]{2}\s*\d+/, '').trim()
+    const cityPart =
+      parts.length >= 3
+        ? parts[parts.length - 2]
+        : parts[parts.length - 1].replace(/[A-Z]{2}\s*\d+/, '').trim()
 
     return {
       street: parts.slice(0, -1).join(', ').replace(/,\s*$/, ''),
@@ -138,10 +141,11 @@ async function fetchDistributors(url: string): Promise<DistributorRow[]> {
         ...row,
         CustomerName: decodeHtmlEntities(row.CustomerName),
       }))
-      .filter((row: DistributorRow) =>
-        !row.CustomerName.toLowerCase().includes('fifo') &&
-        !row.CustomerName.toLowerCase().includes('adjustment') &&
-        !row.AddressCityStateZip.toLowerCase().includes('distributor address')
+      .filter(
+        (row: DistributorRow) =>
+          !row.CustomerName.toLowerCase().includes('fifo') &&
+          !row.CustomerName.toLowerCase().includes('adjustment') &&
+          !row.AddressCityStateZip.toLowerCase().includes('distributor address'),
       )
   } catch (error: any) {
     console.error(`Error fetching data: ${error.message}`)
@@ -213,7 +217,9 @@ async function main() {
     for (const row of rows) {
       const parsed = parseAddress(row.AddressCityStateZip, region)
       if (!parsed) {
-        console.log(`  Skipping "${row.CustomerName}" - could not parse address: ${row.AddressCityStateZip}`)
+        console.log(
+          `  Skipping "${row.CustomerName}" - could not parse address: ${row.AddressCityStateZip}`,
+        )
         errors++
         continue
       }
@@ -259,6 +265,7 @@ async function main() {
             location,
             active: true,
           },
+          context: { skipRevalidate: true },
         })
         console.log(`    Imported: ${row.CustomerName}`)
         imported++

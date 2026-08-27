@@ -2,119 +2,29 @@ import { NextRequest, NextResponse } from 'next/server'
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { getPayload } from 'payload'
 import config from '@/src/payload.config'
-import { fetchUntappdData, isCircuitOpen, resetCircuit } from '@/src/utils/untappd'
 import { logger } from '@/lib/utils/logger'
 
+const QUEUE = 'maintenance'
+
 /**
- * Cron job to sync Untappd ratings for all beers.
- * Runs on a schedule configured in vercel.json.
- * Includes circuit breaker: stops fetching if too many consecutive failures.
+ * Vercel invokes this route daily. Payload handles the schedule deduplication,
+ * durable job record, retries, and execution; this route only wakes the queue.
  */
 export async function GET(request: NextRequest) {
-  // Verify the request is from Vercel Cron
   const authHeader = request.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!process.env.CRON_SECRET || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   try {
     const payload = await getPayload({ config })
+    const scheduled = await payload.jobs.handleSchedules({ queue: QUEUE })
+    const run = await payload.jobs.run({ queue: QUEUE, limit: 1, sequential: true })
+    const ranJobs = Object.keys(run.jobStatus || {}).length
 
-    // Reset circuit breaker at the start of each cron run
-    resetCircuit()
-
-    // Fetch all beers with Untappd URLs
-    const beers = await payload.find({
-      collection: 'beers',
-      where: {
-        untappd: { exists: true },
-      },
-      limit: 500,
-      depth: 0,
-    })
-
-    const results = {
-      total: beers.docs.length,
-      updated: 0,
-      skipped: 0,
-      errors: 0,
-      circuitBroken: false,
-    }
-
-    for (const beer of beers.docs) {
-      if (!beer.untappd) {
-        results.skipped++
-        continue
-      }
-
-      // Stop processing if circuit breaker tripped
-      if (isCircuitOpen()) {
-        results.circuitBroken = true
-        results.skipped += beers.docs.length - results.updated - results.skipped - results.errors
-        logger.warn('Untappd sync stopped: circuit breaker open', {
-          processed: results.updated + results.skipped + results.errors,
-          remaining: beers.docs.length - results.updated - results.skipped - results.errors,
-        })
-        break
-      }
-
-      try {
-        const { rating, ratingCount, positiveReviews } = await fetchUntappdData(beer.untappd)
-
-        if (rating !== null) {
-          // Merge with existing reviews, using URL as unique key
-          const existingReviews = (beer.positiveReviews as { url?: string }[]) || []
-          const existingUrls = new Set(existingReviews.map(r => r.url).filter(Boolean))
-          const newReviews = positiveReviews.filter(r => r.url && !existingUrls.has(r.url))
-
-          const ratingChanged = rating !== beer.untappdRating
-          const countChanged = ratingCount !== null && ratingCount !== beer.untappdRatingCount
-
-          // Nothing changed — skip the write entirely so no hooks fire
-          if (!ratingChanged && !countChanged && newReviews.length === 0) {
-            results.skipped++
-            await new Promise(resolve => setTimeout(resolve, 500))
-            continue
-          }
-
-          const updateData: Record<string, unknown> = {
-            untappdRating: rating,
-          }
-
-          if (ratingCount !== null) {
-            updateData.untappdRatingCount = ratingCount
-          }
-
-          if (newReviews.length > 0) {
-            updateData.positiveReviews = [...existingReviews, ...newReviews]
-          }
-
-          await payload.update({
-            collection: 'beers',
-            id: beer.id,
-            data: updateData,
-            // Batched revalidation fires once after the loop instead of the
-            // full tag/path fan-out per updated beer (see revalidation-plugin)
-            context: { skipRevalidate: true },
-          })
-
-          results.updated++
-        } else {
-          results.skipped++
-        }
-
-        // Delay between requests to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 500))
-      } catch (error) {
-        logger.error(`Error updating beer ${beer.name}:`, error)
-        results.errors++
-      }
-    }
-
-    // One batched invalidation for the whole run. Note: Beers.afterChange
-    // still revalidates the precise menu-${url} tags per updated beer, so
-    // menu displays pick up rating changes.
-    if (results.updated > 0) {
+    // Job tasks intentionally avoid Next cache APIs so they also work from the
+    // Payload CLI. In the Vercel runner, invalidate once after any execution.
+    if (ranJobs > 0) {
       revalidateTag('beers')
       revalidatePath('/')
       revalidatePath('/beer')
@@ -122,17 +32,17 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      results,
-      timestamp: new Date().toISOString(),
+      scheduled: {
+        queued: scheduled.queued.length,
+        skipped: scheduled.skipped.length,
+        errored: scheduled.errored.length,
+      },
+      run,
     })
   } catch (error) {
-    logger.error('Untappd sync cron error:', error)
-    return NextResponse.json(
-      { error: 'Failed to sync Untappd ratings' },
-      { status: 500 }
-    )
+    logger.error('Untappd jobs runner error:', error)
+    return NextResponse.json({ error: 'Failed to run maintenance jobs' }, { status: 500 })
   }
 }
 
-// Allow longer execution time for cron jobs
 export const maxDuration = 300

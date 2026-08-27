@@ -12,9 +12,12 @@ import { Media } from './collections/Media'
 import { Styles } from './collections/Styles'
 import { Tags } from './collections/Tags'
 import { Beers } from './collections/Beers'
+import { BeerReviews } from './collections/BeerReviews'
 import { Events } from './collections/Events'
 import { Food } from './collections/Food'
 import { FoodVendors } from './collections/FoodVendors'
+import { RecurringFoodSchedules } from './collections/RecurringFoodSchedules'
+import { RecurringFoodExclusions } from './collections/RecurringFoodExclusions'
 import { Locations } from './collections/Locations'
 import { HolidayHours } from './collections/HolidayHours'
 import { Menus } from './collections/Menus'
@@ -32,6 +35,8 @@ import { updateDistributorUrls } from './endpoints/update-distributor-urls'
 import { recalculateBeerPrices } from './endpoints/recalculate-beer-prices'
 import { regeocodeDistributors } from './endpoints/regeocode-distributors'
 import { syncUntappdRatings } from './endpoints/sync-untappd-ratings'
+import { adminAccess, hasRole } from './access/roles'
+import { syncUntappdRatingsTask } from './jobs/sync-untappd-ratings'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -72,6 +77,33 @@ export default buildConfig({
     graphQLPlayground: '/api/graphql-playground',
   },
   cookiePrefix: 'payload',
+  jobs: {
+    access: {
+      cancel: ({ req }) => hasRole(req.user, 'admin'),
+      queue: ({ req }) => hasRole(req.user, 'admin'),
+      run: ({ req }) => hasRole(req.user, 'admin'),
+    },
+    addParentToTaskLog: true,
+    deleteJobOnComplete: false,
+    depth: 0,
+    processingOrder: 'createdAt',
+    tasks: [syncUntappdRatingsTask],
+    jobsCollectionOverrides: ({ defaultJobsCollection }) => ({
+      ...defaultJobsCollection,
+      admin: {
+        ...defaultJobsCollection.admin,
+        group: 'System',
+        hidden: false,
+        hideAPIURL: true,
+      },
+      access: {
+        read: adminAccess,
+        create: () => false,
+        update: () => false,
+        delete: adminAccess,
+      },
+    }),
+  },
   admin: {
     user: Users.slug,
     meta: {
@@ -112,6 +144,7 @@ export default buildConfig({
   collections: [
     // Back of House
     Beers,
+    BeerReviews,
     Styles,
     Tags,
     // Front of House
@@ -121,6 +154,8 @@ export default buildConfig({
     Events,
     Food,
     FoodVendors,
+    RecurringFoodSchedules,
+    RecurringFoodExclusions,
     // Settings (last)
     Users,
     Locations,

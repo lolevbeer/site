@@ -23,6 +23,7 @@ const COLLECTION_CACHE_MAP: Record<string, string[]> = {
   // menus that actually contain the beer. Caches that embed beer docs inside
   // menu queries subscribe to 'beers' directly (see lib/utils/payload-api.ts).
   beers: ['beers'],
+  'beer-reviews': ['beers'],
   menus: ['menus'],
   events: ['events'],
   food: ['food'],
@@ -30,6 +31,8 @@ const COLLECTION_CACHE_MAP: Record<string, string[]> = {
   styles: ['styles', 'beers'], // Styles affect beer displays
   distributors: ['distributors'],
   'food-vendors': ['food-vendors', 'food'], // Food vendors affect food displays
+  'recurring-food-schedules': ['recurring-food', 'food'],
+  'recurring-food-exclusions': ['recurring-food', 'food'],
   products: ['products', 'menus'], // Products affect menu displays
   'holiday-hours': ['holiday-hours', 'locations'],
   faqs: ['faqs'],
@@ -45,6 +48,7 @@ const GLOBAL_CACHE_MAP: Record<string, string[]> = {
 // Paths to revalidate for each collection
 const COLLECTION_PATHS: Record<string, string[]> = {
   beers: ['/', '/beer'],
+  'beer-reviews': ['/', '/beer'],
   menus: ['/'],
   events: ['/', '/events'],
   food: ['/', '/food'],
@@ -52,6 +56,8 @@ const COLLECTION_PATHS: Record<string, string[]> = {
   styles: ['/beer'],
   distributors: ['/beer-map'],
   'food-vendors': ['/food'],
+  'recurring-food-schedules': ['/food'],
+  'recurring-food-exclusions': ['/food'],
   products: ['/'],
   'holiday-hours': ['/'],
   faqs: ['/faq'],
@@ -71,7 +77,13 @@ const COLLECTION_PATH_BUILDERS: Record<string, (doc: Record<string, unknown>) =>
  * this fan-out per write — they revalidate once after the loop instead.
  */
 function createCollectionAfterChangeHook(slug: string) {
-  return async ({ doc, context }: { doc: Record<string, unknown>; context?: Record<string, unknown> }) => {
+  return async ({
+    doc,
+    context,
+  }: {
+    doc: Record<string, unknown>
+    context?: Record<string, unknown>
+  }) => {
     if (context?.skipRevalidate) {
       return doc
     }
@@ -105,7 +117,13 @@ function createCollectionAfterChangeHook(slug: string) {
  * Creates the afterDelete hook for a collection
  */
 function createCollectionAfterDeleteHook(slug: string) {
-  return async ({ doc, context }: { doc: Record<string, unknown>; context?: Record<string, unknown> }) => {
+  return async ({
+    doc,
+    context,
+  }: {
+    doc: Record<string, unknown>
+    context?: Record<string, unknown>
+  }) => {
     if (context?.skipRevalidate) {
       return doc
     }
@@ -134,7 +152,13 @@ function createCollectionAfterDeleteHook(slug: string) {
  * revalidateTag/revalidatePath throw ("static generation store missing").
  */
 function createGlobalAfterChangeHook(slug: string) {
-  return async ({ doc, context }: { doc: Record<string, unknown>; context?: Record<string, unknown> }) => {
+  return async ({
+    doc,
+    context,
+  }: {
+    doc: Record<string, unknown>
+    context?: Record<string, unknown>
+  }) => {
     if (context?.skipRevalidate) {
       return doc
     }

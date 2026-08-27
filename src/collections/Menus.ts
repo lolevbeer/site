@@ -1,15 +1,14 @@
-import type { CollectionConfig, Access, FieldAccess, Where } from 'payload'
+import type { CollectionConfig, Access, Where } from 'payload'
 import { APIError } from 'payload'
 import type { User } from '@/src/payload-types'
 import { adminAccess, adminFieldAccess, hasRole } from '@/src/access/roles'
-import { logger } from '@/lib/utils/logger'
 
 /**
  * Get location IDs from user's assigned locations
  */
-function getUserLocationIds(user: User | null): string[] | null {
+function getUserLocationIds(user: User | null): string[] {
   if (!user?.locations || !Array.isArray(user.locations) || user.locations.length === 0) {
-    return null
+    return []
   }
   return user.locations.map((loc: string | { id: string }) =>
     typeof loc === 'object' ? loc.id : loc,
@@ -17,15 +16,8 @@ function getUserLocationIds(user: User | null): string[] | null {
 }
 
 /**
- * Field access: Admin or Lead Bartender can update
- */
-const leadBartenderFieldAccess: FieldAccess = ({ req: { user } }) => {
-  return hasRole(user, ['admin', 'lead-bartender'])
-}
-
-/**
- * Who may edit menus: admins anywhere, (lead) bartenders either everywhere or
- * only at their assigned locations. Exported because the Slack bot asks the
+ * Who may edit menus: admins anywhere and (lead) bartenders only at their
+ * assigned locations. Exported because the Slack bot asks the
  * same question before opening its editor — `read` access falls through to
  * "published only" for everyone, so listing a menu proves nothing about being
  * able to publish it.
@@ -33,17 +25,14 @@ const leadBartenderFieldAccess: FieldAccess = ({ req: { user } }) => {
 export const canUpdateMenus: Access = ({ req: { user } }) => {
   if (hasRole(user, 'admin')) return true
   if (hasRole(user, ['bartender', 'lead-bartender'])) {
-    // If bartender has assigned locations, restrict to those locations' menus
     const locationIds = getUserLocationIds(user)
-    if (locationIds) {
-      return {
-        location: {
-          in: locationIds,
-        },
-      }
+    if (locationIds.length === 0) return false
+
+    return {
+      location: {
+        in: locationIds,
+      },
     }
-    // Bartender without assigned locations can update all menus
-    return true
   }
   return false
 }
@@ -66,17 +55,16 @@ export const Menus: CollectionConfig = {
     read: ({ req: { user } }): boolean | Where => {
       // Admins can read all menus (including drafts)
       if (hasRole(user, 'admin')) return true
-      // Bartenders can read all menus, but if assigned to locations, only those locations' menus
-      if (hasRole(user, 'bartender')) {
+      // Bartenders and lead bartenders can read drafts only for assigned locations.
+      if (hasRole(user, ['bartender', 'lead-bartender'])) {
         const locationIds = getUserLocationIds(user)
-        if (locationIds) {
-          return {
-            location: {
-              in: locationIds,
-            },
-          }
+        if (locationIds.length === 0) return false
+
+        return {
+          location: {
+            in: locationIds,
+          },
         }
-        return true
       }
       // Public can only read published menus
       return {
@@ -94,54 +82,6 @@ export const Menus: CollectionConfig = {
     maxPerDoc: 50, // Keep only the last 50 versions per document
   },
   hooks: {
-    afterChange: [
-      // Sync linesLastCleaned to the location (draft menus only)
-      async ({ data, req }) => {
-        if (data?.type === 'draft' && data?.linesLastCleaned && data?.location) {
-          const locationId = typeof data.location === 'object' ? data.location.id : data.location
-          if (locationId) {
-            try {
-              await req.payload.update({
-                collection: 'locations',
-                id: locationId,
-                data: {
-                  linesLastCleaned: data.linesLastCleaned,
-                },
-              })
-            } catch (error) {
-              // Silently fail if user doesn't have permission to update location
-              logger.error('Failed to sync linesLastCleaned to location:', error)
-            }
-          }
-        }
-        return data
-      },
-    ],
-    afterRead: [
-      // Populate linesLastCleaned from location (draft menus only)
-      async ({ doc, req }) => {
-        if (doc?.type === 'draft' && doc?.location) {
-          let location = typeof doc.location === 'object' ? doc.location : null
-
-          // Fetch location if it's just an ID
-          if (!location && typeof doc.location === 'string') {
-            try {
-              location = await req.payload.findByID({
-                collection: 'locations',
-                id: doc.location,
-              })
-            } catch {
-              // Silently fail if location not found
-            }
-          }
-
-          if (location?.linesLastCleaned) {
-            doc.linesLastCleaned = location.linesLastCleaned
-          }
-        }
-        return doc
-      },
-    ],
     beforeValidate: [
       ({ data }) => {
         if (!data?.items || !Array.isArray(data.items)) return data
@@ -261,22 +201,6 @@ export const Menus: CollectionConfig = {
   },
   fields: [
     {
-      name: 'linesLastCleaned',
-      type: 'date',
-      label: 'Draft Lines Last Cleaned',
-      access: {
-        update: leadBartenderFieldAccess,
-      },
-      admin: {
-        position: 'sidebar',
-        condition: (data) => data?.type === 'draft',
-        date: {
-          pickerAppearance: 'dayOnly',
-          displayFormat: 'MMM d, yyyy',
-        },
-      },
-    },
-    {
       name: 'markLinesCleanedButton',
       type: 'ui',
       admin: {
@@ -363,6 +287,7 @@ export const Menus: CollectionConfig = {
       label: 'Google Sheet URL',
       type: 'text',
       access: {
+        read: adminFieldAccess,
         update: adminFieldAccess,
       },
       admin: {

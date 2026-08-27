@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { foodManagerAccess } from '@/src/access/roles'
+import { authenticatedFieldAccess, foodManagerAccess } from '@/src/access/roles'
 
 export const FoodVendors: CollectionConfig = {
   slug: 'food-vendors',
@@ -29,6 +29,9 @@ export const FoodVendors: CollectionConfig = {
     {
       name: 'email',
       type: 'email',
+      access: {
+        read: authenticatedFieldAccess,
+      },
       admin: {
         position: 'sidebar',
       },
@@ -36,6 +39,9 @@ export const FoodVendors: CollectionConfig = {
     {
       name: 'phone',
       type: 'text',
+      access: {
+        read: authenticatedFieldAccess,
+      },
       admin: {
         position: 'sidebar',
       },

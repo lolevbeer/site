@@ -1,10 +1,11 @@
-import type { CollectionConfig, Field, Payload } from 'payload'
+import type { Access, CollectionConfig, Field, Payload } from 'payload'
 import { APIError } from 'payload'
 import { revalidateTag } from 'next/cache'
 import { generateUniqueSlug } from './utils/generateUniqueSlug'
-import { adminAccess, beerManagerAccess } from '@/src/access/roles'
+import { adminAccess, beerManagerAccess, beerManagerFieldAccess, hasRole } from '@/src/access/roles'
 import { fetchUntappdData, type UntappdReview } from '@/src/utils/untappd'
 import { logger } from '@/lib/utils/logger'
+import { syncBeerReviews, type LegacyUntappdReview } from '@/src/utils/beer-reviews'
 
 /** Round to nearest multiple (like Excel's MROUND) */
 function mround(value: number, multiple: number): number {
@@ -52,10 +53,20 @@ const generatedUploadField = (name: string, description: string): Field => ({
   },
 })
 
+export const canReadBeers: Access = ({ req: { user } }) => {
+  if (hasRole(user, ['admin', 'beer-manager'])) return true
+
+  return {
+    _status: {
+      equals: 'published',
+    },
+  }
+}
+
 export const Beers: CollectionConfig = {
   slug: 'beers',
   access: {
-    read: () => true,
+    read: canReadBeers,
     create: beerManagerAccess,
     update: beerManagerAccess,
     delete: adminAccess, // Beer Managers can only archive, not delete
@@ -158,7 +169,22 @@ export const Beers: CollectionConfig = {
       },
     ],
     afterChange: [
-      async ({ doc, req }) => {
+      async ({ context, doc, req }) => {
+        if (!context?.skipReviewSync && Array.isArray(doc.positiveReviews)) {
+          try {
+            await syncBeerReviews({
+              beerId: doc.id,
+              payload: req.payload,
+              req,
+              reviews: doc.positiveReviews as LegacyUntappdReview[],
+            })
+          } catch (error) {
+            logger.error('Beer review normalization error:', error)
+          }
+        }
+
+        if (context?.skipRevalidate) return doc
+
         try {
           await revalidateMenusForBeer(req.payload, doc.id)
         } catch (error) {
@@ -447,11 +473,25 @@ export const Beers: CollectionConfig = {
     {
       name: 'positiveReviews',
       type: 'json',
+      access: {
+        read: beerManagerFieldAccess,
+      },
       admin: {
-        description: 'MGR agent approved reviews',
-        components: {
-          Field: '@/src/components/admin/ReviewManager#ReviewManager',
-        },
+        hidden: true,
+        description: 'Legacy review data retained temporarily for migration compatibility.',
+      },
+    },
+    {
+      name: 'reviews',
+      type: 'join',
+      collection: 'beer-reviews',
+      on: 'beer',
+      defaultSort: '-reviewedAt',
+      defaultLimit: 25,
+      maxDepth: 1,
+      admin: {
+        allowCreate: true,
+        defaultColumns: ['reviewer', 'rating', 'approved', 'reviewedAt'],
       },
     },
   ],

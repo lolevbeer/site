@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { useAllFormFields, useDocumentInfo } from '@payloadcms/ui'
+import { useDocumentInfo, useFormFields } from '@payloadcms/ui'
 import {
   getEventsOnDate,
   getFoodOnDateRange,
@@ -9,6 +9,10 @@ import {
   getFoodVendor,
 } from '@/src/actions/admin-data'
 import { logger } from '@/lib/utils/logger'
+import {
+  getAdminRelationshipID,
+  type AdminRelationshipValue,
+} from '@/src/components/admin/relationship-value'
 
 const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const
 const weekKeys = ['first', 'second', 'third', 'fourth', 'fifth'] as const
@@ -37,15 +41,14 @@ export const EventDateWarning: React.FC = () => {
   const [foodVendors, setFoodVendors] = useState<FoodVendor[]>([])
   const [loading, setLoading] = useState(false)
 
-  const [fields] = useAllFormFields()
   const { id: currentDocId } = useDocumentInfo()
-  const dateValue = fields['date']?.value as string | undefined
-  const locationRaw = fields['location']?.value as string | { id?: string } | undefined
-
-  // Extract location ID whether it's a string or object
-  const locationValue = typeof locationRaw === 'string' ? locationRaw : locationRaw?.id
+  const dateValue = useFormFields(([fields]) => fields.date?.value as string | undefined)
+  const locationRaw = useFormFields(([fields]) => fields.location?.value as AdminRelationshipValue)
+  const locationValue = getAdminRelationshipID(locationRaw)
 
   useEffect(() => {
+    let cancelled = false
+
     if (!dateValue || !locationValue) {
       setEventConflicts([])
       setFoodVendors([])
@@ -73,8 +76,6 @@ export const EventDateWarning: React.FC = () => {
         } catch (error) {
           logger.error('Error checking events:', error)
         }
-        setEventConflicts(eventConflicting)
-
         // Check food vendors
         const vendors: FoodVendor[] = []
 
@@ -115,17 +116,25 @@ export const EventDateWarning: React.FC = () => {
           logger.error('Error checking individual food:', error)
         }
 
-        setFoodVendors(vendors)
+        if (!cancelled) {
+          setEventConflicts(eventConflicting)
+          setFoodVendors(vendors)
+        }
       } catch (error) {
         logger.error('Error checking date conflicts:', error)
-        setEventConflicts([])
-        setFoodVendors([])
+        if (!cancelled) {
+          setEventConflicts([])
+          setFoodVendors([])
+        }
       } finally {
-        setLoading(false)
+        if (!cancelled) setLoading(false)
       }
     }
 
-    checkAll()
+    void checkAll()
+    return () => {
+      cancelled = true
+    }
   }, [dateValue, locationValue, currentDocId])
 
   if (!dateValue || !locationValue || loading) {
@@ -150,7 +159,9 @@ export const EventDateWarning: React.FC = () => {
       <span style={{ color: 'var(--theme-success-800)' }}>
         {eventConflicts.length > 0 && (
           <>
-            {eventConflicts.length === 1 ? 'Another event' : `${eventConflicts.length} other events`}{' '}
+            {eventConflicts.length === 1
+              ? 'Another event'
+              : `${eventConflicts.length} other events`}{' '}
             scheduled:{' '}
             {eventConflicts.map((c, i) => (
               <span key={i}>

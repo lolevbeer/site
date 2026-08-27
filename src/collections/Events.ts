@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { eventManagerAccess, hasRole } from '@/src/access/roles'
+import { eventManagerAccess, eventManagerFieldAccess, hasRole } from '@/src/access/roles'
 
 export const Events: CollectionConfig = {
   slug: 'events',
@@ -145,6 +145,9 @@ export const Events: CollectionConfig = {
     {
       name: 'attendees',
       type: 'number',
+      access: {
+        read: eventManagerFieldAccess,
+      },
       admin: {
         description: 'Expected or registered attendees',
         position: 'sidebar',
@@ -153,6 +156,9 @@ export const Events: CollectionConfig = {
     {
       name: 'pointOfContact',
       type: 'text',
+      access: {
+        read: eventManagerFieldAccess,
+      },
       admin: {
         position: 'sidebar',
       },
@@ -160,6 +166,9 @@ export const Events: CollectionConfig = {
     {
       name: 'email',
       type: 'email',
+      access: {
+        read: eventManagerFieldAccess,
+      },
       admin: {
         position: 'sidebar',
       },
@@ -167,6 +176,9 @@ export const Events: CollectionConfig = {
     {
       name: 'phone',
       type: 'text',
+      access: {
+        read: eventManagerFieldAccess,
+      },
       admin: {
         condition: (data) => data?.visibility === 'private',
         position: 'sidebar',
@@ -175,6 +187,9 @@ export const Events: CollectionConfig = {
     {
       name: 'otherInfo',
       type: 'textarea',
+      access: {
+        read: eventManagerFieldAccess,
+      },
       admin: {
         description: 'Additional information for private event',
         condition: (data) => data?.visibility === 'private',

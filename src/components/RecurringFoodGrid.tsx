@@ -1,12 +1,15 @@
 'use client'
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { useField, RelationshipInput, useModal, ConfirmationModal } from '@payloadcms/ui'
+import { Banner, ConfirmationModal, RelationshipInput, useModal } from '@payloadcms/ui'
 import type { ValueWithRelation } from 'payload'
 import {
   getActiveLocations,
   getFoodVendorsByIds,
+  getRecurringFoodData,
   getUpcomingFoodForLocation,
+  setRecurringFoodExclusion,
+  setRecurringFoodSchedule,
   type SimpleLocation,
 } from '@/src/actions/admin-data'
 import { logger } from '@/lib/utils/logger'
@@ -34,7 +37,11 @@ type ExclusionsData = Record<string, string[]>
 type Location = SimpleLocation
 
 // Get all occurrences of a specific week/day combo for the next N months
-function getUpcomingDates(dayIndex: number, weekOccurrence: number, monthsAhead: number = 6): Date[] {
+function getUpcomingDates(
+  dayIndex: number,
+  weekOccurrence: number,
+  monthsAhead: number = 6,
+): Date[] {
   const dates: Date[] = []
   const today = new Date()
   const startMonth = today.getMonth()
@@ -87,7 +94,9 @@ const GridCell: React.FC<GridCellProps> = ({ value, onChange, cellKey }) => {
     [onChange],
   )
 
-  const valueWithRelation: ValueWithRelation | null = value ? { relationTo: 'food-vendors', value } : null
+  const valueWithRelation: ValueWithRelation | null = value
+    ? { relationTo: 'food-vendors', value }
+    : null
 
   return (
     <RelationshipInput
@@ -118,17 +127,24 @@ interface DatesListProps {
   locationId: string
   schedules: SchedulesData
   exclusions: ExclusionsData
-  setExclusions: (value: ExclusionsData) => void
+  onExclusionChange: (locationId: string, date: string, excluded: boolean) => Promise<void>
 }
 
 const EXCLUSION_MODAL_SLUG = 'confirm-exclusion'
 
-const DatesList: React.FC<DatesListProps> = ({ locationId, schedules, exclusions, setExclusions }) => {
+const DatesList: React.FC<DatesListProps> = ({
+  locationId,
+  schedules,
+  exclusions,
+  onExclusionChange,
+}) => {
   const [vendorNames, setVendorNames] = useState<Record<string, string>>({})
   const [individualFoodEvents, setIndividualFoodEvents] = useState<ScheduledDate[]>([])
-  const [pendingToggle, setPendingToggle] = useState<{ date: Date; vendorName: string; isExcluded: boolean } | null>(
-    null,
-  )
+  const [pendingToggle, setPendingToggle] = useState<{
+    date: Date
+    vendorName: string
+    isExcluded: boolean
+  } | null>(null)
   const { openModal, closeModal } = useModal()
 
   const locationExclusions = useMemo(() => exclusions[locationId] || [], [exclusions, locationId])
@@ -216,26 +232,18 @@ const DatesList: React.FC<DatesListProps> = ({ locationId, schedules, exclusions
     [locationExclusions, openModal],
   )
 
-  const confirmToggleExclusion = useCallback(() => {
+  const confirmToggleExclusion = useCallback(async () => {
     if (!pendingToggle) return
 
     const dateKey = toDateKey(pendingToggle.date)
-    const newExclusions = { ...exclusions }
-
-    if (!newExclusions[locationId]) {
-      newExclusions[locationId] = []
+    try {
+      await onExclusionChange(locationId, dateKey, !pendingToggle.isExcluded)
+      closeModal(EXCLUSION_MODAL_SLUG)
+      setPendingToggle(null)
+    } catch {
+      // The parent renders the actionable error and restores server state.
     }
-
-    if (pendingToggle.isExcluded) {
-      newExclusions[locationId] = newExclusions[locationId].filter((d) => d !== dateKey)
-    } else {
-      newExclusions[locationId] = [...newExclusions[locationId], dateKey]
-    }
-
-    setExclusions(newExclusions)
-    closeModal(EXCLUSION_MODAL_SLUG)
-    setPendingToggle(null)
-  }, [pendingToggle, exclusions, locationId, setExclusions, closeModal])
+  }, [pendingToggle, locationId, onExclusionChange, closeModal])
 
   const cancelToggleExclusion = useCallback(() => {
     closeModal(EXCLUSION_MODAL_SLUG)
@@ -304,7 +312,13 @@ const DatesList: React.FC<DatesListProps> = ({ locationId, schedules, exclusions
   }
 
   return (
-    <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid var(--theme-elevation-150)' }}>
+    <div
+      style={{
+        marginTop: '24px',
+        paddingTop: '16px',
+        borderTop: '1px solid var(--theme-elevation-150)',
+      }}
+    >
       <ConfirmationModal
         modalSlug={EXCLUSION_MODAL_SLUG}
         heading={pendingToggle?.isExcluded ? 'Remove Exclusion' : 'Exclude Event'}
@@ -331,23 +345,44 @@ const DatesList: React.FC<DatesListProps> = ({ locationId, schedules, exclusions
           <div style={{ marginTop: '8px', fontSize: '13px', color: 'var(--theme-warning-800)' }}>
             {conflicts.map((c, i) => (
               <div key={i} style={{ marginBottom: '4px' }}>
-                <strong>{formatDate(c.date)}</strong>: {c.recurringVendor} (recurring) + {c.individualVendor}{' '}
-                (scheduled)
+                <strong>{formatDate(c.date)}</strong>: {c.recurringVendor} (recurring) +{' '}
+                {c.individualVendor} (scheduled)
               </div>
             ))}
           </div>
         </div>
       )}
-      <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: 600, color: 'var(--theme-elevation-800)' }}>
+      <h4
+        style={{
+          margin: '0 0 8px 0',
+          fontSize: '14px',
+          fontWeight: 600,
+          color: 'var(--theme-elevation-800)',
+        }}
+      >
         Upcoming Dates
-        <span style={{ fontWeight: 400, fontSize: '12px', color: 'var(--theme-elevation-400)', marginLeft: '8px' }}>
+        <span
+          style={{
+            fontWeight: 400,
+            fontSize: '12px',
+            color: 'var(--theme-elevation-400)',
+            marginLeft: '8px',
+          }}
+        >
           (click to exclude)
         </span>
       </h4>
       <div style={{ fontSize: '13px', color: 'var(--theme-elevation-600)' }}>
         {Object.entries(groupedByMonth).map(([month, dates]) => (
           <div key={month} style={{ marginBottom: '16px' }}>
-            <div style={{ fontWeight: 600, fontSize: '12px', color: 'var(--theme-elevation-500)', marginBottom: '4px' }}>
+            <div
+              style={{
+                fontWeight: 600,
+                fontSize: '12px',
+                color: 'var(--theme-elevation-500)',
+                marginBottom: '4px',
+              }}
+            >
               {month}
             </div>
             {dates.map((item, idx) => {
@@ -356,14 +391,29 @@ const DatesList: React.FC<DatesListProps> = ({ locationId, schedules, exclusions
               const displayName = item.vendorName || vendorNames[item.vendorId] || '...'
 
               return (
-                <div
+                <button
                   key={`${item.date.toISOString()}-${idx}-${item.type}`}
-                  onClick={isIndividual ? undefined : () => requestToggleExclusion(item.date, displayName)}
+                  type="button"
+                  disabled={isIndividual}
+                  onClick={
+                    isIndividual ? undefined : () => requestToggleExclusion(item.date, displayName)
+                  }
+                  aria-label={
+                    isIndividual
+                      ? undefined
+                      : `${excluded ? 'Restore' : 'Exclude'} ${displayName} on ${formatDate(item.date)}`
+                  }
                   style={{
+                    display: 'block',
+                    width: '100%',
                     padding: '4px 8px',
                     margin: '2px 0',
                     cursor: isIndividual ? 'default' : 'pointer',
+                    border: 'none',
                     borderRadius: '4px',
+                    color: 'inherit',
+                    font: 'inherit',
+                    textAlign: 'left',
                     backgroundColor: excluded
                       ? 'var(--theme-error-50)'
                       : isIndividual
@@ -414,7 +464,7 @@ const DatesList: React.FC<DatesListProps> = ({ locationId, schedules, exclusions
                       Excluded
                     </span>
                   )}
-                </div>
+                </button>
               )
             })}
           </div>
@@ -427,33 +477,30 @@ const DatesList: React.FC<DatesListProps> = ({ locationId, schedules, exclusions
 interface LocationGridProps {
   location: Location
   schedules: SchedulesData
-  setSchedules: (value: SchedulesData) => void
   exclusions: ExclusionsData
-  setExclusions: (value: ExclusionsData) => void
+  onScheduleChange: (
+    locationId: string,
+    day: Day,
+    week: Week,
+    vendorId: string | null,
+  ) => Promise<void>
+  onExclusionChange: (locationId: string, date: string, excluded: boolean) => Promise<void>
 }
 
 const LocationGrid: React.FC<LocationGridProps> = ({
   location,
   schedules,
-  setSchedules,
   exclusions,
-  setExclusions,
+  onScheduleChange,
+  onExclusionChange,
 }) => {
   const locationSchedule = schedules[location.id] || {}
 
   const handleCellChange = useCallback(
     (day: Day, week: Week, vendorId: string | null) => {
-      const newSchedules = { ...schedules }
-      if (!newSchedules[location.id]) {
-        newSchedules[location.id] = {}
-      }
-      if (!newSchedules[location.id][day]) {
-        newSchedules[location.id][day] = {}
-      }
-      newSchedules[location.id][day]![week] = vendorId
-      setSchedules(newSchedules)
+      void onScheduleChange(location.id, day, week, vendorId)
     },
-    [schedules, location.id, setSchedules],
+    [location.id, onScheduleChange],
   )
 
   return (
@@ -551,7 +598,7 @@ const LocationGrid: React.FC<LocationGridProps> = ({
         locationId={location.id}
         schedules={schedules}
         exclusions={exclusions}
-        setExclusions={setExclusions}
+        onExclusionChange={onExclusionChange}
       />
     </div>
   )
@@ -560,40 +607,93 @@ const LocationGrid: React.FC<LocationGridProps> = ({
 /**
  * RecurringFoodGrid - Location-agnostic recurring food schedule manager
  *
- * Fetches locations dynamically and renders tabs for each.
- * Stores data in JSON fields keyed by location ID.
+ * Fetches locations dynamically and renders tabs for each. Edits save
+ * immediately through authenticated actions backed by normalized collections.
  */
 export const RecurringFoodGrid: React.FC = () => {
   const [locations, setLocations] = useState<Location[]>([])
   const [activeTab, setActiveTab] = useState<string>('')
+  const [schedules, setSchedules] = useState<SchedulesData>({})
+  const [exclusions, setExclusions] = useState<ExclusionsData>({})
   const [loading, setLoading] = useState(true)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
-  const { value: schedules, setValue: setSchedules } = useField<SchedulesData>({ path: 'schedules' })
-  const { value: exclusions, setValue: setExclusions } = useField<ExclusionsData>({ path: 'exclusions' })
+  const refreshData = useCallback(async () => {
+    const [nextLocations, recurringFood] = await Promise.all([
+      getActiveLocations(),
+      getRecurringFoodData(),
+    ])
+    setLocations(nextLocations)
+    setSchedules(recurringFood.schedules as SchedulesData)
+    setExclusions(recurringFood.exclusions)
+    setActiveTab((current) =>
+      nextLocations.some((location) => location.id === current)
+        ? current
+        : nextLocations[0]?.id || '',
+    )
+  }, [])
 
-  // Ensure we have valid objects
-  const safeSchedules = schedules || {}
-  const safeExclusions = exclusions || {}
-
-  // Fetch active locations using server action
   useEffect(() => {
-    const fetchLocations = async () => {
+    async function load() {
       try {
-        const locations = await getActiveLocations()
-
-        if (locations.length > 0) {
-          setLocations(locations)
-          setActiveTab(locations[0].id)
-        }
+        await refreshData()
       } catch (error) {
-        logger.error('Error fetching locations:', error)
+        logger.error('Error fetching recurring food data:', error)
+        setSaveError('Could not load recurring food schedules. Please refresh and try again.')
       } finally {
         setLoading(false)
       }
     }
 
-    fetchLocations()
-  }, [])
+    void load()
+  }, [refreshData])
+
+  const handleScheduleChange = useCallback(
+    async (locationId: string, day: Day, week: Week, vendorId: string | null) => {
+      setSaveError(null)
+      setSchedules((current) => ({
+        ...current,
+        [locationId]: {
+          ...(current[locationId] || {}),
+          [day]: {
+            ...(current[locationId]?.[day] || {}),
+            [week]: vendorId,
+          },
+        },
+      }))
+
+      try {
+        await setRecurringFoodSchedule(locationId, day, week, vendorId)
+      } catch (error) {
+        logger.error('Error saving recurring food schedule:', error)
+        setSaveError('That schedule change was not saved. The grid has been restored.')
+        await refreshData()
+      }
+    },
+    [refreshData],
+  )
+
+  const handleExclusionChange = useCallback(
+    async (locationId: string, date: string, excluded: boolean) => {
+      setSaveError(null)
+      setExclusions((current) => {
+        const dates = new Set(current[locationId] || [])
+        if (excluded) dates.add(date)
+        else dates.delete(date)
+        return { ...current, [locationId]: [...dates].sort() }
+      })
+
+      try {
+        await setRecurringFoodExclusion(locationId, date, excluded)
+      } catch (error) {
+        logger.error('Error saving recurring food exclusion:', error)
+        setSaveError('That exclusion change was not saved. The grid has been restored.')
+        await refreshData()
+        throw error
+      }
+    },
+    [refreshData],
+  )
 
   const activeLocation = useMemo(() => {
     return locations.find((loc) => loc.id === activeTab)
@@ -601,7 +701,9 @@ export const RecurringFoodGrid: React.FC = () => {
 
   if (loading) {
     return (
-      <div style={{ padding: '20px', color: 'var(--theme-elevation-500)' }}>Loading locations...</div>
+      <div style={{ padding: '20px', color: 'var(--theme-elevation-500)' }}>
+        Loading locations...
+      </div>
     )
   }
 
@@ -615,8 +717,12 @@ export const RecurringFoodGrid: React.FC = () => {
 
   return (
     <div>
+      <Banner type="info">Changes in this grid save immediately.</Banner>
+      {saveError && <Banner type="error">{saveError}</Banner>}
       {/* Tabs */}
       <div
+        role="tablist"
+        aria-label="Locations"
         style={{
           display: 'flex',
           gap: '4px',
@@ -627,6 +733,11 @@ export const RecurringFoodGrid: React.FC = () => {
         {locations.map((location) => (
           <button
             key={location.id}
+            id={`recurring-food-tab-${location.id}`}
+            type="button"
+            role="tab"
+            aria-selected={activeTab === location.id}
+            aria-controls={`recurring-food-panel-${location.id}`}
             onClick={() => setActiveTab(location.id)}
             style={{
               padding: '12px 20px',
@@ -635,7 +746,10 @@ export const RecurringFoodGrid: React.FC = () => {
               color: activeTab === location.id ? 'var(--theme-text)' : 'var(--theme-elevation-500)',
               backgroundColor: 'transparent',
               border: 'none',
-              borderBottom: activeTab === location.id ? '2px solid var(--theme-elevation-800)' : '2px solid transparent',
+              borderBottom:
+                activeTab === location.id
+                  ? '2px solid var(--theme-elevation-800)'
+                  : '2px solid transparent',
               cursor: 'pointer',
               transition: 'all 0.15s ease',
             }}
@@ -647,13 +761,19 @@ export const RecurringFoodGrid: React.FC = () => {
 
       {/* Active location grid */}
       {activeLocation && (
-        <LocationGrid
-          location={activeLocation}
-          schedules={safeSchedules}
-          setSchedules={setSchedules}
-          exclusions={safeExclusions}
-          setExclusions={setExclusions}
-        />
+        <div
+          id={`recurring-food-panel-${activeLocation.id}`}
+          role="tabpanel"
+          aria-labelledby={`recurring-food-tab-${activeLocation.id}`}
+        >
+          <LocationGrid
+            location={activeLocation}
+            schedules={schedules}
+            exclusions={exclusions}
+            onScheduleChange={handleScheduleChange}
+            onExclusionChange={handleExclusionChange}
+          />
+        </div>
       )}
     </div>
   )
