@@ -23,6 +23,7 @@ import { getBeerBadgeLabel } from '@/lib/types/beer'
 import { Logo } from '@/components/ui/logo'
 import { TopBeerDropsLink } from '@/components/beer/top-beer-drops-link'
 import { UntappdRating } from '@/components/beer/untappd-rating'
+import { LINES_OVERDUE_DAYS } from '@/src/components/admin/lines-cleaned'
 
 /** Parse price string to number, removing '$' prefix if present */
 function parsePrice(price: string | number | null | undefined): number | undefined {
@@ -33,13 +34,20 @@ function parsePrice(price: string | number | null | undefined): number | undefin
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24
 
-/** Format the lines cleaned date as a relative description using EST timezone */
+/**
+ * Format the lines cleaned date as a relative description using EST timezone.
+ * Returns null once the lines are overdue (LINES_OVERDUE_DAYS, the same
+ * threshold the admin alert uses) — a stale date is worse than no date on a
+ * customer-facing display.
+ */
 function formatLinesCleanedDate(dateStr: string | null | undefined): string | null {
   if (!dateStr) return null
 
   const todayMs = new Date(`${getTodayEST()}T12:00:00`).getTime()
   const cleanedMs = new Date(`${dateStr.split('T')[0]}T12:00:00`).getTime()
   const diffDays = Math.round((todayMs - cleanedMs) / MS_PER_DAY)
+
+  if (diffDays >= LINES_OVERDUE_DAYS) return null
 
   const daysText = diffDays === 0 ? 'today' : `${diffDays} day${diffDays === 1 ? '' : 's'} ago`
   return `Draft lines cleaned ${daysText}`
