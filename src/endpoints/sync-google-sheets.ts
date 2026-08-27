@@ -10,6 +10,7 @@ import { diffJson } from 'diff'
 import { slugify } from '../collections/utils/generateUniqueSlug'
 import { getUserFromRequest } from './auth-helper'
 import { hasRole } from '@/src/access/roles'
+import { CACHE_TAGS } from '@/lib/utils/cache'
 
 interface StreamController {
   send: (event: string, data: Record<string, unknown>) => void
@@ -907,8 +908,8 @@ async function syncBeers(payload: Payload, stream: StreamController, dryRun: boo
   // Beers.afterChange's per-menu menu-${url} tags). The 'menus' tag covers
   // every menu cache entry at once, which is what those tags existed for.
   if (!dryRun && results.updated + results.imported > 0) {
-    revalidateTag('beers')
-    revalidateTag('menus')
+    revalidateTag(CACHE_TAGS.beers)
+    revalidateTag(CACHE_TAGS.menus)
     revalidatePath('/')
     revalidatePath('/beer')
   }

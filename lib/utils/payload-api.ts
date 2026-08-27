@@ -19,7 +19,12 @@ import { cache } from 'react'
 import { getPayload } from 'payload'
 import config from '@/src/payload.config'
 import { unstable_cache } from 'next/cache'
-import { getRecurringFoodState } from '@/src/utils/recurring-food'
+import {
+  getRecurringFoodState,
+  recurringDays,
+  recurringOccurrences,
+  type RecurringFoodState,
+} from '@/src/utils/recurring-food'
 import { getPublicBeerReviews } from '@/src/utils/beer-reviews'
 import type {
   Beer as PayloadBeer,
@@ -137,11 +142,8 @@ export const getBeerBySlug = cache(async (slug: string): Promise<PayloadBeer | n
       const beer = result.docs[0]
       if (!beer) return null
 
-      // beer-reviews is the source of truth for what the public sees: only
-      // approved documents are surfaced. Falls back to the legacy JSON field
-      // only for beers that have no normalized reviews yet.
       const reviews = await getPublicBeerReviews(payload, beer.id)
-      return reviews ? { ...beer, positiveReviews: reviews } : beer
+      return reviews === null ? beer : { ...beer, positiveReviews: reviews }
     },
     [`beer-${slug}`],
     { tags: [CACHE_TAGS.beers], revalidate: 3600 },
@@ -874,20 +876,7 @@ export const getUpcomingFoodFromPayload = async (
 
 // ============ RECURRING FOOD ============
 
-const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const
-const weeks = ['first', 'second', 'third', 'fourth', 'fifth'] as const
-
-type Day = (typeof days)[number]
-type Week = (typeof weeks)[number]
-
-type LocationSchedule = Partial<Record<Day, Partial<Record<Week, string | null>>>>
-type SchedulesData = Record<string, LocationSchedule>
-type ExclusionsData = Record<string, string[]>
-
-interface RecurringFoodGlobal {
-  schedules: SchedulesData
-  exclusions: ExclusionsData
-}
+type RecurringFoodGlobal = Pick<RecurringFoodState, 'schedules' | 'exclusions'>
 
 /**
  * Calculate upcoming occurrences of a specific week/day combo
@@ -944,7 +933,7 @@ const getRecurringFoodGlobal = async (): Promise<RecurringFoodGlobal> => {
         const payload = await getPayload({ config })
         const state = await getRecurringFoodState(payload, { overrideAccess: true })
         return {
-          schedules: state.schedules as SchedulesData,
+          schedules: state.schedules,
           exclusions: state.exclusions,
         }
       },
@@ -1012,8 +1001,8 @@ const getUpcomingRecurringFood = async (
 
         // Collect all vendor IDs to fetch in batch
         const vendorIds = new Set<string>()
-        for (const day of days) {
-          for (const week of weeks) {
+        for (const day of recurringDays) {
+          for (const week of recurringOccurrences) {
             const vendorId = locationSchedule[day]?.[week]
             if (vendorId) vendorIds.add(vendorId)
           }
@@ -1053,10 +1042,10 @@ const getUpcomingRecurringFood = async (
         const currentToday = new Date()
         currentToday.setHours(0, 0, 0, 0)
 
-        for (let dayIndex = 0; dayIndex < days.length; dayIndex++) {
-          const day = days[dayIndex]
-          for (let weekIndex = 0; weekIndex < weeks.length; weekIndex++) {
-            const week = weeks[weekIndex]
+        for (let dayIndex = 0; dayIndex < recurringDays.length; dayIndex++) {
+          const day = recurringDays[dayIndex]
+          for (let weekIndex = 0; weekIndex < recurringOccurrences.length; weekIndex++) {
+            const week = recurringOccurrences[weekIndex]
             const vendorId = locationSchedule[day]?.[week]
 
             if (vendorId && vendorMap[vendorId]) {

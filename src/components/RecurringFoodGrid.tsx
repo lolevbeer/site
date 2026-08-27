@@ -130,7 +130,6 @@ interface DatesListProps {
   schedules: SchedulesData
   exclusions: ExclusionsData
   onExclusionChange: (locationId: string, date: string, excluded: boolean) => Promise<void>
-  /** A save is in flight; the dates are stale until it resolves. */
   saving: boolean
 }
 
@@ -393,18 +392,15 @@ const DatesList: React.FC<DatesListProps> = ({
             {dates.map((item, idx) => {
               const excluded = item.type === 'recurring' && isExcluded(item.date)
               const isIndividual = item.type === 'individual'
+              const isDisabled = isIndividual || saving
               const displayName = item.vendorName || vendorNames[item.vendorId] || '...'
 
               return (
                 <button
                   key={`${item.date.toISOString()}-${idx}-${item.type}`}
                   type="button"
-                  disabled={isIndividual || saving}
-                  onClick={
-                    isIndividual || saving
-                      ? undefined
-                      : () => requestToggleExclusion(item.date, displayName)
-                  }
+                  disabled={isDisabled}
+                  onClick={() => requestToggleExclusion(item.date, displayName)}
                   aria-label={
                     isIndividual
                       ? undefined
@@ -415,7 +411,7 @@ const DatesList: React.FC<DatesListProps> = ({
                     width: '100%',
                     padding: '4px 8px',
                     margin: '2px 0',
-                    cursor: isIndividual || saving ? 'default' : 'pointer',
+                    cursor: isDisabled ? 'default' : 'pointer',
                     border: 'none',
                     borderRadius: '4px',
                     color: 'inherit',
@@ -492,7 +488,6 @@ interface LocationGridProps {
     vendorId: string | null,
   ) => Promise<void>
   onExclusionChange: (locationId: string, date: string, excluded: boolean) => Promise<void>
-  /** A save is in flight; edits are locked out so writes stay ordered. */
   saving: boolean
 }
 
@@ -629,7 +624,7 @@ export const RecurringFoodGrid: React.FC = () => {
   const [exclusions, setExclusions] = useState<ExclusionsData>({})
   const [loading, setLoading] = useState(true)
   const [saveError, setSaveError] = useState<string | null>(null)
-  const [saving, setSaving] = useState(0)
+  const [pendingSaves, setPendingSaves] = useState(0)
 
   /**
    * Every write goes through one promise chain, and the controls are locked
@@ -640,11 +635,8 @@ export const RecurringFoodGrid: React.FC = () => {
    */
   const queueRef = useRef<Promise<unknown>>(Promise.resolve())
   const enqueue = useCallback((task: () => Promise<void>): Promise<void> => {
-    setSaving((count) => count + 1)
-    const next = queueRef.current
-      .catch(() => {})
-      .then(task)
-      .finally(() => setSaving((count) => count - 1))
+    setPendingSaves((count) => count + 1)
+    const next = queueRef.current.then(task).finally(() => setPendingSaves((count) => count - 1))
     // Keep the chain alive after a rejection so later edits still run; the
     // returned promise keeps the rejection for the caller.
     queueRef.current = next.catch(() => {})
@@ -809,7 +801,7 @@ export const RecurringFoodGrid: React.FC = () => {
             exclusions={exclusions}
             onScheduleChange={handleScheduleChange}
             onExclusionChange={handleExclusionChange}
-            saving={saving > 0}
+            saving={pendingSaves > 0}
           />
         </div>
       )}

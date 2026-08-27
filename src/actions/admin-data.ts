@@ -30,6 +30,7 @@ interface AuthorizedPayload {
 
 const FOOD_ADMIN_ROLES: Role[] = ['admin', 'food-manager']
 const EVENT_ADMIN_ROLES: Role[] = ['admin', 'event-manager']
+/** Matches RecurringFood.access.read so the grid can load for event managers. */
 const SCHEDULE_READER_ROLES: Role[] = ['admin', 'event-manager', 'food-manager']
 
 async function getAuthorizedPayload(allowedRoles: Role[]): Promise<AuthorizedPayload> {
@@ -109,10 +110,6 @@ export interface FoodEvent {
 
 /**
  * Get all active locations.
- *
- * Authorized for every schedule reader, not just food managers: the Recurring
- * Food global grants event managers read access, and its grid loads locations
- * before it can render anything.
  */
 export async function getActiveLocations(): Promise<SimpleLocation[]> {
   const { payload, user } = await getAuthorizedPayload(SCHEDULE_READER_ROLES)
@@ -164,8 +161,6 @@ export async function getFoodVendorsByIds(ids: string[]): Promise<Record<string,
   if (ids.length > 100) throw new Error('Too many vendor IDs')
 
   const vendorIds = [...new Set(ids.map((id) => requireIdentifier(id, 'vendor ID')))]
-  // Read-only lookup used by the Recurring Food grid, which event managers may
-  // also view (see getActiveLocations).
   const { payload, user } = await getAuthorizedPayload(SCHEDULE_READER_ROLES)
   const names: Record<string, string> = {}
 
@@ -195,9 +190,6 @@ export async function getFoodVendorsByIds(ids: string[]): Promise<Record<string,
 
 /**
  * Get upcoming food events for a location.
- *
- * Read-only, so it matches the Recurring Food global's reader roles rather than
- * the food-manager-only write roles — its grid lists these dates on load.
  */
 export async function getUpcomingFoodForLocation(locationId: string): Promise<FoodEvent[]> {
   const { payload, user } = await getAuthorizedPayload(SCHEDULE_READER_ROLES)
@@ -347,7 +339,8 @@ export async function setRecurringFoodExclusion(
 ): Promise<void> {
   const { payload, user } = await getAuthorizedPayload(FOOD_ADMIN_ROLES)
   const validLocationId = requireIdentifier(locationId, 'location ID')
-  const validDate = requireDateOnly(date)
+  const dateOnly = requireDateOnly(date)
+  const { start: startOfDay, end: endOfDay } = dayBounds(dateOnly)
   const legacy = await payload.findGlobal({
     slug: 'recurring-food',
     depth: 0,
@@ -361,8 +354,8 @@ export async function setRecurringFoodExclusion(
       legacyObject<RecurringFoodExclusionsData>(legacy.exclusions),
     )
     const current = new Set(exclusions[validLocationId] || [])
-    if (excluded) current.add(validDate)
-    else current.delete(validDate)
+    if (excluded) current.add(dateOnly)
+    else current.delete(dateOnly)
     exclusions[validLocationId] = [...current].sort()
 
     await payload.updateGlobal({
@@ -379,8 +372,8 @@ export async function setRecurringFoodExclusion(
     where: {
       and: [
         { location: { equals: validLocationId } },
-        { date: { greater_than_equal: dayBounds(validDate).start } },
-        { date: { less_than_equal: dayBounds(validDate).end } },
+        { date: { greater_than_equal: startOfDay } },
+        { date: { less_than_equal: endOfDay } },
       ],
     },
     depth: 0,
@@ -393,7 +386,7 @@ export async function setRecurringFoodExclusion(
   if (excluded && !current) {
     await payload.create({
       collection: 'recurring-food-exclusions',
-      data: { location: validLocationId, date: exclusionTimestamp(validDate) },
+      data: { location: validLocationId, date: exclusionTimestamp(dateOnly) },
       overrideAccess: false,
       user,
     })
@@ -419,15 +412,15 @@ export async function getFoodOnDate(
   locationId: string,
 ): Promise<{ id: string; vendorId: string; vendorName: string }[]> {
   const { payload, user } = await getAuthorizedPayload(FOOD_ADMIN_ROLES)
-  const dateOnly = requireDateOnly(date)
+  const { start: startOfDay, end: endOfDay } = dayBounds(requireDateOnly(date))
   const validLocationId = requireIdentifier(locationId, 'location ID')
 
   const result = await payload.find({
     collection: 'food',
     where: {
       and: [
-        { date: { greater_than_equal: `${dateOnly}T00:00:00.000Z` } },
-        { date: { less_than_equal: `${dateOnly}T23:59:59.999Z` } },
+        { date: { greater_than_equal: startOfDay } },
+        { date: { less_than_equal: endOfDay } },
         { location: { equals: validLocationId } },
       ],
     },
@@ -485,8 +478,7 @@ export async function getEventsOnDate(dateStr: string, locationId: string): Prom
   const { payload, user } = await getAuthorizedPayload(EVENT_ADMIN_ROLES)
   const validLocationId = requireIdentifier(locationId, 'location ID')
 
-  const dateOnly = requireDateOnly(dateStr)
-  const { start: startOfDay, end: endOfDay } = dayBounds(dateOnly)
+  const { start: startOfDay, end: endOfDay } = dayBounds(requireDateOnly(dateStr))
 
   const result = await payload.find({
     collection: 'events',
@@ -526,8 +518,7 @@ export async function getFoodOnDateRange(
   const { payload, user } = await getAuthorizedPayload(EVENT_ADMIN_ROLES)
   const validLocationId = requireIdentifier(locationId, 'location ID')
 
-  const dateOnly = requireDateOnly(dateStr)
-  const { start: startOfDay, end: endOfDay } = dayBounds(dateOnly)
+  const { start: startOfDay, end: endOfDay } = dayBounds(requireDateOnly(dateStr))
 
   const result = await payload.find({
     collection: 'food',

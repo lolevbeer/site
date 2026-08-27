@@ -491,14 +491,17 @@ async function openInviteModal(
 
     // A lead bartender can only grant locations they hold themselves (capped
     // by Users' beforeChange hook), so don't offer choices that would 403.
-    const ownLocationIds = new Set(
-      (Array.isArray(user.locations) ? user.locations : []).map((loc) =>
-        typeof loc === 'object' && loc !== null ? String(loc.id) : String(loc),
-      ),
-    )
-    const selectableLocations = (locations?.docs ?? []).filter(
-      (l) => isAdmin(user) || ownLocationIds.has(String(l.id)),
-    )
+    let selectableLocations = locations?.docs ?? []
+    if (!isAdmin(user)) {
+      const ownLocationIds = new Set(
+        (Array.isArray(user.locations) ? user.locations : []).map((loc) =>
+          typeof loc === 'object' && loc !== null ? String(loc.id) : String(loc),
+        ),
+      )
+      selectableLocations = selectableLocations.filter((location) =>
+        ownLocationIds.has(String(location.id)),
+      )
+    }
 
     const opened = await slackApi('views.open', {
       trigger_id: triggerId,

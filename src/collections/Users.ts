@@ -1,4 +1,4 @@
-import type { CollectionConfig } from 'payload'
+import type { CollectionConfig, FieldAccess } from 'payload'
 import { APIError } from 'payload'
 import {
   adminAccess,
@@ -20,6 +20,9 @@ function toLocationIds(value: unknown): string[] {
     )
     .filter(Boolean)
 }
+
+const leadBartenderFieldAccess: FieldAccess = ({ req: { user } }) =>
+  hasRole(user, ['admin', 'lead-bartender'])
 
 export const Users: CollectionConfig = {
   slug: 'users',
@@ -58,18 +61,16 @@ export const Users: CollectionConfig = {
         // they are themselves assigned to — menu access is location-scoped, so
         // an unchecked assignment would hand out access they don't have.
         const granted = toLocationIds(data.locations)
-        if (granted.length > 0) {
-          const own = new Set(toLocationIds(req.user?.locations))
-          const disallowed = granted.filter((id) => !own.has(id))
-          if (disallowed.length > 0) {
-            throw new APIError(
-              'Lead Bartenders can only assign locations they are assigned to themselves',
-              403,
-            )
-          }
-          data.locations = granted
-        }
+        if (granted.length === 0) return data
 
+        const own = new Set(toLocationIds(req.user?.locations))
+        if (granted.some((id) => !own.has(id))) {
+          throw new APIError(
+            'Lead Bartenders can only assign locations they are assigned to themselves',
+            403,
+          )
+        }
+        data.locations = granted
         return data
       },
     ],
@@ -111,7 +112,7 @@ export const Users: CollectionConfig = {
         // Lead bartenders may scope the bartenders they invite (capped by the
         // beforeChange hook to their own locations); only admins may re-scope
         // an existing user.
-        create: ({ req: { user } }) => hasRole(user, ['admin', 'lead-bartender']),
+        create: leadBartenderFieldAccess,
         update: adminFieldAccess,
       },
       admin: {
@@ -143,7 +144,7 @@ export const Users: CollectionConfig = {
       access: {
         // Lead bartenders can set roles on create (validated by hook to only allow 'bartender')
         // Only admins can change roles on existing users
-        create: ({ req: { user } }) => hasRole(user, ['admin', 'lead-bartender']),
+        create: leadBartenderFieldAccess,
         update: adminFieldAccess,
       },
     },

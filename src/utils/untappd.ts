@@ -121,7 +121,8 @@ export async function fetchUntappdData(url: string): Promise<UntappdData> {
 
     // Extract reviews that Lolev has toasted (liked)
     const positiveReviews: UntappdReview[] = []
-    const checkinRegex = /<div[^>]*class="item\s*"[^>]*id="checkin_(\d+)"[^>]*>([\s\S]*?)(?=<div[^>]*class="item\s*"[^>]*id="checkin_|$)/gi
+    const checkinRegex =
+      /<div[^>]*class="item\s*"[^>]*id="checkin_(\d+)"[^>]*>([\s\S]*?)(?=<div[^>]*class="item\s*"[^>]*id="checkin_|$)/gi
     let checkinMatch
 
     while ((checkinMatch = checkinRegex.exec(html)) !== null) {
@@ -129,11 +130,15 @@ export async function fetchUntappdData(url: string): Promise<UntappdData> {
       const checkinHtml = checkinMatch[2]
 
       // Check if Lolev has toasted this checkin (brewery ID 519872)
-      const hasLolevToast = /class="user-toasts[^"]*"[^>]*href="\/brewery\/519872"/.test(checkinHtml)
+      const hasLolevToast = /class="user-toasts[^"]*"[^>]*href="\/brewery\/519872"/.test(
+        checkinHtml,
+      )
       if (!hasLolevToast) continue
 
       // Extract rating from caps div
-      const checkinRatingMatch = checkinHtml.match(/<div[^>]*class="caps[^"]*"[^>]*data-rating="([\d.]+)"/)
+      const checkinRatingMatch = checkinHtml.match(
+        /<div[^>]*class="caps[^"]*"[^>]*data-rating="([\d.]+)"/,
+      )
       const checkinRating = checkinRatingMatch ? parseFloat(checkinRatingMatch[1]) : 0
 
       // Extract comment text - skip reviews without comments
@@ -156,7 +161,9 @@ export async function fetchUntappdData(url: string): Promise<UntappdData> {
       const date = dateMatch ? dateMatch[1].trim() : undefined
 
       // Extract image
-      const imageMatch = checkinHtml.match(/<p[^>]*class="photo"[^>]*>[\s\S]*?<img[^>]*src="([^"]+)"/)
+      const imageMatch = checkinHtml.match(
+        /<p[^>]*class="photo"[^>]*>[\s\S]*?<img[^>]*src="([^"]+)"/,
+      )
       const image = imageMatch ? imageMatch[1] : undefined
 
       positiveReviews.push({ username, rating: checkinRating, text, date, url: checkinUrl, image })
@@ -175,6 +182,6 @@ export async function fetchUntappdData(url: string): Promise<UntappdData> {
       })
     }
 
-    return { ...emptyResult }
+    return emptyResult
   }
 }
