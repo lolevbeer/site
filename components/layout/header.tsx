@@ -67,8 +67,18 @@ export function Header() {
                 behind the hamburger so switching locations never needs the menu
                 to be opened, and stays reachable partway down a long menu or
                 beer list rather than only at the top of the page. `sm` so it
-                fits the row alongside the logo mark and hamburger. */}
-            <LocationTabs syncWithGlobalState={true} size="sm" className="md:hidden" />
+                fits the row alongside the logo mark and hamburger.
+
+                Hidden while the menu is open: the panel starts below the header
+                and declares aria-modal, so leaving this visible would offer
+                sighted users a live control that assistive tech is told to
+                ignore, and let them change location with the menu still
+                covering the page. */}
+            <LocationTabs
+              syncWithGlobalState={true}
+              size="sm"
+              className={cn('md:hidden', isMobileMenuOpen && 'invisible')}
+            />
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-4">

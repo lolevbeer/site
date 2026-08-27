@@ -51,7 +51,7 @@ function MenuCountCard({
   ctaLabel,
   countNoun,
 }: MenuCountCardProps) {
-  const { locations, currentLocation, setLocation } = useLocationContext();
+  const { locations, currentLocation, setLocation, isClient } = useLocationContext();
 
   // One entry per location that reported a count, so the tiles and the
   // "any at all" check cannot disagree.
@@ -66,10 +66,21 @@ function MenuCountCard({
     <MotionCard glow className="h-full">
       <Card className="p-6 lg:p-8 h-full shadow-none bg-transparent border border-border relative text-center flex flex-col items-center justify-center">
         <h3 className="text-3xl lg:text-4xl font-bold mb-5">{title}</h3>
+        {!hasAny && (
+          // Both count props are optional, and every taproom can legitimately
+          // report zero, so the card still needs something to say.
+          <p className="text-sm text-muted-foreground">Explore our current selection</p>
+        )}
         {hasAny && (
           <div className={cn('inline-grid grid-flow-col auto-cols-fr', SEGMENTED_TROUGH_CLASS)}>
             {countedLocations.map(({ location, slug, count }) => {
-              const isActive = slug === currentLocation;
+              // The homepage is ISR-cached, so the served HTML would otherwise
+              // mark whichever location is the default. A visitor whose stored
+              // location is the other taproom would see the wrong tile marked
+              // until the effect fires — and disagree with the header's
+              // switcher, which marks nothing until then. Same guard as
+              // LocationTabs: nothing is current until the client says so.
+              const isActive = isClient && slug === currentLocation;
               return (
                 <a
                   key={slug}
@@ -91,7 +102,7 @@ function MenuCountCard({
         )}
         {/* Same CTA as the section-level buttons further down the homepage,
             ghost so it sits quietly inside the card. */}
-        <Button asChild variant="ghost" size="lg" className={cn(hasAny && 'mt-5')}>
+        <Button asChild variant="ghost" size="lg" className="mt-5">
           <Link href={ctaHref}>{ctaLabel}</Link>
         </Button>
       </Card>
