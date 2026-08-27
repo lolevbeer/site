@@ -1,6 +1,5 @@
-import React, { Suspense } from 'react'
+import { Suspense, type ReactNode } from 'react'
 import type { Metadata, Viewport } from 'next'
-import type { ReactNode } from 'react'
 import { Poppins } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { NuqsAdapter } from 'nuqs/adapters/next/app'
@@ -51,7 +50,7 @@ function getBaseUrl(): string {
  * Next.js data cache as the call in `AppLayout`, so this is a cache read,
  * not a second network/database round trip.
  */
-async function FooterHours(): Promise<React.ReactElement> {
+async function FooterHours(): Promise<ReactNode> {
   const locations = await getAllLocations()
   const weeklyHours = await getWeeklyHoursForLocations(locations)
   return <Footer weeklyHours={weeklyHours} />
@@ -144,7 +143,7 @@ export default async function AppLayout({
   children,
 }: Readonly<{
   children: ReactNode
-}>): Promise<React.ReactElement> {
+}>): Promise<ReactNode> {
   // Locations feed LocationProvider (used throughout the app), so this fetch
   // stays in the shell. Weekly hours are footer-only and are fetched inside
   // <FooterHours>, suspended below, so they don't block the initial paint.
@@ -195,15 +194,11 @@ export default async function AppLayout({
               <LocationProvider locations={locations}>
                 <AuthProvider>
                   <PageViewTracker />
-                  {/* Marks the app hydrated for BlurFade even when the first
-                      page renders no BlurFade of its own (see blur-fade.tsx) */}
                   <MotionHydrationSentinel />
                   <SkipNav />
                   <ConditionalLayout
                     footer={
-                      /* Fallback is the footer WITHOUT hours (Footer renders
-                         "Hours not available" when weeklyHours is undefined) —
-                         a slow/hung hours query must not ship pages footerless. */
+                      /* Bare <Footer /> so a hung hours query still ships a footer. */
                       <Suspense fallback={<Footer />}>
                         <FooterHours />
                       </Suspense>

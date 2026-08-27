@@ -17,11 +17,9 @@ interface BeerPageProps {
 export async function generateMetadata({ params }: BeerPageProps): Promise<Metadata> {
   const { variant } = await params
 
-  // No try/catch: a thrown Payload/DB error must propagate to error.tsx,
-  // not masquerade as a not-found page (same principle as the BeerPage component).
+  // Let Payload/DB errors reach error.tsx instead of looking like a 404.
   const beer = await getBeerBySlug(variant)
 
-  // Missing or hidden beers return minimal metadata
   if (!beer || beer.hideFromSite) {
     return {
       title: 'Beer Not Found',
@@ -71,11 +69,9 @@ export const revalidate = 3600
 export default async function BeerPage({ params }: BeerPageProps) {
   const { variant } = await params
 
-  // No try/catch: a thrown Payload/DB error must reach error.tsx,
-  // not masquerade as a 404 for a real product URL.
+  // Let Payload/DB errors reach error.tsx instead of looking like a 404.
   const beer = await getBeerBySlug(variant)
-  if (!beer) notFound()
-  if (beer.hideFromSite) notFound()
+  if (!beer || beer.hideFromSite) notFound()
 
   // Generate Product schema for SEO
   const productSchema = generateProductSchema(beer)

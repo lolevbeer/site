@@ -57,49 +57,54 @@ vi.mock('@/lib/utils/breadcrumb-schema', () => ({
 import BeerPage, { generateMetadata } from '@/src/app/(frontend)/beer/[variant]/page'
 import { getBeerBySlug } from '@/lib/utils/payload-api'
 
+function mockedGetBeerBySlug() {
+  return getBeerBySlug as ReturnType<typeof vi.fn>
+}
+
+const hiddenBeer = {
+  id: 'beer-1',
+  slug: 'hidden-beer',
+  name: 'Hidden Beer',
+  hideFromSite: true,
+  glass: 'pint' as const,
+  abv: 5.5,
+  draftPrice: 7,
+}
+
 describe('BeerPage error handling', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
   it('should throw NotFoundSentinel when beer slug does not exist', async () => {
-    const mockGetBeerBySlug = getBeerBySlug as ReturnType<typeof vi.fn>
-    mockGetBeerBySlug.mockResolvedValue(null)
+    const getBeer = mockedGetBeerBySlug()
+    getBeer.mockResolvedValue(null)
 
-    const params = Promise.resolve({ variant: 'nonexistent' })
-
-    await expect(BeerPage({ params })).rejects.toThrow(NotFoundSentinel)
-    expect(mockGetBeerBySlug).toHaveBeenCalledWith('nonexistent')
+    await expect(BeerPage({ params: Promise.resolve({ variant: 'nonexistent' }) })).rejects.toThrow(
+      NotFoundSentinel,
+    )
+    expect(getBeer).toHaveBeenCalledWith('nonexistent')
   })
 
   it('should throw NotFoundSentinel when beer is hidden from site', async () => {
-    const mockGetBeerBySlug = getBeerBySlug as ReturnType<typeof vi.fn>
-    const hiddenBeer = {
-      id: 'beer-1',
-      slug: 'hidden-beer',
-      name: 'Hidden Beer',
-      hideFromSite: true,
-      glass: 'pint' as const,
-      abv: 5.5,
-      draftPrice: 7,
-    }
-    mockGetBeerBySlug.mockResolvedValue(hiddenBeer)
+    const getBeer = mockedGetBeerBySlug()
+    getBeer.mockResolvedValue(hiddenBeer)
 
-    const params = Promise.resolve({ variant: 'hidden-beer' })
-
-    await expect(BeerPage({ params })).rejects.toThrow(NotFoundSentinel)
-    expect(mockGetBeerBySlug).toHaveBeenCalledWith('hidden-beer')
+    await expect(BeerPage({ params: Promise.resolve({ variant: 'hidden-beer' }) })).rejects.toThrow(
+      NotFoundSentinel,
+    )
+    expect(getBeer).toHaveBeenCalledWith('hidden-beer')
   })
 
   it('should propagate DB errors without catching them', async () => {
-    const mockGetBeerBySlug = getBeerBySlug as ReturnType<typeof vi.fn>
+    const getBeer = mockedGetBeerBySlug()
     const dbError = new Error('Database connection failed')
-    mockGetBeerBySlug.mockRejectedValue(dbError)
+    getBeer.mockRejectedValue(dbError)
 
-    const params = Promise.resolve({ variant: 'some-beer' })
-
-    await expect(BeerPage({ params })).rejects.toThrow(dbError)
-    expect(mockGetBeerBySlug).toHaveBeenCalledWith('some-beer')
+    await expect(BeerPage({ params: Promise.resolve({ variant: 'some-beer' }) })).rejects.toThrow(
+      dbError,
+    )
+    expect(getBeer).toHaveBeenCalledWith('some-beer')
   })
 })
 
@@ -109,43 +114,33 @@ describe('generateMetadata error handling', () => {
   })
 
   it('should return minimal metadata for hidden beers', async () => {
-    const mockGetBeerBySlug = getBeerBySlug as ReturnType<typeof vi.fn>
-    mockGetBeerBySlug.mockResolvedValue({
-      id: 'beer-1',
-      slug: 'hidden-beer',
-      name: 'Hidden Beer',
-      hideFromSite: true,
-      glass: 'pint' as const,
-      abv: 5.5,
-      draftPrice: 7,
+    mockedGetBeerBySlug().mockResolvedValue(hiddenBeer)
+
+    const metadata = await generateMetadata({
+      params: Promise.resolve({ variant: 'hidden-beer' }),
     })
 
-    const params = Promise.resolve({ variant: 'hidden-beer' })
-    const metadata = await generateMetadata({ params })
-
     expect(metadata.title).toBe('Beer Not Found')
-    // Should not include full OG metadata for hidden beers
     expect(metadata.description).toBeUndefined()
   })
 
   it('should return minimal metadata for missing beers', async () => {
-    const mockGetBeerBySlug = getBeerBySlug as ReturnType<typeof vi.fn>
-    mockGetBeerBySlug.mockResolvedValue(null)
+    mockedGetBeerBySlug().mockResolvedValue(null)
 
-    const params = Promise.resolve({ variant: 'nonexistent' })
-    const metadata = await generateMetadata({ params })
+    const metadata = await generateMetadata({
+      params: Promise.resolve({ variant: 'nonexistent' }),
+    })
 
     expect(metadata.title).toBe('Beer Not Found')
     expect(metadata.description).toBeUndefined()
   })
 
   it('should propagate DB errors in generateMetadata', async () => {
-    const mockGetBeerBySlug = getBeerBySlug as ReturnType<typeof vi.fn>
     const dbError = new Error('Database connection failed')
-    mockGetBeerBySlug.mockRejectedValue(dbError)
+    mockedGetBeerBySlug().mockRejectedValue(dbError)
 
-    const params = Promise.resolve({ variant: 'some-beer' })
-
-    await expect(generateMetadata({ params })).rejects.toThrow(dbError)
+    await expect(
+      generateMetadata({ params: Promise.resolve({ variant: 'some-beer' }) }),
+    ).rejects.toThrow(dbError)
   })
 })

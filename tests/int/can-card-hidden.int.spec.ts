@@ -53,23 +53,21 @@ function makeMenu(): Menu {
 
 afterEach(cleanup)
 
+function expectVisibleLinkedHiddenUnlinked(container: HTMLElement) {
+  const hrefs = Array.from(container.querySelectorAll('a')).map((a) => a.getAttribute('href'))
+  expect(hrefs).toContain('/beer/visible-beer')
+  expect(hrefs).not.toContain('/beer/hidden-beer')
+  expect(container.textContent).toContain('hidden-beer')
+}
+
 describe('CanCard hideFromSite link suppression', () => {
   it('homepage grid: visible beer links to its detail page, hidden beer does not', () => {
     const { container } = render(createElement(FeaturedCans, { menus: [makeMenu()] }))
-
-    const hrefs = Array.from(container.querySelectorAll('a')).map((a) => a.getAttribute('href'))
-    expect(hrefs).toContain('/beer/visible-beer')
-    expect(hrefs).not.toContain('/beer/hidden-beer')
-    // The hidden beer's tile still renders — only the link is suppressed
-    expect(container.textContent).toContain('hidden-beer')
+    expectVisibleLinkedHiddenUnlinked(container)
   })
 
   it('fullscreen /m grid: hidden beer tile renders unlinked', () => {
     const { container } = render(createElement(FeaturedCans, { menu: makeMenu() }))
-
-    const hrefs = Array.from(container.querySelectorAll('a')).map((a) => a.getAttribute('href'))
-    expect(hrefs).toContain('/beer/visible-beer')
-    expect(hrefs).not.toContain('/beer/hidden-beer')
-    expect(container.textContent).toContain('hidden-beer')
+    expectVisibleLinkedHiddenUnlinked(container)
   })
 })

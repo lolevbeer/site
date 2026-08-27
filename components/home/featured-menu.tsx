@@ -336,11 +336,9 @@ function AdminEditButtons({
   )
 }
 
-/** Links a can tile to its beer detail page, or renders it unlinked when the
- *  beer is hidden from the site — hideFromSite beers stay on published cans
- *  menus but their /beer/<slug> page returns 404, so the tile must not link
- *  (same rule as DraftBeerCard's CardWrapper). Module scope so React reconciles
- *  instead of remounting on poll re-renders. */
+/** Module-scope so poll re-renders reconcile instead of remounting the tile.
+ *  Hidden beers stay on the menu, but /beer/<slug> 404s, so they must not link
+ *  (same rule as DraftBeerCard's CardWrapper). */
 function CanCardWrapper({
   href,
   hidden,
@@ -423,11 +421,14 @@ function CanCard({
     return renderFallback(heightClass)
   }
 
+  const href = `/beer/${item.variant.toLowerCase()}`
+  const hidden = item.availability.hideFromSite
+
   if (fullscreen) {
     return (
       <CanCardWrapper
-        href={`/beer/${item.variant.toLowerCase()}`}
-        hidden={item.availability.hideFromSite}
+        href={href}
+        hidden={hidden}
         className="can-tile group cursor-pointer flex flex-col h-full min-h-0"
       >
         {/* flex-1 min-h-0, not a fixed 28vh: the can takes whatever height is
@@ -527,8 +528,8 @@ function CanCard({
 
   return (
     <CanCardWrapper
-      href={`/beer/${item.variant.toLowerCase()}`}
-      hidden={item.availability.hideFromSite}
+      href={href}
+      hidden={hidden}
       className="group flex flex-col cursor-pointer transition-transform duration-200 hover:-translate-y-1"
     >
       <div className="relative h-64 w-full flex-shrink-0 mb-4 bg-transparent transition-transform duration-200 group-hover:scale-[1.02]">

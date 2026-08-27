@@ -18,13 +18,13 @@ interface ConditionalLayoutProps {
 export function ConditionalLayout({ children, footer }: ConditionalLayoutProps) {
   const pathname = usePathname()
 
-  // Check if we're on an admin route or fullscreen display route
-  const isAdminRoute = pathname?.startsWith('/admin') || pathname?.startsWith('/api')
-  const isMenuRoute = pathname?.startsWith('/m/')
-  const isEventsDisplayRoute = pathname?.startsWith('/e/')
+  const skipChrome =
+    pathname?.startsWith('/admin') ||
+    pathname?.startsWith('/api') ||
+    pathname?.startsWith('/m/') ||
+    pathname?.startsWith('/e/')
 
-  // Don't render layout for admin/api routes or fullscreen display routes
-  if (isAdminRoute || isMenuRoute || isEventsDisplayRoute) {
+  if (skipChrome) {
     return (
       <main id="main-content" tabIndex={-1} className="h-screen outline-none">
         {children}

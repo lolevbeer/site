@@ -93,43 +93,41 @@ export function HeroSection({
                   aria-label="Available beers carousel"
                 >
                   <CarouselContent className="-ml-4">
-                    {displayBeers.length > 0 ? (
-                      displayBeers.map(({ beer, imageUrl }, index) => (
-                        <CarouselItem
-                          key={beer.id}
-                          className="pl-4 basis-1/4 sm:basis-1/5 md:basis-1/4 lg:basis-1/6 xl:basis-1/8 2xl:basis-1/8"
-                        >
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <Link
-                                href={`/beer/${beer.slug}`}
-                                prefetch={false}
-                                className="group flex justify-center"
-                              >
-                                <div className="relative h-16 w-16 md:h-24 md:w-24 rounded-lg bg-transparent transition-transform duration-200 ease-out group-hover:-translate-y-1 group-hover:scale-105">
-                                  <Image
-                                    src={imageUrl}
-                                    alt={`${beer.name} beer can`}
-                                    fill
-                                    className="object-contain drop-shadow-sm group-hover:drop-shadow-md transition-all duration-200"
-                                    sizes="(max-width: 768px) 64px, 96px"
-                                    loading={index < 5 ? 'eager' : 'lazy'}
-                                    onError={() => handleImageError(beer.id)}
-                                  />
-                                </div>
-                              </Link>
-                            </TooltipTrigger>
-                            <TooltipContent
-                              side="bottom"
-                              className="bg-popover text-popover-foreground border-0"
-                              sideOffset={5}
+                    {displayBeers.map(({ beer, imageUrl }, index) => (
+                      <CarouselItem
+                        key={beer.id}
+                        className="pl-4 basis-1/4 sm:basis-1/5 md:basis-1/4 lg:basis-1/6 xl:basis-1/8 2xl:basis-1/8"
+                      >
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Link
+                              href={`/beer/${beer.slug}`}
+                              prefetch={false}
+                              className="group flex justify-center"
                             >
-                              <p className="font-semibold text-sm">{beer.name}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </CarouselItem>
-                      ))
-                    ) : null}
+                              <div className="relative h-16 w-16 md:h-24 md:w-24 rounded-lg bg-transparent transition-transform duration-200 ease-out group-hover:-translate-y-1 group-hover:scale-105">
+                                <Image
+                                  src={imageUrl}
+                                  alt={`${beer.name} beer can`}
+                                  fill
+                                  className="object-contain drop-shadow-sm group-hover:drop-shadow-md transition-all duration-200"
+                                  sizes="(max-width: 768px) 64px, 96px"
+                                  loading={index < 5 ? 'eager' : 'lazy'}
+                                  onError={() => handleImageError(beer.id)}
+                                />
+                              </div>
+                            </Link>
+                          </TooltipTrigger>
+                          <TooltipContent
+                            side="bottom"
+                            className="bg-popover text-popover-foreground border-0"
+                            sideOffset={5}
+                          >
+                            <p className="font-semibold text-sm">{beer.name}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </CarouselItem>
+                    ))}
                   </CarouselContent>
                   <CarouselPrevious
                     className="hidden md:flex border-0 bg-transparent hover:bg-muted/50 shadow-none"
