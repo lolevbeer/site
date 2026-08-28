@@ -8,7 +8,8 @@
 import type { Beer as PayloadBeer } from '@/src/payload-types'
 import { Beer, UntappdReview } from '@/lib/types/beer'
 import { getBeerImageUrl } from '@/lib/utils/media-utils'
-import { LOLEV_BASE_URL, resolveStyleName } from '@/lib/utils/schema-shared'
+import { LOLEV_BASE_URL } from '@/lib/utils/schema-shared'
+import { relationshipName } from '@/lib/utils/relationship-name'
 
 /**
  * Schema.org Product type
@@ -100,7 +101,7 @@ function getBeerStyleName(beer: ProductSchemaInput): string {
     return beer.type
   }
   // Check for style relationship (Payload beer)
-  return resolveStyleName('style' in beer ? beer.style : undefined) ?? 'Beer'
+  return relationshipName('style' in beer ? beer.style : undefined) ?? 'Beer'
 }
 
 /**

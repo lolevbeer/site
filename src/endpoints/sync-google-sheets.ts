@@ -10,9 +10,9 @@ import { slugify } from '../collections/utils/generateUniqueSlug'
 import { getUserFromRequest } from './auth-helper'
 import { hasRole } from '@/src/access/roles'
 import { revalidateForCollection } from '@/src/plugins/revalidation-plugin'
-import { parseCSVLine } from '@/lib/utils/csv'
+import { parseCSVLine } from '@/src/utils/csv'
 import { parsePrice } from '@/lib/utils/formatters'
-import { createSSEResponse } from '@/lib/utils/sse-response'
+import { createSSEResponse } from '@/src/utils/sse-response'
 
 interface StreamController {
   send: (event: string, data: Record<string, unknown>) => void

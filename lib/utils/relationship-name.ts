@@ -12,13 +12,19 @@ import type { Style } from '@/src/payload-types'
 /**
  * Name of a populated relationship, or the raw ID when it is unpopulated so
  * callers still have something renderable. `undefined` when nothing is set.
+ *
+ * Takes `unknown` because the JSON-LD generators reach this field through
+ * loosely-typed beer shapes. Every branch is guarded, so a value in neither
+ * shape yields `undefined` rather than throwing.
  */
-export function relationshipName(
-  value: string | { name?: string | null } | null | undefined,
-): string | undefined {
+export function relationshipName(value: unknown): string | undefined {
   if (!value) return undefined
   if (typeof value === 'string') return value
-  return value.name ?? undefined
+  if (typeof value === 'object' && 'name' in value) {
+    const { name } = value as { name?: string | null }
+    return name ?? undefined
+  }
+  return undefined
 }
 
 /**

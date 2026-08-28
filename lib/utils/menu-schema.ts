@@ -5,7 +5,8 @@
  * @see https://schema.org/MenuItem
  */
 
-import { LOLEV_BASE_URL, resolveStyleName } from '@/lib/utils/schema-shared'
+import { LOLEV_BASE_URL } from '@/lib/utils/schema-shared'
+import { relationshipName } from '@/lib/utils/relationship-name'
 
 /** Minimal beer interface for menu schema generation */
 interface MenuBeer {
@@ -57,7 +58,7 @@ export interface MenuJsonLd {
  * Get style name from beer
  */
 function getBeerStyleName(beer: MenuBeer): string {
-  return resolveStyleName(beer.style) ?? 'Beer'
+  return relationshipName(beer.style) ?? 'Beer'
 }
 
 /**
