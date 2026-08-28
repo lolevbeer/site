@@ -34,3 +34,22 @@ export const TV_TYPE = {
  */
 export const TV_SAFE_X = '3vw'
 export const TV_SAFE_Y = '3vh'
+
+/**
+ * Fixed widths for the draft board's columns, shared by the header and the
+ * rows so the two cannot drift apart.
+ *
+ * These are `width`, not `minWidth`, on purpose. The tap column used to be a
+ * 7vh minimum holding a tap number beside a 6vh glass icon — which together
+ * overflow 7vh, so the column grew to fit its content and grew by a different
+ * amount for a one-digit tap than a two-digit one. Every beer name and hop
+ * line then started at a slightly different x down the column.
+ */
+export const TV_COL = {
+  tap: '10vh',
+  abv: '7vh',
+  price: '8vh',
+  /** Reserved for the Untappd rating, so the hop list starts at the same x
+   *  whether or not a beer has been scored yet. */
+  rating: '7vh',
+} as const

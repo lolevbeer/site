@@ -23,7 +23,7 @@ import { getBeerBadgeLabel } from '@/lib/types/beer'
 import { Logo } from '@/components/ui/logo'
 import { TopBeerDropsLink } from '@/components/beer/top-beer-drops-link'
 import { UntappdRating } from '@/components/beer/untappd-rating'
-import { TV_TYPE, TV_SAFE_X, TV_SAFE_Y } from '@/lib/config/tv-display'
+import { TV_TYPE, TV_SAFE_X, TV_SAFE_Y, TV_COL } from '@/lib/config/tv-display'
 import { LINES_OVERDUE_DAYS } from '@/lib/utils/lines-cleaned'
 
 /** Parse price string to number, removing '$' prefix if present */
@@ -115,20 +115,23 @@ function ColumnHeader({ isOtherMenu }: { isOtherMenu: boolean }) {
       className="flex items-center border-b-2 border-border uppercase tracking-wider text-foreground font-bold"
       style={{ gap: '1vh', marginBottom: '0.5vh', fontSize: TV_TYPE.label }}
     >
-      {!isOtherMenu && <div style={{ minWidth: '7vh' }}>Tap</div>}
+      {!isOtherMenu && <div style={{ width: TV_COL.tap }}>Tap</div>}
       <div className="flex-grow">{isOtherMenu ? 'Item' : 'Beer'}</div>
+      {/* Right-aligned, matching the rows. These columns hold numbers of
+          different widths — 8% next to 10.1%, $9 next to $11 — and centring
+          them put the % signs and the digits at a different x on every row. */}
       <div className="flex" style={{ gap: '2vh' }}>
         {!isOtherMenu && (
-          <div className="text-center" style={{ minWidth: '7vh' }}>
+          <div className="text-right" style={{ width: TV_COL.abv }}>
             ABV
           </div>
         )}
         {!isOtherMenu && (
-          <div className="text-center" style={{ minWidth: '8vh' }}>
+          <div className="text-right" style={{ width: TV_COL.price }}>
             Half
           </div>
         )}
-        <div className="text-center" style={{ minWidth: '8vh' }}>
+        <div className="text-right" style={{ width: TV_COL.price }}>
           {isOtherMenu ? 'Price' : 'Full'}
         </div>
       </div>

@@ -15,7 +15,7 @@ import { Badge } from '@/components/ui/badge'
 import { TopBeerDropsLink } from '@/components/beer/top-beer-drops-link'
 import { UntappdRating } from '@/components/beer/untappd-rating'
 import { getBeerBadgeLabel } from '@/lib/types/beer'
-import { TV_TYPE } from '@/lib/config/tv-display'
+import { TV_TYPE, TV_COL } from '@/lib/config/tv-display'
 
 interface DraftBeerCardProps {
   beer: Beer
@@ -76,7 +76,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
             {(showTap || showGlass) && (
               <div
                 className="flex-shrink-0 flex flex-col items-center"
-                style={{ minWidth: showGlass ? '7vh' : '3vh', gap: '0.3vh' }}
+                style={{ width: showGlass ? TV_COL.tap : '3vh', gap: '0.3vh' }}
               >
                 <div className="flex items-center justify-between w-full">
                   {showTap && beer.tap && (
@@ -158,13 +158,21 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                   className="flex items-baseline text-foreground-muted leading-tight"
                   style={{ fontSize: TV_TYPE.body, gap: '0.8vh' }}
                 >
+                  {/* The slot is always rendered at a fixed width, even when a
+                      beer has no rating yet — UntappdRating returns null in
+                      that case, and without a reserved slot the hop list slid
+                      left on exactly those rows, so "Hops:" started at a
+                      different x depending on whether Untappd had scored the
+                      beer. */}
                   {showRating && !(beer as unknown as { isProduct?: boolean }).isProduct && (
-                    <UntappdRating
-                      rating={beer.untappdRating}
-                      className="flex-shrink-0 leading-none inline-flex"
-                      style={{ gap: '0.3vh', fontSize: TV_TYPE.body }}
-                      iconStyle={{ height: '2vh', width: '2vh' }}
-                    />
+                    <span className="flex-shrink-0" style={{ width: TV_COL.rating }}>
+                      <UntappdRating
+                        rating={beer.untappdRating}
+                        className="leading-none inline-flex"
+                        style={{ gap: '0.3vh', fontSize: TV_TYPE.body }}
+                        iconStyle={{ height: '2vh', width: '2vh' }}
+                      />
+                    </span>
                   )}
                   {beer.hops && (
                     <span className="min-w-0 truncate">
@@ -181,7 +189,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                 in the Full column. */}
             <div className="flex-shrink-0 flex items-start" style={{ gap: '2vh' }}>
               {showAbv && (
-                <div className="text-center" style={{ minWidth: '7vh' }}>
+                <div className="text-right" style={{ width: TV_COL.abv }}>
                   {beer.abv && (
                     <div
                       className="font-bold text-foreground-muted tabular-nums"
@@ -193,7 +201,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                 </div>
               )}
               {/* Half pour price - always render column for alignment */}
-              <div className="text-center" style={{ minWidth: '8vh' }}>
+              <div className="text-right" style={{ width: TV_COL.price }}>
                 {beer.pricing?.halfPour && (
                   <div
                     className="font-bold tabular-nums transition-colors duration-500"
@@ -204,7 +212,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                 )}
               </div>
               {/* Full price - always render column, show value if not halfPourOnly */}
-              <div className="text-center" style={{ minWidth: '8vh' }}>
+              <div className="text-right" style={{ width: TV_COL.price }}>
                 {!beer.pricing?.halfPourOnly && beer.pricing?.draftPrice && (
                   <div
                     className="font-bold tabular-nums transition-colors duration-500"
