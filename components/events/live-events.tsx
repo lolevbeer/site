@@ -32,26 +32,23 @@ interface LiveEventsProps {
   initialLocationName: string
 }
 
-/** "Today" as the taproom sees it, not as the viewer's browser does.
- *  These boards are in Pittsburgh, but the server renders in UTC — using
- *  `new Date()` on both sides meant the server and the client could disagree
- *  about the current calendar day for five hours every evening, which both
- *  broke hydration and could mark the wrong row "Today". `getTodayEST` and
- *  `toESTDate` are the same helpers the draft board's lines-cleaned date uses,
- *  so every display agrees on the date. */
-function isBeforeToday(dateStr: string): boolean {
-  return toESTDate(dateStr).getTime() < toESTDate(getTodayEST()).getTime()
-}
-
-function isTodayDate(dateStr: string): boolean {
-  return toESTDate(dateStr).getTime() === toESTDate(getTodayEST()).getTime()
-}
-
-/** Weekday and date for the agenda's day rail, e.g. "Fri" over "Aug 28". */
-function formatDayLabel(dateStr: string): { weekday: string; day: string } {
+/** Weekday and date for the agenda's day rail, e.g. "Fri" over "Aug 28".
+ *
+ *  `isToday` is passed in rather than derived here: the caller already knows
+ *  which day is today from a single comparison, and deriving it per label
+ *  meant recomputing "today" for every group on every poll.
+ *
+ *  Dates arrive from Payload as `YYYY-MM-DD`, so comparing them against
+ *  `getTodayEST()` as plain strings orders and matches them correctly without
+ *  building any Date — which is why callers compare directly rather than going
+ *  through a helper. The EST anchor matters: these boards are in Pittsburgh but
+ *  the server renders in UTC, so using the browser's `new Date()` let the two
+ *  sides disagree about the calendar day for five hours every evening, breaking
+ *  hydration and mismarking "Today". */
+function formatDayLabel(dateStr: string, isToday: boolean): { weekday: string; day: string } {
   const date = toESTDate(dateStr)
   return {
-    weekday: isTodayDate(dateStr) ? 'Today' : format(date, 'EEE'),
+    weekday: isToday ? 'Today' : format(date, 'EEE'),
     day: format(date, 'MMM d'),
   }
 }
@@ -91,6 +88,21 @@ function formatTime(time: string): string {
  *  or an event. Replaces the separate EventCard/FoodCard, which were centred —
  *  so ten rows started at ten different x positions and neither the names nor
  *  the times formed a column you could scan down. */
+interface AgendaEntry {
+  key: string
+  /** Raw `HH:MM` / ISO time, kept only for ordering within a day. */
+  sortTime: string
+  /** Display time, or "Kitchen" / "All day" when there is no clock time. */
+  time: string
+  name: string
+  kind: 'Food' | 'Event'
+  logoUrl?: string
+  tags?: string[]
+  description?: string
+  /** Position in the combined list, which is what indexes the poll's colours. */
+  colorIndex: number
+}
+
 function AgendaRow({
   time,
   name,
@@ -189,6 +201,7 @@ export function LiveEvents({
   // Combine events and food into a single sorted list
   type DisplayItem = { type: 'event'; data: BreweryEvent } | { type: 'food'; data: FoodItem }
   const combinedItems = useMemo(() => {
+    const today = getTodayEST()
     const items: DisplayItem[] = [
       ...events.map((e) => ({ type: 'event' as const, data: e })),
       ...initialFood.map((f) => ({ type: 'food' as const, data: f })),
@@ -198,35 +211,69 @@ export function LiveEvents({
         // The page query filters by date, but this board is left running for
         // days: without a client-side check, everything before today stays on
         // screen after midnight, above the row marked "Today".
-        .filter((i) => !isBeforeToday(i.data.date))
+        .filter((i) => i.data.date >= today)
         .sort((a, b) => a.data.date.localeCompare(b.data.date))
         .slice(0, 10)
     )
   }, [events, initialFood])
 
-  /** The same items grouped by calendar day. Grouping is what makes the board
-   *  answerable at a glance — "what's on Friday" was previously ten unaligned
-   *  rows to read — and it also resolves the pairs that looked like duplicate
-   *  data: a truck and the event it is cooking for now sit under one day
-   *  instead of appearing as two near-identical rows. Within a day, the
-   *  kitchen comes first, then events in time order. */
+  /** The items grouped by calendar day, each already resolved to exactly what a
+   *  row renders. Grouping is what makes the board answerable at a glance —
+   *  "what's on Friday" was previously ten unaligned rows to read — and it also
+   *  resolves the pairs that looked like duplicate data: a truck and the event
+   *  it is cooking for now sit under one day instead of appearing as two
+   *  near-identical rows. Within a day, the kitchen comes first, then events in
+   *  time order.
+   *
+   *  Flattening an event or a food truck into one shape here, rather than
+   *  branching at the call site, keeps the two row variants from drifting and
+   *  lets each row carry the colour index it was assigned — the render used to
+   *  recover that with `combinedItems.indexOf(item)` per row, an O(n) scan
+   *  inside an O(n) loop, repeated on every five-second poll for the life of
+   *  the display. */
   const dayGroups = useMemo(() => {
-    const byDate = new Map<string, DisplayItem[]>()
-    for (const item of combinedItems) {
+    const today = getTodayEST()
+    const byDate = new Map<string, AgendaEntry[]>()
+
+    combinedItems.forEach((item, colorIndex) => {
+      const entry: AgendaEntry =
+        item.type === 'event'
+          ? {
+              key: `event-${item.data.id || colorIndex}`,
+              sortTime: item.data.time || '',
+              time: item.data.time ? formatTime(item.data.time) : 'All day',
+              name: item.data.title,
+              kind: 'Event',
+              tags: item.data.tags,
+              // A description that only repeats the title adds nothing.
+              description:
+                item.data.description !== item.data.title ? item.data.description : undefined,
+              colorIndex,
+            }
+          : {
+              key: `food-${item.data.id || colorIndex}`,
+              sortTime: item.data.time || '',
+              time: item.data.time ? formatTime(item.data.time) : 'Kitchen',
+              name: item.data.vendor,
+              kind: 'Food',
+              logoUrl: item.data.logoUrl,
+              colorIndex,
+            }
+
       const list = byDate.get(item.data.date)
-      if (list) list.push(item)
-      else byDate.set(item.data.date, [item])
-    }
+      if (list) list.push(entry)
+      else byDate.set(item.data.date, [entry])
+    })
+
     return [...byDate.entries()]
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([date, items]) => ({
         date,
+        isToday: date === today,
+        // Untimed entries (the kitchen) lead the day, then everything by time.
         items: items.sort((a, b) => {
-          const at = a.data.time ? formatTime(a.data.time) : ''
-          const bt = b.data.time ? formatTime(b.data.time) : ''
-          if (!at && bt) return -1
-          if (at && !bt) return 1
-          return (a.data.time || '').localeCompare(b.data.time || '')
+          if (!a.sortTime !== !b.sortTime) return a.sortTime ? 1 : -1
+          return a.sortTime.localeCompare(b.sortTime)
         }),
       }))
   }, [combinedItems])
@@ -305,8 +352,7 @@ export function LiveEvents({
                  edge — the old layout centred each row independently. */
               <div className="flex flex-col justify-evenly h-full w-full">
                 {dayGroups.map((group) => {
-                  const { weekday, day } = formatDayLabel(group.date)
-                  const today = isTodayDate(group.date)
+                  const { weekday, day } = formatDayLabel(group.date, group.isToday)
                   return (
                     <div
                       key={group.date}
@@ -315,7 +361,7 @@ export function LiveEvents({
                     >
                       <div
                         className={`flex-shrink-0 uppercase tracking-wider font-bold leading-tight ${
-                          today ? 'text-amber-500' : 'text-foreground-muted'
+                          group.isToday ? 'text-amber-500' : 'text-foreground-muted'
                         }`}
                         style={{ width: '16vh', fontSize: TV_TYPE.eventDay }}
                       >
@@ -323,32 +369,18 @@ export function LiveEvents({
                         <div>{day}</div>
                       </div>
                       <div className="flex flex-col flex-grow min-w-0" style={{ gap: '1vh' }}>
-                        {group.items.map((item, idx) =>
-                          item.type === 'event' ? (
-                            <AgendaRow
-                              key={`event-${item.data.id || idx}`}
-                              time={item.data.time ? formatTime(item.data.time) : 'All day'}
-                              name={item.data.title}
-                              kind="Event"
-                              tags={item.data.tags}
-                              description={
-                                item.data.description !== item.data.title
-                                  ? item.data.description
-                                  : undefined
-                              }
-                              accentColor={itemColors?.[combinedItems.indexOf(item)]}
-                            />
-                          ) : (
-                            <AgendaRow
-                              key={`food-${item.data.id || idx}`}
-                              time={item.data.time ? formatTime(item.data.time) : 'Kitchen'}
-                              name={item.data.vendor}
-                              kind="Food"
-                              logoUrl={item.data.logoUrl}
-                              accentColor={itemColors?.[combinedItems.indexOf(item)]}
-                            />
-                          ),
-                        )}
+                        {group.items.map((item) => (
+                          <AgendaRow
+                            key={item.key}
+                            time={item.time}
+                            name={item.name}
+                            kind={item.kind}
+                            tags={item.tags}
+                            logoUrl={item.logoUrl}
+                            description={item.description}
+                            accentColor={itemColors?.[item.colorIndex]}
+                          />
+                        ))}
                       </div>
                     </div>
                   )

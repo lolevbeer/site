@@ -186,12 +186,8 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                   className="flex items-baseline text-foreground-muted leading-tight"
                   style={{ fontSize: TV_TYPE.body, gap: '0.8vh' }}
                 >
-                  {/* The slot is always rendered at a fixed width, even when a
-                      beer has no rating yet — UntappdRating returns null in
-                      that case, and without a reserved slot the hop list slid
-                      left on exactly those rows, so "Hops:" started at a
-                      different x depending on whether Untappd had scored the
-                      beer. */}
+                  {/* Slot is rendered even when there is no rating — see
+                      TV_COL.rating for why it stays reserved. */}
                   {showRating && !(beer as unknown as { isProduct?: boolean }).isProduct && (
                     <span className="flex-shrink-0" style={{ width: TV_COL.rating }}>
                       {/* No iconStyle override: the icon sizes itself from this
