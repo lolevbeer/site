@@ -1,6 +1,10 @@
 import type { PayloadHandler } from 'payload'
 import { getUserFromRequest } from './auth-helper'
 import { geocode } from './geocode'
+import { parseCSVLine } from '@/lib/utils/csv'
+import { sleep } from '@/lib/utils/async'
+import { createSSEResponse } from '@/lib/utils/sse-response'
+import { DEFAULT_REGION_COORDS } from '@/lib/utils/distributor-region-coords'
 
 interface ParsedRow {
   name: string
@@ -11,33 +15,17 @@ interface ParsedRow {
   phone: string
 }
 
-function parseCSVLine(line: string): string[] {
-  const result: string[] = []
-  let current = ''
-  let inQuotes = false
-
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i]
-    if (char === '"') {
-      if (inQuotes && line[i + 1] === '"') {
-        current += '"'
-        i++
-      } else {
-        inQuotes = !inQuotes
-      }
-    } else if (char === ',' && !inQuotes) {
-      result.push(current.trim())
-      current = ''
-    } else {
-      current += char
-    }
-  }
-  result.push(current.trim())
-  return result
-}
-
+/**
+ * Map the Lake Beverage export's columns onto distributor rows.
+ *
+ * Field-level trimming happens here rather than in the shared
+ * {@link parseCSVLine}, which returns fields verbatim.
+ */
 function parseCSV(text: string): ParsedRow[] {
-  const lines = text.trim().split('\n').filter(line => line.trim())
+  const lines = text
+    .trim()
+    .split('\n')
+    .filter((line) => line.trim())
   if (lines.length < 2) return []
 
   const rows: ParsedRow[] = []
@@ -76,15 +64,13 @@ function formatPhone(phone: string): string {
   return phone
 }
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
-}
-
-const DEFAULT_COORDS: [number, number] = [-77.6109, 43.1566]
+// Lake Beverage is the Rochester, NY distributor, so ungeocodable addresses
+// land on the shared NY fallback point.
+const DEFAULT_COORDS: [number, number] = DEFAULT_REGION_COORDS.NY
 
 export const importLakeBeverageCSV: PayloadHandler = async (req) => {
   const { payload } = req
-  const user = req.user ?? await getUserFromRequest(req, payload)
+  const user = req.user ?? (await getUserFromRequest(req, payload))
 
   if (!user || !user.roles?.includes('admin')) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
@@ -109,99 +95,84 @@ export const importLakeBeverageCSV: PayloadHandler = async (req) => {
     }
 
     // Use streaming response for progress
-    const encoder = new TextEncoder()
-    const stream = new ReadableStream({
-      async start(controller) {
-        const send = (event: string, data: Record<string, unknown>) => {
-          controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`))
-        }
+    return createSSEResponse(async (send) => {
+      send('status', { message: `Starting import of ${rows.length} distributors...` })
 
-        send('status', { message: `Starting import of ${rows.length} distributors...` })
+      let imported = 0,
+        skipped = 0,
+        errors = 0
+      const details: string[] = []
 
-        let imported = 0, skipped = 0, errors = 0
-        const details: string[] = []
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i]
 
-        for (let i = 0; i < rows.length; i++) {
-          const row = rows[i]
-
-          send('progress', {
-            current: i + 1,
-            total: rows.length,
-            name: row.name,
-            percent: Math.round(((i + 1) / rows.length) * 100)
-          })
-
-          // Check for existing
-          const existing = await payload.find({
-            collection: 'distributors',
-            where: { name: { equals: row.name } },
-            limit: 1,
-          })
-
-          if (existing.docs.length > 0) {
-            details.push(`Skipped: "${row.name}" already exists`)
-            send('item', { name: row.name, action: 'skipped', reason: 'already exists' })
-            skipped++
-            continue
-          }
-
-          // Geocode
-          const fullAddress = `${row.address}, ${row.city}, ${row.state} ${row.zip}`.trim()
-          const coords = await geocode(fullAddress)
-          const location = coords || DEFAULT_COORDS
-
-          if (!coords) {
-            details.push(`Warning: Could not geocode "${row.name}"`)
-          }
-
-          try {
-            await payload.create({
-              collection: 'distributors',
-              data: {
-                name: row.name,
-                address: row.address,
-                city: row.city,
-                state: row.state,
-                zip: row.zip,
-                phone: row.phone ? formatPhone(row.phone) : undefined,
-                customerType: 'Retail',
-                region: 'NY',
-                location,
-                active: true,
-              },
-            })
-            details.push(`Imported: ${row.name}`)
-            send('item', { name: row.name, action: 'imported', geocoded: !!coords })
-            imported++
-          } catch (error: unknown) {
-            const message = error instanceof Error ? error.message : 'Unknown error'
-            details.push(`Error: "${row.name}" - ${message}`)
-            send('item', { name: row.name, action: 'error', error: message })
-            errors++
-          }
-
-          // Rate limit for Nominatim
-          await sleep(1100)
-        }
-
-        send('complete', {
-          success: true,
-          imported,
-          skipped,
-          errors,
-          details
+        send('progress', {
+          current: i + 1,
+          total: rows.length,
+          name: row.name,
+          percent: Math.round(((i + 1) / rows.length) * 100),
         })
 
-        controller.close()
-      },
-    })
+        // Check for existing
+        const existing = await payload.find({
+          collection: 'distributors',
+          where: { name: { equals: row.name } },
+          limit: 1,
+        })
 
-    return new Response(stream, {
-      headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        Connection: 'keep-alive',
-      },
+        if (existing.docs.length > 0) {
+          details.push(`Skipped: "${row.name}" already exists`)
+          send('item', { name: row.name, action: 'skipped', reason: 'already exists' })
+          skipped++
+          continue
+        }
+
+        // Geocode
+        const fullAddress = `${row.address}, ${row.city}, ${row.state} ${row.zip}`.trim()
+        const coords = await geocode(fullAddress)
+        const location = coords || DEFAULT_COORDS
+
+        if (!coords) {
+          details.push(`Warning: Could not geocode "${row.name}"`)
+        }
+
+        try {
+          await payload.create({
+            collection: 'distributors',
+            data: {
+              name: row.name,
+              address: row.address,
+              city: row.city,
+              state: row.state,
+              zip: row.zip,
+              phone: row.phone ? formatPhone(row.phone) : undefined,
+              customerType: 'Retail',
+              region: 'NY',
+              location,
+              active: true,
+            },
+          })
+          details.push(`Imported: ${row.name}`)
+          send('item', { name: row.name, action: 'imported', geocoded: !!coords })
+          imported++
+        } catch (error: unknown) {
+          const message = error instanceof Error ? error.message : 'Unknown error'
+          details.push(`Error: "${row.name}" - ${message}`)
+          send('item', { name: row.name, action: 'error', error: message })
+          errors++
+        }
+
+        // Rate limit for Nominatim
+        await sleep(1100)
+      }
+
+      send('complete', {
+        success: true,
+        imported,
+        skipped,
+        errors,
+        details,
+      })
     })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Import failed'

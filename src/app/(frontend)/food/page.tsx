@@ -7,6 +7,7 @@ import { FoodVendorSchedule, DayOfWeek } from '@/lib/types/food'
 import { extractVendorInfo, getAllLocations } from '@/lib/utils/payload-api'
 import { getMediaUrl } from '@/lib/utils/media-utils'
 import { getTodayMidnightISO } from '@/lib/utils/date'
+import { getUpcomingDatesForSlot } from '@/lib/utils/food-dates'
 import { createLocationLookup, generateFoodEventJsonLd } from '@/lib/utils/json-ld'
 import { PageTransition } from '@/components/motion'
 import { logger } from '@/lib/utils/logger'
@@ -28,41 +29,6 @@ export const revalidate = 3600
 
 // Derived so the labels can't fall out of index alignment with `days`.
 const fullDayLabels = days.map(capitalizeName)
-
-/**
- * Calculate upcoming occurrences of a specific week/day combo
- */
-function getUpcomingDatesForSlot(
-  dayIndex: number,
-  weekOccurrence: number,
-  monthsAhead: number = 3,
-): Date[] {
-  const dates: Date[] = []
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const startMonth = today.getMonth()
-  const startYear = today.getFullYear()
-
-  for (let i = 0; i < monthsAhead; i++) {
-    const month = (startMonth + i) % 12
-    const year = startYear + Math.floor((startMonth + i) / 12)
-
-    const firstOfMonth = new Date(year, month, 1)
-    const firstDayOfMonth = firstOfMonth.getDay()
-
-    let firstOccurrence = dayIndex - firstDayOfMonth + 1
-    if (firstOccurrence <= 0) firstOccurrence += 7
-
-    const targetDay = firstOccurrence + (weekOccurrence - 1) * 7
-    const targetDate = new Date(year, month, targetDay)
-
-    if (targetDate.getMonth() === month && targetDate >= today) {
-      dates.push(targetDate)
-    }
-  }
-
-  return dates
-}
 
 interface PayloadFoodEntry {
   id: string

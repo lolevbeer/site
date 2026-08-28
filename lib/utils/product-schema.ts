@@ -8,6 +8,7 @@
 import type { Beer as PayloadBeer } from '@/src/payload-types'
 import { Beer, UntappdReview } from '@/lib/types/beer'
 import { getBeerImageUrl } from '@/lib/utils/media-utils'
+import { LOLEV_BASE_URL, resolveStyleName } from '@/lib/utils/schema-shared'
 
 /**
  * Schema.org Product type
@@ -88,8 +89,7 @@ export interface PropertyValueJsonLd {
  * Accepts either a Payload CMS Beer or the app-level Beer interface.
  */
 type ProductSchemaInput =
-  | (Beer & { style?: unknown; slug?: string; draftPrice?: number; fourPack?: number })
-  | PayloadBeer
+  (Beer & { style?: unknown; slug?: string; draftPrice?: number; fourPack?: number }) | PayloadBeer
 
 /**
  * Get beer style name from either type field or style relationship
@@ -100,15 +100,7 @@ function getBeerStyleName(beer: ProductSchemaInput): string {
     return beer.type
   }
   // Check for style relationship (Payload beer)
-  if ('style' in beer && beer.style) {
-    if (typeof beer.style === 'string') {
-      return beer.style
-    }
-    if (typeof beer.style === 'object' && beer.style !== null && 'name' in beer.style) {
-      return (beer.style as { name: string }).name
-    }
-  }
-  return 'Beer'
+  return resolveStyleName('style' in beer ? beer.style : undefined) ?? 'Beer'
 }
 
 /**
@@ -124,7 +116,6 @@ function getBeerCategory(beer: ProductSchemaInput): string {
  */
 function generateOffers(beer: ProductSchemaInput): OfferJsonLd[] {
   const offers: OfferJsonLd[] = []
-  const baseUrl = 'https://lolev.beer'
 
   // Rolling 90-day validity so Google doesn't warn about missing priceValidUntil.
   const validUntil = new Date()
@@ -142,40 +133,32 @@ function generateOffers(beer: ProductSchemaInput): OfferJsonLd[] {
     ('fourPack' in beer ? beer.fourPack : undefined) ||
     ('pricing' in beer ? beer.pricing?.fourPack : undefined)
 
+  // The draft and four-pack offers are identical apart from the price, so they
+  // share one builder — keeping availability, condition, validity window and
+  // seller from drifting between the two.
+  const buildOffer = (price: number): OfferJsonLd => ({
+    '@type': 'Offer',
+    price: price.toString(),
+    priceCurrency: 'USD',
+    availability: 'https://schema.org/InStock',
+    itemCondition: 'https://schema.org/NewCondition',
+    priceValidUntil,
+    url: `${LOLEV_BASE_URL}/beer/${beerSlug}`,
+    seller: {
+      '@type': 'Organization',
+      name: 'Lolev Beer',
+      url: LOLEV_BASE_URL,
+    },
+  })
+
   // Draft offer with price
   if (draftPrice) {
-    offers.push({
-      '@type': 'Offer',
-      price: draftPrice.toString(),
-      priceCurrency: 'USD',
-      availability: 'https://schema.org/InStock',
-      itemCondition: 'https://schema.org/NewCondition',
-      priceValidUntil,
-      url: `${baseUrl}/beer/${beerSlug}`,
-      seller: {
-        '@type': 'Organization',
-        name: 'Lolev Beer',
-        url: baseUrl,
-      },
-    })
+    offers.push(buildOffer(draftPrice))
   }
 
   // Four pack offer with price
   if (fourPackPrice) {
-    offers.push({
-      '@type': 'Offer',
-      price: fourPackPrice.toString(),
-      priceCurrency: 'USD',
-      availability: 'https://schema.org/InStock',
-      itemCondition: 'https://schema.org/NewCondition',
-      priceValidUntil,
-      url: `${baseUrl}/beer/${beerSlug}`,
-      seller: {
-        '@type': 'Organization',
-        name: 'Lolev Beer',
-        url: baseUrl,
-      },
-    })
+    offers.push(buildOffer(fourPackPrice))
   }
 
   // If no offers with prices, don't add a priceless offer (Google requires price)
@@ -272,7 +255,7 @@ function generateAdditionalProperties(beer: ProductSchemaInput): PropertyValueJs
  * Generate Product JSON-LD for a beer
  */
 export function generateProductSchema(beer: ProductSchemaInput): ProductJsonLd {
-  const baseUrl = 'https://lolev.beer'
+  const baseUrl = LOLEV_BASE_URL
   const styleName = getBeerStyleName(beer)
   const beerSlug =
     ('slug' in beer ? beer.slug : undefined) ||
@@ -345,7 +328,7 @@ export function generateDrinkProductSchema(beer: Beer): object {
     manufacturer: {
       '@type': 'Organization',
       name: 'Lolev Beer',
-      url: 'https://lolev.beer',
+      url: LOLEV_BASE_URL,
     },
   }
 }

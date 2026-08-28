@@ -1,5 +1,6 @@
 import type { Access, FieldAccess } from 'payload'
 import type { User } from '@/src/payload-types'
+import { relationshipId } from '@/src/utils/relationship-id'
 
 /**
  * Role types available in the system
@@ -56,6 +57,26 @@ export const EVENT_MANAGER_ROLES: Role[] = ['admin', 'event-manager']
 
 /** Roles that may invite bartenders and assign them to locations. */
 export const LEAD_BARTENDER_ROLES: Role[] = ['admin', 'lead-bartender']
+
+/**
+ * IDs of the locations a user is assigned to.
+ *
+ * Shared by the Locations and Menus collections, whose access rules both scope
+ * (lead) bartenders to their own locations — keeping one copy stops the two
+ * from drifting apart. An empty array means "no assignment", which every
+ * caller must fail closed on: an unscoped bartender gets nothing, never a
+ * location filter that would match every record.
+ *
+ * Ids are read raw (see `relationshipId`) rather than filtered, so a malformed
+ * entry still produces a filter that matches nothing instead of silently
+ * shrinking the scope check.
+ */
+export function getUserLocationIds(user: User | null | undefined): string[] {
+  if (!user?.locations || !Array.isArray(user.locations) || user.locations.length === 0) {
+    return []
+  }
+  return user.locations.map(relationshipId)
+}
 
 /**
  * Access control: User must be an admin

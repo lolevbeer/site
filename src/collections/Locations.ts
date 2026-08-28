@@ -1,25 +1,14 @@
 import type { CollectionConfig, Access } from 'payload'
-import type { User } from '@/src/payload-types'
 import { generateUniqueSlug } from './utils/generateUniqueSlug'
+import { markLinesCleanedField } from './utils/markLinesCleanedField'
 import {
   adminAccess,
   adminFieldAccess,
+  getUserLocationIds,
   isAdmin,
   hasRole,
   leadBartenderFieldAccess,
 } from '@/src/access/roles'
-
-/**
- * Get location IDs from user's assigned locations
- */
-function getUserLocationIds(user: User | null): string[] | null {
-  if (!user?.locations || !Array.isArray(user.locations) || user.locations.length === 0) {
-    return null
-  }
-  return user.locations.map((loc: string | { id: string }) =>
-    typeof loc === 'object' ? loc.id : loc,
-  )
-}
 
 /**
  * Allow admins full access, lead-bartenders can update their assigned locations
@@ -28,7 +17,7 @@ const canUpdateLocation: Access = ({ req: { user } }) => {
   if (isAdmin(user)) return true
   if (hasRole(user, 'lead-bartender')) {
     const locationIds = getUserLocationIds(user)
-    if (locationIds) {
+    if (locationIds.length > 0) {
       return {
         id: {
           in: locationIds,
@@ -91,17 +80,7 @@ export const Locations: CollectionConfig = {
         },
       },
     },
-    {
-      name: 'markLinesCleanedButton',
-      type: 'ui',
-      admin: {
-        position: 'sidebar',
-        condition: (data, siblingData, { user }) => hasRole(user, ['admin', 'lead-bartender']),
-        components: {
-          Field: '@/src/components/admin/MarkLinesCleanedButton#MarkLinesCleanedButton',
-        },
-      },
-    },
+    markLinesCleanedField(),
     {
       name: 'active',
       type: 'checkbox',

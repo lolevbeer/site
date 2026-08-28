@@ -43,7 +43,27 @@ import { CACHE_TAGS } from '@/lib/utils/cache'
 import { extractBeerFromMenuItem } from './menu-item-utils'
 import { getMediaUrl } from './media-utils'
 import { getTodayEST, getTodayMidnightISO } from './date'
+import { getUpcomingDatesForSlot } from './food-dates'
 import { formatAddress } from './formatters'
+
+/**
+ * Resolve a location slug to its document.
+ *
+ * Shared by the per-location fetchers below: they all start by turning a slug
+ * into a location id, and all treat "not found" as a valid (cacheable) empty
+ * result rather than an error. Returns `undefined` when no location matches.
+ */
+const findLocationBySlug = async (
+  payload: Awaited<ReturnType<typeof getPayload>>,
+  locationSlug: string,
+) => {
+  const result = await payload.find({
+    collection: 'locations',
+    where: { slug: { equals: locationSlug } },
+    limit: 1,
+  })
+  return result.docs[0]
+}
 
 /**
  * Check if any beer globally has justReleased flag set
@@ -162,22 +182,14 @@ export const getMenusByLocation = async (locationSlug: string): Promise<PayloadM
         const payload = await getPayload({ config })
 
         // First get the location by slug
-        const locationResult = await payload.find({
-          collection: 'locations',
-          where: {
-            slug: {
-              equals: locationSlug,
-            },
-          },
-          limit: 1,
-        })
+        const location = await findLocationBySlug(payload, locationSlug)
 
-        if (locationResult.docs.length === 0) {
+        if (!location) {
           // Location not found is a valid cacheable result (not an error)
           return []
         }
 
-        const locationId = locationResult.docs[0].id
+        const locationId = location.id
 
         // Then get menus for that location
         const menusResult = await payload.find({
@@ -767,20 +779,14 @@ export const getUpcomingEventsFromPayload = async (
         const payload = await getPayload({ config })
 
         // Get location ID from slug
-        const locationResult = await payload.find({
-          collection: 'locations',
-          where: {
-            slug: { equals: locationSlug },
-          },
-          limit: 1,
-        })
+        const location = await findLocationBySlug(payload, locationSlug)
 
-        if (locationResult.docs.length === 0) {
+        if (!location) {
           // Location not found is a valid cacheable result
           return []
         }
 
-        const locationId = locationResult.docs[0].id
+        const locationId = location.id
 
         const todayStr = getTodayMidnightISO()
 
@@ -832,20 +838,14 @@ export const getUpcomingFoodFromPayload = async (
         const payload = await getPayload({ config })
 
         // Get location ID from slug
-        const locationResult = await payload.find({
-          collection: 'locations',
-          where: {
-            slug: { equals: locationSlug },
-          },
-          limit: 1,
-        })
+        const location = await findLocationBySlug(payload, locationSlug)
 
-        if (locationResult.docs.length === 0) {
+        if (!location) {
           // Location not found is a valid cacheable result
           return []
         }
 
-        const locationId = locationResult.docs[0].id
+        const locationId = location.id
 
         const todayStr = getTodayMidnightISO()
 
@@ -878,42 +878,6 @@ export const getUpcomingFoodFromPayload = async (
 }
 
 // ============ RECURRING FOOD ============
-
-/**
- * Calculate upcoming occurrences of a specific week/day combo
- * e.g., "2nd Tuesday" -> next N dates that are the 2nd Tuesday of their month
- */
-function getUpcomingDatesForSlot(
-  dayIndex: number,
-  weekOccurrence: number,
-  monthsAhead: number = 6,
-): Date[] {
-  const dates: Date[] = []
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const startMonth = today.getMonth()
-  const startYear = today.getFullYear()
-
-  for (let i = 0; i < monthsAhead; i++) {
-    const month = (startMonth + i) % 12
-    const year = startYear + Math.floor((startMonth + i) / 12)
-
-    const firstOfMonth = new Date(year, month, 1)
-    const firstDayOfMonth = firstOfMonth.getDay()
-
-    let firstOccurrence = dayIndex - firstDayOfMonth + 1
-    if (firstOccurrence <= 0) firstOccurrence += 7
-
-    const targetDay = firstOccurrence + (weekOccurrence - 1) * 7
-    const targetDate = new Date(year, month, targetDay)
-
-    if (targetDate.getMonth() === month && targetDate >= today) {
-      dates.push(targetDate)
-    }
-  }
-
-  return dates
-}
 
 /**
  * Get the recurring food configuration for public expansion.
@@ -977,18 +941,13 @@ const getUpcomingRecurringFood = async (
         const payload = await getPayload({ config })
 
         // Get location ID from slug
-        const locationResult = await payload.find({
-          collection: 'locations',
-          where: { slug: { equals: locationSlug } },
-          limit: 1,
-        })
+        const location = await findLocationBySlug(payload, locationSlug)
 
-        if (locationResult.docs.length === 0) {
+        if (!location) {
           // Location not found is a valid cacheable result
           return []
         }
 
-        const location = locationResult.docs[0]
         const locationId = location.id
 
         // Get recurring food global

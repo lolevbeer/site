@@ -2,14 +2,13 @@ import type { PayloadHandler } from 'payload'
 import type { Distributor } from '@/src/payload-types'
 import { getUserFromRequest } from './auth-helper'
 import { geocodeAddress, geocodeFallback } from './geocode'
+import { sleep } from '@/lib/utils/async'
+import { createSSEResponse } from '@/lib/utils/sse-response'
+import { DEFAULT_REGION_COORDS } from '@/lib/utils/distributor-region-coords'
 
-// Default coordinates used as fallbacks during import
-const DEFAULT_COORDS: Record<string, [number, number]> = {
-  PA: [-79.9959, 40.4406], // Pittsburgh
-  OH: [-82.9988, 39.9612], // Columbus
-  NY: [-77.6109, 43.1566], // Rochester area
-  WV: [-79.9959, 40.4406], // Use Pittsburgh for WV too
-}
+// Default coordinates used as fallbacks during import — the same table the
+// importers write, so a record parked on a fallback point is detectable here
+const DEFAULT_COORDS = DEFAULT_REGION_COORDS
 
 // Tolerance for matching (about 10 meters)
 const COORD_TOLERANCE = 0.0001
@@ -22,10 +21,6 @@ function isSuspiciousCoordinate(location: [number, number], region: string): boo
     Math.abs(location[0] - defaultCoord[0]) < COORD_TOLERANCE &&
     Math.abs(location[1] - defaultCoord[1]) < COORD_TOLERANCE
   )
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 export const regeocodeDistributors: PayloadHandler = async (req) => {
@@ -86,83 +81,65 @@ export const regeocodeDistributors: PayloadHandler = async (req) => {
   }
 
   // Stream progress updates
-  const encoder = new TextEncoder()
-  const stream = new ReadableStream({
-    async start(controller) {
-      const send = (event: string, data: Record<string, unknown>) => {
-        controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`))
+  return createSSEResponse(async (send) => {
+    let fixed = 0
+    let failed = 0
+    const results: Record<string, unknown>[] = []
+    const total = suspicious.length
+
+    send('progress', { current: 0, total, name: 'Starting...', percent: 0 })
+
+    for (let i = 0; i < suspicious.length; i++) {
+      const dist = suspicious[i] as Distributor
+      const percent = Math.round(((i + 1) / total) * 100)
+
+      send('progress', { current: i + 1, total, name: dist.name, percent })
+
+      // Build full address
+      const addressParts = [dist.address, dist.city, dist.state, dist.zip].filter(Boolean)
+      const fullAddress = addressParts.join(', ')
+
+      // Geocode (tries Nominatim first, then Mapbox)
+      let geocodeResult = await geocodeAddress(fullAddress)
+
+      // If full address fails, try zip/city fallback
+      if (!geocodeResult) {
+        geocodeResult = await geocodeFallback(dist.city ?? '', dist.state ?? '', dist.zip ?? '')
       }
 
-      let fixed = 0
-      let failed = 0
-      const results: Record<string, unknown>[] = []
-      const total = suspicious.length
+      if (geocodeResult) {
+        const { coords, source } = geocodeResult
+        // Verify the new coords aren't also default
+        if (!isSuspiciousCoordinate(coords, dist.region ?? '')) {
+          try {
+            await payload.update({
+              collection: 'distributors',
+              id: dist.id,
+              data: { location: coords },
+            })
 
-      send('progress', { current: 0, total, name: 'Starting...', percent: 0 })
-
-      for (let i = 0; i < suspicious.length; i++) {
-        const dist = suspicious[i] as Distributor
-        const percent = Math.round(((i + 1) / total) * 100)
-
-        send('progress', { current: i + 1, total, name: dist.name, percent })
-
-        // Build full address
-        const addressParts = [dist.address, dist.city, dist.state, dist.zip].filter(Boolean)
-        const fullAddress = addressParts.join(', ')
-
-        // Geocode (tries Nominatim first, then Mapbox)
-        let geocodeResult = await geocodeAddress(fullAddress)
-
-        // If full address fails, try zip/city fallback
-        if (!geocodeResult) {
-          geocodeResult = await geocodeFallback(dist.city ?? '', dist.state ?? '', dist.zip ?? '')
-        }
-
-        if (geocodeResult) {
-          const { coords, source } = geocodeResult
-          // Verify the new coords aren't also default
-          if (!isSuspiciousCoordinate(coords, dist.region ?? '')) {
-            try {
-              await payload.update({
-                collection: 'distributors',
-                id: dist.id,
-                data: { location: coords },
-              })
-
-              const result = {
-                id: dist.id,
-                name: dist.name,
-                address: fullAddress,
-                oldLocation: dist.location,
-                newLocation: coords,
-                source,
-                status: 'fixed',
-              }
-              results.push(result)
-              send('item', { type: 'success', ...result })
-              fixed++
-            } catch (error: unknown) {
-              const result = {
-                id: dist.id,
-                name: dist.name,
-                address: fullAddress,
-                error: error instanceof Error ? error.message : 'Unknown error',
-                status: 'error',
-              }
-              results.push(result)
-              send('item', { type: 'error', ...result })
-              failed++
-            }
-          } else {
             const result = {
               id: dist.id,
               name: dist.name,
               address: fullAddress,
-              note: `Geocoded to same default location via ${source} - may need manual fix`,
-              status: 'skipped',
+              oldLocation: dist.location,
+              newLocation: coords,
+              source,
+              status: 'fixed',
             }
             results.push(result)
-            send('item', { type: 'skip', ...result })
+            send('item', { type: 'success', ...result })
+            fixed++
+          } catch (error: unknown) {
+            const result = {
+              id: dist.id,
+              name: dist.name,
+              address: fullAddress,
+              error: error instanceof Error ? error.message : 'Unknown error',
+              status: 'error',
+            }
+            results.push(result)
+            send('item', { type: 'error', ...result })
             failed++
           }
         } else {
@@ -170,34 +147,36 @@ export const regeocodeDistributors: PayloadHandler = async (req) => {
             id: dist.id,
             name: dist.name,
             address: fullAddress,
-            note: `Could not geocode: "${fullAddress}"`,
-            status: 'failed',
+            note: `Geocoded to same default location via ${source} - may need manual fix`,
+            status: 'skipped',
           }
           results.push(result)
-          send('item', { type: 'error', ...result })
+          send('item', { type: 'skip', ...result })
           failed++
         }
-
-        // Rate limit (Nominatim requires 1/sec, Mapbox is more lenient but let's be safe)
-        await sleep(600)
+      } else {
+        const result = {
+          id: dist.id,
+          name: dist.name,
+          address: fullAddress,
+          note: `Could not geocode: "${fullAddress}"`,
+          status: 'failed',
+        }
+        results.push(result)
+        send('item', { type: 'error', ...result })
+        failed++
       }
 
-      send('complete', {
-        checked: allDistributors.docs.length,
-        suspicious: suspicious.length,
-        fixed,
-        failed,
-        results,
-      })
-      controller.close()
-    },
-  })
+      // Rate limit (Nominatim requires 1/sec, Mapbox is more lenient but let's be safe)
+      await sleep(600)
+    }
 
-  return new Response(stream, {
-    headers: {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      Connection: 'keep-alive',
-    },
+    send('complete', {
+      checked: allDistributors.docs.length,
+      suspicious: suspicious.length,
+      fixed,
+      failed,
+      results,
+    })
   })
 }

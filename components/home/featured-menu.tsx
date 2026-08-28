@@ -25,13 +25,7 @@ import { TopBeerDropsLink } from '@/components/beer/top-beer-drops-link'
 import { UntappdRating } from '@/components/beer/untappd-rating'
 import { TV_TYPE, TV_SAFE_X, TV_SAFE_Y, TV_COL } from '@/lib/config/tv-display'
 import { LINES_OVERDUE_DAYS } from '@/lib/utils/lines-cleaned'
-
-/** Parse price string to number, removing '$' prefix if present */
-function parsePrice(price: string | number | null | undefined): number | undefined {
-  if (price == null) return undefined
-  const parsed = parseFloat(String(price).replace('$', ''))
-  return isNaN(parsed) ? undefined : parsed
-}
+import { parsePrice } from '@/lib/utils/formatters'
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24
 

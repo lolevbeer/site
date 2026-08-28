@@ -10,6 +10,9 @@ import { slugify } from '../collections/utils/generateUniqueSlug'
 import { getUserFromRequest } from './auth-helper'
 import { hasRole } from '@/src/access/roles'
 import { revalidateForCollection } from '@/src/plugins/revalidation-plugin'
+import { parseCSVLine } from '@/lib/utils/csv'
+import { parsePrice } from '@/lib/utils/formatters'
+import { createSSEResponse } from '@/lib/utils/sse-response'
 
 interface StreamController {
   send: (event: string, data: Record<string, unknown>) => void
@@ -57,31 +60,6 @@ const SHEETS_CONFIG = {
   },
 }
 
-function parseCSVLine(line: string): string[] {
-  const result: string[] = []
-  let current = ''
-  let inQuotes = false
-
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i]
-    if (char === '"') {
-      if (inQuotes && line[i + 1] === '"') {
-        current += '"'
-        i++
-      } else {
-        inQuotes = !inQuotes
-      }
-    } else if (char === ',' && !inQuotes) {
-      result.push(current)
-      current = ''
-    } else {
-      current += char
-    }
-  }
-  result.push(current)
-  return result
-}
-
 function parseCSV(text: string): Record<string, string>[] {
   const lines = text.trim().split('\n')
   if (lines.length < 2) return []
@@ -124,12 +102,6 @@ function normalize(
 ): string | number | boolean | null {
   if (val === '' || val === undefined || val === null) return null
   return val
-}
-
-function parsePrice(price: string): number | undefined {
-  if (!price) return undefined
-  const num = parseFloat(price.replace(/[$,]/g, ''))
-  return isNaN(num) ? undefined : num
 }
 
 function parseTimeWithDate(timeStr: string, date: Date): string | undefined {
@@ -1406,39 +1378,21 @@ export const syncGoogleSheets: PayloadHandler = async (req) => {
     .split(',')
     .filter((c) => ['events', 'food', 'beers', 'menus', 'hours'].includes(c)) as CollectionType[]
 
-  const encoder = new TextEncoder()
+  return createSSEResponse(async (send) => {
+    try {
+      send('status', { message: dryRun ? 'Starting preview...' : 'Starting sync...' })
 
-  const stream = new ReadableStream({
-    async start(controller) {
-      const send = (event: string, data: Record<string, unknown>) => {
-        controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`))
-      }
+      const results = await runSync(payload, { send }, dryRun, collections)
 
-      try {
-        send('status', { message: dryRun ? 'Starting preview...' : 'Starting sync...' })
-
-        const results = await runSync(payload, { send }, dryRun, collections)
-
-        send('complete', {
-          success: true,
-          results,
-          dryRun,
-        })
-      } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : String(error)
-        send('error', { message: errorMessage })
-        send('complete', { success: false, error: errorMessage })
-      } finally {
-        controller.close()
-      }
-    },
-  })
-
-  return new Response(stream, {
-    headers: {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      Connection: 'keep-alive',
-    },
+      send('complete', {
+        success: true,
+        results,
+        dryRun,
+      })
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      send('error', { message: errorMessage })
+      send('complete', { success: false, error: errorMessage })
+    }
   })
 }

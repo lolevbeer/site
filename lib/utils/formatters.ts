@@ -163,6 +163,25 @@ function formatPrice(price: number | undefined): string {
 }
 
 /**
+ * Parse a money value into a number, or `undefined` when there is nothing
+ * usable to parse.
+ *
+ * Shared by the menu display components and the Google Sheets sync, which both
+ * receive prices as loosely-formatted strings: a Payload `price` text field
+ * ("$5.00") on one side, a spreadsheet cell on the other. Currency symbols and
+ * thousands separators are stripped before parsing, so "$1,200" reads as 1200.
+ *
+ * Numbers pass through (including 0, which is a real price), and
+ * `null`/`undefined`/unparseable input yields `undefined` so callers can fall
+ * back with `??`.
+ */
+export function parsePrice(price: string | number | null | undefined): number | undefined {
+  if (price == null) return undefined
+  const parsed = parseFloat(String(price).replace(/[$,]/g, ''))
+  return isNaN(parsed) ? undefined : parsed
+}
+
+/**
  * Beer-specific formatters
  */
 export function formatAbv(abv: number, includeLabel = false): string {
