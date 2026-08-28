@@ -82,16 +82,27 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                 style={{ width: showGlass ? TV_COL.tap : '3vh', gap: '0.3vh' }}
               >
                 <div className="flex items-center justify-between w-full">
+                  {/* Fixed width, right-aligned. The tap number and the glass
+                      sit at opposite ends of this column, so letting the number
+                      size itself made the gap between them depend on the digit
+                      count — 11px next to tap 10, 25px next to tap 4. A fixed
+                      box makes that gap constant, and right-aligned numerals
+                      line up as a column the way the prices do. */}
                   {showTap && beer.tap && (
                     <span
-                      className="font-bold text-primary tabular-nums"
-                      style={{ fontSize: TV_TYPE.tap }}
+                      className="font-bold text-primary tabular-nums text-right"
+                      style={{ fontSize: TV_TYPE.tap, width: '3.2vh' }}
                     >
                       {beer.tap}
                     </span>
                   )}
+                  {/* Sized to the beer name's line box, not larger. At 6vh the
+                      glass measured 50.6px against a 31.6px name line — 1.6×
+                      the text it sits beside — so it overhung 8.3px above and
+                      10.7px below and read as floating across the row rather
+                      than sitting on it. 4vh matches the line. */}
                   {showGlass && (
-                    <div style={{ height: '6vh', width: '6vh' }}>
+                    <div style={{ height: '4vh', width: '4vh' }}>
                       <GlassIcon className="w-full h-full text-muted-foreground/50 group-hover:text-muted-foreground/70 transition-colors" />
                     </div>
                   )}

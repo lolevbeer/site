@@ -46,7 +46,10 @@ export const TV_SAFE_Y = '3vh'
  * line then started at a slightly different x down the column.
  */
 export const TV_COL = {
-  tap: '10vh',
+  /** Holds the tap number and the glass icon. Sized so the two read as one
+   *  unit: at 10vh the pair was pushed to opposite ends of the column and the
+   *  gap between them measured 28–42px, varying with the digit count. */
+  tap: '8vh',
   abv: '7vh',
   price: '8vh',
   /** Reserved for the Untappd rating, so the hop list starts at the same x
