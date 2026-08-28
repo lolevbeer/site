@@ -4,6 +4,7 @@
  */
 
 import { Beer } from '@/lib/types/beer'
+import type { DayOfWeek } from '@/lib/utils/payload-api'
 
 /**
  * Time formatting utilities
@@ -61,6 +62,50 @@ export function formatTime(timeString: string, options: { timezone?: string } = 
   }
 
   return timeString.toLowerCase()
+}
+
+/**
+ * Format an opening or closing time for an hours table, e.g. "11 AM", "9:30 PM".
+ *
+ * Deliberately separate from {@link formatTime}, which renders "11am" / "9:30pm"
+ * for inline prose. Both conventions are in use — this one across the hours
+ * tables in the footer, the location cards and the hours panel — so they stay
+ * two named functions rather than one with a casing flag, and changing how
+ * hours read becomes a decision made in one place.
+ *
+ * @param time ISO string (how Payload stores time-only fields) or `HH:mm`.
+ * @param timezone IANA zone the ISO instant should be rendered in.
+ */
+export function formatHoursTime(
+  time: string | null,
+  timezone: string = 'America/New_York',
+): string {
+  if (!time) return ''
+
+  // Payload stores time-only fields as full ISO dates.
+  if (time.includes('T')) {
+    const date = new Date(time)
+    const minutes = date.getMinutes()
+    return date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: minutes === 0 ? undefined : '2-digit',
+      hour12: true,
+      timeZone: timezone,
+    })
+  }
+
+  // HH:mm (legacy/fallback)
+  const [hours, minutes] = time.split(':').map(Number)
+  const ampm = hours >= 12 ? 'PM' : 'AM'
+  const displayHours = hours % 12 || 12
+  return minutes === 0
+    ? `${displayHours} ${ampm}`
+    : `${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`
+}
+
+/** Capitalised English name for a day key, e.g. `monday` -> "Monday". */
+export function getDayName(day: DayOfWeek): string {
+  return day.charAt(0).toUpperCase() + day.slice(1)
 }
 
 /**

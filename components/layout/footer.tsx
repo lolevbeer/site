@@ -12,45 +12,14 @@ import { cn } from '@/lib/utils';
 import { navigationItems } from './navigation';
 import type { WeeklyHoursDay } from '@/lib/utils/payload-api';
 import { ThemeSwitcher } from '@/components/ui/theme-switcher';
+import { formatHoursTime, getDayName } from '@/lib/utils/formatters'
 
 /**
  * Get day name from hours key
  */
 type DayOfWeek = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
 
-function getDayName(day: DayOfWeek): string {
-  const dayNames: Record<DayOfWeek, string> = {
-    monday: 'Monday',
-    tuesday: 'Tuesday',
-    wednesday: 'Wednesday',
-    thursday: 'Thursday',
-    friday: 'Friday',
-    saturday: 'Saturday',
-    sunday: 'Sunday',
-  };
-  return dayNames[day];
-}
 
-function formatTime(time: string | null, timezone: string = 'America/New_York'): string {
-  if (!time) return '';
-  if (time.includes('T')) {
-    const date = new Date(time);
-    const minutes = date.getMinutes();
-    return date.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: minutes === 0 ? undefined : '2-digit',
-      hour12: true,
-      timeZone: timezone,
-    });
-  }
-  const [hours, minutes] = time.split(':').map(Number);
-  const ampm = hours >= 12 ? 'PM' : 'AM';
-  const displayHours = hours % 12 || 12;
-  if (minutes === 0) {
-    return `${displayHours} ${ampm}`;
-  }
-  return `${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
-}
 
 /**
  * Hours display component with holiday support
@@ -93,7 +62,7 @@ function HoursDisplay({ weeklyHours }: { weeklyHours: WeeklyHoursDay[] }) {
             <span>
               {dayData.closed
                 ? 'Closed'
-                : `${formatTime(dayData.open, dayData.timezone)} - ${formatTime(dayData.close, dayData.timezone)}`
+                : `${formatHoursTime(dayData.open, dayData.timezone)} - ${formatHoursTime(dayData.close, dayData.timezone)}`
               }
             </span>
           </div>

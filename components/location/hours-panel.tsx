@@ -12,33 +12,12 @@ import { isLocationOpenNow } from '@/lib/config/locations';
 import { cn } from '@/lib/utils';
 import { useLocationContext } from './location-provider';
 import type { WeeklyHoursDay, DayOfWeek } from '@/lib/utils/payload-api';
+import { formatHoursTime } from '@/lib/utils/formatters'
 
-function formatTime(time: string | null, timezone: string = 'America/New_York'): string {
-  if (!time) return '';
-  // Handle ISO date strings from Payload (time only fields store as full ISO)
-  if (time.includes('T')) {
-    const date = new Date(time);
-    const minutes = date.getMinutes();
-    return date.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: minutes === 0 ? undefined : '2-digit',
-      hour12: true,
-      timeZone: timezone,
-    });
-  }
-  // Handle HH:mm format (legacy/fallback)
-  const [hours, minutes] = time.split(':').map(Number);
-  const ampm = hours >= 12 ? 'PM' : 'AM';
-  const displayHours = hours % 12 || 12;
-  if (minutes === 0) {
-    return `${displayHours} ${ampm}`;
-  }
-  return `${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
-}
 
 function formatHoursString(dayData: WeeklyHoursDay): string {
   if (dayData.closed) return 'Closed';
-  return `${formatTime(dayData.open, dayData.timezone)} - ${formatTime(dayData.close, dayData.timezone)}`;
+  return `${formatHoursTime(dayData.open, dayData.timezone)} - ${formatHoursTime(dayData.close, dayData.timezone)}`;
 }
 
 interface HoursPanelProps {

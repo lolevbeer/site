@@ -5,6 +5,7 @@
 
 import { type PayloadLocation, type LocationSlug, type DayHours } from '@/lib/types/location';
 import { getCurrentESTDateTime } from '@/lib/utils/date';
+import { formatHoursTime } from '@/lib/utils/formatters';
 
 /**
  * LocalStorage key for persisting user's location preference
@@ -90,17 +91,7 @@ export function getFormattedHoursForDay(location: PayloadLocation, day: string):
     return 'Closed';
   }
 
-  const formatTime = (time: string) => {
-    const [hours, minutes] = time.split(':').map(Number);
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    const displayHours = hours % 12 || 12;
-    if (minutes === 0) {
-      return `${displayHours} ${ampm}`;
-    }
-    return `${displayHours}:${minutes.toString().padStart(2, '0')} ${ampm}`;
-  };
-
-  return `${formatTime(dayHours.open)} - ${formatTime(dayHours.close)}`;
+  return `${formatHoursTime(dayHours.open)} - ${formatHoursTime(dayHours.close)}`;
 }
 
 /**

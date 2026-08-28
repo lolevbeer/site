@@ -12,6 +12,7 @@ import randomColor from 'randomcolor'
 import { getThemeVars } from '@/lib/utils/display-theme'
 import { getTodayEST, toESTDate } from '@/lib/utils/date'
 import { format } from 'date-fns'
+import { formatTime } from '@/lib/utils/formatters'
 import { TV_TYPE, TV_SAFE_X, TV_SAFE_Y } from '@/lib/config/tv-display'
 import { Music, Utensils, Puzzle, Trophy, Beer, MicVocal, type LucideIcon } from 'lucide-react'
 
@@ -53,41 +54,6 @@ function formatDayLabel(dateStr: string, isToday: boolean): { weekday: string; d
   }
 }
 
-/**
- * Format time for display
- * Handles both ISO date strings and HH:MM format
- */
-function formatTime(time: string): string {
-  if (!time) return ''
-
-  let hours: number
-  let minutes: number
-
-  // Check if it's an ISO date string
-  if (time.includes('T')) {
-    const date = new Date(time)
-    hours = date.getHours()
-    minutes = date.getMinutes()
-  } else {
-    // Assume HH:MM format
-    const parts = time.split(':').map(Number)
-    hours = parts[0]
-    minutes = parts[1] || 0
-  }
-
-  const period = hours >= 12 ? 'PM' : 'AM'
-  const displayHours = hours % 12 || 12
-
-  if (minutes === 0) {
-    return `${displayHours}${period}`
-  }
-  return `${displayHours}:${minutes.toString().padStart(2, '0')}${period}`
-}
-
-/** One row of the agenda: when it happens, what it is, and whether it is food
- *  or an event. Replaces the separate EventCard/FoodCard, which were centred —
- *  so ten rows started at ten different x positions and neither the names nor
- *  the times formed a column you could scan down. */
 interface AgendaEntry {
   key: string
   /** Raw `HH:MM` / ISO time, kept only for ordering within a day. */
