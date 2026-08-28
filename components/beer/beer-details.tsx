@@ -9,7 +9,7 @@ import React, { useEffect, useState, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { logger } from '@/lib/utils/logger'
-import type { Menu, Beer as PayloadBeer, Style } from '@/src/payload-types'
+import type { Menu, Beer as PayloadBeer } from '@/src/payload-types'
 import { useLocationContext } from '@/components/location/location-provider'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -38,6 +38,7 @@ import { BeerCan3D } from './beer-can-3d'
 import { formatAbv, formatRating } from '@/lib/utils/formatters'
 import { getBeerImageUrl, getMediaUrl } from '@/lib/utils/media-utils'
 import { menuItemHasBeer } from '@/lib/utils/menu-item-utils'
+import { getStyleName } from '@/lib/utils/relationship-name'
 import {
   getPackagingType,
   getPackagingLabel,
@@ -58,12 +59,6 @@ type BeerReview = {
 interface BeerDetailsProps {
   beer: PayloadBeer
   className?: string
-}
-
-function getStyleName(beer: PayloadBeer): string {
-  if (!beer.style) return ''
-  if (typeof beer.style === 'string') return beer.style
-  return (beer.style as Style).name || ''
 }
 
 function getPricingInfo(beer: PayloadBeer): {
@@ -120,7 +115,7 @@ function stripReviewHtml(text: string): string {
     .replace(/&quot;/g, '"')
     .replace(/&#0?39;|&apos;/g, "'")
     .replace(/[ \t]+/g, ' ')
-    .trim();
+    .trim()
 }
 
 function formatReviewDate(dateStr: string): string {
@@ -154,6 +149,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
   const canBaseUrl = getMediaUrl(beer.labelBase)
   const canMetalnessUrl = getMediaUrl(beer.labelMetalness)
   const pricing = getPricingInfo(beer)
+  const styleName = getStyleName(beer.style)
   const GlassIcon = getGlassIcon(beer.glass)
   const packagingType = getPackagingType(beer)
   const [tapLocations, setTapLocations] = useState<string[]>([])
@@ -301,9 +297,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
                 {/* Full-strength muted-foreground: the /70 and /50 fades fell
                     under the 4.5:1 AA contrast floor (see draft-beer-card). */}
                 <p className="text-lg font-semibold text-muted-foreground">{beer.name}</p>
-                {getStyleName(beer) && (
-                  <p className="text-sm text-muted-foreground mt-1">{getStyleName(beer)}</p>
-                )}
+                {styleName && <p className="text-sm text-muted-foreground mt-1">{styleName}</p>}
               </div>
             )}
             {pricing.hasSale && (
@@ -319,7 +313,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
           {/* Quick Stats */}
           <Card className="shadow-none border-0 p-0 bg-transparent">
             <CardContent className="p-0 space-y-0">
-              {getStyleName(beer) && <SpecificationRow label="Style" value={getStyleName(beer)} />}
+              {styleName && <SpecificationRow label="Style" value={styleName} />}
               <SpecificationRow label="Alc by Vol" value={formatAbv(beer.abv)} />
               {beer.recipe && <SpecificationRow label="Recipe #" value={beer.recipe} />}
             </CardContent>

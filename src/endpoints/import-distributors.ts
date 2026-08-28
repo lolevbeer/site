@@ -2,6 +2,9 @@ import type { PayloadHandler } from 'payload'
 import type { SiteContent } from '@/src/payload-types'
 import { getUserFromRequest } from './auth-helper'
 import { geocode } from './geocode'
+import { sleep } from '@/src/utils/async'
+import { createSSEResponse } from '@/src/utils/sse-response'
+import { DEFAULT_REGION_COORDS } from '@/src/utils/distributor-region-coords'
 
 interface DistributorRow {
   CustomerName: string
@@ -59,10 +62,7 @@ function parseAddress(combined: string, defaultState: string): ParsedAddress | n
         : parts[parts.length - 1].replace(/[A-Z]{2}\s*\d+/, '').trim()
 
     return {
-      street: parts
-        .slice(0, -1)
-        .join(', ')
-        .replace(/,\s*$/, ''),
+      street: parts.slice(0, -1).join(', ').replace(/,\s*$/, ''),
       city: cityPart.replace(/[A-Za-z]{2,4}\s*\d*$/, '').trim() || defaultState,
       state: defaultState,
       zip: zipMatch ? zipMatch[1] : '',
@@ -70,10 +70,6 @@ function parseAddress(combined: string, defaultState: string): ParsedAddress | n
   }
 
   return null
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 interface FetchResult {
@@ -101,7 +97,11 @@ async function fetchDistributors(url: string): Promise<FetchResult> {
         rows: [],
         error: expired
           ? `QuickLink expired on ${expired[1]} — generate a new QuickLink in Encompass and save it above`
-          : `Response is not JSON (got: ${text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120)})`,
+          : `Response is not JSON (got: ${text
+              .replace(/<[^>]*>/g, ' ')
+              .replace(/\s+/g, ' ')
+              .trim()
+              .slice(0, 120)})`,
       }
     }
     const rows = data?.Export?.Table?.Row || []
@@ -131,15 +131,13 @@ async function fetchDistributors(url: string): Promise<FetchResult> {
   }
 }
 
-// Default coordinates for each region
-const DEFAULT_COORDS: Record<string, [number, number]> = {
-  PA: [-79.9959, 40.4406], // Pittsburgh
-  OH: [-82.9988, 39.9612], // Columbus
-}
+// Default coordinates for each region (shared with the re-geocoding endpoint,
+// which finds these records again by matching against the same table)
+const DEFAULT_COORDS = DEFAULT_REGION_COORDS
 
 export const importDistributors: PayloadHandler = async (req) => {
   const { payload } = req
-  const user = req.user ?? await getUserFromRequest(req, payload)
+  const user = req.user ?? (await getUserFromRequest(req, payload))
 
   if (!user || !user.roles?.includes('admin')) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
@@ -156,7 +154,10 @@ export const importDistributors: PayloadHandler = async (req) => {
 
   // Get URL from site-content
   const siteContent = await payload.findGlobal({ slug: 'site-content' })
-  const jsonUrl = region === 'pa' ? (siteContent as SiteContent).distributorPaUrl : (siteContent as SiteContent).distributorOhUrl
+  const jsonUrl =
+    region === 'pa'
+      ? (siteContent as SiteContent).distributorPaUrl
+      : (siteContent as SiteContent).distributorOhUrl
 
   if (!jsonUrl) {
     return Response.json({ error: `No URL configured for ${regionUpper}` }, { status: 400 })
@@ -165,107 +166,94 @@ export const importDistributors: PayloadHandler = async (req) => {
   const { rows, error: fetchError } = await fetchDistributors(jsonUrl)
 
   if (fetchError || rows.length === 0) {
-    return Response.json({
-      error: fetchError || 'No data fetched from URL',
-      details: [`Fetch error: ${fetchError || 'Empty response'}`],
-      imported: 0,
-      skipped: 0,
-      errors: 1,
-    }, { status: 400 })
+    return Response.json(
+      {
+        error: fetchError || 'No data fetched from URL',
+        details: [`Fetch error: ${fetchError || 'Empty response'}`],
+        imported: 0,
+        skipped: 0,
+        errors: 1,
+      },
+      { status: 400 },
+    )
   }
 
   // Stream progress updates
-  const encoder = new TextEncoder()
-  const stream = new ReadableStream({
-    async start(controller) {
-      const send = (event: string, data: Record<string, unknown>) => {
-        controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`))
+  return createSSEResponse(async (send) => {
+    let imported = 0,
+      skipped = 0,
+      errors = 0
+    const details: string[] = []
+    const total = rows.length
+
+    send('progress', { current: 0, total, name: 'Starting...', percent: 0 })
+
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i]
+      const percent = Math.round(((i + 1) / total) * 100)
+
+      send('progress', { current: i + 1, total, name: row.CustomerName, percent })
+
+      const parsed = parseAddress(row.AddressCityStateZip, regionUpper)
+      if (!parsed) {
+        const msg = `Error: Could not parse address for "${row.CustomerName}"`
+        details.push(msg)
+        send('item', { type: 'error', message: msg })
+        errors++
+        continue
       }
 
-      let imported = 0,
-        skipped = 0,
-        errors = 0
-      const details: string[] = []
-      const total = rows.length
+      // Check for existing
+      const existing = await payload.find({
+        collection: 'distributors',
+        where: { name: { equals: row.CustomerName } },
+        limit: 1,
+      })
 
-      send('progress', { current: 0, total, name: 'Starting...', percent: 0 })
+      if (existing.docs.length > 0) {
+        const msg = `Skipped: "${row.CustomerName}" already exists`
+        details.push(msg)
+        send('item', { type: 'skip', message: msg })
+        skipped++
+        continue
+      }
 
-      for (let i = 0; i < rows.length; i++) {
-        const row = rows[i]
-        const percent = Math.round(((i + 1) / total) * 100)
+      // Geocode
+      const fullAddress = `${parsed.street}, ${parsed.city}, ${parsed.state} ${parsed.zip}`.trim()
+      const coords = await geocode(fullAddress)
+      const location = coords || DEFAULT_COORDS[regionUpper]
 
-        send('progress', { current: i + 1, total, name: row.CustomerName, percent })
-
-        const parsed = parseAddress(row.AddressCityStateZip, regionUpper)
-        if (!parsed) {
-          const msg = `Error: Could not parse address for "${row.CustomerName}"`
-          details.push(msg)
-          send('item', { type: 'error', message: msg })
-          errors++
-          continue
-        }
-
-        // Check for existing
-        const existing = await payload.find({
+      try {
+        await payload.create({
           collection: 'distributors',
-          where: { name: { equals: row.CustomerName } },
-          limit: 1,
+          data: {
+            name: row.CustomerName,
+            address: parsed.street,
+            city: parsed.city,
+            state: parsed.state,
+            zip: parsed.zip,
+            customerType: 'Retail',
+            region: regionUpper,
+            location,
+            active: true,
+          },
         })
-
-        if (existing.docs.length > 0) {
-          const msg = `Skipped: "${row.CustomerName}" already exists`
-          details.push(msg)
-          send('item', { type: 'skip', message: msg })
-          skipped++
-          continue
-        }
-
-        // Geocode
-        const fullAddress = `${parsed.street}, ${parsed.city}, ${parsed.state} ${parsed.zip}`.trim()
-        const coords = await geocode(fullAddress)
-        const location = coords || DEFAULT_COORDS[regionUpper]
-
-        try {
-          await payload.create({
-            collection: 'distributors',
-            data: {
-              name: row.CustomerName,
-              address: parsed.street,
-              city: parsed.city,
-              state: parsed.state,
-              zip: parsed.zip,
-              customerType: 'Retail',
-              region: regionUpper,
-              location,
-              active: true,
-            },
-          })
-          const msg = `Imported: ${row.CustomerName}`
-          details.push(msg)
-          send('item', { type: 'success', message: msg })
-          imported++
-        } catch (error: unknown) {
-          const message = error instanceof Error ? error.message : 'Unknown error'
-          const msg = `Error: Failed to import "${row.CustomerName}" - ${message}`
-          details.push(msg)
-          send('item', { type: 'error', message: msg })
-          errors++
-        }
-
-        // Rate limit for Nominatim
-        await sleep(1100)
+        const msg = `Imported: ${row.CustomerName}`
+        details.push(msg)
+        send('item', { type: 'success', message: msg })
+        imported++
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Unknown error'
+        const msg = `Error: Failed to import "${row.CustomerName}" - ${message}`
+        details.push(msg)
+        send('item', { type: 'error', message: msg })
+        errors++
       }
 
-      send('complete', { imported, skipped, errors, details })
-      controller.close()
-    },
-  })
+      // Rate limit for Nominatim
+      await sleep(1100)
+    }
 
-  return new Response(stream, {
-    headers: {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      Connection: 'keep-alive',
-    },
+    send('complete', { imported, skipped, errors, details })
   })
 }

@@ -1,18 +1,24 @@
 import type { CollectionConfig, Access, Where } from 'payload'
 import { APIError } from 'payload'
 import type { User } from '@/src/payload-types'
-import { adminAccess, adminFieldAccess, hasRole } from '@/src/access/roles'
+import { adminAccess, adminFieldAccess, getUserLocationIds, hasRole } from '@/src/access/roles'
+import { markLinesCleanedField } from './utils/markLinesCleanedField'
 
 /**
- * Get location IDs from user's assigned locations
+ * Menus at the locations this user is assigned to, or `false` when they hold
+ * none. Shared by `read` and `update`, which scope (lead) bartenders
+ * identically — an unassigned bartender must be denied outright rather than
+ * handed an empty filter that would match every menu.
  */
-function getUserLocationIds(user: User | null): string[] {
-  if (!user?.locations || !Array.isArray(user.locations) || user.locations.length === 0) {
-    return []
+function menusAtAssignedLocations(user: User | null | undefined): Where | false {
+  const locationIds = getUserLocationIds(user)
+  if (locationIds.length === 0) return false
+
+  return {
+    location: {
+      in: locationIds,
+    },
   }
-  return user.locations.map((loc: string | { id: string }) =>
-    typeof loc === 'object' ? loc.id : loc,
-  )
 }
 
 /**
@@ -25,14 +31,7 @@ function getUserLocationIds(user: User | null): string[] {
 export const canUpdateMenus: Access = ({ req: { user } }) => {
   if (hasRole(user, 'admin')) return true
   if (hasRole(user, ['bartender', 'lead-bartender'])) {
-    const locationIds = getUserLocationIds(user)
-    if (locationIds.length === 0) return false
-
-    return {
-      location: {
-        in: locationIds,
-      },
-    }
+    return menusAtAssignedLocations(user)
   }
   return false
 }
@@ -57,14 +56,7 @@ export const Menus: CollectionConfig = {
       if (hasRole(user, 'admin')) return true
       // Bartenders and lead bartenders can read drafts only for assigned locations.
       if (hasRole(user, ['bartender', 'lead-bartender'])) {
-        const locationIds = getUserLocationIds(user)
-        if (locationIds.length === 0) return false
-
-        return {
-          location: {
-            in: locationIds,
-          },
-        }
+        return menusAtAssignedLocations(user)
       }
       // Public can only read published menus
       return {
@@ -200,18 +192,7 @@ export const Menus: CollectionConfig = {
     ],
   },
   fields: [
-    {
-      name: 'markLinesCleanedButton',
-      type: 'ui',
-      admin: {
-        position: 'sidebar',
-        condition: (data, siblingData, { user }) =>
-          data?.type === 'draft' && hasRole(user, ['admin', 'lead-bartender']),
-        components: {
-          Field: '@/src/components/admin/MarkLinesCleanedButton#MarkLinesCleanedButton',
-        },
-      },
-    },
+    markLinesCleanedField({ showFor: (data) => data?.type === 'draft' }),
     {
       name: 'name',
       type: 'text',

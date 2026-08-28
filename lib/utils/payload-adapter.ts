@@ -3,12 +3,13 @@
  * Bridges the gap between Payload schema and existing app interfaces
  */
 
-import type { Beer as PayloadBeer, Menu as PayloadMenu, Style, Tag } from '@/src/payload-types'
+import type { Beer as PayloadBeer, Menu as PayloadMenu } from '@/src/payload-types'
 import type { PayloadLocation } from '@/lib/types/location'
 import type { Beer } from '@/lib/types/beer'
 import { GlassType } from '@/lib/types/beer'
 import { getMediaUrl } from './media-utils'
 import { extractBeerFromMenuItem } from './menu-item-utils'
+import { getStyleName, relationshipName } from './relationship-name'
 
 /**
  * Get image URL from Payload beer's image field
@@ -20,22 +21,10 @@ function getImageFromPayload(image: PayloadBeer['image']): string | boolean {
 }
 
 /**
- * Get style name from Payload style field
- */
-function getStyleName(style: string | Style): string {
-  if (typeof style === 'string') {
-    return style
-  }
-  return style.name
-}
-
-/**
  * Get tag name from Payload tag field (optional, single relationship)
  */
 function getTagName(tag: PayloadBeer['tag']): string | undefined {
-  if (!tag) return undefined
-  if (typeof tag === 'string') return tag
-  return (tag as Tag).name
+  return relationshipName(tag)
 }
 
 /**
@@ -93,10 +82,7 @@ function convertPayloadBeer(payloadBeer: PayloadBeer): Beer {
  * Get beers with availability data from menus
  * Enriches base beer data with menu/location information
  */
-export function getBeersWithAvailability(
-  beers: PayloadBeer[],
-  menus: PayloadMenu[]
-): Beer[] {
+export function getBeersWithAvailability(beers: PayloadBeer[], menus: PayloadMenu[]): Beer[] {
   const beerMap = new Map<string, Beer>()
 
   // First convert all beers
@@ -109,7 +95,9 @@ export function getBeersWithAvailability(
   for (const menu of menus) {
     if (!menu.items) continue
 
-    const locationSlug = getLocationSlug(typeof menu.location === 'string' ? undefined : menu.location)
+    const locationSlug = getLocationSlug(
+      typeof menu.location === 'string' ? undefined : menu.location,
+    )
 
     for (let i = 0; i < menu.items.length; i++) {
       const item = menu.items[i]
@@ -117,7 +105,9 @@ export function getBeersWithAvailability(
       const payloadBeer = extractBeerFromMenuItem(item)
       if (!payloadBeer) continue
 
-      const variant = (payloadBeer.slug || payloadBeer.name.toLowerCase().replace(/\s+/g, '-')).toLowerCase()
+      const variant = (
+        payloadBeer.slug || payloadBeer.name.toLowerCase().replace(/\s+/g, '-')
+      ).toLowerCase()
       const beer = beerMap.get(variant)
 
       if (!beer) continue
@@ -136,7 +126,10 @@ export function getBeersWithAvailability(
         if (!existingLocAvail || typeof existingLocAvail !== 'object') {
           beer.availability[locationSlug] = {}
         }
-        const locAvail = beer.availability[locationSlug] as { tap?: string; cansAvailable?: boolean }
+        const locAvail = beer.availability[locationSlug] as {
+          tap?: string
+          cansAvailable?: boolean
+        }
         if (menu.type === 'draft') {
           locAvail.tap = (i + 1).toString()
         } else if (menu.type === 'cans') {

@@ -5,224 +5,205 @@
  * @see https://schema.org/MenuItem
  */
 
+import { LOLEV_BASE_URL } from '@/lib/utils/schema-shared'
+import { relationshipName } from '@/lib/utils/relationship-name'
+
 /** Minimal beer interface for menu schema generation */
 interface MenuBeer {
-  name: string;
-  description?: string | null;
-  abv: number;
-  style?: string | { name: string } | unknown;
-  draftPrice?: number | null;
-  fourPack?: number | null;
-  glutenFree?: boolean | null;
+  name: string
+  description?: string | null
+  abv: number
+  style?: string | { name: string } | unknown
+  draftPrice?: number | null
+  fourPack?: number | null
+  glutenFree?: boolean | null
 }
 
 export interface MenuItemJsonLd {
-  '@type': 'MenuItem';
-  name: string;
-  description?: string;
+  '@type': 'MenuItem'
+  name: string
+  description?: string
   offers?: {
-    '@type': 'Offer';
-    price: string;
-    priceCurrency: string;
-  };
+    '@type': 'Offer'
+    price: string
+    priceCurrency: string
+  }
   nutrition?: {
-    '@type': 'NutritionInformation';
-    alcoholContent?: string;
-  };
-  suitableForDiet?: string[];
+    '@type': 'NutritionInformation'
+    alcoholContent?: string
+  }
+  suitableForDiet?: string[]
 }
 
 export interface MenuSectionJsonLd {
-  '@type': 'MenuSection';
-  name: string;
-  description?: string;
-  hasMenuItem: MenuItemJsonLd[];
+  '@type': 'MenuSection'
+  name: string
+  description?: string
+  hasMenuItem: MenuItemJsonLd[]
 }
 
 export interface MenuJsonLd {
-  '@context': 'https://schema.org';
-  '@type': 'Menu';
-  name: string;
-  description?: string;
-  url?: string;
-  hasMenuSection?: MenuSectionJsonLd[];
-  hasMenuItem?: MenuItemJsonLd[];
-  inLanguage?: string;
-  mainEntityOfPage?: string;
+  '@context': 'https://schema.org'
+  '@type': 'Menu'
+  name: string
+  description?: string
+  url?: string
+  hasMenuSection?: MenuSectionJsonLd[]
+  hasMenuItem?: MenuItemJsonLd[]
+  inLanguage?: string
+  mainEntityOfPage?: string
 }
 
 /**
  * Get style name from beer
  */
 function getBeerStyleName(beer: MenuBeer): string {
-  if (beer.style) {
-    if (typeof beer.style === 'string') return beer.style;
-    if (typeof beer.style === 'object' && beer.style !== null && 'name' in beer.style) {
-      return (beer.style as { name: string }).name;
-    }
-  }
-  return 'Beer';
+  return relationshipName(beer.style) ?? 'Beer'
+}
+
+/**
+ * Build a menu title, dropping the location segment when no location is given.
+ * Shared by the three generators below, which differ only in the suffix.
+ */
+function buildMenuName(locationName: string | undefined, suffix: string): string {
+  return ['Lolev Beer', locationName, suffix].filter(Boolean).join(' ')
 }
 
 /**
  * Convert a beer to a MenuItem
  */
 function beerToMenuItem(beer: MenuBeer): MenuItemJsonLd {
-  const styleName = getBeerStyleName(beer);
+  const styleName = getBeerStyleName(beer)
 
   const menuItem: MenuItemJsonLd = {
     '@type': 'MenuItem',
     name: beer.name,
     description: beer.description || `${styleName} - ${beer.abv}% ABV`,
-  };
+  }
 
   if (beer.draftPrice) {
     menuItem.offers = {
       '@type': 'Offer',
       price: beer.draftPrice.toString(),
       priceCurrency: 'USD',
-    };
+    }
   }
 
   if (beer.abv) {
     menuItem.nutrition = {
       '@type': 'NutritionInformation',
       alcoholContent: `${beer.abv}% ABV`,
-    };
+    }
   }
 
   if (beer.glutenFree) {
-    menuItem.suitableForDiet = ['https://schema.org/GlutenFreeDiet'];
+    menuItem.suitableForDiet = ['https://schema.org/GlutenFreeDiet']
   }
 
-  return menuItem;
+  return menuItem
+}
+
+/**
+ * Convert a beer to a MenuItem priced as a four-pack rather than a pour.
+ * Shared by every "Cans To-Go" section so the can pricing override stays in
+ * one place.
+ */
+function beerToCanMenuItem(beer: MenuBeer): MenuItemJsonLd {
+  const menuItem = beerToMenuItem(beer)
+  if (beer.fourPack) {
+    menuItem.offers = {
+      '@type': 'Offer',
+      price: beer.fourPack.toString(),
+      priceCurrency: 'USD',
+    }
+  }
+  return menuItem
+}
+
+/**
+ * Build the "On Tap" section. Shared by the draft-only and full menus, which
+ * describe the tap list identically and differ only in which beers they pass.
+ */
+function buildOnTapSection(beers: MenuBeer[]): MenuSectionJsonLd {
+  return {
+    '@type': 'MenuSection',
+    name: 'On Tap',
+    description: 'Draft beers currently pouring',
+    hasMenuItem: beers.map(beerToMenuItem),
+  }
+}
+
+/**
+ * Build the "Cans To-Go" section. Shared by the cans-only and full menus for
+ * the same reason as buildOnTapSection.
+ */
+function buildCansToGoSection(beers: MenuBeer[]): MenuSectionJsonLd {
+  return {
+    '@type': 'MenuSection',
+    name: 'Cans To-Go',
+    description: 'Beers available in cans',
+    hasMenuItem: beers.map(beerToCanMenuItem),
+  }
 }
 
 /**
  * Generate Menu schema for draft beers (tap list)
  */
-export function generateDraftMenuSchema(
-  beers: MenuBeer[],
-  locationName?: string
-): MenuJsonLd {
-  const baseUrl = 'https://lolev.beer';
-  const menuName = locationName
-    ? `Lolev Beer ${locationName} Draft Menu`
-    : 'Lolev Beer Draft Menu';
-
+export function generateDraftMenuSchema(beers: MenuBeer[], locationName?: string): MenuJsonLd {
   return {
     '@context': 'https://schema.org',
     '@type': 'Menu',
-    name: menuName,
-    description: 'Current draft beers on tap at Lolev Beer. Our rotating selection of craft beers brewed in-house.',
-    url: baseUrl,
+    name: buildMenuName(locationName, 'Draft Menu'),
+    description:
+      'Current draft beers on tap at Lolev Beer. Our rotating selection of craft beers brewed in-house.',
+    url: LOLEV_BASE_URL,
     inLanguage: 'en-US',
-    hasMenuSection: [
-      {
-        '@type': 'MenuSection',
-        name: 'On Tap',
-        description: 'Draft beers currently pouring',
-        hasMenuItem: beers.map(beerToMenuItem),
-      },
-    ],
-  };
+    hasMenuSection: [buildOnTapSection(beers)],
+  }
 }
 
 /**
  * Generate Menu schema for canned beers
  */
-export function generateCansMenuSchema(
-  beers: MenuBeer[],
-  locationName?: string
-): MenuJsonLd {
-  const baseUrl = 'https://lolev.beer';
-  const menuName = locationName
-    ? `Lolev Beer ${locationName} Cans Menu`
-    : 'Lolev Beer Cans Menu';
-
+export function generateCansMenuSchema(beers: MenuBeer[], locationName?: string): MenuJsonLd {
   return {
     '@context': 'https://schema.org',
     '@type': 'Menu',
-    name: menuName,
+    name: buildMenuName(locationName, 'Cans Menu'),
     description: 'Canned beers available to-go at Lolev Beer.',
-    url: `${baseUrl}/beer`,
+    url: `${LOLEV_BASE_URL}/beer`,
     inLanguage: 'en-US',
-    hasMenuSection: [
-      {
-        '@type': 'MenuSection',
-        name: 'Cans To-Go',
-        description: 'Beers available in cans',
-        hasMenuItem: beers.map(beer => {
-          const menuItem = beerToMenuItem(beer);
-          if (beer.fourPack) {
-            menuItem.offers = {
-              '@type': 'Offer',
-              price: beer.fourPack.toString(),
-              priceCurrency: 'USD',
-            };
-          }
-          return menuItem;
-        }),
-      },
-    ],
-  };
+    hasMenuSection: [buildCansToGoSection(beers)],
+  }
 }
 
 /**
  * Generate combined Menu schema with both draft and cans
  */
-export function generateFullMenuSchema(
-  beers: MenuBeer[],
-  locationName?: string
-): MenuJsonLd {
-  const baseUrl = 'https://lolev.beer';
-  const menuName = locationName
-    ? `Lolev Beer ${locationName} Menu`
-    : 'Lolev Beer Menu';
-
-  const sections: MenuSectionJsonLd[] = [];
+export function generateFullMenuSchema(beers: MenuBeer[], locationName?: string): MenuJsonLd {
+  const sections: MenuSectionJsonLd[] = []
 
   // All beers with a draft price are on tap
-  const draftBeers = beers.filter(beer => beer.draftPrice);
+  const draftBeers = beers.filter((beer) => beer.draftPrice)
   // Beers with a fourPack price are available in cans
-  const cannedBeers = beers.filter(beer => beer.fourPack);
+  const cannedBeers = beers.filter((beer) => beer.fourPack)
 
   if (draftBeers.length > 0) {
-    sections.push({
-      '@type': 'MenuSection',
-      name: 'On Tap',
-      description: 'Draft beers currently pouring',
-      hasMenuItem: draftBeers.map(beerToMenuItem),
-    });
+    sections.push(buildOnTapSection(draftBeers))
   }
 
   if (cannedBeers.length > 0) {
-    sections.push({
-      '@type': 'MenuSection',
-      name: 'Cans To-Go',
-      description: 'Beers available in cans',
-      hasMenuItem: cannedBeers.map(beer => {
-        const menuItem = beerToMenuItem(beer);
-        if (beer.fourPack) {
-          menuItem.offers = {
-            '@type': 'Offer',
-            price: beer.fourPack.toString(),
-            priceCurrency: 'USD',
-          };
-        }
-        return menuItem;
-      }),
-    });
+    sections.push(buildCansToGoSection(cannedBeers))
   }
 
   return {
     '@context': 'https://schema.org',
     '@type': 'Menu',
-    name: menuName,
+    name: buildMenuName(locationName, 'Menu'),
     description: 'Full beer menu at Lolev Beer including draft and canned options.',
-    url: baseUrl,
+    url: LOLEV_BASE_URL,
     inLanguage: 'en-US',
-    mainEntityOfPage: baseUrl,
+    mainEntityOfPage: LOLEV_BASE_URL,
     hasMenuSection: sections,
-  };
+  }
 }

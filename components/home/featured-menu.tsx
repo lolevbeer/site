@@ -23,14 +23,9 @@ import { getBeerBadgeLabel } from '@/lib/types/beer'
 import { Logo } from '@/components/ui/logo'
 import { TopBeerDropsLink } from '@/components/beer/top-beer-drops-link'
 import { UntappdRating } from '@/components/beer/untappd-rating'
+import { TV_TYPE, TV_SAFE_X, TV_SAFE_Y, TV_COL } from '@/lib/config/tv-display'
 import { LINES_OVERDUE_DAYS } from '@/lib/utils/lines-cleaned'
-
-/** Parse price string to number, removing '$' prefix if present */
-function parsePrice(price: string | number | null | undefined): number | undefined {
-  if (price == null) return undefined
-  const parsed = parseFloat(String(price).replace('$', ''))
-  return isNaN(parsed) ? undefined : parsed
-}
+import { parsePrice } from '@/lib/utils/formatters'
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24
 
@@ -112,22 +107,25 @@ function ColumnHeader({ isOtherMenu }: { isOtherMenu: boolean }) {
   return (
     <div
       className="flex items-center border-b-2 border-border uppercase tracking-wider text-foreground font-bold"
-      style={{ gap: '1vh', marginBottom: '0.5vh', fontSize: '1.2vh' }}
+      style={{ gap: '1vh', marginBottom: '0.5vh', fontSize: TV_TYPE.label }}
     >
-      {!isOtherMenu && <div style={{ minWidth: '7vh' }}>Tap</div>}
+      {!isOtherMenu && <div style={{ width: TV_COL.tap }}>Tap</div>}
       <div className="flex-grow">{isOtherMenu ? 'Item' : 'Beer'}</div>
+      {/* Right-aligned, matching the rows. These columns hold numbers of
+          different widths — 8% next to 10.1%, $9 next to $11 — and centring
+          them put the % signs and the digits at a different x on every row. */}
       <div className="flex" style={{ gap: '2vh' }}>
         {!isOtherMenu && (
-          <div className="text-center" style={{ minWidth: '7vh' }}>
+          <div className="text-right" style={{ width: TV_COL.abv }}>
             ABV
           </div>
         )}
         {!isOtherMenu && (
-          <div className="text-center" style={{ minWidth: '8vh' }}>
+          <div className="text-right" style={{ width: TV_COL.price }}>
             Half
           </div>
         )}
-        <div className="text-center" style={{ minWidth: '8vh' }}>
+        <div className="text-right" style={{ width: TV_COL.price }}>
           {isOtherMenu ? 'Price' : 'Full'}
         </div>
       </div>
@@ -531,10 +529,22 @@ function CanCard({
           </Badge>
         )}
       </div>
-      <div className="mb-3">
+      <div>
         <h3 className="text-xl font-semibold text-center mb-2">{item.name}</h3>
-        <div className="flex items-center justify-center gap-2">
+        {/* ABV joins the rating here. The same beer can appear in the draft
+            section and in this one, and the draft row gave you ABV while the
+            can card gave only a rating — the two sections disagreed about what
+            a beer is. */}
+        <div className="flex items-center justify-center gap-2 mb-2">
+          {item.abv && <span className="text-sm font-semibold tabular-nums">{item.abv}%</span>}
+          {item.abv && !item.isProduct && (
+            <span className="text-muted-foreground" aria-hidden>
+              &middot;
+            </span>
+          )}
           {!item.isProduct && <UntappdRating rating={item.untappdRating} />}
+        </div>
+        <div className="flex items-center justify-center gap-2">
           <Badge variant="outline" className="text-xs">
             {item.type}
           </Badge>
@@ -547,13 +557,10 @@ function CanCard({
           )}
         </div>
       </div>
-      <Button
-        variant="outline"
-        className="w-full btn-arrow group-hover:bg-muted/50 hover:translate-y-0"
-        tabIndex={-1}
-      >
-        View Details
-      </Button>
+      {/* No "View Details" button. The whole card is already the link, so the
+          button was a second target for the same destination — and eight
+          identical copies of the same two words were the loudest thing in the
+          grid. */}
     </BeerLinkWrapper>
   )
 }
@@ -620,7 +627,7 @@ function FeaturedMenu({
         {!hideHeader && (
           <div
             className="flex items-center flex-shrink-0"
-            style={{ padding: '2vh 1vw', marginBottom: '0.5vh' }}
+            style={{ padding: `${TV_SAFE_Y} ${TV_SAFE_X}`, marginBottom: '0.5vh' }}
           >
             <div className="flex-1">
               <span className="font-bold text-foreground-muted" style={{ fontSize: '4vh' }}>
@@ -645,11 +652,12 @@ function FeaturedMenu({
             </div>
           </div>
         )}
-        {/* 2.5vh of bottom padding roughly matches the header's 2vh top inset, so
-            the last row of prices doesn't sit flush against the bottom bezel.
-            The 1fr grid rows absorb it by shrinking the cans slightly. */}
-        <div className="w-full flex-1 flex flex-col" style={{ padding: '0 0 2.5vh 0' }}>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '0 1vw' }}>
+        {/* Bottom inset matches the header's top inset, so the last row of prices
+            doesn't sit flush against the bottom bezel — and, with TV_SAFE_X on
+            the sides, keeps the whole board inside a 3% overscan crop. The 1fr
+            grid rows absorb it by shrinking the cans slightly. */}
+        <div className="w-full flex-1 flex flex-col" style={{ padding: `0 0 ${TV_SAFE_Y} 0` }}>
+          <div className="flex-1 overflow-y-auto" style={{ padding: `0 ${TV_SAFE_X}` }}>
             {itemsToRender.length > 0 ? (
               menuType === 'draft' ? (
                 // Split items into two columns: 1-6 left, 7-12 right (column-first ordering)
