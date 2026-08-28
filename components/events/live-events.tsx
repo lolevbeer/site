@@ -129,19 +129,14 @@ function AgendaRow({
           aria-hidden
         >
           {logoUrl ? (
-            <span
-              className="relative rounded-full overflow-hidden bg-muted w-full h-full"
-            >
+            <span className="relative rounded-full overflow-hidden bg-muted w-full h-full">
               <Image src={logoUrl} alt="" fill className="object-cover" sizes="48px" />
             </span>
           ) : (
             tags?.map((tag) => {
               const Icon = tagIcons[tag]
               return Icon ? (
-                <Icon
-                  key={tag}
-                  style={{ width: '3vh', height: '3vh', color: accentColor }}
-                />
+                <Icon key={tag} style={{ width: '3vh', height: '3vh', color: accentColor }} />
               ) : null
             })
           )}
@@ -174,7 +169,13 @@ function AgendaRow({
 /**
  * Live-updating events display component for large displays
  */
-export function LiveEvents({ location, initialEvents, initialFood = [], cansMenu, initialLocationName }: LiveEventsProps) {
+export function LiveEvents({
+  location,
+  initialEvents,
+  initialFood = [],
+  cansMenu,
+  initialLocationName,
+}: LiveEventsProps) {
   const { events, locationName, theme, pollCount } = useEventsStream(
     location,
     initialEvents,
@@ -182,7 +183,7 @@ export function LiveEvents({ location, initialEvents, initialFood = [], cansMenu
     {
       enabled: true,
       pollInterval: 5000,
-    }
+    },
   )
 
   // Combine events and food into a single sorted list
@@ -263,7 +264,10 @@ export function LiveEvents({ location, initialEvents, initialFood = [], cansMenu
   const themeVars = getThemeVars(theme)
 
   return (
-    <div className="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground" style={themeVars}>
+    <div
+      className="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground"
+      style={themeVars}
+    >
       <section className="h-full flex flex-col bg-background overflow-hidden">
         {/* Header row with Lolev Beer, title, and logo aligned */}
         <div
@@ -271,13 +275,18 @@ export function LiveEvents({ location, initialEvents, initialFood = [], cansMenu
           style={{ padding: `${TV_SAFE_Y} ${TV_SAFE_X}`, marginBottom: '0.5vh' }}
         >
           <div className="flex-1">
-            <span className="font-bold text-foreground-muted" style={{ fontSize: '4vh' }}>Lolev Beer</span>
+            <span className="font-bold text-foreground-muted" style={{ fontSize: '4vh' }}>
+              Lolev Beer
+            </span>
           </div>
           <div className="flex-1 text-center">
             <h2 className="font-bold" style={{ fontSize: '4vh' }}>
               {title}
             </h2>
-            <p className="text-foreground-muted" style={{ fontSize: TV_TYPE.body, marginTop: '0.5vh' }}>
+            <p
+              className="text-foreground-muted"
+              style={{ fontSize: TV_TYPE.body, marginTop: '0.5vh' }}
+            >
               {locationName}
             </p>
           </div>
@@ -286,8 +295,10 @@ export function LiveEvents({ location, initialEvents, initialFood = [], cansMenu
           </div>
         </div>
         <div className="w-full flex-1 flex flex-col" style={{ padding: `0 0 ${TV_SAFE_Y} 0` }}>
-
-          <div className="flex-1 overflow-y-auto flex flex-col" style={{ padding: `0 ${TV_SAFE_X}` }}>
+          <div
+            className="flex-1 overflow-y-auto flex flex-col"
+            style={{ padding: `0 ${TV_SAFE_X}` }}
+          >
             {dayGroups.length > 0 ? (
               /* One row per day: a fixed day rail, then that day's items. The
                  rail width is what gives every name and time a single left
@@ -351,7 +362,10 @@ export function LiveEvents({ location, initialEvents, initialFood = [], cansMenu
                   <p className="text-foreground-muted" style={{ fontSize: '2.5vh' }}>
                     No upcoming food or events scheduled
                   </p>
-                  <p className="text-foreground-muted" style={{ fontSize: '1.8vh', marginTop: '1vh' }}>
+                  <p
+                    className="text-foreground-muted"
+                    style={{ fontSize: '1.8vh', marginTop: '1vh' }}
+                  >
                     Check back soon!
                   </p>
                 </div>

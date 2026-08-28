@@ -65,13 +65,16 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
         <div
           className={`relative overflow-hidden transition-colors duration-200 cursor-pointer hover:bg-secondary/50 h-full bg-background ${className}`}
         >
-          {/* `items-start`, not `items-center`. Every row is an equal-height
-              flex track, so centring let each cell float to its own vertical
-              position within that track: a beer with four lines of hops pushed
-              its name up while the price stayed centred — measured 63px apart
-              on /m/l-draft. Aligning to the top gives the name, ABV and price
-              one shared edge however tall the row's text runs. */}
-          <div className="flex items-start h-full" style={{ gap: '1vh', paddingTop: '1.5vh' }}>
+          {/* `items-baseline`, not `items-center` and not `items-start`.
+              Centring let each cell float to its own position inside the
+              row's equal-height track — a beer with four lines of hops pushed
+              its name up while the price stayed centred, 63px apart. Aligning
+              to the top fixed that but left the text ragged, because these
+              cells are set at different sizes: the name at 3vh, ABV at 2.8vh,
+              the prices at 3.8vh. Sharing a top edge puts three different
+              baselines on one row. Sharing a baseline is what actually reads
+              as aligned. */}
+          <div className="flex items-baseline h-full" style={{ gap: '1vh', paddingTop: '1.5vh' }}>
             {/* Tap Number, Glass Icon, and Rating */}
             {(showTap || showGlass) && (
               <div
@@ -98,26 +101,28 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
 
             {/* Beer Info - Main content */}
             <div className="flex-grow min-w-0 flex flex-col" style={{ gap: '0.3vh' }}>
-              <div className="flex items-center flex-wrap" style={{ gap: '1vh' }}>
+              <div className="flex items-baseline flex-wrap" style={{ gap: '1vh' }}>
                 <h3
                   className="font-bold leading-tight truncate transition-colors duration-500"
                   style={{ fontSize: '3vh', color: accentColor }}
                 >
                   {beer.name}
                 </h3>
-                {/* Style as plain muted text rather than an outlined Badge. On a
-                    row where the same style repeats down the whole column, the
-                    outline was the heaviest thing in the line and competed with
-                    the beer name for attention. */}
+                {/* Outlined Badge, the same treatment the style gets on the
+                    homepage draft rows and cans cards, so a beer looks like the
+                    same beer on every surface. `self-center` because the row is
+                    baseline-aligned and a bordered pill has no text baseline to
+                    share. */}
                 {beer.type &&
                   beer.type.split(', ').map((option, i) => (
-                    <span
+                    <Badge
                       key={i}
-                      className="flex-shrink-0 font-medium text-foreground-muted whitespace-nowrap"
+                      variant="outline"
+                      className="flex-shrink-0 self-center"
                       style={{ fontSize: TV_TYPE.badge }}
                     >
                       {option}
-                    </span>
+                    </Badge>
                   ))}
                 {/* Inline, so it reads as a fact about this beer. It used to be
                     absolutely positioned above the price group, where it looked
@@ -125,7 +130,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                 {badgeLabel && (
                   <Badge
                     variant="default"
-                    className="flex-shrink-0"
+                    className="flex-shrink-0 self-center"
                     style={{ fontSize: TV_TYPE.badge }}
                   >
                     {badgeLabel}
@@ -135,7 +140,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                   <TopBeerDropsLink
                     url={beer.topBeerDrops}
                     beerName={beer.name}
-                    className="flex-shrink-0 text-foreground hover:text-primary transition-colors"
+                    className="flex-shrink-0 self-center text-foreground hover:text-primary transition-colors"
                     style={{ height: '3.2vh', width: '3.2vh' }}
                   />
                 )}
@@ -187,7 +192,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                 positioned above this group (it now sits inline beside the beer
                 name), so nothing overlaps the price columns or reads as a value
                 in the Full column. */}
-            <div className="flex-shrink-0 flex items-start" style={{ gap: '2vh' }}>
+            <div className="flex-shrink-0 flex items-baseline" style={{ gap: '2vh' }}>
               {showAbv && (
                 <div className="text-right" style={{ width: TV_COL.abv }}>
                   {beer.abv && (
