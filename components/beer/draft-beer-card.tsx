@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge'
 import { TopBeerDropsLink } from '@/components/beer/top-beer-drops-link'
 import { UntappdRating } from '@/components/beer/untappd-rating'
 import { getBeerBadgeLabel } from '@/lib/types/beer'
+import { TV_TYPE } from '@/lib/config/tv-display'
 
 interface DraftBeerCardProps {
   beer: Beer
@@ -64,7 +65,13 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
         <div
           className={`relative overflow-hidden transition-colors duration-200 cursor-pointer hover:bg-secondary/50 h-full bg-background ${className}`}
         >
-          <div className="flex items-center h-full" style={{ gap: '1vh' }}>
+          {/* `items-start`, not `items-center`. Every row is an equal-height
+              flex track, so centring let each cell float to its own vertical
+              position within that track: a beer with four lines of hops pushed
+              its name up while the price stayed centred — measured 63px apart
+              on /m/l-draft. Aligning to the top gives the name, ABV and price
+              one shared edge however tall the row's text runs. */}
+          <div className="flex items-start h-full" style={{ gap: '1vh', paddingTop: '1.5vh' }}>
             {/* Tap Number, Glass Icon, and Rating */}
             {(showTap || showGlass) && (
               <div
@@ -75,7 +82,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                   {showTap && beer.tap && (
                     <span
                       className="font-bold text-primary tabular-nums"
-                      style={{ fontSize: '2.2vh' }}
+                      style={{ fontSize: TV_TYPE.tap }}
                     >
                       {beer.tap}
                     </span>
@@ -98,17 +105,32 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                 >
                   {beer.name}
                 </h3>
+                {/* Style as plain muted text rather than an outlined Badge. On a
+                    row where the same style repeats down the whole column, the
+                    outline was the heaviest thing in the line and competed with
+                    the beer name for attention. */}
                 {beer.type &&
                   beer.type.split(', ').map((option, i) => (
-                    <Badge
+                    <span
                       key={i}
-                      variant="outline"
-                      className="flex-shrink-0"
-                      style={{ fontSize: '1.8vh' }}
+                      className="flex-shrink-0 font-medium text-foreground-muted whitespace-nowrap"
+                      style={{ fontSize: TV_TYPE.badge }}
                     >
                       {option}
-                    </Badge>
+                    </span>
                   ))}
+                {/* Inline, so it reads as a fact about this beer. It used to be
+                    absolutely positioned above the price group, where it looked
+                    like an entry in the Full column. */}
+                {badgeLabel && (
+                  <Badge
+                    variant="default"
+                    className="flex-shrink-0"
+                    style={{ fontSize: TV_TYPE.badge }}
+                  >
+                    {badgeLabel}
+                  </Badge>
+                )}
                 {beer.topBeerDrops && (
                   <TopBeerDropsLink
                     url={beer.topBeerDrops}
@@ -121,45 +143,43 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
               <div className="flex flex-col" style={{ gap: '0.2vh' }}>
                 {beer.description && (
                   <p
-                    className="text-foreground-muted line-clamp-3 leading-tight"
-                    style={{ fontSize: '1.6vh' }}
+                    className="text-foreground-muted line-clamp-2 leading-tight"
+                    style={{ fontSize: TV_TYPE.body }}
                   >
                     {beer.description}
                   </p>
                 )}
-                <span
-                  className="text-foreground-muted leading-tight inline"
-                  style={{ fontSize: '1.6vh' }}
+                {/* The rating leads this line and the hops truncate after it.
+                    It used to trail a hop list that could run four lines, so it
+                    wrapped to an unpredictable spot and read as part of the hop
+                    text. No `fallbackText`: "Needs Reviews" is our language, not
+                    a customer's, and it was showing on the public boards. */}
+                <div
+                  className="flex items-baseline text-foreground-muted leading-tight"
+                  style={{ fontSize: TV_TYPE.body, gap: '0.8vh' }}
                 >
-                  {beer.hops && (
-                    <span>
-                      <span className="font-medium">Hops:</span> {beer.hops}{' '}
-                    </span>
-                  )}
                   {showRating && !(beer as unknown as { isProduct?: boolean }).isProduct && (
                     <UntappdRating
                       rating={beer.untappdRating}
-                      className="leading-none inline-flex"
-                      style={{ gap: '0.3vh', fontSize: '1.6vh' }}
+                      className="flex-shrink-0 leading-none inline-flex"
+                      style={{ gap: '0.3vh', fontSize: TV_TYPE.body }}
                       iconStyle={{ height: '2vh', width: '2vh' }}
-                      fallbackText="Needs Reviews"
                     />
                   )}
-                </span>
+                  {beer.hops && (
+                    <span className="min-w-0 truncate">
+                      <span className="font-medium">Hops:</span> {beer.hops}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* ABV and Price - Right aligned */}
-            <div className="relative flex-shrink-0 flex items-center" style={{ gap: '2vh' }}>
-              {badgeLabel && (
-                <Badge
-                  variant="default"
-                  className="absolute z-10 right-0"
-                  style={{ bottom: '100%', marginBottom: '0.3vh', fontSize: '1.8vh' }}
-                >
-                  {badgeLabel}
-                </Badge>
-              )}
+            {/* ABV and Price - Right aligned. The badge is no longer absolutely
+                positioned above this group (it now sits inline beside the beer
+                name), so nothing overlaps the price columns or reads as a value
+                in the Full column. */}
+            <div className="flex-shrink-0 flex items-start" style={{ gap: '2vh' }}>
               {showAbv && (
                 <div className="text-center" style={{ minWidth: '7vh' }}>
                   {beer.abv && (

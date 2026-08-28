@@ -31,7 +31,9 @@ export function UntappdRating({
   iconStyle,
   fallbackText,
 }: UntappdRatingProps) {
-  const text = (rating ?? 0) > 0 ? `${formatRating(rating)}/5` : fallbackText
+  // No "/5" — the Untappd icon already states the scale, and on a TV board
+  // those two glyphs cost width on every row.
+  const text = (rating ?? 0) > 0 ? formatRating(rating) : fallbackText
   if (!text) return null
 
   return (

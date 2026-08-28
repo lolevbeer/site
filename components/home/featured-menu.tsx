@@ -23,6 +23,7 @@ import { getBeerBadgeLabel } from '@/lib/types/beer'
 import { Logo } from '@/components/ui/logo'
 import { TopBeerDropsLink } from '@/components/beer/top-beer-drops-link'
 import { UntappdRating } from '@/components/beer/untappd-rating'
+import { TV_TYPE, TV_SAFE_X, TV_SAFE_Y } from '@/lib/config/tv-display'
 import { LINES_OVERDUE_DAYS } from '@/lib/utils/lines-cleaned'
 
 /** Parse price string to number, removing '$' prefix if present */
@@ -112,7 +113,7 @@ function ColumnHeader({ isOtherMenu }: { isOtherMenu: boolean }) {
   return (
     <div
       className="flex items-center border-b-2 border-border uppercase tracking-wider text-foreground font-bold"
-      style={{ gap: '1vh', marginBottom: '0.5vh', fontSize: '1.2vh' }}
+      style={{ gap: '1vh', marginBottom: '0.5vh', fontSize: TV_TYPE.label }}
     >
       {!isOtherMenu && <div style={{ minWidth: '7vh' }}>Tap</div>}
       <div className="flex-grow">{isOtherMenu ? 'Item' : 'Beer'}</div>
@@ -620,7 +621,7 @@ function FeaturedMenu({
         {!hideHeader && (
           <div
             className="flex items-center flex-shrink-0"
-            style={{ padding: '2vh 1vw', marginBottom: '0.5vh' }}
+            style={{ padding: `${TV_SAFE_Y} ${TV_SAFE_X}`, marginBottom: '0.5vh' }}
           >
             <div className="flex-1">
               <span className="font-bold text-foreground-muted" style={{ fontSize: '4vh' }}>
@@ -645,11 +646,12 @@ function FeaturedMenu({
             </div>
           </div>
         )}
-        {/* 2.5vh of bottom padding roughly matches the header's 2vh top inset, so
-            the last row of prices doesn't sit flush against the bottom bezel.
-            The 1fr grid rows absorb it by shrinking the cans slightly. */}
-        <div className="w-full flex-1 flex flex-col" style={{ padding: '0 0 2.5vh 0' }}>
-          <div className="flex-1 overflow-y-auto" style={{ padding: '0 1vw' }}>
+        {/* Bottom inset matches the header's top inset, so the last row of prices
+            doesn't sit flush against the bottom bezel — and, with TV_SAFE_X on
+            the sides, keeps the whole board inside a 3% overscan crop. The 1fr
+            grid rows absorb it by shrinking the cans slightly. */}
+        <div className="w-full flex-1 flex flex-col" style={{ padding: `0 0 ${TV_SAFE_Y} 0` }}>
+          <div className="flex-1 overflow-y-auto" style={{ padding: `0 ${TV_SAFE_X}` }}>
             {itemsToRender.length > 0 ? (
               menuType === 'draft' ? (
                 // Split items into two columns: 1-6 left, 7-12 right (column-first ordering)
