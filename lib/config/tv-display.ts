@@ -51,7 +51,10 @@ export const TV_COL = {
    *  gap between them measured 28–42px, varying with the digit count. */
   tap: '8vh',
   abv: '7vh',
-  price: '8vh',
+  /** Wide enough for "$11" at the price type size, and no wider. It was 8vh,
+   *  which left the beer column ~8px short of fitting the longest beer name;
+   *  that space is worth more to the name than to padding beside a price. */
+  price: '7vh',
   /** Reserved for the Untappd rating, so the hop list starts at the same x
    *  whether or not a beer has been scored yet. */
   rating: '7vh',

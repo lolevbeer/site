@@ -86,11 +86,12 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                       sit at opposite ends of this column, so letting the number
                       size itself made the gap between them depend on the digit
                       count — 11px next to tap 10, 25px next to tap 4. A fixed
-                      box makes that gap constant, and right-aligned numerals
-                      line up as a column the way the prices do. */}
+                      box makes that gap constant. Left-aligned so the digits
+                      start where the TAP header's glyphs do — right-aligning
+                      them inside this box left the two 27px apart. */}
                   {showTap && beer.tap && (
                     <span
-                      className="font-bold text-primary tabular-nums text-right"
+                      className="font-bold text-primary tabular-nums text-left"
                       style={{ fontSize: TV_TYPE.tap, width: '3.2vh' }}
                     >
                       {beer.tap}
@@ -98,11 +99,12 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                   )}
                   {/* Sized to the beer name's line box, not larger. At 6vh the
                       glass measured 50.6px against a 31.6px name line — 1.6×
-                      the text it sits beside — so it overhung 8.3px above and
-                      10.7px below and read as floating across the row rather
-                      than sitting on it. 4vh matches the line. */}
+                      the text beside it — so it overhung and read as floating
+                      across the row. Height is back up for presence, but only
+                      the height: a glass is taller than it is wide, so growing
+                      it vertically costs the beer name no column width. */}
                   {showGlass && (
-                    <div style={{ height: '4vh', width: '4vh' }}>
+                    <div style={{ height: '5.5vh', width: '4vh' }}>
                       <GlassIcon className="w-full h-full text-muted-foreground/50 group-hover:text-muted-foreground/70 transition-colors" />
                     </div>
                   )}
