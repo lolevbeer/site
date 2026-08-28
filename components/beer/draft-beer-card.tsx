@@ -15,7 +15,7 @@ import { Badge } from '@/components/ui/badge'
 import { TopBeerDropsLink } from '@/components/beer/top-beer-drops-link'
 import { UntappdRating } from '@/components/beer/untappd-rating'
 import { getBeerBadgeLabel } from '@/lib/types/beer'
-import { TV_TYPE, TV_COL } from '@/lib/config/tv-display'
+import { TV_TYPE, TV_COL, TV_BADGE_STYLE } from '@/lib/config/tv-display'
 
 interface DraftBeerCardProps {
   beer: Beer
@@ -140,7 +140,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                       key={i}
                       variant="outline"
                       className="flex-shrink-0 self-center"
-                      style={{ fontSize: TV_TYPE.badge }}
+                      style={{ fontSize: TV_TYPE.badge, ...TV_BADGE_STYLE }}
                     >
                       {option}
                     </Badge>
@@ -152,7 +152,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                   <Badge
                     variant="default"
                     className="flex-shrink-0 self-center"
-                    style={{ fontSize: TV_TYPE.badge }}
+                    style={{ fontSize: TV_TYPE.badge, ...TV_BADGE_STYLE }}
                   >
                     {badgeLabel}
                   </Badge>

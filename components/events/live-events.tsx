@@ -13,7 +13,7 @@ import { getThemeVars } from '@/lib/utils/display-theme'
 import { getTodayEST, toESTDate } from '@/lib/utils/date'
 import { format } from 'date-fns'
 import { formatTime } from '@/lib/utils/formatters'
-import { TV_TYPE, TV_SAFE_X, TV_SAFE_Y } from '@/lib/config/tv-display'
+import { TV_TYPE, TV_SAFE_X, TV_SAFE_Y, TV_LOGO_CLASS, TV_BADGE_STYLE } from '@/lib/config/tv-display'
 import { Music, Utensils, Puzzle, Trophy, Beer, MicVocal, type LucideIcon } from 'lucide-react'
 
 const tagIcons: Record<string, LucideIcon> = {
@@ -130,7 +130,7 @@ function AgendaRow({
             like two unrelated things on adjacent rows. */}
         <span
           className="flex-shrink-0 uppercase tracking-wider font-bold text-foreground-muted border border-border rounded"
-          style={{ fontSize: TV_TYPE.label, padding: '0.2vh 0.8vh' }}
+          style={{ fontSize: TV_TYPE.label, ...TV_BADGE_STYLE, borderRadius: '0.5vh' }}
         >
           {kind}
         </span>
@@ -304,7 +304,7 @@ export function LiveEvents({
             </p>
           </div>
           <div className="flex-1 flex justify-end">
-            <Logo width={48} height={52} />
+            <Logo className={TV_LOGO_CLASS} />
           </div>
         </div>
         <div className="w-full flex-1 flex flex-col" style={{ padding: `0 0 ${TV_SAFE_Y} 0` }}>
