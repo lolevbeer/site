@@ -101,9 +101,17 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
 
             {/* Beer Info - Main content */}
             <div className="flex-grow min-w-0 flex flex-col" style={{ gap: '0.3vh' }}>
-              <div className="flex items-baseline flex-wrap" style={{ gap: '1vh' }}>
+              {/* No `flex-wrap`. A long beer name used to push the Collab /
+                  Just Released badge onto a second line, which changed the
+                  row's height and left the badge floating under the name with
+                  nothing beside it. The name truncates instead: it is the one
+                  element on this line that can lose characters and still be
+                  read, and the badge belongs beside the name, where it says
+                  something about the beer. `min-w-0` is what lets truncation
+                  actually happen inside a flex row. */}
+              <div className="flex items-baseline flex-nowrap" style={{ gap: '1vh' }}>
                 <h3
-                  className="font-bold leading-tight truncate transition-colors duration-500"
+                  className="min-w-0 font-bold leading-tight truncate transition-colors duration-500"
                   style={{ fontSize: '3vh', color: accentColor }}
                 >
                   {beer.name}
@@ -146,9 +154,13 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                 )}
               </div>
               <div className="flex flex-col" style={{ gap: '0.2vh' }}>
+                {/* One line, not two. A two-line description pushed the
+                    rating-and-hops line down by a whole line on some rows and
+                    not others, so that line sat at a different height as you
+                    read down the column. */}
                 {beer.description && (
                   <p
-                    className="text-foreground-muted line-clamp-2 leading-tight"
+                    className="text-foreground-muted line-clamp-1 leading-tight"
                     style={{ fontSize: TV_TYPE.body }}
                   >
                     {beer.description}
