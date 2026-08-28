@@ -21,6 +21,10 @@ export const TV_TYPE = {
   body: 'max(1.7vh, 16px)',
   badge: 'max(1.8vh, 16px)',
   tap: 'max(2.4vh, 22px)',
+  /** The `/e/` agenda: a day heading, an item's time, an item's name. */
+  eventDay: 'max(1.9vh, 17px)',
+  eventTime: 'max(2.2vh, 20px)',
+  eventName: 'max(3vh, 26px)',
 } as const
 
 /**

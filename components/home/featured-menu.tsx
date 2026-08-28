@@ -532,10 +532,22 @@ function CanCard({
           </Badge>
         )}
       </div>
-      <div className="mb-3">
+      <div>
         <h3 className="text-xl font-semibold text-center mb-2">{item.name}</h3>
-        <div className="flex items-center justify-center gap-2">
+        {/* ABV joins the rating here. The same beer can appear in the draft
+            section and in this one, and the draft row gave you ABV while the
+            can card gave only a rating — the two sections disagreed about what
+            a beer is. */}
+        <div className="flex items-center justify-center gap-2 mb-2">
+          {item.abv && <span className="text-sm font-semibold tabular-nums">{item.abv}%</span>}
+          {item.abv && !item.isProduct && (
+            <span className="text-muted-foreground" aria-hidden>
+              &middot;
+            </span>
+          )}
           {!item.isProduct && <UntappdRating rating={item.untappdRating} />}
+        </div>
+        <div className="flex items-center justify-center gap-2">
           <Badge variant="outline" className="text-xs">
             {item.type}
           </Badge>
@@ -548,13 +560,10 @@ function CanCard({
           )}
         </div>
       </div>
-      <Button
-        variant="outline"
-        className="w-full btn-arrow group-hover:bg-muted/50 hover:translate-y-0"
-        tabIndex={-1}
-      >
-        View Details
-      </Button>
+      {/* No "View Details" button. The whole card is already the link, so the
+          button was a second target for the same destination — and eight
+          identical copies of the same two words were the loudest thing in the
+          grid. */}
     </BeerLinkWrapper>
   )
 }
