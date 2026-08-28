@@ -228,6 +228,10 @@ export interface Beer {
    * Collaboration brew with another brewery. Overrides "Just Released" badge with "Collab".
    */
   collab?: boolean | null;
+  /**
+   * Brewery name shown in the collaboration badge. Leave blank to show “Collab”.
+   */
+  collabBrewery?: string | null;
   name: string;
   /**
    * Beer style
@@ -560,6 +564,10 @@ export interface Product {
   id: string;
   name: string;
   description?: string | null;
+  /**
+   * Optional grouping on Other Things menus. Uncategorized products remain visible.
+   */
+  category?: ('cocktails-cider' | 'soft-drinks' | 'snacks-merch') | null;
   /**
    * Press "Enter" or "Tab" after entering option to add another
    */
@@ -1104,6 +1112,7 @@ export interface BeersSelect<T extends boolean = true> {
   hideFromSite?: T;
   justReleased?: T;
   collab?: T;
+  collabBrewery?: T;
   name?: T;
   style?: T;
   labelBase?: T;
@@ -1190,6 +1199,7 @@ export interface MenusSelect<T extends boolean = true> {
 export interface ProductsSelect<T extends boolean = true> {
   name?: T;
   description?: T;
+  category?: T;
   options?: T;
   abv?: T;
   price?: T;

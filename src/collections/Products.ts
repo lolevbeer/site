@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import { adminAccess, hasRole } from '@/src/access/roles'
+import { OTHER_MENU_CATEGORIES } from '@/lib/config/other-menu'
 
 export const Products: CollectionConfig = {
   slug: 'products',
@@ -24,6 +25,16 @@ export const Products: CollectionConfig = {
     {
       name: 'description',
       type: 'textarea',
+    },
+    {
+      name: 'category',
+      type: 'select',
+      options: [...OTHER_MENU_CATEGORIES],
+      admin: {
+        description:
+          'Optional grouping on Other Things menus. Uncategorized products remain visible.',
+        position: 'sidebar',
+      },
     },
     {
       name: 'options',
