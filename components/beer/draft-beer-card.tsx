@@ -194,11 +194,12 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                       beer. */}
                   {showRating && !(beer as unknown as { isProduct?: boolean }).isProduct && (
                     <span className="flex-shrink-0" style={{ width: TV_COL.rating }}>
+                      {/* No iconStyle override: the icon sizes itself from this
+                          font size, so it stays proportional to the digits at
+                          any board scale rather than being pinned to 2vh. */}
                       <UntappdRating
                         rating={beer.untappdRating}
-                        className="leading-none inline-flex"
-                        style={{ gap: '0.3vh', fontSize: TV_TYPE.body }}
-                        iconStyle={{ height: '2vh', width: '2vh' }}
+                        style={{ fontSize: TV_TYPE.body }}
                       />
                     </span>
                   )}

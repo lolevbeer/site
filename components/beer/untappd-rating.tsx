@@ -36,17 +36,29 @@ export function UntappdRating({
   const text = (rating ?? 0) > 0 ? formatRating(rating) : fallbackText
   if (!text) return null
 
+  // Normal inline flow, not flex. As a flex container with `items-end` this
+  // aligned the icon by its box edge, because an SVG has no baseline for flex
+  // to fall back on — so the icon ended up both taller than the digits beside
+  // it and optically higher (measured on the draft board: icon ink 211.3→225.4
+  // against digits ~215.4→226.8, centres 2.75px apart). Inline flow lets the
+  // browser baseline the icon like a glyph: `1em` ties its size to the
+  // surrounding text at any font size, and the small negative `vertical-align`
+  // seats it so its optical centre matches the digits'.
   return (
     <span
       className={cn(
-        'flex items-end text-amber-500 text-sm',
-        variant === 'overlay' && 'bg-background/80 backdrop-blur-sm rounded-md px-1.5 py-0.5',
+        'text-amber-500 text-sm whitespace-nowrap',
+        variant === 'overlay' &&
+          'inline-block bg-background/80 backdrop-blur-sm rounded-md px-1.5 py-0.5',
         className,
       )}
       style={style}
     >
-      <UntappdIcon className="h-3.5 w-3.5 mx-0.5" style={iconStyle} />
-      <span className="font-bold leading-none">{text}</span>
+      <UntappdIcon
+        className="inline-block h-[1em] w-[1em] mr-[0.25em] align-[-0.14em]"
+        style={iconStyle}
+      />
+      <span className="font-bold">{text}</span>
     </span>
   )
 }
