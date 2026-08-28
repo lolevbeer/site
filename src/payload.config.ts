@@ -37,6 +37,7 @@ import { regeocodeDistributors } from './endpoints/regeocode-distributors'
 import { syncUntappdRatings } from './endpoints/sync-untappd-ratings'
 import { adminAccess, hasRole } from './access/roles'
 import { syncUntappdRatingsTask } from './jobs/sync-untappd-ratings'
+import { getLocalDevOrigins } from '../lib/config/payload-origins'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -63,15 +64,7 @@ const allowedOrigins = [
     ? [`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`]
     : []),
   // Local development
-  ...(process.env.NODE_ENV === 'development'
-    ? [
-        'http://localhost:3000',
-        'http://localhost:3001',
-        'http://localhost:3002',
-        'http://127.0.0.1:3000',
-        'http://0.0.0.0:3000',
-      ]
-    : []),
+  ...(process.env.NODE_ENV === 'development' ? getLocalDevOrigins(process.env.PORT) : []),
 ]
 
 export default buildConfig({
