@@ -23,7 +23,7 @@ import { getBeerBadgeLabel } from '@/lib/types/beer'
 import { Logo } from '@/components/ui/logo'
 import { TopBeerDropsLink } from '@/components/beer/top-beer-drops-link'
 import { UntappdRating } from '@/components/beer/untappd-rating'
-import { TV_TYPE, TV_SAFE_X, TV_SAFE_Y, TV_COL } from '@/lib/config/tv-display'
+import { TV_TYPE, TV_SAFE_X, TV_SAFE_Y, TV_COL, TV_LOGO_CLASS } from '@/lib/config/tv-display'
 import { LINES_OVERDUE_DAYS } from '@/lib/utils/lines-cleaned'
 import { parsePrice } from '@/lib/utils/formatters'
 
@@ -648,7 +648,7 @@ function FeaturedMenu({
               )}
             </div>
             <div className="flex-1 flex justify-end">
-              <Logo width={48} height={52} />
+              <Logo className={TV_LOGO_CLASS} />
             </div>
           </div>
         )}

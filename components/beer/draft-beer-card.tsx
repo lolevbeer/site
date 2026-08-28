@@ -15,7 +15,7 @@ import { Badge } from '@/components/ui/badge'
 import { TopBeerDropsLink } from '@/components/beer/top-beer-drops-link'
 import { UntappdRating } from '@/components/beer/untappd-rating'
 import { getBeerBadgeLabel } from '@/lib/types/beer'
-import { TV_TYPE, TV_COL } from '@/lib/config/tv-display'
+import { TV_TYPE, TV_COL, TV_BADGE_STYLE } from '@/lib/config/tv-display'
 
 interface DraftBeerCardProps {
   beer: Beer
@@ -65,6 +65,38 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
         <div
           className={`relative overflow-hidden transition-colors duration-200 cursor-pointer hover:bg-secondary/50 h-full bg-background ${className}`}
         >
+          {/* Out of flow, in the empty band under the row's own content.
+              This badge cannot be laid out inline: on the name line it was the
+              third fixed-width item competing with the beer name, and the name
+              is what lost — "Peregrine Falcon" truncated because the name, the
+              style and this badge together needed ~53.6vh of a 44.8vh line.
+              Before that it was absolutely positioned directly above the price
+              group, where it read as a value in the Full column. Anchored to
+              the bottom of the row instead: every row measured at least 4.35vh
+              of free space there against this badge's ~2.4vh, it is clear of
+              the prices on the line above, and being absolute it can never push
+              anything again.
+
+              Anchored to the top, not the bottom. A row's track is much taller
+              than its text — 15.8vh against about 9vh of content — so a
+              bottom-anchored badge floated into the gap and read as belonging
+              to the next beer down. One name-line height below the top puts it
+              directly under the Full price, inside its own row's block of
+              text, and clear of the prices on the line above. */}
+          {badgeLabel && (
+            <Badge
+              variant="default"
+              className="absolute z-10"
+              style={{
+                fontSize: TV_TYPE.badge,
+                ...TV_BADGE_STYLE,
+                right: 0,
+                top: '7.4vh',
+              }}
+            >
+              {badgeLabel}
+            </Badge>
+          )}
           {/* `items-baseline`, not `items-center` and not `items-start`.
               Centring let each cell float to its own position inside the
               row's equal-height track — a beer with four lines of hops pushed
@@ -86,11 +118,12 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                       sit at opposite ends of this column, so letting the number
                       size itself made the gap between them depend on the digit
                       count — 11px next to tap 10, 25px next to tap 4. A fixed
-                      box makes that gap constant, and right-aligned numerals
-                      line up as a column the way the prices do. */}
+                      box makes that gap constant. Left-aligned so the digits
+                      start where the TAP header's glyphs do — right-aligning
+                      them inside this box left the two 27px apart. */}
                   {showTap && beer.tap && (
                     <span
-                      className="font-bold text-primary tabular-nums text-right"
+                      className="font-bold text-primary tabular-nums text-left"
                       style={{ fontSize: TV_TYPE.tap, width: '3.2vh' }}
                     >
                       {beer.tap}
@@ -98,11 +131,12 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                   )}
                   {/* Sized to the beer name's line box, not larger. At 6vh the
                       glass measured 50.6px against a 31.6px name line — 1.6×
-                      the text it sits beside — so it overhung 8.3px above and
-                      10.7px below and read as floating across the row rather
-                      than sitting on it. 4vh matches the line. */}
+                      the text beside it — so it overhung and read as floating
+                      across the row. Height is back up for presence, but only
+                      the height: a glass is taller than it is wide, so growing
+                      it vertically costs the beer name no column width. */}
                   {showGlass && (
-                    <div style={{ height: '4vh', width: '4vh' }}>
+                    <div style={{ height: '5.5vh', width: '4vh' }}>
                       <GlassIcon className="w-full h-full text-muted-foreground/50 group-hover:text-muted-foreground/70 transition-colors" />
                     </div>
                   )}
@@ -138,23 +172,11 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                       key={i}
                       variant="outline"
                       className="flex-shrink-0 self-center"
-                      style={{ fontSize: TV_TYPE.badge }}
+                      style={{ fontSize: TV_TYPE.badge, ...TV_BADGE_STYLE }}
                     >
                       {option}
                     </Badge>
                   ))}
-                {/* Inline, so it reads as a fact about this beer. It used to be
-                    absolutely positioned above the price group, where it looked
-                    like an entry in the Full column. */}
-                {badgeLabel && (
-                  <Badge
-                    variant="default"
-                    className="flex-shrink-0 self-center"
-                    style={{ fontSize: TV_TYPE.badge }}
-                  >
-                    {badgeLabel}
-                  </Badge>
-                )}
                 {beer.topBeerDrops && (
                   <TopBeerDropsLink
                     url={beer.topBeerDrops}
