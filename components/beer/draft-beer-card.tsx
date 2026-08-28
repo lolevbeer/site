@@ -65,6 +65,38 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
         <div
           className={`relative overflow-hidden transition-colors duration-200 cursor-pointer hover:bg-secondary/50 h-full bg-background ${className}`}
         >
+          {/* Out of flow, in the empty band under the row's own content.
+              This badge cannot be laid out inline: on the name line it was the
+              third fixed-width item competing with the beer name, and the name
+              is what lost — "Peregrine Falcon" truncated because the name, the
+              style and this badge together needed ~53.6vh of a 44.8vh line.
+              Before that it was absolutely positioned directly above the price
+              group, where it read as a value in the Full column. Anchored to
+              the bottom of the row instead: every row measured at least 4.35vh
+              of free space there against this badge's ~2.4vh, it is clear of
+              the prices on the line above, and being absolute it can never push
+              anything again.
+
+              Anchored to the top, not the bottom. A row's track is much taller
+              than its text — 15.8vh against about 9vh of content — so a
+              bottom-anchored badge floated into the gap and read as belonging
+              to the next beer down. One name-line height below the top puts it
+              directly under the Full price, inside its own row's block of
+              text, and clear of the prices on the line above. */}
+          {badgeLabel && (
+            <Badge
+              variant="default"
+              className="absolute z-10"
+              style={{
+                fontSize: TV_TYPE.badge,
+                ...TV_BADGE_STYLE,
+                right: 0,
+                top: '7.4vh',
+              }}
+            >
+              {badgeLabel}
+            </Badge>
+          )}
           {/* `items-baseline`, not `items-center` and not `items-start`.
               Centring let each cell float to its own position inside the
               row's equal-height track — a beer with four lines of hops pushed
@@ -145,18 +177,6 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                       {option}
                     </Badge>
                   ))}
-                {/* Inline, so it reads as a fact about this beer. It used to be
-                    absolutely positioned above the price group, where it looked
-                    like an entry in the Full column. */}
-                {badgeLabel && (
-                  <Badge
-                    variant="default"
-                    className="flex-shrink-0 self-center"
-                    style={{ fontSize: TV_TYPE.badge, ...TV_BADGE_STYLE }}
-                  >
-                    {badgeLabel}
-                  </Badge>
-                )}
                 {beer.topBeerDrops && (
                   <TopBeerDropsLink
                     url={beer.topBeerDrops}
