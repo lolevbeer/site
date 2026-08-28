@@ -61,6 +61,8 @@ function convertPayloadBeer(payloadBeer: PayloadBeer): Beer {
     untappdRatingCount: payloadBeer.untappdRatingCount ?? undefined,
     recipe: payloadBeer.recipe || undefined,
     hops: payloadBeer.hops || undefined,
+    collab: payloadBeer.collab || false,
+    collabBrewery: payloadBeer.collabBrewery || undefined,
     topBeerDrops: payloadBeer.topBeerDrops || undefined,
     pricing: {
       draftPrice: payloadBeer.draftPrice,

@@ -284,6 +284,7 @@ const MENU_POPULATE = {
     hideFromSite: true,
     justReleased: true,
     collab: true,
+    collabBrewery: true,
     createdAt: true,
     updatedAt: true,
     untappdRating: true,
@@ -291,6 +292,7 @@ const MENU_POPULATE = {
   },
   products: {
     name: true,
+    category: true,
     options: true,
     abv: true,
     description: true,

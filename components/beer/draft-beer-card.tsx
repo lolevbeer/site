@@ -53,202 +53,149 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
   const beerSlug = getBeerSlug(beer)
   const GlassIcon = getGlassIcon(beer.glass)
   const badgeLabel = showJustReleased ? getBeerBadgeLabel(beer) : null
+  const isProduct = 'isProduct' in beer && beer.isProduct === true
 
   // Fullscreen mode uses viewport-relative sizing
   if (showTapAndPrice) {
+    const showRatingInRail = showRating && !isProduct
+    const showTapRail = showTap || showGlass || showRatingInRail
+    const collabInDetails = Boolean(beer.collab && badgeLabel && (beer.description || beer.hops))
+    const titleBadgeLabel = collabInDetails ? null : badgeLabel
+    const collabDetailBadge = collabInDetails ? (
+      <Badge
+        variant="default"
+        className="align-[0.08em]"
+        style={{
+          marginRight: '0.7vh',
+          padding: '0.15vh 0.65vh',
+          borderRadius: '99vh',
+          fontSize: '1.45vh',
+        }}
+      >
+        {badgeLabel}
+      </Badge>
+    ) : null
+    const gridTemplateColumns = [
+      showTapRail && (showGlass ? TV_COL.tap : '5vh'),
+      'minmax(0, 1fr)',
+      showAbv && TV_COL.abv,
+      showAbv && TV_COL.price,
+      TV_COL.price,
+    ]
+      .filter(Boolean)
+      .join(' ')
+
     return (
       <BeerLinkWrapper
         href={`/beer/${beerSlug}`}
         label={beer.name}
         hidden={beer.availability.hideFromSite}
+        className="group block"
       >
         <div
-          className={`relative overflow-hidden transition-colors duration-200 cursor-pointer hover:bg-secondary/50 h-full bg-background ${className}`}
+          className={`relative overflow-hidden transition-colors duration-200 cursor-pointer hover:bg-secondary/50 bg-background ${className}`}
         >
-          {/* Out of flow, in the empty band under the row's own content.
-              This badge cannot be laid out inline: on the name line it was the
-              third fixed-width item competing with the beer name, and the name
-              is what lost — "Peregrine Falcon" truncated because the name, the
-              style and this badge together needed ~53.6vh of a 44.8vh line.
-              Before that it was absolutely positioned directly above the price
-              group, where it read as a value in the Full column. Anchored to
-              the bottom of the row instead: every row measured at least 4.35vh
-              of free space there against this badge's ~2.4vh, it is clear of
-              the prices on the line above, and being absolute it can never push
-              anything again.
-
-              Anchored to the top, not the bottom. A row's track is much taller
-              than its text — 15.8vh against about 9vh of content — so a
-              bottom-anchored badge floated into the gap and read as belonging
-              to the next beer down. One name-line height below the top puts it
-              directly under the Full price, inside its own row's block of
-              text, and clear of the prices on the line above. */}
-          {badgeLabel && (
-            <Badge
-              variant="default"
-              className="absolute z-10"
-              style={{
-                fontSize: TV_TYPE.badge,
-                ...TV_BADGE_STYLE,
-                right: 0,
-                top: '7.4vh',
-              }}
-            >
-              {badgeLabel}
-            </Badge>
-          )}
-          {/* `items-baseline`, not `items-center` and not `items-start`.
-              Centring let each cell float to its own position inside the
-              row's equal-height track — a beer with four lines of hops pushed
-              its name up while the price stayed centred, 63px apart. Aligning
-              to the top fixed that but left the text ragged, because these
-              cells are set at different sizes: the name at 3vh, ABV at 2.8vh,
-              the prices at 3.8vh. Sharing a top edge puts three different
-              baselines on one row. Sharing a baseline is what actually reads
-              as aligned. */}
-          <div className="flex items-baseline h-full" style={{ gap: '1vh', paddingTop: '1.5vh' }}>
-            {/* Tap Number, Glass Icon, and Rating */}
-            {(showTap || showGlass) && (
+          {/* The first grid row keeps all headline values on one baseline. The
+              copy then clears beneath ABV and both price columns, giving long
+              descriptions and hop lists the width those otherwise-empty lower
+              cells were wasting. */}
+          <div
+            className="grid items-baseline"
+            style={{ gridTemplateColumns, columnGap: '1vh', paddingBlock: '0.5vh' }}
+          >
+            {/* The tap number sits inside the glass; the rating is the second
+                centered unit in the Tap rail, between the glass and beer. */}
+            {showTapRail && (
               <div
-                className="flex-shrink-0 flex flex-col items-center"
-                style={{ width: showGlass ? TV_COL.tap : '3vh', gap: '0.3vh' }}
+                className="flex items-center justify-between self-center"
+                style={{ gridRow: '1 / span 2' }}
               >
-                <div className="flex items-center justify-between w-full">
-                  {/* Fixed width, right-aligned. The tap number and the glass
-                      sit at opposite ends of this column, so letting the number
-                      size itself made the gap between them depend on the digit
-                      count — 11px next to tap 10, 25px next to tap 4. A fixed
-                      box makes that gap constant. Left-aligned so the digits
-                      start where the TAP header's glyphs do — right-aligning
-                      them inside this box left the two 27px apart. */}
-                  {showTap && beer.tap && (
-                    <span
-                      className="font-bold text-primary tabular-nums text-left"
-                      style={{ fontSize: TV_TYPE.tap, width: '3.2vh' }}
-                    >
-                      {beer.tap}
-                    </span>
-                  )}
-                  {/* Sized to the beer name's line box, not larger. At 6vh the
-                      glass measured 50.6px against a 31.6px name line — 1.6×
-                      the text beside it — so it overhung and read as floating
-                      across the row. Height is back up for presence, but only
-                      the height: a glass is taller than it is wide, so growing
-                      it vertically costs the beer name no column width. */}
-                  {showGlass && (
-                    <div style={{ height: '5.5vh', width: '4vh' }}>
+                {(showTap || showGlass) && (
+                  <div className="relative flex-shrink-0" style={{ height: '7vh', width: '5vh' }}>
+                    {showGlass && (
                       <GlassIcon className="w-full h-full text-muted-foreground/50 group-hover:text-muted-foreground/70 transition-colors" />
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Beer Info - Main content */}
-            <div className="flex-grow min-w-0 flex flex-col" style={{ gap: '0.3vh' }}>
-              {/* No `flex-wrap`. A long beer name used to push the Collab /
-                  Just Released badge onto a second line, which changed the
-                  row's height and left the badge floating under the name with
-                  nothing beside it. The name truncates instead: it is the one
-                  element on this line that can lose characters and still be
-                  read, and the badge belongs beside the name, where it says
-                  something about the beer. `min-w-0` is what lets truncation
-                  actually happen inside a flex row. */}
-              <div className="flex items-baseline flex-nowrap" style={{ gap: '1vh' }}>
-                <h3
-                  className="min-w-0 font-bold leading-tight truncate transition-colors duration-500"
-                  style={{ fontSize: '3vh', color: accentColor }}
-                >
-                  {beer.name}
-                </h3>
-                {/* Outlined Badge, the same treatment the style gets on the
-                    homepage draft rows and cans cards, so a beer looks like the
-                    same beer on every surface. `self-center` because the row is
-                    baseline-aligned and a bordered pill has no text baseline to
-                    share. */}
-                {beer.type &&
-                  beer.type.split(', ').map((option, i) => (
-                    <Badge
-                      key={i}
-                      variant="outline"
-                      className="flex-shrink-0 self-center"
-                      style={{ fontSize: TV_TYPE.badge, ...TV_BADGE_STYLE }}
-                    >
-                      {option}
-                    </Badge>
-                  ))}
-                {beer.topBeerDrops && (
-                  <TopBeerDropsLink
-                    url={beer.topBeerDrops}
-                    beerName={beer.name}
-                    className="flex-shrink-0 self-center text-foreground hover:text-primary transition-colors"
-                    style={{ height: '3.2vh', width: '3.2vh' }}
+                    )}
+                    {showTap && beer.tap && (
+                      <span
+                        className="absolute inset-0 z-10 flex items-center justify-center text-center font-bold text-primary tabular-nums"
+                        style={{ fontSize: TV_TYPE.tap, lineHeight: 1 }}
+                      >
+                        {beer.tap}
+                      </span>
+                    )}
+                  </div>
+                )}
+                {showRatingInRail && (
+                  <UntappdRating
+                    rating={beer.untappdRating}
+                    className="flex flex-col items-center justify-center leading-none"
+                    style={{ width: '4vh', fontSize: TV_TYPE.body, gap: '0.2vh' }}
+                    iconStyle={{
+                      height: '2.4vh',
+                      width: '2.4vh',
+                      marginRight: 0,
+                      verticalAlign: 'baseline',
+                    }}
                   />
                 )}
               </div>
-              <div className="flex flex-col" style={{ gap: '0.2vh' }}>
-                {/* One line, not two. A two-line description pushed the
-                    rating-and-hops line down by a whole line on some rows and
-                    not others, so that line sat at a different height as you
-                    read down the column. */}
-                {beer.description && (
-                  <p
-                    className="text-foreground-muted line-clamp-1 leading-tight"
-                    style={{ fontSize: TV_TYPE.body }}
+            )}
+
+            {/* Metadata wraps as complete units inside the Beer column. */}
+            <div
+              className="flex min-w-0 flex-wrap items-baseline"
+              style={{ columnGap: '1vh', rowGap: '0.4vh' }}
+            >
+              <h3
+                className="max-w-full break-words font-bold leading-tight transition-colors duration-500"
+                style={{ fontSize: '3vh', color: accentColor }}
+              >
+                {beer.name}
+              </h3>
+              {beer.type &&
+                beer.type.split(', ').map((option, i) => (
+                  <Badge
+                    key={i}
+                    variant="outline"
+                    className="flex-shrink-0 self-center"
+                    style={{ fontSize: TV_TYPE.badge, ...TV_BADGE_STYLE }}
                   >
-                    {beer.description}
-                  </p>
-                )}
-                {/* The rating leads this line and the hops truncate after it.
-                    It used to trail a hop list that could run four lines, so it
-                    wrapped to an unpredictable spot and read as part of the hop
-                    text. No `fallbackText`: "Needs Reviews" is our language, not
-                    a customer's, and it was showing on the public boards. */}
-                <div
-                  className="flex items-baseline text-foreground-muted leading-tight"
-                  style={{ fontSize: TV_TYPE.body, gap: '0.8vh' }}
+                    {option}
+                  </Badge>
+                ))}
+              {titleBadgeLabel && (
+                <Badge
+                  variant="default"
+                  className="flex-shrink-0 self-center"
+                  style={{ fontSize: TV_TYPE.badge, ...TV_BADGE_STYLE }}
                 >
-                  {/* Slot is rendered even when there is no rating — see
-                      TV_COL.rating for why it stays reserved. */}
-                  {showRating && !(beer as unknown as { isProduct?: boolean }).isProduct && (
-                    <span className="flex-shrink-0" style={{ width: TV_COL.rating }}>
-                      {/* No iconStyle override: the icon sizes itself from this
-                          font size, so it stays proportional to the digits at
-                          any board scale rather than being pinned to 2vh. */}
-                      <UntappdRating
-                        rating={beer.untappdRating}
-                        style={{ fontSize: TV_TYPE.body }}
-                      />
-                    </span>
-                  )}
-                  {beer.hops && (
-                    <span className="min-w-0 truncate">
-                      <span className="font-medium">Hops:</span> {beer.hops}
-                    </span>
-                  )}
-                </div>
-              </div>
+                  {titleBadgeLabel}
+                </Badge>
+              )}
+              {beer.topBeerDrops && (
+                <TopBeerDropsLink
+                  url={beer.topBeerDrops}
+                  beerName={beer.name}
+                  className="flex-shrink-0 self-center text-foreground transition-colors hover:text-primary"
+                  style={{ height: '3.2vh', width: '3.2vh' }}
+                />
+              )}
             </div>
 
-            {/* ABV and Price - Right aligned. The badge is no longer absolutely
-                positioned above this group (it now sits inline beside the beer
-                name), so nothing overlaps the price columns or reads as a value
-                in the Full column. */}
-            <div className="flex-shrink-0 flex items-baseline" style={{ gap: '2vh' }}>
-              {showAbv && (
-                <div className="text-right" style={{ width: TV_COL.abv }}>
-                  {beer.abv && (
-                    <div
-                      className="font-bold text-foreground-muted tabular-nums"
-                      style={{ fontSize: '2.8vh' }}
-                    >
-                      {beer.abv}%
-                    </div>
-                  )}
-                </div>
-              )}
-              {/* Half pour price - always render column for alignment */}
-              <div className="text-right" style={{ width: TV_COL.price }}>
+            {showAbv && (
+              <div className="text-right">
+                {beer.abv && (
+                  <div
+                    className="font-bold text-foreground-muted tabular-nums"
+                    style={{ fontSize: '2.8vh' }}
+                  >
+                    {beer.abv}%
+                  </div>
+                )}
+              </div>
+            )}
+            {showAbv && (
+              <div className="text-right">
                 {beer.pricing?.halfPour && (
                   <div
                     className="font-bold tabular-nums transition-colors duration-500"
@@ -258,18 +205,53 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                   </div>
                 )}
               </div>
-              {/* Full price - always render column, show value if not halfPourOnly */}
-              <div className="text-right" style={{ width: TV_COL.price }}>
-                {!beer.pricing?.halfPourOnly && beer.pricing?.draftPrice && (
+            )}
+            <div className="text-right">
+              {!beer.pricing?.halfPourOnly && beer.pricing?.draftPrice && (
+                <div
+                  className="font-bold tabular-nums transition-colors duration-500"
+                  style={{ fontSize: '3.8vh', color: accentColor }}
+                >
+                  ${beer.pricing.draftPrice}
+                </div>
+              )}
+            </div>
+
+            {(beer.description || beer.hops) && (
+              <div
+                className="flex min-w-0 flex-col"
+                style={{
+                  gridColumn: showTapRail ? '2 / -1' : '1 / -1',
+                  gap: '0.2vh',
+                  marginTop: '0.2vh',
+                }}
+              >
+                {beer.description && (
                   <div
-                    className="font-bold tabular-nums transition-colors duration-500"
-                    style={{ fontSize: '3.8vh', color: accentColor }}
+                    className="whitespace-normal break-words text-foreground-muted leading-tight"
+                    style={{ fontSize: TV_TYPE.body }}
                   >
-                    ${beer.pricing.draftPrice}
+                    {collabDetailBadge}
+                    {beer.description}
+                  </div>
+                )}
+                {beer.hops && (
+                  <div
+                    className="min-w-0 whitespace-normal break-words text-foreground-muted leading-tight"
+                    style={{ fontSize: TV_TYPE.body }}
+                  >
+                    {!beer.description && collabDetailBadge}
+                    <span
+                      className="font-bold uppercase tracking-[0.08em] text-foreground-muted"
+                      style={{ fontSize: '1.45vh', marginRight: '0.6vh' }}
+                    >
+                      Hops
+                    </span>
+                    {beer.hops}
                   </div>
                 )}
               </div>
-            </div>
+            )}
           </div>
         </div>
       </BeerLinkWrapper>
@@ -316,7 +298,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                   className="h-6 w-6 flex-shrink-0 text-foreground hover:text-primary transition-colors"
                 />
               )}
-              {showRating && !(beer as unknown as { isProduct?: boolean }).isProduct && (
+              {showRating && !isProduct && (
                 <UntappdRating
                   rating={beer.untappdRating}
                   className="flex-shrink-0"

@@ -77,16 +77,12 @@ export const TV_SAFE_Y = '3vh'
  * line then started at a slightly different x down the column.
  */
 export const TV_COL = {
-  /** Holds the tap number and the glass icon. Sized so the two read as one
-   *  unit: at 10vh the pair was pushed to opposite ends of the column and the
-   *  gap between them measured 28–42px, varying with the digit count. */
-  tap: '8vh',
+  /** Holds a 5vh glass/tap overlay and a 4vh Untappd stack with a consistent
+   *  1vh gap between them. */
+  tap: '10vh',
   abv: '7vh',
   /** Wide enough for "$11" at the price type size, and no wider. It was 8vh,
    *  which left the beer column ~8px short of fitting the longest beer name;
    *  that space is worth more to the name than to padding beside a price. */
   price: '7vh',
-  /** Reserved for the Untappd rating, so the hop list starts at the same x
-   *  whether or not a beer has been scored yet. */
-  rating: '7vh',
 } as const

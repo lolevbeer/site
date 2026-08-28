@@ -12,7 +12,11 @@ import { getGlassIcon } from '@/lib/utils/beer-icons'
 import { useLocationContext } from '@/components/location/location-provider'
 import { DraftBeerCard } from '@/components/beer/draft-beer-card'
 import { BeerLinkWrapper } from '@/components/beer/beer-link-wrapper'
-import { useAnimatedList, getAnimationClass } from '@/lib/hooks/use-animated-list'
+import {
+  useAnimatedList,
+  getAnimationClass,
+  type AnimatedItem,
+} from '@/lib/hooks/use-animated-list'
 import { useAuth } from '@/lib/hooks/use-auth'
 import { getMediaUrl, canSpriteAnimation } from '@/lib/utils/media-utils'
 import { extractBeerFromMenuItem, extractProductFromMenuItem } from '@/lib/utils/menu-item-utils'
@@ -24,6 +28,7 @@ import { Logo } from '@/components/ui/logo'
 import { TopBeerDropsLink } from '@/components/beer/top-beer-drops-link'
 import { UntappdRating } from '@/components/beer/untappd-rating'
 import { TV_TYPE, TV_SAFE_X, TV_SAFE_Y, TV_COL, TV_LOGO_CLASS } from '@/lib/config/tv-display'
+import { OTHER_MENU_CATEGORIES, type OtherMenuCategory } from '@/lib/config/other-menu'
 import { LINES_OVERDUE_DAYS } from '@/lib/utils/lines-cleaned'
 import { parsePrice } from '@/lib/utils/formatters'
 
@@ -55,6 +60,10 @@ interface MenuItem {
   variant: string
   name: string
   type: string
+  /** Product choices shown as quiet text on Other Things boards. */
+  options?: string[]
+  /** Optional grouping for Other Things products. */
+  otherCategory?: OtherMenuCategory
   abv?: string
   description: string
   glutenFree: boolean
@@ -73,6 +82,8 @@ interface MenuItem {
   guestTap?: boolean
   /** Collaboration brew */
   collab?: boolean
+  /** Other brewery named in the collaboration badge */
+  collabBrewery?: string
   recipe?: number
   hops?: string
   tap?: number
@@ -106,28 +117,212 @@ interface MenuItem {
 function ColumnHeader({ isOtherMenu }: { isOtherMenu: boolean }) {
   return (
     <div
-      className="flex items-center border-b-2 border-border uppercase tracking-wider text-foreground font-bold"
-      style={{ gap: '1vh', marginBottom: '0.5vh', fontSize: TV_TYPE.label }}
+      className="grid items-center bg-[#1d1d1f]"
+      style={{
+        gridTemplateColumns: isOtherMenu
+          ? `minmax(0, 1fr) ${TV_COL.price}`
+          : `${TV_COL.tap} minmax(0, 1fr) ${TV_COL.abv} ${TV_COL.price} ${TV_COL.price}`,
+        columnGap: '1vh',
+        paddingBlock: '0.65vh',
+        borderRadius: '0.35vh',
+      }}
     >
-      {!isOtherMenu && <div style={{ width: TV_COL.tap }}>Tap</div>}
-      <div className="flex-grow">{isOtherMenu ? 'Item' : 'Beer'}</div>
-      {/* Right-aligned, matching the rows. These columns hold numbers of
-          different widths — 8% next to 10.1%, $9 next to $11 — and centring
-          them put the % signs and the digits at a different x on every row. */}
-      <div className="flex" style={{ gap: '2vh' }}>
-        {!isOtherMenu && (
-          <div className="text-right" style={{ width: TV_COL.abv }}>
-            ABV
-          </div>
-        )}
-        {!isOtherMenu && (
-          <div className="text-right" style={{ width: TV_COL.price }}>
-            Half
-          </div>
-        )}
-        <div className="text-right" style={{ width: TV_COL.price }}>
-          {isOtherMenu ? 'Price' : 'Full'}
+      {!isOtherMenu && <div aria-hidden="true" />}
+      <div style={isOtherMenu ? { paddingLeft: '1.2vh' } : undefined}>
+        {isOtherMenu ? 'Item' : 'Beer'}
+      </div>
+      {!isOtherMenu && <div className="text-center">ABV</div>}
+      {!isOtherMenu && <div className="text-center">Half</div>}
+      <div className="text-center">{isOtherMenu ? 'Price' : 'Full'}</div>
+    </div>
+  )
+}
+
+const OTHER_CATEGORY_LABELS = new Map<string, string>(
+  OTHER_MENU_CATEGORIES.map(({ value, label }) => [value, label]),
+)
+const OTHER_CATEGORY_ORDER: string[] = OTHER_MENU_CATEGORIES.map(({ value }) => value)
+const UNCATEGORIZED = 'uncategorized'
+const SOLD_OUT_OPTION = /^sold\s+(?:out|aht)!?$/i
+const TV_COLUMN_GAP = '2.5vw'
+
+interface OtherMenuEntry extends AnimatedItem<MenuItem> {
+  accentColor?: string
+}
+
+interface OtherMenuGroup {
+  key: string
+  label?: string
+  entries: OtherMenuEntry[]
+}
+
+/**
+ * Preserve the menu's authored order inside each category. Categories are
+ * optional: a wholly uncategorized board stays a single clean list, while a
+ * partially categorized board gathers the remainder under "Other".
+ */
+function groupOtherMenuItems(entries: OtherMenuEntry[]): OtherMenuGroup[] {
+  if (!entries.some(({ item }) => item.otherCategory)) {
+    return [{ key: 'all', entries }]
+  }
+
+  const grouped = new Map<string, OtherMenuEntry[]>()
+  for (const entry of entries) {
+    const key = entry.item.otherCategory || UNCATEGORIZED
+    const group = grouped.get(key)
+    if (group) group.push(entry)
+    else grouped.set(key, [entry])
+  }
+
+  const unknownCategories = Array.from(grouped.keys()).filter(
+    (key) => key !== UNCATEGORIZED && !OTHER_CATEGORY_LABELS.has(key),
+  )
+  const keys = [
+    ...OTHER_CATEGORY_ORDER.filter((key) => grouped.has(key)),
+    ...unknownCategories,
+    ...(grouped.has(UNCATEGORIZED) ? [UNCATEGORIZED] : []),
+  ]
+
+  return keys.map((key) => ({
+    key,
+    label:
+      key === UNCATEGORIZED ? 'Other' : OTHER_CATEGORY_LABELS.get(key) || key.replaceAll('-', ' '),
+    entries: grouped.get(key) || [],
+  }))
+}
+
+/** Keep category blocks intact while balancing their item counts across the TV. */
+function distributeOtherGroups(groups: OtherMenuGroup[]): OtherMenuGroup[][] {
+  if (groups.length === 1) {
+    const [group] = groups
+    const midpoint = Math.ceil(group.entries.length / 2)
+    const rightEntries = group.entries.slice(midpoint)
+    return [
+      [{ ...group, entries: group.entries.slice(0, midpoint) }],
+      rightEntries.length > 0 ? [{ ...group, entries: rightEntries }] : [],
+    ]
+  }
+
+  const columns: OtherMenuGroup[][] = [[], []]
+  const columnSizes = [0, 0]
+  for (const group of groups) {
+    const columnIndex = columnSizes[0] <= columnSizes[1] ? 0 : 1
+    columns[columnIndex].push(group)
+    columnSizes[columnIndex] += group.entries.length
+  }
+  return columns
+}
+
+function OtherThingRow({ entry, animated }: { entry: OtherMenuEntry; animated: boolean }) {
+  const { item, state, accentColor } = entry
+  const options = item.options?.filter((option) => !SOLD_OUT_OPTION.test(option))
+  const soldOut = options?.length !== item.options?.length
+  const itemColor = soldOut ? undefined : accentColor
+
+  return (
+    <div
+      className={`grid min-w-0 items-baseline ${animated ? getAnimationClass(state) : ''}`}
+      style={{
+        gridTemplateColumns: `minmax(0, 1fr) ${TV_COL.price}`,
+        columnGap: '1vh',
+        paddingInline: '1.2vh',
+      }}
+      role="listitem"
+    >
+      <div className="min-w-0">
+        <div className="flex min-w-0 flex-wrap items-baseline gap-x-[1vh]">
+          <h4
+            className={`break-words font-bold leading-tight transition-colors duration-500 ${soldOut ? 'text-foreground-muted' : ''}`}
+            style={{ fontSize: '2.8vh', color: itemColor }}
+          >
+            {item.name}
+          </h4>
+          {soldOut && (
+            <span
+              className="font-bold uppercase tracking-[0.12em] text-foreground-muted"
+              style={{ fontSize: '1.15vh' }}
+            >
+              Sold aht
+            </span>
+          )}
         </div>
+        {options && options.length > 0 && (
+          <p
+            className="break-words text-foreground-muted"
+            style={{ fontSize: TV_TYPE.body, lineHeight: 1.35 }}
+          >
+            {options.join(' · ')}
+          </p>
+        )}
+      </div>
+      <div
+        className={`text-right font-bold tabular-nums transition-colors duration-500 ${soldOut ? 'text-foreground-muted line-through' : ''}`}
+        style={{ fontSize: '3.4vh', color: itemColor }}
+      >
+        {item.pricing.draftPrice != null && `$${item.pricing.draftPrice}`}
+      </div>
+    </div>
+  )
+}
+
+function OtherThingsBoard({
+  items,
+  animated,
+  itemColors,
+}: {
+  items: AnimatedItem<MenuItem>[]
+  animated: boolean
+  itemColors?: string[]
+}) {
+  const entries = items.map((entry, index) => ({
+    ...entry,
+    accentColor: itemColors?.[index],
+  }))
+  const columns = distributeOtherGroups(groupOtherMenuItems(entries))
+
+  return (
+    <div className="flex h-full min-w-0 max-w-none flex-col" data-other-things-board>
+      <div
+        className="grid flex-shrink-0 grid-cols-2 font-bold uppercase tracking-wider text-[#f5f5f7]"
+        style={{ columnGap: TV_COLUMN_GAP, marginBottom: '1.4vh', fontSize: TV_TYPE.label }}
+      >
+        {columns.map((_, columnIndex) => (
+          <ColumnHeader key={columnIndex} isOtherMenu />
+        ))}
+      </div>
+
+      <div className="grid min-h-0 min-w-0 flex-1 grid-cols-2" style={{ columnGap: TV_COLUMN_GAP }}>
+        {columns.map((groups, columnIndex) => (
+          <div
+            key={columnIndex}
+            className="flex min-h-0 min-w-0 flex-col"
+            style={{ gap: '2.2vh' }}
+            role="list"
+          >
+            {groups.map((group) => (
+              <section
+                key={group.key}
+                className="flex min-w-0 flex-col"
+                style={{ gap: '1vh' }}
+                data-other-category={group.key}
+              >
+                {group.label && (
+                  <h3
+                    className="border-b border-border font-bold uppercase tracking-[0.14em] text-foreground-muted"
+                    style={{ paddingBottom: '0.6vh', fontSize: '1.35vh' }}
+                  >
+                    {group.label}
+                  </h3>
+                )}
+                <div className="flex min-w-0 flex-col" style={{ gap: '1.35vh' }}>
+                  {group.entries.map((entry) => (
+                    <OtherThingRow key={entry.key} entry={entry} animated={animated} />
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        ))}
       </div>
     </div>
   )
@@ -190,14 +385,16 @@ function convertMenuItems(menuData: Menu, labelVideos = false): MenuItem[] {
       if (!beer) {
         const prod = extractProductFromMenuItem(item)
         if (prod) {
+          const productOptions = prod.options ?? []
+
           return {
             variant: String(prod.id || `product-${index}`),
             name: String(prod.name || 'Unknown Product'),
-            type: Array.isArray(prod.options)
-              ? prod.options.join(', ')
-              : String(prod.options || ''),
+            type: productOptions.join(', '),
+            options: productOptions,
+            otherCategory: prod.category || undefined,
             abv: prod.abv ? String(prod.abv) : '',
-            description: String((prod as { description?: string }).description || ''),
+            description: String(prod.description || ''),
             glutenFree: false,
             imageUrl: undefined,
             glass: 'pint',
@@ -215,8 +412,8 @@ function convertMenuItems(menuData: Menu, labelVideos = false): MenuItem[] {
             style: undefined,
             locationSlug: locationSlug ? String(locationSlug) : undefined,
             justReleased: false,
-            guestTap: (prod as { guestTap?: boolean }).guestTap || false,
-            collab: (prod as { collab?: boolean }).collab || false,
+            guestTap: prod.guestTap || false,
+            collab: prod.collab || false,
             createdAt: prod.createdAt,
             isProduct: true,
           }
@@ -259,9 +456,7 @@ function convertMenuItems(menuData: Menu, labelVideos = false): MenuItem[] {
           : item.price
             ? String(item.price)
             : undefined,
-        bottlePrice: (beer as { bottlePrice?: number }).bottlePrice
-          ? String((beer as { bottlePrice?: number }).bottlePrice)
-          : undefined,
+        bottlePrice: beer.bottlePrice ? String(beer.bottlePrice) : undefined,
         recipe: beer.recipe || 0,
         hops: beer.hops ? String(beer.hops) : undefined,
         tap: index + 1, // 1-based tap/draft number from position in menu
@@ -277,8 +472,9 @@ function convertMenuItems(menuData: Menu, labelVideos = false): MenuItem[] {
         style: styleName, // Pass as string, not object
         locationSlug: locationSlug ? String(locationSlug) : undefined,
         // Store these for badge logic (collab overrides "just released")
-        justReleased: (beer as { justReleased?: boolean }).justReleased || false,
-        collab: (beer as { collab?: boolean }).collab || false,
+        justReleased: beer.justReleased || false,
+        collab: beer.collab || false,
+        collabBrewery: beer.collabBrewery || undefined,
         createdAt: beer.createdAt,
         untappdRating: beer.untappdRating ?? null,
         topBeerDrops: beer.topBeerDrops || undefined,
@@ -659,68 +855,63 @@ function FeaturedMenu({
         <div className="w-full flex-1 flex flex-col" style={{ padding: `0 0 ${TV_SAFE_Y} 0` }}>
           <div className="flex-1 overflow-y-auto" style={{ padding: `0 ${TV_SAFE_X}` }}>
             {itemsToRender.length > 0 ? (
-              menuType === 'draft' ? (
+              menu.type === 'other' ? (
+                <OtherThingsBoard
+                  items={itemsToRender}
+                  animated={animated}
+                  itemColors={itemColors}
+                />
+              ) : menuType === 'draft' ? (
                 // Split items into two columns: 1-6 left, 7-12 right (column-first ordering)
                 (() => {
                   const midpoint = Math.ceil(itemsToRender.length / 2)
-                  const leftColumn = itemsToRender.slice(0, midpoint)
-                  const rightColumn = itemsToRender.slice(midpoint)
-
-                  const isOtherMenu = menu?.type === 'other'
+                  const columns = [itemsToRender.slice(0, midpoint), itemsToRender.slice(midpoint)]
 
                   return (
                     <div
-                      className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] max-w-none h-full"
-                      style={{ gap: '2vw' }}
+                      className="flex h-full min-w-0 max-w-none flex-col"
                       suppressHydrationWarning
                     >
-                      <div className="flex flex-col h-full min-w-0">
-                        <ColumnHeader isOtherMenu={isOtherMenu} />
-                        <div className="flex flex-col flex-1 min-w-0">
-                          {leftColumn.map(({ item, state, key }, idx) => (
-                            <div
-                              key={key}
-                              className={`flex-1 min-w-0 ${animated ? getAnimationClass(state) : ''}`}
-                            >
-                              <DraftBeerCard
-                                beer={item as unknown as Beer}
-                                showLocation={false}
-                                showTapAndPrice
-                                showGlass={!isOtherMenu}
-                                showTap={!isOtherMenu}
-                                showAbv={!isOtherMenu}
-                                showJustReleased={!isOtherMenu}
-                                showRating={!isOtherMenu}
-                                accentColor={itemColors?.[idx]}
-                              />
-                            </div>
-                          ))}
-                        </div>
+                      <div
+                        className="grid flex-shrink-0 grid-cols-2 font-bold uppercase tracking-wider text-[#f5f5f7]"
+                        style={{
+                          columnGap: TV_COLUMN_GAP,
+                          marginBottom: '0.8vh',
+                          fontSize: TV_TYPE.label,
+                        }}
+                      >
+                        {columns.map((_, columnIndex) => (
+                          <ColumnHeader key={columnIndex} isOtherMenu={false} />
+                        ))}
                       </div>
-                      {/* Vertical divider */}
-                      <div className="hidden md:block w-0.5 bg-border" />
-                      <div className="flex flex-col h-full min-w-0">
-                        <ColumnHeader isOtherMenu={isOtherMenu} />
-                        <div className="flex flex-col flex-1 min-w-0">
-                          {rightColumn.map(({ item, state, key }, idx) => (
+                      <div
+                        className="grid min-h-0 min-w-0 flex-1 grid-cols-1 md:grid-cols-2"
+                        style={{ gap: TV_COLUMN_GAP }}
+                      >
+                        {columns.map((items, columnIndex) => (
+                          <div key={columnIndex} className="flex h-full min-w-0 flex-col">
                             <div
-                              key={key}
-                              className={`flex-1 min-w-0 ${animated ? getAnimationClass(state) : ''}`}
+                              className="flex min-h-0 min-w-0 flex-1 flex-col justify-between"
+                              role="list"
                             >
-                              <DraftBeerCard
-                                beer={item as unknown as Beer}
-                                showLocation={false}
-                                showTapAndPrice
-                                showGlass={!isOtherMenu}
-                                showTap={!isOtherMenu}
-                                showAbv={!isOtherMenu}
-                                showJustReleased={!isOtherMenu}
-                                showRating={!isOtherMenu}
-                                accentColor={itemColors?.[midpoint + idx]}
-                              />
+                              {items.map(({ item, state, key }, idx) => (
+                                <div
+                                  key={key}
+                                  className={`min-w-0 flex-none ${animated ? getAnimationClass(state) : ''}`}
+                                  role="listitem"
+                                >
+                                  <DraftBeerCard
+                                    beer={item as unknown as Beer}
+                                    showLocation={false}
+                                    showTapAndPrice
+                                    showRating
+                                    accentColor={itemColors?.[columnIndex * midpoint + idx]}
+                                  />
+                                </div>
+                              ))}
                             </div>
-                          ))}
-                        </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )

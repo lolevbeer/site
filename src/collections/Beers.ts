@@ -344,6 +344,16 @@ export const Beers: CollectionConfig = {
       },
     },
     {
+      name: 'collabBrewery',
+      label: 'Collaborating Brewery',
+      type: 'text',
+      admin: {
+        position: 'sidebar',
+        condition: (data) => data?.collab === true,
+        description: 'Brewery name shown in the collaboration badge. Leave blank to show “Collab”.',
+      },
+    },
+    {
       type: 'row',
       fields: [
         {
