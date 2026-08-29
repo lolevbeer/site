@@ -616,7 +616,7 @@ export const getWeeklyHoursWithHolidays = cache(
     const monday = new Date(now)
     monday.setDate(now.getDate() + mondayOffset)
     monday.setHours(0, 0, 0, 0)
-    const weekKey = monday.toISOString().split('T')[0]
+    const weekKey = toDateKey(monday)
 
     try {
       return await unstable_cache(
@@ -653,8 +653,8 @@ export const getWeeklyHoursWithHolidays = cache(
           sunday.setDate(currentMonday.getDate() + 6)
 
           // Format dates for query
-          const startDateStr = currentMonday.toISOString().split('T')[0]
-          const endDateStr = sunday.toISOString().split('T')[0]
+          const startDateStr = toDateKey(currentMonday)
+          const endDateStr = toDateKey(sunday)
 
           // Get all holiday hours for this location within this week
           const holidayResult = await payload.find({
@@ -704,7 +704,7 @@ export const getWeeklyHoursWithHolidays = cache(
           for (let i = 0; i < 7; i++) {
             const date = new Date(currentMonday)
             date.setDate(currentMonday.getDate() + i)
-            const dateStr = date.toISOString().split('T')[0]
+            const dateStr = toDateKey(date)
             const dayName = days[i]
 
             // Check if there's a holiday override for this day
@@ -1076,7 +1076,9 @@ const getUpcomingRecurringFood = async (
               const vendorId = recurringFood.schedules[locationId]?.[day]?.[week]
               const vendor = vendorId ? vendorMap[vendorId] : undefined
               if (!vendor) continue
-              const dateKey = date.toISOString().split('T')[0]
+              // toDateKey, not toISOString: slot dates are local-midnight, so
+              // the UTC date can differ and break exclusion matching.
+              const dateKey = toDateKey(date)
               const locationExclusions = recurringFood.exclusions[locationId] || []
               if (locationExclusions.includes(dateKey)) continue
 
