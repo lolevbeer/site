@@ -9,6 +9,32 @@
  */
 
 /**
+ * Expand one "nth weekday of the month" slot across a calendar year.
+ * Months without that occurrence (for example, a fifth Monday) are omitted.
+ */
+export function getDatesForSlotInYear(
+  dayIndex: number,
+  weekOccurrence: number,
+  year: number,
+): Date[] {
+  const dates: Date[] = []
+
+  for (let month = 0; month < 12; month++) {
+    const firstDayOfMonth = new Date(year, month, 1).getDay()
+    let firstOccurrence = dayIndex - firstDayOfMonth + 1
+    if (firstOccurrence <= 0) firstOccurrence += 7
+
+    const targetDay = firstOccurrence + (weekOccurrence - 1) * 7
+    // Noon keeps the local calendar date stable when callers serialize it.
+    const targetDate = new Date(year, month, targetDay, 12)
+
+    if (targetDate.getMonth() === month) dates.push(targetDate)
+  }
+
+  return dates
+}
+
+/**
  * Calculate upcoming occurrences of a specific week/day combo.
  *
  * e.g. `getUpcomingDatesForSlot(2, 2, 6)` -> the next 2nd Tuesdays over the

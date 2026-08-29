@@ -4,9 +4,14 @@ import config from '@/src/payload.config'
 import { LiveEvents } from '@/components/events/live-events'
 import { notFound } from 'next/navigation'
 import { BreweryEvent } from '@/lib/types/event'
-import { getCansMenu, getCombinedUpcomingFood, transformPayloadEventToBreweryEvent, extractVendorInfo } from '@/lib/utils/payload-api'
+import {
+  getCansMenu,
+  getCombinedUpcomingFood,
+  getUpcomingEventsFromPayload,
+  transformPayloadEventToBreweryEvent,
+  extractVendorInfo,
+} from '@/lib/utils/payload-api'
 import type { PayloadMenu } from '@/lib/utils/payload-api'
-import { getTodayMidnightISO } from '@/lib/utils/date'
 
 // ISR: cache for 60s, skip build-time pre-rendering (first request is dynamic, then cached)
 export const revalidate = 60
@@ -57,33 +62,23 @@ const getDataByLocation = cache(async (locationSlug: string): Promise<{
 
   const location = locationResult.docs[0]
 
-  const todayStr = getTodayMidnightISO()
-
   // Fetch events, food (individual + recurring), and cans menu in parallel
-  const [eventsResult, combinedFood, cansMenu] = await Promise.all([
-    payload.find({
-      collection: 'events',
-      where: {
-        visibility: { equals: 'public' },
-        date: { greater_than_equal: todayStr },
-        location: { equals: location.id },
-      },
-      sort: 'date',
-      limit: 20,
-      depth: 1,
-    }),
+  const [eventDocs, combinedFood, cansMenu] = await Promise.all([
+    getUpcomingEventsFromPayload(locationSlug.toLowerCase(), 20),
     getCombinedUpcomingFood(locationSlug.toLowerCase(), 20),
     getCansMenu(locationSlug.toLowerCase()),
   ])
 
-  const events: BreweryEvent[] = eventsResult.docs.map((event) =>
-    transformPayloadEventToBreweryEvent(event, locationSlug, location.name)
+  const events: BreweryEvent[] = eventDocs.map((event) =>
+    transformPayloadEventToBreweryEvent(event, locationSlug, location.name),
   )
 
   const food: FoodItem[] = combinedFood.map((entry) => {
     const { name, site, logoUrl } = extractVendorInfo(entry.vendor)
     const dateStr = typeof entry.date === 'string' ? entry.date.split('T')[0] : entry.date
-    const time = ('startTime' in entry ? entry.startTime : ('time' in entry ? entry.time : undefined)) ?? undefined
+    const time =
+      ('startTime' in entry ? entry.startTime : 'time' in entry ? entry.time : undefined) ??
+      undefined
 
     return {
       id: typeof entry.id === 'string' ? entry.id : String(entry.id),

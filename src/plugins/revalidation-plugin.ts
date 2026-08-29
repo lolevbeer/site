@@ -26,6 +26,7 @@ const COLLECTION_CACHE_MAP: Record<string, string[]> = {
   'beer-reviews': ['beers'],
   menus: ['menus'],
   events: ['events'],
+  'recurring-events': ['events'],
   food: ['food'],
   locations: ['locations', 'menus'], // Locations affect menus
   styles: ['styles', 'beers'], // Styles affect beer displays
@@ -51,6 +52,7 @@ const COLLECTION_PATHS: Record<string, string[]> = {
   'beer-reviews': ['/', '/beer'],
   menus: ['/'],
   events: ['/', '/events'],
+  'recurring-events': ['/', '/events'],
   food: ['/', '/food'],
   locations: ['/'],
   styles: ['/beer'],
@@ -66,6 +68,7 @@ const COLLECTION_PATHS: Record<string, string[]> = {
 // Nested route trees that need layout invalidation (every /e/[location] page
 // embeds recurring food via getCombinedUpcomingFood).
 const COLLECTION_LAYOUT_PATHS: Record<string, string[]> = {
+  'recurring-events': ['/e'],
   'recurring-food-schedules': ['/e'],
   'recurring-food-exclusions': ['/e'],
 }

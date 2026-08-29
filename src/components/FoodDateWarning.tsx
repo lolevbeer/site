@@ -51,7 +51,7 @@ export const FoodDateWarning: React.FC = () => {
         // Check recurring vendors using local API
         if (weekKey) {
           try {
-            const data = await getRecurringFoodData()
+            const data = await getRecurringFoodData(Number(dateKey.slice(0, 4)))
 
             // Data structure: data.schedules[locationId][dayName][weekKey]
             const vendorId = data.schedules?.[locationValue]?.[dayName]?.[weekKey]

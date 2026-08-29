@@ -55,7 +55,14 @@ export async function up({ payload, req }: MigrateUpArgs): Promise<void> {
 
         await payload.create({
           collection: 'recurring-food-schedules',
-          data: { location: locationId, vendor: vendorId, day, occurrence, active: true },
+          data: {
+            location: locationId,
+            vendor: vendorId,
+            year: 2026,
+            day,
+            occurrence,
+            active: true,
+          },
           context: { skipRevalidate: true },
           overrideAccess: true,
           req,

@@ -74,6 +74,7 @@ export interface Config {
     menus: Menu;
     products: Product;
     events: Event;
+    'recurring-events': RecurringEvent;
     food: Food;
     'food-vendors': FoodVendor;
     'recurring-food-schedules': RecurringFoodSchedule;
@@ -103,6 +104,7 @@ export interface Config {
     menus: MenusSelect<false> | MenusSelect<true>;
     products: ProductsSelect<false> | ProductsSelect<true>;
     events: EventsSelect<false> | EventsSelect<true>;
+    'recurring-events': RecurringEventsSelect<false> | RecurringEventsSelect<true>;
     food: FoodSelect<false> | FoodSelect<true>;
     'food-vendors': FoodVendorsSelect<false> | FoodVendorsSelect<true>;
     'recurring-food-schedules': RecurringFoodSchedulesSelect<false> | RecurringFoodSchedulesSelect<true>;
@@ -630,6 +632,58 @@ export interface Event {
   createdAt: string;
 }
 /**
+ * Manage events that repeat monthly without creating a dated event for every occurrence.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "recurring-events".
+ */
+export interface RecurringEvent {
+  id: string;
+  active: boolean;
+  /**
+   * Public events will be displayed on the site.
+   */
+  visibility: 'public' | 'private';
+  organizer: string;
+  year: number;
+  day: 'sunday' | 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday';
+  /**
+   * Choose one or more, such as first and third.
+   */
+  occurrences: ('first' | 'second' | 'third' | 'fourth' | 'fifth')[];
+  location: string | Location;
+  startTime?: string | null;
+  endTime?: string | null;
+  /**
+   * Optional dates in this year when the recurring event will not happen.
+   */
+  excludedDates?:
+    | {
+        date: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * This will be linked on the website.
+   */
+  site?: string | null;
+  tags?: ('music' | 'utensils' | 'puzzle' | 'sports' | 'beer-release' | 'mic-vocal')[] | null;
+  description?: string | null;
+  /**
+   * Expected or registered attendees
+   */
+  attendees?: number | null;
+  pointOfContact?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  /**
+   * Additional information for private events
+   */
+  otherInfo?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "food".
  */
@@ -670,6 +724,7 @@ export interface FoodVendor {
 export interface RecurringFoodSchedule {
   id: string;
   location: string | Location;
+  year: number;
   vendor: string | FoodVendor;
   day: 'sunday' | 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday';
   occurrence: 'first' | 'second' | 'third' | 'fourth' | 'fifth';
@@ -1012,6 +1067,10 @@ export interface PayloadLockedDocument {
         value: string | Event;
       } | null)
     | ({
+        relationTo: 'recurring-events';
+        value: string | RecurringEvent;
+      } | null)
+    | ({
         relationTo: 'food';
         value: string | Food;
       } | null)
@@ -1232,6 +1291,37 @@ export interface EventsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "recurring-events_select".
+ */
+export interface RecurringEventsSelect<T extends boolean = true> {
+  active?: T;
+  visibility?: T;
+  organizer?: T;
+  year?: T;
+  day?: T;
+  occurrences?: T;
+  location?: T;
+  startTime?: T;
+  endTime?: T;
+  excludedDates?:
+    | T
+    | {
+        date?: T;
+        id?: T;
+      };
+  site?: T;
+  tags?: T;
+  description?: T;
+  attendees?: T;
+  pointOfContact?: T;
+  email?: T;
+  phone?: T;
+  otherInfo?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "food_select".
  */
 export interface FoodSelect<T extends boolean = true> {
@@ -1262,6 +1352,7 @@ export interface FoodVendorsSelect<T extends boolean = true> {
  */
 export interface RecurringFoodSchedulesSelect<T extends boolean = true> {
   location?: T;
+  year?: T;
   vendor?: T;
   day?: T;
   occurrence?: T;

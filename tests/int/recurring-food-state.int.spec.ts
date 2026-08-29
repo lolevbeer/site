@@ -64,7 +64,28 @@ describe('recurring food compatibility reads', () => {
     expect(find).toHaveBeenCalledWith(
       expect.objectContaining({
         collection: 'recurring-food-schedules',
-        where: { active: { equals: true } },
+        where: {
+          and: [{ active: { equals: true } }, { year: { equals: 2026 } }],
+        },
+      }),
+    )
+  })
+
+  it('loads only the requested year so schedules cannot leak across December', async () => {
+    const findGlobal = vi.fn(async () => ({ normalizedAt: '2026-08-26T00:00:00.000Z' }))
+    const find = vi.fn().mockResolvedValueOnce({ docs: [] }).mockResolvedValueOnce({ docs: [] })
+
+    const state = await getRecurringFoodState({ findGlobal, find } as unknown as Payload, {
+      year: 2027,
+    })
+
+    expect(state.year).toBe(2027)
+    expect(find).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collection: 'recurring-food-schedules',
+        where: {
+          and: [{ active: { equals: true } }, { year: { equals: 2027 } }],
+        },
       }),
     )
   })

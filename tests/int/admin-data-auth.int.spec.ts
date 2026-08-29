@@ -96,7 +96,7 @@ describe('admin data server actions', () => {
     find.mockResolvedValue({ docs: [] })
     create.mockResolvedValue({})
 
-    await setRecurringFoodSchedule('location-1', 'monday', 'first', 'vendor-1')
+    await setRecurringFoodSchedule(2027, 'location-1', 'monday', 'first', 'vendor-1')
 
     expect(create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -104,6 +104,7 @@ describe('admin data server actions', () => {
         data: expect.objectContaining({
           location: 'location-1',
           vendor: 'vendor-1',
+          year: 2027,
           day: 'monday',
           occurrence: 'first',
         }),
@@ -117,8 +118,18 @@ describe('admin data server actions', () => {
     auth.mockResolvedValue({ user: userWith(['food-manager']) })
 
     await expect(
-      setRecurringFoodSchedule('location-1', 'funday', 'first', 'vendor-1'),
+      setRecurringFoodSchedule(2027, 'location-1', 'funday', 'first', 'vendor-1'),
     ).rejects.toThrow('Invalid recurring day')
+    expect(findGlobal).not.toHaveBeenCalled()
+    expect(find).not.toHaveBeenCalled()
+  })
+
+  it('rejects years outside the supported management range', async () => {
+    auth.mockResolvedValue({ user: userWith(['food-manager']) })
+
+    await expect(
+      setRecurringFoodSchedule(1999, 'location-1', 'monday', 'first', 'vendor-1'),
+    ).rejects.toThrow('Invalid year')
     expect(findGlobal).not.toHaveBeenCalled()
     expect(find).not.toHaveBeenCalled()
   })

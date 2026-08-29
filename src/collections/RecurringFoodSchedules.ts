@@ -27,7 +27,7 @@ export const RecurringFoodSchedules: CollectionConfig = {
     update: foodManagerAccess,
     delete: foodManagerAccess,
   },
-  indexes: [{ fields: ['location', 'day', 'occurrence'], unique: true }],
+  indexes: [{ fields: ['location', 'year', 'day', 'occurrence'], unique: true }],
   fields: [
     {
       name: 'location',
@@ -35,6 +35,17 @@ export const RecurringFoodSchedules: CollectionConfig = {
       relationTo: 'locations',
       required: true,
       index: true,
+    },
+    {
+      name: 'year',
+      type: 'number',
+      required: true,
+      min: 2000,
+      max: 2100,
+      index: true,
+      admin: {
+        position: 'sidebar',
+      },
     },
     {
       name: 'vendor',

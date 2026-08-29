@@ -70,6 +70,14 @@ function requireDateOnly(value: string): string {
   return match[1]
 }
 
+function requireYear(value: number): number {
+  if (!Number.isInteger(value) || value < 2000 || value > 2100) {
+    throw new Error('Invalid year')
+  }
+
+  return value
+}
+
 function requireOneOf<T extends string>(value: string, options: readonly T[], label: string): T {
   if (!options.includes(value as T)) {
     throw new Error(`Invalid ${label}`)
@@ -190,19 +198,24 @@ export async function getFoodVendorsByIds(ids: string[]): Promise<Record<string,
 }
 
 /**
- * Get upcoming food events for a location.
+ * Get the individually dated food events for one location and calendar year.
  */
-export async function getUpcomingFoodForLocation(locationId: string): Promise<FoodEvent[]> {
+export async function getFoodForLocationYear(
+  locationId: string,
+  year: number,
+): Promise<FoodEvent[]> {
   const { payload, user } = await getAuthorizedPayload(SCHEDULE_READER_ROLES)
   const validLocationId = requireIdentifier(locationId, 'location ID')
-
-  const today = new Date()
-  const todayStr = today.toISOString().split('T')[0]
+  const validYear = requireYear(year)
 
   const result = await payload.find({
     collection: 'food',
     where: {
-      and: [{ location: { equals: validLocationId } }, { date: { greater_than_equal: todayStr } }],
+      and: [
+        { location: { equals: validLocationId } },
+        { date: { greater_than_equal: `${validYear}-01-01T00:00:00.000Z` } },
+        { date: { less_than_equal: `${validYear}-12-31T23:59:59.999Z` } },
+      ],
     },
     sort: 'date',
     limit: 100,
@@ -229,15 +242,22 @@ export async function getUpcomingFoodForLocation(locationId: string): Promise<Fo
 /**
  * Get recurring food global data
  */
-export async function getRecurringFoodData(): Promise<{
+export async function getRecurringFoodData(year: number = new Date().getFullYear()): Promise<{
+  year: number
   schedules: Record<string, Record<string, Record<string, string | null>>>
   exclusions: Record<string, string[]>
 }> {
   const { payload, user } = await getAuthorizedPayload(SCHEDULE_READER_ROLES)
+  const validYear = requireYear(year)
 
-  const data = await getRecurringFoodState(payload, { overrideAccess: false, user })
+  const data = await getRecurringFoodState(payload, {
+    overrideAccess: false,
+    user,
+    year: validYear,
+  })
 
   return {
+    year: data.year,
     schedules: data.schedules,
     exclusions: data.exclusions,
   }
@@ -248,12 +268,14 @@ export async function getRecurringFoodData(): Promise<{
  * global; afterwards it uses the normalized schedule collection.
  */
 export async function setRecurringFoodSchedule(
+  year: number,
   locationId: string,
   day: string,
   occurrence: string,
   vendorId: string | null,
 ): Promise<void> {
   const { payload, user } = await getAuthorizedPayload(FOOD_MANAGER_ROLES)
+  const validYear = requireYear(year)
   const validLocationId = requireIdentifier(locationId, 'location ID')
   const validDay = requireOneOf(day, recurringDays, 'recurring day')
   const validOccurrence = requireOneOf(occurrence, recurringOccurrences, 'recurring occurrence')
@@ -266,6 +288,10 @@ export async function setRecurringFoodSchedule(
   })
 
   if (!legacy.normalizedAt) {
+    if (validYear !== new Date().getFullYear()) {
+      throw new Error('Run the recurring food migration before editing another year')
+    }
+
     // The legacy global is already fetched — mutate its JSON directly.
     const schedules: RecurringFoodSchedulesData = structuredClone(
       legacyObject<RecurringFoodSchedulesData>(legacy.schedules),
@@ -288,6 +314,7 @@ export async function setRecurringFoodSchedule(
     where: {
       and: [
         { location: { equals: validLocationId } },
+        { year: { equals: validYear } },
         { day: { equals: validDay } },
         { occurrence: { equals: validOccurrence } },
       ],
@@ -313,6 +340,7 @@ export async function setRecurringFoodSchedule(
       data: {
         location: validLocationId,
         vendor: validVendorId,
+        year: validYear,
         day: validDay,
         occurrence: validOccurrence,
         active: true,

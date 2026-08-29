@@ -80,7 +80,7 @@ vi.mock('@payloadcms/ui', () => ({
 vi.mock('@/src/actions/admin-data', () => ({
   getActiveLocations: vi.fn(),
   getRecurringFoodData: vi.fn(),
-  getUpcomingFoodForLocation: vi.fn(),
+  getFoodForLocationYear: vi.fn(),
   getFoodVendorsByIds: vi.fn(),
   setRecurringFoodExclusion: vi.fn(),
   setRecurringFoodSchedule: vi.fn(),
@@ -88,16 +88,16 @@ vi.mock('@/src/actions/admin-data', () => ({
 
 import {
   getActiveLocations,
+  getFoodForLocationYear,
   getFoodVendorsByIds,
   getRecurringFoodData,
-  getUpcomingFoodForLocation,
   setRecurringFoodExclusion,
 } from '@/src/actions/admin-data'
 import { RecurringFoodGrid, toDateKey } from '@/src/components/RecurringFoodGrid'
 
 const getActiveLocationsMock = vi.mocked(getActiveLocations)
 const getRecurringFoodDataMock = vi.mocked(getRecurringFoodData)
-const getUpcomingFoodForLocationMock = vi.mocked(getUpcomingFoodForLocation)
+const getFoodForLocationYearMock = vi.mocked(getFoodForLocationYear)
 const getFoodVendorsByIdsMock = vi.mocked(getFoodVendorsByIds)
 const setRecurringFoodExclusionMock = vi.mocked(setRecurringFoodExclusion)
 
@@ -132,6 +132,35 @@ describe('toDateKey', () => {
 })
 
 describe('RecurringFoodGrid location tabs', () => {
+  it('loads an independent schedule when the selected year changes', async () => {
+    const currentYear = new Date().getFullYear()
+    getActiveLocationsMock.mockResolvedValue([
+      { id: 'loc-a', name: 'Lawrenceville', slug: 'lawrenceville' },
+    ])
+    getRecurringFoodDataMock.mockImplementation(async (year) => {
+      const scheduleYear = year ?? currentYear
+      const schedules: Record<string, Record<string, Record<string, string | null>>> =
+        scheduleYear === currentYear ? { 'loc-a': { sunday: { first: 'vendor-a' } } } : {}
+      return {
+        year: scheduleYear,
+        schedules,
+        exclusions: {},
+      }
+    })
+    getFoodForLocationYearMock.mockResolvedValue([])
+    getFoodVendorsByIdsMock.mockResolvedValue({ 'vendor-a': 'Current Year Truck' })
+
+    render(createElement(RecurringFoodGrid))
+    expect((await screen.findAllByText(/Current Year Truck/)).length).toBeGreaterThan(0)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Next year' }))
+
+    await waitFor(() => {
+      expect(getRecurringFoodDataMock).toHaveBeenCalledWith(currentYear + 1)
+      expect(screen.queryAllByText(/Current Year Truck/)).toHaveLength(0)
+    })
+  })
+
   it('ignores a slower previous location fetch after switching tabs', async () => {
     const firstLocationFood =
       deferred<{ id: string; date: string; vendorId: string; vendorName: string }[]>()
@@ -139,8 +168,8 @@ describe('RecurringFoodGrid location tabs', () => {
       { id: 'loc-a', name: 'Lawrenceville', slug: 'lawrenceville' },
       { id: 'loc-b', name: 'Zelienople', slug: 'zelienople' },
     ])
-    getRecurringFoodDataMock.mockResolvedValue({ schedules: {}, exclusions: {} })
-    getUpcomingFoodForLocationMock.mockImplementation((locationId: string) => {
+    getRecurringFoodDataMock.mockResolvedValue({ year: 2026, schedules: {}, exclusions: {} })
+    getFoodForLocationYearMock.mockImplementation((locationId: string) => {
       if (locationId === 'loc-a') return firstLocationFood.promise
       return Promise.resolve([
         {
@@ -179,10 +208,11 @@ describe('RecurringFoodGrid location tabs', () => {
       { id: 'loc-b', name: 'Zelienople', slug: 'zelienople' },
     ])
     getRecurringFoodDataMock.mockResolvedValue({
+      year: 2026,
       schedules: { 'loc-a': { sunday: { first: 'vendor-a' } } },
       exclusions: {},
     })
-    getUpcomingFoodForLocationMock.mockResolvedValue([])
+    getFoodForLocationYearMock.mockResolvedValue([])
     getFoodVendorsByIdsMock.mockResolvedValue({ 'vendor-a': 'Lawrenceville Recurring' })
 
     render(createElement(RecurringFoodGrid))
@@ -217,10 +247,11 @@ describe('RecurringFoodGrid location tabs', () => {
       { id: 'loc-a', name: 'Lawrenceville', slug: 'lawrenceville' },
     ])
     getRecurringFoodDataMock.mockResolvedValue({
+      year: 2026,
       schedules: { 'loc-a': { sunday: { first: 'vendor-a' } } },
       exclusions: {},
     })
-    getUpcomingFoodForLocationMock.mockResolvedValue([])
+    getFoodForLocationYearMock.mockResolvedValue([])
     getFoodVendorsByIdsMock.mockResolvedValue({ 'vendor-a': 'Lawrenceville Recurring' })
     setRecurringFoodExclusionMock.mockReturnValue(pendingSave.promise)
 
@@ -262,13 +293,14 @@ describe('RecurringFoodGrid location tabs', () => {
       { id: 'loc-b', name: 'Zelienople', slug: 'zelienople' },
     ])
     getRecurringFoodDataMock.mockResolvedValue({
+      year: 2026,
       schedules: {
         'loc-a': { sunday: { first: 'vendor-a' } },
         'loc-b': { sunday: { first: 'vendor-b' } },
       },
       exclusions: {},
     })
-    getUpcomingFoodForLocationMock.mockResolvedValue([])
+    getFoodForLocationYearMock.mockResolvedValue([])
     getFoodVendorsByIdsMock.mockImplementation((vendorIds: string[]) => {
       if (vendorIds.includes('vendor-a')) return firstLocationVendors.promise
       return Promise.resolve({ 'vendor-b': 'Zelie Recurring' })

@@ -5,9 +5,11 @@ import { getPayload } from 'payload'
 import config from '@/src/payload.config'
 import type { BreweryEvent } from '@/lib/types/event'
 import { CACHE_TAGS } from '@/lib/utils/cache'
-import { getTodayMidnightISO } from '@/lib/utils/date'
 import { logger } from '@/lib/utils/logger'
-import { transformPayloadEventToBreweryEvent } from '@/lib/utils/payload-api'
+import {
+  getUpcomingEventsFromPayload,
+  transformPayloadEventToBreweryEvent,
+} from '@/lib/utils/payload-api'
 import { getPittsburghTheme } from '@/lib/utils/pittsburgh-time'
 
 /**
@@ -18,8 +20,6 @@ const getCachedEvents = (locationSlug: string) =>
   unstable_cache(
     async () => {
       const payload = await getPayload({ config })
-      const todayStr = getTodayMidnightISO()
-
       const locationResult = await payload.find({
         collection: 'locations',
         where: { slug: { equals: locationSlug } },
@@ -32,23 +32,13 @@ const getCachedEvents = (locationSlug: string) =>
 
       const location = locationResult.docs[0]
 
-      const result = await payload.find({
-        collection: 'events',
-        where: {
-          visibility: { equals: 'public' },
-          date: { greater_than_equal: todayStr },
-          location: { equals: location.id },
-        },
-        sort: 'date',
-        limit: 20,
-        depth: 1,
-      })
+      const eventDocs = await getUpcomingEventsFromPayload(locationSlug, 20)
 
-      const events: BreweryEvent[] = result.docs.map((event) =>
+      const events: BreweryEvent[] = eventDocs.map((event) =>
         transformPayloadEventToBreweryEvent(event, locationSlug, location.name),
       )
 
-      const latestUpdate = result.docs.reduce((latest, doc) => {
+      const latestUpdate = eventDocs.reduce((latest, doc) => {
         const docTime = doc.updatedAt ? new Date(doc.updatedAt).getTime() : 0
         return docTime > latest ? docTime : latest
       }, 0)
