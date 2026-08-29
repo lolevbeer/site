@@ -17,6 +17,8 @@ import {
   exclusionTimestamp,
   getRecurringFoodState,
   legacyObject,
+  RECURRING_YEAR_MAX,
+  RECURRING_YEAR_MIN,
   recurringDays,
   recurringOccurrences,
   type RecurringFoodExclusionsData,
@@ -71,7 +73,7 @@ function requireDateOnly(value: string): string {
 }
 
 function requireYear(value: number): number {
-  if (!Number.isInteger(value) || value < 2000 || value > 2100) {
+  if (!Number.isInteger(value) || value < RECURRING_YEAR_MIN || value > RECURRING_YEAR_MAX) {
     throw new Error('Invalid year')
   }
 

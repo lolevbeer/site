@@ -1,15 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import * as foodDates from '@/lib/utils/food-dates'
+import { getDatesForSlotInYear } from '@/lib/utils/food-dates'
 
 describe('year-scoped recurring dates', () => {
   it('expands a slot only within the selected calendar year', () => {
-    const getDatesForSlotInYear = (
-      foodDates as typeof foodDates & {
-        getDatesForSlotInYear?: (dayIndex: number, weekOccurrence: number, year: number) => Date[]
-      }
-    ).getDatesForSlotInYear
-
-    const dates = getDatesForSlotInYear?.(1, 1, 2027) ?? []
+    const dates = getDatesForSlotInYear(1, 1, 2027)
 
     expect(dates.map((date) => date.toISOString().slice(0, 10))).toEqual([
       '2027-01-04',
@@ -28,13 +22,7 @@ describe('year-scoped recurring dates', () => {
   })
 
   it('omits months that do not contain the selected occurrence', () => {
-    const getDatesForSlotInYear = (
-      foodDates as typeof foodDates & {
-        getDatesForSlotInYear?: (dayIndex: number, weekOccurrence: number, year: number) => Date[]
-      }
-    ).getDatesForSlotInYear
-
-    const dates = getDatesForSlotInYear?.(1, 5, 2027) ?? []
+    const dates = getDatesForSlotInYear(1, 5, 2027)
 
     expect(dates.map((date) => date.toISOString().slice(0, 10))).toEqual([
       '2027-03-29',

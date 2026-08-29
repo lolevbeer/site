@@ -44,7 +44,7 @@ import { CACHE_TAGS } from '@/lib/utils/cache'
 import { extractBeerFromMenuItem } from './menu-item-utils'
 import { getMediaUrl } from './media-utils'
 import { getTodayEST, getTodayMidnightISO } from './date'
-import { getUpcomingDatesForSlot } from './food-dates'
+import { getUpcomingDatesForSlot, toDateKey } from './food-dates'
 import { formatAddress } from './formatters'
 import { expandRecurringEvents, mergeScheduledEvents } from '@/src/utils/recurring-events'
 
@@ -775,11 +775,7 @@ function eventWindow(): { from: string; through: string; years: number[] } {
   const from = getTodayEST()
   const [year, month, day] = from.split('-').map(Number)
   const end = new Date(year + 1, month - 1, day, 12)
-  const through = [
-    end.getFullYear(),
-    String(end.getMonth() + 1).padStart(2, '0'),
-    String(end.getDate()).padStart(2, '0'),
-  ].join('-')
+  const through = toDateKey(end)
 
   return {
     from,
@@ -1009,12 +1005,11 @@ const getUpcomingRecurringFood = async (
 
         const locationId = location.id
 
-        const upcomingDatesBySlot = recurringDays.map((_, dayIndex) =>
-          recurringOccurrences.map((__, weekIndex) =>
-            getUpcomingDatesForSlot(dayIndex, weekIndex + 1, monthsAhead),
-          ),
-        )
-        const years = [...new Set(upcomingDatesBySlot.flat(2).map((date) => date.getFullYear()))]
+        // The window scans monthsAhead months starting with the current one, so
+        // it can touch at most this year and the next.
+        const now = new Date()
+        const lastMonth = new Date(now.getFullYear(), now.getMonth() + monthsAhead - 1, 1)
+        const years = [...new Set([now.getFullYear(), lastMonth.getFullYear()])]
         const recurringFoodByYear = new Map(
           (await Promise.all(years.map((year) => getRecurringFoodGlobal(year)))).map((state) => [
             state.year,
@@ -1068,11 +1063,17 @@ const getUpcomingRecurringFood = async (
 
         for (const [dayIndex, day] of recurringDays.entries()) {
           for (const [weekIndex, week] of recurringOccurrences.entries()) {
-            for (const date of upcomingDatesBySlot[dayIndex][weekIndex]) {
+            const slotHasVendor = [...recurringFoodByYear.values()].some(
+              (state) => state.schedules[locationId]?.[day]?.[week],
+            )
+            if (!slotHasVendor) continue
+
+            for (const date of getUpcomingDatesForSlot(dayIndex, weekIndex + 1, monthsAhead)) {
               const recurringFood = recurringFoodByYear.get(date.getFullYear())
-              const vendorId = recurringFood?.schedules[locationId]?.[day]?.[week]
+              if (!recurringFood) continue
+              const vendorId = recurringFood.schedules[locationId]?.[day]?.[week]
               const vendor = vendorId ? vendorMap[vendorId] : undefined
-              if (!vendor || !recurringFood) continue
+              if (!vendor) continue
               const dateKey = date.toISOString().split('T')[0]
               const locationExclusions = recurringFood.exclusions[locationId] || []
               if (locationExclusions.includes(dateKey)) continue

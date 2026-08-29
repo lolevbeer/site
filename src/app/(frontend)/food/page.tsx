@@ -63,35 +63,40 @@ async function getFoodData(): Promise<FoodVendorSchedule[]> {
     const payload = await getPayload({ config })
 
     const todayStr = getTodayMidnightISO()
-    const currentYear = Number(todayStr.slice(0, 4))
+    // Compute the upcoming dates once per recurring slot, then derive which
+    // years the three-month window actually touches so we only fetch those
+    // years' recurring-food states.
+    const upcomingDatesBySlot = days.map((_, dayIndex) =>
+      weeks.map((__, weekIndex) => getUpcomingDatesForSlot(dayIndex, weekIndex + 1, 3)),
+    )
+    const years = [...new Set(upcomingDatesBySlot.flat(2).map((date) => date.getFullYear()))]
 
-    // Fetch food entries, both years the three-month window can touch, and
+    // Fetch food entries, the recurring-food state for each needed year, and
     // locations in parallel.
     // The recurring helper falls back to the legacy global until its migration completes.
-    const [foodResult, currentRecurringFood, nextRecurringFood, locationsResult] =
-      await Promise.all([
-        payload.find({
-          collection: 'food',
-          where: {
-            date: {
-              greater_than_equal: todayStr,
-            },
+    const [foodResult, recurringFoodStates, locationsResult] = await Promise.all([
+      payload.find({
+        collection: 'food',
+        where: {
+          date: {
+            greater_than_equal: todayStr,
           },
-          sort: 'date',
-          limit: 100,
-          depth: 2,
-        }),
-        getRecurringFoodState(payload, { year: currentYear }),
-        getRecurringFoodState(payload, { year: currentYear + 1 }),
-        payload.find({
-          collection: 'locations',
-          where: {
-            active: { equals: true },
-          },
-          limit: 100,
-        }),
-      ])
-    const recurringFoodStates = [currentRecurringFood, nextRecurringFood]
+        },
+        sort: 'date',
+        limit: 100,
+        depth: 2,
+      }),
+      Promise.all(years.map((year) => getRecurringFoodState(payload, { year }))),
+      payload.find({
+        collection: 'locations',
+        where: {
+          active: { equals: true },
+        },
+        limit: 100,
+      }),
+    ])
+    // Look up the state that governs a given occurrence by the year the date falls in.
+    const recurringFoodByYear = new Map(recurringFoodStates.map((state) => [state.year, state]))
 
     const locationMap: Record<string, { slug: string; name: string }> = {}
     for (const loc of locationsResult.docs) {
@@ -187,57 +192,65 @@ async function getFoodData(): Promise<FoodVendorSchedule[]> {
     // Generate recurring food schedules
     const recurringSchedules: FoodVendorSchedule[] = []
 
-    for (const recurringFood of recurringFoodStates) {
-      const schedules = recurringFood.schedules as RecurringFoodSchedules
-      const exclusions = recurringFood.exclusions as RecurringFoodExclusions
+    // A location may appear in one year's schedules but not another's, so
+    // expand over the union of location IDs across the fetched states.
+    const scheduledLocationIds = new Set(
+      recurringFoodStates.flatMap((state) =>
+        Object.keys(state.schedules as RecurringFoodSchedules),
+      ),
+    )
 
-      for (const locationId of Object.keys(schedules)) {
-        const locationSchedule = schedules[locationId]
-        const locationExclusions = exclusions[locationId] || []
-        const locationInfo = locationMap[locationId]
+    for (const locationId of scheduledLocationIds) {
+      const locationInfo = locationMap[locationId]
+      if (!locationInfo) continue
 
-        if (!locationInfo) continue
+      for (let dayIndex = 0; dayIndex < days.length; dayIndex++) {
+        const day = days[dayIndex]
+        for (let weekIndex = 0; weekIndex < weeks.length; weekIndex++) {
+          const week = weeks[weekIndex]
 
-        for (let dayIndex = 0; dayIndex < days.length; dayIndex++) {
-          const day = days[dayIndex]
-          for (let weekIndex = 0; weekIndex < weeks.length; weekIndex++) {
-            const week = weeks[weekIndex]
-            const vendorId = locationSchedule?.[day]?.[week]
+          // Skip slots with no vendor scheduled in any fetched year.
+          const slotHasVendor = recurringFoodStates.some(
+            (state) => (state.schedules as RecurringFoodSchedules)[locationId]?.[day]?.[week],
+          )
+          if (!slotHasVendor) continue
 
-            if (vendorId && vendorMap[vendorId]) {
-              const vendor = vendorMap[vendorId]
-              const upcomingDates = getUpcomingDatesForSlot(dayIndex, weekIndex + 1, 3).filter(
-                (date) => date.getFullYear() === recurringFood.year,
-              )
+          for (const date of upcomingDatesBySlot[dayIndex][weekIndex]) {
+            // The year the date falls in determines which state's schedule applies.
+            const recurringFood = recurringFoodByYear.get(date.getFullYear())
+            if (!recurringFood) continue
 
-              for (const date of upcomingDates) {
-                const dateKey = date.toISOString().split('T')[0]
+            const schedules = recurringFood.schedules as RecurringFoodSchedules
+            const vendorId = schedules[locationId]?.[day]?.[week]
+            const vendor = vendorId ? vendorMap[vendorId] : undefined
+            if (!vendorId || !vendor) continue
 
-                // Skip if excluded
-                if (locationExclusions.includes(dateKey)) continue
+            const dateKey = date.toISOString().split('T')[0]
 
-                // Skip if the same vendor already has an individual entry for this date at this location
-                if (individualDateVendorsByLocation[locationId]?.has(`${dateKey}::${vendorId}`))
-                  continue
+            // Skip if excluded
+            const exclusions = recurringFood.exclusions as RecurringFoodExclusions
+            if ((exclusions[locationId] || []).includes(dateKey)) continue
 
-                const dayOfWeek = fullDayLabels[date.getDay()]
+            // Skip if the same vendor already has an individual entry for this date at this location
+            if (individualDateVendorsByLocation[locationId]?.has(`${dateKey}::${vendorId}`))
+              continue
 
-                recurringSchedules.push({
-                  vendor: vendor.name,
-                  date: dateKey,
-                  time: '',
-                  site: vendor.site ?? undefined,
-                  logoUrl: vendor.logoUrl,
-                  day: DayOfWeek[dayOfWeek.toUpperCase() as keyof typeof DayOfWeek],
-                  start: '',
-                  finish: '',
-                  dayNumber: date.getDay(),
-                  location: locationInfo.slug,
-                  locationName: locationInfo.name,
-                  specialEvent: false,
-                } as FoodVendorSchedule)
-              }
-            }
+            const dayOfWeek = fullDayLabels[date.getDay()]
+
+            recurringSchedules.push({
+              vendor: vendor.name,
+              date: dateKey,
+              time: '',
+              site: vendor.site ?? undefined,
+              logoUrl: vendor.logoUrl,
+              day: DayOfWeek[dayOfWeek.toUpperCase() as keyof typeof DayOfWeek],
+              start: '',
+              finish: '',
+              dayNumber: date.getDay(),
+              location: locationInfo.slug,
+              locationName: locationInfo.name,
+              specialEvent: false,
+            } as FoodVendorSchedule)
           }
         }
       }

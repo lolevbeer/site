@@ -1,13 +1,6 @@
 import type { Event, RecurringEvent } from '@/src/payload-types'
-import { getDatesForSlotInYear } from '@/lib/utils/food-dates'
+import { getDatesForSlotInYear, toDateKey } from '@/lib/utils/food-dates'
 import { recurringDays, recurringOccurrences } from '@/src/utils/recurring-food'
-
-function dateKey(date: Date): string {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
 
 function eventLocationId(event: Pick<Event, 'location'>): string {
   return typeof event.location === 'object' ? event.location.id : event.location
@@ -42,7 +35,7 @@ export function expandRecurringEvents(
       if (occurrenceIndex < 0) continue
 
       for (const date of getDatesForSlotInYear(dayIndex, occurrenceIndex + 1, definition.year)) {
-        const occurrenceDate = dateKey(date)
+        const occurrenceDate = toDateKey(date)
         if (
           occurrenceDate < fromDate ||
           occurrenceDate > throughDate ||

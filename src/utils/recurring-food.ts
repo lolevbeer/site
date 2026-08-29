@@ -15,6 +15,14 @@ export const recurringDays = [
 export const recurringOccurrences = ['first', 'second', 'third', 'fourth', 'fifth'] as const
 
 /**
+ * Sanity bounds for the schedule-year fields. Shared by the collections'
+ * min/max, the server actions' validation, and the admin grid's year picker so
+ * loosening them is a one-place change.
+ */
+export const RECURRING_YEAR_MIN = 2000
+export const RECURRING_YEAR_MAX = 2100
+
+/**
  * The `recurringDays` entry for a date. Lives here because the value only means
  * anything against that array's ordering.
  */

@@ -234,10 +234,8 @@ function OtherThingRow({
   displayScale: number
 }) {
   const { item, state, accentColor } = entry
-  const soldOut = item.options?.some((option) => SOLD_OUT_OPTION.test(option)) ?? false
-  const options = soldOut
-    ? item.options?.filter((option) => !SOLD_OUT_OPTION.test(option))
-    : item.options
+  const options = item.options?.filter((option) => !SOLD_OUT_OPTION.test(option))
+  const soldOut = options?.length !== item.options?.length
   const itemColor = soldOut ? undefined : accentColor
 
   return (

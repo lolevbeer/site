@@ -13,9 +13,14 @@ import {
   type SimpleLocation,
 } from '@/src/actions/admin-data'
 import { isFoodManager } from '@/src/access/roles'
-import { recurringDays as days, recurringOccurrences as weeks } from '@/src/utils/recurring-food'
+import {
+  RECURRING_YEAR_MAX,
+  RECURRING_YEAR_MIN,
+  recurringDays as days,
+  recurringOccurrences as weeks,
+} from '@/src/utils/recurring-food'
 import { capitalizeName } from '@/lib/utils/formatters'
-import { getDatesForSlotInYear } from '@/lib/utils/food-dates'
+import { getDatesForSlotInYear, toDateKey } from '@/lib/utils/food-dates'
 import { logger } from '@/lib/utils/logger'
 import type { User } from '@/src/payload-types'
 
@@ -45,12 +50,7 @@ function formatDate(date: Date): string {
 }
 
 // Recurring dates are local calendar days, so persist the displayed day rather than a UTC shift.
-export function toDateKey(date: Date): string {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
+export { toDateKey } from '@/lib/utils/food-dates'
 
 /**
  * Keys identifying a single in-flight write. Each control locks only on its own
@@ -62,6 +62,17 @@ function scheduleSaveKey(year: number, locationId: string, day: string, week: st
 
 function exclusionSaveKey(locationId: string, dateKey: string): string {
   return `exclusion-${locationId}-${dateKey}`
+}
+
+function yearButtonStyle(disabled: boolean): React.CSSProperties {
+  return {
+    padding: '8px 12px',
+    border: '1px solid var(--theme-elevation-200)',
+    borderRadius: '4px',
+    background: 'var(--theme-elevation-50)',
+    color: 'var(--theme-text)',
+    cursor: disabled ? 'not-allowed' : 'pointer',
+  }
 }
 
 interface GridCellProps {
@@ -694,19 +705,25 @@ export const RecurringFoodGrid: React.FC = () => {
     return next
   }, [])
 
+  // Locations don't vary by year, so fetch them once and let year changes and
+  // save recovery refetch only the schedule data.
+  const locationsLoadedRef = useRef(false)
   const refreshData = useCallback(async (year: number) => {
     const [nextLocations, recurringFood] = await Promise.all([
-      getActiveLocations(),
+      locationsLoadedRef.current ? null : getActiveLocations(),
       getRecurringFoodData(year),
     ])
-    setLocations(nextLocations)
+    if (nextLocations) {
+      locationsLoadedRef.current = true
+      setLocations(nextLocations)
+      setActiveTab((current) =>
+        nextLocations.some((location) => location.id === current)
+          ? current
+          : nextLocations[0]?.id || '',
+      )
+    }
     setSchedules(recurringFood.schedules as SchedulesData)
     setExclusions(recurringFood.exclusions)
-    setActiveTab((current) =>
-      nextLocations.some((location) => location.id === current)
-        ? current
-        : nextLocations[0]?.id || '',
-    )
   }, [])
 
   useEffect(() => {
@@ -834,16 +851,9 @@ export const RecurringFoodGrid: React.FC = () => {
       >
         <button
           type="button"
-          onClick={() => setSelectedYear((year) => Math.max(2000, year - 1))}
-          disabled={selectedYear <= 2000}
-          style={{
-            padding: '8px 12px',
-            border: '1px solid var(--theme-elevation-200)',
-            borderRadius: '4px',
-            background: 'var(--theme-elevation-50)',
-            color: 'var(--theme-text)',
-            cursor: selectedYear <= 2000 ? 'not-allowed' : 'pointer',
-          }}
+          onClick={() => setSelectedYear((year) => Math.max(RECURRING_YEAR_MIN, year - 1))}
+          disabled={selectedYear <= RECURRING_YEAR_MIN}
+          style={yearButtonStyle(selectedYear <= RECURRING_YEAR_MIN)}
         >
           Previous year
         </button>
@@ -855,16 +865,9 @@ export const RecurringFoodGrid: React.FC = () => {
         </div>
         <button
           type="button"
-          onClick={() => setSelectedYear((year) => Math.min(2100, year + 1))}
-          disabled={selectedYear >= 2100}
-          style={{
-            padding: '8px 12px',
-            border: '1px solid var(--theme-elevation-200)',
-            borderRadius: '4px',
-            background: 'var(--theme-elevation-50)',
-            color: 'var(--theme-text)',
-            cursor: selectedYear >= 2100 ? 'not-allowed' : 'pointer',
-          }}
+          onClick={() => setSelectedYear((year) => Math.min(RECURRING_YEAR_MAX, year + 1))}
+          disabled={selectedYear >= RECURRING_YEAR_MAX}
+          style={yearButtonStyle(selectedYear >= RECURRING_YEAR_MAX)}
         >
           Next year
         </button>
