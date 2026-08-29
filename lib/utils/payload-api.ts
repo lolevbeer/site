@@ -46,11 +46,7 @@ import { getMediaUrl } from './media-utils'
 import { getTodayEST, getTodayMidnightISO } from './date'
 import { getUpcomingDatesForSlot, toDateKey } from './food-dates'
 import { formatAddress } from './formatters'
-import {
-  expandRecurringEvents,
-  LEGACY_RECURRING_EVENT_YEAR,
-  mergeScheduledEvents,
-} from '@/src/utils/recurring-events'
+import { expandRecurringEvents, mergeScheduledEvents } from '@/src/utils/recurring-events'
 
 /**
  * Resolve a location slug to its document.
@@ -816,14 +812,9 @@ async function findUpcomingPublicEvents(
           ...locationFilter,
           { active: { equals: true } },
           { visibility: { equals: 'public' } },
-          // Legacy rows predate the year field; they belong to
-          // LEGACY_RECURRING_EVENT_YEAR, so include them when it's in window.
-          {
-            or: [
-              { year: { in: years } },
-              ...(years.includes(LEGACY_RECURRING_EVENT_YEAR) ? [{ year: { exists: false } }] : []),
-            ],
-          },
+          // Legacy rows predate the year field; fetch them unconditionally —
+          // expandRecurringEvents assigns them 2026 and window-filters anyway.
+          { or: [{ year: { in: years } }, { year: { exists: false } }] },
         ],
       },
       sort: ['year', 'day'],
