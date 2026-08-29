@@ -14,6 +14,7 @@ import { Tags } from './collections/Tags'
 import { Beers } from './collections/Beers'
 import { BeerReviews } from './collections/BeerReviews'
 import { Events } from './collections/Events'
+import { RecurringEvents } from './collections/RecurringEvents'
 import { Food } from './collections/Food'
 import { FoodVendors } from './collections/FoodVendors'
 import { RecurringFoodSchedules } from './collections/RecurringFoodSchedules'
@@ -154,6 +155,7 @@ export default buildConfig({
     Products,
     // Food & Events
     Events,
+    RecurringEvents,
     Food,
     FoodVendors,
     RecurringFoodSchedules,

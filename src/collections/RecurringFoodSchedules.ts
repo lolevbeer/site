@@ -1,6 +1,11 @@
 import type { Access, CollectionConfig } from 'payload'
 import { foodManagerAccess, hasRole } from '@/src/access/roles'
-import { recurringDays, recurringOccurrences } from '@/src/utils/recurring-food'
+import {
+  RECURRING_YEAR_MAX,
+  RECURRING_YEAR_MIN,
+  recurringDays,
+  recurringOccurrences,
+} from '@/src/utils/recurring-food'
 import { capitalizeName } from '@/lib/utils/formatters'
 
 const canReadRecurringSchedules: Access = ({ req: { user } }) => {
@@ -27,7 +32,7 @@ export const RecurringFoodSchedules: CollectionConfig = {
     update: foodManagerAccess,
     delete: foodManagerAccess,
   },
-  indexes: [{ fields: ['location', 'day', 'occurrence'], unique: true }],
+  indexes: [{ fields: ['location', 'year', 'day', 'occurrence'], unique: true }],
   fields: [
     {
       name: 'location',
@@ -35,6 +40,17 @@ export const RecurringFoodSchedules: CollectionConfig = {
       relationTo: 'locations',
       required: true,
       index: true,
+    },
+    {
+      name: 'year',
+      type: 'number',
+      required: true,
+      min: RECURRING_YEAR_MIN,
+      max: RECURRING_YEAR_MAX,
+      index: true,
+      admin: {
+        position: 'sidebar',
+      },
     },
     {
       name: 'vendor',

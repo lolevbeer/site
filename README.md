@@ -28,6 +28,7 @@ Payload admin is at `/admin`. Follow the on-screen instructions to create your f
 - **Menus** - Draft and can menus per location
 - **Products** - Menu items linking beers to menus
 - **Events** - Brewery events calendar
+- **Recurring Events** - Date-less monthly event definitions scoped to a calendar year
 - **Food** - Food truck schedule
 - **Food Vendors** - Food truck vendor directory
 - **Locations** - Brewery locations with hours
@@ -40,7 +41,7 @@ Payload admin is at `/admin`. Follow the on-screen instructions to create your f
 ## Globals
 
 - **Coming Soon** - Upcoming beer announcements
-- **Recurring Food** - Weekly food truck schedule
+- **Recurring Food** - Year-by-year monthly food truck schedule
 - **Site Content** - Editable site-wide content (about page, etc.)
 
 ## Slack bot

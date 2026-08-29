@@ -8,6 +8,55 @@
  * either side can pull it in without dragging server-only code along.
  */
 
+/** Serialize a local calendar date as YYYY-MM-DD without any UTC shift. */
+export function toDateKey(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+/**
+ * The nth occurrence of a weekday in a month, or null when the month has no
+ * such occurrence (a fifth Monday, say). `hours` lets callers pick noon to
+ * keep the local calendar date stable through serialization.
+ */
+function nthWeekdayOfMonth(
+  year: number,
+  month: number,
+  dayIndex: number,
+  weekOccurrence: number,
+  hours = 0,
+): Date | null {
+  const firstDayOfMonth = new Date(year, month, 1).getDay()
+  let firstOccurrence = dayIndex - firstDayOfMonth + 1
+  if (firstOccurrence <= 0) firstOccurrence += 7
+
+  const targetDay = firstOccurrence + (weekOccurrence - 1) * 7
+  const targetDate = new Date(year, month, targetDay, hours)
+
+  return targetDate.getMonth() === month ? targetDate : null
+}
+
+/**
+ * Expand one "nth weekday of the month" slot across a calendar year.
+ * Months without that occurrence (for example, a fifth Monday) are omitted.
+ */
+export function getDatesForSlotInYear(
+  dayIndex: number,
+  weekOccurrence: number,
+  year: number,
+): Date[] {
+  const dates: Date[] = []
+
+  for (let month = 0; month < 12; month++) {
+    const targetDate = nthWeekdayOfMonth(year, month, dayIndex, weekOccurrence, 12)
+    if (targetDate) dates.push(targetDate)
+  }
+
+  return dates
+}
+
 /**
  * Calculate upcoming occurrences of a specific week/day combo.
  *
@@ -38,16 +87,8 @@ export function getUpcomingDatesForSlot(
     const month = (startMonth + i) % 12
     const year = startYear + Math.floor((startMonth + i) / 12)
 
-    const firstOfMonth = new Date(year, month, 1)
-    const firstDayOfMonth = firstOfMonth.getDay()
-
-    let firstOccurrence = dayIndex - firstDayOfMonth + 1
-    if (firstOccurrence <= 0) firstOccurrence += 7
-
-    const targetDay = firstOccurrence + (weekOccurrence - 1) * 7
-    const targetDate = new Date(year, month, targetDay)
-
-    if (targetDate.getMonth() === month && targetDate >= today) {
+    const targetDate = nthWeekdayOfMonth(year, month, dayIndex, weekOccurrence)
+    if (targetDate && targetDate >= today) {
       dates.push(targetDate)
     }
   }

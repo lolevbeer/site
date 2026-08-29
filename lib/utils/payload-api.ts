@@ -31,6 +31,7 @@ import type {
   Menu,
   HolidayHour,
   Event as PayloadEvent,
+  RecurringEvent,
   Food as PayloadFood,
   Faq,
 } from '@/src/payload-types'
@@ -43,8 +44,9 @@ import { CACHE_TAGS } from '@/lib/utils/cache'
 import { extractBeerFromMenuItem } from './menu-item-utils'
 import { getMediaUrl } from './media-utils'
 import { getTodayEST, getTodayMidnightISO } from './date'
-import { getUpcomingDatesForSlot } from './food-dates'
+import { getUpcomingDatesForSlot, toDateKey } from './food-dates'
 import { formatAddress } from './formatters'
+import { expandRecurringEvents, mergeScheduledEvents } from '@/src/utils/recurring-events'
 
 /**
  * Resolve a location slug to its document.
@@ -769,6 +771,60 @@ export const getWeeklyHoursWithHolidays = cache(
  * Returns events with date >= today, sorted by date ascending
  * Cached until 'events' tag is invalidated
  */
+function eventWindow(): { from: string; through: string; years: number[] } {
+  const from = getTodayEST()
+  const [year, month, day] = from.split('-').map(Number)
+  const end = new Date(year + 1, month - 1, day, 12)
+  const through = toDateKey(end)
+
+  return {
+    from,
+    through,
+    years: year === end.getFullYear() ? [year] : [year, end.getFullYear()],
+  }
+}
+
+async function findUpcomingPublicEvents(
+  payload: Awaited<ReturnType<typeof getPayload>>,
+  limit: number,
+  locationId?: string,
+): Promise<PayloadEvent[]> {
+  const { from, through, years } = eventWindow()
+  const locationFilter = locationId ? [{ location: { equals: locationId } }] : []
+  const [oneOffResult, recurringResult] = await Promise.all([
+    payload.find({
+      collection: 'events',
+      where: {
+        and: [
+          ...locationFilter,
+          { date: { greater_than_equal: `${from}T00:00:00.000Z` } },
+          { visibility: { equals: 'public' } },
+        ],
+      },
+      sort: 'date',
+      limit,
+      depth: 1,
+    }),
+    payload.find({
+      collection: 'recurring-events',
+      where: {
+        and: [
+          ...locationFilter,
+          { active: { equals: true } },
+          { visibility: { equals: 'public' } },
+          { year: { in: years } },
+        ],
+      },
+      sort: ['year', 'day'],
+      limit: 1000,
+      depth: 1,
+    }),
+  ])
+
+  const recurring = expandRecurringEvents(recurringResult.docs as RecurringEvent[], from, through)
+  return mergeScheduledEvents(oneOffResult.docs, recurring, limit)
+}
+
 export const getUpcomingEventsFromPayload = async (
   locationSlug: string,
   limit: number = 10,
@@ -788,37 +844,34 @@ export const getUpcomingEventsFromPayload = async (
           return []
         }
 
-        const locationId = location.id
-
-        const todayStr = getTodayMidnightISO()
-
-        const result = await payload.find({
-          collection: 'events',
-          where: {
-            and: [
-              {
-                location: { equals: locationId },
-              },
-              {
-                date: { greater_than_equal: todayStr },
-              },
-              {
-                visibility: { equals: 'public' },
-              },
-            ],
-          },
-          sort: 'date',
-          limit,
-          depth: 1,
-        })
-
-        return result.docs
+        return findUpcomingPublicEvents(payload, limit, location.id)
       },
       [`events-${locationSlug}-${limit}-${todayKey}`],
       { tags: [CACHE_TAGS.events, CACHE_TAGS.locations], revalidate: 300 },
     )()
   } catch (error) {
     logger.error(`Error fetching events for location: ${locationSlug}`, error)
+    throw error
+  }
+}
+
+/** Get upcoming one-off and recurring public events across all locations. */
+export const getAllUpcomingEventsFromPayload = async (
+  limit: number = 100,
+): Promise<PayloadEvent[]> => {
+  const todayKey = getTodayEST()
+
+  try {
+    return await unstable_cache(
+      async () => {
+        const payload = await getPayload({ config })
+        return findUpcomingPublicEvents(payload, limit)
+      },
+      [`events-all-${limit}-${todayKey}`],
+      { tags: [CACHE_TAGS.events, CACHE_TAGS.locations], revalidate: 300 },
+    )()
+  } catch (error) {
+    logger.error('Error fetching upcoming events', error)
     throw error
   }
 }
@@ -893,14 +946,14 @@ export const getUpcomingFoodFromPayload = async (
  * Cached until the 'food' tag is invalidated (both normalized collections map
  * to that tag in the revalidation plugin).
  */
-const getRecurringFoodGlobal = async (): Promise<RecurringFoodState> => {
+const getRecurringFoodGlobal = async (year: number): Promise<RecurringFoodState> => {
   try {
     return await unstable_cache(
       async (): Promise<RecurringFoodState> => {
         const payload = await getPayload({ config })
-        return getRecurringFoodState(payload, { overrideAccess: true })
+        return getRecurringFoodState(payload, { overrideAccess: true, year })
       },
-      ['recurring-food-global'],
+      [`recurring-food-global-${year}`],
       { tags: [CACHE_TAGS.food], revalidate: 300 },
     )()
   } catch (error) {
@@ -952,17 +1005,27 @@ const getUpcomingRecurringFood = async (
 
         const locationId = location.id
 
-        // Get recurring food global
-        const recurringFood = await getRecurringFoodGlobal()
-        const locationSchedule = recurringFood.schedules[locationId] || {}
-        const locationExclusions = recurringFood.exclusions[locationId] || []
+        // The window scans monthsAhead months starting with the current one, so
+        // it can touch at most this year and the next.
+        const now = new Date()
+        const lastMonth = new Date(now.getFullYear(), now.getMonth() + monthsAhead - 1, 1)
+        const years = [...new Set([now.getFullYear(), lastMonth.getFullYear()])]
+        const recurringFoodByYear = new Map(
+          (await Promise.all(years.map((year) => getRecurringFoodGlobal(year)))).map((state) => [
+            state.year,
+            state,
+          ]),
+        )
 
         // Collect all vendor IDs to fetch in batch
         const vendorIds = new Set<string>()
-        for (const day of recurringDays) {
-          for (const week of recurringOccurrences) {
-            const vendorId = locationSchedule[day]?.[week]
-            if (vendorId) vendorIds.add(vendorId)
+        for (const recurringFood of recurringFoodByYear.values()) {
+          const locationSchedule = recurringFood.schedules[locationId] || {}
+          for (const day of recurringDays) {
+            for (const week of recurringOccurrences) {
+              const vendorId = locationSchedule[day]?.[week]
+              if (vendorId) vendorIds.add(vendorId)
+            }
           }
         }
 
@@ -1000,12 +1063,19 @@ const getUpcomingRecurringFood = async (
 
         for (const [dayIndex, day] of recurringDays.entries()) {
           for (const [weekIndex, week] of recurringOccurrences.entries()) {
-            const vendorId = locationSchedule[day]?.[week]
-            const vendor = vendorId ? vendorMap[vendorId] : undefined
-            if (!vendor) continue
+            const slotHasVendor = [...recurringFoodByYear.values()].some(
+              (state) => state.schedules[locationId]?.[day]?.[week],
+            )
+            if (!slotHasVendor) continue
 
             for (const date of getUpcomingDatesForSlot(dayIndex, weekIndex + 1, monthsAhead)) {
+              const recurringFood = recurringFoodByYear.get(date.getFullYear())
+              if (!recurringFood) continue
+              const vendorId = recurringFood.schedules[locationId]?.[day]?.[week]
+              const vendor = vendorId ? vendorMap[vendorId] : undefined
+              if (!vendor) continue
               const dateKey = date.toISOString().split('T')[0]
+              const locationExclusions = recurringFood.exclusions[locationId] || []
               if (locationExclusions.includes(dateKey)) continue
 
               entries.push({

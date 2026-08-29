@@ -4,13 +4,14 @@
  */
 
 import { Metadata } from 'next'
-import { getPayload } from 'payload'
-import config from '@/src/payload.config'
 import { JsonLd } from '@/components/seo/json-ld'
 import { EventsPageClient } from './events-page-client'
 import { BreweryEvent } from '@/lib/types/event'
-import { transformPayloadEventToBreweryEvent, getAllLocations } from '@/lib/utils/payload-api'
-import { getTodayMidnightISO } from '@/lib/utils/date'
+import {
+  getAllLocations,
+  getAllUpcomingEventsFromPayload,
+  transformPayloadEventToBreweryEvent,
+} from '@/lib/utils/payload-api'
 import { createLocationLookup, generateEventListJsonLd } from '@/lib/utils/json-ld'
 import { PageTransition } from '@/components/motion'
 
@@ -35,22 +36,8 @@ export const metadata: Metadata = {
  * Fetch events server-side
  */
 async function getEvents(): Promise<BreweryEvent[]> {
-  const payload = await getPayload({ config })
-
-  const todayStr = getTodayMidnightISO()
-
-  const result = await payload.find({
-    collection: 'events',
-    where: {
-      visibility: { equals: 'public' },
-      date: { greater_than_equal: todayStr },
-    },
-    sort: 'date',
-    limit: 100,
-    depth: 1,
-  })
-
-  return result.docs.map((event) => transformPayloadEventToBreweryEvent(event))
+  const events = await getAllUpcomingEventsFromPayload(100)
+  return events.map((event) => transformPayloadEventToBreweryEvent(event))
 }
 
 export default async function EventsPage() {

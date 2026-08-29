@@ -79,7 +79,7 @@ export const EventDateWarning: React.FC = () => {
           const weekOccurrence = recurringWeekOccurrence(date)
           const weekKey = weekKeys[weekOccurrence - 1]
 
-          const data = await getRecurringFoodData()
+          const data = await getRecurringFoodData(Number(dateOnly.slice(0, 4)))
 
           // Data structure: data.schedules[locationId][dayName][weekKey]
           const vendorId = data.schedules?.[locationValue]?.[dayName]?.[weekKey]
