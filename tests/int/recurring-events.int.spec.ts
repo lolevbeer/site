@@ -28,6 +28,19 @@ describe('recurring event expansion', () => {
     expect(events.every((event) => event.organizer === 'Trivia Night')).toBe(true)
   })
 
+  it('treats a missing year (legacy row) as 2026', () => {
+    const legacy = { ...definition, year: undefined } as unknown as RecurringEvent
+
+    const events = expandRecurringEvents([legacy], '2026-01-01', '2026-02-28')
+
+    expect(events.map((event) => event.date.slice(0, 10))).toEqual([
+      '2026-01-07',
+      '2026-01-21',
+      '2026-02-04',
+      '2026-02-18',
+    ])
+  })
+
   it('lets a matching one-off event override an expanded occurrence', () => {
     const recurring = expandRecurringEvents([definition], '2027-01-01', '2027-01-31')
     const oneOff: Event = {

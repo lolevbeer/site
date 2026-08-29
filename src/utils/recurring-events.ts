@@ -2,6 +2,13 @@ import type { Event, RecurringEvent } from '@/src/payload-types'
 import { getDatesForSlotInYear, toDateKey } from '@/lib/utils/food-dates'
 import { recurringDays, recurringOccurrences } from '@/src/utils/recurring-food'
 
+/**
+ * Rows created before the year field existed have no year in the DB; they were
+ * authored for the 2026 season, so reads treat a missing year as 2026 instead
+ * of requiring a data migration.
+ */
+export const LEGACY_RECURRING_EVENT_YEAR = 2026
+
 function eventLocationId(event: Pick<Event, 'location'>): string {
   return typeof event.location === 'object' ? event.location.id : event.location
 }
@@ -34,7 +41,11 @@ export function expandRecurringEvents(
       const occurrenceIndex = recurringOccurrences.indexOf(occurrence)
       if (occurrenceIndex < 0) continue
 
-      for (const date of getDatesForSlotInYear(dayIndex, occurrenceIndex + 1, definition.year)) {
+      for (const date of getDatesForSlotInYear(
+        dayIndex,
+        occurrenceIndex + 1,
+        definition.year ?? LEGACY_RECURRING_EVENT_YEAR,
+      )) {
         const occurrenceDate = toDateKey(date)
         if (
           occurrenceDate < fromDate ||
