@@ -7,7 +7,7 @@
 
 import React from 'react'
 import { BeerLinkWrapper } from '@/components/beer/beer-link-wrapper'
-import { Beer } from '@/lib/types/beer'
+import { GlassType, type Beer } from '@/lib/types/beer'
 import { useLocationContext } from '@/components/location/location-provider'
 import { getBeerSlug } from '@/lib/utils/formatters'
 import { getGlassIcon } from '@/lib/utils/beer-icons'
@@ -52,6 +52,8 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
   const { currentLocation } = useLocationContext()
   const beerSlug = getBeerSlug(beer)
   const GlassIcon = getGlassIcon(beer.glass)
+  const isStein = beer.glass === GlassType.STEIN
+  const glassOpticalClass = isStein ? '-translate-x-[0.8vh] scale-[1.08]' : ''
   const badgeLabel = showJustReleased ? getBeerBadgeLabel(beer) : null
   const isProduct = 'isProduct' in beer && beer.isProduct === true
 
@@ -93,7 +95,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
         className="group block"
       >
         <div
-          className={`relative overflow-hidden transition-colors duration-200 cursor-pointer hover:bg-secondary/50 bg-background ${className}`}
+          className={`relative ${isStein ? 'overflow-visible' : 'overflow-hidden'} transition-colors duration-200 cursor-pointer hover:bg-secondary/50 bg-background ${className}`}
         >
           {/* The first grid row keeps all headline values on one baseline. The
               copy then clears beneath ABV and both price columns, giving long
@@ -113,7 +115,9 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                 {(showTap || showGlass) && (
                   <div className="relative flex-shrink-0" style={{ height: '7vh', width: '5vh' }}>
                     {showGlass && (
-                      <GlassIcon className="w-full h-full text-muted-foreground/50 group-hover:text-muted-foreground/70 transition-colors" />
+                      <GlassIcon
+                        className={`h-full w-full text-muted-foreground/50 transition-colors group-hover:text-muted-foreground/70 ${glassOpticalClass}`}
+                      />
                     )}
                     {showTap && beer.tap && (
                       <span

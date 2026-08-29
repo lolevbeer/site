@@ -77,6 +77,19 @@ describe('DraftBeerCard fullscreen rating layout', () => {
     expect(beerInfo?.textContent).not.toContain('4.25')
   })
 
+  it('optically centers a stein body beneath the tap number', () => {
+    const { container } = renderFullscreenBeer({ glass: GlassType.STEIN })
+
+    const tapNumber = container.querySelector('.tabular-nums')
+    const glassIcon = tapNumber?.parentElement?.querySelector('svg')
+    const card = container.firstElementChild?.firstElementChild
+
+    expect(glassIcon?.classList.contains('-translate-x-[0.8vh]')).toBe(true)
+    expect(glassIcon?.classList.contains('scale-[1.08]')).toBe(true)
+    expect(card?.classList.contains('overflow-visible')).toBe(true)
+    expect(card?.classList.contains('overflow-hidden')).toBe(false)
+  })
+
   it('allows the description and hops to wrap onto additional lines', () => {
     const { container } = renderFullscreenBeer()
 
