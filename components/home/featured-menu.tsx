@@ -114,21 +114,32 @@ interface MenuItem {
 /** Column header for the fullscreen draft grid, with viewport-relative sizing.
  *  Module scope on purpose: declaring it inside render created a new component
  *  type each tick, unmounting/remounting both headers every poll. */
-function ColumnHeader({ isOtherMenu }: { isOtherMenu: boolean }) {
+function scaledVh(value: number | `${number}vh`, scale: number): string {
+  const numericValue = typeof value === 'number' ? value : Number.parseFloat(value)
+  return `${Math.round(numericValue * scale * 100) / 100}vh`
+}
+
+function ColumnHeader({
+  isOtherMenu,
+  displayScale = 1,
+}: {
+  isOtherMenu: boolean
+  displayScale?: number
+}) {
   return (
     <div
       className="grid items-center bg-[#1d1d1f]"
       style={{
         gridTemplateColumns: isOtherMenu
-          ? `minmax(0, 1fr) ${TV_COL.price}`
+          ? `minmax(0, 1fr) ${scaledVh(TV_COL.price, displayScale)}`
           : `${TV_COL.tap} minmax(0, 1fr) ${TV_COL.abv} ${TV_COL.price} ${TV_COL.price}`,
-        columnGap: '1vh',
-        paddingBlock: '0.65vh',
+        columnGap: scaledVh(1, displayScale),
+        paddingBlock: scaledVh(0.65, displayScale),
         borderRadius: '0.35vh',
       }}
     >
       {!isOtherMenu && <div aria-hidden="true" />}
-      <div style={isOtherMenu ? { paddingLeft: '1.2vh' } : undefined}>
+      <div style={isOtherMenu ? { paddingLeft: scaledVh(1.2, displayScale) } : undefined}>
         {isOtherMenu ? 'Item' : 'Beer'}
       </div>
       {!isOtherMenu && <div className="text-center">ABV</div>}
@@ -196,11 +207,11 @@ function distributeOtherGroups(groups: OtherMenuGroup[]): OtherMenuGroup[][] {
   if (groups.length === 1) {
     const [group] = groups
     const midpoint = Math.ceil(group.entries.length / 2)
+    const leftGroup = { ...group, entries: group.entries.slice(0, midpoint) }
     const rightEntries = group.entries.slice(midpoint)
-    return [
-      [{ ...group, entries: group.entries.slice(0, midpoint) }],
-      rightEntries.length > 0 ? [{ ...group, entries: rightEntries }] : [],
-    ]
+    return rightEntries.length > 0
+      ? [[leftGroup], [{ ...group, entries: rightEntries }]]
+      : [[leftGroup]]
   }
 
   const columns: OtherMenuGroup[][] = [[], []]
@@ -213,34 +224,47 @@ function distributeOtherGroups(groups: OtherMenuGroup[]): OtherMenuGroup[][] {
   return columns
 }
 
-function OtherThingRow({ entry, animated }: { entry: OtherMenuEntry; animated: boolean }) {
+function OtherThingRow({
+  entry,
+  animated,
+  displayScale,
+}: {
+  entry: OtherMenuEntry
+  animated: boolean
+  displayScale: number
+}) {
   const { item, state, accentColor } = entry
-  const options = item.options?.filter((option) => !SOLD_OUT_OPTION.test(option))
-  const soldOut = options?.length !== item.options?.length
+  const soldOut = item.options?.some((option) => SOLD_OUT_OPTION.test(option)) ?? false
+  const options = soldOut
+    ? item.options?.filter((option) => !SOLD_OUT_OPTION.test(option))
+    : item.options
   const itemColor = soldOut ? undefined : accentColor
 
   return (
     <div
       className={`grid min-w-0 items-baseline ${animated ? getAnimationClass(state) : ''}`}
       style={{
-        gridTemplateColumns: `minmax(0, 1fr) ${TV_COL.price}`,
-        columnGap: '1vh',
-        paddingInline: '1.2vh',
+        gridTemplateColumns: `minmax(0, 1fr) ${scaledVh(TV_COL.price, displayScale)}`,
+        columnGap: scaledVh(1, displayScale),
+        paddingInline: scaledVh(1.2, displayScale),
       }}
       role="listitem"
     >
       <div className="min-w-0">
-        <div className="flex min-w-0 flex-wrap items-baseline gap-x-[1vh]">
+        <div
+          className="flex min-w-0 flex-wrap items-baseline"
+          style={{ columnGap: scaledVh(1, displayScale) }}
+        >
           <h4
             className={`break-words font-bold leading-tight transition-colors duration-500 ${soldOut ? 'text-foreground-muted' : ''}`}
-            style={{ fontSize: '2.8vh', color: itemColor }}
+            style={{ fontSize: scaledVh(2.8, displayScale), color: itemColor }}
           >
             {item.name}
           </h4>
           {soldOut && (
             <span
               className="font-bold uppercase tracking-[0.12em] text-foreground-muted"
-              style={{ fontSize: '1.15vh' }}
+              style={{ fontSize: scaledVh(1.15, displayScale) }}
             >
               Sold aht
             </span>
@@ -249,7 +273,7 @@ function OtherThingRow({ entry, animated }: { entry: OtherMenuEntry; animated: b
         {options && options.length > 0 && (
           <p
             className="break-words text-foreground-muted"
-            style={{ fontSize: TV_TYPE.body, lineHeight: 1.35 }}
+            style={{ fontSize: scaledVh(TV_TYPE.body, displayScale), lineHeight: 1.35 }}
           >
             {options.join(' · ')}
           </p>
@@ -257,7 +281,7 @@ function OtherThingRow({ entry, animated }: { entry: OtherMenuEntry; animated: b
       </div>
       <div
         className={`text-right font-bold tabular-nums transition-colors duration-500 ${soldOut ? 'text-foreground-muted line-through' : ''}`}
-        style={{ fontSize: '3.4vh', color: itemColor }}
+        style={{ fontSize: scaledVh(3.4, displayScale), color: itemColor }}
       >
         {item.pricing.draftPrice != null && `$${item.pricing.draftPrice}`}
       </div>
@@ -279,44 +303,73 @@ function OtherThingsBoard({
     accentColor: itemColors?.[index],
   }))
   const columns = distributeOtherGroups(groupOtherMenuItems(entries))
+  const rowsPerColumn = Math.max(
+    ...columns.map((groups) => groups.reduce((total, group) => total + group.entries.length, 0)),
+  )
+  // Six rows per column is the full-board baseline. Sparse boards grow in
+  // direct proportion to the missing rows, capped so a one-item board remains
+  // balanced and long option lines still have room to wrap.
+  const displayScale = Math.min(2.25, Math.max(1, 6 / rowsPerColumn))
+  const columnClass = columns.length === 1 ? 'grid-cols-1' : 'grid-cols-2'
 
   return (
     <div className="flex h-full min-w-0 max-w-none flex-col" data-other-things-board>
       <div
-        className="grid flex-shrink-0 grid-cols-2 font-bold uppercase tracking-wider text-[#f5f5f7]"
-        style={{ columnGap: TV_COLUMN_GAP, marginBottom: '1.4vh', fontSize: TV_TYPE.label }}
+        className={`grid flex-shrink-0 ${columnClass} font-bold uppercase tracking-wider text-[#f5f5f7]`}
+        style={{
+          columnGap: TV_COLUMN_GAP,
+          marginBottom: scaledVh(1.4, displayScale),
+          fontSize: scaledVh(TV_TYPE.label, displayScale),
+        }}
       >
         {columns.map((_, columnIndex) => (
-          <ColumnHeader key={columnIndex} isOtherMenu />
+          <ColumnHeader key={columnIndex} isOtherMenu displayScale={displayScale} />
         ))}
       </div>
 
-      <div className="grid min-h-0 min-w-0 flex-1 grid-cols-2" style={{ columnGap: TV_COLUMN_GAP }}>
+      <div
+        className={`grid min-h-0 min-w-0 flex-1 ${columnClass}`}
+        style={{ columnGap: TV_COLUMN_GAP }}
+      >
         {columns.map((groups, columnIndex) => (
           <div
             key={columnIndex}
             className="flex min-h-0 min-w-0 flex-col"
-            style={{ gap: '2.2vh' }}
+            style={{ gap: scaledVh(2.2, displayScale) }}
             role="list"
           >
             {groups.map((group) => (
               <section
                 key={group.key}
-                className="flex min-w-0 flex-col"
-                style={{ gap: '1vh' }}
+                className="flex min-w-0 flex-1 flex-col"
+                style={{
+                  flexGrow: group.entries.length,
+                  gap: scaledVh(1, displayScale),
+                }}
                 data-other-category={group.key}
               >
                 {group.label && (
                   <h3
                     className="border-b border-border font-bold uppercase tracking-[0.14em] text-foreground-muted"
-                    style={{ paddingBottom: '0.6vh', fontSize: '1.35vh' }}
+                    style={{
+                      paddingBottom: scaledVh(0.6, displayScale),
+                      fontSize: scaledVh(1.35, displayScale),
+                    }}
                   >
                     {group.label}
                   </h3>
                 )}
-                <div className="flex min-w-0 flex-col" style={{ gap: '1.35vh' }}>
+                <div
+                  className="flex min-w-0 flex-1 flex-col justify-evenly"
+                  style={{ gap: scaledVh(1.35, displayScale) }}
+                >
                   {group.entries.map((entry) => (
-                    <OtherThingRow key={entry.key} entry={entry} animated={animated} />
+                    <OtherThingRow
+                      key={entry.key}
+                      entry={entry}
+                      animated={animated}
+                      displayScale={displayScale}
+                    />
                   ))}
                 </div>
               </section>
