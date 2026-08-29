@@ -9,6 +9,7 @@ import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/
 import { ScrollReveal } from '@/components/ui/scroll-reveal'
 import { Beer as BeerIconLucide, Package, Pencil } from 'lucide-react'
 import { getGlassIcon } from '@/lib/utils/beer-icons'
+import { beerHref } from '@/lib/config/beer-filters'
 import { useLocationContext } from '@/components/location/location-provider'
 import { DraftBeerCard } from '@/components/beer/draft-beer-card'
 import { BeerLinkWrapper } from '@/components/beer/beer-link-wrapper'
@@ -234,10 +235,8 @@ function OtherThingRow({
   displayScale: number
 }) {
   const { item, state, accentColor } = entry
-  const soldOut = item.options?.some((option) => SOLD_OUT_OPTION.test(option)) ?? false
-  const options = soldOut
-    ? item.options?.filter((option) => !SOLD_OUT_OPTION.test(option))
-    : item.options
+  const options = item.options?.filter((option) => !SOLD_OUT_OPTION.test(option))
+  const soldOut = options?.length !== item.options?.length
   const itemColor = soldOut ? undefined : accentColor
 
   return (
@@ -341,7 +340,7 @@ function OtherThingsBoard({
             {groups.map((group) => (
               <section
                 key={group.key}
-                className="flex min-w-0 flex-1 flex-col"
+                className="flex min-w-0 flex-col"
                 style={{
                   flexGrow: group.entries.length,
                   gap: scaledVh(1, displayScale),
@@ -1090,7 +1089,7 @@ function FeaturedMenu({
 
         <div className="text-center">
           <Button asChild variant="outline" size="lg">
-            <Link href="/beer">View All Beer</Link>
+            <Link href={beerHref('tap')}>View All Beer</Link>
           </Button>
         </div>
       </div>

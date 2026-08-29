@@ -13,7 +13,8 @@ import {
   SEGMENTED_ITEM_IDLE_CLASS,
   SEGMENTED_ITEM_SELECTED_CLASS,
   SEGMENTED_TROUGH_CLASS,
-} from '@/components/location/location-tabs'
+} from '@/components/ui/segmented-control'
+import { beerHref } from '@/lib/config/beer-filters'
 import { MotionCard } from '@/components/motion'
 
 interface QuickInfoCardsProps {
@@ -147,7 +148,7 @@ export function QuickInfoCards({
         title="On Tap Now"
         counts={beerCount}
         anchor="draft"
-        ctaHref="/beer?avail=tap"
+        ctaHref={beerHref('tap')}
         ctaLabel="View All Beer"
         countNoun="beers on tap"
       />
@@ -156,7 +157,7 @@ export function QuickInfoCards({
         title="Cans To Go"
         counts={cansCount}
         anchor="cans"
-        ctaHref="/beer?avail=cans"
+        ctaHref={beerHref('cans')}
         ctaLabel="View All Cans"
         countNoun="cans"
       />

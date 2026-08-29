@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { SectionHeader } from '@/components/ui/section-header'
 import { ScrollReveal } from '@/components/ui/scroll-reveal'
+import { beerHref } from '@/lib/config/beer-filters'
 import type { Beer, Style } from '@/src/payload-types'
 
 interface ComingSoonBeer {
@@ -68,7 +69,7 @@ export function UpcomingBeers({
 
         <div className="text-center">
           <Button asChild variant="outline" size="lg">
-            <Link href="/beer">View All Beer</Link>
+            <Link href={beerHref('all')}>View All Beer</Link>
           </Button>
         </div>
       </div>

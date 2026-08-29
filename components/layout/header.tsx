@@ -74,16 +74,12 @@ export function Header() {
                 sighted users a live control that assistive tech is told to
                 ignore, and let them change location with the menu still
                 covering the page. */}
-            <LocationTabs
-              syncWithGlobalState={true}
-              size="sm"
-              className={cn('md:hidden', isMobileMenuOpen && 'invisible')}
-            />
+            <LocationTabs size="sm" className={cn('md:hidden', isMobileMenuOpen && 'invisible')} />
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-4">
               <Navigation />
-              <LocationTabs syncWithGlobalState={true} className="w-full" />
+              <LocationTabs className="w-full" />
             </div>
 
             {/* Mobile menu button - animated two-line hamburger */}
