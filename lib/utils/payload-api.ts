@@ -812,7 +812,9 @@ async function findUpcomingPublicEvents(
           ...locationFilter,
           { active: { equals: true } },
           { visibility: { equals: 'public' } },
-          { year: { in: years } },
+          // Legacy rows predate the year field; fetch them unconditionally —
+          // expandRecurringEvents assigns them 2026 and window-filters anyway.
+          { or: [{ year: { in: years } }, { year: { exists: false } }] },
         ],
       },
       sort: ['year', 'day'],
