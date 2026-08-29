@@ -95,7 +95,7 @@ describe('Other Things fullscreen menu', () => {
     const rows = group?.lastElementChild
 
     expect((board.querySelector('h4') as HTMLElement | null)?.style.fontSize).toBe('4.2vh')
-    expect(group?.classList.contains('flex-1')).toBe(true)
+    expect((group as HTMLElement | null)?.style.flexGrow).toBe('4')
     expect(rows?.classList.contains('justify-evenly')).toBe(true)
   })
 

@@ -23,7 +23,7 @@ vi.mock('next/link', async () => {
   }
 })
 vi.mock('@/components/motion', () => ({ MotionCard: 'div' }))
-vi.mock('@/components/location/location-tabs', () => ({
+vi.mock('@/components/ui/segmented-control', () => ({
   SEGMENTED_ITEM_IDLE_CLASS: 'segmented-idle',
   SEGMENTED_ITEM_SELECTED_CLASS: 'segmented-selected',
   SEGMENTED_TROUGH_CLASS: 'segmented-trough',
