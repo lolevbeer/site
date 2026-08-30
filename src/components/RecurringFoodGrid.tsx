@@ -75,14 +75,27 @@ function exclusionSaveKey(locationId: string, dateKey: string): string {
   return `exclusion-${locationId}-${dateKey}`
 }
 
+/**
+ * Trim a vendor name at a word boundary so truncation reads as "El Rincon…"
+ * rather than a mid-word "El Rinco…". Falls back to a hard cut for names
+ * whose first word is already longer than the budget.
+ */
+function displayName(name: string, max = 16): string {
+  if (name.length <= max) return name
+  const cut = name.lastIndexOf(' ', max)
+  return `${name.slice(0, cut > 4 ? cut : max).trimEnd()}…`
+}
+
 interface GridCellProps {
   value: string | null
   onChange: (vendorId: string | null) => void
   cellKey: string
   readOnly?: boolean
+  /** Full vendor name; enables the tooltip and the word-boundary label. */
+  vendorName?: string
 }
 
-const GridCell: React.FC<GridCellProps> = ({ value, onChange, cellKey, readOnly }) => {
+const GridCell: React.FC<GridCellProps> = ({ value, onChange, cellKey, readOnly, vendorName }) => {
   const handleChange = useCallback(
     (newValue: ValueWithRelation | null) => {
       if (newValue && typeof newValue === 'object' && 'value' in newValue) {
@@ -99,20 +112,34 @@ const GridCell: React.FC<GridCellProps> = ({ value, onChange, cellKey, readOnly 
     : null
 
   return (
-    <RelationshipInput
-      path={`cell-${cellKey}`}
-      relationTo={['food-vendors']}
-      hasMany={false}
-      allowCreate={!readOnly}
-      // No edit-vendor pencil in cells: vendors rarely change and the icon
-      // eats space the (truncated) name needs.
-      allowEdit={false}
-      value={valueWithRelation}
-      onChange={handleChange}
-      appearance="select"
-      placeholder="Select"
-      readOnly={readOnly}
-    />
+    <div
+      className={
+        vendorName
+          ? 'recurring-food-grid__cell recurring-food-grid__cell--labeled'
+          : 'recurring-food-grid__cell'
+      }
+      title={vendorName}
+    >
+      <RelationshipInput
+        path={`cell-${cellKey}`}
+        relationTo={['food-vendors']}
+        hasMany={false}
+        // No create/edit vendor affordances in cells — both are rare and eat
+        // space the (truncated) name needs; manage vendors in their collection.
+        allowCreate={false}
+        allowEdit={false}
+        value={valueWithRelation}
+        onChange={handleChange}
+        appearance="select"
+        placeholder="Select"
+        readOnly={readOnly}
+      />
+      {vendorName && (
+        <span aria-hidden className="recurring-food-grid__cell-label">
+          {displayName(vendorName)}
+        </span>
+      )}
+    </div>
   )
 }
 
@@ -518,6 +545,39 @@ const LocationGrid: React.FC<LocationGridProps> = ({
 }) => {
   const locationSchedule = schedules[location.id] || {}
 
+  // Vendor names for the cell labels/tooltips (the select itself only holds ids).
+  const [cellVendorNames, setCellVendorNames] = useState<Record<string, string>>({})
+  const scheduledVendorIds = useMemo(() => {
+    const ids = new Set<string>()
+    for (const byWeek of Object.values(locationSchedule)) {
+      for (const vendorId of Object.values(byWeek || {})) {
+        if (vendorId) ids.add(vendorId)
+      }
+    }
+    return [...ids].sort()
+  }, [locationSchedule])
+
+  useEffect(() => {
+    if (scheduledVendorIds.length === 0) return
+    let cancelled = false
+    getFoodVendorsByIds(scheduledVendorIds)
+      .then((names) => {
+        if (!cancelled) setCellVendorNames((current) => ({ ...current, ...names }))
+      })
+      .catch((error) => logger.error('Error fetching cell vendor names:', error))
+    return () => {
+      cancelled = true
+    }
+  }, [scheduledVendorIds])
+
+  // Days with no vendors all year (usually Sun/Mon) shrink so the busy days
+  // get the width.
+  const dayHasVendor = useMemo(
+    () =>
+      days.map((day) => weeks.some((week) => Boolean(locationSchedule[day]?.[week]))),
+    [locationSchedule],
+  )
+
   // Week 5 exists for at most a couple of month/day combos and is usually
   // empty, so hide its row unless it has data or the manager asks for it.
   const [showFifthWeek, setShowFifthWeek] = useState(false)
@@ -539,7 +599,12 @@ const LocationGrid: React.FC<LocationGridProps> = ({
             <tr>
               <th />
               {dayLabels.map((label, i) => (
-                <th key={days[i]}>{label}</th>
+                <th
+                  key={days[i]}
+                  className={dayHasVendor[i] ? undefined : 'recurring-food-grid__day--empty'}
+                >
+                  {label}
+                </th>
               ))}
             </tr>
           </thead>
@@ -560,6 +625,7 @@ const LocationGrid: React.FC<LocationGridProps> = ({
                         // Only this cell locks while its own save is in flight,
                         // so a run of quick edits queues instead of blocking.
                         readOnly={readOnly || pendingKeys.has(cellKey)}
+                        vendorName={cellValue ? cellVendorNames[cellValue] : undefined}
                       />
                     </td>
                   )

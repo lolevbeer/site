@@ -112,6 +112,37 @@
     }
   }
 
+  /* Cell wrapper: hosts the tooltip and the word-boundary label overlay. */
+  &__cell {
+    position: relative;
+  }
+
+  /* Our overlay renders the (word-trimmed) name; hide react-select's own
+     mid-word-truncating text underneath it. */
+  &__cell--labeled .rs__single-value {
+    visibility: hidden !important;
+  }
+
+  &__cell-label {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    left: 8px;
+    right: 30px; /* leave room for the clear × */
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 12px;
+    letter-spacing: -0.015em;
+    pointer-events: none; /* clicks fall through to the select */
+  }
+
+  /* Days with no vendors all year collapse to just the Select control. */
+  &__table th.recurring-food-grid__day--empty {
+    min-width: 110px;
+    width: 110px;
+  }
+
   &__table {
     width: 100%;
     border-collapse: collapse;
