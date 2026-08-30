@@ -16,7 +16,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Info } from '@/components/icons';
+import { Info, X } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
@@ -504,9 +504,7 @@ export function DistributorMap({
                         className="text-muted-foreground hover:text-foreground -mt-0.5 -mr-1 p-1"
                       >
                         <span className="sr-only">Close</span>
-                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+                        <X className="h-3 w-3" />
                       </button>
                     </div>
                     <p className="text-xs text-muted-foreground mb-3">
