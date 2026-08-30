@@ -42,44 +42,45 @@ const detectSearchType = (searchTerm: string): boolean => {
 
 export function useLocationSearch() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchLocation, setSearchLocation] = useState<Coordinates | null>(null);
-  const [isSearching, setIsSearching] = useState(false);
+  // The geocode result is stored with the term it was resolved for. Everything
+  // exposed below is then derived, so a term that is cleared or is not
+  // geocodable simply stops matching — no effect has to clear state, which is
+  // what react-hooks/set-state-in-effect flags.
+  const [geocoded, setGeocoded] = useState<{ term: string; coords: Coordinates } | null>(null);
+  const [searching, setSearching] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const shouldGeocode = searchTerm.trim() !== '' && detectSearchType(searchTerm);
+  const searchLocation = shouldGeocode && geocoded?.term === searchTerm ? geocoded.coords : null;
+  const isSearching = shouldGeocode && searching;
 
   useEffect(() => {
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
 
-    if (!searchTerm.trim()) {
-      setSearchLocation(null);
-      setIsSearching(false);
-      return;
-    }
+    if (!shouldGeocode) return;
 
-    if (detectSearchType(searchTerm)) {
-      searchTimeoutRef.current = setTimeout(async () => {
-        setIsSearching(true);
-        const coords = await geocodeLocation(searchTerm);
-        if (coords) {
-          setSearchLocation(coords);
-        }
-        setIsSearching(false);
-      }, SEARCH_DEBOUNCE);
-    } else {
-      setSearchLocation(null);
-    }
+    const term = searchTerm;
+    searchTimeoutRef.current = setTimeout(async () => {
+      setSearching(true);
+      const coords = await geocodeLocation(term);
+      if (coords) {
+        setGeocoded({ term, coords });
+      }
+      setSearching(false);
+    }, SEARCH_DEBOUNCE);
 
     return () => {
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current);
       }
     };
-  }, [searchTerm]);
+  }, [searchTerm, shouldGeocode]);
 
   const clearSearch = useCallback(() => {
     setSearchTerm('');
-    setSearchLocation(null);
+    setGeocoded(null);
   }, []);
 
   return {

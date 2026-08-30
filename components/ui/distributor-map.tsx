@@ -113,8 +113,12 @@ export function DistributorMap({
   const loading = !initialData && fetchLoading
   const error = !initialData ? fetchError : null
 
-  // Unified reference location state (for distance calculations)
-  const [referenceLocation, setReferenceLocation] = useState<{
+  // Reference point for distance calculations. Only the geolocation half is
+  // state — the search half is derived from the geocoded search below, so no
+  // effect has to copy it into state (react-hooks/set-state-in-effect).
+  // Search wins when active; "use my location" clears the search term, which
+  // hands precedence back to the geolocated point.
+  const [geoReference, setGeoReference] = useState<{
     latitude: number
     longitude: number
     label: string
@@ -138,22 +142,29 @@ export function DistributorMap({
   const mapRef = useRef<MapRef>(null)
   const selectedCardRef = useRef<HTMLDivElement>(null)
 
-  // Update reference location when search location changes
+  const searchReference = useMemo(() => {
+    if (!searchLocation) return null
+
+    const trimmedSearch = searchTerm.trim()
+    const label = /^\d{5}$/.test(trimmedSearch)
+      ? trimmedSearch
+      : trimmedSearch.length > 20
+        ? trimmedSearch.substring(0, 20) + '...'
+        : trimmedSearch
+
+    return {
+      latitude: searchLocation.latitude,
+      longitude: searchLocation.longitude,
+      label,
+    }
+  }, [searchLocation, searchTerm])
+
+  const referenceLocation = searchReference ?? geoReference
+
+  // Move the map when a search resolves. Only the camera move lives here now;
+  // the reference point itself is derived above.
   useEffect(() => {
     if (searchLocation) {
-      const trimmedSearch = searchTerm.trim()
-      const label = /^\d{5}$/.test(trimmedSearch)
-        ? trimmedSearch
-        : trimmedSearch.length > 20
-          ? trimmedSearch.substring(0, 20) + '...'
-          : trimmedSearch
-
-      setReferenceLocation({
-        latitude: searchLocation.latitude,
-        longitude: searchLocation.longitude,
-        label,
-      })
-
       // Smooth fly to search location
       if (mapRef.current) {
         mapRef.current.flyTo({
@@ -284,7 +295,7 @@ export function DistributorMap({
     setSearchTerm('')
 
     getUserLocation((coords) => {
-      setReferenceLocation({
+      setGeoReference({
         latitude: coords.latitude,
         longitude: coords.longitude,
         label: 'you',

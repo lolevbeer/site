@@ -6,7 +6,7 @@
 
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useEffect, useCallback, useMemo, useSyncExternalStore } from 'react'
 import { useQueryState, parseAsString } from 'nuqs'
 import { useIsHydrated } from '@/lib/hooks/use-is-hydrated'
 import {
@@ -54,23 +54,35 @@ export interface UseLocationReturn {
 }
 
 /**
- * Get location preference from localStorage with fallback
+ * localStorage is treated as the store of record for the location preference
+ * rather than being copied into React state on mount. Copying meant a
+ * setState inside an effect (flagged by react-hooks/set-state-in-effect) and
+ * a duplicate source of truth; subscribing keeps the selection derived, and
+ * picks up changes from other tabs for free.
  */
-function getStoredLocation(locations: PayloadLocation[]): LocationSlug {
-  if (typeof window === 'undefined' || locations.length === 0) {
-    return getDefaultLocationSlug(locations)
-  }
+const storageListeners = new Set<() => void>()
 
+function subscribeToStoredLocation(listener: () => void): () => void {
+  storageListeners.add(listener)
+  window.addEventListener('storage', listener)
+  return () => {
+    storageListeners.delete(listener)
+    window.removeEventListener('storage', listener)
+  }
+}
+
+function getStoredLocationSnapshot(): string | null {
   try {
-    const stored = localStorage.getItem(LOCATION_STORAGE_KEY)
-    if (stored && isValidLocationSlug(locations, stored)) {
-      return stored
-    }
+    return localStorage.getItem(LOCATION_STORAGE_KEY)
   } catch (error) {
     console.warn('Failed to read location from localStorage:', error)
+    return null
   }
+}
 
-  return getDefaultLocationSlug(locations)
+/** The server has no preference, so SSR and the hydration render agree. */
+function getStoredLocationServerSnapshot(): string | null {
+  return null
 }
 
 /**
@@ -86,6 +98,8 @@ function saveLocationToStorage(slug: LocationSlug): void {
   } catch (error) {
     console.warn('Failed to save location to localStorage:', error)
   }
+  // `storage` only fires in other tabs, so notify this one directly.
+  storageListeners.forEach((listener) => listener())
 }
 
 /**
@@ -96,25 +110,34 @@ function saveLocationToStorage(slug: LocationSlug): void {
  */
 export function useLocation(locations: PayloadLocation[] = []): UseLocationReturn {
   const defaultSlug = useMemo(() => getDefaultLocationSlug(locations), [locations])
-  const [currentLocation, setCurrentLocationState] = useState<LocationSlug>(defaultSlug)
   const isClient = useIsHydrated()
 
   // URL state for location - allows sharing URLs with location preset
   const [urlLocation, _setUrlLocation] = useQueryState('loc', parseAsString)
 
-  // Initialize from URL param first, then localStorage on client mount
+  const storedLocation = useSyncExternalStore(
+    subscribeToStoredLocation,
+    getStoredLocationSnapshot,
+    getStoredLocationServerSnapshot,
+  )
+
+  // Priority: URL param > localStorage > default. Derived rather than held in
+  // state, so selecting a location is a single write to storage and every
+  // consumer re-derives from it.
+  const currentLocation = useMemo<LocationSlug>(() => {
+    if (locations.length === 0) return defaultSlug
+    if (urlLocation && isValidLocationSlug(locations, urlLocation)) return urlLocation
+    if (storedLocation && isValidLocationSlug(locations, storedLocation)) return storedLocation
+    return defaultSlug
+  }, [locations, urlLocation, storedLocation, defaultSlug])
+
+  // Persist a location supplied via the URL so it survives the next visit.
+  // A write to an external system is what effects are for.
   useEffect(() => {
     if (locations.length === 0) return
-
-    // Priority: URL param > localStorage > default
     if (urlLocation && isValidLocationSlug(locations, urlLocation)) {
-      setCurrentLocationState(urlLocation)
       saveLocationToStorage(urlLocation)
-      return
     }
-
-    const storedLocation = getStoredLocation(locations)
-    setCurrentLocationState(storedLocation)
   }, [urlLocation, locations])
 
   // Get current location data
@@ -133,7 +156,8 @@ export function useLocation(locations: PayloadLocation[] = []): UseLocationRetur
   const setLocation = useCallback(
     (slug: LocationSlug) => {
       if (!isValidLocationSlug(locations, slug)) return
-      setCurrentLocationState(slug)
+      // Writing to storage notifies subscribers, and `currentLocation` derives
+      // from that — there is no separate copy in state to keep in step.
       saveLocationToStorage(slug)
     },
     [locations],

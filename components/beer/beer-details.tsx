@@ -153,7 +153,11 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
   const packagingType = getPackagingType(beer)
   const [tapLocations, setTapLocations] = useState<string[]>([])
   const [canLocations, setCanLocations] = useState<string[]>([])
-  const [isLoadingLocations, setIsLoadingLocations] = useState(true)
+  const [fetchingLocations, setFetchingLocations] = useState(true)
+  // With no beer id there is nothing to fetch, so "loading" is derived rather
+  // than cleared by the effect (react-hooks/set-state-in-effect); the location
+  // arrays simply stay empty.
+  const isLoadingLocations = Boolean(beer.id) && fetchingLocations
   const [locationError, setLocationError] = useState<string | null>(null)
   const [imageError, setImageError] = useState(false)
   // Flips when BeerCan3D has appended its canvas; fades the poster image out.
@@ -165,15 +169,10 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
 
   useEffect(() => {
     // Don't fetch locations if beer ID is missing
-    if (!beer.id) {
-      setIsLoadingLocations(false)
-      setTapLocations([])
-      setCanLocations([])
-      return
-    }
+    if (!beer.id) return
 
     const fetchLocations = async () => {
-      setIsLoadingLocations(true)
+      setFetchingLocations(true)
       setLocationError(null)
 
       try {
@@ -217,7 +216,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
         logger.error('Error fetching beer location data:', error)
         setLocationError('Unable to load location information. Please try again later.')
       } finally {
-        setIsLoadingLocations(false)
+        setFetchingLocations(false)
       }
     }
 

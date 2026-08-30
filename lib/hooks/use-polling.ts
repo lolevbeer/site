@@ -77,7 +77,13 @@ export function usePolling<T, R extends PollingResponse>(
 ): UsePollingResult<T> {
   const { enabled = true, pollInterval = 2000 } = options
 
-  const [data, setData] = useState<T | null>(initialData)
+  // A poll result is stored together with the server-supplied `initialData` it
+  // was layered on top of. When the server re-renders with fresh props that
+  // base stops matching, so the newer server data wins automatically — where
+  // previously an effect copied the prop into state on every change, which
+  // react-hooks/set-state-in-effect flags.
+  const [polled, setPolled] = useState<{ base: T | null; value: T } | null>(null)
+  const data = polled && polled.base === initialData ? polled.value : initialData
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
   const [isConnected, setIsConnected] = useState(false)
   const [error, setError] = useState<Error | null>(null)
@@ -93,8 +99,13 @@ export function usePolling<T, R extends PollingResponse>(
   // effect rather than during render: render-phase ref mutation is unsafe when
   // React retries a render, and is flagged by react-hooks/refs.
   const applyResponseRef = useRef(applyResponse)
+  // Read inside poll() so a result records which server render it superseded,
+  // without `initialData` in poll's dependency list restarting the timer on
+  // every server re-render.
+  const initialDataRef = useRef(initialData)
   useEffect(() => {
     applyResponseRef.current = applyResponse
+    initialDataRef.current = initialData
   })
 
   // poll() reschedules itself, which it cannot do by referencing its own
@@ -129,7 +140,7 @@ export function usePolling<T, R extends PollingResponse>(
       // Only update data state when timestamp has changed
       if (raw.timestamp !== lastTimestampRef.current) {
         lastTimestampRef.current = raw.timestamp
-        setData(applied.data)
+        setPolled({ base: initialDataRef.current, value: applied.data })
         noChangeCountRef.current = 0
       } else if (raw.warm) {
         // Editor is active -- snap back to fast polling to catch upcoming changes
@@ -172,13 +183,6 @@ export function usePolling<T, R extends PollingResponse>(
       }
     }
   }, [enabled, url, poll])
-
-  // Sync with server re-renders of initial data
-  useEffect(() => {
-    if (initialData != null) {
-      setData(initialData)
-    }
-  }, [initialData])
 
   return { data, theme, isConnected, error, pollCount }
 }

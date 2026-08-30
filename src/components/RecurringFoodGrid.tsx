@@ -46,6 +46,9 @@ type Week = (typeof weeks)[number]
 
 type LocationSchedule = Partial<Record<Day, Partial<Record<Week, string | null>>>>
 type SchedulesData = Record<string, LocationSchedule>
+
+/** Shared empty result, so deriving one keeps a stable identity across renders. */
+const EMPTY_SCHEDULES: SchedulesData = {}
 type ExclusionsData = Record<string, string[]>
 type Location = SimpleLocation
 
@@ -653,17 +656,27 @@ export const RecurringFoodGrid: React.FC = () => {
    * the previous one. Owned here rather than in the leaf: `LocationGrid`
    * remounts on every tab switch, so a leaf-held fetch would repeat per tab.
    */
-  const [previousYearSchedules, setPreviousYearSchedules] = useState<SchedulesData>({})
+  // Tagged with the year it was fetched for, so switching years derives an
+  // empty result instead of an effect clearing state up front — which is what
+  // react-hooks/set-state-in-effect flags.
+  const [previousYearFetch, setPreviousYearFetch] = useState<{
+    year: number
+    schedules: SchedulesData
+  } | null>(null)
+  const previousYearSchedules =
+    previousYearFetch?.year === selectedYear - 1 ? previousYearFetch.schedules : EMPTY_SCHEDULES
   // Any empty location can show the hint, so one fetch covers every tab.
   const someLocationIsEmpty = locations.some((loc) => countSlots(schedules[loc.id]) === 0)
   useEffect(() => {
-    setPreviousYearSchedules({})
     if (!someLocationIsEmpty || selectedYear - 1 < RECURRING_YEAR_MIN) return
 
     let cancelled = false
-    getRecurringFoodData(selectedYear - 1)
+    const year = selectedYear - 1
+    getRecurringFoodData(year)
       .then((previous) => {
-        if (!cancelled) setPreviousYearSchedules(previous.schedules as SchedulesData)
+        if (!cancelled) {
+          setPreviousYearFetch({ year, schedules: previous.schedules as SchedulesData })
+        }
       })
       .catch((error) => logger.error('Error checking previous year schedules:', error))
     return () => {

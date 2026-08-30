@@ -60,10 +60,9 @@ export function LinesCleanedAlert({ children }: { children: React.ReactNode }) {
   const hasAccess = isAdmin || (isLeadBartender && assignedLocationIds.size > 0)
 
   useEffect(() => {
-    if (!hasAccess) {
-      setLoading(false)
-      return
-    }
+    // Without access the component renders null regardless of `loading`, so
+    // clearing the flag here would only be a setState in an effect body.
+    if (!hasAccess) return
 
     async function fetchLocations() {
       try {

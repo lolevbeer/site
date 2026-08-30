@@ -33,10 +33,10 @@ export const FoodDateWarning: React.FC = () => {
   useEffect(() => {
     let cancelled = false
 
-    if (!dateValue || !locationValue) {
-      setWarnings([])
-      return
-    }
+    // No clearing needed: the render below already returns null whenever the
+    // date or location is missing, so leaving the previous warnings in state is
+    // invisible — and clearing here would be a setState in an effect body.
+    if (!dateValue || !locationValue) return
 
     const checkVendors = async () => {
       setLoading(true)

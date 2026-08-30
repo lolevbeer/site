@@ -43,11 +43,10 @@ export const EventDateWarning: React.FC = () => {
   useEffect(() => {
     let cancelled = false
 
-    if (!dateValue || !locationValue) {
-      setEventConflicts([])
-      setFoodVendors([])
-      return
-    }
+    // No clearing needed: the render below already returns null whenever the
+    // date or location is missing, so stale results stay invisible — and
+    // clearing here would be a setState in an effect body.
+    if (!dateValue || !locationValue) return
 
     const checkAll = async () => {
       setLoading(true)
