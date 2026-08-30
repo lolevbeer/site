@@ -75,17 +75,6 @@ function exclusionSaveKey(locationId: string, dateKey: string): string {
   return `exclusion-${locationId}-${dateKey}`
 }
 
-/**
- * Trim a vendor name at a word boundary so truncation reads as "El Rincon…"
- * rather than a mid-word "El Rinco…". Falls back to a hard cut for names
- * whose first word is already longer than the budget.
- */
-function displayName(name: string, max = 16): string {
-  if (name.length <= max) return name
-  const cut = name.lastIndexOf(' ', max)
-  return `${name.slice(0, cut > 4 ? cut : max).trimEnd()}…`
-}
-
 interface GridCellProps {
   value: string | null
   onChange: (vendorId: string | null) => void
@@ -136,7 +125,7 @@ const GridCell: React.FC<GridCellProps> = ({ value, onChange, cellKey, readOnly,
       />
       {vendorName && (
         <span aria-hidden className="recurring-food-grid__cell-label">
-          {displayName(vendorName)}
+          {vendorName}
         </span>
       )}
     </div>
@@ -573,8 +562,7 @@ const LocationGrid: React.FC<LocationGridProps> = ({
   // Days with no vendors all year (usually Sun/Mon) shrink so the busy days
   // get the width.
   const dayHasVendor = useMemo(
-    () =>
-      days.map((day) => weeks.some((week) => Boolean(locationSchedule[day]?.[week]))),
+    () => days.map((day) => weeks.some((week) => Boolean(locationSchedule[day]?.[week]))),
     [locationSchedule],
   )
 
