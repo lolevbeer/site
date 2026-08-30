@@ -7,11 +7,7 @@ import {
   getAdminRelationshipID,
   type AdminRelationshipValue,
 } from '@/src/components/admin/relationship-value'
-import {
-  daysSinceCleaned,
-  LINES_OVERDUE_DAYS,
-  LINES_WARN_DAYS,
-} from '@/lib/utils/lines-cleaned'
+import { daysSinceCleaned, LINES_OVERDUE_DAYS, LINES_WARN_DAYS } from '@/lib/utils/lines-cleaned'
 
 export function MarkLinesCleanedButton() {
   const { id: docId, collectionSlug } = useDocumentInfo()
