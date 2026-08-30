@@ -89,9 +89,18 @@ export function usePolling<T, R extends PollingResponse>(
   const noChangeCountRef = useRef(0)
 
   // Store applyResponse in a ref so poll() always uses the latest callback
-  // without needing it in the useCallback dependency array.
+  // without needing it in the useCallback dependency array. Written in an
+  // effect rather than during render: render-phase ref mutation is unsafe when
+  // React retries a render, and is flagged by react-hooks/refs.
   const applyResponseRef = useRef(applyResponse)
-  applyResponseRef.current = applyResponse
+  useEffect(() => {
+    applyResponseRef.current = applyResponse
+  })
+
+  // poll() reschedules itself, which it cannot do by referencing its own
+  // binding from inside its initializer. Going through a ref also means a
+  // pending timeout always fires the newest poll rather than a stale closure.
+  const pollRef = useRef<() => void>(() => {})
 
   const poll = useCallback(async () => {
     if (!url || !enabled) return
@@ -143,9 +152,13 @@ export function usePolling<T, R extends PollingResponse>(
     // Schedule next poll with adaptive interval
     if (enabled) {
       const nextInterval = getAdaptiveInterval(pollInterval, noChangeCountRef.current)
-      pollTimeoutRef.current = setTimeout(poll, nextInterval)
+      pollTimeoutRef.current = setTimeout(() => pollRef.current(), nextInterval)
     }
   }, [url, enabled, pollInterval])
+
+  useEffect(() => {
+    pollRef.current = poll
+  })
 
   useEffect(() => {
     if (enabled && url) {

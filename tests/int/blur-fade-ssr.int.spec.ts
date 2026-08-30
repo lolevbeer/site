@@ -43,7 +43,10 @@ describe('BlurFade / PageTransition SSR output', () => {
     // view — it isn't part of the first-paint blank-page problem, so the
     // hydration guard must not touch it.
     const html = renderToStaticMarkup(
-      createElement(BlurFade, { inView: true }, createElement('h1', null, 'Hello')),
+      // BlurFadeProps marks children required, so a props object must carry it;
+      // the third-argument form does not satisfy the createElement overload.
+      // eslint-disable-next-line react/no-children-prop
+      createElement(BlurFade, { inView: true, children: createElement('h1', null, 'Hello') }),
     )
 
     expect(html).toMatch(/opacity:0\b/)
