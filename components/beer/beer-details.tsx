@@ -33,7 +33,7 @@ import {
 import { CircleX } from '@/components/icons'
 import { UntappdIcon } from '@/components/icons/untappd-icon'
 import { AdminEditButton } from './admin-edit-button'
-import { getGlassIcon } from '@/lib/utils/beer-icons'
+import { GlassIcon } from '@/lib/utils/beer-icons'
 import { BeerCan3D } from './beer-can-3d'
 import { formatAbv, formatRating } from '@/lib/utils/formatters'
 import { getBeerImageUrl, getMediaUrl } from '@/lib/utils/media-utils'
@@ -150,7 +150,6 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
   const canMetalnessUrl = getMediaUrl(beer.labelMetalness)
   const pricing = getPricingInfo(beer)
   const styleName = getStyleName(beer.style)
-  const GlassIcon = getGlassIcon(beer.glass)
   const packagingType = getPackagingType(beer)
   const [tapLocations, setTapLocations] = useState<string[]>([])
   const [canLocations, setCanLocations] = useState<string[]>([])
@@ -331,7 +330,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
             <div className="flex items-center gap-2 mb-4 flex-wrap">
               {tapLocations.length > 0 && (
                 <Badge variant="default" className="text-sm flex items-center gap-1">
-                  <GlassIcon className="h-3.5 w-3.5" />
+                  <GlassIcon glass={beer.glass} className="h-3.5 w-3.5" />
                   On Draft
                 </Badge>
               )}
