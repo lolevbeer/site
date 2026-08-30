@@ -29,11 +29,15 @@ export const RECURRING_YEAR_MAX = 2100
  */
 export const LEGACY_SCHEDULE_YEAR = 2026
 
-/** Year filter that also matches legacy year-less rows when querying 2026. */
-export function scheduleYearFilter(year: number): Where {
-  return year === LEGACY_SCHEDULE_YEAR
-    ? { or: [{ year: { equals: year } }, { year: { exists: false } }] }
+/** Year filter that also matches legacy year-less rows when 2026 is queried. */
+export function scheduleYearFilter(year: number | number[]): Where {
+  const match: Where = Array.isArray(year)
+    ? { year: { in: year } }
     : { year: { equals: year } }
+  const includesLegacy = Array.isArray(year)
+    ? year.includes(LEGACY_SCHEDULE_YEAR)
+    : year === LEGACY_SCHEDULE_YEAR
+  return includesLegacy ? { or: [match, { year: { exists: false } }] } : match
 }
 
 /**

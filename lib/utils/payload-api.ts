@@ -23,6 +23,7 @@ import {
   getRecurringFoodState,
   recurringDays,
   recurringOccurrences,
+  scheduleYearFilter,
   type RecurringFoodState,
 } from '@/src/utils/recurring-food'
 import { getPublicBeerReviews } from '@/src/utils/beer-reviews'
@@ -812,9 +813,7 @@ async function findUpcomingPublicEvents(
           ...locationFilter,
           { active: { equals: true } },
           { visibility: { equals: 'public' } },
-          // Legacy rows predate the year field; fetch them unconditionally —
-          // expandRecurringEvents assigns them 2026 and window-filters anyway.
-          { or: [{ year: { in: years } }, { year: { exists: false } }] },
+          scheduleYearFilter(years),
         ],
       },
       sort: ['year', 'day'],
@@ -1076,8 +1075,6 @@ const getUpcomingRecurringFood = async (
               const vendorId = recurringFood.schedules[locationId]?.[day]?.[week]
               const vendor = vendorId ? vendorMap[vendorId] : undefined
               if (!vendor) continue
-              // toDateKey, not toISOString: slot dates are local-midnight, so
-              // the UTC date can differ and break exclusion matching.
               const dateKey = toDateKey(date)
               const locationExclusions = recurringFood.exclusions[locationId] || []
               if (locationExclusions.includes(dateKey)) continue

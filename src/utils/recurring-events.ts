@@ -6,15 +6,6 @@ import {
   recurringOccurrences,
 } from '@/src/utils/recurring-food'
 
-/**
- * Rows created before the year field existed have no year in the DB; they were
- * authored for the 2026 season, so reads treat a missing year as 2026 (the
- * shared LEGACY_SCHEDULE_YEAR — recurring food does the same at read time).
- * New rows always get a year (required + defaultValue in the collection), so
- * the legacy set is closed.
- */
-export const LEGACY_RECURRING_EVENT_YEAR = LEGACY_SCHEDULE_YEAR
-
 function eventLocationId(event: Pick<Event, 'location'>): string {
   return typeof event.location === 'object' ? event.location.id : event.location
 }
@@ -39,7 +30,7 @@ export function expandRecurringEvents(
     if (!definition.active) continue
     const dayIndex = recurringDays.indexOf(definition.day)
     if (dayIndex < 0) continue
-    const year = definition.year ?? LEGACY_RECURRING_EVENT_YEAR
+    const year = definition.year ?? LEGACY_SCHEDULE_YEAR
     const excludedDates = new Set(
       (definition.excludedDates || []).map((excluded) => excluded.date.split('T')[0]),
     )

@@ -225,8 +225,6 @@ async function getFoodData(): Promise<FoodVendorSchedule[]> {
             const vendor = vendorId ? vendorMap[vendorId] : undefined
             if (!vendorId || !vendor) continue
 
-            // toDateKey, not toISOString: slot dates are local-midnight, so
-            // the UTC date can differ and break exclusion matching.
             const dateKey = toDateKey(date)
 
             // Skip if excluded
