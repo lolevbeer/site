@@ -31,36 +31,38 @@ import {
   recurringOccurrences as weeks,
 } from '@/src/utils/recurring-food'
 import { capitalizeName } from '@/lib/utils/formatters'
+import { cn } from '@/lib/utils'
 import { getDatesForSlotInYear, toDateKey } from '@/lib/utils/food-dates'
 import { logger } from '@/lib/utils/logger'
 import type { User } from '@/src/payload-types'
 
-const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 // Derived so the labels can't fall out of index alignment with `days`.
 const fullDayLabels = days.map(capitalizeName)
-const weekLabels = ['1', '2', '3', '4', '5']
+const dayLabels = fullDayLabels.map((label) => label.slice(0, 3))
 const weekOrdinals = ['1st', '2nd', '3rd', '4th', '5th']
 
 type Day = (typeof days)[number]
 type Week = (typeof weeks)[number]
 
-// Schedule data structure: { [day]: { [week]: vendorId } }
 type LocationSchedule = Partial<Record<Day, Partial<Record<Week, string | null>>>>
-
-// Full schedules structure: { [locationId]: LocationSchedule }
 type SchedulesData = Record<string, LocationSchedule>
-
-// Exclusions structure: { [locationId]: string[] }
 type ExclusionsData = Record<string, string[]>
-
-// Using SimpleLocation from server actions
 type Location = SimpleLocation
+
+/** Number of filled slots in one location's `{day: {week: vendorId}}` map. */
+function countSlots(locationSchedule: LocationSchedule | undefined): number {
+  return Object.values(locationSchedule || {}).reduce(
+    (total, byWeek) => total + Object.values(byWeek || {}).filter(Boolean).length,
+    0,
+  )
+}
 
 function formatDate(date: Date): string {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-// Recurring dates are local calendar days, so persist the displayed day rather than a UTC shift.
+// Re-exported for the grid's tests, which assert the local-calendar-day keying
+// this component relies on.
 export { toDateKey } from '@/lib/utils/food-dates'
 
 /**
@@ -135,15 +137,8 @@ interface DatesListProps {
   readOnly: boolean
   /** Lets the empty state offer a jump to a year that has schedules. */
   onYearChange: (year: number) => void
-}
-
-/** Count scheduled slots for one location in a schedules record. */
-function countLocationSlots(schedules: SchedulesData, locationId: string): number {
-  const locationSchedule = schedules[locationId] || {}
-  return Object.values(locationSchedule).reduce(
-    (total, byWeek) => total + Object.values(byWeek || {}).filter(Boolean).length,
-    0,
-  )
+  /** Slots this location has in `year - 1`; drives the empty-state hint. */
+  previousYearSlots: number
 }
 
 const EXCLUSION_MODAL_SLUG = 'confirm-exclusion'
@@ -157,6 +152,7 @@ const DatesList: React.FC<DatesListProps> = ({
   pendingKeys,
   readOnly,
   onYearChange,
+  previousYearSlots,
 }) => {
   const [vendorNames, setVendorNames] = useState<Record<string, string>>({})
   const [individualFoodEvents, setIndividualFoodEvents] = useState<ScheduledDate[]>([])
@@ -192,31 +188,6 @@ const DatesList: React.FC<DatesListProps> = ({
 
   useEffect(() => () => closeModal(EXCLUSION_MODAL_SLUG), [closeModal])
 
-  // When this year is empty, peek at the previous year so the empty state can
-  // say the data exists elsewhere instead of looking like data loss.
-  const [previousYearSlots, setPreviousYearSlots] = useState(0)
-  const yearIsEmpty = recurringDates.length === 0
-  useEffect(() => {
-    setPreviousYearSlots(0)
-    if (!yearIsEmpty || year - 1 < RECURRING_YEAR_MIN) return
-
-    let cancelled = false
-    const peekPreviousYear = async () => {
-      try {
-        const previous = await getRecurringFoodData(year - 1)
-        if (cancelled) return
-        setPreviousYearSlots(countLocationSlots(previous.schedules as SchedulesData, locationId))
-      } catch (error) {
-        if (!cancelled) logger.error('Error checking previous year schedules:', error)
-      }
-    }
-
-    void peekPreviousYear()
-    return () => {
-      cancelled = true
-    }
-  }, [yearIsEmpty, year, locationId])
-
   // Fetch individual food events using server action (local API)
   useEffect(() => {
     let cancelled = false
@@ -250,23 +221,28 @@ const DatesList: React.FC<DatesListProps> = ({
     }
   }, [locationId, year])
 
-  const scheduledDates = useMemo(() => {
-    const allDates = [...recurringDates, ...individualFoodEvents]
-    allDates.sort((a, b) => a.date.getTime() - b.date.getTime())
-    return allDates
-  }, [recurringDates, individualFoodEvents])
+  const scheduledDates = useMemo(
+    () =>
+      [...recurringDates, ...individualFoodEvents].sort(
+        (a, b) => a.date.getTime() - b.date.getTime(),
+      ),
+    [recurringDates, individualFoodEvents],
+  )
 
-  // Fetch vendor names for recurring events
+  // Keyed on the joined id string, not the array: `recurringDates` gets a fresh
+  // identity after every save (including exclusion toggles, which cannot change
+  // vendors at all), and refetching identical ids would re-render the list.
+  const vendorIdKey = useMemo(
+    () => [...new Set(recurringDates.map((d) => d.vendorId))].sort().join(','),
+    [recurringDates],
+  )
   useEffect(() => {
-    const vendorIds = [...new Set(recurringDates.map((d) => d.vendorId))]
-    if (vendorIds.length === 0) {
-      return
-    }
+    if (!vendorIdKey) return
 
     let cancelled = false
     const fetchVendors = async () => {
       try {
-        const names = await getFoodVendorsByIds(vendorIds)
+        const names = await getFoodVendorsByIds(vendorIdKey.split(','))
         if (!cancelled) setVendorNames(names)
       } catch (error) {
         if (!cancelled) logger.error('Error fetching vendor names:', error)
@@ -277,7 +253,7 @@ const DatesList: React.FC<DatesListProps> = ({
     return () => {
       cancelled = true
     }
-  }, [recurringDates])
+  }, [vendorIdKey])
 
   const requestToggleExclusion = useCallback(
     (date: Date, vendorName: string) => {
@@ -333,7 +309,7 @@ const DatesList: React.FC<DatesListProps> = ({
 
     const conflictList: { date: Date; recurringVendor: string; individualVendor: string }[] = []
 
-    Object.entries(dateMap).forEach(([, items]) => {
+    Object.values(dateMap).forEach((items) => {
       if (items.recurring.length > 0 && items.individual.length > 0) {
         items.recurring.forEach((r) => {
           items.individual.forEach((i) => {
@@ -361,18 +337,17 @@ const DatesList: React.FC<DatesListProps> = ({
     return groups
   }, [scheduledDates])
 
+  const restoring = Boolean(pendingToggle?.isExcluded)
   const exclusionModal = (
     <ConfirmationModal
       modalSlug={EXCLUSION_MODAL_SLUG}
-      heading={pendingToggle?.isExcluded ? 'Remove Exclusion' : 'Exclude Event'}
+      heading={restoring ? 'Remove Exclusion' : 'Exclude Event'}
       body={
         pendingToggle
-          ? pendingToggle.isExcluded
-            ? `Are you sure you want to restore "${pendingToggle.vendorName}" on ${formatDate(pendingToggle.date)}?`
-            : `Are you sure you want to exclude "${pendingToggle.vendorName}" on ${formatDate(pendingToggle.date)}?`
+          ? `Are you sure you want to ${restoring ? 'restore' : 'exclude'} "${pendingToggle.vendorName}" on ${formatDate(pendingToggle.date)}?`
           : ''
       }
-      confirmLabel={pendingToggle?.isExcluded ? 'Restore' : 'Exclude'}
+      confirmLabel={restoring ? 'Restore' : 'Exclude'}
       onConfirm={confirmToggleExclusion}
       onCancel={cancelToggleExclusion}
     />
@@ -434,19 +409,15 @@ const DatesList: React.FC<DatesListProps> = ({
               const isPending = pendingKeys.has(exclusionSaveKey(locationId, toDateKey(item.date)))
               const isDisabled = isIndividual || isPending || readOnly
               const displayName = item.vendorName || vendorNames[item.vendorId] || '...'
-              const rowClassNames = [
+              const rowClassNames = cn(
                 'recurring-food-grid__date-row',
                 excluded && 'recurring-food-grid__date-row--excluded',
                 isIndividual && 'recurring-food-grid__date-row--individual',
-              ]
-                .filter(Boolean)
-                .join(' ')
-
-              let ariaLabel: string | undefined
-              if (!isIndividual && !readOnly) {
-                const action = excluded ? 'Restore' : 'Exclude'
-                ariaLabel = `${action} ${displayName} on ${formatDate(item.date)}`
-              }
+              )
+              const ariaLabel =
+                isIndividual || readOnly
+                  ? undefined
+                  : `${excluded ? 'Restore' : 'Exclude'} ${displayName} on ${formatDate(item.date)}`
 
               return (
                 <button
@@ -501,6 +472,7 @@ interface LocationGridProps {
   pendingKeys: ReadonlySet<string>
   readOnly: boolean
   onYearChange: (year: number) => void
+  previousYearSlots: number
 }
 
 const LocationGrid: React.FC<LocationGridProps> = ({
@@ -513,6 +485,7 @@ const LocationGrid: React.FC<LocationGridProps> = ({
   pendingKeys,
   readOnly,
   onYearChange,
+  previousYearSlots,
 }) => {
   const locationSchedule = schedules[location.id] || {}
 
@@ -544,7 +517,7 @@ const LocationGrid: React.FC<LocationGridProps> = ({
           <tbody>
             {visibleWeeks.map((week, weekIndex) => (
               <tr key={week}>
-                <td>{weekLabels[weekIndex]}</td>
+                <td>{weekIndex + 1}</td>
                 {days.map((day) => {
                   const cellValue = locationSchedule[day]?.[week] || null
                   const cellKey = scheduleSaveKey(year, location.id, day, week)
@@ -585,6 +558,7 @@ const LocationGrid: React.FC<LocationGridProps> = ({
         pendingKeys={pendingKeys}
         readOnly={readOnly}
         onYearChange={onYearChange}
+        previousYearSlots={previousYearSlots}
       />
     </div>
   )
@@ -656,6 +630,29 @@ export const RecurringFoodGrid: React.FC = () => {
     setSchedules(recurringFood.schedules as SchedulesData)
     setExclusions(recurringFood.exclusions)
   }, [])
+
+  /**
+   * When the selected year has no schedules, the empty state offers a jump to
+   * the previous one. Owned here rather than in the leaf: `LocationGrid`
+   * remounts on every tab switch, so a leaf-held fetch would repeat per tab.
+   */
+  const [previousYearSchedules, setPreviousYearSchedules] = useState<SchedulesData>({})
+  // Any empty location can show the hint, so one fetch covers every tab.
+  const someLocationIsEmpty = locations.some((loc) => countSlots(schedules[loc.id]) === 0)
+  useEffect(() => {
+    setPreviousYearSchedules({})
+    if (!someLocationIsEmpty || selectedYear - 1 < RECURRING_YEAR_MIN) return
+
+    let cancelled = false
+    getRecurringFoodData(selectedYear - 1)
+      .then((previous) => {
+        if (!cancelled) setPreviousYearSchedules(previous.schedules as SchedulesData)
+      })
+      .catch((error) => logger.error('Error checking previous year schedules:', error))
+    return () => {
+      cancelled = true
+    }
+  }, [someLocationIsEmpty, selectedYear])
 
   useEffect(() => {
     let cancelled = false
@@ -803,11 +800,10 @@ export const RecurringFoodGrid: React.FC = () => {
             aria-selected={activeTab === location.id}
             aria-controls={`recurring-food-panel-${location.id}`}
             onClick={() => setActiveTab(location.id)}
-            className={
-              activeTab === location.id
-                ? 'recurring-food-grid__tab recurring-food-grid__tab--active'
-                : 'recurring-food-grid__tab'
-            }
+            className={cn(
+              'recurring-food-grid__tab',
+              activeTab === location.id && 'recurring-food-grid__tab--active',
+            )}
           >
             {location.name}
           </button>
@@ -832,6 +828,7 @@ export const RecurringFoodGrid: React.FC = () => {
             pendingKeys={pendingKeys}
             readOnly={!canEdit}
             onYearChange={setSelectedYear}
+            previousYearSlots={countSlots(previousYearSchedules[activeLocation.id])}
           />
         </div>
       )}
