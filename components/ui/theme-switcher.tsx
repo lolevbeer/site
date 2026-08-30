@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 import { Monitor, Moon, Sun } from '@/components/icons'
+import { useIsHydrated } from '@/lib/hooks/use-is-hydrated'
 
 type Theme = 'system' | 'light' | 'dark'
 
@@ -15,11 +16,7 @@ interface ThemeSwitcherProps {
 
 export function ThemeSwitcher({ className }: ThemeSwitcherProps) {
   const { theme, setTheme } = useTheme()
-  const [mounted, setMounted] = React.useState(false)
-
-  React.useEffect(() => {
-    setMounted(true)
-  }, [])
+  const mounted = useIsHydrated()
 
   const options: { value: Theme; icon: React.ReactNode; label: string }[] = [
     { value: 'system', icon: <Monitor size={16} />, label: 'System' },

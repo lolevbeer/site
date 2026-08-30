@@ -43,7 +43,7 @@ describe('BlurFade / PageTransition SSR output', () => {
     // view — it isn't part of the first-paint blank-page problem, so the
     // hydration guard must not touch it.
     const html = renderToStaticMarkup(
-      createElement(BlurFade, { inView: true, children: createElement('h1', null, 'Hello') }),
+      createElement(BlurFade, { inView: true }, createElement('h1', null, 'Hello')),
     )
 
     expect(html).toMatch(/opacity:0\b/)
@@ -58,7 +58,7 @@ describe('BlurFade hydration-flag propagation across mounts', () => {
 
   it('the first instance to hydrate matches SSR: no opacity:0 on its first commit', () => {
     const { container } = render(
-      createElement(BlurFade, { children: createElement('h1', null, 'A') }),
+      createElement(BlurFade, null, createElement('h1', null, 'A')),
     )
 
     expect(container.innerHTML).not.toMatch(/opacity:\s*0\b/)
@@ -72,7 +72,7 @@ describe('BlurFade hydration-flag propagation across mounts', () => {
     render(createElement(MotionHydrationSentinel))
 
     const { container } = render(
-      createElement(BlurFade, { children: createElement('h1', null, 'B') }),
+      createElement(BlurFade, null, createElement('h1', null, 'B')),
     )
 
     expect(container.innerHTML).toMatch(/opacity:\s*0\b/)
@@ -82,10 +82,10 @@ describe('BlurFade hydration-flag propagation across mounts', () => {
     // Guards the single-writer invariant: BlurFade deliberately no longer sets
     // the flag itself, so a tree mounted outside the root layout keeps painting
     // at SSR-visible styles rather than silently animating.
-    render(createElement(BlurFade, { children: createElement('h1', null, 'A') })).unmount()
+    render(createElement(BlurFade, null, createElement('h1', null, 'A'))).unmount()
 
     const { container } = render(
-      createElement(BlurFade, { children: createElement('h1', null, 'B') }),
+      createElement(BlurFade, null, createElement('h1', null, 'B')),
     )
 
     expect(container.innerHTML).not.toMatch(/opacity:\s*0\b/)

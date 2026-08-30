@@ -8,6 +8,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useQueryState, parseAsString } from 'nuqs';
+import { useIsHydrated } from '@/lib/hooks/use-is-hydrated';
 import { type PayloadLocation, type LocationSlug, type LocationInfo, toLocationInfo } from '@/lib/types/location';
 import {
   LOCATION_STORAGE_KEY,
@@ -91,15 +92,13 @@ function saveLocationToStorage(slug: LocationSlug): void {
 export function useLocation(locations: PayloadLocation[] = []): UseLocationReturn {
   const defaultSlug = useMemo(() => getDefaultLocationSlug(locations), [locations]);
   const [currentLocation, setCurrentLocationState] = useState<LocationSlug>(defaultSlug);
-  const [isClient, setIsClient] = useState(false);
+  const isClient = useIsHydrated();
 
   // URL state for location - allows sharing URLs with location preset
   const [urlLocation, _setUrlLocation] = useQueryState('loc', parseAsString);
 
   // Initialize from URL param first, then localStorage on client mount
   useEffect(() => {
-    setIsClient(true);
-
     if (locations.length === 0) return;
 
     // Priority: URL param > localStorage > default

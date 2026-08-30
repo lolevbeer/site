@@ -5,8 +5,9 @@
 
 'use client';
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { useLocationContext } from '@/components/location/location-provider';
+import { useIsHydrated } from '@/lib/hooks/use-is-hydrated';
 import type { LocationSlug } from '@/lib/types/location';
 
 /**
@@ -43,12 +44,8 @@ export function useLocationFilteredData<T>({
   showDefaultBeforeHydration = true
 }: UseLocationFilteredDataOptions<T>): T[] {
   const { currentLocation, locations } = useLocationContext();
-  const [isHydrated, setIsHydrated] = useState(false);
-
   // Track hydration to prevent mismatch
-  useEffect(() => {
-    setIsHydrated(true);
-  }, []);
+  const isHydrated = useIsHydrated();
 
   // Get the default location slug (first active location)
   const defaultLocationSlug = useMemo(() => {
