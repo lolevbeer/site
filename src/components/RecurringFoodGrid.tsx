@@ -1,7 +1,18 @@
 'use client'
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Banner, ConfirmationModal, RelationshipInput, useAuth, useModal } from '@payloadcms/ui'
+import {
+  Banner,
+  Button,
+  ConfirmationModal,
+  Pill,
+  RelationshipInput,
+  ShimmerEffect,
+  useAuth,
+  useModal,
+} from '@payloadcms/ui'
+// Styles live in RecurringFoodGrid.scss, pulled in via the admin's custom.scss
+// (a direct import here would drag SCSS through the vitest pipeline).
 import type { ValueWithRelation } from 'payload'
 import {
   getActiveLocations,
@@ -62,17 +73,6 @@ function scheduleSaveKey(year: number, locationId: string, day: string, week: st
 
 function exclusionSaveKey(locationId: string, dateKey: string): string {
   return `exclusion-${locationId}-${dateKey}`
-}
-
-function yearButtonStyle(disabled: boolean): React.CSSProperties {
-  return {
-    padding: '8px 12px',
-    border: '1px solid var(--theme-elevation-200)',
-    borderRadius: '4px',
-    background: 'var(--theme-elevation-50)',
-    color: 'var(--theme-text)',
-    cursor: disabled ? 'not-allowed' : 'pointer',
-  }
 }
 
 interface GridCellProps {
@@ -380,30 +380,19 @@ const DatesList: React.FC<DatesListProps> = ({
 
   if (scheduledDates.length === 0) {
     return (
-      <div
-        ref={mountedRootRef}
-        style={{ padding: '20px 0', color: 'var(--theme-elevation-500)', fontSize: '14px' }}
-      >
+      <div ref={mountedRootRef} className="recurring-food-grid__empty">
         {exclusionModal}
         <div>No vendors scheduled. Select vendors in the grid above to see upcoming dates.</div>
         {previousYearSlots > 0 && (
-          <div style={{ marginTop: '8px' }}>
+          <div className="recurring-food-grid__empty-hint">
             {previousYearSlots} slot{previousYearSlots === 1 ? '' : 's'} scheduled for {year - 1}.{' '}
-            <button
-              type="button"
+            <Button
+              buttonStyle="none"
+              className="recurring-food-grid__link-button"
               onClick={() => onYearChange(year - 1)}
-              style={{
-                border: 'none',
-                background: 'none',
-                padding: 0,
-                font: 'inherit',
-                color: 'var(--theme-text)',
-                textDecoration: 'underline',
-                cursor: 'pointer',
-              }}
             >
               View {year - 1}
-            </button>
+            </Button>
           </div>
         )}
       </div>
@@ -411,31 +400,16 @@ const DatesList: React.FC<DatesListProps> = ({
   }
 
   return (
-    <div
-      ref={mountedRootRef}
-      style={{
-        marginTop: '24px',
-        paddingTop: '16px',
-        borderTop: '1px solid var(--theme-elevation-150)',
-      }}
-    >
+    <div ref={mountedRootRef} className="recurring-food-grid__dates">
       {exclusionModal}
       {conflicts.length > 0 && (
-        <div
-          style={{
-            padding: '12px 16px',
-            backgroundColor: 'var(--theme-warning-100)',
-            border: '1px solid var(--theme-warning-500)',
-            borderRadius: '4px',
-            marginBottom: '16px',
-          }}
-        >
-          <strong style={{ color: 'var(--theme-warning-700)' }}>Conflicts:</strong>
-          <div style={{ marginTop: '8px', fontSize: '13px', color: 'var(--theme-warning-800)' }}>
+        <div className="recurring-food-grid__conflicts">
+          <strong>Conflicts:</strong>
+          <div className="recurring-food-grid__conflict-list">
             {conflicts.map((conflict) => (
               <div
                 key={`${toDateKey(conflict.date)}-${conflict.recurringVendor}-${conflict.individualVendor}`}
-                style={{ marginBottom: '4px' }}
+                className="recurring-food-grid__conflict"
               >
                 <strong>{formatDate(conflict.date)}</strong>: {conflict.recurringVendor} (recurring)
                 + {conflict.individualVendor} (scheduled)
@@ -444,41 +418,14 @@ const DatesList: React.FC<DatesListProps> = ({
           </div>
         </div>
       )}
-      <h4
-        style={{
-          margin: '0 0 8px 0',
-          fontSize: '14px',
-          fontWeight: 600,
-          color: 'var(--theme-elevation-800)',
-        }}
-      >
+      <h4 className="recurring-food-grid__dates-heading">
         {year} Schedule
-        {!readOnly && (
-          <span
-            style={{
-              fontWeight: 400,
-              fontSize: '12px',
-              color: 'var(--theme-elevation-400)',
-              marginLeft: '8px',
-            }}
-          >
-            (click to exclude)
-          </span>
-        )}
+        {!readOnly && <span className="recurring-food-grid__dates-hint">(click to exclude)</span>}
       </h4>
-      <div style={{ fontSize: '13px', color: 'var(--theme-elevation-600)' }}>
+      <div className="recurring-food-grid__dates-list">
         {Object.entries(groupedByMonth).map(([month, dates]) => (
-          <div key={month} style={{ marginBottom: '16px' }}>
-            <div
-              style={{
-                fontWeight: 600,
-                fontSize: '12px',
-                color: 'var(--theme-elevation-500)',
-                marginBottom: '4px',
-              }}
-            >
-              {month}
-            </div>
+          <div key={month} className="recurring-food-grid__month">
+            <div className="recurring-food-grid__month-label">{month}</div>
             {dates.map((item, idx) => {
               const excluded = item.type === 'recurring' && isExcluded(item.date)
               const isIndividual = item.type === 'individual'
@@ -487,9 +434,13 @@ const DatesList: React.FC<DatesListProps> = ({
               const isPending = pendingKeys.has(exclusionSaveKey(locationId, toDateKey(item.date)))
               const isDisabled = isIndividual || isPending || readOnly
               const displayName = item.vendorName || vendorNames[item.vendorId] || '...'
-              let backgroundColor = 'transparent'
-              if (excluded) backgroundColor = 'var(--theme-error-50)'
-              else if (isIndividual) backgroundColor = 'var(--theme-elevation-100)'
+              const rowClassNames = [
+                'recurring-food-grid__date-row',
+                excluded && 'recurring-food-grid__date-row--excluded',
+                isIndividual && 'recurring-food-grid__date-row--individual',
+              ]
+                .filter(Boolean)
+                .join(' ')
 
               let ariaLabel: string | undefined
               if (!isIndividual && !readOnly) {
@@ -504,62 +455,24 @@ const DatesList: React.FC<DatesListProps> = ({
                   disabled={isDisabled}
                   onClick={() => requestToggleExclusion(item.date, displayName)}
                   aria-label={ariaLabel}
-                  style={{
-                    display: 'block',
-                    width: '100%',
-                    padding: '4px 8px',
-                    margin: '2px 0',
-                    cursor: isDisabled ? 'default' : 'pointer',
-                    border: 'none',
-                    borderRadius: '4px',
-                    color: 'inherit',
-                    font: 'inherit',
-                    textAlign: 'left',
-                    backgroundColor,
-                    opacity: excluded ? 0.6 : 1,
-                    transition: 'all 0.15s ease',
-                  }}
+                  className={rowClassNames}
                 >
-                  <span style={{ textDecoration: excluded ? 'line-through' : 'none' }}>
+                  <span className="recurring-food-grid__date-text">
                     <strong>{formatDate(item.date)}</strong> {displayName}
                   </span>{' '}
                   {isIndividual ? (
-                    <span
-                      style={{
-                        backgroundColor: 'var(--theme-success-500)',
-                        color: 'white',
-                        fontSize: '10px',
-                        fontWeight: 600,
-                        padding: '2px 6px',
-                        borderRadius: '10px',
-                        marginLeft: '6px',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px',
-                      }}
-                    >
+                    <Pill pillStyle="success" size="small">
                       Scheduled
-                    </span>
+                    </Pill>
                   ) : (
-                    <span style={{ color: 'var(--theme-elevation-400)' }}>
+                    <span className="recurring-food-grid__slot-note">
                       ({weekOrdinals[item.weekIndex]} {fullDayLabels[item.dayIndex]})
                     </span>
                   )}
                   {excluded && (
-                    <span
-                      style={{
-                        backgroundColor: 'var(--theme-error-500)',
-                        color: 'white',
-                        fontSize: '10px',
-                        fontWeight: 600,
-                        padding: '2px 6px',
-                        borderRadius: '10px',
-                        marginLeft: '6px',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px',
-                      }}
-                    >
+                    <Pill pillStyle="error" size="small">
                       Excluded
-                    </span>
+                    </Pill>
                   )}
                 </button>
               )
@@ -639,62 +552,26 @@ const LocationGrid: React.FC<LocationGridProps> = ({
           flex-wrap: wrap !important;
         }
       `}</style>
-      <div style={{ padding: '10px 0' }}>
-        <table
-          style={{
-            width: '100%',
-            borderCollapse: 'collapse',
-            fontSize: '14px',
-          }}
-        >
+      <div className="recurring-food-grid__table-wrap">
+        <table className="recurring-food-grid__table">
           <thead>
             <tr>
-              <th
-                style={{
-                  padding: '10px',
-                  textAlign: 'center',
-                  fontWeight: 600,
-                  width: '60px',
-                }}
-              />
+              <th />
               {dayLabels.map((label, i) => (
-                <th
-                  key={days[i]}
-                  style={{
-                    padding: '10px',
-                    textAlign: 'center',
-                    fontWeight: 600,
-                    minWidth: '180px',
-                  }}
-                >
-                  {label}
-                </th>
+                <th key={days[i]}>{label}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {visibleWeeks.map((week, weekIndex) => (
               <tr key={week}>
-                <td
-                  style={{
-                    padding: '10px',
-                    textAlign: 'center',
-                    fontWeight: 500,
-                  }}
-                >
-                  {weekLabels[weekIndex]}
-                </td>
+                <td>{weekLabels[weekIndex]}</td>
                 {days.map((day) => {
                   const cellValue = locationSchedule[day]?.[week] || null
                   const cellKey = scheduleSaveKey(year, location.id, day, week)
 
                   return (
-                    <td
-                      key={`${day}_${week}`}
-                      style={{
-                        padding: '4px',
-                      }}
-                    >
+                    <td key={`${day}_${week}`}>
                       <GridCell
                         value={cellValue}
                         onChange={(vendorId) => handleCellChange(day, week, vendorId)}
@@ -711,22 +588,13 @@ const LocationGrid: React.FC<LocationGridProps> = ({
           </tbody>
         </table>
         {!fifthWeekUsed && !showFifthWeek && (
-          <button
-            type="button"
+          <Button
+            buttonStyle="none"
+            className="recurring-food-grid__link-button"
             onClick={() => setShowFifthWeek(true)}
-            style={{
-              border: 'none',
-              background: 'none',
-              padding: '4px 10px',
-              font: 'inherit',
-              fontSize: '13px',
-              color: 'var(--theme-elevation-500)',
-              textDecoration: 'underline',
-              cursor: 'pointer',
-            }}
           >
             Show 5th week
-          </button>
+          </Button>
         )}
       </div>
       <DatesList
@@ -901,15 +769,15 @@ export const RecurringFoodGrid: React.FC = () => {
 
   if (loading) {
     return (
-      <div style={{ padding: '20px', color: 'var(--theme-elevation-500)' }}>
-        Loading locations...
+      <div className="recurring-food-grid__status" aria-label="Loading locations">
+        <ShimmerEffect height="2rem" />
       </div>
     )
   }
 
   if (locations.length === 0) {
     return (
-      <div style={{ padding: '20px', color: 'var(--theme-elevation-500)' }}>
+      <div className="recurring-food-grid__status">
         No active locations found. Please add locations in the Locations collection.
       </div>
     )
@@ -923,50 +791,30 @@ export const RecurringFoodGrid: React.FC = () => {
           : 'View only — ask a food manager to change the schedule.'}
       </Banner>
       {saveError && <Banner type="error">{saveError}</Banner>}
-      <div
-        aria-label="Schedule year"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '12px',
-          padding: '16px 0',
-        }}
-      >
-        <button
-          type="button"
+      <div aria-label="Schedule year" className="recurring-food-grid__year-nav">
+        <Button
+          buttonStyle="secondary"
+          size="small"
           onClick={() => setSelectedYear((year) => Math.max(RECURRING_YEAR_MIN, year - 1))}
           disabled={selectedYear <= RECURRING_YEAR_MIN}
-          style={yearButtonStyle(selectedYear <= RECURRING_YEAR_MIN)}
         >
           Previous year
-        </button>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '12px', color: 'var(--theme-elevation-500)' }}>Schedule year</div>
-          <strong style={{ fontSize: '24px', fontVariantNumeric: 'tabular-nums' }}>
-            {selectedYear}
-          </strong>
+        </Button>
+        <div className="recurring-food-grid__year-center">
+          <div className="recurring-food-grid__year-label">Schedule year</div>
+          <strong className="recurring-food-grid__year-value">{selectedYear}</strong>
         </div>
-        <button
-          type="button"
+        <Button
+          buttonStyle="secondary"
+          size="small"
           onClick={() => setSelectedYear((year) => Math.min(RECURRING_YEAR_MAX, year + 1))}
           disabled={selectedYear >= RECURRING_YEAR_MAX}
-          style={yearButtonStyle(selectedYear >= RECURRING_YEAR_MAX)}
         >
           Next year
-        </button>
+        </Button>
       </div>
       {/* Tabs */}
-      <div
-        role="tablist"
-        aria-label="Locations"
-        style={{
-          display: 'flex',
-          gap: '4px',
-          borderBottom: '1px solid var(--theme-elevation-150)',
-          marginBottom: '16px',
-        }}
-      >
+      <div role="tablist" aria-label="Locations" className="recurring-food-grid__tabs">
         {locations.map((location) => (
           <button
             key={location.id}
@@ -976,20 +824,11 @@ export const RecurringFoodGrid: React.FC = () => {
             aria-selected={activeTab === location.id}
             aria-controls={`recurring-food-panel-${location.id}`}
             onClick={() => setActiveTab(location.id)}
-            style={{
-              padding: '12px 20px',
-              fontSize: '14px',
-              fontWeight: activeTab === location.id ? 600 : 400,
-              color: activeTab === location.id ? 'var(--theme-text)' : 'var(--theme-elevation-500)',
-              backgroundColor: 'transparent',
-              border: 'none',
-              borderBottom:
-                activeTab === location.id
-                  ? '2px solid var(--theme-elevation-800)'
-                  : '2px solid transparent',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease',
-            }}
+            className={
+              activeTab === location.id
+                ? 'recurring-food-grid__tab recurring-food-grid__tab--active'
+                : 'recurring-food-grid__tab'
+            }
           >
             {location.name}
           </button>

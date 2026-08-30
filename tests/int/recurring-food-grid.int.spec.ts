@@ -4,7 +4,7 @@
  * the tab that is now visible.
  */
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { createElement, useSyncExternalStore } from 'react'
+import { createElement, useSyncExternalStore, type ReactNode } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 const {
@@ -71,6 +71,19 @@ vi.mock('@payloadcms/ui', () => ({
     )
   },
   RelationshipInput: () => null,
+  // Minimal stand-ins that keep roles/labels identical to the real components.
+  Button: ({
+    children,
+    onClick,
+    disabled,
+  }: {
+    children?: unknown
+    onClick?: () => void
+    disabled?: boolean
+  }) => createElement('button', { type: 'button', onClick, disabled }, children as ReactNode),
+  Pill: ({ children }: { children?: unknown }) =>
+    createElement('span', null, children as ReactNode),
+  ShimmerEffect: () => null,
   useAuth: () => ({
     user: { id: 'u1', roles: ['food-manager'], email: 'food@example.com' },
   }),
@@ -139,8 +152,10 @@ describe('RecurringFoodGrid location tabs', () => {
     ])
     getRecurringFoodDataMock.mockImplementation(async (year) => {
       const scheduleYear = year ?? currentYear
-      const schedules: Record<string, Record<string, Record<string, string | null>>> =
-        scheduleYear === currentYear ? { 'loc-a': { sunday: { first: 'vendor-a' } } } : {}
+      const schedules: Record<
+        string,
+        Record<string, Record<string, string | null>>
+      > = scheduleYear === currentYear ? { 'loc-a': { sunday: { first: 'vendor-a' } } } : {}
       return {
         year: scheduleYear,
         schedules,
@@ -328,8 +343,10 @@ describe('RecurringFoodGrid location tabs', () => {
       { id: 'loc-a', name: 'Lawrenceville', slug: 'lawrenceville' },
     ])
     getRecurringFoodDataMock.mockImplementation(async (year) => {
-      const schedules: Record<string, Record<string, Record<string, string | null>>> =
-        year === currentYear - 1 ? { 'loc-a': { sunday: { first: 'vendor-a' } } } : {}
+      const schedules: Record<string, Record<string, Record<string, string | null>>> = year ===
+      currentYear - 1
+        ? { 'loc-a': { sunday: { first: 'vendor-a' } } }
+        : {}
       return { year: year ?? currentYear, schedules, exclusions: {} }
     })
     getFoodForLocationYearMock.mockResolvedValue([])
