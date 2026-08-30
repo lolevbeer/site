@@ -210,8 +210,6 @@ describe('draft and sensitive field visibility', () => {
 
   it('limits operational import URLs to admins', () => {
     const protectedFields = [
-      findField(Menus.fields, 'sheetUrl'),
-      findField(Locations.fields, 'googleSheets'),
       findField(SiteContent.fields, 'distributorPaUrl'),
       findField(SiteContent.fields, 'distributorOhUrl'),
     ]

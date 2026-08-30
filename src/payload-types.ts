@@ -424,10 +424,6 @@ export interface Menu {
    */
   url: string;
   /**
-   * Google Sheets CSV export URL for syncing this menu (optional)
-   */
-  sheetUrl?: string | null;
-  /**
    * Override automatic day/night theme switching
    */
   themeMode?: ('auto' | 'light' | 'dark') | null;
@@ -475,27 +471,6 @@ export interface Location {
    * Auto-generated from name (lowercase, spaces to dashes)
    */
   slug?: string | null;
-  /**
-   * CSV export URLs for syncing data from Google Sheets
-   */
-  googleSheets?: {
-    /**
-     * Public events (concerts, trivia, etc.)
-     */
-    eventsPublic?: string | null;
-    /**
-     * Private events (rentals, corporate, etc.)
-     */
-    eventsPrivate?: string | null;
-    /**
-     * Food truck schedule
-     */
-    food?: string | null;
-    /**
-     * Operating hours schedule
-     */
-    hours?: string | null;
-  };
   basicInfo?: {
     phone?: string | null;
     email?: string | null;
@@ -1240,7 +1215,6 @@ export interface MenusSelect<T extends boolean = true> {
   location?: T;
   type?: T;
   url?: T;
-  sheetUrl?: T;
   themeMode?: T;
   animateCans?: T;
   items?:
@@ -1410,14 +1384,6 @@ export interface LocationsSelect<T extends boolean = true> {
   name?: T;
   timezone?: T;
   slug?: T;
-  googleSheets?:
-    | T
-    | {
-        eventsPublic?: T;
-        eventsPrivate?: T;
-        food?: T;
-        hours?: T;
-      };
   basicInfo?:
     | T
     | {
