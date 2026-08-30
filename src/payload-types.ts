@@ -641,9 +641,12 @@ export interface RecurringEvent {
   id: string;
   active: boolean;
   /**
-   * Public events will be displayed on the site.
+   * Public events will be displayed on the site
    */
   visibility: 'public' | 'private';
+  /**
+   * If this is a public event, this will be listed on the website
+   */
   organizer: string;
   year: number;
   day: 'sunday' | 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday';
@@ -664,7 +667,7 @@ export interface RecurringEvent {
       }[]
     | null;
   /**
-   * This will be linked on the website.
+   * This will be linked on the website
    */
   site?: string | null;
   tags?: ('music' | 'utensils' | 'puzzle' | 'sports' | 'beer-release' | 'mic-vocal')[] | null;
@@ -677,7 +680,7 @@ export interface RecurringEvent {
   email?: string | null;
   phone?: string | null;
   /**
-   * Additional information for private events
+   * Additional information for private event
    */
   otherInfo?: string | null;
   updatedAt: string;

@@ -1,5 +1,7 @@
 import type { MigrateDownArgs, MigrateUpArgs } from '@payloadcms/db-mongodb'
 
+// Deliberately NOT imported from LEGACY_SCHEDULE_YEAR: an applied migration is
+// a historical snapshot and must not change meaning if the app constant moves.
 const INITIAL_YEAR = 2026
 const YEAR_INDEX = 'recurring_food_schedule_slot_by_year'
 

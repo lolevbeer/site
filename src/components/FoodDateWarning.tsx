@@ -14,6 +14,7 @@ import {
   recurringOccurrences as weekKeys,
   recurringWeekOccurrence,
 } from '@/src/utils/recurring-food'
+import { toDateKey } from '@/lib/utils/food-dates'
 
 interface Warning {
   type: 'recurring' | 'individual'
@@ -46,7 +47,7 @@ export const FoodDateWarning: React.FC = () => {
         const dayName = recurringDayName(date)
         const weekOccurrence = recurringWeekOccurrence(date)
         const weekKey = weekKeys[weekOccurrence - 1]
-        const dateKey = date.toISOString().split('T')[0]
+        const dateKey = toDateKey(date)
 
         // Check recurring vendors using local API
         if (weekKey) {

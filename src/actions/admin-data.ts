@@ -21,6 +21,7 @@ import {
   RECURRING_YEAR_MIN,
   recurringDays,
   recurringOccurrences,
+  scheduleYearFilter,
   type RecurringFoodExclusionsData,
   type RecurringFoodSchedulesData,
 } from '@/src/utils/recurring-food'
@@ -316,7 +317,7 @@ export async function setRecurringFoodSchedule(
     where: {
       and: [
         { location: { equals: validLocationId } },
-        { year: { equals: validYear } },
+        scheduleYearFilter(validYear),
         { day: { equals: validDay } },
         { occurrence: { equals: validOccurrence } },
       ],
@@ -332,7 +333,8 @@ export async function setRecurringFoodSchedule(
     await payload.update({
       collection: 'recurring-food-schedules',
       id: current.id,
-      data: { vendor: validVendorId, active: true },
+      // year included to lazily backfill legacy year-less rows on first edit.
+      data: { vendor: validVendorId, active: true, year: validYear },
       overrideAccess: false,
       user,
     })

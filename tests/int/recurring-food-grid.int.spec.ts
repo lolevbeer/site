@@ -4,7 +4,7 @@
  * the tab that is now visible.
  */
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { createElement, useSyncExternalStore } from 'react'
+import { createElement, useSyncExternalStore, type ReactNode } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 const {
@@ -71,6 +71,19 @@ vi.mock('@payloadcms/ui', () => ({
     )
   },
   RelationshipInput: () => null,
+  // Minimal stand-ins that keep roles/labels identical to the real components.
+  Button: ({
+    children,
+    onClick,
+    disabled,
+  }: {
+    children?: unknown
+    onClick?: () => void
+    disabled?: boolean
+  }) => createElement('button', { type: 'button', onClick, disabled }, children as ReactNode),
+  Pill: ({ children }: { children?: unknown }) =>
+    createElement('span', null, children as ReactNode),
+  ShimmerEffect: () => null,
   useAuth: () => ({
     user: { id: 'u1', roles: ['food-manager'], email: 'food@example.com' },
   }),
@@ -139,8 +152,10 @@ describe('RecurringFoodGrid location tabs', () => {
     ])
     getRecurringFoodDataMock.mockImplementation(async (year) => {
       const scheduleYear = year ?? currentYear
-      const schedules: Record<string, Record<string, Record<string, string | null>>> =
-        scheduleYear === currentYear ? { 'loc-a': { sunday: { first: 'vendor-a' } } } : {}
+      const schedules: Record<
+        string,
+        Record<string, Record<string, string | null>>
+      > = scheduleYear === currentYear ? { 'loc-a': { sunday: { first: 'vendor-a' } } } : {}
       return {
         year: scheduleYear,
         schedules,
@@ -320,5 +335,69 @@ describe('RecurringFoodGrid location tabs', () => {
     })
     expect(screen.queryAllByText(/Lawrenceville Recurring/)).toHaveLength(0)
     expect(screen.getAllByText(/Zelie Recurring/).length).toBeGreaterThan(0)
+  })
+
+  it('offers a jump to the previous year when the selected year is empty', async () => {
+    const currentYear = new Date().getFullYear()
+    getActiveLocationsMock.mockResolvedValue([
+      { id: 'loc-a', name: 'Lawrenceville', slug: 'lawrenceville' },
+    ])
+    getRecurringFoodDataMock.mockImplementation(async (year) => {
+      const schedules: Record<string, Record<string, Record<string, string | null>>> = year ===
+      currentYear - 1
+        ? { 'loc-a': { sunday: { first: 'vendor-a' } } }
+        : {}
+      return { year: year ?? currentYear, schedules, exclusions: {} }
+    })
+    getFoodForLocationYearMock.mockResolvedValue([])
+    getFoodVendorsByIdsMock.mockResolvedValue({ 'vendor-a': 'Last Year Truck' })
+
+    render(createElement(RecurringFoodGrid))
+
+    const jump = await screen.findByRole('button', { name: `View ${currentYear - 1}` })
+    expect(screen.getByText(new RegExp(`1 slot scheduled for ${currentYear - 1}`))).toBeTruthy()
+
+    fireEvent.click(jump)
+    expect((await screen.findAllByText(/Last Year Truck/)).length).toBeGreaterThan(0)
+  })
+
+  it('hides the empty fifth week row behind a toggle', async () => {
+    getActiveLocationsMock.mockResolvedValue([
+      { id: 'loc-a', name: 'Lawrenceville', slug: 'lawrenceville' },
+    ])
+    getRecurringFoodDataMock.mockResolvedValue({
+      year: 2026,
+      schedules: { 'loc-a': { sunday: { first: 'vendor-a' } } },
+      exclusions: {},
+    })
+    getFoodForLocationYearMock.mockResolvedValue([])
+    getFoodVendorsByIdsMock.mockResolvedValue({ 'vendor-a': 'Truck' })
+
+    render(createElement(RecurringFoodGrid))
+    await screen.findAllByText(/Truck/)
+
+    expect(screen.queryByText('5')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Show 5th week' }))
+    expect(screen.getByText('5')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Show 5th week' })).toBeNull()
+  })
+
+  it('always shows the fifth week row when it has data', async () => {
+    getActiveLocationsMock.mockResolvedValue([
+      { id: 'loc-a', name: 'Lawrenceville', slug: 'lawrenceville' },
+    ])
+    getRecurringFoodDataMock.mockResolvedValue({
+      year: 2026,
+      schedules: { 'loc-a': { sunday: { fifth: 'vendor-a' } } },
+      exclusions: {},
+    })
+    getFoodForLocationYearMock.mockResolvedValue([])
+    getFoodVendorsByIdsMock.mockResolvedValue({ 'vendor-a': 'Truck' })
+
+    render(createElement(RecurringFoodGrid))
+    await screen.findAllByText(/Truck/)
+
+    expect(screen.getByText('5')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Show 5th week' })).toBeNull()
   })
 })

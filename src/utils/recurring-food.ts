@@ -1,4 +1,4 @@
-import type { Payload } from 'payload'
+import type { Payload, Where } from 'payload'
 import type { RecurringFoodExclusion, User } from '@/src/payload-types'
 import { relationshipId } from '@/src/utils/relationship-id'
 
@@ -21,6 +21,24 @@ export const recurringOccurrences = ['first', 'second', 'third', 'fourth', 'fift
  */
 export const RECURRING_YEAR_MIN = 2000
 export const RECURRING_YEAR_MAX = 2100
+
+/**
+ * Rows created before the year fields existed have no year in the DB; they
+ * were authored for the 2026 season. Reads treat a missing year as 2026 so
+ * legacy rows keep working even before the year backfill migration runs.
+ */
+export const LEGACY_SCHEDULE_YEAR = 2026
+
+/** Year filter that also matches legacy year-less rows when 2026 is queried. */
+export function scheduleYearFilter(year: number | number[]): Where {
+  const match: Where = Array.isArray(year)
+    ? { year: { in: year } }
+    : { year: { equals: year } }
+  const includesLegacy = Array.isArray(year)
+    ? year.includes(LEGACY_SCHEDULE_YEAR)
+    : year === LEGACY_SCHEDULE_YEAR
+  return includesLegacy ? { or: [match, { year: { exists: false } }] } : match
+}
 
 /**
  * The `recurringDays` entry for a date. Lives here because the value only means
@@ -100,7 +118,7 @@ export async function getRecurringFoodState(
       // Filter in the query, not after: the 1000-row cap must apply to active
       // schedules, otherwise archived rows can crowd out live ones.
       where: {
-        and: [{ active: { equals: true } }, { year: { equals: year } }],
+        and: [{ active: { equals: true } }, scheduleYearFilter(year)],
       },
       depth: 0,
       limit: 1000,

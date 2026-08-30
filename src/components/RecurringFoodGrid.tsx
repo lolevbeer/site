@@ -1,7 +1,18 @@
 'use client'
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Banner, ConfirmationModal, RelationshipInput, useAuth, useModal } from '@payloadcms/ui'
+import {
+  Banner,
+  Button,
+  ConfirmationModal,
+  Pill,
+  RelationshipInput,
+  ShimmerEffect,
+  useAuth,
+  useModal,
+} from '@payloadcms/ui'
+// Styles live in RecurringFoodGrid.scss, pulled in via the admin's custom.scss
+// (a direct import here would drag SCSS through the vitest pipeline).
 import type { ValueWithRelation } from 'payload'
 import {
   getActiveLocations,
@@ -20,36 +31,38 @@ import {
   recurringOccurrences as weeks,
 } from '@/src/utils/recurring-food'
 import { capitalizeName } from '@/lib/utils/formatters'
+import { cn } from '@/lib/utils'
 import { getDatesForSlotInYear, toDateKey } from '@/lib/utils/food-dates'
 import { logger } from '@/lib/utils/logger'
 import type { User } from '@/src/payload-types'
 
-const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 // Derived so the labels can't fall out of index alignment with `days`.
 const fullDayLabels = days.map(capitalizeName)
-const weekLabels = ['1', '2', '3', '4', '5']
+const dayLabels = fullDayLabels.map((label) => label.slice(0, 3))
 const weekOrdinals = ['1st', '2nd', '3rd', '4th', '5th']
 
 type Day = (typeof days)[number]
 type Week = (typeof weeks)[number]
 
-// Schedule data structure: { [day]: { [week]: vendorId } }
 type LocationSchedule = Partial<Record<Day, Partial<Record<Week, string | null>>>>
-
-// Full schedules structure: { [locationId]: LocationSchedule }
 type SchedulesData = Record<string, LocationSchedule>
-
-// Exclusions structure: { [locationId]: string[] }
 type ExclusionsData = Record<string, string[]>
-
-// Using SimpleLocation from server actions
 type Location = SimpleLocation
+
+/** Number of filled slots in one location's `{day: {week: vendorId}}` map. */
+function countSlots(locationSchedule: LocationSchedule | undefined): number {
+  return Object.values(locationSchedule || {}).reduce(
+    (total, byWeek) => total + Object.values(byWeek || {}).filter(Boolean).length,
+    0,
+  )
+}
 
 function formatDate(date: Date): string {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-// Recurring dates are local calendar days, so persist the displayed day rather than a UTC shift.
+// Re-exported for the grid's tests, which assert the local-calendar-day keying
+// this component relies on.
 export { toDateKey } from '@/lib/utils/food-dates'
 
 /**
@@ -62,17 +75,6 @@ function scheduleSaveKey(year: number, locationId: string, day: string, week: st
 
 function exclusionSaveKey(locationId: string, dateKey: string): string {
   return `exclusion-${locationId}-${dateKey}`
-}
-
-function yearButtonStyle(disabled: boolean): React.CSSProperties {
-  return {
-    padding: '8px 12px',
-    border: '1px solid var(--theme-elevation-200)',
-    borderRadius: '4px',
-    background: 'var(--theme-elevation-50)',
-    color: 'var(--theme-text)',
-    cursor: disabled ? 'not-allowed' : 'pointer',
-  }
 }
 
 interface GridCellProps {
@@ -103,8 +105,11 @@ const GridCell: React.FC<GridCellProps> = ({ value, onChange, cellKey, readOnly 
       path={`cell-${cellKey}`}
       relationTo={['food-vendors']}
       hasMany={false}
-      allowCreate={!readOnly}
-      allowEdit={!readOnly}
+      // No create/edit vendor affordances in cells — both are rare and eat
+      // space the (truncated) name needs; manage vendors in their collection.
+      // Payload's own SingleValue renders the full name as a hover tooltip.
+      allowCreate={false}
+      allowEdit={false}
       value={valueWithRelation}
       onChange={handleChange}
       appearance="select"
@@ -133,6 +138,10 @@ interface DatesListProps {
   /** Keys of the writes currently in flight; see `exclusionSaveKey` above. */
   pendingKeys: ReadonlySet<string>
   readOnly: boolean
+  /** Lets the empty state offer a jump to a year that has schedules. */
+  onYearChange: (year: number) => void
+  /** Slots this location has in `year - 1`; drives the empty-state hint. */
+  previousYearSlots: number
 }
 
 const EXCLUSION_MODAL_SLUG = 'confirm-exclusion'
@@ -145,6 +154,8 @@ const DatesList: React.FC<DatesListProps> = ({
   onExclusionChange,
   pendingKeys,
   readOnly,
+  onYearChange,
+  previousYearSlots,
 }) => {
   const [vendorNames, setVendorNames] = useState<Record<string, string>>({})
   const [individualFoodEvents, setIndividualFoodEvents] = useState<ScheduledDate[]>([])
@@ -213,23 +224,28 @@ const DatesList: React.FC<DatesListProps> = ({
     }
   }, [locationId, year])
 
-  const scheduledDates = useMemo(() => {
-    const allDates = [...recurringDates, ...individualFoodEvents]
-    allDates.sort((a, b) => a.date.getTime() - b.date.getTime())
-    return allDates
-  }, [recurringDates, individualFoodEvents])
+  const scheduledDates = useMemo(
+    () =>
+      [...recurringDates, ...individualFoodEvents].sort(
+        (a, b) => a.date.getTime() - b.date.getTime(),
+      ),
+    [recurringDates, individualFoodEvents],
+  )
 
-  // Fetch vendor names for recurring events
+  // Keyed on the joined id string, not the array: `recurringDates` gets a fresh
+  // identity after every save (including exclusion toggles, which cannot change
+  // vendors at all), and refetching identical ids would re-render the list.
+  const vendorIdKey = useMemo(
+    () => [...new Set(recurringDates.map((d) => d.vendorId))].sort().join(','),
+    [recurringDates],
+  )
   useEffect(() => {
-    const vendorIds = [...new Set(recurringDates.map((d) => d.vendorId))]
-    if (vendorIds.length === 0) {
-      return
-    }
+    if (!vendorIdKey) return
 
     let cancelled = false
     const fetchVendors = async () => {
       try {
-        const names = await getFoodVendorsByIds(vendorIds)
+        const names = await getFoodVendorsByIds(vendorIdKey.split(','))
         if (!cancelled) setVendorNames(names)
       } catch (error) {
         if (!cancelled) logger.error('Error fetching vendor names:', error)
@@ -240,7 +256,7 @@ const DatesList: React.FC<DatesListProps> = ({
     return () => {
       cancelled = true
     }
-  }, [recurringDates])
+  }, [vendorIdKey])
 
   const requestToggleExclusion = useCallback(
     (date: Date, vendorName: string) => {
@@ -296,7 +312,7 @@ const DatesList: React.FC<DatesListProps> = ({
 
     const conflictList: { date: Date; recurringVendor: string; individualVendor: string }[] = []
 
-    Object.entries(dateMap).forEach(([, items]) => {
+    Object.values(dateMap).forEach((items) => {
       if (items.recurring.length > 0 && items.individual.length > 0) {
         items.recurring.forEach((r) => {
           items.individual.forEach((i) => {
@@ -324,18 +340,17 @@ const DatesList: React.FC<DatesListProps> = ({
     return groups
   }, [scheduledDates])
 
+  const restoring = Boolean(pendingToggle?.isExcluded)
   const exclusionModal = (
     <ConfirmationModal
       modalSlug={EXCLUSION_MODAL_SLUG}
-      heading={pendingToggle?.isExcluded ? 'Remove Exclusion' : 'Exclude Event'}
+      heading={restoring ? 'Remove Exclusion' : 'Exclude Event'}
       body={
         pendingToggle
-          ? pendingToggle.isExcluded
-            ? `Are you sure you want to restore "${pendingToggle.vendorName}" on ${formatDate(pendingToggle.date)}?`
-            : `Are you sure you want to exclude "${pendingToggle.vendorName}" on ${formatDate(pendingToggle.date)}?`
+          ? `Are you sure you want to ${restoring ? 'restore' : 'exclude'} "${pendingToggle.vendorName}" on ${formatDate(pendingToggle.date)}?`
           : ''
       }
-      confirmLabel={pendingToggle?.isExcluded ? 'Restore' : 'Exclude'}
+      confirmLabel={restoring ? 'Restore' : 'Exclude'}
       onConfirm={confirmToggleExclusion}
       onCancel={cancelToggleExclusion}
     />
@@ -343,42 +358,36 @@ const DatesList: React.FC<DatesListProps> = ({
 
   if (scheduledDates.length === 0) {
     return (
-      <div
-        ref={mountedRootRef}
-        style={{ padding: '20px 0', color: 'var(--theme-elevation-500)', fontSize: '14px' }}
-      >
+      <div ref={mountedRootRef} className="recurring-food-grid__empty">
         {exclusionModal}
-        No vendors scheduled. Select vendors in the grid above to see upcoming dates.
+        <div>No vendors scheduled. Select vendors in the grid above to see upcoming dates.</div>
+        {previousYearSlots > 0 && (
+          <div className="recurring-food-grid__empty-hint">
+            {previousYearSlots} slot{previousYearSlots === 1 ? '' : 's'} scheduled for {year - 1}.{' '}
+            <Button
+              buttonStyle="none"
+              className="recurring-food-grid__link-button"
+              onClick={() => onYearChange(year - 1)}
+            >
+              View {year - 1}
+            </Button>
+          </div>
+        )}
       </div>
     )
   }
 
   return (
-    <div
-      ref={mountedRootRef}
-      style={{
-        marginTop: '24px',
-        paddingTop: '16px',
-        borderTop: '1px solid var(--theme-elevation-150)',
-      }}
-    >
+    <div ref={mountedRootRef} className="recurring-food-grid__dates">
       {exclusionModal}
       {conflicts.length > 0 && (
-        <div
-          style={{
-            padding: '12px 16px',
-            backgroundColor: 'var(--theme-warning-100)',
-            border: '1px solid var(--theme-warning-500)',
-            borderRadius: '4px',
-            marginBottom: '16px',
-          }}
-        >
-          <strong style={{ color: 'var(--theme-warning-700)' }}>Conflicts:</strong>
-          <div style={{ marginTop: '8px', fontSize: '13px', color: 'var(--theme-warning-800)' }}>
+        <div className="recurring-food-grid__conflicts">
+          <strong>Conflicts:</strong>
+          <div className="recurring-food-grid__conflict-list">
             {conflicts.map((conflict) => (
               <div
                 key={`${toDateKey(conflict.date)}-${conflict.recurringVendor}-${conflict.individualVendor}`}
-                style={{ marginBottom: '4px' }}
+                className="recurring-food-grid__conflict"
               >
                 <strong>{formatDate(conflict.date)}</strong>: {conflict.recurringVendor} (recurring)
                 + {conflict.individualVendor} (scheduled)
@@ -387,41 +396,14 @@ const DatesList: React.FC<DatesListProps> = ({
           </div>
         </div>
       )}
-      <h4
-        style={{
-          margin: '0 0 8px 0',
-          fontSize: '14px',
-          fontWeight: 600,
-          color: 'var(--theme-elevation-800)',
-        }}
-      >
+      <h4 className="recurring-food-grid__dates-heading">
         {year} Schedule
-        {!readOnly && (
-          <span
-            style={{
-              fontWeight: 400,
-              fontSize: '12px',
-              color: 'var(--theme-elevation-400)',
-              marginLeft: '8px',
-            }}
-          >
-            (click to exclude)
-          </span>
-        )}
+        {!readOnly && <span className="recurring-food-grid__dates-hint">(click to exclude)</span>}
       </h4>
-      <div style={{ fontSize: '13px', color: 'var(--theme-elevation-600)' }}>
+      <div className="recurring-food-grid__dates-list">
         {Object.entries(groupedByMonth).map(([month, dates]) => (
-          <div key={month} style={{ marginBottom: '16px' }}>
-            <div
-              style={{
-                fontWeight: 600,
-                fontSize: '12px',
-                color: 'var(--theme-elevation-500)',
-                marginBottom: '4px',
-              }}
-            >
-              {month}
-            </div>
+          <div key={month} className="recurring-food-grid__month">
+            <div className="recurring-food-grid__month-label">{month}</div>
             {dates.map((item, idx) => {
               const excluded = item.type === 'recurring' && isExcluded(item.date)
               const isIndividual = item.type === 'individual'
@@ -430,15 +412,15 @@ const DatesList: React.FC<DatesListProps> = ({
               const isPending = pendingKeys.has(exclusionSaveKey(locationId, toDateKey(item.date)))
               const isDisabled = isIndividual || isPending || readOnly
               const displayName = item.vendorName || vendorNames[item.vendorId] || '...'
-              let backgroundColor = 'transparent'
-              if (excluded) backgroundColor = 'var(--theme-error-50)'
-              else if (isIndividual) backgroundColor = 'var(--theme-elevation-100)'
-
-              let ariaLabel: string | undefined
-              if (!isIndividual && !readOnly) {
-                const action = excluded ? 'Restore' : 'Exclude'
-                ariaLabel = `${action} ${displayName} on ${formatDate(item.date)}`
-              }
+              const rowClassNames = cn(
+                'recurring-food-grid__date-row',
+                excluded && 'recurring-food-grid__date-row--excluded',
+                isIndividual && 'recurring-food-grid__date-row--individual',
+              )
+              const ariaLabel =
+                isIndividual || readOnly
+                  ? undefined
+                  : `${excluded ? 'Restore' : 'Exclude'} ${displayName} on ${formatDate(item.date)}`
 
               return (
                 <button
@@ -447,62 +429,24 @@ const DatesList: React.FC<DatesListProps> = ({
                   disabled={isDisabled}
                   onClick={() => requestToggleExclusion(item.date, displayName)}
                   aria-label={ariaLabel}
-                  style={{
-                    display: 'block',
-                    width: '100%',
-                    padding: '4px 8px',
-                    margin: '2px 0',
-                    cursor: isDisabled ? 'default' : 'pointer',
-                    border: 'none',
-                    borderRadius: '4px',
-                    color: 'inherit',
-                    font: 'inherit',
-                    textAlign: 'left',
-                    backgroundColor,
-                    opacity: excluded ? 0.6 : 1,
-                    transition: 'all 0.15s ease',
-                  }}
+                  className={rowClassNames}
                 >
-                  <span style={{ textDecoration: excluded ? 'line-through' : 'none' }}>
+                  <span className="recurring-food-grid__date-text">
                     <strong>{formatDate(item.date)}</strong> {displayName}
                   </span>{' '}
                   {isIndividual ? (
-                    <span
-                      style={{
-                        backgroundColor: 'var(--theme-success-500)',
-                        color: 'white',
-                        fontSize: '10px',
-                        fontWeight: 600,
-                        padding: '2px 6px',
-                        borderRadius: '10px',
-                        marginLeft: '6px',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px',
-                      }}
-                    >
+                    <Pill pillStyle="success" size="small">
                       Scheduled
-                    </span>
+                    </Pill>
                   ) : (
-                    <span style={{ color: 'var(--theme-elevation-400)' }}>
+                    <span className="recurring-food-grid__slot-note">
                       ({weekOrdinals[item.weekIndex]} {fullDayLabels[item.dayIndex]})
                     </span>
                   )}
                   {excluded && (
-                    <span
-                      style={{
-                        backgroundColor: 'var(--theme-error-500)',
-                        color: 'white',
-                        fontSize: '10px',
-                        fontWeight: 600,
-                        padding: '2px 6px',
-                        borderRadius: '10px',
-                        marginLeft: '6px',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.5px',
-                      }}
-                    >
+                    <Pill pillStyle="error" size="small">
                       Excluded
-                    </span>
+                    </Pill>
                   )}
                 </button>
               )
@@ -530,6 +474,8 @@ interface LocationGridProps {
   /** Keys of the writes currently in flight; see the `*SaveKey` helpers above. */
   pendingKeys: ReadonlySet<string>
   readOnly: boolean
+  onYearChange: (year: number) => void
+  previousYearSlots: number
 }
 
 const LocationGrid: React.FC<LocationGridProps> = ({
@@ -541,8 +487,25 @@ const LocationGrid: React.FC<LocationGridProps> = ({
   onExclusionChange,
   pendingKeys,
   readOnly,
+  onYearChange,
+  previousYearSlots,
 }) => {
   const locationSchedule = schedules[location.id] || {}
+
+  // Days with no vendors all year (usually Sun/Mon) shrink so the busy days
+  // get the width; the same pass answers whether week 5 is used anywhere.
+  const { dayHasVendor, fifthWeekUsed } = useMemo(
+    () => ({
+      dayHasVendor: days.map((day) => weeks.some((week) => Boolean(locationSchedule[day]?.[week]))),
+      fifthWeekUsed: days.some((day) => Boolean(locationSchedule[day]?.fifth)),
+    }),
+    [locationSchedule],
+  )
+
+  // Week 5 exists for at most a couple of month/day combos and is usually
+  // empty, so hide its row unless it has data or the manager asks for it.
+  const [showFifthWeek, setShowFifthWeek] = useState(false)
+  const visibleWeeks = fifthWeekUsed || showFifthWeek ? weeks : weeks.slice(0, 4)
 
   const handleCellChange = useCallback(
     (day: Day, week: Week, vendorId: string | null) => {
@@ -553,54 +516,15 @@ const LocationGrid: React.FC<LocationGridProps> = ({
 
   return (
     <div>
-      <style>{`
-        .rs__menu {
-          z-index: 10000 !important;
-          min-width: 220px !important;
-        }
-        .rs__menu-list {
-          max-height: 300px !important;
-        }
-        .rs__option {
-          white-space: normal !important;
-          word-break: break-word !important;
-        }
-        .rs__single-value {
-          overflow: visible !important;
-          white-space: normal !important;
-          text-overflow: clip !important;
-        }
-        .rs__value-container {
-          flex-wrap: wrap !important;
-        }
-      `}</style>
-      <div style={{ padding: '10px 0' }}>
-        <table
-          style={{
-            width: '100%',
-            borderCollapse: 'collapse',
-            fontSize: '14px',
-          }}
-        >
+      <div className="recurring-food-grid__table-wrap">
+        <table className="recurring-food-grid__table">
           <thead>
             <tr>
-              <th
-                style={{
-                  padding: '10px',
-                  textAlign: 'center',
-                  fontWeight: 600,
-                  width: '60px',
-                }}
-              />
+              <th />
               {dayLabels.map((label, i) => (
                 <th
                   key={days[i]}
-                  style={{
-                    padding: '10px',
-                    textAlign: 'center',
-                    fontWeight: 600,
-                    minWidth: '180px',
-                  }}
+                  className={dayHasVendor[i] ? undefined : 'recurring-food-grid__day--empty'}
                 >
                   {label}
                 </th>
@@ -608,28 +532,15 @@ const LocationGrid: React.FC<LocationGridProps> = ({
             </tr>
           </thead>
           <tbody>
-            {weeks.map((week, weekIndex) => (
+            {visibleWeeks.map((week, weekIndex) => (
               <tr key={week}>
-                <td
-                  style={{
-                    padding: '10px',
-                    textAlign: 'center',
-                    fontWeight: 500,
-                  }}
-                >
-                  {weekLabels[weekIndex]}
-                </td>
+                <td>{weekIndex + 1}</td>
                 {days.map((day) => {
                   const cellValue = locationSchedule[day]?.[week] || null
                   const cellKey = scheduleSaveKey(year, location.id, day, week)
 
                   return (
-                    <td
-                      key={`${day}_${week}`}
-                      style={{
-                        padding: '4px',
-                      }}
-                    >
+                    <td key={`${day}_${week}`}>
                       <GridCell
                         value={cellValue}
                         onChange={(vendorId) => handleCellChange(day, week, vendorId)}
@@ -645,6 +556,15 @@ const LocationGrid: React.FC<LocationGridProps> = ({
             ))}
           </tbody>
         </table>
+        {!fifthWeekUsed && !showFifthWeek && (
+          <Button
+            buttonStyle="none"
+            className="recurring-food-grid__link-button"
+            onClick={() => setShowFifthWeek(true)}
+          >
+            Show 5th week
+          </Button>
+        )}
       </div>
       <DatesList
         year={year}
@@ -654,6 +574,8 @@ const LocationGrid: React.FC<LocationGridProps> = ({
         onExclusionChange={onExclusionChange}
         pendingKeys={pendingKeys}
         readOnly={readOnly}
+        onYearChange={onYearChange}
+        previousYearSlots={previousYearSlots}
       />
     </div>
   )
@@ -725,6 +647,29 @@ export const RecurringFoodGrid: React.FC = () => {
     setSchedules(recurringFood.schedules as SchedulesData)
     setExclusions(recurringFood.exclusions)
   }, [])
+
+  /**
+   * When the selected year has no schedules, the empty state offers a jump to
+   * the previous one. Owned here rather than in the leaf: `LocationGrid`
+   * remounts on every tab switch, so a leaf-held fetch would repeat per tab.
+   */
+  const [previousYearSchedules, setPreviousYearSchedules] = useState<SchedulesData>({})
+  // Any empty location can show the hint, so one fetch covers every tab.
+  const someLocationIsEmpty = locations.some((loc) => countSlots(schedules[loc.id]) === 0)
+  useEffect(() => {
+    setPreviousYearSchedules({})
+    if (!someLocationIsEmpty || selectedYear - 1 < RECURRING_YEAR_MIN) return
+
+    let cancelled = false
+    getRecurringFoodData(selectedYear - 1)
+      .then((previous) => {
+        if (!cancelled) setPreviousYearSchedules(previous.schedules as SchedulesData)
+      })
+      .catch((error) => logger.error('Error checking previous year schedules:', error))
+    return () => {
+      cancelled = true
+    }
+  }, [someLocationIsEmpty, selectedYear])
 
   useEffect(() => {
     let cancelled = false
@@ -817,15 +762,15 @@ export const RecurringFoodGrid: React.FC = () => {
 
   if (loading) {
     return (
-      <div style={{ padding: '20px', color: 'var(--theme-elevation-500)' }}>
-        Loading locations...
+      <div className="recurring-food-grid__status" aria-label="Loading locations">
+        <ShimmerEffect height="2rem" />
       </div>
     )
   }
 
   if (locations.length === 0) {
     return (
-      <div style={{ padding: '20px', color: 'var(--theme-elevation-500)' }}>
+      <div className="recurring-food-grid__status">
         No active locations found. Please add locations in the Locations collection.
       </div>
     )
@@ -839,50 +784,30 @@ export const RecurringFoodGrid: React.FC = () => {
           : 'View only — ask a food manager to change the schedule.'}
       </Banner>
       {saveError && <Banner type="error">{saveError}</Banner>}
-      <div
-        aria-label="Schedule year"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '12px',
-          padding: '16px 0',
-        }}
-      >
-        <button
-          type="button"
+      <div aria-label="Schedule year" className="recurring-food-grid__year-nav">
+        <Button
+          buttonStyle="secondary"
+          size="small"
           onClick={() => setSelectedYear((year) => Math.max(RECURRING_YEAR_MIN, year - 1))}
           disabled={selectedYear <= RECURRING_YEAR_MIN}
-          style={yearButtonStyle(selectedYear <= RECURRING_YEAR_MIN)}
         >
           Previous year
-        </button>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '12px', color: 'var(--theme-elevation-500)' }}>Schedule year</div>
-          <strong style={{ fontSize: '24px', fontVariantNumeric: 'tabular-nums' }}>
-            {selectedYear}
-          </strong>
+        </Button>
+        <div className="recurring-food-grid__year-center">
+          <div className="recurring-food-grid__year-label">Schedule year</div>
+          <strong className="recurring-food-grid__year-value">{selectedYear}</strong>
         </div>
-        <button
-          type="button"
+        <Button
+          buttonStyle="secondary"
+          size="small"
           onClick={() => setSelectedYear((year) => Math.min(RECURRING_YEAR_MAX, year + 1))}
           disabled={selectedYear >= RECURRING_YEAR_MAX}
-          style={yearButtonStyle(selectedYear >= RECURRING_YEAR_MAX)}
         >
           Next year
-        </button>
+        </Button>
       </div>
       {/* Tabs */}
-      <div
-        role="tablist"
-        aria-label="Locations"
-        style={{
-          display: 'flex',
-          gap: '4px',
-          borderBottom: '1px solid var(--theme-elevation-150)',
-          marginBottom: '16px',
-        }}
-      >
+      <div role="tablist" aria-label="Locations" className="recurring-food-grid__tabs">
         {locations.map((location) => (
           <button
             key={location.id}
@@ -892,20 +817,10 @@ export const RecurringFoodGrid: React.FC = () => {
             aria-selected={activeTab === location.id}
             aria-controls={`recurring-food-panel-${location.id}`}
             onClick={() => setActiveTab(location.id)}
-            style={{
-              padding: '12px 20px',
-              fontSize: '14px',
-              fontWeight: activeTab === location.id ? 600 : 400,
-              color: activeTab === location.id ? 'var(--theme-text)' : 'var(--theme-elevation-500)',
-              backgroundColor: 'transparent',
-              border: 'none',
-              borderBottom:
-                activeTab === location.id
-                  ? '2px solid var(--theme-elevation-800)'
-                  : '2px solid transparent',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease',
-            }}
+            className={cn(
+              'recurring-food-grid__tab',
+              activeTab === location.id && 'recurring-food-grid__tab--active',
+            )}
           >
             {location.name}
           </button>
@@ -929,6 +844,8 @@ export const RecurringFoodGrid: React.FC = () => {
             onExclusionChange={handleExclusionChange}
             pendingKeys={pendingKeys}
             readOnly={!canEdit}
+            onYearChange={setSelectedYear}
+            previousYearSlots={countSlots(previousYearSchedules[activeLocation.id])}
           />
         </div>
       )}

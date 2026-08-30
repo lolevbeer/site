@@ -65,7 +65,11 @@ describe('recurring food compatibility reads', () => {
       expect.objectContaining({
         collection: 'recurring-food-schedules',
         where: {
-          and: [{ active: { equals: true } }, { year: { equals: 2026 } }],
+          and: [
+            { active: { equals: true } },
+            // 2026 also matches legacy rows that predate the year field.
+            { or: [{ year: { equals: 2026 } }, { year: { exists: false } }] },
+          ],
         },
       }),
     )
