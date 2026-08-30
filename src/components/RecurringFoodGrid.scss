@@ -51,6 +51,34 @@
 
   &__table-wrap {
     padding: 10px 0;
+
+    /* react-select inside the grid cells: keep the closed control one line
+       tall (long vendor names truncate with an ellipsis) while dropdown
+       options still wrap so full names stay readable when picking. */
+    .rs__menu {
+      z-index: 10000 !important;
+      min-width: 220px !important;
+    }
+
+    .rs__menu-list {
+      max-height: 300px !important;
+    }
+
+    .rs__option {
+      white-space: normal !important;
+      word-break: break-word !important;
+    }
+
+    .rs__single-value {
+      overflow: hidden !important;
+      white-space: nowrap !important;
+      text-overflow: ellipsis !important;
+    }
+
+    .rs__value-container {
+      flex-wrap: nowrap !important;
+      overflow: hidden !important;
+    }
   }
 
   &__table {

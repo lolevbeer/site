@@ -531,27 +531,6 @@ const LocationGrid: React.FC<LocationGridProps> = ({
 
   return (
     <div>
-      <style>{`
-        .rs__menu {
-          z-index: 10000 !important;
-          min-width: 220px !important;
-        }
-        .rs__menu-list {
-          max-height: 300px !important;
-        }
-        .rs__option {
-          white-space: normal !important;
-          word-break: break-word !important;
-        }
-        .rs__single-value {
-          overflow: visible !important;
-          white-space: normal !important;
-          text-overflow: clip !important;
-        }
-        .rs__value-container {
-          flex-wrap: wrap !important;
-        }
-      `}</style>
       <div className="recurring-food-grid__table-wrap">
         <table className="recurring-food-grid__table">
           <thead>
