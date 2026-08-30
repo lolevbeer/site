@@ -81,11 +81,24 @@
       overflow: hidden !important;
       white-space: nowrap !important;
       text-overflow: ellipsis !important;
+      font-size: 12px !important;
+      letter-spacing: -0.015em !important;
     }
 
     .rs__value-container {
       flex-wrap: nowrap !important;
       overflow: hidden !important;
+      padding: 2px 4px !important;
+    }
+
+    .rs__indicator {
+      padding: 4px 2px !important;
+    }
+
+    /* A filled cell keeps only the clear ×; clicking the cell still opens the
+       dropdown, so the chevron is redundant there and steals name space. */
+    .rs__control:has(.rs__single-value) .rs__dropdown-indicator {
+      display: none !important;
     }
   }
 
