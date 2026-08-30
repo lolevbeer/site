@@ -65,8 +65,8 @@ export function getDatesForSlotInYear(
  * Friday, say) and occurrences already in the past are skipped, so the result
  * can be shorter than `monthsAhead`.
  *
- * Dates are built in the server's local time zone at midnight, matching the
- * `date.toISOString().split('T')[0]` keys the callers compare against.
+ * Dates are built in the server's local time zone at midnight; serialize them
+ * with `toDateKey` (never `toISOString`, which can shift the calendar date).
  *
  * @param dayIndex Day of week, 0 = Sunday (matches `Date.getDay()`).
  * @param weekOccurrence 1-based occurrence within the month (1 = first).

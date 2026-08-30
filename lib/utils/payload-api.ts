@@ -23,6 +23,7 @@ import {
   getRecurringFoodState,
   recurringDays,
   recurringOccurrences,
+  scheduleYearFilter,
   type RecurringFoodState,
 } from '@/src/utils/recurring-food'
 import { getPublicBeerReviews } from '@/src/utils/beer-reviews'
@@ -616,7 +617,7 @@ export const getWeeklyHoursWithHolidays = cache(
     const monday = new Date(now)
     monday.setDate(now.getDate() + mondayOffset)
     monday.setHours(0, 0, 0, 0)
-    const weekKey = monday.toISOString().split('T')[0]
+    const weekKey = toDateKey(monday)
 
     try {
       return await unstable_cache(
@@ -653,8 +654,8 @@ export const getWeeklyHoursWithHolidays = cache(
           sunday.setDate(currentMonday.getDate() + 6)
 
           // Format dates for query
-          const startDateStr = currentMonday.toISOString().split('T')[0]
-          const endDateStr = sunday.toISOString().split('T')[0]
+          const startDateStr = toDateKey(currentMonday)
+          const endDateStr = toDateKey(sunday)
 
           // Get all holiday hours for this location within this week
           const holidayResult = await payload.find({
@@ -704,7 +705,7 @@ export const getWeeklyHoursWithHolidays = cache(
           for (let i = 0; i < 7; i++) {
             const date = new Date(currentMonday)
             date.setDate(currentMonday.getDate() + i)
-            const dateStr = date.toISOString().split('T')[0]
+            const dateStr = toDateKey(date)
             const dayName = days[i]
 
             // Check if there's a holiday override for this day
@@ -812,9 +813,7 @@ async function findUpcomingPublicEvents(
           ...locationFilter,
           { active: { equals: true } },
           { visibility: { equals: 'public' } },
-          // Legacy rows predate the year field; fetch them unconditionally —
-          // expandRecurringEvents assigns them 2026 and window-filters anyway.
-          { or: [{ year: { in: years } }, { year: { exists: false } }] },
+          scheduleYearFilter(years),
         ],
       },
       sort: ['year', 'day'],
@@ -1076,7 +1075,7 @@ const getUpcomingRecurringFood = async (
               const vendorId = recurringFood.schedules[locationId]?.[day]?.[week]
               const vendor = vendorId ? vendorMap[vendorId] : undefined
               if (!vendor) continue
-              const dateKey = date.toISOString().split('T')[0]
+              const dateKey = toDateKey(date)
               const locationExclusions = recurringFood.exclusions[locationId] || []
               if (locationExclusions.includes(dateKey)) continue
 

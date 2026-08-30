@@ -105,6 +105,8 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
       if (selectedTag && selectedTag !== 'all' && beer.tag !== selectedTag) return false
       if (availabilityField) {
         const locationAvailability = beer.availability?.[currentLocation]
+        // Deliberately per-location only: top-level tap/cansAvailable are the
+        // legacy shape and would leak other locations' beers into the filter.
         if (typeof locationAvailability !== 'object' || !locationAvailability[availabilityField]) {
           return false
         }

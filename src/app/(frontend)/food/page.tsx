@@ -7,7 +7,7 @@ import { FoodVendorSchedule, DayOfWeek } from '@/lib/types/food'
 import { extractVendorInfo, getAllLocations } from '@/lib/utils/payload-api'
 import { getMediaUrl } from '@/lib/utils/media-utils'
 import { getTodayMidnightISO } from '@/lib/utils/date'
-import { getUpcomingDatesForSlot } from '@/lib/utils/food-dates'
+import { getUpcomingDatesForSlot, toDateKey } from '@/lib/utils/food-dates'
 import { createLocationLookup, generateFoodEventJsonLd } from '@/lib/utils/json-ld'
 import { PageTransition } from '@/components/motion'
 import { logger } from '@/lib/utils/logger'
@@ -225,7 +225,7 @@ async function getFoodData(): Promise<FoodVendorSchedule[]> {
             const vendor = vendorId ? vendorMap[vendorId] : undefined
             if (!vendorId || !vendor) continue
 
-            const dateKey = date.toISOString().split('T')[0]
+            const dateKey = toDateKey(date)
 
             // Skip if excluded
             const exclusions = recurringFood.exclusions as RecurringFoodExclusions
