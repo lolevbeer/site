@@ -5,7 +5,7 @@ import { BreweryEvent } from '@/lib/types/event';
 import type { LocationFilter } from '@/lib/types/location';
 import { Button } from '@/components/ui/button';
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
-import { Calendar } from 'lucide-react';
+import { Calendar } from '@/components/icons';
 import { useLocationContext } from '@/components/location/location-provider';
 import { getLocationDisplayName } from '@/lib/config/locations';
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';

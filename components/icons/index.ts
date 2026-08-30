@@ -5,3 +5,5 @@ export { TbdIcon } from './tbd-icon';
 export { TekuIcon } from './teku-icon';
 export { UhaIcon } from './uha-icon';
 export { UntappdIcon } from './untappd-icon';
+// General-purpose icon set (Hugeicons free), exported under lucide-react names.
+export * from './hugeicons';

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Navigation } from 'lucide-react';
+import { Navigation } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import { capitalizeName } from '@/lib/utils/formatters';
 

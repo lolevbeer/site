@@ -3,33 +3,23 @@
  * Reusable card for events, food vendors, and other scheduled items
  */
 
-'use client';
+'use client'
 
-import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { formatTime, formatDate } from '@/lib/utils/formatters';
-import { Music, Utensils, Puzzle, Trophy, Beer, MicVocal, type LucideIcon } from 'lucide-react';
-
-const tagIcons: Record<string, LucideIcon> = {
-  music: Music,
-  utensils: Utensils,
-  puzzle: Puzzle,
-  sports: Trophy,
-  'beer-release': Beer,
-  'mic-vocal': MicVocal,
-};
+import React from 'react'
+import { Card, CardContent } from '@/components/ui/card'
+import { formatTime, formatDate } from '@/lib/utils/formatters'
 
 interface ScheduleCardProps {
-  title: string;
-  date: string;
-  time?: string;
-  endTime?: string;
-  location?: string;
-  attendees?: string | number;
-  site?: string;
-  tags?: (string | null)[] | null;
-  className?: string;
-  additionalInfo?: React.ReactNode;
+  title: string
+  date: string
+  time?: string
+  endTime?: string
+  location?: string
+  attendees?: string | number
+  site?: string
+  tags?: (string | null)[] | null
+  className?: string
+  additionalInfo?: React.ReactNode
 }
 
 export function ScheduleCard({
@@ -42,15 +32,15 @@ export function ScheduleCard({
   tags,
   site,
   className,
-  additionalInfo
+  additionalInfo,
 }: ScheduleCardProps) {
-  const handleClick = () => site && window.open(site, '_blank');
+  const handleClick = () => site && window.open(site, '_blank')
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (site && (e.key === 'Enter' || e.key === ' ')) {
-      e.preventDefault();
-      window.open(site, '_blank');
+      e.preventDefault()
+      window.open(site, '_blank')
     }
-  };
+  }
 
   return (
     <Card
@@ -62,15 +52,6 @@ export function ScheduleCard({
       aria-label={site ? `${title} - opens in new window` : undefined}
     >
       <CardContent className="p-6 text-center">
-        {tags && tags.length > 0 && (
-          <div className="flex items-center justify-center gap-2 mb-2">
-            {tags.map((tag) => {
-              if (!tag) return null
-              const Icon = tagIcons[tag]
-              return Icon ? <Icon key={tag} className="h-5 w-5 text-muted-foreground" /> : null
-            })}
-          </div>
-        )}
         <h3 className="text-xl font-semibold mb-2">{title}</h3>
 
         <div className="space-y-1 text-sm text-muted-foreground flex flex-col items-center">
@@ -87,7 +68,7 @@ export function ScheduleCard({
         </div>
       </CardContent>
     </Card>
-  );
+  )
 }
 
-export default ScheduleCard;
+export default ScheduleCard

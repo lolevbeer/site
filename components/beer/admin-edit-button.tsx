@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Pencil } from 'lucide-react';
+import { Pencil } from '@/components/icons';
 import { useAuth } from '@/lib/hooks/use-auth';
 
 interface AdminEditButtonProps {

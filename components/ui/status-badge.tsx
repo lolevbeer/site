@@ -9,7 +9,7 @@ import React from 'react';
 import { Badge, badgeVariants } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { EventStatus } from '@/lib/types/event';
-import { LucideIcon } from 'lucide-react';
+import { LucideIcon } from '@/components/icons';
 import type { VariantProps } from "class-variance-authority";
 
 // Derive BadgeProps from the Badge component

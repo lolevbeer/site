@@ -30,7 +30,7 @@ import {
   EmptyDescription,
   EmptyContent,
 } from '@/components/ui/empty'
-import { CircleX } from 'lucide-react'
+import { CircleX } from '@/components/icons'
 import { UntappdIcon } from '@/components/icons/untappd-icon'
 import { AdminEditButton } from './admin-edit-button'
 import { getGlassIcon } from '@/lib/utils/beer-icons'

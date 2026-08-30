@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { MapPin, Search, Locate, Map as MapIcon, List } from 'lucide-react';
+import { MapPin, Search, Locate, Map as MapIcon, List } from '@/components/icons';
 import { capitalizeName } from '@/lib/utils/formatters';
 
 interface NearbyLocation {

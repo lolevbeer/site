@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       revalidated: true,
       menuUrl,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     })
   } catch (error) {
     logger.error('Revalidation error:', error)

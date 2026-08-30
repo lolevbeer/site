@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { MapPin, Beer, Utensils, Calendar, Info, HelpCircle } from 'lucide-react';
+import { MapPin, Beer, Utensils, Calendar, Info, HelpCircle } from '@/components/icons';
 
 /**
  * Navigation menu items configuration
