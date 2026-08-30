@@ -3,27 +3,27 @@
  * Works with dynamically loaded locations from the database
  */
 
-'use client';
+'use client'
 
-import { useMemo } from 'react';
-import { useLocationContext } from '@/components/location/location-provider';
-import { useIsHydrated } from '@/lib/hooks/use-is-hydrated';
-import type { LocationSlug } from '@/lib/types/location';
+import { useMemo } from 'react'
+import { useLocationContext } from '@/components/location/location-provider'
+import { useIsHydrated } from '@/lib/hooks/use-is-hydrated'
+import type { LocationSlug } from '@/lib/types/location'
 
 /**
  * Data organized by location slug
  */
-export type LocationData<T> = Record<LocationSlug, T[]>;
+export type LocationData<T> = Record<LocationSlug, T[]>
 
 interface UseLocationFilteredDataOptions<T> {
   /** Data organized by location slug */
-  dataByLocation: LocationData<T>;
+  dataByLocation: LocationData<T>
   /**
    * If true, shows data from the first available location before hydration.
    * If false, shows an empty array before hydration.
    * Default: true
    */
-  showDefaultBeforeHydration?: boolean;
+  showDefaultBeforeHydration?: boolean
 }
 
 /**
@@ -41,30 +41,30 @@ interface UseLocationFilteredDataOptions<T> {
  */
 export function useLocationFilteredData<T>({
   dataByLocation,
-  showDefaultBeforeHydration = true
+  showDefaultBeforeHydration = true,
 }: UseLocationFilteredDataOptions<T>): T[] {
-  const { currentLocation, locations } = useLocationContext();
+  const { currentLocation, locations } = useLocationContext()
   // Track hydration to prevent mismatch
-  const isHydrated = useIsHydrated();
+  const isHydrated = useIsHydrated()
 
   // Get the default location slug (first active location)
   const defaultLocationSlug = useMemo(() => {
-    const activeLocations = locations.filter(loc => loc.active !== false);
-    return activeLocations[0]?.slug || activeLocations[0]?.id || '';
-  }, [locations]);
+    const activeLocations = locations.filter((loc) => loc.active !== false)
+    return activeLocations[0]?.slug || activeLocations[0]?.id || ''
+  }, [locations])
 
   // Filter data based on current location
   return useMemo(() => {
     if (!isHydrated) {
-      return showDefaultBeforeHydration ? (dataByLocation[defaultLocationSlug] || []) : [];
+      return showDefaultBeforeHydration ? dataByLocation[defaultLocationSlug] || [] : []
     }
 
     // If 'all' or no location, return all data combined
     if (!currentLocation || currentLocation === 'all') {
-      return Object.values(dataByLocation).flat();
+      return Object.values(dataByLocation).flat()
     }
 
     // Return data for the selected location
-    return dataByLocation[currentLocation] || [];
-  }, [currentLocation, dataByLocation, isHydrated, showDefaultBeforeHydration, defaultLocationSlug]);
+    return dataByLocation[currentLocation] || []
+  }, [currentLocation, dataByLocation, isHydrated, showDefaultBeforeHydration, defaultLocationSlug])
 }

@@ -60,9 +60,7 @@ describe('BlurFade hydration-flag propagation across mounts', () => {
   })
 
   it('the first instance to hydrate matches SSR: no opacity:0 on its first commit', () => {
-    const { container } = render(
-      createElement(BlurFade, null, createElement('h1', null, 'A')),
-    )
+    const { container } = render(createElement(BlurFade, null, createElement('h1', null, 'A')))
 
     expect(container.innerHTML).not.toMatch(/opacity:\s*0\b/)
   })
@@ -74,9 +72,7 @@ describe('BlurFade hydration-flag propagation across mounts', () => {
     // animate in, not render pre-animated.
     render(createElement(MotionHydrationSentinel))
 
-    const { container } = render(
-      createElement(BlurFade, null, createElement('h1', null, 'B')),
-    )
+    const { container } = render(createElement(BlurFade, null, createElement('h1', null, 'B')))
 
     expect(container.innerHTML).toMatch(/opacity:\s*0\b/)
   })
@@ -87,9 +83,7 @@ describe('BlurFade hydration-flag propagation across mounts', () => {
     // at SSR-visible styles rather than silently animating.
     render(createElement(BlurFade, null, createElement('h1', null, 'A'))).unmount()
 
-    const { container } = render(
-      createElement(BlurFade, null, createElement('h1', null, 'B')),
-    )
+    const { container } = render(createElement(BlurFade, null, createElement('h1', null, 'B')))
 
     expect(container.innerHTML).not.toMatch(/opacity:\s*0\b/)
   })

@@ -31,6 +31,10 @@ const nextConfig = {
 
   images: {
     formats: ['image/avif', 'image/webp'],
+    // Next 16 defaults this to [75] and coerces anything else to the nearest
+    // allowed value; the hero requests 70. Listing both keeps that request
+    // honoured instead of silently upscaling it.
+    qualities: [70, 75],
     remotePatterns: [
       {
         protocol: 'http',
