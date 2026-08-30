@@ -33,11 +33,14 @@ import {
   Location01Icon,
   Mail01Icon,
   MapIcon as HugeMapIcon,
+  MonitorIcon,
+  Moon02Icon,
   MoreHorizontalIcon,
   Navigation01Icon,
   PackageIcon,
   RestaurantIcon,
   Search01Icon,
+  Sun03Icon,
   Tick02Icon,
 } from '@hugeicons/core-free-icons'
 
@@ -70,6 +73,9 @@ export const Package = icon(PackageIcon)
 export const Pencil = icon(Edit03Icon)
 export const Phone = icon(Call02Icon)
 export const Search = icon(Search01Icon)
+export const Monitor = icon(MonitorIcon)
+export const Moon = icon(Moon02Icon)
+export const Sun = icon(Sun03Icon)
 export const Utensils = icon(RestaurantIcon)
 export const UtensilsCrossed = icon(RestaurantIcon)
 export const X = icon(Cancel01Icon)
