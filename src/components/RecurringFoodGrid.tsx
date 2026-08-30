@@ -105,8 +105,11 @@ const GridCell: React.FC<GridCellProps> = ({ value, onChange, cellKey, readOnly 
       path={`cell-${cellKey}`}
       relationTo={['food-vendors']}
       hasMany={false}
-      allowCreate={!readOnly}
-      allowEdit={!readOnly}
+      // No create/edit vendor affordances in cells — both are rare and eat
+      // space the (truncated) name needs; manage vendors in their collection.
+      // Payload's own SingleValue renders the full name as a hover tooltip.
+      allowCreate={false}
+      allowEdit={false}
       value={valueWithRelation}
       onChange={handleChange}
       appearance="select"
@@ -489,10 +492,19 @@ const LocationGrid: React.FC<LocationGridProps> = ({
 }) => {
   const locationSchedule = schedules[location.id] || {}
 
+  // Days with no vendors all year (usually Sun/Mon) shrink so the busy days
+  // get the width; the same pass answers whether week 5 is used anywhere.
+  const { dayHasVendor, fifthWeekUsed } = useMemo(
+    () => ({
+      dayHasVendor: days.map((day) => weeks.some((week) => Boolean(locationSchedule[day]?.[week]))),
+      fifthWeekUsed: days.some((day) => Boolean(locationSchedule[day]?.fifth)),
+    }),
+    [locationSchedule],
+  )
+
   // Week 5 exists for at most a couple of month/day combos and is usually
   // empty, so hide its row unless it has data or the manager asks for it.
   const [showFifthWeek, setShowFifthWeek] = useState(false)
-  const fifthWeekUsed = days.some((day) => locationSchedule[day]?.fifth)
   const visibleWeeks = fifthWeekUsed || showFifthWeek ? weeks : weeks.slice(0, 4)
 
   const handleCellChange = useCallback(
@@ -510,7 +522,12 @@ const LocationGrid: React.FC<LocationGridProps> = ({
             <tr>
               <th />
               {dayLabels.map((label, i) => (
-                <th key={days[i]}>{label}</th>
+                <th
+                  key={days[i]}
+                  className={dayHasVendor[i] ? undefined : 'recurring-food-grid__day--empty'}
+                >
+                  {label}
+                </th>
               ))}
             </tr>
           </thead>
