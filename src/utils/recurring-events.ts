@@ -1,16 +1,19 @@
 import type { Event, RecurringEvent } from '@/src/payload-types'
 import { getDatesForSlotInYear, toDateKey } from '@/lib/utils/food-dates'
-import { recurringDays, recurringOccurrences } from '@/src/utils/recurring-food'
+import {
+  LEGACY_SCHEDULE_YEAR,
+  recurringDays,
+  recurringOccurrences,
+} from '@/src/utils/recurring-food'
 
 /**
  * Rows created before the year field existed have no year in the DB; they were
- * authored for the 2026 season, so reads treat a missing year as 2026.
- * Deliberately read-time, unlike recurring-food which backfilled the same
- * legacy year via 20260829_120000_scope_recurring_food_by_year — events
- * skipped the data migration by request. New rows always get a year
- * (required + defaultValue in the collection), so the legacy set is closed.
+ * authored for the 2026 season, so reads treat a missing year as 2026 (the
+ * shared LEGACY_SCHEDULE_YEAR — recurring food does the same at read time).
+ * New rows always get a year (required + defaultValue in the collection), so
+ * the legacy set is closed.
  */
-export const LEGACY_RECURRING_EVENT_YEAR = 2026
+export const LEGACY_RECURRING_EVENT_YEAR = LEGACY_SCHEDULE_YEAR
 
 function eventLocationId(event: Pick<Event, 'location'>): string {
   return typeof event.location === 'object' ? event.location.id : event.location
