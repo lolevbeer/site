@@ -69,6 +69,14 @@
       word-break: break-word !important;
     }
 
+    .rs__control {
+      flex-wrap: nowrap !important;
+    }
+
+    .rs__indicators {
+      flex-shrink: 0 !important;
+    }
+
     .rs__single-value {
       overflow: hidden !important;
       white-space: nowrap !important;
