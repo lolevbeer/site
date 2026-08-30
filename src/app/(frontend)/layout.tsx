@@ -148,7 +148,10 @@ export default async function AppLayout({
   const locations = await getAllLocations()
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    // globals.css sets `scroll-behavior: smooth`, and as of Next 16 the router no
+    // longer overrides it during navigation. Without this attribute, route changes
+    // animate a slow scroll to the top instead of jumping instantly.
+    <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth">
       <head>
         {/* Favicons */}
         <link rel="icon" href="/favicons/favicon-16x16.png" type="image/png" sizes="16x16" />

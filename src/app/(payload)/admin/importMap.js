@@ -13,6 +13,7 @@ import { VercelBlobClientUploadHandler as VercelBlobClientUploadHandler_16c82c5e
 import { SyncView as SyncView_c23504be653ff4cfe56b71cd946ad683 } from '../../../components/SyncView'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
+/** @type import('payload').ImportMap */
 export const importMap = {
   "@/src/components/admin/LabelTextureGenerator#LabelTextureGenerator": LabelTextureGenerator_46efd3ef28e684ff03bb8e5d2dae8b4d,
   "@/src/components/admin/UntappdFetcher#UntappdFetcher": UntappdFetcher_98d9a61c943279a91d72840260fe5c0b,

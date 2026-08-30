@@ -60,7 +60,14 @@ const nextConfig = {
   experimental: {
     // ponytail: barrel tree-shaking to cut unused JS in shared chunks.
     // Ceiling: if a chunk stays bloated, run @next/bundle-analyzer and split by hand.
-    optimizePackageImports: ['framer-motion', 'embla-carousel-react', 'lucide-react', 'date-fns', 'date-fns-tz'],
+    optimizePackageImports: [
+      'framer-motion',
+      'embla-carousel-react',
+      '@hugeicons/react',
+      '@hugeicons/core-free-icons',
+      'date-fns',
+      'date-fns-tz',
+    ],
   },
 
   // Optimize module transpilation
