@@ -3,7 +3,7 @@
  * endpoints. The client half lives in `lib/utils/sse-parser.ts`.
  *
  * Every long-running admin endpoint (distributor import, Lake Beverage CSV
- * import, re-geocoding, Google Sheets sync) streams progress the same way: wrap
+ * import, re-geocoding, Untappd sync) streams progress the same way: wrap
  * a `ReadableStream`, encode `event:`/`data:` frames by hand, and return the
  * same three headers. That boilerplate was copied into each endpoint; it lives
  * here so the wire format is defined once and matches `parseSSEStream`.

@@ -28,8 +28,6 @@ import { FAQs } from './collections/FAQs'
 import { ComingSoon } from './globals/ComingSoon'
 import { RecurringFood } from './globals/RecurringFood'
 import { SiteContent } from './globals/SiteContent'
-import { syncGoogleSheets } from './endpoints/sync-google-sheets'
-import { importFoodVendorsCSV } from './endpoints/import-food-vendors-csv'
 import { importDistributors } from './endpoints/import-distributors'
 import { importLakeBeverageCSV } from './endpoints/import-lake-beverage-csv'
 import { updateDistributorUrls } from './endpoints/update-distributor-urls'
@@ -134,11 +132,11 @@ export default buildConfig({
       actions: [],
       afterNavLinks: ['./components/SyncNavLink#SyncNavLink'],
       views: {
-        syncGoogleSheets: {
+        sync: {
           Component: './components/SyncView#SyncView',
           path: '/sync',
           meta: {
-            title: 'Sync Google Sheets',
+            title: 'Sync',
           },
         },
       },
@@ -225,16 +223,6 @@ export default buildConfig({
     }),
   ],
   endpoints: [
-    {
-      path: '/sync-google-sheets',
-      method: 'post',
-      handler: syncGoogleSheets,
-    },
-    {
-      path: '/import-food-vendors-csv',
-      method: 'post',
-      handler: importFoodVendorsCSV,
-    },
     {
       path: '/import-distributors',
       method: 'post',

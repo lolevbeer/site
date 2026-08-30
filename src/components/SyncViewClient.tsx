@@ -2,7 +2,6 @@
 
 import React, { useState, useRef } from 'react'
 import { Gutter, SetStepNav, Button, Banner, Pill, CheckboxInput, toast } from '@payloadcms/ui'
-import { format } from 'date-fns-tz'
 import { getSiteContentData } from '@/src/actions/admin-data'
 import {
   useSSEImport,
@@ -13,38 +12,6 @@ import {
 import { logger } from '@/lib/utils/logger'
 
 import './SyncViewClient.scss'
-
-interface FieldChange {
-  field: string
-  from: unknown
-  to: unknown
-}
-
-interface MenuChanges {
-  added: number
-  removed: number
-  priceChanges: number
-}
-
-type CollectionType = 'events' | 'food' | 'beers' | 'menus' | 'hours'
-
-interface SyncResults {
-  events?: { imported: number; updated: number; skipped: number; errors: number }
-  food?: { imported: number; updated: number; skipped: number; errors: number }
-  beers?: { imported: number; updated: number; skipped: number; errors: number }
-  menus?: { imported: number; updated: number; skipped: number; errors: number }
-  hours?: { imported: number; updated: number; skipped: number; errors: number }
-  dryRun?: boolean
-}
-
-interface CSVImportResults {
-  success: boolean
-  total: number
-  created: number
-  skipped: number
-  errors: number
-  details: string[]
-}
 
 interface DistributorImportResult {
   region: string
@@ -87,71 +54,6 @@ interface RegeocodeResults {
 
 // No props: SyncView.tsx already gates this view to admins server-side.
 export const SyncViewClient: React.FC = () => {
-  const [dryRun, setDryRun] = useState(true)
-  const [selectedCollections, setSelectedCollections] = useState<CollectionType[]>([])
-  const logsEndRef = useRef<HTMLDivElement>(null)
-  // Google Sheets sync. Log entries carry the per-record field changes as
-  // `data` so the console can render before/after diffs.
-  const sheets = useSSEImport<SyncResults>({
-    logLimit: Infinity,
-    handlers: ({ appendLog, setResults }) => ({
-      event: (raw) => {
-        const d = raw as SSEData
-        appendLog('event', `Event: ${d.organizer} (${d.date}) - ${d.location}`, d.changes)
-      },
-      food: (raw) => {
-        const d = raw as SSEData
-        appendLog('food', `Food: ${d.vendor} (${d.date}) - ${d.location}`, d.changes)
-      },
-      beer: (raw) => {
-        const d = raw as SSEData
-        appendLog('beer', `Beer: ${d.name} (${d.style})`, d.changes)
-      },
-      menu: (raw) => {
-        const d = raw as SSEData
-        appendLog('menu', `Menu: ${d.location} ${d.type} - ${d.itemCount} items`, d.changes)
-      },
-      hours: (raw) => {
-        const d = raw as SSEData
-        appendLog('hours', `Hours: ${d.location} - ${d.action}`, d.changes)
-      },
-      error: (raw) => {
-        const d = raw as SSEData
-        appendLog('error', String(d.message ?? ''))
-      },
-      complete: (raw) => {
-        const d = raw as SSEData
-        if (d.success) {
-          setResults({ ...(d.results as SyncResults), dryRun: d.dryRun as boolean })
-          appendLog('complete', d.dryRun ? 'Preview complete!' : 'Sync complete!')
-        } else {
-          appendLog('error', `Sync failed: ${d.error}`)
-        }
-      },
-    }),
-    onJSON: (_data, response, { appendLog }) => {
-      appendLog('error', `HTTP error: ${response.status}`)
-    },
-    onException: (error, { appendLog }) => {
-      appendLog(
-        'error',
-        `Connection error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      )
-    },
-  })
-
-  // Keep the console scrolled to the newest entry
-  React.useEffect(() => {
-    if (sheets.logs.length > 0) {
-      logsEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-    }
-  }, [sheets.logs])
-
-  // CSV Import state
-  const [csvUploading, setCsvUploading] = useState(false)
-  const [csvResults, setCsvResults] = useState<CSVImportResults | null>(null)
-  const csvInputRef = useRef<HTMLInputElement>(null)
-
   // Distributor import state
   const [paUrl, setPaUrl] = useState('')
   const [ohUrl, setOhUrl] = useState('')
@@ -277,45 +179,6 @@ export const SyncViewClient: React.FC = () => {
       .finally(() => setUrlsLoading(false))
   }, [])
 
-  const toggleCollection = (collection: CollectionType) => {
-    setSelectedCollections((prev) =>
-      prev.includes(collection) ? prev.filter((c) => c !== collection) : [...prev, collection],
-    )
-  }
-
-  const handleSync = async () => {
-    if (selectedCollections.length === 0) {
-      sheets.appendLog('error', 'Please select at least one collection to sync')
-      return
-    }
-
-    const params = new URLSearchParams()
-    if (dryRun) params.set('dryRun', 'true')
-    params.set('collections', selectedCollections.join(','))
-    await sheets.run(`/api/sync-google-sheets?${params.toString()}`)
-  }
-
-  const getLogIcon = (type: string) => {
-    switch (type) {
-      case 'event':
-        return '✓'
-      case 'food':
-        return '✓'
-      case 'beer':
-        return '✓'
-      case 'menu':
-        return '✓'
-      case 'hours':
-        return '✓'
-      case 'error':
-        return '✗'
-      case 'complete':
-        return '●'
-      default:
-        return '→'
-    }
-  }
-
   /** Returns true when the save succeeded, so import can refuse to run against a stale URL. */
   const saveDistributorUrls = async (): Promise<boolean> => {
     setUrlsSaving(true)
@@ -436,260 +299,16 @@ export const SyncViewClient: React.FC = () => {
     await untappd.run(`/api/sync-untappd-ratings?${params.toString()}`)
   }
 
-  const handleCSVUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    setCsvUploading(true)
-    setCsvResults(null)
-
-    try {
-      const formData = new FormData()
-      formData.append('file', file)
-
-      const response = await fetch('/api/import-food-vendors-csv', {
-        method: 'POST',
-        credentials: 'same-origin',
-        body: formData,
-      })
-
-      const data = await response.json()
-
-      if (response.ok) {
-        setCsvResults(data)
-      } else {
-        setCsvResults({
-          success: false,
-          total: 0,
-          created: 0,
-          skipped: 0,
-          errors: 1,
-          details: [data.error || 'Upload failed'],
-        })
-      }
-    } catch (error: unknown) {
-      setCsvResults({
-        success: false,
-        total: 0,
-        created: 0,
-        skipped: 0,
-        errors: 1,
-        details: [error instanceof Error ? error.message : 'Upload failed'],
-      })
-    } finally {
-      setCsvUploading(false)
-      if (csvInputRef.current) {
-        csvInputRef.current.value = ''
-      }
-    }
-  }
-
-  // Only include collections that sync from Google Sheets (not recalc)
-  const collectionLabels: Record<CollectionType, string> = {
-    events: 'Events',
-    food: 'Food',
-    beers: 'Beers',
-    menus: 'Menus',
-    hours: 'Hours',
-  }
-
-  // Accent colors for the per-collection result cards
-  const collectionColors: Record<CollectionType, string> = {
-    events: '#60a5fa',
-    food: '#c084fc',
-    beers: '#fbbf24',
-    menus: '#34d399',
-    hours: '#f472b6',
-  }
-
   return (
     <Gutter>
       <SetStepNav nav={[{ label: 'Sync' }]} />
       <div className="sync-view">
         {/* Header */}
         <div className="sync-view__intro">
-          <h1 className="sync-view__title">Sync from Google Sheets</h1>
+          <h1 className="sync-view__title">Sync</h1>
           <p className="sync-view__description">
-            Import data from Google Sheets. Matching entries will be updated.
+            Import and maintenance tools for distributor and beer data.
           </p>
-
-          {/* Collection Selection */}
-          <div className="sync-view__pills">
-            {(Object.keys(collectionLabels) as CollectionType[]).map((collection) => (
-              <Pill
-                key={collection}
-                onClick={() => {
-                  if (!sheets.running) toggleCollection(collection)
-                }}
-                pillStyle={selectedCollections.includes(collection) ? 'dark' : 'light'}
-                aria-checked={selectedCollections.includes(collection)}
-              >
-                {collectionLabels[collection]}
-              </Pill>
-            ))}
-          </div>
-
-          <div className="sync-view__controls">
-            <Button
-              onClick={handleSync}
-              disabled={sheets.running || selectedCollections.length === 0}
-              buttonStyle={dryRun ? 'secondary' : 'primary'}
-              size="small"
-            >
-              {sheets.running
-                ? dryRun
-                  ? 'Previewing...'
-                  : 'Syncing...'
-                : dryRun
-                  ? 'Preview'
-                  : 'Sync Now'}
-            </Button>
-            <CheckboxInput
-              id="sheets-dry-run"
-              checked={dryRun}
-              onToggle={(e) => setDryRun(e.target.checked)}
-              readOnly={sheets.running}
-              label="Dry run (preview only)"
-            />
-          </div>
-        </div>
-
-        {/* Log Console */}
-        {sheets.logs.length > 0 && (
-          <div className="sync-view__console">
-            <div className="sync-view__console-header">Console Output</div>
-            <div className="sync-view__console-body">
-              {sheets.logs.map((log) => (
-                <div
-                  key={log.id}
-                  className={log.data != null ? 'sync-view__log-entry--with-diff' : undefined}
-                >
-                  <div className={`sync-view__log-line sync-view__log-line--${log.type}`}>
-                    <span className="sync-view__log-time">
-                      {format(log.timestamp, 'HH:mm:ss', { timeZone: 'America/New_York' })}
-                    </span>
-                    <span className="sync-view__log-icon">{getLogIcon(log.type)}</span>
-                    <span className="sync-view__log-message">{log.message}</span>
-                  </div>
-                  {log.data != null && (
-                    <div className="sync-view__log-diff">
-                      {Array.isArray(log.data)
-                        ? // Field changes for events, food, beers
-                          (log.data as FieldChange[]).map((change, i) => (
-                            <div key={i} className="sync-view__diff-row">
-                              <span className="sync-view__diff-field">{change.field}:</span>
-                              <span className="sync-view__diff-from">
-                                {change.from === null ? '(empty)' : String(change.from)}
-                              </span>
-                              <span className="sync-view__diff-arrow">→</span>
-                              <span className="sync-view__diff-to">
-                                {change.to === null ? '(empty)' : String(change.to)}
-                              </span>
-                            </div>
-                          ))
-                        : // Menu changes summary
-                          (() => {
-                            const menuChanges = log.data as MenuChanges
-                            return (
-                              <div className="sync-view__diff-summary">
-                                {menuChanges.added > 0 && (
-                                  <span className="sync-view__log-line--success">
-                                    +{menuChanges.added} added
-                                  </span>
-                                )}
-                                {menuChanges.removed > 0 && (
-                                  <span className="sync-view__log-line--error">
-                                    -{menuChanges.removed} removed
-                                  </span>
-                                )}
-                                {menuChanges.priceChanges > 0 && (
-                                  <span className="sync-view__log-line--warning">
-                                    {menuChanges.priceChanges} price changes
-                                  </span>
-                                )}
-                              </div>
-                            )
-                          })()}
-                    </div>
-                  )}
-                </div>
-              ))}
-              <div ref={logsEndRef} />
-            </div>
-          </div>
-        )}
-
-        {/* Results Summary */}
-        {sheets.results && (
-          <div
-            className={`sync-view__results${sheets.results.dryRun ? ' sync-view__results--dry-run' : ''}`}
-          >
-            <h3 className="sync-view__results-title">
-              {sheets.results.dryRun ? 'Preview Results' : 'Sync Complete'}
-            </h3>
-            <div className="sync-view__results-grid">
-              {(Object.keys(collectionLabels) as CollectionType[]).map((collection) => {
-                const data = sheets.results?.[collection]
-                if (!data) return null
-                return (
-                  <ResultCard
-                    key={collection}
-                    label={collectionLabels[collection]}
-                    color={collectionColors[collection]}
-                    data={data}
-                    dryRun={sheets.results?.dryRun}
-                  />
-                )
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* CSV Import Section */}
-        <div className="sync-view__section">
-          <h2 className="sync-view__section-title">Import Food Vendors from CSV</h2>
-          <p className="sync-view__description">
-            Upload a CSV file with columns: vendor, social, contact, phone
-          </p>
-
-          <div className="sync-view__controls">
-            <input
-              ref={csvInputRef}
-              type="file"
-              accept=".csv"
-              onChange={handleCSVUpload}
-              disabled={csvUploading}
-              style={{ display: 'none' }}
-              id="csv-upload"
-            />
-            <Button
-              onClick={() => csvInputRef.current?.click()}
-              disabled={csvUploading}
-              buttonStyle="secondary"
-              size="small"
-            >
-              {csvUploading ? 'Uploading...' : 'Choose CSV File'}
-            </Button>
-          </div>
-
-          {/* CSV Results */}
-          {csvResults && (
-            <ImportResultsBanner
-              title="Import Results"
-              isError={csvResults.errors > 0 && csvResults.created === 0}
-              stats={[
-                { count: csvResults.created, label: 'created', pillStyle: 'success' },
-                { count: csvResults.skipped, label: 'skipped', pillStyle: 'light' },
-                {
-                  count: csvResults.errors,
-                  label: 'errors',
-                  pillStyle: 'error',
-                  hideWhenZero: true,
-                },
-              ]}
-              details={csvResults.details}
-            />
-          )}
         </div>
 
         {/* Distributor Location Data Section */}
@@ -1183,32 +802,6 @@ const ImportResultsBanner: React.FC<{
         ))}
       </div>
     )}
-  </div>
-)
-
-/** Per-collection result counts for the Google Sheets sync */
-const ResultCard: React.FC<{
-  label: string
-  color: string
-  data: { imported: number; updated: number; skipped: number; errors: number }
-  dryRun?: boolean
-}> = ({ label, color, data, dryRun }) => (
-  <div className="sync-view__result-card">
-    <div className="sync-view__result-card-title" style={{ color }}>
-      {label}
-    </div>
-    <div className="sync-view__stats">
-      <span className="sync-view__stat--success">
-        {data.imported} {dryRun ? 'to import' : 'imported'}
-      </span>
-      {data.updated > 0 && (
-        <span className="sync-view__stat--info">
-          {data.updated} {dryRun ? 'to update' : 'updated'}
-        </span>
-      )}
-      <span className="sync-view__stat--muted">{data.skipped} skipped</span>
-      {data.errors > 0 && <span className="sync-view__stat--error">{data.errors} errors</span>}
-    </div>
   </div>
 )
 
