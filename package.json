@@ -70,7 +70,6 @@
     "three": "^0.185.1"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3.3.6",
     "@tailwindcss/postcss": "^4.3.3",
     "@testing-library/react": "16.3.3",
     "@types/geojson": "^7946.0.16",
