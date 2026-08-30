@@ -112,7 +112,7 @@ function generateOpeningHours(location: PayloadLocation): OpeningHoursSpecificat
 /**
  * Generate LocalBusiness schema for a brewery location
  */
-export function generateLocalBusinessSchema(location: PayloadLocation): LocalBusinessJsonLd {
+function generateLocalBusinessSchema(location: PayloadLocation): LocalBusinessJsonLd {
   const slug = location.slug || location.id
   const baseUrl = 'https://lolev.beer'
 

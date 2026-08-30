@@ -12,7 +12,7 @@ function transliterate(str: string): string {
  * Generate a URL-safe slug from a string
  * Transliterates diacritics, lowercases, and replaces non-alphanumeric with dashes
  */
-export function slugify(str: string): string {
+function slugify(str: string): string {
   return transliterate(str)
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
