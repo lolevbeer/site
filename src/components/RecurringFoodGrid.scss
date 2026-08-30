@@ -69,16 +69,53 @@
       word-break: break-word !important;
     }
 
+    .rs__control {
+      flex-wrap: nowrap !important;
+    }
+
+    .rs__indicators {
+      flex-shrink: 0 !important;
+    }
+
     .rs__single-value {
       overflow: hidden !important;
       white-space: nowrap !important;
       text-overflow: ellipsis !important;
+      font-size: 12px !important;
+      letter-spacing: -0.015em !important;
     }
 
     .rs__value-container {
       flex-wrap: nowrap !important;
       overflow: hidden !important;
+      padding: 2px 4px !important;
     }
+
+    .rs__indicator {
+      padding: 4px 2px !important;
+    }
+
+    /* Scannability: open slots read red, filled slots green (theme ramps keep
+       dark mode correct). A filled cell keeps only the clear ×; clicking the
+       cell still opens the dropdown, so its chevron is redundant name space. */
+    .rs__control {
+      background-color: var(--theme-error-50) !important;
+
+      &:has(.rs__single-value) {
+        background-color: var(--theme-success-50) !important;
+
+        .rs__dropdown-indicator {
+          display: none !important;
+        }
+      }
+    }
+  }
+
+  /* Days with no vendors all year collapse to just the Select control.
+     Qualified with th so it out-specifies the base th { min-width } rule. */
+  &__table th.recurring-food-grid__day--empty {
+    min-width: 110px;
+    width: 110px;
   }
 
   &__table {
