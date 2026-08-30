@@ -99,7 +99,7 @@ const COLLECTION_BATCH_EXTRAS: Record<
 }
 
 function invalidateCollection(slug: string, doc?: Record<string, unknown>): void {
-  ;(COLLECTION_CACHE_MAP[slug] || []).forEach((tag) => revalidateTag(tag))
+  ;(COLLECTION_CACHE_MAP[slug] || []).forEach((tag) => revalidateTag(tag, 'max'))
   ;(COLLECTION_PATHS[slug] || []).forEach((path) => revalidatePath(path))
   ;(COLLECTION_LAYOUT_PATHS[slug] || []).forEach((path) => revalidatePath(path, 'layout'))
   if (!doc) return
@@ -121,7 +121,7 @@ export function revalidateForCollection(slug: string): void {
 
   const extras = COLLECTION_BATCH_EXTRAS[slug]
   if (!extras) return
-  extras.tags?.forEach((tag) => revalidateTag(tag))
+  extras.tags?.forEach((tag) => revalidateTag(tag, 'max'))
   extras.paths?.forEach(([path, type]) => revalidatePath(path, type))
 }
 
@@ -189,7 +189,7 @@ function createGlobalAfterChangeHook(slug: string) {
 
     // Revalidate tags
     tags.forEach((tag) => {
-      revalidateTag(tag)
+      revalidateTag(tag, 'max')
     })
 
     // Always revalidate homepage for globals

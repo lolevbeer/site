@@ -18,12 +18,6 @@ const nextConfig = {
     ]
   },
 
-  eslint: {
-    // Run ESLint separately — eslint-config-next has a known compatibility issue
-    // with ESLint 9 flat config that causes "Cannot set properties of undefined (setting 'defaultMeta')"
-    ignoreDuringBuilds: true,
-  },
-
   typescript: {
     ignoreBuildErrors: false,
   },
@@ -64,11 +58,6 @@ const nextConfig = {
   },
 
   experimental: {
-    scrollRestoration: true,
-    webpackBuildWorker: true,
-    // Parallelize static page generation
-    parallelServerBuildTraces: true,
-    parallelServerCompiles: true,
     // ponytail: barrel tree-shaking to cut unused JS in shared chunks.
     // Ceiling: if a chunk stays bloated, run @next/bundle-analyzer and split by hand.
     optimizePackageImports: ['framer-motion', 'embla-carousel-react', 'lucide-react', 'date-fns', 'date-fns-tz'],
@@ -76,28 +65,6 @@ const nextConfig = {
 
   // Optimize module transpilation
   transpilePackages: ['@payloadcms/richtext-lexical'],
-
-  webpack: (webpackConfig) => {
-    webpackConfig.resolve.extensionAlias = {
-      '.cjs': ['.cts', '.cjs'],
-      '.js': ['.ts', '.tsx', '.js', '.jsx'],
-      '.mjs': ['.mts', '.mjs'],
-    }
-
-    // Add SVG support
-    webpackConfig.module.rules.push({
-      test: /\.svg$/,
-      use: ['@svgr/webpack']
-    })
-
-    // Enable filesystem caching for faster rebuilds
-    webpackConfig.cache = {
-      type: 'filesystem',
-      allowCollectingMemory: true,
-    }
-
-    return webpackConfig
-  },
 }
 
 const payloadConfig = withPayload(nextConfig, {
