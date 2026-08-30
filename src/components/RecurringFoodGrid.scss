@@ -100,6 +100,16 @@
     .rs__control:has(.rs__single-value) .rs__dropdown-indicator {
       display: none !important;
     }
+
+    /* Scannability: filled slots read green, open slots read red — both from
+       the theme ramps so dark mode stays correct. */
+    .rs__control:has(.rs__single-value) {
+      background-color: var(--theme-success-50) !important;
+    }
+
+    .rs__control:not(:has(.rs__single-value)) {
+      background-color: var(--theme-error-50) !important;
+    }
   }
 
   &__table {
