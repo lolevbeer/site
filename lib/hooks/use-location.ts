@@ -4,11 +4,17 @@
  * Locations are now dynamically loaded from the database
  */
 
-'use client';
+'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useQueryState, parseAsString } from 'nuqs';
-import { type PayloadLocation, type LocationSlug, type LocationInfo, toLocationInfo } from '@/lib/types/location';
+import { useEffect, useCallback, useMemo, useSyncExternalStore } from 'react'
+import { useQueryState, parseAsString } from 'nuqs'
+import { useIsHydrated } from '@/lib/hooks/use-is-hydrated'
+import {
+  type PayloadLocation,
+  type LocationSlug,
+  type LocationInfo,
+  toLocationInfo,
+} from '@/lib/types/location'
 import {
   LOCATION_STORAGE_KEY,
   isLocationOpenNow,
@@ -18,53 +24,65 @@ import {
   getDefaultLocationSlug,
   findLocationBySlug,
   isValidLocationSlug,
-} from '@/lib/config/locations';
+} from '@/lib/config/locations'
 
 export interface UseLocationReturn {
   /** Current selected location slug */
-  currentLocation: LocationSlug;
+  currentLocation: LocationSlug
   /** Current location data from Payload */
-  currentLocationData: PayloadLocation | null;
+  currentLocationData: PayloadLocation | null
   /** Location information for current location */
-  locationInfo: LocationInfo | null;
+  locationInfo: LocationInfo | null
   /** All available locations */
-  locations: PayloadLocation[];
+  locations: PayloadLocation[]
   /** Set the current location and persist to localStorage */
-  setLocation: (slug: LocationSlug) => void;
+  setLocation: (slug: LocationSlug) => void
   /** Switch to the next location */
-  cycleLocation: () => void;
+  cycleLocation: () => void
   /** Whether the current location is open now */
-  isOpen: boolean;
+  isOpen: boolean
   /** Formatted hours for today */
-  todaysHours: string;
+  todaysHours: string
   /** Next opening time if currently closed */
-  nextOpening: { day: string; time: string } | null;
+  nextOpening: { day: string; time: string } | null
   /** Get location data by slug */
-  getLocationBySlug: (slug: LocationSlug) => PayloadLocation | undefined;
+  getLocationBySlug: (slug: LocationSlug) => PayloadLocation | undefined
   /** Get location info by slug */
-  getLocationInfo: (slug: LocationSlug) => LocationInfo | null;
+  getLocationInfo: (slug: LocationSlug) => LocationInfo | null
   /** Whether we're on the client (hydration check) */
-  isClient: boolean;
+  isClient: boolean
 }
 
 /**
- * Get location preference from localStorage with fallback
+ * localStorage is treated as the store of record for the location preference
+ * rather than being copied into React state on mount. Copying meant a
+ * setState inside an effect (flagged by react-hooks/set-state-in-effect) and
+ * a duplicate source of truth; subscribing keeps the selection derived, and
+ * picks up changes from other tabs for free.
  */
-function getStoredLocation(locations: PayloadLocation[]): LocationSlug {
-  if (typeof window === 'undefined' || locations.length === 0) {
-    return getDefaultLocationSlug(locations);
-  }
+const storageListeners = new Set<() => void>()
 
+function subscribeToStoredLocation(listener: () => void): () => void {
+  storageListeners.add(listener)
+  window.addEventListener('storage', listener)
+  return () => {
+    storageListeners.delete(listener)
+    window.removeEventListener('storage', listener)
+  }
+}
+
+function getStoredLocationSnapshot(): string | null {
   try {
-    const stored = localStorage.getItem(LOCATION_STORAGE_KEY);
-    if (stored && isValidLocationSlug(locations, stored)) {
-      return stored;
-    }
+    return localStorage.getItem(LOCATION_STORAGE_KEY)
   } catch (error) {
-    console.warn('Failed to read location from localStorage:', error);
+    console.warn('Failed to read location from localStorage:', error)
+    return null
   }
+}
 
-  return getDefaultLocationSlug(locations);
+/** The server has no preference, so SSR and the hydration render agree. */
+function getStoredLocationServerSnapshot(): string | null {
+  return null
 }
 
 /**
@@ -72,14 +90,16 @@ function getStoredLocation(locations: PayloadLocation[]): LocationSlug {
  */
 function saveLocationToStorage(slug: LocationSlug): void {
   if (typeof window === 'undefined') {
-    return;
+    return
   }
 
   try {
-    localStorage.setItem(LOCATION_STORAGE_KEY, slug);
+    localStorage.setItem(LOCATION_STORAGE_KEY, slug)
   } catch (error) {
-    console.warn('Failed to save location to localStorage:', error);
+    console.warn('Failed to save location to localStorage:', error)
   }
+  // `storage` only fires in other tabs, so notify this one directly.
+  storageListeners.forEach((listener) => listener())
 }
 
 /**
@@ -89,93 +109,116 @@ function saveLocationToStorage(slug: LocationSlug): void {
  * @param locations - Array of locations from the database (passed from server)
  */
 export function useLocation(locations: PayloadLocation[] = []): UseLocationReturn {
-  const defaultSlug = useMemo(() => getDefaultLocationSlug(locations), [locations]);
-  const [currentLocation, setCurrentLocationState] = useState<LocationSlug>(defaultSlug);
-  const [isClient, setIsClient] = useState(false);
+  const defaultSlug = useMemo(() => getDefaultLocationSlug(locations), [locations])
+  const isClient = useIsHydrated()
 
   // URL state for location - allows sharing URLs with location preset
-  const [urlLocation, _setUrlLocation] = useQueryState('loc', parseAsString);
+  const [urlLocation, _setUrlLocation] = useQueryState('loc', parseAsString)
 
-  // Initialize from URL param first, then localStorage on client mount
+  const storedLocation = useSyncExternalStore(
+    subscribeToStoredLocation,
+    getStoredLocationSnapshot,
+    getStoredLocationServerSnapshot,
+  )
+
+  // Priority: URL param > localStorage > default. Derived rather than held in
+  // state, so selecting a location is a single write to storage and every
+  // consumer re-derives from it.
+  const currentLocation = useMemo<LocationSlug>(() => {
+    if (locations.length === 0) return defaultSlug
+    if (urlLocation && isValidLocationSlug(locations, urlLocation)) return urlLocation
+    if (storedLocation && isValidLocationSlug(locations, storedLocation)) return storedLocation
+    return defaultSlug
+  }, [locations, urlLocation, storedLocation, defaultSlug])
+
+  // Persist a location supplied via the URL so it survives the next visit.
+  // A write to an external system is what effects are for.
   useEffect(() => {
-    setIsClient(true);
-
-    if (locations.length === 0) return;
-
-    // Priority: URL param > localStorage > default
+    if (locations.length === 0) return
     if (urlLocation && isValidLocationSlug(locations, urlLocation)) {
-      setCurrentLocationState(urlLocation);
-      saveLocationToStorage(urlLocation);
-      return;
+      saveLocationToStorage(urlLocation)
     }
-
-    const storedLocation = getStoredLocation(locations);
-    setCurrentLocationState(storedLocation);
-  }, [urlLocation, locations]);
+  }, [urlLocation, locations])
 
   // Get current location data
   const currentLocationData = useMemo(
     () => findLocationBySlug(locations, currentLocation) || null,
-    [locations, currentLocation]
-  );
+    [locations, currentLocation],
+  )
 
   // Get current location info
   const locationInfo = useMemo(
-    () => currentLocationData ? toLocationInfo(currentLocationData) : null,
-    [currentLocationData]
-  );
+    () => (currentLocationData ? toLocationInfo(currentLocationData) : null),
+    [currentLocationData],
+  )
 
   // Set location with persistence (localStorage only - URL sync is slow)
-  const setLocation = useCallback((slug: LocationSlug) => {
-    if (!isValidLocationSlug(locations, slug)) return;
-    setCurrentLocationState(slug);
-    saveLocationToStorage(slug);
-  }, [locations]);
+  const setLocation = useCallback(
+    (slug: LocationSlug) => {
+      if (!isValidLocationSlug(locations, slug)) return
+      // Writing to storage notifies subscribers, and `currentLocation` derives
+      // from that — there is no separate copy in state to keep in step.
+      saveLocationToStorage(slug)
+    },
+    [locations],
+  )
 
   // Cycle to next location
   const cycleLocation = useCallback(() => {
-    const activeLocations = locations.filter(loc => loc.active !== false);
-    if (activeLocations.length <= 1) return;
+    const activeLocations = locations.filter((loc) => loc.active !== false)
+    if (activeLocations.length <= 1) return
 
     const currentIndex = activeLocations.findIndex(
-      loc => loc.slug === currentLocation || loc.id === currentLocation
-    );
-    const nextIndex = (currentIndex + 1) % activeLocations.length;
-    const nextSlug = activeLocations[nextIndex].slug || activeLocations[nextIndex].id;
-    setLocation(nextSlug);
-  }, [locations, currentLocation, setLocation]);
+      (loc) => loc.slug === currentLocation || loc.id === currentLocation,
+    )
+    const nextIndex = (currentIndex + 1) % activeLocations.length
+    const nextSlug = activeLocations[nextIndex].slug || activeLocations[nextIndex].id
+    setLocation(nextSlug)
+  }, [locations, currentLocation, setLocation])
 
   // Check if current location is open
   const isOpen = useMemo(
-    () => currentLocationData ? isLocationOpenNow(currentLocationData) : false,
-    [currentLocationData]
-  );
+    () => (currentLocationData ? isLocationOpenNow(currentLocationData) : false),
+    [currentLocationData],
+  )
 
   // Get today's hours
   const todaysHours = useMemo(() => {
-    if (!currentLocationData) return 'Hours unavailable';
-    const today = new Date();
-    const dayOfWeek = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][today.getDay()];
-    return getFormattedHoursForDay(currentLocationData, dayOfWeek);
-  }, [currentLocationData]);
+    if (!currentLocationData) return 'Hours unavailable'
+    const today = new Date()
+    const dayOfWeek = [
+      'sunday',
+      'monday',
+      'tuesday',
+      'wednesday',
+      'thursday',
+      'friday',
+      'saturday',
+    ][today.getDay()]
+    return getFormattedHoursForDay(currentLocationData, dayOfWeek)
+  }, [currentLocationData])
 
   // Get next opening time if closed
   const nextOpening = useMemo(
-    () => currentLocationData && !isOpen ? getNextOpeningTimeForLocation(currentLocationData) : null,
-    [currentLocationData, isOpen]
-  );
+    () =>
+      currentLocationData && !isOpen ? getNextOpeningTimeForLocation(currentLocationData) : null,
+    [currentLocationData, isOpen],
+  )
 
   // Helper to get location data by slug
   const getLocationBySlug = useCallback(
     (slug: LocationSlug) => findLocationBySlug(locations, slug),
-    [locations]
-  );
+    [locations],
+  )
 
   // Helper to get location info by slug
-  const getLocationInfo = useCallback((slug: LocationSlug): LocationInfo | null => {
-    const loc = findLocationBySlug(locations, slug);
-    return loc ? toLocationInfo(loc) : null;
-  }, [locations]);
+  const getLocationInfo = useCallback(
+    (slug: LocationSlug): LocationInfo | null => {
+      const loc = findLocationBySlug(locations, slug)
+      return loc ? toLocationInfo(loc) : null
+    },
+    [locations],
+  )
 
   return {
     currentLocation,
@@ -189,32 +232,35 @@ export function useLocation(locations: PayloadLocation[] = []): UseLocationRetur
     nextOpening,
     getLocationBySlug,
     getLocationInfo,
-    isClient
-  };
+    isClient,
+  }
 }
 
 /**
  * Hook specifically for getting hours information
  */
 export function useLocationHours(locations: PayloadLocation[], locationSlug?: LocationSlug) {
-  const { currentLocation, getLocationBySlug } = useLocation(locations);
-  const targetSlug = locationSlug || currentLocation;
-  const targetLocation = getLocationBySlug(targetSlug);
+  const { currentLocation, getLocationBySlug } = useLocation(locations)
+  const targetSlug = locationSlug || currentLocation
+  const targetLocation = getLocationBySlug(targetSlug)
 
-  const getHoursForDay = useCallback((day: string) => {
-    if (!targetLocation) return 'Hours unavailable';
-    return getFormattedHoursForDay(targetLocation, day);
-  }, [targetLocation]);
+  const getHoursForDay = useCallback(
+    (day: string) => {
+      if (!targetLocation) return 'Hours unavailable'
+      return getFormattedHoursForDay(targetLocation, day)
+    },
+    [targetLocation],
+  )
 
   const getAllHours = useCallback(() => {
-    if (!targetLocation) return [];
-    return getAllHoursForLocation(targetLocation);
-  }, [targetLocation]);
+    if (!targetLocation) return []
+    return getAllHoursForLocation(targetLocation)
+  }, [targetLocation])
 
   return {
     getHoursForDay,
     getAllHours,
     isOpen: targetLocation ? isLocationOpenNow(targetLocation) : false,
-    nextOpening: targetLocation ? getNextOpeningTimeForLocation(targetLocation) : null
-  };
+    nextOpening: targetLocation ? getNextOpeningTimeForLocation(targetLocation) : null,
+  }
 }

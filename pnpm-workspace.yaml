@@ -8,7 +8,6 @@ onlyBuiltDependencies:
   - "unrs-resolver"
 
 overrides:
-  "next": "15.5.23"
   "undici@5": "^6.28.0"
   "undici@6": "^6.28.0"
   "undici@7": "^7.29.0"
@@ -27,7 +26,4 @@ overrides:
   "nanoid@3": ">=3.3.18"
   "svgo@3": ">=3.3.4"
   "js-yaml@4": ">=4.2.0"
-  "sharp": "0.35.3"
-
-patchedDependencies:
-  "next@15.5.23": "patches/next@15.5.23.patch"
+  "sharp": "0.35.4"

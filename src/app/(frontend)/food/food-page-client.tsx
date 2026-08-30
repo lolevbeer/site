@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import { FoodVendorSchedule } from '@/lib/types/food';
 import { Button } from '@/components/ui/button';
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
-import { UtensilsCrossed } from 'lucide-react';
+import { UtensilsCrossed } from '@/components/icons';
 import { useLocationContext } from '@/components/location/location-provider';
 import { getLocationDisplayName } from '@/lib/config/locations';
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';

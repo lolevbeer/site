@@ -24,7 +24,7 @@
  * the same fallback.
  */
 
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { parseSSEStream, isSSEResponse, type SSEHandlers } from '@/lib/utils/sse-parser'
 
@@ -90,9 +90,13 @@ export function useSSEImport<TResults>(options: UseSSEImportOptions<TResults> = 
   const logIdRef = useRef(0)
 
   // Read options through a ref so `run` stays stable and never closes over
-  // stale handlers from a previous render.
+  // stale handlers from a previous render. The write happens in an effect
+  // rather than during render: render-phase ref mutation is unsafe once React
+  // can retry or discard a render, and is flagged by react-hooks/refs.
   const optionsRef = useRef(options)
-  optionsRef.current = options
+  useEffect(() => {
+    optionsRef.current = options
+  })
 
   const appendLog = useCallback((type: string, message: string, data?: unknown) => {
     const logLimit = optionsRef.current.logLimit ?? 100

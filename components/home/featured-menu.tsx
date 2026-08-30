@@ -7,8 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
 import { ScrollReveal } from '@/components/ui/scroll-reveal'
-import { Beer as BeerIconLucide, Package, Pencil } from 'lucide-react'
-import { getGlassIcon } from '@/lib/utils/beer-icons'
+import { Beer as BeerIconLucide, Package, Pencil } from '@/components/icons'
+import { GlassIcon } from '@/lib/utils/beer-icons'
 import { beerHref } from '@/lib/config/beer-filters'
 import { useLocationContext } from '@/components/location/location-provider'
 import { DraftBeerCard } from '@/components/beer/draft-beer-card'
@@ -603,7 +603,6 @@ function CanCard({
   fullscreen?: boolean
   accentColor?: string
 }) {
-  const GlassIcon = getGlassIcon(item.glass)
   const badgeLabel = getBeerBadgeLabel(item)
   const [imageError, setImageError] = useState(false)
 
@@ -753,7 +752,7 @@ function CanCard({
               style={{ fontSize: '1.3vh', gap: '0.3vh' }}
             >
               <div style={{ height: '1.5vh', width: '1.5vh' }}>
-                <GlassIcon className="w-full h-full" />
+                <GlassIcon glass={item.glass} className="w-full h-full" />
               </div>
               Pouring
             </Badge>

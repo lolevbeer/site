@@ -30,10 +30,10 @@ import {
   EmptyDescription,
   EmptyContent,
 } from '@/components/ui/empty'
-import { CircleX } from 'lucide-react'
+import { CircleX } from '@/components/icons'
 import { UntappdIcon } from '@/components/icons/untappd-icon'
 import { AdminEditButton } from './admin-edit-button'
-import { getGlassIcon } from '@/lib/utils/beer-icons'
+import { GlassIcon } from '@/lib/utils/beer-icons'
 import { BeerCan3D } from './beer-can-3d'
 import { formatAbv, formatRating } from '@/lib/utils/formatters'
 import { getBeerImageUrl, getMediaUrl } from '@/lib/utils/media-utils'
@@ -150,11 +150,14 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
   const canMetalnessUrl = getMediaUrl(beer.labelMetalness)
   const pricing = getPricingInfo(beer)
   const styleName = getStyleName(beer.style)
-  const GlassIcon = getGlassIcon(beer.glass)
   const packagingType = getPackagingType(beer)
   const [tapLocations, setTapLocations] = useState<string[]>([])
   const [canLocations, setCanLocations] = useState<string[]>([])
-  const [isLoadingLocations, setIsLoadingLocations] = useState(true)
+  const [fetchingLocations, setFetchingLocations] = useState(true)
+  // With no beer id there is nothing to fetch, so "loading" is derived rather
+  // than cleared by the effect (react-hooks/set-state-in-effect); the location
+  // arrays simply stay empty.
+  const isLoadingLocations = Boolean(beer.id) && fetchingLocations
   const [locationError, setLocationError] = useState<string | null>(null)
   const [imageError, setImageError] = useState(false)
   // Flips when BeerCan3D has appended its canvas; fades the poster image out.
@@ -166,15 +169,10 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
 
   useEffect(() => {
     // Don't fetch locations if beer ID is missing
-    if (!beer.id) {
-      setIsLoadingLocations(false)
-      setTapLocations([])
-      setCanLocations([])
-      return
-    }
+    if (!beer.id) return
 
     const fetchLocations = async () => {
-      setIsLoadingLocations(true)
+      setFetchingLocations(true)
       setLocationError(null)
 
       try {
@@ -218,7 +216,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
         logger.error('Error fetching beer location data:', error)
         setLocationError('Unable to load location information. Please try again later.')
       } finally {
-        setIsLoadingLocations(false)
+        setFetchingLocations(false)
       }
     }
 
@@ -331,7 +329,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
             <div className="flex items-center gap-2 mb-4 flex-wrap">
               {tapLocations.length > 0 && (
                 <Badge variant="default" className="text-sm flex items-center gap-1">
-                  <GlassIcon className="h-3.5 w-3.5" />
+                  <GlassIcon glass={beer.glass} className="h-3.5 w-3.5" />
                   On Draft
                 </Badge>
               )}

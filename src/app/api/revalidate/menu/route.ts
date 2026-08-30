@@ -24,17 +24,17 @@ export async function POST(request: NextRequest) {
     const { menuUrl } = body
 
     // Revalidate the menus cache tag
-    revalidateTag(CACHE_TAGS.menus)
+    revalidateTag(CACHE_TAGS.menus, 'max')
 
     // Also revalidate specific menu path if provided
     if (menuUrl) {
-      revalidateTag(`menu-${menuUrl}`)
+      revalidateTag(`menu-${menuUrl}`, 'max')
     }
 
     return NextResponse.json({
       revalidated: true,
       menuUrl,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     })
   } catch (error) {
     logger.error('Revalidation error:', error)

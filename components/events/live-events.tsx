@@ -13,17 +13,13 @@ import { getThemeVars } from '@/lib/utils/display-theme'
 import { getTodayEST, toESTDate } from '@/lib/utils/date'
 import { format } from 'date-fns'
 import { formatTime } from '@/lib/utils/formatters'
-import { TV_TYPE, TV_SAFE_X, TV_SAFE_Y, TV_LOGO_CLASS, TV_BADGE_STYLE } from '@/lib/config/tv-display'
-import { Music, Utensils, Puzzle, Trophy, Beer, MicVocal, type LucideIcon } from 'lucide-react'
-
-const tagIcons: Record<string, LucideIcon> = {
-  music: Music,
-  utensils: Utensils,
-  puzzle: Puzzle,
-  sports: Trophy,
-  'beer-release': Beer,
-  'mic-vocal': MicVocal,
-}
+import {
+  TV_TYPE,
+  TV_SAFE_X,
+  TV_SAFE_Y,
+  TV_LOGO_CLASS,
+  TV_BADGE_STYLE,
+} from '@/lib/config/tv-display'
 
 interface LiveEventsProps {
   location: string
@@ -97,26 +93,18 @@ function AgendaRow({
         {time}
       </span>
       <div className="flex items-baseline min-w-0 flex-grow" style={{ gap: '1.5vh' }}>
-        {/* One fixed-width slot for whichever mark this row has — a vendor photo,
-            a tag icon, or nothing. Reserving the width unconditionally is what
-            gives every name the same left edge: a 4vh food logo and a 3vh event
-            icon otherwise started their names 8.5px apart. */}
+        {/* One fixed-width slot for a vendor photo, or nothing. Reserving the
+            width unconditionally is what gives every name the same left edge
+            whether or not the row has a logo. */}
         <span
           className="flex-shrink-0 self-center flex items-center justify-center"
           style={{ width: '4vh', height: '4vh' }}
           aria-hidden
         >
-          {logoUrl ? (
+          {logoUrl && (
             <span className="relative rounded-full overflow-hidden bg-muted w-full h-full">
               <Image src={logoUrl} alt="" fill className="object-cover" sizes="48px" />
             </span>
-          ) : (
-            tags?.map((tag) => {
-              const Icon = tagIcons[tag]
-              return Icon ? (
-                <Icon key={tag} style={{ width: '3vh', height: '3vh', color: accentColor }} />
-              ) : null
-            })
           )}
         </span>
         <h3

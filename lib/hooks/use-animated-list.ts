@@ -36,11 +36,17 @@ export function useAnimatedList<T>(
   // Stable key for dependency tracking
   const currentKeysString = useMemo(() => items.map(getKey).join(','), [items, getKey])
 
-  // Refs for latest values so the effect can access them without deps
+  // Refs for latest values so the effect can access them without deps. Written
+  // in an effect rather than during render — render-phase ref mutation is
+  // unsafe when React retries a render, and is flagged by react-hooks/refs.
+  // Declared before the animation effect below, so the refs are already current
+  // by the time that one reads them.
   const itemsRef = useRef(items)
-  itemsRef.current = items
   const getKeyRef = useRef(getKey)
-  getKeyRef.current = getKey
+  useEffect(() => {
+    itemsRef.current = items
+    getKeyRef.current = getKey
+  })
 
   // Track previous keys (state drives animation phases; item content is
   // overlaid from the items prop at render time)

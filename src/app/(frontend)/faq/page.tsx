@@ -19,7 +19,7 @@ import { breweryFAQs, generateFAQSchema, type FAQItem } from '@/lib/utils/faq-sc
 import { generateFAQSpeakableSchema } from '@/lib/utils/speakable-schema';
 import { getActiveFAQs } from '@/lib/utils/payload-api';
 import { PageTransition } from '@/components/motion';
-import { Mail, Phone, MapPin } from 'lucide-react';
+import { Mail, Phone, MapPin } from '@/components/icons';
 
 interface FAQAnswerProps {
   question: string;

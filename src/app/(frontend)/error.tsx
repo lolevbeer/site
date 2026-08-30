@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle } from '@/components/icons';
 import * as Sentry from '@sentry/nextjs';
 
 export default function Error({

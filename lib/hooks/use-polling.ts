@@ -77,7 +77,13 @@ export function usePolling<T, R extends PollingResponse>(
 ): UsePollingResult<T> {
   const { enabled = true, pollInterval = 2000 } = options
 
-  const [data, setData] = useState<T | null>(initialData)
+  // A poll result is stored together with the server-supplied `initialData` it
+  // was layered on top of. When the server re-renders with fresh props that
+  // base stops matching, so the newer server data wins automatically — where
+  // previously an effect copied the prop into state on every change, which
+  // react-hooks/set-state-in-effect flags.
+  const [polled, setPolled] = useState<{ base: T | null; value: T } | null>(null)
+  const data = polled && polled.base === initialData ? polled.value : initialData
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
   const [isConnected, setIsConnected] = useState(false)
   const [error, setError] = useState<Error | null>(null)
@@ -89,9 +95,23 @@ export function usePolling<T, R extends PollingResponse>(
   const noChangeCountRef = useRef(0)
 
   // Store applyResponse in a ref so poll() always uses the latest callback
-  // without needing it in the useCallback dependency array.
+  // without needing it in the useCallback dependency array. Written in an
+  // effect rather than during render: render-phase ref mutation is unsafe when
+  // React retries a render, and is flagged by react-hooks/refs.
   const applyResponseRef = useRef(applyResponse)
-  applyResponseRef.current = applyResponse
+  // Read inside poll() so a result records which server render it superseded,
+  // without `initialData` in poll's dependency list restarting the timer on
+  // every server re-render.
+  const initialDataRef = useRef(initialData)
+  useEffect(() => {
+    applyResponseRef.current = applyResponse
+    initialDataRef.current = initialData
+  })
+
+  // poll() reschedules itself, which it cannot do by referencing its own
+  // binding from inside its initializer. Going through a ref also means a
+  // pending timeout always fires the newest poll rather than a stale closure.
+  const pollRef = useRef<() => void>(() => {})
 
   const poll = useCallback(async () => {
     if (!url || !enabled) return
@@ -120,7 +140,7 @@ export function usePolling<T, R extends PollingResponse>(
       // Only update data state when timestamp has changed
       if (raw.timestamp !== lastTimestampRef.current) {
         lastTimestampRef.current = raw.timestamp
-        setData(applied.data)
+        setPolled({ base: initialDataRef.current, value: applied.data })
         noChangeCountRef.current = 0
       } else if (raw.warm) {
         // Editor is active -- snap back to fast polling to catch upcoming changes
@@ -143,9 +163,13 @@ export function usePolling<T, R extends PollingResponse>(
     // Schedule next poll with adaptive interval
     if (enabled) {
       const nextInterval = getAdaptiveInterval(pollInterval, noChangeCountRef.current)
-      pollTimeoutRef.current = setTimeout(poll, nextInterval)
+      pollTimeoutRef.current = setTimeout(() => pollRef.current(), nextInterval)
     }
   }, [url, enabled, pollInterval])
+
+  useEffect(() => {
+    pollRef.current = poll
+  })
 
   useEffect(() => {
     if (enabled && url) {
@@ -159,13 +183,6 @@ export function usePolling<T, R extends PollingResponse>(
       }
     }
   }, [enabled, url, poll])
-
-  // Sync with server re-renders of initial data
-  useEffect(() => {
-    if (initialData != null) {
-      setData(initialData)
-    }
-  }, [initialData])
 
   return { data, theme, isConnected, error, pollCount }
 }

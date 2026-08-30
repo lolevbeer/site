@@ -6,11 +6,7 @@ import { Banner } from '@payloadcms/ui'
 import { logger } from '@/lib/utils/logger'
 import { hasRole } from '@/src/access/roles'
 import { getAdminRelationshipID } from '@/src/components/admin/relationship-value'
-import {
-  daysSinceCleaned,
-  LINES_OVERDUE_DAYS,
-  LINES_WARN_DAYS,
-} from '@/lib/utils/lines-cleaned'
+import { daysSinceCleaned, LINES_OVERDUE_DAYS, LINES_WARN_DAYS } from '@/lib/utils/lines-cleaned'
 import type { User } from '@/src/payload-types'
 
 interface Location {
@@ -60,10 +56,9 @@ export function LinesCleanedAlert({ children }: { children: React.ReactNode }) {
   const hasAccess = isAdmin || (isLeadBartender && assignedLocationIds.size > 0)
 
   useEffect(() => {
-    if (!hasAccess) {
-      setLoading(false)
-      return
-    }
+    // Without access the component renders null regardless of `loading`, so
+    // clearing the flag here would only be a setState in an effect body.
+    if (!hasAccess) return
 
     async function fetchLocations() {
       try {

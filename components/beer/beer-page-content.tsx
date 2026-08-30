@@ -19,7 +19,7 @@ import {
   EmptyDescription,
   EmptyContent,
 } from '@/components/ui/empty'
-import { Search, X, Beer as BeerIcon } from 'lucide-react'
+import { Search, X, Beer as BeerIcon } from '@/components/icons'
 import { Input } from '@/components/ui/input'
 import { SegmentedControl } from '@/components/ui/segmented-control'
 import { LocationTabs } from '@/components/location/location-tabs'

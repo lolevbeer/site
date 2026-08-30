@@ -7,11 +7,7 @@ import {
   getAdminRelationshipID,
   type AdminRelationshipValue,
 } from '@/src/components/admin/relationship-value'
-import {
-  daysSinceCleaned,
-  LINES_OVERDUE_DAYS,
-  LINES_WARN_DAYS,
-} from '@/lib/utils/lines-cleaned'
+import { daysSinceCleaned, LINES_OVERDUE_DAYS, LINES_WARN_DAYS } from '@/lib/utils/lines-cleaned'
 
 export function MarkLinesCleanedButton() {
   const { id: docId, collectionSlug } = useDocumentInfo()
@@ -23,31 +19,27 @@ export function MarkLinesCleanedButton() {
     collectionSlug === 'locations'
       ? getAdminRelationshipID(docId)
       : getAdminRelationshipID(locationFieldValue)
-  const [lastCleaned, setLastCleaned] = useState<string | null>(
-    collectionSlug === 'locations' ? locationFormValue || null : null,
-  )
-  const [loading, setLoading] = useState(collectionSlug !== 'locations')
+  const isLocationDoc = collectionSlug === 'locations'
+  // Only the fetched branch needs state. On a location document the value
+  // already lives in the form, and with no location there is nothing to show —
+  // both are derived below rather than copied into state by an effect, which
+  // is what react-hooks/set-state-in-effect flags.
+  const [fetchedLastCleaned, setFetchedLastCleaned] = useState<string | null>(null)
+  const [fetching, setFetching] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (collectionSlug === 'locations') {
-      setLastCleaned(locationFormValue || null)
-      setLoading(false)
-      return
-    }
+  const lastCleaned = isLocationDoc ? locationFormValue || null : fetchedLastCleaned
+  const loading = !isLocationDoc && Boolean(locationId) && fetching
 
-    if (!locationId) {
-      setLastCleaned(null)
-      setLoading(false)
-      return
-    }
+  useEffect(() => {
+    if (isLocationDoc || !locationId) return
 
     const controller = new AbortController()
     const currentLocationId = locationId
 
     async function loadLocation() {
-      setLoading(true)
+      setFetching(true)
       setError(null)
 
       try {
@@ -62,19 +54,19 @@ export function MarkLinesCleanedButton() {
         if (!response.ok) throw new Error(`Location request failed (${response.status})`)
 
         const location = (await response.json()) as { linesLastCleaned?: string | null }
-        setLastCleaned(location.linesLastCleaned || null)
+        setFetchedLastCleaned(location.linesLastCleaned || null)
       } catch (caught) {
         if (caught instanceof DOMException && caught.name === 'AbortError') return
         logger.error('Failed to load the line-cleaning date:', caught)
         setError('Could not load the current line-cleaning date.')
       } finally {
-        if (!controller.signal.aborted) setLoading(false)
+        if (!controller.signal.aborted) setFetching(false)
       }
     }
 
     void loadLocation()
     return () => controller.abort()
-  }, [collectionSlug, locationFieldValue, locationFormValue, locationId])
+  }, [isLocationDoc, locationId])
 
   async function handleClick() {
     if (!locationId || saving) return
@@ -99,7 +91,7 @@ export function MarkLinesCleanedButton() {
       }
       const savedValue = result.doc?.linesLastCleaned || result.linesLastCleaned || cleanedAt
 
-      setLastCleaned(savedValue)
+      setFetchedLastCleaned(savedValue)
       if (collectionSlug === 'locations') setLocationFormValue(savedValue)
       window.dispatchEvent(
         new CustomEvent('linesCleanedUpdate', { detail: { locationId, cleanedAt: savedValue } }),

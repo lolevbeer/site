@@ -10,7 +10,7 @@ import { BeerLinkWrapper } from '@/components/beer/beer-link-wrapper'
 import { GlassType, type Beer } from '@/lib/types/beer'
 import { useLocationContext } from '@/components/location/location-provider'
 import { getBeerSlug } from '@/lib/utils/formatters'
-import { getGlassIcon } from '@/lib/utils/beer-icons'
+import { GlassIcon } from '@/lib/utils/beer-icons'
 import { Badge } from '@/components/ui/badge'
 import { TopBeerDropsLink } from '@/components/beer/top-beer-drops-link'
 import { UntappdRating } from '@/components/beer/untappd-rating'
@@ -51,7 +51,6 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
 }: DraftBeerCardProps) {
   const { currentLocation } = useLocationContext()
   const beerSlug = getBeerSlug(beer)
-  const GlassIcon = getGlassIcon(beer.glass)
   const isStein = beer.glass === GlassType.STEIN
   const glassOpticalClass = isStein ? '-translate-x-[0.8vh] scale-[1.08]' : ''
   const badgeLabel = showJustReleased ? getBeerBadgeLabel(beer) : null
@@ -116,6 +115,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                   <div className="relative flex-shrink-0" style={{ height: '7vh', width: '5vh' }}>
                     {showGlass && (
                       <GlassIcon
+                        glass={beer.glass}
                         className={`h-full w-full text-muted-foreground/50 transition-colors group-hover:text-muted-foreground/70 ${glassOpticalClass}`}
                       />
                     )}
@@ -281,7 +281,10 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
           {/* Tap Number and Glass Icon */}
           {showGlass && (
             <div className="flex-shrink-0 flex items-center gap-3">
-              <GlassIcon className="h-8 w-8 text-muted-foreground/50 group-hover:text-muted-foreground/70 transition-colors" />
+              <GlassIcon
+                glass={beer.glass}
+                className="h-8 w-8 text-muted-foreground/50 group-hover:text-muted-foreground/70 transition-colors"
+              />
             </div>
           )}
 

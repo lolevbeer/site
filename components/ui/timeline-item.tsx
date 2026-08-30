@@ -3,38 +3,24 @@
  * A visually engaging item for timeline displays
  */
 
-'use client';
+'use client'
 
-import React, { useState } from 'react';
-import Image from 'next/image';
-import { cn } from '@/lib/utils';
-import { formatTime } from '@/lib/utils/formatters';
-import { Music, Utensils, Puzzle, Trophy, Beer, MicVocal, type LucideIcon } from 'lucide-react';
-
-const tagIcons: Record<string, LucideIcon> = {
-  music: Music,
-  utensils: Utensils,
-  puzzle: Puzzle,
-  sports: Trophy,
-  'beer-release': Beer,
-  'mic-vocal': MicVocal,
-};
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import React, { useState } from 'react'
+import Image from 'next/image'
+import { cn } from '@/lib/utils'
+import { formatTime } from '@/lib/utils/formatters'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 
 interface TimelineItemProps {
-  title: string;
-  time?: string;
-  endTime?: string;
-  location?: string;
-  description?: string;
-  tags?: string[];
-  site?: string;
-  imageUrl?: string;
-  className?: string;
+  title: string
+  time?: string
+  endTime?: string
+  location?: string
+  description?: string
+  tags?: string[]
+  site?: string
+  imageUrl?: string
+  className?: string
 }
 
 export function TimelineItem({
@@ -46,35 +32,35 @@ export function TimelineItem({
   tags,
   site,
   imageUrl,
-  className
+  className,
 }: TimelineItemProps) {
-  const [imageDialogOpen, setImageDialogOpen] = useState(false);
+  const [imageDialogOpen, setImageDialogOpen] = useState(false)
 
   const handleClick = () => {
     if (site) {
-      window.open(site, '_blank');
+      window.open(site, '_blank')
     }
-  };
+  }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (site && (e.key === 'Enter' || e.key === ' ')) {
-      e.preventDefault();
-      window.open(site, '_blank');
+      e.preventDefault()
+      window.open(site, '_blank')
     }
-  };
+  }
 
   const handleImageClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setImageDialogOpen(true);
-  };
+    e.stopPropagation()
+    setImageDialogOpen(true)
+  }
 
-  const hasTime = time && time.toLowerCase() !== 'tbd';
+  const hasTime = time && time.toLowerCase() !== 'tbd'
 
-  const timeDisplay = hasTime ? (
-    endTime && endTime.toLowerCase() !== 'tbd'
+  const timeDisplay = hasTime
+    ? endTime && endTime.toLowerCase() !== 'tbd'
       ? `${formatTime(time)}–${formatTime(endTime)}`
       : formatTime(time)
-  ) : null;
+    : null
 
   return (
     <>
@@ -85,7 +71,7 @@ export function TimelineItem({
           site
             ? 'border border-border cursor-pointer hover:bg-secondary hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
             : 'border-transparent',
-          className
+          className,
         )}
         onClick={site ? handleClick : undefined}
         onKeyDown={site ? handleKeyDown : undefined}
@@ -108,31 +94,21 @@ export function TimelineItem({
             />
           </button>
         )}
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5">
-          {tags?.map((tag) => {
-            const Icon = tagIcons[tag]
-            return Icon ? <Icon key={tag} className="h-4 w-4 text-muted-foreground flex-shrink-0" /> : null
-          })}
-          <h4 className="font-semibold text-base leading-tight">
-            {title}
-          </h4>
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <h4 className="font-semibold text-base leading-tight">{title}</h4>
+          {(location || timeDisplay) && (
+            <p className="text-sm text-muted-foreground mt-1">
+              {location}
+              {location && timeDisplay && ' • '}
+              {timeDisplay}
+            </p>
+          )}
+          {description && (
+            <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{description}</p>
+          )}
         </div>
-        {(location || timeDisplay) && (
-          <p className="text-sm text-muted-foreground mt-1">
-            {location}
-            {location && timeDisplay && ' • '}
-            {timeDisplay}
-          </p>
-        )}
-        {description && (
-          <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-            {description}
-          </p>
-        )}
       </div>
-    </div>
 
       {/* Image Dialog */}
       {imageUrl && (
@@ -153,7 +129,7 @@ export function TimelineItem({
         </Dialog>
       )}
     </>
-  );
+  )
 }
 
-export default TimelineItem;
+export default TimelineItem

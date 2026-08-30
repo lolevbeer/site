@@ -30,7 +30,7 @@ async function revalidateMenusForBeer(payload: Payload, beerId: string | number)
   })
   for (const menu of menus.docs) {
     if (menu.url) {
-      revalidateTag(`menu-${menu.url}`)
+      revalidateTag(`menu-${menu.url}`, 'max')
     }
   }
 }
