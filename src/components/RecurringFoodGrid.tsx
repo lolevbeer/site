@@ -133,6 +133,17 @@ interface DatesListProps {
   /** Keys of the writes currently in flight; see `exclusionSaveKey` above. */
   pendingKeys: ReadonlySet<string>
   readOnly: boolean
+  /** Lets the empty state offer a jump to a year that has schedules. */
+  onYearChange: (year: number) => void
+}
+
+/** Count scheduled slots for one location in a schedules record. */
+function countLocationSlots(schedules: SchedulesData, locationId: string): number {
+  const locationSchedule = schedules[locationId] || {}
+  return Object.values(locationSchedule).reduce(
+    (total, byWeek) => total + Object.values(byWeek || {}).filter(Boolean).length,
+    0,
+  )
 }
 
 const EXCLUSION_MODAL_SLUG = 'confirm-exclusion'
@@ -145,6 +156,7 @@ const DatesList: React.FC<DatesListProps> = ({
   onExclusionChange,
   pendingKeys,
   readOnly,
+  onYearChange,
 }) => {
   const [vendorNames, setVendorNames] = useState<Record<string, string>>({})
   const [individualFoodEvents, setIndividualFoodEvents] = useState<ScheduledDate[]>([])
@@ -179,6 +191,31 @@ const DatesList: React.FC<DatesListProps> = ({
   }, [locationSchedule, year])
 
   useEffect(() => () => closeModal(EXCLUSION_MODAL_SLUG), [closeModal])
+
+  // When this year is empty, peek at the previous year so the empty state can
+  // say the data exists elsewhere instead of looking like data loss.
+  const [previousYearSlots, setPreviousYearSlots] = useState(0)
+  const yearIsEmpty = recurringDates.length === 0
+  useEffect(() => {
+    setPreviousYearSlots(0)
+    if (!yearIsEmpty || year - 1 < RECURRING_YEAR_MIN) return
+
+    let cancelled = false
+    const peekPreviousYear = async () => {
+      try {
+        const previous = await getRecurringFoodData(year - 1)
+        if (cancelled) return
+        setPreviousYearSlots(countLocationSlots(previous.schedules as SchedulesData, locationId))
+      } catch (error) {
+        if (!cancelled) logger.error('Error checking previous year schedules:', error)
+      }
+    }
+
+    void peekPreviousYear()
+    return () => {
+      cancelled = true
+    }
+  }, [yearIsEmpty, year, locationId])
 
   // Fetch individual food events using server action (local API)
   useEffect(() => {
@@ -348,7 +385,27 @@ const DatesList: React.FC<DatesListProps> = ({
         style={{ padding: '20px 0', color: 'var(--theme-elevation-500)', fontSize: '14px' }}
       >
         {exclusionModal}
-        No vendors scheduled. Select vendors in the grid above to see upcoming dates.
+        <div>No vendors scheduled. Select vendors in the grid above to see upcoming dates.</div>
+        {previousYearSlots > 0 && (
+          <div style={{ marginTop: '8px' }}>
+            {previousYearSlots} slot{previousYearSlots === 1 ? '' : 's'} scheduled for {year - 1}.{' '}
+            <button
+              type="button"
+              onClick={() => onYearChange(year - 1)}
+              style={{
+                border: 'none',
+                background: 'none',
+                padding: 0,
+                font: 'inherit',
+                color: 'var(--theme-text)',
+                textDecoration: 'underline',
+                cursor: 'pointer',
+              }}
+            >
+              View {year - 1}
+            </button>
+          </div>
+        )}
       </div>
     )
   }
@@ -530,6 +587,7 @@ interface LocationGridProps {
   /** Keys of the writes currently in flight; see the `*SaveKey` helpers above. */
   pendingKeys: ReadonlySet<string>
   readOnly: boolean
+  onYearChange: (year: number) => void
 }
 
 const LocationGrid: React.FC<LocationGridProps> = ({
@@ -541,8 +599,15 @@ const LocationGrid: React.FC<LocationGridProps> = ({
   onExclusionChange,
   pendingKeys,
   readOnly,
+  onYearChange,
 }) => {
   const locationSchedule = schedules[location.id] || {}
+
+  // Week 5 exists for at most a couple of month/day combos and is usually
+  // empty, so hide its row unless it has data or the manager asks for it.
+  const [showFifthWeek, setShowFifthWeek] = useState(false)
+  const fifthWeekUsed = days.some((day) => locationSchedule[day]?.fifth)
+  const visibleWeeks = fifthWeekUsed || showFifthWeek ? weeks : weeks.slice(0, 4)
 
   const handleCellChange = useCallback(
     (day: Day, week: Week, vendorId: string | null) => {
@@ -608,7 +673,7 @@ const LocationGrid: React.FC<LocationGridProps> = ({
             </tr>
           </thead>
           <tbody>
-            {weeks.map((week, weekIndex) => (
+            {visibleWeeks.map((week, weekIndex) => (
               <tr key={week}>
                 <td
                   style={{
@@ -645,6 +710,24 @@ const LocationGrid: React.FC<LocationGridProps> = ({
             ))}
           </tbody>
         </table>
+        {!fifthWeekUsed && !showFifthWeek && (
+          <button
+            type="button"
+            onClick={() => setShowFifthWeek(true)}
+            style={{
+              border: 'none',
+              background: 'none',
+              padding: '4px 10px',
+              font: 'inherit',
+              fontSize: '13px',
+              color: 'var(--theme-elevation-500)',
+              textDecoration: 'underline',
+              cursor: 'pointer',
+            }}
+          >
+            Show 5th week
+          </button>
+        )}
       </div>
       <DatesList
         year={year}
@@ -654,6 +737,7 @@ const LocationGrid: React.FC<LocationGridProps> = ({
         onExclusionChange={onExclusionChange}
         pendingKeys={pendingKeys}
         readOnly={readOnly}
+        onYearChange={onYearChange}
       />
     </div>
   )
@@ -929,6 +1013,7 @@ export const RecurringFoodGrid: React.FC = () => {
             onExclusionChange={handleExclusionChange}
             pendingKeys={pendingKeys}
             readOnly={!canEdit}
+            onYearChange={setSelectedYear}
           />
         </div>
       )}
