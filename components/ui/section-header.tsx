@@ -7,6 +7,11 @@ import { useAuth } from '@/lib/hooks/use-auth';
 interface SectionHeaderProps {
   /** The section title */
   title: string;
+  /**
+   * Taproom name to append as "Title · Name". Omit (or pass undefined, as the
+   * location context does for "All") to show the title alone.
+   */
+  locationName?: string;
   /** URL for the admin edit button */
   adminUrl?: string;
   /** Custom edit button label (defaults to "Edit") */
@@ -19,6 +24,7 @@ interface SectionHeaderProps {
  */
 export function SectionHeader({
   title,
+  locationName,
   adminUrl,
   editLabel = 'Edit',
 }: SectionHeaderProps) {
@@ -28,7 +34,12 @@ export function SectionHeader({
     <div className="text-center mb-12">
       <div className="flex items-center justify-between mb-4">
         <div className="flex-1" />
-        <h2 className="text-3xl lg:text-4xl font-bold">{title}</h2>
+        <h2 className="text-3xl lg:text-4xl font-bold">
+          {title}
+          {locationName && (
+            <span className="text-muted-foreground font-normal"> · {locationName}</span>
+          )}
+        </h2>
         <div className="flex-1 flex justify-end">
           {isAuthenticated && adminUrl && (
             <Button asChild variant="outline" size="sm">

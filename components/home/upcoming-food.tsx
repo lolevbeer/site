@@ -37,7 +37,7 @@ interface UpcomingFoodProps {
 }
 
 export function UpcomingFood({ foodByLocation }: UpcomingFoodProps): React.ReactElement | null {
-  const { locations } = useLocationContext();
+  const { locations, currentLocationData } = useLocationContext();
   const [expandedImage, setExpandedImage] = useState<{ url: string; name: string } | null>(null);
 
   // Create data structure for location filtering with location attached
@@ -71,7 +71,8 @@ export function UpcomingFood({ foodByLocation }: UpcomingFoodProps): React.React
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal>
           <SectionHeader
-            title="Upcoming Food"
+            title="Food"
+            locationName={currentLocationData?.name}
             adminUrl="/admin/collections/food"
           />
         </ScrollReveal>

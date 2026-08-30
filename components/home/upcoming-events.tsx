@@ -8,6 +8,7 @@ import { ScrollReveal } from '@/components/ui/scroll-reveal';
 import { EventCard } from '@/components/events/event-card';
 import { parseLocalDate } from '@/lib/utils/formatters';
 import { useLocationFilteredData, type LocationData } from '@/lib/hooks/use-location-filtered-data';
+import { useLocationContext } from '@/components/location/location-provider';
 import { useSortedItems } from '@/lib/hooks/use-sorted-items';
 import type { Event as PayloadEvent } from '@/src/payload-types';
 
@@ -19,6 +20,8 @@ interface UpcomingEventsProps {
 }
 
 export function UpcomingEvents({ eventsByLocation }: UpcomingEventsProps) {
+  const { currentLocationData } = useLocationContext();
+
   // Create data structure for location filtering
   const dataByLocation = useMemo(() => {
     const result: LocationData<EventWithLocationSlug> = {};
@@ -49,7 +52,8 @@ export function UpcomingEvents({ eventsByLocation }: UpcomingEventsProps) {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal>
           <SectionHeader
-            title="Upcoming Events"
+            title="Events"
+            locationName={currentLocationData?.name}
             adminUrl="/admin/collections/events"
           />
         </ScrollReveal>
