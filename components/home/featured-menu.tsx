@@ -19,6 +19,7 @@ import {
   type AnimatedItem,
 } from '@/lib/hooks/use-animated-list'
 import { useAuth } from '@/lib/hooks/use-auth'
+import { SectionHeader } from '@/components/ui/section-header'
 import { getMediaUrl, canSpriteAnimation } from '@/lib/utils/media-utils'
 import { extractBeerFromMenuItem, extractProductFromMenuItem } from '@/lib/utils/menu-item-utils'
 import { getTodayEST, toESTDate } from '@/lib/utils/date'
@@ -1027,20 +1028,11 @@ function FeaturedMenu({
     <section id={menuType} className="py-16 lg:py-24 bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <ScrollReveal>
-          <div className="text-center mb-12">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex-1" />
-              <h2 className="text-3xl lg:text-4xl font-bold">
-                {title}
-                {locationName && (
-                  <span className="text-muted-foreground font-normal"> · {locationName}</span>
-                )}
-              </h2>
-              <div className="flex-1 flex justify-end">
-                <AdminEditButtons menusArray={menus} currentLocation={currentLocation} />
-              </div>
-            </div>
-          </div>
+          <SectionHeader
+            title={title}
+            locationName={locationName}
+            actions={<AdminEditButtons menusArray={menus} currentLocation={currentLocation} />}
+          />
         </ScrollReveal>
 
         <div className="mb-8">
