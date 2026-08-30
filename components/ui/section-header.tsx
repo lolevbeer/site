@@ -1,21 +1,27 @@
-'use client';
+'use client'
 
-import { Button } from '@/components/ui/button';
-import { Pencil } from 'lucide-react';
-import { useAuth } from '@/lib/hooks/use-auth';
+import { Button } from '@/components/ui/button'
+import { Pencil } from 'lucide-react'
+import { useAuth } from '@/lib/hooks/use-auth'
 
 interface SectionHeaderProps {
   /** The section title */
-  title: string;
+  title: string
   /**
    * Taproom name to append as "Title · Name". Omit (or pass undefined, as the
    * location context does for "All") to show the title alone.
    */
-  locationName?: string;
+  locationName?: string
   /** URL for the admin edit button */
-  adminUrl?: string;
+  adminUrl?: string
   /** Custom edit button label (defaults to "Edit") */
-  editLabel?: string;
+  editLabel?: string
+  /**
+   * Replaces the built-in edit button when a section needs richer controls
+   * (featured-menu renders one button per menu location). Callers are
+   * responsible for their own auth gating.
+   */
+  actions?: React.ReactNode
 }
 
 /**
@@ -27,8 +33,9 @@ export function SectionHeader({
   locationName,
   adminUrl,
   editLabel = 'Edit',
+  actions,
 }: SectionHeaderProps) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth()
 
   return (
     <div className="text-center mb-12">
@@ -41,16 +48,17 @@ export function SectionHeader({
           )}
         </h2>
         <div className="flex-1 flex justify-end">
-          {isAuthenticated && adminUrl && (
-            <Button asChild variant="outline" size="sm">
-              <a href={adminUrl} target="_blank" rel="noopener noreferrer">
-                <Pencil className="h-4 w-4 mr-1" />
-                {editLabel}
-              </a>
-            </Button>
-          )}
+          {actions ??
+            (isAuthenticated && adminUrl && (
+              <Button asChild variant="outline" size="sm">
+                <a href={adminUrl} target="_blank" rel="noopener noreferrer">
+                  <Pencil className="h-4 w-4 mr-1" />
+                  {editLabel}
+                </a>
+              </Button>
+            ))}
         </div>
       </div>
     </div>
-  );
+  )
 }
