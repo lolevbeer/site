@@ -122,7 +122,7 @@ function truncate(text: string, max: number): string {
  * labels must be escaped; plain_text fields are literal and need no escaping.
  * https://api.slack.com/reference/surfaces/formatting#escaping
  */
-export function escapeSlackText(text: string): string {
+function escapeSlackText(text: string): string {
   return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 

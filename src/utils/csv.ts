@@ -1,11 +1,9 @@
 /**
  * Shared CSV parsing primitives for the data importers.
  *
- * Both CSV entry points — the Lake Beverage file upload
- * (`src/endpoints/import-lake-beverage-csv.ts`) and the Google Sheets sync
- * (`src/endpoints/sync-google-sheets.ts`) — used to carry their own copy of the
- * quote-aware line splitter. They live here so a fix to the quoting rules
- * applies to every import path at once.
+ * The quote-aware line splitter lives here rather than in the Lake Beverage
+ * file upload (`src/endpoints/import-lake-beverage-csv.ts`) that uses it, so a
+ * fix to the quoting rules applies to every import path at once.
  */
 
 /**

@@ -7,7 +7,6 @@ import { Events } from '@/src/collections/Events'
 import { FoodVendors } from '@/src/collections/FoodVendors'
 import { Locations } from '@/src/collections/Locations'
 import { SiteContent } from '@/src/globals/SiteContent'
-import { canRunGoogleSheetsSync } from '@/src/endpoints/sync-google-sheets'
 import { canRunUntappdSync } from '@/src/endpoints/sync-untappd-ratings'
 import { getAdminRelationshipID } from '@/src/components/admin/relationship-value'
 import { isFoodManager } from '@/src/access/roles'
@@ -171,12 +170,6 @@ describe('user assignment authorization', () => {
 })
 
 describe('sync endpoint authorization', () => {
-  it('reserves Google Sheets bulk sync for admins', () => {
-    expect(canRunGoogleSheetsSync(userWith(['admin']))).toBe(true)
-    expect(canRunGoogleSheetsSync(userWith(['beer-manager']))).toBe(false)
-    expect(canRunGoogleSheetsSync(null)).toBe(false)
-  })
-
   it('allows only admins and beer managers to sync Untappd', () => {
     expect(canRunUntappdSync(userWith(['admin']))).toBe(true)
     expect(canRunUntappdSync(userWith(['beer-manager']))).toBe(true)
@@ -217,8 +210,6 @@ describe('draft and sensitive field visibility', () => {
 
   it('limits operational import URLs to admins', () => {
     const protectedFields = [
-      findField(Menus.fields, 'sheetUrl'),
-      findField(Locations.fields, 'googleSheets'),
       findField(SiteContent.fields, 'distributorPaUrl'),
       findField(SiteContent.fields, 'distributorOhUrl'),
     ]

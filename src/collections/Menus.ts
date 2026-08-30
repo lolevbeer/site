@@ -264,19 +264,6 @@ export const Menus: CollectionConfig = {
       },
     },
     {
-      name: 'sheetUrl',
-      label: 'Google Sheet URL',
-      type: 'text',
-      access: {
-        read: adminFieldAccess,
-        update: adminFieldAccess,
-      },
-      admin: {
-        description: 'Google Sheets CSV export URL for syncing this menu (optional)',
-        position: 'sidebar',
-      },
-    },
-    {
       name: 'themeMode',
       label: 'Theme Mode',
       type: 'select',

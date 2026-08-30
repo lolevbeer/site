@@ -23,7 +23,7 @@ export interface SpeakableJsonLd {
  * @param url - Page URL
  * @param cssSelectors - CSS selectors for speakable content
  */
-export function generateSpeakableSchema(
+function generateSpeakableSchema(
   name: string,
   url: string,
   cssSelectors: string[]
@@ -43,7 +43,7 @@ export function generateSpeakableSchema(
 /**
  * Pre-configured speakable schemas for common pages
  */
-export const speakableConfigs = {
+const speakableConfigs = {
   home: {
     name: 'Lolev Beer - Craft Brewery in Pittsburgh',
     selectors: [

@@ -5,13 +5,21 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { NavItem } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { MapPin, Beer, Utensils, Calendar, Info, HelpCircle } from 'lucide-react';
 
 /**
  * Navigation menu items configuration
  */
+/** A top-level navigation entry, optionally with a dropdown of children. */
+interface NavItem {
+  label: string;
+  href: string;
+  icon?: React.ComponentType<{ className?: string }>;
+  children?: NavItem[];
+  external?: boolean;
+}
+
 const navigationItems: NavItem[] = [
   {
     label: 'Find Lolev',

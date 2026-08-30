@@ -12,7 +12,7 @@ import { isAdmin } from '@/src/access/roles'
  * so this gates server-side: anonymous visitors go to the login screen
  * (returning here after auth) and non-admin users get Payload's
  * unauthorized view. The import/sync endpoints enforce their own auth
- * separately — the food-vendor CSV endpoint still permits food-manager.
+ * separately.
  */
 export const SyncView: React.FC<AdminViewServerProps> = ({
   initPageResult,

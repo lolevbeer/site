@@ -316,25 +316,6 @@ export function generateProductSchema(beer: ProductSchemaInput): ProductJsonLd {
 }
 
 /**
- * Generate DrinkProduct schema (more specific than Product)
- * This is an alternative that's more semantic for beverages
- */
-export function generateDrinkProductSchema(beer: Beer): object {
-  const baseProduct = generateProductSchema(beer)
-
-  return {
-    ...baseProduct,
-    '@type': ['Product', 'AlcoholicBeverage'],
-    alcoholWarning: 'Alcoholic beverage. Must be 21+ to purchase.',
-    manufacturer: {
-      '@type': 'Organization',
-      name: 'Lolev Beer',
-      url: LOLEV_BASE_URL,
-    },
-  }
-}
-
-/**
  * ItemList schema for beer collection page
  * @see https://schema.org/ItemList
  * @see https://developers.google.com/search/docs/appearance/structured-data/carousel

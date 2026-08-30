@@ -128,52 +128,6 @@ export const Locations: CollectionConfig = {
       },
     },
     {
-      name: 'googleSheets',
-      type: 'group',
-      label: 'Google Sheets Import URLs',
-      access: {
-        read: adminFieldAccess,
-        update: adminFieldAccess,
-      },
-      admin: {
-        description: 'CSV export URLs for syncing data from Google Sheets',
-      },
-      fields: [
-        {
-          name: 'eventsPublic',
-          type: 'text',
-          label: 'Events Sheet (Public)',
-          admin: {
-            description: 'Public events (concerts, trivia, etc.)',
-          },
-        },
-        {
-          name: 'eventsPrivate',
-          type: 'text',
-          label: 'Events Sheet (Private)',
-          admin: {
-            description: 'Private events (rentals, corporate, etc.)',
-          },
-        },
-        {
-          name: 'food',
-          type: 'text',
-          label: 'Food Sheet',
-          admin: {
-            description: 'Food truck schedule',
-          },
-        },
-        {
-          name: 'hours',
-          type: 'text',
-          label: 'Hours Sheet',
-          admin: {
-            description: 'Operating hours schedule',
-          },
-        },
-      ],
-    },
-    {
       name: 'basicInfo',
       type: 'group',
       label: 'Contact Information',

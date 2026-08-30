@@ -147,37 +147,6 @@ function buildCansToGoSection(beers: MenuBeer[]): MenuSectionJsonLd {
 }
 
 /**
- * Generate Menu schema for draft beers (tap list)
- */
-export function generateDraftMenuSchema(beers: MenuBeer[], locationName?: string): MenuJsonLd {
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'Menu',
-    name: buildMenuName(locationName, 'Draft Menu'),
-    description:
-      'Current draft beers on tap at Lolev Beer. Our rotating selection of craft beers brewed in-house.',
-    url: LOLEV_BASE_URL,
-    inLanguage: 'en-US',
-    hasMenuSection: [buildOnTapSection(beers)],
-  }
-}
-
-/**
- * Generate Menu schema for canned beers
- */
-export function generateCansMenuSchema(beers: MenuBeer[], locationName?: string): MenuJsonLd {
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'Menu',
-    name: buildMenuName(locationName, 'Cans Menu'),
-    description: 'Canned beers available to-go at Lolev Beer.',
-    url: `${LOLEV_BASE_URL}/beer`,
-    inLanguage: 'en-US',
-    hasMenuSection: [buildCansToGoSection(beers)],
-  }
-}
-
-/**
  * Generate combined Menu schema with both draft and cans
  */
 export function generateFullMenuSchema(beers: MenuBeer[], locationName?: string): MenuJsonLd {
