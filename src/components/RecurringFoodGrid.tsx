@@ -104,7 +104,9 @@ const GridCell: React.FC<GridCellProps> = ({ value, onChange, cellKey, readOnly 
       relationTo={['food-vendors']}
       hasMany={false}
       allowCreate={!readOnly}
-      allowEdit={!readOnly}
+      // No edit-vendor pencil in cells: vendors rarely change and the icon
+      // eats space the (truncated) name needs.
+      allowEdit={false}
       value={valueWithRelation}
       onChange={handleChange}
       appearance="select"
