@@ -1,4 +1,5 @@
 const BING_MAPS_API_KEY = process.env.BING_MAPS_API_KEY || ''
+const GEOCODIO_API_KEY = process.env.GEOCODIO_API_KEY || ''
 
 // Nominatim geocoding (free, rate limited 1 req/sec)
 async function geocodeWithNominatim(address: string): Promise<[number, number] | null> {
@@ -13,6 +14,39 @@ async function geocodeWithNominatim(address: string): Promise<[number, number] |
     const data = await response.json()
     if (data.length === 0) return null
     return [parseFloat(data[0].lon), parseFloat(data[0].lat)]
+  } catch {
+    return null
+  }
+}
+
+// Geocodio fallback (requires API key)
+async function geocodeWithGeocodio(address: string): Promise<[number, number] | null> {
+  if (!GEOCODIO_API_KEY) return null
+
+  const params = new URLSearchParams({
+    q: address,
+    country: 'USA',
+    limit: '1',
+  })
+
+  try {
+    const response = await fetch(`https://api.geocod.io/v2/geocode?${params}`, {
+      headers: { Authorization: `Bearer ${GEOCODIO_API_KEY}` },
+    })
+    if (!response.ok) return null
+
+    const data = await response.json()
+    const location = data.results?.[0]?.location
+    if (
+      typeof location?.lat !== 'number' ||
+      !Number.isFinite(location.lat) ||
+      typeof location?.lng !== 'number' ||
+      !Number.isFinite(location.lng)
+    ) {
+      return null
+    }
+
+    return [location.lng, location.lat]
   } catch {
     return null
   }
@@ -43,11 +77,16 @@ export interface GeocodeResult {
   source: string
 }
 
-// Geocode address: Nominatim first, then Bing fallback
+// Geocode address: Nominatim first, then Geocodio and Bing fallbacks
 export async function geocodeAddress(address: string): Promise<GeocodeResult | null> {
   const nominatimResult = await geocodeWithNominatim(address)
   if (nominatimResult) {
     return { coords: nominatimResult, source: 'Nominatim' }
+  }
+
+  const geocodioResult = await geocodeWithGeocodio(address)
+  if (geocodioResult) {
+    return { coords: geocodioResult, source: 'Geocodio' }
   }
 
   const bingResult = await geocodeWithBing(address)
@@ -68,7 +107,7 @@ export async function geocode(address: string): Promise<[number, number] | null>
 export async function geocodeFallback(
   city: string,
   state: string,
-  zip: string
+  zip: string,
 ): Promise<GeocodeResult | null> {
   // Try zip code first (more specific)
   if (zip && zip.length === 5) {
