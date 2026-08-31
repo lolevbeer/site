@@ -1,5 +1,5 @@
-const BING_MAPS_API_KEY = process.env.BING_MAPS_API_KEY || ''
 const GEOCODIO_API_KEY = process.env.GEOCODIO_API_KEY || ''
+const BING_MAPS_API_KEY = process.env.BING_MAPS_API_KEY || ''
 
 // Nominatim geocoding (free, rate limited 1 req/sec)
 async function geocodeWithNominatim(address: string): Promise<[number, number] | null> {
@@ -107,7 +107,7 @@ export async function geocode(address: string): Promise<[number, number] | null>
 export async function geocodeFallback(
   city: string,
   state: string,
-  zip: string,
+  zip: string
 ): Promise<GeocodeResult | null> {
   // Try zip code first (more specific)
   if (zip && zip.length === 5) {

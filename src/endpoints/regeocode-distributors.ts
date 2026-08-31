@@ -25,7 +25,7 @@ function isSuspiciousCoordinate(location: [number, number], region: string): boo
 
 export const regeocodeDistributors: PayloadHandler = async (req) => {
   const { payload } = req
-  const user = req.user ?? (await getUserFromRequest(req, payload))
+  const user = req.user ?? await getUserFromRequest(req, payload)
 
   if (!user || !user.roles?.includes('admin')) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })

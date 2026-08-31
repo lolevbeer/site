@@ -1,30 +1,21 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-const originalGeocodioKey = process.env.GEOCODIO_API_KEY
-const originalBingKey = process.env.BING_MAPS_API_KEY
-
 function jsonResponse(data: unknown, ok = true) {
-  return new Response(JSON.stringify(data), {
+  return Response.json(data, {
     status: ok ? 200 : 503,
-    headers: { 'Content-Type': 'application/json' },
   })
 }
 
 describe('server-side geocoding provider fallbacks', () => {
   beforeEach(() => {
     vi.resetModules()
-    process.env.GEOCODIO_API_KEY = 'test-geocodio-key'
-    delete process.env.BING_MAPS_API_KEY
+    vi.stubEnv('GEOCODIO_API_KEY', 'test-geocodio-key')
+    vi.stubEnv('BING_MAPS_API_KEY', undefined)
   })
 
   afterEach(() => {
     vi.unstubAllGlobals()
-
-    if (originalGeocodioKey === undefined) delete process.env.GEOCODIO_API_KEY
-    else process.env.GEOCODIO_API_KEY = originalGeocodioKey
-
-    if (originalBingKey === undefined) delete process.env.BING_MAPS_API_KEY
-    else process.env.BING_MAPS_API_KEY = originalBingKey
+    vi.unstubAllEnvs()
   })
 
   it('uses Geocodio when Nominatim cannot geocode the address', async () => {
@@ -59,7 +50,7 @@ describe('server-side geocoding provider fallbacks', () => {
   })
 
   it('keeps Bing as the final fallback when Geocodio fails', async () => {
-    process.env.BING_MAPS_API_KEY = 'test-bing-key'
+    vi.stubEnv('BING_MAPS_API_KEY', 'test-bing-key')
     const fetchMock = vi
       .fn<typeof fetch>()
       .mockResolvedValueOnce(jsonResponse([]))
