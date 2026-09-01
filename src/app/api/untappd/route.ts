@@ -9,7 +9,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@/src/payload.config'
-import { fetchUntappdData, type UntappdReview } from '@/src/utils/untappd'
+import {
+  fetchUntappdData,
+  normalizeUntappdBeerUrl,
+  type UntappdReview,
+} from '@/src/utils/untappd'
 import { logger } from '@/lib/utils/logger'
 
 interface UntappdSearchResult {
@@ -54,7 +58,11 @@ export async function GET(request: NextRequest) {
     if (!url) {
       return NextResponse.json({ error: 'Missing url parameter' }, { status: 400 })
     }
-    return fetchRating(url)
+    const canonicalUrl = normalizeUntappdBeerUrl(url)
+    if (!canonicalUrl) {
+      return NextResponse.json({ error: 'Invalid Untappd beer URL' }, { status: 400 })
+    }
+    return fetchRating(canonicalUrl.toString())
   }
 
   return NextResponse.json({ error: 'Invalid action. Use "search" or "rating"' }, { status: 400 })

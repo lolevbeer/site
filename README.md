@@ -1,11 +1,19 @@
 # Lolev Beer
 
-Brewery website built with Next.js 15 and Payload CMS 3, deployed on Vercel.
+[![CI](https://github.com/lolevbeer/site/actions/workflows/ci.yml/badge.svg)](https://github.com/lolevbeer/site/actions/workflows/ci.yml)
+[![Vercel](https://img.shields.io/github/deployments/lolevbeer/site/Production?label=vercel&logo=vercel)](https://lolev.beer)
+[![health](https://img.shields.io/website?url=https%3A%2F%2Flolev.beer%2Fapi%2Fhealth&up_message=ok&down_message=unhealthy&label=health)](https://lolev.beer/api/health)
+
+Brewery website for [lolev.beer](https://lolev.beer), built with Next.js 16 and Payload CMS 3, deployed on Vercel.
+
+The badges above are, in order: the `CI` workflow on `main` (type-check, lint, Vitest, then a disposable production build and Playwright smoke), the latest GitHub `Production` deployment, and live `GET`/`HEAD` `https://lolev.beer/api/health`. Shields caches the health badge for a few minutes.
 
 ## Setup
 
+Requires Node 20+ and pnpm 9 or 10 (`package.json` pins `packageManager` to pnpm 10).
+
 1. Clone the repo
-2. `cp .env.example .env` and fill in your values
+2. `cp .env.example .env` and fill in your values. `DATABASE_URI` and `PAYLOAD_SECRET` are required; do not leave `PAYLOAD_SECRET` as the documented placeholder. Production also requires `BLOB_READ_WRITE_TOKEN`. Slack, cron, revalidation, and geocoding keys are optional — see `.env.example`.
 3. `pnpm install && pnpm dev`
 4. Open `http://localhost:3000`
 
@@ -13,36 +21,116 @@ Payload admin is at `/admin`. Follow the on-screen instructions to create your f
 
 ## Tech Stack
 
-- **Framework:** Next.js 15 (App Router)
+- **Framework:** Next.js 16 (App Router)
 - **CMS:** Payload CMS 3 (MongoDB)
 - **Styling:** Tailwind CSS 4, shadcn/ui
 - **Maps:** Mapbox GL
 - **Monitoring:** Sentry
 - **Storage:** Vercel Blob
 - **Deployment:** Vercel
+- **Tests:** Vitest and Playwright
+
+## Scripts
+
+```bash
+pnpm dev                 # Start the development server
+pnpm build               # Production build (runs pending migrations first on Vercel production)
+pnpm start               # Serve a production build
+pnpm type-check          # TypeScript check
+pnpm lint                # ESLint
+pnpm test                # Tests (Vitest)
+pnpm test:e2e:install    # Install Chromium for Playwright
+pnpm e2e:seed            # Seed a disposable database for the release smoke test
+pnpm test:e2e            # Run Playwright against the built server on port 3100
+pnpm migrate             # Run pending Payload migrations against DATABASE_URI
+pnpm migrate:status      # Show which migrations have run
+pnpm generate:types      # Regenerate Payload types
+pnpm generate:importmap  # Regenerate Payload import map
+```
+
+`pnpm e2e:seed` writes admin and FAQ fixture data. By default it accepts only a
+loopback MongoDB target. A remote target is allowed only when
+`E2E_DISPOSABLE_DATABASE=1` and the database name ends in `-e2e` or `-ci`; the
+seed also refuses `PAYLOAD_DROP_DATABASE=true`. Set `E2E_ADMIN_EMAIL` and
+`E2E_ADMIN_PASSWORD` only for local or CI smoke tests. Never point the seed or
+Playwright release smoke test at production.
+
+## Health check
+
+`GET /api/health` validates the server environment and pings MongoDB through
+Payload. It returns HTTP 200 with generic `{"status":"ok"}` when healthy or HTTP
+503 with generic `{"status":"unhealthy"}` when unavailable. `HEAD /api/health`
+runs the same probe and returns the same status with an empty body so uptime
+badges that send HEAD (including the Shields.io website badge on this README)
+match GET. Every response sets `Cache-Control: no-store` and never exposes
+dependency, failure-stage, or error details.
+
+The health badge polls production `https://lolev.beer/api/health` and shows `ok`
+for HTTP 200 or `unhealthy` for HTTP 503, timeouts, or other unsuccessful
+responses. It is not a substitute for the post-deploy checks in the
+[production deployment runbook](docs/operations/production-deploy.md).
+
+## CI
+
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs on pull requests and
+pushes to `main`:
+
+1. **checks** — `pnpm type-check`, `pnpm lint`, and `pnpm test`
+2. **release-smoke** — seed a disposable MongoDB, `pnpm build` with
+   `VERCEL_ENV=preview` (migrations skipped), then Playwright against
+   `http://127.0.0.1:3100`
+
+The CI badge reflects the latest `main` run of that workflow. Preview and
+production deploys still go through Vercel auto-deploy; the Vercel badge is the
+GitHub `Production` deployment status, not a preview.
+
+## Migrations on deploy
+
+`pnpm build` runs `migrate:prod` first, which executes pending migrations before
+Vercel promotion only when `VERCEL_ENV=production`. Builds skip migrations only
+when `VERCEL_ENV` is not `production`; local and CI builds must use a
+non-production, disposable database context. Retry eligibility is
+migration-specific. For recurring-food normalization, record the normalized
+schedule and exclusion counts, confirm both are at most 10,000, and confirm
+there is no unresolved duplicate-key state; otherwise use a reviewed
+roll-forward. Review the migration [recovery
+manifest](src/migrations/recovery.ts) and [production deployment
+runbook](docs/operations/production-deploy.md) before recovery.
+
+A failed build can leave partial database mutation while the previous
+deployment remains live. The recovery manifest and runbook determine whether
+an approved retry or targeted roll-forward is permitted. Where the manifest
+requires it, an immediate compatible roll-forward or isolated Atlas restore is
+mandatory. Rolling back the deployment does not reverse database mutations.
+Migrations live in `src/migrations/` and are registered in
+`src/migrations/index.ts`.
 
 ## Collections
 
-- **Beers** - Beer catalog with styles, ABV, pricing, Untappd ratings, and 3D can label textures (generated in the admin from label art + metallic-mask PDFs; rendered by `components/beer/beer-can-3d.tsx`)
-- **Styles** - Beer style definitions
-- **Menus** - Draft and can menus per location
-- **Products** - Menu items linking beers to menus
-- **Events** - Brewery events calendar
-- **Recurring Events** - Date-less monthly event definitions scoped to a calendar year
-- **Food** - Food truck schedule
-- **Food Vendors** - Food truck vendor directory
-- **Locations** - Brewery locations with hours
-- **Holiday Hours** - Holiday hour overrides
-- **Distributors** - Distribution partners with geocoded locations
-- **FAQs** - Frequently asked questions
-- **Media** - Image uploads (Vercel Blob storage)
-- **Users** - Admin users with role-based access
+- **Beers** — Beer catalog with styles, ABV, pricing, Untappd ratings, and 3D can label textures (generated in the admin from label art + metallic-mask PDFs; rendered by `components/beer/beer-can-3d.tsx`)
+- **Beer Reviews** — Approved customer reviews attached to beers
+- **Styles** — Beer style definitions
+- **Tags** — Reusable single-value labels for beers
+- **Menus** — Draft and can menus per location
+- **Products** — Menu items linking beers to menus
+- **Events** — Brewery events calendar
+- **Recurring Events** — Date-less monthly event definitions scoped to a calendar year
+- **Food** — Food truck schedule
+- **Food Vendors** — Food truck vendor directory
+- **Recurring Food Schedules** — Normalized monthly food-truck slots (system collection)
+- **Recurring Food Exclusions** — Dates a recurring food slot does not run (system collection)
+- **Locations** — Brewery locations with hours
+- **Holiday Hours** — Holiday hour overrides
+- **Distributors** — Distribution partners with geocoded locations
+- **FAQs** — Frequently asked questions
+- **Media** — Image uploads (Vercel Blob storage)
+- **Users** — Admin users with role-based access
 
 ## Globals
 
-- **Coming Soon** - Upcoming beer announcements
-- **Recurring Food** - Year-by-year monthly food truck schedule
-- **Site Content** - Editable site-wide content (about page, etc.)
+- **Coming Soon** — Upcoming beer announcements
+- **Recurring Food** — Year-by-year monthly food truck schedule
+- **Site Content** — Editable site-wide content (about page, etc.)
 
 ## Slack bot
 
@@ -136,25 +224,3 @@ happen in the admin panel and take effect immediately — no env var, no redeplo
 Every request runs as the requester's Payload user, so these are the collections'
 own rules rather than a copy kept in the Slack handler. Someone with no linked
 account, or without the right role, gets a message saying so.
-
-## Scripts
-
-```bash
-pnpm dev              # Start dev server
-pnpm build            # Production build (runs pending migrations first on Vercel production)
-pnpm type-check       # TypeScript check
-pnpm lint             # ESLint
-pnpm test             # Tests (vitest)
-pnpm migrate          # Run pending Payload migrations against DATABASE_URI
-pnpm migrate:status   # Show which migrations have run
-pnpm generate:types   # Regenerate Payload types
-pnpm generate:importmap  # Regenerate Payload import map
-```
-
-### Migrations on deploy
-
-`pnpm build` runs `migrate:prod` first, which executes `pnpm migrate` only when
-`VERCEL_ENV=production`. Preview and local builds skip it, so they never mutate
-the production database. A failing migration fails the build, so a deploy is
-never promoted with a half-applied migration — fix the migration and redeploy.
-Migrations live in `src/migrations/` and are registered in `src/migrations/index.ts`.

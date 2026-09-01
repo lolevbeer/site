@@ -6,6 +6,64 @@
 
 import * as Sentry from '@sentry/nextjs'
 
+export const UNTAPPD_FETCH_TIMEOUT_MS = 10_000
+export const UNTAPPD_MAX_BODY_BYTES = 5 * 1024 * 1024
+
+const UNTAPPD_BEER_PATH = /^\/b\/[a-z0-9][a-z0-9-]*\/\d+\/?$/
+const UNTAPPD_HOSTS = new Set(['untappd.com', 'www.untappd.com'])
+
+/** Returns a canonical Untappd beer URL, or null without performing I/O. */
+export function normalizeUntappdBeerUrl(input: string): URL | null {
+  const isRelativeBeerPath = input.startsWith('/b/')
+  // URL normalizes away a default port (:443), so reject explicit ports before parsing.
+  if (!isRelativeBeerPath && /^https?:\/\/[^/?#]*:\d*(?:[/?#]|$)/i.test(input)) return null
+
+  try {
+    const parsed = isRelativeBeerPath ? new URL(input, 'https://untappd.com') : new URL(input)
+    if (parsed.protocol !== 'https:') return null
+    if (!UNTAPPD_HOSTS.has(parsed.hostname)) return null
+    if (parsed.username || parsed.password || parsed.port) return null
+    if (!UNTAPPD_BEER_PATH.test(parsed.pathname)) return null
+    return new URL(parsed.pathname.replace(/\/$/, ''), 'https://untappd.com')
+  } catch {
+    return null
+  }
+}
+
+async function discardResponseBody(response: Response): Promise<void> {
+  await response.body?.cancel().catch(() => undefined)
+}
+
+async function readBoundedText(response: Response): Promise<string | null> {
+  const declaredLength = Number(response.headers.get('content-length'))
+  if (Number.isFinite(declaredLength) && declaredLength > UNTAPPD_MAX_BODY_BYTES) {
+    await discardResponseBody(response)
+    return null
+  }
+  if (!response.body) return response.text()
+
+  const reader = response.body.getReader()
+  const chunks: Uint8Array[] = []
+  let totalBytes = 0
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      totalBytes += value.byteLength
+      if (totalBytes > UNTAPPD_MAX_BODY_BYTES) {
+        await reader.cancel().catch(() => undefined)
+        return null
+      }
+      chunks.push(value)
+    }
+  } finally {
+    reader.releaseLock()
+  }
+
+  return Buffer.concat(chunks).toString('utf8')
+}
+
 export interface UntappdReview {
   username: string
   rating: number
@@ -70,6 +128,10 @@ export async function fetchUntappdData(url: string): Promise<UntappdData> {
     failure,
   })
 
+  const canonicalUrl = normalizeUntappdBeerUrl(url)
+  if (!canonicalUrl) return failed('permanent')
+  const fullUrl = canonicalUrl.toString()
+
   // Circuit breaker: skip requests if too many consecutive failures. The beer
   // itself is fine — the run was cut short — so this is retryable.
   if (isCircuitOpen()) {
@@ -77,15 +139,22 @@ export async function fetchUntappdData(url: string): Promise<UntappdData> {
   }
 
   try {
-    const fullUrl = url.startsWith('http') ? url : `https://untappd.com${url}`
     const response = await fetch(fullUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
       },
+      redirect: 'manual',
+      signal: AbortSignal.timeout(UNTAPPD_FETCH_TIMEOUT_MS),
     })
+
+    if (response.status >= 300 && response.status < 400) {
+      await discardResponseBody(response)
+      return failed('permanent')
+    }
 
     // Rate limit detection
     if (response.status === 429) {
+      await discardResponseBody(response)
       consecutiveFailures++
       Sentry.captureMessage('Untappd rate limit hit', {
         level: 'warning',
@@ -95,6 +164,7 @@ export async function fetchUntappdData(url: string): Promise<UntappdData> {
     }
 
     if (!response.ok) {
+      await discardResponseBody(response)
       // A dead URL says nothing about Untappd's health, so it must not count
       // toward the circuit breaker — five stale links would otherwise trip it
       // and skip the rest of a perfectly healthy catalogue.
@@ -116,7 +186,8 @@ export async function fetchUntappdData(url: string): Promise<UntappdData> {
       return failed('retryable')
     }
 
-    const html = await response.text()
+    const html = await readBoundedText(response)
+    if (html === null) return failed('permanent')
 
     // Detect if Untappd changed their markup (no rating div found on a page that should have one)
     const hasRatingDiv = html.includes('class="caps"')
@@ -202,7 +273,11 @@ export async function fetchUntappdData(url: string): Promise<UntappdData> {
 
     if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
       Sentry.captureException(error, {
-        extra: { url, consecutiveFailures, context: 'Untappd scraper circuit breaker opened' },
+        extra: {
+          url: fullUrl,
+          consecutiveFailures,
+          context: 'Untappd scraper circuit breaker opened',
+        },
       })
     }
 

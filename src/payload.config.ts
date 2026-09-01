@@ -37,6 +37,7 @@ import { syncUntappdRatings } from './endpoints/sync-untappd-ratings'
 import { adminAccess, hasRole } from './access/roles'
 import { syncUntappdRatingsTask } from './jobs/sync-untappd-ratings'
 import { getLocalDevOrigins } from '../lib/config/payload-origins'
+import { readServerEnvironment } from '../lib/config/server-env'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -49,6 +50,9 @@ const dirname = path.dirname(filename)
 const isMigrationCommand = process.argv.some(
   (arg) => arg === 'migrate' || arg.startsWith('migrate:'),
 )
+
+// Validate server-only values before passing them into Payload or its adapters.
+const serverEnv = readServerEnvironment()
 
 // Allowed origins for CORS and CSRF
 const allowedOrigins = [
@@ -175,12 +179,12 @@ export default buildConfig({
     SiteContent,
   ],
   editor: lexicalEditor(),
-  secret: process.env.PAYLOAD_SECRET || '',
+  secret: serverEnv.payloadSecret,
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
   db: mongooseAdapter({
-    url: process.env.DATABASE_URI || '',
+    url: serverEnv.databaseUri,
     // Payload wraps an entire migration in one MongoDB transaction, but Atlas
     // enforces transactionLifetimeLimitSeconds (60s by default) and kills any
     // that outlive it. The normalization migrations page the whole beer and
@@ -188,15 +192,12 @@ export default buildConfig({
     // that on a remote cluster and fails with NoSuchTransaction (code 251) —
     // the writes roll back, so the migration can never finish.
     //
-    // Every migration in src/migrations is written to be idempotent and
-    // resumable (syncBeerReviews upserts by sourceUrl, the recurring-food pass
-    // early-returns on normalizedAt and skips existing keys, and named
-    // createIndex is a no-op when the index exists), so per-migration atomicity
-    // buys nothing here — a partial run is simply re-run. Detecting the CLI
-    // rather than reading a flag keeps `pnpm migrate` working the same locally
-    // and inside the Vercel production build, with no env var to forget.
-    // Serving requests never boots through this path, so the app keeps
-    // transactional writes.
+    // Migrations do not all have interchangeable recovery semantics. The recovery
+    // manifest governs partial failures: batch `migrate:down` is prohibited, and
+    // recovery requires the recorded migration-specific roll-forward or restore
+    // procedure. Disabling Payload's transaction here avoids Atlas's 60-second
+    // transaction lifetime limit; it does not make a partial migration safe to
+    // rerun without following that manifest.
     ...(isMigrationCommand ? { transactionOptions: false as const } : {}),
     // Serverless connection hardening. Each Vercel lambda opens its own Mongoose
     // pool; the MongoDB driver default is maxPoolSize 100. A post-deploy ISR
@@ -210,6 +211,10 @@ export default buildConfig({
     connectOptions: {
       maxPoolSize: 10,
       maxIdleTimeMS: 10000,
+      // Bound connection and server selection while the health probe applies its
+      // own cancellable timeout to the native MongoDB ping operation.
+      connectTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 5000,
     },
   }),
   sharp,
@@ -219,7 +224,7 @@ export default buildConfig({
       collections: {
         media: true,
       },
-      token: process.env.BLOB_READ_WRITE_TOKEN || '',
+      token: serverEnv.blobReadWriteToken,
     }),
   ],
   endpoints: [

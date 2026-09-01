@@ -31,6 +31,7 @@ import { getPayload, APIError, type TypedUser } from 'payload'
 import crypto from 'crypto'
 import config from '@/src/payload.config'
 import { logger } from '@/lib/utils/logger'
+import { readServerEnvironment } from '@/lib/config/server-env'
 import { isAdmin, leadBartenderAccess } from '@/src/access/roles'
 import { relationshipIds } from '@/src/utils/relationship-id'
 import { canUpdateMenus } from '@/src/collections/Menus'
@@ -55,6 +56,8 @@ import {
   verifySlackSignature,
   type SlackStateValues,
 } from '@/src/utils/slack'
+
+const serverEnv = readServerEnvironment()
 
 /** Handled types: block_actions, block_suggestion, view_submission. */
 interface SlackInteractionPayload {
@@ -100,7 +103,7 @@ function canEditMenus(user: TypedUser): boolean {
 async function slackApi(target: string, body: Record<string, unknown>): Promise<boolean> {
   const isWebhook = target.startsWith('https://')
   // A Web API call with no bot token can only 401 — fail fast, don't fetch.
-  if (!isWebhook && !process.env.SLACK_BOT_TOKEN) {
+  if (!isWebhook && !serverEnv.slackBotToken) {
     logger.error('SLACK_BOT_TOKEN is not configured')
     return false
   }
@@ -109,7 +112,7 @@ async function slackApi(target: string, body: Record<string, unknown>): Promise<
       method: 'POST',
       headers: {
         'content-type': 'application/json; charset=utf-8',
-        ...(isWebhook ? {} : { authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}` }),
+        ...(isWebhook ? {} : { authorization: `Bearer ${serverEnv.slackBotToken}` }),
       },
       body: JSON.stringify(body),
       // Bound the call so a hung Slack endpoint can't wedge the after() task.
@@ -144,7 +147,7 @@ async function slackApi(target: string, body: Record<string, unknown>): Promise<
  * every command, and never auto-link.
  */
 async function slackUserEmail(slackUserId: string): Promise<string | null> {
-  const token = process.env.SLACK_BOT_TOKEN
+  const token = serverEnv.slackBotToken
   if (!token) {
     logger.error('SLACK_BOT_TOKEN is not configured')
     return null
@@ -263,7 +266,7 @@ function noAccountMessage(): Record<string, unknown> {
 }
 
 export async function POST(request: NextRequest) {
-  const signingSecret = process.env.SLACK_SIGNING_SECRET
+  const signingSecret = serverEnv.slackSigningSecret
   if (!signingSecret) {
     logger.error('SLACK_SIGNING_SECRET is not configured')
     return NextResponse.json({ error: 'Not configured' }, { status: 500 })

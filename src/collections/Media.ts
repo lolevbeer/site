@@ -23,7 +23,6 @@ export const Media: CollectionConfig = {
     // LABEL_VIDEO_MIME: generated can-label sweep loops (LabelTextureGenerator).
     // Sharp/imageSizes only run on images, so videos pass through untouched.
     mimeTypes: ['image/png', 'image/jpg', 'image/jpeg', 'image/webp', LABEL_VIDEO_MIME],
-    disableLocalStorage: !!process.env.BLOB_READ_WRITE_TOKEN,
     formatOptions: {
       format: 'png',
     },
