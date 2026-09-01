@@ -24,17 +24,17 @@ A release is blocked if the recovery-point ID, timestamp, restore authorization,
 
 ## Pre-merge checks
 
-Run these commands in CI or a local checkout before merging:
+Run these commands in CI or a local checkout before merging. The build must use a disposable, non-production database context supplied by the approved non-production secret wrapper; the wrapper must reject a production database target. Do not run the build unless the non-secret target fingerprint has been checked against the production fingerprint.
 
 ```bash
 pnpm type-check
 pnpm lint
 pnpm test
-pnpm build
+VERCEL_ENV=preview pnpm build
 pnpm test:e2e
 ```
 
-Record each result. A production build invokes `migrate:prod`; it only runs `pnpm migrate` when `VERCEL_ENV=production`. Do not run a production build locally with production credentials merely to satisfy this checklist.
+`VERCEL_ENV=preview` ensures `migrate:prod` skips migrations. The non-production wrapper must make a production `DATABASE_URI` unavailable to the build process in CI and local use. Record each result.
 
 ## Production-status wrapper contract
 
@@ -56,6 +56,10 @@ For `20260826_212000_add_payload_jobs_indexes`, use a read-only index inspection
 | `payload_jobs_schedule_dedupe` | `{ taskSlug: 1, queue: 1, completedAt: 1, createdAt: 1 }` | `{ name: 'payload_jobs_schedule_dedupe' }` |
 
 Do not manually invoke a maintenance cron to prove these indexes. Observe the next normally scheduled maintenance run through the approved operational surface and record its outcome.
+
+## Failed Google Sheets field removal decision
+
+If a build fails after `20260830_100000_drop_google_sheets_fields` unsets the fields, the still-live prior deployment's Google Sheets endpoint can no longer import location events, food, or hours from configured URLs, and menu sync uses only its environment fallback. The release owner must immediately choose and record one of two paths: deploy a compatible roll-forward that removes the prior endpoint from live traffic, or perform an Atlas restore under the isolated-target and write-reconciliation controls below. Do not leave the prior deployment serving with degraded sync while awaiting a later release.
 
 ## Normalization verification invariants
 
@@ -93,7 +97,8 @@ Atlas restore always starts into an isolated target for validation; do not repla
 | Condition | Decision | Required evidence and action |
 | --- | --- | --- |
 | A manifest entry permits retry and all of its stated preconditions hold | Retry | Preserve the build and migration error, run the production-status wrapper, record its target fingerprint, and retry only through the approved production release path. Verify using the manifest evidence. |
-| A migration is `roll-forward`, retry preconditions fail, or a partial mutation needs cleanup | Roll forward | Prepare an explicitly reviewed targeted cleanup or forward migration compatible with the observed state. Do not invoke `migrate:down` or recreate removed schema or indexes contrary to the manifest. |
+| A pending migration partially failed and is not recorded in the migration ledger | Targeted cleanup, then resume | Use a separately reviewed targeted cleanup or controlled procedure that makes the immutable `up()` safely complete. Capture the error, target fingerprint, and ledger evidence that the failed migration is unrecorded; only then resume the normal runner. A later normal forward migration cannot run first. |
+| A failed migration is recorded, or a separately controlled procedure has explicit ledger evidence that it no longer blocks the runner | Forward migration | Prepare an explicitly reviewed forward migration compatible with the observed state. A later normal forward migration is permitted only after that ledger evidence exists; otherwise it requires separately controlled execution with ledger evidence. Do not invoke `migrate:down` or recreate removed schema or indexes contrary to the manifest. |
 | A migration is `restore` and compatibility cannot be recovered by rolling forward | Atlas restore | Obtain release-owner authorization, restore to an isolated target, validate it, then satisfy the write-quiescence, preservation/reconciliation, or explicit-loss-approval controls before any cutover. |
 | Considering a Payload batch down operation | Not authorized by this runbook | Capture the exact latest applied batch and obtain a separate reviewed procedure proving every migration in that batch has a safe, applicable down path and all guards pass. This runbook supplies no `migrate:down` command. |
 
@@ -108,6 +113,8 @@ Production-status wrapper identity/version:
 Selected database target fingerprint before promotion:
 Pending migration names before promotion:
 Migration recovery modes and evidence reviewed:
+Migration ledger evidence for recovery decision:
+Google Sheets failed-build decision and time:
 Normalization expected/actual counts and skipped-key evidence:
 Payload-jobs index inspection result:
 Next scheduled maintenance-run observation:

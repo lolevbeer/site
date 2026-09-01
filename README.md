@@ -154,8 +154,9 @@ pnpm generate:importmap  # Regenerate Payload import map
 ### Migrations on deploy
 
 `pnpm build` runs `migrate:prod` first, which executes pending migrations before
-Vercel promotion only when `VERCEL_ENV=production`. Preview and local builds skip
-migrations, so they never mutate the production database. Retry eligibility is
+Vercel promotion only when `VERCEL_ENV=production`. Builds skip migrations only
+when `VERCEL_ENV` is not `production`; local and CI builds must use a
+non-production, disposable database context. Retry eligibility is
 migration-specific: operators must record the recurring-food count and
 duplicate-key preconditions and review the [production deployment
 runbook](docs/operations/production-deploy.md) before recovery. A failed build

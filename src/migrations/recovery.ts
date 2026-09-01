@@ -47,10 +47,10 @@ export const migrationRecovery = [
   },
   {
     name: '20260830_100000_drop_google_sheets_fields',
-    compatibility: 'The fields are removed only after every application reader and sync endpoint was deleted.',
-    retry: 'MongoDB unset operations are idempotent for live documents and stored versions.',
+    compatibility: 'A failed build leaves the prior deployment live, where its Google Sheets sync endpoint reads these fields: location imports become not configured and menus use only the environment fallback.',
+    retry: 'The unsets are idempotent, but a failed build requires an immediate compatible roll-forward or Atlas restore rather than leaving the prior sync endpoint degraded.',
     mode: 'restore',
-    verify: 'Confirm the fields are absent; use the recorded Atlas recovery point only if old code must be reinstated.',
+    verify: 'Confirm the fields are absent; after a failed build, choose Atlas restore or immediate compatible roll-forward before the live prior deployment continues serving degraded sync.',
   },
   {
     name: '20260830_143000_drop_legacy_recurring_food_slot_index',

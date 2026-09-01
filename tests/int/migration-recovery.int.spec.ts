@@ -20,4 +20,16 @@ describe('migration recovery manifest', () => {
   it('does not authorize batch migration down as production recovery', () => {
     expect(migrationRecovery.map(({ mode }) => mode)).not.toContain('down')
   })
+
+  it('requires restore or a compatible roll-forward when Google Sheets fields break the live prior deployment', () => {
+    const recovery = migrationRecovery.find(
+      ({ name }) => name === '20260830_100000_drop_google_sheets_fields',
+    )
+
+    expect(recovery).toMatchObject({
+      mode: 'restore',
+      compatibility: expect.stringMatching(/prior deployment/i),
+      verify: expect.stringMatching(/Atlas restore or immediate compatible roll-forward/i),
+    })
+  })
 })
