@@ -63,8 +63,11 @@ describe('fetchUntappdData network boundary', () => {
     expect(global.fetch).not.toHaveBeenCalled()
   })
 
-  it('uses the canonical URL and disables redirects', async () => {
-    global.fetch = vi.fn().mockResolvedValue(new Response('', { status: 302 }))
+  it('uses the canonical URL, disables redirects, and cancels redirect bodies', async () => {
+    const cancel = vi.fn()
+    global.fetch = vi.fn().mockResolvedValue(
+      new Response(new ReadableStream({ cancel }), { status: 302 }),
+    )
     await expect(fetchUntappdData('/b/lolev-beer-lupula/123456')).resolves.toMatchObject({
       failure: 'permanent',
     })
@@ -72,11 +75,13 @@ describe('fetchUntappdData network boundary', () => {
       'https://untappd.com/b/lolev-beer-lupula/123456',
       expect.objectContaining({ redirect: 'manual', signal: expect.any(AbortSignal) }),
     )
+    expect(cancel).toHaveBeenCalledOnce()
   })
 
-  it('rejects a declared oversized response', async () => {
+  it('rejects declared oversized responses and cancels their bodies', async () => {
+    const cancel = vi.fn()
     global.fetch = vi.fn().mockResolvedValue(
-      new Response('small', {
+      new Response(new ReadableStream({ cancel }), {
         status: 200,
         headers: { 'content-length': String(UNTAPPD_MAX_BODY_BYTES + 1) },
       }),
@@ -84,6 +89,7 @@ describe('fetchUntappdData network boundary', () => {
     await expect(fetchUntappdData('/b/lolev-beer-lupula/123456')).resolves.toMatchObject({
       failure: 'permanent',
     })
+    expect(cancel).toHaveBeenCalledOnce()
   })
 })
 

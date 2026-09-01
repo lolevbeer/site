@@ -26,9 +26,16 @@ export function normalizeUntappdBeerUrl(input: string): URL | null {
   }
 }
 
+async function discardResponseBody(response: Response): Promise<void> {
+  await response.body?.cancel().catch(() => undefined)
+}
+
 async function readBoundedText(response: Response): Promise<string | null> {
   const declaredLength = Number(response.headers.get('content-length'))
-  if (Number.isFinite(declaredLength) && declaredLength > UNTAPPD_MAX_BODY_BYTES) return null
+  if (Number.isFinite(declaredLength) && declaredLength > UNTAPPD_MAX_BODY_BYTES) {
+    await discardResponseBody(response)
+    return null
+  }
   if (!response.body) return response.text()
 
   const reader = response.body.getReader()
@@ -143,10 +150,14 @@ export async function fetchUntappdData(url: string): Promise<UntappdData> {
       signal: AbortSignal.timeout(UNTAPPD_FETCH_TIMEOUT_MS),
     })
 
-    if (response.status >= 300 && response.status < 400) return failed('permanent')
+    if (response.status >= 300 && response.status < 400) {
+      await discardResponseBody(response)
+      return failed('permanent')
+    }
 
     // Rate limit detection
     if (response.status === 429) {
+      await discardResponseBody(response)
       consecutiveFailures++
       Sentry.captureMessage('Untappd rate limit hit', {
         level: 'warning',
@@ -156,6 +167,7 @@ export async function fetchUntappdData(url: string): Promise<UntappdData> {
     }
 
     if (!response.ok) {
+      await discardResponseBody(response)
       // A dead URL says nothing about Untappd's health, so it must not count
       // toward the circuit breaker — five stale links would otherwise trip it
       // and skip the rest of a perfectly healthy catalogue.
