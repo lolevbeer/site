@@ -114,7 +114,7 @@ The build and browser jobs may be separate from static checks for clear failure 
 
 ### Disposable release fixture
 
-Add a deterministic seed script for CI-only data. It creates a test administrator and one uniquely named FAQ record used by the authenticated update/revalidation journey. It must refuse to run unless the database URI is local or explicitly marked disposable.
+Add a deterministic seed script for CI-only data. It creates a test administrator and one uniquely named FAQ record used by the authenticated update/revalidation journey. It must refuse to run unless the database URI is local; a remote disposable database additionally requires an explicit opt-in and a database name ending in `-e2e` or `-ci`.
 
 ### Playwright journeys
 

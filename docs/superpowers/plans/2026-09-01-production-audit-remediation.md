@@ -829,8 +829,10 @@ git commit -m "docs(ops): define migration recovery contract"
 - Modify: `package.json:15-32,71-99`
 - Modify: `pnpm-lock.yaml`
 - Create: `scripts/seed-e2e.ts`
+- Create: `scripts/e2e-database-guard.ts`
 - Create: `playwright.config.ts`
 - Create: `tests/e2e/release-smoke.spec.ts`
+- Create: `tests/int/e2e-seed-safety.int.spec.ts`
 - Modify: `.gitignore`
 
 **Interfaces:**
@@ -857,27 +859,30 @@ Add scripts:
 
 - [ ] **Step 2: Write a failing seed-safety unit test before the seed implementation**
 
-Create a small exported pure function in the planned script interface and test it in `tests/int/e2e-seed-safety.int.spec.ts`:
+Create `tests/int/e2e-seed-safety.int.spec.ts` importing `isDisposableDatabase` from `scripts/e2e-database-guard.ts`:
 
 ```ts
 expect(isDisposableDatabase('mongodb://127.0.0.1:27017/test', undefined)).toBe(true)
 expect(isDisposableDatabase('mongodb://localhost:27017/test', undefined)).toBe(true)
-expect(isDisposableDatabase('mongodb+srv://cluster.example/test', '1')).toBe(true)
-expect(isDisposableDatabase('mongodb+srv://cluster.example/test', undefined)).toBe(false)
+expect(isDisposableDatabase('mongodb+srv://cluster.example/release-ci', '1')).toBe(true)
+expect(isDisposableDatabase('mongodb+srv://cluster.example/test', '1')).toBe(false)
+expect(isDisposableDatabase('mongodb+srv://cluster.example/release-ci', undefined)).toBe(false)
 expect(isDisposableDatabase('not-a-url', '1')).toBe(false)
 ```
 
-Run `pnpm test -- tests/int/e2e-seed-safety.int.spec.ts` and expect FAIL because the helper does not exist.
+Run `pnpm test -- tests/int/e2e-seed-safety.int.spec.ts` and expect FAIL because the guard module does not exist.
 
 - [ ] **Step 3: Implement the guarded idempotent seed**
 
-Create `scripts/seed-e2e.ts` with a module-purpose comment. Export:
+Create `scripts/e2e-database-guard.ts` with a module-purpose comment and export:
 
 ```ts
 export function isDisposableDatabase(uri: string, explicit: string | undefined): boolean
 ```
 
-Return true only for valid MongoDB URLs whose hostname is `localhost`, `127.0.0.1`, or `[::1]`, or when `explicit === '1'`. Malformed URLs always return false.
+Return true for valid MongoDB URLs whose hostname is `localhost`, `127.0.0.1`, or `[::1]`. A remote URI is accepted only when `explicit === '1'` and its database pathname ends in `-e2e` or `-ci`. Malformed URLs always return false.
+
+Create `scripts/seed-e2e.ts` with a module-purpose comment. Import the guard and execute the seed at module top level because `payload run` imports the script.
 
 When executed through `payload run`, the script must:
 
@@ -887,7 +892,7 @@ When executed through `payload run`, the script must:
 4. find or create the active FAQ `Production readiness fixture` with answer `Initial release fixture answer` and order `9999`;
 5. log only IDs and the disposable database host classification.
 
-Add `.playwright/` and `test-results/` to `.gitignore`.
+Add `.playwright/`, `playwright-report/`, and `test-results/` to `.gitignore`.
 
 Run the seed-safety unit test green and `pnpm type-check`.
 
@@ -933,10 +938,16 @@ The mutation test must fail immediately when either credential variable is absen
 
 - [ ] **Step 6: Run the complete disposable production journey**
 
-With a local disposable MongoDB running, execute:
+With a local disposable MongoDB running, execute with explicit disposable values instead of inheriting `.env`:
 
 ```bash
-E2E_DISPOSABLE_DATABASE=1 pnpm e2e:seed
+export DATABASE_URI=mongodb://127.0.0.1:27017/lolev-beer-e2e
+export PAYLOAD_SECRET=e2e-only-payload-secret
+export BLOB_READ_WRITE_TOKEN=vercel_blob_rw_e2e_only
+export E2E_DISPOSABLE_DATABASE=1
+export E2E_ADMIN_EMAIL=release-smoke@example.test
+export E2E_ADMIN_PASSWORD=e2e-only-release-smoke-password
+pnpm e2e:seed
 pnpm build
 pnpm test:e2e
 ```
@@ -946,7 +957,7 @@ Expected: all Playwright tests pass against `pnpm start`; failure artifacts are 
 - [ ] **Step 7: Commit the browser gate**
 
 ```bash
-git add package.json pnpm-lock.yaml scripts/seed-e2e.ts playwright.config.ts tests/e2e/release-smoke.spec.ts tests/int/e2e-seed-safety.int.spec.ts .gitignore
+git add package.json pnpm-lock.yaml scripts/e2e-database-guard.ts scripts/seed-e2e.ts playwright.config.ts tests/e2e/release-smoke.spec.ts tests/int/e2e-seed-safety.int.spec.ts .gitignore
 git commit -m "test(e2e): cover production release journey"
 ```
 
@@ -1093,9 +1104,16 @@ git branch --show-current
 git status --short --branch
 ```
 
-Then run:
+Then point every data-writing command at a disposable local database and run:
 
 ```bash
+export DATABASE_URI=mongodb://127.0.0.1:27017/lolev-beer-e2e
+export PAYLOAD_SECRET=e2e-only-payload-secret
+export BLOB_READ_WRITE_TOKEN=vercel_blob_rw_e2e_only
+export E2E_DISPOSABLE_DATABASE=1
+export E2E_ADMIN_EMAIL=release-smoke@example.test
+export E2E_ADMIN_PASSWORD=e2e-only-release-smoke-password
+pnpm e2e:seed
 pnpm test
 pnpm type-check
 pnpm lint
