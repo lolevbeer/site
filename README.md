@@ -153,8 +153,10 @@ pnpm generate:importmap  # Regenerate Payload import map
 
 ### Migrations on deploy
 
-`pnpm build` runs `migrate:prod` first, which executes `pnpm migrate` only when
-`VERCEL_ENV=production`. Preview and local builds skip it, so they never mutate
-the production database. A failing migration fails the build, so a deploy is
-never promoted with a half-applied migration — fix the migration and redeploy.
-Migrations live in `src/migrations/` and are registered in `src/migrations/index.ts`.
+`pnpm build` runs `migrate:prod` first, which executes idempotent and resumable
+migrations before Vercel promotion only when `VERCEL_ENV=production`. Preview and
+local builds skip migrations, so they never mutate the production database. A
+failed build can leave partial database mutation while the previous deployment
+remains live; operators must follow the [production deployment
+runbook](docs/operations/production-deploy.md). Migrations live in
+`src/migrations/` and are registered in `src/migrations/index.ts`.
