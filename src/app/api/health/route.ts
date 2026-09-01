@@ -17,3 +17,9 @@ export async function GET() {
     return NextResponse.json({ status: 'unhealthy' }, { status: 503, headers })
   }
 }
+
+/** Same probe as GET, without a body, so Shields.io website badges (HEAD) match GET status. */
+export async function HEAD() {
+  const response = await GET()
+  return new NextResponse(null, { status: response.status, headers: response.headers })
+}

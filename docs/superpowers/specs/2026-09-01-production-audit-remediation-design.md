@@ -150,13 +150,16 @@ Core validation runs when the server configuration is constructed, producing a c
 
 ### Health endpoint
 
-Add `GET /api/health`:
+Add `GET /api/health` and `HEAD /api/health`:
 
-- returns HTTP 200 with `{ "status": "ok" }` after a lightweight database ping;
-- returns HTTP 503 with `{ "status": "unhealthy" }` on configuration or database failure;
+- GET returns HTTP 200 with `{ "status": "ok" }` after a lightweight database ping;
+- GET returns HTTP 503 with `{ "status": "unhealthy" }` on configuration or database failure;
+- HEAD runs the same probe and returns the same status with an empty body so uptime badges that send HEAD match GET;
 - sets `Cache-Control: no-store`;
 - exposes no hostnames, credentials, stack traces, collection contents, or provider details;
 - logs the underlying server error through the existing logger/Sentry path.
+
+The GitHub README includes status badges for the `CI` workflow on `main`, the GitHub `Production` deployment, and a Shields.io website badge for production `https://lolev.beer/api/health` (`ok` / `unhealthy`).
 
 Route tests mock healthy and failing dependencies. Browser smoke verifies the healthy response against the disposable production server.
 

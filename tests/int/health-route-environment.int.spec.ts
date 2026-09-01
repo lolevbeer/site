@@ -13,7 +13,7 @@ beforeEach(() => {
 
 afterEach(vi.unstubAllEnvs)
 
-describe('GET /api/health environment failures', () => {
+describe('/api/health environment failures', () => {
   it('loads the route and returns the generic no-store 503 for invalid environment', async () => {
     vi.stubEnv('DATABASE_URI', '')
 
@@ -23,6 +23,22 @@ describe('GET /api/health environment failures', () => {
     expect(response.status).toBe(503)
     expect(response.headers.get('cache-control')).toBe('no-store')
     await expect(response.json()).resolves.toEqual({ status: 'unhealthy' })
+    expect(loggerError).toHaveBeenCalledWith(
+      'Application health check failed',
+      expect.objectContaining({ name: 'ServerEnvironmentError' }),
+      { stage: 'environment' },
+    )
+  })
+
+  it('answers HEAD with the same generic no-store 503 and no body', async () => {
+    vi.stubEnv('DATABASE_URI', '')
+
+    const { HEAD } = await import('@/src/app/api/health/route')
+    const response = await HEAD()
+
+    expect(response.status).toBe(503)
+    expect(response.headers.get('cache-control')).toBe('no-store')
+    expect(await response.text()).toBe('')
     expect(loggerError).toHaveBeenCalledWith(
       'Application health check failed',
       expect.objectContaining({ name: 'ServerEnvironmentError' }),

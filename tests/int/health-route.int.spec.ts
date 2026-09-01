@@ -21,15 +21,15 @@ vi.mock('@/lib/utils/logger', () => ({
   logger: { error: loggerError },
 }))
 
-import { GET } from '@/src/app/api/health/route'
+import { GET, HEAD } from '@/src/app/api/health/route'
 
-describe('GET /api/health', () => {
+describe('/api/health', () => {
   beforeEach(() => {
     checkApplicationHealth.mockReset()
     loggerError.mockReset()
   })
 
-  it('returns a non-cacheable healthy response', async () => {
+  it('returns a non-cacheable healthy GET response', async () => {
     checkApplicationHealth.mockResolvedValue(undefined)
     const response = await GET()
     expect(response.status).toBe(200)
@@ -46,6 +46,28 @@ describe('GET /api/health', () => {
     await expect(response.json()).resolves.toEqual({ status: 'unhealthy' })
     expect(loggerError).toHaveBeenCalledWith('Application health check failed', cause, {
       stage: 'database-probe',
+    })
+  })
+
+  describe('HEAD', () => {
+    it('answers with the healthy status and no body', async () => {
+      checkApplicationHealth.mockResolvedValue(undefined)
+      const response = await HEAD()
+      expect(response.status).toBe(200)
+      expect(response.headers.get('cache-control')).toBe('no-store')
+      expect(await response.text()).toBe('')
+    })
+
+    it('answers with the unhealthy status and no body', async () => {
+      const cause = new Error('mongodb://secret-host')
+      checkApplicationHealth.mockRejectedValueOnce(new HealthCheckError('database-probe', cause))
+      const response = await HEAD()
+      expect(response.status).toBe(503)
+      expect(response.headers.get('cache-control')).toBe('no-store')
+      expect(await response.text()).toBe('')
+      expect(loggerError).toHaveBeenCalledWith('Application health check failed', cause, {
+        stage: 'database-probe',
+      })
     })
   })
 })

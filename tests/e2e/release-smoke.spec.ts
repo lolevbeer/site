@@ -122,4 +122,9 @@ test('an authenticated administrator can update only the seeded FAQ and observe 
   expect(health.status()).toBe(200)
   expect(health.headers()['cache-control']).toBe('no-store')
   await expect(health.json()).resolves.toEqual({ status: 'ok' })
+
+  const healthHead = await request.head('/api/health')
+  expect(healthHead.status()).toBe(200)
+  expect(healthHead.headers()['cache-control']).toBe('no-store')
+  expect(await healthHead.text()).toBe('')
 })

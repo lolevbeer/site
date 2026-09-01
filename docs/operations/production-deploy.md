@@ -87,7 +87,7 @@ Atlas restore always starts into an isolated target for validation; do not repla
 
 1. Merge the approved commit and identify the Vercel production deployment created by auto-deploy.
 2. Confirm the build outcome. If it fails after migrations begin, treat the database as potentially partially mutated and use the failure table before retrying.
-3. After promotion, verify `/api/health` returns its expected healthy response.
+3. After promotion, verify `/api/health` returns its expected healthy response. The GitHub README health badge polls the same production URL through Shields.io and can lag by several minutes.
 4. Open the public routes relevant to the release and confirm they render and fetch data successfully.
 5. Complete an admin login with an authorized account and confirm the affected admin surfaces load.
 6. Run the same production-status wrapper used before promotion and confirm no intended migration remains pending and its target fingerprint matches the pre-promotion result.
