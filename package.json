@@ -28,6 +28,9 @@
     "migrate": "cross-env NODE_OPTIONS=--no-deprecation payload migrate",
     "migrate:status": "cross-env NODE_OPTIONS=--no-deprecation payload migrate:status",
     "migrate:prod": "if [ \"$VERCEL_ENV\" = production ]; then pnpm migrate; fi",
+    "e2e:seed": "payload run scripts/seed-e2e.ts",
+    "test:e2e": "playwright test",
+    "test:e2e:install": "playwright install chromium",
     "test": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts"
   },
   "dependencies": {
@@ -70,6 +73,7 @@
     "three": "^0.185.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4.3.3",
     "@testing-library/react": "16.3.3",
     "@types/geojson": "^7946.0.16",
