@@ -9,13 +9,17 @@ import * as Sentry from '@sentry/nextjs'
 export const UNTAPPD_FETCH_TIMEOUT_MS = 10_000
 export const UNTAPPD_MAX_BODY_BYTES = 5 * 1024 * 1024
 
-const UNTAPPD_BEER_PATH = /^\/b\/[a-z0-9][a-z0-9-]*\/\d+\/?$/i
+const UNTAPPD_BEER_PATH = /^\/b\/[a-z0-9][a-z0-9-]*\/\d+\/?$/
 const UNTAPPD_HOSTS = new Set(['untappd.com', 'www.untappd.com'])
 
 /** Returns a canonical Untappd beer URL, or null without performing I/O. */
 export function normalizeUntappdBeerUrl(input: string): URL | null {
+  const isRelativeBeerPath = input.startsWith('/b/')
+  if (input.startsWith('/') && !isRelativeBeerPath) return null
+  if (!isRelativeBeerPath && /^https?:\/\/[^/?#]*:\d*(?:[/?#]|$)/i.test(input)) return null
+
   try {
-    const parsed = input.startsWith('/') ? new URL(input, 'https://untappd.com') : new URL(input)
+    const parsed = isRelativeBeerPath ? new URL(input, 'https://untappd.com') : new URL(input)
     if (parsed.protocol !== 'https:') return null
     if (!UNTAPPD_HOSTS.has(parsed.hostname)) return null
     if (parsed.username || parsed.password || parsed.port) return null
@@ -48,7 +52,7 @@ async function readBoundedText(response: Response): Promise<string | null> {
       if (done) break
       totalBytes += value.byteLength
       if (totalBytes > UNTAPPD_MAX_BODY_BYTES) {
-        await reader.cancel()
+        await reader.cancel().catch(() => undefined)
         return null
       }
       chunks.push(value)
