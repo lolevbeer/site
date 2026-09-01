@@ -40,7 +40,6 @@ describe('readServerEnvironment', () => {
 
   it('never includes configured secret values in validation errors', () => {
     const databaseUri = 'mongodb://user:database-secret@127.0.0.1/lolev-test'
-    const payloadSecret = 'payload-secret-value'
 
     expect(() =>
       readServerEnvironment({ ...valid, DATABASE_URI: databaseUri, PAYLOAD_SECRET: '' }),
