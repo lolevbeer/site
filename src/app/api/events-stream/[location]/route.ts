@@ -8,6 +8,7 @@ import {
   transformPayloadEventToBreweryEvent,
 } from '@/lib/utils/payload-api'
 import { getPittsburghTheme } from '@/lib/utils/pittsburgh-time'
+import { STREAM_CACHE_CONTROL, isWarm } from '@/lib/utils/stream-freshness'
 
 /**
  * Events fetch for the polling endpoint. Both underlying helpers are already
@@ -35,7 +36,7 @@ async function getCachedEvents(locationSlug: string) {
   return {
     events,
     locationName: location.name,
-    timestamp: latestUpdate || Date.now(),
+    timestamp: latestUpdate,
   }
 }
 
@@ -56,6 +57,8 @@ export async function GET(
       return NextResponse.json({ error: 'Location not found' }, { status: 404 })
     }
 
+    const warm = isWarm(data.timestamp)
+
     return NextResponse.json(
       {
         events: data.events,
@@ -63,10 +66,11 @@ export async function GET(
         theme: getPittsburghTheme(),
         timestamp: data.timestamp,
         deployId: process.env.NEXT_PUBLIC_DEPLOY_ID || '',
+        warm,
       },
       {
         headers: {
-          'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=30',
+          'Cache-Control': STREAM_CACHE_CONTROL,
         },
       },
     )

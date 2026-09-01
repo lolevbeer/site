@@ -86,8 +86,11 @@ export function UpcomingFood({ foodByLocation }: UpcomingFoodProps): React.React
             const vendorName = typeof food.vendor === 'object' ? food.vendor?.name : food.vendor
             const vendorSite =
               food.site || (typeof food.vendor === 'object' ? food.vendor?.site : undefined)
-            const vendorLogo =
+            const vendorLogoThumb =
+              typeof food.vendor === 'object' ? getMediaUrl(food.vendor?.logo, 'thumbnail') : undefined
+            const vendorLogoFull =
               typeof food.vendor === 'object' ? getMediaUrl(food.vendor?.logo) : undefined
+            const vendorLogo = vendorLogoThumb || vendorLogoFull
             const timeDisplay = food.time || food.startTime
 
             return (
@@ -104,7 +107,10 @@ export function UpcomingFood({ foodByLocation }: UpcomingFoodProps): React.React
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation()
-                        setExpandedImage({ url: vendorLogo, name: vendorName || 'Vendor' })
+                        setExpandedImage({
+                          url: vendorLogoFull || vendorLogo,
+                          name: vendorName || 'Vendor',
+                        })
                       }}
                       className="relative w-16 h-16 flex-shrink-0 rounded-full overflow-hidden bg-muted cursor-zoom-in hover:ring-2 hover:ring-ring hover:ring-offset-2 transition-all"
                     >

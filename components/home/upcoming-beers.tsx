@@ -4,37 +4,16 @@ import { Button } from '@/components/ui/button'
 import { SectionHeader } from '@/components/ui/section-header'
 import { ScrollReveal } from '@/components/ui/scroll-reveal'
 import { beerHref } from '@/lib/config/beer-filters'
-import type { Beer, Style } from '@/src/payload-types'
-
-interface ComingSoonBeer {
-  beer?: (string | Beer) | null
-  style?: (string | Style) | null
-}
+import type { ComingSoonView } from '@/lib/utils/homepage-view-models'
 
 interface UpcomingBeersProps {
-  comingSoonBeers?: ComingSoonBeer[]
-}
-
-/** Extract beer object if populated, null otherwise */
-function extractBeer(item: ComingSoonBeer): Beer | null {
-  return typeof item.beer === 'object' ? item.beer : null
-}
-
-/** Extract style object if populated, null otherwise */
-function extractStyle(item: ComingSoonBeer): Style | null {
-  return typeof item.style === 'object' ? item.style : null
+  comingSoonBeers?: ComingSoonView[]
 }
 
 export function UpcomingBeers({
   comingSoonBeers = [],
 }: UpcomingBeersProps): React.ReactElement | null {
-  // Filter and normalize items with valid beer or style data
-  const validItems = comingSoonBeers
-    .map((item) => ({
-      beer: extractBeer(item),
-      style: extractStyle(item),
-    }))
-    .filter(({ beer, style }) => beer?.slug || style)
+  const validItems = comingSoonBeers.filter((item) => item.slug || item.styleName)
 
   if (validItems.length === 0) {
     return null
@@ -48,20 +27,20 @@ export function UpcomingBeers({
         </ScrollReveal>
 
         <div className="max-w-4xl mx-auto space-y-1 text-center mb-8">
-          {validItems.map(({ beer, style }, index) => (
-            <div key={index}>
-              {beer?.slug && !beer.hideFromSite ? (
+          {validItems.map((item, index) => (
+            <div key={item.slug || item.styleName || String(index)}>
+              {item.slug && !item.hideFromSite ? (
                 <Button
                   asChild
                   variant="ghost"
                   size="sm"
                   className="text-lg font-semibold h-auto py-0 px-2"
                 >
-                  <Link href={`/beer/${beer.slug}`}>{beer.name}</Link>
+                  <Link href={`/beer/${item.slug}`}>{item.name}</Link>
                 </Button>
               ) : (
                 /* Hidden beers 404 on /beer/<slug>, so keep the name but drop the link */
-                <h3 className="font-semibold text-lg">{beer?.name ?? style?.name}</h3>
+                <h3 className="font-semibold text-lg">{item.name || item.styleName}</h3>
               )}
             </div>
           ))}

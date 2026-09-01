@@ -151,6 +151,21 @@ pnpm generate:types   # Regenerate Payload types
 pnpm generate:importmap  # Regenerate Payload import map
 ```
 
+### Preview deployments
+
+Automatic Git previews are not turned off in this repository. When the Vercel
+project uses **Only build production**, ordinary non-production pushes are
+skipped (a CANCELED Git deployment may still appear). Production-branch pushes
+still build.
+
+To request an explicit preview after that setting is on:
+
+1. Dashboard: Deployments → ⋮ on the commit → **Redeploy** → uncheck **Use project's Ignore Build Step**.
+2. Or from a clean checkout of the branch: `pnpm dlx vercel deploy`.
+
+Do not apply that Vercel project setting until the implementation preview has
+been verified.
+
 ### Migrations on deploy
 
 `pnpm build` runs `migrate:prod` first, which executes `pnpm migrate` only when

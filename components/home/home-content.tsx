@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 import { HeroSection } from '@/components/home/hero-section';
 import { FeaturedBeers } from '@/components/home/featured-menu';
@@ -7,15 +5,14 @@ import { QuickInfoCards } from '@/components/home/quick-info-cards';
 import { LocationCards } from '@/components/location/location-cards';
 import { ScrollReveal } from '@/components/ui/scroll-reveal';
 import type { WeeklyHoursDay } from '@/lib/utils/payload-api';
-import type { Beer as PayloadBeer, Menu as PayloadMenu } from '@/src/payload-types';
+import type { Menu as PayloadMenu } from '@/src/payload-types';
 import type { LocationSlug } from '@/lib/types/location';
+import type { HeroBeerView } from '@/lib/utils/homepage-view-models';
 
 interface HomeContentProps {
-  availableBeers: PayloadBeer[];
+  heroBeers: HeroBeerView[];
   /** All draft menus from all locations */
   draftMenus: PayloadMenu[];
-  /** All cans menus from all locations */
-  cansMenus: PayloadMenu[];
   /** Draft tap count by location slug */
   beerCount: Record<string, number>;
   /** Cans count by location slug */
@@ -28,9 +25,8 @@ interface HomeContentProps {
 }
 
 export function HomeContent({
-  availableBeers,
+  heroBeers,
   draftMenus,
-  cansMenus,
   beerCount,
   cansCount,
   nextEvent,
@@ -41,7 +37,7 @@ export function HomeContent({
 }: HomeContentProps) {
   return (
     <div className="min-h-screen">
-      <HeroSection availableBeers={availableBeers} cansMenus={cansMenus} heroDescription={heroDescription} heroImageUrl={heroImageUrl} />
+      <HeroSection beers={heroBeers} heroDescription={heroDescription} heroImageUrl={heroImageUrl} />
 
       {/* Our Locations - right after hero */}
       <section className="py-16 lg:py-24 bg-background">

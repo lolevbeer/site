@@ -9,9 +9,14 @@ import { PageTransition } from '@/components/motion';
 import { generateEventJsonLd, generateFoodEventJsonLd } from '@/lib/utils/json-ld';
 import { generateLocalBusinessSchemas, generateOrganizationSchema, generateWebSiteSchema } from '@/lib/utils/local-business-schema';
 import { generateFullMenuSchema } from '@/lib/utils/menu-schema';
+import {
+  projectComingSoon,
+  projectHeroBeers,
+  projectMarketingBeers,
+} from '@/lib/utils/homepage-view-models';
 
-// ISR: Revalidate every 5 minutes as fallback (on-demand revalidation handles immediate updates)
-export const revalidate = 300;
+// ISR: 1h fallback. Collection hooks still revalidatePath('/') on CMS writes.
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   alternates: {
@@ -65,17 +70,26 @@ export default async function Home(): Promise<React.ReactElement> {
 
       <PageTransition>
         <MarketingText
-          draftMenusByLocation={data.draftMenusByLocation}
-          cansMenusByLocation={data.cansMenusByLocation}
+          draftBeersByLocation={Object.fromEntries(
+            Object.entries(data.draftMenusByLocation).map(([slug, menu]) => [
+              slug,
+              projectMarketingBeers(menu),
+            ]),
+          )}
+          cansBeersByLocation={Object.fromEntries(
+            Object.entries(data.cansMenusByLocation).map(([slug, menu]) => [
+              slug,
+              projectMarketingBeers(menu),
+            ]),
+          )}
           eventsByLocation={data.eventsMarketingByLocation}
           foodByLocation={data.foodMarketingByLocation}
-          comingSoonBeers={data.comingSoonBeers}
+          comingSoonBeers={projectComingSoon(data.comingSoonBeers)}
         />
 
         <HomeContent
-          availableBeers={data.availableBeers}
+          heroBeers={projectHeroBeers(data.availableBeers, data.allCansMenus)}
           draftMenus={data.allDraftMenus}
-          cansMenus={data.allCansMenus}
           beerCount={data.beerCount}
           cansCount={data.cansCount}
           nextEvent={data.nextEvent}
@@ -89,7 +103,7 @@ export default async function Home(): Promise<React.ReactElement> {
 
           <UpcomingEvents eventsByLocation={data.eventsByLocation} />
 
-          <UpcomingBeers comingSoonBeers={data.comingSoonBeers} />
+          <UpcomingBeers comingSoonBeers={projectComingSoon(data.comingSoonBeers)} />
         </HomeContent>
       </PageTransition>
     </>

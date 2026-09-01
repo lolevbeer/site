@@ -6,19 +6,13 @@
  * Cost-effective design:
  * - No query params, so all displays share one CDN cache entry per endpoint
  * - Client-side timestamp comparison avoids unnecessary state updates
- * - Adaptive polling reduces idle-time requests by 50-80%
+ * - 10s warm / 30s idle polling aligned with the shared CDN object
  * @module
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 
-/** No-change poll counts before slowing down */
-const SLOW_AFTER = 30
-const SLOWER_AFTER = 90
-
-/** Multipliers applied to the base poll interval at each slowdown tier */
-const MEDIUM_MULTIPLIER = 2.5
-const SLOW_MULTIPLIER = 5
+import { selectPollInterval } from '@/lib/hooks/poll-interval'
 
 interface PollingResponse {
   timestamp: number
@@ -30,7 +24,7 @@ interface PollingResponse {
 export interface UsePollingOptions {
   /** Whether polling is enabled (default: true) */
   enabled?: boolean
-  /** Base poll interval in ms (default: 2000) */
+  /** Unused. Intervals come from selectPollInterval (10s warm / 30s idle). */
   pollInterval?: number
 }
 
@@ -41,16 +35,6 @@ interface UsePollingResult<T> {
   error: Error | null
   /** Increments on each successful poll */
   pollCount: number
-}
-
-/**
- * Compute the next poll delay based on how many consecutive polls returned
- * unchanged data. Slows from base -> 2.5x -> 5x as idle time increases.
- */
-function getAdaptiveInterval(baseInterval: number, noChangeCount: number): number {
-  if (noChangeCount >= SLOWER_AFTER) return baseInterval * SLOW_MULTIPLIER
-  if (noChangeCount >= SLOW_AFTER) return baseInterval * MEDIUM_MULTIPLIER
-  return baseInterval
 }
 
 /**
@@ -75,7 +59,7 @@ export function usePolling<T, R extends PollingResponse>(
   applyResponse: (response: R) => { data: T; theme: 'light' | 'dark' },
   options: UsePollingOptions = {},
 ): UsePollingResult<T> {
-  const { enabled = true, pollInterval = 2000 } = options
+  const { enabled = true } = options
 
   // A poll result is stored together with the server-supplied `initialData` it
   // was layered on top of. When the server re-renders with fresh props that
@@ -90,9 +74,14 @@ export function usePolling<T, R extends PollingResponse>(
   const [pollCount, setPollCount] = useState(0)
 
   const pollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const abortRef = useRef<AbortController | null>(null)
   const lastTimestampRef = useRef(0)
   const deployIdRef = useRef<string | null>(null)
   const noChangeCountRef = useRef(0)
+  const consecutiveErrorsRef = useRef(0)
+  const successfulPollsRef = useRef(0)
+  const lastWarmRef = useRef(false)
+  const generationRef = useRef(0)
 
   // Store applyResponse in a ref so poll() always uses the latest callback
   // without needing it in the useCallback dependency array. Written in an
@@ -116,14 +105,20 @@ export function usePolling<T, R extends PollingResponse>(
   const poll = useCallback(async () => {
     if (!url || !enabled) return
 
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+    const generation = ++generationRef.current
+
     try {
-      const response = await fetch(url, { cache: 'no-store' })
+      const response = await fetch(url, { signal: controller.signal })
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`)
       }
 
       const raw: R = await response.json()
+      if (generation !== generationRef.current) return
 
       // Detect new deployment and force a full page reload
       if (raw.deployId) {
@@ -138,12 +133,12 @@ export function usePolling<T, R extends PollingResponse>(
       const applied = applyResponseRef.current(raw)
 
       // Only update data state when timestamp has changed
+      lastWarmRef.current = Boolean(raw.warm)
       if (raw.timestamp !== lastTimestampRef.current) {
         lastTimestampRef.current = raw.timestamp
         setPolled({ base: initialDataRef.current, value: applied.data })
         noChangeCountRef.current = 0
       } else if (raw.warm) {
-        // Editor is active -- snap back to fast polling to catch upcoming changes
         noChangeCountRef.current = 0
       } else {
         noChangeCountRef.current += 1
@@ -152,20 +147,36 @@ export function usePolling<T, R extends PollingResponse>(
       // Always update theme (handles time-of-day transitions even without data changes)
       setTheme(applied.theme)
 
+      consecutiveErrorsRef.current = 0
+      successfulPollsRef.current += 1
       setIsConnected(true)
       setError(null)
       setPollCount((prev) => prev + 1)
     } catch (err) {
+      if (controller.signal.aborted || generation !== generationRef.current) return
+      consecutiveErrorsRef.current += 1
+      lastWarmRef.current = false
       setError(err instanceof Error ? err : new Error('Polling failed'))
       setIsConnected(false)
     }
 
-    // Schedule next poll with adaptive interval
-    if (enabled) {
-      const nextInterval = getAdaptiveInterval(pollInterval, noChangeCountRef.current)
-      pollTimeoutRef.current = setTimeout(() => pollRef.current(), nextInterval)
+    if (generation !== generationRef.current) return
+    if (pollTimeoutRef.current) {
+      clearTimeout(pollTimeoutRef.current)
+      pollTimeoutRef.current = null
     }
-  }, [url, enabled, pollInterval])
+    if (!enabled) return
+    const hidden = typeof document !== 'undefined' && document.hidden
+    const nextInterval = selectPollInterval({
+      noChangeCount: noChangeCountRef.current,
+      warm: lastWarmRef.current,
+      consecutiveErrors: consecutiveErrorsRef.current,
+      hidden,
+      isInitial: successfulPollsRef.current === 1 && consecutiveErrorsRef.current === 0,
+    })
+    if (nextInterval === null) return
+    pollTimeoutRef.current = setTimeout(() => pollRef.current(), nextInterval)
+  }, [url, enabled])
 
   useEffect(() => {
     pollRef.current = poll
@@ -176,7 +187,26 @@ export function usePolling<T, R extends PollingResponse>(
       poll()
     }
 
+    const onVisibility = () => {
+      if (typeof document === 'undefined') return
+      if (pollTimeoutRef.current) {
+        clearTimeout(pollTimeoutRef.current)
+        pollTimeoutRef.current = null
+      }
+      if (document.hidden) {
+        abortRef.current?.abort()
+        return
+      }
+      noChangeCountRef.current = 0
+      lastWarmRef.current = true
+      if (enabled && url) pollRef.current()
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+
     return () => {
+      document.removeEventListener('visibilitychange', onVisibility)
+      abortRef.current?.abort()
+      generationRef.current += 1
       if (pollTimeoutRef.current) {
         clearTimeout(pollTimeoutRef.current)
         pollTimeoutRef.current = null

@@ -6,6 +6,7 @@ import { FeaturedBeers, FeaturedCans } from '@/components/home/featured-menu'
 import type { Menu } from '@/src/payload-types'
 import { getThemeVars } from '@/lib/utils/display-theme'
 import { seededLightColors } from '@/lib/utils/seeded-colors'
+import { useColorCycleSeed } from '@/lib/hooks/color-cycle'
 
 interface LiveMenuProps {
   menuUrl: string
@@ -16,22 +17,20 @@ interface LiveMenuProps {
  * Live-updating menu display component
  *
  * Uses polling against a cached endpoint for real-time updates.
- * - Polls every 2 seconds for near-instant updates
+ * - Polls every 10s while warm, 30s when idle (CDN-aligned)
  * - Cache is invalidated on-demand when menu is updated in Payload
  * - Much more cost-effective than SSE on Vercel (no persistent connections)
  * - Applies dark mode via inline CSS variables for maximum browser compatibility
  */
 export function LiveMenu({ menuUrl, initialMenu }: LiveMenuProps) {
-  const { menu, theme, pollCount } = useMenuStream(menuUrl, initialMenu, {
+  const { menu, theme } = useMenuStream(menuUrl, initialMenu, {
     enabled: true,
-    pollInterval: 2000,
   })
-
   // Use streamed menu if available, otherwise fall back to initial
   const displayMenu = menu || initialMenu
 
   // Generate deterministic light colors that cycle every ~30 seconds (dark mode only)
-  const colorSeed = Math.floor(pollCount / 15)
+  const colorSeed = useColorCycleSeed()
   const itemColors = useMemo(() => {
     const itemCount = displayMenu.items?.length || 0
     if (itemCount === 0 || theme !== 'dark') return undefined

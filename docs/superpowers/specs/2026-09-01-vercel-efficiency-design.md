@@ -63,7 +63,7 @@ Four layers sit between a Payload save and a kiosk pixel:
 |---|---|---|---|
 | 1. Mongo / Payload | source of truth | unchanged | the write itself |
 | 2. Next data cache (`unstable_cache`) | `getMenuByUrl` revalidate 60s, tags `menus` + `menu-${url}`; events helpers already tag-cached with no extra route wrapper | menu fallback 3,600s; **remove** the nested `unstable_cache` in `menu-stream` | `revalidateTag` / `revalidatePath` from `src/plugins/revalidation-plugin.ts` and `revalidateMenusForBeer` |
-| 3. HTTP CDN (`Cache-Control` on the stream routes) | `s-maxage=10, stale-while-revalidate=30` | `public, s-maxage=30, stale-while-revalidate=60` | time. Tag invalidation does **not** purge this object |
+| 3. HTTP CDN (`Cache-Control` on the stream routes) | `s-maxage=10, stale-while-revalidate=30` | `public, max-age=0, s-maxage=30, stale-while-revalidate=60` | time. Tag invalidation does **not** purge this object |
 | 4. Client poll | menu 2s / events 5s, `fetch(..., { cache: 'no-store' })`, adaptive slowdown to 5× | see [Polling state machine](#polling-state-machine) | the next poll after layer 3 has a new body |
 
 `revalidateTag` / `revalidatePath` make layer 2 fresh immediately. Layer 3 is an independent edge object. After a CMS write the first request that is allowed to miss or revalidate layer 3 (at `s-maxage`, 30s) rebuilds from layer 2 and publishes a new shared body. Constraint 2 then allows one more poll interval (30s idle) before every display must show that body.
@@ -215,7 +215,7 @@ Events-stream already has no nested cache; it only gains `warm` plus the shared 
 The shared response policy for both stream routes becomes:
 
 ```text
-Cache-Control: public, s-maxage=30, stale-while-revalidate=60
+Cache-Control: public, max-age=0, s-maxage=30, stale-while-revalidate=60
 ```
 
 Acceptance conditions:

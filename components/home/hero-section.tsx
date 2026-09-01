@@ -13,20 +13,16 @@ import {
   CarouselPrevious,
 } from '@/components/ui/carousel'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import type { Beer as PayloadBeer, Menu as PayloadMenu } from '@/src/payload-types'
-import { extractBeerFromMenuItem } from '@/lib/utils/menu-item-utils'
-import { getBeerImageUrl } from '@/lib/utils/media-utils'
+import type { HeroBeerView } from '@/lib/utils/homepage-view-models'
 
 interface HeroSectionProps {
-  availableBeers: PayloadBeer[]
-  cansMenus: PayloadMenu[]
+  beers: HeroBeerView[]
   heroDescription?: string
   heroImageUrl?: string | null
 }
 
 export function HeroSection({
-  availableBeers,
-  cansMenus,
+  beers,
   heroDescription,
   heroImageUrl,
 }: HeroSectionProps) {
@@ -35,22 +31,10 @@ export function HeroSection({
     setImageErrors((prev) => new Set(prev).add(beerId))
   }
 
-  // Pre-filter to beers in cans menus with valid images
-  const displayBeers = useMemo(() => {
-    const cansIds = new Set<string>()
-    for (const menu of cansMenus) {
-      if (!menu.items) continue
-      for (const item of menu.items) {
-        const beer = extractBeerFromMenuItem(item)
-        if (beer?.id) cansIds.add(beer.id)
-      }
-    }
-    return availableBeers
-      .filter(
-        (beer) => cansIds.has(beer.id) && getBeerImageUrl(beer.image) && !imageErrors.has(beer.id),
-      )
-      .map((beer) => ({ beer, imageUrl: getBeerImageUrl(beer.image)! }))
-  }, [availableBeers, cansMenus, imageErrors])
+  const displayBeers = useMemo(
+    () => beers.filter((beer) => !imageErrors.has(beer.id)),
+    [beers, imageErrors],
+  )
 
   return (
     <div className="relative flex flex-col gap-8 md:gap-16 px-4 md:px-8 py-16 md:py-24 text-center min-h-[600px] md:min-h-[700px]">
@@ -93,7 +77,7 @@ export function HeroSection({
                   aria-label="Available beers carousel"
                 >
                   <CarouselContent className="-ml-4">
-                    {displayBeers.map(({ beer, imageUrl }, index) => (
+                    {displayBeers.map((beer, index) => (
                       <CarouselItem
                         key={beer.id}
                         className="pl-4 basis-1/4 sm:basis-1/5 md:basis-1/4 lg:basis-1/6 xl:basis-1/8 2xl:basis-1/8"
@@ -107,7 +91,7 @@ export function HeroSection({
                             >
                               <div className="relative h-16 w-16 md:h-24 md:w-24 rounded-lg bg-transparent transition-transform duration-200 ease-out group-hover:-translate-y-1 group-hover:scale-105">
                                 <Image
-                                  src={imageUrl}
+                                  src={beer.imageUrl}
                                   alt={`${beer.name} beer can`}
                                   fill
                                   className="object-contain drop-shadow-sm group-hover:drop-shadow-md transition-all duration-200"

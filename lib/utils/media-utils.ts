@@ -77,7 +77,7 @@ export function canSpriteAnimation(url: string): CSSProperties {
  * Type for Payload Media objects
  * Matches the essential fields from Payload's Media collection
  */
-type MediaSize = 'thumbnail' | 'card' | 'detail'
+export type MediaSize = 'thumbnail' | 'card' | 'detail'
 
 interface MediaSizeObject {
   url?: string | null
@@ -136,9 +136,14 @@ export function getMediaUrl(media: unknown, size?: MediaSize): string | undefine
  *
  * @param image - The beer's image field value
  * @param slugOrVariant - Optional slug or variant for local image path fallback
+ * @param size - Optional Payload derivative (`thumbnail` for 64/96px renders)
  * @returns The image URL string, or null if not available
  */
-export function getBeerImageUrl(image: unknown, slugOrVariant?: string): string | null {
+export function getBeerImageUrl(
+  image: unknown,
+  slugOrVariant?: string,
+  size?: MediaSize,
+): string | null {
   if (!image) return null
 
   // Already a URL string (from payload-adapter conversion or direct URL)
@@ -150,13 +155,7 @@ export function getBeerImageUrl(image: unknown, slugOrVariant?: string): string 
     return null
   }
 
-  // Payload Media object with url property
-  if (typeof image === 'object' && image !== null && 'url' in image) {
-    const url = (image as MediaObject).url
-    return url ? normalizeUrl(url) : null
-  }
-
-  return null
+  return getMediaUrl(image, size) ?? null
 }
 
 /**
@@ -166,11 +165,8 @@ export function getBeerImageUrl(image: unknown, slugOrVariant?: string): string 
  * @param image - The image field value
  * @returns The normalized URL string, or null if not available
  */
-export function getLocationImageUrl(image: unknown): string | null {
+export function getLocationImageUrl(image: unknown, size?: MediaSize): string | null {
   if (!image) return null
   if (typeof image === 'string') return image
-  if (typeof image === 'object' && image !== null && 'url' in image) {
-    return (image as MediaObject).url || null
-  }
-  return null
+  return getMediaUrl(image, size) ?? null
 }

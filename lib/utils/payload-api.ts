@@ -350,6 +350,9 @@ async function findMenuByUrl(url: string): Promise<PayloadMenu | null> {
  * Get menu by URL slug (e.g., 'lawrenceville-draft', 'zelienople-cans')
  * Cached until the 'menus' tag or this menu's own `menu-${url}` tag is invalidated
  */
+/** Tagged data-cache fallback. On-demand tags remain the freshness path. */
+export const MENU_DATA_CACHE_REVALIDATE_SECONDS = 3600
+
 export const getMenuByUrl = async (url: string): Promise<PayloadMenu | null> => {
   try {
     return await unstable_cache(
@@ -358,7 +361,7 @@ export const getMenuByUrl = async (url: string): Promise<PayloadMenu | null> => 
       // menu-${url} lets beer edits invalidate only the menus that contain the
       // beer (see revalidateMenusForBeer in src/collections/Beers.ts) instead
       // of nuking every menu via the broad 'menus' tag.
-      { tags: [CACHE_TAGS.menus, `menu-${url}`], revalidate: 60 }, // 1 min fallback for menus
+      { tags: [CACHE_TAGS.menus, `menu-${url}`], revalidate: MENU_DATA_CACHE_REVALIDATE_SECONDS },
     )()
   } catch (error) {
     logger.error(`Error fetching menu by URL: ${url}`, error)
@@ -465,7 +468,7 @@ export function extractVendorInfo(
     return {
       name: v.name,
       site: (fallbackSite || v.site) ?? undefined,
-      logoUrl: getMediaUrl(v.logo) ?? undefined,
+      logoUrl: getMediaUrl(v.logo, 'thumbnail') ?? undefined,
     }
   }
   return {

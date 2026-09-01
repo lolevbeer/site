@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
-import type { Beer as PayloadBeer, Menu as PayloadMenu, Event as PayloadEvent } from '@/src/payload-types';
+import React, { useEffect, useState } from 'react';
+import type { Event as PayloadEvent } from '@/src/payload-types';
 import { formatAbv } from '@/lib/utils/formatters';
-import { extractBeerFromMenuItem } from '@/lib/utils/menu-item-utils';
+import type { ComingSoonView, MarketingBeerView } from '@/lib/utils/homepage-view-models';
 import { Button } from '@/components/ui/button';
 import { useLocationContext } from '@/components/location/location-provider';
 import { getLocationDisplayName } from '@/lib/config/locations';
@@ -24,23 +24,8 @@ function toBoldUnicode(text: string): string {
   return text.split('').map(char => boldMap[char] || char).join('');
 }
 
-interface ComingSoonBeer {
-  beer?: {
-    name: string;
-    slug: string;
-    style?: { name: string } | string | null;
-  } | string | null;
-  style?: {
-    name: string;
-  } | string | null;
-}
-
-interface SimpleBeer {
-  variant: string;
-  name: string;
-  type: string;
-  abv: string | number;
-}
+type ComingSoonBeer = ComingSoonView
+type SimpleBeer = MarketingBeerView
 
 /** Minimal food shape covering both PayloadFood and RecurringFoodEntry */
 interface MarketingFood {
@@ -50,66 +35,22 @@ interface MarketingFood {
 }
 
 interface MarketingTextProps {
-  /** Draft menus by location slug */
-  draftMenusByLocation: Record<string, PayloadMenu | null>;
-  /** Cans menus by location slug */
-  cansMenusByLocation: Record<string, PayloadMenu | null>;
-  /** Events by location slug */
+  draftBeersByLocation: Record<string, SimpleBeer[]>;
+  cansBeersByLocation: Record<string, SimpleBeer[]>;
   eventsByLocation: Record<string, PayloadEvent[]>;
-  /** Food by location slug */
   foodByLocation: Record<string, MarketingFood[]>;
   comingSoonBeers: ComingSoonBeer[];
 }
 
 export function MarketingText({
-  draftMenusByLocation,
-  cansMenusByLocation,
+  draftBeersByLocation,
+  cansBeersByLocation,
   eventsByLocation,
   foodByLocation,
   comingSoonBeers,
 }: MarketingTextProps) {
   const [isVisible, setIsVisible] = useState(false);
   const { locations } = useLocationContext();
-
-  // Helper to convert Menu to Beer array
-  const convertMenuToBeers = (menuData: PayloadMenu | null): SimpleBeer[] => {
-    if (!menuData?.items) return [];
-
-    return menuData.items
-      .map((item) => {
-        const beer = extractBeerFromMenuItem(item);
-        if (!beer) return null;
-
-        const beerObj = beer as PayloadBeer & { variant?: string; type?: string };
-
-        return {
-          variant: beerObj.slug || beerObj.variant || '',
-          name: beerObj.name,
-          type: typeof beerObj.style === 'object' && beerObj.style?.name
-            ? beerObj.style.name
-            : (typeof beerObj.style === 'string' ? beerObj.style : beerObj.type || ''),
-          abv: beerObj.abv || 0,
-        };
-      })
-      .filter((beer): beer is NonNullable<typeof beer> => beer !== null);
-  };
-
-  // Convert menus to beer arrays by location
-  const draftBeersByLocation = useMemo(() => {
-    const result: Record<string, SimpleBeer[]> = {};
-    for (const [slug, menu] of Object.entries(draftMenusByLocation)) {
-      result[slug] = convertMenuToBeers(menu);
-    }
-    return result;
-  }, [draftMenusByLocation]);
-
-  const cansBeersByLocation = useMemo(() => {
-    const result: Record<string, SimpleBeer[]> = {};
-    for (const [slug, menu] of Object.entries(cansMenusByLocation)) {
-      result[slug] = convertMenuToBeers(menu);
-    }
-    return result;
-  }, [cansMenusByLocation]);
 
   useEffect(() => {
     const checkHash = () => {
@@ -308,15 +249,9 @@ export function MarketingText({
               {comingSoonBeers.length > 0 && (
                 <div>
                   <div className="mb-2">{toBoldUnicode('UPCOMING BEER RELEASES')}</div>
-                  {comingSoonBeers.map((item, index) => {
-                    // Get beer name from relationship or use style name
-                    const beerName = typeof item.beer === 'object' && item.beer?.name
-                      ? item.beer.name
-                      : typeof item.style === 'object' && item.style?.name
-                        ? item.style.name
-                        : 'Coming Soon';
-                    return <div key={index}>{beerName}</div>;
-                  })}
+                  {comingSoonBeers.map((item, index) => (
+                    <div key={index}>{item.name || item.styleName || 'Coming Soon'}</div>
+                  ))}
                 </div>
               )}
             </div>

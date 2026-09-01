@@ -9,6 +9,7 @@ import type { BreweryEvent } from '@/lib/types/event'
 import type { FoodItem } from '@/src/app/(frontend)/e/[location]/page'
 import type { PayloadMenu } from '@/lib/utils/payload-api'
 import { seededLightColors } from '@/lib/utils/seeded-colors'
+import { useColorCycleSeed } from '@/lib/hooks/color-cycle'
 import { getThemeVars } from '@/lib/utils/display-theme'
 import { getTodayEST, toESTDate } from '@/lib/utils/date'
 import { format } from 'date-fns'
@@ -142,15 +143,15 @@ export function LiveEvents({
   cansMenu,
   initialLocationName,
 }: LiveEventsProps) {
-  const { events, locationName, theme, pollCount } = useEventsStream(
+  const { events, locationName, theme } = useEventsStream(
     location,
     initialEvents,
     initialLocationName,
     {
       enabled: true,
-      pollInterval: 5000,
     },
   )
+  const colorSeed = useColorCycleSeed()
 
   // Combine events and food into a single sorted list
   type DisplayItem = { type: 'event'; data: BreweryEvent } | { type: 'food'; data: FoodItem }
@@ -250,7 +251,7 @@ export function LiveEvents({
   }
 
   // Generate deterministic light colors that cycle every ~30 seconds (dark mode only)
-  const colorSeed = Math.floor(pollCount / 6)
+
   const itemColors = useMemo(() => {
     const itemCount = combinedItems.length
     if (itemCount === 0 || theme !== 'dark') return undefined
