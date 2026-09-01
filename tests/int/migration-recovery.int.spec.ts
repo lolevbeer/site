@@ -32,4 +32,15 @@ describe('migration recovery manifest', () => {
       verify: expect.stringMatching(/Atlas restore or immediate compatible roll-forward/i),
     })
   })
+
+  it('requires safe index and write preconditions before retrying year scoping', () => {
+    const recovery = migrationRecovery.find(
+      ({ name }) => name === '20260829_120000_scope_recurring_food_by_year',
+    )
+
+    expect(recovery).toMatchObject({
+      retry: expect.stringMatching(/quiesce.*writes/i),
+      verify: expect.stringMatching(/duplicate.*location.*year.*day.*occurrence/i),
+    })
+  })
 })
