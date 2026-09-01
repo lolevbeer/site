@@ -15,48 +15,30 @@ export class HealthCheckError extends Error {
   }
 }
 
+/** Runs one probe phase and tags any failure with its stage. */
+async function stage<T>(name: HealthCheckStage, run: () => Promise<T> | T): Promise<T> {
+  try {
+    return await run()
+  } catch (error) {
+    throw new HealthCheckError(
+      name,
+      error instanceof Error ? error : new Error('Unknown health check failure'),
+    )
+  }
+}
+
 export async function checkApplicationHealth(): Promise<void> {
-  try {
-    readServerEnvironment()
-  } catch (error) {
-    throw new HealthCheckError(
-      'environment',
-      error instanceof Error ? error : new Error('Unknown health check failure'),
-    )
-  }
-
-  let config: Awaited<ReturnType<typeof loadPayloadConfig>>
-  try {
-    config = await loadPayloadConfig()
-  } catch (error) {
-    throw new HealthCheckError(
-      'payload-init',
-      error instanceof Error ? error : new Error('Unknown health check failure'),
-    )
-  }
-
-  let payload: Awaited<ReturnType<typeof getPayload>>
-  try {
-    payload = await getPayload({ config })
-  } catch (error) {
-    throw new HealthCheckError(
-      'payload-init',
-      error instanceof Error ? error : new Error('Unknown health check failure'),
-    )
-  }
-  try {
+  await stage('environment', () => readServerEnvironment())
+  const config = await stage('payload-init', loadPayloadConfig)
+  const payload = await stage('payload-init', () => getPayload({ config }))
+  await stage('database-probe', async () => {
     const database = payload.db.collections.locations?.collection.conn.db
     if (!database) {
       throw new Error('Native MongoDB database handle is unavailable')
     }
 
     await database.command({ ping: 1 }, { timeoutMS: 5000 })
-  } catch (error) {
-    throw new HealthCheckError(
-      'database-probe',
-      error instanceof Error ? error : new Error('Unknown health check failure'),
-    )
-  }
+  })
 }
 
 async function loadPayloadConfig() {
