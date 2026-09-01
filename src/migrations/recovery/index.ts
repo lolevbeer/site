@@ -1,4 +1,10 @@
-/** Recovery evidence for each production migration, in registry order. */
+/**
+ * Recovery evidence for each production migration, in registry order.
+ *
+ * Lives in a subdirectory because `payload migrate` loads every `.ts`/`.js`
+ * sibling of `src/migrations/index.ts` (except index itself) and calls `up()`.
+ * A sibling `recovery.ts` is treated as a migration named `recovery`.
+ */
 export type MigrationRecoveryMode = 'down' | 'roll-forward' | 'restore'
 
 export interface MigrationRecovery {
