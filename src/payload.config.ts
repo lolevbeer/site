@@ -37,6 +37,7 @@ import { syncUntappdRatings } from './endpoints/sync-untappd-ratings'
 import { adminAccess, hasRole } from './access/roles'
 import { syncUntappdRatingsTask } from './jobs/sync-untappd-ratings'
 import { getLocalDevOrigins } from '../lib/config/payload-origins'
+import { readServerEnvironment } from '../lib/config/server-env'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -49,6 +50,8 @@ const dirname = path.dirname(filename)
 const isMigrationCommand = process.argv.some(
   (arg) => arg === 'migrate' || arg.startsWith('migrate:'),
 )
+
+const serverEnv = readServerEnvironment()
 
 // Allowed origins for CORS and CSRF
 const allowedOrigins = [
@@ -175,12 +178,12 @@ export default buildConfig({
     SiteContent,
   ],
   editor: lexicalEditor(),
-  secret: process.env.PAYLOAD_SECRET || '',
+  secret: serverEnv.payloadSecret,
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
   db: mongooseAdapter({
-    url: process.env.DATABASE_URI || '',
+    url: serverEnv.databaseUri,
     // Payload wraps an entire migration in one MongoDB transaction, but Atlas
     // enforces transactionLifetimeLimitSeconds (60s by default) and kills any
     // that outlive it. The normalization migrations page the whole beer and
@@ -219,7 +222,7 @@ export default buildConfig({
       collections: {
         media: true,
       },
-      token: process.env.BLOB_READ_WRITE_TOKEN || '',
+      token: serverEnv.blobReadWriteToken,
     }),
   ],
   endpoints: [
