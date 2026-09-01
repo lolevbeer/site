@@ -193,11 +193,14 @@ export default buildConfig({
     // the writes roll back, so the migration can never finish.
     //
     // Migrations do not all have interchangeable recovery semantics. The recovery
-    // manifest governs partial failures: batch `migrate:down` is prohibited, and
-    // recovery requires the recorded migration-specific roll-forward or restore
-    // procedure. Disabling Payload's transaction here avoids Atlas's 60-second
-    // transaction lifetime limit; it does not make a partial migration safe to
-    // rerun without following that manifest.
+    // manifest in src/migrations/recovery/ governs partial failures: batch
+    // `migrate:down` is prohibited, and recovery requires the recorded
+    // migration-specific roll-forward or restore procedure. The manifest is not
+    // a sibling of the migration files because `payload migrate` loads every
+    // `.ts`/`.js` file in that directory except index and calls `up()`.
+    // Disabling Payload's transaction here avoids Atlas's 60-second transaction
+    // lifetime limit; it does not make a partial migration safe to rerun without
+    // following that manifest.
     ...(isMigrationCommand ? { transactionOptions: false as const } : {}),
     // Serverless connection hardening. Each Vercel lambda opens its own Mongoose
     // pool; the MongoDB driver default is maxPoolSize 100. A post-deploy ISR

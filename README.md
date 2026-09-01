@@ -94,7 +94,7 @@ migration-specific. For recurring-food normalization, record the normalized
 schedule and exclusion counts, confirm both are at most 10,000, and confirm
 there is no unresolved duplicate-key state; otherwise use a reviewed
 roll-forward. Review the migration [recovery
-manifest](src/migrations/recovery.ts) and [production deployment
+manifest](src/migrations/recovery/index.ts) and [production deployment
 runbook](docs/operations/production-deploy.md) before recovery.
 
 A failed build can leave partial database mutation while the previous
@@ -103,7 +103,9 @@ an approved retry or targeted roll-forward is permitted. Where the manifest
 requires it, an immediate compatible roll-forward or isolated Atlas restore is
 mandatory. Rolling back the deployment does not reverse database mutations.
 Migrations live in `src/migrations/` and are registered in
-`src/migrations/index.ts`.
+`src/migrations/index.ts`. `payload migrate` auto-discovers every `.ts`/`.js`
+file in that directory except `index.ts`; keep the recovery manifest in
+`src/migrations/recovery/` so it is not treated as a migration.
 
 ## Collections
 

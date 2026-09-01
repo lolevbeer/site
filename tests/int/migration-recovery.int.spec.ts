@@ -1,7 +1,13 @@
 /** Every registered production migration has explicit compatibility and recovery evidence. */
+import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { migrations } from '@/src/migrations'
 import { migrationRecovery } from '@/src/migrations/recovery'
+
+/** Payload's migrate CLI loads every sibling `.ts`/`.js` except `index.ts`/`index.js`. */
+const MIGRATIONS_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../src/migrations')
 
 describe('migration recovery manifest', () => {
   it('covers the migration registry in the same order', () => {
@@ -42,5 +48,20 @@ describe('migration recovery manifest', () => {
       retry: expect.stringMatching(/quiesce.*writes/i),
       verify: expect.stringMatching(/duplicate.*location.*year.*day.*occurrence/i),
     })
+  })
+
+  it('does not place non-migration modules where Payload auto-discovers up functions', () => {
+    const discovered = fs
+      .readdirSync(MIGRATIONS_DIR)
+      .filter(
+        (name) =>
+          (name.endsWith('.ts') || name.endsWith('.js')) &&
+          name !== 'index.ts' &&
+          name !== 'index.js',
+      )
+      .map((name) => name.split('.')[0])
+      .sort()
+
+    expect(discovered).toEqual([...migrations.map(({ name }) => name)].sort())
   })
 })
