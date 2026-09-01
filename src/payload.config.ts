@@ -210,10 +210,12 @@ export default buildConfig({
     connectOptions: {
       maxPoolSize: 10,
       maxIdleTimeMS: 10000,
-      // Keep readiness probes beneath deployment-monitor deadlines when MongoDB
-      // blackholes a connection rather than rejecting it immediately.
+      // Bound initial selection and established-socket operations alike so a
+      // blackholed MongoDB connection returns the health route's 503 within
+      // the five-second readiness budget.
       connectTimeoutMS: 5000,
       serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 5000,
     },
   }),
   sharp,
