@@ -29,12 +29,22 @@ test('the mobile menu keeps keyboard focus inside its dialog and restores the tr
 
   const dialog = page.getByRole('dialog', { name: 'Mobile navigation menu' })
   await expect(dialog).toBeVisible()
-  const linkCount = await dialog.getByRole('link').count()
+  const links = dialog.getByRole('link')
+  const linkCount = await links.count()
+  const focusedLinks = new Set<number>()
 
   for (let tab = 0; tab <= linkCount; tab += 1) {
     await page.keyboard.press('Tab')
     expect(await dialog.evaluate((element) => element.contains(document.activeElement))).toBe(true)
+
+    for (let index = 0; index < linkCount; index += 1) {
+      if (await links.nth(index).evaluate((element) => element === document.activeElement)) {
+        focusedLinks.add(index)
+      }
+    }
   }
+
+  expect(focusedLinks).toEqual(new Set(Array.from({ length: linkCount }, (_, index) => index)))
 
   await page.keyboard.press('Escape')
   await expect(dialog).toBeHidden()
@@ -51,6 +61,7 @@ test('the admin route redirects unauthenticated visitors to its labeled login fo
 
 test('an authenticated administrator can update only the seeded FAQ and observe the revalidated page', async ({
   page,
+  request: unauthenticatedRequest,
 }) => {
   const email = process.env.E2E_ADMIN_EMAIL
   const password = process.env.E2E_ADMIN_PASSWORD
@@ -60,9 +71,6 @@ test('an authenticated administrator can update only the seeded FAQ and observe 
   }
 
   const request = page.context().request
-  const login = await request.post('/api/users/login', { data: { email, password } })
-  expect(login.ok()).toBe(true)
-
   const findFixture = await request.get('/api/faqs', {
     params: { 'where[question][equals]': fixtureQuestion },
   })
@@ -73,6 +81,18 @@ test('an authenticated administrator can update only the seeded FAQ and observe 
   expect(fixture.docs[0]).toMatchObject({ question: fixtureQuestion })
 
   const answer = `Release-smoke answer ${Date.now()}`
+  const rejectedUpdate = await unauthenticatedRequest.patch(`/api/faqs/${fixture.docs[0].id}`, {
+    data: { answer },
+  })
+  expect([401, 403]).toContain(rejectedUpdate.status())
+
+  const login = await request.post('/api/users/login', { data: { email, password } })
+  expect(login.ok()).toBe(true)
+
+  const currentUser = await request.get('/api/users/me')
+  expect(currentUser.ok()).toBe(true)
+  await expect(currentUser.json()).resolves.toMatchObject({ user: { email } })
+
   const updateFixture = await request.patch(`/api/faqs/${fixture.docs[0].id}`, { data: { answer } })
   expect(updateFixture.ok()).toBe(true)
 
