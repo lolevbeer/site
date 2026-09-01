@@ -16,7 +16,7 @@ const publicRoutes = [
 test('public routes render their expected headings', async ({ page }) => {
   for (const [route, heading] of publicRoutes) {
     await page.goto(route)
-    await expect(page.getByRole('heading', { name: heading })).toBeVisible()
+    await expect(page.getByRole('heading', { name: heading, exact: true })).toBeVisible()
   }
 })
 
@@ -89,11 +89,18 @@ test('an authenticated administrator can update only the seeded FAQ and observe 
   const login = await request.post('/api/users/login', { data: { email, password } })
   expect(login.ok()).toBe(true)
 
-  const currentUser = await request.get('/api/users/me')
+  const { token } = (await login.json()) as { token?: string }
+  if (!token) throw new Error('Payload login response did not include an authentication token')
+
+  const authorization = { Authorization: `Bearer ${token}` }
+  const currentUser = await request.get('/api/users/me', { headers: authorization })
   expect(currentUser.ok()).toBe(true)
   await expect(currentUser.json()).resolves.toMatchObject({ user: { email } })
 
-  const updateFixture = await request.patch(`/api/faqs/${fixture.docs[0].id}`, { data: { answer } })
+  const updateFixture = await request.patch(`/api/faqs/${fixture.docs[0].id}`, {
+    data: { answer },
+    headers: authorization,
+  })
   expect(updateFixture.ok()).toBe(true)
 
   await page.goto('/faq')
