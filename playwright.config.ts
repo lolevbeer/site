@@ -1,7 +1,7 @@
 /** Playwright release-smoke configuration for a built local production server. */
 import { defineConfig, devices } from '@playwright/test'
 
-const releaseOrigin = 'http://127.0.0.1:3000'
+const releaseOrigin = 'http://127.0.0.1:3100'
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -15,7 +15,7 @@ export default defineConfig({
     video: 'retain-on-failure',
   },
   webServer: {
-    command: 'pnpm start --hostname 127.0.0.1 --port 3000',
+    command: 'pnpm start --hostname 127.0.0.1 --port 3100',
     url: `${releaseOrigin}/api/health`,
     reuseExistingServer: false,
     timeout: 120_000,
