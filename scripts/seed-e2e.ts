@@ -1,4 +1,5 @@
 /** Seeds the disposable release-smoke database through Payload's local API. */
+import { isDropDatabaseEnabled } from '@/lib/config/server-env'
 import { isDisposableDatabase, isLoopbackHost } from './e2e-database-guard'
 
 export async function runSeed(): Promise<void> {
@@ -10,7 +11,7 @@ export async function runSeed(): Promise<void> {
     throw new Error('E2E seeding requires a disposable database target')
   }
 
-  if (process.env.PAYLOAD_DROP_DATABASE?.trim().toLowerCase() === 'true') {
+  if (isDropDatabaseEnabled()) {
     throw new Error('E2E seeding refuses PAYLOAD_DROP_DATABASE=true')
   }
 
@@ -19,9 +20,7 @@ export async function runSeed(): Promise<void> {
   }
 
   const database = new URL(databaseUri)
-  const databaseClassification = isLoopbackHost(database.hostname)
-    ? 'local'
-    : 'explicit-remote'
+  const databaseClassification = isLoopbackHost(database.hostname) ? 'local' : 'explicit-remote'
   // These imports run only after all environment guards; static config loading
   // would initialize Payload configuration even for a rejected seed target.
   const [{ getPayload }, { default: config }] = await Promise.all([

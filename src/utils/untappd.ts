@@ -15,7 +15,7 @@ const UNTAPPD_HOSTS = new Set(['untappd.com', 'www.untappd.com'])
 /** Returns a canonical Untappd beer URL, or null without performing I/O. */
 export function normalizeUntappdBeerUrl(input: string): URL | null {
   const isRelativeBeerPath = input.startsWith('/b/')
-  if (input.startsWith('/') && !isRelativeBeerPath) return null
+  // URL normalizes away a default port (:443), so reject explicit ports before parsing.
   if (!isRelativeBeerPath && /^https?:\/\/[^/?#]*:\d*(?:[/?#]|$)/i.test(input)) return null
 
   try {
@@ -61,15 +61,8 @@ async function readBoundedText(response: Response): Promise<string | null> {
     reader.releaseLock()
   }
 
-  const body = new Uint8Array(totalBytes)
-  let offset = 0
-  for (const chunk of chunks) {
-    body.set(chunk, offset)
-    offset += chunk.byteLength
-  }
-  return new TextDecoder().decode(body)
+  return Buffer.concat(chunks).toString('utf8')
 }
-
 
 export interface UntappdReview {
   username: string
@@ -137,7 +130,7 @@ export async function fetchUntappdData(url: string): Promise<UntappdData> {
 
   const canonicalUrl = normalizeUntappdBeerUrl(url)
   if (!canonicalUrl) return failed('permanent')
-
+  const fullUrl = canonicalUrl.toString()
 
   // Circuit breaker: skip requests if too many consecutive failures. The beer
   // itself is fine — the run was cut short — so this is retryable.
@@ -146,7 +139,7 @@ export async function fetchUntappdData(url: string): Promise<UntappdData> {
   }
 
   try {
-    const response = await fetch(canonicalUrl.toString(), {
+    const response = await fetch(fullUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
       },
@@ -165,7 +158,7 @@ export async function fetchUntappdData(url: string): Promise<UntappdData> {
       consecutiveFailures++
       Sentry.captureMessage('Untappd rate limit hit', {
         level: 'warning',
-        extra: { url: canonicalUrl.toString(), consecutiveFailures },
+        extra: { url: fullUrl, consecutiveFailures },
       })
       return failed('retryable')
     }
@@ -178,7 +171,7 @@ export async function fetchUntappdData(url: string): Promise<UntappdData> {
       if (PERMANENT_STATUSES.has(response.status)) {
         Sentry.captureMessage('Untappd beer URL is gone', {
           level: 'warning',
-          extra: { url: canonicalUrl.toString(), status: response.status },
+          extra: { url: fullUrl, status: response.status },
         })
         return failed('permanent')
       }
@@ -187,7 +180,7 @@ export async function fetchUntappdData(url: string): Promise<UntappdData> {
       if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
         Sentry.captureMessage('Untappd circuit breaker opened after consecutive failures', {
           level: 'error',
-          extra: { url: canonicalUrl.toString(), status: response.status, consecutiveFailures },
+          extra: { url: fullUrl, status: response.status, consecutiveFailures },
         })
       }
       return failed('retryable')
@@ -201,7 +194,7 @@ export async function fetchUntappdData(url: string): Promise<UntappdData> {
     if (!hasRatingDiv && html.length > 1000) {
       Sentry.captureMessage('Untappd HTML structure may have changed - rating div not found', {
         level: 'warning',
-        extra: { url: canonicalUrl.toString(), htmlLength: html.length },
+        extra: { url: fullUrl, htmlLength: html.length },
       })
     }
 
@@ -280,7 +273,11 @@ export async function fetchUntappdData(url: string): Promise<UntappdData> {
 
     if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
       Sentry.captureException(error, {
-        extra: { url: canonicalUrl.toString(), consecutiveFailures, context: 'Untappd scraper circuit breaker opened' },
+        extra: {
+          url: fullUrl,
+          consecutiveFailures,
+          context: 'Untappd scraper circuit breaker opened',
+        },
       })
     }
 

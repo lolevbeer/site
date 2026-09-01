@@ -15,30 +15,20 @@ vi.mock('@/src/payload.config', () => {
 
 import { checkApplicationHealth, HealthCheckError } from '@/src/utils/health'
 
-const originalEnvironment = { ...process.env }
-
-function restoreEnvironment() {
-  for (const name of Object.keys(process.env)) {
-    if (!(name in originalEnvironment)) delete process.env[name]
-  }
-  Object.assign(process.env, originalEnvironment)
-}
-
 beforeEach(() => {
-  restoreEnvironment()
-  process.env.DATABASE_URI = 'mongodb://127.0.0.1/lolev-test'
-  process.env.PAYLOAD_SECRET = 'test-secret-that-is-not-a-placeholder'
-  process.env.VERCEL_ENV = 'preview'
+  vi.stubEnv('DATABASE_URI', 'mongodb://127.0.0.1/lolev-test')
+  vi.stubEnv('PAYLOAD_SECRET', 'test-secret-that-is-not-a-placeholder')
+  vi.stubEnv('VERCEL_ENV', 'preview')
   command.mockReset()
   configFactory.mockClear()
   getPayload.mockReset()
 })
 
-afterEach(restoreEnvironment)
+afterEach(vi.unstubAllEnvs)
 
 describe('checkApplicationHealth', () => {
   it('validates the environment before importing config or initializing Payload', async () => {
-    process.env.DATABASE_URI = ''
+    vi.stubEnv('DATABASE_URI', '')
 
     await expect(checkApplicationHealth()).rejects.toMatchObject({ stage: 'environment' })
     expect(configFactory).not.toHaveBeenCalled()
@@ -47,7 +37,7 @@ describe('checkApplicationHealth', () => {
 
   it('initializes Payload and pings its MongoDB handle with a cancellable timeout', async () => {
     getPayload.mockResolvedValue({
-      db: { collections: { locations: { collection: { conn: { db: { command } } } } } },
+      db: { connection: { db: { command } } },
     })
     command.mockResolvedValue({ ok: 1 })
 
@@ -57,11 +47,10 @@ describe('checkApplicationHealth', () => {
   })
 
   it('maps an unavailable native MongoDB handle to the database-probe stage', async () => {
-    getPayload.mockResolvedValue({ db: { collections: {} } })
+    getPayload.mockResolvedValue({ db: { connection: {} } })
 
     await expect(checkApplicationHealth()).rejects.toMatchObject({ stage: 'database-probe' })
   })
-
 
   it('retains the underlying failure as a cause for internal logging', async () => {
     const cause = new Error('mongodb://secret-host')
@@ -73,12 +62,16 @@ describe('checkApplicationHealth', () => {
     })
   })
   it.each([
-    ['payload initialization', () => getPayload.mockRejectedValue(new Error('payload failure')), 'payload-init'],
+    [
+      'payload initialization',
+      () => getPayload.mockRejectedValue(new Error('payload failure')),
+      'payload-init',
+    ],
     [
       'database probe',
       () => {
         getPayload.mockResolvedValue({
-          db: { collections: { locations: { collection: { conn: { db: { command } } } } } },
+          db: { connection: { db: { command } } },
         })
         command.mockRejectedValue(new Error('mongodb://secret-host'))
       },

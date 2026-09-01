@@ -20,11 +20,9 @@ const e2eEnvironment = [
   'E2E_DISPOSABLE_DATABASE',
   'PAYLOAD_DROP_DATABASE',
 ] as const
-const originalEnvironment = Object.fromEntries(e2eEnvironment.map((name) => [name, process.env[name]]))
 
 async function importSeed(environment: Partial<Record<(typeof e2eEnvironment)[number], string>>) {
-  for (const name of e2eEnvironment) delete process.env[name]
-  Object.assign(process.env, environment)
+  for (const name of e2eEnvironment) vi.stubEnv(name, environment[name])
   await import('@/scripts/seed-e2e')
 }
 
@@ -46,13 +44,7 @@ describe('seed-e2e execution guard', () => {
     getPayload.mockReset()
   })
 
-  afterEach(() => {
-    for (const name of e2eEnvironment) {
-      const value = originalEnvironment[name]
-      if (value === undefined) delete process.env[name]
-      else process.env[name] = value
-    }
-  })
+  afterEach(vi.unstubAllEnvs)
 
   it('rejects an unsafe URI before config initialization or Payload access', async () => {
     await expect(
@@ -82,9 +74,7 @@ describe('seed-e2e execution guard', () => {
   })
 
   it('rejects duplicate fixture records before making a mutation', async () => {
-    const find = vi
-      .fn()
-      .mockResolvedValueOnce({ docs: [{ id: 'fixture-1' }, { id: 'fixture-2' }] })
+    const find = vi.fn().mockResolvedValueOnce({ docs: [{ id: 'fixture-1' }, { id: 'fixture-2' }] })
     getPayload.mockResolvedValue({ find })
 
     await expect(
@@ -95,9 +85,7 @@ describe('seed-e2e execution guard', () => {
       }),
     ).rejects.toThrow('duplicate release-smoke FAQ fixtures')
 
-    expect(find).toHaveBeenCalledWith(
-      expect.objectContaining({ collection: 'faqs', limit: 2 }),
-    )
+    expect(find).toHaveBeenCalledWith(expect.objectContaining({ collection: 'faqs', limit: 2 }))
     expect(getPayload).toHaveBeenCalledTimes(1)
   })
 })

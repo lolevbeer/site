@@ -9,7 +9,7 @@ export interface MigrationRecovery {
   verify: string
 }
 
-export const migrationRecovery = [
+export const migrationRecovery: readonly MigrationRecovery[] = [
   {
     name: '20260826_210000_normalize_beer_reviews',
     compatibility:
@@ -78,4 +78,4 @@ export const migrationRecovery = [
     verify:
       'Confirm the yearless slot index is absent and the year-scoped uniqueness index remains.',
   },
-] as const satisfies readonly MigrationRecovery[]
+]

@@ -11,8 +11,8 @@ export async function GET() {
     await checkApplicationHealth()
     return NextResponse.json({ status: 'ok' }, { headers })
   } catch (error) {
-    const stage = error instanceof HealthCheckError ? error.stage : 'unknown'
-    const cause = error instanceof HealthCheckError ? error.cause : error
+    const { stage, cause } =
+      error instanceof HealthCheckError ? error : { stage: 'unknown', cause: error }
     logger.error('Application health check failed', cause, { stage })
     return NextResponse.json({ status: 'unhealthy' }, { status: 503, headers })
   }

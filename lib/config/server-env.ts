@@ -25,8 +25,13 @@ function required(name: string, env: NodeJS.ProcessEnv): string {
   return value
 }
 
+/** True when PAYLOAD_DROP_DATABASE opts into Payload wiping the database on boot. */
+export function isDropDatabaseEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
+  return env.PAYLOAD_DROP_DATABASE?.trim().toLowerCase() === 'true'
+}
+
 export function readServerEnvironment(env: NodeJS.ProcessEnv = process.env): ServerEnvironment {
-  if (env.PAYLOAD_DROP_DATABASE?.trim().toLowerCase() === 'true') {
+  if (isDropDatabaseEnabled(env)) {
     throw new ServerEnvironmentError('PAYLOAD_DROP_DATABASE must not be enabled')
   }
 

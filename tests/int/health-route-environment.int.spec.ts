@@ -4,28 +4,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 const { loggerError } = vi.hoisted(() => ({ loggerError: vi.fn() }))
 vi.mock('@/lib/utils/logger', () => ({ logger: { error: loggerError } }))
 
-const originalEnvironment = { ...process.env }
-
-function restoreEnvironment() {
-  for (const name of Object.keys(process.env)) {
-    if (!(name in originalEnvironment)) delete process.env[name]
-  }
-  Object.assign(process.env, originalEnvironment)
-}
-
 beforeEach(() => {
-  restoreEnvironment()
-  process.env.PAYLOAD_SECRET = 'test-secret-that-is-not-a-placeholder'
-  process.env.VERCEL_ENV = 'preview'
+  vi.stubEnv('PAYLOAD_SECRET', 'test-secret-that-is-not-a-placeholder')
+  vi.stubEnv('VERCEL_ENV', 'preview')
   loggerError.mockReset()
   vi.resetModules()
 })
 
-afterEach(restoreEnvironment)
+afterEach(vi.unstubAllEnvs)
 
 describe('GET /api/health environment failures', () => {
   it('loads the route and returns the generic no-store 503 for invalid environment', async () => {
-    process.env.DATABASE_URI = ''
+    vi.stubEnv('DATABASE_URI', '')
 
     const { GET } = await import('@/src/app/api/health/route')
     const response = await GET()
