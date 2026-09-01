@@ -32,7 +32,7 @@ export function readServerEnvironment(env: NodeJS.ProcessEnv = process.env): Ser
   }
 
   const blobReadWriteToken = env.BLOB_READ_WRITE_TOKEN?.trim() || undefined
-  if (env.NODE_ENV === 'production' && !blobReadWriteToken) {
+  if (env.VERCEL_ENV === 'production' && !blobReadWriteToken) {
     throw new ServerEnvironmentError(
       'Missing required server environment variable: BLOB_READ_WRITE_TOKEN',
     )

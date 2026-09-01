@@ -191,15 +191,12 @@ export default buildConfig({
     // that on a remote cluster and fails with NoSuchTransaction (code 251) —
     // the writes roll back, so the migration can never finish.
     //
-    // Every migration in src/migrations is written to be idempotent and
-    // resumable (syncBeerReviews upserts by sourceUrl, the recurring-food pass
-    // early-returns on normalizedAt and skips existing keys, and named
-    // createIndex is a no-op when the index exists), so per-migration atomicity
-    // buys nothing here — a partial run is simply re-run. Detecting the CLI
-    // rather than reading a flag keeps `pnpm migrate` working the same locally
-    // and inside the Vercel production build, with no env var to forget.
-    // Serving requests never boots through this path, so the app keeps
-    // transactional writes.
+    // Migrations do not all have interchangeable recovery semantics. The recovery
+    // manifest governs partial failures: batch `migrate:down` is prohibited, and
+    // recovery requires the recorded migration-specific roll-forward or restore
+    // procedure. Disabling Payload's transaction here avoids Atlas's 60-second
+    // transaction lifetime limit; it does not make a partial migration safe to
+    // rerun without following that manifest.
     ...(isMigrationCommand ? { transactionOptions: false as const } : {}),
     // Serverless connection hardening. Each Vercel lambda opens its own Mongoose
     // pool; the MongoDB driver default is maxPoolSize 100. A post-deploy ISR
@@ -213,6 +210,10 @@ export default buildConfig({
     connectOptions: {
       maxPoolSize: 10,
       maxIdleTimeMS: 10000,
+      // Keep readiness probes beneath deployment-monitor deadlines when MongoDB
+      // blackholes a connection rather than rejecting it immediately.
+      connectTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 5000,
     },
   }),
   sharp,

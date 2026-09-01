@@ -1,12 +1,14 @@
 /** The health route reports dependency readiness without exposing internals. */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { checkApplicationHealth, loggerError } = vi.hoisted(() => ({
+const { checkApplicationHealth, HealthCheckError, loggerError } = vi.hoisted(() => ({
   checkApplicationHealth: vi.fn(),
+  HealthCheckError: class HealthCheckError extends Error {},
   loggerError: vi.fn(),
 }))
 vi.mock('@/src/utils/health', () => ({
   checkApplicationHealth: () => checkApplicationHealth(),
+  HealthCheckError,
 }))
 vi.mock('@/lib/utils/logger', () => ({
   logger: { error: loggerError },
@@ -34,6 +36,6 @@ describe('GET /api/health', () => {
     expect(response.status).toBe(503)
     expect(response.headers.get('cache-control')).toBe('no-store')
     await expect(response.json()).resolves.toEqual({ status: 'unhealthy' })
-    expect(loggerError).toHaveBeenCalledWith('Application health check failed')
+    expect(loggerError).toHaveBeenCalledWith('Application health check failed', { stage: 'unknown' })
   })
 })

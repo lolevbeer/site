@@ -21,8 +21,10 @@ describe('readServerEnvironment', () => {
     )
   })
 
-  it('requires Blob storage in production', () => {
-    expect(() => readServerEnvironment({ ...valid, NODE_ENV: 'production' })).toThrow(
+  it('requires Blob storage only on the production Vercel deployment', () => {
+    expect(() => readServerEnvironment({ ...valid, NODE_ENV: 'production' })).not.toThrow()
+    expect(() => readServerEnvironment({ ...valid, VERCEL_ENV: 'preview' })).not.toThrow()
+    expect(() => readServerEnvironment({ ...valid, VERCEL_ENV: 'production' })).toThrow(
       'BLOB_READ_WRITE_TOKEN',
     )
   })
