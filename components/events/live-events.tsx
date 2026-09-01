@@ -147,9 +147,6 @@ export function LiveEvents({
     location,
     initialEvents,
     initialLocationName,
-    {
-      enabled: true,
-    },
   )
   const colorSeed = useColorCycleSeed()
 
@@ -249,8 +246,6 @@ export function LiveEvents({
   } else {
     title = 'Upcoming Events'
   }
-
-  // Generate deterministic light colors that cycle every ~30 seconds (dark mode only)
 
   const itemColors = useMemo(() => {
     const itemCount = combinedItems.length

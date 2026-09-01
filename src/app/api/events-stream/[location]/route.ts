@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-import type { BreweryEvent } from '@/lib/types/event'
 import { logger } from '@/lib/utils/logger'
 import {
   getAllLocations,
@@ -8,13 +7,17 @@ import {
   transformPayloadEventToBreweryEvent,
 } from '@/lib/utils/payload-api'
 import { getPittsburghTheme } from '@/lib/utils/pittsburgh-time'
-import { STREAM_CACHE_CONTROL, isWarm } from '@/lib/utils/stream-freshness'
+import {
+  STREAM_CACHE_CONTROL,
+  contentTimestampFromEvents,
+  isWarm,
+} from '@/lib/utils/stream-freshness'
 
 /**
  * Events fetch for the polling endpoint. Both underlying helpers are already
  * tag-cached in payload-api, so the route adds no cache layer of its own.
  */
-async function getCachedEvents(locationSlug: string) {
+async function getEventsForLocation(locationSlug: string) {
   const locations = await getAllLocations()
   const location = locations.find((doc) => doc.slug === locationSlug)
 
@@ -24,19 +27,12 @@ async function getCachedEvents(locationSlug: string) {
 
   const eventDocs = await getUpcomingEventsFromPayload(locationSlug, 20)
 
-  const events: BreweryEvent[] = eventDocs.map((event) =>
-    transformPayloadEventToBreweryEvent(event, locationSlug, location.name),
-  )
-
-  const latestUpdate = eventDocs.reduce((latest, doc) => {
-    const docTime = doc.updatedAt ? new Date(doc.updatedAt).getTime() : 0
-    return docTime > latest ? docTime : latest
-  }, 0)
-
   return {
-    events,
+    events: eventDocs.map((event) =>
+      transformPayloadEventToBreweryEvent(event, locationSlug, location.name),
+    ),
     locationName: location.name,
-    timestamp: latestUpdate,
+    timestamp: contentTimestampFromEvents(eventDocs),
   }
 }
 
@@ -51,7 +47,7 @@ export async function GET(
   const { location } = await params
 
   try {
-    const data = await getCachedEvents(location.toLowerCase())
+    const data = await getEventsForLocation(location.toLowerCase())
 
     if (!data) {
       return NextResponse.json({ error: 'Location not found' }, { status: 404 })

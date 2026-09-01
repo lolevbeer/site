@@ -23,9 +23,7 @@ interface LiveMenuProps {
  * - Applies dark mode via inline CSS variables for maximum browser compatibility
  */
 export function LiveMenu({ menuUrl, initialMenu }: LiveMenuProps) {
-  const { menu, theme } = useMenuStream(menuUrl, initialMenu, {
-    enabled: true,
-  })
+  const { menu, theme } = useMenuStream(menuUrl, initialMenu)
   // Use streamed menu if available, otherwise fall back to initial
   const displayMenu = menu || initialMenu
 

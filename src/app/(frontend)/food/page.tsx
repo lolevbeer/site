@@ -184,7 +184,7 @@ async function getFoodData(): Promise<FoodVendorSchedule[]> {
           id: vendor.id,
           name: vendor.name,
           site: vendor.site,
-          logoUrl: getMediaUrl(vendor.logo, 'thumbnail') || getMediaUrl(vendor.logo),
+          logoUrl: getMediaUrl(vendor.logo, 'thumbnail'),
         }
       }
     }

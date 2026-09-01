@@ -24,9 +24,6 @@ function toBoldUnicode(text: string): string {
   return text.split('').map(char => boldMap[char] || char).join('');
 }
 
-type ComingSoonBeer = ComingSoonView
-type SimpleBeer = MarketingBeerView
-
 /** Minimal food shape covering both PayloadFood and RecurringFoodEntry */
 interface MarketingFood {
   vendor: string | { name?: string; id?: string };
@@ -35,11 +32,11 @@ interface MarketingFood {
 }
 
 interface MarketingTextProps {
-  draftBeersByLocation: Record<string, SimpleBeer[]>;
-  cansBeersByLocation: Record<string, SimpleBeer[]>;
+  draftBeersByLocation: Record<string, MarketingBeerView[]>;
+  cansBeersByLocation: Record<string, MarketingBeerView[]>;
   eventsByLocation: Record<string, PayloadEvent[]>;
   foodByLocation: Record<string, MarketingFood[]>;
-  comingSoonBeers: ComingSoonBeer[];
+  comingSoonBeers: ComingSoonView[];
 }
 
 export function MarketingText({
@@ -65,7 +62,7 @@ export function MarketingText({
 
   if (!isVisible) return null;
 
-  const formatBeer = (beer: SimpleBeer) => {
+  const formatBeer = (beer: MarketingBeerView) => {
     const abv = typeof beer.abv === 'string' ? parseFloat(beer.abv) : beer.abv;
     return `${beer.name} • ${beer.type} • ${formatAbv(abv)}`;
   };

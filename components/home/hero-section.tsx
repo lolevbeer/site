@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { BlurFade } from '@/components/motion'
@@ -31,10 +31,7 @@ export function HeroSection({
     setImageErrors((prev) => new Set(prev).add(beerId))
   }
 
-  const displayBeers = useMemo(
-    () => beers.filter((beer) => !imageErrors.has(beer.id)),
-    [beers, imageErrors],
-  )
+  const displayBeers = beers.filter((beer) => !imageErrors.has(beer.id))
 
   return (
     <div className="relative flex flex-col gap-8 md:gap-16 px-4 md:px-8 py-16 md:py-24 text-center min-h-[600px] md:min-h-[700px]">

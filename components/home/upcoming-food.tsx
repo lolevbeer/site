@@ -86,11 +86,10 @@ export function UpcomingFood({ foodByLocation }: UpcomingFoodProps): React.React
             const vendorName = typeof food.vendor === 'object' ? food.vendor?.name : food.vendor
             const vendorSite =
               food.site || (typeof food.vendor === 'object' ? food.vendor?.site : undefined)
-            const vendorLogoThumb =
+            const vendorLogo =
               typeof food.vendor === 'object' ? getMediaUrl(food.vendor?.logo, 'thumbnail') : undefined
             const vendorLogoFull =
               typeof food.vendor === 'object' ? getMediaUrl(food.vendor?.logo) : undefined
-            const vendorLogo = vendorLogoThumb || vendorLogoFull
             const timeDisplay = food.time || food.startTime
 
             return (

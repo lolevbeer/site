@@ -102,27 +102,13 @@ interface MediaObject {
  * @returns The normalized URL string, or undefined if not available
  */
 export function getMediaUrl(media: unknown, size?: MediaSize): string | undefined {
-  if (!media) return undefined
+  if (!media || typeof media === 'string') return undefined
+  if (typeof media !== 'object' || !('url' in media)) return undefined
 
-  // Just an ID reference, not a populated Media object
-  if (typeof media === 'string') return undefined
-
-  // Check if it's a Media object with a url property
-  if (typeof media === 'object' && media !== null && 'url' in media) {
-    const obj = media as MediaObject
-
-    // Try the requested size first
-    if (size) {
-      const sizedUrl = obj.sizes?.[size]?.url
-      if (sizedUrl) return normalizeUrl(sizedUrl)
-    }
-
-    const url = obj.url
-    if (!url) return undefined
-    return normalizeUrl(url)
-  }
-
-  return undefined
+  const obj = media as MediaObject
+  const sizedUrl = size ? obj.sizes?.[size]?.url : undefined
+  const url = sizedUrl || obj.url
+  return url ? normalizeUrl(url) : undefined
 }
 
 /**
@@ -165,8 +151,8 @@ export function getBeerImageUrl(
  * @param image - The image field value
  * @returns The normalized URL string, or null if not available
  */
-export function getLocationImageUrl(image: unknown, size?: MediaSize): string | null {
+export function getLocationImageUrl(image: unknown): string | null {
   if (!image) return null
   if (typeof image === 'string') return image
-  return getMediaUrl(image, size) ?? null
+  return getMediaUrl(image) ?? null
 }

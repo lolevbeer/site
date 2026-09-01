@@ -4,6 +4,7 @@
 
 import { extractBeerFromMenuItem } from '@/lib/utils/menu-item-utils'
 import { getBeerImageUrl } from '@/lib/utils/media-utils'
+import { relationshipName } from '@/lib/utils/relationship-name'
 
 export interface HeroBeerView {
   id: string
@@ -31,13 +32,18 @@ interface BeerLike {
   slug?: string | null
   name?: string | null
   image?: unknown
-  style?: { name?: string | null } | string | null
+  style?: unknown
   abv?: string | number | null
   hideFromSite?: boolean | null
 }
 
 interface MenuLike {
   items?: unknown[] | null
+}
+
+function beerFromMenuItem(item: unknown): BeerLike | null {
+  if (!item || typeof item !== 'object') return null
+  return extractBeerFromMenuItem(item as Record<string, unknown>)
 }
 
 export function projectHeroBeers(
@@ -47,17 +53,16 @@ export function projectHeroBeers(
   const cansIds = new Set<string>()
   for (const menu of cansMenus) {
     for (const item of menu.items || []) {
-      if (!item || typeof item !== 'object') continue
-      const beer = extractBeerFromMenuItem(item as Record<string, unknown>)
+      const beer = beerFromMenuItem(item)
       if (beer?.id) cansIds.add(String(beer.id))
     }
   }
 
   const projected: HeroBeerView[] = []
   for (const beer of availableBeers) {
-    if (!beer.id || !cansIds.has(String(beer.id))) continue
-    const imageUrl = getBeerImageUrl(beer.image, beer.slug || undefined, 'thumbnail')
-    if (!imageUrl || !beer.slug || !beer.name) continue
+    if (!beer.id || !cansIds.has(String(beer.id)) || !beer.slug || !beer.name) continue
+    const imageUrl = getBeerImageUrl(beer.image, beer.slug, 'thumbnail')
+    if (!imageUrl) continue
     projected.push({
       id: String(beer.id),
       slug: beer.slug,
@@ -72,46 +77,40 @@ export function projectMarketingBeers(menu: MenuLike | null | undefined): Market
   if (!menu?.items) return []
   const beers: MarketingBeerView[] = []
   for (const item of menu.items) {
-    if (!item || typeof item !== 'object') continue
-    const beer = extractBeerFromMenuItem(item as Record<string, unknown>) as BeerLike | null
+    const beer = beerFromMenuItem(item)
     if (!beer) continue
-    const styleName =
-      typeof beer.style === 'object' && beer.style?.name
-        ? beer.style.name
-        : typeof beer.style === 'string'
-          ? beer.style
-          : ''
     beers.push({
       variant: beer.slug || '',
       name: beer.name || '',
-      type: styleName,
+      type: relationshipName(beer.style) || '',
       abv: beer.abv || 0,
     })
   }
   return beers
 }
 
+export function projectMarketingBeersByLocation(
+  menusByLocation: Record<string, MenuLike | null | undefined>,
+): Record<string, MarketingBeerView[]> {
+  const projected: Record<string, MarketingBeerView[]> = {}
+  for (const [slug, menu] of Object.entries(menusByLocation)) {
+    projected[slug] = projectMarketingBeers(menu)
+  }
+  return projected
+}
+
 export function projectComingSoon(
-  entries: Array<{ beer?: BeerLike | string | null; style?: { name?: string | null } | string | null }>,
+  entries: Array<{
+    beer?: BeerLike | string | null
+    style?: { name?: string | null } | string | null
+  }>,
 ): ComingSoonView[] {
   return entries.map((item) => {
     const beer = typeof item.beer === 'object' && item.beer ? item.beer : null
-    const beerStyle =
-      typeof beer?.style === 'object' && beer.style?.name
-        ? beer.style.name
-        : typeof beer?.style === 'string'
-          ? beer.style
-          : ''
-    const fallbackStyle =
-      typeof item.style === 'object' && item.style?.name
-        ? item.style.name
-        : typeof item.style === 'string'
-          ? item.style
-          : ''
     return {
       name: beer?.name || '',
       slug: beer?.slug || '',
-      styleName: beerStyle || fallbackStyle,
+      styleName: relationshipName(beer?.style) || relationshipName(item.style) || '',
       hideFromSite: Boolean(beer?.hideFromSite),
     }
   })

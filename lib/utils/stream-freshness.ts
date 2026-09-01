@@ -18,21 +18,25 @@ interface MenuLike {
   } | null> | null
 }
 
+function parseTimestamp(value?: string | null): number | undefined {
+  if (!value) return undefined
+  const time = Date.parse(value)
+  return Number.isFinite(time) ? time : undefined
+}
+
 export function isWarm(contentTimestamp: number, now = Date.now()): boolean {
   return now - contentTimestamp < WARM_WINDOW_MS
 }
 
 export function contentTimestampFromMenu(menu: MenuLike, now = Date.now()): number {
-  let timestamp = menu.updatedAt ? Date.parse(menu.updatedAt) : now
-  if (!Number.isFinite(timestamp)) timestamp = now
+  let timestamp = parseTimestamp(menu.updatedAt) ?? now
 
   for (const item of menu.items || []) {
     const product = item?.product?.value
-    if (product && typeof product === 'object' && product.updatedAt) {
-      const itemTimestamp = Date.parse(product.updatedAt)
-      if (Number.isFinite(itemTimestamp) && itemTimestamp > timestamp) {
-        timestamp = itemTimestamp
-      }
+    if (!product || typeof product !== 'object') continue
+    const itemTimestamp = parseTimestamp(product.updatedAt)
+    if (itemTimestamp !== undefined && itemTimestamp > timestamp) {
+      timestamp = itemTimestamp
     }
   }
 
@@ -42,9 +46,8 @@ export function contentTimestampFromMenu(menu: MenuLike, now = Date.now()): numb
 export function contentTimestampFromEvents(events: Timestamped[]): number {
   let latest = 0
   for (const event of events) {
-    if (!event.updatedAt) continue
-    const time = Date.parse(event.updatedAt)
-    if (Number.isFinite(time) && time > latest) latest = time
+    const time = parseTimestamp(event.updatedAt)
+    if (time !== undefined && time > latest) latest = time
   }
   return latest
 }

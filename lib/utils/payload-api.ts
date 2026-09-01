@@ -346,13 +346,13 @@ async function findMenuByUrl(url: string): Promise<PayloadMenu | null> {
   return result.docs[0] || null
 }
 
+/** Tagged data-cache fallback. On-demand tags remain the freshness path. */
+export const MENU_DATA_CACHE_REVALIDATE_SECONDS = 3600
+
 /**
  * Get menu by URL slug (e.g., 'lawrenceville-draft', 'zelienople-cans')
  * Cached until the 'menus' tag or this menu's own `menu-${url}` tag is invalidated
  */
-/** Tagged data-cache fallback. On-demand tags remain the freshness path. */
-export const MENU_DATA_CACHE_REVALIDATE_SECONDS = 3600
-
 export const getMenuByUrl = async (url: string): Promise<PayloadMenu | null> => {
   try {
     return await unstable_cache(

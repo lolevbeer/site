@@ -12,7 +12,7 @@ import { generateFullMenuSchema } from '@/lib/utils/menu-schema';
 import {
   projectComingSoon,
   projectHeroBeers,
-  projectMarketingBeers,
+  projectMarketingBeersByLocation,
 } from '@/lib/utils/homepage-view-models';
 
 // ISR: 1h fallback. Collection hooks still revalidatePath('/') on CMS writes.
@@ -43,6 +43,10 @@ const UpcomingEvents = dynamic(() => import('@/components/home/upcoming-events')
 
 export default async function Home(): Promise<React.ReactElement> {
   const data = await getHomePageData();
+  const comingSoonBeers = projectComingSoon(data.comingSoonBeers);
+  const heroBeers = projectHeroBeers(data.availableBeers, data.allCansMenus);
+  const draftBeersByLocation = projectMarketingBeersByLocation(data.draftMenusByLocation);
+  const cansBeersByLocation = projectMarketingBeersByLocation(data.cansMenusByLocation);
 
   // Generate SEO schemas
   const localBusinessSchemas = generateLocalBusinessSchemas(data.locations);
@@ -70,25 +74,15 @@ export default async function Home(): Promise<React.ReactElement> {
 
       <PageTransition>
         <MarketingText
-          draftBeersByLocation={Object.fromEntries(
-            Object.entries(data.draftMenusByLocation).map(([slug, menu]) => [
-              slug,
-              projectMarketingBeers(menu),
-            ]),
-          )}
-          cansBeersByLocation={Object.fromEntries(
-            Object.entries(data.cansMenusByLocation).map(([slug, menu]) => [
-              slug,
-              projectMarketingBeers(menu),
-            ]),
-          )}
+          draftBeersByLocation={draftBeersByLocation}
+          cansBeersByLocation={cansBeersByLocation}
           eventsByLocation={data.eventsMarketingByLocation}
           foodByLocation={data.foodMarketingByLocation}
-          comingSoonBeers={projectComingSoon(data.comingSoonBeers)}
+          comingSoonBeers={comingSoonBeers}
         />
 
         <HomeContent
-          heroBeers={projectHeroBeers(data.availableBeers, data.allCansMenus)}
+          heroBeers={heroBeers}
           draftMenus={data.allDraftMenus}
           beerCount={data.beerCount}
           cansCount={data.cansCount}
@@ -103,7 +97,7 @@ export default async function Home(): Promise<React.ReactElement> {
 
           <UpcomingEvents eventsByLocation={data.eventsByLocation} />
 
-          <UpcomingBeers comingSoonBeers={projectComingSoon(data.comingSoonBeers)} />
+          <UpcomingBeers comingSoonBeers={comingSoonBeers} />
         </HomeContent>
       </PageTransition>
     </>

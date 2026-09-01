@@ -11,7 +11,7 @@ export function colorCycleSeed(elapsedMs: number): number {
   return Math.floor(Math.max(0, elapsedMs) / COLOR_CYCLE_MS)
 }
 
-/** Advances about every 30s of elapsed wall-clock; pauses while the tab is hidden. */
+/** Advances about every 30s of elapsed wall-clock. Ticks immediately when the tab becomes visible. */
 export function useColorCycleSeed(): number {
   const mountedAtRef = useRef(Date.now())
   const [seed, setSeed] = useState(0)

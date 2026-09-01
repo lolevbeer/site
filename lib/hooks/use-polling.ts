@@ -24,8 +24,6 @@ interface PollingResponse {
 export interface UsePollingOptions {
   /** Whether polling is enabled (default: true) */
   enabled?: boolean
-  /** Unused. Intervals come from selectPollInterval (10s warm / 30s idle). */
-  pollInterval?: number
 }
 
 interface UsePollingResult<T> {
@@ -166,13 +164,12 @@ export function usePolling<T, R extends PollingResponse>(
       pollTimeoutRef.current = null
     }
     if (!enabled) return
-    const hidden = typeof document !== 'undefined' && document.hidden
     const nextInterval = selectPollInterval({
       noChangeCount: noChangeCountRef.current,
       warm: lastWarmRef.current,
       consecutiveErrors: consecutiveErrorsRef.current,
-      hidden,
-      isInitial: successfulPollsRef.current === 1 && consecutiveErrorsRef.current === 0,
+      hidden: document.hidden,
+      isInitial: successfulPollsRef.current === 1,
     })
     if (nextInterval === null) return
     pollTimeoutRef.current = setTimeout(() => pollRef.current(), nextInterval)
@@ -188,7 +185,6 @@ export function usePolling<T, R extends PollingResponse>(
     }
 
     const onVisibility = () => {
-      if (typeof document === 'undefined') return
       if (pollTimeoutRef.current) {
         clearTimeout(pollTimeoutRef.current)
         pollTimeoutRef.current = null
