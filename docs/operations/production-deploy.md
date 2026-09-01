@@ -34,6 +34,8 @@ VERCEL_ENV=preview pnpm build
 pnpm test:e2e
 ```
 
+Release is blocked if any required command is unavailable, including `pnpm test:e2e`. Operators must not skip an unavailable gate or record it as passed.
+
 `VERCEL_ENV=preview` ensures `migrate:prod` skips migrations. The non-production wrapper must make a production `DATABASE_URI` unavailable to the build process in CI and local use. Record each result.
 
 ## Production-status wrapper contract
