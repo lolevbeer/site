@@ -1,6 +1,6 @@
 # Lolev Beer
 
-Brewery website built with Next.js 15 and Payload CMS 3, deployed on Vercel.
+Brewery website built with Next.js 16 and Payload CMS 3, deployed on Vercel.
 
 ## Setup
 
@@ -13,7 +13,7 @@ Payload admin is at `/admin`. Follow the on-screen instructions to create your f
 
 ## Tech Stack
 
-- **Framework:** Next.js 15 (App Router)
+- **Framework:** Next.js 16 (App Router)
 - **CMS:** Payload CMS 3 (MongoDB)
 - **Styling:** Tailwind CSS 4, shadcn/ui
 - **Maps:** Mapbox GL
@@ -140,16 +140,34 @@ account, or without the right role, gets a message saying so.
 ## Scripts
 
 ```bash
-pnpm dev              # Start dev server
-pnpm build            # Production build (runs pending migrations first on Vercel production)
-pnpm type-check       # TypeScript check
-pnpm lint             # ESLint
-pnpm test             # Tests (vitest)
-pnpm migrate          # Run pending Payload migrations against DATABASE_URI
-pnpm migrate:status   # Show which migrations have run
-pnpm generate:types   # Regenerate Payload types
+pnpm dev                 # Start the development server
+pnpm build               # Production build (runs pending migrations first on Vercel production)
+pnpm type-check          # TypeScript check
+pnpm lint                # ESLint
+pnpm test                # Tests (Vitest)
+pnpm test:e2e:install    # Install Chromium for Playwright
+pnpm e2e:seed            # Seed a disposable database for the release smoke test
+pnpm test:e2e            # Run Playwright against the built server on port 3100
+pnpm migrate             # Run pending Payload migrations against DATABASE_URI
+pnpm migrate:status      # Show which migrations have run
+pnpm generate:types      # Regenerate Payload types
 pnpm generate:importmap  # Regenerate Payload import map
 ```
+
+`pnpm e2e:seed` writes admin and FAQ fixture data. By default it accepts only a
+loopback MongoDB target. A remote target is allowed only when
+`E2E_DISPOSABLE_DATABASE=1` and the database name ends in `-e2e` or `-ci`; the
+seed also refuses `PAYLOAD_DROP_DATABASE=true`. Set `E2E_ADMIN_EMAIL` and
+`E2E_ADMIN_PASSWORD` only for local or CI smoke tests. Never point the seed or
+Playwright release smoke test at production.
+
+### Health check
+
+`GET /api/health` validates the server environment and pings MongoDB through
+Payload. It returns HTTP 200 with generic `{"status":"ok"}` when healthy or HTTP
+503 with generic `{"status":"unhealthy"}` when unavailable. Every response sets
+`Cache-Control: no-store` and never exposes dependency, failure-stage, or error
+details.
 
 ### Migrations on deploy
 

@@ -21,8 +21,8 @@ interface MobileMenuProps {
 /**
  * Mobile hamburger menu with navigation and social links.
  *
- * No location switcher here — it lives in the header itself (see `Header`), so
- * switching locations never requires opening the menu.
+ * Radix Dialog owns focus trapping, scroll locking, Escape handling, and focus
+ * restoration. The location switcher stays in `Header`, outside this dialog.
  */
 export function MobileMenu({ isOpen, onClose, isScrolled = false }: MobileMenuProps) {
   const pathname = usePathname()

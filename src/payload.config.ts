@@ -51,6 +51,7 @@ const isMigrationCommand = process.argv.some(
   (arg) => arg === 'migrate' || arg.startsWith('migrate:'),
 )
 
+// Validate server-only values before passing them into Payload or its adapters.
 const serverEnv = readServerEnvironment()
 
 // Allowed origins for CORS and CSRF

@@ -1,4 +1,4 @@
-/** Probes Payload and MongoDB readiness while exposing only allowlisted failure stages. */
+/** Probes Payload and MongoDB readiness while classifying failures for internal logs. */
 
 import { getPayload } from 'payload'
 import { readServerEnvironment } from '@/lib/config/server-env'
