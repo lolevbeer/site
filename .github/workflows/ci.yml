@@ -7,6 +7,9 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: read
+
 # Cancel superseded runs on PR pushes; always let main runs finish.
 concurrency:
   group: ci-${{ github.ref }}
@@ -17,6 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       # pnpm and node versions come from packageManager and engines.node in package.json.
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
@@ -58,6 +63,8 @@ jobs:
       PAYLOAD_DROP_DATABASE: "false"
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
