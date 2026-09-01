@@ -1,9 +1,9 @@
 /** Verifies the readiness helper validates configuration before initializing Payload. */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { configFactory, find, getPayload } = vi.hoisted(() => ({
+const { command, configFactory, getPayload } = vi.hoisted(() => ({
+  command: vi.fn(),
   configFactory: vi.fn(),
-  find: vi.fn(),
   getPayload: vi.fn(),
 }))
 
@@ -29,8 +29,8 @@ beforeEach(() => {
   process.env.DATABASE_URI = 'mongodb://127.0.0.1/lolev-test'
   process.env.PAYLOAD_SECRET = 'test-secret-that-is-not-a-placeholder'
   process.env.VERCEL_ENV = 'preview'
+  command.mockReset()
   configFactory.mockClear()
-  find.mockReset()
   getPayload.mockReset()
 })
 
@@ -45,19 +45,21 @@ describe('checkApplicationHealth', () => {
     expect(getPayload).not.toHaveBeenCalled()
   })
 
-  it('initializes Payload and executes the minimal locations readiness query', async () => {
-    getPayload.mockResolvedValue({ find })
-    find.mockResolvedValue({ docs: [] })
+  it('initializes Payload and pings its MongoDB handle with a cancellable timeout', async () => {
+    getPayload.mockResolvedValue({
+      db: { collections: { locations: { collection: { conn: { db: { command } } } } } },
+    })
+    command.mockResolvedValue({ ok: 1 })
 
     await expect(checkApplicationHealth()).resolves.toBeUndefined()
     expect(getPayload).toHaveBeenCalledWith({ config: {} })
-    expect(find).toHaveBeenCalledWith({
-      collection: 'locations',
-      limit: 1,
-      depth: 0,
-      pagination: false,
-      overrideAccess: true,
-    })
+    expect(command).toHaveBeenCalledWith({ ping: 1 }, { timeoutMS: 5000 })
+  })
+
+  it('maps an unavailable native MongoDB handle to the database-probe stage', async () => {
+    getPayload.mockResolvedValue({ db: { collections: {} } })
+
+    await expect(checkApplicationHealth()).rejects.toMatchObject({ stage: 'database-probe' })
   })
 
   it.each([
@@ -65,8 +67,10 @@ describe('checkApplicationHealth', () => {
     [
       'database probe',
       () => {
-        getPayload.mockResolvedValue({ find })
-        find.mockRejectedValue(new Error('mongodb://secret-host'))
+        getPayload.mockResolvedValue({
+          db: { collections: { locations: { collection: { conn: { db: { command } } } } } },
+        })
+        command.mockRejectedValue(new Error('mongodb://secret-host'))
       },
       'database-probe',
     ],

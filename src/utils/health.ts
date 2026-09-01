@@ -32,15 +32,13 @@ export async function checkApplicationHealth(): Promise<void> {
   } catch {
     throw new HealthCheckError('payload-init')
   }
-
   try {
-    await payload.find({
-      collection: 'locations',
-      limit: 1,
-      depth: 0,
-      pagination: false,
-      overrideAccess: true,
-    })
+    const database = payload.db.collections.locations?.collection.conn.db
+    if (!database) {
+      throw new Error('Native MongoDB database handle is unavailable')
+    }
+
+    await database.command({ ping: 1 }, { timeoutMS: 5000 })
   } catch {
     throw new HealthCheckError('database-probe')
   }
