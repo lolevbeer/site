@@ -99,7 +99,7 @@ export const regeocodeDistributors: PayloadHandler = async (req) => {
       const addressParts = [dist.address, dist.city, dist.state, dist.zip].filter(Boolean)
       const fullAddress = addressParts.join(', ')
 
-      // Geocode (tries Nominatim first, then Mapbox)
+      // Geocode (tries Nominatim first, then Geocodio and Bing)
       let geocodeResult = await geocodeAddress(fullAddress)
 
       // If full address fails, try zip/city fallback
@@ -167,7 +167,7 @@ export const regeocodeDistributors: PayloadHandler = async (req) => {
         failed++
       }
 
-      // Rate limit (Nominatim requires 1/sec, Mapbox is more lenient but let's be safe)
+      // Rate limit requests to stay within Nominatim's usage limits
       await sleep(600)
     }
 
