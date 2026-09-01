@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import * as Dialog from '@radix-ui/react-dialog'
 import Link from 'next/link'
 import { Navigation } from './navigation'
 import { MobileMenu } from './mobile-menu'
@@ -9,7 +10,7 @@ import { LocationTabs } from '@/components/location/location-tabs'
 import { cn } from '@/lib/utils'
 
 /**
- * Main site header component with logo, navigation, and mobile menu toggle
+ * Main site header component with logo, navigation, and mobile navigation dialog.
  */
 export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -33,13 +34,23 @@ export function Header() {
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
+  useEffect(() => {
+    const desktopMediaQuery = window.matchMedia('(min-width: 768px)')
+    const closeOnDesktop = () => {
+      if (desktopMediaQuery.matches) {
+        setIsMobileMenuOpen(false)
+      }
+    }
 
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen)
-  }
+    closeOnDesktop()
+    desktopMediaQuery.addEventListener('change', closeOnDesktop)
+    return () => desktopMediaQuery.removeEventListener('change', closeOnDesktop)
+  }, [])
+
 
   return (
     <>
+      <Dialog.Root open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
       <header className="sticky top-0 z-50 w-full bg-background/80 backdrop-blur-xl border-b border-border/50 transition-all duration-200">
         <div className="container mx-auto px-4 sm:px-4 lg:px-4">
           <div
@@ -83,27 +94,28 @@ export function Header() {
             </div>
 
             {/* Mobile menu button - animated two-line hamburger */}
-            <button
-              onClick={toggleMobileMenu}
-              aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
-              aria-expanded={isMobileMenuOpen}
-              className="flex items-center justify-center w-10 h-10 md:hidden rounded-md hover:bg-muted transition-colors"
-            >
-              <div className="relative w-5 h-2.5 flex flex-col justify-between">
-                <span
-                  className={cn(
-                    'block h-0.5 w-full bg-foreground rounded-full transition-all duration-300 ease-out origin-center',
-                    isMobileMenuOpen ? 'rotate-45 translate-y-[4px]' : 'rotate-0 translate-y-0',
-                  )}
-                />
-                <span
-                  className={cn(
-                    'block h-0.5 w-full bg-foreground rounded-full transition-all duration-300 ease-out origin-center',
-                    isMobileMenuOpen ? '-rotate-45 -translate-y-[4px]' : 'rotate-0 translate-y-0',
-                  )}
-                />
-              </div>
-            </button>
+            <Dialog.Trigger asChild>
+              <button
+                aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
+                aria-expanded={isMobileMenuOpen}
+                className="flex items-center justify-center w-10 h-10 md:hidden rounded-md hover:bg-muted transition-colors"
+              >
+                <div className="relative w-5 h-2.5 flex flex-col justify-between">
+                  <span
+                    className={cn(
+                      'block h-0.5 w-full bg-foreground rounded-full transition-all duration-300 ease-out origin-center',
+                      isMobileMenuOpen ? 'rotate-45 translate-y-[4px]' : 'rotate-0 translate-y-0',
+                    )}
+                  />
+                  <span
+                    className={cn(
+                      'block h-0.5 w-full bg-foreground rounded-full transition-all duration-300 ease-out origin-center',
+                      isMobileMenuOpen ? '-rotate-45 -translate-y-[4px]' : 'rotate-0 translate-y-0',
+                    )}
+                  />
+                </div>
+              </button>
+            </Dialog.Trigger>
           </div>
         </div>
       </header>
@@ -114,6 +126,7 @@ export function Header() {
         onClose={() => setIsMobileMenuOpen(false)}
         isScrolled={isScrolled}
       />
+      </Dialog.Root>
     </>
   )
 }
