@@ -16,4 +16,8 @@ describe('migration recovery manifest', () => {
       expect(['down', 'roll-forward', 'restore']).toContain(entry.mode)
     }
   })
+
+  it('does not authorize batch migration down as production recovery', () => {
+    expect(migrationRecovery.map(({ mode }) => mode)).not.toContain('down')
+  })
 })
