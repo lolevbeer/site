@@ -58,6 +58,7 @@ export function MapControls({
             )}
             <Input
               placeholder="Search location..."
+              aria-label="Search locations"
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
               className="pl-9 h-10 bg-secondary border-0 transition-all duration-200 focus:bg-background focus:shadow-sm focus:ring-1 focus:ring-primary/20"
@@ -86,6 +87,7 @@ export function MapControls({
                 )}
                 <Input
                   placeholder="Search location..."
+                  aria-label="Search locations"
                   value={searchTerm}
                   onChange={(e) => onSearchChange(e.target.value)}
                   className="pl-9 h-8 bg-secondary border-0 transition-all duration-200 focus:bg-background focus:shadow-sm focus:ring-1 focus:ring-primary/20"
