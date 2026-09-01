@@ -62,6 +62,16 @@ describe('checkApplicationHealth', () => {
     await expect(checkApplicationHealth()).rejects.toMatchObject({ stage: 'database-probe' })
   })
 
+
+  it('retains the underlying failure as a cause for internal logging', async () => {
+    const cause = new Error('mongodb://secret-host')
+    getPayload.mockRejectedValue(cause)
+
+    await expect(checkApplicationHealth()).rejects.toMatchObject({
+      stage: 'payload-init',
+      cause,
+    })
+  })
   it.each([
     ['payload initialization', () => getPayload.mockRejectedValue(new Error('payload failure')), 'payload-init'],
     [

@@ -3,7 +3,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const { checkApplicationHealth, HealthCheckError, loggerError } = vi.hoisted(() => ({
   checkApplicationHealth: vi.fn(),
-  HealthCheckError: class HealthCheckError extends Error {},
+  HealthCheckError: class HealthCheckError extends Error {
+    readonly stage: string
+
+    constructor(stage: string, cause: Error) {
+      super(`Health check failed during ${stage}`, { cause })
+      this.stage = stage
+    }
+  },
   loggerError: vi.fn(),
 }))
 vi.mock('@/src/utils/health', () => ({
@@ -30,12 +37,15 @@ describe('GET /api/health', () => {
     await expect(response.json()).resolves.toEqual({ status: 'ok' })
   })
 
-  it('returns only a generic, non-cacheable 503 body on failure', async () => {
-    checkApplicationHealth.mockRejectedValueOnce(new Error('mongodb://secret-host'))
+  it('logs the internal cause while returning only a generic, non-cacheable 503 body', async () => {
+    const cause = new Error('mongodb://secret-host')
+    checkApplicationHealth.mockRejectedValueOnce(new HealthCheckError('database-probe', cause))
     const response = await GET()
     expect(response.status).toBe(503)
     expect(response.headers.get('cache-control')).toBe('no-store')
     await expect(response.json()).resolves.toEqual({ status: 'unhealthy' })
-    expect(loggerError).toHaveBeenCalledWith('Application health check failed', { stage: 'unknown' })
+    expect(loggerError).toHaveBeenCalledWith('Application health check failed', cause, {
+      stage: 'database-probe',
+    })
   })
 })

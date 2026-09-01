@@ -21,6 +21,12 @@ describe('readServerEnvironment', () => {
     )
   })
 
+  it('rejects the destructive Payload drop-database flag before startup', () => {
+    expect(() => readServerEnvironment({ ...valid, PAYLOAD_DROP_DATABASE: ' true ' })).toThrow(
+      'PAYLOAD_DROP_DATABASE',
+    )
+  })
+
   it('requires Blob storage only on the production Vercel deployment', () => {
     expect(() => readServerEnvironment({ ...valid, NODE_ENV: 'production' })).not.toThrow()
     expect(() => readServerEnvironment({ ...valid, VERCEL_ENV: 'preview' })).not.toThrow()
@@ -32,10 +38,35 @@ describe('readServerEnvironment', () => {
   it.each([
     { SLACK_SIGNING_SECRET: 'signing-only' },
     { SLACK_BOT_TOKEN: 'bot-only' },
+    { SLACK_SIGNING_SECRET: 'signing-only', SLACK_BOT_TOKEN: '   ' },
   ])('requires Slack credentials as a pair', (partialSlackEnvironment) => {
     expect(() => readServerEnvironment({ ...valid, ...partialSlackEnvironment })).toThrow(
       'SLACK_SIGNING_SECRET and SLACK_BOT_TOKEN',
     )
+  })
+
+  it('normalizes Slack credentials and treats whitespace-only pairs as absent', () => {
+    expect(
+      readServerEnvironment({
+        ...valid,
+        SLACK_SIGNING_SECRET: '  signing-secret  ',
+        SLACK_BOT_TOKEN: '  bot-token  ',
+      }),
+    ).toMatchObject({
+      slackSigningSecret: 'signing-secret',
+      slackBotToken: 'bot-token',
+    })
+
+    expect(
+      readServerEnvironment({
+        ...valid,
+        SLACK_SIGNING_SECRET: '   ',
+        SLACK_BOT_TOKEN: '   ',
+      }),
+    ).toMatchObject({
+      slackSigningSecret: undefined,
+      slackBotToken: undefined,
+    })
   })
 
   it('never includes configured secret values in validation errors', () => {

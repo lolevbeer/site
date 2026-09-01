@@ -6,8 +6,11 @@ import { readServerEnvironment } from '@/lib/config/server-env'
 export type HealthCheckStage = 'environment' | 'payload-init' | 'database-probe'
 
 export class HealthCheckError extends Error {
-  constructor(readonly stage: HealthCheckStage) {
-    super(`Application health check failed during ${stage}`)
+  constructor(
+    readonly stage: HealthCheckStage,
+    cause: Error,
+  ) {
+    super(`Application health check failed during ${stage}`, { cause })
     this.name = 'HealthCheckError'
   }
 }
@@ -15,22 +18,31 @@ export class HealthCheckError extends Error {
 export async function checkApplicationHealth(): Promise<void> {
   try {
     readServerEnvironment()
-  } catch {
-    throw new HealthCheckError('environment')
+  } catch (error) {
+    throw new HealthCheckError(
+      'environment',
+      error instanceof Error ? error : new Error('Unknown health check failure'),
+    )
   }
 
   let config: Awaited<ReturnType<typeof loadPayloadConfig>>
   try {
     config = await loadPayloadConfig()
-  } catch {
-    throw new HealthCheckError('payload-init')
+  } catch (error) {
+    throw new HealthCheckError(
+      'payload-init',
+      error instanceof Error ? error : new Error('Unknown health check failure'),
+    )
   }
 
   let payload: Awaited<ReturnType<typeof getPayload>>
   try {
     payload = await getPayload({ config })
-  } catch {
-    throw new HealthCheckError('payload-init')
+  } catch (error) {
+    throw new HealthCheckError(
+      'payload-init',
+      error instanceof Error ? error : new Error('Unknown health check failure'),
+    )
   }
   try {
     const database = payload.db.collections.locations?.collection.conn.db
@@ -39,8 +51,11 @@ export async function checkApplicationHealth(): Promise<void> {
     }
 
     await database.command({ ping: 1 }, { timeoutMS: 5000 })
-  } catch {
-    throw new HealthCheckError('database-probe')
+  } catch (error) {
+    throw new HealthCheckError(
+      'database-probe',
+      error instanceof Error ? error : new Error('Unknown health check failure'),
+    )
   }
 }
 

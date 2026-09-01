@@ -30,6 +30,7 @@ import {
   type SlackStateValues,
 } from '@/src/utils/slack'
 import type { Menu } from '@/src/payload-types'
+import { readServerEnvironment } from '@/lib/config/server-env'
 
 const SECRET = 'test-signing-secret'
 
@@ -112,6 +113,29 @@ describe('verifySlackSignature', () => {
         now,
       }),
     ).toBe(false)
+  })
+})
+
+describe('normalized Slack server credentials', () => {
+  it('keeps surrounding whitespace out of the signing credential used for verification', () => {
+    const environment = readServerEnvironment({
+      NODE_ENV: 'test',
+      DATABASE_URI: 'mongodb://127.0.0.1/lolev-test',
+      PAYLOAD_SECRET: 'test-secret-that-is-not-a-placeholder',
+      SLACK_SIGNING_SECRET: `  ${SECRET}  `,
+      SLACK_BOT_TOKEN: '  xoxb-test-token  ',
+    })
+
+    expect(environment.slackBotToken).toBe('xoxb-test-token')
+    expect(
+      verifySlackSignature({
+        signingSecret: environment.slackSigningSecret!,
+        timestamp: '1700000000',
+        signature: sign('1700000000', 'command=%2Flolevbeer&text=menu'),
+        rawBody: 'command=%2Flolevbeer&text=menu',
+        now: 1_700_000_000,
+      }),
+    ).toBe(true)
   })
 })
 

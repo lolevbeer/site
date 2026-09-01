@@ -33,8 +33,10 @@ describe('GET /api/health environment failures', () => {
     expect(response.status).toBe(503)
     expect(response.headers.get('cache-control')).toBe('no-store')
     await expect(response.json()).resolves.toEqual({ status: 'unhealthy' })
-    expect(loggerError).toHaveBeenCalledWith('Application health check failed', {
-      stage: 'environment',
-    })
+    expect(loggerError).toHaveBeenCalledWith(
+      'Application health check failed',
+      expect.objectContaining({ name: 'ServerEnvironmentError' }),
+      { stage: 'environment' },
+    )
   })
 })

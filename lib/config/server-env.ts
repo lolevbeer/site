@@ -4,6 +4,8 @@ export interface ServerEnvironment {
   databaseUri: string
   payloadSecret: string
   blobReadWriteToken: string | undefined
+  slackSigningSecret: string | undefined
+  slackBotToken: string | undefined
 }
 
 export class ServerEnvironmentError extends Error {
@@ -24,6 +26,10 @@ function required(name: string, env: NodeJS.ProcessEnv): string {
 }
 
 export function readServerEnvironment(env: NodeJS.ProcessEnv = process.env): ServerEnvironment {
+  if (env.PAYLOAD_DROP_DATABASE?.trim().toLowerCase() === 'true') {
+    throw new ServerEnvironmentError('PAYLOAD_DROP_DATABASE must not be enabled')
+  }
+
   const databaseUri = required('DATABASE_URI', env)
   const payloadSecret = required('PAYLOAD_SECRET', env)
 
@@ -38,13 +44,13 @@ export function readServerEnvironment(env: NodeJS.ProcessEnv = process.env): Ser
     )
   }
 
-  const slackSigningSecret = env.SLACK_SIGNING_SECRET?.trim()
-  const slackBotToken = env.SLACK_BOT_TOKEN?.trim()
+  const slackSigningSecret = env.SLACK_SIGNING_SECRET?.trim() || undefined
+  const slackBotToken = env.SLACK_BOT_TOKEN?.trim() || undefined
   if (Boolean(slackSigningSecret) !== Boolean(slackBotToken)) {
     throw new ServerEnvironmentError(
       'SLACK_SIGNING_SECRET and SLACK_BOT_TOKEN must be configured together',
     )
   }
 
-  return { databaseUri, payloadSecret, blobReadWriteToken }
+  return { databaseUri, payloadSecret, blobReadWriteToken, slackSigningSecret, slackBotToken }
 }
