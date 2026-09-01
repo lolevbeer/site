@@ -18,10 +18,6 @@ const nextConfig = {
     ]
   },
 
-  typescript: {
-    ignoreBuildErrors: false,
-  },
-
   env: {
     NEXT_PUBLIC_SERVER_URL: process.env.VERCEL_URL
       ? `https://${process.env.VERCEL_URL}`
@@ -56,9 +52,7 @@ const nextConfig = {
   },
 
   compiler: {
-    removeConsole: process.env.NODE_ENV === 'production'
-      ? { exclude: ['error', 'warn'] }
-      : false,
+    removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
   },
 
   experimental: {
@@ -69,7 +63,6 @@ const nextConfig = {
       'embla-carousel-react',
       '@hugeicons/react',
       '@hugeicons/core-free-icons',
-      'date-fns',
       'date-fns-tz',
     ],
   },
@@ -85,8 +78,8 @@ const payloadConfig = withPayload(nextConfig, {
 export default withSentryConfig(payloadConfig, {
   // Suppresses source map uploading logs during build
   silent: true,
-  org: "lolev-beer",
-  project: "javascript-nextjs",
+  org: 'lolev-beer',
+  project: 'javascript-nextjs',
 
   // Upload source maps for better stack traces
   widenClientFileUpload: true,

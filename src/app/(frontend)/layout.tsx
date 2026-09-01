@@ -4,8 +4,7 @@ import { Poppins } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { NuqsAdapter } from 'nuqs/adapters/next/app'
 import { LocationProvider } from '@/components/location/location-provider'
-import { ThemeProvider } from '@/components/providers/theme-provider'
-import { AutoThemeSwitcher } from '@/components/providers/auto-theme-switcher'
+import { ThemeProvider } from 'next-themes'
 import { ConditionalLayout } from '@/components/layout/conditional-layout'
 import { Toaster } from '@/components/ui/sonner'
 import { ErrorBoundary } from '@/components/error-boundary'
@@ -190,7 +189,6 @@ export default async function AppLayout({
             themes={['light', 'dark']}
             storageKey="lolev-theme"
           >
-            <AutoThemeSwitcher />
             <NuqsAdapter>
               <LocationProvider locations={locations}>
                 <AuthProvider>
