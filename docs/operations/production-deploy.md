@@ -4,7 +4,7 @@
 
 This runbook governs production releases that may run Payload migrations. Vercel production builds run `pnpm migrate` before the deployment is promoted. Vercel auto-deploy remains the accepted deployment model.
 
-Migrations can mutate MongoDB before a build later fails. In that case, the prior deployment can remain live against a partially mutated database; the process is **not atomic**. Do not retry, roll back, or restore from memory. Use the compatibility, retry, mode, and verification evidence for every pending migration in [`src/migrations/recovery.ts`](../../src/migrations/recovery.ts), then record the decision below.
+Migrations can mutate MongoDB before a build later fails. In that case, the prior deployment can remain live against a partially mutated database; the process is **not atomic**. Do not retry, roll back, or restore from memory. Use the compatibility, retry, mode, and verification evidence for every pending migration in [`src/migrations/recovery/index.ts`](../../src/migrations/recovery/index.ts), then record the decision below. Keep that manifest in its subdirectory: `payload migrate` treats every `.ts`/`.js` sibling of `src/migrations/index.ts` as a migration and calls `up()`.
 
 Payload's migration down operation is batch-scoped, not per-migration recovery: it acts on the latest recorded batch and cannot clean up an unrecorded failed migration. This runbook does not authorize `migrate:down`. Recover failed pending migrations by a manifest-approved retry or an explicitly reviewed targeted roll-forward or cleanup procedure.
 
@@ -46,7 +46,7 @@ Use that exact wrapper invocation, with `pnpm migrate:status` as its child comma
 
 ## Confirm pending migrations and recovery evidence
 
-Run the production-status wrapper before promotion and record its pending migration names and target fingerprint. For each pending migration, review its entry in [`src/migrations/recovery.ts`](../../src/migrations/recovery.ts).
+Run the production-status wrapper before promotion and record its pending migration names and target fingerprint. For each pending migration, review its entry in [`src/migrations/recovery/index.ts`](../../src/migrations/recovery/index.ts).
 
 For `20260826_211000_normalize_recurring_food`, record read-only counts for normalized schedules and exclusions and investigate duplicate-key errors before retrying. A retry is eligible only when both counts are at or below the migration's 10,000-row prefetch limit and no duplicate-key state remains unresolved; otherwise use a reviewed roll-forward procedure.
 
@@ -79,7 +79,7 @@ Before promotion, confirm and record all of the following:
 - The selected database has a restorable Atlas recovery point from before the release begins.
 - The recovery-point ID and timestamp are captured in the release record.
 - The restore owner has confirmed access and the approved isolated-target restore procedure.
-- The release owner has reviewed the pending migrations' compatibility, retry, mode, and verification evidence in [`src/migrations/recovery.ts`](../../src/migrations/recovery.ts).
+- The release owner has reviewed the pending migrations' compatibility, retry, mode, and verification evidence in [`src/migrations/recovery/index.ts`](../../src/migrations/recovery/index.ts).
 
 Atlas restore always starts into an isolated target for validation; do not replace or cut over production directly from a recovery point. Before any production replacement or cutover, the release owner must record the recovery-point-to-cutover time gap, quiesce writes, preserve post-recovery-point writes, and reconcile them into the validated restored state. If preservation or reconciliation is not feasible, the owner with data-loss authority must explicitly approve the defined loss before cutover. Record the quiescence time, preservation location/reference, reconciliation outcome or loss approval, and the isolated and production target fingerprints.
 

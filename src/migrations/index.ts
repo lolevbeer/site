@@ -1,3 +1,9 @@
+/**
+ * Explicit migration registry used by tests that compare against the recovery
+ * manifest. `payload migrate` does not read this file. It loads every `.ts`/`.js`
+ * sibling except `index.ts`/`index.js` and calls `up()`. Keep non-migration
+ * modules out of this directory (the recovery manifest lives in `./recovery`).
+ */
 import * as normalizeBeerReviews from './20260826_210000_normalize_beer_reviews'
 import * as normalizeRecurringFood from './20260826_211000_normalize_recurring_food'
 import * as addPayloadJobsIndexes from './20260826_212000_add_payload_jobs_indexes'
