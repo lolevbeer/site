@@ -9,8 +9,6 @@ import { logger } from '@/lib/utils/logger'
 
 interface ErrorBoundaryProps {
   children: React.ReactNode
-  fallback?: React.ReactNode
-  onError?: (error: Error, errorInfo: React.ErrorInfo) => void
 }
 
 interface ErrorBoundaryState {
@@ -19,8 +17,7 @@ interface ErrorBoundaryState {
 }
 
 /**
- * Error Boundary Component
- * Catches JavaScript errors anywhere in the child component tree and displays a fallback UI
+ * Catches client-rendering errors, reports them, and displays the site fallback.
  */
 export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
@@ -39,9 +36,6 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
       logger.error('Error caught by boundary:', error, { errorInfo })
     }
 
-    // Call custom error handler if provided
-    this.props.onError?.(error, errorInfo)
-
     // Report to Sentry in production
     Sentry.captureException(error, {
       contexts: { react: { componentStack: errorInfo.componentStack } },
@@ -50,12 +44,6 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 
   render() {
     if (this.state.hasError) {
-      // Custom fallback UI if provided
-      if (this.props.fallback) {
-        return this.props.fallback
-      }
-
-      // Default fallback UI
       return (
         <div className="min-h-screen flex items-center justify-center p-4 bg-background">
           <Card className="max-w-md w-full">

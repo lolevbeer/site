@@ -15,7 +15,6 @@ import type { CircleLayer } from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Info, X } from '@/components/icons'
 import { cn } from '@/lib/utils'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -560,12 +559,18 @@ export function DistributorMap({
               {listLocations.length > 0 ? (
                 <>
                   {!referenceLocation && (
-                    <Alert className="mb-3 border-border bg-transparent">
-                      <Info className="h-4 w-4 text-muted-foreground" />
-                      <AlertDescription className="text-muted-foreground">
+                    <div
+                      role="alert"
+                      className="relative mb-3 grid w-full grid-cols-[calc(var(--spacing)*4)_1fr] items-start gap-x-3 gap-y-0.5 rounded-lg border border-border bg-transparent px-4 py-3 text-sm text-card-foreground"
+                    >
+                      <Info
+                        aria-hidden="true"
+                        className="h-4 w-4 translate-y-0.5 text-muted-foreground"
+                      />
+                      <div className="col-start-2 grid justify-items-start gap-1 text-sm text-muted-foreground">
                         Enter a location or use "Near Me" to see distances
-                      </AlertDescription>
-                    </Alert>
+                      </div>
+                    </div>
                   )}
                   {listLocations.map((location, index) => {
                     const isSelected =

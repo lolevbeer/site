@@ -8,7 +8,7 @@ import { FeaturedCans } from '@/components/home/featured-menu'
 import type { BreweryEvent } from '@/lib/types/event'
 import type { FoodItem } from '@/src/app/(frontend)/e/[location]/page'
 import type { PayloadMenu } from '@/lib/utils/payload-api'
-import randomColor from 'randomcolor'
+import { seededLightColors } from '@/lib/utils/seeded-colors'
 import { getThemeVars } from '@/lib/utils/display-theme'
 import { getTodayEST, toESTDate } from '@/lib/utils/date'
 import { format } from 'date-fns'
@@ -249,17 +249,13 @@ export function LiveEvents({
     title = 'Upcoming Events'
   }
 
-  // Generate random light colors that cycle every ~30 seconds (dark mode only)
+  // Generate deterministic light colors that cycle every ~30 seconds (dark mode only)
   const colorSeed = Math.floor(pollCount / 6)
   const itemColors = useMemo(() => {
     const itemCount = combinedItems.length
     if (itemCount === 0 || theme !== 'dark') return undefined
 
-    return randomColor({
-      count: itemCount,
-      luminosity: 'light',
-      seed: colorSeed,
-    })
+    return seededLightColors(itemCount, colorSeed)
   }, [combinedItems.length, theme, colorSeed])
 
   const themeVars = getThemeVars(theme)

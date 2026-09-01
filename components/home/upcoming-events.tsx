@@ -5,8 +5,8 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { SectionHeader } from '@/components/ui/section-header'
 import { ScrollReveal } from '@/components/ui/scroll-reveal'
-import { EventCard } from '@/components/events/event-card'
-import { parseLocalDate } from '@/lib/utils/formatters'
+import { Card, CardContent } from '@/components/ui/card'
+import { formatDate, formatTime, parseLocalDate } from '@/lib/utils/formatters'
 import { useLocationFilteredData, type LocationData } from '@/lib/hooks/use-location-filtered-data'
 import { useLocationContext } from '@/components/location/location-provider'
 import { useSortedItems } from '@/lib/hooks/use-sorted-items'
@@ -59,9 +59,55 @@ export function UpcomingEvents({ eventsByLocation }: UpcomingEventsProps) {
         </ScrollReveal>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {upcomingEvents.map((event, index) => (
-            <EventCard key={index} event={event} currentLocation={event.locationSlug} />
-          ))}
+          {upcomingEvents.map((event, index) => {
+            const title = event.organizer || 'Event'
+            const site = event.site || undefined
+            const time = event.startTime || undefined
+            const endTime = event.endTime || undefined
+            const locationName = currentLocationData?.name || event.locationSlug
+
+            return (
+              <Card
+                key={index}
+                className={`overflow-hidden bg-transparent shadow-none transition-colors ${
+                  site
+                    ? 'cursor-pointer border border-border hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+                    : ''
+                }`}
+                onClick={() => site && window.open(site, '_blank')}
+                onKeyDown={
+                  site
+                    ? (keyboardEvent) => {
+                        if (keyboardEvent.key === 'Enter' || keyboardEvent.key === ' ') {
+                          keyboardEvent.preventDefault()
+                          window.open(site, '_blank')
+                        }
+                      }
+                    : undefined
+                }
+                tabIndex={site ? 0 : undefined}
+                role={site ? 'link' : undefined}
+                aria-label={site ? `${title} - opens in new window` : undefined}
+              >
+                <CardContent className="p-6 text-center">
+                  <h3 className="text-xl font-semibold mb-2">{title}</h3>
+                  <div className="space-y-1 text-sm text-muted-foreground flex flex-col items-center">
+                    <span>{formatDate(event.date, 'full')}</span>
+                    {time && time.toLowerCase() !== 'tbd' && (
+                      <span>
+                        {formatTime(time.trim())}
+                        {endTime &&
+                          endTime.toLowerCase() !== 'tbd' &&
+                          `–${formatTime(endTime.trim())}`}
+                      </span>
+                    )}
+                    <span>{locationName}</span>
+                    {event.attendees && <span>{event.attendees} attending</span>}
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })}
         </div>
 
         <div className="text-center">

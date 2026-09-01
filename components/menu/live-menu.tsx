@@ -5,7 +5,7 @@ import { useMenuStream } from '@/lib/hooks/use-menu-stream'
 import { FeaturedBeers, FeaturedCans } from '@/components/home/featured-menu'
 import type { Menu } from '@/src/payload-types'
 import { getThemeVars } from '@/lib/utils/display-theme'
-import randomColor from 'randomcolor'
+import { seededLightColors } from '@/lib/utils/seeded-colors'
 
 interface LiveMenuProps {
   menuUrl: string
@@ -30,18 +30,13 @@ export function LiveMenu({ menuUrl, initialMenu }: LiveMenuProps) {
   // Use streamed menu if available, otherwise fall back to initial
   const displayMenu = menu || initialMenu
 
-  // Generate random light colors that cycle every ~30 seconds (dark mode only)
+  // Generate deterministic light colors that cycle every ~30 seconds (dark mode only)
   const colorSeed = Math.floor(pollCount / 15)
   const itemColors = useMemo(() => {
     const itemCount = displayMenu.items?.length || 0
     if (itemCount === 0 || theme !== 'dark') return undefined
 
-    // Generate colors with a slower-changing seed for smoother transitions
-    return randomColor({
-      count: itemCount,
-      luminosity: 'light',
-      seed: colorSeed,
-    })
+    return seededLightColors(itemCount, colorSeed)
   }, [displayMenu.items?.length, theme, colorSeed])
 
   // Apply CSS variables directly - bypasses .dark class for browser compatibility
