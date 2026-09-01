@@ -1,7 +1,7 @@
 # Production Audit Remediation Design
 
-**Date:** 2026-09-01  
-**Branch:** `fix/production-audit-remediation`  
+**Date:** 2026-09-01
+**Branch:** `fix/production-audit-remediation`
 **Worktree:** `.agents/worktrees/production-audit-remediation`
 
 ## Goal
