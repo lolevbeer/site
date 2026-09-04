@@ -445,6 +445,10 @@ export interface Menu {
      * Sale Price (optional override)
      */
     price?: string | null;
+    /**
+     * Optional promotion shown only on the fullscreen can menu.
+     */
+    promotion?: string | null;
     id?: string | null;
   }[];
   updatedAt: string;
@@ -1222,6 +1226,7 @@ export interface MenusSelect<T extends boolean = true> {
     | {
         product?: T;
         price?: T;
+        promotion?: T;
         id?: T;
       };
   updatedAt?: T;

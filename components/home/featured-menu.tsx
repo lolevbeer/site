@@ -106,6 +106,8 @@ interface MenuItem {
   createdAt?: string
   /** Untappd rating (0-5 scale) */
   untappdRating?: number | null
+  /** Promotion shown only on fullscreen can menus. */
+  promotion?: string
   /** Top Beer Drops URL */
   topBeerDrops?: string
   /** True when this slot has no product assigned (empty tap) */
@@ -468,6 +470,7 @@ function convertMenuItems(menuData: Menu, labelVideos = false): MenuItem[] {
             guestTap: prod.guestTap || false,
             collab: prod.collab || false,
             createdAt: prod.createdAt,
+            promotion: item.promotion || undefined,
             isProduct: true,
           }
         }
@@ -531,6 +534,7 @@ function convertMenuItems(menuData: Menu, labelVideos = false): MenuItem[] {
         createdAt: beer.createdAt,
         untappdRating: beer.untappdRating ?? null,
         topBeerDrops: beer.topBeerDrops || undefined,
+        promotion: item.promotion || undefined,
       }
     })
     .filter((item): item is NonNullable<typeof item> => item !== null && !item.isEmpty)
@@ -744,6 +748,14 @@ function CanCard({
                 </span>
               )}
             </div>
+          )}
+          {item.promotion && (
+            <Badge
+              className="max-w-full whitespace-normal text-center uppercase leading-tight"
+              style={{ fontSize: '1.3vh' }}
+            >
+              {item.promotion}
+            </Badge>
           )}
           {item.onDraft && (
             <Badge

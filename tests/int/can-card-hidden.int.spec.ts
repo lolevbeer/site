@@ -29,6 +29,7 @@ vi.mock('@/lib/hooks/use-auth', () => ({
 
 function makeMenu(): Menu {
   const beer = (slug: string, hideFromSite: boolean) => ({
+    promotion: slug === 'visible-beer' ? 'Buy one, get one free' : undefined,
     product: {
       relationTo: 'beers' as const,
       value: {
@@ -75,5 +76,14 @@ describe('CanCard', () => {
     const { container } = render(createElement(FeaturedCans, { menus: [makeMenu()] }))
 
     expect(container.textContent).not.toContain('·')
+  })
+
+  it('shows item promotions only on fullscreen menus', () => {
+    const menu = makeMenu()
+    const homepage = render(createElement(FeaturedCans, { menus: [menu] }))
+    const fullscreen = render(createElement(FeaturedCans, { menu }))
+
+    expect(homepage.container.textContent).not.toContain('Buy one, get one free')
+    expect(fullscreen.container.textContent).toContain('Buy one, get one free')
   })
 })
