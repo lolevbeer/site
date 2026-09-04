@@ -113,7 +113,7 @@ export function useLocation(locations: PayloadLocation[] = []): UseLocationRetur
   const isClient = useIsHydrated()
 
   // URL state for location - allows sharing URLs with location preset
-  const [urlLocation, _setUrlLocation] = useQueryState('loc', parseAsString)
+  const [urlLocation, setUrlLocation] = useQueryState('loc', parseAsString)
 
   const storedLocation = useSyncExternalStore(
     subscribeToStoredLocation,
@@ -152,15 +152,17 @@ export function useLocation(locations: PayloadLocation[] = []): UseLocationRetur
     [currentLocationData],
   )
 
-  // Set location with persistence (localStorage only - URL sync is slow)
+  // Set location with persistence. Clear any URL preset so it cannot keep
+  // overriding the visitor's direct selection.
   const setLocation = useCallback(
     (slug: LocationSlug) => {
       if (!isValidLocationSlug(locations, slug)) return
+      void setUrlLocation(null)
       // Writing to storage notifies subscribers, and `currentLocation` derives
       // from that — there is no separate copy in state to keep in step.
       saveLocationToStorage(slug)
     },
-    [locations],
+    [locations, setUrlLocation],
   )
 
   // Cycle to next location
