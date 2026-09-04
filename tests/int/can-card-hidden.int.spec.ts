@@ -60,7 +60,7 @@ function expectVisibleLinkedHiddenUnlinked(container: HTMLElement) {
   expect(container.textContent).toContain('hidden-beer')
 }
 
-describe('CanCard hideFromSite link suppression', () => {
+describe('CanCard', () => {
   it('homepage grid: visible beer links to its detail page, hidden beer does not', () => {
     const { container } = render(createElement(FeaturedCans, { menus: [makeMenu()] }))
     expectVisibleLinkedHiddenUnlinked(container)
@@ -69,5 +69,11 @@ describe('CanCard hideFromSite link suppression', () => {
   it('fullscreen /m grid: hidden beer tile renders unlinked', () => {
     const { container } = render(createElement(FeaturedCans, { menu: makeMenu() }))
     expectVisibleLinkedHiddenUnlinked(container)
+  })
+
+  it('does not leave a separator after the ABV when a beer has no rating', () => {
+    const { container } = render(createElement(FeaturedCans, { menus: [makeMenu()] }))
+
+    expect(container.textContent).not.toContain('·')
   })
 })

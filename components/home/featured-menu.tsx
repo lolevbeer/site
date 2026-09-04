@@ -785,7 +785,7 @@ function CanCard({
             a beer is. */}
         <div className="flex items-center justify-center gap-2 mb-2">
           {item.abv && <span className="text-sm font-semibold tabular-nums">{item.abv}%</span>}
-          {item.abv && !item.isProduct && (
+          {item.abv && !item.isProduct && (item.untappdRating ?? 0) > 0 && (
             <span className="text-muted-foreground" aria-hidden>
               &middot;
             </span>
