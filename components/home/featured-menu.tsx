@@ -751,8 +751,9 @@ function CanCard({
           )}
           {item.promotion && (
             <Badge
-              className="max-w-full whitespace-normal text-center uppercase leading-tight"
-              style={{ fontSize: '1.3vh' }}
+              variant="destructive"
+              className="max-w-full whitespace-normal px-3 py-1 text-center uppercase leading-tight shadow-md shadow-destructive/30"
+              style={{ fontSize: '1.4vh' }}
             >
               {item.promotion}
             </Badge>

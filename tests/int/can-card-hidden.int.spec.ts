@@ -27,9 +27,11 @@ vi.mock('@/lib/hooks/use-auth', () => ({
   useAuth: () => ({ isAuthenticated: false }),
 }))
 
+const PROMOTION = 'Buy one, get one free'
+
 function makeMenu(): Menu {
   const beer = (slug: string, hideFromSite: boolean) => ({
-    promotion: slug === 'visible-beer' ? 'Buy one, get one free' : undefined,
+    promotion: slug === 'visible-beer' ? PROMOTION : undefined,
     product: {
       relationTo: 'beers' as const,
       value: {
@@ -83,7 +85,7 @@ describe('CanCard', () => {
     const homepage = render(createElement(FeaturedCans, { menus: [menu] }))
     const fullscreen = render(createElement(FeaturedCans, { menu }))
 
-    expect(homepage.container.textContent).not.toContain('Buy one, get one free')
-    expect(fullscreen.container.textContent).toContain('Buy one, get one free')
+    expect(homepage.container.textContent).not.toContain(PROMOTION)
+    expect(fullscreen.getByText(PROMOTION).classList.contains('bg-destructive')).toBe(true)
   })
 })
