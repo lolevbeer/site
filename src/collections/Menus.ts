@@ -332,6 +332,15 @@ export const Menus: CollectionConfig = {
             },
           ],
         },
+        {
+          name: 'promotion',
+          type: 'text',
+          maxLength: 60,
+          admin: {
+            condition: (data) => data?.type === 'cans',
+            description: 'Optional promotion shown only on the fullscreen can menu.',
+          },
+        },
       ],
     },
   ],
