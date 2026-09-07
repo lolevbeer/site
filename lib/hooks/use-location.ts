@@ -13,6 +13,7 @@ import {
   type PayloadLocation,
   type LocationSlug,
   type LocationInfo,
+  type Weekday,
   toLocationInfo,
 } from '@/lib/types/location'
 import {
@@ -188,15 +189,17 @@ export function useLocation(locations: PayloadLocation[] = []): UseLocationRetur
   const todaysHours = useMemo(() => {
     if (!currentLocationData) return 'Hours unavailable'
     const today = new Date()
-    const dayOfWeek = [
-      'sunday',
-      'monday',
-      'tuesday',
-      'wednesday',
-      'thursday',
-      'friday',
-      'saturday',
-    ][today.getDay()]
+    const dayOfWeek = (
+      [
+        'sunday',
+        'monday',
+        'tuesday',
+        'wednesday',
+        'thursday',
+        'friday',
+        'saturday',
+      ] as const
+    )[today.getDay()]
     return getFormattedHoursForDay(currentLocationData, dayOfWeek)
   }, [currentLocationData])
 
@@ -247,7 +250,7 @@ export function useLocationHours(locations: PayloadLocation[], locationSlug?: Lo
   const targetLocation = getLocationBySlug(targetSlug)
 
   const getHoursForDay = useCallback(
-    (day: string) => {
+    (day: Weekday) => {
       if (!targetLocation) return 'Hours unavailable'
       return getFormattedHoursForDay(targetLocation, day)
     },

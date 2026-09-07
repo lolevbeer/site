@@ -8,6 +8,7 @@ import { PageTransition } from '@/components/motion'
 import { generateProductSchema } from '@/lib/utils/product-schema'
 import { generateBreadcrumbSchema } from '@/lib/utils/breadcrumb-schema'
 import { getBeerImageUrl } from '@/lib/utils/media-utils'
+import { logger } from '@/lib/utils/logger'
 
 interface BeerPageProps {
   params: Promise<{
@@ -73,10 +74,14 @@ export default async function BeerPage({ params }: BeerPageProps) {
   const beer = await getBeerBySlug(variant)
   if (!beer || beer.hideFromSite) notFound()
 
-  const onMenu = await getAvailableBeersFromMenus()
-  const productSchema = generateProductSchema(beer, {
-    inStock: onMenu.some((candidate) => candidate.id === beer.id),
-  })
+  let inStock: boolean | undefined
+  try {
+    const onMenu = await getAvailableBeersFromMenus()
+    if (onMenu.some((candidate) => candidate.id === beer.id)) inStock = true
+  } catch (error) {
+    logger.error('Could not load menus for product availability', error)
+  }
+  const productSchema = generateProductSchema(beer, { inStock })
   const breadcrumbSchema = generateBreadcrumbSchema([
     { label: 'Home', href: '/' },
     { label: 'Beer', href: '/beer' },

@@ -6,6 +6,7 @@
  */
 
 import type { PayloadLocation } from '@/lib/types/location'
+import { WEEKDAYS } from '@/lib/types/location'
 import { extractDayHours, formatHourMinute } from '@/lib/config/locations'
 import type { PostalAddressJsonLd, GeoCoordinatesJsonLd } from './json-ld'
 import { getMediaUrl } from './media-utils'
@@ -18,6 +19,8 @@ export interface SchemaHoursDay {
   close: string | null
   closed: boolean
   timezone?: string
+  holidayName?: string
+  date?: Date | string
 }
 
 /**
@@ -38,6 +41,7 @@ export interface LocalBusinessJsonLd {
   geo?: GeoCoordinatesJsonLd
   hasMap?: string
   openingHoursSpecification: OpeningHoursSpecificationJsonLd[]
+  specialOpeningHoursSpecification?: SpecialOpeningHoursSpecificationJsonLd[]
   priceRange?: string
   servesCuisine?: string[]
   hasMenu?: string
@@ -54,6 +58,14 @@ export interface OpeningHoursSpecificationJsonLd {
   dayOfWeek: string | string[]
   opens: string
   closes: string
+}
+
+export interface SpecialOpeningHoursSpecificationJsonLd {
+  '@type': 'OpeningHoursSpecification'
+  validFrom: string
+  validThrough: string
+  opens?: string
+  closes?: string
 }
 
 export interface AmenityFeatureJsonLd {
@@ -90,32 +102,11 @@ function groupOpeningHours(
 }
 
 /**
- * Convert day hours to OpeningHoursSpecification in the location timezone.
- * Prefer this week's holiday-aware hours when the caller has them.
+ * Regular weekly hours from the location document — not this week's holiday
+ * overrides, which Google expects on specialOpeningHoursSpecification.
  */
-function generateOpeningHours(
-  location: PayloadLocation,
-  weeklyHours?: SchemaHoursDay[],
-): OpeningHoursSpecificationJsonLd[] {
-  const timezone = location.timezone || 'America/New_York'
-
-  if (weeklyHours && weeklyHours.length > 0) {
-    const rows = weeklyHours.flatMap((day) => {
-      if (day.closed || !day.open || !day.close) return []
-      const tz = day.timezone || timezone
-      return [
-        {
-          day: day.day.charAt(0).toUpperCase() + day.day.slice(1),
-          opens: formatHourMinute(day.open, tz),
-          closes: formatHourMinute(day.close, tz),
-        },
-      ]
-    })
-    return groupOpeningHours(rows)
-  }
-
-  const dayNames = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
-  const rows = dayNames.flatMap((day) => {
+function generateOpeningHours(location: PayloadLocation): OpeningHoursSpecificationJsonLd[] {
+  const rows = WEEKDAYS.flatMap((day) => {
     const hours = extractDayHours(location, day)
     if (!hours || hours.closed) return []
     return [
@@ -127,6 +118,36 @@ function generateOpeningHours(
     ]
   })
   return groupOpeningHours(rows)
+}
+
+function toDateKey(value: Date | string): string {
+  if (typeof value === 'string') return value.split('T')[0]
+  return value.toISOString().split('T')[0]
+}
+
+function generateSpecialHours(
+  location: PayloadLocation,
+  weeklyHours?: SchemaHoursDay[],
+): SpecialOpeningHoursSpecificationJsonLd[] {
+  if (!weeklyHours?.length) return []
+  const timezone = location.timezone || 'America/New_York'
+  return weeklyHours.flatMap((day) => {
+    if (!day.holidayName || !day.date) return []
+    const valid = toDateKey(day.date)
+    const tz = day.timezone || timezone
+    if (day.closed || !day.open || !day.close) {
+      return [{ '@type': 'OpeningHoursSpecification', validFrom: valid, validThrough: valid }]
+    }
+    return [
+      {
+        '@type': 'OpeningHoursSpecification',
+        validFrom: valid,
+        validThrough: valid,
+        opens: formatHourMinute(day.open, tz),
+        closes: formatHourMinute(day.close, tz),
+      },
+    ]
+  })
 }
 
 /**
@@ -165,7 +186,7 @@ export function generateLocalBusinessSchema(
       postalCode: location.address?.zip || '',
       addressCountry: 'US',
     },
-    openingHoursSpecification: generateOpeningHours(location, weeklyHours),
+    openingHoursSpecification: generateOpeningHours(location),
     priceRange: '$$',
     servesCuisine: ['American', 'Beer'],
     acceptsReservations: false,
@@ -183,6 +204,11 @@ export function generateLocalBusinessSchema(
       longitude: lng,
     }
     schema.hasMap = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`
+  }
+
+  const specialHours = generateSpecialHours(location, weeklyHours)
+  if (specialHours.length > 0) {
+    schema.specialOpeningHoursSpecification = specialHours
   }
 
   if (location.basicInfo?.phone) {
@@ -211,8 +237,25 @@ export function generateLocalBusinessSchemas(
 /**
  * Generate Organization schema linking all locations
  */
-export function generateOrganizationSchema(locations?: PayloadLocation[]): object {
-  const baseSchema = {
+export interface OrganizationJsonLd {
+  '@context': 'https://schema.org'
+  '@type': 'Organization'
+  '@id': string
+  name: string
+  alternateName?: string
+  url: string
+  logo: string
+  description?: string
+  foundingDate?: string
+  email?: string
+  telephone?: string
+  sameAs?: string[]
+  address?: PostalAddressJsonLd
+  location?: Array<{ '@id': string }>
+}
+
+export function generateOrganizationSchema(locations?: PayloadLocation[]): OrganizationJsonLd {
+  const baseSchema: OrganizationJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     '@id': `${LOLEV_BASE_URL}#organization`,
@@ -227,13 +270,12 @@ export function generateOrganizationSchema(locations?: PayloadLocation[]): objec
     sameAs: SOCIAL_PROFILE_URLS,
   }
 
-  // Add location references if provided
   if (locations && locations.length > 0) {
     const firstLocation = locations.find((loc) => loc.active !== false)
     if (firstLocation) {
       return {
         ...baseSchema,
-        telephone: firstLocation.basicInfo?.phone || '(412) 336-8965',
+        telephone: firstLocation.basicInfo?.phone || undefined,
         address: {
           '@type': 'PostalAddress',
           streetAddress: firstLocation.address?.street || '',
@@ -244,7 +286,7 @@ export function generateOrganizationSchema(locations?: PayloadLocation[]): objec
         },
         location: locations
           .filter((loc) => loc.active !== false)
-          .map((loc) => ({ '@id': `https://lolev.beer#${loc.slug || loc.id}` })),
+          .map((loc) => ({ '@id': `${LOLEV_BASE_URL}#${loc.slug || loc.id}` })),
       }
     }
   }
@@ -282,7 +324,7 @@ export interface SearchActionJsonLd {
  * Links the website to the organization
  */
 export function generateWebSiteSchema(): WebSiteJsonLd {
-  const baseUrl = 'https://lolev.beer'
+  const baseUrl = LOLEV_BASE_URL
 
   return {
     '@context': 'https://schema.org',

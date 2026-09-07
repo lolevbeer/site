@@ -517,5 +517,5 @@ export function createLocationLookup(locations: PayloadLocation[]): LocationLook
  * Serialize JSON-LD to script tag content
  */
 export function serializeJsonLd(jsonLd: object): string {
-  return JSON.stringify(jsonLd, null, 0)
+  return JSON.stringify(jsonLd).replace(/</g, '\\u003c')
 }

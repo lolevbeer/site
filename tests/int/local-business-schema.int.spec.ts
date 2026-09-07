@@ -43,6 +43,28 @@ describe('generateLocalBusinessSchema', () => {
     expect(monday?.closes).toBe('22:00')
   })
 
+  it('keeps holiday closures off the standing weekly spec', () => {
+    const schema = generateLocalBusinessSchema(lawrenceville, [
+      {
+        day: 'monday',
+        open: null,
+        close: null,
+        closed: true,
+        holidayName: 'Labor Day',
+        date: '2026-09-07',
+      },
+    ])
+    const monday = schema.openingHoursSpecification.find((row) =>
+      (Array.isArray(row.dayOfWeek) ? row.dayOfWeek : [row.dayOfWeek]).includes('Monday'),
+    )
+    expect(monday?.opens).toBe('16:00')
+    expect(schema.specialOpeningHoursSpecification?.[0]).toMatchObject({
+      validFrom: '2026-09-07',
+      validThrough: '2026-09-07',
+    })
+    expect(schema.specialOpeningHoursSpecification?.[0].opens).toBeUndefined()
+  })
+
   it('points url at the location landing page and includes geo', () => {
     const schema = generateLocalBusinessSchema(lawrenceville)
     expect(schema.url).toBe('https://lolev.beer/lawrenceville')
@@ -79,7 +101,7 @@ describe('generateLocalBusinessSchema', () => {
 
 describe('generateOrganizationSchema', () => {
   it('includes NAP and location @id refs when locations are passed', () => {
-    const schema = generateOrganizationSchema([lawrenceville]) as Record<string, unknown>
+    const schema = generateOrganizationSchema([lawrenceville])
     expect(schema.telephone).toBe('(412) 336-8965')
     expect(schema.sameAs).toContain('https://x.com/lolevbeer')
     expect(schema.sameAs).not.toContain('https://twitter.com/lolevbeer')

@@ -7,19 +7,32 @@
  */
 export function getBaseUrl(): string {
   const explicit = process.env.NEXT_PUBLIC_SITE_URL?.trim()
-  if (explicit) return stripTrailingSlash(explicit)
-
-  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
-    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+  if (explicit) {
+    const normalized = asAbsoluteHttpUrl(explicit)
+    if (normalized) return normalized
   }
 
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`
+  const production = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim()
+  if (production) {
+    const normalized = asAbsoluteHttpUrl(`https://${production}`)
+    if (normalized) return normalized
+  }
+
+  const preview = process.env.VERCEL_URL?.trim()
+  if (preview) {
+    const normalized = asAbsoluteHttpUrl(`https://${preview}`)
+    if (normalized) return normalized
   }
 
   return 'https://lolev.beer'
 }
 
-function stripTrailingSlash(url: string): string {
-  return url.endsWith('/') ? url.slice(0, -1) : url
+function asAbsoluteHttpUrl(value: string): string | null {
+  try {
+    const url = new URL(value)
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return null
+    return url.origin
+  } catch {
+    return null
+  }
 }

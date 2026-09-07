@@ -13,7 +13,7 @@ interface MenuBeer {
   name: string
   description?: string | null
   abv: number
-  style?: string | { name: string } | unknown
+  style?: string | { name: string } | null
   draftPrice?: number | null
   fourPack?: number | null
   glutenFree?: boolean | null

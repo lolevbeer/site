@@ -3,7 +3,13 @@
  * Locations are now dynamically loaded from the database
  */
 
-import { type PayloadLocation, type LocationSlug, type DayHours } from '@/lib/types/location'
+import {
+  type PayloadLocation,
+  type LocationSlug,
+  type DayHours,
+  type Weekday,
+  WEEKDAYS,
+} from '@/lib/types/location'
 import { getCurrentESTDateTime } from '@/lib/utils/date'
 import { formatHoursTime } from '@/lib/utils/formatters'
 
@@ -12,14 +18,33 @@ import { formatHoursTime } from '@/lib/utils/formatters'
  */
 export const LOCATION_STORAGE_KEY = 'brewery-location-preference'
 
+/** Location slugs that would collide with App Router static segments. */
+export const RESERVED_LOCATION_SLUGS = new Set([
+  'about',
+  'accessibility',
+  'admin',
+  'api',
+  'beer',
+  'beer-map',
+  'e',
+  'events',
+  'faq',
+  'food',
+  'm',
+  'privacy',
+  'terms',
+])
+
 /**
  * Format a Payload time field as `HH:mm` in the location timezone.
  * Shared by open/closed checks and LocalBusiness openingHoursSpecification.
  */
 export function formatHourMinute(time: string, timezone: string): string {
   if (!time.includes('T')) return time.slice(0, 5)
+  const date = new Date(time)
+  if (Number.isNaN(date.getTime())) return '00:00'
   try {
-    return new Date(time).toLocaleTimeString('en-US', {
+    return date.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
       hour12: false,
@@ -34,9 +59,8 @@ export function formatHourMinute(time: string, timezone: string): string {
  * Extract hours from Payload Location for a specific day
  * Parses ISO time strings in the location's timezone for proper comparison
  */
-export function extractDayHours(location: PayloadLocation, day: string): DayHours | null {
-  const dayData = location[day as keyof PayloadLocation] as
-    { open?: string; close?: string } | undefined
+export function extractDayHours(location: PayloadLocation, day: Weekday): DayHours | null {
+  const dayData = location[day] as { open?: string; close?: string } | undefined
 
   if (!dayData?.open || !dayData?.close) {
     return null
@@ -57,9 +81,8 @@ export function formatHoursFaqAnswer(locations: PayloadLocation[]): string {
     return 'Hours vary by location and holiday. See lolev.beer for this week\'s hours.'
   }
   const parts = locations.map((location) => {
-    const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
     const groups: { label: string; hours: string }[] = []
-    for (const day of days) {
+    for (const day of WEEKDAYS) {
       const hours = getFormattedHoursForDay(location, day)
       const label = day.charAt(0).toUpperCase() + day.slice(1, 3)
       const last = groups[groups.length - 1]
@@ -108,7 +131,7 @@ export function formatLocationsFaqAnswer(locations: PayloadLocation[]): string {
  */
 export function isLocationOpenNow(location: PayloadLocation, date?: Date): boolean {
   const now = date || getCurrentESTDateTime()
-  const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+  const days: Weekday[] = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
   const dayOfWeek = days[now.getDay()]
 
   const dayHours = extractDayHours(location, dayOfWeek)
@@ -137,7 +160,7 @@ export function isLocationOpenNow(location: PayloadLocation, date?: Date): boole
 /**
  * Get formatted hours string for a specific day
  */
-export function getFormattedHoursForDay(location: PayloadLocation, day: string): string {
+export function getFormattedHoursForDay(location: PayloadLocation, day: Weekday): string {
   const dayHours = extractDayHours(location, day)
 
   if (!dayHours || dayHours.closed) {
@@ -154,7 +177,7 @@ export function getNextOpeningTimeForLocation(
   location: PayloadLocation,
 ): { day: string; time: string } | null {
   const now = getCurrentESTDateTime()
-  const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+  const days: Weekday[] = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
 
   for (let i = 1; i <= 7; i++) {
     const dayIndex = (now.getDay() + i) % 7
@@ -181,14 +204,13 @@ export function getAllHoursForLocation(location: PayloadLocation): Array<{
   hours: string
   isToday: boolean
 }> {
-  const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
   const today = new Date()
   const todayIndex = today.getDay()
-  const todayName = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][
-    todayIndex
-  ]
+  const todayName: Weekday = (
+    ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const
+  )[todayIndex]
 
-  return days.map((day) => ({
+  return WEEKDAYS.map((day) => ({
     day: day.charAt(0).toUpperCase() + day.slice(1),
     hours: getFormattedHoursForDay(location, day),
     isToday: day === todayName,

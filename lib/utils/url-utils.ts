@@ -15,6 +15,18 @@
  * @param url - The URL to normalize
  * @returns The relative path, or the original string if already relative or invalid
  */
+/** Allow only http(s) hrefs from CMS fields (directionsUrl, vendor sites). */
+export function safeHttpUrl(url: string | null | undefined): string | undefined {
+  if (!url) return undefined
+  try {
+    const parsed = new URL(url)
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') return parsed.toString()
+  } catch {
+    return undefined
+  }
+  return undefined
+}
+
 export function normalizeUrl(url: string): string {
   // If already relative, return as-is
   if (url.startsWith('/')) return url

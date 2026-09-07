@@ -4,7 +4,7 @@
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { getBaseUrl } from '@/lib/utils/get-base-url'
-import { joinLocationNames } from '@/lib/config/locations'
+import { formatHourMinute, joinLocationNames } from '@/lib/config/locations'
 import { beersDescription, siteDescription } from '@/lib/utils/seo'
 
 describe('getBaseUrl', () => {
@@ -40,6 +40,13 @@ describe('getBaseUrl', () => {
     expect(getBaseUrl()).toBe('https://lolev.beer')
     expect(getBaseUrl()).not.toContain('localhost')
   })
+
+  it('ignores NEXT_PUBLIC_SITE_URL without a scheme so metadataBase does not throw', () => {
+    vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'lolev.beer')
+    vi.stubEnv('VERCEL_PROJECT_PRODUCTION_URL', '')
+    vi.stubEnv('VERCEL_URL', '')
+    expect(getBaseUrl()).toBe('https://lolev.beer')
+  })
 })
 
 describe('joinLocationNames', () => {
@@ -59,5 +66,11 @@ describe('joinLocationNames', () => {
     expect(joinLocationNames([])).toBe('')
     expect(siteDescription([])).not.toMatch(/Lawrenceville|Zelienople/)
     expect(beersDescription([])).toMatch(/from our taprooms/)
+  })
+})
+
+describe('formatHourMinute', () => {
+  it('does not emit Invalid Date for unparseable ISO strings', () => {
+    expect(formatHourMinute('not-a-dateT', 'America/New_York')).toBe('00:00')
   })
 })

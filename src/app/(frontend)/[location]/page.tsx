@@ -24,7 +24,8 @@ import {
   getWeeklyHoursWithHolidays,
   extractVendorInfo,
 } from '@/lib/utils/payload-api'
-import { findLocationBySlug } from '@/lib/config/locations'
+import { findLocationBySlug, RESERVED_LOCATION_SLUGS } from '@/lib/config/locations'
+import { safeHttpUrl } from '@/lib/utils/url-utils'
 
 export const revalidate = 300
 
@@ -35,21 +36,29 @@ interface LocationPageProps {
 export async function generateStaticParams() {
   const locations = await getAllLocations()
   return locations
-    .filter((loc) => loc.active !== false && loc.slug)
-    .map((loc) => ({ location: loc.slug as string }))
+    .filter(
+      (loc): loc is typeof loc & { slug: string } =>
+        loc.active !== false &&
+        typeof loc.slug === 'string' &&
+        loc.slug.length > 0 &&
+        !RESERVED_LOCATION_SLUGS.has(loc.slug),
+    )
+    .map((loc) => ({ location: loc.slug }))
 }
 
 const loadLocation = cache(async (slug: string) => {
   const locations = await getAllLocations()
-  const location = findLocationBySlug(locations, slug.toLowerCase())
+  const key = slug.toLowerCase()
+  if (RESERVED_LOCATION_SLUGS.has(key)) return null
+  const location = findLocationBySlug(locations, key)
   if (!location || location.active === false) return null
 
   const [draftMenu, cansMenu, events, food, weeklyHours] = await Promise.all([
-    getDraftMenu(slug.toLowerCase()),
-    getCansMenu(slug.toLowerCase()),
-    getUpcomingEventsFromPayload(slug.toLowerCase(), 5),
-    getCombinedUpcomingFood(slug.toLowerCase(), 5),
-    getWeeklyHoursWithHolidays(location.id),
+    getDraftMenu(key).catch(() => null),
+    getCansMenu(key).catch(() => null),
+    getUpcomingEventsFromPayload(key, 5).catch(() => []),
+    getCombinedUpcomingFood(key, 5).catch(() => []),
+    getWeeklyHoursWithHolidays(location.id).catch(() => []),
   ])
 
   return { location, draftMenu, cansMenu, events, food, weeklyHours }
@@ -87,7 +96,7 @@ export default async function LocationPage({ params }: LocationPageProps) {
   const beersFrom = (menu: typeof draftMenu) =>
     (menu?.items ?? [])
       .map((item) => extractBeerFromMenuItem(item))
-      .filter((beer): beer is NonNullable<typeof beer> => beer !== null)
+      .filter((beer): beer is NonNullable<typeof beer> => beer !== null && !beer.hideFromSite)
 
   const localBusiness = generateLocalBusinessSchema(location, weeklyHours)
   const menuSchema = generateLocationMenuSchema({
@@ -101,11 +110,10 @@ export default async function LocationPage({ params }: LocationPageProps) {
   const cityLine = [location.address?.city, location.address?.state, location.address?.zip]
     .filter(Boolean)
     .join(' ')
-  const directionsUrl =
-    location.address?.directionsUrl ||
-    (street
-      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${street}, ${cityLine}`)}`
-      : undefined)
+  const mapsSearch = street
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${street}, ${cityLine}`)}`
+    : undefined
+  const directionsUrl = safeHttpUrl(location.address?.directionsUrl) || mapsSearch
 
   const draftBeers = beersFrom(draftMenu)
   const canBeers = beersFrom(cansMenu)
@@ -125,19 +133,22 @@ export default async function LocationPage({ params }: LocationPageProps) {
 
           <section className="mb-10 space-y-2">
             <h2 className="text-2xl font-semibold">Address</h2>
-            {street && <p>{street}</p>}
-            {cityLine && <p>{cityLine}</p>}
-            {location.basicInfo?.phone && (
-              <p>
-                <a href={`tel:${location.basicInfo.phone}`} className="hover:underline">
-                  {location.basicInfo.phone}
-                </a>
-              </p>
-            )}
+            <address className="not-italic space-y-2">
+              {street && <p>{street}</p>}
+              {cityLine && <p>{cityLine}</p>}
+              {location.basicInfo?.phone && (
+                <p>
+                  <a href={`tel:${location.basicInfo.phone}`} className="hover:underline">
+                    {location.basicInfo.phone}
+                  </a>
+                </p>
+              )}
+            </address>
             {directionsUrl && (
               <Button asChild className="mt-2">
                 <a href={directionsUrl} target="_blank" rel="noopener noreferrer">
                   Get directions
+                  <span className="sr-only"> (opens in Google Maps)</span>
                 </a>
               </Button>
             )}

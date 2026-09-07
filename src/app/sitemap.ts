@@ -2,6 +2,7 @@ import { MetadataRoute } from 'next'
 import { getAllBeersFromPayload, getAllLocations } from '@/lib/utils/payload-api'
 import { logger } from '@/lib/utils/logger'
 import { getBaseUrl } from '@/lib/utils/get-base-url'
+import { RESERVED_LOCATION_SLUGS } from '@/lib/config/locations'
 
 /** lastmod for pages that change with code, not CMS. YYYY-MM-DD of last meaningful edit. */
 const STATIC_LASTMOD: Record<string, string> = {
@@ -37,7 +38,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
 
   const visibleBeers = beers.filter((beer) => beer.slug && !beer.hideFromSite)
-  const activeLocations = locations.filter((loc) => loc.active && loc.slug)
+  const activeLocations = locations.filter(
+    (loc) => loc.active && loc.slug && !RESERVED_LOCATION_SLUGS.has(loc.slug),
+  )
   const catalogLastmod = maxDate(visibleBeers.map((b) => b.updatedAt))
   const homeLastmod = maxDate([
     catalogLastmod,
