@@ -6,15 +6,26 @@
  */
 
 import type { PayloadLocation } from '@/lib/types/location'
+import { extractDayHours, formatHourMinute } from '@/lib/config/locations'
 import type { PostalAddressJsonLd, GeoCoordinatesJsonLd } from './json-ld'
 import { getMediaUrl } from './media-utils'
+import { LOLEV_BASE_URL, SOCIAL_PROFILE_URLS, normalizeLngLat } from './schema-shared'
+
+/** Minimal week-hours row from getWeeklyHoursWithHolidays (avoids importing payload-api). */
+export interface SchemaHoursDay {
+  day: string
+  open: string | null
+  close: string | null
+  closed: boolean
+  timezone?: string
+}
 
 /**
  * Schema.org LocalBusiness type
  */
 export interface LocalBusinessJsonLd {
   '@context': 'https://schema.org'
-  '@type': 'BreweryOrDistillery'
+  '@type': 'Brewery'
   '@id': string
   name: string
   description?: string
@@ -25,6 +36,7 @@ export interface LocalBusinessJsonLd {
   email?: string
   address: PostalAddressJsonLd
   geo?: GeoCoordinatesJsonLd
+  hasMap?: string
   openingHoursSpecification: OpeningHoursSpecificationJsonLd[]
   priceRange?: string
   servesCuisine?: string[]
@@ -56,48 +68,16 @@ export interface AggregateRatingJsonLd {
   reviewCount: string
 }
 
-interface DayHours {
-  open?: string
-  close?: string
-}
-
-/**
- * Extract time from ISO string
- */
-function parseTime(isoString: string): string {
-  try {
-    const date = new Date(isoString)
-    const hours = date.getUTCHours().toString().padStart(2, '0')
-    const minutes = date.getUTCMinutes().toString().padStart(2, '0')
-    return `${hours}:${minutes}`
-  } catch {
-    return '00:00'
-  }
-}
-
-/**
- * Convert day hours to OpeningHoursSpecification
- */
-function generateOpeningHours(location: PayloadLocation): OpeningHoursSpecificationJsonLd[] {
-  // Group days with same hours
+function groupOpeningHours(
+  rows: { day: string; opens: string; closes: string }[],
+): OpeningHoursSpecificationJsonLd[] {
   const hoursMap = new Map<string, string[]>()
-
-  const dayNames = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
-
-  dayNames.forEach((day) => {
-    const dayData = location[day as keyof PayloadLocation] as DayHours | undefined
-    if (dayData?.open && dayData?.close) {
-      const opens = parseTime(dayData.open)
-      const closes = parseTime(dayData.close)
-      const key = `${opens}-${closes}`
-      const existing = hoursMap.get(key) || []
-      const capitalizedDay = day.charAt(0).toUpperCase() + day.slice(1)
-      existing.push(capitalizedDay)
-      hoursMap.set(key, existing)
-    }
-  })
-
-  // Convert to OpeningHoursSpecification array
+  for (const row of rows) {
+    const key = `${row.opens}-${row.closes}`
+    const existing = hoursMap.get(key) || []
+    existing.push(row.day)
+    hoursMap.set(key, existing)
+  }
   return Array.from(hoursMap.entries()).map(([timeRange, days]) => {
     const [opens, closes] = timeRange.split('-')
     return {
@@ -110,14 +90,57 @@ function generateOpeningHours(location: PayloadLocation): OpeningHoursSpecificat
 }
 
 /**
+ * Convert day hours to OpeningHoursSpecification in the location timezone.
+ * Prefer this week's holiday-aware hours when the caller has them.
+ */
+function generateOpeningHours(
+  location: PayloadLocation,
+  weeklyHours?: SchemaHoursDay[],
+): OpeningHoursSpecificationJsonLd[] {
+  const timezone = location.timezone || 'America/New_York'
+
+  if (weeklyHours && weeklyHours.length > 0) {
+    const rows = weeklyHours.flatMap((day) => {
+      if (day.closed || !day.open || !day.close) return []
+      const tz = day.timezone || timezone
+      return [
+        {
+          day: day.day.charAt(0).toUpperCase() + day.day.slice(1),
+          opens: formatHourMinute(day.open, tz),
+          closes: formatHourMinute(day.close, tz),
+        },
+      ]
+    })
+    return groupOpeningHours(rows)
+  }
+
+  const dayNames = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+  const rows = dayNames.flatMap((day) => {
+    const hours = extractDayHours(location, day)
+    if (!hours || hours.closed) return []
+    return [
+      {
+        day: day.charAt(0).toUpperCase() + day.slice(1),
+        opens: hours.open,
+        closes: hours.close,
+      },
+    ]
+  })
+  return groupOpeningHours(rows)
+}
+
+/**
  * Generate LocalBusiness schema for a brewery location
  */
-function generateLocalBusinessSchema(location: PayloadLocation): LocalBusinessJsonLd {
+export function generateLocalBusinessSchema(
+  location: PayloadLocation,
+  weeklyHours?: SchemaHoursDay[],
+): LocalBusinessJsonLd {
   const slug = location.slug || location.id
-  const baseUrl = 'https://lolev.beer'
+  const pageUrl = `${LOLEV_BASE_URL}/${slug}`
+  const logo = `${LOLEV_BASE_URL}/images/beer/og-image.jpg`
 
-  // Build images array from CMS data with fallback
-  const images: string[] = [`${baseUrl}/images/beer/og-image.png`]
+  const images: string[] = [logo]
   const heroImage = getMediaUrl(location.images?.hero)
   const cardImage = getMediaUrl(location.images?.card)
   if (heroImage) images.push(heroImage)
@@ -125,14 +148,15 @@ function generateLocalBusinessSchema(location: PayloadLocation): LocalBusinessJs
 
   const schema: LocalBusinessJsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'BreweryOrDistillery',
-    '@id': `${baseUrl}#${slug}`,
+    '@type': 'Brewery',
+    '@id': `${LOLEV_BASE_URL}#${slug}`,
     name: `Lolev Beer - ${location.name}`,
     description:
       'Craft brewery serving purposeful beer and building community in the Pittsburgh area. Offering modern ales, expressive lagers, and oak-aged beer.',
     image: images,
-    logo: `${baseUrl}/images/beer/og-image.png`,
-    url: baseUrl,
+    logo,
+    url: pageUrl,
+    hasMenu: pageUrl,
     address: {
       '@type': 'PostalAddress',
       streetAddress: location.address?.street || '',
@@ -141,32 +165,30 @@ function generateLocalBusinessSchema(location: PayloadLocation): LocalBusinessJs
       postalCode: location.address?.zip || '',
       addressCountry: 'US',
     },
-    openingHoursSpecification: generateOpeningHours(location),
+    openingHoursSpecification: generateOpeningHours(location, weeklyHours),
     priceRange: '$$',
     servesCuisine: ['American', 'Beer'],
     acceptsReservations: false,
     currenciesAccepted: 'USD',
     paymentAccepted: 'Cash, Credit Card, Debit Card',
-    sameAs: ['https://www.facebook.com/lolevbeer', 'https://www.instagram.com/lolevbeer'],
+    sameAs: SOCIAL_PROFILE_URLS,
   }
 
-  // Add geo coordinates if available
-  // coordinates is a point field: [longitude, latitude]
-  if (location.coordinates && location.coordinates.length === 2) {
-    const [lng, lat] = location.coordinates
+  const lngLat = normalizeLngLat(location.coordinates)
+  if (lngLat) {
+    const [lng, lat] = lngLat
     schema.geo = {
       '@type': 'GeoCoordinates',
       latitude: lat,
       longitude: lng,
     }
+    schema.hasMap = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`
   }
 
-  // Add telephone if available
   if (location.basicInfo?.phone) {
     schema.telephone = location.basicInfo.phone
   }
 
-  // Add email if available
   if (location.basicInfo?.email) {
     schema.email = location.basicInfo.email
   }
@@ -177,8 +199,13 @@ function generateLocalBusinessSchema(location: PayloadLocation): LocalBusinessJs
 /**
  * Generate LocalBusiness schemas for all locations
  */
-export function generateLocalBusinessSchemas(locations: PayloadLocation[]): LocalBusinessJsonLd[] {
-  return locations.filter((loc) => loc.active !== false).map(generateLocalBusinessSchema)
+export function generateLocalBusinessSchemas(
+  locations: PayloadLocation[],
+  weeklyHoursBySlug?: Record<string, SchemaHoursDay[]>,
+): LocalBusinessJsonLd[] {
+  return locations
+    .filter((loc) => loc.active !== false)
+    .map((loc) => generateLocalBusinessSchema(loc, weeklyHoursBySlug?.[loc.slug || loc.id]))
 }
 
 /**
@@ -188,20 +215,16 @@ export function generateOrganizationSchema(locations?: PayloadLocation[]): objec
   const baseSchema = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    '@id': 'https://lolev.beer#organization',
+    '@id': `${LOLEV_BASE_URL}#organization`,
     name: 'Lolev Beer',
     alternateName: 'Lolev Beer - A Brewery in Pittsburgh',
-    url: 'https://lolev.beer',
-    logo: 'https://lolev.beer/images/beer/og-image.png',
+    url: LOLEV_BASE_URL,
+    logo: `${LOLEV_BASE_URL}/images/beer/og-image.jpg`,
     description:
       'Craft brewery in Pennsylvania. Specializing in modern ales, expressive lagers, and oak-aged beer.',
     foundingDate: '2022',
     email: 'info@lolev.beer',
-    sameAs: [
-      'https://www.facebook.com/lolevbeer',
-      'https://www.instagram.com/lolevbeer',
-      'https://twitter.com/lolevbeer',
-    ],
+    sameAs: SOCIAL_PROFILE_URLS,
   }
 
   // Add location references if provided

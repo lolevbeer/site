@@ -9,6 +9,7 @@ import { FoodVendorSchedule } from '@/lib/types/food'
 import type { LocationSlug, PayloadLocation } from '@/lib/types/location'
 import type { Event as PayloadCmsEvent } from '@/src/payload-types'
 import { parseLocalDate } from './formatters'
+import { LOLEV_BASE_URL, SOCIAL_PROFILE_URLS, normalizeLngLat } from './schema-shared'
 
 /**
  * Schema.org Event type
@@ -117,9 +118,9 @@ function getLocationPlaceFromPayload(location: PayloadLocation): PlaceJsonLd {
     },
   }
 
-  // coordinates is a point field: [longitude, latitude]
-  if (location.coordinates && location.coordinates.length === 2) {
-    const [lng, lat] = location.coordinates
+  const lngLat = normalizeLngLat(location.coordinates)
+  if (lngLat) {
+    const [lng, lat] = lngLat
     place.geo = {
       '@type': 'GeoCoordinates',
       latitude: lat,
@@ -159,10 +160,16 @@ function getOrganizer(): OrganizationJsonLd {
   return {
     '@type': 'Organization',
     name: 'Lolev Beer',
-    url: 'https://lolev.beer',
-    logo: 'https://lolev.beer/images/beer/og-image.png',
-    sameAs: ['https://www.facebook.com/lolevbeer', 'https://www.instagram.com/lolevbeer'],
+    url: LOLEV_BASE_URL,
+    logo: `${LOLEV_BASE_URL}/images/beer/og-image.jpg`,
+    sameAs: SOCIAL_PROFILE_URLS,
   }
+}
+
+function qualifyEventName(name: string, locationName?: string): string {
+  const trimmed = name.trim()
+  if (!locationName || trimmed.includes(locationName)) return trimmed
+  return `${trimmed} — ${locationName}`
 }
 
 /**
@@ -245,12 +252,13 @@ function createBaseEventJsonLd(
   return {
     '@context': 'https://schema.org',
     '@type': 'Event',
-    name,
+    name: qualifyEventName(name, location?.name),
     startDate,
     eventStatus: 'https://schema.org/EventScheduled',
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
     location: place,
     organizer: getOrganizer(),
+    url: `${LOLEV_BASE_URL}/events`,
   }
 }
 
@@ -422,11 +430,11 @@ export function generateFoodEventJsonLd(
     )
 
     jsonLd.startDate = startDate
+    jsonLd.url = vendorSite || `${LOLEV_BASE_URL}/food`
     jsonLd.offers = { '@type': 'Offer', availability: 'https://schema.org/InStock' }
     jsonLd.performer = vendorSite
       ? { '@type': 'Organization', name: vendorName, url: vendorSite }
       : { '@type': 'Organization', name: vendorName }
-    if (vendorSite) jsonLd.url = vendorSite
 
     return jsonLd
   }
@@ -460,7 +468,7 @@ export function generateFoodEventJsonLd(
   jsonLd.performer = foodSchedule.site
     ? { '@type': 'Organization', name: foodSchedule.vendor, url: foodSchedule.site }
     : { '@type': 'Organization', name: foodSchedule.vendor }
-  if (foodSchedule.site) jsonLd.url = foodSchedule.site
+  jsonLd.url = foodSchedule.site || `${LOLEV_BASE_URL}/food`
 
   return jsonLd
 }

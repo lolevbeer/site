@@ -33,7 +33,15 @@ function LocationInfoSection({
     <div className="space-y-4">
       {/* Address */}
       <div>
-        <p className="font-semibold">Lolev {location.name}</p>
+        <p className="font-semibold">
+          {location.slug ? (
+            <Link href={`/${location.slug}`} className="hover:underline">
+              Lolev {location.name}
+            </Link>
+          ) : (
+            <>Lolev {location.name}</>
+          )}
+        </p>
         {mapUrl ? (
           <a
             href={mapUrl}
@@ -154,7 +162,9 @@ export function Footer({ weeklyHours }: FooterProps) {
               <Link href="/terms">Terms of Service</Link>
             </Button>
             <Button asChild variant="ghost" size="sm">
-              <Link href="/admin">Login</Link>
+              <Link href="/admin" rel="nofollow">
+                Login
+              </Link>
             </Button>
           </div>
         </div>

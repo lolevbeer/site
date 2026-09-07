@@ -13,10 +13,28 @@ import { formatHoursTime } from '@/lib/utils/formatters'
 export const LOCATION_STORAGE_KEY = 'brewery-location-preference'
 
 /**
+ * Format a Payload time field as `HH:mm` in the location timezone.
+ * Shared by open/closed checks and LocalBusiness openingHoursSpecification.
+ */
+export function formatHourMinute(time: string, timezone: string): string {
+  if (!time.includes('T')) return time.slice(0, 5)
+  try {
+    return new Date(time).toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      timeZone: timezone,
+    })
+  } catch {
+    return '00:00'
+  }
+}
+
+/**
  * Extract hours from Payload Location for a specific day
  * Parses ISO time strings in the location's timezone for proper comparison
  */
-function extractDayHours(location: PayloadLocation, day: string): DayHours | null {
+export function extractDayHours(location: PayloadLocation, day: string): DayHours | null {
   const dayData = location[day as keyof PayloadLocation] as
     { open?: string; close?: string } | undefined
 
@@ -26,29 +44,63 @@ function extractDayHours(location: PayloadLocation, day: string): DayHours | nul
 
   const timezone = location.timezone || 'America/New_York'
 
-  // Payload stores times as ISO date strings
-  // We need to extract the time in the location's timezone for proper open/closed comparison
-  const parseTime = (isoString: string): string => {
-    try {
-      const date = new Date(isoString)
-      // Format as HH:mm in the location's timezone
-      const timeString = date.toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-        timeZone: timezone,
-      })
-      return timeString
-    } catch {
-      return '00:00'
-    }
-  }
-
   return {
-    open: parseTime(dayData.open),
-    close: parseTime(dayData.close),
+    open: formatHourMinute(dayData.open, timezone),
+    close: formatHourMinute(dayData.close, timezone),
     closed: false,
   }
+}
+
+/** One-line hours summary for FAQ / llms.txt, grouped by identical open/close. */
+export function formatHoursFaqAnswer(locations: PayloadLocation[]): string {
+  if (locations.length === 0) {
+    return 'Hours vary by location and holiday. See lolev.beer for this week\'s hours.'
+  }
+  const parts = locations.map((location) => {
+    const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+    const groups: { label: string; hours: string }[] = []
+    for (const day of days) {
+      const hours = getFormattedHoursForDay(location, day)
+      const label = day.charAt(0).toUpperCase() + day.slice(1, 3)
+      const last = groups[groups.length - 1]
+      if (last && last.hours === hours) {
+        last.label = `${last.label.split('–')[0]}–${label}`
+      } else {
+        groups.push({ label, hours })
+      }
+    }
+    const summary = groups.map((g) => `${g.label} ${g.hours}`).join(', ')
+    return `${location.name} is ${summary}`
+  })
+  return `${parts.join('. ')}. Holiday hours may differ — this week's hours are listed in the footer of every page.`
+}
+
+/** "Lawrenceville and Zelienople" from live location docs — never a hardcoded list. */
+export function joinLocationNames(
+  locations: Array<{ name?: string | null }>,
+): string {
+  const names = locations
+    .map((location) => location.name?.trim())
+    .filter((name): name is string => Boolean(name))
+  if (names.length === 0) return ''
+  if (names.length === 1) return names[0]
+  if (names.length === 2) return `${names[0]} and ${names[1]}`
+  return `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`
+}
+
+export function formatLocationsFaqAnswer(locations: PayloadLocation[]): string {
+  if (locations.length === 0) {
+    return 'We have taprooms in the Pittsburgh area. See lolev.beer for addresses.'
+  }
+  const parts = locations.map((location) => {
+    const street = location.address?.street
+    const city = location.address?.city
+    const state = location.address?.state
+    const zip = location.address?.zip
+    const address = [street, [city, state].filter(Boolean).join(', '), zip].filter(Boolean).join(', ')
+    return `${location.name} at ${address || 'see lolev.beer'}`
+  })
+  return `We have ${locations.length} locations: ${parts.join('; ')}.`
 }
 
 /**

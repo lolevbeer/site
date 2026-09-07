@@ -147,6 +147,33 @@ function buildCansToGoSection(beers: MenuBeer[]): MenuSectionJsonLd {
 }
 
 /**
+ * Per-taproom Menu graph so "what's on tap at Lawrenceville" is distinct from Zelienople.
+ */
+export function generateLocationMenuSchema(args: {
+  locationName: string
+  locationSlug: string
+  draftBeers: MenuBeer[]
+  canBeers: MenuBeer[]
+}): MenuJsonLd {
+  const { locationName, locationSlug, draftBeers, canBeers } = args
+  const pageUrl = `${LOLEV_BASE_URL}/${locationSlug}`
+  const sections: MenuSectionJsonLd[] = []
+  if (draftBeers.length > 0) sections.push(buildOnTapSection(draftBeers))
+  if (canBeers.length > 0) sections.push(buildCansToGoSection(canBeers))
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Menu',
+    name: buildMenuName(locationName, 'Menu'),
+    description: `Draft and canned beers at Lolev Beer ${locationName}.`,
+    url: pageUrl,
+    inLanguage: 'en-US',
+    mainEntityOfPage: pageUrl,
+    hasMenuSection: sections,
+  }
+}
+
+/**
  * Generate combined Menu schema with both draft and cans
  */
 export function generateFullMenuSchema(beers: MenuBeer[], locationName?: string): MenuJsonLd {

@@ -15,9 +15,10 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { JsonLd } from '@/components/seo/json-ld';
-import { breweryFAQs, generateFAQSchema, type FAQItem } from '@/lib/utils/faq-schema';
+import { getBreweryFAQs, generateFAQSchema, type FAQItem } from '@/lib/utils/faq-schema';
+import { DEFAULT_OG_IMAGES } from '@/lib/utils/seo';
 import { generateFAQSpeakableSchema } from '@/lib/utils/speakable-schema';
-import { getActiveFAQs } from '@/lib/utils/payload-api';
+import { getActiveFAQs, getAllLocations } from '@/lib/utils/payload-api';
 import { PageTransition } from '@/components/motion';
 import { Mail, Phone, MapPin } from '@/components/icons';
 
@@ -61,7 +62,7 @@ function FAQAnswer({ question, answer }: FAQAnswerProps): ReactNode {
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: 'FAQ | Frequently Asked Questions',
+  title: 'FAQ',
   description: 'Find answers to common questions about Lolev Beer including hours, locations, events, private bookings, beer styles, and more.',
   keywords: ['brewery faq', 'hours', 'location', 'private events', 'beer styles', 'Pittsburgh brewery'],
   alternates: {
@@ -71,19 +72,18 @@ export const metadata: Metadata = {
     title: 'FAQ | Lolev Beer',
     description: 'Find answers to common questions about Lolev Beer including hours, locations, events, and more.',
     type: 'website',
-  }
-};
+    images: DEFAULT_OG_IMAGES,
+  },
+}
 
 export default async function FAQPage() {
-  // Fetch additional FAQs from CMS and combine with static FAQs
-  const cmsFAQs = await getActiveFAQs();
+  const [cmsFAQs, locations] = await Promise.all([getActiveFAQs(), getAllLocations()]);
   const dynamicFAQs: FAQItem[] = cmsFAQs.map(faq => ({
     question: faq.question,
     answer: faq.answer,
   }));
 
-  // Combine static FAQs with CMS FAQs (CMS FAQs are appended)
-  const allFAQs = [...breweryFAQs, ...dynamicFAQs];
+  const allFAQs = [...getBreweryFAQs(locations), ...dynamicFAQs];
 
   // Generate FAQ schema for SEO
   const faqSchema = generateFAQSchema(allFAQs);
@@ -158,20 +158,27 @@ export default async function FAQPage() {
             <div className="rounded-lg p-6 space-y-4 text-center">
               <h3 className="text-lg font-semibold mb-4">Our Locations</h3>
               <div className="space-y-3 text-sm">
-                <div className="flex flex-col items-center gap-2">
-                  <MapPin className="h-4 w-4 flex-shrink-0" />
-                  <div>
-                    <p className="font-medium">Lawrenceville</p>
-                    <p className="text-muted-foreground">5247 Butler Street<br />Pittsburgh, PA 15201</p>
+                {locations.map((location) => (
+                  <div key={location.id} className="flex flex-col items-center gap-2">
+                    <MapPin className="h-4 w-4 flex-shrink-0" />
+                    <div>
+                      {location.slug ? (
+                        <Link href={`/${location.slug}`} className="font-medium hover:underline">
+                          {location.name}
+                        </Link>
+                      ) : (
+                        <p className="font-medium">{location.name}</p>
+                      )}
+                      <p className="text-muted-foreground">
+                        {location.address?.street}
+                        {location.address?.street && <br />}
+                        {[location.address?.city, location.address?.state, location.address?.zip]
+                          .filter(Boolean)
+                          .join(' ')}
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <div className="flex flex-col items-center gap-2">
-                  <MapPin className="h-4 w-4 flex-shrink-0" />
-                  <div>
-                    <p className="font-medium">Zelienople</p>
-                    <p className="text-muted-foreground">111 South Main Street<br />Zelienople, PA 16063</p>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
           </div>

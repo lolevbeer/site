@@ -14,22 +14,26 @@ import {
 } from '@/lib/utils/payload-api'
 import { createLocationLookup, generateEventListJsonLd } from '@/lib/utils/json-ld'
 import { PageTransition } from '@/components/motion'
+import { DEFAULT_OG_IMAGES, eventsDescription } from '@/lib/utils/seo'
 
 // ISR: Revalidate every 5 minutes
 export const revalidate = 300
 
-export const metadata: Metadata = {
-  title: 'Events',
-  description:
-    'Discover upcoming events at Lolev Beer. From trivia nights to live music, find your next great experience at our Lawrenceville and Zelienople locations.',
-  keywords: ['brewery events', 'trivia night', 'live music', 'Pittsburgh brewery', 'beer events'],
-  alternates: { canonical: '/events' },
-  openGraph: {
-    title: 'Events | Lolev Beer',
-    description:
-      'Discover upcoming events at Lolev Beer. From trivia nights to live music, find your next great experience.',
-    type: 'website',
-  },
+export async function generateMetadata(): Promise<Metadata> {
+  const locations = await getAllLocations()
+  const description = eventsDescription(locations)
+  return {
+    title: 'Events',
+    description,
+    keywords: ['brewery events', 'trivia night', 'live music', 'Pittsburgh brewery', 'beer events'],
+    alternates: { canonical: '/events' },
+    openGraph: {
+      title: 'Events | Lolev Beer',
+      description,
+      type: 'website',
+      images: DEFAULT_OG_IMAGES,
+    },
+  }
 }
 
 /**

@@ -124,6 +124,7 @@ export async function generateMetadata({ params }: EventsDisplayPageProps) {
   if (!data) {
     return {
       title: 'Not Found',
+      robots: { index: false, follow: false },
     }
   }
 
@@ -138,6 +139,6 @@ export async function generateMetadata({ params }: EventsDisplayPageProps) {
   return {
     title,
     description: `Upcoming food and events at ${data.locationName}`,
-    alternates: { canonical: `/e/${location}` },
+    robots: { index: false, follow: false },
   }
 }

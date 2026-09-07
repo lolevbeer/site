@@ -4,11 +4,46 @@
  */
 
 import { NextResponse } from 'next/server'
+import { getAllLocations } from '@/lib/utils/payload-api'
+import { getBaseUrl } from '@/lib/utils/get-base-url'
+import { formatHoursFaqAnswer } from '@/lib/config/locations'
+import { logger } from '@/lib/utils/logger'
 
 export const revalidate = 3600 // Revalidate every hour
 
 export async function GET() {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lolev.beer'
+  const baseUrl = getBaseUrl()
+  let locations: Awaited<ReturnType<typeof getAllLocations>> = []
+  try {
+    locations = await getAllLocations()
+  } catch (error) {
+    logger.error('Error fetching locations for llms.txt:', error)
+  }
+
+  const locationBlocks = locations
+    .map((loc) => {
+      const street = loc.address?.street ?? ''
+      const city = [loc.address?.city, loc.address?.state, loc.address?.zip].filter(Boolean).join(' ')
+      const phone = loc.basicInfo?.phone ? `- Phone: ${loc.basicInfo.phone}` : ''
+      const page = loc.slug ? `- Page: ${baseUrl}/${loc.slug}` : ''
+      return `### ${loc.name}
+- Address: ${street}${city ? `, ${city}` : ''}
+${phone}
+${page}`.trim()
+    })
+    .join('\n\n')
+
+  const hoursLine = locations.length
+    ? formatHoursFaqAnswer(locations)
+    : 'Hours vary by location and holiday. See the website footer for this week.'
+
+  const taproomLinks = locations
+    .filter((loc) => loc.slug)
+    .map(
+      (loc) =>
+        `- [${loc.name} taproom](${baseUrl}/${loc.slug}): Hours, address, and what's on tap`,
+    )
+    .join('\n')
 
   const content = `# Lolev Beer
 
@@ -16,19 +51,14 @@ export async function GET() {
 
 ## Locations
 
-### Lawrenceville (Flagship Brewery & Taproom)
-- Address: 5247 Butler Street, Pittsburgh, PA 15201
-- Hours: Mon-Thu 4pm-10pm, Fri-Sat 12pm-12am, Sun 12pm-9pm
-- Phone: (412) 336-8965
+${locationBlocks || 'See the website for current taprooms.'}
 
-### Zelienople (Taproom)
-- Address: 111 South Main Street, Zelienople, PA 16063
-- Hours: Mon-Thu 5pm-10pm, Fri-Sat 12pm-12am, Sun 12pm-9pm
+${hoursLine}
 
 ## Site Navigation
 
 - [Home](${baseUrl}/): Current draft and cans menu, upcoming events and food vendors
-- [Our Beers](${baseUrl}/beer): Full catalog of all beers with filtering by style, ABV, and availability
+${taproomLinks ? `${taproomLinks}\n` : ''}- [Our Beers](${baseUrl}/beer): Full catalog of all beers with filtering by style, ABV, and availability
 - [Events](${baseUrl}/events): Upcoming events at both locations
 - [Food](${baseUrl}/food): Food truck and vendor schedule
 - [Beer Map](${baseUrl}/beer-map): Find Lolev Beer at retailers near you

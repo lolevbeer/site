@@ -40,7 +40,7 @@ interface BeerCardProps {
 
 export const BeerCard = React.memo(function BeerCard({
   beer,
-  showLocation = true,
+  showLocation = false,
   showPricing = true,
   showAvailability = true,
   className = '',

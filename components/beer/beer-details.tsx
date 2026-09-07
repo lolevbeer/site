@@ -10,7 +10,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { logger } from '@/lib/utils/logger'
 import type { Menu, Beer as PayloadBeer } from '@/src/payload-types'
-import { useLocationContext } from '@/components/location/location-provider'
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -142,7 +142,6 @@ function formatReviewDate(dateStr: string): string {
 }
 
 export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
-  const { currentLocation } = useLocationContext()
   const imagePath = getBeerImageUrl(beer.image, beer.slug)
   // Generated 3D label textures (see LabelTextureGenerator in the admin).
   // When present, a spinning 3D can replaces the flat image below.
@@ -236,7 +235,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
         </EmptyHeader>
         <EmptyContent>
           <Button asChild>
-            <Link href={`/${currentLocation}/beer`}>Browse Available Beers</Link>
+            <Link href="/beer">Browse Available Beers</Link>
           </Button>
         </EmptyContent>
       </Empty>
@@ -404,7 +403,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
                     )}
                     {tapLocations.length === 0 && canLocations.length === 0 && (
                       <p className="text-sm text-muted-foreground">
-                        Not currently available in Lawrenceville or Zelienople
+                        Not currently available at our taprooms
                       </p>
                     )}
                   </div>

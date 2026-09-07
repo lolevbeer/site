@@ -52,12 +52,13 @@ export async function generateMetadata({ params }: MenuPageProps) {
   if (!menu) {
     return {
       title: 'Menu Not Found',
+      robots: { index: false, follow: false },
     }
   }
 
   return {
     title: menu.name || `${menu.type} Menu`,
     description: menu.description || `View our ${menu.type} menu`,
-    alternates: { canonical: `/m/${menuUrl}` },
+    robots: { index: false, follow: false },
   }
 }

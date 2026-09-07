@@ -81,7 +81,15 @@ export function LocationCards({ weeklyHours }: LocationCardsProps) {
 
             {/* Location Info */}
             <div className="flex flex-col items-center text-center space-y-4">
-              <h3 className="text-2xl font-bold">{location.name}</h3>
+              <h3 className="text-2xl font-bold">
+                {location.slug ? (
+                  <Link href={`/${location.slug}`} className="hover:underline">
+                    {location.name}
+                  </Link>
+                ) : (
+                  location.name
+                )}
+              </h3>
 
               {/* Address */}
               {location.address && (

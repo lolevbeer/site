@@ -5,6 +5,13 @@
  * @see https://developers.google.com/search/docs/appearance/structured-data/faqpage
  */
 
+import type { PayloadLocation } from '@/lib/types/location'
+import {
+  formatHoursFaqAnswer,
+  formatLocationsFaqAnswer,
+  joinLocationNames,
+} from '@/lib/config/locations'
+
 export interface FAQItem {
   question: string
   answer: string
@@ -55,12 +62,12 @@ export const breweryFAQs: FAQItem[] = [
   {
     question: 'What are your hours of operation?',
     answer:
-      'Our Lawrenceville location is open Monday-Thursday 4pm-10pm, Friday-Saturday 12pm-12am, and Sunday 12pm-9pm. Our Zelienople location is open Monday-Thursday 5pm-10pm, Friday-Saturday 12pm-12am, and Sunday 12pm-9pm.',
+      'Hours vary by taproom and holiday. See the footer of any page for this week.',
   },
   {
     question: 'Where are you located?',
     answer:
-      "We have two locations: Our flagship brewery is at 5247 Butler Street in Pittsburgh's Lawrenceville neighborhood. Our second location is at 111 South Main Street in Zelienople, PA.",
+      'See our location pages or the footer for current taproom addresses.',
   },
   {
     question: 'Do you serve food?',
@@ -75,7 +82,7 @@ export const breweryFAQs: FAQItem[] = [
   {
     question: 'Are dogs allowed?',
     answer:
-      'Yes! Well-behaved, leashed dogs are welcome at both our Lawrenceville and Zelienople locations. We love our four-legged friends!',
+      'Yes! Well-behaved, leashed dogs are welcome at our taprooms. We love our four-legged friends!',
   },
   {
     question: 'Can I book a private event?',
@@ -90,7 +97,7 @@ export const breweryFAQs: FAQItem[] = [
   {
     question: 'Do you offer brewery tours?',
     answer:
-      'Yes! We offer brewery tours at our Lawrenceville production facility. Tours are typically available on weekends. Contact us for scheduling or check our Events page for upcoming tour dates.',
+      'Yes! We offer brewery tours at our production facility. Tours are typically available on weekends. Contact us for scheduling or check our Events page for upcoming tour dates.',
   },
   {
     question: 'Can I buy beer to take home?',
@@ -110,7 +117,7 @@ export const breweryFAQs: FAQItem[] = [
   {
     question: 'Is there parking available?',
     answer:
-      'Street parking is available at our Lawrenceville location. Our Zelienople location has a free parking lot adjacent to the building with additional street parking on Main Street.',
+      'Parking varies by taproom — some have street parking, others have a lot. See each location page or the footer for details.',
   },
   {
     question: 'Do you have WiFi?',
@@ -133,7 +140,7 @@ export const breweryFAQs: FAQItem[] = [
   {
     question: 'What is the best beer at Lolev?',
     answer:
-      'Lolev is best known for hop-forward IPAs with a showcase of New Zealand hops and our Ultra Hopped Ale. Our highest-rated and most popular beers are constantly being produced, so always check our homepage for the current draft and to-go menus — be sure to select the correct location, Lawrenceville or Zelienople, to see what is pouring now.',
+      'Lolev is best known for hop-forward IPAs with a showcase of New Zealand hops and our Ultra Hopped Ale. Our highest-rated and most popular beers are constantly being produced, so always check our homepage for the current draft and to-go menus — select a taproom to see what is pouring now.',
   },
   {
     question: 'What IPA do you recommend?',
@@ -143,11 +150,37 @@ export const breweryFAQs: FAQItem[] = [
   {
     question: 'What should I order on my first visit?',
     answer:
-      'Visiting our Pittsburgh brewery for the first time? We recommend sampling across our lineup of craft beers — our taproom pours a rotating selection of IPAs, expressive lagers, and oak-aged beers, all built to be balanced and approachable. There is no wrong place to start; ask our taproom staff what is fresh, or check the current draft menu on our homepage for your location. Both our Lawrenceville and Zelienople taprooms are dog-friendly and family-friendly craft beer destinations with local food trucks on site.',
+      'Visiting our Pittsburgh brewery for the first time? We recommend sampling across our lineup of craft beers — our taprooms pour a rotating selection of IPAs, expressive lagers, and oak-aged beers, all built to be balanced and approachable. There is no wrong place to start; ask our taproom staff what is fresh, or check the current draft menu on our homepage for your location. Our taprooms are dog-friendly and family-friendly craft beer destinations with local food trucks on site.',
   },
   {
     question: 'What makes Lolev one of the best breweries in Pittsburgh?',
     answer:
-      'Lolev is an independent Pittsburgh craft brewery with taprooms in Lawrenceville and Zelienople, focused on modern ales, expressive lagers, oak-aged beers, and hop-forward IPAs showcasing New Zealand hops. If you are visiting Pittsburgh from out of town, our taprooms are a great stop for craft beer, with dog-friendly and family-friendly spaces, rotating local food trucks, and regular events. Beyond our taprooms, Lolev beer is distributed across Pennsylvania, New York, and Ohio, and internationally in the United Kingdom, the European Union, China, Hong Kong, Japan, and South Korea.',
+      'Lolev is an independent Pittsburgh craft brewery focused on modern ales, expressive lagers, oak-aged beers, and hop-forward IPAs showcasing New Zealand hops. If you are visiting Pittsburgh from out of town, our taprooms are a great stop for craft beer, with dog-friendly and family-friendly spaces, rotating local food trucks, and regular events. Beyond our taprooms, Lolev beer is distributed across Pennsylvania, New York, and Ohio, and internationally in the United Kingdom, the European Union, China, Hong Kong, Japan, and South Korea.',
   },
 ]
+
+/** Static FAQs with hours, addresses, and taproom names filled from live location documents. */
+export function getBreweryFAQs(locations: PayloadLocation[] = []): FAQItem[] {
+  const names = joinLocationNames(locations)
+  return breweryFAQs.map((faq) => {
+    if (faq.question === 'What are your hours of operation?' && locations.length > 0) {
+      return { ...faq, answer: formatHoursFaqAnswer(locations) }
+    }
+    if (faq.question === 'Where are you located?' && locations.length > 0) {
+      return { ...faq, answer: formatLocationsFaqAnswer(locations) }
+    }
+    if (
+      faq.question === 'What makes Lolev one of the best breweries in Pittsburgh?' &&
+      names
+    ) {
+      return {
+        ...faq,
+        answer: faq.answer.replace(
+          'Pittsburgh craft brewery focused',
+          `Pittsburgh craft brewery with taprooms in ${names}, focused`,
+        ),
+      }
+    }
+    return { ...faq }
+  })
+}

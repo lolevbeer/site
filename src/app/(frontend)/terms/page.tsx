@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
 import { JsonLd } from '@/components/seo/json-ld';
-import { generateBreadcrumbSchema, generateWebPageSchema } from '@/lib/utils/breadcrumb-schema';
+import { generateWebPageSchema } from '@/lib/utils/breadcrumb-schema';
 
 export const metadata: Metadata = {
   title: 'Terms of Service',
@@ -10,10 +10,6 @@ export const metadata: Metadata = {
 };
 
 export default function TermsPage() {
-  const breadcrumbSchema = generateBreadcrumbSchema([
-    { label: 'Home', href: '/' },
-    { label: 'Terms of Service', href: '/terms' }
-  ]);
   const webPageSchema = generateWebPageSchema({
     name: 'Terms of Service',
     description: 'Lolev Beer terms of service governing use of lolev.beer website.',
@@ -23,7 +19,6 @@ export default function TermsPage() {
 
   return (
     <>
-      <JsonLd data={breadcrumbSchema} />
       <JsonLd data={webPageSchema} />
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto space-y-6">

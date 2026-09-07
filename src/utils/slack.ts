@@ -13,6 +13,7 @@ import {
   extractProductFromMenuItem,
   extractProductRefFromMenuItem,
 } from '@/lib/utils/menu-item-utils'
+import { getBaseUrl } from '@/lib/utils/get-base-url'
 
 export type MenuItem = Menu['items'][number]
 
@@ -177,13 +178,7 @@ export function parseProductValue(
  * a password-reset link minted against it hands the recipient an auth wall and
  * burns the one-time token.
  */
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ??
-  (process.env.VERCEL_PROJECT_PRODUCTION_URL
-    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-    : process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : 'https://lolev.beer')
+const SITE_URL = getBaseUrl()
 
 /**
  * The item's polymorphic product as a plain {relationTo, id} ref — delegates

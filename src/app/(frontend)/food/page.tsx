@@ -12,16 +12,27 @@ import { createLocationLookup, generateFoodEventJsonLd } from '@/lib/utils/json-
 import { PageTransition } from '@/components/motion'
 import { logger } from '@/lib/utils/logger'
 import { capitalizeName } from '@/lib/utils/formatters'
+import { DEFAULT_OG_IMAGES, foodDescription } from '@/lib/utils/seo'
 import {
   getRecurringFoodState,
   recurringDays as days,
   recurringOccurrences as weeks,
 } from '@/src/utils/recurring-food'
 
-export const metadata: Metadata = {
-  title: 'Food',
-  description: 'Food trucks and vendors at Lolev Beer in Lawrenceville and Zelienople',
-  alternates: { canonical: '/food' },
+export async function generateMetadata(): Promise<Metadata> {
+  const locations = await getAllLocations()
+  const description = foodDescription(locations)
+  return {
+    title: 'Food',
+    description,
+    alternates: { canonical: '/food' },
+    openGraph: {
+      title: 'Food | Lolev Beer',
+      description,
+      type: 'website',
+      images: DEFAULT_OG_IMAGES,
+    },
+  }
 }
 
 // Revalidate every hour

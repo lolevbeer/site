@@ -39,7 +39,7 @@ interface DraftBeerCardProps {
 
 export const DraftBeerCard = React.memo(function DraftBeerCard({
   beer,
-  showLocation = true,
+  showLocation = false,
   className = '',
   showTapAndPrice = false,
   showGlass = true,

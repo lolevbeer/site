@@ -5,18 +5,20 @@
  */
 
 import { NextResponse } from 'next/server'
-import { getAllBeersFromPayload, getActiveFAQs } from '@/lib/utils/payload-api'
-import { breweryFAQs } from '@/lib/utils/faq-schema'
+import { getAllBeersFromPayload, getActiveFAQs, getAllLocations } from '@/lib/utils/payload-api'
+import { getBreweryFAQs } from '@/lib/utils/faq-schema'
+import { getBaseUrl } from '@/lib/utils/get-base-url'
+import { formatHoursFaqAnswer } from '@/lib/config/locations'
 import { logger } from '@/lib/utils/logger'
 
 export const revalidate = 3600 // Revalidate every hour
 
 export async function GET() {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lolev.beer'
+  const baseUrl = getBaseUrl()
 
-  // Fetch dynamic content
   let beers: Awaited<ReturnType<typeof getAllBeersFromPayload>> = []
   let cmsFAQs: Awaited<ReturnType<typeof getActiveFAQs>> = []
+  let locations: Awaited<ReturnType<typeof getAllLocations>> = []
 
   try {
     beers = await getAllBeersFromPayload()
@@ -30,6 +32,12 @@ export async function GET() {
     logger.error('Error fetching FAQs for llms-full.txt:', error)
   }
 
+  try {
+    locations = await getAllLocations()
+  } catch (error) {
+    logger.error('Error fetching locations for llms-full.txt:', error)
+  }
+
   // Filter visible beers and sort by name
   const visibleBeers = beers
     .filter(beer => !beer.hideFromSite && beer.name)
@@ -37,9 +45,22 @@ export async function GET() {
 
   // Combine static and CMS FAQs
   const allFAQs = [
-    ...breweryFAQs,
+    ...getBreweryFAQs(locations),
     ...cmsFAQs.map(faq => ({ question: faq.question, answer: faq.answer }))
   ]
+
+  const locationBlocks = locations
+    .map((loc) => {
+      const street = loc.address?.street ?? ''
+      const city = [loc.address?.city, loc.address?.state, loc.address?.zip].filter(Boolean).join(' ')
+      const page = loc.slug ? `- Page: ${baseUrl}/${loc.slug}` : ''
+      return `### ${loc.name}
+- Address: ${street}${city ? `, ${city}` : ''}
+${page}`.trim()
+    })
+    .join('\n\n')
+
+  const hoursLine = locations.length ? formatHoursFaqAnswer(locations) : ''
 
   // Build beer list markdown
   const beerList = visibleBeers.map(beer => {
@@ -66,16 +87,9 @@ export async function GET() {
 
 ## Locations
 
-### Lawrenceville (Flagship Brewery & Taproom)
-- Address: 5247 Butler Street, Pittsburgh, PA 15201
-- Hours: Mon-Thu 4pm-10pm, Fri-Sat 12pm-12am, Sun 12pm-9pm
-- Phone: (412) 336-8965
-- Features: Production brewery, taproom, outdoor seating, dog-friendly, family-friendly
+${locationBlocks}
 
-### Zelienople (Taproom)
-- Address: 111 South Main Street, Zelienople, PA 16063
-- Hours: Mon-Thu 5pm-10pm, Fri-Sat 12pm-12am, Sun 12pm-9pm
-- Features: Historic building (former Barq's bottling facility), taproom, outdoor seating, dog-friendly, family-friendly, free parking lot
+${hoursLine}
 
 ## Site Navigation
 
@@ -107,9 +121,14 @@ ${faqList}
 
 We focus on creating beers that are purposeful and refined. Our approach combines traditional brewing techniques with modern innovation, always in service of flavor and quality. We source the finest ingredients, obsess over every detail of the brewing process, and refine our recipes.
 
-Our flagship location in Lawrenceville is both our production brewery and taproom, where visitors can experience our beers in the space where they're created. Our Zelienople location occupies a historic building that previously housed a Barq's bottling facility until the 1970s.
+${locations
+    .map((loc) => {
+      const city = loc.address?.city
+      return `${loc.name}${city ? ` (${city})` : ''} is a Lolev Beer taproom.`
+    })
+    .join(' ')}
 
-Both locations offer a curated selection of our freshest draft beers and canned offerings. We regularly host food trucks, live events, and community gatherings.
+Our taprooms offer a curated selection of our freshest draft beers and canned offerings. We regularly host food trucks, live events, and community gatherings.
 `
 
   return new NextResponse(content, {

@@ -16,28 +16,9 @@ import { Footer } from '@/components/layout/footer'
 import { MotionHydrationSentinel } from '@/components/motion/blur-fade'
 import { getAllLocations } from '@/lib/utils/payload-api'
 import { getWeeklyHoursForLocations } from '@/lib/utils/homepage-data'
+import { getBaseUrl } from '@/lib/utils/get-base-url'
+import { DEFAULT_OG_IMAGES, locationKeywords, siteDescription, SITE_TITLE } from '@/lib/utils/seo'
 import './globals.css'
-
-/**
- * Get the base URL for metadata.
- * Priority: NEXT_PUBLIC_SITE_URL > VERCEL_PROJECT_PRODUCTION_URL > VERCEL_URL > fallback
- */
-function getBaseUrl(): string {
-  // Explicit site URL (set in production)
-  if (process.env.NEXT_PUBLIC_SITE_URL) {
-    return process.env.NEXT_PUBLIC_SITE_URL
-  }
-  // Vercel production URL (e.g., lolev.beer if custom domain configured)
-  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
-    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-  }
-  // Vercel preview/branch URL (auto-generated)
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`
-  }
-  // Local development fallback
-  return 'http://localhost:3000'
-}
 
 /**
  * Fetches the footer's per-location weekly hours and renders it into the
@@ -67,23 +48,24 @@ export const viewport: Viewport = {
   // No maximumScale — allow pinch-zoom (WCAG 2.2 SC 1.4.4).
 }
 
-export const metadata: Metadata = {
+export async function generateMetadata(): Promise<Metadata> {
+  const locations = await getAllLocations()
+  const description = siteDescription(locations)
+  return {
   title: {
-    default: 'Lolev Beer - Craft Brewery in Pittsburgh',
+    default: SITE_TITLE,
     template: '%s | Lolev Beer',
   },
-  description:
-    'Experience exceptional craft beer at Lolev Beer with locations in Lawrenceville and Zelienople. Fresh brews, local food, and community events.',
+  description,
   keywords: [
     'craft beer',
     'brewery',
     'Pittsburgh',
-    'Lawrenceville',
-    'Zelienople',
     'local beer',
     'IPA',
     'stout',
     'ale',
+    ...locationKeywords(locations),
   ],
   authors: [{ name: 'Lolev Beer' }],
   creator: 'Lolev Beer',
@@ -98,25 +80,13 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     url: getBaseUrl(),
-    title: 'Lolev Beer - Craft Beer in Pittsburgh',
-    description:
-      'Experience exceptional craft beer at Lolev Beer with locations in Lawrenceville and Zelienople. Fresh brews, local food, and community events.',
+    title: SITE_TITLE,
+    description,
     siteName: 'Lolev Beer',
-    images: [
-      {
-        url: '/images/beer/og-image.png',
-        width: 1200,
-        height: 630,
-        alt: 'Lolev Beer - Craft Beer',
-      },
-    ],
+    images: DEFAULT_OG_IMAGES,
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Lolev Beer - Craft Beer in Pittsburgh',
-    description:
-      'Experience exceptional craft beer at Lolev Beer with locations in Lawrenceville and Zelienople. Fresh brews, local food, and community events.',
-    images: ['/images/beer/og-image.png'],
     site: '@lolevbeer',
     creator: '@lolevbeer',
   },
@@ -134,6 +104,7 @@ export const metadata: Metadata = {
   verification: {
     google: process.env.GOOGLE_SITE_VERIFICATION,
   },
+  }
 }
 
 export default async function AppLayout({
@@ -159,10 +130,10 @@ export default async function AppLayout({
         <link rel="manifest" href="/favicons/site.webmanifest" />
 
         {/* PWA Meta Tags */}
-        <meta name="theme-color" content="#8B5A3C" />
+        <meta name="theme-color" content="#ffffff" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="LoL Brewing" />
+        <meta name="apple-mobile-web-app-title" content="Lolev" />
         <meta name="mobile-web-app-capable" content="yes" />
 
         {/* Resource Hints for Performance */}

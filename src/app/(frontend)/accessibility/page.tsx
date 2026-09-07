@@ -1,7 +1,8 @@
 import { Metadata } from 'next'
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs'
 import { JsonLd } from '@/components/seo/json-ld'
-import { generateBreadcrumbSchema, generateWebPageSchema } from '@/lib/utils/breadcrumb-schema'
+import { generateWebPageSchema } from '@/lib/utils/breadcrumb-schema'
+import { DEFAULT_OG_IMAGES } from '@/lib/utils/seo'
 
 export const metadata: Metadata = {
   title: 'Accessibility Statement',
@@ -11,16 +12,13 @@ export const metadata: Metadata = {
     title: 'Accessibility Statement | Lolev Beer',
     description: 'WCAG 2.2 Level AA compliant website.',
     type: 'website',
+    images: DEFAULT_OG_IMAGES,
   },
 }
 
 export default function AccessibilityPage() {
   const lastUpdated = 'March 5, 2026'
 
-  const breadcrumbSchema = generateBreadcrumbSchema([
-    { label: 'Home', href: '/' },
-    { label: 'Accessibility', href: '/accessibility' },
-  ])
   const webPageSchema = generateWebPageSchema({
     name: 'Accessibility Statement',
     description:
@@ -31,7 +29,6 @@ export default function AccessibilityPage() {
 
   return (
     <>
-      <JsonLd data={breadcrumbSchema} />
       <JsonLd data={webPageSchema} />
       <div className="container mx-auto px-4 py-8 max-w-3xl">
         <PageBreadcrumbs className="mb-6" />

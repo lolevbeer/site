@@ -27,7 +27,7 @@ export function BeerMapContent({ weeklyHours, distributorData }: BeerMapContentP
       <PageBreadcrumbs className="mb-6" />
       {/* Page Header */}
       <div className="text-center mb-8">
-        <h1 className="text-4xl md:text-5xl font-bold mb-2">Where to find us</h1>
+        <h1 className="text-4xl md:text-5xl font-bold mb-2">Find Lolev Beer near you</h1>
         <div className="w-16 h-1 bg-primary mx-auto rounded-full" />
       </div>
 
