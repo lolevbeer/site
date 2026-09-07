@@ -5,7 +5,7 @@ const fixtureQuestion = 'Production readiness fixture'
 
 const publicRoutes = [
   ['/', 'Lolev Beer'],
-  ['/beer-map', 'Where to find us'],
+  ['/beer-map', 'Find Lolev Beer near you'],
   ['/beer', 'Our Beers'],
   ['/food', 'Food'],
   ['/events', 'Events'],
