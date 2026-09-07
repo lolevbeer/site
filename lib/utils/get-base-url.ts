@@ -6,30 +6,30 @@
  * the site. Local metadata pointing at production is harmless.
  */
 export function getBaseUrl(): string {
-  const explicit = process.env.NEXT_PUBLIC_SITE_URL?.trim()
-  if (explicit) {
-    const normalized = asAbsoluteHttpUrl(explicit)
-    if (normalized) return normalized
-  }
+  const candidates = [
+    process.env.NEXT_PUBLIC_SITE_URL,
+    httpsFromHost(process.env.VERCEL_PROJECT_PRODUCTION_URL),
+    httpsFromHost(process.env.VERCEL_URL),
+  ]
 
-  const production = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim()
-  if (production) {
-    const normalized = asAbsoluteHttpUrl(`https://${production}`)
-    if (normalized) return normalized
-  }
-
-  const preview = process.env.VERCEL_URL?.trim()
-  if (preview) {
-    const normalized = asAbsoluteHttpUrl(`https://${preview}`)
-    if (normalized) return normalized
+  for (const candidate of candidates) {
+    const origin = asAbsoluteHttpUrl(candidate)
+    if (origin) return origin
   }
 
   return 'https://lolev.beer'
 }
 
-function asAbsoluteHttpUrl(value: string): string | null {
+function httpsFromHost(host: string | undefined): string | undefined {
+  const trimmed = host?.trim()
+  return trimmed ? `https://${trimmed}` : undefined
+}
+
+function asAbsoluteHttpUrl(value: string | undefined): string | null {
+  const trimmed = value?.trim()
+  if (!trimmed) return null
   try {
-    const url = new URL(value)
+    const url = new URL(trimmed)
     if (url.protocol !== 'http:' && url.protocol !== 'https:') return null
     return url.origin
   } catch {

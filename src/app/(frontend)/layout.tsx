@@ -52,58 +52,58 @@ export async function generateMetadata(): Promise<Metadata> {
   const locations = await getAllLocations()
   const description = siteDescription(locations)
   return {
-  title: {
-    default: SITE_TITLE,
-    template: '%s | Lolev Beer',
-  },
-  description,
-  keywords: [
-    'craft beer',
-    'brewery',
-    'Pittsburgh',
-    'local beer',
-    'IPA',
-    'stout',
-    'ale',
-    ...locationKeywords(locations),
-  ],
-  authors: [{ name: 'Lolev Beer' }],
-  creator: 'Lolev Beer',
-  publisher: 'Lolev Beer',
-  formatDetection: {
-    email: false,
-    address: false,
-    telephone: false,
-  },
-  metadataBase: new URL(getBaseUrl()),
-  openGraph: {
-    type: 'website',
-    locale: 'en_US',
-    url: getBaseUrl(),
-    title: SITE_TITLE,
+    title: {
+      default: SITE_TITLE,
+      template: '%s | Lolev Beer',
+    },
     description,
-    siteName: 'Lolev Beer',
-    images: DEFAULT_OG_IMAGES,
-  },
-  twitter: {
-    card: 'summary_large_image',
-    site: '@lolevbeer',
-    creator: '@lolevbeer',
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
+    keywords: [
+      'craft beer',
+      'brewery',
+      'Pittsburgh',
+      'local beer',
+      'IPA',
+      'stout',
+      'ale',
+      ...locationKeywords(locations),
+    ],
+    authors: [{ name: 'Lolev Beer' }],
+    creator: 'Lolev Beer',
+    publisher: 'Lolev Beer',
+    formatDetection: {
+      email: false,
+      address: false,
+      telephone: false,
+    },
+    metadataBase: new URL(getBaseUrl()),
+    openGraph: {
+      type: 'website',
+      locale: 'en_US',
+      url: getBaseUrl(),
+      title: SITE_TITLE,
+      description,
+      siteName: 'Lolev Beer',
+      images: DEFAULT_OG_IMAGES,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      site: '@lolevbeer',
+      creator: '@lolevbeer',
+    },
+    robots: {
       index: true,
       follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-video-preview': -1,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
     },
-  },
-  verification: {
-    google: process.env.GOOGLE_SITE_VERIFICATION,
-  },
+    verification: {
+      google: process.env.GOOGLE_SITE_VERIFICATION,
+    },
   }
 }
 

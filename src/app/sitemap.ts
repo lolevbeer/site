@@ -5,14 +5,27 @@ import { getBaseUrl } from '@/lib/utils/get-base-url'
 import { RESERVED_LOCATION_SLUGS } from '@/lib/config/locations'
 
 /** lastmod for pages that change with code, not CMS. YYYY-MM-DD of last meaningful edit. */
-const STATIC_LASTMOD: Record<string, string> = {
+const STATIC_LASTMOD = {
   '/about': '2026-03-05',
   '/faq': '2026-03-05',
   '/accessibility': '2026-03-05',
   '/privacy': '2025-10-02',
   '/terms': '2025-10-02',
   '/beer-map': '2026-09-07',
-}
+} as const
+
+const STATIC_INFO_PAGES: Array<{
+  path: keyof typeof STATIC_LASTMOD
+  changeFrequency: 'weekly' | 'monthly' | 'yearly'
+  priority: number
+}> = [
+  { path: '/beer-map', changeFrequency: 'weekly', priority: 0.7 },
+  { path: '/about', changeFrequency: 'monthly', priority: 0.6 },
+  { path: '/faq', changeFrequency: 'monthly', priority: 0.5 },
+  { path: '/accessibility', changeFrequency: 'monthly', priority: 0.3 },
+  { path: '/privacy', changeFrequency: 'yearly', priority: 0.2 },
+  { path: '/terms', changeFrequency: 'yearly', priority: 0.2 },
+]
 
 function maxDate(dates: Array<string | Date | undefined | null>): Date {
   const times = dates
@@ -67,42 +80,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'daily',
       priority: 0.8,
     },
-    {
-      url: `${baseUrl}/beer-map`,
-      lastModified: new Date(STATIC_LASTMOD['/beer-map']),
-      changeFrequency: 'weekly',
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/about`,
-      lastModified: new Date(STATIC_LASTMOD['/about']),
-      changeFrequency: 'monthly',
-      priority: 0.6,
-    },
-    {
-      url: `${baseUrl}/faq`,
-      lastModified: new Date(STATIC_LASTMOD['/faq']),
-      changeFrequency: 'monthly',
-      priority: 0.5,
-    },
-    {
-      url: `${baseUrl}/accessibility`,
-      lastModified: new Date(STATIC_LASTMOD['/accessibility']),
-      changeFrequency: 'monthly',
-      priority: 0.3,
-    },
-    {
-      url: `${baseUrl}/privacy`,
-      lastModified: new Date(STATIC_LASTMOD['/privacy']),
-      changeFrequency: 'yearly',
-      priority: 0.2,
-    },
-    {
-      url: `${baseUrl}/terms`,
-      lastModified: new Date(STATIC_LASTMOD['/terms']),
-      changeFrequency: 'yearly',
-      priority: 0.2,
-    },
+    ...STATIC_INFO_PAGES.map((page) => ({
+      url: `${baseUrl}${page.path}`,
+      lastModified: new Date(STATIC_LASTMOD[page.path]),
+      changeFrequency: page.changeFrequency,
+      priority: page.priority,
+    })),
   ]
 
   const beerPages: MetadataRoute.Sitemap = visibleBeers.map((beer) => ({

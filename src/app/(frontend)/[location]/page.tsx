@@ -46,6 +46,44 @@ export async function generateStaticParams() {
     .map((loc) => ({ location: loc.slug }))
 }
 
+function visibleBeersFromMenu(menu: Awaited<ReturnType<typeof getDraftMenu>> | null) {
+  return (menu?.items ?? [])
+    .map((item) => extractBeerFromMenuItem(item))
+    .filter((beer): beer is NonNullable<typeof beer> => beer !== null && !beer.hideFromSite)
+}
+
+function BeerNameList({
+  beers,
+}: {
+  beers: Array<{ id: string; name: string; slug?: string | null }>
+}) {
+  return (
+    <ul className="list-disc pl-6 space-y-1">
+      {beers.map((beer) => (
+        <li key={beer.id}>
+          {beer.slug ? (
+            <Link href={`/beer/${beer.slug}`} className="hover:underline">
+              {beer.name}
+            </Link>
+          ) : (
+            beer.name
+          )}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+function DateSuffix({ value }: { value: string | Date | undefined | null }) {
+  if (!value) return null
+  return (
+    <span className="text-muted-foreground">
+      {' '}
+      — {String(value).split('T')[0]}
+    </span>
+  )
+}
+
 const loadLocation = cache(async (slug: string) => {
   const locations = await getAllLocations()
   const key = slug.toLowerCase()
@@ -93,17 +131,15 @@ export default async function LocationPage({ params }: LocationPageProps) {
   if (!data) notFound()
 
   const { location, draftMenu, cansMenu, events, food, weeklyHours } = data
-  const beersFrom = (menu: typeof draftMenu) =>
-    (menu?.items ?? [])
-      .map((item) => extractBeerFromMenuItem(item))
-      .filter((beer): beer is NonNullable<typeof beer> => beer !== null && !beer.hideFromSite)
+  const draftBeers = visibleBeersFromMenu(draftMenu)
+  const canBeers = visibleBeersFromMenu(cansMenu)
 
   const localBusiness = generateLocalBusinessSchema(location, weeklyHours)
   const menuSchema = generateLocationMenuSchema({
     locationName: location.name,
     locationSlug: location.slug || slug,
-    draftBeers: beersFrom(draftMenu),
-    canBeers: beersFrom(cansMenu),
+    draftBeers,
+    canBeers,
   })
 
   const street = location.address?.street
@@ -114,9 +150,6 @@ export default async function LocationPage({ params }: LocationPageProps) {
     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${street}, ${cityLine}`)}`
     : undefined
   const directionsUrl = safeHttpUrl(location.address?.directionsUrl) || mapsSearch
-
-  const draftBeers = beersFrom(draftMenu)
-  const canBeers = beersFrom(cansMenu)
 
   return (
     <>
@@ -168,38 +201,14 @@ export default async function LocationPage({ params }: LocationPageProps) {
             {draftBeers.length === 0 ? (
               <p className="text-muted-foreground">Check back soon for the current draft list.</p>
             ) : (
-              <ul className="list-disc pl-6 space-y-1">
-                {draftBeers.map((beer) => (
-                  <li key={beer.id}>
-                    {beer.slug ? (
-                      <Link href={`/beer/${beer.slug}`} className="hover:underline">
-                        {beer.name}
-                      </Link>
-                    ) : (
-                      beer.name
-                    )}
-                  </li>
-                ))}
-              </ul>
+              <BeerNameList beers={draftBeers} />
             )}
           </section>
 
           {canBeers.length > 0 && (
             <section className="mb-10">
               <h2 className="text-2xl font-semibold mb-3">Cans to go</h2>
-              <ul className="list-disc pl-6 space-y-1">
-                {canBeers.map((beer) => (
-                  <li key={beer.id}>
-                    {beer.slug ? (
-                      <Link href={`/beer/${beer.slug}`} className="hover:underline">
-                        {beer.name}
-                      </Link>
-                    ) : (
-                      beer.name
-                    )}
-                  </li>
-                ))}
-              </ul>
+              <BeerNameList beers={canBeers} />
             </section>
           )}
 
@@ -212,12 +221,7 @@ export default async function LocationPage({ params }: LocationPageProps) {
                     <Link href="/events" className="hover:underline font-medium">
                       {event.organizer}
                     </Link>
-                    {event.date && (
-                      <span className="text-muted-foreground">
-                        {' '}
-                        — {event.date.split('T')[0]}
-                      </span>
-                    )}
+                    <DateSuffix value={event.date} />
                   </li>
                 ))}
               </ul>
@@ -235,12 +239,7 @@ export default async function LocationPage({ params }: LocationPageProps) {
                       <Link href="/food" className="hover:underline font-medium">
                         {vendor.name}
                       </Link>
-                      {entry.date && (
-                        <span className="text-muted-foreground">
-                          {' '}
-                          — {String(entry.date).split('T')[0]}
-                        </span>
-                      )}
+                      <DateSuffix value={entry.date} />
                     </li>
                   )
                 })}

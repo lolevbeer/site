@@ -8,7 +8,11 @@
 import type { PayloadLocation } from '@/lib/types/location'
 import { WEEKDAYS } from '@/lib/types/location'
 import { extractDayHours, formatHourMinute } from '@/lib/config/locations'
-import type { PostalAddressJsonLd, GeoCoordinatesJsonLd } from './json-ld'
+import {
+  postalAddressFromLocation,
+  type PostalAddressJsonLd,
+  type GeoCoordinatesJsonLd,
+} from './json-ld'
 import { getMediaUrl } from './media-utils'
 import { LOLEV_BASE_URL, SOCIAL_PROFILE_URLS, normalizeLngLat } from './schema-shared'
 
@@ -86,9 +90,12 @@ function groupOpeningHours(
   const hoursMap = new Map<string, string[]>()
   for (const row of rows) {
     const key = `${row.opens}-${row.closes}`
-    const existing = hoursMap.get(key) || []
-    existing.push(row.day)
-    hoursMap.set(key, existing)
+    const days = hoursMap.get(key)
+    if (days) {
+      days.push(row.day)
+    } else {
+      hoursMap.set(key, [row.day])
+    }
   }
   return Array.from(hoursMap.entries()).map(([timeRange, days]) => {
     const [opens, closes] = timeRange.split('-')
@@ -106,17 +113,16 @@ function groupOpeningHours(
  * overrides, which Google expects on specialOpeningHoursSpecification.
  */
 function generateOpeningHours(location: PayloadLocation): OpeningHoursSpecificationJsonLd[] {
-  const rows = WEEKDAYS.flatMap((day) => {
+  const rows: { day: string; opens: string; closes: string }[] = []
+  for (const day of WEEKDAYS) {
     const hours = extractDayHours(location, day)
-    if (!hours || hours.closed) return []
-    return [
-      {
-        day: day.charAt(0).toUpperCase() + day.slice(1),
-        opens: hours.open,
-        closes: hours.close,
-      },
-    ]
-  })
+    if (!hours || hours.closed) continue
+    rows.push({
+      day: day.charAt(0).toUpperCase() + day.slice(1),
+      opens: hours.open,
+      closes: hours.close,
+    })
+  }
   return groupOpeningHours(rows)
 }
 
@@ -131,23 +137,23 @@ function generateSpecialHours(
 ): SpecialOpeningHoursSpecificationJsonLd[] {
   if (!weeklyHours?.length) return []
   const timezone = location.timezone || 'America/New_York'
-  return weeklyHours.flatMap((day) => {
-    if (!day.holidayName || !day.date) return []
+  const specs: SpecialOpeningHoursSpecificationJsonLd[] = []
+  for (const day of weeklyHours) {
+    if (!day.holidayName || !day.date) continue
     const valid = toDateKey(day.date)
-    const tz = day.timezone || timezone
-    if (day.closed || !day.open || !day.close) {
-      return [{ '@type': 'OpeningHoursSpecification', validFrom: valid, validThrough: valid }]
+    const spec: SpecialOpeningHoursSpecificationJsonLd = {
+      '@type': 'OpeningHoursSpecification',
+      validFrom: valid,
+      validThrough: valid,
     }
-    return [
-      {
-        '@type': 'OpeningHoursSpecification',
-        validFrom: valid,
-        validThrough: valid,
-        opens: formatHourMinute(day.open, tz),
-        closes: formatHourMinute(day.close, tz),
-      },
-    ]
-  })
+    if (!day.closed && day.open && day.close) {
+      const tz = day.timezone || timezone
+      spec.opens = formatHourMinute(day.open, tz)
+      spec.closes = formatHourMinute(day.close, tz)
+    }
+    specs.push(spec)
+  }
+  return specs
 }
 
 /**
@@ -178,14 +184,7 @@ export function generateLocalBusinessSchema(
     logo,
     url: pageUrl,
     hasMenu: pageUrl,
-    address: {
-      '@type': 'PostalAddress',
-      streetAddress: location.address?.street || '',
-      addressLocality: location.address?.city || '',
-      addressRegion: location.address?.state || 'PA',
-      postalCode: location.address?.zip || '',
-      addressCountry: 'US',
-    },
+    address: postalAddressFromLocation(location),
     openingHoursSpecification: generateOpeningHours(location),
     priceRange: '$$',
     servesCuisine: ['American', 'Beer'],
@@ -270,28 +269,18 @@ export function generateOrganizationSchema(locations?: PayloadLocation[]): Organ
     sameAs: SOCIAL_PROFILE_URLS,
   }
 
-  if (locations && locations.length > 0) {
-    const firstLocation = locations.find((loc) => loc.active !== false)
-    if (firstLocation) {
-      return {
-        ...baseSchema,
-        telephone: firstLocation.basicInfo?.phone || undefined,
-        address: {
-          '@type': 'PostalAddress',
-          streetAddress: firstLocation.address?.street || '',
-          addressLocality: firstLocation.address?.city || '',
-          addressRegion: firstLocation.address?.state || 'PA',
-          postalCode: firstLocation.address?.zip || '',
-          addressCountry: 'US',
-        },
-        location: locations
-          .filter((loc) => loc.active !== false)
-          .map((loc) => ({ '@id': `${LOLEV_BASE_URL}#${loc.slug || loc.id}` })),
-      }
-    }
-  }
+  const active = locations?.filter((loc) => loc.active !== false) ?? []
+  const firstLocation = active[0]
+  if (!firstLocation) return baseSchema
 
-  return baseSchema
+  return {
+    ...baseSchema,
+    telephone: firstLocation.basicInfo?.phone || undefined,
+    address: postalAddressFromLocation(firstLocation),
+    location: active.map((loc) => ({
+      '@id': `${LOLEV_BASE_URL}#${loc.slug || loc.id}`,
+    })),
+  }
 }
 
 /**
@@ -324,17 +313,15 @@ export interface SearchActionJsonLd {
  * Links the website to the organization
  */
 export function generateWebSiteSchema(): WebSiteJsonLd {
-  const baseUrl = LOLEV_BASE_URL
-
   return {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    '@id': `${baseUrl}#website`,
+    '@id': `${LOLEV_BASE_URL}#website`,
     name: 'Lolev Beer',
-    url: baseUrl,
+    url: LOLEV_BASE_URL,
     description: 'Craft brewery in Pittsburgh serving modern ales, expressive lagers, and oak-aged beer.',
     publisher: {
-      '@id': `${baseUrl}#organization`
-    }
+      '@id': `${LOLEV_BASE_URL}#organization`,
+    },
   }
 }

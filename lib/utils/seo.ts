@@ -51,6 +51,9 @@ export function locationKeywords(locations: PayloadLocation[]): string[] {
 /** Fallback when a caller has no location docs (tests, error paths). */
 export const SITE_DESCRIPTION = siteDescription()
 
+/** TV / kiosk routes — never index even if a crawler ignores robots.txt. */
+export const NOINDEX_ROBOTS = { index: false, follow: false } as const
+
 /** Compressed 1200×630 social card. Keep this on every page-level `openGraph`. */
 export const DEFAULT_OG_IMAGE_PATH = '/images/beer/og-image.jpg'
 

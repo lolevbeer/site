@@ -14,6 +14,7 @@ import {
   type LocationSlug,
   type LocationInfo,
   type Weekday,
+  WEEKDAYS_FROM_SUNDAY,
   toLocationInfo,
 } from '@/lib/types/location'
 import {
@@ -188,18 +189,7 @@ export function useLocation(locations: PayloadLocation[] = []): UseLocationRetur
   // Get today's hours
   const todaysHours = useMemo(() => {
     if (!currentLocationData) return 'Hours unavailable'
-    const today = new Date()
-    const dayOfWeek = (
-      [
-        'sunday',
-        'monday',
-        'tuesday',
-        'wednesday',
-        'thursday',
-        'friday',
-        'saturday',
-      ] as const
-    )[today.getDay()]
+    const dayOfWeek = WEEKDAYS_FROM_SUNDAY[new Date().getDay()]
     return getFormattedHoursForDay(currentLocationData, dayOfWeek)
   }, [currentLocationData])
 

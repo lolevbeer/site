@@ -2,6 +2,7 @@ import { cache } from 'react'
 import { getMenuByUrlFresh, hasAnyBeerJustReleased } from '@/lib/utils/payload-api'
 import { LiveMenu } from '@/components/menu/live-menu'
 import { notFound } from 'next/navigation'
+import { NOINDEX_ROBOTS } from '@/lib/utils/seo'
 
 // Use ISR with 60s revalidation for initial load performance
 // SSE handles real-time updates after hydration, so stale initial data is fine
@@ -52,13 +53,13 @@ export async function generateMetadata({ params }: MenuPageProps) {
   if (!menu) {
     return {
       title: 'Menu Not Found',
-      robots: { index: false, follow: false },
+      robots: NOINDEX_ROBOTS,
     }
   }
 
   return {
     title: menu.name || `${menu.type} Menu`,
     description: menu.description || `View our ${menu.type} menu`,
-    robots: { index: false, follow: false },
+    robots: NOINDEX_ROBOTS,
   }
 }

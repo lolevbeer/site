@@ -181,6 +181,6 @@ export function getBreweryFAQs(locations: PayloadLocation[] = []): FAQItem[] {
         ),
       }
     }
-    return { ...faq }
+    return faq
   })
 }

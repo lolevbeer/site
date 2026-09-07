@@ -9,6 +9,7 @@ import {
   type DayHours,
   type Weekday,
   WEEKDAYS,
+  WEEKDAYS_FROM_SUNDAY,
 } from '@/lib/types/location'
 import { getCurrentESTDateTime } from '@/lib/utils/date'
 import { formatHoursTime } from '@/lib/utils/formatters'
@@ -81,18 +82,23 @@ export function formatHoursFaqAnswer(locations: PayloadLocation[]): string {
     return 'Hours vary by location and holiday. See lolev.beer for this week\'s hours.'
   }
   const parts = locations.map((location) => {
-    const groups: { label: string; hours: string }[] = []
+    const groups: { start: string; end: string; hours: string }[] = []
     for (const day of WEEKDAYS) {
       const hours = getFormattedHoursForDay(location, day)
       const label = day.charAt(0).toUpperCase() + day.slice(1, 3)
       const last = groups[groups.length - 1]
       if (last && last.hours === hours) {
-        last.label = `${last.label.split('–')[0]}–${label}`
+        last.end = label
       } else {
-        groups.push({ label, hours })
+        groups.push({ start: label, end: label, hours })
       }
     }
-    const summary = groups.map((g) => `${g.label} ${g.hours}`).join(', ')
+    const summary = groups
+      .map((group) => {
+        const days = group.start === group.end ? group.start : `${group.start}–${group.end}`
+        return `${days} ${group.hours}`
+      })
+      .join(', ')
     return `${location.name} is ${summary}`
   })
   return `${parts.join('. ')}. Holiday hours may differ — this week's hours are listed in the footer of every page.`
@@ -116,11 +122,10 @@ export function formatLocationsFaqAnswer(locations: PayloadLocation[]): string {
     return 'We have taprooms in the Pittsburgh area. See lolev.beer for addresses.'
   }
   const parts = locations.map((location) => {
-    const street = location.address?.street
-    const city = location.address?.city
-    const state = location.address?.state
-    const zip = location.address?.zip
-    const address = [street, [city, state].filter(Boolean).join(', '), zip].filter(Boolean).join(', ')
+    const cityState = [location.address?.city, location.address?.state].filter(Boolean).join(', ')
+    const address = [location.address?.street, cityState, location.address?.zip]
+      .filter(Boolean)
+      .join(', ')
     return `${location.name} at ${address || 'see lolev.beer'}`
   })
   return `We have ${locations.length} locations: ${parts.join('; ')}.`
@@ -131,8 +136,7 @@ export function formatLocationsFaqAnswer(locations: PayloadLocation[]): string {
  */
 export function isLocationOpenNow(location: PayloadLocation, date?: Date): boolean {
   const now = date || getCurrentESTDateTime()
-  const days: Weekday[] = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
-  const dayOfWeek = days[now.getDay()]
+  const dayOfWeek = WEEKDAYS_FROM_SUNDAY[now.getDay()]
 
   const dayHours = extractDayHours(location, dayOfWeek)
 
@@ -177,11 +181,10 @@ export function getNextOpeningTimeForLocation(
   location: PayloadLocation,
 ): { day: string; time: string } | null {
   const now = getCurrentESTDateTime()
-  const days: Weekday[] = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
 
   for (let i = 1; i <= 7; i++) {
     const dayIndex = (now.getDay() + i) % 7
-    const dayName = days[dayIndex]
+    const dayName = WEEKDAYS_FROM_SUNDAY[dayIndex]
     const dayHours = extractDayHours(location, dayName)
 
     if (dayHours && !dayHours.closed) {
@@ -204,11 +207,7 @@ export function getAllHoursForLocation(location: PayloadLocation): Array<{
   hours: string
   isToday: boolean
 }> {
-  const today = new Date()
-  const todayIndex = today.getDay()
-  const todayName: Weekday = (
-    ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const
-  )[todayIndex]
+  const todayName = WEEKDAYS_FROM_SUNDAY[new Date().getDay()]
 
   return WEEKDAYS.map((day) => ({
     day: day.charAt(0).toUpperCase() + day.slice(1),

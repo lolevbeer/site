@@ -124,6 +124,14 @@ function offerAvailability(inStock: boolean | undefined): string {
   return 'https://schema.org/LimitedAvailability'
 }
 
+function productUrlSlug(beer: ProductSchemaInput) {
+  return (
+    ('slug' in beer ? beer.slug : undefined) ||
+    ('variant' in beer ? beer.variant : undefined) ||
+    beer.id
+  )
+}
+
 /**
  * Generate offers array for a beer
  */
@@ -134,10 +142,7 @@ function generateOffers(beer: ProductSchemaInput, inStock?: boolean): OfferJsonL
   const validUntil = new Date()
   validUntil.setDate(validUntil.getDate() + 90)
   const priceValidUntil = validUntil.toISOString().split('T')[0]
-  const beerSlug =
-    ('slug' in beer ? beer.slug : undefined) ||
-    ('variant' in beer ? beer.variant : undefined) ||
-    beer.id
+  const beerSlug = productUrlSlug(beer)
 
   const draftPrice = beer.draftPrice || ('pricing' in beer ? beer.pricing?.draftPrice : undefined)
   const fourPackPrice =
@@ -222,10 +227,7 @@ export function generateProductSchema(
 ): ProductJsonLd {
   const baseUrl = LOLEV_BASE_URL
   const styleName = getBeerStyleName(beer)
-  const beerSlug =
-    ('slug' in beer ? beer.slug : undefined) ||
-    ('variant' in beer ? beer.variant : undefined) ||
-    beer.id
+  const beerSlug = productUrlSlug(beer)
 
   const product: ProductJsonLd = {
     '@context': 'https://schema.org',
@@ -305,17 +307,11 @@ export function generateBeerListSchema(beers: ProductSchemaInput[]): ItemListJso
     description:
       'Explore our handcrafted selection of craft beers at Lolev Beer, a modern brewery in Pittsburgh.',
     numberOfItems: beers.length,
-    itemListElement: beers.map((beer, index) => {
-      const slug =
-        ('slug' in beer ? beer.slug : undefined) ||
-        ('variant' in beer ? beer.variant : undefined) ||
-        beer.id
-      return {
-        '@type': 'ListItem',
-        position: index + 1,
-        name: beer.name,
-        url: `${LOLEV_BASE_URL}/beer/${slug}`,
-      }
-    }),
+    itemListElement: beers.map((beer, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: beer.name,
+      url: `${LOLEV_BASE_URL}/beer/${productUrlSlug(beer)}`,
+    })),
   }
 }

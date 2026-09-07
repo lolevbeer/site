@@ -101,6 +101,20 @@ export interface OfferJsonLd {
   validFrom?: string
 }
 
+/** NAP address shared by Event Place, LocalBusiness, and Organization. */
+export function postalAddressFromLocation(
+  location: Pick<PayloadLocation, 'address'>,
+): PostalAddressJsonLd {
+  return {
+    '@type': 'PostalAddress',
+    streetAddress: location.address?.street || '',
+    addressLocality: location.address?.city || '',
+    addressRegion: location.address?.state || 'PA',
+    postalCode: location.address?.zip || '',
+    addressCountry: 'US',
+  }
+}
+
 /**
  * Get location Place data for JSON-LD from PayloadLocation
  */
@@ -108,14 +122,7 @@ function getLocationPlaceFromPayload(location: PayloadLocation): PlaceJsonLd {
   const place: PlaceJsonLd = {
     '@type': 'Place',
     name: `Lolev Beer - ${location.name}`,
-    address: {
-      '@type': 'PostalAddress',
-      streetAddress: location.address?.street || '',
-      addressLocality: location.address?.city || '',
-      addressRegion: location.address?.state || 'PA',
-      postalCode: location.address?.zip || '',
-      addressCountry: 'US',
-    },
+    address: postalAddressFromLocation(location),
   }
 
   const lngLat = normalizeLngLat(location.coordinates)
