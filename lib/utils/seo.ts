@@ -11,33 +11,43 @@ import type { PayloadLocation } from '@/lib/types/location'
 
 export const SITE_TITLE = 'Lolev Beer - Craft Brewery in Pittsburgh'
 
-export function siteDescription(locations: Array<{ name?: string | null }> = []): string {
+type NamedLocations = Array<{ name?: string | null }>
+
+function locationClause(
+  locations: NamedLocations,
+  whenNamed: (names: string) => string,
+  whenEmpty = '',
+): string {
   const names = joinLocationNames(locations)
-  const where = names ? ` with locations in ${names}` : ''
+  return names ? whenNamed(names) : whenEmpty
+}
+
+export function siteDescription(locations: NamedLocations = []): string {
+  const where = locationClause(locations, (names) => ` with locations in ${names}`)
   return `Experience exceptional craft beer at Lolev Beer${where}. Fresh brews, local food, and community events.`
 }
 
-export function beersDescription(locations: Array<{ name?: string | null }> = []): string {
-  const names = joinLocationNames(locations)
-  const where = names ? ` from our ${names} taprooms` : ' from our taprooms'
+export function beersDescription(locations: NamedLocations = []): string {
+  const where = locationClause(
+    locations,
+    (names) => ` from our ${names} taprooms`,
+    ' from our taprooms',
+  )
   return `Explore Lolev Beer's catalog of hop-saturated ales, hazy IPAs, and crisp lagers${where}.`
 }
 
-export function eventsDescription(locations: Array<{ name?: string | null }> = []): string {
-  const names = joinLocationNames(locations)
-  const where = names ? ` at our ${names} locations` : ''
+export function eventsDescription(locations: NamedLocations = []): string {
+  const where = locationClause(locations, (names) => ` at our ${names} locations`)
   return `Discover upcoming events at Lolev Beer. From trivia nights to live music, find your next great experience${where}.`
 }
 
-export function foodDescription(locations: Array<{ name?: string | null }> = []): string {
-  const names = joinLocationNames(locations)
-  const where = names ? ` in ${names}` : ''
+export function foodDescription(locations: NamedLocations = []): string {
+  const where = locationClause(locations, (names) => ` in ${names}`)
   return `Food trucks and vendors at Lolev Beer${where}`
 }
 
-export function beerMapDescription(locations: Array<{ name?: string | null }> = []): string {
-  const names = joinLocationNames(locations)
-  const taprooms = names ? `taprooms in ${names}` : 'our taprooms'
+export function beerMapDescription(locations: NamedLocations = []): string {
+  const taprooms = locationClause(locations, (names) => `taprooms in ${names}`, 'our taprooms')
   return `Find Lolev Beer ${taprooms}, plus retailers across Pennsylvania, New York, and Ohio.`
 }
 

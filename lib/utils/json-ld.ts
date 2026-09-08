@@ -9,7 +9,12 @@ import { FoodVendorSchedule } from '@/lib/types/food'
 import type { LocationSlug, PayloadLocation } from '@/lib/types/location'
 import type { Event as PayloadCmsEvent } from '@/src/payload-types'
 import { parseLocalDate } from './formatters'
-import { LOLEV_BASE_URL, SOCIAL_PROFILE_URLS, normalizeLngLat } from './schema-shared'
+import {
+  LOLEV_BASE_URL,
+  LOLEV_OG_IMAGE_URL,
+  SOCIAL_PROFILE_URLS,
+  normalizeLngLat,
+} from './schema-shared'
 
 /**
  * Schema.org Event type
@@ -115,6 +120,25 @@ export function postalAddressFromLocation(
   }
 }
 
+export function geoFromCoordinates(coordinates: unknown): GeoCoordinatesJsonLd | undefined {
+  const lngLat = normalizeLngLat(coordinates)
+  if (!lngLat) return undefined
+  const [lng, lat] = lngLat
+  return {
+    '@type': 'GeoCoordinates',
+    latitude: lat,
+    longitude: lng,
+  }
+}
+
+function locationSlugFromRelation(location: unknown): LocationSlug | undefined {
+  if (typeof location === 'object') {
+    const rel = location as { slug?: string | null; id?: string } | null
+    return (rel?.slug || rel?.id) as LocationSlug | undefined
+  }
+  return location as LocationSlug | undefined
+}
+
 /**
  * Get location Place data for JSON-LD from PayloadLocation
  */
@@ -125,15 +149,8 @@ function getLocationPlaceFromPayload(location: PayloadLocation): PlaceJsonLd {
     address: postalAddressFromLocation(location),
   }
 
-  const lngLat = normalizeLngLat(location.coordinates)
-  if (lngLat) {
-    const [lng, lat] = lngLat
-    place.geo = {
-      '@type': 'GeoCoordinates',
-      latitude: lat,
-      longitude: lng,
-    }
-  }
+  const geo = geoFromCoordinates(location.coordinates)
+  if (geo) place.geo = geo
 
   if (location.basicInfo?.phone) {
     place.telephone = location.basicInfo.phone
@@ -142,35 +159,37 @@ function getLocationPlaceFromPayload(location: PayloadLocation): PlaceJsonLd {
   return place
 }
 
-/**
- * Get a default place for when no location is available
- */
 function getDefaultPlace(): PlaceJsonLd {
   return {
     '@type': 'Place',
     name: 'Lolev Beer',
-    address: {
-      '@type': 'PostalAddress',
-      streetAddress: '',
-      addressLocality: '',
-      addressRegion: 'PA',
-      postalCode: '',
-      addressCountry: 'US',
-    },
+    address: postalAddressFromLocation({}),
   }
 }
 
-/**
- * Get organizer data for JSON-LD
- */
 function getOrganizer(): OrganizationJsonLd {
   return {
     '@type': 'Organization',
     name: 'Lolev Beer',
     url: LOLEV_BASE_URL,
-    logo: `${LOLEV_BASE_URL}/images/beer/og-image.jpg`,
+    logo: LOLEV_OG_IMAGE_URL,
     sameAs: SOCIAL_PROFILE_URLS,
   }
+}
+
+function complimentaryOffer(): OfferJsonLd {
+  return {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'USD',
+    availability: 'https://schema.org/InStock',
+  }
+}
+
+function organizationPerformer(name: string, url?: string): PersonOrOrganizationJsonLd {
+  return url
+    ? { '@type': 'Organization', name, url }
+    : { '@type': 'Organization', name }
 }
 
 function qualifyEventName(name: string, locationName?: string): string {
@@ -288,12 +307,7 @@ export function generateEventJsonLd(
       return createBaseEventJsonLd('Event at Lolev Beer', undefined, locationLookup)
     }
 
-    // Extract location slug from relationship
-    const locationSlug =
-      typeof payloadEvent.location === 'object'
-        ? ((payloadEvent.location?.slug || payloadEvent.location?.id) as LocationSlug | undefined)
-        : (payloadEvent.location as LocationSlug | undefined)
-
+    const locationSlug = locationSlugFromRelation(payloadEvent.location)
     const { startDate, endDate } = toISO8601(
       payloadEvent.date,
       payloadEvent.startTime ?? undefined,
@@ -307,16 +321,10 @@ export function generateEventJsonLd(
       startDate,
     )
 
-    jsonLd.startDate = startDate
     if (endDate) jsonLd.endDate = endDate
     if (payloadEvent.description) jsonLd.description = payloadEvent.description
     if (payloadEvent.site) jsonLd.url = payloadEvent.site
-    jsonLd.offers = {
-      '@type': 'Offer',
-      price: '0',
-      priceCurrency: 'USD',
-      availability: 'https://schema.org/InStock',
-    }
+    jsonLd.offers = complimentaryOffer()
 
     return jsonLd
   }
@@ -333,16 +341,19 @@ export function generateEventJsonLd(
     breweryEvent.time,
     breweryEvent.endTime,
   )
-  const jsonLd = createBaseEventJsonLd(breweryEvent.title, breweryEvent.location, locationLookup)
+  const jsonLd = createBaseEventJsonLd(
+    breweryEvent.title,
+    breweryEvent.location,
+    locationLookup,
+    startDate,
+  )
 
   jsonLd.description = breweryEvent.description
-  jsonLd.startDate = startDate
   jsonLd.eventStatus = getEventStatus(breweryEvent.status)
   if (endDate) jsonLd.endDate = endDate
   if (breweryEvent.image) jsonLd.image = breweryEvent.image
   if (breweryEvent.site) jsonLd.url = breweryEvent.site
 
-  // Add offers
   if (breweryEvent.price) {
     const priceMatch = breweryEvent.price.match(/\$?(\d+(?:\.\d{2})?)/)
     jsonLd.offers = {
@@ -357,21 +368,11 @@ export function generateEventJsonLd(
       ...(breweryEvent.site && { url: breweryEvent.site }),
     }
   } else {
-    jsonLd.offers = {
-      '@type': 'Offer',
-      price: '0',
-      priceCurrency: 'USD',
-      availability: 'https://schema.org/InStock',
-    }
+    jsonLd.offers = complimentaryOffer()
   }
 
-  // Add performer if it's a music or entertainment event
   if (breweryEvent.vendor && breweryEvent.vendor !== breweryEvent.title) {
-    jsonLd.performer = {
-      '@type': 'Organization',
-      name: breweryEvent.vendor,
-      url: breweryEvent.site,
-    }
+    jsonLd.performer = organizationPerformer(breweryEvent.vendor, breweryEvent.site)
   }
 
   return jsonLd
@@ -421,12 +422,7 @@ export function generateFoodEventJsonLd(
       return createBaseEventJsonLd('Food at Lolev Beer', undefined, locationLookup)
     }
 
-    // Extract location slug from relationship
-    const locationSlug =
-      typeof payloadFood.location === 'object'
-        ? ((payloadFood.location?.slug || payloadFood.location?.id) as LocationSlug | undefined)
-        : (payloadFood.location as LocationSlug | undefined)
-
+    const locationSlug = locationSlugFromRelation(payloadFood.location)
     const { startDate } = toISO8601(payloadFood.date, payloadFood.startTime ?? undefined)
 
     const jsonLd = createBaseEventJsonLd(
@@ -436,12 +432,9 @@ export function generateFoodEventJsonLd(
       startDate,
     )
 
-    jsonLd.startDate = startDate
     jsonLd.url = vendorSite || `${LOLEV_BASE_URL}/food`
     jsonLd.offers = { '@type': 'Offer', availability: 'https://schema.org/InStock' }
-    jsonLd.performer = vendorSite
-      ? { '@type': 'Organization', name: vendorName, url: vendorSite }
-      : { '@type': 'Organization', name: vendorName }
+    jsonLd.performer = organizationPerformer(vendorName, vendorSite)
 
     return jsonLd
   }
@@ -464,17 +457,15 @@ export function generateFoodEventJsonLd(
     `${foodSchedule.vendor} at Lolev Beer`,
     foodSchedule.location,
     locationLookup,
+    startDate,
   )
 
   jsonLd.description =
     foodSchedule.notes ||
     `${foodSchedule.vendor} will be serving food at Lolev Beer ${locationName}`
-  jsonLd.startDate = startDate
   if (endDate) jsonLd.endDate = endDate
   jsonLd.offers = { '@type': 'Offer', availability: 'https://schema.org/InStock' }
-  jsonLd.performer = foodSchedule.site
-    ? { '@type': 'Organization', name: foodSchedule.vendor, url: foodSchedule.site }
-    : { '@type': 'Organization', name: foodSchedule.vendor }
+  jsonLd.performer = organizationPerformer(foodSchedule.vendor, foodSchedule.site)
   jsonLd.url = foodSchedule.site || `${LOLEV_BASE_URL}/food`
 
   return jsonLd

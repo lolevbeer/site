@@ -5,6 +5,8 @@
  * → https://lolev.beer. Never localhost: a wrong production canonical deindexes
  * the site. Local metadata pointing at production is harmless.
  */
+import { LOLEV_BASE_URL } from './schema-shared'
+
 export function getBaseUrl(): string {
   const candidates = [
     process.env.NEXT_PUBLIC_SITE_URL,
@@ -17,7 +19,7 @@ export function getBaseUrl(): string {
     if (origin) return origin
   }
 
-  return 'https://lolev.beer'
+  return LOLEV_BASE_URL
 }
 
 function httpsFromHost(host: string | undefined): string | undefined {

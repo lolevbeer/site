@@ -24,7 +24,11 @@ import {
   getWeeklyHoursWithHolidays,
   extractVendorInfo,
 } from '@/lib/utils/payload-api'
-import { findLocationBySlug, RESERVED_LOCATION_SLUGS } from '@/lib/config/locations'
+import {
+  findLocationBySlug,
+  formatCityStateZip,
+  RESERVED_LOCATION_SLUGS,
+} from '@/lib/config/locations'
 import { safeHttpUrl } from '@/lib/utils/url-utils'
 
 export const revalidate = 300
@@ -143,9 +147,7 @@ export default async function LocationPage({ params }: LocationPageProps) {
   })
 
   const street = location.address?.street
-  const cityLine = [location.address?.city, location.address?.state, location.address?.zip]
-    .filter(Boolean)
-    .join(' ')
+  const cityLine = formatCityStateZip(location.address)
   const mapsSearch = street
     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${street}, ${cityLine}`)}`
     : undefined

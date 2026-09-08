@@ -6,7 +6,7 @@
 import { NextResponse } from 'next/server'
 import { getAllLocations } from '@/lib/utils/payload-api'
 import { getBaseUrl } from '@/lib/utils/get-base-url'
-import { formatHoursFaqAnswer } from '@/lib/config/locations'
+import { formatCityStateZip, formatHoursFaqAnswer } from '@/lib/config/locations'
 import { logger } from '@/lib/utils/logger'
 
 export const revalidate = 3600 // Revalidate every hour
@@ -23,7 +23,7 @@ export async function GET() {
   const locationBlocks = locations
     .map((loc) => {
       const street = loc.address?.street ?? ''
-      const city = [loc.address?.city, loc.address?.state, loc.address?.zip].filter(Boolean).join(' ')
+      const city = formatCityStateZip(loc.address)
       const phone = loc.basicInfo?.phone ? `- Phone: ${loc.basicInfo.phone}` : ''
       const page = loc.slug ? `- Page: ${baseUrl}/${loc.slug}` : ''
       return `### ${loc.name}

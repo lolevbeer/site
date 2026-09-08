@@ -18,6 +18,7 @@ import { JsonLd } from '@/components/seo/json-ld';
 import { getBreweryFAQs, generateFAQSchema, type FAQItem } from '@/lib/utils/faq-schema';
 import { DEFAULT_OG_IMAGES } from '@/lib/utils/seo';
 import { generateFAQSpeakableSchema } from '@/lib/utils/speakable-schema';
+import { formatCityStateZip } from '@/lib/config/locations';
 import { getActiveFAQs, getAllLocations } from '@/lib/utils/payload-api';
 import { PageTransition } from '@/components/motion';
 import { Mail, Phone, MapPin } from '@/components/icons';
@@ -172,9 +173,7 @@ export default async function FAQPage() {
                       <p className="text-muted-foreground">
                         {location.address?.street}
                         {location.address?.street && <br />}
-                        {[location.address?.city, location.address?.state, location.address?.zip]
-                          .filter(Boolean)
-                          .join(' ')}
+                        {formatCityStateZip(location.address)}
                       </p>
                     </div>
                   </div>

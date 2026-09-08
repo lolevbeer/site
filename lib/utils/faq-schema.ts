@@ -163,24 +163,23 @@ export const breweryFAQs: FAQItem[] = [
 export function getBreweryFAQs(locations: PayloadLocation[] = []): FAQItem[] {
   const names = joinLocationNames(locations)
   return breweryFAQs.map((faq) => {
-    if (faq.question === 'What are your hours of operation?' && locations.length > 0) {
-      return { ...faq, answer: formatHoursFaqAnswer(locations) }
+    switch (faq.question) {
+      case 'What are your hours of operation?':
+        return locations.length > 0 ? { ...faq, answer: formatHoursFaqAnswer(locations) } : faq
+      case 'Where are you located?':
+        return locations.length > 0 ? { ...faq, answer: formatLocationsFaqAnswer(locations) } : faq
+      case 'What makes Lolev one of the best breweries in Pittsburgh?':
+        return names
+          ? {
+              ...faq,
+              answer: faq.answer.replace(
+                'Pittsburgh craft brewery focused',
+                `Pittsburgh craft brewery with taprooms in ${names}, focused`,
+              ),
+            }
+          : faq
+      default:
+        return faq
     }
-    if (faq.question === 'Where are you located?' && locations.length > 0) {
-      return { ...faq, answer: formatLocationsFaqAnswer(locations) }
-    }
-    if (
-      faq.question === 'What makes Lolev one of the best breweries in Pittsburgh?' &&
-      names
-    ) {
-      return {
-        ...faq,
-        answer: faq.answer.replace(
-          'Pittsburgh craft brewery focused',
-          `Pittsburgh craft brewery with taprooms in ${names}, focused`,
-        ),
-      }
-    }
-    return faq
   })
 }

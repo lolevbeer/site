@@ -117,6 +117,13 @@ export function joinLocationNames(
   return `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`
 }
 
+/** "Pittsburgh PA 15201" from a Payload address — street is handled by the caller. */
+export function formatCityStateZip(
+  address: { city?: string | null; state?: string | null; zip?: string | null } | null | undefined,
+): string {
+  return [address?.city, address?.state, address?.zip].filter(Boolean).join(' ')
+}
+
 export function formatLocationsFaqAnswer(locations: PayloadLocation[]): string {
   if (locations.length === 0) {
     return 'We have taprooms in the Pittsburgh area. See lolev.beer for addresses.'

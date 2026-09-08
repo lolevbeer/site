@@ -8,7 +8,7 @@
 import type { Beer as PayloadBeer } from '@/src/payload-types'
 import { Beer } from '@/lib/types/beer'
 import { getBeerImageUrl } from '@/lib/utils/media-utils'
-import { LOLEV_BASE_URL } from '@/lib/utils/schema-shared'
+import { LOLEV_BASE_URL, LOLEV_OG_IMAGE_URL } from '@/lib/utils/schema-shared'
 import { relationshipName } from '@/lib/utils/relationship-name'
 
 /**
@@ -103,14 +103,6 @@ function getBeerStyleName(beer: ProductSchemaInput): string {
   }
   // Check for style relationship (Payload beer)
   return relationshipName('style' in beer ? beer.style : undefined) ?? 'Beer'
-}
-
-/**
- * Get beer category/style
- */
-function getBeerCategory(beer: ProductSchemaInput): string {
-  const styleName = getBeerStyleName(beer)
-  return `Craft Beer > ${styleName}`
 }
 
 export interface ProductSchemaOptions {
@@ -225,7 +217,6 @@ export function generateProductSchema(
   beer: ProductSchemaInput,
   options: ProductSchemaOptions = {},
 ): ProductJsonLd {
-  const baseUrl = LOLEV_BASE_URL
   const styleName = getBeerStyleName(beer)
   const beerSlug = productUrlSlug(beer)
 
@@ -237,10 +228,10 @@ export function generateProductSchema(
     brand: {
       '@type': 'Brand',
       name: 'Lolev Beer',
-      logo: `${baseUrl}/images/beer/og-image.jpg`,
-      url: baseUrl,
+      logo: LOLEV_OG_IMAGE_URL,
+      url: LOLEV_BASE_URL,
     },
-    category: getBeerCategory(beer),
+    category: `Craft Beer > ${styleName}`,
     additionalProperty: generateAdditionalProperties(beer),
     sku: beerSlug,
   }
@@ -249,7 +240,7 @@ export function generateProductSchema(
   // Blob) via the shared helper, then make it absolute for schema.org.
   const imageUrl = getBeerImageUrl(beer.image, typeof beerSlug === 'string' ? beerSlug : undefined)
   if (imageUrl) {
-    product.image = imageUrl.startsWith('/') ? `${baseUrl}${imageUrl}` : imageUrl
+    product.image = imageUrl.startsWith('/') ? `${LOLEV_BASE_URL}${imageUrl}` : imageUrl
   }
 
   const offers = generateOffers(beer, options.inStock)

@@ -9,12 +9,13 @@ import type { PayloadLocation } from '@/lib/types/location'
 import { WEEKDAYS } from '@/lib/types/location'
 import { extractDayHours, formatHourMinute } from '@/lib/config/locations'
 import {
+  geoFromCoordinates,
   postalAddressFromLocation,
   type PostalAddressJsonLd,
   type GeoCoordinatesJsonLd,
 } from './json-ld'
 import { getMediaUrl } from './media-utils'
-import { LOLEV_BASE_URL, SOCIAL_PROFILE_URLS, normalizeLngLat } from './schema-shared'
+import { LOLEV_BASE_URL, LOLEV_OG_IMAGE_URL, SOCIAL_PROFILE_URLS } from './schema-shared'
 
 /** Minimal week-hours row from getWeeklyHoursWithHolidays (avoids importing payload-api). */
 export interface SchemaHoursDay {
@@ -156,18 +157,18 @@ function generateSpecialHours(
   return specs
 }
 
-/**
- * Generate LocalBusiness schema for a brewery location
- */
+function locationKey(location: PayloadLocation): string {
+  return location.slug || location.id
+}
+
 export function generateLocalBusinessSchema(
   location: PayloadLocation,
   weeklyHours?: SchemaHoursDay[],
 ): LocalBusinessJsonLd {
-  const slug = location.slug || location.id
+  const slug = locationKey(location)
   const pageUrl = `${LOLEV_BASE_URL}/${slug}`
-  const logo = `${LOLEV_BASE_URL}/images/beer/og-image.jpg`
 
-  const images: string[] = [logo]
+  const images: string[] = [LOLEV_OG_IMAGE_URL]
   const heroImage = getMediaUrl(location.images?.hero)
   const cardImage = getMediaUrl(location.images?.card)
   if (heroImage) images.push(heroImage)
@@ -181,7 +182,7 @@ export function generateLocalBusinessSchema(
     description:
       'Craft brewery serving purposeful beer and building community in the Pittsburgh area. Offering modern ales, expressive lagers, and oak-aged beer.',
     image: images,
-    logo,
+    logo: LOLEV_OG_IMAGE_URL,
     url: pageUrl,
     hasMenu: pageUrl,
     address: postalAddressFromLocation(location),
@@ -194,15 +195,10 @@ export function generateLocalBusinessSchema(
     sameAs: SOCIAL_PROFILE_URLS,
   }
 
-  const lngLat = normalizeLngLat(location.coordinates)
-  if (lngLat) {
-    const [lng, lat] = lngLat
-    schema.geo = {
-      '@type': 'GeoCoordinates',
-      latitude: lat,
-      longitude: lng,
-    }
-    schema.hasMap = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`
+  const geo = geoFromCoordinates(location.coordinates)
+  if (geo) {
+    schema.geo = geo
+    schema.hasMap = `https://www.google.com/maps/search/?api=1&query=${geo.latitude},${geo.longitude}`
   }
 
   const specialHours = generateSpecialHours(location, weeklyHours)
@@ -230,7 +226,7 @@ export function generateLocalBusinessSchemas(
 ): LocalBusinessJsonLd[] {
   return locations
     .filter((loc) => loc.active !== false)
-    .map((loc) => generateLocalBusinessSchema(loc, weeklyHoursBySlug?.[loc.slug || loc.id]))
+    .map((loc) => generateLocalBusinessSchema(loc, weeklyHoursBySlug?.[locationKey(loc)]))
 }
 
 /**
@@ -261,7 +257,7 @@ export function generateOrganizationSchema(locations?: PayloadLocation[]): Organ
     name: 'Lolev Beer',
     alternateName: 'Lolev Beer - A Brewery in Pittsburgh',
     url: LOLEV_BASE_URL,
-    logo: `${LOLEV_BASE_URL}/images/beer/og-image.jpg`,
+    logo: LOLEV_OG_IMAGE_URL,
     description:
       'Craft brewery in Pennsylvania. Specializing in modern ales, expressive lagers, and oak-aged beer.',
     foundingDate: '2022',
@@ -278,7 +274,7 @@ export function generateOrganizationSchema(locations?: PayloadLocation[]): Organ
     telephone: firstLocation.basicInfo?.phone || undefined,
     address: postalAddressFromLocation(firstLocation),
     location: active.map((loc) => ({
-      '@id': `${LOLEV_BASE_URL}#${loc.slug || loc.id}`,
+      '@id': `${LOLEV_BASE_URL}#${locationKey(loc)}`,
     })),
   }
 }
