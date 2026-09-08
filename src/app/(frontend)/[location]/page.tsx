@@ -4,13 +4,10 @@
  */
 import { cache } from 'react'
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { JsonLd } from '@/components/seo/json-ld'
-import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs'
 import { PageTransition } from '@/components/motion'
-import { Button } from '@/components/ui/button'
-import { WeeklyHoursTable } from '@/components/location/weekly-hours'
+import { LocationLanding } from '@/components/location/location-landing'
 import { generateLocalBusinessSchema } from '@/lib/utils/local-business-schema'
 import { generateLocationMenuSchema } from '@/lib/utils/menu-schema'
 import { DEFAULT_OG_IMAGES } from '@/lib/utils/seo'
@@ -22,13 +19,8 @@ import {
   getDraftMenu,
   getUpcomingEventsFromPayload,
   getWeeklyHoursWithHolidays,
-  extractVendorInfo,
 } from '@/lib/utils/payload-api'
-import {
-  findLocationBySlug,
-  formatCityStateZip,
-  RESERVED_LOCATION_SLUGS,
-} from '@/lib/config/locations'
+import { findLocationBySlug, formatCityStateZip, RESERVED_LOCATION_SLUGS } from '@/lib/config/locations'
 import { safeHttpUrl } from '@/lib/utils/url-utils'
 
 export const revalidate = 300
@@ -56,38 +48,6 @@ function visibleBeersFromMenu(menu: Awaited<ReturnType<typeof getDraftMenu>> | n
     .filter((beer): beer is NonNullable<typeof beer> => beer !== null && !beer.hideFromSite)
 }
 
-function BeerNameList({
-  beers,
-}: {
-  beers: Array<{ id: string; name: string; slug?: string | null }>
-}) {
-  return (
-    <ul className="list-disc pl-6 space-y-1">
-      {beers.map((beer) => (
-        <li key={beer.id}>
-          {beer.slug ? (
-            <Link href={`/beer/${beer.slug}`} className="hover:underline">
-              {beer.name}
-            </Link>
-          ) : (
-            beer.name
-          )}
-        </li>
-      ))}
-    </ul>
-  )
-}
-
-function DateSuffix({ value }: { value: string | Date | undefined | null }) {
-  if (!value) return null
-  return (
-    <span className="text-muted-foreground">
-      {' '}
-      — {String(value).split('T')[0]}
-    </span>
-  )
-}
-
 const loadLocation = cache(async (slug: string) => {
   const locations = await getAllLocations()
   const key = slug.toLowerCase()
@@ -103,7 +63,15 @@ const loadLocation = cache(async (slug: string) => {
     getWeeklyHoursWithHolidays(location.id).catch(() => []),
   ])
 
-  return { location, draftMenu, cansMenu, events, food, weeklyHours }
+  const otherLocations = locations.filter(
+    (loc) =>
+      loc.active !== false &&
+      loc.slug &&
+      loc.slug !== location.slug &&
+      !RESERVED_LOCATION_SLUGS.has(loc.slug),
+  )
+
+  return { location, draftMenu, cansMenu, events, food, weeklyHours, otherLocations }
 })
 
 export async function generateMetadata({ params }: LocationPageProps): Promise<Metadata> {
@@ -114,7 +82,8 @@ export async function generateMetadata({ params }: LocationPageProps): Promise<M
   const name = data.location.name
   const city = data.location.address?.city
   const title = `${name} Taproom`
-  const description = `Visit Lolev Beer in ${name}${city ? `, ${city}` : ''}. Hours, address, what's on tap, and upcoming events.`
+  const place = city && city.toLowerCase() !== name.toLowerCase() ? `${name}, ${city}` : name
+  const description = `Visit Lolev Beer in ${place}. Hours, address, what's on tap, and upcoming events.`
 
   return {
     title,
@@ -134,7 +103,7 @@ export default async function LocationPage({ params }: LocationPageProps) {
   const data = await loadLocation(slug)
   if (!data) notFound()
 
-  const { location, draftMenu, cansMenu, events, food, weeklyHours } = data
+  const { location, draftMenu, cansMenu, events, food, weeklyHours, otherLocations } = data
   const draftBeers = visibleBeersFromMenu(draftMenu)
   const canBeers = visibleBeersFromMenu(cansMenu)
 
@@ -158,97 +127,16 @@ export default async function LocationPage({ params }: LocationPageProps) {
       <JsonLd data={localBusiness} />
       <JsonLd data={menuSchema} />
       <PageTransition>
-        <div className="container mx-auto px-4 py-8 max-w-3xl">
-          <PageBreadcrumbs className="mb-6" />
-          <h1 className="text-4xl font-bold tracking-tight mb-2">Lolev Beer — {location.name}</h1>
-          <p className="text-muted-foreground mb-8">
-            Craft brewery taproom
-            {location.address?.city ? ` in ${location.address.city}` : ''}.
-          </p>
-
-          <section className="mb-10 space-y-2">
-            <h2 className="text-2xl font-semibold">Address</h2>
-            <address className="not-italic space-y-2">
-              {street && <p>{street}</p>}
-              {cityLine && <p>{cityLine}</p>}
-              {location.basicInfo?.phone && (
-                <p>
-                  <a href={`tel:${location.basicInfo.phone}`} className="hover:underline">
-                    {location.basicInfo.phone}
-                  </a>
-                </p>
-              )}
-            </address>
-            {directionsUrl && (
-              <Button asChild className="mt-2">
-                <a href={directionsUrl} target="_blank" rel="noopener noreferrer">
-                  Get directions
-                  <span className="sr-only"> (opens in Google Maps)</span>
-                </a>
-              </Button>
-            )}
-          </section>
-
-          <section className="mb-10">
-            <h2 className="text-2xl font-semibold mb-3">Hours</h2>
-            {weeklyHours.length > 0 ? (
-              <WeeklyHoursTable weeklyHours={weeklyHours} variant="card" />
-            ) : (
-              <p className="text-muted-foreground">Hours not available.</p>
-            )}
-          </section>
-
-          <section className="mb-10">
-            <h2 className="text-2xl font-semibold mb-3">On tap now</h2>
-            {draftBeers.length === 0 ? (
-              <p className="text-muted-foreground">Check back soon for the current draft list.</p>
-            ) : (
-              <BeerNameList beers={draftBeers} />
-            )}
-          </section>
-
-          {canBeers.length > 0 && (
-            <section className="mb-10">
-              <h2 className="text-2xl font-semibold mb-3">Cans to go</h2>
-              <BeerNameList beers={canBeers} />
-            </section>
-          )}
-
-          {events.length > 0 && (
-            <section className="mb-10">
-              <h2 className="text-2xl font-semibold mb-3">Upcoming events</h2>
-              <ul className="space-y-2">
-                {events.map((event) => (
-                  <li key={event.id}>
-                    <Link href="/events" className="hover:underline font-medium">
-                      {event.organizer}
-                    </Link>
-                    <DateSuffix value={event.date} />
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-
-          {food.length > 0 && (
-            <section className="mb-10">
-              <h2 className="text-2xl font-semibold mb-3">Food</h2>
-              <ul className="space-y-2">
-                {food.map((entry) => {
-                  const vendor = extractVendorInfo(entry.vendor)
-                  return (
-                    <li key={String(entry.id)}>
-                      <Link href="/food" className="hover:underline font-medium">
-                        {vendor.name}
-                      </Link>
-                      <DateSuffix value={entry.date} />
-                    </li>
-                  )
-                })}
-              </ul>
-            </section>
-          )}
-        </div>
+        <LocationLanding
+          location={location}
+          weeklyHours={weeklyHours}
+          draftBeers={draftBeers}
+          canBeers={canBeers}
+          events={events}
+          food={food}
+          otherLocations={otherLocations}
+          directionsUrl={directionsUrl}
+        />
       </PageTransition>
     </>
   )
