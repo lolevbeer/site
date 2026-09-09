@@ -4,11 +4,13 @@
  */
 
 import { Metadata } from 'next'
+import { Suspense } from 'react'
 import { BeerMapContent } from '@/components/beer/beer-map-content'
+import { BeerMapCanvas } from '@/components/beer/beer-map-canvas'
+import { MapLoadingSkeleton } from '@/components/map/location-card-skeleton'
 import {
   getAllLocations,
   getWeeklyHoursWithHolidays,
-  getAllDistributorsGeoJSON,
   type WeeklyHoursDay,
 } from '@/lib/utils/payload-api'
 import { JsonLd } from '@/components/seo/json-ld'
@@ -43,12 +45,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function BeerMapPage() {
-  // Fetch locations, weekly hours, and distributors in parallel
-  const [locations, distributorData] = await Promise.all([
-    getAllLocations(),
-    getAllDistributorsGeoJSON(),
-  ])
-
+  const locations = await getAllLocations()
   const weeklyHoursEntries = await Promise.all(
     locations.map(async (location) => {
       const hours = await getWeeklyHoursWithHolidays(location.id)
@@ -56,8 +53,6 @@ export default async function BeerMapPage() {
     }),
   )
   const weeklyHours: Record<string, WeeklyHoursDay[]> = Object.fromEntries(weeklyHoursEntries)
-
-  // Generate JSON-LD schemas for SEO
   const locationSchemas = generateLocalBusinessSchemas(locations, weeklyHours)
 
   return (
@@ -65,7 +60,11 @@ export default async function BeerMapPage() {
       {locationSchemas.map((schema, index) => (
         <JsonLd key={index} data={schema} />
       ))}
-      <BeerMapContent weeklyHours={weeklyHours} distributorData={distributorData} />
+      <BeerMapContent weeklyHours={weeklyHours}>
+        <Suspense fallback={<MapLoadingSkeleton />}>
+          <BeerMapCanvas />
+        </Suspense>
+      </BeerMapContent>
     </>
   )
 }

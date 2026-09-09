@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { MapPin, Search, Locate, Map as MapIcon, List } from '@/components/icons';
+import { MapPin, Search, Map as MapIcon, List } from '@/components/icons';
 import { capitalizeName } from '@/lib/utils/formatters';
 
 interface NearbyLocation {
@@ -106,7 +106,6 @@ export function MapControls({
               onClick={onNearMeClick}
               className="h-8 shrink-0"
             >
-              <Locate className="h-4 w-4 mr-1" />
               Near Me
             </Button>
             <span className="text-sm text-muted-foreground whitespace-nowrap hidden sm:inline">

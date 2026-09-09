@@ -1,43 +1,32 @@
 'use client'
 
 /**
- * Beer map page body: taproom hours plus the distributor map.
+ * Beer map page body: taproom hours plus a slot for the distributor map.
  *
  * Hours use the same WeeklyHoursTable as the homepage cards, taproom
- * landings, and footer — not a separate accordion.
+ * landings, and footer — not a separate accordion. The map is passed as
+ * children so the server can stream GeoJSON behind Suspense.
  */
 
 import React from 'react'
-import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs'
-import { MapLoadingSkeleton } from '@/components/map/location-card-skeleton'
 import { WeeklyHoursTable } from '@/components/location/weekly-hours'
 import { useLocationContext } from '@/components/location/location-provider'
 import { formatCityStateZip } from '@/lib/config/locations'
-import type { WeeklyHoursDay, DistributorGeoJSON } from '@/lib/utils/payload-api'
-
-// Lazy load the map component - no SSR for better performance
-const DistributorMap = dynamic(
-  () => import('@/components/ui/distributor-map').then((mod) => mod.DistributorMap),
-  {
-    ssr: false,
-    loading: () => <MapLoadingSkeleton />,
-  },
-)
+import type { WeeklyHoursDay } from '@/lib/utils/payload-api'
 
 interface BeerMapContentProps {
   weeklyHours?: Record<string, WeeklyHoursDay[]>
-  distributorData?: DistributorGeoJSON
+  children?: React.ReactNode
 }
 
-export function BeerMapContent({ weeklyHours, distributorData }: BeerMapContentProps) {
+export function BeerMapContent({ weeklyHours, children }: BeerMapContentProps) {
   const { locations } = useLocationContext()
 
   return (
     <div className="container mx-auto px-4 py-8">
       <PageBreadcrumbs className="mb-6" />
-      {/* Page Header */}
       <div className="text-center mb-8">
         <h1 className="text-4xl md:text-5xl font-bold mb-2">Find Lolev Beer near you</h1>
         <div className="w-16 h-1 bg-primary mx-auto rounded-full" />
@@ -90,15 +79,8 @@ export function BeerMapContent({ weeklyHours, distributorData }: BeerMapContentP
         })}
       </div>
 
-      {/* Distributor Map */}
       <div className="overflow-hidden" style={{ height: '700px', position: 'relative' }}>
-        <DistributorMap
-          height={700}
-          showSearch={true}
-          initialZoom={5}
-          maxPoints={10}
-          initialData={distributorData}
-        />
+        {children}
       </div>
     </div>
   )

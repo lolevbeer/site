@@ -18,10 +18,9 @@ import { JsonLd } from '@/components/seo/json-ld';
 import { getBreweryFAQs, generateFAQSchema, type FAQItem } from '@/lib/utils/faq-schema';
 import { DEFAULT_OG_IMAGES } from '@/lib/utils/seo';
 import { generateFAQSpeakableSchema } from '@/lib/utils/speakable-schema';
-import { formatCityStateZip } from '@/lib/config/locations';
 import { getActiveFAQs, getAllLocations } from '@/lib/utils/payload-api';
 import { PageTransition } from '@/components/motion';
-import { Mail, Phone, MapPin } from '@/components/icons';
+import { FaqContactSection } from '@/components/faq/faq-contact';
 
 interface FAQAnswerProps {
   question: string;
@@ -147,75 +146,7 @@ export default async function FAQPage() {
           </Accordion>
         </div>
 
-        {/* Quick Links Section */}
-        <div className="pt-12">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-semibold mb-4">Still have questions?</h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            {/* Contact Card */}
-            <div className="rounded-lg p-6 space-y-4 text-center">
-              <h3 className="text-lg font-semibold mb-4">Contact Us</h3>
-              <div className="space-y-3">
-                <Button variant="ghost" size="sm" asChild className="w-full justify-center">
-                  <a href="mailto:info@lolev.beer" className="flex items-center gap-2">
-                    <Mail className="h-4 w-4" />
-                    info@lolev.beer
-                  </a>
-                </Button>
-                <Button variant="ghost" size="sm" asChild className="w-full justify-center">
-                  <a href="tel:4123368965" className="flex items-center gap-2">
-                    <Phone className="h-4 w-4" />
-                    (412) 336-8965
-                  </a>
-                </Button>
-              </div>
-            </div>
-
-            {/* Locations Card */}
-            <div className="rounded-lg p-6 space-y-4 text-center">
-              <h3 className="text-lg font-semibold mb-4">Our Locations</h3>
-              <div className="space-y-3 text-sm">
-                {locations.map((location) => (
-                  <div key={location.id} className="flex flex-col items-center gap-2">
-                    <MapPin className="h-4 w-4 flex-shrink-0" />
-                    <div>
-                      {location.slug ? (
-                        <Link href={`/${location.slug}`} className="font-medium hover:underline">
-                          {location.name}
-                        </Link>
-                      ) : (
-                        <p className="font-medium">{location.name}</p>
-                      )}
-                      <p className="text-muted-foreground">
-                        {location.address?.street}
-                        {location.address?.street && <br />}
-                        {formatCityStateZip(location.address)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Links */}
-          <div className="flex flex-wrap gap-4 justify-center">
-            <Button asChild variant="default">
-              <Link href="/about">About Us</Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link href="/beer">Our Beers</Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link href="/events">Upcoming Events</Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link href="/beer-map">Find Our Beer</Link>
-            </Button>
-          </div>
-        </div>
+        <FaqContactSection />
       </div>
       </PageTransition>
     </>
