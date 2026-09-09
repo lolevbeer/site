@@ -36,10 +36,10 @@ function LocationInfoSection({
         <p className="font-semibold">
           {location.slug ? (
             <Link href={`/${location.slug}`} className="hover:underline">
-              Lolev {location.name}
+              {location.name}
             </Link>
           ) : (
-            <>Lolev {location.name}</>
+            location.name
           )}
         </p>
         {mapUrl ? (
