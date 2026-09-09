@@ -1,97 +1,92 @@
-import { Metadata } from 'next'
-import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs'
+import type { Metadata } from 'next'
 import { JsonLd } from '@/components/seo/json-ld'
+import { LegalPage } from '@/components/legal/legal-page'
 import { generateWebPageSchema } from '@/lib/utils/breadcrumb-schema'
 import { DEFAULT_OG_IMAGES } from '@/lib/utils/seo'
+import { LEGAL_PAGES_LASTMOD, LEGAL_PAGES_LASTMOD_LABEL } from '@/lib/legal/dates'
+
+const DESCRIPTION =
+  'How lolev.beer is built for keyboard, screen reader, and magnification use, and how to report barriers.'
 
 export const metadata: Metadata = {
   title: 'Accessibility Statement',
-  description: 'Lolev Beer website conforms to WCAG 2.2 Level AA standards for web accessibility.',
+  description: DESCRIPTION,
   alternates: { canonical: '/accessibility' },
   openGraph: {
     title: 'Accessibility Statement | Lolev Beer',
-    description: 'WCAG 2.2 Level AA compliant website.',
+    description: DESCRIPTION,
     type: 'website',
     images: DEFAULT_OG_IMAGES,
   },
 }
 
 export default function AccessibilityPage() {
-  const lastUpdated = 'March 5, 2026'
-
   const webPageSchema = generateWebPageSchema({
     name: 'Accessibility Statement',
-    description:
-      'Lolev Beer website conforms to WCAG 2.2 Level AA standards for web accessibility.',
+    description: DESCRIPTION,
     path: '/accessibility',
-    dateModified: '2026-03-05',
+    dateModified: LEGAL_PAGES_LASTMOD,
   })
 
   return (
     <>
       <JsonLd data={webPageSchema} />
-      <div className="container mx-auto px-4 py-8 max-w-3xl">
-        <PageBreadcrumbs className="mb-6" />
+      <LegalPage title="Accessibility Statement" lastUpdated={LEGAL_PAGES_LASTMOD_LABEL}>
+        <section>
+          <h2>What we aim for</h2>
+          <p>
+            We want lolev.beer to work for people using keyboards, screen readers, and
+            magnification. We design to{' '}
+            <a
+              href="https://www.w3.org/TR/WCAG22/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              WCAG 2.2 Level AA
+            </a>
+            . We have not published a third-party audit that every criterion is met.
+          </p>
+        </section>
 
-        <h1 className="text-4xl font-bold tracking-tight mb-8">Accessibility Statement</h1>
+        <section>
+          <h2>What is in place</h2>
+          <ul>
+            <li>A skip link to main content</li>
+            <li>Keyboard access for site navigation and public forms</li>
+            <li>Visible focus styles</li>
+            <li>Text contrast aimed at 4.5:1</li>
+            <li>Pinch-zoom allowed; text can grow without trapping content</li>
+            <li>Form labels and error text, not color alone</li>
+            <li>Hit areas at least 24×24 pixels</li>
+          </ul>
+        </section>
 
-        <div className="prose prose-lg dark:prose-invert max-w-none space-y-8">
-          <section>
-            <h2 className="text-2xl font-semibold mb-4">Conformance Status</h2>
-            <p className="mb-4">
-              This website conforms to <strong>WCAG 2.2 Level AA</strong> (Web Content Accessibility
-              Guidelines 2.2).
-            </p>
-            <p>All 87 applicable success criteria have been met, ensuring compliance with:</p>
-            <ul className="list-disc pl-6 space-y-1 mt-2">
-              <li>Americans with Disabilities Act (ADA) Title III</li>
-              <li>Section 508 of the Rehabilitation Act</li>
-            </ul>
-          </section>
+        <section>
+          <h2>Known limits</h2>
+          <ul>
+            <li>
+              The beer map is Mapbox. Map controls and popups can be harder with a keyboard
+              or screen reader. Store names and addresses are also listed beside the map.
+            </li>
+            <li>
+              Some beer pages include a 3D can. That is decorative; the beer information is
+              also in text.
+            </li>
+          </ul>
+        </section>
 
-          <section>
-            <h2 className="text-2xl font-semibold mb-4">Accessibility Features</h2>
-            <ul className="list-disc pl-6 space-y-2">
-              <li>Full keyboard navigation support</li>
-              <li>Screen reader compatibility (NVDA, JAWS, VoiceOver, TalkBack)</li>
-              <li>Minimum 4.5:1 color contrast ratios</li>
-              <li>Responsive design (320px to 4K viewports)</li>
-              <li>Text resizable up to 200% without loss of content</li>
-              <li>Touch targets minimum 24×24 pixels</li>
-              <li>Semantic HTML and proper ARIA labels</li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold mb-4">Reporting Issues</h2>
-            <p className="mb-4">If you encounter any accessibility barriers, please contact us:</p>
-            <ul className="list-disc pl-6 space-y-2">
-              <li>
-                Email:{' '}
-                <a href="mailto:info@lolev.beer" className="text-primary hover:underline">
-                  info@lolev.beer
-                </a>{' '}
-                (include "Accessibility" in subject)
-              </li>
-              <li>
-                Phone:{' '}
-                <a href="tel:4123368965" className="text-primary hover:underline">
-                  (412) 336-8965
-                </a>
-              </li>
-            </ul>
-            <p className="mt-4 text-sm text-muted-foreground">
-              We aim to respond within 2 business days.
-            </p>
-          </section>
-
-          <section className="pt-8 border-t text-sm text-muted-foreground">
-            <p>
-              <strong>Last updated:</strong> {lastUpdated}
-            </p>
-          </section>
-        </div>
-      </div>
+        <section>
+          <h2>Reporting issues</h2>
+          <p>
+            If you hit a barrier, email{' '}
+            <a href="mailto:info@lolev.beer?subject=Accessibility">info@lolev.beer</a> with
+            &quot;Accessibility&quot; in the subject, and tell us the page and what you were
+            trying to do. You can also call{' '}
+            <a href="tel:4123368965">(412) 336-8965</a>. We aim to reply within 2 business
+            days.
+          </p>
+        </section>
+      </LegalPage>
     </>
   )
 }

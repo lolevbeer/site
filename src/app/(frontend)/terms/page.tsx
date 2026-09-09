@@ -1,88 +1,110 @@
-import type { Metadata } from 'next';
-import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
-import { JsonLd } from '@/components/seo/json-ld';
-import { generateWebPageSchema } from '@/lib/utils/breadcrumb-schema';
+import type { Metadata } from 'next'
+import { JsonLd } from '@/components/seo/json-ld'
+import { LegalPage } from '@/components/legal/legal-page'
+import { generateWebPageSchema } from '@/lib/utils/breadcrumb-schema'
+import { DEFAULT_OG_IMAGES } from '@/lib/utils/seo'
+import { LEGAL_PAGES_LASTMOD, LEGAL_PAGES_LASTMOD_LABEL } from '@/lib/legal/dates'
+
+const DESCRIPTION =
+  'Terms for using lolev.beer, including age, menus and hours, donation requests, and job applications.'
 
 export const metadata: Metadata = {
   title: 'Terms of Service',
-  description: 'Lolev Beer terms of service governing use of the lolev.beer website.',
+  description: DESCRIPTION,
   alternates: { canonical: '/terms' },
-};
+  openGraph: {
+    title: 'Terms of Service | Lolev Beer',
+    description: DESCRIPTION,
+    type: 'website',
+    images: DEFAULT_OG_IMAGES,
+  },
+}
 
 export default function TermsPage() {
   const webPageSchema = generateWebPageSchema({
     name: 'Terms of Service',
-    description: 'Lolev Beer terms of service governing use of lolev.beer website.',
+    description: DESCRIPTION,
     path: '/terms',
-    dateModified: '2025-10-02'
-  });
+    dateModified: LEGAL_PAGES_LASTMOD,
+  })
 
   return (
     <>
       <JsonLd data={webPageSchema} />
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto space-y-6">
-          <PageBreadcrumbs className="mb-6" />
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-foreground">Terms of Service</h1>
-            <p className="text-sm text-muted-foreground mt-2">
-              Last updated: October 2, 2025
-            </p>
-          </div>
+      <LegalPage title="Terms of Service" lastUpdated={LEGAL_PAGES_LASTMOD_LABEL}>
+        <section>
+          <p>
+            By using lolev.beer you agree to these terms. If you do not agree, do not use the
+            site.
+          </p>
+        </section>
 
-          <div className="space-y-4">
-          <section>
-            <p className="text-muted-foreground">
-              By accessing and using lolev.beer, you accept and agree to be bound by the terms and provisions of this agreement.
-            </p>
-          </section>
+        <section>
+          <h2>Age</h2>
+          <p>
+            You must be 21 or older to use this website. By using it, you represent that you
+            are of legal drinking age.
+          </p>
+        </section>
 
-          <section>
-            <h2 className="text-lg font-semibold text-foreground mb-2">Use License</h2>
-            <p className="text-muted-foreground">Permission is granted to temporarily access the materials on lolev.beer for personal, non-commercial use only. You may not modify, distribute, or reproduce any content without prior written permission.</p>
-          </section>
+        <section>
+          <h2>Hours, menus, and listings</h2>
+          <p>
+            Hours, beer lists, food, events, and job openings change. What you see here is not
+            a guarantee we have that beer, table, or role when you arrive.
+          </p>
+        </section>
 
-          <section>
-            <h2 className="text-lg font-semibold text-foreground mb-2">Age Restriction</h2>
-            <p className="text-muted-foreground">You must be 21 years or older to use this website. By using this site, you represent that you are of legal drinking age.</p>
-          </section>
+        <section>
+          <h2>Donation requests and job applications</h2>
+          <p>
+            Sending a donation request or job application is not a yes, an offer, or a
+            contract. We email only if we want to continue. Please do not follow up at the bar
+            about an application.
+          </p>
+        </section>
 
-          <section>
-            <h2 className="text-lg font-semibold text-foreground mb-2">Disclaimer</h2>
-            <p className="text-muted-foreground">The materials on lolev.beer are provided on an 'as is' basis. Lolev Beer makes no warranties, expressed or implied, and hereby disclaims all other warranties including, without limitation, implied warranties for a particular purpose.</p>
-          </section>
+        <section>
+          <h2>Using the site</h2>
+          <p>
+            You may browse the site for personal use. Do not copy the site wholesale, scrape
+            it in a way that harms the service, or interfere with other people&apos;s
+            submissions.
+          </p>
+        </section>
 
-          <section>
-            <h2 className="text-lg font-semibold text-foreground mb-2">Limitations</h2>
-            <p className="text-muted-foreground">In no event shall Lolev Beer or its suppliers be liable for any damages arising out of the use or inability to use the materials on lolev.beer.</p>
-          </section>
+        <section>
+          <h2>Disclaimer</h2>
+          <p>
+            The site is provided as-is. We do not warrant that it is complete, current, or
+            error-free. Linked sites are not ours, and a link is not an endorsement.
+          </p>
+        </section>
 
-          <section>
-            <h2 className="text-lg font-semibold text-foreground mb-2">Accuracy of Materials</h2>
-            <p className="text-muted-foreground">The materials appearing on lolev.beer could include technical, typographical, or photographic errors. We do not warrant that any materials are accurate, complete, or current.</p>
-          </section>
+        <section>
+          <h2>Limits on liability</h2>
+          <p>
+            Lolev Beer is not liable for damages that come from using, or being unable to use,
+            this website.
+          </p>
+        </section>
 
-          <section>
-            <h2 className="text-lg font-semibold text-foreground mb-2">Links</h2>
-            <p className="text-muted-foreground">We have not reviewed all sites linked to our website and are not responsible for the contents of any such linked site. The inclusion of any link does not imply endorsement by Lolev Beer.</p>
-          </section>
+        <section>
+          <h2>Changes</h2>
+          <p>
+            We may update these terms. The date at the top is the current version. Keep using
+            the site after a change means you accept the new terms.
+          </p>
+        </section>
 
-          <section>
-            <h2 className="text-lg font-semibold text-foreground mb-2">Modifications</h2>
-            <p className="text-muted-foreground">Lolev Beer may revise these terms of service at any time without notice. By using this website you are agreeing to be bound by the current version of these terms of service.</p>
-          </section>
-
-          <section>
-            <h2 className="text-lg font-semibold text-foreground mb-2">Contact</h2>
-            <div className="text-muted-foreground">
-              <p>Lolev Beer</p>
-              <p>Email: <a href="mailto:info@lolev.beer" className="text-primary hover:underline">info@lolev.beer</a></p>
-              <p>Phone: <a href="tel:4123368965" className="text-primary hover:underline">(412) 336-8965</a></p>
-            </div>
-          </section>
-          </div>
-        </div>
-      </div>
+        <section>
+          <h2>Contact</h2>
+          <p>
+            Lolev Beer ·{' '}
+            <a href="mailto:info@lolev.beer">info@lolev.beer</a>
+          </p>
+        </section>
+      </LegalPage>
     </>
-  );
+  )
 }

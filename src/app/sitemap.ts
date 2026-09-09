@@ -4,15 +4,16 @@ import { getAllBeersFromPayload, getAllLocations } from '@/lib/utils/payload-api
 import { logger } from '@/lib/utils/logger'
 import { getBaseUrl } from '@/lib/utils/get-base-url'
 import { RESERVED_LOCATION_SLUGS } from '@/lib/config/locations'
+import { LEGAL_PAGES_LASTMOD } from '@/lib/legal/dates'
 
 /** lastmod for pages that change with code, not CMS. YYYY-MM-DD of last meaningful edit. */
 const STATIC_LASTMOD = {
   '/about': '2026-03-05',
   '/faq': '2026-03-05',
-  '/accessibility': '2026-03-05',
-  '/privacy': '2025-10-02',
-  '/terms': '2025-10-02',
-  '/beer-map': '2026-09-07',
+  '/accessibility': LEGAL_PAGES_LASTMOD,
+  '/privacy': LEGAL_PAGES_LASTMOD,
+  '/terms': LEGAL_PAGES_LASTMOD,
+  '/beer-map': '2026-09-09',
   '/donate': '2026-09-09',
   '/jobs': '2026-09-09',
 } as const
