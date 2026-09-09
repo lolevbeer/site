@@ -2,9 +2,10 @@
 
 /**
  * Apply form for a single opening. Cover letter only — Media does not accept PDFs.
+ * Remount with `key={job.slug}` when the opening changes so form state resets.
  */
 
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Field, FormAlert, fieldClass } from '@/components/ui/form-field'
 import { HoneypotField } from '@/components/ui/honeypot-field'
@@ -17,12 +18,6 @@ export function JobApplyForm({ jobSlug }: { jobSlug: string }) {
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
   const [done, setDone] = useState(false)
-
-  useEffect(() => {
-    setValues(emptyJobApplication(jobSlug))
-    setError(null)
-    setDone(false)
-  }, [jobSlug])
 
   function set<K extends keyof JobApplicationInput>(key: K, value: JobApplicationInput[K]) {
     setValues((prev) => ({ ...prev, [key]: value }))

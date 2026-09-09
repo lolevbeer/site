@@ -39,7 +39,11 @@ export const RESERVED_LOCATION_SLUGS = new Set([
 ])
 
 /** True for public taproom landings (`/lawrenceville`), not `/beer` or nested routes. */
-export function isTaproomLandingPath(pathname: string, locations: PayloadLocation[]): boolean {
+export function isTaproomLandingPath(
+  pathname: string | null | undefined,
+  locations: PayloadLocation[],
+): boolean {
+  if (!pathname) return false
   const segments = pathname.replace(/\/$/, '').split('/').filter(Boolean)
   if (segments.length !== 1) return false
   const slug = segments[0]

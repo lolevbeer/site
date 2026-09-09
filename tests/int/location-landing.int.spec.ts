@@ -219,5 +219,6 @@ describe('isTaproomLandingPath', () => {
     expect(isTaproomLandingPath('/donate', locations)).toBe(false)
     expect(isTaproomLandingPath('/jobs', locations)).toBe(false)
     expect(isTaproomLandingPath('/unknown', locations)).toBe(false)
+    expect(isTaproomLandingPath(null, locations)).toBe(false)
   })
 })
