@@ -44,6 +44,24 @@ function FAQAnswer({ question, answer }: FAQAnswerProps): ReactNode {
     );
   }
 
+  if (question === 'Can I book a private event?') {
+    return (
+      <div>
+        Yes! We offer private event space at both locations. For private event inquiries, please
+        contact us at{' '}
+        <a href="mailto:events@lolev.beer" className="text-primary hover:underline font-medium">
+          events@lolev.beer
+        </a>{' '}
+        or call (412) 336-8965. Beer donation and fundraiser-night requests go through the{' '}
+        <Button asChild variant="default" size="sm" className="inline-flex">
+          <Link href="/donate">donation request form</Link>
+        </Button>
+        {' '}
+        — we do not take those by phone or Instagram.
+      </div>
+    )
+  }
+
   if (question === 'How do I stay updated on new beer releases and events?') {
     return (
       <div>

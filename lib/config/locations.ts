@@ -27,14 +27,25 @@ export const RESERVED_LOCATION_SLUGS = new Set([
   'api',
   'beer',
   'beer-map',
+  'donate',
   'e',
   'events',
   'faq',
   'food',
+  'jobs',
   'm',
   'privacy',
   'terms',
 ])
+
+/** True for public taproom landings (`/lawrenceville`), not `/beer` or nested routes. */
+export function isTaproomLandingPath(pathname: string, locations: PayloadLocation[]): boolean {
+  const segments = pathname.replace(/\/$/, '').split('/').filter(Boolean)
+  if (segments.length !== 1) return false
+  const slug = segments[0]
+  if (RESERVED_LOCATION_SLUGS.has(slug)) return false
+  return locations.some((location) => location.slug === slug)
+}
 
 /**
  * Format a Payload time field as `HH:mm` in the location timezone.

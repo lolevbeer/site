@@ -110,7 +110,7 @@ export function LocationCards({ weeklyHours }: LocationCardsProps) {
               )}
 
               {/* Hours */}
-              <div className="w-full max-w-xs">
+              <div className="w-full max-w-xs text-center">
                 <p className="font-semibold mb-2">Hours</p>
                 {weeklyHours && weeklyHours[locationKey] ? (
                   <WeeklyHoursTable weeklyHours={weeklyHours[locationKey]} variant="card" />

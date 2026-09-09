@@ -11,6 +11,7 @@ import {
   formatLocationsFaqAnswer,
   joinLocationNames,
 } from '@/lib/config/locations'
+import { getBaseUrl } from '@/lib/utils/get-base-url'
 
 export interface FAQItem {
   question: string
@@ -87,7 +88,7 @@ export const breweryFAQs: FAQItem[] = [
   {
     question: 'Can I book a private event?',
     answer:
-      'Yes! We offer private event space at both locations. For private event inquiries, please contact us at events@lolev.beer or call (412) 336-8965.',
+      'Yes! We offer private event space at both locations. For private event inquiries, please contact us at events@lolev.beer or call (412) 336-8965. Beer donation and fundraiser-night requests go through the form at DONATE_URL — we do not take those by phone or Instagram.',
   },
   {
     question: 'What types of beer do you brew?',
@@ -162,12 +163,15 @@ export const breweryFAQs: FAQItem[] = [
 /** Static FAQs with hours, addresses, and taproom names filled from live location documents. */
 export function getBreweryFAQs(locations: PayloadLocation[] = []): FAQItem[] {
   const names = joinLocationNames(locations)
+  const donateUrl = `${getBaseUrl()}/donate`
   return breweryFAQs.map((faq) => {
     switch (faq.question) {
       case 'What are your hours of operation?':
         return locations.length > 0 ? { ...faq, answer: formatHoursFaqAnswer(locations) } : faq
       case 'Where are you located?':
         return locations.length > 0 ? { ...faq, answer: formatLocationsFaqAnswer(locations) } : faq
+      case 'Can I book a private event?':
+        return { ...faq, answer: faq.answer.replace('DONATE_URL', donateUrl) }
       case 'What makes Lolev one of the best breweries in Pittsburgh?':
         return names
           ? {

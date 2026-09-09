@@ -37,6 +37,8 @@ const COLLECTION_CACHE_MAP: Record<string, string[]> = {
   products: ['products', 'menus'], // Products affect menu displays
   'holiday-hours': ['holiday-hours', 'locations'],
   faqs: ['faqs'],
+  jobs: ['jobs'],
+  'job-applications': [],
 }
 
 // Global to cache tags mapping
@@ -63,6 +65,7 @@ const COLLECTION_PATHS: Record<string, string[]> = {
   products: ['/'],
   'holiday-hours': ['/'],
   faqs: ['/faq'],
+  jobs: ['/jobs'],
 }
 
 // Nested route trees that need layout invalidation (every /e/[location] page
@@ -77,6 +80,16 @@ const COLLECTION_LAYOUT_PATHS: Record<string, string[]> = {
 const COLLECTION_PATH_BUILDERS: Record<string, (doc: Record<string, unknown>) => string[]> = {
   beers: (doc) => (doc.slug ? [`/beer/${doc.slug}`] : []),
   menus: (doc) => (doc.url ? [`/m/${doc.url}`] : []),
+  jobs: (doc) => {
+    const paths: string[] = []
+    if (typeof doc.slug === 'string' && doc.slug) paths.push(`/jobs/${doc.slug}`)
+    const location = doc.location
+    if (typeof location === 'object' && location && 'slug' in location) {
+      const slug = (location as { slug?: unknown }).slug
+      if (typeof slug === 'string' && slug) paths.push(`/${slug}`)
+    }
+    return paths
+  },
 }
 
 // Extra invalidation that only whole-collection batch runs need, so a

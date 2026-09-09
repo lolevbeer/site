@@ -8,6 +8,14 @@ vi.mock('@/components/location/location-provider', () => ({
   useLocationContext: () => ({ currentLocation: 'all' }),
 }))
 
+vi.mock('@/lib/hooks/use-auth', () => ({
+  useAuth: () => ({ isAuthenticated: false }),
+}))
+
+vi.mock('@/components/ui/scroll-reveal', () => ({
+  ScrollReveal: ({ children }: { children: unknown }) => children,
+}))
+
 function makeDraftMenu(): Menu {
   const item = (slug: string, collab = false) => ({
     product: {
@@ -78,5 +86,16 @@ describe('Fullscreen draft menu row sizing', () => {
         expect(row.classList.contains('flex-1')).toBe(false)
       }
     }
+  })
+
+  it('renders the homepage draft list as a single centered column', () => {
+    const { container } = render(createElement(FeaturedBeers, { menus: [makeDraftMenu()] }))
+    const section = container.querySelector('#draft')
+    const list = section?.querySelector('ul')
+
+    expect(list?.className).toContain('max-w-2xl')
+    expect(list?.className).toContain('mx-auto')
+    expect(list?.className).not.toContain('grid-cols-2')
+    expect(section?.querySelector('.lg\\:grid-cols-2')).toBeNull()
   })
 })

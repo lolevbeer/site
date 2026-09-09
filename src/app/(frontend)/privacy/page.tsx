@@ -14,7 +14,7 @@ export default function PrivacyPage() {
     name: 'Privacy Policy',
     description: 'Lolev Beer privacy policy explaining how we collect, use, and safeguard your information.',
     path: '/privacy',
-    dateModified: '2025-10-02'
+    dateModified: '2026-09-09'
   });
 
   return (
@@ -26,7 +26,7 @@ export default function PrivacyPage() {
           <div className="text-center">
             <h1 className="text-3xl font-bold text-foreground">Privacy Policy</h1>
             <p className="text-sm text-muted-foreground mt-2">
-              Last updated: October 2, 2025
+              Last updated: September 9, 2026
             </p>
           </div>
 
@@ -39,7 +39,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="text-lg font-semibold text-foreground mb-2">Information We Collect</h2>
-            <p className="text-muted-foreground mb-2">We collect browser/device information, usage data, location data, and information you voluntarily provide.</p>
+            <p className="text-muted-foreground mb-2">We collect browser/device information, usage data, location data, and information you voluntarily provide. Donation requests and job applications collect your name, email, phone, and the details you type into those forms.</p>
           </section>
 
           <section>
@@ -49,7 +49,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="text-lg font-semibold text-foreground mb-2">Information Sharing</h2>
-            <p className="text-muted-foreground">We do not sell your personal information. We may share data with service providers, for legal compliance, or to protect our rights and safety.</p>
+            <p className="text-muted-foreground">We do not sell your personal information. We may share data with service providers (including Slack, used to ping staff that a donation request or job application landed), for legal compliance, or to protect our rights and safety. Contact details from those forms are stored in our admin inbox; Slack pings do not include your email or phone.</p>
           </section>
 
           <section>

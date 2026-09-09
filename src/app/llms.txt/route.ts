@@ -64,6 +64,8 @@ ${taproomLinks ? `${taproomLinks}\n` : ''}- [Our Beers](${baseUrl}/beer): Full c
 - [Beer Map](${baseUrl}/beer-map): Find Lolev Beer at retailers near you
 - [About](${baseUrl}/about): Brewery philosophy and location information
 - [FAQ](${baseUrl}/faq): Frequently asked questions about hours, food, dogs, private events, etc.
+- [Donation requests](${baseUrl}/donate): Request a beer donation or taproom fundraiser night (completed forms only)
+- [Jobs](${baseUrl}/jobs): Open roles at Lolev taprooms
 
 ## Beer Styles We Brew
 

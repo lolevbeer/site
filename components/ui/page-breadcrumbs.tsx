@@ -21,6 +21,8 @@ interface BreadcrumbSegment {
 const pathLabels: Record<string, string> = {
   'beer': 'Beer',
   'beer-map': 'Find Lolev Beer',
+  donate: 'Donations',
+  jobs: 'Jobs',
   'accessibility': 'Accessibility',
   'events': 'Events',
   'food': 'Food',

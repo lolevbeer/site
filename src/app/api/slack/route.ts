@@ -56,6 +56,7 @@ import {
   verifySlackSignature,
   type SlackStateValues,
 } from '@/src/utils/slack'
+import { slackApi } from '@/src/utils/slack-api'
 
 const serverEnv = readServerEnvironment()
 
@@ -91,45 +92,6 @@ interface SlackInteractionPayload {
  */
 function canEditMenus(user: TypedUser): boolean {
   return Boolean(canUpdateMenus({ req: { user } } as Parameters<typeof canUpdateMenus>[0]))
-}
-
-/**
- * Minimal Slack HTTP client — plain fetch, no SDK needed. `target` is a Web
- * API method name (bot token attached) or a full response_url; either way
- * failures are logged here so no outbound Slack call can fail silently.
- * Returns true only when Slack accepted the call, false on any failure — callers
- * that need to react (e.g. a failed views.open) branch on the result.
- */
-async function slackApi(target: string, body: Record<string, unknown>): Promise<boolean> {
-  const isWebhook = target.startsWith('https://')
-  // A Web API call with no bot token can only 401 — fail fast, don't fetch.
-  if (!isWebhook && !serverEnv.slackBotToken) {
-    logger.error('SLACK_BOT_TOKEN is not configured')
-    return false
-  }
-  try {
-    const res = await fetch(isWebhook ? target : `https://slack.com/api/${target}`, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json; charset=utf-8',
-        ...(isWebhook ? {} : { authorization: `Bearer ${serverEnv.slackBotToken}` }),
-      },
-      body: JSON.stringify(body),
-      // Bound the call so a hung Slack endpoint can't wedge the after() task.
-      signal: AbortSignal.timeout(8000),
-    })
-    // Web API failures are 200s with {"ok":false,...}; webhook failures are non-2xx.
-    const text = await res.text()
-    if (!res.ok || /"ok"\s*:\s*false/.test(text)) {
-      logger.error(`Slack ${target} failed: ${res.status} ${text.slice(0, 200)}`)
-      return false
-    }
-    return true
-  } catch (error) {
-    // Network reject or the 8s AbortSignal timeout — log, never rethrow.
-    logger.error(`Slack ${target} request failed:`, error)
-    return false
-  }
 }
 
 /**

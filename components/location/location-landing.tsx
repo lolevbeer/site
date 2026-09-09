@@ -1,31 +1,33 @@
 /**
- * Public taproom landing page. Same visual language as the homepage location
- * cards, beer catalog grid, and events/food cards — NAP and tap lists stay in
- * the HTML for SEO.
+ * Public taproom landing. Reuses homepage location-card, DraftBeerCard, BeerCard,
+ * and the food/event agenda so /[location] matches the rest of the site.
+ * Draft rows are compact (name and style) — cans keep the catalog tile.
  */
 import Link from 'next/link'
 import Image from 'next/image'
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent } from '@/components/ui/card'
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
+import { FoodSchedule } from '@/components/food/food-schedule'
+import { ScheduleList } from '@/components/ui/schedule-list'
+import { Beer as BeerIcon } from '@/components/icons'
 import { WeeklyHoursTable } from '@/components/location/weekly-hours'
+import { DraftBeerCard } from '@/components/beer/draft-beer-card'
+import { BeerCard } from '@/components/beer/beer-card'
+import { beerHref } from '@/lib/config/beer-filters'
 import { formatCityStateZip } from '@/lib/config/locations'
-import { getBeerImageUrl, getMediaUrl } from '@/lib/utils/media-utils'
-import { getStyleName } from '@/lib/utils/relationship-name'
-import { formatDate, formatTime } from '@/lib/utils/formatters'
-import { extractVendorInfo, type WeeklyHoursDay } from '@/lib/utils/payload-api'
+import { getMediaUrl } from '@/lib/utils/media-utils'
 import { safeHttpUrl } from '@/lib/utils/url-utils'
+import type { WeeklyHoursDay } from '@/lib/utils/payload-api'
+import type { Beer } from '@/lib/types/beer'
 import type { PayloadLocation } from '@/lib/types/location'
-import type { Beer as PayloadBeer, Event as PayloadEvent } from '@/src/payload-types'
-
-type MenuBeer = Pick<PayloadBeer, 'id' | 'name' | 'slug' | 'image' | 'style'>
+import type { Event as PayloadEvent } from '@/src/payload-types'
 
 interface LocationLandingProps {
   location: PayloadLocation
   weeklyHours: WeeklyHoursDay[]
-  draftBeers: MenuBeer[]
-  canBeers: MenuBeer[]
+  draftBeers: Beer[]
+  canBeers: Beer[]
   events: PayloadEvent[]
   food: Array<{
     id?: string | number
@@ -39,58 +41,22 @@ interface LocationLandingProps {
   directionsUrl?: string
 }
 
-function dateLabel(value: string | Date | undefined | null): string | null {
-  if (!value) return null
-  const raw = typeof value === 'string' ? value : value.toISOString()
-  return formatDate(raw, 'full')
-}
-
-function BeerGrid({ beers }: { beers: MenuBeer[] }) {
-  return (
-    <ul className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-8 gap-y-10 list-none p-0 m-0">
-      {beers.map((beer, index) => {
-        const style = getStyleName(beer.style)
-        const href = beer.slug ? `/beer/${beer.slug}` : undefined
-        const image = getBeerImageUrl(beer.image, beer.slug ?? undefined)
-        return (
-          <li key={beer.id}>
-            <div className="group relative flex flex-col">
-              {image ? (
-                <div className="relative h-52 sm:h-60 w-full mb-3 overflow-hidden rounded-lg bg-muted/30">
-                  <Image
-                    src={image}
-                    alt=""
-                    fill
-                    className="object-contain p-2 transition-transform duration-200 group-hover:scale-[1.03]"
-                    sizes="(max-width: 768px) 50vw, 25vw"
-                    priority={index < 4}
-                  />
-                </div>
-              ) : null}
-              <h3 className="text-xl font-semibold text-center text-balance group-hover:underline underline-offset-4">
-                {beer.name}
-              </h3>
-              {style ? (
-                <div className="flex justify-center mt-2">
-                  <Badge variant="outline" className="text-xs">
-                    {style}
-                  </Badge>
-                </div>
-              ) : null}
-              {href ? (
-                <Link
-                  href={href}
-                  className="absolute inset-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                >
-                  <span className="sr-only">{beer.name}</span>
-                </Link>
-              ) : null}
-            </div>
-          </li>
-        )
-      })}
-    </ul>
-  )
+function vendorFields(
+  vendor: unknown,
+  fallbackSite?: string | null,
+): { name: string; site?: string; logoUrl?: string } {
+  if (typeof vendor === 'object' && vendor !== null && 'name' in vendor) {
+    const v = vendor as { name?: string; site?: string | null; logo?: unknown }
+    return {
+      name: v.name || 'Vendor',
+      site: (fallbackSite || v.site) ?? undefined,
+      logoUrl: getMediaUrl(v.logo) ?? undefined,
+    }
+  }
+  return {
+    name: String(vendor ?? 'Vendor'),
+    site: fallbackSite ?? undefined,
+  }
 }
 
 export function LocationLanding({
@@ -143,7 +109,10 @@ export function LocationLanding({
             {cityLine ? <p>{cityLine}</p> : null}
           </address>
           {phone ? (
-            <a href={`tel:${phone}`} className="text-muted-foreground hover:text-foreground hover:underline transition-colors">
+            <a
+              href={`tel:${phone}`}
+              className="text-muted-foreground hover:text-foreground hover:underline transition-colors"
+            >
               {phone}
             </a>
           ) : null}
@@ -172,15 +141,34 @@ export function LocationLanding({
       <section className="mb-16 lg:mb-24">
         <h2 className="text-3xl lg:text-4xl font-bold text-center mb-12">On tap now</h2>
         {draftBeers.length === 0 ? (
-          <p className="text-center text-muted-foreground">
-            Check back soon for the current draft list.
-          </p>
+          <Empty className="border border-dashed border-border/60 rounded-xl p-8 mb-8">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <BeerIcon className="h-6 w-6" />
+              </EmptyMedia>
+              <EmptyTitle className="text-xl">No beers on draft</EmptyTitle>
+              <EmptyDescription className="text-muted-foreground/70">
+                Check back soon for the current draft list.
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         ) : (
-          <BeerGrid beers={draftBeers} />
+          <ul className="max-w-2xl mx-auto list-none p-0 m-0 space-y-1 mb-8">
+            {draftBeers.map((beer, index) => (
+              <li key={`${beer.variant}-${index}`}>
+                <DraftBeerCard
+                  beer={beer}
+                  compact
+                  showJustReleased={false}
+                  showLocation={false}
+                />
+              </li>
+            ))}
+          </ul>
         )}
-        <div className="text-center mt-10">
+        <div className="text-center">
           <Button asChild variant="outline" size="lg">
-            <Link href="/beer">View all beers</Link>
+            <Link href={beerHref('tap')}>View all beers</Link>
           </Button>
         </div>
       </section>
@@ -188,54 +176,40 @@ export function LocationLanding({
       {canBeers.length > 0 ? (
         <section className="mb-16 lg:mb-24">
           <h2 className="text-3xl lg:text-4xl font-bold text-center mb-12">Cans to go</h2>
-          <BeerGrid beers={canBeers} />
+          <ul className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 list-none p-0 m-0 mb-8">
+            {canBeers.map((beer, index) => (
+              <li key={`${beer.variant}-${index}`}>
+                <BeerCard
+                  beer={beer}
+                  variant="minimal"
+                  showLocation={false}
+                  showCta={false}
+                />
+              </li>
+            ))}
+          </ul>
         </section>
       ) : null}
 
       {events.length > 0 ? (
         <section className="mb-16 lg:mb-24">
           <h2 className="text-3xl lg:text-4xl font-bold text-center mb-12">Upcoming events</h2>
-          <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 list-none p-0 m-0 mb-8">
-            {events.map((event) => {
-              const title = event.organizer || 'Event'
-              const site = safeHttpUrl(event.site)
-              const time = event.startTime || undefined
-              const endTime = event.endTime || undefined
-              const body = (
-                <Card
-                  className={`overflow-hidden bg-transparent shadow-none h-full border border-border ${
-                    site ? 'hover:bg-secondary transition-colors' : ''
-                  }`}
-                >
-                  <CardContent className="p-6 text-center">
-                    <h3 className="text-xl font-semibold mb-2 text-balance">{title}</h3>
-                    <div className="space-y-1 text-sm text-muted-foreground flex flex-col items-center">
-                      <span>{dateLabel(event.date)}</span>
-                      {time && time.toLowerCase() !== 'tbd' ? (
-                        <span>
-                          {formatTime(time.trim())}
-                          {endTime && endTime.toLowerCase() !== 'tbd'
-                            ? `–${formatTime(endTime.trim())}`
-                            : ''}
-                        </span>
-                      ) : null}
-                    </div>
-                  </CardContent>
-                </Card>
-              )
-              return (
-                <li key={event.id}>
-                  {site ? (
-                    <a href={site} target="_blank" rel="noopener noreferrer" className="block h-full">
-                      {body}
-                    </a>
-                  ) : (
-                    body
-                  )}
-                </li>
-              )
-            })}
-          </ul>
+          <div className="max-w-2xl mx-auto mb-8">
+            <ScheduleList
+              items={events.map((event) => {
+                const rawDate =
+                  typeof event.date === 'string' ? event.date : String(event.date)
+                return {
+                  id: String(event.id),
+                  date: rawDate,
+                  title: event.organizer || 'Event',
+                  time: event.startTime,
+                  endTime: event.endTime,
+                  site: safeHttpUrl(event.site),
+                }
+              })}
+            />
+          </div>
           <div className="text-center">
             <Button asChild variant="outline" size="lg">
               <Link href="/events">View all events</Link>
@@ -247,55 +221,23 @@ export function LocationLanding({
       {food.length > 0 ? (
         <section className="mb-16 lg:mb-24">
           <h2 className="text-3xl lg:text-4xl font-bold text-center mb-12">Food</h2>
-          <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 list-none p-0 m-0 mb-8">
-            {food.map((entry) => {
-              const vendor = extractVendorInfo(entry.vendor, entry.site)
-              const logo = vendor.logoUrl
-              const site = safeHttpUrl(vendor.site)
-              const timeDisplay = entry.time || entry.startTime
-              const body = (
-                <Card
-                  className={`overflow-hidden bg-transparent shadow-none h-full border border-border ${
-                    site ? 'hover:bg-secondary transition-colors' : ''
-                  }`}
-                >
-                  <CardContent
-                    className={`p-4 ${logo ? 'flex items-center gap-4' : 'text-center py-6'}`}
-                  >
-                    {logo ? (
-                      <div className="relative w-16 h-16 flex-shrink-0 rounded-full overflow-hidden bg-muted">
-                        <Image
-                          src={logo}
-                          alt={`${vendor.name} logo`}
-                          fill
-                          className="object-cover"
-                          sizes="64px"
-                        />
-                      </div>
-                    ) : null}
-                    <div className={logo ? 'flex-1 min-w-0 text-left' : ''}>
-                      <h3 className="text-xl font-semibold mb-1 text-balance">{vendor.name}</h3>
-                      <p className="text-sm text-muted-foreground">{dateLabel(entry.date)}</p>
-                      {timeDisplay ? (
-                        <p className="text-sm text-muted-foreground">{formatTime(String(timeDisplay))}</p>
-                      ) : null}
-                    </div>
-                  </CardContent>
-                </Card>
-              )
-              return (
-                <li key={String(entry.id ?? `${vendor.name}-${entry.date}`)}>
-                  {site ? (
-                    <a href={site} target="_blank" rel="noopener noreferrer" className="block h-full">
-                      {body}
-                    </a>
-                  ) : (
-                    body
-                  )}
-                </li>
-              )
-            })}
-          </ul>
+          <div className="max-w-2xl mx-auto mb-8">
+            <FoodSchedule
+              items={food.map((entry, index) => {
+                const vendor = vendorFields(entry.vendor, entry.site)
+                const rawDate =
+                  typeof entry.date === 'string' ? entry.date : entry.date.toISOString()
+                return {
+                  id: String(entry.id ?? `${vendor.name}-${rawDate}-${index}`),
+                  date: rawDate,
+                  vendor: vendor.name,
+                  time: entry.time || entry.startTime,
+                  site: safeHttpUrl(vendor.site),
+                  logoUrl: vendor.logoUrl,
+                }
+              })}
+            />
+          </div>
           <div className="text-center">
             <Button asChild variant="outline" size="lg">
               <Link href="/food">View food schedule</Link>
@@ -305,11 +247,17 @@ export function LocationLanding({
       ) : null}
 
       {otherLocations.length > 0 ? (
-        <section className="pt-8 border-t border-border">
+        <section>
           <h2 className="text-2xl font-bold text-center mb-8">
             Our other taproom{otherLocations.length > 1 ? 's' : ''}
           </h2>
-          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-xl mx-auto list-none p-0 m-0">
+          <ul
+            className={
+              otherLocations.length === 1
+                ? 'max-w-xs mx-auto list-none p-0 m-0'
+                : 'grid grid-cols-1 sm:grid-cols-2 gap-8 max-w-xl mx-auto list-none p-0 m-0'
+            }
+          >
             {otherLocations.map((other) => {
               const src = getMediaUrl(other.images?.card) || getMediaUrl(other.images?.hero)
               const href = other.slug ? `/${other.slug}` : undefined
@@ -321,7 +269,6 @@ export function LocationLanding({
                         src={src}
                         alt=""
                         fill
-                        loading="eager"
                         className="object-cover transition-transform duration-200 group-hover:scale-[1.03]"
                         sizes="(max-width: 640px) 100vw, 20rem"
                       />

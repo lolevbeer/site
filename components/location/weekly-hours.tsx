@@ -3,24 +3,17 @@
 /**
  * Shared weekly-hours rendering for the location surfaces.
  *
- * The footer column (components/layout/footer.tsx) and the home-page location
- * cards (components/location/location-cards.tsx) each carried their own copy of
- * this table. The DOM structure and the logic were identical and only three
- * cosmetic details differed — banner alignment and wording, the gap beside the
- * day name, and the holiday badge size — so they are merged here behind one
- * `variant` prop instead of two near-identical components that drift apart.
- *
- * The hours panel (components/location/hours-panel.tsx) is a genuinely
- * different layout: an accordion with abbreviated day names, holidays inline in
- * parentheses rather than in a badge, and its own colour scheme. Folding it in
- * would take more flags than it would save, so it stays separate and shares
- * only the two helpers below.
+ * Footer, homepage location cards, taproom landings, and the beer-map hours
+ * section all use this table. Banner alignment, the gap beside the day name,
+ * and holiday badge size differ behind one `variant` prop so those surfaces
+ * cannot drift apart. Banner copy is shared via `specialHoursBanner`.
  */
 
 import React from 'react'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { formatHoursTime, getDayName } from '@/lib/utils/formatters'
+import { getTodayEST } from '@/lib/utils/date'
 import type { DayOfWeek, WeeklyHoursDay } from '@/lib/utils/payload-api'
 
 /** Day keys indexed by `Date#getDay()` (0 = Sunday). */
@@ -35,12 +28,12 @@ const DAY_KEYS: DayOfWeek[] = [
 ]
 
 /**
- * Today as a `WeeklyHoursDay['day']` key, for highlighting the current day in
- * an hours list. Shared because every hours surface needs the same
- * `Date#getDay()` -> day-key lookup.
+ * Today as a `WeeklyHoursDay['day']` key in America/New_York, so SSR (UTC)
+ * and the taprooms highlight the same day.
  */
 export function getTodayDayOfWeek(): DayOfWeek {
-  return DAY_KEYS[new Date().getDay()]
+  const [year, month, day] = getTodayEST().split('-').map(Number)
+  return DAY_KEYS[new Date(Date.UTC(year, month - 1, day)).getUTCDay()]
 }
 
 /**
@@ -53,21 +46,51 @@ export function formatHoursRange(dayData: WeeklyHoursDay): string {
 }
 
 /**
+ * One-line holiday summary for the hours banner. Names the day and holiday
+ * (and "Closed …" when they are) instead of a generic "special hours" warning.
+ * A CMS `note` wins when present.
+ */
+export function specialHoursBanner(weeklyHours: WeeklyHoursDay[]): string | null {
+  const special = weeklyHours.filter((d) => d.holidayName)
+  if (special.length === 0) return null
+
+  const notes = [
+    ...new Set(special.map((d) => d.note?.trim()).filter((note): note is string => Boolean(note))),
+  ]
+  if (notes.length === 1) return notes[0]
+  if (notes.length > 1) return notes.join(' · ')
+
+  if (special.length === 1) {
+    const d = special[0]
+    const dayName = getDayName(d.day)
+    if (d.closed) return `Closed ${dayName} for ${d.holidayName}`
+    return `${d.holidayName} hours (${dayName})`
+  }
+
+  const names = [...new Set(special.map((d) => d.holidayName))]
+  const allClosed = special.every((d) => d.closed)
+  if (allClosed && names.length === 1) {
+    const days = special.map((d) => getDayName(d.day)).join(' & ')
+    return `Closed ${days} for ${names[0]}`
+  }
+  if (names.length === 1) return `${names[0]} hours this week`
+  return 'Holiday hours this week'
+}
+
+/**
  * Per-caller cosmetics. Everything else about the table — structure, today
  * highlighting, holiday handling, closed/open wording — is shared.
  */
 const VARIANT_STYLES = {
-  /** Footer column: left-aligned banner, tight day gap, extra-small badge. */
+  /** Footer column: tight day gap, extra-small badge. */
   footer: {
-    banner: 'flex items-center gap-1.5 mb-2 pb-2 border-b border-border',
-    bannerText: 'Special hours this week',
+    banner: 'flex items-center justify-center gap-1.5 mb-2 text-center',
     dayGap: 'gap-1',
     badge: 'text-[10px] py-0 px-1 border-amber-500 text-amber-600 dark:text-amber-400',
   },
-  /** Location card: centred banner with a warning glyph, roomier badge. */
+  /** Location card: roomier badge. */
   card: {
-    banner: 'flex items-center justify-center gap-1.5 mb-2 pb-2 border-b border-border',
-    bannerText: '⚠ Special hours this week',
+    banner: 'flex items-center justify-center gap-1.5 mb-2 text-center',
     dayGap: 'gap-2',
     badge: 'text-xs py-0 px-1.5 border-amber-500 text-amber-600 dark:text-amber-400',
   },
@@ -86,42 +109,50 @@ export interface WeeklyHoursTableProps {
 export function WeeklyHoursTable({ weeklyHours, variant }: WeeklyHoursTableProps) {
   const styles = VARIANT_STYLES[variant]
   const today = getTodayDayOfWeek()
-  const hasSpecialHours = weeklyHours.some((d) => d.holidayName)
+  const banner = specialHoursBanner(weeklyHours)
 
   return (
-    <div className="space-y-1 text-sm">
-      {hasSpecialHours && (
+    <div className="space-y-1 text-sm text-center">
+      {banner ? (
         <div className={styles.banner}>
-          <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
-            {styles.bannerText}
+          <span className="text-xs font-medium text-pretty text-amber-600 dark:text-amber-400">
+            {banner}
           </span>
         </div>
-      )}
-      {weeklyHours.map((dayData) => {
-        const isToday = dayData.day === today
-        const isSpecial = !!dayData.holidayName
+      ) : null}
+      <div className="gradient-separator mb-2" />
+      <table className="mx-auto">
+        <caption className="sr-only">Weekly hours</caption>
+        <tbody>
+          {weeklyHours.map((dayData) => {
+            const isToday = dayData.day === today
+            const isClosedHoliday = Boolean(dayData.holidayName && dayData.closed)
 
-        return (
-          <div
-            key={dayData.day}
-            className={cn(
-              'flex justify-between items-center gap-2',
-              isToday && 'font-semibold text-primary',
-              isSpecial && !isToday && 'text-amber-600 dark:text-amber-400',
-            )}
-          >
-            <span className={cn('flex items-center', styles.dayGap)}>
-              {getDayName(dayData.day)}
-              {dayData.holidayName && (
-                <Badge variant="outline" className={styles.badge}>
-                  {dayData.holidayName}
-                </Badge>
-              )}
-            </span>
-            <span>{formatHoursRange(dayData)}</span>
-          </div>
-        )
-      })}
+            return (
+              <tr
+                key={dayData.day}
+                className={cn(
+                  isToday && 'font-semibold text-primary',
+                  isClosedHoliday && !isToday && 'text-amber-600 dark:text-amber-400',
+                )}
+              >
+                <th
+                  scope="row"
+                  className={cn('font-normal text-left pr-2 py-0.5', styles.dayGap, 'flex items-center')}
+                >
+                  {getDayName(dayData.day)}
+                  {dayData.holidayName ? (
+                    <Badge variant="outline" className={styles.badge}>
+                      {dayData.holidayName}
+                    </Badge>
+                  ) : null}
+                </th>
+                <td className="tabular-nums text-left py-0.5">{formatHoursRange(dayData)}</td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
     </div>
   )
 }

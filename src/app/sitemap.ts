@@ -1,4 +1,5 @@
 import { MetadataRoute } from 'next'
+import { getActiveJobs } from '@/lib/jobs/payload'
 import { getAllBeersFromPayload, getAllLocations } from '@/lib/utils/payload-api'
 import { logger } from '@/lib/utils/logger'
 import { getBaseUrl } from '@/lib/utils/get-base-url'
@@ -12,6 +13,8 @@ const STATIC_LASTMOD = {
   '/privacy': '2025-10-02',
   '/terms': '2025-10-02',
   '/beer-map': '2026-09-07',
+  '/donate': '2026-09-09',
+  '/jobs': '2026-09-09',
 } as const
 
 const STATIC_INFO_PAGES: Array<{
@@ -20,6 +23,8 @@ const STATIC_INFO_PAGES: Array<{
   priority: number
 }> = [
   { path: '/beer-map', changeFrequency: 'weekly', priority: 0.7 },
+  { path: '/donate', changeFrequency: 'yearly', priority: 0.3 },
+  { path: '/jobs', changeFrequency: 'weekly', priority: 0.4 },
   { path: '/about', changeFrequency: 'monthly', priority: 0.6 },
   { path: '/faq', changeFrequency: 'monthly', priority: 0.5 },
   { path: '/accessibility', changeFrequency: 'monthly', priority: 0.3 },
@@ -39,6 +44,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   let beers: Awaited<ReturnType<typeof getAllBeersFromPayload>> = []
   let locations: Awaited<ReturnType<typeof getAllLocations>> = []
+  let jobs: Awaited<ReturnType<typeof getActiveJobs>> = []
   try {
     beers = await getAllBeersFromPayload()
   } catch (error) {
@@ -48,6 +54,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     locations = await getAllLocations()
   } catch (error) {
     logger.error('Error fetching locations for sitemap:', error)
+  }
+  try {
+    jobs = await getActiveJobs()
+  } catch (error) {
+    logger.error('Error fetching jobs for sitemap:', error)
   }
 
   const visibleBeers = beers.filter((beer) => beer.slug && !beer.hideFromSite)
@@ -102,5 +113,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }))
 
-  return [...staticPages, ...beerPages, ...locationPages]
+  const jobPages: MetadataRoute.Sitemap = jobs.map((job) => ({
+    url: `${baseUrl}/jobs/${job.slug}`,
+    lastModified: homeLastmod,
+    changeFrequency: 'weekly' as const,
+    priority: 0.4,
+  }))
+
+  return [...staticPages, ...beerPages, ...locationPages, ...jobPages]
 }

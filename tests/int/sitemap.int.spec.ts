@@ -9,15 +9,21 @@ vi.mock('@/lib/utils/payload-api', () => ({
   getAllLocations: vi.fn(),
 }))
 
+vi.mock('@/lib/jobs/payload', () => ({
+  getActiveJobs: vi.fn(),
+}))
+
 vi.mock('@/lib/utils/logger', () => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
 }))
 
 import sitemap from '@/src/app/sitemap'
+import { getActiveJobs } from '@/lib/jobs/payload'
 import { getAllBeersFromPayload, getAllLocations } from '@/lib/utils/payload-api'
 
 const beers = getAllBeersFromPayload as ReturnType<typeof vi.fn>
 const locations = getAllLocations as ReturnType<typeof vi.fn>
+const jobs = getActiveJobs as ReturnType<typeof vi.fn>
 
 describe('sitemap', () => {
   beforeEach(() => {
@@ -47,6 +53,7 @@ describe('sitemap', () => {
         updatedAt: '2026-09-04T13:16:42.524Z',
       },
     ])
+    jobs.mockResolvedValue([{ slug: 'bartender', title: 'Bartender' }])
   })
 
   it('includes location landing pages and visible beer pages', async () => {
@@ -56,6 +63,8 @@ describe('sitemap', () => {
     expect(urls).toContain('https://lolev.beer/zelienople')
     expect(urls).toContain('https://lolev.beer/beer/lupula')
     expect(urls).not.toContain('https://lolev.beer/beer/guest-pour')
+    expect(urls).toContain('https://lolev.beer/jobs/bartender')
+    expect(urls).toContain('https://lolev.beer/jobs')
   })
 
   it('does not stamp every static URL with the current time', async () => {

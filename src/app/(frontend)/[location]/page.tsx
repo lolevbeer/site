@@ -12,6 +12,7 @@ import { generateLocalBusinessSchema } from '@/lib/utils/local-business-schema'
 import { generateLocationMenuSchema } from '@/lib/utils/menu-schema'
 import { DEFAULT_OG_IMAGES } from '@/lib/utils/seo'
 import { extractBeerFromMenuItem } from '@/lib/utils/menu-item-utils'
+import { convertPayloadBeer } from '@/lib/utils/payload-adapter'
 import {
   getAllLocations,
   getCansMenu,
@@ -42,10 +43,11 @@ export async function generateStaticParams() {
     .map((loc) => ({ location: loc.slug }))
 }
 
-function visibleBeersFromMenu(menu: Awaited<ReturnType<typeof getDraftMenu>> | null) {
+/** Beers on a location menu, including hideFromSite guest taps. Catalog JSON-LD filters those out. */
+function beersFromMenu(menu: Awaited<ReturnType<typeof getDraftMenu>> | null) {
   return (menu?.items ?? [])
     .map((item) => extractBeerFromMenuItem(item))
-    .filter((beer): beer is NonNullable<typeof beer> => beer !== null && !beer.hideFromSite)
+    .filter((beer): beer is NonNullable<typeof beer> => beer !== null)
 }
 
 const loadLocation = cache(async (slug: string) => {
@@ -104,15 +106,18 @@ export default async function LocationPage({ params }: LocationPageProps) {
   if (!data) notFound()
 
   const { location, draftMenu, cansMenu, events, food, weeklyHours, otherLocations } = data
-  const draftBeers = visibleBeersFromMenu(draftMenu)
-  const canBeers = visibleBeersFromMenu(cansMenu)
+  const draftPayload = beersFromMenu(draftMenu)
+  const canPayload = beersFromMenu(cansMenu).filter((beer) => !beer.hideFromSite)
+  const catalogDraft = draftPayload.filter((beer) => !beer.hideFromSite)
+  const draftBeers = draftPayload.map(convertPayloadBeer)
+  const canBeers = canPayload.map(convertPayloadBeer)
 
   const localBusiness = generateLocalBusinessSchema(location, weeklyHours)
   const menuSchema = generateLocationMenuSchema({
     locationName: location.name,
     locationSlug: location.slug || slug,
-    draftBeers,
-    canBeers,
+    draftBeers: catalogDraft,
+    canBeers: canPayload,
   })
 
   const street = location.address?.street

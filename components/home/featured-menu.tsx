@@ -1050,16 +1050,21 @@ function FeaturedMenu({
         <div className="mb-8">
           {displayItems.length > 0 ? (
             menuType === 'draft' ? (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4" suppressHydrationWarning>
+              <ul
+                className="max-w-2xl mx-auto list-none p-0 m-0 space-y-1"
+                suppressHydrationWarning
+              >
                 {displayItems.map((item, index) => (
-                  <DraftBeerCard
-                    key={`${item.variant}-${index}`}
-                    beer={item as unknown as Beer}
-                    showLocation={false}
-                    showRating
-                  />
+                  <li key={`${item.variant}-${index}`}>
+                    <DraftBeerCard
+                      beer={item as unknown as Beer}
+                      compact
+                      showJustReleased={false}
+                      showLocation={false}
+                    />
+                  </li>
                 ))}
-              </div>
+              </ul>
             ) : (
               <div
                 className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"

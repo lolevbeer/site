@@ -17,6 +17,7 @@ export const CACHE_TAGS = {
   homepage: 'homepage',
   distributors: 'distributors',
   faqs: 'faqs',
+  jobs: 'jobs',
 } as const
 
 export type CacheTag = (typeof CACHE_TAGS)[keyof typeof CACHE_TAGS]
