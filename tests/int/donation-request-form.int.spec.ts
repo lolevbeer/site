@@ -57,6 +57,7 @@ describe('DonationRequestForm', () => {
     expect(screen.getByLabelText('Organization name')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
     expect(screen.getByRole('alert').textContent).toMatch(/organization/i)
+    expect(screen.getByRole('tooltip').textContent).toMatch(/organization/i)
     expect(screen.getByLabelText('Organization name')).toBeTruthy()
   })
 })

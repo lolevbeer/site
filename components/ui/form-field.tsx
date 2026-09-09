@@ -1,48 +1,79 @@
 /**
- * Shared labeled fields for the public donate and job forms.
+ * Labeled control with ring gutter and a shadcn tooltip for hints/errors.
+ * Native browser validation bubbles are not used — wrap forms in noValidate.
  */
 
-import React from 'react'
+'use client'
 
-export const fieldClass =
-  'flex min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2'
+import {
+  cloneElement,
+  isValidElement,
+  useState,
+  type ReactElement,
+  type ReactNode,
+} from 'react'
+import { Field, FieldLabel } from '@/components/ui/field'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
+import { cn } from '@/lib/utils'
 
-export const selectClass =
-  'flex h-10 w-full rounded-md border border-input bg-background px-3 text-base'
-
-export function Label({ htmlFor, children }: { htmlFor: string; children: React.ReactNode }) {
-  return (
-    <label htmlFor={htmlFor} className="block text-sm font-medium text-left mb-1.5">
-      {children}
-    </label>
-  )
-}
-
-export function Field({
+export function FormField({
   id,
   label,
   hint,
+  error,
+  forceOpen,
   children,
 }: {
   id: string
   label: string
   hint?: string
-  children: React.ReactNode
+  error?: string
+  forceOpen?: boolean
+  children: ReactNode
 }) {
-  return (
-    <div>
-      <Label htmlFor={id}>{label}</Label>
-      {children}
-      {hint ? <p className="text-xs text-muted-foreground mt-1">{hint}</p> : null}
-    </div>
-  )
-}
+  const [focused, setFocused] = useState(false)
+  const invalid = Boolean(error)
+  const message = error || hint
+  const open = forceOpen || (hint && focused) ? true : undefined
+  const control =
+    invalid && isValidElement(children)
+      ? cloneElement(children as ReactElement<{ 'aria-invalid'?: boolean }>, {
+          'aria-invalid': true,
+        })
+      : children
 
-export function FormAlert({ error }: { error: string | null }) {
-  if (!error) return null
   return (
-    <p className="text-sm text-destructive" role="alert">
-      {error}
-    </p>
+    <Field
+      data-invalid={invalid || undefined}
+      className="overflow-visible"
+      onFocusCapture={() => setFocused(true)}
+      onBlurCapture={() => setFocused(false)}
+    >
+      <FieldLabel htmlFor={id}>{label}</FieldLabel>
+      <div className="w-full min-w-0 overflow-visible p-1 -m-1">
+        {message ? (
+          <Tooltip open={open}>
+            <TooltipTrigger asChild>
+              <span className="block w-full min-w-0 [&>*]:w-full">{control}</span>
+            </TooltipTrigger>
+            <TooltipContent
+              side="top"
+              align="end"
+              sideOffset={8}
+              collisionPadding={16}
+              className={cn(invalid && 'bg-destructive text-destructive-foreground')}
+            >
+              {message}
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          control
+        )}
+      </div>
+    </Field>
   )
 }

@@ -5,6 +5,7 @@
 
 import type { Metadata } from 'next'
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs'
+import { Card, CardContent } from '@/components/ui/card'
 import { DonationRequestForm } from '@/components/donate/donation-request-form'
 import { PageTransition } from '@/components/motion'
 
@@ -28,7 +29,11 @@ export default function DonatePage() {
             out completely if you want to be considered.
           </p>
         </div>
-        <DonationRequestForm />
+        <Card>
+          <CardContent className="overflow-visible p-6">
+            <DonationRequestForm />
+          </CardContent>
+        </Card>
       </div>
     </PageTransition>
   )

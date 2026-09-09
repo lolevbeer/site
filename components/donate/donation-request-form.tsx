@@ -8,12 +8,14 @@
 
 import React, { useEffect, useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
+import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
 import { submitDonationRequest } from '@/src/actions/donation-request'
 import { useLocationContext } from '@/components/location/location-provider'
 import {
   donationStepErrors,
   emptyDonationRequest,
   page1Gates,
+  type DonationRequestErrors,
   type DonationRequestInput,
 } from '@/lib/donate/donation-request'
 import { firstFieldError } from '@/lib/public-forms/fields'
@@ -28,6 +30,7 @@ export function DonationRequestForm() {
   const [step, setStep] = useState(1)
   const [values, setValues] = useState<DonationRequestInput>(emptyDonationRequest)
   const [error, setError] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<DonationRequestErrors>({})
   const [pending, setPending] = useState(false)
   const [done, setDone] = useState(false)
   const panelRef = useRef<HTMLFieldSetElement>(null)
@@ -39,6 +42,12 @@ export function DonationRequestForm() {
 
   function set<K extends keyof DonationRequestInput>(key: K, value: DonationRequestInput[K]) {
     setValues((prev) => ({ ...prev, [key]: value }))
+    setFieldErrors((prev) => {
+      if (!prev[key]) return prev
+      const next = { ...prev }
+      delete next[key]
+      return next
+    })
   }
 
   function goTo(next: 1 | 2 | 3) {
@@ -46,10 +55,12 @@ export function DonationRequestForm() {
     if (next === 3) {
       const errors = donationStepErrors(2, values)
       if (Object.keys(errors).length > 0) {
+        setFieldErrors(errors)
         setError(firstFieldError(errors))
         return
       }
     }
+    setFieldErrors({})
     setError(null)
     setStep(next)
   }
@@ -75,18 +86,24 @@ export function DonationRequestForm() {
 
   if (done) {
     return (
-      <div className="text-center space-y-3 py-12" role="status">
-        <h2 className="text-2xl font-semibold">We got it</h2>
-        <p className="text-muted-foreground text-pretty max-w-md mx-auto">
-          If we can help, we will email you. Completing this form is not a yes — please do not
-          follow up by phone, Instagram, or at the bar.
-        </p>
-      </div>
+      <Empty role="status">
+        <EmptyHeader>
+          <EmptyTitle>We got it</EmptyTitle>
+          <EmptyDescription>
+            If we can help, we will email you. Completing this form is not a yes — please do not
+            follow up by phone, Instagram, or at the bar.
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     )
   }
 
   return (
-    <form onSubmit={onSubmit} className="relative overflow-x-hidden space-y-8 text-left">
+    <form
+      noValidate
+      onSubmit={onSubmit}
+      className="relative overflow-visible flex flex-col gap-8 text-left"
+    >
       <ol className="flex justify-center gap-6 text-sm">
         {['Eligibility', 'Organization', 'The ask'].map((label, index) => {
           const n = index + 1
@@ -121,6 +138,7 @@ export function DonationRequestForm() {
           values={values}
           set={set}
           error={error}
+          fieldErrors={fieldErrors}
           onBack={() => goTo(1)}
           onContinue={() => goTo(3)}
         />
@@ -132,6 +150,7 @@ export function DonationRequestForm() {
           set={set}
           taprooms={taprooms}
           error={error}
+          fieldErrors={fieldErrors}
           pending={pending}
           onBack={() => goTo(2)}
         />

@@ -7,6 +7,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs'
 import { PageTransition } from '@/components/motion'
+import { Card, CardContent } from '@/components/ui/card'
 import { JobApplyForm } from '@/components/jobs/job-apply-form'
 import { getJobBySlug } from '@/lib/jobs/payload'
 
@@ -62,7 +63,11 @@ export default async function JobPage({ params }: JobPageProps) {
           <div className="text-pretty whitespace-pre-wrap mb-10">{job.description}</div>
         ) : null}
         <h2 className="text-2xl font-semibold text-center mb-6">Apply</h2>
-        <JobApplyForm key={job.slug} jobSlug={job.slug} />
+        <Card>
+          <CardContent className="overflow-visible p-6">
+            <JobApplyForm key={job.slug} jobSlug={job.slug} />
+          </CardContent>
+        </Card>
       </div>
     </PageTransition>
   )

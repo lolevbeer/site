@@ -1,15 +1,25 @@
 import React from 'react'
 import { Button } from '@/components/ui/button'
-import { Field, FormAlert, fieldClass, selectClass } from '@/components/ui/form-field'
+import { FieldGroup, FieldSet } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import type { DonationRequestInput } from '@/lib/donate/donation-request'
-import type { SetDonationField } from './form-shared'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { firstErrorKey, FormAlert, FormField, type SetDonationField } from './form-shared'
+import type { DonationRequestErrors, DonationRequestInput } from '@/lib/donate/donation-request'
 
 export function OrganizationStep({
   panelRef,
   values,
   set,
   error,
+  fieldErrors,
   onBack,
   onContinue,
 }: {
@@ -17,97 +27,127 @@ export function OrganizationStep({
   values: DonationRequestInput
   set: SetDonationField
   error: string | null
+  fieldErrors: DonationRequestErrors
   onBack: () => void
   onContinue: () => void
 }) {
+  const openKey = firstErrorKey(fieldErrors)
   return (
-    <fieldset ref={panelRef} tabIndex={-1} className="space-y-4 outline-none">
+    <FieldSet ref={panelRef} tabIndex={-1} className="overflow-visible outline-none">
       <legend className="sr-only">Organization</legend>
-      <Field id="organizationName" label="Organization name">
-        <Input
+      <FieldGroup className="overflow-visible p-1">
+        <FormField
           id="organizationName"
-          name="organizationName"
-          autoComplete="organization"
-          value={values.organizationName}
-          onChange={(e) => set('organizationName', e.target.value)}
-          required
-          aria-required="true"
-        />
-      </Field>
-      <Field id="contactName" label="Your name">
-        <Input
-          id="contactName"
-          name="contactName"
-          autoComplete="name"
-          value={values.contactName}
-          onChange={(e) => set('contactName', e.target.value)}
-          required
-          aria-required="true"
-        />
-      </Field>
-      <Field id="email" label="Email">
-        <Input
-          id="email"
-          name="email"
-          type="email"
-          autoComplete="email"
-          value={values.email}
-          onChange={(e) => set('email', e.target.value)}
-          required
-          aria-required="true"
-        />
-      </Field>
-      <Field id="phone" label="Phone">
-        <Input
-          id="phone"
-          name="phone"
-          type="tel"
-          autoComplete="tel"
-          value={values.phone}
-          onChange={(e) => set('phone', e.target.value)}
-          required
-          aria-required="true"
-        />
-      </Field>
-      <Field id="mission" label="What does the organization do?" hint="At least 80 characters.">
-        <textarea
-          id="mission"
-          name="mission"
-          className={fieldClass}
-          value={values.mission}
-          onChange={(e) => set('mission', e.target.value)}
-          required
-          minLength={80}
-        />
-      </Field>
-      <Field id="howHeard" label="How did you hear about Lolev?" hint="At least 20 characters.">
-        <textarea
-          id="howHeard"
-          name="howHeard"
-          className={fieldClass}
-          value={values.howHeard}
-          onChange={(e) => set('howHeard', e.target.value)}
-          required
-          minLength={20}
-        />
-      </Field>
-      <Field id="previousDonation" label="Have we donated to you before?">
-        <select
-          id="previousDonation"
-          name="previousDonation"
-          className={selectClass}
-          value={values.previousDonation}
-          onChange={(e) => {
-            const value = e.target.value
-            if (value === '' || value === 'yes' || value === 'no') set('previousDonation', value)
-          }}
-          required
+          label="Organization name"
+          error={fieldErrors.organizationName}
+          forceOpen={openKey === 'organizationName'}
         >
-          <option value="">Select</option>
-          <option value="no">No</option>
-          <option value="yes">Yes</option>
-        </select>
-      </Field>
+          <Input
+            id="organizationName"
+            name="organizationName"
+            autoComplete="organization"
+            value={values.organizationName}
+            onChange={(e) => set('organizationName', e.target.value)}
+            required
+            aria-required="true"
+          />
+        </FormField>
+        <FormField
+          id="contactName"
+          label="Your name"
+          error={fieldErrors.contactName}
+          forceOpen={openKey === 'contactName'}
+        >
+          <Input
+            id="contactName"
+            name="contactName"
+            autoComplete="name"
+            value={values.contactName}
+            onChange={(e) => set('contactName', e.target.value)}
+            required
+            aria-required="true"
+          />
+        </FormField>
+        <FormField id="email" label="Email" error={fieldErrors.email} forceOpen={openKey === 'email'}>
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            value={values.email}
+            onChange={(e) => set('email', e.target.value)}
+            required
+            aria-required="true"
+          />
+        </FormField>
+        <FormField id="phone" label="Phone" error={fieldErrors.phone} forceOpen={openKey === 'phone'}>
+          <Input
+            id="phone"
+            name="phone"
+            type="tel"
+            autoComplete="tel"
+            value={values.phone}
+            onChange={(e) => set('phone', e.target.value)}
+            required
+            aria-required="true"
+          />
+        </FormField>
+        <FormField
+          id="mission"
+          label="What does the organization do?"
+          hint="At least 80 characters."
+          error={fieldErrors.mission}
+          forceOpen={openKey === 'mission'}
+        >
+          <Textarea
+            id="mission"
+            name="mission"
+            value={values.mission}
+            onChange={(e) => set('mission', e.target.value)}
+            required
+            minLength={80}
+          />
+        </FormField>
+        <FormField
+          id="howHeard"
+          label="How did you hear about Lolev?"
+          hint="At least 20 characters."
+          error={fieldErrors.howHeard}
+          forceOpen={openKey === 'howHeard'}
+        >
+          <Textarea
+            id="howHeard"
+            name="howHeard"
+            value={values.howHeard}
+            onChange={(e) => set('howHeard', e.target.value)}
+            required
+            minLength={20}
+          />
+        </FormField>
+        <FormField
+          id="previousDonation"
+          label="Have we donated to you before?"
+          error={fieldErrors.previousDonation}
+          forceOpen={openKey === 'previousDonation'}
+        >
+          <Select
+            value={values.previousDonation || undefined}
+            onValueChange={(value) => {
+              if (value === 'yes' || value === 'no') set('previousDonation', value)
+            }}
+          >
+            <SelectTrigger id="previousDonation" className="w-full" aria-required="true">
+              <SelectValue placeholder="Select" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectItem value="no">No</SelectItem>
+                <SelectItem value="yes">Yes</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </FormField>
+      </FieldGroup>
       <FormAlert error={error} />
       <div className="flex justify-between pt-4">
         <Button type="button" variant="outline" onClick={onBack}>
@@ -117,6 +157,6 @@ export function OrganizationStep({
           Continue
         </Button>
       </div>
-    </fieldset>
+    </FieldSet>
   )
 }

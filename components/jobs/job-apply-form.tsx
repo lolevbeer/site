@@ -6,10 +6,15 @@
  */
 
 import React, { useState } from 'react'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { Field, FormAlert, fieldClass } from '@/components/ui/form-field'
+import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
+import { FieldGroup } from '@/components/ui/field'
+import { FormField } from '@/components/ui/form-field'
 import { HoneypotField } from '@/components/ui/honeypot-field'
 import { Input } from '@/components/ui/input'
+import { Spinner } from '@/components/ui/spinner'
+import { Textarea } from '@/components/ui/textarea'
 import { submitJobApplication } from '@/src/actions/job-application'
 import { emptyJobApplication, type JobApplicationInput } from '@/lib/jobs/application'
 
@@ -41,67 +46,75 @@ export function JobApplyForm({ jobSlug }: { jobSlug: string }) {
 
   if (done) {
     return (
-      <div className="text-center space-y-3 py-8" role="status">
-        <h2 className="text-2xl font-semibold">Application received</h2>
-        <p className="text-muted-foreground text-pretty max-w-md mx-auto">
-          If we want to talk, we will email you. Please do not follow up at the bar.
-        </p>
-      </div>
+      <Empty role="status">
+        <EmptyHeader>
+          <EmptyTitle>Application received</EmptyTitle>
+          <EmptyDescription>
+            If we want to talk, we will email you. Please do not follow up at the bar.
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     )
   }
 
   return (
-    <form onSubmit={onSubmit} className="relative flex flex-col gap-4 text-left">
-      <Field id="name" label="Your name">
-        <Input
-          id="name"
-          name="name"
-          autoComplete="name"
-          value={values.name}
-          onChange={(e) => set('name', e.target.value)}
-          required
-        />
-      </Field>
-      <Field id="email" label="Email">
-        <Input
-          id="email"
-          name="email"
-          type="email"
-          autoComplete="email"
-          value={values.email}
-          onChange={(e) => set('email', e.target.value)}
-          required
-        />
-      </Field>
-      <Field id="phone" label="Phone">
-        <Input
-          id="phone"
-          name="phone"
-          type="tel"
-          autoComplete="tel"
-          value={values.phone}
-          onChange={(e) => set('phone', e.target.value)}
-          required
-        />
-      </Field>
-      <Field id="message" label="Why this role?" hint="At least 40 characters.">
-        <textarea
-          id="message"
-          name="message"
-          className={fieldClass}
-          value={values.message}
-          onChange={(e) => set('message', e.target.value)}
-          required
-          minLength={40}
-        />
-      </Field>
+    <form noValidate onSubmit={onSubmit} className="relative overflow-visible flex flex-col gap-4 text-left">
+      <FieldGroup className="overflow-visible p-1">
+        <FormField id="name" label="Your name">
+          <Input
+            id="name"
+            name="name"
+            autoComplete="name"
+            value={values.name}
+            onChange={(e) => set('name', e.target.value)}
+            required
+          />
+        </FormField>
+        <FormField id="email" label="Email">
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            value={values.email}
+            onChange={(e) => set('email', e.target.value)}
+            required
+          />
+        </FormField>
+        <FormField id="phone" label="Phone">
+          <Input
+            id="phone"
+            name="phone"
+            type="tel"
+            autoComplete="tel"
+            value={values.phone}
+            onChange={(e) => set('phone', e.target.value)}
+            required
+          />
+        </FormField>
+        <FormField id="message" label="Why this role?" hint="At least 40 characters.">
+          <Textarea
+            id="message"
+            name="message"
+            value={values.message}
+            onChange={(e) => set('message', e.target.value)}
+            required
+            minLength={40}
+          />
+        </FormField>
+      </FieldGroup>
       <HoneypotField
         value={values.companyUrlHp}
         onChange={(value) => set('companyUrlHp', value)}
       />
-      <FormAlert error={error} />
+      {error ? (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
       <div className="flex justify-end pt-2">
         <Button type="submit" disabled={pending}>
+          {pending ? <Spinner /> : null}
           {pending ? 'Submitting…' : 'Submit application'}
         </Button>
       </div>
