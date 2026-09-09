@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
+import Link from 'next/link';
 import { BreweryEvent } from '@/lib/types/event';
 import type { LocationFilter } from '@/lib/types/location';
 import { Button } from '@/components/ui/button';
@@ -9,9 +10,9 @@ import { Calendar } from '@/components/icons';
 import { useLocationContext } from '@/components/location/location-provider';
 import { getLocationDisplayName } from '@/lib/config/locations';
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
-import { TimelineList } from '@/components/ui/timeline-list';
-import { TimelineItem } from '@/components/ui/timeline-item';
+import { ScheduleList } from '@/components/ui/schedule-list';
 import { isTodayOrFuture } from '@/lib/utils/formatters';
+import { safeHttpUrl } from '@/lib/utils/url-utils';
 
 interface EventsPageClientProps {
   initialEvents: BreweryEvent[];
@@ -40,39 +41,43 @@ export function EventsPageClient({ initialEvents }: EventsPageClientProps) {
       </div>
 
       <div className="max-w-2xl mx-auto">
-        <TimelineList
-          items={filteredEvents}
-          renderItem={(event) => (
-            <TimelineItem
-              title={event.title}
-              time={event.time}
-              endTime={event.endTime}
-              location={getLocationDisplayName(locations, event.location)}
-              description={event.description !== event.title ? event.description : undefined}
-              tags={event.tags}
-              site={event.site}
-            />
-          )}
-          emptyState={
-            <Empty>
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <Calendar className="h-6 w-6" />
-                </EmptyMedia>
-                <EmptyTitle>No Upcoming Events</EmptyTitle>
-                <EmptyDescription>
-                  {locationFilter !== 'all'
-                    ? `No upcoming events at ${locations.find(l => (l.slug || l.id) === locationFilter)?.name || locationFilter}. Check back soon!`
-                    : 'No upcoming events scheduled. Check back soon for live music, trivia, and more!'}
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
-          }
-        />
+        <h2 className="sr-only">Upcoming events</h2>
+        {filteredEvents.length > 0 ? (
+          <ScheduleList
+            items={filteredEvents.map((event) => ({
+              id: String(event.id ?? `${event.title}-${event.date}-${event.location}-${event.time}`),
+              date: event.date,
+              title: event.title,
+              time: event.time,
+              endTime: event.endTime,
+              locationName:
+                locationFilter === 'all'
+                  ? getLocationDisplayName(locations, event.location)
+                  : undefined,
+              description:
+                event.description !== event.title ? event.description : undefined,
+              site: safeHttpUrl(event.site),
+            }))}
+          />
+        ) : (
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <Calendar className="h-6 w-6" />
+              </EmptyMedia>
+              <EmptyTitle>No Upcoming Events</EmptyTitle>
+              <EmptyDescription>
+                {locationFilter === 'all'
+                  ? 'No upcoming events scheduled. Check back soon for live music, trivia, and more!'
+                  : `No upcoming events at ${getLocationDisplayName(locations, locationFilter)}. Check back soon!`}
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        )}
       </div>
 
       <div className="text-center space-y-3 pt-12 mt-12">
-        <h2 className="text-lg font-semibold">Book Private Event</h2>
+        <h2 className="text-lg font-semibold">Book a private event</h2>
         <div className="flex justify-center gap-4 flex-wrap">
           <Button variant="ghost" size="sm" asChild>
             <a href="mailto:events@lolev.beer">
@@ -85,6 +90,13 @@ export function EventsPageClient({ initialEvents }: EventsPageClientProps) {
             </a>
           </Button>
         </div>
+        <p className="text-sm text-muted-foreground pt-6">
+          Asking us to donate beer? Use the{' '}
+          <Link href="/donate" className="underline hover:text-foreground">
+            donation request form
+          </Link>
+          .
+        </p>
       </div>
     </div>
   );

@@ -6,9 +6,10 @@ import { MarketingText } from '@/components/home/marketing-text';
 import { getHomePageData } from '@/lib/utils/homepage-data';
 import { JsonLd } from '@/components/seo/json-ld';
 import { PageTransition } from '@/components/motion';
-import { generateEventJsonLd, generateFoodEventJsonLd } from '@/lib/utils/json-ld';
+import { createLocationLookup, generateEventJsonLd, generateFoodEventJsonLd } from '@/lib/utils/json-ld';
 import { generateLocalBusinessSchemas, generateOrganizationSchema, generateWebSiteSchema } from '@/lib/utils/local-business-schema';
-import { generateFullMenuSchema } from '@/lib/utils/menu-schema';
+import { generateLocationMenuSchema } from '@/lib/utils/menu-schema';
+import { extractBeerFromMenuItem } from '@/lib/utils/menu-item-utils';
 
 // ISR: Revalidate every 5 minutes as fallback (on-demand revalidation handles immediate updates)
 export const revalidate = 300;
@@ -39,13 +40,27 @@ const UpcomingEvents = dynamic(() => import('@/components/home/upcoming-events')
 export default async function Home(): Promise<React.ReactElement> {
   const data = await getHomePageData();
 
-  // Generate SEO schemas
-  const localBusinessSchemas = generateLocalBusinessSchemas(data.locations);
-  const organizationSchema = generateOrganizationSchema();
+  const locationLookup = createLocationLookup(data.locations);
+  const localBusinessSchemas = generateLocalBusinessSchemas(data.locations, data.weeklyHours);
+  const organizationSchema = generateOrganizationSchema(data.locations);
   const webSiteSchema = generateWebSiteSchema();
-  const menuSchema = generateFullMenuSchema(data.availableBeers);
-  const eventSchemas = data.allEvents.map(event => generateEventJsonLd(event));
-  const foodSchemas = data.allFood.map(food => generateFoodEventJsonLd(food));
+  const beersFrom = (menu: (typeof data.allDraftMenus)[number] | null) =>
+    (menu?.items ?? [])
+      .map((item) => extractBeerFromMenuItem(item))
+      .filter((beer): beer is NonNullable<typeof beer> => beer !== null);
+  const menuSchemas = data.locations
+    .filter((loc) => loc.slug)
+    .map((loc) => {
+      const slug = loc.slug as string;
+      return generateLocationMenuSchema({
+        locationName: loc.name,
+        locationSlug: slug,
+        draftBeers: beersFrom(data.draftMenusByLocation[slug]),
+        canBeers: beersFrom(data.cansMenusByLocation[slug]),
+      });
+    });
+  const eventSchemas = data.allEvents.map((event) => generateEventJsonLd(event, locationLookup));
+  const foodSchemas = data.allFood.map((food) => generateFoodEventJsonLd(food, locationLookup));
 
   return (
     <>
@@ -55,7 +70,9 @@ export default async function Home(): Promise<React.ReactElement> {
       ))}
       <JsonLd data={organizationSchema} />
       <JsonLd data={webSiteSchema} />
-      <JsonLd data={menuSchema} />
+      {menuSchemas.map((schema, index) => (
+        <JsonLd key={`menu-${index}`} data={schema} />
+      ))}
       {eventSchemas.map((schema, index) => (
         <JsonLd key={`event-${index}`} data={schema} />
       ))}

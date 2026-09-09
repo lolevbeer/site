@@ -21,6 +21,29 @@ export type LocationSlug = string;
  */
 export type LocationFilter = LocationSlug | 'all';
 
+export const WEEKDAYS = [
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+  'sunday',
+] as const
+
+export type Weekday = (typeof WEEKDAYS)[number]
+
+/** Indexable by `Date.getDay()` (0 = Sunday). `WEEKDAYS` starts on Monday. */
+export const WEEKDAYS_FROM_SUNDAY: Weekday[] = [
+  'sunday',
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+]
+
 /**
  * Daily hours interface
  */

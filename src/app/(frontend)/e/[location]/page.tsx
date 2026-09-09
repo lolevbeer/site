@@ -12,6 +12,7 @@ import {
   extractVendorInfo,
 } from '@/lib/utils/payload-api'
 import type { PayloadMenu } from '@/lib/utils/payload-api'
+import { NOINDEX_ROBOTS } from '@/lib/utils/seo'
 
 // ISR: cache for 60s, skip build-time pre-rendering (first request is dynamic, then cached)
 export const revalidate = 60
@@ -124,20 +125,22 @@ export async function generateMetadata({ params }: EventsDisplayPageProps) {
   if (!data) {
     return {
       title: 'Not Found',
+      robots: NOINDEX_ROBOTS,
     }
   }
 
   const hasEvents = data.events.length > 0
   const hasFood = data.food.length > 0
-  const title = hasEvents && hasFood
-    ? `Food & Events - ${data.locationName}`
-    : hasFood
-      ? `Food - ${data.locationName}`
-      : `Events - ${data.locationName}`
+  let title = `Events - ${data.locationName}`
+  if (hasEvents && hasFood) {
+    title = `Food & Events - ${data.locationName}`
+  } else if (hasFood) {
+    title = `Food - ${data.locationName}`
+  }
 
   return {
     title,
     description: `Upcoming food and events at ${data.locationName}`,
-    alternates: { canonical: `/e/${location}` },
+    robots: NOINDEX_ROBOTS,
   }
 }

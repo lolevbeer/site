@@ -3,6 +3,10 @@ import { withSentryConfig } from '@sentry/nextjs'
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // localhost and 127.0.0.1 are different origins; Next blocks /_next assets
+  // across that pair unless listed here. Dev-only — ignored in production.
+  allowedDevOrigins: ['127.0.0.1'],
+
   // Add caching headers for media files to reduce blob transfer
   async headers() {
     return [

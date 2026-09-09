@@ -3,7 +3,14 @@
  * Locations are now dynamically loaded from the database
  */
 
-import { type PayloadLocation, type LocationSlug, type DayHours } from '@/lib/types/location'
+import {
+  type PayloadLocation,
+  type LocationSlug,
+  type DayHours,
+  type Weekday,
+  WEEKDAYS,
+  WEEKDAYS_FROM_SUNDAY,
+} from '@/lib/types/location'
 import { getCurrentESTDateTime } from '@/lib/utils/date'
 import { formatHoursTime } from '@/lib/utils/formatters'
 
@@ -12,13 +19,64 @@ import { formatHoursTime } from '@/lib/utils/formatters'
  */
 export const LOCATION_STORAGE_KEY = 'brewery-location-preference'
 
+/** Location slugs that would collide with App Router static segments. */
+export const RESERVED_LOCATION_SLUGS = new Set([
+  'about',
+  'accessibility',
+  'admin',
+  'api',
+  'beer',
+  'beer-map',
+  'donate',
+  'e',
+  'events',
+  'faq',
+  'food',
+  'jobs',
+  'm',
+  'privacy',
+  'terms',
+])
+
+/** True for public taproom landings (`/lawrenceville`), not `/beer` or nested routes. */
+export function isTaproomLandingPath(
+  pathname: string | null | undefined,
+  locations: PayloadLocation[],
+): boolean {
+  if (!pathname) return false
+  const segments = pathname.replace(/\/$/, '').split('/').filter(Boolean)
+  if (segments.length !== 1) return false
+  const slug = segments[0]
+  if (RESERVED_LOCATION_SLUGS.has(slug)) return false
+  return locations.some((location) => location.slug === slug)
+}
+
+/**
+ * Format a Payload time field as `HH:mm` in the location timezone.
+ * Shared by open/closed checks and LocalBusiness openingHoursSpecification.
+ */
+export function formatHourMinute(time: string, timezone: string): string {
+  if (!time.includes('T')) return time.slice(0, 5)
+  const date = new Date(time)
+  if (Number.isNaN(date.getTime())) return '00:00'
+  try {
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      timeZone: timezone,
+    })
+  } catch {
+    return '00:00'
+  }
+}
+
 /**
  * Extract hours from Payload Location for a specific day
  * Parses ISO time strings in the location's timezone for proper comparison
  */
-function extractDayHours(location: PayloadLocation, day: string): DayHours | null {
-  const dayData = location[day as keyof PayloadLocation] as
-    { open?: string; close?: string } | undefined
+export function extractDayHours(location: PayloadLocation, day: Weekday): DayHours | null {
+  const dayData = location[day] as { open?: string; close?: string } | undefined
 
   if (!dayData?.open || !dayData?.close) {
     return null
@@ -26,29 +84,73 @@ function extractDayHours(location: PayloadLocation, day: string): DayHours | nul
 
   const timezone = location.timezone || 'America/New_York'
 
-  // Payload stores times as ISO date strings
-  // We need to extract the time in the location's timezone for proper open/closed comparison
-  const parseTime = (isoString: string): string => {
-    try {
-      const date = new Date(isoString)
-      // Format as HH:mm in the location's timezone
-      const timeString = date.toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false,
-        timeZone: timezone,
-      })
-      return timeString
-    } catch {
-      return '00:00'
-    }
-  }
-
   return {
-    open: parseTime(dayData.open),
-    close: parseTime(dayData.close),
+    open: formatHourMinute(dayData.open, timezone),
+    close: formatHourMinute(dayData.close, timezone),
     closed: false,
   }
+}
+
+/** One-line hours summary for FAQ / llms.txt, grouped by identical open/close. */
+export function formatHoursFaqAnswer(locations: PayloadLocation[]): string {
+  if (locations.length === 0) {
+    return 'Hours vary by location and holiday. See lolev.beer for this week\'s hours.'
+  }
+  const parts = locations.map((location) => {
+    const groups: { start: string; end: string; hours: string }[] = []
+    for (const day of WEEKDAYS) {
+      const hours = getFormattedHoursForDay(location, day)
+      const label = day.charAt(0).toUpperCase() + day.slice(1, 3)
+      const last = groups[groups.length - 1]
+      if (last && last.hours === hours) {
+        last.end = label
+      } else {
+        groups.push({ start: label, end: label, hours })
+      }
+    }
+    const summary = groups
+      .map((group) => {
+        const days = group.start === group.end ? group.start : `${group.start}–${group.end}`
+        return `${days} ${group.hours}`
+      })
+      .join(', ')
+    return `${location.name} is ${summary}`
+  })
+  return `${parts.join('. ')}. Holiday hours may differ — this week's hours are listed in the footer of every page.`
+}
+
+/** "Lawrenceville and Zelienople" from live location docs — never a hardcoded list. */
+export function joinLocationNames(
+  locations: Array<{ name?: string | null }>,
+): string {
+  const names = locations
+    .map((location) => location.name?.trim())
+    .filter((name): name is string => Boolean(name))
+  if (names.length === 0) return ''
+  if (names.length === 1) return names[0]
+  if (names.length === 2) return `${names[0]} and ${names[1]}`
+  return `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`
+}
+
+/** "Pittsburgh PA 15201" from a Payload address — street is handled by the caller. */
+export function formatCityStateZip(
+  address: { city?: string | null; state?: string | null; zip?: string | null } | null | undefined,
+): string {
+  return [address?.city, address?.state, address?.zip].filter(Boolean).join(' ')
+}
+
+export function formatLocationsFaqAnswer(locations: PayloadLocation[]): string {
+  if (locations.length === 0) {
+    return 'We have taprooms in the Pittsburgh area. See lolev.beer for addresses.'
+  }
+  const parts = locations.map((location) => {
+    const cityState = [location.address?.city, location.address?.state].filter(Boolean).join(', ')
+    const address = [location.address?.street, cityState, location.address?.zip]
+      .filter(Boolean)
+      .join(', ')
+    return `${location.name} at ${address || 'see lolev.beer'}`
+  })
+  return `We have ${locations.length} locations: ${parts.join('; ')}.`
 }
 
 /**
@@ -56,8 +158,7 @@ function extractDayHours(location: PayloadLocation, day: string): DayHours | nul
  */
 export function isLocationOpenNow(location: PayloadLocation, date?: Date): boolean {
   const now = date || getCurrentESTDateTime()
-  const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
-  const dayOfWeek = days[now.getDay()]
+  const dayOfWeek = WEEKDAYS_FROM_SUNDAY[now.getDay()]
 
   const dayHours = extractDayHours(location, dayOfWeek)
 
@@ -85,7 +186,7 @@ export function isLocationOpenNow(location: PayloadLocation, date?: Date): boole
 /**
  * Get formatted hours string for a specific day
  */
-export function getFormattedHoursForDay(location: PayloadLocation, day: string): string {
+export function getFormattedHoursForDay(location: PayloadLocation, day: Weekday): string {
   const dayHours = extractDayHours(location, day)
 
   if (!dayHours || dayHours.closed) {
@@ -102,11 +203,10 @@ export function getNextOpeningTimeForLocation(
   location: PayloadLocation,
 ): { day: string; time: string } | null {
   const now = getCurrentESTDateTime()
-  const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
 
   for (let i = 1; i <= 7; i++) {
     const dayIndex = (now.getDay() + i) % 7
-    const dayName = days[dayIndex]
+    const dayName = WEEKDAYS_FROM_SUNDAY[dayIndex]
     const dayHours = extractDayHours(location, dayName)
 
     if (dayHours && !dayHours.closed) {
@@ -129,14 +229,9 @@ export function getAllHoursForLocation(location: PayloadLocation): Array<{
   hours: string
   isToday: boolean
 }> {
-  const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
-  const today = new Date()
-  const todayIndex = today.getDay()
-  const todayName = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][
-    todayIndex
-  ]
+  const todayName = WEEKDAYS_FROM_SUNDAY[new Date().getDay()]
 
-  return days.map((day) => ({
+  return WEEKDAYS.map((day) => ({
     day: day.charAt(0).toUpperCase() + day.slice(1),
     hours: getFormattedHoursForDay(location, day),
     isToday: day === todayName,

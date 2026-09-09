@@ -6,9 +6,9 @@
  */
 
 import type { Beer as PayloadBeer } from '@/src/payload-types'
-import { Beer, UntappdReview } from '@/lib/types/beer'
+import { Beer } from '@/lib/types/beer'
 import { getBeerImageUrl } from '@/lib/utils/media-utils'
-import { LOLEV_BASE_URL } from '@/lib/utils/schema-shared'
+import { LOLEV_BASE_URL, LOLEV_OG_IMAGE_URL } from '@/lib/utils/schema-shared'
 import { relationshipName } from '@/lib/utils/relationship-name'
 
 /**
@@ -56,6 +56,7 @@ export interface BrandJsonLd {
 
 export interface OfferJsonLd {
   '@type': 'Offer'
+  name?: string
   price?: string
   priceCurrency?: string
   availability: string
@@ -104,44 +105,48 @@ function getBeerStyleName(beer: ProductSchemaInput): string {
   return relationshipName('style' in beer ? beer.style : undefined) ?? 'Beer'
 }
 
-/**
- * Get beer category/style
- */
-function getBeerCategory(beer: ProductSchemaInput): string {
-  const styleName = getBeerStyleName(beer)
-  return `Craft Beer > ${styleName}`
+export interface ProductSchemaOptions {
+  /** True when the beer is on a current draft or cans menu. */
+  inStock?: boolean
+}
+
+function offerAvailability(inStock: boolean | undefined): string {
+  if (inStock === true) return 'https://schema.org/InStock'
+  if (inStock === false) return 'https://schema.org/OutOfStock'
+  return 'https://schema.org/LimitedAvailability'
+}
+
+function productUrlSlug(beer: ProductSchemaInput) {
+  return (
+    ('slug' in beer ? beer.slug : undefined) ||
+    ('variant' in beer ? beer.variant : undefined) ||
+    beer.id
+  )
 }
 
 /**
  * Generate offers array for a beer
  */
-function generateOffers(beer: ProductSchemaInput): OfferJsonLd[] {
+function generateOffers(beer: ProductSchemaInput, inStock?: boolean): OfferJsonLd[] {
   const offers: OfferJsonLd[] = []
 
   // Rolling 90-day validity so Google doesn't warn about missing priceValidUntil.
   const validUntil = new Date()
   validUntil.setDate(validUntil.getDate() + 90)
   const priceValidUntil = validUntil.toISOString().split('T')[0]
-  const beerSlug =
-    ('slug' in beer ? beer.slug : undefined) ||
-    ('variant' in beer ? beer.variant : undefined) ||
-    beer.id
+  const beerSlug = productUrlSlug(beer)
 
-  // Get draft price from either direct field (Payload) or pricing object (app Beer)
   const draftPrice = beer.draftPrice || ('pricing' in beer ? beer.pricing?.draftPrice : undefined)
-  // Get four pack price from either direct field (Payload) or pricing object (app Beer)
   const fourPackPrice =
     ('fourPack' in beer ? beer.fourPack : undefined) ||
     ('pricing' in beer ? beer.pricing?.fourPack : undefined)
 
-  // The draft and four-pack offers are identical apart from the price, so they
-  // share one builder — keeping availability, condition, validity window and
-  // seller from drifting between the two.
-  const buildOffer = (price: number): OfferJsonLd => ({
+  const buildOffer = (price: number, name: string): OfferJsonLd => ({
     '@type': 'Offer',
+    name,
     price: price.toString(),
     priceCurrency: 'USD',
-    availability: 'https://schema.org/InStock',
+    availability: offerAvailability(inStock),
     itemCondition: 'https://schema.org/NewCondition',
     priceValidUntil,
     url: `${LOLEV_BASE_URL}/beer/${beerSlug}`,
@@ -152,62 +157,15 @@ function generateOffers(beer: ProductSchemaInput): OfferJsonLd[] {
     },
   })
 
-  // Draft offer with price
   if (draftPrice) {
-    offers.push(buildOffer(draftPrice))
+    offers.push(buildOffer(draftPrice, 'Draft pour'))
   }
 
-  // Four pack offer with price
   if (fourPackPrice) {
-    offers.push(buildOffer(fourPackPrice))
+    offers.push(buildOffer(fourPackPrice, '4-pack'))
   }
 
-  // If no offers with prices, don't add a priceless offer (Google requires price)
   return offers
-}
-
-/**
- * Convert date string to ISO format (YYYY-MM-DD)
- */
-function toISODate(dateStr: string): string | null {
-  const date = new Date(dateStr)
-  if (isNaN(date.getTime())) return null
-  return date.toISOString().split('T')[0]
-}
-
-/**
- * Generate reviews from Untappd positive reviews
- */
-function generateReviews(reviews: UntappdReview[]): ReviewJsonLd[] {
-  return reviews.map((review) => {
-    const reviewData: ReviewJsonLd = {
-      '@type': 'Review',
-      author: {
-        '@type': 'Person',
-        name: review.username,
-      },
-      reviewRating: {
-        '@type': 'Rating',
-        ratingValue: review.rating.toFixed(1),
-        bestRating: '5',
-        worstRating: '1',
-      },
-      reviewBody: review.text,
-    }
-
-    if (review.date) {
-      const isoDate = toISODate(review.date)
-      if (isoDate) {
-        reviewData.datePublished = isoDate
-      }
-    }
-
-    if (review.url) {
-      reviewData.url = review.url
-    }
-
-    return reviewData
-  })
 }
 
 /**
@@ -255,13 +213,12 @@ function generateAdditionalProperties(beer: ProductSchemaInput): PropertyValueJs
 /**
  * Generate Product JSON-LD for a beer
  */
-export function generateProductSchema(beer: ProductSchemaInput): ProductJsonLd {
-  const baseUrl = LOLEV_BASE_URL
+export function generateProductSchema(
+  beer: ProductSchemaInput,
+  options: ProductSchemaOptions = {},
+): ProductJsonLd {
   const styleName = getBeerStyleName(beer)
-  const beerSlug =
-    ('slug' in beer ? beer.slug : undefined) ||
-    ('variant' in beer ? beer.variant : undefined) ||
-    beer.id
+  const beerSlug = productUrlSlug(beer)
 
   const product: ProductJsonLd = {
     '@context': 'https://schema.org',
@@ -271,10 +228,10 @@ export function generateProductSchema(beer: ProductSchemaInput): ProductJsonLd {
     brand: {
       '@type': 'Brand',
       name: 'Lolev Beer',
-      logo: `${baseUrl}/images/beer/og-image.png`,
-      url: baseUrl,
+      logo: LOLEV_OG_IMAGE_URL,
+      url: LOLEV_BASE_URL,
     },
-    category: getBeerCategory(beer),
+    category: `Craft Beer > ${styleName}`,
     additionalProperty: generateAdditionalProperties(beer),
     sku: beerSlug,
   }
@@ -283,16 +240,16 @@ export function generateProductSchema(beer: ProductSchemaInput): ProductJsonLd {
   // Blob) via the shared helper, then make it absolute for schema.org.
   const imageUrl = getBeerImageUrl(beer.image, typeof beerSlug === 'string' ? beerSlug : undefined)
   if (imageUrl) {
-    product.image = imageUrl.startsWith('/') ? `${baseUrl}${imageUrl}` : imageUrl
+    product.image = imageUrl.startsWith('/') ? `${LOLEV_BASE_URL}${imageUrl}` : imageUrl
   }
 
-  // Add offers only if we have prices
-  const offers = generateOffers(beer)
+  const offers = generateOffers(beer, options.inStock)
   if (offers.length > 0) {
     product.offers = offers
   }
 
-  // Add Untappd rating as aggregate rating
+  // Untappd aggregate only — do not nest a shorter Review[] that disagrees
+  // with reviewCount. The visible reviews stay on the page.
   if (beer.untappdRating && beer.untappdRating > 0) {
     product.aggregateRating = {
       '@type': 'AggregateRating',
@@ -301,15 +258,6 @@ export function generateProductSchema(beer: ProductSchemaInput): ProductJsonLd {
       worstRating: '1',
       reviewCount: beer.untappdRatingCount ? String(beer.untappdRatingCount) : '1',
     }
-  }
-
-  // Add individual reviews (positiveReviews may be UntappdReview[] from app Beer or JSON from Payload)
-  if (
-    beer.positiveReviews &&
-    Array.isArray(beer.positiveReviews) &&
-    beer.positiveReviews.length > 0
-  ) {
-    product.review = generateReviews(beer.positiveReviews as UntappdReview[])
   }
 
   return product
@@ -332,12 +280,15 @@ export interface ItemListJsonLd {
 export interface ItemListElementJsonLd {
   '@type': 'ListItem'
   position: number
-  item: ProductJsonLd
+  name?: string
+  url?: string
+  item?: ProductJsonLd
 }
 
 /**
- * Generate ItemList JSON-LD for beer collection page
- * This helps search engines display rich carousels of beers
+ * Generate ItemList JSON-LD for the beer collection page.
+ * Elements are URLs (not nested Product graphs) so the catalog HTML stays small
+ * and availability claims live only on each beer page.
  */
 export function generateBeerListSchema(beers: ProductSchemaInput[]): ItemListJsonLd {
   return {
@@ -350,7 +301,8 @@ export function generateBeerListSchema(beers: ProductSchemaInput[]): ItemListJso
     itemListElement: beers.map((beer, index) => ({
       '@type': 'ListItem',
       position: index + 1,
-      item: generateProductSchema(beer),
+      name: beer.name,
+      url: `${LOLEV_BASE_URL}/beer/${productUrlSlug(beer)}`,
     })),
   }
 }

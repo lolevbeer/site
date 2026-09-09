@@ -7,7 +7,12 @@
 'use client'
 
 import React, { createContext, useContext, ReactNode, useMemo, Suspense } from 'react'
-import { type PayloadLocation, type LocationSlug, type LocationInfo } from '@/lib/types/location'
+import {
+  type PayloadLocation,
+  type LocationSlug,
+  type LocationInfo,
+  type Weekday,
+} from '@/lib/types/location'
 import { useLocation, useLocationHours } from '@/lib/hooks/use-location'
 
 interface LocationContextValue {
@@ -31,7 +36,7 @@ interface LocationContextValue {
 
   // Hours management
   hours: {
-    getHoursForDay: (day: string) => string
+    getHoursForDay: (day: Weekday) => string
     getAllHours: () => Array<{
       day: string
       hours: string

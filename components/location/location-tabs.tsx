@@ -1,6 +1,7 @@
 /**
  * Location Tabs Component
  * Segmented control for switching the active brewery location.
+ * Hidden on /{taproom} landings, where the URL already names the taproom.
  *
  * Deliberately NOT tab semantics. These controls switch a global location
  * filter and own no tab panel, so Radix `Tabs` emitted
@@ -24,7 +25,9 @@
 
 'use client'
 
+import { usePathname } from 'next/navigation'
 import { SegmentedControl, type SegmentedSize } from '@/components/ui/segmented-control'
+import { isTaproomLandingPath } from '@/lib/config/locations'
 import { useLocationContext } from './location-provider'
 
 interface LocationTabsProps {
@@ -34,7 +37,12 @@ interface LocationTabsProps {
 }
 
 export function LocationTabs({ className, size = 'default' }: LocationTabsProps) {
+  const pathname = usePathname()
   const { currentLocation, setLocation, isClient, locations } = useLocationContext()
+
+  if (isTaproomLandingPath(pathname, locations)) {
+    return null
+  }
 
   // Nothing is selected until the client has resolved a location, so the server
   // render and the first client render agree and hydration stays quiet.

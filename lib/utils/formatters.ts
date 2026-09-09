@@ -5,6 +5,7 @@
 
 import { Beer } from '@/lib/types/beer'
 import type { DayOfWeek } from '@/lib/utils/payload-api'
+import { getTodayEST } from '@/lib/utils/date'
 
 /**
  * Time formatting utilities
@@ -69,7 +70,7 @@ export function formatTime(timeString: string, options: { timezone?: string } = 
  *
  * Deliberately separate from {@link formatTime}, which renders "11am" / "9:30pm"
  * for inline prose. Both conventions are in use — this one across the hours
- * tables in the footer, the location cards and the hours panel — so they stay
+ * tables in the footer, location cards, taproom landings, and beer map — so they stay
  * two named functions rather than one with a casing flag, and changing how
  * hours read becomes a decision made in one place.
  *
@@ -199,27 +200,28 @@ export function formatRating(rating: number | null | undefined): string {
 }
 
 /**
- * Date comparison helpers for filtering events/schedules
+ * Date comparison helpers for filtering events/schedules.
+ * Uses America/New_York calendar days so SSR (UTC) and the taprooms agree.
  */
+function dateKey(dateString: string): string {
+  return dateString.split('T')[0]
+}
+
+function addEstDays(ymd: string, days: number): string {
+  const [year, month, day] = ymd.split('-').map(Number)
+  return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10)
+}
+
 export function isToday(dateString: string): boolean {
-  const date = parseLocalDate(dateString.split('T')[0])
-  const today = new Date()
-  return date.toDateString() === today.toDateString()
+  return dateKey(dateString) === getTodayEST()
 }
 
 export function isTomorrow(dateString: string): boolean {
-  const date = parseLocalDate(dateString.split('T')[0])
-  const tomorrow = new Date()
-  tomorrow.setDate(tomorrow.getDate() + 1)
-  return date.toDateString() === tomorrow.toDateString()
+  return dateKey(dateString) === addEstDays(getTodayEST(), 1)
 }
 
 export function isTodayOrFuture(dateString: string): boolean {
-  const date = parseLocalDate(dateString.split('T')[0])
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  date.setHours(0, 0, 0, 0)
-  return date.getTime() >= today.getTime()
+  return dateKey(dateString) >= getTodayEST()
 }
 
 export function getBeerSlug(beer: Beer): string {

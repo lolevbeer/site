@@ -1,8 +1,7 @@
 /**
  * Beer Detail Loading Skeleton
  * Mirrors the detail page layout (container from beer/[variant]/page.tsx,
- * two-column grid from components/beer/beer-details.tsx) so detail
- * navigations don't flash the listing-grid skeleton from beer/loading.tsx.
+ * two-column grid from components/beer/beer-details.tsx).
  */
 
 import { Skeleton } from '@/components/ui/skeleton'

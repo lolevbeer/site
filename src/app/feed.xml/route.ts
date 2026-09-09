@@ -5,8 +5,16 @@
  */
 
 import { NextResponse } from 'next/server';
-import { getAllBeersFromPayload, getUpcomingEventsFromPayload, getUpcomingFoodFromPayload, extractVendorInfo } from '@/lib/utils/payload-api';
+import {
+  getAllBeersFromPayload,
+  getAllLocations,
+  getAllUpcomingEventsFromPayload,
+  getCombinedUpcomingFood,
+  extractVendorInfo,
+} from '@/lib/utils/payload-api';
 import { logger } from '@/lib/utils/logger';
+import { getBaseUrl } from '@/lib/utils/get-base-url';
+import { DEFAULT_OG_IMAGE_PATH } from '@/lib/utils/seo';
 
 export const revalidate = 3600; // Revalidate every hour
 
@@ -24,12 +32,12 @@ function formatRFC822Date(date: Date): string {
 }
 
 export async function GET() {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lolev.beer';
+  const baseUrl = getBaseUrl();
 
   // Fetch content
   let beers: Awaited<ReturnType<typeof getAllBeersFromPayload>> = [];
-  let events: Awaited<ReturnType<typeof getUpcomingEventsFromPayload>> = [];
-  let food: Awaited<ReturnType<typeof getUpcomingFoodFromPayload>> = [];
+  let events: Awaited<ReturnType<typeof getAllUpcomingEventsFromPayload>> = [];
+  let food: Awaited<ReturnType<typeof getCombinedUpcomingFood>> = [];
 
   try {
     beers = await getAllBeersFromPayload();
@@ -38,23 +46,19 @@ export async function GET() {
   }
 
   try {
-    // Fetch events from both locations
-    const [lawrencevilleEvents, zelienopleEvents] = await Promise.all([
-      getUpcomingEventsFromPayload('lawrenceville', 10),
-      getUpcomingEventsFromPayload('zelienople', 10),
-    ]);
-    events = [...lawrencevilleEvents, ...zelienopleEvents];
+    events = await getAllUpcomingEventsFromPayload(20);
   } catch (error) {
     logger.error('Error fetching events for RSS:', error);
   }
 
   try {
-    // Fetch food from both locations
-    const [lawrencevilleFood, zelienopleFood] = await Promise.all([
-      getUpcomingFoodFromPayload('lawrenceville', 10),
-      getUpcomingFoodFromPayload('zelienople', 10),
-    ]);
-    food = [...lawrencevilleFood, ...zelienopleFood];
+    const locations = await getAllLocations();
+    const perLocation = await Promise.all(
+      locations
+        .filter((loc) => loc.slug)
+        .map((loc) => getCombinedUpcomingFood(loc.slug as string, 10)),
+    );
+    food = perLocation.flat();
   } catch (error) {
     logger.error('Error fetching food for RSS:', error);
   }
@@ -71,7 +75,7 @@ export async function GET() {
   // Add beer items
   for (const beer of visibleBeers) {
     const styleName = typeof beer.style === 'object' ? beer.style?.name : beer.style || 'Beer';
-    const pubDate = formatRFC822Date(new Date()); // Use current date as we don't track beer creation date
+    const pubDate = formatRFC822Date(new Date(beer.updatedAt || beer.createdAt || Date.now()));
 
     items.push(`
     <item>
@@ -104,7 +108,8 @@ export async function GET() {
   // Add food vendor items
   for (const vendor of food.slice(0, 10)) {
     const vendorDate = new Date(vendor.date);
-    const vendorName = extractVendorInfo(vendor.vendor).name || vendor.vendorName || 'Food Vendor';
+    const vendorName =
+      extractVendorInfo('vendor' in vendor ? vendor.vendor : vendor).name || 'Food Vendor';
 
     items.push(`
     <item>
@@ -127,7 +132,7 @@ export async function GET() {
     <lastBuildDate>${formatRFC822Date(new Date())}</lastBuildDate>
     <atom:link href="${baseUrl}/feed.xml" rel="self" type="application/rss+xml"/>
     <image>
-      <url>${baseUrl}/images/beer/og-image.png</url>
+      <url>${baseUrl}${DEFAULT_OG_IMAGE_PATH}</url>
       <title>Lolev Beer</title>
       <link>${baseUrl}</link>
     </image>

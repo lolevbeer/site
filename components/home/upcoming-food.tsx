@@ -1,19 +1,17 @@
 'use client'
 
-import React, { useMemo, useState } from 'react'
+import React, { useMemo } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
-import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { SectionHeader } from '@/components/ui/section-header'
 import { ScrollReveal } from '@/components/ui/scroll-reveal'
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import { FoodSchedule, type FoodScheduleItem } from '@/components/food/food-schedule'
 import { useLocationFilteredData, type LocationData } from '@/lib/hooks/use-location-filtered-data'
-import { formatDate, formatTime } from '@/lib/utils/formatters'
 import { useSortedItems } from '@/lib/hooks/use-sorted-items'
 import { useLocationContext } from '@/components/location/location-provider'
 import { getMediaUrl } from '@/lib/utils/media-utils'
 import { getLocationDisplayName } from '@/lib/config/locations'
+import { safeHttpUrl } from '@/lib/utils/url-utils'
 import type { LocationSlug } from '@/lib/types/location'
 
 interface FoodVendor {
@@ -39,10 +37,8 @@ interface UpcomingFoodProps {
 }
 
 export function UpcomingFood({ foodByLocation }: UpcomingFoodProps): React.ReactElement | null {
-  const { locations, currentLocationData } = useLocationContext()
-  const [expandedImage, setExpandedImage] = useState<{ url: string; name: string } | null>(null)
+  const { locations, currentLocation, currentLocationData } = useLocationContext()
 
-  // Create data structure for location filtering with location attached
   const dataByLocation = useMemo(() => {
     const result: LocationData<FoodVendor & { location: LocationSlug }> = {}
     for (const [locationSlug, foods] of Object.entries(foodByLocation)) {
@@ -51,22 +47,28 @@ export function UpcomingFood({ foodByLocation }: UpcomingFoodProps): React.React
     return result
   }, [foodByLocation])
 
-  // Filter by current location and take first 3
   const filteredFood = useLocationFilteredData({ dataByLocation })
-  const upcomingFood = useSortedItems(filteredFood, { limit: 3 })
+  const upcomingFood = useSortedItems(filteredFood, { limit: 6 })
 
-  /** Get location display name from slug or object */
-  function getLocationName(
-    location: LocationSlug | { slug?: string; name?: string } | string | undefined,
-  ): string {
-    if (!location) return ''
-    if (typeof location === 'object' && location.name) return location.name
-    const slug = typeof location === 'object' ? location.slug : location
-    if (!slug) return ''
-    return getLocationDisplayName(locations, slug)
-  }
+  const rows: FoodScheduleItem[] = upcomingFood.map((food, index) => {
+    const vendorName = typeof food.vendor === 'object' ? food.vendor?.name : food.vendor
+    const vendorSite =
+      food.site || (typeof food.vendor === 'object' ? food.vendor?.site : undefined)
+    return {
+      id: `${vendorName}-${food.date}-${index}`,
+      date: food.date,
+      vendor: vendorName || 'Vendor',
+      time: food.time || food.startTime,
+      site: safeHttpUrl(vendorSite),
+      logoUrl: typeof food.vendor === 'object' ? getMediaUrl(food.vendor?.logo) : undefined,
+      locationName:
+        currentLocation === 'all'
+          ? getLocationDisplayName(locations, food.location)
+          : undefined,
+    }
+  })
 
-  if (upcomingFood.length === 0) {
+  if (rows.length === 0) {
     return null
   }
 
@@ -81,54 +83,8 @@ export function UpcomingFood({ foodByLocation }: UpcomingFoodProps): React.React
           />
         </ScrollReveal>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {upcomingFood.map((food, index) => {
-            const vendorName = typeof food.vendor === 'object' ? food.vendor?.name : food.vendor
-            const vendorSite =
-              food.site || (typeof food.vendor === 'object' ? food.vendor?.site : undefined)
-            const vendorLogo =
-              typeof food.vendor === 'object' ? getMediaUrl(food.vendor?.logo) : undefined
-            const timeDisplay = food.time || food.startTime
-
-            return (
-              <Card
-                key={index}
-                className={`overflow-hidden transition-colors shadow-none bg-transparent ${vendorSite ? 'border border-border cursor-pointer hover:bg-secondary' : ''}`}
-                onClick={vendorSite ? () => window.open(vendorSite, '_blank') : undefined}
-              >
-                <CardContent
-                  className={`p-4 ${vendorLogo ? 'flex items-center gap-4' : 'text-center py-6'}`}
-                >
-                  {vendorLogo && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setExpandedImage({ url: vendorLogo, name: vendorName || 'Vendor' })
-                      }}
-                      className="relative w-16 h-16 flex-shrink-0 rounded-full overflow-hidden bg-muted cursor-zoom-in hover:ring-2 hover:ring-ring hover:ring-offset-2 transition-all"
-                    >
-                      <Image
-                        src={vendorLogo}
-                        alt={`${vendorName} logo`}
-                        fill
-                        className="object-cover"
-                        sizes="64px"
-                      />
-                    </button>
-                  )}
-                  <div className={vendorLogo ? 'flex-1 min-w-0' : ''}>
-                    <h3 className="text-lg font-semibold">{vendorName}</h3>
-                    <div className="text-sm text-muted-foreground">
-                      <span>{formatDate(food.date, 'full')}</span>
-                      {timeDisplay && <span> • {formatTime(timeDisplay)}</span>}
-                      <span> • {getLocationName(food.location)}</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })}
+        <div className="max-w-2xl mx-auto mb-8">
+          <FoodSchedule items={rows} />
         </div>
 
         <div className="text-center">
@@ -137,27 +93,6 @@ export function UpcomingFood({ foodByLocation }: UpcomingFoodProps): React.React
           </Button>
         </div>
       </div>
-
-      {/* Image Dialog */}
-      <Dialog open={!!expandedImage} onOpenChange={(open) => !open && setExpandedImage(null)}>
-        <DialogContent className="sm:max-w-lg p-4">
-          <DialogTitle className="sr-only">{expandedImage?.name}</DialogTitle>
-          {expandedImage && (
-            <>
-              <div className="relative w-full aspect-square">
-                <Image
-                  src={expandedImage.url}
-                  alt={`${expandedImage.name} logo`}
-                  fill
-                  className="object-contain rounded-lg"
-                  sizes="(max-width: 768px) 100vw, 400px"
-                />
-              </div>
-              <p className="text-center font-semibold mt-2">{expandedImage.name}</p>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
     </section>
   )
 }

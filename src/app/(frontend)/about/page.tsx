@@ -9,10 +9,12 @@ import { Button } from '@/components/ui/button';
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
 import { JsonLd } from '@/components/seo/json-ld';
 import { generateOrganizationSchema } from '@/lib/utils/local-business-schema';
-import { generateBreadcrumbSchema } from '@/lib/utils/breadcrumb-schema';
+import { DEFAULT_OG_IMAGES, locationKeywords } from '@/lib/utils/seo';
+import { joinLocationNames } from '@/lib/config/locations';
 import { generateAboutSpeakableSchema } from '@/lib/utils/speakable-schema';
 import { PageTransition } from '@/components/motion';
 import { getSiteContent } from '@/lib/utils/site-content';
+import { getAllLocations } from '@/lib/utils/payload-api';
 import {
   DEFAULT_ABOUT_PHILOSOPHY,
   DEFAULT_ABOUT_LOCATIONS,
@@ -21,19 +23,27 @@ import {
 // ISR: revalidate every hour (content changes infrequently)
 export const revalidate = 3600;
 
-export const metadata: Metadata = {
-  title: 'About',
-  description: 'Learn about Lolev Beer, our brewing philosophy, and our locations in Lawrenceville and Zelienople.',
-  keywords: ['about', 'brewery', 'philosophy', 'Lawrenceville', 'Zelienople', 'Pittsburgh brewery'],
-  alternates: {
-    canonical: '/about',
-  },
-  openGraph: {
-    title: 'About | Lolev Beer',
-    description: 'Learn about Lolev Beer, our brewing philosophy, and our locations in Lawrenceville and Zelienople.',
-    type: 'website',
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const taprooms = await getAllLocations();
+  const names = joinLocationNames(taprooms);
+  const description = names
+    ? `Learn about Lolev Beer, our brewing philosophy, and our locations in ${names}.`
+    : 'Learn about Lolev Beer, our brewing philosophy, and our taprooms.';
+  return {
+    title: 'About',
+    description,
+    keywords: ['about', 'brewery', 'philosophy', 'Pittsburgh brewery', ...locationKeywords(taprooms)],
+    alternates: {
+      canonical: '/about',
+    },
+    openGraph: {
+      title: 'About | Lolev Beer',
+      description,
+      type: 'website',
+      images: DEFAULT_OG_IMAGES,
+    },
+  };
+}
 
 /** Renders multi-paragraph text split by double newlines */
 function Paragraphs({ text }: { text: string }) {
@@ -47,12 +57,8 @@ function Paragraphs({ text }: { text: string }) {
 }
 
 export default async function AboutPage() {
-  const siteContent = await getSiteContent();
-  const organizationSchema = generateOrganizationSchema();
-  const breadcrumbSchema = generateBreadcrumbSchema([
-    { label: 'Home', href: '/' },
-    { label: 'About', href: '/about' },
-  ]);
+  const [siteContent, taprooms] = await Promise.all([getSiteContent(), getAllLocations()]);
+  const organizationSchema = generateOrganizationSchema(taprooms);
   const speakableSchema = generateAboutSpeakableSchema();
 
   const philosophy = siteContent.aboutPhilosophy ?? DEFAULT_ABOUT_PHILOSOPHY;
@@ -61,7 +67,6 @@ export default async function AboutPage() {
   return (
     <>
       <JsonLd data={organizationSchema} />
-      <JsonLd data={breadcrumbSchema} />
       <JsonLd data={speakableSchema} />
       <PageTransition>
       <div className="container mx-auto px-4 py-8 max-w-4xl">

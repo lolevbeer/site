@@ -13,7 +13,7 @@ interface MenuBeer {
   name: string
   description?: string | null
   abv: number
-  style?: string | { name: string } | unknown
+  style?: string | { name: string } | null
   draftPrice?: number | null
   fourPack?: number | null
   glutenFree?: boolean | null
@@ -55,25 +55,10 @@ export interface MenuJsonLd {
 }
 
 /**
- * Get style name from beer
- */
-function getBeerStyleName(beer: MenuBeer): string {
-  return relationshipName(beer.style) ?? 'Beer'
-}
-
-/**
- * Build a menu title, dropping the location segment when no location is given.
- * Shared by the three generators below, which differ only in the suffix.
- */
-function buildMenuName(locationName: string | undefined, suffix: string): string {
-  return ['Lolev Beer', locationName, suffix].filter(Boolean).join(' ')
-}
-
-/**
  * Convert a beer to a MenuItem
  */
 function beerToMenuItem(beer: MenuBeer): MenuItemJsonLd {
-  const styleName = getBeerStyleName(beer)
+  const styleName = relationshipName(beer.style) ?? 'Beer'
 
   const menuItem: MenuItemJsonLd = {
     '@type': 'MenuItem',
@@ -103,11 +88,7 @@ function beerToMenuItem(beer: MenuBeer): MenuItemJsonLd {
   return menuItem
 }
 
-/**
- * Convert a beer to a MenuItem priced as a four-pack rather than a pour.
- * Shared by every "Cans To-Go" section so the can pricing override stays in
- * one place.
- */
+/** MenuItem with the four-pack price in place of the draft pour. */
 function beerToCanMenuItem(beer: MenuBeer): MenuItemJsonLd {
   const menuItem = beerToMenuItem(beer)
   if (beer.fourPack) {
@@ -120,10 +101,6 @@ function beerToCanMenuItem(beer: MenuBeer): MenuItemJsonLd {
   return menuItem
 }
 
-/**
- * Build the "On Tap" section. Shared by the draft-only and full menus, which
- * describe the tap list identically and differ only in which beers they pass.
- */
 function buildOnTapSection(beers: MenuBeer[]): MenuSectionJsonLd {
   return {
     '@type': 'MenuSection',
@@ -133,10 +110,6 @@ function buildOnTapSection(beers: MenuBeer[]): MenuSectionJsonLd {
   }
 }
 
-/**
- * Build the "Cans To-Go" section. Shared by the cans-only and full menus for
- * the same reason as buildOnTapSection.
- */
 function buildCansToGoSection(beers: MenuBeer[]): MenuSectionJsonLd {
   return {
     '@type': 'MenuSection',
@@ -147,32 +120,28 @@ function buildCansToGoSection(beers: MenuBeer[]): MenuSectionJsonLd {
 }
 
 /**
- * Generate combined Menu schema with both draft and cans
+ * Per-taproom Menu graph so "what's on tap at Lawrenceville" is distinct from Zelienople.
  */
-export function generateFullMenuSchema(beers: MenuBeer[], locationName?: string): MenuJsonLd {
+export function generateLocationMenuSchema(args: {
+  locationName: string
+  locationSlug: string
+  draftBeers: MenuBeer[]
+  canBeers: MenuBeer[]
+}): MenuJsonLd {
+  const { locationName, locationSlug, draftBeers, canBeers } = args
+  const pageUrl = `${LOLEV_BASE_URL}/${locationSlug}`
   const sections: MenuSectionJsonLd[] = []
-
-  // All beers with a draft price are on tap
-  const draftBeers = beers.filter((beer) => beer.draftPrice)
-  // Beers with a fourPack price are available in cans
-  const cannedBeers = beers.filter((beer) => beer.fourPack)
-
-  if (draftBeers.length > 0) {
-    sections.push(buildOnTapSection(draftBeers))
-  }
-
-  if (cannedBeers.length > 0) {
-    sections.push(buildCansToGoSection(cannedBeers))
-  }
+  if (draftBeers.length > 0) sections.push(buildOnTapSection(draftBeers))
+  if (canBeers.length > 0) sections.push(buildCansToGoSection(canBeers))
 
   return {
     '@context': 'https://schema.org',
     '@type': 'Menu',
-    name: buildMenuName(locationName, 'Menu'),
-    description: 'Full beer menu at Lolev Beer including draft and canned options.',
-    url: LOLEV_BASE_URL,
+    name: ['Lolev Beer', locationName, 'Menu'].filter(Boolean).join(' '),
+    description: `Draft and canned beers at Lolev Beer ${locationName}.`,
+    url: pageUrl,
     inLanguage: 'en-US',
-    mainEntityOfPage: LOLEV_BASE_URL,
+    mainEntityOfPage: pageUrl,
     hasMenuSection: sections,
   }
 }

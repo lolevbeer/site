@@ -146,6 +146,14 @@ export function Navigation({
 }
 
 /**
+ * Footer-only links. Donations and Jobs stay out of the header and mobile menu.
+ */
+const footerOnlyItems: NavItem[] = [
+  { label: 'Donations', href: '/donate' },
+  { label: 'Jobs', href: '/jobs' },
+]
+
+/**
  * Export navigation items for use in other components
  */
-export { navigationItems };
+export { navigationItems, footerOnlyItems };

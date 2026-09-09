@@ -36,16 +36,19 @@ interface BeerCardProps {
   className?: string
   variant?: 'full' | 'minimal'
   priority?: boolean
+  /** Minimal variant only. Catalog tiles show a visual CTA; taproom landings omit it. */
+  showCta?: boolean
 }
 
 export const BeerCard = React.memo(function BeerCard({
   beer,
-  showLocation = true,
+  showLocation = false,
   showPricing = true,
   showAvailability = true,
   className = '',
   variant = 'full',
   priority = false,
+  showCta = true,
 }: BeerCardProps) {
   const { currentLocation } = useLocationContext()
   const beerSlug = getBeerSlug(beer)
@@ -83,18 +86,21 @@ export const BeerCard = React.memo(function BeerCard({
               {beer.topBeerDrops && (
                 <TopBeerDropsLink
                   url={beer.topBeerDrops}
+                  beerName={beer.name}
                   className="h-6 w-6 text-foreground hover:text-primary transition-colors"
                 />
               )}
             </div>
           </div>
-          <Button
-            variant="outline"
-            className="w-full btn-arrow group-hover:bg-muted/50 hover:translate-y-0"
-            tabIndex={-1}
-          >
-            View Details
-          </Button>
+          {showCta ? (
+            <Button
+              variant="outline"
+              className="w-full btn-arrow group-hover:bg-muted/50 hover:translate-y-0"
+              tabIndex={-1}
+            >
+              View Details
+            </Button>
+          ) : null}
           <Link
             href={beerHref}
             onClick={() => trackBeerView(beer.name, beer.type)}

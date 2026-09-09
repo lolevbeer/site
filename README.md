@@ -184,6 +184,11 @@ an email typed into the command.
 
 Slack app setup (one-time, at api.slack.com/apps):
 
+Donation requests at `/donate` and job applications at `/jobs/[slug]` post a
+summary to Slack `#events` via `chat.postMessage` (same bot token). Invite the
+**Lolev Beer** bot into `#events` or the ping fails with `not_in_channel`.
+Override with `SLACK_DONATION_CHANNEL` or `SLACK_JOBS_CHANNEL`.
+
 1. **Create New App → From an app manifest** → pick the workspace → paste
    [`docs/slack-app-manifest.yml`](docs/slack-app-manifest.yml). That sets the
    scopes (`commands`, `users:read`, `users:read.email`, `chat:write`,

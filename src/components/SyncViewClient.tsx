@@ -16,6 +16,7 @@ import './SyncViewClient.scss'
 interface DistributorImportResult {
   region: string
   imported: number
+  updated: number
   skipped: number
   errors: number
   details: string[]
@@ -79,6 +80,7 @@ export const SyncViewClient: React.FC = () => {
     getResults: (data) => ({
       region: 'NY',
       imported: (data.imported as number) || 0,
+      updated: (data.updated as number) || 0,
       skipped: (data.skipped as number) || 0,
       errors: (data.errors as number) || 0,
       details: (data.details as string[]) || [],
@@ -87,6 +89,7 @@ export const SyncViewClient: React.FC = () => {
       setResults({
         region: 'NY',
         imported: 0,
+        updated: 0,
         skipped: 0,
         errors: 1,
         details: [String(data.error || 'Upload failed')],
@@ -96,6 +99,7 @@ export const SyncViewClient: React.FC = () => {
       setResults({
         region: 'NY',
         imported: 0,
+        updated: 0,
         skipped: 0,
         errors: 1,
         details: [error instanceof Error ? error.message : 'Upload failed'],
@@ -218,6 +222,7 @@ export const SyncViewClient: React.FC = () => {
         imported: 0,
         skipped: 0,
         errors: 1,
+        updated: 0,
         details: [`No URL configured for ${region.toUpperCase()}`],
       })
       return
@@ -234,6 +239,7 @@ export const SyncViewClient: React.FC = () => {
         getResults: (data) => ({
           region: region.toUpperCase(),
           imported: (data.imported as number) || 0,
+          updated: (data.updated as number) || 0,
           skipped: (data.skipped as number) || 0,
           errors: (data.errors as number) || 0,
           details: (data.details as string[]) || [],
@@ -246,6 +252,7 @@ export const SyncViewClient: React.FC = () => {
           setResults({
             region: region.toUpperCase(),
             imported: (data.imported as number) || 0,
+            updated: (data.updated as number) || 0,
             skipped: (data.skipped as number) || 0,
             errors: (data.errors as number) || 1,
             details,
@@ -255,6 +262,7 @@ export const SyncViewClient: React.FC = () => {
           setResults({
             region: region.toUpperCase(),
             imported: 0,
+            updated: 0,
             skipped: 0,
             errors: 1,
             details: [`Network error: ${error instanceof Error ? error.message : 'Import failed'}`],
@@ -392,9 +400,19 @@ export const SyncViewClient: React.FC = () => {
               {dist.results && (
                 <ImportResultsBanner
                   title={`${dist.results.region} Import Results`}
-                  isError={dist.results.errors > 0 && dist.results.imported === 0}
+                  isError={
+                    dist.results.errors > 0 &&
+                    dist.results.imported === 0 &&
+                    dist.results.updated === 0
+                  }
                   stats={[
                     { count: dist.results.imported, label: 'imported', pillStyle: 'success' },
+                    {
+                      count: dist.results.updated ?? 0,
+                      label: 'updated',
+                      pillStyle: 'success',
+                      hideWhenZero: true,
+                    },
                     { count: dist.results.skipped, label: 'skipped', pillStyle: 'light' },
                     {
                       count: dist.results.errors,
@@ -440,9 +458,19 @@ export const SyncViewClient: React.FC = () => {
                 {lake.results && (
                   <ImportResultsBanner
                     title="NY Import Results"
-                    isError={lake.results.errors > 0 && lake.results.imported === 0}
+                    isError={
+                      lake.results.errors > 0 &&
+                      lake.results.imported === 0 &&
+                      lake.results.updated === 0
+                    }
                     stats={[
                       { count: lake.results.imported, label: 'imported', pillStyle: 'success' },
+                      {
+                        count: lake.results.updated ?? 0,
+                        label: 'updated',
+                        pillStyle: 'success',
+                        hideWhenZero: true,
+                      },
                       { count: lake.results.skipped, label: 'skipped', pillStyle: 'light' },
                       {
                         count: lake.results.errors,
@@ -734,7 +762,13 @@ const logTone = (type: string): string => {
 /** Tone for a server-provided detail line (results panels) */
 const detailTone = (detail: string): string => {
   if (detail.startsWith('Error')) return 'error'
-  if (detail.startsWith('Imported') || detail.startsWith('Created')) return 'success'
+  if (
+    detail.startsWith('Imported') ||
+    detail.startsWith('Created') ||
+    detail.startsWith('Updated')
+  ) {
+    return 'success'
+  }
   if (detail.startsWith('Warning')) return 'warning'
   return 'muted'
 }

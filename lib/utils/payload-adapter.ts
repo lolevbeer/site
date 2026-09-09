@@ -4,6 +4,7 @@
  */
 
 import type { Beer as PayloadBeer, Menu as PayloadMenu } from '@/src/payload-types'
+import type { CatalogBeer } from '@/lib/utils/payload-api'
 import type { PayloadLocation } from '@/lib/types/location'
 import type { Beer } from '@/lib/types/beer'
 import { GlassType } from '@/lib/types/beer'
@@ -37,9 +38,10 @@ function getLocationSlug(location: string | PayloadLocation | undefined): string
 }
 
 /**
- * Convert Payload Beer to app Beer interface
+ * Convert Payload Beer to app Beer interface.
+ * Used by menu availability enrichment and the public taproom landing cards.
  */
-function convertPayloadBeer(payloadBeer: PayloadBeer): Beer {
+export function convertPayloadBeer(payloadBeer: CatalogBeer | PayloadBeer): Beer {
   const styleName = getStyleName(payloadBeer.style)
   const variant = payloadBeer.slug || payloadBeer.name.toLowerCase().replace(/\s+/g, '-')
   const image = getImageFromPayload(payloadBeer.image)
@@ -64,8 +66,11 @@ function convertPayloadBeer(payloadBeer: PayloadBeer): Beer {
     collab: payloadBeer.collab || false,
     collabBrewery: payloadBeer.collabBrewery || undefined,
     topBeerDrops: payloadBeer.topBeerDrops || undefined,
+    isJustReleased: payloadBeer.justReleased || false,
     pricing: {
       draftPrice: payloadBeer.draftPrice,
+      halfPour: payloadBeer.halfPour ?? undefined,
+      halfPourOnly: payloadBeer.halfPourOnly || false,
       canSingle: payloadBeer.canSingle || undefined,
       fourPack: payloadBeer.fourPack || undefined,
       cansSingle: payloadBeer.canSingle || undefined,
@@ -84,7 +89,10 @@ function convertPayloadBeer(payloadBeer: PayloadBeer): Beer {
  * Get beers with availability data from menus
  * Enriches base beer data with menu/location information
  */
-export function getBeersWithAvailability(beers: PayloadBeer[], menus: PayloadMenu[]): Beer[] {
+export function getBeersWithAvailability(
+  beers: Array<CatalogBeer | PayloadBeer>,
+  menus: PayloadMenu[],
+): Beer[] {
   const beerMap = new Map<string, Beer>()
 
   // First convert all beers

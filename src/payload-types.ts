@@ -74,6 +74,9 @@ export interface Config {
     menus: Menu;
     products: Product;
     events: Event;
+    'donation-requests': DonationRequest;
+    jobs: Job;
+    'job-applications': JobApplication;
     'recurring-events': RecurringEvent;
     food: Food;
     'food-vendors': FoodVendor;
@@ -104,6 +107,9 @@ export interface Config {
     menus: MenusSelect<false> | MenusSelect<true>;
     products: ProductsSelect<false> | ProductsSelect<true>;
     events: EventsSelect<false> | EventsSelect<true>;
+    'donation-requests': DonationRequestsSelect<false> | DonationRequestsSelect<true>;
+    jobs: JobsSelect<false> | JobsSelect<true>;
+    'job-applications': JobApplicationsSelect<false> | JobApplicationsSelect<true>;
     'recurring-events': RecurringEventsSelect<false> | RecurringEventsSelect<true>;
     food: FoodSelect<false> | FoodSelect<true>;
     'food-vendors': FoodVendorsSelect<false> | FoodVendorsSelect<true>;
@@ -611,6 +617,88 @@ export interface Event {
   createdAt: string;
 }
 /**
+ * Public donation asks from /donate. Completing the form is not a yes. Rows are created only by the public form.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "donation-requests".
+ */
+export interface DonationRequest {
+  id: string;
+  status?: ('new' | 'approved' | 'declined') | null;
+  askType: 'product' | 'taproom-night';
+  organizationName: string;
+  contactName: string;
+  email: string;
+  phone: string;
+  mission: string;
+  howHeard: string;
+  previousDonation: 'yes' | 'no';
+  eventName: string;
+  eventDate: string;
+  venue: string;
+  attendees: number;
+  requestDetails: string;
+  howServed?: string | null;
+  recognition: string;
+  whyLolev: string;
+  pickupName?: string | null;
+  /**
+   * Location slug from the public form, when the ask is a taproom night.
+   */
+  taproom?: string | null;
+  /**
+   * When the #events ping succeeded. Empty means staff should check Slack.
+   */
+  slackNotifiedAt?: string | null;
+  slackError?: string | null;
+  ipHash?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Openings listed at /jobs (footer link). Applications land in Job Applications.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "jobs".
+ */
+export interface Job {
+  id: string;
+  title: string;
+  /**
+   * Auto-generated from the title if left blank.
+   */
+  slug?: string | null;
+  location: string | Location;
+  employmentType?: ('full-time' | 'part-time' | 'seasonal') | null;
+  /**
+   * One or two lines on the taproom page.
+   */
+  summary?: string | null;
+  description: string;
+  active?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Applications from /jobs/[slug]. Completing the form is not a hire.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "job-applications".
+ */
+export interface JobApplication {
+  id: string;
+  job: string | Job;
+  name: string;
+  email: string;
+  phone: string;
+  message: string;
+  slackNotifiedAt?: string | null;
+  slackError?: string | null;
+  ipHash?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Manage events that repeat monthly without creating a dated event for every occurrence.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1049,6 +1137,18 @@ export interface PayloadLockedDocument {
         value: string | Event;
       } | null)
     | ({
+        relationTo: 'donation-requests';
+        value: string | DonationRequest;
+      } | null)
+    | ({
+        relationTo: 'jobs';
+        value: string | Job;
+      } | null)
+    | ({
+        relationTo: 'job-applications';
+        value: string | JobApplication;
+      } | null)
+    | ({
         relationTo: 'recurring-events';
         value: string | RecurringEvent;
       } | null)
@@ -1268,6 +1368,67 @@ export interface EventsSelect<T extends boolean = true> {
   email?: T;
   phone?: T;
   otherInfo?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "donation-requests_select".
+ */
+export interface DonationRequestsSelect<T extends boolean = true> {
+  status?: T;
+  askType?: T;
+  organizationName?: T;
+  contactName?: T;
+  email?: T;
+  phone?: T;
+  mission?: T;
+  howHeard?: T;
+  previousDonation?: T;
+  eventName?: T;
+  eventDate?: T;
+  venue?: T;
+  attendees?: T;
+  requestDetails?: T;
+  howServed?: T;
+  recognition?: T;
+  whyLolev?: T;
+  pickupName?: T;
+  taproom?: T;
+  slackNotifiedAt?: T;
+  slackError?: T;
+  ipHash?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "jobs_select".
+ */
+export interface JobsSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  location?: T;
+  employmentType?: T;
+  summary?: T;
+  description?: T;
+  active?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "job-applications_select".
+ */
+export interface JobApplicationsSelect<T extends boolean = true> {
+  job?: T;
+  name?: T;
+  email?: T;
+  phone?: T;
+  message?: T;
+  slackNotifiedAt?: T;
+  slackError?: T;
+  ipHash?: T;
   updatedAt?: T;
   createdAt?: T;
 }

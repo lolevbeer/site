@@ -4,48 +4,48 @@
  */
 
 import { Metadata } from 'next'
+import { Suspense } from 'react'
 import { BeerMapContent } from '@/components/beer/beer-map-content'
+import { BeerMapCanvas } from '@/components/beer/beer-map-canvas'
+import { MapLoadingSkeleton } from '@/components/map/location-card-skeleton'
 import {
   getAllLocations,
   getWeeklyHoursWithHolidays,
-  getAllDistributorsGeoJSON,
   type WeeklyHoursDay,
 } from '@/lib/utils/payload-api'
 import { JsonLd } from '@/components/seo/json-ld'
 import { generateLocalBusinessSchemas } from '@/lib/utils/local-business-schema'
-import { generateBreadcrumbSchema } from '@/lib/utils/breadcrumb-schema'
+import { beerMapDescription, DEFAULT_OG_IMAGES, locationKeywords } from '@/lib/utils/seo'
 
 // ISR: revalidate every hour (locations/distributors change infrequently)
 export const revalidate = 3600;
 
-export const metadata: Metadata = {
-  title: 'Find Us',
-  description:
-    "Find Lolev's locations in Lawrenceville and Zelienople. Get directions, hours, and contact information for both brewery locations.",
-  keywords: [
-    'brewery locations',
-    'Pittsburgh brewery',
-    'Lawrenceville brewery',
-    'Zelienople brewery',
-    'find us',
-    'brewery map',
-    'directions',
-  ],
-  alternates: { canonical: '/beer-map' },
-  openGraph: {
-    title: 'Find Us | Lolev Beer',
-    description: 'Visit us at our Lawrenceville or Zelienople locations',
-    type: 'website',
-  },
+export async function generateMetadata(): Promise<Metadata> {
+  const locations = await getAllLocations()
+  const description = beerMapDescription(locations)
+  return {
+    title: 'Find Lolev Beer Near You',
+    description,
+    keywords: [
+      'brewery locations',
+      'Pittsburgh brewery',
+      'find us',
+      'brewery map',
+      'directions',
+      ...locationKeywords(locations),
+    ],
+    alternates: { canonical: '/beer-map' },
+    openGraph: {
+      title: 'Find Lolev Beer Near You | Lolev Beer',
+      description,
+      type: 'website',
+      images: DEFAULT_OG_IMAGES,
+    },
+  }
 }
 
 export default async function BeerMapPage() {
-  // Fetch locations, weekly hours, and distributors in parallel
-  const [locations, distributorData] = await Promise.all([
-    getAllLocations(),
-    getAllDistributorsGeoJSON(),
-  ])
-
+  const locations = await getAllLocations()
   const weeklyHoursEntries = await Promise.all(
     locations.map(async (location) => {
       const hours = await getWeeklyHoursWithHolidays(location.id)
@@ -53,21 +53,18 @@ export default async function BeerMapPage() {
     }),
   )
   const weeklyHours: Record<string, WeeklyHoursDay[]> = Object.fromEntries(weeklyHoursEntries)
-
-  // Generate JSON-LD schemas for SEO
-  const locationSchemas = generateLocalBusinessSchemas(locations)
-  const breadcrumbSchema = generateBreadcrumbSchema([
-    { label: 'Home', href: '/' },
-    { label: 'Find Us', href: '/beer-map' },
-  ])
+  const locationSchemas = generateLocalBusinessSchemas(locations, weeklyHours)
 
   return (
     <>
       {locationSchemas.map((schema, index) => (
         <JsonLd key={index} data={schema} />
       ))}
-      <JsonLd data={breadcrumbSchema} />
-      <BeerMapContent weeklyHours={weeklyHours} distributorData={distributorData} />
+      <BeerMapContent weeklyHours={weeklyHours}>
+        <Suspense fallback={<MapLoadingSkeleton />}>
+          <BeerMapCanvas />
+        </Suspense>
+      </BeerMapContent>
     </>
   )
 }

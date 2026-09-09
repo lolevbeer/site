@@ -15,11 +15,12 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { JsonLd } from '@/components/seo/json-ld';
-import { breweryFAQs, generateFAQSchema, type FAQItem } from '@/lib/utils/faq-schema';
+import { getBreweryFAQs, generateFAQSchema, type FAQItem } from '@/lib/utils/faq-schema';
+import { DEFAULT_OG_IMAGES } from '@/lib/utils/seo';
 import { generateFAQSpeakableSchema } from '@/lib/utils/speakable-schema';
-import { getActiveFAQs } from '@/lib/utils/payload-api';
+import { getActiveFAQs, getAllLocations } from '@/lib/utils/payload-api';
 import { PageTransition } from '@/components/motion';
-import { Mail, Phone, MapPin } from '@/components/icons';
+import { FaqContactSection } from '@/components/faq/faq-contact';
 
 interface FAQAnswerProps {
   question: string;
@@ -42,6 +43,24 @@ function FAQAnswer({ question, answer }: FAQAnswerProps): ReactNode {
     );
   }
 
+  if (question === 'Can I book a private event?') {
+    return (
+      <div>
+        Yes! We offer private event space at both locations. For private event inquiries, please
+        contact us at{' '}
+        <a href="mailto:events@lolev.beer" className="text-primary hover:underline font-medium">
+          events@lolev.beer
+        </a>{' '}
+        or call (412) 336-8965. Beer donation and fundraiser-night requests go through the{' '}
+        <Button asChild variant="default" size="sm" className="inline-flex">
+          <Link href="/donate">donation request form</Link>
+        </Button>
+        {' '}
+        — we do not take those by phone or Instagram.
+      </div>
+    )
+  }
+
   if (question === 'How do I stay updated on new beer releases and events?') {
     return (
       <div>
@@ -61,7 +80,7 @@ function FAQAnswer({ question, answer }: FAQAnswerProps): ReactNode {
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: 'FAQ | Frequently Asked Questions',
+  title: 'FAQ',
   description: 'Find answers to common questions about Lolev Beer including hours, locations, events, private bookings, beer styles, and more.',
   keywords: ['brewery faq', 'hours', 'location', 'private events', 'beer styles', 'Pittsburgh brewery'],
   alternates: {
@@ -71,19 +90,18 @@ export const metadata: Metadata = {
     title: 'FAQ | Lolev Beer',
     description: 'Find answers to common questions about Lolev Beer including hours, locations, events, and more.',
     type: 'website',
-  }
-};
+    images: DEFAULT_OG_IMAGES,
+  },
+}
 
 export default async function FAQPage() {
-  // Fetch additional FAQs from CMS and combine with static FAQs
-  const cmsFAQs = await getActiveFAQs();
+  const [cmsFAQs, locations] = await Promise.all([getActiveFAQs(), getAllLocations()]);
   const dynamicFAQs: FAQItem[] = cmsFAQs.map(faq => ({
     question: faq.question,
     answer: faq.answer,
   }));
 
-  // Combine static FAQs with CMS FAQs (CMS FAQs are appended)
-  const allFAQs = [...breweryFAQs, ...dynamicFAQs];
+  const allFAQs = [...getBreweryFAQs(locations), ...dynamicFAQs];
 
   // Generate FAQ schema for SEO
   const faqSchema = generateFAQSchema(allFAQs);
@@ -128,70 +146,7 @@ export default async function FAQPage() {
           </Accordion>
         </div>
 
-        {/* Quick Links Section */}
-        <div className="pt-12">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-semibold mb-4">Still have questions?</h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            {/* Contact Card */}
-            <div className="rounded-lg p-6 space-y-4 text-center">
-              <h3 className="text-lg font-semibold mb-4">Contact Us</h3>
-              <div className="space-y-3">
-                <Button variant="ghost" size="sm" asChild className="w-full justify-center">
-                  <a href="mailto:info@lolev.beer" className="flex items-center gap-2">
-                    <Mail className="h-4 w-4" />
-                    info@lolev.beer
-                  </a>
-                </Button>
-                <Button variant="ghost" size="sm" asChild className="w-full justify-center">
-                  <a href="tel:4123368965" className="flex items-center gap-2">
-                    <Phone className="h-4 w-4" />
-                    (412) 336-8965
-                  </a>
-                </Button>
-              </div>
-            </div>
-
-            {/* Locations Card */}
-            <div className="rounded-lg p-6 space-y-4 text-center">
-              <h3 className="text-lg font-semibold mb-4">Our Locations</h3>
-              <div className="space-y-3 text-sm">
-                <div className="flex flex-col items-center gap-2">
-                  <MapPin className="h-4 w-4 flex-shrink-0" />
-                  <div>
-                    <p className="font-medium">Lawrenceville</p>
-                    <p className="text-muted-foreground">5247 Butler Street<br />Pittsburgh, PA 15201</p>
-                  </div>
-                </div>
-                <div className="flex flex-col items-center gap-2">
-                  <MapPin className="h-4 w-4 flex-shrink-0" />
-                  <div>
-                    <p className="font-medium">Zelienople</p>
-                    <p className="text-muted-foreground">111 South Main Street<br />Zelienople, PA 16063</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Links */}
-          <div className="flex flex-wrap gap-4 justify-center">
-            <Button asChild variant="default">
-              <Link href="/about">About Us</Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link href="/beer">Our Beers</Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link href="/events">Upcoming Events</Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link href="/beer-map">Find Our Beer</Link>
-            </Button>
-          </div>
-        </div>
+        <FaqContactSection />
       </div>
       </PageTransition>
     </>

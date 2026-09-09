@@ -143,4 +143,24 @@ describe('generateMetadata error handling', () => {
       generateMetadata({ params: Promise.resolve({ variant: 'some-beer' }) }),
     ).rejects.toThrow(dbError)
   })
+
+  it('falls back to a real description when CMS description is an empty string', async () => {
+    mockedGetBeerBySlug().mockResolvedValue({
+      id: 'beer-2',
+      slug: 'lupula',
+      name: 'Lupula',
+      hideFromSite: false,
+      description: '',
+      style: { name: 'Hazy India Pale Ale' },
+    })
+
+    const metadata = await generateMetadata({
+      params: Promise.resolve({ variant: 'lupula' }),
+    })
+
+    expect(metadata.description).toMatch(/Lupula/)
+    expect(metadata.description).toMatch(/Hazy India Pale Ale/)
+    expect(metadata.description?.length).toBeGreaterThan(40)
+  })
 })
+

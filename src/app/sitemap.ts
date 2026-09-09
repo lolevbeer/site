@@ -1,111 +1,125 @@
 import { MetadataRoute } from 'next'
+import { getActiveJobs } from '@/lib/jobs/payload'
 import { getAllBeersFromPayload, getAllLocations } from '@/lib/utils/payload-api'
 import { logger } from '@/lib/utils/logger'
+import { getBaseUrl } from '@/lib/utils/get-base-url'
+import { RESERVED_LOCATION_SLUGS } from '@/lib/config/locations'
+import { LEGAL_PAGES_LASTMOD } from '@/lib/legal/dates'
+
+/** lastmod for pages that change with code, not CMS. YYYY-MM-DD of last meaningful edit. */
+const STATIC_LASTMOD = {
+  '/about': '2026-03-05',
+  '/faq': '2026-03-05',
+  '/accessibility': LEGAL_PAGES_LASTMOD,
+  '/privacy': LEGAL_PAGES_LASTMOD,
+  '/terms': LEGAL_PAGES_LASTMOD,
+  '/beer-map': '2026-09-09',
+  '/donate': '2026-09-09',
+  '/jobs': '2026-09-09',
+} as const
+
+const STATIC_INFO_PAGES: Array<{
+  path: keyof typeof STATIC_LASTMOD
+  changeFrequency: 'weekly' | 'monthly' | 'yearly'
+  priority: number
+}> = [
+  { path: '/beer-map', changeFrequency: 'weekly', priority: 0.7 },
+  { path: '/donate', changeFrequency: 'yearly', priority: 0.3 },
+  { path: '/jobs', changeFrequency: 'weekly', priority: 0.4 },
+  { path: '/about', changeFrequency: 'monthly', priority: 0.6 },
+  { path: '/faq', changeFrequency: 'monthly', priority: 0.5 },
+  { path: '/accessibility', changeFrequency: 'monthly', priority: 0.3 },
+  { path: '/privacy', changeFrequency: 'yearly', priority: 0.2 },
+  { path: '/terms', changeFrequency: 'yearly', priority: 0.2 },
+]
+
+function maxDate(dates: Array<string | Date | undefined | null>): Date {
+  const times = dates
+    .map((d) => (d ? new Date(d).getTime() : NaN))
+    .filter((t) => Number.isFinite(t))
+  return new Date(times.length ? Math.max(...times) : Date.parse('2026-03-05'))
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    (process.env.VERCEL_PROJECT_PRODUCTION_URL
-      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-      : '') ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '') ||
-    'https://lolev.beer'
+  const baseUrl = getBaseUrl()
 
-  // Static pages
+  let beers: Awaited<ReturnType<typeof getAllBeersFromPayload>> = []
+  let locations: Awaited<ReturnType<typeof getAllLocations>> = []
+  let jobs: Awaited<ReturnType<typeof getActiveJobs>> = []
+  try {
+    beers = await getAllBeersFromPayload()
+  } catch (error) {
+    logger.error('Error fetching beers for sitemap:', error)
+  }
+  try {
+    locations = await getAllLocations()
+  } catch (error) {
+    logger.error('Error fetching locations for sitemap:', error)
+  }
+  try {
+    jobs = await getActiveJobs()
+  } catch (error) {
+    logger.error('Error fetching jobs for sitemap:', error)
+  }
+
+  const visibleBeers = beers.filter((beer) => beer.slug && !beer.hideFromSite)
+  const activeLocations = locations.filter(
+    (loc) => loc.active && loc.slug && !RESERVED_LOCATION_SLUGS.has(loc.slug),
+  )
+  const catalogLastmod = maxDate(visibleBeers.map((b) => b.updatedAt))
+  const homeLastmod = maxDate([
+    catalogLastmod,
+    ...activeLocations.map((l) => l.updatedAt),
+  ])
+
   const staticPages: MetadataRoute.Sitemap = [
-    {
-      url: baseUrl,
-      lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 1,
-    },
+    { url: baseUrl, lastModified: homeLastmod, changeFrequency: 'daily', priority: 1 },
     {
       url: `${baseUrl}/beer`,
-      lastModified: new Date(),
+      lastModified: catalogLastmod,
       changeFrequency: 'daily',
       priority: 0.9,
     },
     {
       url: `${baseUrl}/events`,
-      lastModified: new Date(),
+      lastModified: homeLastmod,
       changeFrequency: 'daily',
       priority: 0.8,
     },
     {
       url: `${baseUrl}/food`,
-      lastModified: new Date(),
+      lastModified: homeLastmod,
       changeFrequency: 'daily',
       priority: 0.8,
     },
-    {
-      url: `${baseUrl}/beer-map`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/about`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.6,
-    },
-    {
-      url: `${baseUrl}/faq`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.5,
-    },
-    {
-      url: `${baseUrl}/accessibility`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.3,
-    },
-    {
-      url: `${baseUrl}/privacy`,
-      lastModified: new Date(),
-      changeFrequency: 'yearly',
-      priority: 0.2,
-    },
-    {
-      url: `${baseUrl}/terms`,
-      lastModified: new Date(),
-      changeFrequency: 'yearly',
-      priority: 0.2,
-    },
+    ...STATIC_INFO_PAGES.map((page) => ({
+      url: `${baseUrl}${page.path}`,
+      lastModified: new Date(STATIC_LASTMOD[page.path]),
+      changeFrequency: page.changeFrequency,
+      priority: page.priority,
+    })),
   ]
 
-  // Dynamic beer pages
-  let beerPages: MetadataRoute.Sitemap = []
-  try {
-    const beers = await getAllBeersFromPayload()
-    beerPages = beers
-      .filter((beer) => beer.slug && !beer.hideFromSite)
-      .map((beer) => ({
-        url: `${baseUrl}/beer/${beer.slug}`,
-        lastModified: beer.updatedAt ? new Date(beer.updatedAt) : new Date(),
-        changeFrequency: 'weekly' as const,
-        priority: 0.7,
-      }))
-  } catch (error) {
-    logger.error('Error fetching beers for sitemap:', error)
-  }
+  const beerPages: MetadataRoute.Sitemap = visibleBeers.map((beer) => ({
+    url: `${baseUrl}/beer/${beer.slug}`,
+    lastModified: beer.updatedAt ? new Date(beer.updatedAt) : catalogLastmod,
+    changeFrequency: 'weekly' as const,
+    priority: 0.7,
+  }))
 
-  // Location pages (if they exist)
-  let locationPages: MetadataRoute.Sitemap = []
-  try {
-    const locations = await getAllLocations()
-    locationPages = locations
-      .filter((loc) => loc.active && loc.slug)
-      .map((loc) => ({
-        url: `${baseUrl}/${loc.slug}`,
-        lastModified: loc.updatedAt ? new Date(loc.updatedAt) : new Date(),
-        changeFrequency: 'daily' as const,
-        priority: 0.8,
-      }))
-  } catch (error) {
-    logger.error('Error fetching locations for sitemap:', error)
-  }
+  const locationPages: MetadataRoute.Sitemap = activeLocations.map((loc) => ({
+    url: `${baseUrl}/${loc.slug}`,
+    lastModified: loc.updatedAt ? new Date(loc.updatedAt) : homeLastmod,
+    changeFrequency: 'daily' as const,
+    priority: 0.8,
+  }))
 
-  return [...staticPages, ...beerPages, ...locationPages]
+  const jobPages: MetadataRoute.Sitemap = jobs.map((job) => ({
+    url: `${baseUrl}/jobs/${job.slug}`,
+    lastModified: homeLastmod,
+    changeFrequency: 'weekly' as const,
+    priority: 0.4,
+  }))
+
+  return [...staticPages, ...beerPages, ...locationPages, ...jobPages]
 }

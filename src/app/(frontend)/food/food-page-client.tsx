@@ -8,9 +8,9 @@ import { UtensilsCrossed } from '@/components/icons';
 import { useLocationContext } from '@/components/location/location-provider';
 import { getLocationDisplayName } from '@/lib/config/locations';
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
-import { TimelineList } from '@/components/ui/timeline-list';
-import { TimelineItem } from '@/components/ui/timeline-item';
+import { FoodSchedule } from '@/components/food/food-schedule';
 import { isTodayOrFuture } from '@/lib/utils/formatters';
+import { safeHttpUrl } from '@/lib/utils/url-utils';
 
 interface FoodPageClientProps {
   initialSchedules: FoodVendorSchedule[];
@@ -19,19 +19,15 @@ interface FoodPageClientProps {
 export function FoodPageClient({ initialSchedules }: FoodPageClientProps) {
   const { currentLocation, locations, cycleLocation } = useLocationContext();
 
-  // Filter schedules by current location and sort by date
   const filteredSchedules = useMemo(() => {
     return initialSchedules
-      .filter(schedule => schedule.location === currentLocation)
-      .filter(schedule => isTodayOrFuture(schedule.date))
-      .sort((a, b) => a.date.localeCompare(b.date))
-      .map(schedule => ({
-        ...schedule,
-        id: `${schedule.vendor}-${schedule.date}`
-      }));
+      .filter(
+        (schedule) =>
+          schedule.location === currentLocation && isTodayOrFuture(schedule.date),
+      )
+      .sort((a, b) => a.date.localeCompare(b.date));
   }, [initialSchedules, currentLocation]);
 
-  // Check if other locations have food (for empty state hint)
   const otherLocationsWithFood = useMemo(() => {
     const otherLocations = locations.filter(loc => {
       const slug = loc.slug || loc.id;
@@ -51,44 +47,43 @@ export function FoodPageClient({ initialSchedules }: FoodPageClientProps) {
       </div>
 
       <div className="max-w-2xl mx-auto">
-        <TimelineList
-          items={filteredSchedules}
-          renderItem={(schedule) => (
-            <TimelineItem
-              title={schedule.vendor}
-              time={schedule.time || schedule.start}
-              endTime={schedule.finish}
-              location={getLocationDisplayName(locations, schedule.location)}
-              site={schedule.site}
-              imageUrl={schedule.logoUrl}
-            />
-          )}
-          emptyState={
-            <Empty>
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <UtensilsCrossed className="h-6 w-6" />
-                </EmptyMedia>
-                <EmptyTitle>No Food Trucks Scheduled</EmptyTitle>
-                <EmptyDescription>
-                  No upcoming food trucks at {getLocationDisplayName(locations, currentLocation)}.
-                  {otherLocationsWithFood.length > 0 && (
-                    <>
-                      {' '}
-                      <Button
-                        variant="link"
-                        className="h-auto p-0 text-base"
-                        onClick={cycleLocation}
-                      >
-                        Check {otherLocationsWithFood[0].name}
-                      </Button>
-                    </>
-                  )}
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
-          }
-        />
+        <h2 className="sr-only">Upcoming food</h2>
+        {filteredSchedules.length > 0 ? (
+          <FoodSchedule
+            items={filteredSchedules.map((schedule, index) => ({
+              id: `${schedule.vendor}-${schedule.date}-${index}`,
+              date: schedule.date,
+              vendor: schedule.vendor,
+              time: schedule.time || schedule.start,
+              site: safeHttpUrl(schedule.site),
+              logoUrl: schedule.logoUrl,
+            }))}
+          />
+        ) : (
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <UtensilsCrossed className="h-6 w-6" />
+              </EmptyMedia>
+              <EmptyTitle>No Food Trucks Scheduled</EmptyTitle>
+              <EmptyDescription>
+                No upcoming food trucks at {getLocationDisplayName(locations, currentLocation)}.
+                {otherLocationsWithFood.length > 0 && (
+                  <>
+                    {' '}
+                    <Button
+                      variant="link"
+                      className="h-auto p-0 text-base"
+                      onClick={cycleLocation}
+                    >
+                      Check {otherLocationsWithFood[0].name}
+                    </Button>
+                  </>
+                )}
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        )}
       </div>
 
       <div className="text-center space-y-3 pt-12 mt-12">

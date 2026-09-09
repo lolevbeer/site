@@ -1,6 +1,7 @@
 /**
- * Draft Beer Card Component
- * Row-style layout focused on draft-specific information: tap number, glass type, ABV, and hops
+ * Draft beer row. Homepage featured drafts and taproom landings pass `compact`
+ * (name and style only). Full description/hops/ABV is the /m board default.
+ * Glass icons are /m boards only.
  */
 
 'use client'
@@ -23,7 +24,10 @@ interface DraftBeerCardProps {
   className?: string
   /** Show tap number and pricing (for fullscreen menu displays) */
   showTapAndPrice?: boolean
-  /** Show glass icon (default: true) */
+  /**
+   * Show the serving-glass icon. Defaults to the /m fullscreen boards
+   * (`showTapAndPrice`); public pages omit it.
+   */
   showGlass?: boolean
   /** Show tap number column (default: true) */
   showTap?: boolean
@@ -31,26 +35,33 @@ interface DraftBeerCardProps {
   showAbv?: boolean
   /** Show Just Released badge (default: true) */
   showJustReleased?: boolean
-  /** Show Untappd rating (default: false for menu displays, true for homepage) */
+  /** Show Untappd rating (default: false; homepage compact rows omit it) */
   showRating?: boolean
+  /**
+   * Name and style only — no description, hops, ABV, or glass.
+   * Used on taproom landings where the homepage draft row is too dense.
+   */
+  compact?: boolean
   /** Accent color for the beer name (dark mode cycling effect) */
   accentColor?: string
 }
 
 export const DraftBeerCard = React.memo(function DraftBeerCard({
   beer,
-  showLocation = true,
+  showLocation = false,
   className = '',
   showTapAndPrice = false,
-  showGlass = true,
+  showGlass,
   showTap = true,
   showAbv = true,
   showJustReleased = true,
   showRating = false,
+  compact = false,
   accentColor,
 }: DraftBeerCardProps) {
   const { currentLocation } = useLocationContext()
   const beerSlug = getBeerSlug(beer)
+  const displayGlass = showGlass ?? showTapAndPrice
   const isStein = beer.glass === GlassType.STEIN
   const glassOpticalClass = isStein ? '-translate-x-[0.8vh] scale-[1.08]' : ''
   const badgeLabel = showJustReleased ? getBeerBadgeLabel(beer) : null
@@ -59,7 +70,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
   // Fullscreen mode uses viewport-relative sizing
   if (showTapAndPrice) {
     const showRatingInRail = showRating && !isProduct
-    const showTapRail = showTap || showGlass || showRatingInRail
+    const showTapRail = showTap || displayGlass || showRatingInRail
     const collabInDetails = Boolean(beer.collab && badgeLabel && (beer.description || beer.hops))
     const titleBadgeLabel = collabInDetails ? null : badgeLabel
     const collabDetailBadge = collabInDetails ? (
@@ -77,7 +88,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
       </Badge>
     ) : null
     const gridTemplateColumns = [
-      showTapRail && (showGlass ? TV_COL.tap : '5vh'),
+      showTapRail && (displayGlass ? TV_COL.tap : '5vh'),
       'minmax(0, 1fr)',
       showAbv && TV_COL.abv,
       showAbv && TV_COL.price,
@@ -111,9 +122,9 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                 className="flex items-center justify-between self-center"
                 style={{ gridRow: '1 / span 2' }}
               >
-                {(showTap || showGlass) && (
+                {(showTap || displayGlass) && (
                   <div className="relative flex-shrink-0" style={{ height: '7vh', width: '5vh' }}>
-                    {showGlass && (
+                    {displayGlass && (
                       <GlassIcon
                         glass={beer.glass}
                         className={`h-full w-full text-muted-foreground/50 transition-colors group-hover:text-muted-foreground/70 ${glassOpticalClass}`}
@@ -270,16 +281,18 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
       hidden={beer.availability.hideFromSite}
     >
       <div
-        className={`relative overflow-hidden transition-colors duration-200 cursor-pointer hover:bg-secondary/50 h-full min-h-[80px] bg-background rounded-lg ${className}`}
+        className={`relative overflow-hidden transition-colors duration-200 cursor-pointer hover:bg-secondary/50 h-full bg-background rounded-lg ${compact ? '' : 'min-h-[80px]'} ${className}`}
       >
         {badgeLabel && (
           <Badge variant="default" className="absolute z-10 top-2 right-1 text-xs">
             {badgeLabel}
           </Badge>
         )}
-        <div className="flex items-center gap-6 px-4 h-full">
+        <div
+          className={`flex items-center px-4 h-full ${compact ? 'justify-center gap-3' : 'gap-6'}`}
+        >
           {/* Tap Number and Glass Icon */}
-          {showGlass && (
+          {displayGlass && (
             <div className="flex-shrink-0 flex items-center gap-3">
               <GlassIcon
                 glass={beer.glass}
@@ -289,8 +302,12 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
           )}
 
           {/* Beer Info - Main content */}
-          <div className="flex-grow min-w-0 flex flex-col gap-1">
-            <div className="flex items-center gap-3 flex-wrap">
+          <div
+            className={`min-w-0 flex flex-col gap-1 ${compact ? 'items-center' : 'flex-grow'}`}
+          >
+            <div
+              className={`flex items-center gap-3 flex-wrap ${compact ? 'justify-center' : ''}`}
+            >
               <h3 className="text-xl font-bold leading-tight truncate">{beer.name}</h3>
               {beer.type &&
                 beer.type.split(', ').map((option, i) => (
@@ -298,7 +315,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                     {option}
                   </Badge>
                 ))}
-              {beer.topBeerDrops && (
+              {!compact && beer.topBeerDrops && (
                 <TopBeerDropsLink
                   url={beer.topBeerDrops}
                   beerName={beer.name}
@@ -313,29 +330,30 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                 />
               )}
             </div>
-            <div className="flex flex-col gap-0.5">
-              {/* No /50 or /60 opacity here: fading muted-foreground put this
-                  body text at 2.45:1 and 3.1:1 against the dark background,
-                  under the 4.5:1 WCAG AA floor for text this size. */}
-              {beer.description && (
-                <p className="text-sm text-muted-foreground line-clamp-1 leading-tight">
-                  {beer.description}
-                </p>
-              )}
-              {beer.hops && (
-                <p className="text-xs text-muted-foreground truncate leading-tight">
-                  <span className="font-medium">Hops:</span> {beer.hops}
-                </p>
-              )}
-            </div>
+            {!compact && (
+              <div className="flex flex-col gap-0.5">
+                {/* No /50 or /60 opacity here: fading muted-foreground put this
+                    body text at 2.45:1 and 3.1:1 against the dark background,
+                    under the 4.5:1 WCAG AA floor for text this size. */}
+                {beer.description && (
+                  <p className="text-sm text-muted-foreground line-clamp-1 leading-tight">
+                    {beer.description}
+                  </p>
+                )}
+                {beer.hops && (
+                  <p className="text-xs text-muted-foreground truncate leading-tight">
+                    <span className="font-medium">Hops:</span> {beer.hops}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
-          {/* ABV - Right aligned */}
-          {beer.abv && (
+          {!compact && beer.abv ? (
             <div className="flex-shrink-0">
               <div className="text-lg font-bold text-foreground tabular-nums">{beer.abv}%</div>
             </div>
-          )}
+          ) : null}
         </div>
       </div>
     </BeerLinkWrapper>

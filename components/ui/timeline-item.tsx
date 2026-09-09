@@ -1,15 +1,26 @@
 /**
- * Timeline Item Component
- * A visually engaging item for timeline displays
+ * One agenda entry for food and events lists.
+ *
+ * Time, title, and location stack on the center axis. A side-by-side time
+ * column shoved titles off-center whenever the time string changed width
+ * ("7pm" vs "5pm–8pm").
  */
 
 'use client'
 
-import React, { useState } from 'react'
+import React from 'react'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import { formatTime } from '@/lib/utils/formatters'
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import { safeHttpUrl } from '@/lib/utils/url-utils'
+
+function agendaTime(time?: string, endTime?: string): string | null {
+  if (!time || time.toLowerCase() === 'tbd') return null
+  if (endTime && endTime.toLowerCase() !== 'tbd') {
+    return `${formatTime(time)}–${formatTime(endTime)}`
+  }
+  return formatTime(time)
+}
 
 interface TimelineItemProps {
   title: string
@@ -17,7 +28,6 @@ interface TimelineItemProps {
   endTime?: string
   location?: string
   description?: string
-  tags?: string[]
   site?: string
   imageUrl?: string
   className?: string
@@ -29,107 +39,45 @@ export function TimelineItem({
   endTime,
   location,
   description,
-  tags,
   site,
   imageUrl,
   className,
 }: TimelineItemProps) {
-  const [imageDialogOpen, setImageDialogOpen] = useState(false)
+  const href = safeHttpUrl(site)
+  const timeDisplay = agendaTime(time, endTime)
 
-  const handleClick = () => {
-    if (site) {
-      window.open(site, '_blank')
-    }
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (site && (e.key === 'Enter' || e.key === ' ')) {
-      e.preventDefault()
-      window.open(site, '_blank')
-    }
-  }
-
-  const handleImageClick = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    setImageDialogOpen(true)
-  }
-
-  const hasTime = time && time.toLowerCase() !== 'tbd'
-
-  const timeDisplay = hasTime
-    ? endTime && endTime.toLowerCase() !== 'tbd'
-      ? `${formatTime(time)}–${formatTime(endTime)}`
-      : formatTime(time)
-    : null
-
-  return (
-    <>
-      <div
-        className={cn(
-          'group relative flex items-stretch gap-4 p-4 rounded-lg',
-          'transition-all duration-200',
-          site
-            ? 'border border-border cursor-pointer hover:bg-secondary hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
-            : 'border-transparent',
-          className,
-        )}
-        onClick={site ? handleClick : undefined}
-        onKeyDown={site ? handleKeyDown : undefined}
-        tabIndex={site ? 0 : undefined}
-        role={site ? 'link' : undefined}
-      >
-        {/* Image */}
-        {imageUrl && (
-          <button
-            type="button"
-            onClick={handleImageClick}
-            className="relative w-16 h-16 flex-shrink-0 rounded-full overflow-hidden bg-muted cursor-zoom-in hover:ring-2 hover:ring-ring hover:ring-offset-2 transition-all"
-          >
-            <Image
-              src={imageUrl}
-              alt={`${title} logo`}
-              fill
-              className="object-cover"
-              sizes="64px"
-            />
-          </button>
-        )}
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          <h4 className="font-semibold text-base leading-tight">{title}</h4>
-          {(location || timeDisplay) && (
-            <p className="text-sm text-muted-foreground mt-1">
-              {location}
-              {location && timeDisplay && ' • '}
-              {timeDisplay}
-            </p>
-          )}
-          {description && (
-            <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{description}</p>
-          )}
-        </div>
-      </div>
-
-      {/* Image Dialog */}
-      {imageUrl && (
-        <Dialog open={imageDialogOpen} onOpenChange={setImageDialogOpen}>
-          <DialogContent className="sm:max-w-lg p-4">
-            <DialogTitle className="sr-only">{title}</DialogTitle>
-            <div className="relative w-full aspect-square">
-              <Image
-                src={imageUrl}
-                alt={`${title} logo`}
-                fill
-                className="object-contain rounded-lg"
-                sizes="(max-width: 768px) 100vw, 400px"
-              />
-            </div>
-            <p className="text-center font-semibold mt-2">{title}</p>
-          </DialogContent>
-        </Dialog>
-      )}
-    </>
+  const body = (
+    <div className={cn('flex flex-col items-center text-center py-2 gap-0.5', className)}>
+      {imageUrl ? (
+        <span className="relative h-10 w-10 shrink-0 rounded-full overflow-hidden bg-muted mb-1">
+          <Image src={imageUrl} alt="" fill className="object-cover" sizes="40px" />
+        </span>
+      ) : null}
+      {timeDisplay ? (
+        <p className="text-sm text-muted-foreground tabular-nums">{timeDisplay}</p>
+      ) : null}
+      <p className="font-normal leading-tight text-balance">{title}</p>
+      {location ? <p className="text-sm text-muted-foreground">{location}</p> : null}
+      {description ? (
+        <p className="text-sm text-muted-foreground line-clamp-1">{description}</p>
+      ) : null}
+    </div>
   )
+
+  if (href) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block rounded-lg hover:bg-secondary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+      >
+        {body}
+      </a>
+    )
+  }
+
+  return body
 }
 
 export default TimelineItem

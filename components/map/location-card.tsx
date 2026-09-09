@@ -1,8 +1,10 @@
+'use client'
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Navigation } from '@/components/icons';
 import { cn } from '@/lib/utils';
 import { capitalizeName } from '@/lib/utils/formatters';
+import { googleDirectionsUrl } from '@/lib/map/geo';
 
 interface LocationCardProps {
   name: string;
@@ -12,6 +14,7 @@ interface LocationCardProps {
   isSelected: boolean;
   onClick: () => void;
   innerRef?: React.Ref<HTMLDivElement>;
+  badge?: string;
 }
 
 export function LocationCard({
@@ -21,42 +24,43 @@ export function LocationCard({
   distanceFromLabel,
   isSelected,
   onClick,
-  innerRef
+  innerRef,
+  badge,
 }: LocationCardProps) {
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      onClick();
-    }
-  };
+  const directionsUrl = googleDirectionsUrl(address);
 
   return (
     <div
       ref={innerRef}
       className={cn(
-        "p-3 cursor-pointer rounded-md",
+        "p-3 rounded-md",
         "transition-all duration-200 ease-out",
         "hover:bg-secondary",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         isSelected && "bg-secondary"
       )}
-      onClick={onClick}
-      onKeyDown={handleKeyDown}
-      tabIndex={0}
-      role="button"
-      aria-pressed={isSelected}
     >
       <div className="flex items-center justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <h4 className="font-semibold text-sm truncate">
-            {capitalizeName(name)}
-          </h4>
+          <button
+            type="button"
+            onClick={onClick}
+            aria-pressed={isSelected}
+            className="text-left w-full min-h-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
+          >
+            <span className="font-semibold text-sm truncate block">
+              {capitalizeName(name)}
+              {badge ? (
+                <span className="ml-2 text-[10px] uppercase tracking-wider font-bold text-primary">
+                  {badge}
+                </span>
+              ) : null}
+            </span>
+          </button>
           <a
-            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`}
+            href={directionsUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="text-xs text-muted-foreground mt-1 block hover:text-foreground hover:underline transition-colors"
-            onClick={(e) => e.stopPropagation()}
           >
             {address}
           </a>
@@ -69,17 +73,12 @@ export function LocationCard({
         <Button
           size="sm"
           variant="outline"
-          className="h-7 text-xs shrink-0 hover:bg-primary hover:text-primary-foreground cursor-pointer"
-          onClick={(e) => {
-            e.stopPropagation();
-            window.open(
-              `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`,
-              '_blank'
-            );
-          }}
+          className="h-7 min-h-6 min-w-6 text-xs shrink-0 hover:bg-primary hover:text-primary-foreground cursor-pointer"
+          asChild
         >
-          <Navigation className="h-3 w-3 mr-1" />
-          Directions
+          <a href={directionsUrl} target="_blank" rel="noopener noreferrer">
+            Directions
+          </a>
         </Button>
       </div>
     </div>

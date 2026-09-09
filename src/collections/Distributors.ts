@@ -59,7 +59,6 @@ export const Distributors: CollectionConfig = {
     {
       name: 'customerType',
       type: 'select',
-      defaultValue: 'Retail',
       options: [
         { label: 'Retail', value: 'Retail' },
         { label: 'On Premise', value: 'On Premise' },

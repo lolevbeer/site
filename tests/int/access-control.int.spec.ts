@@ -4,6 +4,9 @@ import { Users } from '@/src/collections/Users'
 import { Menus, canUpdateMenus } from '@/src/collections/Menus'
 import { Beers, canReadBeers } from '@/src/collections/Beers'
 import { Events } from '@/src/collections/Events'
+import { DonationRequests } from '@/src/collections/DonationRequests'
+import { Jobs } from '@/src/collections/Jobs'
+import { JobApplications } from '@/src/collections/JobApplications'
 import { FoodVendors } from '@/src/collections/FoodVendors'
 import { Locations } from '@/src/collections/Locations'
 import { SiteContent } from '@/src/globals/SiteContent'
@@ -221,6 +224,37 @@ describe('draft and sensitive field visibility', () => {
       expect(callAccess(read, userWith(['food-manager']))).toBe(false)
       expect(callAccess(read, userWith(['admin']))).toBe(true)
     }
+  })
+})
+
+describe('donation request inbox', () => {
+  it('is not creatable via the public API', () => {
+    expect(callAccess(DonationRequests.access?.create, null)).toBe(false)
+    expect(callAccess(DonationRequests.access?.create, userWith(['event-manager']))).toBe(false)
+  })
+
+  it('lets event managers read and update, and keeps the public out', () => {
+    expect(callAccess(DonationRequests.access?.read, null)).toBe(false)
+    expect(callAccess(DonationRequests.access?.read, userWith(['bartender']))).toBe(false)
+    expect(callAccess(DonationRequests.access?.read, userWith(['event-manager']))).toBe(true)
+    expect(callAccess(DonationRequests.access?.update, userWith(['event-manager']))).toBe(true)
+    expect(callAccess(DonationRequests.access?.delete, userWith(['event-manager']))).toBe(false)
+    expect(callAccess(DonationRequests.access?.delete, userWith(['admin']))).toBe(true)
+  })
+})
+
+describe('jobs and applications', () => {
+  it('lets the public read active jobs only, and admins read all', () => {
+    expect(callAccess(Jobs.access?.read, null)).toEqual({ active: { equals: true } })
+    expect(callAccess(Jobs.access?.read, userWith(['admin']))).toBe(true)
+    expect(callAccess(Jobs.access?.create, null)).toBe(false)
+    expect(callAccess(Jobs.access?.create, userWith(['admin']))).toBe(true)
+  })
+
+  it('keeps applications off the public API', () => {
+    expect(callAccess(JobApplications.access?.create, null)).toBe(false)
+    expect(callAccess(JobApplications.access?.read, null)).toBe(false)
+    expect(callAccess(JobApplications.access?.read, userWith(['admin']))).toBe(true)
   })
 })
 

@@ -1,12 +1,14 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { getBeerBySlug, getAllBeersFromPayload } from '@/lib/utils/payload-api'
+import { getBeerBySlug, getAllBeersFromPayload, getAvailableBeersFromMenus } from '@/lib/utils/payload-api'
+import { DEFAULT_OG_IMAGES } from '@/lib/utils/seo'
 import { BeerDetails } from '@/components/beer/beer-details'
 import { JsonLd } from '@/components/seo/json-ld'
 import { PageTransition } from '@/components/motion'
 import { generateProductSchema } from '@/lib/utils/product-schema'
 import { generateBreadcrumbSchema } from '@/lib/utils/breadcrumb-schema'
 import { getBeerImageUrl } from '@/lib/utils/media-utils'
+import { logger } from '@/lib/utils/logger'
 
 interface BeerPageProps {
   params: Promise<{
@@ -28,9 +30,8 @@ export async function generateMetadata({ params }: BeerPageProps): Promise<Metad
 
   const styleName = typeof beer.style === 'string' ? beer.style : beer.style?.name || ''
   const description =
-    beer.description ??
+    (typeof beer.description === 'string' ? beer.description.trim() : '') ||
     `${beer.name}${styleName ? ` — ${styleName}` : ''} beer from Lolev Beer, a craft brewery in Pittsburgh.`
-  // Per-beer OG image (relative path; metadataBase resolves it to absolute).
   const ogImage = getBeerImageUrl(beer.image, beer.slug)
 
   const pageTitle = styleName ? `${beer.name} | ${styleName}` : beer.name
@@ -46,7 +47,7 @@ export async function generateMetadata({ params }: BeerPageProps): Promise<Metad
       description,
       type: 'website',
       url: `/beer/${beer.slug}`,
-      ...(ogImage ? { images: [{ url: ogImage, alt: beer.name }] } : {}),
+      images: ogImage ? [{ url: ogImage, alt: beer.name }] : DEFAULT_OG_IMAGES,
     },
   }
 }
@@ -73,8 +74,14 @@ export default async function BeerPage({ params }: BeerPageProps) {
   const beer = await getBeerBySlug(variant)
   if (!beer || beer.hideFromSite) notFound()
 
-  // Generate Product schema for SEO
-  const productSchema = generateProductSchema(beer)
+  let inStock: boolean | undefined
+  try {
+    const onMenu = await getAvailableBeersFromMenus()
+    if (onMenu.some((candidate) => candidate.id === beer.id)) inStock = true
+  } catch (error) {
+    logger.error('Could not load menus for product availability', error)
+  }
+  const productSchema = generateProductSchema(beer, { inStock })
   const breadcrumbSchema = generateBreadcrumbSchema([
     { label: 'Home', href: '/' },
     { label: 'Beer', href: '/beer' },

@@ -105,13 +105,58 @@ export const hasAnyBeerJustReleased = async (): Promise<boolean> => {
 }
 
 /**
+ * Catalog / sitemap / RSS / llms.txt beer fields. Next.js `unstable_cache`
+ * refuses entries over 2MB (throws in dev); a full `depth: 2` beers find
+ * — reviews join, `positiveReviews` JSON, 3D label uploads — crossed that
+ * on `/beer`. Inclusion `select` drops those; `joins: false` skips the
+ * `reviews` join. Matches what `convertPayloadBeer` and the feeds read.
+ */
+export const BEERS_LIST_SELECT = {
+  slug: true,
+  name: true,
+  style: true,
+  tag: true,
+  abv: true,
+  glass: true,
+  description: true,
+  upc: true,
+  image: true,
+  untappd: true,
+  untappdRating: true,
+  untappdRatingCount: true,
+  recipe: true,
+  hops: true,
+  collab: true,
+  collabBrewery: true,
+  topBeerDrops: true,
+  justReleased: true,
+  draftPrice: true,
+  halfPour: true,
+  halfPourOnly: true,
+  canSingle: true,
+  fourPack: true,
+  hideFromSite: true,
+  createdAt: true,
+  updatedAt: true,
+} as const satisfies { [K in keyof PayloadBeer]?: true }
+
+const BEERS_LIST_POPULATE = {
+  styles: { name: true },
+  tags: { name: true },
+  media: { url: true, sizes: true, filename: true, prefix: true },
+} as const
+
+/** Catalog/sitemap/RSS beer: `BEERS_LIST_SELECT` plus Payload `id`. */
+export type CatalogBeer = Pick<PayloadBeer, 'id' | keyof typeof BEERS_LIST_SELECT>
+
+/**
  * Get all beers from Payload
  * Cached until 'beers' tag is invalidated
  */
-export const getAllBeersFromPayload = async (): Promise<PayloadBeer[]> => {
+export const getAllBeersFromPayload = async (): Promise<CatalogBeer[]> => {
   try {
     return await unstable_cache(
-      async (): Promise<PayloadBeer[]> => {
+      async (): Promise<CatalogBeer[]> => {
         const payload = await getPayload({ config })
 
         const result = await payload.find({
@@ -122,10 +167,13 @@ export const getAllBeersFromPayload = async (): Promise<PayloadBeer[]> => {
               not_equals: true,
             },
           },
-          depth: 2, // Include style and image relations
+          depth: 1,
+          select: BEERS_LIST_SELECT,
+          populate: BEERS_LIST_POPULATE,
+          joins: false,
         })
 
-        return result.docs
+        return result.docs as CatalogBeer[]
       },
       ['all-beers'],
       { tags: [CACHE_TAGS.beers], revalidate: 3600 }, // 1 hour fallback
@@ -159,6 +207,9 @@ export const getBeerBySlug = cache(async (slug: string): Promise<PayloadBeer | n
         },
         limit: 1,
         depth: 2,
+        // Reviews are loaded via getPublicBeerReviews below; the join would
+        // duplicate them in the unstable_cache entry.
+        joins: false,
       })
 
       // Return null for "not found" (cacheable), but let errors throw (not cached)
@@ -212,6 +263,7 @@ export const getMenusByLocation = async (locationSlug: string): Promise<PayloadM
             ],
           },
           depth: 3, // Include location, beers, and beer relations (style, image)
+          populate: CATALOG_MENU_POPULATE,
           limit: 100,
         })
 
@@ -267,8 +319,7 @@ export async function getCansMenu(locationSlug: string): Promise<PayloadMenu | n
  * review array), the untappd/upc admin fields, and the labelBase/
  * labelMetalness/labelTextures generator uploads.
  */
-const MENU_POPULATE = {
-  beers: {
+const MENU_BEERS_POPULATE = {
     slug: true,
     name: true,
     style: true,
@@ -292,7 +343,10 @@ const MENU_POPULATE = {
     updatedAt: true,
     untappdRating: true,
     topBeerDrops: true,
-  },
+} as const satisfies { [K in keyof PayloadBeer]?: true }
+
+const MENU_POPULATE = {
+  beers: MENU_BEERS_POPULATE,
   products: {
     name: true,
     category: true,
@@ -312,6 +366,18 @@ const MENU_POPULATE = {
   // linesLastCleaned drives the "Draft lines cleaned N days ago" line on the
   // /m draft displays (formatLinesCleanedDate in featured-menu.tsx).
   locations: { slug: true, name: true, linesLastCleaned: true },
+} as const
+
+/** Landing/catalog menus need `convertPayloadBeer` fields `/m` can skip. */
+const CATALOG_MENU_POPULATE = {
+  ...MENU_POPULATE,
+  beers: {
+    ...MENU_BEERS_POPULATE,
+    canSingle: true,
+    tag: true,
+    upc: true,
+    untappd: true,
+  },
 } as const
 
 /**
@@ -496,6 +562,7 @@ export const getAvailableBeersFromMenus = async (): Promise<PayloadBeer[]> => {
             },
           },
           depth: 3, // Include location, beers, and beer relations (style, image)
+          populate: CATALOG_MENU_POPULATE,
           limit: 1000,
         })
 
@@ -1210,7 +1277,7 @@ export const getAllDistributorsGeoJSON = async (): Promise<DistributorGeoJSON> =
               id: index,
               Name: dist.name,
               address: formatAddress(dist),
-              customerType: dist.customerType || 'Retail',
+              customerType: dist.customerType || '',
               uniqueId: dist.id,
             },
           }))

@@ -1,0 +1,77 @@
+/**
+ * Shared Open Graph / title strings so page-level metadata cannot drift from
+ * the root layout or drop og:image via Next.js shallow merge.
+ *
+ * Taproom names in descriptions come from Payload via {@link joinLocationNames}
+ * — do not hardcode Lawrenceville/Zelienople here.
+ */
+
+import { joinLocationNames } from '@/lib/config/locations'
+import type { PayloadLocation } from '@/lib/types/location'
+
+export const SITE_TITLE = 'Lolev Beer - Craft Brewery in Pittsburgh'
+
+type NamedLocations = Array<{ name?: string | null }>
+
+function locationClause(
+  locations: NamedLocations,
+  whenNamed: (names: string) => string,
+  whenEmpty = '',
+): string {
+  const names = joinLocationNames(locations)
+  return names ? whenNamed(names) : whenEmpty
+}
+
+export function siteDescription(locations: NamedLocations = []): string {
+  const where = locationClause(locations, (names) => ` with locations in ${names}`)
+  return `Experience exceptional craft beer at Lolev Beer${where}. Fresh brews, local food, and community events.`
+}
+
+export function beersDescription(locations: NamedLocations = []): string {
+  const where = locationClause(
+    locations,
+    (names) => ` from our ${names} taprooms`,
+    ' from our taprooms',
+  )
+  return `Explore Lolev Beer's catalog of hop-saturated ales, hazy IPAs, and crisp lagers${where}.`
+}
+
+export function eventsDescription(locations: NamedLocations = []): string {
+  const where = locationClause(locations, (names) => ` at our ${names} locations`)
+  return `Discover upcoming events at Lolev Beer. From trivia nights to live music, find your next great experience${where}.`
+}
+
+export function foodDescription(locations: NamedLocations = []): string {
+  const where = locationClause(locations, (names) => ` in ${names}`)
+  return `Food trucks and vendors at Lolev Beer${where}`
+}
+
+export function beerMapDescription(locations: NamedLocations = []): string {
+  const taprooms = locationClause(locations, (names) => `taprooms in ${names}`, 'our taprooms')
+  return `Find Lolev Beer ${taprooms}, plus retailers across Pennsylvania, New York, and Ohio.`
+}
+
+export function locationKeywords(locations: PayloadLocation[]): string[] {
+  return locations.flatMap((location) => {
+    const city = location.address?.city
+    return [location.name, city].filter((value): value is string => Boolean(value))
+  })
+}
+
+/** Fallback when a caller has no location docs (tests, error paths). */
+export const SITE_DESCRIPTION = siteDescription()
+
+/** TV / kiosk routes — never index even if a crawler ignores robots.txt. */
+export const NOINDEX_ROBOTS = { index: false, follow: false } as const
+
+/** Compressed 1200×630 social card. Keep this on every page-level `openGraph`. */
+export const DEFAULT_OG_IMAGE_PATH = '/images/beer/og-image.jpg'
+
+export const DEFAULT_OG_IMAGES = [
+  {
+    url: DEFAULT_OG_IMAGE_PATH,
+    width: 1200,
+    height: 630,
+    alt: 'Lolev Beer - Craft Brewery in Pittsburgh',
+  },
+]
