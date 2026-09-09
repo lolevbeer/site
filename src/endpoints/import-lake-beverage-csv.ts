@@ -5,6 +5,12 @@ import { parseCSVLine } from '@/src/utils/csv'
 import { sleep } from '@/src/utils/async'
 import { createSSEResponse } from '@/src/utils/sse-response'
 import { DEFAULT_REGION_COORDS } from '@/src/utils/distributor-region-coords'
+import {
+  distributorImportPatch,
+  indexDocsByName,
+} from '@/lib/distributors/import-patch'
+import { applyExistingDistributorPatch } from '@/lib/distributors/upsert-existing'
+import type { Distributor } from '@/src/payload-types'
 
 interface ParsedRow {
   name: string
@@ -99,9 +105,18 @@ export const importLakeBeverageCSV: PayloadHandler = async (req) => {
       send('status', { message: `Starting import of ${rows.length} distributors...` })
 
       let imported = 0,
+        updated = 0,
         skipped = 0,
         errors = 0
       const details: string[] = []
+
+      const existing = await payload.find({
+        collection: 'distributors',
+        where: { region: { equals: 'NY' } },
+        pagination: false,
+        depth: 0,
+      })
+      const byName = indexDocsByName(existing.docs)
 
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i]
@@ -113,21 +128,52 @@ export const importLakeBeverageCSV: PayloadHandler = async (req) => {
           percent: Math.round(((i + 1) / rows.length) * 100),
         })
 
-        // Check for existing
-        const existing = await payload.find({
-          collection: 'distributors',
-          where: { name: { equals: row.name } },
-          limit: 1,
-        })
-
-        if (existing.docs.length > 0) {
-          details.push(`Skipped: "${row.name}" already exists`)
-          send('item', { name: row.name, action: 'skipped', reason: 'already exists' })
-          skipped++
+        const matches = byName.get(row.name) ?? []
+        if (matches.length > 1) {
+          const message = `"${row.name}" matches ${matches.length} existing rows in NY; skipped`
+          details.push(`Error: ${message}`)
+          send('item', { name: row.name, action: 'error', error: message })
+          errors++
           continue
         }
 
-        // Geocode
+        if (matches.length === 1) {
+          const current = matches[0]
+          const patch = distributorImportPatch(current, {
+            address: row.address,
+            city: row.city,
+            state: row.state,
+            zip: row.zip,
+            phone: row.phone ? formatPhone(row.phone) : '',
+            region: 'NY',
+          })
+          if (!patch) {
+            skipped++
+            continue
+          }
+          try {
+            const result = await applyExistingDistributorPatch({
+              payload,
+              current,
+              patch,
+              name: row.name,
+              geocode,
+              sleep,
+            })
+            byName.set(row.name, [{ ...current, ...patch } as Distributor])
+            details.push(`Updated: "${row.name}" (${Object.keys(patch).join(', ')})`)
+            if (result.warning) details.push(result.warning)
+            send('item', { name: row.name, action: 'updated', reason: 'updated' })
+            updated++
+          } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : 'Unknown error'
+            details.push(`Error: "${row.name}" - ${message}`)
+            send('item', { name: row.name, action: 'error', error: message })
+            errors++
+          }
+          continue
+        }
+
         const fullAddress = `${row.address}, ${row.city}, ${row.state} ${row.zip}`.trim()
         const coords = await geocode(fullAddress)
         const location = coords || DEFAULT_COORDS
@@ -137,7 +183,7 @@ export const importLakeBeverageCSV: PayloadHandler = async (req) => {
         }
 
         try {
-          await payload.create({
+          const created = await payload.create({
             collection: 'distributors',
             data: {
               name: row.name,
@@ -145,13 +191,13 @@ export const importLakeBeverageCSV: PayloadHandler = async (req) => {
               city: row.city,
               state: row.state,
               zip: row.zip,
-              phone: row.phone ? formatPhone(row.phone) : undefined,
-              customerType: 'Retail',
+              phone: row.phone ? formatPhone(row.phone) : '',
               region: 'NY',
               location,
               active: true,
             },
           })
+          byName.set(row.name, [created])
           details.push(`Imported: ${row.name}`)
           send('item', { name: row.name, action: 'imported', geocoded: !!coords })
           imported++
@@ -162,13 +208,17 @@ export const importLakeBeverageCSV: PayloadHandler = async (req) => {
           errors++
         }
 
-        // Rate limit for Nominatim
         await sleep(1100)
+      }
+
+      if (skipped > 0) {
+        details.push(`Skipped ${skipped} unchanged`)
       }
 
       send('complete', {
         success: true,
         imported,
+        updated,
         skipped,
         errors,
         details,

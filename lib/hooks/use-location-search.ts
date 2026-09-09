@@ -1,94 +1,182 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { logger } from '@/lib/utils/logger'
+import { parseMapboxFeatures, type PlaceSuggestion } from '@/lib/map/search'
 
-const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || ''
-const SEARCH_DEBOUNCE = 800
+const SEARCH_DEBOUNCE = 300
+
+function mapboxToken(): string {
+  return process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || ''
+}
 
 interface Coordinates {
   latitude: number
   longitude: number
 }
 
-const geocodeLocation = async (query: string): Promise<Coordinates | null> => {
-  if (!MAPBOX_TOKEN || !query.trim()) return null
+function isAbortError(error: unknown): boolean {
+  return (
+    (error instanceof DOMException && error.name === 'AbortError') ||
+    (error instanceof Error && error.name === 'AbortError')
+  )
+}
 
+const fetchPlaceSuggestions = async (
+  query: string,
+  proximity: Coordinates | null,
+  signal?: AbortSignal,
+): Promise<PlaceSuggestion[]> => {
+  const token = mapboxToken()
+  if (!token || query.trim().length < 2) return []
+  if (signal?.aborted) return []
+
+  const proximityParam = proximity
+    ? `&proximity=${proximity.longitude},${proximity.latitude}`
+    : ''
   try {
     const response = await fetch(
       `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?` +
-        `access_token=${MAPBOX_TOKEN}&country=US&limit=1`,
+        `access_token=${token}&country=US&types=place,postcode,locality,neighborhood,address&limit=5${proximityParam}`,
+      { signal },
     )
-
-    if (!response.ok) return null
+    if (!response.ok) return []
     const data = await response.json()
-
-    if (data.features && data.features.length > 0) {
-      const [longitude, latitude] = data.features[0].center
-      return { latitude, longitude }
-    }
+    return parseMapboxFeatures(data.features || [])
   } catch (error) {
-    logger.error('Geocoding error:', error)
+    if (isAbortError(error)) return []
+    logger.error('Place suggest error:', error)
+    return []
   }
-  return null
 }
 
-const detectSearchType = (searchTerm: string): boolean => {
-  const isZipcode = /^\d{5}$/.test(searchTerm.trim())
-  const hasLocationIndicators =
-    /\b(street|st|ave|avenue|rd|road|blvd|boulevard|city|state|[A-Z]{2})\b/i.test(searchTerm)
-  const hasComma = searchTerm.includes(',')
-  const hasMultipleWords = searchTerm.trim().split(' ').length >= 2
-
-  return isZipcode || hasLocationIndicators || hasComma || hasMultipleWords
-}
-
-export function useLocationSearch() {
+export function useLocationSearch(proximity: Coordinates | null = null) {
   const [searchTerm, setSearchTerm] = useState('')
-  // The geocode result is stored with the term it was resolved for. Everything
-  // exposed below is then derived, so a term that is cleared or is not
-  // geocodable simply stops matching — no effect has to clear state, which is
-  // what react-hooks/set-state-in-effect flags.
-  const [geocoded, setGeocoded] = useState<{ term: string; coords: Coordinates } | null>(null)
+  const [selectedPlace, setSelectedPlace] = useState<{
+    term: string
+    coords: Coordinates
+    label: string
+  } | null>(null)
+  const [fetched, setFetched] = useState<{ term: string; places: PlaceSuggestion[] }>({
+    term: '',
+    places: [],
+  })
   const [searching, setSearching] = useState(false)
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const abortRef = useRef<AbortController | null>(null)
+  const requestIdRef = useRef(0)
 
-  const shouldGeocode = searchTerm.trim() !== '' && detectSearchType(searchTerm)
-  const searchLocation = shouldGeocode && geocoded?.term === searchTerm ? geocoded.coords : null
-  const isSearching = shouldGeocode && searching
+  const searchLocation =
+    selectedPlace && selectedPlace.term === searchTerm ? selectedPlace.coords : null
+  const searchLabel =
+    selectedPlace && selectedPlace.term === searchTerm ? selectedPlace.label : null
+  const trimmed = searchTerm.trim()
+  const committed = Boolean(selectedPlace && selectedPlace.term === searchTerm)
+  const isSearching = searching && trimmed.length >= 2 && !committed
+  const placeSuggestions =
+    trimmed.length < 2 || committed || fetched.term !== trimmed ? [] : fetched.places
+  const proximityLat = proximity?.latitude
+  const proximityLng = proximity?.longitude
+
+  const cancelInFlight = useCallback(() => {
+    abortRef.current?.abort()
+    abortRef.current = null
+    requestIdRef.current += 1
+  }, [])
 
   useEffect(() => {
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current)
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current)
+
+    const term = searchTerm.trim()
+    if (term.length < 2 || (selectedPlace && selectedPlace.term === searchTerm)) {
+      cancelInFlight()
+      return
     }
 
-    if (!shouldGeocode) return
-
-    const term = searchTerm
+    const proximityForFetch = selectedPlace?.coords
+      ? selectedPlace.coords
+      : proximityLat != null && proximityLng != null
+        ? { latitude: proximityLat, longitude: proximityLng }
+        : null
     searchTimeoutRef.current = setTimeout(async () => {
+      abortRef.current?.abort()
+      const controller = new AbortController()
+      abortRef.current = controller
+      const id = ++requestIdRef.current
       setSearching(true)
-      const coords = await geocodeLocation(term)
-      if (coords) {
-        setGeocoded({ term, coords })
-      }
+      const suggestions = await fetchPlaceSuggestions(term, proximityForFetch, controller.signal)
+      if (id !== requestIdRef.current) return
+      setFetched({ term, places: suggestions })
       setSearching(false)
     }, SEARCH_DEBOUNCE)
 
     return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current)
-      }
+      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current)
     }
-  }, [searchTerm, shouldGeocode])
+  }, [searchTerm, proximityLat, proximityLng, selectedPlace, cancelInFlight])
+
+  const selectPlace = useCallback(
+    (suggestion: PlaceSuggestion) => {
+      if (suggestion.latitude == null || suggestion.longitude == null) return
+      const label = suggestion.label
+      cancelInFlight()
+      setSearchTerm(label)
+      setSelectedPlace({
+        term: label,
+        coords: { latitude: suggestion.latitude, longitude: suggestion.longitude },
+        label: suggestion.subtitle || suggestion.label,
+      })
+      setFetched({ term: '', places: [] })
+      setSearching(false)
+    },
+    [cancelInFlight],
+  )
+
+  const commitTypedPlace = useCallback(async () => {
+    const term = searchTerm.trim()
+    if (!term) return false
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+    const id = ++requestIdRef.current
+    setSearching(true)
+    const proximityForFetch = selectedPlace?.coords
+      ? selectedPlace.coords
+      : proximityLat != null && proximityLng != null
+        ? { latitude: proximityLat, longitude: proximityLng }
+        : null
+    const suggestions = await fetchPlaceSuggestions(term, proximityForFetch, controller.signal)
+    if (id !== requestIdRef.current) return false
+    setSearching(false)
+    const suggestion = suggestions[0]
+    if (!suggestion?.latitude || suggestion.longitude == null) {
+      setFetched({ term: '', places: [] })
+      return false
+    }
+    setSelectedPlace({
+      term: searchTerm,
+      coords: { latitude: suggestion.latitude, longitude: suggestion.longitude },
+      label: suggestion.subtitle || suggestion.label,
+    })
+    setFetched({ term: '', places: [] })
+    return true
+  }, [searchTerm, proximityLat, proximityLng, selectedPlace])
 
   const clearSearch = useCallback(() => {
+    cancelInFlight()
     setSearchTerm('')
-    setGeocoded(null)
-  }, [])
+    setSelectedPlace(null)
+    setFetched({ term: '', places: [] })
+    setSearching(false)
+  }, [cancelInFlight])
 
   return {
     searchTerm,
     setSearchTerm,
     searchLocation,
+    searchLabel,
     isSearching,
+    placeSuggestions,
+    selectPlace,
+    commitTypedPlace,
     clearSearch,
   }
 }

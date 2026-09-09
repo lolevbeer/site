@@ -31,12 +31,15 @@ interface PayloadDistributor {
   location: [number, number] | { type: 'Point'; coordinates: [number, number] } | null;
 }
 
-export function useMapData() {
+export function useMapData(options?: { enabled?: boolean }) {
+  const enabled = options?.enabled ?? true;
   const [geoData, setGeoData] = useState<GeoJSON | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!enabled) return
+
     const loadData = async () => {
       try {
         // Fetch distributors from Payload API
@@ -111,7 +114,7 @@ export function useMapData() {
     };
 
     loadData();
-  }, []);
+  }, [enabled]);
 
   return { geoData, loading, error };
 }

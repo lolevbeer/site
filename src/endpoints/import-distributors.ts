@@ -5,11 +5,17 @@ import { geocode } from './geocode'
 import { sleep } from '@/src/utils/async'
 import { createSSEResponse } from '@/src/utils/sse-response'
 import { DEFAULT_REGION_COORDS } from '@/src/utils/distributor-region-coords'
+import {
+  distributorImportPatch,
+  indexDocsByName,
+} from '@/lib/distributors/import-patch'
+import { applyExistingDistributorPatch } from '@/lib/distributors/upsert-existing'
+import type { Distributor } from '@/src/payload-types'
 
 interface DistributorRow {
   CustomerName: string
   AddressCityStateZip: string
-  CaseEquivSale: string
+  CaseEquivSale?: string
 }
 
 interface ParsedAddress {
@@ -181,12 +187,21 @@ export const importDistributors: PayloadHandler = async (req) => {
   // Stream progress updates
   return createSSEResponse(async (send) => {
     let imported = 0,
+      updated = 0,
       skipped = 0,
       errors = 0
     const details: string[] = []
     const total = rows.length
 
     send('progress', { current: 0, total, name: 'Starting...', percent: 0 })
+
+    const existing = await payload.find({
+      collection: 'distributors',
+      where: { region: { equals: regionUpper } },
+      pagination: false,
+      depth: 0,
+    })
+    const byName = indexDocsByName(existing.docs)
 
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i]
@@ -203,28 +218,59 @@ export const importDistributors: PayloadHandler = async (req) => {
         continue
       }
 
-      // Check for existing
-      const existing = await payload.find({
-        collection: 'distributors',
-        where: { name: { equals: row.CustomerName } },
-        limit: 1,
-      })
-
-      if (existing.docs.length > 0) {
-        const msg = `Skipped: "${row.CustomerName}" already exists`
+      const matches = byName.get(row.CustomerName) ?? []
+      if (matches.length > 1) {
+        const msg = `Error: "${row.CustomerName}" matches ${matches.length} existing rows in ${regionUpper}; skipped`
         details.push(msg)
-        send('item', { type: 'skip', message: msg })
-        skipped++
+        send('item', { type: 'error', message: msg })
+        errors++
         continue
       }
 
-      // Geocode
+      if (matches.length === 1) {
+        const current = matches[0]
+        const patch = distributorImportPatch(current, {
+          address: parsed.street,
+          city: parsed.city,
+          state: parsed.state,
+          zip: parsed.zip,
+          region: regionUpper,
+        })
+        if (!patch) {
+          skipped++
+          continue
+        }
+        try {
+          const result = await applyExistingDistributorPatch({
+            payload,
+            current,
+            patch,
+            name: row.CustomerName,
+            geocode,
+            sleep,
+          })
+          byName.set(row.CustomerName, [{ ...current, ...patch } as Distributor])
+          const msg = `Updated: "${row.CustomerName}" (${Object.keys(patch).join(', ')})`
+          details.push(msg)
+          if (result.warning) details.push(result.warning)
+          send('item', { type: 'success', message: msg })
+          updated++
+        } catch (error: unknown) {
+          const message = error instanceof Error ? error.message : 'Unknown error'
+          const msg = `Error: Failed to update "${row.CustomerName}" - ${message}`
+          details.push(msg)
+          send('item', { type: 'error', message: msg })
+          errors++
+        }
+        continue
+      }
+
       const fullAddress = `${parsed.street}, ${parsed.city}, ${parsed.state} ${parsed.zip}`.trim()
       const coords = await geocode(fullAddress)
       const location = coords || DEFAULT_COORDS[regionUpper]
 
       try {
-        await payload.create({
+        const created = await payload.create({
           collection: 'distributors',
           data: {
             name: row.CustomerName,
@@ -232,12 +278,12 @@ export const importDistributors: PayloadHandler = async (req) => {
             city: parsed.city,
             state: parsed.state,
             zip: parsed.zip,
-            customerType: 'Retail',
             region: regionUpper,
             location,
             active: true,
           },
         })
+        byName.set(row.CustomerName, [created])
         const msg = `Imported: ${row.CustomerName}`
         details.push(msg)
         send('item', { type: 'success', message: msg })
@@ -250,10 +296,15 @@ export const importDistributors: PayloadHandler = async (req) => {
         errors++
       }
 
-      // Rate limit for Nominatim
       await sleep(1100)
     }
 
-    send('complete', { imported, skipped, errors, details })
+    if (skipped > 0) {
+      const msg = `Skipped ${skipped} unchanged`
+      details.push(msg)
+      send('item', { type: 'skip', message: msg })
+    }
+
+    send('complete', { imported, updated, skipped, errors, details })
   })
 }

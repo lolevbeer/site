@@ -21,9 +21,6 @@ export function DistributorMapLoader({ initialData }: { initialData?: Distributo
   return (
     <DistributorMap
       height={700}
-      showSearch={true}
-      initialZoom={5}
-      maxPoints={10}
       initialData={initialData}
     />
   )

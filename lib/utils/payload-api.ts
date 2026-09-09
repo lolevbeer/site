@@ -1277,7 +1277,7 @@ export const getAllDistributorsGeoJSON = async (): Promise<DistributorGeoJSON> =
               id: index,
               Name: dist.name,
               address: formatAddress(dist),
-              customerType: dist.customerType || 'Retail',
+              customerType: dist.customerType || '',
               uniqueId: dist.id,
             },
           }))
