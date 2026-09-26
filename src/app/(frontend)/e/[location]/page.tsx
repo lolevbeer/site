@@ -55,6 +55,7 @@ const getDataByLocation = cache(async (locationSlug: string): Promise<{
       slug: { equals: locationSlug.toLowerCase() },
     },
     limit: 1,
+    overrideAccess: false,
   })
 
   if (locationResult.docs.length === 0) {

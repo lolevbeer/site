@@ -96,6 +96,7 @@ async function getFoodData(): Promise<FoodVendorSchedule[]> {
         sort: 'date',
         limit: 100,
         depth: 2,
+        overrideAccess: false,
       }),
       Promise.all(years.map((year) => getRecurringFoodState(payload, { year }))),
       payload.find({
@@ -104,6 +105,7 @@ async function getFoodData(): Promise<FoodVendorSchedule[]> {
           active: { equals: true },
         },
         limit: 100,
+        overrideAccess: false,
       }),
     ])
     // Look up the state that governs a given occurrence by the year the date falls in.
@@ -188,6 +190,7 @@ async function getFoodData(): Promise<FoodVendorSchedule[]> {
         },
         limit: vendorIds.size,
         depth: 2,
+        overrideAccess: false,
       })
 
       for (const vendor of vendorsResult.docs) {
