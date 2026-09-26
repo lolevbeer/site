@@ -82,9 +82,15 @@ File: `src/collections/Beers.ts:56`, new helper `src/access/public-beer-ids.ts`
 - `canReadBeers` becomes async; memoize `ids` on `req.context` so one request
   (incl. depth-3 population) queries once. Anonymous public reads already sit
   inside `unstable_cache`, so the cost is per cache fill.
+- **Draft guard:** widening read would let anyone fetch
+  `/api/beers/<id>?draft=true` and see unpublished edits of on-menu beers. Add
+  `readVersions: beerManagerAccess` and have `canReadBeers` deny draft reads for
+  anyone but the full-read roles. Verify in Payload 3.88 source which signal
+  `draft` reaches access through before choosing; public pages never request drafts.
 
 Tests first: bartender → `true`; anonymous → `or` clause with IDs from a mocked
-`req.payload.find`/`findGlobal`; second call on same `req` does not re-query.
+`req.payload.find`/`findGlobal`; second call on same `req` does not re-query;
+anonymous draft read → `false`; `readVersions` anonymous → `false`.
 Types: `Access`, `Where`, `Menu`, `ComingSoon` from `src/payload-types`. Deps: 0.
 
 ### Wave 2 — convert call sites
