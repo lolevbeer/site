@@ -26,12 +26,12 @@ function mround(value: number, multiple: number): number {
  * Server Action forces the admin router to refetch — resetting the edit form.
  */
 async function revalidateMenusForBeer(req: PayloadRequest, beerId: string | number): Promise<void> {
-  // eslint-disable-next-line no-restricted-syntax -- system: cache invalidation must find every menu listing the beer; the editor's menus read can be location-scoped (beer-manager + bartender) or empty
   const menus = await req.payload.find({
     collection: 'menus',
     where: { 'items.product.value': { equals: beerId } },
     limit: 100,
     depth: 0,
+    // eslint-disable-next-line no-restricted-syntax -- system: cache invalidation must find every menu listing the beer; the editor's menus read can be location-scoped (beer-manager + bartender) or empty
     overrideAccess: true,
     req,
   })
@@ -144,11 +144,11 @@ export const Beers: CollectionConfig = {
 
         // Auto-increment recipe number for new beers (always, even when cloning)
         if (operation === 'create') {
-          // eslint-disable-next-line no-restricted-syntax -- system: next recipe number must count every beer, drafts included
           const lastBeer = await req.payload.find({
             collection: 'beers',
             sort: '-recipe',
             limit: 1,
+            // eslint-disable-next-line no-restricted-syntax -- system: next recipe number must count every beer, drafts included
             overrideAccess: true,
             req,
           })
@@ -162,7 +162,6 @@ export const Beers: CollectionConfig = {
 
         // Validate recipe number is unique (on create or when changed)
         if (data.recipe !== undefined && data.recipe !== originalDoc?.recipe) {
-          // eslint-disable-next-line no-restricted-syntax -- system: recipe uniqueness invariant spans every beer, drafts included
           const existing = await req.payload.find({
             collection: 'beers',
             where: {
@@ -170,6 +169,7 @@ export const Beers: CollectionConfig = {
               id: { not_equals: originalDoc?.id },
             },
             limit: 1,
+            // eslint-disable-next-line no-restricted-syntax -- system: recipe uniqueness invariant spans every beer, drafts included
             overrideAccess: true,
             req,
           })

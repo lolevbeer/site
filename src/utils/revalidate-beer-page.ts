@@ -22,13 +22,15 @@ export async function revalidateBeerPageForReview(
     const slug =
       typeof beer === 'object' && beer.slug
         ? beer.slug
-        : (await payload.findByID({
-            collection: 'beers',
-            id: relationshipId(beer),
-            depth: 0,
-            overrideAccess: true,
-            req,
-          })).slug
+        : (
+            await payload.findByID({
+              collection: 'beers',
+              id: relationshipId(beer),
+              depth: 0,
+              overrideAccess: true,
+              req,
+            })
+          ).slug
 
     if (slug) revalidatePath(`/beer/${slug}`)
   } catch (error) {

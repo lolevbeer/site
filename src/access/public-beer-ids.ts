@@ -16,21 +16,21 @@ import { relationshipId } from '@/src/utils/relationship-id'
 const CONTEXT_KEY = 'accessPublicBeerIds'
 
 async function loadPublicBeerIds(req: PayloadRequest): Promise<string[]> {
-  // eslint-disable-next-line no-restricted-syntax -- system: access rule must see every menu to decide public beers
   const menus = await req.payload.find({
     collection: 'menus',
     where: { _status: { equals: 'published' } },
     select: { items: { product: true } },
     depth: 0,
     pagination: false,
+    // eslint-disable-next-line no-restricted-syntax -- system: access rule must see every menu to decide public beers
     overrideAccess: true,
     req,
   })
-  // eslint-disable-next-line no-restricted-syntax -- system: access rule must see every menu to decide public beers
   const comingSoon = await req.payload.findGlobal({
     slug: 'coming-soon',
     select: { beers: { beer: true } },
     depth: 0,
+    // eslint-disable-next-line no-restricted-syntax -- system: access rule must see every menu to decide public beers
     overrideAccess: true,
     req,
   })

@@ -221,6 +221,8 @@ export const getBeerBySlug = cache(async (slug: string): Promise<PayloadBeer | n
         // Reviews are loaded via getPublicBeerReviews below; the join would
         // duplicate them in the unstable_cache entry.
         joins: false,
+        // eslint-disable-next-line no-restricted-syntax -- system: pending access-plan Task 7 (legacy review fallback)
+        overrideAccess: true,
       })
 
       // Return null for "not found" (cacheable), but let errors throw (not cached)
