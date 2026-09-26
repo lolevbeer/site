@@ -1,5 +1,5 @@
 import type { GlobalConfig } from 'payload'
-import { foodManagerAccess, hasRole, SCHEDULE_READER_ROLES } from '@/src/access/roles'
+import { foodManagerAccess } from '@/src/access/roles'
 
 /**
  * RecurringFood Global
@@ -21,7 +21,9 @@ export const RecurringFood: GlobalConfig = {
     group: 'Food & Events',
   },
   access: {
-    read: ({ req: { user } }) => hasRole(user, SCHEDULE_READER_ROLES),
+    // Public: the schedule is already published on the homepage, /food, and the
+    // feed, and those anonymous reads go through access control.
+    read: () => true,
     update: foodManagerAccess,
   },
   fields: [

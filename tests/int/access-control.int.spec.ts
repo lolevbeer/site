@@ -10,6 +10,7 @@ import { JobApplications } from '@/src/collections/JobApplications'
 import { FoodVendors } from '@/src/collections/FoodVendors'
 import { Locations } from '@/src/collections/Locations'
 import { SiteContent } from '@/src/globals/SiteContent'
+import { RecurringFood } from '@/src/globals/RecurringFood'
 import { canRunUntappdSync } from '@/src/endpoints/sync-untappd-ratings'
 import { getAdminRelationshipID } from '@/src/components/admin/relationship-value'
 import { isFoodManager } from '@/src/access/roles'
@@ -255,6 +256,13 @@ describe('jobs and applications', () => {
     expect(callAccess(JobApplications.access?.create, null)).toBe(false)
     expect(callAccess(JobApplications.access?.read, null)).toBe(false)
     expect(callAccess(JobApplications.access?.read, userWith(['admin']))).toBe(true)
+  })
+})
+
+describe('recurring food schedule', () => {
+  it('lets anyone read the schedule, since /food and the homepage publish it', () => {
+    expect(callAccess(RecurringFood.access?.read, null)).toBe(true)
+    expect(callAccess(RecurringFood.access?.read, userWith(['bartender']))).toBe(true)
   })
 })
 
