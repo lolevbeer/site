@@ -84,4 +84,14 @@ export const migrationRecovery: readonly MigrationRecovery[] = [
     verify:
       'Confirm the yearless slot index is absent and the year-scoped uniqueness index remains.',
   },
+  {
+    name: '20260926_190000_backfill_missing_beer_reviews',
+    compatibility:
+      'Only adds beer-reviews documents for beers that have none; the previously deployed app still falls back to embedded legacy reviews, so both versions render the same reviews.',
+    retry:
+      'Safe to rerun: it skips any beer that already has review documents, and review upserts are keyed by source URL.',
+    mode: 'roll-forward',
+    verify:
+      'Run scripts/check-legacy-reviews.ts: beers with legacy positiveReviews but zero beer-reviews documents must be 0 (Taupō was the only one on 2026-09-26).',
+  },
 ]
