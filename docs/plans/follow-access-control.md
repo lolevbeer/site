@@ -36,8 +36,14 @@ This is also Payload v4 prep: v4 flips the omitted default from `true` to `false
   Local API call that omits `overrideAccess`. Isolated invariants use
   `// eslint-disable-next-line no-restricted-syntax -- system: <reason>`.
 - **Gaps → widen the role.**
-- **A beer on a published menu or Coming Soon is public.** Draft still hides a
-  beer from the catalog, sitemap, RSS, llms.txt.
+- **Draft beers never show on the public site** (revised 2026-09-26; supersedes
+  the earlier "on a published menu or Coming Soon is public" exception, which
+  Task 2 first built and commit `0ebcc3a8` removed). `main` leaked 38
+  never-published imported beers via override reads; following access hides
+  them from the catalog, sitemap, feeds, and beer pages.
+- **Taupō review backfill:** migration `20260926_190000_backfill_missing_beer_reviews`
+  gives every beer with legacy reviews its review docs before the legacy
+  fallback is removed (Task 7).
 - **Derived-data / invariant helpers are system code** (review sync, unique
   slug/recipe checks, beer page revalidation): keep `overrideAccess: true`, pass
   `req` for the transaction, allowlisted with a comment saying why.
