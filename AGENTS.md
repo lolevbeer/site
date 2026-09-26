@@ -19,4 +19,4 @@ Never omit `overrideAccess`: Payload 3 defaults an omitted (or `undefined`) flag
 
 When following access hides something a role legitimately needs, widen that role's access rule rather than bypassing it. A denied relationship populates as a bare ID and our consumers drop non-objects, so access gaps show up as missing content, not errors — check the rendered page.
 
-Current rules worth knowing: beer managers, bartenders, and lead bartenders read every beer; the public reads published beers plus any beer on a published menu or Coming Soon (`src/access/public-beer-ids.ts`); draft and version reads of beers are beer-manager only. See `docs/plans/follow-access-control.md` for the migration.
+Current rules worth knowing: beer managers, bartenders, and lead bartenders read every beer; everyone else reads published beers only (drafts never show on the public site, even on a published menu or Coming Soon); beer version history is beer-manager only. See `docs/plans/follow-access-control.md` for the migration.

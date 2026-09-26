@@ -3,7 +3,6 @@ import { APIError } from 'payload'
 import { revalidateTag } from 'next/cache'
 import { generateUniqueSlug } from './utils/generateUniqueSlug'
 import { adminAccess, beerManagerAccess, beerManagerFieldAccess, hasRole } from '@/src/access/roles'
-import { getPublicBeerIds } from '@/src/access/public-beer-ids'
 import { fetchUntappdData, type UntappdReview } from '@/src/utils/untappd'
 import { logger } from '@/lib/utils/logger'
 import { syncBeerReviews, type LegacyUntappdReview } from '@/src/utils/beer-reviews'
@@ -72,12 +71,15 @@ const generatedUploadField = (name: string, description: string): Field => ({
  *    (`req.data.draft`). GraphQL rewrites `req.query.draft` unreliably, so
  *    GraphQL reads stay published-only, which is also safe in draft mode.
  *    A Local API `draft: true` leaves no trace on `req`; server code must not
- *    request drafts on a visitor's behalf.
- * 3. Otherwise: published beers, plus any beer on a published menu or on
- *    Coming Soon (see `getPublicBeerIds`), so a drafted beer that is on tap
- *    still populates on public menus.
+ *    request drafts on a visitor's behalf. The guard is still needed with
+ *    case 3: Payload's draft lookup (`replaceWithDraftIfAvailable`) only
+ *    checks read access, so without it `?draft=true` on a published beer
+ *    would return its unpublished edits.
+ * 3. Otherwise: published beers only. Drafts never show on the public site,
+ *    even when a draft beer sits on a published menu or Coming Soon; publish
+ *    the beer to make it public.
  */
-export const canReadBeers: Access = async ({ req }) => {
+export const canReadBeers: Access = ({ req }) => {
   if (hasRole(req.user, ['admin', 'beer-manager', 'bartender', 'lead-bartender'])) return true
 
   const published: Where = { _status: { equals: 'published' } }
@@ -86,17 +88,14 @@ export const canReadBeers: Access = async ({ req }) => {
   const isTrue = (value: unknown) => value === true || value === 'true'
   if (isTrue(req.query?.draft) || isTrue(req.data?.draft)) return false
 
-  const ids = await getPublicBeerIds(req)
-  if (ids.length === 0) return published
-  return { or: [published, { id: { in: ids } }] }
+  return published
 }
 
 export const Beers: CollectionConfig = {
   slug: 'beers',
   access: {
     read: canReadBeers,
-    // Version history holds unpublished edits; canReadBeers' menu/Coming Soon
-    // widening must not extend to it.
+    // Version history holds unpublished edits, so only beer managers see it.
     readVersions: beerManagerAccess,
     create: beerManagerAccess,
     update: beerManagerAccess,
