@@ -18,9 +18,7 @@
  * `overrideAccess: false` explicitly (Payload 3.x defaults it to true), so
  * collection and field access rules decide what the public sees — e.g. event
  * contact fields and food-vendor email/phone are stripped, and beers are
- * limited to published ones plus those on a published menu or Coming Soon
- * (see `canReadBeers` in src/collections/Beers.ts). getBeerBySlug is the one
- * exception still pending conversion.
+ * limited to published ones (see `canReadBeers` in src/collections/Beers.ts).
  */
 
 import { cache } from 'react'
@@ -221,16 +219,18 @@ export const getBeerBySlug = cache(async (slug: string): Promise<PayloadBeer | n
         // Reviews are loaded via getPublicBeerReviews below; the join would
         // duplicate them in the unstable_cache entry.
         joins: false,
-        // eslint-disable-next-line no-restricted-syntax -- system: pending access-plan Task 7 (legacy review fallback)
-        overrideAccess: true,
+        overrideAccess: false,
       })
 
-      // Return null for "not found" (cacheable), but let errors throw (not cached)
+      // Return null for "not found" (cacheable), but let errors throw (not cached).
+      // Access hides draft beers from anonymous reads, so a draft slug lands
+      // here and the page renders its not-found route.
       const beer = result.docs[0]
       if (!beer) return null
 
+      // The page renders reviews from `positiveReviews`; fill it from the
+      // approved beer-reviews docs only (the legacy JSON field is manager-only).
       const reviews = await getPublicBeerReviews(payload, beer.id)
-      if (reviews === null) return beer
       return { ...beer, positiveReviews: reviews }
     },
     [`beer-${slug}`],

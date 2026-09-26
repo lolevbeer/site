@@ -107,10 +107,20 @@ describe('public beer reviews', () => {
     expect(reviews?.[0].url).toBe('https://untappd.com/checkin/a')
   })
 
-  it('returns null when a beer has no normalized reviews so legacy JSON still renders', async () => {
+  it('reads as an anonymous visitor so access limits it to approved docs', async () => {
+    const { payload, find } = payloadWith()
+
+    await getPublicBeerReviews(payload, 'beer-1')
+
+    expect(find).toHaveBeenCalledWith(
+      expect.objectContaining({ collection: 'beer-reviews', overrideAccess: false }),
+    )
+  })
+
+  it('returns an empty list, not a legacy fallback signal, when no docs are visible', async () => {
     const { payload } = payloadWith()
 
-    await expect(getPublicBeerReviews(payload, 'beer-1')).resolves.toBeNull()
+    await expect(getPublicBeerReviews(payload, 'beer-1')).resolves.toEqual([])
   })
 
   it('publishes an empty list once every review is unapproved', async () => {

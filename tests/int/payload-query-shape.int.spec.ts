@@ -45,6 +45,7 @@ import {
   getAllLocations,
   getAllUpcomingEventsFromPayload,
   getAvailableBeersFromMenus,
+  getBeerBySlug,
   getCombinedUpcomingFood,
   getComingSoonBeers,
   getMenuByUrl,
@@ -184,6 +185,37 @@ describe('public fetchers read as an anonymous visitor', () => {
     expect([...hit].sort()).toEqual([...targets].sort())
     for (const args of calls) {
       expect(args, String(args.collection ?? args.slug)).toMatchObject({ overrideAccess: false })
+    }
+  })
+})
+
+describe('getBeerBySlug reads as an anonymous visitor', () => {
+  it('returns null for a draft beer (access hides it) so the page 404s', async () => {
+    // canReadBeers limits anonymous reads to published beers, so a draft slug
+    // comes back with no docs.
+    find.mockResolvedValue({ docs: [] })
+
+    await expect(getBeerBySlug('draft-beer')).resolves.toBeNull()
+
+    expect(find).toHaveBeenCalledTimes(1)
+    expect(find.mock.calls[0][0]).toMatchObject({ collection: 'beers', overrideAccess: false })
+  })
+
+  it('serves only beer-reviews docs, never the legacy positiveReviews JSON', async () => {
+    const legacy = [{ username: 'Old', url: 'https://untappd.com/checkin/legacy' }]
+    find.mockImplementation(async (args: { collection: string }) =>
+      args.collection === 'beers'
+        ? { docs: [{ id: 'beer-1', slug: 'published-beer', positiveReviews: legacy }] }
+        : { docs: [] },
+    )
+
+    const beer = await getBeerBySlug('published-beer')
+
+    expect(beer?.positiveReviews).toEqual([])
+    const calls = find.mock.calls.map((call) => call[0] as Record<string, unknown>)
+    expect(calls.map((args) => args.collection)).toEqual(['beers', 'beer-reviews'])
+    for (const args of calls) {
+      expect(args, String(args.collection)).toMatchObject({ overrideAccess: false })
     }
   })
 })
