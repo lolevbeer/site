@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { SocialLinks } from './social-links'
-import { navigationItems } from './navigation'
+import { isNavItemActive, navigationItems } from './navigation'
 
 interface MobileMenuProps {
   /** Whether the mobile menu is open */
@@ -71,7 +71,7 @@ export function MobileMenu({ isOpen, onClose, isScrolled = false }: MobileMenuPr
                 {/* Navigation - centered with staggered animations */}
                 <nav className="flex-1 flex flex-col justify-center" aria-label="Main navigation">
                   {navigationItems.map((item, index) => {
-                    const isActive = pathname === item.href
+                    const isActive = isNavItemActive(pathname, item.href)
                     return (
                       <motion.div
                         key={item.href}

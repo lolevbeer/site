@@ -2,12 +2,12 @@
 @import "mapbox-gl/dist/mapbox-gl.css";
 @plugin "tailwindcss-animate";
 
+/* `dark:` follows the theme switcher's `.dark` class, not the OS setting. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   /* Font family */
   --font-poppins: var(--font-poppins), 'Poppins', system-ui, sans-serif;
-
-  /* Dark mode configuration */
-  --dark-mode: class;
 
   /* Light mode colors */
   --color-background: #ffffff;
@@ -32,13 +32,6 @@
   --color-border: #d2d2d7;
   --color-input: #f5f5f7;
   --color-ring: #0071e3;
-
-  /* Additional colors for brewery theme */
-  --color-amber: #ff9500;
-  --color-amber-light: #ffcc00;
-
-  /* Override Tailwind amber-500 with hex */
-  --color-amber-500: #f59e0b;
 
   /* Simplified spacing */
   --spacing-xs: 0.5rem;
@@ -364,24 +357,6 @@
     animation: search-pulse 0.3s ease-out;
   }
 
-  /* Subtle glow pulse for CTAs */
-  @keyframes glow-pulse {
-    0%, 100% {
-      box-shadow: 0 0 0 0 transparent;
-    }
-    50% {
-      box-shadow: 0 0 20px 4px rgba(128, 128, 128, 0.2);
-    }
-  }
-
-  .dark .animate-glow-pulse {
-    --glow-color: rgba(255, 255, 255, 0.15);
-  }
-
-  .animate-glow-pulse {
-    animation: glow-pulse 3s ease-in-out infinite;
-  }
-
   /* Hide scrollbar utility for carousel */
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
@@ -408,22 +383,6 @@
   /* Gradient separator */
   .gradient-separator {
     @apply h-px bg-gradient-to-r from-transparent via-border to-transparent;
-  }
-
-  /* Button hover arrow */
-  .btn-arrow::after {
-    content: '\2192';
-    display: inline-block;
-    margin-left: 0;
-    opacity: 0;
-    transform: translateX(-4px);
-    transition: all 0.2s ease;
-  }
-
-  .btn-arrow:hover::after {
-    margin-left: 0.5rem;
-    opacity: 1;
-    transform: translateX(0);
   }
 
   /* Tighter tracking for display text */

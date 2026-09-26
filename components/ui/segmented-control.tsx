@@ -88,7 +88,7 @@ export function SegmentedControl({
             aria-pressed={isActive}
             onClick={() => onValueChange(option.value)}
             className={cn(
-              'relative inline-flex cursor-pointer items-center justify-center whitespace-nowrap rounded-sm py-1.5 font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
+              'relative inline-flex cursor-pointer items-center justify-center whitespace-nowrap rounded-sm py-1.5 font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
               ITEM_SIZE_CLASS[size],
               isActive ? 'text-foreground' : SEGMENTED_ITEM_IDLE_CLASS,
             )}
