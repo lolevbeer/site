@@ -2,24 +2,33 @@
  * Open roles, scoped to a taproom. Anonymous REST/GraphQL read is active jobs
  * only; admins see drafts and inactive openings.
  */
-import type { CollectionConfig, Payload } from 'payload'
+import type { CollectionConfig, PayloadRequest } from 'payload'
 import { revalidatePath } from 'next/cache'
 import { adminAccess, hasRole } from '@/src/access/roles'
 import { generateUniqueSlug } from './utils/generateUniqueSlug'
 
-/** Populated location slug, or a lookup when the field is still an id. */
+/**
+ * Populated location slug, or a lookup when the field is still an id. The
+ * lookup runs as the editor (`req`); locations are publicly readable.
+ */
 async function locationSlugForJob(
   location: unknown,
-  payload: Payload | undefined,
+  req: PayloadRequest | undefined,
 ): Promise<string | undefined> {
   if (typeof location === 'object' && location && 'slug' in location) {
     return typeof location.slug === 'string' ? location.slug : undefined
   }
-  if (!location || !payload) return undefined
+  if (!location || !req?.payload) return undefined
   const id =
     typeof location === 'object' && 'id' in location ? String(location.id) : String(location)
   try {
-    const loc = await payload.findByID({ collection: 'locations', id, depth: 0 })
+    const loc = await req.payload.findByID({
+      collection: 'locations',
+      id,
+      depth: 0,
+      req,
+      overrideAccess: false,
+    })
     return loc?.slug || undefined
   } catch {
     return undefined
@@ -107,7 +116,7 @@ export const Jobs: CollectionConfig = {
     afterChange: [
       async ({ doc, req, context }) => {
         if (context?.skipRevalidate) return doc
-        const slug = await locationSlugForJob(doc.location, req?.payload)
+        const slug = await locationSlugForJob(doc.location, req)
         if (slug) revalidatePath(`/${slug}`)
         return doc
       },

@@ -109,12 +109,14 @@ export const Menus: CollectionConfig = {
       async ({ data, req }) => {
         // Auto-generate URL if not provided or empty
         if ((!data.url || data.url.trim() === '') && data.location && data.type) {
-          // Fetch location name
+          // Fetch location name as the editor (locations are publicly readable)
           let locationName = ''
           if (typeof data.location === 'string') {
             const location = await req.payload.findByID({
               collection: 'locations',
               id: data.location,
+              req,
+              overrideAccess: false,
             })
             locationName = location.name || location.slug || ''
           } else if (data.location && typeof data.location === 'object') {
@@ -152,13 +154,17 @@ export const Menus: CollectionConfig = {
             },
           )
 
-          // Single batch query for all beers
+          // Single batch query for all beers, run as the editor inside the
+          // save transaction. Menu editors (admin, bartender, lead-bartender)
+          // read every beer incl. drafts via canReadBeers.
           const recipeMap: Map<string, number> = new Map()
           if (beerIds.length > 0) {
             const beers = await req.payload.find({
               collection: 'beers',
               where: { id: { in: beerIds } },
               limit: beerIds.length,
+              req,
+              overrideAccess: false,
             })
             beers.docs.forEach((beer) => {
               recipeMap.set(beer.id, beer.recipe || 0)
