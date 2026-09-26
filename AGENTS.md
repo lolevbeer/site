@@ -7,3 +7,16 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+# Access control
+
+Payload access rules (collection, global, and field `access`) are the single source of truth for who may read or write what. Every Payload Local API call states the identity it runs as:
+
+- **Acting for a person** (anonymous visitor, admin editor, Slack user): `overrideAccess: false` plus their `user` or the hook's `req`. Public pages pass no user — anonymous is the correct identity. Inside hooks, always pass `req` so the call runs as the editor and inside the save transaction.
+- **User-less system code** (migrations, `scripts/`, the Untappd job and cron, public form intake, rate limiting, Slack notify, and derived-data helpers such as review sync, unique slug/recipe checks, and page revalidation): `overrideAccess: true`. It is allowed only in the files listed as `SYSTEM_OVERRIDE_FILES` in `eslint.config.mjs`, or behind `// eslint-disable-next-line no-restricted-syntax -- system: <reason>` on the `overrideAccess` line.
+
+Never omit `overrideAccess`: Payload 3 defaults an omitted (or `undefined`) flag to `true`, Payload 4 flips it to `false`. ESLint rejects both an omitted flag and an unfenced `true`.
+
+When following access hides something a role legitimately needs, widen that role's access rule rather than bypassing it. A denied relationship populates as a bare ID and our consumers drop non-objects, so access gaps show up as missing content, not errors — check the rendered page.
+
+Current rules worth knowing: beer managers, bartenders, and lead bartenders read every beer; the public reads published beers plus any beer on a published menu or Coming Soon (`src/access/public-beer-ids.ts`); draft and version reads of beers are beer-manager only. See `docs/plans/follow-access-control.md` for the migration.
