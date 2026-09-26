@@ -51,14 +51,12 @@ export function UpcomingBeers({
           {validItems.map(({ beer, style }, index) => (
             <div key={index}>
               {beer?.slug && !beer.hideFromSite ? (
-                <Button
-                  asChild
-                  variant="ghost"
-                  size="sm"
-                  className="text-lg font-semibold h-auto py-0 px-2"
+                <Link
+                  href={`/beer/${beer.slug}`}
+                  className="text-lg font-semibold transition-colors hover:text-muted-foreground"
                 >
-                  <Link href={`/beer/${beer.slug}`}>{beer.name}</Link>
-                </Button>
+                  {beer.name}
+                </Link>
               ) : (
                 /* Hidden beers 404 on /beer/<slug>, so keep the name but drop the link */
                 <h3 className="font-semibold text-lg">{beer?.name ?? style?.name}</h3>

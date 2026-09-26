@@ -157,7 +157,7 @@ export function HeroSection({
               asChild
               variant="default"
               size="lg"
-              className="w-full sm:w-auto sm:min-w-[160px] text-base animate-glow-pulse"
+              className="w-full sm:w-auto sm:min-w-[160px]"
             >
               <Link href="/beer-map" prefetch={false}>
                 Find Lolev
@@ -177,7 +177,7 @@ export function HeroSection({
                 Newsletter
               </a>
             </Button>
-            <Button asChild variant="ghost" size="lg" className="w-full sm:w-auto sm:min-w-[160px]">
+            <Button asChild variant="link" size="lg" className="w-full sm:w-auto sm:min-w-[160px]">
               <Link href="/about" prefetch={false}>
                 Our Story
               </Link>

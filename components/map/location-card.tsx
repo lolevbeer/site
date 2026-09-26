@@ -1,20 +1,20 @@
 'use client'
 
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { capitalizeName } from '@/lib/utils/formatters';
-import { googleDirectionsUrl } from '@/lib/map/geo';
+import React from 'react'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+import { capitalizeName } from '@/lib/utils/formatters'
+import { googleDirectionsUrl } from '@/lib/map/geo'
 
 interface LocationCardProps {
-  name: string;
-  address: string;
-  distance?: number;
-  distanceFromLabel?: string | null;
-  isSelected: boolean;
-  onClick: () => void;
-  innerRef?: React.Ref<HTMLDivElement>;
-  badge?: string;
+  name: string
+  address: string
+  distance?: number
+  distanceFromLabel?: string | null
+  isSelected: boolean
+  onClick: () => void
+  innerRef?: React.Ref<HTMLDivElement>
+  badge?: string
 }
 
 export function LocationCard({
@@ -27,16 +27,16 @@ export function LocationCard({
   innerRef,
   badge,
 }: LocationCardProps) {
-  const directionsUrl = googleDirectionsUrl(address);
+  const directionsUrl = googleDirectionsUrl(address)
 
   return (
     <div
       ref={innerRef}
       className={cn(
-        "p-3 rounded-md",
-        "transition-all duration-200 ease-out",
-        "hover:bg-secondary",
-        isSelected && "bg-secondary"
+        'p-3 rounded-md',
+        'transition-all duration-200 ease-out',
+        'hover:bg-secondary',
+        isSelected && 'bg-secondary',
       )}
     >
       <div className="flex items-center justify-between gap-3">
@@ -70,17 +70,12 @@ export function LocationCard({
             </span>
           )}
         </div>
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-7 min-h-6 min-w-6 text-xs shrink-0 hover:bg-primary hover:text-primary-foreground cursor-pointer"
-          asChild
-        >
+        <Button size="sm" variant="outline" className="shrink-0" asChild>
           <a href={directionsUrl} target="_blank" rel="noopener noreferrer">
             Directions
           </a>
         </Button>
       </div>
     </div>
-  );
+  )
 }
