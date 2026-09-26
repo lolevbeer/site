@@ -159,7 +159,11 @@ export const importDistributors: PayloadHandler = async (req) => {
   const regionUpper = region.toUpperCase() as 'PA' | 'OH'
 
   // Get URL from site-content
-  const siteContent = await payload.findGlobal({ slug: 'site-content' })
+  const siteContent = await payload.findGlobal({
+    slug: 'site-content',
+    overrideAccess: false,
+    user,
+  })
   const jsonUrl =
     region === 'pa'
       ? (siteContent as SiteContent).distributorPaUrl
@@ -200,6 +204,8 @@ export const importDistributors: PayloadHandler = async (req) => {
       where: { region: { equals: regionUpper } },
       pagination: false,
       depth: 0,
+      overrideAccess: false,
+      user,
     })
     const byName = indexDocsByName(existing.docs)
 
@@ -243,6 +249,7 @@ export const importDistributors: PayloadHandler = async (req) => {
         try {
           const result = await applyExistingDistributorPatch({
             payload,
+            user,
             current,
             patch,
             name: row.CustomerName,
@@ -282,6 +289,8 @@ export const importDistributors: PayloadHandler = async (req) => {
             location,
             active: true,
           },
+          overrideAccess: false,
+          user,
         })
         byName.set(row.CustomerName, [created])
         const msg = `Imported: ${row.CustomerName}`

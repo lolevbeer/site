@@ -34,6 +34,8 @@ export const recalculateBeerPrices: PayloadHandler = async (req) => {
           collection: 'beers',
           limit: 1000,
           depth: 0,
+          overrideAccess: false,
+          user,
         })
 
         send('status', { message: `Recalculating fields for ${beersResult.docs.length} beers...` })
@@ -56,6 +58,8 @@ export const recalculateBeerPrices: PayloadHandler = async (req) => {
                   draftPrice: beer.draftPrice,
                   fourPack: beer.fourPack,
                 },
+                overrideAccess: false,
+                user,
               })
             }
             results.updated++

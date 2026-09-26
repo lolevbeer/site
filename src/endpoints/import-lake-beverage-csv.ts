@@ -115,6 +115,8 @@ export const importLakeBeverageCSV: PayloadHandler = async (req) => {
         where: { region: { equals: 'NY' } },
         pagination: false,
         depth: 0,
+        overrideAccess: false,
+        user,
       })
       const byName = indexDocsByName(existing.docs)
 
@@ -154,6 +156,7 @@ export const importLakeBeverageCSV: PayloadHandler = async (req) => {
           try {
             const result = await applyExistingDistributorPatch({
               payload,
+              user,
               current,
               patch,
               name: row.name,
@@ -196,6 +199,8 @@ export const importLakeBeverageCSV: PayloadHandler = async (req) => {
               location,
               active: true,
             },
+            overrideAccess: false,
+            user,
           })
           byName.set(row.name, [created])
           details.push(`Imported: ${row.name}`)

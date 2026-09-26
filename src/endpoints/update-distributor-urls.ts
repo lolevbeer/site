@@ -26,6 +26,8 @@ export const updateDistributorUrls: PayloadHandler = async (req) => {
         distributorPaUrl: distributorPaUrl || '',
         distributorOhUrl: distributorOhUrl || '',
       },
+      overrideAccess: false,
+      user,
     })
 
     return Response.json({ success: true })

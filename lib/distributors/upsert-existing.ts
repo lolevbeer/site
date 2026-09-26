@@ -1,10 +1,13 @@
 /**
  * Apply a re-import patch to an existing distributor. Geocodes when the
  * street address changes. Does not infer customer type.
+ *
+ * Runs as `user` (the admin the calling import endpoint authorized) with
+ * `overrideAccess: false`, so the Distributors access rules apply.
  */
 
 import type { Payload } from 'payload'
-import type { Distributor } from '@/src/payload-types'
+import type { Distributor, User } from '@/src/payload-types'
 import {
   addressFieldsChanged,
   formatFullAddress,
@@ -13,13 +16,14 @@ import {
 
 export async function applyExistingDistributorPatch(args: {
   payload: Payload
+  user: User
   current: Distributor
   patch: DistributorImportPatch
   name: string
   geocode: (address: string) => Promise<[number, number] | null>
   sleep: (ms: number) => Promise<void>
 }): Promise<{ geocodeFailed: boolean; warning?: string }> {
-  const { payload, current, patch, name, geocode, sleep } = args
+  const { payload, user, current, patch, name, geocode, sleep } = args
   let geocodeFailed = false
   if (addressFieldsChanged(patch)) {
     const full = formatFullAddress({
@@ -38,6 +42,8 @@ export async function applyExistingDistributorPatch(args: {
     collection: 'distributors',
     id: current.id,
     data: patch,
+    overrideAccess: false,
+    user,
   })
 
   return {

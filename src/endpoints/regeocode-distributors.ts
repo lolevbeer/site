@@ -39,6 +39,8 @@ export const regeocodeDistributors: PayloadHandler = async (req) => {
     collection: 'distributors',
     limit: 2000,
     depth: 0,
+    overrideAccess: false,
+    user,
   })
 
   // Find distributors with suspicious coordinates
@@ -116,6 +118,8 @@ export const regeocodeDistributors: PayloadHandler = async (req) => {
               collection: 'distributors',
               id: dist.id,
               data: { location: coords },
+              overrideAccess: false,
+              user,
             })
 
             const result = {

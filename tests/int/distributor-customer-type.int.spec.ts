@@ -123,6 +123,7 @@ describe('applyExistingDistributorPatch', () => {
     const patch = { address: '2 Main' }
     await applyExistingDistributorPatch({
       payload: { update } as never,
+      user: { id: 'admin-id', roles: ['admin'] } as never,
       current: {
         id: '1',
         address: '1 Main',
@@ -142,6 +143,8 @@ describe('applyExistingDistributorPatch', () => {
         collection: 'distributors',
         id: '1',
         data: expect.objectContaining({ address: '2 Main', location: [-80, 40.4] }),
+        overrideAccess: false,
+        user: { id: 'admin-id', roles: ['admin'] },
       }),
     )
   })
