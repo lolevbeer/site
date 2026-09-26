@@ -1019,7 +1019,8 @@ const getRecurringFoodGlobal = async (year: number): Promise<RecurringFoodState>
     return await unstable_cache(
       async (): Promise<RecurringFoodState> => {
         const payload = await getPayload({ config })
-        return getRecurringFoodState(payload, { overrideAccess: true, year })
+        // Anonymous: the global, active schedules, and exclusions are public.
+        return getRecurringFoodState(payload, { overrideAccess: false, year })
       },
       [`recurring-food-global-${year}`],
       { tags: [CACHE_TAGS.food], revalidate: 300 },

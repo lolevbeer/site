@@ -98,7 +98,9 @@ async function getFoodData(): Promise<FoodVendorSchedule[]> {
         depth: 2,
         overrideAccess: false,
       }),
-      Promise.all(years.map((year) => getRecurringFoodState(payload, { year }))),
+      Promise.all(
+        years.map((year) => getRecurringFoodState(payload, { overrideAccess: false, year })),
+      ),
       payload.find({
         collection: 'locations',
         where: {

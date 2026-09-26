@@ -1,6 +1,22 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { Payload } from 'payload'
+import type { User } from '@/src/payload-types'
 import { getRecurringFoodState } from '@/src/utils/recurring-food'
+
+vi.mock('next/cache', () => ({
+  unstable_cache: (fn: (...args: unknown[]) => unknown) => fn,
+  revalidateTag: vi.fn(),
+}))
+vi.mock('@/lib/utils/logger', () => ({
+  logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() },
+}))
+const mockPayload = { find: vi.fn(), findGlobal: vi.fn() }
+vi.mock('payload', () => ({ getPayload: vi.fn(async () => mockPayload) }))
+vi.mock('@/src/payload.config', () => ({ default: {} }))
+
+import { getCombinedUpcomingFood } from '@/lib/utils/payload-api'
+
+const anonymous = { overrideAccess: false } as const
 
 describe('recurring food compatibility reads', () => {
   it('uses legacy JSON until the migration marker is present', async () => {
@@ -21,7 +37,7 @@ describe('recurring food compatibility reads', () => {
       ],
     }))
 
-    const state = await getRecurringFoodState({ findGlobal, find } as unknown as Payload)
+    const state = await getRecurringFoodState({ findGlobal, find } as unknown as Payload, anonymous)
 
     expect(state.usingLegacyData).toBe(true)
     expect(state.schedules['location-1'].monday.first).toBe('legacy-vendor')
@@ -46,7 +62,7 @@ describe('recurring food compatibility reads', () => {
         docs: [{ location: 'location-1', date: '2026-08-31T12:00:00.000Z' }],
       })
 
-    const state = await getRecurringFoodState({ findGlobal, find } as unknown as Payload)
+    const state = await getRecurringFoodState({ findGlobal, find } as unknown as Payload, anonymous)
 
     expect(state.usingLegacyData).toBe(false)
     expect(state.schedules['location-1'].monday.first).toBe('vendor-1')
@@ -59,7 +75,7 @@ describe('recurring food compatibility reads', () => {
     const findGlobal = vi.fn(async () => ({ normalizedAt: '2026-08-26T00:00:00.000Z' }))
     const find = vi.fn().mockResolvedValueOnce({ docs: [] }).mockResolvedValueOnce({ docs: [] })
 
-    await getRecurringFoodState({ findGlobal, find } as unknown as Payload)
+    await getRecurringFoodState({ findGlobal, find } as unknown as Payload, anonymous)
 
     expect(find).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -80,6 +96,7 @@ describe('recurring food compatibility reads', () => {
     const find = vi.fn().mockResolvedValueOnce({ docs: [] }).mockResolvedValueOnce({ docs: [] })
 
     const state = await getRecurringFoodState({ findGlobal, find } as unknown as Payload, {
+      ...anonymous,
       year: 2027,
     })
 
@@ -92,5 +109,66 @@ describe('recurring food compatibility reads', () => {
         },
       }),
     )
+  })
+})
+
+/**
+ * Payload 3.x Local API treats an omitted or undefined `overrideAccess` as
+ * true, so each inner read must receive the caller's value literally.
+ */
+describe('recurring food access identity', () => {
+  function normalizedPayload() {
+    const findGlobal = vi.fn(async () => ({ normalizedAt: '2026-08-26T00:00:00.000Z' }))
+    const find = vi.fn(async () => ({ docs: [] }))
+    return { findGlobal, find, payload: { findGlobal, find } as unknown as Payload }
+  }
+
+  function innerCalls(findGlobal: ReturnType<typeof vi.fn>, find: ReturnType<typeof vi.fn>) {
+    return [...findGlobal.mock.calls, ...find.mock.calls].map(
+      (call) => call[0] as Record<string, unknown>,
+    )
+  }
+
+  it('passes overrideAccess: false to every read for an anonymous caller', async () => {
+    const { findGlobal, find, payload } = normalizedPayload()
+
+    await getRecurringFoodState(payload, anonymous)
+
+    const calls = innerCalls(findGlobal, find)
+    expect(calls).toHaveLength(3)
+    for (const args of calls) expect(args.overrideAccess).toBe(false)
+  })
+
+  it('forwards overrideAccess and user exactly as passed', async () => {
+    const { findGlobal, find, payload } = normalizedPayload()
+    const user = { id: 'user-1' } as unknown as User
+
+    await getRecurringFoodState(payload, { overrideAccess: false, user })
+
+    for (const args of innerCalls(findGlobal, find)) {
+      expect(args).toHaveProperty('overrideAccess', false)
+      expect(args.user).toBe(user)
+    }
+  })
+
+  it('public recurring food expansion reads as anonymous, not with override', async () => {
+    mockPayload.find.mockReset()
+    mockPayload.findGlobal.mockReset()
+    mockPayload.find.mockImplementation(async ({ collection }: { collection: string }) =>
+      collection === 'locations' ? { docs: [{ id: 'loc-1' }] } : { docs: [] },
+    )
+    mockPayload.findGlobal.mockResolvedValue({ normalizedAt: '2026-08-26T00:00:00.000Z' })
+
+    await getCombinedUpcomingFood('lawrenceville')
+
+    const recurringReads = [...mockPayload.findGlobal.mock.calls, ...mockPayload.find.mock.calls]
+      .map((call) => call[0] as Record<string, unknown>)
+      .filter((args) =>
+        ['recurring-food', 'recurring-food-schedules', 'recurring-food-exclusions'].includes(
+          String(args.slug ?? args.collection),
+        ),
+      )
+    expect(recurringReads.length).toBeGreaterThan(0)
+    for (const args of recurringReads) expect(args.overrideAccess).toBe(false)
   })
 })

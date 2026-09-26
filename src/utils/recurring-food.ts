@@ -31,9 +31,7 @@ export const LEGACY_SCHEDULE_YEAR = 2026
 
 /** Year filter that also matches legacy year-less rows when 2026 is queried. */
 export function scheduleYearFilter(year: number | number[]): Where {
-  const match: Where = Array.isArray(year)
-    ? { year: { in: year } }
-    : { year: { equals: year } }
+  const match: Where = Array.isArray(year) ? { year: { in: year } } : { year: { equals: year } }
   const includesLegacy = Array.isArray(year)
     ? year.includes(LEGACY_SCHEDULE_YEAR)
     : year === LEGACY_SCHEDULE_YEAR
@@ -66,9 +64,14 @@ export interface RecurringFoodState {
   usingLegacyData: boolean
 }
 
+/**
+ * Identity for the recurring-food reads. `overrideAccess` is required because
+ * Payload 3.x treats an omitted or undefined value as `true`; public callers
+ * pass `false` (anonymous), admin callers pass `false` plus their `user`.
+ */
 interface RecurringFoodQueryOptions {
-  overrideAccess?: boolean
-  user?: User
+  overrideAccess: boolean
+  user?: User | null
   year?: number
 }
 
@@ -87,20 +90,29 @@ export function exclusionTimestamp(dateOnly: string): string {
   return `${dateOnly}T12:00:00.000Z`
 }
 
+/**
+ * Read one year's recurring food grid: the normalized schedule/exclusion
+ * collections once the legacy global's `normalizedAt` marker is set, the frozen
+ * legacy global JSON before that.
+ *
+ * Each of the three Local API reads receives `overrideAccess` and `user`
+ * literally from `access`, so access rules apply as the caller specifies.
+ * Anonymous reads (`overrideAccess: false`, no user) see the same rows as an
+ * override would: the global and exclusions are publicly readable, and
+ * anonymous schedule reads are limited to `active` rows, which is all this
+ * query asks for.
+ */
 export async function getRecurringFoodState(
   payload: Payload,
-  options: RecurringFoodQueryOptions = {},
+  access: RecurringFoodQueryOptions,
 ): Promise<RecurringFoodState> {
-  const year = options.year ?? new Date().getFullYear()
-  const access = {
-    overrideAccess: options.overrideAccess,
-    user: options.user,
-  }
+  const year = access.year ?? new Date().getFullYear()
 
   const legacy = await payload.findGlobal({
     slug: 'recurring-food',
     depth: 0,
-    ...access,
+    overrideAccess: access.overrideAccess,
+    user: access.user,
   })
 
   if (!legacy.normalizedAt) {
@@ -123,7 +135,8 @@ export async function getRecurringFoodState(
       depth: 0,
       limit: 1000,
       sort: ['location', 'day', 'occurrence'],
-      ...access,
+      overrideAccess: access.overrideAccess,
+      user: access.user,
     }),
     payload.find({
       collection: 'recurring-food-exclusions',
@@ -136,7 +149,8 @@ export async function getRecurringFoodState(
       depth: 0,
       limit: 1000,
       sort: 'date',
-      ...access,
+      overrideAccess: access.overrideAccess,
+      user: access.user,
     }),
   ])
 
