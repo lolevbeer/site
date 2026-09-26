@@ -128,9 +128,10 @@ bartender (relies on Task 2). Deps: 2.
 → `overrideAccess: false`, and delete the legacy `positiveReviews` fallback at
 `payload-api.ts:~220` (anonymous can't read that field; converting only one
 call re-exposes unapproved reviews via the fallback).
-**Pre-check:** confirm on prod that every beer with `positiveReviews` has
-normalized `beer-reviews` docs (migration `20260826_210000` ran); if not, stop
-and report.
+**Pre-check:** add read-only `scripts/check-legacy-reviews.ts` (run via
+`payload run`) listing beers with non-empty `positiveReviews` but zero
+`beer-reviews` docs. The user runs it against prod; if it lists any, stop and
+report before deleting the fallback.
 Test: `beer-reviews.int.spec.ts` — anonymous read passes `false`; beer with only
 unapproved docs yields no reviews (not the legacy JSON). Deps: 3.
 
