@@ -11,6 +11,7 @@ import * as dropMenuLinesLastCleaned from './20260827_120000_drop_menu_lines_las
 import * as scopeRecurringFoodByYear from './20260829_120000_scope_recurring_food_by_year'
 import * as dropGoogleSheetsFields from './20260830_100000_drop_google_sheets_fields'
 import * as dropLegacyRecurringFoodSlotIndex from './20260830_143000_drop_legacy_recurring_food_slot_index'
+import * as backfillMissingBeerReviews from './20260926_190000_backfill_missing_beer_reviews'
 
 export const migrations = [
   {
@@ -47,5 +48,10 @@ export const migrations = [
     up: dropLegacyRecurringFoodSlotIndex.up,
     down: dropLegacyRecurringFoodSlotIndex.down,
     name: '20260830_143000_drop_legacy_recurring_food_slot_index',
+  },
+  {
+    up: backfillMissingBeerReviews.up,
+    down: backfillMissingBeerReviews.down,
+    name: '20260926_190000_backfill_missing_beer_reviews',
   },
 ]
