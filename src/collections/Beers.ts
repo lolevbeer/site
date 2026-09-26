@@ -1,8 +1,9 @@
-import type { Access, CollectionConfig, Field, Payload } from 'payload'
+import type { Access, CollectionConfig, Field, Payload, Where } from 'payload'
 import { APIError } from 'payload'
 import { revalidateTag } from 'next/cache'
 import { generateUniqueSlug } from './utils/generateUniqueSlug'
 import { adminAccess, beerManagerAccess, beerManagerFieldAccess, hasRole } from '@/src/access/roles'
+import { getPublicBeerIds } from '@/src/access/public-beer-ids'
 import { fetchUntappdData, type UntappdReview } from '@/src/utils/untappd'
 import { logger } from '@/lib/utils/logger'
 import { syncBeerReviews, type LegacyUntappdReview } from '@/src/utils/beer-reviews'
@@ -53,20 +54,44 @@ const generatedUploadField = (name: string, description: string): Field => ({
   },
 })
 
-export const canReadBeers: Access = ({ req: { user } }) => {
-  if (hasRole(user, ['admin', 'beer-manager'])) return true
+/**
+ * Read access for beers, in three cases:
+ *
+ * 1. Staff who handle beer (admin, beer-manager, bartender, lead-bartender)
+ *    read every beer, drafts included.
+ * 2. Anyone else asking for drafts gets nothing. Payload's `draft` flag never
+ *    reaches access functions, so the REST request is inspected instead:
+ *    `?draft=true` (`req.query.draft`, boolean after the find handler parses
+ *    it, the raw string on findByID) or a method-override body
+ *    (`req.data.draft`). GraphQL rewrites `req.query.draft` unreliably, so
+ *    GraphQL reads stay published-only, which is also safe in draft mode.
+ *    A Local API `draft: true` leaves no trace on `req`; server code must not
+ *    request drafts on a visitor's behalf.
+ * 3. Otherwise: published beers, plus any beer on a published menu or on
+ *    Coming Soon (see `getPublicBeerIds`), so a drafted beer that is on tap
+ *    still populates on public menus.
+ */
+export const canReadBeers: Access = async ({ req }) => {
+  if (hasRole(req.user, ['admin', 'beer-manager', 'bartender', 'lead-bartender'])) return true
 
-  return {
-    _status: {
-      equals: 'published',
-    },
-  }
+  const published: Where = { _status: { equals: 'published' } }
+  if (req.payloadAPI === 'GraphQL') return published
+
+  const isTrue = (value: unknown) => value === true || value === 'true'
+  if (isTrue(req.query?.draft) || isTrue(req.data?.draft)) return false
+
+  const ids = await getPublicBeerIds(req)
+  if (ids.length === 0) return published
+  return { or: [published, { id: { in: ids } }] }
 }
 
 export const Beers: CollectionConfig = {
   slug: 'beers',
   access: {
     read: canReadBeers,
+    // Version history holds unpublished edits; canReadBeers' menu/Coming Soon
+    // widening must not extend to it.
+    readVersions: beerManagerAccess,
     create: beerManagerAccess,
     update: beerManagerAccess,
     delete: adminAccess, // Beer Managers can only archive, not delete

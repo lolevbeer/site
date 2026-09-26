@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import type { User } from '@/src/payload-types'
 import { Users } from '@/src/collections/Users'
 import { Menus, canUpdateMenus } from '@/src/collections/Menus'
-import { Beers, canReadBeers } from '@/src/collections/Beers'
 import { Events } from '@/src/collections/Events'
 import { DonationRequests } from '@/src/collections/DonationRequests'
 import { Jobs } from '@/src/collections/Jobs'
@@ -182,14 +181,7 @@ describe('sync endpoint authorization', () => {
 })
 
 describe('draft and sensitive field visibility', () => {
-  it('returns only published beers unless the user manages beer content', () => {
-    const publishedOnly = { _status: { equals: 'published' } }
-
-    expect(callAccess(canReadBeers, null)).toEqual(publishedOnly)
-    expect(callAccess(Beers.access?.read, userWith(['bartender']))).toEqual(publishedOnly)
-    expect(callAccess(canReadBeers, userWith(['beer-manager']))).toBe(true)
-    expect(callAccess(canReadBeers, userWith(['admin']))).toBe(true)
-  })
+  // Beer read access is covered in beer-read-access.int.spec.ts.
 
   it('keeps food vendor contacts available to staff but out of public responses', () => {
     for (const name of ['email', 'phone']) {
