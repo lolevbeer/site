@@ -73,6 +73,20 @@ describe('submitJobApplication', () => {
     expect(create).not.toHaveBeenCalled()
   })
 
+  it('reads the opening anonymously and writes with the system override', async () => {
+    find.mockImplementation(async (args: { collection: string }) =>
+      args.collection === 'jobs'
+        ? { docs: [{ id: 'job-1', title: 'Bartender', location: { name: 'Lawrenceville' } }] }
+        : { docs: [] },
+    )
+    const result = await submitJobApplication(valid())
+    expect(result).toEqual({ ok: true })
+    const jobsRead = find.mock.calls.find(([args]) => args.collection === 'jobs')
+    expect(jobsRead?.[0]).toMatchObject({ overrideAccess: false })
+    expect(create).toHaveBeenCalledTimes(1)
+    expect(create.mock.calls[0][0]).toMatchObject({ overrideAccess: true })
+  })
+
   it('rejects an inactive or missing opening', async () => {
     find.mockResolvedValue({ docs: [] })
     const result = await submitJobApplication(valid())

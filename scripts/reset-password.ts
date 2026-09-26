@@ -44,7 +44,7 @@ async function resetPassword() {
   // List users option
   if (email === '--list') {
     const payload = await getPayload({ config })
-    const users = await payload.find({ collection: 'users', limit: 100 })
+    const users = await payload.find({ collection: 'users', limit: 100, overrideAccess: true })
     if (users.docs.length === 0) {
       console.log('No users found. Create one with: npx tsx scripts/reset-password.ts --create <email> <password>')
     } else {
@@ -64,6 +64,7 @@ async function resetPassword() {
     const payload = await getPayload({ config })
     const users = await payload.find({
       collection: 'users',
+      overrideAccess: true,
       where: { email: { equals: unlockEmail } },
       limit: 1,
     })
@@ -77,6 +78,7 @@ async function resetPassword() {
     // Directly clear lock fields
     const updated = await payload.update({
       collection: 'users',
+      overrideAccess: true,
       id: user.id,
       data: {
         lockUntil: null,
@@ -98,6 +100,7 @@ async function resetPassword() {
     const payload = await getPayload({ config })
     const users = await payload.find({
       collection: 'users',
+      overrideAccess: true,
       where: { email: { equals: delEmail } },
       limit: 1,
     })
@@ -107,6 +110,7 @@ async function resetPassword() {
     }
     await payload.delete({
       collection: 'users',
+      overrideAccess: true,
       id: users.docs[0].id,
     })
     console.log(`Deleted user: ${delEmail}`)
@@ -123,6 +127,7 @@ async function resetPassword() {
     const payload = await getPayload({ config })
     const users = await payload.find({
       collection: 'users',
+      overrideAccess: true,
       where: { email: { equals: fixEmail } },
       limit: 1,
     })
@@ -132,6 +137,7 @@ async function resetPassword() {
     }
     await payload.update({
       collection: 'users',
+      overrideAccess: true,
       id: users.docs[0].id,
       data: { roles: ['admin'] },
     })
@@ -154,6 +160,7 @@ async function resetPassword() {
     const payload = await getPayload({ config })
     const user = await payload.create({
       collection: 'users',
+      overrideAccess: true,
       data: {
         email: createEmail,
         password: createPassword,
@@ -184,6 +191,7 @@ async function resetPassword() {
     // Find user by email
     const users = await payload.find({
       collection: 'users',
+      overrideAccess: true,
       where: {
         email: { equals: email },
       },
@@ -202,6 +210,7 @@ async function resetPassword() {
     // Update password and ensure roles is set
     const updated = await payload.update({
       collection: 'users',
+      overrideAccess: true,
       id: user.id,
       data: {
         password: newPassword,

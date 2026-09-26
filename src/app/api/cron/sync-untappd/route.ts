@@ -19,7 +19,12 @@ export async function GET(request: NextRequest) {
   try {
     const payload = await getPayload({ config })
     const scheduled = await payload.jobs.handleSchedules({ queue: QUEUE })
-    const run = await payload.jobs.run({ queue: QUEUE, limit: 1, sequential: true })
+    const run = await payload.jobs.run({
+      queue: QUEUE,
+      limit: 1,
+      sequential: true,
+      overrideAccess: true,
+    })
     const ranJobs = Object.keys(run.jobStatus || {}).length
 
     // Job tasks avoid Next cache APIs so they also work from the Payload CLI.

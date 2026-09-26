@@ -264,7 +264,12 @@ describe('sync-untappd cron runner', () => {
 
     expect(response.status).toBe(200)
     expect(handleSchedules).toHaveBeenCalledWith({ queue: 'maintenance' })
-    expect(runJobs).toHaveBeenCalledWith({ queue: 'maintenance', limit: 1, sequential: true })
+    expect(runJobs).toHaveBeenCalledWith({
+      queue: 'maintenance',
+      limit: 1,
+      sequential: true,
+      overrideAccess: true,
+    })
     expect(revalidateTag.mock.calls.map((call) => call[0]).sort()).toEqual(['beers', 'menus'])
     expect(revalidatePath.mock.calls.map((call) => call[0]).sort()).toEqual([
       '/',
