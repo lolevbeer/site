@@ -1,3 +1,12 @@
+/**
+ * Beer review normalization between the legacy `beers.positiveReviews` JSON
+ * and `beer-reviews` documents.
+ *
+ * `syncBeerReviews` and `pruneLegacyReview` are system code (allowlisted for
+ * `overrideAccess: true`): they maintain derived data and must see every doc
+ * whoever triggered them — including the user-less Untappd job and migrations.
+ * They require the caller's `req` so their writes join its transaction.
+ */
 import type { Payload, PayloadRequest } from 'payload'
 import type { BeerReview } from '@/src/payload-types'
 import type { UntappdReview } from '@/src/utils/untappd'
@@ -10,7 +19,7 @@ export interface LegacyUntappdReview extends UntappdReview {
 interface SyncBeerReviewsArgs {
   beerId: string
   payload: Payload
-  req?: PayloadRequest
+  req: PayloadRequest
   reviews: LegacyUntappdReview[]
 }
 
@@ -123,7 +132,7 @@ export async function pruneLegacyReview({
 }: {
   beer: BeerReview['beer'] | null | undefined
   payload: Payload
-  req?: PayloadRequest
+  req: PayloadRequest
   sourceUrl: string | null | undefined
 }): Promise<{ id: string; slug?: string | null } | null> {
   if (!beer || !sourceUrl) return null

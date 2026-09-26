@@ -36,7 +36,7 @@ export const BeerReviews: CollectionConfig = {
     afterChange: [
       async ({ context, doc, req }) => {
         if (context?.skipRevalidate) return doc
-        await revalidateBeerPageForReview(req.payload, doc.beer)
+        await revalidateBeerPageForReview(req.payload, doc.beer, req)
         return doc
       },
     ],
@@ -62,7 +62,7 @@ export const BeerReviews: CollectionConfig = {
         }
 
         if (context?.skipRevalidate) return doc
-        await revalidateBeerPageForReview(req.payload, beer)
+        await revalidateBeerPageForReview(req.payload, beer, req)
         return doc
       },
     ],

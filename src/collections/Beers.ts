@@ -1,4 +1,4 @@
-import type { Access, CollectionConfig, Field, Payload, Where } from 'payload'
+import type { Access, CollectionConfig, Field, PayloadRequest, Where } from 'payload'
 import { APIError } from 'payload'
 import { revalidateTag } from 'next/cache'
 import { generateUniqueSlug } from './utils/generateUniqueSlug'
@@ -16,18 +16,24 @@ function mround(value: number, multiple: number): number {
 /**
  * Find all menus containing a given beer and revalidate their CDN cache tags.
  * Called from afterChange so menu displays pick up beer edits on their next poll.
+ * System lookup: reads every menu regardless of the editor's own menus access
+ * (derived cache state, not something the editor is shown), inside the save's
+ * transaction via `req`.
  *
  * NOTE: This must never run from an afterRead hook. Payload's admin form-state
  * requests (stale-data check, document locking, relationship population) read
  * docs through Next.js Server Actions, and calling revalidateTag inside a
  * Server Action forces the admin router to refetch — resetting the edit form.
  */
-async function revalidateMenusForBeer(payload: Payload, beerId: string | number): Promise<void> {
-  const menus = await payload.find({
+async function revalidateMenusForBeer(req: PayloadRequest, beerId: string | number): Promise<void> {
+  // eslint-disable-next-line no-restricted-syntax -- system: cache invalidation must find every menu listing the beer; the editor's menus read can be location-scoped (beer-manager + bartender) or empty
+  const menus = await req.payload.find({
     collection: 'menus',
     where: { 'items.product.value': { equals: beerId } },
     limit: 100,
     depth: 0,
+    overrideAccess: true,
+    req,
   })
   for (const menu of menus.docs) {
     if (menu.url) {
@@ -138,11 +144,13 @@ export const Beers: CollectionConfig = {
 
         // Auto-increment recipe number for new beers (always, even when cloning)
         if (operation === 'create') {
+          // eslint-disable-next-line no-restricted-syntax -- system: next recipe number must count every beer, drafts included
           const lastBeer = await req.payload.find({
             collection: 'beers',
             sort: '-recipe',
             limit: 1,
             overrideAccess: true,
+            req,
           })
 
           if (lastBeer.docs.length > 0 && lastBeer.docs[0].recipe) {
@@ -154,6 +162,7 @@ export const Beers: CollectionConfig = {
 
         // Validate recipe number is unique (on create or when changed)
         if (data.recipe !== undefined && data.recipe !== originalDoc?.recipe) {
+          // eslint-disable-next-line no-restricted-syntax -- system: recipe uniqueness invariant spans every beer, drafts included
           const existing = await req.payload.find({
             collection: 'beers',
             where: {
@@ -162,6 +171,7 @@ export const Beers: CollectionConfig = {
             },
             limit: 1,
             overrideAccess: true,
+            req,
           })
 
           if (existing.docs.length > 0) {
@@ -216,7 +226,7 @@ export const Beers: CollectionConfig = {
         if (context?.skipRevalidate) return doc
 
         try {
-          await revalidateMenusForBeer(req.payload, doc.id)
+          await revalidateMenusForBeer(req, doc.id)
         } catch (error) {
           logger.error('Beer menu revalidation error:', error)
         }
