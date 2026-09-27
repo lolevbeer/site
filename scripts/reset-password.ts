@@ -232,4 +232,5 @@ async function resetPassword() {
   }
 }
 
-resetPassword()
+// Awaited because `payload run` exits as soon as this module finishes loading.
+await resetPassword()
