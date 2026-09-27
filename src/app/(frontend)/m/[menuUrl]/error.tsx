@@ -11,7 +11,8 @@
  * until someone reloads the TV. We report to Sentry, then reload after a short delay to
  * give the backend time to warm. If the outage persists the reload simply
  * retries every few seconds until the menu comes back — the correct behaviour
- * for an always-on display.
+ * for an always-on display. usePolling waits for a new deploy to render before
+ * reloading, so this is the fallback for outages that aren't deploys.
  */
 import { useEffect } from 'react'
 import * as Sentry from '@sentry/nextjs'

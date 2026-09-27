@@ -144,6 +144,37 @@ describe('usePolling', () => {
     await vi.advanceTimersByTimeAsync(0)
     expect(fetchMock).toHaveBeenCalledTimes(2)
   })
+
+  it('keeps the display up until a new deploy renders the page, then reloads', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
+    const reload = vi.fn()
+    vi.stubGlobal('location', { href: 'http://localhost/m/example', reload })
+    let deployId = 'old'
+    // A cold deploy serves the black error screen with status 200.
+    let page = { ok: true, html: '<div style="background:#000"></div>' }
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) =>
+        url === '/api/example'
+          ? { ok: true, json: async () => ({ timestamp: 1, deployId }) }
+          : { ok: page.ok, text: async () => page.html },
+      ),
+    )
+    pollExample()
+    await vi.advanceTimersByTimeAsync(0)
+
+    deployId = 'new'
+    await vi.advanceTimersByTimeAsync(10_000)
+    expect(reload).not.toHaveBeenCalled()
+
+    page = { ok: false, html: '' } // still failing outright
+    await vi.advanceTimersByTimeAsync(30_000) // first error backoff
+    expect(reload).not.toHaveBeenCalled()
+
+    page = { ok: true, html: '<meta name="live-display" content="ready"/>' } // warmed up
+    await vi.advanceTimersByTimeAsync(60_000) // second error backoff
+    expect(reload).toHaveBeenCalledTimes(1)
+  })
 })
 
 describe('useClockBucket', () => {

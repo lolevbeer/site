@@ -21,6 +21,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { LIVE_DISPLAY_META } from '@/lib/utils/seo'
 
 export const FAST_INTERVAL_MS = 10_000
 export const IDLE_INTERVAL_MS = 30_000
@@ -73,8 +74,8 @@ export function selectPollInterval({
 /**
  * Generic display polling hook; see the module comment for the rhythm.
  *
- * Handles deploy detection (page reload on new deploy) and timestamp-based
- * change detection to avoid unnecessary state updates.
+ * Handles deploy detection (page reload once the new deploy's page renders) and
+ * timestamp-based change detection to avoid unnecessary state updates.
  *
  * @param url - API endpoint to poll (empty string disables polling)
  * @param initialData - Initial data to use before first successful poll (null if unavailable)
@@ -144,11 +145,18 @@ export function usePolling<T, R extends PollingResponse>(
 
       const raw: R = await response.json()
 
-      // Detect new deployment and force a full page reload
+      // New deploy: reload only once its page carries the LIVE_DISPLAY_META tag,
+      // so displays keep the current menu while the backend warms. The error
+      // screen is served with 200, so `ok` alone isn't enough. A failed check
+      // backs off like a failed poll.
       if (raw.deployId) {
         if (deployIdRef.current === null) {
           deployIdRef.current = raw.deployId
         } else if (raw.deployId !== deployIdRef.current) {
+          const page = await fetch(window.location.href, { cache: 'no-store' })
+          if (!page.ok || !(await page.text()).includes(`name="${LIVE_DISPLAY_META}"`)) {
+            throw new Error('New deploy not ready')
+          }
           window.location.reload()
           return
         }
