@@ -252,9 +252,6 @@ export const Beers: CollectionConfig = {
                   name: 'name',
                   type: 'text',
                   required: true,
-                  admin: {
-                    width: '50%',
-                  },
                 },
                 {
                   name: 'style',
@@ -262,9 +259,6 @@ export const Beers: CollectionConfig = {
                   relationTo: 'styles',
                   required: true,
                   index: true,
-                  admin: {
-                    width: '50%',
-                  },
                 },
               ],
             },
@@ -281,9 +275,6 @@ export const Beers: CollectionConfig = {
                     { label: 'Teku', value: 'teku' },
                     { label: 'UHA', value: 'uha' },
                   ],
-                  admin: {
-                    width: '50%',
-                  },
                 },
                 {
                   name: 'abv',
@@ -294,7 +285,6 @@ export const Beers: CollectionConfig = {
                   max: 20,
                   admin: {
                     step: 0.1,
-                    width: '50%',
                   },
                 },
               ],
@@ -311,7 +301,6 @@ export const Beers: CollectionConfig = {
                   type: 'text',
                   admin: {
                     placeholder: 'e.g. Citra, Mosaic',
-                    width: '50%',
                   },
                 },
                 {
@@ -324,7 +313,6 @@ export const Beers: CollectionConfig = {
                   index: true,
                   admin: {
                     description: 'Optional (search existing or add a new one)',
-                    width: '50%',
                   },
                 },
               ],
@@ -344,7 +332,6 @@ export const Beers: CollectionConfig = {
                   admin: {
                     placeholder: 'e.g. 7',
                     step: 0.25,
-                    width: '50%',
                   },
                 },
                 {
@@ -354,7 +341,6 @@ export const Beers: CollectionConfig = {
                     description:
                       'Set automatically from the draft price unless "Half Pour Only" is on',
                     step: 0.25,
-                    width: '50%',
                   },
                 },
               ],
@@ -388,7 +374,6 @@ export const Beers: CollectionConfig = {
                     description: 'Set automatically from the four pack price',
                     readOnly: true,
                     step: 0.01,
-                    width: '50%',
                   },
                 },
               ],
@@ -402,16 +387,12 @@ export const Beers: CollectionConfig = {
                   admin: {
                     placeholder: 'e.g. 12',
                     step: 0.25,
-                    width: '50%',
                   },
                 },
                 {
                   name: 'upc',
                   label: 'UPC',
                   type: 'text',
-                  admin: {
-                    width: '50%',
-                  },
                 },
               ],
             },
