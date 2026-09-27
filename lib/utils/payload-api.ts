@@ -10,9 +10,7 @@
  * error into `[]`/`null` would bake an empty render into the route cache and
  * serve it for the whole revalidate window (see the /m fix, commit 7160f57e).
  * A genuinely-empty result (e.g. location not found) is still returned normally
- * from inside the cached fn and remains cacheable. The one exception is
- * hasAnyBeerJustReleased: it feeds a non-critical badge that is discarded after
- * the first /m poll, so it degrades to `false` rather than blanking the display.
+ * from inside the cached fn and remains cacheable.
  *
  * Identity contract: every read here acts as an anonymous visitor and passes
  * `overrideAccess: false` explicitly (Payload 3.x defaults it to true), so
@@ -76,43 +74,6 @@ const findLocationBySlug = async (
 }
 
 /**
- * Check if any beer globally has justReleased flag set
- * Used to determine "Just Released" display logic
- * Cached until 'beers' tag is invalidated
- */
-export const hasAnyBeerJustReleased = async (): Promise<boolean> => {
-  try {
-    return await unstable_cache(
-      async (): Promise<boolean> => {
-        const payload = await getPayload({ config })
-
-        const result = await payload.find({
-          collection: 'beers',
-          overrideAccess: false,
-          limit: 1,
-          where: {
-            justReleased: {
-              equals: true,
-            },
-          },
-        })
-
-        return result.docs.length > 0
-      },
-      ['any-beer-just-released'],
-      { tags: [CACHE_TAGS.beers], revalidate: 300 },
-    )()
-  } catch (error) {
-    logger.error('Error checking justReleased beers', error)
-    // Non-critical badge flag (drives the "Just Released" highlight and is
-    // discarded after the first /m poll). Degrade gracefully instead of
-    // throwing — a transient blip here must not black out an unattended
-    // /m display via the auto-reloading error boundary.
-    return false
-  }
-}
-
-/**
  * Catalog / sitemap / RSS / llms.txt beer fields. Next.js `unstable_cache`
  * refuses entries over 2MB (throws in dev); a full `depth: 2` beers find
  * — reviews join, `positiveReviews` JSON, 3D label uploads — crossed that
@@ -137,7 +98,6 @@ export const BEERS_LIST_SELECT = {
   collab: true,
   collabBrewery: true,
   topBeerDrops: true,
-  justReleased: true,
   draftPrice: true,
   halfPour: true,
   halfPourOnly: true,
@@ -350,7 +310,6 @@ const MENU_BEERS_POPULATE = {
   halfPour: true,
   halfPourOnly: true,
   hideFromSite: true,
-  justReleased: true,
   collab: true,
   collabBrewery: true,
   createdAt: true,

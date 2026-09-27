@@ -66,7 +66,6 @@ export function convertPayloadBeer(payloadBeer: CatalogBeer | PayloadBeer): Beer
     collab: payloadBeer.collab || false,
     collabBrewery: payloadBeer.collabBrewery || undefined,
     topBeerDrops: payloadBeer.topBeerDrops || undefined,
-    isJustReleased: payloadBeer.justReleased || false,
     pricing: {
       draftPrice: payloadBeer.draftPrice,
       halfPour: payloadBeer.halfPour ?? undefined,

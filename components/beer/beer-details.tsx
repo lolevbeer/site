@@ -61,22 +61,6 @@ interface BeerDetailsProps {
   className?: string
 }
 
-function getPricingInfo(beer: PayloadBeer): {
-  draftPrice?: number
-  singlePrice?: number | null
-  fourPackPrice?: number | null
-  bottlePrice?: number | null
-  hasSale: boolean
-} {
-  return {
-    draftPrice: beer.draftPrice,
-    singlePrice: beer.canSingle,
-    fourPackPrice: beer.fourPack,
-    bottlePrice: beer.bottlePrice,
-    hasSale: beer.justReleased === true,
-  }
-}
-
 function SpecificationRow({
   label,
   value,
@@ -147,7 +131,6 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
   // When present, a spinning 3D can replaces the flat image below.
   const canBaseUrl = getMediaUrl(beer.labelBase)
   const canMetalnessUrl = getMediaUrl(beer.labelMetalness)
-  const pricing = getPricingInfo(beer)
   const styleName = getStyleName(beer.style)
   const packagingType = getPackagingType(beer)
   const [tapLocations, setTapLocations] = useState<string[]>([])
@@ -297,14 +280,6 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
                 {styleName && <p className="text-sm text-muted-foreground mt-1">{styleName}</p>}
               </div>
             )}
-            {pricing.hasSale && (
-              <Badge
-                variant="destructive"
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-lg px-4 py-2 z-20"
-              >
-                Just Released
-              </Badge>
-            )}
           </div>
 
           {/* Quick Stats */}
@@ -343,11 +318,6 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
                   className="text-sm text-muted-foreground border-muted-foreground/50"
                 >
                   {getNoPackagingLabel(packagingType)}
-                </Badge>
-              )}
-              {pricing.hasSale && (
-                <Badge variant="destructive" className="text-sm">
-                  Sale
                 </Badge>
               )}
             </div>
@@ -412,33 +382,22 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
             </Card>
 
             {/* Pricing */}
-            {((tapLocations.length > 0 && pricing.draftPrice) ||
-              (canLocations.length > 0 && (pricing.fourPackPrice || pricing.bottlePrice))) && (
+            {((tapLocations.length > 0 && beer.draftPrice) ||
+              (canLocations.length > 0 && (beer.fourPack || beer.bottlePrice))) && (
               <Card className="shadow-none border-0 p-0 bg-transparent">
                 <CardHeader className="p-0 pb-4">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    Pricing
-                    {pricing.hasSale && (
-                      <Badge variant="destructive" className="text-xs">
-                        Sale Price
-                      </Badge>
-                    )}
-                  </CardTitle>
+                  <CardTitle className="text-lg flex items-center gap-2">Pricing</CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
                   <div className="space-y-2">
-                    {tapLocations.length > 0 && pricing.draftPrice && (
-                      <p className="text-sm text-muted-foreground">• Draft ${pricing.draftPrice}</p>
+                    {tapLocations.length > 0 && beer.draftPrice && (
+                      <p className="text-sm text-muted-foreground">• Draft ${beer.draftPrice}</p>
                     )}
-                    {canLocations.length > 0 && pricing.fourPackPrice && (
-                      <p className="text-sm text-muted-foreground">
-                        • 4 Pack ${pricing.fourPackPrice}
-                      </p>
+                    {canLocations.length > 0 && beer.fourPack && (
+                      <p className="text-sm text-muted-foreground">• 4 Pack ${beer.fourPack}</p>
                     )}
-                    {canLocations.length > 0 && pricing.bottlePrice && (
-                      <p className="text-sm text-muted-foreground">
-                        • Bottle ${pricing.bottlePrice}
-                      </p>
+                    {canLocations.length > 0 && beer.bottlePrice && (
+                      <p className="text-sm text-muted-foreground">• Bottle ${beer.bottlePrice}</p>
                     )}
                   </div>
                 </CardContent>

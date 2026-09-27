@@ -5,7 +5,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/lib/utils/payload-api', () => ({
   getMenuByUrlFresh: vi.fn(),
-  hasAnyBeerJustReleased: vi.fn(),
   getUpcomingEventsFromPayload: vi.fn(),
   getCombinedUpcomingFood: vi.fn(),
   getCansMenu: vi.fn(),

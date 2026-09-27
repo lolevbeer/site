@@ -54,7 +54,6 @@ import {
   getUpcomingEventsFromPayload,
   getUpcomingFoodFromPayload,
   getWeeklyHoursWithHolidays,
-  hasAnyBeerJustReleased,
 } from '@/lib/utils/payload-api'
 
 beforeEach(() => {
@@ -134,7 +133,6 @@ describe('public fetchers read as an anonymous visitor', () => {
   }
 
   it.each<[string, () => Promise<unknown>, string[]]>([
-    ['hasAnyBeerJustReleased', () => hasAnyBeerJustReleased(), ['beers']],
     ['getAllBeersFromPayload', () => getAllBeersFromPayload(), ['beers']],
     ['getMenusByLocation', () => getMenusByLocation('lawrenceville'), ['locations', 'menus']],
     ['getMenuByUrl', () => getMenuByUrl('lawrenceville-draft'), ['menus']],

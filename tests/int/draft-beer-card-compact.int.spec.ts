@@ -54,7 +54,7 @@ describe('DraftBeerCard compact layout', () => {
   it('still shows a Just Released badge when compact', () => {
     const { container } = render(
       createElement(DraftBeerCard, {
-        beer: { ...beer, isJustReleased: true },
+        beer: { ...beer, createdAt: new Date().toISOString() },
         compact: true,
         showLocation: false,
       }),
@@ -81,7 +81,7 @@ describe('DraftBeerCard compact layout', () => {
       createElement(DraftBeerCard, {
         beer: {
           ...beer,
-          isJustReleased: true,
+          createdAt: new Date().toISOString(),
           topBeerDrops: 'https://topbeerdrops.com/test-beer',
         },
         compact: true,
