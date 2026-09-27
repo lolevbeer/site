@@ -2,10 +2,14 @@
 
 import { useMemo } from 'react'
 import { useMenuStream } from '@/lib/hooks/use-menu-stream'
+import { useClockBucket } from '@/lib/hooks/use-clock-bucket'
 import { FeaturedBeers, FeaturedCans } from '@/components/home/featured-menu'
 import type { Menu } from '@/src/payload-types'
 import { getThemeVars } from '@/lib/utils/display-theme'
 import { seededLightColors } from '@/lib/utils/seeded-colors'
+
+/** How long each dark-mode color set shows before the next. */
+const COLOR_CYCLE_MS = 30_000
 
 interface LiveMenuProps {
   menuUrl: string
@@ -16,22 +20,22 @@ interface LiveMenuProps {
  * Live-updating menu display component
  *
  * Uses polling against a cached endpoint for real-time updates.
- * - Polls every 2 seconds for near-instant updates
- * - Cache is invalidated on-demand when menu is updated in Payload
+ * - Polls every 10s after a change and every 30s when idle, not while the tab
+ *   is hidden (see usePolling)
+ * - The endpoint is CDN-cached and invalidated when the menu or a beer on it
+ *   is edited in Payload, so an edit shows within about a minute
  * - Much more cost-effective than SSE on Vercel (no persistent connections)
  * - Applies dark mode via inline CSS variables for maximum browser compatibility
  */
 export function LiveMenu({ menuUrl, initialMenu }: LiveMenuProps) {
-  const { menu, theme, pollCount } = useMenuStream(menuUrl, initialMenu, {
-    enabled: true,
-    pollInterval: 2000,
-  })
+  const { menu, theme } = useMenuStream(menuUrl, initialMenu)
 
   // Use streamed menu if available, otherwise fall back to initial
   const displayMenu = menu || initialMenu
 
-  // Generate deterministic light colors that cycle every ~30 seconds (dark mode only)
-  const colorSeed = Math.floor(pollCount / 15)
+  // Deterministic light colors that change every 30s of wall-clock time,
+  // however often the display polls (dark mode only)
+  const colorSeed = useClockBucket(COLOR_CYCLE_MS)
   const itemColors = useMemo(() => {
     const itemCount = displayMenu.items?.length || 0
     if (itemCount === 0 || theme !== 'dark') return undefined

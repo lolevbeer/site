@@ -63,20 +63,22 @@ Four layers sit between a Payload save and a kiosk pixel:
 |---|---|---|---|
 | 1. Mongo / Payload | source of truth | unchanged | the write itself |
 | 2. Next data cache (`unstable_cache`) | `getMenuByUrl` revalidate 60s, tags `menus` + `menu-${url}`; events helpers already tag-cached with no extra route wrapper | menu fallback 3,600s; **remove** the nested `unstable_cache` in `menu-stream` | `revalidateTag` / `revalidatePath` from `src/plugins/revalidation-plugin.ts` and `revalidateMenusForBeer` |
-| 3. HTTP CDN (`Cache-Control` on the stream routes) | `s-maxage=10, stale-while-revalidate=30` | `public, s-maxage=30, stale-while-revalidate=60` | time. Tag invalidation does **not** purge this object |
-| 4. Client poll | menu 2s / events 5s, `fetch(..., { cache: 'no-store' })`, adaptive slowdown to 5× | see [Polling state machine](#polling-state-machine) | the next poll after layer 3 has a new body |
+| 3. Stream route cache (Vercel CDN / ISR) | `Cache-Control: s-maxage=10, stale-while-revalidate=30` | **Amended (hybrid):** route-level ISR — `dynamic = 'force-static'`, `generateStaticParams() { return [] }`, `revalidate = 600` | the same `revalidateTag` calls as layer 2: the layer-2 tags attach to the cached route response. The 600s fallback bounds `deployId` staleness |
+| 4. Client poll | menu 2s / events 5s, `fetch(..., { cache: 'no-store' })`, adaptive slowdown to 5× | see [Polling state machine](#polling-state-machine); `fetch(..., { cache: 'no-cache' })` | the next poll after layer 3 has a new body |
 
-`revalidateTag` / `revalidatePath` make layer 2 fresh immediately. Layer 3 is an independent edge object. After a CMS write the first request that is allowed to miss or revalidate layer 3 (at `s-maxage`, 30s) rebuilds from layer 2 and publishes a new shared body. Constraint 2 then allows one more poll interval (30s idle) before every display must show that body.
+`revalidateTag(tag, 'max')` marks layers 2 and 3 stale together. The first poll after a CMS write is served the stale body and triggers a background regeneration; Next re-fetches stale `unstable_cache` data in the foreground while regenerating (`unstable-cache.js`: "When the page is revalidating and the cache entry is stale, we need to wait for fresh data"), so the regenerated body is fresh. The next poll gets it.
 
-End-to-end budget:
+**Amendment (hybrid, 2026-09-27).** The original design put a 30s time-based `Cache-Control` object at layer 3 that tag invalidation could not purge, so the route function ran every 30s per URL whether or not anything changed. Route-level ISR is purged by the existing tags instead, so an idle stream route runs only after a CMS edit or its 600s fallback. To stay cacheable that long, the stream responses carry nothing clock-dependent: the client derives `warm` from the content timestamp and works out the day/night theme itself.
 
-- CMS write → shared CDN body: ≤ 30s (`s-maxage`)
-- shared CDN body → display: ≤ 30s (idle poll)
+End-to-end budget (idle display):
+
+- CMS write → first poll (served stale, triggers regeneration): ≤ 30s (idle poll)
+- → next poll (fresh body): ≤ 30s more; 10s when the display is already fast or warm
 - CMS write → display: ≤ 60s
 
 On-demand tags remain the only way past the one-hour data-cache fallback. No extra scheduled regeneration is added. If a tag hook is skipped (`context.skipRevalidate`), behavior stays as today.
 
-`warm` is derived from the **content** timestamp (max of menu `updatedAt` and populated item `updatedAt`; for events, max of returned event `updatedAt` values), not from a cache-write `_fetchedAt`. `warm === true` when `now - contentTimestamp < 60_000`. That flags editor activity without coupling to nested cache writes. Events-stream currently returns no `warm` field; implementation adds the same derivation.
+`warm` is derived from the **content** timestamp (max of menu `updatedAt` and populated item `updatedAt`; for events, max of returned event `updatedAt` values), not from a cache-write `_fetchedAt`. `warm === true` when `now - contentTimestamp < 60_000`. That flags editor activity without coupling to nested cache writes. **Amended (hybrid):** the client computes `warm` from the response `timestamp` (the routes return no `warm` field), because a server-computed `warm` would depend on the clock and could not be cached until the next edit.
 
 ### Polling state machine
 
@@ -208,23 +210,29 @@ Acceptance conditions:
 
 `getMenuByUrl` remains the only cross-request data cache for a menu URL. Its fallback revalidation changes from 60 seconds to 3,600 seconds while preserving `menus` and `menu-${url}` tags.
 
-The menu polling route removes its nested `unstable_cache` (the one that stamps `_fetchedAt`). The response timestamp remains the maximum of the menu document and populated item timestamps. `warm` follows the content-timestamp rule above.
+The menu polling route removes its nested `unstable_cache` (the one that stamps `_fetchedAt`). The response timestamp remains the maximum of the menu document and populated item timestamps. `warm` follows the content-timestamp rule above, computed on the client.
 
-Events-stream already has no nested cache; it only gains `warm` plus the shared `Cache-Control`.
+Events-stream already has no nested cache. Its empty-list timestamp becomes a stable `0` instead of `Date.now()`, so an unchanged empty list stays unchanged.
 
-The shared response policy for both stream routes becomes:
+**Amended (hybrid):** the shared policy for both stream routes is route-level ISR rather than a `Cache-Control` header:
 
-```text
-Cache-Control: public, s-maxage=30, stale-while-revalidate=60
+```ts
+export const dynamic = 'force-static'
+export const revalidate = 600
+export function generateStaticParams() {
+  return []
+}
 ```
+
+Responses are `{ menu | events, locationName, timestamp, deployId }` with no `theme` or `warm`. A failed fetch throws instead of returning a 500 body, so a failed regeneration keeps serving the last good cached response (Vercel `STALE` with reason `stale_error`) rather than caching an error for every display.
 
 Acceptance conditions:
 
-- a content timestamp within `WARM_WINDOW_MS` produces `warm: true`;
-- older content produces `warm: false`;
+- a content timestamp within `WARM_WINDOW_MS` keeps the client on `FAST_INTERVAL_MS`; older content does not;
 - item timestamps can supersede the menu timestamp;
-- the menu route uses one tagged data-cache layer (`getMenuByUrl` only);
-- missing menus and errors retain their current status contracts;
+- the menu route uses one tagged data-cache layer (`getMenuByUrl` only, 3,600s fallback);
+- both stream routes are route-level ISR (`force-static`, no prerendered params, `revalidate = 600`) and return nothing clock-dependent;
+- missing menus/locations still return 404; fetch errors throw so the last good cached response keeps serving;
 - on-demand invalidation tests cover the existing menu tags.
 
 ### 4. Homepage ISR Contract

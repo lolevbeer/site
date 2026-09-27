@@ -3,6 +3,7 @@
 import { useMemo } from 'react'
 import Image from 'next/image'
 import { useEventsStream } from '@/lib/hooks/use-events-stream'
+import { useClockBucket } from '@/lib/hooks/use-clock-bucket'
 import { Logo } from '@/components/ui/logo'
 import { FeaturedCans } from '@/components/home/featured-menu'
 import type { BreweryEvent } from '@/lib/types/event'
@@ -139,14 +140,10 @@ export function LiveEvents({
   cansMenu,
   initialLocationName,
 }: LiveEventsProps) {
-  const { events, locationName, theme, pollCount } = useEventsStream(
+  const { events, locationName, theme } = useEventsStream(
     location,
     initialEvents,
     initialLocationName,
-    {
-      enabled: true,
-      pollInterval: 5000,
-    },
   )
 
   // Combine events and food into a single sorted list
@@ -245,8 +242,9 @@ export function LiveEvents({
     title = 'Upcoming Events'
   }
 
-  // Generate deterministic light colors that cycle every ~30 seconds (dark mode only)
-  const colorSeed = Math.floor(pollCount / 6)
+  // Deterministic light colors that change every 30s of wall-clock time,
+  // however often the display polls (dark mode only)
+  const colorSeed = useClockBucket(30_000)
   const itemColors = useMemo(() => {
     const itemCount = combinedItems.length
     if (itemCount === 0 || theme !== 'dark') return undefined
@@ -307,7 +305,9 @@ export function LiveEvents({
                     >
                       <div
                         className={`flex-shrink-0 uppercase tracking-wider font-bold leading-tight ${
-                          group.isToday ? 'text-amber-600 dark:text-amber-400' : 'text-foreground-muted'
+                          group.isToday
+                            ? 'text-amber-600 dark:text-amber-400'
+                            : 'text-foreground-muted'
                         }`}
                         style={{ width: '16vh', fontSize: TV_TYPE.eventDay }}
                       >
