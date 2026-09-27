@@ -10,8 +10,12 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+// Passes the cached function straight through, recording the cache options.
+const unstableCache = vi.hoisted(() =>
+  vi.fn((fn: (...args: unknown[]) => unknown, _key?: unknown, _options?: unknown) => fn),
+)
 vi.mock('next/cache', () => ({
-  unstable_cache: (fn: (...args: unknown[]) => unknown) => fn,
+  unstable_cache: unstableCache,
   revalidateTag: vi.fn(),
 }))
 
@@ -215,5 +219,17 @@ describe('getBeerBySlug reads as an anonymous visitor', () => {
     for (const args of calls) {
       expect(args, String(args.collection)).toMatchObject({ overrideAccess: false })
     }
+  })
+})
+
+describe('menu data cache', () => {
+  it('keeps a menu until its tags are invalidated, with a one-hour fallback', async () => {
+    unstableCache.mockClear()
+    await getMenuByUrl('l-draft').catch(() => null)
+
+    expect(unstableCache).toHaveBeenCalledWith(expect.any(Function), ['menu-url-l-draft'], {
+      tags: ['menus', 'menu-l-draft'],
+      revalidate: 3600,
+    })
   })
 })

@@ -2,19 +2,13 @@
 
 import React, { useEffect, useState } from 'react'
 import { Banner, useDocumentInfo, useFormFields } from '@payloadcms/ui'
-import { getRecurringFoodData, getFoodVendor, getFoodOnDate } from '@/src/actions/admin-data'
+import { getFoodOnDate } from '@/src/actions/admin-data'
 import { logger } from '@/lib/utils/logger'
 import {
   getAdminRelationshipID,
   type AdminRelationshipValue,
 } from '@/src/components/admin/relationship-value'
-
-import {
-  recurringDayName,
-  recurringOccurrences as weekKeys,
-  recurringWeekOccurrence,
-} from '@/src/utils/recurring-food'
-import { toDateKey } from '@/lib/utils/food-dates'
+import { getRecurringVendorName } from '@/src/components/admin/recurring-vendor'
 
 interface Warning {
   type: 'recurring' | 'individual'
@@ -43,35 +37,12 @@ export const FoodDateWarning: React.FC = () => {
       const newWarnings: Warning[] = []
 
       try {
-        const date = new Date(dateValue)
-        const dayName = recurringDayName(date)
-        const weekOccurrence = recurringWeekOccurrence(date)
-        const weekKey = weekKeys[weekOccurrence - 1]
-        const dateKey = toDateKey(date)
-
-        // Check recurring vendors using local API
-        if (weekKey) {
-          try {
-            const data = await getRecurringFoodData(Number(dateKey.slice(0, 4)))
-
-            // Data structure: data.schedules[locationId][dayName][weekKey]
-            const vendorId = data.schedules?.[locationValue]?.[dayName]?.[weekKey]
-
-            if (vendorId) {
-              // Check if this date is excluded
-              const exclusions = data.exclusions?.[locationValue] || []
-              const isExcluded = exclusions.includes(dateKey)
-
-              if (!isExcluded) {
-                // Fetch vendor name using local API
-                const vendor = await getFoodVendor(vendorId)
-                const vendorName = vendor?.name || 'Unknown vendor'
-                newWarnings.push({ type: 'recurring', vendorName })
-              }
-            }
-          } catch (error) {
-            logger.error('Error checking recurring vendors:', error)
-          }
+        // Check recurring vendors
+        try {
+          const vendorName = await getRecurringVendorName(new Date(dateValue), locationValue)
+          if (vendorName) newWarnings.push({ type: 'recurring', vendorName })
+        } catch (error) {
+          logger.error('Error checking recurring vendors:', error)
         }
 
         // Check individual food events using local API

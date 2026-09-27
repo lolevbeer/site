@@ -2,23 +2,13 @@
 
 import React, { useEffect, useState } from 'react'
 import { Banner, useDocumentInfo, useFormFields } from '@payloadcms/ui'
-import {
-  getEventsOnDate,
-  getFoodOnDateRange,
-  getRecurringFoodData,
-  getFoodVendor,
-} from '@/src/actions/admin-data'
+import { getEventsOnDate, getFoodOnDateRange } from '@/src/actions/admin-data'
 import { logger } from '@/lib/utils/logger'
 import {
   getAdminRelationshipID,
   type AdminRelationshipValue,
 } from '@/src/components/admin/relationship-value'
-
-import {
-  recurringDayName,
-  recurringOccurrences as weekKeys,
-  recurringWeekOccurrence,
-} from '@/src/utils/recurring-food'
+import { getRecurringVendorName } from '@/src/components/admin/recurring-vendor'
 
 interface ConflictingEvent {
   organizer: string
@@ -52,9 +42,6 @@ export const EventDateWarning: React.FC = () => {
       setLoading(true)
 
       try {
-        const date = new Date(dateValue)
-        const dateOnly = dateValue.split('T')[0]
-
         // Check other events using local API
         const eventConflicting: ConflictingEvent[] = []
         try {
@@ -72,29 +59,10 @@ export const EventDateWarning: React.FC = () => {
         // Check food vendors
         const vendors: FoodVendor[] = []
 
-        // Check recurring food using local API
+        // Check recurring food
         try {
-          const dayName = recurringDayName(date)
-          const weekOccurrence = recurringWeekOccurrence(date)
-          const weekKey = weekKeys[weekOccurrence - 1]
-
-          const data = await getRecurringFoodData(Number(dateOnly.slice(0, 4)))
-
-          // Data structure: data.schedules[locationId][dayName][weekKey]
-          const vendorId = data.schedules?.[locationValue]?.[dayName]?.[weekKey]
-
-          if (vendorId) {
-            // Check if this date is excluded
-            const exclusions = data.exclusions?.[locationValue] || []
-            const isExcluded = exclusions.includes(dateOnly)
-
-            if (!isExcluded) {
-              // Fetch vendor name using local API
-              const vendor = await getFoodVendor(vendorId)
-              const vendorName = vendor?.name || 'Unknown vendor'
-              vendors.push({ name: vendorName, type: 'recurring' })
-            }
-          }
+          const vendorName = await getRecurringVendorName(new Date(dateValue), locationValue)
+          if (vendorName) vendors.push({ name: vendorName, type: 'recurring' })
         } catch (error) {
           logger.error('Error checking recurring food:', error)
         }
