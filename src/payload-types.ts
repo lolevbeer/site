@@ -186,7 +186,7 @@ export interface UserAuthOperations {
 export interface Beer {
   id: string;
   /**
-   * Who saved this revision
+   * The last person to save this. Automated updates, such as the nightly Untappd sync, keep the previous person.
    */
   updatedBy?: (string | null) | User;
   name: string;
@@ -517,7 +517,7 @@ export interface BeerReview {
 export interface Menu {
   id: string;
   /**
-   * Who saved this revision
+   * The last person to save this. Automated updates, such as the nightly Untappd sync, keep the previous person.
    */
   updatedBy?: (string | null) | User;
   /**

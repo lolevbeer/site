@@ -92,7 +92,7 @@ describe('menu authorization', () => {
 })
 
 describe('user directory visibility', () => {
-  it('lets every signed-in user read other users (so revisions show who saved them)', () => {
+  it('lets every signed-in user read other users (so revisions show who last edited them)', () => {
     expect(callAccess(Users.access?.read, null)).toBe(false)
     expect(callAccess(Users.access?.read, userWith(['bartender']))).toBe(true)
   })
@@ -240,7 +240,7 @@ describe('draft and sensitive field visibility', () => {
     }
   })
 
-  it('hides who saved a beer or menu revision from anonymous readers', () => {
+  it('hides who last edited a beer or menu from anonymous readers', () => {
     for (const fields of [Beers.fields, Menus.fields]) {
       const read = (findField(fields, 'updatedBy').access as Record<string, unknown> | undefined)
         ?.read

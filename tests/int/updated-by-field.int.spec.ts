@@ -1,4 +1,4 @@
-/** Checks the `updatedBy` field stamps each save (and so each version) with its editor. */
+/** Checks `updatedBy` ("Last edited by") records the last signed-in editor on each save, and so on each version. */
 import { describe, expect, it } from 'vitest'
 import { updatedByField } from '@/src/collections/utils/updatedByField'
 import { Beers } from '@/src/collections/Beers'
