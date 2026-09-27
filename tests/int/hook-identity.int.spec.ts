@@ -1,7 +1,7 @@
 /**
  * Hooks that look up related docs act for the editing user: each inner Local
  * API call must receive the hook's own `req` (user + save transaction) and an
- * explicit `overrideAccess: false` (Payload 3.x defaults an omitted flag to true).
+ * explicit `overrideAccess: false` (an omitted flag defaults to false on Payload 4, true on Payload 3).
  */
 import { describe, expect, it, vi } from 'vitest'
 import type { User } from '@/src/payload-types'

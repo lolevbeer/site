@@ -4,13 +4,13 @@
 [![Vercel](https://img.shields.io/github/deployments/lolevbeer/site/Production?label=vercel&logo=vercel)](https://lolev.beer)
 [![health](https://img.shields.io/website?url=https%3A%2F%2Flolev.beer%2Fapi%2Fhealth&up_message=ok&down_message=unhealthy&label=health)](https://lolev.beer/api/health)
 
-Brewery website for [lolev.beer](https://lolev.beer), built with Next.js 16 and Payload CMS 3, deployed on Vercel.
+Brewery website for [lolev.beer](https://lolev.beer), built with Next.js 16 and Payload CMS 4, deployed on Vercel.
 
 The badges above are, in order: the `CI` workflow on `main` (type-check, lint, Vitest, then a disposable production build and Playwright smoke), the latest GitHub `Production` deployment, and live `GET`/`HEAD` `https://lolev.beer/api/health`. Shields caches the health badge for a few minutes.
 
 ## Setup
 
-Requires Node 20+ and pnpm 9 or 10 (`package.json` pins `packageManager` to pnpm 10).
+Requires Node 24.15+ (Payload 4's minimum; CI reads `engines.node` from `package.json`) and pnpm 9 or 10 (`package.json` pins `packageManager` to pnpm 10).
 
 1. Clone the repo
 2. `cp .env.example .env` and fill in your values. `DATABASE_URI` and `PAYLOAD_SECRET` are required; do not leave `PAYLOAD_SECRET` as the documented placeholder. Production also requires `BLOB_READ_WRITE_TOKEN`. Slack, cron, revalidation, and geocoding keys are optional — see `.env.example`.
@@ -22,7 +22,7 @@ Payload admin is at `/admin`. Follow the on-screen instructions to create your f
 ## Tech Stack
 
 - **Framework:** Next.js 16 (App Router)
-- **CMS:** Payload CMS 3 (MongoDB)
+- **CMS:** Payload CMS 4 (MongoDB)
 - **Styling:** Tailwind CSS 4, shadcn/ui
 - **Maps:** Mapbox GL
 - **Monitoring:** Sentry

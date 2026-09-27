@@ -4,9 +4,9 @@
  * - Catalog/menu queries must not serialize unbounded reviews or 3D label
  *   uploads. Next.js `unstable_cache` throws in dev (and skips in prod) when an
  *   entry exceeds 2MB — the full beers find crossed that on /beer.
- * - Every public fetcher reads as an anonymous visitor: Payload 3.x defaults
- *   `overrideAccess` to true, so each call must pass `overrideAccess: false`
- *   for collection and field access rules to apply.
+ * - Every public fetcher reads as an anonymous visitor: each call must pass
+ *   `overrideAccess: false` explicitly (the omitted default is false on
+ *   Payload 4 but was true on Payload 3) so collection and field access rules apply.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 

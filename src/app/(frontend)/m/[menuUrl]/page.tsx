@@ -4,8 +4,9 @@ import { LiveMenu } from '@/components/menu/live-menu'
 import { notFound } from 'next/navigation'
 import { NOINDEX_ROBOTS } from '@/lib/utils/seo'
 
-// Use ISR with 60s revalidation for initial load performance
-// SSE handles real-time updates after hydration, so stale initial data is fine
+// This dynamic segment has no generateStaticParams, so Next renders it per
+// request (it is not prerendered, and this revalidate never takes effect).
+// LiveMenu keeps the display current after hydration.
 export const revalidate = 60
 
 /**
@@ -32,10 +33,8 @@ export default async function MenuPage({ params }: MenuPageProps) {
     notFound()
   }
 
-  // Use LiveMenu for real-time updates via SSE
-  // - Single persistent connection per display
-  // - Updates within 5 seconds of Payload changes
-  // - Auto-reconnects if connection drops
+  // LiveMenu polls the cached /api/menu-stream endpoint (every 2s, backing off
+  // when idle) and swaps in new menu data; see components/menu/live-menu.tsx.
   return <LiveMenu menuUrl={menuUrl} initialMenu={menu} />
 }
 

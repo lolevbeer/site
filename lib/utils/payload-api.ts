@@ -13,7 +13,7 @@
  * from inside the cached fn and remains cacheable.
  *
  * Identity contract: every read here acts as an anonymous visitor and passes
- * `overrideAccess: false` explicitly (Payload 3.x defaults it to true), so
+ * `overrideAccess: false` explicitly (never relying on the version's default), so
  * collection and field access rules decide what the public sees — e.g. event
  * contact fields and food-vendor email/phone are stripped, and beers are
  * limited to published ones (see `canReadBeers` in src/collections/Beers.ts).

@@ -1,7 +1,7 @@
 /**
- * Public pages read Payload as an anonymous visitor. Payload 3.x Local API
- * defaults `overrideAccess` to true, so each public read must pass
- * `overrideAccess: false` explicitly for collection access rules to apply.
+ * Public pages read Payload as an anonymous visitor. Each public read must pass
+ * `overrideAccess: false` explicitly (the omitted default is false on Payload 4
+ * but was true on Payload 3) so collection access rules always apply.
  * Covers lib/jobs, /food, and /e/[location]. (Recurring food state reads are
  * covered in recurring-food-state.int.spec.ts.)
  */

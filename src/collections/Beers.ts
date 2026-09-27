@@ -235,7 +235,8 @@ export const Beers: CollectionConfig = {
   },
   // Layout: unnamed tabs, rows, and collapsibles are presentational only —
   // every field below still stores at the top level of the beer document.
-  // Only fields editors flip per release stay in the sidebar.
+  // The sidebar holds the per-release flags (hide, collab), the identifiers
+  // (slug, recipe), and the read-only updatedBy stamp.
   fields: [
     updatedByField,
     {
