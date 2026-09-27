@@ -1,10 +1,23 @@
 /**
- * Date utilities for handling EST/EDT timezone
+ * Date utilities: EST/EDT timezone helpers and elapsed-time checks.
  */
 
 import { toZonedTime, format } from 'date-fns-tz'
 
 const EST_TIMEZONE = 'America/New_York'
+
+export const MS_PER_DAY = 24 * 60 * 60 * 1000
+
+/** True when `createdAt` is inside `windowMs` before `now`. Invalid dates are not recent. */
+export function isRecentTimestamp(
+  createdAt: string | undefined,
+  windowMs: number,
+  now = Date.now(),
+): boolean {
+  if (!createdAt) return false
+  const then = new Date(createdAt).getTime()
+  return Number.isFinite(then) && now - then < windowMs
+}
 
 /**
  * Get current date and time in EST/EDT timezone

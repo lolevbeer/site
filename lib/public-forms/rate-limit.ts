@@ -39,22 +39,7 @@ export function allowIpAttempt(scope: string, ip: string): boolean {
 }
 
 export function allowEmailAttempt(scope: string, email: string): boolean {
-  return allowAttempt(
-    `${scope}:email:${email}`,
-    PUBLIC_FORM_EMAIL_MAX,
-    PUBLIC_FORM_EMAIL_WINDOW_MS,
-  )
-}
-
-/** True when `createdAt` is inside `windowMs`. Invalid dates are not recent. */
-export function isRecentTimestamp(
-  createdAt: string | undefined,
-  windowMs: number,
-  now = Date.now(),
-): boolean {
-  if (!createdAt) return false
-  const then = new Date(createdAt).getTime()
-  return Number.isFinite(then) && now - then < windowMs
+  return allowAttempt(`${scope}:email:${email}`, PUBLIC_FORM_EMAIL_MAX, PUBLIC_FORM_EMAIL_WINDOW_MS)
 }
 
 /** Test-only. */

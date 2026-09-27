@@ -35,6 +35,12 @@ interface DraftBeerCardProps {
   showAbv?: boolean
   /** Show Just Released badge (default: true) */
   showJustReleased?: boolean
+  /**
+   * Clock for the time-based "Just Released" badge (see getBeerBadgeLabel):
+   * menus pass useHourlyNow() so this memoized card re-renders as time passes.
+   * Omit to use the current time.
+   */
+  now?: number | null
   /** Show Untappd rating (default: false; homepage compact rows omit it) */
   showRating?: boolean
   /**
@@ -55,6 +61,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
   showTap = true,
   showAbv = true,
   showJustReleased = true,
+  now,
   showRating = false,
   compact = false,
   accentColor,
@@ -64,7 +71,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
   const displayGlass = showGlass ?? showTapAndPrice
   const isStein = beer.glass === GlassType.STEIN
   const glassOpticalClass = isStein ? '-translate-x-[0.8vh] scale-[1.08]' : ''
-  const badgeLabel = showJustReleased ? getBeerBadgeLabel(beer) : null
+  const badgeLabel = showJustReleased ? getBeerBadgeLabel(beer, now) : null
   const isProduct = 'isProduct' in beer && beer.isProduct === true
 
   // Fullscreen mode uses viewport-relative sizing

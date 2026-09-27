@@ -19,10 +19,11 @@ import {
   type AnimatedItem,
 } from '@/lib/hooks/use-animated-list'
 import { useAuth } from '@/lib/hooks/use-auth'
+import { useHourlyNow } from '@/lib/hooks/use-hourly-now'
 import { SectionHeader } from '@/components/ui/section-header'
 import { getMediaUrl, canSpriteAnimation } from '@/lib/utils/media-utils'
 import { extractBeerFromMenuItem, extractProductFromMenuItem } from '@/lib/utils/menu-item-utils'
-import { getTodayEST, toESTDate } from '@/lib/utils/date'
+import { MS_PER_DAY, getTodayEST, toESTDate } from '@/lib/utils/date'
 import type { Menu, Style, Location } from '@/src/payload-types'
 import type { Beer } from '@/lib/types/beer'
 import { getBeerBadgeLabel } from '@/lib/types/beer'
@@ -33,8 +34,6 @@ import { TV_TYPE, TV_SAFE_X, TV_SAFE_Y, TV_COL, TV_LOGO_CLASS } from '@/lib/conf
 import { OTHER_MENU_CATEGORIES, type OtherMenuCategory } from '@/lib/config/other-menu'
 import { LINES_OVERDUE_DAYS } from '@/lib/utils/lines-cleaned'
 import { parsePrice } from '@/lib/utils/formatters'
-
-const MS_PER_DAY = 1000 * 60 * 60 * 24
 
 /**
  * Format the lines cleaned date as a relative description using EST timezone,
@@ -576,14 +575,17 @@ function AdminEditButtons({
 /** Can card component for cans display */
 function CanCard({
   item,
+  now,
   fullscreen = false,
   accentColor,
 }: {
   item: MenuItem
+  /** Clock for the "Just Released" badge; see getBeerBadgeLabel. */
+  now: number | null
   fullscreen?: boolean
   accentColor?: string
 }) {
-  const badgeLabel = getBeerBadgeLabel(item)
+  const badgeLabel = getBeerBadgeLabel(item, now)
   const [imageError, setImageError] = useState(false)
 
   // Fallback content when no image or image failed to load
@@ -812,6 +814,8 @@ function FeaturedMenu({
   labelVideos = false,
 }: FeaturedMenuProps) {
   const { currentLocation, currentLocationData } = useLocationContext()
+  // Drives the time-based "Just Released" badge on the cards below.
+  const now = useHourlyNow()
   const title = menuType === 'draft' ? 'Draft' : 'Cans'
   // The homepage list is filtered to one taproom, so the heading names it —
   // otherwise nothing on the page says which location you are looking at.
@@ -943,6 +947,7 @@ function FeaturedMenu({
                                 >
                                   <DraftBeerCard
                                     beer={item as unknown as Beer}
+                                    now={now}
                                     showLocation={false}
                                     showTapAndPrice
                                     showRating
@@ -980,7 +985,7 @@ function FeaturedMenu({
                       key={key}
                       className={`min-h-0 ${animated ? getAnimationClass(state) : ''}`}
                     >
-                      <CanCard item={item} fullscreen accentColor={itemColors?.[idx]} />
+                      <CanCard item={item} now={now} fullscreen accentColor={itemColors?.[idx]} />
                     </div>
                   ))}
                 </div>
@@ -1047,7 +1052,7 @@ function FeaturedMenu({
                 suppressHydrationWarning
               >
                 {displayItems.map((item, index) => (
-                  <CanCard key={`${item.variant}-${index}`} item={item} />
+                  <CanCard key={`${item.variant}-${index}`} item={item} now={now} />
                 ))}
               </div>
             )

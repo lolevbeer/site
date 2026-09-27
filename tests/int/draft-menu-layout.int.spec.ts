@@ -1,7 +1,12 @@
-import { cleanup, render } from '@testing-library/react'
+/**
+ * Draft menu rendering: fullscreen board layout, the homepage list, and the
+ * automatic "Just Released" badge (beers created in the last 7 days).
+ */
+import { act, cleanup, render } from '@testing-library/react'
 import { createElement } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { FeaturedBeers } from '@/components/home/featured-menu'
+import { MS_PER_DAY } from '@/lib/utils/date'
 import type { Menu } from '@/src/payload-types'
 
 vi.mock('@/components/location/location-provider', () => ({
@@ -16,8 +21,8 @@ vi.mock('@/components/ui/scroll-reveal', () => ({
   ScrollReveal: ({ children }: { children: unknown }) => children,
 }))
 
-function makeDraftMenu(): Menu {
-  const item = (slug: string, collab = false) => ({
+function beerItem(slug: string, overrides: Record<string, unknown> = {}) {
+  return {
     product: {
       relationTo: 'beers' as const,
       value: {
@@ -30,23 +35,40 @@ function makeDraftMenu(): Menu {
         hops: 'Citra, Mosaic, Nelson Sauvin',
         draftPrice: 7,
         hideFromSite: false,
-        collab,
-        collabBrewery: collab ? 'Azvex Brewing Company' : undefined,
         createdAt: '2020-01-01T00:00:00.000Z',
+        ...overrides,
       },
     },
-  })
+  }
+}
 
+const collab = { collab: true, collabBrewery: 'Azvex Brewing Company' }
+
+function makeDraftMenu(
+  items = Array.from({ length: 12 }, (_, index) =>
+    beerItem(`beer-${index + 1}`, index === 0 ? collab : {}),
+  ),
+): Menu {
   return {
     id: 'draft-menu',
     name: 'Draft Beer',
     type: 'draft',
     location: { id: 'loc-1', slug: 'lawrenceville', name: 'Lawrenceville' },
-    items: Array.from({ length: 12 }, (_, index) => item(`beer-${index + 1}`, index === 0)),
+    items,
   } as unknown as Menu
 }
 
-afterEach(cleanup)
+function rowFor(container: HTMLElement, name: string): HTMLElement {
+  const rows = Array.from(container.querySelectorAll<HTMLElement>('[role="listitem"]'))
+  const row = rows.find((r) => r.textContent?.includes(name))
+  if (!row) throw new Error(`No menu row for ${name}`)
+  return row
+}
+
+afterEach(() => {
+  cleanup()
+  vi.useRealTimers()
+})
 
 describe('Fullscreen draft menu row sizing', () => {
   it('uses two separate header bars and distributes natural-height rows', () => {
@@ -97,5 +119,35 @@ describe('Fullscreen draft menu row sizing', () => {
     expect(list?.className).toContain('mx-auto')
     expect(list?.className).not.toContain('grid-cols-2')
     expect(section?.querySelector('.lg\\:grid-cols-2')).toBeNull()
+  })
+})
+
+describe('menu "Just Released" badge', () => {
+  const createdDaysAgo = (days: number) => new Date(Date.now() - days * MS_PER_DAY).toISOString()
+
+  it('marks only beers created in the last 7 days, ignoring any stored manual flag', () => {
+    const menu = makeDraftMenu([
+      beerItem('Fresh Pale', { createdAt: createdDaysAgo(2) }),
+      beerItem('Old Stout', { createdAt: createdDaysAgo(90), justReleased: true }),
+    ])
+
+    const { container } = render(createElement(FeaturedBeers, { menu }))
+
+    expect(rowFor(container, 'Fresh Pale').textContent).toContain('Just Released')
+    expect(rowFor(container, 'Old Stout').textContent).not.toContain('Just Released')
+  })
+
+  it('drops the badge on a display left running past the 7-day mark', () => {
+    vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] })
+    vi.setSystemTime(Date.parse('2026-09-27T12:00:00.000Z'))
+    const menu = makeDraftMenu([beerItem('Almost Week', { createdAt: createdDaysAgo(6.95) })])
+
+    const { container } = render(createElement(FeaturedBeers, { menu }))
+    expect(rowFor(container, 'Almost Week').textContent).toContain('Just Released')
+
+    act(() => {
+      vi.advanceTimersByTime(3 * 60 * 60 * 1000)
+    })
+    expect(rowFor(container, 'Almost Week').textContent).not.toContain('Just Released')
   })
 })
