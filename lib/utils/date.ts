@@ -27,14 +27,24 @@ export function getCurrentESTDateTime(): Date {
 }
 
 /**
- * Get today's date string in EST/EDT (YYYY-MM-DD format)
+ * Get the EST/EDT calendar date (YYYY-MM-DD) of an instant, such as a stored
+ * timestamp. The date part of an ISO timestamp is the UTC day, which from 8pm
+ * EDT (7pm EST) is already tomorrow.
  */
-export function getTodayEST(): string {
-  return format(getCurrentESTDateTime(), 'yyyy-MM-dd')
+export function getDateEST(instant: Date | number): string {
+  return format(toZonedTime(instant, EST_TIMEZONE), 'yyyy-MM-dd')
 }
 
 /**
- * Convert a date string to EST/EDT Date object at noon
+ * Get today's date string in EST/EDT (YYYY-MM-DD format)
+ */
+export function getTodayEST(): string {
+  return getDateEST(new Date())
+}
+
+/**
+ * Convert a date string to EST/EDT Date object at noon. Uses the string's
+ * YYYY-MM-DD part as written, so pass a timestamp through getDateEST first.
  */
 export function toESTDate(dateString: string): Date {
   return new Date(`${dateString.split('T')[0]}T12:00:00-05:00`)

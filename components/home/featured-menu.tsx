@@ -23,7 +23,7 @@ import { useClockBucket } from '@/lib/hooks/use-clock-bucket'
 import { SectionHeader } from '@/components/ui/section-header'
 import { getMediaUrl, canSpriteAnimation } from '@/lib/utils/media-utils'
 import { extractBeerFromMenuItem, extractProductFromMenuItem } from '@/lib/utils/menu-item-utils'
-import { MS_PER_DAY, getTodayEST, toESTDate } from '@/lib/utils/date'
+import { MS_PER_DAY, getDateEST, toESTDate } from '@/lib/utils/date'
 import type { Menu, Style, Location } from '@/src/payload-types'
 import type { Beer } from '@/lib/types/beer'
 import { getBeerBadgeLabel } from '@/lib/types/beer'
@@ -38,17 +38,27 @@ import { formatPrice, formatPriceText, parsePrice } from '@/lib/utils/formatters
 const HOUR_MS = 60 * 60 * 1000
 
 /**
- * Format the lines cleaned date as a relative description using EST timezone,
- * or null once the lines are overdue — a stale date is worse than no date on a
- * customer-facing display. Counts EST calendar days, so at the
- * LINES_OVERDUE_DAYS boundary it can differ by a day from the admin alert,
- * which counts elapsed days from `Date.now()`.
+ * Describe when the draft lines were cleaned ("today", "3 days ago"), counting
+ * New York calendar days up to `now`. Returns null without a valid date, when
+ * `now` is unknown (server rendering), or once the lines are overdue — a stale
+ * date is worse than no date on a customer-facing display.
+ *
+ * The cleaning's day comes from the instant, not the ISO string's date part:
+ * MarkLinesCleanedButton stores the exact time, and an evening cleaning is
+ * already the next day in UTC. Counting calendar days, the LINES_OVERDUE_DAYS
+ * cutoff can land a day off the admin alert, which counts elapsed days from
+ * `Date.now()`.
  */
-function formatLinesCleanedDate(dateStr: string | null | undefined): string | null {
-  if (!dateStr) return null
+function formatLinesCleanedDate(
+  dateStr: string | null | undefined,
+  now: number | null,
+): string | null {
+  const cleanedAt = dateStr ? Date.parse(dateStr) : NaN
+  if (now === null || Number.isNaN(cleanedAt)) return null
 
   const diffDays = Math.round(
-    (toESTDate(getTodayEST()).getTime() - toESTDate(dateStr).getTime()) / MS_PER_DAY,
+    (toESTDate(getDateEST(now)).getTime() - toESTDate(getDateEST(cleanedAt)).getTime()) /
+      MS_PER_DAY,
   )
 
   if (diffDays >= LINES_OVERDUE_DAYS) return null
@@ -848,12 +858,16 @@ function FeaturedMenu({
     [menu, labelVideos],
   )
   const displayItems = menuItems ?? filteredItems
-  // Memoized for the same reason as menuItems: the poll re-renders this
-  // component every 2s, and this value changes at most once a day.
+  // Memoized: the display re-renders on each poll with new data (10s after a
+  // change, 30s when idle; see usePolling), but this text changes once a day at
+  // most. It follows the hourly clock `now`, so a display left running rolls
+  // over at midnight; `now` is null while server rendering, so the note is left
+  // out of server HTML and hydration always matches.
   const menuLocation = typeof menu?.location === 'object' ? (menu.location as Location) : null
   const linesCleanedText = useMemo(
-    () => (menu?.type === 'draft' ? formatLinesCleanedDate(menuLocation?.linesLastCleaned) : null),
-    [menu?.type, menuLocation?.linesLastCleaned],
+    () =>
+      menu?.type === 'draft' ? formatLinesCleanedDate(menuLocation?.linesLastCleaned, now) : null,
+    [menu?.type, menuLocation?.linesLastCleaned, now],
   )
 
   // Animated items for live updates (only when animated prop is true)
