@@ -12,12 +12,33 @@ import {
   leadBartenderFieldAccess,
 } from '@/src/access/roles'
 import { relationshipIds } from '@/src/utils/relationship-id'
+import { buildPasswordResetMessage } from '@/src/utils/slack'
+import { slackApi } from '@/src/utils/slack-api'
 
 export const Users: CollectionConfig = {
   slug: 'users',
   auth: {
     // 7 days in seconds (7 * 24 * 60 * 60)
     tokenExpiration: 604800,
+    forgotPassword: {
+      // There is no email service, so the admin "Forgot password?" form sends
+      // the reset over Slack with the same message and client as
+      // `/lolevbeer password` (buildPasswordResetMessage + slackApi), as a DM
+      // since there is no slash-command response_url here. The returned HTML
+      // goes to Payload's console email adapter, which only logs.
+      // Payload's minRequestInterval (15s) rate-limits this.
+      // ponytail: unlinked accounts (no slackUserId) get nothing; they can run
+      // `/lolevbeer password`, which links by email first.
+      generateEmailHTML: async ({ token, user } = {}) => {
+        if (token && user?.slackUserId) {
+          await slackApi('chat.postMessage', {
+            channel: user.slackUserId,
+            ...buildPasswordResetMessage(token),
+          })
+        }
+        return ''
+      },
+    },
   },
   admin: {
     group: 'Settings',

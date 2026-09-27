@@ -168,6 +168,11 @@ ephemeral message only the requester can see (valid 1 hour, single use). It is
 not gated by the menu allowlist, since it only ever acts on the caller's own
 account — but it does require that account to be linked (below).
 
+The "Forgot password?" form on the `/admin` login page sends the same message
+as a Slack DM to the account's linked `slackUserId`
+(`Users.auth.forgotPassword.generateEmailHTML`). Unlinked accounts receive
+nothing from the form; `/lolevbeer password` links them by email first.
+
 ### Linking Slack accounts to site users
 
 Users have a `slackUserId` field. The bot resolves a Slack request to a Payload
