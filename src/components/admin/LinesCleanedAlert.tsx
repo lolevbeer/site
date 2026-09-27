@@ -123,12 +123,7 @@ export function LinesCleanedAlert({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <style>{`
-        .lines-cleaned-alerts > div:not(:last-child) {
-          margin-bottom: 0 !important;
-        }
-      `}</style>
-      <div className="lines-cleaned-alerts">
+      <div>
         {errorAlerts.length > 0 && (
           <Banner type="danger">
             <strong>OVERDUE:</strong>{' '}
