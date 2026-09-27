@@ -4,11 +4,12 @@
  * Uses unstable_cache for cross-request caching with tag-based invalidation
  *
  * Error handling contract: these fetchers RETHROW on a fetch failure rather
- * than returning an empty default. A thrown error is never persisted to the
- * ISR/full-route cache, so a transient blip (e.g. a cold-start connection storm
- * right after a Vercel deploy) self-heals on the next request. Swallowing the
- * error into `[]`/`null` would bake an empty render into the route cache and
- * serve it for the whole revalidate window (see the /m fix, commit 7160f57e).
+ * than returning an empty default. A thrown error is never stored in the data
+ * cache (`unstable_cache`) or in a cached page, so a transient blip (e.g. a
+ * cold-start connection storm right after a Vercel deploy) self-heals on the
+ * next request. Swallowing the error into `[]`/`null` would cache the empty
+ * result and serve it until the next revalidation (this once blanked the /m
+ * displays; commit 7160f57e).
  * A genuinely-empty result (e.g. location not found) is still returned normally
  * from inside the cached fn and remains cacheable.
  *
