@@ -9,9 +9,9 @@ import { AdminLogo as AdminLogo_a61f4011432dd182d230f12ec130ccf3 } from '../../.
 import { SyncNavLink as SyncNavLink_82c709757ca89b15fbda01ecdc07cb23 } from '../../../components/SyncNavLink'
 import { AdminNavLink as AdminNavLink_718cb223f4c9ff40cc70f8d31e60b60b } from '../../../components/AdminNavLink'
 import { LinesCleanedAlert as LinesCleanedAlert_ea4d0d6c304332acbeb3a86b04f0d005 } from '../../../components/admin/LinesCleanedAlert'
-import { VercelBlobClientUploadHandler as VercelBlobClientUploadHandler_16c82c5e25f430251a3e3ba57219ff4e } from '@payloadcms/storage-vercel-blob/client'
 import { SyncView as SyncView_c23504be653ff4cfe56b71cd946ad683 } from '../../../components/SyncView'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
+import { VercelBlobClientUploadHandler as VercelBlobClientUploadHandler_16c82c5e25f430251a3e3ba57219ff4e } from '@payloadcms/storage-vercel-blob/client'
 
 /** @type import('payload').ImportMap */
 export const importMap = {
@@ -26,7 +26,7 @@ export const importMap = {
   "./components/SyncNavLink#SyncNavLink": SyncNavLink_82c709757ca89b15fbda01ecdc07cb23,
   "./components/AdminNavLink#AdminNavLink": AdminNavLink_718cb223f4c9ff40cc70f8d31e60b60b,
   "./components/admin/LinesCleanedAlert#LinesCleanedAlert": LinesCleanedAlert_ea4d0d6c304332acbeb3a86b04f0d005,
-  "@payloadcms/storage-vercel-blob/client#VercelBlobClientUploadHandler": VercelBlobClientUploadHandler_16c82c5e25f430251a3e3ba57219ff4e,
   "./components/SyncView#SyncView": SyncView_c23504be653ff4cfe56b71cd946ad683,
-  "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1
+  "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1,
+  "@payloadcms/storage-vercel-blob/client#VercelBlobClientUploadHandler": VercelBlobClientUploadHandler_16c82c5e25f430251a3e3ba57219ff4e
 }
