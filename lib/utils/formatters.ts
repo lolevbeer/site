@@ -158,7 +158,7 @@ export function formatDate(
 /**
  * Price formatting utilities
  */
-function formatPrice(price: number | undefined): string {
+export function formatPrice(price: number | undefined): string {
   if (!price) return ''
   return `$${price.toFixed(2).replace(/\.00$/, '')}`
 }
@@ -180,6 +180,17 @@ export function parsePrice(price: string | number | null | undefined): number | 
   if (price == null) return undefined
   const parsed = parseFloat(String(price).replace(/[$,]/g, ''))
   return isNaN(parsed) ? undefined : parsed
+}
+
+/**
+ * Display a free-text price (Products.price, a menu item's sale price): a plain
+ * number, with or without "$", reads like formatPrice ("4.5" → "$4.50"); any
+ * other text shows as entered ("2 for $10"). Empty or 0 gives "", so callers
+ * can hide the price.
+ */
+export function formatPriceText(price: string | undefined): string {
+  const text = price?.trim() ?? ''
+  return /^\$?\d+(\.\d+)?$/.test(text) ? formatPrice(parsePrice(text)) : text
 }
 
 /**
@@ -242,16 +253,6 @@ export function getBeerAvailability(beer: Beer): string {
     beer.availability.singleCanAvailable && 'Singles',
   ].filter(Boolean)
   return items.length > 0 ? items.join(' • ') : 'Limited'
-}
-
-export function getBeerPricing(beer: Beer): string {
-  const items = [
-    beer.pricing.draftPrice && `Draft ${formatPrice(beer.pricing.draftPrice)}`,
-    (beer.pricing.canSingle || beer.pricing.cansSingle) &&
-      `Single ${formatPrice(beer.pricing.canSingle || beer.pricing.cansSingle)}`,
-    beer.pricing.fourPack && `4 Pack ${formatPrice(beer.pricing.fourPack)}`,
-  ].filter(Boolean)
-  return items.length > 0 ? items.join(' • ') : 'See store'
 }
 
 /**

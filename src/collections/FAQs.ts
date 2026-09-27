@@ -12,7 +12,6 @@ export const FAQs: CollectionConfig = {
   admin: {
     group: 'Settings',
     useAsTitle: 'question',
-    hideAPIURL: true,
     defaultColumns: ['question', 'order', 'active'],
     pagination: {
       defaultLimit: 50,

@@ -12,7 +12,6 @@ export const Distributors: CollectionConfig = {
   admin: {
     group: 'Settings',
     useAsTitle: 'name',
-    hideAPIURL: true,
     defaultColumns: ['name', 'address', 'customerType', 'region'],
     pagination: {
       defaultLimit: 100,

@@ -19,7 +19,6 @@ export const Tags: CollectionConfig = {
   admin: {
     hidden: true,
     useAsTitle: 'name',
-    hideAPIURL: true,
     defaultColumns: ['name'],
     pagination: {
       defaultLimit: 100,

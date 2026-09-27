@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { User } from '@/src/payload-types'
 import { Users } from '@/src/collections/Users'
 import { Menus, canUpdateMenus } from '@/src/collections/Menus'
+import { Beers } from '@/src/collections/Beers'
 import { Events } from '@/src/collections/Events'
 import { DonationRequests } from '@/src/collections/DonationRequests'
 import { Jobs } from '@/src/collections/Jobs'
@@ -74,6 +75,80 @@ describe('menu authorization', () => {
     expect(callAccess(canUpdateMenus, userWith(['admin']))).toBe(true)
     expect(callAccess(Menus.access?.read, userWith(['admin']))).toBe(true)
   })
+
+  it('scopes menu version history like menu reads, and never to anonymous visitors', () => {
+    const readVersions = Menus.access?.readVersions
+
+    expect(callAccess(readVersions, null)).toBe(false)
+    expect(callAccess(readVersions, userWith(['admin']))).toBe(true)
+    expect(callAccess(readVersions, userWith(['bartender']))).toBe(false)
+    expect(callAccess(readVersions, userWith(['bartender'], ['location-1']))).toEqual({
+      'version.location': { in: ['location-1'] },
+    })
+    expect(callAccess(readVersions, userWith(['event-manager']))).toEqual({
+      'version._status': { equals: 'published' },
+    })
+  })
+})
+
+describe('user directory visibility', () => {
+  const restrictedFieldRead = (name: string) => {
+    const read = (findField(Users.fields, name).access as Record<string, unknown> | undefined)?.read
+    if (typeof read !== 'function') throw new Error(`Expected ${name} read access`)
+    return read
+  }
+
+  it('lets every signed-in user read other users (so revisions show who last edited them)', () => {
+    expect(callAccess(Users.access?.read, null)).toBe(false)
+    expect(callAccess(Users.access?.read, userWith(['bartender']))).toBe(true)
+  })
+
+  it.each(['roles', 'locations', 'slackUserId'])(
+    "keeps other users' %s visible only to admins and the user themselves",
+    (name) => {
+      const read = restrictedFieldRead(name)
+      const readAs = (user: User, docId: string) => read({ req: { user }, doc: { id: docId } })
+
+      expect(readAs(userWith(['admin']), 'someone-else')).toBe(true)
+      expect(readAs(userWith(['bartender']), 'user-id')).toBe(true)
+      expect(readAs(userWith(['bartender']), 'someone-else')).toBe(false)
+      expect(readAs(userWith(['beer-manager']), 'someone-else')).toBe(false)
+      expect(readAs(userWith(['lead-bartender']), 'someone-else')).toBe(false)
+    },
+  )
+
+  it.each(['roles', 'locations', 'slackUserId'])(
+    'keeps %s on the create form, where the new user has no id yet',
+    (name) => {
+      // If the create form drops these fields, a lead bartender's invite saves
+      // as a bartender with no locations.
+      const read = restrictedFieldRead(name)
+      const req = { user: userWith(['lead-bartender'], ['location-1']) }
+      const draft = { roles: ['bartender'] }
+      const permissionsDraft = { _status: 'draft' }
+
+      // Form state (@payloadcms/ui addFieldStatePromise): the draft as data.
+      expect(read({ req, id: undefined, data: draft, siblingData: draft })).toBe(true)
+      // Create-view permissions (getDocumentPermissions → populateFieldPermissions):
+      // the draft as data and doc.
+      expect(read({ req, id: undefined, data: permissionsDraft, doc: permissionsDraft })).toBe(true)
+    },
+  )
+
+  it.each(['roles', 'locations', 'slackUserId'])(
+    'keeps non-admins from querying users by %s',
+    (name) => {
+      // Where-query validation (validateSearchParams → getEntityPermissions with
+      // fetchData: false) passes no id, data, or doc.
+      const read = restrictedFieldRead(name)
+      const queryAs = (user: User) =>
+        read({ req: { user }, id: undefined, data: undefined, doc: undefined })
+
+      expect(queryAs(userWith(['bartender']))).toBe(false)
+      expect(queryAs(userWith(['lead-bartender'], ['location-1']))).toBe(false)
+      expect(queryAs(userWith(['admin']))).toBe(true)
+    },
+  )
 })
 
 describe('user assignment authorization', () => {
@@ -200,6 +275,16 @@ describe('draft and sensitive field visibility', () => {
       expect(callAccess(read, null)).toBe(false)
       expect(callAccess(read, userWith(['bartender']))).toBe(false)
       expect(callAccess(read, userWith(['event-manager']))).toBe(true)
+    }
+  })
+
+  it('hides who last edited a beer or menu from anonymous readers', () => {
+    for (const fields of [Beers.fields, Menus.fields]) {
+      const read = (findField(fields, 'updatedBy').access as Record<string, unknown> | undefined)
+        ?.read
+
+      expect(callAccess(read, null)).toBe(false)
+      expect(callAccess(read, userWith(['bartender']))).toBe(true)
     }
   })
 

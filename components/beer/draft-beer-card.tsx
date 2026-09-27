@@ -10,12 +10,13 @@ import React from 'react'
 import { BeerLinkWrapper } from '@/components/beer/beer-link-wrapper'
 import { GlassType, type Beer } from '@/lib/types/beer'
 import { useLocationContext } from '@/components/location/location-provider'
-import { getBeerSlug } from '@/lib/utils/formatters'
+import { formatPrice, getBeerSlug } from '@/lib/utils/formatters'
 import { GlassIcon } from '@/lib/utils/beer-icons'
 import { Badge } from '@/components/ui/badge'
 import { TopBeerDropsLink } from '@/components/beer/top-beer-drops-link'
 import { UntappdRating } from '@/components/beer/untappd-rating'
 import { getBeerBadgeLabel } from '@/lib/types/beer'
+import { isSold } from '@/lib/utils/packaging-utils'
 import { TV_TYPE, TV_COL, TV_BADGE_STYLE } from '@/lib/config/tv-display'
 
 interface DraftBeerCardProps {
@@ -35,6 +36,13 @@ interface DraftBeerCardProps {
   showAbv?: boolean
   /** Show Just Released badge (default: true) */
   showJustReleased?: boolean
+  /**
+   * Clock for the time-based "Just Released" badge (see getBeerBadgeLabel):
+   * menus pass an hourly clock (useClockBucket) so this memoized card
+   * re-renders as time passes. Defaults to null, which leaves that badge out
+   * (Collab and Guest Tap badges still show).
+   */
+  now?: number | null
   /** Show Untappd rating (default: false; homepage compact rows omit it) */
   showRating?: boolean
   /**
@@ -55,6 +63,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
   showTap = true,
   showAbv = true,
   showJustReleased = true,
+  now = null,
   showRating = false,
   compact = false,
   accentColor,
@@ -64,7 +73,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
   const displayGlass = showGlass ?? showTapAndPrice
   const isStein = beer.glass === GlassType.STEIN
   const glassOpticalClass = isStein ? '-translate-x-[0.8vh] scale-[1.08]' : ''
-  const badgeLabel = showJustReleased ? getBeerBadgeLabel(beer) : null
+  const badgeLabel = showJustReleased ? getBeerBadgeLabel(beer, now) : null
   const isProduct = 'isProduct' in beer && beer.isProduct === true
 
   // Fullscreen mode uses viewport-relative sizing
@@ -211,23 +220,23 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
             )}
             {showAbv && (
               <div className="text-right">
-                {beer.pricing?.halfPour && (
+                {isSold(beer.pricing?.halfPour) && (
                   <div
                     className="font-bold tabular-nums transition-colors duration-500"
                     style={{ fontSize: '3.8vh', color: accentColor }}
                   >
-                    ${beer.pricing.halfPour}
+                    {formatPrice(beer.pricing.halfPour)}
                   </div>
                 )}
               </div>
             )}
             <div className="text-right">
-              {!beer.pricing?.halfPourOnly && beer.pricing?.draftPrice && (
+              {!beer.pricing?.halfPourOnly && isSold(beer.pricing?.draftPrice) && (
                 <div
                   className="font-bold tabular-nums transition-colors duration-500"
                   style={{ fontSize: '3.8vh', color: accentColor }}
                 >
-                  ${beer.pricing.draftPrice}
+                  {formatPrice(beer.pricing.draftPrice)}
                 </div>
               )}
             </div>

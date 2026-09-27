@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { useDocumentInfo, useFormFields } from '@payloadcms/ui'
 import { getEventsOnDate, getFoodOnDateRange } from '@/src/actions/admin-data'
 import { logger } from '@/lib/utils/logger'
+import { NoteBanner } from '@/src/components/admin/NoteBanner'
 import {
   getAdminRelationshipID,
   type AdminRelationshipValue,
@@ -107,46 +108,33 @@ export const EventDateWarning: React.FC = () => {
   }
 
   return (
-    <div
-      style={{
-        padding: '12px 16px',
-        backgroundColor: 'var(--theme-success-100)',
-        border: '1px solid var(--theme-success-500)',
-        borderRadius: '4px',
-        marginBottom: '16px',
-      }}
-    >
-      <strong style={{ color: 'var(--theme-success-700)' }}>Note:</strong>{' '}
-      <span style={{ color: 'var(--theme-success-800)' }}>
-        {eventConflicts.length > 0 && (
-          <>
-            {eventConflicts.length === 1
-              ? 'Another event'
-              : `${eventConflicts.length} other events`}{' '}
-            scheduled:{' '}
-            {eventConflicts.map((c, i) => (
-              <span key={i}>
-                {i > 0 && ', '}
-                <strong>{c.organizer}</strong>
-                {c.visibility === 'private' && ' (private)'}
-              </span>
-            ))}
-          </>
-        )}
-        {eventConflicts.length > 0 && foodVendors.length > 0 && <br />}
-        {foodVendors.length > 0 && (
-          <>
-            Food scheduled:{' '}
-            {foodVendors.map((v, i) => (
-              <span key={i}>
-                {i > 0 && ', '}
-                <strong>{v.name}</strong>
-                {v.type === 'recurring' ? ' (recurring)' : ''}
-              </span>
-            ))}
-          </>
-        )}
-      </span>
-    </div>
+    <NoteBanner type="success">
+      {eventConflicts.length > 0 && (
+        <>
+          {eventConflicts.length === 1 ? 'Another event' : `${eventConflicts.length} other events`}{' '}
+          scheduled:{' '}
+          {eventConflicts.map((c, i) => (
+            <span key={i}>
+              {i > 0 && ', '}
+              <strong>{c.organizer}</strong>
+              {c.visibility === 'private' && ' (private)'}
+            </span>
+          ))}
+        </>
+      )}
+      {eventConflicts.length > 0 && foodVendors.length > 0 && <br />}
+      {foodVendors.length > 0 && (
+        <>
+          Food scheduled:{' '}
+          {foodVendors.map((v, i) => (
+            <span key={i}>
+              {i > 0 && ', '}
+              <strong>{v.name}</strong>
+              {v.type === 'recurring' ? ' (recurring)' : ''}
+            </span>
+          ))}
+        </>
+      )}
+    </NoteBanner>
   )
 }

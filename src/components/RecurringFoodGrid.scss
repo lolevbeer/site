@@ -16,7 +16,7 @@
 
   &__year-label {
     font-size: 12px;
-    color: var(--theme-elevation-500);
+    color: var(--color-text-secondary);
   }
 
   &__year-value {
@@ -27,7 +27,7 @@
   &__tabs {
     display: flex;
     gap: 4px;
-    border-bottom: 1px solid var(--theme-elevation-150);
+    border-bottom: 1px solid var(--color-border);
     margin-bottom: 16px;
   }
 
@@ -35,7 +35,7 @@
     padding: 12px 20px;
     font-size: 14px;
     font-weight: 400;
-    color: var(--theme-elevation-500);
+    color: var(--color-text-secondary);
     background: transparent;
     border: none;
     border-bottom: 2px solid transparent;
@@ -46,8 +46,8 @@
 
     &--active {
       font-weight: 600;
-      color: var(--theme-text);
-      border-bottom-color: var(--theme-elevation-800);
+      color: var(--color-text);
+      border-bottom-color: var(--color-border-strong);
     }
   }
 
@@ -101,10 +101,10 @@
        cell still opens the dropdown, so its chevron is redundant name space. */
     .rs__control {
       flex-wrap: nowrap;
-      background-color: var(--theme-error-50);
+      background-color: var(--color-bg-danger-tertiary);
 
       &:has(.rs__single-value) {
-        background-color: var(--theme-success-50);
+        background-color: var(--color-bg-success-tertiary);
 
         .rs__dropdown-indicator {
           display: none;
@@ -149,14 +149,25 @@
   }
 
   /* Text-style action (View <year>, Show 5th week). */
+  // Text links inside sentences, built on Payload's Button for its click and
+  // focus handling. Payload 4 has no unstyled button (v3's buttonStyle="none"),
+  // so undo the ghost button's box: flex layout, 24px height, padding, border,
+  // 11px font, and hover fill.
   &__link-button.btn {
+    display: inline;
+    height: auto;
     margin: 0;
+    padding: 0;
+    border: 0;
+    font: inherit;
+    color: inherit;
+    background: none;
     text-decoration: underline;
   }
 
   &__empty {
     padding: 20px 0;
-    color: var(--theme-elevation-500);
+    color: var(--color-text-secondary);
     font-size: 14px;
   }
 
@@ -167,44 +178,38 @@
   &__dates {
     margin-top: 24px;
     padding-top: 16px;
-    border-top: 1px solid var(--theme-elevation-150);
+    border-top: 1px solid var(--color-border);
   }
 
   &__dates-heading {
     margin: 0 0 8px 0;
     font-size: 14px;
     font-weight: 600;
-    color: var(--theme-elevation-800);
+    color: var(--color-text);
   }
 
   &__dates-hint {
     font-weight: 400;
     font-size: 12px;
-    color: var(--theme-elevation-400);
+    color: var(--color-text-tertiary);
     margin-left: 8px;
   }
 
   &__dates-list {
     font-size: 13px;
-    color: var(--theme-elevation-600);
+    color: var(--color-text-secondary);
   }
 
+  // A Payload Banner (type="warning"). Banners centre their icon vertically,
+  // which strands it mid-list here, so pin it to the "Conflicts:" line.
   &__conflicts {
-    padding: 12px 16px;
-    background-color: var(--theme-warning-100);
-    border: 1px solid var(--theme-warning-500);
-    border-radius: 4px;
+    align-items: flex-start;
     margin-bottom: 16px;
-
-    strong {
-      color: var(--theme-warning-700);
-    }
   }
 
   &__conflict-list {
     margin-top: 8px;
     font-size: 13px;
-    color: var(--theme-warning-800);
   }
 
   &__conflict {
@@ -218,7 +223,7 @@
   &__month-label {
     font-weight: 600;
     font-size: 12px;
-    color: var(--theme-elevation-500);
+    color: var(--color-text-secondary);
     margin-bottom: 4px;
   }
 
@@ -243,7 +248,7 @@
     }
 
     &--excluded {
-      background-color: var(--theme-error-50);
+      background-color: var(--color-bg-danger-tertiary);
       opacity: 0.6;
 
       .recurring-food-grid__date-text {
@@ -252,16 +257,16 @@
     }
 
     &--individual {
-      background-color: var(--theme-elevation-100);
+      background-color: var(--color-bg-secondary);
     }
   }
 
   &__slot-note {
-    color: var(--theme-elevation-400);
+    color: var(--color-text-tertiary);
   }
 
   &__status {
     padding: 20px;
-    color: var(--theme-elevation-500);
+    color: var(--color-text-secondary);
   }
 }

@@ -16,7 +16,6 @@ export const FoodVendors: CollectionConfig = {
   admin: {
     group: 'Food & Events',
     useAsTitle: 'name',
-    hideAPIURL: true,
     defaultColumns: ['name', 'email', 'phone', 'site'],
   },
   fields: [

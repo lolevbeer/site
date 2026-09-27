@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { BeerImage } from './beer-image'
-import { getBeerSlug, getBeerAvailability, getBeerPricing } from '@/lib/utils/formatters'
+import { getBeerSlug, getBeerAvailability } from '@/lib/utils/formatters'
 import { trackBeerView } from '@/lib/analytics/events'
 import { TopBeerDropsLink } from '@/components/beer/top-beer-drops-link'
 import { UntappdRating } from '@/components/beer/untappd-rating'
@@ -31,7 +31,6 @@ function LiveDot() {
 interface BeerCardProps {
   beer: Beer
   showLocation?: boolean
-  showPricing?: boolean
   showAvailability?: boolean
   className?: string
   variant?: 'full' | 'minimal'
@@ -43,7 +42,6 @@ interface BeerCardProps {
 export const BeerCard = React.memo(function BeerCard({
   beer,
   showLocation = false,
-  showPricing = true,
   showAvailability = true,
   className = '',
   variant = 'full',
@@ -169,13 +167,6 @@ export const BeerCard = React.memo(function BeerCard({
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Available:</span>
                 <span className="font-medium">{getBeerAvailability(beer)}</span>
-              </div>
-            )}
-
-            {showPricing && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Pricing:</span>
-                <span className="font-medium">{getBeerPricing(beer)}</span>
               </div>
             )}
           </div>

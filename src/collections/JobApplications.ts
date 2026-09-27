@@ -16,7 +16,6 @@ export const JobApplications: CollectionConfig = {
   admin: {
     group: 'Settings',
     useAsTitle: 'name',
-    hideAPIURL: true,
     defaultColumns: ['name', 'job', 'email', 'createdAt'],
     description: 'Applications from /jobs/[slug]. Completing the form is not a hire.',
   },

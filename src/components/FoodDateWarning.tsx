@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { useDocumentInfo, useFormFields } from '@payloadcms/ui'
 import { getFoodOnDate } from '@/src/actions/admin-data'
 import { logger } from '@/lib/utils/logger'
+import { NoteBanner } from '@/src/components/admin/NoteBanner'
 import {
   getAdminRelationshipID,
   type AdminRelationshipValue,
@@ -79,26 +80,15 @@ export const FoodDateWarning: React.FC = () => {
   }
 
   return (
-    <div
-      style={{
-        padding: '12px 16px',
-        backgroundColor: 'var(--theme-warning-100)',
-        border: '1px solid var(--theme-warning-500)',
-        borderRadius: '4px',
-        marginBottom: '16px',
-      }}
-    >
-      <strong style={{ color: 'var(--theme-warning-700)' }}>Note:</strong>{' '}
-      <span style={{ color: 'var(--theme-warning-800)' }}>
-        {warnings.map((w, i) => (
-          <span key={i}>
-            {i > 0 && ', '}
-            <strong>{w.vendorName}</strong>
-            {w.type === 'recurring' ? ' (recurring)' : ' (scheduled)'}
-          </span>
-        ))}{' '}
-        already on this date.
-      </span>
-    </div>
+    <NoteBanner type="warning">
+      {warnings.map((w, i) => (
+        <span key={i}>
+          {i > 0 && ', '}
+          <strong>{w.vendorName}</strong>
+          {w.type === 'recurring' ? ' (recurring)' : ' (scheduled)'}
+        </span>
+      ))}{' '}
+      already on this date.
+    </NoteBanner>
   )
 }

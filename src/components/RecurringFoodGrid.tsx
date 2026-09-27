@@ -369,7 +369,7 @@ const DatesList: React.FC<DatesListProps> = ({
           <div className="recurring-food-grid__empty-hint">
             {previousYearSlots} slot{previousYearSlots === 1 ? '' : 's'} scheduled for {year - 1}.{' '}
             <Button
-              buttonStyle="none"
+              buttonStyle="ghost"
               className="recurring-food-grid__link-button"
               onClick={() => onYearChange(year - 1)}
             >
@@ -385,7 +385,7 @@ const DatesList: React.FC<DatesListProps> = ({
     <div ref={mountedRootRef} className="recurring-food-grid__dates">
       {exclusionModal}
       {conflicts.length > 0 && (
-        <div className="recurring-food-grid__conflicts">
+        <Banner type="warning" className="recurring-food-grid__conflicts">
           <strong>Conflicts:</strong>
           <div className="recurring-food-grid__conflict-list">
             {conflicts.map((conflict) => (
@@ -398,7 +398,7 @@ const DatesList: React.FC<DatesListProps> = ({
               </div>
             ))}
           </div>
-        </div>
+        </Banner>
       )}
       <h4 className="recurring-food-grid__dates-heading">
         {year} Schedule
@@ -562,7 +562,7 @@ const LocationGrid: React.FC<LocationGridProps> = ({
         </table>
         {!fifthWeekUsed && !showFifthWeek && (
           <Button
-            buttonStyle="none"
+            buttonStyle="ghost"
             className="recurring-food-grid__link-button"
             onClick={() => setShowFifthWeek(true)}
           >
@@ -792,16 +792,15 @@ export const RecurringFoodGrid: React.FC = () => {
 
   return (
     <div>
-      <Banner type="info">
+      <Banner type="default">
         {canEdit
           ? 'Changes in this grid save immediately.'
           : 'View only — ask a food manager to change the schedule.'}
       </Banner>
-      {saveError && <Banner type="error">{saveError}</Banner>}
+      {saveError && <Banner type="danger">{saveError}</Banner>}
       <div aria-label="Schedule year" className="recurring-food-grid__year-nav">
         <Button
           buttonStyle="secondary"
-          size="small"
           onClick={() => setSelectedYear((year) => Math.max(RECURRING_YEAR_MIN, year - 1))}
           disabled={selectedYear <= RECURRING_YEAR_MIN}
         >
@@ -813,7 +812,6 @@ export const RecurringFoodGrid: React.FC = () => {
         </div>
         <Button
           buttonStyle="secondary"
-          size="small"
           onClick={() => setSelectedYear((year) => Math.min(RECURRING_YEAR_MAX, year + 1))}
           disabled={selectedYear >= RECURRING_YEAR_MAX}
         >

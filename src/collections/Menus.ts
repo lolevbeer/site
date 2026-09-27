@@ -1,8 +1,9 @@
-import type { CollectionConfig, Access, Where } from 'payload'
-import { APIError } from 'payload'
+import type { AccessArgs, CollectionConfig, Access, Where } from 'payload'
+import { APIError, appendVersionToQueryKey } from 'payload'
 import type { User } from '@/src/payload-types'
 import { adminAccess, adminFieldAccess, getUserLocationIds, hasRole } from '@/src/access/roles'
 import { markLinesCleanedField } from './utils/markLinesCleanedField'
+import { updatedByField } from './utils/updatedByField'
 
 /**
  * Menus at the locations this user is assigned to, or `false` when they hold
@@ -36,12 +37,38 @@ export const canUpdateMenus: Access = ({ req: { user } }) => {
   return false
 }
 
+/**
+ * Admins read every menu, drafts included; (lead) bartenders read drafts only
+ * at their assigned locations; everyone else reads published menus only.
+ */
+const canReadMenus = ({ req: { user } }: AccessArgs): boolean | Where => {
+  if (hasRole(user, 'admin')) return true
+  if (hasRole(user, ['bartender', 'lead-bartender'])) {
+    return menusAtAssignedLocations(user)
+  }
+  return {
+    _status: {
+      equals: 'published',
+    },
+  }
+}
+
+/**
+ * Version history follows the same rule as `read`, mapped onto version
+ * documents (`version.location`, `version._status`), and stays behind
+ * sign-in: anonymous visitors never see past revisions.
+ */
+const canReadMenuVersions: Access = (args) => {
+  if (!args.req.user) return false
+  const result = canReadMenus(args)
+  return typeof result === 'object' ? appendVersionToQueryKey(result) : result
+}
+
 export const Menus: CollectionConfig = {
   slug: 'menus',
   admin: {
     group: 'Front of House',
     useAsTitle: 'description',
-    hideAPIURL: true,
     defaultColumns: ['description', 'location', 'type', '_status'],
     preview: (doc) => {
       if (doc?.url) {
@@ -51,20 +78,8 @@ export const Menus: CollectionConfig = {
     },
   },
   access: {
-    read: ({ req: { user } }): boolean | Where => {
-      // Admins can read all menus (including drafts)
-      if (hasRole(user, 'admin')) return true
-      // Bartenders and lead bartenders can read drafts only for assigned locations.
-      if (hasRole(user, ['bartender', 'lead-bartender'])) {
-        return menusAtAssignedLocations(user)
-      }
-      // Public can only read published menus
-      return {
-        _status: {
-          equals: 'published',
-        },
-      }
-    },
+    read: canReadMenus,
+    readVersions: canReadMenuVersions,
     create: adminAccess,
     update: canUpdateMenus,
     delete: adminAccess,
@@ -199,6 +214,7 @@ export const Menus: CollectionConfig = {
   },
   fields: [
     markLinesCleanedField({ showFor: (data) => data?.type === 'draft' }),
+    updatedByField,
     {
       name: 'name',
       type: 'text',

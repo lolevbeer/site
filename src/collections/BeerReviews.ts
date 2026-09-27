@@ -23,7 +23,6 @@ export const BeerReviews: CollectionConfig = {
   admin: {
     group: 'Back of House',
     useAsTitle: 'reviewer',
-    hideAPIURL: true,
     defaultColumns: ['reviewer', 'beer', 'rating', 'approved', 'reviewedAt'],
   },
   access: {

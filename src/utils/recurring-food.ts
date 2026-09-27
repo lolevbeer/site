@@ -65,8 +65,8 @@ export interface RecurringFoodState {
 }
 
 /**
- * Identity for the recurring-food reads. `overrideAccess` is required because
- * Payload 3.x treats an omitted or undefined value as `true`; public callers
+ * Identity for the recurring-food reads. `overrideAccess` is required so every
+ * read states it explicitly (see AGENTS.md, Access control); public callers
  * pass `false` (anonymous), admin callers pass `false` plus their `user`.
  */
 interface RecurringFoodQueryOptions {

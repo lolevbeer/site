@@ -716,4 +716,38 @@ describe('Slack route acts as the mapped Payload user', () => {
       expect(call).toMatchObject({ overrideAccess: false, user: bartender })
     }
   })
+
+  it("checks an invitee's existing account as the inviter, not as the system", async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({
+        ok: true,
+        json: async () => ({ ok: true, user: { profile: { email: 'new@example.com' } } }),
+      })),
+    )
+    await POST(
+      interactionRequest({
+        type: 'view_submission',
+        user: { id: 'U1' },
+        view: {
+          id: 'V1',
+          callback_id: SLACK_IDS.callbackInvite,
+          state: {
+            values: {
+              [SLACK_IDS.blockInviteUser]: {
+                [SLACK_IDS.actionInviteUser]: { selected_user: 'U123' },
+              },
+            },
+          },
+        },
+      }),
+    )
+    for (const fn of afterFns) await fn()
+    vi.unstubAllGlobals()
+
+    const duplicateCheck = callsFor(find, 'users').find(
+      (call) => call.where?.email?.equals === 'new@example.com',
+    )
+    expect(duplicateCheck).toMatchObject({ overrideAccess: false, user: bartender })
+  })
 })

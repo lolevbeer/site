@@ -23,7 +23,6 @@ export const RecurringFoodSchedules: CollectionConfig = {
     group: 'System',
     hidden: true,
     useAsTitle: 'day',
-    hideAPIURL: true,
     defaultColumns: ['location', 'day', 'occurrence', 'vendor', 'active'],
   },
   access: {

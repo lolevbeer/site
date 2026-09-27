@@ -35,8 +35,8 @@ import {
   PUBLIC_FORM_IP_LIMIT_MESSAGE,
   allowEmailAttempt,
   allowIpAttempt,
-  isRecentTimestamp,
 } from '@/lib/public-forms/rate-limit'
+import { isRecentTimestamp } from '@/lib/utils/date'
 import { notifyCollectionOnSlack } from '@/lib/slack/notify'
 
 export type SubmitDonationResult =

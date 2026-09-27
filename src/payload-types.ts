@@ -146,6 +146,8 @@ export interface Config {
   locale: null;
   widgets: {
     collections: CollectionsWidget;
+    'collection-query': CollectionQueryWidget;
+    activity: ActivityWidget;
   };
   user: User;
   jobs: {
@@ -183,70 +185,42 @@ export interface UserAuthOperations {
  */
 export interface Beer {
   id: string;
+  /**
+   * The last person to save this. Automated updates, such as the nightly Untappd sync, keep the previous person.
+   */
+  updatedBy?: (string | null) | User;
+  name: string;
+  style: string | Style;
   glass: 'pint' | 'stein' | 'teku' | 'uha';
-  /**
-   * Alcohol by volume percentage
-   */
   abv: number;
+  description?: string | null;
+  hops?: string | null;
   /**
-   * Draft price in dollars (e.g., 7)
+   * Optional (search existing or add a new one)
    */
+  tag?: (string | null) | Tag;
   draftPrice: number;
   /**
-   * Enable to manually set half pour price (disables auto-calculation)
-   */
-  halfPourOnly?: boolean | null;
-  /**
-   * Auto-calculated unless "Half Pour Only" is enabled
+   * Set automatically from the draft price unless "Half Pour Only" is on
    */
   halfPour?: number | null;
   /**
-   * Four pack price (e.g., 15)
+   * Served in half pours only: hides the full draft price on the site and uses the half pour price above as entered.
    */
+  halfPourOnly?: boolean | null;
   fourPack?: number | null;
   /**
-   * Bottle price (e.g., 12)
-   */
-  bottlePrice?: number | null;
-  /**
-   * Auto-calculated from four pack price
+   * Set automatically from the four pack price
    */
   canSingle?: number | null;
-  /**
-   * UPC barcode
-   */
+  bottlePrice?: number | null;
   upc?: string | null;
   /**
-   * Auto-generated from name, but you can override it manually
+   * Beer image (auto-filled by the 3D label tool; upload to override)
    */
-  slug: string;
+  image?: (string | null) | Media;
   /**
-   * Auto-incremented recipe number
-   */
-  recipe?: number | null;
-  /**
-   * Hide from the /beer catalog (and sitemap/feeds). Usually for guest beers. Does NOT hide the beer from menu displays (/m).
-   */
-  hideFromSite?: boolean | null;
-  /**
-   * Mark as "Just Released". If no beers have this set, beers created within 2 weeks are auto-marked.
-   */
-  justReleased?: boolean | null;
-  /**
-   * Collaboration brew with another brewery. Overrides "Just Released" badge with "Collab".
-   */
-  collab?: boolean | null;
-  /**
-   * Brewery name shown in the collaboration badge. Leave blank to show “Collab”.
-   */
-  collabBrewery?: string | null;
-  name: string;
-  /**
-   * Beer style
-   */
-  style: string | Style;
-  /**
-   * Generated 3D label texture (via the tool above)
+   * Generated 3D label texture
    */
   labelBase?: (string | null) | Media;
   /**
@@ -254,26 +228,9 @@ export interface Beer {
    */
   labelMetalness?: (string | null) | Media;
   /**
-   * Beer image (auto-filled by the 3D label tool; upload to override)
-   */
-  image?: (string | null) | Media;
-  /**
    * Generated can-rotation sprite sheet (PNG; animated in CSS on menu displays)
    */
   labelVideo?: (string | null) | Media;
-  /**
-   * Optional tag (search existing or add a new one)
-   */
-  tag?: (string | null) | Tag;
-  description?: string | null;
-  /**
-   * Hop varieties used
-   */
-  hops?: string | null;
-  /**
-   * Top Beer Drops URL (e.g., https://topbeerdrops.com/...)
-   */
-  topBeerDrops?: string | null;
   /**
    * Untappd URL (e.g., /b/lolev-beer-lupula/123456)
    */
@@ -287,6 +244,35 @@ export interface Beer {
    */
   untappdRatingCount?: number | null;
   /**
+   * Top Beer Drops URL (e.g., https://topbeerdrops.com/...)
+   */
+  topBeerDrops?: string | null;
+  reviews?: {
+    docs?: (string | BeerReview)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  /**
+   * Hide from the /beer catalog (and sitemap/feeds). Usually for guest beers. Does NOT hide the beer from menu displays (/m).
+   */
+  hideFromSite?: boolean | null;
+  /**
+   * Collaboration brew with another brewery. Shows a "Collab" badge instead of the automatic "Just Released" one.
+   */
+  collab?: boolean | null;
+  /**
+   * Brewery name shown in the collaboration badge. Leave blank to show “Collab”.
+   */
+  collabBrewery?: string | null;
+  /**
+   * Auto-generated from name, but you can override it manually
+   */
+  slug: string;
+  /**
+   * Assigned automatically to new beers; change only to fix a mistake (must be unique)
+   */
+  recipe?: number | null;
+  /**
    * Legacy review data retained temporarily for migration compatibility.
    */
   positiveReviews?:
@@ -298,169 +284,48 @@ export interface Beer {
     | number
     | boolean
     | null;
-  reviews?: {
-    docs?: (string | BeerReview)[];
-    hasNextPage?: boolean;
-    totalDocs?: number;
-  };
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "styles".
+ * via the `definition` "users".
  */
-export interface Style {
+export interface User {
   id: string;
+  name?: string | null;
   /**
-   * Beer style name (e.g., IPA, Stout, Pale Ale)
+   * Slack member ID (e.g. U01ABCDEF). Filled in automatically when the Slack profile email matches this account — set it manually only if the emails differ.
    */
-  name: string;
+  slackUserId?: string | null;
+  /**
+   * Assign bartenders to the locations whose menus they may access. Users without an assignment cannot access menu drafts.
+   */
+  locations?: (string | Location)[] | null;
+  /**
+   * Admins can manage users and all content. Event/Beer/Food Managers can manage their respective collections. Lead Bartenders can update line cleaning dates. Bartenders can update menus. Users can have multiple roles.
+   */
+  roles: ('admin' | 'event-manager' | 'beer-manager' | 'food-manager' | 'lead-bartender' | 'bartender')[];
   updatedAt: string;
   createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "media".
- */
-export interface Media {
-  id: string;
-  /**
-   * Alternative text for the image (for accessibility)
-   */
-  alt: string;
-  _objectKey?: string | null;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
-  sizes?: {
-    thumbnail?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-    card?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-    detail?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-  };
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "tags".
- */
-export interface Tag {
-  id: string;
-  /**
-   * Tag name (e.g., Seasonal, Limited, Award Winner)
-   */
-  name: string;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "beer-reviews".
- */
-export interface BeerReview {
-  id: string;
-  beer: string | Beer;
-  reviewer: string;
-  rating: number;
-  text: string;
-  reviewedAt?: string | null;
-  /**
-   * Original date text supplied by Untappd when an exact timestamp is unavailable.
-   */
-  sourceDate?: string | null;
-  source: 'untappd';
-  sourceUrl: string;
-  externalImageUrl?: string | null;
-  /**
-   * Approved reviews can be included in public beer data.
-   */
-  approved: boolean;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "menus".
- */
-export interface Menu {
-  id: string;
-  /**
-   * Menu name (e.g., "Lawrenceville Draft Menu")
-   */
-  name: string;
-  /**
-   * Menu description
-   */
-  description?: string | null;
-  /**
-   * Required to generate menu URL
-   */
-  location: string | Location;
-  type: 'cans' | 'draft' | 'other';
-  /**
-   * Auto-generated from location and type, but you can override it manually
-   */
-  url: string;
-  /**
-   * Override automatic day/night theme switching
-   */
-  themeMode?: ('auto' | 'light' | 'dark') | null;
-  /**
-   * Play the rotating-can animation on this display. Turn off to show static can images instead.
-   */
-  animateCans?: boolean | null;
-  items: {
-    product?:
-      | ({
-          relationTo: 'beers';
-          value: string | Beer;
-        } | null)
-      | ({
-          relationTo: 'products';
-          value: string | Product;
-        } | null);
-    /**
-     * Sale Price (optional override)
-     */
-    price?: string | null;
-    /**
-     * Optional promotion shown only on the fullscreen can menu.
-     */
-    promotion?: string | null;
-    id?: string | null;
-  }[];
-  updatedAt: string;
-  createdAt: string;
-  _status?: ('draft' | 'published') | null;
+  email: string;
+  resetPasswordToken?: string | null;
+  resetPasswordExpiration?: string | null;
+  salt?: string | null;
+  hash?: string | null;
+  resetPasswordRequestedAt?: string | null;
+  loginAttempts?: number | null;
+  lockUntil?: string | null;
+  sessions?:
+    | {
+        id: string;
+        createdAt?: string | null;
+        expiresAt: string;
+      }[]
+    | null;
+  password?: string | null;
+  collection: 'users';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -543,6 +408,166 @@ export interface Location {
   };
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "media".
+ */
+export interface Media {
+  id: string;
+  /**
+   * Alternative text for the image (for accessibility)
+   */
+  alt: string;
+  prefix?: string | null;
+  _objectKey?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+  sizes?: {
+    thumbnail?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    card?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    detail?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+  };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "styles".
+ */
+export interface Style {
+  id: string;
+  /**
+   * Beer style name (e.g., IPA, Stout, Pale Ale)
+   */
+  name: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tags".
+ */
+export interface Tag {
+  id: string;
+  /**
+   * Tag name (e.g., Seasonal, Limited, Award Winner)
+   */
+  name: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "beer-reviews".
+ */
+export interface BeerReview {
+  id: string;
+  beer: string | Beer;
+  reviewer: string;
+  rating: number;
+  text: string;
+  reviewedAt?: string | null;
+  /**
+   * Original date text supplied by Untappd when an exact timestamp is unavailable.
+   */
+  sourceDate?: string | null;
+  source: 'untappd';
+  sourceUrl: string;
+  externalImageUrl?: string | null;
+  /**
+   * Approved reviews can be included in public beer data.
+   */
+  approved: boolean;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "menus".
+ */
+export interface Menu {
+  id: string;
+  /**
+   * The last person to save this. Automated updates, such as the nightly Untappd sync, keep the previous person.
+   */
+  updatedBy?: (string | null) | User;
+  /**
+   * Menu name (e.g., "Lawrenceville Draft Menu")
+   */
+  name: string;
+  /**
+   * Menu description
+   */
+  description?: string | null;
+  /**
+   * Required to generate menu URL
+   */
+  location: string | Location;
+  type: 'cans' | 'draft' | 'other';
+  /**
+   * Auto-generated from location and type, but you can override it manually
+   */
+  url: string;
+  /**
+   * Override automatic day/night theme switching
+   */
+  themeMode?: ('auto' | 'light' | 'dark') | null;
+  /**
+   * Play the rotating-can animation on this display. Turn off to show static can images instead.
+   */
+  animateCans?: boolean | null;
+  items: {
+    product?:
+      | ({
+          relationTo: 'beers';
+          value: string | Beer;
+        } | null)
+      | ({
+          relationTo: 'products';
+          value: string | Product;
+        } | null);
+    /**
+     * Sale Price (optional override)
+     */
+    price?: string | null;
+    /**
+     * Optional promotion shown only on the fullscreen can menu.
+     */
+    promotion?: string | null;
+    id?: string | null;
+  }[];
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -816,45 +841,6 @@ export interface RecurringFoodExclusion {
   createdAt: string;
 }
 /**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users".
- */
-export interface User {
-  id: string;
-  name?: string | null;
-  /**
-   * Slack member ID (e.g. U01ABCDEF). Filled in automatically when the Slack profile email matches this account — set it manually only if the emails differ.
-   */
-  slackUserId?: string | null;
-  /**
-   * Assign bartenders to the locations whose menus they may access. Users without an assignment cannot access menu drafts.
-   */
-  locations?: (string | Location)[] | null;
-  /**
-   * Admins can manage users and all content. Event/Beer/Food Managers can manage their respective collections. Lead Bartenders can update line cleaning dates. Bartenders can update menus. Users can have multiple roles.
-   */
-  roles: ('admin' | 'event-manager' | 'beer-manager' | 'food-manager' | 'lead-bartender' | 'bartender')[];
-  updatedAt: string;
-  createdAt: string;
-  email: string;
-  resetPasswordToken?: string | null;
-  resetPasswordExpiration?: string | null;
-  salt?: string | null;
-  hash?: string | null;
-  resetPasswordRequestedAt?: string | null;
-  loginAttempts?: number | null;
-  lockUntil?: string | null;
-  sessions?:
-    | {
-        id: string;
-        createdAt?: string | null;
-        expiresAt: string;
-      }[]
-    | null;
-  password?: string | null;
-  collection: 'users';
-}
-/**
  * Holiday and special hours overrides for locations
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1025,6 +1011,15 @@ export interface PayloadJob {
     | number
     | boolean
     | null;
+  meta?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   completedAt?: string | null;
   totalTried?: number | null;
   /**
@@ -1052,7 +1047,7 @@ export interface PayloadJob {
         completedAt: string;
         taskSlug: 'inline' | 'syncUntappdRatings';
         taskID: string;
-        input?:
+        input:
           | {
               [k: string]: unknown;
             }
@@ -1090,16 +1085,13 @@ export interface PayloadJob {
   taskSlug?: ('inline' | 'syncUntappdRatings') | null;
   queue?: string | null;
   waitUntil?: string | null;
+  processingUntil?: string | null;
+  processingToken?: string | null;
+  /**
+   * Used for concurrency control. Jobs with the same key are subject to exclusive/supersedes rules.
+   */
+  concurrencyKey?: string | null;
   processing?: boolean | null;
-  meta?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1241,36 +1233,36 @@ export interface PayloadMigration {
  * via the `definition` "beers_select".
  */
 export interface BeersSelect<T extends boolean = true> {
-  glass?: T;
-  abv?: T;
-  draftPrice?: T;
-  halfPourOnly?: T;
-  halfPour?: T;
-  fourPack?: T;
-  bottlePrice?: T;
-  canSingle?: T;
-  upc?: T;
-  slug?: T;
-  recipe?: T;
-  hideFromSite?: T;
-  justReleased?: T;
-  collab?: T;
-  collabBrewery?: T;
+  updatedBy?: T;
   name?: T;
   style?: T;
-  labelBase?: T;
-  labelMetalness?: T;
-  image?: T;
-  labelVideo?: T;
-  tag?: T;
+  glass?: T;
+  abv?: T;
   description?: T;
   hops?: T;
-  topBeerDrops?: T;
+  tag?: T;
+  draftPrice?: T;
+  halfPour?: T;
+  halfPourOnly?: T;
+  fourPack?: T;
+  canSingle?: T;
+  bottlePrice?: T;
+  upc?: T;
+  image?: T;
+  labelBase?: T;
+  labelMetalness?: T;
+  labelVideo?: T;
   untappd?: T;
   untappdRating?: T;
   untappdRatingCount?: T;
-  positiveReviews?: T;
+  topBeerDrops?: T;
   reviews?: T;
+  hideFromSite?: T;
+  collab?: T;
+  collabBrewery?: T;
+  slug?: T;
+  recipe?: T;
+  positiveReviews?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -1316,6 +1308,7 @@ export interface TagsSelect<T extends boolean = true> {
  * via the `definition` "menus_select".
  */
 export interface MenusSelect<T extends boolean = true> {
+  updatedBy?: T;
   name?: T;
   description?: T;
   location?: T;
@@ -1676,6 +1669,7 @@ export interface FaqsSelect<T extends boolean = true> {
  */
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
+  prefix?: T;
   _objectKey?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1738,6 +1732,7 @@ export interface PayloadKvSelect<T extends boolean = true> {
 export interface PayloadJobsSelect<T extends boolean = true> {
   input?: T;
   taskStatus?: T;
+  meta?: T;
   completedAt?: T;
   totalTried?: T;
   hasError?: T;
@@ -1764,8 +1759,10 @@ export interface PayloadJobsSelect<T extends boolean = true> {
   taskSlug?: T;
   queue?: T;
   waitUntil?: T;
+  processingUntil?: T;
+  processingToken?: T;
+  concurrencyKey?: T;
   processing?: T;
-  meta?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1970,6 +1967,76 @@ export interface CollectionsWidget {
     [k: string]: unknown;
   };
   width: 'full';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "collection-query_widget".
+ */
+export interface CollectionQueryWidget {
+  data?: {
+    title?: string | null;
+    relatedCollection:
+      | 'beers'
+      | 'beer-reviews'
+      | 'menus'
+      | 'products'
+      | 'events'
+      | 'donation-requests'
+      | 'jobs'
+      | 'job-applications'
+      | 'recurring-events'
+      | 'food'
+      | 'food-vendors'
+      | 'users'
+      | 'locations'
+      | 'holiday-hours'
+      | 'distributors'
+      | 'faqs'
+      | 'payload-jobs';
+    where?:
+      | {
+          [k: string]: unknown;
+        }
+      | unknown[]
+      | string
+      | number
+      | boolean
+      | null;
+    sortField?: string | null;
+    sortDirection?: ('asc' | 'desc') | null;
+    limit?: number | null;
+  };
+  width: 'x-small' | 'small' | 'medium' | 'large' | 'x-large' | 'full';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "activity_widget".
+ */
+export interface ActivityWidget {
+  data?: {
+    excludedCollections?:
+      | (
+          | 'beers'
+          | 'beer-reviews'
+          | 'menus'
+          | 'products'
+          | 'events'
+          | 'donation-requests'
+          | 'jobs'
+          | 'job-applications'
+          | 'recurring-events'
+          | 'food'
+          | 'food-vendors'
+          | 'users'
+          | 'locations'
+          | 'holiday-hours'
+          | 'distributors'
+          | 'faqs'
+          | 'payload-jobs'
+        )[]
+      | null;
+  };
+  width: 'x-small' | 'small' | 'medium' | 'large' | 'x-large' | 'full';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

@@ -33,7 +33,6 @@ export const DonationRequests: CollectionConfig = {
   admin: {
     group: 'Food & Events',
     useAsTitle: 'organizationName',
-    hideAPIURL: true,
     defaultColumns: ['organizationName', 'eventDate', 'askType', 'status', 'createdAt'],
     description:
       'Public donation asks from /donate. Completing the form is not a yes. Rows are created only by the public form.',

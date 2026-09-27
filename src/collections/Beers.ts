@@ -2,6 +2,7 @@ import type { Access, CollectionConfig, Field, PayloadRequest, Where } from 'pay
 import { APIError } from 'payload'
 import { revalidateTag } from 'next/cache'
 import { generateUniqueSlug } from './utils/generateUniqueSlug'
+import { updatedByField } from './utils/updatedByField'
 import { adminAccess, beerManagerAccess, beerManagerFieldAccess, hasRole } from '@/src/access/roles'
 import { fetchUntappdData, type UntappdReview } from '@/src/utils/untappd'
 import { logger } from '@/lib/utils/logger'
@@ -104,7 +105,6 @@ export const Beers: CollectionConfig = {
   admin: {
     group: 'Back of House',
     useAsTitle: 'name',
-    hideAPIURL: true,
     listSearchableFields: ['name', 'slug'],
     defaultColumns: ['name', 'slug', 'style', 'abv', 'hideFromSite'],
     pagination: {
@@ -233,97 +233,315 @@ export const Beers: CollectionConfig = {
       },
     ],
   },
+  // Layout: unnamed tabs, rows, and collapsibles are presentational only —
+  // every field below still stores at the top level of the beer document.
+  // The sidebar holds the per-release flags (hide, collab), the identifiers
+  // (slug, recipe), and the read-only updatedBy stamp.
   fields: [
+    updatedByField,
     {
-      name: 'glass',
-      type: 'select',
-      required: true,
-      options: [
-        { label: 'Pint', value: 'pint' },
-        { label: 'Stein', value: 'stein' },
-        { label: 'Teku', value: 'teku' },
-        { label: 'UHA', value: 'uha' },
+      type: 'tabs',
+      tabs: [
+        {
+          label: 'Details',
+          fields: [
+            {
+              type: 'row',
+              fields: [
+                {
+                  name: 'name',
+                  type: 'text',
+                  required: true,
+                },
+                {
+                  name: 'style',
+                  type: 'relationship',
+                  relationTo: 'styles',
+                  required: true,
+                  index: true,
+                },
+              ],
+            },
+            {
+              type: 'row',
+              fields: [
+                {
+                  name: 'glass',
+                  type: 'select',
+                  required: true,
+                  options: [
+                    { label: 'Pint', value: 'pint' },
+                    { label: 'Stein', value: 'stein' },
+                    { label: 'Teku', value: 'teku' },
+                    { label: 'UHA', value: 'uha' },
+                  ],
+                },
+                {
+                  name: 'abv',
+                  label: 'ABV (%)',
+                  type: 'number',
+                  required: true,
+                  min: 0,
+                  max: 20,
+                  admin: {
+                    step: 0.1,
+                  },
+                },
+              ],
+            },
+            {
+              name: 'description',
+              type: 'textarea',
+            },
+            {
+              type: 'row',
+              fields: [
+                {
+                  name: 'hops',
+                  type: 'text',
+                  admin: {
+                    placeholder: 'e.g. Citra, Mosaic',
+                  },
+                },
+                {
+                  // Single-value tag: relationship gives a typeahead over existing tags
+                  // plus inline "Add new" creation. hasMany defaults to false, so only
+                  // one tag is allowed per beer.
+                  name: 'tag',
+                  type: 'relationship',
+                  relationTo: 'tags',
+                  index: true,
+                  admin: {
+                    description: 'Optional (search existing or add a new one)',
+                  },
+                },
+              ],
+            },
+          ],
+        },
+        {
+          label: 'Pricing',
+          fields: [
+            {
+              type: 'row',
+              fields: [
+                {
+                  name: 'draftPrice',
+                  type: 'number',
+                  required: true,
+                  admin: {
+                    placeholder: 'e.g. 7',
+                    step: 0.25,
+                  },
+                },
+                {
+                  name: 'halfPour',
+                  type: 'number',
+                  admin: {
+                    description:
+                      'Set automatically from the draft price unless "Half Pour Only" is on',
+                    step: 0.25,
+                  },
+                },
+              ],
+            },
+            {
+              name: 'halfPourOnly',
+              type: 'checkbox',
+              defaultValue: false,
+              admin: {
+                description:
+                  'Served in half pours only: hides the full draft price on the site and uses the half pour price above as entered.',
+              },
+            },
+            {
+              type: 'row',
+              fields: [
+                {
+                  name: 'fourPack',
+                  type: 'number',
+                  admin: {
+                    placeholder: 'e.g. 15',
+                    step: 0.25,
+                    width: '50%',
+                  },
+                },
+                {
+                  name: 'canSingle',
+                  type: 'number',
+                  admin: {
+                    condition: (data) => typeof data?.fourPack === 'number',
+                    description: 'Set automatically from the four pack price',
+                    readOnly: true,
+                    step: 0.01,
+                  },
+                },
+              ],
+            },
+            {
+              type: 'row',
+              fields: [
+                {
+                  name: 'bottlePrice',
+                  type: 'number',
+                  admin: {
+                    placeholder: 'e.g. 12',
+                    step: 0.25,
+                  },
+                },
+                {
+                  name: 'upc',
+                  label: 'UPC',
+                  type: 'text',
+                },
+              ],
+            },
+          ],
+        },
+        {
+          label: 'Label & images',
+          fields: [
+            {
+              // Drop-zone + button that runs the PDF→texture pipeline in the admin
+              // browser and fills in the generated files below.
+              name: 'labelTextures',
+              type: 'ui',
+              admin: {
+                components: {
+                  Field: '@/src/components/admin/LabelTextureGenerator#LabelTextureGenerator',
+                },
+              },
+            },
+            {
+              name: 'image',
+              type: 'upload',
+              relationTo: 'media',
+              admin: {
+                description: 'Beer image (auto-filled by the 3D label tool; upload to override)',
+              },
+            },
+            {
+              type: 'collapsible',
+              label: 'Generated label files',
+              admin: {
+                initCollapsed: true,
+              },
+              fields: [
+                {
+                  type: 'row',
+                  fields: [
+                    generatedUploadField('labelBase', 'Generated 3D label texture'),
+                    generatedUploadField(
+                      'labelMetalness',
+                      'Generated metalness map (white = metallic foil)',
+                    ),
+                  ],
+                },
+                generatedUploadField(
+                  'labelVideo',
+                  'Generated can-rotation sprite sheet (PNG; animated in CSS on menu displays)',
+                ),
+              ],
+            },
+          ],
+        },
+        {
+          label: 'Untappd & reviews',
+          fields: [
+            {
+              name: 'untappdFetcher',
+              type: 'ui',
+              admin: {
+                components: {
+                  Field: '@/src/components/admin/UntappdFetcher#UntappdFetcher',
+                },
+              },
+            },
+            {
+              type: 'row',
+              fields: [
+                {
+                  name: 'untappd',
+                  type: 'text',
+                  admin: {
+                    description: 'Untappd URL (e.g., /b/lolev-beer-lupula/123456)',
+                    width: '50%',
+                  },
+                },
+                {
+                  name: 'untappdRating',
+                  type: 'number',
+                  admin: {
+                    description: 'Rating (auto-fetched)',
+                    readOnly: true,
+                    step: 0.01,
+                    width: '25%',
+                  },
+                },
+                {
+                  name: 'untappdRatingCount',
+                  type: 'number',
+                  admin: {
+                    description: 'Rating count (auto-fetched)',
+                    readOnly: true,
+                    width: '25%',
+                  },
+                },
+              ],
+            },
+            {
+              name: 'topBeerDrops',
+              type: 'text',
+              admin: {
+                description: 'Top Beer Drops URL (e.g., https://topbeerdrops.com/...)',
+              },
+            },
+            {
+              name: 'reviews',
+              type: 'join',
+              collection: 'beer-reviews',
+              on: 'beer',
+              defaultSort: '-reviewedAt',
+              defaultLimit: 25,
+              maxDepth: 1,
+              admin: {
+                allowCreate: true,
+                defaultColumns: ['reviewer', 'rating', 'approved', 'reviewedAt'],
+              },
+            },
+          ],
+        },
       ],
-      admin: {
-        position: 'sidebar',
-      },
     },
     {
-      name: 'abv',
-      label: 'ABV',
-      type: 'number',
-      required: true,
-      min: 0,
-      max: 20,
-      admin: {
-        step: 0.1,
-        description: 'Alcohol by volume percentage',
-        position: 'sidebar',
-      },
-    },
-    {
-      name: 'draftPrice',
-      type: 'number',
-      required: true,
-      admin: {
-        description: 'Draft price in dollars (e.g., 7)',
-        position: 'sidebar',
-        step: 0.25,
-      },
-    },
-    {
-      name: 'halfPourOnly',
+      name: 'hideFromSite',
       type: 'checkbox',
       defaultValue: false,
       admin: {
-        description: 'Enable to manually set half pour price (disables auto-calculation)',
         position: 'sidebar',
+        description:
+          'Hide from the /beer catalog (and sitemap/feeds). Usually for guest beers. Does NOT hide the beer from menu displays (/m).',
       },
     },
     {
-      name: 'halfPour',
-      type: 'number',
+      name: 'collab',
+      label: 'Collab',
+      type: 'checkbox',
+      defaultValue: false,
       admin: {
-        description: 'Auto-calculated unless "Half Pour Only" is enabled',
         position: 'sidebar',
-        step: 0.25,
+        description:
+          'Collaboration brew with another brewery. Shows a "Collab" badge instead of the automatic "Just Released" one.',
       },
     },
     {
-      name: 'fourPack',
-      type: 'number',
-      admin: {
-        description: 'Four pack price (e.g., 15)',
-        position: 'sidebar',
-        step: 0.25,
-      },
-    },
-    {
-      name: 'bottlePrice',
-      type: 'number',
-      admin: {
-        description: 'Bottle price (e.g., 12)',
-        position: 'sidebar',
-        step: 0.25,
-      },
-    },
-    {
-      name: 'canSingle',
-      type: 'number',
-      admin: {
-        description: 'Auto-calculated from four pack price',
-        position: 'sidebar',
-        readOnly: true,
-        step: 0.01,
-      },
-    },
-    {
-      name: 'upc',
-      label: 'UPC',
+      name: 'collabBrewery',
+      label: 'Collaborating Brewery',
       type: 'text',
       admin: {
-        description: 'UPC barcode',
         position: 'sidebar',
+        condition: (data) => data?.collab === true,
+        description: 'Brewery name shown in the collaboration badge. Leave blank to show “Collab”.',
       },
     },
     {
@@ -342,182 +560,10 @@ export const Beers: CollectionConfig = {
       type: 'number',
       unique: true,
       admin: {
-        description: 'Auto-incremented recipe number',
-        position: 'sidebar',
-      },
-    },
-    {
-      name: 'hideFromSite',
-      type: 'checkbox',
-      defaultValue: false,
-      admin: {
-        position: 'sidebar',
         description:
-          'Hide from the /beer catalog (and sitemap/feeds). Usually for guest beers. Does NOT hide the beer from menu displays (/m).',
-      },
-    },
-    {
-      name: 'justReleased',
-      type: 'checkbox',
-      defaultValue: false,
-      admin: {
-        position: 'sidebar',
-        description:
-          'Mark as "Just Released". If no beers have this set, beers created within 2 weeks are auto-marked.',
-      },
-    },
-    {
-      name: 'collab',
-      label: 'Collab',
-      type: 'checkbox',
-      defaultValue: false,
-      admin: {
-        position: 'sidebar',
-        description:
-          'Collaboration brew with another brewery. Overrides "Just Released" badge with "Collab".',
-      },
-    },
-    {
-      name: 'collabBrewery',
-      label: 'Collaborating Brewery',
-      type: 'text',
-      admin: {
-        position: 'sidebar',
-        condition: (data) => data?.collab === true,
-        description: 'Brewery name shown in the collaboration badge. Leave blank to show “Collab”.',
-      },
-    },
-    {
-      type: 'row',
-      fields: [
-        {
-          name: 'name',
-          type: 'text',
-          required: true,
-          admin: {
-            width: '50%',
-          },
-        },
-        {
-          name: 'style',
-          type: 'relationship',
-          relationTo: 'styles',
-          required: true,
-          index: true,
-          admin: {
-            description: 'Beer style',
-            width: '50%',
-          },
-        },
-      ],
-    },
-    {
-      // Drop-zone + button that runs the PDF→texture pipeline in the admin
-      // browser and fills in labelBase/labelMetalness below.
-      name: 'labelTextures',
-      type: 'ui',
-      admin: {
-        components: {
-          Field: '@/src/components/admin/LabelTextureGenerator#LabelTextureGenerator',
-        },
-      },
-    },
-    {
-      type: 'row',
-      fields: [
-        generatedUploadField('labelBase', 'Generated 3D label texture (via the tool above)'),
-        generatedUploadField('labelMetalness', 'Generated metalness map (white = metallic foil)'),
-      ],
-    },
-    {
-      type: 'row',
-      fields: [
-        {
-          name: 'image',
-          type: 'upload',
-          relationTo: 'media',
-          admin: {
-            description: 'Beer image (auto-filled by the 3D label tool; upload to override)',
-            width: '50%',
-          },
-        },
-        generatedUploadField(
-          'labelVideo',
-          'Generated can-rotation sprite sheet (PNG; animated in CSS on menu displays)',
-        ),
-      ],
-    },
-    {
-      // Single-value tag: relationship gives a typeahead over existing tags
-      // plus inline "Add new" creation. hasMany defaults to false, so only
-      // one tag is allowed per beer.
-      name: 'tag',
-      type: 'relationship',
-      relationTo: 'tags',
-      index: true,
-      admin: {
-        description: 'Optional tag (search existing or add a new one)',
-      },
-    },
-    {
-      name: 'description',
-      type: 'textarea',
-    },
-    {
-      name: 'hops',
-      type: 'text',
-      admin: {
-        description: 'Hop varieties used',
-      },
-    },
-    {
-      name: 'untappdFetcher',
-      type: 'ui',
-      admin: {
-        components: {
-          Field: '@/src/components/admin/UntappdFetcher#UntappdFetcher',
-        },
-      },
-    },
-    {
-      name: 'topBeerDrops',
-      type: 'text',
-      admin: {
-        description: 'Top Beer Drops URL (e.g., https://topbeerdrops.com/...)',
+          'Assigned automatically to new beers; change only to fix a mistake (must be unique)',
         position: 'sidebar',
       },
-    },
-    {
-      type: 'row',
-      fields: [
-        {
-          name: 'untappd',
-          type: 'text',
-          admin: {
-            description: 'Untappd URL (e.g., /b/lolev-beer-lupula/123456)',
-            width: '50%',
-          },
-        },
-        {
-          name: 'untappdRating',
-          type: 'number',
-          admin: {
-            description: 'Rating (auto-fetched)',
-            readOnly: true,
-            step: 0.01,
-            width: '25%',
-          },
-        },
-        {
-          name: 'untappdRatingCount',
-          type: 'number',
-          admin: {
-            description: 'Rating count (auto-fetched)',
-            readOnly: true,
-            width: '25%',
-          },
-        },
-      ],
     },
     {
       name: 'positiveReviews',
@@ -528,19 +574,6 @@ export const Beers: CollectionConfig = {
       admin: {
         hidden: true,
         description: 'Legacy review data retained temporarily for migration compatibility.',
-      },
-    },
-    {
-      name: 'reviews',
-      type: 'join',
-      collection: 'beer-reviews',
-      on: 'beer',
-      defaultSort: '-reviewedAt',
-      defaultLimit: 25,
-      maxDepth: 1,
-      admin: {
-        allowCreate: true,
-        defaultColumns: ['reviewer', 'rating', 'approved', 'reviewedAt'],
       },
     },
   ],

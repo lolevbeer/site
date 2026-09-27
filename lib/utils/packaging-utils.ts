@@ -2,9 +2,15 @@
  * Determines the packaging type label for a beer based on its pricing fields.
  * Beers on "cans" menus may actually be bottled — use pricing to distinguish.
  */
-import type { Beer as PayloadBeer } from '@/src/payload-types';
+import type { Beer as PayloadBeer } from '@/src/payload-types'
+import { formatPrice } from '@/lib/utils/formatters'
 
-export type PackagingType = 'cans' | 'bottles' | 'cans_and_bottles';
+export type PackagingType = 'cans' | 'bottles' | 'cans_and_bottles'
+
+/** A price field counts only when it is a positive number; 0 or unset means "not sold this way". */
+export function isSold(price: number | null | undefined): price is number {
+  return typeof price === 'number' && price > 0
+}
 
 /**
  * Determine packaging type from beer pricing fields.
@@ -13,13 +19,15 @@ export type PackagingType = 'cans' | 'bottles' | 'cans_and_bottles';
  * - both set → cans_and_bottles
  * Falls back to 'cans' if neither is set (legacy behavior).
  */
-export function getPackagingType(beer: Pick<PayloadBeer, 'fourPack' | 'bottlePrice'>): PackagingType {
-  const hasCans = typeof beer.fourPack === 'number' && beer.fourPack > 0;
-  const hasBottles = typeof beer.bottlePrice === 'number' && beer.bottlePrice > 0;
+export function getPackagingType(
+  beer: Pick<PayloadBeer, 'fourPack' | 'bottlePrice'>,
+): PackagingType {
+  const hasCans = isSold(beer.fourPack)
+  const hasBottles = isSold(beer.bottlePrice)
 
-  if (hasCans && hasBottles) return 'cans_and_bottles';
-  if (hasBottles) return 'bottles';
-  return 'cans';
+  if (hasCans && hasBottles) return 'cans_and_bottles'
+  if (hasBottles) return 'bottles'
+  return 'cans'
 }
 
 /**
@@ -28,12 +36,12 @@ export function getPackagingType(beer: Pick<PayloadBeer, 'fourPack' | 'bottlePri
 export function getPackagingLabel(type: PackagingType): string {
   switch (type) {
     case 'bottles':
-      return 'Bottles Available';
+      return 'Bottles Available'
     case 'cans_and_bottles':
-      return 'Cans & Bottles Available';
+      return 'Cans & Bottles Available'
     case 'cans':
     default:
-      return 'Cans Available';
+      return 'Cans Available'
   }
 }
 
@@ -43,12 +51,12 @@ export function getPackagingLabel(type: PackagingType): string {
 export function getNoPackagingLabel(type: PackagingType): string {
   switch (type) {
     case 'bottles':
-      return 'No Bottles';
+      return 'No Bottles'
     case 'cans_and_bottles':
-      return 'No Cans or Bottles';
+      return 'No Cans or Bottles'
     case 'cans':
     default:
-      return 'No Cans';
+      return 'No Cans'
   }
 }
 
@@ -58,12 +66,12 @@ export function getNoPackagingLabel(type: PackagingType): string {
 export function getDraftOnlyMessage(type: PackagingType): string {
   switch (type) {
     case 'bottles':
-      return 'No bottles available at this time — draft only';
+      return 'No bottles available at this time — draft only'
     case 'cans_and_bottles':
-      return 'No cans or bottles available at this time — draft only';
+      return 'No cans or bottles available at this time — draft only'
     case 'cans':
     default:
-      return 'No cans available at this time — draft only';
+      return 'No cans available at this time — draft only'
   }
 }
 
@@ -71,14 +79,47 @@ export function getDraftOnlyMessage(type: PackagingType): string {
  * Get the location availability message (e.g., "Cans available at X").
  */
 export function getPackagingAtLocationsMessage(type: PackagingType, locations: string[]): string {
-  const locationStr = locations.join(' and ');
+  const locationStr = locations.join(' and ')
   switch (type) {
     case 'bottles':
-      return `Bottles available at ${locationStr}`;
+      return `Bottles available at ${locationStr}`
     case 'cans_and_bottles':
-      return `Cans & bottles available at ${locationStr}`;
+      return `Cans & bottles available at ${locationStr}`
     case 'cans':
     default:
-      return `Cans available at ${locationStr}`;
+      return `Cans available at ${locationStr}`
   }
+}
+
+/**
+ * The draft price the site shows: the half pour for a "Half Pour Only" beer,
+ * whose full draft price is hidden everywhere (see Beers.halfPourOnly),
+ * otherwise the full pour. Check it with isSold before showing it.
+ */
+export function getShownDraftPrice(beer: {
+  draftPrice?: number | null
+  halfPour?: number | null
+  halfPourOnly?: boolean | null
+}): number | null | undefined {
+  return beer.halfPourOnly ? beer.halfPour : beer.draftPrice
+}
+
+/**
+ * Price lines for the beer detail page ("Draft $7", "4 Pack $15", ...): draft
+ * only when the beer is on tap somewhere ("Half Pour $4" instead for a Half
+ * Pour Only beer), packaged prices only when it is on a cans menu, and never a
+ * price that isn't sold (0 or unset).
+ */
+export function getPricingLines(
+  beer: Pick<PayloadBeer, 'draftPrice' | 'halfPour' | 'halfPourOnly' | 'fourPack' | 'bottlePrice'>,
+  { onTap, inCans }: { onTap: boolean; inCans: boolean },
+): string[] {
+  const lines: string[] = []
+  const draftPrice = getShownDraftPrice(beer)
+  if (onTap && isSold(draftPrice)) {
+    lines.push(`${beer.halfPourOnly ? 'Half Pour' : 'Draft'} ${formatPrice(draftPrice)}`)
+  }
+  if (inCans && isSold(beer.fourPack)) lines.push(`4 Pack ${formatPrice(beer.fourPack)}`)
+  if (inCans && isSold(beer.bottlePrice)) lines.push(`Bottle ${formatPrice(beer.bottlePrice)}`)
+  return lines
 }

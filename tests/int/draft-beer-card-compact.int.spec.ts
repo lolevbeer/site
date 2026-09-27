@@ -1,6 +1,7 @@
 /**
- * Compact DraftBeerCard is the taproom-landing row: name, style, and glass,
- * without description, hops, or ABV.
+ * Compact DraftBeerCard is the taproom-landing row: name and style, without
+ * description, hops, ABV, or glass. The time-based "Just Released" badge needs
+ * a clock from the caller (`now`); without one it is left out.
  */
 import { cleanup, render } from '@testing-library/react'
 import { createElement } from 'react'
@@ -54,13 +55,26 @@ describe('DraftBeerCard compact layout', () => {
   it('still shows a Just Released badge when compact', () => {
     const { container } = render(
       createElement(DraftBeerCard, {
-        beer: { ...beer, isJustReleased: true },
+        beer: { ...beer, createdAt: new Date().toISOString() },
+        now: Date.now(),
         compact: true,
         showLocation: false,
       }),
     )
 
     expect(container.textContent).toContain('Just Released')
+  })
+
+  it('leaves out the Just Released badge when the caller passes no clock', () => {
+    const { container } = render(
+      createElement(DraftBeerCard, {
+        beer: { ...beer, createdAt: new Date().toISOString() },
+        compact: true,
+        showLocation: false,
+      }),
+    )
+
+    expect(container.textContent).not.toContain('Just Released')
   })
 
   it('hides the glass icon on public rows and keeps it on fullscreen menus', () => {
@@ -81,9 +95,10 @@ describe('DraftBeerCard compact layout', () => {
       createElement(DraftBeerCard, {
         beer: {
           ...beer,
-          isJustReleased: true,
+          createdAt: new Date().toISOString(),
           topBeerDrops: 'https://topbeerdrops.com/test-beer',
         },
+        now: Date.now(),
         compact: true,
         showJustReleased: false,
         showLocation: false,

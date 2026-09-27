@@ -29,7 +29,8 @@ import {
 /**
  * Server actions for admin components using the Payload Local API.
  * Every action authenticates the incoming request and explicitly enables
- * Payload access control, because Local API operations bypass access by default.
+ * Payload access control (`overrideAccess: false` plus the user; see
+ * AGENTS.md, Access control).
  */
 
 interface AuthorizedPayload {

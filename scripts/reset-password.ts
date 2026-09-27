@@ -1,26 +1,28 @@
 /**
  * Reset user password using Payload local API
  *
- * Usage:
- *   npx tsx scripts/reset-password.ts <email> <new-password>
+ * Usage (`payload run` loads .env.local and .env, then passes the arguments through):
+ *   pnpm payload run scripts/reset-password.ts <email> <new-password>
  *
  * Example:
- *   npx tsx scripts/reset-password.ts admin@example.com newpassword123
+ *   pnpm payload run scripts/reset-password.ts admin@example.com newpassword123
  */
 
-import 'dotenv/config'
 import { getPayload } from 'payload'
 import config from '../src/payload.config'
 
+/** The command every usage hint below prints, so the hints can't drift from the header. */
+const RUN = 'pnpm payload run scripts/reset-password.ts'
+
 async function resetPassword() {
-  const [,, email, newPassword] = process.argv
+  const [, , email, newPassword] = process.argv
 
   // Verify login
   if (email === '--verify') {
     const verifyEmail = newPassword
     const verifyPassword = process.argv[4]
     if (!verifyEmail || !verifyPassword) {
-      console.error('Usage: npx tsx scripts/reset-password.ts --verify <email> <password>')
+      console.error(`Usage: ${RUN} --verify <email> <password>`)
       process.exit(1)
     }
     const payload = await getPayload({ config })
@@ -31,6 +33,7 @@ async function resetPassword() {
           email: verifyEmail,
           password: verifyPassword,
         },
+        overrideAccess: true,
       })
       console.log('Login successful!')
       console.log(`User: ${result.user?.email}`)
@@ -46,10 +49,12 @@ async function resetPassword() {
     const payload = await getPayload({ config })
     const users = await payload.find({ collection: 'users', limit: 100, overrideAccess: true })
     if (users.docs.length === 0) {
-      console.log('No users found. Create one with: npx tsx scripts/reset-password.ts --create <email> <password>')
+      console.log(
+        `No users found. Create one with: ${RUN} --create <email> <password>`,
+      )
     } else {
       console.log('Users:')
-      users.docs.forEach(u => console.log(`  - ${u.email}`))
+      users.docs.forEach((u) => console.log(`  - ${u.email}`))
     }
     process.exit(0)
   }
@@ -58,7 +63,7 @@ async function resetPassword() {
   if (email === '--unlock') {
     const unlockEmail = newPassword
     if (!unlockEmail) {
-      console.error('Usage: npx tsx scripts/reset-password.ts --unlock <email>')
+      console.error(`Usage: ${RUN} --unlock <email>`)
       process.exit(1)
     }
     const payload = await getPayload({ config })
@@ -94,7 +99,7 @@ async function resetPassword() {
   if (email === '--delete') {
     const delEmail = newPassword
     if (!delEmail) {
-      console.error('Usage: npx tsx scripts/reset-password.ts --delete <email>')
+      console.error(`Usage: ${RUN} --delete <email>`)
       process.exit(1)
     }
     const payload = await getPayload({ config })
@@ -121,7 +126,7 @@ async function resetPassword() {
   if (email === '--fix') {
     const fixEmail = newPassword
     if (!fixEmail) {
-      console.error('Usage: npx tsx scripts/reset-password.ts --fix <email>')
+      console.error(`Usage: ${RUN} --fix <email>`)
       process.exit(1)
     }
     const payload = await getPayload({ config })
@@ -150,7 +155,7 @@ async function resetPassword() {
     const createEmail = newPassword // shifts args
     const createPassword = process.argv[4]
     if (!createEmail || !createPassword) {
-      console.error('Usage: npx tsx scripts/reset-password.ts --create <email> <password>')
+      console.error(`Usage: ${RUN} --create <email> <password>`)
       process.exit(1)
     }
     if (createPassword.length < 8) {
@@ -172,9 +177,9 @@ async function resetPassword() {
   }
 
   if (!email || !newPassword) {
-    console.error('Usage: npx tsx scripts/reset-password.ts <email> <new-password>')
-    console.error('       npx tsx scripts/reset-password.ts --list')
-    console.error('       npx tsx scripts/reset-password.ts --create <email> <password>')
+    console.error(`Usage: ${RUN} <email> <new-password>`)
+    console.error(`       ${RUN} --list`)
+    console.error(`       ${RUN} --create <email> <password>`)
     process.exit(1)
   }
 
@@ -227,4 +232,5 @@ async function resetPassword() {
   }
 }
 
-resetPassword()
+// Awaited because `payload run` exits as soon as this module finishes loading.
+await resetPassword()

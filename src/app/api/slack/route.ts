@@ -27,7 +27,7 @@
  */
 
 import { NextRequest, NextResponse, after } from 'next/server'
-import { getPayload, APIError, type TypedUser } from 'payload'
+import { getPayload, APIError } from 'payload'
 import crypto from 'crypto'
 import config from '@/src/payload.config'
 import { logger } from '@/lib/utils/logger'
@@ -90,7 +90,7 @@ interface SlackInteractionPayload {
  * through to "published only" for everyone, so an unprivileged user could
  * otherwise list menus and open an editor that only fails at publish.
  */
-function canEditMenus(user: TypedUser): boolean {
+function canEditMenus(user: User): boolean {
   return Boolean(canUpdateMenus({ req: { user } } as Parameters<typeof canUpdateMenus>[0]))
 }
 
@@ -156,7 +156,7 @@ async function slackUserEmail(slackUserId: string): Promise<string | null> {
 async function resolvePayloadUser(
   payload: Awaited<ReturnType<typeof getPayload>>,
   slackUserId: string | undefined,
-): Promise<TypedUser | null> {
+): Promise<User | null> {
   if (!slackUserId) return null
 
   const byId = await payload.find({
@@ -167,7 +167,7 @@ async function resolvePayloadUser(
     // eslint-disable-next-line no-restricted-syntax -- system: no identity exists yet
     overrideAccess: true,
   })
-  if (byId.docs[0]) return byId.docs[0] as TypedUser
+  if (byId.docs[0]) return byId.docs[0]
 
   const email = await slackUserEmail(slackUserId)
   if (!email) return null
@@ -197,7 +197,7 @@ async function resolvePayloadUser(
     // already resolved, so don't fail their command over it.
     logger.error(`Claiming slackUserId for user ${user.id} failed:`, error)
   }
-  return user as TypedUser
+  return user
 }
 
 /**
@@ -205,7 +205,7 @@ async function resolvePayloadUser(
  * access rule so the invite modal never opens for someone Payload would reject
  * at submit time — and so the rule lives in exactly one place.
  */
-function canCreateUsers(user: TypedUser): boolean {
+function canCreateUsers(user: User): boolean {
   return Boolean(
     leadBartenderAccess({ req: { user } } as Parameters<typeof leadBartenderAccess>[0]),
   )
@@ -547,13 +547,14 @@ async function submitInvite(
       return
     }
 
+    // As the inviter: every signed-in user may read other users' emails.
     const existing = await payload.find({
       collection: 'users',
       where: { email: { equals: email } },
       limit: 1,
       depth: 0,
-      // eslint-disable-next-line no-restricted-syntax -- system: lead bartenders can't read other users
-      overrideAccess: true,
+      user: inviter,
+      overrideAccess: false,
     })
     if (existing.docs[0]) {
       await updateView(

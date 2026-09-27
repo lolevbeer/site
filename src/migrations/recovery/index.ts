@@ -94,4 +94,14 @@ export const migrationRecovery: readonly MigrationRecovery[] = [
     verify:
       'Run scripts/check-legacy-reviews.ts: beers with legacy positiveReviews but zero beer-reviews documents must be 0 (Taupō was the only one on 2026-09-26).',
   },
+  {
+    name: '20260927_020000_payload_jobs_runnable_processing_until',
+    compatibility:
+      "Index-only: rebuilds payload_jobs_runnable on processingUntil (completedAt moved second) and drops Payload 3's processing_1; either index only changes claim speed. App rollback: Payload 3 claims only jobs with processing: false, and the jobs override in src/payload.config.ts gives every job Payload 4 creates that value. Jobs created before that field was added lack it (none in production); db['payload-jobs'].updateMany({ completedAt: { $exists: false }, processing: { $exists: false } }, { $set: { processing: false } }) fixes them and is safe to run before any rollback.",
+    retry:
+      'Safe to rerun: it drops each named index if present and recreates payload_jobs_runnable with the exact key.',
+    mode: 'roll-forward',
+    verify:
+      'Read-only inspect payload_jobs_runnable (queue, completedAt, hasError, processingUntil, waitUntil, createdAt) with name-only options; observe the next scheduled maintenance run. processing_1 may reappear while any Payload 3 deployment still connects (its Mongoose autoIndex recreates it): harmless, since Payload 4 never queries it; drop it once no Payload 3 deployment remains.',
+  },
 ]

@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
+    "types": ["node", "geojson"],
     "lib": [
       "DOM",
       "DOM.Iterable",

@@ -1,20 +1,15 @@
-import type { CollectionConfig, Access } from 'payload'
-import { adminAccess } from '@/src/access/roles'
+import type { CollectionConfig } from 'payload'
+import { adminAccess, authenticatedAccess } from '@/src/access/roles'
 import { LABEL_VIDEO_MIME } from '@/lib/utils/media-utils'
-
-const isLoggedIn: Access = ({ req: { user } }) => {
-  return Boolean(user)
-}
 
 export const Media: CollectionConfig = {
   slug: 'media',
   admin: {
     hidden: true,
-    hideAPIURL: true,
   },
   access: {
     read: () => true,
-    create: isLoggedIn,
+    create: authenticatedAccess,
     update: adminAccess,
     delete: adminAccess,
   },

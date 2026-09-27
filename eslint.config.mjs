@@ -6,8 +6,9 @@ import nextCoreWebVitals from 'eslint-config-next/core-web-vitals'
 import nextTypescript from 'eslint-config-next/typescript'
 
 // Identity fence for the Payload Local API (see "Access control" in AGENTS.md).
-// Payload 3 treats an omitted `overrideAccess` as `true`, so every call must say
-// which identity it runs as:
+// An omitted `overrideAccess` defaults to `false` on Payload 4 (it was `true` on
+// Payload 3), so a silent default either bypasses or enforces access depending on
+// the version. Every call must say which identity it runs as:
 //   - acting for a person → `overrideAccess: false` plus their `user` or `req`;
 //   - user-less system code → `overrideAccess: true`, allowed only in
 //     SYSTEM_OVERRIDE_FILES or behind
@@ -25,7 +26,7 @@ const LOCAL_API_CALLS = [
 const omittedOverrideAccess = {
   selector: `:matches(${LOCAL_API_CALLS.join(', ')}) > ObjectExpression:first-child:not(:has(> Property[key.name='overrideAccess']))`,
   message:
-    'Payload Local API call must set overrideAccess (Payload 3 defaults an omitted flag to true). Acting for a person: `overrideAccess: false` plus `user` or `req`. User-less system code: `overrideAccess: true` in an allowlisted path or behind `// eslint-disable-next-line no-restricted-syntax -- system: <reason>`.',
+    'Payload Local API call must set overrideAccess (an omitted flag defaults to false on Payload 4, true on Payload 3). Acting for a person: `overrideAccess: false` plus `user` or `req`. User-less system code: `overrideAccess: true` in an allowlisted path or behind `// eslint-disable-next-line no-restricted-syntax -- system: <reason>`.',
 }
 const overrideAccessTrue = {
   selector: "Property[key.name='overrideAccess'][value.value=true]",

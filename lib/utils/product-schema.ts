@@ -10,6 +10,7 @@ import { Beer } from '@/lib/types/beer'
 import { getBeerImageUrl } from '@/lib/utils/media-utils'
 import { LOLEV_BASE_URL, LOLEV_OG_IMAGE_URL } from '@/lib/utils/schema-shared'
 import { relationshipName } from '@/lib/utils/relationship-name'
+import { getShownDraftPrice } from '@/lib/utils/packaging-utils'
 
 /**
  * Schema.org Product type
@@ -137,6 +138,8 @@ function generateOffers(beer: ProductSchemaInput, inStock?: boolean): OfferJsonL
   const beerSlug = productUrlSlug(beer)
 
   const draftPrice = beer.draftPrice || ('pricing' in beer ? beer.pricing?.draftPrice : undefined)
+  const halfPour = 'pricing' in beer ? beer.pricing?.halfPour : beer.halfPour
+  const halfPourOnly = 'pricing' in beer ? beer.pricing?.halfPourOnly : beer.halfPourOnly
   const fourPackPrice =
     ('fourPack' in beer ? beer.fourPack : undefined) ||
     ('pricing' in beer ? beer.pricing?.fourPack : undefined)
@@ -157,8 +160,10 @@ function generateOffers(beer: ProductSchemaInput, inStock?: boolean): OfferJsonL
     },
   })
 
-  if (draftPrice) {
-    offers.push(buildOffer(draftPrice, 'Draft pour'))
+  // A Half Pour Only beer offers its half pour, never the full price the site hides.
+  const shownDraftPrice = getShownDraftPrice({ draftPrice, halfPour, halfPourOnly })
+  if (shownDraftPrice) {
+    offers.push(buildOffer(shownDraftPrice, halfPourOnly ? 'Half pour' : 'Draft pour'))
   }
 
   if (fourPackPrice) {

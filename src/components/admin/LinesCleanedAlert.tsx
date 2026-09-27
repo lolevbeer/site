@@ -123,14 +123,9 @@ export function LinesCleanedAlert({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <style>{`
-        .lines-cleaned-alerts > div:not(:last-child) {
-          margin-bottom: 0 !important;
-        }
-      `}</style>
-      <div className="lines-cleaned-alerts">
+      <div>
         {errorAlerts.length > 0 && (
-          <Banner type="error">
+          <Banner type="danger">
             <strong>OVERDUE:</strong>{' '}
             {errorAlerts.map((a, i) => (
               <span key={a.location.id}>
@@ -142,7 +137,7 @@ export function LinesCleanedAlert({ children }: { children: React.ReactNode }) {
           </Banner>
         )}
         {warningAlerts.map((a) => (
-          <Banner key={a.location.id} type="info">
+          <Banner key={a.location.id} type="default">
             <strong>Clean Draft Lines ({a.location.name}):</strong> By {a.dueDate}
           </Banner>
         ))}

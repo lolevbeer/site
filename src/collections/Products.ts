@@ -7,7 +7,6 @@ export const Products: CollectionConfig = {
   admin: {
     group: 'Front of House',
     useAsTitle: 'name',
-    hideAPIURL: true,
     defaultColumns: ['name', 'price', 'category'],
   },
   access: {

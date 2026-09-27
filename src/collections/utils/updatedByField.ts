@@ -1,0 +1,37 @@
+/**
+ * Shared `updatedBy` ("Last edited by") field for versioned collections
+ * (Beers, Menus).
+ *
+ * Payload versions record when a revision was saved but not who saved it.
+ * A version is a snapshot of the document's fields, so stamping the signed-in
+ * editor onto the document on every save makes each revision carry the last
+ * person who edited it. Saves with no signed-in user (the nightly Untappd
+ * sync, scripts) keep the previous person, so the sidebar keeps naming the
+ * last human editor. Revisions saved before this field existed name no one.
+ */
+
+import type { Field } from 'payload'
+import { authenticatedFieldAccess } from '@/src/access/roles'
+
+export const updatedByField = {
+  name: 'updatedBy',
+  type: 'relationship',
+  relationTo: 'users',
+  // Reads return the user ID only; the admin sidebar and version compare view
+  // look up the editor's email themselves (Users are readable by every
+  // signed-in user for this), so populating it would be wasted work.
+  maxDepth: 0,
+  // Published beers and menus are public; don't expose staff user IDs.
+  access: { read: authenticatedFieldAccess },
+  label: 'Last edited by',
+  admin: {
+    position: 'sidebar',
+    readOnly: true,
+    description:
+      'The last person to save this. Automated updates, such as the nightly Untappd sync, keep the previous person.',
+  },
+  hooks: {
+    // Saves with no signed-in user (the nightly Untappd sync, scripts) keep the previous person.
+    beforeChange: [({ req, value }) => req.user?.id ?? value],
+  },
+} satisfies Field

@@ -19,10 +19,11 @@ import {
   type AnimatedItem,
 } from '@/lib/hooks/use-animated-list'
 import { useAuth } from '@/lib/hooks/use-auth'
+import { useClockBucket } from '@/lib/hooks/use-clock-bucket'
 import { SectionHeader } from '@/components/ui/section-header'
 import { getMediaUrl, canSpriteAnimation } from '@/lib/utils/media-utils'
 import { extractBeerFromMenuItem, extractProductFromMenuItem } from '@/lib/utils/menu-item-utils'
-import { getTodayEST, toESTDate } from '@/lib/utils/date'
+import { MS_PER_DAY, getDateEST, toESTDate } from '@/lib/utils/date'
 import type { Menu, Style, Location } from '@/src/payload-types'
 import type { Beer } from '@/lib/types/beer'
 import { getBeerBadgeLabel } from '@/lib/types/beer'
@@ -32,22 +33,32 @@ import { UntappdRating } from '@/components/beer/untappd-rating'
 import { TV_TYPE, TV_SAFE_X, TV_SAFE_Y, TV_COL, TV_LOGO_CLASS } from '@/lib/config/tv-display'
 import { OTHER_MENU_CATEGORIES, type OtherMenuCategory } from '@/lib/config/other-menu'
 import { LINES_OVERDUE_DAYS } from '@/lib/utils/lines-cleaned'
-import { parsePrice } from '@/lib/utils/formatters'
+import { formatPrice, formatPriceText, parsePrice } from '@/lib/utils/formatters'
 
-const MS_PER_DAY = 1000 * 60 * 60 * 24
+const HOUR_MS = 60 * 60 * 1000
 
 /**
- * Format the lines cleaned date as a relative description using EST timezone,
- * or null once the lines are overdue — a stale date is worse than no date on a
- * customer-facing display. Counts EST calendar days, so at the
- * LINES_OVERDUE_DAYS boundary it can differ by a day from the admin alert,
- * which counts elapsed days from `Date.now()`.
+ * Describe when the draft lines were cleaned ("today", "3 days ago"), counting
+ * New York calendar days up to `now`. Returns null without a valid date, when
+ * `now` is unknown (server rendering), or once the lines are overdue — a stale
+ * date is worse than no date on a customer-facing display.
+ *
+ * The cleaning's day comes from the instant, not the ISO string's date part:
+ * MarkLinesCleanedButton stores the exact time, and an evening cleaning is
+ * already the next day in UTC. Counting calendar days, the LINES_OVERDUE_DAYS
+ * cutoff can land a day off the admin alert, which counts elapsed days from
+ * `Date.now()`.
  */
-function formatLinesCleanedDate(dateStr: string | null | undefined): string | null {
-  if (!dateStr) return null
+function formatLinesCleanedDate(
+  dateStr: string | null | undefined,
+  now: number | null,
+): string | null {
+  const cleanedAt = dateStr ? Date.parse(dateStr) : NaN
+  if (now === null || Number.isNaN(cleanedAt)) return null
 
   const diffDays = Math.round(
-    (toESTDate(getTodayEST()).getTime() - toESTDate(dateStr).getTime()) / MS_PER_DAY,
+    (toESTDate(getDateEST(now)).getTime() - toESTDate(getDateEST(cleanedAt)).getTime()) /
+      MS_PER_DAY,
   )
 
   if (diffDays >= LINES_OVERDUE_DAYS) return null
@@ -79,7 +90,6 @@ interface MenuItem {
   glass?: string
   fourPack?: string
   bottlePrice?: string
-  isJustReleased?: boolean
   /** Beer from another brewery */
   guestTap?: boolean
   /** Collaboration brew */
@@ -100,9 +110,7 @@ interface MenuItem {
   slug?: string
   style?: string | Style
   locationSlug?: string
-  /** Manual "Just Released" flag from Payload */
-  justReleased?: boolean
-  /** Beer creation date for auto "Just Released" logic */
+  /** Beer creation date: drives the automatic "Just Released" badge */
   createdAt?: string
   /** Untappd rating (0-5 scale) */
   untappdRating?: number | null
@@ -285,7 +293,7 @@ function OtherThingRow({
         className={`text-right font-bold tabular-nums transition-colors duration-500 ${soldOut ? 'text-foreground-muted line-through' : ''}`}
         style={{ fontSize: scaledVh(3.4, displayScale), color: itemColor }}
       >
-        {item.pricing.draftPrice != null && `$${item.pricing.draftPrice}`}
+        {formatPrice(item.pricing.draftPrice)}
       </div>
     </div>
   )
@@ -405,12 +413,6 @@ interface FeaturedMenuProps {
   labelVideos?: boolean
 }
 
-/** Check if a date is within the last N days */
-function isWithinDays(dateStr: string | undefined, days: number): boolean {
-  if (!dateStr) return false
-  return (Date.now() - new Date(dateStr).getTime()) / MS_PER_DAY <= days
-}
-
 /** Stable key extractor for useAnimatedList — module-level so the hook's memos can skip work */
 const getMenuItemKey = (item: MenuItem) => item.variant
 
@@ -431,7 +433,7 @@ function convertMenuItems(menuData: Menu, labelVideos = false): MenuItem[] {
   const location = typeof menuData.location === 'object' ? menuData.location : null
   const locationSlug = location?.slug
 
-  const items = menuData.items
+  return menuData.items
     .map((item, index) => {
       // Try to extract beer first
       const beer = extractBeerFromMenuItem(item)
@@ -466,7 +468,6 @@ function convertMenuItems(menuData: Menu, labelVideos = false): MenuItem[] {
             slug: String(prod.id || `product-${index}`),
             style: undefined,
             locationSlug: locationSlug ? String(locationSlug) : undefined,
-            justReleased: false,
             guestTap: prod.guestTap || false,
             collab: prod.collab || false,
             createdAt: prod.createdAt,
@@ -527,8 +528,7 @@ function convertMenuItems(menuData: Menu, labelVideos = false): MenuItem[] {
         slug: String(beer.slug),
         style: styleName, // Pass as string, not object
         locationSlug: locationSlug ? String(locationSlug) : undefined,
-        // Store these for badge logic (collab overrides "just released")
-        justReleased: beer.justReleased || false,
+        // Stored for badge logic (collab overrides "just released")
         collab: beer.collab || false,
         collabBrewery: beer.collabBrewery || undefined,
         createdAt: beer.createdAt,
@@ -538,19 +538,6 @@ function convertMenuItems(menuData: Menu, labelVideos = false): MenuItem[] {
       }
     })
     .filter((item): item is NonNullable<typeof item> => item !== null && !item.isEmpty)
-
-  // "Just Released" logic:
-  // 1. If any beer GLOBALLY has justReleased manually set, only mark those
-  // 2. Otherwise, mark beers created within the last 2 weeks
-  // Check global flag from menu data (set by server), fall back to local check
-  const hasGlobalJustReleased = (menuData as { _hasGlobalJustReleased?: boolean })
-    ._hasGlobalJustReleased
-  const hasManualJustReleased = hasGlobalJustReleased ?? items.some((i) => i.justReleased)
-
-  return items.map((item) => ({
-    ...item,
-    isJustReleased: hasManualJustReleased ? item.justReleased : isWithinDays(item.createdAt, 7),
-  }))
 }
 
 /** Filter items by location (returns all if 'all' or unspecified) */
@@ -600,14 +587,17 @@ function AdminEditButtons({
 /** Can card component for cans display */
 function CanCard({
   item,
+  now,
   fullscreen = false,
   accentColor,
 }: {
   item: MenuItem
+  /** Clock for the "Just Released" badge; see getBeerBadgeLabel. */
+  now: number | null
   fullscreen?: boolean
   accentColor?: string
 }) {
-  const badgeLabel = getBeerBadgeLabel(item)
+  const badgeLabel = getBeerBadgeLabel(item, now)
   const [imageError, setImageError] = useState(false)
 
   // Fallback content when no image or image failed to load
@@ -715,7 +705,10 @@ function CanCard({
               />
             )}
           </div>
-          {(!item.isProduct || item.fourPack || item.bottlePrice) && (
+          {/* Guards test the displayed text, so a 0 or blank price hides its line. */}
+          {(!item.isProduct ||
+            formatPriceText(item.fourPack) ||
+            formatPriceText(item.bottlePrice)) && (
             <div className="flex items-center" style={{ gap: '0.8vh' }}>
               {!item.isProduct && (
                 <UntappdRating
@@ -725,23 +718,23 @@ function CanCard({
                   iconStyle={{ height: '1em', width: '1em' }}
                 />
               )}
-              {item.fourPack && (
+              {formatPriceText(item.fourPack) && (
                 <span
                   className="can-tile-price font-semibold transition-colors duration-[250ms]"
                   style={{ color: accentColor }}
                 >
-                  ${item.fourPack}{' '}
+                  {formatPriceText(item.fourPack)}{' '}
                   <span className="can-tile-price-sub font-semibold text-foreground-muted">
                     • Four Pack
                   </span>
                 </span>
               )}
-              {item.bottlePrice && (
+              {formatPriceText(item.bottlePrice) && (
                 <span
                   className="can-tile-price font-semibold transition-colors duration-[250ms]"
                   style={{ color: accentColor }}
                 >
-                  ${item.bottlePrice}{' '}
+                  {formatPriceText(item.bottlePrice)}{' '}
                   <span className="can-tile-price-sub font-semibold text-foreground-muted">
                     • Bottle
                   </span>
@@ -836,6 +829,10 @@ function FeaturedMenu({
   labelVideos = false,
 }: FeaturedMenuProps) {
   const { currentLocation, currentLocationData } = useLocationContext()
+  // Drives the time-based "Just Released" badge on the cards below: the start
+  // of the current hour, or null while server rendering (see getBeerBadgeLabel).
+  const hour = useClockBucket(HOUR_MS)
+  const now = hour === null ? null : hour * HOUR_MS
   const title = menuType === 'draft' ? 'Draft' : 'Cans'
   // The homepage list is filtered to one taproom, so the heading names it —
   // otherwise nothing on the page says which location you are looking at.
@@ -861,12 +858,16 @@ function FeaturedMenu({
     [menu, labelVideos],
   )
   const displayItems = menuItems ?? filteredItems
-  // Memoized for the same reason as menuItems: the poll re-renders this
-  // component every 2s, and this value changes at most once a day.
+  // Memoized: the display re-renders on each poll with new data (10s after a
+  // change, 30s when idle; see usePolling), but this text changes once a day at
+  // most. It follows the hourly clock `now`, so a display left running rolls
+  // over at midnight; `now` is null while server rendering, so the note is left
+  // out of server HTML and hydration always matches.
   const menuLocation = typeof menu?.location === 'object' ? (menu.location as Location) : null
   const linesCleanedText = useMemo(
-    () => (menu?.type === 'draft' ? formatLinesCleanedDate(menuLocation?.linesLastCleaned) : null),
-    [menu?.type, menuLocation?.linesLastCleaned],
+    () =>
+      menu?.type === 'draft' ? formatLinesCleanedDate(menuLocation?.linesLastCleaned, now) : null,
+    [menu?.type, menuLocation?.linesLastCleaned, now],
   )
 
   // Animated items for live updates (only when animated prop is true)
@@ -967,6 +968,7 @@ function FeaturedMenu({
                                 >
                                   <DraftBeerCard
                                     beer={item as unknown as Beer}
+                                    now={now}
                                     showLocation={false}
                                     showTapAndPrice
                                     showRating
@@ -1004,7 +1006,7 @@ function FeaturedMenu({
                       key={key}
                       className={`min-h-0 ${animated ? getAnimationClass(state) : ''}`}
                     >
-                      <CanCard item={item} fullscreen accentColor={itemColors?.[idx]} />
+                      <CanCard item={item} now={now} fullscreen accentColor={itemColors?.[idx]} />
                     </div>
                   ))}
                 </div>
@@ -1071,7 +1073,7 @@ function FeaturedMenu({
                 suppressHydrationWarning
               >
                 {displayItems.map((item, index) => (
-                  <CanCard key={`${item.variant}-${index}`} item={item} />
+                  <CanCard key={`${item.variant}-${index}`} item={item} now={now} />
                 ))}
               </div>
             )

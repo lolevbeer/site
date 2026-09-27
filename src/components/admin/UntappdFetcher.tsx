@@ -117,20 +117,19 @@ export function UntappdFetcher() {
     <div style={{ marginBottom: '20px' }}>
       {error && (
         <div style={{ marginBottom: '10px' }}>
-          <Banner type="error">
+          <Banner type="danger">
             {error}
           </Banner>
         </div>
       )}
 
       {searchResults && searchResults.length > 1 && (
-        <div style={{ marginBottom: '10px', padding: '10px', background: 'var(--theme-elevation-100)', borderRadius: '4px' }}>
+        <div style={{ marginBottom: '10px', padding: '10px', background: 'var(--color-bg-secondary)', borderRadius: '4px' }}>
           <p style={{ marginBottom: '8px', fontWeight: 'bold' }}>Multiple results found. Select one:</p>
           {searchResults.map((result, index) => (
             <span key={index} style={{ marginRight: '8px', marginBottom: '8px', display: 'inline-block' }}>
             <Button
               buttonStyle="secondary"
-              size="small"
               onClick={() => handleSelectResult(result)}
             >
               {result.name}
@@ -143,7 +142,6 @@ export function UntappdFetcher() {
       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
         <Button
           buttonStyle="secondary"
-          size="small"
           onClick={handleSearch}
           disabled={loading || !beerName}
         >
@@ -154,7 +152,6 @@ export function UntappdFetcher() {
           <>
             <Button
               buttonStyle="secondary"
-              size="small"
               onClick={() => fetchRating()}
               disabled={loading}
             >
@@ -163,7 +160,6 @@ export function UntappdFetcher() {
 
             <Button
               buttonStyle="secondary"
-              size="small"
               onClick={() => window.open(`https://untappd.com${untappdUrl}`, '_blank')}
             >
               View on Untappd

@@ -10,12 +10,10 @@
  * error into `[]`/`null` would bake an empty render into the route cache and
  * serve it for the whole revalidate window (see the /m fix, commit 7160f57e).
  * A genuinely-empty result (e.g. location not found) is still returned normally
- * from inside the cached fn and remains cacheable. The one exception is
- * hasAnyBeerJustReleased: it feeds a non-critical badge that is discarded after
- * the first /m poll, so it degrades to `false` rather than blanking the display.
+ * from inside the cached fn and remains cacheable.
  *
  * Identity contract: every read here acts as an anonymous visitor and passes
- * `overrideAccess: false` explicitly (Payload 3.x defaults it to true), so
+ * `overrideAccess: false` explicitly (see AGENTS.md, Access control), so
  * collection and field access rules decide what the public sees — e.g. event
  * contact fields and food-vendor email/phone are stripped, and beers are
  * limited to published ones (see `canReadBeers` in src/collections/Beers.ts).
@@ -76,43 +74,6 @@ const findLocationBySlug = async (
 }
 
 /**
- * Check if any beer globally has justReleased flag set
- * Used to determine "Just Released" display logic
- * Cached until 'beers' tag is invalidated
- */
-export const hasAnyBeerJustReleased = async (): Promise<boolean> => {
-  try {
-    return await unstable_cache(
-      async (): Promise<boolean> => {
-        const payload = await getPayload({ config })
-
-        const result = await payload.find({
-          collection: 'beers',
-          overrideAccess: false,
-          limit: 1,
-          where: {
-            justReleased: {
-              equals: true,
-            },
-          },
-        })
-
-        return result.docs.length > 0
-      },
-      ['any-beer-just-released'],
-      { tags: [CACHE_TAGS.beers], revalidate: 300 },
-    )()
-  } catch (error) {
-    logger.error('Error checking justReleased beers', error)
-    // Non-critical badge flag (drives the "Just Released" highlight and is
-    // discarded after the first /m poll). Degrade gracefully instead of
-    // throwing — a transient blip here must not black out an unattended
-    // /m display via the auto-reloading error boundary.
-    return false
-  }
-}
-
-/**
  * Catalog / sitemap / RSS / llms.txt beer fields. Next.js `unstable_cache`
  * refuses entries over 2MB (throws in dev); a full `depth: 2` beers find
  * — reviews join, `positiveReviews` JSON, 3D label uploads — crossed that
@@ -137,7 +98,6 @@ export const BEERS_LIST_SELECT = {
   collab: true,
   collabBrewery: true,
   topBeerDrops: true,
-  justReleased: true,
   draftPrice: true,
   halfPour: true,
   halfPourOnly: true,
@@ -326,12 +286,13 @@ export async function getCansMenu(locationSlug: string): Promise<PayloadMenu | n
 
 /**
  * Field narrowing for the populated relations in menu queries. Menus ship in
- * every 2s poll response and every /m ISR render, so populated Beer/Product/
- * Media docs carry only what the displays render — derived from
- * convertMenuItems (components/home/featured-menu.tsx) and the poll route's
- * updatedAt timestamp check. Notably excluded: positiveReviews (unbounded
- * review array), the untappd/upc admin fields, and the labelBase/
- * labelMetalness/labelTextures generator uploads.
+ * every /m page render and in the /api/menu-stream response the displays poll
+ * (10s after a change, 30s when idle), so populated Beer/Product/Media docs
+ * carry only what the displays render — derived from convertMenuItems
+ * (components/home/featured-menu.tsx) and the poll route's updatedAt timestamp
+ * check. Notably excluded: positiveReviews (unbounded review array), the
+ * untappd/upc admin fields, and the labelBase/labelMetalness/labelTextures
+ * generator uploads.
  */
 const MENU_BEERS_POPULATE = {
   slug: true,
@@ -350,7 +311,6 @@ const MENU_BEERS_POPULATE = {
   halfPour: true,
   halfPourOnly: true,
   hideFromSite: true,
-  justReleased: true,
   collab: true,
   collabBrewery: true,
   createdAt: true,
@@ -450,16 +410,17 @@ export const getMenuByUrl = async (url: string): Promise<PayloadMenu | null> => 
 }
 
 /**
- * Get menu by URL slug - UNCACHED version for real-time updates
- * Used by SSE endpoints and menu display pages that need immediate updates
+ * Get menu by URL slug - UNCACHED version for the /m display page
+ * (m/[menuUrl]), which renders per request so each display load starts from
+ * the current menu. Displays then poll /api/menu-stream, which reads the
+ * cached getMenuByUrl.
  *
  * Returns null ONLY when the menu genuinely doesn't exist. A fetch failure
- * (cold start, transient DB blip) throws rather than returning null: the
- * display page (m/[menuUrl]) turns null into notFound(), and because that
- * page is ISR (revalidate = 60), a 404 render gets cached and served to every
- * display for up to a minute. A thrown error is never persisted to the route
- * cache, so it self-heals on the next request and hits the segment's
- * auto-reloading error boundary instead of poisoning the fleet with a 404.
+ * (cold start, transient DB blip) throws rather than returning null: the page
+ * turns null into notFound(), and a 404 screen stays up until someone reloads
+ * the TV, while a thrown error renders the segment's error boundary
+ * (m/[menuUrl]/error.tsx), which reloads the display every few seconds until
+ * the menu is back.
  */
 export const getMenuByUrlFresh = async (url: string): Promise<PayloadMenu | null> => {
   try {

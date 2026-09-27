@@ -1,6 +1,6 @@
 import type { AdminViewServerProps } from 'payload'
 
-import { DefaultTemplate } from '@payloadcms/next/templates'
+import { DefaultTemplate } from '@payloadcms/ui/rsc'
 import { redirect } from 'next/navigation'
 import React from 'react'
 

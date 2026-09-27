@@ -2,7 +2,7 @@ import { vercelBlobStorage } from '@payloadcms/storage-vercel-blob'
 import { mongooseAdapter } from '@payloadcms/db-mongodb'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'path'
-import { buildConfig } from 'payload'
+import { buildConfig, type CollectionConfig } from 'payload'
 import { fileURLToPath } from 'url'
 import sharp from 'sharp'
 import { revalidationPlugin } from './plugins/revalidation-plugin'
@@ -73,44 +73,78 @@ const allowedOrigins = [
   ...(process.env.NODE_ENV === 'development' ? getLocalDevOrigins(process.env.PORT) : []),
 ]
 
+/**
+ * Payload 3 hid each document's "API" tab with `admin.hideAPIURL: true` on every
+ * collection. Payload 4 dropped that option, so the tab is hidden here instead.
+ * (Typing /api after a document URL still renders it; it shows only what the
+ * REST API already returns to that user.)
+ */
+function hideApiTab(collection: CollectionConfig): CollectionConfig {
+  const components = collection.admin?.components
+  // Never true today. A collection that adds its own edit views is returned as-is
+  // and keeps its API tab, so hide the tab in that collection's `edit` instead.
+  // `api` can't be merged in here: Payload's EditConfig union types it `never`
+  // alongside a `root` view.
+  if (components?.views?.edit) return collection
+  return {
+    ...collection,
+    admin: {
+      ...collection.admin,
+      components: {
+        ...components,
+        views: {
+          ...components?.views,
+          edit: { api: { tab: { condition: () => false } } },
+        },
+      },
+    },
+  }
+}
+
 export default buildConfig({
-  // Empty serverURL = relative URLs, works on any domain (preview URLs, custom domains, etc.)
-  serverURL: '',
+  // serverURL, cookiePrefix, and the api/admin routes use Payload's defaults
+  // ('' = relative URLs on any domain; 'payload'; '/api'; '/admin').
   cors: allowedOrigins,
   csrf: allowedOrigins,
   routes: {
-    api: '/api',
-    admin: '/admin',
+    // GraphQL lives under /api here; Payload's default is /graphql.
     graphQL: '/api/graphql',
     graphQLPlayground: '/api/graphql-playground',
   },
-  cookiePrefix: 'payload',
+  // Payload 4 lowered the default query depth to 1; keep v3's 2 until each
+  // query that omits `depth` is audited.
+  defaultDepth: 2,
   jobs: {
     access: {
       cancel: ({ req }) => hasRole(req.user, 'admin'),
       queue: ({ req }) => hasRole(req.user, 'admin'),
       run: ({ req }) => hasRole(req.user, 'admin'),
     },
-    addParentToTaskLog: true,
     deleteJobOnComplete: false,
-    depth: 0,
     processingOrder: 'createdAt',
     tasks: [syncUntappdRatingsTask],
-    jobsCollectionOverrides: ({ defaultJobsCollection }) => ({
-      ...defaultJobsCollection,
-      admin: {
-        ...defaultJobsCollection.admin,
-        group: 'System',
-        hidden: false,
-        hideAPIURL: true,
-      },
-      access: {
-        read: adminAccess,
-        create: () => false,
-        update: () => false,
-        delete: adminAccess,
-      },
-    }),
+    jobsCollectionOverrides: ({ defaultJobsCollection }) =>
+      hideApiTab({
+        ...defaultJobsCollection,
+        admin: {
+          ...defaultJobsCollection.admin,
+          hidden: false,
+        },
+        // Payload 4 denies all job CRUD by default; open read/delete to admins.
+        access: {
+          ...defaultJobsCollection.access,
+          read: adminAccess,
+          delete: adminAccess,
+        },
+        fields: [
+          ...defaultJobsCollection.fields,
+          // Rollback safety: Payload 3 claims only jobs with `processing: false`, and
+          // Payload 4 dropped the field (it never reads it). This static default makes
+          // the mongoose model stamp it on every job Payload 4 creates. Not indexed:
+          // migration 20260927_020000 dropped Payload 3's processing_1.
+          { name: 'processing', type: 'checkbox', defaultValue: false, admin: { hidden: true } },
+        ],
+      }),
   },
   admin: {
     user: Users.slug,
@@ -127,15 +161,21 @@ export default buildConfig({
     importMap: {
       baseDir: path.resolve(dirname),
     },
+    // Payload 4's Vercel Blob adapter registers its client upload handler only
+    // when a blob token is set; declaring it here keeps importMap.js identical
+    // with or without one (Payload 3 always registered it).
+    dependencies: {
+      '@payloadcms/storage-vercel-blob/client#VercelBlobClientUploadHandler': {
+        type: 'component',
+        path: '@payloadcms/storage-vercel-blob/client#VercelBlobClientUploadHandler',
+      },
+    },
     components: {
       graphics: {
         Logo: './components/AdminLogo#AdminLogo',
         Icon: './components/AdminLogo#AdminIcon',
       },
-      providers: [
-        './components/AdminNavLink#AdminNavLink',
-        './components/admin/LinesCleanedAlert#LinesCleanedAlert',
-      ],
+      providers: ['./components/admin/LinesCleanedAlert#LinesCleanedAlert'],
       actions: [],
       afterNavLinks: ['./components/SyncNavLink#SyncNavLink'],
       views: {
@@ -149,6 +189,8 @@ export default buildConfig({
       },
     },
   },
+  // Payload 4 keeps version history for every collection and global unless told
+  // not to. Only Beers and Menus want history; they set their own `versions`.
   collections: [
     // Back of House
     Beers,
@@ -175,7 +217,7 @@ export default buildConfig({
     Distributors,
     FAQs,
     Media,
-  ],
+  ].map((collection) => hideApiTab({ versions: false, ...collection })),
   globals: [
     // Back of House
     ComingSoon,
@@ -183,7 +225,7 @@ export default buildConfig({
     RecurringFood,
     // Settings (last)
     SiteContent,
-  ],
+  ].map((global) => ({ versions: false, ...global })),
   editor: lexicalEditor(),
   secret: serverEnv.payloadSecret,
   typescript: {
@@ -227,15 +269,7 @@ export default buildConfig({
     },
   }),
   sharp,
-  plugins: [
-    revalidationPlugin,
-    vercelBlobStorage({
-      collections: {
-        media: true,
-      },
-      token: serverEnv.blobReadWriteToken,
-    }),
-  ],
+  plugins: [revalidationPlugin],
   endpoints: [
     {
       path: '/import-distributors',
@@ -267,5 +301,13 @@ export default buildConfig({
       method: 'post',
       handler: syncUntappdRatings,
     },
+  ],
+  storage: [
+    vercelBlobStorage({
+      collections: {
+        media: true,
+      },
+      token: serverEnv.blobReadWriteToken,
+    }),
   ],
 })

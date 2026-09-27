@@ -348,7 +348,6 @@ export const SyncViewClient: React.FC = () => {
                     onClick={() => importDistributors('pa')}
                     disabled={!paUrl || distImporting !== null}
                     buttonStyle="primary"
-                    size="small"
                   >
                     {distImporting === 'pa' ? 'Importing...' : 'Import PA'}
                   </Button>
@@ -372,7 +371,6 @@ export const SyncViewClient: React.FC = () => {
                     onClick={() => importDistributors('oh')}
                     disabled={!ohUrl || distImporting !== null}
                     buttonStyle="primary"
-                    size="small"
                   >
                     {distImporting === 'oh' ? 'Importing...' : 'Import OH'}
                   </Button>
@@ -380,12 +378,7 @@ export const SyncViewClient: React.FC = () => {
               </div>
 
               <div className="sync-view__controls">
-                <Button
-                  onClick={saveDistributorUrls}
-                  disabled={urlsSaving}
-                  buttonStyle="secondary"
-                  size="small"
-                >
+                <Button onClick={saveDistributorUrls} disabled={urlsSaving} buttonStyle="secondary">
                   {urlsSaving ? 'Saving...' : 'Save URLs'}
                 </Button>
               </div>
@@ -447,7 +440,6 @@ export const SyncViewClient: React.FC = () => {
                     onClick={() => lakeInputRef.current?.click()}
                     disabled={lake.running}
                     buttonStyle="secondary"
-                    size="small"
                   >
                     {lake.running ? 'Importing...' : 'Upload CSV'}
                   </Button>
@@ -497,7 +489,6 @@ export const SyncViewClient: React.FC = () => {
                     onClick={handleRegeocodeDistributors}
                     disabled={regeocode.running}
                     buttonStyle={regeocodeDryRun ? 'secondary' : 'primary'}
-                    size="small"
                   >
                     {regeocode.running
                       ? regeocodeDryRun
@@ -527,7 +518,7 @@ export const SyncViewClient: React.FC = () => {
                       type={
                         regeocode.results.fixed > 0 || regeocode.results.suspicious === 0
                           ? 'success'
-                          : 'info'
+                          : 'default'
                       }
                     >
                       <div className="sync-view__banner-row">
@@ -615,7 +606,6 @@ export const SyncViewClient: React.FC = () => {
               onClick={handleRecalculateBeerFields}
               disabled={recalc.running}
               buttonStyle={recalcDryRun ? 'secondary' : 'primary'}
-              size="small"
             >
               {recalc.running
                 ? recalcDryRun
@@ -685,7 +675,6 @@ export const SyncViewClient: React.FC = () => {
                 onClick={handleUntappdSync}
                 disabled={untappd.running}
                 buttonStyle={untappdDryRun ? 'secondary' : 'primary'}
-                size="small"
               >
                 {untappd.running
                   ? untappdDryRun
@@ -815,7 +804,7 @@ const ImportResultsBanner: React.FC<{
   details?: string[]
 }> = ({ title, isError, stats, details }) => (
   <div className="sync-view__banner-wrap">
-    <Banner type={isError ? 'error' : 'success'}>
+    <Banner type={isError ? 'danger' : 'success'}>
       <div className="sync-view__banner-row">
         <strong>{title}</strong>
         {stats

@@ -2,6 +2,8 @@
  * Beer type definitions for the brewery website
  */
 
+import { MS_PER_DAY, isRecentTimestamp } from '@/lib/utils/date'
+
 /**
  * Enum for beer glass types used for serving
  */
@@ -92,7 +94,8 @@ export interface Beer {
   hops?: string
   /** Tap/draft number (position in menu) */
   tap?: number | string
-  isJustReleased?: boolean
+  /** ISO creation date; drives the automatic "Just Released" badge */
+  createdAt?: string
   /** Beer from another brewery */
   guestTap?: boolean
   /** Collaboration brew */
@@ -103,19 +106,31 @@ export interface Beer {
   availability: BeerAvailability
 }
 
+/** Beers created within this many days get the automatic "Just Released" badge. */
+const JUST_RELEASED_DAYS = 7
+
 /**
  * Get the badge label for a beer. Collab and Guest Tap take priority over Just Released.
  * Returns null if no badge should be shown.
+ *
+ * "Just Released" depends on `now`: menus pass the current hour from
+ * `useClockBucket`, which is null while server rendering (the time-based badge
+ * is skipped, so hydration always matches) and changes hourly so long-running
+ * displays drop the badge on time. `now` has no default, so a caller can't
+ * fall back to the server's clock by leaving it out.
  */
 export function getBeerBadgeLabel(
-  beer: Pick<Beer, 'collab' | 'collabBrewery' | 'guestTap' | 'isJustReleased'>,
+  beer: Pick<Beer, 'collab' | 'collabBrewery' | 'guestTap' | 'createdAt'>,
+  now: number | null,
 ): string | null {
   if (beer.collab) {
     const brewery = beer.collabBrewery?.trim()
     return brewery ? `Collab · ${brewery}` : 'Collab'
   }
   if (beer.guestTap) return 'Guest Tap'
-  if (beer.isJustReleased) return 'Just Released'
+  if (now !== null && isRecentTimestamp(beer.createdAt, JUST_RELEASED_DAYS * MS_PER_DAY, now)) {
+    return 'Just Released'
+  }
   return null
 }
 

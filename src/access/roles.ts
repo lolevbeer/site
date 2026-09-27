@@ -93,10 +93,46 @@ export const adminFieldAccess: FieldAccess = ({ req: { user } }) => {
 }
 
 /**
+ * Access control: User must be authenticated
+ */
+export const authenticatedAccess: Access = ({ req: { user } }) => {
+  return Boolean(user)
+}
+
+/**
  * Field access control: User must be authenticated
  */
 export const authenticatedFieldAccess: FieldAccess = ({ req: { user } }) => {
   return Boolean(user)
+}
+
+/**
+ * Field access control: an admin, the user whose own record this is, or a
+ * record still being created.
+ *
+ * Payload loads `req.user` with overrideAccess and sets it before login's
+ * field reads, so users always see their own restricted fields.
+ *
+ * A record being created has no id and nothing stored yet, only its creator's
+ * draft, so the create form keeps these fields (a lead bartender sets the
+ * roles and locations of the bartender they invite). Payload 4 passes that
+ * draft as `data` with no id, to the form state (@payloadcms/ui
+ * addFieldStatePromise) and to the create view's permissions
+ * (getDocumentPermissions → docAccessOperation → populateFieldPermissions).
+ *
+ * A call with no document at all stays denied: where-query validation
+ * (validateSearchParams → getEntityPermissions with `fetchData: false` →
+ * populateFieldPermissions), collection-wide permissions (getAccessResults),
+ * and findDistinct pass no id, `data`, or `doc`, and allowing them would let
+ * any signed-in user filter users by these fields. Stored records always
+ * arrive with their id (afterRead passes `doc.id`), so they never reach the
+ * create branch.
+ */
+export const adminOrSelfFieldAccess: FieldAccess = ({ req: { user }, data, doc, id }) => {
+  if (isAdmin(user)) return true
+  const recordId = doc?.id ?? id
+  if (recordId === undefined) return Boolean(data)
+  return Boolean(user?.id) && recordId === user?.id
 }
 
 /**
