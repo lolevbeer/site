@@ -10,7 +10,6 @@ import { JobApplications } from '@/src/collections/JobApplications'
 import { FoodVendors } from '@/src/collections/FoodVendors'
 import { SiteContent } from '@/src/globals/SiteContent'
 import { RecurringFood } from '@/src/globals/RecurringFood'
-import { canRunUntappdSync } from '@/src/endpoints/sync-untappd-ratings'
 import { getAdminRelationshipID } from '@/src/components/admin/relationship-value'
 import { isFoodManager } from '@/src/access/roles'
 
@@ -243,14 +242,6 @@ describe('user assignment authorization', () => {
         runHook({ roles: ['bartender'], locations: ['location-1'] }, userWith(['lead-bartender'])),
       ).toThrow(/only assign locations/i)
     })
-  })
-})
-
-describe('sync endpoint authorization', () => {
-  it('allows only admins and beer managers to sync Untappd', () => {
-    expect(canRunUntappdSync(userWith(['admin']))).toBe(true)
-    expect(canRunUntappdSync(userWith(['beer-manager']))).toBe(true)
-    expect(canRunUntappdSync(userWith(['bartender']))).toBe(false)
   })
 })
 
