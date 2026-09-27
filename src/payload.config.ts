@@ -133,6 +133,14 @@ export default buildConfig({
           read: adminAccess,
           delete: adminAccess,
         },
+        fields: [
+          ...defaultJobsCollection.fields,
+          // Rollback safety: Payload 3 claims only jobs with `processing: false`, and
+          // Payload 4 dropped the field (it never reads it). This static default makes
+          // the mongoose model stamp it on every job Payload 4 creates. Not indexed:
+          // migration 20260927_020000 dropped Payload 3's processing_1.
+          { name: 'processing', type: 'checkbox', defaultValue: false, admin: { hidden: true } },
+        ],
       }),
   },
   admin: {

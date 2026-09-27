@@ -1091,6 +1091,7 @@ export interface PayloadJob {
    * Used for concurrency control. Jobs with the same key are subject to exclusive/supersedes rules.
    */
   concurrencyKey?: string | null;
+  processing?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1761,6 +1762,7 @@ export interface PayloadJobsSelect<T extends boolean = true> {
   processingUntil?: T;
   processingToken?: T;
   concurrencyKey?: T;
+  processing?: T;
   updatedAt?: T;
   createdAt?: T;
 }

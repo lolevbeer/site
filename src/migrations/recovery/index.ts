@@ -97,7 +97,7 @@ export const migrationRecovery: readonly MigrationRecovery[] = [
   {
     name: '20260927_020000_payload_jobs_runnable_processing_until',
     compatibility:
-      "Index-only: rebuilds payload_jobs_runnable on processingUntil (completedAt moved second) and drops Payload 3's processing_1; either index only changes claim speed. The app rollback is not index-only: Payload 3 claims only jobs with processing: false, and jobs Payload 4 created have no processing field, so before rolling the app back to Payload 3 run db['payload-jobs'].updateMany({ completedAt: { $exists: false }, processing: { $exists: false } }, { $set: { processing: false } }).",
+      "Index-only: rebuilds payload_jobs_runnable on processingUntil (completedAt moved second) and drops Payload 3's processing_1; either index only changes claim speed. App rollback: Payload 3 claims only jobs with processing: false, and the jobs override in src/payload.config.ts gives every job Payload 4 creates that value. Jobs created before that field was added lack it (none in production); db['payload-jobs'].updateMany({ completedAt: { $exists: false }, processing: { $exists: false } }, { $set: { processing: false } }) fixes them and is safe to run before any rollback.",
     retry:
       'Safe to rerun: it drops each named index if present and recreates payload_jobs_runnable with the exact key.',
     mode: 'roll-forward',

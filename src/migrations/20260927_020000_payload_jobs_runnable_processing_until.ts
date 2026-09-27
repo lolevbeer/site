@@ -7,10 +7,11 @@
  * nothing in Payload 4 queries.
  *
  * Existing `processing` values are left in place; Payload 4 never reads them.
- * Payload 3 does: it claims only jobs with `processing: false`, and jobs that
- * Payload 4 creates have no `processing` field. Before rolling the app back to
- * Payload 3, set `processing: false` on unfinished jobs (see the recovery
- * manifest), or v3 never runs them and its scheduler waits on them forever.
+ * Payload 3 does: it claims only jobs with `processing: false`. The jobs
+ * override in src/payload.config.ts keeps a hidden `processing` field that
+ * defaults to false, so jobs Payload 4 creates still run after an app rollback
+ * to Payload 3. Jobs created before that field was added lack it (none in
+ * production); the recovery manifest has the one-off fix.
  */
 import type { MigrateDownArgs, MigrateUpArgs } from '@payloadcms/db-mongodb'
 

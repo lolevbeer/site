@@ -69,7 +69,7 @@ For `20260927_020000_payload_jobs_runnable_processing_until` (the Payload 4 upgr
 | --- | --- | --- |
 | `payload_jobs_runnable` | `{ queue: 1, completedAt: 1, hasError: 1, processingUntil: 1, waitUntil: 1, createdAt: 1 }` | `{ name: 'payload_jobs_runnable' }` |
 
-Rolling the app back from Payload 4 to Payload 3 needs one data step first: Payload 3 claims only jobs with `processing: false`, and jobs Payload 4 created have no `processing` field. Run the `updateMany` in that migration's recovery-manifest entry before the rollback, or the daily Untappd sync silently stops.
+Rolling the app back from Payload 4 to Payload 3, including a Vercel Instant Rollback, needs no data step for jobs Payload 4 created: Payload 3 claims only jobs with `processing: false`, and the jobs override in `src/payload.config.ts` sets it on every new job. Only jobs created before that field was added lack it (none in production); the `updateMany` in that migration's recovery-manifest entry fixes them and is safe to run before any rollback.
 
 ## Failed Google Sheets field removal decision
 
