@@ -167,7 +167,7 @@ async function resolvePayloadUser(
     // eslint-disable-next-line no-restricted-syntax -- system: no identity exists yet
     overrideAccess: true,
   })
-  if (byId.docs[0]) return byId.docs[0] as User
+  if (byId.docs[0]) return byId.docs[0]
 
   const email = await slackUserEmail(slackUserId)
   if (!email) return null
@@ -197,7 +197,7 @@ async function resolvePayloadUser(
     // already resolved, so don't fail their command over it.
     logger.error(`Claiming slackUserId for user ${user.id} failed:`, error)
   }
-  return user as User
+  return user
 }
 
 /**
