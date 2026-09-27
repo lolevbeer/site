@@ -4,8 +4,13 @@
  */
 import { describe, expect, it } from 'vitest'
 import { createLocationLookup, generateEventJsonLd } from '@/lib/utils/json-ld'
+import type { PayloadLocation } from '@/lib/types/location'
 
-const location = {
+type EventInput = Parameters<typeof generateEventJsonLd>[0]
+/** Fixtures set only the fields these tests read. */
+const event = (fields: Partial<EventInput>) => fields as EventInput
+
+const location: PayloadLocation = {
   id: 'loc-1',
   slug: 'lawrenceville',
   name: 'Lawrenceville',
@@ -16,28 +21,30 @@ const location = {
     zip: '15201',
   },
   coordinates: [-79.96, 40.46],
-} as any
+} as PayloadLocation
 
 describe('generateEventJsonLd', () => {
   it('leaves an empty address when no lookup is passed (the homepage bug)', () => {
-    const schema = generateEventJsonLd({
+    const schema = generateEventJsonLd(
+      event({
       organizer: "Drew's Clues Trivia",
       date: '2026-09-09',
       startTime: '4:00pm',
       location: 'lawrenceville',
-    } as any)
+      }),
+    )
     expect(schema.location.address.streetAddress).toBe('')
   })
 
   it('fills Place from the lookup and qualifies the name with the taproom', () => {
     const lookup = createLocationLookup([location])
     const schema = generateEventJsonLd(
-      {
+      event({
         organizer: "Drew's Clues Trivia",
         date: '2026-09-09',
         startTime: '4:00pm',
-        location: { slug: 'lawrenceville' },
-      } as any,
+        location: { slug: 'lawrenceville' } as PayloadLocation,
+      }),
       lookup,
     )
     expect(schema.location.address.streetAddress).toBe('5247 Butler Street')

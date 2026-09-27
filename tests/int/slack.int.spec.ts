@@ -54,8 +54,10 @@ function makeMenu(overrides: Partial<Menu> = {}): Menu {
   }
 }
 
-/** Builders return Record<string, unknown>; loosen it for nested assertions. */
-const loose = (v: Record<string, unknown>) => v as Record<string, any>
+/** A Block Kit JSON node, walkable by key or index in assertions. */
+type SlackJson = { readonly [key: string]: SlackJson } & readonly SlackJson[]
+/** Builders return Record<string, unknown>; view it as walkable JSON for nested assertions. */
+const loose = (v: Record<string, unknown>) => v as unknown as SlackJson
 
 /** True if `s` contains a lone (unpaired) UTF-16 surrogate — an ill-formed string. */
 const hasLoneSurrogate = (s: string) =>
@@ -337,19 +339,19 @@ describe('buildEditModalView', () => {
 
   it('includes the remove select only when the menu has items', () => {
     const withItems = loose(buildEditModalView(menu))
-    const removeBlock = (withItems.blocks as Record<string, any>[]).find(
-      (b) => b.block_id === SLACK_IDS.blockRemove,
+    const removeBlock = withItems.blocks.find(
+      (b) => String(b.block_id) === SLACK_IDS.blockRemove,
     )
     expect(removeBlock).toBeDefined()
     expect(removeBlock!.element.options).toHaveLength(2)
 
     const empty = loose(buildEditModalView(makeMenu({ items: [] })))
     expect(
-      (empty.blocks as Record<string, any>[]).some((b) => b.block_id === SLACK_IDS.blockRemove),
+      empty.blocks.some((b) => String(b.block_id) === SLACK_IDS.blockRemove),
     ).toBe(false)
     // The add select is always present.
     expect(
-      (empty.blocks as Record<string, any>[]).some((b) => b.block_id === SLACK_IDS.blockAdd),
+      empty.blocks.some((b) => String(b.block_id) === SLACK_IDS.blockAdd),
     ).toBe(true)
   })
 })
@@ -496,7 +498,7 @@ describe('buildProductOptionGroups', () => {
     // code-unit slice would emit a lone high surrogate. Array.from keeps it whole.
     const name = 'a'.repeat(73) + '😀' + 'b'.repeat(30)
     const result = loose(buildProductOptionGroups([{ id: 'b1', name }], []))
-    const text = result.option_groups[0].options[0].text.text as string
+    const text = String(result.option_groups[0].options[0].text.text)
     expect(hasLoneSurrogate(text)).toBe(false)
     expect(text).toContain('😀')
     expect(text.endsWith('…')).toBe(true)

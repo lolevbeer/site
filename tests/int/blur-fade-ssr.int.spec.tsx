@@ -12,7 +12,6 @@
 import { describe, it, expect, afterEach } from 'vitest'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { render, cleanup } from '@testing-library/react'
-import { createElement } from 'react'
 import { BlurFade, PageTransition } from '@/components/motion'
 import {
   __resetBlurFadeHydrationForTests,
@@ -22,7 +21,7 @@ import {
 describe('BlurFade / PageTransition SSR output', () => {
   it('BlurFade renders visible (no opacity:0) before the client has mounted', () => {
     const html = renderToStaticMarkup(
-      createElement(BlurFade, null, createElement('h1', null, 'Hello')),
+      <BlurFade><h1>Hello</h1></BlurFade>,
     )
 
     expect(html).not.toMatch(/opacity:0\b/)
@@ -31,7 +30,7 @@ describe('BlurFade / PageTransition SSR output', () => {
 
   it('PageTransition (delegates to BlurFade) renders visible before mount', () => {
     const html = renderToStaticMarkup(
-      createElement(PageTransition, null, createElement('h1', null, 'Hello')),
+      <PageTransition><h1>Hello</h1></PageTransition>,
     )
 
     expect(html).not.toMatch(/opacity:0\b/)
@@ -43,10 +42,9 @@ describe('BlurFade / PageTransition SSR output', () => {
     // view — it isn't part of the first-paint blank-page problem, so the
     // hydration guard must not touch it.
     const html = renderToStaticMarkup(
-      // BlurFadeProps marks children required, so a props object must carry it;
-      // the third-argument form does not satisfy the createElement overload.
-      // eslint-disable-next-line react/no-children-prop
-      createElement(BlurFade, { inView: true, children: createElement('h1', null, 'Hello') }),
+      <BlurFade inView>
+        <h1>Hello</h1>
+      </BlurFade>,
     )
 
     expect(html).toMatch(/opacity:0\b/)
@@ -60,7 +58,7 @@ describe('BlurFade hydration-flag propagation across mounts', () => {
   })
 
   it('the first instance to hydrate matches SSR: no opacity:0 on its first commit', () => {
-    const { container } = render(createElement(BlurFade, null, createElement('h1', null, 'A')))
+    const { container } = render(<BlurFade><h1>A</h1></BlurFade>)
 
     expect(container.innerHTML).not.toMatch(/opacity:\s*0\b/)
   })
@@ -70,9 +68,9 @@ describe('BlurFade hydration-flag propagation across mounts', () => {
     // layout — so this covers hard-loading a page with NO BlurFade (/privacy,
     // /terms, /beer-map) and then client-navigating: the destination tree must
     // animate in, not render pre-animated.
-    render(createElement(MotionHydrationSentinel))
+    render(<MotionHydrationSentinel />)
 
-    const { container } = render(createElement(BlurFade, null, createElement('h1', null, 'B')))
+    const { container } = render(<BlurFade><h1>B</h1></BlurFade>)
 
     expect(container.innerHTML).toMatch(/opacity:\s*0\b/)
   })
@@ -81,9 +79,9 @@ describe('BlurFade hydration-flag propagation across mounts', () => {
     // Guards the single-writer invariant: BlurFade deliberately no longer sets
     // the flag itself, so a tree mounted outside the root layout keeps painting
     // at SSR-visible styles rather than silently animating.
-    render(createElement(BlurFade, null, createElement('h1', null, 'A'))).unmount()
+    render(<BlurFade><h1>A</h1></BlurFade>).unmount()
 
-    const { container } = render(createElement(BlurFade, null, createElement('h1', null, 'B')))
+    const { container } = render(<BlurFade><h1>B</h1></BlurFade>)
 
     expect(container.innerHTML).not.toMatch(/opacity:\s*0\b/)
   })

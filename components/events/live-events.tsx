@@ -59,7 +59,6 @@ interface AgendaEntry {
   name: string
   kind: 'Food' | 'Event'
   logoUrl?: string
-  tags?: string[]
   description?: string
   /** Position in the combined list, which is what indexes the poll's colours. */
   colorIndex: number
@@ -70,7 +69,6 @@ function AgendaRow({
   name,
   kind,
   logoUrl,
-  tags,
   description,
   accentColor,
 }: {
@@ -78,7 +76,6 @@ function AgendaRow({
   name: string
   kind: 'Food' | 'Event'
   logoUrl?: string
-  tags?: string[]
   description?: string
   accentColor?: string
 }) {
@@ -198,7 +195,6 @@ export function LiveEvents({
               time: item.data.time ? formatTime(item.data.time) : 'All day',
               name: item.data.title,
               kind: 'Event',
-              tags: item.data.tags,
               // A description that only repeats the title adds nothing.
               description:
                 item.data.description !== item.data.title ? item.data.description : undefined,
@@ -325,7 +321,6 @@ export function LiveEvents({
                             time={item.time}
                             name={item.name}
                             kind={item.kind}
-                            tags={item.tags}
                             logoUrl={item.logoUrl}
                             description={item.description}
                             accentColor={itemColors?.[item.colorIndex]}

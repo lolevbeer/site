@@ -25,11 +25,11 @@ describe('getPackagingType', () => {
   });
 
   it('returns "cans" when fourPack is set and bottlePrice is undefined', () => {
-    expect(getPackagingType({ fourPack: 15 } as any)).toBe('cans');
+    expect(getPackagingType({ fourPack: 15 })).toBe('cans');
   });
 
   it('returns "bottles" when bottlePrice is set and fourPack is undefined', () => {
-    expect(getPackagingType({ bottlePrice: 12 } as any)).toBe('bottles');
+    expect(getPackagingType({ bottlePrice: 12 })).toBe('bottles');
   });
 
   it('ignores zero values (treats as not set)', () => {

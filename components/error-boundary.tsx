@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { AlertCircle } from '@/components/icons'
@@ -74,8 +75,12 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                 >
                   Try Again
                 </Button>
-                <Button onClick={() => (window.location.href = '/')} className="flex-1">
-                  Go Home
+                {/* This boundary lives in the root layout and survives client
+                    navigation, so clear the error as we leave. */}
+                <Button asChild className="flex-1">
+                  <Link href="/" onClick={() => this.setState({ hasError: false, error: null })}>
+                    Go Home
+                  </Link>
                 </Button>
               </div>
             </CardContent>

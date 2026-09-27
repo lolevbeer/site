@@ -8,7 +8,7 @@
  * ponytail: always-on rAF instead of captiva's on-demand rendering — fine
  * for the single can on a beer page.
  */
-import { useEffect, useRef } from 'react'
+import { useEffect, useEffectEvent, useRef } from 'react'
 import { createCanScene } from './can-scene'
 
 interface BeerCan3DProps {
@@ -24,6 +24,8 @@ interface BeerCan3DProps {
 
 export function BeerCan3D({ baseUrl, metalnessUrl, onReady, className = '' }: BeerCan3DProps) {
   const ref = useRef<HTMLDivElement>(null)
+  // Latest onReady without rebuilding the scene when the parent re-renders.
+  const handleReady = useEffectEvent(() => onReady?.())
 
   useEffect(() => {
     const el = ref.current
@@ -57,7 +59,7 @@ export function BeerCan3D({ baseUrl, metalnessUrl, onReady, className = '' }: Be
       // Append only once the scene is fully assembled so the first painted
       // frame is a finished can, then tell the parent to drop its poster.
       el.appendChild(can.renderer.domElement)
-      onReady?.()
+      handleReady()
 
       // rAF auto-pauses on hidden tabs but not scrolled-out elements; the
       // observer stops rendering (GPU/battery) while the can is off-screen.
