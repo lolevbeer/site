@@ -13,7 +13,6 @@ overrides:
   dompurify: '>=3.4.13'
   esbuild: '>=0.28.1'
   file-type: '>=21.3.1'
-  mongoose: 9.9.2
   postcss: '>=8.5.23'
   uuid: '>=11.1.1'
   js-yaml@5: '>=5.2.2'
@@ -4758,7 +4757,7 @@ packages:
     resolution: {integrity: sha512-8chOqpVE3bcoWT2pIgcJeIZlXaOfQCavZgQZF4qytUtjRBqsNMyzUoR16qdw9XL2kC478N8iA8z0AA+NSS0d1A==}
     engines: {node: '>=16.20.1'}
     peerDependencies:
-      mongoose: 9.9.2
+      mongoose: '>=5.11.10'
 
   mongoose-paginate-v2@1.9.4:
     resolution: {integrity: sha512-0LOsVEQmjrbJKVDi/IvFEhIezmuRjUE4loGgslv57j9nK/NMC+mbKT0QnaPSPpib4lByKVBcy3VbDa1TvlHZjA==}

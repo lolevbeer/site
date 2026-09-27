@@ -1,9 +1,7 @@
 # pnpm 10 no longer reads the `pnpm` field from package.json; these settings
 # live here instead. The overrides are security floors keeping transitive
 # dependencies above known-vulnerable versions, so losing them silently
-# reopens Dependabot alerts — keep them here, not in package.json. The exact
-# `mongoose` pin is the exception: it keeps one mongoose in the graph and must
-# equal @payloadcms/db-mongodb's own pin (tests/int/mongoose-pin.int.spec.ts).
+# reopens Dependabot alerts — keep them here, not in package.json.
 onlyBuiltDependencies:
   - "sharp"
   - "esbuild"
@@ -18,9 +16,6 @@ overrides:
   "dompurify": ">=3.4.13"
   "esbuild": ">=0.28.1"
   "file-type": ">=21.3.1"
-  # Match @payloadcms/db-mongodb's exact pin (bump both together); an open
-  # range resolves past what Payload tests.
-  "mongoose": "9.9.2"
   "postcss": ">=8.5.23"
   "uuid": ">=11.1.1"
   "js-yaml@5": ">=5.2.2"
