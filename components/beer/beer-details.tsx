@@ -45,6 +45,7 @@ import {
   getNoPackagingLabel,
   getDraftOnlyMessage,
   getPackagingAtLocationsMessage,
+  getPricingLines,
 } from '@/lib/utils/packaging-utils'
 
 type BeerReview = {
@@ -140,6 +141,10 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
   // than cleared by the effect (react-hooks/set-state-in-effect); the location
   // arrays simply stay empty.
   const isLoadingLocations = Boolean(beer.id) && fetchingLocations
+  const pricingLines = getPricingLines(beer, {
+    onTap: tapLocations.length > 0,
+    inCans: canLocations.length > 0,
+  })
   const [locationError, setLocationError] = useState<string | null>(null)
   const [imageError, setImageError] = useState(false)
   // Flips when BeerCan3D has appended its canvas; fades the poster image out.
@@ -382,23 +387,18 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
             </Card>
 
             {/* Pricing */}
-            {((tapLocations.length > 0 && beer.draftPrice) ||
-              (canLocations.length > 0 && (beer.fourPack || beer.bottlePrice))) && (
+            {pricingLines.length > 0 && (
               <Card className="shadow-none border-0 p-0 bg-transparent">
                 <CardHeader className="p-0 pb-4">
-                  <CardTitle className="text-lg flex items-center gap-2">Pricing</CardTitle>
+                  <CardTitle className="text-lg">Pricing</CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
                   <div className="space-y-2">
-                    {tapLocations.length > 0 && beer.draftPrice && (
-                      <p className="text-sm text-muted-foreground">• Draft ${beer.draftPrice}</p>
-                    )}
-                    {canLocations.length > 0 && beer.fourPack && (
-                      <p className="text-sm text-muted-foreground">• 4 Pack ${beer.fourPack}</p>
-                    )}
-                    {canLocations.length > 0 && beer.bottlePrice && (
-                      <p className="text-sm text-muted-foreground">• Bottle ${beer.bottlePrice}</p>
-                    )}
+                    {pricingLines.map((line) => (
+                      <p key={line} className="text-sm text-muted-foreground">
+                        • {line}
+                      </p>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
