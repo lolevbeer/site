@@ -115,5 +115,4 @@ export const Distributors: CollectionConfig = {
       },
     },
   ],
-  versions: false,
 }

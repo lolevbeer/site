@@ -55,5 +55,4 @@ export const FAQs: CollectionConfig = {
     },
   ],
   defaultSort: 'order',
-  versions: false,
 }

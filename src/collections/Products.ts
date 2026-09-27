@@ -81,5 +81,4 @@ export const Products: CollectionConfig = {
       },
     },
   ],
-  versions: false,
 }

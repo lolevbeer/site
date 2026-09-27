@@ -461,5 +461,4 @@ export const Locations: CollectionConfig = {
       ],
     },
   ],
-  versions: false,
 }

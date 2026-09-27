@@ -195,16 +195,12 @@
     border: 1px solid var(--color-border-warning);
     border-radius: 4px;
     margin-bottom: 16px;
-
-    strong {
-      color: var(--color-text-warning);
-    }
+    color: var(--color-text-warning);
   }
 
   &__conflict-list {
     margin-top: 8px;
     font-size: 13px;
-    color: var(--color-text-warning);
   }
 
   &__conflict {

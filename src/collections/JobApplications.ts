@@ -49,5 +49,4 @@ export const JobApplications: CollectionConfig = {
       admin: { hidden: true },
     },
   ],
-  versions: false,
 }

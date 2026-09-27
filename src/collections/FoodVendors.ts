@@ -56,5 +56,4 @@ export const FoodVendors: CollectionConfig = {
       relationTo: 'media',
     },
   ],
-  versions: false,
 }

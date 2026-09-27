@@ -111,5 +111,4 @@ export const HolidayHours: CollectionConfig = {
       },
     },
   ],
-  versions: false,
 }

@@ -29,5 +29,4 @@ export const Styles: CollectionConfig = {
       },
     },
   ],
-  versions: false,
 }

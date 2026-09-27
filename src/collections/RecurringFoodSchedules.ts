@@ -89,5 +89,4 @@ export const RecurringFoodSchedules: CollectionConfig = {
       },
     },
   ],
-  versions: false,
 }

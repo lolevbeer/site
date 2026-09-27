@@ -105,13 +105,13 @@ export interface Beer {
 }
 
 /** Beers created within this many days get the automatic "Just Released" badge. */
-export const JUST_RELEASED_DAYS = 7
+const JUST_RELEASED_DAYS = 7
 
 /** Whether a beer created at `createdAt` still counts as just released. Evaluate at
  *  render time, not inside cached data, so "now" is never frozen. */
-export function isJustReleased(createdAt: string | undefined, now = Date.now()): boolean {
+function isJustReleased(createdAt: string | undefined): boolean {
   if (!createdAt) return false
-  return now - new Date(createdAt).getTime() <= JUST_RELEASED_DAYS * 24 * 60 * 60 * 1000
+  return Date.now() - new Date(createdAt).getTime() <= JUST_RELEASED_DAYS * 24 * 60 * 60 * 1000
 }
 
 /**

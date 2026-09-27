@@ -99,5 +99,4 @@ export const Food: CollectionConfig = {
       },
     },
   ],
-  versions: false,
 }

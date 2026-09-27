@@ -45,5 +45,4 @@ export const RecurringFoodExclusions: CollectionConfig = {
       type: 'text',
     },
   ],
-  versions: false,
 }

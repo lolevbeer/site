@@ -62,5 +62,4 @@ export const Events: CollectionConfig = {
     },
     ...eventDetailFields,
   ],
-  versions: false,
 }

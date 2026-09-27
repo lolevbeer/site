@@ -142,5 +142,4 @@ export const BeerReviews: CollectionConfig = {
       },
     },
   ],
-  versions: false,
 }

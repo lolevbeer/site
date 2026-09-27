@@ -134,5 +134,4 @@ export const DonationRequests: CollectionConfig = {
       admin: { hidden: true },
     },
   ],
-  versions: false,
 }

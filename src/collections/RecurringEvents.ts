@@ -115,5 +115,4 @@ export const RecurringEvents: CollectionConfig = {
     },
     ...eventDetailFields,
   ],
-  versions: false,
 }

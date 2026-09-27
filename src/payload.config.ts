@@ -146,6 +146,8 @@ export default buildConfig({
       },
     },
   },
+  // Payload 4 keeps version history for every collection and global unless told
+  // not to. Only Beers and Menus want history; they set their own `versions`.
   collections: [
     // Back of House
     Beers,
@@ -172,7 +174,7 @@ export default buildConfig({
     Distributors,
     FAQs,
     Media,
-  ],
+  ].map((collection) => ({ versions: false, ...collection })),
   globals: [
     // Back of House
     ComingSoon,
@@ -180,7 +182,7 @@ export default buildConfig({
     RecurringFood,
     // Settings (last)
     SiteContent,
-  ],
+  ].map((global) => ({ versions: false, ...global })),
   editor: lexicalEditor(),
   secret: serverEnv.payloadSecret,
   typescript: {

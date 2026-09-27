@@ -121,5 +121,4 @@ export const Jobs: CollectionConfig = {
       },
     ],
   },
-  versions: false,
 }
