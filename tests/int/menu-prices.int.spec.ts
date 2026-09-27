@@ -1,6 +1,8 @@
 /**
  * Menus show prices the way the beer page does (formatPrice): cents always
  * have two digits ($4.50, never $4.5) and whole dollars have none ($8).
+ * Free-text prices on the cans board that aren't a plain number ("2 for $10")
+ * show as entered.
  */
 import { cleanup, render } from '@testing-library/react'
 import { createElement } from 'react'
@@ -90,6 +92,28 @@ describe('menu prices', () => {
     expect(text).toContain('$4.50')
     expect(text).toContain('$16')
     expect(text).not.toMatch(SINGLE_DIGIT_CENTS)
+  })
+
+  it('cans board: product prices are free text', () => {
+    const cans = menu('cans', [
+      product('Growler', '2 for $10'),
+      product('Hat', '5'),
+      product('Glass', '$4.5'),
+    ])
+    const text = render(createElement(FeaturedCans, { menu: cans })).container.textContent
+
+    expect(text).toContain('2 for $10 • Four Pack')
+    expect(text).toContain('$5 • Four Pack')
+    expect(text).toContain('$4.50 • Four Pack')
+    expect(text).not.toContain('$2 •')
+  })
+
+  it('cans board: a product priced 0 shows no price line', () => {
+    const cans = menu('cans', [product('Sticker', '0')])
+    const text = render(createElement(FeaturedCans, { menu: cans })).container.textContent
+
+    expect(text).toContain('Sticker')
+    expect(text).not.toContain('Four Pack')
   })
 
   it('other board: product prices', () => {

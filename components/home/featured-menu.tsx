@@ -33,7 +33,7 @@ import { UntappdRating } from '@/components/beer/untappd-rating'
 import { TV_TYPE, TV_SAFE_X, TV_SAFE_Y, TV_COL, TV_LOGO_CLASS } from '@/lib/config/tv-display'
 import { OTHER_MENU_CATEGORIES, type OtherMenuCategory } from '@/lib/config/other-menu'
 import { LINES_OVERDUE_DAYS } from '@/lib/utils/lines-cleaned'
-import { formatPrice, parsePrice } from '@/lib/utils/formatters'
+import { formatPrice, formatPriceText, parsePrice } from '@/lib/utils/formatters'
 
 const HOUR_MS = 60 * 60 * 1000
 
@@ -695,7 +695,10 @@ function CanCard({
               />
             )}
           </div>
-          {(!item.isProduct || item.fourPack || item.bottlePrice) && (
+          {/* Guards test the displayed text, so a 0 or blank price hides its line. */}
+          {(!item.isProduct ||
+            formatPriceText(item.fourPack) ||
+            formatPriceText(item.bottlePrice)) && (
             <div className="flex items-center" style={{ gap: '0.8vh' }}>
               {!item.isProduct && (
                 <UntappdRating
@@ -705,23 +708,23 @@ function CanCard({
                   iconStyle={{ height: '1em', width: '1em' }}
                 />
               )}
-              {item.fourPack && (
+              {formatPriceText(item.fourPack) && (
                 <span
                   className="can-tile-price font-semibold transition-colors duration-[250ms]"
                   style={{ color: accentColor }}
                 >
-                  {formatPrice(parsePrice(item.fourPack))}{' '}
+                  {formatPriceText(item.fourPack)}{' '}
                   <span className="can-tile-price-sub font-semibold text-foreground-muted">
                     • Four Pack
                   </span>
                 </span>
               )}
-              {item.bottlePrice && (
+              {formatPriceText(item.bottlePrice) && (
                 <span
                   className="can-tile-price font-semibold transition-colors duration-[250ms]"
                   style={{ color: accentColor }}
                 >
-                  {formatPrice(parsePrice(item.bottlePrice))}{' '}
+                  {formatPriceText(item.bottlePrice)}{' '}
                   <span className="can-tile-price-sub font-semibold text-foreground-muted">
                     • Bottle
                   </span>

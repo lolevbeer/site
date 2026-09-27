@@ -183,6 +183,17 @@ export function parsePrice(price: string | number | null | undefined): number | 
 }
 
 /**
+ * Display a free-text price (Products.price, a menu item's sale price): a plain
+ * number, with or without "$", reads like formatPrice ("4.5" → "$4.50"); any
+ * other text shows as entered ("2 for $10"). Empty or 0 gives "", so callers
+ * can hide the price.
+ */
+export function formatPriceText(price: string | undefined): string {
+  const text = price?.trim() ?? ''
+  return /^\$?\d+(\.\d+)?$/.test(text) ? formatPrice(parsePrice(text)) : text
+}
+
+/**
  * Beer-specific formatters
  */
 export function formatAbv(abv: number, includeLabel = false): string {
