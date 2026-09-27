@@ -3,7 +3,8 @@
  * Payload renders only the active tab, so switching tabs unmounts it mid-run.
  * These tests pin the two guarantees that keep that safe: the four generated
  * files are applied to the form together or not at all, and a run whose tab
- * was left stops before uploading anything. They also pin the upload order:
+ * was left mid-render stops before uploading anything (a render that already
+ * finished still uploads and applies). They also pin the upload order:
  * the sprite sheet, the likeliest to fail, goes first and alone, so its
  * failure leaves no orphaned media.
  */
@@ -141,5 +142,27 @@ describe('LabelTextureGenerator', () => {
 
     expect(fetchMock).not.toHaveBeenCalled()
     for (const setter of allSetters()) expect(setter).not.toHaveBeenCalled()
+  })
+
+  it('still uploads and applies a render that finished after the tab was left', async () => {
+    const fetchMock = stubUploads()
+    let finishRender!: () => void
+    // Held after its last frame (while the sprite sheet encodes), so no
+    // per-frame progress callback runs once the tab has been left.
+    generateCanRenders.mockImplementation(async () => {
+      await new Promise<void>((resolve) => {
+        finishRender = resolve
+      })
+      return { still: new Blob(['still']), sprite: new Blob(['sprite']) }
+    })
+    const view = startGeneration()
+
+    await waitFor(() => expect(generateCanRenders).toHaveBeenCalled())
+    view.unmount()
+    finishRender()
+
+    await waitFor(() => expect(setters.labelVideo).toHaveBeenCalled())
+    expect(fetchMock).toHaveBeenCalledTimes(4)
+    for (const setter of allSetters()) expect(setter).toHaveBeenCalledTimes(1)
   })
 })

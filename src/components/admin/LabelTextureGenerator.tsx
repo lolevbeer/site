@@ -13,9 +13,10 @@
  *
  * The field lives in the beer editor's "Label & images" tab, and Payload
  * renders only the active tab, so switching tabs unmounts it mid-run. A run
- * therefore renders everything first, stops before uploading if the field has
- * unmounted, and applies the four files to the form together, so a failed or
- * abandoned run never leaves a half-updated set.
+ * therefore renders everything first and stops mid-render if the field has
+ * unmounted (a render that already finished still uploads), and applies the
+ * four files to the form together, so a failed or abandoned run never leaves
+ * a half-updated set.
  */
 import { useEffect, useId, useRef, useState } from 'react'
 import { Banner, Button, Dropzone, FieldDescription, FieldLabel, useField } from '@payloadcms/ui'
@@ -102,7 +103,7 @@ export function LabelTextureGenerator() {
   const generate = async () => {
     // The button stays disabled until the art PDF is chosen; this narrows the type.
     if (!artFile) return
-    /** Abandon a run whose tab was left, before it uploads anything. */
+    /** Abandon a run whose tab was left while it is still rendering. */
     const stopIfTabLeft = () => {
       if (!mountedRef.current) throw new Error('Label generation stopped: its tab was left.')
     }
@@ -132,7 +133,6 @@ export function LabelTextureGenerator() {
           })
         },
       )
-      stopIfTabLeft()
       setProgress({ pct: 85, label: 'Uploading label files…' })
       // The sprite sheet goes first, alone: it is the largest file and the one
       // likeliest to hit Vercel's 413, and if it fails nothing else has been
@@ -143,8 +143,8 @@ export function LabelTextureGenerator() {
         uploadWebp(metalnessCanvas, `${name}-label-metalness`),
         uploadMedia(still, `${name}-can.webp`, `${name} can`),
       ])
-      // All four together, even if the tab was left during the uploads: the
-      // form outlives the tab, and applying keeps the uploads from orphaning.
+      // All four together, even if the tab was left once the render finished:
+      // the form outlives the tab, and applying keeps the uploads from orphaning.
       setBase(baseId)
       setMetalness(metalnessId)
       setImage(imageId)
