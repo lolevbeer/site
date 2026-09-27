@@ -47,9 +47,13 @@ function PdfDropzone({
     <div style={{ flex: 1, minWidth: '240px' }}>
       <FieldLabel label={label} />
       <Dropzone onChange={(files) => onSelect(files[0] ?? null)}>
-        <Button buttonStyle="secondary" onClick={() => inputRef.current?.click()}>
-          {file ? file.name : 'Select a PDF or drag it here'}
-        </Button>
+        {/* Payload 4's default dropzone pads only block-wise; its own upload
+            field insets content by --spacer-3, so match that (Dropzone takes no style). */}
+        <div style={{ paddingInline: 'var(--spacer-3)' }}>
+          <Button buttonStyle="secondary" onClick={() => inputRef.current?.click()}>
+            {file ? file.name : 'Select a PDF or drag it here'}
+          </Button>
+        </div>
         <input
           ref={inputRef}
           type="file"
