@@ -92,6 +92,12 @@ describe('menu authorization', () => {
 })
 
 describe('user directory visibility', () => {
+  const restrictedFieldRead = (name: string) => {
+    const read = (findField(Users.fields, name).access as Record<string, unknown> | undefined)?.read
+    if (typeof read !== 'function') throw new Error(`Expected ${name} read access`)
+    return read
+  }
+
   it('lets every signed-in user read other users (so revisions show who last edited them)', () => {
     expect(callAccess(Users.access?.read, null)).toBe(false)
     expect(callAccess(Users.access?.read, userWith(['bartender']))).toBe(true)
@@ -100,15 +106,47 @@ describe('user directory visibility', () => {
   it.each(['roles', 'locations', 'slackUserId'])(
     "keeps other users' %s visible only to admins and the user themselves",
     (name) => {
-      const read = (findField(Users.fields, name).access as Record<string, unknown> | undefined)
-        ?.read
-      if (typeof read !== 'function') throw new Error(`Expected ${name} read access`)
+      const read = restrictedFieldRead(name)
       const readAs = (user: User, docId: string) => read({ req: { user }, doc: { id: docId } })
 
       expect(readAs(userWith(['admin']), 'someone-else')).toBe(true)
       expect(readAs(userWith(['bartender']), 'user-id')).toBe(true)
       expect(readAs(userWith(['bartender']), 'someone-else')).toBe(false)
       expect(readAs(userWith(['beer-manager']), 'someone-else')).toBe(false)
+      expect(readAs(userWith(['lead-bartender']), 'someone-else')).toBe(false)
+    },
+  )
+
+  it.each(['roles', 'locations', 'slackUserId'])(
+    'keeps %s on the create form, where the new user has no id yet',
+    (name) => {
+      // If the create form drops these fields, a lead bartender's invite saves
+      // as a bartender with no locations.
+      const read = restrictedFieldRead(name)
+      const req = { user: userWith(['lead-bartender'], ['location-1']) }
+      const draft = { roles: ['bartender'] }
+      const permissionsDraft = { _status: 'draft' }
+
+      // Form state (@payloadcms/ui addFieldStatePromise): the draft as data.
+      expect(read({ req, id: undefined, data: draft, siblingData: draft })).toBe(true)
+      // Create-view permissions (getDocumentPermissions → populateFieldPermissions):
+      // the draft as data and doc.
+      expect(read({ req, id: undefined, data: permissionsDraft, doc: permissionsDraft })).toBe(true)
+    },
+  )
+
+  it.each(['roles', 'locations', 'slackUserId'])(
+    'keeps non-admins from querying users by %s',
+    (name) => {
+      // Where-query validation (validateSearchParams → getEntityPermissions with
+      // fetchData: false) passes no id, data, or doc.
+      const read = restrictedFieldRead(name)
+      const queryAs = (user: User) =>
+        read({ req: { user }, id: undefined, data: undefined, doc: undefined })
+
+      expect(queryAs(userWith(['bartender']))).toBe(false)
+      expect(queryAs(userWith(['lead-bartender'], ['location-1']))).toBe(false)
+      expect(queryAs(userWith(['admin']))).toBe(true)
     },
   )
 })
