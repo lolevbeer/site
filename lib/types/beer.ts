@@ -24,6 +24,8 @@ export type BeerStyle = string
  */
 export interface BeerPricing {
   draftPrice?: number
+  /** The draft price as entered, when it's free text (a product's price or a menu item's sale price). */
+  draftPriceText?: string
   halfPour?: number
   halfPourOnly?: boolean
   canSingle?: number

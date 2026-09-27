@@ -11,7 +11,7 @@ import { Beer as BeerIconLucide, Package, Pencil } from '@/components/icons'
 import { GlassIcon } from '@/lib/utils/beer-icons'
 import { beerHref } from '@/lib/config/beer-filters'
 import { useLocationContext } from '@/components/location/location-provider'
-import { DraftBeerCard } from '@/components/beer/draft-beer-card'
+import { DraftBeerCard, needsWidePriceColumn } from '@/components/beer/draft-beer-card'
 import { BeerLinkWrapper } from '@/components/beer/beer-link-wrapper'
 import {
   useAnimatedList,
@@ -101,6 +101,8 @@ interface MenuItem {
   tap?: number
   pricing: {
     draftPrice?: number
+    /** The draft price as entered, when it's free text; see BeerPricing. */
+    draftPriceText?: string
     halfPour?: number
     halfPourOnly?: boolean
   }
@@ -134,9 +136,12 @@ function scaledVh(value: number | `${number}vh`, scale: number): string {
 function ColumnHeader({
   isOtherMenu,
   displayScale = 1,
+  priceColumn = TV_COL.price,
 }: {
   isOtherMenu: boolean
   displayScale?: number
+  /** Draft boards only: must match the rows' price columns (see DraftBeerCard). */
+  priceColumn?: string
 }) {
   return (
     <div
@@ -144,7 +149,7 @@ function ColumnHeader({
       style={{
         gridTemplateColumns: isOtherMenu
           ? `minmax(0, 1fr) ${scaledVh(TV_COL.price, displayScale)}`
-          : `${TV_COL.tap} minmax(0, 1fr) ${TV_COL.abv} ${TV_COL.price} ${TV_COL.price}`,
+          : `${TV_COL.tap} minmax(0, 1fr) ${TV_COL.abv} ${priceColumn} ${priceColumn}`,
         columnGap: scaledVh(1, displayScale),
         paddingBlock: scaledVh(0.65, displayScale),
         borderRadius: '0.35vh',
@@ -293,7 +298,7 @@ function OtherThingRow({
         className={`text-right font-bold tabular-nums transition-colors duration-500 ${soldOut ? 'text-foreground-muted line-through' : ''}`}
         style={{ fontSize: scaledVh(3.4, displayScale), color: itemColor }}
       >
-        {formatPrice(item.pricing.draftPrice)}
+        {formatPriceText(item.pricing.draftPriceText) || formatPrice(item.pricing.draftPrice)}
       </div>
     </div>
   )
@@ -403,7 +408,7 @@ interface FeaturedMenuProps {
   menus?: Menu[]
   /** Enable enter/exit animations for live updates */
   animated?: boolean
-  /** Random colors to apply to items (dark mode only, cycles on poll) */
+  /** Random colors to apply to items (dark mode only; the display re-seeds them every 30s) */
   itemColors?: string[]
   /** Hide header when embedding in another component */
   hideHeader?: boolean
@@ -461,6 +466,7 @@ function convertMenuItems(menuData: Menu, labelVideos = false): MenuItem[] {
             tap: index + 1,
             pricing: {
               draftPrice: parsePrice(item.price) ?? parsePrice(prod.price),
+              draftPriceText: item.price || prod.price || undefined,
             },
             availability: {
               hideFromSite: false,
@@ -519,6 +525,7 @@ function convertMenuItems(menuData: Menu, labelVideos = false): MenuItem[] {
         tap: index + 1, // 1-based tap/draft number from position in menu
         pricing: {
           draftPrice: parsePrice(item.price) ?? beer.draftPrice,
+          draftPriceText: item.price || undefined,
           halfPour: beer.halfPour ?? undefined,
           halfPourOnly: beer.halfPourOnly || false,
         },
@@ -932,6 +939,12 @@ function FeaturedMenu({
                 (() => {
                   const midpoint = Math.ceil(itemsToRender.length / 2)
                   const columns = [itemsToRender.slice(0, midpoint), itemsToRender.slice(midpoint)]
+                  // One width for every row, so the price columns stay aligned.
+                  const priceColumn = itemsToRender.some(({ item }) =>
+                    needsWidePriceColumn(item.pricing),
+                  )
+                    ? TV_COL.priceWide
+                    : TV_COL.price
 
                   return (
                     <div
@@ -947,7 +960,11 @@ function FeaturedMenu({
                         }}
                       >
                         {columns.map((_, columnIndex) => (
-                          <ColumnHeader key={columnIndex} isOtherMenu={false} />
+                          <ColumnHeader
+                            key={columnIndex}
+                            isOtherMenu={false}
+                            priceColumn={priceColumn}
+                          />
                         ))}
                       </div>
                       <div
@@ -973,6 +990,7 @@ function FeaturedMenu({
                                     showTapAndPrice
                                     showRating
                                     accentColor={itemColors?.[columnIndex * midpoint + idx]}
+                                    priceColumn={priceColumn}
                                   />
                                 </div>
                               ))}
