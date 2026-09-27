@@ -3,11 +3,12 @@
  * Uses sine wave approximation based on Pittsburgh's latitude (40.4°N)
  */
 
+import { MS_PER_DAY } from '@/lib/utils/date'
+
 function getDayOfYear(date: Date): number {
   const start = new Date(date.getFullYear(), 0, 0)
   const diff = date.getTime() - start.getTime()
-  const oneDay = 1000 * 60 * 60 * 24
-  return Math.floor(diff / oneDay)
+  return Math.floor(diff / MS_PER_DAY)
 }
 
 /**

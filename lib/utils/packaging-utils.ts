@@ -3,11 +3,12 @@
  * Beers on "cans" menus may actually be bottled — use pricing to distinguish.
  */
 import type { Beer as PayloadBeer } from '@/src/payload-types'
+import { formatPrice } from '@/lib/utils/formatters'
 
 export type PackagingType = 'cans' | 'bottles' | 'cans_and_bottles'
 
 /** A price field counts only when it is a positive number; 0 or unset means "not sold this way". */
-function isSold(price: number | null | undefined): price is number {
+export function isSold(price: number | null | undefined): price is number {
   return typeof price === 'number' && price > 0
 }
 
@@ -100,8 +101,8 @@ export function getPricingLines(
   { onTap, inCans }: { onTap: boolean; inCans: boolean },
 ): string[] {
   const lines: string[] = []
-  if (onTap && isSold(beer.draftPrice)) lines.push(`Draft $${beer.draftPrice}`)
-  if (inCans && isSold(beer.fourPack)) lines.push(`4 Pack $${beer.fourPack}`)
-  if (inCans && isSold(beer.bottlePrice)) lines.push(`Bottle $${beer.bottlePrice}`)
+  if (onTap && isSold(beer.draftPrice)) lines.push(`Draft ${formatPrice(beer.draftPrice)}`)
+  if (inCans && isSold(beer.fourPack)) lines.push(`4 Pack ${formatPrice(beer.fourPack)}`)
+  if (inCans && isSold(beer.bottlePrice)) lines.push(`Bottle ${formatPrice(beer.bottlePrice)}`)
   return lines
 }

@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge'
 import { TopBeerDropsLink } from '@/components/beer/top-beer-drops-link'
 import { UntappdRating } from '@/components/beer/untappd-rating'
 import { getBeerBadgeLabel } from '@/lib/types/beer'
+import { isSold } from '@/lib/utils/packaging-utils'
 import { TV_TYPE, TV_COL, TV_BADGE_STYLE } from '@/lib/config/tv-display'
 
 interface DraftBeerCardProps {
@@ -218,7 +219,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
             )}
             {showAbv && (
               <div className="text-right">
-                {beer.pricing?.halfPour && (
+                {isSold(beer.pricing?.halfPour) && (
                   <div
                     className="font-bold tabular-nums transition-colors duration-500"
                     style={{ fontSize: '3.8vh', color: accentColor }}
@@ -229,7 +230,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
               </div>
             )}
             <div className="text-right">
-              {!beer.pricing?.halfPourOnly && beer.pricing?.draftPrice && (
+              {!beer.pricing?.halfPourOnly && isSold(beer.pricing?.draftPrice) && (
                 <div
                   className="font-bold tabular-nums transition-colors duration-500"
                   style={{ fontSize: '3.8vh', color: accentColor }}

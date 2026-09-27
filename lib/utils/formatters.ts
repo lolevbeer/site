@@ -158,7 +158,7 @@ export function formatDate(
 /**
  * Price formatting utilities
  */
-function formatPrice(price: number | undefined): string {
+export function formatPrice(price: number | undefined): string {
   if (!price) return ''
   return `$${price.toFixed(2).replace(/\.00$/, '')}`
 }

@@ -1,4 +1,4 @@
-import type { CollectionConfig, Access, Where } from 'payload'
+import type { AccessArgs, CollectionConfig, Access, Where } from 'payload'
 import { APIError, appendVersionToQueryKey } from 'payload'
 import type { User } from '@/src/payload-types'
 import { adminAccess, adminFieldAccess, getUserLocationIds, hasRole } from '@/src/access/roles'
@@ -41,7 +41,7 @@ export const canUpdateMenus: Access = ({ req: { user } }) => {
  * Admins read every menu, drafts included; (lead) bartenders read drafts only
  * at their assigned locations; everyone else reads published menus only.
  */
-const canReadMenus = ({ user }: { user: User | null | undefined }): boolean | Where => {
+const canReadMenus = ({ req: { user } }: AccessArgs): boolean | Where => {
   if (hasRole(user, 'admin')) return true
   if (hasRole(user, ['bartender', 'lead-bartender'])) {
     return menusAtAssignedLocations(user)
@@ -58,9 +58,9 @@ const canReadMenus = ({ user }: { user: User | null | undefined }): boolean | Wh
  * documents (`version.location`, `version._status`), and stays behind
  * sign-in: anonymous visitors never see past revisions.
  */
-const canReadMenuVersions: Access = ({ req: { user } }) => {
-  if (!user) return false
-  const result = canReadMenus({ user })
+const canReadMenuVersions: Access = (args) => {
+  if (!args.req.user) return false
+  const result = canReadMenus(args)
   return typeof result === 'object' ? appendVersionToQueryKey(result) : result
 }
 
@@ -78,7 +78,7 @@ export const Menus: CollectionConfig = {
     },
   },
   access: {
-    read: ({ req: { user } }) => canReadMenus({ user }),
+    read: canReadMenus,
     readVersions: canReadMenuVersions,
     create: adminAccess,
     update: canUpdateMenus,

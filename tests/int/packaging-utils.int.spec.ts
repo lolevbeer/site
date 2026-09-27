@@ -85,6 +85,15 @@ describe('getPricingLines', () => {
     ])
   })
 
+  it('formats cents like the rest of the site', () => {
+    expect(
+      getPricingLines(
+        { draftPrice: 7.5, fourPack: 16, bottlePrice: null },
+        { onTap: true, inCans: true },
+      ),
+    ).toEqual(['Draft $7.50', '4 Pack $16'])
+  })
+
   it('leaves out prices for places the beer is not available', () => {
     expect(getPricingLines(beer, { onTap: true, inCans: false })).toEqual(['Draft $7'])
     expect(getPricingLines(beer, { onTap: false, inCans: true })).toEqual([

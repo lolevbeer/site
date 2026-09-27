@@ -7,6 +7,8 @@
  * bundle.
  */
 
+import { MS_PER_DAY } from '@/lib/utils/date'
+
 export const LINES_WARN_DAYS = 7
 export const LINES_OVERDUE_DAYS = 15
 
@@ -15,5 +17,5 @@ export function daysSinceCleaned(value: string | null | undefined): number | nul
   if (!value) return null
   const timestamp = Date.parse(value)
   if (Number.isNaN(timestamp)) return null
-  return Math.floor((Date.now() - timestamp) / (1000 * 60 * 60 * 24))
+  return Math.floor((Date.now() - timestamp) / MS_PER_DAY)
 }
