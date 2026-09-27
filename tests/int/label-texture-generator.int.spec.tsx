@@ -3,7 +3,9 @@
  * Payload renders only the active tab, so switching tabs unmounts it mid-run.
  * These tests pin the two guarantees that keep that safe: the four generated
  * files are applied to the form together or not at all, and a run whose tab
- * was left stops before uploading anything.
+ * was left stops before uploading anything. They also pin the upload order:
+ * the sprite sheet, the likeliest to fail, goes first and alone, so its
+ * failure leaves no orphaned media.
  */
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { createElement, type ReactNode } from 'react'
@@ -97,11 +99,20 @@ describe('LabelTextureGenerator', () => {
     expect(screen.getByRole('status').textContent).toContain('save the beer to keep them')
   })
 
-  it('applies none of them when any upload fails', async () => {
+  it('applies none of them when a later upload fails', async () => {
     stubUploads('-can.webp')
     startGeneration()
 
     await waitFor(() => expect(screen.getByRole('status').textContent).toContain('413'))
+    for (const setter of allSetters()) expect(setter).not.toHaveBeenCalled()
+  })
+
+  it('uploads nothing else when the sprite sheet, the likeliest 413, fails', async () => {
+    const fetchMock = stubUploads('-can-sprite.webp')
+    startGeneration()
+
+    await waitFor(() => expect(screen.getByRole('status').textContent).toContain('413'))
+    expect(fetchMock).toHaveBeenCalledTimes(1)
     for (const setter of allSetters()) expect(setter).not.toHaveBeenCalled()
   })
 

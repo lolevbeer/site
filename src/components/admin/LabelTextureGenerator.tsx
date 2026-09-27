@@ -134,11 +134,14 @@ export function LabelTextureGenerator() {
       )
       stopIfTabLeft()
       setProgress({ pct: 85, label: 'Uploading label files…' })
-      const [baseId, metalnessId, imageId, spriteId] = await Promise.all([
+      // The sprite sheet goes first, alone: it is the largest file and the one
+      // likeliest to hit Vercel's 413, and if it fails nothing else has been
+      // uploaded to orphan (media docs and their Blob files are never cleaned up).
+      const spriteId = await uploadMedia(sprite, `${name}-can-sprite.webp`, `${name} can rotation`)
+      const [baseId, metalnessId, imageId] = await Promise.all([
         uploadWebp(baseCanvas, `${name}-label-base`),
         uploadWebp(metalnessCanvas, `${name}-label-metalness`),
         uploadMedia(still, `${name}-can.webp`, `${name} can`),
-        uploadMedia(sprite, `${name}-can-sprite.webp`, `${name} can rotation`),
       ])
       // All four together, even if the tab was left during the uploads: the
       // form outlives the tab, and applying keeps the uploads from orphaning.
