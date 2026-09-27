@@ -80,7 +80,7 @@ export function LocationLanding({
       <PageBreadcrumbs className="mb-6" />
 
       <header className="text-center mb-8">
-        <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-balance mb-3">
+        <h1 className="text-4xl font-bold tracking-tight text-balance mb-3">
           {location.name}
         </h1>
         <p className="text-muted-foreground text-lg text-pretty">

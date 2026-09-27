@@ -28,7 +28,7 @@ export function BeerMapContent({ weeklyHours, children }: BeerMapContentProps) {
     <div className="container mx-auto px-4 py-8">
       <PageBreadcrumbs className="mb-6" />
       <div className="text-center mb-8">
-        <h1 className="text-4xl md:text-5xl font-bold mb-2">Find Lolev Beer near you</h1>
+        <h1 className="text-4xl font-bold tracking-tight mb-2">Find Lolev Beer near you</h1>
         <div className="w-16 h-1 bg-primary mx-auto rounded-full" />
       </div>
 

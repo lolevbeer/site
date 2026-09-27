@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import type { LocationSlug } from '@/lib/types/location'
 import { cn } from '@/lib/utils'
-import { getTodayEST, getDayOfWeekEST, toESTDate } from '@/lib/utils/date'
+import { formatDayLabel } from '@/lib/utils/formatters'
 import { useLocationContext } from '@/components/location/location-provider'
 import { getLocationDisplayName } from '@/lib/config/locations'
 import {
@@ -64,7 +64,7 @@ function MenuCountCard({
   const hasAny = countedLocations.some(({ count }) => count > 0)
 
   return (
-    <MotionCard glow className="h-full">
+    <MotionCard className="h-full">
       <Card className="p-6 lg:p-8 h-full shadow-none bg-transparent border border-border relative text-center flex flex-col items-center justify-center">
         <h3 className="text-3xl lg:text-4xl font-bold mb-5">{title}</h3>
         {!hasAny && (
@@ -101,9 +101,9 @@ function MenuCountCard({
             })}
           </div>
         )}
-        {/* Same CTA as the section-level buttons further down the homepage,
-            ghost so it sits quietly inside the card. */}
-        <Button asChild variant="ghost" size="lg" className="mt-5">
+        {/* Same CTA and same outline style as the section-level "View All"
+            buttons further down the homepage. */}
+        <Button asChild variant="outline" size="lg" className="mt-5">
           <Link href={ctaHref}>{ctaLabel}</Link>
         </Button>
       </Card>
@@ -118,29 +118,6 @@ export function QuickInfoCards({
   className,
 }: QuickInfoCardsProps) {
   const { locations } = useLocationContext()
-
-  // Format next event date using EST timezone
-  const formatEventDate = (dateStr: string) => {
-    const todayEST = getTodayEST()
-    const eventDateStr = dateStr.split('T')[0]
-
-    const todayDate = toESTDate(todayEST)
-    const eventDate = toESTDate(eventDateStr)
-    const diffDays = Math.floor((eventDate.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24))
-
-    if (diffDays === 0) return 'Today'
-    if (diffDays === 1) return 'Tomorrow'
-    if (diffDays < 7) {
-      return getDayOfWeekEST(eventDateStr)
-    }
-
-    const date = toESTDate(eventDateStr)
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      timeZone: 'America/New_York',
-    })
-  }
 
   return (
     <div className={cn('grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4', className)}>
@@ -163,7 +140,7 @@ export function QuickInfoCards({
       />
 
       {/* Next Event Card */}
-      <MotionCard glow className="h-full">
+      <MotionCard className="h-full">
         <Link href="/events" className="group block h-full">
           <Card className="p-6 lg:p-8 h-full transition-colors cursor-pointer shadow-none bg-transparent border border-border hover:bg-secondary/50 relative text-center flex flex-col items-center justify-center">
             <h3 className="text-3xl lg:text-4xl font-bold mb-5">
@@ -175,7 +152,7 @@ export function QuickInfoCards({
                   {nextEvent.name}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {formatEventDate(nextEvent.date)} ·{' '}
+                  {formatDayLabel(nextEvent.date)} ·{' '}
                   {getLocationDisplayName(locations, nextEvent.location)}
                 </p>
               </div>

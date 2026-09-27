@@ -97,25 +97,17 @@ export function Header() {
 
               {/* Mobile menu button - animated two-line hamburger */}
               <Dialog.Trigger asChild>
+                {/* Hidden while open: the panel has its own close button. */}
                 <button
-                  aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
-                  className="flex items-center justify-center w-10 h-10 md:hidden rounded-md hover:bg-muted transition-colors"
+                  aria-label="Open menu"
+                  className={cn(
+                    'flex items-center justify-center w-10 h-10 md:hidden rounded-md hover:bg-muted transition-colors',
+                    isMobileMenuOpen && 'invisible',
+                  )}
                 >
-                  <div className="relative w-5 h-2.5 flex flex-col justify-between">
-                    <span
-                      className={cn(
-                        'block h-0.5 w-full bg-foreground rounded-full transition-all duration-300 ease-out origin-center',
-                        isMobileMenuOpen ? 'rotate-45 translate-y-[4px]' : 'rotate-0 translate-y-0',
-                      )}
-                    />
-                    <span
-                      className={cn(
-                        'block h-0.5 w-full bg-foreground rounded-full transition-all duration-300 ease-out origin-center',
-                        isMobileMenuOpen
-                          ? '-rotate-45 -translate-y-[4px]'
-                          : 'rotate-0 translate-y-0',
-                      )}
-                    />
+                  <div className="w-5 h-2.5 flex flex-col justify-between">
+                    <span className="block h-0.5 w-full bg-foreground rounded-full" />
+                    <span className="block h-0.5 w-full bg-foreground rounded-full" />
                   </div>
                 </button>
               </Dialog.Trigger>

@@ -1,133 +1,54 @@
-'use client';
+'use client'
 
-import React from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { MapPin, Beer, Utensils, Calendar, Info, HelpCircle } from '@/components/icons';
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { motion } from 'framer-motion'
+import { cn } from '@/lib/utils'
 
-/**
- * Navigation menu items configuration
- */
-/** A top-level navigation entry, optionally with a dropdown of children. */
+/** A site navigation entry. */
 interface NavItem {
-  label: string;
-  href: string;
-  icon?: React.ComponentType<{ className?: string }>;
-  children?: NavItem[];
-  external?: boolean;
+  label: string
+  href: string
 }
 
 const navigationItems: NavItem[] = [
-  {
-    label: 'Find Lolev',
-    href: '/beer-map',
-    icon: MapPin,
-  },
-  {
-    label: 'Beer',
-    href: '/beer',
-    icon: Beer,
-  },
-  {
-    label: 'Food',
-    href: '/food',
-    icon: Utensils,
-  },
-  {
-    label: 'Events',
-    href: '/events',
-    icon: Calendar,
-  },
-  {
-    label: 'About',
-    href: '/about',
-    icon: Info,
-  },
-  {
-    label: 'FAQ',
-    href: '/faq',
-    icon: HelpCircle,
-  },
-];
+  { label: 'Find Lolev', href: '/beer-map' },
+  { label: 'Beer', href: '/beer' },
+  { label: 'Food', href: '/food' },
+  { label: 'Events', href: '/events' },
+  { label: 'About', href: '/about' },
+  { label: 'FAQ', href: '/faq' },
+]
 
-interface NavigationProps {
-  /** Additional CSS classes */
-  className?: string;
-  /** Callback when navigation item is clicked (useful for mobile) */
-  onItemClick?: () => void;
-  /** Whether to show in vertical layout (mobile) */
-  vertical?: boolean;
-  /** Whether to show icons (default: true) */
-  showIcons?: boolean;
-  /** Size variant for mobile */
-  size?: 'default' | 'large';
+/** True on the item's page and on pages nested under it (`/beer/aardwolf` → Beer). */
+export function isNavItemActive(pathname: string | null, href: string): boolean {
+  return pathname === href || !!pathname?.startsWith(`${href}/`)
 }
 
 /**
- * Main navigation component with brewery menu items
+ * Desktop header navigation. The mobile menu renders its own list from
+ * `navigationItems` (see mobile-menu.tsx).
  */
-export function Navigation({
-  className,
-  onItemClick,
-  vertical = false,
-  showIcons = true,
-  size = 'default'
-}: NavigationProps) {
-  const pathname = usePathname();
+export function Navigation() {
+  const pathname = usePathname()
 
   return (
     <nav
-      className={cn(
-        vertical
-          ? "flex flex-col"
-          : "flex items-center space-x-2 lg:space-x-4 xl:space-x-6",
-        vertical && size === 'large' ? "space-y-0" : vertical && "space-y-1",
-        className
-      )}
+      className="flex items-center space-x-2 lg:space-x-4 xl:space-x-6"
       aria-label="Main navigation"
     >
       {navigationItems.map((item) => {
-        const isActive = pathname === item.href;
-
-        if (vertical) {
-          const IconComponent = item.icon;
-          return (
-            <Button
-              key={item.href}
-              variant="ghost"
-              asChild
-              className={cn(
-                "w-full justify-center rounded-none",
-                size === 'large' && "h-auto py-5 text-2xl font-bold",
-                isActive && "bg-primary/10 text-primary"
-              )}
-            >
-              <Link
-                href={item.href}
-                onClick={onItemClick}
-                aria-current={isActive ? "page" : undefined}
-              >
-                {showIcons && IconComponent && <IconComponent className="mr-2 h-4 w-4" />}
-                {item.label}
-              </Link>
-            </Button>
-          );
-        }
-
+        const isActive = isNavItemActive(pathname, item.href)
         return (
           <Link
             key={item.href}
             href={item.href}
-            onClick={onItemClick}
-            aria-current={isActive ? "page" : undefined}
+            aria-current={isActive ? 'page' : undefined}
             className={cn(
-              "relative pb-1 transition-all duration-200 ease-in-out whitespace-nowrap text-sm font-semibold",
-              isActive
-                ? "text-foreground"
-                : "text-foreground hover:text-muted-foreground"
+              // py-1, not pb-1: the bottom gap clears the active underline, and the
+              // matching top padding keeps the label on the header's centerline.
+              'relative py-1 transition-all duration-200 ease-in-out whitespace-nowrap text-sm font-semibold',
+              isActive ? 'text-foreground' : 'text-foreground hover:text-muted-foreground',
             )}
           >
             {item.label}
@@ -139,10 +60,10 @@ export function Navigation({
               />
             )}
           </Link>
-        );
+        )
       })}
     </nav>
-  );
+  )
 }
 
 /**
@@ -153,7 +74,4 @@ const footerOnlyItems: NavItem[] = [
   { label: 'Jobs', href: '/jobs' },
 ]
 
-/**
- * Export navigation items for use in other components
- */
-export { navigationItems, footerOnlyItems };
+export { navigationItems, footerOnlyItems }

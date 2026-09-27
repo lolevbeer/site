@@ -75,7 +75,7 @@ export default async function AboutPage() {
           <h1 className="text-4xl font-bold tracking-tight mb-4">About Lolev</h1>
         </div>
 
-        <div className="prose prose-lg dark:prose-invert mx-auto">
+        <div className="mx-auto">
           <section className="mb-12" data-speakable="philosophy">
             <h2 className="text-2xl font-semibold mb-4">Our Philosophy</h2>
             <Paragraphs text={philosophy} />

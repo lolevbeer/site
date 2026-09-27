@@ -63,7 +63,7 @@ export const BeerCard = React.memo(function BeerCard({
     const beerHref = showLocation ? `/${currentLocation}/beer/${beerSlug}` : `/beer/${beerSlug}`
 
     return (
-      <MotionCard glow>
+      <MotionCard>
         {/* Stretched link, not a wrapper: this card contains its own anchor (the
             Top Beer Drops icon) and a View Details button, and nesting either
             inside an <a> is invalid. See BeerLinkWrapper for the same pattern. */}
@@ -93,11 +93,7 @@ export const BeerCard = React.memo(function BeerCard({
             </div>
           </div>
           {showCta ? (
-            <Button
-              variant="outline"
-              className="w-full btn-arrow group-hover:bg-muted/50 hover:translate-y-0"
-              tabIndex={-1}
-            >
+            <Button variant="outline" className="w-full group-hover:bg-secondary" tabIndex={-1}>
               View Details
             </Button>
           ) : null}
@@ -113,7 +109,7 @@ export const BeerCard = React.memo(function BeerCard({
   }
 
   return (
-    <MotionCard glow>
+    <MotionCard>
       <Card
         className={cn(
           'group p-6 transition-all duration-200 hover:translate-y-0 hover:shadow-md',
@@ -205,7 +201,7 @@ export const BeerCard = React.memo(function BeerCard({
               )}
             </div>
 
-            <Button asChild variant="outline" size="sm" className="ml-auto hover:translate-y-0">
+            <Button asChild variant="outline" size="sm" className="ml-auto">
               <Link
                 href={showLocation ? `/${currentLocation}/beer/${beerSlug}` : `/beer/${beerSlug}`}
                 className="no-underline"

@@ -47,7 +47,7 @@ export function UntappdRating({
   return (
     <span
       className={cn(
-        'text-amber-500 text-sm whitespace-nowrap',
+        'text-amber-600 dark:text-amber-400 text-sm whitespace-nowrap',
         variant === 'overlay' &&
           'inline-block bg-background/80 backdrop-blur-sm rounded-md px-1.5 py-0.5',
         className,

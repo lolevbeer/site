@@ -25,7 +25,7 @@ export function LegalPage({
         </h1>
         <p className="text-sm text-muted-foreground">Last updated: {lastUpdated}</p>
       </header>
-      <div className="prose prose-lg dark:prose-invert max-w-none space-y-8 [&_h2]:text-2xl [&_h2]:font-semibold [&_h2]:mb-3 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:space-y-2">
+      <div className="space-y-8 [&_h2]:text-2xl [&_h2]:font-semibold [&_h2]:mb-3 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:space-y-2">
         {children}
       </div>
     </article>

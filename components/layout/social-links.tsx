@@ -161,12 +161,7 @@ export function SocialLinks({
             variant="ghost"
             size="icon"
             asChild
-            className={cn(
-              buttonSizes[size],
-              'text-muted-foreground transition-colors transition-shadow',
-              'dark:hover:shadow-[0_0_12px_rgba(255,255,255,0.15)]',
-              social.color,
-            )}
+            className={cn(buttonSizes[size], 'text-muted-foreground', social.color)}
           >
             <Link
               href={social.href}

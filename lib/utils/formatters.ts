@@ -220,6 +220,13 @@ export function isTomorrow(dateString: string): boolean {
   return dateKey(dateString) === addEstDays(getTodayEST(), 1)
 }
 
+/** "Today", "Tomorrow", or the full date — the one day label used site-wide. */
+export function formatDayLabel(dateString: string): string {
+  if (isToday(dateString)) return 'Today'
+  if (isTomorrow(dateString)) return 'Tomorrow'
+  return formatDate(dateString, 'full')
+}
+
 export function isTodayOrFuture(dateString: string): boolean {
   return dateKey(dateString) >= getTodayEST()
 }
