@@ -4,6 +4,7 @@
  */
 import { act, cleanup, render } from '@testing-library/react'
 import { createElement } from 'react'
+import { renderToString } from 'react-dom/server'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { FeaturedBeers } from '@/components/home/featured-menu'
 import { MS_PER_DAY } from '@/lib/utils/date'
@@ -137,8 +138,16 @@ describe('menu "Just Released" badge', () => {
     expect(rowFor(container, 'Old Stout').textContent).not.toContain('Just Released')
   })
 
+  it('leaves the time-based badge out of server HTML, so hydration always matches', () => {
+    const menu = makeDraftMenu([beerItem('Fresh Pale', { createdAt: createdDaysAgo(2) })])
+
+    expect(renderToString(createElement(FeaturedBeers, { menu }))).not.toContain('Just Released')
+  })
+
   it('drops the badge on a display left running past the 7-day mark', () => {
-    vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] })
+    vi.useFakeTimers({
+      toFake: ['Date', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'],
+    })
     vi.setSystemTime(Date.parse('2026-09-27T12:00:00.000Z'))
     const menu = makeDraftMenu([beerItem('Almost Week', { createdAt: createdDaysAgo(6.95) })])
 

@@ -38,7 +38,8 @@ interface DraftBeerCardProps {
   showJustReleased?: boolean
   /**
    * Clock for the time-based "Just Released" badge (see getBeerBadgeLabel):
-   * menus pass useHourlyNow() so this memoized card re-renders as time passes.
+   * menus pass an hourly clock (useClockBucket) so this memoized card
+   * re-renders as time passes.
    * Omit to use the current time.
    */
   now?: number | null

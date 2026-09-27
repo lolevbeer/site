@@ -19,7 +19,7 @@ import {
   type AnimatedItem,
 } from '@/lib/hooks/use-animated-list'
 import { useAuth } from '@/lib/hooks/use-auth'
-import { useHourlyNow } from '@/lib/hooks/use-hourly-now'
+import { useClockBucket } from '@/lib/hooks/use-clock-bucket'
 import { SectionHeader } from '@/components/ui/section-header'
 import { getMediaUrl, canSpriteAnimation } from '@/lib/utils/media-utils'
 import { extractBeerFromMenuItem, extractProductFromMenuItem } from '@/lib/utils/menu-item-utils'
@@ -34,6 +34,8 @@ import { TV_TYPE, TV_SAFE_X, TV_SAFE_Y, TV_COL, TV_LOGO_CLASS } from '@/lib/conf
 import { OTHER_MENU_CATEGORIES, type OtherMenuCategory } from '@/lib/config/other-menu'
 import { LINES_OVERDUE_DAYS } from '@/lib/utils/lines-cleaned'
 import { parsePrice } from '@/lib/utils/formatters'
+
+const HOUR_MS = 60 * 60 * 1000
 
 /**
  * Format the lines cleaned date as a relative description using EST timezone,
@@ -814,8 +816,10 @@ function FeaturedMenu({
   labelVideos = false,
 }: FeaturedMenuProps) {
   const { currentLocation, currentLocationData } = useLocationContext()
-  // Drives the time-based "Just Released" badge on the cards below.
-  const now = useHourlyNow()
+  // Drives the time-based "Just Released" badge on the cards below: the start
+  // of the current hour, or null while server rendering (see getBeerBadgeLabel).
+  const hour = useClockBucket(HOUR_MS)
+  const now = hour === null ? null : hour * HOUR_MS
   const title = menuType === 'draft' ? 'Draft' : 'Cans'
   // The homepage list is filtered to one taproom, so the heading names it —
   // otherwise nothing on the page says which location you are looking at.

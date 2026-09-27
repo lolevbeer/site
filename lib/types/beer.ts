@@ -113,9 +113,10 @@ const JUST_RELEASED_DAYS = 7
  * Get the badge label for a beer. Collab and Guest Tap take priority over Just Released.
  * Returns null if no badge should be shown.
  *
- * "Just Released" depends on `now`: menus pass `useHourlyNow()`, which is null
- * while server rendering (the time-based badge is skipped, so hydration always
- * matches) and ticks hourly so long-running displays drop the badge on time.
+ * "Just Released" depends on `now`: menus pass the current hour from
+ * `useClockBucket`, which is null while server rendering (the time-based badge
+ * is skipped, so hydration always matches) and changes hourly so long-running
+ * displays drop the badge on time.
  * Omit `now` to use the current time.
  */
 export function getBeerBadgeLabel(
