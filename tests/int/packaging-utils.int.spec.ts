@@ -110,4 +110,15 @@ describe('getPricingLines', () => {
       ),
     ).toEqual([])
   })
+
+  it('shows the half pour in place of the hidden full price for a Half Pour Only beer', () => {
+    const halfPourOnly = { draftPrice: 12, halfPour: 6.5, halfPourOnly: true, fourPack: 20 }
+    expect(getPricingLines(halfPourOnly, { onTap: true, inCans: true })).toEqual([
+      'Half Pour $6.50',
+      '4 Pack $20',
+    ])
+    expect(
+      getPricingLines({ ...halfPourOnly, halfPour: null }, { onTap: true, inCans: false }),
+    ).toEqual([])
+  })
 })

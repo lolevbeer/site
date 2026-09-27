@@ -92,16 +92,33 @@ export function getPackagingAtLocationsMessage(type: PackagingType, locations: s
 }
 
 /**
+ * The draft price the site shows: the half pour for a "Half Pour Only" beer,
+ * whose full draft price is hidden everywhere (see Beers.halfPourOnly),
+ * otherwise the full pour. Check it with isSold before showing it.
+ */
+export function getShownDraftPrice(beer: {
+  draftPrice?: number | null
+  halfPour?: number | null
+  halfPourOnly?: boolean | null
+}): number | null | undefined {
+  return beer.halfPourOnly ? beer.halfPour : beer.draftPrice
+}
+
+/**
  * Price lines for the beer detail page ("Draft $7", "4 Pack $15", ...): draft
- * only when the beer is on tap somewhere, packaged prices only when it is on a
- * cans menu, and never a price that isn't sold (0 or unset).
+ * only when the beer is on tap somewhere ("Half Pour $4" instead for a Half
+ * Pour Only beer), packaged prices only when it is on a cans menu, and never a
+ * price that isn't sold (0 or unset).
  */
 export function getPricingLines(
-  beer: Pick<PayloadBeer, 'draftPrice' | 'fourPack' | 'bottlePrice'>,
+  beer: Pick<PayloadBeer, 'draftPrice' | 'halfPour' | 'halfPourOnly' | 'fourPack' | 'bottlePrice'>,
   { onTap, inCans }: { onTap: boolean; inCans: boolean },
 ): string[] {
   const lines: string[] = []
-  if (onTap && isSold(beer.draftPrice)) lines.push(`Draft ${formatPrice(beer.draftPrice)}`)
+  const draftPrice = getShownDraftPrice(beer)
+  if (onTap && isSold(draftPrice)) {
+    lines.push(`${beer.halfPourOnly ? 'Half Pour' : 'Draft'} ${formatPrice(draftPrice)}`)
+  }
   if (inCans && isSold(beer.fourPack)) lines.push(`4 Pack ${formatPrice(beer.fourPack)}`)
   if (inCans && isSold(beer.bottlePrice)) lines.push(`Bottle ${formatPrice(beer.bottlePrice)}`)
   return lines

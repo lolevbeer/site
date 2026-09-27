@@ -15,4 +15,14 @@ describe('generateLocationMenuSchema', () => {
     expect(schema.hasMenuSection?.map((s) => s.name)).toEqual(['On Tap', 'Cans To-Go'])
     expect(schema.hasMenuSection?.[0].hasMenuItem[0].name).toBe('Lupula')
   })
+
+  it('offers the half pour, not the hidden full price, for a Half Pour Only beer', () => {
+    const schema = generateLocationMenuSchema({
+      locationName: 'Lawrenceville',
+      locationSlug: 'lawrenceville',
+      draftBeers: [{ name: 'Samo', abv: 11, draftPrice: 12, halfPour: 7, halfPourOnly: true }],
+      canBeers: [],
+    })
+    expect(schema.hasMenuSection?.[0].hasMenuItem[0].offers?.price).toBe('7')
+  })
 })

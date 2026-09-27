@@ -50,6 +50,14 @@ describe('generateProductSchema offers and reviews', () => {
     expect(offers.every((o) => o?.availability === 'https://schema.org/InStock')).toBe(false)
   })
 
+  it('offers the half pour, not the hidden full price, for a Half Pour Only beer', () => {
+    const schema = generateProductSchema(
+      beer({ name: 'Samo', slug: 'samo', draftPrice: 12, halfPour: 7, halfPourOnly: true }),
+    )
+    const offers = Array.isArray(schema.offers) ? schema.offers : [schema.offers]
+    expect(offers.map((o) => [o?.name, o?.price])).toEqual([['Half pour', '7']])
+  })
+
   it('marks offers InStock only when the beer is on a current menu', () => {
     const schema = generateProductSchema(
       beer({ name: 'Lupula', slug: 'lupula', draftPrice: 8 }),

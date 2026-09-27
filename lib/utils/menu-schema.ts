@@ -7,6 +7,7 @@
 
 import { LOLEV_BASE_URL } from '@/lib/utils/schema-shared'
 import { relationshipName } from '@/lib/utils/relationship-name'
+import { getShownDraftPrice } from '@/lib/utils/packaging-utils'
 
 /** Minimal beer interface for menu schema generation */
 interface MenuBeer {
@@ -15,6 +16,8 @@ interface MenuBeer {
   abv: number
   style?: string | { name: string } | null
   draftPrice?: number | null
+  halfPour?: number | null
+  halfPourOnly?: boolean | null
   fourPack?: number | null
   glutenFree?: boolean | null
 }
@@ -66,10 +69,11 @@ function beerToMenuItem(beer: MenuBeer): MenuItemJsonLd {
     description: beer.description || `${styleName} - ${beer.abv}% ABV`,
   }
 
-  if (beer.draftPrice) {
+  const draftPrice = getShownDraftPrice(beer)
+  if (draftPrice) {
     menuItem.offers = {
       '@type': 'Offer',
-      price: beer.draftPrice.toString(),
+      price: draftPrice.toString(),
       priceCurrency: 'USD',
     }
   }
