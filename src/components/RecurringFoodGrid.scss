@@ -149,8 +149,19 @@
   }
 
   /* Text-style action (View <year>, Show 5th week). */
+  // Text links inside sentences, built on Payload's Button for its click and
+  // focus handling. Payload 4 has no unstyled button (v3's buttonStyle="none"),
+  // so undo the ghost button's box: flex layout, 24px height, padding, border,
+  // 11px font, and hover fill.
   &__link-button.btn {
+    display: inline;
+    height: auto;
     margin: 0;
+    padding: 0;
+    border: 0;
+    font: inherit;
+    color: inherit;
+    background: none;
     text-decoration: underline;
   }
 
