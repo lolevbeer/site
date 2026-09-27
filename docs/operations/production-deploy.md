@@ -63,11 +63,13 @@ For `20260826_212000_add_payload_jobs_indexes`, use a read-only index inspection
 
 Do not manually invoke a maintenance cron to prove these indexes. Observe the next normally scheduled maintenance run through the approved operational surface and record its outcome.
 
-For `20260927_020000_payload_jobs_runnable_processing_until` (the Payload 4 upgrade), the table above no longer describes `payload_jobs_runnable`. Inspect it the same read-only way against this specification, and confirm the Payload 3 `processing_1` index is gone:
+For `20260927_020000_payload_jobs_runnable_processing_until` (the Payload 4 upgrade), the table above no longer describes `payload_jobs_runnable`. Inspect it the same read-only way against this specification:
 
 | Index | Key specification, in order | Options |
 | --- | --- | --- |
 | `payload_jobs_runnable` | `{ queue: 1, completedAt: 1, hasError: 1, processingUntil: 1, waitUntil: 1, createdAt: 1 }` | `{ name: 'payload_jobs_runnable' }` |
+
+The migration also drops Payload 3's `processing_1` index, but any Payload 3 deployment that still connects (the prior deployment during the release, or one rolled back to) recreates it through Mongoose autoIndex. That is harmless, since Payload 4 never queries it, so its presence does not fail verification. Once no Payload 3 deployment remains, drop it with `db['payload-jobs'].dropIndex('processing_1')`.
 
 Rolling the app back from Payload 4 to Payload 3, including a Vercel Instant Rollback, needs no data step for jobs Payload 4 created: Payload 3 claims only jobs with `processing: false`, and the jobs override in `src/payload.config.ts` sets it on every new job. Only jobs created before that field was added lack it (none in production); the `updateMany` in that migration's recovery-manifest entry fixes them and is safe to run before any rollback.
 

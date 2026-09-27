@@ -54,12 +54,14 @@ describe('migration recovery manifest', () => {
     })
   })
 
-  it('documents the payload_jobs_runnable key order the migration builds, and the Payload 3 rollback step', () => {
+  it('documents the payload_jobs_runnable key order, the processing_1 caveat, and the Payload 3 rollback step', () => {
     const recovery = migrationRecovery.find(
       ({ name }) => name === '20260927_020000_payload_jobs_runnable_processing_until',
     )
 
     expect(recovery?.verify).toContain(`(${Object.keys(RUNNABLE_KEYS).join(', ')})`)
+    // A still-connected Payload 3 deployment recreates processing_1, so its absence isn't a pass/fail check.
+    expect(recovery?.verify).toMatch(/processing_1.*Payload 3/i)
     expect(recovery?.compatibility).toMatch(/Payload 3.*processing: false/i)
   })
 

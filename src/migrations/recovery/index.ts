@@ -102,6 +102,6 @@ export const migrationRecovery: readonly MigrationRecovery[] = [
       'Safe to rerun: it drops each named index if present and recreates payload_jobs_runnable with the exact key.',
     mode: 'roll-forward',
     verify:
-      'Read-only inspect payload_jobs_runnable (queue, completedAt, hasError, processingUntil, waitUntil, createdAt) with name-only options and confirm processing_1 is gone; observe the next scheduled maintenance run.',
+      'Read-only inspect payload_jobs_runnable (queue, completedAt, hasError, processingUntil, waitUntil, createdAt) with name-only options; observe the next scheduled maintenance run. processing_1 may reappear while any Payload 3 deployment still connects (its Mongoose autoIndex recreates it): harmless, since Payload 4 never queries it; drop it once no Payload 3 deployment remains.',
   },
 ]
