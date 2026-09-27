@@ -20,9 +20,17 @@ export const SyncNavLink: React.FC = () => {
 
   return (
     <NavGroup label="Tools">
-      <a href="/admin/sync" className={`nav__link${isActive ? ' active' : ''}`} id="nav-sync">
-        <span className="nav__link-label">Sync</span>
-      </a>
+      {/* Payload 4's own nav markup: the wrapper sets the link's inset and
+          spacing, and nav__link--selected is its "current page" style. */}
+      <div className="nav__link-wrapper">
+        <a
+          href="/admin/sync"
+          className={`nav__link${isActive ? ' nav__link--selected' : ''}`}
+          id="nav-sync"
+        >
+          <span className="nav__link-label">Sync</span>
+        </a>
+      </div>
     </NavGroup>
   )
 }
