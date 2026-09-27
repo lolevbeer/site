@@ -17,6 +17,11 @@ describe('getBeerBadgeLabel', () => {
     expect(getBeerBadgeLabel({ createdAt: createdDaysAgo(7.1) }, now)).toBeNull()
   })
 
+  it('counts a beer created after `now` as just released, since menus floor `now` to the hour', () => {
+    const createdLaterThisHour = new Date(now + 30 * 60 * 1000).toISOString()
+    expect(getBeerBadgeLabel({ createdAt: createdLaterThisHour }, now)).toBe('Just Released')
+  })
+
   it('skips only the time-based badge while the time is unknown', () => {
     expect(getBeerBadgeLabel({ createdAt: createdDaysAgo(1) }, null)).toBeNull()
     expect(getBeerBadgeLabel({ createdAt: createdDaysAgo(1), collab: true }, null)).toBe('Collab')

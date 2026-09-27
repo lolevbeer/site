@@ -8,7 +8,12 @@ const EST_TIMEZONE = 'America/New_York'
 
 export const MS_PER_DAY = 24 * 60 * 60 * 1000
 
-/** True when `createdAt` is inside `windowMs` before `now`. Invalid dates are not recent. */
+/**
+ * True when `createdAt` is less than `windowMs` older than `now`, including any
+ * time after `now`: the "Just Released" badge passes a clock floored to the
+ * hour, so a beer created since the hour began is newer than `now`. Invalid
+ * dates are not recent.
+ */
 export function isRecentTimestamp(
   createdAt: string | undefined,
   windowMs: number,
