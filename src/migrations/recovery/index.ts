@@ -97,11 +97,11 @@ export const migrationRecovery: readonly MigrationRecovery[] = [
   {
     name: '20260927_020000_payload_jobs_runnable_processing_until',
     compatibility:
-      'Index-only: swaps the processing key for processingUntil in payload_jobs_runnable. Both app versions run correctly on either index; only claim-query speed differs.',
+      "Index-only: rebuilds payload_jobs_runnable on processingUntil (completedAt moved second) and drops Payload 3's processing_1; either index only changes claim speed. The app rollback is not index-only: Payload 3 claims only jobs with processing: false, and jobs Payload 4 created have no processing field, so before rolling the app back to Payload 3 run db['payload-jobs'].updateMany({ completedAt: { $exists: false }, processing: { $exists: false } }, { $set: { processing: false } }).",
     retry:
-      'Safe to rerun: it drops the named index if present and recreates it with the exact key.',
+      'Safe to rerun: it drops each named index if present and recreates payload_jobs_runnable with the exact key.',
     mode: 'roll-forward',
     verify:
-      'Read-only inspect payload_jobs_runnable (queue, processingUntil, hasError, completedAt, waitUntil, createdAt); observe the next scheduled maintenance run.',
+      'Read-only inspect payload_jobs_runnable (queue, completedAt, hasError, processingUntil, waitUntil, createdAt) with name-only options and confirm processing_1 is gone; observe the next scheduled maintenance run.',
   },
 ]

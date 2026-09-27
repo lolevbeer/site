@@ -63,6 +63,14 @@ For `20260826_212000_add_payload_jobs_indexes`, use a read-only index inspection
 
 Do not manually invoke a maintenance cron to prove these indexes. Observe the next normally scheduled maintenance run through the approved operational surface and record its outcome.
 
+For `20260927_020000_payload_jobs_runnable_processing_until` (the Payload 4 upgrade), the table above no longer describes `payload_jobs_runnable`. Inspect it the same read-only way against this specification, and confirm the Payload 3 `processing_1` index is gone:
+
+| Index | Key specification, in order | Options |
+| --- | --- | --- |
+| `payload_jobs_runnable` | `{ queue: 1, completedAt: 1, hasError: 1, processingUntil: 1, waitUntil: 1, createdAt: 1 }` | `{ name: 'payload_jobs_runnable' }` |
+
+Rolling the app back from Payload 4 to Payload 3 needs one data step first: Payload 3 claims only jobs with `processing: false`, and jobs Payload 4 created have no `processing` field. Run the `updateMany` in that migration's recovery-manifest entry before the rollback, or the daily Untappd sync silently stops.
+
 ## Failed Google Sheets field removal decision
 
 If a build fails after `20260830_100000_drop_google_sheets_fields` unsets the fields, the still-live prior deployment's Google Sheets endpoint can no longer import location events, food, or hours from configured URLs, and menu sync uses only its environment fallback. The release owner must immediately choose and record one of two paths: deploy a compatible roll-forward that removes the prior endpoint from live traffic, or perform an Atlas restore under the isolated-target and write-reconciliation controls below. Do not leave the prior deployment serving with degraded sync while awaiting a later release.

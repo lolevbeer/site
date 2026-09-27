@@ -2,42 +2,60 @@
  * Payload 4 replaced the `processing` flag on payload-jobs with a
  * `processingUntil` lease, and the job claim query now filters on the lease.
  * Rebuild the runnable index from 20260826_212000 on the new key so claims
- * stay indexed, with `completedAt` ahead of the lease so finished jobs are skipped. Existing `processing` values are left in place: nothing reads
- * them, and a v3 job stuck at `processing: true` has no lease, so v4 can claim it.
+ * stay indexed, with `completedAt` ahead of the lease so finished jobs are
+ * skipped, and drop Payload 3's single-field `processing_1` index, which
+ * nothing in Payload 4 queries.
+ *
+ * Existing `processing` values are left in place; Payload 4 never reads them.
+ * Payload 3 does: it claims only jobs with `processing: false`, and jobs that
+ * Payload 4 creates have no `processing` field. Before rolling the app back to
+ * Payload 3, set `processing: false` on unfinished jobs (see the recovery
+ * manifest), or v3 never runs them and its scheduler waits on them forever.
  */
 import type { MigrateDownArgs, MigrateUpArgs } from '@payloadcms/db-mongodb'
 
 const RUNNABLE_INDEX = 'payload_jobs_runnable'
+const LEGACY_PROCESSING_INDEX = 'processing_1'
 
-async function replaceRunnableIndex(
-  { payload }: MigrateUpArgs | MigrateDownArgs,
-  keys: Record<string, 1>,
-): Promise<void> {
-  const jobs = payload.db.collections['payload-jobs'].collection
+/**
+ * Exact-match keys first: finished jobs keep `processingUntil: null`, which
+ * falls inside the lease range, so `completedAt` must narrow the scan before it.
+ * Exported so the recovery manifest test can check the documented key order.
+ */
+export const RUNNABLE_KEYS = {
+  queue: 1,
+  completedAt: 1,
+  hasError: 1,
+  processingUntil: 1,
+  waitUntil: 1,
+  createdAt: 1,
+} as const
 
-  // No `session`: index builds on a populated collection can't run in a
-  // transaction (see 20260826_212000).
-  if (await jobs.indexExists(RUNNABLE_INDEX)) {
-    await jobs.dropIndex(RUNNABLE_INDEX)
+type JobsCollection = MigrateUpArgs['payload']['db']['collections'][string]['collection']
+
+async function dropIndexIfPresent(jobs: JobsCollection, name: string): Promise<void> {
+  if (await jobs.indexExists(name)) {
+    await jobs.dropIndex(name)
   }
+}
+
+async function replaceRunnableIndex(jobs: JobsCollection, keys: Record<string, 1>): Promise<void> {
+  await dropIndexIfPresent(jobs, RUNNABLE_INDEX)
   await jobs.createIndex(keys, { name: RUNNABLE_INDEX })
 }
 
-export async function up(args: MigrateUpArgs): Promise<void> {
-  // Exact-match keys first: finished jobs keep `processingUntil: null`, which
-  // falls inside the lease range, so `completedAt` must narrow the scan before it.
-  await replaceRunnableIndex(args, {
-    queue: 1,
-    completedAt: 1,
-    hasError: 1,
-    processingUntil: 1,
-    waitUntil: 1,
-    createdAt: 1,
-  })
+// No `session` in either direction: index builds on a populated collection
+// can't run in a transaction (see 20260826_212000).
+export async function up({ payload }: MigrateUpArgs): Promise<void> {
+  const jobs = payload.db.collections['payload-jobs'].collection
+  await replaceRunnableIndex(jobs, RUNNABLE_KEYS)
+  await dropIndexIfPresent(jobs, LEGACY_PROCESSING_INDEX)
 }
 
-export async function down(args: MigrateDownArgs): Promise<void> {
-  await replaceRunnableIndex(args, {
+/** Restores the Payload 3 runnable index; Payload 3 recreates `processing_1` itself (autoIndex). */
+export async function down({ payload }: MigrateDownArgs): Promise<void> {
+  const jobs = payload.db.collections['payload-jobs'].collection
+  await replaceRunnableIndex(jobs, {
     queue: 1,
     processing: 1,
     hasError: 1,
