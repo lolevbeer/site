@@ -10,8 +10,14 @@
  * Built from Payload UI primitives (Dropzone/FieldLabel/FieldDescription/Button/Banner) so
  * it matches the rest of the admin. Source PDFs are not stored — the
  * generated files are the canonical output.
+ *
+ * The field lives in the beer editor's "Label & images" tab, and Payload
+ * renders only the active tab, so switching tabs unmounts it mid-run. A run
+ * therefore renders everything first, stops before uploading if the field has
+ * unmounted, and applies the four files to the form together, so a failed or
+ * abandoned run never leaves a half-updated set.
  */
-import { useId, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { Banner, Button, Dropzone, FieldDescription, FieldLabel, useField } from '@payloadcms/ui'
 import { canvasToWebpBlob, processLabelPdfs } from './pdf-label-textures'
 
@@ -91,10 +97,22 @@ export function LabelTextureGenerator() {
   const [progress, setProgress] = useState<{ pct: number; label: string } | null>(null)
   const [status, setStatus] = useState<{ type: 'danger' | 'success'; msg: string } | null>(null)
   const busy = progress !== null
+  // False once the editor leaves the tab (see the module comment).
+  const mountedRef = useRef(false)
+  useEffect(() => {
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+    }
+  }, [])
 
   const generate = async () => {
     // The button stays disabled until the art PDF is chosen; this narrows the type.
     if (!artFile) return
+    /** Abandon a run whose tab was left, before it uploads anything. */
+    const stopIfTabLeft = () => {
+      if (!mountedRef.current) throw new Error('Label generation stopped: its tab was left.')
+    }
     setStatus(null)
     // Stage weights are rough wall-clock shares; the sprite loop (72 frames)
     // dominates and reports real per-frame progress.
@@ -105,31 +123,34 @@ export function LabelTextureGenerator() {
         await artFile.arrayBuffer(),
         maskFile ? await maskFile.arrayBuffer() : null,
       )
-      setProgress({ pct: 25, label: 'Uploading textures…' })
-      const [baseId, metalnessId] = await Promise.all([
-        uploadWebp(baseCanvas, `${name}-label-base`),
-        uploadWebp(metalnessCanvas, `${name}-label-metalness`),
-      ])
-      setBase(baseId)
-      setMetalness(metalnessId)
+      stopIfTabLeft()
       // Bake the beer image still + the can-rotation sprite sheet (both WebP,
       // to stay under Vercel's request-body limit)
-      setProgress({ pct: 35, label: 'Rendering can…' })
+      setProgress({ pct: 25, label: 'Rendering can…' })
       const { generateCanRenders } = await import('./record-can-video')
       const { still, sprite } = await generateCanRenders(
         baseCanvas,
         metalnessCanvas,
-        (done, total) =>
+        (done, total) => {
+          stopIfTabLeft()
           setProgress({
-            pct: 35 + (done / total) * 55,
+            pct: 25 + (done / total) * 60,
             label: `Rendering sprite frames (${done}/${total})…`,
-          }),
+          })
+        },
       )
-      setProgress({ pct: 90, label: 'Uploading can image + sprite…' })
-      const [imageId, spriteId] = await Promise.all([
+      stopIfTabLeft()
+      setProgress({ pct: 85, label: 'Uploading label files…' })
+      const [baseId, metalnessId, imageId, spriteId] = await Promise.all([
+        uploadWebp(baseCanvas, `${name}-label-base`),
+        uploadWebp(metalnessCanvas, `${name}-label-metalness`),
         uploadMedia(still, `${name}-can.webp`, `${name} can`),
         uploadMedia(sprite, `${name}-can-sprite.webp`, `${name} can rotation`),
       ])
+      // All four together, even if the tab was left during the uploads: the
+      // form outlives the tab, and applying keeps the uploads from orphaning.
+      setBase(baseId)
+      setMetalness(metalnessId)
       setImage(imageId)
       setSprite(spriteId)
       setStatus({
@@ -158,7 +179,7 @@ export function LabelTextureGenerator() {
         </Button>
         <FieldDescription
           path="labelTextures"
-          description="Creates the label texture, metallic map, beer image, and menu sprite sheet."
+          description="Creates the label texture, metallic map, beer image, and menu sprite sheet. Stay on this tab until it finishes."
         />
       </div>
       {progress && (
