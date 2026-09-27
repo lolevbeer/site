@@ -81,7 +81,10 @@ const allowedOrigins = [
  */
 function hideApiTab(collection: CollectionConfig): CollectionConfig {
   const components = collection.admin?.components
-  // A collection with its own document views decides its own tabs.
+  // Never true today. A collection that adds its own edit views is returned as-is
+  // and keeps its API tab, so hide the tab in that collection's `edit` instead.
+  // `api` can't be merged in here: Payload's EditConfig union types it `never`
+  // alongside a `root` view.
   if (components?.views?.edit) return collection
   return {
     ...collection,
