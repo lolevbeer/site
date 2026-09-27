@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { useDocumentInfo, useFormFields } from '@payloadcms/ui'
+import { Banner, useDocumentInfo, useFormFields } from '@payloadcms/ui'
 import { getRecurringFoodData, getFoodVendor, getFoodOnDate } from '@/src/actions/admin-data'
 import { logger } from '@/lib/utils/logger'
 import {
@@ -108,27 +108,21 @@ export const FoodDateWarning: React.FC = () => {
   }
 
   return (
-    <div
-      style={{
-        padding: '12px 16px',
-        backgroundColor: 'var(--color-bg-warning-tertiary)',
-        border: '1px solid var(--color-border-warning)',
-        borderRadius: '4px',
-        marginBottom: '16px',
-        color: 'var(--color-text-warning)',
-      }}
-    >
-      <strong>Note:</strong>{' '}
-      <span>
-        {warnings.map((w, i) => (
-          <span key={i}>
-            {i > 0 && ', '}
-            <strong>{w.vendorName}</strong>
-            {w.type === 'recurring' ? ' (recurring)' : ' (scheduled)'}
-          </span>
-        ))}{' '}
-        already on this date.
-      </span>
+    // .field-type gives the note Payload's standard space before the next field.
+    <div className="field-type">
+      <Banner type="warning">
+        <strong>Note:</strong>{' '}
+        <span>
+          {warnings.map((w, i) => (
+            <span key={i}>
+              {i > 0 && ', '}
+              <strong>{w.vendorName}</strong>
+              {w.type === 'recurring' ? ' (recurring)' : ' (scheduled)'}
+            </span>
+          ))}{' '}
+          already on this date.
+        </span>
+      </Banner>
     </div>
   )
 }

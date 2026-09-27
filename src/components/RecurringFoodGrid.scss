@@ -200,13 +200,11 @@
     color: var(--color-text-secondary);
   }
 
+  // A Payload Banner (type="warning"). Banners centre their icon vertically,
+  // which strands it mid-list here, so pin it to the "Conflicts:" line.
   &__conflicts {
-    padding: 12px 16px;
-    background-color: var(--color-bg-warning-tertiary);
-    border: 1px solid var(--color-border-warning);
-    border-radius: 4px;
+    align-items: flex-start;
     margin-bottom: 16px;
-    color: var(--color-text-warning);
   }
 
   &__conflict-list {

@@ -385,7 +385,7 @@ const DatesList: React.FC<DatesListProps> = ({
     <div ref={mountedRootRef} className="recurring-food-grid__dates">
       {exclusionModal}
       {conflicts.length > 0 && (
-        <div className="recurring-food-grid__conflicts">
+        <Banner type="warning" className="recurring-food-grid__conflicts">
           <strong>Conflicts:</strong>
           <div className="recurring-food-grid__conflict-list">
             {conflicts.map((conflict) => (
@@ -398,7 +398,7 @@ const DatesList: React.FC<DatesListProps> = ({
               </div>
             ))}
           </div>
-        </div>
+        </Banner>
       )}
       <h4 className="recurring-food-grid__dates-heading">
         {year} Schedule
