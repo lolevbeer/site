@@ -255,16 +255,6 @@ export function getBeerAvailability(beer: Beer): string {
   return items.length > 0 ? items.join(' • ') : 'Limited'
 }
 
-export function getBeerPricing(beer: Beer): string {
-  const items = [
-    beer.pricing.draftPrice && `Draft ${formatPrice(beer.pricing.draftPrice)}`,
-    (beer.pricing.canSingle || beer.pricing.cansSingle) &&
-      `Single ${formatPrice(beer.pricing.canSingle || beer.pricing.cansSingle)}`,
-    beer.pricing.fourPack && `4 Pack ${formatPrice(beer.pricing.fourPack)}`,
-  ].filter(Boolean)
-  return items.length > 0 ? items.join(' • ') : 'See store'
-}
-
 /**
  * Title-case a name (e.g., "GIANT EAGLE" → "Giant Eagle")
  */
