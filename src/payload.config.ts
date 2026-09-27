@@ -2,7 +2,7 @@ import { vercelBlobStorage } from '@payloadcms/storage-vercel-blob'
 import { mongooseAdapter } from '@payloadcms/db-mongodb'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'path'
-import { buildConfig } from 'payload'
+import { buildConfig, type CollectionConfig } from 'payload'
 import { fileURLToPath } from 'url'
 import sharp from 'sharp'
 import { revalidationPlugin } from './plugins/revalidation-plugin'
@@ -73,6 +73,31 @@ const allowedOrigins = [
   ...(process.env.NODE_ENV === 'development' ? getLocalDevOrigins(process.env.PORT) : []),
 ]
 
+/**
+ * Payload 3 hid each document's "API" tab with `admin.hideAPIURL: true` on every
+ * collection. Payload 4 dropped that option, so the tab is hidden here instead.
+ * (Typing /api after a document URL still renders it; it shows only what the
+ * REST API already returns to that user.)
+ */
+function hideApiTab(collection: CollectionConfig): CollectionConfig {
+  const components = collection.admin?.components
+  // A collection with its own document views decides its own tabs.
+  if (components?.views?.edit) return collection
+  return {
+    ...collection,
+    admin: {
+      ...collection.admin,
+      components: {
+        ...components,
+        views: {
+          ...components?.views,
+          edit: { api: { tab: { condition: () => false } } },
+        },
+      },
+    },
+  }
+}
+
 export default buildConfig({
   // serverURL, cookiePrefix, and the api/admin routes use Payload's defaults
   // ('' = relative URLs on any domain; 'payload'; '/api'; '/admin').
@@ -95,19 +120,20 @@ export default buildConfig({
     deleteJobOnComplete: false,
     processingOrder: 'createdAt',
     tasks: [syncUntappdRatingsTask],
-    jobsCollectionOverrides: ({ defaultJobsCollection }) => ({
-      ...defaultJobsCollection,
-      admin: {
-        ...defaultJobsCollection.admin,
-        hidden: false,
-      },
-      // Payload 4 denies all job CRUD by default; open read/delete to admins.
-      access: {
-        ...defaultJobsCollection.access,
-        read: adminAccess,
-        delete: adminAccess,
-      },
-    }),
+    jobsCollectionOverrides: ({ defaultJobsCollection }) =>
+      hideApiTab({
+        ...defaultJobsCollection,
+        admin: {
+          ...defaultJobsCollection.admin,
+          hidden: false,
+        },
+        // Payload 4 denies all job CRUD by default; open read/delete to admins.
+        access: {
+          ...defaultJobsCollection.access,
+          read: adminAccess,
+          delete: adminAccess,
+        },
+      }),
   },
   admin: {
     user: Users.slug,
@@ -124,15 +150,21 @@ export default buildConfig({
     importMap: {
       baseDir: path.resolve(dirname),
     },
+    // Payload 4's Vercel Blob adapter registers its client upload handler only
+    // when a blob token is set; declaring it here keeps importMap.js identical
+    // with or without one (Payload 3 always registered it).
+    dependencies: {
+      '@payloadcms/storage-vercel-blob/client#VercelBlobClientUploadHandler': {
+        type: 'component',
+        path: '@payloadcms/storage-vercel-blob/client#VercelBlobClientUploadHandler',
+      },
+    },
     components: {
       graphics: {
         Logo: './components/AdminLogo#AdminLogo',
         Icon: './components/AdminLogo#AdminIcon',
       },
-      providers: [
-        './components/AdminNavLink#AdminNavLink',
-        './components/admin/LinesCleanedAlert#LinesCleanedAlert',
-      ],
+      providers: ['./components/admin/LinesCleanedAlert#LinesCleanedAlert'],
       actions: [],
       afterNavLinks: ['./components/SyncNavLink#SyncNavLink'],
       views: {
@@ -174,7 +206,7 @@ export default buildConfig({
     Distributors,
     FAQs,
     Media,
-  ].map((collection) => ({ versions: false, ...collection })),
+  ].map((collection) => hideApiTab({ versions: false, ...collection })),
   globals: [
     // Back of House
     ComingSoon,
