@@ -12,7 +12,7 @@ import {
   extractVendorInfo,
 } from '@/lib/utils/payload-api'
 import type { PayloadMenu } from '@/lib/utils/payload-api'
-import { NOINDEX_ROBOTS } from '@/lib/utils/seo'
+import { LIVE_DISPLAY_META, NOINDEX_ROBOTS } from '@/lib/utils/seo'
 
 // ISR: cache for 60s, skip build-time pre-rendering (first request is dynamic, then cached)
 export const revalidate = 60
@@ -143,7 +143,6 @@ export async function generateMetadata({ params }: EventsDisplayPageProps) {
     title,
     description: `Upcoming food and events at ${data.locationName}`,
     robots: NOINDEX_ROBOTS,
-    // Displays reload onto a new deploy only once this renders; see usePolling.
-    other: { 'live-display': 'ready' },
+    other: { [LIVE_DISPLAY_META]: 'ready' },
   }
 }
