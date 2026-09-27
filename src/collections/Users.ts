@@ -21,19 +21,16 @@ export const Users: CollectionConfig = {
     // 7 days in seconds (7 * 24 * 60 * 60)
     tokenExpiration: 604800,
     forgotPassword: {
-      // There is no email service, so the admin "Forgot password?" form sends
-      // the reset over Slack with the same message and client as
-      // `/lolevbeer password` (buildPasswordResetMessage + slackApi), as a DM
-      // since there is no slash-command response_url here. The returned HTML
-      // goes to Payload's console email adapter, which only logs.
-      // Payload's minRequestInterval (15s) rate-limits this.
-      // ponytail: unlinked accounts (no slackUserId) get nothing; they can run
-      // `/lolevbeer password`, which links by email first.
+      // No email service: DM the reset link over Slack with the same message
+      // `/lolevbeer password` sends (see README). Unlinked accounts get nothing.
+      // The '' return only reaches Payload's console email adapter — return
+      // real HTML here if an email adapter is ever configured.
       generateEmailHTML: async ({ token, user } = {}) => {
         if (token && user?.slackUserId) {
+          // Text only: the builder's response_type is for slash-command replies.
           await slackApi('chat.postMessage', {
             channel: user.slackUserId,
-            ...buildPasswordResetMessage(token),
+            text: buildPasswordResetMessage(token).text,
           })
         }
         return ''

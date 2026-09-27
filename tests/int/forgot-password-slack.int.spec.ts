@@ -10,16 +10,14 @@ vi.mock('@/src/utils/slack-api', () => ({
 }))
 
 const { Users } = await import('@/src/collections/Users')
-const generate =
-  Users.auth && typeof Users.auth === 'object'
-    ? Users.auth.forgotPassword?.generateEmailHTML
-    : undefined
+const auth = Users.auth as Exclude<typeof Users.auth, boolean | undefined>
+const generate = auth.forgotPassword!.generateEmailHTML!
 
 describe('admin forgot password → Slack DM', () => {
   beforeEach(() => slackApi.mockReset())
 
   it('DMs the reset link to the linked Slack account', async () => {
-    await generate!({ req: {} as never, token: 'abc123', user: { slackUserId: 'U123' } })
+    await generate({ req: {} as never, token: 'abc123', user: { slackUserId: 'U123' } })
     expect(slackApi).toHaveBeenCalledWith(
       'chat.postMessage',
       expect.objectContaining({
@@ -30,7 +28,7 @@ describe('admin forgot password → Slack DM', () => {
   })
 
   it('sends nothing when the account has no linked Slack user', async () => {
-    await generate!({ req: {} as never, token: 'abc123', user: { slackUserId: null } })
+    await generate({ req: {} as never, token: 'abc123', user: { slackUserId: null } })
     expect(slackApi).not.toHaveBeenCalled()
   })
 })
