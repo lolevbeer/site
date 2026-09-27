@@ -322,7 +322,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
           {/* Header */}
           <div>
             <div className="flex items-start justify-between gap-4 mb-2">
-              <h1 className="text-3xl font-bold">{beer.name}</h1>
+              <h1 className="text-4xl font-bold tracking-tight">{beer.name}</h1>
               {beer.id && <AdminEditButton beerId={beer.id} />}
             </div>
             <div className="flex items-center gap-2 mb-4 flex-wrap">
@@ -458,7 +458,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
                 <UntappdIcon className="h-5 w-5" />
                 Untappd
                 {(beer.untappdRating ?? 0) > 0 && (
-                  <span className="text-amber-500 font-bold">
+                  <span className="text-amber-600 dark:text-amber-400 font-bold">
                     {formatRating(beer.untappdRating)}/5
                   </span>
                 )}

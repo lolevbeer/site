@@ -4,7 +4,7 @@
  * so callers do not have to pre-sort.
  */
 import { TimelineItem } from '@/components/ui/timeline-item'
-import { formatDate, isToday, isTomorrow } from '@/lib/utils/formatters'
+import { formatDayLabel, isToday } from '@/lib/utils/formatters'
 
 export interface ScheduleListItem {
   id: string
@@ -16,12 +16,6 @@ export interface ScheduleListItem {
   imageUrl?: string
   locationName?: string
   description?: string
-}
-
-function dateLabel(dateKey: string): string {
-  if (isToday(dateKey)) return 'Today'
-  if (isTomorrow(dateKey)) return 'Tomorrow'
-  return formatDate(dateKey, 'full')
 }
 
 function groupItemsByDate(items: ScheduleListItem[]): Array<[string, ScheduleListItem[]]> {
@@ -58,7 +52,7 @@ export function ScheduleList({
               isToday(dateKey) ? 'text-primary' : ''
             }`}
           >
-            {dateLabel(dateKey)}
+            {formatDayLabel(dateKey)}
           </Heading>
           <ul className="space-y-3 list-none p-0 m-0">
             {sortByTime(dayItems).map((item) => (

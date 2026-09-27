@@ -3,28 +3,27 @@
  * Frequently asked questions about Lolev Beer
  */
 
-import type { ReactNode } from 'react';
-import type { Metadata } from 'next';
-import Link from 'next/link';
-import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
-import { Button } from '@/components/ui/button';
+import type { ReactNode } from 'react'
+import type { Metadata } from 'next'
+import Link from 'next/link'
+import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs'
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from '@/components/ui/accordion';
-import { JsonLd } from '@/components/seo/json-ld';
-import { getBreweryFAQs, generateFAQSchema, type FAQItem } from '@/lib/utils/faq-schema';
-import { DEFAULT_OG_IMAGES } from '@/lib/utils/seo';
-import { generateFAQSpeakableSchema } from '@/lib/utils/speakable-schema';
-import { getActiveFAQs, getAllLocations } from '@/lib/utils/payload-api';
-import { PageTransition } from '@/components/motion';
-import { FaqContactSection } from '@/components/faq/faq-contact';
+} from '@/components/ui/accordion'
+import { JsonLd } from '@/components/seo/json-ld'
+import { getBreweryFAQs, generateFAQSchema, type FAQItem } from '@/lib/utils/faq-schema'
+import { DEFAULT_OG_IMAGES } from '@/lib/utils/seo'
+import { generateFAQSpeakableSchema } from '@/lib/utils/speakable-schema'
+import { getActiveFAQs, getAllLocations } from '@/lib/utils/payload-api'
+import { PageTransition } from '@/components/motion'
+import { FaqContactSection } from '@/components/faq/faq-contact'
 
 interface FAQAnswerProps {
-  question: string;
-  answer: string;
+  question: string
+  answer: string
 }
 
 /**
@@ -34,13 +33,14 @@ function FAQAnswer({ question, answer }: FAQAnswerProps): ReactNode {
   if (question === 'Where can I find your beer in stores?') {
     return (
       <div>
-        Our beers are distributed throughout the Pittsburgh area and select locations in Pennsylvania, New York, and Ohio. Use our{' '}
-        <Button asChild variant="default" size="sm" className="inline-flex">
-          <Link href="/beer-map">Beer Map</Link>
-        </Button>{' '}
+        Our beers are distributed throughout the Pittsburgh area and select locations in
+        Pennsylvania, New York, and Ohio. Use our{' '}
+        <Link href="/beer-map" className="text-primary hover:underline font-medium">
+          Beer Map
+        </Link>{' '}
         to find the nearest retailer carrying Lolev Beer.
       </div>
-    );
+    )
   }
 
   if (question === 'Can I book a private event?') {
@@ -52,10 +52,9 @@ function FAQAnswer({ question, answer }: FAQAnswerProps): ReactNode {
           events@lolev.beer
         </a>{' '}
         or call (412) 336-8965. Beer donation and fundraiser-night requests go through the{' '}
-        <Button asChild variant="default" size="sm" className="inline-flex">
-          <Link href="/donate">donation request form</Link>
-        </Button>
-        {' '}
+        <Link href="/donate" className="text-primary hover:underline font-medium">
+          donation request form
+        </Link>{' '}
         — we do not take those by phone or Instagram.
       </div>
     )
@@ -65,47 +64,62 @@ function FAQAnswer({ question, answer }: FAQAnswerProps): ReactNode {
     return (
       <div>
         Follow us on social media (Instagram{' '}
-        <a href="https://instagram.com/lolevbeer" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">
+        <a
+          href="https://instagram.com/lolevbeer"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary hover:underline font-medium"
+        >
           @lolevbeer
         </a>
-        ), check our website regularly, or sign up for our newsletter. Our Events and Food pages are updated weekly with upcoming activities.
+        ), check our website regularly, or sign up for our newsletter. Our Events and Food pages are
+        updated weekly with upcoming activities.
       </div>
-    );
+    )
   }
 
-  return answer;
+  return answer
 }
 
 // ISR: revalidate every hour (FAQ content changes infrequently)
-export const revalidate = 3600;
+export const revalidate = 3600
 
 export const metadata: Metadata = {
   title: 'FAQ',
-  description: 'Find answers to common questions about Lolev Beer including hours, locations, events, private bookings, beer styles, and more.',
-  keywords: ['brewery faq', 'hours', 'location', 'private events', 'beer styles', 'Pittsburgh brewery'],
+  description:
+    'Find answers to common questions about Lolev Beer including hours, locations, events, private bookings, beer styles, and more.',
+  keywords: [
+    'brewery faq',
+    'hours',
+    'location',
+    'private events',
+    'beer styles',
+    'Pittsburgh brewery',
+  ],
   alternates: {
     canonical: '/faq',
   },
   openGraph: {
     title: 'FAQ | Lolev Beer',
-    description: 'Find answers to common questions about Lolev Beer including hours, locations, events, and more.',
+    description:
+      'Find answers to common questions about Lolev Beer including hours, locations, events, and more.',
     type: 'website',
     images: DEFAULT_OG_IMAGES,
   },
 }
 
 export default async function FAQPage() {
-  const [cmsFAQs, locations] = await Promise.all([getActiveFAQs(), getAllLocations()]);
-  const dynamicFAQs: FAQItem[] = cmsFAQs.map(faq => ({
+  const [cmsFAQs, locations] = await Promise.all([getActiveFAQs(), getAllLocations()])
+  const dynamicFAQs: FAQItem[] = cmsFAQs.map((faq) => ({
     question: faq.question,
     answer: faq.answer,
-  }));
+  }))
 
-  const allFAQs = [...getBreweryFAQs(locations), ...dynamicFAQs];
+  const allFAQs = [...getBreweryFAQs(locations), ...dynamicFAQs]
 
   // Generate FAQ schema for SEO
-  const faqSchema = generateFAQSchema(allFAQs);
-  const speakableSchema = generateFAQSpeakableSchema();
+  const faqSchema = generateFAQSchema(allFAQs)
+  const speakableSchema = generateFAQSpeakableSchema()
 
   return (
     <>
@@ -114,41 +128,37 @@ export default async function FAQPage() {
       <JsonLd data={speakableSchema} />
 
       <PageTransition>
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <PageBreadcrumbs className="mb-6" />
+        <div className="container mx-auto px-4 py-8 max-w-4xl">
+          <PageBreadcrumbs className="mb-6" />
 
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold tracking-tight mb-4">
-            Frequently Asked Questions
-          </h1>
-        </div>
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-bold tracking-tight mb-4">Frequently Asked Questions</h1>
+          </div>
 
-        {/* FAQ Accordion */}
-        <div className="mb-12">
-          <Accordion type="single" collapsible className="w-full">
-            {allFAQs.map((faq, index) => (
-              <AccordionItem key={index} value={`item-${index}`}>
-                <AccordionTrigger className="text-left">
-                  {faq.question}
-                </AccordionTrigger>
-                {/* forceMount keeps closed answers in the server HTML so crawlers
+          {/* FAQ Accordion */}
+          <div className="mb-12">
+            <Accordion type="single" collapsible className="w-full">
+              {allFAQs.map((faq, index) => (
+                <AccordionItem key={index} value={`item-${index}`}>
+                  <AccordionTrigger className="text-left">{faq.question}</AccordionTrigger>
+                  {/* forceMount keeps closed answers in the server HTML so crawlers
                     and AI fetchers see the full Q&A; the closed state is hidden
                     with CSS instead of being unmounted. */}
-                <AccordionContent
-                  forceMount
-                  className="text-muted-foreground data-[state=closed]:hidden"
-                  data-speakable="faq-answer"
-                >
-                  <FAQAnswer question={faq.question} answer={faq.answer} />
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-        </div>
+                  <AccordionContent
+                    forceMount
+                    className="text-muted-foreground data-[state=closed]:hidden"
+                    data-speakable="faq-answer"
+                  >
+                    <FAQAnswer question={faq.question} answer={faq.answer} />
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </div>
 
-        <FaqContactSection />
-      </div>
+          <FaqContactSection />
+        </div>
       </PageTransition>
     </>
-  );
+  )
 }

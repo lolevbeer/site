@@ -1,7 +1,7 @@
 /**
  * Public donate action: honeypot does not write; success writes then Slack after().
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const afterFns: Array<() => Promise<void>> = []
 const create = vi.fn()
@@ -79,6 +79,14 @@ function valid() {
 }
 
 describe('submitDonationRequest', () => {
+  // Pin the clock to TODAY so the action's lead-time check agrees with the
+  // fixture's event date; on the real clock the fixture expires.
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(`${TODAY}T12:00:00-04:00`))
+  })
+  afterEach(() => vi.useRealTimers())
+
   beforeEach(() => {
     afterFns.length = 0
     create.mockReset()

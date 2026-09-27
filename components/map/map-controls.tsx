@@ -66,7 +66,7 @@ export function MapControls({
               suggestions={suggestions}
               onSelect={onSelectSuggestion}
               onCommit={onCommitSearch}
-              inputClassName="h-10 md:h-8"
+              inputClassName="h-10 md:h-9"
             />
           )}
           <Button
@@ -74,7 +74,7 @@ export function MapControls({
             variant="default"
             size="sm"
             onClick={onNearMeClick}
-            className="h-8 min-h-6 order-2 shrink-0"
+            className="order-2 shrink-0"
           >
             Near Me
           </Button>
@@ -119,7 +119,8 @@ export function MapControls({
           <div className="flex flex-col gap-2">
             {distanceFromLabel && (
               <span className="text-xs text-muted-foreground">
-                Distances from <span className="font-medium text-foreground">{distanceFromLabel}</span>
+                Distances from{' '}
+                <span className="font-medium text-foreground">{distanceFromLabel}</span>
               </span>
             )}
             <div className="flex items-center gap-2 overflow-x-auto">
@@ -131,9 +132,8 @@ export function MapControls({
                 <Button
                   key={location.uniqueId}
                   type="button"
-                  variant="secondary"
+                  variant="outline"
                   size="sm"
-                  className="h-8 min-h-6 text-xs whitespace-nowrap"
                   onClick={() => onNearbyLocationClick(location)}
                 >
                   {capitalizeName(location.name).substring(0, 25)}

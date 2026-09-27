@@ -106,7 +106,11 @@ export function DistributorMap({
   showSearch = true,
   initialData,
 }: DistributorMapProps) {
-  const { geoData: fetchedData, loading: fetchLoading, error: fetchError } = useMapData({
+  const {
+    geoData: fetchedData,
+    loading: fetchLoading,
+    error: fetchError,
+  } = useMapData({
     enabled: !initialData,
   })
   const { getUserLocation } = useGeolocation()
@@ -169,19 +173,22 @@ export function DistributorMap({
 
   const referenceLocation = searchReference ?? geoReference ?? taproomReference
 
-  const flyTo = useCallback((longitude: number, latitude: number, zoom: number, duration = 1200) => {
-    if (mapRef.current) {
-      mapRef.current.flyTo({
-        center: [longitude, latitude],
-        zoom,
-        duration,
-        curve: 1.42,
-        easing: (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2),
-      })
-    } else {
-      setViewport({ latitude, longitude, zoom })
-    }
-  }, [])
+  const flyTo = useCallback(
+    (longitude: number, latitude: number, zoom: number, duration = 1200) => {
+      if (mapRef.current) {
+        mapRef.current.flyTo({
+          center: [longitude, latitude],
+          zoom,
+          duration,
+          curve: 1.42,
+          easing: (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2),
+        })
+      } else {
+        setViewport({ latitude, longitude, zoom })
+      }
+    },
+    [],
+  )
 
   useEffect(() => {
     if (searchLocation) {
@@ -202,10 +209,7 @@ export function DistributorMap({
   }, [isClient, currentLocationData, searchLocation, geoReference, flyTo])
 
   const taprooms = useMemo(() => taproomPoints(locations), [locations])
-  const retailers = useMemo(
-    () => retailerPoints(geoData?.features ?? []),
-    [geoData],
-  )
+  const retailers = useMemo(() => retailerPoints(geoData?.features ?? []), [geoData])
 
   const sortedLocations = useMemo(
     () =>
@@ -219,10 +223,7 @@ export function DistributorMap({
   )
   const allVisible = sortedLocations.items
   const locationTotal = sortedLocations.total
-  const listLocations = useMemo(
-    () => allVisible.slice(0, MAP_CONFIG.MAX_LIST_ITEMS),
-    [allVisible],
-  )
+  const listLocations = useMemo(() => allVisible.slice(0, MAP_CONFIG.MAX_LIST_ITEMS), [allVisible])
 
   const nearbyLocations = useMemo(() => {
     if (!referenceLocation) return []
@@ -537,7 +538,7 @@ export function DistributorMap({
                         </button>
                       </div>
                       <p className="text-xs text-muted-foreground mb-3">{popupPoint.address}</p>
-                      <Button size="sm" variant="default" className="w-full h-8 text-xs" asChild>
+                      <Button size="sm" variant="default" className="w-full" asChild>
                         <a
                           href={googleDirectionsUrl(popupPoint.address)}
                           target="_blank"
@@ -603,12 +604,7 @@ export function DistributorMap({
                   <div className="text-center">
                     <p className="text-muted-foreground">No locations found</p>
                     {searchTerm && (
-                      <Button
-                        onClick={handleClearSearch}
-                        variant="link"
-                        size="sm"
-                        className="mt-2"
-                      >
+                      <Button onClick={handleClearSearch} variant="link" size="sm" className="mt-2">
                         Clear search
                       </Button>
                     )}

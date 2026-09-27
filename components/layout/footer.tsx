@@ -2,7 +2,6 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
 import { SocialLinks } from './social-links'
 import { HandwrittenLolevLogo } from '@/components/icons'
 import type { LocationSlug, PayloadLocation } from '@/lib/types/location'
@@ -11,6 +10,9 @@ import { footerOnlyItems, navigationItems } from './navigation'
 import type { WeeklyHoursDay } from '@/lib/utils/payload-api'
 import { ThemeSwitcher } from '@/components/ui/theme-switcher'
 import { WeeklyHoursTable } from '@/components/location/weekly-hours'
+
+/** Shared style for every text link in the footer (nav list and legal row). */
+const FOOTER_LINK_CLASS = 'text-muted-foreground hover:text-foreground transition-colors'
 
 /**
  * Location info component
@@ -124,10 +126,7 @@ export function Footer({ weeklyHours }: FooterProps) {
             <ul className="space-y-2 text-sm mb-6 text-center">
               {[...navigationItems, ...footerOnlyItems].map((item) => (
                 <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    className="text-muted-foreground hover:text-foreground transition-colors"
-                  >
+                  <Link href={item.href} className={FOOTER_LINK_CLASS}>
                     {item.label}
                   </Link>
                 </li>
@@ -148,24 +147,19 @@ export function Footer({ weeklyHours }: FooterProps) {
             </p>
             <ThemeSwitcher />
           </div>
-          <div className="flex flex-wrap gap-2 justify-center">
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/faq">FAQ</Link>
-            </Button>
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/privacy">Privacy Policy</Link>
-            </Button>
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/accessibility">Accessibility</Link>
-            </Button>
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/terms">Terms of Service</Link>
-            </Button>
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/admin" rel="nofollow">
-                Login
-              </Link>
-            </Button>
+          <div className="flex flex-wrap gap-x-6 gap-y-2 justify-center text-sm">
+            <Link href="/privacy" className={FOOTER_LINK_CLASS}>
+              Privacy Policy
+            </Link>
+            <Link href="/accessibility" className={FOOTER_LINK_CLASS}>
+              Accessibility
+            </Link>
+            <Link href="/terms" className={FOOTER_LINK_CLASS}>
+              Terms of Service
+            </Link>
+            <Link href="/admin" rel="nofollow" className={FOOTER_LINK_CLASS}>
+              Login
+            </Link>
           </div>
         </div>
       </div>
