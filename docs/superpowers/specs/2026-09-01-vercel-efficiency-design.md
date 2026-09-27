@@ -115,7 +115,7 @@ Callers:
 - `live-events.tsx`: same machine (today `pollInterval: 5000`)
 - `fetch` drops `{ cache: 'no-store' }` only after the measurement in [Route-level measurements](#route-level-measurements) shows that `no-store` is what bypasses the edge. If that measurement shows edge HITs already, still drop `no-store` so the 30s CDN object is shareable; do not add a browser `max-age=2` (the audit-remediation draft) because it fights the 30s alignment.
 
-Success resets error count. Content timestamp change or `warm` resets `noChangeCount`. Deploy-id change still reloads the page.
+Success resets error count. Content timestamp change or `warm` resets `noChangeCount`. Deploy-id change reloads the page, but only after fetching it and finding the `live-display` meta tag the /m and /e pages add once their data loads. Until then the display keeps its current content and the check retries on the error backoff, so displays no longer sit on the black error screen while a new deploy warms up.
 
 ### Route-level measurements
 

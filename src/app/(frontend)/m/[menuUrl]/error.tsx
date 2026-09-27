@@ -5,7 +5,8 @@
  *
  * These screens run unattended on Frame TVs, so a transient failure — a Payload
  * cold start or DB blip, typically right after a deploy when every display
- * reloads at once — must self-recover without anyone touching the TV. Next
+ * reloads at once — must self-recover without anyone touching the TV. (usePolling
+ * now reloads only once the new deploy renders, so this is the fallback.) Next
  * renders this (instead of caching a 404) whenever the page's data fetch throws;
  * see getMenuByUrlFresh. We report to Sentry, then reload after a short delay to
  * give the backend time to warm. If the outage persists the reload simply

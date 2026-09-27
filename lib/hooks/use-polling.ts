@@ -73,7 +73,7 @@ export function selectPollInterval({
 /**
  * Generic display polling hook; see the module comment for the rhythm.
  *
- * Handles deploy detection (page reload on new deploy) and timestamp-based
+ * Handles deploy detection (page reload once the new deploy's page renders) and timestamp-based
  * change detection to avoid unnecessary state updates.
  *
  * @param url - API endpoint to poll (empty string disables polling)
@@ -144,11 +144,21 @@ export function usePolling<T, R extends PollingResponse>(
 
       const raw: R = await response.json()
 
-      // Detect new deployment and force a full page reload
+      // A new deployment reloads the display, but only once its page renders.
+      // Every display reloads at once onto a cold backend, and a failed page
+      // shows the black error screen; checking first keeps the current menu up
+      // meanwhile. A failed check counts as a failed poll and retries. The
+      // error screen is served with status 200, so the check looks for the
+      // `live-display` meta tag the /m and /e pages add only after their data
+      // loads (the body can't be used: it may render in the browser).
       if (raw.deployId) {
         if (deployIdRef.current === null) {
           deployIdRef.current = raw.deployId
         } else if (raw.deployId !== deployIdRef.current) {
+          const page = await fetch(window.location.href, { cache: 'no-store' })
+          if (!page.ok || !(await page.text()).includes('name="live-display"')) {
+            throw new Error('New deploy not ready')
+          }
           window.location.reload()
           return
         }

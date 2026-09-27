@@ -61,5 +61,7 @@ export async function generateMetadata({ params }: MenuPageProps) {
     title: menu.name || `${menu.type} Menu`,
     description: menu.description || `View our ${menu.type} menu`,
     robots: NOINDEX_ROBOTS,
+    // Displays reload onto a new deploy only once this renders; see usePolling.
+    other: { 'live-display': 'ready' },
   }
 }
