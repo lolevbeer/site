@@ -4,11 +4,6 @@ import { LiveMenu } from '@/components/menu/live-menu'
 import { notFound } from 'next/navigation'
 import { NOINDEX_ROBOTS } from '@/lib/utils/seo'
 
-// This dynamic segment has no generateStaticParams, so Next renders it per
-// request (it is not prerendered, and this revalidate never takes effect).
-// LiveMenu keeps the display current after hydration.
-export const revalidate = 60
-
 /**
  * Cached menu fetch — deduplicates between generateMetadata and page render.
  */
@@ -33,8 +28,8 @@ export default async function MenuPage({ params }: MenuPageProps) {
     notFound()
   }
 
-  // LiveMenu polls the cached /api/menu-stream endpoint (every 2s, backing off
-  // when idle) and swaps in new menu data; see components/menu/live-menu.tsx.
+  // LiveMenu polls the cached /api/menu-stream endpoint (10s after a change,
+  // 30s when idle) and swaps in new menu data; see components/menu/live-menu.tsx.
   return <LiveMenu menuUrl={menuUrl} initialMenu={menu} />
 }
 

@@ -286,12 +286,13 @@ export async function getCansMenu(locationSlug: string): Promise<PayloadMenu | n
 
 /**
  * Field narrowing for the populated relations in menu queries. Menus ship in
- * every 2s poll response and every /m ISR render, so populated Beer/Product/
- * Media docs carry only what the displays render — derived from
- * convertMenuItems (components/home/featured-menu.tsx) and the poll route's
- * updatedAt timestamp check. Notably excluded: positiveReviews (unbounded
- * review array), the untappd/upc admin fields, and the labelBase/
- * labelMetalness/labelTextures generator uploads.
+ * every /m page render and in the /api/menu-stream response the displays poll
+ * (10s after a change, 30s when idle), so populated Beer/Product/Media docs
+ * carry only what the displays render — derived from convertMenuItems
+ * (components/home/featured-menu.tsx) and the poll route's updatedAt timestamp
+ * check. Notably excluded: positiveReviews (unbounded review array), the
+ * untappd/upc admin fields, and the labelBase/labelMetalness/labelTextures
+ * generator uploads.
  */
 const MENU_BEERS_POPULATE = {
   slug: true,
@@ -409,16 +410,17 @@ export const getMenuByUrl = async (url: string): Promise<PayloadMenu | null> => 
 }
 
 /**
- * Get menu by URL slug - UNCACHED version for real-time updates
- * Used by SSE endpoints and menu display pages that need immediate updates
+ * Get menu by URL slug - UNCACHED version for the /m display page
+ * (m/[menuUrl]), which renders per request so each display load starts from
+ * the current menu. Displays then poll /api/menu-stream, which reads the
+ * cached getMenuByUrl.
  *
  * Returns null ONLY when the menu genuinely doesn't exist. A fetch failure
- * (cold start, transient DB blip) throws rather than returning null: the
- * display page (m/[menuUrl]) turns null into notFound(), and because that
- * page is ISR (revalidate = 60), a 404 render gets cached and served to every
- * display for up to a minute. A thrown error is never persisted to the route
- * cache, so it self-heals on the next request and hits the segment's
- * auto-reloading error boundary instead of poisoning the fleet with a 404.
+ * (cold start, transient DB blip) throws rather than returning null: the page
+ * turns null into notFound(), and a 404 screen stays up until someone reloads
+ * the TV, while a thrown error renders the segment's error boundary
+ * (m/[menuUrl]/error.tsx), which reloads the display every few seconds until
+ * the menu is back.
  */
 export const getMenuByUrlFresh = async (url: string): Promise<PayloadMenu | null> => {
   try {
