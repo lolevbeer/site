@@ -3,6 +3,7 @@ import { APIError } from 'payload'
 import type { User } from '@/src/payload-types'
 import { adminAccess, adminFieldAccess, getUserLocationIds, hasRole } from '@/src/access/roles'
 import { markLinesCleanedField } from './utils/markLinesCleanedField'
+import { updatedByField } from './utils/updatedByField'
 
 /**
  * Menus at the locations this user is assigned to, or `false` when they hold
@@ -201,6 +202,7 @@ export const Menus: CollectionConfig = {
   },
   fields: [
     markLinesCleanedField({ showFor: (data) => data?.type === 'draft' }),
+    updatedByField,
     {
       name: 'name',
       type: 'text',

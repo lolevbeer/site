@@ -2,6 +2,7 @@ import type { Access, CollectionConfig, Field, PayloadRequest, Where } from 'pay
 import { APIError } from 'payload'
 import { revalidateTag } from 'next/cache'
 import { generateUniqueSlug } from './utils/generateUniqueSlug'
+import { updatedByField } from './utils/updatedByField'
 import { adminAccess, beerManagerAccess, beerManagerFieldAccess, hasRole } from '@/src/access/roles'
 import { fetchUntappdData, type UntappdReview } from '@/src/utils/untappd'
 import { logger } from '@/lib/utils/logger'
@@ -236,6 +237,7 @@ export const Beers: CollectionConfig = {
   // every field below still stores at the top level of the beer document.
   // Only fields editors flip per release stay in the sidebar.
   fields: [
+    updatedByField,
     {
       type: 'tabs',
       tabs: [

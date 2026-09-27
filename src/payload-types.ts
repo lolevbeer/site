@@ -185,6 +185,10 @@ export interface UserAuthOperations {
  */
 export interface Beer {
   id: string;
+  /**
+   * Who saved this revision
+   */
+  updatedBy?: (string | null) | User;
   name: string;
   style: string | Style;
   glass: 'pint' | 'stein' | 'teku' | 'uha';
@@ -286,159 +290,42 @@ export interface Beer {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "styles".
+ * via the `definition` "users".
  */
-export interface Style {
+export interface User {
   id: string;
+  name?: string | null;
   /**
-   * Beer style name (e.g., IPA, Stout, Pale Ale)
+   * Slack member ID (e.g. U01ABCDEF). Filled in automatically when the Slack profile email matches this account — set it manually only if the emails differ.
    */
-  name: string;
+  slackUserId?: string | null;
+  /**
+   * Assign bartenders to the locations whose menus they may access. Users without an assignment cannot access menu drafts.
+   */
+  locations?: (string | Location)[] | null;
+  /**
+   * Admins can manage users and all content. Event/Beer/Food Managers can manage their respective collections. Lead Bartenders can update line cleaning dates. Bartenders can update menus. Users can have multiple roles.
+   */
+  roles: ('admin' | 'event-manager' | 'beer-manager' | 'food-manager' | 'lead-bartender' | 'bartender')[];
   updatedAt: string;
   createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "tags".
- */
-export interface Tag {
-  id: string;
-  /**
-   * Tag name (e.g., Seasonal, Limited, Award Winner)
-   */
-  name: string;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "media".
- */
-export interface Media {
-  id: string;
-  /**
-   * Alternative text for the image (for accessibility)
-   */
-  alt: string;
-  prefix?: string | null;
-  _objectKey?: string | null;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
-  sizes?: {
-    thumbnail?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-    card?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-    detail?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-  };
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "beer-reviews".
- */
-export interface BeerReview {
-  id: string;
-  beer: string | Beer;
-  reviewer: string;
-  rating: number;
-  text: string;
-  reviewedAt?: string | null;
-  /**
-   * Original date text supplied by Untappd when an exact timestamp is unavailable.
-   */
-  sourceDate?: string | null;
-  source: 'untappd';
-  sourceUrl: string;
-  externalImageUrl?: string | null;
-  /**
-   * Approved reviews can be included in public beer data.
-   */
-  approved: boolean;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "menus".
- */
-export interface Menu {
-  id: string;
-  /**
-   * Menu name (e.g., "Lawrenceville Draft Menu")
-   */
-  name: string;
-  /**
-   * Menu description
-   */
-  description?: string | null;
-  /**
-   * Required to generate menu URL
-   */
-  location: string | Location;
-  type: 'cans' | 'draft' | 'other';
-  /**
-   * Auto-generated from location and type, but you can override it manually
-   */
-  url: string;
-  /**
-   * Override automatic day/night theme switching
-   */
-  themeMode?: ('auto' | 'light' | 'dark') | null;
-  /**
-   * Play the rotating-can animation on this display. Turn off to show static can images instead.
-   */
-  animateCans?: boolean | null;
-  items: {
-    product?:
-      | ({
-          relationTo: 'beers';
-          value: string | Beer;
-        } | null)
-      | ({
-          relationTo: 'products';
-          value: string | Product;
-        } | null);
-    /**
-     * Sale Price (optional override)
-     */
-    price?: string | null;
-    /**
-     * Optional promotion shown only on the fullscreen can menu.
-     */
-    promotion?: string | null;
-    id?: string | null;
-  }[];
-  updatedAt: string;
-  createdAt: string;
-  _status?: ('draft' | 'published') | null;
+  email: string;
+  resetPasswordToken?: string | null;
+  resetPasswordExpiration?: string | null;
+  salt?: string | null;
+  hash?: string | null;
+  resetPasswordRequestedAt?: string | null;
+  loginAttempts?: number | null;
+  lockUntil?: string | null;
+  sessions?:
+    | {
+        id: string;
+        createdAt?: string | null;
+        expiresAt: string;
+      }[]
+    | null;
+  password?: string | null;
+  collection: 'users';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -521,6 +408,166 @@ export interface Location {
   };
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "media".
+ */
+export interface Media {
+  id: string;
+  /**
+   * Alternative text for the image (for accessibility)
+   */
+  alt: string;
+  prefix?: string | null;
+  _objectKey?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+  sizes?: {
+    thumbnail?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    card?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    detail?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+  };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "styles".
+ */
+export interface Style {
+  id: string;
+  /**
+   * Beer style name (e.g., IPA, Stout, Pale Ale)
+   */
+  name: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tags".
+ */
+export interface Tag {
+  id: string;
+  /**
+   * Tag name (e.g., Seasonal, Limited, Award Winner)
+   */
+  name: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "beer-reviews".
+ */
+export interface BeerReview {
+  id: string;
+  beer: string | Beer;
+  reviewer: string;
+  rating: number;
+  text: string;
+  reviewedAt?: string | null;
+  /**
+   * Original date text supplied by Untappd when an exact timestamp is unavailable.
+   */
+  sourceDate?: string | null;
+  source: 'untappd';
+  sourceUrl: string;
+  externalImageUrl?: string | null;
+  /**
+   * Approved reviews can be included in public beer data.
+   */
+  approved: boolean;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "menus".
+ */
+export interface Menu {
+  id: string;
+  /**
+   * Who saved this revision
+   */
+  updatedBy?: (string | null) | User;
+  /**
+   * Menu name (e.g., "Lawrenceville Draft Menu")
+   */
+  name: string;
+  /**
+   * Menu description
+   */
+  description?: string | null;
+  /**
+   * Required to generate menu URL
+   */
+  location: string | Location;
+  type: 'cans' | 'draft' | 'other';
+  /**
+   * Auto-generated from location and type, but you can override it manually
+   */
+  url: string;
+  /**
+   * Override automatic day/night theme switching
+   */
+  themeMode?: ('auto' | 'light' | 'dark') | null;
+  /**
+   * Play the rotating-can animation on this display. Turn off to show static can images instead.
+   */
+  animateCans?: boolean | null;
+  items: {
+    product?:
+      | ({
+          relationTo: 'beers';
+          value: string | Beer;
+        } | null)
+      | ({
+          relationTo: 'products';
+          value: string | Product;
+        } | null);
+    /**
+     * Sale Price (optional override)
+     */
+    price?: string | null;
+    /**
+     * Optional promotion shown only on the fullscreen can menu.
+     */
+    promotion?: string | null;
+    id?: string | null;
+  }[];
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -792,45 +839,6 @@ export interface RecurringFoodExclusion {
   reason?: string | null;
   updatedAt: string;
   createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users".
- */
-export interface User {
-  id: string;
-  name?: string | null;
-  /**
-   * Slack member ID (e.g. U01ABCDEF). Filled in automatically when the Slack profile email matches this account — set it manually only if the emails differ.
-   */
-  slackUserId?: string | null;
-  /**
-   * Assign bartenders to the locations whose menus they may access. Users without an assignment cannot access menu drafts.
-   */
-  locations?: (string | Location)[] | null;
-  /**
-   * Admins can manage users and all content. Event/Beer/Food Managers can manage their respective collections. Lead Bartenders can update line cleaning dates. Bartenders can update menus. Users can have multiple roles.
-   */
-  roles: ('admin' | 'event-manager' | 'beer-manager' | 'food-manager' | 'lead-bartender' | 'bartender')[];
-  updatedAt: string;
-  createdAt: string;
-  email: string;
-  resetPasswordToken?: string | null;
-  resetPasswordExpiration?: string | null;
-  salt?: string | null;
-  hash?: string | null;
-  resetPasswordRequestedAt?: string | null;
-  loginAttempts?: number | null;
-  lockUntil?: string | null;
-  sessions?:
-    | {
-        id: string;
-        createdAt?: string | null;
-        expiresAt: string;
-      }[]
-    | null;
-  password?: string | null;
-  collection: 'users';
 }
 /**
  * Holiday and special hours overrides for locations
@@ -1224,6 +1232,7 @@ export interface PayloadMigration {
  * via the `definition` "beers_select".
  */
 export interface BeersSelect<T extends boolean = true> {
+  updatedBy?: T;
   name?: T;
   style?: T;
   glass?: T;
@@ -1298,6 +1307,7 @@ export interface TagsSelect<T extends boolean = true> {
  * via the `definition` "menus_select".
  */
 export interface MenusSelect<T extends boolean = true> {
+  updatedBy?: T;
   name?: T;
   description?: T;
   location?: T;
