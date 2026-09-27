@@ -66,14 +66,12 @@ function getPricingInfo(beer: PayloadBeer): {
   singlePrice?: number | null
   fourPackPrice?: number | null
   bottlePrice?: number | null
-  hasSale: boolean
 } {
   return {
     draftPrice: beer.draftPrice,
     singlePrice: beer.canSingle,
     fourPackPrice: beer.fourPack,
     bottlePrice: beer.bottlePrice,
-    hasSale: beer.justReleased === true,
   }
 }
 
@@ -297,14 +295,6 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
                 {styleName && <p className="text-sm text-muted-foreground mt-1">{styleName}</p>}
               </div>
             )}
-            {pricing.hasSale && (
-              <Badge
-                variant="destructive"
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-lg px-4 py-2 z-20"
-              >
-                Just Released
-              </Badge>
-            )}
           </div>
 
           {/* Quick Stats */}
@@ -343,11 +333,6 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
                   className="text-sm text-muted-foreground border-muted-foreground/50"
                 >
                   {getNoPackagingLabel(packagingType)}
-                </Badge>
-              )}
-              {pricing.hasSale && (
-                <Badge variant="destructive" className="text-sm">
-                  Sale
                 </Badge>
               )}
             </div>
@@ -416,14 +401,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
               (canLocations.length > 0 && (pricing.fourPackPrice || pricing.bottlePrice))) && (
               <Card className="shadow-none border-0 p-0 bg-transparent">
                 <CardHeader className="p-0 pb-4">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    Pricing
-                    {pricing.hasSale && (
-                      <Badge variant="destructive" className="text-xs">
-                        Sale Price
-                      </Badge>
-                    )}
-                  </CardTitle>
+                  <CardTitle className="text-lg flex items-center gap-2">Pricing</CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
                   <div className="space-y-2">

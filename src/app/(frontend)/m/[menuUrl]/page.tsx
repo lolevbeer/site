@@ -1,5 +1,5 @@
 import { cache } from 'react'
-import { getMenuByUrlFresh, hasAnyBeerJustReleased } from '@/lib/utils/payload-api'
+import { getMenuByUrlFresh } from '@/lib/utils/payload-api'
 import { LiveMenu } from '@/components/menu/live-menu'
 import { notFound } from 'next/navigation'
 import { NOINDEX_ROBOTS } from '@/lib/utils/seo'
@@ -21,10 +21,7 @@ interface MenuPageProps {
 
 export default async function MenuPage({ params }: MenuPageProps) {
   const { menuUrl } = await params
-  const [menu, hasGlobalJustReleased] = await Promise.all([
-    getCachedMenu(menuUrl),
-    hasAnyBeerJustReleased(),
-  ])
+  const menu = await getCachedMenu(menuUrl)
 
   if (!menu) {
     notFound()
@@ -35,14 +32,11 @@ export default async function MenuPage({ params }: MenuPageProps) {
     notFound()
   }
 
-  // Add flag to menu for initial render
-  const menuWithFlag = { ...menu, _hasGlobalJustReleased: hasGlobalJustReleased }
-
   // Use LiveMenu for real-time updates via SSE
   // - Single persistent connection per display
   // - Updates within 5 seconds of Payload changes
   // - Auto-reconnects if connection drops
-  return <LiveMenu menuUrl={menuUrl} initialMenu={menuWithFlag} />
+  return <LiveMenu menuUrl={menuUrl} initialMenu={menu} />
 }
 
 // Generate metadata

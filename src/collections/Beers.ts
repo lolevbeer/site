@@ -540,16 +540,6 @@ export const Beers: CollectionConfig = {
       },
     },
     {
-      name: 'justReleased',
-      type: 'checkbox',
-      defaultValue: false,
-      admin: {
-        position: 'sidebar',
-        description:
-          'Mark as "Just Released". If no beers have this set, beers created within 2 weeks are auto-marked.',
-      },
-    },
-    {
       name: 'collab',
       label: 'Collab',
       type: 'checkbox',
@@ -557,7 +547,7 @@ export const Beers: CollectionConfig = {
       admin: {
         position: 'sidebar',
         description:
-          'Collaboration brew with another brewery. Overrides "Just Released" badge with "Collab".',
+          'Collaboration brew with another brewery. Shows a "Collab" badge instead of the automatic "Just Released" one.',
       },
     },
     {

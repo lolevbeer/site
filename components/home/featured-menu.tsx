@@ -100,9 +100,7 @@ interface MenuItem {
   slug?: string
   style?: string | Style
   locationSlug?: string
-  /** Manual "Just Released" flag from Payload */
-  justReleased?: boolean
-  /** Beer creation date for auto "Just Released" logic */
+  /** Beer creation date: drives the automatic "Just Released" badge */
   createdAt?: string
   /** Untappd rating (0-5 scale) */
   untappdRating?: number | null
@@ -466,7 +464,6 @@ function convertMenuItems(menuData: Menu, labelVideos = false): MenuItem[] {
             slug: String(prod.id || `product-${index}`),
             style: undefined,
             locationSlug: locationSlug ? String(locationSlug) : undefined,
-            justReleased: false,
             guestTap: prod.guestTap || false,
             collab: prod.collab || false,
             createdAt: prod.createdAt,
@@ -527,8 +524,7 @@ function convertMenuItems(menuData: Menu, labelVideos = false): MenuItem[] {
         slug: String(beer.slug),
         style: styleName, // Pass as string, not object
         locationSlug: locationSlug ? String(locationSlug) : undefined,
-        // Store these for badge logic (collab overrides "just released")
-        justReleased: beer.justReleased || false,
+        // Stored for badge logic (collab overrides "just released")
         collab: beer.collab || false,
         collabBrewery: beer.collabBrewery || undefined,
         createdAt: beer.createdAt,
@@ -539,17 +535,10 @@ function convertMenuItems(menuData: Menu, labelVideos = false): MenuItem[] {
     })
     .filter((item): item is NonNullable<typeof item> => item !== null && !item.isEmpty)
 
-  // "Just Released" logic:
-  // 1. If any beer GLOBALLY has justReleased manually set, only mark those
-  // 2. Otherwise, mark beers created within the last 2 weeks
-  // Check global flag from menu data (set by server), fall back to local check
-  const hasGlobalJustReleased = (menuData as { _hasGlobalJustReleased?: boolean })
-    ._hasGlobalJustReleased
-  const hasManualJustReleased = hasGlobalJustReleased ?? items.some((i) => i.justReleased)
-
+  // "Just Released" is automatic: beers created within the last 7 days.
   return items.map((item) => ({
     ...item,
-    isJustReleased: hasManualJustReleased ? item.justReleased : isWithinDays(item.createdAt, 7),
+    isJustReleased: isWithinDays(item.createdAt, 7),
   }))
 }
 

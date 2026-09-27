@@ -253,11 +253,7 @@ export interface Beer {
    */
   hideFromSite?: boolean | null;
   /**
-   * Mark as "Just Released". If no beers have this set, beers created within 2 weeks are auto-marked.
-   */
-  justReleased?: boolean | null;
-  /**
-   * Collaboration brew with another brewery. Overrides "Just Released" badge with "Collab".
+   * Collaboration brew with another brewery. Shows a "Collab" badge instead of the automatic "Just Released" one.
    */
   collab?: boolean | null;
   /**
@@ -1252,7 +1248,6 @@ export interface BeersSelect<T extends boolean = true> {
   topBeerDrops?: T;
   reviews?: T;
   hideFromSite?: T;
-  justReleased?: T;
   collab?: T;
   collabBrewery?: T;
   slug?: T;
