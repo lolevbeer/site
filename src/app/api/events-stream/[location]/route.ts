@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import type { BreweryEvent } from '@/lib/types/event'
-import { logger } from '@/lib/utils/logger'
 import {
   getAllLocations,
   getUpcomingEventsFromPayload,
@@ -65,15 +64,10 @@ export async function GET(
 ): Promise<NextResponse> {
   const { location } = await params
 
-  let data: Awaited<ReturnType<typeof getCachedEvents>>
-  try {
-    data = await getCachedEvents(location.toLowerCase())
-  } catch (error) {
-    // Throw rather than answer 500: a failed refresh keeps serving the last
-    // good cached events instead of caching an error for every display.
-    logger.error('Events fetch error:', error)
-    throw error
-  }
+  // A failed fetch throws (the payload-api fetchers log it and Sentry's
+  // onRequestError captures it) rather than answering 500, so a failed refresh
+  // keeps serving the last good cached events instead of caching an error.
+  const data = await getCachedEvents(location.toLowerCase())
 
   if (!data) {
     return NextResponse.json({ error: 'Location not found' }, { status: 404 })

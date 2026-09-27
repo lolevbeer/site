@@ -243,8 +243,8 @@ export function LiveEvents({
   }
 
   // Deterministic light colors that change every 30s of wall-clock time,
-  // however often the display polls (dark mode only)
-  const colorSeed = useClockBucket(30_000)
+  // however often the display polls (dark mode only). Seed 0 until hydrated.
+  const colorSeed = useClockBucket(30_000) ?? 0
   const itemColors = useMemo(() => {
     const itemCount = combinedItems.length
     if (itemCount === 0 || theme !== 'dark') return undefined

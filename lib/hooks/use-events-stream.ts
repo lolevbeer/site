@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react'
 
-import { usePolling, type UsePollingOptions } from './use-polling'
+import { usePolling } from './use-polling'
 import type { BreweryEvent } from '@/lib/types/event'
 import { getPittsburghTheme } from '@/lib/utils/pittsburgh-time'
 
@@ -10,9 +10,6 @@ interface UseEventsStreamResult {
   events: BreweryEvent[]
   locationName: string
   theme: 'light' | 'dark'
-  isConnected: boolean
-  error: Error | null
-  pollCount: number
 }
 
 /** Domain data managed by the polling hook */
@@ -40,29 +37,24 @@ export function useEventsStream(
   location: string,
   initialEvents: BreweryEvent[],
   initialLocationName: string,
-  options: UsePollingOptions = {},
 ): UseEventsStreamResult {
   const initialData = useMemo<EventsData>(
     () => ({ events: initialEvents, locationName: initialLocationName }),
     [initialEvents, initialLocationName],
   )
 
-  const { data, theme, isConnected, error, pollCount } = usePolling<EventsData, EventsResponse>(
+  const { data, theme } = usePolling<EventsData, EventsResponse>(
     location ? `/api/events-stream/${location}` : '',
     initialData,
     ({ events, locationName }) => ({
       data: { events, locationName },
       theme: getPittsburghTheme(),
     }),
-    options,
   )
 
   return {
     events: data?.events ?? initialEvents,
     locationName: data?.locationName ?? initialLocationName,
     theme,
-    isConnected,
-    error,
-    pollCount,
   }
 }

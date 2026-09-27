@@ -7,6 +7,8 @@
  * own day/night theme (the endpoints send no clock-dependent fields, so their
  * responses stay cacheable until content changes).
  */
+import { createElement } from 'react'
+import { renderToString } from 'react-dom/server'
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -105,6 +107,28 @@ describe('usePolling', () => {
     expect(fetchMock).toHaveBeenCalledTimes(3)
   })
 
+  it('does not re-render the display when a poll finds nothing new', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
+    stubFetch(() => ({ timestamp: 1 }))
+    let renders = 0
+    renderHook(() => {
+      renders += 1
+      return usePolling<number, { timestamp: number }>('/api/example', 0, () => ({
+        data: 1,
+        theme: 'light',
+      }))
+    })
+    // One act() per step, so each step's renders are flushed before counting.
+    // React may render once more on the first same-value update after a real
+    // change; the second poll absorbs that before the count is taken.
+    await act(() => vi.advanceTimersByTimeAsync(0)) // first poll: new data
+    await act(() => vi.advanceTimersByTimeAsync(10_000)) // second poll: unchanged
+    const settled = renders
+
+    await act(() => vi.advanceTimersByTimeAsync(60_000)) // two more unchanged polls
+    expect(renders).toBe(settled)
+  })
+
   it('stops polling while the tab is hidden and polls at once when it is shown again', async () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
     const fetchMock = stubFetch(() => ({ timestamp: 1 }))
@@ -126,13 +150,19 @@ describe('useClockBucket', () => {
   it('advances once per period of wall-clock time, however often anything polls', () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
     vi.setSystemTime(Date.parse('2026-01-01T00:00:10Z'))
+    const start = Math.floor(Date.now() / 30_000)
     const { result } = renderHook(() => useClockBucket(30_000))
-    const start = result.current
+    expect(result.current).toBe(start)
 
     act(() => vi.advanceTimersByTime(20_000))
     expect(result.current).toBe(start + 1)
     act(() => vi.advanceTimersByTime(30_000))
     expect(result.current).toBe(start + 2)
+  })
+
+  it('is null in server HTML, so the first client render always matches it', () => {
+    const Bucket = () => String(useClockBucket(30_000))
+    expect(renderToString(createElement(Bucket))).toBe('null')
   })
 })
 
@@ -141,22 +171,24 @@ describe('display themes', () => {
     ({ id: 'm1', url: 'draft', themeMode, items: [] }) as unknown as Menu
 
   it("uses a menu's fixed theme when it has one", async () => {
-    stubFetch(() => ({ menu: menu('light'), timestamp: 2, deployId: '' }))
-    const { result } = renderHook(() => useMenuStream('draft', menu('light')))
+    const initial = menu('light')
+    const polled = menu('light')
+    stubFetch(() => ({ menu: polled, timestamp: 2, deployId: '' }))
+    const { result } = renderHook(() => useMenuStream('draft', initial))
 
-    await waitFor(() => expect(result.current.pollCount).toBe(1))
+    // The theme lands in the same render as the polled menu.
+    await waitFor(() => expect(result.current.menu).toBe(polled))
     expect(result.current.theme).toBe('light')
   })
 
   it('works out the Pittsburgh day/night theme for auto menus and for events', async () => {
+    // Themes start 'light'; the mocked Pittsburgh clock says 'dark'.
     stubFetch(() => ({ menu: menu('auto'), timestamp: 2, deployId: '' }))
     const menuHook = renderHook(() => useMenuStream('draft', menu('auto')))
-    await waitFor(() => expect(menuHook.result.current.pollCount).toBe(1))
-    expect(menuHook.result.current.theme).toBe('dark')
+    await waitFor(() => expect(menuHook.result.current.theme).toBe('dark'))
 
     stubFetch(() => ({ events: [], locationName: 'Lawrenceville', timestamp: 0, deployId: '' }))
     const eventsHook = renderHook(() => useEventsStream('lawrenceville', [], 'Lawrenceville'))
-    await waitFor(() => expect(eventsHook.result.current.pollCount).toBe(1))
-    expect(eventsHook.result.current.theme).toBe('dark')
+    await waitFor(() => expect(eventsHook.result.current.theme).toBe('dark'))
   })
 })

@@ -16,7 +16,6 @@ const api = vi.hoisted(() => ({
 }))
 
 vi.mock('@/lib/utils/payload-api', () => api)
-vi.mock('@/lib/utils/logger', () => ({ logger: { error: vi.fn() } }))
 
 import * as menuStream from '@/src/app/api/menu-stream/[url]/route'
 import * as eventsStream from '@/src/app/api/events-stream/[location]/route'

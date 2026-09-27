@@ -34,18 +34,13 @@ interface PollingResponse {
   deployId?: string
 }
 
-export interface UsePollingOptions {
-  /** Whether polling is enabled (default: true) */
-  enabled?: boolean
-}
-
+/**
+ * Only what the displays render. State that changed on every poll would
+ * re-render the whole display each time, even when nothing on it changed.
+ */
 interface UsePollingResult<T> {
   data: T | null
   theme: 'light' | 'dark'
-  isConnected: boolean
-  error: Error | null
-  /** Increments on each successful poll */
-  pollCount: number
 }
 
 interface PollState {
@@ -87,16 +82,12 @@ export function selectPollInterval({
  *   out the display theme (on the client, since responses stay cacheable and carry
  *   no clock-dependent fields). Must return `{ data, theme }` — null returns are
  *   not supported.
- * @param options - Polling configuration
  */
 export function usePolling<T, R extends PollingResponse>(
   url: string,
   initialData: T | null,
   applyResponse: (response: R) => { data: T; theme: 'light' | 'dark' },
-  options: UsePollingOptions = {},
 ): UsePollingResult<T> {
-  const { enabled = true } = options
-
   // A poll result is stored together with the server-supplied `initialData` it
   // was layered on top of. When the server re-renders with fresh props that
   // base stops matching, so the newer server data wins automatically — where
@@ -105,9 +96,6 @@ export function usePolling<T, R extends PollingResponse>(
   const [polled, setPolled] = useState<{ base: T | null; value: T } | null>(null)
   const data = polled && polled.base === initialData ? polled.value : initialData
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
-  const [isConnected, setIsConnected] = useState(false)
-  const [error, setError] = useState<Error | null>(null)
-  const [pollCount, setPollCount] = useState(0)
 
   const pollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const lastTimestampRef = useRef(0)
@@ -143,7 +131,7 @@ export function usePolling<T, R extends PollingResponse>(
   }, [])
 
   const poll = useCallback(async () => {
-    if (!url || !enabled) return
+    if (!url) return
 
     try {
       // 'no-cache' revalidates with the CDN (If-None-Match), so an unchanged
@@ -182,44 +170,37 @@ export function usePolling<T, R extends PollingResponse>(
       // Always update theme: applyResponse reads the clock, so day/night changes
       // land on the next poll even when the data hasn't changed.
       setTheme(applied.theme)
-
-      setIsConnected(true)
-      setError(null)
-      setPollCount((prev) => prev + 1)
-    } catch (err) {
+    } catch {
+      // The display keeps showing its last good data; the next poll backs off.
       consecutiveErrorsRef.current += 1
-      setError(err instanceof Error ? err : new Error('Polling failed'))
-      setIsConnected(false)
     }
 
-    if (enabled) {
-      const delay = selectPollInterval({
-        noChangeCount: noChangeCountRef.current,
-        warm: warmRef.current,
-        consecutiveErrors: consecutiveErrorsRef.current,
-        hidden: document.hidden,
-      })
-      if (delay !== null) {
-        pollTimeoutRef.current = setTimeout(() => pollRef.current(), delay)
-      }
+    const delay = selectPollInterval({
+      noChangeCount: noChangeCountRef.current,
+      warm: warmRef.current,
+      consecutiveErrors: consecutiveErrorsRef.current,
+      hidden: document.hidden,
+    })
+    if (delay !== null) {
+      pollTimeoutRef.current = setTimeout(() => pollRef.current(), delay)
     }
-  }, [url, enabled])
+  }, [url])
 
   useEffect(() => {
     pollRef.current = poll
   })
 
   useEffect(() => {
-    if (enabled && url) {
+    if (url) {
       poll()
     }
 
     return clearScheduledPoll
-  }, [enabled, url, poll, clearScheduledPoll])
+  }, [url, poll, clearScheduledPoll])
 
   // Hidden tabs don't poll; showing the tab polls at once and resumes fast.
   useEffect(() => {
-    if (!enabled || !url) return
+    if (!url) return
 
     const onVisibilityChange = () => {
       clearScheduledPoll()
@@ -230,7 +211,7 @@ export function usePolling<T, R extends PollingResponse>(
     }
     document.addEventListener('visibilitychange', onVisibilityChange)
     return () => document.removeEventListener('visibilitychange', onVisibilityChange)
-  }, [enabled, url, clearScheduledPoll])
+  }, [url, clearScheduledPoll])
 
-  return { data, theme, isConnected, error, pollCount }
+  return { data, theme }
 }

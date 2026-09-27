@@ -360,5 +360,5 @@ The implementation updates:
 | DTO projection omits rendered data | Exact-shape tests plus browser journeys | Restore the affected field in the view model |
 | Production-only builds block needed preview | Document Redeploy-with-ignore-unchecked before policy change | Restore Dashboard Ignored Build Step to Automatic |
 | Concurrent PR changes overlap components | Rebased onto #191; implement against `seededLightColors` | Resolve against the landed component contract, then rerun all gates |
-| Color cycle stretches after slower polls | Wall-clock seed (constraint 11) | Restore pollCount divisor matched to the reverted interval |
+| Color cycle stretches after slower polls | Wall-clock seed (constraint 11) | Re-add `pollCount` to `usePolling` and restore its divisor matched to the reverted interval |
 | Ignored Build Step canceled deploys still consume quota | Accept canceled Git rows; success is Build CPU-minutes, not row count | If CPU-minutes do not fall, follow up with `git.deploymentEnabled` rather than rolling back code |

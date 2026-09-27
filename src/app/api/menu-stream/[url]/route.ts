@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getMenuByUrl } from '@/lib/utils/payload-api'
-import { logger } from '@/lib/utils/logger'
 
 /**
  * Menu polling endpoint for the /m displays.
@@ -30,15 +29,10 @@ export function generateStaticParams() {
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ url: string }> }) {
   const { url } = await params
 
-  let menu: Awaited<ReturnType<typeof getMenuByUrl>>
-  try {
-    menu = await getMenuByUrl(url)
-  } catch (error) {
-    // Throw rather than answer 500: a failed refresh keeps serving the last
-    // good cached menu instead of caching an error for every display.
-    logger.error('Menu fetch error:', error)
-    throw error
-  }
+  // A failed fetch throws (getMenuByUrl logs it and Sentry's onRequestError
+  // captures it) rather than answering 500, so a failed refresh keeps serving
+  // the last good cached menu instead of caching an error.
+  const menu = await getMenuByUrl(url)
 
   if (!menu) {
     return NextResponse.json({ error: 'Menu not found' }, { status: 404 })

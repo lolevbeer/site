@@ -8,9 +8,6 @@ import type { Menu } from '@/src/payload-types'
 import { getThemeVars } from '@/lib/utils/display-theme'
 import { seededLightColors } from '@/lib/utils/seeded-colors'
 
-/** How long each dark-mode color set shows before the next. */
-const COLOR_CYCLE_MS = 30_000
-
 interface LiveMenuProps {
   menuUrl: string
   initialMenu: Menu
@@ -34,8 +31,8 @@ export function LiveMenu({ menuUrl, initialMenu }: LiveMenuProps) {
   const displayMenu = menu || initialMenu
 
   // Deterministic light colors that change every 30s of wall-clock time,
-  // however often the display polls (dark mode only)
-  const colorSeed = useClockBucket(COLOR_CYCLE_MS)
+  // however often the display polls (dark mode only). Seed 0 until hydrated.
+  const colorSeed = useClockBucket(30_000) ?? 0
   const itemColors = useMemo(() => {
     const itemCount = displayMenu.items?.length || 0
     if (itemCount === 0 || theme !== 'dark') return undefined

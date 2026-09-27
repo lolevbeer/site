@@ -2,19 +2,20 @@
  * Which `periodMs` slice of wall-clock time it is: `Math.floor(Date.now() / periodMs)`,
  * re-rendering the caller when a new slice starts.
  *
- * Drives the menu and event displays' dark-mode color cycle, which must stay on
- * a fixed wall-clock rhythm however often (or seldom) the display polls. It is
- * 0 while server rendering and hydrating, so server HTML and the first client
- * render agree, and follows the clock after that. Built on
- * `useSyncExternalStore`, like `useIsHydrated`, rather than state set in an effect.
+ * For UI that must change with wall-clock time rather than with how often
+ * anything polls or re-renders, such as a color cycle or an hourly badge
+ * check. It is `null` while server rendering and hydrating, so server HTML and
+ * the first client render always agree (the server can't know the viewer's
+ * clock), and follows the clock after that. Built on `useSyncExternalStore`,
+ * like `useIsHydrated`, rather than state set in an effect.
  */
 'use client'
 
 import { useCallback, useSyncExternalStore } from 'react'
 
-const getServerBucket = () => 0
+const getServerBucket = () => null
 
-export function useClockBucket(periodMs: number): number {
+export function useClockBucket(periodMs: number): number | null {
   const subscribe = useCallback(
     (onChange: () => void) => {
       // Wake exactly when the next slice starts, then re-arm for the one after.
