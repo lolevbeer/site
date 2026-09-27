@@ -110,7 +110,9 @@ export function MarkLinesCleanedButton() {
     cleanedDays !== null && cleanedDays >= LINES_WARN_DAYS && cleanedDays < LINES_OVERDUE_DAYS
 
   return (
-    <div style={{ marginTop: '-8px', width: '100%' }}>
+    // .field-type: Payload's field spacing (gap between the banners and the
+    // button, and the standard space before the next sidebar field).
+    <div className="field-type" style={{ width: '100%' }}>
       {error && <Banner type="danger">{error}</Banner>}
       {isOverdue && <Banner type="danger">OVERDUE - Lines need cleaning!</Banner>}
       {isReadyToClean && <Banner type="default">Ready to be cleaned</Banner>}
