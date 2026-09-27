@@ -2,12 +2,13 @@
  * Bulk sync Untappd ratings for all beers
  *
  * Logic:
- * - Skip beers without untappd field
+ * - Search for beers without an Untappd URL
  * - If untappd matches /b/ format, just refresh the rating
  * - If untappd has a value but wrong format, search and update URL + rating
  */
 
 import type { PayloadHandler } from 'payload'
+import { createSSEResponse } from '@/src/utils/sse-response'
 import { getUserFromRequest } from './auth-helper'
 import { fetchUntappdData, type UntappdReview } from '@/src/utils/untappd'
 import { hasRole } from '@/src/access/roles'
@@ -78,248 +79,176 @@ export const syncUntappdRatings: PayloadHandler = async (req) => {
   const url = new URL(req.url || '', 'http://localhost')
   const dryRun = url.searchParams.get('dryRun') === 'true'
 
-  // Create a streaming response
-  const encoder = new TextEncoder()
-  const stream = new ReadableStream({
-    async start(controller) {
-      const send = (event: string, data: Record<string, unknown>) => {
-        controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`))
-      }
+  return createSSEResponse(async (send) => {
+    try {
+      // Get all beers
+      const beers = await req.payload.find({
+        collection: 'beers',
+        limit: 500,
+        depth: 0,
+        overrideAccess: false,
+        user,
+      })
 
-      try {
-        // Get all beers
-        const beers = await req.payload.find({
-          collection: 'beers',
-          limit: 500,
-          depth: 0,
-          overrideAccess: false,
-          user,
+      const total = beers.docs.length
+
+      send('status', { message: `Processing ${total} beers` })
+
+      let updated = 0
+      let skipped = 0
+      let errors = 0
+      let refreshed = 0
+
+      for (let i = 0; i < beers.docs.length; i++) {
+        const beer = beers.docs[i]
+        const untappdValue = beer.untappd?.trim() || ''
+        const hasUntappd = untappdValue !== ''
+        const isValidFormat = VALID_UNTAPPD_URL_PATTERN.test(untappdValue)
+
+        send('progress', {
+          current: i + 1,
+          total,
+          name: beer.name,
+          percent: Math.round(((i + 1) / total) * 100),
         })
 
-        const total = beers.docs.length
+        // Add delay to avoid rate limiting
+        if (i > 0) {
+          await new Promise((resolve) => setTimeout(resolve, 500))
+        }
 
-        send('status', { message: `Processing ${total} beers` })
+        try {
+          if (isValidFormat) {
+            // Just refresh the rating
+            const { rating, ratingCount, positiveReviews } = await fetchUntappdData(untappdValue)
 
-        let updated = 0
-        let skipped = 0
-        let errors = 0
-        let refreshed = 0
+            if (rating !== null) {
+              // Merge with existing reviews
+              const existingReviews = (beer.positiveReviews as UntappdReview[]) || []
+              const existingUrls = new Set(existingReviews.map((r) => r.url).filter(Boolean))
+              const newReviews = positiveReviews.filter((r) => r.url && !existingUrls.has(r.url))
+              const mergedReviews = [...existingReviews, ...newReviews]
 
-        for (let i = 0; i < beers.docs.length; i++) {
-          const beer = beers.docs[i]
-          const untappdValue = beer.untappd?.trim() || ''
-          const hasUntappd = untappdValue !== ''
-          const isValidFormat = VALID_UNTAPPD_URL_PATTERN.test(untappdValue)
-
-          send('progress', {
-            current: i + 1,
-            total,
-            name: beer.name,
-            percent: Math.round(((i + 1) / total) * 100),
-          })
-
-          // Add delay to avoid rate limiting
-          if (i > 0) {
-            await new Promise((resolve) => setTimeout(resolve, 500))
-          }
-
-          try {
-            if (isValidFormat) {
-              // Just refresh the rating
-              const { rating, ratingCount, positiveReviews } = await fetchUntappdData(untappdValue)
-
-              if (rating !== null) {
-                // Merge with existing reviews
-                const existingReviews = (beer.positiveReviews as UntappdReview[]) || []
-                const existingUrls = new Set(existingReviews.map((r) => r.url).filter(Boolean))
-                const newReviews = positiveReviews.filter((r) => r.url && !existingUrls.has(r.url))
-                const mergedReviews = [...existingReviews, ...newReviews]
-
-                if (!dryRun) {
-                  await req.payload.update({
-                    collection: 'beers',
-                    id: beer.id,
-                    data: {
-                      untappdRating: rating,
-                      untappdRatingCount: ratingCount ?? undefined,
-                      positiveReviews: mergedReviews.length > 0 ? mergedReviews : undefined,
-                    },
-                    overrideAccess: false,
-                    user,
-                  })
-                }
-                refreshed++
-                send('item', {
-                  name: beer.name,
-                  status: 'refreshed',
-                  message: `Refreshed rating: ${rating}${ratingCount ? ` (${ratingCount.toLocaleString()} ratings)` : ''}${newReviews.length > 0 ? `, +${newReviews.length} reviews` : ''}`,
-                  rating,
-                  ratingCount,
-                  newReviews: newReviews.length,
-                })
-              } else {
-                skipped++
-                send('item', {
-                  name: beer.name,
-                  status: 'skipped',
-                  message: 'Could not fetch rating from page',
+              if (!dryRun) {
+                await req.payload.update({
+                  collection: 'beers',
+                  id: beer.id,
+                  data: {
+                    untappdRating: rating,
+                    untappdRatingCount: ratingCount ?? undefined,
+                    positiveReviews: mergedReviews.length > 0 ? mergedReviews : undefined,
+                  },
+                  overrideAccess: false,
+                  user,
                 })
               }
-            } else if (hasUntappd) {
+              refreshed++
+              send('item', {
+                name: beer.name,
+                status: 'refreshed',
+                message: `Refreshed rating: ${rating}${ratingCount ? ` (${ratingCount.toLocaleString()} ratings)` : ''}${newReviews.length > 0 ? `, +${newReviews.length} reviews` : ''}`,
+                rating,
+                ratingCount,
+                newReviews: newReviews.length,
+              })
+            } else {
+              skipped++
+              send('item', {
+                name: beer.name,
+                status: 'skipped',
+                message: 'Could not fetch rating from page',
+              })
+            }
+          } else {
+            if (hasUntappd) {
               // Has value but invalid format - search for the beer
               send('item', {
                 name: beer.name,
                 status: 'searching',
                 message: `Invalid format "${untappdValue}", searching...`,
               })
-
-              const results = await searchUntappd(beer.name)
-
-              if (results.length === 0) {
-                skipped++
-                send('item', {
-                  name: beer.name,
-                  status: 'not-found',
-                  message: 'No results found on Untappd',
-                })
-              } else if (results.length === 1) {
-                // Single result - auto-select
-                const result = results[0]
-                const { rating, ratingCount, positiveReviews } = await fetchUntappdData(result.url)
-
-                // Merge with existing reviews
-                const existingReviews = (beer.positiveReviews as UntappdReview[]) || []
-                const existingUrls = new Set(existingReviews.map((r) => r.url).filter(Boolean))
-                const newReviews = positiveReviews.filter((r) => r.url && !existingUrls.has(r.url))
-                const mergedReviews = [...existingReviews, ...newReviews]
-
-                if (!dryRun) {
-                  await req.payload.update({
-                    collection: 'beers',
-                    id: beer.id,
-                    data: {
-                      untappd: result.url,
-                      untappdRating: rating ?? undefined,
-                      untappdRatingCount: ratingCount ?? undefined,
-                      positiveReviews: mergedReviews.length > 0 ? mergedReviews : undefined,
-                    },
-                    overrideAccess: false,
-                    user,
-                  })
-                }
-                updated++
-                send('item', {
-                  name: beer.name,
-                  status: 'updated',
-                  message: `Updated URL to ${result.url}${rating !== null ? `, rating: ${rating}` : ''}${ratingCount ? ` (${ratingCount.toLocaleString()} ratings)` : ''}${newReviews.length > 0 ? `, +${newReviews.length} reviews` : ''}`,
-                  url: result.url,
-                  rating,
-                  ratingCount,
-                  newReviews: newReviews.length,
-                })
-              } else {
-                // Multiple results - skip (needs manual selection)
-                skipped++
-                send('item', {
-                  name: beer.name,
-                  status: 'multiple',
-                  message: `Found ${results.length} results - needs manual selection`,
-                  results: results.map((r) => r.name),
-                })
-              }
-            } else {
-              // No untappd value - search for the beer by name
-              const results = await searchUntappd(beer.name)
-
-              if (results.length === 0) {
-                skipped++
-                send('item', {
-                  name: beer.name,
-                  status: 'not-found',
-                  message: 'No results found on Untappd',
-                })
-              } else if (results.length === 1) {
-                // Single result - auto-select
-                const result = results[0]
-                const { rating, ratingCount, positiveReviews } = await fetchUntappdData(result.url)
-
-                // Merge with existing reviews (likely empty for new beers)
-                const existingReviews = (beer.positiveReviews as UntappdReview[]) || []
-                const existingUrls = new Set(existingReviews.map((r) => r.url).filter(Boolean))
-                const newReviews = positiveReviews.filter((r) => r.url && !existingUrls.has(r.url))
-                const mergedReviews = [...existingReviews, ...newReviews]
-
-                if (!dryRun) {
-                  await req.payload.update({
-                    collection: 'beers',
-                    id: beer.id,
-                    data: {
-                      untappd: result.url,
-                      untappdRating: rating ?? undefined,
-                      untappdRatingCount: ratingCount ?? undefined,
-                      positiveReviews: mergedReviews.length > 0 ? mergedReviews : undefined,
-                    },
-                    overrideAccess: false,
-                    user,
-                  })
-                }
-                updated++
-                send('item', {
-                  name: beer.name,
-                  status: 'new',
-                  message: `Found ${result.url}${rating !== null ? `, rating: ${rating}` : ''}${ratingCount ? ` (${ratingCount.toLocaleString()} ratings)` : ''}${newReviews.length > 0 ? `, +${newReviews.length} reviews` : ''}`,
-                  url: result.url,
-                  rating,
-                  ratingCount,
-                  newReviews: newReviews.length,
-                })
-              } else {
-                // Multiple results - skip (needs manual selection)
-                skipped++
-                send('item', {
-                  name: beer.name,
-                  status: 'multiple',
-                  message: `Found ${results.length} results - needs manual selection`,
-                  results: results.map((r) => r.name),
-                })
-              }
             }
-          } catch (err: unknown) {
-            errors++
-            send('item', {
-              name: beer.name,
-              status: 'error',
-              message: err instanceof Error ? err.message : 'Unknown error',
-            })
+
+            const results = await searchUntappd(beer.name)
+
+            if (results.length === 0) {
+              skipped++
+              send('item', {
+                name: beer.name,
+                status: 'not-found',
+                message: 'No results found on Untappd',
+              })
+            } else if (results.length === 1) {
+              // Single result - auto-select
+              const result = results[0]
+              const { rating, ratingCount, positiveReviews } = await fetchUntappdData(result.url)
+
+              // Merge with existing reviews
+              const existingReviews = (beer.positiveReviews as UntappdReview[]) || []
+              const existingUrls = new Set(existingReviews.map((r) => r.url).filter(Boolean))
+              const newReviews = positiveReviews.filter((r) => r.url && !existingUrls.has(r.url))
+              const mergedReviews = [...existingReviews, ...newReviews]
+
+              if (!dryRun) {
+                await req.payload.update({
+                  collection: 'beers',
+                  id: beer.id,
+                  data: {
+                    untappd: result.url,
+                    untappdRating: rating ?? undefined,
+                    untappdRatingCount: ratingCount ?? undefined,
+                    positiveReviews: mergedReviews.length > 0 ? mergedReviews : undefined,
+                  },
+                  overrideAccess: false,
+                  user,
+                })
+              }
+              updated++
+              send('item', {
+                name: beer.name,
+                status: hasUntappd ? 'updated' : 'new',
+                message: `${hasUntappd ? 'Updated URL to' : 'Found'} ${result.url}${rating !== null ? `, rating: ${rating}` : ''}${ratingCount ? ` (${ratingCount.toLocaleString()} ratings)` : ''}${newReviews.length > 0 ? `, +${newReviews.length} reviews` : ''}`,
+                url: result.url,
+                rating,
+                ratingCount,
+                newReviews: newReviews.length,
+              })
+            } else {
+              // Multiple results - skip (needs manual selection)
+              skipped++
+              send('item', {
+                name: beer.name,
+                status: 'multiple',
+                message: `Found ${results.length} results - needs manual selection`,
+                results: results.map((r) => r.name),
+              })
+            }
           }
+        } catch (err: unknown) {
+          errors++
+          send('item', {
+            name: beer.name,
+            status: 'error',
+            message: err instanceof Error ? err.message : 'Unknown error',
+          })
         }
-
-        send('complete', {
-          success: true,
-          dryRun,
-          results: {
-            total,
-            refreshed,
-            updated,
-            skipped,
-            errors,
-          },
-        })
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : 'Sync failed'
-        send('error', { message })
-        send('complete', { success: false, error: message })
-      } finally {
-        controller.close()
       }
-    },
-  })
 
-  return new Response(stream, {
-    headers: {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      Connection: 'keep-alive',
-    },
+      send('complete', {
+        success: true,
+        dryRun,
+        results: {
+          total,
+          refreshed,
+          updated,
+          skipped,
+          errors,
+        },
+      })
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Sync failed'
+      send('error', { message })
+      send('complete', { success: false, error: message })
+    }
   })
 }

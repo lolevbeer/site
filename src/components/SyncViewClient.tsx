@@ -331,51 +331,35 @@ export const SyncViewClient: React.FC = () => {
           ) : (
             <>
               {/* URL Inputs */}
-              <div className="sync-view__url-field">
-                <label className="sync-view__url-label" htmlFor="dist-url-pa">
-                  Pennsylvania JSON URL
-                </label>
-                <div className="sync-view__url-row">
-                  <input
-                    id="dist-url-pa"
-                    type="text"
-                    className="sync-view__url-input"
-                    value={paUrl}
-                    onChange={(e) => setPaUrl(e.target.value)}
-                    placeholder="Paste URL..."
-                  />
-                  <Button
-                    onClick={() => importDistributors('pa')}
-                    disabled={!paUrl || distImporting !== null}
-                    buttonStyle="primary"
-                  >
-                    {distImporting === 'pa' ? 'Importing...' : 'Import PA'}
-                  </Button>
+              {(
+                [
+                  ['pa', 'Pennsylvania', paUrl, setPaUrl],
+                  ['oh', 'Ohio', ohUrl, setOhUrl],
+                ] as const
+              ).map(([region, label, url, setUrl]) => (
+                <div key={region} className="sync-view__url-field">
+                  <label className="sync-view__url-label" htmlFor={`dist-url-${region}`}>
+                    {label} JSON URL
+                  </label>
+                  <div className="sync-view__url-row">
+                    <input
+                      id={`dist-url-${region}`}
+                      type="text"
+                      className="sync-view__url-input"
+                      value={url}
+                      onChange={(e) => setUrl(e.target.value)}
+                      placeholder="Paste URL..."
+                    />
+                    <Button
+                      onClick={() => importDistributors(region)}
+                      disabled={!url || distImporting !== null}
+                      buttonStyle="primary"
+                    >
+                      {distImporting === region ? 'Importing...' : `Import ${region.toUpperCase()}`}
+                    </Button>
+                  </div>
                 </div>
-              </div>
-
-              <div className="sync-view__url-field">
-                <label className="sync-view__url-label" htmlFor="dist-url-oh">
-                  Ohio JSON URL
-                </label>
-                <div className="sync-view__url-row">
-                  <input
-                    id="dist-url-oh"
-                    type="text"
-                    className="sync-view__url-input"
-                    value={ohUrl}
-                    onChange={(e) => setOhUrl(e.target.value)}
-                    placeholder="Paste URL..."
-                  />
-                  <Button
-                    onClick={() => importDistributors('oh')}
-                    disabled={!ohUrl || distImporting !== null}
-                    buttonStyle="primary"
-                  >
-                    {distImporting === 'oh' ? 'Importing...' : 'Import OH'}
-                  </Button>
-                </div>
-              </div>
+              ))}
 
               <div className="sync-view__controls">
                 <Button onClick={saveDistributorUrls} disabled={urlsSaving} buttonStyle="secondary">
@@ -390,33 +374,7 @@ export const SyncViewClient: React.FC = () => {
               {dist.logs.length > 0 && distImporting && <LogFeed logs={dist.logs} />}
 
               {/* Distributor Import Results */}
-              {dist.results && (
-                <ImportResultsBanner
-                  title={`${dist.results.region} Import Results`}
-                  isError={
-                    dist.results.errors > 0 &&
-                    dist.results.imported === 0 &&
-                    dist.results.updated === 0
-                  }
-                  stats={[
-                    { count: dist.results.imported, label: 'imported', pillStyle: 'success' },
-                    {
-                      count: dist.results.updated ?? 0,
-                      label: 'updated',
-                      pillStyle: 'success',
-                      hideWhenZero: true,
-                    },
-                    { count: dist.results.skipped, label: 'skipped', pillStyle: 'light' },
-                    {
-                      count: dist.results.errors,
-                      label: 'errors',
-                      pillStyle: 'error',
-                      hideWhenZero: true,
-                    },
-                  ]}
-                  details={dist.results.details}
-                />
-              )}
+              {dist.results && <DistributorResults results={dist.results} />}
 
               {/* Lake Beverage CSV Upload */}
               <div className="sync-view__subsection">
@@ -447,33 +405,7 @@ export const SyncViewClient: React.FC = () => {
 
                 {lake.progress && <ImportProgress progress={lake.progress} />}
 
-                {lake.results && (
-                  <ImportResultsBanner
-                    title="NY Import Results"
-                    isError={
-                      lake.results.errors > 0 &&
-                      lake.results.imported === 0 &&
-                      lake.results.updated === 0
-                    }
-                    stats={[
-                      { count: lake.results.imported, label: 'imported', pillStyle: 'success' },
-                      {
-                        count: lake.results.updated ?? 0,
-                        label: 'updated',
-                        pillStyle: 'success',
-                        hideWhenZero: true,
-                      },
-                      { count: lake.results.skipped, label: 'skipped', pillStyle: 'light' },
-                      {
-                        count: lake.results.errors,
-                        label: 'errors',
-                        pillStyle: 'error',
-                        hideWhenZero: true,
-                      },
-                    ]}
-                    details={lake.results.details}
-                  />
-                )}
+                {lake.results && <DistributorResults results={lake.results} />}
               </div>
 
               {/* Fix Bad Coordinates Section */}
@@ -789,6 +721,20 @@ const LogFeed: React.FC<{ logs: ImportLogEntry[]; tall?: boolean }> = ({ logs, t
       </div>
     ))}
   </div>
+)
+
+const DistributorResults: React.FC<{ results: DistributorImportResult }> = ({ results }) => (
+  <ImportResultsBanner
+    title={`${results.region} Import Results`}
+    isError={results.errors > 0 && results.imported === 0 && results.updated === 0}
+    stats={[
+      { count: results.imported, label: 'imported', pillStyle: 'success' },
+      { count: results.updated ?? 0, label: 'updated', pillStyle: 'success', hideWhenZero: true },
+      { count: results.skipped, label: 'skipped', pillStyle: 'light' },
+      { count: results.errors, label: 'errors', pillStyle: 'error', hideWhenZero: true },
+    ]}
+    details={results.details}
+  />
 )
 
 /** Results banner: status Banner with count Pills, optional detail lines below */
