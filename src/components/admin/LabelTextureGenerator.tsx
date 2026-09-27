@@ -7,12 +7,12 @@
  * media collection, and wires them into the beer's labelBase /
  * labelMetalness / labelVideo / image fields (image stays editable so a
  * hand-shot photo can override the render).
- * Built from Payload UI primitives (Dropzone/FieldLabel/Button/Banner) so
+ * Built from Payload UI primitives (Dropzone/FieldLabel/FieldDescription/Button/Banner) so
  * it matches the rest of the admin. Source PDFs are not stored — the
  * generated files are the canonical output.
  */
-import { useRef, useState } from 'react'
-import { Banner, Button, Dropzone, FieldLabel, useField } from '@payloadcms/ui'
+import { useId, useRef, useState } from 'react'
+import { Banner, Button, Dropzone, FieldDescription, FieldLabel, useField } from '@payloadcms/ui'
 import { canvasToWebpBlob, processLabelPdfs } from './pdf-label-textures'
 
 /** Create a media doc from a blob; returns the new doc id. */
@@ -43,9 +43,19 @@ function PdfDropzone({
   onSelect: (file: File | null) => void
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
+  const inputId = useId()
   return (
-    <div style={{ flex: 1, minWidth: '240px' }}>
-      <FieldLabel label={label} />
+    // Same label-to-control rhythm as Payload's own fields (.field-type: column, --spacer-2 gap).
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 'var(--spacer-2)',
+        flex: 1,
+        minWidth: '240px',
+      }}
+    >
+      <FieldLabel as="label" htmlFor={inputId} label={label} />
       <Dropzone onChange={(files) => onSelect(files[0] ?? null)}>
         {/* Payload 4's default dropzone pads only block-wise; its own upload
             field insets content by --spacer-3, so match that (Dropzone takes no style). */}
@@ -55,6 +65,7 @@ function PdfDropzone({
           </Button>
         </div>
         <input
+          id={inputId}
           ref={inputRef}
           type="file"
           accept="application/pdf"
@@ -82,10 +93,8 @@ export function LabelTextureGenerator() {
   const busy = progress !== null
 
   const generate = async () => {
-    if (!artFile) {
-      setStatus({ type: 'danger', msg: 'Choose the label art PDF first' })
-      return
-    }
+    // The button stays disabled until the art PDF is chosen; this narrows the type.
+    if (!artFile) return
     setStatus(null)
     // Stage weights are rough wall-clock shares; the sprite loop (72 frames)
     // dominates and reports real per-frame progress.
@@ -136,13 +145,21 @@ export function LabelTextureGenerator() {
 
   return (
     <div className="field-type">
-      <FieldLabel label="3D label textures" />
-      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+      <FieldLabel as="h3" label="3D label textures" />
+      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
         <PdfDropzone label="Label art PDF" file={artFile} onSelect={setArtFile} />
         <PdfDropzone label="Metallic mask PDF (optional)" file={maskFile} onSelect={setMaskFile} />
-        <Button onClick={generate} disabled={busy}>
-          {busy ? 'Processing…' : 'Generate'}
+      </div>
+      {/* The action gets its own row under the inputs it consumes, and stays
+          disabled until the required art PDF is chosen. */}
+      <div style={{ display: 'flex', gap: 'var(--spacer-3)', alignItems: 'center' }}>
+        <Button onClick={generate} disabled={busy || !artFile} margin={false}>
+          {busy ? 'Generating…' : 'Generate label files'}
         </Button>
+        <FieldDescription
+          path="labelTextures"
+          description="Creates the label texture, metallic map, beer image, and menu sprite sheet."
+        />
       </div>
       {progress && (
         <div style={{ marginTop: '8px' }}>
