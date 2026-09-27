@@ -4,6 +4,8 @@ import {
   adminAccess,
   adminFieldAccess,
   adminOrSelfAccess,
+  adminOrSelfFieldAccess,
+  authenticatedAccess,
   hasRole,
   isAdmin,
   leadBartenderAccess,
@@ -22,7 +24,10 @@ export const Users: CollectionConfig = {
     useAsTitle: 'email',
   },
   access: {
-    read: adminOrSelfAccess,
+    // Every signed-in user can see who other staff are (name and email), so
+    // relationships such as Beers/Menus `updatedBy` show a name, not an ID.
+    // Roles, locations, and Slack IDs stay admin-or-self at the field level.
+    read: authenticatedAccess,
     create: leadBartenderAccess,
     update: adminOrSelfAccess,
     delete: adminAccess,
@@ -88,6 +93,7 @@ export const Users: CollectionConfig = {
           'Slack member ID (e.g. U01ABCDEF). Filled in automatically when the Slack profile email matches this account — set it manually only if the emails differ.',
       },
       access: {
+        read: adminOrSelfFieldAccess,
         // Self-claim is a system write (overrideAccess); only admins may
         // retarget an existing mapping, which would hand over this account.
         update: adminFieldAccess,
@@ -99,6 +105,7 @@ export const Users: CollectionConfig = {
       relationTo: 'locations',
       hasMany: true,
       access: {
+        read: adminOrSelfFieldAccess,
         // Lead bartenders may scope the bartenders they invite (capped by the
         // beforeChange hook to their own locations); only admins may re-scope
         // an existing user.
@@ -132,6 +139,7 @@ export const Users: CollectionConfig = {
           'Admins can manage users and all content. Event/Beer/Food Managers can manage their respective collections. Lead Bartenders can update line cleaning dates. Bartenders can update menus. Users can have multiple roles.',
       },
       access: {
+        read: adminOrSelfFieldAccess,
         // Lead bartenders can set roles on create (validated by hook to only allow 'bartender')
         // Only admins can change roles on existing users
         create: leadBartenderFieldAccess,

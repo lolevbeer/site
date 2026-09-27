@@ -93,10 +93,27 @@ export const adminFieldAccess: FieldAccess = ({ req: { user } }) => {
 }
 
 /**
+ * Access control: User must be authenticated
+ */
+export const authenticatedAccess: Access = ({ req: { user } }) => {
+  return Boolean(user)
+}
+
+/**
  * Field access control: User must be authenticated
  */
 export const authenticatedFieldAccess: FieldAccess = ({ req: { user } }) => {
   return Boolean(user)
+}
+
+/**
+ * Field access control: an admin, or the user whose own record this is.
+ * Payload loads `req.user` with overrideAccess and sets it before login's
+ * field reads, so users always see their own restricted fields.
+ */
+export const adminOrSelfFieldAccess: FieldAccess = ({ req: { user }, doc, id }) => {
+  if (isAdmin(user)) return true
+  return Boolean(user?.id) && (doc?.id ?? id) === user?.id
 }
 
 /**

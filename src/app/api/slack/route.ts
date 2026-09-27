@@ -547,13 +547,14 @@ async function submitInvite(
       return
     }
 
+    // As the inviter: every signed-in user may read other users' emails.
     const existing = await payload.find({
       collection: 'users',
       where: { email: { equals: email } },
       limit: 1,
       depth: 0,
-      // eslint-disable-next-line no-restricted-syntax -- system: lead bartenders can't read other users
-      overrideAccess: true,
+      user: inviter,
+      overrideAccess: false,
     })
     if (existing.docs[0]) {
       await updateView(

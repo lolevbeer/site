@@ -1,5 +1,5 @@
 import type { CollectionConfig, Access, Where } from 'payload'
-import { APIError } from 'payload'
+import { APIError, appendVersionToQueryKey } from 'payload'
 import type { User } from '@/src/payload-types'
 import { adminAccess, adminFieldAccess, getUserLocationIds, hasRole } from '@/src/access/roles'
 import { markLinesCleanedField } from './utils/markLinesCleanedField'
@@ -37,6 +37,33 @@ export const canUpdateMenus: Access = ({ req: { user } }) => {
   return false
 }
 
+/**
+ * Admins read every menu, drafts included; (lead) bartenders read drafts only
+ * at their assigned locations; everyone else reads published menus only.
+ */
+const canReadMenus = ({ user }: { user: User | null | undefined }): boolean | Where => {
+  if (hasRole(user, 'admin')) return true
+  if (hasRole(user, ['bartender', 'lead-bartender'])) {
+    return menusAtAssignedLocations(user)
+  }
+  return {
+    _status: {
+      equals: 'published',
+    },
+  }
+}
+
+/**
+ * Version history follows the same rule as `read`, mapped onto version
+ * documents (`version.location`, `version._status`), and stays behind
+ * sign-in: anonymous visitors never see past revisions.
+ */
+const canReadMenuVersions: Access = ({ req: { user } }) => {
+  if (!user) return false
+  const result = canReadMenus({ user })
+  return typeof result === 'object' ? appendVersionToQueryKey(result) : result
+}
+
 export const Menus: CollectionConfig = {
   slug: 'menus',
   admin: {
@@ -51,23 +78,8 @@ export const Menus: CollectionConfig = {
     },
   },
   access: {
-    read: ({ req: { user } }): boolean | Where => {
-      // Admins can read all menus (including drafts)
-      if (hasRole(user, 'admin')) return true
-      // Bartenders and lead bartenders can read drafts only for assigned locations.
-      if (hasRole(user, ['bartender', 'lead-bartender'])) {
-        return menusAtAssignedLocations(user)
-      }
-      // Public can only read published menus
-      return {
-        _status: {
-          equals: 'published',
-        },
-      }
-    },
-    // Payload 4 makes versions inherit `read`, which is public for published
-    // menus; keep version history (unpublished edits) behind sign-in as in v3.
-    readVersions: ({ req: { user } }) => Boolean(user),
+    read: ({ req: { user } }) => canReadMenus({ user }),
+    readVersions: canReadMenuVersions,
     create: adminAccess,
     update: canUpdateMenus,
     delete: adminAccess,

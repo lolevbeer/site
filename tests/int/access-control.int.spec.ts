@@ -75,6 +75,42 @@ describe('menu authorization', () => {
     expect(callAccess(canUpdateMenus, userWith(['admin']))).toBe(true)
     expect(callAccess(Menus.access?.read, userWith(['admin']))).toBe(true)
   })
+
+  it('scopes menu version history like menu reads, and never to anonymous visitors', () => {
+    const readVersions = Menus.access?.readVersions
+
+    expect(callAccess(readVersions, null)).toBe(false)
+    expect(callAccess(readVersions, userWith(['admin']))).toBe(true)
+    expect(callAccess(readVersions, userWith(['bartender']))).toBe(false)
+    expect(callAccess(readVersions, userWith(['bartender'], ['location-1']))).toEqual({
+      'version.location': { in: ['location-1'] },
+    })
+    expect(callAccess(readVersions, userWith(['event-manager']))).toEqual({
+      'version._status': { equals: 'published' },
+    })
+  })
+})
+
+describe('user directory visibility', () => {
+  it('lets every signed-in user read other users (so revisions show who saved them)', () => {
+    expect(callAccess(Users.access?.read, null)).toBe(false)
+    expect(callAccess(Users.access?.read, userWith(['bartender']))).toBe(true)
+  })
+
+  it.each(['roles', 'locations', 'slackUserId'])(
+    "keeps other users' %s visible only to admins and the user themselves",
+    (name) => {
+      const read = (findField(Users.fields, name).access as Record<string, unknown> | undefined)
+        ?.read
+      if (typeof read !== 'function') throw new Error(`Expected ${name} read access`)
+      const readAs = (user: User, docId: string) => read({ req: { user }, doc: { id: docId } })
+
+      expect(readAs(userWith(['admin']), 'someone-else')).toBe(true)
+      expect(readAs(userWith(['bartender']), 'user-id')).toBe(true)
+      expect(readAs(userWith(['bartender']), 'someone-else')).toBe(false)
+      expect(readAs(userWith(['beer-manager']), 'someone-else')).toBe(false)
+    },
+  )
 })
 
 describe('user assignment authorization', () => {
