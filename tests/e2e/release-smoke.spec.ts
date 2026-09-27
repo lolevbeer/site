@@ -56,7 +56,8 @@ test('the admin route redirects unauthenticated visitors to its labeled login fo
 
   await expect(page).toHaveURL(/\/admin\/login/)
   await expect(page.getByLabel(/email/i)).toBeVisible()
-  await expect(page.getByLabel(/password/i)).toBeVisible()
+  // Exact: Payload 4's "Show password" toggle button also matches /password/i.
+  await expect(page.getByLabel('Password', { exact: true })).toBeVisible()
 })
 
 test('an authenticated administrator can update only the seeded FAQ and observe the revalidated page', async ({
