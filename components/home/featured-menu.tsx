@@ -79,7 +79,6 @@ interface MenuItem {
   glass?: string
   fourPack?: string
   bottlePrice?: string
-  isJustReleased?: boolean
   /** Beer from another brewery */
   guestTap?: boolean
   /** Collaboration brew */
@@ -403,12 +402,6 @@ interface FeaturedMenuProps {
   labelVideos?: boolean
 }
 
-/** Check if a date is within the last N days */
-function isWithinDays(dateStr: string | undefined, days: number): boolean {
-  if (!dateStr) return false
-  return (Date.now() - new Date(dateStr).getTime()) / MS_PER_DAY <= days
-}
-
 /** Stable key extractor for useAnimatedList — module-level so the hook's memos can skip work */
 const getMenuItemKey = (item: MenuItem) => item.variant
 
@@ -429,7 +422,7 @@ function convertMenuItems(menuData: Menu, labelVideos = false): MenuItem[] {
   const location = typeof menuData.location === 'object' ? menuData.location : null
   const locationSlug = location?.slug
 
-  const items = menuData.items
+  return menuData.items
     .map((item, index) => {
       // Try to extract beer first
       const beer = extractBeerFromMenuItem(item)
@@ -534,12 +527,6 @@ function convertMenuItems(menuData: Menu, labelVideos = false): MenuItem[] {
       }
     })
     .filter((item): item is NonNullable<typeof item> => item !== null && !item.isEmpty)
-
-  // "Just Released" is automatic: beers created within the last 7 days.
-  return items.map((item) => ({
-    ...item,
-    isJustReleased: isWithinDays(item.createdAt, 7),
-  }))
 }
 
 /** Filter items by location (returns all if 'all' or unspecified) */

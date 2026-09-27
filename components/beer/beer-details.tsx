@@ -61,20 +61,6 @@ interface BeerDetailsProps {
   className?: string
 }
 
-function getPricingInfo(beer: PayloadBeer): {
-  draftPrice?: number
-  singlePrice?: number | null
-  fourPackPrice?: number | null
-  bottlePrice?: number | null
-} {
-  return {
-    draftPrice: beer.draftPrice,
-    singlePrice: beer.canSingle,
-    fourPackPrice: beer.fourPack,
-    bottlePrice: beer.bottlePrice,
-  }
-}
-
 function SpecificationRow({
   label,
   value,
@@ -145,7 +131,6 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
   // When present, a spinning 3D can replaces the flat image below.
   const canBaseUrl = getMediaUrl(beer.labelBase)
   const canMetalnessUrl = getMediaUrl(beer.labelMetalness)
-  const pricing = getPricingInfo(beer)
   const styleName = getStyleName(beer.style)
   const packagingType = getPackagingType(beer)
   const [tapLocations, setTapLocations] = useState<string[]>([])
@@ -397,26 +382,22 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
             </Card>
 
             {/* Pricing */}
-            {((tapLocations.length > 0 && pricing.draftPrice) ||
-              (canLocations.length > 0 && (pricing.fourPackPrice || pricing.bottlePrice))) && (
+            {((tapLocations.length > 0 && beer.draftPrice) ||
+              (canLocations.length > 0 && (beer.fourPack || beer.bottlePrice))) && (
               <Card className="shadow-none border-0 p-0 bg-transparent">
                 <CardHeader className="p-0 pb-4">
                   <CardTitle className="text-lg flex items-center gap-2">Pricing</CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
                   <div className="space-y-2">
-                    {tapLocations.length > 0 && pricing.draftPrice && (
-                      <p className="text-sm text-muted-foreground">• Draft ${pricing.draftPrice}</p>
+                    {tapLocations.length > 0 && beer.draftPrice && (
+                      <p className="text-sm text-muted-foreground">• Draft ${beer.draftPrice}</p>
                     )}
-                    {canLocations.length > 0 && pricing.fourPackPrice && (
-                      <p className="text-sm text-muted-foreground">
-                        • 4 Pack ${pricing.fourPackPrice}
-                      </p>
+                    {canLocations.length > 0 && beer.fourPack && (
+                      <p className="text-sm text-muted-foreground">• 4 Pack ${beer.fourPack}</p>
                     )}
-                    {canLocations.length > 0 && pricing.bottlePrice && (
-                      <p className="text-sm text-muted-foreground">
-                        • Bottle ${pricing.bottlePrice}
-                      </p>
+                    {canLocations.length > 0 && beer.bottlePrice && (
+                      <p className="text-sm text-muted-foreground">• Bottle ${beer.bottlePrice}</p>
                     )}
                   </div>
                 </CardContent>

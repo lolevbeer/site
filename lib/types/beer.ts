@@ -92,7 +92,8 @@ export interface Beer {
   hops?: string
   /** Tap/draft number (position in menu) */
   tap?: number | string
-  isJustReleased?: boolean
+  /** ISO creation date; drives the automatic "Just Released" badge */
+  createdAt?: string
   /** Beer from another brewery */
   guestTap?: boolean
   /** Collaboration brew */
@@ -103,19 +104,29 @@ export interface Beer {
   availability: BeerAvailability
 }
 
+/** Beers created within this many days get the automatic "Just Released" badge. */
+export const JUST_RELEASED_DAYS = 7
+
+/** Whether a beer created at `createdAt` still counts as just released. Evaluate at
+ *  render time, not inside cached data, so "now" is never frozen. */
+export function isJustReleased(createdAt: string | undefined, now = Date.now()): boolean {
+  if (!createdAt) return false
+  return now - new Date(createdAt).getTime() <= JUST_RELEASED_DAYS * 24 * 60 * 60 * 1000
+}
+
 /**
  * Get the badge label for a beer. Collab and Guest Tap take priority over Just Released.
  * Returns null if no badge should be shown.
  */
 export function getBeerBadgeLabel(
-  beer: Pick<Beer, 'collab' | 'collabBrewery' | 'guestTap' | 'isJustReleased'>,
+  beer: Pick<Beer, 'collab' | 'collabBrewery' | 'guestTap' | 'createdAt'>,
 ): string | null {
   if (beer.collab) {
     const brewery = beer.collabBrewery?.trim()
     return brewery ? `Collab · ${brewery}` : 'Collab'
   }
   if (beer.guestTap) return 'Guest Tap'
-  if (beer.isJustReleased) return 'Just Released'
+  if (isJustReleased(beer.createdAt)) return 'Just Released'
   return null
 }
 
