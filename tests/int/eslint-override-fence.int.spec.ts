@@ -2,7 +2,7 @@
 /**
  * Guards the ESLint identity fence in eslint.config.mjs: `overrideAccess: true`
  * is only allowed in allowlisted system paths, and every Payload Local API call
- * must state `overrideAccess` explicitly (an omitted flag defaults to false on Payload 4, true on Payload 3).
+ * must state `overrideAccess` explicitly (see AGENTS.md, Access control).
  */
 import path from 'node:path'
 import { ESLint } from 'eslint'

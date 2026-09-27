@@ -113,9 +113,8 @@ describe('recurring food compatibility reads', () => {
 })
 
 /**
- * The Local API's omitted `overrideAccess` default differs by version (false
- * on Payload 4, true on Payload 3), so each inner read must receive the
- * caller's value literally.
+ * Each inner read must receive the caller's `overrideAccess` literally, never
+ * an omitted flag (see AGENTS.md, Access control).
  */
 describe('recurring food access identity', () => {
   function normalizedPayload() {
