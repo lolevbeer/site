@@ -46,6 +46,7 @@ type Week = (typeof weeks)[number]
 
 type LocationSchedule = Partial<Record<Day, Partial<Record<Week, string | null>>>>
 type SchedulesData = Record<string, LocationSchedule>
+const EMPTY_SCHEDULE: LocationSchedule = {}
 
 /** Shared empty result, so deriving one keeps a stable identity across renders. */
 const EMPTY_SCHEDULES: SchedulesData = {}
@@ -493,7 +494,7 @@ const LocationGrid: React.FC<LocationGridProps> = ({
   onYearChange,
   previousYearSlots,
 }) => {
-  const locationSchedule = schedules[location.id] || {}
+  const locationSchedule = schedules[location.id] ?? EMPTY_SCHEDULE
 
   // Days with no vendors all year (usually Sun/Mon) shrink so the busy days
   // get the width; the same pass answers whether week 5 is used anywhere.

@@ -8,6 +8,7 @@ import {
   generateLocalBusinessSchemas,
   generateOrganizationSchema,
 } from '@/lib/utils/local-business-schema'
+import type { PayloadLocation } from '@/lib/types/location'
 
 /** 4pm–10pm America/New_York on 2000-01-01 (EST, UTC−5) stored the way Payload time fields arrive. */
 const lawrenceville = {
@@ -26,7 +27,7 @@ const lawrenceville = {
   monday: { open: '2000-01-01T21:00:00.000Z', close: '2000-01-02T03:00:00.000Z' },
   tuesday: { open: '2000-01-01T21:00:00.000Z', close: '2000-01-02T03:00:00.000Z' },
   coordinates: [-79.960098, 40.465372],
-} as any
+} as PayloadLocation
 
 describe('generateLocalBusinessSchema', () => {
   it('uses schema.org Brewery, not BreweryOrDistillery', () => {
@@ -78,7 +79,8 @@ describe('generateLocalBusinessSchema', () => {
   it('reads GeoJSON-shaped Payload points', () => {
     const schema = generateLocalBusinessSchema({
       ...lawrenceville,
-      coordinates: { type: 'Point', coordinates: [-80.1, 40.8] },
+      // Raw DB reads can return GeoJSON, which Payload's generated type doesn't declare.
+      coordinates: { type: 'Point', coordinates: [-80.1, 40.8] } as unknown as PayloadLocation['coordinates'],
     })
     expect(schema.geo).toEqual({
       '@type': 'GeoCoordinates',

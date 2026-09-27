@@ -35,8 +35,8 @@ async function resetPassword() {
       console.log('Login successful!')
       console.log(`User: ${result.user?.email}`)
       console.log(`Token: ${result.token?.substring(0, 20)}...`)
-    } catch (err: any) {
-      console.error('Login failed:', err.message)
+    } catch (err: unknown) {
+      console.error('Login failed:', err instanceof Error ? err.message : err)
     }
     process.exit(0)
   }
@@ -72,7 +72,7 @@ async function resetPassword() {
       process.exit(1)
     }
     const user = users.docs[0]
-    console.log(`Before: loginAttempts=${user.loginAttempts}, lockUntil=${(user as any).lockUntil}`)
+    console.log(`Before: loginAttempts=${user.loginAttempts}, lockUntil=${user.lockUntil}`)
 
     // Directly clear lock fields
     const updated = await payload.update({
@@ -81,9 +81,9 @@ async function resetPassword() {
       data: {
         lockUntil: null,
         loginAttempts: 0,
-      } as any,
+      },
     })
-    console.log(`After: loginAttempts=${updated.loginAttempts}, lockUntil=${(updated as any).lockUntil}`)
+    console.log(`After: loginAttempts=${updated.loginAttempts}, lockUntil=${updated.lockUntil}`)
     console.log(`Unlocked user: ${unlockEmail}`)
     process.exit(0)
   }

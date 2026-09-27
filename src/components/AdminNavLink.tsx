@@ -1,17 +1,18 @@
 'use client'
 
 import { useEffect, ReactNode, useRef } from 'react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 
 export function AdminNavLink({ children }: { children: ReactNode }) {
   const pathname = usePathname()
+  const router = useRouter()
   const handlerRef = useRef<((e: Event) => void) | null>(null)
 
   useEffect(() => {
     const handleClick = (e: Event) => {
       e.preventDefault()
       e.stopPropagation()
-      window.location.href = '/'
+      router.push('/')
     }
     handlerRef.current = handleClick
 
@@ -31,7 +32,7 @@ export function AdminNavLink({ children }: { children: ReactNode }) {
         homeElement.removeEventListener('click', handlerRef.current)
       }
     }
-  }, [pathname])
+  }, [pathname, router])
 
   return <>{children}</>
 }
