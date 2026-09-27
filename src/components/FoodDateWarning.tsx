@@ -1,9 +1,10 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { Banner, useDocumentInfo, useFormFields } from '@payloadcms/ui'
+import { useDocumentInfo, useFormFields } from '@payloadcms/ui'
 import { getFoodOnDate } from '@/src/actions/admin-data'
 import { logger } from '@/lib/utils/logger'
+import { NoteBanner } from '@/src/components/admin/NoteBanner'
 import {
   getAdminRelationshipID,
   type AdminRelationshipValue,
@@ -79,21 +80,15 @@ export const FoodDateWarning: React.FC = () => {
   }
 
   return (
-    // .field-type gives the note Payload's standard space before the next field.
-    <div className="field-type">
-      <Banner type="warning">
-        <strong>Note:</strong>{' '}
-        <span>
-          {warnings.map((w, i) => (
-            <span key={i}>
-              {i > 0 && ', '}
-              <strong>{w.vendorName}</strong>
-              {w.type === 'recurring' ? ' (recurring)' : ' (scheduled)'}
-            </span>
-          ))}{' '}
-          already on this date.
+    <NoteBanner type="warning">
+      {warnings.map((w, i) => (
+        <span key={i}>
+          {i > 0 && ', '}
+          <strong>{w.vendorName}</strong>
+          {w.type === 'recurring' ? ' (recurring)' : ' (scheduled)'}
         </span>
-      </Banner>
-    </div>
+      ))}{' '}
+      already on this date.
+    </NoteBanner>
   )
 }
