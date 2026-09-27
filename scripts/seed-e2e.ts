@@ -31,6 +31,7 @@ export async function runSeed(): Promise<void> {
 
   const faqs = await payload.find({
     collection: 'faqs',
+    overrideAccess: true,
     where: { question: { equals: 'Production readiness fixture' } },
     limit: 2,
   })
@@ -40,29 +41,34 @@ export async function runSeed(): Promise<void> {
 
   const users = await payload.find({
     collection: 'users',
+    overrideAccess: true,
     where: { email: { equals: email } },
     limit: 1,
   })
   const admin = users.docs[0]
     ? await payload.update({
         collection: 'users',
+        overrideAccess: true,
         id: users.docs[0].id,
         data: { password, roles: ['admin'] },
       })
     : await payload.create({
         collection: 'users',
+        overrideAccess: true,
         data: { email, password, roles: ['admin'] },
       })
 
   const faq = faqs.docs[0]
     ? await payload.update({
         collection: 'faqs',
+        overrideAccess: true,
         id: faqs.docs[0].id,
         data: { active: true, answer: 'Initial release fixture answer', order: 9999 },
         context: { skipRevalidate: true },
       })
     : await payload.create({
         collection: 'faqs',
+        overrideAccess: true,
         data: {
           active: true,
           answer: 'Initial release fixture answer',

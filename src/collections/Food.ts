@@ -45,9 +45,12 @@ export const Food: CollectionConfig = {
         beforeChange: [
           async ({ data, req }) => {
             if (data?.vendor) {
+              // As the editor; food vendors (and their name) are publicly readable.
               const vendorDoc = await req.payload.findByID({
                 collection: 'food-vendors',
                 id: typeof data.vendor === 'object' ? data.vendor.id : data.vendor,
+                req,
+                overrideAccess: false,
               })
               return vendorDoc?.name || ''
             }

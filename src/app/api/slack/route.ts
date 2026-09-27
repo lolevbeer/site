@@ -164,6 +164,7 @@ async function resolvePayloadUser(
     where: { slackUserId: { equals: slackUserId } },
     limit: 1,
     depth: 0,
+    // eslint-disable-next-line no-restricted-syntax -- system: no identity exists yet
     overrideAccess: true,
   })
   if (byId.docs[0]) return byId.docs[0] as TypedUser
@@ -176,6 +177,7 @@ async function resolvePayloadUser(
     where: { email: { equals: email } },
     limit: 1,
     depth: 0,
+    // eslint-disable-next-line no-restricted-syntax -- system: no identity exists yet
     overrideAccess: true,
   })
   const user = byEmail.docs[0]
@@ -187,6 +189,7 @@ async function resolvePayloadUser(
       id: user.id,
       data: { slackUserId },
       depth: 0,
+      // eslint-disable-next-line no-restricted-syntax -- system: slackUserId update is admin-only field
       overrideAccess: true,
     })
   } catch (error) {
@@ -393,6 +396,9 @@ async function sendPasswordResetLink(
       collection: 'users',
       data: { email: user.email },
       disableEmail: true,
+      // forgotPassword has no access rule to override (it's the public reset
+      // flow); false only keeps the call explicit.
+      overrideAccess: false,
     })
     // forgotPassword returns null for an unknown address rather than throwing.
     // resolvePayloadUser already found this user, so null here means a race
@@ -546,6 +552,7 @@ async function submitInvite(
       where: { email: { equals: email } },
       limit: 1,
       depth: 0,
+      // eslint-disable-next-line no-restricted-syntax -- system: lead bartenders can't read other users
       overrideAccess: true,
     })
     if (existing.docs[0]) {
@@ -583,6 +590,9 @@ async function submitInvite(
       collection: 'users',
       data: { email },
       disableEmail: true,
+      // forgotPassword has no access rule to override (it's the public reset
+      // flow); false only keeps the call explicit.
+      overrideAccess: false,
     })
     if (!token) {
       await updateView(
@@ -746,10 +756,12 @@ async function handleTypeahead(interaction: SlackInteractionPayload): Promise<Ne
     // private_metadata is now `<id>|<updatedAt>`; only the id is needed here.
     const { menuId } = parseMenuMetadata(interaction.view.private_metadata ?? '')
     const payload = await getPayload({ config })
-    // ponytail: this one stays a system read. It fires on every keystroke, and
-    // resolvePayloadUser costs a users query — while the data it returns
-    // (beer/product names, and the menu the user already has open) is public
-    // catalog content. The submit that follows is access-checked for real.
+    // Searched as the requester, so the options are exactly what they may read
+    // (bartenders see every beer; others only public ones). Costs one indexed
+    // users query per keystroke. An unlinked Slack user gets nothing — they
+    // couldn't submit the modal anyway.
+    const user = await resolvePayloadUser(payload, interaction.user?.id)
+    if (!user) return NextResponse.json({ options: [] })
 
     const search = (collection: 'beers' | 'products', limit: number) =>
       payload.find({
@@ -762,6 +774,8 @@ async function handleTypeahead(interaction: SlackInteractionPayload): Promise<Ne
         depth: 0,
         select: { name: true }, // only name (+ id) feeds the option list
         sort: 'name',
+        user,
+        overrideAccess: false,
       })
 
     // The menu read only feeds the exclusion filter, so all three queries run in
@@ -770,10 +784,14 @@ async function handleTypeahead(interaction: SlackInteractionPayload): Promise<Ne
     // exclude up to 90 matches — 150/120 leaves ≥50/≥25 after exclusion.
     const [menu, beers, products] = await Promise.all([
       menuId
-        ? payload.findByID({ collection: 'menus', id: menuId, depth: 0 }).catch((error) => {
-            logger.error('Slack typeahead menu lookup failed:', error)
-            return null
-          })
+        ? payload
+            // A menu outside the requester's locations throws here; the catch
+            // degrades to no exclusions rather than an empty list.
+            .findByID({ collection: 'menus', id: menuId, depth: 0, user, overrideAccess: false })
+            .catch((error) => {
+              logger.error('Slack typeahead menu lookup failed:', error)
+              return null
+            })
         : null,
       search('beers', 150),
       search('products', 120),
@@ -875,6 +893,9 @@ async function handleSubmit(interaction: SlackInteractionPayload): Promise<NextR
       // draft exists", waving the guard below through and force-publishing over
       // the very admin changes it exists to protect. Genuine failures now reach
       // the outer catch and become a retry message instead.
+      //
+      // Read as the requester: a menu outside their locations (scope changed
+      // since the modal opened) reads as null and gets the not-published reply.
       const [published, latest] = await Promise.all([
         payload.findByID({
           collection: 'menus',
@@ -882,6 +903,8 @@ async function handleSubmit(interaction: SlackInteractionPayload): Promise<NextR
           depth: 0,
           draft: false,
           disableErrors: true,
+          user,
+          overrideAccess: false,
         }),
         payload.findByID({
           collection: 'menus',
@@ -889,6 +912,8 @@ async function handleSubmit(interaction: SlackInteractionPayload): Promise<NextR
           depth: 0,
           draft: true,
           disableErrors: true,
+          user,
+          overrideAccess: false,
         }),
       ])
 

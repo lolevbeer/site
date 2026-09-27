@@ -70,6 +70,8 @@ export async function submitJobApplication(input: unknown): Promise<SubmitJobApp
       },
       limit: 1,
       depth: 1,
+      // Anonymous visitor: jobs read access already limits this to active openings.
+      overrideAccess: false,
     })
     const job = jobs.docs[0]
     if (!job) return fail('That opening is no longer listed.')

@@ -3,7 +3,7 @@
  * beer page (`/beer/[slug]`), not just the beers list.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { Payload } from 'payload'
+import type { Payload, PayloadRequest } from 'payload'
 
 const revalidatePath = vi.fn()
 vi.mock('next/cache', () => ({
@@ -15,6 +15,8 @@ vi.mock('@/lib/utils/logger', () => ({
 
 import { revalidateBeerPageForReview } from '@/src/utils/revalidate-beer-page'
 
+const req = { context: {} } as unknown as PayloadRequest
+
 describe('revalidateBeerPageForReview', () => {
   beforeEach(() => {
     revalidatePath.mockReset()
@@ -25,6 +27,7 @@ describe('revalidateBeerPageForReview', () => {
     await revalidateBeerPageForReview(
       { findByID } as unknown as Payload,
       { id: 'beer-1', slug: 'akko' },
+      req,
     )
 
     expect(findByID).not.toHaveBeenCalled()
@@ -33,10 +36,11 @@ describe('revalidateBeerPageForReview', () => {
 
   it('looks up the slug when the review only stores a beer id', async () => {
     const findByID = vi.fn(async () => ({ slug: 'akko' }))
-    await revalidateBeerPageForReview({ findByID } as unknown as Payload, 'beer-1')
+    await revalidateBeerPageForReview({ findByID } as unknown as Payload, 'beer-1', req)
 
+    // System read inside the review's save: sees drafts, joins the transaction.
     expect(findByID).toHaveBeenCalledWith(
-      expect.objectContaining({ collection: 'beers', id: 'beer-1' }),
+      expect.objectContaining({ collection: 'beers', id: 'beer-1', overrideAccess: true, req }),
     )
     expect(revalidatePath).toHaveBeenCalledWith('/beer/akko')
   })
@@ -46,7 +50,7 @@ describe('revalidateBeerPageForReview', () => {
       throw new Error('not found')
     })
     await expect(
-      revalidateBeerPageForReview({ findByID } as unknown as Payload, 'missing'),
+      revalidateBeerPageForReview({ findByID } as unknown as Payload, 'missing', req),
     ).resolves.toBeUndefined()
     expect(revalidatePath).not.toHaveBeenCalled()
   })

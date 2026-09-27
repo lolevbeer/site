@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import type { User } from '@/src/payload-types'
 import { Users } from '@/src/collections/Users'
 import { Menus, canUpdateMenus } from '@/src/collections/Menus'
-import { Beers, canReadBeers } from '@/src/collections/Beers'
 import { Events } from '@/src/collections/Events'
 import { DonationRequests } from '@/src/collections/DonationRequests'
 import { Jobs } from '@/src/collections/Jobs'
@@ -10,6 +9,7 @@ import { JobApplications } from '@/src/collections/JobApplications'
 import { FoodVendors } from '@/src/collections/FoodVendors'
 import { Locations } from '@/src/collections/Locations'
 import { SiteContent } from '@/src/globals/SiteContent'
+import { RecurringFood } from '@/src/globals/RecurringFood'
 import { canRunUntappdSync } from '@/src/endpoints/sync-untappd-ratings'
 import { getAdminRelationshipID } from '@/src/components/admin/relationship-value'
 import { isFoodManager } from '@/src/access/roles'
@@ -181,14 +181,7 @@ describe('sync endpoint authorization', () => {
 })
 
 describe('draft and sensitive field visibility', () => {
-  it('returns only published beers unless the user manages beer content', () => {
-    const publishedOnly = { _status: { equals: 'published' } }
-
-    expect(callAccess(canReadBeers, null)).toEqual(publishedOnly)
-    expect(callAccess(Beers.access?.read, userWith(['bartender']))).toEqual(publishedOnly)
-    expect(callAccess(canReadBeers, userWith(['beer-manager']))).toBe(true)
-    expect(callAccess(canReadBeers, userWith(['admin']))).toBe(true)
-  })
+  // Beer read access is covered in beer-read-access.int.spec.ts.
 
   it('keeps food vendor contacts available to staff but out of public responses', () => {
     for (const name of ['email', 'phone']) {
@@ -255,6 +248,13 @@ describe('jobs and applications', () => {
     expect(callAccess(JobApplications.access?.create, null)).toBe(false)
     expect(callAccess(JobApplications.access?.read, null)).toBe(false)
     expect(callAccess(JobApplications.access?.read, userWith(['admin']))).toBe(true)
+  })
+})
+
+describe('recurring food schedule', () => {
+  it('lets anyone read the schedule, since /food and the homepage publish it', () => {
+    expect(callAccess(RecurringFood.access?.read, null)).toBe(true)
+    expect(callAccess(RecurringFood.access?.read, userWith(['bartender']))).toBe(true)
   })
 })
 

@@ -125,6 +125,20 @@ describe('submitDonationRequest', () => {
     )
   })
 
+  it('reads taprooms anonymously and writes with the system override', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(`${TODAY}T12:00:00-04:00`))
+    try {
+      await submitDonationRequest(valid())
+    } finally {
+      vi.useRealTimers()
+    }
+    const locationsRead = find.mock.calls.find(([args]) => args.collection === 'locations')
+    expect(locationsRead?.[0]).toMatchObject({ overrideAccess: false })
+    expect(create).toHaveBeenCalledTimes(1)
+    expect(create.mock.calls[0][0]).toMatchObject({ overrideAccess: true })
+  })
+
   it('returns ok false for a non-object without throwing', async () => {
     const result = await submitDonationRequest(null)
     expect(result.ok).toBe(false)

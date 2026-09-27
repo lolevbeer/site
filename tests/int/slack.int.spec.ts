@@ -5,7 +5,7 @@
  * publish/publishing/error views). All pure — no Payload boot.
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from 'vitest'
 import crypto from 'crypto'
 import {
   verifySlackSignature,
@@ -524,5 +524,194 @@ describe('publish / publishing / error views', () => {
     expect(view.type).toBe('modal')
     expect(view.title.text).toBe('Publish failed')
     expect(view.blocks[0].text.text).toBe('Failed &amp; &lt;broke&gt;')
+  })
+})
+
+/**
+ * Route-level identity: every Local API read the Slack bot makes on a user's
+ * behalf runs as that user (`overrideAccess: false` + `user`), while the
+ * identity bootstrap in resolvePayloadUser stays an explicit system read.
+ * doMock + dynamic import keep these mocks out of the pure tests above.
+ */
+describe('Slack route acts as the mapped Payload user', () => {
+  const bartender = {
+    id: 'u1',
+    email: 'bar@example.com',
+    roles: ['bartender'],
+    locations: ['loc1'],
+  }
+  const afterFns: Array<() => Promise<unknown>> = []
+  const find = vi.fn()
+  const findByID = vi.fn()
+  const update = vi.fn()
+  let POST: (request: any) => Promise<Response>
+
+  beforeAll(async () => {
+    vi.doMock('next/server', async (importOriginal) => ({
+      ...(await importOriginal<typeof import('next/server')>()),
+      after: (fn: () => Promise<unknown>) => {
+        afterFns.push(fn)
+      },
+    }))
+    vi.doMock('payload', async (importOriginal) => ({
+      ...(await importOriginal<typeof import('payload')>()),
+      getPayload: vi.fn(async () => ({ find, findByID, update })),
+    }))
+    vi.doMock('@/src/payload.config', () => ({ default: {} }))
+    vi.doMock('@/src/utils/slack-api', () => ({ slackApi: vi.fn(async () => ({ ok: true })) }))
+    vi.doMock('@/lib/utils/logger', () => ({
+      logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
+    }))
+    vi.doMock('@/lib/config/server-env', () => ({
+      readServerEnvironment: () => ({ slackSigningSecret: SECRET, slackBotToken: 'xoxb-test' }),
+    }))
+    ;({ POST } = (await import('@/src/app/api/slack/route')) as any)
+  })
+
+  afterAll(() => {
+    vi.doUnmock('next/server')
+    vi.doUnmock('payload')
+    vi.doUnmock('@/src/payload.config')
+    vi.doUnmock('@/src/utils/slack-api')
+    vi.doUnmock('@/lib/utils/logger')
+    vi.doUnmock('@/lib/config/server-env')
+    vi.unstubAllGlobals()
+  })
+
+  beforeEach(() => {
+    afterFns.length = 0
+    find.mockReset()
+    findByID.mockReset()
+    update.mockReset()
+    // users lookup by slackUserId → the bartender; catalog searches → empty.
+    find.mockImplementation(async ({ collection }: { collection: string }) =>
+      collection === 'users' ? { docs: [bartender] } : { docs: [] },
+    )
+    findByID.mockResolvedValue(makeMenu({ id: 'menu1', location: 'loc1' }))
+    update.mockResolvedValue({})
+  })
+
+  /** A Slack-signed interactivity request carrying `interaction` as its payload. */
+  function interactionRequest(interaction: Record<string, unknown>) {
+    const rawBody = new URLSearchParams({ payload: JSON.stringify(interaction) }).toString()
+    const ts = String(Math.floor(Date.now() / 1000))
+    const headers = new Headers({
+      'x-slack-request-timestamp': ts,
+      'x-slack-signature': sign(ts, rawBody),
+    })
+    return { text: async () => rawBody, headers }
+  }
+
+  const callsFor = (mock: ReturnType<typeof vi.fn>, collection: string) =>
+    mock.mock.calls.map(([args]) => args).filter((args) => args.collection === collection)
+
+  it('resolves the Slack user with an explicit system read', async () => {
+    await POST(
+      interactionRequest({
+        type: 'block_suggestion',
+        user: { id: 'U1' },
+        action_id: SLACK_IDS.actionAddProducts,
+        value: 'lup',
+        view: { callback_id: SLACK_IDS.callbackMenuEdit, private_metadata: 'menu1|x' },
+      }),
+    )
+    const [lookup] = callsFor(find, 'users')
+    expect(lookup).toMatchObject({
+      where: { slackUserId: { equals: 'U1' } },
+      overrideAccess: true,
+    })
+  })
+
+  it('claims slackUserId via email with explicit system reads/writes', async () => {
+    find.mockImplementation(async ({ collection, where }: any) =>
+      collection !== 'users' ? { docs: [] } : where.email ? { docs: [bartender] } : { docs: [] },
+    )
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({
+        ok: true,
+        json: async () => ({ ok: true, user: { profile: { email: 'bar@example.com' } } }),
+      })),
+    )
+    await POST(
+      interactionRequest({
+        type: 'block_suggestion',
+        user: { id: 'U1' },
+        action_id: SLACK_IDS.actionAddProducts,
+        value: 'lup',
+        view: { callback_id: SLACK_IDS.callbackMenuEdit, private_metadata: 'menu1|x' },
+      }),
+    )
+    vi.unstubAllGlobals()
+    const users = callsFor(find, 'users')
+    expect(users).toHaveLength(2)
+    for (const call of users) expect(call.overrideAccess).toBe(true)
+    expect(callsFor(update, 'users')[0]).toMatchObject({
+      data: { slackUserId: 'U1' },
+      overrideAccess: true,
+    })
+  })
+
+  it('runs the typeahead catalog and menu reads as the Slack user', async () => {
+    await POST(
+      interactionRequest({
+        type: 'block_suggestion',
+        user: { id: 'U1' },
+        action_id: SLACK_IDS.actionAddProducts,
+        value: 'lup',
+        view: { callback_id: SLACK_IDS.callbackMenuEdit, private_metadata: 'menu1|x' },
+      }),
+    )
+    const reads = [...callsFor(find, 'beers'), ...callsFor(find, 'products')]
+    expect(reads).toHaveLength(2)
+    for (const call of reads) {
+      expect(call).toMatchObject({ overrideAccess: false, user: bartender })
+    }
+    expect(callsFor(findByID, 'menus')[0]).toMatchObject({
+      id: 'menu1',
+      overrideAccess: false,
+      user: bartender,
+    })
+  })
+
+  it('serves no typeahead options to an unlinked Slack user', async () => {
+    find.mockResolvedValue({ docs: [] })
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({ ok: true, json: async () => ({ ok: false }) })),
+    )
+    const response = await POST(
+      interactionRequest({
+        type: 'block_suggestion',
+        user: { id: 'U404' },
+        action_id: SLACK_IDS.actionAddProducts,
+        value: 'lup',
+        view: { callback_id: SLACK_IDS.callbackMenuEdit, private_metadata: 'menu1|x' },
+      }),
+    )
+    vi.unstubAllGlobals()
+    expect(await response.json()).toEqual({ options: [] })
+    expect(callsFor(find, 'beers')).toHaveLength(0)
+  })
+
+  it('reads the published and draft menu as the Slack user on submit', async () => {
+    await POST(
+      interactionRequest({
+        type: 'view_submission',
+        user: { id: 'U1' },
+        view: {
+          id: 'V1',
+          callback_id: SLACK_IDS.callbackMenuEdit,
+          private_metadata: 'menu1|2026-07-18T00:00:00.000Z',
+          state: { values: {} },
+        },
+      }),
+    )
+    for (const fn of afterFns) await fn()
+    const reads = callsFor(findByID, 'menus')
+    expect(reads.map((call) => call.draft).sort()).toEqual([false, true])
+    for (const call of reads) {
+      expect(call).toMatchObject({ overrideAccess: false, user: bartender })
+    }
   })
 })

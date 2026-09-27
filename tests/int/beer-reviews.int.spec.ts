@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { Payload } from 'payload'
+import type { Payload, PayloadRequest } from 'payload'
 import { getPublicBeerReviews, pruneLegacyReview, syncBeerReviews } from '@/src/utils/beer-reviews'
 
 function payloadWith(existingDocs: unknown[] = []) {
@@ -14,6 +14,10 @@ function payloadWith(existingDocs: unknown[] = []) {
   }
 }
 
+// Stand-in for the hook's request: forwarding it keeps the helper's writes
+// inside the save transaction that triggered them.
+const req = { context: {} } as unknown as PayloadRequest
+
 const sourceReview = {
   username: 'Reviewer',
   rating: 4.5,
@@ -25,11 +29,14 @@ const sourceReview = {
 
 describe('beer review normalization', () => {
   it('creates a native approved review from legacy JSON', async () => {
-    const { payload, create } = payloadWith()
+    const { payload, create, find } = payloadWith()
 
     await expect(
-      syncBeerReviews({ beerId: 'beer-1', payload, reviews: [sourceReview] }),
+      syncBeerReviews({ beerId: 'beer-1', payload, req, reviews: [sourceReview] }),
     ).resolves.toBe(1)
+    expect(find).toHaveBeenCalledWith(
+      expect.objectContaining({ collection: 'beer-reviews', overrideAccess: true, req }),
+    )
     expect(create).toHaveBeenCalledWith(
       expect.objectContaining({
         collection: 'beer-reviews',
@@ -41,6 +48,7 @@ describe('beer review normalization', () => {
         }),
         context: { skipRevalidate: true },
         overrideAccess: true,
+        req,
       }),
     )
   })
@@ -62,11 +70,13 @@ describe('beer review normalization', () => {
     ])
 
     await expect(
-      syncBeerReviews({ beerId: 'beer-1', payload, reviews: [sourceReview] }),
+      syncBeerReviews({ beerId: 'beer-1', payload, req, reviews: [sourceReview] }),
     ).resolves.toBe(1)
     expect(update).toHaveBeenCalledWith(
       expect.objectContaining({
         id: 'review-1',
+        overrideAccess: true,
+        req,
         data: expect.not.objectContaining({ approved: expect.anything() }),
       }),
     )
@@ -97,10 +107,20 @@ describe('public beer reviews', () => {
     expect(reviews?.[0].url).toBe('https://untappd.com/checkin/a')
   })
 
-  it('returns null when a beer has no normalized reviews so legacy JSON still renders', async () => {
+  it('reads as an anonymous visitor so access limits it to approved docs', async () => {
+    const { payload, find } = payloadWith()
+
+    await getPublicBeerReviews(payload, 'beer-1')
+
+    expect(find).toHaveBeenCalledWith(
+      expect.objectContaining({ collection: 'beer-reviews', overrideAccess: false }),
+    )
+  })
+
+  it('returns an empty list, not a legacy fallback signal, when no docs are visible', async () => {
     const { payload } = payloadWith()
 
-    await expect(getPublicBeerReviews(payload, 'beer-1')).resolves.toBeNull()
+    await expect(getPublicBeerReviews(payload, 'beer-1')).resolves.toEqual([])
   })
 
   it('publishes an empty list once every review is unapproved', async () => {
@@ -122,16 +142,21 @@ describe('legacy review pruning on delete', () => {
     // the document from `positiveReviews` — approved, since legacy entries
     // carry no `hidden` flag — silently undoing the moderation.
     const other = { ...sourceReview, url: 'https://untappd.com/checkin/keep' }
-    const { payload, update } = payloadWithBeer([sourceReview, other])
+    const { payload, update, findByID } = payloadWithBeer([sourceReview, other])
 
-    await pruneLegacyReview({ beer: 'beer-1', payload, sourceUrl: sourceReview.url })
+    await pruneLegacyReview({ beer: 'beer-1', payload, req, sourceUrl: sourceReview.url })
 
+    expect(findByID).toHaveBeenCalledWith(
+      expect.objectContaining({ collection: 'beers', overrideAccess: true, req }),
+    )
     expect(update).toHaveBeenCalledWith(
       expect.objectContaining({
         collection: 'beers',
         id: 'beer-1',
         data: { positiveReviews: [other] },
         context: { skipRevalidate: true, skipReviewSync: true },
+        overrideAccess: true,
+        req,
       }),
     )
   })
@@ -141,6 +166,7 @@ describe('legacy review pruning on delete', () => {
 
     await pruneLegacyReview({
       payload,
+      req,
       beer: 'beer-1',
       sourceUrl: 'https://untappd.com/checkin/absent',
     })
@@ -151,8 +177,8 @@ describe('legacy review pruning on delete', () => {
   it('ignores a review with no beer or source URL', async () => {
     const { payload, findByID } = payloadWithBeer([sourceReview])
 
-    await pruneLegacyReview({ beer: null, payload, sourceUrl: sourceReview.url })
-    await pruneLegacyReview({ beer: 'beer-1', payload, sourceUrl: null })
+    await pruneLegacyReview({ beer: null, payload, req, sourceUrl: sourceReview.url })
+    await pruneLegacyReview({ beer: 'beer-1', payload, req, sourceUrl: null })
 
     expect(findByID).not.toHaveBeenCalled()
   })

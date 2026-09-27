@@ -1,4 +1,4 @@
-import type { Access, CollectionConfig, Field, Payload } from 'payload'
+import type { Access, CollectionConfig, Field, PayloadRequest, Where } from 'payload'
 import { APIError } from 'payload'
 import { revalidateTag } from 'next/cache'
 import { generateUniqueSlug } from './utils/generateUniqueSlug'
@@ -15,18 +15,24 @@ function mround(value: number, multiple: number): number {
 /**
  * Find all menus containing a given beer and revalidate their CDN cache tags.
  * Called from afterChange so menu displays pick up beer edits on their next poll.
+ * System lookup: reads every menu regardless of the editor's own menus access
+ * (derived cache state, not something the editor is shown), inside the save's
+ * transaction via `req`.
  *
  * NOTE: This must never run from an afterRead hook. Payload's admin form-state
  * requests (stale-data check, document locking, relationship population) read
  * docs through Next.js Server Actions, and calling revalidateTag inside a
  * Server Action forces the admin router to refetch — resetting the edit form.
  */
-async function revalidateMenusForBeer(payload: Payload, beerId: string | number): Promise<void> {
-  const menus = await payload.find({
+async function revalidateMenusForBeer(req: PayloadRequest, beerId: string | number): Promise<void> {
+  const menus = await req.payload.find({
     collection: 'menus',
     where: { 'items.product.value': { equals: beerId } },
     limit: 100,
     depth: 0,
+    // eslint-disable-next-line no-restricted-syntax -- system: cache invalidation must find every menu listing the beer; the editor's menus read can be location-scoped (beer-manager + bartender) or empty
+    overrideAccess: true,
+    req,
   })
   for (const menu of menus.docs) {
     if (menu.url) {
@@ -53,20 +59,44 @@ const generatedUploadField = (name: string, description: string): Field => ({
   },
 })
 
-export const canReadBeers: Access = ({ req: { user } }) => {
-  if (hasRole(user, ['admin', 'beer-manager'])) return true
+/**
+ * Read access for beers, in three cases:
+ *
+ * 1. Staff who handle beer (admin, beer-manager, bartender, lead-bartender)
+ *    read every beer, drafts included.
+ * 2. Anyone else asking for drafts gets nothing. Payload's `draft` flag never
+ *    reaches access functions, so the REST request is inspected instead:
+ *    `?draft=true` (`req.query.draft`, boolean after the find handler parses
+ *    it, the raw string on findByID) or a method-override body
+ *    (`req.data.draft`). GraphQL rewrites `req.query.draft` unreliably, so
+ *    GraphQL reads stay published-only, which is also safe in draft mode.
+ *    A Local API `draft: true` leaves no trace on `req`; server code must not
+ *    request drafts on a visitor's behalf. The guard is still needed with
+ *    case 3: Payload's draft lookup (`replaceWithDraftIfAvailable`) only
+ *    checks read access, so without it `?draft=true` on a published beer
+ *    would return its unpublished edits.
+ * 3. Otherwise: published beers only. Drafts never show on the public site,
+ *    even when a draft beer sits on a published menu or Coming Soon; publish
+ *    the beer to make it public.
+ */
+export const canReadBeers: Access = ({ req }) => {
+  if (hasRole(req.user, ['admin', 'beer-manager', 'bartender', 'lead-bartender'])) return true
 
-  return {
-    _status: {
-      equals: 'published',
-    },
-  }
+  const published: Where = { _status: { equals: 'published' } }
+  if (req.payloadAPI === 'GraphQL') return published
+
+  const isTrue = (value: unknown) => value === true || value === 'true'
+  if (isTrue(req.query?.draft) || isTrue(req.data?.draft)) return false
+
+  return published
 }
 
 export const Beers: CollectionConfig = {
   slug: 'beers',
   access: {
     read: canReadBeers,
+    // Version history holds unpublished edits, so only beer managers see it.
+    readVersions: beerManagerAccess,
     create: beerManagerAccess,
     update: beerManagerAccess,
     delete: adminAccess, // Beer Managers can only archive, not delete
@@ -117,7 +147,9 @@ export const Beers: CollectionConfig = {
             collection: 'beers',
             sort: '-recipe',
             limit: 1,
+            // eslint-disable-next-line no-restricted-syntax -- system: next recipe number must count every beer, drafts included
             overrideAccess: true,
+            req,
           })
 
           if (lastBeer.docs.length > 0 && lastBeer.docs[0].recipe) {
@@ -136,7 +168,9 @@ export const Beers: CollectionConfig = {
               id: { not_equals: originalDoc?.id },
             },
             limit: 1,
+            // eslint-disable-next-line no-restricted-syntax -- system: recipe uniqueness invariant spans every beer, drafts included
             overrideAccess: true,
+            req,
           })
 
           if (existing.docs.length > 0) {
@@ -191,7 +225,7 @@ export const Beers: CollectionConfig = {
         if (context?.skipRevalidate) return doc
 
         try {
-          await revalidateMenusForBeer(req.payload, doc.id)
+          await revalidateMenusForBeer(req, doc.id)
         } catch (error) {
           logger.error('Beer menu revalidation error:', error)
         }

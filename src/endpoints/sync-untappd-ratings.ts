@@ -92,6 +92,8 @@ export const syncUntappdRatings: PayloadHandler = async (req) => {
           collection: 'beers',
           limit: 500,
           depth: 0,
+          overrideAccess: false,
+          user,
         })
 
         const total = beers.docs.length
@@ -142,6 +144,8 @@ export const syncUntappdRatings: PayloadHandler = async (req) => {
                       untappdRatingCount: ratingCount ?? undefined,
                       positiveReviews: mergedReviews.length > 0 ? mergedReviews : undefined,
                     },
+                    overrideAccess: false,
+                    user,
                   })
                 }
                 refreshed++
@@ -199,6 +203,8 @@ export const syncUntappdRatings: PayloadHandler = async (req) => {
                       untappdRatingCount: ratingCount ?? undefined,
                       positiveReviews: mergedReviews.length > 0 ? mergedReviews : undefined,
                     },
+                    overrideAccess: false,
+                    user,
                   })
                 }
                 updated++
@@ -253,6 +259,8 @@ export const syncUntappdRatings: PayloadHandler = async (req) => {
                       untappdRatingCount: ratingCount ?? undefined,
                       positiveReviews: mergedReviews.length > 0 ? mergedReviews : undefined,
                     },
+                    overrideAccess: false,
+                    user,
                   })
                 }
                 updated++

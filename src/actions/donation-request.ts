@@ -83,7 +83,8 @@ async function activeTaproomSlugs(payload: Payload): Promise<string[]> {
     where: { active: { not_equals: false } },
     limit: 50,
     depth: 0,
-    overrideAccess: true,
+    // Anonymous visitor: locations are publicly readable.
+    overrideAccess: false,
   })
   return result.docs
     .map((doc) => doc.slug)

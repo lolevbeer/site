@@ -13,6 +13,12 @@
  * from inside the cached fn and remains cacheable. The one exception is
  * hasAnyBeerJustReleased: it feeds a non-critical badge that is discarded after
  * the first /m poll, so it degrades to `false` rather than blanking the display.
+ *
+ * Identity contract: every read here acts as an anonymous visitor and passes
+ * `overrideAccess: false` explicitly (Payload 3.x defaults it to true), so
+ * collection and field access rules decide what the public sees — e.g. event
+ * contact fields and food-vendor email/phone are stripped, and beers are
+ * limited to published ones (see `canReadBeers` in src/collections/Beers.ts).
  */
 
 import { cache } from 'react'
@@ -62,6 +68,7 @@ const findLocationBySlug = async (
 ) => {
   const result = await payload.find({
     collection: 'locations',
+    overrideAccess: false,
     where: { slug: { equals: locationSlug } },
     limit: 1,
   })
@@ -81,6 +88,7 @@ export const hasAnyBeerJustReleased = async (): Promise<boolean> => {
 
         const result = await payload.find({
           collection: 'beers',
+          overrideAccess: false,
           limit: 1,
           where: {
             justReleased: {
@@ -161,6 +169,7 @@ export const getAllBeersFromPayload = async (): Promise<CatalogBeer[]> => {
 
         const result = await payload.find({
           collection: 'beers',
+          overrideAccess: false,
           limit: 1000,
           where: {
             hideFromSite: {
@@ -210,14 +219,18 @@ export const getBeerBySlug = cache(async (slug: string): Promise<PayloadBeer | n
         // Reviews are loaded via getPublicBeerReviews below; the join would
         // duplicate them in the unstable_cache entry.
         joins: false,
+        overrideAccess: false,
       })
 
-      // Return null for "not found" (cacheable), but let errors throw (not cached)
+      // Return null for "not found" (cacheable), but let errors throw (not cached).
+      // Access hides draft beers from anonymous reads, so a draft slug lands
+      // here and the page renders its not-found route.
       const beer = result.docs[0]
       if (!beer) return null
 
+      // The page renders reviews from `positiveReviews`; fill it from the
+      // approved beer-reviews docs only (the legacy JSON field is manager-only).
       const reviews = await getPublicBeerReviews(payload, beer.id)
-      if (reviews === null) return beer
       return { ...beer, positiveReviews: reviews }
     },
     [`beer-${slug}`],
@@ -248,6 +261,7 @@ export const getMenusByLocation = async (locationSlug: string): Promise<PayloadM
         // Then get menus for that location
         const menusResult = await payload.find({
           collection: 'menus',
+          overrideAccess: false,
           where: {
             and: [
               {
@@ -320,29 +334,29 @@ export async function getCansMenu(locationSlug: string): Promise<PayloadMenu | n
  * labelMetalness/labelTextures generator uploads.
  */
 const MENU_BEERS_POPULATE = {
-    slug: true,
-    name: true,
-    style: true,
-    abv: true,
-    description: true,
-    image: true,
-    labelVideo: true,
-    glass: true,
-    fourPack: true,
-    bottlePrice: true,
-    recipe: true,
-    hops: true,
-    draftPrice: true,
-    halfPour: true,
-    halfPourOnly: true,
-    hideFromSite: true,
-    justReleased: true,
-    collab: true,
-    collabBrewery: true,
-    createdAt: true,
-    updatedAt: true,
-    untappdRating: true,
-    topBeerDrops: true,
+  slug: true,
+  name: true,
+  style: true,
+  abv: true,
+  description: true,
+  image: true,
+  labelVideo: true,
+  glass: true,
+  fourPack: true,
+  bottlePrice: true,
+  recipe: true,
+  hops: true,
+  draftPrice: true,
+  halfPour: true,
+  halfPourOnly: true,
+  hideFromSite: true,
+  justReleased: true,
+  collab: true,
+  collabBrewery: true,
+  createdAt: true,
+  updatedAt: true,
+  untappdRating: true,
+  topBeerDrops: true,
 } as const satisfies { [K in keyof PayloadBeer]?: true }
 
 const MENU_POPULATE = {
@@ -389,6 +403,9 @@ async function findMenuByUrl(url: string): Promise<PayloadMenu | null> {
 
   const result = await payload.find({
     collection: 'menus',
+    // Anonymous read: menus access already limits visitors to published menus;
+    // the _status filter below keeps that explicit in the query.
+    overrideAccess: false,
     where: {
       and: [
         {
@@ -403,7 +420,6 @@ async function findMenuByUrl(url: string): Promise<PayloadMenu | null> {
         },
       ],
     },
-    overrideAccess: true, // Bypass access control — we filter by _status ourselves
     depth: 3, // Include location, beers, and beer relations (style, image)
     populate: MENU_POPULATE,
     limit: 1,
@@ -470,6 +486,7 @@ export const getAllLocations = cache(async () => {
 
         const result = await payload.find({
           collection: 'locations',
+          overrideAccess: false,
           where: {
             active: {
               equals: true,
@@ -556,6 +573,7 @@ export const getAvailableBeersFromMenus = async (): Promise<PayloadBeer[]> => {
         // Get all published menus from all locations
         const menusResult = await payload.find({
           collection: 'menus',
+          overrideAccess: false,
           where: {
             _status: {
               equals: 'published',
@@ -613,6 +631,7 @@ export const getComingSoonBeers = async () => {
 
         const result = await payload.findGlobal({
           slug: 'coming-soon',
+          overrideAccess: false,
           depth: 2, // Include beer and style relations
         })
 
@@ -640,6 +659,7 @@ export const fetchGlobal = async (slug: string, depth: number = 0) => {
         const payload = await getPayload({ config })
         const result = await payload.findGlobal({
           slug: slug as 'coming-soon' | 'site-content',
+          overrideAccess: false,
           depth,
         })
         return result
@@ -694,6 +714,7 @@ export const getWeeklyHoursWithHolidays = cache(
           // Get the location
           const locationResult = await payload.find({
             collection: 'locations',
+            overrideAccess: false,
             where: {
               id: {
                 equals: locationId,
@@ -727,6 +748,7 @@ export const getWeeklyHoursWithHolidays = cache(
           // Get all holiday hours for this location within this week
           const holidayResult = await payload.find({
             collection: 'holiday-hours',
+            overrideAccess: false,
             where: {
               and: [
                 {
@@ -862,6 +884,7 @@ async function findUpcomingPublicEvents(
   const [oneOffResult, recurringResult] = await Promise.all([
     payload.find({
       collection: 'events',
+      overrideAccess: false,
       where: {
         and: [
           ...locationFilter,
@@ -875,6 +898,7 @@ async function findUpcomingPublicEvents(
     }),
     payload.find({
       collection: 'recurring-events',
+      overrideAccess: false,
       where: {
         and: [
           ...locationFilter,
@@ -974,6 +998,7 @@ export const getUpcomingFoodFromPayload = async (
 
         const result = await payload.find({
           collection: 'food',
+          overrideAccess: false,
           where: {
             and: [
               {
@@ -1019,7 +1044,8 @@ const getRecurringFoodGlobal = async (year: number): Promise<RecurringFoodState>
     return await unstable_cache(
       async (): Promise<RecurringFoodState> => {
         const payload = await getPayload({ config })
-        return getRecurringFoodState(payload, { overrideAccess: true, year })
+        // Anonymous: the global, active schedules, and exclusions are public.
+        return getRecurringFoodState(payload, { overrideAccess: false, year })
       },
       [`recurring-food-global-${year}`],
       { tags: [CACHE_TAGS.food], revalidate: 300 },
@@ -1110,6 +1136,7 @@ const getUpcomingRecurringFood = async (
         if (vendorIds.size > 0) {
           const vendorResult = await payload.find({
             collection: 'food-vendors',
+            overrideAccess: false,
             where: {
               id: { in: Array.from(vendorIds) },
             },
@@ -1251,6 +1278,7 @@ export const getAllDistributorsGeoJSON = async (): Promise<DistributorGeoJSON> =
 
         const result = await payload.find({
           collection: 'distributors',
+          overrideAccess: false,
           limit: 2000,
           where: {
             active: {
@@ -1310,6 +1338,7 @@ export const getActiveFAQs = async (): Promise<Faq[]> => {
 
         const result = await payload.find({
           collection: 'faqs',
+          overrideAccess: false,
           where: {
             active: {
               equals: true,

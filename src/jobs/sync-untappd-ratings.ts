@@ -26,6 +26,7 @@ export async function runUntappdRatingsSync(payload: Payload): Promise<UntappdSy
     },
     limit: 500,
     depth: 0,
+    overrideAccess: true,
   })
 
   const results: UntappdSyncResult = {
@@ -90,6 +91,7 @@ export async function runUntappdRatingsSync(payload: Payload): Promise<UntappdSy
       await payload.update({
         collection: 'beers',
         id: beer.id,
+        overrideAccess: true,
         data: {
           untappdRating: rating,
           ...(ratingCount !== null ? { untappdRatingCount: ratingCount } : {}),

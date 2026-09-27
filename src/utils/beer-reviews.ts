@@ -1,3 +1,12 @@
+/**
+ * Beer review normalization between the legacy `beers.positiveReviews` JSON
+ * and `beer-reviews` documents.
+ *
+ * `syncBeerReviews` and `pruneLegacyReview` are system code (allowlisted for
+ * `overrideAccess: true`): they maintain derived data and must see every doc
+ * whoever triggered them — including the user-less Untappd job and migrations.
+ * They require the caller's `req` so their writes join its transaction.
+ */
 import type { Payload, PayloadRequest } from 'payload'
 import type { BeerReview } from '@/src/payload-types'
 import type { UntappdReview } from '@/src/utils/untappd'
@@ -10,7 +19,7 @@ export interface LegacyUntappdReview extends UntappdReview {
 interface SyncBeerReviewsArgs {
   beerId: string
   payload: Payload
-  req?: PayloadRequest
+  req: PayloadRequest
   reviews: LegacyUntappdReview[]
 }
 
@@ -108,9 +117,7 @@ export async function syncBeerReviews({
  * The legacy array is a second copy of the same data that `syncBeerReviews`
  * reads back, so leaving a deleted review in it would re-create the document —
  * approved, since legacy entries carry no `hidden` flag — on the next Untappd
- * sync that touches the beer. Pruning also keeps `getPublicBeerReviews`'s
- * "no documents => not normalized yet" fallback honest: emptying a beer's
- * review set now renders nothing instead of resurrecting the legacy list.
+ * sync that touches the beer.
  *
  * Returns the beer's id and slug when the document was found, so the caller can
  * revalidate its page without reading the same document a second time.
@@ -123,7 +130,7 @@ export async function pruneLegacyReview({
 }: {
   beer: BeerReview['beer'] | null | undefined
   payload: Payload
-  req?: PayloadRequest
+  req: PayloadRequest
   sourceUrl: string | null | undefined
 }): Promise<{ id: string; slug?: string | null } | null> {
   if (!beer || !sourceUrl) return null
@@ -163,27 +170,23 @@ export async function pruneLegacyReview({
  * Public review list for one beer, in the legacy `positiveReviews` shape the
  * beer page and product schema already render.
  *
- * Returns `null` when the beer has no normalized review documents at all, so
- * callers can keep serving the legacy JSON until the normalization migration
- * has run for that beer. Once documents exist they are authoritative:
- * unapproving a beer-reviews document removes it from the public page and the
- * Product schema, and deleting one prunes the legacy copy too
- * (see `pruneLegacyReview`) so it cannot come back through the fallback.
+ * This is the file's one public read: it runs as an anonymous visitor, so
+ * `canReadBeerReviews` limits it to approved docs. beer-reviews documents are
+ * the only source — there is no fallback to the legacy JSON, so a beer with no
+ * approved docs gets an empty list.
  */
 export async function getPublicBeerReviews(
   payload: Payload,
   beerId: string,
-): Promise<LegacyUntappdReview[] | null> {
+): Promise<LegacyUntappdReview[]> {
   const reviews = await payload.find({
     collection: 'beer-reviews',
     where: { beer: { equals: beerId } },
     depth: 0,
     limit: 100,
     sort: '-reviewedAt',
-    overrideAccess: true,
+    overrideAccess: false,
   })
-
-  if (reviews.docs.length === 0) return null
 
   return reviews.docs.filter((review) => review.approved).map(reviewToLegacy)
 }

@@ -1,3 +1,7 @@
+/**
+ * Slug generation for collection beforeChange hooks. System code (allowlisted
+ * for `overrideAccess: true`): the uniqueness check must see every document.
+ */
 import type { CollectionSlug, PayloadRequest, Where } from 'payload'
 
 /**
@@ -26,6 +30,10 @@ function slugify(str: string): string {
  * 3. Replacing non-alphanumeric characters with dashes
  * 4. Removing leading/trailing dashes
  * 5. Appending an incrementing number if the slug already exists
+ *
+ * System code: uniqueness must hold across every document (drafts included),
+ * whoever is saving, so the lookups use `overrideAccess: true`. They pass `req`
+ * to run inside the save's transaction.
  */
 export async function generateUniqueSlug(
   name: string,
@@ -64,6 +72,7 @@ export async function generateUniqueSlug(
         select: { slug: true },
         draft: false,
         overrideAccess: true,
+        req,
       }),
       req.payload.find({
         collection,
@@ -73,6 +82,7 @@ export async function generateUniqueSlug(
         select: { slug: true },
         draft: true,
         overrideAccess: true,
+        req,
       }),
     ])
 
