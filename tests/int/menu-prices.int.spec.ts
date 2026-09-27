@@ -124,4 +124,14 @@ describe('menu prices', () => {
     expect(text).toContain('$8')
     expect(text).not.toMatch(SINGLE_DIGIT_CENTS)
   })
+
+  it.each(['draft', 'other'] as const)('%s board: product prices are free text', (type) => {
+    const board = menu(type, [product('Growler', '2 for $10'), product('Sticker', '0')])
+    const text = render(createElement(FeaturedBeers, { menu: board })).container.textContent
+
+    expect(text).toContain('2 for $10')
+    expect(text).not.toContain('$2')
+    expect(text).toContain('Sticker')
+    expect(text).not.toMatch(/Sticker[^$]*\$0|\b0\b/)
+  })
 })

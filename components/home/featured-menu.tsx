@@ -101,6 +101,8 @@ interface MenuItem {
   tap?: number
   pricing: {
     draftPrice?: number
+    /** The draft price as entered, when it's free text; see BeerPricing. */
+    draftPriceText?: string
     halfPour?: number
     halfPourOnly?: boolean
   }
@@ -293,7 +295,7 @@ function OtherThingRow({
         className={`text-right font-bold tabular-nums transition-colors duration-500 ${soldOut ? 'text-foreground-muted line-through' : ''}`}
         style={{ fontSize: scaledVh(3.4, displayScale), color: itemColor }}
       >
-        {formatPrice(item.pricing.draftPrice)}
+        {formatPriceText(item.pricing.draftPriceText) || formatPrice(item.pricing.draftPrice)}
       </div>
     </div>
   )
@@ -403,7 +405,7 @@ interface FeaturedMenuProps {
   menus?: Menu[]
   /** Enable enter/exit animations for live updates */
   animated?: boolean
-  /** Random colors to apply to items (dark mode only, cycles on poll) */
+  /** Random colors to apply to items (dark mode only; the display re-seeds them every 30s) */
   itemColors?: string[]
   /** Hide header when embedding in another component */
   hideHeader?: boolean
@@ -461,6 +463,7 @@ function convertMenuItems(menuData: Menu, labelVideos = false): MenuItem[] {
             tap: index + 1,
             pricing: {
               draftPrice: parsePrice(item.price) ?? parsePrice(prod.price),
+              draftPriceText: item.price || prod.price || undefined,
             },
             availability: {
               hideFromSite: false,
@@ -519,6 +522,7 @@ function convertMenuItems(menuData: Menu, labelVideos = false): MenuItem[] {
         tap: index + 1, // 1-based tap/draft number from position in menu
         pricing: {
           draftPrice: parsePrice(item.price) ?? beer.draftPrice,
+          draftPriceText: item.price || undefined,
           halfPour: beer.halfPour ?? undefined,
           halfPourOnly: beer.halfPourOnly || false,
         },
