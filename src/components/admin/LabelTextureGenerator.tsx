@@ -16,11 +16,25 @@
  * therefore renders everything first and stops mid-render if the field has
  * unmounted (a render that already finished still uploads), and applies the
  * four files to the form together, so a failed or abandoned run never leaves
- * a half-updated set.
+ * a half-updated set. The remounted field starts out idle, so an editor who
+ * comes back can start a second run while the first is still uploading; only
+ * the latest run applies its files.
  */
 import { useEffect, useId, useRef, useState } from 'react'
-import { Banner, Button, Dropzone, FieldDescription, FieldLabel, useField } from '@payloadcms/ui'
+import {
+  Banner,
+  Button,
+  Dropzone,
+  FieldDescription,
+  FieldLabel,
+  useDocumentInfo,
+  useField,
+} from '@payloadcms/ui'
 import { canvasToWebpBlob, processLabelPdfs } from './pdf-label-textures'
+
+// Latest run number per beer (unsaved beers share one key): a remounted field
+// can start a run while an earlier one is still uploading, and only the latest applies.
+const latestRun = new Map<number | string, number>()
 
 /** Create a media doc from a blob; returns the new doc id. */
 async function uploadMedia(blob: Blob, filename: string, alt: string): Promise<string> {
@@ -78,6 +92,7 @@ function PdfDropzone({
 }
 
 export function LabelTextureGenerator() {
+  const { id } = useDocumentInfo()
   const { value: slug } = useField<string>({ path: 'slug' })
   const { setValue: setBase } = useField<string>({ path: 'labelBase' })
   const { setValue: setMetalness } = useField<string>({ path: 'labelMetalness' })
@@ -107,6 +122,9 @@ export function LabelTextureGenerator() {
     const stopIfTabLeft = () => {
       if (!mountedRef.current) throw new Error('Label generation stopped: its tab was left.')
     }
+    const runKey = id ?? 'unsaved'
+    const run = (latestRun.get(runKey) ?? 0) + 1
+    latestRun.set(runKey, run)
     setStatus(null)
     // Stage weights are rough wall-clock shares; the sprite loop (72 frames)
     // dominates and reports real per-frame progress.
@@ -143,8 +161,10 @@ export function LabelTextureGenerator() {
         uploadWebp(metalnessCanvas, `${name}-label-metalness`),
         uploadMedia(still, `${name}-can.webp`, `${name} can`),
       ])
-      // All four together, even if the tab was left once the render finished:
-      // the form outlives the tab, and applying keeps the uploads from orphaning.
+      // All four together, even if the tab was left once the render finished
+      // (the form outlives the tab), unless a newer run for this beer started
+      // since: its files win, and this run's uploads are left orphaned.
+      if (latestRun.get(runKey) !== run) return
       setBase(baseId)
       setMetalness(metalnessId)
       setImage(imageId)

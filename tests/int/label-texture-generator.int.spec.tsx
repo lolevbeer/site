@@ -1,14 +1,15 @@
 /**
  * LabelTextureGenerator sits in the beer editor's "Label & images" tab, and
  * Payload renders only the active tab, so switching tabs unmounts it mid-run.
- * These tests pin the two guarantees that keep that safe: the four generated
- * files are applied to the form together or not at all, and a run whose tab
- * was left mid-render stops before uploading anything (a render that already
- * finished still uploads and applies). They also pin the upload order:
- * the sprite sheet, the likeliest to fail, goes first and alone, so its
- * failure leaves no orphaned media.
+ * These tests pin the guarantees that keep that safe: the four generated files
+ * are applied to the form together or not at all; a run whose tab was left
+ * mid-render stops before uploading anything (a render that already finished
+ * still uploads and applies); and if the editor comes back and starts another
+ * run while the first is still uploading, only the newer run applies. They
+ * also pin the upload order: the sprite sheet, the likeliest to fail, goes
+ * first and alone, so its failure leaves no orphaned media.
  */
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { createElement, type ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -35,6 +36,7 @@ vi.mock('@payloadcms/ui', () => ({
   FieldDescription: ({ description }: { description: string }) =>
     createElement('p', null, description),
   FieldLabel: ({ label }: { label: string }) => createElement('span', null, label),
+  useDocumentInfo: () => ({ id: 'beer-1' }),
   useField: ({ path }: { path: string }) => ({
     value: path === 'slug' ? 'test-beer' : undefined,
     setValue: setters[path as keyof typeof setters] ?? vi.fn(),
@@ -165,4 +167,42 @@ describe('LabelTextureGenerator', () => {
     expect(fetchMock).toHaveBeenCalledTimes(4)
     for (const setter of allSetters()) expect(setter).toHaveBeenCalledTimes(1)
   })
+
+  it.each(['newer', 'older'])(
+    'applies only the newer of two overlapping runs when the %s one finishes first',
+    async (firstToFinish) => {
+      // Each run's first upload, its sprite sheet, waits to be released, so run A
+      // is still uploading when the editor leaves the tab, comes back and runs B.
+      const releaseSprite: Array<() => void> = []
+      let next = 0
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async (_url: string, init: RequestInit) => {
+          const id = `media-${++next}`
+          const file = (init.body as FormData).get('file') as File
+          if (file.name.includes('-can-sprite')) {
+            await new Promise<void>((resolve) => releaseSprite.push(resolve))
+          }
+          return { ok: true, json: async () => ({ doc: { id } }) }
+        }),
+      )
+
+      const runA = startGeneration()
+      await waitFor(() => expect(releaseSprite).toHaveLength(1))
+      runA.unmount()
+      startGeneration()
+      await waitFor(() => expect(releaseSprite).toHaveLength(2))
+      const [releaseA, releaseB] = releaseSprite
+      const finishOrder = firstToFinish === 'newer' ? [releaseB, releaseA] : [releaseA, releaseB]
+      for (const release of finishOrder) {
+        await act(async () => {
+          release()
+          await new Promise((resolve) => setTimeout(resolve, 0))
+        })
+      }
+
+      for (const setter of allSetters()) expect(setter).toHaveBeenCalledTimes(1)
+      expect(setters.labelVideo).toHaveBeenCalledWith('media-2') // run B's sprite sheet
+    },
+  )
 })
