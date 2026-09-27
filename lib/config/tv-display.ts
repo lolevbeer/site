@@ -85,4 +85,7 @@ export const TV_COL = {
    *  which left the beer column ~8px short of fitting the longest beer name;
    *  that space is worth more to the name than to padding beside a price. */
   price: '7vh',
+  /** Used instead of `price` on a draft board that shows a longer price.
+   *  Measured at the 3.8vh price size: "$12.50" is 12.1vh wide. */
+  priceWide: '12.5vh',
 } as const

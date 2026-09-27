@@ -125,6 +125,23 @@ describe('menu prices', () => {
     expect(text).not.toMatch(SINGLE_DIGIT_CENTS)
   })
 
+  it('draft board: price columns widen only when a price has cents', () => {
+    const columns = (items: unknown[]) =>
+      [
+        ...render(
+          createElement(FeaturedBeers, { menu: menu('draft', items) }),
+        ).container.querySelectorAll<HTMLElement>('[style*="grid-template-columns"]'),
+      ].map((el) => el.style.gridTemplateColumns)
+
+    const whole = columns([beer('lupula', { draftPrice: 8, halfPour: 5 })])
+    cleanup()
+    const cents = columns([beer('samo', { draftPrice: 12.5, halfPour: 4.5 })])
+
+    expect(whole.length).toBeGreaterThan(1) // header and row
+    expect(whole.every((c) => c.endsWith('7vh 7vh'))).toBe(true)
+    expect(cents.every((c) => c.endsWith('12.5vh 12.5vh'))).toBe(true)
+  })
+
   it.each(['draft', 'other'] as const)('%s board: product prices are free text', (type) => {
     const board = menu(type, [product('Growler', '2 for $10'), product('Sticker', '0')])
     const text = render(createElement(FeaturedBeers, { menu: board })).container.textContent

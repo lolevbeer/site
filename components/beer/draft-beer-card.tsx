@@ -18,6 +18,26 @@ import { UntappdRating } from '@/components/beer/untappd-rating'
 import { getBeerBadgeLabel } from '@/lib/types/beer'
 import { isSold } from '@/lib/utils/packaging-utils'
 import { TV_TYPE, TV_COL, TV_BADGE_STYLE } from '@/lib/config/tv-display'
+import type { BeerPricing } from '@/lib/types/beer'
+
+/**
+ * The half and full pour prices a draft row shows ('' when hidden). A free-text
+ * price ("2 for $10") shows as entered; 0 or missing shows nothing.
+ */
+export function draftPriceLabels(pricing?: BeerPricing): { half: string; full: string } {
+  return {
+    half: isSold(pricing?.halfPour) ? formatPrice(pricing?.halfPour) : '',
+    full: pricing?.halfPourOnly
+      ? ''
+      : formatPriceText(pricing?.draftPriceText) || formatPrice(pricing?.draftPrice),
+  }
+}
+
+/** Longer than "$11" (e.g. cents or free text) needs TV_COL.priceWide on the /m board. */
+export function needsWidePriceColumn(pricing?: BeerPricing): boolean {
+  const { half, full } = draftPriceLabels(pricing)
+  return half.length > 3 || full.length > 3
+}
 
 interface DraftBeerCardProps {
   beer: Beer
@@ -52,6 +72,8 @@ interface DraftBeerCardProps {
   compact?: boolean
   /** Accent color for the beer name (dark mode cycling effect) */
   accentColor?: string
+  /** Width of each price column in fullscreen mode; the board picks one for every row. */
+  priceColumn?: string
 }
 
 export const DraftBeerCard = React.memo(function DraftBeerCard({
@@ -67,6 +89,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
   showRating = false,
   compact = false,
   accentColor,
+  priceColumn = TV_COL.price,
 }: DraftBeerCardProps) {
   const { currentLocation } = useLocationContext()
   const beerSlug = getBeerSlug(beer)
@@ -74,9 +97,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
   const isStein = beer.glass === GlassType.STEIN
   const glassOpticalClass = isStein ? '-translate-x-[0.8vh] scale-[1.08]' : ''
   const badgeLabel = showJustReleased ? getBeerBadgeLabel(beer, now) : null
-  // Free text ("2 for $10") shows as entered; a 0 or missing price shows nothing.
-  const draftPriceLabel =
-    formatPriceText(beer.pricing?.draftPriceText) || formatPrice(beer.pricing?.draftPrice)
+  const prices = draftPriceLabels(beer.pricing)
   const isProduct = 'isProduct' in beer && beer.isProduct === true
 
   // Fullscreen mode uses viewport-relative sizing
@@ -103,8 +124,8 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
       showTapRail && (displayGlass ? TV_COL.tap : '5vh'),
       'minmax(0, 1fr)',
       showAbv && TV_COL.abv,
-      showAbv && TV_COL.price,
-      TV_COL.price,
+      showAbv && priceColumn,
+      priceColumn,
     ]
       .filter(Boolean)
       .join(' ')
@@ -223,23 +244,23 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
             )}
             {showAbv && (
               <div className="text-right">
-                {isSold(beer.pricing?.halfPour) && (
+                {prices.half && (
                   <div
                     className="font-bold tabular-nums transition-colors duration-500"
                     style={{ fontSize: '3.8vh', color: accentColor }}
                   >
-                    {formatPrice(beer.pricing.halfPour)}
+                    {prices.half}
                   </div>
                 )}
               </div>
             )}
             <div className="text-right">
-              {!beer.pricing?.halfPourOnly && draftPriceLabel && (
+              {prices.full && (
                 <div
                   className="font-bold tabular-nums transition-colors duration-500"
                   style={{ fontSize: '3.8vh', color: accentColor }}
                 >
-                  {draftPriceLabel}
+                  {prices.full}
                 </div>
               )}
             </div>
