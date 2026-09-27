@@ -11,7 +11,6 @@ export const RecurringFoodExclusions: CollectionConfig = {
     group: 'System',
     hidden: true,
     useAsTitle: 'date',
-    hideAPIURL: true,
     defaultColumns: ['date', 'location', 'reason'],
   },
   access: {
@@ -46,4 +45,5 @@ export const RecurringFoodExclusions: CollectionConfig = {
       type: 'text',
     },
   ],
+  versions: false,
 }

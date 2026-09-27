@@ -47,7 +47,7 @@ function PdfDropzone({
     <div style={{ flex: 1, minWidth: '240px' }}>
       <FieldLabel label={label} />
       <Dropzone onChange={(files) => onSelect(files[0] ?? null)}>
-        <Button buttonStyle="secondary" size="small" onClick={() => inputRef.current?.click()}>
+        <Button buttonStyle="secondary" onClick={() => inputRef.current?.click()}>
           {file ? file.name : 'Select a PDF or drag it here'}
         </Button>
         <input
@@ -74,12 +74,12 @@ export function LabelTextureGenerator() {
   const [maskFile, setMaskFile] = useState<File | null>(null)
   // Non-null while generating: drives the progress bar + stage label.
   const [progress, setProgress] = useState<{ pct: number; label: string } | null>(null)
-  const [status, setStatus] = useState<{ type: 'error' | 'success'; msg: string } | null>(null)
+  const [status, setStatus] = useState<{ type: 'danger' | 'success'; msg: string } | null>(null)
   const busy = progress !== null
 
   const generate = async () => {
     if (!artFile) {
-      setStatus({ type: 'error', msg: 'Choose the label art PDF first' })
+      setStatus({ type: 'danger', msg: 'Choose the label art PDF first' })
       return
     }
     setStatus(null)
@@ -124,7 +124,7 @@ export function LabelTextureGenerator() {
         msg: 'Textures, can image + rotation sprite generated — save the beer to keep them',
       })
     } catch (err) {
-      setStatus({ type: 'error', msg: err instanceof Error ? err.message : String(err) })
+      setStatus({ type: 'danger', msg: err instanceof Error ? err.message : String(err) })
     } finally {
       setProgress(null)
     }

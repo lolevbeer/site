@@ -20,7 +20,6 @@ export const Users: CollectionConfig = {
   admin: {
     group: 'Settings',
     useAsTitle: 'email',
-    hideAPIURL: true,
   },
   access: {
     read: adminOrSelfAccess,
@@ -140,4 +139,5 @@ export const Users: CollectionConfig = {
       },
     },
   ],
+  versions: false,
 }

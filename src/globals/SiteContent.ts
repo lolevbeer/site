@@ -120,4 +120,5 @@ export const SiteContent: GlobalConfig = {
       ],
     },
   ],
+  versions: false,
 }

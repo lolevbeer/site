@@ -142,14 +142,14 @@ export const EventDateWarning: React.FC = () => {
     <div
       style={{
         padding: '12px 16px',
-        backgroundColor: 'var(--theme-success-100)',
-        border: '1px solid var(--theme-success-500)',
+        backgroundColor: 'var(--color-bg-success-tertiary)',
+        border: '1px solid var(--color-border-success)',
         borderRadius: '4px',
         marginBottom: '16px',
       }}
     >
-      <strong style={{ color: 'var(--theme-success-700)' }}>Note:</strong>{' '}
-      <span style={{ color: 'var(--theme-success-800)' }}>
+      <strong style={{ color: 'var(--color-text-success)' }}>Note:</strong>{' '}
+      <span style={{ color: 'var(--color-text-success)' }}>
         {eventConflicts.length > 0 && (
           <>
             {eventConflicts.length === 1

@@ -45,4 +45,5 @@ export const ComingSoon: GlobalConfig = {
       ],
     },
   ],
+  versions: false,
 }

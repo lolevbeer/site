@@ -146,6 +146,8 @@ export interface Config {
   locale: null;
   widgets: {
     collections: CollectionsWidget;
+    'collection-query': CollectionQueryWidget;
+    activity: ActivityWidget;
   };
   user: User;
   jobs: {
@@ -330,6 +332,7 @@ export interface Media {
    * Alternative text for the image (for accessibility)
    */
   alt: string;
+  prefix?: string | null;
   _objectKey?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -1025,6 +1028,15 @@ export interface PayloadJob {
     | number
     | boolean
     | null;
+  meta?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   completedAt?: string | null;
   totalTried?: number | null;
   /**
@@ -1052,7 +1064,7 @@ export interface PayloadJob {
         completedAt: string;
         taskSlug: 'inline' | 'syncUntappdRatings';
         taskID: string;
-        input?:
+        input:
           | {
               [k: string]: unknown;
             }
@@ -1090,16 +1102,12 @@ export interface PayloadJob {
   taskSlug?: ('inline' | 'syncUntappdRatings') | null;
   queue?: string | null;
   waitUntil?: string | null;
-  processing?: boolean | null;
-  meta?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
+  processingUntil?: string | null;
+  processingToken?: string | null;
+  /**
+   * Used for concurrency control. Jobs with the same key are subject to exclusive/supersedes rules.
+   */
+  concurrencyKey?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1676,6 +1684,7 @@ export interface FaqsSelect<T extends boolean = true> {
  */
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
+  prefix?: T;
   _objectKey?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1738,6 +1747,7 @@ export interface PayloadKvSelect<T extends boolean = true> {
 export interface PayloadJobsSelect<T extends boolean = true> {
   input?: T;
   taskStatus?: T;
+  meta?: T;
   completedAt?: T;
   totalTried?: T;
   hasError?: T;
@@ -1764,8 +1774,9 @@ export interface PayloadJobsSelect<T extends boolean = true> {
   taskSlug?: T;
   queue?: T;
   waitUntil?: T;
-  processing?: T;
-  meta?: T;
+  processingUntil?: T;
+  processingToken?: T;
+  concurrencyKey?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1970,6 +1981,76 @@ export interface CollectionsWidget {
     [k: string]: unknown;
   };
   width: 'full';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "collection-query_widget".
+ */
+export interface CollectionQueryWidget {
+  data?: {
+    title?: string | null;
+    relatedCollection:
+      | 'beers'
+      | 'beer-reviews'
+      | 'menus'
+      | 'products'
+      | 'events'
+      | 'donation-requests'
+      | 'jobs'
+      | 'job-applications'
+      | 'recurring-events'
+      | 'food'
+      | 'food-vendors'
+      | 'users'
+      | 'locations'
+      | 'holiday-hours'
+      | 'distributors'
+      | 'faqs'
+      | 'payload-jobs';
+    where?:
+      | {
+          [k: string]: unknown;
+        }
+      | unknown[]
+      | string
+      | number
+      | boolean
+      | null;
+    sortField?: string | null;
+    sortDirection?: ('asc' | 'desc') | null;
+    limit?: number | null;
+  };
+  width: 'x-small' | 'small' | 'medium' | 'large' | 'x-large' | 'full';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "activity_widget".
+ */
+export interface ActivityWidget {
+  data?: {
+    excludedCollections?:
+      | (
+          | 'beers'
+          | 'beer-reviews'
+          | 'menus'
+          | 'products'
+          | 'events'
+          | 'donation-requests'
+          | 'jobs'
+          | 'job-applications'
+          | 'recurring-events'
+          | 'food'
+          | 'food-vendors'
+          | 'users'
+          | 'locations'
+          | 'holiday-hours'
+          | 'distributors'
+          | 'faqs'
+          | 'payload-jobs'
+        )[]
+      | null;
+  };
+  width: 'x-small' | 'small' | 'medium' | 'large' | 'x-large' | 'full';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

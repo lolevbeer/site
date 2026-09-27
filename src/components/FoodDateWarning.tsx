@@ -111,14 +111,14 @@ export const FoodDateWarning: React.FC = () => {
     <div
       style={{
         padding: '12px 16px',
-        backgroundColor: 'var(--theme-warning-100)',
-        border: '1px solid var(--theme-warning-500)',
+        backgroundColor: 'var(--color-bg-warning-tertiary)',
+        border: '1px solid var(--color-border-warning)',
         borderRadius: '4px',
         marginBottom: '16px',
       }}
     >
-      <strong style={{ color: 'var(--theme-warning-700)' }}>Note:</strong>{' '}
-      <span style={{ color: 'var(--theme-warning-800)' }}>
+      <strong style={{ color: 'var(--color-text-warning)' }}>Note:</strong>{' '}
+      <span style={{ color: 'var(--color-text-warning)' }}>
         {warnings.map((w, i) => (
           <span key={i}>
             {i > 0 && ', '}

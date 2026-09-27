@@ -63,4 +63,5 @@ export const RecurringFood: GlobalConfig = {
       },
     },
   ],
+  versions: false,
 }

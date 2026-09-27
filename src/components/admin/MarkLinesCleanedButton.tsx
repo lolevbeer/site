@@ -111,9 +111,9 @@ export function MarkLinesCleanedButton() {
 
   return (
     <div style={{ marginTop: '-8px', width: '100%' }}>
-      {error && <Banner type="error">{error}</Banner>}
-      {isOverdue && <Banner type="error">OVERDUE - Lines need cleaning!</Banner>}
-      {isReadyToClean && <Banner type="info">Ready to be cleaned</Banner>}
+      {error && <Banner type="danger">{error}</Banner>}
+      {isOverdue && <Banner type="danger">OVERDUE - Lines need cleaning!</Banner>}
+      {isReadyToClean && <Banner type="default">Ready to be cleaned</Banner>}
       <div style={{ width: '100%' }}>
         <Button
           buttonStyle="secondary"

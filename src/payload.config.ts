@@ -74,40 +74,37 @@ const allowedOrigins = [
 ]
 
 export default buildConfig({
-  // Empty serverURL = relative URLs, works on any domain (preview URLs, custom domains, etc.)
-  serverURL: '',
+  // serverURL, cookiePrefix, and the api/admin routes use Payload's defaults
+  // ('' = relative URLs on any domain; 'payload'; '/api'; '/admin').
   cors: allowedOrigins,
   csrf: allowedOrigins,
   routes: {
-    api: '/api',
-    admin: '/admin',
+    // GraphQL lives under /api here; Payload's default is /graphql.
     graphQL: '/api/graphql',
     graphQLPlayground: '/api/graphql-playground',
   },
-  cookiePrefix: 'payload',
+  // Payload 4 lowered the default query depth to 1; keep v3's 2 until each
+  // query that omits `depth` is audited.
+  defaultDepth: 2,
   jobs: {
     access: {
       cancel: ({ req }) => hasRole(req.user, 'admin'),
       queue: ({ req }) => hasRole(req.user, 'admin'),
       run: ({ req }) => hasRole(req.user, 'admin'),
     },
-    addParentToTaskLog: true,
     deleteJobOnComplete: false,
-    depth: 0,
     processingOrder: 'createdAt',
     tasks: [syncUntappdRatingsTask],
     jobsCollectionOverrides: ({ defaultJobsCollection }) => ({
       ...defaultJobsCollection,
       admin: {
         ...defaultJobsCollection.admin,
-        group: 'System',
         hidden: false,
-        hideAPIURL: true,
       },
+      // Payload 4 denies all job CRUD by default; open read/delete to admins.
       access: {
+        ...defaultJobsCollection.access,
         read: adminAccess,
-        create: () => false,
-        update: () => false,
         delete: adminAccess,
       },
     }),
@@ -227,15 +224,7 @@ export default buildConfig({
     },
   }),
   sharp,
-  plugins: [
-    revalidationPlugin,
-    vercelBlobStorage({
-      collections: {
-        media: true,
-      },
-      token: serverEnv.blobReadWriteToken,
-    }),
-  ],
+  plugins: [revalidationPlugin],
   endpoints: [
     {
       path: '/import-distributors',
@@ -267,5 +256,13 @@ export default buildConfig({
       method: 'post',
       handler: syncUntappdRatings,
     },
+  ],
+  storage: [
+    vercelBlobStorage({
+      collections: {
+        media: true,
+      },
+      token: serverEnv.blobReadWriteToken,
+    }),
   ],
 })

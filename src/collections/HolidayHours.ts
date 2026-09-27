@@ -12,7 +12,6 @@ export const HolidayHours: CollectionConfig = {
     defaultColumns: ['name', 'locations', 'date', 'type'],
     group: 'Settings',
     description: 'Holiday and special hours overrides for locations',
-    hideAPIURL: true,
   },
   access: {
     read: () => true,
@@ -112,4 +111,5 @@ export const HolidayHours: CollectionConfig = {
       },
     },
   ],
+  versions: false,
 }

@@ -33,7 +33,6 @@ export const Locations: CollectionConfig = {
   admin: {
     group: 'Settings',
     useAsTitle: 'name',
-    hideAPIURL: true,
   },
   access: {
     read: () => true, // Public read access
@@ -462,4 +461,5 @@ export const Locations: CollectionConfig = {
       ],
     },
   ],
+  versions: false,
 }

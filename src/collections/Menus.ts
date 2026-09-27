@@ -41,7 +41,6 @@ export const Menus: CollectionConfig = {
   admin: {
     group: 'Front of House',
     useAsTitle: 'description',
-    hideAPIURL: true,
     defaultColumns: ['description', 'location', 'type', '_status'],
     preview: (doc) => {
       if (doc?.url) {
@@ -65,6 +64,9 @@ export const Menus: CollectionConfig = {
         },
       }
     },
+    // Payload 4 makes versions inherit `read`, which is public for published
+    // menus; keep version history (unpublished edits) behind sign-in as in v3.
+    readVersions: ({ req: { user } }) => Boolean(user),
     create: adminAccess,
     update: canUpdateMenus,
     delete: adminAccess,

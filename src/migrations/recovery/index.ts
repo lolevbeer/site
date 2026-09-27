@@ -94,4 +94,14 @@ export const migrationRecovery: readonly MigrationRecovery[] = [
     verify:
       'Run scripts/check-legacy-reviews.ts: beers with legacy positiveReviews but zero beer-reviews documents must be 0 (Taupō was the only one on 2026-09-26).',
   },
+  {
+    name: '20260927_020000_payload_jobs_runnable_processing_until',
+    compatibility:
+      'Index-only: swaps the processing key for processingUntil in payload_jobs_runnable. Both app versions run correctly on either index; only claim-query speed differs.',
+    retry:
+      'Safe to rerun: it drops the named index if present and recreates it with the exact key.',
+    mode: 'roll-forward',
+    verify:
+      'Read-only inspect payload_jobs_runnable (queue, processingUntil, hasError, completedAt, waitUntil, createdAt); observe the next scheduled maintenance run.',
+  },
 ]

@@ -49,7 +49,6 @@ export const Jobs: CollectionConfig = {
   admin: {
     group: 'Settings',
     useAsTitle: 'title',
-    hideAPIURL: true,
     defaultColumns: ['title', 'location', 'active', 'updatedAt'],
     description: 'Openings listed at /jobs (footer link). Applications land in Job Applications.',
   },
@@ -122,4 +121,5 @@ export const Jobs: CollectionConfig = {
       },
     ],
   },
+  versions: false,
 }

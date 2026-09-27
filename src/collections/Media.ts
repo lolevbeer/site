@@ -10,7 +10,6 @@ export const Media: CollectionConfig = {
   slug: 'media',
   admin: {
     hidden: true,
-    hideAPIURL: true,
   },
   access: {
     read: () => true,
@@ -69,4 +68,5 @@ export const Media: CollectionConfig = {
       },
     },
   ],
+  versions: false,
 }

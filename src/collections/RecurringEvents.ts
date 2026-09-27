@@ -39,7 +39,6 @@ export const RecurringEvents: CollectionConfig = {
   admin: {
     group: 'Food & Events',
     useAsTitle: 'organizer',
-    hideAPIURL: true,
     defaultColumns: ['organizer', 'year', 'day', 'occurrences', 'location', 'visibility'],
     description:
       'Manage events that repeat monthly without creating a dated event for every occurrence.',
@@ -116,4 +115,5 @@ export const RecurringEvents: CollectionConfig = {
     },
     ...eventDetailFields,
   ],
+  versions: false,
 }

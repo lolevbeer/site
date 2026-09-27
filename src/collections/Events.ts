@@ -30,7 +30,6 @@ export const Events: CollectionConfig = {
   admin: {
     group: 'Food & Events',
     useAsTitle: 'organizer',
-    hideAPIURL: true,
     defaultColumns: ['organizer', 'date', 'location', 'visibility'],
     pagination: {
       defaultLimit: 100,
@@ -63,4 +62,5 @@ export const Events: CollectionConfig = {
     },
     ...eventDetailFields,
   ],
+  versions: false,
 }

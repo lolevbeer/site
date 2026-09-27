@@ -104,7 +104,6 @@ export const Beers: CollectionConfig = {
   admin: {
     group: 'Back of House',
     useAsTitle: 'name',
-    hideAPIURL: true,
     listSearchableFields: ['name', 'slug'],
     defaultColumns: ['name', 'slug', 'style', 'abv', 'hideFromSite'],
     pagination: {

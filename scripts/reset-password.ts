@@ -1,19 +1,18 @@
 /**
  * Reset user password using Payload local API
  *
- * Usage:
- *   npx tsx scripts/reset-password.ts <email> <new-password>
+ * Usage (Node's --env-file loads DATABASE_URI and friends):
+ *   npx tsx --env-file=.env.local scripts/reset-password.ts <email> <new-password>
  *
  * Example:
- *   npx tsx scripts/reset-password.ts admin@example.com newpassword123
+ *   npx tsx --env-file=.env.local scripts/reset-password.ts admin@example.com newpassword123
  */
 
-import 'dotenv/config'
 import { getPayload } from 'payload'
 import config from '../src/payload.config'
 
 async function resetPassword() {
-  const [,, email, newPassword] = process.argv
+  const [, , email, newPassword] = process.argv
 
   // Verify login
   if (email === '--verify') {
@@ -31,6 +30,7 @@ async function resetPassword() {
           email: verifyEmail,
           password: verifyPassword,
         },
+        overrideAccess: true,
       })
       console.log('Login successful!')
       console.log(`User: ${result.user?.email}`)
@@ -46,10 +46,12 @@ async function resetPassword() {
     const payload = await getPayload({ config })
     const users = await payload.find({ collection: 'users', limit: 100, overrideAccess: true })
     if (users.docs.length === 0) {
-      console.log('No users found. Create one with: npx tsx scripts/reset-password.ts --create <email> <password>')
+      console.log(
+        'No users found. Create one with: npx tsx scripts/reset-password.ts --create <email> <password>',
+      )
     } else {
       console.log('Users:')
-      users.docs.forEach(u => console.log(`  - ${u.email}`))
+      users.docs.forEach((u) => console.log(`  - ${u.email}`))
     }
     process.exit(0)
   }

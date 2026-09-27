@@ -16,7 +16,6 @@ export const Food: CollectionConfig = {
   admin: {
     group: 'Food & Events',
     useAsTitle: 'vendorName',
-    hideAPIURL: true,
     defaultColumns: ['vendor', 'date', 'location', 'startTime'],
     pagination: {
       defaultLimit: 100,
@@ -100,4 +99,5 @@ export const Food: CollectionConfig = {
       },
     },
   ],
+  versions: false,
 }

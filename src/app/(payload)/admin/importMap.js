@@ -10,7 +10,12 @@ import { SyncNavLink as SyncNavLink_82c709757ca89b15fbda01ecdc07cb23 } from '../
 import { AdminNavLink as AdminNavLink_718cb223f4c9ff40cc70f8d31e60b60b } from '../../../components/AdminNavLink'
 import { LinesCleanedAlert as LinesCleanedAlert_ea4d0d6c304332acbeb3a86b04f0d005 } from '../../../components/admin/LinesCleanedAlert'
 import { SyncView as SyncView_c23504be653ff4cfe56b71cd946ad683 } from '../../../components/SyncView'
-import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
+import { CollectionCards as CollectionCards_ab83ff7e88da8d3530831f296ec4756a } from '@payloadcms/ui/rsc'
+import { CollectionQueryWidget as CollectionQueryWidget_ab83ff7e88da8d3530831f296ec4756a } from '@payloadcms/ui/rsc'
+import { QueryPresetsWhereField as QueryPresetsWhereField_3817bf644402e67bfe6577f60ef982de } from '@payloadcms/ui'
+import { CollectionQuerySortField as CollectionQuerySortField_3817bf644402e67bfe6577f60ef982de } from '@payloadcms/ui'
+import { RecentlyViewedWidget as RecentlyViewedWidget_ab83ff7e88da8d3530831f296ec4756a } from '@payloadcms/ui/rsc'
+import { RecentlyViewedCollectionsField as RecentlyViewedCollectionsField_3817bf644402e67bfe6577f60ef982de } from '@payloadcms/ui'
 import { VercelBlobClientUploadHandler as VercelBlobClientUploadHandler_16c82c5e25f430251a3e3ba57219ff4e } from '@payloadcms/storage-vercel-blob/client'
 
 /** @type import('payload').ImportMap */
@@ -27,6 +32,11 @@ export const importMap = {
   "./components/AdminNavLink#AdminNavLink": AdminNavLink_718cb223f4c9ff40cc70f8d31e60b60b,
   "./components/admin/LinesCleanedAlert#LinesCleanedAlert": LinesCleanedAlert_ea4d0d6c304332acbeb3a86b04f0d005,
   "./components/SyncView#SyncView": SyncView_c23504be653ff4cfe56b71cd946ad683,
-  "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1,
+  "@payloadcms/ui/rsc#CollectionCards": CollectionCards_ab83ff7e88da8d3530831f296ec4756a,
+  "@payloadcms/ui/rsc#CollectionQueryWidget": CollectionQueryWidget_ab83ff7e88da8d3530831f296ec4756a,
+  "@payloadcms/ui#QueryPresetsWhereField": QueryPresetsWhereField_3817bf644402e67bfe6577f60ef982de,
+  "@payloadcms/ui#CollectionQuerySortField": CollectionQuerySortField_3817bf644402e67bfe6577f60ef982de,
+  "@payloadcms/ui/rsc#RecentlyViewedWidget": RecentlyViewedWidget_ab83ff7e88da8d3530831f296ec4756a,
+  "@payloadcms/ui#RecentlyViewedCollectionsField": RecentlyViewedCollectionsField_3817bf644402e67bfe6577f60ef982de,
   "@payloadcms/storage-vercel-blob/client#VercelBlobClientUploadHandler": VercelBlobClientUploadHandler_16c82c5e25f430251a3e3ba57219ff4e
 }
