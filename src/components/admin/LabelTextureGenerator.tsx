@@ -51,16 +51,9 @@ function PdfDropzone({
   const inputRef = useRef<HTMLInputElement>(null)
   const inputId = useId()
   return (
-    // Same label-to-control rhythm as Payload's own fields (.field-type: column, --spacer-2 gap).
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 'var(--spacer-2)',
-        flex: 1,
-        minWidth: '240px',
-      }}
-    >
+    // .field-type: Payload's own label-to-control rhythm (column, --spacer-2 gap).
+    // flex: 1 keeps both pickers equal width (.field-type only sets flex-grow).
+    <div className="field-type" style={{ flex: 1, minWidth: '240px' }}>
       <FieldLabel as="label" htmlFor={inputId} label={label} />
       <Dropzone onChange={(files) => onSelect(files[0] ?? null)}>
         {/* Payload 4's default dropzone pads only block-wise; its own upload
@@ -167,7 +160,7 @@ export function LabelTextureGenerator() {
   return (
     <div className="field-type">
       <FieldLabel as="h3" label="3D label textures" />
-      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 'var(--spacer-3)', flexWrap: 'wrap' }}>
         <PdfDropzone label="Label art PDF" file={artFile} onSelect={setArtFile} />
         <PdfDropzone label="Metallic mask PDF (optional)" file={maskFile} onSelect={setMaskFile} />
       </div>
