@@ -185,47 +185,69 @@ export interface UserAuthOperations {
  */
 export interface Beer {
   id: string;
+  name: string;
+  style: string | Style;
   glass: 'pint' | 'stein' | 'teku' | 'uha';
-  /**
-   * Alcohol by volume percentage
-   */
   abv: number;
+  description?: string | null;
+  hops?: string | null;
   /**
-   * Draft price in dollars (e.g., 7)
+   * Optional (search existing or add a new one)
    */
+  tag?: (string | null) | Tag;
   draftPrice: number;
   /**
-   * Enable to manually set half pour price (disables auto-calculation)
-   */
-  halfPourOnly?: boolean | null;
-  /**
-   * Auto-calculated unless "Half Pour Only" is enabled
+   * Set automatically from the draft price unless "Half Pour Only" is on
    */
   halfPour?: number | null;
   /**
-   * Four pack price (e.g., 15)
+   * Served in half pours only: hides the full draft price on the site and uses the half pour price above as entered.
    */
+  halfPourOnly?: boolean | null;
   fourPack?: number | null;
   /**
-   * Bottle price (e.g., 12)
-   */
-  bottlePrice?: number | null;
-  /**
-   * Auto-calculated from four pack price
+   * Set automatically from the four pack price
    */
   canSingle?: number | null;
-  /**
-   * UPC barcode
-   */
+  bottlePrice?: number | null;
   upc?: string | null;
   /**
-   * Auto-generated from name, but you can override it manually
+   * Beer image (auto-filled by the 3D label tool; upload to override)
    */
-  slug: string;
+  image?: (string | null) | Media;
   /**
-   * Auto-incremented recipe number
+   * Generated 3D label texture
    */
-  recipe?: number | null;
+  labelBase?: (string | null) | Media;
+  /**
+   * Generated metalness map (white = metallic foil)
+   */
+  labelMetalness?: (string | null) | Media;
+  /**
+   * Generated can-rotation sprite sheet (PNG; animated in CSS on menu displays)
+   */
+  labelVideo?: (string | null) | Media;
+  /**
+   * Untappd URL (e.g., /b/lolev-beer-lupula/123456)
+   */
+  untappd?: string | null;
+  /**
+   * Rating (auto-fetched)
+   */
+  untappdRating?: number | null;
+  /**
+   * Rating count (auto-fetched)
+   */
+  untappdRatingCount?: number | null;
+  /**
+   * Top Beer Drops URL (e.g., https://topbeerdrops.com/...)
+   */
+  topBeerDrops?: string | null;
+  reviews?: {
+    docs?: (string | BeerReview)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
   /**
    * Hide from the /beer catalog (and sitemap/feeds). Usually for guest beers. Does NOT hide the beer from menu displays (/m).
    */
@@ -242,52 +264,14 @@ export interface Beer {
    * Brewery name shown in the collaboration badge. Leave blank to show “Collab”.
    */
   collabBrewery?: string | null;
-  name: string;
   /**
-   * Beer style
+   * Auto-generated from name, but you can override it manually
    */
-  style: string | Style;
+  slug: string;
   /**
-   * Generated 3D label texture (via the tool above)
+   * Assigned automatically to new beers; change only to fix a mistake (must be unique)
    */
-  labelBase?: (string | null) | Media;
-  /**
-   * Generated metalness map (white = metallic foil)
-   */
-  labelMetalness?: (string | null) | Media;
-  /**
-   * Beer image (auto-filled by the 3D label tool; upload to override)
-   */
-  image?: (string | null) | Media;
-  /**
-   * Generated can-rotation sprite sheet (PNG; animated in CSS on menu displays)
-   */
-  labelVideo?: (string | null) | Media;
-  /**
-   * Optional tag (search existing or add a new one)
-   */
-  tag?: (string | null) | Tag;
-  description?: string | null;
-  /**
-   * Hop varieties used
-   */
-  hops?: string | null;
-  /**
-   * Top Beer Drops URL (e.g., https://topbeerdrops.com/...)
-   */
-  topBeerDrops?: string | null;
-  /**
-   * Untappd URL (e.g., /b/lolev-beer-lupula/123456)
-   */
-  untappd?: string | null;
-  /**
-   * Rating (auto-fetched)
-   */
-  untappdRating?: number | null;
-  /**
-   * Rating count (auto-fetched)
-   */
-  untappdRatingCount?: number | null;
+  recipe?: number | null;
   /**
    * Legacy review data retained temporarily for migration compatibility.
    */
@@ -300,11 +284,6 @@ export interface Beer {
     | number
     | boolean
     | null;
-  reviews?: {
-    docs?: (string | BeerReview)[];
-    hasNextPage?: boolean;
-    totalDocs?: number;
-  };
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -317,6 +296,19 @@ export interface Style {
   id: string;
   /**
    * Beer style name (e.g., IPA, Stout, Pale Ale)
+   */
+  name: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tags".
+ */
+export interface Tag {
+  id: string;
+  /**
+   * Tag name (e.g., Seasonal, Limited, Award Winner)
    */
   name: string;
   updatedAt: string;
@@ -371,19 +363,6 @@ export interface Media {
       filename?: string | null;
     };
   };
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "tags".
- */
-export interface Tag {
-  id: string;
-  /**
-   * Tag name (e.g., Seasonal, Limited, Award Winner)
-   */
-  name: string;
-  updatedAt: string;
-  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1249,36 +1228,36 @@ export interface PayloadMigration {
  * via the `definition` "beers_select".
  */
 export interface BeersSelect<T extends boolean = true> {
+  name?: T;
+  style?: T;
   glass?: T;
   abv?: T;
+  description?: T;
+  hops?: T;
+  tag?: T;
   draftPrice?: T;
-  halfPourOnly?: T;
   halfPour?: T;
+  halfPourOnly?: T;
   fourPack?: T;
-  bottlePrice?: T;
   canSingle?: T;
+  bottlePrice?: T;
   upc?: T;
-  slug?: T;
-  recipe?: T;
+  image?: T;
+  labelBase?: T;
+  labelMetalness?: T;
+  labelVideo?: T;
+  untappd?: T;
+  untappdRating?: T;
+  untappdRatingCount?: T;
+  topBeerDrops?: T;
+  reviews?: T;
   hideFromSite?: T;
   justReleased?: T;
   collab?: T;
   collabBrewery?: T;
-  name?: T;
-  style?: T;
-  labelBase?: T;
-  labelMetalness?: T;
-  image?: T;
-  labelVideo?: T;
-  tag?: T;
-  description?: T;
-  hops?: T;
-  topBeerDrops?: T;
-  untappd?: T;
-  untappdRating?: T;
-  untappdRatingCount?: T;
+  slug?: T;
+  recipe?: T;
   positiveReviews?: T;
-  reviews?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
