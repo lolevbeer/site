@@ -439,8 +439,9 @@ export const getMenuByUrl = async (url: string): Promise<PayloadMenu | null> => 
       [`menu-url-${url}`],
       // menu-${url} lets beer edits invalidate only the menus that contain the
       // beer (see revalidateMenusForBeer in src/collections/Beers.ts) instead
-      // of nuking every menu via the broad 'menus' tag.
-      { tags: [CACHE_TAGS.menus, `menu-${url}`], revalidate: 60 }, // 1 min fallback for menus
+      // of nuking every menu via the broad 'menus' tag. Edits reach this cache
+      // through those tags, so the time-based fallback can be long.
+      { tags: [CACHE_TAGS.menus, `menu-${url}`], revalidate: 3600 }, // 1 hour fallback
     )()
   } catch (error) {
     logger.error(`Error fetching menu by URL: ${url}`, error)

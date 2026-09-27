@@ -1,13 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import type { BreweryEvent } from '@/lib/types/event'
-import { logger } from '@/lib/utils/logger'
 import {
   getAllLocations,
   getUpcomingEventsFromPayload,
   transformPayloadEventToBreweryEvent,
 } from '@/lib/utils/payload-api'
-import { getPittsburghTheme } from '@/lib/utils/pittsburgh-time'
+
+/**
+ * Cached on Vercel's CDN like /api/menu-stream: each location is cached on its
+ * first request, event and location edits invalidate it through the fetchers'
+ * cache tags, and it refreshes at least every 10 minutes so events that have
+ * ended drop off (displays also hide past days themselves) and a new
+ * deployment's `deployId` reaches them.
+ */
+export const dynamic = 'force-static'
+export const revalidate = 600
+
+/** No locations are prerendered at build; each is cached on its first request. */
+export function generateStaticParams() {
+  return []
+}
 
 /**
  * Events fetch for the polling endpoint. Both underlying helpers are already
@@ -35,13 +48,15 @@ async function getCachedEvents(locationSlug: string) {
   return {
     events,
     locationName: location.name,
-    timestamp: latestUpdate || Date.now(),
+    // 0 with no events (not the clock), so an unchanged empty list stays unchanged.
+    timestamp: latestUpdate,
   }
 }
 
 /**
- * Events polling endpoint for large displays.
- * Returns events data as JSON with edge-cache headers.
+ * Events polling endpoint for large displays. The response depends only on the
+ * events, never the clock, so it stays cacheable: displays work out their
+ * day/night theme themselves.
  */
 export async function GET(
   _request: NextRequest,
@@ -49,29 +64,19 @@ export async function GET(
 ): Promise<NextResponse> {
   const { location } = await params
 
-  try {
-    const data = await getCachedEvents(location.toLowerCase())
+  // A failed fetch throws (the payload-api fetchers log it and Sentry's
+  // onRequestError captures it) rather than answering 500, so a failed refresh
+  // keeps serving the last good cached events instead of caching an error.
+  const data = await getCachedEvents(location.toLowerCase())
 
-    if (!data) {
-      return NextResponse.json({ error: 'Location not found' }, { status: 404 })
-    }
-
-    return NextResponse.json(
-      {
-        events: data.events,
-        locationName: data.locationName,
-        theme: getPittsburghTheme(),
-        timestamp: data.timestamp,
-        deployId: process.env.NEXT_PUBLIC_DEPLOY_ID || '',
-      },
-      {
-        headers: {
-          'Cache-Control': 'public, s-maxage=10, stale-while-revalidate=30',
-        },
-      },
-    )
-  } catch (error) {
-    logger.error('Events fetch error:', error)
-    return NextResponse.json({ error: 'Failed to fetch events' }, { status: 500 })
+  if (!data) {
+    return NextResponse.json({ error: 'Location not found' }, { status: 404 })
   }
+
+  return NextResponse.json({
+    events: data.events,
+    locationName: data.locationName,
+    timestamp: data.timestamp,
+    deployId: process.env.NEXT_PUBLIC_DEPLOY_ID || '',
+  })
 }
