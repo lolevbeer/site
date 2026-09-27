@@ -39,8 +39,8 @@ interface DraftBeerCardProps {
   /**
    * Clock for the time-based "Just Released" badge (see getBeerBadgeLabel):
    * menus pass an hourly clock (useClockBucket) so this memoized card
-   * re-renders as time passes.
-   * Omit to use the current time.
+   * re-renders as time passes. Defaults to null, which leaves that badge out
+   * (Collab and Guest Tap badges still show).
    */
   now?: number | null
   /** Show Untappd rating (default: false; homepage compact rows omit it) */
@@ -63,7 +63,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
   showTap = true,
   showAbv = true,
   showJustReleased = true,
-  now,
+  now = null,
   showRating = false,
   compact = false,
   accentColor,

@@ -116,12 +116,12 @@ const JUST_RELEASED_DAYS = 7
  * "Just Released" depends on `now`: menus pass the current hour from
  * `useClockBucket`, which is null while server rendering (the time-based badge
  * is skipped, so hydration always matches) and changes hourly so long-running
- * displays drop the badge on time.
- * Omit `now` to use the current time.
+ * displays drop the badge on time. `now` has no default, so a caller can't
+ * fall back to the server's clock by leaving it out.
  */
 export function getBeerBadgeLabel(
   beer: Pick<Beer, 'collab' | 'collabBrewery' | 'guestTap' | 'createdAt'>,
-  now: number | null = Date.now(),
+  now: number | null,
 ): string | null {
   if (beer.collab) {
     const brewery = beer.collabBrewery?.trim()
