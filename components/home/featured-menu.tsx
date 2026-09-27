@@ -33,7 +33,7 @@ import { UntappdRating } from '@/components/beer/untappd-rating'
 import { TV_TYPE, TV_SAFE_X, TV_SAFE_Y, TV_COL, TV_LOGO_CLASS } from '@/lib/config/tv-display'
 import { OTHER_MENU_CATEGORIES, type OtherMenuCategory } from '@/lib/config/other-menu'
 import { LINES_OVERDUE_DAYS } from '@/lib/utils/lines-cleaned'
-import { parsePrice } from '@/lib/utils/formatters'
+import { formatPrice, parsePrice } from '@/lib/utils/formatters'
 
 const HOUR_MS = 60 * 60 * 1000
 
@@ -283,7 +283,7 @@ function OtherThingRow({
         className={`text-right font-bold tabular-nums transition-colors duration-500 ${soldOut ? 'text-foreground-muted line-through' : ''}`}
         style={{ fontSize: scaledVh(3.4, displayScale), color: itemColor }}
       >
-        {item.pricing.draftPrice != null && `$${item.pricing.draftPrice}`}
+        {formatPrice(item.pricing.draftPrice)}
       </div>
     </div>
   )
@@ -710,7 +710,7 @@ function CanCard({
                   className="can-tile-price font-semibold transition-colors duration-[250ms]"
                   style={{ color: accentColor }}
                 >
-                  ${item.fourPack}{' '}
+                  {formatPrice(parsePrice(item.fourPack))}{' '}
                   <span className="can-tile-price-sub font-semibold text-foreground-muted">
                     • Four Pack
                   </span>
@@ -721,7 +721,7 @@ function CanCard({
                   className="can-tile-price font-semibold transition-colors duration-[250ms]"
                   style={{ color: accentColor }}
                 >
-                  ${item.bottlePrice}{' '}
+                  {formatPrice(parsePrice(item.bottlePrice))}{' '}
                   <span className="can-tile-price-sub font-semibold text-foreground-muted">
                     • Bottle
                   </span>

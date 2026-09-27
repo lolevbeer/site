@@ -10,7 +10,7 @@ import React from 'react'
 import { BeerLinkWrapper } from '@/components/beer/beer-link-wrapper'
 import { GlassType, type Beer } from '@/lib/types/beer'
 import { useLocationContext } from '@/components/location/location-provider'
-import { getBeerSlug } from '@/lib/utils/formatters'
+import { formatPrice, getBeerSlug } from '@/lib/utils/formatters'
 import { GlassIcon } from '@/lib/utils/beer-icons'
 import { Badge } from '@/components/ui/badge'
 import { TopBeerDropsLink } from '@/components/beer/top-beer-drops-link'
@@ -225,7 +225,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                     className="font-bold tabular-nums transition-colors duration-500"
                     style={{ fontSize: '3.8vh', color: accentColor }}
                   >
-                    ${beer.pricing.halfPour}
+                    {formatPrice(beer.pricing.halfPour)}
                   </div>
                 )}
               </div>
@@ -236,7 +236,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
                   className="font-bold tabular-nums transition-colors duration-500"
                   style={{ fontSize: '3.8vh', color: accentColor }}
                 >
-                  ${beer.pricing.draftPrice}
+                  {formatPrice(beer.pricing.draftPrice)}
                 </div>
               )}
             </div>
