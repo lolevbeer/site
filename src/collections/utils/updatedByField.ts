@@ -10,7 +10,7 @@
 import type { Field } from 'payload'
 import { authenticatedFieldAccess } from '@/src/access/roles'
 
-export const updatedByField: Field = {
+export const updatedByField = {
   name: 'updatedBy',
   type: 'relationship',
   relationTo: 'users',
@@ -25,4 +25,4 @@ export const updatedByField: Field = {
     // User-less system saves (Untappd sync, scripts) keep the previous editor.
     beforeChange: [({ req, value }) => req.user?.id ?? value],
   },
-}
+} satisfies Field

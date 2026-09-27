@@ -1,13 +1,12 @@
 /** Checks the `updatedBy` field stamps each save (and so each version) with its editor. */
 import { describe, expect, it } from 'vitest'
-import type { FieldHook, RelationshipField } from 'payload'
 import { updatedByField } from '@/src/collections/utils/updatedByField'
 import { Beers } from '@/src/collections/Beers'
 import { Menus } from '@/src/collections/Menus'
 
-const field = updatedByField as RelationshipField
+// Read access is covered with the other field-visibility rules in access-control.int.spec.ts.
 const stamp = (user: { id: string } | null, value?: string) =>
-  (field.hooks!.beforeChange![0] as FieldHook)({ req: { user }, value } as never)
+  updatedByField.hooks.beforeChange[0]({ req: { user }, value } as never)
 
 describe('updatedByField', () => {
   it('records the signed-in editor, ignoring the submitted value', () => {
@@ -16,12 +15,6 @@ describe('updatedByField', () => {
 
   it('keeps the previous editor on user-less system saves', () => {
     expect(stamp(null, 'editor')).toBe('editor')
-  })
-
-  it('hides the editor from anonymous readers', () => {
-    const read = field.access!.read!
-    expect(read({ req: { user: null } } as never)).toBe(false)
-    expect(read({ req: { user: { id: 'editor' } } } as never)).toBe(true)
   })
 
   it('is on Beers and Menus', () => {

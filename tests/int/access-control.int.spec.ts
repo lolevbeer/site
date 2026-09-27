@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { User } from '@/src/payload-types'
 import { Users } from '@/src/collections/Users'
 import { Menus, canUpdateMenus } from '@/src/collections/Menus'
+import { Beers } from '@/src/collections/Beers'
 import { Events } from '@/src/collections/Events'
 import { DonationRequests } from '@/src/collections/DonationRequests'
 import { Jobs } from '@/src/collections/Jobs'
@@ -200,6 +201,16 @@ describe('draft and sensitive field visibility', () => {
       expect(callAccess(read, null)).toBe(false)
       expect(callAccess(read, userWith(['bartender']))).toBe(false)
       expect(callAccess(read, userWith(['event-manager']))).toBe(true)
+    }
+  })
+
+  it('hides who saved a beer or menu revision from anonymous readers', () => {
+    for (const fields of [Beers.fields, Menus.fields]) {
+      const read = (findField(fields, 'updatedBy').access as Record<string, unknown> | undefined)
+        ?.read
+
+      expect(callAccess(read, null)).toBe(false)
+      expect(callAccess(read, userWith(['bartender']))).toBe(true)
     }
   })
 
