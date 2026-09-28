@@ -114,22 +114,31 @@ export function MarkLinesCleanedButton() {
   const isReadyToClean =
     cleanedDays !== null && cleanedDays >= LINES_WARN_DAYS && cleanedDays < LINES_OVERDUE_DAYS
 
+  let lastCleanedLabel = 'No cleaning date recorded.'
+  if (loading) {
+    lastCleanedLabel = 'Loading last cleaning…'
+  } else if (lastCleaned && cleanedDays !== null) {
+    const formattedDate = new Date(lastCleaned).toLocaleDateString('en-US', {
+      timeZone: 'America/New_York',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    })
+    lastCleanedLabel = `Last cleaned: ${formattedDate}`
+  }
+
+  let buttonLabel = 'Mark Lines Cleaned Today'
+  if (saving) {
+    buttonLabel = 'Saving…'
+  } else if (loading) {
+    buttonLabel = 'Loading…'
+  }
+
   return (
     // .field-type: Payload's field spacing (gap between the banners and the
     // button, and the standard space before the next sidebar field).
     <div className="field-type" style={{ width: '100%' }}>
-      <p>
-        {loading
-          ? 'Loading last cleaning…'
-          : lastCleaned && cleanedDays !== null
-            ? `Last cleaned: ${new Date(lastCleaned).toLocaleDateString('en-US', {
-                timeZone: 'America/New_York',
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-              })}`
-            : 'No cleaning date recorded.'}
-      </p>
+      <p>{lastCleanedLabel}</p>
       <p>Records today immediately for this location. No menu save is needed.</p>
       {error && (
         <div role="alert">
@@ -149,7 +158,7 @@ export function MarkLinesCleanedButton() {
           size="medium"
           type="button"
         >
-          {saving ? 'Saving…' : loading ? 'Loading…' : 'Mark Lines Cleaned Today'}
+          {buttonLabel}
         </Button>
       </div>
       {isAdmin(user) && !isLocationDoc && locationId && (
