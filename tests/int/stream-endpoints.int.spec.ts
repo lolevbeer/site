@@ -52,6 +52,30 @@ describe('menu-stream response', () => {
     expect(body.timestamp).toBe(Date.parse('2026-09-20T00:00:00.000Z'))
   })
 
+  it('changes the polling timestamp when only the location cleaning date is updated', async () => {
+    const menu = {
+      updatedAt: '2026-09-20T00:00:00.000Z',
+      items: [],
+      location: {
+        linesLastCleaned: '2026-09-01T00:00:00.000Z',
+        updatedAt: '2026-09-01T00:00:00.000Z',
+      },
+    }
+    api.getMenuByUrl.mockResolvedValue(menu)
+    const before = await (await menuStream.GET(request, params({ url: 'draft' }))).json()
+
+    // Backdating a cleaning still needs to reach displays: use updatedAt.
+    menu.location = {
+      linesLastCleaned: '2026-09-19T00:00:00.000Z',
+      updatedAt: '2026-09-28T00:00:00.000Z',
+    }
+    const after = await (await menuStream.GET(request, params({ url: 'draft' }))).json()
+
+    expect(after.timestamp).not.toBe(before.timestamp)
+    expect(after.timestamp).toBe(Date.parse(menu.location.updatedAt))
+    expect(after.menu.location.linesLastCleaned).toBe(menu.location.linesLastCleaned)
+  })
+
   it('throws on a failed fetch so the last good cached menu keeps serving', async () => {
     api.getMenuByUrl.mockRejectedValue(new Error('db down'))
     await expect(menuStream.GET(request, params({ url: 'draft' }))).rejects.toThrow('db down')

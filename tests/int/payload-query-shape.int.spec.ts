@@ -66,18 +66,27 @@ beforeEach(() => {
 })
 
 function beersQuery() {
-  return find.mock.calls.map((call) => call[0] as Record<string, unknown>).find(
-    (args) => args.collection === 'beers',
-  )
+  return find.mock.calls
+    .map((call) => call[0] as Record<string, unknown>)
+    .find((args) => args.collection === 'beers')
 }
 
 function menusQuery() {
-  return find.mock.calls.map((call) => call[0] as Record<string, unknown>).find(
-    (args) => args.collection === 'menus',
-  )
+  return find.mock.calls
+    .map((call) => call[0] as Record<string, unknown>)
+    .find((args) => args.collection === 'menus')
 }
 
 describe('Payload query shape for cacheable beer lists', () => {
+  it('includes location update timestamps so cleaning edits reach menu displays', async () => {
+    find.mockResolvedValue({ docs: [] })
+    await getMenuByUrl('lawrenceville-draft')
+
+    expect(menusQuery()?.populate).toMatchObject({
+      locations: { linesLastCleaned: true, updatedAt: true },
+    })
+  })
+
   it('getAllBeersFromPayload drops the reviews join and 3D label uploads', async () => {
     find.mockResolvedValue({ docs: [] })
     await getAllBeersFromPayload()

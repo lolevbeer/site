@@ -333,6 +333,10 @@ export interface User {
  */
 export interface Location {
   id: string;
+  markLinesCleanedToday?: boolean | null;
+  /**
+   * Admin correction: choose a date, then save this location.
+   */
   linesLastCleaned?: string | null;
   /**
    * Is this location currently active?
@@ -1541,6 +1545,7 @@ export interface UsersSelect<T extends boolean = true> {
  * via the `definition` "locations_select".
  */
 export interface LocationsSelect<T extends boolean = true> {
+  markLinesCleanedToday?: T;
   linesLastCleaned?: T;
   active?: T;
   name?: T;

@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Banner, Button, useDocumentInfo, useField } from '@payloadcms/ui'
+import { Banner, Button, useAuth, useDocumentInfo, useField } from '@payloadcms/ui'
+import { isAdmin } from '@/src/access/roles'
 import { logger } from '@/lib/utils/logger'
 import {
   getAdminRelationshipID,
@@ -10,6 +11,7 @@ import {
 import { daysSinceCleaned, LINES_OVERDUE_DAYS, LINES_WARN_DAYS } from '@/lib/utils/lines-cleaned'
 
 export function MarkLinesCleanedButton() {
+  const { user } = useAuth()
   const { id: docId, collectionSlug } = useDocumentInfo()
   const { value: locationFieldValue } = useField<AdminRelationshipValue>({ path: 'location' })
   const { value: locationFormValue, setValue: setLocationFormValue } = useField<string>({
@@ -28,6 +30,7 @@ export function MarkLinesCleanedButton() {
   const [fetching, setFetching] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [saved, setSaved] = useState(false)
 
   const lastCleaned = isLocationDoc ? locationFormValue || null : fetchedLastCleaned
   const loading = !isLocationDoc && Boolean(locationId) && fetching
@@ -73,14 +76,14 @@ export function MarkLinesCleanedButton() {
 
     setSaving(true)
     setError(null)
-    const cleanedAt = new Date().toISOString()
+    setSaved(false)
 
     try {
       const response = await fetch(`/api/locations/${encodeURIComponent(locationId)}`, {
         method: 'PATCH',
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ linesLastCleaned: cleanedAt }),
+        body: JSON.stringify({ markLinesCleanedToday: true }),
       })
 
       if (!response.ok) throw new Error(`Location update failed (${response.status})`)
@@ -89,10 +92,12 @@ export function MarkLinesCleanedButton() {
         doc?: { linesLastCleaned?: string | null }
         linesLastCleaned?: string | null
       }
-      const savedValue = result.doc?.linesLastCleaned || result.linesLastCleaned || cleanedAt
+      const savedValue = result.doc?.linesLastCleaned || result.linesLastCleaned
+      if (!savedValue) throw new Error('Location response is missing the saved cleaning date')
 
       setFetchedLastCleaned(savedValue)
       if (collectionSlug === 'locations') setLocationFormValue(savedValue)
+      setSaved(true)
       window.dispatchEvent(
         new CustomEvent('linesCleanedUpdate', { detail: { locationId, cleanedAt: savedValue } }),
       )
@@ -113,7 +118,27 @@ export function MarkLinesCleanedButton() {
     // .field-type: Payload's field spacing (gap between the banners and the
     // button, and the standard space before the next sidebar field).
     <div className="field-type" style={{ width: '100%' }}>
-      {error && <Banner type="danger">{error}</Banner>}
+      <p>
+        {loading
+          ? 'Loading last cleaning…'
+          : lastCleaned && cleanedDays !== null
+            ? `Last cleaned: ${new Date(lastCleaned).toLocaleDateString('en-US', {
+                timeZone: 'America/New_York',
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+              })}`
+            : 'No cleaning date recorded.'}
+      </p>
+      <p>Records today immediately for this location. No menu save is needed.</p>
+      {error && (
+        <div role="alert">
+          <Banner type="danger">{error}</Banner>
+        </div>
+      )}
+      {saved && (
+        <p role="status">Saved. Lines cleaned today. Live menus will update automatically.</p>
+      )}
       {isOverdue && <Banner type="danger">OVERDUE - Lines need cleaning!</Banner>}
       {isReadyToClean && <Banner type="default">Ready to be cleaned</Banner>}
       <div style={{ width: '100%' }}>
@@ -124,9 +149,14 @@ export function MarkLinesCleanedButton() {
           size="medium"
           type="button"
         >
-          {saving ? 'Saving…' : loading ? 'Loading…' : 'Lines Cleaned Today'}
+          {saving ? 'Saving…' : loading ? 'Loading…' : 'Mark Lines Cleaned Today'}
         </Button>
       </div>
+      {isAdmin(user) && !isLocationDoc && locationId && (
+        <a href={`/admin/collections/locations/${encodeURIComponent(locationId)}`}>
+          Correct the cleaning date in location settings
+        </a>
+      )}
     </div>
   )
 }
