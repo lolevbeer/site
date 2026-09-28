@@ -43,6 +43,13 @@ export const Locations: CollectionConfig = {
   hooks: {
     beforeChange: [
       async ({ data, req, operation, originalDoc }) => {
+        // Field access gates this command; the server supplies the date so
+        // lead bartenders can record today without choosing an arbitrary date.
+        if (data.markLinesCleanedToday === true) {
+          data.linesLastCleaned = new Date().toISOString()
+        }
+        delete data.markLinesCleanedToday
+
         // Compute slug from name — only when the name changed or no slug
         // exists yet, so unrelated saves skip the uniqueness queries.
         if (
@@ -65,14 +72,27 @@ export const Locations: CollectionConfig = {
   },
   fields: [
     {
+      name: 'markLinesCleanedToday',
+      type: 'checkbox',
+      virtual: true,
+      access: {
+        create: leadBartenderFieldAccess,
+        update: leadBartenderFieldAccess,
+      },
+      admin: { hidden: true },
+    },
+    {
       name: 'linesLastCleaned',
       type: 'date',
       label: 'Draft Lines Last Cleaned',
       access: {
-        update: leadBartenderFieldAccess,
+        create: adminFieldAccess,
+        update: adminFieldAccess,
       },
       admin: {
         position: 'sidebar',
+        condition: (_data, _siblingData, { user }) => isAdmin(user),
+        description: 'Admin correction: choose a date, then save this location.',
         date: {
           pickerAppearance: 'dayOnly',
           displayFormat: 'MMM d, yyyy',

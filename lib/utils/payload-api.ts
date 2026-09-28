@@ -340,7 +340,7 @@ const MENU_POPULATE = {
   media: { url: true, sizes: true, filename: true, prefix: true },
   // linesLastCleaned drives the "Draft lines cleaned N days ago" line on the
   // /m draft displays (formatLinesCleanedDate in featured-menu.tsx).
-  locations: { slug: true, name: true, linesLastCleaned: true },
+  locations: { slug: true, name: true, linesLastCleaned: true, updatedAt: true },
 } as const
 
 /** Landing/catalog menus need `convertPayloadBeer` fields `/m` can skip. */

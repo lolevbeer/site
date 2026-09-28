@@ -38,9 +38,12 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ error: 'Menu not found' }, { status: 404 })
   }
 
-  // The newest of the menu's and its items' updatedAt, so edits to a beer or
-  // product on the menu count as changes even if the menu document didn't.
+  // Include location edits (such as linesLastCleaned) and item edits even
+  // when the menu document itself hasn't changed.
   let timestamp = menu.updatedAt ? new Date(menu.updatedAt).getTime() : 0
+  if (menu.location && typeof menu.location === 'object' && menu.location.updatedAt) {
+    timestamp = Math.max(timestamp, new Date(menu.location.updatedAt).getTime())
+  }
   for (const item of menu.items ?? []) {
     const product = item.product?.value
     if (product && typeof product === 'object' && 'updatedAt' in product) {
