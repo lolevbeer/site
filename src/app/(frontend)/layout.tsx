@@ -6,6 +6,7 @@ import { NuqsAdapter } from 'nuqs/adapters/next/app'
 import { LocationProvider } from '@/components/location/location-provider'
 import { ThemeProvider } from 'next-themes'
 import { ConditionalLayout } from '@/components/layout/conditional-layout'
+import { FooterGate } from '@/components/layout/footer-gate'
 import { Toaster } from '@/components/ui/sonner'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { SkipNav } from '@/components/ui/skip-nav'
@@ -13,6 +14,8 @@ import { GoogleAnalytics } from '@/components/analytics/google-analytics'
 import { PageViewTracker } from '@/components/analytics/page-view-tracker'
 import { AuthProvider } from '@/lib/hooks/use-auth'
 import { Footer } from '@/components/layout/footer'
+import { FooterTaprooms } from '@/components/layout/footer-taprooms'
+import { SiteJsonLd } from '@/components/seo/site-json-ld'
 import { MotionHydrationSentinel } from '@/components/motion/blur-fade'
 import { getAllLocations } from '@/lib/utils/payload-api'
 import { getWeeklyHoursForLocations } from '@/lib/utils/homepage-data'
@@ -31,7 +34,16 @@ async function FooterHours({
 }: {
   locations: Awaited<ReturnType<typeof getAllLocations>>
 }): Promise<ReactNode> {
-  return <Footer weeklyHours={await getWeeklyHoursForLocations(locations)} />
+  return (
+    <Footer
+      taprooms={
+        <FooterTaprooms
+          locations={locations}
+          weeklyHours={await getWeeklyHoursForLocations(locations)}
+        />
+      }
+    />
+  )
 }
 
 const poppins = Poppins({
@@ -149,40 +161,40 @@ export default async function AppLayout({
         />
       </head>
       <body className={`${poppins.variable} antialiased min-h-screen flex flex-col font-poppins`}>
+        <SiteJsonLd locations={locations} />
         <GoogleAnalytics />
-        <ErrorBoundary>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            enableColorScheme={false}
-            disableTransitionOnChange
-            themes={['light', 'dark']}
-            storageKey="lolev-theme"
-          >
-            <NuqsAdapter>
-              <LocationProvider locations={locations}>
-                <AuthProvider>
-                  <PageViewTracker />
-                  <MotionHydrationSentinel />
-                  <SkipNav />
-                  <ConditionalLayout
-                    footer={
-                      /* Bare <Footer /> so a hung hours query still ships a footer. */
-                      <Suspense fallback={<Footer />}>
-                        <FooterHours locations={locations} />
-                      </Suspense>
-                    }
-                  >
-                    {children}
-                  </ConditionalLayout>
-                  <Toaster />
-                  <Analytics />
-                </AuthProvider>
-              </LocationProvider>
-            </NuqsAdapter>
-          </ThemeProvider>
-        </ErrorBoundary>
+        <div className="flex min-h-0 flex-1 flex-col">
+          <ErrorBoundary>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              enableColorScheme={false}
+              disableTransitionOnChange
+              themes={['light', 'dark']}
+              storageKey="lolev-theme"
+            >
+              <NuqsAdapter>
+                <LocationProvider locations={locations}>
+                  <AuthProvider>
+                    <PageViewTracker />
+                    <MotionHydrationSentinel />
+                    <SkipNav />
+                    <ConditionalLayout>{children}</ConditionalLayout>
+                    <Toaster />
+                    <Analytics />
+                  </AuthProvider>
+                </LocationProvider>
+              </NuqsAdapter>
+            </ThemeProvider>
+          </ErrorBoundary>
+        </div>
+        {/* Outside LocationProvider so the taproom text is in the HTML shell. */}
+        <FooterGate>
+          <Suspense fallback={<Footer taprooms={<FooterTaprooms locations={locations} />} />}>
+            <FooterHours locations={locations} />
+          </Suspense>
+        </FooterGate>
       </body>
     </html>
   )

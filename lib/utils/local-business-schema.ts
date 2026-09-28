@@ -15,7 +15,12 @@ import {
   type GeoCoordinatesJsonLd,
 } from './json-ld'
 import { getMediaUrl } from './media-utils'
-import { LOLEV_BASE_URL, LOLEV_OG_IMAGE_URL, SOCIAL_PROFILE_URLS } from './schema-shared'
+import {
+  CRAWLABLE_SAME_AS,
+  LOLEV_BASE_URL,
+  LOLEV_OG_IMAGE_URL,
+  SOCIAL_PROFILE_URLS,
+} from './schema-shared'
 
 /** Minimal week-hours row from getWeeklyHoursWithHolidays (avoids importing payload-api). */
 export interface SchemaHoursDay {
@@ -302,6 +307,111 @@ export interface SearchActionJsonLd {
     urlTemplate: string
   }
   'query-input': string
+}
+
+/** @id of the crawlable Organization node rendered from the root layout. */
+export const CRAWLABLE_ORG_ID = `${LOLEV_BASE_URL}/#org`
+
+const CRAWLABLE_ORG_DESCRIPTION =
+  'Pittsburgh brewery sourcing specific hop lots from specialty growers worldwide, known for Ultra Hopped Ales, lagers, and oak-aged beer.'
+
+export interface CrawlableOrganizationJsonLd {
+  '@type': 'Organization'
+  '@id': string
+  name: string
+  url: string
+  logo: string
+  description: string
+  foundingDate: string
+  sameAs: string[]
+}
+
+export interface CrawlablePostalAddress {
+  '@type': 'PostalAddress'
+  streetAddress?: string
+  addressLocality?: string
+  addressRegion?: string
+  postalCode?: string
+  addressCountry: 'US'
+}
+
+export interface CrawlableBreweryJsonLd {
+  '@type': 'Brewery'
+  '@id': string
+  parentOrganization: { '@id': string }
+  name: string
+  url: string
+  telephone?: string
+  address?: CrawlablePostalAddress
+  geo?: GeoCoordinatesJsonLd
+  openingHoursSpecification?: OpeningHoursSpecificationJsonLd[]
+}
+
+export interface CrawlableSiteGraph {
+  '@context': 'https://schema.org'
+  '@graph': [CrawlableOrganizationJsonLd, ...CrawlableBreweryJsonLd[]]
+}
+
+function crawlablePostalAddress(location: PayloadLocation): CrawlablePostalAddress | undefined {
+  const street = location.address?.street?.trim()
+  const city = location.address?.city?.trim()
+  const state = location.address?.state?.trim()
+  const zip = location.address?.zip?.trim()
+  if (!street && !city && !state && !zip) return undefined
+  return {
+    '@type': 'PostalAddress',
+    ...(street ? { streetAddress: street } : {}),
+    ...(city ? { addressLocality: city } : {}),
+    ...(state ? { addressRegion: state } : {}),
+    ...(zip ? { postalCode: zip } : {}),
+    addressCountry: 'US',
+  }
+}
+
+/**
+ * One Organization plus one Brewery per active taproom, for the layout JSON-LD
+ * script. Hours, phone, address, and coordinates come from the location
+ * document. A phone, address line, coordinate, or hours row is included only
+ * when that location record has it.
+ */
+export function generateCrawlableSiteGraph(locations: PayloadLocation[]): CrawlableSiteGraph {
+  const organization: CrawlableOrganizationJsonLd = {
+    '@type': 'Organization',
+    '@id': CRAWLABLE_ORG_ID,
+    name: 'Lolev Beer',
+    url: LOLEV_BASE_URL,
+    logo: LOLEV_OG_IMAGE_URL,
+    description: CRAWLABLE_ORG_DESCRIPTION,
+    foundingDate: '2022-12',
+    sameAs: [...CRAWLABLE_SAME_AS],
+  }
+
+  const breweries = locations
+    .filter((location) => location.active !== false)
+    .map((location): CrawlableBreweryJsonLd => {
+      const slug = location.slug || location.id
+      const brewery: CrawlableBreweryJsonLd = {
+        '@type': 'Brewery',
+        '@id': `${LOLEV_BASE_URL}/#${slug}`,
+        parentOrganization: { '@id': CRAWLABLE_ORG_ID },
+        name: `Lolev Beer - ${location.name}`,
+        url: `${LOLEV_BASE_URL}/${slug}`,
+      }
+      const phone = location.basicInfo?.phone?.trim()
+      if (phone) brewery.telephone = phone
+      const address = crawlablePostalAddress(location)
+      if (address) brewery.address = address
+      const geo = geoFromCoordinates(location.coordinates)
+      if (geo) brewery.geo = geo
+      const hours = generateOpeningHours(location)
+      if (hours.length > 0) brewery.openingHoursSpecification = hours
+      return brewery
+    })
+
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [organization, ...breweries],
+  }
 }
 
 /**
