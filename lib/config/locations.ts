@@ -132,6 +132,28 @@ export function joinLocationNames(
   return `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`
 }
 
+/** Taproom name and phone, skipping locations that have no phone on the document. */
+export function taproomPhones(
+  locations: Array<{ name?: string | null; basicInfo?: { phone?: string | null } | null }>,
+): { name: string; phone: string }[] {
+  return locations.flatMap((location) => {
+    const name = location.name?.trim()
+    const phone = location.basicInfo?.phone?.trim()
+    if (!name || !phone) return []
+    return [{ name, phone }]
+  })
+}
+
+/** "Lawrenceville at (412) 336-8965 or Zelienople at (724) 609-5100" */
+export function formatTaproomPhones(
+  locations: Array<{ name?: string | null; basicInfo?: { phone?: string | null } | null }>,
+): string {
+  const phones = taproomPhones(locations).map((entry) => `${entry.name} at ${entry.phone}`)
+  if (phones.length === 0) return ''
+  if (phones.length === 1) return phones[0]
+  return `${phones.slice(0, -1).join(', ')} or ${phones[phones.length - 1]}`
+}
+
 /** "Pittsburgh PA 15201" from a Payload address — street is handled by the caller. */
 export function formatCityStateZip(
   address: { city?: string | null; state?: string | null; zip?: string | null } | null | undefined,

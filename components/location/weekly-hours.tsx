@@ -1,5 +1,3 @@
-'use client'
-
 /**
  * Shared weekly-hours rendering for the location surfaces.
  *
@@ -7,11 +5,15 @@
  * section all use this table. Banner alignment, the gap beside the day name,
  * and holiday badge size differ behind one `variant` prop so those surfaces
  * cannot drift apart. Banner copy is shared via `specialHoursBanner`.
+ *
+ * No "use client": the footer server component renders this table into the
+ * HTML document. Client pages can still import it.
  */
 
 import React from 'react'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
+import { formatHourMinute } from '@/lib/config/locations'
 import { formatHoursTime, getDayName } from '@/lib/utils/formatters'
 import { getTodayEST } from '@/lib/utils/date'
 import type { DayOfWeek, WeeklyHoursDay } from '@/lib/utils/payload-api'
@@ -43,6 +45,22 @@ export function getTodayDayOfWeek(): DayOfWeek {
 export function formatHoursRange(dayData: WeeklyHoursDay): string {
   if (dayData.closed) return 'Closed'
   return `${formatHoursTime(dayData.open, dayData.timezone)} - ${formatHoursTime(dayData.close, dayData.timezone)}`
+}
+
+function HoursTimes({ dayData }: { dayData: WeeklyHoursDay }) {
+  if (dayData.closed || !dayData.open || !dayData.close) return formatHoursRange(dayData)
+  const timezone = dayData.timezone || 'America/New_York'
+  return (
+    <>
+      <time dateTime={formatHourMinute(dayData.open, timezone)}>
+        {formatHoursTime(dayData.open, timezone)}
+      </time>
+      {' - '}
+      <time dateTime={formatHourMinute(dayData.close, timezone)}>
+        {formatHoursTime(dayData.close, timezone)}
+      </time>
+    </>
+  )
 }
 
 /**
@@ -147,7 +165,9 @@ export function WeeklyHoursTable({ weeklyHours, variant }: WeeklyHoursTableProps
                     </Badge>
                   ) : null}
                 </th>
-                <td className="tabular-nums text-left py-0.5">{formatHoursRange(dayData)}</td>
+                <td className="tabular-nums text-left py-0.5">
+                  <HoursTimes dayData={dayData} />
+                </td>
               </tr>
             )
           })}

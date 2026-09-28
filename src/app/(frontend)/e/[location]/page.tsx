@@ -12,7 +12,7 @@ import {
   extractVendorInfo,
 } from '@/lib/utils/payload-api'
 import type { PayloadMenu } from '@/lib/utils/payload-api'
-import { LIVE_DISPLAY_META, NOINDEX_ROBOTS } from '@/lib/utils/seo'
+import { LIVE_DISPLAY_META, NOINDEX_ROBOTS, pageOpenGraph } from '@/lib/utils/seo'
 
 // ISR: cache for 60s, skip build-time pre-rendering (first request is dynamic, then cached)
 export const revalidate = 60
@@ -139,10 +139,12 @@ export async function generateMetadata({ params }: EventsDisplayPageProps) {
     title = `Food - ${data.locationName}`
   }
 
+  const description = `Upcoming food and events at ${data.locationName}`
   return {
     title,
-    description: `Upcoming food and events at ${data.locationName}`,
+    description,
     robots: NOINDEX_ROBOTS,
+    openGraph: pageOpenGraph(`${title} | Lolev Beer`, description),
     other: { [LIVE_DISPLAY_META]: 'ready' },
   }
 }

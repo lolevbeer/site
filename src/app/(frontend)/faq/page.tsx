@@ -15,21 +15,24 @@ import {
 } from '@/components/ui/accordion'
 import { JsonLd } from '@/components/seo/json-ld'
 import { getBreweryFAQs, generateFAQSchema, type FAQItem } from '@/lib/utils/faq-schema'
-import { DEFAULT_OG_IMAGES } from '@/lib/utils/seo'
+import { pageOpenGraph } from '@/lib/utils/seo'
 import { generateFAQSpeakableSchema } from '@/lib/utils/speakable-schema'
 import { getActiveFAQs, getAllLocations } from '@/lib/utils/payload-api'
 import { PageTransition } from '@/components/motion'
 import { FaqContactSection } from '@/components/faq/faq-contact'
+import { taproomPhones } from '@/lib/config/locations'
+import type { PayloadLocation } from '@/lib/types/location'
 
 interface FAQAnswerProps {
   question: string
   answer: string
+  locations: PayloadLocation[]
 }
 
 /**
  * Renders FAQ answer with special formatting for certain questions
  */
-function FAQAnswer({ question, answer }: FAQAnswerProps): ReactNode {
+function FAQAnswer({ question, answer, locations }: FAQAnswerProps): ReactNode {
   if (question === 'Where can I find your beer in stores?') {
     return (
       <div>
@@ -44,14 +47,37 @@ function FAQAnswer({ question, answer }: FAQAnswerProps): ReactNode {
   }
 
   if (question === 'Can I book a private event?') {
+    const phones = taproomPhones(locations)
     return (
       <div>
         Yes! We offer private event space at both locations. For private event inquiries, please
         contact us at{' '}
         <a href="mailto:events@lolev.beer" className="text-primary hover:underline font-medium">
           events@lolev.beer
-        </a>{' '}
-        or call (412) 336-8965. Beer donation and fundraiser-night requests go through the{' '}
+        </a>
+        {phones.length > 0 ? (
+          <>
+            {' '}
+            or call{' '}
+            {phones.map((entry, index) => {
+              let separator = ''
+              if (index > 0) separator = index === phones.length - 1 ? ' or ' : ', '
+              return (
+                <span key={entry.phone}>
+                  {separator}
+                  {entry.name} at{' '}
+                  <a
+                    href={`tel:${entry.phone}`}
+                    className="text-primary hover:underline font-medium"
+                  >
+                    {entry.phone}
+                  </a>
+                </span>
+              )
+            })}
+          </>
+        ) : null}
+        . Beer donation and fundraiser-night requests go through the{' '}
         <Link href="/donate" className="text-primary hover:underline font-medium">
           donation request form
         </Link>{' '}
@@ -84,10 +110,12 @@ function FAQAnswer({ question, answer }: FAQAnswerProps): ReactNode {
 // ISR: revalidate every hour (FAQ content changes infrequently)
 export const revalidate = 3600
 
+const FAQ_DESCRIPTION =
+  'Hours, taproom locations, food, dogs, private events, and beer styles at Lolev Beer.'
+
 export const metadata: Metadata = {
   title: 'FAQ',
-  description:
-    'Find answers to common questions about Lolev Beer including hours, locations, events, private bookings, beer styles, and more.',
+  description: FAQ_DESCRIPTION,
   keywords: [
     'brewery faq',
     'hours',
@@ -99,13 +127,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: '/faq',
   },
-  openGraph: {
-    title: 'FAQ | Lolev Beer',
-    description:
-      'Find answers to common questions about Lolev Beer including hours, locations, events, and more.',
-    type: 'website',
-    images: DEFAULT_OG_IMAGES,
-  },
+  openGraph: pageOpenGraph('FAQ | Lolev Beer', FAQ_DESCRIPTION),
 }
 
 export default async function FAQPage() {
@@ -149,7 +171,7 @@ export default async function FAQPage() {
                     className="text-muted-foreground data-[state=closed]:hidden"
                     data-speakable="faq-answer"
                   >
-                    <FAQAnswer question={faq.question} answer={faq.answer} />
+                    <FAQAnswer question={faq.question} answer={faq.answer} locations={locations} />
                   </AccordionContent>
                 </AccordionItem>
               ))}

@@ -10,6 +10,7 @@ import { PageTransition } from '@/components/motion'
 import { Card, CardContent } from '@/components/ui/card'
 import { JobApplyForm } from '@/components/jobs/job-apply-form'
 import { getJobBySlug } from '@/lib/jobs/payload'
+import { pageOpenGraph } from '@/lib/utils/seo'
 
 export const revalidate = 300
 
@@ -21,10 +22,13 @@ export async function generateMetadata({ params }: JobPageProps): Promise<Metada
   const { slug } = await params
   const job = await getJobBySlug(slug)
   if (!job) return { title: 'Job not found' }
+  const description = job.summary || `Apply for ${job.title} at Lolev Beer.`
+  const title = `${job.title} — Jobs`
   return {
-    title: `${job.title} — Jobs`,
-    description: job.summary || `Apply for ${job.title} at Lolev Beer.`,
+    title,
+    description,
     alternates: { canonical: `/jobs/${job.slug}` },
+    openGraph: pageOpenGraph(`${title} | Lolev Beer`, description),
   }
 }
 

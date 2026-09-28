@@ -11,6 +11,10 @@ import type { PayloadLocation } from '@/lib/types/location'
 
 export const SITE_TITLE = 'Lolev Beer - Craft Brewery in Pittsburgh'
 
+/** Shared with Organization JSON-LD and llms.txt. Meta snippets append taproom names. */
+export const ORG_DESCRIPTION =
+  'Pittsburgh brewery sourcing specific hop lots from specialty growers worldwide, known for Ultra Hopped Ales, lagers, and oak-aged beer.'
+
 type NamedLocations = Array<{ name?: string | null }>
 
 function locationClause(
@@ -23,8 +27,8 @@ function locationClause(
 }
 
 export function siteDescription(locations: NamedLocations = []): string {
-  const where = locationClause(locations, (names) => ` with locations in ${names}`)
-  return `Experience exceptional craft beer at Lolev Beer${where}. Fresh brews, local food, and community events.`
+  const where = locationClause(locations, (names) => ` Taprooms in ${names}.`)
+  return `${ORG_DESCRIPTION}${where}`
 }
 
 export function beersDescription(locations: NamedLocations = []): string {
@@ -43,7 +47,7 @@ export function eventsDescription(locations: NamedLocations = []): string {
 
 export function foodDescription(locations: NamedLocations = []): string {
   const where = locationClause(locations, (names) => ` in ${names}`)
-  return `Food trucks and vendors at Lolev Beer${where}`
+  return `This week's food trucks and vendors at Lolev Beer${where}.`
 }
 
 export function beerMapDescription(locations: NamedLocations = []): string {
@@ -78,3 +82,17 @@ export const DEFAULT_OG_IMAGES = [
     alt: 'Lolev Beer - Craft Brewery in Pittsburgh',
   },
 ]
+
+/**
+ * Open Graph for a page. Next.js shallow-merges `openGraph`, so a page that
+ * sets `description` and omits this keeps the layout's site-wide blurb on
+ * the share card. Always pass the page description and the default image.
+ */
+export function pageOpenGraph(title: string, description: string) {
+  return {
+    title,
+    description,
+    type: 'website' as const,
+    images: DEFAULT_OG_IMAGES,
+  }
+}

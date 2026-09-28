@@ -6,7 +6,7 @@
 
 'use client'
 
-import React, { useMemo } from 'react'
+import React, { Suspense, useMemo } from 'react'
 import { useQueryState, parseAsString } from 'nuqs'
 import { Beer } from '@/lib/types/beer'
 import { BeerCard } from '@/components/beer/beer-card'
@@ -41,8 +41,45 @@ interface BeerPageContentProps {
   beers: Beer[]
 }
 
+interface BeerListingProps {
+  beers: Beer[]
+  search: string
+  availability: string
+  selectedType: string
+  selectedTag: string
+  onSearchChange?: (value: string) => void
+  onAvailabilityChange?: (value: string) => void
+  onTypeChange?: (type: string) => void
+  onTagChange?: (tag: string) => void
+  onClear?: () => void
+}
+
+const noop = () => {}
+
+/**
+ * Filter controls read the query string, which bails out of static rendering.
+ * The catalog itself renders with the default filters so beer names are in
+ * the HTML. The suspended child applies `?q=`, style, and availability.
+ */
 export function BeerPageContent({ beers }: BeerPageContentProps) {
-  const { currentLocation } = useLocationContext()
+  return (
+    <Suspense
+      fallback={
+        <BeerListing
+          beers={beers}
+          search=""
+          availability={DEFAULT_AVAILABILITY}
+          selectedType="all"
+          selectedTag="all"
+        />
+      }
+    >
+      <BeerPageFiltered beers={beers} />
+    </Suspense>
+  )
+}
+
+function BeerPageFiltered({ beers }: BeerPageContentProps) {
   const [search, setSearch] = useQueryState('q', { defaultValue: '' })
   const [availability, setAvailability] = useQueryState(
     'avail',
@@ -50,6 +87,48 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
   )
   const [selectedType, setSelectedType] = useQueryState('style', { defaultValue: 'all' })
   const [selectedTag, setSelectedTag] = useQueryState('tag', { defaultValue: 'all' })
+
+  const handleSearchChange = (value: string) => setSearch(value || null)
+  const handleAvailabilityChange = (value: string) =>
+    setAvailability(value === DEFAULT_AVAILABILITY ? null : value)
+  const handleTypeChange = (type: string) => setSelectedType(type === 'all' ? null : type)
+  const handleTagChange = (tag: string) => setSelectedTag(tag === 'all' ? null : tag)
+  const clearFilters = () => {
+    setSearch(null)
+    setAvailability(null)
+    setSelectedType(null)
+    setSelectedTag(null)
+  }
+
+  return (
+    <BeerListing
+      beers={beers}
+      search={search ?? ''}
+      availability={availability}
+      selectedType={selectedType ?? 'all'}
+      selectedTag={selectedTag ?? 'all'}
+      onSearchChange={handleSearchChange}
+      onAvailabilityChange={handleAvailabilityChange}
+      onTypeChange={handleTypeChange}
+      onTagChange={handleTagChange}
+      onClear={clearFilters}
+    />
+  )
+}
+
+function BeerListing({
+  beers,
+  search,
+  availability,
+  selectedType,
+  selectedTag,
+  onSearchChange = noop,
+  onAvailabilityChange = noop,
+  onTypeChange = noop,
+  onTagChange = noop,
+  onClear = noop,
+}: BeerListingProps) {
+  const { currentLocation } = useLocationContext()
 
   const beerTypes = useMemo(() => {
     const types = new Set<string>()
@@ -66,20 +145,6 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
     })
     return Array.from(tags).sort()
   }, [beers])
-
-  // Writing null resets a param to its default and drops it from the URL.
-  const handleSearchChange = (value: string) => setSearch(value || null)
-  const handleAvailabilityChange = (value: string) =>
-    setAvailability(value === DEFAULT_AVAILABILITY ? null : value)
-  const handleTypeChange = (type: string) => setSelectedType(type === 'all' ? null : type)
-  const handleTagChange = (tag: string) => setSelectedTag(tag === 'all' ? null : tag)
-
-  const clearFilters = () => {
-    setSearch(null)
-    setAvailability(null)
-    setSelectedType(null)
-    setSelectedTag(null)
-  }
 
   const hasActiveFilters =
     search ||
@@ -143,12 +208,12 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
                 aria-label="Search beers"
                 placeholder="Search beers"
                 value={search}
-                onChange={(e) => handleSearchChange(e.target.value)}
+                onChange={(e) => onSearchChange(e.target.value)}
                 className="bg-background pl-9 pr-9"
               />
               {search && (
                 <button
-                  onClick={() => handleSearchChange('')}
+                  onClick={() => onSearchChange('')}
                   className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   type="button"
                   aria-label="Clear search"
@@ -164,12 +229,12 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
               <SegmentedControl
                 aria-label="Filter by availability"
                 className="w-full sm:w-auto"
-                onValueChange={handleAvailabilityChange}
+                onValueChange={onAvailabilityChange}
                 options={AVAILABILITY_OPTIONS}
                 value={availability}
               />
 
-              <Select value={selectedType} onValueChange={handleTypeChange}>
+              <Select value={selectedType} onValueChange={onTypeChange}>
                 <SelectTrigger
                   aria-label="Filter by beer style"
                   className="w-full bg-background sm:w-44"
@@ -187,7 +252,7 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
               </Select>
 
               {beerTags.length > 0 && (
-                <Select value={selectedTag} onValueChange={handleTagChange}>
+                <Select value={selectedTag} onValueChange={onTagChange}>
                   <SelectTrigger
                     aria-label="Filter by beer series"
                     className="w-full bg-background sm:w-44"
@@ -239,7 +304,7 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
             </EmptyHeader>
             {hasActiveFilters && (
               <EmptyContent>
-                <Button variant="outline" onClick={clearFilters}>
+                <Button variant="outline" onClick={onClear}>
                   Clear all filters
                 </Button>
               </EmptyContent>

@@ -4,10 +4,12 @@
  */
 import { describe, expect, it } from 'vitest'
 import {
+  generateCrawlableSiteGraph,
   generateLocalBusinessSchema,
   generateLocalBusinessSchemas,
   generateOrganizationSchema,
 } from '@/lib/utils/local-business-schema'
+import { serializeJsonLd } from '@/lib/utils/json-ld'
 import type { PayloadLocation } from '@/lib/types/location'
 
 /** 4pm–10pm America/New_York on 2000-01-01 (EST, UTC−5) stored the way Payload time fields arrive. */
@@ -98,6 +100,81 @@ describe('generateLocalBusinessSchema', () => {
       'https://lolev.beer/lawrenceville',
       'https://lolev.beer/zelienople',
     ])
+  })
+})
+
+describe('generateCrawlableSiteGraph', () => {
+  const zelienople = {
+    id: 'loc-2',
+    slug: 'zelienople',
+    name: 'Zelienople',
+    active: true,
+    address: {
+      street: '111 South Main Street',
+      city: 'Zelienople',
+      state: 'PA',
+      zip: '16063',
+    },
+  } as PayloadLocation
+
+  it('publishes one Organization and one Brewery per taproom', () => {
+    const graph = generateCrawlableSiteGraph([lawrenceville, zelienople])
+    expect(graph['@graph'].map((node) => node['@type'])).toEqual([
+      'Organization',
+      'Brewery',
+      'Brewery',
+    ])
+    expect(graph['@graph'][0]).toMatchObject({
+      '@id': 'https://lolev.beer/#org',
+      name: 'Lolev Beer',
+      foundingDate: '2022-12',
+      description:
+        'Pittsburgh brewery sourcing specific hop lots from specialty growers worldwide, known for Ultra Hopped Ales, lagers, and oak-aged beer.',
+      sameAs: [
+        'https://untappd.com/Lolev',
+        'https://www.beeradvocate.com/beer/profile/64204/',
+        'https://www.facebook.com/lolevbeer/',
+        'https://www.instagram.com/lolevbeer',
+        'https://x.com/lolevbeer',
+      ],
+    })
+  })
+
+  it('copies phone, hours, and coordinates from the location and omits them when absent', () => {
+    const graph = generateCrawlableSiteGraph([lawrenceville, zelienople])
+    const [organization, lawrencevilleNode, zelienopleNode] = graph['@graph']
+    expect(organization['@type']).toBe('Organization')
+    expect(lawrencevilleNode).toMatchObject({
+      '@id': 'https://lolev.beer/#lawrenceville',
+      parentOrganization: { '@id': 'https://lolev.beer/#org' },
+      telephone: '(412) 336-8965',
+      address: {
+        streetAddress: '5247 Butler Street',
+        addressLocality: 'Pittsburgh',
+        addressRegion: 'PA',
+        postalCode: '15201',
+        addressCountry: 'US',
+      },
+      geo: { latitude: 40.465372, longitude: -79.960098 },
+    })
+    const monday = lawrencevilleNode.openingHoursSpecification?.find((row) =>
+      (Array.isArray(row.dayOfWeek) ? row.dayOfWeek : [row.dayOfWeek]).includes('Monday'),
+    )
+    expect(monday?.opens).toBe('16:00')
+    expect(zelienopleNode.telephone).toBeUndefined()
+    expect(zelienopleNode.openingHoursSpecification).toBeUndefined()
+    expect(zelienopleNode.geo).toBeUndefined()
+    expect(zelienopleNode.address?.streetAddress).toBe('111 South Main Street')
+  })
+
+  it('escapes < in the serialized script payload', () => {
+    const html = serializeJsonLd(
+      generateCrawlableSiteGraph([
+        { ...lawrenceville, name: 'Lawrenceville <script>' },
+      ]),
+    )
+    expect(html).toContain('\\u003c')
+    expect(html).not.toContain('<script>')
   })
 })
 

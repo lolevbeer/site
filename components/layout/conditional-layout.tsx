@@ -6,25 +6,23 @@ import { Header } from '@/components/layout/header'
 
 interface ConditionalLayoutProps {
   children: React.ReactNode
-  /**
-   * Footer slot, rendered by the server layout (a `<Suspense>`-wrapped
-   * async component that fetches the footer's weekly hours). Passed as a
-   * node rather than raw data so this client component doesn't need to
-   * know how the footer's data is fetched.
-   */
-  footer: React.ReactNode
 }
 
-export function ConditionalLayout({ children, footer }: ConditionalLayoutProps) {
+/** Menu boards, event screens, and non-public routes render without site chrome. */
+export function hidesSiteChrome(pathname: string | null): boolean {
+  if (!pathname) return false
+  return (
+    pathname.startsWith('/admin') ||
+    pathname.startsWith('/api') ||
+    pathname.startsWith('/m/') ||
+    pathname.startsWith('/e/')
+  )
+}
+
+export function ConditionalLayout({ children }: ConditionalLayoutProps) {
   const pathname = usePathname()
 
-  const skipChrome =
-    pathname?.startsWith('/admin') ||
-    pathname?.startsWith('/api') ||
-    pathname?.startsWith('/m/') ||
-    pathname?.startsWith('/e/')
-
-  if (skipChrome) {
+  if (hidesSiteChrome(pathname)) {
     return (
       <main id="main-content" tabIndex={-1} className="h-screen outline-none">
         {children}
@@ -38,7 +36,6 @@ export function ConditionalLayout({ children, footer }: ConditionalLayoutProps) 
       <main id="main-content" tabIndex={-1} className="flex-1 outline-none">
         {children}
       </main>
-      {footer}
     </>
   )
 }
