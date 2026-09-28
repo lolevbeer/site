@@ -1,14 +1,15 @@
 import { LabelTextureGenerator as LabelTextureGenerator_46efd3ef28e684ff03bb8e5d2dae8b4d } from '@/src/components/admin/LabelTextureGenerator'
 import { UntappdFetcher as UntappdFetcher_98d9a61c943279a91d72840260fe5c0b } from '@/src/components/admin/UntappdFetcher'
+import { VersionsWithEditor as VersionsWithEditor_086ae422e503b0ca3c3b3cebea7f361d } from '@/src/components/admin/VersionsWithEditor'
 import { MarkLinesCleanedButton as MarkLinesCleanedButton_f5f2df171d50f30cf104614de4c760a1 } from '@/src/components/admin/MarkLinesCleanedButton'
-import { EventDateWarning as EventDateWarning_ceb08b3b2912cb840ec0a7cae7cd13ed } from '../../../components/EventDateWarning'
-import { FoodDateWarning as FoodDateWarning_91c1c655713f1f06387e201ec7e2c9e1 } from '../../../components/FoodDateWarning'
-import { RecurringFoodGrid as RecurringFoodGrid_b4543e9ad50a80e5974eb5902847310e } from '../../../components/RecurringFoodGrid'
-import { AdminIcon as AdminIcon_a61f4011432dd182d230f12ec130ccf3 } from '../../../components/AdminLogo'
-import { AdminLogo as AdminLogo_a61f4011432dd182d230f12ec130ccf3 } from '../../../components/AdminLogo'
-import { SyncNavLink as SyncNavLink_82c709757ca89b15fbda01ecdc07cb23 } from '../../../components/SyncNavLink'
-import { LinesCleanedAlert as LinesCleanedAlert_ea4d0d6c304332acbeb3a86b04f0d005 } from '../../../components/admin/LinesCleanedAlert'
-import { SyncView as SyncView_c23504be653ff4cfe56b71cd946ad683 } from '../../../components/SyncView'
+import { EventDateWarning as EventDateWarning_86d7a7ba4986bf7e4d43cf53ef110e20 } from '@/src/components/EventDateWarning'
+import { FoodDateWarning as FoodDateWarning_f1a26c4c763b5f7447cc10d2b4b9a2e1 } from '@/src/components/FoodDateWarning'
+import { RecurringFoodGrid as RecurringFoodGrid_0c1dc1aa84aa3f4861a00292ec49d05d } from '@/src/components/RecurringFoodGrid'
+import { AdminIcon as AdminIcon_3cd799f05ab0794410a063fc246d88cb } from '@/src/components/AdminLogo'
+import { AdminLogo as AdminLogo_3cd799f05ab0794410a063fc246d88cb } from '@/src/components/AdminLogo'
+import { SyncNavLink as SyncNavLink_d656220869059dfb87e573ae59f98b9f } from '@/src/components/SyncNavLink'
+import { LinesCleanedAlert as LinesCleanedAlert_cd2a45d43757864ac10ad04ad5d94aa2 } from '@/src/components/admin/LinesCleanedAlert'
+import { SyncView as SyncView_d4a55995137be8d8e874f993f349f672 } from '@/src/components/SyncView'
 import { CollectionCards as CollectionCards_ab83ff7e88da8d3530831f296ec4756a } from '@payloadcms/ui/rsc'
 import { CollectionQueryWidget as CollectionQueryWidget_ab83ff7e88da8d3530831f296ec4756a } from '@payloadcms/ui/rsc'
 import { QueryPresetsWhereField as QueryPresetsWhereField_3817bf644402e67bfe6577f60ef982de } from '@payloadcms/ui'
@@ -21,15 +22,16 @@ import { VercelBlobClientUploadHandler as VercelBlobClientUploadHandler_16c82c5e
 export const importMap = {
   "@/src/components/admin/LabelTextureGenerator#LabelTextureGenerator": LabelTextureGenerator_46efd3ef28e684ff03bb8e5d2dae8b4d,
   "@/src/components/admin/UntappdFetcher#UntappdFetcher": UntappdFetcher_98d9a61c943279a91d72840260fe5c0b,
+  "@/src/components/admin/VersionsWithEditor#VersionsWithEditor": VersionsWithEditor_086ae422e503b0ca3c3b3cebea7f361d,
   "@/src/components/admin/MarkLinesCleanedButton#MarkLinesCleanedButton": MarkLinesCleanedButton_f5f2df171d50f30cf104614de4c760a1,
-  "./components/EventDateWarning#EventDateWarning": EventDateWarning_ceb08b3b2912cb840ec0a7cae7cd13ed,
-  "./components/FoodDateWarning#FoodDateWarning": FoodDateWarning_91c1c655713f1f06387e201ec7e2c9e1,
-  "./components/RecurringFoodGrid#RecurringFoodGrid": RecurringFoodGrid_b4543e9ad50a80e5974eb5902847310e,
-  "./components/AdminLogo#AdminIcon": AdminIcon_a61f4011432dd182d230f12ec130ccf3,
-  "./components/AdminLogo#AdminLogo": AdminLogo_a61f4011432dd182d230f12ec130ccf3,
-  "./components/SyncNavLink#SyncNavLink": SyncNavLink_82c709757ca89b15fbda01ecdc07cb23,
-  "./components/admin/LinesCleanedAlert#LinesCleanedAlert": LinesCleanedAlert_ea4d0d6c304332acbeb3a86b04f0d005,
-  "./components/SyncView#SyncView": SyncView_c23504be653ff4cfe56b71cd946ad683,
+  "@/src/components/EventDateWarning#EventDateWarning": EventDateWarning_86d7a7ba4986bf7e4d43cf53ef110e20,
+  "@/src/components/FoodDateWarning#FoodDateWarning": FoodDateWarning_f1a26c4c763b5f7447cc10d2b4b9a2e1,
+  "@/src/components/RecurringFoodGrid#RecurringFoodGrid": RecurringFoodGrid_0c1dc1aa84aa3f4861a00292ec49d05d,
+  "@/src/components/AdminLogo#AdminIcon": AdminIcon_3cd799f05ab0794410a063fc246d88cb,
+  "@/src/components/AdminLogo#AdminLogo": AdminLogo_3cd799f05ab0794410a063fc246d88cb,
+  "@/src/components/SyncNavLink#SyncNavLink": SyncNavLink_d656220869059dfb87e573ae59f98b9f,
+  "@/src/components/admin/LinesCleanedAlert#LinesCleanedAlert": LinesCleanedAlert_cd2a45d43757864ac10ad04ad5d94aa2,
+  "@/src/components/SyncView#SyncView": SyncView_d4a55995137be8d8e874f993f349f672,
   "@payloadcms/ui/rsc#CollectionCards": CollectionCards_ab83ff7e88da8d3530831f296ec4756a,
   "@payloadcms/ui/rsc#CollectionQueryWidget": CollectionQueryWidget_ab83ff7e88da8d3530831f296ec4756a,
   "@payloadcms/ui#QueryPresetsWhereField": QueryPresetsWhereField_3817bf644402e67bfe6577f60ef982de,

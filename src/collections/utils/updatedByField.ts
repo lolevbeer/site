@@ -17,8 +17,8 @@ export const updatedByField = {
   name: 'updatedBy',
   type: 'relationship',
   relationTo: 'users',
-  // Reads return the user ID only; the admin sidebar and version compare view
-  // look up the editor's email themselves (Users are readable by every
+  // Reads return the user ID only; the admin sidebar, version compare view, and
+  // versions list (VersionsWithEditor) look up the editor themselves (Users are readable by every
   // signed-in user for this), so populating it would be wasted work.
   maxDepth: 0,
   // Published beers and menus are public; don't expose staff user IDs.

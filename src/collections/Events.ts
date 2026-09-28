@@ -56,7 +56,7 @@ export const Events: CollectionConfig = {
       type: 'ui',
       admin: {
         components: {
-          Field: './components/EventDateWarning#EventDateWarning',
+          Field: '@/src/components/EventDateWarning#EventDateWarning',
         },
       },
     },
