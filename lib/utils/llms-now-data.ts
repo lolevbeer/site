@@ -36,27 +36,30 @@ async function loadOrEmpty<T>(label: string, load: () => Promise<T>, empty: T): 
   }
 }
 
+function namedOn(
+  name: string | null | undefined,
+  date: string | null | undefined,
+): { name: string; date: string }[] {
+  const trimmed = name?.trim()
+  if (!trimmed) return []
+  return [{ name: trimmed, date: dayKey(date) }]
+}
+
 function foodRows(
   entries: Awaited<ReturnType<typeof getCombinedUpcomingFood>>,
 ): { name: string; date: string }[] {
   return entries.flatMap((entry) => {
     if ('isRecurring' in entry && entry.isRecurring) {
-      const name = entry.vendor?.name?.trim() || ''
-      return name ? [{ name, date: dayKey(entry.date) }] : []
+      return namedOn(entry.vendor?.name, entry.date)
     }
     const food = entry as PayloadFood
-    const name = (food.vendorName || extractVendorInfo(food.vendor).name).trim()
-    const date = dayKey(typeof food.date === 'string' ? food.date : '')
-    return name ? [{ name, date }] : []
+    const date = typeof food.date === 'string' ? food.date : ''
+    return namedOn(food.vendorName || extractVendorInfo(food.vendor).name, date)
   })
 }
 
 function eventRows(events: PayloadEvent[]): { name: string; date: string }[] {
-  return events.flatMap((event) => {
-    const name = event.organizer?.trim() || ''
-    const date = dayKey(event.date)
-    return name ? [{ name, date }] : []
-  })
+  return events.flatMap((event) => namedOn(event.organizer, event.date))
 }
 
 /** Markdown "Pouring now" section, one block per location. */

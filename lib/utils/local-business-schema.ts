@@ -313,8 +313,6 @@ export interface SearchActionJsonLd {
 /** @id of the crawlable Organization node rendered from the root layout. */
 export const CRAWLABLE_ORG_ID = `${LOLEV_BASE_URL}/#org`
 
-export const CRAWLABLE_ORG_DESCRIPTION = ORG_DESCRIPTION
-
 export interface CrawlableOrganizationJsonLd {
   '@type': 'Organization'
   '@id': string
@@ -381,7 +379,7 @@ export function generateCrawlableSiteGraph(locations: PayloadLocation[]): Crawla
     name: 'Lolev Beer',
     url: LOLEV_BASE_URL,
     logo: LOLEV_OG_IMAGE_URL,
-    description: CRAWLABLE_ORG_DESCRIPTION,
+    description: ORG_DESCRIPTION,
     foundingDate: '2022-12',
     sameAs: [...CRAWLABLE_SAME_AS],
   }

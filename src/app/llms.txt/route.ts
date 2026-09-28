@@ -8,7 +8,7 @@ import { getAllLocations } from '@/lib/utils/payload-api'
 import { getBaseUrl } from '@/lib/utils/get-base-url'
 import { formatCityStateZip, formatHoursFaqAnswer } from '@/lib/config/locations'
 import { logger } from '@/lib/utils/logger'
-import { CRAWLABLE_ORG_DESCRIPTION } from '@/lib/utils/local-business-schema'
+import { ORG_DESCRIPTION } from '@/lib/utils/seo'
 import { formatPhoneLines } from '@/lib/utils/llms-now'
 import { loadPouringNow } from '@/lib/utils/llms-now-data'
 
@@ -27,9 +27,8 @@ export async function GET() {
     .map((loc) => {
       const street = loc.address?.street ?? ''
       const city = formatCityStateZip(loc.address)
-      const phone = loc.basicInfo?.phone?.trim()
-        ? `- Phone: ${loc.basicInfo.phone.trim()}`
-        : ''
+      const phoneNumber = loc.basicInfo?.phone?.trim()
+      const phone = phoneNumber ? `- Phone: ${phoneNumber}` : ''
       const page = loc.slug ? `- Page: ${baseUrl}/${loc.slug}` : ''
       return `### ${loc.name}
 - Address: ${street}${city ? `, ${city}` : ''}
@@ -55,7 +54,7 @@ ${page}`.trim()
 
   const content = `# Lolev Beer
 
-> ${CRAWLABLE_ORG_DESCRIPTION}
+> ${ORG_DESCRIPTION}
 
 ## Locations
 

@@ -75,19 +75,23 @@ function LocationUrlSync() {
 
   useEffect(() => {
     publishUrlLocation(urlLocation)
+  }, [urlLocation])
+
+  useEffect(() => {
     return registerUrlLocationSetter((value) => {
       void setUrlLocation(value)
     })
-  }, [urlLocation, setUrlLocation])
+  }, [setUrlLocation])
 
   return null
 }
 
 /**
- * Provides location state without calling useSearchParams.
- * The URL sync is a sibling of `children`, not their parent.
+ * Location state for the public site. `?loc=` is read in a nested Suspense
+ * boundary so the page body still prerenders. This component does not call
+ * useSearchParams; LocationUrlSync is a sibling of `children`.
  */
-function LocationProviderInner({ children, locations }: LocationProviderProps) {
+export function LocationProvider({ children, locations }: LocationProviderProps) {
   const locationState = useLocationWithoutUrl(locations)
   const target = locationState.currentLocationData
   const hoursState = useMemo(
@@ -101,24 +105,9 @@ function LocationProviderInner({ children, locations }: LocationProviderProps) {
     [target],
   )
 
-  // Memoize context value to prevent unnecessary re-renders
   const contextValue: LocationContextValue = useMemo(
     () => ({
-      // Core state from useLocation
-      currentLocation: locationState.currentLocation,
-      currentLocationData: locationState.currentLocationData,
-      locationInfo: locationState.locationInfo,
-      locations: locationState.locations,
-      setLocation: locationState.setLocation,
-      cycleLocation: locationState.cycleLocation,
-      isOpen: locationState.isOpen,
-      todaysHours: locationState.todaysHours,
-      nextOpening: locationState.nextOpening,
-      getLocationBySlug: locationState.getLocationBySlug,
-      getLocationInfo: locationState.getLocationInfo,
-      isClient: locationState.isClient,
-
-      // Hours state
+      ...locationState,
       hours: hoursState,
     }),
     [locationState, hoursState],
@@ -132,14 +121,6 @@ function LocationProviderInner({ children, locations }: LocationProviderProps) {
       {children}
     </LocationContext.Provider>
   )
-}
-
-/**
- * Location state for the public site. `?loc=` is read in a nested Suspense
- * boundary so the page body still prerenders.
- */
-export function LocationProvider({ children, locations }: LocationProviderProps) {
-  return <LocationProviderInner locations={locations}>{children}</LocationProviderInner>
 }
 
 /**

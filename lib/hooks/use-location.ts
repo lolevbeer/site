@@ -13,7 +13,6 @@ import {
   type PayloadLocation,
   type LocationSlug,
   type LocationInfo,
-  type Weekday,
   WEEKDAYS_FROM_SUNDAY,
   toLocationInfo,
 } from '@/lib/types/location'
@@ -22,7 +21,6 @@ import {
   isLocationOpenNow,
   getFormattedHoursForDay,
   getNextOpeningTimeForLocation,
-  getAllHoursForLocation,
   getDefaultLocationSlug,
   findLocationBySlug,
   isValidLocationSlug,
@@ -292,33 +290,4 @@ export function useLocationWithoutUrl(locations: PayloadLocation[] = []): UseLoc
     getUrlLocationServerSnapshot,
   )
   return useLocationState(locations, urlLocation, writeUrlLocation)
-}
-
-/**
- * Hook specifically for getting hours information
- */
-export function useLocationHours(locations: PayloadLocation[], locationSlug?: LocationSlug) {
-  const { currentLocation, getLocationBySlug } = useLocation(locations)
-  const targetSlug = locationSlug || currentLocation
-  const targetLocation = getLocationBySlug(targetSlug)
-
-  const getHoursForDay = useCallback(
-    (day: Weekday) => {
-      if (!targetLocation) return 'Hours unavailable'
-      return getFormattedHoursForDay(targetLocation, day)
-    },
-    [targetLocation],
-  )
-
-  const getAllHours = useCallback(() => {
-    if (!targetLocation) return []
-    return getAllHoursForLocation(targetLocation)
-  }, [targetLocation])
-
-  return {
-    getHoursForDay,
-    getAllHours,
-    isOpen: targetLocation ? isLocationOpenNow(targetLocation) : false,
-    nextOpening: targetLocation ? getNextOpeningTimeForLocation(targetLocation) : null,
-  }
 }

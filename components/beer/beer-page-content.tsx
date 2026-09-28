@@ -41,6 +41,21 @@ interface BeerPageContentProps {
   beers: Beer[]
 }
 
+interface BeerListingProps {
+  beers: Beer[]
+  search: string
+  availability: string
+  selectedType: string
+  selectedTag: string
+  onSearchChange?: (value: string) => void
+  onAvailabilityChange?: (value: string) => void
+  onTypeChange?: (type: string) => void
+  onTagChange?: (tag: string) => void
+  onClear?: () => void
+}
+
+const noop = () => {}
+
 /**
  * Filter controls read the query string, which bails out of static rendering.
  * The catalog itself renders with the default filters so beer names are in
@@ -56,11 +71,6 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
           availability={DEFAULT_AVAILABILITY}
           selectedType="all"
           selectedTag="all"
-          onSearchChange={() => {}}
-          onAvailabilityChange={() => {}}
-          onTypeChange={() => {}}
-          onTagChange={() => {}}
-          onClear={() => {}}
         />
       }
     >
@@ -112,22 +122,12 @@ function BeerListing({
   availability,
   selectedType,
   selectedTag,
-  onSearchChange,
-  onAvailabilityChange,
-  onTypeChange,
-  onTagChange,
-  onClear,
-}: BeerPageContentProps & {
-  search: string
-  availability: string
-  selectedType: string
-  selectedTag: string
-  onSearchChange: (value: string) => void
-  onAvailabilityChange: (value: string) => void
-  onTypeChange: (type: string) => void
-  onTagChange: (tag: string) => void
-  onClear: () => void
-}) {
+  onSearchChange = noop,
+  onAvailabilityChange = noop,
+  onTypeChange = noop,
+  onTagChange = noop,
+  onClear = noop,
+}: BeerListingProps) {
   const { currentLocation } = useLocationContext()
 
   const beerTypes = useMemo(() => {

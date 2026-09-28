@@ -8,15 +8,10 @@
 
 import { usePathname } from 'next/navigation'
 import type { ReactNode } from 'react'
+import { hidesSiteChrome } from '@/components/layout/conditional-layout'
 
 export function FooterGate({ children }: { children: ReactNode }) {
   const pathname = usePathname()
-  const skipChrome =
-    pathname?.startsWith('/admin') ||
-    pathname?.startsWith('/api') ||
-    pathname?.startsWith('/m/') ||
-    pathname?.startsWith('/e/')
-
-  if (skipChrome) return null
+  if (hidesSiteChrome(pathname)) return null
   return children
 }

@@ -3,6 +3,8 @@
  * Built from location documents and menu/event/food rows. Empty lists are omitted.
  */
 
+import { taproomPhones } from '@/lib/config/locations'
+
 export interface LlmsNowLocation {
   name: string
   onTap: string[]
@@ -52,12 +54,7 @@ export function formatPouringNow(locations: LlmsNowLocation[]): string {
 export function formatPhoneLines(
   locations: Array<{ name?: string | null; basicInfo?: { phone?: string | null } | null }>,
 ): string {
-  return locations
-    .flatMap((location) => {
-      const name = location.name?.trim()
-      const phone = location.basicInfo?.phone?.trim()
-      if (!name || !phone) return []
-      return [`- ${name}: ${phone}`]
-    })
+  return taproomPhones(locations)
+    .map((entry) => `- ${entry.name}: ${entry.phone}`)
     .join('\n')
 }

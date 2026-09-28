@@ -9,6 +9,26 @@ import { WeeklyHoursTable } from '@/components/location/weekly-hours'
 import type { PayloadLocation } from '@/lib/types/location'
 import type { WeeklyHoursDay } from '@/lib/utils/payload-api'
 
+function mapsHref(location: PayloadLocation): string | undefined {
+  const address = location.address
+  if (!address) return undefined
+  if (address.directionsUrl) return address.directionsUrl
+  if (!address.street || !address.city || !address.state) return undefined
+  const query = encodeURIComponent(`${address.street}, ${address.city}, ${address.state}`)
+  return `https://maps.google.com/?q=${query}`
+}
+
+function StreetAddress({ location }: { location: PayloadLocation }) {
+  const address = location.address
+  return (
+    <>
+      {address?.street}
+      <br />
+      {address?.city}, {address?.state} {address?.zip}
+    </>
+  )
+}
+
 export function FooterTaprooms({
   locations,
   weeklyHours,
@@ -20,13 +40,7 @@ export function FooterTaprooms({
     .filter((location) => location.active !== false)
     .map((location) => {
       const locationKey = location.slug || location.id
-      const mapUrl =
-        location.address?.directionsUrl ||
-        (location.address?.street && location.address?.city && location.address?.state
-          ? `https://maps.google.com/?q=${encodeURIComponent(
-              `${location.address.street}, ${location.address.city}, ${location.address.state}`,
-            )}`
-          : undefined)
+      const mapUrl = mapsHref(location)
       const hours = weeklyHours?.[locationKey]
       const phone = location.basicInfo?.phone?.trim()
 
@@ -50,15 +64,11 @@ export function FooterTaprooms({
                   rel="noopener noreferrer"
                   className="text-sm text-muted-foreground hover:text-foreground hover:underline transition-colors block"
                 >
-                  {location.address?.street}
-                  <br />
-                  {location.address?.city}, {location.address?.state} {location.address?.zip}
+                  <StreetAddress location={location} />
                 </a>
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  {location.address?.street}
-                  <br />
-                  {location.address?.city}, {location.address?.state} {location.address?.zip}
+                  <StreetAddress location={location} />
                 </p>
               )}
             </address>

@@ -10,7 +10,7 @@ import { getBreweryFAQs } from '@/lib/utils/faq-schema'
 import { getBaseUrl } from '@/lib/utils/get-base-url'
 import { formatCityStateZip, formatHoursFaqAnswer } from '@/lib/config/locations'
 import { logger } from '@/lib/utils/logger'
-import { CRAWLABLE_ORG_DESCRIPTION } from '@/lib/utils/local-business-schema'
+import { ORG_DESCRIPTION } from '@/lib/utils/seo'
 import { formatPhoneLines } from '@/lib/utils/llms-now'
 import { loadPouringNow } from '@/lib/utils/llms-now-data'
 
@@ -89,7 +89,7 @@ ${phone ? `- Phone: ${phone}\n` : ''}${page}`.trim()
 
   const content = `# Lolev Beer
 
-> ${CRAWLABLE_ORG_DESCRIPTION}
+> ${ORG_DESCRIPTION}
 
 ## Locations
 

@@ -26,16 +26,13 @@ import type { PayloadLocation } from '@/lib/types/location'
 interface FAQAnswerProps {
   question: string
   answer: string
+  locations: PayloadLocation[]
 }
 
 /**
  * Renders FAQ answer with special formatting for certain questions
  */
-function FAQAnswer({
-  question,
-  answer,
-  locations,
-}: FAQAnswerProps & { locations: PayloadLocation[] }): ReactNode {
+function FAQAnswer({ question, answer, locations }: FAQAnswerProps): ReactNode {
   if (question === 'Where can I find your beer in stores?') {
     return (
       <div>
@@ -50,6 +47,7 @@ function FAQAnswer({
   }
 
   if (question === 'Can I book a private event?') {
+    const phones = taproomPhones(locations)
     return (
       <div>
         Yes! We offer private event space at both locations. For private event inquiries, please
@@ -57,19 +55,26 @@ function FAQAnswer({
         <a href="mailto:events@lolev.beer" className="text-primary hover:underline font-medium">
           events@lolev.beer
         </a>
-        {taproomPhones(locations).length > 0 ? (
+        {phones.length > 0 ? (
           <>
             {' '}
             or call{' '}
-            {taproomPhones(locations).map((entry, index, all) => (
-              <span key={entry.phone}>
-                {index > 0 ? (index === all.length - 1 ? ' or ' : ', ') : null}
-                {entry.name} at{' '}
-                <a href={`tel:${entry.phone}`} className="text-primary hover:underline font-medium">
-                  {entry.phone}
-                </a>
-              </span>
-            ))}
+            {phones.map((entry, index) => {
+              let separator = ''
+              if (index > 0) separator = index === phones.length - 1 ? ' or ' : ', '
+              return (
+                <span key={entry.phone}>
+                  {separator}
+                  {entry.name} at{' '}
+                  <a
+                    href={`tel:${entry.phone}`}
+                    className="text-primary hover:underline font-medium"
+                  >
+                    {entry.phone}
+                  </a>
+                </span>
+              )
+            })}
           </>
         ) : null}
         . Beer donation and fundraiser-night requests go through the{' '}
