@@ -1,5 +1,6 @@
 import { LabelTextureGenerator as LabelTextureGenerator_46efd3ef28e684ff03bb8e5d2dae8b4d } from '@/src/components/admin/LabelTextureGenerator'
 import { UntappdFetcher as UntappdFetcher_98d9a61c943279a91d72840260fe5c0b } from '@/src/components/admin/UntappdFetcher'
+import { VersionsWithEditor as VersionsWithEditor_8552222394241d2fd4034b5408bbdc78 } from '../../../components/admin/VersionsWithEditor'
 import { MarkLinesCleanedButton as MarkLinesCleanedButton_f5f2df171d50f30cf104614de4c760a1 } from '@/src/components/admin/MarkLinesCleanedButton'
 import { EventDateWarning as EventDateWarning_ceb08b3b2912cb840ec0a7cae7cd13ed } from '../../../components/EventDateWarning'
 import { FoodDateWarning as FoodDateWarning_91c1c655713f1f06387e201ec7e2c9e1 } from '../../../components/FoodDateWarning'
@@ -21,6 +22,7 @@ import { VercelBlobClientUploadHandler as VercelBlobClientUploadHandler_16c82c5e
 export const importMap = {
   "@/src/components/admin/LabelTextureGenerator#LabelTextureGenerator": LabelTextureGenerator_46efd3ef28e684ff03bb8e5d2dae8b4d,
   "@/src/components/admin/UntappdFetcher#UntappdFetcher": UntappdFetcher_98d9a61c943279a91d72840260fe5c0b,
+  "./components/admin/VersionsWithEditor#VersionsWithEditor": VersionsWithEditor_8552222394241d2fd4034b5408bbdc78,
   "@/src/components/admin/MarkLinesCleanedButton#MarkLinesCleanedButton": MarkLinesCleanedButton_f5f2df171d50f30cf104614de4c760a1,
   "./components/EventDateWarning#EventDateWarning": EventDateWarning_ceb08b3b2912cb840ec0a7cae7cd13ed,
   "./components/FoodDateWarning#FoodDateWarning": FoodDateWarning_91c1c655713f1f06387e201ec7e2c9e1,

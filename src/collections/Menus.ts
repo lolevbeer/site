@@ -70,6 +70,13 @@ export const Menus: CollectionConfig = {
     group: 'Front of House',
     useAsTitle: 'description',
     defaultColumns: ['description', 'location', 'type', '_status'],
+    components: {
+      views: {
+        edit: {
+          versions: { Component: './components/admin/VersionsWithEditor#VersionsWithEditor' },
+        },
+      },
+    },
     preview: (doc) => {
       if (doc?.url) {
         return `/m/${doc.url}`

@@ -107,6 +107,13 @@ export const Beers: CollectionConfig = {
     useAsTitle: 'name',
     listSearchableFields: ['name', 'slug'],
     defaultColumns: ['name', 'slug', 'style', 'abv', 'hideFromSite'],
+    components: {
+      views: {
+        edit: {
+          versions: { Component: './components/admin/VersionsWithEditor#VersionsWithEditor' },
+        },
+      },
+    },
     pagination: {
       defaultLimit: 100,
     },
