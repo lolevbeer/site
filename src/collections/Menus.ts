@@ -73,7 +73,7 @@ export const Menus: CollectionConfig = {
     components: {
       views: {
         edit: {
-          versions: { Component: './components/admin/VersionsWithEditor#VersionsWithEditor' },
+          versions: { Component: '@/src/components/admin/VersionsWithEditor#VersionsWithEditor' },
         },
       },
     },

@@ -172,15 +172,15 @@ export default buildConfig({
     },
     components: {
       graphics: {
-        Logo: './components/AdminLogo#AdminLogo',
-        Icon: './components/AdminLogo#AdminIcon',
+        Logo: '@/src/components/AdminLogo#AdminLogo',
+        Icon: '@/src/components/AdminLogo#AdminIcon',
       },
-      providers: ['./components/admin/LinesCleanedAlert#LinesCleanedAlert'],
+      providers: ['@/src/components/admin/LinesCleanedAlert#LinesCleanedAlert'],
       actions: [],
-      afterNavLinks: ['./components/SyncNavLink#SyncNavLink'],
+      afterNavLinks: ['@/src/components/SyncNavLink#SyncNavLink'],
       views: {
         sync: {
-          Component: './components/SyncView#SyncView',
+          Component: '@/src/components/SyncView#SyncView',
           path: '/sync',
           meta: {
             title: 'Sync',
