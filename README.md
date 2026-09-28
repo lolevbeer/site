@@ -10,7 +10,7 @@ The badges above are, in order: the `CI` workflow on `main` (type-check, lint, V
 
 ## Setup
 
-Requires Node 24.15+ (Payload 4's minimum; CI reads `engines.node` from `package.json`) and pnpm 9 or 10 (`package.json` pins `packageManager` to pnpm 10).
+Requires Node 24.15+ (Payload 4's minimum; CI reads `engines.node` from `package.json`) and pnpm 11 (`package.json` pins `packageManager` to pnpm 11).
 
 1. Clone the repo
 2. `cp .env.example .env` and fill in your values. `DATABASE_URI` and `PAYLOAD_SECRET` are required; do not leave `PAYLOAD_SECRET` as the documented placeholder. Production also requires `BLOB_READ_WRITE_TOKEN`. Slack, cron, revalidation, and geocoding keys are optional — see `.env.example`.

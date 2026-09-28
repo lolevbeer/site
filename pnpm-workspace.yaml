@@ -1,11 +1,14 @@
-# pnpm 10 no longer reads the `pnpm` field from package.json; these settings
+# pnpm 10+ no longer reads the `pnpm` field from package.json; these settings
 # live here instead. The overrides are security floors keeping transitive
 # dependencies above known-vulnerable versions, so losing them silently
 # reopens Dependabot alerts — keep them here, not in package.json.
-onlyBuiltDependencies:
-  - "sharp"
-  - "esbuild"
-  - "unrs-resolver"
+# pnpm 11 runs install scripts only for packages listed true here
+# (it replaced pnpm 10's onlyBuiltDependencies).
+allowBuilds:
+  sharp: true
+  esbuild: true
+  unrs-resolver: true
+  "@sentry/cli": false
 
 overrides:
   "undici@5": "^6.28.0"
