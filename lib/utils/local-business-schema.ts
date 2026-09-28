@@ -312,7 +312,7 @@ export interface SearchActionJsonLd {
 /** @id of the crawlable Organization node rendered from the root layout. */
 export const CRAWLABLE_ORG_ID = `${LOLEV_BASE_URL}/#org`
 
-const CRAWLABLE_ORG_DESCRIPTION =
+export const CRAWLABLE_ORG_DESCRIPTION =
   'Pittsburgh brewery sourcing specific hop lots from specialty growers worldwide, known for Ultra Hopped Ales, lagers, and oak-aged beer.'
 
 export interface CrawlableOrganizationJsonLd {

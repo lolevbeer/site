@@ -6,14 +6,25 @@
 
 'use client'
 
-import React, { createContext, useContext, ReactNode, useMemo, Suspense } from 'react'
+import React, { createContext, useContext, ReactNode, useEffect, useMemo, Suspense } from 'react'
+import { useQueryState, parseAsString } from 'nuqs'
 import {
   type PayloadLocation,
   type LocationSlug,
   type LocationInfo,
   type Weekday,
 } from '@/lib/types/location'
-import { useLocation, useLocationHours } from '@/lib/hooks/use-location'
+import {
+  getAllHoursForLocation,
+  getFormattedHoursForDay,
+  getNextOpeningTimeForLocation,
+  isLocationOpenNow,
+} from '@/lib/config/locations'
+import {
+  publishUrlLocation,
+  registerUrlLocationSetter,
+  useLocationWithoutUrl,
+} from '@/lib/hooks/use-location'
 
 interface LocationContextValue {
   // Core location state
@@ -56,12 +67,39 @@ interface LocationProviderProps {
 }
 
 /**
- * Inner provider component that uses hooks requiring useSearchParams
- * This is wrapped in Suspense to support static generation
+ * Reads `?loc=` inside its own Suspense boundary. The page body is a sibling,
+ * so a search-param bailout does not drop the document HTML.
+ */
+function LocationUrlSync() {
+  const [urlLocation, setUrlLocation] = useQueryState('loc', parseAsString)
+
+  useEffect(() => {
+    publishUrlLocation(urlLocation)
+    return registerUrlLocationSetter((value) => {
+      void setUrlLocation(value)
+    })
+  }, [urlLocation, setUrlLocation])
+
+  return null
+}
+
+/**
+ * Provides location state without calling useSearchParams.
+ * The URL sync is a sibling of `children`, not their parent.
  */
 function LocationProviderInner({ children, locations }: LocationProviderProps) {
-  const locationState = useLocation(locations)
-  const hoursState = useLocationHours(locations)
+  const locationState = useLocationWithoutUrl(locations)
+  const target = locationState.currentLocationData
+  const hoursState = useMemo(
+    () => ({
+      getHoursForDay: (day: Weekday) =>
+        target ? getFormattedHoursForDay(target, day) : 'Hours unavailable',
+      getAllHours: () => (target ? getAllHoursForLocation(target) : []),
+      isOpen: target ? isLocationOpenNow(target) : false,
+      nextOpening: target ? getNextOpeningTimeForLocation(target) : null,
+    }),
+    [target],
+  )
 
   // Memoize context value to prevent unnecessary re-renders
   const contextValue: LocationContextValue = useMemo(
@@ -86,20 +124,22 @@ function LocationProviderInner({ children, locations }: LocationProviderProps) {
     [locationState, hoursState],
   )
 
-  return <LocationContext.Provider value={contextValue}>{children}</LocationContext.Provider>
+  return (
+    <LocationContext.Provider value={contextValue}>
+      <Suspense fallback={null}>
+        <LocationUrlSync />
+      </Suspense>
+      {children}
+    </LocationContext.Provider>
+  )
 }
 
 /**
- * Location Context Provider Component
- * Wraps the application to provide location state globally
- * Wrapped in Suspense for Next.js 15 compatibility with useSearchParams
+ * Location state for the public site. `?loc=` is read in a nested Suspense
+ * boundary so the page body still prerenders.
  */
 export function LocationProvider({ children, locations }: LocationProviderProps) {
-  return (
-    <Suspense fallback={null}>
-      <LocationProviderInner locations={locations}>{children}</LocationProviderInner>
-    </Suspense>
-  )
+  return <LocationProviderInner locations={locations}>{children}</LocationProviderInner>
 }
 
 /**

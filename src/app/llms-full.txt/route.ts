@@ -10,6 +10,9 @@ import { getBreweryFAQs } from '@/lib/utils/faq-schema'
 import { getBaseUrl } from '@/lib/utils/get-base-url'
 import { formatCityStateZip, formatHoursFaqAnswer } from '@/lib/config/locations'
 import { logger } from '@/lib/utils/logger'
+import { CRAWLABLE_ORG_DESCRIPTION } from '@/lib/utils/local-business-schema'
+import { formatPhoneLines } from '@/lib/utils/llms-now'
+import { loadPouringNow } from '@/lib/utils/llms-now-data'
 
 export const revalidate = 3600 // Revalidate every hour
 
@@ -54,13 +57,16 @@ export async function GET() {
       const street = loc.address?.street ?? ''
       const city = formatCityStateZip(loc.address)
       const page = loc.slug ? `- Page: ${baseUrl}/${loc.slug}` : ''
+      const phone = loc.basicInfo?.phone?.trim()
       return `### ${loc.name}
 - Address: ${street}${city ? `, ${city}` : ''}
-${page}`.trim()
+${phone ? `- Phone: ${phone}\n` : ''}${page}`.trim()
     })
     .join('\n\n')
 
   const hoursLine = locations.length ? formatHoursFaqAnswer(locations) : ''
+  const pouringNow = locations.length ? await loadPouringNow(locations) : ''
+  const phoneLines = formatPhoneLines(locations)
 
   // Build beer list markdown
   const beerList = visibleBeers.map(beer => {
@@ -83,7 +89,7 @@ ${page}`.trim()
 
   const content = `# Lolev Beer
 
-> Craft brewery in Pittsburgh, Pennsylvania specializing in modern ales, expressive lagers, and oak-aged beer.
+> ${CRAWLABLE_ORG_DESCRIPTION}
 
 ## Locations
 
@@ -91,7 +97,7 @@ ${locationBlocks}
 
 ${hoursLine}
 
-## Site Navigation
+${pouringNow ? `${pouringNow}\n\n` : ''}## Site Navigation
 
 - [Home](${baseUrl}/): Current draft and cans menu, upcoming events and food vendors
 - [Our Beers](${baseUrl}/beer): Full catalog of all beers with filtering by style, ABV, and availability
@@ -112,8 +118,7 @@ ${faqList}
 ## Contact Information
 
 - **General Inquiries:** info@lolev.beer
-- **Phone:** (412) 336-8965
-- **Private Events:** events@lolev.beer
+${phoneLines ? `${phoneLines}\n` : ''}- **Private Events:** events@lolev.beer
 - **Instagram:** [@lolevbeer](https://instagram.com/lolevbeer)
 - **Facebook:** [facebook.com/lolevbeer](https://facebook.com/lolevbeer)
 

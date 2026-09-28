@@ -20,6 +20,8 @@ import { generateFAQSpeakableSchema } from '@/lib/utils/speakable-schema'
 import { getActiveFAQs, getAllLocations } from '@/lib/utils/payload-api'
 import { PageTransition } from '@/components/motion'
 import { FaqContactSection } from '@/components/faq/faq-contact'
+import { taproomPhones } from '@/lib/config/locations'
+import type { PayloadLocation } from '@/lib/types/location'
 
 interface FAQAnswerProps {
   question: string
@@ -29,7 +31,11 @@ interface FAQAnswerProps {
 /**
  * Renders FAQ answer with special formatting for certain questions
  */
-function FAQAnswer({ question, answer }: FAQAnswerProps): ReactNode {
+function FAQAnswer({
+  question,
+  answer,
+  locations,
+}: FAQAnswerProps & { locations: PayloadLocation[] }): ReactNode {
   if (question === 'Where can I find your beer in stores?') {
     return (
       <div>
@@ -50,8 +56,23 @@ function FAQAnswer({ question, answer }: FAQAnswerProps): ReactNode {
         contact us at{' '}
         <a href="mailto:events@lolev.beer" className="text-primary hover:underline font-medium">
           events@lolev.beer
-        </a>{' '}
-        or call (412) 336-8965. Beer donation and fundraiser-night requests go through the{' '}
+        </a>
+        {taproomPhones(locations).length > 0 ? (
+          <>
+            {' '}
+            or call{' '}
+            {taproomPhones(locations).map((entry, index, all) => (
+              <span key={entry.phone}>
+                {index > 0 ? (index === all.length - 1 ? ' or ' : ', ') : null}
+                {entry.name} at{' '}
+                <a href={`tel:${entry.phone}`} className="text-primary hover:underline font-medium">
+                  {entry.phone}
+                </a>
+              </span>
+            ))}
+          </>
+        ) : null}
+        . Beer donation and fundraiser-night requests go through the{' '}
         <Link href="/donate" className="text-primary hover:underline font-medium">
           donation request form
         </Link>{' '}
@@ -149,7 +170,7 @@ export default async function FAQPage() {
                     className="text-muted-foreground data-[state=closed]:hidden"
                     data-speakable="faq-answer"
                   >
-                    <FAQAnswer question={faq.question} answer={faq.answer} />
+                    <FAQAnswer question={faq.question} answer={faq.answer} locations={locations} />
                   </AccordionContent>
                 </AccordionItem>
               ))}
