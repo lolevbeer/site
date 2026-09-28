@@ -1,6 +1,6 @@
 import React from 'react'
 import { notFound } from 'next/navigation'
-import type { Column, DocumentViewServerProps } from 'payload'
+import type { Column, DocumentViewServerProps, SelectType } from 'payload'
 import { formatAdminURL, isNumber } from 'payload/shared'
 import {
   ListQueryProvider,
@@ -19,8 +19,10 @@ type VersionData = {
   updatedBy?: string | null
 }
 
-// Payload 4's versions columns are fixed. Keep its cells and pagination,
-// adding only the last human editor stored in each version's snapshot.
+// Versions list for Beers and Menus. Payload 4's version columns are fixed (its
+// only hook, CreatedAtCellOverride, swaps one cell), so this mirrors its view
+// (@payloadcms/ui/dist/views/Versions, 4.0.0-canary.37) plus a "Last edited by"
+// column read from each version's `updatedBy`. Re-check it on Payload upgrades.
 export async function VersionsWithEditor({
   hasPublishedDoc,
   initPageResult: { collectionConfig, docID, req },
@@ -39,10 +41,8 @@ export async function VersionsWithEditor({
     collectionSlug: slug,
     parentID: docID,
     depth: 0,
-    locale: req.locale ?? undefined,
     overrideAccess: false,
     req,
-    user: req.user ?? undefined,
   }
   const data = await fetchVersions<VersionData>({
     ...query,
@@ -52,19 +52,26 @@ export async function VersionsWithEditor({
   })
   if (!data) return notFound()
 
-  const editorIDs = [
-    ...new Set(data.docs.flatMap(({ version }) => (version.updatedBy ? [version.updatedBy] : []))),
-  ]
+  // The status column only compares IDs and dates, as in Payload's view.
+  const latestSelect: SelectType = {
+    id: true,
+    updatedAt: true,
+    version: { _status: true, updatedAt: true },
+  }
+
+  const editorIDs = [...new Set(data.docs.flatMap(({ version }) => version.updatedBy ?? []))]
   const [published, draft, editors] = await Promise.all([
-    hasPublishedDoc ? fetchLatestVersion<VersionData>({ ...query, status: 'published' }) : null,
-    fetchLatestVersion<VersionData>({ ...query, status: 'draft' }),
+    hasPublishedDoc
+      ? fetchLatestVersion<VersionData>({ ...query, select: latestSelect, status: 'published' })
+      : null,
+    fetchLatestVersion<VersionData>({ ...query, select: latestSelect, status: 'draft' }),
     editorIDs.length
       ? payload.find({
           collection: 'users',
           where: { id: { in: editorIDs } },
           select: { name: true, email: true },
           depth: 0,
-          limit: editorIDs.length,
+          pagination: false,
           overrideAccess: false,
           req,
         })

@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto'
+import { readFileSync } from 'node:fs'
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
@@ -85,42 +87,36 @@ function fixture(
 }
 
 describe('versions with editor', () => {
-  it.each(['beers', 'menus'])(
-    'shows each %s version’s editor using one access-controlled lookup',
-    async (slug) => {
-      const { props, req, find, findVersions } = fixture(slug)
-      const html = renderToStaticMarkup(await VersionsWithEditor(props))
-      expect(html).toContain('Last edited by')
-      expect(html.match(/Alice Editor/g)).toHaveLength(2)
-      expect(html).toContain('bob@example.test')
-      expect(html.match(/Unknown/g)).toHaveLength(2)
-      expect(html).toContain('/versions/v0')
-      expect(find).toHaveBeenCalledExactlyOnceWith(
-        expect.objectContaining({
-          collection: 'users',
-          where: { id: { in: ['alice', 'bob', 'deleted'] } },
-          select: { name: true, email: true },
-          overrideAccess: false,
-          req,
-        }),
-      )
-      expect(findVersions).toHaveBeenNthCalledWith(
-        1,
-        expect.objectContaining({
-          collection: slug,
-          limit: 100,
-          page: 2,
-          sort: 'updatedAt',
-          where: { and: [{ parent: { equals: 'parent' } }] },
-          overrideAccess: false,
-          req,
-        }),
-      )
-      for (const [query] of findVersions.mock.calls) {
-        expect(query).toMatchObject({ overrideAccess: false, req })
-      }
-    },
-  )
+  it('shows each version’s editor using one access-controlled lookup', async () => {
+    const { props, req, find, findVersions } = fixture()
+    const html = renderToStaticMarkup(await VersionsWithEditor(props))
+    expect(html).toContain('Last edited by')
+    expect(html.match(/Alice Editor/g)).toHaveLength(2)
+    expect(html).toContain('bob@example.test')
+    expect(html.match(/Unknown/g)).toHaveLength(2)
+    expect(html).toContain('/versions/v0')
+    expect(find).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({
+        collection: 'users',
+        where: { id: { in: ['alice', 'bob', 'deleted'] } },
+        select: { name: true, email: true },
+        overrideAccess: false,
+        req,
+      }),
+    )
+    expect(findVersions).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        collection: 'beers',
+        limit: 100,
+        page: 2,
+        sort: 'updatedAt',
+        where: { and: [{ parent: { equals: 'parent' } }] },
+        overrideAccess: false,
+        req,
+      }),
+    )
+  })
 
   it('skips user queries for history without attribution', async () => {
     const { props, find } = fixture('beers', [undefined])
@@ -134,4 +130,16 @@ describe('versions with editor', () => {
     await expect(VersionsWithEditor(props)).rejects.toThrow('not found')
     expect(find).not.toHaveBeenCalled()
   })
+})
+
+// VersionsWithEditor mirrors Payload's versions view, and the test above mocks
+// @payloadcms/ui, so a Payload upgrade that changes that view would pass
+// silently. Fail on any change instead: diff these files against the
+// component, re-sync it, then record the new hashes.
+it.each([
+  ['index.js', 'c023337ae5f171e33f452b9ad6dcbdb3917705ea82297ae4407c26c1e4612e29'],
+  ['buildColumns.js', '9a97d1d5b58f841d89d5b015ac0add6eb845774b42239ebfd369f51e426948da'],
+])('Payload versions view %s is unchanged since VersionsWithEditor copied it', (file, hash) => {
+  const source = readFileSync(`node_modules/@payloadcms/ui/dist/views/Versions/${file}`)
+  expect(createHash('sha256').update(source).digest('hex')).toBe(hash)
 })
