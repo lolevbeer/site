@@ -80,6 +80,14 @@ describe('generateProductSchema offers and reviews', () => {
     expect(schema.aggregateRating?.reviewCount).toBe('1600')
     expect(schema.review).toBeUndefined()
   })
+
+  it('omits reviewCount when Untappd never stored one', () => {
+    const schema = generateProductSchema(
+      beer({ name: 'Lupula', slug: 'lupula', untappdRating: 4.07, untappdRatingCount: null }),
+    )
+    expect(schema.aggregateRating?.ratingValue).toBe('4.07')
+    expect(schema.aggregateRating?.reviewCount).toBeUndefined()
+  })
 })
 
 describe('generateBeerListSchema', () => {

@@ -8,13 +8,17 @@ import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs'
 import { Card, CardContent } from '@/components/ui/card'
 import { DonationRequestForm } from '@/components/donate/donation-request-form'
 import { PageTransition } from '@/components/motion'
+import { pageOpenGraph } from '@/lib/utils/seo'
+
+const DESCRIPTION =
+  'Request a Lolev Beer donation or a fundraiser night at a taproom. We review completed forms only.'
 
 export const metadata: Metadata = {
   title: 'Donations',
-  description:
-    'Request a Lolev Beer donation or a fundraiser night at a taproom. We review completed forms only.',
+  description: DESCRIPTION,
   alternates: { canonical: '/donate' },
   robots: { index: true, follow: true },
+  openGraph: pageOpenGraph('Donations | Lolev Beer', DESCRIPTION),
 }
 
 export default function DonatePage() {

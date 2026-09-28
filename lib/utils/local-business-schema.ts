@@ -15,6 +15,7 @@ import {
   type GeoCoordinatesJsonLd,
 } from './json-ld'
 import { getMediaUrl } from './media-utils'
+import { ORG_DESCRIPTION } from './seo'
 import {
   CRAWLABLE_SAME_AS,
   LOLEV_BASE_URL,
@@ -312,8 +313,7 @@ export interface SearchActionJsonLd {
 /** @id of the crawlable Organization node rendered from the root layout. */
 export const CRAWLABLE_ORG_ID = `${LOLEV_BASE_URL}/#org`
 
-export const CRAWLABLE_ORG_DESCRIPTION =
-  'Pittsburgh brewery sourcing specific hop lots from specialty growers worldwide, known for Ultra Hopped Ales, lagers, and oak-aged beer.'
+export const CRAWLABLE_ORG_DESCRIPTION = ORG_DESCRIPTION
 
 export interface CrawlableOrganizationJsonLd {
   '@type': 'Organization'

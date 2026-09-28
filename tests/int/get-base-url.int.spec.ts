@@ -64,7 +64,9 @@ describe('joinLocationNames', () => {
 
   it('returns empty when Payload has no locations', () => {
     expect(joinLocationNames([])).toBe('')
+    expect(siteDescription([])).toMatch(/specific hop lots/)
     expect(siteDescription([])).not.toMatch(/Lawrenceville|Zelienople/)
+    expect(siteDescription([{ name: 'Lawrenceville' }])).toMatch(/Taprooms in Lawrenceville/)
     expect(beersDescription([])).toMatch(/from our taprooms/)
   })
 })

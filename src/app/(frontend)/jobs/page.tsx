@@ -17,13 +17,17 @@ import {
 } from '@/components/ui/card'
 import { Empty, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
 import { getActiveJobs } from '@/lib/jobs/payload'
+import { pageOpenGraph } from '@/lib/utils/seo'
 
 export const revalidate = 300
 
+const DESCRIPTION = 'Open roles at Lolev Beer taprooms.'
+
 export const metadata: Metadata = {
   title: 'Jobs',
-  description: 'Open roles at Lolev Beer taprooms.',
+  description: DESCRIPTION,
   alternates: { canonical: '/jobs' },
+  openGraph: pageOpenGraph('Jobs | Lolev Beer', DESCRIPTION),
 }
 
 export default async function JobsPage() {

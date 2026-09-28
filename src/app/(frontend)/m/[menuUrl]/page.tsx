@@ -2,7 +2,7 @@ import { cache } from 'react'
 import { getMenuByUrlFresh } from '@/lib/utils/payload-api'
 import { LiveMenu } from '@/components/menu/live-menu'
 import { notFound } from 'next/navigation'
-import { LIVE_DISPLAY_META, NOINDEX_ROBOTS } from '@/lib/utils/seo'
+import { LIVE_DISPLAY_META, NOINDEX_ROBOTS, pageOpenGraph } from '@/lib/utils/seo'
 
 /**
  * Cached menu fetch — deduplicates between generateMetadata and page render.
@@ -45,10 +45,13 @@ export async function generateMetadata({ params }: MenuPageProps) {
     }
   }
 
+  const title = menu.name || `${menu.type} Menu`
+  const description = menu.description || `View our ${menu.type} menu`
   return {
-    title: menu.name || `${menu.type} Menu`,
-    description: menu.description || `View our ${menu.type} menu`,
+    title,
+    description,
     robots: NOINDEX_ROBOTS,
+    openGraph: pageOpenGraph(`${title} | Lolev Beer`, description),
     other: { [LIVE_DISPLAY_META]: 'ready' },
   }
 }

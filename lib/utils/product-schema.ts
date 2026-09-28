@@ -76,7 +76,7 @@ export interface OrganizationJsonLd {
 export interface AggregateRatingJsonLd {
   '@type': 'AggregateRating'
   ratingValue: string
-  reviewCount: string
+  reviewCount?: string
   bestRating?: string
   worstRating?: string
 }
@@ -256,12 +256,16 @@ export function generateProductSchema(
   // Untappd aggregate only — do not nest a shorter Review[] that disagrees
   // with reviewCount. The visible reviews stay on the page.
   if (beer.untappdRating && beer.untappdRating > 0) {
+    const reviewCount =
+      beer.untappdRatingCount && beer.untappdRatingCount > 0
+        ? String(beer.untappdRatingCount)
+        : undefined
     product.aggregateRating = {
       '@type': 'AggregateRating',
       ratingValue: beer.untappdRating.toFixed(2),
       bestRating: '5',
       worstRating: '1',
-      reviewCount: beer.untappdRatingCount ? String(beer.untappdRatingCount) : '1',
+      ...(reviewCount ? { reviewCount } : {}),
     }
   }
 

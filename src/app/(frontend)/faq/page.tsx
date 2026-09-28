@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/accordion'
 import { JsonLd } from '@/components/seo/json-ld'
 import { getBreweryFAQs, generateFAQSchema, type FAQItem } from '@/lib/utils/faq-schema'
-import { DEFAULT_OG_IMAGES } from '@/lib/utils/seo'
+import { pageOpenGraph } from '@/lib/utils/seo'
 import { generateFAQSpeakableSchema } from '@/lib/utils/speakable-schema'
 import { getActiveFAQs, getAllLocations } from '@/lib/utils/payload-api'
 import { PageTransition } from '@/components/motion'
@@ -105,10 +105,12 @@ function FAQAnswer({
 // ISR: revalidate every hour (FAQ content changes infrequently)
 export const revalidate = 3600
 
+const FAQ_DESCRIPTION =
+  'Hours, taproom locations, food, dogs, private events, and beer styles at Lolev Beer.'
+
 export const metadata: Metadata = {
   title: 'FAQ',
-  description:
-    'Find answers to common questions about Lolev Beer including hours, locations, events, private bookings, beer styles, and more.',
+  description: FAQ_DESCRIPTION,
   keywords: [
     'brewery faq',
     'hours',
@@ -120,13 +122,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: '/faq',
   },
-  openGraph: {
-    title: 'FAQ | Lolev Beer',
-    description:
-      'Find answers to common questions about Lolev Beer including hours, locations, events, and more.',
-    type: 'website',
-    images: DEFAULT_OG_IMAGES,
-  },
+  openGraph: pageOpenGraph('FAQ | Lolev Beer', FAQ_DESCRIPTION),
 }
 
 export default async function FAQPage() {
