@@ -13,7 +13,7 @@ import type { PayloadLocation } from '@/lib/types/location'
 export const SITE_TITLE = 'Lolev Beer - Craft Brewery in Pittsburgh'
 
 /** Layout `title.template` and og:title default when Site SEO leaves the template blank. */
-export const DEFAULT_TITLE_TEMPLATE = '%s | Lolev Beer'
+export const DEFAULT_TITLE_TEMPLATE = '%s • Lolev Beer'
 
 /** Shared with Organization JSON-LD and llms.txt. Meta snippets append taproom names. */
 export const ORG_DESCRIPTION =
