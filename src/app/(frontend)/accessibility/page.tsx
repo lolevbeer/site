@@ -3,23 +3,19 @@ import { JsonLd } from '@/components/seo/json-ld'
 import { LegalPage } from '@/components/legal/legal-page'
 import { generateWebPageSchema } from '@/lib/utils/breadcrumb-schema'
 import { LEGAL_PAGES_LASTMOD, LEGAL_PAGES_LASTMOD_LABEL } from '@/lib/legal/dates'
-import { getSiteSeo, hubPageSeo } from '@/lib/utils/site-seo'
 import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
 
 const DESCRIPTION =
   'How lolev.beer is built for keyboard, screen reader, and magnification use, and how to report barriers.'
 
 export async function generateMetadata(): Promise<Metadata> {
-  const siteSeo = await getSiteSeo()
   return buildPageMetadata({
     fallbackTitle: 'Accessibility Statement',
     fallbackDescription: DESCRIPTION,
     canonicalPath: '/accessibility',
-    seo: hubPageSeo(siteSeo, 'accessibility'),
-    siteSeo,
+    hubKey: 'accessibility',
   })
 }
-
 
 export default function AccessibilityPage() {
   const webPageSchema = generateWebPageSchema({

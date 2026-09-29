@@ -97,6 +97,16 @@ export const Jobs: CollectionConfig = {
       required: true,
     },
     {
+      name: 'closesOn',
+      type: 'date',
+      admin: {
+        position: 'sidebar',
+        date: { pickerAppearance: 'dayOnly' },
+        description:
+          'Optional last day to apply. Sent to Google as the posting’s expiry. This does not hide the job: also untick Active when it closes.',
+      },
+    },
+    {
       name: 'active',
       type: 'checkbox',
       defaultValue: true,

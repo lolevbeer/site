@@ -15,7 +15,6 @@ import { generateAboutSpeakableSchema } from '@/lib/utils/speakable-schema';
 import { PageTransition } from '@/components/motion';
 import { getSiteContent } from '@/lib/utils/site-content';
 import { getAllLocations } from '@/lib/utils/payload-api';
-import { getSiteSeo, hubPageSeo } from '@/lib/utils/site-seo'
 import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
 import {
   DEFAULT_ABOUT_PHILOSOPHY,
@@ -26,7 +25,7 @@ import {
 export const revalidate = 3600;
 
 export async function generateMetadata(): Promise<Metadata> {
-  const [taprooms, siteSeo] = await Promise.all([getAllLocations(), getSiteSeo()]);
+  const taprooms = await getAllLocations();
   const names = joinLocationNames(taprooms);
   const description = names
     ? `Learn about Lolev Beer, our brewing philosophy, and our locations in ${names}.`
@@ -36,8 +35,7 @@ export async function generateMetadata(): Promise<Metadata> {
     fallbackDescription: description,
     canonicalPath: '/about',
     fallbackKeywords: ['about', 'brewery', 'philosophy', 'Pittsburgh brewery', ...locationKeywords(taprooms)],
-    seo: hubPageSeo(siteSeo, 'about'),
-    siteSeo,
+    hubKey: 'about',
   });
 }
 

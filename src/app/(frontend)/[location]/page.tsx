@@ -10,6 +10,7 @@ import { PageTransition } from '@/components/motion'
 import { LocationLanding } from '@/components/location/location-landing'
 import { generateLocalBusinessSchema } from '@/lib/utils/local-business-schema'
 import { generateLocationMenuSchema } from '@/lib/utils/menu-schema'
+import { generateWebPageSchema } from '@/lib/utils/breadcrumb-schema'
 import { extractBeerFromMenuItem } from '@/lib/utils/menu-item-utils'
 import { convertPayloadBeer } from '@/lib/utils/payload-adapter'
 import {
@@ -22,8 +23,8 @@ import {
 } from '@/lib/utils/payload-api'
 import { findLocationBySlug, formatCityStateZip, RESERVED_LOCATION_SLUGS } from '@/lib/config/locations'
 import { safeHttpUrl } from '@/lib/utils/url-utils'
-import { getSiteSeo } from '@/lib/utils/site-seo'
 import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
+import { ogCardImages } from '@/lib/og/paths'
 
 export const revalidate = 300
 
@@ -79,7 +80,7 @@ const loadLocation = cache(async (slug: string) => {
 
 export async function generateMetadata({ params }: LocationPageProps): Promise<Metadata> {
   const { location: slug } = await params
-  const [data, siteSeo] = await Promise.all([loadLocation(slug), getSiteSeo()])
+  const data = await loadLocation(slug)
   if (!data) return { title: 'Not Found' }
 
   const name = data.location.name
@@ -94,7 +95,7 @@ export async function generateMetadata({ params }: LocationPageProps): Promise<M
     fallbackDescription: description,
     canonicalPath: `/${data.location.slug}`,
     seo,
-    siteSeo,
+    fallbackOgImages: ogCardImages('location', data.location.slug || slug, title),
   })
 }
 
@@ -111,6 +112,11 @@ export default async function LocationPage({ params }: LocationPageProps) {
   const canBeers = canPayload.map(convertPayloadBeer)
 
   const localBusiness = generateLocalBusinessSchema(location, weeklyHours)
+  const webPageSchema = generateWebPageSchema({
+    name: `${location.name} Taproom`,
+    path: `/${location.slug || slug}`,
+    dateModified: location.updatedAt,
+  })
   const menuSchema = generateLocationMenuSchema({
     locationName: location.name,
     locationSlug: location.slug || slug,
@@ -128,6 +134,7 @@ export default async function LocationPage({ params }: LocationPageProps) {
   return (
     <>
       <JsonLd data={localBusiness} />
+      <JsonLd data={webPageSchema} />
       <JsonLd data={menuSchema} />
       <PageTransition>
         <LocationLanding

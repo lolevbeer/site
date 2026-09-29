@@ -15,7 +15,6 @@ vi.mock('@/components/seo/json-ld', () => ({
 
 vi.mock('@/lib/utils/site-seo', () => ({
   getSiteSeo: vi.fn(async () => ({})),
-  hubPageSeo: vi.fn(() => null),
 }))
 
 import AccessibilityPage from '@/src/app/(frontend)/accessibility/page'

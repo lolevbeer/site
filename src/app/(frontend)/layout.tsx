@@ -20,8 +20,8 @@ import { MotionHydrationSentinel } from '@/components/motion/blur-fade'
 import { getAllLocations } from '@/lib/utils/payload-api'
 import { getWeeklyHoursForLocations } from '@/lib/utils/homepage-data'
 import { getBaseUrl } from '@/lib/utils/get-base-url'
-import { locationKeywords, siteDescription, SITE_TITLE } from '@/lib/utils/seo'
-import { getSiteSeo } from '@/lib/utils/site-seo'
+import { DEFAULT_TITLE_TEMPLATE, locationKeywords, trim } from '@/lib/utils/seo'
+import { getSiteSeo, siteDefaults } from '@/lib/utils/site-seo'
 import { defaultOgImages } from '@/lib/seo/resolve-metadata'
 import './globals.css'
 
@@ -64,20 +64,16 @@ export const viewport: Viewport = {
 
 export async function generateMetadata(): Promise<Metadata> {
   const [locations, siteSeo] = await Promise.all([getAllLocations(), getSiteSeo()])
-  const description =
-    siteSeo.description?.trim() || siteDescription(locations)
-  const defaultTitle = siteSeo.defaultTitle?.trim() || SITE_TITLE
-  const titleTemplate = siteSeo.titleTemplate?.trim() || '%s | Lolev Beer'
-  const homeSeo = siteSeo.pages?.home
-  const homeTitle = homeSeo?.title?.trim() || defaultTitle
-  const homeDescription = homeSeo?.description?.trim() || description
+  // Site defaults only. Home's own overrides are applied in page.tsx so they can't leak to other routes.
+  const { title: defaultTitle, description } = siteDefaults(siteSeo, locations)
+  const titleTemplate = trim(siteSeo.titleTemplate) ?? DEFAULT_TITLE_TEMPLATE
 
   return {
     title: {
-      default: homeTitle,
+      default: defaultTitle,
       template: titleTemplate,
     },
-    description: homeDescription,
+    description,
     keywords: [
       'craft beer',
       'brewery',
@@ -102,29 +98,28 @@ export async function generateMetadata(): Promise<Metadata> {
       type: 'website',
       locale: 'en_US',
       url: getBaseUrl(),
-      title: homeSeo?.ogTitle?.trim() || homeTitle,
-      description: homeSeo?.ogDescription?.trim() || homeDescription,
+      title: defaultTitle,
+      description,
       siteName: 'Lolev Beer',
-      images: defaultOgImages({ ...siteSeo, ogImage: homeSeo?.ogImage ?? siteSeo.ogImage }),
+      images: defaultOgImages(siteSeo.ogImage),
     },
     twitter: {
       card: 'summary_large_image',
-      site: siteSeo.twitterSite?.trim() || '@lolevbeer',
-      creator: siteSeo.twitterCreator?.trim() || '@lolevbeer',
+      site: trim(siteSeo.twitterSite) ?? '@lolevbeer',
+      creator: trim(siteSeo.twitterCreator) ?? '@lolevbeer',
     },
-    robots: homeSeo?.noIndex
-      ? { index: false, follow: false }
-      : {
-          index: true,
-          follow: true,
-          googleBot: {
-            index: true,
-            follow: true,
-            'max-video-preview': -1,
-            'max-image-preview': 'large',
-            'max-snippet': -1,
-          },
-        },
+    // Site-wide default; Home's noIndex is applied in page.tsx.
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-video-preview': -1,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
+    },
     verification: {
       google: process.env.GOOGLE_SITE_VERIFICATION,
     },

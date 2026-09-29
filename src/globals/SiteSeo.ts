@@ -6,25 +6,8 @@ import type { GlobalConfig } from 'payload'
 import { adminAccess } from '@/src/access/roles'
 import { hubSeoGroup } from '@/src/fields/seo'
 
-/** Hub keys in the Pages tab. Keep in sync with STATIC_INFO_PAGES + home/beer/events/food. */
-export const SITE_SEO_PAGE_KEYS = [
-  'home',
-  'beer',
-  'events',
-  'food',
-  'beerMap',
-  'donate',
-  'jobs',
-  'about',
-  'faq',
-  'accessibility',
-  'privacy',
-  'terms',
-] as const
-
-export type SiteSeoPageKey = (typeof SITE_SEO_PAGE_KEYS)[number]
-
-const PAGE_LABELS: Record<SiteSeoPageKey, string> = {
+/** Hub pages in the Pages tab, keyed by SiteSeo `pages.*` name. Keep in sync with STATIC_INFO_PAGES + home/beer/events/food. */
+const PAGE_LABELS = {
   home: 'Home (/)',
   beer: 'Beer catalog (/beer)',
   events: 'Events (/events)',
@@ -38,6 +21,16 @@ const PAGE_LABELS: Record<SiteSeoPageKey, string> = {
   privacy: 'Privacy (/privacy)',
   terms: 'Terms (/terms)',
 }
+
+export type SiteSeoPageKey = keyof typeof PAGE_LABELS
+
+/** Hub pages whose component renders the `intro` field. */
+export const INTRO_PAGE_KEYS = [
+  'beer',
+  'events',
+  'food',
+] as const satisfies readonly SiteSeoPageKey[]
+const introKeys = new Set<string>(INTRO_PAGE_KEYS)
 
 export const SiteSeo: GlobalConfig = {
   slug: 'site-seo',
@@ -103,7 +96,8 @@ export const SiteSeo: GlobalConfig = {
               relationTo: 'media',
               label: 'Default Open Graph image',
               admin: {
-                description: 'Fallback social card (1200×630). Replaces /images/beer/og-image.jpg when set.',
+                description:
+                  'Fallback social card (1200×630). Replaces /images/beer/og-image.jpg when set.',
               },
             },
             {
@@ -132,7 +126,9 @@ export const SiteSeo: GlobalConfig = {
               name: 'pages',
               type: 'group',
               label: 'Hub pages',
-              fields: SITE_SEO_PAGE_KEYS.map((key) => hubSeoGroup(key, PAGE_LABELS[key])),
+              fields: Object.entries(PAGE_LABELS).map(([key, label]) =>
+                hubSeoGroup(key, label, introKeys.has(key)),
+              ),
             },
           ],
         },

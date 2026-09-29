@@ -11,7 +11,8 @@ vi.mock('next/cache', () => ({
   revalidatePath: (...args: unknown[]) => revalidatePath(...args),
 }))
 
-import { revalidateForCollection } from '@/src/plugins/revalidation-plugin'
+import { revalidateForCollection, revalidationPlugin } from '@/src/plugins/revalidation-plugin'
+import type { Config } from 'payload'
 
 describe('revalidateForCollection', () => {
   beforeEach(() => {
@@ -42,5 +43,23 @@ describe('revalidateForCollection', () => {
       '/beer/[variant]',
     ])
     expect(revalidatePath).toHaveBeenCalledWith('/beer/[variant]', 'page')
+  })
+})
+
+describe('site-seo global hook', () => {
+  it('revalidates the whole route tree, since every page reads it for metadata', async () => {
+    revalidateTag.mockReset()
+    revalidatePath.mockReset()
+    const config = await revalidationPlugin({
+      globals: [{ slug: 'site-seo', fields: [] }],
+    } as unknown as Config)
+    const hook = config.globals![0].hooks!.afterChange![0] as (args: {
+      doc: object
+    }) => Promise<unknown>
+
+    await hook({ doc: {} })
+
+    expect(revalidateTag).toHaveBeenCalledWith('site-seo', 'max')
+    expect(revalidatePath).toHaveBeenCalledWith('/', 'layout')
   })
 })

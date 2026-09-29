@@ -16,14 +16,13 @@ import {
 import { JsonLd } from '@/components/seo/json-ld'
 import { generateLocalBusinessSchemas } from '@/lib/utils/local-business-schema'
 import { beerMapDescription, locationKeywords } from '@/lib/utils/seo'
-import { getSiteSeo, hubPageSeo } from '@/lib/utils/site-seo'
 import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
 
 // ISR: revalidate every hour (locations/distributors change infrequently)
 export const revalidate = 3600;
 
 export async function generateMetadata(): Promise<Metadata> {
-  const [locations, siteSeo] = await Promise.all([getAllLocations(), getSiteSeo()])
+  const locations = await getAllLocations()
   const description = beerMapDescription(locations)
   return buildPageMetadata({
     fallbackTitle: 'Where to Buy Lolev Beer Near You',
@@ -41,8 +40,7 @@ export async function generateMetadata(): Promise<Metadata> {
       'directions',
       ...locationKeywords(locations),
     ],
-    seo: hubPageSeo(siteSeo, 'beerMap'),
-    siteSeo,
+    hubKey: 'beerMap',
   })
 }
 

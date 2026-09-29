@@ -185,21 +185,6 @@ export interface UserAuthOperations {
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "beers".
  */
-
-/**
- * Shared document / hub SEO overrides.
- */
-export interface SeoFields {
-  title?: string | null;
-  description?: string | null;
-  ogTitle?: string | null;
-  ogDescription?: string | null;
-  ogImage?: (string | null) | Media;
-  keywords?: string[] | null;
-  noIndex?: boolean | null;
-  canonicalPath?: string | null;
-}
-
 export interface Beer {
   id: string;
   /**
@@ -304,7 +289,40 @@ export interface Beer {
   /**
    * Optional overrides for this document’s public page. Blank fields keep the auto-generated title and description.
    */
-  seo?: SeoFields;
+  seo?: {
+    /**
+     * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "| Lolev Beer" on hub pages; the site title template adds it.
+     */
+    title?: string | null;
+    /**
+     * SERP snippet. Aim for ~150–160 characters.
+     */
+    description?: string | null;
+    /**
+     * Optional. Defaults to the meta title (plus site name where applicable).
+     */
+    ogTitle?: string | null;
+    /**
+     * Optional. Defaults to the meta description.
+     */
+    ogDescription?: string | null;
+    /**
+     * Optional social share image (1200×630 recommended). Falls back to the site default.
+     */
+    ogImage?: (string | null) | Media;
+    /**
+     * Optional. Press Enter after each keyword. Mostly legacy; Google ignores these.
+     */
+    keywords?: string[] | null;
+    /**
+     * Ask search engines not to index this page.
+     */
+    noIndex?: boolean | null;
+    /**
+     * Optional override, e.g. /beer or /lawrenceville. Must start with /. Leave blank for the normal URL.
+     */
+    canonicalPath?: string | null;
+  };
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -434,7 +452,40 @@ export interface Location {
   /**
    * Optional overrides for this document’s public page. Blank fields keep the auto-generated title and description.
    */
-  seo?: SeoFields;
+  seo?: {
+    /**
+     * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "| Lolev Beer" on hub pages; the site title template adds it.
+     */
+    title?: string | null;
+    /**
+     * SERP snippet. Aim for ~150–160 characters.
+     */
+    description?: string | null;
+    /**
+     * Optional. Defaults to the meta title (plus site name where applicable).
+     */
+    ogTitle?: string | null;
+    /**
+     * Optional. Defaults to the meta description.
+     */
+    ogDescription?: string | null;
+    /**
+     * Optional social share image (1200×630 recommended). Falls back to the site default.
+     */
+    ogImage?: (string | null) | Media;
+    /**
+     * Optional. Press Enter after each keyword. Mostly legacy; Google ignores these.
+     */
+    keywords?: string[] | null;
+    /**
+     * Ask search engines not to index this page.
+     */
+    noIndex?: boolean | null;
+    /**
+     * Optional override, e.g. /beer or /lawrenceville. Must start with /. Leave blank for the normal URL.
+     */
+    canonicalPath?: string | null;
+  };
   updatedAt: string;
   createdAt: string;
 }
@@ -734,11 +785,48 @@ export interface Job {
    */
   summary?: string | null;
   description: string;
+  /**
+   * Optional last day to apply. Sent to Google as the posting’s expiry. This does not hide the job: also untick Active when it closes.
+   */
+  closesOn?: string | null;
   active?: boolean | null;
   /**
    * Optional overrides for this document’s public page. Blank fields keep the auto-generated title and description.
    */
-  seo?: SeoFields;
+  seo?: {
+    /**
+     * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "| Lolev Beer" on hub pages; the site title template adds it.
+     */
+    title?: string | null;
+    /**
+     * SERP snippet. Aim for ~150–160 characters.
+     */
+    description?: string | null;
+    /**
+     * Optional. Defaults to the meta title (plus site name where applicable).
+     */
+    ogTitle?: string | null;
+    /**
+     * Optional. Defaults to the meta description.
+     */
+    ogDescription?: string | null;
+    /**
+     * Optional social share image (1200×630 recommended). Falls back to the site default.
+     */
+    ogImage?: (string | null) | Media;
+    /**
+     * Optional. Press Enter after each keyword. Mostly legacy; Google ignores these.
+     */
+    keywords?: string[] | null;
+    /**
+     * Ask search engines not to index this page.
+     */
+    noIndex?: boolean | null;
+    /**
+     * Optional override, e.g. /beer or /lawrenceville. Must start with /. Leave blank for the normal URL.
+     */
+    canonicalPath?: string | null;
+  };
   updatedAt: string;
   createdAt: string;
 }
@@ -1304,16 +1392,18 @@ export interface BeersSelect<T extends boolean = true> {
   slug?: T;
   recipe?: T;
   positiveReviews?: T;
-  seo?: T | {
-    title?: T;
-    description?: T;
-    ogTitle?: T;
-    ogDescription?: T;
-    ogImage?: T;
-    keywords?: T;
-    noIndex?: T;
-    canonicalPath?: T;
-  };
+  seo?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        ogTitle?: T;
+        ogDescription?: T;
+        ogImage?: T;
+        keywords?: T;
+        noIndex?: T;
+        canonicalPath?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -1459,17 +1549,20 @@ export interface JobsSelect<T extends boolean = true> {
   employmentType?: T;
   summary?: T;
   description?: T;
+  closesOn?: T;
   active?: T;
-  seo?: T | {
-    title?: T;
-    description?: T;
-    ogTitle?: T;
-    ogDescription?: T;
-    ogImage?: T;
-    keywords?: T;
-    noIndex?: T;
-    canonicalPath?: T;
-  };
+  seo?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        ogTitle?: T;
+        ogDescription?: T;
+        ogImage?: T;
+        keywords?: T;
+        noIndex?: T;
+        canonicalPath?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1674,16 +1767,18 @@ export interface LocationsSelect<T extends boolean = true> {
         open?: T;
         close?: T;
       };
-  seo?: T | {
-    title?: T;
-    description?: T;
-    ogTitle?: T;
-    ogDescription?: T;
-    ogImage?: T;
-    keywords?: T;
-    noIndex?: T;
-    canonicalPath?: T;
-  };
+  seo?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        ogTitle?: T;
+        ogDescription?: T;
+        ogImage?: T;
+        keywords?: T;
+        noIndex?: T;
+        canonicalPath?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1935,68 +2030,6 @@ export interface RecurringFood {
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "site-content".
  */
-
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "site-seo".
- */
-export interface SiteSeo {
-  id: string;
-  defaultTitle?: string | null;
-  titleTemplate?: string | null;
-  description?: string | null;
-  keywords?: string[] | null;
-  ogImage?: (string | null) | Media;
-  twitterSite?: string | null;
-  twitterCreator?: string | null;
-  pages?: {
-    home?: SeoFields;
-    beer?: SeoFields;
-    events?: SeoFields;
-    food?: SeoFields;
-    beerMap?: SeoFields;
-    donate?: SeoFields;
-    jobs?: SeoFields;
-    about?: SeoFields;
-    faq?: SeoFields;
-    accessibility?: SeoFields;
-    privacy?: SeoFields;
-    terms?: SeoFields;
-  };
-  updatedAt?: string | null;
-  createdAt?: string | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "site-seo_select".
- */
-export interface SiteSeoSelect<T extends boolean = true> {
-  defaultTitle?: T;
-  titleTemplate?: T;
-  description?: T;
-  keywords?: T;
-  ogImage?: T;
-  twitterSite?: T;
-  twitterCreator?: T;
-  pages?: T | {
-    home?: T;
-    beer?: T;
-    events?: T;
-    food?: T;
-    beerMap?: T;
-    donate?: T;
-    jobs?: T;
-    about?: T;
-    faq?: T;
-    accessibility?: T;
-    privacy?: T;
-    terms?: T;
-  };
-  updatedAt?: T;
-  createdAt?: T;
-  globalType?: T;
-}
-
 export interface SiteContent {
   id: string;
   /**
@@ -2017,6 +2050,455 @@ export interface SiteContent {
    * Sixth City/Encompass8 QuickLink URL for OH distributors
    */
   distributorOhUrl?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * Default titles, descriptions, and social images. Per-page overrides for every static sitemap URL. Beer, location, and job pages use the SEO group on each document.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-seo".
+ */
+export interface SiteSeo {
+  id: string;
+  /**
+   * Homepage / fallback <title>. Example: Lolev Beer | Craft Brewery in Zelienople & Pittsburgh
+   */
+  defaultTitle?: string | null;
+  /**
+   * Next.js title template with %s for the page title. Example: %s | Lolev Beer. Leave blank for "%s | Lolev Beer".
+   */
+  titleTemplate?: string | null;
+  /**
+   * Site-wide description when a page has none. Taproom names are still appended in code when this is blank.
+   */
+  description?: string | null;
+  /**
+   * Merged with location names on the root layout. Mostly legacy.
+   */
+  keywords?: string[] | null;
+  /**
+   * Fallback social card (1200×630). Replaces /images/beer/og-image.jpg when set.
+   */
+  ogImage?: (string | null) | Media;
+  /**
+   * e.g. @lolevbeer
+   */
+  twitterSite?: string | null;
+  /**
+   * e.g. @lolevbeer
+   */
+  twitterCreator?: string | null;
+  pages?: {
+    /**
+     * Meta for Home (/). Blank fields keep the code defaults.
+     */
+    home?: {
+      /**
+       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "| Lolev Beer" on hub pages; the site title template adds it.
+       */
+      title?: string | null;
+      /**
+       * SERP snippet. Aim for ~150–160 characters.
+       */
+      description?: string | null;
+      /**
+       * Optional. Defaults to the meta title (plus site name where applicable).
+       */
+      ogTitle?: string | null;
+      /**
+       * Optional. Defaults to the meta description.
+       */
+      ogDescription?: string | null;
+      /**
+       * Optional social share image (1200×630 recommended). Falls back to the site default.
+       */
+      ogImage?: (string | null) | Media;
+      /**
+       * Optional. Press Enter after each keyword. Mostly legacy; Google ignores these.
+       */
+      keywords?: string[] | null;
+      /**
+       * Ask search engines not to index this page.
+       */
+      noIndex?: boolean | null;
+    };
+    /**
+     * Meta for Beer catalog (/beer). Blank fields keep the code defaults.
+     */
+    beer?: {
+      /**
+       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "| Lolev Beer" on hub pages; the site title template adds it.
+       */
+      title?: string | null;
+      /**
+       * SERP snippet. Aim for ~150–160 characters.
+       */
+      description?: string | null;
+      /**
+       * Optional. Defaults to the meta title (plus site name where applicable).
+       */
+      ogTitle?: string | null;
+      /**
+       * Optional. Defaults to the meta description.
+       */
+      ogDescription?: string | null;
+      /**
+       * Optional social share image (1200×630 recommended). Falls back to the site default.
+       */
+      ogImage?: (string | null) | Media;
+      /**
+       * Optional. Press Enter after each keyword. Mostly legacy; Google ignores these.
+       */
+      keywords?: string[] | null;
+      /**
+       * Ask search engines not to index this page.
+       */
+      noIndex?: boolean | null;
+      /**
+       * Optional short paragraph shown under the page heading (Beer, Events, Food). Good for search and AI answers; leave blank to show nothing.
+       */
+      intro?: string | null;
+    };
+    /**
+     * Meta for Events (/events). Blank fields keep the code defaults.
+     */
+    events?: {
+      /**
+       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "| Lolev Beer" on hub pages; the site title template adds it.
+       */
+      title?: string | null;
+      /**
+       * SERP snippet. Aim for ~150–160 characters.
+       */
+      description?: string | null;
+      /**
+       * Optional. Defaults to the meta title (plus site name where applicable).
+       */
+      ogTitle?: string | null;
+      /**
+       * Optional. Defaults to the meta description.
+       */
+      ogDescription?: string | null;
+      /**
+       * Optional social share image (1200×630 recommended). Falls back to the site default.
+       */
+      ogImage?: (string | null) | Media;
+      /**
+       * Optional. Press Enter after each keyword. Mostly legacy; Google ignores these.
+       */
+      keywords?: string[] | null;
+      /**
+       * Ask search engines not to index this page.
+       */
+      noIndex?: boolean | null;
+      /**
+       * Optional short paragraph shown under the page heading (Beer, Events, Food). Good for search and AI answers; leave blank to show nothing.
+       */
+      intro?: string | null;
+    };
+    /**
+     * Meta for Food (/food). Blank fields keep the code defaults.
+     */
+    food?: {
+      /**
+       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "| Lolev Beer" on hub pages; the site title template adds it.
+       */
+      title?: string | null;
+      /**
+       * SERP snippet. Aim for ~150–160 characters.
+       */
+      description?: string | null;
+      /**
+       * Optional. Defaults to the meta title (plus site name where applicable).
+       */
+      ogTitle?: string | null;
+      /**
+       * Optional. Defaults to the meta description.
+       */
+      ogDescription?: string | null;
+      /**
+       * Optional social share image (1200×630 recommended). Falls back to the site default.
+       */
+      ogImage?: (string | null) | Media;
+      /**
+       * Optional. Press Enter after each keyword. Mostly legacy; Google ignores these.
+       */
+      keywords?: string[] | null;
+      /**
+       * Ask search engines not to index this page.
+       */
+      noIndex?: boolean | null;
+      /**
+       * Optional short paragraph shown under the page heading (Beer, Events, Food). Good for search and AI answers; leave blank to show nothing.
+       */
+      intro?: string | null;
+    };
+    /**
+     * Meta for Beer map (/beer-map). Blank fields keep the code defaults.
+     */
+    beerMap?: {
+      /**
+       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "| Lolev Beer" on hub pages; the site title template adds it.
+       */
+      title?: string | null;
+      /**
+       * SERP snippet. Aim for ~150–160 characters.
+       */
+      description?: string | null;
+      /**
+       * Optional. Defaults to the meta title (plus site name where applicable).
+       */
+      ogTitle?: string | null;
+      /**
+       * Optional. Defaults to the meta description.
+       */
+      ogDescription?: string | null;
+      /**
+       * Optional social share image (1200×630 recommended). Falls back to the site default.
+       */
+      ogImage?: (string | null) | Media;
+      /**
+       * Optional. Press Enter after each keyword. Mostly legacy; Google ignores these.
+       */
+      keywords?: string[] | null;
+      /**
+       * Ask search engines not to index this page.
+       */
+      noIndex?: boolean | null;
+    };
+    /**
+     * Meta for Donations (/donate). Blank fields keep the code defaults.
+     */
+    donate?: {
+      /**
+       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "| Lolev Beer" on hub pages; the site title template adds it.
+       */
+      title?: string | null;
+      /**
+       * SERP snippet. Aim for ~150–160 characters.
+       */
+      description?: string | null;
+      /**
+       * Optional. Defaults to the meta title (plus site name where applicable).
+       */
+      ogTitle?: string | null;
+      /**
+       * Optional. Defaults to the meta description.
+       */
+      ogDescription?: string | null;
+      /**
+       * Optional social share image (1200×630 recommended). Falls back to the site default.
+       */
+      ogImage?: (string | null) | Media;
+      /**
+       * Optional. Press Enter after each keyword. Mostly legacy; Google ignores these.
+       */
+      keywords?: string[] | null;
+      /**
+       * Ask search engines not to index this page.
+       */
+      noIndex?: boolean | null;
+    };
+    /**
+     * Meta for Jobs list (/jobs). Blank fields keep the code defaults.
+     */
+    jobs?: {
+      /**
+       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "| Lolev Beer" on hub pages; the site title template adds it.
+       */
+      title?: string | null;
+      /**
+       * SERP snippet. Aim for ~150–160 characters.
+       */
+      description?: string | null;
+      /**
+       * Optional. Defaults to the meta title (plus site name where applicable).
+       */
+      ogTitle?: string | null;
+      /**
+       * Optional. Defaults to the meta description.
+       */
+      ogDescription?: string | null;
+      /**
+       * Optional social share image (1200×630 recommended). Falls back to the site default.
+       */
+      ogImage?: (string | null) | Media;
+      /**
+       * Optional. Press Enter after each keyword. Mostly legacy; Google ignores these.
+       */
+      keywords?: string[] | null;
+      /**
+       * Ask search engines not to index this page.
+       */
+      noIndex?: boolean | null;
+    };
+    /**
+     * Meta for About (/about). Blank fields keep the code defaults.
+     */
+    about?: {
+      /**
+       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "| Lolev Beer" on hub pages; the site title template adds it.
+       */
+      title?: string | null;
+      /**
+       * SERP snippet. Aim for ~150–160 characters.
+       */
+      description?: string | null;
+      /**
+       * Optional. Defaults to the meta title (plus site name where applicable).
+       */
+      ogTitle?: string | null;
+      /**
+       * Optional. Defaults to the meta description.
+       */
+      ogDescription?: string | null;
+      /**
+       * Optional social share image (1200×630 recommended). Falls back to the site default.
+       */
+      ogImage?: (string | null) | Media;
+      /**
+       * Optional. Press Enter after each keyword. Mostly legacy; Google ignores these.
+       */
+      keywords?: string[] | null;
+      /**
+       * Ask search engines not to index this page.
+       */
+      noIndex?: boolean | null;
+    };
+    /**
+     * Meta for FAQ (/faq). Blank fields keep the code defaults.
+     */
+    faq?: {
+      /**
+       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "| Lolev Beer" on hub pages; the site title template adds it.
+       */
+      title?: string | null;
+      /**
+       * SERP snippet. Aim for ~150–160 characters.
+       */
+      description?: string | null;
+      /**
+       * Optional. Defaults to the meta title (plus site name where applicable).
+       */
+      ogTitle?: string | null;
+      /**
+       * Optional. Defaults to the meta description.
+       */
+      ogDescription?: string | null;
+      /**
+       * Optional social share image (1200×630 recommended). Falls back to the site default.
+       */
+      ogImage?: (string | null) | Media;
+      /**
+       * Optional. Press Enter after each keyword. Mostly legacy; Google ignores these.
+       */
+      keywords?: string[] | null;
+      /**
+       * Ask search engines not to index this page.
+       */
+      noIndex?: boolean | null;
+    };
+    /**
+     * Meta for Accessibility (/accessibility). Blank fields keep the code defaults.
+     */
+    accessibility?: {
+      /**
+       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "| Lolev Beer" on hub pages; the site title template adds it.
+       */
+      title?: string | null;
+      /**
+       * SERP snippet. Aim for ~150–160 characters.
+       */
+      description?: string | null;
+      /**
+       * Optional. Defaults to the meta title (plus site name where applicable).
+       */
+      ogTitle?: string | null;
+      /**
+       * Optional. Defaults to the meta description.
+       */
+      ogDescription?: string | null;
+      /**
+       * Optional social share image (1200×630 recommended). Falls back to the site default.
+       */
+      ogImage?: (string | null) | Media;
+      /**
+       * Optional. Press Enter after each keyword. Mostly legacy; Google ignores these.
+       */
+      keywords?: string[] | null;
+      /**
+       * Ask search engines not to index this page.
+       */
+      noIndex?: boolean | null;
+    };
+    /**
+     * Meta for Privacy (/privacy). Blank fields keep the code defaults.
+     */
+    privacy?: {
+      /**
+       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "| Lolev Beer" on hub pages; the site title template adds it.
+       */
+      title?: string | null;
+      /**
+       * SERP snippet. Aim for ~150–160 characters.
+       */
+      description?: string | null;
+      /**
+       * Optional. Defaults to the meta title (plus site name where applicable).
+       */
+      ogTitle?: string | null;
+      /**
+       * Optional. Defaults to the meta description.
+       */
+      ogDescription?: string | null;
+      /**
+       * Optional social share image (1200×630 recommended). Falls back to the site default.
+       */
+      ogImage?: (string | null) | Media;
+      /**
+       * Optional. Press Enter after each keyword. Mostly legacy; Google ignores these.
+       */
+      keywords?: string[] | null;
+      /**
+       * Ask search engines not to index this page.
+       */
+      noIndex?: boolean | null;
+    };
+    /**
+     * Meta for Terms (/terms). Blank fields keep the code defaults.
+     */
+    terms?: {
+      /**
+       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "| Lolev Beer" on hub pages; the site title template adds it.
+       */
+      title?: string | null;
+      /**
+       * SERP snippet. Aim for ~150–160 characters.
+       */
+      description?: string | null;
+      /**
+       * Optional. Defaults to the meta title (plus site name where applicable).
+       */
+      ogTitle?: string | null;
+      /**
+       * Optional. Defaults to the meta description.
+       */
+      ogDescription?: string | null;
+      /**
+       * Optional social share image (1200×630 recommended). Falls back to the site default.
+       */
+      ogImage?: (string | null) | Media;
+      /**
+       * Optional. Press Enter after each keyword. Mostly legacy; Google ignores these.
+       */
+      keywords?: string[] | null;
+      /**
+       * Ask search engines not to index this page.
+       */
+      noIndex?: boolean | null;
+    };
+  };
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -2080,6 +2562,161 @@ export interface SiteContentSelect<T extends boolean = true> {
   todaysFoodTitle?: T;
   distributorPaUrl?: T;
   distributorOhUrl?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-seo_select".
+ */
+export interface SiteSeoSelect<T extends boolean = true> {
+  defaultTitle?: T;
+  titleTemplate?: T;
+  description?: T;
+  keywords?: T;
+  ogImage?: T;
+  twitterSite?: T;
+  twitterCreator?: T;
+  pages?:
+    | T
+    | {
+        home?:
+          | T
+          | {
+              title?: T;
+              description?: T;
+              ogTitle?: T;
+              ogDescription?: T;
+              ogImage?: T;
+              keywords?: T;
+              noIndex?: T;
+            };
+        beer?:
+          | T
+          | {
+              title?: T;
+              description?: T;
+              ogTitle?: T;
+              ogDescription?: T;
+              ogImage?: T;
+              keywords?: T;
+              noIndex?: T;
+              intro?: T;
+            };
+        events?:
+          | T
+          | {
+              title?: T;
+              description?: T;
+              ogTitle?: T;
+              ogDescription?: T;
+              ogImage?: T;
+              keywords?: T;
+              noIndex?: T;
+              intro?: T;
+            };
+        food?:
+          | T
+          | {
+              title?: T;
+              description?: T;
+              ogTitle?: T;
+              ogDescription?: T;
+              ogImage?: T;
+              keywords?: T;
+              noIndex?: T;
+              intro?: T;
+            };
+        beerMap?:
+          | T
+          | {
+              title?: T;
+              description?: T;
+              ogTitle?: T;
+              ogDescription?: T;
+              ogImage?: T;
+              keywords?: T;
+              noIndex?: T;
+            };
+        donate?:
+          | T
+          | {
+              title?: T;
+              description?: T;
+              ogTitle?: T;
+              ogDescription?: T;
+              ogImage?: T;
+              keywords?: T;
+              noIndex?: T;
+            };
+        jobs?:
+          | T
+          | {
+              title?: T;
+              description?: T;
+              ogTitle?: T;
+              ogDescription?: T;
+              ogImage?: T;
+              keywords?: T;
+              noIndex?: T;
+            };
+        about?:
+          | T
+          | {
+              title?: T;
+              description?: T;
+              ogTitle?: T;
+              ogDescription?: T;
+              ogImage?: T;
+              keywords?: T;
+              noIndex?: T;
+            };
+        faq?:
+          | T
+          | {
+              title?: T;
+              description?: T;
+              ogTitle?: T;
+              ogDescription?: T;
+              ogImage?: T;
+              keywords?: T;
+              noIndex?: T;
+            };
+        accessibility?:
+          | T
+          | {
+              title?: T;
+              description?: T;
+              ogTitle?: T;
+              ogDescription?: T;
+              ogImage?: T;
+              keywords?: T;
+              noIndex?: T;
+            };
+        privacy?:
+          | T
+          | {
+              title?: T;
+              description?: T;
+              ogTitle?: T;
+              ogDescription?: T;
+              ogImage?: T;
+              keywords?: T;
+              noIndex?: T;
+            };
+        terms?:
+          | T
+          | {
+              title?: T;
+              description?: T;
+              ogTitle?: T;
+              ogDescription?: T;
+              ogImage?: T;
+              keywords?: T;
+              noIndex?: T;
+            };
+      };
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

@@ -3,23 +3,19 @@ import { JsonLd } from '@/components/seo/json-ld'
 import { LegalPage } from '@/components/legal/legal-page'
 import { generateWebPageSchema } from '@/lib/utils/breadcrumb-schema'
 import { LEGAL_PAGES_LASTMOD, LEGAL_PAGES_LASTMOD_LABEL } from '@/lib/legal/dates'
-import { getSiteSeo, hubPageSeo } from '@/lib/utils/site-seo'
 import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
 
 const DESCRIPTION =
   'Terms for using lolev.beer, including age, menus and hours, donation requests, and job applications.'
 
 export async function generateMetadata(): Promise<Metadata> {
-  const siteSeo = await getSiteSeo()
   return buildPageMetadata({
     fallbackTitle: 'Terms of Service',
     fallbackDescription: DESCRIPTION,
     canonicalPath: '/terms',
-    seo: hubPageSeo(siteSeo, 'terms'),
-    siteSeo,
+    hubKey: 'terms',
   })
 }
-
 
 export default function TermsPage() {
   const webPageSchema = generateWebPageSchema({

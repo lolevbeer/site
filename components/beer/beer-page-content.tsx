@@ -37,13 +37,15 @@ import { AVAILABILITY_OPTIONS, DEFAULT_AVAILABILITY } from '@/lib/config/beer-fi
 import { StaggerChildren, StaggerItem } from '@/components/motion'
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs'
 import { PageTransition } from '@/components/motion'
+import { HubIntro } from '@/components/ui/hub-intro'
 
 interface BeerPageContentProps {
   beers: Beer[]
+  /** CMS intro paragraph shown under the heading. */
+  intro?: string
 }
 
-interface BeerListingProps {
-  beers: Beer[]
+interface BeerListingProps extends BeerPageContentProps {
   search: string
   availability: string
   selectedType: string
@@ -62,12 +64,13 @@ const noop = () => {}
  * The catalog itself renders with the default filters so beer names are in
  * the HTML. The suspended child applies `?q=`, style, and availability.
  */
-export function BeerPageContent({ beers }: BeerPageContentProps) {
+export function BeerPageContent({ beers, intro }: BeerPageContentProps) {
   return (
     <Suspense
       fallback={
         <BeerListing
           beers={beers}
+          intro={intro}
           search=""
           availability={DEFAULT_AVAILABILITY}
           selectedType="all"
@@ -75,12 +78,12 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
         />
       }
     >
-      <BeerPageFiltered beers={beers} />
+      <BeerPageFiltered beers={beers} intro={intro} />
     </Suspense>
   )
 }
 
-function BeerPageFiltered({ beers }: BeerPageContentProps) {
+function BeerPageFiltered({ beers, intro }: BeerPageContentProps) {
   const [search, setSearch] = useQueryState('q', { defaultValue: '' })
   const [availability, setAvailability] = useQueryState(
     'avail',
@@ -104,6 +107,7 @@ function BeerPageFiltered({ beers }: BeerPageContentProps) {
   return (
     <BeerListing
       beers={beers}
+      intro={intro}
       search={search ?? ''}
       availability={availability}
       selectedType={selectedType ?? 'all'}
@@ -119,6 +123,7 @@ function BeerPageFiltered({ beers }: BeerPageContentProps) {
 
 function BeerListing({
   beers,
+  intro,
   search,
   availability,
   selectedType,
@@ -197,6 +202,7 @@ function BeerListing({
 
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold tracking-tight">Our Beers</h1>
+          <HubIntro text={intro} />
           <p className="mt-3 text-muted-foreground text-balance">
             Looking for cans or draft near you?{' '}
             <Link href="/beer-map" className="text-primary font-medium hover:underline">

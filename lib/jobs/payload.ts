@@ -10,6 +10,7 @@ import config from '@/src/payload.config'
 import { logger } from '@/lib/utils/logger'
 import { CACHE_TAGS } from '@/lib/utils/cache'
 import type { SeoOverride } from '@/lib/seo/resolve-metadata'
+import type { PayloadLocation } from '@/lib/types/location'
 
 export interface PublicJob {
   id: string
@@ -20,6 +21,12 @@ export interface PublicJob {
   employmentType: string
   locationName: string
   locationSlug: string
+  /** ISO timestamp the opening was created; becomes JobPosting `datePosted`. */
+  postedAt: string
+  /** ISO timestamp of the optional last day to apply; becomes JobPosting `validThrough`. */
+  closesOn?: string
+  /** Street/city/state/zip of the populated location, for JobPosting `jobLocation`. */
+  locationAddress?: PayloadLocation['address']
   seo?: SeoOverride
 }
 
@@ -33,6 +40,8 @@ type JobDoc = {
   description?: string | null
   employmentType?: string | null
   location?: unknown
+  createdAt: string
+  closesOn?: string | null
   seo?: SeoOverride
 }
 
@@ -52,7 +61,10 @@ function toPublicJob(doc: JobDoc): PublicJob | null {
     employmentType: doc.employmentType || 'full-time',
     locationName: relatedString(doc.location, 'name'),
     locationSlug: relatedString(doc.location, 'slug'),
-    seo: doc.seo ?? null,
+    postedAt: doc.createdAt,
+    closesOn: doc.closesOn ?? undefined,
+    locationAddress: (doc.location as Pick<PayloadLocation, 'address'> | null)?.address,
+    seo: doc.seo,
   }
 }
 

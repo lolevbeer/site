@@ -10,14 +10,14 @@ import { JsonLd } from '@/components/seo/json-ld'
 import { generateBeerListSchema } from '@/lib/utils/product-schema'
 import { beersDescription, locationKeywords } from '@/lib/utils/seo'
 import { getAllLocations } from '@/lib/utils/payload-api'
-import { getSiteSeo, hubPageSeo } from '@/lib/utils/site-seo'
 import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
+import { getHubIntro } from '@/lib/utils/site-seo'
 
 // ISR: Revalidate every hour as fallback (on-demand revalidation handles immediate updates)
 export const revalidate = 3600
 
 export async function generateMetadata(): Promise<Metadata> {
-  const [locations, siteSeo] = await Promise.all([getAllLocations(), getSiteSeo()])
+  const locations = await getAllLocations()
   const description = beersDescription(locations)
   return buildPageMetadata({
     fallbackTitle: 'Our Beers',
@@ -34,13 +34,12 @@ export async function generateMetadata(): Promise<Metadata> {
       'Hazy IPA',
       ...locationKeywords(locations),
     ],
-    seo: hubPageSeo(siteSeo, 'beer'),
-    siteSeo,
+    hubKey: 'beer',
   })
 }
 
 export default async function BeerPage() {
-  const allBeers = await getAllBeers()
+  const [allBeers, intro] = await Promise.all([getAllBeers(), getHubIntro('beer')])
 
   // Filter out beers that should be hidden
   const availableBeers = allBeers.filter((beer) => !beer.availability?.hideFromSite)
@@ -52,7 +51,7 @@ export default async function BeerPage() {
     <>
       {/* JSON-LD structured data for beer collection */}
       <JsonLd data={beerListSchema} />
-      <BeerPageContent beers={availableBeers} />
+      <BeerPageContent beers={availableBeers} intro={intro} />
     </>
   )
 }

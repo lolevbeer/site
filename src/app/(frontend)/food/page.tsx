@@ -13,8 +13,8 @@ import { PageTransition } from '@/components/motion'
 import { logger } from '@/lib/utils/logger'
 import { capitalizeName } from '@/lib/utils/formatters'
 import { foodDescription } from '@/lib/utils/seo'
-import { getSiteSeo, hubPageSeo } from '@/lib/utils/site-seo'
 import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
+import { getHubIntro } from '@/lib/utils/site-seo'
 import {
   getRecurringFoodState,
   recurringDays as days,
@@ -22,14 +22,13 @@ import {
 } from '@/src/utils/recurring-food'
 
 export async function generateMetadata(): Promise<Metadata> {
-  const [locations, siteSeo] = await Promise.all([getAllLocations(), getSiteSeo()])
+  const locations = await getAllLocations()
   const description = foodDescription(locations)
   return buildPageMetadata({
     fallbackTitle: 'Food',
     fallbackDescription: description,
     canonicalPath: '/food',
-    seo: hubPageSeo(siteSeo, 'food'),
-    siteSeo,
+    hubKey: 'food',
   })
 }
 
@@ -282,7 +281,7 @@ async function getFoodData(): Promise<FoodVendorSchedule[]> {
 }
 
 export default async function FoodPage() {
-  const [schedules, locations] = await Promise.all([getFoodData(), getAllLocations()])
+  const [schedules, locations, intro] = await Promise.all([getFoodData(), getAllLocations(), getHubIntro('food')])
   const locationLookup = createLocationLookup(locations)
 
   const validSchedules = schedules.filter(
@@ -307,7 +306,7 @@ export default async function FoodPage() {
       {jsonLd && <JsonLd data={jsonLd} />}
 
       <PageTransition>
-        <FoodPageClient initialSchedules={schedules} />
+        <FoodPageClient initialSchedules={schedules} intro={intro} />
       </PageTransition>
     </>
   )

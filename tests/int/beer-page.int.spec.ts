@@ -43,7 +43,6 @@ vi.mock('@/lib/utils/payload-api', () => ({
 
 vi.mock('@/lib/utils/site-seo', () => ({
   getSiteSeo: vi.fn(async () => ({})),
-  hubPageSeo: vi.fn(() => null),
 }))
 
 // Mock media-utils

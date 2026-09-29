@@ -3,50 +3,40 @@
  */
 import type { Metadata } from 'next'
 import { getMediaUrl } from '@/lib/utils/media-utils'
-import { DEFAULT_OG_IMAGES } from '@/lib/utils/seo'
+import {
+  DEFAULT_OG_IMAGES,
+  DEFAULT_TITLE_TEMPLATE,
+  NOINDEX_FOLLOW_ROBOTS,
+  pageOpenGraph,
+  trim,
+} from '@/lib/utils/seo'
+import { getSiteSeo } from '@/lib/utils/site-seo'
+import type { SiteSeoPageKey } from '@/src/globals/SiteSeo'
+import type { SiteSeo } from '@/src/payload-types'
 
-/** Shape of the shared `seo` group (collections + hub pages). */
-export type SeoOverride = {
-  title?: string | null
-  description?: string | null
-  ogTitle?: string | null
-  ogDescription?: string | null
-  ogImage?: unknown
-  keywords?: string[] | null
-  canonicalPath?: string | null
-  noIndex?: boolean | null
-} | null | undefined
-
-export type SiteSeoDefaults = {
-  defaultTitle?: string | null
-  titleTemplate?: string | null
-  description?: string | null
-  keywords?: string[] | null
-  ogImage?: unknown
-  twitterSite?: string | null
-  twitterCreator?: string | null
-  pages?: Partial<Record<string, SeoOverride>> | null
-} | null | undefined
-
-function trim(value: string | null | undefined): string | undefined {
-  const t = value?.trim()
-  return t ? t : undefined
-}
+/** The shared `seo` group. Hub pages (Site SEO) lack `canonicalPath`; beers, locations and jobs have it. */
+export type SeoOverride =
+  (NonNullable<SiteSeo['pages']>['home'] & { canonicalPath?: string | null }) | null | undefined
 
 type OgImageList = NonNullable<NonNullable<Metadata['openGraph']>['images']>
 
+/** Declares the upload's real dimensions when known; a wrong size makes scrapers crop or reject the card. */
 function ogImageFromUpload(media: unknown): OgImageList | undefined {
   const url = getMediaUrl(media)
   if (!url) return undefined
-  const alt =
-    typeof media === 'object' && media && 'alt' in media && typeof (media as { alt?: unknown }).alt === 'string'
-      ? (media as { alt: string }).alt
-      : 'Lolev Beer'
-  return [{ url, width: 1200, height: 630, alt }]
+  const { alt, width, height } = media as { alt?: unknown; width?: unknown; height?: unknown }
+  return [
+    {
+      url,
+      alt: typeof alt === 'string' ? alt : 'Lolev Beer',
+      ...(typeof width === 'number' && typeof height === 'number' ? { width, height } : {}),
+    },
+  ]
 }
 
-export function defaultOgImages(siteSeo?: SiteSeoDefaults) {
-  return ogImageFromUpload(siteSeo?.ogImage) ?? DEFAULT_OG_IMAGES
+/** Site default OG image: the CMS upload if set, else the bundled card. */
+export function defaultOgImages(media?: unknown) {
+  return ogImageFromUpload(media) ?? DEFAULT_OG_IMAGES
 }
 
 type BuildArgs = {
@@ -56,30 +46,38 @@ type BuildArgs = {
   /** Canonical path, e.g. /beer or /beer/lupula */
   canonicalPath: string
   fallbackKeywords?: string[]
-  /** Document or hub-page SEO group */
+  /** Document SEO group (beer, location, job). */
   seo?: SeoOverride
-  /** Site-wide defaults (for OG image / keyword merge) */
-  siteSeo?: SiteSeoDefaults
+  /** Hub page key in the Site SEO global; used when `seo` is not given. */
+  hubKey?: SiteSeoPageKey
   /** Absolute or path OG images when the doc already has one (e.g. beer image) */
   fallbackOgImages?: NonNullable<Metadata['openGraph']>['images']
+  /** Home only: the title is the whole <title>, so skip the layout's site-name template. */
+  absoluteTitle?: boolean
 }
 
 /**
  * Build page Metadata from CMS overrides + code fallbacks.
  * Layout still owns title.template and site-wide twitter defaults.
  */
-export function buildPageMetadata({
+export async function buildPageMetadata({
   fallbackTitle,
   fallbackDescription,
   canonicalPath,
   fallbackKeywords = [],
-  seo,
-  siteSeo,
+  seo: docSeo,
+  hubKey,
   fallbackOgImages,
-}: BuildArgs): Metadata {
+  absoluteTitle = false,
+}: BuildArgs): Promise<Metadata> {
+  const siteSeo = await getSiteSeo()
+  const seo: SeoOverride = docSeo ?? (hubKey ? siteSeo.pages?.[hubKey] : undefined)
   const title = trim(seo?.title) ?? fallbackTitle
   const description = trim(seo?.description) ?? fallbackDescription
-  const ogTitle = trim(seo?.ogTitle) ?? `${title} | Lolev Beer`
+  // Same template the layout applies to <title>, so og:title never drifts from it.
+  const template = trim(siteSeo.titleTemplate) ?? DEFAULT_TITLE_TEMPLATE
+  const ogTitle =
+    trim(seo?.ogTitle) ?? (absoluteTitle ? title : template.replace('%s', () => title))
   const ogDescription = trim(seo?.ogDescription) ?? description
   const canonical = trim(seo?.canonicalPath) ?? canonicalPath
 
@@ -90,20 +88,14 @@ export function buildPageMetadata({
   const uniqueKeywords = [...new Set(keywords)]
 
   const images =
-    ogImageFromUpload(seo?.ogImage) ??
-    fallbackOgImages ??
-    defaultOgImages(siteSeo)
+    ogImageFromUpload(seo?.ogImage) ?? fallbackOgImages ?? defaultOgImages(siteSeo.ogImage)
 
   const metadata: Metadata = {
-    title,
+    title: absoluteTitle ? { absolute: title } : title,
     description,
     alternates: { canonical },
-    openGraph: {
-      title: ogTitle,
-      description: ogDescription,
-      type: 'website',
-      images,
-    },
+    // Page openGraph replaces the layout's wholesale, so og:url must be restated here.
+    openGraph: { ...pageOpenGraph(ogTitle, ogDescription, images), url: canonical },
   }
 
   if (uniqueKeywords.length) {
@@ -111,7 +103,7 @@ export function buildPageMetadata({
   }
 
   if (seo?.noIndex) {
-    metadata.robots = { index: false, follow: false }
+    metadata.robots = NOINDEX_FOLLOW_ROBOTS
   }
 
   return metadata

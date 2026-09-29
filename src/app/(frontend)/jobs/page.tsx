@@ -17,7 +17,6 @@ import {
 } from '@/components/ui/card'
 import { Empty, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
 import { getActiveJobs } from '@/lib/jobs/payload'
-import { getSiteSeo, hubPageSeo } from '@/lib/utils/site-seo'
 import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
 
 export const revalidate = 300
@@ -25,16 +24,13 @@ export const revalidate = 300
 const DESCRIPTION = 'Open roles at Lolev Beer taprooms.'
 
 export async function generateMetadata(): Promise<Metadata> {
-  const siteSeo = await getSiteSeo()
   return buildPageMetadata({
     fallbackTitle: 'Jobs',
     fallbackDescription: DESCRIPTION,
     canonicalPath: '/jobs',
-    seo: hubPageSeo(siteSeo, 'jobs'),
-    siteSeo,
+    hubKey: 'jobs',
   })
 }
-
 
 export default async function JobsPage() {
   const jobs = await getActiveJobs()

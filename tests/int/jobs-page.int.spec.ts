@@ -10,7 +10,6 @@ vi.mock('@/lib/jobs/payload', () => ({
 
 vi.mock('@/lib/utils/site-seo', () => ({
   getSiteSeo: vi.fn(async () => ({})),
-  hubPageSeo: vi.fn(() => null),
 }))
 
 vi.mock('@/components/ui/page-breadcrumbs', () => ({

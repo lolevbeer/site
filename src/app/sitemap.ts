@@ -5,6 +5,10 @@ import { logger } from '@/lib/utils/logger'
 import { getBaseUrl } from '@/lib/utils/get-base-url'
 import { RESERVED_LOCATION_SLUGS } from '@/lib/config/locations'
 import { LEGAL_PAGES_LASTMOD } from '@/lib/legal/dates'
+import { getSiteSeo } from '@/lib/utils/site-seo'
+import { trim } from '@/lib/utils/seo'
+import type { SeoOverride } from '@/lib/seo/resolve-metadata'
+import type { SiteSeoPageKey } from '@/src/globals/SiteSeo'
 
 /** lastmod for pages that change with code, not CMS. YYYY-MM-DD of last meaningful edit. */
 const STATIC_LASTMOD = {
@@ -20,17 +24,18 @@ const STATIC_LASTMOD = {
 
 const STATIC_INFO_PAGES: Array<{
   path: keyof typeof STATIC_LASTMOD
+  key: SiteSeoPageKey
   changeFrequency: 'weekly' | 'monthly' | 'yearly'
   priority: number
 }> = [
-  { path: '/beer-map', changeFrequency: 'weekly', priority: 0.9 },
-  { path: '/donate', changeFrequency: 'yearly', priority: 0.3 },
-  { path: '/jobs', changeFrequency: 'weekly', priority: 0.4 },
-  { path: '/about', changeFrequency: 'monthly', priority: 0.6 },
-  { path: '/faq', changeFrequency: 'monthly', priority: 0.5 },
-  { path: '/accessibility', changeFrequency: 'monthly', priority: 0.3 },
-  { path: '/privacy', changeFrequency: 'yearly', priority: 0.2 },
-  { path: '/terms', changeFrequency: 'yearly', priority: 0.2 },
+  { path: '/beer-map', key: 'beerMap', changeFrequency: 'weekly', priority: 0.9 },
+  { path: '/donate', key: 'donate', changeFrequency: 'yearly', priority: 0.3 },
+  { path: '/jobs', key: 'jobs', changeFrequency: 'weekly', priority: 0.4 },
+  { path: '/about', key: 'about', changeFrequency: 'monthly', priority: 0.6 },
+  { path: '/faq', key: 'faq', changeFrequency: 'monthly', priority: 0.5 },
+  { path: '/accessibility', key: 'accessibility', changeFrequency: 'monthly', priority: 0.3 },
+  { path: '/privacy', key: 'privacy', changeFrequency: 'yearly', priority: 0.2 },
+  { path: '/terms', key: 'terms', changeFrequency: 'yearly', priority: 0.2 },
 ]
 
 function maxDate(dates: Array<string | Date | undefined | null>): Date {
@@ -40,27 +45,39 @@ function maxDate(dates: Array<string | Date | undefined | null>): Date {
   return new Date(times.length ? Math.max(...times) : Date.parse('2026-03-05'))
 }
 
+/**
+ * A page belongs in the sitemap only if its CMS SEO lets it be indexed and it is its own
+ * canonical URL (a canonical override points crawlers at some other URL instead).
+ */
+function isListed(path: string, seo: SeoOverride): boolean {
+  if (seo?.noIndex) return false
+  const canonical = trim(seo?.canonicalPath)
+  return !canonical || canonical === path
+}
+
+type StaticPage = {
+  path: string
+  key: SiteSeoPageKey
+  lastModified: Date
+  changeFrequency: NonNullable<MetadataRoute.Sitemap[number]['changeFrequency']>
+  priority: number
+}
+
+/** Log a failed source and continue with none, so one outage cannot empty the whole sitemap. */
+const orEmpty = <T,>(source: Promise<T[]>, name: string) =>
+  source.catch((error) => {
+    logger.error(`Error fetching ${name} for sitemap:`, error)
+    return [] as T[]
+  })
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = getBaseUrl()
-
-  let beers: Awaited<ReturnType<typeof getAllBeersFromPayload>> = []
-  let locations: Awaited<ReturnType<typeof getAllLocations>> = []
-  let jobs: Awaited<ReturnType<typeof getActiveJobs>> = []
-  try {
-    beers = await getAllBeersFromPayload()
-  } catch (error) {
-    logger.error('Error fetching beers for sitemap:', error)
-  }
-  try {
-    locations = await getAllLocations()
-  } catch (error) {
-    logger.error('Error fetching locations for sitemap:', error)
-  }
-  try {
-    jobs = await getActiveJobs()
-  } catch (error) {
-    logger.error('Error fetching jobs for sitemap:', error)
-  }
+  const [siteSeo, beers, locations, jobs] = await Promise.all([
+    getSiteSeo(),
+    orEmpty(getAllBeersFromPayload(), 'beers'),
+    orEmpty(getAllLocations(), 'locations'),
+    orEmpty(getActiveJobs(), 'jobs'),
+  ])
 
   const visibleBeers = beers.filter((beer) => beer.slug && !beer.hideFromSite)
   const activeLocations = locations.filter(
@@ -72,54 +89,49 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...activeLocations.map((l) => l.updatedAt),
   ])
 
-  const staticPages: MetadataRoute.Sitemap = [
-    { url: baseUrl, lastModified: homeLastmod, changeFrequency: 'daily', priority: 1 },
-    {
-      url: `${baseUrl}/beer`,
-      lastModified: catalogLastmod,
-      changeFrequency: 'daily',
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/events`,
-      lastModified: homeLastmod,
-      changeFrequency: 'daily',
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/food`,
-      lastModified: homeLastmod,
-      changeFrequency: 'daily',
-      priority: 0.8,
-    },
-    ...STATIC_INFO_PAGES.map((page) => ({
-      url: `${baseUrl}${page.path}`,
-      lastModified: new Date(STATIC_LASTMOD[page.path]),
-      changeFrequency: page.changeFrequency,
-      priority: page.priority,
-    })),
+  const staticEntries: StaticPage[] = [
+    { path: '/', key: 'home', lastModified: homeLastmod, changeFrequency: 'daily', priority: 1 },
+    { path: '/beer', key: 'beer', lastModified: catalogLastmod, changeFrequency: 'daily', priority: 0.9 },
+    { path: '/events', key: 'events', lastModified: homeLastmod, changeFrequency: 'daily', priority: 0.8 },
+    { path: '/food', key: 'food', lastModified: homeLastmod, changeFrequency: 'daily', priority: 0.8 },
+    ...STATIC_INFO_PAGES.map((page) => ({ ...page, lastModified: new Date(STATIC_LASTMOD[page.path]) })),
   ]
+  const staticPages: MetadataRoute.Sitemap = staticEntries
+    // Hub SEO groups have no canonical field, so noIndex is the only thing that can hide them.
+    .filter((page) => !siteSeo.pages?.[page.key]?.noIndex)
+    .map(({ path, changeFrequency, priority, lastModified }) => ({
+      url: path === '/' ? baseUrl : `${baseUrl}${path}`,
+      lastModified,
+      changeFrequency,
+      priority,
+    }))
 
-  const beerPages: MetadataRoute.Sitemap = visibleBeers.map((beer) => ({
-    url: `${baseUrl}/beer/${beer.slug}`,
-    lastModified: beer.updatedAt ? new Date(beer.updatedAt) : catalogLastmod,
-    changeFrequency: 'weekly' as const,
-    priority: 0.7,
-  }))
+  const beerPages: MetadataRoute.Sitemap = visibleBeers
+    .filter((beer) => isListed(`/beer/${beer.slug}`, beer.seo))
+    .map((beer) => ({
+      url: `${baseUrl}/beer/${beer.slug}`,
+      lastModified: beer.updatedAt ? new Date(beer.updatedAt) : catalogLastmod,
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
+    }))
 
-  const locationPages: MetadataRoute.Sitemap = activeLocations.map((loc) => ({
-    url: `${baseUrl}/${loc.slug}`,
-    lastModified: loc.updatedAt ? new Date(loc.updatedAt) : homeLastmod,
-    changeFrequency: 'daily' as const,
-    priority: 0.8,
-  }))
+  const locationPages: MetadataRoute.Sitemap = activeLocations
+    .filter((loc) => isListed(`/${loc.slug}`, loc.seo))
+    .map((loc) => ({
+      url: `${baseUrl}/${loc.slug}`,
+      lastModified: loc.updatedAt ? new Date(loc.updatedAt) : homeLastmod,
+      changeFrequency: 'daily' as const,
+      priority: 0.8,
+    }))
 
-  const jobPages: MetadataRoute.Sitemap = jobs.map((job) => ({
-    url: `${baseUrl}/jobs/${job.slug}`,
-    lastModified: homeLastmod,
-    changeFrequency: 'weekly' as const,
-    priority: 0.4,
-  }))
+  const jobPages: MetadataRoute.Sitemap = jobs
+    .filter((job) => isListed(`/jobs/${job.slug}`, job.seo))
+    .map((job) => ({
+      url: `${baseUrl}/jobs/${job.slug}`,
+      lastModified: homeLastmod,
+      changeFrequency: 'weekly' as const,
+      priority: 0.4,
+    }))
 
   return [...staticPages, ...beerPages, ...locationPages, ...jobPages]
 }

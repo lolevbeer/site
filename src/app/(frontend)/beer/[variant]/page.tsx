@@ -5,11 +5,10 @@ import { BeerDetails } from '@/components/beer/beer-details'
 import { JsonLd } from '@/components/seo/json-ld'
 import { PageTransition } from '@/components/motion'
 import { generateProductSchema } from '@/lib/utils/product-schema'
-import { generateBreadcrumbSchema } from '@/lib/utils/breadcrumb-schema'
-import { getBeerImageUrl } from '@/lib/utils/media-utils'
+import { generateBreadcrumbSchema, generateWebPageSchema } from '@/lib/utils/breadcrumb-schema'
 import { logger } from '@/lib/utils/logger'
-import { getSiteSeo } from '@/lib/utils/site-seo'
 import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
+import { ogCardImages } from '@/lib/og/paths'
 
 interface BeerPageProps {
   params: Promise<{
@@ -21,7 +20,7 @@ export async function generateMetadata({ params }: BeerPageProps): Promise<Metad
   const { variant } = await params
 
   // Let Payload/DB errors reach error.tsx instead of looking like a 404.
-  const [beer, siteSeo] = await Promise.all([getBeerBySlug(variant), getSiteSeo()])
+  const beer = await getBeerBySlug(variant)
 
   if (!beer || beer.hideFromSite) {
     return {
@@ -33,7 +32,6 @@ export async function generateMetadata({ params }: BeerPageProps): Promise<Metad
   const description =
     (typeof beer.description === 'string' ? beer.description.trim() : '') ||
     `${beer.name}${styleName ? ` — ${styleName}` : ''} beer from Lolev Beer, a craft brewery in Pittsburgh.`
-  const ogImage = getBeerImageUrl(beer.image, beer.slug)
 
   const pageTitle = styleName ? `${beer.name} | ${styleName}` : beer.name
   const seo = beer.seo
@@ -43,8 +41,7 @@ export async function generateMetadata({ params }: BeerPageProps): Promise<Metad
     fallbackDescription: description,
     canonicalPath: `/beer/${beer.slug}`,
     seo,
-    siteSeo,
-    fallbackOgImages: ogImage ? [{ url: ogImage, alt: beer.name }] : undefined,
+    fallbackOgImages: ogCardImages('beer', beer.slug, beer.name),
   })
 }
 
@@ -78,6 +75,11 @@ export default async function BeerPage({ params }: BeerPageProps) {
     logger.error('Could not load menus for product availability', error)
   }
   const productSchema = generateProductSchema(beer, { inStock })
+  const webPageSchema = generateWebPageSchema({
+    name: beer.name,
+    path: `/beer/${beer.slug}`,
+    dateModified: beer.updatedAt,
+  })
   const breadcrumbSchema = generateBreadcrumbSchema([
     { label: 'Home', href: '/' },
     { label: 'Beer', href: '/beer' },
@@ -88,6 +90,7 @@ export default async function BeerPage({ params }: BeerPageProps) {
     <>
       {/* Add Product JSON-LD for SEO */}
       <JsonLd data={productSchema} />
+      <JsonLd data={webPageSchema} />
       <JsonLd data={breadcrumbSchema} />
 
       <PageTransition>
