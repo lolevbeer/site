@@ -135,6 +135,8 @@ export function usePolling<T, R extends PollingResponse>(
   const warmRef = useRef(false)
   const consecutiveErrorsRef = useRef(0)
   const realtimeFallbackRef = useRef(realtimeFallback)
+  // Skip the first realtimeFallback effect run (url/poll effect starts cadence).
+  const realtimeFallbackMountedRef = useRef(false)
 
   // Store applyResponse in a ref so poll() always uses the latest callback
   // without needing it in the useCallback dependency array. Written in an
@@ -223,6 +225,10 @@ export function usePolling<T, R extends PollingResponse>(
       realtimeFallback: realtimeFallbackRef.current,
     })
     if (delay !== null) {
+      if (pollTimeoutRef.current) {
+        clearTimeout(pollTimeoutRef.current)
+        pollTimeoutRef.current = null
+      }
       pollTimeoutRef.current = setTimeout(() => pollRef.current(), delay)
     }
   }, [url])
@@ -261,6 +267,30 @@ export function usePolling<T, R extends PollingResponse>(
     noChangeCountRef.current = 0
     void pollRef.current()
   }, [url, invalidateSignal, clearScheduledPoll])
+
+  // When Ably connects or drops, reschedule so a 120s safety-net timer does not
+  // linger after disconnect (and so connect does not keep a leftover 10s/30s).
+  // Skip the first run: the url/poll effect already starts the first cadence.
+  useEffect(() => {
+    realtimeFallbackRef.current = realtimeFallback
+    if (!realtimeFallbackMountedRef.current) {
+      realtimeFallbackMountedRef.current = true
+      return
+    }
+    if (!url) return
+    clearScheduledPoll()
+    if (document.hidden) return
+    const delay = selectPollInterval({
+      noChangeCount: noChangeCountRef.current,
+      warm: warmRef.current,
+      consecutiveErrors: consecutiveErrorsRef.current,
+      hidden: false,
+      realtimeFallback,
+    })
+    if (delay !== null) {
+      pollTimeoutRef.current = setTimeout(() => pollRef.current(), delay)
+    }
+  }, [url, realtimeFallback, clearScheduledPoll])
 
   return { data, theme }
 }

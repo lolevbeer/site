@@ -2,6 +2,7 @@
  * Ably kiosk realtime spike: feature flags, publish no-op, auth 503 when
  * unset, and the polling realtime-fallback cadence.
  */
+import { act, cleanup, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('ably', () => {
@@ -26,8 +27,10 @@ import {
 import { isAblyClientEnabled, isAblyPublishEnabled } from '@/lib/ably/config'
 import { ABLY_CHANNELS, ABLY_UPDATED_EVENT } from '@/lib/ably/channels'
 import {
+  FAST_INTERVAL_MS,
   REALTIME_FALLBACK_INTERVAL_MS,
   selectPollInterval,
+  usePolling,
 } from '@/lib/hooks/use-polling'
 import { GET as ablyAuthGet } from '@/src/app/api/ably-auth/route'
 
@@ -144,5 +147,57 @@ describe('channel constants', () => {
     expect(ABLY_CHANNELS.menu).toBe('kiosk:menu')
     expect(ABLY_CHANNELS.events).toBe('kiosk:events')
     expect(ABLY_UPDATED_EVENT).toBe('updated')
+  })
+})
+
+describe('usePolling realtimeFallback reschedule', () => {
+  afterEach(() => {
+    cleanup()
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+  })
+
+  it('reschedules to warm/idle cadence when Ably disconnects instead of leaving a 120s timer', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ timestamp: Date.parse('2026-01-01T00:00:00Z') }),
+    }))
+    vi.stubGlobal('fetch', fetchMock)
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => false })
+
+    const { rerender } = renderHook(
+      ({ realtimeFallback }) =>
+        usePolling<number, { timestamp: number }>(
+          '/api/example',
+          0,
+          () => ({ data: 1, theme: 'light' }),
+          { realtimeFallback },
+        ),
+      { initialProps: { realtimeFallback: true } },
+    )
+
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+
+    // 100s into the 120s safety-net window: still only the first poll.
+    await act(() => vi.advanceTimersByTimeAsync(100_000))
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+
+    // Disconnect must clear the lingering 120s timer and start warm/fast 10s.
+    await act(() => {
+      rerender({ realtimeFallback: false })
+    })
+    await act(() => vi.advanceTimersByTimeAsync(FAST_INTERVAL_MS))
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+
+    // Original 120s deadline is 20s after disconnect. A leaked timer would poll
+    // here; with a proper clear, idle cadence (30s after this unchanged poll)
+    // has not fired yet.
+    await act(() => vi.advanceTimersByTimeAsync(19_000))
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+
+    await act(() => vi.advanceTimersByTimeAsync(11_000))
+    expect(fetchMock).toHaveBeenCalledTimes(3)
   })
 })
