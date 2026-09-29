@@ -381,6 +381,14 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
                         Not currently available at our taprooms
                       </p>
                     )}
+                    <p className="pt-2">
+                      <Link
+                        href="/beer-map"
+                        className="text-sm font-medium text-primary hover:underline"
+                      >
+                        Find retailers near you on the beer map
+                      </Link>
+                    </p>
                   </div>
                 )}
               </CardContent>

@@ -52,7 +52,7 @@ export function foodDescription(locations: NamedLocations = []): string {
 
 export function beerMapDescription(locations: NamedLocations = []): string {
   const taprooms = locationClause(locations, (names) => `taprooms in ${names}`, 'our taprooms')
-  return `Find Lolev Beer ${taprooms}, plus retailers across Pennsylvania, New York, and Ohio.`
+  return `Where to buy Lolev Beer: ${taprooms}, plus bottle shops and retailers across Pennsylvania, New York, and Ohio. Search the map by city or ZIP.`
 }
 
 export function locationKeywords(locations: PayloadLocation[]): string[] {

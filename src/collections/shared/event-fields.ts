@@ -111,6 +111,15 @@ export const eventDetailFields: Field[] = [
     type: 'textarea',
   },
   {
+    name: 'image',
+    type: 'upload',
+    relationTo: 'media',
+    admin: {
+      description: 'Optional photo for Event rich results (falls back to the site OG image)',
+      condition: (data) => data?.visibility !== 'private',
+    },
+  },
+  {
     name: 'attendees',
     type: 'number',
     access: {

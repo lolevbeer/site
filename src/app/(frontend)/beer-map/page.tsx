@@ -24,19 +24,23 @@ export async function generateMetadata(): Promise<Metadata> {
   const locations = await getAllLocations()
   const description = beerMapDescription(locations)
   return {
-    title: 'Find Lolev Beer Near You',
+    title: 'Where to Buy Lolev Beer Near You',
     description,
     keywords: [
+      'where to buy Lolev Beer',
+      'find Lolev Beer',
+      'Lolev Beer near me',
+      'Lolev Beer stores',
+      'Lolev Beer retailers',
       'brewery locations',
       'Pittsburgh brewery',
-      'find us',
-      'brewery map',
+      'beer map',
       'directions',
       ...locationKeywords(locations),
     ],
     alternates: { canonical: '/beer-map' },
     openGraph: {
-      title: 'Find Lolev Beer Near You | Lolev Beer',
+      title: 'Where to Buy Lolev Beer Near You | Lolev Beer',
       description,
       type: 'website',
       images: DEFAULT_OG_IMAGES,

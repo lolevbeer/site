@@ -9,6 +9,7 @@ import { FoodVendorSchedule } from '@/lib/types/food'
 import type { LocationSlug, PayloadLocation } from '@/lib/types/location'
 import type { Event as PayloadCmsEvent } from '@/src/payload-types'
 import { parseLocalDate } from './formatters'
+import { getMediaUrl } from './media-utils'
 import {
   LOLEV_BASE_URL,
   LOLEV_OG_IMAGE_URL,
@@ -186,6 +187,23 @@ function complimentaryOffer(): OfferJsonLd {
   }
 }
 
+/** Make media/site paths absolute for Google rich results. */
+function absoluteAssetUrl(url?: string | null): string | undefined {
+  if (!url) return undefined
+  if (url.startsWith('http://') || url.startsWith('https://')) return url
+  if (url.startsWith('/')) return `${LOLEV_BASE_URL}${url}`
+  return url
+}
+
+/** Prefer a CMS/event image; always fall back to the site OG image. */
+function resolveEventImage(...candidates: Array<string | null | undefined>): string {
+  for (const candidate of candidates) {
+    const absolute = absoluteAssetUrl(candidate)
+    if (absolute) return absolute
+  }
+  return LOLEV_OG_IMAGE_URL
+}
+
 function organizationPerformer(name: string, url?: string): PersonOrOrganizationJsonLd {
   return url
     ? { '@type': 'Organization', name, url }
@@ -285,6 +303,7 @@ function createBaseEventJsonLd(
     location: place,
     organizer: getOrganizer(),
     url: `${LOLEV_BASE_URL}/events`,
+    image: LOLEV_OG_IMAGE_URL,
   }
 }
 
@@ -322,8 +341,9 @@ export function generateEventJsonLd(
     )
 
     if (endDate) jsonLd.endDate = endDate
-    if (payloadEvent.description) jsonLd.description = payloadEvent.description
+    jsonLd.description = (payloadEvent.description || payloadEvent.organizer).trim()
     if (payloadEvent.site) jsonLd.url = payloadEvent.site
+    jsonLd.image = resolveEventImage(getMediaUrl(payloadEvent.image))
     jsonLd.offers = complimentaryOffer()
 
     return jsonLd
@@ -348,10 +368,10 @@ export function generateEventJsonLd(
     startDate,
   )
 
-  jsonLd.description = breweryEvent.description
+  jsonLd.description = (breweryEvent.description || breweryEvent.title).trim()
   jsonLd.eventStatus = getEventStatus(breweryEvent.status)
   if (endDate) jsonLd.endDate = endDate
-  if (breweryEvent.image) jsonLd.image = breweryEvent.image
+  jsonLd.image = resolveEventImage(breweryEvent.image)
   if (breweryEvent.site) jsonLd.url = breweryEvent.site
 
   if (breweryEvent.price) {
@@ -432,7 +452,13 @@ export function generateFoodEventJsonLd(
       startDate,
     )
 
+    jsonLd.description = `${vendorName} serving food at Lolev Beer`
     jsonLd.url = vendorSite || `${LOLEV_BASE_URL}/food`
+    jsonLd.image = resolveEventImage(
+      typeof payloadFood.vendor === 'object'
+        ? getMediaUrl((payloadFood.vendor as { logo?: unknown }).logo)
+        : undefined,
+    )
     jsonLd.offers = { '@type': 'Offer', availability: 'https://schema.org/InStock' }
     jsonLd.performer = organizationPerformer(vendorName, vendorSite)
 
@@ -464,6 +490,7 @@ export function generateFoodEventJsonLd(
     foodSchedule.notes ||
     `${foodSchedule.vendor} will be serving food at Lolev Beer ${locationName}`
   if (endDate) jsonLd.endDate = endDate
+  jsonLd.image = resolveEventImage()
   jsonLd.offers = { '@type': 'Offer', availability: 'https://schema.org/InStock' }
   jsonLd.performer = organizationPerformer(foodSchedule.vendor, foodSchedule.site)
   jsonLd.url = foodSchedule.site || `${LOLEV_BASE_URL}/food`

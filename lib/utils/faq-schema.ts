@@ -109,7 +109,7 @@ export const breweryFAQs: FAQItem[] = [
   {
     question: 'Where can I find your beer in stores?',
     answer:
-      'Our beers are distributed throughout the Pittsburgh area and select locations in Pennsylvania, New York, and Ohio. Use our Beer Map to find the nearest retailer carrying Lolev Beer.',
+      'Our beers are distributed throughout the Pittsburgh area and select locations in Pennsylvania, New York, and Ohio. Use the Beer Map at lolev.beer/beer-map to find the nearest retailer carrying Lolev Beer.',
   },
   {
     question: 'Do you have gluten-free options?',
