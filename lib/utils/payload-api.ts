@@ -105,9 +105,10 @@ export const BEERS_LIST_SELECT = {
   canSingle: true,
   fourPack: true,
   hideFromSite: true,
+  seo: { noIndex: true, canonicalPath: true }, // sitemap only; skips populating seo.ogImage
   createdAt: true,
   updatedAt: true,
-} as const satisfies { [K in keyof PayloadBeer]?: true }
+} as const satisfies { [K in keyof PayloadBeer]?: true | { [key: string]: true } }
 
 const BEERS_LIST_POPULATE = {
   styles: { name: true },
@@ -318,7 +319,7 @@ const MENU_BEERS_POPULATE = {
   updatedAt: true,
   untappdRating: true,
   topBeerDrops: true,
-} as const satisfies { [K in keyof PayloadBeer]?: true }
+} as const satisfies { [K in keyof PayloadBeer]?: true | { [key: string]: true } }
 
 const MENU_POPULATE = {
   beers: MENU_BEERS_POPULATE,
@@ -612,19 +613,25 @@ export const getComingSoonBeers = async () => {
   }
 }
 
+/** Cache tag per global; anything else falls back to the site-content tag. */
+const GLOBAL_TAGS: Record<string, string> = {
+  'coming-soon': CACHE_TAGS.comingSoon,
+  'site-seo': CACHE_TAGS.siteSeo,
+}
+
 /**
  * Fetch a global by slug
  * Cached based on the global type
  */
 export const fetchGlobal = async (slug: string, depth: number = 0) => {
-  const tag = slug === 'coming-soon' ? CACHE_TAGS.comingSoon : CACHE_TAGS.siteContent
+  const tag = GLOBAL_TAGS[slug] ?? CACHE_TAGS.siteContent
 
   try {
     return await unstable_cache(
       async () => {
         const payload = await getPayload({ config })
         const result = await payload.findGlobal({
-          slug: slug as 'coming-soon' | 'site-content',
+          slug: slug as 'coming-soon' | 'site-content' | 'site-seo',
           overrideAccess: false,
           depth,
         })

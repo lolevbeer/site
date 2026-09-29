@@ -10,7 +10,7 @@ import { PageTransition } from '@/components/motion'
 import { LocationLanding } from '@/components/location/location-landing'
 import { generateLocalBusinessSchema } from '@/lib/utils/local-business-schema'
 import { generateLocationMenuSchema } from '@/lib/utils/menu-schema'
-import { DEFAULT_OG_IMAGES } from '@/lib/utils/seo'
+import { generateWebPageSchema } from '@/lib/utils/breadcrumb-schema'
 import { extractBeerFromMenuItem } from '@/lib/utils/menu-item-utils'
 import { convertPayloadBeer } from '@/lib/utils/payload-adapter'
 import {
@@ -23,6 +23,8 @@ import {
 } from '@/lib/utils/payload-api'
 import { findLocationBySlug, formatCityStateZip, RESERVED_LOCATION_SLUGS } from '@/lib/config/locations'
 import { safeHttpUrl } from '@/lib/utils/url-utils'
+import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
+import { ogCardImages } from '@/lib/og/paths'
 
 export const revalidate = 300
 
@@ -86,18 +88,15 @@ export async function generateMetadata({ params }: LocationPageProps): Promise<M
   const title = `${name} Taproom`
   const place = city && city.toLowerCase() !== name.toLowerCase() ? `${name}, ${city}` : name
   const description = `Visit Lolev Beer in ${place}. Hours, address, what's on tap, and upcoming events.`
+  const seo = data.location.seo
 
-  return {
-    title,
-    description,
-    alternates: { canonical: `/${data.location.slug}` },
-    openGraph: {
-      title: `${title} | Lolev Beer`,
-      description,
-      type: 'website',
-      images: DEFAULT_OG_IMAGES,
-    },
-  }
+  return buildPageMetadata({
+    fallbackTitle: title,
+    fallbackDescription: description,
+    canonicalPath: `/${data.location.slug}`,
+    seo,
+    fallbackOgImages: ogCardImages('location', data.location.slug || slug, title),
+  })
 }
 
 export default async function LocationPage({ params }: LocationPageProps) {
@@ -113,6 +112,11 @@ export default async function LocationPage({ params }: LocationPageProps) {
   const canBeers = canPayload.map(convertPayloadBeer)
 
   const localBusiness = generateLocalBusinessSchema(location, weeklyHours)
+  const webPageSchema = generateWebPageSchema({
+    name: `${location.name} Taproom`,
+    path: `/${location.slug || slug}`,
+    dateModified: location.updatedAt,
+  })
   const menuSchema = generateLocationMenuSchema({
     locationName: location.name,
     locationSlug: location.slug || slug,
@@ -130,6 +134,7 @@ export default async function LocationPage({ params }: LocationPageProps) {
   return (
     <>
       <JsonLd data={localBusiness} />
+      <JsonLd data={webPageSchema} />
       <JsonLd data={menuSchema} />
       <PageTransition>
         <LocationLanding

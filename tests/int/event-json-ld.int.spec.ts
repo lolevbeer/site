@@ -4,6 +4,7 @@
  */
 import { describe, expect, it } from 'vitest'
 import { createLocationLookup, generateEventJsonLd } from '@/lib/utils/json-ld'
+import { EventStatus, EventType } from '@/lib/types/event'
 import type { PayloadLocation } from '@/lib/types/location'
 
 type EventInput = Parameters<typeof generateEventJsonLd>[0]
@@ -77,10 +78,10 @@ describe('generateEventJsonLd', () => {
         date: '2026-10-02',
         time: '5:00pm',
         endTime: '8:00pm',
-        status: 'scheduled',
+        status: EventStatus.SCHEDULED,
         location: 'lawrenceville',
         vendor: 'Lolev',
-        type: 'special_event',
+        type: EventType.SPECIAL_EVENT,
         site: 'https://lolev.beer/events',
         image: '/api/media/file/release.jpg',
       }),

@@ -10,15 +10,24 @@ import { createLocationLookup, generateEventJsonLd, generateFoodEventJsonLd } fr
 import { generateLocalBusinessSchemas, generateOrganizationSchema, generateWebSiteSchema } from '@/lib/utils/local-business-schema';
 import { generateLocationMenuSchema } from '@/lib/utils/menu-schema';
 import { extractBeerFromMenuItem } from '@/lib/utils/menu-item-utils';
+import { getSiteSeo, siteDefaults } from '@/lib/utils/site-seo'
+import { getAllLocations } from '@/lib/utils/payload-api'
+import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
 
 // ISR: Revalidate every 5 minutes as fallback (on-demand revalidation handles immediate updates)
 export const revalidate = 300;
 
-export const metadata: Metadata = {
-  alternates: {
-    canonical: '/',
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const [locations, siteSeo] = await Promise.all([getAllLocations(), getSiteSeo()])
+  const defaults = siteDefaults(siteSeo, locations)
+  return buildPageMetadata({
+    fallbackTitle: defaults.title,
+    fallbackDescription: defaults.description,
+    canonicalPath: '/',
+    hubKey: 'home',
+    absoluteTitle: true,
+  })
+}
 
 // Lazy load below-the-fold components
 const FeaturedCans = dynamic(() => import('@/components/home/featured-menu').then(mod => ({ default: mod.FeaturedCans })), {

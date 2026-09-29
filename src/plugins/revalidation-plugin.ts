@@ -45,8 +45,14 @@ const COLLECTION_CACHE_MAP: Record<string, string[]> = {
 const GLOBAL_CACHE_MAP: Record<string, string[]> = {
   'coming-soon': ['coming-soon'],
   'site-content': ['site-content'],
+  'site-seo': ['site-seo'],
   'recurring-food': ['recurring-food', 'food'],
 }
+
+// Globals that feed every page's metadata (title template, default OG image, hub meta and
+// intros). Tag invalidation alone leaves the ISR/static pages stale, so these revalidate the
+// whole route tree.
+const SITE_WIDE_GLOBALS = new Set(['site-seo'])
 
 // Paths to revalidate for each collection
 const COLLECTION_PATHS: Record<string, string[]> = {
@@ -79,6 +85,7 @@ const COLLECTION_LAYOUT_PATHS: Record<string, string[]> = {
 // Dynamic path builders for collections with slugs
 const COLLECTION_PATH_BUILDERS: Record<string, (doc: Record<string, unknown>) => string[]> = {
   beers: (doc) => (doc.slug ? [`/beer/${doc.slug}`] : []),
+  locations: (doc) => (doc.slug ? [`/${doc.slug}`] : []),
   menus: (doc) => (doc.url ? [`/m/${doc.url}`] : []),
   jobs: (doc) => {
     const paths: string[] = []
@@ -205,8 +212,12 @@ function createGlobalAfterChangeHook(slug: string) {
       revalidateTag(tag, 'max')
     })
 
-    // Always revalidate homepage for globals
-    revalidatePath('/')
+    if (SITE_WIDE_GLOBALS.has(slug)) {
+      revalidatePath('/', 'layout')
+    } else {
+      // Always revalidate homepage for globals
+      revalidatePath('/')
+    }
 
     return doc
   }

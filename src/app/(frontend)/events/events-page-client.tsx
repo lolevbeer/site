@@ -10,15 +10,18 @@ import { Calendar } from '@/components/icons';
 import { useLocationContext } from '@/components/location/location-provider';
 import { getLocationDisplayName } from '@/lib/config/locations';
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
+import { HubIntro } from '@/components/ui/hub-intro'
 import { ScheduleList } from '@/components/ui/schedule-list';
 import { isTodayOrFuture } from '@/lib/utils/formatters';
 import { safeHttpUrl } from '@/lib/utils/url-utils';
 
 interface EventsPageClientProps {
+  /** CMS intro paragraph shown under the heading. */
+  intro?: string
   initialEvents: BreweryEvent[];
 }
 
-export function EventsPageClient({ initialEvents }: EventsPageClientProps) {
+export function EventsPageClient({ initialEvents, intro }: EventsPageClientProps) {
   const { currentLocation, locations } = useLocationContext();
   const locationFilter = currentLocation as LocationFilter;
 
@@ -38,6 +41,7 @@ export function EventsPageClient({ initialEvents }: EventsPageClientProps) {
       <PageBreadcrumbs className="mb-6" />
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold tracking-tight">Events</h1>
+        <HubIntro text={intro} />
       </div>
 
       <div className="max-w-2xl mx-auto">

@@ -8,15 +8,18 @@ import { UtensilsCrossed } from '@/components/icons';
 import { useLocationContext } from '@/components/location/location-provider';
 import { getLocationDisplayName } from '@/lib/config/locations';
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
+import { HubIntro } from '@/components/ui/hub-intro'
 import { FoodSchedule } from '@/components/food/food-schedule';
 import { isTodayOrFuture } from '@/lib/utils/formatters';
 import { safeHttpUrl } from '@/lib/utils/url-utils';
 
 interface FoodPageClientProps {
+  /** CMS intro paragraph shown under the heading. */
+  intro?: string
   initialSchedules: FoodVendorSchedule[];
 }
 
-export function FoodPageClient({ initialSchedules }: FoodPageClientProps) {
+export function FoodPageClient({ initialSchedules, intro }: FoodPageClientProps) {
   const { currentLocation, locations, cycleLocation } = useLocationContext();
 
   const filteredSchedules = useMemo(() => {
@@ -44,6 +47,7 @@ export function FoodPageClient({ initialSchedules }: FoodPageClientProps) {
       <PageBreadcrumbs className="mb-6" />
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold tracking-tight">Food</h1>
+        <HubIntro text={intro} />
       </div>
 
       <div className="max-w-2xl mx-auto">

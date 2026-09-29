@@ -10,7 +10,9 @@ import { PageTransition } from '@/components/motion'
 import { Card, CardContent } from '@/components/ui/card'
 import { JobApplyForm } from '@/components/jobs/job-apply-form'
 import { getJobBySlug } from '@/lib/jobs/payload'
-import { pageOpenGraph } from '@/lib/utils/seo'
+import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
+import { JsonLd } from '@/components/seo/json-ld'
+import { generateJobPostingSchema } from '@/lib/utils/job-posting-schema'
 
 export const revalidate = 300
 
@@ -24,12 +26,12 @@ export async function generateMetadata({ params }: JobPageProps): Promise<Metada
   if (!job) return { title: 'Job not found' }
   const description = job.summary || `Apply for ${job.title} at Lolev Beer.`
   const title = `${job.title} — Jobs`
-  return {
-    title,
-    description,
-    alternates: { canonical: `/jobs/${job.slug}` },
-    openGraph: pageOpenGraph(`${title} | Lolev Beer`, description),
-  }
+  return buildPageMetadata({
+    fallbackTitle: title,
+    fallbackDescription: description,
+    canonicalPath: `/jobs/${job.slug}`,
+    seo: job.seo,
+  })
 }
 
 export default async function JobPage({ params }: JobPageProps) {
@@ -38,9 +40,11 @@ export default async function JobPage({ params }: JobPageProps) {
   if (!job) notFound()
 
   const typeLabel = job.employmentType.replace('-', ' ')
+  const jobPostingSchema = generateJobPostingSchema(job)
 
   return (
     <PageTransition>
+      {jobPostingSchema ? <JsonLd data={jobPostingSchema} /> : null}
       <div className="container mx-auto px-4 py-8 max-w-2xl">
         <PageBreadcrumbs className="mb-6" />
         <div className="text-center mb-10">
@@ -56,7 +60,10 @@ export default async function JobPage({ params }: JobPageProps) {
             {job.locationSlug ? (
               <>
                 {' · '}
-                <Link href={`/${job.locationSlug}`} className="text-sm underline hover:text-foreground">
+                <Link
+                  href={`/${job.locationSlug}`}
+                  className="text-sm underline hover:text-foreground"
+                >
                   {job.locationName || 'the taproom'}
                 </Link>
               </>

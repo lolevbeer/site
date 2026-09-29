@@ -20,7 +20,9 @@ import { MotionHydrationSentinel } from '@/components/motion/blur-fade'
 import { getAllLocations } from '@/lib/utils/payload-api'
 import { getWeeklyHoursForLocations } from '@/lib/utils/homepage-data'
 import { getBaseUrl } from '@/lib/utils/get-base-url'
-import { DEFAULT_OG_IMAGES, locationKeywords, siteDescription, SITE_TITLE } from '@/lib/utils/seo'
+import { DEFAULT_TITLE_TEMPLATE, locationKeywords, trim } from '@/lib/utils/seo'
+import { getSiteSeo, siteDefaults } from '@/lib/utils/site-seo'
+import { defaultOgImages } from '@/lib/seo/resolve-metadata'
 import './globals.css'
 
 /**
@@ -61,12 +63,15 @@ export const viewport: Viewport = {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const locations = await getAllLocations()
-  const description = siteDescription(locations)
+  const [locations, siteSeo] = await Promise.all([getAllLocations(), getSiteSeo()])
+  // Site defaults only. Home's own overrides are applied in page.tsx so they can't leak to other routes.
+  const { title: defaultTitle, description } = siteDefaults(siteSeo, locations)
+  const titleTemplate = trim(siteSeo.titleTemplate) ?? DEFAULT_TITLE_TEMPLATE
+
   return {
     title: {
-      default: SITE_TITLE,
-      template: '%s | Lolev Beer',
+      default: defaultTitle,
+      template: titleTemplate,
     },
     description,
     keywords: [
@@ -77,6 +82,7 @@ export async function generateMetadata(): Promise<Metadata> {
       'IPA',
       'stout',
       'ale',
+      ...(siteSeo.keywords?.filter(Boolean) ?? []),
       ...locationKeywords(locations),
     ],
     authors: [{ name: 'Lolev Beer' }],
@@ -92,16 +98,17 @@ export async function generateMetadata(): Promise<Metadata> {
       type: 'website',
       locale: 'en_US',
       url: getBaseUrl(),
-      title: SITE_TITLE,
+      title: defaultTitle,
       description,
       siteName: 'Lolev Beer',
-      images: DEFAULT_OG_IMAGES,
+      images: defaultOgImages(siteSeo.ogImage),
     },
     twitter: {
       card: 'summary_large_image',
-      site: '@lolevbeer',
-      creator: '@lolevbeer',
+      site: trim(siteSeo.twitterSite) ?? '@lolevbeer',
+      creator: trim(siteSeo.twitterCreator) ?? '@lolevbeer',
     },
+    // Site-wide default; Home's noIndex is applied in page.tsx.
     robots: {
       index: true,
       follow: true,

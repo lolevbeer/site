@@ -1,14 +1,14 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getBeerBySlug, getAllBeersFromPayload, getAvailableBeersFromMenus } from '@/lib/utils/payload-api'
-import { DEFAULT_OG_IMAGES } from '@/lib/utils/seo'
 import { BeerDetails } from '@/components/beer/beer-details'
 import { JsonLd } from '@/components/seo/json-ld'
 import { PageTransition } from '@/components/motion'
 import { generateProductSchema } from '@/lib/utils/product-schema'
-import { generateBreadcrumbSchema } from '@/lib/utils/breadcrumb-schema'
-import { getBeerImageUrl } from '@/lib/utils/media-utils'
+import { generateBreadcrumbSchema, generateWebPageSchema } from '@/lib/utils/breadcrumb-schema'
 import { logger } from '@/lib/utils/logger'
+import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
+import { ogCardImages } from '@/lib/og/paths'
 
 interface BeerPageProps {
   params: Promise<{
@@ -32,24 +32,17 @@ export async function generateMetadata({ params }: BeerPageProps): Promise<Metad
   const description =
     (typeof beer.description === 'string' ? beer.description.trim() : '') ||
     `${beer.name}${styleName ? ` — ${styleName}` : ''} beer from Lolev Beer, a craft brewery in Pittsburgh.`
-  const ogImage = getBeerImageUrl(beer.image, beer.slug)
 
   const pageTitle = styleName ? `${beer.name} | ${styleName}` : beer.name
+  const seo = beer.seo
 
-  return {
-    title: pageTitle,
-    description,
-    alternates: {
-      canonical: `/beer/${beer.slug}`,
-    },
-    openGraph: {
-      title: `${pageTitle} | Lolev Beer`,
-      description,
-      type: 'website',
-      url: `/beer/${beer.slug}`,
-      images: ogImage ? [{ url: ogImage, alt: beer.name }] : DEFAULT_OG_IMAGES,
-    },
-  }
+  return buildPageMetadata({
+    fallbackTitle: pageTitle,
+    fallbackDescription: description,
+    canonicalPath: `/beer/${beer.slug}`,
+    seo,
+    fallbackOgImages: ogCardImages('beer', beer.slug, beer.name),
+  })
 }
 
 // Limit static generation to popular beers only
@@ -82,6 +75,11 @@ export default async function BeerPage({ params }: BeerPageProps) {
     logger.error('Could not load menus for product availability', error)
   }
   const productSchema = generateProductSchema(beer, { inStock })
+  const webPageSchema = generateWebPageSchema({
+    name: beer.name,
+    path: `/beer/${beer.slug}`,
+    dateModified: beer.updatedAt,
+  })
   const breadcrumbSchema = generateBreadcrumbSchema([
     { label: 'Home', href: '/' },
     { label: 'Beer', href: '/beer' },
@@ -92,6 +90,7 @@ export default async function BeerPage({ params }: BeerPageProps) {
     <>
       {/* Add Product JSON-LD for SEO */}
       <JsonLd data={productSchema} />
+      <JsonLd data={webPageSchema} />
       <JsonLd data={breadcrumbSchema} />
 
       <PageTransition>

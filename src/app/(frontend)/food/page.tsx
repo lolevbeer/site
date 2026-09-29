@@ -12,7 +12,9 @@ import { createLocationLookup, generateFoodEventJsonLd } from '@/lib/utils/json-
 import { PageTransition } from '@/components/motion'
 import { logger } from '@/lib/utils/logger'
 import { capitalizeName } from '@/lib/utils/formatters'
-import { DEFAULT_OG_IMAGES, foodDescription } from '@/lib/utils/seo'
+import { foodDescription } from '@/lib/utils/seo'
+import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
+import { getHubIntro } from '@/lib/utils/site-seo'
 import {
   getRecurringFoodState,
   recurringDays as days,
@@ -22,17 +24,12 @@ import {
 export async function generateMetadata(): Promise<Metadata> {
   const locations = await getAllLocations()
   const description = foodDescription(locations)
-  return {
-    title: 'Food',
-    description,
-    alternates: { canonical: '/food' },
-    openGraph: {
-      title: 'Food | Lolev Beer',
-      description,
-      type: 'website',
-      images: DEFAULT_OG_IMAGES,
-    },
-  }
+  return buildPageMetadata({
+    fallbackTitle: 'Food',
+    fallbackDescription: description,
+    canonicalPath: '/food',
+    hubKey: 'food',
+  })
 }
 
 // Revalidate every hour
@@ -284,7 +281,7 @@ async function getFoodData(): Promise<FoodVendorSchedule[]> {
 }
 
 export default async function FoodPage() {
-  const [schedules, locations] = await Promise.all([getFoodData(), getAllLocations()])
+  const [schedules, locations, intro] = await Promise.all([getFoodData(), getAllLocations(), getHubIntro('food')])
   const locationLookup = createLocationLookup(locations)
 
   const validSchedules = schedules.filter(
@@ -309,7 +306,7 @@ export default async function FoodPage() {
       {jsonLd && <JsonLd data={jsonLd} />}
 
       <PageTransition>
-        <FoodPageClient initialSchedules={schedules} />
+        <FoodPageClient initialSchedules={schedules} intro={intro} />
       </PageTransition>
     </>
   )

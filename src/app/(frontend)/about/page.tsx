@@ -9,12 +9,13 @@ import { Button } from '@/components/ui/button';
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
 import { JsonLd } from '@/components/seo/json-ld';
 import { generateOrganizationSchema } from '@/lib/utils/local-business-schema';
-import { DEFAULT_OG_IMAGES, locationKeywords } from '@/lib/utils/seo';
+import { locationKeywords } from '@/lib/utils/seo';
 import { joinLocationNames } from '@/lib/config/locations';
 import { generateAboutSpeakableSchema } from '@/lib/utils/speakable-schema';
 import { PageTransition } from '@/components/motion';
 import { getSiteContent } from '@/lib/utils/site-content';
 import { getAllLocations } from '@/lib/utils/payload-api';
+import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
 import {
   DEFAULT_ABOUT_PHILOSOPHY,
   DEFAULT_ABOUT_LOCATIONS,
@@ -29,20 +30,13 @@ export async function generateMetadata(): Promise<Metadata> {
   const description = names
     ? `Learn about Lolev Beer, our brewing philosophy, and our locations in ${names}.`
     : 'Learn about Lolev Beer, our brewing philosophy, and our taprooms.';
-  return {
-    title: 'About',
-    description,
-    keywords: ['about', 'brewery', 'philosophy', 'Pittsburgh brewery', ...locationKeywords(taprooms)],
-    alternates: {
-      canonical: '/about',
-    },
-    openGraph: {
-      title: 'About | Lolev Beer',
-      description,
-      type: 'website',
-      images: DEFAULT_OG_IMAGES,
-    },
-  };
+  return buildPageMetadata({
+    fallbackTitle: 'About',
+    fallbackDescription: description,
+    canonicalPath: '/about',
+    fallbackKeywords: ['about', 'brewery', 'philosophy', 'Pittsburgh brewery', ...locationKeywords(taprooms)],
+    hubKey: 'about',
+  });
 }
 
 /** Renders multi-paragraph text split by double newlines */

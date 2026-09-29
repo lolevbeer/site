@@ -5,11 +5,15 @@
  * Taproom names in descriptions come from Payload via {@link joinLocationNames}
  * — do not hardcode Lawrenceville/Zelienople here.
  */
+import type { Metadata } from 'next'
 
 import { joinLocationNames } from '@/lib/config/locations'
 import type { PayloadLocation } from '@/lib/types/location'
 
 export const SITE_TITLE = 'Lolev Beer - Craft Brewery in Pittsburgh'
+
+/** Layout `title.template` and og:title default when Site SEO leaves the template blank. */
+export const DEFAULT_TITLE_TEMPLATE = '%s | Lolev Beer'
 
 /** Shared with Organization JSON-LD and llms.txt. Meta snippets append taproom names. */
 export const ORG_DESCRIPTION =
@@ -68,6 +72,9 @@ export const SITE_DESCRIPTION = siteDescription()
 /** TV / kiosk routes — never index even if a crawler ignores robots.txt. */
 export const NOINDEX_ROBOTS = { index: false, follow: false } as const
 
+/** CMS "Noindex" checkbox: keep the page out of results but let crawlers follow its links. */
+export const NOINDEX_FOLLOW_ROBOTS = { index: false, follow: true } as const
+
 /** Meta tag a TV display page emits once its data loads; usePolling reloads onto a new deploy only after seeing it. */
 export const LIVE_DISPLAY_META = 'live-display'
 
@@ -86,13 +93,26 @@ export const DEFAULT_OG_IMAGES = [
 /**
  * Open Graph for a page. Next.js shallow-merges `openGraph`, so a page that
  * sets `description` and omits this keeps the layout's site-wide blurb on
- * the share card. Always pass the page description and the default image.
+ * the share card, and loses the layout's `locale`/`siteName`. Always pass the
+ * page description; images default to the site card.
  */
-export function pageOpenGraph(title: string, description: string) {
+export function pageOpenGraph(
+  title: string,
+  description: string,
+  images: NonNullable<Metadata['openGraph']>['images'] = DEFAULT_OG_IMAGES,
+) {
   return {
     title,
     description,
     type: 'website' as const,
-    images: DEFAULT_OG_IMAGES,
+    locale: 'en_US',
+    siteName: 'Lolev Beer',
+    images,
   }
+}
+
+/** Blank CMS strings mean "use the code fallback". */
+export function trim(value: string | null | undefined): string | undefined {
+  const t = value?.trim()
+  return t ? t : undefined
 }

@@ -13,11 +13,16 @@ vi.mock('@/lib/jobs/payload', () => ({
   getActiveJobs: vi.fn(),
 }))
 
+vi.mock('@/lib/utils/site-seo', () => ({
+  getSiteSeo: vi.fn(async () => ({})),
+}))
+
 vi.mock('@/lib/utils/logger', () => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
 }))
 
 import sitemap from '@/src/app/sitemap'
+import { getSiteSeo } from '@/lib/utils/site-seo'
 import { getActiveJobs } from '@/lib/jobs/payload'
 import { getAllBeersFromPayload, getAllLocations } from '@/lib/utils/payload-api'
 
@@ -80,5 +85,22 @@ describe('sitemap', () => {
     const entries = await sitemap()
     const lupula = entries.find((e) => e.url === 'https://lolev.beer/beer/lupula')
     expect((lupula?.lastModified as Date).toISOString()).toBe('2026-09-01T12:00:00.000Z')
+  })
+
+  it('omits pages the CMS marks noindex or canonicalizes elsewhere', async () => {
+    beers.mockResolvedValue([
+      { slug: 'lupula', seo: { noIndex: true }, updatedAt: '2026-09-01T12:00:00.000Z' },
+      { slug: 'mosaic', seo: { canonicalPath: '/beer/lupula' }, updatedAt: '2026-09-01T12:00:00.000Z' },
+      { slug: 'citra', seo: { canonicalPath: '/beer/citra' }, updatedAt: '2026-09-01T12:00:00.000Z' },
+    ])
+    ;(getSiteSeo as ReturnType<typeof vi.fn>).mockResolvedValue({
+      pages: { about: { noIndex: true } },
+    })
+    const urls = (await sitemap()).map((e) => e.url)
+    expect(urls).not.toContain('https://lolev.beer/beer/lupula')
+    expect(urls).not.toContain('https://lolev.beer/beer/mosaic')
+    expect(urls).toContain('https://lolev.beer/beer/citra')
+    expect(urls).not.toContain('https://lolev.beer/about')
+    expect(urls).toContain('https://lolev.beer/faq')
   })
 })

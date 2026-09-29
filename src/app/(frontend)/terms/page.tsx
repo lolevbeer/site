@@ -2,22 +2,19 @@ import type { Metadata } from 'next'
 import { JsonLd } from '@/components/seo/json-ld'
 import { LegalPage } from '@/components/legal/legal-page'
 import { generateWebPageSchema } from '@/lib/utils/breadcrumb-schema'
-import { DEFAULT_OG_IMAGES } from '@/lib/utils/seo'
 import { LEGAL_PAGES_LASTMOD, LEGAL_PAGES_LASTMOD_LABEL } from '@/lib/legal/dates'
+import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
 
 const DESCRIPTION =
   'Terms for using lolev.beer, including age, menus and hours, donation requests, and job applications.'
 
-export const metadata: Metadata = {
-  title: 'Terms of Service',
-  description: DESCRIPTION,
-  alternates: { canonical: '/terms' },
-  openGraph: {
-    title: 'Terms of Service | Lolev Beer',
-    description: DESCRIPTION,
-    type: 'website',
-    images: DEFAULT_OG_IMAGES,
-  },
+export async function generateMetadata(): Promise<Metadata> {
+  return buildPageMetadata({
+    fallbackTitle: 'Terms of Service',
+    fallbackDescription: DESCRIPTION,
+    canonicalPath: '/terms',
+    hubKey: 'terms',
+  })
 }
 
 export default function TermsPage() {

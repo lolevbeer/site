@@ -15,7 +15,8 @@ import {
 } from '@/lib/utils/payload-api'
 import { JsonLd } from '@/components/seo/json-ld'
 import { generateLocalBusinessSchemas } from '@/lib/utils/local-business-schema'
-import { beerMapDescription, DEFAULT_OG_IMAGES, locationKeywords } from '@/lib/utils/seo'
+import { beerMapDescription, locationKeywords } from '@/lib/utils/seo'
+import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
 
 // ISR: revalidate every hour (locations/distributors change infrequently)
 export const revalidate = 3600;
@@ -23,10 +24,11 @@ export const revalidate = 3600;
 export async function generateMetadata(): Promise<Metadata> {
   const locations = await getAllLocations()
   const description = beerMapDescription(locations)
-  return {
-    title: 'Where to Buy Lolev Beer Near You',
-    description,
-    keywords: [
+  return buildPageMetadata({
+    fallbackTitle: 'Where to Buy Lolev Beer Near You',
+    fallbackDescription: description,
+    canonicalPath: '/beer-map',
+    fallbackKeywords: [
       'where to buy Lolev Beer',
       'find Lolev Beer',
       'Lolev Beer near me',
@@ -38,14 +40,8 @@ export async function generateMetadata(): Promise<Metadata> {
       'directions',
       ...locationKeywords(locations),
     ],
-    alternates: { canonical: '/beer-map' },
-    openGraph: {
-      title: 'Where to Buy Lolev Beer Near You | Lolev Beer',
-      description,
-      type: 'website',
-      images: DEFAULT_OG_IMAGES,
-    },
-  }
+    hubKey: 'beerMap',
+  })
 }
 
 export default async function BeerMapPage() {

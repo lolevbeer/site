@@ -17,17 +17,19 @@ import {
 } from '@/components/ui/card'
 import { Empty, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
 import { getActiveJobs } from '@/lib/jobs/payload'
-import { pageOpenGraph } from '@/lib/utils/seo'
+import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
 
 export const revalidate = 300
 
 const DESCRIPTION = 'Open roles at Lolev Beer taprooms.'
 
-export const metadata: Metadata = {
-  title: 'Jobs',
-  description: DESCRIPTION,
-  alternates: { canonical: '/jobs' },
-  openGraph: pageOpenGraph('Jobs | Lolev Beer', DESCRIPTION),
+export async function generateMetadata(): Promise<Metadata> {
+  return buildPageMetadata({
+    fallbackTitle: 'Jobs',
+    fallbackDescription: DESCRIPTION,
+    canonicalPath: '/jobs',
+    hubKey: 'jobs',
+  })
 }
 
 export default async function JobsPage() {

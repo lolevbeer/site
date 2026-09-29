@@ -14,6 +14,7 @@ export const CACHE_TAGS = {
   holidayHours: 'holiday-hours',
   comingSoon: 'coming-soon',
   siteContent: 'site-content',
+  siteSeo: 'site-seo',
   homepage: 'homepage',
   distributors: 'distributors',
   faqs: 'faqs',

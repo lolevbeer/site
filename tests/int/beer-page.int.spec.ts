@@ -37,11 +37,18 @@ vi.mock('@/components/motion', () => ({
 vi.mock('@/lib/utils/payload-api', () => ({
   getBeerBySlug: vi.fn(),
   getAllBeersFromPayload: vi.fn(),
+  getAvailableBeersFromMenus: vi.fn(),
+  fetchGlobal: vi.fn(),
+}))
+
+vi.mock('@/lib/utils/site-seo', () => ({
+  getSiteSeo: vi.fn(async () => ({})),
 }))
 
 // Mock media-utils
 vi.mock('@/lib/utils/media-utils', () => ({
   getBeerImageUrl: vi.fn((image) => (image ? '/mock-image-url' : null)),
+  getMediaUrl: vi.fn(() => undefined),
 }))
 
 // Mock product-schema and breadcrumb-schema

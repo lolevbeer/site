@@ -14,7 +14,9 @@ import {
 } from '@/lib/utils/payload-api'
 import { createLocationLookup, generateEventListJsonLd } from '@/lib/utils/json-ld'
 import { PageTransition } from '@/components/motion'
-import { DEFAULT_OG_IMAGES, eventsDescription } from '@/lib/utils/seo'
+import { eventsDescription } from '@/lib/utils/seo'
+import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
+import { getHubIntro } from '@/lib/utils/site-seo'
 
 // ISR: Revalidate every 5 minutes
 export const revalidate = 300
@@ -22,18 +24,13 @@ export const revalidate = 300
 export async function generateMetadata(): Promise<Metadata> {
   const locations = await getAllLocations()
   const description = eventsDescription(locations)
-  return {
-    title: 'Events',
-    description,
-    keywords: ['brewery events', 'trivia night', 'live music', 'Pittsburgh brewery', 'beer events'],
-    alternates: { canonical: '/events' },
-    openGraph: {
-      title: 'Events | Lolev Beer',
-      description,
-      type: 'website',
-      images: DEFAULT_OG_IMAGES,
-    },
-  }
+  return buildPageMetadata({
+    fallbackTitle: 'Events',
+    fallbackDescription: description,
+    canonicalPath: '/events',
+    fallbackKeywords: ['brewery events', 'trivia night', 'live music', 'Pittsburgh brewery', 'beer events'],
+    hubKey: 'events',
+  })
 }
 
 /**
@@ -45,7 +42,7 @@ async function getEvents(): Promise<BreweryEvent[]> {
 }
 
 export default async function EventsPage() {
-  const [events, locations] = await Promise.all([getEvents(), getAllLocations()])
+  const [events, locations, intro] = await Promise.all([getEvents(), getAllLocations(), getHubIntro('events')])
   const locationLookup = createLocationLookup(locations)
 
   const jsonLd = events.length > 0 ? generateEventListJsonLd(events, locationLookup) : null
@@ -56,7 +53,7 @@ export default async function EventsPage() {
       {jsonLd && <JsonLd data={jsonLd} />}
 
       <PageTransition>
-        <EventsPageClient initialEvents={events} />
+        <EventsPageClient initialEvents={events} intro={intro} />
       </PageTransition>
     </>
   )

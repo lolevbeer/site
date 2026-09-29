@@ -8,17 +8,18 @@ import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs'
 import { Card, CardContent } from '@/components/ui/card'
 import { DonationRequestForm } from '@/components/donate/donation-request-form'
 import { PageTransition } from '@/components/motion'
-import { pageOpenGraph } from '@/lib/utils/seo'
+import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
 
 const DESCRIPTION =
   'Request a Lolev Beer donation or a fundraiser night at a taproom. We review completed forms only.'
 
-export const metadata: Metadata = {
-  title: 'Donations',
-  description: DESCRIPTION,
-  alternates: { canonical: '/donate' },
-  robots: { index: true, follow: true },
-  openGraph: pageOpenGraph('Donations | Lolev Beer', DESCRIPTION),
+export async function generateMetadata(): Promise<Metadata> {
+  return buildPageMetadata({
+    fallbackTitle: 'Donations',
+    fallbackDescription: DESCRIPTION,
+    canonicalPath: '/donate',
+    hubKey: 'donate',
+  })
 }
 
 export default function DonatePage() {

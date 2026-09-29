@@ -8,8 +8,10 @@ import { BeerPageContent } from '@/components/beer/beer-page-content'
 import { getAllBeers } from '@/lib/utils/payload-beers'
 import { JsonLd } from '@/components/seo/json-ld'
 import { generateBeerListSchema } from '@/lib/utils/product-schema'
-import { beersDescription, DEFAULT_OG_IMAGES, locationKeywords } from '@/lib/utils/seo'
+import { beersDescription, locationKeywords } from '@/lib/utils/seo'
 import { getAllLocations } from '@/lib/utils/payload-api'
+import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
+import { getHubIntro } from '@/lib/utils/site-seo'
 
 // ISR: Revalidate every hour as fallback (on-demand revalidation handles immediate updates)
 export const revalidate = 3600
@@ -17,10 +19,11 @@ export const revalidate = 3600
 export async function generateMetadata(): Promise<Metadata> {
   const locations = await getAllLocations()
   const description = beersDescription(locations)
-  return {
-    title: 'Our Beers',
-    description,
-    keywords: [
+  return buildPageMetadata({
+    fallbackTitle: 'Our Beers',
+    fallbackDescription: description,
+    canonicalPath: '/beer',
+    fallbackKeywords: [
       'craft beer',
       'brewery',
       'Pittsburgh beer',
@@ -31,20 +34,12 @@ export async function generateMetadata(): Promise<Metadata> {
       'Hazy IPA',
       ...locationKeywords(locations),
     ],
-    alternates: {
-      canonical: '/beer',
-    },
-    openGraph: {
-      title: 'Our Beers | Lolev Beer',
-      description,
-      type: 'website',
-      images: DEFAULT_OG_IMAGES,
-    },
-  }
+    hubKey: 'beer',
+  })
 }
 
 export default async function BeerPage() {
-  const allBeers = await getAllBeers()
+  const [allBeers, intro] = await Promise.all([getAllBeers(), getHubIntro('beer')])
 
   // Filter out beers that should be hidden
   const availableBeers = allBeers.filter((beer) => !beer.availability?.hideFromSite)
@@ -56,7 +51,7 @@ export default async function BeerPage() {
     <>
       {/* JSON-LD structured data for beer collection */}
       <JsonLd data={beerListSchema} />
-      <BeerPageContent beers={availableBeers} />
+      <BeerPageContent beers={availableBeers} intro={intro} />
     </>
   )
 }

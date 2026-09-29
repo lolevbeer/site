@@ -2,22 +2,19 @@ import type { Metadata } from 'next'
 import { JsonLd } from '@/components/seo/json-ld'
 import { LegalPage } from '@/components/legal/legal-page'
 import { generateWebPageSchema } from '@/lib/utils/breadcrumb-schema'
-import { DEFAULT_OG_IMAGES } from '@/lib/utils/seo'
 import { LEGAL_PAGES_LASTMOD, LEGAL_PAGES_LASTMOD_LABEL } from '@/lib/legal/dates'
+import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
 
 const DESCRIPTION =
   'How lolev.beer is built for keyboard, screen reader, and magnification use, and how to report barriers.'
 
-export const metadata: Metadata = {
-  title: 'Accessibility Statement',
-  description: DESCRIPTION,
-  alternates: { canonical: '/accessibility' },
-  openGraph: {
-    title: 'Accessibility Statement | Lolev Beer',
-    description: DESCRIPTION,
-    type: 'website',
-    images: DEFAULT_OG_IMAGES,
-  },
+export async function generateMetadata(): Promise<Metadata> {
+  return buildPageMetadata({
+    fallbackTitle: 'Accessibility Statement',
+    fallbackDescription: DESCRIPTION,
+    canonicalPath: '/accessibility',
+    hubKey: 'accessibility',
+  })
 }
 
 export default function AccessibilityPage() {
