@@ -456,7 +456,7 @@ export function generateFoodEventJsonLd(
     jsonLd.url = vendorSite || `${LOLEV_BASE_URL}/food`
     jsonLd.image = resolveEventImage(
       typeof payloadFood.vendor === 'object'
-        ? getMediaUrl((payloadFood.vendor as { logo?: unknown }).logo)
+        ? getMediaUrl((payloadFood.vendor as { logo?: unknown }).logo, 'thumbnail')
         : undefined,
     )
     jsonLd.offers = { '@type': 'Offer', availability: 'https://schema.org/InStock' }

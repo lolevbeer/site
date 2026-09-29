@@ -60,7 +60,10 @@ export function UpcomingFood({ foodByLocation }: UpcomingFoodProps): React.React
       vendor: vendorName || 'Vendor',
       time: food.time || food.startTime,
       site: safeHttpUrl(vendorSite),
-      logoUrl: typeof food.vendor === 'object' ? getMediaUrl(food.vendor?.logo) : undefined,
+      logoUrl:
+        typeof food.vendor === 'object'
+          ? getMediaUrl(food.vendor?.logo, 'thumbnail')
+          : undefined,
       locationName:
         currentLocation === 'all'
           ? getLocationDisplayName(locations, food.location)
