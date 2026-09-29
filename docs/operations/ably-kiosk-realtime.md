@@ -8,11 +8,11 @@ only accelerates refreshes when CMS content changes.
 
 For 12-20 always-on kiosk sockets:
 
-| | Ably free | Pusher Sandbox |
-|---|---|---|
-| Concurrent connections | 200 | 100 |
-| Messages | 6M / month | 200K / day |
-| Fit for always-on TVs | Comfortable headroom | Tight on connection count |
+|                        | Ably free            | Pusher Sandbox            |
+| ---------------------- | -------------------- | ------------------------- |
+| Concurrent connections | 200                  | 100                       |
+| Messages               | 6M / month           | 200K / day                |
+| Fit for always-on TVs  | Comfortable headroom | Tight on connection count |
 
 Ably wins on concurrent connections and monthly message budget for kiosks
 that stay connected all day.
@@ -45,7 +45,10 @@ SDK and the kiosk page loads successfully in the browser.
 ### Environment
 
 1. Create an Ably account and a free-tier app: https://ably.com
-2. Copy the root API key (or a key that can publish and create token requests).
+2. Create a server API key with **Publish + Subscribe**, restricted to the
+   `kiosk:menu` and `kiosk:events` channels. Copy that key into `ABLY_API_KEY`.
+   The server publishes refresh signals and signs browser tokens; those tokens
+   are restricted to **Subscribe only** by `/api/ably-auth`.
 3. Set env vars (Vercel project + local `.env`):
 
    ```
@@ -61,15 +64,23 @@ Set both for the **Preview** and **Production** environments (Project → Settin
 Environment Variables). `NEXT_PUBLIC_ABLY_ENABLED` is inlined at build time, so
 changing it requires a redeploy of that environment.
 
-| Goal | `ABLY_API_KEY` | `NEXT_PUBLIC_ABLY_ENABLED` | Behavior |
-| --- | --- | --- | --- |
-| Polling only (default) | unset | unset / not `true` | 10s warm / 30s idle polls; no Ably SDK on the client |
-| Realtime invalidate | set (root or publish+token key) | `true` | Client opens Ably; CMS publish on save; 120s safety-net poll |
+| Goal                   | `ABLY_API_KEY`                                   | `NEXT_PUBLIC_ABLY_ENABLED` | Behavior                                                     |
+| ---------------------- | ------------------------------------------------ | -------------------------- | ------------------------------------------------------------ |
+| Polling only (default) | unset                                            | unset / not `true`         | 10s warm / 30s idle polls; no Ably SDK on the client         |
+| Realtime invalidate    | set (Publish + Subscribe on both kiosk channels) | `true`                     | Client opens Ably; CMS publish on save; 120s safety-net poll |
 
 Confirm Preview after deploy: `/api/ably-auth` should return 200 JSON TokenRequest
 when both are set, or `{"error":"Ably is not configured"}` (503) when the key is
 unset. Kiosk pages must still show `/api/menu-stream/...` or `/api/events-stream/...`
 polls every 10s then 30s even when Ably is unset.
+
+### Connected, but edits do not arrive
+
+`Unauthorized to publish to channel` means the server key lacks **Publish**
+permission for the target channel. A subscribe-only key can connect displays
+but cannot send refresh signals. In Ably → API Keys → Edit configuration,
+enable **Publish + Subscribe** for `kiosk:menu` and `kiosk:events`. Reload the
+displays after changing capabilities. See [Ably's capability documentation](https://ably.com/docs/auth/capabilities).
 
 ## Verify with 12-20 TVs
 
