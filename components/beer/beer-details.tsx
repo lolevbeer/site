@@ -127,7 +127,7 @@ function formatReviewDate(dateStr: string): string {
 }
 
 export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
-  const imagePath = getBeerImageUrl(beer.image, beer.slug)
+  const imagePath = getBeerImageUrl(beer.image, beer.slug, 'detail')
   // Generated 3D label textures (see LabelTextureGenerator in the admin).
   // When present, a spinning 3D can replaces the flat image below.
   const canBaseUrl = getMediaUrl(beer.labelBase)

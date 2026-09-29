@@ -60,8 +60,15 @@ export interface LocalBusinessJsonLd {
   currenciesAccepted?: string
   paymentAccepted?: string
   amenityFeature?: AmenityFeatureJsonLd[]
+  areaServed?: AreaServedJsonLd[]
   sameAs?: string[]
   aggregateRating?: AggregateRatingJsonLd
+}
+
+/** schema.org Place / City / AdministrativeArea for areaServed */
+export interface AreaServedJsonLd {
+  '@type': 'AdministrativeArea' | 'City' | 'Place'
+  name: string
 }
 
 export interface OpeningHoursSpecificationJsonLd {
@@ -167,6 +174,55 @@ function locationKey(location: PayloadLocation): string {
   return location.slug || location.id
 }
 
+function locationMatchKey(location: PayloadLocation): string {
+  return `${location.slug || ''} ${location.name || ''} ${location.address?.city || ''}`.toLowerCase()
+}
+
+/**
+ * Local service areas for Brewery JSON-LD. Zelienople covers Butler County and
+ * nearby towns; Lawrenceville covers Allegheny County / Pittsburgh.
+ */
+function areaServedForLocation(location: PayloadLocation): AreaServedJsonLd[] | undefined {
+  const key = locationMatchKey(location)
+  if (key.includes('zelienople')) {
+    return [
+      { '@type': 'AdministrativeArea', name: 'Butler County' },
+      { '@type': 'City', name: 'Zelienople' },
+      { '@type': 'Place', name: 'Cranberry Township' },
+      { '@type': 'City', name: 'Harmony' },
+      { '@type': 'City', name: 'Mars' },
+    ]
+  }
+  if (key.includes('lawrenceville')) {
+    return [
+      { '@type': 'AdministrativeArea', name: 'Allegheny County' },
+      { '@type': 'City', name: 'Pittsburgh' },
+      { '@type': 'Place', name: 'Lawrenceville' },
+    ]
+  }
+  return undefined
+}
+
+function breweryDescription(location: PayloadLocation): string {
+  const key = locationMatchKey(location)
+  if (key.includes('zelienople')) {
+    return (
+      'Lolev Beer taproom in Zelienople, Butler County. Craft brewery serving purposeful beer ' +
+      'and building community, with modern ales, expressive lagers, and oak-aged beer.'
+    )
+  }
+  if (key.includes('lawrenceville')) {
+    return (
+      'Lolev Beer taproom in Pittsburgh Lawrenceville. Craft brewery serving purposeful beer ' +
+      'and building community, with modern ales, expressive lagers, and oak-aged beer.'
+    )
+  }
+  return (
+    'Craft brewery serving purposeful beer and building community in the Pittsburgh area. ' +
+    'Offering modern ales, expressive lagers, and oak-aged beer.'
+  )
+}
+
 export function generateLocalBusinessSchema(
   location: PayloadLocation,
   weeklyHours?: SchemaHoursDay[],
@@ -185,8 +241,7 @@ export function generateLocalBusinessSchema(
     '@type': 'Brewery',
     '@id': `${LOLEV_BASE_URL}#${slug}`,
     name: `Lolev Beer - ${location.name}`,
-    description:
-      'Craft brewery serving purposeful beer and building community in the Pittsburgh area. Offering modern ales, expressive lagers, and oak-aged beer.',
+    description: breweryDescription(location),
     image: images,
     logo: LOLEV_OG_IMAGE_URL,
     url: pageUrl,
@@ -199,6 +254,11 @@ export function generateLocalBusinessSchema(
     currenciesAccepted: 'USD',
     paymentAccepted: 'Cash, Credit Card, Debit Card',
     sameAs: SOCIAL_PROFILE_URLS,
+  }
+
+  const areaServed = areaServedForLocation(location)
+  if (areaServed) {
+    schema.areaServed = areaServed
   }
 
   const geo = geoFromCoordinates(location.coordinates)

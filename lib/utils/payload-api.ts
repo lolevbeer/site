@@ -481,7 +481,7 @@ export function transformPayloadEventToBreweryEvent(
 ): BreweryEvent {
   const eventLocation = typeof event.location === 'object' ? event.location : null
 
-  const imageUrl = getMediaUrl(event.image)
+  const imageUrl = getMediaUrl(event.image, 'card')
 
   return {
     id: event.id,
@@ -515,7 +515,7 @@ export function extractVendorInfo(
     return {
       name: v.name,
       site: (fallbackSite || v.site) ?? undefined,
-      logoUrl: getMediaUrl(v.logo) ?? undefined,
+      logoUrl: getMediaUrl(v.logo, 'thumbnail') ?? undefined,
     }
   }
   return {

@@ -307,7 +307,12 @@ export default buildConfig({
   storage: [
     vercelBlobStorage({
       collections: {
-        media: true,
+        // Public read on Media already; skip the Payload /api/media/file proxy so
+        // generated URLs point at *.public.blob.vercel-storage.com (Blob CDN)
+        // instead of Fast Origin Transfer through the Next.js origin.
+        media: {
+          disablePayloadAccessControl: true,
+        },
       },
       token: serverEnv.blobReadWriteToken,
     }),

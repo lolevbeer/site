@@ -15,6 +15,6 @@ export async function GET(_request: Request, { params }: { params: Promise<{ slu
   return renderOgCard({
     title: beer.name,
     subtitle,
-    imageUrl: getBeerImageUrl(beer.image, beer.slug),
+    imageUrl: getBeerImageUrl(beer.image, beer.slug, 'detail'),
   })
 }

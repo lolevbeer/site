@@ -15,17 +15,25 @@ export function safeHttpUrl(url: string | null | undefined): string | undefined 
   return undefined
 }
 
+/** Vercel Blob public CDN hosts. Keep these absolute so browsers and next/image
+ * hit Blob Data Transfer instead of Fast Origin Transfer via /api/media/file/... */
+function isVercelBlobHost(hostname: string): boolean {
+  return (
+    hostname.endsWith('.public.blob.vercel-storage.com') ||
+    hostname.endsWith('.blob.vercel-storage.com')
+  )
+}
+
 /**
- * Normalize a URL to be relative (domain/port agnostic)
- * Converts absolute URLs like "http://localhost:3002/api/media/file/hades.png"
- * to relative paths like "/api/media/file/hades.png"
+ * Normalize a media URL for frontend delivery.
  *
- * This is useful for:
- * - Making media URLs work across different environments (dev/staging/prod)
- * - Handling Payload CMS media URLs that may include the full domain
+ * - Relative paths stay relative (local/dev and Payload proxy paths).
+ * - Vercel Blob CDN absolute URLs stay absolute (production display).
+ * - Other absolute URLs (localhost, preview hosts) collapse to pathname so
+ *   the same media works across environments without baking in a host.
  *
  * @param url - The URL to normalize
- * @returns The relative path, or the original string if already relative or invalid
+ * @returns Relative path, or absolute Blob CDN URL when applicable
  */
 export function normalizeUrl(url: string): string {
   // If already relative, return as-is
@@ -33,6 +41,9 @@ export function normalizeUrl(url: string): string {
 
   try {
     const parsed = new URL(url)
+    if (isVercelBlobHost(parsed.hostname)) {
+      return parsed.toString()
+    }
     // Return just the pathname (e.g., "/api/media/file/hades.png")
     return parsed.pathname
   } catch {
