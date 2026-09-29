@@ -101,6 +101,41 @@ describe('generateLocalBusinessSchema', () => {
       'https://lolev.beer/zelienople',
     ])
   })
+
+  it('sets Butler County areaServed and description for Zelienople', () => {
+    const schema = generateLocalBusinessSchema({
+      ...lawrenceville,
+      id: 'loc-2',
+      slug: 'zelienople',
+      name: 'Zelienople',
+      address: {
+        street: '111 South Main Street',
+        city: 'Zelienople',
+        state: 'PA',
+        zip: '16063',
+      },
+    })
+    expect(schema.areaServed).toEqual([
+      { '@type': 'AdministrativeArea', name: 'Butler County' },
+      { '@type': 'City', name: 'Zelienople' },
+      { '@type': 'Place', name: 'Cranberry Township' },
+      { '@type': 'City', name: 'Harmony' },
+      { '@type': 'City', name: 'Mars' },
+    ])
+    expect(schema.description).toContain('Butler County')
+    expect(schema.description).not.toMatch(/\u2014|—/)
+  })
+
+  it('sets Allegheny County areaServed for Lawrenceville', () => {
+    const schema = generateLocalBusinessSchema(lawrenceville)
+    expect(schema.areaServed).toEqual([
+      { '@type': 'AdministrativeArea', name: 'Allegheny County' },
+      { '@type': 'City', name: 'Pittsburgh' },
+      { '@type': 'Place', name: 'Lawrenceville' },
+    ])
+    expect(schema.description).toContain('Pittsburgh Lawrenceville')
+    expect(schema.description).not.toMatch(/\u2014|—/)
+  })
 })
 
 describe('generateCrawlableSiteGraph', () => {

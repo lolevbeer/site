@@ -291,7 +291,7 @@ export interface Beer {
    */
   seo?: {
     /**
-     * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "| Lolev Beer" on hub pages; the site title template adds it.
+     * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "• Lolev Beer" on hub pages; the site title template adds it.
      */
     title?: string | null;
     /**
@@ -315,7 +315,7 @@ export interface Beer {
      */
     keywords?: string[] | null;
     /**
-     * Ask search engines not to index this page.
+     * Ask search engines not to list this page in results. Links on it are still followed, and it is left out of the sitemap.
      */
     noIndex?: boolean | null;
     /**
@@ -382,6 +382,10 @@ export interface Location {
    */
   active?: boolean | null;
   name: string;
+  /**
+   * Optional short paragraph under the location heading for local SEO. Leave blank to show nothing.
+   */
+  intro?: string | null;
   /**
    * Timezone for this location's hours
    */
@@ -454,7 +458,7 @@ export interface Location {
    */
   seo?: {
     /**
-     * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "| Lolev Beer" on hub pages; the site title template adds it.
+     * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "• Lolev Beer" on hub pages; the site title template adds it.
      */
     title?: string | null;
     /**
@@ -478,7 +482,7 @@ export interface Location {
      */
     keywords?: string[] | null;
     /**
-     * Ask search engines not to index this page.
+     * Ask search engines not to list this page in results. Links on it are still followed, and it is left out of the sitemap.
      */
     noIndex?: boolean | null;
     /**
@@ -795,7 +799,7 @@ export interface Job {
    */
   seo?: {
     /**
-     * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "| Lolev Beer" on hub pages; the site title template adds it.
+     * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "• Lolev Beer" on hub pages; the site title template adds it.
      */
     title?: string | null;
     /**
@@ -819,7 +823,7 @@ export interface Job {
      */
     keywords?: string[] | null;
     /**
-     * Ask search engines not to index this page.
+     * Ask search engines not to list this page in results. Links on it are still followed, and it is left out of the sitemap.
      */
     noIndex?: boolean | null;
     /**
@@ -1701,6 +1705,7 @@ export interface LocationsSelect<T extends boolean = true> {
   linesLastCleaned?: T;
   active?: T;
   name?: T;
+  intro?: T;
   timezone?: T;
   slug?: T;
   basicInfo?:
@@ -2062,11 +2067,11 @@ export interface SiteContent {
 export interface SiteSeo {
   id: string;
   /**
-   * Homepage / fallback <title>. Example: Lolev Beer | Craft Brewery in Zelienople & Pittsburgh
+   * Homepage / fallback <title>. Example: Lolev Beer • Craft Brewery in Zelienople & Pittsburgh
    */
   defaultTitle?: string | null;
   /**
-   * Next.js title template with %s for the page title. Example: %s | Lolev Beer. Leave blank for "%s | Lolev Beer".
+   * Next.js title template with %s for the page title. Example: %s • Lolev Beer. Leave blank for "%s • Lolev Beer".
    */
   titleTemplate?: string | null;
   /**
@@ -2095,7 +2100,7 @@ export interface SiteSeo {
      */
     home?: {
       /**
-       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "| Lolev Beer" on hub pages; the site title template adds it.
+       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "• Lolev Beer" on hub pages; the site title template adds it.
        */
       title?: string | null;
       /**
@@ -2119,7 +2124,7 @@ export interface SiteSeo {
        */
       keywords?: string[] | null;
       /**
-       * Ask search engines not to index this page.
+       * Ask search engines not to list this page in results. Links on it are still followed, and it is left out of the sitemap.
        */
       noIndex?: boolean | null;
     };
@@ -2128,7 +2133,7 @@ export interface SiteSeo {
      */
     beer?: {
       /**
-       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "| Lolev Beer" on hub pages; the site title template adds it.
+       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "• Lolev Beer" on hub pages; the site title template adds it.
        */
       title?: string | null;
       /**
@@ -2152,7 +2157,7 @@ export interface SiteSeo {
        */
       keywords?: string[] | null;
       /**
-       * Ask search engines not to index this page.
+       * Ask search engines not to list this page in results. Links on it are still followed, and it is left out of the sitemap.
        */
       noIndex?: boolean | null;
       /**
@@ -2165,7 +2170,7 @@ export interface SiteSeo {
      */
     events?: {
       /**
-       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "| Lolev Beer" on hub pages; the site title template adds it.
+       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "• Lolev Beer" on hub pages; the site title template adds it.
        */
       title?: string | null;
       /**
@@ -2189,7 +2194,7 @@ export interface SiteSeo {
        */
       keywords?: string[] | null;
       /**
-       * Ask search engines not to index this page.
+       * Ask search engines not to list this page in results. Links on it are still followed, and it is left out of the sitemap.
        */
       noIndex?: boolean | null;
       /**
@@ -2202,7 +2207,7 @@ export interface SiteSeo {
      */
     food?: {
       /**
-       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "| Lolev Beer" on hub pages; the site title template adds it.
+       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "• Lolev Beer" on hub pages; the site title template adds it.
        */
       title?: string | null;
       /**
@@ -2226,7 +2231,7 @@ export interface SiteSeo {
        */
       keywords?: string[] | null;
       /**
-       * Ask search engines not to index this page.
+       * Ask search engines not to list this page in results. Links on it are still followed, and it is left out of the sitemap.
        */
       noIndex?: boolean | null;
       /**
@@ -2239,7 +2244,7 @@ export interface SiteSeo {
      */
     beerMap?: {
       /**
-       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "| Lolev Beer" on hub pages; the site title template adds it.
+       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "• Lolev Beer" on hub pages; the site title template adds it.
        */
       title?: string | null;
       /**
@@ -2263,7 +2268,7 @@ export interface SiteSeo {
        */
       keywords?: string[] | null;
       /**
-       * Ask search engines not to index this page.
+       * Ask search engines not to list this page in results. Links on it are still followed, and it is left out of the sitemap.
        */
       noIndex?: boolean | null;
     };
@@ -2272,7 +2277,7 @@ export interface SiteSeo {
      */
     donate?: {
       /**
-       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "| Lolev Beer" on hub pages; the site title template adds it.
+       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "• Lolev Beer" on hub pages; the site title template adds it.
        */
       title?: string | null;
       /**
@@ -2296,7 +2301,7 @@ export interface SiteSeo {
        */
       keywords?: string[] | null;
       /**
-       * Ask search engines not to index this page.
+       * Ask search engines not to list this page in results. Links on it are still followed, and it is left out of the sitemap.
        */
       noIndex?: boolean | null;
     };
@@ -2305,7 +2310,7 @@ export interface SiteSeo {
      */
     jobs?: {
       /**
-       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "| Lolev Beer" on hub pages; the site title template adds it.
+       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "• Lolev Beer" on hub pages; the site title template adds it.
        */
       title?: string | null;
       /**
@@ -2329,7 +2334,7 @@ export interface SiteSeo {
        */
       keywords?: string[] | null;
       /**
-       * Ask search engines not to index this page.
+       * Ask search engines not to list this page in results. Links on it are still followed, and it is left out of the sitemap.
        */
       noIndex?: boolean | null;
     };
@@ -2338,7 +2343,7 @@ export interface SiteSeo {
      */
     about?: {
       /**
-       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "| Lolev Beer" on hub pages; the site title template adds it.
+       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "• Lolev Beer" on hub pages; the site title template adds it.
        */
       title?: string | null;
       /**
@@ -2362,7 +2367,7 @@ export interface SiteSeo {
        */
       keywords?: string[] | null;
       /**
-       * Ask search engines not to index this page.
+       * Ask search engines not to list this page in results. Links on it are still followed, and it is left out of the sitemap.
        */
       noIndex?: boolean | null;
     };
@@ -2371,7 +2376,7 @@ export interface SiteSeo {
      */
     faq?: {
       /**
-       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "| Lolev Beer" on hub pages; the site title template adds it.
+       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "• Lolev Beer" on hub pages; the site title template adds it.
        */
       title?: string | null;
       /**
@@ -2395,7 +2400,7 @@ export interface SiteSeo {
        */
       keywords?: string[] | null;
       /**
-       * Ask search engines not to index this page.
+       * Ask search engines not to list this page in results. Links on it are still followed, and it is left out of the sitemap.
        */
       noIndex?: boolean | null;
     };
@@ -2404,7 +2409,7 @@ export interface SiteSeo {
      */
     accessibility?: {
       /**
-       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "| Lolev Beer" on hub pages; the site title template adds it.
+       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "• Lolev Beer" on hub pages; the site title template adds it.
        */
       title?: string | null;
       /**
@@ -2428,7 +2433,7 @@ export interface SiteSeo {
        */
       keywords?: string[] | null;
       /**
-       * Ask search engines not to index this page.
+       * Ask search engines not to list this page in results. Links on it are still followed, and it is left out of the sitemap.
        */
       noIndex?: boolean | null;
     };
@@ -2437,7 +2442,7 @@ export interface SiteSeo {
      */
     privacy?: {
       /**
-       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "| Lolev Beer" on hub pages; the site title template adds it.
+       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "• Lolev Beer" on hub pages; the site title template adds it.
        */
       title?: string | null;
       /**
@@ -2461,7 +2466,7 @@ export interface SiteSeo {
        */
       keywords?: string[] | null;
       /**
-       * Ask search engines not to index this page.
+       * Ask search engines not to list this page in results. Links on it are still followed, and it is left out of the sitemap.
        */
       noIndex?: boolean | null;
     };
@@ -2470,7 +2475,7 @@ export interface SiteSeo {
      */
     terms?: {
       /**
-       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "| Lolev Beer" on hub pages; the site title template adds it.
+       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "• Lolev Beer" on hub pages; the site title template adds it.
        */
       title?: string | null;
       /**
@@ -2494,7 +2499,7 @@ export interface SiteSeo {
        */
       keywords?: string[] | null;
       /**
-       * Ask search engines not to index this page.
+       * Ask search engines not to list this page in results. Links on it are still followed, and it is left out of the sitemap.
        */
       noIndex?: boolean | null;
     };

@@ -122,6 +122,19 @@ export const Locations: CollectionConfig = {
       },
     },
     {
+      name: 'intro',
+      type: 'textarea',
+      label: 'Intro text',
+      access: {
+        update: adminFieldAccess,
+      },
+      admin: {
+        rows: 3,
+        description:
+          'Optional short paragraph under the location heading for local SEO. Leave blank to show nothing.',
+      },
+    },
+    {
       name: 'timezone',
       type: 'select',
       defaultValue: 'America/New_York',
