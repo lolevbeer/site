@@ -140,19 +140,3 @@ export const SiteSeo: GlobalConfig = {
     },
   ],
 }
-
-/** Path → SiteSeo pages key for hub routes. */
-export const PATH_TO_SEO_PAGE: Record<string, SiteSeoPageKey> = {
-  '/': 'home',
-  '/beer': 'beer',
-  '/events': 'events',
-  '/food': 'food',
-  '/beer-map': 'beerMap',
-  '/donate': 'donate',
-  '/jobs': 'jobs',
-  '/about': 'about',
-  '/faq': 'faq',
-  '/accessibility': 'accessibility',
-  '/privacy': 'privacy',
-  '/terms': 'terms',
-}

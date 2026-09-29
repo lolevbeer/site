@@ -9,6 +9,7 @@ import { unstable_cache } from 'next/cache'
 import config from '@/src/payload.config'
 import { logger } from '@/lib/utils/logger'
 import { CACHE_TAGS } from '@/lib/utils/cache'
+import type { SeoOverride } from '@/lib/seo/resolve-metadata'
 
 export interface PublicJob {
   id: string
@@ -19,16 +20,7 @@ export interface PublicJob {
   employmentType: string
   locationName: string
   locationSlug: string
-  seo?: {
-    title?: string | null
-    description?: string | null
-    ogTitle?: string | null
-    ogDescription?: string | null
-    ogImage?: unknown
-    keywords?: string[] | null
-    canonicalPath?: string | null
-    noIndex?: boolean | null
-  } | null
+  seo?: SeoOverride
 }
 
 const JOBS_CACHE = { tags: [CACHE_TAGS.jobs], revalidate: 300 }
@@ -41,7 +33,7 @@ type JobDoc = {
   description?: string | null
   employmentType?: string | null
   location?: unknown
-  seo?: PublicJob['seo']
+  seo?: SeoOverride
 }
 
 function relatedString(value: unknown, key: 'name' | 'slug'): string {

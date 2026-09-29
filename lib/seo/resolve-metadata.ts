@@ -3,11 +3,7 @@
  */
 import type { Metadata } from 'next'
 import { getMediaUrl } from '@/lib/utils/media-utils'
-import {
-  DEFAULT_OG_IMAGES,
-  DEFAULT_OG_IMAGE_PATH,
-  pageOpenGraph,
-} from '@/lib/utils/seo'
+import { DEFAULT_OG_IMAGES } from '@/lib/utils/seo'
 
 /** Shape of the shared `seo` group (collections + hub pages). */
 export type SeoOverride = {
@@ -53,10 +49,6 @@ export function defaultOgImages(siteSeo?: SiteSeoDefaults) {
   return ogImageFromUpload(siteSeo?.ogImage) ?? DEFAULT_OG_IMAGES
 }
 
-export function defaultOgImagePath(siteSeo?: SiteSeoDefaults): string {
-  return getMediaUrl(siteSeo?.ogImage) ?? DEFAULT_OG_IMAGE_PATH
-}
-
 type BuildArgs = {
   /** Auto-generated title (without site suffix when using the layout template). */
   fallbackTitle: string
@@ -70,8 +62,6 @@ type BuildArgs = {
   siteSeo?: SiteSeoDefaults
   /** Absolute or path OG images when the doc already has one (e.g. beer image) */
   fallbackOgImages?: NonNullable<Metadata['openGraph']>['images']
-  /** When true, title is used as-is for OG (already includes branding). */
-  ogTitleAbsolute?: string
 }
 
 /**
@@ -86,12 +76,10 @@ export function buildPageMetadata({
   seo,
   siteSeo,
   fallbackOgImages,
-  ogTitleAbsolute,
 }: BuildArgs): Metadata {
   const title = trim(seo?.title) ?? fallbackTitle
   const description = trim(seo?.description) ?? fallbackDescription
-  const ogTitle =
-    trim(seo?.ogTitle) ?? ogTitleAbsolute ?? `${title} | Lolev Beer`
+  const ogTitle = trim(seo?.ogTitle) ?? `${title} | Lolev Beer`
   const ogDescription = trim(seo?.ogDescription) ?? description
   const canonical = trim(seo?.canonicalPath) ?? canonicalPath
 
@@ -128,25 +116,3 @@ export function buildPageMetadata({
 
   return metadata
 }
-
-/** Convenience for static pages that previously used pageOpenGraph(). */
-export function buildHubMetadata(
-  path: string,
-  fallbackTitle: string,
-  fallbackDescription: string,
-  hubSeo: SeoOverride,
-  siteSeo?: SiteSeoDefaults,
-  fallbackKeywords?: string[],
-): Metadata {
-  return buildPageMetadata({
-    fallbackTitle,
-    fallbackDescription,
-    canonicalPath: path,
-    fallbackKeywords,
-    seo: hubSeo,
-    siteSeo,
-    ogTitleAbsolute: undefined,
-  })
-}
-
-export { pageOpenGraph }
