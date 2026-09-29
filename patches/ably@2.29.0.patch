@@ -1,0 +1,26 @@
+diff --git a/build/ably.js b/build/ably.js
+index 3c1f48a2a4647fe75b6cb2b5828b9e96a17747c4..5b20c23e084a80aaaff4d8e3bdb29ea618d27cea 100644
+--- a/build/ably.js
++++ b/build/ably.js
+@@ -291,8 +291,8 @@ function withHelpHref(err) {
+ }
+ var ErrorInfo = class _ErrorInfo extends Error {
+   constructor(messageOrValues, code, statusCode, cause, detail) {
+-    var __super = (...args) => {
+-      super(...args);
++    var __super = (message) => {
++      super(message);
+     };
+     if (typeof messageOrValues === "object") {
+       const values = messageOrValues;
+@@ -341,8 +341,8 @@ var ErrorInfo = class _ErrorInfo extends Error {
+ };
+ var PartialErrorInfo = class _PartialErrorInfo extends Error {
+   constructor(messageOrValues, code, statusCode, cause, detail) {
+-    var __super = (...args) => {
+-      super(...args);
++    var __super = (message) => {
++      super(message);
+     };
+     if (typeof messageOrValues === "object") {
+       const values = messageOrValues;

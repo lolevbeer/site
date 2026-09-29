@@ -226,13 +226,10 @@ export function usePolling<T, R extends PollingResponse>(
       realtimeFallback: realtimeFallbackRef.current,
     })
     if (delay !== null) {
-      if (pollTimeoutRef.current) {
-        clearTimeout(pollTimeoutRef.current)
-        pollTimeoutRef.current = null
-      }
+      clearScheduledPoll()
       pollTimeoutRef.current = setTimeout(() => pollRef.current(), delay)
     }
-  }, [url])
+  }, [url, clearScheduledPoll])
 
   useEffect(() => {
     pollRef.current = poll

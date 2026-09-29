@@ -11,12 +11,10 @@ export const ABLY_CHANNELS = {
   events: 'kiosk:events',
 } as const
 
-export type AblyChannelName = (typeof ABLY_CHANNELS)[keyof typeof ABLY_CHANNELS]
-
 /** Message name clients subscribe to on the kiosk channels. */
 export const ABLY_UPDATED_EVENT = 'updated'
 
-export type KioskInvalidateKind = 'menu' | 'events'
+export type KioskInvalidateKind = keyof typeof ABLY_CHANNELS
 
 /**
  * Lightweight invalidate payload. Prefer scoped `key` (menu url or location

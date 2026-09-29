@@ -2,28 +2,33 @@
  * Ably kiosk realtime spike: feature flags, publish no-op, auth 503 when
  * unset, and the polling realtime-fallback cadence.
  */
-import { act, cleanup, renderHook } from '@testing-library/react'
+import { act, cleanup, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('ably', () => {
+const ablyMock = vi.hoisted(() => {
   const publish = vi.fn(async () => undefined)
   const createTokenRequest = vi.fn(async () => ({ keyName: 'test', ttl: 3600000 }))
-  const Rest = vi.fn(function MockRest(this: {
-    channels: { get: (name: string) => { publish: typeof publish; name: string } }
-    auth: { createTokenRequest: typeof createTokenRequest }
-  }) {
-    this.channels = {
-      get: (name: string) => ({ name, publish }),
-    }
-    this.auth = { createTokenRequest }
+  const subscribe = vi.fn(
+    (_event: string, _listener: (message: { data: unknown }) => void) => undefined,
+  )
+  const unsubscribe = vi.fn()
+  const getChannel = vi.fn((_name: string) => ({ publish, subscribe, unsubscribe }))
+  const connection = {
+    on: vi.fn((_event: string, _listener: () => void) => undefined),
+    off: vi.fn(),
+  }
+  const close = vi.fn()
+  const Rest = vi.fn(function MockRest() {
+    return { channels: { get: getChannel }, auth: { createTokenRequest } }
   })
-  return { default: { Rest }, __mock: { publish, createTokenRequest, Rest } }
+  const Realtime = vi.fn(function MockRealtime() {
+    return { channels: { get: getChannel }, connection, close }
+  })
+  return { publish, Rest, Realtime, getChannel, subscribe, unsubscribe, connection, close }
 })
+vi.mock('ably', () => ({ default: ablyMock }))
 
-import {
-  publishKioskInvalidate,
-  resetAblyRestClientForTests,
-} from '@/lib/ably/publish'
+import { publishKioskInvalidate, resetAblyRestClientForTests } from '@/lib/ably/publish'
 import { isAblyClientEnabled, isAblyPublishEnabled } from '@/lib/ably/config'
 import { ABLY_CHANNELS, ABLY_UPDATED_EVENT } from '@/lib/ably/channels'
 import {
@@ -33,6 +38,12 @@ import {
   usePolling,
 } from '@/lib/hooks/use-polling'
 import { GET as ablyAuthGet } from '@/src/app/api/ably-auth/route'
+import { useAblyInvalidate } from '@/lib/hooks/use-ably-invalidate'
+
+afterEach(() => {
+  cleanup()
+  vi.unstubAllEnvs()
+})
 
 describe('Ably feature flags', () => {
   it('treats publish as off when ABLY_API_KEY is missing or blank', () => {
@@ -49,54 +60,37 @@ describe('Ably feature flags', () => {
   })
 
   it('reads process.env.NEXT_PUBLIC_ABLY_ENABLED directly when called with no args', () => {
-    const prev = process.env.NEXT_PUBLIC_ABLY_ENABLED
-    try {
-      delete process.env.NEXT_PUBLIC_ABLY_ENABLED
-      expect(isAblyClientEnabled()).toBe(false)
-      process.env.NEXT_PUBLIC_ABLY_ENABLED = 'true'
-      expect(isAblyClientEnabled()).toBe(true)
-      process.env.NEXT_PUBLIC_ABLY_ENABLED = 'false'
-      expect(isAblyClientEnabled()).toBe(false)
-    } finally {
-      if (prev === undefined) delete process.env.NEXT_PUBLIC_ABLY_ENABLED
-      else process.env.NEXT_PUBLIC_ABLY_ENABLED = prev
-    }
+    vi.stubEnv('NEXT_PUBLIC_ABLY_ENABLED', undefined)
+    expect(isAblyClientEnabled()).toBe(false)
+    vi.stubEnv('NEXT_PUBLIC_ABLY_ENABLED', 'true')
+    expect(isAblyClientEnabled()).toBe(true)
+    vi.stubEnv('NEXT_PUBLIC_ABLY_ENABLED', 'false')
+    expect(isAblyClientEnabled()).toBe(false)
   })
 })
 
 describe('publishKioskInvalidate', () => {
-  const originalKey = process.env.ABLY_API_KEY
-
   beforeEach(() => {
     resetAblyRestClientForTests()
-    delete process.env.ABLY_API_KEY
+    vi.stubEnv('ABLY_API_KEY', undefined)
     vi.clearAllMocks()
   })
 
   afterEach(() => {
     resetAblyRestClientForTests()
-    if (originalKey === undefined) delete process.env.ABLY_API_KEY
-    else process.env.ABLY_API_KEY = originalKey
   })
 
   it('no-ops when ABLY_API_KEY is unset', async () => {
     await publishKioskInvalidate({ kind: 'menu', key: 'lawrenceville-draft' })
-    const ably = await import('ably')
-    const mock = (ably as unknown as { __mock: { Rest: ReturnType<typeof vi.fn> } }).__mock
-    expect(mock.Rest).not.toHaveBeenCalled()
+    expect(ablyMock.Rest).not.toHaveBeenCalled()
   })
 
   it('publishes an updated message on the menu channel when configured', async () => {
-    process.env.ABLY_API_KEY = 'app.key:secret'
+    vi.stubEnv('ABLY_API_KEY', 'app.key:secret')
     await publishKioskInvalidate({ kind: 'menu', key: 'lawrenceville-draft' })
-    const ably = await import('ably')
-    const mock = (
-      ably as unknown as {
-        __mock: { Rest: ReturnType<typeof vi.fn>; publish: ReturnType<typeof vi.fn> }
-      }
-    ).__mock
-    expect(mock.Rest).toHaveBeenCalled()
-    expect(mock.publish).toHaveBeenCalledWith(
+    expect(ablyMock.Rest).toHaveBeenCalled()
+    expect(ablyMock.getChannel).toHaveBeenCalledWith(ABLY_CHANNELS.menu)
+    expect(ablyMock.publish).toHaveBeenCalledWith(
       ABLY_UPDATED_EVENT,
       expect.objectContaining({
         kind: 'menu',
@@ -107,11 +101,10 @@ describe('publishKioskInvalidate', () => {
   })
 
   it('publishes events invalidates on the events channel', async () => {
-    process.env.ABLY_API_KEY = 'app.key:secret'
+    vi.stubEnv('ABLY_API_KEY', 'app.key:secret')
     await publishKioskInvalidate({ kind: 'events', key: 'lawrenceville' })
-    const ably = await import('ably')
-    const mock = (ably as unknown as { __mock: { publish: ReturnType<typeof vi.fn> } }).__mock
-    expect(mock.publish).toHaveBeenCalledWith(
+    expect(ablyMock.getChannel).toHaveBeenCalledWith(ABLY_CHANNELS.events)
+    expect(ablyMock.publish).toHaveBeenCalledWith(
       ABLY_UPDATED_EVENT,
       expect.objectContaining({ kind: 'events', key: 'lawrenceville' }),
     )
@@ -119,19 +112,54 @@ describe('publishKioskInvalidate', () => {
 })
 
 describe('/api/ably-auth', () => {
-  const originalKey = process.env.ABLY_API_KEY
-
-  afterEach(() => {
-    if (originalKey === undefined) delete process.env.ABLY_API_KEY
-    else process.env.ABLY_API_KEY = originalKey
-  })
-
   it('returns 503 when Ably is not configured', async () => {
-    delete process.env.ABLY_API_KEY
+    vi.stubEnv('ABLY_API_KEY', undefined)
     const res = await ablyAuthGet()
     expect(res.status).toBe(503)
     const body = await res.json()
     expect(body.error).toMatch(/not configured/i)
+  })
+})
+
+describe('useAblyInvalidate', () => {
+  it('filters messages and reconnects with the new channel and key when props change', async () => {
+    vi.clearAllMocks()
+    vi.stubEnv('NEXT_PUBLIC_ABLY_ENABLED', 'true')
+    const { result, rerender, unmount } = renderHook(useAblyInvalidate, {
+      initialProps: { kind: 'menu' as 'menu' | 'events', key: 'draft' },
+    })
+    await waitFor(() => expect(ablyMock.subscribe).toHaveBeenCalledTimes(1))
+    expect(ablyMock.getChannel).toHaveBeenLastCalledWith(ABLY_CHANNELS.menu)
+    const onMenu = ablyMock.subscribe.mock.calls[0][1]
+    const onConnected = ablyMock.connection.on.mock.calls.find(
+      ([event]) => event === 'connected',
+    )![1]
+    act(() => {
+      onConnected()
+      onMenu({ data: { kind: 'menu', key: 'other' } })
+      onMenu({ data: { kind: 'events', key: 'draft' } })
+      onMenu({ data: null })
+    })
+    expect(result.current).toEqual({ invalidateSignal: 0, realtimeActive: true })
+    act(() => {
+      onMenu({ data: { kind: 'menu', key: 'draft' } })
+      onMenu({ data: { kind: 'menu' } })
+    })
+    expect(result.current.invalidateSignal).toBe(2)
+
+    rerender({ kind: 'events', key: 'lawrenceville' })
+    await waitFor(() => expect(ablyMock.subscribe).toHaveBeenCalledTimes(2))
+    expect(ablyMock.getChannel).toHaveBeenLastCalledWith(ABLY_CHANNELS.events)
+    expect(ablyMock.unsubscribe).toHaveBeenCalledWith(ABLY_UPDATED_EVENT, onMenu)
+    expect(ablyMock.close).toHaveBeenCalledTimes(1)
+    const onEvents = ablyMock.subscribe.mock.calls[1][1]
+    act(() => {
+      onMenu({ data: { kind: 'menu', key: 'draft' } })
+      onEvents({ data: { kind: 'events', key: 'lawrenceville' } })
+    })
+    expect(result.current).toEqual({ invalidateSignal: 3, realtimeActive: false })
+    unmount()
+    expect(ablyMock.close).toHaveBeenCalledTimes(2)
   })
 })
 

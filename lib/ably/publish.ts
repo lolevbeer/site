@@ -9,6 +9,7 @@
  * pure revalidateTag/revalidatePath path when Ably is unset (Preview default).
  */
 
+import type { Rest } from 'ably'
 import {
   ABLY_CHANNELS,
   ABLY_UPDATED_EVENT,
@@ -18,26 +19,18 @@ import {
 import { isAblyPublishEnabled } from '@/lib/ably/config'
 import { logger } from '@/lib/utils/logger'
 
-type AblyRest = {
-  channels: { get: (name: string) => { publish: (event: string, data: unknown) => Promise<void> } }
-}
-
-let restClient: AblyRest | null = null
+let restClient: Rest | null = null
 let restClientKey: string | null = null
 
-async function getRestClient(): Promise<AblyRest | null> {
+async function getRestClient(): Promise<Rest | null> {
   if (!isAblyPublishEnabled()) return null
   const key = process.env.ABLY_API_KEY!.trim()
   if (restClient && restClientKey === key) return restClient
 
   const Ably = (await import('ably')).default
-  restClient = new Ably.Rest({ key }) as unknown as AblyRest
+  restClient = new Ably.Rest({ key })
   restClientKey = key
   return restClient
-}
-
-function channelForKind(kind: KioskInvalidateKind): string {
-  return kind === 'menu' ? ABLY_CHANNELS.menu : ABLY_CHANNELS.events
 }
 
 /**
@@ -48,7 +41,7 @@ export async function publishKioskInvalidate(input: {
   kind: KioskInvalidateKind
   key?: string
 }): Promise<void> {
-  let client: AblyRest | null
+  let client: Rest | null
   try {
     client = await getRestClient()
   } catch (error) {
@@ -68,7 +61,7 @@ export async function publishKioskInvalidate(input: {
   }
 
   try {
-    const channel = client.channels.get(channelForKind(input.kind))
+    const channel = client.channels.get(ABLY_CHANNELS[input.kind])
     await channel.publish(ABLY_UPDATED_EVENT, message)
   } catch (error) {
     logger.warn('Ably kiosk invalidate publish failed', {

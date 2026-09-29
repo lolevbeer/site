@@ -30,13 +30,13 @@ const menu = (overrides: Partial<Menu> = {}) =>
     ...overrides,
   }) as unknown as Menu
 
-describe('useMenuStream polling without Ably', () => {
-  afterEach(() => {
-    cleanup()
-    vi.useRealTimers()
-    vi.unstubAllGlobals()
-  })
+afterEach(() => {
+  cleanup()
+  vi.useRealTimers()
+  vi.unstubAllGlobals()
+})
 
+describe('useMenuStream polling without Ably', () => {
   it('keeps polling the stream endpoint when Ably is disabled', async () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
     const initial = menu()
@@ -64,16 +64,9 @@ describe('useMenuStream polling without Ably', () => {
     expect(fetchMock).toHaveBeenCalledTimes(3)
     expect(result.current.menu?.id).toBe('polled')
   })
-
 })
 
 describe('usePolling realtimeFallback stays false', () => {
-  afterEach(() => {
-    cleanup()
-    vi.useRealTimers()
-    vi.unstubAllGlobals()
-  })
-
   it('keeps the warm/idle cadence when realtimeFallback never flips', async () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
     const fetchMock = vi.fn(async () => ({

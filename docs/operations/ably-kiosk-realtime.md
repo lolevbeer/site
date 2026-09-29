@@ -32,6 +32,18 @@ that stay connected all day.
 
 ## Setup
 
+### Browser build compatibility
+
+`patches/ably@2.29.0.patch` keeps Ably's two error-constructor helpers compatible
+with Next.js 16.3.3 / Turbopack and this project's Safari 15.6 browser target.
+Without it, SWC converts their rest-argument arrows into regular functions
+containing `super()`, causing a runtime syntax error. Each helper only receives
+one message, so the patch uses a single parameter without changing behavior.
+Remove the patch when `ably-browser-bundle.int.spec.ts` passes with an unpatched
+SDK and the kiosk page loads successfully in the browser.
+
+### Environment
+
 1. Create an Ably account and a free-tier app: https://ably.com
 2. Copy the root API key (or a key that can publish and create token requests).
 3. Set env vars (Vercel project + local `.env`):

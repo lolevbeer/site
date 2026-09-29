@@ -29,3 +29,6 @@ overrides:
   "svgo@3": ">=3.3.4"
   "js-yaml@4": ">=4.2.0"
   "sharp": "0.35.4"
+
+patchedDependencies:
+  ably@2.29.0: patches/ably@2.29.0.patch

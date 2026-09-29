@@ -10,13 +10,12 @@
  * bundle (and hydration) stay polling-only when the flag is off.
  */
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import type Ably from 'ably'
 
 import {
   ABLY_CHANNELS,
   ABLY_UPDATED_EVENT,
-  type AblyChannelName,
   type KioskInvalidateKind,
   type KioskInvalidateMessage,
 } from '@/lib/ably/channels'
@@ -33,10 +32,6 @@ export interface UseAblyInvalidateResult {
   invalidateSignal: number
   /** True once Ably reports connected; drives slower poll fallback. */
   realtimeActive: boolean
-}
-
-function channelForKind(kind: KioskInvalidateKind): AblyChannelName {
-  return kind === 'menu' ? ABLY_CHANNELS.menu : ABLY_CHANNELS.events
 }
 
 function messageMatches(data: unknown, kind: KioskInvalidateKind, key: string): boolean {
@@ -59,13 +54,6 @@ export function useAblyInvalidate({
   const [invalidateSignal, setInvalidateSignal] = useState(0)
   const [realtimeActive, setRealtimeActive] = useState(false)
   const enabled = isAblyClientEnabled()
-  // Keep the latest key without restarting the connection on every render.
-  const keyRef = useRef(key)
-  const kindRef = useRef(kind)
-  useEffect(() => {
-    keyRef.current = key
-    kindRef.current = kind
-  })
 
   useEffect(() => {
     if (!enabled || !key) return
@@ -102,10 +90,10 @@ export function useAblyInvalidate({
         client.connection.on('failed', onNotConnected)
         client.connection.on('closed', onNotConnected)
 
-        channel = client.channels.get(channelForKind(kind))
+        channel = client.channels.get(ABLY_CHANNELS[kind])
         onMessage = (message: Ably.Message) => {
           if (cancelled) return
-          if (!messageMatches(message.data, kindRef.current, keyRef.current)) return
+          if (!messageMatches(message.data, kind, key)) return
           setInvalidateSignal((n) => n + 1)
         }
         void channel.subscribe(ABLY_UPDATED_EVENT, onMessage)
