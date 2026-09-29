@@ -205,6 +205,46 @@ describe('LocationLanding beer sections', () => {
 
     expect(screen.queryByRole('heading', { name: 'Jobs' })).toBeNull()
   })
+
+  it('shows the CMS intro under the subtitle when set', () => {
+    render(
+      createElement(LocationLanding, {
+        location: {
+          ...location,
+          intro: 'Our Zelienople taproom sits on Main Street in Butler County.',
+        },
+        weeklyHours: [],
+        draftBeers: [],
+        canBeers: [],
+        events: [],
+        food: [],
+        otherLocations: [],
+      }),
+    )
+
+    expect(screen.getByText('Lolev Beer taproom in Pittsburgh')).toBeTruthy()
+    expect(
+      screen.getByText('Our Zelienople taproom sits on Main Street in Butler County.'),
+    ).toBeTruthy()
+  })
+
+  it('omits the intro paragraph when blank', () => {
+    const { container } = render(
+      createElement(LocationLanding, {
+        location,
+        weeklyHours: [],
+        draftBeers: [],
+        canBeers: [],
+        events: [],
+        food: [],
+        otherLocations: [],
+      }),
+    )
+
+    const subtitle = screen.getByText('Lolev Beer taproom in Pittsburgh')
+    expect(subtitle.nextElementSibling).toBeNull()
+    expect(container.querySelector('header p + p')).toBeNull()
+  })
 })
 
 describe('isTaproomLandingPath', () => {

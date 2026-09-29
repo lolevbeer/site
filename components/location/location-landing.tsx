@@ -86,6 +86,11 @@ export function LocationLanding({
         <p className="text-muted-foreground text-lg text-pretty">
           Lolev Beer taproom{city ? ` in ${city}` : ''}
         </p>
+        {location.intro?.trim() ? (
+          <p className="mt-3 mx-auto max-w-2xl text-muted-foreground text-pretty whitespace-pre-line">
+            {location.intro.trim()}
+          </p>
+        ) : null}
       </header>
 
       {heroSrc ? (
