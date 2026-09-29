@@ -135,8 +135,9 @@ export function usePolling<T, R extends PollingResponse>(
   const warmRef = useRef(false)
   const consecutiveErrorsRef = useRef(0)
   const realtimeFallbackRef = useRef(realtimeFallback)
-  // Skip the first realtimeFallback effect run (url/poll effect starts cadence).
-  const realtimeFallbackMountedRef = useRef(false)
+  // Track prior value so we only reschedule on a real connect/disconnect edge,
+  // not on mount (url/poll effect starts cadence) or on unrelated dep churn.
+  const prevRealtimeFallbackRef = useRef(realtimeFallback)
 
   // Store applyResponse in a ref so poll() always uses the latest callback
   // without needing it in the useCallback dependency array. Written in an
@@ -270,13 +271,13 @@ export function usePolling<T, R extends PollingResponse>(
 
   // When Ably connects or drops, reschedule so a 120s safety-net timer does not
   // linger after disconnect (and so connect does not keep a leftover 10s/30s).
-  // Skip the first run: the url/poll effect already starts the first cadence.
+  // Only runs on a realtimeFallback edge — never on mount or url-only changes,
+  // which would clear the timer the url/poll effect just armed.
   useEffect(() => {
     realtimeFallbackRef.current = realtimeFallback
-    if (!realtimeFallbackMountedRef.current) {
-      realtimeFallbackMountedRef.current = true
-      return
-    }
+    const prev = prevRealtimeFallbackRef.current
+    prevRealtimeFallbackRef.current = realtimeFallback
+    if (prev === realtimeFallback) return
     if (!url) return
     clearScheduledPoll()
     if (document.hidden) return

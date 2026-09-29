@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import Ably from 'ably'
 
 import { KIOSK_SUBSCRIBE_CAPABILITY } from '@/lib/ably/channels'
 import { isAblyPublishEnabled } from '@/lib/ably/config'
@@ -21,6 +20,7 @@ export async function GET(): Promise<NextResponse> {
   }
 
   try {
+    const Ably = (await import('ably')).default
     const rest = new Ably.Rest({ key: process.env.ABLY_API_KEY!.trim() })
     const tokenRequest = await rest.auth.createTokenRequest({
       // Stable-ish client id per mint is fine; Ably allows many clients.

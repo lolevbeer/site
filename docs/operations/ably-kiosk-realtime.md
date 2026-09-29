@@ -43,6 +43,22 @@ that stay connected all day.
 
 4. Redeploy. Without both vars, behavior is polling-only (safe default).
 
+### Preview / Production on Vercel
+
+Set both for the **Preview** and **Production** environments (Project → Settings →
+Environment Variables). `NEXT_PUBLIC_ABLY_ENABLED` is inlined at build time, so
+changing it requires a redeploy of that environment.
+
+| Goal | `ABLY_API_KEY` | `NEXT_PUBLIC_ABLY_ENABLED` | Behavior |
+| --- | --- | --- | --- |
+| Polling only (default) | unset | unset / not `true` | 10s warm / 30s idle polls; no Ably SDK on the client |
+| Realtime invalidate | set (root or publish+token key) | `true` | Client opens Ably; CMS publish on save; 120s safety-net poll |
+
+Confirm Preview after deploy: `/api/ably-auth` should return 200 JSON TokenRequest
+when both are set, or `{"error":"Ably is not configured"}` (503) when the key is
+unset. Kiosk pages must still show `/api/menu-stream/...` or `/api/events-stream/...`
+polls every 10s then 30s even when Ably is unset.
+
 ## Verify with 12-20 TVs
 
 1. Open `/m/<menuUrl>` and `/e/<location>` on the kiosk browsers (or

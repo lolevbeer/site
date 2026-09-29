@@ -16,8 +16,16 @@ export function isAblyPublishEnabled(env: AblyEnv = process.env): boolean {
 
 /**
  * True when kiosk clients should open an Ably connection.
- * Read at module load on the client via NEXT_PUBLIC_*.
+ *
+ * Next.js only inlines *direct* `process.env.NEXT_PUBLIC_*` member access into
+ * the client bundle. Reading a key from a `process.env` object alias is always
+ * undefined in the browser, which would permanently disable Ably even when the
+ * Preview/Production env var is set. Call with no args in client components;
+ * pass an explicit `env` bag only from tests.
  */
-export function isAblyClientEnabled(env: AblyEnv = process.env): boolean {
-  return env.NEXT_PUBLIC_ABLY_ENABLED?.trim().toLowerCase() === 'true'
+export function isAblyClientEnabled(env?: AblyEnv): boolean {
+  if (env) {
+    return env.NEXT_PUBLIC_ABLY_ENABLED?.trim().toLowerCase() === 'true'
+  }
+  return process.env.NEXT_PUBLIC_ABLY_ENABLED?.trim().toLowerCase() === 'true'
 }

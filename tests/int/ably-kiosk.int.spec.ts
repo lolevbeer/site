@@ -47,6 +47,21 @@ describe('Ably feature flags', () => {
     expect(isAblyClientEnabled({ NEXT_PUBLIC_ABLY_ENABLED: 'true' })).toBe(true)
     expect(isAblyClientEnabled({ NEXT_PUBLIC_ABLY_ENABLED: 'TRUE' })).toBe(true)
   })
+
+  it('reads process.env.NEXT_PUBLIC_ABLY_ENABLED directly when called with no args', () => {
+    const prev = process.env.NEXT_PUBLIC_ABLY_ENABLED
+    try {
+      delete process.env.NEXT_PUBLIC_ABLY_ENABLED
+      expect(isAblyClientEnabled()).toBe(false)
+      process.env.NEXT_PUBLIC_ABLY_ENABLED = 'true'
+      expect(isAblyClientEnabled()).toBe(true)
+      process.env.NEXT_PUBLIC_ABLY_ENABLED = 'false'
+      expect(isAblyClientEnabled()).toBe(false)
+    } finally {
+      if (prev === undefined) delete process.env.NEXT_PUBLIC_ABLY_ENABLED
+      else process.env.NEXT_PUBLIC_ABLY_ENABLED = prev
+    }
+  })
 })
 
 describe('publishKioskInvalidate', () => {

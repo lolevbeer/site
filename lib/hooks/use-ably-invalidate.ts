@@ -5,10 +5,13 @@
  * matching "updated" message arrives. Used by menu/events stream hooks so
  * displays can poll immediately on CMS edits while keeping polling as the
  * fallback when Ably is disabled or disconnected.
+ *
+ * Ably is loaded only when NEXT_PUBLIC_ABLY_ENABLED=true so the kiosk client
+ * bundle (and hydration) stay polling-only when the flag is off.
  */
 
 import { useEffect, useRef, useState } from 'react'
-import Ably from 'ably'
+import type Ably from 'ably'
 
 import {
   ABLY_CHANNELS,
@@ -68,48 +71,68 @@ export function useAblyInvalidate({
     if (!enabled || !key) return
 
     let cancelled = false
-    const client = new Ably.Realtime({
-      authUrl: '/api/ably-auth',
-      authMethod: 'GET',
-      // Kiosk TVs stay open for hours; let Ably reconnect quietly.
-      disconnectedRetryTimeout: 15_000,
-      suspendedRetryTimeout: 30_000,
-    })
+    let client: Ably.Realtime | null = null
+    let channel: Ably.RealtimeChannel | null = null
+    let onMessage: ((message: Ably.Message) => void) | null = null
+    let onConnected: (() => void) | null = null
+    let onNotConnected: (() => void) | null = null
 
-    const onConnected = () => {
-      if (!cancelled) setRealtimeActive(true)
-    }
-    const onNotConnected = () => {
-      if (!cancelled) setRealtimeActive(false)
-    }
+    void import('ably')
+      .then((mod) => {
+        if (cancelled) return
+        const AblyCtor = mod.default
+        client = new AblyCtor.Realtime({
+          authUrl: '/api/ably-auth',
+          authMethod: 'GET',
+          // Kiosk TVs stay open for hours; let Ably reconnect quietly.
+          disconnectedRetryTimeout: 15_000,
+          suspendedRetryTimeout: 30_000,
+        })
 
-    client.connection.on('connected', onConnected)
-    client.connection.on('disconnected', onNotConnected)
-    client.connection.on('suspended', onNotConnected)
-    client.connection.on('failed', onNotConnected)
-    client.connection.on('closed', onNotConnected)
+        onConnected = () => {
+          if (!cancelled) setRealtimeActive(true)
+        }
+        onNotConnected = () => {
+          if (!cancelled) setRealtimeActive(false)
+        }
 
-    const channel = client.channels.get(channelForKind(kind))
-    const onMessage = (message: Ably.Message) => {
-      if (cancelled) return
-      if (!messageMatches(message.data, kindRef.current, keyRef.current)) return
-      setInvalidateSignal((n) => n + 1)
-    }
-    void channel.subscribe(ABLY_UPDATED_EVENT, onMessage)
+        client.connection.on('connected', onConnected)
+        client.connection.on('disconnected', onNotConnected)
+        client.connection.on('suspended', onNotConnected)
+        client.connection.on('failed', onNotConnected)
+        client.connection.on('closed', onNotConnected)
+
+        channel = client.channels.get(channelForKind(kind))
+        onMessage = (message: Ably.Message) => {
+          if (cancelled) return
+          if (!messageMatches(message.data, kindRef.current, keyRef.current)) return
+          setInvalidateSignal((n) => n + 1)
+        }
+        void channel.subscribe(ABLY_UPDATED_EVENT, onMessage)
+      })
+      .catch(() => {
+        // Auth/config/network failures: leave realtimeActive false so polling
+        // keeps the normal 10s/30s cadence.
+        if (!cancelled) setRealtimeActive(false)
+      })
 
     return () => {
       cancelled = true
       try {
-        channel.unsubscribe(ABLY_UPDATED_EVENT, onMessage)
+        if (channel && onMessage) {
+          channel.unsubscribe(ABLY_UPDATED_EVENT, onMessage)
+        }
       } catch {
         // Channel may already be released.
       }
-      client.connection.off('connected', onConnected)
-      client.connection.off('disconnected', onNotConnected)
-      client.connection.off('suspended', onNotConnected)
-      client.connection.off('failed', onNotConnected)
-      client.connection.off('closed', onNotConnected)
-      client.close()
+      if (client && onConnected && onNotConnected) {
+        client.connection.off('connected', onConnected)
+        client.connection.off('disconnected', onNotConnected)
+        client.connection.off('suspended', onNotConnected)
+        client.connection.off('failed', onNotConnected)
+        client.connection.off('closed', onNotConnected)
+        client.close()
+      }
       setRealtimeActive(false)
     }
   }, [enabled, kind, key])

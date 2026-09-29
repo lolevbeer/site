@@ -4,9 +4,10 @@
  * Uses Ably.Rest (stateless HTTP) so serverless/CMS hooks never hold a
  * persistent WebSocket. Failures are logged and swallowed: a CMS save must
  * never fail because realtime is down. Polling remains the safety net.
+ *
+ * Ably is imported only when ABLY_API_KEY is set so CMS revalidation stays a
+ * pure revalidateTag/revalidatePath path when Ably is unset (Preview default).
  */
-
-import Ably from 'ably'
 
 import {
   ABLY_CHANNELS,
@@ -17,13 +18,21 @@ import {
 import { isAblyPublishEnabled } from '@/lib/ably/config'
 import { logger } from '@/lib/utils/logger'
 
-let restClient: Ably.Rest | null = null
+type AblyRest = {
+  channels: { get: (name: string) => { publish: (event: string, data: unknown) => Promise<void> } }
+}
 
-function getRestClient(): Ably.Rest | null {
+let restClient: AblyRest | null = null
+let restClientKey: string | null = null
+
+async function getRestClient(): Promise<AblyRest | null> {
   if (!isAblyPublishEnabled()) return null
-  if (!restClient) {
-    restClient = new Ably.Rest({ key: process.env.ABLY_API_KEY!.trim() })
-  }
+  const key = process.env.ABLY_API_KEY!.trim()
+  if (restClient && restClientKey === key) return restClient
+
+  const Ably = (await import('ably')).default
+  restClient = new Ably.Rest({ key }) as unknown as AblyRest
+  restClientKey = key
   return restClient
 }
 
@@ -39,7 +48,17 @@ export async function publishKioskInvalidate(input: {
   kind: KioskInvalidateKind
   key?: string
 }): Promise<void> {
-  const client = getRestClient()
+  let client: AblyRest | null
+  try {
+    client = await getRestClient()
+  } catch (error) {
+    logger.warn('Ably REST client init failed', {
+      kind: input.kind,
+      key: input.key,
+      error: error instanceof Error ? error.message : String(error),
+    })
+    return
+  }
   if (!client) return
 
   const message: KioskInvalidateMessage = {
@@ -63,4 +82,5 @@ export async function publishKioskInvalidate(input: {
 /** Test helper: reset the cached REST client between specs. */
 export function resetAblyRestClientForTests(): void {
   restClient = null
+  restClientKey = null
 }
