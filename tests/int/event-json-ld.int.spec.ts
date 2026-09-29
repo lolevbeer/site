@@ -1,6 +1,6 @@
 /**
  * Event JSON-LD must include a real Place address when a location lookup is
- * provided, and names must distinguish the two taprooms.
+ * provided, and always emit url / description / image (with OG fallback).
  */
 import { describe, expect, it } from 'vitest'
 import { createLocationLookup, generateEventJsonLd } from '@/lib/utils/json-ld'
@@ -27,10 +27,10 @@ describe('generateEventJsonLd', () => {
   it('leaves an empty address when no lookup is passed (the homepage bug)', () => {
     const schema = generateEventJsonLd(
       event({
-      organizer: "Drew's Clues Trivia",
-      date: '2026-09-09',
-      startTime: '4:00pm',
-      location: 'lawrenceville',
+        organizer: "Drew's Clues Trivia",
+        date: '2026-09-09',
+        startTime: '4:00pm',
+        location: 'lawrenceville',
       }),
     )
     expect(schema.location.address.streetAddress).toBe('')
@@ -51,5 +51,43 @@ describe('generateEventJsonLd', () => {
     expect(schema.location.address.addressLocality).toBe('Pittsburgh')
     expect(schema.name).toContain('Lawrenceville')
     expect(schema.url).toBe('https://lolev.beer/events')
+  })
+
+  it('always emits description, url, and OG image fallback', () => {
+    const schema = generateEventJsonLd(
+      event({
+        organizer: 'Karaoke Night',
+        date: '2026-10-01',
+        startTime: '7:00pm',
+        endTime: '10:00pm',
+        location: 'lawrenceville',
+      }),
+    )
+    expect(schema.description).toBe('Karaoke Night')
+    expect(schema.url).toBe('https://lolev.beer/events')
+    expect(schema.image).toBe('https://lolev.beer/images/beer/og-image.jpg')
+    expect(schema.endDate).toBeTruthy()
+  })
+
+  it('prefers CMS description, site url, and absolute event image', () => {
+    const schema = generateEventJsonLd(
+      event({
+        title: 'Beer Release',
+        description: 'Hazy IPA drop party',
+        date: '2026-10-02',
+        time: '5:00pm',
+        endTime: '8:00pm',
+        status: 'scheduled',
+        location: 'lawrenceville',
+        vendor: 'Lolev',
+        type: 'special_event',
+        site: 'https://lolev.beer/events',
+        image: '/api/media/file/release.jpg',
+      }),
+    )
+    expect(schema.description).toBe('Hazy IPA drop party')
+    expect(schema.url).toBe('https://lolev.beer/events')
+    expect(schema.image).toBe('https://lolev.beer/api/media/file/release.jpg')
+    expect(schema.endDate).toBeTruthy()
   })
 })

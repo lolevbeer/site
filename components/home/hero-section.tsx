@@ -160,7 +160,7 @@ export function HeroSection({
               className="w-full sm:w-auto sm:min-w-[160px]"
             >
               <Link href="/beer-map" prefetch={false}>
-                Find Lolev
+                Find Our Beer
               </Link>
             </Button>
             <Button

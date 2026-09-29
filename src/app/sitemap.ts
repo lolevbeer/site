@@ -23,7 +23,7 @@ const STATIC_INFO_PAGES: Array<{
   changeFrequency: 'weekly' | 'monthly' | 'yearly'
   priority: number
 }> = [
-  { path: '/beer-map', changeFrequency: 'weekly', priority: 0.7 },
+  { path: '/beer-map', changeFrequency: 'weekly', priority: 0.9 },
   { path: '/donate', changeFrequency: 'yearly', priority: 0.3 },
   { path: '/jobs', changeFrequency: 'weekly', priority: 0.4 },
   { path: '/about', changeFrequency: 'monthly', priority: 0.6 },

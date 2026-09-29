@@ -633,6 +633,10 @@ export interface Event {
   tags?: ('music' | 'utensils' | 'puzzle' | 'sports' | 'beer-release' | 'mic-vocal')[] | null;
   description?: string | null;
   /**
+   * Optional photo for Event rich results (falls back to the site OG image)
+   */
+  image?: (string | null) | Media;
+  /**
    * Expected or registered attendees
    */
   attendees?: number | null;
@@ -769,6 +773,10 @@ export interface RecurringEvent {
   site?: string | null;
   tags?: ('music' | 'utensils' | 'puzzle' | 'sports' | 'beer-release' | 'mic-vocal')[] | null;
   description?: string | null;
+  /**
+   * Optional photo for Event rich results (falls back to the site OG image)
+   */
+  image?: (string | null) | Media;
   /**
    * Expected or registered attendees
    */
@@ -1362,6 +1370,7 @@ export interface EventsSelect<T extends boolean = true> {
   site?: T;
   tags?: T;
   description?: T;
+  image?: T;
   attendees?: T;
   pointOfContact?: T;
   email?: T;
@@ -1454,6 +1463,7 @@ export interface RecurringEventsSelect<T extends boolean = true> {
   site?: T;
   tags?: T;
   description?: T;
+  image?: T;
   attendees?: T;
   pointOfContact?: T;
   email?: T;

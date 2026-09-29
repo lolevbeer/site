@@ -7,6 +7,7 @@
 'use client'
 
 import React, { Suspense, useMemo } from 'react'
+import Link from 'next/link'
 import { useQueryState, parseAsString } from 'nuqs'
 import { Beer } from '@/lib/types/beer'
 import { BeerCard } from '@/components/beer/beer-card'
@@ -196,6 +197,13 @@ function BeerListing({
 
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold tracking-tight">Our Beers</h1>
+          <p className="mt-3 text-muted-foreground text-balance">
+            Looking for cans or draft near you?{' '}
+            <Link href="/beer-map" className="text-primary font-medium hover:underline">
+              Find Our Beer on the map
+            </Link>
+            .
+          </p>
         </div>
 
         {/* Filter Bar */}

@@ -480,6 +480,8 @@ export function transformPayloadEventToBreweryEvent(
 ): BreweryEvent {
   const eventLocation = typeof event.location === 'object' ? event.location : null
 
+  const imageUrl = getMediaUrl(event.image)
+
   return {
     id: event.id,
     title: event.organizer,
@@ -495,6 +497,7 @@ export function transformPayloadEventToBreweryEvent(
     site: event.site ?? undefined,
     attendees: event.attendees ?? undefined,
     tags: event.tags ?? undefined,
+    image: imageUrl,
   }
 }
 
