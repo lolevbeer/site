@@ -58,7 +58,7 @@ export const SiteSeo: GlobalConfig = {
               label: 'Default title',
               admin: {
                 description:
-                  'Homepage / fallback <title>. Example: Lolev Beer | Craft Brewery in Zelienople & Pittsburgh',
+                  'Homepage / fallback <title>. Example: Lolev Beer • Craft Brewery in Zelienople & Pittsburgh',
               },
             },
             {
@@ -67,7 +67,7 @@ export const SiteSeo: GlobalConfig = {
               label: 'Title template',
               admin: {
                 description:
-                  'Next.js title template with %s for the page title. Example: %s | Lolev Beer. Leave blank for "%s | Lolev Beer".',
+                  'Next.js title template with %s for the page title. Example: %s • Lolev Beer. Leave blank for "%s • Lolev Beer".',
               },
             },
             {

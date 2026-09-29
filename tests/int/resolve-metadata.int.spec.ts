@@ -36,7 +36,7 @@ describe('buildPageMetadata', () => {
   })
 
   it('builds og:title from the CMS title template, not a hard-coded suffix', async () => {
-    expect((await buildPageMetadata(base)).openGraph?.title).toBe('Lupula | Lolev Beer')
+    expect((await buildPageMetadata(base)).openGraph?.title).toBe('Lupula • Lolev Beer')
     siteSeo.current = { titleTemplate: '%s · Lolev' }
     expect((await buildPageMetadata(base)).openGraph?.title).toBe('Lupula · Lolev')
   })

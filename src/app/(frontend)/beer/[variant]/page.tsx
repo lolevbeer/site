@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: BeerPageProps): Promise<Metad
     (typeof beer.description === 'string' ? beer.description.trim() : '') ||
     `${beer.name}${styleName ? ` — ${styleName}` : ''} beer from Lolev Beer, a craft brewery in Pittsburgh.`
 
-  const pageTitle = styleName ? `${beer.name} | ${styleName}` : beer.name
+  const pageTitle = styleName ? `${beer.name} • ${styleName}` : beer.name
   const seo = beer.seo
 
   return buildPageMetadata({

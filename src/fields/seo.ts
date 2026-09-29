@@ -11,7 +11,7 @@ const seoFields: Field[] = [
     label: 'Meta title',
     admin: {
       description:
-        'Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "| Lolev Beer" on hub pages; the site title template adds it.',
+        'Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "• Lolev Beer" on hub pages; the site title template adds it.',
     },
   },
   {

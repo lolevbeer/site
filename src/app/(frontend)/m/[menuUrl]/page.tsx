@@ -51,7 +51,7 @@ export async function generateMetadata({ params }: MenuPageProps) {
     title,
     description,
     robots: NOINDEX_ROBOTS,
-    openGraph: pageOpenGraph(`${title} | Lolev Beer`, description),
+    openGraph: pageOpenGraph(`${title} • Lolev Beer`, description),
     other: { [LIVE_DISPLAY_META]: 'ready' },
   }
 }
