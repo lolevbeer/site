@@ -13,6 +13,11 @@ vi.mock('@/components/seo/json-ld', () => ({
   JsonLd: () => null,
 }))
 
+vi.mock('@/lib/utils/site-seo', () => ({
+  getSiteSeo: vi.fn(async () => ({})),
+  hubPageSeo: vi.fn(() => null),
+}))
+
 import AccessibilityPage from '@/src/app/(frontend)/accessibility/page'
 import PrivacyPage from '@/src/app/(frontend)/privacy/page'
 import TermsPage from '@/src/app/(frontend)/terms/page'

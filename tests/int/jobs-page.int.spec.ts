@@ -8,6 +8,11 @@ vi.mock('@/lib/jobs/payload', () => ({
   getActiveJobs: vi.fn(),
 }))
 
+vi.mock('@/lib/utils/site-seo', () => ({
+  getSiteSeo: vi.fn(async () => ({})),
+  hubPageSeo: vi.fn(() => null),
+}))
+
 vi.mock('@/components/ui/page-breadcrumbs', () => ({
   PageBreadcrumbs: () => null,
 }))
