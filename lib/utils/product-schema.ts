@@ -243,7 +243,11 @@ export function generateProductSchema(
 
   // Add image if available. Resolve the real URL (local PNG, Payload Media, or
   // Blob) via the shared helper, then make it absolute for schema.org.
-  const imageUrl = getBeerImageUrl(beer.image, typeof beerSlug === 'string' ? beerSlug : undefined)
+  const imageUrl = getBeerImageUrl(
+    beer.image,
+    typeof beerSlug === 'string' ? beerSlug : undefined,
+    'detail',
+  )
   if (imageUrl) {
     product.image = imageUrl.startsWith('/') ? `${LOLEV_BASE_URL}${imageUrl}` : imageUrl
   }

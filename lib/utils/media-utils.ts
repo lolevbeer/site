@@ -77,7 +77,7 @@ export function canSpriteAnimation(url: string): CSSProperties {
  * Type for Payload Media objects
  * Matches the essential fields from Payload's Media collection
  */
-type MediaSize = 'thumbnail' | 'card' | 'detail'
+export type MediaSize = 'thumbnail' | 'card' | 'detail'
 
 interface MediaSizeObject {
   url?: string | null
@@ -96,9 +96,11 @@ interface MediaObject {
  * - string (just an ID, not populated): returns undefined
  * - Media object with url: returns normalized URL
  *
- * URLs are normalized to be relative for environment-agnostic usage
+ * Absolute Blob CDN hosts are preserved; other absolute hosts collapse to
+ * pathname for environment-agnostic delivery (see normalizeUrl).
  *
  * @param media - The media field value (string ID, Media object, null, or undefined)
+ * @param size - Optional Payload image size (thumbnail | card | detail)
  * @returns The normalized URL string, or undefined if not available
  */
 export function getMediaUrl(media: unknown, size?: MediaSize): string | undefined {
@@ -132,28 +134,32 @@ export function getMediaUrl(media: unknown, size?: MediaSize): string | undefine
  * - undefined/null/false: returns null (no image)
  * - string: returns normalized URL
  * - true (boolean): returns path to local PNG based on slug/variant
- * - Media object: extracts and normalizes URL
+ * - Media object: extracts sized URL when requested, else original
  *
  * @param image - The beer's image field value
  * @param slugOrVariant - Optional slug or variant for local image path fallback
+ * @param size - Optional Payload image size (thumbnail | card | detail)
  * @returns The image URL string, or null if not available
  */
-export function getBeerImageUrl(image: unknown, slugOrVariant?: string): string | null {
+export function getBeerImageUrl(
+  image: unknown,
+  slugOrVariant?: string,
+  size?: MediaSize,
+): string | null {
   if (!image) return null
 
   // Already a URL string (from payload-adapter conversion or direct URL)
   if (typeof image === 'string') return normalizeUrl(image)
 
-  // Boolean true means use local PNG file
+  // Boolean true means use local PNG file (no Payload size derivatives)
   if (image === true) {
     if (slugOrVariant) return `/images/beer/${slugOrVariant}.png`
     return null
   }
 
-  // Payload Media object with url property
+  // Payload Media object: prefer the requested size, fall back to original
   if (typeof image === 'object' && image !== null && 'url' in image) {
-    const url = (image as MediaObject).url
-    return url ? normalizeUrl(url) : null
+    return getMediaUrl(image, size) ?? null
   }
 
   return null
@@ -163,14 +169,16 @@ export function getBeerImageUrl(image: unknown, slugOrVariant?: string): string 
  * Get image URL for a location card image
  * Similar to getMediaUrl but returns null instead of undefined
  *
+ * Landscape location photos should omit size (keep original) so square
+ * Payload crops do not change composition. Use size only for square UI.
+ *
  * @param image - The image field value
+ * @param size - Optional Payload image size (thumbnail | card | detail)
  * @returns The normalized URL string, or null if not available
  */
-export function getLocationImageUrl(image: unknown): string | null {
+export function getLocationImageUrl(image: unknown, size?: MediaSize): string | null {
   if (!image) return null
-  if (typeof image === 'string') return image
-  if (typeof image === 'object' && image !== null && 'url' in image) {
-    return (image as MediaObject).url || null
-  }
-  return null
+  // Legacy callers may pass a bare URL string
+  if (typeof image === 'string') return normalizeUrl(image)
+  return getMediaUrl(image, size) ?? null
 }

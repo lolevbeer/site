@@ -47,9 +47,15 @@ export function HeroSection({
     }
     return availableBeers
       .filter(
-        (beer) => cansIds.has(beer.id) && getBeerImageUrl(beer.image) && !imageErrors.has(beer.id),
+        (beer) =>
+          cansIds.has(beer.id) &&
+          getBeerImageUrl(beer.image, beer.slug, 'thumbnail') &&
+          !imageErrors.has(beer.id),
       )
-      .map((beer) => ({ beer, imageUrl: getBeerImageUrl(beer.image)! }))
+      .map((beer) => ({
+        beer,
+        imageUrl: getBeerImageUrl(beer.image, beer.slug, 'thumbnail')!,
+      }))
   }, [availableBeers, cansMenus, imageErrors])
 
   return (

@@ -50,7 +50,7 @@ function vendorFields(
     return {
       name: v.name || 'Vendor',
       site: (fallbackSite || v.site) ?? undefined,
-      logoUrl: getMediaUrl(v.logo) ?? undefined,
+      logoUrl: getMediaUrl(v.logo, 'thumbnail') ?? undefined,
     }
   }
   return {
