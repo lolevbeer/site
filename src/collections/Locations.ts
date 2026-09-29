@@ -1,4 +1,4 @@
-import type { CollectionConfig, Access } from 'payload'
+import type { CollectionConfig, Access, RelationshipField } from 'payload'
 import { generateUniqueSlug } from './utils/generateUniqueSlug'
 import { markLinesCleanedField } from './utils/markLinesCleanedField'
 import { documentSeoField } from '@/src/fields/seo'
@@ -120,6 +120,26 @@ export const Locations: CollectionConfig = {
       access: {
         update: adminFieldAccess,
       },
+    },
+    {
+      type: 'row',
+      fields: (['draft', 'cans'] as const).map((type): RelationshipField => ({
+        name: `${type}Menu`,
+        label: type === 'draft' ? 'Draft Menu' : 'Cans Menu',
+        type: 'relationship',
+        relationTo: 'menus',
+        // Avoid populating the location → menu → location cycle.
+        maxDepth: 0,
+        access: { update: adminFieldAccess },
+        filterOptions: ({ id }) =>
+          id ? { location: { equals: id }, type: { equals: type } } : false,
+        admin: {
+          width: '50%',
+          description:
+            `The ${type} menu shown for this location on the homepage and /<location> page ` +
+            '(e.g. /lawrenceville). Only published menus appear. Leave blank to hide it.',
+        },
+      })),
     },
     {
       name: 'intro',

@@ -32,6 +32,7 @@ import {
   type RecurringFoodState,
 } from '@/src/utils/recurring-food'
 import { getPublicBeerReviews } from '@/src/utils/beer-reviews'
+import { relationshipId } from '@/src/utils/relationship-id'
 import type {
   Beer as PayloadBeer,
   Menu,
@@ -256,20 +257,46 @@ export const getMenusByLocation = async (locationSlug: string): Promise<PayloadM
   }
 }
 
-/**
- * Get draft menu for a location
- */
-export async function getDraftMenu(locationSlug: string): Promise<PayloadMenu | null> {
-  const menus = await getMenusByLocation(locationSlug)
-  return menus.find((menu) => menu.type === 'draft') || null
+/** Resolve the explicit website menu selection, never the first menu of a type. */
+async function getLocationMenu(
+  locationSlug: string,
+  type: 'draft' | 'cans',
+): Promise<PayloadMenu | null> {
+  return unstable_cache(
+    async () => {
+      const payload = await getPayload({ config })
+      const location = await findLocationBySlug(payload, locationSlug)
+      const selected = location?.[`${type}Menu`]
+      if (!location || !selected) return null
+
+      const result = await payload.find({
+        collection: 'menus',
+        overrideAccess: false,
+        where: {
+          id: { equals: relationshipId(selected) },
+          location: { equals: location.id },
+          type: { equals: type },
+          _status: { equals: 'published' },
+        },
+        depth: 3,
+        populate: CATALOG_MENU_POPULATE,
+        limit: 1,
+      })
+      return result.docs[0] ?? null
+    },
+    [`location-${locationSlug}-${type}-menu`],
+    { tags: [CACHE_TAGS.locations, CACHE_TAGS.menus, CACHE_TAGS.beers], revalidate: 300 },
+  )()
 }
 
-/**
- * Get cans menu for a location
- */
+/** Get the location's selected draft menu for the homepage and taproom page. */
+export async function getDraftMenu(locationSlug: string): Promise<PayloadMenu | null> {
+  return getLocationMenu(locationSlug, 'draft')
+}
+
+/** Get the location's selected cans menu for the homepage and taproom page. */
 export async function getCansMenu(locationSlug: string): Promise<PayloadMenu | null> {
-  const menus = await getMenusByLocation(locationSlug)
-  const cansMenu = menus.find((menu) => menu.type === 'cans') || null
+  const cansMenu = await getLocationMenu(locationSlug, 'cans')
 
   // Clone and sort to avoid mutating the cached object from unstable_cache
   if (cansMenu?.items) {

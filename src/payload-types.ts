@@ -383,6 +383,14 @@ export interface Location {
   active?: boolean | null;
   name: string;
   /**
+   * The draft menu shown for this location on the homepage and /<location> page (e.g. /lawrenceville). Only published menus appear. Leave blank to hide it.
+   */
+  draftMenu?: (string | null) | Menu;
+  /**
+   * The cans menu shown for this location on the homepage and /<location> page (e.g. /lawrenceville). Only published menus appear. Leave blank to hide it.
+   */
+  cansMenu?: (string | null) | Menu;
+  /**
    * Optional short paragraph under the location heading for local SEO. Leave blank to show nothing.
    */
   intro?: string | null;
@@ -495,6 +503,100 @@ export interface Location {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "menus".
+ */
+export interface Menu {
+  id: string;
+  /**
+   * The last person to save this. Automated updates, such as the nightly Untappd sync, keep the previous person.
+   */
+  updatedBy?: (string | null) | User;
+  /**
+   * Menu name (e.g., "Lawrenceville Draft Menu")
+   */
+  name: string;
+  /**
+   * Menu description
+   */
+  description?: string | null;
+  /**
+   * Required to generate menu URL
+   */
+  location: string | Location;
+  type: 'cans' | 'draft' | 'other';
+  /**
+   * Auto-generated from location and type, but you can override it manually
+   */
+  url: string;
+  /**
+   * Override automatic day/night theme switching
+   */
+  themeMode?: ('auto' | 'light' | 'dark') | null;
+  /**
+   * Play the rotating-can animation on this display. Turn off to show static can images instead.
+   */
+  animateCans?: boolean | null;
+  items: {
+    product?:
+      | ({
+          relationTo: 'beers';
+          value: string | Beer;
+        } | null)
+      | ({
+          relationTo: 'products';
+          value: string | Product;
+        } | null);
+    /**
+     * Sale Price (optional override)
+     */
+    price?: string | null;
+    /**
+     * Optional promotion shown only on the fullscreen can menu.
+     */
+    promotion?: string | null;
+    id?: string | null;
+  }[];
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "products".
+ */
+export interface Product {
+  id: string;
+  name: string;
+  description?: string | null;
+  /**
+   * Optional grouping on Other Things menus. Uncategorized products remain visible.
+   */
+  category?: ('cocktails-cider' | 'soft-drinks' | 'snacks-merch') | null;
+  /**
+   * Press "Enter" or "Tab" after entering option to add another
+   */
+  options?: string[] | null;
+  /**
+   * Alcohol by volume (%)
+   */
+  abv?: number | null;
+  /**
+   * Display price (e.g., "$5.00")
+   */
+  price?: string | null;
+  /**
+   * Product from another brewery. Shows "Guest Tap" badge on menu.
+   */
+  guestTap?: boolean | null;
+  /**
+   * Collaboration product. Shows "Collab" badge on menu.
+   */
+  collab?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media".
  */
 export interface Media {
@@ -591,100 +693,6 @@ export interface BeerReview {
    * Approved reviews can be included in public beer data.
    */
   approved: boolean;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "menus".
- */
-export interface Menu {
-  id: string;
-  /**
-   * The last person to save this. Automated updates, such as the nightly Untappd sync, keep the previous person.
-   */
-  updatedBy?: (string | null) | User;
-  /**
-   * Menu name (e.g., "Lawrenceville Draft Menu")
-   */
-  name: string;
-  /**
-   * Menu description
-   */
-  description?: string | null;
-  /**
-   * Required to generate menu URL
-   */
-  location: string | Location;
-  type: 'cans' | 'draft' | 'other';
-  /**
-   * Auto-generated from location and type, but you can override it manually
-   */
-  url: string;
-  /**
-   * Override automatic day/night theme switching
-   */
-  themeMode?: ('auto' | 'light' | 'dark') | null;
-  /**
-   * Play the rotating-can animation on this display. Turn off to show static can images instead.
-   */
-  animateCans?: boolean | null;
-  items: {
-    product?:
-      | ({
-          relationTo: 'beers';
-          value: string | Beer;
-        } | null)
-      | ({
-          relationTo: 'products';
-          value: string | Product;
-        } | null);
-    /**
-     * Sale Price (optional override)
-     */
-    price?: string | null;
-    /**
-     * Optional promotion shown only on the fullscreen can menu.
-     */
-    promotion?: string | null;
-    id?: string | null;
-  }[];
-  updatedAt: string;
-  createdAt: string;
-  _status?: ('draft' | 'published') | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "products".
- */
-export interface Product {
-  id: string;
-  name: string;
-  description?: string | null;
-  /**
-   * Optional grouping on Other Things menus. Uncategorized products remain visible.
-   */
-  category?: ('cocktails-cider' | 'soft-drinks' | 'snacks-merch') | null;
-  /**
-   * Press "Enter" or "Tab" after entering option to add another
-   */
-  options?: string[] | null;
-  /**
-   * Alcohol by volume (%)
-   */
-  abv?: number | null;
-  /**
-   * Display price (e.g., "$5.00")
-   */
-  price?: string | null;
-  /**
-   * Product from another brewery. Shows "Guest Tap" badge on menu.
-   */
-  guestTap?: boolean | null;
-  /**
-   * Collaboration product. Shows "Collab" badge on menu.
-   */
-  collab?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1705,6 +1713,8 @@ export interface LocationsSelect<T extends boolean = true> {
   linesLastCleaned?: T;
   active?: T;
   name?: T;
+  draftMenu?: T;
+  cansMenu?: T;
   intro?: T;
   timezone?: T;
   slug?: T;

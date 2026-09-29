@@ -13,6 +13,7 @@ import * as dropGoogleSheetsFields from './20260830_100000_drop_google_sheets_fi
 import * as dropLegacyRecurringFoodSlotIndex from './20260830_143000_drop_legacy_recurring_food_slot_index'
 import * as backfillMissingBeerReviews from './20260926_190000_backfill_missing_beer_reviews'
 import * as payloadJobsRunnableProcessingUntil from './20260927_020000_payload_jobs_runnable_processing_until'
+import * as locationWebsiteMenus from './20260929_120000_location_website_menus'
 
 export const migrations = [
   {
@@ -59,5 +60,10 @@ export const migrations = [
     up: payloadJobsRunnableProcessingUntil.up,
     down: payloadJobsRunnableProcessingUntil.down,
     name: '20260927_020000_payload_jobs_runnable_processing_until',
+  },
+  {
+    up: locationWebsiteMenus.up,
+    down: locationWebsiteMenus.down,
+    name: '20260929_120000_location_website_menus',
   },
 ]
