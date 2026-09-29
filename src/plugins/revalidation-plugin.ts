@@ -41,10 +41,31 @@ const COLLECTION_CACHE_MAP: Record<string, string[]> = {
   'job-applications': [],
 }
 
+
+// Paths to revalidate when a global changes (beyond homepage)
+const GLOBAL_PATHS: Record<string, string[]> = {
+  'site-seo': [
+    '/',
+    '/beer',
+    '/events',
+    '/food',
+    '/beer-map',
+    '/donate',
+    '/jobs',
+    '/about',
+    '/faq',
+    '/accessibility',
+    '/privacy',
+    '/terms',
+  ],
+  'site-content': ['/', '/about'],
+}
+
 // Global to cache tags mapping
 const GLOBAL_CACHE_MAP: Record<string, string[]> = {
   'coming-soon': ['coming-soon'],
   'site-content': ['site-content'],
+  'site-seo': ['site-seo'],
   'recurring-food': ['recurring-food', 'food'],
 }
 
@@ -79,6 +100,7 @@ const COLLECTION_LAYOUT_PATHS: Record<string, string[]> = {
 // Dynamic path builders for collections with slugs
 const COLLECTION_PATH_BUILDERS: Record<string, (doc: Record<string, unknown>) => string[]> = {
   beers: (doc) => (doc.slug ? [`/beer/${doc.slug}`] : []),
+  locations: (doc) => (doc.slug ? [`/${doc.slug}`] : []),
   menus: (doc) => (doc.url ? [`/m/${doc.url}`] : []),
   jobs: (doc) => {
     const paths: string[] = []
@@ -207,6 +229,9 @@ function createGlobalAfterChangeHook(slug: string) {
 
     // Always revalidate homepage for globals
     revalidatePath('/')
+    ;(GLOBAL_PATHS[slug] || []).forEach((path) => {
+      if (path !== '/') revalidatePath(path)
+    })
 
     return doc
   }

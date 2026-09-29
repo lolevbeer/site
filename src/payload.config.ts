@@ -31,6 +31,7 @@ import { FAQs } from './collections/FAQs'
 import { ComingSoon } from './globals/ComingSoon'
 import { RecurringFood } from './globals/RecurringFood'
 import { SiteContent } from './globals/SiteContent'
+import { SiteSeo } from './globals/SiteSeo'
 import { importDistributors } from './endpoints/import-distributors'
 import { importLakeBeverageCSV } from './endpoints/import-lake-beverage-csv'
 import { updateDistributorUrls } from './endpoints/update-distributor-urls'
@@ -225,6 +226,7 @@ export default buildConfig({
     RecurringFood,
     // Settings (last)
     SiteContent,
+    SiteSeo,
   ].map((global) => ({ versions: false, ...global })),
   editor: lexicalEditor(),
   secret: serverEnv.payloadSecret,

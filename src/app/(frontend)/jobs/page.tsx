@@ -17,18 +17,24 @@ import {
 } from '@/components/ui/card'
 import { Empty, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
 import { getActiveJobs } from '@/lib/jobs/payload'
-import { pageOpenGraph } from '@/lib/utils/seo'
+import { getSiteSeo, hubPageSeo } from '@/lib/utils/site-seo'
+import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
 
 export const revalidate = 300
 
 const DESCRIPTION = 'Open roles at Lolev Beer taprooms.'
 
-export const metadata: Metadata = {
-  title: 'Jobs',
-  description: DESCRIPTION,
-  alternates: { canonical: '/jobs' },
-  openGraph: pageOpenGraph('Jobs | Lolev Beer', DESCRIPTION),
+export async function generateMetadata(): Promise<Metadata> {
+  const siteSeo = await getSiteSeo()
+  return buildPageMetadata({
+    fallbackTitle: 'Jobs',
+    fallbackDescription: DESCRIPTION,
+    canonicalPath: '/jobs',
+    seo: hubPageSeo(siteSeo, 'jobs'),
+    siteSeo,
+  })
 }
+
 
 export default async function JobsPage() {
   const jobs = await getActiveJobs()

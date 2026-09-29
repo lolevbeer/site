@@ -7,6 +7,7 @@ import { adminAccess, beerManagerAccess, beerManagerFieldAccess, hasRole } from 
 import { fetchUntappdData, type UntappdReview } from '@/src/utils/untappd'
 import { logger } from '@/lib/utils/logger'
 import { syncBeerReviews, type LegacyUntappdReview } from '@/src/utils/beer-reviews'
+import { documentSeoField } from '@/src/fields/seo'
 
 /** Round to nearest multiple (like Excel's MROUND) */
 function mround(value: number, multiple: number): number {
@@ -583,5 +584,6 @@ export const Beers: CollectionConfig = {
         description: 'Legacy review data retained temporarily for migration compatibility.',
       },
     },
+    documentSeoField,
   ],
 }

@@ -1,6 +1,7 @@
 import type { CollectionConfig, Access } from 'payload'
 import { generateUniqueSlug } from './utils/generateUniqueSlug'
 import { markLinesCleanedField } from './utils/markLinesCleanedField'
+import { documentSeoField } from '@/src/fields/seo'
 import {
   adminAccess,
   adminFieldAccess,
@@ -480,5 +481,6 @@ export const Locations: CollectionConfig = {
         },
       ],
     },
+    documentSeoField,
   ],
 }

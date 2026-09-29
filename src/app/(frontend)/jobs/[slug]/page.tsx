@@ -10,7 +10,8 @@ import { PageTransition } from '@/components/motion'
 import { Card, CardContent } from '@/components/ui/card'
 import { JobApplyForm } from '@/components/jobs/job-apply-form'
 import { getJobBySlug } from '@/lib/jobs/payload'
-import { pageOpenGraph } from '@/lib/utils/seo'
+import { getSiteSeo } from '@/lib/utils/site-seo'
+import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
 
 export const revalidate = 300
 
@@ -20,16 +21,17 @@ interface JobPageProps {
 
 export async function generateMetadata({ params }: JobPageProps): Promise<Metadata> {
   const { slug } = await params
-  const job = await getJobBySlug(slug)
+  const [job, siteSeo] = await Promise.all([getJobBySlug(slug), getSiteSeo()])
   if (!job) return { title: 'Job not found' }
   const description = job.summary || `Apply for ${job.title} at Lolev Beer.`
   const title = `${job.title} — Jobs`
-  return {
-    title,
-    description,
-    alternates: { canonical: `/jobs/${job.slug}` },
-    openGraph: pageOpenGraph(`${title} | Lolev Beer`, description),
-  }
+  return buildPageMetadata({
+    fallbackTitle: title,
+    fallbackDescription: description,
+    canonicalPath: `/jobs/${job.slug}`,
+    seo: job.seo,
+    siteSeo,
+  })
 }
 
 export default async function JobPage({ params }: JobPageProps) {

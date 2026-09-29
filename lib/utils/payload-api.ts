@@ -617,14 +617,19 @@ export const getComingSoonBeers = async () => {
  * Cached based on the global type
  */
 export const fetchGlobal = async (slug: string, depth: number = 0) => {
-  const tag = slug === 'coming-soon' ? CACHE_TAGS.comingSoon : CACHE_TAGS.siteContent
+  const tag =
+    slug === 'coming-soon'
+      ? CACHE_TAGS.comingSoon
+      : slug === 'site-seo'
+        ? CACHE_TAGS.siteSeo
+        : CACHE_TAGS.siteContent
 
   try {
     return await unstable_cache(
       async () => {
         const payload = await getPayload({ config })
         const result = await payload.findGlobal({
-          slug: slug as 'coming-soon' | 'site-content',
+          slug: slug as 'coming-soon' | 'site-content' | 'site-seo',
           overrideAccess: false,
           depth,
         })

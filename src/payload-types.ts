@@ -135,12 +135,14 @@ export interface Config {
     'coming-soon': ComingSoon;
     'recurring-food': RecurringFood;
     'site-content': SiteContent;
+    'site-seo': SiteSeo;
     'payload-jobs-stats': PayloadJobsStat;
   };
   globalsSelect: {
     'coming-soon': ComingSoonSelect<false> | ComingSoonSelect<true>;
     'recurring-food': RecurringFoodSelect<false> | RecurringFoodSelect<true>;
     'site-content': SiteContentSelect<false> | SiteContentSelect<true>;
+    'site-seo': SiteSeoSelect<false> | SiteSeoSelect<true>;
     'payload-jobs-stats': PayloadJobsStatsSelect<false> | PayloadJobsStatsSelect<true>;
   };
   locale: null;
@@ -183,6 +185,21 @@ export interface UserAuthOperations {
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "beers".
  */
+
+/**
+ * Shared document / hub SEO overrides.
+ */
+export interface SeoFields {
+  title?: string | null;
+  description?: string | null;
+  ogTitle?: string | null;
+  ogDescription?: string | null;
+  ogImage?: (string | null) | Media;
+  keywords?: string[] | null;
+  noIndex?: boolean | null;
+  canonicalPath?: string | null;
+}
+
 export interface Beer {
   id: string;
   /**
@@ -284,6 +301,10 @@ export interface Beer {
     | number
     | boolean
     | null;
+  /**
+   * Optional overrides for this document’s public page. Blank fields keep the auto-generated title and description.
+   */
+  seo?: SeoFields;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -410,6 +431,10 @@ export interface Location {
     open?: string | null;
     close?: string | null;
   };
+  /**
+   * Optional overrides for this document’s public page. Blank fields keep the auto-generated title and description.
+   */
+  seo?: SeoFields;
   updatedAt: string;
   createdAt: string;
 }
@@ -710,6 +735,10 @@ export interface Job {
   summary?: string | null;
   description: string;
   active?: boolean | null;
+  /**
+   * Optional overrides for this document’s public page. Blank fields keep the auto-generated title and description.
+   */
+  seo?: SeoFields;
   updatedAt: string;
   createdAt: string;
 }
@@ -1275,6 +1304,16 @@ export interface BeersSelect<T extends boolean = true> {
   slug?: T;
   recipe?: T;
   positiveReviews?: T;
+  seo?: T | {
+    title?: T;
+    description?: T;
+    ogTitle?: T;
+    ogDescription?: T;
+    ogImage?: T;
+    keywords?: T;
+    noIndex?: T;
+    canonicalPath?: T;
+  };
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -1421,6 +1460,16 @@ export interface JobsSelect<T extends boolean = true> {
   summary?: T;
   description?: T;
   active?: T;
+  seo?: T | {
+    title?: T;
+    description?: T;
+    ogTitle?: T;
+    ogDescription?: T;
+    ogImage?: T;
+    keywords?: T;
+    noIndex?: T;
+    canonicalPath?: T;
+  };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1625,6 +1674,16 @@ export interface LocationsSelect<T extends boolean = true> {
         open?: T;
         close?: T;
       };
+  seo?: T | {
+    title?: T;
+    description?: T;
+    ogTitle?: T;
+    ogDescription?: T;
+    ogImage?: T;
+    keywords?: T;
+    noIndex?: T;
+    canonicalPath?: T;
+  };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1876,6 +1935,68 @@ export interface RecurringFood {
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "site-content".
  */
+
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-seo".
+ */
+export interface SiteSeo {
+  id: string;
+  defaultTitle?: string | null;
+  titleTemplate?: string | null;
+  description?: string | null;
+  keywords?: string[] | null;
+  ogImage?: (string | null) | Media;
+  twitterSite?: string | null;
+  twitterCreator?: string | null;
+  pages?: {
+    home?: SeoFields;
+    beer?: SeoFields;
+    events?: SeoFields;
+    food?: SeoFields;
+    beerMap?: SeoFields;
+    donate?: SeoFields;
+    jobs?: SeoFields;
+    about?: SeoFields;
+    faq?: SeoFields;
+    accessibility?: SeoFields;
+    privacy?: SeoFields;
+    terms?: SeoFields;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-seo_select".
+ */
+export interface SiteSeoSelect<T extends boolean = true> {
+  defaultTitle?: T;
+  titleTemplate?: T;
+  description?: T;
+  keywords?: T;
+  ogImage?: T;
+  twitterSite?: T;
+  twitterCreator?: T;
+  pages?: T | {
+    home?: T;
+    beer?: T;
+    events?: T;
+    food?: T;
+    beerMap?: T;
+    donate?: T;
+    jobs?: T;
+    about?: T;
+    faq?: T;
+    accessibility?: T;
+    privacy?: T;
+    terms?: T;
+  };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+
 export interface SiteContent {
   id: string;
   /**

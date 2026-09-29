@@ -12,7 +12,9 @@ import { createLocationLookup, generateFoodEventJsonLd } from '@/lib/utils/json-
 import { PageTransition } from '@/components/motion'
 import { logger } from '@/lib/utils/logger'
 import { capitalizeName } from '@/lib/utils/formatters'
-import { DEFAULT_OG_IMAGES, foodDescription } from '@/lib/utils/seo'
+import { foodDescription } from '@/lib/utils/seo'
+import { getSiteSeo, hubPageSeo } from '@/lib/utils/site-seo'
+import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
 import {
   getRecurringFoodState,
   recurringDays as days,
@@ -20,19 +22,15 @@ import {
 } from '@/src/utils/recurring-food'
 
 export async function generateMetadata(): Promise<Metadata> {
-  const locations = await getAllLocations()
+  const [locations, siteSeo] = await Promise.all([getAllLocations(), getSiteSeo()])
   const description = foodDescription(locations)
-  return {
-    title: 'Food',
-    description,
-    alternates: { canonical: '/food' },
-    openGraph: {
-      title: 'Food | Lolev Beer',
-      description,
-      type: 'website',
-      images: DEFAULT_OG_IMAGES,
-    },
-  }
+  return buildPageMetadata({
+    fallbackTitle: 'Food',
+    fallbackDescription: description,
+    canonicalPath: '/food',
+    seo: hubPageSeo(siteSeo, 'food'),
+    siteSeo,
+  })
 }
 
 // Revalidate every hour

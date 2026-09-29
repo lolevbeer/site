@@ -10,7 +10,6 @@ import { PageTransition } from '@/components/motion'
 import { LocationLanding } from '@/components/location/location-landing'
 import { generateLocalBusinessSchema } from '@/lib/utils/local-business-schema'
 import { generateLocationMenuSchema } from '@/lib/utils/menu-schema'
-import { DEFAULT_OG_IMAGES } from '@/lib/utils/seo'
 import { extractBeerFromMenuItem } from '@/lib/utils/menu-item-utils'
 import { convertPayloadBeer } from '@/lib/utils/payload-adapter'
 import {
@@ -23,6 +22,8 @@ import {
 } from '@/lib/utils/payload-api'
 import { findLocationBySlug, formatCityStateZip, RESERVED_LOCATION_SLUGS } from '@/lib/config/locations'
 import { safeHttpUrl } from '@/lib/utils/url-utils'
+import { getSiteSeo } from '@/lib/utils/site-seo'
+import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
 
 export const revalidate = 300
 
@@ -78,7 +79,7 @@ const loadLocation = cache(async (slug: string) => {
 
 export async function generateMetadata({ params }: LocationPageProps): Promise<Metadata> {
   const { location: slug } = await params
-  const data = await loadLocation(slug)
+  const [data, siteSeo] = await Promise.all([loadLocation(slug), getSiteSeo()])
   if (!data) return { title: 'Not Found' }
 
   const name = data.location.name
@@ -86,18 +87,15 @@ export async function generateMetadata({ params }: LocationPageProps): Promise<M
   const title = `${name} Taproom`
   const place = city && city.toLowerCase() !== name.toLowerCase() ? `${name}, ${city}` : name
   const description = `Visit Lolev Beer in ${place}. Hours, address, what's on tap, and upcoming events.`
+  const seo = data.location.seo
 
-  return {
-    title,
-    description,
-    alternates: { canonical: `/${data.location.slug}` },
-    openGraph: {
-      title: `${title} | Lolev Beer`,
-      description,
-      type: 'website',
-      images: DEFAULT_OG_IMAGES,
-    },
-  }
+  return buildPageMetadata({
+    fallbackTitle: title,
+    fallbackDescription: description,
+    canonicalPath: `/${data.location.slug}`,
+    seo,
+    siteSeo,
+  })
 }
 
 export default async function LocationPage({ params }: LocationPageProps) {

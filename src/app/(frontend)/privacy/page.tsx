@@ -2,23 +2,24 @@ import type { Metadata } from 'next'
 import { JsonLd } from '@/components/seo/json-ld'
 import { LegalPage } from '@/components/legal/legal-page'
 import { generateWebPageSchema } from '@/lib/utils/breadcrumb-schema'
-import { DEFAULT_OG_IMAGES } from '@/lib/utils/seo'
 import { LEGAL_PAGES_LASTMOD, LEGAL_PAGES_LASTMOD_LABEL } from '@/lib/legal/dates'
+import { getSiteSeo, hubPageSeo } from '@/lib/utils/site-seo'
+import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
 
 const DESCRIPTION =
   'How Lolev Beer collects and uses information on lolev.beer, including analytics, the beer map, donation requests, and job applications.'
 
-export const metadata: Metadata = {
-  title: 'Privacy Policy',
-  description: DESCRIPTION,
-  alternates: { canonical: '/privacy' },
-  openGraph: {
-    title: 'Privacy Policy | Lolev Beer',
-    description: DESCRIPTION,
-    type: 'website',
-    images: DEFAULT_OG_IMAGES,
-  },
+export async function generateMetadata(): Promise<Metadata> {
+  const siteSeo = await getSiteSeo()
+  return buildPageMetadata({
+    fallbackTitle: 'Privacy Policy',
+    fallbackDescription: DESCRIPTION,
+    canonicalPath: '/privacy',
+    seo: hubPageSeo(siteSeo, 'privacy'),
+    siteSeo,
+  })
 }
+
 
 export default function PrivacyPage() {
   const webPageSchema = generateWebPageSchema({

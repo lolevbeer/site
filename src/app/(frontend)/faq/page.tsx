@@ -15,13 +15,14 @@ import {
 } from '@/components/ui/accordion'
 import { JsonLd } from '@/components/seo/json-ld'
 import { getBreweryFAQs, generateFAQSchema, type FAQItem } from '@/lib/utils/faq-schema'
-import { pageOpenGraph } from '@/lib/utils/seo'
 import { generateFAQSpeakableSchema } from '@/lib/utils/speakable-schema'
 import { getActiveFAQs, getAllLocations } from '@/lib/utils/payload-api'
 import { PageTransition } from '@/components/motion'
 import { FaqContactSection } from '@/components/faq/faq-contact'
 import { taproomPhones } from '@/lib/config/locations'
 import type { PayloadLocation } from '@/lib/types/location'
+import { getSiteSeo, hubPageSeo } from '@/lib/utils/site-seo'
+import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
 
 interface FAQAnswerProps {
   question: string
@@ -113,22 +114,25 @@ export const revalidate = 3600
 const FAQ_DESCRIPTION =
   'Hours, taproom locations, food, dogs, private events, and beer styles at Lolev Beer.'
 
-export const metadata: Metadata = {
-  title: 'FAQ',
-  description: FAQ_DESCRIPTION,
-  keywords: [
-    'brewery faq',
-    'hours',
-    'location',
-    'private events',
-    'beer styles',
-    'Pittsburgh brewery',
-  ],
-  alternates: {
-    canonical: '/faq',
-  },
-  openGraph: pageOpenGraph('FAQ | Lolev Beer', FAQ_DESCRIPTION),
+export async function generateMetadata(): Promise<Metadata> {
+  const siteSeo = await getSiteSeo()
+  return buildPageMetadata({
+    fallbackTitle: 'FAQ',
+    fallbackDescription: FAQ_DESCRIPTION,
+    canonicalPath: '/faq',
+    fallbackKeywords: [
+      'brewery faq',
+      'hours',
+      'location',
+      'private events',
+      'beer styles',
+      'Pittsburgh brewery',
+    ],
+    seo: hubPageSeo(siteSeo, 'faq'),
+    siteSeo,
+  })
 }
+
 
 export default async function FAQPage() {
   const [cmsFAQs, locations] = await Promise.all([getActiveFAQs(), getAllLocations()])

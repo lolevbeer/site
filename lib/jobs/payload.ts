@@ -19,6 +19,16 @@ export interface PublicJob {
   employmentType: string
   locationName: string
   locationSlug: string
+  seo?: {
+    title?: string | null
+    description?: string | null
+    ogTitle?: string | null
+    ogDescription?: string | null
+    ogImage?: unknown
+    keywords?: string[] | null
+    canonicalPath?: string | null
+    noIndex?: boolean | null
+  } | null
 }
 
 const JOBS_CACHE = { tags: [CACHE_TAGS.jobs], revalidate: 300 }
@@ -31,6 +41,7 @@ type JobDoc = {
   description?: string | null
   employmentType?: string | null
   location?: unknown
+  seo?: PublicJob['seo']
 }
 
 function relatedString(value: unknown, key: 'name' | 'slug'): string {
@@ -49,6 +60,7 @@ function toPublicJob(doc: JobDoc): PublicJob | null {
     employmentType: doc.employmentType || 'full-time',
     locationName: relatedString(doc.location, 'name'),
     locationSlug: relatedString(doc.location, 'slug'),
+    seo: doc.seo ?? null,
   }
 }
 

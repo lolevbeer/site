@@ -6,6 +6,7 @@ import type { CollectionConfig, PayloadRequest } from 'payload'
 import { revalidatePath } from 'next/cache'
 import { adminAccess, hasRole } from '@/src/access/roles'
 import { generateUniqueSlug } from './utils/generateUniqueSlug'
+import { documentSeoField } from '@/src/fields/seo'
 
 /**
  * Populated location slug, or a lookup when the field is still an id. The
@@ -101,6 +102,7 @@ export const Jobs: CollectionConfig = {
       defaultValue: true,
       admin: { position: 'sidebar' },
     },
+    documentSeoField,
   ],
   hooks: {
     beforeChange: [

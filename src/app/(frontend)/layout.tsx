@@ -20,7 +20,9 @@ import { MotionHydrationSentinel } from '@/components/motion/blur-fade'
 import { getAllLocations } from '@/lib/utils/payload-api'
 import { getWeeklyHoursForLocations } from '@/lib/utils/homepage-data'
 import { getBaseUrl } from '@/lib/utils/get-base-url'
-import { DEFAULT_OG_IMAGES, locationKeywords, siteDescription, SITE_TITLE } from '@/lib/utils/seo'
+import { locationKeywords, siteDescription, SITE_TITLE } from '@/lib/utils/seo'
+import { getSiteSeo } from '@/lib/utils/site-seo'
+import { defaultOgImages } from '@/lib/seo/resolve-metadata'
 import './globals.css'
 
 /**
@@ -61,14 +63,21 @@ export const viewport: Viewport = {
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const locations = await getAllLocations()
-  const description = siteDescription(locations)
+  const [locations, siteSeo] = await Promise.all([getAllLocations(), getSiteSeo()])
+  const description =
+    siteSeo.description?.trim() || siteDescription(locations)
+  const defaultTitle = siteSeo.defaultTitle?.trim() || SITE_TITLE
+  const titleTemplate = siteSeo.titleTemplate?.trim() || '%s | Lolev Beer'
+  const homeSeo = siteSeo.pages?.home
+  const homeTitle = homeSeo?.title?.trim() || defaultTitle
+  const homeDescription = homeSeo?.description?.trim() || description
+
   return {
     title: {
-      default: SITE_TITLE,
-      template: '%s | Lolev Beer',
+      default: homeTitle,
+      template: titleTemplate,
     },
-    description,
+    description: homeDescription,
     keywords: [
       'craft beer',
       'brewery',
@@ -77,6 +86,7 @@ export async function generateMetadata(): Promise<Metadata> {
       'IPA',
       'stout',
       'ale',
+      ...(siteSeo.keywords?.filter(Boolean) ?? []),
       ...locationKeywords(locations),
     ],
     authors: [{ name: 'Lolev Beer' }],
@@ -92,27 +102,29 @@ export async function generateMetadata(): Promise<Metadata> {
       type: 'website',
       locale: 'en_US',
       url: getBaseUrl(),
-      title: SITE_TITLE,
-      description,
+      title: homeSeo?.ogTitle?.trim() || homeTitle,
+      description: homeSeo?.ogDescription?.trim() || homeDescription,
       siteName: 'Lolev Beer',
-      images: DEFAULT_OG_IMAGES,
+      images: defaultOgImages({ ...siteSeo, ogImage: homeSeo?.ogImage ?? siteSeo.ogImage }),
     },
     twitter: {
       card: 'summary_large_image',
-      site: '@lolevbeer',
-      creator: '@lolevbeer',
+      site: siteSeo.twitterSite?.trim() || '@lolevbeer',
+      creator: siteSeo.twitterCreator?.trim() || '@lolevbeer',
     },
-    robots: {
-      index: true,
-      follow: true,
-      googleBot: {
-        index: true,
-        follow: true,
-        'max-video-preview': -1,
-        'max-image-preview': 'large',
-        'max-snippet': -1,
-      },
-    },
+    robots: homeSeo?.noIndex
+      ? { index: false, follow: false }
+      : {
+          index: true,
+          follow: true,
+          googleBot: {
+            index: true,
+            follow: true,
+            'max-video-preview': -1,
+            'max-image-preview': 'large',
+            'max-snippet': -1,
+          },
+        },
     verification: {
       google: process.env.GOOGLE_SITE_VERIFICATION,
     },

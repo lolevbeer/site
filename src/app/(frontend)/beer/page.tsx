@@ -8,19 +8,22 @@ import { BeerPageContent } from '@/components/beer/beer-page-content'
 import { getAllBeers } from '@/lib/utils/payload-beers'
 import { JsonLd } from '@/components/seo/json-ld'
 import { generateBeerListSchema } from '@/lib/utils/product-schema'
-import { beersDescription, DEFAULT_OG_IMAGES, locationKeywords } from '@/lib/utils/seo'
+import { beersDescription, locationKeywords } from '@/lib/utils/seo'
 import { getAllLocations } from '@/lib/utils/payload-api'
+import { getSiteSeo, hubPageSeo } from '@/lib/utils/site-seo'
+import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
 
 // ISR: Revalidate every hour as fallback (on-demand revalidation handles immediate updates)
 export const revalidate = 3600
 
 export async function generateMetadata(): Promise<Metadata> {
-  const locations = await getAllLocations()
+  const [locations, siteSeo] = await Promise.all([getAllLocations(), getSiteSeo()])
   const description = beersDescription(locations)
-  return {
-    title: 'Our Beers',
-    description,
-    keywords: [
+  return buildPageMetadata({
+    fallbackTitle: 'Our Beers',
+    fallbackDescription: description,
+    canonicalPath: '/beer',
+    fallbackKeywords: [
       'craft beer',
       'brewery',
       'Pittsburgh beer',
@@ -31,16 +34,9 @@ export async function generateMetadata(): Promise<Metadata> {
       'Hazy IPA',
       ...locationKeywords(locations),
     ],
-    alternates: {
-      canonical: '/beer',
-    },
-    openGraph: {
-      title: 'Our Beers | Lolev Beer',
-      description,
-      type: 'website',
-      images: DEFAULT_OG_IMAGES,
-    },
-  }
+    seo: hubPageSeo(siteSeo, 'beer'),
+    siteSeo,
+  })
 }
 
 export default async function BeerPage() {

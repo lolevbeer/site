@@ -1,7 +1,6 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getBeerBySlug, getAllBeersFromPayload, getAvailableBeersFromMenus } from '@/lib/utils/payload-api'
-import { DEFAULT_OG_IMAGES } from '@/lib/utils/seo'
 import { BeerDetails } from '@/components/beer/beer-details'
 import { JsonLd } from '@/components/seo/json-ld'
 import { PageTransition } from '@/components/motion'
@@ -9,6 +8,8 @@ import { generateProductSchema } from '@/lib/utils/product-schema'
 import { generateBreadcrumbSchema } from '@/lib/utils/breadcrumb-schema'
 import { getBeerImageUrl } from '@/lib/utils/media-utils'
 import { logger } from '@/lib/utils/logger'
+import { getSiteSeo } from '@/lib/utils/site-seo'
+import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
 
 interface BeerPageProps {
   params: Promise<{
@@ -20,7 +21,7 @@ export async function generateMetadata({ params }: BeerPageProps): Promise<Metad
   const { variant } = await params
 
   // Let Payload/DB errors reach error.tsx instead of looking like a 404.
-  const beer = await getBeerBySlug(variant)
+  const [beer, siteSeo] = await Promise.all([getBeerBySlug(variant), getSiteSeo()])
 
   if (!beer || beer.hideFromSite) {
     return {
@@ -35,21 +36,16 @@ export async function generateMetadata({ params }: BeerPageProps): Promise<Metad
   const ogImage = getBeerImageUrl(beer.image, beer.slug)
 
   const pageTitle = styleName ? `${beer.name} | ${styleName}` : beer.name
+  const seo = beer.seo
 
-  return {
-    title: pageTitle,
-    description,
-    alternates: {
-      canonical: `/beer/${beer.slug}`,
-    },
-    openGraph: {
-      title: `${pageTitle} | Lolev Beer`,
-      description,
-      type: 'website',
-      url: `/beer/${beer.slug}`,
-      images: ogImage ? [{ url: ogImage, alt: beer.name }] : DEFAULT_OG_IMAGES,
-    },
-  }
+  return buildPageMetadata({
+    fallbackTitle: pageTitle,
+    fallbackDescription: description,
+    canonicalPath: `/beer/${beer.slug}`,
+    seo,
+    siteSeo,
+    fallbackOgImages: ogImage ? [{ url: ogImage, alt: beer.name }] : undefined,
+  })
 }
 
 // Limit static generation to popular beers only
