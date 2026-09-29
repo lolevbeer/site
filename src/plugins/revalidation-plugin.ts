@@ -15,6 +15,8 @@
 import { revalidatePath, revalidateTag } from 'next/cache'
 import type { Config, Plugin, CollectionConfig, GlobalConfig } from 'payload'
 
+import { publishKioskInvalidate } from '@/lib/ably/publish'
+
 // Collection to cache tags mapping
 // Defines which tags should be invalidated when a collection changes
 const COLLECTION_CACHE_MAP: Record<string, string[]> = {
@@ -118,15 +120,64 @@ const COLLECTION_BATCH_EXTRAS: Record<
   },
 }
 
+/**
+ * Best-effort location slug from an events-style relationship field.
+ * Populated docs expose `slug`; bare IDs return undefined (broadcast refresh).
+ */
+function locationSlugFromDoc(doc: Record<string, unknown>): string | undefined {
+  const location = doc.location
+  if (location && typeof location === 'object' && 'slug' in location) {
+    const slug = (location as { slug?: unknown }).slug
+    if (typeof slug === 'string' && slug) return slug
+  }
+  return undefined
+}
+
+/**
+ * Publish Ably invalidate signals for collections that drive kiosk TVs.
+ * Fire-and-forget: publishKioskInvalidate never throws into the CMS save.
+ */
+function publishKioskSignal(slug: string, doc?: Record<string, unknown>): void {
+  if (slug === 'menus') {
+    const url = typeof doc?.url === 'string' ? doc.url : undefined
+    void publishKioskInvalidate({ kind: 'menu', key: url })
+    return
+  }
+  if (slug === 'events' || slug === 'recurring-events') {
+    void publishKioskInvalidate({ kind: 'events', key: locationSlugFromDoc(doc ?? {}) })
+    return
+  }
+  // Location edits (hours, lines cleaned) feed menu displays that embed them.
+  if (slug === 'locations') {
+    const locSlug = typeof doc?.slug === 'string' ? doc.slug : undefined
+    void publishKioskInvalidate({ kind: 'menu' })
+    void publishKioskInvalidate({ kind: 'events', key: locSlug })
+    return
+  }
+  // Food / recurring food appear on the events kiosk agenda.
+  if (
+    slug === 'food' ||
+    slug === 'recurring-food-schedules' ||
+    slug === 'recurring-food-exclusions' ||
+    slug === 'food-vendors'
+  ) {
+    void publishKioskInvalidate({ kind: 'events' })
+  }
+}
+
 function invalidateCollection(slug: string, doc?: Record<string, unknown>): void {
   ;(COLLECTION_CACHE_MAP[slug] || []).forEach((tag) => revalidateTag(tag, 'max'))
   ;(COLLECTION_PATHS[slug] || []).forEach((path) => revalidatePath(path))
   ;(COLLECTION_LAYOUT_PATHS[slug] || []).forEach((path) => revalidatePath(path, 'layout'))
-  if (!doc) return
-  const pathBuilder = COLLECTION_PATH_BUILDERS[slug]
-  if (pathBuilder) {
-    pathBuilder(doc).forEach((path) => revalidatePath(path))
+  if (doc) {
+    const pathBuilder = COLLECTION_PATH_BUILDERS[slug]
+    if (pathBuilder) {
+      pathBuilder(doc).forEach((path) => revalidatePath(path))
+    }
   }
+  // Optional Ably spike: notify kiosk TVs so they can poll immediately.
+  // No-op when ABLY_API_KEY is unset; never blocks or fails the CMS write.
+  publishKioskSignal(slug, doc)
 }
 
 /**

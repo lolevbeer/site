@@ -6,6 +6,8 @@
  * with the CDN so unchanged ones can be 304s, and each display works out its
  * own day/night theme (the endpoints send no clock-dependent fields, so their
  * responses stay cacheable until content changes).
+ *
+ * Optional Ably invalidate path: see tests/int/ably-kiosk.int.spec.ts.
  */
 import { createElement } from 'react'
 import { renderToString } from 'react-dom/server'

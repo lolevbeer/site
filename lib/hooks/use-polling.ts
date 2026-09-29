@@ -17,6 +17,9 @@
  * - `warm` and the display theme are worked out here from the content
  *   timestamp and the clock, so responses carry nothing clock-dependent
  * - Client-side timestamp comparison avoids unnecessary state updates
+ * - Optional Ably invalidate signals (see useAblyInvalidate) force an
+ *   immediate poll; while realtime is connected, idle polling is the
+ *   fallback instead of the warm/fast cadence
  * @module
  */
 
@@ -25,6 +28,11 @@ import { LIVE_DISPLAY_META } from '@/lib/utils/seo'
 
 export const FAST_INTERVAL_MS = 10_000
 export const IDLE_INTERVAL_MS = 30_000
+/**
+ * Poll cadence while Ably realtime is connected: invalidate messages drive
+ * urgent refreshes, and this slower interval is only a safety net.
+ */
+export const REALTIME_FALLBACK_INTERVAL_MS = 120_000
 /** Content changed this recently counts as "warm": an editor is likely still at it. */
 export const WARM_WINDOW_MS = 60_000
 /** Delay after the 1st, 2nd, and 3rd-or-later consecutive failed poll. */
@@ -51,6 +59,11 @@ interface PollState {
   warm: boolean
   consecutiveErrors: number
   hidden: boolean
+  /**
+   * When true (Ably connected), skip warm/fast intervals and use the slower
+   * realtime fallback cadence. Errors and hidden tabs still win.
+   */
+  realtimeFallback?: boolean
 }
 
 /**
@@ -62,11 +75,13 @@ export function selectPollInterval({
   warm,
   consecutiveErrors,
   hidden,
+  realtimeFallback = false,
 }: PollState): number | null {
   if (hidden) return null
   if (consecutiveErrors > 0) {
     return ERROR_BACKOFF_MS[Math.min(consecutiveErrors, ERROR_BACKOFF_MS.length) - 1]
   }
+  if (realtimeFallback) return REALTIME_FALLBACK_INTERVAL_MS
   if (warm || noChangeCount === 0) return FAST_INTERVAL_MS
   return IDLE_INTERVAL_MS
 }
@@ -84,11 +99,26 @@ export function selectPollInterval({
  *   no clock-dependent fields). Must return `{ data, theme }` — null returns are
  *   not supported.
  */
+export interface UsePollingOptions {
+  /**
+   * Bump to force an immediate poll (e.g. after an Ably invalidate).
+   * Compared by identity/value change; 0 is the idle default.
+   */
+  invalidateSignal?: number
+  /**
+   * When true, use REALTIME_FALLBACK_INTERVAL_MS instead of warm/fast
+   * polling. Ably pushes urgent refreshes; this is only a safety net.
+   */
+  realtimeFallback?: boolean
+}
+
 export function usePolling<T, R extends PollingResponse>(
   url: string,
   initialData: T | null,
   applyResponse: (response: R) => { data: T; theme: 'light' | 'dark' },
+  options: UsePollingOptions = {},
 ): UsePollingResult<T> {
+  const { invalidateSignal = 0, realtimeFallback = false } = options
   // A poll result is stored together with the server-supplied `initialData` it
   // was layered on top of. When the server re-renders with fresh props that
   // base stops matching, so the newer server data wins automatically — where
@@ -104,6 +134,7 @@ export function usePolling<T, R extends PollingResponse>(
   const noChangeCountRef = useRef(0)
   const warmRef = useRef(false)
   const consecutiveErrorsRef = useRef(0)
+  const realtimeFallbackRef = useRef(realtimeFallback)
 
   // Store applyResponse in a ref so poll() always uses the latest callback
   // without needing it in the useCallback dependency array. Written in an
@@ -117,6 +148,7 @@ export function usePolling<T, R extends PollingResponse>(
   useEffect(() => {
     applyResponseRef.current = applyResponse
     initialDataRef.current = initialData
+    realtimeFallbackRef.current = realtimeFallback
   })
 
   // poll() reschedules itself, which it cannot do by referencing its own
@@ -188,6 +220,7 @@ export function usePolling<T, R extends PollingResponse>(
       warm: warmRef.current,
       consecutiveErrors: consecutiveErrorsRef.current,
       hidden: document.hidden,
+      realtimeFallback: realtimeFallbackRef.current,
     })
     if (delay !== null) {
       pollTimeoutRef.current = setTimeout(() => pollRef.current(), delay)
@@ -220,6 +253,14 @@ export function usePolling<T, R extends PollingResponse>(
     document.addEventListener('visibilitychange', onVisibilityChange)
     return () => document.removeEventListener('visibilitychange', onVisibilityChange)
   }, [url, clearScheduledPoll])
+
+  // Ably (or any external signal) asked for an immediate refresh.
+  useEffect(() => {
+    if (!url || invalidateSignal === 0) return
+    clearScheduledPoll()
+    noChangeCountRef.current = 0
+    void pollRef.current()
+  }, [url, invalidateSignal, clearScheduledPoll])
 
   return { data, theme }
 }

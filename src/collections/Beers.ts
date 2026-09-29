@@ -1,6 +1,7 @@
 import type { Access, CollectionConfig, Field, PayloadRequest, Where } from 'payload'
 import { APIError } from 'payload'
 import { revalidateTag } from 'next/cache'
+import { publishKioskInvalidate } from '@/lib/ably/publish'
 import { generateUniqueSlug } from './utils/generateUniqueSlug'
 import { updatedByField } from './utils/updatedByField'
 import { adminAccess, beerManagerAccess, beerManagerFieldAccess, hasRole } from '@/src/access/roles'
@@ -39,6 +40,7 @@ async function revalidateMenusForBeer(req: PayloadRequest, beerId: string | numb
   for (const menu of menus.docs) {
     if (menu.url) {
       revalidateTag(`menu-${menu.url}`, 'max')
+      void publishKioskInvalidate({ kind: 'menu', key: menu.url })
     }
   }
 }

@@ -16,12 +16,14 @@ interface LiveMenuProps {
 /**
  * Live-updating menu display component
  *
- * Uses polling against a cached endpoint for real-time updates.
+ * Uses polling against a cached endpoint for real-time updates, with an
+ * optional Ably invalidate path (NEXT_PUBLIC_ABLY_ENABLED) that forces an
+ * immediate poll on CMS edits.
  * - Polls every 10s after a change and every 30s when idle, not while the tab
- *   is hidden (see usePolling)
+ *   is hidden (see usePolling); 120s safety-net while Ably is connected
  * - The endpoint is CDN-cached and invalidated when the menu or a beer on it
- *   is edited in Payload, so an edit shows within about a minute
- * - Much more cost-effective than SSE on Vercel (no persistent connections)
+ *   is edited in Payload, so an edit shows within about a minute (faster with Ably)
+ * - Much more cost-effective than SSE on Vercel (no persistent app-server connections)
  * - Applies dark mode via inline CSS variables for maximum browser compatibility
  */
 export function LiveMenu({ menuUrl, initialMenu }: LiveMenuProps) {
