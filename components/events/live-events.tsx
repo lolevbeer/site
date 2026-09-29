@@ -177,7 +177,7 @@ export function LiveEvents({
    *  branching at the call site, keeps the two row variants from drifting and
    *  lets each row carry the colour index it was assigned — the render used to
    *  recover that with `combinedItems.indexOf(item)` per row, an O(n) scan
-   *  inside an O(n) loop, repeated on every five-second poll for the life of
+   *  inside an O(n) loop, repeated on every stream refresh for the life of
    *  the display. */
   const dayGroups = useMemo(() => {
     const today = getTodayEST()

@@ -865,11 +865,12 @@ function FeaturedMenu({
     [menu, labelVideos],
   )
   const displayItems = menuItems ?? filteredItems
-  // Memoized: the display re-renders on each poll with new data (10s after a
-  // change, 30s when idle; see usePolling), but this text changes once a day at
-  // most. It follows the hourly clock `now`, so a display left running rolls
-  // over at midnight; `now` is null while server rendering, so the note is left
-  // out of server HTML and hydration always matches.
+  // Memoized: the display re-renders when stream data changes (Ably invalidate
+  // and/or usePolling: 10s warm / 30s idle, or 120s safety net while Ably is
+  // connected), but this text changes once a day at most. It follows the hourly
+  // clock `now`, so a display left running rolls over at midnight; `now` is
+  // null while server rendering, so the note is left out of server HTML and
+  // hydration always matches.
   const menuLocation = typeof menu?.location === 'object' ? (menu.location as Location) : null
   const linesCleanedText = useMemo(
     () =>
