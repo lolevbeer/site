@@ -8,14 +8,12 @@ import { expect, it } from 'vitest'
 
 // The kiosk client imports `ably/modular`; `ably.js` is the default browser
 // build. The patch (patches/ably@2.29.0.patch) must cover both.
-const BROWSER_BUILDS = [
-  { name: 'ably.js', isModule: false },
-  { name: 'modular/index.mjs', isModule: true },
-]
+const BROWSER_BUILDS = ['ably.js', 'modular/index.mjs']
 
 it.each(BROWSER_BUILDS)(
-  'keeps the Ably browser bundle $name valid after Next compiles it for supported browsers',
-  async ({ name, isModule }) => {
+  'keeps the Ably browser bundle %s valid after Next compiles it for supported browsers',
+  async (name) => {
+    const isModule = name.endsWith('.mjs')
     const require = createRequire(import.meta.url)
     const filename = path.join(path.dirname(require.resolve('ably')), name)
     const source = readFileSync(filename, 'utf8')

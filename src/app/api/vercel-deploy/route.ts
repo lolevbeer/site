@@ -1,7 +1,8 @@
+import crypto from 'node:crypto'
+
 import { NextResponse } from 'next/server'
 
 import { publishKioskInvalidate } from '@/lib/ably/publish'
-import { isValidVercelSignature } from '@/lib/utils/vercel-webhook'
 
 /**
  * Vercel `deployment.promoted` webhook: pushes a keyless Ably invalidate to
@@ -13,6 +14,7 @@ import { isValidVercelSignature } from '@/lib/utils/vercel-webhook'
  * old deployment still serving production.
  *
  * Returns 503 when VERCEL_WEBHOOK_SECRET is unset so the endpoint is inert.
+ * https://vercel.com/docs/webhooks
  */
 export async function POST(request: Request): Promise<NextResponse> {
   const secret = process.env.VERCEL_WEBHOOK_SECRET?.trim()
@@ -22,20 +24,22 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   // Sign the raw body: re-serialized JSON would not match Vercel's signature.
   const rawBody = await request.text()
-  if (!isValidVercelSignature(rawBody, request.headers.get('x-vercel-signature'), secret)) {
+  if (!isValidSignature(rawBody, request.headers.get('x-vercel-signature'), secret)) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
   }
 
-  let type: unknown
-  try {
-    type = (JSON.parse(rawBody) as { type?: unknown }).type
-  } catch {
-    return NextResponse.json({ error: 'Invalid body' }, { status: 400 })
-  }
-
+  // The signature proves Vercel sent this body, so it is trusted JSON.
+  const { type } = JSON.parse(rawBody) as { type?: string }
   if (type === 'deployment.promoted') {
-    void publishKioskInvalidate({ kind: 'menu' })
-    void publishKioskInvalidate({ kind: 'events' })
+    for (const kind of ['menu', 'events'] as const) void publishKioskInvalidate({ kind })
   }
   return NextResponse.json({ ok: true })
+}
+
+/** Vercel sends the hex HMAC-SHA1 of the raw body, keyed with the webhook secret. */
+function isValidSignature(rawBody: string, signature: string | null, secret: string): boolean {
+  if (!signature) return false
+  const expected = Buffer.from(crypto.createHmac('sha1', secret).update(rawBody).digest('hex'))
+  const actual = Buffer.from(signature)
+  return expected.length === actual.length && crypto.timingSafeEqual(expected, actual)
 }

@@ -65,7 +65,12 @@ describe('beer hook system lookups', () => {
     await hook({ req, context: {}, doc: { id: 'beer-1' }, previousDoc: { id: 'beer-1' } })
 
     expect(find).toHaveBeenCalledWith(
-      expect.objectContaining({ collection: 'menus', overrideAccess: true, req }),
+      expect.objectContaining({
+        collection: 'menus',
+        overrideAccess: true,
+        req,
+        select: { url: true },
+      }),
     )
     expect(revalidateTag).toHaveBeenCalledWith('menu-z-cans', { expire: 0 })
     expect(publishKioskInvalidate).toHaveBeenCalledWith({ kind: 'menu', keys: ['z-cans'] })

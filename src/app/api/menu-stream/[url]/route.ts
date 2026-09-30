@@ -11,8 +11,9 @@ import { getMenuByUrl } from '@/lib/utils/payload-api'
  * - getMenuByUrl's cache tags (`menus`, `kiosk-menus`, `menu-<url>`) attach to
  *   that cached response, so the Payload hooks expire it when a menu, its
  *   location or a product (`kiosk-menus`) or a beer on it (`menu-<url>`)
- *   changes. Those two tags are hard-expired, so the first fetch after the save
- *   gets the fresh menu, including the fetch triggered by an Ably notification.
+ *   changes. `kiosk-menus` and `menu-<url>` are hard-expired, so the first
+ *   fetch after the save gets the fresh menu, including the fetch triggered by
+ *   an Ably notification.
  * - The 10-minute fallback refresh bounds how long a new deployment's
  *   `deployId` (which reloads displays) takes to reach them.
  *

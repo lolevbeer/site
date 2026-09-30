@@ -9,7 +9,7 @@ import { fetchUntappdData, type UntappdReview } from '@/src/utils/untappd'
 import { logger } from '@/lib/utils/logger'
 import { syncBeerReviews, type LegacyUntappdReview } from '@/src/utils/beer-reviews'
 import { documentSeoField } from '@/src/fields/seo'
-import { isDraftOnlySave } from '@/src/utils/draft-save'
+import { isDraftOnlySave, isTrue } from '@/src/utils/draft-save'
 
 /** Round to nearest multiple (like Excel's MROUND) */
 function mround(value: number, multiple: number): number {
@@ -34,6 +34,8 @@ async function revalidateMenusForBeer(req: PayloadRequest, beerId: string | numb
     where: { 'items.product.value': { equals: beerId } },
     limit: 100,
     depth: 0,
+    // Only the url is read; skip loading every menu's items.
+    select: { url: true },
     // eslint-disable-next-line no-restricted-syntax -- system: cache invalidation must find every menu listing the beer; the editor's menus read can be location-scoped (beer-manager + bartender) or empty
     overrideAccess: true,
     req,
@@ -93,7 +95,6 @@ export const canReadBeers: Access = ({ req }) => {
   const published: Where = { _status: { equals: 'published' } }
   if (req.payloadAPI === 'GraphQL') return published
 
-  const isTrue = (value: unknown) => value === true || value === 'true'
   if (isTrue(req.query?.draft) || isTrue(req.data?.draft)) return false
 
   return published

@@ -36,14 +36,19 @@ describe.each([
           and: [
             { location: { equals: 'loc-1' } },
             { _status: { equals: 'published' } },
-            { or: [{ and: [{ id: { equals: 'selected-menu' } }, { type: { equals: type } }] }] },
+            { id: { in: ['selected-menu'] } },
           ],
         },
         populate: expect.objectContaining({ beers: expect.objectContaining({ name: true }) }),
         limit: 1,
       }),
     )
-    expect(find.mock.calls[0][0]).toMatchObject({ overrideAccess: false })
+    // Depth 0: only the selected menu ids are needed, not the populated menus.
+    expect(find.mock.calls[0][0]).toMatchObject({
+      collection: 'locations',
+      overrideAccess: false,
+      depth: 0,
+    })
     expect(unstableCache).toHaveBeenLastCalledWith(
       expect.any(Function),
       ['location-lawrenceville-website-menus'],
@@ -118,16 +123,20 @@ it('resolves the draft and cans menus with one location lookup and one menu quer
       and: [
         { location: { equals: 'loc-1' } },
         { _status: { equals: 'published' } },
-        {
-          or: [
-            { and: [{ id: { equals: 'draft-menu' } }, { type: { equals: 'draft' } }] },
-            { and: [{ id: { equals: 'cans-menu' } }, { type: { equals: 'cans' } }] },
-          ],
-        },
+        { id: { in: ['draft-menu', 'cans-menu'] } },
       ],
     },
     limit: 2,
   })
+})
+
+it('ignores a selected menu whose type does not match the selector', async () => {
+  // A cans menu picked in the draft slot (bad data) must not be served as draft.
+  const wrongType = { id: 'cans-menu', type: 'cans', items: [] }
+  find
+    .mockResolvedValueOnce({ docs: [{ id: 'loc-1', draftMenu: 'cans-menu' }] })
+    .mockResolvedValueOnce({ docs: [wrongType] })
+  expect(await getDraftMenu('lawrenceville')).toBeNull()
 })
 
 it('keeps the cans menu sorted by recipe without changing the cached items', async () => {
@@ -137,7 +146,7 @@ it('keeps the cans menu sorted by recipe without changing the cached items', asy
   const items = [item('older', 10), item('newer', 20)]
   find
     .mockResolvedValueOnce({ docs: [{ id: 'loc-1', cansMenu: { id: 'cans' } }] })
-    .mockResolvedValueOnce({ docs: [{ id: 'cans', items }] })
+    .mockResolvedValueOnce({ docs: [{ id: 'cans', type: 'cans', items }] })
   expect((await getCansMenu('lawrenceville'))?.items).toEqual([items[1], items[0]])
   expect(items.map((entry) => entry.product.value.id)).toEqual(['older', 'newer'])
 })

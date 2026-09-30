@@ -15,6 +15,7 @@
 
 import { useEffect, useState } from 'react'
 import type { Message, RealtimeChannel } from 'ably'
+import type { BaseRealtime as RealtimeClient } from 'ably/modular'
 
 import {
   ABLY_CHANNELS,
@@ -62,7 +63,7 @@ export function useAblyInvalidate({
     if (!enabled || !key) return
 
     let cancelled = false
-    let client: import('ably/modular').BaseRealtime | null = null
+    let client: RealtimeClient | null = null
     let channel: RealtimeChannel | null = null
     let onMessage: ((message: Message) => void) | null = null
     let onConnected: (() => void) | null = null

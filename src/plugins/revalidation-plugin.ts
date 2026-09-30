@@ -28,10 +28,7 @@ const COLLECTION_CACHE_MAP: Record<string, string[]> = {
   // menu queries subscribe to 'beers' directly (see lib/utils/payload-api.ts).
   beers: ['beers'],
   'beer-reviews': ['beers'],
-  // CACHE_TAGS.kioskMenus is the tag only the kiosk menu stream carries; it is
-  // what gets hard-expired for menu, location and product edits (see
-  // KIOSK_FRESH_TAGS), leaving the shared 'menus' tag stale-while-revalidate.
-  menus: ['menus', CACHE_TAGS.kioskMenus],
+  menus: ['menus', CACHE_TAGS.kioskMenus], // kioskMenus: see KIOSK_FRESH_TAGS
   events: ['events'],
   'recurring-events': ['events'],
   food: ['food'],
@@ -113,8 +110,8 @@ const COLLECTION_BATCH_EXTRAS: Record<
   { tags?: string[]; paths?: Array<[string, 'page' | 'layout']> }
 > = {
   beers: {
-    // getMenuByUrl subscribes to the broad 'menus' tag, not 'beers'; the kiosk
-    // tag makes the displays' next fetch fresh (a batch skips the per-menu tags).
+    // getMenuByUrl reads 'menus' and 'kiosk-menus', not 'beers'; a batch skips
+    // the per-menu tags Beers.afterChange would have expired.
     tags: ['menus', CACHE_TAGS.kioskMenus],
     // `/beer/[variant]` is a 3600s ISR route; invalidating the dynamic segment
     // covers every beer page in one call, which is what a catalogue-wide batch
@@ -141,13 +138,13 @@ function locationSlugFromDoc(doc: Record<string, unknown>): string | undefined {
  */
 async function resolveLocationSlug(
   doc: Record<string, unknown>,
-  req?: PayloadRequest,
+  req: PayloadRequest,
 ): Promise<string | undefined> {
   const populated = locationSlugFromDoc(doc)
   if (populated) return populated
 
   const id = doc.location
-  if (!req?.payload || (typeof id !== 'string' && typeof id !== 'number')) return undefined
+  if (typeof id !== 'string' && typeof id !== 'number') return undefined
   try {
     const location = await req.payload.findByID({
       collection: 'locations',
@@ -188,7 +185,8 @@ async function publishKioskSignal(
     return
   }
   if (LOCATION_SCOPED_KIOSK_SLUGS.has(slug)) {
-    const location = doc ? await resolveLocationSlug(doc, req) : undefined
+    // No doc or req (a whole-collection batch): nothing to resolve, refresh all.
+    const location = doc && req ? await resolveLocationSlug(doc, req) : undefined
     void publishKioskInvalidate({ kind: 'events', keys: scope(location) })
     return
   }
@@ -214,9 +212,12 @@ function invalidateCollection(slug: string, doc?: Record<string, unknown>): void
   }
 }
 
-// Tags the kiosk stream responses carry. Broad tags that public pages also use
-// ('menus', 'locations') are deliberately absent: hard-expiring them would make
-// the next visitor to every tagged page wait for a synchronous rebuild.
+// Tags the kiosk stream responses carry, hard-expired so the push-triggered
+// fetch is fresh. 'menus' and 'locations' are deliberately absent: public pages
+// share them, and hard expiry would make the next visitor to each wait for a
+// synchronous rebuild (CACHE_TAGS.kioskMenus exists to avoid that for menus).
+// 'events' is shared with public events pages too; that cost is accepted because
+// event saves are rare and the events stream has no kiosk-only tag yet.
 const KIOSK_FRESH_TAGS = new Set<string>([CACHE_TAGS.kioskMenus, CACHE_TAGS.events])
 
 function revalidateCollectionTag(tag: string): void {
@@ -268,7 +269,8 @@ function createCollectionAfterChangeHook(slug: string) {
     }
     invalidateCollection(slug, doc)
     // Optional Ably push so kiosk TVs poll immediately. No-op when ABLY_API_KEY
-    // is unset; never blocks or fails the CMS write.
+    // is unset. May do one location lookup to scope the push; never fails the
+    // CMS write.
     await publishKioskSignal(slug, doc, req)
     return doc
   }

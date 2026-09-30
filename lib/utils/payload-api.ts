@@ -21,7 +21,7 @@
  */
 
 import { cache } from 'react'
-import { getPayload, type Where } from 'payload'
+import { getPayload } from 'payload'
 import config from '@/src/payload.config'
 import { unstable_cache } from 'next/cache'
 import {
@@ -65,12 +65,14 @@ import { expandRecurringEvents, mergeScheduledEvents } from '@/src/utils/recurri
 const findLocationBySlug = async (
   payload: Awaited<ReturnType<typeof getPayload>>,
   locationSlug: string,
+  depth?: number,
 ) => {
   const result = await payload.find({
     collection: 'locations',
     overrideAccess: false,
     where: { slug: { equals: locationSlug } },
     limit: 1,
+    depth,
   })
   return result.docs[0]
 }
@@ -261,58 +263,60 @@ type WebsiteMenuType = 'draft' | 'cans'
 
 /**
  * Resolve a location's explicit website menu selections, never the first menu
- * of a type. One cache entry serves getDraftMenu and getCansMenu (the homepage
- * and taproom page call both), so a miss costs one location lookup and one
- * menu query instead of two of each. The query still enforces each selection's
- * id, type, location and published status.
+ * of a type. One cache entry serves getDraftMenu and getCansMenu (most callers
+ * want both), so a miss costs one location lookup and one menu query. React
+ * `cache()` collapses the two concurrent calls within a render, which
+ * unstable_cache alone would run twice on a cold miss.
  */
-async function getLocationMenus(
-  locationSlug: string,
-): Promise<Record<WebsiteMenuType, PayloadMenu | null>> {
-  return unstable_cache(
-    async (): Promise<Record<WebsiteMenuType, PayloadMenu | null>> => {
-      const none = { draft: null, cans: null }
-      const payload = await getPayload({ config })
-      const location = await findLocationBySlug(payload, locationSlug)
-      if (!location) return none
+const getLocationMenus = cache(
+  async (locationSlug: string): Promise<Record<WebsiteMenuType, PayloadMenu | null>> =>
+    unstable_cache(
+      async () => {
+        const none = { draft: null, cans: null }
+        const payload = await getPayload({ config })
+        // Depth 0: only the selected menu ids are needed, not the populated menus.
+        const location = await findLocationBySlug(payload, locationSlug, 0)
+        if (!location) return none
 
-      const selections = (['draft', 'cans'] as const).flatMap((type) => {
-        const selected = location[`${type}Menu`]
-        return selected ? [{ type, id: relationshipId(selected) }] : []
-      })
-      if (selections.length === 0) return none
+        const selections = (['draft', 'cans'] as const).flatMap((type) => {
+          const selected = location[`${type}Menu`]
+          return selected ? [{ type, id: relationshipId(selected) }] : []
+        })
+        if (selections.length === 0) return none
 
-      const result = await payload.find({
-        collection: 'menus',
-        overrideAccess: false,
-        where: {
-          and: [
-            { location: { equals: location.id } },
-            { _status: { equals: 'published' } },
-            {
-              or: selections.map(({ id, type }): Where => ({
-                and: [{ id: { equals: id } }, { type: { equals: type } }],
-              })),
-            },
-          ],
-        },
-        depth: 3,
-        populate: CATALOG_MENU_POPULATE,
-        limit: selections.length,
-      })
+        const result = await payload.find({
+          collection: 'menus',
+          overrideAccess: false,
+          where: {
+            and: [
+              { location: { equals: location.id } },
+              { _status: { equals: 'published' } },
+              { id: { in: selections.map(({ id }) => id) } },
+            ],
+          },
+          depth: 3,
+          populate: CATALOG_MENU_POPULATE,
+          limit: selections.length,
+        })
 
-      const pick = (type: WebsiteMenuType) => {
-        const selection = selections.find((entry) => entry.type === type)
-        return (
-          (selection && result.docs.find((doc) => String(doc.id) === String(selection.id))) || null
-        )
-      }
-      return { draft: pick('draft'), cans: pick('cans') }
-    },
-    [`location-${locationSlug}-website-menus`],
-    { tags: [CACHE_TAGS.locations, CACHE_TAGS.menus, CACHE_TAGS.beers], revalidate: 300 },
-  )()
-}
+        // The type check is here rather than in the query: a menu picked in the
+        // wrong slot (say a cans menu as the draft menu) is never served.
+        const pick = (type: WebsiteMenuType) => {
+          const selection = selections.find((entry) => entry.type === type)
+          return (
+            (selection &&
+              result.docs.find(
+                (doc) => doc.type === type && String(doc.id) === String(selection.id),
+              )) ||
+            null
+          )
+        }
+        return { draft: pick('draft'), cans: pick('cans') }
+      },
+      [`location-${locationSlug}-website-menus`],
+      { tags: [CACHE_TAGS.locations, CACHE_TAGS.menus, CACHE_TAGS.beers], revalidate: 300 },
+    )(),
+)
 
 /** Get the location's selected draft menu for the homepage and taproom page. */
 export async function getDraftMenu(locationSlug: string): Promise<PayloadMenu | null> {
@@ -454,12 +458,9 @@ export const getMenuByUrl = async (url: string): Promise<PayloadMenu | null> => 
       [`menu-url-${url}`],
       // menu-${url} lets beer edits invalidate only the menus that contain the
       // beer (see revalidateMenusForBeer in src/collections/Beers.ts) instead
-      // of nuking every menu via the broad 'menus' tag. 'kiosk-menus' is the one
-      // tag the revalidation plugin hard-expires for menu, location and product
-      // edits, so a push-triggered display fetch is fresh while the broad
-      // 'menus' tag (shared with public pages) stays stale-while-revalidate.
-      // Edits reach this cache through those tags, so the time-based fallback
-      // can be long.
+      // of nuking every menu via the broad 'menus' tag. CACHE_TAGS.kioskMenus
+      // explains 'kiosk-menus'. Edits reach this cache through those tags, so
+      // the time-based fallback can be long.
       {
         tags: [CACHE_TAGS.menus, CACHE_TAGS.kioskMenus, `menu-${url}`],
         revalidate: 3600, // 1 hour fallback

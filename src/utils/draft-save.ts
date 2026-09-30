@@ -10,7 +10,9 @@
 
 import type { PayloadRequest } from 'payload'
 
+/** A `?draft=true` flag arrives as a boolean or the raw string, depending on the route. */
+export const isTrue = (value: unknown) => value === true || value === 'true'
+
 export function isDraftOnlySave(doc: { _status?: unknown }, req?: PayloadRequest): boolean {
-  const draft = req?.query?.draft
-  return doc._status === 'draft' && (draft === true || draft === 'true')
+  return doc._status === 'draft' && isTrue(req?.query?.draft)
 }
