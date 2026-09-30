@@ -57,17 +57,27 @@ that stay connected all day.
 
 ### Browser build compatibility
 
+The kiosk client imports `ably/modular` (`BaseRealtime` with only the WebSocket
+transport and fetch for the auth request) instead of the full SDK: about 37 KiB
+gzipped versus 58 KiB (esbuild, minified, for the same connect-and-subscribe
+code). The server publish and `/api/ably-auth` keep the Node build via `ably`.
+
 `patches/ably@2.29.0.patch` keeps Ably's two error-constructor helpers compatible
 with Next.js 16.3.3 / Turbopack and this project's Safari 15.6 browser target.
 Without it, SWC converts their rest-argument arrows into regular functions
 containing `super()`, causing a runtime syntax error. Each helper only receives
 one message, so the patch uses a single parameter without changing behavior.
-Remove the patch when `ably-browser-bundle.int.spec.ts` passes with an unpatched
-SDK and the kiosk page loads successfully in the browser.
+Both browser builds have the same helpers, so the patch covers `build/ably.js`
+and `build/modular/index.mjs`; the modular file is the one that ships to kiosks.
+Remove the patch when `ably-browser-bundle.int.spec.ts` passes both builds with
+an unpatched SDK and the kiosk page loads successfully in the browser.
 
 `ably` is pinned to `2.29.0` in `package.json` so the patch and the version move
 together. When bumping it, rename the patch file, update `patchedDependencies`
-in `pnpm-workspace.yaml`, and re-run `ably-browser-bundle.int.spec.ts`.
+in `pnpm-workspace.yaml`, and re-run `ably-browser-bundle.int.spec.ts`. The
+patch's SHA-256 is recorded in `pnpm-lock.yaml` (`patchedDependencies` and the
+`patch_hash=` in the `ably` entries); regenerate it with `pnpm patch-commit`
+when the patch changes, or a frozen install fails.
 
 ### Environment
 

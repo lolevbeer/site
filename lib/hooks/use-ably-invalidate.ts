@@ -7,11 +7,14 @@
  * fallback when Ably is disabled or disconnected.
  *
  * Ably is loaded only when NEXT_PUBLIC_ABLY_ENABLED=true so the kiosk client
- * bundle (and hydration) stay polling-only when the flag is off.
+ * bundle (and hydration) stay polling-only when the flag is off. It uses the
+ * `ably/modular` build with just the WebSocket transport and fetch (for the
+ * auth request), about a third smaller gzipped than the full SDK. The pnpm
+ * patch (patches/ably@2.29.0.patch) must cover that build's files.
  */
 
 import { useEffect, useState } from 'react'
-import type Ably from 'ably'
+import type { Message, RealtimeChannel } from 'ably'
 
 import {
   ABLY_CHANNELS,
@@ -59,18 +62,20 @@ export function useAblyInvalidate({
     if (!enabled || !key) return
 
     let cancelled = false
-    let client: Ably.Realtime | null = null
-    let channel: Ably.RealtimeChannel | null = null
-    let onMessage: ((message: Ably.Message) => void) | null = null
+    let client: import('ably/modular').BaseRealtime | null = null
+    let channel: RealtimeChannel | null = null
+    let onMessage: ((message: Message) => void) | null = null
     let onConnected: (() => void) | null = null
     let onNotConnected: (() => void) | null = null
 
-    void import('ably')
-      .then((mod) => {
+    void import('ably/modular')
+      .then(({ BaseRealtime, WebSocketTransport, FetchRequest }) => {
         if (cancelled) return
-        const AblyCtor = mod.default
         // Ably's defaults already retry quietly (15s disconnected, 30s suspended).
-        client = new AblyCtor.Realtime({ authUrl: '/api/ably-auth' })
+        client = new BaseRealtime({
+          authUrl: '/api/ably-auth',
+          plugins: { WebSocketTransport, FetchRequest },
+        })
 
         onConnected = () => {
           if (!cancelled) setRealtimeActive(true)
@@ -86,7 +91,7 @@ export function useAblyInvalidate({
         client.connection.on('closed', onNotConnected)
 
         channel = client.channels.get(ABLY_CHANNELS[kind])
-        onMessage = (message: Ably.Message) => {
+        onMessage = (message: Message) => {
           if (cancelled) return
           if (!messageMatches(message.data, kind, key)) return
           setInvalidateSignal((n) => n + 1)

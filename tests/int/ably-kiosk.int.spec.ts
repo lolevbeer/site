@@ -30,9 +30,29 @@ const ablyMock = vi.hoisted(() => {
   const Realtime = vi.fn(function MockRealtime() {
     return { channels: { get: getChannel }, connection, close }
   })
-  return { publish, Rest, Realtime, getChannel, subscribe, unsubscribe, connection, close }
+  const WebSocketTransport = { name: 'WebSocketTransport' }
+  const FetchRequest = { name: 'FetchRequest' }
+  return {
+    publish,
+    Rest,
+    Realtime,
+    getChannel,
+    subscribe,
+    unsubscribe,
+    connection,
+    close,
+    WebSocketTransport,
+    FetchRequest,
+  }
 })
+// Server publish/auth use the Node build; the kiosk client uses the smaller
+// ably/modular build with only the WebSocket transport and fetch requests.
 vi.mock('ably', () => ({ default: ablyMock }))
+vi.mock('ably/modular', () => ({
+  BaseRealtime: ablyMock.Realtime,
+  WebSocketTransport: ablyMock.WebSocketTransport,
+  FetchRequest: ablyMock.FetchRequest,
+}))
 
 import { publishKioskInvalidate, resetAblyRestClientForTests } from '@/lib/ably/publish'
 import { isAblyClientEnabled, isAblyPublishEnabled } from '@/lib/ably/config'
@@ -179,6 +199,13 @@ describe('useAblyInvalidate', () => {
       initialProps: { kind: 'menu' as 'menu' | 'events', key: 'draft' },
     })
     await waitFor(() => expect(ablyMock.subscribe).toHaveBeenCalledTimes(1))
+    expect(ablyMock.Realtime).toHaveBeenCalledWith({
+      authUrl: '/api/ably-auth',
+      plugins: {
+        WebSocketTransport: ablyMock.WebSocketTransport,
+        FetchRequest: ablyMock.FetchRequest,
+      },
+    })
     expect(ablyMock.getChannel).toHaveBeenLastCalledWith(ABLY_CHANNELS.menu)
     const onMenu = ablyMock.subscribe.mock.calls[0][1]
     const onConnected = ablyMock.connection.on.mock.calls.find(
