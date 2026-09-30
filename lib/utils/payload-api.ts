@@ -466,10 +466,8 @@ export const getMenuByUrl = async (url: string): Promise<PayloadMenu | null> => 
 /**
  * Get menu by URL slug - UNCACHED version for the /m display page
  * (m/[menuUrl]), which renders per request so each display load starts from
- * the current menu. Also read by /api/menu-stream/[url]/fresh, the endpoint
- * displays fetch when an Ably push says the menu changed (the tagged cache can
- * still hold the previous menu then). Ordinary display polls hit
- * /api/menu-stream, which reads the cached getMenuByUrl.
+ * the current menu. Also read by /api/menu-stream/[url]/fresh. Ordinary display
+ * polls hit /api/menu-stream, which reads the cached getMenuByUrl.
  *
  * Returns null ONLY when the menu genuinely doesn't exist. A fetch failure
  * (cold start, transient DB blip) throws rather than returning null: the page

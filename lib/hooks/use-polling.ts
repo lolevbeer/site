@@ -98,10 +98,8 @@ export interface UsePollingOptions {
    */
   realtimeFallback?: boolean
   /**
-   * Endpoint to fetch instead of `url` for the poll an `invalidateSignal` bump
-   * triggers, bypassing every cache. Ordinary polls still use `url`. Menus use
-   * it because the cached endpoint can still hold the previous menu when the
-   * Ably push that announces a save arrives.
+   * Endpoint fetched instead of `url` for the poll an `invalidateSignal` bump
+   * triggers; ordinary polls use `url`.
    */
   invalidateUrl?: string
 }
@@ -161,14 +159,12 @@ export function usePolling<T, R extends PollingResponse>(
     applyResponseRef.current = applyResponse
     initialDataRef.current = initialData
     realtimeFallbackRef.current = realtimeFallback
-    invalidateUrlRef.current = invalidateUrl
   })
 
   // poll() reschedules itself, which it cannot do by referencing its own
   // binding from inside its initializer. Going through a ref also means a
   // pending timeout always fires the newest poll rather than a stale closure.
-  const pollRef = useRef<(fetchUrl?: string) => void>(() => {})
-  const invalidateUrlRef = useRef(invalidateUrl)
+  const pollRef = useRef<(freshUrl?: string) => void>(() => {})
 
   const clearScheduledPoll = useCallback(() => {
     if (pollTimeoutRef.current) {
@@ -278,8 +274,8 @@ export function usePolling<T, R extends PollingResponse>(
     if (!url || invalidateSignal === 0) return
     clearScheduledPoll()
     noChangeCountRef.current = 0
-    void pollRef.current(invalidateUrlRef.current)
-  }, [url, invalidateSignal, clearScheduledPoll])
+    void pollRef.current(invalidateUrl)
+  }, [url, invalidateUrl, invalidateSignal, clearScheduledPoll])
 
   // When Ably connects or drops, reschedule so a 120s safety-net timer does not
   // linger after disconnect (and so connect does not keep a leftover 10s/30s).

@@ -208,17 +208,20 @@ function invalidateCollection(slug: string, doc?: Record<string, unknown>): void
   }
 }
 
-// Tags the kiosk stream responses carry, hard-expired so the push-triggered
-// fetch is fresh. 'menus' and 'locations' are deliberately absent: public pages
-// share them, and hard expiry would make the next visitor to each wait for a
-// synchronous rebuild (CACHE_TAGS.kioskMenus exists to avoid that for menus).
+// Tags the kiosk stream responses carry, hard-expired so a cached read after a
+// save is fresh rather than stale-while-revalidate. The expiry is queued, not
+// awaited, so the Ably push can still beat it: menu displays therefore refetch
+// on a push from the uncached /api/menu-stream/[url]/fresh. 'menus' and
+// 'locations' are deliberately absent: public pages share them, and hard
+// expiry would make the next visitor to each wait for a synchronous rebuild
+// (CACHE_TAGS.kioskMenus exists to avoid that for menus).
 // 'events' is shared with public events pages too; that cost is accepted because
 // event saves are rare and the events stream has no kiosk-only tag yet.
 const KIOSK_FRESH_TAGS = new Set<string>([CACHE_TAGS.kioskMenus, CACHE_TAGS.events])
 
 function revalidateCollectionTag(tag: string): void {
-  // A push triggers one fetch. The kiosk caches must return fresh data on that
-  // first fetch, rather than stale data followed by a background refresh.
+  // Kiosk caches return fresh data on the first read after a save, rather than
+  // stale data followed by a background refresh.
   revalidateTag(tag, KIOSK_FRESH_TAGS.has(tag) ? { expire: 0 } : 'max')
 }
 

@@ -52,9 +52,13 @@ that stay connected all day.
      first cached read after a push can still return the previous menu
      (`tests/int/menu-update-freshness.int.spec.ts` demonstrates the timing).
      Ordinary 10s/30s/120s polls still use the CDN-cached endpoint; the cost is
-     one database read per display per push. Events displays keep the cached
-     endpoint. Both menu routes build their body with `menuStreamBody`
-     (`lib/utils/menu-stream-response.ts`).
+     one database read per display per push. The route is public like the
+     cached one, so anything can call it and skip the CDN.
+   - **Known gap, events displays:** they still refetch the cached events
+     endpoint on a push, so the same ordering race can show the previous events.
+     Fixing it needs either an uncached events twin or a push that carries the
+     saved version so the display retries until it sees it (which would also
+     replace `/fresh`).
 3. While Ably is connected, the warm/fast 10s poll cadence is replaced by a
    120s safety-net poll. If Ably is unset, disabled, or disconnects, the
    original 10s/30s polling state machine is unchanged.
