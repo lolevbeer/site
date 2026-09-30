@@ -92,11 +92,8 @@ const COLLECTION_PATH_BUILDERS: Record<string, (doc: Record<string, unknown>) =>
   jobs: (doc) => {
     const paths: string[] = []
     if (typeof doc.slug === 'string' && doc.slug) paths.push(`/jobs/${doc.slug}`)
-    const location = doc.location
-    if (typeof location === 'object' && location && 'slug' in location) {
-      const slug = (location as { slug?: unknown }).slug
-      if (typeof slug === 'string' && slug) paths.push(`/${slug}`)
-    }
+    const locationSlug = locationSlugFromDoc(doc)
+    if (locationSlug) paths.push(`/${locationSlug}`)
     return paths
   },
 }
@@ -180,10 +177,12 @@ function invalidateCollection(slug: string, doc?: Record<string, unknown>): void
   publishKioskSignal(slug, doc)
 }
 
+const KIOSK_FRESH_TAGS = new Set(['menus', 'events', 'locations'])
+
 function revalidateCollectionTag(tag: string): void {
   // A push triggers one fetch. These caches must return fresh data on that
   // first fetch, rather than stale data followed by a background refresh.
-  revalidateTag(tag, ['menus', 'events', 'locations'].includes(tag) ? { expire: 0 } : 'max')
+  revalidateTag(tag, KIOSK_FRESH_TAGS.has(tag) ? { expire: 0 } : 'max')
 }
 
 /**

@@ -49,6 +49,10 @@ one message, so the patch uses a single parameter without changing behavior.
 Remove the patch when `ably-browser-bundle.int.spec.ts` passes with an unpatched
 SDK and the kiosk page loads successfully in the browser.
 
+`ably` is pinned to `2.29.0` in `package.json` so the patch and the version move
+together. When bumping it, rename the patch file, update `patchedDependencies`
+in `pnpm-workspace.yaml`, and re-run `ably-browser-bundle.int.spec.ts`.
+
 ### Environment
 
 1. Create an Ably account and a free-tier app: https://ably.com

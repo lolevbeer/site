@@ -86,19 +86,6 @@ export function selectPollInterval({
   return IDLE_INTERVAL_MS
 }
 
-/**
- * Generic display polling hook; see the module comment for the rhythm.
- *
- * Handles deploy detection (page reload once the new deploy's page renders) and
- * timestamp-based change detection to avoid unnecessary state updates.
- *
- * @param url - API endpoint to poll (empty string disables polling)
- * @param initialData - Initial data to use before first successful poll (null if unavailable)
- * @param applyResponse - Callback to extract domain data from the raw response and work
- *   out the display theme (on the client, since responses stay cacheable and carry
- *   no clock-dependent fields). Must return `{ data, theme }` — null returns are
- *   not supported.
- */
 export interface UsePollingOptions {
   /**
    * Bump to force an immediate poll (e.g. after an Ably invalidate).
@@ -112,6 +99,20 @@ export interface UsePollingOptions {
   realtimeFallback?: boolean
 }
 
+/**
+ * Generic display polling hook; see the module comment for the rhythm.
+ *
+ * Handles deploy detection (page reload once the new deploy's page renders) and
+ * timestamp-based change detection to avoid unnecessary state updates.
+ *
+ * @param url - API endpoint to poll (empty string disables polling)
+ * @param initialData - Initial data to use before first successful poll (null if unavailable)
+ * @param applyResponse - Callback to extract domain data from the raw response and work
+ *   out the display theme (on the client, since responses stay cacheable and carry
+ *   no clock-dependent fields). Must return `{ data, theme }` — null returns are
+ *   not supported.
+ * @param options - `invalidateSignal` and `realtimeFallback`; see `UsePollingOptions`.
+ */
 export function usePolling<T, R extends PollingResponse>(
   url: string,
   initialData: T | null,

@@ -23,7 +23,8 @@ import { logger } from '@/lib/utils/logger'
 let restClient: Rest | null = null
 let restClientKey: string | null = null
 
-async function getRestClient(): Promise<Rest | null> {
+/** Cached REST client, or null when ABLY_API_KEY is unset. Shared with /api/ably-auth. */
+export async function getRestClient(): Promise<Rest | null> {
   if (!isAblyPublishEnabled()) return null
   const key = process.env.ABLY_API_KEY!.trim()
   if (restClient && restClientKey === key) return restClient

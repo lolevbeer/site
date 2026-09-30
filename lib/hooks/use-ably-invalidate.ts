@@ -69,13 +69,8 @@ export function useAblyInvalidate({
       .then((mod) => {
         if (cancelled) return
         const AblyCtor = mod.default
-        client = new AblyCtor.Realtime({
-          authUrl: '/api/ably-auth',
-          authMethod: 'GET',
-          // Kiosk TVs stay open for hours; let Ably reconnect quietly.
-          disconnectedRetryTimeout: 15_000,
-          suspendedRetryTimeout: 30_000,
-        })
+        // Ably's defaults already retry quietly (15s disconnected, 30s suspended).
+        client = new AblyCtor.Realtime({ authUrl: '/api/ably-auth' })
 
         onConnected = () => {
           if (!cancelled) setRealtimeActive(true)

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { KIOSK_SUBSCRIBE_CAPABILITY } from '@/lib/ably/channels'
-import { isAblyPublishEnabled } from '@/lib/ably/config'
+import { getRestClient } from '@/lib/ably/publish'
 
 /**
  * Mints short-lived Ably TokenRequests for kiosk displays.
@@ -15,19 +15,14 @@ import { isAblyPublishEnabled } from '@/lib/ably/config'
 export const dynamic = 'force-dynamic'
 
 export async function GET(): Promise<NextResponse> {
-  if (!isAblyPublishEnabled()) {
-    return NextResponse.json({ error: 'Ably is not configured' }, { status: 503 })
-  }
-
   try {
-    const Ably = (await import('ably')).default
-    const rest = new Ably.Rest({ key: process.env.ABLY_API_KEY!.trim() })
+    const rest = await getRestClient()
+    if (!rest) {
+      return NextResponse.json({ error: 'Ably is not configured' }, { status: 503 })
+    }
+    // Default 1 hour TTL; the Realtime SDK renews via this endpoint before expiry.
     const tokenRequest = await rest.auth.createTokenRequest({
-      // Stable-ish client id per mint is fine; Ably allows many clients.
-      clientId: `kiosk-${Date.now().toString(36)}`,
       capability: KIOSK_SUBSCRIBE_CAPABILITY,
-      // 1 hour; the Realtime SDK renews via this endpoint before expiry.
-      ttl: 60 * 60 * 1000,
     })
     return NextResponse.json(tokenRequest)
   } catch (error) {
