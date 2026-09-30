@@ -45,6 +45,16 @@ that stay connected all day.
 2. When `NEXT_PUBLIC_ABLY_ENABLED=true`, displays open an Ably Realtime
    connection authenticated via `/api/ably-auth` (token request, subscribe
    only) and poll the existing stream endpoints immediately on invalidate.
+   - **The push refetch skips the cache:** a display told to refetch by Ably
+     reads `/api/menu-stream/<url>/fresh` (`force-dynamic`, `no-store`, backed by
+     the uncached `getMenuByUrlFresh`) instead of the cached stream endpoint.
+     Next starts the tag expiry and the `after()` publish together, so the
+     first cached read after a push can still return the previous menu
+     (`tests/int/menu-update-freshness.int.spec.ts` demonstrates the timing).
+     Ordinary 10s/30s/120s polls still use the CDN-cached endpoint; the cost is
+     one database read per display per push. Events displays keep the cached
+     endpoint. Both menu routes build their body with `menuStreamBody`
+     (`lib/utils/menu-stream-response.ts`).
 3. While Ably is connected, the warm/fast 10s poll cadence is replaced by a
    120s safety-net poll. If Ably is unset, disabled, or disconnects, the
    original 10s/30s polling state machine is unchanged.
@@ -55,7 +65,7 @@ that stay connected all day.
    kiosk stream responses carry: `kiosk-menus` (menu, location and product
    saves; attached only to `getMenuByUrl`), the per-menu `menu-<url>` tag (beer
    saves) and `events`. `max` would return the old content to the first
-   push-triggered fetch and leave it on screen until the 120s fallback poll.
+   cached read after a save and leave it on screen until the 120s fallback poll.
    The broad `menus` and `locations` tags that public pages share stay
    stale-while-revalidate, so a CMS save never makes a visitor wait for a
    synchronous rebuild. A location rename is not pushed to the events kiosk: the

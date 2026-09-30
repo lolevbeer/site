@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { menuStreamBody } from '@/lib/utils/menu-stream-response'
 import { getMenuByUrl } from '@/lib/utils/payload-api'
 
 /**
@@ -16,6 +17,9 @@ import { getMenuByUrl } from '@/lib/utils/payload-api'
  *   an Ably notification.
  * - The 10-minute fallback refresh bounds how long a new deployment's
  *   `deployId` (which reloads displays) takes to reach them.
+ *
+ * A display told to refetch by an Ably push uses the uncached `./fresh` route
+ * instead; see there for why.
  *
  * The response depends only on the menu, never the clock, so it stays
  * cacheable: displays work out their day/night theme themselves.
@@ -40,22 +44,5 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ error: 'Menu not found' }, { status: 404 })
   }
 
-  // Include location edits (such as linesLastCleaned) and item edits even
-  // when the menu document itself hasn't changed.
-  let timestamp = menu.updatedAt ? new Date(menu.updatedAt).getTime() : 0
-  if (menu.location && typeof menu.location === 'object' && menu.location.updatedAt) {
-    timestamp = Math.max(timestamp, new Date(menu.location.updatedAt).getTime())
-  }
-  for (const item of menu.items ?? []) {
-    const product = item.product?.value
-    if (product && typeof product === 'object' && 'updatedAt' in product) {
-      timestamp = Math.max(timestamp, new Date(product.updatedAt as string).getTime())
-    }
-  }
-
-  return NextResponse.json({
-    menu,
-    timestamp,
-    deployId: process.env.NEXT_PUBLIC_DEPLOY_ID || '',
-  })
+  return NextResponse.json(menuStreamBody(menu))
 }
