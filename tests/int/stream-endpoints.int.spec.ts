@@ -10,6 +10,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const api = vi.hoisted(() => ({
   getMenuByUrl: vi.fn(),
+  getMenuByUrlFresh: vi.fn(),
   getAllLocations: vi.fn(),
   getUpcomingEventsFromPayload: vi.fn(),
   transformPayloadEventToBreweryEvent: vi.fn((event: { id: string }) => ({ id: event.id })),
@@ -18,6 +19,7 @@ const api = vi.hoisted(() => ({
 vi.mock('@/lib/utils/payload-api', () => api)
 
 import * as menuStream from '@/src/app/api/menu-stream/[url]/route'
+import * as menuStreamFresh from '@/src/app/api/menu-stream/[url]/fresh/route'
 import * as eventsStream from '@/src/app/api/events-stream/[location]/route'
 
 const params = <T>(value: T) => ({ params: Promise.resolve(value) })
@@ -79,6 +81,51 @@ describe('menu-stream response', () => {
   it('throws on a failed fetch so the last good cached menu keeps serving', async () => {
     api.getMenuByUrl.mockRejectedValue(new Error('db down'))
     await expect(menuStream.GET(request, params({ url: 'draft' }))).rejects.toThrow('db down')
+  })
+})
+
+/**
+ * The Ably-triggered refetch reads the menu straight from the database, not through the
+ * tagged cache, because Next starts the tag flush and the after() publish together and
+ * the cache can still serve the previous menu when the display's fetch arrives.
+ */
+describe('menu-stream fresh response', () => {
+  const menu = {
+    id: 'm1',
+    url: 'draft',
+    updatedAt: '2026-09-01T00:00:00.000Z',
+    themeMode: 'auto',
+    location: { updatedAt: '2026-09-10T00:00:00.000Z' },
+    items: [{ product: { value: { updatedAt: '2026-09-20T00:00:00.000Z' } } }],
+  }
+
+  it('is dynamic and never stored by the CDN or browser', async () => {
+    api.getMenuByUrlFresh.mockResolvedValue(menu)
+    expect(menuStreamFresh.dynamic).toBe('force-dynamic')
+
+    const response = await menuStreamFresh.GET(request, params({ url: 'draft' }))
+
+    expect(response.headers.get('cache-control')).toBe('no-store')
+  })
+
+  it('reads the uncached menu and answers in the same shape as the cached endpoint', async () => {
+    api.getMenuByUrlFresh.mockResolvedValue(menu)
+    api.getMenuByUrl.mockResolvedValue(menu)
+
+    const fresh = await (await menuStreamFresh.GET(request, params({ url: 'draft' }))).json()
+    const cached = await (await menuStream.GET(request, params({ url: 'draft' }))).json()
+
+    expect(api.getMenuByUrlFresh).toHaveBeenCalledWith('draft')
+    expect(fresh).toEqual(cached)
+    expect(fresh.timestamp).toBe(Date.parse('2026-09-20T00:00:00.000Z'))
+  })
+
+  it('answers 404 for a missing menu and throws on a failed fetch', async () => {
+    api.getMenuByUrlFresh.mockResolvedValueOnce(null)
+    expect((await menuStreamFresh.GET(request, params({ url: 'nope' }))).status).toBe(404)
+
+    api.getMenuByUrlFresh.mockRejectedValueOnce(new Error('db down'))
+    await expect(menuStreamFresh.GET(request, params({ url: 'draft' }))).rejects.toThrow('db down')
   })
 })
 

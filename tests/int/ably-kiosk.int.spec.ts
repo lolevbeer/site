@@ -381,3 +381,107 @@ describe('useMenuStream when publishing fails', () => {
     expect(fetchMock).toHaveBeenCalledTimes(3)
   })
 })
+
+describe('Ably-triggered refetch reads the fresh endpoint', () => {
+  afterEach(() => {
+    cleanup()
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+  })
+
+  const poll = (invalidateUrl?: string) => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ timestamp: Date.parse('2026-01-01T00:00:00Z') }),
+    }))
+    vi.stubGlobal('fetch', fetchMock)
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => false })
+    const hook = renderHook(
+      ({ invalidateSignal }) =>
+        usePolling<number, { timestamp: number }>(
+          '/api/example',
+          0,
+          () => ({ data: 1, theme: 'light' }),
+          { invalidateSignal, invalidateUrl },
+        ),
+      { initialProps: { invalidateSignal: 0 } },
+    )
+    return { fetchMock, ...hook }
+  }
+
+  it('uses invalidateUrl only for the invalidate poll; ordinary polls keep the cached URL', async () => {
+    const { fetchMock, rerender } = poll('/api/example/fresh')
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(fetchMock).toHaveBeenLastCalledWith('/api/example', { cache: 'no-cache' })
+
+    await act(() => {
+      rerender({ invalidateSignal: 1 })
+    })
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(fetchMock).toHaveBeenLastCalledWith('/api/example/fresh', { cache: 'no-store' })
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+
+    // Unchanged timestamp, so the next scheduled poll is the 30s idle one.
+    await act(() => vi.advanceTimersByTimeAsync(30_000))
+    expect(fetchMock).toHaveBeenLastCalledWith('/api/example', { cache: 'no-cache' })
+    expect(fetchMock).toHaveBeenCalledTimes(3)
+  })
+
+  it('polls the ordinary URL on invalidate when no invalidateUrl is given', async () => {
+    const { fetchMock, rerender } = poll()
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    await act(() => {
+      rerender({ invalidateSignal: 1 })
+    })
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(fetchMock).toHaveBeenLastCalledWith('/api/example', { cache: 'no-cache' })
+  })
+
+  it('backs off like any failed poll when the fresh fetch fails, then resumes the cached URL', async () => {
+    const { fetchMock, rerender } = poll('/api/example/fresh')
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    fetchMock.mockRejectedValueOnce(new Error('offline'))
+    await act(() => {
+      rerender({ invalidateSignal: 1 })
+    })
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+
+    await act(() => vi.advanceTimersByTimeAsync(29_999))
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    await act(() => vi.advanceTimersByTimeAsync(1))
+    expect(fetchMock).toHaveBeenLastCalledWith('/api/example', { cache: 'no-cache' })
+  })
+
+  it('useMenuStream refetches /fresh when Ably says its menu changed', async () => {
+    vi.clearAllMocks()
+    vi.stubEnv('NEXT_PUBLIC_ABLY_ENABLED', 'true')
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => false })
+    const initial = {
+      id: 'menu-1',
+      url: 'z-cans',
+      type: 'cans',
+      themeMode: 'light',
+      items: [],
+      updatedAt: '2026-01-01T00:00:00Z',
+    } as unknown as Menu
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ menu: initial, timestamp: Date.parse(initial.updatedAt) }),
+    }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    renderHook(() => useMenuStream('z-cans', initial))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(fetchMock).toHaveBeenLastCalledWith('/api/menu-stream/z-cans', { cache: 'no-cache' })
+
+    const onMessage = ablyMock.subscribe.mock.calls[0][1]
+    act(() => onMessage({ data: { kind: 'menu', key: 'z-cans' } }))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(fetchMock).toHaveBeenLastCalledWith('/api/menu-stream/z-cans/fresh', {
+      cache: 'no-store',
+    })
+  })
+})

@@ -97,6 +97,13 @@ export interface UsePollingOptions {
    * polling. Ably pushes urgent refreshes; this is only a safety net.
    */
   realtimeFallback?: boolean
+  /**
+   * Endpoint to fetch instead of `url` for the poll an `invalidateSignal` bump
+   * triggers, bypassing every cache. Ordinary polls still use `url`. Menus use
+   * it because the cached endpoint can still hold the previous menu when the
+   * Ably push that announces a save arrives.
+   */
+  invalidateUrl?: string
 }
 
 /**
@@ -111,7 +118,8 @@ export interface UsePollingOptions {
  *   out the display theme (on the client, since responses stay cacheable and carry
  *   no clock-dependent fields). Must return `{ data, theme }` — null returns are
  *   not supported.
- * @param options - `invalidateSignal` and `realtimeFallback`; see `UsePollingOptions`.
+ * @param options - `invalidateSignal`, `realtimeFallback` and `invalidateUrl`; see
+ *   `UsePollingOptions`.
  */
 export function usePolling<T, R extends PollingResponse>(
   url: string,
@@ -119,7 +127,7 @@ export function usePolling<T, R extends PollingResponse>(
   applyResponse: (response: R) => { data: T; theme: 'light' | 'dark' },
   options: UsePollingOptions = {},
 ): UsePollingResult<T> {
-  const { invalidateSignal = 0, realtimeFallback = false } = options
+  const { invalidateSignal = 0, realtimeFallback = false, invalidateUrl } = options
   // A poll result is stored together with the server-supplied `initialData` it
   // was layered on top of. When the server re-renders with fresh props that
   // base stops matching, so the newer server data wins automatically — where
@@ -153,12 +161,14 @@ export function usePolling<T, R extends PollingResponse>(
     applyResponseRef.current = applyResponse
     initialDataRef.current = initialData
     realtimeFallbackRef.current = realtimeFallback
+    invalidateUrlRef.current = invalidateUrl
   })
 
   // poll() reschedules itself, which it cannot do by referencing its own
   // binding from inside its initializer. Going through a ref also means a
   // pending timeout always fires the newest poll rather than a stale closure.
-  const pollRef = useRef<() => void>(() => {})
+  const pollRef = useRef<(fetchUrl?: string) => void>(() => {})
+  const invalidateUrlRef = useRef(invalidateUrl)
 
   const clearScheduledPoll = useCallback(() => {
     if (pollTimeoutRef.current) {
@@ -167,70 +177,74 @@ export function usePolling<T, R extends PollingResponse>(
     }
   }, [])
 
-  const poll = useCallback(async () => {
-    if (!url) return
+  const poll = useCallback(
+    async (freshUrl?: string) => {
+      if (!url) return
 
-    try {
-      // 'no-cache' revalidates with the CDN (If-None-Match), so an unchanged
-      // cached response comes back as a 304 with no body.
-      const response = await fetch(url, { cache: 'no-cache' })
+      try {
+        // 'no-cache' revalidates with the CDN (If-None-Match), so an unchanged
+        // cached response comes back as a 304 with no body. `freshUrl` (the
+        // invalidate poll's uncached endpoint) is never stored, so 'no-store'.
+        const response = await fetch(freshUrl ?? url, { cache: freshUrl ? 'no-store' : 'no-cache' })
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`)
-      }
-
-      const raw: R = await response.json()
-
-      // New deploy: reload only once its page carries the LIVE_DISPLAY_META tag,
-      // so displays keep the current menu while the backend warms. The error
-      // screen is served with 200, so `ok` alone isn't enough. A failed check
-      // backs off like a failed poll.
-      if (raw.deployId) {
-        if (deployIdRef.current === null) {
-          deployIdRef.current = raw.deployId
-        } else if (raw.deployId !== deployIdRef.current) {
-          const page = await fetch(window.location.href, { cache: 'no-store' })
-          if (!page.ok || !(await page.text()).includes(`name="${LIVE_DISPLAY_META}"`)) {
-            throw new Error('New deploy not ready')
-          }
-          window.location.reload()
-          return
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`)
         }
+
+        const raw: R = await response.json()
+
+        // New deploy: reload only once its page carries the LIVE_DISPLAY_META tag,
+        // so displays keep the current menu while the backend warms. The error
+        // screen is served with 200, so `ok` alone isn't enough. A failed check
+        // backs off like a failed poll.
+        if (raw.deployId) {
+          if (deployIdRef.current === null) {
+            deployIdRef.current = raw.deployId
+          } else if (raw.deployId !== deployIdRef.current) {
+            const page = await fetch(window.location.href, { cache: 'no-store' })
+            if (!page.ok || !(await page.text()).includes(`name="${LIVE_DISPLAY_META}"`)) {
+              throw new Error('New deploy not ready')
+            }
+            window.location.reload()
+            return
+          }
+        }
+
+        const applied = applyResponseRef.current(raw)
+
+        // Only update data state when timestamp has changed
+        if (raw.timestamp !== lastTimestampRef.current) {
+          lastTimestampRef.current = raw.timestamp
+          setPolled({ base: initialDataRef.current, value: applied.data })
+          noChangeCountRef.current = 0
+        } else {
+          noChangeCountRef.current += 1
+        }
+        warmRef.current = raw.timestamp > 0 && Date.now() - raw.timestamp < WARM_WINDOW_MS
+        consecutiveErrorsRef.current = 0
+
+        // Always update theme: applyResponse reads the clock, so day/night changes
+        // land on the next poll even when the data hasn't changed.
+        setTheme(applied.theme)
+      } catch {
+        // The display keeps showing its last good data; the next poll backs off.
+        consecutiveErrorsRef.current += 1
       }
 
-      const applied = applyResponseRef.current(raw)
-
-      // Only update data state when timestamp has changed
-      if (raw.timestamp !== lastTimestampRef.current) {
-        lastTimestampRef.current = raw.timestamp
-        setPolled({ base: initialDataRef.current, value: applied.data })
-        noChangeCountRef.current = 0
-      } else {
-        noChangeCountRef.current += 1
+      const delay = selectPollInterval({
+        noChangeCount: noChangeCountRef.current,
+        warm: warmRef.current,
+        consecutiveErrors: consecutiveErrorsRef.current,
+        hidden: document.hidden,
+        realtimeFallback: realtimeFallbackRef.current,
+      })
+      if (delay !== null) {
+        clearScheduledPoll()
+        pollTimeoutRef.current = setTimeout(() => pollRef.current(), delay)
       }
-      warmRef.current = raw.timestamp > 0 && Date.now() - raw.timestamp < WARM_WINDOW_MS
-      consecutiveErrorsRef.current = 0
-
-      // Always update theme: applyResponse reads the clock, so day/night changes
-      // land on the next poll even when the data hasn't changed.
-      setTheme(applied.theme)
-    } catch {
-      // The display keeps showing its last good data; the next poll backs off.
-      consecutiveErrorsRef.current += 1
-    }
-
-    const delay = selectPollInterval({
-      noChangeCount: noChangeCountRef.current,
-      warm: warmRef.current,
-      consecutiveErrors: consecutiveErrorsRef.current,
-      hidden: document.hidden,
-      realtimeFallback: realtimeFallbackRef.current,
-    })
-    if (delay !== null) {
-      clearScheduledPoll()
-      pollTimeoutRef.current = setTimeout(() => pollRef.current(), delay)
-    }
-  }, [url, clearScheduledPoll])
+    },
+    [url, clearScheduledPoll],
+  )
 
   useEffect(() => {
     pollRef.current = poll
@@ -264,7 +278,7 @@ export function usePolling<T, R extends PollingResponse>(
     if (!url || invalidateSignal === 0) return
     clearScheduledPoll()
     noChangeCountRef.current = 0
-    void pollRef.current()
+    void pollRef.current(invalidateUrlRef.current)
   }, [url, invalidateSignal, clearScheduledPoll])
 
   // When Ably connects or drops, reschedule so a 120s safety-net timer does not

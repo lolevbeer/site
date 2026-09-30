@@ -22,7 +22,9 @@ interface MenuResponse {
 /**
  * Hook for real-time menu updates via adaptive polling, with an optional
  * Ably invalidate path (NEXT_PUBLIC_ABLY_ENABLED) that forces an immediate
- * poll when CMS revalidation publishes to kiosk:menu.
+ * poll when CMS revalidation publishes to kiosk:menu. That poll reads the
+ * uncached `/fresh` endpoint, since the cached one can still serve the
+ * previous menu when the push arrives; ordinary polls stay cached.
  *
  * Wraps the generic usePolling hook with menu-specific data transformation.
  * The display theme is the menu's fixed themeMode, or Pittsburgh day/night for
@@ -46,7 +48,11 @@ export function useMenuStream(menuUrl: string, initialMenu: Menu | null): UseMen
           ? responseMenu.themeMode
           : getPittsburghTheme(),
     }),
-    { invalidateSignal, realtimeFallback: realtimeActive },
+    {
+      invalidateSignal,
+      realtimeFallback: realtimeActive,
+      invalidateUrl: menuUrl ? `/api/menu-stream/${menuUrl}/fresh` : undefined,
+    },
   )
 
   return { menu, theme }
