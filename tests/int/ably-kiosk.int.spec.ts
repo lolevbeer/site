@@ -320,6 +320,41 @@ describe('usePolling realtimeFallback reschedule', () => {
   })
 })
 
+describe('useMenuStream realtime state', () => {
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+  })
+
+  it('exposes whether Ably is connected and counts pushes for this menu only', async () => {
+    vi.clearAllMocks()
+    vi.stubEnv('NEXT_PUBLIC_ABLY_ENABLED', 'true')
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({ ok: false })),
+    )
+    const { result } = renderHook(() => useMenuStream('z-cans', null))
+    await waitFor(() => expect(ablyMock.subscribe).toHaveBeenCalledTimes(1))
+    expect(result.current).toMatchObject({ realtime: false, pushCount: 0 })
+
+    const onConnected = ablyMock.connection.on.mock.calls.find(
+      ([event]) => event === 'connected',
+    )![1]
+    const onMessage = ablyMock.subscribe.mock.calls[0][1]
+    act(() => {
+      onConnected()
+      onMessage({ data: { kind: 'menu', key: 'another-menu' } })
+    })
+    expect(result.current).toMatchObject({ realtime: true, pushCount: 0 })
+
+    act(() => {
+      onMessage({ data: { kind: 'menu', key: 'z-cans' } })
+      onMessage({ data: { kind: 'menu' } })
+    })
+    expect(result.current.pushCount).toBe(2)
+  })
+})
+
 describe('useMenuStream when publishing fails', () => {
   afterEach(() => {
     cleanup()

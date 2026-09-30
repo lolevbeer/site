@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import { useMenuStream } from '@/lib/hooks/use-menu-stream'
 import { useClockBucket } from '@/lib/hooks/use-clock-bucket'
 import { FeaturedBeers, FeaturedCans } from '@/components/home/featured-menu'
+import { RealtimeIndicator } from '@/components/menu/realtime-indicator'
 import type { Menu } from '@/src/payload-types'
 import { getThemeVars } from '@/lib/utils/display-theme'
 import { seededLightColors } from '@/lib/utils/seeded-colors'
@@ -25,9 +26,11 @@ interface LiveMenuProps {
  *   is edited in Payload, so an edit shows within about a minute (faster with Ably)
  * - Much more cost-effective than SSE on Vercel (no persistent app-server connections)
  * - Applies dark mode via inline CSS variables for maximum browser compatibility
+ * - Shows a small lightning bolt in the corner while connected to Ably, pulsing
+ *   when a push arrives (see RealtimeIndicator)
  */
 export function LiveMenu({ menuUrl, initialMenu }: LiveMenuProps) {
-  const { menu, theme } = useMenuStream(menuUrl, initialMenu)
+  const { menu, theme, realtime, pushCount } = useMenuStream(menuUrl, initialMenu)
 
   // Use streamed menu if available, otherwise fall back to initial
   const displayMenu = menu || initialMenu
@@ -45,44 +48,28 @@ export function LiveMenu({ menuUrl, initialMenu }: LiveMenuProps) {
   // Apply CSS variables directly - bypasses .dark class for browser compatibility
   const themeVars = getThemeVars(theme)
 
-  if (displayMenu.type === 'draft') {
-    return (
-      <div
-        className="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground"
-        style={themeVars}
-      >
-        <FeaturedBeers menu={displayMenu} animated itemColors={itemColors} />
-      </div>
-    )
-  }
-
-  if (displayMenu.type === 'cans') {
-    return (
-      <div
-        className="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground"
-        style={themeVars}
-      >
-        <FeaturedCans
-          menu={displayMenu}
-          animated
-          itemColors={itemColors}
-          labelVideos={displayMenu.animateCans ?? true}
-        />
-      </div>
-    )
-  }
-
   // 'other' type renders like draft
-  if (displayMenu.type === 'other') {
-    return (
-      <div
-        className="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground"
-        style={themeVars}
-      >
-        <FeaturedBeers menu={displayMenu} animated itemColors={itemColors} />
-      </div>
-    )
-  }
+  const board =
+    displayMenu.type === 'cans' ? (
+      <FeaturedCans
+        menu={displayMenu}
+        animated
+        itemColors={itemColors}
+        labelVideos={displayMenu.animateCans ?? true}
+      />
+    ) : displayMenu.type === 'draft' || displayMenu.type === 'other' ? (
+      <FeaturedBeers menu={displayMenu} animated itemColors={itemColors} />
+    ) : null
 
-  return null
+  if (!board) return null
+
+  return (
+    <div
+      className="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground"
+      style={themeVars}
+    >
+      {board}
+      <RealtimeIndicator connected={realtime} pulseKey={pushCount} />
+    </div>
+  )
 }

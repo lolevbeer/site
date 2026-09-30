@@ -59,6 +59,13 @@ that stay connected all day.
      Fixing it needs either an uncached events twin or a push that carries the
      saved version so the display retries until it sees it (which would also
      replace `/fresh`).
+   - **Connection indicator:** while connected, `/m` boards show a small
+     lightning bolt in the bottom-right corner (`RealtimeIndicator`) that flashes
+     when a push arrives, so a CMS save is visibly seen reaching the TV. It sits
+     in the 3% safe-area gutter so it can never overlap a row or price; a TV
+     that crops its outer 3% will not show it (nudge `right`/`bottom` in
+     `components/menu/realtime-indicator.tsx` if so). The flash is off under
+     `prefers-reduced-motion`.
 3. While Ably is connected, the warm/fast 10s poll cadence is replaced by a
    120s safety-net poll. If Ably is unset, disabled, or disconnects, the
    original 10s/30s polling state machine is unchanged.

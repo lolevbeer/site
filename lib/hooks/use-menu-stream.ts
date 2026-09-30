@@ -10,6 +10,10 @@ import type { Menu } from '@/src/payload-types'
 interface UseMenuStreamResult {
   menu: Menu | null
   theme: 'light' | 'dark'
+  /** True while the display is connected to Ably (drives the corner bolt). */
+  realtime: boolean
+  /** Pushes received for this menu so far; changes on each one (drives the pulse). */
+  pushCount: number
 }
 
 /** Shape of the /api/menu-stream response */
@@ -55,5 +59,5 @@ export function useMenuStream(menuUrl: string, initialMenu: Menu | null): UseMen
     },
   )
 
-  return { menu, theme }
+  return { menu, theme, realtime: realtimeActive, pushCount: invalidateSignal }
 }

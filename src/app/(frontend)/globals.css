@@ -357,6 +357,30 @@
     animation: search-pulse 0.3s ease-out;
   }
 
+  /* Realtime bolt on the menu boards: rests dim, flashes when a push arrives.
+     The icon is re-keyed per push to restart this (components/menu/realtime-indicator.tsx). */
+  @keyframes live-pulse {
+    0% {
+      opacity: 1;
+      transform: scale(1.3);
+    }
+    100% {
+      opacity: 0.4;
+      transform: scale(1);
+    }
+  }
+
+  .live-pulse {
+    opacity: 0.4;
+    animation: live-pulse 1.2s ease-out;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .live-pulse {
+      animation: none;
+    }
+  }
+
   /* Hide scrollbar utility for carousel */
   .scrollbar-hide::-webkit-scrollbar {
     display: none;

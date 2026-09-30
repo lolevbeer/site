@@ -23,6 +23,7 @@ import {
   Cancel01Icon,
   CancelCircleIcon,
   Edit03Icon,
+  EnergyIcon,
   FacebookIcon,
   GpsIcon,
   HelpCircleIcon,
@@ -79,6 +80,7 @@ export const Sun = icon(Sun03Icon)
 export const Utensils = icon(RestaurantIcon)
 export const UtensilsCrossed = icon(RestaurantIcon)
 export const X = icon(Cancel01Icon)
+export const Zap = icon(EnergyIcon)
 
 // shadcn/ui primitives (accordion, dialog, breadcrumb, select, carousel)
 export const ArrowLeft = icon(ArrowLeft02Icon)
