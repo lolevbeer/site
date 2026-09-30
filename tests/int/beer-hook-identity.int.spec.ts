@@ -4,7 +4,7 @@
  * each inner Local API call passes an explicit `overrideAccess: true` and the
  * hook's own `req` so it joins the save transaction.
  */
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { PayloadRequest } from 'payload'
 
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn(), revalidateTag: vi.fn() }))
@@ -28,6 +28,8 @@ function mockReq() {
 }
 
 describe('beer hook system lookups', () => {
+  beforeEach(() => vi.clearAllMocks())
+
   it('generateUniqueSlug checks published and draft slugs with req and overrideAccess: true', async () => {
     const { req, find } = mockReq()
 
@@ -66,6 +68,39 @@ describe('beer hook system lookups', () => {
       expect.objectContaining({ collection: 'menus', overrideAccess: true, req }),
     )
     expect(revalidateTag).toHaveBeenCalledWith('menu-z-cans', { expire: 0 })
-    expect(publishKioskInvalidate).toHaveBeenCalledWith({ kind: 'menu', key: 'z-cans' })
+    expect(publishKioskInvalidate).toHaveBeenCalledWith({ kind: 'menu', keys: ['z-cans'] })
+  })
+
+  it('Beers afterChange pushes every affected menu in one batched publish, skipping menus without a url', async () => {
+    const { req, find } = mockReq()
+    find.mockResolvedValueOnce({ docs: [{ url: 'z-cans' }, {}, { url: 'a-draft' }] })
+    const hook = Beers.hooks!.afterChange![0] as unknown as AnyHook
+
+    await hook({ req, context: {}, doc: { id: 'beer-1' }, previousDoc: { id: 'beer-1' } })
+
+    expect(revalidateTag).toHaveBeenCalledWith('menu-z-cans', { expire: 0 })
+    expect(revalidateTag).toHaveBeenCalledWith('menu-a-draft', { expire: 0 })
+    expect(publishKioskInvalidate).toHaveBeenCalledTimes(1)
+    expect(publishKioskInvalidate).toHaveBeenCalledWith({
+      kind: 'menu',
+      keys: ['z-cans', 'a-draft'],
+    })
+  })
+
+  it('Beers afterChange does no menu lookup or push for a draft-only save', async () => {
+    const { req, find } = mockReq()
+    ;(req as unknown as { query: object }).query = { draft: 'true' }
+    const hook = Beers.hooks!.afterChange![0] as unknown as AnyHook
+
+    await hook({
+      req,
+      context: {},
+      doc: { id: 'beer-1', _status: 'draft' },
+      previousDoc: { id: 'beer-1' },
+    })
+
+    expect(find).not.toHaveBeenCalled()
+    expect(revalidateTag).not.toHaveBeenCalled()
+    expect(publishKioskInvalidate).not.toHaveBeenCalled()
   })
 })

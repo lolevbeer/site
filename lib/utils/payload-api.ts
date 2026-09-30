@@ -21,7 +21,7 @@
  */
 
 import { cache } from 'react'
-import { getPayload } from 'payload'
+import { getPayload, type Where } from 'payload'
 import config from '@/src/payload.config'
 import { unstable_cache } from 'next/cache'
 import {
@@ -257,46 +257,74 @@ export const getMenusByLocation = async (locationSlug: string): Promise<PayloadM
   }
 }
 
-/** Resolve the explicit website menu selection, never the first menu of a type. */
-async function getLocationMenu(
+type WebsiteMenuType = 'draft' | 'cans'
+
+/**
+ * Resolve a location's explicit website menu selections, never the first menu
+ * of a type. One cache entry serves getDraftMenu and getCansMenu (the homepage
+ * and taproom page call both), so a miss costs one location lookup and one
+ * menu query instead of two of each. The query still enforces each selection's
+ * id, type, location and published status.
+ */
+async function getLocationMenus(
   locationSlug: string,
-  type: 'draft' | 'cans',
-): Promise<PayloadMenu | null> {
+): Promise<Record<WebsiteMenuType, PayloadMenu | null>> {
   return unstable_cache(
-    async () => {
+    async (): Promise<Record<WebsiteMenuType, PayloadMenu | null>> => {
+      const none = { draft: null, cans: null }
       const payload = await getPayload({ config })
       const location = await findLocationBySlug(payload, locationSlug)
-      const selected = location?.[`${type}Menu`]
-      if (!location || !selected) return null
+      if (!location) return none
+
+      const selections = (['draft', 'cans'] as const).flatMap((type) => {
+        const selected = location[`${type}Menu`]
+        return selected ? [{ type, id: relationshipId(selected) }] : []
+      })
+      if (selections.length === 0) return none
 
       const result = await payload.find({
         collection: 'menus',
         overrideAccess: false,
         where: {
-          id: { equals: relationshipId(selected) },
-          location: { equals: location.id },
-          type: { equals: type },
-          _status: { equals: 'published' },
+          and: [
+            { location: { equals: location.id } },
+            { _status: { equals: 'published' } },
+            {
+              or: selections.map(
+                ({ id, type }): Where => ({
+                  and: [{ id: { equals: id } }, { type: { equals: type } }],
+                }),
+              ),
+            },
+          ],
         },
         depth: 3,
         populate: CATALOG_MENU_POPULATE,
-        limit: 1,
+        limit: selections.length,
       })
-      return result.docs[0] ?? null
+
+      const pick = (type: WebsiteMenuType) => {
+        const selection = selections.find((entry) => entry.type === type)
+        return (
+          (selection && result.docs.find((doc) => String(doc.id) === String(selection.id))) ||
+          null
+        )
+      }
+      return { draft: pick('draft'), cans: pick('cans') }
     },
-    [`location-${locationSlug}-${type}-menu`],
+    [`location-${locationSlug}-website-menus`],
     { tags: [CACHE_TAGS.locations, CACHE_TAGS.menus, CACHE_TAGS.beers], revalidate: 300 },
   )()
 }
 
 /** Get the location's selected draft menu for the homepage and taproom page. */
 export async function getDraftMenu(locationSlug: string): Promise<PayloadMenu | null> {
-  return getLocationMenu(locationSlug, 'draft')
+  return (await getLocationMenus(locationSlug)).draft
 }
 
 /** Get the location's selected cans menu for the homepage and taproom page. */
 export async function getCansMenu(locationSlug: string): Promise<PayloadMenu | null> {
-  const cansMenu = await getLocationMenu(locationSlug, 'cans')
+  const cansMenu = (await getLocationMenus(locationSlug)).cans
 
   // Clone and sort to avoid mutating the cached object from unstable_cache
   if (cansMenu?.items) {
@@ -419,7 +447,8 @@ async function findMenuByUrl(url: string): Promise<PayloadMenu | null> {
 
 /**
  * Get menu by URL slug (e.g., 'lawrenceville-draft', 'zelienople-cans')
- * Cached until the 'menus' tag or this menu's own `menu-${url}` tag is invalidated
+ * Cached until the 'menus' tag, this menu's own `menu-${url}` tag, or the
+ * kiosk-only 'kiosk-menus' tag is invalidated. Only /api/menu-stream reads this.
  */
 export const getMenuByUrl = async (url: string): Promise<PayloadMenu | null> => {
   try {
@@ -428,9 +457,16 @@ export const getMenuByUrl = async (url: string): Promise<PayloadMenu | null> => 
       [`menu-url-${url}`],
       // menu-${url} lets beer edits invalidate only the menus that contain the
       // beer (see revalidateMenusForBeer in src/collections/Beers.ts) instead
-      // of nuking every menu via the broad 'menus' tag. Edits reach this cache
-      // through those tags, so the time-based fallback can be long.
-      { tags: [CACHE_TAGS.menus, `menu-${url}`], revalidate: 3600 }, // 1 hour fallback
+      // of nuking every menu via the broad 'menus' tag. 'kiosk-menus' is the one
+      // tag the revalidation plugin hard-expires for menu, location and product
+      // edits, so a push-triggered display fetch is fresh while the broad
+      // 'menus' tag (shared with public pages) stays stale-while-revalidate.
+      // Edits reach this cache through those tags, so the time-based fallback
+      // can be long.
+      {
+        tags: [CACHE_TAGS.menus, CACHE_TAGS.kioskMenus, `menu-${url}`],
+        revalidate: 3600, // 1 hour fallback
+      },
     )()
   } catch (error) {
     logger.error(`Error fetching menu by URL: ${url}`, error)

@@ -35,54 +35,60 @@ export async function getRestClient(): Promise<Rest | null> {
   return restClient
 }
 
+/** `keys` = the menu urls or location slugs to refresh; none = every display on the channel. */
+interface KioskInvalidateInput {
+  kind: KioskInvalidateKind
+  keys?: string[]
+}
+
 /**
- * Queue a lightweight invalidate after the save response. Payload afterChange
+ * Queue lightweight invalidates after the save response. Payload afterChange
  * runs before the transaction commits; publishing there can make displays
  * refetch the old document. after() also keeps serverless publishes alive.
+ *
+ * All keys go out as one REST request (Ably accepts an array of messages), so a
+ * beer on 30 menus costs one round trip, not 30. Ably still bills per message.
  */
-export async function publishKioskInvalidate(input: {
-  kind: KioskInvalidateKind
-  key?: string
-}): Promise<void> {
+export async function publishKioskInvalidate(input: KioskInvalidateInput): Promise<void> {
   if (!isAblyPublishEnabled()) return
   try {
     after(() => publish(input))
   } catch (error) {
     logger.warn('Ably kiosk invalidate scheduling failed', {
       kind: input.kind,
-      key: input.key,
+      keys: input.keys,
       error: error instanceof Error ? error.message : String(error),
     })
   }
 }
 
-async function publish(input: { kind: KioskInvalidateKind; key?: string }): Promise<void> {
+async function publish({ kind, keys }: KioskInvalidateInput): Promise<void> {
   let client: Rest | null
   try {
     client = await getRestClient()
   } catch (error) {
     logger.warn('Ably REST client init failed', {
-      kind: input.kind,
-      key: input.key,
+      kind,
+      keys,
       error: error instanceof Error ? error.message : String(error),
     })
     return
   }
   if (!client) return
 
-  const message: KioskInvalidateMessage = {
-    kind: input.kind,
-    key: input.key,
-    at: Date.now(),
-  }
+  const at = Date.now()
+  // No keys: one keyless message that every display on the channel acts on.
+  const messages = (keys?.length ? keys : [undefined]).map((key) => ({
+    name: ABLY_UPDATED_EVENT,
+    data: { kind, key, at } satisfies KioskInvalidateMessage,
+  }))
 
   try {
-    const channel = client.channels.get(ABLY_CHANNELS[input.kind])
-    await channel.publish(ABLY_UPDATED_EVENT, message)
+    await client.channels.get(ABLY_CHANNELS[kind]).publish(messages)
   } catch (error) {
     logger.warn('Ably kiosk invalidate publish failed', {
-      kind: input.kind,
-      key: input.key,
+      kind,
+      keys,
       error: error instanceof Error ? error.message : String(error),
     })
   }

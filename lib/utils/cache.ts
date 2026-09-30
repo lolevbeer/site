@@ -7,6 +7,9 @@
 export const CACHE_TAGS = {
   beers: 'beers',
   menus: 'menus',
+  // Only the kiosk menu stream carries this, so it can be hard-expired without
+  // forcing synchronous rebuilds of public pages that share 'menus'.
+  kioskMenus: 'kiosk-menus',
   events: 'events',
   food: 'food',
   locations: 'locations',

@@ -89,44 +89,74 @@ describe('publishKioskInvalidate', () => {
   })
 
   it('no-ops when ABLY_API_KEY is unset', async () => {
-    await publishKioskInvalidate({ kind: 'menu', key: 'lawrenceville-draft' })
+    await publishKioskInvalidate({ kind: 'menu', keys: ['lawrenceville-draft'] })
     expect(ablyMock.Rest).not.toHaveBeenCalled()
     expect(after).not.toHaveBeenCalled()
   })
 
   it('publishes only after the save response, when the transaction and cache invalidation are done', async () => {
     vi.stubEnv('ABLY_API_KEY', 'app.key:secret')
-    await publishKioskInvalidate({ kind: 'menu', key: 'lawrenceville-draft' })
+    await publishKioskInvalidate({ kind: 'menu', keys: ['lawrenceville-draft'] })
     expect(ablyMock.publish).not.toHaveBeenCalled()
     expect(after).toHaveBeenCalledTimes(1)
     await after.mock.calls[0][0]()
     expect(ablyMock.Rest).toHaveBeenCalled()
     expect(ablyMock.getChannel).toHaveBeenCalledWith(ABLY_CHANNELS.menu)
-    expect(ablyMock.publish).toHaveBeenCalledWith(
-      ABLY_UPDATED_EVENT,
-      expect.objectContaining({
-        kind: 'menu',
-        key: 'lawrenceville-draft',
-        at: expect.any(Number),
-      }),
-    )
+    expect(ablyMock.publish).toHaveBeenCalledWith([
+      {
+        name: ABLY_UPDATED_EVENT,
+        data: expect.objectContaining({
+          kind: 'menu',
+          key: 'lawrenceville-draft',
+          at: expect.any(Number),
+        }),
+      },
+    ])
   })
 
   it('publishes events invalidates on the events channel', async () => {
     vi.stubEnv('ABLY_API_KEY', 'app.key:secret')
-    await publishKioskInvalidate({ kind: 'events', key: 'lawrenceville' })
+    await publishKioskInvalidate({ kind: 'events', keys: ['lawrenceville'] })
     await after.mock.calls[0][0]()
     expect(ablyMock.getChannel).toHaveBeenCalledWith(ABLY_CHANNELS.events)
-    expect(ablyMock.publish).toHaveBeenCalledWith(
-      ABLY_UPDATED_EVENT,
-      expect.objectContaining({ kind: 'events', key: 'lawrenceville' }),
-    )
+    expect(ablyMock.publish).toHaveBeenCalledWith([
+      {
+        name: ABLY_UPDATED_EVENT,
+        data: expect.objectContaining({ kind: 'events', key: 'lawrenceville' }),
+      },
+    ])
+  })
+
+  it('sends several keys as one batched publish, one message per key', async () => {
+    vi.stubEnv('ABLY_API_KEY', 'app.key:secret')
+    await publishKioskInvalidate({ kind: 'menu', keys: ['a-draft', 'b-cans', 'c-draft'] })
+    expect(after).toHaveBeenCalledTimes(1)
+    await after.mock.calls[0][0]()
+    expect(ablyMock.publish).toHaveBeenCalledTimes(1)
+    const [messages] = ablyMock.publish.mock.calls[0] as unknown as [{ data: { key?: string } }[]]
+    expect(messages.map((m) => m.data.key)).toEqual(['a-draft', 'b-cans', 'c-draft'])
+  })
+
+  it('sends a single keyless message (refresh every display) when there are no keys', async () => {
+    vi.stubEnv('ABLY_API_KEY', 'app.key:secret')
+    await publishKioskInvalidate({ kind: 'events' })
+    await publishKioskInvalidate({ kind: 'events', keys: [] })
+    for (const call of after.mock.calls) await call[0]()
+    expect(ablyMock.publish).toHaveBeenCalledTimes(2)
+    for (const [messages] of ablyMock.publish.mock.calls as unknown as [
+      { data: { key?: string } }[],
+    ][]) {
+      expect(messages).toHaveLength(1)
+      expect(messages[0].data.key).toBeUndefined()
+    }
   })
 
   it('handles a failed background publish without rejecting the save or after task', async () => {
     vi.stubEnv('ABLY_API_KEY', 'app.key:secret')
     ablyMock.publish.mockRejectedValueOnce(new Error('Ably unavailable'))
-    await expect(publishKioskInvalidate({ kind: 'menu', key: 'draft' })).resolves.toBeUndefined()
+    await expect(
+      publishKioskInvalidate({ kind: 'menu', keys: ['draft'] }),
+    ).resolves.toBeUndefined()
     await expect(after.mock.calls[0][0]()).resolves.toBeUndefined()
   })
 })
@@ -308,7 +338,7 @@ describe('useMenuStream when publishing fails', () => {
     // The write succeeds, but the server cannot notify the still-connected display.
     saved = { ...initial, name: 'After save', updatedAt: '2026-01-01T00:01:00Z' }
     ablyMock.publish.mockRejectedValueOnce(new Error('Unauthorized to publish to channel'))
-    await publishKioskInvalidate({ kind: 'menu', key: 'z-cans' })
+    await publishKioskInvalidate({ kind: 'menu', keys: ['z-cans'] })
     await after.mock.calls[0][0]()
 
     await act(() => vi.advanceTimersByTimeAsync(REALTIME_FALLBACK_INTERVAL_MS - 1))

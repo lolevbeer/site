@@ -4,7 +4,8 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('@/lib/ably/publish', () => ({ publishKioskInvalidate: vi.fn() }))
+const publishKioskInvalidate = vi.hoisted(() => vi.fn())
+vi.mock('@/lib/ably/publish', () => ({ publishKioskInvalidate }))
 
 const revalidateTag = vi.fn()
 const revalidatePath = vi.fn()
@@ -16,22 +17,138 @@ vi.mock('next/cache', () => ({
 import { revalidateForCollection, revalidationPlugin } from '@/src/plugins/revalidation-plugin'
 import type { Config } from 'payload'
 
+type Hook = (args: { doc: object; req?: object; context?: object }) => Promise<unknown>
+
+async function hooksFor(slug: string) {
+  const config = await revalidationPlugin({
+    collections: [{ slug, fields: [] }],
+  } as unknown as Config)
+  const hooks = config.collections![0].hooks!
+  return { afterChange: hooks.afterChange![0] as Hook, afterDelete: hooks.afterDelete![0] as Hook }
+}
+
+const hardExpired = () =>
+  revalidateTag.mock.calls
+    .filter(([, profile]) => typeof profile === 'object')
+    .map(([tag]) => tag)
+    .sort()
+
 describe('kiosk cache invalidation', () => {
-  it.each(['menus', 'events', 'locations'])(
-    'expires %s before the next display fetch',
+  // Only the tags the kiosk stream responses carry are hard-expired (a push
+  // triggers one fetch that must be fresh). Every other tag, including the broad
+  // 'menus'/'locations' that public pages share, stays stale-while-revalidate.
+  it.each([
+    ['menus', ['kiosk-menus'], ['menus']],
+    ['locations', ['kiosk-menus'], ['locations', 'menus']],
+    ['products', ['kiosk-menus'], ['products', 'menus']],
+    ['events', ['events'], []],
+    ['recurring-events', ['events'], []],
+  ])('%s expires only kiosk tags before the next display fetch', async (slug, hard, soft) => {
+    const { afterChange, afterDelete } = await hooksFor(slug)
+    for (const hook of [afterChange, afterDelete]) {
+      revalidateTag.mockClear()
+      await hook({ doc: {} })
+      expect(hardExpired()).toEqual(hard)
+      for (const tag of soft) expect(revalidateTag).toHaveBeenCalledWith(tag, 'max')
+    }
+  })
+})
+
+describe('draft-only saves', () => {
+  beforeEach(() => {
+    revalidateTag.mockReset()
+    revalidatePath.mockReset()
+    publishKioskInvalidate.mockReset()
+  })
+
+  it('skip cache invalidation and kiosk pushes: nothing published changed', async () => {
+    const { afterChange } = await hooksFor('menus')
+    await afterChange({ doc: { _status: 'draft', url: 'z-cans' }, req: { query: { draft: 'true' } } })
+    expect(revalidateTag).not.toHaveBeenCalled()
+    expect(revalidatePath).not.toHaveBeenCalled()
+    expect(publishKioskInvalidate).not.toHaveBeenCalled()
+  })
+
+  it('still run for publish, unpublish, and deletes', async () => {
+    const { afterChange, afterDelete } = await hooksFor('menus')
+    await afterChange({ doc: { _status: 'published', url: 'z-cans' }, req: { query: {} } })
+    expect(publishKioskInvalidate).toHaveBeenCalledTimes(1)
+    // Unpublish sends _status draft without draft=true.
+    await afterChange({ doc: { _status: 'draft', url: 'z-cans' }, req: { query: {} } })
+    expect(publishKioskInvalidate).toHaveBeenCalledTimes(2)
+    await afterDelete({ doc: { _status: 'draft', url: 'z-cans' }, req: { query: { draft: 'true' } } })
+    expect(publishKioskInvalidate).toHaveBeenCalledTimes(3)
+  })
+})
+
+describe('kiosk push keys', () => {
+  const findByID = vi.fn()
+  const req = { payload: { findByID }, query: {} }
+
+  beforeEach(() => {
+    revalidateTag.mockReset()
+    publishKioskInvalidate.mockReset()
+    findByID.mockReset()
+  })
+
+  it('scopes a menu save to that menu url', async () => {
+    const { afterChange } = await hooksFor('menus')
+    await afterChange({ doc: { url: 'z-cans' }, req })
+    expect(publishKioskInvalidate).toHaveBeenCalledWith({ kind: 'menu', keys: ['z-cans'] })
+  })
+
+  it('scopes an event save to its location slug when the relationship is populated', async () => {
+    const { afterChange } = await hooksFor('events')
+    await afterChange({ doc: { location: { id: 'loc-1', slug: 'lawrenceville' } }, req })
+    expect(publishKioskInvalidate).toHaveBeenCalledWith({ kind: 'events', keys: ['lawrenceville'] })
+    expect(findByID).not.toHaveBeenCalled()
+  })
+
+  it.each(['events', 'recurring-events', 'food', 'recurring-food-schedules'])(
+    'resolves a bare location id to its slug for %s saves, inside the save transaction',
     async (slug) => {
-      revalidateTag.mockReset()
-      const config = await revalidationPlugin({
-        collections: [{ slug, fields: [] }],
-      } as unknown as Config)
-      const hooks = config.collections![0].hooks!
-      for (const hook of [hooks.afterChange![0], hooks.afterDelete![0]]) {
-        revalidateTag.mockClear()
-        await (hook as (args: { doc: object }) => Promise<unknown>)({ doc: {} })
-        expect(revalidateTag).toHaveBeenCalledWith(slug, { expire: 0 })
-      }
+      findByID.mockResolvedValue({ slug: 'zelienople' })
+      const { afterChange } = await hooksFor(slug)
+      await afterChange({ doc: { location: 'loc-2' }, req })
+      expect(findByID).toHaveBeenCalledWith(
+        expect.objectContaining({
+          collection: 'locations',
+          id: 'loc-2',
+          depth: 0,
+          overrideAccess: true,
+          req,
+        }),
+      )
+      expect(publishKioskInvalidate).toHaveBeenCalledWith({ kind: 'events', keys: ['zelienople'] })
     },
   )
+
+  it('falls back to refreshing every display when the location cannot be resolved', async () => {
+    findByID.mockRejectedValue(new Error('not found'))
+    const { afterChange } = await hooksFor('events')
+    await expect(afterChange({ doc: { location: 'gone' }, req })).resolves.toBeDefined()
+    expect(publishKioskInvalidate).toHaveBeenCalledWith({ kind: 'events' })
+  })
+
+  it('refreshes every display for saves with no location (food vendors, unset)', async () => {
+    const { afterChange } = await hooksFor('food-vendors')
+    await afterChange({ doc: {}, req })
+    expect(publishKioskInvalidate).toHaveBeenCalledWith({ kind: 'events' })
+  })
+
+  it('pushes a location edit to every menu display and that location’s events', async () => {
+    const { afterChange } = await hooksFor('locations')
+    await afterChange({ doc: { slug: 'lawrenceville' }, req })
+    expect(publishKioskInvalidate).toHaveBeenCalledWith({ kind: 'menu' })
+    expect(publishKioskInvalidate).toHaveBeenCalledWith({ kind: 'events', keys: ['lawrenceville'] })
+  })
+
+  it('batch invalidation (no doc) pushes without keys', async () => {
+    revalidateForCollection('events')
+    await vi.waitFor(() =>
+      expect(publishKioskInvalidate).toHaveBeenCalledWith({ kind: 'events' }),
+    )
+  })
 })
 
 describe('revalidateForCollection', () => {
@@ -55,14 +172,20 @@ describe('revalidateForCollection', () => {
   it('keeps beer bulk invalidation on the beers list paths', () => {
     revalidateForCollection('beers')
 
-    expect(revalidateTag.mock.calls.map((call) => call[0]).sort()).toEqual(['beers', 'menus'])
+    expect(revalidateTag.mock.calls.map((call) => call[0]).sort()).toEqual([
+      'beers',
+      'kiosk-menus',
+      'menus',
+    ])
     expect(revalidatePath.mock.calls.map((call) => call[0]).sort()).toEqual([
       '/',
       '/beer',
       '/beer/[variant]',
     ])
     expect(revalidatePath).toHaveBeenCalledWith('/beer/[variant]', 'page')
-    expect(revalidateTag).toHaveBeenCalledWith('menus', { expire: 0 })
+    // Kiosk menu streams must be fresh on the push; public pages sharing 'menus' need not be.
+    expect(revalidateTag).toHaveBeenCalledWith('kiosk-menus', { expire: 0 })
+    expect(revalidateTag).toHaveBeenCalledWith('menus', 'max')
   })
 })
 

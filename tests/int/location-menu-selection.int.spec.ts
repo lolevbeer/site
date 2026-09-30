@@ -33,10 +33,11 @@ describe.each([
         collection: 'menus',
         overrideAccess: false,
         where: {
-          id: { equals: 'selected-menu' },
-          location: { equals: 'loc-1' },
-          type: { equals: type },
-          _status: { equals: 'published' },
+          and: [
+            { location: { equals: 'loc-1' } },
+            { _status: { equals: 'published' } },
+            { or: [{ and: [{ id: { equals: 'selected-menu' } }, { type: { equals: type } }] }] },
+          ],
         },
         populate: expect.objectContaining({ beers: expect.objectContaining({ name: true }) }),
         limit: 1,
@@ -45,7 +46,7 @@ describe.each([
     expect(find.mock.calls[0][0]).toMatchObject({ overrideAccess: false })
     expect(unstableCache).toHaveBeenLastCalledWith(
       expect.any(Function),
-      [`location-lawrenceville-${type}-menu`],
+      ['location-lawrenceville-website-menus'],
       { tags: ['locations', 'menus', 'beers'], revalidate: 300 },
     )
   })
@@ -88,6 +89,44 @@ describe.each([
     })
     expect(field.filterOptions({} as never)).toBe(false)
     expect(field.admin?.description).toMatch(/homepage and \/<location> page/)
+  })
+})
+
+it('resolves the draft and cans menus with one location lookup and one menu query', async () => {
+  const draft = { id: 'draft-menu', type: 'draft', items: [] }
+  const cans = { id: 'cans-menu', type: 'cans', items: [] }
+  const location = { id: 'loc-1', draftMenu: 'draft-menu', cansMenu: 'cans-menu' }
+
+  // One cache miss for the draft getter: a single location find and a single
+  // menus find that fetch both selections.
+  find.mockResolvedValueOnce({ docs: [location] }).mockResolvedValueOnce({ docs: [cans, draft] })
+  expect(await getDraftMenu('lawrenceville')).toEqual(draft)
+  expect(find).toHaveBeenCalledTimes(2)
+
+  // The cans getter reads the same cache entry (same key), so a real cache
+  // serves it without any further query; the mocked cache just re-runs it.
+  find.mockResolvedValueOnce({ docs: [location] }).mockResolvedValueOnce({ docs: [cans, draft] })
+  expect(await getCansMenu('lawrenceville')).toEqual(cans)
+  expect(unstableCache.mock.calls.map(([, key]) => key)).toEqual([
+    ['location-lawrenceville-website-menus'],
+    ['location-lawrenceville-website-menus'],
+  ])
+
+  const menuQueries = find.mock.calls.filter(([args]) => args.collection === 'menus')
+  expect(menuQueries[0][0]).toMatchObject({
+    where: {
+      and: [
+        { location: { equals: 'loc-1' } },
+        { _status: { equals: 'published' } },
+        {
+          or: [
+            { and: [{ id: { equals: 'draft-menu' } }, { type: { equals: 'draft' } }] },
+            { and: [{ id: { equals: 'cans-menu' } }, { type: { equals: 'cans' } }] },
+          ],
+        },
+      ],
+    },
+    limit: 2,
   })
 })
 

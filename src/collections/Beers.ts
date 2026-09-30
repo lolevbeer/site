@@ -9,6 +9,7 @@ import { fetchUntappdData, type UntappdReview } from '@/src/utils/untappd'
 import { logger } from '@/lib/utils/logger'
 import { syncBeerReviews, type LegacyUntappdReview } from '@/src/utils/beer-reviews'
 import { documentSeoField } from '@/src/fields/seo'
+import { isDraftOnlySave } from '@/src/utils/draft-save'
 
 /** Round to nearest multiple (like Excel's MROUND) */
 function mround(value: number, multiple: number): number {
@@ -37,12 +38,15 @@ async function revalidateMenusForBeer(req: PayloadRequest, beerId: string | numb
     overrideAccess: true,
     req,
   })
+  const urls: string[] = []
   for (const menu of menus.docs) {
     if (menu.url) {
       revalidateTag(`menu-${menu.url}`, { expire: 0 })
-      void publishKioskInvalidate({ kind: 'menu', key: menu.url })
+      urls.push(menu.url)
     }
   }
+  // One batched publish for every menu that lists the beer, not one per menu.
+  if (urls.length > 0) void publishKioskInvalidate({ kind: 'menu', keys: urls })
 }
 
 /**
@@ -232,7 +236,9 @@ export const Beers: CollectionConfig = {
           }
         }
 
-        if (context?.skipRevalidate) return doc
+        // A draft-only save changes nothing public or kiosk-visible, so skip
+        // the menu lookup, hard expiry and push (menus list published beers only).
+        if (context?.skipRevalidate || isDraftOnlySave(doc, req)) return doc
 
         try {
           await revalidateMenusForBeer(req, doc.id)

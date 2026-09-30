@@ -24,6 +24,16 @@ that stay connected all day.
    `after()` publishes a lightweight `updated` message on `kiosk:menu` or
    `kiosk:events` after the save response, so CMS transactions have committed
    before displays refetch. It also keeps the publish alive on Vercel.
+   - **Scoped by key:** a menu save carries the menu `url`; event and food saves
+     carry their location slug (a bare relationship id is looked up inside the
+     save transaction). A display ignores messages for other keys. If the
+     location cannot be resolved, or the doc has none (food vendors), the message
+     has no key and every display on the channel refreshes.
+   - **Batched:** all keys for one save go out as a single Ably request, so a
+     beer on 30 menus is one round trip. Ably still bills one message per key.
+   - **Draft saves are skipped:** Save Draft and autosave (`?draft=true`, status
+     stays `draft`) touch neither caches nor Ably, since public pages and kiosks
+     only read published documents. Publish, Unpublish and deletes still run.
 2. When `NEXT_PUBLIC_ABLY_ENABLED=true`, displays open an Ably Realtime
    connection authenticated via `/api/ably-auth` (token request, subscribe
    only) and poll the existing stream endpoints immediately on invalidate.
@@ -33,9 +43,15 @@ that stay connected all day.
    A failed server publish does not disconnect viewers: the 120s poll still
    fetches saved changes even when no notification arrives.
 4. ISR / stream `revalidate` values are **not** changed in this PR.
-   Save-triggered invalidation uses `{ expire: 0 }` for menu, event, and location
-   caches: `max` would return the old content to the first push-triggered fetch
-   and leave it on screen until the 120s fallback poll.
+   Save-triggered invalidation hard-expires (`{ expire: 0 }`) only the tags the
+   kiosk stream responses carry: `kiosk-menus` (menu, location and product
+   saves; attached only to `getMenuByUrl`), the per-menu `menu-<url>` tag (beer
+   saves) and `events`. `max` would return the old content to the first
+   push-triggered fetch and leave it on screen until the 120s fallback poll.
+   The broad `menus` and `locations` tags that public pages share stay
+   stale-while-revalidate, so a CMS save never makes a visitor wait for a
+   synchronous rebuild. A location rename reaches the events kiosk on its next
+   fetch after the background refresh.
 
 ## Setup
 
