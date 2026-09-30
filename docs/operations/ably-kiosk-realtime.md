@@ -85,6 +85,34 @@ when both are set, or `{"error":"Ably is not configured"}` (503) when the key is
 unset. Kiosk pages must still show `/api/menu-stream/...` or `/api/events-stream/...`
 polls every 10s then 30s even when Ably is unset.
 
+### Reload displays on deploy
+
+Displays already reload themselves after a code deploy: each stream response
+carries `deployId` (the commit SHA), and `usePolling` reloads once the new
+deploy's page renders. With Ably connected that check only runs on the 120s
+fallback poll, so a Vercel webhook pushes an immediate poll instead.
+
+`POST /api/vercel-deploy` verifies Vercel's `x-vercel-signature` (HMAC-SHA1 of the
+raw body) and, on `deployment.promoted`, publishes a keyless invalidate to
+`kiosk:menu` and `kiosk:events`. It only says "poll now"; the poll's `deployId`
+comparison decides whether to reload. It fires on promotion, not build or boot,
+so a poll can't race an older deployment still serving production.
+
+Setup (team **Settings → Webhooks**; requires a Pro or Enterprise team). This is
+an outbound webhook, not a Deploy Hook (Deploy Hooks are inbound URLs that trigger
+builds):
+
+1. Create a webhook with the **Deployment Promoted** event, this project as the
+   target, and the URL `https://<production domain>/api/vercel-deploy`.
+2. Copy the secret Vercel shows once into `VERCEL_WEBHOOK_SECRET` for the
+   **Production** environment, then redeploy. Unset, the route returns 503.
+
+Without the webhook nothing breaks: displays reload within the 120s fallback.
+A redeploy of the same commit (or an env-var-only change) keeps the same
+`deployId`, so displays do not reload. "Deployment Promoted" excludes rollbacks
+(a separate "Deployment Rollback" event), so after a rollback displays reload on
+the fallback poll.
+
 ### Connected, but edits do not arrive
 
 `Unauthorized to publish to channel` means the server key lacks **Publish**
