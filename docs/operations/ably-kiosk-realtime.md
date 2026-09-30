@@ -24,11 +24,15 @@ that stay connected all day.
    `after()` publishes a lightweight `updated` message on `kiosk:menu` or
    `kiosk:events` after the save response, so CMS transactions have committed
    before displays refetch. It also keeps the publish alive on Vercel.
-   - **Scoped by key:** a menu save carries the menu `url`; event and food saves
-     carry their location slug (a bare relationship id is looked up inside the
-     save transaction). A display ignores messages for other keys. If the
-     location cannot be resolved, or the doc has none (food vendors), the message
-     has no key and every display on the channel refreshes.
+   - **Scoped by key:** a menu save carries the menu `url`; event saves carry
+     their location slug (a bare relationship id is looked up inside the save
+     transaction). A display ignores messages for other keys. If the location
+     cannot be resolved or is unset, the message has no key and every display on
+     the channel refreshes.
+   - **Food saves do not push:** the events kiosk gets food only as a
+     server-rendered prop, never through the events stream, so a food,
+     recurring-food or vendor save cannot change a stream response. Their public
+     page caches are still invalidated.
    - **Batched:** all keys for one save go out as a single Ably request, so a
      beer on 30 menus is one round trip. Ably still bills one message per key.
    - **Draft saves are skipped:** Save Draft and autosave (`?draft=true`, status

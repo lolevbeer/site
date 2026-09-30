@@ -110,7 +110,7 @@ describe('kiosk push keys', () => {
     expect(findByID).not.toHaveBeenCalled()
   })
 
-  it.each(['events', 'recurring-events', 'food', 'recurring-food-schedules'])(
+  it.each(['events', 'recurring-events'])(
     'resolves a bare location id to its slug for %s saves, inside the save transaction',
     async (slug) => {
       findByID.mockResolvedValue({ slug: 'zelienople' })
@@ -136,11 +136,27 @@ describe('kiosk push keys', () => {
     expect(publishKioskInvalidate).toHaveBeenCalledWith({ kind: 'events' })
   })
 
-  it('refreshes every display for saves with no location (food vendors, unset)', async () => {
-    const { afterChange } = await hooksFor('food-vendors')
+  it('refreshes every display for an event saved with no location', async () => {
+    const { afterChange } = await hooksFor('events')
     await afterChange({ doc: {}, req })
     expect(publishKioskInvalidate).toHaveBeenCalledWith({ kind: 'events' })
+    expect(findByID).not.toHaveBeenCalled()
   })
+
+  // The events kiosk gets food only as a server-rendered prop, never through the
+  // events stream, so a food save cannot change what a display would refetch.
+  it.each(['food', 'recurring-food-schedules', 'recurring-food-exclusions', 'food-vendors'])(
+    '%s saves push nothing to the kiosks and do no location lookup',
+    async (slug) => {
+      const { afterChange, afterDelete } = await hooksFor(slug)
+      await afterChange({ doc: { location: 'loc-2' }, req })
+      await afterDelete({ doc: { location: 'loc-2' }, req })
+      expect(publishKioskInvalidate).not.toHaveBeenCalled()
+      expect(findByID).not.toHaveBeenCalled()
+      // Cache invalidation for the public food pages is unaffected.
+      expect(revalidateTag).toHaveBeenCalledWith('food', 'max')
+    },
+  )
 
   it('pushes a location edit to every menu display and that location’s events', async () => {
     const { afterChange } = await hooksFor('locations')

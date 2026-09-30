@@ -165,14 +165,9 @@ async function resolveLocationSlug(
 }
 
 // Collections whose docs carry a single `location` relationship and feed the
-// events kiosk (events, plus the food agenda shown beside them).
-const LOCATION_SCOPED_KIOSK_SLUGS = new Set([
-  'events',
-  'recurring-events',
-  'food',
-  'recurring-food-schedules',
-  'recurring-food-exclusions',
-])
+// events kiosk stream. Food is deliberately absent: the events kiosk gets food
+// only as a server-rendered prop, so food saves never change a stream response.
+const LOCATION_SCOPED_KIOSK_SLUGS = new Set(['events', 'recurring-events'])
 
 /**
  * Publish Ably invalidate signals for collections that drive kiosk TVs.
@@ -204,11 +199,6 @@ async function publishKioskSignal(
       kind: 'events',
       keys: scope(typeof doc?.slug === 'string' ? doc.slug : undefined),
     })
-    return
-  }
-  // Vendors have no location: any vendor edit can change any agenda.
-  if (slug === 'food-vendors') {
-    void publishKioskInvalidate({ kind: 'events' })
   }
 }
 
