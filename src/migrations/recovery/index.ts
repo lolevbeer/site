@@ -104,4 +104,14 @@ export const migrationRecovery: readonly MigrationRecovery[] = [
     verify:
       'Read-only inspect payload_jobs_runnable (queue, completedAt, hasError, processingUntil, waitUntil, createdAt) with name-only options; observe the next scheduled maintenance run. processing_1 may reappear while any Payload 3 deployment still connects (its Mongoose autoIndex recreates it): harmless, since Payload 4 never queries it; drop it once no Payload 3 deployment remains.',
   },
+  {
+    name: '20260929_120000_location_website_menus',
+    compatibility:
+      'Adds explicit menu selections to locations; the prior deployment ignores them and continues choosing the first published menu of each type.',
+    retry:
+      'Safe to rerun: only absent fields are initialized; existing selections and explicitly cleared null values are preserved.',
+    mode: 'roll-forward',
+    verify:
+      'Check Draft Menu and Cans Menu on each Location in Payload, then confirm the homepage and /<location> page show the selected published menus.',
+  },
 ]

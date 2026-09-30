@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react'
 
+import { useAblyInvalidate } from './use-ably-invalidate'
 import { usePolling } from './use-polling'
 import type { BreweryEvent } from '@/lib/types/event'
 import { getPittsburghTheme } from '@/lib/utils/pittsburgh-time'
@@ -27,7 +28,9 @@ interface EventsResponse {
 }
 
 /**
- * Hook for real-time events updates via adaptive polling.
+ * Hook for real-time events updates via adaptive polling, with an optional
+ * Ably invalidate path (NEXT_PUBLIC_ABLY_ENABLED) that forces an immediate
+ * poll when CMS revalidation publishes to kiosk:events.
  *
  * Wraps the generic usePolling hook with events-specific data transformation.
  * The Pittsburgh day/night theme is worked out here because the cached
@@ -42,6 +45,10 @@ export function useEventsStream(
     () => ({ events: initialEvents, locationName: initialLocationName }),
     [initialEvents, initialLocationName],
   )
+  const { invalidateSignal, realtimeActive } = useAblyInvalidate({
+    kind: 'events',
+    key: location,
+  })
 
   const { data, theme } = usePolling<EventsData, EventsResponse>(
     location ? `/api/events-stream/${location}` : '',
@@ -50,6 +57,7 @@ export function useEventsStream(
       data: { events, locationName },
       theme: getPittsburghTheme(),
     }),
+    { invalidateSignal, realtimeFallback: realtimeActive },
   )
 
   return {

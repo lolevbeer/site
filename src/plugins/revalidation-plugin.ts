@@ -13,7 +13,11 @@
  */
 
 import { revalidatePath, revalidateTag } from 'next/cache'
-import type { Config, Plugin, CollectionConfig, GlobalConfig } from 'payload'
+import type { Config, Plugin, CollectionConfig, GlobalConfig, PayloadRequest } from 'payload'
+
+import { publishKioskInvalidate } from '@/lib/ably/publish'
+import { CACHE_TAGS } from '@/lib/utils/cache'
+import { isDraftOnlySave } from '@/src/utils/draft-save'
 
 // Collection to cache tags mapping
 // Defines which tags should be invalidated when a collection changes
@@ -24,17 +28,17 @@ const COLLECTION_CACHE_MAP: Record<string, string[]> = {
   // menu queries subscribe to 'beers' directly (see lib/utils/payload-api.ts).
   beers: ['beers'],
   'beer-reviews': ['beers'],
-  menus: ['menus'],
+  menus: ['menus', CACHE_TAGS.kioskMenus], // kioskMenus: see KIOSK_FRESH_TAGS
   events: ['events'],
   'recurring-events': ['events'],
   food: ['food'],
-  locations: ['locations', 'menus'], // Locations affect menus
+  locations: ['locations', 'menus', CACHE_TAGS.kioskMenus], // Locations affect menus
   styles: ['styles', 'beers'], // Styles affect beer displays
   distributors: ['distributors'],
   'food-vendors': ['food-vendors', 'food'], // Food vendors affect food displays
   'recurring-food-schedules': ['recurring-food', 'food'],
   'recurring-food-exclusions': ['recurring-food', 'food'],
-  products: ['products', 'menus'], // Products affect menu displays
+  products: ['products', 'menus', CACHE_TAGS.kioskMenus], // Products affect menu displays
   'holiday-hours': ['holiday-hours', 'locations'],
   faqs: ['faqs'],
   jobs: ['jobs'],
@@ -90,11 +94,8 @@ const COLLECTION_PATH_BUILDERS: Record<string, (doc: Record<string, unknown>) =>
   jobs: (doc) => {
     const paths: string[] = []
     if (typeof doc.slug === 'string' && doc.slug) paths.push(`/jobs/${doc.slug}`)
-    const location = doc.location
-    if (typeof location === 'object' && location && 'slug' in location) {
-      const slug = (location as { slug?: unknown }).slug
-      if (typeof slug === 'string' && slug) paths.push(`/${slug}`)
-    }
+    const locationSlug = locationSlugFromDoc(doc)
+    if (locationSlug) paths.push(`/${locationSlug}`)
     return paths
   },
 }
@@ -109,8 +110,9 @@ const COLLECTION_BATCH_EXTRAS: Record<
   { tags?: string[]; paths?: Array<[string, 'page' | 'layout']> }
 > = {
   beers: {
-    // getMenuByUrl subscribes to the broad 'menus' tag, not 'beers'.
-    tags: ['menus'],
+    // getMenuByUrl reads 'menus' and 'kiosk-menus', not 'beers'; a batch skips
+    // the per-menu tags Beers.afterChange would have expired.
+    tags: ['menus', CACHE_TAGS.kioskMenus],
     // `/beer/[variant]` is a 3600s ISR route; invalidating the dynamic segment
     // covers every beer page in one call, which is what a catalogue-wide batch
     // wants anyway. Tag invalidation alone would leave them an hour stale.
@@ -118,15 +120,106 @@ const COLLECTION_BATCH_EXTRAS: Record<
   },
 }
 
+/** Location slug from a `location` relationship that is already populated. */
+function locationSlugFromDoc(doc: Record<string, unknown>): string | undefined {
+  const location = doc.location
+  if (location && typeof location === 'object' && 'slug' in location) {
+    const slug = (location as { slug?: unknown }).slug
+    if (typeof slug === 'string' && slug) return slug
+  }
+  return undefined
+}
+
+/**
+ * Slug of a doc's `location`. A save hook usually gets the bare id, so it is
+ * looked up inside the save's transaction. Undefined when the doc has no
+ * location or the lookup fails, which callers turn into a refresh of every
+ * display rather than a push that might miss one.
+ */
+async function resolveLocationSlug(
+  doc: Record<string, unknown>,
+  req: PayloadRequest,
+): Promise<string | undefined> {
+  const populated = locationSlugFromDoc(doc)
+  if (populated) return populated
+
+  const id = doc.location
+  if (typeof id !== 'string' && typeof id !== 'number') return undefined
+  try {
+    const location = await req.payload.findByID({
+      collection: 'locations',
+      id,
+      depth: 0,
+      select: { slug: true },
+      // eslint-disable-next-line no-restricted-syntax -- system: scoping a kiosk push is derived state; the editor's locations read can be limited to their own locations
+      overrideAccess: true,
+      req,
+    })
+    return location.slug || undefined
+  } catch {
+    return undefined
+  }
+}
+
+// Collections whose docs carry a single `location` relationship and feed the
+// events kiosk stream. Food is deliberately absent: the events kiosk gets food
+// only as a server-rendered prop, so food saves never change a stream response.
+const LOCATION_SCOPED_KIOSK_SLUGS = new Set(['events', 'recurring-events'])
+
+/**
+ * Publish Ably invalidate signals for collections that drive kiosk TVs.
+ * `keys` scope a push to the displays showing that menu url or location slug;
+ * none refreshes every display on the channel. Never throws into the CMS save.
+ */
+async function publishKioskSignal(
+  slug: string,
+  doc?: Record<string, unknown>,
+  req?: PayloadRequest,
+): Promise<void> {
+  const scope = (key?: string) => (key ? [key] : undefined)
+  if (slug === 'menus') {
+    void publishKioskInvalidate({
+      kind: 'menu',
+      keys: scope(typeof doc?.url === 'string' ? doc.url : undefined),
+    })
+    return
+  }
+  if (LOCATION_SCOPED_KIOSK_SLUGS.has(slug)) {
+    // No doc or req (a whole-collection batch): nothing to resolve, refresh all.
+    const location = doc && req ? await resolveLocationSlug(doc, req) : undefined
+    void publishKioskInvalidate({ kind: 'events', keys: scope(location) })
+    return
+  }
+  // Location edits (hours, lines cleaned) feed menu displays that embed them.
+  // No events push: that stream carries only the location name and its
+  // 'locations' cache is just marked stale, so a push would refetch stale data.
+  if (slug === 'locations') void publishKioskInvalidate({ kind: 'menu' })
+}
+
 function invalidateCollection(slug: string, doc?: Record<string, unknown>): void {
-  ;(COLLECTION_CACHE_MAP[slug] || []).forEach((tag) => revalidateTag(tag, 'max'))
+  ;(COLLECTION_CACHE_MAP[slug] || []).forEach(revalidateCollectionTag)
   ;(COLLECTION_PATHS[slug] || []).forEach((path) => revalidatePath(path))
   ;(COLLECTION_LAYOUT_PATHS[slug] || []).forEach((path) => revalidatePath(path, 'layout'))
-  if (!doc) return
-  const pathBuilder = COLLECTION_PATH_BUILDERS[slug]
-  if (pathBuilder) {
-    pathBuilder(doc).forEach((path) => revalidatePath(path))
+  if (doc) {
+    const pathBuilder = COLLECTION_PATH_BUILDERS[slug]
+    if (pathBuilder) {
+      pathBuilder(doc).forEach((path) => revalidatePath(path))
+    }
   }
+}
+
+// Tags the kiosk stream responses carry, hard-expired so the push-triggered
+// fetch is fresh. 'menus' and 'locations' are deliberately absent: public pages
+// share them, and hard expiry would make the next visitor to each wait for a
+// synchronous rebuild (CACHE_TAGS.kioskMenus exists to avoid that for menus).
+// 'events' is shared with public events pages too; that cost is accepted because
+// event saves are rare and the events stream has no kiosk-only tag yet.
+const KIOSK_FRESH_TAGS = new Set<string>([CACHE_TAGS.kioskMenus, CACHE_TAGS.events])
+
+function revalidateCollectionTag(tag: string): void {
+  // A push triggers one fetch. The kiosk caches must return fresh data on that
+  // first fetch, rather than stale data followed by a background refresh.
+  revalidateTag(tag, KIOSK_FRESH_TAGS.has(tag) ? { expire: 0 } : 'max')
 }
 
 /**
@@ -138,10 +231,12 @@ function invalidateCollection(slug: string, doc?: Record<string, unknown>): void
  */
 export function revalidateForCollection(slug: string): void {
   invalidateCollection(slug)
+  // No doc, so no keys: refresh every display on the affected kiosk channels.
+  void publishKioskSignal(slug)
 
   const extras = COLLECTION_BATCH_EXTRAS[slug]
   if (!extras) return
-  extras.tags?.forEach((tag) => revalidateTag(tag, 'max'))
+  extras.tags?.forEach(revalidateCollectionTag)
   extras.paths?.forEach(([path, type]) => revalidatePath(path, type))
 }
 
@@ -151,19 +246,28 @@ export function revalidateForCollection(slug: string): void {
  * Bulk writers (the Untappd cron, sheet sync) pass
  * `context: { skipRevalidate: true }` so a 500-document loop doesn't fire
  * this fan-out per write — they revalidate once after the loop instead.
+ *
+ * Draft-only saves (Save Draft, autosave) skip everything: public pages and
+ * kiosks read published documents only, so nothing they show has changed.
  */
 function createCollectionAfterChangeHook(slug: string) {
   return async ({
     doc,
+    req,
     context,
   }: {
     doc: Record<string, unknown>
+    req?: PayloadRequest
     context?: Record<string, unknown>
   }) => {
-    if (context?.skipRevalidate) {
+    if (context?.skipRevalidate || isDraftOnlySave(doc, req)) {
       return doc
     }
     invalidateCollection(slug, doc)
+    // Optional Ably push so kiosk TVs poll immediately. No-op when ABLY_API_KEY
+    // is unset. May do one location lookup to scope the push; never fails the
+    // CMS write.
+    await publishKioskSignal(slug, doc, req)
     return doc
   }
 }
@@ -174,15 +278,18 @@ function createCollectionAfterChangeHook(slug: string) {
 function createCollectionAfterDeleteHook(slug: string) {
   return async ({
     doc,
+    req,
     context,
   }: {
     doc: Record<string, unknown>
+    req?: PayloadRequest
     context?: Record<string, unknown>
   }) => {
     if (context?.skipRevalidate) {
       return doc
     }
     invalidateCollection(slug, doc)
+    await publishKioskSignal(slug, doc, req)
     return doc
   }
 }

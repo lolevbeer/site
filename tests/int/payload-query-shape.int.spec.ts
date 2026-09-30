@@ -236,8 +236,10 @@ describe('menu data cache', () => {
     unstableCache.mockClear()
     await getMenuByUrl('l-draft').catch(() => null)
 
+    // 'kiosk-menus' is the tag only this kiosk-facing cache carries, so the
+    // revalidation plugin can hard-expire it without touching public pages.
     expect(unstableCache).toHaveBeenCalledWith(expect.any(Function), ['menu-url-l-draft'], {
-      tags: ['menus', 'menu-l-draft'],
+      tags: ['menus', 'kiosk-menus', 'menu-l-draft'],
       revalidate: 3600,
     })
   })

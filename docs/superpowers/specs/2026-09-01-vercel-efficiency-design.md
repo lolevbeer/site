@@ -46,7 +46,7 @@ The current media collection contains 518 documents. Average stored sizes are ap
 5. Fixed 64 px and 96 px images may bypass Vercel Image Optimization only after measured browser verification shows acceptable quality and transfer behavior.
 6. Missing generated derivatives must fall back to the original media URL.
 7. No database schema migration or media backfill is introduced.
-8. No Cache Components, SSE, WebSocket, or custom image-service migration is introduced.
+8. No Cache Components, SSE, or custom image-service migration is introduced. Optional Ably invalidate (subscribe-only realtime) may sit alongside the polling state machine as a faster path when configured; polling remains the intentional fallback when Ably is unset, disabled, or disconnected. This is not a general WebSocket rewrite of display transport.
 9. PR #191 (`a9a86a56`, simplify site components and display colors) has landed. This branch is rebased onto that commit. Implementation uses the post-#191 contracts: `seededLightColors` in `live-menu.tsx` / `live-events.tsx`, current `next.config.mjs` image qualities, and current `vercel.json`. Deployment policy stays out of `vercel.json`.
 10. Production-only automatic builds are configured only after the implementation preview has been verified.
 11. Dark-mode color cycling on live menu and event displays stays a ~30 second wall-clock cycle after poll intervals change. Today that cycle is derived from `pollCount` (`pollCount / 15` at a 2s menu interval, `pollCount / 6` at a 5s events interval). Implementation must retarget the seed to elapsed time so slowing the poll does not stretch the visual cycle.
@@ -93,6 +93,9 @@ Constants:
 | `WARM_WINDOW_MS` | 60_000 | content-timestamp window for `warm` |
 | `ERROR_BACKOFF_MS` | 30_000, 60_000, 120_000 | consecutive error 1 / 2 / ≥3 |
 | `ERROR_BACKOFF_CAP_MS` | 120_000 | never slower than this on error |
+| `REALTIME_FALLBACK_INTERVAL_MS` | 120_000 | safety-net poll while optional Ably is connected |
+
+**Amendment (Ably, 2026-09-29).** When `realtimeFallback` is true (Ably connected), warm/fast 10s cadence is replaced by `REALTIME_FALLBACK_INTERVAL_MS`; Ably `updated` messages bump an invalidate signal for an immediate poll. When Ably disconnects, the hook must reschedule immediately to the normal 10s warm / 30s idle machine so a lingering 120s timer does not remain. Unset/disabled Ably leaves this machine unchanged. Historical "Current" columns below (menu 2s / events 5s) describe pre-remediation behavior.
 
 Transitions:
 
@@ -106,6 +109,8 @@ Transitions:
 | error-3 | third or later consecutive failure | 120_000 |
 | hidden | `document.hidden === true` | do not schedule; clear the timer |
 | visible | `visibilitychange` to visible | poll immediately, reset to fast |
+| realtime-connected | `realtimeFallback === true` (Ably up) | 120_000 safety net; invalidate forces immediate poll |
+| realtime-disconnected | `realtimeFallback` flips to false | clear pending timer; reschedule 10s warm / 30s idle |
 
 There is **no** third idle slowdown. Today's `SLOW_AFTER` / `SLOWER_AFTER` multipliers (2.5× / 5×) would push idle past 30s once the base interval is 30s, which violates constraint 2.
 
