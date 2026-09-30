@@ -10,6 +10,7 @@
  */
 
 import type { Rest } from 'ably'
+import { after } from 'next/server'
 import {
   ABLY_CHANNELS,
   ABLY_UPDATED_EVENT,
@@ -34,13 +35,27 @@ async function getRestClient(): Promise<Rest | null> {
 }
 
 /**
- * Publish a lightweight invalidate. Safe to call from revalidation hooks:
- * returns immediately when Ably is unset, and never throws.
+ * Queue a lightweight invalidate after the save response. Payload afterChange
+ * runs before the transaction commits; publishing there can make displays
+ * refetch the old document. after() also keeps serverless publishes alive.
  */
 export async function publishKioskInvalidate(input: {
   kind: KioskInvalidateKind
   key?: string
 }): Promise<void> {
+  if (!isAblyPublishEnabled()) return
+  try {
+    after(() => publish(input))
+  } catch (error) {
+    logger.warn('Ably kiosk invalidate scheduling failed', {
+      kind: input.kind,
+      key: input.key,
+      error: error instanceof Error ? error.message : String(error),
+    })
+  }
+}
+
+async function publish(input: { kind: KioskInvalidateKind; key?: string }): Promise<void> {
   let client: Rest | null
   try {
     client = await getRestClient()

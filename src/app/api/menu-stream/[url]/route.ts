@@ -9,9 +9,9 @@ import { getMenuByUrl } from '@/lib/utils/payload-api'
  * - `force-static` with no prerendered params caches each menu URL on its
  *   first request.
  * - getMenuByUrl's cache tags (`menus`, `menu-<url>`) attach to that cached
- *   response, so the Payload hooks' `revalidateTag` calls for a menu (or a beer
- *   on it) mark it stale. The next poll gets the old copy while it refreshes;
- *   the one after gets the new menu.
+ *   response, so the Payload hooks expire it when a menu (or a beer on it)
+ *   changes. The first fetch after the save gets the fresh menu, including
+ *   the fetch triggered by an Ably notification.
  * - The 10-minute fallback refresh bounds how long a new deployment's
  *   `deployId` (which reloads displays) takes to reach them.
  *

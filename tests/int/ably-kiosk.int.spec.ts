@@ -5,6 +5,12 @@
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+const after = vi.hoisted(() => vi.fn<(_task: () => Promise<void>) => void>())
+vi.mock('next/server', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('next/server')>()),
+  after,
+}))
+
 const ablyMock = vi.hoisted(() => {
   const publish = vi.fn(async () => undefined)
   const createTokenRequest = vi.fn(async () => ({ keyName: 'test', ttl: 3600000 }))
@@ -83,11 +89,15 @@ describe('publishKioskInvalidate', () => {
   it('no-ops when ABLY_API_KEY is unset', async () => {
     await publishKioskInvalidate({ kind: 'menu', key: 'lawrenceville-draft' })
     expect(ablyMock.Rest).not.toHaveBeenCalled()
+    expect(after).not.toHaveBeenCalled()
   })
 
-  it('publishes an updated message on the menu channel when configured', async () => {
+  it('publishes only after the save response, when the transaction and cache invalidation are done', async () => {
     vi.stubEnv('ABLY_API_KEY', 'app.key:secret')
     await publishKioskInvalidate({ kind: 'menu', key: 'lawrenceville-draft' })
+    expect(ablyMock.publish).not.toHaveBeenCalled()
+    expect(after).toHaveBeenCalledTimes(1)
+    await after.mock.calls[0][0]()
     expect(ablyMock.Rest).toHaveBeenCalled()
     expect(ablyMock.getChannel).toHaveBeenCalledWith(ABLY_CHANNELS.menu)
     expect(ablyMock.publish).toHaveBeenCalledWith(
@@ -103,11 +113,19 @@ describe('publishKioskInvalidate', () => {
   it('publishes events invalidates on the events channel', async () => {
     vi.stubEnv('ABLY_API_KEY', 'app.key:secret')
     await publishKioskInvalidate({ kind: 'events', key: 'lawrenceville' })
+    await after.mock.calls[0][0]()
     expect(ablyMock.getChannel).toHaveBeenCalledWith(ABLY_CHANNELS.events)
     expect(ablyMock.publish).toHaveBeenCalledWith(
       ABLY_UPDATED_EVENT,
       expect.objectContaining({ kind: 'events', key: 'lawrenceville' }),
     )
+  })
+
+  it('handles a failed background publish without rejecting the save or after task', async () => {
+    vi.stubEnv('ABLY_API_KEY', 'app.key:secret')
+    ablyMock.publish.mockRejectedValueOnce(new Error('Ably unavailable'))
+    await expect(publishKioskInvalidate({ kind: 'menu', key: 'draft' })).resolves.toBeUndefined()
+    await expect(after.mock.calls[0][0]()).resolves.toBeUndefined()
   })
 })
 

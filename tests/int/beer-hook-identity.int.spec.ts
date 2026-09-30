@@ -8,7 +8,10 @@ import { describe, expect, it, vi } from 'vitest'
 import type { PayloadRequest } from 'payload'
 
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn(), revalidateTag: vi.fn() }))
+vi.mock('@/lib/ably/publish', () => ({ publishKioskInvalidate: vi.fn() }))
 
+import { revalidateTag } from 'next/cache'
+import { publishKioskInvalidate } from '@/lib/ably/publish'
 import { Beers } from '@/src/collections/Beers'
 import { generateUniqueSlug } from '@/src/collections/utils/generateUniqueSlug'
 
@@ -54,6 +57,7 @@ describe('beer hook system lookups', () => {
 
   it('Beers afterChange menu revalidation lookup passes req and overrideAccess: true', async () => {
     const { req, find } = mockReq()
+    find.mockResolvedValueOnce({ docs: [{ url: 'z-cans' }] })
     const hook = Beers.hooks!.afterChange![0] as unknown as AnyHook
 
     await hook({ req, context: {}, doc: { id: 'beer-1' }, previousDoc: { id: 'beer-1' } })
@@ -61,5 +65,7 @@ describe('beer hook system lookups', () => {
     expect(find).toHaveBeenCalledWith(
       expect.objectContaining({ collection: 'menus', overrideAccess: true, req }),
     )
+    expect(revalidateTag).toHaveBeenCalledWith('menu-z-cans', { expire: 0 })
+    expect(publishKioskInvalidate).toHaveBeenCalledWith({ kind: 'menu', key: 'z-cans' })
   })
 })

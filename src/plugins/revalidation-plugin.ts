@@ -166,7 +166,7 @@ function publishKioskSignal(slug: string, doc?: Record<string, unknown>): void {
 }
 
 function invalidateCollection(slug: string, doc?: Record<string, unknown>): void {
-  ;(COLLECTION_CACHE_MAP[slug] || []).forEach((tag) => revalidateTag(tag, 'max'))
+  ;(COLLECTION_CACHE_MAP[slug] || []).forEach(revalidateCollectionTag)
   ;(COLLECTION_PATHS[slug] || []).forEach((path) => revalidatePath(path))
   ;(COLLECTION_LAYOUT_PATHS[slug] || []).forEach((path) => revalidatePath(path, 'layout'))
   if (doc) {
@@ -178,6 +178,12 @@ function invalidateCollection(slug: string, doc?: Record<string, unknown>): void
   // Optional Ably spike: notify kiosk TVs so they can poll immediately.
   // No-op when ABLY_API_KEY is unset; never blocks or fails the CMS write.
   publishKioskSignal(slug, doc)
+}
+
+function revalidateCollectionTag(tag: string): void {
+  // A push triggers one fetch. These caches must return fresh data on that
+  // first fetch, rather than stale data followed by a background refresh.
+  revalidateTag(tag, ['menus', 'events', 'locations'].includes(tag) ? { expire: 0 } : 'max')
 }
 
 /**
@@ -192,7 +198,7 @@ export function revalidateForCollection(slug: string): void {
 
   const extras = COLLECTION_BATCH_EXTRAS[slug]
   if (!extras) return
-  extras.tags?.forEach((tag) => revalidateTag(tag, 'max'))
+  extras.tags?.forEach(revalidateCollectionTag)
   extras.paths?.forEach(([path, type]) => revalidatePath(path, type))
 }
 

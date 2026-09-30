@@ -20,8 +20,10 @@ that stay connected all day.
 ## What this spike does
 
 1. On Payload saves that affect menus or events, the revalidation plugin (and
-   beer-driven menu tag invalidation) publishes a lightweight `updated`
-   message on `kiosk:menu` or `kiosk:events`.
+   beer-driven menu tag invalidation) expires the display caches immediately.
+   `after()` publishes a lightweight `updated` message on `kiosk:menu` or
+   `kiosk:events` after the save response, so CMS transactions have committed
+   before displays refetch. It also keeps the publish alive on Vercel.
 2. When `NEXT_PUBLIC_ABLY_ENABLED=true`, displays open an Ably Realtime
    connection authenticated via `/api/ably-auth` (token request, subscribe
    only) and poll the existing stream endpoints immediately on invalidate.
@@ -29,6 +31,9 @@ that stay connected all day.
    120s safety-net poll. If Ably is unset, disabled, or disconnects, the
    original 10s/30s polling state machine is unchanged.
 4. ISR / stream `revalidate` values are **not** changed in this PR.
+   Save-triggered invalidation uses `{ expire: 0 }` for menu, event, and location
+   caches: `max` would return the old content to the first push-triggered fetch
+   and leave it on screen until the 120s fallback poll.
 
 ## Setup
 

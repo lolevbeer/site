@@ -39,7 +39,7 @@ async function revalidateMenusForBeer(req: PayloadRequest, beerId: string | numb
   })
   for (const menu of menus.docs) {
     if (menu.url) {
-      revalidateTag(`menu-${menu.url}`, 'max')
+      revalidateTag(`menu-${menu.url}`, { expire: 0 })
       void publishKioskInvalidate({ kind: 'menu', key: menu.url })
     }
   }
