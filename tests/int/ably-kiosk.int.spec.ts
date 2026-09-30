@@ -45,6 +45,8 @@ import {
 } from '@/lib/hooks/use-polling'
 import { GET as ablyAuthGet } from '@/src/app/api/ably-auth/route'
 import { useAblyInvalidate } from '@/lib/hooks/use-ably-invalidate'
+import { useMenuStream } from '@/lib/hooks/use-menu-stream'
+import type { Menu } from '@/src/payload-types'
 
 afterEach(() => {
   cleanup()
@@ -259,6 +261,68 @@ describe('usePolling realtimeFallback reschedule', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2)
 
     await act(() => vi.advanceTimersByTimeAsync(11_000))
+    expect(fetchMock).toHaveBeenCalledTimes(3)
+  })
+})
+
+describe('useMenuStream when publishing fails', () => {
+  afterEach(() => {
+    cleanup()
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+    resetAblyRestClientForTests()
+  })
+
+  it('applies saved changes on the safety poll even while Ably stays connected without messages', async () => {
+    vi.clearAllMocks()
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
+    vi.stubEnv('NEXT_PUBLIC_ABLY_ENABLED', 'true')
+    vi.stubEnv('ABLY_API_KEY', 'app.key:secret')
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => false })
+
+    const initial: Menu = {
+      id: 'menu-1',
+      url: 'z-cans',
+      type: 'cans',
+      themeMode: 'light',
+      items: [],
+      location: 'location-1',
+      createdAt: '2026-01-01T00:00:00Z',
+      name: 'Before save',
+      updatedAt: '2026-01-01T00:00:00Z',
+    }
+    let saved = initial
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ menu: saved, timestamp: Date.parse(saved.updatedAt) }),
+    }))
+    vi.stubGlobal('fetch', fetchMock)
+    const { result } = renderHook(() => useMenuStream('z-cans', initial))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(ablyMock.subscribe).toHaveBeenCalledTimes(1)
+    const onConnected = ablyMock.connection.on.mock.calls.find(
+      ([event]) => event === 'connected',
+    )![1]
+    act(onConnected)
+
+    // The write succeeds, but the server cannot notify the still-connected display.
+    saved = { ...initial, name: 'After save', updatedAt: '2026-01-01T00:01:00Z' }
+    ablyMock.publish.mockRejectedValueOnce(new Error('Unauthorized to publish to channel'))
+    await publishKioskInvalidate({ kind: 'menu', key: 'z-cans' })
+    await after.mock.calls[0][0]()
+
+    await act(() => vi.advanceTimersByTimeAsync(REALTIME_FALLBACK_INTERVAL_MS - 1))
+    expect(result.current.menu?.name).toBe('Before save')
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+
+    await act(() => vi.advanceTimersByTimeAsync(1))
+    expect(result.current.menu?.name).toBe('After save')
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+
+    // A second edit also arrives without a single Ably message or disconnect.
+    saved = { ...saved, name: 'Another save', updatedAt: '2026-01-01T00:02:00Z' }
+    await act(() => vi.advanceTimersByTimeAsync(REALTIME_FALLBACK_INTERVAL_MS))
+    expect(result.current.menu?.name).toBe('Another save')
     expect(fetchMock).toHaveBeenCalledTimes(3)
   })
 })

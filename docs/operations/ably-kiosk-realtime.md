@@ -30,6 +30,8 @@ that stay connected all day.
 3. While Ably is connected, the warm/fast 10s poll cadence is replaced by a
    120s safety-net poll. If Ably is unset, disabled, or disconnects, the
    original 10s/30s polling state machine is unchanged.
+   A failed server publish does not disconnect viewers: the 120s poll still
+   fetches saved changes even when no notification arrives.
 4. ISR / stream `revalidate` values are **not** changed in this PR.
    Save-triggered invalidation uses `{ expire: 0 }` for menu, event, and location
    caches: `max` would return the old content to the first push-triggered fetch
