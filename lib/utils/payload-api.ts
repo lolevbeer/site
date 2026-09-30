@@ -290,11 +290,9 @@ async function getLocationMenus(
             { location: { equals: location.id } },
             { _status: { equals: 'published' } },
             {
-              or: selections.map(
-                ({ id, type }): Where => ({
-                  and: [{ id: { equals: id } }, { type: { equals: type } }],
-                }),
-              ),
+              or: selections.map(({ id, type }): Where => ({
+                and: [{ id: { equals: id } }, { type: { equals: type } }],
+              })),
             },
           ],
         },
@@ -306,8 +304,7 @@ async function getLocationMenus(
       const pick = (type: WebsiteMenuType) => {
         const selection = selections.find((entry) => entry.type === type)
         return (
-          (selection && result.docs.find((doc) => String(doc.id) === String(selection.id))) ||
-          null
+          (selection && result.docs.find((doc) => String(doc.id) === String(selection.id))) || null
         )
       }
       return { draft: pick('draft'), cans: pick('cans') }

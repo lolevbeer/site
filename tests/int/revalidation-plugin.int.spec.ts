@@ -63,7 +63,10 @@ describe('draft-only saves', () => {
 
   it('skip cache invalidation and kiosk pushes: nothing published changed', async () => {
     const { afterChange } = await hooksFor('menus')
-    await afterChange({ doc: { _status: 'draft', url: 'z-cans' }, req: { query: { draft: 'true' } } })
+    await afterChange({
+      doc: { _status: 'draft', url: 'z-cans' },
+      req: { query: { draft: 'true' } },
+    })
     expect(revalidateTag).not.toHaveBeenCalled()
     expect(revalidatePath).not.toHaveBeenCalled()
     expect(publishKioskInvalidate).not.toHaveBeenCalled()
@@ -76,7 +79,10 @@ describe('draft-only saves', () => {
     // Unpublish sends _status draft without draft=true.
     await afterChange({ doc: { _status: 'draft', url: 'z-cans' }, req: { query: {} } })
     expect(publishKioskInvalidate).toHaveBeenCalledTimes(2)
-    await afterDelete({ doc: { _status: 'draft', url: 'z-cans' }, req: { query: { draft: 'true' } } })
+    await afterDelete({
+      doc: { _status: 'draft', url: 'z-cans' },
+      req: { query: { draft: 'true' } },
+    })
     expect(publishKioskInvalidate).toHaveBeenCalledTimes(3)
   })
 })
@@ -145,9 +151,7 @@ describe('kiosk push keys', () => {
 
   it('batch invalidation (no doc) pushes without keys', async () => {
     revalidateForCollection('events')
-    await vi.waitFor(() =>
-      expect(publishKioskInvalidate).toHaveBeenCalledWith({ kind: 'events' }),
-    )
+    await vi.waitFor(() => expect(publishKioskInvalidate).toHaveBeenCalledWith({ kind: 'events' }))
   })
 })
 

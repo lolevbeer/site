@@ -174,9 +174,7 @@ describe('publishKioskInvalidate', () => {
   it('handles a failed background publish without rejecting the save or after task', async () => {
     vi.stubEnv('ABLY_API_KEY', 'app.key:secret')
     ablyMock.publish.mockRejectedValueOnce(new Error('Ably unavailable'))
-    await expect(
-      publishKioskInvalidate({ kind: 'menu', keys: ['draft'] }),
-    ).resolves.toBeUndefined()
+    await expect(publishKioskInvalidate({ kind: 'menu', keys: ['draft'] })).resolves.toBeUndefined()
     await expect(after.mock.calls[0][0]()).resolves.toBeUndefined()
   })
 })
