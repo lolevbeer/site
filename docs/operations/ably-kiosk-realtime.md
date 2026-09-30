@@ -33,6 +33,10 @@ that stay connected all day.
      server-rendered prop, never through the events stream, so a food,
      recurring-food or vendor save cannot change a stream response. Their public
      page caches are still invalidated.
+   - **Location saves push to menu displays only:** menus embed the location
+     (hours, lines cleaned) and `kiosk-menus` is hard-expired, so that push is
+     fresh. The events stream carries only the location name and its cache is
+     just marked stale, so an events push would refetch stale data.
    - **Batched:** all keys for one save go out as a single Ably request, so a
      beer on 30 menus is one round trip. Ably still bills one message per key.
    - **Draft saves are skipped:** Save Draft and autosave (`?draft=true`, status
@@ -54,8 +58,9 @@ that stay connected all day.
    push-triggered fetch and leave it on screen until the 120s fallback poll.
    The broad `menus` and `locations` tags that public pages share stay
    stale-while-revalidate, so a CMS save never makes a visitor wait for a
-   synchronous rebuild. A location rename reaches the events kiosk on its next
-   fetch after the background refresh.
+   synchronous rebuild. A location rename is not pushed to the events kiosk: the
+   first poll after the save triggers the background refresh and a later poll
+   shows the new name (a rename is rare, so this is accepted).
 
 ## Setup
 

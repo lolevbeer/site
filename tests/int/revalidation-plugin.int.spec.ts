@@ -158,11 +158,15 @@ describe('kiosk push keys', () => {
     },
   )
 
-  it('pushes a location edit to every menu display and that location’s events', async () => {
+  // Menus embed the location (hours, lines cleaned) and 'kiosk-menus' is
+  // hard-expired, so the push fetches fresh data. The events stream only carries
+  // the location name, and its 'locations' cache is just marked stale, so an
+  // events push would refetch stale data: it is deliberately not sent.
+  it('pushes a location edit to every menu display and nothing to the events displays', async () => {
     const { afterChange } = await hooksFor('locations')
     await afterChange({ doc: { slug: 'lawrenceville' }, req })
+    expect(publishKioskInvalidate).toHaveBeenCalledTimes(1)
     expect(publishKioskInvalidate).toHaveBeenCalledWith({ kind: 'menu' })
-    expect(publishKioskInvalidate).toHaveBeenCalledWith({ kind: 'events', keys: ['lawrenceville'] })
   })
 
   it('batch invalidation (no doc) pushes without keys', async () => {

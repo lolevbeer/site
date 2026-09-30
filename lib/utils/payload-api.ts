@@ -262,70 +262,60 @@ export const getMenusByLocation = async (locationSlug: string): Promise<PayloadM
 type WebsiteMenuType = 'draft' | 'cans'
 
 /**
- * Resolve a location's explicit website menu selections, never the first menu
- * of a type. One cache entry serves getDraftMenu and getCansMenu (most callers
- * want both), so a miss costs one location lookup and one menu query. React
- * `cache()` collapses the two concurrent calls within a render, which
- * unstable_cache alone would run twice on a cold miss.
+ * Location lookup for the website menu selections. Depth 0: only the selected
+ * menu ids are needed, not the populated menus. React `cache()` lets the draft
+ * and cans getters of one render share it, which unstable_cache alone would run
+ * twice on concurrent cold misses.
  */
-const getLocationMenus = cache(
-  async (locationSlug: string): Promise<Record<WebsiteMenuType, PayloadMenu | null>> =>
-    unstable_cache(
-      async () => {
-        const none = { draft: null, cans: null }
-        const payload = await getPayload({ config })
-        // Depth 0: only the selected menu ids are needed, not the populated menus.
-        const location = await findLocationBySlug(payload, locationSlug, 0)
-        if (!location) return none
+const findLocationForMenus = cache(async (locationSlug: string) => {
+  const payload = await getPayload({ config })
+  return findLocationBySlug(payload, locationSlug, 0)
+})
 
-        const selections = (['draft', 'cans'] as const).flatMap((type) => {
-          const selected = location[`${type}Menu`]
-          return selected ? [{ type, id: relationshipId(selected) }] : []
-        })
-        if (selections.length === 0) return none
+/**
+ * Resolve the explicit website menu selection, never the first menu of a type.
+ * One cache entry per type, so a caller that wants one menu (e/[location] wants
+ * cans) never fetches or stores the other.
+ */
+async function getLocationMenu(
+  locationSlug: string,
+  type: WebsiteMenuType,
+): Promise<PayloadMenu | null> {
+  return unstable_cache(
+    async () => {
+      const location = await findLocationForMenus(locationSlug)
+      const selected = location?.[`${type}Menu`]
+      if (!location || !selected) return null
 
-        const result = await payload.find({
-          collection: 'menus',
-          overrideAccess: false,
-          where: {
-            and: [
-              { location: { equals: location.id } },
-              { _status: { equals: 'published' } },
-              { id: { in: selections.map(({ id }) => id) } },
-            ],
-          },
-          depth: 3,
-          populate: CATALOG_MENU_POPULATE,
-          limit: selections.length,
-        })
-
-        // The type check is here rather than in the query: a menu picked in the
-        // wrong slot (say a cans menu as the draft menu) is never served.
-        const pick = (type: WebsiteMenuType) => {
-          const selection = selections.find((entry) => entry.type === type)
-          return (
-            (selection &&
-              result.docs.find(
-                (doc) => doc.type === type && String(doc.id) === String(selection.id),
-              )) ||
-            null
-          )
-        }
-        return { draft: pick('draft'), cans: pick('cans') }
-      },
-      [`location-${locationSlug}-website-menus`],
-      { tags: [CACHE_TAGS.locations, CACHE_TAGS.menus, CACHE_TAGS.beers], revalidate: 300 },
-    )(),
-)
+      const payload = await getPayload({ config })
+      const result = await payload.find({
+        collection: 'menus',
+        overrideAccess: false,
+        where: {
+          id: { equals: relationshipId(selected) },
+          location: { equals: location.id },
+          type: { equals: type },
+          _status: { equals: 'published' },
+        },
+        depth: 3,
+        populate: CATALOG_MENU_POPULATE,
+        limit: 1,
+      })
+      return result.docs[0] ?? null
+    },
+    [`location-${locationSlug}-${type}-menu`],
+    { tags: [CACHE_TAGS.locations, CACHE_TAGS.menus, CACHE_TAGS.beers], revalidate: 300 },
+  )()
+}
 
 /** Get the location's selected draft menu for the homepage and taproom page. */
 export async function getDraftMenu(locationSlug: string): Promise<PayloadMenu | null> {
-  return (await getLocationMenus(locationSlug)).draft
+  return getLocationMenu(locationSlug, 'draft')
 }
 
 /** Get the location's selected cans menu for the homepage and taproom page. */
 export async function getCansMenu(locationSlug: string): Promise<PayloadMenu | null> {
-  const cansMenu = (await getLocationMenus(locationSlug)).cans
+  const cansMenu = await getLocationMenu(locationSlug, 'cans')
 
   // Clone and sort to avoid mutating the cached object from unstable_cache
   if (cansMenu?.items) {

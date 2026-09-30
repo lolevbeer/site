@@ -33,11 +33,10 @@ describe.each([
         collection: 'menus',
         overrideAccess: false,
         where: {
-          and: [
-            { location: { equals: 'loc-1' } },
-            { _status: { equals: 'published' } },
-            { id: { in: ['selected-menu'] } },
-          ],
+          id: { equals: 'selected-menu' },
+          location: { equals: 'loc-1' },
+          type: { equals: type },
+          _status: { equals: 'published' },
         },
         populate: expect.objectContaining({ beers: expect.objectContaining({ name: true }) }),
         limit: 1,
@@ -51,7 +50,7 @@ describe.each([
     })
     expect(unstableCache).toHaveBeenLastCalledWith(
       expect.any(Function),
-      ['location-lawrenceville-website-menus'],
+      [`location-lawrenceville-${type}-menu`],
       { tags: ['locations', 'menus', 'beers'], revalidate: 300 },
     )
   })
@@ -97,46 +96,24 @@ describe.each([
   })
 })
 
-it('resolves the draft and cans menus with one location lookup and one menu query', async () => {
-  const draft = { id: 'draft-menu', type: 'draft', items: [] }
+it('fetches only the requested menu, even when both are selected', async () => {
+  // e/[location] wants the cans menu alone: it must not fetch or cache the draft menu.
   const cans = { id: 'cans-menu', type: 'cans', items: [] }
-  const location = { id: 'loc-1', draftMenu: 'draft-menu', cansMenu: 'cans-menu' }
+  find
+    .mockResolvedValueOnce({
+      docs: [{ id: 'loc-1', draftMenu: 'draft-menu', cansMenu: 'cans-menu' }],
+    })
+    .mockResolvedValueOnce({ docs: [cans] })
 
-  // One cache miss for the draft getter: a single location find and a single
-  // menus find that fetch both selections.
-  find.mockResolvedValueOnce({ docs: [location] }).mockResolvedValueOnce({ docs: [cans, draft] })
-  expect(await getDraftMenu('lawrenceville')).toEqual(draft)
-  expect(find).toHaveBeenCalledTimes(2)
-
-  // The cans getter reads the same cache entry (same key), so a real cache
-  // serves it without any further query; the mocked cache just re-runs it.
-  find.mockResolvedValueOnce({ docs: [location] }).mockResolvedValueOnce({ docs: [cans, draft] })
   expect(await getCansMenu('lawrenceville')).toEqual(cans)
-  expect(unstableCache.mock.calls.map(([, key]) => key)).toEqual([
-    ['location-lawrenceville-website-menus'],
-    ['location-lawrenceville-website-menus'],
-  ])
 
   const menuQueries = find.mock.calls.filter(([args]) => args.collection === 'menus')
-  expect(menuQueries[0][0]).toMatchObject({
-    where: {
-      and: [
-        { location: { equals: 'loc-1' } },
-        { _status: { equals: 'published' } },
-        { id: { in: ['draft-menu', 'cans-menu'] } },
-      ],
-    },
-    limit: 2,
+  expect(menuQueries).toHaveLength(1)
+  expect(menuQueries[0][0].where).toMatchObject({
+    id: { equals: 'cans-menu' },
+    type: { equals: 'cans' },
   })
-})
-
-it('ignores a selected menu whose type does not match the selector', async () => {
-  // A cans menu picked in the draft slot (bad data) must not be served as draft.
-  const wrongType = { id: 'cans-menu', type: 'cans', items: [] }
-  find
-    .mockResolvedValueOnce({ docs: [{ id: 'loc-1', draftMenu: 'cans-menu' }] })
-    .mockResolvedValueOnce({ docs: [wrongType] })
-  expect(await getDraftMenu('lawrenceville')).toBeNull()
+  expect(unstableCache).toHaveBeenCalledTimes(1)
 })
 
 it('keeps the cans menu sorted by recipe without changing the cached items', async () => {
@@ -146,7 +123,7 @@ it('keeps the cans menu sorted by recipe without changing the cached items', asy
   const items = [item('older', 10), item('newer', 20)]
   find
     .mockResolvedValueOnce({ docs: [{ id: 'loc-1', cansMenu: { id: 'cans' } }] })
-    .mockResolvedValueOnce({ docs: [{ id: 'cans', type: 'cans', items }] })
+    .mockResolvedValueOnce({ docs: [{ id: 'cans', items }] })
   expect((await getCansMenu('lawrenceville'))?.items).toEqual([items[1], items[0]])
   expect(items.map((entry) => entry.product.value.id)).toEqual(['older', 'newer'])
 })

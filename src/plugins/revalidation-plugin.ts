@@ -191,13 +191,9 @@ async function publishKioskSignal(
     return
   }
   // Location edits (hours, lines cleaned) feed menu displays that embed them.
-  if (slug === 'locations') {
-    void publishKioskInvalidate({ kind: 'menu' })
-    void publishKioskInvalidate({
-      kind: 'events',
-      keys: scope(typeof doc?.slug === 'string' ? doc.slug : undefined),
-    })
-  }
+  // No events push: that stream carries only the location name and its
+  // 'locations' cache is just marked stale, so a push would refetch stale data.
+  if (slug === 'locations') void publishKioskInvalidate({ kind: 'menu' })
 }
 
 function invalidateCollection(slug: string, doc?: Record<string, unknown>): void {
