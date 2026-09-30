@@ -36,8 +36,10 @@ export function useMenuStream(menuUrl: string, initialMenu: Menu | null): UseMen
     key: menuUrl,
   })
 
+  const streamUrl = menuUrl ? `/api/menu-stream/${menuUrl}` : ''
+
   const { data: menu, theme } = usePolling<Menu, MenuResponse>(
-    menuUrl ? `/api/menu-stream/${menuUrl}` : '',
+    streamUrl,
     stableInitialMenu,
     ({ menu: responseMenu }) => ({
       data: responseMenu,
@@ -46,7 +48,11 @@ export function useMenuStream(menuUrl: string, initialMenu: Menu | null): UseMen
           ? responseMenu.themeMode
           : getPittsburghTheme(),
     }),
-    { invalidateSignal, realtimeFallback: realtimeActive },
+    {
+      invalidateSignal,
+      realtimeFallback: realtimeActive,
+      invalidateUrl: streamUrl ? `${streamUrl}/fresh` : undefined,
+    },
   )
 
   return { menu, theme }
