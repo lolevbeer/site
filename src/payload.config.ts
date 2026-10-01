@@ -37,7 +37,6 @@ import { importLakeBeverageCSV } from './endpoints/import-lake-beverage-csv'
 import { updateDistributorUrls } from './endpoints/update-distributor-urls'
 import { recalculateBeerPrices } from './endpoints/recalculate-beer-prices'
 import { regeocodeDistributors } from './endpoints/regeocode-distributors'
-import { syncUntappdRatings } from './endpoints/sync-untappd-ratings'
 import { adminAccess, hasRole } from './access/roles'
 import { syncUntappdRatingsTask } from './jobs/sync-untappd-ratings'
 import { getLocalDevOrigins } from '../lib/config/payload-origins'
@@ -297,11 +296,6 @@ export default buildConfig({
       path: '/regeocode-distributors',
       method: 'post',
       handler: regeocodeDistributors,
-    },
-    {
-      path: '/sync-untappd-ratings',
-      method: 'post',
-      handler: syncUntappdRatings,
     },
   ],
   storage: [

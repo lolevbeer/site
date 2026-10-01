@@ -28,14 +28,6 @@ interface RecalcResults {
   errors: number
 }
 
-interface UntappdResults {
-  total: number
-  refreshed: number
-  updated: number
-  skipped: number
-  errors: number
-}
-
 interface RegeocodeDistributor {
   name: string
   address: string
@@ -146,30 +138,6 @@ export const SyncViewClient: React.FC = () => {
         distributors: data.distributors as RegeocodeDistributor[] | undefined,
       })
     },
-  })
-
-  // Untappd sync state
-  const [untappdDryRun, setUntappdDryRun] = useState(true)
-  const untappd = useSSEImport<UntappdResults>({
-    getResults: (data) => (data.results as UntappdResults) ?? null,
-    handlers: ({ appendLog }) => ({
-      item: (raw) => {
-        const data = raw as SSEData
-        const statusIcon =
-          data.status === 'refreshed'
-            ? '✓'
-            : data.status === 'updated' || data.status === 'new'
-              ? '+'
-              : data.status === 'error'
-                ? '✗'
-                : data.status === 'multiple'
-                  ? '?'
-                  : data.status === 'not-found'
-                    ? '○'
-                    : '→'
-        appendLog(String(data.status ?? 'item'), `${statusIcon} ${data.name}: ${data.message}`)
-      },
-    }),
   })
 
   // Load distributor URLs on mount using local API
@@ -299,12 +267,6 @@ export const SyncViewClient: React.FC = () => {
     const params = new URLSearchParams()
     if (regeocodeDryRun) params.set('dryRun', 'true')
     await regeocode.run(`/api/regeocode-distributors?${params.toString()}`)
-  }
-
-  const handleUntappdSync = async () => {
-    const params = new URLSearchParams()
-    if (untappdDryRun) params.set('dryRun', 'true')
-    await untappd.run(`/api/sync-untappd-ratings?${params.toString()}`)
   }
 
   return (
@@ -661,67 +623,6 @@ export const SyncViewClient: React.FC = () => {
               ]}
             />
           )}
-
-          {/* Untappd Sync Section */}
-          <div className="sync-view__subsection">
-            <h3 className="sync-view__subsection-title">Sync Untappd Ratings</h3>
-            <p className="sync-view__description sync-view__description--small">
-              Bulk update Untappd ratings for all beers. Invalid URLs will be searched and fixed
-              automatically.
-            </p>
-
-            <div className="sync-view__controls">
-              <Button
-                onClick={handleUntappdSync}
-                disabled={untappd.running}
-                buttonStyle={untappdDryRun ? 'secondary' : 'primary'}
-              >
-                {untappd.running
-                  ? untappdDryRun
-                    ? 'Previewing...'
-                    : 'Syncing...'
-                  : untappdDryRun
-                    ? 'Preview Sync'
-                    : 'Sync Now'}
-              </Button>
-              <CheckboxInput
-                id="untappd-dry-run"
-                checked={untappdDryRun}
-                onToggle={(e) => setUntappdDryRun(e.target.checked)}
-                readOnly={untappd.running}
-                label="Dry run (preview only)"
-              />
-            </div>
-
-            {untappd.progress && <ImportProgress progress={untappd.progress} />}
-
-            {untappd.logs.length > 0 && <LogFeed logs={untappd.logs} tall />}
-
-            {/* Results */}
-            {untappd.results && (
-              <ImportResultsBanner
-                title={untappdDryRun ? 'Preview Results' : 'Sync Complete'}
-                isError={untappd.results.errors > 0}
-                stats={[
-                  { count: untappd.results.total, label: 'total', pillStyle: 'light' },
-                  { count: untappd.results.refreshed, label: 'refreshed', pillStyle: 'success' },
-                  {
-                    count: untappd.results.updated,
-                    label: 'fixed',
-                    pillStyle: 'warning',
-                    hideWhenZero: true,
-                  },
-                  { count: untappd.results.skipped, label: 'skipped', pillStyle: 'light' },
-                  {
-                    count: untappd.results.errors,
-                    label: 'errors',
-                    pillStyle: 'error',
-                    hideWhenZero: true,
-                  },
-                ]}
-              />
-            )}
-          </div>
         </div>
       </div>
     </Gutter>
@@ -731,16 +632,10 @@ export const SyncViewClient: React.FC = () => {
 /** Maps flow-specific log entry types onto the shared tone modifier classes */
 const logTone = (type: string): string => {
   switch (type) {
-    case 'refreshed':
     case 'success':
       return 'success'
     case 'updated':
-    case 'new':
       return 'info'
-    case 'multiple':
-      return 'warning'
-    case 'not-found':
-      return 'muted'
     case 'error':
       return 'error'
     default:
