@@ -19,6 +19,15 @@ Requires Node 24.15+ (Payload 4's minimum; CI reads `engines.node` from `package
 
 Payload admin is at `/admin`. Follow the on-screen instructions to create your first admin user.
 
+## Visitor navigation
+
+The homepage brings the selected taproom's hours, directions, and menu/schedule
+shortcuts ahead of the brand introduction. The beer map puts retailer search
+before full taproom information, and beer details prioritize availability and
+pricing before artwork on mobile. Food and events identify the selected
+location and use compact agendas. These pages share the existing location
+selection; the full-screen kiosk layouts remain separate.
+
 ## Tech Stack
 
 - **Framework:** Next.js 16 (App Router)

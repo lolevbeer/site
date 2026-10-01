@@ -7,6 +7,7 @@ import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { useLocationContext } from '@/components/location/location-provider'
 import { WeeklyHoursTable } from '@/components/location/weekly-hours'
+import { getLocationDirectionsUrl } from '@/lib/config/locations'
 import { trackDirections } from '@/lib/analytics/events'
 import { getLocationImageUrl } from '@/lib/utils/media-utils'
 import type { WeeklyHoursDay } from '@/lib/utils/payload-api'
@@ -39,17 +40,7 @@ export function LocationCards({ weeklyHours }: LocationCardsProps) {
         const cardImage = getLocationImageUrl(location.images?.card)
         const fallbackGradient = fallbackGradients[index % fallbackGradients.length]
 
-        // Use custom directions URL if provided, otherwise generate from coordinates/address
-        // coordinates is a point field: [longitude, latitude]
-        const mapUrl =
-          location.address?.directionsUrl ||
-          (location.coordinates && location.coordinates.length === 2
-            ? `https://www.google.com/maps/dir/?api=1&destination=${location.coordinates[1]},${location.coordinates[0]}`
-            : location.address?.street && location.address?.city && location.address?.state
-              ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                  `${location.address.street}, ${location.address.city}, ${location.address.state} ${location.address.zip || ''}`,
-                )}`
-              : '#')
+        const mapUrl = getLocationDirectionsUrl(location)
 
         return (
           <div

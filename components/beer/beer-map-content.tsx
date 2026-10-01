@@ -1,7 +1,7 @@
 'use client'
 
 /**
- * Beer map page body: taproom hours plus a slot for the distributor map.
+ * Beer map page body: streamed retailer search first, followed by full taproom hours.
  *
  * Hours use the same WeeklyHoursTable as the homepage cards, taproom
  * landings, and footer — not a separate accordion. The map is passed as
@@ -30,10 +30,14 @@ export function BeerMapContent({ weeklyHours, children }: BeerMapContentProps) {
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold tracking-tight mb-2">Find Lolev Beer near you</h1>
         <p className="mx-auto mt-3 max-w-2xl text-muted-foreground text-balance">
-          Taprooms below, then the map of bottle shops and retailers carrying Lolev across
-          Pennsylvania, New York, and Ohio. Search by city or ZIP, or use Near Me.
+          Search the map of bottle shops and retailers carrying Lolev across Pennsylvania, New York,
+          and Ohio. Search by city or ZIP, or use Near Me.
         </p>
         <div className="w-16 h-1 bg-primary mx-auto rounded-full mt-4" />
+      </div>
+
+      <div className="mb-8 overflow-hidden" style={{ height: '700px', position: 'relative' }}>
+        {children}
       </div>
 
       <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
@@ -81,10 +85,6 @@ export function BeerMapContent({ weeklyHours, children }: BeerMapContentProps) {
             </div>
           )
         })}
-      </div>
-
-      <div className="overflow-hidden" style={{ height: '700px', position: 'relative' }}>
-        {children}
       </div>
     </div>
   )

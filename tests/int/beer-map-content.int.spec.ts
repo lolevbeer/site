@@ -2,6 +2,7 @@
  * Beer map hours reuse WeeklyHoursTable (full day names, holiday banner,
  * gradient separator) instead of a one-off accordion.
  */
+import { readFileSync } from 'node:fs'
 import { cleanup, render, screen } from '@testing-library/react'
 import { createElement } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -37,16 +38,31 @@ function day(overrides: Partial<WeeklyHoursDay> & Pick<WeeklyHoursDay, 'day'>): 
 }
 
 const weeklyHours: Record<string, WeeklyHoursDay[]> = {
-  lawrenceville: [
-    day({ day: 'monday', holidayName: 'Labor Day' }),
-    day({ day: 'tuesday' }),
-  ],
+  lawrenceville: [day({ day: 'monday', holidayName: 'Labor Day' }), day({ day: 'tuesday' })],
   zelienople: [day({ day: 'monday' }), day({ day: 'tuesday' })],
 }
 
 afterEach(cleanup)
 
 describe('BeerMapContent hours', () => {
+  it('lets visitors scroll the page past the interactive map', () => {
+    // WebGL cannot run in jsdom; guard the actual Map interaction option.
+    const source = readFileSync('components/ui/distributor-map.tsx', 'utf8')
+    expect(source).toMatch(/<Map\s[\s\S]*?\scooperativeGestures(?:\s|=)/)
+  })
+  it('places streamed retailer search before taproom hours', () => {
+    render(
+      createElement(
+        BeerMapContent,
+        { weeklyHours },
+        createElement('input', { 'aria-label': 'Search retailers' }),
+      ),
+    )
+    const search = screen.getByRole('textbox', { name: 'Search retailers' })
+    const taproom = screen.getByRole('heading', { name: 'Lawrenceville' })
+    expect(search.compareDocumentPosition(taproom) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(screen.queryByText(/Taprooms below, then the map/)).toBeNull()
+  })
   it('renders the shared weekly hours table for each taproom, not an accordion', () => {
     render(createElement(BeerMapContent, { weeklyHours }))
 

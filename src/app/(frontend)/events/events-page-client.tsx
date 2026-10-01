@@ -1,46 +1,52 @@
-'use client';
+'use client'
 
-import React, { useMemo } from 'react';
-import Link from 'next/link';
-import { BreweryEvent } from '@/lib/types/event';
-import type { LocationFilter } from '@/lib/types/location';
-import { Button } from '@/components/ui/button';
-import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
-import { Calendar } from '@/components/icons';
-import { useLocationContext } from '@/components/location/location-provider';
-import { getLocationDisplayName } from '@/lib/config/locations';
-import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
+import React, { useMemo } from 'react'
+import Link from 'next/link'
+import { BreweryEvent } from '@/lib/types/event'
+import type { LocationFilter } from '@/lib/types/location'
+import { Button } from '@/components/ui/button'
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
+import { Calendar } from '@/components/icons'
+import { useLocationContext } from '@/components/location/location-provider'
+import { getLocationDisplayName } from '@/lib/config/locations'
+import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs'
 import { HubIntro } from '@/components/ui/hub-intro'
-import { ScheduleList } from '@/components/ui/schedule-list';
-import { isTodayOrFuture } from '@/lib/utils/formatters';
-import { safeHttpUrl } from '@/lib/utils/url-utils';
+import { ScheduleList } from '@/components/ui/schedule-list'
+import { isTodayOrFuture } from '@/lib/utils/formatters'
+import { safeHttpUrl } from '@/lib/utils/url-utils'
 
 interface EventsPageClientProps {
   /** CMS intro paragraph shown under the heading. */
   intro?: string
-  initialEvents: BreweryEvent[];
+  initialEvents: BreweryEvent[]
 }
 
 export function EventsPageClient({ initialEvents, intro }: EventsPageClientProps) {
-  const { currentLocation, locations } = useLocationContext();
-  const locationFilter = currentLocation as LocationFilter;
+  // Use the same selected location as the header and schedule filter.
+  const { currentLocation, currentLocationData, isClient, locations } = useLocationContext()
+  const locationFilter = currentLocation as LocationFilter
 
   // Filter events by location and sort by date
   const filteredEvents = useMemo(() => {
-    const filtered = locationFilter === 'all'
-      ? initialEvents
-      : initialEvents.filter(event => event.location === locationFilter);
+    const filtered =
+      locationFilter === 'all'
+        ? initialEvents
+        : initialEvents.filter((event) => event.location === locationFilter)
 
     return filtered
-      .filter(event => isTodayOrFuture(event.date))
-      .sort((a, b) => a.date.localeCompare(b.date));
-  }, [initialEvents, locationFilter]);
+      .filter((event) => isTodayOrFuture(event.date))
+      .sort((a, b) => a.date.localeCompare(b.date))
+  }, [initialEvents, locationFilter])
 
   return (
     <div className="container mx-auto px-4 py-8">
       <PageBreadcrumbs className="mb-6" />
       <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold tracking-tight">Events</h1>
+        <h1 className="text-4xl font-bold tracking-tight">
+          {isClient && currentLocationData?.name
+            ? `Events at ${currentLocationData.name}`
+            : 'Events'}
+        </h1>
         <HubIntro text={intro} />
       </div>
 
@@ -49,7 +55,9 @@ export function EventsPageClient({ initialEvents, intro }: EventsPageClientProps
         {filteredEvents.length > 0 ? (
           <ScheduleList
             items={filteredEvents.map((event) => ({
-              id: String(event.id ?? `${event.title}-${event.date}-${event.location}-${event.time}`),
+              id: String(
+                event.id ?? `${event.title}-${event.date}-${event.location}-${event.time}`,
+              ),
               date: event.date,
               title: event.title,
               time: event.time,
@@ -58,8 +66,7 @@ export function EventsPageClient({ initialEvents, intro }: EventsPageClientProps
                 locationFilter === 'all'
                   ? getLocationDisplayName(locations, event.location)
                   : undefined,
-              description:
-                event.description !== event.title ? event.description : undefined,
+              description: event.description !== event.title ? event.description : undefined,
               site: safeHttpUrl(event.site),
             }))}
           />
@@ -84,14 +91,10 @@ export function EventsPageClient({ initialEvents, intro }: EventsPageClientProps
         <h2 className="text-lg font-semibold">Book a private event</h2>
         <div className="flex justify-center gap-4 flex-wrap">
           <Button variant="ghost" size="sm" asChild>
-            <a href="mailto:events@lolev.beer">
-              events@lolev.beer
-            </a>
+            <a href="mailto:events@lolev.beer">events@lolev.beer</a>
           </Button>
           <Button variant="ghost" size="sm" asChild>
-            <a href="tel:4123368965">
-              (412) 336-8965
-            </a>
+            <a href="tel:4123368965">(412) 336-8965</a>
           </Button>
         </div>
         <p className="text-sm text-muted-foreground pt-6">
@@ -103,5 +106,5 @@ export function EventsPageClient({ initialEvents, intro }: EventsPageClientProps
         </p>
       </div>
     </div>
-  );
+  )
 }

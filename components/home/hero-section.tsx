@@ -18,6 +18,8 @@ import { extractBeerFromMenuItem } from '@/lib/utils/menu-item-utils'
 import { getBeerImageUrl } from '@/lib/utils/media-utils'
 
 interface HeroSectionProps {
+  /** Selected-taproom visit summary rendered before carousel and brand prose. */
+  children?: React.ReactNode
   availableBeers: PayloadBeer[]
   cansMenus: PayloadMenu[]
   heroDescription?: string
@@ -25,6 +27,7 @@ interface HeroSectionProps {
 }
 
 export function HeroSection({
+  children,
   availableBeers,
   cansMenus,
   heroDescription,
@@ -85,6 +88,7 @@ export function HeroSection({
             Lolev Beer
           </h1>
         </BlurFade>
+        {children}
         <BlurFade delay={0.1} className="w-full">
           <section className="flex flex-col items-center justify-center gap-4 md:gap-8 rounded-xl py-8 md:py-12 w-full">
             <div className="w-full max-w-5xl mx-auto px-4 md:px-12">

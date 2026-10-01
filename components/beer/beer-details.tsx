@@ -1,6 +1,6 @@
 /**
  * Beer Details Component
- * Displays comprehensive beer information for individual beer pages
+ * Shows visitor identity, availability and prices before artwork and secondary details
  */
 
 'use client'
@@ -253,52 +253,9 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
         </BreadcrumbList>
       </Breadcrumb>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[350px_1fr] gap-8 mb-8">
-        {/* Beer Image and Quick Stats */}
-        <div className="space-y-4">
-          <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-gradient-to-b from-muted/30 to-muted/10 dark:from-muted/10 dark:to-muted/5">
-            {/* Flat image is the poster (and LCP element); it fades once the
-                3D can reports ready, and stays if WebGL/assets fail. */}
-            {canBaseUrl && (
-              <BeerCan3D
-                baseUrl={canBaseUrl}
-                metalnessUrl={canMetalnessUrl}
-                onReady={() => setCanReady(true)}
-                className="absolute inset-0 z-10"
-              />
-            )}
-            {imagePath && !imageError ? (
-              <Image
-                src={imagePath}
-                alt={`${beer.name} beer`}
-                fill
-                className={`object-contain transition-opacity duration-300 ${canReady ? 'opacity-0' : ''}`}
-                sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 800px"
-                priority
-                onError={handleImageError}
-              />
-            ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center text-center px-4">
-                {/* Full-strength muted-foreground: the /70 and /50 fades fell
-                    under the 4.5:1 AA contrast floor (see draft-beer-card). */}
-                <p className="text-lg font-semibold text-muted-foreground">{beer.name}</p>
-                {styleName && <p className="text-sm text-muted-foreground mt-1">{styleName}</p>}
-              </div>
-            )}
-          </div>
-
-          {/* Quick Stats */}
-          <Card className="shadow-none border-0 p-0 bg-transparent">
-            <CardContent className="p-0 space-y-0">
-              {styleName && <SpecificationRow label="Style" value={styleName} />}
-              <SpecificationRow label="Alc by Vol" value={formatAbv(beer.abv)} />
-              {beer.recipe && <SpecificationRow label="Recipe #" value={beer.recipe} />}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Beer Information */}
-        <div className="space-y-6">
+      {/* One visitor summary comes first in DOM; artwork sits alongside it on desktop. */}
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_350px] gap-8 mb-8">
+        <div className="min-w-0 space-y-4">
           {/* Header */}
           <div>
             <div className="flex items-start justify-between gap-4 mb-2">
@@ -328,22 +285,14 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
             </div>
           </div>
 
-          {/* Description */}
-          {beer.description && (
-            <div>
-              <h2 className="text-xl font-semibold mb-3">Description</h2>
-              <p>{beer.description}</p>
-            </div>
-          )}
-
-          {/* Hops */}
-          {beer.hops && (
-            <div>
-              <h2 className="text-xl font-semibold mb-3">Hops</h2>
-              <p>{beer.hops}</p>
-            </div>
-          )}
-
+          {/* Quick Stats */}
+          <Card className="shadow-none border-0 p-0 bg-transparent">
+            <CardContent className="p-0 space-y-0">
+              {styleName && <SpecificationRow label="Style" value={styleName} />}
+              <SpecificationRow label="Alc by Vol" value={formatAbv(beer.abv)} />
+              {beer.recipe && <SpecificationRow label="Recipe #" value={beer.recipe} />}
+            </CardContent>
+          </Card>
           {/* Availability and Pricing */}
           <div className="space-y-6">
             {/* Availability */}
@@ -353,7 +302,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
               </CardHeader>
               <CardContent className="p-0">
                 {isLoadingLocations ? (
-                  <div className="space-y-2 animate-pulse">
+                  <div className="min-h-36 space-y-2 animate-pulse">
                     <div className="h-4 bg-muted rounded w-3/4"></div>
                     <div className="h-4 bg-muted rounded w-2/3"></div>
                   </div>
@@ -412,6 +361,54 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
               </Card>
             )}
           </div>
+        </div>
+        <div className="min-w-0">
+          <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-gradient-to-b from-muted/30 to-muted/10 dark:from-muted/10 dark:to-muted/5">
+            {/* Flat image is the poster fallback; it fades once the
+                3D can reports ready, and stays if WebGL/assets fail. */}
+            {canBaseUrl && (
+              <BeerCan3D
+                baseUrl={canBaseUrl}
+                metalnessUrl={canMetalnessUrl}
+                onReady={() => setCanReady(true)}
+                className="absolute inset-0 z-10"
+              />
+            )}
+            {imagePath && !imageError ? (
+              <Image
+                src={imagePath}
+                alt={`${beer.name} beer`}
+                fill
+                className={`object-contain transition-opacity duration-300 ${canReady ? 'opacity-0' : ''}`}
+                sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 800px"
+                onError={handleImageError}
+              />
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center text-center px-4">
+                {/* Full-strength muted-foreground: the /70 and /50 fades fell
+                    under the 4.5:1 AA contrast floor (see draft-beer-card). */}
+                <p className="text-lg font-semibold text-muted-foreground">{beer.name}</p>
+                {styleName && <p className="text-sm text-muted-foreground mt-1">{styleName}</p>}
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="min-w-0 space-y-6 lg:col-span-2">
+          {/* Description */}
+          {beer.description && (
+            <div>
+              <h2 className="text-xl font-semibold mb-3">Description</h2>
+              <p>{beer.description}</p>
+            </div>
+          )}
+
+          {/* Hops */}
+          {beer.hops && (
+            <div>
+              <h2 className="text-xl font-semibold mb-3">Hops</h2>
+              <p>{beer.hops}</p>
+            </div>
+          )}
 
           {/* External Links */}
           {beer.untappd && (

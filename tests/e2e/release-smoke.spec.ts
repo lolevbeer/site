@@ -7,8 +7,8 @@ const publicRoutes = [
   ['/', 'Lolev Beer'],
   ['/beer-map', 'Find Lolev Beer near you'],
   ['/beer', 'Our Beers'],
-  ['/food', 'Food'],
-  ['/events', 'Events'],
+  ['/food', /^Food(?: at .+)?$/],
+  ['/events', /^Events(?: at .+)?$/],
   ['/about', 'About Lolev'],
   ['/faq', 'Frequently Asked Questions'],
 ] as const
@@ -20,7 +20,9 @@ test('public routes render their expected headings', async ({ page }) => {
   }
 })
 
-test('the mobile menu keeps keyboard focus inside its dialog and restores the trigger', async ({ page }) => {
+test('the mobile menu keeps keyboard focus inside its dialog and restores the trigger', async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 375, height: 812 })
   await page.goto('/')
 
@@ -51,7 +53,9 @@ test('the mobile menu keeps keyboard focus inside its dialog and restores the tr
   await expect(menuTrigger).toBeFocused()
 })
 
-test('the admin route redirects unauthenticated visitors to its labeled login form', async ({ page }) => {
+test('the admin route redirects unauthenticated visitors to its labeled login form', async ({
+  page,
+}) => {
   await page.goto('/admin')
 
   await expect(page).toHaveURL(/\/admin\/login/)
@@ -68,7 +72,9 @@ test('an authenticated administrator can update only the seeded FAQ and observe 
   const password = process.env.E2E_ADMIN_PASSWORD
 
   if (!email || !password) {
-    throw new Error('E2E_ADMIN_EMAIL and E2E_ADMIN_PASSWORD are required for the mutation smoke test')
+    throw new Error(
+      'E2E_ADMIN_EMAIL and E2E_ADMIN_PASSWORD are required for the mutation smoke test',
+    )
   }
 
   const request = page.context().request
