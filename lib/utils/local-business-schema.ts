@@ -17,10 +17,14 @@ import {
 import { getMediaUrl } from './media-utils'
 import { ORG_DESCRIPTION } from './seo'
 import {
-  CRAWLABLE_SAME_AS,
   LOLEV_BASE_URL,
+  LOLEV_FOUNDING_DATE,
   LOLEV_OG_IMAGE_URL,
+  LOLEV_ORG_ID,
+  LOLEV_WEBSITE_ID,
+  ORGANIZATION_SAME_AS,
   SOCIAL_PROFILE_URLS,
+  locationSchemaId,
 } from './schema-shared'
 
 /** Minimal week-hours row from getWeeklyHoursWithHolidays (avoids importing payload-api). */
@@ -239,7 +243,7 @@ export function generateLocalBusinessSchema(
   const schema: LocalBusinessJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Brewery',
-    '@id': `${LOLEV_BASE_URL}#${slug}`,
+    '@id': locationSchemaId(slug),
     name: `Lolev Beer - ${location.name}`,
     description: breweryDescription(location),
     image: images,
@@ -253,7 +257,7 @@ export function generateLocalBusinessSchema(
     acceptsReservations: false,
     currenciesAccepted: 'USD',
     paymentAccepted: 'Cash, Credit Card, Debit Card',
-    sameAs: SOCIAL_PROFILE_URLS,
+    sameAs: [...SOCIAL_PROFILE_URLS],
   }
 
   const areaServed = areaServedForLocation(location)
@@ -296,7 +300,10 @@ export function generateLocalBusinessSchemas(
 }
 
 /**
- * Generate Organization schema linking all locations
+ * Page-level Organization (home, about). Shares the sitewide @id, so it adds
+ * NAP and location refs to the layout node (same description and founding
+ * year) rather than defining a second identity. The address omits fields the
+ * location record lacks, like the sitewide Brewery nodes.
  */
 export interface OrganizationJsonLd {
   '@context': 'https://schema.org'
@@ -311,7 +318,7 @@ export interface OrganizationJsonLd {
   email?: string
   telephone?: string
   sameAs?: string[]
-  address?: PostalAddressJsonLd
+  address?: CrawlablePostalAddress
   location?: Array<{ '@id': string }>
 }
 
@@ -319,16 +326,15 @@ export function generateOrganizationSchema(locations?: PayloadLocation[]): Organ
   const baseSchema: OrganizationJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    '@id': `${LOLEV_BASE_URL}#organization`,
+    '@id': LOLEV_ORG_ID,
     name: 'Lolev Beer',
     alternateName: 'Lolev Beer - A Brewery in Pittsburgh',
     url: LOLEV_BASE_URL,
     logo: LOLEV_OG_IMAGE_URL,
-    description:
-      'Craft brewery in Pennsylvania. Specializing in modern ales, expressive lagers, and oak-aged beer.',
-    foundingDate: '2022',
+    description: ORG_DESCRIPTION,
+    foundingDate: LOLEV_FOUNDING_DATE,
     email: 'info@lolev.beer',
-    sameAs: SOCIAL_PROFILE_URLS,
+    sameAs: [...SOCIAL_PROFILE_URLS],
   }
 
   const active = locations?.filter((loc) => loc.active !== false) ?? []
@@ -338,9 +344,9 @@ export function generateOrganizationSchema(locations?: PayloadLocation[]): Organ
   return {
     ...baseSchema,
     telephone: firstLocation.basicInfo?.phone || undefined,
-    address: postalAddressFromLocation(firstLocation),
+    address: crawlablePostalAddress(firstLocation),
     location: active.map((loc) => ({
-      '@id': `${LOLEV_BASE_URL}#${locationKey(loc)}`,
+      '@id': locationSchemaId(locationKey(loc)),
     })),
   }
 }
@@ -369,9 +375,6 @@ export interface SearchActionJsonLd {
   }
   'query-input': string
 }
-
-/** @id of the crawlable Organization node rendered from the root layout. */
-export const CRAWLABLE_ORG_ID = `${LOLEV_BASE_URL}/#org`
 
 export interface CrawlableOrganizationJsonLd {
   '@type': 'Organization'
@@ -407,7 +410,7 @@ export interface CrawlableBreweryJsonLd {
 
 export interface CrawlableSiteGraph {
   '@context': 'https://schema.org'
-  '@graph': [CrawlableOrganizationJsonLd, ...CrawlableBreweryJsonLd[]]
+  '@graph': [CrawlableOrganizationJsonLd, WebSiteJsonLd, ...CrawlableBreweryJsonLd[]]
 }
 
 function crawlablePostalAddress(location: PayloadLocation): CrawlablePostalAddress | undefined {
@@ -427,21 +430,22 @@ function crawlablePostalAddress(location: PayloadLocation): CrawlablePostalAddre
 }
 
 /**
- * One Organization plus one Brewery per active taproom, for the layout JSON-LD
- * script. Hours, phone, address, and coordinates come from the location
+ * One Organization, the WebSite (so every page's WebPage `isPartOf` and
+ * Organization `publisher` reference resolves), and one Brewery per active
+ * taproom, for the layout JSON-LD script. Hours, phone, address, and coordinates come from the location
  * document. A phone, address line, coordinate, or hours row is included only
  * when that location record has it.
  */
 export function generateCrawlableSiteGraph(locations: PayloadLocation[]): CrawlableSiteGraph {
   const organization: CrawlableOrganizationJsonLd = {
     '@type': 'Organization',
-    '@id': CRAWLABLE_ORG_ID,
+    '@id': LOLEV_ORG_ID,
     name: 'Lolev Beer',
     url: LOLEV_BASE_URL,
     logo: LOLEV_OG_IMAGE_URL,
     description: ORG_DESCRIPTION,
-    foundingDate: '2022-12',
-    sameAs: [...CRAWLABLE_SAME_AS],
+    foundingDate: LOLEV_FOUNDING_DATE,
+    sameAs: [...ORGANIZATION_SAME_AS],
   }
 
   const breweries = locations
@@ -450,8 +454,8 @@ export function generateCrawlableSiteGraph(locations: PayloadLocation[]): Crawla
       const slug = location.slug || location.id
       const brewery: CrawlableBreweryJsonLd = {
         '@type': 'Brewery',
-        '@id': `${LOLEV_BASE_URL}/#${slug}`,
-        parentOrganization: { '@id': CRAWLABLE_ORG_ID },
+        '@id': locationSchemaId(slug),
+        parentOrganization: { '@id': LOLEV_ORG_ID },
         name: `Lolev Beer - ${location.name}`,
         url: `${LOLEV_BASE_URL}/${slug}`,
       }
@@ -468,7 +472,7 @@ export function generateCrawlableSiteGraph(locations: PayloadLocation[]): Crawla
 
   return {
     '@context': 'https://schema.org',
-    '@graph': [organization, ...breweries],
+    '@graph': [organization, generateWebSiteSchema(), ...breweries],
   }
 }
 
@@ -480,12 +484,13 @@ export function generateWebSiteSchema(): WebSiteJsonLd {
   return {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    '@id': `${LOLEV_BASE_URL}#website`,
+    '@id': LOLEV_WEBSITE_ID,
     name: 'Lolev Beer',
     url: LOLEV_BASE_URL,
-    description: 'Craft brewery in Pittsburgh serving modern ales, expressive lagers, and oak-aged beer.',
+    description:
+      'Craft brewery in Pittsburgh serving modern ales, expressive lagers, and oak-aged beer.',
     publisher: {
-      '@id': `${LOLEV_BASE_URL}#organization`,
+      '@id': LOLEV_ORG_ID,
     },
   }
 }

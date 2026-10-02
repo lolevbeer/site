@@ -3,165 +3,121 @@
 import React from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import type { LocationSlug } from '@/lib/types/location'
 import { cn } from '@/lib/utils'
-import { formatDayLabel } from '@/lib/utils/formatters'
 import { useLocationContext } from '@/components/location/location-provider'
-import { getLocationDisplayName } from '@/lib/config/locations'
-import {
-  SEGMENTED_ITEM_IDLE_CLASS,
-  SEGMENTED_ITEM_SELECTED_CLASS,
-  SEGMENTED_TROUGH_CLASS,
-} from '@/components/ui/segmented-control'
-import { beerHref } from '@/lib/config/beer-filters'
-import { MotionCard } from '@/components/motion'
+import { getLocationDirectionsUrl } from '@/lib/config/locations'
+import { formatHoursRange } from '@/components/location/weekly-hours'
+import { getTodayEST } from '@/lib/utils/date'
+import { trackDirections } from '@/lib/analytics/events'
+import type { WeeklyHoursDay } from '@/lib/utils/payload-api'
 
 interface QuickInfoCardsProps {
-  /** Draft tap count by location slug */
+  /** Draft tap count by location slug. Missing counts leave the shortcut unnumbered. */
   beerCount?: Record<string, number>
-  /** Cans count by location slug */
+  /** Cans count by location slug. */
   cansCount?: Record<string, number>
-  nextEvent?: { name: string; date: string; location: LocationSlug } | null
+  /** Server-supplied current week, including holiday overrides; never regular context hours. */
+  weeklyHours?: Record<string, WeeklyHoursDay[]>
   className?: string
 }
 
-interface MenuCountCardProps {
-  title: string
-  /** Count by location slug */
-  counts?: Record<string, number>
-  /** id of the homepage section the tiles scroll to */
-  anchor: string
-  ctaHref: string
-  ctaLabel: string
-  /** Reads "See the N <noun> at <location>" on each tile */
-  countNoun: string
-}
-
-/**
- * A count-per-location card. Each location is its own target rather than the
- * whole card, so it is obvious you are picking one taproom or the other:
- * choosing one switches the global location and scrolls to that section's
- * list, which is already filtered to it.
- */
-function MenuCountCard({
-  title,
-  counts,
-  anchor,
-  ctaHref,
-  ctaLabel,
-  countNoun,
-}: MenuCountCardProps) {
-  const { locations, currentLocation, setLocation, isClient } = useLocationContext()
-
-  // One entry per location that reported a count, so the tiles and the
-  // "any at all" check cannot disagree.
-  const countedLocations = locations.flatMap((location) => {
-    const slug = location.slug || location.id
-    const count = counts?.[slug]
-    return count === undefined ? [] : [{ location, slug, count }]
-  })
-  const hasAny = countedLocations.some(({ count }) => count > 0)
-
-  return (
-    <MotionCard className="h-full">
-      <Card className="p-6 lg:p-8 h-full shadow-none bg-transparent border border-border relative text-center flex flex-col items-center justify-center">
-        <h3 className="text-3xl lg:text-4xl font-bold mb-5">{title}</h3>
-        {!hasAny && (
-          // Both count props are optional, and every taproom can legitimately
-          // report zero, so the card still needs something to say.
-          <p className="text-sm text-muted-foreground">Explore our current selection</p>
-        )}
-        {hasAny && (
-          <div className={cn('inline-grid grid-flow-col auto-cols-fr', SEGMENTED_TROUGH_CLASS)}>
-            {countedLocations.map(({ location, slug, count }) => {
-              // The homepage is ISR-cached, so the served HTML would otherwise
-              // mark whichever location is the default. A visitor whose stored
-              // location is the other taproom would see the wrong tile marked
-              // until the effect fires — and disagree with the header's
-              // switcher, which marks nothing until then. Same guard as
-              // LocationTabs: nothing is current until the client says so.
-              const isActive = isClient && slug === currentLocation
-              return (
-                <Link
-                  key={slug}
-                  href={`/?loc=${encodeURIComponent(slug)}#${anchor}`}
-                  onNavigate={() => setLocation(slug)}
-                  aria-label={`See the ${count} ${countNoun} at ${location.name}`}
-                  aria-current={isActive ? 'true' : undefined}
-                  className={cn(
-                    'flex flex-col items-center gap-1 rounded-sm px-6 py-3 transition-colors',
-                    isActive ? SEGMENTED_ITEM_SELECTED_CLASS : SEGMENTED_ITEM_IDLE_CLASS,
-                  )}
-                >
-                  <div className="text-4xl lg:text-5xl font-bold tabular-nums">{count}</div>
-                  <div className="text-sm font-medium">{location.name}</div>
-                </Link>
-              )
-            })}
-          </div>
-        )}
-        {/* Same CTA and same outline style as the section-level "View All"
-            buttons further down the homepage. */}
-        <Button asChild variant="outline" size="lg" className="mt-5">
-          <Link href={ctaHref}>{ctaLabel}</Link>
-        </Button>
-      </Card>
-    </MotionCard>
-  )
-}
-
+/** Integrated hero visit actions: menus lead, with directions beside hours and quieter schedules. */
 export function QuickInfoCards({
   beerCount,
   cansCount,
-  nextEvent,
+  weeklyHours,
   className,
 }: QuickInfoCardsProps) {
-  const { locations } = useLocationContext()
+  const { locations, currentLocation, isClient } = useLocationContext()
+  const summaryClass = cn('w-full max-w-xl min-h-64 text-foreground', className)
+  // ISR cannot know the stored taproom; reserve the summary until the provider restores it.
+  if (!isClient) {
+    return (
+      <section aria-label="Plan your visit" className={summaryClass}>
+        <p className="text-sm">Choose a taproom above to plan your visit</p>
+      </section>
+    )
+  }
+  const location = locations.find((item) => (item.slug || item.id) === currentLocation)
+  if (!location) return null
+
+  const slug = location.slug || location.id
+  // These are source calendar dates, not instants to shift into the previous EDT day.
+  // A weekday-only match can pick next Sunday's holiday when UTC has reached Monday.
+  const todayDate = getTodayEST()
+  const today = weeklyHours?.[slug]?.find(
+    (day) => new Date(day.date).toISOString().slice(0, 10) === todayDate,
+  )
+  const directionsUrl = getLocationDirectionsUrl(location)
+  const draftCount = beerCount?.[slug]
+  const canCount = cansCount?.[slug]
+  const locationQuery = `loc=${encodeURIComponent(slug)}`
 
   return (
-    <div className={cn('grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4', className)}>
-      <MenuCountCard
-        title="On Tap Now"
-        counts={beerCount}
-        anchor="draft"
-        ctaHref={beerHref('tap')}
-        ctaLabel="View All Beer"
-        countNoun="beers on tap"
-      />
-
-      <MenuCountCard
-        title="Cans To Go"
-        counts={cansCount}
-        anchor="cans"
-        ctaHref={beerHref('cans')}
-        ctaLabel="View All Cans"
-        countNoun="cans"
-      />
-
-      {/* Next Event Card */}
-      <MotionCard className="h-full">
-        <Link href="/events" className="group block h-full">
-          <Card className="p-6 lg:p-8 h-full transition-colors cursor-pointer shadow-none bg-transparent border border-border hover:bg-secondary/50 relative text-center flex flex-col items-center justify-center">
-            <h3 className="text-3xl lg:text-4xl font-bold mb-5">
-              {nextEvent ? 'Next Event' : 'Upcoming Events'}
-            </h3>
-            {nextEvent ? (
-              <div className="flex flex-col items-center gap-1">
-                <p className="text-lg font-semibold text-foreground line-clamp-2 leading-tight">
-                  {nextEvent.name}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {formatDayLabel(nextEvent.date)} ·{' '}
-                  {getLocationDisplayName(locations, nextEvent.location)}
-                </p>
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">Check out our event calendar</p>
-            )}
-          </Card>
-        </Link>
-      </MotionCard>
-    </div>
+    <section aria-label="Plan your visit" className={summaryClass}>
+      <h2 className="text-xl font-bold text-balance">{location.name}</h2>
+      <div className="flex flex-wrap items-center justify-center gap-x-4">
+        <p className="text-sm">
+          Today: {today ? formatHoursRange(today) : 'Hours not available'}
+          {today?.holidayName ? ` · ${today.holidayName}` : ''}
+        </p>
+        {directionsUrl !== '#' ? (
+          <Button asChild variant="ghost" size="lg" className="px-2">
+            <a
+              href={directionsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => trackDirections(location.name)}
+            >
+              Directions
+            </a>
+          </Button>
+        ) : null}
+      </div>
+      {today?.note ? <p className="mt-1 text-sm">{today.note}</p> : null}
+      <nav aria-label={`${location.name} visit shortcuts`} className="mt-4">
+        <div className="grid grid-cols-2 gap-3">
+          <Button
+            asChild
+            size="lg"
+            className="min-h-24 flex-col gap-1 px-3 sm:flex-row sm:justify-between sm:px-5"
+          >
+            <Link
+              href={`/?${locationQuery}#draft`}
+              aria-label={`On tap${draftCount === undefined ? '' : ` (${draftCount})`}`}
+            >
+              <span>On tap</span>
+              {draftCount === undefined ? null : (
+                <span className="text-2xl font-bold tabular-nums">{draftCount}</span>
+              )}
+            </Link>
+          </Button>
+          <Button
+            asChild
+            variant="outline"
+            size="lg"
+            className="min-h-24 flex-col gap-1 border-foreground/20 bg-background/60 px-3 sm:flex-row sm:justify-between sm:px-5"
+          >
+            <Link
+              href={`/?${locationQuery}#cans`}
+              aria-label={`Cans to go${canCount === undefined ? '' : ` (${canCount})`}`}
+            >
+              <span>Cans to go</span>
+              {canCount === undefined ? null : (
+                <span className="text-2xl font-bold tabular-nums">{canCount}</span>
+              )}
+            </Link>
+          </Button>
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          <Button asChild variant="link" size="lg" className="px-2">
+            <Link href={`/food?${locationQuery}`}>Food schedule</Link>
+          </Button>
+          <Button asChild variant="link" size="lg" className="px-2">
+            <Link href={`/events?${locationQuery}`}>Events</Link>
+          </Button>
+        </div>
+      </nav>
+    </section>
   )
 }

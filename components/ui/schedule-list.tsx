@@ -4,7 +4,7 @@
  * so callers do not have to pre-sort.
  */
 import { TimelineItem } from '@/components/ui/timeline-item'
-import { formatDayLabel, isToday } from '@/lib/utils/formatters'
+import { formatDayLabel, isToday, isTodayOrFuture } from '@/lib/utils/formatters'
 
 export interface ScheduleListItem {
   id: string
@@ -42,19 +42,25 @@ export function ScheduleList({
 }) {
   const days = groupItemsByDate(items)
   const Heading = headingLevel === 2 ? 'h2' : 'h3'
+  // Highlight the next calendar day with entries, not a retained past group.
+  const upcomingDate = days.find(([date]) => isTodayOrFuture(date))?.[0]
 
   return (
-    <ol className="text-center list-none p-0 m-0">
+    <ol className="text-left list-none p-0 m-0">
       {days.map(([dateKey, dayItems], groupIndex) => (
-        <li key={dateKey} className={groupIndex > 0 ? 'mt-8' : undefined}>
+        <li key={dateKey} className={groupIndex > 0 ? 'mt-5' : undefined}>
           <Heading
-            className={`text-lg font-semibold tracking-tight mb-3 ${
-              isToday(dateKey) ? 'text-primary' : ''
-            }`}
+            className={`text-base tracking-tight mb-1 ${isToday(dateKey) ? 'font-bold' : 'font-semibold'}`}
           >
             {formatDayLabel(dateKey)}
+            {dateKey === upcomingDate && !isToday(dateKey) && (
+              <>
+                {' '}
+                <span className="ml-2 text-xs font-medium text-muted-foreground">Up next</span>
+              </>
+            )}
           </Heading>
-          <ul className="space-y-3 list-none p-0 m-0">
+          <ul className="space-y-1 list-none p-0 m-0">
             {sortByTime(dayItems).map((item) => (
               <li key={item.id}>
                 <TimelineItem

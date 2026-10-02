@@ -1,7 +1,18 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { formatPhoneLines, formatPouringNow } from '@/lib/utils/llms-now'
 import { getBreweryFAQs } from '@/lib/utils/faq-schema'
 import type { PayloadLocation } from '@/lib/types/location'
+
+vi.mock('@/lib/utils/payload-api', () => ({
+  getAllBeersFromPayload: vi.fn(async () => []),
+  getActiveFAQs: vi.fn(async () => [
+    { question: ' ARE dogs   allowed? ', answer: 'Only on the <patio> & leashed.' },
+    { question: 'Do you sell merch?', answer: 'Yes.' },
+    { question: 'Blank answer?', answer: '  ' },
+  ]),
+  getAllLocations: vi.fn(async () => []),
+}))
+vi.mock('@/lib/utils/llms-now-data', () => ({ loadPouringNow: vi.fn(async () => '') }))
 
 describe('formatPouringNow', () => {
   it('lists draft, cans, food, and events for each taproom', () => {
@@ -60,5 +71,21 @@ describe('private event FAQ phones', () => {
     expect(answer?.answer).toContain('Zelienople at (724) 609-5100')
     expect(answer?.answer).toContain('https://lolev.beer/donate')
     expect(answer?.answer).not.toContain('DONATE_URL')
+  })
+})
+
+describe('llms-full.txt FAQs', () => {
+  it('resolves CMS overrides like the FAQ page: one entry per question, CMS answer, verbatim text', async () => {
+    const { GET } = await import('@/src/app/llms-full.txt/route')
+    const text = await (await GET()).text()
+    const section = text
+      .split('## Frequently Asked Questions')[1]
+      .split('## Contact Information')[0]
+
+    expect(section.match(/### Are dogs allowed\?/gi)).toHaveLength(1)
+    expect(section).toContain('### Are dogs allowed?\nOnly on the <patio> & leashed.')
+    expect(section).not.toContain('Yes! Well-behaved, leashed dogs')
+    expect(section).toContain('### Do you sell merch?\nYes.')
+    expect(section).not.toContain('Blank answer?')
   })
 })

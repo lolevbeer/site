@@ -17,6 +17,7 @@ import { PageTransition } from '@/components/motion'
 import { eventsDescription } from '@/lib/utils/seo'
 import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
 import { getHubIntro } from '@/lib/utils/site-seo'
+import { projectEventsForClient } from '@/lib/utils/public-client-payloads'
 
 // ISR: Revalidate every 5 minutes
 export const revalidate = 300
@@ -28,7 +29,13 @@ export async function generateMetadata(): Promise<Metadata> {
     fallbackTitle: 'Events',
     fallbackDescription: description,
     canonicalPath: '/events',
-    fallbackKeywords: ['brewery events', 'trivia night', 'live music', 'Pittsburgh brewery', 'beer events'],
+    fallbackKeywords: [
+      'brewery events',
+      'trivia night',
+      'live music',
+      'Pittsburgh brewery',
+      'beer events',
+    ],
     hubKey: 'events',
   })
 }
@@ -42,7 +49,11 @@ async function getEvents(): Promise<BreweryEvent[]> {
 }
 
 export default async function EventsPage() {
-  const [events, locations, intro] = await Promise.all([getEvents(), getAllLocations(), getHubIntro('events')])
+  const [events, locations, intro] = await Promise.all([
+    getEvents(),
+    getAllLocations(),
+    getHubIntro('events'),
+  ])
   const locationLookup = createLocationLookup(locations)
 
   const jsonLd = events.length > 0 ? generateEventListJsonLd(events, locationLookup) : null
@@ -53,7 +64,7 @@ export default async function EventsPage() {
       {jsonLd && <JsonLd data={jsonLd} />}
 
       <PageTransition>
-        <EventsPageClient initialEvents={events} intro={intro} />
+        <EventsPageClient initialEvents={projectEventsForClient(events)} intro={intro} />
       </PageTransition>
     </>
   )

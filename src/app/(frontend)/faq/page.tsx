@@ -3,7 +3,6 @@
  * Frequently asked questions about Lolev Beer
  */
 
-import type { ReactNode } from 'react'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs'
@@ -14,7 +13,8 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion'
 import { JsonLd } from '@/components/seo/json-ld'
-import { getBreweryFAQs, generateFAQSchema, type FAQItem } from '@/lib/utils/faq-schema'
+import { getBreweryFAQs, generateFAQSchema, resolveFAQs } from '@/lib/utils/faq-schema'
+import { getBaseUrl } from '@/lib/utils/get-base-url'
 import { generateFAQSpeakableSchema } from '@/lib/utils/speakable-schema'
 import { getActiveFAQs, getAllLocations } from '@/lib/utils/payload-api'
 import { PageTransition } from '@/components/motion'
@@ -23,88 +23,63 @@ import { taproomPhones } from '@/lib/config/locations'
 import type { PayloadLocation } from '@/lib/types/location'
 import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
 
-interface FAQAnswerProps {
-  question: string
-  answer: string
-  locations: PayloadLocation[]
+interface LinkTarget {
+  text: string
+  href: string
+  external?: boolean
 }
 
+const LINK_CLASS = 'text-primary hover:underline font-medium'
+
+// A phrase is linked only as a whole token: not glued to a preceding word, "@", ".", "-"
+// (info@lolevbeer.com), nor followed by more word/path/domain text (events@lolev.beer.au,
+// lolev.beer/beer-map-foo). A trailing sentence period is still a boundary.
+const BEFORE = String.raw`(?<![\w@.\-/])`
+const AFTER = String.raw`(?![\w@\-/]|\.\w)`
+
 /**
- * Renders FAQ answer with special formatting for certain questions
+ * Renders the resolved answer text verbatim as plain (escaped) text, linking only
+ * phrases that already appear in it. No wording is added or replaced here.
  */
-function FAQAnswer({ question, answer, locations }: FAQAnswerProps): ReactNode {
-  if (question === 'Where can I find your beer in stores?') {
-    return (
-      <div>
-        Our beers are distributed throughout the Pittsburgh area and select locations in
-        Pennsylvania, New York, and Ohio. Use our{' '}
-        <Link href="/beer-map" className="text-primary hover:underline font-medium">
-          Beer Map
-        </Link>{' '}
-        to find the nearest retailer carrying Lolev Beer.
-      </div>
-    )
-  }
+function FAQAnswer({ answer, locations }: { answer: string; locations: PayloadLocation[] }) {
+  const baseUrl = getBaseUrl()
+  const targets: LinkTarget[] = [
+    { text: 'events@lolev.beer', href: 'mailto:events@lolev.beer' },
+    { text: `${baseUrl}/donate`, href: '/donate' },
+    { text: `${baseUrl}/beer-map`, href: '/beer-map' },
+    { text: 'lolev.beer/beer-map', href: '/beer-map' },
+    { text: '@lolevbeer', href: 'https://instagram.com/lolevbeer', external: true },
+    ...taproomPhones(locations).map(({ phone }) => ({
+      text: phone,
+      href: `tel:${phone.replace(/[^\d+]/g, '')}`,
+    })),
+  ].sort((a, b) => b.text.length - a.text.length)
 
-  if (question === 'Can I book a private event?') {
-    const phones = taproomPhones(locations)
+  const escaped = targets.map((target) => target.text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+  const pattern = new RegExp(`${BEFORE}(${escaped.join('|')})${AFTER}`)
+  // split() with one capture group puts every matched phrase at an odd index
+  return answer.split(pattern).map((part, index) => {
+    const target =
+      index % 2 === 1 ? targets.find((candidate) => candidate.text === part) : undefined
+    if (!target) return part
+    if (target.href.startsWith('/')) {
+      return (
+        <Link key={index} href={target.href} className={LINK_CLASS}>
+          {part}
+        </Link>
+      )
+    }
     return (
-      <div>
-        Yes! We offer private event space at both locations. For private event inquiries, please
-        contact us at{' '}
-        <a href="mailto:events@lolev.beer" className="text-primary hover:underline font-medium">
-          events@lolev.beer
-        </a>
-        {phones.length > 0 ? (
-          <>
-            {' '}
-            or call{' '}
-            {phones.map((entry, index) => {
-              let separator = ''
-              if (index > 0) separator = index === phones.length - 1 ? ' or ' : ', '
-              return (
-                <span key={entry.phone}>
-                  {separator}
-                  {entry.name} at{' '}
-                  <a
-                    href={`tel:${entry.phone}`}
-                    className="text-primary hover:underline font-medium"
-                  >
-                    {entry.phone}
-                  </a>
-                </span>
-              )
-            })}
-          </>
-        ) : null}
-        . Beer donation and fundraiser-night requests go through the{' '}
-        <Link href="/donate" className="text-primary hover:underline font-medium">
-          donation request form
-        </Link>{' '}
-        — we do not take those by phone or Instagram.
-      </div>
+      <a
+        key={index}
+        href={target.href}
+        className={LINK_CLASS}
+        {...(target.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+      >
+        {part}
+      </a>
     )
-  }
-
-  if (question === 'How do I stay updated on new beer releases and events?') {
-    return (
-      <div>
-        Follow us on social media (Instagram{' '}
-        <a
-          href="https://instagram.com/lolevbeer"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-primary hover:underline font-medium"
-        >
-          @lolevbeer
-        </a>
-        ), check our website regularly, or sign up for our newsletter. Our Events and Food pages are
-        updated weekly with upcoming activities.
-      </div>
-    )
-  }
-
-  return answer
+  })
 }
 
 // ISR: revalidate every hour (FAQ content changes infrequently)
@@ -132,14 +107,9 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function FAQPage() {
   const [cmsFAQs, locations] = await Promise.all([getActiveFAQs(), getAllLocations()])
-  const dynamicFAQs: FAQItem[] = cmsFAQs.map((faq) => ({
-    question: faq.question,
-    answer: faq.answer,
-  }))
+  // One resolved list drives both the visible answers and the JSON-LD
+  const allFAQs = resolveFAQs(getBreweryFAQs(locations), cmsFAQs)
 
-  const allFAQs = [...getBreweryFAQs(locations), ...dynamicFAQs]
-
-  // Generate FAQ schema for SEO
   const faqSchema = generateFAQSchema(allFAQs)
   const speakableSchema = generateFAQSpeakableSchema()
 
@@ -171,7 +141,7 @@ export default async function FAQPage() {
                     className="text-muted-foreground data-[state=closed]:hidden"
                     data-speakable="faq-answer"
                   >
-                    <FAQAnswer question={faq.question} answer={faq.answer} locations={locations} />
+                    <FAQAnswer answer={faq.answer} locations={locations} />
                   </AccordionContent>
                 </AccordionItem>
               ))}

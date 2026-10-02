@@ -1,21 +1,29 @@
-import React from 'react';
-import dynamic from 'next/dynamic';
-import type { Metadata } from 'next';
-import { HomeContent } from '@/components/home/home-content';
-import { MarketingText } from '@/components/home/marketing-text';
-import { getHomePageData } from '@/lib/utils/homepage-data';
-import { JsonLd } from '@/components/seo/json-ld';
-import { PageTransition } from '@/components/motion';
-import { createLocationLookup, generateEventJsonLd, generateFoodEventJsonLd } from '@/lib/utils/json-ld';
-import { generateLocalBusinessSchemas, generateOrganizationSchema, generateWebSiteSchema } from '@/lib/utils/local-business-schema';
-import { generateLocationMenuSchema } from '@/lib/utils/menu-schema';
-import { extractBeerFromMenuItem } from '@/lib/utils/menu-item-utils';
+import React from 'react'
+import dynamic from 'next/dynamic'
+import type { Metadata } from 'next'
+import { HomeContent } from '@/components/home/home-content'
+import { MarketingText } from '@/components/home/marketing-text'
+import { getHomePageData } from '@/lib/utils/homepage-data'
+import { JsonLd } from '@/components/seo/json-ld'
+import { PageTransition } from '@/components/motion'
+import {
+  createLocationLookup,
+  generateEventJsonLd,
+  generateFoodEventJsonLd,
+} from '@/lib/utils/json-ld'
+import {
+  generateLocalBusinessSchemas,
+  generateOrganizationSchema,
+} from '@/lib/utils/local-business-schema'
+import { generateLocationMenuSchema } from '@/lib/utils/menu-schema'
+import { extractBeerFromMenuItem } from '@/lib/utils/menu-item-utils'
 import { getSiteSeo, siteDefaults } from '@/lib/utils/site-seo'
 import { getAllLocations } from '@/lib/utils/payload-api'
+import { projectHeroCanBeers } from '@/lib/utils/public-client-payloads'
 import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
 
 // ISR: Revalidate every 5 minutes as fallback (on-demand revalidation handles immediate updates)
-export const revalidate = 300;
+export const revalidate = 300
 
 export async function generateMetadata(): Promise<Metadata> {
   const [locations, siteSeo] = await Promise.all([getAllLocations(), getSiteSeo()])
@@ -30,46 +38,58 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 // Lazy load below-the-fold components
-const FeaturedCans = dynamic(() => import('@/components/home/featured-menu').then(mod => ({ default: mod.FeaturedCans })), {
-  loading: () => <div className="py-16 lg:py-24 bg-background h-96 animate-pulse" />,
-});
+const FeaturedCans = dynamic(
+  () => import('@/components/home/featured-menu').then((mod) => ({ default: mod.FeaturedCans })),
+  {
+    loading: () => <div className="py-16 lg:py-24 bg-background h-96 animate-pulse" />,
+  },
+)
 
-const UpcomingBeers = dynamic(() => import('@/components/home/upcoming-beers').then(mod => ({ default: mod.UpcomingBeers })), {
-  loading: () => <div className="py-16 lg:py-24 bg-background h-96 animate-pulse" />,
-});
+const UpcomingBeers = dynamic(
+  () => import('@/components/home/upcoming-beers').then((mod) => ({ default: mod.UpcomingBeers })),
+  {
+    loading: () => <div className="py-16 lg:py-24 bg-background h-96 animate-pulse" />,
+  },
+)
 
-const UpcomingFood = dynamic(() => import('@/components/home/upcoming-food').then(mod => ({ default: mod.UpcomingFood })), {
-  loading: () => <div className="py-16 lg:py-24 bg-background h-96 animate-pulse" />,
-});
+const UpcomingFood = dynamic(
+  () => import('@/components/home/upcoming-food').then((mod) => ({ default: mod.UpcomingFood })),
+  {
+    loading: () => <div className="py-16 lg:py-24 bg-background h-96 animate-pulse" />,
+  },
+)
 
-const UpcomingEvents = dynamic(() => import('@/components/home/upcoming-events').then(mod => ({ default: mod.UpcomingEvents })), {
-  loading: () => <div className="py-16 lg:py-24 h-96 animate-pulse" />,
-});
+const UpcomingEvents = dynamic(
+  () =>
+    import('@/components/home/upcoming-events').then((mod) => ({ default: mod.UpcomingEvents })),
+  {
+    loading: () => <div className="py-16 lg:py-24 h-96 animate-pulse" />,
+  },
+)
 
 export default async function Home(): Promise<React.ReactElement> {
-  const data = await getHomePageData();
+  const data = await getHomePageData()
 
-  const locationLookup = createLocationLookup(data.locations);
-  const localBusinessSchemas = generateLocalBusinessSchemas(data.locations, data.weeklyHours);
-  const organizationSchema = generateOrganizationSchema(data.locations);
-  const webSiteSchema = generateWebSiteSchema();
+  const locationLookup = createLocationLookup(data.locations)
+  const localBusinessSchemas = generateLocalBusinessSchemas(data.locations, data.weeklyHours)
+  const organizationSchema = generateOrganizationSchema(data.locations)
   const beersFrom = (menu: (typeof data.allDraftMenus)[number] | null) =>
     (menu?.items ?? [])
       .map((item) => extractBeerFromMenuItem(item))
-      .filter((beer): beer is NonNullable<typeof beer> => beer !== null);
+      .filter((beer): beer is NonNullable<typeof beer> => beer !== null)
   const menuSchemas = data.locations
     .filter((loc) => loc.slug)
     .map((loc) => {
-      const slug = loc.slug as string;
+      const slug = loc.slug as string
       return generateLocationMenuSchema({
         locationName: loc.name,
         locationSlug: slug,
         draftBeers: beersFrom(data.draftMenusByLocation[slug]),
         canBeers: beersFrom(data.cansMenusByLocation[slug]),
-      });
-    });
-  const eventSchemas = data.allEvents.map((event) => generateEventJsonLd(event, locationLookup));
-  const foodSchemas = data.allFood.map((food) => generateFoodEventJsonLd(food, locationLookup));
+      })
+    })
+  const eventSchemas = data.allEvents.map((event) => generateEventJsonLd(event, locationLookup))
+  const foodSchemas = data.allFood.map((food) => generateFoodEventJsonLd(food, locationLookup))
 
   return (
     <>
@@ -78,7 +98,6 @@ export default async function Home(): Promise<React.ReactElement> {
         <JsonLd key={`local-business-${index}`} data={schema} />
       ))}
       <JsonLd data={organizationSchema} />
-      <JsonLd data={webSiteSchema} />
       {menuSchemas.map((schema, index) => (
         <JsonLd key={`menu-${index}`} data={schema} />
       ))}
@@ -99,12 +118,10 @@ export default async function Home(): Promise<React.ReactElement> {
         />
 
         <HomeContent
-          availableBeers={data.availableBeers}
+          heroBeers={projectHeroCanBeers(data.availableBeers, data.allCansMenus)}
           draftMenus={data.allDraftMenus}
-          cansMenus={data.allCansMenus}
           beerCount={data.beerCount}
           cansCount={data.cansCount}
-          nextEvent={data.nextEvent}
           heroDescription={data.siteContent.heroDescription}
           heroImageUrl={data.siteContent.heroImageUrl}
           weeklyHours={data.weeklyHours}
@@ -119,5 +136,5 @@ export default async function Home(): Promise<React.ReactElement> {
         </HomeContent>
       </PageTransition>
     </>
-  );
+  )
 }

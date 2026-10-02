@@ -651,7 +651,10 @@ with byte counts. Task 24 proposed separately. FINAL CHECKPOINT.
 - **F-S10** Four divergent base-URL resolvers; `layout.tsx` falls back to
   `http://localhost:3000` for canonicals.
 - **F-S11** No BreadcrumbList on `/beer`, `/events`, `/food` (all other
-  pages have it).
+  pages have it). _Update: stale. `PageBreadcrumbs` already emits the
+  BreadcrumbList for all three; `tests/int/breadcrumb-schema.int.spec.ts` and
+  the release smoke test (one breadcrumb nav and one BreadcrumbList per
+  non-home route) check it._
 - Bonus: `/beer` meta description typos "hop saturate ales to crisy lager".
 
 ### UX / views

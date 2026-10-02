@@ -7,24 +7,24 @@
  */
 
 export interface BreadcrumbItem {
-  label: string;
-  href: string;
+  label: string
+  href: string
 }
 
 /**
  * Schema.org BreadcrumbList type
  */
 export interface BreadcrumbListJsonLd {
-  '@context': 'https://schema.org';
-  '@type': 'BreadcrumbList';
-  itemListElement: BreadcrumbListItemJsonLd[];
+  '@context': 'https://schema.org'
+  '@type': 'BreadcrumbList'
+  itemListElement: BreadcrumbListItemJsonLd[]
 }
 
 export interface BreadcrumbListItemJsonLd {
-  '@type': 'ListItem';
-  position: number;
-  name: string;
-  item?: string;
+  '@type': 'ListItem'
+  position: number
+  name: string
+  item?: string
 }
 
 /**
@@ -32,7 +32,7 @@ export interface BreadcrumbListItemJsonLd {
  */
 export function generateBreadcrumbSchema(
   breadcrumbs: BreadcrumbItem[],
-  baseUrl: string = 'https://lolev.beer'
+  baseUrl: string = 'https://lolev.beer',
 ): BreadcrumbListJsonLd {
   return {
     '@context': 'https://schema.org',
@@ -41,40 +41,40 @@ export function generateBreadcrumbSchema(
       const item: BreadcrumbListItemJsonLd = {
         '@type': 'ListItem',
         position: index + 1,
-        name: crumb.label
-      };
+        name: crumb.label,
+      }
 
       // Don't add 'item' property to the last breadcrumb (current page)
       if (index < breadcrumbs.length - 1) {
-        item.item = `${baseUrl}${crumb.href}`;
+        item.item = `${baseUrl}${crumb.href}`
       }
 
-      return item;
-    })
-  };
+      return item
+    }),
+  }
 }
 
 /**
  * Schema.org WebPage type
  */
 export interface WebPageJsonLd {
-  '@context': 'https://schema.org';
-  '@type': 'WebPage';
-  '@id': string;
-  name: string;
-  description?: string;
-  url: string;
-  isPartOf?: { '@id': string };
-  about?: { '@id': string };
-  dateModified?: string;
-  inLanguage?: string;
+  '@context': 'https://schema.org'
+  '@type': 'WebPage'
+  '@id': string
+  name: string
+  description?: string
+  url: string
+  isPartOf?: { '@id': string }
+  about?: { '@id': string }
+  dateModified?: string
+  inLanguage?: string
 }
 
 export interface WebPageOptions {
-  name: string;
-  description?: string;
-  path: string;
-  dateModified?: string;
+  name: string
+  description?: string
+  path: string
+  dateModified?: string
 }
 
 /**
@@ -82,9 +82,9 @@ export interface WebPageOptions {
  */
 export function generateWebPageSchema(
   options: WebPageOptions,
-  baseUrl: string = 'https://lolev.beer'
+  baseUrl: string = 'https://lolev.beer',
 ): WebPageJsonLd {
-  const url = `${baseUrl}${options.path}`;
+  const url = `${baseUrl}${options.path}`
 
   return {
     '@context': 'https://schema.org',
@@ -93,9 +93,11 @@ export function generateWebPageSchema(
     name: options.name,
     description: options.description,
     url,
-    isPartOf: { '@id': `${baseUrl}#website` },
-    about: { '@id': `${baseUrl}#organization` },
+    // Same `/#website` and `/#org` path convention as the canonical ids in schema-shared.ts,
+    // applied to the caller's baseUrl.
+    isPartOf: { '@id': `${baseUrl}/#website` },
+    about: { '@id': `${baseUrl}/#org` },
     dateModified: options.dateModified,
-    inLanguage: 'en-US'
-  };
+    inLanguage: 'en-US',
+  }
 }

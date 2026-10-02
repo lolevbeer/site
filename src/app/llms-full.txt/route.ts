@@ -6,7 +6,7 @@
 
 import { NextResponse } from 'next/server'
 import { getAllBeersFromPayload, getActiveFAQs, getAllLocations } from '@/lib/utils/payload-api'
-import { getBreweryFAQs } from '@/lib/utils/faq-schema'
+import { getBreweryFAQs, resolveFAQs } from '@/lib/utils/faq-schema'
 import { getBaseUrl } from '@/lib/utils/get-base-url'
 import { formatCityStateZip, formatHoursFaqAnswer } from '@/lib/config/locations'
 import { logger } from '@/lib/utils/logger'
@@ -43,14 +43,11 @@ export async function GET() {
 
   // Filter visible beers and sort by name
   const visibleBeers = beers
-    .filter(beer => !beer.hideFromSite && beer.name)
+    .filter((beer) => !beer.hideFromSite && beer.name)
     .sort((a, b) => a.name.localeCompare(b.name))
 
-  // Combine static and CMS FAQs
-  const allFAQs = [
-    ...getBreweryFAQs(locations),
-    ...cmsFAQs.map(faq => ({ question: faq.question, answer: faq.answer }))
-  ]
+  // Same resolved list as the /faq page: CMS overrides defaults, each question once
+  const allFAQs = resolveFAQs(getBreweryFAQs(locations), cmsFAQs)
 
   const locationBlocks = locations
     .map((loc) => {
@@ -69,23 +66,23 @@ ${phone ? `- Phone: ${phone}\n` : ''}${page}`.trim()
   const phoneLines = formatPhoneLines(locations)
 
   // Build beer list markdown
-  const beerList = visibleBeers.map(beer => {
-    const parts = [`### ${beer.name}`]
-    if (beer.style) {
-      const styleName = typeof beer.style === 'object' ? beer.style.name : beer.style
-      parts.push(`- **Style:** ${styleName}`)
-    }
-    if (beer.abv) parts.push(`- **ABV:** ${beer.abv}%`)
-    if (beer.description) parts.push(`- **Description:** ${beer.description}`)
-    if (beer.hops) parts.push(`- **Hops:** ${beer.hops}`)
-    if (beer.slug) parts.push(`- **Details:** ${baseUrl}/beer/${beer.slug}`)
-    return parts.join('\n')
-  }).join('\n\n')
+  const beerList = visibleBeers
+    .map((beer) => {
+      const parts = [`### ${beer.name}`]
+      if (beer.style) {
+        const styleName = typeof beer.style === 'object' ? beer.style.name : beer.style
+        parts.push(`- **Style:** ${styleName}`)
+      }
+      if (beer.abv) parts.push(`- **ABV:** ${beer.abv}%`)
+      if (beer.description) parts.push(`- **Description:** ${beer.description}`)
+      if (beer.hops) parts.push(`- **Hops:** ${beer.hops}`)
+      if (beer.slug) parts.push(`- **Details:** ${baseUrl}/beer/${beer.slug}`)
+      return parts.join('\n')
+    })
+    .join('\n\n')
 
   // Build FAQ markdown
-  const faqList = allFAQs.map(faq =>
-    `### ${faq.question}\n${faq.answer}`
-  ).join('\n\n')
+  const faqList = allFAQs.map((faq) => `### ${faq.question}\n${faq.answer}`).join('\n\n')
 
   const content = `# Lolev Beer
 
@@ -127,11 +124,11 @@ ${phoneLines ? `${phoneLines}\n` : ''}- **Private Events:** events@lolev.beer
 We focus on creating beers that are purposeful and refined. Our approach combines traditional brewing techniques with modern innovation, always in service of flavor and quality. We source the finest ingredients, obsess over every detail of the brewing process, and refine our recipes.
 
 ${locations
-    .map((loc) => {
-      const city = loc.address?.city
-      return `${loc.name}${city ? ` (${city})` : ''} is a Lolev Beer taproom.`
-    })
-    .join(' ')}
+  .map((loc) => {
+    const city = loc.address?.city
+    return `${loc.name}${city ? ` (${city})` : ''} is a Lolev Beer taproom.`
+  })
+  .join(' ')}
 
 Our taprooms offer a curated selection of our freshest draft beers and canned offerings. We regularly host food trucks, live events, and community gatherings.
 `

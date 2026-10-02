@@ -14,6 +14,20 @@ import {
 import { getCurrentESTDateTime } from '@/lib/utils/date'
 import { formatHoursTime } from '@/lib/utils/formatters'
 
+/** Directions shared by visit shortcuts and full location cards: custom URL, point, address. */
+export function getLocationDirectionsUrl(location: PayloadLocation): string {
+  return (
+    location.address?.directionsUrl ||
+    (location.coordinates && location.coordinates.length === 2
+      ? `https://www.google.com/maps/dir/?api=1&destination=${location.coordinates[1]},${location.coordinates[0]}`
+      : location.address?.street && location.address?.city && location.address?.state
+        ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+            `${location.address.street}, ${location.address.city}, ${location.address.state} ${location.address.zip || ''}`,
+          )}`
+        : '#')
+  )
+}
+
 /**
  * LocalStorage key for persisting user's location preference
  */
@@ -94,7 +108,7 @@ export function extractDayHours(location: PayloadLocation, day: Weekday): DayHou
 /** One-line hours summary for FAQ / llms.txt, grouped by identical open/close. */
 export function formatHoursFaqAnswer(locations: PayloadLocation[]): string {
   if (locations.length === 0) {
-    return 'Hours vary by location and holiday. See lolev.beer for this week\'s hours.'
+    return "Hours vary by location and holiday. See lolev.beer for this week's hours."
   }
   const parts = locations.map((location) => {
     const groups: { start: string; end: string; hours: string }[] = []
@@ -120,9 +134,7 @@ export function formatHoursFaqAnswer(locations: PayloadLocation[]): string {
 }
 
 /** "Lawrenceville and Zelienople" from live location docs — never a hardcoded list. */
-export function joinLocationNames(
-  locations: Array<{ name?: string | null }>,
-): string {
+export function joinLocationNames(locations: Array<{ name?: string | null }>): string {
   const names = locations
     .map((location) => location.name?.trim())
     .filter((name): name is string => Boolean(name))

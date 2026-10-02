@@ -490,6 +490,8 @@ export function DistributorMap({
               mapStyle={mapStyle}
               style={{ width: '100%', height: '100%' }}
               reuseMaps
+              // Leave single-finger and unmodified wheel gestures available for page scrolling.
+              cooperativeGestures
               interactiveLayerIds={['distributor-points', 'taproom-points', 'selected-point']}
               onClick={handleMapClick}
               onMouseEnter={handleMouseEnter}

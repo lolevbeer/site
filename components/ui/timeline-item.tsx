@@ -1,9 +1,8 @@
 /**
  * One agenda entry for food and events lists.
  *
- * Time, title, and location stack on the center axis. A side-by-side time
- * column shoved titles off-center whenever the time string changed width
- * ("7pm" vs "5pm–8pm").
+ * A consistent time column aligns titles; missing/TBD times leave it empty.
+ * Titles and supporting details wrap in the remaining width.
  */
 
 'use client'
@@ -47,20 +46,31 @@ export function TimelineItem({
   const timeDisplay = agendaTime(time, endTime)
 
   const body = (
-    <div className={cn('flex flex-col items-center text-center py-2 gap-0.5', className)}>
-      {imageUrl ? (
-        <span className="relative h-10 w-10 shrink-0 rounded-full overflow-hidden bg-muted mb-1">
-          <Image src={imageUrl} alt="" fill className="object-cover" sizes="40px" />
-        </span>
-      ) : null}
+    <div
+      className={cn(
+        'grid grid-cols-[7rem_minmax(0,1fr)] items-start text-left py-2 gap-x-3',
+        className,
+      )}
+    >
       {timeDisplay ? (
-        <p className="text-sm text-muted-foreground tabular-nums">{timeDisplay}</p>
-      ) : null}
-      <p className="font-normal leading-tight text-balance">{title}</p>
-      {location ? <p className="text-sm text-muted-foreground">{location}</p> : null}
-      {description ? (
-        <p className="text-sm text-muted-foreground line-clamp-1">{description}</p>
-      ) : null}
+        <p className="text-sm text-muted-foreground tabular-nums break-words">{timeDisplay}</p>
+      ) : (
+        <span aria-hidden="true" />
+      )}
+      <div className="min-w-0 flex items-start gap-2 break-words">
+        {imageUrl ? (
+          <span className="relative block h-10 w-10 shrink-0 rounded-full overflow-hidden bg-muted">
+            <Image src={imageUrl} alt="" fill className="object-cover" sizes="40px" />
+          </span>
+        ) : null}
+        <div className="min-w-0 space-y-0.5">
+          <p className="font-normal leading-snug">{title}</p>
+          {location ? <p className="text-sm text-muted-foreground">{location}</p> : null}
+          {description ? (
+            <p className="text-sm text-muted-foreground line-clamp-2">{description}</p>
+          ) : null}
+        </div>
+      </div>
     </div>
   )
 

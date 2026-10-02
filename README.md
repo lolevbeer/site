@@ -19,6 +19,46 @@ Requires Node 24.15+ (Payload 4's minimum; CI reads `engines.node` from `package
 
 Payload admin is at `/admin`. Follow the on-screen instructions to create your first admin user.
 
+## Visitor navigation
+
+The homepage brings the selected taproom's hours, directions, and menu/schedule
+shortcuts directly on the hero, without an enclosing card, ahead of the brand
+introduction. On tap is the primary action; Cans to go is translucent and outlined,
+with separate menu counts. Directions sits beside today's hours, while Food
+schedule and Events remain quieter links in a balanced two-column row on mobile.
+The actions retain the selected location and reuse existing theme color tokens
+and Button focus-ring styles, with targets sized to at least 44px. The beer map puts retailer search
+before full taproom information, and beer details prioritize availability and
+pricing before artwork on mobile. Food and events identify the selected
+location and use compact agendas. These pages share the existing location
+selection; the full-screen kiosk layouts remain separate. Existing sections on
+the home, location, food, events, and beer detail pages give brief context from
+the loaded locations, menus, and schedules, never hardcoded city names or dates.
+
+### Public content and structured data
+
+- **FAQs** — `resolveFAQs` (`lib/utils/faq-schema.ts`) merges the built-in
+  FAQs with the CMS FAQs collection. Questions match ignoring case and extra
+  whitespace: a CMS entry replaces the built-in answer in place, CMS-only
+  entries follow in `order`, and blank entries are dropped. The `/faq` page,
+  its FAQPage JSON-LD, and `/llms-full.txt` all use this one list.
+- **Beer reviews** — ratings and selected reviews on beer pages link to the
+  original Untappd source; reviews without a URL stay unlinked.
+- **Schema identity** — the root layout's `SiteJsonLd` is the sitewide owner of
+  the Organization (`/#org`), WebSite (`/#website`), and taproom Brewery
+  (`/#<slug>`) nodes; IDs live in `lib/utils/schema-shared.ts`. Page schemas
+  (home/about Organization, location LocalBusiness) reuse the same IDs to add
+  details. Event/FoodEvent `organizer`, WebPage `isPartOf`/`about`, and WebSite
+  `publisher` reference them. Do not emit a second WebSite node on a page.
+- **Client props** — the home hero, `/food`, and `/events` receive small
+  server-derived arrays (`lib/utils/public-client-payloads.ts`) instead of full
+  Payload documents. Add a field there only when the client renders it.
+- **Breadcrumbs** — `PageBreadcrumbs` renders the visible trail and its
+  BreadcrumbList JSON-LD together, including `/beer`, `/events`, and `/food`.
+- **Checking pages** — compare `curl` output of the raw HTML (headings, JSON-LD
+  blocks, byte size) before and after a change;
+  `pnpm exec playwright test -g "raw initial HTML"` covers headings and JSON-LD.
+
 ## Tech Stack
 
 - **Framework:** Next.js 16 (App Router)
@@ -48,7 +88,24 @@ pnpm generate:types      # Regenerate Payload types
 pnpm generate:importmap  # Regenerate Payload import map
 ```
 
-`pnpm e2e:seed` writes admin and FAQ fixture data. By default it accepts only a
+`pnpm e2e:seed` writes admin and FAQ fixture data plus an active location, style,
+published visible beer, published draft and cans menus linked to that beer and
+selected on the location, and active job. `/beer` reads all published menus at
+active locations; the cans fixture satisfies its initial cans filter. Selecting
+those menus also supplies the homepage and location loaders. These fixtures give
+the release smoke test discoverable location, beer, and job pages without relying
+on existing data.
+The reserved keys are location name `Lolev Release Smoke`, style name
+`Release Smoke Style`, beer slug `release-smoke-beer`, menu URLs
+`release-smoke-location-draft` and `release-smoke-location-cans`, and job slug
+`release-smoke-job`; admin email and
+FAQ question retain their existing identities. Reruns update those records and
+restore publication/relationships rather than create duplicates. Duplicate
+identities are rejected before any writes; no records are deleted. Beer recipe
+numbers are assigned by the collection hook, and no Untappd fields or external
+fetches are requested. Writes skip revalidation during offline seeding.
+
+By default it accepts only a
 loopback MongoDB target. A remote target is allowed only when
 `E2E_DISPOSABLE_DATABASE=1` and the database name ends in `-e2e` or `-ci`; the
 seed also refuses `PAYLOAD_DROP_DATABASE=true`. Set `E2E_ADMIN_EMAIL` and
