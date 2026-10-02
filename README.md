@@ -89,12 +89,16 @@ pnpm generate:importmap  # Regenerate Payload import map
 ```
 
 `pnpm e2e:seed` writes admin and FAQ fixture data plus an active location, style,
-published visible beer, published draft menu linked to that beer and selected on
-the location, and active job. These disposable fixtures give the release smoke
-test discoverable location, beer, and job pages without relying on existing data.
+published visible beer, published draft and cans menus linked to that beer and
+selected on the location, and active job. `/beer` reads all published menus at
+active locations; the cans fixture satisfies its initial cans filter. Selecting
+those menus also supplies the homepage and location loaders. These fixtures give
+the release smoke test discoverable location, beer, and job pages without relying
+on existing data.
 The reserved keys are location name `Lolev Release Smoke`, style name
-`Release Smoke Style`, beer slug `release-smoke-beer`, menu URL
-`release-smoke-location-draft`, and job slug `release-smoke-job`; admin email and
+`Release Smoke Style`, beer slug `release-smoke-beer`, menu URLs
+`release-smoke-location-draft` and `release-smoke-location-cans`, and job slug
+`release-smoke-job`; admin email and
 FAQ question retain their existing identities. Reruns update those records and
 restore publication/relationships rather than create duplicates. Duplicate
 identities are rejected before any writes; no records are deleted. Beer recipe

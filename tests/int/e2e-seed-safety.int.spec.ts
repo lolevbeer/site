@@ -94,20 +94,80 @@ describe('seed-e2e execution guard', () => {
     },
   )
 
-  it('creates public fixtures and repairs the same records on rerun', async () => {
-    const records = new Map<string, Record<string, unknown>>()
-    const find = vi.fn(async ({ collection }) => ({
-      docs: records.has(collection) ? [records.get(collection)] : [],
+  it('creates and repairs the selected published cans menu for the initial beer view', async () => {
+    let cansMenu: Record<string, unknown> | undefined
+    let location: Record<string, unknown> | undefined
+    const find = vi.fn(async ({ collection, where }) => ({
+      docs:
+        collection === 'locations' && location
+          ? [location]
+          : where.url?.equals === 'release-smoke-location-cans' && cansMenu
+            ? [cansMenu]
+            : [],
     }))
     const create = vi.fn(async ({ collection, data }) => {
-      const record = { id: `${collection}-fixture`, ...data }
-      records.set(collection, record)
+      const record = { id: `${data.url || collection}-fixture`, ...data }
+      if (data.url === 'release-smoke-location-cans') cansMenu = record
+      if (collection === 'locations') location = record
+      return record
+    })
+    const update = vi.fn(async ({ id, data }) => {
+      if (id === cansMenu?.id) cansMenu = { ...cansMenu, ...data }
+      if (id === location?.id) location = { ...location, ...data }
+      return { id, ...data }
+    })
+    getPayload.mockResolvedValue({ find, create, update })
+    await importSeed({
+      DATABASE_URI: 'mongodb://127.0.0.1:27017/release-e2e',
+      E2E_ADMIN_EMAIL: 'release-smoke@example.test',
+      E2E_ADMIN_PASSWORD: 'password',
+    })
+    const expectedMenu = {
+      id: 'release-smoke-location-cans-fixture',
+      url: 'release-smoke-location-cans',
+      type: 'cans',
+      location: 'locations-fixture',
+      _status: 'published',
+      items: [{ product: { relationTo: 'beers', value: 'beers-fixture' } }],
+    }
+    expect(cansMenu).toMatchObject(expectedMenu)
+    expect(location?.cansMenu).toBe(expectedMenu.id)
+    location = { ...location, cansMenu: null }
+    cansMenu = { ...cansMenu, type: 'other', _status: 'draft', location: null, items: [] }
+    const { runSeed } = await import('@/scripts/seed-e2e')
+    await runSeed()
+    expect(location?.cansMenu).toBe(expectedMenu.id)
+    expect(cansMenu).toMatchObject(expectedMenu)
+    expect(
+      create.mock.calls.filter(([options]) => options.data.url === expectedMenu.url),
+    ).toHaveLength(1)
+    find.mockImplementation(async ({ where }) => ({
+      docs: where.url?.equals === expectedMenu.url ? [{ id: 'one' }, { id: 'two' }] : [],
+    }))
+    create.mockClear()
+    update.mockClear()
+    await expect(runSeed()).rejects.toThrow('duplicate release-smoke')
+    expect(create).not.toHaveBeenCalled()
+    expect(update).not.toHaveBeenCalled()
+  })
+
+  it('creates public fixtures and repairs the same records on rerun', async () => {
+    const records = new Map<string, Record<string, unknown>>()
+    const find = vi.fn(async ({ collection, where }) => {
+      const key = where.url?.equals === 'release-smoke-location-cans' ? 'cans-menu' : collection
+      return { docs: records.has(key) ? [records.get(key)] : [] }
+    })
+    const create = vi.fn(async ({ collection, data }) => {
+      const key = data.url === 'release-smoke-location-cans' ? 'cans-menu' : collection
+      const record = { id: `${key}-fixture`, ...data }
+      records.set(key, record)
       return record
     })
     const update = vi.fn(async ({ collection, id, data }) => {
-      expect(id).toBe(records.get(collection)?.id)
-      const record = { ...records.get(collection), ...data }
-      records.set(collection, record)
+      const key = id === 'cans-menu-fixture' ? 'cans-menu' : collection
+      expect(id).toBe(records.get(key)?.id)
+      const record = { ...records.get(key), ...data }
+      records.set(key, record)
       return record
     })
     getPayload.mockResolvedValue({ find, create, update })
@@ -152,6 +212,7 @@ describe('seed-e2e execution guard', () => {
       expect.objectContaining({ where: { name: { equals: 'Release Smoke Style' } } }),
       expect.objectContaining({ where: { slug: { equals: 'release-smoke-beer' } } }),
       expect.objectContaining({ where: { url: { equals: 'release-smoke-location-draft' } } }),
+      expect.objectContaining({ where: { url: { equals: 'release-smoke-location-cans' } } }),
       expect.objectContaining({ where: { slug: { equals: 'release-smoke-job' } } }),
       expect.objectContaining({ where: { email: { equals: environment.E2E_ADMIN_EMAIL } } }),
     ])
@@ -160,8 +221,8 @@ describe('seed-e2e execution guard', () => {
     records.set('beers', { ...records.get('beers'), _status: 'draft', hideFromSite: true })
     const { runSeed } = await import('@/scripts/seed-e2e')
     await runSeed()
-    expect(create).toHaveBeenCalledTimes(7)
-    expect(records.size).toBe(7)
+    expect(create).toHaveBeenCalledTimes(8)
+    expect(records.size).toBe(8)
     expect(records.get('locations')).toMatchObject({ active: true, draftMenu: 'menus-fixture' })
     expect(records.get('menus')).toMatchObject({
       _status: 'published',

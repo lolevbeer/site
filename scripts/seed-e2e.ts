@@ -65,6 +65,12 @@ export async function runSeed(): Promise<void> {
     where: { url: { equals: 'release-smoke-location-draft' } },
     limit: 2,
   })
+  const cansMenus = await payload.find({
+    collection: 'menus',
+    overrideAccess: true,
+    where: { url: { equals: 'release-smoke-location-cans' } },
+    limit: 2,
+  })
   const jobs = await payload.find({
     collection: 'jobs',
     overrideAccess: true,
@@ -83,6 +89,7 @@ export async function runSeed(): Promise<void> {
     ['styles', styles],
     ['beers', beers],
     ['menus', menus],
+    ['cans menus', cansMenus],
     ['jobs', jobs],
     ['users', users],
   ] as const) {
@@ -174,11 +181,31 @@ export async function runSeed(): Promise<void> {
         overrideAccess: true,
         context: { skipRevalidate: true },
       })
-  // The homepage and location page use the selected menu, not any matching menu.
+  const cansMenuData = {
+    ...menuData,
+    name: 'Release Smoke Cans Menu',
+    url: 'release-smoke-location-cans',
+    type: 'cans' as const,
+  }
+  const cansMenu = cansMenus.docs[0]
+    ? await payload.update({
+        collection: 'menus',
+        id: cansMenus.docs[0].id,
+        data: cansMenuData,
+        overrideAccess: true,
+        context: { skipRevalidate: true },
+      })
+    : await payload.create({
+        collection: 'menus',
+        data: cansMenuData,
+        overrideAccess: true,
+        context: { skipRevalidate: true },
+      })
+  // Homepage/location loaders require selected menus; /beer uses all published menus.
   await payload.update({
     collection: 'locations',
     id: location.id,
-    data: { draftMenu: menu.id },
+    data: { draftMenu: menu.id, cansMenu: cansMenu.id },
     overrideAccess: true,
     context: { skipRevalidate: true },
   })
