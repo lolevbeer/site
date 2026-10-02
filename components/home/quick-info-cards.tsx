@@ -62,7 +62,7 @@ export function QuickInfoCards({
           {today?.holidayName ? ` · ${today.holidayName}` : ''}
         </p>
         {directionsUrl !== '#' ? (
-          <Button asChild variant="link" size="lg" className="px-2 underline">
+          <Button asChild variant="ghost" size="lg" className="px-2">
             <a
               href={directionsUrl}
               target="_blank"
