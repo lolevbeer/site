@@ -21,7 +21,7 @@ interface QuickInfoCardsProps {
   className?: string
 }
 
-/** Compact selected-taproom visit summary, placed before the hero carousel and brand story. */
+/** Integrated hero visit actions: menus lead, with directions beside hours and quieter schedules. */
 export function QuickInfoCards({
   beerCount,
   cansCount,
@@ -29,10 +29,7 @@ export function QuickInfoCards({
   className,
 }: QuickInfoCardsProps) {
   const { locations, currentLocation, isClient } = useLocationContext()
-  const summaryClass = cn(
-    'w-full max-w-3xl min-h-44 md:min-h-28 rounded-xl border border-border bg-background/90 p-4 md:p-5',
-    className,
-  )
+  const summaryClass = cn('w-full max-w-xl min-h-64 text-foreground', className)
   // ISR cannot know the stored taproom; reserve the summary until the provider restores it.
   if (!isClient) {
     return (
@@ -58,20 +55,14 @@ export function QuickInfoCards({
 
   return (
     <section aria-label="Plan your visit" className={summaryClass}>
-      <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
-        <h2 className="text-lg font-bold">{location.name}</h2>
+      <h2 className="text-xl font-bold text-balance">{location.name}</h2>
+      <div className="flex flex-wrap items-center justify-center gap-x-4">
         <p className="text-sm">
           Today: {today ? formatHoursRange(today) : 'Hours not available'}
           {today?.holidayName ? ` · ${today.holidayName}` : ''}
         </p>
-      </div>
-      {today?.note ? <p className="mt-1 text-sm text-muted-foreground">{today.note}</p> : null}
-      <nav
-        aria-label={`${location.name} visit shortcuts`}
-        className="mt-3 flex flex-wrap justify-center gap-2"
-      >
         {directionsUrl !== '#' ? (
-          <Button asChild variant="outline">
+          <Button asChild variant="link" size="lg" className="px-2 underline">
             <a
               href={directionsUrl}
               target="_blank"
@@ -82,22 +73,50 @@ export function QuickInfoCards({
             </a>
           </Button>
         ) : null}
-        <Button asChild variant="outline">
-          <Link href={`/?${locationQuery}#draft`}>
-            On Tap{draftCount === undefined ? '' : ` (${draftCount})`}
-          </Link>
-        </Button>
-        <Button asChild variant="outline">
-          <Link href={`/?${locationQuery}#cans`}>
-            Cans{canCount === undefined ? '' : ` (${canCount})`}
-          </Link>
-        </Button>
-        <Button asChild variant="outline">
-          <Link href={`/food?${locationQuery}`}>Food</Link>
-        </Button>
-        <Button asChild variant="outline">
-          <Link href={`/events?${locationQuery}`}>Events</Link>
-        </Button>
+      </div>
+      {today?.note ? <p className="mt-1 text-sm">{today.note}</p> : null}
+      <nav aria-label={`${location.name} visit shortcuts`} className="mt-4">
+        <div className="grid grid-cols-2 gap-3">
+          <Button
+            asChild
+            size="lg"
+            className="min-h-24 flex-col gap-1 px-3 sm:flex-row sm:justify-between sm:px-5"
+          >
+            <Link
+              href={`/?${locationQuery}#draft`}
+              aria-label={`On tap${draftCount === undefined ? '' : ` (${draftCount})`}`}
+            >
+              <span>On tap</span>
+              {draftCount === undefined ? null : (
+                <span className="text-2xl font-bold tabular-nums">{draftCount}</span>
+              )}
+            </Link>
+          </Button>
+          <Button
+            asChild
+            variant="outline"
+            size="lg"
+            className="min-h-24 flex-col gap-1 border-foreground/20 bg-background/60 px-3 sm:flex-row sm:justify-between sm:px-5"
+          >
+            <Link
+              href={`/?${locationQuery}#cans`}
+              aria-label={`Cans to go${canCount === undefined ? '' : ` (${canCount})`}`}
+            >
+              <span>Cans to go</span>
+              {canCount === undefined ? null : (
+                <span className="text-2xl font-bold tabular-nums">{canCount}</span>
+              )}
+            </Link>
+          </Button>
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          <Button asChild variant="link" size="lg" className="px-2">
+            <Link href={`/food?${locationQuery}`}>Food schedule</Link>
+          </Button>
+          <Button asChild variant="link" size="lg" className="px-2">
+            <Link href={`/events?${locationQuery}`}>Events</Link>
+          </Button>
+        </div>
       </nav>
     </section>
   )

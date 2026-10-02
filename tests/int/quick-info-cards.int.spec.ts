@@ -64,20 +64,46 @@ describe('QuickInfoCards visit summary', () => {
       'https://example.com/directions',
     )
     for (const [name, href] of [
-      ['On Tap (10)', '/?loc=lawrenceville#draft'],
-      ['Cans (8)', '/?loc=lawrenceville#cans'],
-      ['Food', '/food?loc=lawrenceville'],
+      ['On tap (10)', '/?loc=lawrenceville#draft'],
+      ['Cans to go (8)', '/?loc=lawrenceville#cans'],
+      ['Food schedule', '/food?loc=lawrenceville'],
       ['Events', '/events?loc=lawrenceville'],
     ]) {
       expect(screen.getByRole('link', { name }).getAttribute('href')).toBe(href)
     }
     expect(screen.queryByText('Zelienople')).toBeNull()
   })
+  it('keeps menu actions first with separate visible counts and quieter schedule links', () => {
+    render(createElement(QuickInfoCards, props))
+    const shortcuts = screen.getByRole('navigation', { name: 'Lawrenceville visit shortcuts' })
+    expect(
+      Array.from(shortcuts.querySelectorAll('a')).map(
+        (link) => link.getAttribute('aria-label') || link.textContent,
+      ),
+    ).toEqual(['On tap (10)', 'Cans to go (8)', 'Food schedule', 'Events'])
+    expect(screen.getByText('10').closest('a')).toBe(
+      screen.getByRole('link', { name: 'On tap (10)' }),
+    )
+    expect(screen.getByText('8').closest('a')).toBe(
+      screen.getByRole('link', { name: 'Cans to go (8)' }),
+    )
+    expect(shortcuts.contains(screen.getByRole('link', { name: 'Directions' }))).toBe(false)
+  })
+  it('preserves zero counts rather than hiding them', () => {
+    render(
+      createElement(QuickInfoCards, {
+        beerCount: { lawrenceville: 0 },
+        cansCount: { lawrenceville: 0 },
+      }),
+    )
+    expect(screen.getByRole('link', { name: 'On tap (0)' })).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Cans to go (0)' })).toBeTruthy()
+  })
   it('changes hours, counts, and coordinates directions with the selected taproom', () => {
     context.currentLocation = 'zelienople'
     render(createElement(QuickInfoCards, props))
     expect(screen.getByText(/Today: 12 PM - 6 PM/)).toBeTruthy()
-    expect(screen.getByRole('link', { name: 'On Tap (12)' })).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'On tap (12)' })).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Directions' }).getAttribute('href')).toContain(
       'destination=40.79,-80.14',
     )
@@ -141,10 +167,21 @@ describe('QuickInfoCards visit summary', () => {
     )
     expect(getLocationDirectionsUrl({} as PayloadLocation)).toBe('#')
   })
+  it('omits Directions when the selected taproom has no directions destination', () => {
+    const address = context.locations[0].address
+    context.locations[0].address = undefined
+    try {
+      render(createElement(QuickInfoCards, props))
+      expect(screen.queryByRole('link', { name: 'Directions' })).toBeNull()
+      expect(screen.getByRole('link', { name: 'On tap (10)' })).toBeTruthy()
+    } finally {
+      context.locations[0].address = address
+    }
+  })
   it('keeps shortcuts useful when counts and hours are unavailable', () => {
     render(createElement(QuickInfoCards))
     expect(screen.getByText('Today: Hours not available')).toBeTruthy()
-    expect(screen.getByRole('link', { name: 'On Tap' })).toBeTruthy()
-    expect(screen.getByRole('link', { name: 'Cans' })).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'On tap' })).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Cans to go' })).toBeTruthy()
   })
 })

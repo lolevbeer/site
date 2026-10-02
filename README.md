@@ -22,7 +22,12 @@ Payload admin is at `/admin`. Follow the on-screen instructions to create your f
 ## Visitor navigation
 
 The homepage brings the selected taproom's hours, directions, and menu/schedule
-shortcuts ahead of the brand introduction. The beer map puts retailer search
+shortcuts directly on the hero, without an enclosing card, ahead of the brand
+introduction. On tap is the primary action; Cans to go is translucent and outlined,
+with separate menu counts. Directions sits beside today's hours, while Food
+schedule and Events remain quieter links in a balanced two-column row on mobile.
+The actions retain the selected location and reuse existing theme color tokens
+and Button focus-ring styles, with targets sized to at least 44px. The beer map puts retailer search
 before full taproom information, and beer details prioritize availability and
 pricing before artwork on mobile. Food and events identify the selected
 location and use compact agendas. These pages share the existing location
