@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useMemo } from 'react'
-import { FoodVendorSchedule } from '@/lib/types/food'
+import type { FoodClientItem } from '@/lib/utils/public-client-payloads'
 import { Button } from '@/components/ui/button'
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
 import { UtensilsCrossed } from '@/components/icons'
@@ -16,7 +16,8 @@ import { safeHttpUrl } from '@/lib/utils/url-utils'
 interface FoodPageClientProps {
   /** CMS intro paragraph shown under the heading. */
   intro?: string
-  initialSchedules: FoodVendorSchedule[]
+  /** Schedules projected by the server page to just the displayed fields. */
+  initialSchedules: FoodClientItem[]
 }
 
 export function FoodPageClient({ initialSchedules, intro }: FoodPageClientProps) {
@@ -54,16 +55,21 @@ export function FoodPageClient({ initialSchedules, intro }: FoodPageClientProps)
       <div className="max-w-2xl mx-auto">
         <h2 className="sr-only">Upcoming food</h2>
         {filteredSchedules.length > 0 ? (
-          <FoodSchedule
-            items={filteredSchedules.map((schedule, index) => ({
-              id: `${schedule.vendor}-${schedule.date}-${index}`,
-              date: schedule.date,
-              vendor: schedule.vendor,
-              time: schedule.time || schedule.start,
-              site: safeHttpUrl(schedule.site),
-              logoUrl: schedule.logoUrl,
-            }))}
-          />
+          <>
+            <p className="mb-4 text-center text-muted-foreground">
+              Vendors and serving times for this taproom are listed below by date.
+            </p>
+            <FoodSchedule
+              items={filteredSchedules.map((schedule, index) => ({
+                id: `${schedule.vendor}-${schedule.date}-${index}`,
+                date: schedule.date,
+                vendor: schedule.vendor,
+                time: schedule.time || schedule.start,
+                site: safeHttpUrl(schedule.site),
+                logoUrl: schedule.logoUrl,
+              }))}
+            />
+          </>
         ) : (
           <Empty>
             <EmptyHeader>

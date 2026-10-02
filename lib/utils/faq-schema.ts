@@ -1,6 +1,8 @@
 /**
- * FAQ schema generation for frequently asked questions
- * Helps with FAQ rich results in search
+ * FAQ content resolution and schema generation for frequently asked questions.
+ * The FAQPage JSON-LD mirrors the visible answers one-to-one. Google now shows FAQ
+ * rich results only for well-known government and health sites, so this markup is
+ * for machine-readable consistency, not a rich-result guarantee.
  * @see https://schema.org/FAQPage
  * @see https://developers.google.com/search/docs/appearance/structured-data/faqpage
  */
@@ -39,6 +41,40 @@ export interface AnswerJsonLd {
   text: string
 }
 
+const normalizeQuestion = (question: string) => question.trim().replace(/\s+/g, ' ').toLowerCase()
+
+/**
+ * Merge default and CMS FAQs into the single list that drives both the visible
+ * answers and the JSON-LD. Questions match by trimmed, whitespace-collapsed,
+ * case-insensitive text. A CMS answer replaces the default in place; CMS-only
+ * questions follow in CMS order; each question appears once (first entry wins).
+ * Entries with a blank question or answer are dropped, never filled in.
+ */
+export function resolveFAQs(
+  defaults: FAQItem[],
+  cms: Array<{ question?: string | null; answer?: string | null }>,
+): FAQItem[] {
+  const resolved = new Map<string, FAQItem>()
+  const add = (question?: string | null, answer?: string | null, replace = false) => {
+    const q = question?.trim()
+    const a = answer?.trim()
+    if (!q || !a) return
+    const key = normalizeQuestion(q)
+    const existing = resolved.get(key)
+    if (!existing) resolved.set(key, { question: q, answer: a })
+    else if (replace) resolved.set(key, { question: existing.question, answer: a })
+  }
+  for (const faq of defaults) add(faq.question, faq.answer)
+  const cmsSeen = new Set<string>()
+  for (const faq of cms) {
+    const key = faq.question ? normalizeQuestion(faq.question) : ''
+    if (!key || cmsSeen.has(key) || !faq.answer?.trim()) continue
+    cmsSeen.add(key)
+    add(faq.question, faq.answer, true)
+  }
+  return [...resolved.values()]
+}
+
 /**
  * Generate FAQ schema from array of questions and answers
  */
@@ -63,13 +99,11 @@ export function generateFAQSchema(faqs: FAQItem[]): FAQPageJsonLd {
 export const breweryFAQs: FAQItem[] = [
   {
     question: 'What are your hours of operation?',
-    answer:
-      'Hours vary by taproom and holiday. See the footer of any page for this week.',
+    answer: 'Hours vary by taproom and holiday. See the footer of any page for this week.',
   },
   {
     question: 'Where are you located?',
-    answer:
-      'See our location pages or the footer for current taproom addresses.',
+    answer: 'See our location pages or the footer for current taproom addresses.',
   },
   {
     question: 'Do you serve food?',

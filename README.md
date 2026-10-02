@@ -26,7 +26,33 @@ shortcuts ahead of the brand introduction. The beer map puts retailer search
 before full taproom information, and beer details prioritize availability and
 pricing before artwork on mobile. Food and events identify the selected
 location and use compact agendas. These pages share the existing location
-selection; the full-screen kiosk layouts remain separate.
+selection; the full-screen kiosk layouts remain separate. Existing sections on
+the home, location, food, events, and beer detail pages give brief context from
+the loaded locations, menus, and schedules, never hardcoded city names or dates.
+
+### Public content and structured data
+
+- **FAQs** — `resolveFAQs` (`lib/utils/faq-schema.ts`) merges the built-in
+  FAQs with the CMS FAQs collection. Questions match ignoring case and extra
+  whitespace: a CMS entry replaces the built-in answer in place, CMS-only
+  entries follow in `order`, and blank entries are dropped. The `/faq` page,
+  its FAQPage JSON-LD, and `/llms-full.txt` all use this one list.
+- **Beer reviews** — ratings and selected reviews on beer pages link to the
+  original Untappd source; reviews without a URL stay unlinked.
+- **Schema identity** — the root layout's `SiteJsonLd` is the sitewide owner of
+  the Organization (`/#org`), WebSite (`/#website`), and taproom Brewery
+  (`/#<slug>`) nodes; IDs live in `lib/utils/schema-shared.ts`. Page schemas
+  (home/about Organization, location LocalBusiness) reuse the same IDs to add
+  details. Event/FoodEvent `organizer`, WebPage `isPartOf`/`about`, and WebSite
+  `publisher` reference them. Do not emit a second WebSite node on a page.
+- **Client props** — the home hero, `/food`, and `/events` receive small
+  server-derived arrays (`lib/utils/public-client-payloads.ts`) instead of full
+  Payload documents. Add a field there only when the client renders it.
+- **Breadcrumbs** — `PageBreadcrumbs` renders the visible trail and its
+  BreadcrumbList JSON-LD together, including `/beer`, `/events`, and `/food`.
+- **Checking pages** — compare `curl` output of the raw HTML (headings, JSON-LD
+  blocks, byte size) before and after a change;
+  `pnpm exec playwright test -g "raw initial HTML"` covers headings and JSON-LD.
 
 ## Tech Stack
 

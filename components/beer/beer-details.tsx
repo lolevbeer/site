@@ -1,6 +1,7 @@
 /**
  * Beer Details Component
- * Shows visitor identity, availability and prices before artwork and secondary details
+ * Shows visitor identity, availability and prices before artwork and secondary details.
+ * Attributes ratings and selected reviews to their original Untappd sources.
  */
 
 'use client'
@@ -298,7 +299,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
             {/* Availability */}
             <Card className="shadow-none border-0 p-0 bg-transparent">
               <CardHeader className="p-0 pb-4">
-                <CardTitle className="text-lg">Availability</CardTitle>
+                <CardTitle className="text-lg">Where to find it</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 {isLoadingLocations ? (
@@ -420,7 +421,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
                 className="no-underline"
               >
                 <UntappdIcon className="h-5 w-5" />
-                Untappd
+                Ratings on Untappd
                 {(beer.untappdRating ?? 0) > 0 && (
                   <span className="text-amber-600 dark:text-amber-400 font-bold">
                     {formatRating(beer.untappdRating)}/5
@@ -436,7 +437,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
       {Array.isArray(beer.positiveReviews) &&
         (beer.positiveReviews as BeerReview[]).filter((r) => !r.hidden).length > 0 && (
           <div className="mt-8">
-            <h2 className="text-2xl font-bold mb-6">Reviews</h2>
+            <h2 className="text-2xl font-bold mb-6">Selected Untappd reviews</h2>
             <div className="space-y-4">
               {[...(beer.positiveReviews as BeerReview[])]
                 .filter((r) => !r.hidden)
@@ -470,6 +471,11 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
                         <span className="text-sm text-muted-foreground">
                           {stripReviewHtml(review.text)}
                         </span>
+                        {review.url && (
+                          <span className="text-xs text-muted-foreground underline">
+                            View original on Untappd
+                          </span>
+                        )}
                       </div>
                     </>
                   )

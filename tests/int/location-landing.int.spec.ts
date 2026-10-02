@@ -28,15 +28,7 @@ vi.mock('@/components/beer/draft-beer-card', () => ({
 }))
 
 vi.mock('@/components/beer/beer-card', () => ({
-  BeerCard: ({
-    beer,
-    variant,
-    showCta,
-  }: {
-    beer: Beer
-    variant?: string
-    showCta?: boolean
-  }) =>
+  BeerCard: ({ beer, variant, showCta }: { beer: Beer; variant?: string; showCta?: boolean }) =>
     createElement(
       'article',
       { 'data-can-variant': variant ?? '', 'data-show-cta': String(showCta !== false) },
@@ -244,6 +236,96 @@ describe('LocationLanding beer sections', () => {
     const subtitle = screen.getByText('Lolev Beer taproom in Pittsburgh')
     expect(subtitle.nextElementSibling).toBeNull()
     expect(container.querySelector('header p + p')).toBeNull()
+  })
+})
+
+describe('LocationLanding direct answers', () => {
+  const base = {
+    location,
+    weeklyHours: [],
+    draftBeers: [],
+    canBeers: [],
+    events: [],
+    food: [],
+    otherLocations: [],
+  }
+
+  it('states loaded draft and can counts, singular and plural', () => {
+    render(
+      createElement(LocationLanding, {
+        ...base,
+        draftBeers: [draftBeer],
+        canBeers: [canBeer, { ...canBeer, variant: 'can-2', name: 'Can Two' }],
+      }),
+    )
+
+    expect(screen.getByText('1 beer on draft.')).toBeTruthy()
+    expect(screen.getByText('2 beers available in cans to take home.')).toBeTruthy()
+  })
+
+  it('states no counts or schedule sentences when nothing is loaded', () => {
+    render(createElement(LocationLanding, base))
+
+    expect(screen.queryByText(/on draft\.$/)).toBeNull()
+    expect(screen.queryByText(/to take home/)).toBeNull()
+    expect(screen.queryByText(/scheduled here/)).toBeNull()
+    expect(screen.getByText('No beers on draft')).toBeTruthy()
+    expect(screen.getByText('Hours not available.')).toBeTruthy()
+  })
+
+  it('points food and event sections at their full schedules without naming dates', () => {
+    render(
+      createElement(LocationLanding, {
+        ...base,
+        food: [{ id: 'f1', vendor: { name: 'El Rincon' }, date: '2026-09-08' }],
+        events: [{ id: 'e1', organizer: 'Trivia', date: '2026-09-09' } as never],
+      }),
+    )
+
+    expect(screen.getByText(/Food vendors scheduled here/)).toBeTruthy()
+    expect(screen.getByText(/Events scheduled here/)).toBeTruthy()
+    expect(screen.getAllByText(/see the full schedule/i)).toHaveLength(2)
+    expect(screen.queryByText(/every taproom/i)).toBeNull()
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Lawrenceville')
+  })
+
+  it('shows only the draft sentence when there are draft beers and no cans', () => {
+    render(createElement(LocationLanding, { ...base, draftBeers: [draftBeer] }))
+
+    expect(screen.getByText('1 beer on draft.')).toBeTruthy()
+    expect(screen.queryByText(/to take home/)).toBeNull()
+    expect(screen.queryByRole('heading', { name: 'Cans to go' })).toBeNull()
+  })
+
+  it('shows only the cans sentence when there are cans and no draft beers', () => {
+    render(createElement(LocationLanding, { ...base, canBeers: [canBeer] }))
+
+    expect(screen.getByText('1 beer available in cans to take home.')).toBeTruthy()
+    expect(screen.queryByText(/on draft\.$/)).toBeNull()
+  })
+
+  it('shows the events sentence without the food sentence when only events exist', () => {
+    render(
+      createElement(LocationLanding, {
+        ...base,
+        events: [{ id: 'e1', organizer: 'Trivia', date: '2026-09-09' } as never],
+      }),
+    )
+
+    expect(screen.getByText(/Events scheduled here/)).toBeTruthy()
+    expect(screen.queryByText(/Food vendors scheduled here/)).toBeNull()
+  })
+
+  it('shows the food sentence without the events sentence when only food exists', () => {
+    render(
+      createElement(LocationLanding, {
+        ...base,
+        food: [{ id: 'f1', vendor: { name: 'El Rincon' }, date: '2026-09-08' }],
+      }),
+    )
+
+    expect(screen.getByText(/Food vendors scheduled here/)).toBeTruthy()
+    expect(screen.queryByText(/Events scheduled here/)).toBeNull()
   })
 })
 

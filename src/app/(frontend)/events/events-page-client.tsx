@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react'
 import Link from 'next/link'
-import { BreweryEvent } from '@/lib/types/event'
+import type { EventClientItem } from '@/lib/utils/public-client-payloads'
 import type { LocationFilter } from '@/lib/types/location'
 import { Button } from '@/components/ui/button'
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty'
@@ -18,7 +18,8 @@ import { safeHttpUrl } from '@/lib/utils/url-utils'
 interface EventsPageClientProps {
   /** CMS intro paragraph shown under the heading. */
   intro?: string
-  initialEvents: BreweryEvent[]
+  /** Events projected by the server page to just the displayed fields. */
+  initialEvents: EventClientItem[]
 }
 
 export function EventsPageClient({ initialEvents, intro }: EventsPageClientProps) {
@@ -53,23 +54,28 @@ export function EventsPageClient({ initialEvents, intro }: EventsPageClientProps
       <div className="max-w-2xl mx-auto">
         <h2 className="sr-only">Upcoming events</h2>
         {filteredEvents.length > 0 ? (
-          <ScheduleList
-            items={filteredEvents.map((event) => ({
-              id: String(
-                event.id ?? `${event.title}-${event.date}-${event.location}-${event.time}`,
-              ),
-              date: event.date,
-              title: event.title,
-              time: event.time,
-              endTime: event.endTime,
-              locationName:
-                locationFilter === 'all'
-                  ? getLocationDisplayName(locations, event.location)
-                  : undefined,
-              description: event.description !== event.title ? event.description : undefined,
-              site: safeHttpUrl(event.site),
-            }))}
-          />
+          <>
+            <p className="mb-4 text-center text-muted-foreground">
+              Dates, times, and activities are listed below, soonest first.
+            </p>
+            <ScheduleList
+              items={filteredEvents.map((event) => ({
+                id: String(
+                  event.id ?? `${event.title}-${event.date}-${event.location}-${event.time}`,
+                ),
+                date: event.date,
+                title: event.title,
+                time: event.time,
+                endTime: event.endTime,
+                locationName:
+                  locationFilter === 'all'
+                    ? getLocationDisplayName(locations, event.location)
+                    : undefined,
+                description: event.description !== event.title ? event.description : undefined,
+                site: safeHttpUrl(event.site),
+              }))}
+            />
+          </>
         ) : (
           <Empty>
             <EmptyHeader>

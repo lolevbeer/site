@@ -3,7 +3,7 @@
  * provided, and always emit url / description / image (with OG fallback).
  */
 import { describe, expect, it } from 'vitest'
-import { createLocationLookup, generateEventJsonLd } from '@/lib/utils/json-ld'
+import { createLocationLookup, generateEventJsonLd, serializeJsonLd } from '@/lib/utils/json-ld'
 import { EventStatus, EventType } from '@/lib/types/event'
 import type { PayloadLocation } from '@/lib/types/location'
 
@@ -90,5 +90,20 @@ describe('generateEventJsonLd', () => {
     expect(schema.url).toBe('https://lolev.beer/events')
     expect(schema.image).toBe('https://lolev.beer/api/media/file/release.jpg')
     expect(schema.endDate).toBeTruthy()
+  })
+
+  it('keeps the closing-script sequence out of the serialized organizer-bearing payload', () => {
+    const html = serializeJsonLd(
+      generateEventJsonLd(
+        event({
+          organizer: '</script><script>alert(1)</script>',
+          date: '2026-10-01',
+          startTime: '7:00pm',
+          location: 'lawrenceville',
+        }),
+      ),
+    )
+    expect(html).not.toContain('</script>')
+    expect(html).toContain('\\u003c/script>')
   })
 })

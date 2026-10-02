@@ -14,12 +14,12 @@ import {
 import {
   generateLocalBusinessSchemas,
   generateOrganizationSchema,
-  generateWebSiteSchema,
 } from '@/lib/utils/local-business-schema'
 import { generateLocationMenuSchema } from '@/lib/utils/menu-schema'
 import { extractBeerFromMenuItem } from '@/lib/utils/menu-item-utils'
 import { getSiteSeo, siteDefaults } from '@/lib/utils/site-seo'
 import { getAllLocations } from '@/lib/utils/payload-api'
+import { projectHeroCanBeers } from '@/lib/utils/public-client-payloads'
 import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
 
 // ISR: Revalidate every 5 minutes as fallback (on-demand revalidation handles immediate updates)
@@ -73,7 +73,6 @@ export default async function Home(): Promise<React.ReactElement> {
   const locationLookup = createLocationLookup(data.locations)
   const localBusinessSchemas = generateLocalBusinessSchemas(data.locations, data.weeklyHours)
   const organizationSchema = generateOrganizationSchema(data.locations)
-  const webSiteSchema = generateWebSiteSchema()
   const beersFrom = (menu: (typeof data.allDraftMenus)[number] | null) =>
     (menu?.items ?? [])
       .map((item) => extractBeerFromMenuItem(item))
@@ -99,7 +98,6 @@ export default async function Home(): Promise<React.ReactElement> {
         <JsonLd key={`local-business-${index}`} data={schema} />
       ))}
       <JsonLd data={organizationSchema} />
-      <JsonLd data={webSiteSchema} />
       {menuSchemas.map((schema, index) => (
         <JsonLd key={`menu-${index}`} data={schema} />
       ))}
@@ -120,9 +118,8 @@ export default async function Home(): Promise<React.ReactElement> {
         />
 
         <HomeContent
-          availableBeers={data.availableBeers}
+          heroBeers={projectHeroCanBeers(data.availableBeers, data.allCansMenus)}
           draftMenus={data.allDraftMenus}
-          cansMenus={data.allCansMenus}
           beerCount={data.beerCount}
           cansCount={data.cansCount}
           heroDescription={data.siteContent.heroDescription}

@@ -80,9 +80,7 @@ export function LocationLanding({
       <PageBreadcrumbs className="mb-6" />
 
       <header className="text-center mb-8">
-        <h1 className="text-4xl font-bold tracking-tight text-balance mb-3">
-          {location.name}
-        </h1>
+        <h1 className="text-4xl font-bold tracking-tight text-balance mb-3">{location.name}</h1>
         <p className="text-muted-foreground text-lg text-pretty">
           Lolev Beer taproom{city ? ` in ${city}` : ''}
         </p>
@@ -161,17 +159,17 @@ export function LocationLanding({
           <ul className="max-w-2xl mx-auto list-none p-0 m-0 space-y-1 mb-8">
             {draftBeers.map((beer, index) => (
               <li key={`${beer.variant}-${index}`}>
-                <DraftBeerCard
-                  beer={beer}
-                  compact
-                  showJustReleased={false}
-                  showLocation={false}
-                />
+                <DraftBeerCard beer={beer} compact showJustReleased={false} showLocation={false} />
               </li>
             ))}
           </ul>
         )}
         <div className="text-center">
+          {draftBeers.length > 0 ? (
+            <p className="mb-4 text-muted-foreground">
+              {draftBeers.length} {draftBeers.length === 1 ? 'beer' : 'beers'} on draft.
+            </p>
+          ) : null}
           <Button asChild variant="outline" size="lg">
             <Link href={beerHref('tap')}>View all beers</Link>
           </Button>
@@ -184,15 +182,14 @@ export function LocationLanding({
           <ul className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 list-none p-0 m-0 mb-8">
             {canBeers.map((beer, index) => (
               <li key={`${beer.variant}-${index}`}>
-                <BeerCard
-                  beer={beer}
-                  variant="minimal"
-                  showLocation={false}
-                  showCta={false}
-                />
+                <BeerCard beer={beer} variant="minimal" showLocation={false} showCta={false} />
               </li>
             ))}
           </ul>
+          <p className="text-center text-muted-foreground">
+            {canBeers.length} {canBeers.length === 1 ? 'beer' : 'beers'} available in cans to take
+            home.
+          </p>
         </section>
       ) : null}
 
@@ -202,8 +199,7 @@ export function LocationLanding({
           <div className="max-w-2xl mx-auto mb-8">
             <ScheduleList
               items={events.map((event) => {
-                const rawDate =
-                  typeof event.date === 'string' ? event.date : String(event.date)
+                const rawDate = typeof event.date === 'string' ? event.date : String(event.date)
                 return {
                   id: String(event.id),
                   date: rawDate,
@@ -216,6 +212,9 @@ export function LocationLanding({
             />
           </div>
           <div className="text-center">
+            <p className="mb-4 text-muted-foreground">
+              Events scheduled here are listed above. See the full schedule for more.
+            </p>
             <Button asChild variant="outline" size="lg">
               <Link href="/events">View all events</Link>
             </Button>
@@ -244,6 +243,9 @@ export function LocationLanding({
             />
           </div>
           <div className="text-center">
+            <p className="mb-4 text-muted-foreground">
+              Food vendors scheduled here are listed above. See the full schedule for more.
+            </p>
             <Button asChild variant="outline" size="lg">
               <Link href="/food">View food schedule</Link>
             </Button>

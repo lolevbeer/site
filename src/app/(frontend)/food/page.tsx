@@ -15,6 +15,7 @@ import { capitalizeName } from '@/lib/utils/formatters'
 import { foodDescription } from '@/lib/utils/seo'
 import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
 import { getHubIntro } from '@/lib/utils/site-seo'
+import { projectFoodForClient } from '@/lib/utils/public-client-payloads'
 import {
   getRecurringFoodState,
   recurringDays as days,
@@ -281,7 +282,11 @@ async function getFoodData(): Promise<FoodVendorSchedule[]> {
 }
 
 export default async function FoodPage() {
-  const [schedules, locations, intro] = await Promise.all([getFoodData(), getAllLocations(), getHubIntro('food')])
+  const [schedules, locations, intro] = await Promise.all([
+    getFoodData(),
+    getAllLocations(),
+    getHubIntro('food'),
+  ])
   const locationLookup = createLocationLookup(locations)
 
   const validSchedules = schedules.filter(
@@ -306,7 +311,7 @@ export default async function FoodPage() {
       {jsonLd && <JsonLd data={jsonLd} />}
 
       <PageTransition>
-        <FoodPageClient initialSchedules={schedules} intro={intro} />
+        <FoodPageClient initialSchedules={projectFoodForClient(schedules)} intro={intro} />
       </PageTransition>
     </>
   )

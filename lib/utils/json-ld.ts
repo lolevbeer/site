@@ -10,12 +10,7 @@ import type { LocationSlug, PayloadLocation } from '@/lib/types/location'
 import type { Event as PayloadCmsEvent } from '@/src/payload-types'
 import { parseLocalDate } from './formatters'
 import { getMediaUrl } from './media-utils'
-import {
-  LOLEV_BASE_URL,
-  LOLEV_OG_IMAGE_URL,
-  SOCIAL_PROFILE_URLS,
-  normalizeLngLat,
-} from './schema-shared'
+import { LOLEV_BASE_URL, LOLEV_OG_IMAGE_URL, LOLEV_ORG_ID, normalizeLngLat } from './schema-shared'
 
 /**
  * Schema.org Event type
@@ -31,7 +26,8 @@ export interface EventJsonLd {
   eventStatus: string
   eventAttendanceMode: string
   location: PlaceJsonLd
-  organizer: OrganizationJsonLd
+  /** Reference to the sitewide Organization node; name kept for standalone-script consumers. */
+  organizer: { '@id': string; name: string }
   offers?: OfferJsonLd
   image?: string | string[]
   performer?: PersonOrOrganizationJsonLd
@@ -71,18 +67,6 @@ export interface GeoCoordinatesJsonLd {
   '@type': 'GeoCoordinates'
   latitude: number
   longitude: number
-}
-
-/**
- * Schema.org Organization type
- * @see https://schema.org/Organization
- */
-export interface OrganizationJsonLd {
-  '@type': 'Organization'
-  name: string
-  url?: string
-  logo?: string
-  sameAs?: string[]
 }
 
 /**
@@ -168,16 +152,6 @@ function getDefaultPlace(): PlaceJsonLd {
   }
 }
 
-function getOrganizer(): OrganizationJsonLd {
-  return {
-    '@type': 'Organization',
-    name: 'Lolev Beer',
-    url: LOLEV_BASE_URL,
-    logo: LOLEV_OG_IMAGE_URL,
-    sameAs: SOCIAL_PROFILE_URLS,
-  }
-}
-
 function complimentaryOffer(): OfferJsonLd {
   return {
     '@type': 'Offer',
@@ -205,9 +179,7 @@ function resolveEventImage(...candidates: Array<string | null | undefined>): str
 }
 
 function organizationPerformer(name: string, url?: string): PersonOrOrganizationJsonLd {
-  return url
-    ? { '@type': 'Organization', name, url }
-    : { '@type': 'Organization', name }
+  return url ? { '@type': 'Organization', name, url } : { '@type': 'Organization', name }
 }
 
 function qualifyEventName(name: string, locationName?: string): string {
@@ -301,7 +273,7 @@ function createBaseEventJsonLd(
     eventStatus: 'https://schema.org/EventScheduled',
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
     location: place,
-    organizer: getOrganizer(),
+    organizer: { '@id': LOLEV_ORG_ID, name: 'Lolev Beer' },
     url: `${LOLEV_BASE_URL}/events`,
     image: LOLEV_OG_IMAGE_URL,
   }

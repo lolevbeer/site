@@ -24,6 +24,45 @@ const beer = {
 } as Beer
 
 describe('BeerDetails visitor hierarchy', () => {
+  it('identifies Untappd sources and links only reviews with original URLs', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: true, json: async () => ({ docs: [] }) }),
+    )
+    render(
+      <BeerDetails
+        beer={{
+          ...beer,
+          untappd: '/b/test-ale/123',
+          untappdRating: 4.2,
+          positiveReviews: [
+            {
+              username: 'Reviewer',
+              text: 'Great ale',
+              url: 'https://untappd.com/user/reviewer/checkin/456',
+            },
+            { username: 'No URL', text: 'Good ale' },
+            {
+              username: 'Hidden',
+              text: 'Hidden review',
+              hidden: true,
+              url: 'https://untappd.com/checkin/789',
+            },
+          ],
+        }}
+      />,
+    )
+    expect(screen.getByRole('link', { name: /Ratings on Untappd/ }).getAttribute('href')).toBe(
+      'https://untappd.com/b/test-ale/123',
+    )
+    const source = screen.getByRole('link', { name: /View original on Untappd/ })
+    expect(source.getAttribute('href')).toBe('https://untappd.com/user/reviewer/checkin/456')
+    expect(source.getAttribute('rel')).toBe('noopener noreferrer')
+    expect(screen.getByRole('heading', { name: 'Selected Untappd reviews' })).toBeTruthy()
+    expect(screen.getByText('Good ale').closest('a')).toBeNull()
+    expect(screen.queryByText('Hidden review')).toBeNull()
+    await screen.findByText('Great ale')
+  })
   it('renders identity, style/ABV, availability and pricing before artwork', async () => {
     vi.stubGlobal(
       'fetch',
@@ -50,6 +89,7 @@ describe('BeerDetails visitor hierarchy', () => {
       expect(node.compareDocumentPosition(image) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     }
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1)
+    expect(screen.getByRole('heading', { name: 'Where to find it' })).toBeTruthy()
   })
   it('preserves location fetch errors', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false }))
