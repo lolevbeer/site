@@ -83,7 +83,20 @@ pnpm generate:types      # Regenerate Payload types
 pnpm generate:importmap  # Regenerate Payload import map
 ```
 
-`pnpm e2e:seed` writes admin and FAQ fixture data. By default it accepts only a
+`pnpm e2e:seed` writes admin and FAQ fixture data plus an active location, style,
+published visible beer, published draft menu linked to that beer and selected on
+the location, and active job. These disposable fixtures give the release smoke
+test discoverable location, beer, and job pages without relying on existing data.
+The reserved keys are location name `Lolev Release Smoke`, style name
+`Release Smoke Style`, beer slug `release-smoke-beer`, menu URL
+`release-smoke-location-draft`, and job slug `release-smoke-job`; admin email and
+FAQ question retain their existing identities. Reruns update those records and
+restore publication/relationships rather than create duplicates. Duplicate
+identities are rejected before any writes; no records are deleted. Beer recipe
+numbers are assigned by the collection hook, and no Untappd fields or external
+fetches are requested. Writes skip revalidation during offline seeding.
+
+By default it accepts only a
 loopback MongoDB target. A remote target is allowed only when
 `E2E_DISPOSABLE_DATABASE=1` and the database name ends in `-e2e` or `-ci`; the
 seed also refuses `PAYLOAD_DROP_DATABASE=true`. Set `E2E_ADMIN_EMAIL` and
