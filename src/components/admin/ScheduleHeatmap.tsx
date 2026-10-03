@@ -232,8 +232,6 @@ export async function ScheduleHeatmap({ req, permissions, widgetData }: WidgetSe
       location={{ id: location.id, name: location.name }}
       firstSunday={firstSunday}
       today={today}
-      canEvents={canEvents}
-      canFood={canFood}
       listURLs={{
         event: formatAdminURL({ adminRoute, path: '/collections/events' }),
         food: formatAdminURL({ adminRoute, path: '/collections/food' }),

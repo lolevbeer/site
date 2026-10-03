@@ -58,8 +58,6 @@ export function HeatmapGrid({
   location,
   firstSunday,
   today,
-  canEvents,
-  canFood,
   listURLs,
 }: {
   /** Rows for this location only. */
@@ -67,8 +65,6 @@ export function HeatmapGrid({
   location: { id: string; name: string }
   firstSunday: string
   today: string
-  canEvents: boolean
-  canFood: boolean
   /** Day lists for stored docs; `recurring*` for days booked only by a rule. */
   listURLs: { event: string; food: string; recurringEvent: string; recurringFood: string }
 }) {
@@ -124,19 +120,6 @@ export function HeatmapGrid({
       ),
     [weeks, byDay, location.id, listURLs],
   )
-  let eventCount = 0
-  let foodCount = 0
-  for (const [day, d] of byDay) {
-    if (day < from || day > through) continue
-    eventCount += d.events.length
-    foodCount += d.food.length
-  }
-  const totals = [
-    canEvents && `${eventCount} ${plural(eventCount, 'event', 'events')}`,
-    canFood && `${foodCount} food`,
-  ]
-    .filter(Boolean)
-    .join(', ')
 
   return (
     <div className="card widget-card schedule-heatmap">
@@ -150,7 +133,7 @@ export function HeatmapGrid({
           tooltip={page === PAGES_BACK ? undefined : 'Back to today'}
           onClick={() => setPage(PAGES_BACK)}
         >
-          {`${monthName(from)} ${from.slice(0, 4)} – ${monthName(through)} ${through.slice(0, 4)} (${totals})`}
+          {`${monthName(from)} ${from.slice(0, 4)} – ${monthName(through)} ${through.slice(0, 4)}`}
         </Button>
         <span className="schedule-heatmap__arrows">
           <Button

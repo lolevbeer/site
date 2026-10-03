@@ -154,10 +154,7 @@ export async function MenuTargetHistory({ req }: WidgetServerProps) {
   const names = new Map(data.names)
   return (
     <div className="card" style={{ display: 'grid', gap: 20, padding: 16 }}>
-      <h3 style={{ margin: 0 }}>Items vs target, last {DAYS} days</h3>
-      <small style={{ color: 'var(--color-text-secondary)', marginTop: -12 }}>
-        Furthest off target first. Hover a line for each save and who made it.
-      </small>
+      <h3 style={{ margin: 0 }}>Items vs target</h3>
       {rows.map(({ location, atLocation }) => (
         <section key={location.id} style={{ display: 'grid', gap: 8 }}>
           <h4 style={{ margin: 0 }}>{location.name}</h4>
@@ -182,8 +179,7 @@ export async function MenuTargetHistory({ req }: WidgetServerProps) {
         </section>
       ))}
       <small style={{ color: 'var(--color-text-secondary)' }}>
-        Solid line is items on the menu (green when on target), dashed is the target. Shading marks
-        the gap: yellow at 1 off, one step redder per extra item, red at 6+, over or under.
+        Solid: items. Dashed: target. Hover for each save.
       </small>
     </div>
   )
@@ -367,7 +363,7 @@ function MenuChart({
           <span>Today</span>
         </div>
       </div>
-      <small style={{ color: 'var(--color-text-secondary)' }}>On target {share}% of the time</small>
+      <small style={{ color: 'var(--color-text-secondary)' }}>{share}% on target</small>
     </div>
   )
 }
