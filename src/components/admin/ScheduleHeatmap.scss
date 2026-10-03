@@ -1,0 +1,119 @@
+// Styles for the ScheduleHeatmap dashboard widget. Reuses Payload's global
+// .card.widget-card chrome and its semantic --color-* / --spacer-* tokens
+// (yellow uses --ramp-yellow-500; event-only mixes it with --color-bg-danger).
+.schedule-heatmap {
+  --hm-gap: 2px; // --hm-weeks is set inline from WEEKS by HeatmapGrid
+  max-height: none; // widget-card caps height for list rows; the grid sizes itself
+
+  &__grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--hm-gap);
+    overflow-x: auto;
+  }
+
+  // Day-label column plus one equal column per week, so cells fill the widget.
+  // The 6px floor keeps cells readable; narrower widgets scroll instead.
+  &__row {
+    display: grid;
+    grid-template-columns: 2.25em repeat(var(--hm-weeks), minmax(6px, 1fr));
+    gap: var(--hm-gap);
+    align-items: center;
+  }
+
+  // Each label spans the columns of its month's weeks (span set inline).
+  &__month {
+    overflow: hidden;
+    font-size: 10px;
+    line-height: 1;
+    white-space: nowrap;
+    color: var(--color-text-secondary);
+  }
+
+  &__dow {
+    font-size: 10px;
+    color: var(--color-text-secondary);
+  }
+
+  // Grid cells stretch to their column; legend swatches are fixed 10px.
+  &__cell,
+  &__swatch {
+    display: inline-block;
+    aspect-ratio: 1;
+    border-radius: 2px;
+
+    // Status, not volume: red = open day, orange = event without food,
+    // yellow = food only, green = both.
+    &[data-kind='none'] {
+      background: color-mix(in srgb, var(--color-bg-danger) 55%, transparent);
+    }
+
+    // An event with no food truck needs attention, so it leans red.
+    &[data-kind='event'] {
+      background: color-mix(in srgb, var(--color-bg-danger) 50%, var(--ramp-yellow-500));
+    }
+
+    &[data-kind='food'] {
+      background: var(--ramp-yellow-500);
+    }
+
+    &[data-kind='both'] {
+      background: var(--color-bg-success);
+    }
+  }
+
+  &__swatch {
+    width: 10px;
+  }
+
+  &__cell {
+    &.is-past {
+      opacity: 0.6; // readable history, still distinct from upcoming days
+    }
+
+    &.is-today {
+      outline: 2px solid var(--color-text);
+      outline-offset: -2px; // inset: the scrolling grid clips anything outside the cell
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--color-border-selected-strong);
+      outline-offset: -2px; // inset: the scrolling grid clips anything outside the cell
+    }
+  }
+
+  &__legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--spacer-2);
+    font-size: 10px;
+    color: var(--color-text-secondary);
+  }
+
+  &__key {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--hm-gap);
+  }
+}
+
+.schedule-heatmap__header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacer-2);
+
+  .schedule-heatmap__location {
+    min-width: 12rem;
+  }
+
+  // Ghost buttons keep Payload's look; only drop the margin they carry in forms.
+  .btn {
+    margin: 0;
+  }
+
+  .schedule-heatmap__arrows {
+    margin-left: auto;
+    display: flex;
+  }
+}
