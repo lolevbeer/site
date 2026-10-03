@@ -1,13 +1,14 @@
 import { sleep } from '@/src/utils/async'
+import { formatFullAddress } from '@/lib/distributors/import-patch'
 
 const GEOCODIO_API_KEY = process.env.GEOCODIO_API_KEY || ''
 const BING_MAPS_API_KEY = process.env.BING_MAPS_API_KEY || ''
 
 /**
  * Nominatim allows one request per second. Every Nominatim call in the app goes
- * through here, so the importers and the re-geocode pass need no sleeps of
- * their own, and a caller that spends time between requests (database writes,
- * fallback providers) waits only for whatever is left of the interval.
+ * through here, so the importers need no sleeps of their own, and a caller that
+ * spends time between requests (database writes, fallback providers) waits only
+ * for whatever is left of the interval.
  *
  * ponytail: per-process timestamp; concurrent imports in separate serverless
  * instances are not coordinated. Add a shared store if imports ever run in parallel.
@@ -119,12 +120,6 @@ export async function geocodeAddress(address: string): Promise<GeocodeResult | n
   return null
 }
 
-// Simple geocode returning just coordinates (for backwards compat)
-export async function geocode(address: string): Promise<[number, number] | null> {
-  const result = await geocodeAddress(address)
-  return result?.coords ?? null
-}
-
 // Fallback geocoding using zip or city/state
 export async function geocodeFallback(
   city: string,
@@ -148,4 +143,21 @@ export async function geocodeFallback(
   }
 
   return null
+}
+
+/**
+ * Geocode a distributor the way every import does: the full street address
+ * first (Nominatim, Geocodio, Bing), then the zip, then city + state. Returns
+ * null only when all of those fail, so callers never need a made-up pin.
+ */
+export async function geocodeDistributor(parts: {
+  address?: string | null
+  city?: string | null
+  state?: string | null
+  zip?: string | null
+}): Promise<[number, number] | null> {
+  const full = await geocodeAddress(formatFullAddress(parts))
+  if (full) return full.coords
+  const fallback = await geocodeFallback(parts.city ?? '', parts.state ?? '', parts.zip ?? '')
+  return fallback?.coords ?? null
 }

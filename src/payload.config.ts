@@ -36,7 +36,6 @@ import { importDistributors } from './endpoints/import-distributors'
 import { importDistributorsCsv } from './endpoints/import-distributors-csv'
 import { updateDistributorUrls } from './endpoints/update-distributor-urls'
 import { recalculateBeerPrices } from './endpoints/recalculate-beer-prices'
-import { regeocodeDistributors } from './endpoints/regeocode-distributors'
 import { syncUntappdRatings } from './endpoints/sync-untappd-ratings'
 import { adminAccess, hasRole } from './access/roles'
 import { syncUntappdRatingsTask } from './jobs/sync-untappd-ratings'
@@ -292,11 +291,6 @@ export default buildConfig({
       path: '/recalculate-beer-prices',
       method: 'post',
       handler: recalculateBeerPrices,
-    },
-    {
-      path: '/regeocode-distributors',
-      method: 'post',
-      handler: regeocodeDistributors,
     },
     {
       path: '/sync-untappd-ratings',

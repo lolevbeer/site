@@ -227,28 +227,6 @@
     border: 1px solid var(--color-border);
   }
 
-  &__detail-entry {
-    margin-bottom: 8px;
-    color: var(--color-text-secondary);
-
-    strong {
-      color: var(--color-text);
-    }
-  }
-
-  &__detail-line {
-    font-size: 11px;
-  }
-
-  &__detail-note {
-    font-size: 10px;
-    color: #8b949e;
-  }
-
-  &__missing {
-    color: #f87171;
-  }
-
   &__stat {
     &--success { color: var(--color-text-success); }
     &--error { color: var(--color-text-danger); }
