@@ -93,7 +93,7 @@ export const Menus: CollectionConfig = {
   },
   versions: {
     drafts: true,
-    maxPerDoc: 50, // Keep only the last 50 versions per document
+    maxPerDoc: 1000, // ~1.5 KB each, so ~1.5 MB per menu; feeds the menu-target-history widget
   },
   hooks: {
     beforeValidate: [
@@ -325,6 +325,21 @@ export const Menus: CollectionConfig = {
         condition: (data) => data?.type === 'cans',
         description:
           'Play the rotating-can animation on this display. Turn off to show static can images instead.',
+      },
+    },
+    {
+      name: 'targetItemCount',
+      label: 'Target Item Count',
+      type: 'number',
+      min: 0,
+      defaultValue: 10,
+      access: {
+        update: adminFieldAccess,
+      },
+      admin: {
+        position: 'sidebar',
+        condition: (data) => data?.type === 'cans' || data?.type === 'draft',
+        description: 'Ideal number of cans or draft lines on this menu',
       },
     },
     {

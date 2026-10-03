@@ -169,11 +169,17 @@ export default buildConfig({
           Component: '@/src/components/admin/ScheduleHeatmap#ScheduleHeatmap',
           minWidth: 'large',
         },
+        {
+          slug: 'menu-target-history',
+          label: 'Menu size vs target',
+          Component: '@/src/components/admin/MenuTargetHistory#MenuTargetHistory',
+        },
       ],
       // Built-ins re-listed because setting defaultLayout replaces Payload's default.
       defaultLayout: [
         { widgetSlug: 'collections', width: 'full' },
         { widgetSlug: 'schedule-heatmap', width: 'full' },
+        { widgetSlug: 'menu-target-history', width: 'medium' },
         { widgetSlug: 'activity', width: 'small' },
       ],
     },
