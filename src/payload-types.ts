@@ -148,6 +148,7 @@ export interface Config {
   locale: null;
   widgets: {
     'schedule-heatmap': ScheduleHeatmapWidget;
+    'menu-target-history': MenuTargetHistoryWidget;
     collections: CollectionsWidget;
     'collection-query': CollectionQueryWidget;
     activity: ActivityWidget;
@@ -537,6 +538,10 @@ export interface Menu {
    * Play the rotating-can animation on this display. Turn off to show static can images instead.
    */
   animateCans?: boolean | null;
+  /**
+   * Ideal number of cans or draft lines on this menu
+   */
+  targetItemCount?: number | null;
   items: {
     product?:
       | ({
@@ -1524,6 +1529,7 @@ export interface MenusSelect<T extends boolean = true> {
   url?: T;
   themeMode?: T;
   animateCans?: T;
+  targetItemCount?: T;
   items?:
     | T
     | {
@@ -2810,6 +2816,16 @@ export interface ScheduleHeatmapWidget {
     [k: string]: unknown;
   };
   width: 'large' | 'x-large' | 'full';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "menu-target-history_widget".
+ */
+export interface MenuTargetHistoryWidget {
+  data?: {
+    [k: string]: unknown;
+  };
+  width: 'x-small' | 'small' | 'medium' | 'large' | 'x-large' | 'full';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

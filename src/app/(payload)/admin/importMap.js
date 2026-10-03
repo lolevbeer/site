@@ -11,6 +11,7 @@ import { SyncNavLink as SyncNavLink_d656220869059dfb87e573ae59f98b9f } from '@/s
 import { LinesCleanedAlert as LinesCleanedAlert_cd2a45d43757864ac10ad04ad5d94aa2 } from '@/src/components/admin/LinesCleanedAlert'
 import { SyncView as SyncView_d4a55995137be8d8e874f993f349f672 } from '@/src/components/SyncView'
 import { ScheduleHeatmap as ScheduleHeatmap_65e01fac2cc928f8fd2584422dde9786 } from '@/src/components/admin/ScheduleHeatmap'
+import { MenuTargetHistory as MenuTargetHistory_6e7978d5a59943049707cc48ef4b312d } from '@/src/components/admin/MenuTargetHistory'
 import { CollectionCards as CollectionCards_ab83ff7e88da8d3530831f296ec4756a } from '@payloadcms/ui/rsc'
 import { CollectionQueryWidget as CollectionQueryWidget_ab83ff7e88da8d3530831f296ec4756a } from '@payloadcms/ui/rsc'
 import { QueryPresetsWhereField as QueryPresetsWhereField_3817bf644402e67bfe6577f60ef982de } from '@payloadcms/ui'
@@ -34,6 +35,7 @@ export const importMap = {
   "@/src/components/admin/LinesCleanedAlert#LinesCleanedAlert": LinesCleanedAlert_cd2a45d43757864ac10ad04ad5d94aa2,
   "@/src/components/SyncView#SyncView": SyncView_d4a55995137be8d8e874f993f349f672,
   "@/src/components/admin/ScheduleHeatmap#ScheduleHeatmap": ScheduleHeatmap_65e01fac2cc928f8fd2584422dde9786,
+  "@/src/components/admin/MenuTargetHistory#MenuTargetHistory": MenuTargetHistory_6e7978d5a59943049707cc48ef4b312d,
   "@payloadcms/ui/rsc#CollectionCards": CollectionCards_ab83ff7e88da8d3530831f296ec4756a,
   "@payloadcms/ui/rsc#CollectionQueryWidget": CollectionQueryWidget_ab83ff7e88da8d3530831f296ec4756a,
   "@payloadcms/ui#QueryPresetsWhereField": QueryPresetsWhereField_3817bf644402e67bfe6577f60ef982de,

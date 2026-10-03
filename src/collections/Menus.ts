@@ -4,6 +4,7 @@ import type { User } from '@/src/payload-types'
 import { adminAccess, adminFieldAccess, getUserLocationIds, hasRole } from '@/src/access/roles'
 import { markLinesCleanedField } from './utils/markLinesCleanedField'
 import { updatedByField } from './utils/updatedByField'
+import { DEFAULT_TARGET, TARGETED_MENU_TYPES } from '@/lib/utils/menu-target'
 
 /**
  * Menus at the locations this user is assigned to, or `false` when they hold
@@ -93,7 +94,7 @@ export const Menus: CollectionConfig = {
   },
   versions: {
     drafts: true,
-    maxPerDoc: 50, // Keep only the last 50 versions per document
+    maxPerDoc: 1000, // ~1.5 KB each, so ~1.5 MB per menu; feeds the menu-target-history widget
   },
   hooks: {
     beforeValidate: [
@@ -325,6 +326,21 @@ export const Menus: CollectionConfig = {
         condition: (data) => data?.type === 'cans',
         description:
           'Play the rotating-can animation on this display. Turn off to show static can images instead.',
+      },
+    },
+    {
+      name: 'targetItemCount',
+      label: 'Target Item Count',
+      type: 'number',
+      min: 0,
+      defaultValue: DEFAULT_TARGET,
+      access: {
+        update: adminFieldAccess,
+      },
+      admin: {
+        position: 'sidebar',
+        condition: (data) => TARGETED_MENU_TYPES.includes(data?.type),
+        description: 'Ideal number of cans or draft lines on this menu',
       },
     },
     {

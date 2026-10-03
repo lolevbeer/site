@@ -13,6 +13,8 @@ import {
 } from '@payloadcms/ui'
 import { fetchLatestVersion, fetchVersions } from '@payloadcms/ui/views/Versions/fetchVersions'
 
+import { editorNames } from './editor-names'
+
 type VersionData = {
   _status: 'draft' | 'published'
   updatedAt: string
@@ -59,25 +61,16 @@ export async function VersionsWithEditor({
     version: { _status: true, updatedAt: true },
   }
 
-  const editorIDs = [...new Set(data.docs.flatMap(({ version }) => version.updatedBy ?? []))]
-  const [published, draft, editors] = await Promise.all([
+  const [published, draft, editorNamesById] = await Promise.all([
     hasPublishedDoc
       ? fetchLatestVersion<VersionData>({ ...query, select: latestSelect, status: 'published' })
       : null,
     fetchLatestVersion<VersionData>({ ...query, select: latestSelect, status: 'draft' }),
-    editorIDs.length
-      ? payload.find({
-          collection: 'users',
-          where: { id: { in: editorIDs } },
-          select: { name: true, email: true },
-          depth: 0,
-          pagination: false,
-          overrideAccess: false,
-          req,
-        })
-      : null,
+    editorNames(
+      req,
+      data.docs.map(({ version }) => version.updatedBy),
+    ),
   ])
-  const editorNames = new Map(editors?.docs.map((user) => [user.id, user.name || user.email]))
   const columns: Column[] = [
     {
       accessor: 'updatedAt',
@@ -115,7 +108,7 @@ export async function VersionsWithEditor({
       field: { name: 'updatedBy', type: 'text' },
       Heading: 'Last edited by',
       renderedCells: data.docs.map(
-        ({ version }) => editorNames.get(version.updatedBy ?? '') || 'Unknown',
+        ({ version }) => editorNamesById.get(version.updatedBy ?? '') || 'Unknown',
       ),
     },
     {
