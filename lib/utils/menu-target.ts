@@ -6,6 +6,8 @@
  * hits, weighted by time live.
  */
 export const DEFAULT_TARGET = 10
+/** Menu types that carry a targetItemCount; others (e.g. 'other') aren't tracked. */
+export const TARGETED_MENU_TYPES = ['draft', 'cans'] as const
 
 export type Revision = {
   updatedAt: string
@@ -44,8 +46,15 @@ export function stockTimeline(revisions: Revision[], end: number) {
 export const stockedCount = (items: { product?: unknown }[] | null | undefined) =>
   items?.filter((it) => it.product != null).length ?? 0
 
-/** 'ok' on target, 'near' off by 1–2, 'far' off by 3+. */
-export const severity = (diff: number) => (diff === 0 ? 'ok' : Math.abs(diff) <= 2 ? 'near' : 'far')
+// Off-target shading deepens one step per item off, yellow at 1 to red at RED_AT+.
+const RED_AT = 6
+
+/** Color for a distance from target: green on target, else yellow→red by size, over or under alike. */
+export function fillFor(diff: number) {
+  if (diff === 0) return 'var(--color-bg-success)'
+  const t = Math.min((Math.abs(diff) - 1) / (RED_AT - 1), 1)
+  return `color-mix(in oklab, var(--color-bg-danger) ${Math.round(t * 100)}%, var(--color-bg-warning))`
+}
 
 /** Largest distance from target among `diffs` (-1 when empty), for worst-first ordering. */
 export const worstMiss = (diffs: number[]) => Math.max(-1, ...diffs.map(Math.abs))

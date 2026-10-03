@@ -4,6 +4,7 @@ import type { User } from '@/src/payload-types'
 import { adminAccess, adminFieldAccess, getUserLocationIds, hasRole } from '@/src/access/roles'
 import { markLinesCleanedField } from './utils/markLinesCleanedField'
 import { updatedByField } from './utils/updatedByField'
+import { DEFAULT_TARGET, TARGETED_MENU_TYPES } from '@/lib/utils/menu-target'
 
 /**
  * Menus at the locations this user is assigned to, or `false` when they hold
@@ -332,13 +333,13 @@ export const Menus: CollectionConfig = {
       label: 'Target Item Count',
       type: 'number',
       min: 0,
-      defaultValue: 10,
+      defaultValue: DEFAULT_TARGET,
       access: {
         update: adminFieldAccess,
       },
       admin: {
         position: 'sidebar',
-        condition: (data) => data?.type === 'cans' || data?.type === 'draft',
+        condition: (data) => TARGETED_MENU_TYPES.includes(data?.type),
         description: 'Ideal number of cans or draft lines on this menu',
       },
     },

@@ -4,7 +4,7 @@
  */
 import { describe, expect, it } from 'vitest'
 
-import { severity, stockedCount, stockTimeline, worstMiss } from '@/lib/utils/menu-target'
+import { fillFor, stockedCount, stockTimeline, worstMiss } from '@/lib/utils/menu-target'
 
 const h = (n: number) => `2026-10-01T${String(n).padStart(2, '0')}:00:00.000Z`
 
@@ -50,9 +50,12 @@ describe('stockedCount', () => {
   })
 })
 
-describe('severity', () => {
-  it('treats over and under alike', () => {
-    expect([0, 1, -2, 3, -5].map(severity)).toEqual(['ok', 'near', 'near', 'far', 'far'])
+describe('fillFor', () => {
+  it('is green on target and colors over and under alike', () => {
+    expect(fillFor(0)).toBe('var(--color-bg-success)')
+    expect(fillFor(2)).toBe(fillFor(-2))
+    expect(fillFor(1)).toContain('danger) 0%')
+    expect(fillFor(9)).toContain('danger) 100%')
   })
 })
 
