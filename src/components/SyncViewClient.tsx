@@ -53,9 +53,16 @@ interface RegeocodeResults {
   distributors?: RegeocodeDistributor[]
 }
 
-/** A failed CSV upload shown as a one-error result in the banner. */
-function csvUploadFailed(details: string[]): DistributorImportResult {
-  return { region: 'CSV', imported: 0, updated: 0, skipped: 0, errors: 1, details }
+/** Read a CSV upload's counts from an SSE `complete` or JSON error payload; missing counts are 0. */
+function csvUploadResult(data: SSEData): DistributorImportResult {
+  return {
+    region: 'CSV',
+    imported: (data.imported as number) || 0,
+    updated: (data.updated as number) || 0,
+    skipped: (data.skipped as number) || 0,
+    errors: (data.errors as number) || 0,
+    details: (data.details as string[]) || [],
+  }
 }
 
 // No props: SyncView.tsx already gates this view to admins server-side.
@@ -82,23 +89,21 @@ export const SyncViewClient: React.FC = () => {
   // Distributor CSV upload (any state; format spec: public/distributor-csv-import.md)
   const csvInputRef = useRef<HTMLInputElement>(null)
   const distCsv = useSSEImport<DistributorImportResult>({
-    getResults: (data) => ({
-      region: 'CSV',
-      imported: (data.imported as number) || 0,
-      updated: (data.updated as number) || 0,
-      skipped: (data.skipped as number) || 0,
-      errors: (data.errors as number) || 0,
-      details: (data.details as string[]) || [],
-    }),
-    // A 400 carries every per-line parse error in `details`
+    getResults: csvUploadResult,
+    // A 400 carries the real `errors` count and every per-line parse error in `details`
     onJSON: (data, _response, { setResults }) => {
       const details = data.details as string[] | undefined
       setResults(
-        csvUploadFailed(details?.length ? details : [String(data.error || 'Upload failed')]),
+        csvUploadResult({
+          errors: 1,
+          ...data,
+          details: details?.length ? details : [String(data.error || 'Upload failed')],
+        }),
       )
     },
     onException: (error, { setResults }) => {
-      setResults(csvUploadFailed([error instanceof Error ? error.message : 'Upload failed']))
+      const message = error instanceof Error ? error.message : 'Upload failed'
+      setResults(csvUploadResult({ errors: 1, details: [message] }))
     },
   })
 

@@ -15,78 +15,69 @@ export const CUSTOMER_TYPES = [
 
 export type CustomerType = (typeof CUSTOMER_TYPES)[number]['value']
 
-const CUSTOMER_TYPE_VALUES: ReadonlySet<string> = new Set(CUSTOMER_TYPES.map((t) => t.value))
-
 /** True for a stored `customerType` value (not its label). */
 export function isCustomerType(value: string): value is CustomerType {
-  return CUSTOMER_TYPE_VALUES.has(value)
+  return CUSTOMER_TYPES.some((t) => t.value === value)
 }
 
-/** `region` options: the 50 US states plus DC, as `[code, name]` pairs. */
-
-const STATE_ENTRIES = [
-  ['AL', 'Alabama'],
-  ['AK', 'Alaska'],
-  ['AZ', 'Arizona'],
-  ['AR', 'Arkansas'],
-  ['CA', 'California'],
-  ['CO', 'Colorado'],
-  ['CT', 'Connecticut'],
-  ['DE', 'Delaware'],
-  ['DC', 'District of Columbia'],
-  ['FL', 'Florida'],
-  ['GA', 'Georgia'],
-  ['HI', 'Hawaii'],
-  ['ID', 'Idaho'],
-  ['IL', 'Illinois'],
-  ['IN', 'Indiana'],
-  ['IA', 'Iowa'],
-  ['KS', 'Kansas'],
-  ['KY', 'Kentucky'],
-  ['LA', 'Louisiana'],
-  ['ME', 'Maine'],
-  ['MD', 'Maryland'],
-  ['MA', 'Massachusetts'],
-  ['MI', 'Michigan'],
-  ['MN', 'Minnesota'],
-  ['MS', 'Mississippi'],
-  ['MO', 'Missouri'],
-  ['MT', 'Montana'],
-  ['NE', 'Nebraska'],
-  ['NV', 'Nevada'],
-  ['NH', 'New Hampshire'],
-  ['NJ', 'New Jersey'],
-  ['NM', 'New Mexico'],
-  ['NY', 'New York'],
-  ['NC', 'North Carolina'],
-  ['ND', 'North Dakota'],
-  ['OH', 'Ohio'],
-  ['OK', 'Oklahoma'],
-  ['OR', 'Oregon'],
-  ['PA', 'Pennsylvania'],
-  ['RI', 'Rhode Island'],
-  ['SC', 'South Carolina'],
-  ['SD', 'South Dakota'],
-  ['TN', 'Tennessee'],
-  ['TX', 'Texas'],
-  ['UT', 'Utah'],
-  ['VT', 'Vermont'],
-  ['VA', 'Virginia'],
-  ['WA', 'Washington'],
-  ['WV', 'West Virginia'],
-  ['WI', 'Wisconsin'],
-  ['WY', 'Wyoming'],
+/** `region` options: the 50 US states plus DC, by two-letter code. */
+export const US_STATES = [
+  { value: 'AL', label: 'Alabama' },
+  { value: 'AK', label: 'Alaska' },
+  { value: 'AZ', label: 'Arizona' },
+  { value: 'AR', label: 'Arkansas' },
+  { value: 'CA', label: 'California' },
+  { value: 'CO', label: 'Colorado' },
+  { value: 'CT', label: 'Connecticut' },
+  { value: 'DE', label: 'Delaware' },
+  { value: 'DC', label: 'District of Columbia' },
+  { value: 'FL', label: 'Florida' },
+  { value: 'GA', label: 'Georgia' },
+  { value: 'HI', label: 'Hawaii' },
+  { value: 'ID', label: 'Idaho' },
+  { value: 'IL', label: 'Illinois' },
+  { value: 'IN', label: 'Indiana' },
+  { value: 'IA', label: 'Iowa' },
+  { value: 'KS', label: 'Kansas' },
+  { value: 'KY', label: 'Kentucky' },
+  { value: 'LA', label: 'Louisiana' },
+  { value: 'ME', label: 'Maine' },
+  { value: 'MD', label: 'Maryland' },
+  { value: 'MA', label: 'Massachusetts' },
+  { value: 'MI', label: 'Michigan' },
+  { value: 'MN', label: 'Minnesota' },
+  { value: 'MS', label: 'Mississippi' },
+  { value: 'MO', label: 'Missouri' },
+  { value: 'MT', label: 'Montana' },
+  { value: 'NE', label: 'Nebraska' },
+  { value: 'NV', label: 'Nevada' },
+  { value: 'NH', label: 'New Hampshire' },
+  { value: 'NJ', label: 'New Jersey' },
+  { value: 'NM', label: 'New Mexico' },
+  { value: 'NY', label: 'New York' },
+  { value: 'NC', label: 'North Carolina' },
+  { value: 'ND', label: 'North Dakota' },
+  { value: 'OH', label: 'Ohio' },
+  { value: 'OK', label: 'Oklahoma' },
+  { value: 'OR', label: 'Oregon' },
+  { value: 'PA', label: 'Pennsylvania' },
+  { value: 'RI', label: 'Rhode Island' },
+  { value: 'SC', label: 'South Carolina' },
+  { value: 'SD', label: 'South Dakota' },
+  { value: 'TN', label: 'Tennessee' },
+  { value: 'TX', label: 'Texas' },
+  { value: 'UT', label: 'Utah' },
+  { value: 'VT', label: 'Vermont' },
+  { value: 'VA', label: 'Virginia' },
+  { value: 'WA', label: 'Washington' },
+  { value: 'WV', label: 'West Virginia' },
+  { value: 'WI', label: 'Wisconsin' },
+  { value: 'WY', label: 'Wyoming' },
 ] as const
 
-export type StateCode = (typeof STATE_ENTRIES)[number][0]
-
-export const US_STATES: ReadonlyArray<{ code: StateCode; name: string }> = STATE_ENTRIES.map(
-  ([code, name]) => ({ code, name }),
-)
-
-const CODES: ReadonlySet<string> = new Set(STATE_ENTRIES.map(([code]) => code))
+export type StateCode = (typeof US_STATES)[number]['value']
 
 /** True for an uppercase two-letter code in {@link US_STATES}. */
 export function isStateCode(value: string): value is StateCode {
-  return CODES.has(value)
+  return US_STATES.some((s) => s.value === value)
 }

@@ -59,7 +59,7 @@ export const Distributors: CollectionConfig = {
     {
       name: 'customerType',
       type: 'select',
-      options: CUSTOMER_TYPES.map(({ value, label }) => ({ value, label })),
+      options: [...CUSTOMER_TYPES],
       index: true,
       admin: {
         description: 'Type of customer/location',
@@ -69,7 +69,7 @@ export const Distributors: CollectionConfig = {
       name: 'region',
       type: 'select',
       defaultValue: 'PA',
-      options: US_STATES.map(({ code, name }) => ({ label: name, value: code })),
+      options: [...US_STATES],
       index: true,
       admin: {
         description:

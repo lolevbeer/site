@@ -12,6 +12,7 @@
 import type { PayloadHandler } from 'payload'
 import type { Distributor } from '@/src/payload-types'
 import { getUserFromRequest } from './auth-helper'
+import { isAdmin } from '@/src/access/roles'
 import { geocode } from './geocode'
 import { sleep } from '@/src/utils/async'
 import { createSSEResponse } from '@/src/utils/sse-response'
@@ -27,7 +28,7 @@ export const importDistributorsCsv: PayloadHandler = async (req) => {
   const { payload } = req
   const user = req.user ?? (await getUserFromRequest(req, payload))
 
-  if (!user || !user.roles?.includes('admin')) {
+  if (!user || !isAdmin(user)) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -100,20 +101,13 @@ export const importDistributorsCsv: PayloadHandler = async (req) => {
         continue
       }
 
+      // Everything but the line number and name is a distributor field
+      const { line, name, ...fields } = row
+
       try {
         if (matches.length === 1) {
           const current = matches[0]
-          const patch = distributorImportPatch(current, {
-            address: row.address,
-            city: row.city,
-            state: row.state,
-            zip: row.zip,
-            phone: row.phone,
-            region: row.region,
-            website: row.website,
-            customerType: row.customerType,
-            active: row.active,
-          })
+          const patch = distributorImportPatch(current, fields)
           if (!patch) {
             skipped++
             continue
@@ -123,7 +117,7 @@ export const importDistributorsCsv: PayloadHandler = async (req) => {
             user,
             current,
             patch,
-            name: row.name,
+            name,
             geocode,
             sleep,
           })
@@ -136,26 +130,14 @@ export const importDistributorsCsv: PayloadHandler = async (req) => {
         const location = await geocode(formatFullAddress(row))
         await sleep(1100)
         if (!location) {
-          report('error', `Error: Could not geocode "${row.name}" (line ${row.line}); not created`)
+          report('error', `Error: Could not geocode "${name}" (line ${line}); not created`)
           errors++
           continue
         }
 
         await payload.create({
           collection: 'distributors',
-          data: {
-            name: row.name,
-            address: row.address,
-            city: row.city,
-            state: row.state,
-            zip: row.zip,
-            phone: row.phone,
-            region: row.region,
-            website: row.website,
-            customerType: row.customerType,
-            location,
-            active: row.active ?? true,
-          },
+          data: { ...fields, name, location, active: fields.active ?? true },
           overrideAccess: false,
           user,
         })

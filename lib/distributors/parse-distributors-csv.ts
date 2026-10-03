@@ -47,6 +47,9 @@ function formatPhone(raw: string): string {
   return raw
 }
 
+const notAState = (column: string, value: string) =>
+  `${column} "${value}" is not a two-letter US state code (uppercase)`
+
 /** Validate one row; returns the first problem found, or the cleaned row. */
 function parseRow(
   line: number,
@@ -60,23 +63,20 @@ function parseRow(
   if (!city) return { error: 'city is required' }
 
   const state = get('state')
-  if (!isStateCode(state)) {
-    return { error: `state "${state}" is not a two-letter US state code (uppercase)` }
-  }
-  const regionCell = get('region')
-  if (regionCell && !isStateCode(regionCell)) {
-    return { error: `region "${regionCell}" is not a two-letter US state code (uppercase)` }
-  }
+  if (!isStateCode(state)) return { error: notAState('state', state) }
+  const region = get('region') || state
+  if (!isStateCode(region)) return { error: notAState('region', region) }
 
   const zipCell = get('zip')
   if (zipCell && !/^\d{5}(-\d{4})?$/.test(zipCell)) {
     return { error: `zip "${zipCell}" must be 5 digits or ZIP+4` }
   }
 
-  const typeCell = get('customertype')
-  if (typeCell && !isCustomerType(typeCell)) {
+  const customerTypeCell = get('customertype')
+  const customerType = isCustomerType(customerTypeCell) ? customerTypeCell : undefined
+  if (customerTypeCell && !customerType) {
     const allowed = CUSTOMER_TYPES.map((t) => t.value).join(', ')
-    return { error: `customerType "${typeCell}" must be one of: ${allowed}` }
+    return { error: `customerType "${customerTypeCell}" must be one of: ${allowed}` }
   }
 
   const website = get('website')
@@ -97,10 +97,10 @@ function parseRow(
     state,
     zip: zipCell.slice(0, 5),
     phone: formatPhone(get('phone')),
-    region: (regionCell || state) as StateCode,
+    region,
   }
   if (website) row.website = website
-  if (typeCell) row.customerType = typeCell as CustomerType
+  if (customerType) row.customerType = customerType
   if (activeCell) row.active = activeCell === 'true'
   return row
 }
@@ -132,13 +132,14 @@ export function parseDistributorsCsv(text: string): {
   const rows: DistributorCsvRow[] = []
   const errors: DistributorCsvError[] = []
   const seen = new Map<string, number>()
+  const columnIndex = new Map(header.map((h, i) => [h, i]))
 
   for (let i = first + 1; i < lines.length; i++) {
     if (!lines[i].trim()) continue
     const cells = parseCSVLine(lines[i])
     const get = (column: string) => {
-      const index = header.indexOf(column)
-      return index === -1 ? '' : (cells[index] ?? '').trim()
+      const index = columnIndex.get(column)
+      return index === undefined ? '' : (cells[index] ?? '').trim()
     }
 
     const result = parseRow(i + 1, get)

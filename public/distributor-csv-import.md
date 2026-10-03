@@ -17,18 +17,18 @@ field is written `""`). A field cannot span lines.
 Header names are case-insensitive and columns can be in any order. Unknown
 columns are ignored.
 
-| Column         | Required | Rule                                                                                         |
-| -------------- | -------- | -------------------------------------------------------------------------------------------- |
-| `name`         | yes      | The business name only. See "Names".                                                         |
-| `address`      | yes      | Street line only: no city, state, zip, or phone. Keep suite/unit (`7110 Patterson Ave A`).   |
-| `city`         | yes      | City name, properly capitalized (`Ashburn`, not `ASHBURN`).                                  |
-| `state`        | yes      | Two-letter USPS code, uppercase. `DC` is valid.                                              |
-| `zip`          | no       | `12345` or `12345-6789`. Leave blank if the source has none; never look one up or guess.     |
-| `phone`        | no       | Any layout with ten digits (a leading `1` is fine); the upload formats it `(804) 288-0816`.  |
+| Column         | Required | Rule                                                                                            |
+| -------------- | -------- | ----------------------------------------------------------------------------------------------- |
+| `name`         | yes      | The business name only. See "Names".                                                            |
+| `address`      | yes      | Street line only: no city, state, zip, or phone. Keep suite/unit (`7110 Patterson Ave A`).      |
+| `city`         | yes      | City name, properly capitalized (`Ashburn`, not `ASHBURN`).                                     |
+| `state`        | yes      | Two-letter USPS code, uppercase. `DC` is valid.                                                 |
+| `zip`          | no       | `12345` or `12345-6789`. Leave blank if the source has none; never look one up or guess.        |
+| `phone`        | no       | Any layout with ten digits (a leading `1` is fine); the upload formats it `(804) 288-0816`.     |
 | `region`       | no       | Two-letter code used for grouping and the distributor map. Leave blank: it defaults to `state`. |
-| `customerType` | no       | Exactly `Retail`, `On Premise`, or `Home-D`. Only when the source says so; otherwise blank.  |
-| `website`      | no       | Full URL starting with `http://` or `https://`. Otherwise blank.                             |
-| `active`       | no       | `true` or `false`. Blank leaves an existing row unchanged and makes a new row active.        |
+| `customerType` | no       | Exactly `Retail`, `On Premise`, or `Home-D`. Only when the source says so; otherwise blank.     |
+| `website`      | no       | Full URL starting with `http://` or `https://`. Otherwise blank.                                |
+| `active`       | no       | `true` or `false`. Blank leaves an existing row unchanged and makes a new row active.           |
 
 There is no latitude/longitude column. The upload looks up map coordinates from
 the address. A row it cannot locate is reported and not created.
@@ -47,11 +47,11 @@ Crafted Haymarket,20693 Ashburn Rd #125,Ashburn,VA,,(703) 272-4200
 ### Names
 
 - Remove license and permit identifiers from the end of the name: `Corks & Kegs
-  ABC #48896` becomes `Corks & Kegs`. This covers `ABC #`, `ABC#`, `ABC License`,
+ABC #48896` becomes `Corks & Kegs`. This covers `ABC #`, `ABC#`, `ABC License`,
   `Lic.`, and similar. Do not remove anything that is part of the business name.
 - Collapse repeated spaces and trim the ends.
 - Keep punctuation and capitalization the source uses otherwise (`Lucky's
-  Woodlake`, `Kettles & Grains`).
+Woodlake`, `Kettles & Grains`).
 
 ### Addresses
 

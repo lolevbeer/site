@@ -14,10 +14,10 @@ import { parseDistributorsCsv } from '@/lib/distributors/parse-distributors-csv'
 describe('US_STATES', () => {
   it('lists the 50 states plus DC with unique two-letter codes', () => {
     expect(US_STATES).toHaveLength(51)
-    expect(new Set(US_STATES.map((s) => s.code)).size).toBe(51)
-    for (const { code, name } of US_STATES) {
-      expect(code).toMatch(/^[A-Z]{2}$/)
-      expect(name.length).toBeGreaterThan(1)
+    expect(new Set(US_STATES.map((s) => s.value)).size).toBe(51)
+    for (const { value, label } of US_STATES) {
+      expect(value).toMatch(/^[A-Z]{2}$/)
+      expect(label.length).toBeGreaterThan(1)
     }
   })
 
