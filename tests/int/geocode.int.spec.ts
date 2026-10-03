@@ -29,7 +29,7 @@ describe('server-side geocoding provider fallbacks', () => {
           return jsonResponse([{ lon: '-79.9', lat: '40.4' }])
         }),
       )
-      const { geocode } = await import('@/src/endpoints/geocode')
+      const { geocodeAddress: geocode } = await import('@/src/endpoints/geocode')
 
       await geocode('a') // first request goes out immediately
       await vi.advanceTimersByTimeAsync(400) // caller spends 400ms on other work
@@ -111,5 +111,35 @@ describe('server-side geocoding provider fallbacks', () => {
 
     expect(result).toEqual({ coords: [-79.98, 40.45], source: 'Nominatim' })
     expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('geocodeDistributor falls back to the zip when the full address finds nothing', async () => {
+    vi.useFakeTimers()
+    try {
+      const fetchMock = vi
+        .fn<typeof fetch>()
+        .mockResolvedValueOnce(jsonResponse([])) // Nominatim, full address
+        .mockResolvedValueOnce(jsonResponse({ results: [] })) // Geocodio, full address
+        .mockResolvedValueOnce(jsonResponse([{ lon: '-79.95', lat: '40.44' }])) // Nominatim, zip
+      vi.stubGlobal('fetch', fetchMock)
+
+      const { geocodeDistributor } = await import('@/src/endpoints/geocode')
+      const pending = geocodeDistributor({
+        address: '123 Nowhere Ln',
+        city: 'Pittsburgh',
+        state: 'PA',
+        zip: '15201',
+      })
+      await vi.advanceTimersByTimeAsync(5000)
+
+      expect(await pending).toEqual([-79.95, 40.44])
+      expect(fetchMock).toHaveBeenCalledTimes(3)
+      expect(decodeURIComponent(String(fetchMock.mock.calls[0][0]))).toContain(
+        '123 Nowhere Ln, Pittsburgh PA 15201',
+      )
+      expect(decodeURIComponent(String(fetchMock.mock.calls[2][0]))).toContain('15201, USA')
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })

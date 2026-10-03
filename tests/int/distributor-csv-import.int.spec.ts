@@ -221,8 +221,10 @@ const getUserFromRequest = vi.fn()
 vi.mock('@/src/endpoints/auth-helper', () => ({
   getUserFromRequest: (...args: unknown[]) => getUserFromRequest(...args),
 }))
-const geocode = vi.fn()
-vi.mock('@/src/endpoints/geocode', () => ({ geocode: (...a: unknown[]) => geocode(...a) }))
+const geocodeDistributor = vi.fn()
+vi.mock('@/src/endpoints/geocode', () => ({
+  geocodeDistributor: (...a: unknown[]) => geocodeDistributor(...a),
+}))
 
 const admin: User = {
   id: 'admin-id',
@@ -266,8 +268,8 @@ describe('importDistributorsCsv endpoint', () => {
 
   beforeEach(() => {
     getUserFromRequest.mockReset()
-    geocode.mockReset()
-    geocode.mockResolvedValue([-77.05, 38.8])
+    geocodeDistributor.mockReset()
+    geocodeDistributor.mockResolvedValue([-77.05, 38.8])
   })
 
   async function load() {
@@ -321,12 +323,19 @@ describe('importDistributorsCsv endpoint', () => {
       overrideAccess: false,
       user: admin,
     })
-    expect(geocode).toHaveBeenCalledWith('2004 Mt Vernon Ave, Alexandria VA 22301')
+    expect(geocodeDistributor).toHaveBeenCalledWith(
+      expect.objectContaining({
+        address: '2004 Mt Vernon Ave',
+        city: 'Alexandria',
+        state: 'VA',
+        zip: '22301',
+      }),
+    )
     expect(evs.at(-1)).toMatchObject({ event: 'complete', data: { imported: 1, errors: 0 } })
   })
 
   it('does not create a row it cannot geocode, and says so', async () => {
-    geocode.mockResolvedValue(null)
+    geocodeDistributor.mockResolvedValue(null)
     const handler = await load()
     const { req, payload } = csvReq(csv, admin)
     const evs = await events(await handler(req))
