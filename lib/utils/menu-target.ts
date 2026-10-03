@@ -1,8 +1,8 @@
 /**
  * Turns a menu's saved revisions into a stock-vs-target timeline: each
  * revision is live from its save until the next one (the last until `end`),
- * and is judged by how far its item count sits from the target set at that
- * save. Over and under are equally bad, so `onTargetShare` counts only exact
+ * and is judged by how far its item count sits from one `target` (the menu's
+ * current target, so history is scored against today's goal). Over and under are equally bad, so `onTargetShare` counts only exact
  * hits, weighted by time live.
  */
 export const DEFAULT_TARGET = 10
@@ -12,7 +12,6 @@ export const TARGETED_MENU_TYPES = ['draft', 'cans'] as const
 export type Revision = {
   updatedAt: string
   items: number
-  target: number | null | undefined
   /** User ID of whoever saved it (menus' updatedBy), if known. */
   editor?: string
 }
@@ -25,9 +24,8 @@ export type Segment = {
   editor?: string
 }
 
-export function stockTimeline(revisions: Revision[], end: number) {
+export function stockTimeline(revisions: Revision[], target: number, end: number) {
   const segments: Segment[] = revisions.map((r, i) => {
-    const target = r.target ?? DEFAULT_TARGET
     return {
       start: Date.parse(r.updatedAt),
       end: i + 1 < revisions.length ? Date.parse(revisions[i + 1].updatedAt) : end,

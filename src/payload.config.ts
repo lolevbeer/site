@@ -167,21 +167,39 @@ export default buildConfig({
           slug: 'schedule-heatmap',
           label: 'Schedule heatmap',
           Component: '@/src/components/admin/ScheduleHeatmap#ScheduleHeatmap',
-          minWidth: 'large',
+          minWidth: 'medium',
+          // One instance per location; add more from the dashboard and pick one.
+          fields: [{ name: 'location', type: 'relationship', relationTo: 'locations' }],
         },
         {
           slug: 'menu-target-history',
-          label: 'Menu size vs target',
+          label: 'Menu tracking',
           Component: '@/src/components/admin/MenuTargetHistory#MenuTargetHistory',
         },
       ],
       // Built-ins re-listed because setting defaultLayout replaces Payload's default.
-      defaultLayout: [
-        { widgetSlug: 'collections', width: 'full' },
-        { widgetSlug: 'schedule-heatmap', width: 'full' },
-        { widgetSlug: 'menu-target-history', width: 'medium' },
-        { widgetSlug: 'activity', width: 'small' },
-      ],
+      // One half-width schedule per location, read as the signed-in user.
+      defaultLayout: async ({ req }) => {
+        const { docs } = await req.payload.find({
+          collection: 'locations',
+          depth: 0,
+          pagination: false,
+          select: { name: true },
+          sort: 'name',
+          overrideAccess: false,
+          req,
+        })
+        return [
+          { widgetSlug: 'collections', width: 'full' },
+          ...docs.map((l) => ({
+            widgetSlug: 'schedule-heatmap' as const,
+            width: 'medium' as const,
+            data: { location: l.id },
+          })),
+          { widgetSlug: 'menu-target-history', width: 'medium' },
+          { widgetSlug: 'activity', width: 'small' },
+        ]
+      },
     },
     // Payload 4's Vercel Blob adapter registers its client upload handler only
     // when a blob token is set; declaring it here keeps importMap.js identical

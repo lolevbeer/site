@@ -9,37 +9,35 @@ import { fillFor, stockedCount, stockTimeline, worstMiss } from '@/lib/utils/men
 const h = (n: number) => `2026-10-01T${String(n).padStart(2, '0')}:00:00.000Z`
 
 describe('stockTimeline', () => {
-  it('weights each revision by how long it was live, against its own target', () => {
+  it('weights each revision by how long it was live, against one target', () => {
     const { segments, onTargetShare } = stockTimeline(
       [
-        { updatedAt: h(0), items: 10, target: null }, // default 10: on target for 1h
-        { updatedAt: h(1), items: 13, target: 10 }, // 3 over for 2h
-        { updatedAt: h(3), items: 8, target: 8 }, // on target until end, 1h
+        { updatedAt: h(0), items: 10 }, // on target for 1h
+        { updatedAt: h(1), items: 13 }, // 3 over for 2h
+        { updatedAt: h(3), items: 8 }, // 2 under until end, 1h
       ],
+      10,
       Date.parse(h(4)),
     )
-    expect(segments.map((s) => s.diff)).toEqual([0, 3, 0])
-    expect(segments.map((s) => [s.items, s.target])).toEqual([
-      [10, 10],
-      [13, 10],
-      [8, 8],
-    ])
-    expect(onTargetShare).toBe(0.5)
+    expect(segments.map((s) => s.diff)).toEqual([0, 3, -2])
+    expect(segments.every((s) => s.target === 10)).toBe(true)
+    expect(onTargetShare).toBe(0.25)
   })
 
   it('carries who saved each revision', () => {
     const { segments } = stockTimeline(
       [
-        { updatedAt: h(0), items: 10, target: 10, editor: 'u1' },
-        { updatedAt: h(1), items: 9, target: 10 },
+        { updatedAt: h(0), items: 10, editor: 'u1' },
+        { updatedAt: h(1), items: 9 },
       ],
+      10,
       Date.parse(h(2)),
     )
     expect(segments.map((s) => s.editor)).toEqual(['u1', undefined])
   })
 
   it('handles no revisions', () => {
-    expect(stockTimeline([], Date.parse(h(1))).onTargetShare).toBe(0)
+    expect(stockTimeline([], 10, Date.parse(h(1))).onTargetShare).toBe(0)
   })
 })
 

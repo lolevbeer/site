@@ -25,3 +25,13 @@ export const CACHE_TAGS = {
 } as const
 
 export type CacheTag = (typeof CACHE_TAGS)[keyof typeof CACHE_TAGS]
+
+/**
+ * Cache-key part for per-viewer caches: user id plus the access fields that
+ * decide what they can read (roles, locations), so a role or location change
+ * misses the old entry instead of serving it until it expires.
+ */
+export function accessKey(req: { user?: unknown }): string {
+  const user = req.user as { id?: unknown; roles?: unknown; locations?: unknown } | null | undefined
+  return JSON.stringify([user?.id, user?.roles, user?.locations])
+}

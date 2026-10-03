@@ -1,18 +1,22 @@
 /**
  * Admin dashboard widget: per location, Draft and Cans side by side, each a
  * step line of items on the menu across its saves in the last 90 days against
- * a dashed targetItemCount line (default 10). The item line is green while on
+ * a dashed line at the menu's current targetItemCount (default 10), applied to
+ * every save so history is scored against today's target. The item line is green while on
  * target; the gap to the target is shaded one step redder per item off (yellow
  * at 1, red at 6+), too many and too few alike. Each step's tooltip names the
  * save's date, counts, and who saved it; a dot marks today's count; locations
  * are ordered by their worst current miss. Blank rows don't count. Reads
  * locations, menus, menu versions, and editor names under the viewer's access.
  */
+import { unstable_cache } from 'next/cache'
 import type { WidgetServerProps } from 'payload'
 
+import { accessKey, CACHE_TAGS } from '@/lib/utils/cache'
 import { getDateEST, getESTMidnightISO, getTodayEST } from '@/lib/utils/date'
 import { formatDate } from '@/lib/utils/formatters'
 import {
+  DEFAULT_TARGET,
   fillFor,
   stockedCount,
   stockTimeline,
@@ -33,14 +37,27 @@ const TYPE_LABEL: Record<string, string> = { cans: 'Cans', draft: 'Draft' }
 const VERSION_SELECT = {
   parent: true,
   updatedAt: true,
-  version: { items: { product: true }, targetItemCount: true, updatedBy: true },
+  version: { items: { product: true }, updatedBy: true },
 } as const
 
 const diffLabel = (d: number) =>
   d === 0 ? 'on target' : `${Math.abs(d)} ${d < 0 ? 'under' : 'over'}`
 const dayLabel = (t: number) => formatDate(getDateEST(t))
 
-export async function MenuTargetHistory({ req }: WidgetServerProps) {
+/**
+ * The widget's data, cached per user (menu read access varies by role and
+ * location) as plain JSON: Maps become entry arrays. The revalidation plugin
+ * clears 'menus' on every published save; `today` in the key rolls the 90-day
+ * window at EST midnight.
+ */
+const loadMenuTargets = (req: WidgetServerProps['req']) =>
+  unstable_cache(
+    () => readMenuTargets(req),
+    ['dashboard-menu-target-v1', accessKey(req), getTodayEST()],
+    { tags: [CACHE_TAGS.menus, CACHE_TAGS.locations], revalidate: 3600 },
+  )()
+
+async function readMenuTargets(req: WidgetServerProps['req']) {
   const { payload } = req
   const since = getESTMidnightISO(addDays(getTodayEST(), -DAYS))
   const versionQuery = { collection: 'menus', select: VERSION_SELECT, depth: 0, req } as const
@@ -49,6 +66,7 @@ export async function MenuTargetHistory({ req }: WidgetServerProps) {
     payload.find({
       collection: 'menus',
       where: { type: { in: [...TARGETED_MENU_TYPES] } },
+      select: { type: true, location: true, targetItemCount: true },
       depth: 0,
       limit: 100,
       overrideAccess: false,
@@ -71,6 +89,7 @@ export async function MenuTargetHistory({ req }: WidgetServerProps) {
     }),
     payload.find({
       collection: 'locations',
+      select: { name: true },
       sort: 'name',
       depth: 0,
       limit: 100,
@@ -89,7 +108,9 @@ export async function MenuTargetHistory({ req }: WidgetServerProps) {
   }
   for (const v of versions.docs) {
     const id = String(v.parent)
-    byMenu.set(id, [...(byMenu.get(id) ?? []), v])
+    const list = byMenu.get(id)
+    if (list) list.push(v)
+    else byMenu.set(id, [v])
   }
   const timelines = new Map(
     menus.docs.map((menu) => [
@@ -98,9 +119,9 @@ export async function MenuTargetHistory({ req }: WidgetServerProps) {
         (byMenu.get(menu.id) ?? []).map((v) => ({
           updatedAt: v.updatedAt,
           items: stockedCount(v.version.items),
-          target: v.version.targetItemCount,
           editor: v.version.updatedBy ? relationshipId(v.version.updatedBy) : undefined,
         })),
+        menu.targetItemCount ?? DEFAULT_TARGET,
         end,
       ),
     ]),
@@ -122,12 +143,22 @@ export async function MenuTargetHistory({ req }: WidgetServerProps) {
     .filter((r) => r.atLocation.length > 0)
     .sort((a, b) => b.worst - a.worst)
 
+  return { rows, end, timelines: [...timelines], names: [...names] }
+}
+
+export async function MenuTargetHistory({ req }: WidgetServerProps) {
+  const data = await loadMenuTargets(req)
+  if (!data) return null
+  const { rows, end } = data
+  const timelines = new Map(data.timelines)
+  const names = new Map(data.names)
   return (
-    <div className="card" style={{ display: 'grid', gap: 20, padding: 16 }}>
-      <h3 style={{ margin: 0 }}>Items vs target, last {DAYS} days</h3>
-      <small style={{ color: 'var(--color-text-secondary)', marginTop: -12 }}>
-        Furthest off target first. Hover a line for each save and who made it.
-      </small>
+    // Payload's widget-card chrome, like the built-in and Schedule widgets;
+    // max-height: none because widget-card caps height for list rows.
+    <div className="card widget-card" style={{ display: 'grid', gap: 20, maxHeight: 'none' }}>
+      <div className="widget-card__header">
+        <h3 className="widget-card__title">Menu tracking</h3>
+      </div>
       {rows.map(({ location, atLocation }) => (
         <section key={location.id} style={{ display: 'grid', gap: 8 }}>
           <h4 style={{ margin: 0 }}>{location.name}</h4>
@@ -152,8 +183,7 @@ export async function MenuTargetHistory({ req }: WidgetServerProps) {
         </section>
       ))}
       <small style={{ color: 'var(--color-text-secondary)' }}>
-        Solid line is items on the menu (green when on target), dashed is the target. Shading marks
-        the gap: yellow at 1 off, one step redder per extra item, red at 6+, over or under.
+        Solid: items. Dashed: target. Hover for each save.
       </small>
     </div>
   )
@@ -337,7 +367,7 @@ function MenuChart({
           <span>Today</span>
         </div>
       </div>
-      <small style={{ color: 'var(--color-text-secondary)' }}>On target {share}% of the time</small>
+      <small style={{ color: 'var(--color-text-secondary)' }}>{share}% on target</small>
     </div>
   )
 }
