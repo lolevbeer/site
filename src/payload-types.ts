@@ -1125,7 +1125,7 @@ export interface Distributor {
    */
   phone?: string | null;
   /**
-   * Website URL
+   * Website URL, starting with http:// or https://
    */
   website?: string | null;
   /**

@@ -68,7 +68,6 @@ export const Distributors: CollectionConfig = {
     {
       name: 'region',
       type: 'select',
-      defaultValue: 'PA',
       options: [...US_STATES],
       index: true,
       admin: {
@@ -94,8 +93,11 @@ export const Distributors: CollectionConfig = {
     {
       name: 'website',
       type: 'text',
+      // Enforced here, not only in the CSV parser, so admin edits obey it too
+      validate: (value: string | null | undefined) =>
+        !value || /^https?:\/\//i.test(value) || 'Website must start with http:// or https://',
       admin: {
-        description: 'Website URL',
+        description: 'Website URL, starting with http:// or https://',
       },
     },
     {

@@ -32,6 +32,28 @@ describe('US_STATES', () => {
   })
 })
 
+describe('Distributors collection', () => {
+  async function field(name: string) {
+    const { Distributors } = await import('@/src/collections/Distributors')
+    return Distributors.fields.find((f) => 'name' in f && f.name === name) as {
+      defaultValue?: unknown
+      validate?: (value: unknown) => true | string
+    }
+  }
+
+  it('rejects a website without http(s) on every write path, and allows blank', async () => {
+    const { validate } = await field('website')
+    expect(validate!('www.example.com')).toMatch(/http/)
+    expect(validate!('https://example.com')).toBe(true)
+    expect(validate!('')).toBe(true)
+    expect(validate!(null)).toBe(true)
+  })
+
+  it('has no default region, so a manual entry must pick its state', async () => {
+    expect((await field('region')).defaultValue).toBeUndefined()
+  })
+})
+
 describe('CUSTOMER_TYPES', () => {
   it('validates stored values, not admin labels', () => {
     expect(CUSTOMER_TYPES.map((t) => t.value)).toEqual(['Retail', 'On Premise', 'Home-D'])
@@ -201,7 +223,6 @@ vi.mock('@/src/endpoints/auth-helper', () => ({
 }))
 const geocode = vi.fn()
 vi.mock('@/src/endpoints/geocode', () => ({ geocode: (...a: unknown[]) => geocode(...a) }))
-vi.mock('@/src/utils/async', () => ({ sleep: vi.fn(async () => undefined) }))
 
 const admin: User = {
   id: 'admin-id',

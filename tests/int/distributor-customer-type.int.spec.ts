@@ -119,7 +119,6 @@ describe('applyExistingDistributorPatch', () => {
   it('geocodes and writes location when the address changes', async () => {
     const update = vi.fn().mockResolvedValue({})
     const geocode = vi.fn().mockResolvedValue([-80, 40.4] as [number, number])
-    const sleep = vi.fn().mockResolvedValue(undefined)
     const patch = { address: '2 Main' }
     await applyExistingDistributorPatch({
       payload: { update } as never,
@@ -134,10 +133,8 @@ describe('applyExistingDistributorPatch', () => {
       patch,
       name: 'Store',
       geocode,
-      sleep,
     })
     expect(geocode).toHaveBeenCalled()
-    expect(sleep).toHaveBeenCalledWith(1100)
     expect(update).toHaveBeenCalledWith(
       expect.objectContaining({
         collection: 'distributors',

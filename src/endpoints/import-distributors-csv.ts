@@ -14,7 +14,6 @@ import type { Distributor } from '@/src/payload-types'
 import { getUserFromRequest } from './auth-helper'
 import { isAdmin } from '@/src/access/roles'
 import { geocode } from './geocode'
-import { sleep } from '@/src/utils/async'
 import { createSSEResponse } from '@/src/utils/sse-response'
 import {
   distributorImportPatch,
@@ -119,7 +118,6 @@ export const importDistributorsCsv: PayloadHandler = async (req) => {
             patch,
             name,
             geocode,
-            sleep,
           })
           report('success', `Updated: "${row.name}" (${Object.keys(patch).join(', ')})`)
           if (result.warning) details.push(result.warning)
@@ -128,7 +126,6 @@ export const importDistributorsCsv: PayloadHandler = async (req) => {
         }
 
         const location = await geocode(formatFullAddress(row))
-        await sleep(1100)
         if (!location) {
           report('error', `Error: Could not geocode "${name}" (line ${line}); not created`)
           errors++

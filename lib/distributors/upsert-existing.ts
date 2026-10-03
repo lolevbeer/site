@@ -21,9 +21,8 @@ export async function applyExistingDistributorPatch(args: {
   patch: DistributorImportPatch
   name: string
   geocode: (address: string) => Promise<[number, number] | null>
-  sleep: (ms: number) => Promise<void>
 }): Promise<{ geocodeFailed: boolean; warning?: string }> {
-  const { payload, user, current, patch, name, geocode, sleep } = args
+  const { payload, user, current, patch, name, geocode } = args
   let geocodeFailed = false
   if (addressFieldsChanged(patch)) {
     const full = formatFullAddress({
@@ -33,7 +32,6 @@ export async function applyExistingDistributorPatch(args: {
       zip: patch.zip ?? current.zip,
     })
     const coords = await geocode(full)
-    await sleep(1100)
     if (coords) patch.location = coords
     else geocodeFailed = true
   }

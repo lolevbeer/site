@@ -23,8 +23,6 @@ vi.mock('@/src/endpoints/geocode', () => ({
   geocodeFallback: vi.fn(async () => null),
 }))
 
-vi.mock('@/src/utils/async', () => ({ sleep: vi.fn(async () => undefined) }))
-
 vi.mock('@/src/utils/untappd', () => ({
   fetchUntappdData: vi.fn(async () => ({ rating: 4.1, ratingCount: 10, positiveReviews: [] })),
 }))

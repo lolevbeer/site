@@ -16,9 +16,11 @@
  * WV intentionally reuses the Pittsburgh point — the West Virginia accounts are
  * all in the Pittsburgh trade area.
  */
-export const DEFAULT_REGION_COORDS: Record<string, [number, number]> = {
+import type { StateCode } from '@/lib/distributors/fields'
+
+export const DEFAULT_REGION_COORDS = {
   PA: [-79.9959, 40.4406], // Pittsburgh
   OH: [-82.9988, 39.9612], // Columbus
   NY: [-77.6109, 43.1566], // Rochester area
   WV: [-79.9959, 40.4406], // Use Pittsburgh for WV too
-}
+} satisfies Partial<Record<StateCode, [number, number]>>

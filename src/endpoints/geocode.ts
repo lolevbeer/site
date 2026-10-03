@@ -1,8 +1,30 @@
+import { sleep } from '@/src/utils/async'
+
 const GEOCODIO_API_KEY = process.env.GEOCODIO_API_KEY || ''
 const BING_MAPS_API_KEY = process.env.BING_MAPS_API_KEY || ''
 
+/**
+ * Nominatim allows one request per second. Every Nominatim call in the app goes
+ * through here, so the importers and the re-geocode pass need no sleeps of
+ * their own, and a caller that spends time between requests (database writes,
+ * fallback providers) waits only for whatever is left of the interval.
+ *
+ * ponytail: per-process timestamp; concurrent imports in separate serverless
+ * instances are not coordinated. Add a shared store if imports ever run in parallel.
+ */
+const NOMINATIM_INTERVAL_MS = 1100
+let nominatimReadyAt = 0
+
+async function waitForNominatimSlot(): Promise<void> {
+  const now = Date.now()
+  const wait = nominatimReadyAt - now
+  nominatimReadyAt = Math.max(now, nominatimReadyAt) + NOMINATIM_INTERVAL_MS
+  if (wait > 0) await sleep(wait)
+}
+
 // Nominatim geocoding (free, rate limited 1 req/sec)
 async function geocodeWithNominatim(address: string): Promise<[number, number] | null> {
+  await waitForNominatimSlot()
   const encoded = encodeURIComponent(address)
   const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encoded}&limit=1&countrycodes=us`
 
@@ -107,7 +129,7 @@ export async function geocode(address: string): Promise<[number, number] | null>
 export async function geocodeFallback(
   city: string,
   state: string,
-  zip: string
+  zip: string,
 ): Promise<GeocodeResult | null> {
   // Try zip code first (more specific)
   if (zip && zip.length === 5) {
