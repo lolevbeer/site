@@ -21,5 +21,9 @@ export function stockTimeline(revisions: Revision[], end: number) {
   return { segments, onTargetShare: total > 0 ? onTarget / total : 0 }
 }
 
+/** Rows with a product selected; empty rows are saved but hidden on the public menu. */
+export const stockedCount = (items: { product?: unknown }[] | null | undefined) =>
+  items?.filter((it) => it.product != null).length ?? 0
+
 /** 'ok' on target, 'near' off by 1–2, 'far' off by 3+. */
 export const severity = (diff: number) => (diff === 0 ? 'ok' : Math.abs(diff) <= 2 ? 'near' : 'far')

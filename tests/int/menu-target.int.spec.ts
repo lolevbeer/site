@@ -4,7 +4,7 @@
  */
 import { describe, expect, it } from 'vitest'
 
-import { severity, stockTimeline } from '@/lib/utils/menu-target'
+import { severity, stockedCount, stockTimeline } from '@/lib/utils/menu-target'
 
 const h = (n: number) => `2026-10-01T${String(n).padStart(2, '0')}:00:00.000Z`
 
@@ -24,6 +24,13 @@ describe('stockTimeline', () => {
 
   it('handles no revisions', () => {
     expect(stockTimeline([], Date.parse(h(1))).onTargetShare).toBe(0)
+  })
+})
+
+describe('stockedCount', () => {
+  it('skips rows with no product, which the public menu hides', () => {
+    expect(stockedCount([{ product: 'a' }, { product: null }, { product: 'b' }])).toBe(2)
+    expect(stockedCount(undefined)).toBe(0)
   })
 })
 

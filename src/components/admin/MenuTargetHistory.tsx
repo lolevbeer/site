@@ -9,7 +9,7 @@
 import type { WidgetServerProps } from 'payload'
 
 import { getESTMidnightISO, getTodayEST } from '@/lib/utils/date'
-import { severity, stockTimeline } from '@/lib/utils/menu-target'
+import { severity, stockedCount, stockTimeline } from '@/lib/utils/menu-target'
 import { addDays } from '@/lib/utils/schedule-heatmap'
 import { relationshipId } from '@/src/utils/relationship-id'
 
@@ -97,7 +97,7 @@ export async function MenuTargetHistory({ req }: WidgetServerProps) {
                   ...versions.docs.filter((v) => v.parent === menu.id),
                 ].map((v) => ({
                   updatedAt: v.updatedAt,
-                  items: v.version.items?.length ?? 0,
+                  items: stockedCount(v.version.items),
                   target: v.version.targetItemCount,
                 })),
                 end,
