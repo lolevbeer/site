@@ -8,6 +8,7 @@ import {
   type SSEData,
   type ProgressData,
   type ImportLogEntry,
+  type UseSSEImportOptions,
 } from '@/lib/hooks/use-sse-import'
 import { logger } from '@/lib/utils/logger'
 
@@ -53,6 +54,44 @@ interface RegeocodeResults {
   distributors?: RegeocodeDistributor[]
 }
 
+/**
+ * Result handling shared by the CSV upload cards: the `complete` event carries
+ * the counts, and a JSON error or thrown fetch error becomes a one-error result.
+ * `region` is only the label in the results banner title.
+ */
+function csvUploadOptions(region: string): UseSSEImportOptions<DistributorImportResult> {
+  const failed = (message: string): DistributorImportResult => ({
+    region,
+    imported: 0,
+    updated: 0,
+    skipped: 0,
+    errors: 1,
+    details: [message],
+  })
+  return {
+    getResults: (data) => ({
+      region,
+      imported: (data.imported as number) || 0,
+      updated: (data.updated as number) || 0,
+      skipped: (data.skipped as number) || 0,
+      errors: (data.errors as number) || 0,
+      details: (data.details as string[]) || [],
+    }),
+    onJSON: (data, _response, { setResults }) => {
+      // 400s carry per-line parse errors in `details`; show them all
+      const lines = data.details as string[] | undefined
+      setResults(
+        lines?.length
+          ? { ...failed(String(data.error || 'Upload failed')), details: lines }
+          : failed(String(data.error || 'Upload failed')),
+      )
+    },
+    onException: (error, { setResults }) => {
+      setResults(failed(error instanceof Error ? error.message : 'Upload failed'))
+    },
+  }
+}
+
 // No props: SyncView.tsx already gates this view to admins server-side.
 export const SyncViewClient: React.FC = () => {
   // Distributor import state
@@ -76,36 +115,11 @@ export const SyncViewClient: React.FC = () => {
 
   // Lake Beverage CSV import state
   const lakeInputRef = useRef<HTMLInputElement>(null)
-  const lake = useSSEImport<DistributorImportResult>({
-    getResults: (data) => ({
-      region: 'NY',
-      imported: (data.imported as number) || 0,
-      updated: (data.updated as number) || 0,
-      skipped: (data.skipped as number) || 0,
-      errors: (data.errors as number) || 0,
-      details: (data.details as string[]) || [],
-    }),
-    onJSON: (data, _response, { setResults }) => {
-      setResults({
-        region: 'NY',
-        imported: 0,
-        updated: 0,
-        skipped: 0,
-        errors: 1,
-        details: [String(data.error || 'Upload failed')],
-      })
-    },
-    onException: (error, { setResults }) => {
-      setResults({
-        region: 'NY',
-        imported: 0,
-        updated: 0,
-        skipped: 0,
-        errors: 1,
-        details: [error instanceof Error ? error.message : 'Upload failed'],
-      })
-    },
-  })
+  const lake = useSSEImport<DistributorImportResult>(csvUploadOptions('NY'))
+
+  // Distributor CSV upload (any state; format spec: public/distributor-csv-import.md)
+  const csvInputRef = useRef<HTMLInputElement>(null)
+  const distCsv = useSSEImport<DistributorImportResult>(csvUploadOptions('CSV'))
 
   // Recalculate beer fields state
   const [recalcDryRun, setRecalcDryRun] = useState(true)
@@ -274,6 +288,19 @@ export const SyncViewClient: React.FC = () => {
     }
   }
 
+  const handleDistributorCsvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const formData = new FormData()
+    formData.append('file', file)
+    await distCsv.run('/api/import-distributors-csv', { body: formData })
+
+    if (csvInputRef.current) {
+      csvInputRef.current.value = ''
+    }
+  }
+
   const handleLakeBeverageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -417,6 +444,69 @@ export const SyncViewClient: React.FC = () => {
                   details={dist.results.details}
                 />
               )}
+
+              {/* Distributor CSV Upload (any state) */}
+              <div className="sync-view__subsection">
+                <h3 className="sync-view__subsection-title">Distributor CSV (any state)</h3>
+                <p className="sync-view__description sync-view__description--small">
+                  Required columns: name, address, city, state (two-letter code, DC allowed).
+                  Optional: zip, phone, region, customerType, website, active. Map coordinates are
+                  looked up automatically.{' '}
+                  <a href="/distributor-csv-import.md" download>
+                    Download the format spec
+                  </a>{' '}
+                  and hand it to an agent to convert raw sales data into this CSV.
+                </p>
+
+                <div className="sync-view__controls">
+                  <input
+                    ref={csvInputRef}
+                    type="file"
+                    accept=".csv"
+                    onChange={handleDistributorCsvUpload}
+                    disabled={distCsv.running}
+                    style={{ display: 'none' }}
+                    id="distributor-csv-upload"
+                  />
+                  <Button
+                    onClick={() => csvInputRef.current?.click()}
+                    disabled={distCsv.running}
+                    buttonStyle="secondary"
+                  >
+                    {distCsv.running ? 'Importing...' : 'Upload CSV'}
+                  </Button>
+                </div>
+
+                {distCsv.progress && <ImportProgress progress={distCsv.progress} />}
+
+                {distCsv.results && (
+                  <ImportResultsBanner
+                    title="CSV Import Results"
+                    isError={
+                      distCsv.results.errors > 0 &&
+                      distCsv.results.imported === 0 &&
+                      distCsv.results.updated === 0
+                    }
+                    stats={[
+                      { count: distCsv.results.imported, label: 'imported', pillStyle: 'success' },
+                      {
+                        count: distCsv.results.updated ?? 0,
+                        label: 'updated',
+                        pillStyle: 'success',
+                        hideWhenZero: true,
+                      },
+                      { count: distCsv.results.skipped, label: 'skipped', pillStyle: 'light' },
+                      {
+                        count: distCsv.results.errors,
+                        label: 'errors',
+                        pillStyle: 'error',
+                        hideWhenZero: true,
+                      },
+                    ]}
+                    details={distCsv.results.details}
+                  />
+                )}
+              </div>
 
               {/* Lake Beverage CSV Upload */}
               <div className="sync-view__subsection">

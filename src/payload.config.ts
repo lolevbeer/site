@@ -34,6 +34,7 @@ import { SiteContent } from './globals/SiteContent'
 import { SiteSeo } from './globals/SiteSeo'
 import { importDistributors } from './endpoints/import-distributors'
 import { importLakeBeverageCSV } from './endpoints/import-lake-beverage-csv'
+import { importDistributorsCsv } from './endpoints/import-distributors-csv'
 import { updateDistributorUrls } from './endpoints/update-distributor-urls'
 import { recalculateBeerPrices } from './endpoints/recalculate-beer-prices'
 import { regeocodeDistributors } from './endpoints/regeocode-distributors'
@@ -282,6 +283,11 @@ export default buildConfig({
       path: '/import-lake-beverage-csv',
       method: 'post',
       handler: importLakeBeverageCSV,
+    },
+    {
+      path: '/import-distributors-csv',
+      method: 'post',
+      handler: importDistributorsCsv,
     },
     {
       path: '/update-distributor-urls',

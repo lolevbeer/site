@@ -123,7 +123,7 @@ file in that directory except `index.ts`; keep the recovery manifest in
 - **Recurring Food Exclusions** — Dates a recurring food slot does not run (system collection)
 - **Locations** — Brewery locations with hours
 - **Holiday Hours** — Holiday hour overrides
-- **Distributors** — Distribution partners with geocoded locations
+- **Distributors** — Distribution partners with geocoded locations, any US state or DC. Bulk-add them from the admin Sync page's "Distributor CSV" upload; the format (and instructions an agent can follow to convert raw sales data) is in [`public/distributor-csv-import.md`](public/distributor-csv-import.md)
 - **FAQs** — Frequently asked questions
 - **Media** — Image uploads (Vercel Blob storage)
 - **Users** — Admin users with role-based access

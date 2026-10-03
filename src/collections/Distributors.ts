@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import { adminAccess } from '@/src/access/roles'
+import { US_STATES } from '@/lib/distributors/states'
 
 export const Distributors: CollectionConfig = {
   slug: 'distributors',
@@ -72,15 +73,11 @@ export const Distributors: CollectionConfig = {
       name: 'region',
       type: 'select',
       defaultValue: 'PA',
-      options: [
-        { label: 'New York', value: 'NY' },
-        { label: 'Ohio', value: 'OH' },
-        { label: 'Pennsylvania', value: 'PA' },
-        { label: 'West Virginia', value: 'WV' },
-      ],
+      options: US_STATES.map(({ code, name }) => ({ label: name, value: code })),
       index: true,
       admin: {
-        description: 'Geographic region',
+        description:
+          'Geographic region (a US state or DC); the CSV import defaults it to the state',
       },
     },
     {
