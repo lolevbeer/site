@@ -153,8 +153,12 @@ export async function MenuTargetHistory({ req }: WidgetServerProps) {
   const timelines = new Map(data.timelines)
   const names = new Map(data.names)
   return (
-    <div className="card" style={{ display: 'grid', gap: 20, padding: 16 }}>
-      <h3 style={{ margin: 0 }}>Menu tracking</h3>
+    // Payload's widget-card chrome, like the built-in and Schedule widgets;
+    // max-height: none because widget-card caps height for list rows.
+    <div className="card widget-card" style={{ display: 'grid', gap: 20, maxHeight: 'none' }}>
+      <div className="widget-card__header">
+        <h3 className="widget-card__title">Menu tracking</h3>
+      </div>
       {rows.map(({ location, atLocation }) => (
         <section key={location.id} style={{ display: 'grid', gap: 8 }}>
           <h4 style={{ margin: 0 }}>{location.name}</h4>
