@@ -4,7 +4,7 @@
  */
 import { describe, expect, it } from 'vitest'
 
-import { severity, stockedCount, stockTimeline } from '@/lib/utils/menu-target'
+import { severity, stockedCount, stockTimeline, worstMiss } from '@/lib/utils/menu-target'
 
 const h = (n: number) => `2026-10-01T${String(n).padStart(2, '0')}:00:00.000Z`
 
@@ -19,8 +19,23 @@ describe('stockTimeline', () => {
       Date.parse(h(4)),
     )
     expect(segments.map((s) => s.diff)).toEqual([0, 3, 0])
-    expect(segments.map((s) => [s.items, s.target])).toEqual([[10, 10], [13, 10], [8, 8]])
+    expect(segments.map((s) => [s.items, s.target])).toEqual([
+      [10, 10],
+      [13, 10],
+      [8, 8],
+    ])
     expect(onTargetShare).toBe(0.5)
+  })
+
+  it('carries who saved each revision', () => {
+    const { segments } = stockTimeline(
+      [
+        { updatedAt: h(0), items: 10, target: 10, editor: 'u1' },
+        { updatedAt: h(1), items: 9, target: 10 },
+      ],
+      Date.parse(h(2)),
+    )
+    expect(segments.map((s) => s.editor)).toEqual(['u1', undefined])
   })
 
   it('handles no revisions', () => {
@@ -38,5 +53,13 @@ describe('stockedCount', () => {
 describe('severity', () => {
   it('treats over and under alike', () => {
     expect([0, 1, -2, 3, -5].map(severity)).toEqual(['ok', 'near', 'near', 'far', 'far'])
+  })
+})
+
+describe('worstMiss', () => {
+  it('ranks by distance from target, over or under alike', () => {
+    expect(worstMiss([-1, 6, 0])).toBe(6)
+    expect(worstMiss([-3, 2])).toBe(3)
+    expect(worstMiss([])).toBe(-1)
   })
 })

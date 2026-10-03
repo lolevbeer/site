@@ -3,13 +3,15 @@
  * step line of items on the menu across its saves in the last 90 days against
  * a dashed targetItemCount line (default 10). The item line is green on
  * target with gap shading one step redder per item off (yellow at 1, red at 6+); too many and too few count alike,
- * and each step's tooltip says which. Blank rows don't count. Reads locations, menus, and menu
+ * and each step's tooltip says which and who saved it. A dot marks today's
+ * count; locations are ordered by their worst current miss. Blank rows don't
+ * count. Reads locations, menus, and menu
  * version history under the viewer's access.
  */
 import type { WidgetServerProps } from 'payload'
 
 import { getESTMidnightISO, getTodayEST } from '@/lib/utils/date'
-import { severity, stockedCount, stockTimeline } from '@/lib/utils/menu-target'
+import { severity, stockedCount, stockTimeline, worstMiss } from '@/lib/utils/menu-target'
 import { addDays } from '@/lib/utils/schedule-heatmap'
 import { relationshipId } from '@/src/utils/relationship-id'
 
@@ -82,13 +84,62 @@ export async function MenuTargetHistory({ req }: WidgetServerProps) {
 
   // Window runs to the end of today; segments past now render as the current state.
   const end = Date.parse(getESTMidnightISO(addDays(getTodayEST(), 1)))
+  const timelines = new Map(
+    menus.docs.map((menu) => {
+      const first = opening.get(menu.id)
+      return [
+        menu.id,
+        stockTimeline(
+          [
+            ...(first ? [{ ...first, updatedAt: since }] : []),
+            ...versions.docs.filter((v) => v.parent === menu.id),
+          ].map((v) => ({
+            updatedAt: v.updatedAt,
+            items: stockedCount(v.version.items),
+            target: v.version.targetItemCount,
+            editor: v.version.updatedBy ? relationshipId(v.version.updatedBy) : undefined,
+          })),
+          end,
+        ),
+      ] as const
+    }),
+  )
+  const currentDiff = (menuId: string) => timelines.get(menuId)?.segments.at(-1)?.diff
+
+  // Who saved each revision, for tooltips; every signed-in user may read names.
+  const editorIds = [
+    ...new Set([...timelines.values()].flatMap((t) => t.segments.map((g) => g.editor))),
+  ].filter((id): id is string => Boolean(id))
+  const editors = editorIds.length
+    ? await payload.find({
+        collection: 'users',
+        where: { id: { in: editorIds } },
+        depth: 0,
+        limit: editorIds.length,
+        overrideAccess: false,
+        req,
+      })
+    : { docs: [] }
+  const editorName = new Map(editors.docs.map((u) => [u.id, u.name || u.email]))
+
+  // Locations ordered by their worst current miss, so the biggest problem leads.
+  const menusAt = (locationId: string) =>
+    menus.docs.filter((m) => relationshipId(m.location) === locationId)
+  const ordered = [...locations.docs].sort(
+    (a, b) =>
+      worstMiss(menusAt(b.id).map((m) => currentDiff(m.id) ?? 0)) -
+      worstMiss(menusAt(a.id).map((m) => currentDiff(m.id) ?? 0)),
+  )
   const W = 300
   const H = 96
 
   return (
     <div className="card" style={{ display: 'grid', gap: 20, padding: 16 }}>
       <h3 style={{ margin: 0 }}>Items vs target, last {DAYS} days</h3>
-      {locations.docs.map((location) => {
+      <small style={{ color: 'var(--color-text-secondary)', marginTop: -12 }}>
+        Furthest off target first. Hover a line for each save and who made it.
+      </small>
+      {ordered.map((location) => {
         const forType = (type: string) =>
           menus.docs.find((m) => m.type === type && relationshipId(m.location) === location.id)
         const columns = (['draft', 'cans'] as const).map((type) => [type, forType(type)] as const)
@@ -99,18 +150,7 @@ export async function MenuTargetHistory({ req }: WidgetServerProps) {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               {columns.map(([type, menu]) => {
                 if (!menu) return <div key={type} />
-                const first = opening.get(menu.id)
-                const { segments, onTargetShare } = stockTimeline(
-                  [
-                    ...(first ? [{ ...first, updatedAt: since }] : []),
-                    ...versions.docs.filter((v) => v.parent === menu.id),
-                  ].map((v) => ({
-                    updatedAt: v.updatedAt,
-                    items: stockedCount(v.version.items),
-                    target: v.version.targetItemCount,
-                  })),
-                  end,
-                )
+                const { segments, onTargetShare } = timelines.get(menu.id)!
                 const last = segments[segments.length - 1]
                 // Axis starts at this menu's first kept save, so pruned history isn't blank space.
                 const from = segments[0]?.start ?? end
@@ -175,72 +215,90 @@ export async function MenuTargetHistory({ req }: WidgetServerProps) {
                               </span>
                             ))}
                         </div>
-                        <svg
-                          viewBox={`0 0 ${W} ${H}`}
-                          width="100%"
-                          height={H}
-                          preserveAspectRatio="none"
-                          role="img"
-                          aria-label={`${label}: ${last.items} items, target ${last.target}, ${diffLabel(last.diff)}; on target ${Math.round(onTargetShare * 100)}% of the time`}
-                          style={{ overflow: 'visible' }}
-                        >
-                          {segments.map((g, i) =>
-                            g.diff === 0 ? null : (
+                        <div style={{ position: 'relative' }}>
+                          <svg
+                            viewBox={`0 0 ${W} ${H}`}
+                            width="100%"
+                            height={H}
+                            preserveAspectRatio="none"
+                            role="img"
+                            aria-label={`${label}: ${last.items} items, target ${last.target}, ${diffLabel(last.diff)}; on target ${Math.round(onTargetShare * 100)}% of the time`}
+                            style={{ overflow: 'visible' }}
+                          >
+                            {segments.map((g, i) =>
+                              g.diff === 0 ? null : (
+                                <rect
+                                  key={`gap${i}`}
+                                  x={x(g.start)}
+                                  width={x(g.end) - x(g.start)}
+                                  y={Math.min(y(g.items), y(g.target))}
+                                  height={Math.abs(y(g.items) - y(g.target))}
+                                  fill={gapFill(g.diff)}
+                                  fillOpacity={0.55}
+                                />
+                              ),
+                            )}
+                            <path
+                              d={step('target')}
+                              fill="none"
+                              stroke="var(--color-text-secondary)"
+                              strokeDasharray="4 3"
+                              vectorEffect="non-scaling-stroke"
+                            />
+                            <path
+                              d={step('items')}
+                              fill="none"
+                              stroke="var(--color-text)"
+                              strokeWidth={2}
+                              strokeLinejoin="round"
+                              vectorEffect="non-scaling-stroke"
+                            />
+                            {/* On-target stretches drawn green over the item line. */}
+                            {segments.map((g, i) =>
+                              g.diff === 0 ? (
+                                <line
+                                  key={`ok${i}`}
+                                  x1={x(g.start)}
+                                  x2={x(g.end)}
+                                  y1={y(g.items)}
+                                  y2={y(g.items)}
+                                  stroke="var(--color-bg-success)"
+                                  strokeWidth={3}
+                                  vectorEffect="non-scaling-stroke"
+                                />
+                              ) : null,
+                            )}
+                            {/* Full-height hit areas so hovering anywhere over a save shows it. */}
+                            {segments.map((g, i) => (
                               <rect
-                                key={`gap${i}`}
+                                key={`hit${i}`}
                                 x={x(g.start)}
-                                width={x(g.end) - x(g.start)}
-                                y={Math.min(y(g.items), y(g.target))}
-                                height={Math.abs(y(g.items) - y(g.target))}
-                                fill={gapFill(g.diff)}
-                                fillOpacity={0.55}
-                              />
-                            ),
-                          )}
-                          <path
-                            d={step('target')}
-                            fill="none"
-                            stroke="var(--color-text-secondary)"
-                            strokeDasharray="4 3"
-                            vectorEffect="non-scaling-stroke"
+                                width={Math.max(x(g.end) - x(g.start), 1)}
+                                y={0}
+                                height={H}
+                                fill="transparent"
+                              >
+                                <title>{`${new Date(g.start).toLocaleDateString()}: ${g.items} items, target ${g.target}, ${diffLabel(g.diff)}${g.editor && editorName.get(g.editor) ? ` · saved by ${editorName.get(g.editor)}` : ''}`}</title>
+                              </rect>
+                            ))}
+                          </svg>
+                          {/* Today's count, so the eye lands on now. */}
+                          <span
+                            aria-hidden
+                            style={{
+                              position: 'absolute',
+                              right: -5,
+                              top: y(last.items) - 5,
+                              width: 10,
+                              height: 10,
+                              borderRadius: '50%',
+                              background:
+                                last.diff === 0 ? 'var(--color-bg-success)' : gapFill(last.diff),
+                              boxShadow:
+                                '0 0 0 2px var(--color-bg-secondary), 0 0 0 3px var(--color-text)',
+                            }}
                           />
-                          <path
-                            d={step('items')}
-                            fill="none"
-                            stroke="var(--color-text)"
-                            strokeWidth={2}
-                            strokeLinejoin="round"
-                            vectorEffect="non-scaling-stroke"
-                          />
-                          {/* On-target stretches drawn green over the item line. */}
-                          {segments.map((g, i) =>
-                            g.diff === 0 ? (
-                              <line
-                                key={`ok${i}`}
-                                x1={x(g.start)}
-                                x2={x(g.end)}
-                                y1={y(g.items)}
-                                y2={y(g.items)}
-                                stroke="var(--color-bg-success)"
-                                strokeWidth={3}
-                                vectorEffect="non-scaling-stroke"
-                              />
-                            ) : null,
-                          )}
-                          {/* Full-height hit areas so hovering anywhere over a save shows it. */}
-                          {segments.map((g, i) => (
-                            <rect
-                              key={`hit${i}`}
-                              x={x(g.start)}
-                              width={Math.max(x(g.end) - x(g.start), 1)}
-                              y={0}
-                              height={H}
-                              fill="transparent"
-                            >
-                              <title>{`${new Date(g.start).toLocaleDateString()}: ${g.items} items, target ${g.target}, ${diffLabel(g.diff)}`}</title>
-                            </rect>
-                          ))}
-                        </svg>
+                        </div>
                         <div />
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                           <span>{new Date(segments[0].start).toLocaleDateString()}</span>

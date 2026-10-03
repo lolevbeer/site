@@ -7,8 +7,21 @@
  */
 export const DEFAULT_TARGET = 10
 
-export type Revision = { updatedAt: string; items: number; target: number | null | undefined }
-export type Segment = { start: number; end: number; items: number; target: number; diff: number }
+export type Revision = {
+  updatedAt: string
+  items: number
+  target: number | null | undefined
+  /** User ID of whoever saved it (menus' updatedBy), if known. */
+  editor?: string
+}
+export type Segment = {
+  start: number
+  end: number
+  items: number
+  target: number
+  diff: number
+  editor?: string
+}
 
 export function stockTimeline(revisions: Revision[], end: number) {
   const segments: Segment[] = revisions.map((r, i) => {
@@ -19,6 +32,7 @@ export function stockTimeline(revisions: Revision[], end: number) {
       items: r.items,
       target,
       diff: r.items - target,
+      editor: r.editor,
     }
   })
   const total = segments.reduce((s, g) => s + g.end - g.start, 0)
@@ -32,3 +46,6 @@ export const stockedCount = (items: { product?: unknown }[] | null | undefined) 
 
 /** 'ok' on target, 'near' off by 1–2, 'far' off by 3+. */
 export const severity = (diff: number) => (diff === 0 ? 'ok' : Math.abs(diff) <= 2 ? 'near' : 'far')
+
+/** Largest distance from target among `diffs` (-1 when empty), for worst-first ordering. */
+export const worstMiss = (diffs: number[]) => Math.max(-1, ...diffs.map(Math.abs))
