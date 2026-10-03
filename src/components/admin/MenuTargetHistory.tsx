@@ -2,7 +2,7 @@
  * Admin dashboard widget: per location, Draft and Cans side by side, each a
  * step line of items on the menu across its saves in the last 90 days against
  * a dashed targetItemCount line (default 10). The item line is green on
- * target with gap shading yellow off by 1–2, red off by 3+; too many and too few count alike,
+ * target with gap shading one step redder per item off (yellow at 1, red at 6+); too many and too few count alike,
  * and each step's tooltip says which. Blank rows don't count. Reads locations, menus, and menu
  * version history under the viewer's access.
  */
@@ -19,11 +19,11 @@ const COLORS = {
   near: 'var(--color-text-warning)',
   far: 'var(--color-text-danger)',
 }
-// Gap shading: yellow vs red reads as distinct where the text-tone amber didn't.
-const FILLS = {
-  ok: 'transparent',
-  near: 'var(--color-bg-warning)',
-  far: 'var(--color-bg-danger)',
+// Gap shading deepens one step per item off: yellow at 1, red at RED_AT+, over or under alike.
+const RED_AT = 6
+const gapFill = (diff: number) => {
+  const t = Math.min((Math.abs(diff) - 1) / (RED_AT - 1), 1)
+  return `color-mix(in oklab, var(--color-bg-danger) ${Math.round(t * 100)}%, var(--color-bg-warning))`
 }
 const TYPE_LABEL = { cans: 'Cans', draft: 'Draft' } as Record<string, string>
 
@@ -192,7 +192,7 @@ export async function MenuTargetHistory({ req }: WidgetServerProps) {
                                 width={x(g.end) - x(g.start)}
                                 y={Math.min(y(g.items), y(g.target))}
                                 height={Math.abs(y(g.items) - y(g.target))}
-                                fill={FILLS[severity(g.diff)]}
+                                fill={gapFill(g.diff)}
                                 fillOpacity={0.55}
                               />
                             ),
@@ -246,8 +246,8 @@ export async function MenuTargetHistory({ req }: WidgetServerProps) {
         )
       })}
       <small style={{ color: 'var(--color-text-secondary)' }}>
-        Solid line is items on the menu, dashed is the target. Shading marks the gap: yellow off by
-        1–2, red off by 3+, over or under.
+        Solid line is items on the menu, dashed is the target. Shading marks the gap: yellow at 1
+        off, one step redder per extra item, red at 6+, over or under.
       </small>
     </div>
   )
