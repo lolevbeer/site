@@ -1,9 +1,9 @@
 /**
  * Shared CSV parsing primitives for the data importers.
  *
- * The quote-aware line splitter lives here rather than in the Lake Beverage
- * file upload (`src/endpoints/import-lake-beverage-csv.ts`) that uses it, so a
- * fix to the quoting rules applies to every import path at once.
+ * The quote-aware line splitter used by the distributor CSV parser
+ * (`lib/distributors/parse-distributors-csv.ts`), kept here so a fix to the
+ * quoting rules applies to every import path at once.
  */
 
 /**

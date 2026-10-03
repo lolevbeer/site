@@ -33,7 +33,6 @@ import { RecurringFood } from './globals/RecurringFood'
 import { SiteContent } from './globals/SiteContent'
 import { SiteSeo } from './globals/SiteSeo'
 import { importDistributors } from './endpoints/import-distributors'
-import { importLakeBeverageCSV } from './endpoints/import-lake-beverage-csv'
 import { importDistributorsCsv } from './endpoints/import-distributors-csv'
 import { updateDistributorUrls } from './endpoints/update-distributor-urls'
 import { recalculateBeerPrices } from './endpoints/recalculate-beer-prices'
@@ -278,11 +277,6 @@ export default buildConfig({
       path: '/import-distributors',
       method: 'post',
       handler: importDistributors,
-    },
-    {
-      path: '/import-lake-beverage-csv',
-      method: 'post',
-      handler: importLakeBeverageCSV,
     },
     {
       path: '/import-distributors-csv',

@@ -1,17 +1,15 @@
 /**
  * Diff for distributor re-import. A field is only patched when the caller
- * passes it, so the Encompass and Lake Beverage importers (which have no
- * customer-type or website column) never touch those fields. Callers must not
+ * passes it, so the Encompass importer (which has no customer-type or
+ * website column) never touches those fields. Callers must not
  * set `active` or `customerType` on update unless the source file explicitly
  * provides them — the CSV importer passes them only for non-blank cells.
  */
-import type { StateCode } from './states'
+import type { CustomerType, StateCode } from './fields'
 
 const PATCH_STRINGS = ['address', 'city', 'state', 'zip', 'phone', 'website'] as const
 
 export type DistributorRegion = StateCode
-
-export type DistributorCustomerType = 'Retail' | 'On Premise' | 'Home-D'
 
 export type DistributorImportFields = {
   address?: string | null
@@ -20,7 +18,7 @@ export type DistributorImportFields = {
   zip?: string | null
   phone?: string | null
   website?: string | null
-  customerType?: DistributorCustomerType | null
+  customerType?: CustomerType | null
   region?: DistributorRegion | null
   active?: boolean | null
 }
@@ -32,7 +30,7 @@ export type DistributorImportPatch = Partial<{
   zip: string
   phone: string
   website: string
-  customerType: DistributorCustomerType
+  customerType: CustomerType
   region: DistributorRegion
   active: boolean
   location: [number, number]
@@ -47,7 +45,7 @@ export function distributorImportPatch(
     zip?: string
     phone?: string
     website?: string
-    customerType?: DistributorCustomerType
+    customerType?: CustomerType
     region?: DistributorRegion
     active?: boolean
   },

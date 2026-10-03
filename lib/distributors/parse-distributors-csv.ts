@@ -8,10 +8,13 @@
  * numbers in names, is rejected so the normalizer fixes it at the source.
  */
 import { parseCSVLine } from '@/src/utils/csv'
-import { isStateCode, type StateCode } from './states'
-
-export const CUSTOMER_TYPES = ['Retail', 'On Premise', 'Home-D'] as const
-export type CustomerType = (typeof CUSTOMER_TYPES)[number]
+import {
+  CUSTOMER_TYPES,
+  isCustomerType,
+  isStateCode,
+  type CustomerType,
+  type StateCode,
+} from './fields'
 
 export interface DistributorCsvRow {
   /** 1-based line in the file, for error messages. */
@@ -37,7 +40,7 @@ export interface DistributorCsvError {
 
 const REQUIRED = ['name', 'address', 'city', 'state'] as const
 
-export function formatPhone(raw: string): string {
+function formatPhone(raw: string): string {
   const digits = raw.replace(/\D/g, '')
   const ten = digits.length === 11 && digits[0] === '1' ? digits.slice(1) : digits
   if (ten.length === 10) return `(${ten.slice(0, 3)}) ${ten.slice(3, 6)}-${ten.slice(6)}`
@@ -71,8 +74,9 @@ function parseRow(
   }
 
   const typeCell = get('customertype')
-  if (typeCell && !(CUSTOMER_TYPES as readonly string[]).includes(typeCell)) {
-    return { error: `customerType "${typeCell}" must be one of: ${CUSTOMER_TYPES.join(', ')}` }
+  if (typeCell && !isCustomerType(typeCell)) {
+    const allowed = CUSTOMER_TYPES.map((t) => t.value).join(', ')
+    return { error: `customerType "${typeCell}" must be one of: ${allowed}` }
   }
 
   const website = get('website')

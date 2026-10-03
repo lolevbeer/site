@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import { adminAccess } from '@/src/access/roles'
-import { US_STATES } from '@/lib/distributors/states'
+import { CUSTOMER_TYPES, US_STATES } from '@/lib/distributors/fields'
 
 export const Distributors: CollectionConfig = {
   slug: 'distributors',
@@ -59,11 +59,7 @@ export const Distributors: CollectionConfig = {
     {
       name: 'customerType',
       type: 'select',
-      options: [
-        { label: 'Retail', value: 'Retail' },
-        { label: 'On Premise', value: 'On Premise' },
-        { label: 'Home Delivery', value: 'Home-D' },
-      ],
+      options: CUSTOMER_TYPES.map(({ value, label }) => ({ value, label })),
       index: true,
       admin: {
         description: 'Type of customer/location',

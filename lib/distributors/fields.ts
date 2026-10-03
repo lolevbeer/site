@@ -1,10 +1,28 @@
 /**
- * The 50 US states plus DC, as `[code, name]` pairs.
+ * Allowed values for the distributors collection's select fields.
  *
- * One list feeds the `distributors.region` select options, the
- * `DistributorRegion` type, and CSV validation (`parse-distributors-csv.ts`),
- * so a region the importer accepts is always one the collection can store.
+ * Each list feeds the collection's select options, the matching type, and the
+ * CSV parser's validation (`parse-distributors-csv.ts`), so a value the
+ * importer accepts is always one the collection can store.
  */
+
+/** `customerType` options: stored value and admin label. */
+export const CUSTOMER_TYPES = [
+  { value: 'Retail', label: 'Retail' },
+  { value: 'On Premise', label: 'On Premise' },
+  { value: 'Home-D', label: 'Home Delivery' },
+] as const
+
+export type CustomerType = (typeof CUSTOMER_TYPES)[number]['value']
+
+const CUSTOMER_TYPE_VALUES: ReadonlySet<string> = new Set(CUSTOMER_TYPES.map((t) => t.value))
+
+/** True for a stored `customerType` value (not its label). */
+export function isCustomerType(value: string): value is CustomerType {
+  return CUSTOMER_TYPE_VALUES.has(value)
+}
+
+/** `region` options: the 50 US states plus DC, as `[code, name]` pairs. */
 
 const STATE_ENTRIES = [
   ['AL', 'Alabama'],

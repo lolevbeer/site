@@ -41,7 +41,13 @@ export const importDistributorsCsv: PayloadHandler = async (req) => {
   if (rows.length === 0) {
     const details = parseErrors.map((e) => `Line ${e.line}: ${e.message}`)
     return Response.json(
-      { error: details[0] ?? 'No rows found in CSV', details, imported: 0, skipped: 0, errors: 1 },
+      {
+        error: details[0] ?? 'No rows found in CSV',
+        details,
+        imported: 0,
+        skipped: 0,
+        errors: Math.max(parseErrors.length, 1),
+      },
       { status: 400 },
     )
   }
@@ -82,8 +88,9 @@ export const importDistributorsCsv: PayloadHandler = async (req) => {
         percent: Math.round(((i + 1) / rows.length) * 100),
       })
 
-      const byName = byRegion.get(row.region)!
-      const matches = byName.get(row.name) ?? []
+      // The parser already rejects a repeated name within a region, so this
+      // index never needs updating as rows are created or patched.
+      const matches = byRegion.get(row.region)!.get(row.name) ?? []
       if (matches.length > 1) {
         report(
           'error',
@@ -120,7 +127,6 @@ export const importDistributorsCsv: PayloadHandler = async (req) => {
             geocode,
             sleep,
           })
-          byName.set(row.name, [{ ...current, ...patch } as Distributor])
           report('success', `Updated: "${row.name}" (${Object.keys(patch).join(', ')})`)
           if (result.warning) details.push(result.warning)
           updated++
@@ -135,7 +141,7 @@ export const importDistributorsCsv: PayloadHandler = async (req) => {
           continue
         }
 
-        const created = await payload.create({
+        await payload.create({
           collection: 'distributors',
           data: {
             name: row.name,
@@ -153,7 +159,6 @@ export const importDistributorsCsv: PayloadHandler = async (req) => {
           overrideAccess: false,
           user,
         })
-        byName.set(row.name, [created])
         report('success', `Imported: ${row.name}`)
         imported++
       } catch (error: unknown) {

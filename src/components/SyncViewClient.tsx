@@ -8,7 +8,6 @@ import {
   type SSEData,
   type ProgressData,
   type ImportLogEntry,
-  type UseSSEImportOptions,
 } from '@/lib/hooks/use-sse-import'
 import { logger } from '@/lib/utils/logger'
 
@@ -54,42 +53,9 @@ interface RegeocodeResults {
   distributors?: RegeocodeDistributor[]
 }
 
-/**
- * Result handling shared by the CSV upload cards: the `complete` event carries
- * the counts, and a JSON error or thrown fetch error becomes a one-error result.
- * `region` is only the label in the results banner title.
- */
-function csvUploadOptions(region: string): UseSSEImportOptions<DistributorImportResult> {
-  const failed = (message: string): DistributorImportResult => ({
-    region,
-    imported: 0,
-    updated: 0,
-    skipped: 0,
-    errors: 1,
-    details: [message],
-  })
-  return {
-    getResults: (data) => ({
-      region,
-      imported: (data.imported as number) || 0,
-      updated: (data.updated as number) || 0,
-      skipped: (data.skipped as number) || 0,
-      errors: (data.errors as number) || 0,
-      details: (data.details as string[]) || [],
-    }),
-    onJSON: (data, _response, { setResults }) => {
-      // 400s carry per-line parse errors in `details`; show them all
-      const lines = data.details as string[] | undefined
-      setResults(
-        lines?.length
-          ? { ...failed(String(data.error || 'Upload failed')), details: lines }
-          : failed(String(data.error || 'Upload failed')),
-      )
-    },
-    onException: (error, { setResults }) => {
-      setResults(failed(error instanceof Error ? error.message : 'Upload failed'))
-    },
-  }
+/** A failed CSV upload shown as a one-error result in the banner. */
+function csvUploadFailed(details: string[]): DistributorImportResult {
+  return { region: 'CSV', imported: 0, updated: 0, skipped: 0, errors: 1, details }
 }
 
 // No props: SyncView.tsx already gates this view to admins server-side.
@@ -113,13 +79,28 @@ export const SyncViewClient: React.FC = () => {
     }),
   })
 
-  // Lake Beverage CSV import state
-  const lakeInputRef = useRef<HTMLInputElement>(null)
-  const lake = useSSEImport<DistributorImportResult>(csvUploadOptions('NY'))
-
   // Distributor CSV upload (any state; format spec: public/distributor-csv-import.md)
   const csvInputRef = useRef<HTMLInputElement>(null)
-  const distCsv = useSSEImport<DistributorImportResult>(csvUploadOptions('CSV'))
+  const distCsv = useSSEImport<DistributorImportResult>({
+    getResults: (data) => ({
+      region: 'CSV',
+      imported: (data.imported as number) || 0,
+      updated: (data.updated as number) || 0,
+      skipped: (data.skipped as number) || 0,
+      errors: (data.errors as number) || 0,
+      details: (data.details as string[]) || [],
+    }),
+    // A 400 carries every per-line parse error in `details`
+    onJSON: (data, _response, { setResults }) => {
+      const details = data.details as string[] | undefined
+      setResults(
+        csvUploadFailed(details?.length ? details : [String(data.error || 'Upload failed')]),
+      )
+    },
+    onException: (error, { setResults }) => {
+      setResults(csvUploadFailed([error instanceof Error ? error.message : 'Upload failed']))
+    },
+  })
 
   // Recalculate beer fields state
   const [recalcDryRun, setRecalcDryRun] = useState(true)
@@ -298,19 +279,6 @@ export const SyncViewClient: React.FC = () => {
 
     if (csvInputRef.current) {
       csvInputRef.current.value = ''
-    }
-  }
-
-  const handleLakeBeverageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    const formData = new FormData()
-    formData.append('file', file)
-    await lake.run('/api/import-lake-beverage-csv', { body: formData })
-
-    if (lakeInputRef.current) {
-      lakeInputRef.current.value = ''
     }
   }
 
@@ -504,64 +472,6 @@ export const SyncViewClient: React.FC = () => {
                       },
                     ]}
                     details={distCsv.results.details}
-                  />
-                )}
-              </div>
-
-              {/* Lake Beverage CSV Upload */}
-              <div className="sync-view__subsection">
-                <h3 className="sync-view__subsection-title">Lake Beverage (NY)</h3>
-                <p className="sync-view__description sync-view__description--small">
-                  Upload CSV with columns: Retail Accounts, Address, City, Account #, State, Zip
-                  Code, Phone
-                </p>
-
-                <div className="sync-view__controls">
-                  <input
-                    ref={lakeInputRef}
-                    type="file"
-                    accept=".csv"
-                    onChange={handleLakeBeverageUpload}
-                    disabled={lake.running}
-                    style={{ display: 'none' }}
-                    id="lake-csv-upload"
-                  />
-                  <Button
-                    onClick={() => lakeInputRef.current?.click()}
-                    disabled={lake.running}
-                    buttonStyle="secondary"
-                  >
-                    {lake.running ? 'Importing...' : 'Upload CSV'}
-                  </Button>
-                </div>
-
-                {lake.progress && <ImportProgress progress={lake.progress} />}
-
-                {lake.results && (
-                  <ImportResultsBanner
-                    title="NY Import Results"
-                    isError={
-                      lake.results.errors > 0 &&
-                      lake.results.imported === 0 &&
-                      lake.results.updated === 0
-                    }
-                    stats={[
-                      { count: lake.results.imported, label: 'imported', pillStyle: 'success' },
-                      {
-                        count: lake.results.updated ?? 0,
-                        label: 'updated',
-                        pillStyle: 'success',
-                        hideWhenZero: true,
-                      },
-                      { count: lake.results.skipped, label: 'skipped', pillStyle: 'light' },
-                      {
-                        count: lake.results.errors,
-                        label: 'errors',
-                        pillStyle: 'error',
-                        hideWhenZero: true,
-                      },
-                    ]}
-                    details={lake.results.details}
                   />
                 )}
               </div>

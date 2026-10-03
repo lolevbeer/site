@@ -8,7 +8,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { PayloadRequest } from 'payload'
 import type { User } from '@/src/payload-types'
-import { US_STATES, isStateCode } from '@/lib/distributors/states'
+import { CUSTOMER_TYPES, US_STATES, isCustomerType, isStateCode } from '@/lib/distributors/fields'
 import { parseDistributorsCsv } from '@/lib/distributors/parse-distributors-csv'
 
 describe('US_STATES', () => {
@@ -29,6 +29,14 @@ describe('US_STATES', () => {
     expect(isStateCode('XX')).toBe(false)
     expect(isStateCode('va')).toBe(false)
     expect(isStateCode('')).toBe(false)
+  })
+})
+
+describe('CUSTOMER_TYPES', () => {
+  it('validates stored values, not admin labels', () => {
+    expect(CUSTOMER_TYPES.map((t) => t.value)).toEqual(['Retail', 'On Premise', 'Home-D'])
+    expect(isCustomerType('Home-D')).toBe(true)
+    expect(isCustomerType('Home Delivery')).toBe(false)
   })
 })
 
@@ -251,6 +259,16 @@ describe('importDistributorsCsv endpoint', () => {
     const res = await handler(req)
     expect(res.status).toBe(401)
     expect(payload.create).not.toHaveBeenCalled()
+  })
+
+  it('reports how many lines failed when no row is valid', async () => {
+    const handler = await load()
+    const res = await handler(csvReq('name,address,city,state\nA,,X,VA\nB,,Y,VA\n', admin).req)
+    expect(res.status).toBe(400)
+    expect(await res.json()).toMatchObject({
+      errors: 2,
+      details: [expect.any(String), expect.any(String)],
+    })
   })
 
   it('400s when no file is uploaded or the header is unusable', async () => {
