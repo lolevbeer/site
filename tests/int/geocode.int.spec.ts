@@ -18,6 +18,33 @@ describe('server-side geocoding provider fallbacks', () => {
     vi.unstubAllEnvs()
   })
 
+  it('spaces Nominatim requests 1.1s apart, counting time already spent', async () => {
+    vi.useFakeTimers()
+    try {
+      const sent: number[] = []
+      vi.stubGlobal(
+        'fetch',
+        vi.fn<typeof fetch>(async () => {
+          sent.push(Date.now())
+          return jsonResponse([{ lon: '-79.9', lat: '40.4' }])
+        }),
+      )
+      const { geocode } = await import('@/src/endpoints/geocode')
+
+      await geocode('a') // first request goes out immediately
+      await vi.advanceTimersByTimeAsync(400) // caller spends 400ms on other work
+      const second = geocode('b')
+      await vi.advanceTimersByTimeAsync(699)
+      expect(sent).toHaveLength(1) // still inside the 1.1s window
+      await vi.advanceTimersByTimeAsync(1)
+      await second
+      expect(sent).toHaveLength(2)
+      expect(sent[1] - sent[0]).toBe(1100) // waited only the remaining 700ms
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   it('uses Geocodio when Nominatim cannot geocode the address', async () => {
     const fetchMock = vi
       .fn<typeof fetch>()

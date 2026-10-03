@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import { adminAccess } from '@/src/access/roles'
+import { CUSTOMER_TYPES, US_STATES } from '@/lib/distributors/fields'
 
 export const Distributors: CollectionConfig = {
   slug: 'distributors',
@@ -58,11 +59,7 @@ export const Distributors: CollectionConfig = {
     {
       name: 'customerType',
       type: 'select',
-      options: [
-        { label: 'Retail', value: 'Retail' },
-        { label: 'On Premise', value: 'On Premise' },
-        { label: 'Home Delivery', value: 'Home-D' },
-      ],
+      options: [...CUSTOMER_TYPES],
       index: true,
       admin: {
         description: 'Type of customer/location',
@@ -71,16 +68,11 @@ export const Distributors: CollectionConfig = {
     {
       name: 'region',
       type: 'select',
-      defaultValue: 'PA',
-      options: [
-        { label: 'New York', value: 'NY' },
-        { label: 'Ohio', value: 'OH' },
-        { label: 'Pennsylvania', value: 'PA' },
-        { label: 'West Virginia', value: 'WV' },
-      ],
+      options: [...US_STATES],
       index: true,
       admin: {
-        description: 'Geographic region',
+        description:
+          'Geographic region (a US state or DC); the CSV import defaults it to the state',
       },
     },
     {
@@ -101,8 +93,11 @@ export const Distributors: CollectionConfig = {
     {
       name: 'website',
       type: 'text',
+      // Enforced here, not only in the CSV parser, so admin edits obey it too
+      validate: (value: string | null | undefined) =>
+        !value || /^https?:\/\//i.test(value) || 'Website must start with http:// or https://',
       admin: {
-        description: 'Website URL',
+        description: 'Website URL, starting with http:// or https://',
       },
     },
     {

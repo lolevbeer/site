@@ -1,12 +1,15 @@
 /**
- * Diff for distributor re-import. Type is ignored — the Encompass feed has no
- * customer-type column, and we do not infer one. Callers must not set `active`
- * on update unless the feed is explicitly the source of truth for visibility.
+ * Diff for distributor re-import. A field is only patched when the caller
+ * passes it, so the Encompass importer (which has no customer-type or
+ * website column) never touches those fields. Callers must not
+ * set `active` or `customerType` on update unless the source file explicitly
+ * provides them — the CSV importer passes them only for non-blank cells.
  */
+import type { CustomerType, StateCode } from './fields'
 
-const PATCH_STRINGS = ['address', 'city', 'state', 'zip', 'phone'] as const
+const PATCH_STRINGS = ['address', 'city', 'state', 'zip', 'phone', 'website'] as const
 
-export type DistributorRegion = 'NY' | 'OH' | 'PA' | 'WV'
+export type DistributorRegion = StateCode
 
 export type DistributorImportFields = {
   address?: string | null
@@ -14,6 +17,8 @@ export type DistributorImportFields = {
   state?: string | null
   zip?: string | null
   phone?: string | null
+  website?: string | null
+  customerType?: CustomerType | null
   region?: DistributorRegion | null
   active?: boolean | null
 }
@@ -24,6 +29,8 @@ export type DistributorImportPatch = Partial<{
   state: string
   zip: string
   phone: string
+  website: string
+  customerType: CustomerType
   region: DistributorRegion
   active: boolean
   location: [number, number]
@@ -37,6 +44,8 @@ export function distributorImportPatch(
     state?: string
     zip?: string
     phone?: string
+    website?: string
+    customerType?: CustomerType
     region?: DistributorRegion
     active?: boolean
   },
@@ -47,6 +56,9 @@ export function distributorImportPatch(
     const incoming = (next[field] ?? '').trim()
     const previous = (current[field] || '').trim()
     if (incoming !== previous) patch[field] = incoming
+  }
+  if (next.customerType !== undefined && next.customerType !== current.customerType) {
+    patch.customerType = next.customerType
   }
   if (next.region !== undefined) {
     const incoming = next.region

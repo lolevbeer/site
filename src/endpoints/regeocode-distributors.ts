@@ -2,19 +2,16 @@ import type { PayloadHandler } from 'payload'
 import type { Distributor } from '@/src/payload-types'
 import { getUserFromRequest } from './auth-helper'
 import { geocodeAddress, geocodeFallback } from './geocode'
-import { sleep } from '@/src/utils/async'
 import { createSSEResponse } from '@/src/utils/sse-response'
 import { DEFAULT_REGION_COORDS } from '@/src/utils/distributor-region-coords'
-
-// Default coordinates used as fallbacks during import — the same table the
-// importers write, so a record parked on a fallback point is detectable here
-const DEFAULT_COORDS = DEFAULT_REGION_COORDS
 
 // Tolerance for matching (about 10 meters)
 const COORD_TOLERANCE = 0.0001
 
 function isSuspiciousCoordinate(location: [number, number], region: string): boolean {
-  const defaultCoord = DEFAULT_COORDS[region]
+  // Same table the importer writes, so a record parked on a fallback point is detectable here
+  const defaultCoord: [number, number] | undefined =
+    DEFAULT_REGION_COORDS[region as keyof typeof DEFAULT_REGION_COORDS]
   if (!defaultCoord) return false
 
   return (
@@ -25,7 +22,7 @@ function isSuspiciousCoordinate(location: [number, number], region: string): boo
 
 export const regeocodeDistributors: PayloadHandler = async (req) => {
   const { payload } = req
-  const user = req.user ?? await getUserFromRequest(req, payload)
+  const user = req.user ?? (await getUserFromRequest(req, payload))
 
   if (!user || !user.roles?.includes('admin')) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
@@ -170,9 +167,6 @@ export const regeocodeDistributors: PayloadHandler = async (req) => {
         send('item', { type: 'error', ...result })
         failed++
       }
-
-      // Rate limit requests to stay within Nominatim's usage limits
-      await sleep(600)
     }
 
     send('complete', {

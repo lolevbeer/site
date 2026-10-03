@@ -2,13 +2,9 @@ import type { PayloadHandler } from 'payload'
 import type { SiteContent } from '@/src/payload-types'
 import { getUserFromRequest } from './auth-helper'
 import { geocode } from './geocode'
-import { sleep } from '@/src/utils/async'
 import { createSSEResponse } from '@/src/utils/sse-response'
 import { DEFAULT_REGION_COORDS } from '@/src/utils/distributor-region-coords'
-import {
-  distributorImportPatch,
-  indexDocsByName,
-} from '@/lib/distributors/import-patch'
+import { distributorImportPatch, indexDocsByName } from '@/lib/distributors/import-patch'
 import { applyExistingDistributorPatch } from '@/lib/distributors/upsert-existing'
 import type { Distributor } from '@/src/payload-types'
 
@@ -137,10 +133,6 @@ async function fetchDistributors(url: string): Promise<FetchResult> {
   }
 }
 
-// Default coordinates for each region (shared with the re-geocoding endpoint,
-// which finds these records again by matching against the same table)
-const DEFAULT_COORDS = DEFAULT_REGION_COORDS
-
 export const importDistributors: PayloadHandler = async (req) => {
   const { payload } = req
   const user = req.user ?? (await getUserFromRequest(req, payload))
@@ -254,7 +246,6 @@ export const importDistributors: PayloadHandler = async (req) => {
             patch,
             name: row.CustomerName,
             geocode,
-            sleep,
           })
           byName.set(row.CustomerName, [{ ...current, ...patch } as Distributor])
           const msg = `Updated: "${row.CustomerName}" (${Object.keys(patch).join(', ')})`
@@ -274,7 +265,7 @@ export const importDistributors: PayloadHandler = async (req) => {
 
       const fullAddress = `${parsed.street}, ${parsed.city}, ${parsed.state} ${parsed.zip}`.trim()
       const coords = await geocode(fullAddress)
-      const location = coords || DEFAULT_COORDS[regionUpper]
+      const location = coords || DEFAULT_REGION_COORDS[regionUpper]
 
       try {
         const created = await payload.create({
@@ -304,8 +295,6 @@ export const importDistributors: PayloadHandler = async (req) => {
         send('item', { type: 'error', message: msg })
         errors++
       }
-
-      await sleep(1100)
     }
 
     if (skipped > 0) {

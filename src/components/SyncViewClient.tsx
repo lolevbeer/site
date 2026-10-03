@@ -53,6 +53,18 @@ interface RegeocodeResults {
   distributors?: RegeocodeDistributor[]
 }
 
+/** Read a CSV upload's counts from an SSE `complete` or JSON error payload; missing counts are 0. */
+function csvUploadResult(data: SSEData): DistributorImportResult {
+  return {
+    region: 'CSV',
+    imported: (data.imported as number) || 0,
+    updated: (data.updated as number) || 0,
+    skipped: (data.skipped as number) || 0,
+    errors: (data.errors as number) || 0,
+    details: (data.details as string[]) || [],
+  }
+}
+
 // No props: SyncView.tsx already gates this view to admins server-side.
 export const SyncViewClient: React.FC = () => {
   // Distributor import state
@@ -74,36 +86,24 @@ export const SyncViewClient: React.FC = () => {
     }),
   })
 
-  // Lake Beverage CSV import state
-  const lakeInputRef = useRef<HTMLInputElement>(null)
-  const lake = useSSEImport<DistributorImportResult>({
-    getResults: (data) => ({
-      region: 'NY',
-      imported: (data.imported as number) || 0,
-      updated: (data.updated as number) || 0,
-      skipped: (data.skipped as number) || 0,
-      errors: (data.errors as number) || 0,
-      details: (data.details as string[]) || [],
-    }),
+  // Distributor CSV upload (any state; format spec: public/distributor-csv-import.md)
+  const csvInputRef = useRef<HTMLInputElement>(null)
+  const distCsv = useSSEImport<DistributorImportResult>({
+    getResults: csvUploadResult,
+    // A 400 carries the real `errors` count and every per-line parse error in `details`
     onJSON: (data, _response, { setResults }) => {
-      setResults({
-        region: 'NY',
-        imported: 0,
-        updated: 0,
-        skipped: 0,
-        errors: 1,
-        details: [String(data.error || 'Upload failed')],
-      })
+      const details = data.details as string[] | undefined
+      setResults(
+        csvUploadResult({
+          errors: 1,
+          ...data,
+          details: details?.length ? details : [String(data.error || 'Upload failed')],
+        }),
+      )
     },
     onException: (error, { setResults }) => {
-      setResults({
-        region: 'NY',
-        imported: 0,
-        updated: 0,
-        skipped: 0,
-        errors: 1,
-        details: [error instanceof Error ? error.message : 'Upload failed'],
-      })
+      const message = error instanceof Error ? error.message : 'Upload failed'
+      setResults(csvUploadResult({ errors: 1, details: [message] }))
     },
   })
 
@@ -274,16 +274,16 @@ export const SyncViewClient: React.FC = () => {
     }
   }
 
-  const handleLakeBeverageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDistributorCsvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
     const formData = new FormData()
     formData.append('file', file)
-    await lake.run('/api/import-lake-beverage-csv', { body: formData })
+    await distCsv.run('/api/import-distributors-csv', { body: formData })
 
-    if (lakeInputRef.current) {
-      lakeInputRef.current.value = ''
+    if (csvInputRef.current) {
+      csvInputRef.current.value = ''
     }
   }
 
@@ -418,60 +418,65 @@ export const SyncViewClient: React.FC = () => {
                 />
               )}
 
-              {/* Lake Beverage CSV Upload */}
+              {/* Distributor CSV Upload (any state) */}
               <div className="sync-view__subsection">
-                <h3 className="sync-view__subsection-title">Lake Beverage (NY)</h3>
+                <h3 className="sync-view__subsection-title">Distributor CSV (any state)</h3>
                 <p className="sync-view__description sync-view__description--small">
-                  Upload CSV with columns: Retail Accounts, Address, City, Account #, State, Zip
-                  Code, Phone
+                  Required columns: name, address, city, state (two-letter code, DC allowed).
+                  Optional: zip, phone, region, customerType, website, active. Map coordinates are
+                  looked up automatically.{' '}
+                  <a href="/distributor-csv-import.md" download>
+                    Download the format spec
+                  </a>{' '}
+                  and hand it to an agent to convert raw sales data into this CSV.
                 </p>
 
                 <div className="sync-view__controls">
                   <input
-                    ref={lakeInputRef}
+                    ref={csvInputRef}
                     type="file"
                     accept=".csv"
-                    onChange={handleLakeBeverageUpload}
-                    disabled={lake.running}
+                    onChange={handleDistributorCsvUpload}
+                    disabled={distCsv.running}
                     style={{ display: 'none' }}
-                    id="lake-csv-upload"
+                    id="distributor-csv-upload"
                   />
                   <Button
-                    onClick={() => lakeInputRef.current?.click()}
-                    disabled={lake.running}
+                    onClick={() => csvInputRef.current?.click()}
+                    disabled={distCsv.running}
                     buttonStyle="secondary"
                   >
-                    {lake.running ? 'Importing...' : 'Upload CSV'}
+                    {distCsv.running ? 'Importing...' : 'Upload CSV'}
                   </Button>
                 </div>
 
-                {lake.progress && <ImportProgress progress={lake.progress} />}
+                {distCsv.progress && <ImportProgress progress={distCsv.progress} />}
 
-                {lake.results && (
+                {distCsv.results && (
                   <ImportResultsBanner
-                    title="NY Import Results"
+                    title="CSV Import Results"
                     isError={
-                      lake.results.errors > 0 &&
-                      lake.results.imported === 0 &&
-                      lake.results.updated === 0
+                      distCsv.results.errors > 0 &&
+                      distCsv.results.imported === 0 &&
+                      distCsv.results.updated === 0
                     }
                     stats={[
-                      { count: lake.results.imported, label: 'imported', pillStyle: 'success' },
+                      { count: distCsv.results.imported, label: 'imported', pillStyle: 'success' },
                       {
-                        count: lake.results.updated ?? 0,
+                        count: distCsv.results.updated ?? 0,
                         label: 'updated',
                         pillStyle: 'success',
                         hideWhenZero: true,
                       },
-                      { count: lake.results.skipped, label: 'skipped', pillStyle: 'light' },
+                      { count: distCsv.results.skipped, label: 'skipped', pillStyle: 'light' },
                       {
-                        count: lake.results.errors,
+                        count: distCsv.results.errors,
                         label: 'errors',
                         pillStyle: 'error',
                         hideWhenZero: true,
                       },
                     ]}
-                    details={lake.results.details}
+                    details={distCsv.results.details}
                   />
                 )}
               </div>

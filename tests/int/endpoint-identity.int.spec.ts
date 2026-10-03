@@ -23,8 +23,6 @@ vi.mock('@/src/endpoints/geocode', () => ({
   geocodeFallback: vi.fn(async () => null),
 }))
 
-vi.mock('@/src/utils/async', () => ({ sleep: vi.fn(async () => undefined) }))
-
 vi.mock('@/src/utils/untappd', () => ({
   fetchUntappdData: vi.fn(async () => ({ rating: 4.1, ratingCount: 10, positiveReviews: [] })),
 }))
@@ -166,22 +164,22 @@ const cases: Case[] = [
     ops: ['findGlobal', 'find', 'update', 'create'],
   },
   {
-    name: 'import-lake-beverage-csv',
+    name: 'import-distributors-csv',
     load: async () =>
-      (await import('@/src/endpoints/import-lake-beverage-csv')).importLakeBeverageCSV,
+      (await import('@/src/endpoints/import-distributors-csv')).importDistributorsCsv,
     findDocs: [{ ...suspiciousPA, region: 'NY', state: 'NY', address: 'Old St', phone: '' }],
-    url: 'http://localhost/api/lake',
+    url: 'http://localhost/api/csv',
     extra: {
-      formData: async () => ({
-        get: () => ({
-          text: async () =>
-            [
-              'Name,Address,City,County,State,Zip,Phone',
-              'Store,1 Main,Rochester,Monroe,NY,14604,',
-              'New Place,2 Oak,Rochester,Monroe,NY,14604,',
-            ].join('\n'),
-        }),
-      }),
+      formData: async () => {
+        const form = new FormData()
+        const csv = [
+          'name,address,city,state,zip',
+          'Store,1 Main,Rochester,NY,14604',
+          'New Place,2 Oak,Rochester,NY,14604',
+        ].join('\n')
+        form.set('file', new File([csv], 'd.csv'))
+        return form
+      },
     } as unknown as Partial<PayloadRequest>,
     ops: ['find', 'update', 'create'],
   },
