@@ -1,6 +1,16 @@
+/**
+ * Pure helpers behind the admin schedule heatmap widget: grid layout,
+ * per-year recurring slot projection, month header spans, and booking dedupe.
+ */
 import { describe, expect, it } from 'vitest'
 
-import { buildHeatmapWeeks, monthSpans, slotDatesInRange } from '@/lib/utils/schedule-heatmap'
+import {
+  buildHeatmapWeeks,
+  dedupeSchedule,
+  monthSpans,
+  slotDatesInRange,
+  type ScheduleRow,
+} from '@/lib/utils/schedule-heatmap'
 
 describe('buildHeatmapWeeks', () => {
   it('lays out Sunday-first week columns of dates', () => {
@@ -38,5 +48,36 @@ describe('monthSpans', () => {
       { label: 'Sep', span: 1 },
       { label: 'Oct', span: 5 },
     ])
+  })
+})
+
+describe('dedupeSchedule', () => {
+  const food = (name: string, vendor: string, recurring?: true): ScheduleRow => ({
+    day: '2026-10-10',
+    kind: 'food',
+    name,
+    location: 'loc-1',
+    vendor,
+    ...(recurring && { recurring }),
+  })
+
+  it('collapses a one-off that confirms a recurring slot by vendor id, keeping the one-off', () => {
+    // Vendor renamed after the one-off was saved: names differ, id matches.
+    const rows = dedupeSchedule([food('Old Name', 'v1'), food('New Name', 'v1', true)])
+    expect(rows).toEqual([food('Old Name', 'v1')])
+  })
+
+  it('keeps two different vendors that share a name on the same day', () => {
+    expect(dedupeSchedule([food('Tacos', 'v1'), food('Tacos', 'v2')])).toHaveLength(2)
+  })
+
+  it('matches events on location + day + organizer, case-insensitively', () => {
+    const event = (name: string): ScheduleRow => ({
+      day: '2026-10-10',
+      kind: 'event',
+      name,
+      location: 'loc-1',
+    })
+    expect(dedupeSchedule([event('Trivia'), event(' trivia ')])).toHaveLength(1)
   })
 })

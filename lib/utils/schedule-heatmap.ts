@@ -11,8 +11,36 @@ export const PAGES_AHEAD = 1
 /** What a day has booked; drives the cell color. */
 export type DayKind = 'none' | 'event' | 'food' | 'both'
 
-/** One booking on one EST day, as sent from the server to the client grid. */
-export type ScheduleRow = { day: string; kind: 'event' | 'food'; name: string; location: string }
+/**
+ * One booking on one EST day, as sent from the server to the client grid.
+ * `vendor` is the food vendor id (food identity, as on the public site);
+ * `recurring` marks rows expanded from a rule rather than a stored document.
+ */
+export type ScheduleRow = {
+  day: string
+  kind: 'event' | 'food'
+  name: string
+  location: string
+  vendor?: string
+  recurring?: true
+}
+
+/**
+ * Drop repeat bookings, keeping the first (pass one-offs before recurring
+ * rows): a one-off can confirm a recurring slot. Food matches on location +
+ * day + vendor id, like the public /food page; events on location + day +
+ * organizer, like mergeScheduledEvents, but by EST day.
+ */
+export function dedupeSchedule(rows: ScheduleRow[]): ScheduleRow[] {
+  const seen = new Set<string>()
+  return rows.filter((r) => {
+    const who = r.kind === 'food' && r.vendor ? r.vendor : r.name.trim().toLowerCase()
+    const key = `${r.kind}|${r.location}|${r.day}|${who}`
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 

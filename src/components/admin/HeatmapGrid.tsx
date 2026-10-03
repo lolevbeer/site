@@ -3,7 +3,8 @@
  * Client grid for the ScheduleHeatmap widget. Receives booking rows from the
  * server and renders only the visible 16-month window, with Payload's Select
  * (location filter) and ghost Buttons (‹ › paging; the range label returns to
- * today). Cell color is booking status: red nothing, orange event without
+ * today). Each day links to its filtered list, or to the recurring rules when
+ * only rules book it. Cell color is booking status: red nothing, orange event without
  * food, yellow food only, green both.
  */
 import { Button, ChevronIcon, Select } from '@payloadcms/ui'
@@ -31,8 +32,26 @@ const LEGEND: { kind: DayKind; label: string }[] = [
 ]
 const plural = (n: number, one: string, many: string) => (n === 1 ? one : many)
 
-type Day = { events: string[]; food: string[] }
-const EMPTY: Day = { events: [], food: [] }
+/** Names booked on one day, and whether any came from a stored document. */
+type Day = { events: string[]; food: string[]; eventDoc: boolean; foodDoc: boolean }
+type Cell = { date: string; kind: DayKind; label: string; href: string }
+
+/** Cell color from what the day has booked. */
+function dayKind(d: Day | undefined): DayKind {
+  if (!d) return 'none'
+  if (d.events.length && d.food.length) return 'both'
+  return d.events.length ? 'event' : d.food.length ? 'food' : 'none'
+}
+
+/** Hover text, e.g. "2026-10-10: 2 events (A, B), 1 food (C)". */
+function dayLabel(date: string, d: Day | undefined): string {
+  const parts = [
+    d?.events.length &&
+      `${d.events.length} ${plural(d.events.length, 'event', 'events')} (${d.events.join(', ')})`,
+    d?.food.length && `${d.food.length} food (${d.food.join(', ')})`,
+  ].filter(Boolean)
+  return `${date}: ${parts.length ? parts.join(', ') : 'nothing scheduled'}`
+}
 
 export function HeatmapGrid({
   rows,
@@ -49,7 +68,8 @@ export function HeatmapGrid({
   today: string
   canEvents: boolean
   canFood: boolean
-  listURLs: Record<ScheduleRow['kind'], string>
+  /** Day lists for stored docs; `recurring*` for days booked only by a rule. */
+  listURLs: { event: string; food: string; recurringEvent: string; recurringFood: string }
 }) {
   const [page, setPage] = useState(PAGES_BACK)
   const [location, setLocation] = useState('')
@@ -58,16 +78,53 @@ export function HeatmapGrid({
     const map = new Map<string, Day>()
     for (const r of rows) {
       if (location && r.location !== location) continue
-      const day = map.get(r.day) ?? { events: [], food: [] }
-      ;(r.kind === 'event' ? day.events : day.food).push(r.name || 'Untitled')
+      const day = map.get(r.day) ?? { events: [], food: [], eventDoc: false, foodDoc: false }
+      if (r.kind === 'event') {
+        day.events.push(r.name || 'Untitled')
+        day.eventDoc ||= !r.recurring
+      } else {
+        day.food.push(r.name || 'Untitled')
+        day.foodDoc ||= !r.recurring
+      }
       map.set(r.day, day)
     }
     return map
   }, [rows, location])
 
-  const weeks = buildHeatmapWeeks(addDays(firstSunday, page * WEEKS * 7), WEEKS)
+  const weeks = useMemo(
+    () => buildHeatmapWeeks(addDays(firstSunday, page * WEEKS * 7), WEEKS),
+    [firstSunday, page],
+  )
   const from = weeks[0][0]
   const through = weeks[WEEKS - 1][6]
+
+  // Computed once per page/location: ~490 cells, two EST conversions each.
+  const cells = useMemo(
+    () =>
+      weeks.map((week) =>
+        week.map((date): Cell => {
+          const d = byDay.get(date)
+          // Event list when the day has events (or nothing), else food. Days
+          // booked only by recurring rules have no dated docs, so they open
+          // the rule list instead of an empty filtered list.
+          const isEvent = Boolean(d?.events.length) || !d?.food.length
+          const hasDoc = isEvent ? d?.eventDoc : d?.foodDoc
+          const params = new URLSearchParams({
+            'where[date][greater_than_equal]': getESTMidnightISO(date),
+            'where[date][less_than]': getESTMidnightISO(addDays(date, 1)),
+          })
+          if (location) params.set('where[location][equals]', location)
+          const href =
+            d && !hasDoc
+              ? isEvent
+                ? listURLs.recurringEvent
+                : listURLs.recurringFood
+              : `${isEvent ? listURLs.event : listURLs.food}?${params}`
+          return { date, kind: dayKind(d), label: dayLabel(date, d), href }
+        }),
+      ),
+    [weeks, byDay, location, listURLs],
+  )
   let eventCount = 0
   let foodCount = 0
   for (const [day, d] of byDay) {
@@ -155,28 +212,8 @@ export function HeatmapGrid({
             <span role="rowheader" className="schedule-heatmap__dow">
               {d % 2 ? dow : ''}
             </span>
-            {weeks.map((week) => {
-              const date = week[d]
-              const { events, food } = byDay.get(date) ?? EMPTY
-              const kind: DayKind =
-                events.length && food.length
-                  ? 'both'
-                  : events.length
-                    ? 'event'
-                    : food.length
-                      ? 'food'
-                      : 'none'
-              const parts = [
-                events.length &&
-                  `${events.length} ${plural(events.length, 'event', 'events')} (${events.join(', ')})`,
-                food.length && `${food.length} food (${food.join(', ')})`,
-              ].filter(Boolean)
-              const label = `${date}: ${parts.length ? parts.join(', ') : 'nothing scheduled'}`
-              const list = events.length || !food.length ? listURLs.event : listURLs.food
-              const href = `${list}?${new URLSearchParams({
-                'where[date][greater_than_equal]': getESTMidnightISO(date),
-                'where[date][less_than]': getESTMidnightISO(addDays(date, 1)),
-              })}`
+            {cells.map((week) => {
+              const { date, kind, label, href } = week[d]
               return (
                 <a
                   role="gridcell"
