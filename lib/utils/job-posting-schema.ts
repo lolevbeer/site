@@ -36,7 +36,7 @@ const EMPLOYMENT_TYPES: Record<string, string> = {
 
 /**
  * Returns null when Google would reject the posting: the location has no street/city
- * (an empty PostalAddress is invalid), the description is empty, or `closesOn` has passed (the page stays up until
+ * (an empty PostalAddress is invalid) or `closesOn` has passed (the page stays up until
  * an editor unticks Active, but the expired posting must not keep being advertised).
  */
 // ponytail: no baseSalary; the CMS has no pay fields. Google recommends it, so add pay fields to Jobs when wanted.

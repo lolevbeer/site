@@ -18,7 +18,6 @@ export interface PublicJob {
   title: string
   slug: string
   summary: string
-  /** Lexical editor state; null when the editor left it empty. */
   description: Job['description'] | null
   employmentType: string
   locationName: string

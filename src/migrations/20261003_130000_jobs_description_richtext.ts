@@ -40,10 +40,13 @@ export function plainTextToLexical(text: string) {
     root: {
       type: 'root',
       version: 1,
-      direction: 'ltr' as const,
-      format: '' as const,
+      direction: 'ltr',
+      format: '',
       indent: 0,
-      children: blocks.map((block) => paragraph(block.split('\n').map((l) => l.trim()))),
+      // Lexical throws on a root with no children, so blank input becomes one empty paragraph.
+      children: blocks.length
+        ? blocks.map((block) => paragraph(block.split('\n').map((l) => l.trim())))
+        : [paragraph([])],
     },
   }
 }

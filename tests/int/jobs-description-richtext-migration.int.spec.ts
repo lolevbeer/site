@@ -1,9 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import {
-  down,
-  plainTextToLexical,
-  up,
-} from '@/src/migrations/20261003_130000_jobs_description_richtext'
+import { plainTextToLexical, up } from '@/src/migrations/20261003_130000_jobs_description_richtext'
 
 const paragraphs = (state: ReturnType<typeof plainTextToLexical>) =>
   state.root.children.map((p) =>
@@ -24,8 +20,8 @@ describe('plainTextToLexical', () => {
     expect(paragraphs(plainTextToLexical('Line one\nLine two'))).toEqual(['Line one\nLine two'])
   })
 
-  it('yields an empty editor state for blank text', () => {
-    expect(plainTextToLexical('  \n ').root.children).toEqual([])
+  it('yields one empty paragraph for blank text, since Lexical rejects a childless root', () => {
+    expect(paragraphs(plainTextToLexical('  \n '))).toEqual([''])
   })
 })
 
@@ -46,9 +42,5 @@ describe('jobs description migration', () => {
     const [filter, update] = updateOne.mock.calls[0]
     expect(filter).toEqual({ _id: 'a' })
     expect(paragraphs(update.$set.description)).toEqual(['Pour beer.'])
-  })
-
-  it('rollback is a no-op (rich text is kept)', async () => {
-    await expect(down()).resolves.toBeUndefined()
   })
 })

@@ -74,7 +74,7 @@ export default async function JobPage({ params }: JobPageProps) {
         {job.description ? (
           <RichText
             data={job.description}
-            className="text-pretty mb-10 space-y-4 [&_h1]:text-2xl [&_h2]:text-xl [&_h3]:text-lg [&_h1]:font-semibold [&_h2]:font-semibold [&_h3]:font-semibold [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-6 [&_ol]:pl-6 [&_a]:underline"
+            className="text-pretty mb-10 space-y-4 [&_h1]:text-2xl [&_h2]:text-xl [&_h3]:text-lg [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-6 [&_ol]:pl-6 [&_a]:underline"
           />
         ) : null}
         <h2 className="text-2xl font-semibold text-center mb-6">Apply</h2>
