@@ -2,7 +2,7 @@
  * Admin dashboard widget: per location, Draft and Cans side by side, each a
  * step line of items on the menu across its saves in the last 90 days against
  * a dashed targetItemCount line (default 10). The item line is green on
- * target, amber off by 1–2, red off by 3+; too many and too few count alike,
+ * target with gap shading yellow off by 1–2, red off by 3+; too many and too few count alike,
  * and each step's tooltip says which. Blank rows don't count. Reads locations, menus, and menu
  * version history under the viewer's access.
  */
@@ -18,6 +18,12 @@ const COLORS = {
   ok: 'var(--color-text-success)',
   near: 'var(--color-text-warning)',
   far: 'var(--color-text-danger)',
+}
+// Gap shading: yellow vs red reads as distinct where the text-tone amber didn't.
+const FILLS = {
+  ok: 'transparent',
+  near: 'var(--color-bg-warning)',
+  far: 'var(--color-bg-danger)',
 }
 const TYPE_LABEL = { cans: 'Cans', draft: 'Draft' } as Record<string, string>
 
@@ -77,7 +83,7 @@ export async function MenuTargetHistory({ req }: WidgetServerProps) {
   // Window runs to the end of today; segments past now render as the current state.
   const end = Date.parse(getESTMidnightISO(addDays(getTodayEST(), 1)))
   const W = 300
-  const H = 80
+  const H = 96
 
   return (
     <div className="card" style={{ display: 'grid', gap: 20, padding: 16 }}>
@@ -109,12 +115,27 @@ export async function MenuTargetHistory({ req }: WidgetServerProps) {
                 // Axis starts at this menu's first kept save, so pruned history isn't blank space.
                 const from = segments[0]?.start ?? end
                 const x = (t: number) => ((t - from) / Math.max(end - from, 1)) * W
-                const top = Math.max(...segments.flatMap((g) => [g.items, g.target]), 1) + 2
-                const y = (n: number) => H - (n / top) * H
+                // Y spans the data around the target, padded by 1, so small misses are visible.
+                const values = segments.flatMap((g) => [g.items, g.target])
+                const lo = Math.max(0, Math.min(...values) - 1)
+                const hi = Math.max(...values) + 1
+                const y = (n: number) => H - ((n - lo) / Math.max(hi - lo, 1)) * H
                 const label = `${location.name} ${TYPE_LABEL[type]}`
+                // One continuous step path for items and one for the target.
+                const step = (key: 'items' | 'target') =>
+                  segments
+                    .map((g, i) => `${i ? 'V' : 'M' + x(g.start) + ' '}${y(g[key])} H${x(g.end)}`)
+                    .join(' ')
                 return (
                   <div key={type}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        gap: 8,
+                        marginBottom: 10,
+                      }}
+                    >
                       <strong>{TYPE_LABEL[type]}</strong>
                       {last && (
                         <span>
@@ -126,59 +147,96 @@ export async function MenuTargetHistory({ req }: WidgetServerProps) {
                       )}
                     </div>
                     {last ? (
-                      <svg
-                        viewBox={`0 0 ${W} ${H}`}
-                        width="100%"
-                        height={H}
-                        preserveAspectRatio="none"
-                        role="img"
-                        aria-label={`${label}: ${last.items} items, target ${last.target}, ${diffLabel(last.diff)}; on target ${Math.round(onTargetShare * 100)}% of the last ${DAYS} days`}
-                        style={{ background: 'var(--color-bg-secondary)', borderRadius: 3 }}
+                      <div
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: '1.5em 1fr',
+                          columnGap: 4,
+                          rowGap: 6,
+                          fontSize: 11,
+                          color: 'var(--color-text-secondary)',
+                        }}
                       >
-                        {segments.map((g, i) => {
-                          const next = segments[i + 1]
-                          return (
-                            <g key={i}>
-                              <line
-                                x1={x(g.start)}
-                                x2={x(g.end)}
-                                y1={y(g.target)}
-                                y2={y(g.target)}
-                                stroke="var(--color-text-secondary)"
-                                strokeDasharray="4 3"
-                                vectorEffect="non-scaling-stroke"
-                              />
-                              <line
-                                x1={x(g.start)}
-                                x2={x(g.end)}
-                                y1={y(g.items)}
-                                y2={y(g.items)}
-                                stroke={COLORS[severity(g.diff)]}
-                                strokeWidth={2.5}
-                                vectorEffect="non-scaling-stroke"
+                        <div style={{ position: 'relative', height: H }}>
+                          {[hi, last.target, lo]
+                            .filter((n) => n === last.target || Math.abs(n - last.target) >= 2)
+                            .map((n) => (
+                              <span
+                                key={n}
+                                style={{
+                                  position: 'absolute',
+                                  right: 0,
+                                  top: y(n),
+                                  transform: 'translateY(-50%)',
+                                  fontWeight: n === last.target ? 600 : undefined,
+                                }}
                               >
-                                <title>{`${new Date(g.start).toLocaleDateString()}: ${g.items} items, ${diffLabel(g.diff)}`}</title>
-                              </line>
-                              {next && (
-                                <line
-                                  x1={x(g.end)}
-                                  x2={x(g.end)}
-                                  y1={y(g.items)}
-                                  y2={y(next.items)}
-                                  stroke="var(--color-border)"
-                                  vectorEffect="non-scaling-stroke"
-                                />
-                              )}
-                            </g>
-                          )
-                        })}
-                      </svg>
+                                {n}
+                              </span>
+                            ))}
+                        </div>
+                        <svg
+                          viewBox={`0 0 ${W} ${H}`}
+                          width="100%"
+                          height={H}
+                          preserveAspectRatio="none"
+                          role="img"
+                          aria-label={`${label}: ${last.items} items, target ${last.target}, ${diffLabel(last.diff)}; on target ${Math.round(onTargetShare * 100)}% of the time`}
+                          style={{ overflow: 'visible' }}
+                        >
+                          {segments.map((g, i) =>
+                            g.diff === 0 ? null : (
+                              <rect
+                                key={`gap${i}`}
+                                x={x(g.start)}
+                                width={x(g.end) - x(g.start)}
+                                y={Math.min(y(g.items), y(g.target))}
+                                height={Math.abs(y(g.items) - y(g.target))}
+                                fill={FILLS[severity(g.diff)]}
+                                fillOpacity={0.55}
+                              />
+                            ),
+                          )}
+                          <path
+                            d={step('target')}
+                            fill="none"
+                            stroke="var(--color-text-secondary)"
+                            strokeDasharray="4 3"
+                            vectorEffect="non-scaling-stroke"
+                          />
+                          <path
+                            d={step('items')}
+                            fill="none"
+                            stroke="var(--color-text)"
+                            strokeWidth={2}
+                            strokeLinejoin="round"
+                            vectorEffect="non-scaling-stroke"
+                          />
+                          {/* Full-height hit areas so hovering anywhere over a save shows it. */}
+                          {segments.map((g, i) => (
+                            <rect
+                              key={`hit${i}`}
+                              x={x(g.start)}
+                              width={Math.max(x(g.end) - x(g.start), 1)}
+                              y={0}
+                              height={H}
+                              fill="transparent"
+                            >
+                              <title>{`${new Date(g.start).toLocaleDateString()}: ${g.items} items, target ${g.target}, ${diffLabel(g.diff)}`}</title>
+                            </rect>
+                          ))}
+                        </svg>
+                        <div />
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span>{new Date(segments[0].start).toLocaleDateString()}</span>
+                          <span>Today</span>
+                        </div>
+                      </div>
                     ) : (
                       <small>No saves yet</small>
                     )}
                     <small style={{ color: 'var(--color-text-secondary)' }}>
-                      {Math.round(onTargetShare * 100)}% of the time on target since{' '}
-                      {new Date(segments[0]?.start ?? end).toLocaleDateString()}
+                      On target {Math.round(onTargetShare * 100)}% of the time
                     </small>
                   </div>
                 )
@@ -188,8 +246,8 @@ export async function MenuTargetHistory({ req }: WidgetServerProps) {
         )
       })}
       <small style={{ color: 'var(--color-text-secondary)' }}>
-        Dashed line is the target. Item line: green on target, amber off by 1–2, red off by 3+ (over
-        or under).
+        Solid line is items on the menu, dashed is the target. Shading marks the gap: yellow off by
+        1–2, red off by 3+, over or under.
       </small>
     </div>
   )
