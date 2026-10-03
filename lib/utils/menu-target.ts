@@ -8,14 +8,19 @@
 export const DEFAULT_TARGET = 10
 
 export type Revision = { updatedAt: string; items: number; target: number | null | undefined }
-export type Segment = { start: number; end: number; diff: number }
+export type Segment = { start: number; end: number; items: number; target: number; diff: number }
 
 export function stockTimeline(revisions: Revision[], end: number) {
-  const segments: Segment[] = revisions.map((r, i) => ({
-    start: Date.parse(r.updatedAt),
-    end: i + 1 < revisions.length ? Date.parse(revisions[i + 1].updatedAt) : end,
-    diff: r.items - (r.target ?? DEFAULT_TARGET),
-  }))
+  const segments: Segment[] = revisions.map((r, i) => {
+    const target = r.target ?? DEFAULT_TARGET
+    return {
+      start: Date.parse(r.updatedAt),
+      end: i + 1 < revisions.length ? Date.parse(revisions[i + 1].updatedAt) : end,
+      items: r.items,
+      target,
+      diff: r.items - target,
+    }
+  })
   const total = segments.reduce((s, g) => s + g.end - g.start, 0)
   const onTarget = segments.reduce((s, g) => s + (g.diff === 0 ? g.end - g.start : 0), 0)
   return { segments, onTargetShare: total > 0 ? onTarget / total : 0 }

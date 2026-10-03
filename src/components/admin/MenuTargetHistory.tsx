@@ -1,9 +1,9 @@
 /**
- * Admin dashboard widget: per location, one row per cans/draft menu showing
- * how much of the last 90 days it was stocked at its targetItemCount (default
- * 10). The strip is a time-proportional timeline of its revisions: green on
+ * Admin dashboard widget: per location, Draft and Cans side by side, each a
+ * step line of items on the menu across its saves in the last 90 days against
+ * a dashed targetItemCount line (default 10). The item line is green on
  * target, amber off by 1–2, red off by 3+; too many and too few count alike,
- * and each segment's tooltip says which. Reads locations, menus, and menu
+ * and each step's tooltip says which. Blank rows don't count. Reads locations, menus, and menu
  * version history under the viewer's access.
  */
 import type { WidgetServerProps } from 'payload'
@@ -15,9 +15,9 @@ import { relationshipId } from '@/src/utils/relationship-id'
 
 const DAYS = 90
 const COLORS = {
-  ok: 'var(--theme-success-500)',
-  near: 'var(--theme-warning-500)',
-  far: 'var(--theme-error-500)',
+  ok: 'var(--color-text-success)',
+  near: 'var(--color-text-warning)',
+  far: 'var(--color-text-danger)',
 }
 const TYPE_LABEL = { cans: 'Cans', draft: 'Draft' } as Record<string, string>
 
@@ -74,81 +74,122 @@ export async function MenuTargetHistory({ req }: WidgetServerProps) {
   )
   const opening = new Map(menus.docs.map((menu, i) => [menu.id, before[i].docs[0]]))
 
-  const start = Date.parse(since)
   // Window runs to the end of today; segments past now render as the current state.
   const end = Date.parse(getESTMidnightISO(addDays(getTodayEST(), 1)))
-  const span = end - start
-  const pct = (t: number) => `${((Math.max(t, start) - start) / span) * 100}%`
+  const W = 300
+  const H = 80
 
   return (
     <div className="card" style={{ display: 'grid', gap: 20, padding: 16 }}>
-      <h3 style={{ margin: 0 }}>Stocked at target, last {DAYS} days</h3>
+      <h3 style={{ margin: 0 }}>Items vs target, last {DAYS} days</h3>
       {locations.docs.map((location) => {
-        const rows = menus.docs.filter((m) => relationshipId(m.location) === location.id)
-        if (rows.length === 0) return null
+        const forType = (type: string) =>
+          menus.docs.find((m) => m.type === type && relationshipId(m.location) === location.id)
+        const columns = (['draft', 'cans'] as const).map((type) => [type, forType(type)] as const)
+        if (columns.every(([, menu]) => !menu)) return null
         return (
-          <section key={location.id} style={{ display: 'grid', gap: 10 }}>
+          <section key={location.id} style={{ display: 'grid', gap: 8 }}>
             <h4 style={{ margin: 0 }}>{location.name}</h4>
-            {rows.map((menu) => {
-              const first = opening.get(menu.id)
-              const { segments, onTargetShare } = stockTimeline(
-                [
-                  ...(first ? [{ ...first, updatedAt: since }] : []),
-                  ...versions.docs.filter((v) => v.parent === menu.id),
-                ].map((v) => ({
-                  updatedAt: v.updatedAt,
-                  items: stockedCount(v.version.items),
-                  target: v.version.targetItemCount,
-                })),
-                end,
-              )
-              if (segments.length === 0) return null
-              const now = segments[segments.length - 1].diff
-              const label = `${location.name} ${TYPE_LABEL[menu.type] ?? menu.type}`
-              return (
-                <div key={menu.id}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-                    <span>{TYPE_LABEL[menu.type] ?? menu.type}</span>
-                    <span>
-                      <strong>{Math.round(onTargetShare * 100)}%</strong> on target · now{' '}
-                      <span style={{ color: COLORS[severity(now)] }}>{diffLabel(now)}</span>
-                    </span>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              {columns.map(([type, menu]) => {
+                if (!menu) return <div key={type} />
+                const first = opening.get(menu.id)
+                const { segments, onTargetShare } = stockTimeline(
+                  [
+                    ...(first ? [{ ...first, updatedAt: since }] : []),
+                    ...versions.docs.filter((v) => v.parent === menu.id),
+                  ].map((v) => ({
+                    updatedAt: v.updatedAt,
+                    items: stockedCount(v.version.items),
+                    target: v.version.targetItemCount,
+                  })),
+                  end,
+                )
+                const last = segments[segments.length - 1]
+                // Axis starts at this menu's first kept save, so pruned history isn't blank space.
+                const from = segments[0]?.start ?? end
+                const x = (t: number) => ((t - from) / Math.max(end - from, 1)) * W
+                const top = Math.max(...segments.flatMap((g) => [g.items, g.target]), 1) + 2
+                const y = (n: number) => H - (n / top) * H
+                const label = `${location.name} ${TYPE_LABEL[type]}`
+                return (
+                  <div key={type}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                      <strong>{TYPE_LABEL[type]}</strong>
+                      {last && (
+                        <span>
+                          {last.items} / {last.target} ·{' '}
+                          <span style={{ color: COLORS[severity(last.diff)] }}>
+                            {diffLabel(last.diff)}
+                          </span>
+                        </span>
+                      )}
+                    </div>
+                    {last ? (
+                      <svg
+                        viewBox={`0 0 ${W} ${H}`}
+                        width="100%"
+                        height={H}
+                        preserveAspectRatio="none"
+                        role="img"
+                        aria-label={`${label}: ${last.items} items, target ${last.target}, ${diffLabel(last.diff)}; on target ${Math.round(onTargetShare * 100)}% of the last ${DAYS} days`}
+                        style={{ background: 'var(--color-bg-secondary)', borderRadius: 3 }}
+                      >
+                        {segments.map((g, i) => {
+                          const next = segments[i + 1]
+                          return (
+                            <g key={i}>
+                              <line
+                                x1={x(g.start)}
+                                x2={x(g.end)}
+                                y1={y(g.target)}
+                                y2={y(g.target)}
+                                stroke="var(--color-text-secondary)"
+                                strokeDasharray="4 3"
+                                vectorEffect="non-scaling-stroke"
+                              />
+                              <line
+                                x1={x(g.start)}
+                                x2={x(g.end)}
+                                y1={y(g.items)}
+                                y2={y(g.items)}
+                                stroke={COLORS[severity(g.diff)]}
+                                strokeWidth={2.5}
+                                vectorEffect="non-scaling-stroke"
+                              >
+                                <title>{`${new Date(g.start).toLocaleDateString()}: ${g.items} items, ${diffLabel(g.diff)}`}</title>
+                              </line>
+                              {next && (
+                                <line
+                                  x1={x(g.end)}
+                                  x2={x(g.end)}
+                                  y1={y(g.items)}
+                                  y2={y(next.items)}
+                                  stroke="var(--color-border)"
+                                  vectorEffect="non-scaling-stroke"
+                                />
+                              )}
+                            </g>
+                          )
+                        })}
+                      </svg>
+                    ) : (
+                      <small>No saves yet</small>
+                    )}
+                    <small style={{ color: 'var(--color-text-secondary)' }}>
+                      {Math.round(onTargetShare * 100)}% of the time on target since{' '}
+                      {new Date(segments[0]?.start ?? end).toLocaleDateString()}
+                    </small>
                   </div>
-                  <div
-                    role="img"
-                    aria-label={`${label}: on target ${Math.round(onTargetShare * 100)}% of the time, now ${diffLabel(now)}`}
-                    style={{
-                      position: 'relative',
-                      height: 12,
-                      borderRadius: 3,
-                      overflow: 'hidden',
-                      background: 'var(--theme-elevation-100)',
-                    }}
-                  >
-                    {segments.map((s, i) => (
-                      <div
-                        key={i}
-                        title={`${new Date(s.start).toLocaleDateString()}: ${diffLabel(s.diff)}`}
-                        style={{
-                          position: 'absolute',
-                          top: 0,
-                          bottom: 0,
-                          left: pct(s.start),
-                          width: `calc(${pct(s.end)} - ${pct(s.start)})`,
-                          background: COLORS[severity(s.diff)],
-                        }}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )
-            })}
+                )
+              })}
+            </div>
           </section>
         )
       })}
-      <small style={{ color: 'var(--theme-elevation-500)' }}>
-        Green on target · amber off by 1–2 · red off by 3+ (over or under). Gray means no saved
-        revision covers that time.
+      <small style={{ color: 'var(--color-text-secondary)' }}>
+        Dashed line is the target. Item line: green on target, amber off by 1–2, red off by 3+ (over
+        or under).
       </small>
     </div>
   )

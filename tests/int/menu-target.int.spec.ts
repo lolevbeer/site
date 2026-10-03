@@ -19,6 +19,7 @@ describe('stockTimeline', () => {
       Date.parse(h(4)),
     )
     expect(segments.map((s) => s.diff)).toEqual([0, 3, 0])
+    expect(segments.map((s) => [s.items, s.target])).toEqual([[10, 10], [13, 10], [8, 8]])
     expect(onTargetShare).toBe(0.5)
   })
 
