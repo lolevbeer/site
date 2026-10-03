@@ -173,7 +173,7 @@ export default buildConfig({
         },
         {
           slug: 'menu-target-history',
-          label: 'Menu size vs target',
+          label: 'Menu tracking',
           Component: '@/src/components/admin/MenuTargetHistory#MenuTargetHistory',
         },
       ],

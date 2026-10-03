@@ -154,7 +154,7 @@ export async function MenuTargetHistory({ req }: WidgetServerProps) {
   const names = new Map(data.names)
   return (
     <div className="card" style={{ display: 'grid', gap: 20, padding: 16 }}>
-      <h3 style={{ margin: 0 }}>Items vs target</h3>
+      <h3 style={{ margin: 0 }}>Menu tracking</h3>
       {rows.map(({ location, atLocation }) => (
         <section key={location.id} style={{ display: 'grid', gap: 8 }}>
           <h4 style={{ margin: 0 }}>{location.name}</h4>
