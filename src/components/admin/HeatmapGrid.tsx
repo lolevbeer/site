@@ -1,13 +1,13 @@
 'use client'
 /**
  * Client grid for the ScheduleHeatmap widget. Receives booking rows from the
- * server and renders only the visible 16-month window, with Payload's Select
- * (location filter) and ghost Buttons (‹ › paging; the range label returns to
+ * server and renders the visible 16-month window for one location, with
+ * ghost Buttons (‹ › paging; the range label returns to
  * today). Each day links to its filtered list, or to the recurring rules when
  * only rules book it. Cell color is booking status: red nothing, orange event without
  * food, yellow food only, green both.
  */
-import { Button, ChevronIcon, Select } from '@payloadcms/ui'
+import { Button, ChevronIcon } from '@payloadcms/ui'
 import { useMemo, useState, type CSSProperties } from 'react'
 
 import { getESTMidnightISO } from '@/lib/utils/date'
@@ -55,15 +55,16 @@ function dayLabel(date: string, d: Day | undefined): string {
 
 export function HeatmapGrid({
   rows,
-  locations,
+  location,
   firstSunday,
   today,
   canEvents,
   canFood,
   listURLs,
 }: {
+  /** Rows for this location only. */
   rows: ScheduleRow[]
-  locations: { id: string; name: string }[]
+  location: { id: string; name: string }
   firstSunday: string
   today: string
   canEvents: boolean
@@ -72,12 +73,10 @@ export function HeatmapGrid({
   listURLs: { event: string; food: string; recurringEvent: string; recurringFood: string }
 }) {
   const [page, setPage] = useState(PAGES_BACK)
-  const [location, setLocation] = useState('')
 
   const byDay = useMemo(() => {
     const map = new Map<string, Day>()
     for (const r of rows) {
-      if (location && r.location !== location) continue
       const day = map.get(r.day) ?? { events: [], food: [], eventDoc: false, foodDoc: false }
       if (r.kind === 'event') {
         day.events.push(r.name || 'Untitled')
@@ -89,7 +88,7 @@ export function HeatmapGrid({
       map.set(r.day, day)
     }
     return map
-  }, [rows, location])
+  }, [rows])
 
   const weeks = useMemo(
     () => buildHeatmapWeeks(addDays(firstSunday, page * WEEKS * 7), WEEKS),
@@ -113,7 +112,7 @@ export function HeatmapGrid({
             'where[date][greater_than_equal]': getESTMidnightISO(date),
             'where[date][less_than]': getESTMidnightISO(addDays(date, 1)),
           })
-          if (location) params.set('where[location][equals]', location)
+          params.set('where[location][equals]', location.id)
           const href =
             d && !hasDoc
               ? isEvent
@@ -123,7 +122,7 @@ export function HeatmapGrid({
           return { date, kind: dayKind(d), label: dayLabel(date, d), href }
         }),
       ),
-    [weeks, byDay, location, listURLs],
+    [weeks, byDay, location.id, listURLs],
   )
   let eventCount = 0
   let foodCount = 0
@@ -138,30 +137,13 @@ export function HeatmapGrid({
   ]
     .filter(Boolean)
     .join(', ')
-  const options = [
-    { label: 'All locations', value: '' },
-    ...locations.map((l) => ({ label: l.name, value: l.id })),
-  ]
 
   return (
     <div className="card widget-card schedule-heatmap">
       <div className="widget-card__header schedule-heatmap__header">
-        <h3 id="hm-title" className="widget-card__title">
-          Schedule
+        <h3 id={`hm-title-${location.id}`} className="widget-card__title">
+          {location.name}
         </h3>
-        {locations.length > 1 && (
-          <Select
-            className="schedule-heatmap__location"
-            aria-label="Location"
-            isClearable={false}
-            isSearchable={false}
-            options={options}
-            value={options.find((o) => o.value === location)}
-            onChange={(option) => {
-              if (!Array.isArray(option)) setLocation(String(option.value))
-            }}
-          />
-        )}
         <Button
           buttonStyle="ghost"
           disabled={page === PAGES_BACK}
@@ -191,7 +173,7 @@ export function HeatmapGrid({
       </div>
       <div
         role="grid"
-        aria-labelledby="hm-title"
+        aria-labelledby={`hm-title-${location.id}`}
         className="schedule-heatmap__grid"
         style={{ '--hm-weeks': WEEKS } as CSSProperties}
       >

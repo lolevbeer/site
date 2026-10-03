@@ -1,7 +1,7 @@
 /**
  * Turns a menu's saved revisions into a stock-vs-target timeline: each
  * revision is live from its save until the next one (the last until `end`),
- * and is judged by how far its item count sits from the target set at that
+ * and is judged by how far its item count sits from the target passed with that
  * save. Over and under are equally bad, so `onTargetShare` counts only exact
  * hits, weighted by time live.
  */

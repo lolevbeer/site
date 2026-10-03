@@ -3,11 +3,15 @@
  * bookings per EST day. This server component only gathers rows (one-offs plus
  * recurring rules expanded within the year each was set up for) under the
  * viewer's read access (overrideAccess: false + req); HeatmapGrid renders the
- * visible 16-month window, paging and location filtering client-side.
+ * the location chosen in this widget instance's settings (each location gets
+ * its own widget in the default layout), paging its 16-month window client-side.
  */
-import type { WidgetServerProps } from 'payload'
+import type { PayloadRequest, WidgetServerProps } from 'payload'
+import { unstable_cache } from 'next/cache'
+import { cache } from 'react'
 import { formatAdminURL } from 'payload/shared'
 
+import { CACHE_TAGS } from '@/lib/utils/cache'
 import { getDateEST, getESTMidnightISO, getTodayEST } from '@/lib/utils/date'
 import {
   addDays,
@@ -31,11 +35,28 @@ import { relationshipId } from '@/src/utils/relationship-id'
 import { HeatmapGrid } from './HeatmapGrid'
 import './ScheduleHeatmap.scss'
 
-export async function ScheduleHeatmap({ req, permissions }: WidgetServerProps) {
-  const canEvents = Boolean(permissions?.collections?.events?.read)
-  const canFood = Boolean(permissions?.collections?.food?.read)
-  if (!canEvents && !canFood) return null
+/**
+ * Every booking row in the paging range. Two cache layers: unstable_cache keeps
+ * the rows across requests per user (access differs by role), cleared by the
+ * revalidation plugin's 'events' / 'food' tags on any save; cache() shares one
+ * read between the location widgets of a single dashboard render (same `req`).
+ * `today` is in the key so the window rolls over at EST midnight.
+ */
+const loadSchedule = cache((req: PayloadRequest, canEvents: boolean, canFood: boolean) =>
+  unstable_cache(
+    () => readSchedule(req, canEvents, canFood),
+    [
+      'dashboard-schedule-v1',
+      String(req.user?.id),
+      String(canEvents),
+      String(canFood),
+      getTodayEST(),
+    ],
+    { tags: [CACHE_TAGS.events, CACHE_TAGS.food], revalidate: 3600 },
+  )(),
+)
 
+async function readSchedule(req: PayloadRequest, canEvents: boolean, canFood: boolean) {
   const { payload } = req
   const today = getTodayEST()
   const firstSunday = addDays(today, -dayOfWeek(today) - PAGES_BACK * WEEKS * 7)
@@ -53,7 +74,7 @@ export async function ScheduleHeatmap({ req, permissions }: WidgetServerProps) {
   )
 
   // Five 16-month windows is still only a few thousand rows; no pagination.
-  const [events, recurringEvents, food, foodStates, locations] = await Promise.all([
+  const [events, recurringEvents, food, foodStates] = await Promise.all([
     canEvents
       ? payload.find({
           collection: 'events',
@@ -95,15 +116,6 @@ export async function ScheduleHeatmap({ req, permissions }: WidgetServerProps) {
           ),
         )
       : none,
-    payload.find({
-      collection: 'locations',
-      depth: 0,
-      pagination: false,
-      select: { name: true },
-      sort: 'name',
-      overrideAccess: false,
-      req,
-    }),
   ])
 
   const eventRows: ScheduleRow[] = [
@@ -188,21 +200,54 @@ export async function ScheduleHeatmap({ req, permissions }: WidgetServerProps) {
     }
   }
 
-  const adminRoute = payload.config.routes.admin
+  return { rows: dedupeSchedule([...eventRows, ...foodRows]), firstSunday, today }
+}
+
+export async function ScheduleHeatmap({ req, permissions, widgetData }: WidgetServerProps) {
+  const locationId = widgetData?.location ? relationshipId(widgetData.location as string) : ''
+  const canEvents = Boolean(permissions?.collections?.events?.read)
+  const canFood = Boolean(permissions?.collections?.food?.read)
+  if (!canEvents && !canFood) return null
+
+  const [{ rows, firstSunday, today }, locations] = await Promise.all([
+    loadSchedule(req, canEvents, canFood),
+    locationId
+      ? req.payload.find({
+          collection: 'locations',
+          where: { id: { equals: locationId } },
+          depth: 0,
+          pagination: false,
+          select: { name: true },
+          overrideAccess: false,
+          req,
+        })
+      : null,
+  ])
+  const adminRoute = req.payload.config.routes.admin
+  const listURLs = {
+    event: formatAdminURL({ adminRoute, path: '/collections/events' }),
+    food: formatAdminURL({ adminRoute, path: '/collections/food' }),
+    recurringEvent: formatAdminURL({ adminRoute, path: '/collections/recurring-events' }),
+    recurringFood: formatAdminURL({ adminRoute, path: '/globals/recurring-food' }),
+  }
+  const location = locations?.docs[0]
+  if (!location) {
+    return (
+      <div className="card widget-card schedule-heatmap">
+        <h3 className="widget-card__title">Schedule</h3>
+        <p>Pick a location in this widget&apos;s settings.</p>
+      </div>
+    )
+  }
   return (
     <HeatmapGrid
-      rows={dedupeSchedule([...eventRows, ...foodRows])}
-      locations={(locations?.docs ?? []).map((l) => ({ id: l.id, name: l.name }))}
+      rows={rows.filter((r) => r.location === location.id)}
+      location={{ id: location.id, name: location.name }}
       firstSunday={firstSunday}
       today={today}
       canEvents={canEvents}
       canFood={canFood}
-      listURLs={{
-        event: formatAdminURL({ adminRoute, path: '/collections/events' }),
-        food: formatAdminURL({ adminRoute, path: '/collections/food' }),
-        recurringEvent: formatAdminURL({ adminRoute, path: '/collections/recurring-events' }),
-        recurringFood: formatAdminURL({ adminRoute, path: '/globals/recurring-food' }),
-      }}
+      listURLs={listURLs}
     />
   )
 }

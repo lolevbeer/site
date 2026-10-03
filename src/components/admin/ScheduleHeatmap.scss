@@ -2,7 +2,7 @@
 // .card.widget-card chrome and its semantic --color-* / --spacer-* tokens
 // (yellow uses --ramp-yellow-500; event-only mixes it with --color-bg-danger).
 .schedule-heatmap {
-  --hm-gap: 2px; // --hm-weeks is set inline from WEEKS by HeatmapGrid
+  --hm-gap: 1px; // --hm-weeks is set inline from WEEKS by HeatmapGrid
   max-height: none; // widget-card caps height for list rows; the grid sizes itself
 
   &__grid {
@@ -30,8 +30,11 @@
     color: var(--color-text-secondary);
   }
 
+  // line-height 1 keeps the label shorter than a cell, so rows are cell-height
+  // and the vertical gap matches the horizontal one.
   &__dow {
     font-size: 10px;
+    line-height: 1;
     color: var(--color-text-secondary);
   }
 
@@ -72,13 +75,13 @@
     }
 
     &.is-today {
-      outline: 2px solid var(--color-text);
-      outline-offset: -2px; // inset: the scrolling grid clips anything outside the cell
+      outline: 1px solid var(--color-text);
+      outline-offset: -1px; // inset: the scrolling grid clips anything outside the cell
     }
 
     &:focus-visible {
-      outline: 2px solid var(--color-border-selected-strong);
-      outline-offset: -2px; // inset: the scrolling grid clips anything outside the cell
+      outline: 1px solid var(--color-border-selected-strong);
+      outline-offset: -1px; // inset: the scrolling grid clips anything outside the cell
     }
   }
 
@@ -102,10 +105,6 @@
   display: flex;
   align-items: center;
   gap: var(--spacer-2);
-
-  .schedule-heatmap__location {
-    min-width: 12rem;
-  }
 
   // Ghost buttons keep Payload's look; only drop the margin they carry in forms.
   .btn {

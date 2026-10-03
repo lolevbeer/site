@@ -2813,9 +2813,9 @@ export interface PayloadJobsStatsSelect<T extends boolean = true> {
  */
 export interface ScheduleHeatmapWidget {
   data?: {
-    [k: string]: unknown;
+    location?: (string | null) | Location;
   };
-  width: 'large' | 'x-large' | 'full';
+  width: 'medium' | 'large' | 'x-large' | 'full';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
