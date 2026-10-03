@@ -161,6 +161,22 @@ export default buildConfig({
     importMap: {
       baseDir: path.resolve(dirname),
     },
+    dashboard: {
+      widgets: [
+        {
+          slug: 'schedule-heatmap',
+          label: 'Schedule heatmap',
+          Component: '@/src/components/admin/ScheduleHeatmap#ScheduleHeatmap',
+          minWidth: 'large',
+        },
+      ],
+      // Built-ins re-listed because setting defaultLayout replaces Payload's default.
+      defaultLayout: [
+        { widgetSlug: 'collections', width: 'full' },
+        { widgetSlug: 'schedule-heatmap', width: 'full' },
+        { widgetSlug: 'activity', width: 'small' },
+      ],
+    },
     // Payload 4's Vercel Blob adapter registers its client upload handler only
     // when a blob token is set; declaring it here keeps importMap.js identical
     // with or without one (Payload 3 always registered it).

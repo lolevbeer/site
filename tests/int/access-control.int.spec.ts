@@ -4,6 +4,7 @@ import { Users } from '@/src/collections/Users'
 import { Menus, canUpdateMenus } from '@/src/collections/Menus'
 import { Beers } from '@/src/collections/Beers'
 import { Events } from '@/src/collections/Events'
+import { RecurringEvents } from '@/src/collections/RecurringEvents'
 import { DonationRequests } from '@/src/collections/DonationRequests'
 import { Jobs } from '@/src/collections/Jobs'
 import { JobApplications } from '@/src/collections/JobApplications'
@@ -264,6 +265,16 @@ describe('draft and sensitive field visibility', () => {
 
       expect(callAccess(read, null)).toBe(false)
       expect(callAccess(read, userWith(['bartender']))).toBe(true)
+    }
+  })
+
+  it('lets bartenders read every event and recurring event, not just public ones', () => {
+    for (const access of [Events.access?.read, RecurringEvents.access?.read]) {
+      for (const role of ['bartender', 'lead-bartender'] as const) {
+        expect(callAccess(access, userWith([role]))).toBe(true)
+      }
+      expect(callAccess(access, userWith(['beer-manager']))).not.toBe(true)
+      expect(callAccess(access, null)).not.toBe(true)
     }
   })
 

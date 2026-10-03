@@ -128,6 +128,10 @@ file in that directory except `index.ts`; keep the recovery manifest in
 - **Media** — Image uploads (Vercel Blob storage)
 - **Users** — Admin users with role-based access
 
+## Admin dashboard
+
+- **Schedule heatmap** — booking status per EST day — red nothing, orange event without food, yellow food only, green both — 16 months at a time with ‹ › arrows to page back through history, filterable by location (recurring rules fill only the year they were set up for); click a day to open that day's list. Counts follow your read access. Users with a saved dashboard layout must add the widget manually.
+
 ## Globals
 
 - **Coming Soon** — Upcoming beer announcements
