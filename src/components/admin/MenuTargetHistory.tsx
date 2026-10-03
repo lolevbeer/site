@@ -12,11 +12,11 @@
 import { unstable_cache } from 'next/cache'
 import type { WidgetServerProps } from 'payload'
 
-import { CACHE_TAGS } from '@/lib/utils/cache'
-
+import { accessKey, CACHE_TAGS } from '@/lib/utils/cache'
 import { getDateEST, getESTMidnightISO, getTodayEST } from '@/lib/utils/date'
 import { formatDate } from '@/lib/utils/formatters'
 import {
+  DEFAULT_TARGET,
   fillFor,
   stockedCount,
   stockTimeline,
@@ -53,7 +53,7 @@ const dayLabel = (t: number) => formatDate(getDateEST(t))
 const loadMenuTargets = (req: WidgetServerProps['req']) =>
   unstable_cache(
     () => readMenuTargets(req),
-    ['dashboard-menu-target-v1', String(req.user?.id), getTodayEST()],
+    ['dashboard-menu-target-v1', accessKey(req), getTodayEST()],
     { tags: [CACHE_TAGS.menus, CACHE_TAGS.locations], revalidate: 3600 },
   )()
 
@@ -66,6 +66,7 @@ async function readMenuTargets(req: WidgetServerProps['req']) {
     payload.find({
       collection: 'menus',
       where: { type: { in: [...TARGETED_MENU_TYPES] } },
+      select: { type: true, location: true, targetItemCount: true },
       depth: 0,
       limit: 100,
       overrideAccess: false,
@@ -88,6 +89,7 @@ async function readMenuTargets(req: WidgetServerProps['req']) {
     }),
     payload.find({
       collection: 'locations',
+      select: { name: true },
       sort: 'name',
       depth: 0,
       limit: 100,
@@ -106,7 +108,9 @@ async function readMenuTargets(req: WidgetServerProps['req']) {
   }
   for (const v of versions.docs) {
     const id = String(v.parent)
-    byMenu.set(id, [...(byMenu.get(id) ?? []), v])
+    const list = byMenu.get(id)
+    if (list) list.push(v)
+    else byMenu.set(id, [v])
   }
   const timelines = new Map(
     menus.docs.map((menu) => [
@@ -115,9 +119,9 @@ async function readMenuTargets(req: WidgetServerProps['req']) {
         (byMenu.get(menu.id) ?? []).map((v) => ({
           updatedAt: v.updatedAt,
           items: stockedCount(v.version.items),
-          target: menu.targetItemCount,
           editor: v.version.updatedBy ? relationshipId(v.version.updatedBy) : undefined,
         })),
+        menu.targetItemCount ?? DEFAULT_TARGET,
         end,
       ),
     ]),
