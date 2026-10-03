@@ -212,6 +212,21 @@ export async function MenuTargetHistory({ req }: WidgetServerProps) {
                             strokeLinejoin="round"
                             vectorEffect="non-scaling-stroke"
                           />
+                          {/* On-target stretches drawn green over the item line. */}
+                          {segments.map((g, i) =>
+                            g.diff === 0 ? (
+                              <line
+                                key={`ok${i}`}
+                                x1={x(g.start)}
+                                x2={x(g.end)}
+                                y1={y(g.items)}
+                                y2={y(g.items)}
+                                stroke="var(--color-bg-success)"
+                                strokeWidth={3}
+                                vectorEffect="non-scaling-stroke"
+                              />
+                            ) : null,
+                          )}
                           {/* Full-height hit areas so hovering anywhere over a save shows it. */}
                           {segments.map((g, i) => (
                             <rect
@@ -246,8 +261,8 @@ export async function MenuTargetHistory({ req }: WidgetServerProps) {
         )
       })}
       <small style={{ color: 'var(--color-text-secondary)' }}>
-        Solid line is items on the menu, dashed is the target. Shading marks the gap: yellow at 1
-        off, one step redder per extra item, red at 6+, over or under.
+        Solid line is items on the menu (green when on target), dashed is the target. Shading marks
+        the gap: yellow at 1 off, one step redder per extra item, red at 6+, over or under.
       </small>
     </div>
   )
