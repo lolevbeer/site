@@ -2,12 +2,34 @@ import { describe, it, expect } from 'vitest'
 import { generateJobPostingSchema as generate } from '@/lib/utils/job-posting-schema'
 import type { PublicJob } from '@/lib/jobs/payload'
 
+/** Minimal Lexical state: one paragraph per string, plus optional bold run. */
+const lexical = (...paragraphs: string[]) =>
+  ({
+    root: {
+      type: 'root',
+      version: 1,
+      direction: 'ltr',
+      format: '',
+      indent: 0,
+      children: paragraphs.map((text) => ({
+        type: 'paragraph',
+        version: 1,
+        direction: 'ltr',
+        format: '',
+        indent: 0,
+        children: [
+          { type: 'text', version: 1, text, detail: 0, format: 0, mode: 'normal', style: '' },
+        ],
+      })),
+    },
+  }) as unknown as NonNullable<PublicJob['description']>
+
 const job = (fields: Partial<PublicJob> = {}): PublicJob => ({
   id: 'job-1',
   title: 'Bartender',
   slug: 'bartender',
   summary: 'Nights and weekends.',
-  description: 'Pour beer.\n\nSmile <a lot>.',
+  description: lexical('Pour beer.', 'Smile <a lot>.'),
   employmentType: 'part-time',
   locationName: 'Lawrenceville',
   locationSlug: 'lawrenceville',
@@ -43,10 +65,14 @@ describe('generateJobPostingSchema', () => {
     ).toBe('2026-10-15')
   })
 
-  it('renders the description as escaped HTML paragraphs', () => {
+  it('renders the rich-text description as escaped HTML paragraphs', () => {
     expect(generateJobPostingSchema(job()).description).toBe(
       '<p>Pour beer.</p><p>Smile &lt;a lot&gt;.</p>',
     )
+  })
+
+  it('emits nothing when the description is empty', () => {
+    expect(generate(job({ description: null }))).toBeNull()
   })
 
   it.each([

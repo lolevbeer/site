@@ -14,6 +14,7 @@ import * as dropLegacyRecurringFoodSlotIndex from './20260830_143000_drop_legacy
 import * as backfillMissingBeerReviews from './20260926_190000_backfill_missing_beer_reviews'
 import * as payloadJobsRunnableProcessingUntil from './20260927_020000_payload_jobs_runnable_processing_until'
 import * as locationWebsiteMenus from './20260929_120000_location_website_menus'
+import * as jobsDescriptionRichtext from './20261003_130000_jobs_description_richtext'
 
 export const migrations = [
   {
@@ -65,5 +66,10 @@ export const migrations = [
     up: locationWebsiteMenus.up,
     down: locationWebsiteMenus.down,
     name: '20260929_120000_location_website_menus',
+  },
+  {
+    up: jobsDescriptionRichtext.up,
+    down: jobsDescriptionRichtext.down,
+    name: '20261003_130000_jobs_description_richtext',
   },
 ]

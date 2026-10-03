@@ -114,4 +114,14 @@ export const migrationRecovery: readonly MigrationRecovery[] = [
     verify:
       'Check Draft Menu and Cans Menu on each Location in Payload, then confirm the homepage and /<location> page show the selected published menus.',
   },
+  {
+    name: '20261003_130000_jobs_description_richtext',
+    compatibility:
+      'Rewrites each job description from a string to Lexical JSON. The prior deployment renders the description as a string, so its /jobs/[slug] pages error until the new deployment serves; roll forward rather than back.',
+    retry:
+      'Safe to rerun: only string-valued descriptions are converted; ones already converted are skipped.',
+    mode: 'roll-forward',
+    verify:
+      'Open each job in Payload and confirm the description shows in the editor, then confirm /jobs/<slug> renders it and the JobPosting JSON-LD description is non-empty HTML.',
+  },
 ]

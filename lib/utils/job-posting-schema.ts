@@ -3,6 +3,7 @@
  * @see https://developers.google.com/search/docs/appearance/structured-data/job-posting
  */
 
+import { convertLexicalToHTML } from '@payloadcms/richtext-lexical/html'
 import type { PublicJob } from '@/lib/jobs/payload'
 import { postalAddressFromLocation, type PostalAddressJsonLd } from './json-ld'
 import { LOLEV_BASE_URL, LOLEV_OG_IMAGE_URL } from './schema-shared'
@@ -33,35 +34,23 @@ const EMPLOYMENT_TYPES: Record<string, string> = {
   seasonal: 'TEMPORARY',
 }
 
-const escapeHtml = (text: string) =>
-  text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-
-/** Google collapses plain-text newlines, so blank-line-separated paragraphs become <p>. */
-function paragraphsToHtml(text: string): string {
-  return text
-    .split(/\n\s*\n/)
-    .map((paragraph) => paragraph.trim())
-    .filter(Boolean)
-    .map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`)
-    .join('')
-}
-
 /**
  * Returns null when Google would reject the posting: the location has no street/city
- * (an empty PostalAddress is invalid) or `closesOn` has passed (the page stays up until
+ * (an empty PostalAddress is invalid), the description is empty, or `closesOn` has passed (the page stays up until
  * an editor unticks Active, but the expired posting must not keep being advertised).
  */
 // ponytail: no baseSalary; the CMS has no pay fields. Google recommends it, so add pay fields to Jobs when wanted.
 export function generateJobPostingSchema(job: PublicJob): JobPostingJsonLd | null {
   const address = job.locationAddress
   if (!address?.street || !address.city) return null
+  if (!job.description) return null
   if (job.closesOn && job.closesOn.slice(0, 10) < new Date().toISOString().slice(0, 10)) return null
 
   return {
     '@context': 'https://schema.org',
     '@type': 'JobPosting',
     title: job.title,
-    description: paragraphsToHtml(job.description),
+    description: convertLexicalToHTML({ data: job.description, disableContainer: true }),
     datePosted: job.postedAt.slice(0, 10),
     ...(job.closesOn ? { validThrough: job.closesOn.slice(0, 10) } : {}),
     employmentType: EMPLOYMENT_TYPES[job.employmentType] ?? 'OTHER',

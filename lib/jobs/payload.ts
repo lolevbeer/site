@@ -11,13 +11,15 @@ import { logger } from '@/lib/utils/logger'
 import { CACHE_TAGS } from '@/lib/utils/cache'
 import type { SeoOverride } from '@/lib/seo/resolve-metadata'
 import type { PayloadLocation } from '@/lib/types/location'
+import type { Job } from '@/src/payload-types'
 
 export interface PublicJob {
   id: string
   title: string
   slug: string
   summary: string
-  description: string
+  /** Lexical editor state; null when the editor left it empty. */
+  description: Job['description'] | null
   employmentType: string
   locationName: string
   locationSlug: string
@@ -37,7 +39,7 @@ type JobDoc = {
   title?: string | null
   slug?: string | null
   summary?: string | null
-  description?: string | null
+  description?: Job['description'] | null
   employmentType?: string | null
   location?: unknown
   createdAt: string
@@ -57,7 +59,7 @@ function toPublicJob(doc: JobDoc): PublicJob | null {
     title: doc.title || 'Open role',
     slug: doc.slug,
     summary: doc.summary || '',
-    description: doc.description || '',
+    description: doc.description ?? null,
     employmentType: doc.employmentType || 'full-time',
     locationName: relatedString(doc.location, 'name'),
     locationSlug: relatedString(doc.location, 'slug'),
