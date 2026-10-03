@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { buildEditorState } from '@payloadcms/richtext-lexical'
 import { generateJobPostingSchema as generate } from '@/lib/utils/job-posting-schema'
 import type { PublicJob } from '@/lib/jobs/payload'
 
@@ -7,7 +8,7 @@ const job = (fields: Partial<PublicJob> = {}): PublicJob => ({
   title: 'Bartender',
   slug: 'bartender',
   summary: 'Nights and weekends.',
-  description: 'Pour beer.\n\nSmile <a lot>.',
+  description: buildEditorState<PublicJob['description']>({ text: 'Smile <a lot>.' }),
   employmentType: 'part-time',
   locationName: 'Lawrenceville',
   locationSlug: 'lawrenceville',
@@ -44,9 +45,11 @@ describe('generateJobPostingSchema', () => {
   })
 
   it('renders the description as escaped HTML paragraphs', () => {
-    expect(generateJobPostingSchema(job()).description).toBe(
-      '<p>Pour beer.</p><p>Smile &lt;a lot&gt;.</p>',
-    )
+    expect(generateJobPostingSchema(job()).description).toBe('<p>Smile &lt;a lot&gt;.</p>')
+  })
+
+  it('emits nothing when the description is empty', () => {
+    expect(generate(job({ description: null }))).toBeNull()
   })
 
   it.each([

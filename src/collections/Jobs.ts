@@ -93,8 +93,12 @@ export const Jobs: CollectionConfig = {
     },
     {
       name: 'description',
-      type: 'textarea',
+      type: 'richText',
       required: true,
+      admin: {
+        description:
+          'Shown on the job page and sent to Google. Markdown shortcuts work as you type (**bold**, "- " for a list, "# " for a heading).',
+      },
     },
     {
       name: 'closesOn',
