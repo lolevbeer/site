@@ -134,7 +134,12 @@ describe('applyExistingDistributorPatch', () => {
       name: 'Store',
       geocode,
     })
-    expect(geocode).toHaveBeenCalled()
+    expect(geocode).toHaveBeenCalledWith({
+      address: '2 Main',
+      city: 'Pittsburgh',
+      state: 'PA',
+      zip: '15201',
+    })
     expect(update).toHaveBeenCalledWith(
       expect.objectContaining({
         collection: 'distributors',

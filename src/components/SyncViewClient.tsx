@@ -36,23 +36,6 @@ interface UntappdResults {
   errors: number
 }
 
-interface RegeocodeDistributor {
-  name: string
-  address: string
-  city: string
-  state: string
-  zip: string
-  fullAddress?: string
-}
-
-interface RegeocodeResults {
-  checked: number
-  suspicious: number
-  fixed: number
-  failed: number
-  distributors?: RegeocodeDistributor[]
-}
-
 /** Read a CSV upload's counts from an SSE `complete` or JSON error payload; missing counts are 0. */
 function csvUploadResult(data: SSEData): DistributorImportResult {
   return {
@@ -111,41 +94,6 @@ export const SyncViewClient: React.FC = () => {
   const [recalcDryRun, setRecalcDryRun] = useState(true)
   const recalc = useSSEImport<RecalcResults>({
     getResults: (data) => (data.results as RecalcResults) ?? null,
-  })
-
-  // Re-geocode distributors state
-  const [regeocodeDryRun, setRegeocodeDryRun] = useState(true)
-  const regeocode = useSSEImport<RegeocodeResults>({
-    getResults: (data) => ({
-      checked: (data.checked as number) || 0,
-      suspicious: (data.suspicious as number) || 0,
-      fixed: (data.fixed as number) || 0,
-      failed: (data.failed as number) || 0,
-    }),
-    handlers: ({ appendLog }) => ({
-      item: (raw) => {
-        const data = raw as SSEData
-        if (data.status === 'fixed') appendLog('success', `Fixed: ${data.name}`)
-        else if (data.status === 'skipped')
-          appendLog('status', `Skipped: ${data.name} - ${data.note}`)
-        else appendLog('error', `Failed: ${data.name} - ${data.note || data.error}`)
-      },
-    }),
-    onJSON: (data, response, { appendLog, setResults }) => {
-      if (!response.ok) {
-        setResults({ checked: 0, suspicious: 0, fixed: 0, failed: 1 })
-        appendLog('error', `Error: ${data.error || 'Request failed'}`)
-        return
-      }
-      // JSON success fallback: dry run report, or no suspicious coordinates found
-      setResults({
-        checked: (data.checked as number) || 0,
-        suspicious: (data.suspicious as number) || 0,
-        fixed: (data.fixed as number) || 0,
-        failed: 0,
-        distributors: data.distributors as RegeocodeDistributor[] | undefined,
-      })
-    },
   })
 
   // Untappd sync state
@@ -293,12 +241,6 @@ export const SyncViewClient: React.FC = () => {
     const params = new URLSearchParams()
     if (recalcDryRun) params.set('dryRun', 'true')
     await recalc.run(`/api/recalculate-beer-prices?${params.toString()}`)
-  }
-
-  const handleRegeocodeDistributors = async () => {
-    const params = new URLSearchParams()
-    if (regeocodeDryRun) params.set('dryRun', 'true')
-    await regeocode.run(`/api/regeocode-distributors?${params.toString()}`)
   }
 
   const handleUntappdSync = async () => {
@@ -478,121 +420,6 @@ export const SyncViewClient: React.FC = () => {
                     ]}
                     details={distCsv.results.details}
                   />
-                )}
-              </div>
-
-              {/* Fix Bad Coordinates Section */}
-              <div className="sync-view__subsection">
-                <h3 className="sync-view__subsection-title">Fix Bad Coordinates</h3>
-                <p className="sync-view__description sync-view__description--small">
-                  Find and re-geocode distributors that have default/fallback coordinates
-                  (Pittsburgh, Columbus, or Rochester center)
-                </p>
-
-                <div className="sync-view__controls">
-                  <Button
-                    onClick={handleRegeocodeDistributors}
-                    disabled={regeocode.running}
-                    buttonStyle={regeocodeDryRun ? 'secondary' : 'primary'}
-                  >
-                    {regeocode.running
-                      ? regeocodeDryRun
-                        ? 'Scanning...'
-                        : 'Fixing...'
-                      : regeocodeDryRun
-                        ? 'Find Bad Coords'
-                        : 'Fix Bad Coords'}
-                  </Button>
-                  <CheckboxInput
-                    id="regeocode-dry-run"
-                    checked={regeocodeDryRun}
-                    onToggle={(e) => setRegeocodeDryRun(e.target.checked)}
-                    readOnly={regeocode.running}
-                    label="Dry run (preview only)"
-                  />
-                </div>
-
-                {regeocode.progress && <ImportProgress progress={regeocode.progress} />}
-
-                {regeocode.logs.length > 0 && <LogFeed logs={regeocode.logs} />}
-
-                {/* Results */}
-                {regeocode.results && (
-                  <div className="sync-view__banner-wrap">
-                    <Banner
-                      type={
-                        regeocode.results.fixed > 0 || regeocode.results.suspicious === 0
-                          ? 'success'
-                          : 'default'
-                      }
-                    >
-                      <div className="sync-view__banner-row">
-                        <strong>{regeocodeDryRun ? 'Scan Results' : 'Fix Results'}</strong>
-                        <Pill pillStyle="light">{regeocode.results.checked} checked</Pill>
-                        <Pill pillStyle={regeocode.results.suspicious > 0 ? 'warning' : 'success'}>
-                          {regeocode.results.suspicious} with bad coords
-                        </Pill>
-                        {!regeocodeDryRun && regeocode.results.fixed > 0 && (
-                          <Pill pillStyle="success">{regeocode.results.fixed} fixed</Pill>
-                        )}
-                        {!regeocodeDryRun && regeocode.results.failed > 0 && (
-                          <Pill pillStyle="error">{regeocode.results.failed} failed</Pill>
-                        )}
-                      </div>
-                    </Banner>
-                    {/* List of distributors with bad coords (dry run) */}
-                    {regeocodeDryRun &&
-                      regeocode.results.distributors &&
-                      regeocode.results.distributors.length > 0 && (
-                        <div className="sync-view__details">
-                          {regeocode.results.distributors.map(
-                            (dist_: RegeocodeDistributor, i: number) => (
-                              <div key={i} className="sync-view__detail-entry">
-                                <strong>{dist_.name}</strong>
-                                <br />
-                                <span className="sync-view__detail-line">
-                                  Address:{' '}
-                                  {dist_.address === '(missing)' ? (
-                                    <span className="sync-view__missing">(missing)</span>
-                                  ) : (
-                                    dist_.address
-                                  )}
-                                </span>
-                                <br />
-                                <span className="sync-view__detail-line">
-                                  City:{' '}
-                                  {dist_.city === '(missing)' ? (
-                                    <span className="sync-view__missing">(missing)</span>
-                                  ) : (
-                                    dist_.city
-                                  )}
-                                  , State:{' '}
-                                  {dist_.state === '(missing)' ? (
-                                    <span className="sync-view__missing">(missing)</span>
-                                  ) : (
-                                    dist_.state
-                                  )}
-                                  , Zip:{' '}
-                                  {dist_.zip === '(missing)' ? (
-                                    <span className="sync-view__missing">(missing)</span>
-                                  ) : (
-                                    dist_.zip
-                                  )}
-                                </span>
-                                {dist_.fullAddress && (
-                                  <>
-                                    <br />
-                                    <span className="sync-view__detail-note">
-                                      Will geocode: &quot;{dist_.fullAddress}&quot;
-                                    </span>
-                                  </>
-                                )}
-                              </div>
-                            ),
-                          )}
-                        </div>
-                      )}
-                  </div>
                 )}
               </div>
             </>

@@ -5,21 +5,18 @@
  *
  * Rows are matched to existing distributors by exact name within their region,
  * so re-uploading a file updates rather than duplicates. Latitude/longitude are
- * never in the file; they are geocoded here. A row that cannot be geocoded is
- * reported and not created, because `location` is required and a made-up
- * fallback pin would be mistaken for a real one by the re-geocoding repair pass.
+ * never in the file; they are geocoded here (full address, then zip, then city).
+ * A row that still cannot be geocoded after those fallbacks is reported and not
+ * created, because `location` is required and a made-up fallback pin would be
+ * mistaken for a real one.
  */
 import type { PayloadHandler } from 'payload'
 import type { Distributor } from '@/src/payload-types'
 import { getUserFromRequest } from './auth-helper'
 import { isAdmin } from '@/src/access/roles'
-import { geocode } from './geocode'
+import { geocodeDistributor } from './geocode'
 import { createSSEResponse } from '@/src/utils/sse-response'
-import {
-  distributorImportPatch,
-  formatFullAddress,
-  indexDocsByName,
-} from '@/lib/distributors/import-patch'
+import { distributorImportPatch, indexDocsByName } from '@/lib/distributors/import-patch'
 import { applyExistingDistributorPatch } from '@/lib/distributors/upsert-existing'
 import { parseDistributorsCsv } from '@/lib/distributors/parse-distributors-csv'
 
@@ -117,7 +114,7 @@ export const importDistributorsCsv: PayloadHandler = async (req) => {
             current,
             patch,
             name,
-            geocode,
+            geocode: geocodeDistributor,
           })
           report('success', `Updated: "${row.name}" (${Object.keys(patch).join(', ')})`)
           if (result.warning) details.push(result.warning)
@@ -125,7 +122,7 @@ export const importDistributorsCsv: PayloadHandler = async (req) => {
           continue
         }
 
-        const location = await geocode(formatFullAddress(row))
+        const location = await geocodeDistributor(row)
         if (!location) {
           report('error', `Error: Could not geocode "${name}" (line ${line}); not created`)
           errors++

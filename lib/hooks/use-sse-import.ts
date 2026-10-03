@@ -18,8 +18,7 @@
  * - `error`    → appends an 'error' log entry from `data.message`
  * - `complete` → stores `getResults(data)` into `results`
  *
- * Non-SSE responses (JSON errors, or JSON success fallbacks like the
- * re-geocode dry run) are routed to `onJSON`; unhandled ones become an
+ * Non-SSE responses (JSON errors or JSON success fallbacks) are routed to `onJSON`; unhandled ones become an
  * 'error' log entry. Thrown fetch/stream errors go to `onException` with
  * the same fallback.
  */

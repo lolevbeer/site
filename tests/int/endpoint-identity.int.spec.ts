@@ -10,17 +10,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { PayloadHandler, PayloadRequest } from 'payload'
 import type { User } from '@/src/payload-types'
-import { DEFAULT_REGION_COORDS } from '@/src/utils/distributor-region-coords'
 
 const getUserFromRequest = vi.fn()
 vi.mock('@/src/endpoints/auth-helper', () => ({
   getUserFromRequest: (...args: unknown[]) => getUserFromRequest(...args),
 }))
 
+const geocodeDistributor = vi.fn(async () => [-80, 40.5] as [number, number] | null)
 vi.mock('@/src/endpoints/geocode', () => ({
-  geocode: vi.fn(async () => [-80, 40.5] as [number, number]),
-  geocodeAddress: vi.fn(async () => ({ coords: [-80, 40.5], source: 'Nominatim' })),
-  geocodeFallback: vi.fn(async () => null),
+  geocodeDistributor: (...a: unknown[]) => geocodeDistributor(...(a as [])),
 }))
 
 vi.mock('@/src/utils/untappd', () => ({
@@ -101,7 +99,7 @@ interface Case {
   ops: string[]
 }
 
-const suspiciousPA = {
+const existingPA = {
   id: 'd1',
   name: 'Store',
   address: '1 Main',
@@ -109,7 +107,7 @@ const suspiciousPA = {
   state: 'PA',
   zip: '15201',
   region: 'PA',
-  location: DEFAULT_REGION_COORDS.PA,
+  location: [-79.9959, 40.4406],
 }
 
 const cases: Case[] = [
@@ -136,7 +134,7 @@ const cases: Case[] = [
     name: 'import-distributors',
     load: async () => (await import('@/src/endpoints/import-distributors')).importDistributors,
     // Existing "Store" in OH with an old address → update; "New Place" → create.
-    findDocs: [{ ...suspiciousPA, region: 'OH', state: 'OH', address: 'Old St' }],
+    findDocs: [{ ...existingPA, region: 'OH', state: 'OH', address: 'Old St' }],
     url: 'http://localhost/api/import?region=oh',
     setup: () => {
       vi.stubGlobal(
@@ -167,7 +165,7 @@ const cases: Case[] = [
     name: 'import-distributors-csv',
     load: async () =>
       (await import('@/src/endpoints/import-distributors-csv')).importDistributorsCsv,
-    findDocs: [{ ...suspiciousPA, region: 'NY', state: 'NY', address: 'Old St', phone: '' }],
+    findDocs: [{ ...existingPA, region: 'NY', state: 'NY', address: 'Old St', phone: '' }],
     url: 'http://localhost/api/csv',
     extra: {
       formData: async () => {
@@ -182,14 +180,6 @@ const cases: Case[] = [
       },
     } as unknown as Partial<PayloadRequest>,
     ops: ['find', 'update', 'create'],
-  },
-  {
-    name: 'regeocode-distributors',
-    load: async () =>
-      (await import('@/src/endpoints/regeocode-distributors')).regeocodeDistributors,
-    findDocs: [suspiciousPA],
-    url: 'http://localhost/api/regeocode',
-    ops: ['find', 'update'],
   },
   {
     name: 'sync-untappd-ratings',
@@ -223,5 +213,34 @@ describe.each(cases)('$name acts as the authorized user', (c) => {
     expect(res.status).toBe(200)
     expect(getUserFromRequest).toHaveBeenCalled()
     expectActsAs(payload, fallbackAdmin, c.ops)
+  })
+})
+
+describe('import-distributors when a row cannot be geocoded', () => {
+  it('reports the row as an error and does not create it', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          new Response(
+            JSON.stringify({
+              Export: {
+                Table: {
+                  Row: [
+                    { CustomerName: 'Nowhere', AddressCityStateZip: '2 Oak, Columbus, OH 43215' },
+                  ],
+                },
+              },
+            }),
+          ),
+      ),
+    )
+    geocodeDistributor.mockResolvedValueOnce(null)
+    const payload = mockPayload([])
+    const handler = (await import('@/src/endpoints/import-distributors')).importDistributors
+    const res = await run(handler, makeReq(payload, admin, 'http://localhost/api/import?region=oh'))
+    expect(res.status).toBe(200)
+    expect(payload.create).not.toHaveBeenCalled()
+    vi.unstubAllGlobals()
   })
 })

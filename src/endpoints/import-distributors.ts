@@ -1,9 +1,8 @@
 import type { PayloadHandler } from 'payload'
 import type { SiteContent } from '@/src/payload-types'
 import { getUserFromRequest } from './auth-helper'
-import { geocode } from './geocode'
+import { geocodeDistributor } from './geocode'
 import { createSSEResponse } from '@/src/utils/sse-response'
-import { DEFAULT_REGION_COORDS } from '@/src/utils/distributor-region-coords'
 import { distributorImportPatch, indexDocsByName } from '@/lib/distributors/import-patch'
 import { applyExistingDistributorPatch } from '@/lib/distributors/upsert-existing'
 import type { Distributor } from '@/src/payload-types'
@@ -245,7 +244,7 @@ export const importDistributors: PayloadHandler = async (req) => {
             current,
             patch,
             name: row.CustomerName,
-            geocode,
+            geocode: geocodeDistributor,
           })
           byName.set(row.CustomerName, [{ ...current, ...patch } as Distributor])
           const msg = `Updated: "${row.CustomerName}" (${Object.keys(patch).join(', ')})`
@@ -263,9 +262,19 @@ export const importDistributors: PayloadHandler = async (req) => {
         continue
       }
 
-      const fullAddress = `${parsed.street}, ${parsed.city}, ${parsed.state} ${parsed.zip}`.trim()
-      const coords = await geocode(fullAddress)
-      const location = coords || DEFAULT_REGION_COORDS[regionUpper]
+      const location = await geocodeDistributor({
+        address: parsed.street,
+        city: parsed.city,
+        state: parsed.state,
+        zip: parsed.zip,
+      })
+      if (!location) {
+        const message = `Error: Could not geocode "${row.CustomerName}"; not created`
+        details.push(message)
+        send('item', { type: 'error', message })
+        errors++
+        continue
+      }
 
       try {
         const created = await payload.create({
