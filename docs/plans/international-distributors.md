@@ -145,8 +145,9 @@ Each task starts with its failing test (TDD). Validation for every task:
   Busan with no city 0.35, Bilbao 0.65). Geocodio covers only the US and Canada and
   Bing has no key, so neither helps abroad.
 - Provider order in `src/endpoints/geocode.ts`: **Mapbox v6 forward with
-  `permanent=true`** (results we store) → Nominatim → Geocodio (US rows only). Bing
-  stays as-is, dormant without a key.
+  `permanent=true`** (results we store) → Nominatim → Geocodio (US rows only) → zip →
+  city. Bing and the old US-only chain (`geocodeAddress`, `geocodeFallback`) were removed
+  in cleanup; `geocodeDistributor` is now a coords-only wrapper over `resolveDistributor`.
 - Token: server-only `MAPBOX_GEOCODING_TOKEN` (secret, no URL restriction). The public
   `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` is URL-restricted (403 without the site Referer) and
   must not be used server-side. Missing token: skip Mapbox, fall back to Nominatim.

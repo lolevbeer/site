@@ -1,13 +1,12 @@
 /**
  * Server-side geocoding for distributor imports.
  *
- * `geocodeAddress` / `geocodeFallback` / `geocodeDistributor` are the US chain the
- * Encompass importer uses (Nominatim → Geocodio → Bing, then zip, then city+state).
- * `resolveDistributor` is the any-country chain the CSV importer uses: Mapbox (v6,
- * `permanent=true` because we store the pin) → Nominatim → Geocodio for US rows only.
- * It also returns the city / state / zip / country the provider found, so the importer
- * can fill blank cells, and whether the match is uncertain enough to review.
- * `reverseDistributor` answers the same question for a row whose CSV gave the pin.
+ * `resolveDistributor` locates a row in any country: Mapbox (v6, `permanent=true`
+ * because we store the pin) → Nominatim → Geocodio for US rows only → the zip, then
+ * the city alone. It also returns the city / state / zip / country the provider found,
+ * so the importer can fill blank cells, and whether the match is uncertain enough to
+ * review. `reverseDistributor` answers the same question for a row whose CSV gave the
+ * pin. `geocodeDistributor` is the coords-only form both importers use for a pin.
  */
 import { sleep } from '@/src/utils/async'
 import { formatFullAddress } from '@/lib/distributors/import-patch'
@@ -15,7 +14,6 @@ import { isStateCode } from '@/lib/distributors/fields'
 import type { ResolvedParts } from '@/lib/distributors/fill-blank-parts'
 
 const GEOCODIO_API_KEY = process.env.GEOCODIO_API_KEY || ''
-const BING_MAPS_API_KEY = process.env.BING_MAPS_API_KEY || ''
 
 /**
  * Nominatim allows one request per second. Every Nominatim call in the app goes
@@ -36,26 +34,7 @@ async function waitForNominatimSlot(): Promise<void> {
   if (wait > 0) await sleep(wait)
 }
 
-// Nominatim geocoding (free, rate limited 1 req/sec)
-async function geocodeWithNominatim(address: string): Promise<[number, number] | null> {
-  await waitForNominatimSlot()
-  const encoded = encodeURIComponent(address)
-  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encoded}&limit=1&countrycodes=us`
-
-  try {
-    const response = await fetch(url, {
-      headers: { 'User-Agent': 'LolevBeer/1.0' },
-    })
-    if (!response.ok) return null
-    const data = await response.json()
-    if (data.length === 0) return null
-    return [parseFloat(data[0].lon), parseFloat(data[0].lat)]
-  } catch {
-    return null
-  }
-}
-
-// Geocodio fallback (requires API key)
+// Geocodio (US only; requires API key)
 async function geocodeWithGeocodio(address: string): Promise<[number, number] | null> {
   if (!GEOCODIO_API_KEY) return null
 
@@ -86,93 +65,6 @@ async function geocodeWithGeocodio(address: string): Promise<[number, number] | 
   } catch {
     return null
   }
-}
-
-// Bing Maps fallback (requires API key)
-async function geocodeWithBing(address: string): Promise<[number, number] | null> {
-  if (!BING_MAPS_API_KEY) return null
-
-  const encoded = encodeURIComponent(address)
-  const url = `https://dev.virtualearth.net/REST/v1/Locations?q=${encoded}&key=${BING_MAPS_API_KEY}`
-
-  try {
-    const response = await fetch(url)
-    if (!response.ok) return null
-    const data = await response.json()
-    if (!data.resourceSets?.[0]?.resources?.[0]?.point?.coordinates) return null
-    // Bing returns [lat, lng] - swap to [lng, lat]
-    const [lat, lng] = data.resourceSets[0].resources[0].point.coordinates
-    return [lng, lat]
-  } catch {
-    return null
-  }
-}
-
-export interface GeocodeResult {
-  coords: [number, number]
-  source: string
-}
-
-// Geocode address: Nominatim first, then Geocodio and Bing fallbacks
-export async function geocodeAddress(address: string): Promise<GeocodeResult | null> {
-  const nominatimResult = await geocodeWithNominatim(address)
-  if (nominatimResult) {
-    return { coords: nominatimResult, source: 'Nominatim' }
-  }
-
-  const geocodioResult = await geocodeWithGeocodio(address)
-  if (geocodioResult) {
-    return { coords: geocodioResult, source: 'Geocodio' }
-  }
-
-  const bingResult = await geocodeWithBing(address)
-  if (bingResult) {
-    return { coords: bingResult, source: 'Bing' }
-  }
-
-  return null
-}
-
-// Fallback geocoding using zip or city/state
-export async function geocodeFallback(
-  city: string,
-  state: string,
-  zip: string,
-): Promise<GeocodeResult | null> {
-  // Try zip code first (more specific)
-  if (zip && zip.length === 5) {
-    const zipResult = await geocodeWithNominatim(`${zip}, USA`)
-    if (zipResult) {
-      return { coords: zipResult, source: 'Nominatim (zip)' }
-    }
-  }
-
-  // Try city, state
-  if (city && state) {
-    const cityResult = await geocodeWithNominatim(`${city}, ${state}, USA`)
-    if (cityResult) {
-      return { coords: cityResult, source: 'Nominatim (city)' }
-    }
-  }
-
-  return null
-}
-
-/**
- * Geocode a distributor the way every import does: the full street address
- * first (Nominatim, Geocodio, Bing), then the zip, then city + state. Returns
- * null only when all of those fail, so callers never need a made-up pin.
- */
-export async function geocodeDistributor(parts: {
-  address?: string | null
-  city?: string | null
-  state?: string | null
-  zip?: string | null
-}): Promise<[number, number] | null> {
-  const full = await geocodeAddress(formatFullAddress(parts))
-  if (full) return full.coords
-  const fallback = await geocodeFallback(parts.city ?? '', parts.state ?? '', parts.zip ?? '')
-  return fallback?.coords ?? null
 }
 
 type DistributorParts = {
@@ -384,7 +276,20 @@ export async function resolveDistributor(
     if (coords) return { coords, parts: {}, source: 'Geocodio', uncertain: false }
   }
 
-  // Coarse fallback: the city (and state) alone puts the pin in the right town.
+  // Coarse fallbacks: the postcode, then the city (and state), put the pin in the right
+  // area. Flagged uncertain so the report asks for a check.
+  const zip = row.zip?.trim()
+  if (zip) {
+    const coarse = sameCountry(
+      await resolveWithNominatim(
+        formatFullAddress({ zip, country: country ?? undefined }),
+        country,
+      ),
+    )
+    if (coarse) return { ...coarse, uncertain: true }
+  }
+
+  // The city (and state) alone puts the pin in the right town.
   const city = row.city?.trim()
   if (city) {
     const coarse = sameCountry(
@@ -394,4 +299,14 @@ export async function resolveDistributor(
   }
 
   return null
+}
+
+/**
+ * Coords-only `resolveDistributor`, for callers that need just the pin (the Encompass
+ * importer, and re-imports whose address changed). Null when nothing locates the row.
+ */
+export async function geocodeDistributor(
+  parts: DistributorParts,
+): Promise<[number, number] | null> {
+  return (await resolveDistributor(parts))?.coords ?? null
 }
