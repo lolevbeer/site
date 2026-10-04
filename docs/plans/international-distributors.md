@@ -151,7 +151,7 @@ Each task starts with its failing test (TDD). Validation for every task:
   `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` is URL-restricted (403 without the site Referer) and
   must not be used server-side. Missing token: skip Mapbox, fall back to Nominatim.
 - Add `resolveDistributor(parts & { country? }) → { coords, parts: ResolvedParts,
-  relevance?, source } | null`:
+  uncertain, source } | null`:
   - Mapbox: `language=en`, `country=<code>` when the row's country is known, parts from
     `context` (`place` → city, `region` → state, `postcode` → zip, `country.country_code`
     → country, uppercased).
@@ -159,7 +159,9 @@ Each task starts with its failing test (TDD). Validation for every task:
   - Any answer whose country contradicts a *supplied* country is discarded.
   - Zip/city fallbacks drop the hard-coded `, USA` and 5-digit assumption.
   - Keep `geocodeDistributor(parts)` as a coords-only wrapper for existing callers.
-- `relevance` below 0.6 is reported by Task 8 as `check this` in every report line.
+- v6 has no relevance score: a match is `uncertain` when `match_code.confidence` is
+  `low` or missing, or the feature is coarser than an address (e.g. Busan matched only
+  the street). Task 8 reports uncertain rows as `check this`.
 - Test first: extend `tests/int/geocode.int.spec.ts` (fetch mocks) — Mapbox called
   first with `permanent=true`, `language=en`, and `country=nl` for an `NL` row; no
   `country` param for a blank-country row; parts parsed from `context`; skipped when the
