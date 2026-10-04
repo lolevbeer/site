@@ -10,7 +10,8 @@
  */
 import { sleep } from '@/src/utils/async'
 import { formatFullAddress } from '@/lib/distributors/import-patch'
-import { isStateCode } from '@/lib/distributors/fields'
+import { effectiveCountry } from '@/lib/distributors/country'
+import { lngLat } from '@/lib/map/geo'
 import type { ResolvedParts } from '@/lib/distributors/fill-blank-parts'
 
 const GEOCODIO_API_KEY = process.env.GEOCODIO_API_KEY || ''
@@ -73,9 +74,10 @@ type DistributorParts = {
   state?: string | null
   zip?: string | null
   country?: string | null
+  region?: string | null
 }
 
-export interface ResolvedDistributor {
+interface ResolvedDistributor {
   coords: [number, number]
   /** What the provider says the address is; the importer fills only blank cells. */
   parts: ResolvedParts
@@ -91,64 +93,89 @@ function compact(parts: ResolvedParts): ResolvedParts {
   ) as ResolvedParts
 }
 
+/** `[lng, lat]` when both are finite and in range, else null. */
+function pin(lng: unknown, lat: unknown): [number, number] | null {
+  const point = lngLat([Number(lng), Number(lat)])
+  return point && [point.lng, point.lat]
+}
+
 type MapboxContext = Record<string, { name?: string; country_code?: string } | undefined>
 
-// Mapbox v6 forward geocoding. Server-only secret token: the public map token is
-// URL-restricted and is rejected without the site's Referer.
-async function resolveWithMapbox(
-  query: string,
-  country: string | undefined,
+/**
+ * One Mapbox v6 request (`forward` or `reverse`), English, `permanent=true` because we
+ * store the pin. Server-only secret token: the public map token is URL-restricted and
+ * is rejected without the site's Referer. Null without a token, a hit, or on error.
+ */
+async function mapboxFetch(
+  endpoint: 'forward' | 'reverse',
+  query: Record<string, string>,
 ): Promise<ResolvedDistributor | null> {
   const token = process.env.MAPBOX_GEOCODING_TOKEN
   if (!token) return null
   const params = new URLSearchParams({
-    q: query,
+    ...query,
     access_token: token,
     permanent: 'true',
     language: 'en',
     limit: '1',
   })
-  if (country) params.set('country', country.toLowerCase())
-
   try {
-    const response = await fetch(`https://api.mapbox.com/search/geocode/v6/forward?${params}`)
+    const response = await fetch(`https://api.mapbox.com/search/geocode/v6/${endpoint}?${params}`)
     if (!response.ok) return null
-    return mapboxResult((await response.json()).features?.[0])
+    const feature = (await response.json()).features?.[0]
+    const coords = pin(feature?.geometry?.coordinates?.[0], feature?.geometry?.coordinates?.[1])
+    if (!coords) return null
+    const props = feature.properties ?? {}
+    const context: MapboxContext = props.context ?? {}
+    const confidence: string | undefined = props.match_code?.confidence
+    return {
+      coords,
+      parts: compact({
+        city: context.place?.name,
+        state: context.region?.name,
+        zip: context.postcode?.name,
+        country: context.country?.country_code?.toUpperCase(),
+      }),
+      source: 'Mapbox',
+      uncertain: props.feature_type !== 'address' || !confidence || confidence === 'low',
+    }
   } catch {
     return null
   }
 }
 
-type NominatimAddress = Record<string, string | undefined>
+type NominatimHit = { lon?: string; lat?: string; address?: Record<string, string | undefined> }
 
-// Nominatim with structured parts; `countrycodes` only when the row's country is known.
-async function resolveWithNominatim(
-  query: string,
-  country: string | undefined,
+/** One paced Nominatim request (`search` or `reverse`) with English address parts. */
+async function nominatimFetch(
+  endpoint: 'search' | 'reverse',
+  query: Record<string, string>,
 ): Promise<ResolvedDistributor | null> {
   await waitForNominatimSlot()
   const params = new URLSearchParams({
+    ...query,
     format: 'json',
-    q: query,
-    limit: '1',
     addressdetails: '1',
     'accept-language': 'en',
   })
-  if (country) params.set('countrycodes', country.toLowerCase())
-
   try {
-    const response = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, {
+    const response = await fetch(`https://nominatim.openstreetmap.org/${endpoint}?${params}`, {
       headers: { 'User-Agent': 'LolevBeer/1.0' },
     })
     if (!response.ok) return null
-    const hit = (await response.json())[0]
-    if (!hit) return null
-    const lng = parseFloat(hit.lon)
-    const lat = parseFloat(hit.lat)
-    if (!Number.isFinite(lng) || !Number.isFinite(lat)) return null
+    const body = await response.json()
+    const hit: NominatimHit | undefined = Array.isArray(body) ? body[0] : body
+    const coords = pin(hit?.lon, hit?.lat)
+    if (!coords) return null
+    const a = hit?.address ?? {}
     return {
-      coords: [lng, lat],
-      parts: nominatimParts(hit.address),
+      coords,
+      parts: compact({
+        city: a.city || a.town || a.village || a.municipality,
+        state: a.state,
+        zip: a.postcode,
+        country: a.country_code?.toUpperCase(),
+      }),
       source: 'Nominatim',
       uncertain: false,
     }
@@ -157,38 +184,12 @@ async function resolveWithNominatim(
   }
 }
 
-function mapboxResult(feature: {
-  geometry?: { coordinates?: number[] }
-  properties?: {
-    feature_type?: string
-    match_code?: { confidence?: string }
-    context?: MapboxContext
-  }
-}): ResolvedDistributor | null {
-  const [lng, lat] = feature?.geometry?.coordinates ?? []
-  if (!Number.isFinite(lng) || !Number.isFinite(lat)) return null
-  const props = feature.properties ?? {}
-  const context = props.context ?? {}
-  const confidence = props.match_code?.confidence
-  return {
-    coords: [lng, lat],
-    parts: compact({
-      city: context.place?.name,
-      state: context.region?.name,
-      zip: context.postcode?.name,
-      country: context.country?.country_code?.toUpperCase(),
-    }),
-    source: 'Mapbox',
-    uncertain: props.feature_type !== 'address' || !confidence || confidence === 'low',
-  }
-}
-
-function nominatimParts(a: NominatimAddress = {}): ResolvedParts {
-  return compact({
-    city: a.city || a.town || a.village || a.municipality,
-    state: a.state,
-    zip: a.postcode,
-    country: a.country_code?.toUpperCase(),
+/** Forward search; `countrycodes` only when the row's country is known. */
+function nominatimSearch(q: string, country: string | undefined) {
+  return nominatimFetch('search', {
+    q,
+    limit: '1',
+    ...(country ? { countrycodes: country.toLowerCase() } : {}),
   })
 }
 
@@ -201,101 +202,51 @@ export async function reverseDistributor([lng, lat]: [
   number,
   number,
 ]): Promise<ResolvedDistributor | null> {
-  const token = process.env.MAPBOX_GEOCODING_TOKEN
-  if (token) {
-    const params = new URLSearchParams({
-      longitude: String(lng),
-      latitude: String(lat),
-      access_token: token,
-      permanent: 'true',
-      language: 'en',
-      limit: '1',
-    })
-    try {
-      const response = await fetch(`https://api.mapbox.com/search/geocode/v6/reverse?${params}`)
-      if (response.ok) {
-        const hit = mapboxResult((await response.json()).features?.[0])
-        if (hit) return hit
-      }
-    } catch {
-      // fall through to Nominatim
-    }
-  }
-
-  await waitForNominatimSlot()
-  const params = new URLSearchParams({
-    format: 'json',
-    lon: String(lng),
-    lat: String(lat),
-    addressdetails: '1',
-    'accept-language': 'en',
-  })
-  try {
-    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?${params}`, {
-      headers: { 'User-Agent': 'LolevBeer/1.0' },
-    })
-    if (!response.ok) return null
-    const hit = await response.json()
-    if (!hit?.address) return null
-    return {
-      coords: [lng, lat],
-      parts: nominatimParts(hit.address),
-      source: 'Nominatim',
-      uncertain: false,
-    }
-  } catch {
-    return null
-  }
+  const at = { longitude: String(lng), latitude: String(lat) }
+  return (
+    (await mapboxFetch('reverse', at)) ??
+    (await nominatimFetch('reverse', { lon: at.longitude, lat: at.latitude }))
+  )
 }
 
 /**
  * Locate a distributor in any country and report what the provider found.
  *
- * The row is treated as US when its country is `US`, or blank with a US state code.
- * A supplied country restricts every provider and any answer in another country is
- * discarded. Order: Mapbox, Nominatim (full address, then city + state), Geocodio (US
- * rows only). Returns null when nothing locates the row.
+ * The row's country comes from `effectiveCountry` (blank with a US state means US). A
+ * known country restricts every provider and any answer in another country is
+ * discarded. Order: Mapbox, Nominatim, Geocodio (US rows only), then the zip and the
+ * city alone, which are flagged uncertain. Returns null when nothing locates the row.
  */
 export async function resolveDistributor(
   row: DistributorParts,
 ): Promise<ResolvedDistributor | null> {
-  const state = row.state?.trim() || ''
-  const country = row.country?.trim() || (isStateCode(state) ? 'US' : undefined)
-  const query = formatFullAddress({ ...row, country })
+  const country = effectiveCountry(row)
   const sameCountry = (r: ResolvedDistributor | null) =>
     r && (!country || !r.parts.country || r.parts.country === country) ? r : null
+  const query = formatFullAddress({ ...row, country })
 
-  const mapbox = sameCountry(await resolveWithMapbox(query, country))
-  if (mapbox) return mapbox
-
-  const nominatim = sameCountry(await resolveWithNominatim(query, country))
-  if (nominatim) return nominatim
+  const precise =
+    sameCountry(
+      await mapboxFetch('forward', {
+        q: query,
+        ...(country ? { country: country.toLowerCase() } : {}),
+      }),
+    ) ?? sameCountry(await nominatimSearch(query, country))
+  if (precise) return precise
 
   if (country === 'US') {
     const coords = await geocodeWithGeocodio(query)
     if (coords) return { coords, parts: {}, source: 'Geocodio', uncertain: false }
   }
 
-  // Coarse fallbacks: the postcode, then the city (and state), put the pin in the right
-  // area. Flagged uncertain so the report asks for a check.
+  // Coarse fallbacks put the pin in the right area; flagged so the report asks for a check
   const zip = row.zip?.trim()
-  if (zip) {
-    const coarse = sameCountry(
-      await resolveWithNominatim(
-        formatFullAddress({ zip, country: country ?? undefined }),
-        country,
-      ),
-    )
-    if (coarse) return { ...coarse, uncertain: true }
-  }
-
-  // The city (and state) alone puts the pin in the right town.
   const city = row.city?.trim()
-  if (city) {
-    const coarse = sameCountry(
-      await resolveWithNominatim(formatFullAddress({ city, state, country }), country),
-    )
-    if (coarse) return { ...coarse, uncertain: true }
+  const coarse = [zip && { zip, country }, city && { city, state: row.state, country }]
+  for (const parts of coarse) {
+    if (!parts) continue
+    const hit = sameCountry(await nominatimSearch(formatFullAddress(parts), country))
+    if (hit) return { ...hit, uncertain: true }
   }
 
   return null

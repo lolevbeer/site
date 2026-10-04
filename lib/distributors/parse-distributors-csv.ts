@@ -17,7 +17,8 @@
  * the pin directly, so the row is not geocoded (only reverse-looked-up for blanks).
  */
 import { parseCSVLine } from '@/src/utils/csv'
-import { groupKey, isCountryCode } from './country'
+import { lngLat } from '@/lib/map/geo'
+import { effectiveCountry, groupKey, isCountryCode } from './country'
 import {
   CUSTOMER_TYPES,
   isCustomerType,
@@ -90,8 +91,7 @@ function parseRow(
   }
 
   const isUS =
-    countryCell === 'US' ||
-    (!countryCell && (isStateCode(stateCell) || (!stateCell && isStateCode(regionCell))))
+    effectiveCountry({ country: countryCell, state: stateCell, region: regionCell }) === 'US'
   const zipCell = get('zip')
   let region: StateCode | undefined
   let zip = zipCell
@@ -145,13 +145,15 @@ function parseRow(
     }
     const lat = Number(latCell)
     const lng = Number(lngCell)
-    if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
-      return { error: `latitude "${latCell}" must be a number from -90 to 90` }
+    const point = lngLat([lng, lat])
+    if (!point) {
+      return {
+        error: !lngLat([0, lat])
+          ? `latitude "${latCell}" must be a number from -90 to 90`
+          : `longitude "${lngCell}" must be a number from -180 to 180`,
+      }
     }
-    if (!Number.isFinite(lng) || lng < -180 || lng > 180) {
-      return { error: `longitude "${lngCell}" must be a number from -180 to 180` }
-    }
-    location = [lng, lat]
+    location = [point.lng, point.lat]
   }
 
   const row: DistributorCsvRow = { line, name, address, zip, phone }

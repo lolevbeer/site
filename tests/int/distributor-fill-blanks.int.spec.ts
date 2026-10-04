@@ -95,3 +95,10 @@ describe('fillBlankParts', () => {
     expect(filled).toMatchObject({ state: 'PA', region: 'PA' })
   })
 })
+
+describe('fillBlankParts: a blank country with a US state', () => {
+  it('still sets the region when the geocoder returns no country', () => {
+    const { filled } = fillBlankParts({ state: 'PA' }, { city: 'Pittsburgh' })
+    expect(filled).toEqual({ city: 'Pittsburgh', region: 'PA' })
+  })
+})

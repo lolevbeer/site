@@ -31,7 +31,7 @@ import {
   parseDistributorsCsv,
   type DistributorCsvRow,
 } from '@/lib/distributors/parse-distributors-csv'
-import { fillBlankParts } from '@/lib/distributors/fill-blank-parts'
+import { fillBlankParts, needsFill } from '@/lib/distributors/fill-blank-parts'
 import { groupKey } from '@/lib/distributors/country'
 import { formatAddress } from '@/lib/utils/formatters'
 
@@ -96,39 +96,31 @@ export const importDistributorsCsv: PayloadHandler = async (req) => {
     const enriched: EnrichedRow[] = []
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i]
-      if (row.city && row.state && (row.country || row.region)) {
+      if (!needsFill(row)) {
         enriched.push({ ...row, note: '' })
         continue
       }
       progress(i, rows.length, row.name, 'Locating')
-      if (row.location) {
-        // The file gave the pin: keep it, and only look up the blank parts
-        const around = await reverseDistributor(row.location)
-        const { filled, inferred } = around
-          ? fillBlankParts(row, around.parts)
-          : { filled: {}, inferred: [] }
-        enriched.push({
-          ...row,
-          ...filled,
-          note: inferred.length ? ` (inferred: ${inferred.join(', ')})` : '',
-        })
-        continue
-      }
-      const resolved = await resolveDistributor(row)
-      if (!resolved) {
+      // A pin from the file is kept and only reverse-looked-up for its blank parts
+      const resolved = row.location
+        ? await reverseDistributor(row.location)
+        : await resolveDistributor(row)
+      if (!resolved && !row.location) {
         report('error', `Error: Could not geocode "${row.name}" (line ${row.line}); not created`)
         errors++
         continue
       }
-      const { filled, inferred } = fillBlankParts(row, resolved.parts)
+      const { filled, inferred } = resolved
+        ? fillBlankParts(row, resolved.parts)
+        : { filled: {}, inferred: [] }
       const flags = [
         inferred.length ? `inferred: ${inferred.join(', ')}` : '',
-        resolved.uncertain ? 'check this' : '',
+        !row.location && resolved?.uncertain ? 'check this' : '',
       ].filter(Boolean)
       enriched.push({
         ...row,
         ...filled,
-        location: resolved.coords,
+        location: row.location ?? resolved!.coords,
         note: flags.length ? ` (${flags.join('; ')})` : '',
       })
     }
@@ -167,10 +159,12 @@ export const importDistributorsCsv: PayloadHandler = async (req) => {
           user,
         })
       : { docs: [] as Distributor[] }
-    const byGroup = new Map<string, Map<string, Distributor[]>>()
-    for (const key of new Set(existing.docs.map((d) => groupKey(d)))) {
-      byGroup.set(key, indexDocsByName(existing.docs.filter((d) => groupKey(d) === key)))
+    const buckets = new Map<string, Distributor[]>()
+    for (const doc of existing.docs) {
+      const key = groupKey(doc)
+      buckets.set(key, [...(buckets.get(key) ?? []), doc])
     }
+    const byGroup = new Map([...buckets].map(([key, docs]) => [key, indexDocsByName(docs)]))
 
     for (let i = 0; i < ready.length; i++) {
       const row = ready[i]

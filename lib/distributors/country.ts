@@ -7,6 +7,8 @@
  * country, because two-letter codes collide (`DE` Delaware/Germany, `CA` California/Canada).
  */
 
+import { isStateCode } from './fields'
+
 const names = new Intl.DisplayNames(['en'], { type: 'region', fallback: 'none' })
 
 /**
@@ -49,6 +51,23 @@ export function countryName(code: string): string {
 /** The country name to append to an address, or `''` for a blank or US country. */
 export function countrySuffix(country?: string | null): string {
   return country && country !== 'US' ? countryName(country) : ''
+}
+
+/**
+ * The one rule for which country a row is in: its `country` when set; else `US` when
+ * its state (or region) is a US code; else unknown (`undefined`), to be filled in from
+ * the geocoder. The parser, the geocoder and the blank-filler all decide through this.
+ */
+export function effectiveCountry(row: {
+  country?: string | null
+  state?: string | null
+  region?: string | null
+}): string | undefined {
+  const country = row.country?.trim()
+  if (country) return country
+  const state = row.state?.trim() || ''
+  const region = row.region?.trim() || ''
+  return isStateCode(state) || (!state && isStateCode(region)) ? 'US' : undefined
 }
 
 /** `US:<state>` for a blank or US country, else the country code. */

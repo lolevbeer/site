@@ -3,7 +3,7 @@
  * and the grouping key that keeps a US state apart from a country with the same code.
  */
 import { describe, expect, it } from 'vitest'
-import { countryName, groupKey, isCountryCode } from '@/lib/distributors/country'
+import { countryName, effectiveCountry, groupKey, isCountryCode } from '@/lib/distributors/country'
 
 describe('isCountryCode', () => {
   it('accepts uppercase ISO-2 codes', () => {
@@ -41,5 +41,21 @@ describe('groupKey', () => {
     expect(groupKey({ country: 'CA' })).toBe('CA')
     expect(groupKey({ country: 'DE' })).not.toBe(groupKey({ region: 'DE' }))
     expect(groupKey({ country: 'CA' })).not.toBe(groupKey({ region: 'CA' }))
+  })
+})
+
+describe('effectiveCountry', () => {
+  it('uses the country cell when set', () => {
+    expect(effectiveCountry({ country: 'NL', state: 'PA' })).toBe('NL')
+  })
+
+  it('reads a blank country with a US state or region as US', () => {
+    expect(effectiveCountry({ state: 'PA' })).toBe('US')
+    expect(effectiveCountry({ region: 'VA' })).toBe('US')
+  })
+
+  it('is unknown for a blank country with a non-US or missing state', () => {
+    expect(effectiveCountry({ state: 'Noord-Holland' })).toBeUndefined()
+    expect(effectiveCountry({})).toBeUndefined()
   })
 })

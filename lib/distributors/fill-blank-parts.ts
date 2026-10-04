@@ -8,6 +8,7 @@
  * and only when that name is one of the 50 states or DC.
  */
 import { US_STATES, isStateCode, type StateCode } from './fields'
+import { effectiveCountry } from './country'
 
 /** The parts a geocoder can return for an address. */
 export type ResolvedParts = {
@@ -24,9 +25,10 @@ type RowParts = {
   state?: string | null
   country?: string | null
   zip?: string | null
+  region?: string | null
 }
 
-export type FilledParts = ResolvedParts & { region?: StateCode }
+type FilledParts = ResolvedParts & { region?: StateCode }
 
 /** Order the parts appear in `inferred`, so reports read the same every time. */
 const FILLABLE = ['city', 'state', 'country', 'zip'] as const
@@ -40,6 +42,11 @@ function stateCode(name: string): StateCode | undefined {
   return US_STATES.find((s) => s.label.toLowerCase() === trimmed.toLowerCase())?.value
 }
 
+/** True when the row is missing a city, state, or country the geocoder could fill. */
+export function needsFill(row: RowParts): boolean {
+  return blank(row.city) || blank(row.state) || !effectiveCountry(row)
+}
+
 export function fillBlankParts(
   row: RowParts,
   resolved: ResolvedParts,
@@ -47,8 +54,7 @@ export function fillBlankParts(
   const filled: FilledParts = {}
   const inferred: (typeof FILLABLE)[number][] = []
 
-  const country = blank(row.country) ? resolved.country : (row.country as string).trim()
-  const isUS = country === 'US'
+  const isUS = (effectiveCountry(row) ?? resolved.country) === 'US'
   let region: StateCode | undefined = blank(row.state) ? undefined : stateCode(row.state as string)
 
   for (const part of FILLABLE) {
