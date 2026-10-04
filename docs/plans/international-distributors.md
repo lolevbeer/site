@@ -55,7 +55,7 @@ all) and 1 has no `city`.
   (Untappd removal). None touch `lib/distributors`, `src/endpoints/*distributors*`,
   `geocode.ts`, or `Distributors.ts`.
 
-## Decisions (proposed — approve or change)
+## Decisions (approved 2026-10-04)
 
 1. **Fill blanks, never overwrite.** Supplied cells always win. Filled cells are
    listed per row in the report as `inferred: country, city`.
@@ -66,10 +66,11 @@ all) and 1 has no `city`.
 3. **A supplied `country` restricts the search** (`countrycodes=xx`); a provider answer
    in a different country is discarded. Blank country searches globally, then fills it.
 4. **`region` stays US-only/blank for non-US.** Non-US rows group by `country`.
-5. **Filled `city`/`state` are in the venue's local language** (Nominatim default; the
-   CSV's own cells are already local-script). Say if you want English.
+5. **Filled `city`/`state` are in English** (`accept-language=en` on Nominatim,
+   `culture=en` on Bing), even though the CSV's own cells are local-script. Cells the
+   CSV supplies are stored as written, so one file can mix scripts.
 6. **Place search drops `country=US`** so visitors can search abroad; Mapbox
-   `proximity` still biases toward the visitor. Say if you want US-only search kept.
+   `proximity` still biases toward the visitor.
 
 ## Tasks
 
@@ -141,17 +142,19 @@ Each task starts with its failing test (TDD). Validation for every task:
 ### 6. Geocoder: resolve parts, any country
 - Edit `src/endpoints/geocode.ts`. Add `resolveDistributor(parts & { country? }) →
   { coords, parts: ResolvedParts, source } | null`:
-  - Nominatim: `addressdetails=1`; `countrycodes` = the row's country when known (US
+  - Nominatim: `addressdetails=1&accept-language=en`; `countrycodes` = the row's
+    country when known (US
     implied by a valid US `state`), no restriction otherwise; resolved `city` from
     `city|town|village|municipality`, `country` from `country_code`.
-  - Geocodio only when the country is US. Bing maps `address.*`; any provider answer
+  - Geocodio only when the country is US. Bing (`culture=en`) maps `address.*`; any provider answer
     whose country contradicts a *supplied* country is discarded.
   - Zip/city fallbacks drop the hard-coded `, USA` and the 5-digit zip assumption (use
     `countryName`).
   - Keep `geocodeDistributor(parts)` as a thin wrapper returning `coords` only, so
     `import-distributors.ts` and `upsert-existing.ts` callers are unchanged.
 - Test first: extend `tests/int/geocode.int.spec.ts` (existing fetch-mock style) —
-  no `countrycodes=us` when the country is `NL`; `us` still sent for a US row; Geocodio
+  no `countrycodes=us` when the country is `NL`; `us` still sent for a US row;
+  `accept-language=en` always sent; Geocodio
   not called for `NL`; resolved parts returned; a contradicting Bing country discarded;
   existing five tests still pass unmodified.
 - Acceptance: test green. Depends on: 3, 5.
@@ -249,8 +252,9 @@ Each task starts with its failing test (TDD). Validation for every task:
   the endpoint has no `maxDuration` (platform default 300 s), so roughly 100 non-US rows
   per upload. A dry run and the real run each geocode (nothing is cached between them).
   Split larger files. Nominatim's usage policy is for light use, fine at this scale.
-- **Local-language names.** Filled `city`/`state` follow the venue's language
-  (Decision 5).
+- **Mixed scripts.** Filled `city`/`state` are English while supplied cells stay as
+  written (Decision 5), so a stored row can read `東京都` for state beside an English
+  city. Addresses and map pins are unaffected; only the displayed text mixes.
 - **Out of scope:** map default center/zoom (stays Pittsburgh), FAQ/JSON-LD copy that
   says "Pittsburgh, PA, NY, OH" (`lib/utils/faq-schema.ts:112`; it describes the
   taprooms, not the retailer list), Locations (taprooms), and the PA/OH Encompass
