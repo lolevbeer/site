@@ -46,6 +46,11 @@ export function countryName(code: string): string {
   return names.of(code) ?? code
 }
 
+/** The country name to append to an address, or `''` for a blank or US country. */
+export function countrySuffix(country?: string | null): string {
+  return country && country !== 'US' ? countryName(country) : ''
+}
+
 /** `US:<state>` for a blank or US country, else the country code. */
 export function groupKey(row: { country?: string | null; region?: string | null }): string {
   const country = row.country || 'US'
