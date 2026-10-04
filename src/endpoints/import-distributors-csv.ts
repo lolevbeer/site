@@ -32,8 +32,29 @@ import {
   type DistributorCsvRow,
 } from '@/lib/distributors/parse-distributors-csv'
 import { fillBlankParts, needsFill } from '@/lib/distributors/fill-blank-parts'
-import { groupKey } from '@/lib/distributors/country'
+import { groupKey, groupWhere } from '@/lib/distributors/country'
 import { formatAddress } from '@/lib/utils/formatters'
+
+/** How many rows are located at once. */
+const LOOKUP_CONCURRENCY = 4
+
+/** Map with at most `limit` calls in flight; results keep the input order. */
+async function mapInBatches<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  const results = new Array<R>(items.length)
+  let next = 0
+  const worker = async () => {
+    while (next < items.length) {
+      const i = next++
+      results[i] = await fn(items[i], i)
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker))
+  return results
+}
 
 /** A parsed row after enrichment, with the pin it was located at (if it was). */
 type EnrichedRow = DistributorCsvRow & {
@@ -93,23 +114,18 @@ export const importDistributorsCsv: PayloadHandler = async (req) => {
       })
 
     // ---- 2. Enrich: locate rows missing city, state or country --------------------
-    const enriched: EnrichedRow[] = []
-    for (let i = 0; i < rows.length; i++) {
-      const row = rows[i]
-      if (!needsFill(row)) {
-        enriched.push({ ...row, note: '' })
-        continue
-      }
-      progress(i, rows.length, row.name, 'Locating')
+    // Lookups run a few at a time (Mapbox handles it; Nominatim paces itself), and the
+    // results are kept in file order so reports and duplicate checks read top to bottom.
+    let locatedCount = 0
+    const located = await mapInBatches(rows, LOOKUP_CONCURRENCY, async (row) => {
+      if (!needsFill(row)) return { row: { ...row, note: '' } }
+      // Count finished-or-started lookups, not the row index, so the bar never goes backwards
+      progress(locatedCount++, rows.length, row.name, 'Locating')
       // A pin from the file is kept and only reverse-looked-up for its blank parts
       const resolved = row.location
         ? await reverseDistributor(row.location)
         : await resolveDistributor(row)
-      if (!resolved && !row.location) {
-        report('error', `Error: Could not geocode "${row.name}" (line ${row.line}); not created`)
-        errors++
-        continue
-      }
+      if (!resolved && !row.location) return { row, failed: true }
       const { filled, inferred } = resolved
         ? fillBlankParts(row, resolved.parts)
         : { filled: {}, inferred: [] }
@@ -117,12 +133,21 @@ export const importDistributorsCsv: PayloadHandler = async (req) => {
         inferred.length ? `inferred: ${inferred.join(', ')}` : '',
         !row.location && resolved?.uncertain ? 'check this' : '',
       ].filter(Boolean)
-      enriched.push({
-        ...row,
-        ...filled,
-        location: row.location ?? resolved!.coords,
-        note: flags.length ? ` (${flags.join('; ')})` : '',
-      })
+      return {
+        row: {
+          ...row,
+          ...filled,
+          location: row.location ?? resolved!.coords,
+          note: flags.length ? ` (${flags.join('; ')})` : '',
+        },
+      }
+    })
+    const enriched: EnrichedRow[] = []
+    for (const { row, failed } of located) {
+      if (failed) {
+        report('error', `Error: Could not geocode "${row.name}" (line ${row.line}); not created`)
+        errors++
+      } else enriched.push(row as EnrichedRow)
     }
 
     // Groups are final only now, so recheck names the parser could not compare.
@@ -141,14 +166,7 @@ export const importDistributorsCsv: PayloadHandler = async (req) => {
     }
 
     // ---- 3. Match existing rows by name within each group -------------------------
-    const regions = [...new Set(ready.flatMap((r) => (r.region ? [r.region] : [])))]
-    const countries = [
-      ...new Set(ready.flatMap((r) => (!r.region && r.country ? [r.country] : []))),
-    ]
-    const or: Where[] = [
-      ...(regions.length ? [{ region: { in: regions } }] : []),
-      ...(countries.length ? [{ country: { in: countries } }] : []),
-    ]
+    const or: Where[] = groupWhere(ready)
     const existing = or.length
       ? await payload.find({
           collection: 'distributors',

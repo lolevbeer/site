@@ -3,7 +3,7 @@
  * and the grouping key that keeps a US state apart from a country with the same code.
  */
 import { describe, expect, it } from 'vitest'
-import { countryName, effectiveCountry, groupKey, isCountryCode } from '@/lib/distributors/country'
+import { effectiveCountry, groupKey, isCountryCode } from '@/lib/distributors/country'
 
 describe('isCountryCode', () => {
   it('accepts uppercase ISO-2 codes', () => {
@@ -19,13 +19,6 @@ describe('isCountryCode', () => {
   it('rejects codes Intl names but that are not countries, and keeps Kosovo', () => {
     for (const bad of ['EU', 'UN', 'QO', 'XA', 'EZ', 'AC']) expect(isCountryCode(bad)).toBe(false)
     expect(isCountryCode('XK')).toBe(true)
-  })
-})
-
-describe('countryName', () => {
-  it('gives the English name', () => {
-    expect(countryName('NL')).toBe('Netherlands')
-    expect(countryName('JP')).toBe('Japan')
   })
 })
 

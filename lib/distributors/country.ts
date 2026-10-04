@@ -1,6 +1,7 @@
 /**
- * Country helpers for distributors: ISO-3166-1 alpha-2 validation, English display
- * names, and the key that groups rows for matching and duplicate checks.
+ * Country helpers for distributors: ISO-3166-1 alpha-2 validation, the row's
+ * effective country, and the key that groups rows for matching and duplicate checks.
+ * English names for address text live in `lib/utils/country-names.ts`.
  *
  * A blank `country` means the United States, so rows saved before the field existed
  * keep their `region` (US state) group. `region` is US-only; non-US rows group by
@@ -43,16 +44,6 @@ export function isCountryCode(value: string): boolean {
   }
 }
 
-/** English country name for a valid code, e.g. `NL` becomes `Netherlands`. */
-export function countryName(code: string): string {
-  return names.of(code) ?? code
-}
-
-/** The country name to append to an address, or `''` for a blank or US country. */
-export function countrySuffix(country?: string | null): string {
-  return country && country !== 'US' ? countryName(country) : ''
-}
-
 /**
  * The one rule for which country a row is in: its `country` when set; else `US` when
  * its state (or region) is a US code; else unknown (`undefined`), to be filled in from
@@ -68,6 +59,29 @@ export function effectiveCountry(row: {
   const state = row.state?.trim() || ''
   const region = row.region?.trim() || ''
   return isStateCode(state) || (!state && isStateCode(region)) ? 'US' : undefined
+}
+
+/**
+ * Payload `where` clauses for the existing rows that could share a group with `rows`:
+ * their US states by `region`, their other countries by `country`. Empty when no row
+ * has a known group.
+ */
+export function groupWhere(
+  rows: { country?: string | null; state?: string | null; region?: string | null }[],
+): Record<string, { in: string[] }>[] {
+  const regions = new Set<string>()
+  const countries = new Set<string>()
+  for (const row of rows) {
+    if (row.region) regions.add(row.region)
+    else {
+      const country = effectiveCountry(row)
+      if (country && country !== 'US') countries.add(country)
+    }
+  }
+  return [
+    ...(regions.size ? [{ region: { in: [...regions] } }] : []),
+    ...(countries.size ? [{ country: { in: [...countries] } }] : []),
+  ]
 }
 
 /** `US:<state>` for a blank or US country, else the country code. */

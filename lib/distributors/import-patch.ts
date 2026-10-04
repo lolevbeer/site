@@ -5,7 +5,7 @@
  * set `active` or `customerType` on update unless the source file explicitly
  * provides them — the CSV importer passes them only for non-blank cells.
  */
-import { countrySuffix } from './country'
+import { countrySuffix } from '@/lib/utils/country-names'
 import type { CustomerType, StateCode } from './fields'
 
 const PATCH_STRINGS = ['address', 'city', 'state', 'zip', 'country', 'phone', 'website'] as const

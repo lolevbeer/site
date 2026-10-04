@@ -840,4 +840,41 @@ describe('importDistributorsCsv endpoint', () => {
       expect(payload.create.mock.calls[0][0].data).toMatchObject({ location: [-77.4, 37.5] })
     })
   })
+
+  describe('lookup concurrency', () => {
+    it('locates several rows at once but reports them in file order', async () => {
+      let inFlight = 0
+      let peak = 0
+      resolveDistributor.mockImplementation(async (row: { address: string }) => {
+        inFlight++
+        peak = Math.max(peak, inFlight)
+        // later rows answer first, to prove order comes from the file, not the network
+        await new Promise((r) => setTimeout(r, 40 - Number(row.address.split(' ')[0]) * 5))
+        inFlight--
+        return {
+          coords: [4.89, 52.37],
+          parts: { city: 'Amsterdam', country: 'NL' },
+          source: 'Mapbox',
+          uncertain: false,
+        }
+      })
+      const handler = await load()
+      const csvText =
+        'name,address,city,state,zip,phone,country\n' +
+        [1, 2, 3, 4, 5, 6].map((n) => `Bar ${n},${n} Dam,,,,,`).join('\n') +
+        '\n'
+      const { req, payload } = csvReq(csvText, admin)
+      await events(await handler(req))
+      expect(peak).toBeGreaterThan(1)
+      expect(peak).toBeLessThanOrEqual(4)
+      expect(payload.create.mock.calls.map((c) => c[0].data.name)).toEqual([
+        'Bar 1',
+        'Bar 2',
+        'Bar 3',
+        'Bar 4',
+        'Bar 5',
+        'Bar 6',
+      ])
+    })
+  })
 })

@@ -6,7 +6,7 @@
 import { Beer } from '@/lib/types/beer'
 import type { DayOfWeek } from '@/lib/utils/payload-api'
 import { getTodayEST } from '@/lib/utils/date'
-import { countrySuffix } from '@/lib/distributors/country'
+import { countrySuffix } from '@/lib/utils/country-names'
 
 /**
  * Time formatting utilities
