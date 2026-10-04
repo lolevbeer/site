@@ -1050,19 +1050,23 @@ export interface Distributor {
    */
   city?: string | null;
   /**
-   * State abbreviation (e.g., PA, NY)
+   * US state abbreviation (e.g., PA, NY); free text outside the US
    */
   state?: string | null;
   /**
-   * ZIP code
+   * ZIP or postal code
    */
   zip?: string | null;
+  /**
+   * Two-letter ISO country code (e.g., NL, JP, GB). Leave blank for the United States.
+   */
+  country?: string | null;
   /**
    * Type of customer/location
    */
   customerType?: ('Retail' | 'On Premise' | 'Home-D') | null;
   /**
-   * Geographic region (a US state or DC); the CSV import defaults it to the state
+   * US venues only: the state or DC. The CSV import defaults it to the state. Leave blank outside the US; those venues group by country.
    */
   region?:
     | (
@@ -1887,6 +1891,7 @@ export interface DistributorsSelect<T extends boolean = true> {
   city?: T;
   state?: T;
   zip?: T;
+  country?: T;
   customerType?: T;
   region?: T;
   location?: T;

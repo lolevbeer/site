@@ -52,6 +52,25 @@ describe('Distributors collection', () => {
   it('has no default region, so a manual entry must pick its state', async () => {
     expect((await field('region')).defaultValue).toBeUndefined()
   })
+
+  it('validates country as an ISO-2 code on every write path, and allows blank (= US)', async () => {
+    const { validate } = await field('country')
+    expect(validate!('NL')).toBe(true)
+    expect(validate!('US')).toBe(true)
+    expect(validate!('')).toBe(true)
+    expect(validate!(null)).toBe(true)
+    expect(validate!('Netherlands')).toMatch(/two-letter/)
+    expect(validate!('nl')).toMatch(/two-letter/)
+    expect(validate!('ZZ')).toMatch(/two-letter/)
+  })
+
+  it('does not require region, so a non-US venue saves without one', async () => {
+    const { Distributors } = await import('@/src/collections/Distributors')
+    const region = Distributors.fields.find((f) => 'name' in f && f.name === 'region') as {
+      required?: boolean
+    }
+    expect(region.required).toBeFalsy()
+  })
 })
 
 describe('CUSTOMER_TYPES', () => {
