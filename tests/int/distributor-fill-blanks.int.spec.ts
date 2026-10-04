@@ -9,7 +9,7 @@ import { fillBlankParts } from '@/lib/distributors/fill-blank-parts'
 describe('fillBlankParts', () => {
   it('fills blank city, state and country from the resolved parts', () => {
     const { filled, inferred } = fillBlankParts(
-      { address: '47 High Street' },
+      {},
       { city: 'London', state: 'England', country: 'GB' },
     )
     expect(filled).toEqual({ city: 'London', state: 'England', country: 'GB' })
@@ -50,7 +50,7 @@ describe('fillBlankParts', () => {
 
   it('turns a US state name into its code and sets the region', () => {
     const { filled, inferred } = fillBlankParts(
-      { address: '1 Main' },
+      {},
       { city: 'Pittsburgh', state: 'Pennsylvania', country: 'US', zip: '15201' },
     )
     expect(filled).toEqual({

@@ -18,13 +18,12 @@ export type ResolvedParts = {
   zip?: string
 }
 
-/** The row cells that can be filled (each may be blank); a whole CSV row fits too. */
+/** The row cells that can be filled; each may be blank. */
 type RowParts = {
   city?: string | null
   state?: string | null
   country?: string | null
   zip?: string | null
-  [other: string]: unknown
 }
 
 export type FilledParts = ResolvedParts & { region?: StateCode }

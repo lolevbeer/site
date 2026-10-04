@@ -378,8 +378,10 @@ vi.mock('@/src/endpoints/auth-helper', () => ({
   getUserFromRequest: (...args: unknown[]) => getUserFromRequest(...args),
 }))
 const geocodeDistributor = vi.fn()
+const resolveDistributor = vi.fn()
 vi.mock('@/src/endpoints/geocode', () => ({
   geocodeDistributor: (...a: unknown[]) => geocodeDistributor(...a),
+  resolveDistributor: (...a: unknown[]) => resolveDistributor(...a),
 }))
 
 const admin: User = {
@@ -392,7 +394,12 @@ const admin: User = {
 }
 const bartender = { ...admin, id: 'b', roles: ['bartender'] } as unknown as User
 
-function csvReq(csv: string | null, user: User | null, existing: unknown[] = []) {
+function csvReq(
+  csv: string | null,
+  user: User | null,
+  existing: unknown[] = [],
+  fields: Record<string, string> = {},
+) {
   const payload = {
     find: vi.fn(async () => ({ docs: existing })),
     create: vi.fn(async (args: { data: Record<string, unknown> }) => ({ id: 'new', ...args.data })),
@@ -400,6 +407,7 @@ function csvReq(csv: string | null, user: User | null, existing: unknown[] = [])
   }
   const formData = new FormData()
   if (csv !== null) formData.set('file', new File([csv], 'd.csv', { type: 'text/csv' }))
+  for (const [k, v] of Object.entries(fields)) formData.set(k, v)
   const req = {
     payload,
     user,
@@ -426,6 +434,7 @@ describe('importDistributorsCsv endpoint', () => {
     getUserFromRequest.mockReset()
     geocodeDistributor.mockReset()
     geocodeDistributor.mockResolvedValue([-77.05, 38.8])
+    resolveDistributor.mockReset()
   })
 
   async function load() {
@@ -453,9 +462,9 @@ describe('importDistributorsCsv endpoint', () => {
   it('400s when no file is uploaded or the header is unusable', async () => {
     const handler = await load()
     expect((await handler(csvReq(null, admin).req)).status).toBe(400)
-    const bad = await handler(csvReq('name,address\nA,1 Main\n', admin).req)
+    const bad = await handler(csvReq('name,city\nA,Richmond\n', admin).req)
     expect(bad.status).toBe(400)
-    expect(await bad.json()).toMatchObject({ error: expect.stringContaining('state') })
+    expect(await bad.json()).toMatchObject({ error: expect.stringContaining('address') })
   })
 
   it('creates a geocoded distributor in the row state as the signed-in admin', async () => {
@@ -606,5 +615,150 @@ describe('importDistributorsCsv endpoint', () => {
     )
     await events(await handler(blank.req))
     expect(blank.payload.update).not.toHaveBeenCalled()
+  })
+
+  describe('international rows', () => {
+    const intl = 'name,address,city,state,zip,phone,country\n'
+    const amsterdam = {
+      coords: [4.89, 52.37],
+      parts: { city: 'Amsterdam', state: 'North Holland', zip: '1012 RR', country: 'NL' },
+      source: 'Mapbox',
+      uncertain: false,
+    }
+
+    it('creates a non-US row with its country, filled blanks, and no region', async () => {
+      resolveDistributor.mockResolvedValue(amsterdam)
+      const handler = await load()
+      const { req, payload } = csvReq(`${intl}BeerTemple,Nieuwezijds Voorburgwal 250,,,,,\n`, admin)
+      const evs = await events(await handler(req))
+      expect(payload.create).toHaveBeenCalledWith({
+        collection: 'distributors',
+        data: {
+          name: 'BeerTemple',
+          address: 'Nieuwezijds Voorburgwal 250',
+          city: 'Amsterdam',
+          state: 'North Holland',
+          zip: '1012 RR',
+          country: 'NL',
+          phone: '',
+          location: [4.89, 52.37],
+          active: true,
+        },
+        overrideAccess: false,
+        user: admin,
+      })
+      expect(geocodeDistributor).not.toHaveBeenCalled()
+      const text = JSON.stringify(evs)
+      expect(text).toContain('Imported: BeerTemple')
+      expect(text).toContain('Amsterdam')
+      expect(text).toContain('inferred: city, state, country, zip')
+      expect(evs.at(-1)).toMatchObject({ data: { imported: 1, errors: 0 } })
+    })
+
+    it('never overwrites a city the CSV supplied', async () => {
+      resolveDistributor.mockResolvedValue({
+        ...amsterdam,
+        parts: { ...amsterdam.parts, city: 'London' },
+      })
+      const handler = await load()
+      const { req, payload } = csvReq(`${intl}Craft Metropolis,47 High Street,Penge,,,,\n`, admin)
+      await events(await handler(req))
+      expect(payload.create.mock.calls[0][0].data).toMatchObject({ city: 'Penge' })
+    })
+
+    it('flags an uncertain match for review', async () => {
+      resolveDistributor.mockResolvedValue({ ...amsterdam, uncertain: true })
+      const handler = await load()
+      const evs = await events(await handler(csvReq(`${intl}Fritz,255 Jeonpo,,,,,\n`, admin).req))
+      expect(JSON.stringify(evs)).toContain('check this')
+    })
+
+    it('does not create a row it cannot locate, and says so', async () => {
+      resolveDistributor.mockResolvedValue(null)
+      const handler = await load()
+      const { req, payload } = csvReq(`${intl}Nowhere,1 Nowhere,,,,,\n`, admin)
+      const evs = await events(await handler(req))
+      expect(payload.create).not.toHaveBeenCalled()
+      expect(evs.at(-1)).toMatchObject({ data: { imported: 0, errors: 1 } })
+      expect(JSON.stringify(evs)).toContain('Could not geocode')
+    })
+
+    it('matches an existing row by name within its country, not a US state with the same code', async () => {
+      resolveDistributor.mockResolvedValue({
+        ...amsterdam,
+        parts: { city: 'Berlin', country: 'DE' },
+      })
+      const handler = await load()
+      const delaware = { id: 'us', name: 'Brew', address: '1 Main', region: 'DE', state: 'DE' }
+      const germany = {
+        id: 'de',
+        name: 'Brew',
+        address: '2 Strasse',
+        city: 'Berlin',
+        country: 'DE',
+        phone: '',
+        zip: '',
+      }
+      const { req, payload } = csvReq(`${intl}Brew,2 Strasse,Berlin,,,,DE\n`, admin, [
+        delaware,
+        germany,
+      ])
+      const evs = await events(await handler(req))
+      expect(payload.create).not.toHaveBeenCalled()
+      expect(payload.update).not.toHaveBeenCalled()
+      expect(evs.at(-1)).toMatchObject({ data: { skipped: 1, errors: 0 } })
+    })
+
+    it('flags two rows that resolve to the same venue in the same country', async () => {
+      resolveDistributor.mockResolvedValue(amsterdam)
+      const handler = await load()
+      const { req, payload } = csvReq(`${intl}Bar,1 Dam,,,,,\nBar,2 Dam,,,,,\n`, admin)
+      const evs = await events(await handler(req))
+      expect(payload.create).toHaveBeenCalledTimes(1)
+      expect(JSON.stringify(evs)).toContain('duplicate of line 2')
+    })
+  })
+
+  describe('dry run', () => {
+    it('reports what would happen and writes nothing', async () => {
+      resolveDistributor.mockResolvedValue({
+        coords: [4.89, 52.37],
+        parts: { city: 'Amsterdam', country: 'NL' },
+        source: 'Mapbox',
+        uncertain: false,
+      })
+      const handler = await load()
+      const { req, payload } = csvReq(
+        `${csv}BeerTemple,Nieuwezijds Voorburgwal 250,,,,\n`,
+        admin,
+        [],
+        { dryRun: 'true' },
+      )
+      const evs = await events(await handler(req))
+      expect(payload.create).not.toHaveBeenCalled()
+      expect(payload.update).not.toHaveBeenCalled()
+      const text = JSON.stringify(evs)
+      expect(text).toContain('Would import: Planet Wine')
+      expect(text).toContain('Would import: BeerTemple')
+      expect(text).toContain('Amsterdam, Netherlands')
+      expect(evs.at(-1)).toMatchObject({ data: { imported: 2, dryRun: true } })
+    })
+
+    it('reports a would-be update without writing it', async () => {
+      const handler = await load()
+      const existing = {
+        id: 'd1',
+        name: 'Planet Wine',
+        address: 'Old St',
+        region: 'VA',
+        state: 'VA',
+      }
+      const { req, payload } = csvReq(csv, admin, [existing], { dryRun: 'true' })
+      const evs = await events(await handler(req))
+      expect(payload.update).not.toHaveBeenCalled()
+      expect(geocodeDistributor).not.toHaveBeenCalled()
+      expect(JSON.stringify(evs)).toContain('Would update: \\"Planet Wine\\"')
+      expect(evs.at(-1)).toMatchObject({ data: { updated: 1, dryRun: true } })
+    })
   })
 })
