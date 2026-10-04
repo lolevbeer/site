@@ -139,25 +139,34 @@ Each task starts with its failing test (TDD). Validation for every task:
   non-US leaves region unset; `inferred` lists exactly the cells filled.
 - Acceptance: test green. Depends on: 1.
 
-### 6. Geocoder: resolve parts, any country
-- Edit `src/endpoints/geocode.ts`. Add `resolveDistributor(parts & { country? }) →
-  { coords, parts: ResolvedParts, source } | null`:
-  - Nominatim: `addressdetails=1&accept-language=en`; `countrycodes` = the row's
-    country when known (US
-    implied by a valid US `state`), no restriction otherwise; resolved `city` from
-    `city|town|village|municipality`, `country` from `country_code`.
-  - Geocodio only when the country is US. Bing (`culture=en`) maps `address.*`; any provider answer
-    whose country contradicts a *supplied* country is discarded.
-  - Zip/city fallbacks drop the hard-coded `, USA` and the 5-digit zip assumption (use
-    `countryName`).
-  - Keep `geocodeDistributor(parts)` as a thin wrapper returning `coords` only, so
-    `import-distributors.ts` and `upsert-existing.ts` callers are unchanged.
-- Test first: extend `tests/int/geocode.int.spec.ts` (existing fetch-mock style) —
-  no `countrycodes=us` when the country is `NL`; `us` still sent for a US row;
-  `accept-language=en` always sent; Geocodio
-  not called for `NL`; resolved parts returned; a contradicting Bing country discarded;
-  existing five tests still pass unmodified.
-- Acceptance: test green. Depends on: 3, 5.
+### 6. Geocoder: resolve parts, any country (Mapbox first)
+- Decided 2026-10-04 after live tests on five rows of the real file (Amsterdam 0.97,
+  Penge resolved to London GB 1.00 with no country given, Tokyo in Japanese script 0.80,
+  Busan with no city 0.35, Bilbao 0.65). Geocodio covers only the US and Canada and
+  Bing has no key, so neither helps abroad.
+- Provider order in `src/endpoints/geocode.ts`: **Mapbox v6 forward with
+  `permanent=true`** (results we store) → Nominatim → Geocodio (US rows only). Bing
+  stays as-is, dormant without a key.
+- Token: server-only `MAPBOX_GEOCODING_TOKEN` (secret, no URL restriction). The public
+  `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` is URL-restricted (403 without the site Referer) and
+  must not be used server-side. Missing token: skip Mapbox, fall back to Nominatim.
+- Add `resolveDistributor(parts & { country? }) → { coords, parts: ResolvedParts,
+  relevance?, source } | null`:
+  - Mapbox: `language=en`, `country=<code>` when the row's country is known, parts from
+    `context` (`place` → city, `region` → state, `postcode` → zip, `country.country_code`
+    → country, uppercased).
+  - Nominatim: `addressdetails=1&accept-language=en`; `countrycodes` only when known.
+  - Any answer whose country contradicts a *supplied* country is discarded.
+  - Zip/city fallbacks drop the hard-coded `, USA` and 5-digit assumption.
+  - Keep `geocodeDistributor(parts)` as a coords-only wrapper for existing callers.
+- `relevance` below 0.6 is reported by Task 8 as `check this` in every report line.
+- Test first: extend `tests/int/geocode.int.spec.ts` (fetch mocks) — Mapbox called
+  first with `permanent=true`, `language=en`, and `country=nl` for an `NL` row; no
+  `country` param for a blank-country row; parts parsed from `context`; skipped when the
+  token is unset; Nominatim fallback has no `countrycodes=us` for `NL`; Geocodio not
+  called for `NL`; contradicting country discarded; existing tests still pass.
+- Acceptance: test green. Depends on: 3, 5. Needs `MAPBOX_GEOCODING_TOKEN` in Vercel
+  (Preview, Production) and `.env.local` before Task 12.
 
 ### 7. Import patch + upsert carry `country`
 - Edit `lib/distributors/import-patch.ts` (`country` joins `PATCH_STRINGS`,
@@ -248,7 +257,7 @@ Each task starts with its failing test (TDD). Validation for every task:
   dry run default-on, resolved address + `inferred:` in every report line, a supplied
   country restricts the search. Not built: ambiguity detection across multiple
   candidates (false rejections likely); add only if dry runs show real misses.
-- **Throughput.** Nominatim is 1 req/s and a row can take up to three provider calls;
+- **Throughput.** Mapbox answers first; Nominatim (1 req/s) is only a fallback. A row can take up to three provider calls;
   the endpoint has no `maxDuration` (platform default 300 s), so roughly 100 non-US rows
   per upload. A dry run and the real run each geocode (nothing is cached between them).
   Split larger files. Nominatim's usage policy is for light use, fine at this scale.
