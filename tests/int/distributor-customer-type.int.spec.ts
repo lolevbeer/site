@@ -94,11 +94,42 @@ describe('distributorImportPatch', () => {
   })
 })
 
+describe('distributorImportPatch: country', () => {
+  const stored = { address: '47 High Street', city: 'Penge', country: 'GB' }
+
+  it('patches a changed country', () => {
+    expect(distributorImportPatch(stored, { country: 'IE' })).toEqual({ country: 'IE' })
+  })
+
+  it('skips an unchanged country', () => {
+    expect(distributorImportPatch(stored, { country: 'GB' })).toBeNull()
+  })
+
+  it('treats a stored blank country as unchanged when the row says nothing', () => {
+    expect(distributorImportPatch({ address: '1 Main' }, { address: '1 Main' })).toBeNull()
+  })
+
+  it('fills a stored blank country when the row supplies one', () => {
+    expect(distributorImportPatch({ address: '1 Main' }, { country: 'NL' })).toEqual({
+      country: 'NL',
+    })
+  })
+
+  it('never clears a stored country when the row leaves it out', () => {
+    expect(distributorImportPatch(stored, { address: '47 High Street' })).toBeNull()
+  })
+
+  it('does not require a region, so a non-US row can be patched', () => {
+    expect(distributorImportPatch({ ...stored }, { city: 'London' })).toEqual({ city: 'London' })
+  })
+})
+
 describe('addressFieldsChanged', () => {
-  it('is true only when street/city/state/zip are in the patch', () => {
+  it('is true only when street/city/state/zip/country are in the patch', () => {
     expect(addressFieldsChanged({ phone: '(412) 555-0199' })).toBe(false)
     expect(addressFieldsChanged({ address: '2 Main' })).toBe(true)
     expect(addressFieldsChanged({ zip: '' })).toBe(true)
+    expect(addressFieldsChanged({ country: 'NL' })).toBe(true)
   })
 })
 
@@ -149,6 +180,58 @@ describe('applyExistingDistributorPatch', () => {
         user: { id: 'admin-id', roles: ['admin'] },
       }),
     )
+  })
+})
+
+describe('applyExistingDistributorPatch: country', () => {
+  const user = { id: 'admin-id', roles: ['admin'] } as never
+
+  it('re-geocodes with the new country when only the country changes', async () => {
+    const update = vi.fn().mockResolvedValue({})
+    const geocode = vi.fn().mockResolvedValue([4.9, 52.37] as [number, number])
+    await applyExistingDistributorPatch({
+      payload: { update } as never,
+      user,
+      current: { id: '1', address: '1 Main', city: 'Springfield', country: 'US' } as never,
+      patch: { country: 'NL' },
+      name: 'Store',
+      geocode,
+    })
+    expect(geocode).toHaveBeenCalledWith(expect.objectContaining({ country: 'NL' }))
+    expect(update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ country: 'NL', location: [4.9, 52.37] }),
+      }),
+    )
+  })
+
+  it('passes the stored country when the patch changes something else', async () => {
+    const update = vi.fn().mockResolvedValue({})
+    const geocode = vi.fn().mockResolvedValue([-0.06, 51.41] as [number, number])
+    await applyExistingDistributorPatch({
+      payload: { update } as never,
+      user,
+      current: { id: '1', address: '47 High Street', city: 'Penge', country: 'GB' } as never,
+      patch: { city: 'London' },
+      name: 'Store',
+      geocode,
+    })
+    expect(geocode).toHaveBeenCalledWith(expect.objectContaining({ city: 'London', country: 'GB' }))
+  })
+
+  it('leaves the pin alone and warns when the geocode fails', async () => {
+    const update = vi.fn().mockResolvedValue({})
+    const geocode = vi.fn().mockResolvedValue(null)
+    const result = await applyExistingDistributorPatch({
+      payload: { update } as never,
+      user,
+      current: { id: '1', address: '1 Main', country: 'GB' } as never,
+      patch: { country: 'IE' },
+      name: 'Store',
+      geocode,
+    })
+    expect(result.geocodeFailed).toBe(true)
+    expect(update.mock.calls[0][0].data).not.toHaveProperty('location')
   })
 })
 

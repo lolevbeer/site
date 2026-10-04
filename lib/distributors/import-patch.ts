@@ -8,7 +8,7 @@
 import { countrySuffix } from './country'
 import type { CustomerType, StateCode } from './fields'
 
-const PATCH_STRINGS = ['address', 'city', 'state', 'zip', 'phone', 'website'] as const
+const PATCH_STRINGS = ['address', 'city', 'state', 'zip', 'country', 'phone', 'website'] as const
 
 export type DistributorRegion = StateCode
 
@@ -17,6 +17,7 @@ export type DistributorImportFields = {
   city?: string | null
   state?: string | null
   zip?: string | null
+  country?: string | null
   phone?: string | null
   website?: string | null
   customerType?: CustomerType | null
@@ -29,6 +30,7 @@ export type DistributorImportPatch = Partial<{
   city: string
   state: string
   zip: string
+  country: string
   phone: string
   website: string
   customerType: CustomerType
@@ -44,6 +46,7 @@ export function distributorImportPatch(
     city?: string
     state?: string
     zip?: string
+    country?: string
     phone?: string
     website?: string
     customerType?: CustomerType
@@ -77,7 +80,8 @@ export function addressFieldsChanged(patch: DistributorImportPatch): boolean {
     patch.address !== undefined ||
     patch.city !== undefined ||
     patch.state !== undefined ||
-    patch.zip !== undefined
+    patch.zip !== undefined ||
+    patch.country !== undefined
   )
 }
 
