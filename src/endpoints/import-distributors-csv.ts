@@ -34,7 +34,21 @@ export const importDistributorsCsv: PayloadHandler = async (req) => {
     return Response.json({ error: 'No file uploaded' }, { status: 400 })
   }
 
-  const { rows, errors: parseErrors } = parseDistributorsCsv(await file.text())
+  const parsed = parseDistributorsCsv(await file.text())
+  // ponytail: interim until the enrich/group phase lands; the parser now accepts rows
+  // with no US region (non-US, or country to be filled in) that this loop cannot group yet.
+  const rows = parsed.rows.filter((r): r is typeof r & { region: NonNullable<typeof r.region> } =>
+    Boolean(r.region),
+  )
+  const parseErrors = [
+    ...parsed.errors,
+    ...parsed.rows
+      .filter((r) => !r.region)
+      .map((r) => ({
+        line: r.line,
+        message: `"${r.name}" has no US state; international rows are not importable yet`,
+      })),
+  ]
   if (rows.length === 0) {
     const details = parseErrors.map((e) => `Line ${e.line}: ${e.message}`)
     return Response.json(

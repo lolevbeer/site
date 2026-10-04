@@ -165,14 +165,18 @@ describe('parseDistributorsCsv', () => {
     const { rows, errors } = parseDistributorsCsv(`${header}\nPlanet Wine,1 Main,Alexandria,va,,\n`)
     expect(rows).toEqual([])
     expect(errors).toEqual([
-      { line: 2, message: 'state "va" is not a two-letter US state code (uppercase)' },
+      {
+        line: 2,
+        message:
+          'state "va" is not a two-letter US state code (uppercase); for a non-US venue, fill the country column',
+      },
     ])
   })
 
   it('fails the whole file when a required column is missing', () => {
-    const { rows, errors } = parseDistributorsCsv('name,address,city\nA,1 Main,Richmond\n')
+    const { rows, errors } = parseDistributorsCsv('name,city,state\nA,Richmond,VA\n')
     expect(rows).toEqual([])
-    expect(errors).toEqual([{ line: 1, message: 'missing required column(s): state' }])
+    expect(errors).toEqual([{ line: 1, message: 'missing required column(s): address' }])
   })
 
   it('handles BOM, CRLF, blank lines, and quoted commas', () => {
@@ -199,9 +203,142 @@ describe('parseDistributorsCsv', () => {
     expect(errors).toEqual([
       { line: 2, message: 'name is required' },
       { line: 4, message: 'address is required' },
-      { line: 5, message: 'state "ZZ" is not a two-letter US state code (uppercase)' },
+      {
+        line: 5,
+        message:
+          'state "ZZ" is not a two-letter US state code (uppercase); for a non-US venue, fill the country column',
+      },
       { line: 6, message: 'zip "2322" must be 5 digits or ZIP+4' },
     ])
+  })
+
+  describe('country', () => {
+    const intl = 'name,address,city,state,zip,phone,country,region'
+
+    it('accepts the shape of the international file: blank city and state, no country', () => {
+      const { rows, errors } = parseDistributorsCsv(
+        `${intl}\nCraft Metropolis,47 High Street,Penge,,,,,\nFritz Fritz,255 Jeonpo,,,,,,\n`,
+      )
+      expect(errors).toEqual([])
+      expect(rows).toHaveLength(2)
+      // blank cells stay unset so a re-import never clears a value the geocoder filled
+      expect(rows[0]).toMatchObject({ city: 'Penge' })
+      expect(rows[0].state).toBeUndefined()
+      expect(rows[0].country).toBeUndefined()
+      expect(rows[0].region).toBeUndefined()
+      expect(rows[1].city).toBeUndefined()
+    })
+
+    it('keeps a non-US state, zip, and phone as free text and gives it no region', () => {
+      const { rows, errors } = parseDistributorsCsv(
+        `${intl}\nBeerTemple,250 Nieuwezijds Voorburgwal,Amsterdam,Noord-Holland,1012 RR,+31 20 626 6544,NL,\n`,
+      )
+      expect(errors).toEqual([])
+      expect(rows[0]).toMatchObject({
+        country: 'NL',
+        state: 'Noord-Holland',
+        zip: '1012 RR',
+        phone: '+31 20 626 6544',
+      })
+      expect(rows[0].region).toBeUndefined()
+    })
+
+    it('treats a blank country with a long state as a non-US venue to be located', () => {
+      const { rows, errors } = parseDistributorsCsv(
+        `${intl}\nPub Kultainen Apina,Insinöörinkatu 30,Tampere,Pirkanmaa,,,,\n`,
+      )
+      expect(errors).toEqual([])
+      expect(rows[0]).toMatchObject({ state: 'Pirkanmaa' })
+      expect(rows[0].region).toBeUndefined()
+    })
+
+    it('keeps every US rule for a US row, with or without an explicit US country', () => {
+      const { rows, errors } = parseDistributorsCsv(
+        `${intl}\nA,1 Main,Richmond,VA,23229-1234,804.288.0816,,\nB,2 Main,Richmond,VA,,1-703-533-3030,US,\n`,
+      )
+      expect(errors).toEqual([])
+      expect(rows.map((r) => [r.region, r.zip, r.phone])).toEqual([
+        ['VA', '23229', '(804) 288-0816'],
+        ['VA', '', '(703) 533-3030'],
+      ])
+    })
+
+    it('accepts an explicit US row with a blank state, but not one with a non-code state', () => {
+      const { rows, errors } = parseDistributorsCsv(
+        `${intl}\nA,1 Main,Richmond,,,,US,\nB,2 Main,Richmond,Virginia,,,US,\n`,
+      )
+      expect(rows.map((r) => r.name)).toEqual(['A'])
+      expect(errors).toEqual([
+        { line: 3, message: 'state "Virginia" is not a two-letter US state code (uppercase)' },
+      ])
+    })
+
+    it('accepts a US row with no city, to be filled in', () => {
+      const { rows, errors } = parseDistributorsCsv(`${intl}\nA,1 Main,,VA,,,,\n`)
+      expect(errors).toEqual([])
+      expect(rows[0].city).toBeUndefined()
+      expect(rows[0].region).toBe('VA')
+    })
+
+    it('rejects a Canadian province with no country, because a two-letter code is ambiguous', () => {
+      const { rows, errors } = parseDistributorsCsv(`${intl}\nA,1 Rue Main,Montréal,QC,,,,\n`)
+      expect(rows).toEqual([])
+      expect(errors).toEqual([
+        {
+          line: 2,
+          message:
+            'state "QC" is not a two-letter US state code (uppercase); for a non-US venue, fill the country column',
+        },
+      ])
+    })
+
+    it('rejects a country that is not an uppercase ISO code', () => {
+      const { rows, errors } = parseDistributorsCsv(
+        `${intl}\nA,1 Main,Penge,,,,nl,\nB,2 Main,Penge,,,,Netherlands,\nC,3 Main,Penge,,,,ZZ,\n`,
+      )
+      expect(rows).toEqual([])
+      const expected = (v: string) =>
+        `country "${v}" must be an uppercase two-letter ISO code, e.g. NL, JP, GB`
+      expect(errors).toEqual([
+        { line: 2, message: expected('nl') },
+        { line: 3, message: expected('Netherlands') },
+        { line: 4, message: expected('ZZ') },
+      ])
+    })
+
+    it('rejects a region on a non-US row, since region is US-only', () => {
+      const { rows, errors } = parseDistributorsCsv(`${intl}\nA,1 Main,Berlin,,,,DE,DE\n`)
+      expect(rows).toEqual([])
+      expect(errors).toEqual([
+        { line: 2, message: 'region "DE" applies to US venues only; leave it blank for DE' },
+      ])
+    })
+
+    it('keeps Germany apart from Delaware when flagging duplicates', () => {
+      const { rows, errors } = parseDistributorsCsv(
+        `${intl}\nBrew,1 Main,Wilmington,DE,,,,\nBrew,2 Strasse,Berlin,,,,DE,\nBrew,3 Strasse,Munich,,,,DE,\n`,
+      )
+      expect(rows.map((r) => [r.name, r.region ?? r.country])).toEqual([
+        ['Brew', 'DE'],
+        ['Brew', 'DE'],
+      ])
+      expect(errors).toEqual([
+        { line: 4, message: 'duplicate of line 3: "Brew" already appears in DE' },
+      ])
+    })
+
+    it('compares rows with no known group by name and address', () => {
+      const { rows, errors } = parseDistributorsCsv(
+        `${intl}\nBar,1 High St,Penge,,,,,\nBar,2 High St,Penge,,,,,\nBar,1 High St,Penge,,,,,\n`,
+      )
+      expect(rows.map((r) => r.address)).toEqual(['1 High St', '2 High St'])
+      expect(errors).toEqual([
+        {
+          line: 4,
+          message: 'duplicate of line 2: "Bar" already appears at the same address',
+        },
+      ])
+    })
   })
 
   it('reduces ZIP+4 to five digits and formats ten-digit phones', () => {
