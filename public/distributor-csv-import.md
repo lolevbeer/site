@@ -30,8 +30,11 @@ columns are ignored.
 | `website`      | no       | Full URL starting with `http://` or `https://`. Otherwise blank.                                |
 | `active`       | no       | `true` or `false`. Blank leaves an existing row unchanged and makes a new row active.           |
 
-There is no latitude/longitude column. The upload looks up map coordinates from
-the address. A row it cannot locate is reported and not created.
+Optional `latitude` and `longitude` columns (decimal degrees, e.g. `52.3719711`,
+`4.8903227`) give the map pin directly. Give both or neither. A row with them is not
+geocoded: the pin is used as-is and the upload only looks up any blank city, state, or
+country from it. A row without them is located from its address; a row that cannot be
+located is reported and not created.
 
 ## Example
 

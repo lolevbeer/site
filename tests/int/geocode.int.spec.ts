@@ -334,3 +334,58 @@ describe('resolveDistributor', () => {
     expect(result).toMatchObject({ coords: [-79.9, 40.4], source: 'Geocodio' })
   })
 })
+
+describe('reverseDistributor', () => {
+  beforeEach(() => {
+    vi.resetModules()
+    vi.stubEnv('MAPBOX_GEOCODING_TOKEN', 'sk.test')
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.unstubAllEnvs()
+  })
+
+  it('asks Mapbox what is at the pin, in English, storable', async () => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(jsonResponse(mapboxV6({ confidence: 'exact' })))
+    vi.stubGlobal('fetch', fetchMock)
+    const { reverseDistributor } = await import('@/src/endpoints/geocode')
+
+    const result = await reverseDistributor([4.89, 52.37])
+
+    const url = new URL(String(fetchMock.mock.calls[0][0]))
+    expect(`${url.origin}${url.pathname}`).toBe('https://api.mapbox.com/search/geocode/v6/reverse')
+    expect(url.searchParams.get('longitude')).toBe('4.89')
+    expect(url.searchParams.get('latitude')).toBe('52.37')
+    expect(url.searchParams.get('permanent')).toBe('true')
+    expect(url.searchParams.get('language')).toBe('en')
+    expect(result?.parts).toEqual({
+      city: 'Amsterdam',
+      state: 'North Holland',
+      zip: '1012 RR',
+      country: 'NL',
+    })
+  })
+
+  it('falls back to Nominatim reverse when Mapbox has no token', async () => {
+    vi.stubEnv('MAPBOX_GEOCODING_TOKEN', undefined)
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValueOnce(
+      jsonResponse({
+        lon: '4.89',
+        lat: '52.37',
+        address: { city: 'Amsterdam', country_code: 'nl' },
+      }),
+    )
+    vi.stubGlobal('fetch', fetchMock)
+    const { reverseDistributor } = await import('@/src/endpoints/geocode')
+
+    const result = await reverseDistributor([4.89, 52.37])
+
+    const url = new URL(String(fetchMock.mock.calls[0][0]))
+    expect(`${url.origin}${url.pathname}`).toBe('https://nominatim.openstreetmap.org/reverse')
+    expect(url.searchParams.get('accept-language')).toBe('en')
+    expect(result?.parts).toEqual({ city: 'Amsterdam', country: 'NL' })
+  })
+})

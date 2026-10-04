@@ -7,6 +7,7 @@
  * `permanent=true` because we store the pin) → Nominatim → Geocodio for US rows only.
  * It also returns the city / state / zip / country the provider found, so the importer
  * can fill blank cells, and whether the match is uncertain enough to review.
+ * `reverseDistributor` answers the same question for a row whose CSV gave the pin.
  */
 import { sleep } from '@/src/utils/async'
 import { formatFullAddress } from '@/lib/distributors/import-patch'
@@ -220,23 +221,7 @@ async function resolveWithMapbox(
   try {
     const response = await fetch(`https://api.mapbox.com/search/geocode/v6/forward?${params}`)
     if (!response.ok) return null
-    const feature = (await response.json()).features?.[0]
-    const [lng, lat] = feature?.geometry?.coordinates ?? []
-    if (!Number.isFinite(lng) || !Number.isFinite(lat)) return null
-    const props = feature.properties ?? {}
-    const context: MapboxContext = props.context ?? {}
-    const confidence: string | undefined = props.match_code?.confidence
-    return {
-      coords: [lng, lat],
-      parts: compact({
-        city: context.place?.name,
-        state: context.region?.name,
-        zip: context.postcode?.name,
-        country: context.country?.country_code?.toUpperCase(),
-      }),
-      source: 'Mapbox',
-      uncertain: props.feature_type !== 'address' || !confidence || confidence === 'low',
-    }
+    return mapboxResult((await response.json()).features?.[0])
   } catch {
     return null
   }
@@ -269,15 +254,100 @@ async function resolveWithNominatim(
     const lng = parseFloat(hit.lon)
     const lat = parseFloat(hit.lat)
     if (!Number.isFinite(lng) || !Number.isFinite(lat)) return null
-    const a: NominatimAddress = hit.address ?? {}
     return {
       coords: [lng, lat],
-      parts: compact({
-        city: a.city || a.town || a.village || a.municipality,
-        state: a.state,
-        zip: a.postcode,
-        country: a.country_code?.toUpperCase(),
-      }),
+      parts: nominatimParts(hit.address),
+      source: 'Nominatim',
+      uncertain: false,
+    }
+  } catch {
+    return null
+  }
+}
+
+function mapboxResult(feature: {
+  geometry?: { coordinates?: number[] }
+  properties?: {
+    feature_type?: string
+    match_code?: { confidence?: string }
+    context?: MapboxContext
+  }
+}): ResolvedDistributor | null {
+  const [lng, lat] = feature?.geometry?.coordinates ?? []
+  if (!Number.isFinite(lng) || !Number.isFinite(lat)) return null
+  const props = feature.properties ?? {}
+  const context = props.context ?? {}
+  const confidence = props.match_code?.confidence
+  return {
+    coords: [lng, lat],
+    parts: compact({
+      city: context.place?.name,
+      state: context.region?.name,
+      zip: context.postcode?.name,
+      country: context.country?.country_code?.toUpperCase(),
+    }),
+    source: 'Mapbox',
+    uncertain: props.feature_type !== 'address' || !confidence || confidence === 'low',
+  }
+}
+
+function nominatimParts(a: NominatimAddress = {}): ResolvedParts {
+  return compact({
+    city: a.city || a.town || a.village || a.municipality,
+    state: a.state,
+    zip: a.postcode,
+    country: a.country_code?.toUpperCase(),
+  })
+}
+
+/**
+ * What is at a known pin: the city, state, zip and country, for filling blank cells of
+ * a row whose CSV gave latitude/longitude. Mapbox v6 reverse, then Nominatim reverse.
+ * The returned `coords` are the provider's; callers keep their own pin.
+ */
+export async function reverseDistributor([lng, lat]: [
+  number,
+  number,
+]): Promise<ResolvedDistributor | null> {
+  const token = process.env.MAPBOX_GEOCODING_TOKEN
+  if (token) {
+    const params = new URLSearchParams({
+      longitude: String(lng),
+      latitude: String(lat),
+      access_token: token,
+      permanent: 'true',
+      language: 'en',
+      limit: '1',
+    })
+    try {
+      const response = await fetch(`https://api.mapbox.com/search/geocode/v6/reverse?${params}`)
+      if (response.ok) {
+        const hit = mapboxResult((await response.json()).features?.[0])
+        if (hit) return hit
+      }
+    } catch {
+      // fall through to Nominatim
+    }
+  }
+
+  await waitForNominatimSlot()
+  const params = new URLSearchParams({
+    format: 'json',
+    lon: String(lng),
+    lat: String(lat),
+    addressdetails: '1',
+    'accept-language': 'en',
+  })
+  try {
+    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?${params}`, {
+      headers: { 'User-Agent': 'LolevBeer/1.0' },
+    })
+    if (!response.ok) return null
+    const hit = await response.json()
+    if (!hit?.address) return null
+    return {
+      coords: [lng, lat],
+      parts: nominatimParts(hit.address),
       source: 'Nominatim',
       uncertain: false,
     }

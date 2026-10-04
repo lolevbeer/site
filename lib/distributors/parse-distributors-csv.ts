@@ -13,7 +13,8 @@
  * Any other row is a non-US venue, or one whose country the importer fills in from
  * the geocoder: `state`, `zip` and `phone` are free text and `region` is empty.
  * `city`, `state` and `country` may be blank; the import endpoint fills blanks and
- * never overwrites a cell supplied here.
+ * never overwrites a cell supplied here. Optional `latitude` / `longitude` columns give
+ * the pin directly, so the row is not geocoded (only reverse-looked-up for blanks).
  */
 import { parseCSVLine } from '@/src/utils/csv'
 import { groupKey, isCountryCode } from './country'
@@ -45,6 +46,8 @@ export interface DistributorCsvRow {
   website?: string
   customerType?: CustomerType
   active?: boolean
+  /** `[longitude, latitude]` from the optional latitude/longitude columns; used as the pin. */
+  location?: [number, number]
 }
 
 export interface DistributorCsvError {
@@ -133,7 +136,26 @@ function parseRow(
     return { error: `active "${get('active')}" must be true or false` }
   }
 
+  const latCell = get('latitude')
+  const lngCell = get('longitude')
+  let location: [number, number] | undefined
+  if (latCell || lngCell) {
+    if (!latCell || !lngCell) {
+      return { error: 'latitude and longitude must both be given, or both left blank' }
+    }
+    const lat = Number(latCell)
+    const lng = Number(lngCell)
+    if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
+      return { error: `latitude "${latCell}" must be a number from -90 to 90` }
+    }
+    if (!Number.isFinite(lng) || lng < -180 || lng > 180) {
+      return { error: `longitude "${lngCell}" must be a number from -180 to 180` }
+    }
+    location = [lng, lat]
+  }
+
   const row: DistributorCsvRow = { line, name, address, zip, phone }
+  if (location) row.location = location
   if (city) row.city = city
   if (stateCell) row.state = stateCell
   if (countryCell) row.country = countryCell

@@ -7,6 +7,8 @@
  * 2. Enrich. A row missing city, state or country is located with
  *    `resolveDistributor` (Mapbox, Nominatim, Geocodio for US), and only its blank
  *    cells are filled from the answer; a cell the CSV supplied is never changed.
+ *    A row with latitude/longitude keeps that pin and is only reverse-looked-up
+ *    (`reverseDistributor`) to fill blanks; if that finds nothing it still imports.
  *    A row that cannot be located is reported and not created, because `location`
  *    is required and a made-up pin would be mistaken for a real one.
  * 3. Match. Rows are matched to existing distributors by exact name within their
@@ -21,7 +23,7 @@ import type { PayloadHandler, Where } from 'payload'
 import type { Distributor } from '@/src/payload-types'
 import { getUserFromRequest } from './auth-helper'
 import { isAdmin } from '@/src/access/roles'
-import { geocodeDistributor, resolveDistributor } from './geocode'
+import { geocodeDistributor, resolveDistributor, reverseDistributor } from './geocode'
 import { createSSEResponse } from '@/src/utils/sse-response'
 import { distributorImportPatch, indexDocsByName } from '@/lib/distributors/import-patch'
 import { applyExistingDistributorPatch } from '@/lib/distributors/upsert-existing'
@@ -99,6 +101,19 @@ export const importDistributorsCsv: PayloadHandler = async (req) => {
         continue
       }
       progress(i, rows.length, row.name, 'Locating')
+      if (row.location) {
+        // The file gave the pin: keep it, and only look up the blank parts
+        const around = await reverseDistributor(row.location)
+        const { filled, inferred } = around
+          ? fillBlankParts(row, around.parts)
+          : { filled: {}, inferred: [] }
+        enriched.push({
+          ...row,
+          ...filled,
+          note: inferred.length ? ` (inferred: ${inferred.join(', ')})` : '',
+        })
+        continue
+      }
       const resolved = await resolveDistributor(row)
       if (!resolved) {
         report('error', `Error: Could not geocode "${row.name}" (line ${row.line}); not created`)

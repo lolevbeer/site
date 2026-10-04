@@ -212,6 +212,37 @@ describe('parseDistributorsCsv', () => {
     ])
   })
 
+  describe('latitude and longitude', () => {
+    const geo = 'name,address,city,state,zip,phone,latitude,longitude\n'
+
+    it('keeps a valid pair as a [longitude, latitude] location', () => {
+      const { rows, errors } = parseDistributorsCsv(
+        `${geo}BeerTemple,250 Nieuwezijds Voorburgwal,Amsterdam,,,,52.3719711,4.8903227\n`,
+      )
+      expect(errors).toEqual([])
+      expect(rows[0].location).toEqual([4.8903227, 52.3719711])
+    })
+
+    it('leaves location unset when both cells are blank', () => {
+      const { rows } = parseDistributorsCsv(`${geo}A,1 Main,Richmond,VA,,,,\n`)
+      expect(rows[0].location).toBeUndefined()
+    })
+
+    it('rejects half a pair, a non-number, and an out-of-range value', () => {
+      const { rows, errors } = parseDistributorsCsv(
+        `${geo}A,1 Main,X,,,,52.37,\nB,2 Main,X,,,,north,4.89\nC,3 Main,X,,,,91,4.89\nD,4 Main,X,,,,52.37,181\n`,
+      )
+      expect(rows).toEqual([])
+      const both = 'latitude and longitude must both be given, or both left blank'
+      expect(errors).toEqual([
+        { line: 2, message: both },
+        { line: 3, message: 'latitude "north" must be a number from -90 to 90' },
+        { line: 4, message: 'latitude "91" must be a number from -90 to 90' },
+        { line: 5, message: 'longitude "181" must be a number from -180 to 180' },
+      ])
+    })
+  })
+
   describe('country', () => {
     const intl = 'name,address,city,state,zip,phone,country,region'
 
@@ -379,9 +410,11 @@ vi.mock('@/src/endpoints/auth-helper', () => ({
 }))
 const geocodeDistributor = vi.fn()
 const resolveDistributor = vi.fn()
+const reverseDistributor = vi.fn()
 vi.mock('@/src/endpoints/geocode', () => ({
   geocodeDistributor: (...a: unknown[]) => geocodeDistributor(...a),
   resolveDistributor: (...a: unknown[]) => resolveDistributor(...a),
+  reverseDistributor: (...a: unknown[]) => reverseDistributor(...a),
 }))
 
 const admin: User = {
@@ -435,6 +468,7 @@ describe('importDistributorsCsv endpoint', () => {
     geocodeDistributor.mockReset()
     geocodeDistributor.mockResolvedValue([-77.05, 38.8])
     resolveDistributor.mockReset()
+    reverseDistributor.mockReset()
   })
 
   async function load() {
@@ -759,6 +793,51 @@ describe('importDistributorsCsv endpoint', () => {
       expect(geocodeDistributor).not.toHaveBeenCalled()
       expect(JSON.stringify(evs)).toContain('Would update: \\"Planet Wine\\"')
       expect(evs.at(-1)).toMatchObject({ data: { updated: 1, dryRun: true } })
+    })
+  })
+
+  describe('rows with coordinates', () => {
+    const geo = 'name,address,city,state,zip,phone,latitude,longitude\n'
+
+    it('keeps the file pin and fills blanks from a reverse lookup', async () => {
+      reverseDistributor.mockResolvedValue({
+        coords: [0, 0],
+        parts: { city: 'Amsterdam', state: 'North Holland', country: 'NL' },
+        source: 'Mapbox',
+        uncertain: false,
+      })
+      const handler = await load()
+      const { req, payload } = csvReq(
+        `${geo}BeerTemple,250 Nieuwezijds Voorburgwal,Amsterdam,,,,52.3719711,4.8903227\n`,
+        admin,
+      )
+      await events(await handler(req))
+      expect(reverseDistributor).toHaveBeenCalledWith([4.8903227, 52.3719711])
+      expect(resolveDistributor).not.toHaveBeenCalled()
+      expect(payload.create.mock.calls[0][0].data).toMatchObject({
+        city: 'Amsterdam',
+        state: 'North Holland',
+        country: 'NL',
+        location: [4.8903227, 52.3719711],
+      })
+    })
+
+    it('still imports with the file pin when the reverse lookup finds nothing', async () => {
+      reverseDistributor.mockResolvedValue(null)
+      const handler = await load()
+      const { req, payload } = csvReq(`${geo}Bar,1 Dam,Amsterdam,,,,52.37,4.89\n`, admin)
+      const evs = await events(await handler(req))
+      expect(payload.create.mock.calls[0][0].data).toMatchObject({ location: [4.89, 52.37] })
+      expect(evs.at(-1)).toMatchObject({ data: { imported: 1, errors: 0 } })
+    })
+
+    it('does not look anything up for a complete US row with coordinates', async () => {
+      const handler = await load()
+      const { req, payload } = csvReq(`${geo}Shop,1 Main,Richmond,VA,,,37.5,-77.4\n`, admin)
+      await events(await handler(req))
+      expect(reverseDistributor).not.toHaveBeenCalled()
+      expect(geocodeDistributor).not.toHaveBeenCalled()
+      expect(payload.create.mock.calls[0][0].data).toMatchObject({ location: [-77.4, 37.5] })
     })
   })
 })
