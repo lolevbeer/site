@@ -55,6 +55,14 @@ all) and 1 has no `city`.
   (Untappd removal). None touch `lib/distributors`, `src/endpoints/*distributors*`,
   `geocode.ts`, or `Distributors.ts`.
 
+## Status (2026-10-04)
+
+Tasks 1–11 done on PR #271, plus additions agreed during the work: optional
+`latitude`/`longitude` columns (pin kept, reverse lookup fills blanks), lookups run 4 at
+a time, Bing and the old US-only geocode chain removed. Task 12's real-file run waits on
+`MAPBOX_GEOCODING_TOKEN` and a merge: preview `lolev-venues-validated-international-v3.csv`
+on the Sync page, review `inferred` / `check this` lines, then upload.
+
 ## Decisions (approved 2026-10-04)
 
 1. **Fill blanks, never overwrite.** Supplied cells always win. Filled cells are
