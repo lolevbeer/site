@@ -145,4 +145,37 @@ describe('submitDonationRequest', () => {
     expect(result.ok).toBe(false)
     expect(create).not.toHaveBeenCalled()
   })
+
+  it('acknowledges concurrent exact retries but sends only one notification; changed content is distinct', async () => {
+    const records = new Map<string, Record<string, unknown>>()
+    find.mockImplementation(async ({ collection, where }) => ({
+      docs:
+        collection === 'locations'
+          ? [{ slug: 'lawrenceville', active: true }]
+          : records.has(where.submissionKey.equals)
+            ? [records.get(where.submissionKey.equals)]
+            : [],
+    }))
+    create.mockImplementation(async ({ data }) => {
+      if (records.has(data.submissionKey)) throw { code: 11000 }
+      const doc = { id: `record-${records.size}`, ...data }
+      records.set(data.submissionKey, doc)
+      return doc
+    })
+    expect(
+      await Promise.all([submitDonationRequest(valid()), submitDonationRequest(valid())]),
+    ).toEqual([{ ok: true }, { ok: true }])
+    expect(records.size).toBe(1)
+    expect(afterFns).toHaveLength(1)
+    await afterFns[0]()
+    expect(slackApi).toHaveBeenCalledTimes(1)
+    expect(
+      await submitDonationRequest({
+        ...valid(),
+        requestDetails: 'A different valid request with additional details.',
+      }),
+    ).toEqual({ ok: true })
+    expect(records.size).toBe(2)
+    expect(afterFns).toHaveLength(2)
+  })
 })

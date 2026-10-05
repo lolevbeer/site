@@ -249,3 +249,29 @@ describe('import-distributors when a row cannot be geocoded', () => {
     vi.unstubAllGlobals()
   })
 })
+
+it('rejects unsafe distributor destinations before fetching and disallows redirects without leaking errors', async () => {
+  const { importDistributors } = await import('@/src/endpoints/import-distributors')
+  const payload = mockPayload([])
+  const fetchMock = vi.fn().mockRejectedValue(new Error('redirect contained PRIVATE RESPONSE'))
+  vi.stubGlobal('fetch', fetchMock)
+  try {
+    payload.findGlobal.mockResolvedValueOnce({ distributorOhUrl: 'https://127.0.0.1/private' })
+    expect(
+      (await importDistributors(makeReq(payload, admin, 'http://localhost/api/import'))).status,
+    ).toBe(400)
+    expect(fetchMock).not.toHaveBeenCalled()
+    const response = await importDistributors(
+      makeReq(payload, admin, 'http://localhost/api/import'),
+    )
+    expect(response.status).toBe(400)
+    expect(await response.text()).not.toContain('PRIVATE RESPONSE')
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://sixthcity.encompass8.com/oh.json',
+      expect.objectContaining({ redirect: 'error', signal: expect.any(AbortSignal) }),
+    )
+    expect(payload.create).not.toHaveBeenCalled()
+  } finally {
+    vi.unstubAllGlobals()
+  }
+})
