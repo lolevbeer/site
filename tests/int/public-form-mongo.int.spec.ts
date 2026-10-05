@@ -21,6 +21,7 @@ beforeAll(async () => {
   const db = connection.db!
   await db.dropDatabase()
   for (const scope of ['job-applications', 'donation-requests']) {
+    await db.collection(scope).insertMany([{ legacy: 'one' }, { legacy: 'two' }])
     await db.collection(scope).createIndex({ submissionKey: 1 }, { unique: true, sparse: true })
   }
   payload = {
@@ -77,7 +78,16 @@ it.skipIf(!uri)(
     )
     expect(results.filter((r) => r.status === 'created')).toHaveLength(1)
     expect(results.filter((r) => r.status === 'duplicate')).toHaveLength(11)
-    expect(await connection.db!.collection('job-applications').countDocuments()).toBe(1)
+    expect(
+      await connection
+        .db!.collection('job-applications')
+        .countDocuments({ submissionKey: { $exists: true } }),
+    ).toBe(1)
+    expect(
+      await connection
+        .db!.collection('job-applications')
+        .countDocuments({ submissionKey: { $exists: false } }),
+    ).toBe(2)
     expect(
       await connection
         .db!.collection('public-form-limits')
