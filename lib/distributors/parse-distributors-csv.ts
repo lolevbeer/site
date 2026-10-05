@@ -6,8 +6,19 @@
  * This parser validates and lightly cleans (ZIP+4, phone layout) but does not
  * guess: anything that needs judgment, such as lowercase state codes or license
  * numbers in names, is rejected so the normalizer fixes it at the source.
+ *
+ * Only `name` and `address` are required. A row is a US row when its `country` is
+ * `US`, or the country is blank and the state (or region) is a US code; US rows keep
+ * every US rule (state code, ZIP, phone layout, `region` defaulting to the state).
+ * Any other row is a non-US venue, or one whose country the importer fills in from
+ * the geocoder: `state`, `zip` and `phone` are free text and `region` is empty.
+ * `city`, `state` and `country` may be blank; the import endpoint fills blanks and
+ * never overwrites a cell supplied here. Optional `latitude` / `longitude` columns give
+ * the pin directly, so the row is not geocoded (only reverse-looked-up for blanks).
  */
 import { parseCSVLine } from '@/src/utils/csv'
+import { lngLat } from '@/lib/map/geo'
+import { effectiveCountry, groupKey, isCountryCode } from './country'
 import {
   CUSTOMER_TYPES,
   isCustomerType,
@@ -21,16 +32,23 @@ export interface DistributorCsvRow {
   line: number
   name: string
   address: string
-  city: string
-  state: StateCode
+  /** Unset when the cell is blank, so the importer can fill it from the geocoder. */
+  city?: string
+  /** A US code for US rows; free text otherwise. Unset when blank. */
+  state?: string
+  /** ISO-3166-1 alpha-2, uppercase. Unset when blank (US, or to be filled in). */
+  country?: string
+  /** US ZIP (five digits) for US rows; free text otherwise. */
   zip: string
   phone: string
-  /** Defaults to `state` when the column or cell is blank. */
-  region: StateCode
+  /** US rows only; defaults to `state` when the column or cell is blank. */
+  region?: StateCode
   /** The three below are unset when the cell is blank, so a re-import never overwrites with a guess. */
   website?: string
   customerType?: CustomerType
   active?: boolean
+  /** `[longitude, latitude]` from the optional latitude/longitude columns; used as the pin. */
+  location?: [number, number]
 }
 
 export interface DistributorCsvError {
@@ -38,7 +56,7 @@ export interface DistributorCsvError {
   message: string
 }
 
-const REQUIRED = ['name', 'address', 'city', 'state'] as const
+const REQUIRED = ['name', 'address'] as const
 
 function formatPhone(raw: string): string {
   const digits = raw.replace(/\D/g, '')
@@ -47,8 +65,11 @@ function formatPhone(raw: string): string {
   return raw
 }
 
-const notAState = (column: string, value: string) =>
-  `${column} "${value}" is not a two-letter US state code (uppercase)`
+const notAState = (column: string, value: string, hint = '') =>
+  `${column} "${value}" is not a two-letter US state code (uppercase)${hint}`
+
+/** A two-letter state with no country is ambiguous (`QC`, `DE`, `CA`), so ask for the country. */
+const NEEDS_COUNTRY = '; for a non-US venue, fill the country column'
 
 /** Validate one row; returns the first problem found, or the cleaned row. */
 function parseRow(
@@ -60,16 +81,42 @@ function parseRow(
   const address = get('address')
   if (!address) return { error: 'address is required' }
   const city = get('city')
-  if (!city) return { error: 'city is required' }
+  const stateCell = get('state')
+  const regionCell = get('region')
+  const countryCell = get('country')
+  if (countryCell && !isCountryCode(countryCell)) {
+    return {
+      error: `country "${countryCell}" must be an uppercase two-letter ISO code, e.g. NL, JP, GB`,
+    }
+  }
 
-  const state = get('state')
-  if (!isStateCode(state)) return { error: notAState('state', state) }
-  const region = get('region') || state
-  if (!isStateCode(region)) return { error: notAState('region', region) }
-
+  const isUS =
+    effectiveCountry({ country: countryCell, state: stateCell, region: regionCell }) === 'US'
   const zipCell = get('zip')
-  if (zipCell && !/^\d{5}(-\d{4})?$/.test(zipCell)) {
-    return { error: `zip "${zipCell}" must be 5 digits or ZIP+4` }
+  let region: StateCode | undefined
+  let zip = zipCell
+  let phone = get('phone')
+
+  if (isUS) {
+    if (stateCell && !isStateCode(stateCell)) return { error: notAState('state', stateCell) }
+    if (regionCell && !isStateCode(regionCell)) return { error: notAState('region', regionCell) }
+    region = (regionCell || stateCell || undefined) as StateCode | undefined
+    if (zipCell && !/^\d{5}(-\d{4})?$/.test(zipCell)) {
+      return { error: `zip "${zipCell}" must be 5 digits or ZIP+4` }
+    }
+    zip = zipCell.slice(0, 5)
+    phone = formatPhone(phone)
+  } else {
+    if (!countryCell && /^[A-Za-z]{2}$/.test(stateCell)) {
+      return { error: notAState('state', stateCell, NEEDS_COUNTRY) }
+    }
+    if (regionCell) {
+      return {
+        error: countryCell
+          ? `region "${regionCell}" applies to US venues only; leave it blank for ${countryCell}`
+          : notAState('region', regionCell),
+      }
+    }
   }
 
   const customerTypeCell = get('customertype')
@@ -89,16 +136,32 @@ function parseRow(
     return { error: `active "${get('active')}" must be true or false` }
   }
 
-  const row: DistributorCsvRow = {
-    line,
-    name,
-    address,
-    city,
-    state,
-    zip: zipCell.slice(0, 5),
-    phone: formatPhone(get('phone')),
-    region,
+  const latCell = get('latitude')
+  const lngCell = get('longitude')
+  let location: [number, number] | undefined
+  if (latCell || lngCell) {
+    if (!latCell || !lngCell) {
+      return { error: 'latitude and longitude must both be given, or both left blank' }
+    }
+    const lat = Number(latCell)
+    const lng = Number(lngCell)
+    const point = lngLat([lng, lat])
+    if (!point) {
+      return {
+        error: !lngLat([0, lat])
+          ? `latitude "${latCell}" must be a number from -90 to 90`
+          : `longitude "${lngCell}" must be a number from -180 to 180`,
+      }
+    }
+    location = [point.lng, point.lat]
   }
+
+  const row: DistributorCsvRow = { line, name, address, zip, phone }
+  if (location) row.location = location
+  if (city) row.city = city
+  if (stateCell) row.state = stateCell
+  if (countryCell) row.country = countryCell
+  if (region) row.region = region
   if (website) row.website = website
   if (customerType) row.customerType = customerType
   if (activeCell) row.active = activeCell === 'true'
@@ -148,12 +211,17 @@ export function parseDistributorsCsv(text: string): {
       continue
     }
 
-    const key = `${result.region}|${result.name}`
+    // Rows in a known group (US state or country) are the same venue by name; rows
+    // with no known group yet can only be compared by name and street address.
+    const group = result.region || (result.country !== 'US' && result.country) || undefined
+    const key = group ? `${groupKey(result)}|${result.name}` : `?|${result.name}|${result.address}`
     const earlier = seen.get(key)
     if (earlier !== undefined) {
       errors.push({
         line: i + 1,
-        message: `duplicate of line ${earlier}: "${result.name}" already appears in ${result.region}`,
+        message: `duplicate of line ${earlier}: "${result.name}" already appears ${
+          group ? `in ${group}` : 'at the same address'
+        }`,
       })
       continue
     }

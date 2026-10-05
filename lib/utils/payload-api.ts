@@ -1133,9 +1133,8 @@ const getUpcomingRecurringFood = async (
 
         const locationId = location.id
 
-        // The window scans monthsAhead months starting with the current one, so
-        // it can touch at most this year and the next.
-        const now = new Date()
+        // Load schedule years from the same Pittsburgh calendar used by occurrence expansion.
+        const now = new Date(`${todayKey}T12:00:00`)
         const lastMonth = new Date(now.getFullYear(), now.getMonth() + monthsAhead - 1, 1)
         const years = [...new Set([now.getFullYear(), lastMonth.getFullYear()])]
         const recurringFoodByYear = new Map(
