@@ -180,12 +180,12 @@ export const importDistributors: PayloadHandler = async (req) => {
     )
   }
 
-  // Stream progress updates
   // Import writes skip the per-write revalidation hook (it throws inside this
   // stream); refresh /beer-map and its data once the stream has finished instead.
   let wrote = false
   revalidateForCollectionAfterResponse('distributors', () => wrote)
 
+  // Stream progress updates
   return createSSEResponse(async (send) => {
     let imported = 0,
       updated = 0,

@@ -233,6 +233,17 @@ function revalidateCollectionTag(tag: string): void {
  * revalidate once afterwards, so the route and tag shapes stay single-sourced
  * here rather than being hand-rolled per caller.
  */
+export function revalidateForCollection(slug: string): void {
+  invalidateCollection(slug)
+  // No doc, so no keys: refresh every display on the affected kiosk channels.
+  void publishKioskSignal(slug)
+
+  const extras = COLLECTION_BATCH_EXTRAS[slug]
+  if (!extras) return
+  extras.tags?.forEach(revalidateCollectionTag)
+  extras.paths?.forEach(([path, type]) => revalidatePath(path, type))
+}
+
 /**
  * `revalidateForCollection` once the current response has finished, for writers
  * that stream (the distributor importers): inside a stream the request context is
@@ -249,17 +260,6 @@ export function revalidateForCollectionAfterResponse(slug: string, shouldRun: ()
   } catch {
     // `after` throws outside a request scope; no page cache to refresh there
   }
-}
-
-export function revalidateForCollection(slug: string): void {
-  invalidateCollection(slug)
-  // No doc, so no keys: refresh every display on the affected kiosk channels.
-  void publishKioskSignal(slug)
-
-  const extras = COLLECTION_BATCH_EXTRAS[slug]
-  if (!extras) return
-  extras.tags?.forEach(revalidateCollectionTag)
-  extras.paths?.forEach(([path, type]) => revalidatePath(path, type))
 }
 
 /**
