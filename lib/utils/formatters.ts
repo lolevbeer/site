@@ -6,6 +6,7 @@
 import { Beer } from '@/lib/types/beer'
 import type { DayOfWeek } from '@/lib/utils/payload-api'
 import { getTodayEST } from '@/lib/utils/date'
+import { countrySuffix } from '@/lib/utils/country-names'
 
 /**
  * Time formatting utilities
@@ -268,19 +269,23 @@ export function capitalizeName(name: string): string {
 }
 
 /**
- * Format a US address from parts, omitting any missing fields.
- * Returns e.g. "123 Main St, Pittsburgh, PA 15201"
+ * Format an address from parts for display, omitting any missing fields. The country
+ * name is appended outside the US (blank and `US` mean the US and add nothing).
+ * Returns e.g. "123 Main St, Pittsburgh, PA 15201" or "47 High Street, Penge, United Kingdom"
  */
 export function formatAddress(parts: {
   address?: string | null
   city?: string | null
   state?: string | null
   zip?: string | null
+  country?: string | null
 }): string {
   const segments: string[] = []
   if (parts.address) segments.push(parts.address)
   const cityState = [parts.city, parts.state].filter(Boolean).join(', ')
   const locale = [cityState, parts.zip].filter(Boolean).join(' ')
   if (locale) segments.push(locale)
+  const country = countrySuffix(parts.country)
+  if (country) segments.push(country)
   return segments.join(', ')
 }

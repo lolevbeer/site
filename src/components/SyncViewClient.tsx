@@ -20,6 +20,8 @@ interface DistributorImportResult {
   skipped: number
   errors: number
   details: string[]
+  /** True when the CSV upload was a preview that wrote nothing. */
+  dryRun?: boolean
 }
 
 interface RecalcResults {
@@ -45,6 +47,7 @@ function csvUploadResult(data: SSEData): DistributorImportResult {
     skipped: (data.skipped as number) || 0,
     errors: (data.errors as number) || 0,
     details: (data.details as string[]) || [],
+    dryRun: data.dryRun === true,
   }
 }
 
@@ -69,8 +72,10 @@ export const SyncViewClient: React.FC = () => {
     }),
   })
 
-  // Distributor CSV upload (any state; format spec: public/distributor-csv-import.md)
+  // Distributor CSV upload (US or international; format spec: public/distributor-csv-import.md).
+  // Dry run defaults on: the geocoder fills blank city/state/country, so preview before writing.
   const csvInputRef = useRef<HTMLInputElement>(null)
+  const [csvDryRun, setCsvDryRun] = useState(true)
   const distCsv = useSSEImport<DistributorImportResult>({
     getResults: csvUploadResult,
     // A 400 carries the real `errors` count and every per-line parse error in `details`
@@ -228,6 +233,7 @@ export const SyncViewClient: React.FC = () => {
 
     const formData = new FormData()
     formData.append('file', file)
+    if (csvDryRun) formData.append('dryRun', 'true')
     await distCsv.run('/api/import-distributors-csv', { body: formData })
 
     if (csvInputRef.current) {
@@ -360,13 +366,16 @@ export const SyncViewClient: React.FC = () => {
                 />
               )}
 
-              {/* Distributor CSV Upload (any state) */}
+              {/* Distributor CSV Upload (US or international) */}
               <div className="sync-view__subsection">
-                <h3 className="sync-view__subsection-title">Distributor CSV (any state)</h3>
+                <h3 className="sync-view__subsection-title">
+                  Distributor CSV (US or international)
+                </h3>
                 <p className="sync-view__description sync-view__description--small">
-                  Required columns: name, address, city, state (two-letter code, DC allowed).
-                  Optional: zip, phone, region, customerType, website, active. Map coordinates are
-                  looked up automatically.{' '}
+                  Required columns: name, address. Optional: city, state, zip, country (two-letter
+                  code, blank = US), latitude, longitude, phone, region, customerType, website,
+                  active. Blank city, state, and country are filled from the map lookup; a cell you
+                  supply is never changed. Preview with Dry run first.{' '}
                   <a href="/distributor-csv-import.md" download>
                     Download the format spec
                   </a>{' '}
@@ -386,27 +395,44 @@ export const SyncViewClient: React.FC = () => {
                   <Button
                     onClick={() => csvInputRef.current?.click()}
                     disabled={distCsv.running}
-                    buttonStyle="secondary"
+                    buttonStyle={csvDryRun ? 'secondary' : 'primary'}
                   >
-                    {distCsv.running ? 'Importing...' : 'Upload CSV'}
+                    {distCsv.running
+                      ? csvDryRun
+                        ? 'Previewing...'
+                        : 'Importing...'
+                      : csvDryRun
+                        ? 'Preview CSV'
+                        : 'Upload CSV'}
                   </Button>
+                  <CheckboxInput
+                    id="distributor-csv-dry-run"
+                    checked={csvDryRun}
+                    onToggle={(e) => setCsvDryRun(e.target.checked)}
+                    readOnly={distCsv.running}
+                    label="Dry run (preview only)"
+                  />
                 </div>
 
                 {distCsv.progress && <ImportProgress progress={distCsv.progress} />}
 
                 {distCsv.results && (
                   <ImportResultsBanner
-                    title="CSV Import Results"
+                    title={distCsv.results.dryRun ? 'CSV Preview' : 'CSV Import Results'}
                     isError={
                       distCsv.results.errors > 0 &&
                       distCsv.results.imported === 0 &&
                       distCsv.results.updated === 0
                     }
                     stats={[
-                      { count: distCsv.results.imported, label: 'imported', pillStyle: 'success' },
+                      {
+                        count: distCsv.results.imported,
+                        label: distCsv.results.dryRun ? 'would import' : 'imported',
+                        pillStyle: 'success',
+                      },
                       {
                         count: distCsv.results.updated ?? 0,
-                        label: 'updated',
+                        label: distCsv.results.dryRun ? 'would update' : 'updated',
                         pillStyle: 'success',
                         hideWhenZero: true,
                       },

@@ -33,6 +33,34 @@ function mapboxBody(label: string) {
   }
 }
 
+describe('useLocationSearch request', () => {
+  /** Type a term, wait out the debounce, and return the URL the hook asked Mapbox for. */
+  async function requestedUrl(
+    term: string,
+    proximity: { latitude: number; longitude: number } | null,
+  ) {
+    fetchMock.mockResolvedValue({ ok: true, json: async () => mapboxBody('Amsterdam') })
+    const { result } = renderHook(() => useLocationSearch(proximity))
+    act(() => {
+      result.current.setSearchTerm(term)
+    })
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled())
+    return new URL(String(fetchMock.mock.calls[0][0]))
+  }
+
+  it('is not limited to one country, so visitors can search for a place abroad', async () => {
+    const url = await requestedUrl('Amsterdam', null)
+    expect(url.searchParams.has('country')).toBe(false)
+    expect(url.searchParams.get('types')).toContain('place')
+  })
+
+  it('still biases results toward the visitor when their location is known', async () => {
+    const url = await requestedUrl('Amsterdam', { latitude: 40.44, longitude: -79.99 })
+    expect(url.searchParams.get('proximity')).toBe('-79.99,40.44')
+    expect(url.searchParams.has('country')).toBe(false)
+  })
+})
+
 describe('useLocationSearch', () => {
   it('does not apply a slower earlier response after the query changes', async () => {
     let resolveFirst: ((value: Response) => void) | undefined

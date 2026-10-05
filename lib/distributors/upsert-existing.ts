@@ -1,7 +1,8 @@
 /**
  * Apply a re-import patch to an existing distributor. Geocodes when the
- * street address changes, passing the merged address parts (patch over current)
- * to `geocode` so it can fall back to zip or city. Does not infer customer type.
+ * street address, city, state, zip or country changes, passing the merged address
+ * parts (patch over current) to `geocode` so it can fall back to zip or city and
+ * search the right country. Does not infer customer type.
  *
  * Runs as `user` (the admin the calling import endpoint authorized) with
  * `overrideAccess: false`, so the Distributors access rules apply.
@@ -22,6 +23,7 @@ export async function applyExistingDistributorPatch(args: {
     city?: string | null
     state?: string | null
     zip?: string | null
+    country?: string | null
   }) => Promise<[number, number] | null>
 }): Promise<{ geocodeFailed: boolean; warning?: string }> {
   const { payload, user, current, patch, name, geocode } = args
@@ -32,6 +34,7 @@ export async function applyExistingDistributorPatch(args: {
       city: patch.city ?? current.city,
       state: patch.state ?? current.state,
       zip: patch.zip ?? current.zip,
+      country: patch.country ?? current.country,
     })
     if (coords) patch.location = coords
     else geocodeFailed = true

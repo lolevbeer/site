@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 import { adminAccess } from '@/src/access/roles'
 import { CUSTOMER_TYPES, US_STATES } from '@/lib/distributors/fields'
+import { isCountryCode } from '@/lib/distributors/country'
 
 export const Distributors: CollectionConfig = {
   slug: 'distributors',
@@ -46,14 +47,26 @@ export const Distributors: CollectionConfig = {
       name: 'state',
       type: 'text',
       admin: {
-        description: 'State abbreviation (e.g., PA, NY)',
+        description: 'US state abbreviation (e.g., PA, NY); free text outside the US',
       },
     },
     {
       name: 'zip',
       type: 'text',
       admin: {
-        description: 'ZIP code',
+        description: 'ZIP or postal code',
+      },
+    },
+    {
+      name: 'country',
+      type: 'text',
+      index: true,
+      // Enforced here, not only in the CSV parser, so admin edits obey it too
+      validate: (value: string | null | undefined) =>
+        !value || isCountryCode(value) || 'Country must be a two-letter ISO code, e.g. NL, JP, GB',
+      admin: {
+        description:
+          'Two-letter ISO country code (e.g., NL, JP, GB). Leave blank for the United States.',
       },
     },
     {
@@ -72,7 +85,7 @@ export const Distributors: CollectionConfig = {
       index: true,
       admin: {
         description:
-          'Geographic region (a US state or DC); the CSV import defaults it to the state',
+          'US venues only: the state or DC. The CSV import defaults it to the state. Leave blank outside the US; those venues group by country.',
       },
     },
     {
