@@ -32,7 +32,7 @@ async function revalidateMenusForBeer(req: PayloadRequest, beerId: string | numb
   const menus = await req.payload.find({
     collection: 'menus',
     where: { 'items.product.value': { equals: beerId } },
-    limit: 100,
+    pagination: false,
     depth: 0,
     // Only the url is read; skip loading every menu's items.
     select: { url: true },
@@ -246,6 +246,12 @@ export const Beers: CollectionConfig = {
         } catch (error) {
           logger.error('Beer menu revalidation error:', error)
         }
+        return doc
+      },
+    ],
+    afterDelete: [
+      async ({ context, doc, req }) => {
+        if (!context?.skipRevalidate) await revalidateMenusForBeer(req, doc.id)
         return doc
       },
     ],

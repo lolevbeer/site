@@ -50,7 +50,7 @@ import { logger } from '@/lib/utils/logger'
 import { CACHE_TAGS } from '@/lib/utils/cache'
 import { extractBeerFromMenuItem } from './menu-item-utils'
 import { getMediaUrl } from './media-utils'
-import { getTodayEST, getTodayMidnightISO } from './date'
+import { getTodayEST } from './date'
 import { getUpcomingDatesForSlot, toDateKey } from './food-dates'
 import { formatAddress } from './formatters'
 import { expandRecurringEvents, mergeScheduledEvents } from '@/src/utils/recurring-events'
@@ -942,6 +942,15 @@ async function findUpcomingPublicEvents(
   return mergeScheduledEvents(oneOffResult.docs, recurring, limit)
 }
 
+/** Direct public read for pushed refreshes, bypassing pending tag invalidation. */
+export async function getEventsForLocationFresh(locationSlug: string) {
+  const payload = await getPayload({ config })
+  const location = await findLocationBySlug(payload, locationSlug)
+  if (!location || !location.active) return null
+  const events = await findUpcomingPublicEvents(payload, 20, location.id)
+  return { location, events }
+}
+
 export const getUpcomingEventsFromPayload = async (
   locationSlug: string,
   limit: number = 10,
@@ -1019,7 +1028,7 @@ export const getUpcomingFoodFromPayload = async (
 
         const locationId = location.id
 
-        const todayStr = getTodayMidnightISO()
+        const todayStr = `${todayKey}T00:00:00.000Z`
 
         const result = await payload.find({
           collection: 'food',

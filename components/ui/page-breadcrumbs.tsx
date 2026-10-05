@@ -1,7 +1,8 @@
-'use client';
+'use client'
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { Fragment } from 'react'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -9,73 +10,73 @@ import {
   BreadcrumbLink,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
-import { JsonLd } from '@/components/seo/json-ld';
-import { generateBreadcrumbSchema } from '@/lib/utils/breadcrumb-schema';
+} from '@/components/ui/breadcrumb'
+import { JsonLd } from '@/components/seo/json-ld'
+import { generateBreadcrumbSchema } from '@/lib/utils/breadcrumb-schema'
 
 interface BreadcrumbSegment {
-  label: string;
-  href: string;
+  label: string
+  href: string
 }
 
 const pathLabels: Record<string, string> = {
-  'beer': 'Beer',
+  beer: 'Beer',
   'beer-map': 'Find Our Beer',
   donate: 'Donations',
   jobs: 'Jobs',
-  'accessibility': 'Accessibility',
-  'events': 'Events',
-  'food': 'Food',
-  'about': 'About',
-  'faq': 'FAQ',
-  'privacy': 'Privacy Policy',
-  'terms': 'Terms of Service',
-};
+  accessibility: 'Accessibility',
+  events: 'Events',
+  food: 'Food',
+  about: 'About',
+  faq: 'FAQ',
+  privacy: 'Privacy Policy',
+  terms: 'Terms of Service',
+}
 
 function generateBreadcrumbs(pathname: string): BreadcrumbSegment[] {
   // Remove trailing slash and split
-  const segments = pathname.replace(/\/$/, '').split('/').filter(Boolean);
+  const segments = pathname.replace(/\/$/, '').split('/').filter(Boolean)
 
-  const breadcrumbs: BreadcrumbSegment[] = [
-    { label: 'Home', href: '/' }
-  ];
+  const breadcrumbs: BreadcrumbSegment[] = [{ label: 'Home', href: '/' }]
 
-  let currentPath = '';
+  let currentPath = ''
   segments.forEach((segment) => {
-    currentPath += `/${segment}`;
+    currentPath += `/${segment}`
 
     // Use custom label if available, otherwise format the segment
-    const label = pathLabels[segment] ||
-                  segment.split('-').map(word =>
-                    word.charAt(0).toUpperCase() + word.slice(1)
-                  ).join(' ');
+    const label =
+      pathLabels[segment] ||
+      segment
+        .split('-')
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ')
 
     breadcrumbs.push({
       label,
-      href: currentPath
-    });
-  });
+      href: currentPath,
+    })
+  })
 
-  return breadcrumbs;
+  return breadcrumbs
 }
 
 interface PageBreadcrumbsProps {
-  customSegments?: BreadcrumbSegment[];
-  className?: string;
+  customSegments?: BreadcrumbSegment[]
+  className?: string
 }
 
 export function PageBreadcrumbs({ customSegments, className }: PageBreadcrumbsProps) {
-  const pathname = usePathname();
+  const pathname = usePathname()
 
   // Don't show breadcrumbs on home page
   if (pathname === '/') {
-    return null;
+    return null
   }
 
-  const breadcrumbs = customSegments || generateBreadcrumbs(pathname);
+  const breadcrumbs = customSegments || generateBreadcrumbs(pathname)
 
   // Generate BreadcrumbList schema for SEO
-  const breadcrumbSchema = generateBreadcrumbSchema(breadcrumbs);
+  const breadcrumbSchema = generateBreadcrumbSchema(breadcrumbs)
 
   return (
     <>
@@ -84,11 +85,11 @@ export function PageBreadcrumbs({ customSegments, className }: PageBreadcrumbsPr
 
       <Breadcrumb className={className}>
         <BreadcrumbList>
-          {breadcrumbs.map((crumb) => {
-            const isLast = breadcrumbs.indexOf(crumb) === breadcrumbs.length - 1;
+          {breadcrumbs.map((crumb, index) => {
+            const isLast = index === breadcrumbs.length - 1
 
             return (
-              <div key={crumb.href} className="contents">
+              <Fragment key={crumb.href}>
                 <BreadcrumbItem>
                   {isLast ? (
                     <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
@@ -99,11 +100,11 @@ export function PageBreadcrumbs({ customSegments, className }: PageBreadcrumbsPr
                   )}
                 </BreadcrumbItem>
                 {!isLast && <BreadcrumbSeparator />}
-              </div>
-            );
+              </Fragment>
+            )
           })}
         </BreadcrumbList>
       </Breadcrumb>
     </>
-  );
+  )
 }

@@ -6,7 +6,7 @@ import { FoodPageClient } from './food-page-client'
 import { FoodVendorSchedule, DayOfWeek } from '@/lib/types/food'
 import { extractVendorInfo, getAllLocations } from '@/lib/utils/payload-api'
 import { getMediaUrl } from '@/lib/utils/media-utils'
-import { getTodayMidnightISO } from '@/lib/utils/date'
+import { getTodayEST } from '@/lib/utils/date'
 import { getUpcomingDatesForSlot, toDateKey } from '@/lib/utils/food-dates'
 import { createLocationLookup, generateFoodEventJsonLd } from '@/lib/utils/json-ld'
 import { PageTransition } from '@/components/motion'
@@ -38,19 +38,6 @@ export const revalidate = 3600
 // Derived so the labels can't fall out of index alignment with `days`.
 const fullDayLabels = days.map(capitalizeName)
 
-interface PayloadFoodEntry {
-  id: string
-  vendor:
-    | string
-    | { id: string; name: string; site?: string | null; logo?: string | { url?: string } | null }
-  date: string
-  time: string
-  start?: string
-  finish?: string
-  site?: string
-  location?: { slug?: string; id?: string; name?: string } | string
-}
-
 interface RecurringFoodSchedules {
   [locationId: string]: {
     [day: string]: {
@@ -70,7 +57,7 @@ async function getFoodData(): Promise<FoodVendorSchedule[]> {
   try {
     const payload = await getPayload({ config })
 
-    const todayStr = getTodayMidnightISO()
+    const todayStr = `${getTodayEST()}T00:00:00.000Z`
     // Compute the upcoming dates once per recurring slot, then derive which
     // years the three-month window actually touches so we only fetch those
     // years' recurring-food states.
@@ -121,7 +108,7 @@ async function getFoodData(): Promise<FoodVendorSchedule[]> {
     const individualSchedules: FoodVendorSchedule[] = []
     const individualDateVendorsByLocation: Record<string, Set<string>> = {}
 
-    for (const entry of foodResult.docs as unknown as PayloadFoodEntry[]) {
+    for (const entry of foodResult.docs) {
       const locId = typeof entry.location === 'object' ? entry.location?.id : entry.location
       const locationSlug = typeof entry.location === 'object' ? entry.location?.slug : undefined
       const locationName = typeof entry.location === 'object' ? entry.location?.name : undefined
@@ -131,7 +118,7 @@ async function getFoodData(): Promise<FoodVendorSchedule[]> {
         name: vendorName,
         site: vendorSite,
         logoUrl: vendorLogo,
-      } = extractVendorInfo(entry.vendor, entry.site)
+      } = extractVendorInfo(entry.vendor)
 
       const dateStr = entry.date.split('T')[0]
       const [year, month, day] = dateStr.split('-').map(Number)
@@ -148,12 +135,12 @@ async function getFoodData(): Promise<FoodVendorSchedule[]> {
       individualSchedules.push({
         vendor: vendorName,
         date: dateStr,
-        time: entry.time || '',
+        time: entry.startTime || '',
         site: vendorSite ?? undefined,
         logoUrl: vendorLogo ?? undefined,
         day: DayOfWeek[dayOfWeek.toUpperCase() as keyof typeof DayOfWeek],
-        start: entry.start || entry.time?.split('-')[0]?.trim() || '',
-        finish: entry.finish || entry.time?.split('-')[1]?.trim() || '',
+        start: entry.startTime || '',
+        finish: '',
         dayNumber: date.getDay(),
         location: locationSlug,
         locationName: locationName,
@@ -281,7 +268,11 @@ async function getFoodData(): Promise<FoodVendorSchedule[]> {
 }
 
 export default async function FoodPage() {
-  const [schedules, locations, intro] = await Promise.all([getFoodData(), getAllLocations(), getHubIntro('food')])
+  const [schedules, locations, intro] = await Promise.all([
+    getFoodData(),
+    getAllLocations(),
+    getHubIntro('food'),
+  ])
   const locationLookup = createLocationLookup(locations)
 
   const validSchedules = schedules.filter(

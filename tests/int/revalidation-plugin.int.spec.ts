@@ -162,11 +162,12 @@ describe('kiosk push keys', () => {
   // hard-expired, so the push fetches fresh data. The events stream only carries
   // the location name, and its 'locations' cache is just marked stale, so an
   // events push would refetch stale data: it is deliberately not sent.
-  it('pushes a location edit to every menu display and nothing to the events displays', async () => {
+  it('pushes location edits to menu and events displays', async () => {
     const { afterChange } = await hooksFor('locations')
     await afterChange({ doc: { slug: 'lawrenceville' }, req })
-    expect(publishKioskInvalidate).toHaveBeenCalledTimes(1)
+    expect(publishKioskInvalidate).toHaveBeenCalledTimes(2)
     expect(publishKioskInvalidate).toHaveBeenCalledWith({ kind: 'menu' })
+    expect(publishKioskInvalidate).toHaveBeenCalledWith({ kind: 'events' })
   })
 
   it('batch invalidation (no doc) pushes without keys', async () => {
@@ -198,6 +199,7 @@ describe('revalidateForCollection', () => {
 
     expect(revalidateTag.mock.calls.map((call) => call[0]).sort()).toEqual([
       'beers',
+      'coming-soon',
       'kiosk-menus',
       'menus',
     ])
@@ -229,4 +231,16 @@ describe('site-seo global hook', () => {
     expect(revalidateTag).toHaveBeenCalledWith('site-seo', 'max')
     expect(revalidatePath).toHaveBeenCalledWith('/', 'layout')
   })
+})
+
+it('hard-expires populated Coming Soon and menus on style changes', async () => {
+  const { afterChange, afterDelete } = await hooksFor('styles')
+  for (const hook of [afterChange, afterDelete]) {
+    revalidateTag.mockClear()
+    publishKioskInvalidate.mockClear()
+    await hook({ doc: {} })
+    expect(revalidateTag).toHaveBeenCalledWith('coming-soon', { expire: 0 })
+    expect(revalidateTag).toHaveBeenCalledWith('kiosk-menus', { expire: 0 })
+    expect(publishKioskInvalidate).toHaveBeenCalledWith({ kind: 'menu' })
+  }
 })

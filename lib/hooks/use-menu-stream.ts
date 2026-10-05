@@ -53,6 +53,7 @@ export function useMenuStream(menuUrl: string, initialMenu: Menu | null): UseMen
           : getPittsburghTheme(),
     }),
     {
+      clearOnNotFound: true,
       invalidateSignal,
       realtimeFallback: realtimeActive,
       invalidateUrl: streamUrl ? `${streamUrl}/fresh` : undefined,

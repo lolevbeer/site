@@ -514,11 +514,7 @@ function convertMenuItems(menuData: Menu, labelVideos = false): MenuItem[] {
         // the sprite-sheet URL; CanCard animates it iff present.
         labelVideoUrl: labelVideos ? spriteSheetUrl(beer.labelVideo) : undefined,
         glass: String(beer.glass || 'pint'),
-        fourPack: beer.fourPack
-          ? String(beer.fourPack)
-          : item.price
-            ? String(item.price)
-            : undefined,
+        fourPack: item.price?.trim() || (beer.fourPack ? String(beer.fourPack) : undefined),
         bottlePrice: beer.bottlePrice ? String(beer.bottlePrice) : undefined,
         recipe: beer.recipe || 0,
         hops: beer.hops ? String(beer.hops) : undefined,

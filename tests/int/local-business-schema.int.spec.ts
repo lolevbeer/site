@@ -65,7 +65,8 @@ describe('generateLocalBusinessSchema', () => {
       validFrom: '2026-09-07',
       validThrough: '2026-09-07',
     })
-    expect(schema.specialOpeningHoursSpecification?.[0].opens).toBeUndefined()
+    expect(schema.specialOpeningHoursSpecification?.[0].opens).toBe('00:00')
+    expect(schema.specialOpeningHoursSpecification?.[0].closes).toBe('00:00')
   })
 
   it('points url at the location landing page and includes geo', () => {
@@ -82,7 +83,10 @@ describe('generateLocalBusinessSchema', () => {
     const schema = generateLocalBusinessSchema({
       ...lawrenceville,
       // Raw DB reads can return GeoJSON, which Payload's generated type doesn't declare.
-      coordinates: { type: 'Point', coordinates: [-80.1, 40.8] } as unknown as PayloadLocation['coordinates'],
+      coordinates: {
+        type: 'Point',
+        coordinates: [-80.1, 40.8],
+      } as unknown as PayloadLocation['coordinates'],
     })
     expect(schema.geo).toEqual({
       '@type': 'GeoCoordinates',
@@ -204,9 +208,7 @@ describe('generateCrawlableSiteGraph', () => {
 
   it('escapes < in the serialized script payload', () => {
     const html = serializeJsonLd(
-      generateCrawlableSiteGraph([
-        { ...lawrenceville, name: 'Lawrenceville <script>' },
-      ]),
+      generateCrawlableSiteGraph([{ ...lawrenceville, name: 'Lawrenceville <script>' }]),
     )
     expect(html).toContain('\\u003c')
     expect(html).not.toContain('<script>')

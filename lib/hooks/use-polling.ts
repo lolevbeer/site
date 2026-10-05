@@ -16,7 +16,7 @@
  *   (`cache: 'no-cache'`), so an unchanged poll can be a 304 with no body
  * - `warm` and the display theme are worked out here from the content
  *   timestamp and the clock, so responses carry nothing clock-dependent
- * - Client-side timestamp comparison avoids unnecessary state updates
+ * - Client-side response comparison avoids unnecessary state updates
  * - Optional Ably invalidate signals (see useAblyInvalidate) force an
  *   immediate poll; while realtime is connected, idle polling is the
  *   fallback instead of the warm/fast cadence
@@ -102,13 +102,15 @@ export interface UsePollingOptions {
    * triggers; ordinary polls use `url`.
    */
   invalidateUrl?: string
+  /** A 404 withdraws the displayed content; network/5xx failures retain it. */
+  clearOnNotFound?: boolean
 }
 
 /**
  * Generic display polling hook; see the module comment for the rhythm.
  *
  * Handles deploy detection (page reload once the new deploy's page renders) and
- * timestamp-based change detection to avoid unnecessary state updates.
+ * response-based change detection to avoid unnecessary state updates.
  *
  * @param url - API endpoint to poll (empty string disables polling)
  * @param initialData - Initial data to use before first successful poll (null if unavailable)
@@ -125,18 +127,28 @@ export function usePolling<T, R extends PollingResponse>(
   applyResponse: (response: R) => { data: T; theme: 'light' | 'dark' },
   options: UsePollingOptions = {},
 ): UsePollingResult<T> {
-  const { invalidateSignal = 0, realtimeFallback = false, invalidateUrl } = options
+  const {
+    invalidateSignal = 0,
+    realtimeFallback = false,
+    invalidateUrl,
+    clearOnNotFound = false,
+  } = options
   // A poll result is stored together with the server-supplied `initialData` it
   // was layered on top of. When the server re-renders with fresh props that
   // base stops matching, so the newer server data wins automatically — where
   // previously an effect copied the prop into state on every change, which
   // react-hooks/set-state-in-effect flags.
-  const [polled, setPolled] = useState<{ base: T | null; value: T } | null>(null)
-  const data = polled && polled.base === initialData ? polled.value : initialData
+  const [polled, setPolled] = useState<{ url: string; base: T | null; value: T | null } | null>(
+    null,
+  )
+  const data =
+    polled && polled.url === url && polled.base === initialData ? polled.value : initialData
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
 
   const pollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const lastTimestampRef = useRef(0)
+  const lastResponseRef = useRef<string | null>(null)
+  const requestIdRef = useRef(0)
+  const activeRef = useRef(false)
   const deployIdRef = useRef<string | null>(null)
   const noChangeCountRef = useRef(0)
   const warmRef = useRef(false)
@@ -175,7 +187,10 @@ export function usePolling<T, R extends PollingResponse>(
 
   const poll = useCallback(
     async (freshUrl?: string) => {
-      if (!url) return
+      if (!url || !activeRef.current) return
+      const requestId = ++requestIdRef.current
+      const isCurrent = () => activeRef.current && requestId === requestIdRef.current
+      clearScheduledPoll()
 
       try {
         // 'no-cache' revalidates with the CDN (If-None-Match), so an unchanged
@@ -183,11 +198,18 @@ export function usePolling<T, R extends PollingResponse>(
         // invalidate poll's uncached endpoint) is never stored, so 'no-store'.
         const response = await fetch(freshUrl ?? url, { cache: freshUrl ? 'no-store' : 'no-cache' })
 
+        if (!isCurrent()) return
+        if (response.status === 404 && clearOnNotFound) {
+          lastResponseRef.current = null
+          setPolled({ url, base: initialDataRef.current, value: null })
+        }
+
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`)
         }
 
         const raw: R = await response.json()
+        if (!isCurrent()) return
 
         // New deploy: reload only once its page carries the LIVE_DISPLAY_META tag,
         // so displays keep the current menu while the backend warms. The error
@@ -198,7 +220,9 @@ export function usePolling<T, R extends PollingResponse>(
             deployIdRef.current = raw.deployId
           } else if (raw.deployId !== deployIdRef.current) {
             const page = await fetch(window.location.href, { cache: 'no-store' })
-            if (!page.ok || !(await page.text()).includes(`name="${LIVE_DISPLAY_META}"`)) {
+            const html = page.ok ? await page.text() : ''
+            if (!isCurrent()) return
+            if (!page.ok || !html.includes(`name="${LIVE_DISPLAY_META}"`)) {
               throw new Error('New deploy not ready')
             }
             window.location.reload()
@@ -208,10 +232,11 @@ export function usePolling<T, R extends PollingResponse>(
 
         const applied = applyResponseRef.current(raw)
 
-        // Only update data state when timestamp has changed
-        if (raw.timestamp !== lastTimestampRef.current) {
-          lastTimestampRef.current = raw.timestamp
-          setPolled({ base: initialDataRef.current, value: applied.data })
+        // Membership and populated relationships can change without a newer timestamp.
+        const responseKey = JSON.stringify(raw)
+        if (responseKey !== lastResponseRef.current) {
+          lastResponseRef.current = responseKey
+          setPolled({ url, base: initialDataRef.current, value: applied.data })
           noChangeCountRef.current = 0
         } else {
           noChangeCountRef.current += 1
@@ -223,10 +248,12 @@ export function usePolling<T, R extends PollingResponse>(
         // land on the next poll even when the data hasn't changed.
         setTheme(applied.theme)
       } catch {
+        if (!isCurrent()) return
         // The display keeps showing its last good data; the next poll backs off.
         consecutiveErrorsRef.current += 1
       }
 
+      if (!isCurrent()) return
       const delay = selectPollInterval({
         noChangeCount: noChangeCountRef.current,
         warm: warmRef.current,
@@ -239,7 +266,7 @@ export function usePolling<T, R extends PollingResponse>(
         pollTimeoutRef.current = setTimeout(() => pollRef.current(), delay)
       }
     },
-    [url, clearScheduledPoll],
+    [url, clearOnNotFound, clearScheduledPoll],
   )
 
   useEffect(() => {
@@ -247,11 +274,19 @@ export function usePolling<T, R extends PollingResponse>(
   })
 
   useEffect(() => {
-    if (url) {
-      poll()
-    }
+    activeRef.current = true
+    lastResponseRef.current = null
+    deployIdRef.current = null
+    noChangeCountRef.current = 0
+    consecutiveErrorsRef.current = 0
+    warmRef.current = false
+    if (url) void poll()
 
-    return clearScheduledPoll
+    return () => {
+      activeRef.current = false
+      requestIdRef.current += 1
+      clearScheduledPoll()
+    }
   }, [url, poll, clearScheduledPoll])
 
   // Hidden tabs don't poll; showing the tab polls at once and resumes fast.

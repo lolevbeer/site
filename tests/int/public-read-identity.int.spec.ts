@@ -6,6 +6,9 @@
  * covered in recurring-food-state.int.spec.ts.)
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { renderToStaticMarkup } from 'react-dom/server'
+import type { ReactNode } from 'react'
+import { getTodayEST } from '@/lib/utils/date'
 
 vi.mock('next/cache', () => ({
   unstable_cache: (fn: (...args: unknown[]) => unknown) => fn,
@@ -40,8 +43,16 @@ vi.mock('@/src/utils/recurring-food', async (importOriginal) => ({
   })),
 }))
 
-vi.mock('@/src/app/(frontend)/food/food-page-client', () => ({ FoodPageClient: () => null }))
-vi.mock('@/components/motion', () => ({ PageTransition: () => null }))
+const foodClient = vi.fn((_props: unknown) => null)
+vi.mock('@/src/app/(frontend)/food/food-page-client', () => ({
+  FoodPageClient: (props: unknown) => {
+    foodClient(props)
+    return null
+  },
+}))
+vi.mock('@/components/motion', () => ({
+  PageTransition: ({ children }: { children: ReactNode }) => children,
+}))
 vi.mock('@/components/seo/json-ld', () => ({ JsonLd: () => null }))
 vi.mock('@/components/events/live-events', () => ({ LiveEvents: () => null }))
 
@@ -50,6 +61,7 @@ import FoodPage from '@/src/app/(frontend)/food/page'
 import { generateMetadata as eventsDisplayMetadata } from '@/src/app/(frontend)/e/[location]/page'
 
 beforeEach(() => {
+  foodClient.mockClear()
   find.mockReset()
   find.mockResolvedValue({ docs: [] })
 })
@@ -85,4 +97,37 @@ describe('public reads pass overrideAccess: false', () => {
     await eventsDisplayMetadata({ params: Promise.resolve({ location: 'lawrenceville' }) })
     expect(findArgs('locations').overrideAccess).toBe(false)
   })
+})
+
+it('the rendered food page includes UTC-midnight calendar entries and their saved startTime', async () => {
+  const today = getTodayEST()
+  find.mockImplementation(async ({ collection }) => ({
+    docs:
+      collection === 'food'
+        ? [
+            {
+              id: 'f1',
+              date: `${today}T00:00:00.000Z`,
+              startTime: '16:00',
+              location: { id: 'loc-1', slug: 'lawrenceville', name: 'Lawrenceville' },
+              vendor: { id: 'vendor-1', name: 'Vendor' },
+            },
+          ]
+        : [],
+  }))
+  renderToStaticMarkup(await FoodPage())
+  expect(findArgs('food').where).toEqual({ date: { greater_than_equal: `${today}T00:00:00.000Z` } })
+  expect(foodClient).toHaveBeenCalledWith(
+    expect.objectContaining({
+      initialSchedules: expect.arrayContaining([
+        expect.objectContaining({
+          date: today,
+          time: '16:00',
+          start: '16:00',
+          finish: '',
+          location: 'lawrenceville',
+        }),
+      ]),
+    }),
+  )
 })

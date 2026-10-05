@@ -160,7 +160,10 @@ function generateSpecialHours(
       validFrom: valid,
       validThrough: valid,
     }
-    if (!day.closed && day.open && day.close) {
+    if (day.closed) {
+      spec.opens = '00:00'
+      spec.closes = '00:00'
+    } else if (day.open && day.close) {
       const tz = day.timezone || timezone
       spec.opens = formatHourMinute(day.open, tz)
       spec.closes = formatHourMinute(day.close, tz)
@@ -483,7 +486,8 @@ export function generateWebSiteSchema(): WebSiteJsonLd {
     '@id': `${LOLEV_BASE_URL}#website`,
     name: 'Lolev Beer',
     url: LOLEV_BASE_URL,
-    description: 'Craft brewery in Pittsburgh serving modern ales, expressive lagers, and oak-aged beer.',
+    description:
+      'Craft brewery in Pittsburgh serving modern ales, expressive lagers, and oak-aged beer.',
     publisher: {
       '@id': `${LOLEV_BASE_URL}#organization`,
     },

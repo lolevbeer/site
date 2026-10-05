@@ -8,7 +8,8 @@ import { BreweryEvent, EventStatus } from '@/lib/types/event'
 import { FoodVendorSchedule } from '@/lib/types/food'
 import type { LocationSlug, PayloadLocation } from '@/lib/types/location'
 import type { Event as PayloadCmsEvent } from '@/src/payload-types'
-import { parseLocalDate } from './formatters'
+import { formatTime } from './formatters'
+import { fromZonedTime } from 'date-fns-tz'
 import { getMediaUrl } from './media-utils'
 import {
   LOLEV_BASE_URL,
@@ -205,9 +206,7 @@ function resolveEventImage(...candidates: Array<string | null | undefined>): str
 }
 
 function organizationPerformer(name: string, url?: string): PersonOrOrganizationJsonLd {
-  return url
-    ? { '@type': 'Organization', name, url }
-    : { '@type': 'Organization', name }
+  return url ? { '@type': 'Organization', name, url } : { '@type': 'Organization', name }
 }
 
 function qualifyEventName(name: string, locationName?: string): string {
@@ -235,11 +234,12 @@ function getEventStatus(status: EventStatus): string {
  * Parse time string to hours and minutes
  */
 function parseTime(timeStr: string): { hours: number; minutes: number } {
-  const match = timeStr.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i)
+  const match = formatTime(timeStr).match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/i)
   if (!match) return { hours: 18, minutes: 0 }
 
   let hours = parseInt(match[1])
   const minutes = parseInt(match[2] || '0')
+  if (hours > 23 || minutes > 59) return { hours: 18, minutes: 0 }
   const meridiem = match[3]?.toLowerCase()
 
   if (meridiem === 'pm' && hours !== 12) hours += 12
@@ -257,19 +257,28 @@ function toISO8601(
   time?: string,
   endTime?: string,
 ): { startDate: string; endDate?: string } {
-  const eventDate = parseLocalDate(date)
-
-  if (!time) return { startDate: eventDate.toISOString().split('T')[0] }
+  const dateKey = date.split('T')[0]
+  if (!time) return { startDate: dateKey }
 
   const { hours, minutes } = parseTime(time)
-  eventDate.setHours(hours, minutes, 0, 0)
+  const localTime = (h: number, m: number) =>
+    `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`
+  const eventDate = fromZonedTime(`${dateKey}T${localTime(hours, minutes)}`, 'America/New_York')
 
   const result = { startDate: eventDate.toISOString(), endDate: undefined as string | undefined }
 
   if (endTime) {
-    const endEventDate = new Date(eventDate)
     const { hours: endHours, minutes: endMinutes } = parseTime(endTime)
-    endEventDate.setHours(endHours, endMinutes, 0, 0)
+    let endDay = dateKey
+    if (endHours * 60 + endMinutes < hours * 60 + minutes) {
+      const next = new Date(`${dateKey}T12:00:00Z`)
+      next.setUTCDate(next.getUTCDate() + 1)
+      endDay = next.toISOString().split('T')[0]
+    }
+    const endEventDate = fromZonedTime(
+      `${endDay}T${localTime(endHours, endMinutes)}`,
+      'America/New_York',
+    )
     result.endDate = endEventDate.toISOString()
   }
 

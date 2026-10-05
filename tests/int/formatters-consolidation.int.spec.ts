@@ -26,3 +26,10 @@ describe('formatTime stays the prose variant', () => {
   it('is lowercase and drops :00', () => expect(formatTime('19:00')).toBe('7pm'))
   it('keeps minutes', () => expect(formatTime('19:30')).toBe('7:30pm'))
 })
+
+it.each([
+  ['7pm', '7pm'],
+  ['12am', '12am'],
+  ['12pm', '12pm'],
+  ['7:30pm', '7:30pm'],
+])('preserves the meridiem in %s', (input, expected) => expect(formatTime(input)).toBe(expected))

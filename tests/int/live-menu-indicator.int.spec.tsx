@@ -8,14 +8,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Menu } from '@/src/payload-types'
 
 const stream = vi.hoisted(() => ({
-  value: { menu: null, theme: 'light', realtime: false, pushCount: 0 } as {
+  value: { menu: undefined, theme: 'light', realtime: false, pushCount: 0 } as {
     menu: unknown
     theme: 'light' | 'dark'
     realtime: boolean
     pushCount: number
   },
 }))
-vi.mock('@/lib/hooks/use-menu-stream', () => ({ useMenuStream: () => stream.value }))
+vi.mock('@/lib/hooks/use-menu-stream', () => ({
+  useMenuStream: (_url: string, initialMenu: Menu) => ({
+    ...stream.value,
+    menu: stream.value.menu === undefined ? initialMenu : stream.value.menu,
+  }),
+}))
 vi.mock('@/components/home/featured-menu', () => ({
   FeaturedBeers: () => <div data-testid="featured-beers" />,
   FeaturedCans: ({ labelVideos }: { labelVideos?: boolean }) => (
@@ -29,11 +34,17 @@ const menu = (type: string, extra: Partial<Menu> = {}) =>
   ({ id: 'm1', url: 'l-draft', type, items: [], ...extra }) as unknown as Menu
 
 beforeEach(() => {
-  stream.value = { menu: null, theme: 'light', realtime: false, pushCount: 0 }
+  stream.value = { menu: undefined, theme: 'light', realtime: false, pushCount: 0 }
 })
 afterEach(cleanup)
 
 describe('LiveMenu boards', () => {
+  it('clears a withdrawn menu without restoring the initial board', () => {
+    stream.value.menu = null
+    const { container } = render(<LiveMenu menuUrl="l-draft" initialMenu={menu('draft')} />)
+    expect(container.innerHTML).toBe('')
+  })
+
   it.each([
     ['draft', 'featured-beers'],
     ['other', 'featured-beers'],

@@ -26,14 +26,14 @@ const COLLECTION_CACHE_MAP: Record<string, string[]> = {
   // (revalidateMenusForBeer) invalidates the precise `menu-${url}` tags of the
   // menus that actually contain the beer. Caches that embed beer docs inside
   // menu queries subscribe to 'beers' directly (see lib/utils/payload-api.ts).
-  beers: ['beers'],
+  beers: ['beers', 'coming-soon'],
   'beer-reviews': ['beers'],
   menus: ['menus', CACHE_TAGS.kioskMenus], // kioskMenus: see KIOSK_FRESH_TAGS
   events: ['events'],
   'recurring-events': ['events'],
   food: ['food'],
   locations: ['locations', 'menus', CACHE_TAGS.kioskMenus], // Locations affect menus
-  styles: ['styles', 'beers'], // Styles affect beer displays
+  styles: ['styles', 'beers', 'menus', CACHE_TAGS.kioskMenus, 'coming-soon'], // Styles affect beer displays
   distributors: ['distributors'],
   'food-vendors': ['food-vendors', 'food'], // Food vendors affect food displays
   'recurring-food-schedules': ['recurring-food', 'food'],
@@ -191,9 +191,11 @@ async function publishKioskSignal(
     return
   }
   // Location edits (hours, lines cleaned) feed menu displays that embed them.
-  // No events push: that stream carries only the location name and its
-  // 'locations' cache is just marked stale, so a push would refetch stale data.
-  if (slug === 'locations') void publishKioskInvalidate({ kind: 'menu' })
+  // Pushes use fresh endpoints, so populated location/style changes can refresh immediately.
+  if (slug === 'locations' || slug === 'styles') {
+    void publishKioskInvalidate({ kind: 'menu' })
+  }
+  if (slug === 'locations') void publishKioskInvalidate({ kind: 'events' })
 }
 
 function invalidateCollection(slug: string, doc?: Record<string, unknown>): void {
@@ -211,13 +213,17 @@ function invalidateCollection(slug: string, doc?: Record<string, unknown>): void
 // Tags the kiosk stream responses carry, hard-expired so a cached read after a
 // save is fresh rather than stale-while-revalidate. The expiry is queued, not
 // awaited, so the Ably push can still beat it: menu displays therefore refetch
-// on a push from the uncached /api/menu-stream/[url]/fresh. 'menus' and
+// on a push from their uncached /fresh endpoints. 'menus' and
 // 'locations' are deliberately absent: public pages share them, and hard
 // expiry would make the next visitor to each wait for a synchronous rebuild
 // (CACHE_TAGS.kioskMenus exists to avoid that for menus).
 // 'events' is shared with public events pages too; that cost is accepted because
 // event saves are rare and the events stream has no kiosk-only tag yet.
-const KIOSK_FRESH_TAGS = new Set<string>([CACHE_TAGS.kioskMenus, CACHE_TAGS.events])
+const KIOSK_FRESH_TAGS = new Set<string>([
+  CACHE_TAGS.kioskMenus,
+  CACHE_TAGS.events,
+  CACHE_TAGS.comingSoon,
+])
 
 function revalidateCollectionTag(tag: string): void {
   // Kiosk caches return fresh data on the first read after a save, rather than

@@ -68,6 +68,7 @@ export function useAblyInvalidate({
     let onMessage: ((message: Message) => void) | null = null
     let onConnected: (() => void) | null = null
     let onNotConnected: (() => void) | null = null
+    let onChannelState: (() => void) | null = null
 
     void import('ably/modular')
       .then(({ BaseRealtime, WebSocketTransport, FetchRequest }) => {
@@ -79,7 +80,7 @@ export function useAblyInvalidate({
         })
 
         onConnected = () => {
-          if (!cancelled) setRealtimeActive(true)
+          if (!cancelled) setRealtimeActive(channel?.state === 'attached')
         }
         onNotConnected = () => {
           if (!cancelled) setRealtimeActive(false)
@@ -92,12 +93,22 @@ export function useAblyInvalidate({
         client.connection.on('closed', onNotConnected)
 
         channel = client.channels.get(ABLY_CHANNELS[kind])
+        onChannelState = () => {
+          if (!cancelled) {
+            setRealtimeActive(
+              client?.connection.state === 'connected' && channel?.state === 'attached',
+            )
+          }
+        }
+        channel.on(onChannelState)
         onMessage = (message: Message) => {
           if (cancelled) return
           if (!messageMatches(message.data, kind, key)) return
           setInvalidateSignal((n) => n + 1)
         }
-        void channel.subscribe(ABLY_UPDATED_EVENT, onMessage)
+        void channel.subscribe(ABLY_UPDATED_EVENT, onMessage).catch(() => {
+          if (!cancelled) setRealtimeActive(false)
+        })
       })
       .catch(() => {
         // Auth/config/network failures: leave realtimeActive false so polling
@@ -108,6 +119,7 @@ export function useAblyInvalidate({
     return () => {
       cancelled = true
       try {
+        if (channel && onChannelState) channel.off(onChannelState)
         if (channel && onMessage) {
           channel.unsubscribe(ABLY_UPDATED_EVENT, onMessage)
         }

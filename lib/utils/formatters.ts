@@ -48,7 +48,8 @@ export function formatTime(timeString: string, options: { timezone?: string } = 
 
   const match12h = timeString.match(/(\d{1,2})(?::(\d{2}))?\s*(AM|PM|am|pm)/i)
   if (match12h) {
-    return convertTo12Hour(parseInt(match12h[1]), parseInt(match12h[2] || '0'))
+    const hour = (parseInt(match12h[1]) % 12) + (match12h[3].toLowerCase() === 'pm' ? 12 : 0)
+    return convertTo12Hour(hour, parseInt(match12h[2] || '0'))
   }
 
   const match24h = timeString.match(/(\d{1,2}):(\d{2})/)

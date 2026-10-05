@@ -57,7 +57,11 @@ export function useEventsStream(
       data: { events, locationName },
       theme: getPittsburghTheme(),
     }),
-    { invalidateSignal, realtimeFallback: realtimeActive },
+    {
+      invalidateSignal,
+      realtimeFallback: realtimeActive,
+      invalidateUrl: location ? `/api/events-stream/${location}/fresh` : undefined,
+    },
   )
 
   return {
