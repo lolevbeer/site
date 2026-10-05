@@ -273,6 +273,7 @@ describe('sync-untappd cron runner', () => {
     // 'kiosk-menus' refreshes the TV menu displays after the nightly sync.
     expect(revalidateTag.mock.calls.map((call) => call[0]).sort()).toEqual([
       'beers',
+      'coming-soon',
       'kiosk-menus',
       'menus',
     ])
@@ -297,4 +298,22 @@ describe('sync-untappd cron runner', () => {
     expect(response.status).toBe(401)
     expect(handleSchedules).not.toHaveBeenCalled()
   })
+})
+
+it.each(['error', 'error-reached-max-retries'])(
+  'cron reports %s without a false success',
+  async (status) => {
+    handleSchedules.mockResolvedValue({ queued: [], skipped: [], errored: [] })
+    runJobs.mockResolvedValue({ jobStatus: { j: { status } } })
+    const response = await GET(cronRequest())
+    expect(response.status).toBe(503)
+    expect(await response.json()).toMatchObject({ success: false })
+  },
+)
+it('cron reports scheduling failures but accepts successful no-work runs', async () => {
+  handleSchedules.mockResolvedValue({ queued: [], skipped: [], errored: [{}] })
+  runJobs.mockResolvedValue({ jobStatus: {} })
+  expect((await GET(cronRequest())).status).toBe(503)
+  handleSchedules.mockResolvedValue({ queued: [], skipped: [], errored: [] })
+  expect((await GET(cronRequest())).status).toBe(200)
 })

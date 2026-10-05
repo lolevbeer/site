@@ -26,6 +26,9 @@ vi.mock('payload', () => ({
 }))
 
 vi.mock('@/src/payload.config', () => ({ default: {} }))
+vi.mock('@/lib/public-forms/durable-limit', () => ({
+  reserveIpHashSlot: vi.fn(async () => async () => {}),
+}))
 
 vi.mock('@/src/utils/slack-api', () => ({
   slackApi: (...args: unknown[]) => slackApi(...args),
@@ -41,7 +44,6 @@ vi.mock('@/lib/config/server-env', () => ({
 
 import { submitJobApplication } from '@/src/actions/job-application'
 import { emptyJobApplication } from '@/lib/jobs/application'
-import { resetPublicFormRateLimit } from '@/lib/public-forms/rate-limit'
 
 function valid() {
   return {
@@ -60,14 +62,15 @@ describe('submitJobApplication', () => {
     find.mockReset()
     update.mockReset()
     slackApi.mockReset()
-    resetPublicFormRateLimit()
     create.mockResolvedValue({ id: 'app-1' })
     update.mockResolvedValue({})
     slackApi.mockResolvedValue(true)
   })
 
   it('does not write when the honeypot is filled', async () => {
-    find.mockResolvedValue({ docs: [{ id: 'job-1', title: 'Bartender', location: { name: 'Lawrenceville' } }] })
+    find.mockResolvedValue({
+      docs: [{ id: 'job-1', title: 'Bartender', location: { name: 'Lawrenceville' } }],
+    })
     const result = await submitJobApplication({ ...valid(), companyUrlHp: 'bot' })
     expect(result).toEqual({ ok: true })
     expect(create).not.toHaveBeenCalled()

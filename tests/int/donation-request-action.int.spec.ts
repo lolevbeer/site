@@ -26,6 +26,9 @@ vi.mock('payload', () => ({
 }))
 
 vi.mock('@/src/payload.config', () => ({ default: {} }))
+vi.mock('@/lib/public-forms/durable-limit', () => ({
+  reserveIpHashSlot: vi.fn(async () => async () => {}),
+}))
 
 vi.mock('@/src/utils/slack-api', () => ({
   slackApi: (...args: unknown[]) => slackApi(...args),
@@ -41,7 +44,6 @@ vi.mock('@/lib/config/server-env', () => ({
 
 import { submitDonationRequest } from '@/src/actions/donation-request'
 import { emptyDonationRequest, minimumEventDate } from '@/lib/donate/donation-request'
-import { resetPublicFormRateLimit } from '@/lib/public-forms/rate-limit'
 
 const TODAY = '2026-09-09'
 
@@ -93,7 +95,6 @@ describe('submitDonationRequest', () => {
     find.mockReset()
     update.mockReset()
     slackApi.mockReset()
-    resetPublicFormRateLimit()
     find.mockImplementation(async (args: { collection: string }) => {
       if (args.collection === 'locations') {
         return { docs: [{ slug: 'lawrenceville', active: true }] }

@@ -89,10 +89,10 @@ export const migrationRecovery: readonly MigrationRecovery[] = [
     compatibility:
       'Only adds beer-reviews documents for beers that have none; the previously deployed app still falls back to embedded legacy reviews, so both versions render the same reviews.',
     retry:
-      'Safe to rerun: it skips any beer that already has review documents, and review upserts are keyed by source URL.',
+      'An interrupted beer is skipped by this historical migration. Roll forward through 20261005_090000_complete_beer_review_backfill to complete every URL; do not rely on rerunning this migration.',
     mode: 'roll-forward',
     verify:
-      'Run scripts/check-legacy-reviews.ts: beers with legacy positiveReviews but zero beer-reviews documents must be 0 (Taupō was the only one on 2026-09-26).',
+      'Run scripts/check-legacy-reviews.ts: every valid legacy URL must have a normalized document; partial backfills count as missing.',
   },
   {
     name: '20260927_020000_payload_jobs_runnable_processing_until',
@@ -113,5 +113,25 @@ export const migrationRecovery: readonly MigrationRecovery[] = [
     mode: 'roll-forward',
     verify:
       'Check Draft Menu and Cans Menu on each Location in Payload, then confirm the homepage and /<location> page show the selected published menus.',
+  },
+  {
+    name: '20261005_090000_complete_beer_review_backfill',
+    compatibility:
+      'Replays existing source-URL upserts for every beer with legacy reviews; preserves approved/hidden moderation and leaves legacy JSON intact.',
+    retry:
+      'Safe to rerun after a partial failure: every valid URL is reconsidered and existing unchanged reviews are not written.',
+    mode: 'roll-forward',
+    verify:
+      'Run scripts/check-legacy-reviews.ts; no valid legacy URL may be missing from its beer. An incomplete check exits nonzero.',
+  },
+  {
+    name: '20261005_100000_public_form_indexes',
+    compatibility:
+      'Adds sparse submissionKey unique indexes without changing legacy rows and a TTL index for system rate-limit reservations. Prior app versions ignore both.',
+    retry:
+      'Safe to rerun: creates the same named indexes with the same options. Never remove the unique indexes while new intake code is serving.',
+    mode: 'roll-forward',
+    verify:
+      'Inspect submissionKey_1 (unique, sparse) on both form collections and expiresAt_1 (TTL 0) on public-form-limits. Test concurrent intake using the disposable Mongo check.',
   },
 ]

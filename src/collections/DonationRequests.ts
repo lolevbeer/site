@@ -38,6 +38,7 @@ export const DonationRequests: CollectionConfig = {
       'Public donation asks from /donate. Completing the form is not a yes. Rows are created only by the public form.',
   },
   fields: [
+    { name: 'submissionKey', type: 'text', unique: true, admin: { hidden: true } },
     {
       name: 'status',
       type: 'select',
@@ -109,7 +110,8 @@ export const DonationRequests: CollectionConfig = {
       maxLength: 80,
       admin: {
         description: 'Location slug from the public form, when the ask is a taproom night.',
-        condition: (_: unknown, sibling: { askType?: string }) => sibling?.askType === 'taproom-night',
+        condition: (_: unknown, sibling: { askType?: string }) =>
+          sibling?.askType === 'taproom-night',
       },
     },
     {

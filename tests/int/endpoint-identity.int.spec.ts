@@ -42,7 +42,9 @@ type Calls = Record<
 function mockPayload(findDocs: unknown[]): Calls {
   return {
     find: vi.fn(async () => ({ docs: findDocs })),
-    findGlobal: vi.fn(async () => ({ distributorOhUrl: 'https://example.com/oh.json' })),
+    findGlobal: vi.fn(async () => ({
+      distributorOhUrl: 'https://sixthcity.encompass8.com/oh.json',
+    })),
     update: vi.fn(async () => ({})),
     create: vi.fn(async (args: { data: Record<string, unknown> }) => ({ id: 'new', ...args.data })),
     updateGlobal: vi.fn(async () => ({})),
@@ -126,7 +128,10 @@ const cases: Case[] = [
     findDocs: [],
     url: 'http://localhost/api/urls',
     extra: {
-      json: async () => ({ distributorPaUrl: 'https://pa', distributorOhUrl: 'https://oh' }),
+      json: async () => ({
+        distributorPaUrl: 'https://sixthcity.encompass8.com/pa',
+        distributorOhUrl: 'https://sixthcity.encompass8.com/oh',
+      }),
     } as Partial<PayloadRequest>,
     ops: ['updateGlobal'],
   },
