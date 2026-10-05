@@ -25,6 +25,7 @@ import { getUserFromRequest } from './auth-helper'
 import { isAdmin } from '@/src/access/roles'
 import { geocodeDistributor, resolveDistributor, reverseDistributor } from './geocode'
 import { createSSEResponse } from '@/src/utils/sse-response'
+import { revalidateForCollectionAfterResponse } from '@/src/plugins/revalidation-plugin'
 import { distributorImportPatch, indexDocsByName } from '@/lib/distributors/import-patch'
 import { applyExistingDistributorPatch } from '@/lib/distributors/upsert-existing'
 import {
@@ -92,6 +93,11 @@ export const importDistributorsCsv: PayloadHandler = async (req) => {
       { status: 400 },
     )
   }
+
+  // Import writes skip the per-write revalidation hook (it throws inside this
+  // stream); refresh /beer-map and its data once the stream has finished instead.
+  let wrote = false
+  revalidateForCollectionAfterResponse('distributors', () => wrote)
 
   return createSSEResponse(async (send) => {
     let imported = 0
@@ -248,6 +254,7 @@ export const importDistributorsCsv: PayloadHandler = async (req) => {
           data: { ...fields, name, location: pin, active: fields.active ?? true },
           overrideAccess: false,
           user,
+          context: { skipRevalidate: true },
         })
         report('success', `Imported: ${name} — ${at}`)
         imported++
@@ -260,6 +267,7 @@ export const importDistributorsCsv: PayloadHandler = async (req) => {
 
     if (skipped > 0) report('skip', `${dryRun ? 'Would skip' : 'Skipped'} ${skipped} unchanged`)
 
+    wrote = !dryRun && imported + updated > 0
     send('complete', { imported, updated, skipped, errors, details, dryRun })
   })
 }

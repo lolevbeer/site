@@ -13,6 +13,7 @@
  */
 
 import { revalidatePath, revalidateTag } from 'next/cache'
+import { after } from 'next/server'
 import type { Config, Plugin, CollectionConfig, GlobalConfig, PayloadRequest } from 'payload'
 
 import { publishKioskInvalidate } from '@/lib/ably/publish'
@@ -232,6 +233,24 @@ function revalidateCollectionTag(tag: string): void {
  * revalidate once afterwards, so the route and tag shapes stay single-sourced
  * here rather than being hand-rolled per caller.
  */
+/**
+ * `revalidateForCollection` once the current response has finished, for writers
+ * that stream (the distributor importers): inside a stream the request context is
+ * gone and Next's cache APIs throw "static generation store missing". `after` runs
+ * the refresh once the stream closes, with the request context. `shouldRun` is read
+ * then, so the caller can decide from the final counts. Outside a Next request
+ * (unit tests, the Payload CLI) there is nothing to refresh, so it does nothing.
+ */
+export function revalidateForCollectionAfterResponse(slug: string, shouldRun: () => boolean): void {
+  try {
+    after(() => {
+      if (shouldRun()) revalidateForCollection(slug)
+    })
+  } catch {
+    // `after` throws outside a request scope; no page cache to refresh there
+  }
+}
+
 export function revalidateForCollection(slug: string): void {
   invalidateCollection(slug)
   // No doc, so no keys: refresh every display on the affected kiosk channels.

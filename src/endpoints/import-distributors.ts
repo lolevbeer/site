@@ -3,6 +3,7 @@ import type { SiteContent } from '@/src/payload-types'
 import { getUserFromRequest } from './auth-helper'
 import { geocodeDistributor } from './geocode'
 import { createSSEResponse } from '@/src/utils/sse-response'
+import { revalidateForCollectionAfterResponse } from '@/src/plugins/revalidation-plugin'
 import { distributorImportPatch, indexDocsByName } from '@/lib/distributors/import-patch'
 import { applyExistingDistributorPatch } from '@/lib/distributors/upsert-existing'
 import type { Distributor } from '@/src/payload-types'
@@ -180,6 +181,11 @@ export const importDistributors: PayloadHandler = async (req) => {
   }
 
   // Stream progress updates
+  // Import writes skip the per-write revalidation hook (it throws inside this
+  // stream); refresh /beer-map and its data once the stream has finished instead.
+  let wrote = false
+  revalidateForCollectionAfterResponse('distributors', () => wrote)
+
   return createSSEResponse(async (send) => {
     let imported = 0,
       updated = 0,
@@ -291,6 +297,7 @@ export const importDistributors: PayloadHandler = async (req) => {
           },
           overrideAccess: false,
           user,
+          context: { skipRevalidate: true },
         })
         byName.set(row.CustomerName, [created])
         const msg = `Imported: ${row.CustomerName}`
@@ -312,6 +319,7 @@ export const importDistributors: PayloadHandler = async (req) => {
       send('item', { type: 'skip', message: msg })
     }
 
+    wrote = imported + updated > 0
     send('complete', { imported, updated, skipped, errors, details })
   })
 }
