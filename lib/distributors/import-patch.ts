@@ -5,9 +5,10 @@
  * set `active` or `customerType` on update unless the source file explicitly
  * provides them — the CSV importer passes them only for non-blank cells.
  */
+import { countrySuffix } from '@/lib/utils/country-names'
 import type { CustomerType, StateCode } from './fields'
 
-const PATCH_STRINGS = ['address', 'city', 'state', 'zip', 'phone', 'website'] as const
+const PATCH_STRINGS = ['address', 'city', 'state', 'zip', 'country', 'phone', 'website'] as const
 
 export type DistributorRegion = StateCode
 
@@ -16,6 +17,7 @@ export type DistributorImportFields = {
   city?: string | null
   state?: string | null
   zip?: string | null
+  country?: string | null
   phone?: string | null
   website?: string | null
   customerType?: CustomerType | null
@@ -28,6 +30,7 @@ export type DistributorImportPatch = Partial<{
   city: string
   state: string
   zip: string
+  country: string
   phone: string
   website: string
   customerType: CustomerType
@@ -43,6 +46,7 @@ export function distributorImportPatch(
     city?: string
     state?: string
     zip?: string
+    country?: string
     phone?: string
     website?: string
     customerType?: CustomerType
@@ -76,21 +80,29 @@ export function addressFieldsChanged(patch: DistributorImportPatch): boolean {
     patch.address !== undefined ||
     patch.city !== undefined ||
     patch.state !== undefined ||
-    patch.zip !== undefined
+    patch.zip !== undefined ||
+    patch.country !== undefined
   )
 }
 
+/**
+ * The geocoder query line. The country name is appended outside the US so an
+ * address like "47 High Street, Penge" cannot resolve to the wrong country.
+ */
 export function formatFullAddress(parts: {
   address?: string | null
   city?: string | null
   state?: string | null
   zip?: string | null
+  country?: string | null
 }): string {
   const street = parts.address?.trim() || ''
   const city = parts.city?.trim() || ''
   const state = parts.state?.trim() || ''
   const zip = parts.zip?.trim() || ''
-  return [street, [city, state, zip].filter(Boolean).join(' ')].filter(Boolean).join(', ')
+  return [street, [city, state, zip].filter(Boolean).join(' '), countrySuffix(parts.country)]
+    .filter(Boolean)
+    .join(', ')
 }
 
 export function indexDocsByName<T extends { name: string }>(docs: T[]): Map<string, T[]> {

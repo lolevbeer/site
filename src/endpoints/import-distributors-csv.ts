@@ -1,24 +1,67 @@
 /**
  * Admin upload endpoint for the distributor CSV format documented in
- * `public/distributor-csv-import.md`. Works for any US state or DC:
- * each row's `region` (default: its `state`) decides where it is stored.
+ * `public/distributor-csv-import.md`. Works for US and international venues.
  *
- * Rows are matched to existing distributors by exact name within their region,
- * so re-uploading a file updates rather than duplicates. Latitude/longitude are
- * never in the file; they are geocoded here (full address, then zip, then city).
- * A row that still cannot be geocoded after those fallbacks is reported and not
- * created, because `location` is required and a made-up fallback pin would be
- * mistaken for a real one.
+ * 1. Parse. US rows (country `US`, or blank with a US state) keep the US rules;
+ *    other rows may leave city, state and country blank.
+ * 2. Enrich. A row missing city, state or country is located with
+ *    `resolveDistributor` (Mapbox, Nominatim, Geocodio for US), and only its blank
+ *    cells are filled from the answer; a cell the CSV supplied is never changed.
+ *    A row with latitude/longitude keeps that pin and is only reverse-looked-up
+ *    (`reverseDistributor`) to fill blanks; if that finds nothing it still imports.
+ *    A row that cannot be located is reported and not created, because `location`
+ *    is required and a made-up pin would be mistaken for a real one.
+ * 3. Match. Rows are matched to existing distributors by exact name within their
+ *    group: the US state (`region`) for US rows, the country for the rest, so
+ *    re-uploading a file updates rather than duplicates.
+ *
+ * `dryRun=true` runs steps 1–3 and reports what would happen without writing. Every
+ * line names the resolved address and which cells were inferred; an uncertain
+ * geocode is marked "check this" so a wrong match is caught before it is saved.
  */
-import type { PayloadHandler } from 'payload'
+import type { PayloadHandler, Where } from 'payload'
 import type { Distributor } from '@/src/payload-types'
 import { getUserFromRequest } from './auth-helper'
 import { isAdmin } from '@/src/access/roles'
-import { geocodeDistributor } from './geocode'
+import { geocodeDistributor, resolveDistributor, reverseDistributor } from './geocode'
 import { createSSEResponse } from '@/src/utils/sse-response'
 import { distributorImportPatch, indexDocsByName } from '@/lib/distributors/import-patch'
 import { applyExistingDistributorPatch } from '@/lib/distributors/upsert-existing'
-import { parseDistributorsCsv } from '@/lib/distributors/parse-distributors-csv'
+import {
+  parseDistributorsCsv,
+  type DistributorCsvRow,
+} from '@/lib/distributors/parse-distributors-csv'
+import { fillBlankParts, needsFill } from '@/lib/distributors/fill-blank-parts'
+import { groupKey, groupWhere } from '@/lib/distributors/country'
+import { formatAddress } from '@/lib/utils/formatters'
+
+/** How many rows are located at once. */
+const LOOKUP_CONCURRENCY = 4
+
+/** Map with at most `limit` calls in flight; results keep the input order. */
+async function mapInBatches<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  const results = new Array<R>(items.length)
+  let next = 0
+  const worker = async () => {
+    while (next < items.length) {
+      const i = next++
+      results[i] = await fn(items[i], i)
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker))
+  return results
+}
+
+/** A parsed row after enrichment, with the pin it was located at (if it was). */
+type EnrichedRow = DistributorCsvRow & {
+  location?: [number, number]
+  /** e.g. ` (inferred: city, country; check this)`, appended to report lines. */
+  note: string
+}
 
 export const importDistributorsCsv: PayloadHandler = async (req) => {
   const { payload } = req
@@ -33,6 +76,7 @@ export const importDistributorsCsv: PayloadHandler = async (req) => {
   if (!(file instanceof File)) {
     return Response.json({ error: 'No file uploaded' }, { status: 400 })
   }
+  const dryRun = formData?.get('dryRun') === 'true'
 
   const { rows, errors: parseErrors } = parseDistributorsCsv(await file.text())
   if (rows.length === 0) {
@@ -57,48 +101,105 @@ export const importDistributorsCsv: PayloadHandler = async (req) => {
     const details = parseErrors.map((e) => `Error: Line ${e.line}: ${e.message}`)
     for (const message of details) send('item', { type: 'error', message })
 
-    const regions = [...new Set(rows.map((r) => r.region))]
-    const existing = await payload.find({
-      collection: 'distributors',
-      where: { region: { in: regions } },
-      pagination: false,
-      depth: 0,
-      overrideAccess: false,
-      user,
-    })
-    const byRegion = new Map<string, Map<string, Distributor[]>>()
-    for (const region of regions) {
-      byRegion.set(region, indexDocsByName(existing.docs.filter((d) => d.region === region)))
-    }
-
     const report = (type: 'success' | 'skip' | 'error', message: string) => {
       details.push(message)
       send('item', { type, message })
     }
-
-    for (let i = 0; i < rows.length; i++) {
-      const row = rows[i]
+    const progress = (i: number, total: number, name: string, phase: string) =>
       send('progress', {
         current: i + 1,
-        total: rows.length,
-        name: row.name,
-        percent: Math.round(((i + 1) / rows.length) * 100),
+        total,
+        name: `${phase}: ${name}`,
+        percent: Math.round(((i + 1) / total) * 100),
       })
 
-      // The parser already rejects a repeated name within a region, so this
-      // index never needs updating as rows are created or patched.
-      const matches = byRegion.get(row.region)!.get(row.name) ?? []
+    // ---- 2. Enrich: locate rows missing city, state or country --------------------
+    // Lookups run a few at a time (Mapbox handles it; Nominatim paces itself), and the
+    // results are kept in file order so reports and duplicate checks read top to bottom.
+    let locatedCount = 0
+    const located = await mapInBatches(rows, LOOKUP_CONCURRENCY, async (row) => {
+      if (!needsFill(row)) return { row: { ...row, note: '' } }
+      // Count finished-or-started lookups, not the row index, so the bar never goes backwards
+      progress(locatedCount++, rows.length, row.name, 'Locating')
+      // A pin from the file is kept and only reverse-looked-up for its blank parts
+      const resolved = row.location
+        ? await reverseDistributor(row.location)
+        : await resolveDistributor(row)
+      if (!resolved && !row.location) return { row, failed: true }
+      const { filled, inferred } = resolved
+        ? fillBlankParts(row, resolved.parts)
+        : { filled: {}, inferred: [] }
+      const flags = [
+        inferred.length ? `inferred: ${inferred.join(', ')}` : '',
+        !row.location && resolved?.uncertain ? 'check this' : '',
+      ].filter(Boolean)
+      return {
+        row: {
+          ...row,
+          ...filled,
+          location: row.location ?? resolved!.coords,
+          note: flags.length ? ` (${flags.join('; ')})` : '',
+        },
+      }
+    })
+    const enriched: EnrichedRow[] = []
+    for (const { row, failed } of located) {
+      if (failed) {
+        report('error', `Error: Could not geocode "${row.name}" (line ${row.line}); not created`)
+        errors++
+      } else enriched.push(row as EnrichedRow)
+    }
+
+    // Groups are final only now, so recheck names the parser could not compare.
+    const seen = new Map<string, number>()
+    const ready: EnrichedRow[] = []
+    for (const row of enriched) {
+      const key = `${groupKey(row)}|${row.name}`
+      const earlier = seen.get(key)
+      if (earlier !== undefined) {
+        report('error', `Error: Line ${row.line}: duplicate of line ${earlier}: "${row.name}"`)
+        errors++
+        continue
+      }
+      seen.set(key, row.line)
+      ready.push(row)
+    }
+
+    // ---- 3. Match existing rows by name within each group -------------------------
+    const or: Where[] = groupWhere(ready)
+    const existing = or.length
+      ? await payload.find({
+          collection: 'distributors',
+          where: { or },
+          pagination: false,
+          depth: 0,
+          overrideAccess: false,
+          user,
+        })
+      : { docs: [] as Distributor[] }
+    const buckets = new Map<string, Distributor[]>()
+    for (const doc of existing.docs) {
+      const key = groupKey(doc)
+      buckets.set(key, [...(buckets.get(key) ?? []), doc])
+    }
+    const byGroup = new Map([...buckets].map(([key, docs]) => [key, indexDocsByName(docs)]))
+
+    for (let i = 0; i < ready.length; i++) {
+      const row = ready[i]
+      progress(i, ready.length, row.name, dryRun ? 'Checking' : 'Saving')
+      const matches = byGroup.get(groupKey(row))?.get(row.name) ?? []
       if (matches.length > 1) {
         report(
           'error',
-          `Error: "${row.name}" matches ${matches.length} existing rows in ${row.region}; skipped`,
+          `Error: "${row.name}" matches ${matches.length} existing rows in ${row.region ?? row.country}; skipped`,
         )
         errors++
         continue
       }
 
-      // Everything but the line number and name is a distributor field
-      const { line, name, ...fields } = row
+      // Everything but bookkeeping is a distributor field
+      const { line, name, location, note, ...fields } = row
+      const at = `${formatAddress(row)}${note}`
 
       try {
         if (matches.length === 1) {
@@ -108,22 +209,35 @@ export const importDistributorsCsv: PayloadHandler = async (req) => {
             skipped++
             continue
           }
+          const changed = Object.keys(patch).join(', ')
+          if (dryRun) {
+            report('success', `Would update: "${name}" (${changed}) — ${at}`)
+            updated++
+            continue
+          }
           const result = await applyExistingDistributorPatch({
             payload,
             user,
             current,
             patch,
             name,
-            geocode: geocodeDistributor,
+            // Reuse the pin found while enriching instead of geocoding twice
+            geocode: location ? async () => location : geocodeDistributor,
           })
-          report('success', `Updated: "${row.name}" (${Object.keys(patch).join(', ')})`)
+          report('success', `Updated: "${name}" (${changed}) — ${at}`)
           if (result.warning) details.push(result.warning)
           updated++
           continue
         }
 
-        const location = await geocodeDistributor(row)
-        if (!location) {
+        if (dryRun) {
+          report('success', `Would import: ${name} — ${at}`)
+          imported++
+          continue
+        }
+
+        const pin = location ?? (await geocodeDistributor(row))
+        if (!pin) {
           report('error', `Error: Could not geocode "${name}" (line ${line}); not created`)
           errors++
           continue
@@ -131,21 +245,21 @@ export const importDistributorsCsv: PayloadHandler = async (req) => {
 
         await payload.create({
           collection: 'distributors',
-          data: { ...fields, name, location, active: fields.active ?? true },
+          data: { ...fields, name, location: pin, active: fields.active ?? true },
           overrideAccess: false,
           user,
         })
-        report('success', `Imported: ${row.name}`)
+        report('success', `Imported: ${name} — ${at}`)
         imported++
       } catch (error: unknown) {
         const message = error instanceof Error ? error.message : 'Unknown error'
-        report('error', `Error: Failed to import "${row.name}" - ${message}`)
+        report('error', `Error: Failed to import "${name}" - ${message}`)
         errors++
       }
     }
 
-    if (skipped > 0) report('skip', `Skipped ${skipped} unchanged`)
+    if (skipped > 0) report('skip', `${dryRun ? 'Would skip' : 'Skipped'} ${skipped} unchanged`)
 
-    send('complete', { imported, updated, skipped, errors, details })
+    send('complete', { imported, updated, skipped, errors, details, dryRun })
   })
 }
