@@ -521,6 +521,7 @@ describe('importDistributorsCsv endpoint', () => {
       },
       overrideAccess: false,
       user: admin,
+      context: { skipRevalidate: true },
     })
     expect(geocodeDistributor).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -680,6 +681,7 @@ describe('importDistributorsCsv endpoint', () => {
         },
         overrideAccess: false,
         user: admin,
+        context: { skipRevalidate: true },
       })
       expect(geocodeDistributor).not.toHaveBeenCalled()
       const text = JSON.stringify(evs)

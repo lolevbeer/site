@@ -5,7 +5,8 @@
  * search the right country. Does not infer customer type.
  *
  * Runs as `user` (the admin the calling import endpoint authorized) with
- * `overrideAccess: false`, so the Distributors access rules apply.
+ * `overrideAccess: false`, so the Distributors access rules apply. Skips the
+ * per-write cache revalidation: callers refresh the beer map once after their loop.
  */
 
 import type { Payload } from 'payload'
@@ -46,6 +47,8 @@ export async function applyExistingDistributorPatch(args: {
     data: patch,
     overrideAccess: false,
     user,
+    // The importers revalidate once after their loop; see revalidateForCollection
+    context: { skipRevalidate: true },
   })
 
   return {
