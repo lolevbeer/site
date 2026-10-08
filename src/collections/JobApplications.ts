@@ -20,6 +20,7 @@ export const JobApplications: CollectionConfig = {
     description: 'Applications from /jobs/[slug]. Completing the form is not a hire.',
   },
   fields: [
+    { name: 'submissionKey', type: 'text', unique: true, admin: { hidden: true } },
     {
       name: 'job',
       type: 'relationship',

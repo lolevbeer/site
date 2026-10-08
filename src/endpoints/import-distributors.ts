@@ -6,6 +6,7 @@ import { createSSEResponse } from '@/src/utils/sse-response'
 import { distributorImportPatch, indexDocsByName } from '@/lib/distributors/import-patch'
 import { applyExistingDistributorPatch } from '@/lib/distributors/upsert-existing'
 import type { Distributor } from '@/src/payload-types'
+import { isDistributorImportUrl } from '@/lib/distributors/import-source'
 
 interface DistributorRow {
   CustomerName: string
@@ -80,7 +81,9 @@ interface FetchResult {
 
 async function fetchDistributors(url: string): Promise<FetchResult> {
   try {
-    const response = await fetch(url)
+    if (!isDistributorImportUrl(url))
+      return { rows: [], error: 'Use an HTTPS Encompass8 QuickLink URL.' }
+    const response = await fetch(url, { redirect: 'error', signal: AbortSignal.timeout(30_000) })
     if (!response.ok) {
       return { rows: [], error: `HTTP ${response.status}: ${response.statusText}` }
     }
@@ -98,11 +101,7 @@ async function fetchDistributors(url: string): Promise<FetchResult> {
         rows: [],
         error: expired
           ? `QuickLink expired on ${expired[1]} — generate a new QuickLink in Encompass and save it above`
-          : `Response is not JSON (got: ${text
-              .replace(/<[^>]*>/g, ' ')
-              .replace(/\s+/g, ' ')
-              .trim()
-              .slice(0, 120)})`,
+          : 'Response is not JSON; check the Encompass QuickLink.',
       }
     }
     const rows = data?.Export?.Table?.Row || []
@@ -126,9 +125,8 @@ async function fetchDistributors(url: string): Promise<FetchResult> {
       )
 
     return { rows: filtered }
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Unknown fetch error'
-    return { rows: [], error: message }
+  } catch {
+    return { rows: [], error: 'Could not fetch the Encompass QuickLink.' }
   }
 }
 

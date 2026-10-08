@@ -26,6 +26,9 @@ vi.mock('payload', () => ({
 }))
 
 vi.mock('@/src/payload.config', () => ({ default: {} }))
+vi.mock('@/lib/public-forms/durable-limit', () => ({
+  reserveIpHashSlot: vi.fn(async () => async () => {}),
+}))
 
 vi.mock('@/src/utils/slack-api', () => ({
   slackApi: (...args: unknown[]) => slackApi(...args),
@@ -41,7 +44,6 @@ vi.mock('@/lib/config/server-env', () => ({
 
 import { submitJobApplication } from '@/src/actions/job-application'
 import { emptyJobApplication } from '@/lib/jobs/application'
-import { resetPublicFormRateLimit } from '@/lib/public-forms/rate-limit'
 
 function valid() {
   return {
@@ -60,14 +62,15 @@ describe('submitJobApplication', () => {
     find.mockReset()
     update.mockReset()
     slackApi.mockReset()
-    resetPublicFormRateLimit()
     create.mockResolvedValue({ id: 'app-1' })
     update.mockResolvedValue({})
     slackApi.mockResolvedValue(true)
   })
 
   it('does not write when the honeypot is filled', async () => {
-    find.mockResolvedValue({ docs: [{ id: 'job-1', title: 'Bartender', location: { name: 'Lawrenceville' } }] })
+    find.mockResolvedValue({
+      docs: [{ id: 'job-1', title: 'Bartender', location: { name: 'Lawrenceville' } }],
+    })
     const result = await submitJobApplication({ ...valid(), companyUrlHp: 'bot' })
     expect(result).toEqual({ ok: true })
     expect(create).not.toHaveBeenCalled()
@@ -93,5 +96,38 @@ describe('submitJobApplication', () => {
     expect(result.ok).toBe(false)
     if (!result.ok) expect(result.error).toMatch(/no longer listed/)
     expect(create).not.toHaveBeenCalled()
+  })
+
+  it('acknowledges concurrent exact retries but sends only one notification; changed content is distinct', async () => {
+    const records = new Map<string, Record<string, unknown>>()
+    find.mockImplementation(async ({ collection, where }) => ({
+      docs:
+        collection === 'jobs'
+          ? [{ id: 'job-1', title: 'Bartender', location: { name: 'Lawrenceville' } }]
+          : records.has(where.submissionKey.equals)
+            ? [records.get(where.submissionKey.equals)]
+            : [],
+    }))
+    create.mockImplementation(async ({ data }) => {
+      if (records.has(data.submissionKey)) throw { code: 11000 }
+      const doc = { id: `record-${records.size}`, ...data }
+      records.set(data.submissionKey, doc)
+      return doc
+    })
+    expect(
+      await Promise.all([submitJobApplication(valid()), submitJobApplication(valid())]),
+    ).toEqual([{ ok: true }, { ok: true }])
+    expect(records.size).toBe(1)
+    expect(afterFns).toHaveLength(1)
+    await afterFns[0]()
+    expect(slackApi).toHaveBeenCalledTimes(1)
+    expect(
+      await submitJobApplication({
+        ...valid(),
+        message: 'A different valid request with additional details.',
+      }),
+    ).toEqual({ ok: true })
+    expect(records.size).toBe(2)
+    expect(afterFns).toHaveLength(2)
   })
 })

@@ -15,6 +15,10 @@ import * as backfillMissingBeerReviews from './20260926_190000_backfill_missing_
 import * as payloadJobsRunnableProcessingUntil from './20260927_020000_payload_jobs_runnable_processing_until'
 import * as locationWebsiteMenus from './20260929_120000_location_website_menus'
 
+import * as completeBeerReviews from './20261005_090000_complete_beer_review_backfill'
+
+import * as publicFormIndexes from './20261005_100000_public_form_indexes'
+
 export const migrations = [
   {
     up: normalizeBeerReviews.up,
@@ -65,5 +69,15 @@ export const migrations = [
     up: locationWebsiteMenus.up,
     down: locationWebsiteMenus.down,
     name: '20260929_120000_location_website_menus',
+  },
+  {
+    up: completeBeerReviews.up,
+    down: completeBeerReviews.down,
+    name: '20261005_090000_complete_beer_review_backfill',
+  },
+  {
+    up: publicFormIndexes.up,
+    down: publicFormIndexes.down,
+    name: '20261005_100000_public_form_indexes',
   },
 ]

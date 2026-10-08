@@ -26,6 +26,9 @@ vi.mock('payload', () => ({
 }))
 
 vi.mock('@/src/payload.config', () => ({ default: {} }))
+vi.mock('@/lib/public-forms/durable-limit', () => ({
+  reserveIpHashSlot: vi.fn(async () => async () => {}),
+}))
 
 vi.mock('@/src/utils/slack-api', () => ({
   slackApi: (...args: unknown[]) => slackApi(...args),
@@ -41,7 +44,6 @@ vi.mock('@/lib/config/server-env', () => ({
 
 import { submitDonationRequest } from '@/src/actions/donation-request'
 import { emptyDonationRequest, minimumEventDate } from '@/lib/donate/donation-request'
-import { resetPublicFormRateLimit } from '@/lib/public-forms/rate-limit'
 
 const TODAY = '2026-09-09'
 
@@ -93,7 +95,6 @@ describe('submitDonationRequest', () => {
     find.mockReset()
     update.mockReset()
     slackApi.mockReset()
-    resetPublicFormRateLimit()
     find.mockImplementation(async (args: { collection: string }) => {
       if (args.collection === 'locations') {
         return { docs: [{ slug: 'lawrenceville', active: true }] }
@@ -143,5 +144,38 @@ describe('submitDonationRequest', () => {
     const result = await submitDonationRequest(null)
     expect(result.ok).toBe(false)
     expect(create).not.toHaveBeenCalled()
+  })
+
+  it('acknowledges concurrent exact retries but sends only one notification; changed content is distinct', async () => {
+    const records = new Map<string, Record<string, unknown>>()
+    find.mockImplementation(async ({ collection, where }) => ({
+      docs:
+        collection === 'locations'
+          ? [{ slug: 'lawrenceville', active: true }]
+          : records.has(where.submissionKey.equals)
+            ? [records.get(where.submissionKey.equals)]
+            : [],
+    }))
+    create.mockImplementation(async ({ data }) => {
+      if (records.has(data.submissionKey)) throw { code: 11000 }
+      const doc = { id: `record-${records.size}`, ...data }
+      records.set(data.submissionKey, doc)
+      return doc
+    })
+    expect(
+      await Promise.all([submitDonationRequest(valid()), submitDonationRequest(valid())]),
+    ).toEqual([{ ok: true }, { ok: true }])
+    expect(records.size).toBe(1)
+    expect(afterFns).toHaveLength(1)
+    await afterFns[0]()
+    expect(slackApi).toHaveBeenCalledTimes(1)
+    expect(
+      await submitDonationRequest({
+        ...valid(),
+        requestDetails: 'A different valid request with additional details.',
+      }),
+    ).toEqual({ ok: true })
+    expect(records.size).toBe(2)
+    expect(afterFns).toHaveLength(2)
   })
 })

@@ -28,20 +28,12 @@ import { firstFieldError, PUBLIC_FORM_INCOMPLETE } from '@/lib/public-forms/fiel
 import { isHoneypotFilled } from '@/lib/public-forms/honeypot'
 import { clientIp } from '@/lib/public-forms/request-ip'
 import { hashSubmitterIp } from '@/lib/public-forms/ip-hash'
-import { hasReachedIpHashLimit } from '@/lib/public-forms/durable-limit'
-import {
-  PUBLIC_FORM_EMAIL_LIMIT_MESSAGE,
-  PUBLIC_FORM_EMAIL_WINDOW_MS,
-  PUBLIC_FORM_IP_LIMIT_MESSAGE,
-  allowEmailAttempt,
-  allowIpAttempt,
-} from '@/lib/public-forms/rate-limit'
-import { isRecentTimestamp } from '@/lib/utils/date'
+import { savePublicForm } from '@/lib/public-forms/submission'
+import { PUBLIC_FORM_IP_LIMIT_MESSAGE } from '@/lib/public-forms/rate-limit'
 import { notifyCollectionOnSlack } from '@/lib/slack/notify'
 
 export type SubmitDonationResult =
-  | { ok: true }
-  | { ok: false; error: string; errors?: DonationRequestErrors; step?: 1 | 2 | 3 }
+  { ok: true } | { ok: false; error: string; errors?: DonationRequestErrors; step?: 1 | 2 | 3 }
 
 function fail(error: string, errors?: DonationRequestErrors): SubmitDonationResult {
   return {
@@ -52,13 +44,13 @@ function fail(error: string, errors?: DonationRequestErrors): SubmitDonationResu
   }
 }
 
-function persistData(input: ValidatedDonationRequest, ipHash: string) {
+function persistData(input: ValidatedDonationRequest) {
   return {
     status: 'new' as const,
     askType: input.askType,
     organizationName: input.organizationName,
     contactName: input.contactName,
-    email: input.email,
+    email: input.email.toLowerCase(),
     phone: input.phone,
     mission: input.mission,
     howHeard: input.howHeard,
@@ -73,7 +65,6 @@ function persistData(input: ValidatedDonationRequest, ipHash: string) {
     howServed: input.askType === 'product' ? input.howServed : undefined,
     pickupName: input.askType === 'product' ? input.pickupName : undefined,
     taproom: input.askType === 'taproom-night' ? input.taproom : undefined,
-    ipHash,
   }
 }
 
@@ -103,7 +94,6 @@ export async function submitDonationRequest(input: unknown): Promise<SubmitDonat
     if (isHoneypotFilled(parsed.companyUrlHp)) return { ok: true }
 
     const ip = await clientIp()
-    if (!allowIpAttempt('donate', ip)) return fail(PUBLIC_FORM_IP_LIMIT_MESSAGE)
 
     const payload = await getPayload({ config })
     const result = validateDonationRequest(parsed, undefined, await activeTaproomSlugs(payload))
@@ -111,35 +101,12 @@ export async function submitDonationRequest(input: unknown): Promise<SubmitDonat
     if (!result.ok) return fail(firstFieldError(result.errors), result.errors)
 
     const value = result.value
-    const email = value.email.toLowerCase()
-    if (!allowEmailAttempt('donate', email)) return fail(PUBLIC_FORM_EMAIL_LIMIT_MESSAGE)
 
     const ipHash = hashSubmitterIp(ip, readServerEnvironment().payloadSecret)
-    if (await hasReachedIpHashLimit(payload, 'donation-requests', ipHash)) {
-      return fail(PUBLIC_FORM_IP_LIMIT_MESSAGE)
-    }
-
-    const recent = await payload.find({
-      collection: 'donation-requests',
-      where: {
-        and: [
-          { email: { equals: value.email } },
-          { eventDate: { equals: value.eventDate } },
-          { eventName: { equals: value.eventName } },
-        ],
-      },
-      limit: 1,
-      overrideAccess: true,
-    })
-    if (isRecentTimestamp(recent.docs[0]?.createdAt, PUBLIC_FORM_EMAIL_WINDOW_MS)) {
-      return { ok: true }
-    }
-
-    const created = await payload.create({
-      collection: 'donation-requests',
-      overrideAccess: true,
-      data: persistData(value, ipHash),
-    })
+    const saved = await savePublicForm(payload, 'donation-requests', persistData(value), ipHash)
+    if (saved.status === 'limited') return fail(PUBLIC_FORM_IP_LIMIT_MESSAGE)
+    if (saved.status === 'duplicate') return { ok: true }
+    const created = saved.doc
 
     after(() =>
       notifyCollectionOnSlack(payload, {

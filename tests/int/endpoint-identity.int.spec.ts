@@ -42,7 +42,9 @@ type Calls = Record<
 function mockPayload(findDocs: unknown[]): Calls {
   return {
     find: vi.fn(async () => ({ docs: findDocs })),
-    findGlobal: vi.fn(async () => ({ distributorOhUrl: 'https://example.com/oh.json' })),
+    findGlobal: vi.fn(async () => ({
+      distributorOhUrl: 'https://sixthcity.encompass8.com/oh.json',
+    })),
     update: vi.fn(async () => ({})),
     create: vi.fn(async (args: { data: Record<string, unknown> }) => ({ id: 'new', ...args.data })),
     updateGlobal: vi.fn(async () => ({})),
@@ -126,7 +128,10 @@ const cases: Case[] = [
     findDocs: [],
     url: 'http://localhost/api/urls',
     extra: {
-      json: async () => ({ distributorPaUrl: 'https://pa', distributorOhUrl: 'https://oh' }),
+      json: async () => ({
+        distributorPaUrl: 'https://sixthcity.encompass8.com/pa',
+        distributorOhUrl: 'https://sixthcity.encompass8.com/oh',
+      }),
     } as Partial<PayloadRequest>,
     ops: ['updateGlobal'],
   },
@@ -243,4 +248,30 @@ describe('import-distributors when a row cannot be geocoded', () => {
     expect(payload.create).not.toHaveBeenCalled()
     vi.unstubAllGlobals()
   })
+})
+
+it('rejects unsafe distributor destinations before fetching and disallows redirects without leaking errors', async () => {
+  const { importDistributors } = await import('@/src/endpoints/import-distributors')
+  const payload = mockPayload([])
+  const fetchMock = vi.fn().mockRejectedValue(new Error('redirect contained PRIVATE RESPONSE'))
+  vi.stubGlobal('fetch', fetchMock)
+  try {
+    payload.findGlobal.mockResolvedValueOnce({ distributorOhUrl: 'https://127.0.0.1/private' })
+    expect(
+      (await importDistributors(makeReq(payload, admin, 'http://localhost/api/import'))).status,
+    ).toBe(400)
+    expect(fetchMock).not.toHaveBeenCalled()
+    const response = await importDistributors(
+      makeReq(payload, admin, 'http://localhost/api/import'),
+    )
+    expect(response.status).toBe(400)
+    expect(await response.text()).not.toContain('PRIVATE RESPONSE')
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://sixthcity.encompass8.com/oh.json',
+      expect.objectContaining({ redirect: 'error', signal: expect.any(AbortSignal) }),
+    )
+    expect(payload.create).not.toHaveBeenCalled()
+  } finally {
+    vi.unstubAllGlobals()
+  }
 })
