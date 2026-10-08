@@ -1,5 +1,5 @@
 /** Guards the release-smoke seed from writing to non-disposable MongoDB databases. */
-/** Loopback hosts are always disposable; remote targets need explicit opt-in. */
+/** A local host can still hold real data: every target needs explicit opt-in and a test name. */
 export function isLoopbackHost(hostname: string): boolean {
   return ['localhost', '127.0.0.1', '[::1]'].includes(hostname)
 }
@@ -15,10 +15,6 @@ export function isDisposableDatabase(uri: string, explicit: string | undefined):
 
   if (database.protocol !== 'mongodb:' && database.protocol !== 'mongodb+srv:') {
     return false
-  }
-
-  if (isLoopbackHost(database.hostname)) {
-    return true
   }
 
   return explicit === '1' && /-(?:e2e|ci)$/.test(database.pathname)

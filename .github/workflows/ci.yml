@@ -19,12 +19,12 @@ jobs:
   checks:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
       # pnpm and node versions come from packageManager and engines.node in package.json.
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version-file: package.json
           cache: pnpm
@@ -56,17 +56,17 @@ jobs:
       BLOB_READ_WRITE_TOKEN: vercel_blob_rw_ci_only
       NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3100
       NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN: ci-public-placeholder
-      E2E_DISPOSABLE_DATABASE: "1"
+      E2E_DISPOSABLE_DATABASE: '1'
       E2E_ADMIN_EMAIL: release-smoke@example.test
       E2E_ADMIN_PASSWORD: ci-only-release-smoke-password
       VERCEL_ENV: preview
-      PAYLOAD_DROP_DATABASE: "false"
+      PAYLOAD_DROP_DATABASE: 'false'
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version-file: package.json
           cache: pnpm
@@ -75,7 +75,7 @@ jobs:
       - run: pnpm e2e:seed
       - run: pnpm build
       - run: pnpm test:e2e
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         if: failure()
         with:
           name: playwright-report
