@@ -109,3 +109,14 @@ describe('beer hook system lookups', () => {
     expect(publishKioskInvalidate).not.toHaveBeenCalled()
   })
 })
+
+it('deleting a beer invalidates all containing menus without truncating at 100', async () => {
+  const { req, find } = mockReq()
+  find.mockResolvedValueOnce({ docs: [{ url: 'draft' }] })
+  const hook = Beers.hooks!.afterDelete![0] as unknown as AnyHook
+  await hook({ req, context: {}, doc: { id: 'beer-1' } })
+  expect(find).toHaveBeenCalledWith(
+    expect.objectContaining({ pagination: false, req, overrideAccess: true }),
+  )
+  expect(revalidateTag).toHaveBeenCalledWith('menu-draft', { expire: 0 })
+})

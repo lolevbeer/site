@@ -32,21 +32,22 @@ interface LiveMenuProps {
 export function LiveMenu({ menuUrl, initialMenu }: LiveMenuProps) {
   const { menu, theme, realtime, pushCount } = useMenuStream(menuUrl, initialMenu)
 
-  // Use streamed menu if available, otherwise fall back to initial
-  const displayMenu = menu || initialMenu
+  const displayMenu = menu
 
   // Deterministic light colors that change every 30s of wall-clock time,
   // however often the display polls (dark mode only). Seed 0 until hydrated.
   const colorSeed = useClockBucket(30_000) ?? 0
   const itemColors = useMemo(() => {
-    const itemCount = displayMenu.items?.length || 0
+    const itemCount = displayMenu?.items?.length || 0
     if (itemCount === 0 || theme !== 'dark') return undefined
 
     return seededLightColors(itemCount, colorSeed)
-  }, [displayMenu.items?.length, theme, colorSeed])
+  }, [displayMenu?.items?.length, theme, colorSeed])
 
   // Apply CSS variables directly - bypasses .dark class for browser compatibility
   const themeVars = getThemeVars(theme)
+
+  if (!displayMenu) return null
 
   // 'other' type renders like draft
   const board =

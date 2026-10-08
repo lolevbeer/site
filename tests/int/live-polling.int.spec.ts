@@ -147,6 +147,80 @@ describe('usePolling', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2)
   })
 
+  it('applies changed membership, location names and empty responses with unchanged timestamps', async () => {
+    vi.useFakeTimers()
+    let body = { timestamp: 0, events: ['A', 'B'], locationName: 'Old' }
+    stubFetch(() => body)
+    const { result } = renderHook(() =>
+      usePolling('/api/events', body, (raw: typeof body) => ({ data: raw, theme: 'light' })),
+    )
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    body = { ...body, events: ['B'], locationName: 'New' }
+    await act(() => vi.advanceTimersByTimeAsync(10_000))
+    expect(result.current.data).toEqual(body)
+    body = { ...body, events: [] }
+    await act(() => vi.advanceTimersByTimeAsync(10_000))
+    expect(result.current.data?.events).toEqual([])
+  })
+
+  it('ignores superseded responses and cannot rearm polling after unmount or URL changes', async () => {
+    vi.useFakeTimers()
+    const pending: ((value: unknown) => void)[] = []
+    const fetchMock = vi.fn(() => new Promise((resolve) => pending.push(resolve)))
+    vi.stubGlobal('fetch', fetchMock)
+    const { result, rerender, unmount } = renderHook(
+      ({ url, invalidateSignal }) =>
+        usePolling(
+          url,
+          'initial',
+          (raw: { timestamp: number; value: string }) => ({ data: raw.value, theme: 'light' }),
+          { invalidateSignal },
+        ),
+      { initialProps: { url: '/old', invalidateSignal: 0 } },
+    )
+    rerender({ url: '/old', invalidateSignal: 1 })
+    await act(async () =>
+      pending[1]({ ok: true, json: async () => ({ timestamp: 2, value: 'fresh' }) }),
+    )
+    await act(async () =>
+      pending[0]({ ok: true, json: async () => ({ timestamp: 1, value: 'stale' }) }),
+    )
+    expect(result.current.data).toBe('fresh')
+    rerender({ url: '/new', invalidateSignal: 0 })
+    expect(result.current.data).toBe('initial')
+    unmount()
+    await act(async () =>
+      pending[2]({ ok: true, json: async () => ({ timestamp: 3, value: 'late' }) }),
+    )
+    await act(() => vi.advanceTimersByTimeAsync(300_000))
+    expect(fetchMock).toHaveBeenCalledTimes(3)
+  })
+
+  it('clears withdrawn menus, retains last-good data on 5xx and recovers after republishing', async () => {
+    vi.useFakeTimers()
+    const initial = { id: 'm1', themeMode: 'light', name: 'Published' } as Menu
+    let status = 200
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({
+        ok: status === 200,
+        status,
+        json: async () => ({ timestamp: 1, menu: initial }),
+      })),
+    )
+    const { result } = renderHook(() => useMenuStream('draft', initial))
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    status = 500
+    await act(() => vi.advanceTimersByTimeAsync(10_000))
+    expect(result.current.menu).toBe(initial)
+    status = 404
+    await act(() => vi.advanceTimersByTimeAsync(30_000))
+    expect(result.current.menu).toBeNull()
+    status = 200
+    await act(() => vi.advanceTimersByTimeAsync(60_000))
+    expect(result.current.menu).toBe(initial)
+  })
+
   it('keeps the display up until a new deploy renders the page, then reloads', async () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
     const reload = vi.fn()

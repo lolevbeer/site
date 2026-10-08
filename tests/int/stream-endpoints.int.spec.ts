@@ -12,6 +12,7 @@ const api = vi.hoisted(() => ({
   getMenuByUrl: vi.fn(),
   getMenuByUrlFresh: vi.fn(),
   getAllLocations: vi.fn(),
+  getEventsForLocationFresh: vi.fn(),
   getUpcomingEventsFromPayload: vi.fn(),
   transformPayloadEventToBreweryEvent: vi.fn((event: { id: string }) => ({ id: event.id })),
 }))
@@ -21,6 +22,7 @@ vi.mock('@/lib/utils/payload-api', () => api)
 import * as menuStream from '@/src/app/api/menu-stream/[url]/route'
 import * as menuStreamFresh from '@/src/app/api/menu-stream/[url]/fresh/route'
 import * as eventsStream from '@/src/app/api/events-stream/[location]/route'
+import * as eventsStreamFresh from '@/src/app/api/events-stream/[location]/fresh/route'
 
 const params = <T>(value: T) => ({ params: Promise.resolve(value) })
 const request = new Request('http://localhost/api') as never
@@ -151,4 +153,16 @@ describe('events-stream response', () => {
       'db down',
     )
   })
+})
+
+it('pushed events bypass both the location and event caches', async () => {
+  api.getEventsForLocationFresh.mockResolvedValue({
+    location: { slug: 'lawrenceville', name: 'Renamed' },
+    events: [],
+  })
+  const response = await eventsStreamFresh.GET(request, params({ location: 'Lawrenceville' }))
+  expect(response.headers.get('cache-control')).toBe('no-store')
+  expect(await response.json()).toMatchObject({ events: [], locationName: 'Renamed', timestamp: 0 })
+  expect(api.getEventsForLocationFresh).toHaveBeenCalledWith('lawrenceville')
+  expect(api.getAllLocations).not.toHaveBeenCalled()
 })

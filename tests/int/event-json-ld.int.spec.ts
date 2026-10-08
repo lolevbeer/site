@@ -92,3 +92,33 @@ describe('generateEventJsonLd', () => {
     expect(schema.endDate).toBeTruthy()
   })
 })
+
+it.each([
+  ['2026-07-01', '7pm', '2026-07-01T23:00:00.000Z'],
+  ['2026-01-01', '7pm', '2026-01-02T00:00:00.000Z'],
+  ['2026-07-01', '2000-01-01T23:00:00.000Z', '2026-07-01T22:00:00.000Z'],
+  ['2026-03-08', '3am', '2026-03-08T07:00:00.000Z'],
+])('uses the Pittsburgh wall time for %s / %s', (date, startTime, expected) => {
+  expect(
+    generateEventJsonLd(event({ organizer: 'Trivia', date, startTime, location: 'lawrenceville' }))
+      .startDate,
+  ).toBe(expected)
+})
+it('rolls overnight events to the following local day and keeps date-only schedules date-only', () => {
+  const schema = generateEventJsonLd(
+    event({
+      organizer: 'Trivia',
+      date: '2026-07-01',
+      startTime: '11pm',
+      endTime: '1am',
+      location: 'lawrenceville',
+    }),
+  )
+  expect(schema.startDate).toBe('2026-07-02T03:00:00.000Z')
+  expect(schema.endDate).toBe('2026-07-02T05:00:00.000Z')
+  expect(
+    generateEventJsonLd(
+      event({ organizer: 'Trivia', date: '2026-07-01', location: 'lawrenceville' }),
+    ).startDate,
+  ).toBe('2026-07-01')
+})

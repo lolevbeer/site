@@ -273,6 +273,7 @@ describe('sync-untappd cron runner', () => {
     // 'kiosk-menus' refreshes the TV menu displays after the nightly sync.
     expect(revalidateTag.mock.calls.map((call) => call[0]).sort()).toEqual([
       'beers',
+      'coming-soon',
       'kiosk-menus',
       'menus',
     ])

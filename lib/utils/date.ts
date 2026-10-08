@@ -75,5 +75,5 @@ export function getESTMidnightISO(date: string): string {
  * Suitable for Payload CMS queries with `greater_than_equal`.
  */
 export function getTodayMidnightISO(): string {
-  return new Date(`${getTodayEST()}T00:00:00-05:00`).toISOString()
+  return getESTMidnightISO(getTodayEST())
 }

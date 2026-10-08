@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import { getDatesForSlotInYear } from '@/lib/utils/food-dates'
+import { describe, expect, it, vi } from 'vitest'
+import { getDatesForSlotInYear, getUpcomingDatesForSlot, toDateKey } from '@/lib/utils/food-dates'
 
 describe('year-scoped recurring dates', () => {
   it('expands a slot only within the selected calendar year', () => {
@@ -31,4 +31,16 @@ describe('year-scoped recurring dates', () => {
       '2027-11-29',
     ])
   })
+})
+
+it('keeps the Pittsburgh calendar day through UTC month and year boundaries', () => {
+  vi.useFakeTimers()
+  try {
+    vi.setSystemTime(new Date('2026-10-01T01:00:00Z'))
+    expect(getUpcomingDatesForSlot(3, 5, 3).map(toDateKey)).toContain('2026-09-30')
+    vi.setSystemTime(new Date('2027-01-01T02:00:00Z'))
+    expect(getUpcomingDatesForSlot(4, 5, 3).map(toDateKey)).toContain('2026-12-31')
+  } finally {
+    vi.useRealTimers()
+  }
 })

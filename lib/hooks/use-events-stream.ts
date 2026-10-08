@@ -50,14 +50,20 @@ export function useEventsStream(
     key: location,
   })
 
+  const streamUrl = location ? `/api/events-stream/${location}` : ''
+
   const { data, theme } = usePolling<EventsData, EventsResponse>(
-    location ? `/api/events-stream/${location}` : '',
+    streamUrl,
     initialData,
     ({ events, locationName }) => ({
       data: { events, locationName },
       theme: getPittsburghTheme(),
     }),
-    { invalidateSignal, realtimeFallback: realtimeActive },
+    {
+      invalidateSignal,
+      realtimeFallback: realtimeActive,
+      invalidateUrl: streamUrl ? `${streamUrl}/fresh` : undefined,
+    },
   )
 
   return {

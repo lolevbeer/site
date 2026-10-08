@@ -22,6 +22,7 @@ export interface PublicJob {
   locationName: string
   locationSlug: string
   /** ISO timestamp the opening was created; becomes JobPosting `datePosted`. */
+  updatedAt?: string
   postedAt: string
   /** ISO timestamp of the optional last day to apply; becomes JobPosting `validThrough`. */
   closesOn?: string
@@ -40,6 +41,7 @@ type JobDoc = {
   description?: string | null
   employmentType?: string | null
   location?: unknown
+  updatedAt?: string
   createdAt: string
   closesOn?: string | null
   seo?: SeoOverride
@@ -62,6 +64,7 @@ function toPublicJob(doc: JobDoc): PublicJob | null {
     locationName: relatedString(doc.location, 'name'),
     locationSlug: relatedString(doc.location, 'slug'),
     postedAt: doc.createdAt,
+    updatedAt: doc.updatedAt,
     closesOn: doc.closesOn ?? undefined,
     locationAddress: (doc.location as Pick<PayloadLocation, 'address'> | null)?.address,
     seo: doc.seo,

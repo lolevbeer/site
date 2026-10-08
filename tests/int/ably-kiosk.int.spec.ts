@@ -14,12 +14,14 @@ vi.mock('next/server', async (importOriginal) => ({
 const ablyMock = vi.hoisted(() => {
   const publish = vi.fn(async () => undefined)
   const createTokenRequest = vi.fn(async () => ({ keyName: 'test', ttl: 3600000 }))
-  const subscribe = vi.fn(
-    (_event: string, _listener: (message: { data: unknown }) => void) => undefined,
+  const subscribe = vi.fn((_event: string, _listener: (message: { data: unknown }) => void) =>
+    Promise.resolve(),
   )
   const unsubscribe = vi.fn()
-  const getChannel = vi.fn((_name: string) => ({ publish, subscribe, unsubscribe }))
+  const channel = { publish, subscribe, unsubscribe, state: 'attached', on: vi.fn(), off: vi.fn() }
+  const getChannel = vi.fn((_name: string) => channel)
   const connection = {
+    state: 'connected',
     on: vi.fn((_event: string, _listener: () => void) => undefined),
     off: vi.fn(),
   }
@@ -34,6 +36,7 @@ const ablyMock = vi.hoisted(() => {
   const FetchRequest = { name: 'FetchRequest' }
   return {
     publish,
+    channel,
     Rest,
     Realtime,
     getChannel,
@@ -519,4 +522,29 @@ describe('Ably-triggered refetch reads the fresh endpoint', () => {
       cache: 'no-store',
     })
   })
+})
+
+it('falls back when the channel fails while the connection stays connected', async () => {
+  vi.clearAllMocks()
+  vi.stubEnv('NEXT_PUBLIC_ABLY_ENABLED', 'true')
+  ablyMock.channel.state = 'attached'
+  const { result } = renderHook(() => useAblyInvalidate({ kind: 'menu', key: 'draft' }))
+  await waitFor(() => expect(ablyMock.subscribe).toHaveBeenCalled())
+  act(() => ablyMock.channel.on.mock.calls[0][0]())
+  expect(result.current.realtimeActive).toBe(true)
+  ablyMock.channel.state = 'failed'
+  act(() => ablyMock.channel.on.mock.calls[0][0]())
+  expect(result.current.realtimeActive).toBe(false)
+  ablyMock.channel.state = 'attached'
+  act(() => ablyMock.channel.on.mock.calls[0][0]())
+  expect(result.current.realtimeActive).toBe(true)
+})
+
+it('handles rejected subscription promises without reporting realtime active', async () => {
+  vi.clearAllMocks()
+  vi.stubEnv('NEXT_PUBLIC_ABLY_ENABLED', 'true')
+  ablyMock.subscribe.mockRejectedValueOnce(new Error('channel denied'))
+  const { result } = renderHook(() => useAblyInvalidate({ kind: 'menu', key: 'draft' }))
+  await waitFor(() => expect(ablyMock.subscribe).toHaveBeenCalled())
+  expect(result.current.realtimeActive).toBe(false)
 })

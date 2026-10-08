@@ -1,7 +1,5 @@
 'use client'
 
-import { useMemo } from 'react'
-
 import { useAblyInvalidate } from './use-ably-invalidate'
 import { usePolling } from './use-polling'
 import { getPittsburghTheme } from '@/lib/utils/pittsburgh-time'
@@ -34,7 +32,6 @@ interface MenuResponse {
  * See usePolling for details on adaptive interval behavior and CDN caching.
  */
 export function useMenuStream(menuUrl: string, initialMenu: Menu | null): UseMenuStreamResult {
-  const stableInitialMenu = useMemo(() => initialMenu, [initialMenu])
   const { invalidateSignal, realtimeActive } = useAblyInvalidate({
     kind: 'menu',
     key: menuUrl,
@@ -44,7 +41,7 @@ export function useMenuStream(menuUrl: string, initialMenu: Menu | null): UseMen
 
   const { data: menu, theme } = usePolling<Menu, MenuResponse>(
     streamUrl,
-    stableInitialMenu,
+    initialMenu,
     ({ menu: responseMenu }) => ({
       data: responseMenu,
       theme:
@@ -53,6 +50,7 @@ export function useMenuStream(menuUrl: string, initialMenu: Menu | null): UseMen
           : getPittsburghTheme(),
     }),
     {
+      clearOnNotFound: true,
       invalidateSignal,
       realtimeFallback: realtimeActive,
       invalidateUrl: streamUrl ? `${streamUrl}/fresh` : undefined,

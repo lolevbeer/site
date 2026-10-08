@@ -295,7 +295,7 @@ function BeerListing({
           >
             {filteredBeers.map((beer, index) => (
               <StaggerItem key={`${beer.variant}-${index}`}>
-                <BeerCard beer={beer} variant="minimal" showLocation={false} />
+                <BeerCard headingLevel="h2" beer={beer} variant="minimal" showLocation={false} />
               </StaggerItem>
             ))}
           </StaggerChildren>

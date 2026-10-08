@@ -13,13 +13,13 @@ import type { SiteSeoPageKey } from '@/src/globals/SiteSeo'
 /** lastmod for pages that change with code, not CMS. YYYY-MM-DD of last meaningful edit. */
 const STATIC_LASTMOD = {
   '/about': '2026-03-05',
-  '/faq': '2026-03-05',
+  '/faq': undefined,
   '/accessibility': LEGAL_PAGES_LASTMOD,
   '/privacy': LEGAL_PAGES_LASTMOD,
   '/terms': LEGAL_PAGES_LASTMOD,
   '/beer-map': '2026-09-09',
   '/donate': '2026-09-09',
-  '/jobs': '2026-09-09',
+  '/jobs': undefined,
 } as const
 
 const STATIC_INFO_PAGES: Array<{
@@ -58,13 +58,13 @@ function isListed(path: string, seo: SeoOverride): boolean {
 type StaticPage = {
   path: string
   key: SiteSeoPageKey
-  lastModified: Date
+  lastModified?: Date
   changeFrequency: NonNullable<MetadataRoute.Sitemap[number]['changeFrequency']>
   priority: number
 }
 
 /** Log a failed source and continue with none, so one outage cannot empty the whole sitemap. */
-const orEmpty = <T,>(source: Promise<T[]>, name: string) =>
+const orEmpty = <T>(source: Promise<T[]>, name: string) =>
   source.catch((error) => {
     logger.error(`Error fetching ${name} for sitemap:`, error)
     return [] as T[]
@@ -84,17 +84,23 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     (loc) => loc.active && loc.slug && !RESERVED_LOCATION_SLUGS.has(loc.slug),
   )
   const catalogLastmod = maxDate(visibleBeers.map((b) => b.updatedAt))
-  const homeLastmod = maxDate([
-    catalogLastmod,
-    ...activeLocations.map((l) => l.updatedAt),
-  ])
+  const homeLastmod = maxDate([catalogLastmod, ...activeLocations.map((l) => l.updatedAt)])
 
   const staticEntries: StaticPage[] = [
-    { path: '/', key: 'home', lastModified: homeLastmod, changeFrequency: 'daily', priority: 1 },
-    { path: '/beer', key: 'beer', lastModified: catalogLastmod, changeFrequency: 'daily', priority: 0.9 },
-    { path: '/events', key: 'events', lastModified: homeLastmod, changeFrequency: 'daily', priority: 0.8 },
-    { path: '/food', key: 'food', lastModified: homeLastmod, changeFrequency: 'daily', priority: 0.8 },
-    ...STATIC_INFO_PAGES.map((page) => ({ ...page, lastModified: new Date(STATIC_LASTMOD[page.path]) })),
+    { path: '/', key: 'home', changeFrequency: 'daily', priority: 1 },
+    {
+      path: '/beer',
+      key: 'beer',
+      lastModified: catalogLastmod,
+      changeFrequency: 'daily',
+      priority: 0.9,
+    },
+    { path: '/events', key: 'events', changeFrequency: 'daily', priority: 0.8 },
+    { path: '/food', key: 'food', changeFrequency: 'daily', priority: 0.8 },
+    ...STATIC_INFO_PAGES.map((page) => ({
+      ...page,
+      lastModified: STATIC_LASTMOD[page.path] ? new Date(STATIC_LASTMOD[page.path]!) : undefined,
+    })),
   ]
   const staticPages: MetadataRoute.Sitemap = staticEntries
     // Hub SEO groups have no canonical field, so noIndex is the only thing that can hide them.
@@ -128,7 +134,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .filter((job) => isListed(`/jobs/${job.slug}`, job.seo))
     .map((job) => ({
       url: `${baseUrl}/jobs/${job.slug}`,
-      lastModified: homeLastmod,
+      lastModified: new Date(job.updatedAt || job.postedAt),
       changeFrequency: 'weekly' as const,
       priority: 0.4,
     }))

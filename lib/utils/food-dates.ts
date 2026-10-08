@@ -8,6 +8,8 @@
  * either side can pull it in without dragging server-only code along.
  */
 
+import { getTodayEST } from './date'
+
 /** Serialize a local calendar date as YYYY-MM-DD without any UTC shift. */
 export function toDateKey(date: Date): string {
   const year = date.getFullYear()
@@ -78,8 +80,8 @@ export function getUpcomingDatesForSlot(
   monthsAhead: number = 6,
 ): Date[] {
   const dates: Date[] = []
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
+  const [year, month, day] = getTodayEST().split('-').map(Number)
+  const today = new Date(year, month - 1, day)
   const startMonth = today.getMonth()
   const startYear = today.getFullYear()
 

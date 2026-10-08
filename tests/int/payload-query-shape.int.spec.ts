@@ -244,3 +244,38 @@ describe('menu data cache', () => {
     })
   })
 })
+
+it('keeps the current Pittsburgh vendor when UTC has entered the next schedule year', async () => {
+  const { getRecurringFoodState } = await import('@/src/utils/recurring-food')
+  const state = vi.mocked(getRecurringFoodState)
+  const original = state.getMockImplementation()!
+  vi.stubEnv('TZ', 'UTC')
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date('2027-01-01T02:00:00Z'))
+  try {
+    state.mockImplementation(async (_payload, { year }) => ({
+      year: year!,
+      usingLegacyData: false,
+      exclusions: {},
+      schedules: { 'loc-1': { thursday: { fifth: year === 2026 ? 'vendor-1' : null } } },
+    }))
+    find.mockImplementation(async ({ collection }) => ({
+      docs:
+        collection === 'locations'
+          ? [{ id: 'loc-1', slug: 'lawrenceville' }]
+          : collection === 'food-vendors'
+            ? [{ id: 'vendor-1', name: 'Vendor' }]
+            : [],
+    }))
+    expect(await getCombinedUpcomingFood('lawrenceville')).toEqual([
+      expect.objectContaining({
+        date: '2026-12-31',
+        vendor: expect.objectContaining({ id: 'vendor-1' }),
+      }),
+    ])
+  } finally {
+    state.mockImplementation(original)
+    vi.useRealTimers()
+    vi.unstubAllEnvs()
+  }
+})
