@@ -28,6 +28,10 @@ import { ogCardImages } from '@/lib/og/paths'
 
 export const revalidate = 300
 
+// Only the taprooms from generateStaticParams render; any other slug 404s
+// without a request-time Payload lookup. Adding a taproom needs a redeploy.
+export const dynamicParams = false
+
 interface LocationPageProps {
   params: Promise<{ location: string }>
 }
