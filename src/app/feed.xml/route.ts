@@ -75,7 +75,8 @@ export async function GET() {
   // Add beer items
   for (const beer of visibleBeers) {
     const styleName = typeof beer.style === 'object' ? beer.style?.name : beer.style || 'Beer';
-    const pubDate = formatRFC822Date(new Date(beer.updatedAt || beer.createdAt || Date.now()));
+    // createdAt, not updatedAt: the nightly Untappd sync bumps updatedAt on every beer.
+    const pubDate = formatRFC822Date(new Date(beer.createdAt || Date.now()));
 
     items.push(`
     <item>

@@ -38,7 +38,9 @@ describe('sitemap', () => {
       {
         slug: 'lupula',
         hideFromSite: false,
-        updatedAt: '2026-09-01T12:00:00.000Z',
+        createdAt: '2026-09-01T12:00:00.000Z',
+        // The nightly Untappd sync touches updatedAt on every beer.
+        updatedAt: '2026-10-09T03:00:00.000Z',
       },
       {
         slug: 'guest-pour',
@@ -88,10 +90,17 @@ describe('sitemap', () => {
     expect(lastmod).toBeLessThan(before - 24 * 60 * 60 * 1000)
   })
 
-  it('uses beer updatedAt for beer URLs', async () => {
+  it('uses beer createdAt for beer URLs and the catalog, not the sync-bumped updatedAt', async () => {
     const entries = await sitemap()
     const lupula = entries.find((e) => e.url === 'https://lolev.beer/beer/lupula')
     expect((lupula?.lastModified as Date).toISOString()).toBe('2026-09-01T12:00:00.000Z')
+    const catalog = entries.find((e) => e.url === 'https://lolev.beer/beer')
+    expect((catalog?.lastModified as Date).toISOString()).toBe('2026-09-01T12:00:00.000Z')
+  })
+
+  it('regenerates hourly instead of staying frozen at build time', async () => {
+    const mod = await import('@/src/app/sitemap')
+    expect(mod.revalidate).toBe(3600)
   })
 
   it('omits pages the CMS marks noindex or canonicalizes elsewhere', async () => {

@@ -384,6 +384,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
                     <p className="pt-2">
                       <Link
                         href="/beer-map"
+                        prefetch={false}
                         className="text-sm font-medium text-primary hover:underline"
                       >
                         Find retailers near you on the beer map

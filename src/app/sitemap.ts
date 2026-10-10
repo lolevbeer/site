@@ -10,6 +10,9 @@ import { trim } from '@/lib/utils/seo'
 import type { SeoOverride } from '@/lib/seo/resolve-metadata'
 import type { SiteSeoPageKey } from '@/src/globals/SiteSeo'
 
+/** sitemap.ts is cached at build by default; regenerate hourly so new beers and jobs appear. */
+export const revalidate = 3600
+
 /** lastmod for pages that change with code, not CMS. YYYY-MM-DD of last meaningful edit. */
 const STATIC_LASTMOD = {
   '/about': '2026-03-05',
@@ -83,7 +86,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const activeLocations = locations.filter(
     (loc) => loc.active && loc.slug && !RESERVED_LOCATION_SLUGS.has(loc.slug),
   )
-  const catalogLastmod = maxDate(visibleBeers.map((b) => b.updatedAt))
+  // createdAt, not updatedAt: the nightly Untappd sync bumps updatedAt on every beer.
+  const catalogLastmod = maxDate(visibleBeers.map((b) => b.createdAt))
   const homeLastmod = maxDate([catalogLastmod, ...activeLocations.map((l) => l.updatedAt)])
 
   const staticEntries: StaticPage[] = [
@@ -116,7 +120,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .filter((beer) => isListed(`/beer/${beer.slug}`, beer.seo))
     .map((beer) => ({
       url: `${baseUrl}/beer/${beer.slug}`,
-      lastModified: beer.updatedAt ? new Date(beer.updatedAt) : catalogLastmod,
+      lastModified: beer.createdAt ? new Date(beer.createdAt) : catalogLastmod,
       changeFrequency: 'weekly' as const,
       priority: 0.7,
     }))
