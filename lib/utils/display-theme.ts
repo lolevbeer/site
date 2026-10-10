@@ -15,7 +15,7 @@ const lightVars = {
   '--color-secondary': '#f5f5f7',
   '--color-secondary-foreground': '#1d1d1f',
   '--color-muted': '#f2f2f2',
-  '--color-muted-foreground': '#86868b',
+  '--color-muted-foreground': '#6a6a6f', // AA on white, matches globals.css
   '--color-border': '#d2d2d7',
 } as React.CSSProperties
 

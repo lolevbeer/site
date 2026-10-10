@@ -60,7 +60,8 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   // No maximumScale — allow pinch-zoom (WCAG 2.2 SC 1.4.4).
-  // Browser chrome follows the OS scheme; values match --color-background in globals.css.
+  // Browser chrome follows the OS scheme, not the site's theme toggle; values
+  // match --color-background in globals.css.
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#ffffff' },
     { media: '(prefers-color-scheme: dark)', color: '#000000' },

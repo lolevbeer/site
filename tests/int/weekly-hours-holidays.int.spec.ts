@@ -13,7 +13,8 @@ import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vites
 const originalTZ = process.env.TZ
 process.env.TZ = 'UTC'
 afterAll(() => {
-  process.env.TZ = originalTZ
+  if (originalTZ === undefined) delete process.env.TZ
+  else process.env.TZ = originalTZ
 })
 
 vi.mock('next/cache', () => ({

@@ -7,7 +7,7 @@ This site has comprehensive Google Analytics tracking implemented throughout. Al
 ## What's Being Tracked
 
 ### Automatic Tracking
-- **Page Views**: Every page navigation, sent by GA4 itself (the `config` call on load, and enhanced measurement's history-change tracking for SPA navigation). There is no custom page-view tracker; adding one double-counts.
+- **Page Views**: Every page navigation, sent by GA4 itself (the `config` call on load, and enhanced measurement's history-change tracking for SPA navigation). There is no custom page-view tracker; adding one double-counts. Client-side navigations are only counted while the GA4 property's Enhanced measurement → "Page changes based on browser history events" setting is on.
 - **Standard GA4 Events**: Scroll depth, outbound clicks, file downloads, video engagement
 
 ### Custom Events

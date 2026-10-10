@@ -714,7 +714,7 @@ export interface WeeklyHoursDay {
 
 /**
  * Get the current week's hours for a location with holiday overrides applied
- * Returns an array of 7 days starting from Monday of the current week
+ * Returns an array of 7 days starting from Monday of the current America/New_York week
  * Cached until 'locations' or 'holiday-hours' tags are invalidated
  *
  * React cache() on top for per-request dedupe: the footer and the page body
@@ -723,7 +723,7 @@ export interface WeeklyHoursDay {
 export const getWeeklyHoursWithHolidays = cache(
   async (locationId: string): Promise<WeeklyHoursDay[]> => {
     // Monday of the brewery's (EST/EDT) week, not the server's UTC week:
-    // from 8pm EDT Sunday, UTC is already next Monday.
+    // from 8pm EDT (7pm EST) Sunday, UTC is already next Monday.
     const [year, month, day] = getTodayEST().split('-').map(Number)
     const dayOfWeek = new Date(year, month - 1, day).getDay()
     const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek

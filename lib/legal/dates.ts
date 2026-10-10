@@ -3,7 +3,7 @@
  * Keep the sitemap lastmod in lockstep with the on-page date.
  */
 
-export const LEGAL_PAGES_LASTMOD = '2026-09-09'
+export const LEGAL_PAGES_LASTMOD = '2026-10-10'
 
 export function formatLegalDate(isoDate: string): string {
   const [year, month, day] = isoDate.split('-').map(Number)

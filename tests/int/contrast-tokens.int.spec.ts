@@ -39,6 +39,7 @@ describe('light-mode muted-foreground contrast', () => {
     expect(contrast(muted, token('color-background'))).toBeGreaterThanOrEqual(4.5)
   })
 
+  // #f0f0f0 ≈ bg-black/[0.06] on white, the trough in components/ui/segmented-control.tsx.
   it('is at least 4.5:1 on the #f0f0f0 segmented-control trough', () => {
     expect(contrast(muted, '#f0f0f0')).toBeGreaterThanOrEqual(4.5)
   })

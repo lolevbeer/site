@@ -3,7 +3,7 @@
  * hints stay on the admin (Critical-CH makes Chromium retry every public
  * first navigation), and legacy /api/media/file URLs go to the Blob CDN.
  */
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import nextConfig, { scopeClientHints } from '../../next.config.mjs'
 
 type Rule = { source: string; headers: { key: string; value: string }[] }
@@ -46,12 +46,25 @@ describe('scopeClientHints', () => {
 })
 
 describe('legacy media redirect', () => {
-  it('permanently redirects /api/media/file to the Blob CDN', async () => {
+  const original = process.env.BLOB_READ_WRITE_TOKEN
+  afterEach(() => {
+    if (original === undefined) delete process.env.BLOB_READ_WRITE_TOKEN
+    else process.env.BLOB_READ_WRITE_TOKEN = original
+  })
+
+  it('sends /api/media/file to the Blob store named in the token', async () => {
+    process.env.BLOB_READ_WRITE_TOKEN = 'vercel_blob_rw_AbC123_secretpart'
     const redirects = await nextConfig.redirects!()
     expect(redirects).toContainEqual({
       source: '/api/media/file/:path*',
-      destination: 'https://pnjczxrx9qntxjws.public.blob.vercel-storage.com/:path*',
-      permanent: true,
+      destination: 'https://abc123.public.blob.vercel-storage.com/:path*',
+      permanent: false,
     })
+  })
+
+  it('leaves /api/media/file to Payload when Blob is off (local dev)', async () => {
+    delete process.env.BLOB_READ_WRITE_TOKEN
+    const redirects = await nextConfig.redirects!()
+    expect(redirects.some((r) => r.source === '/api/media/file/:path*')).toBe(false)
   })
 })

@@ -27,6 +27,10 @@ describe('legal dates', () => {
   it('derives the display label from the ISO lastmod', () => {
     expect(LEGAL_PAGES_LASTMOD_LABEL).toBe(formatLegalDate(LEGAL_PAGES_LASTMOD))
   })
+
+  it('moved forward when Sentry replay was removed from the privacy policy', () => {
+    expect(LEGAL_PAGES_LASTMOD >= '2026-10-10').toBe(true)
+  })
 })
 
 describe('legal pages', () => {
@@ -46,6 +50,10 @@ describe('legal pages', () => {
     expect(text).toMatch(/There is no mailing-list form on this site/)
     expect(text).not.toMatch(/There is no email-list signup on this site/)
     expect(text).not.toMatch(/send updates \(with consent\)/i)
+    // Sentry runs errors-only: no session replay, so no recording claim.
+    expect(text).not.toMatch(/session replay|may be recorded/i)
+    expect(text).toMatch(/Vercel Analytics does not use cookies/)
+    expect(text).not.toMatch(/Vercel Web Analytics/)
   })
 
   it('terms say a donation or job form is not a yes', () => {

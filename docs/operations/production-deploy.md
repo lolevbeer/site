@@ -26,6 +26,8 @@ A release is blocked if the recovery-point ID, timestamp, restore authorization,
 
 Apex `lolev.beer` is the canonical host. `www.lolev.beer` must be attached to the same Vercel project with a valid certificate, then 301 to `https://lolev.beer` (`vercel.json` already declares that redirect). A missing www cert (`ERR_CERT_COMMON_NAME_INVALID`) drops users and crawlers who type www.
 
+`vercel.json` also 308s common guessed URLs (`/careers`, `/calendar`, `/menu`, `/on-tap`, `/hours`, `/shop`, bare taproom names, root favicon paths) to their real pages; `tests/int/vercel-redirects.int.spec.ts` rejects redirect chains. `next.config.mjs` 307s legacy `/api/media/file/*` links to the Blob store named in `BLOB_READ_WRITE_TOKEN` (no redirect without the token, so local uploads keep working).
+
 ## Pre-merge checks
 
 Run these commands in CI or a local checkout before merging. The build must use a disposable, non-production database context supplied by the approved non-production secret wrapper; the wrapper must reject a production database target. Do not run the build unless the non-secret target fingerprint has been checked against the production fingerprint.

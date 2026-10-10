@@ -4,7 +4,8 @@ import * as Sentry from "@sentry/nextjs";
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
 
 // Errors and traces only. Replay and profiling are left out on purpose: they
-// add ~178KB gz of rrweb/profiler code to every page.
+// add rrweb/profiler code to every page (~178KB gz measured on the live
+// chunk before removal).
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
 

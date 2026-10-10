@@ -70,7 +70,10 @@ export function MobileMenu({ isOpen, onClose, isScrolled = false }: MobileMenuPr
               </Dialog.Close>
               <div className="flex min-h-full flex-col">
                 {/* Navigation - centered with staggered animations */}
-                <nav className="flex-1 flex flex-col justify-center-safe" aria-label="Main navigation">
+                <nav
+                  className="flex-1 flex flex-col justify-center-safe"
+                  aria-label="Main navigation"
+                >
                   {navigationItems.map((item, index) => {
                     const isActive = isNavItemActive(pathname, item.href)
                     return (

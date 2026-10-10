@@ -30,7 +30,9 @@ import { GET } from '@/src/app/feed.xml/route'
 describe('feed.xml', () => {
   it('dates beer items by createdAt', async () => {
     const xml = await (await GET()).text()
-    expect(xml).toContain(`<pubDate>${new Date('2026-09-01T12:00:00.000Z').toUTCString()}</pubDate>`)
+    expect(xml).toContain(
+      `<pubDate>${new Date('2026-09-01T12:00:00.000Z').toUTCString()}</pubDate>`,
+    )
     expect(xml).not.toContain(new Date('2026-10-09T03:00:00.000Z').toUTCString())
   })
 })

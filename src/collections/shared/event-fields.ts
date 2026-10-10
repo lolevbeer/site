@@ -109,6 +109,10 @@ export const eventDetailFields: Field[] = [
   {
     name: 'description',
     type: 'textarea',
+    admin: {
+      description:
+        'Shown publicly on /events and in Google results. Put staff notes (tabs, gratuity, contacts) in Other info.',
+    },
   },
   {
     name: 'image',
@@ -168,8 +172,8 @@ export const eventDetailFields: Field[] = [
       read: eventManagerFieldAccess,
     },
     admin: {
-      description: 'Additional information for private event',
-      condition: (data) => data?.visibility === 'private',
+      // Staff-only via read access above, so it is safe on public events too.
+      description: 'Staff-only notes (never shown on the website)',
       position: 'sidebar',
     },
   },

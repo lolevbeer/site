@@ -71,9 +71,8 @@ export default function PrivacyPage() {
         <section>
           <h2>Cookies and local storage</h2>
           <p>
-            Google Analytics sets cookies to measure traffic. Vercel Web Analytics does not
-            use cookies. Your taproom choice is stored
-            in localStorage on your device. Staff who sign in to the admin use a session
+            Google Analytics sets cookies to measure traffic. Vercel Analytics does not use
+            cookies. Your taproom choice is stored in localStorage on your device. Staff who sign in to the admin use a session
             cookie. There is no mailing-list form on this site. The homepage Newsletter
             button opens Square, where you can enroll if you want updates.
           </p>
