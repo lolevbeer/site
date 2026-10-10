@@ -152,7 +152,7 @@ export function LocationLanding({
                 <BeerIcon className="h-6 w-6" />
               </EmptyMedia>
               <EmptyTitle className="text-xl">No beers on draft</EmptyTitle>
-              <EmptyDescription className="text-muted-foreground/70">
+              <EmptyDescription className="text-muted-foreground">
                 Check back soon for the current draft list.
               </EmptyDescription>
             </EmptyHeader>

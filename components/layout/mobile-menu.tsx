@@ -51,8 +51,9 @@ export function MobileMenu({ isOpen, onClose, isScrolled = false }: MobileMenuPr
               exit={{ x: '100%', filter: 'blur(4px)' }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
               className={cn(
-                'fixed right-0 z-50 w-full bg-background shadow-lg md:hidden overflow-hidden',
-                isScrolled ? 'top-14 h-[calc(100vh-3.5rem)]' : 'top-16 h-[calc(100vh-4rem)]',
+                // Scrolls (not clips) on short landscape screens; dvh tracks mobile browser chrome.
+                'fixed right-0 z-50 w-full bg-background shadow-lg md:hidden overflow-y-auto overscroll-contain',
+                isScrolled ? 'top-14 h-[calc(100dvh-3.5rem)]' : 'top-16 h-[calc(100dvh-4rem)]',
               )}
             >
               <Dialog.Title className="sr-only">Mobile navigation menu</Dialog.Title>
@@ -67,9 +68,9 @@ export function MobileMenu({ isOpen, onClose, isScrolled = false }: MobileMenuPr
                   </span>
                 </button>
               </Dialog.Close>
-              <div className="flex h-full flex-col">
+              <div className="flex min-h-full flex-col">
                 {/* Navigation - centered with staggered animations */}
-                <nav className="flex-1 flex flex-col justify-center" aria-label="Main navigation">
+                <nav className="flex-1 flex flex-col justify-center-safe" aria-label="Main navigation">
                   {navigationItems.map((item, index) => {
                     const isActive = isNavItemActive(pathname, item.href)
                     return (

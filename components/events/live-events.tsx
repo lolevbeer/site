@@ -306,7 +306,7 @@ export function LiveEvents({
                       <div
                         className={`flex-shrink-0 uppercase tracking-wider font-bold leading-tight ${
                           group.isToday
-                            ? 'text-amber-600 dark:text-amber-400'
+                            ? 'text-amber-700 dark:text-amber-400'
                             : 'text-foreground-muted'
                         }`}
                         style={{ width: '16vh', fontSize: TV_TYPE.eventDay }}

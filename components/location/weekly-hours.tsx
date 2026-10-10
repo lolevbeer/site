@@ -104,13 +104,13 @@ const VARIANT_STYLES = {
   footer: {
     banner: 'flex items-center justify-center gap-1.5 mb-2 text-center',
     dayGap: 'gap-1',
-    badge: 'text-[10px] py-0 px-1 border-amber-500 text-amber-600 dark:text-amber-400',
+    badge: 'text-[10px] py-0 px-1 border-amber-500 text-amber-700 dark:text-amber-400',
   },
   /** Location card: roomier badge. */
   card: {
     banner: 'flex items-center justify-center gap-1.5 mb-2 text-center',
     dayGap: 'gap-2',
-    badge: 'text-xs py-0 px-1.5 border-amber-500 text-amber-600 dark:text-amber-400',
+    badge: 'text-xs py-0 px-1.5 border-amber-500 text-amber-700 dark:text-amber-400',
   },
 } as const
 
@@ -133,7 +133,7 @@ export function WeeklyHoursTable({ weeklyHours, variant }: WeeklyHoursTableProps
     <div className="space-y-1 text-sm text-center">
       {banner ? (
         <div className={styles.banner}>
-          <span className="text-xs font-medium text-pretty text-amber-600 dark:text-amber-400">
+          <span className="text-xs font-medium text-pretty text-amber-700 dark:text-amber-400">
             {banner}
           </span>
         </div>
@@ -151,7 +151,7 @@ export function WeeklyHoursTable({ weeklyHours, variant }: WeeklyHoursTableProps
                 key={dayData.day}
                 className={cn(
                   isToday && 'font-semibold text-primary',
-                  isClosedHoliday && !isToday && 'text-amber-600 dark:text-amber-400',
+                  isClosedHoliday && !isToday && 'text-amber-700 dark:text-amber-400',
                 )}
               >
                 <th

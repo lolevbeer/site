@@ -41,7 +41,7 @@ describe('DraftBeerCard fullscreen rating layout', () => {
   it('centers the tap inside the glass and places a larger rating stack beside it', () => {
     const { container } = renderFullscreenBeer()
 
-    const rating = container.querySelector('.text-amber-600.flex-col')
+    const rating = container.querySelector('.text-amber-700.flex-col')
     const tapRail = rating?.parentElement
     const tapNumber = tapRail?.querySelector('.tabular-nums')
     const glass = tapNumber?.parentElement
