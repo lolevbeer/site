@@ -205,7 +205,7 @@ function BeerListing({
           <HubIntro text={intro} />
           <p className="mt-3 text-muted-foreground text-balance">
             Looking for cans or draft near you?{' '}
-            <Link href="/beer-map" className="text-primary font-medium hover:underline">
+            <Link href="/beer-map" prefetch={false} className="text-primary font-medium hover:underline">
               Find Our Beer on the map
             </Link>
             .

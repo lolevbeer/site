@@ -12,7 +12,6 @@ import { Toaster } from '@/components/ui/sonner'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { SkipNav } from '@/components/ui/skip-nav'
 import { GoogleAnalytics } from '@/components/analytics/google-analytics'
-import { PageViewTracker } from '@/components/analytics/page-view-tracker'
 import { AuthProvider } from '@/lib/hooks/use-auth'
 import { Footer } from '@/components/layout/footer'
 import { FooterTaprooms } from '@/components/layout/footer-taprooms'
@@ -189,7 +188,6 @@ export default async function AppLayout({
               <NuqsAdapter>
                 <LocationProvider locations={locations}>
                   <AuthProvider>
-                    <PageViewTracker />
                     <MotionHydrationSentinel />
                     <SkipNav />
                     {/* Framer animations honor prefers-reduced-motion site-wide. */}

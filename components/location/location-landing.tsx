@@ -74,6 +74,11 @@ export function LocationLanding({
   const city = location.address?.city
   const heroSrc = getMediaUrl(location.images?.hero) || getMediaUrl(location.images?.card)
   const phone = location.basicInfo?.phone
+  // `?loc=` makes the hub pages open on this taproom instead of the default one.
+  const withLoc = (href: string) =>
+    location.slug
+      ? `${href}${href.includes('?') ? '&' : '?'}loc=${encodeURIComponent(location.slug)}`
+      : href
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-5xl">
@@ -173,7 +178,7 @@ export function LocationLanding({
         )}
         <div className="text-center">
           <Button asChild variant="outline" size="lg">
-            <Link href={beerHref('tap')}>View all beers</Link>
+            <Link href={withLoc(beerHref('tap'))}>View all beers</Link>
           </Button>
         </div>
       </section>
@@ -217,7 +222,7 @@ export function LocationLanding({
           </div>
           <div className="text-center">
             <Button asChild variant="outline" size="lg">
-              <Link href="/events">View all events</Link>
+              <Link href={withLoc('/events')}>View all events</Link>
             </Button>
           </div>
         </section>
@@ -245,7 +250,7 @@ export function LocationLanding({
           </div>
           <div className="text-center">
             <Button asChild variant="outline" size="lg">
-              <Link href="/food">View food schedule</Link>
+              <Link href={withLoc('/food')}>View food schedule</Link>
             </Button>
           </div>
         </section>
