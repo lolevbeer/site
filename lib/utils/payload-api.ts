@@ -722,13 +722,13 @@ export interface WeeklyHoursDay {
  */
 export const getWeeklyHoursWithHolidays = cache(
   async (locationId: string): Promise<WeeklyHoursDay[]> => {
-    // Calculate week start for cache key
-    const now = new Date()
-    const dayOfWeek = now.getDay()
+    // Monday of the brewery's (EST/EDT) week, not the server's UTC week:
+    // from 8pm EDT Sunday, UTC is already next Monday.
+    const [year, month, day] = getTodayEST().split('-').map(Number)
+    const dayOfWeek = new Date(year, month - 1, day).getDay()
     const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
-    const monday = new Date(now)
-    monday.setDate(now.getDate() + mondayOffset)
-    monday.setHours(0, 0, 0, 0)
+    const monday = new Date(year, month - 1, day + mondayOffset)
+    const nextMonday = new Date(year, month - 1, day + mondayOffset + 7)
     const weekKey = toDateKey(monday)
 
     try {
@@ -754,21 +754,11 @@ export const getWeeklyHoursWithHolidays = cache(
             return []
           }
 
-          // Calculate the start of the current week (Monday)
-          const currentNow = new Date()
-          const currentDayOfWeek = currentNow.getDay()
-          const currentMondayOffset = currentDayOfWeek === 0 ? -6 : 1 - currentDayOfWeek
-          const currentMonday = new Date(currentNow)
-          currentMonday.setDate(currentNow.getDate() + currentMondayOffset)
-          currentMonday.setHours(0, 0, 0, 0)
-
-          // Calculate the end of the week (Sunday)
-          const sunday = new Date(currentMonday)
-          sunday.setDate(currentMonday.getDate() + 6)
-
-          // Format dates for query
-          const startDateStr = toDateKey(currentMonday)
-          const endDateStr = toDateKey(sunday)
+          // Holiday dates are stored at noon UTC, so bound the week with the
+          // next Monday (exclusive): a bare Sunday key would compare as Sunday
+          // midnight and drop Sunday's override.
+          const startDateStr = weekKey
+          const endDateStr = toDateKey(nextMonday)
 
           // Get all holiday hours for this location within this week
           const holidayResult = await payload.find({
@@ -788,7 +778,7 @@ export const getWeeklyHoursWithHolidays = cache(
                 },
                 {
                   date: {
-                    less_than_equal: endDateStr,
+                    less_than: endDateStr,
                   },
                 },
               ],
@@ -817,8 +807,8 @@ export const getWeeklyHoursWithHolidays = cache(
           const weeklyHours: WeeklyHoursDay[] = []
 
           for (let i = 0; i < 7; i++) {
-            const date = new Date(currentMonday)
-            date.setDate(currentMonday.getDate() + i)
+            const date = new Date(monday)
+            date.setDate(monday.getDate() + i)
             const dateStr = toDateKey(date)
             const dayName = days[i]
 
