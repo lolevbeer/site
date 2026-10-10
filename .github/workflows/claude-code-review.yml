@@ -12,11 +12,10 @@ on:
 
 jobs:
   claude-review:
-    # Optional: Filter by PR author
-    # if: |
-    #   github.event.pull_request.user.login == 'external-contributor' ||
-    #   github.event.pull_request.user.login == 'new-developer' ||
-    #   github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
+    # Skip Dependabot: the action refuses bot actors, and Dependabot-triggered
+    # runs read Dependabot secrets, which don't hold CLAUDE_CODE_OAUTH_TOKEN.
+    # CI (type-check, tests, release smoke) still gates dependency bumps.
+    if: github.actor != 'dependabot[bot]'
 
     runs-on: ubuntu-latest
     permissions:
