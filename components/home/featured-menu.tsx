@@ -611,8 +611,8 @@ function CanCard({
       aria-label={`${item.name} - ${item.type || 'Craft beer'}`}
     >
       <div className="text-center px-4">
-        <div className="text-2xl font-bold text-muted-foreground/70 mb-2">{item.name}</div>
-        <div className="text-sm text-muted-foreground/70">{item.type}</div>
+        <div className="text-2xl font-bold text-muted-foreground mb-2">{item.name}</div>
+        <div className="text-sm text-muted-foreground">{item.type}</div>
       </div>
     </div>
   )
@@ -1039,7 +1039,7 @@ function FeaturedMenu({
                   <EmptyTitle className="text-xl">
                     No {menuType === 'draft' ? 'beers' : 'cans'} available
                   </EmptyTitle>
-                  <EmptyDescription className="text-muted-foreground/70">
+                  <EmptyDescription className="text-muted-foreground">
                     {emptyMessage}
                   </EmptyDescription>
                 </EmptyHeader>
@@ -1105,7 +1105,7 @@ function FeaturedMenu({
                 <EmptyTitle className="text-xl">
                   No {menuType === 'draft' ? 'beers on draft' : 'cans available'}
                 </EmptyTitle>
-                <EmptyDescription className="text-muted-foreground/70">
+                <EmptyDescription className="text-muted-foreground">
                   {emptyMessage}
                 </EmptyDescription>
               </EmptyHeader>

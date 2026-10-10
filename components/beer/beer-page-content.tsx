@@ -306,7 +306,7 @@ function BeerListing({
                 <BeerIcon className="h-6 w-6" />
               </EmptyMedia>
               <EmptyTitle className="text-xl">No Beers Found</EmptyTitle>
-              <EmptyDescription className="text-muted-foreground/70">
+              <EmptyDescription className="text-muted-foreground">
                 {search && selectedType !== 'all'
                   ? `No ${selectedType} beers matching "${search}"`
                   : search

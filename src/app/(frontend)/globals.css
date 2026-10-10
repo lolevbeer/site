@@ -23,7 +23,7 @@
   --color-secondary: #f5f5f7;
   --color-secondary-foreground: #1d1d1f;
   --color-muted: #f2f2f2;
-  --color-muted-foreground: #86868b;
+  --color-muted-foreground: #6a6a6f; /* 5.38:1 on #ffffff, 4.72:1 on #f0f0f0 (WCAG AA) */
   --color-foreground-muted: #6e6e73;
   --color-accent: #0071e3;
   --color-accent-foreground: #ffffff;
@@ -76,11 +76,15 @@
 }
 
 @layer base {
+  /* color-scheme keeps native UI (scrollbars, form controls) in step with the
+     next-themes class rather than the OS setting. */
   :root {
     --radius: 0.5rem;
+    color-scheme: light;
   }
 
   .dark {
+    color-scheme: dark;
     --color-background: #000000;
     --color-foreground: #f5f5f7;
     --color-card: #1d1d1f;
@@ -378,6 +382,16 @@
   @media (prefers-reduced-motion: reduce) {
     .live-pulse {
       animation: none;
+    }
+
+    /* Entrance animations: jump straight to the final keyframe. Not
+       `animation: none` — these elements start at `opacity-0` and rely on
+       the `forwards` fill to become visible. */
+    .animate-stagger-in,
+    .menu-item-enter,
+    .animate-in {
+      animation-duration: 0.01ms !important;
+      animation-delay: 0s !important;
     }
   }
 
