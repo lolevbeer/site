@@ -205,7 +205,11 @@ function BeerListing({
           <HubIntro text={intro} />
           <p className="mt-3 text-muted-foreground text-balance">
             Looking for cans or draft near you?{' '}
-            <Link href="/beer-map" className="text-primary font-medium hover:underline">
+            <Link
+              href="/beer-map"
+              prefetch={false}
+              className="text-primary font-medium hover:underline"
+            >
               Find Our Beer on the map
             </Link>
             .
@@ -306,7 +310,7 @@ function BeerListing({
                 <BeerIcon className="h-6 w-6" />
               </EmptyMedia>
               <EmptyTitle className="text-xl">No Beers Found</EmptyTitle>
-              <EmptyDescription className="text-muted-foreground/70">
+              <EmptyDescription className="text-muted-foreground">
                 {search && selectedType !== 'all'
                   ? `No ${selectedType} beers matching "${search}"`
                   : search

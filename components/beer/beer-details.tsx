@@ -372,7 +372,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
                       </p>
                     )}
                     {tapLocations.length > 0 && canLocations.length === 0 && (
-                      <p className="text-sm text-amber-600 dark:text-amber-400 font-medium">
+                      <p className="text-sm text-amber-700 dark:text-amber-400 font-medium">
                         • {getDraftOnlyMessage(packagingType)}
                       </p>
                     )}
@@ -384,6 +384,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
                     <p className="pt-2">
                       <Link
                         href="/beer-map"
+                        prefetch={false}
                         className="text-sm font-medium text-primary hover:underline"
                       >
                         Find retailers near you on the beer map
@@ -425,7 +426,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
                 <UntappdIcon className="h-5 w-5" />
                 Untappd
                 {(beer.untappdRating ?? 0) > 0 && (
-                  <span className="text-amber-600 dark:text-amber-400 font-bold">
+                  <span className="text-amber-700 dark:text-amber-400 font-bold">
                     {formatRating(beer.untappdRating)}/5
                   </span>
                 )}
@@ -465,7 +466,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
                         <div className="flex items-center gap-1">
                           <span className="font-medium">{review.username}</span>
                           {review.date && (
-                            <span className="text-xs text-muted-foreground/70">
+                            <span className="text-xs text-muted-foreground">
                               • {formatReviewDate(review.date)}
                             </span>
                           )}

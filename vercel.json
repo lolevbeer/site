@@ -117,6 +117,29 @@
       "source": "/beers",
       "destination": "/beer",
       "permanent": true
+    },
+    { "source": "/careers", "destination": "/jobs", "permanent": true },
+    { "source": "/calendar", "destination": "/events", "permanent": true },
+    { "source": "/upcoming", "destination": "/events", "permanent": true },
+    { "source": "/shows", "destination": "/events", "permanent": true },
+    { "source": "/performances", "destination": "/events", "permanent": true },
+    { "source": "/lawrenceville", "destination": "/lolev-lawrenceville", "permanent": true },
+    { "source": "/zelienople", "destination": "/lolev-zelienople", "permanent": true },
+    { "source": "/menu", "destination": "/beer", "permanent": true },
+    { "source": "/on-tap", "destination": "/beer", "permanent": true },
+    { "source": "/tap-list", "destination": "/beer", "permanent": true },
+    { "source": "/hours", "destination": "/", "permanent": true },
+    { "source": "/shop", "destination": "/beer-map", "permanent": true },
+    { "source": "/favicon.ico", "destination": "/favicons/favicon-32x32.png", "permanent": true },
+    {
+      "source": "/apple-touch-icon.png",
+      "destination": "/favicons/apple-touch-icon.png",
+      "permanent": true
+    },
+    {
+      "source": "/apple-touch-icon-precomposed.png",
+      "destination": "/favicons/apple-touch-icon.png",
+      "permanent": true
     }
   ],
   "build": {

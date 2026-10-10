@@ -266,6 +266,11 @@ export function mergePositiveReviews<T extends { username?: string; text?: strin
 
 ### Task 9: Trim Sentry client/server overhead  [F-E9]  (parallel with 6–8)
 
+> **Superseded (2026-10-10):** replay and profiling were removed outright
+> rather than lazy-loaded, and Sentry is enabled only in production when
+> `NEXT_PUBLIC_SENTRY_DSN` is set. `tests/int/sentry-client-config.int.spec.ts`
+> fails if replay or profiling come back. The checklist below is historical.
+
 **Files:**
 - Modify: `instrumentation-client.ts:13-27`
 - Modify: `sentry.server.config.ts:8-11`

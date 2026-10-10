@@ -3,7 +3,7 @@
 /**
  * 3D spinning beer can for beer detail pages: builds the shared can scene
  * (see ./can-scene) from the CMS-generated label textures and adds orbit
- * controls + auto-rotate.
+ * controls + auto-rotate (off under prefers-reduced-motion).
  *
  * ponytail: always-on rAF instead of captiva's on-demand rendering — fine
  * for the single can on a beer page.
@@ -53,8 +53,10 @@ export function BeerCan3D({ baseUrl, metalnessUrl, onReady, className = '' }: Be
       controls.enableDamping = true
       controls.enableZoom = false
       controls.enablePan = false
-      controls.autoRotate = true
+      controls.autoRotate = !window.matchMedia('(prefers-reduced-motion: reduce)').matches
       controls.autoRotateSpeed = -2
+      // OrbitControls sets touch-action: none, which traps vertical swipes on phones.
+      can.renderer.domElement.style.touchAction = 'pan-y'
 
       // Append only once the scene is fully assembled so the first painted
       // frame is a finished can, then tell the parent to drop its poster.

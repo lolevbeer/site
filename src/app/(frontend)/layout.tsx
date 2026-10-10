@@ -2,6 +2,7 @@ import { Suspense, type ReactNode } from 'react'
 import type { Metadata, Viewport } from 'next'
 import { Poppins } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { MotionConfig } from 'framer-motion'
 import { NuqsAdapter } from 'nuqs/adapters/next/app'
 import { LocationProvider } from '@/components/location/location-provider'
 import { ThemeProvider } from 'next-themes'
@@ -11,7 +12,6 @@ import { Toaster } from '@/components/ui/sonner'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { SkipNav } from '@/components/ui/skip-nav'
 import { GoogleAnalytics } from '@/components/analytics/google-analytics'
-import { PageViewTracker } from '@/components/analytics/page-view-tracker'
 import { AuthProvider } from '@/lib/hooks/use-auth'
 import { Footer } from '@/components/layout/footer'
 import { FooterTaprooms } from '@/components/layout/footer-taprooms'
@@ -60,6 +60,12 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   // No maximumScale — allow pinch-zoom (WCAG 2.2 SC 1.4.4).
+  // Browser chrome follows the OS scheme, not the site's theme toggle; values
+  // match --color-background in globals.css.
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#000000' },
+  ],
 }
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -149,7 +155,6 @@ export default async function AppLayout({
         <link rel="manifest" href="/favicons/site.webmanifest" />
 
         {/* PWA Meta Tags */}
-        <meta name="theme-color" content="#ffffff" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="Lolev" />
@@ -184,10 +189,12 @@ export default async function AppLayout({
               <NuqsAdapter>
                 <LocationProvider locations={locations}>
                   <AuthProvider>
-                    <PageViewTracker />
                     <MotionHydrationSentinel />
                     <SkipNav />
-                    <ConditionalLayout>{children}</ConditionalLayout>
+                    {/* Framer animations honor prefers-reduced-motion site-wide. */}
+                    <MotionConfig reducedMotion="user">
+                      <ConditionalLayout>{children}</ConditionalLayout>
+                    </MotionConfig>
                     <Toaster />
                     <Analytics />
                   </AuthProvider>

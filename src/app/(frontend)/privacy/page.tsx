@@ -71,8 +71,8 @@ export default function PrivacyPage() {
         <section>
           <h2>Cookies and local storage</h2>
           <p>
-            Google Analytics sets cookies to measure traffic. Your taproom choice is stored
-            in localStorage on your device. Staff who sign in to the admin use a session
+            Google Analytics sets cookies to measure traffic. Vercel Analytics does not use
+            cookies. Your taproom choice is stored in localStorage on your device. Staff who sign in to the admin use a session
             cookie. There is no mailing-list form on this site. The homepage Newsletter
             button opens Square, where you can enroll if you want updates.
           </p>
@@ -97,10 +97,7 @@ export default function PrivacyPage() {
               address search. If you use Near Me, Mapbox sees the map around your location.
               Search text is sent to Mapbox Geocoding.
             </li>
-            <li>
-              Sentry, for errors and sampled session replay so we can debug problems. Some
-              page activity may be recorded.
-            </li>
+            <li>Sentry, for error reports so we can debug problems.</li>
             <li>
               Square, if you use the homepage Newsletter link. That mailing-list form is on
               Square, not this site.
