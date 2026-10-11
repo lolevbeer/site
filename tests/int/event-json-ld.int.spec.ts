@@ -52,7 +52,7 @@ describe('generateEventJsonLd', () => {
     expect(schema.location.address.streetAddress).toBe('5247 Butler Street')
     expect(schema.location.address.addressLocality).toBe('Pittsburgh')
     expect(schema.name).toContain('Lawrenceville')
-    expect(schema.url).toBe('https://lolev.beer/events')
+    expect(schema.url).toBe('https://lolev.beer/events?loc=lawrenceville')
   })
 
   it('always emits description, url, and OG image fallback', () => {
@@ -66,9 +66,42 @@ describe('generateEventJsonLd', () => {
       }),
     )
     expect(schema.description).toBe('Karaoke Night')
-    expect(schema.url).toBe('https://lolev.beer/events')
+    expect(schema.url).toBe('https://lolev.beer/events?loc=lawrenceville')
     expect(schema.image).toBe('https://lolev.beer/images/beer/og-image.jpg')
     expect(schema.endDate).toBeTruthy()
+  })
+
+  it('links each event to its own anchor on the right taproom', () => {
+    const payloadSchema = generateEventJsonLd(
+      event({ id: 'abc123', organizer: 'Trivia', date: '2026-10-01', location: 'lawrenceville' }),
+    )
+    expect(payloadSchema.url).toBe('https://lolev.beer/events?loc=lawrenceville#event-abc123')
+    const brewerySchema = generateEventJsonLd(
+      event({
+        id: 'recurring-r1-2026-10-07',
+        title: 'Trivia',
+        date: '2026-10-07',
+        time: '7pm',
+        status: EventStatus.SCHEDULED,
+        location: 'zelienople',
+      }),
+    )
+    expect(brewerySchema.url).toBe(
+      'https://lolev.beer/events?loc=zelienople#event-recurring-r1-2026-10-07',
+    )
+  })
+
+  it('keeps an event site as the url over the anchor link', () => {
+    const schema = generateEventJsonLd(
+      event({
+        id: 'abc123',
+        organizer: 'Release',
+        date: '2026-10-01',
+        location: 'lawrenceville',
+        site: 'https://tickets.example.com/x',
+      }),
+    )
+    expect(schema.url).toBe('https://tickets.example.com/x')
   })
 
   it('never publishes the internal CMS description; uses the title', () => {

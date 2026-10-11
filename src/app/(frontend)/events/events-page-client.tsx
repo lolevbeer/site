@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { BreweryEvent } from '@/lib/types/event';
 import type { LocationFilter } from '@/lib/types/location';
@@ -12,8 +12,44 @@ import { getLocationDisplayName } from '@/lib/config/locations';
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
 import { HubIntro } from '@/components/ui/hub-intro'
 import { ScheduleList } from '@/components/ui/schedule-list';
-import { isTodayOrFuture } from '@/lib/utils/formatters';
+import { TimelineItem } from '@/components/ui/timeline-item';
+import { formatDate, isTodayOrFuture } from '@/lib/utils/formatters';
 import { safeHttpUrl } from '@/lib/utils/url-utils';
+import { regularLabel, splitRegulars } from '@/lib/utils/event-regulars';
+
+/**
+ * Row anchor id. CMS and recurring ids are already URL-safe; the rare id-less
+ * event gets a slug so `#event-<id>` stays a valid fragment.
+ */
+function eventAnchorId(event: BreweryEvent): string {
+  if (event.id) return String(event.id);
+  return `${event.title}-${event.date}-${event.location}-${event.time}`
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+/**
+ * Shared links look like /events?loc=<slug>#event-<id>. The server renders the
+ * default taproom, so a row at another taproom only appears after hydration
+ * applies `?loc=`; the browser's own hash jump has already missed it. Scroll
+ * once, the first time the target row exists.
+ */
+function useScrollToHashOnce(rowsKey: unknown) {
+  const done = useRef(false);
+  useEffect(() => {
+    if (done.current) return;
+    const hash = window.location.hash.slice(1);
+    if (!hash.startsWith('event-')) {
+      done.current = true;
+      return;
+    }
+    const target = document.getElementById(decodeURIComponent(hash));
+    if (!target) return;
+    done.current = true;
+    target.scrollIntoView();
+  }, [rowsKey]);
+}
 
 interface EventsPageClientProps {
   /** CMS intro paragraph shown under the heading. */
@@ -36,6 +72,12 @@ export function EventsPageClient({ initialEvents, intro }: EventsPageClientProps
       .sort((a, b) => a.date.localeCompare(b.date));
   }, [initialEvents, locationFilter]);
 
+  // Weekly regulars collapse into one block so one-offs stand out. The page's
+  // JSON-LD still lists every occurrence.
+  const { oneOffs, regulars } = useMemo(() => splitRegulars(filteredEvents), [filteredEvents]);
+
+  useScrollToHashOnce(filteredEvents);
+
   return (
     <div className="container mx-auto px-4 py-8">
       <PageBreadcrumbs className="mb-6" />
@@ -47,9 +89,13 @@ export function EventsPageClient({ initialEvents, intro }: EventsPageClientProps
       <div className="max-w-2xl mx-auto">
         <h2 className="sr-only">Upcoming events</h2>
         {filteredEvents.length > 0 ? (
+          <>
           <ScheduleList
-            items={filteredEvents.map((event) => ({
-              id: String(event.id ?? `${event.title}-${event.date}-${event.location}-${event.time}`),
+            calendar
+            anchors
+            items={oneOffs.map((event) => ({
+              // No description: the CMS field is internal and never reaches this page.
+              id: eventAnchorId(event),
               date: event.date,
               title: event.title,
               time: event.time,
@@ -58,11 +104,36 @@ export function EventsPageClient({ initialEvents, intro }: EventsPageClientProps
                 locationFilter === 'all'
                   ? getLocationDisplayName(locations, event.location)
                   : undefined,
-              description:
-                event.description !== event.title ? event.description : undefined,
               site: safeHttpUrl(event.site),
             }))}
           />
+          {regulars.length > 0 ? (
+            <section className={`text-center ${oneOffs.length > 0 ? 'mt-12' : ''}`}>
+              <h3 className="text-lg font-semibold tracking-tight mb-3">Regulars</h3>
+              <ul className="space-y-3 list-none p-0 m-0">
+                {regulars.map(({ next, occurrenceIds }) => (
+                  <li key={occurrenceIds[0]} className="py-2">
+                    {/* Keep each occurrence's anchor so Event JSON-LD links land here. */}
+                    {occurrenceIds.map((id) => (
+                      <span key={id} id={`event-${id}`} className="block scroll-mt-20" />
+                    ))}
+                    <TimelineItem
+                      title={regularLabel(next)}
+                      location={`${
+                        locationFilter === 'all'
+                          ? `${getLocationDisplayName(locations, next.location)} · `
+                          : ''
+                      }next ${formatDate(next.date, 'short')}`}
+                      site={next.site}
+                      calendarHref={`/events/${encodeURIComponent(occurrenceIds[0])}/calendar.ics`}
+                      className="py-0"
+                    />
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+          </>
         ) : (
           <Empty>
             <EmptyHeader>

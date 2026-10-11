@@ -128,6 +128,14 @@ file in that directory except `index.ts`; keep the recovery manifest in
 - **Media** — Image uploads (Vercel Blob storage)
 - **Users** — Admin users with role-based access
 
+## Public events page (`/events`)
+
+- **Never public: an event's `description`.** The field is staff-only (field access). Public rows, JSON-LD, and `.ics` files use the event title (`organizer`).
+- **Regulars.** Recurring occurrences with the same title, taproom, start time, and weekday collapse into one "Regulars" row when they repeat weekly: every gap is whole weeks and at least half are exactly one week. That tolerates a holiday skip or a 1st–4th schedule. A one-off that matches the series (an override of one week) joins it. Monthly or every-other-week series stay in the dated list.
+- **Shareable links.** Each row has an `#event-<id>` anchor (`ScheduleList anchors`, plus one per collapsed occurrence under Regulars). `eventPageUrl()` builds `/events?loc=<slug>#event-<id>` for the Event JSON-LD `url`. The page scrolls to the hash once hydration applies `?loc=` and the row exists.
+- **Row links.** Agenda rows (events and food, everywhere `TimelineItem` is used) are not whole-row links. An event's site shows as a "Tickets ↗" link (ticketing hosts) or a "Details ↗" link under the row. Link names include the title for screen readers.
+- **Add to calendar.** `/events/<id>/calendar.ics` serves one upcoming public event as iCalendar (TZID `America/New_York`, with no `DESCRIPTION`). It reads anonymously through `getPublicEventById`, so private events and descriptions never ship. Unknown ids 404 with `no-store`. robots.txt disallows the route and the link is `nofollow`. Only `/events` passes `ScheduleList calendar`; the homepage and taproom pages link to `/events` instead.
+
 ## Admin dashboard
 
 - **Schedule heatmap** — booking status per EST day — red nothing, orange event without food, yellow food only, green both — 16 months at a time with ‹ › arrows to page back through history, filterable by location (recurring rules fill only the year they were set up for); click a day to open that day's list. Counts follow your read access. Users with a saved dashboard layout must add the widget manually.
