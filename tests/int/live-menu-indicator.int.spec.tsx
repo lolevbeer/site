@@ -68,6 +68,20 @@ describe('LiveMenu boards', () => {
   })
 })
 
+describe('LiveMenu theme frame', () => {
+  // Board theme is set per display, not by the device's site theme, so the
+  // frame carries `.dark` for `dark:` utilities (amber Untappd ratings).
+  it.each([
+    ['dark', true],
+    ['light', false],
+  ] as const)('%s board frame has dark class: %s', (theme, isDark) => {
+    stream.value = { ...stream.value, theme }
+    render(<LiveMenu menuUrl="l-draft" initialMenu={menu('draft')} />)
+    const frame = screen.getByTestId('featured-beers').parentElement!
+    expect(frame.classList.contains('dark')).toBe(isDark)
+  })
+})
+
 describe('LiveMenu realtime indicator', () => {
   it('shows no bolt while the display is polling only', () => {
     render(<LiveMenu menuUrl="l-draft" initialMenu={menu('draft')} />)

@@ -4,7 +4,7 @@ import { getAllBeersFromPayload, getAllLocations } from '@/lib/utils/payload-api
 import { logger } from '@/lib/utils/logger'
 import { getBaseUrl } from '@/lib/utils/get-base-url'
 import { RESERVED_LOCATION_SLUGS } from '@/lib/config/locations'
-import { LEGAL_PAGES_LASTMOD } from '@/lib/legal/dates'
+import { LEGAL_PAGES_LASTMOD, PRIVACY_LASTMOD } from '@/lib/legal/dates'
 import { getSiteSeo } from '@/lib/utils/site-seo'
 import { trim } from '@/lib/utils/seo'
 import type { SeoOverride } from '@/lib/seo/resolve-metadata'
@@ -18,7 +18,7 @@ const STATIC_LASTMOD = {
   '/about': '2026-03-05',
   '/faq': undefined,
   '/accessibility': LEGAL_PAGES_LASTMOD,
-  '/privacy': LEGAL_PAGES_LASTMOD,
+  '/privacy': PRIVACY_LASTMOD,
   '/terms': LEGAL_PAGES_LASTMOD,
   '/beer-map': '2026-09-09',
   '/donate': '2026-09-09',
@@ -86,8 +86,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const activeLocations = locations.filter(
     (loc) => loc.active && loc.slug && !RESERVED_LOCATION_SLUGS.has(loc.slug),
   )
-  // createdAt, not updatedAt: the nightly Untappd sync bumps updatedAt on every beer.
-  const catalogLastmod = maxDate(visibleBeers.map((b) => b.createdAt))
+  // updatedAt matches the beer page's JSON-LD dateModified. The nightly Untappd
+  // sync only saves a beer when its rating, count, or reviews change, and those
+  // are shown on the page, so a sync bump is a real content change.
+  const catalogLastmod = maxDate(visibleBeers.map((b) => b.updatedAt))
   const homeLastmod = maxDate([catalogLastmod, ...activeLocations.map((l) => l.updatedAt)])
 
   const staticEntries: StaticPage[] = [
@@ -120,7 +122,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .filter((beer) => isListed(`/beer/${beer.slug}`, beer.seo))
     .map((beer) => ({
       url: `${baseUrl}/beer/${beer.slug}`,
-      lastModified: beer.createdAt ? new Date(beer.createdAt) : catalogLastmod,
+      lastModified: beer.updatedAt ? new Date(beer.updatedAt) : catalogLastmod,
       changeFrequency: 'weekly' as const,
       priority: 0.7,
     }))

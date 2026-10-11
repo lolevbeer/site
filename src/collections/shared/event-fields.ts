@@ -111,7 +111,7 @@ export const eventDetailFields: Field[] = [
     type: 'textarea',
     admin: {
       description:
-        'Shown publicly on /events and in Google results. Put staff notes (tabs, gratuity, contacts) in Other info.',
+        'Public events show this on /events and in Google results. Put staff notes (tabs, gratuity, contacts) in Other info.',
     },
   },
   {

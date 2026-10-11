@@ -5,6 +5,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { RESERVED_LOCATION_SLUGS } from '@/lib/config/locations'
 
 type Redirect = { source: string; destination: string; permanent?: boolean; has?: unknown[] }
 
@@ -33,6 +34,14 @@ const EXPECTED: Record<string, string> = {
 describe('vercel.json redirects', () => {
   it.each(Object.entries(EXPECTED))('%s permanently redirects to %s', (source, destination) => {
     expect(redirects).toContainEqual({ source, destination, permanent: true })
+  })
+
+  // A taproom slug equal to a top-level redirect source would be unreachable.
+  it('reserves every single-segment redirect source as a location slug', () => {
+    const singleSegment = redirects
+      .map((r) => r.source.match(/^\/([a-z0-9-]+)$/)?.[1])
+      .filter((slug): slug is string => !!slug)
+    expect(singleSegment.filter((slug) => !RESERVED_LOCATION_SLUGS.has(slug))).toEqual([])
   })
 
   it('has no redirect chains', () => {

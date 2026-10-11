@@ -1,9 +1,11 @@
 /**
- * Last meaningful edit for /privacy, /terms, and /accessibility.
+ * Last meaningful edit for /terms and /accessibility, and separately for
+ * /privacy, so editing one policy doesn't re-date the others.
  * Keep the sitemap lastmod in lockstep with the on-page date.
  */
 
-export const LEGAL_PAGES_LASTMOD = '2026-10-10'
+export const LEGAL_PAGES_LASTMOD = '2026-09-09'
+export const PRIVACY_LASTMOD = '2026-10-10'
 
 export function formatLegalDate(isoDate: string): string {
   const [year, month, day] = isoDate.split('-').map(Number)
@@ -16,3 +18,4 @@ export function formatLegalDate(isoDate: string): string {
 }
 
 export const LEGAL_PAGES_LASTMOD_LABEL = formatLegalDate(LEGAL_PAGES_LASTMOD)
+export const PRIVACY_LASTMOD_LABEL = formatLegalDate(PRIVACY_LASTMOD)

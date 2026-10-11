@@ -256,7 +256,11 @@ export function LiveEvents({
 
   return (
     <div
-      className="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground"
+      // `dark` class too, so `dark:` utilities (amber ratings, Today label) follow
+      // the board theme rather than the device's site theme.
+      className={`h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground${
+        theme === 'dark' ? ' dark' : ''
+      }`}
       style={themeVars}
     >
       <section className="h-full flex flex-col bg-background overflow-hidden">

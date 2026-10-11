@@ -10,18 +10,21 @@ const nextConfig = {
   async redirects() {
     // Media is served straight from Vercel Blob (disablePayloadAccessControl in
     // payload.config.ts), so Payload's /api/media/file proxy 500s. Send old
-    // links to the same filename on the Blob store. The store id comes from the
-    // token, parsed the way @payloadcms/storage-vercel-blob does. With no token
-    // (local dev) Payload serves public/uploads itself, so no redirect. 307, not
-    // 308, so browsers don't pin the host if the store is ever rotated.
+    // links to the same filename on the Blob store. The base URL is built the
+    // way @payloadcms/storage-vercel-blob builds it (public access, Media has no
+    // prefix). It is read at build time, so a rotated token needs a redeploy.
+    // With no token (local dev) Payload serves public/uploads itself, so no
+    // redirect. 307, not 308, so browsers don't pin the host.
     const storeId = process.env.BLOB_READ_WRITE_TOKEN?.match(
       /^vercel_blob_rw_([a-z\d]+)_[a-z\d]+$/i,
     )?.[1]?.toLowerCase()
     if (!storeId) return []
+    const blobBaseUrl =
+      process.env.STORAGE_VERCEL_BLOB_BASE_URL || `https://${storeId}.public.blob.vercel-storage.com`
     return [
       {
         source: '/api/media/file/:path*',
-        destination: `https://${storeId}.public.blob.vercel-storage.com/:path*`,
+        destination: `${blobBaseUrl}/:path*`,
         permanent: false,
       },
     ]

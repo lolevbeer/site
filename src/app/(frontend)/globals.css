@@ -384,12 +384,15 @@
       animation: none;
     }
 
-    /* Entrance animations: jump straight to the final keyframe. Not
-       `animation: none` — these elements start at `opacity-0` and rely on
-       the `forwards` fill to become visible. */
+    /* Entrance and exit animations: jump straight to the final keyframe.
+       Not `animation: none` — entrances start at `opacity-0` and rely on the
+       `forwards` fill to become visible, and Radix waits for exits'
+       animationend before unmounting. */
     .animate-stagger-in,
     .menu-item-enter,
-    .animate-in {
+    .menu-item-exit,
+    .animate-in,
+    .animate-out {
       animation-duration: 0.01ms !important;
       animation-delay: 0s !important;
     }

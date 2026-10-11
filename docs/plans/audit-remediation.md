@@ -268,7 +268,8 @@ export function mergePositiveReviews<T extends { username?: string; text?: strin
 
 > **Superseded (2026-10-10):** replay and profiling were removed outright
 > rather than lazy-loaded, and Sentry is enabled only in production when
-> `NEXT_PUBLIC_SENTRY_DSN` is set. `tests/int/sentry-client-config.int.spec.ts`
+> `NEXT_PUBLIC_SENTRY_DSN` is set. All three configs init from
+> `sentry.options.ts`. `tests/int/sentry-client-config.int.spec.ts`
 > fails if replay or profiling come back. The checklist below is historical.
 
 **Files:**

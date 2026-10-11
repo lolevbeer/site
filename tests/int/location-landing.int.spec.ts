@@ -11,7 +11,7 @@ import { isTaproomLandingPath } from '@/lib/config/locations'
 import { LocationLanding } from '@/components/location/location-landing'
 
 vi.mock('next/navigation', () => ({
-  usePathname: () => '/lawrenceville',
+  usePathname: () => '/lolev-lawrenceville',
 }))
 
 vi.mock('@/components/ui/page-breadcrumbs', () => ({
@@ -19,7 +19,7 @@ vi.mock('@/components/ui/page-breadcrumbs', () => ({
 }))
 
 vi.mock('@/components/location/location-provider', () => ({
-  useLocationContext: () => ({ currentLocation: 'lawrenceville' }),
+  useLocationContext: () => ({ currentLocation: 'lolev-lawrenceville' }),
 }))
 
 vi.mock('@/components/beer/draft-beer-card', () => ({
@@ -66,7 +66,7 @@ const canBeer: Beer = {
 
 const location = {
   id: 'loc-1',
-  slug: 'lawrenceville',
+  slug: 'lolev-lawrenceville',
   name: 'Lawrenceville',
   active: true,
   createdAt: '2026-01-01T00:00:00.000Z',
@@ -123,7 +123,7 @@ describe('LocationLanding beer sections', () => {
           {
             ...location,
             id: 'loc-2',
-            slug: 'zelienople',
+            slug: 'lolev-zelienople',
             name: 'Zelienople',
           },
         ],
@@ -251,8 +251,8 @@ describe('isTaproomLandingPath', () => {
   const locations = [location]
 
   it('matches a taproom landing and ignores other routes', () => {
-    expect(isTaproomLandingPath('/lawrenceville', locations)).toBe(true)
-    expect(isTaproomLandingPath('/lawrenceville/', locations)).toBe(true)
+    expect(isTaproomLandingPath('/lolev-lawrenceville', locations)).toBe(true)
+    expect(isTaproomLandingPath('/lolev-lawrenceville/', locations)).toBe(true)
     expect(isTaproomLandingPath('/', locations)).toBe(false)
     expect(isTaproomLandingPath('/beer', locations)).toBe(false)
     expect(isTaproomLandingPath('/food', locations)).toBe(false)

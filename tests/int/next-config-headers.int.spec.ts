@@ -62,6 +62,19 @@ describe('legacy media redirect', () => {
     })
   })
 
+  it('honors the adapter base-URL override', async () => {
+    process.env.BLOB_READ_WRITE_TOKEN = 'vercel_blob_rw_AbC123_secretpart'
+    process.env.STORAGE_VERCEL_BLOB_BASE_URL = 'http://localhost:3010'
+    try {
+      const redirects = await nextConfig.redirects!()
+      expect(redirects).toContainEqual(
+        expect.objectContaining({ destination: 'http://localhost:3010/:path*' }),
+      )
+    } finally {
+      delete process.env.STORAGE_VERCEL_BLOB_BASE_URL
+    }
+  })
+
   it('leaves /api/media/file to Payload when Blob is off (local dev)', async () => {
     delete process.env.BLOB_READ_WRITE_TOKEN
     const redirects = await nextConfig.redirects!()

@@ -1,6 +1,6 @@
 /**
- * Beer items in /feed.xml are dated by createdAt: the nightly Untappd sync
- * bumps updatedAt on every beer, which would re-date the whole feed daily.
+ * Beer items in /feed.xml are dated by createdAt: updatedAt moves on every
+ * rating sync or edit, which would re-date items readers already saw.
  */
 import { describe, expect, it, vi } from 'vitest'
 
