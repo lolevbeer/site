@@ -36,7 +36,7 @@ import { AdminEditButton } from './admin-edit-button'
 import { GlassIcon } from '@/lib/utils/beer-icons'
 import { BeerCan3D } from './beer-can-3d'
 import { formatAbv, formatRating } from '@/lib/utils/formatters'
-import { getBeerImageUrl, getMediaUrl } from '@/lib/utils/media-utils'
+import { getBeerImageUrl, getMediaUrl, textureImageUrl } from '@/lib/utils/media-utils'
 import { menuItemHasBeer } from '@/lib/utils/menu-item-utils'
 import { getStyleName } from '@/lib/utils/relationship-name'
 import {
@@ -128,10 +128,11 @@ function formatReviewDate(dateStr: string): string {
 
 export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
   const imagePath = getBeerImageUrl(beer.image, beer.slug, 'detail')
-  // Generated 3D label textures (see LabelTextureGenerator in the admin).
+  // Generated 3D label textures (see LabelTextureGenerator in the admin),
+  // served resized through /_next/image instead of the ~7 MB stored PNGs.
   // When present, a spinning 3D can replaces the flat image below.
-  const canBaseUrl = getMediaUrl(beer.labelBase)
-  const canMetalnessUrl = getMediaUrl(beer.labelMetalness)
+  const canBaseUrl = textureImageUrl(getMediaUrl(beer.labelBase))
+  const canMetalnessUrl = textureImageUrl(getMediaUrl(beer.labelMetalness))
   const styleName = getStyleName(beer.style)
   const packagingType = getPackagingType(beer)
   const [tapLocations, setTapLocations] = useState<string[]>([])
@@ -257,8 +258,9 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
         {/* Beer Image and Quick Stats */}
         <div className="space-y-4">
           <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-gradient-to-b from-muted/30 to-muted/10 dark:from-muted/10 dark:to-muted/5">
-            {/* Flat image is the poster (and LCP element); it fades once the
-                3D can reports ready, and stays if WebGL/assets fail. */}
+            {/* Flat image is the poster (and LCP element); BeerCan3D waits for
+                window load + idle before building, then the poster fades once
+                the can reports ready, and stays if WebGL/assets fail. */}
             {canBaseUrl && (
               <BeerCan3D
                 baseUrl={canBaseUrl}

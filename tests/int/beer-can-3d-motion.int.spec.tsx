@@ -12,10 +12,10 @@ import { render, cleanup, waitFor } from '@testing-library/react'
 import { BeerCan3D } from '@/components/beer/beer-can-3d'
 
 const created: Array<{ autoRotate: boolean; listeners: Record<string, () => void> }> = []
-const renders = { count: 0 }
+const renders = { count: 0, scenes: 0 }
 
 vi.mock('@/components/beer/can-scene', () => ({
-  createCanScene: async () => ({
+  createCanScene: async () => (renders.scenes++, {
     camera: {},
     renderer: { domElement: document.createElement('canvas') },
     render: () => {
@@ -54,6 +54,7 @@ function mockReducedMotion(reduce: boolean) {
 beforeEach(() => {
   created.length = 0
   renders.count = 0
+  renders.scenes = 0
   // Report the can as on-screen so the render loop starts.
   globalThis.IntersectionObserver = class {
     constructor(private cb: IntersectionObserverCallback) {}
@@ -73,7 +74,7 @@ afterEach(cleanup)
 async function renderCan() {
   const onReady = vi.fn()
   const { container } = render(<BeerCan3D baseUrl="/label.png" onReady={onReady} />)
-  await waitFor(() => expect(onReady).toHaveBeenCalled())
+  await waitFor(() => expect(onReady).toHaveBeenCalled(), { timeout: 3000 })
   return container.querySelector('canvas') as HTMLCanvasElement
 }
 
@@ -109,5 +110,22 @@ describe('BeerCan3D motion and touch', () => {
     mockReducedMotion(false)
     const canvas = await renderCan()
     expect(canvas.style.touchAction).toBe('pan-y')
+  })
+})
+
+describe('BeerCan3D deferral', () => {
+  it('does not start building the scene until the window load event', async () => {
+    mockReducedMotion(false)
+    const readyState = vi.spyOn(document, 'readyState', 'get').mockReturnValue('loading')
+    const onReady = vi.fn()
+    render(<BeerCan3D baseUrl="/label.png" onReady={onReady} />)
+    await new Promise((r) => setTimeout(r, 400))
+    expect(renders.scenes).toBe(0)
+
+    readyState.mockReturnValue('complete')
+    window.dispatchEvent(new Event('load'))
+    await waitFor(() => expect(onReady).toHaveBeenCalled(), { timeout: 3000 })
+    expect(renders.scenes).toBe(1)
+    readyState.mockRestore()
   })
 })
