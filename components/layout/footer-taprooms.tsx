@@ -34,6 +34,7 @@ export function FooterTaprooms({
   weeklyHours,
 }: {
   locations: PayloadLocation[]
+  /** Omitted by the layout's Suspense fallback while hours load. */
   weeklyHours?: Record<string, WeeklyHoursDay[]>
 }) {
   return locations
@@ -78,7 +79,7 @@ export function FooterTaprooms({
               {hours ? (
                 <WeeklyHoursTable weeklyHours={hours} variant="footer" />
               ) : (
-                <p className="text-sm text-muted-foreground">Hours not available</p>
+                weeklyHours && <p className="text-sm text-muted-foreground">Hours not available</p>
               )}
             </div>
 

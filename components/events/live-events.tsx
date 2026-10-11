@@ -256,6 +256,8 @@ export function LiveEvents({
 
   return (
     <div
+      // data-board: globals.css stacks boards above the site's dark-mode noise overlay.
+      data-board
       className="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground"
       style={themeVars}
     >
@@ -266,12 +268,12 @@ export function LiveEvents({
           style={{ padding: `${TV_SAFE_Y} ${TV_SAFE_X}`, marginBottom: '0.5vh' }}
         >
           <div className="flex-1">
-            <span className="font-bold text-foreground-muted" style={{ fontSize: '4vh' }}>
+            <span className="font-bold text-foreground-muted" style={{ fontSize: TV_TYPE.title }}>
               Lolev Beer
             </span>
           </div>
           <div className="flex-1 text-center">
-            <h2 className="font-bold" style={{ fontSize: '4vh' }}>
+            <h2 className="font-bold" style={{ fontSize: TV_TYPE.title }}>
               {title}
             </h2>
             <p
@@ -305,9 +307,7 @@ export function LiveEvents({
                     >
                       <div
                         className={`flex-shrink-0 uppercase tracking-wider font-bold leading-tight ${
-                          group.isToday
-                            ? 'text-amber-600 dark:text-amber-400'
-                            : 'text-foreground-muted'
+                          group.isToday ? 'text-highlight' : 'text-foreground-muted'
                         }`}
                         style={{ width: '16vh', fontSize: TV_TYPE.eventDay }}
                       >
@@ -336,12 +336,12 @@ export function LiveEvents({
             ) : (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center">
-                  <p className="text-foreground-muted" style={{ fontSize: '2.5vh' }}>
+                  <p className="text-foreground-muted" style={{ fontSize: TV_TYPE.emptyState }}>
                     No upcoming food or events scheduled
                   </p>
                   <p
                     className="text-foreground-muted"
-                    style={{ fontSize: '1.8vh', marginTop: '1vh' }}
+                    style={{ fontSize: TV_TYPE.badge, marginTop: '1vh' }}
                   >
                     Check back soon!
                   </p>

@@ -725,6 +725,9 @@ export interface Event {
    */
   site?: string | null;
   tags?: ('music' | 'utensils' | 'puzzle' | 'sports' | 'beer-release' | 'mic-vocal')[] | null;
+  /**
+   * Public events show this on /events and in Google results. Put staff notes (tabs, gratuity, contacts) in Other info.
+   */
   description?: string | null;
   /**
    * Optional photo for Event rich results (falls back to the site OG image)
@@ -738,7 +741,7 @@ export interface Event {
   email?: string | null;
   phone?: string | null;
   /**
-   * Additional information for private event
+   * Staff-only notes (never shown on the website)
    */
   otherInfo?: string | null;
   updatedAt: string;
@@ -907,6 +910,9 @@ export interface RecurringEvent {
    */
   site?: string | null;
   tags?: ('music' | 'utensils' | 'puzzle' | 'sports' | 'beer-release' | 'mic-vocal')[] | null;
+  /**
+   * Public events show this on /events and in Google results. Put staff notes (tabs, gratuity, contacts) in Other info.
+   */
   description?: string | null;
   /**
    * Optional photo for Event rich results (falls back to the site OG image)
@@ -920,7 +926,7 @@ export interface RecurringEvent {
   email?: string | null;
   phone?: string | null;
   /**
-   * Additional information for private event
+   * Staff-only notes (never shown on the website)
    */
   otherInfo?: string | null;
   updatedAt: string;

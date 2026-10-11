@@ -7,7 +7,7 @@ This site has comprehensive Google Analytics tracking implemented throughout. Al
 ## What's Being Tracked
 
 ### Automatic Tracking
-- **Page Views**: Every page navigation (including SPA navigation)
+- **Page Views**: Every page navigation, sent by GA4 itself (the `config` call on load, and enhanced measurement's history-change tracking for SPA navigation). There is no custom page-view tracker; adding one double-counts. Client-side navigations are only counted while the GA4 property's Enhanced measurement → "Page changes based on browser history events" setting is on.
 - **Standard GA4 Events**: Scroll depth, outbound clicks, file downloads, video engagement
 
 ### Custom Events
@@ -92,12 +92,7 @@ trackEvent('custom_event_name', {
    - Hardcoded measurement ID: `G-RR14DE5FPS`
    - No environment variables needed
 
-2. **PageViewTracker** (`components/analytics/page-view-tracker.tsx`)
-   - Tracks SPA navigation automatically
-   - Integrated into root layout
-   - Wrapped in Suspense boundary (Next.js 16 requirement)
-
-3. **TrackedLink** (`components/analytics/tracked-link.tsx`)
+2. **TrackedLink** (`components/analytics/tracked-link.tsx`)
    - Drop-in replacement for Next.js Link
    - Auto-tracks external and social links
 
@@ -113,7 +108,6 @@ All event tracking functions are in `lib/analytics/events.ts`:
 
 - **GA Script**: ~17KB gzipped
 - **Tracking Utilities**: ~2KB (tree-shaken if unused)
-- **Page Tracker**: ~0.5KB
 
 Total: **~20KB** with **zero impact** on initial page load (loads after interactive).
 

@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { JsonLd } from '@/components/seo/json-ld'
 import { LegalPage } from '@/components/legal/legal-page'
 import { generateWebPageSchema } from '@/lib/utils/breadcrumb-schema'
-import { LEGAL_PAGES_LASTMOD, LEGAL_PAGES_LASTMOD_LABEL } from '@/lib/legal/dates'
+import { PRIVACY_LASTMOD, PRIVACY_LASTMOD_LABEL } from '@/lib/legal/dates'
 import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
 
 const DESCRIPTION =
@@ -22,13 +22,13 @@ export default function PrivacyPage() {
     name: 'Privacy Policy',
     description: DESCRIPTION,
     path: '/privacy',
-    dateModified: LEGAL_PAGES_LASTMOD,
+    dateModified: PRIVACY_LASTMOD,
   })
 
   return (
     <>
       <JsonLd data={webPageSchema} />
-      <LegalPage title="Privacy Policy" lastUpdated={LEGAL_PAGES_LASTMOD_LABEL}>
+      <LegalPage title="Privacy Policy" lastUpdated={PRIVACY_LASTMOD_LABEL}>
         <section>
           <h2>About this policy</h2>
           <p>
@@ -71,8 +71,8 @@ export default function PrivacyPage() {
         <section>
           <h2>Cookies and local storage</h2>
           <p>
-            Google Analytics sets cookies to measure traffic. Your taproom choice is stored
-            in localStorage on your device. Staff who sign in to the admin use a session
+            Google Analytics sets cookies to measure traffic. Vercel Analytics does not use
+            cookies. Your taproom choice is stored in localStorage on your device. Staff who sign in to the admin use a session
             cookie. There is no mailing-list form on this site. The homepage Newsletter
             button opens Square, where you can enroll if you want updates.
           </p>
@@ -98,8 +98,8 @@ export default function PrivacyPage() {
               Search text is sent to Mapbox Geocoding.
             </li>
             <li>
-              Sentry, for errors and sampled session replay so we can debug problems. Some
-              page activity may be recorded.
+              Sentry, for error reports and sampled performance timings (page URLs and load
+              times) so we can debug problems. No session recording.
             </li>
             <li>
               Square, if you use the homepage Newsletter link. That mailing-list form is on

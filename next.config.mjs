@@ -7,17 +7,23 @@ const nextConfig = {
   // across that pair unless listed here. Dev-only — ignored in production.
   allowedDevOrigins: ['127.0.0.1'],
 
-  // Add caching headers for media files to reduce blob transfer
-  async headers() {
+  async redirects() {
+    // Media is served straight from Blob, so Payload's /api/media/file proxy
+    // 500s; send old links there. Base URL built as @payloadcms/storage-vercel-blob
+    // does, at build time. No token (local dev): Payload serves uploads itself.
+    // 307 so browsers don't pin the host.
+    const storeId = process.env.BLOB_READ_WRITE_TOKEN?.match(
+      /^vercel_blob_rw_([a-z\d]+)_[a-z\d]+$/i,
+    )?.[1]?.toLowerCase()
+    if (!storeId) return []
+    const blobBaseUrl =
+      process.env.STORAGE_VERCEL_BLOB_BASE_URL ||
+      `https://${storeId}.public.blob.vercel-storage.com`
     return [
       {
         source: '/api/media/file/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable', // 1 year, immutable (filenames are unique)
-          },
-        ],
+        destination: `${blobBaseUrl}/:path*`,
+        permanent: false,
       },
     ]
   },
@@ -75,11 +81,35 @@ const nextConfig = {
   transpilePackages: ['@payloadcms/richtext-lexical'],
 }
 
+const CLIENT_HINT_KEYS = new Set(['Accept-CH', 'Vary', 'Critical-CH'])
+
+/**
+ * withPayload adds Accept-CH / Vary / Critical-CH (Sec-CH-Prefers-Color-Scheme)
+ * to every path for the admin theme. Critical-CH makes Chromium retry the first
+ * navigation on public pages, so move those three headers to /admin/:path* and
+ * leave everything else (X-Powered-By) where it was.
+ */
+export function scopeClientHints(rules) {
+  return rules.flatMap((rule) => {
+    const hints = rule.headers.filter((h) => CLIENT_HINT_KEYS.has(h.key))
+    if (rule.source !== '/:path*' || hints.length === 0) return [rule]
+    const rest = rule.headers.filter((h) => !CLIENT_HINT_KEYS.has(h.key))
+    return [
+      { ...rule, headers: rest },
+      { source: '/admin/:path*', headers: hints },
+    ]
+  })
+}
+
 const payloadConfig = withPayload(nextConfig, {
   devBundleServerPackages: false,
 })
+const config = {
+  ...payloadConfig,
+  headers: async () => scopeClientHints(await payloadConfig.headers()),
+}
 
-export default withSentryConfig(payloadConfig, {
+export default withSentryConfig(config, {
   // Suppresses source map uploading logs during build
   silent: true,
   org: 'lolev-beer',

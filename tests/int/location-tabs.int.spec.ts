@@ -13,12 +13,12 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/components/location/location-provider', () => ({
   useLocationContext: () => ({
-    currentLocation: 'lawrenceville',
+    currentLocation: 'lolev-lawrenceville',
     setLocation: vi.fn(),
     isClient: true,
     locations: [
-      { id: '1', slug: 'lawrenceville', name: 'Lawrenceville' },
-      { id: '2', slug: 'zelienople', name: 'Zelienople' },
+      { id: '1', slug: 'lolev-lawrenceville', name: 'Lawrenceville' },
+      { id: '2', slug: 'lolev-zelienople', name: 'Zelienople' },
     ],
   }),
 }))
@@ -33,7 +33,7 @@ describe('LocationTabs', () => {
     const { rerender } = render(createElement(LocationTabs))
     expect(screen.getByRole('group', { name: 'Choose location' })).toBeTruthy()
 
-    pathname.value = '/lawrenceville'
+    pathname.value = '/lolev-lawrenceville'
     rerender(createElement(LocationTabs))
     expect(screen.queryByRole('group', { name: 'Choose location' })).toBeNull()
   })

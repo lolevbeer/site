@@ -4,7 +4,13 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import { createElement } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { formatLegalDate, LEGAL_PAGES_LASTMOD, LEGAL_PAGES_LASTMOD_LABEL } from '@/lib/legal/dates'
+import {
+  formatLegalDate,
+  LEGAL_PAGES_LASTMOD,
+  LEGAL_PAGES_LASTMOD_LABEL,
+  PRIVACY_LASTMOD,
+  PRIVACY_LASTMOD_LABEL,
+} from '@/lib/legal/dates'
 
 vi.mock('@/components/ui/page-breadcrumbs', () => ({
   PageBreadcrumbs: () => null,
@@ -26,6 +32,12 @@ afterEach(cleanup)
 describe('legal dates', () => {
   it('derives the display label from the ISO lastmod', () => {
     expect(LEGAL_PAGES_LASTMOD_LABEL).toBe(formatLegalDate(LEGAL_PAGES_LASTMOD))
+    expect(PRIVACY_LASTMOD_LABEL).toBe(formatLegalDate(PRIVACY_LASTMOD))
+  })
+
+  it('moves only the privacy date when Sentry replay was removed from it', () => {
+    expect(PRIVACY_LASTMOD >= '2026-10-10').toBe(true)
+    expect(LEGAL_PAGES_LASTMOD).toBe('2026-09-09')
   })
 })
 
@@ -46,6 +58,12 @@ describe('legal pages', () => {
     expect(text).toMatch(/There is no mailing-list form on this site/)
     expect(text).not.toMatch(/There is no email-list signup on this site/)
     expect(text).not.toMatch(/send updates \(with consent\)/i)
+    // Sentry runs errors-only: no session replay, so no recording claim.
+    expect(text).not.toMatch(/session replay|may be recorded/i)
+    // Sentry still samples traces (tracesSampleRate), so the policy says so.
+    expect(text).toMatch(/sampled performance timings/)
+    expect(text).toMatch(/Vercel Analytics does not use cookies/)
+    expect(text).not.toMatch(/Vercel Web Analytics/)
   })
 
   it('terms say a donation or job form is not a yes', () => {

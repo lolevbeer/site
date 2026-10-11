@@ -3,7 +3,7 @@
 /**
  * 3D spinning beer can for beer detail pages: builds the shared can scene
  * (see ./can-scene) from the CMS-generated label textures and adds orbit
- * controls + auto-rotate.
+ * controls + auto-rotate (off under prefers-reduced-motion).
  *
  * ponytail: always-on rAF instead of captiva's on-demand rendering — fine
  * for the single can on a beer page.
@@ -53,8 +53,11 @@ export function BeerCan3D({ baseUrl, metalnessUrl, onReady, className = '' }: Be
       controls.enableDamping = true
       controls.enableZoom = false
       controls.enablePan = false
-      controls.autoRotate = true
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      controls.autoRotate = !reduceMotion
       controls.autoRotateSpeed = -2
+      // OrbitControls sets touch-action: none, which traps vertical swipes on phones.
+      can.renderer.domElement.style.touchAction = 'pan-y'
 
       // Append only once the scene is fully assembled so the first painted
       // frame is a finished can, then tell the parent to drop its poster.
@@ -63,12 +66,15 @@ export function BeerCan3D({ baseUrl, metalnessUrl, onReady, className = '' }: Be
 
       // rAF auto-pauses on hidden tabs but not scrolled-out elements; the
       // observer stops rendering (GPU/battery) while the can is off-screen.
+      // Under reduced motion nothing moves on its own, so render once and then
+      // only on OrbitControls `change` (drags and their damping settle).
       let raf = 0
       const tick = () => {
         controls.update()
         can.render()
-        raf = requestAnimationFrame(tick)
+        raf = reduceMotion ? 0 : requestAnimationFrame(tick)
       }
+      if (reduceMotion) controls.addEventListener('change', () => can.render())
       const io = new IntersectionObserver(([entry]) => {
         if (entry.isIntersecting) {
           if (!raf) raf = requestAnimationFrame(tick)

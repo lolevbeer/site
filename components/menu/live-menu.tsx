@@ -66,6 +66,8 @@ export function LiveMenu({ menuUrl, initialMenu }: LiveMenuProps) {
 
   return (
     <div
+      // data-board: globals.css stacks boards above the site's dark-mode noise overlay.
+      data-board
       className="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground"
       style={themeVars}
     >

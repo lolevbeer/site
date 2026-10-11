@@ -19,7 +19,10 @@ import { formatHoursTime } from '@/lib/utils/formatters'
  */
 export const LOCATION_STORAGE_KEY = 'brewery-location-preference'
 
-/** Location slugs that would collide with App Router static segments. */
+/**
+ * Location slugs that would collide with App Router static segments or with a
+ * vercel.json redirect source (a taproom there would be unreachable).
+ */
 export const RESERVED_LOCATION_SLUGS = new Set([
   'about',
   'accessibility',
@@ -27,15 +30,29 @@ export const RESERVED_LOCATION_SLUGS = new Set([
   'api',
   'beer',
   'beer-map',
+  'beers',
+  'calendar',
+  'careers',
   'donate',
   'e',
   'events',
   'faq',
   'food',
+  'home',
+  'hours',
   'jobs',
+  'lawrenceville',
   'm',
+  'menu',
+  'on-tap',
+  'performances',
   'privacy',
+  'shop',
+  'shows',
+  'tap-list',
   'terms',
+  'upcoming',
+  'zelienople',
 ])
 
 /** True for public taproom landings (`/lawrenceville`), not `/beer` or nested routes. */
