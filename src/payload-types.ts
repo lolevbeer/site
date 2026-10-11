@@ -404,6 +404,10 @@ export interface Location {
    * Auto-generated from name (lowercase, spaces to dashes)
    */
   slug?: string | null;
+  /**
+   * Former slugs. /<alias> redirects to the current page and /e/<alias> still shows the events board. A rename adds the old slug automatically; delete one to retire it.
+   */
+  aliases?: string[] | null;
   basicInfo?: {
     phone?: string | null;
     email?: string | null;
@@ -1789,6 +1793,7 @@ export interface LocationsSelect<T extends boolean = true> {
   intro?: T;
   timezone?: T;
   slug?: T;
+  aliases?: T;
   basicInfo?:
     | T
     | {

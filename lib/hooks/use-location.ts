@@ -142,6 +142,12 @@ function saveLocationToStorage(slug: LocationSlug): void {
   storageListeners.forEach((listener) => listener())
 }
 
+/** Current slug (or id) for a slug, id, or alias; null when nothing matches. */
+function canonicalSlug(locations: PayloadLocation[], value: string): LocationSlug | null {
+  const location = findLocationBySlug(locations, value)
+  return location ? location.slug || location.id : null
+}
+
 /**
  * Location state shared by the nuqs-backed hook and the prerender-safe one.
  * `setUrlLocation` clears or replaces the `loc` query.
@@ -162,22 +168,23 @@ function useLocationState(
 
   // Priority: URL param > localStorage > default. Derived rather than held in
   // state, so selecting a location is a single write to storage and every
-  // consumer re-derives from it.
+  // consumer re-derives from it. A former slug (alias) resolves to the
+  // location's current slug, so `?loc=<old-slug>` keeps working after a rename.
+  const urlSlug = useMemo(
+    () => (urlLocation ? canonicalSlug(locations, urlLocation) : null),
+    [locations, urlLocation],
+  )
   const currentLocation = useMemo<LocationSlug>(() => {
     if (locations.length === 0) return defaultSlug
-    if (urlLocation && isValidLocationSlug(locations, urlLocation)) return urlLocation
-    if (storedLocation && isValidLocationSlug(locations, storedLocation)) return storedLocation
-    return defaultSlug
-  }, [locations, urlLocation, storedLocation, defaultSlug])
+    if (urlSlug) return urlSlug
+    return (storedLocation && canonicalSlug(locations, storedLocation)) || defaultSlug
+  }, [locations, urlSlug, storedLocation, defaultSlug])
 
   // Persist a location supplied via the URL so it survives the next visit.
   // A write to an external system is what effects are for.
   useEffect(() => {
-    if (locations.length === 0) return
-    if (urlLocation && isValidLocationSlug(locations, urlLocation)) {
-      saveLocationToStorage(urlLocation)
-    }
-  }, [urlLocation, locations])
+    if (urlSlug) saveLocationToStorage(urlSlug)
+  }, [urlSlug])
 
   // Get current location data
   const currentLocationData = useMemo(

@@ -1,4 +1,5 @@
-import type { CollectionConfig, Access, RelationshipField } from 'payload'
+import type { CollectionConfig, Access, RelationshipField, Validate, Where } from 'payload'
+import { RESERVED_LOCATION_SLUGS } from '@/lib/config/locations'
 import { generateUniqueSlug } from './utils/generateUniqueSlug'
 import { markLinesCleanedField } from './utils/markLinesCleanedField'
 import { documentSeoField } from '@/src/fields/seo'
@@ -27,6 +28,52 @@ const canUpdateLocation: Access = ({ req: { user } }) => {
     }
   }
   return false
+}
+
+const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+
+/**
+ * Aliases must be URL slugs that no route or other location already claims;
+ * otherwise /<alias>, /e/<alias>, and ?loc=<alias> would be ambiguous or dead.
+ * Location slugs and aliases are public, so the check reads as the editor.
+ */
+const validateAliases: Validate<string[]> = async (value, { id, req }) => {
+  const aliases = value ?? []
+  if (aliases.length === 0) return true
+  const malformed = aliases.find((alias) => !SLUG_PATTERN.test(alias))
+  if (malformed) return `"${malformed}" must be a lowercase slug (letters, numbers, dashes).`
+  const reserved = aliases.find((alias) => RESERVED_LOCATION_SLUGS.has(alias))
+  if (reserved) return `"${reserved}" is reserved by a site page and cannot be an alias.`
+
+  const claimed: Where = {
+    or: [{ slug: { in: aliases } }, { aliases: { in: aliases } }],
+  }
+  const others = await req.payload.find({
+    collection: 'locations',
+    where: id ? { and: [{ id: { not_equals: id } }, claimed] } : claimed,
+    limit: 1,
+    depth: 0,
+    select: { name: true },
+    overrideAccess: false,
+    req,
+  })
+  const other = others.docs[0]
+  return other ? `An alias is already used by ${other.name}.` : true
+}
+
+/**
+ * Record the previous slug as an alias when a rename changes it, so old
+ * /<slug> links redirect and /e/<slug> TV boards keep rendering. Aliases never
+ * include the current slug or a reserved route slug (those would not resolve).
+ */
+function withPreviousSlug(
+  aliases: string[] | null | undefined,
+  previousSlug: string | null | undefined,
+  currentSlug: string | null | undefined,
+): string[] {
+  const next = [...(aliases ?? [])]
+  if (previousSlug && !RESERVED_LOCATION_SLUGS.has(previousSlug)) next.push(previousSlug)
+  return [...new Set(next)].filter((alias) => alias !== currentSlug)
 }
 
 export const Locations: CollectionConfig = {
@@ -64,6 +111,16 @@ export const Locations: CollectionConfig = {
             req,
             operation,
             originalDoc?.id,
+          )
+        }
+
+        const previousSlug = originalDoc?.slug
+        const slugChanged = Boolean(previousSlug && data.slug && data.slug !== previousSlug)
+        if (slugChanged || data.aliases) {
+          data.aliases = withPreviousSlug(
+            data.aliases ?? originalDoc?.aliases,
+            slugChanged ? previousSlug : undefined,
+            data.slug ?? previousSlug,
           )
         }
 
@@ -178,6 +235,21 @@ export const Locations: CollectionConfig = {
         description: 'Auto-generated from name (lowercase, spaces to dashes)',
         readOnly: true,
         position: 'sidebar',
+      },
+    },
+    {
+      name: 'aliases',
+      type: 'text',
+      hasMany: true,
+      access: {
+        update: adminFieldAccess,
+      },
+      validate: validateAliases,
+      admin: {
+        position: 'sidebar',
+        description:
+          'Former slugs. /<alias> redirects to the current page and /e/<alias> still shows ' +
+          'the events board. A rename adds the old slug automatically; delete one to retire it.',
       },
     },
     {
