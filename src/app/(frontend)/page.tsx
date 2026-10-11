@@ -13,6 +13,8 @@ import { extractBeerFromMenuItem } from '@/lib/utils/menu-item-utils';
 import { getSiteSeo, siteDefaults } from '@/lib/utils/site-seo'
 import { getAllLocations } from '@/lib/utils/payload-api'
 import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
+import { toHomeBeer, toHomeMenu } from '@/lib/utils/public-client-payloads'
+import type { Menu } from '@/src/payload-types'
 
 // ISR: Revalidate every 5 minutes as fallback (on-demand revalidation handles immediate updates)
 export const revalidate = 300;
@@ -71,6 +73,19 @@ export default async function Home(): Promise<React.ReactElement> {
   const eventSchemas = data.allEvents.map((event) => generateEventJsonLd(event, locationLookup));
   const foodSchemas = data.allFood.map((food) => generateFoodEventJsonLd(food, locationLookup));
 
+  // Client components get trimmed menus and beers (see public-client-payloads);
+  // the JSON-LD above keeps the full docs. Each menu is projected once and the
+  // same object is reused across props so the RSC payload can share it.
+  const projectMenus = (byLocation: Record<string, Menu | null>) =>
+    Object.fromEntries(
+      Object.entries(byLocation).map(([slug, menu]) => [slug, menu && toHomeMenu(menu)]),
+    );
+  const homeDraftMenusByLocation = projectMenus(data.draftMenusByLocation);
+  const homeCansMenusByLocation = projectMenus(data.cansMenusByLocation);
+  const homeDraftMenus = Object.values(homeDraftMenusByLocation).filter((m): m is Menu => m !== null);
+  const homeCansMenus = Object.values(homeCansMenusByLocation).filter((m): m is Menu => m !== null);
+  const homeAvailableBeers = data.availableBeers.map(toHomeBeer);
+
   return (
     <>
       {/* JSON-LD structured data for SEO */}
@@ -91,17 +106,17 @@ export default async function Home(): Promise<React.ReactElement> {
 
       <PageTransition>
         <MarketingText
-          draftMenusByLocation={data.draftMenusByLocation}
-          cansMenusByLocation={data.cansMenusByLocation}
+          draftMenusByLocation={homeDraftMenusByLocation}
+          cansMenusByLocation={homeCansMenusByLocation}
           eventsByLocation={data.eventsMarketingByLocation}
           foodByLocation={data.foodMarketingByLocation}
           comingSoonBeers={data.comingSoonBeers}
         />
 
         <HomeContent
-          availableBeers={data.availableBeers}
-          draftMenus={data.allDraftMenus}
-          cansMenus={data.allCansMenus}
+          availableBeers={homeAvailableBeers}
+          draftMenus={homeDraftMenus}
+          cansMenus={homeCansMenus}
           beerCount={data.beerCount}
           cansCount={data.cansCount}
           nextEvent={data.nextEvent}
@@ -109,7 +124,7 @@ export default async function Home(): Promise<React.ReactElement> {
           heroImageUrl={data.siteContent.heroImageUrl}
           weeklyHours={data.weeklyHours}
         >
-          <FeaturedCans menus={data.allCansMenus} />
+          <FeaturedCans menus={homeCansMenus} />
 
           <UpcomingFood foodByLocation={data.foodByLocation} />
 
