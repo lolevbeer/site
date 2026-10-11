@@ -156,6 +156,24 @@ describe('alias validation', () => {
   })
 })
 
+describe('slug validation', () => {
+  const slugField = Locations.fields.find(
+    (field) => 'name' in field && field.name === 'slug',
+  ) as TextField
+  const validate = (value: string) => slugField.validate!(value as never, {} as never)
+
+  it('accepts a lowercase slug', async () => {
+    expect(await validate('lolev-lawrenceville')).toBe(true)
+  })
+
+  it.each(['/evil.com', '//evil.com', 'Lolev Lawrenceville', 'a/b', 'evil.com'])(
+    'rejects %s (it is used as a redirect target)',
+    async (slug) => {
+      expect(await validate(slug)).toMatch(/lowercase/i)
+    },
+  )
+})
+
 describe('alias validation only checks new aliases', () => {
   const validate = (value: string[], previousValue: string[]) =>
     aliasesField.validate!(
@@ -262,6 +280,14 @@ describe('routes', () => {
     expect(permanentRedirect).toHaveBeenCalledWith('/lolev-lawrenceville')
     // Redirects before loading the page's menus, events, and food.
     expect(getDraftMenu).not.toHaveBeenCalled()
+  })
+
+  it('never redirects to a malformed stored slug (no //host open redirect)', async () => {
+    getAllLocations.mockResolvedValue([{ ...lawrenceville, slug: '/evil.com' }])
+    await expect(
+      LocationPage({ params: Promise.resolve({ location: 'old-lawrenceville' }) }),
+    ).rejects.toThrow('NOT_FOUND')
+    expect(permanentRedirect).not.toHaveBeenCalled()
   })
 
   it('/<alias> metadata redirects too', async () => {

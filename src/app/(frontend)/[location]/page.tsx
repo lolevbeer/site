@@ -24,7 +24,12 @@ import {
   getUpcomingEventsFromPayload,
   getWeeklyHoursWithHolidays,
 } from '@/lib/utils/payload-api'
-import { findLocationBySlug, formatCityStateZip, RESERVED_LOCATION_SLUGS } from '@/lib/config/locations'
+import {
+  findLocationBySlug,
+  formatCityStateZip,
+  LOCATION_SLUG_PATTERN,
+  RESERVED_LOCATION_SLUGS,
+} from '@/lib/config/locations'
 import { safeHttpUrl } from '@/lib/utils/url-utils'
 import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
 import { ogCardImages } from '@/lib/og/paths'
@@ -61,6 +66,8 @@ const loadLocation = cache(async (slug: string) => {
   if (RESERVED_LOCATION_SLUGS.has(key)) return null
   const location = findLocationBySlug(locations, key)
   if (!location || location.active === false) return null
+  // A malformed stored slug is never a redirect target (no //host open redirect).
+  if (location.slug && !LOCATION_SLUG_PATTERN.test(location.slug)) return null
   // Not the canonical URL: redirect before fetching data that would be discarded.
   if (location.slug && location.slug !== slug) permanentRedirect(`/${location.slug}`)
   const current = location.slug || key

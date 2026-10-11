@@ -1,5 +1,5 @@
 import type { CollectionConfig, Access, RelationshipField, Validate, Where } from 'payload'
-import { RESERVED_LOCATION_SLUGS } from '@/lib/config/locations'
+import { LOCATION_SLUG_PATTERN, RESERVED_LOCATION_SLUGS } from '@/lib/config/locations'
 import { generateUniqueSlug } from './utils/generateUniqueSlug'
 import { markLinesCleanedField } from './utils/markLinesCleanedField'
 import { documentSeoField } from '@/src/fields/seo'
@@ -30,8 +30,6 @@ const canUpdateLocation: Access = ({ req: { user } }) => {
   return false
 }
 
-const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
-
 /**
  * Aliases must be URL slugs that no route or other location already claims;
  * otherwise /<alias>, /e/<alias>, and ?loc=<alias> would be ambiguous or dead.
@@ -43,7 +41,7 @@ const validateAliases: Validate<string[]> = async (value, { id, previousValue, r
   const previous = new Set(previousValue ?? [])
   const added = (value ?? []).filter((alias) => !previous.has(alias))
   if (added.length === 0) return true
-  const malformed = added.find((alias) => !SLUG_PATTERN.test(alias))
+  const malformed = added.find((alias) => !LOCATION_SLUG_PATTERN.test(alias))
   if (malformed) return `"${malformed}" must be a lowercase slug (letters, numbers, dashes).`
   const reserved = added.find((alias) => RESERVED_LOCATION_SLUGS.has(alias))
   if (reserved) return `"${reserved}" is reserved by a site page and cannot be an alias.`
@@ -237,6 +235,11 @@ export const Locations: CollectionConfig = {
     {
       name: 'slug',
       type: 'text',
+      // Hand-set slugs (REST/Local API) skip the generator; the slug is a redirect target.
+      validate: (value: string | null | undefined) =>
+        !value ||
+        LOCATION_SLUG_PATTERN.test(value) ||
+        'Slug must be lowercase letters, numbers, and dashes.',
       admin: {
         description: 'Auto-generated from name (lowercase, spaces to dashes)',
         readOnly: true,
