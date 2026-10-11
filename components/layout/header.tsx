@@ -78,8 +78,9 @@ export function Header() {
                 to be opened, and stays reachable partway down a long menu or
                 beer list rather than only at the top of the page. `sm` with
                 short labels (no "Lolev " prefix) so it fits the row alongside
-                the logo mark and hamburger, and does not reach the hamburger
-                at 200% zoom; touch pointers get 44px-tall options.
+                the logo mark and hamburger, meant to keep clear of the
+                hamburger at 200% zoom (not yet measured); touch pointers get
+                44px-tall options.
 
                 Hidden while the menu is open: the panel starts below the header
                 and declares aria-modal, so leaving this visible would offer
