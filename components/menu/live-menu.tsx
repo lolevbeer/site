@@ -66,9 +66,9 @@ export function LiveMenu({ menuUrl, initialMenu }: LiveMenuProps) {
 
   return (
     <div
-      // relative z-[1]: above the site's fixed dark-mode noise overlay (globals.css
-      // `.dark body::before`), which follows the device theme, not the board's.
-      className="relative z-[1] h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground"
+      // data-board: globals.css keeps the site's dark-mode noise overlay off boards.
+      data-board
+      className="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground"
       style={themeVars}
     >
       {board}

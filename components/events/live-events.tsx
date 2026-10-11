@@ -256,9 +256,9 @@ export function LiveEvents({
 
   return (
     <div
-      // relative z-[1]: above the site's fixed dark-mode noise overlay (globals.css
-      // `.dark body::before`), which follows the device theme, not the board's.
-      className="relative z-[1] h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground"
+      // data-board: globals.css keeps the site's dark-mode noise overlay off boards.
+      data-board
+      className="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground"
       style={themeVars}
     >
       <section className="h-full flex flex-col bg-background overflow-hidden">
@@ -336,12 +336,12 @@ export function LiveEvents({
             ) : (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center">
-                  <p className="text-foreground-muted" style={{ fontSize: '2.5vh' }}>
+                  <p className="text-foreground-muted" style={{ fontSize: TV_TYPE.emptyState }}>
                     No upcoming food or events scheduled
                   </p>
                   <p
                     className="text-foreground-muted"
-                    style={{ fontSize: '1.8vh', marginTop: '1vh' }}
+                    style={{ fontSize: TV_TYPE.badge, marginTop: '1vh' }}
                   >
                     Check back soon!
                   </p>

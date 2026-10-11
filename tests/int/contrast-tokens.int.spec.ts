@@ -77,6 +77,16 @@ describe('TV board theme vars mirror globals.css', () => {
   const darkToken = (name: string) =>
     darkBlock.match(new RegExp(`--${name}:\\s*(#[0-9a-fA-F]{6})`))?.[1] ?? token(name)
 
+  it('sets every color token the dark theme overrides, so none follows the device theme', () => {
+    const darkColors = [...darkBlock.matchAll(/(--color-[a-z-]+):\s*#/g)].map((m) => m[1])
+    const boardVars = Object.keys(getThemeVars('dark'))
+    expect(darkColors.filter((name) => !boardVars.includes(name))).toEqual([])
+  })
+
+  it('keeps the dark-mode noise overlay off live boards', () => {
+    expect(css).toMatch(/\.dark body:not\(:has\(\[data-board\]\)\)::before/)
+  })
+
   it.each(['light', 'dark'] as const)('%s board vars match the site tokens', (theme) => {
     const vars = Object.entries(getThemeVars(theme)).filter(([key]) => key.startsWith('--'))
     expect(vars.length).toBeGreaterThan(0)

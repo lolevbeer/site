@@ -20,7 +20,7 @@ const beer: Beer = {
   glutenFree: false,
   image: false,
   hops: 'Citra',
-  tap: 7,
+  tap: 12,
   pricing: { draftPrice: 7 },
   availability: { hideFromSite: false },
   createdAt: new Date().toISOString(),
@@ -49,9 +49,18 @@ describe('DraftBeerCard board row', () => {
     const { container } = render(createElement(DraftBeerCard, { beer, showTapAndPrice: true }))
 
     expect(container.querySelector('svg')).not.toBeNull()
-    for (const shown of ['7', 'A juicy hazy IPA.', 'Citra', '6.5%', '$7']) {
+    expect(container.querySelector('.tabular-nums.text-primary')?.textContent).toBe('12')
+    for (const shown of ['A juicy hazy IPA.', 'Citra', '6.5%', '$7']) {
       expect(container.textContent).toContain(shown)
     }
+  })
+
+  it('shows no ABV for a beer without one (menus pass it as "0")', () => {
+    const noAbv = { ...beer, abv: '0' as unknown as number }
+    const { container } = render(
+      createElement(DraftBeerCard, { beer: noAbv, showTapAndPrice: true }),
+    )
+    expect(container.textContent).not.toMatch(/(^|[^.\d])0%/)
   })
 
   it('shows Just Released only with a clock', () => {

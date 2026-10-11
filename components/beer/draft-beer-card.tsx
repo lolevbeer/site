@@ -16,7 +16,7 @@ import { TopBeerDropsLink } from '@/components/beer/top-beer-drops-link'
 import { UntappdRating } from '@/components/beer/untappd-rating'
 import { getBeerBadgeLabel } from '@/lib/types/beer'
 import { isSold } from '@/lib/utils/packaging-utils'
-import { TV_TYPE, TV_COL, TV_BADGE_STYLE } from '@/lib/config/tv-display'
+import { TV_TYPE, TV_COL, TV_BADGE_STYLE, draftBoardColumns } from '@/lib/config/tv-display'
 import type { BeerPricing } from '@/lib/types/beer'
 
 /**
@@ -90,8 +90,7 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
         {badgeLabel}
       </Badge>
     ) : null
-    // Tap rail | beer | ABV | half | full
-    const gridTemplateColumns = `${TV_COL.tap} minmax(0, 1fr) ${TV_COL.abv} ${priceColumn} ${priceColumn}`
+    const gridTemplateColumns = draftBoardColumns(priceColumn)
 
     return (
       <BeerLinkWrapper
@@ -188,7 +187,8 @@ export const DraftBeerCard = React.memo(function DraftBeerCard({
             </div>
 
             <div className="text-right">
-              {beer.abv && (
+              {/* Menus pass a missing ABV as "0"; show nothing rather than "0%". */}
+              {Number(beer.abv) > 0 && (
                 <div
                   className="font-bold text-foreground-muted tabular-nums"
                   style={{ fontSize: TV_TYPE.abv }}

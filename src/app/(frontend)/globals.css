@@ -134,8 +134,9 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Noise texture overlay for dark mode depth */
-  .dark body::before {
+  /* Noise texture overlay for dark mode depth. Not on live TV boards
+     ([data-board]): their theme is the menu's, not the device's. */
+  .dark body:not(:has([data-board]))::before {
     content: '';
     position: fixed;
     inset: 0;

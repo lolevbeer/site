@@ -34,10 +34,14 @@ export const TV_TYPE = {
   body: '1.7vh',
   badge: '1.8vh',
   tap: '2.4vh',
-  /** Draft row ABV, beer name, and half/full prices (TV_COL.price is sized to `price`). */
+  /** Draft row ABV. */
   abv: '2.8vh',
+  /** Draft row beer name. */
   beerName: '3vh',
+  /** Draft row half/full prices; TV_COL.price is sized to it. */
   price: '3.8vh',
+  /** The /e board's empty state. */
+  emptyState: '2.5vh',
   /** Board header title on /m and /e. */
   title: '4vh',
   /** The `/e/` agenda: a day heading, an item's time, an item's name. */
@@ -97,3 +101,11 @@ export const TV_COL = {
    *  Measured at TV_TYPE.price (3.8vh): "$12.50" is 12.1vh wide. */
   priceWide: '12.5vh',
 } as const
+
+/**
+ * Draft board columns, tap rail | beer | ABV | half | full. One builder for the
+ * header and every row, so the labels can't drift from the values under them.
+ */
+export function draftBoardColumns(priceColumn: string): string {
+  return `${TV_COL.tap} minmax(0, 1fr) ${TV_COL.abv} ${priceColumn} ${priceColumn}`
+}
