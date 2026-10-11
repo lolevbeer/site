@@ -71,3 +71,12 @@ export function regularLabel(event: BreweryEvent): string {
   const time = event.time && event.time.toLowerCase() !== 'tbd' ? ` ${formatTime(event.time)}` : ''
   return `${weekday}s${time} · ${event.title}`
 }
+
+/**
+ * The agenda badge for an event's CMS tags: "Beer release" for `beer-release`,
+ * otherwise none. Shared by /events, the home agenda and taproom landings.
+ * Weekly regulars collapse into the Regulars block and show no badge.
+ */
+export function eventBadge(tags: readonly string[] | null | undefined): string | undefined {
+  return tags?.includes('beer-release') ? 'Beer release' : undefined
+}

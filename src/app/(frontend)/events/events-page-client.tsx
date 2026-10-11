@@ -14,7 +14,7 @@ import { HubIntro } from '@/components/ui/hub-intro'
 import { ScheduleList } from '@/components/ui/schedule-list';
 import { formatDate, isTodayOrFuture } from '@/lib/utils/formatters';
 import { safeHttpUrl } from '@/lib/utils/url-utils';
-import { regularLabel, splitRegulars } from '@/lib/utils/event-regulars';
+import { eventBadge, regularLabel, splitRegulars } from '@/lib/utils/event-regulars';
 import { useTodayEST } from '@/lib/hooks/use-today-est';
 
 interface EventsPageClientProps {
@@ -72,7 +72,7 @@ export function EventsPageClient({ initialEvents, intro }: EventsPageClientProps
               description:
                 event.description !== event.title ? event.description : undefined,
               site: safeHttpUrl(event.site),
-              badge: event.tags?.includes('beer-release') ? 'Beer release' : undefined,
+              badge: eventBadge(event.tags),
             }))}
           />
           {regulars.length > 0 ? (

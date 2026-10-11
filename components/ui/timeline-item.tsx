@@ -80,7 +80,7 @@ export function TimelineItem({
         <p className="text-sm text-muted-foreground tabular-nums">{timeDisplay}</p>
       ) : null}
       {badge ? (
-        <Badge variant="outline" className="border-amber-500 text-highlight mb-0.5">
+        <Badge variant="outline" className="border-highlight text-highlight mb-0.5">
           {badge}
         </Badge>
       ) : null}
