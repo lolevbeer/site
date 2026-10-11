@@ -133,6 +133,13 @@ export function getMediaUrl(media: unknown, size?: MediaSize): string | undefine
  * q75 serves a ~0.7 MB AVIF/WebP. Same-origin, so three.js's TextureLoader
  * (a plain <img>) needs no CORS. 2048 is a default deviceSize and 75 is in
  * next.config `images.qualities`; Blob hosts are in `remotePatterns`.
+ *
+ * ponytail: relies on the runtime optimizer (first view per region converts
+ * the 7 MB PNG, counted in Vercel image-optimization usage). Ceiling: add an
+ * uncropped 2048w WebP 'texture' size to Media.ts imageSizes + MediaSize and
+ * prefer getMediaUrl(media, 'texture'), once existing labels are regenerated.
+ * The black/white metalness mask shares q75; if foil edges look soft or ring
+ * next to the PNG original, give it a higher listed quality.
  */
 export function textureImageUrl(url: string | undefined): string | undefined {
   if (!url) return undefined
