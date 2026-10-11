@@ -2,6 +2,8 @@
  * Beer Details Component
  * Displays comprehensive beer information for individual beer pages. Taproom
  * availability arrives as a server-rendered prop (see beer/[variant]/page.tsx).
+ * A Share button opens the native share sheet, or copies the link where the
+ * browser has none.
  */
 
 'use client'
@@ -30,7 +32,7 @@ import {
   EmptyDescription,
   EmptyContent,
 } from '@/components/ui/empty'
-import { CircleX } from '@/components/icons'
+import { Check, CircleX, Share } from '@/components/icons'
 import { UntappdIcon } from '@/components/icons/untappd-icon'
 import { AdminEditButton } from './admin-edit-button'
 import { GlassIcon } from '@/lib/utils/beer-icons'
@@ -72,6 +74,33 @@ interface BeerDetailsProps {
   beer: PayloadBeer
   availability: BeerAvailability
   className?: string
+}
+
+/**
+ * Shares this page: the native share sheet when the browser has one (phones,
+ * in-app browsers), else copies the URL and confirms with "Link copied".
+ */
+function ShareButton({ title }: { title: string }) {
+  const [copied, setCopied] = useState(false)
+
+  const share = useCallback(async () => {
+    const url = window.location.href
+    if (typeof navigator.share === 'function') {
+      // A dismissed share sheet rejects with AbortError; nothing to do.
+      await navigator.share({ title, url }).catch(() => {})
+      return
+    }
+    await navigator.clipboard?.writeText(url)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }, [title])
+
+  return (
+    <Button variant="outline" onClick={share}>
+      {copied ? <Check className="h-5 w-5" /> : <Share className="h-5 w-5" />}
+      {copied ? 'Link copied' : 'Share'}
+    </Button>
+  )
 }
 
 /** "A", "A and B" with each taproom linked to its landing page. */
@@ -376,24 +405,27 @@ export function BeerDetails({ beer, availability, className = '' }: BeerDetailsP
           </div>
 
           {/* External Links */}
-          {beer.untappd && (
-            <Button variant="outline" asChild>
-              <a
-                href={`https://untappd.com${typeof beer.untappd === 'string' && beer.untappd.startsWith('/') ? '' : '/b/-/'}${beer.untappd}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="no-underline"
-              >
-                <UntappdIcon className="h-5 w-5" />
-                Untappd
-                {(beer.untappdRating ?? 0) > 0 && (
-                  <span className="text-highlight font-bold">
-                    {formatRating(beer.untappdRating)}/5
-                  </span>
-                )}
-              </a>
-            </Button>
-          )}
+          <div className="flex flex-wrap gap-3">
+            <ShareButton title={beer.name} />
+            {beer.untappd && (
+              <Button variant="outline" asChild>
+                <a
+                  href={`https://untappd.com${typeof beer.untappd === 'string' && beer.untappd.startsWith('/') ? '' : '/b/-/'}${beer.untappd}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="no-underline"
+                >
+                  <UntappdIcon className="h-5 w-5" />
+                  Untappd
+                  {(beer.untappdRating ?? 0) > 0 && (
+                    <span className="text-highlight font-bold">
+                      {formatRating(beer.untappdRating)}/5
+                    </span>
+                  )}
+                </a>
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
