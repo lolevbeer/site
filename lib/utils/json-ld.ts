@@ -291,13 +291,25 @@ function toISO8601(
 type LocationLookup = Map<LocationSlug, PayloadLocation>
 
 /**
- * Create base event JSON-LD structure with common fields
+ * Shareable /events link for one event: `?loc=` opens the right taproom and
+ * `#event-<id>` matches the row anchor ScheduleList renders.
+ */
+function eventPageUrl(locationSlug?: string, eventId?: string | number): string {
+  const query = locationSlug ? `?loc=${encodeURIComponent(locationSlug)}` : ''
+  const hash = eventId != null && eventId !== '' ? `#event-${eventId}` : ''
+  return `${LOLEV_BASE_URL}/events${query}${hash}`
+}
+
+/**
+ * Create base event JSON-LD structure with common fields. The url is the
+ * event's own /events anchor; callers override it with the event's site.
  */
 function createBaseEventJsonLd(
   name: string,
   locationSlug: LocationSlug | undefined,
   locationLookup: LocationLookup,
   startDate = new Date().toISOString(),
+  eventId?: string | number,
 ): EventJsonLd {
   const location = locationSlug ? locationLookup.get(locationSlug) : undefined
   const place = location ? getLocationPlaceFromPayload(location) : getDefaultPlace()
@@ -311,7 +323,7 @@ function createBaseEventJsonLd(
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
     location: place,
     organizer: getOrganizer(),
-    url: `${LOLEV_BASE_URL}/events`,
+    url: eventPageUrl(location?.slug ?? locationSlug, eventId),
     image: LOLEV_OG_IMAGE_URL,
   }
 }
@@ -347,6 +359,7 @@ export function generateEventJsonLd(
       locationSlug,
       locationLookup,
       startDate,
+      payloadEvent.id,
     )
 
     if (endDate) jsonLd.endDate = endDate
@@ -376,6 +389,7 @@ export function generateEventJsonLd(
     breweryEvent.location,
     locationLookup,
     startDate,
+    breweryEvent.id,
   )
 
   jsonLd.description = breweryEvent.title.trim()

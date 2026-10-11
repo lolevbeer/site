@@ -56,7 +56,8 @@ export function ScheduleList({
           </Heading>
           <ul className="space-y-3 list-none p-0 m-0">
             {sortByTime(dayItems).map((item) => (
-              <li key={item.id}>
+              // Anchor target for shared links and the Event JSON-LD url.
+              <li key={item.id} id={`event-${item.id}`} className="scroll-mt-20">
                 <TimelineItem
                   title={item.title}
                   time={item.time || undefined}
