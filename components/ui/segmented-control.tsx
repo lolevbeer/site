@@ -24,6 +24,9 @@ interface SegmentedControlProps {
  * These are buttons rather than tabs because they update state without owning
  * tab panels. `aria-pressed` exposes the selected option while keeping every
  * choice in the normal tab order.
+ *
+ * On coarse (touch) pointers each option is at least 44px tall and the group
+ * drops its fixed height to fit them; mouse layouts keep the compact size.
  */
 export const SEGMENTED_TROUGH_CLASS =
   'rounded-sm bg-black/[0.06] p-1 gap-0.5 text-muted-foreground dark:bg-muted/40'
@@ -62,6 +65,7 @@ export function SegmentedControl({
         'relative grid w-fit items-center justify-center',
         SEGMENTED_TROUGH_CLASS,
         GROUP_SIZE_CLASS[size],
+        'pointer-coarse:h-auto',
         className,
       )}
       style={{ gridTemplateColumns: `repeat(${count}, minmax(0, 1fr))` }}
@@ -90,6 +94,7 @@ export function SegmentedControl({
             className={cn(
               'relative inline-flex cursor-pointer items-center justify-center whitespace-nowrap rounded-sm py-1.5 font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
               ITEM_SIZE_CLASS[size],
+              'pointer-coarse:min-h-11',
               isActive ? 'text-foreground' : SEGMENTED_ITEM_IDLE_CLASS,
             )}
           >

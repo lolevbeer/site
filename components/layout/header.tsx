@@ -76,8 +76,10 @@ export function Header() {
               {/* Location switcher — mobile only. Sits in the header rather than
                 behind the hamburger so switching locations never needs the menu
                 to be opened, and stays reachable partway down a long menu or
-                beer list rather than only at the top of the page. `sm` so it
-                fits the row alongside the logo mark and hamburger.
+                beer list rather than only at the top of the page. `sm` with
+                short labels (no "Lolev " prefix) so it fits the row alongside
+                the logo mark and hamburger, and does not reach the hamburger
+                at 200% zoom; touch pointers get 44px-tall options.
 
                 Hidden while the menu is open: the panel starts below the header
                 and declares aria-modal, so leaving this visible would offer
@@ -86,6 +88,7 @@ export function Header() {
                 covering the page. */}
               <LocationTabs
                 size="sm"
+                shortLabels
                 className={cn('md:hidden', isMobileMenuOpen && 'invisible')}
               />
 

@@ -27,7 +27,7 @@ import {
   type DonationRequestErrors,
   type DonationRequestInput,
 } from '@/lib/donate/donation-request'
-import { firstErrorKey, FormAlert, FormField, type SetDonationField } from './form-shared'
+import { FormAlert, FormField, formFieldAria, type SetDonationField } from './form-shared'
 
 export function AskStep({
   panelRef,
@@ -48,7 +48,6 @@ export function AskStep({
   pending: boolean
   onBack: () => void
 }) {
-  const openKey = firstErrorKey(fieldErrors)
   return (
     <FieldSet ref={panelRef} tabIndex={-1} className="overflow-visible outline-none">
       <legend className="sr-only">The ask</legend>
@@ -92,7 +91,6 @@ export function AskStep({
           id="eventName"
           label="Event name"
           error={fieldErrors.eventName}
-          forceOpen={openKey === 'eventName'}
         >
           <Input
             id="eventName"
@@ -107,7 +105,6 @@ export function AskStep({
           label="Event date"
           hint={`Must be at least ${DONATION_LEAD_DAYS} days out.`}
           error={fieldErrors.eventDate}
-          forceOpen={openKey === 'eventDate'}
         >
           <Input
             id="eventDate"
@@ -123,7 +120,6 @@ export function AskStep({
           id="venue"
           label="Venue and city"
           error={fieldErrors.venue}
-          forceOpen={openKey === 'venue'}
         >
           <Input
             id="venue"
@@ -137,7 +133,6 @@ export function AskStep({
           id="attendees"
           label="Expected 21+ attendance"
           error={fieldErrors.attendees}
-          forceOpen={openKey === 'attendees'}
         >
           <Input
             id="attendees"
@@ -155,7 +150,6 @@ export function AskStep({
           label="What exactly are you asking for?"
           hint="At least 40 characters."
           error={fieldErrors.requestDetails}
-          forceOpen={openKey === 'requestDetails'}
         >
           <Textarea
             id="requestDetails"
@@ -173,7 +167,6 @@ export function AskStep({
               label="How will the beer be served?"
               hint="At least 20 characters."
               error={fieldErrors.howServed}
-              forceOpen={openKey === 'howServed'}
             >
               <Textarea
                 id="howServed"
@@ -188,7 +181,6 @@ export function AskStep({
               id="pickupName"
               label="Who is picking up? (21+, can haul it)"
               error={fieldErrors.pickupName}
-              forceOpen={openKey === 'pickupName'}
             >
               <Input
                 id="pickupName"
@@ -205,13 +197,16 @@ export function AskStep({
             id="taproom"
             label="Which taproom?"
             error={fieldErrors.taproom}
-            forceOpen={openKey === 'taproom'}
           >
             <Select
               value={values.taproom || undefined}
               onValueChange={(value) => set('taproom', value)}
             >
-              <SelectTrigger id="taproom" className="w-full">
+              <SelectTrigger
+                id="taproom"
+                className="w-full"
+                {...formFieldAria('taproom', { error: fieldErrors.taproom })}
+              >
                 <SelectValue placeholder="Select" />
               </SelectTrigger>
               <SelectContent>
@@ -231,7 +226,6 @@ export function AskStep({
           label="How will Lolev be recognized?"
           hint="At least 40 characters."
           error={fieldErrors.recognition}
-          forceOpen={openKey === 'recognition'}
         >
           <Textarea
             id="recognition"
@@ -247,7 +241,6 @@ export function AskStep({
           label="Why Lolev, specifically?"
           hint="At least 80 characters."
           error={fieldErrors.whyLolev}
-          forceOpen={openKey === 'whyLolev'}
         >
           <Textarea
             id="whyLolev"
