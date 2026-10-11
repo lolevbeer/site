@@ -1,6 +1,7 @@
 /**
  * Event JSON-LD must include a real Place address when a location lookup is
  * provided, and always emit url / description / image (with OG fallback).
+ * The description is the event title: the CMS description is internal.
  */
 import { describe, expect, it } from 'vitest'
 import { createLocationLookup, generateEventJsonLd } from '@/lib/utils/json-ld'
@@ -70,11 +71,23 @@ describe('generateEventJsonLd', () => {
     expect(schema.endDate).toBeTruthy()
   })
 
-  it('prefers CMS description, site url, and absolute event image', () => {
+  it('never publishes the internal CMS description; uses the title', () => {
+    const schema = generateEventJsonLd(
+      event({
+        organizer: 'Karaoke Night',
+        description: 'Staff: tab under Smith, 20% gratuity',
+        date: '2026-10-01',
+        location: 'lawrenceville',
+      }),
+    )
+    expect(schema.description).toBe('Karaoke Night')
+  })
+
+  it('uses site url and absolute event image', () => {
     const schema = generateEventJsonLd(
       event({
         title: 'Beer Release',
-        description: 'Hazy IPA drop party',
+        description: 'Staff only: Hazy IPA drop party',
         date: '2026-10-02',
         time: '5:00pm',
         endTime: '8:00pm',
@@ -86,7 +99,7 @@ describe('generateEventJsonLd', () => {
         image: '/api/media/file/release.jpg',
       }),
     )
-    expect(schema.description).toBe('Hazy IPA drop party')
+    expect(schema.description).toBe('Beer Release')
     expect(schema.url).toBe('https://lolev.beer/events')
     expect(schema.image).toBe('https://lolev.beer/api/media/file/release.jpg')
     expect(schema.endDate).toBeTruthy()

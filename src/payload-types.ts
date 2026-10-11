@@ -726,7 +726,7 @@ export interface Event {
   site?: string | null;
   tags?: ('music' | 'utensils' | 'puzzle' | 'sports' | 'beer-release' | 'mic-vocal')[] | null;
   /**
-   * Public events show this on /events and in Google results. Put staff notes (tabs, gratuity, contacts) in Other info.
+   * Internal notes for staff. Never shown on the website.
    */
   description?: string | null;
   /**
@@ -911,7 +911,7 @@ export interface RecurringEvent {
   site?: string | null;
   tags?: ('music' | 'utensils' | 'puzzle' | 'sports' | 'beer-release' | 'mic-vocal')[] | null;
   /**
-   * Public events show this on /events and in Google results. Put staff notes (tabs, gratuity, contacts) in Other info.
+   * Internal notes for staff. Never shown on the website.
    */
   description?: string | null;
   /**
