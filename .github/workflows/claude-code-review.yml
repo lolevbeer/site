@@ -12,10 +12,12 @@ on:
 
 jobs:
   claude-review:
-    # Skip Dependabot: the action refuses bot actors, and Dependabot-triggered
-    # runs read Dependabot secrets, which don't hold CLAUDE_CODE_OAUTH_TOKEN.
-    # CI (type-check, tests, release smoke) still gates dependency bumps.
-    if: github.actor != 'dependabot[bot]'
+    # Skip bots and fork PRs: the action refuses bot actors, and neither gets
+    # CLAUDE_CODE_OAUTH_TOKEN (Dependabot runs read Dependabot secrets; fork
+    # runs get none). CI (type-check, tests, release smoke) still runs on them.
+    if: >-
+      !endsWith(github.actor, '[bot]') &&
+      github.event.pull_request.head.repo.full_name == github.repository
 
     runs-on: ubuntu-latest
     permissions:
@@ -26,9 +28,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 1
+          persist-credentials: false
 
       - name: Run Claude Code Review
         id: claude-review
