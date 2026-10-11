@@ -1,10 +1,16 @@
 /**
  * Shared CSS variable definitions for live display components (TV menus, events boards).
  * Bypasses Next.js theme system via inline styles for maximum browser compatibility.
+ *
+ * The board theme comes from the menu, not the device's site theme, so every
+ * token a board renders with must be set here or it falls through to `html`
+ * (`.dark` when the device's site theme is dark). Values mirror globals.css;
+ * tests/int/contrast-tokens.int.spec.ts fails if they drift.
  */
 
 /** Light mode CSS variables for live displays */
 const lightVars = {
+  colorScheme: 'light',
   '--color-background': '#ffffff',
   '--color-foreground': '#1d1d1f',
   '--color-foreground-muted': '#6e6e73',
@@ -16,12 +22,16 @@ const lightVars = {
   '--color-secondary': '#f5f5f7',
   '--color-secondary-foreground': '#1d1d1f',
   '--color-muted': '#f2f2f2',
-  '--color-muted-foreground': '#6a6a6f', // AA on white, matches globals.css
+  '--color-muted-foreground': '#6a6a6f',
+  '--color-destructive': '#ff3b30',
+  '--color-destructive-foreground': '#ffffff',
   '--color-border': '#d2d2d7',
+  '--color-ring': '#0071e3',
 } as React.CSSProperties
 
 /** Dark mode CSS variables for live displays */
 const darkVars = {
+  colorScheme: 'dark',
   '--color-background': '#000000',
   '--color-foreground': '#f5f5f7',
   '--color-foreground-muted': '#acacae',
@@ -34,7 +44,10 @@ const darkVars = {
   '--color-secondary-foreground': '#f5f5f7',
   '--color-muted': '#2c2c2e',
   '--color-muted-foreground': '#98989d',
+  '--color-destructive': '#ff453a',
+  '--color-destructive-foreground': '#ffffff',
   '--color-border': '#38383a',
+  '--color-ring': '#0a84ff',
 } as React.CSSProperties
 
 /** Get the appropriate theme variables for a given theme mode */
