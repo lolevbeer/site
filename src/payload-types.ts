@@ -407,7 +407,7 @@ export interface Location {
    */
   slug?: string | null;
   /**
-   * Former slugs. /<alias> redirects to the current page and /e/<alias> still shows the events board. A rename adds the old slug automatically; delete one to retire it.
+   * Former slugs. /<alias> redirects to the current page and /e/<alias> still shows the events board. A rename adds the old slug automatically. Browsers cache the redirect, so a deleted alias can keep sending past visitors here; avoid reusing it as another location's slug.
    */
   aliases?: string[] | null;
   basicInfo?: {
