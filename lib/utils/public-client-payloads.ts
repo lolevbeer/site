@@ -7,13 +7,17 @@
  * never reads, so these helpers keep only what the client renders. Server-only
  * consumers (JSON-LD) keep using the full docs.
  *
- * Each projection keeps the original type's shape, so client components take
- * the projected data with no prop or type changes. When a component starts
- * reading a new field, add it here too; the render-equality tests in
- * tests/int/public-client-payloads.int.spec.tsx catch a missed field.
+ * The homepage projections are cast back to the full Beer/Menu types so the
+ * client components keep their prop types. The cast deliberately widens: tsc
+ * still believes dropped fields (description, url, updatedAt, ...) exist, so a
+ * component that starts reading one compiles and renders it blank. When a
+ * client component reads a new field, add it here too. The render-equality
+ * tests in tests/int/public-client-payloads.int.spec.tsx compare full vs.
+ * projected renders of FeaturedBeers, FeaturedCans, HeroSection, MarketingText
+ * (#marketing) and FoodPageClient, so a missed field read by those fails there.
  */
 import type { FoodVendorSchedule } from '@/lib/types/food'
-import type { Beer, Media, Menu } from '@/src/payload-types'
+import type { Beer, ComingSoon, Media, Menu } from '@/src/payload-types'
 import { extractBeerFromMenuItem, extractProductFromMenuItem } from './menu-item-utils'
 
 /** A /food schedule row with only the fields FoodPageClient reads. */
@@ -59,7 +63,7 @@ export function toHomeBeer(beer: Beer): Beer {
     id: beer.id,
     name: beer.name,
     slug: beer.slug,
-    style: typeof beer.style === 'object' ? { name: beer.style.name } : beer.style,
+    style: beer.style && typeof beer.style === 'object' ? { name: beer.style.name } : beer.style,
     glass: beer.glass,
     abv: beer.abv,
     image: toHomeImage(beer.image),
@@ -84,7 +88,7 @@ export function toHomeBeer(beer: Beer): Beer {
  */
 export function toHomeMenu(menu: Menu): Menu {
   const location =
-    typeof menu.location === 'object'
+    menu.location && typeof menu.location === 'object'
       ? { id: menu.location.id, slug: menu.location.slug, name: menu.location.name }
       : menu.location
   return {
@@ -105,4 +109,18 @@ export function toHomeMenu(menu: Menu): Menu {
       }
     }),
   } as Menu
+}
+
+type ComingSoonEntry = NonNullable<ComingSoon['beers']>[number]
+
+/**
+ * Coming-soon entries for the #marketing copy, which prints only the beer name
+ * or, without a beer, the style name. UpcomingBeers is a server component and
+ * keeps the full depth-2 entries.
+ */
+export function toHomeComingSoon(entries: ComingSoonEntry[]): ComingSoonEntry[] {
+  return entries.map(({ beer, style }) => ({
+    beer: beer && typeof beer === 'object' ? ({ name: beer.name } as Beer) : beer,
+    style: style && typeof style === 'object' ? { name: style.name } as typeof style : style,
+  }))
 }

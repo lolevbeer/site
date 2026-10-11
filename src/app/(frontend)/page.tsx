@@ -13,7 +13,7 @@ import { extractBeerFromMenuItem } from '@/lib/utils/menu-item-utils';
 import { getSiteSeo, siteDefaults } from '@/lib/utils/site-seo'
 import { getAllLocations } from '@/lib/utils/payload-api'
 import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
-import { toHomeBeer, toHomeMenu } from '@/lib/utils/public-client-payloads'
+import { toHomeBeer, toHomeComingSoon, toHomeMenu } from '@/lib/utils/public-client-payloads'
 import type { Menu } from '@/src/payload-types'
 
 // ISR: Revalidate every 5 minutes as fallback (on-demand revalidation handles immediate updates)
@@ -55,7 +55,7 @@ export default async function Home(): Promise<React.ReactElement> {
   const localBusinessSchemas = generateLocalBusinessSchemas(data.locations, data.weeklyHours);
   const organizationSchema = generateOrganizationSchema(data.locations);
   const webSiteSchema = generateWebSiteSchema();
-  const beersFrom = (menu: (typeof data.allDraftMenus)[number] | null) =>
+  const beersFrom = (menu: Menu | null) =>
     (menu?.items ?? [])
       .map((item) => extractBeerFromMenuItem(item))
       .filter((beer): beer is NonNullable<typeof beer> => beer !== null);
@@ -110,7 +110,7 @@ export default async function Home(): Promise<React.ReactElement> {
           cansMenusByLocation={homeCansMenusByLocation}
           eventsByLocation={data.eventsMarketingByLocation}
           foodByLocation={data.foodMarketingByLocation}
-          comingSoonBeers={data.comingSoonBeers}
+          comingSoonBeers={toHomeComingSoon(data.comingSoonBeers)}
         />
 
         <HomeContent

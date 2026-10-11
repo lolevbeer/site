@@ -7,17 +7,20 @@
  * - the serialized props shrink (sizes are logged for the PR description).
  */
 import { cleanup, render } from '@testing-library/react'
-import { createElement } from 'react'
+import React, { createElement } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { FeaturedBeers, FeaturedCans } from '@/components/home/featured-menu'
+import { HeroSection } from '@/components/home/hero-section'
+import { MarketingText } from '@/components/home/marketing-text'
 import { FoodPageClient } from '@/src/app/(frontend)/food/food-page-client'
 import {
   toFoodPageSchedules,
   toHomeBeer,
+  toHomeComingSoon,
   toHomeMenu,
 } from '@/lib/utils/public-client-payloads'
 import { DayOfWeek, type FoodVendorSchedule } from '@/lib/types/food'
-import type { Beer, Media, Menu } from '@/src/payload-types'
+import type { Beer, ComingSoon, Media, Menu } from '@/src/payload-types'
 
 vi.stubGlobal(
   'IntersectionObserver',
@@ -38,6 +41,17 @@ vi.mock('@/lib/hooks/use-auth', () => ({
   useAuth: () => ({ isAuthenticated: false }),
 }))
 vi.mock('@/components/ui/page-breadcrumbs', () => ({ PageBreadcrumbs: () => null }))
+// Embla needs layout APIs jsdom lacks; the carousel's children are what we compare.
+vi.mock('@/components/ui/carousel', () => {
+  const Pass = ({ children }: { children?: React.ReactNode }) => createElement('div', null, children)
+  return {
+    Carousel: Pass,
+    CarouselContent: Pass,
+    CarouselItem: Pass,
+    CarouselNext: () => null,
+    CarouselPrevious: () => null,
+  }
+})
 
 afterEach(cleanup)
 
@@ -180,6 +194,67 @@ describe('homepage menu projection', () => {
     }
   })
 
+  it('renders the hero carousel identically from projected beers and cans menus', () => {
+    const beers = ['alpha', 'bravo', 'charlie', 'delta', 'echo', 'foxtrot'].map(beer)
+    const full = render(
+      createElement(HeroSection, { availableBeers: beers, cansMenus: [menu('cans')] }),
+    ).container.innerHTML
+    cleanup()
+    const projected = render(
+      createElement(HeroSection, {
+        availableBeers: beers.map(toHomeBeer),
+        cansMenus: [toHomeMenu(menu('cans'))],
+      }),
+    ).container.innerHTML
+    expect(projected).toBe(full)
+    expect(full).toContain('alpha-thumbnail.png')
+  })
+
+  it('renders the #marketing copy identically from projected menus and coming-soon beers', () => {
+    window.location.hash = '#marketing'
+    const comingSoon: NonNullable<ComingSoon['beers']> = [
+      { id: 'cs-1', beer: beer('golf', 0), style: null },
+      { id: 'cs-2', beer: null, style: { id: 'style-2', name: 'Pilsner', updatedAt: 'x', createdAt: 'x' } },
+    ]
+    const props = (draft: Menu | null, cans: Menu | null, soon: typeof comingSoon) => ({
+      draftMenusByLocation: { lawrenceville: draft },
+      cansMenusByLocation: { lawrenceville: cans },
+      eventsByLocation: {},
+      foodByLocation: {},
+      comingSoonBeers: soon,
+    })
+    const full = render(
+      createElement(MarketingText, props(menu('draft'), menu('cans'), comingSoon)),
+    ).container.innerHTML
+    cleanup()
+    const projected = render(
+      createElement(
+        MarketingText,
+        props(toHomeMenu(menu('draft')), toHomeMenu(menu('cans')), toHomeComingSoon(comingSoon)),
+      ),
+    ).container.innerHTML
+    window.location.hash = ''
+    expect(projected).toBe(full)
+    expect(full).toContain('Beer alpha')
+    expect(full).toContain('Beer golf')
+    expect(full).toContain('Pilsner')
+    expect(bytes(toHomeComingSoon(comingSoon))).toBeLessThan(bytes(comingSoon) / 5)
+  })
+
+  it('tolerates a menu with a null location and a beer with a null style', () => {
+    const broken = menu('draft')
+    broken.location = null as unknown as Menu['location']
+    const first = broken.items![0].product!.value as Beer
+    first.style = null as unknown as Beer['style']
+    const projected = toHomeMenu(broken)
+    expect(projected.location).toBeNull()
+    expect((projected.items![0].product!.value as Beer).style).toBeNull()
+    expect(toHomeBeer(first).style).toBeNull()
+    const full = render(createElement(FeaturedBeers, { menus: [broken] })).container.innerHTML
+    cleanup()
+    expect(render(createElement(FeaturedBeers, { menus: [projected] })).container.innerHTML).toBe(full)
+  })
+
   it('keeps one display URL per image size the homepage reads, and nothing else', () => {
     const projected = toHomeBeer(beer('alpha', 0))
     expect(projected.image).toEqual({
@@ -227,6 +302,20 @@ describe('/food client projection', () => {
       logoUrl: '/api/media/file/vendor-0-thumbnail.png',
       location: 'zelienople',
     })
+  })
+
+  it('shows the start time for a start-only row and prefers time when both are set', () => {
+    const rows: FoodVendorSchedule[] = [
+      { ...schedules[1], vendor: 'Start Only', time: '', start: '5pm' },
+      { ...schedules[3], vendor: 'Both Set', date: '2099-02-01', time: '4-9pm', start: '6pm' },
+    ]
+    const text = render(
+      createElement(FoodPageClient, { initialSchedules: toFoodPageSchedules(rows) }),
+    ).container.textContent
+    // Each agenda row renders its time right before the vendor name.
+    expect(text).toContain('5pmStart Only')
+    expect(text).toMatch(/9pmBoth Set/)
+    expect(text).not.toContain('6pm')
   })
 
   it('renders the schedule identically to the full rows and shrinks the payload', () => {
