@@ -1,10 +1,10 @@
 /**
  * BeerDetails renders taproom availability from server-provided props (no
- * client /api/menus fetch): taproom names link to their landing pages, and a
- * failed menu load (availability = null) says so instead of guessing.
+ * client /api/menus fetch): taproom names link to their landing pages. A
+ * failed menu load never reaches here; the page throws (see beer-page spec).
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, within } from '@testing-library/react'
 import type { Beer } from '@/src/payload-types'
 import { BeerDetails } from '@/components/beer/beer-details'
 
@@ -37,7 +37,18 @@ describe('BeerDetails availability', () => {
     expect(screen.getByRole('link', { name: 'Lawrenceville' }).getAttribute('href')).toBe(
       '/lawrenceville',
     )
-    expect(screen.getByText(/Cans available at/).textContent).toBe('• Cans available at Zelienople')
+    const cansLine = screen.getByText(/Cans available at/)
+    expect(cansLine.textContent).toBe('• Cans available at Zelienople')
+    expect(within(cansLine).getByRole('link', { name: 'Zelienople' }).getAttribute('href')).toBe(
+      '/zelienople',
+    )
+    const zelienople = screen.getAllByRole('link', { name: 'Zelienople' })
+    expect(zelienople).toHaveLength(2)
+    for (const link of zelienople) expect(link.getAttribute('href')).toBe('/zelienople')
+    // In-sentence links need a non-color cue (WCAG 1.4.1), not hover-only underline.
+    for (const link of screen.getAllByRole('link', { name: /Lawrenceville|Zelienople/ })) {
+      expect(link.className.split(' ')).toContain('underline')
+    }
     // Prices follow availability: draft and 4-pack both show.
     expect(screen.getByText(/Draft \$8/)).toBeTruthy()
     expect(screen.getByText(/4 Pack \$18/)).toBeTruthy()
@@ -47,11 +58,5 @@ describe('BeerDetails availability', () => {
   it('says it is not on tap anywhere when no menu lists it', () => {
     render(<BeerDetails beer={beer} availability={{ tap: [], cans: [] }} />)
     expect(screen.getByText('Not currently available at our taprooms')).toBeTruthy()
-  })
-
-  it('makes no availability claim when menus failed to load', () => {
-    render(<BeerDetails beer={beer} availability={null} />)
-    expect(screen.queryByText('Not currently available at our taprooms')).toBeNull()
-    expect(screen.getByText(/availability is unavailable/i)).toBeTruthy()
   })
 })

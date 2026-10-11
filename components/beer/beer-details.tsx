@@ -70,8 +70,7 @@ export interface BeerAvailability {
 
 interface BeerDetailsProps {
   beer: PayloadBeer
-  /** Null when menus could not be loaded; the Availability section says so. */
-  availability: BeerAvailability | null
+  availability: BeerAvailability
   className?: string
 }
 
@@ -80,7 +79,12 @@ function TaproomLinks({ places }: { places: TaproomRef[] }) {
   return places.map((place, i) => (
     <Fragment key={place.slug}>
       {i > 0 && ' and '}
-      <Link href={`/${place.slug}`} className="text-primary hover:underline">
+      <Link
+        href={`/${place.slug}`}
+        // Underlined at rest: inside muted body text, color alone is not
+        // enough to mark a link (WCAG 1.4.1).
+        className="text-primary underline underline-offset-2 hover:decoration-2"
+      >
         {place.name}
       </Link>
     </Fragment>
@@ -160,8 +164,8 @@ export function BeerDetails({ beer, availability, className = '' }: BeerDetailsP
   const canMetalnessUrl = textureImageUrl(getMediaUrl(beer.labelMetalness))
   const styleName = getStyleName(beer.style)
   const packagingType = getPackagingType(beer)
-  const tapLocations = availability?.tap ?? []
-  const canLocations = availability?.cans ?? []
+  const tapLocations = availability.tap
+  const canLocations = availability.cans
   const pricingLines = getPricingLines(beer, {
     onTap: tapLocations.length > 0,
     inCans: canLocations.length > 0,
@@ -317,44 +321,38 @@ export function BeerDetails({ beer, availability, className = '' }: BeerDetailsP
                 <CardTitle className="text-lg">Availability</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
-                {!availability ? (
-                  <p className="text-sm text-muted-foreground">
-                    Taproom availability is unavailable right now.
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {tapLocations.length > 0 && (
-                      <p className="text-sm text-muted-foreground">
-                        • On draft at <TaproomLinks places={tapLocations} />
-                      </p>
-                    )}
-                    {canLocations.length > 0 && (
-                      <p className="text-sm text-muted-foreground">
-                        • {getPackagingAvailableAtPrefix(packagingType)}{' '}
-                        <TaproomLinks places={canLocations} />
-                      </p>
-                    )}
-                    {tapLocations.length > 0 && canLocations.length === 0 && (
-                      <p className="text-sm text-highlight font-medium">
-                        • {getDraftOnlyMessage(packagingType)}
-                      </p>
-                    )}
-                    {tapLocations.length === 0 && canLocations.length === 0 && (
-                      <p className="text-sm text-muted-foreground">
-                        Not currently available at our taprooms
-                      </p>
-                    )}
-                    <p className="pt-2">
-                      <Link
-                        href="/beer-map"
-                        prefetch={false}
-                        className="text-sm font-medium text-primary hover:underline"
-                      >
-                        Find retailers near you on the beer map
-                      </Link>
+                <div className="space-y-2">
+                  {tapLocations.length > 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      • On draft at <TaproomLinks places={tapLocations} />
                     </p>
-                  </div>
-                )}
+                  )}
+                  {canLocations.length > 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      • {getPackagingAvailableAtPrefix(packagingType)}{' '}
+                      <TaproomLinks places={canLocations} />
+                    </p>
+                  )}
+                  {tapLocations.length > 0 && canLocations.length === 0 && (
+                    <p className="text-sm text-highlight font-medium">
+                      • {getDraftOnlyMessage(packagingType)}
+                    </p>
+                  )}
+                  {tapLocations.length === 0 && canLocations.length === 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      Not currently available at our taprooms
+                    </p>
+                  )}
+                  <p className="pt-2">
+                    <Link
+                      href="/beer-map"
+                      prefetch={false}
+                      className="text-sm font-medium text-primary hover:underline"
+                    >
+                      Find retailers near you on the beer map
+                    </Link>
+                  </p>
+                </div>
               </CardContent>
             </Card>
 

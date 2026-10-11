@@ -13,7 +13,6 @@ import { JsonLd } from '@/components/seo/json-ld'
 import { PageTransition } from '@/components/motion'
 import { generateProductSchema } from '@/lib/utils/product-schema'
 import { generateBreadcrumbSchema, generateWebPageSchema } from '@/lib/utils/breadcrumb-schema'
-import { logger } from '@/lib/utils/logger'
 import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
 import { ogCardImages } from '@/lib/og/paths'
 
@@ -69,29 +68,31 @@ export const revalidate = 3600
 
 /**
  * Taprooms whose website draft/cans menu lists this beer, from the same
- * cached per-location getters the taproom pages use. Null when any menu fails
- * to load, so the page shows no availability claim rather than a wrong one.
+ * cached per-location getters the taproom pages use.
+ *
+ * "On tap" means on the taproom's *selected* website menu (getDraftMenu /
+ * getCansMenu); a beer that is only on some other published menu counts as
+ * not available. The page's InStock/OutOfStock JSON-LD uses the same rule.
+ *
+ * Menu errors propagate (like getBeerBySlug's): error.tsx renders and ISR
+ * keeps serving the last good page instead of caching a degraded one for the
+ * full revalidate window.
  */
-async function loadAvailability(beerId: string): Promise<BeerAvailability | null> {
-  try {
-    const locations = (await getAllLocations()).filter(
-      (loc): loc is typeof loc & { slug: string } => Boolean(loc.slug),
-    )
-    const rows = await Promise.all(
-      locations.map(async (loc) => {
-        const [draft, cans] = await Promise.all([getDraftMenu(loc.slug), getCansMenu(loc.slug)])
-        const has = (menu: typeof draft) =>
-          Boolean(menu?.items?.some((item) => menuItemHasBeer(item, beerId)))
-        return { place: { name: loc.name, slug: loc.slug }, tap: has(draft), cans: has(cans) }
-      }),
-    )
-    return {
-      tap: rows.filter((row) => row.tap).map((row) => row.place),
-      cans: rows.filter((row) => row.cans).map((row) => row.place),
-    }
-  } catch (error) {
-    logger.error('Could not load menus for beer availability', error)
-    return null
+async function loadAvailability(beerId: string): Promise<BeerAvailability> {
+  const locations = (await getAllLocations()).filter((loc): loc is typeof loc & { slug: string } =>
+    Boolean(loc.slug),
+  )
+  const rows = await Promise.all(
+    locations.map(async (loc) => {
+      const [draft, cans] = await Promise.all([getDraftMenu(loc.slug), getCansMenu(loc.slug)])
+      const has = (menu: typeof draft) =>
+        Boolean(menu?.items?.some((item) => menuItemHasBeer(item, beerId)))
+      return { place: { name: loc.name, slug: loc.slug }, tap: has(draft), cans: has(cans) }
+    }),
+  )
+  return {
+    tap: rows.filter((row) => row.tap).map((row) => row.place),
+    cans: rows.filter((row) => row.cans).map((row) => row.place),
   }
 }
 
@@ -103,10 +104,7 @@ export default async function BeerPage({ params }: BeerPageProps) {
   if (!beer || beer.hideFromSite) notFound()
 
   const availability = await loadAvailability(beer.id)
-  // Unknown (menus failed) stays undefined → LimitedAvailability, not a guess.
-  const inStock = availability
-    ? availability.tap.length + availability.cans.length > 0
-    : undefined
+  const inStock = availability.tap.length + availability.cans.length > 0
   const productSchema = generateProductSchema(beer, { inStock })
   const webPageSchema = generateWebPageSchema({
     name: beer.name,

@@ -176,10 +176,11 @@ describe('generateMetadata error handling', () => {
   })
 })
 
-
 describe('BeerPage server-rendered availability', () => {
   const beer = { id: 'beer-9', slug: 'akko', name: 'Akko', hideFromSite: false }
-  const menuWith = (id: string) => ({ items: [{ product: { relationTo: 'beers', value: { id } } }] })
+  const menuWith = (id: string) => ({
+    items: [{ product: { relationTo: 'beers', value: { id } } }],
+  })
 
   /** Walk the returned element tree to find BeerDetails' props. */
   async function renderPage() {
@@ -233,10 +234,19 @@ describe('BeerPage server-rendered availability', () => {
     expect(generateProductSchema).toHaveBeenCalledWith(beer, { inStock: false })
   })
 
-  it('leaves availability and stock unknown when menus fail to load', async () => {
-    ;(getDraftMenu as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('db down'))
+  it('throws on a menu failure so ISR keeps the last good page (no degraded cache entry)', async () => {
+    const dbError = new Error('db down')
+    ;(getDraftMenu as ReturnType<typeof vi.fn>).mockRejectedValue(dbError)
+    await expect(renderPage()).rejects.toThrow(dbError)
+    expect(generateProductSchema).not.toHaveBeenCalled()
+  })
+
+  it("ignores a beer on a published menu the taproom hasn't selected for the website", async () => {
+    // getDraftMenu/getCansMenu return only the selected menu, so a beer that is
+    // only on some other published menu does not count as available.
     const props = await renderPage()
-    expect(props?.availability).toBeNull()
-    expect(generateProductSchema).toHaveBeenCalledWith(beer, { inStock: undefined })
+    expect(getDraftMenu).toHaveBeenCalledWith('lawrenceville')
+    expect(getCansMenu).toHaveBeenCalledWith('zelienople')
+    expect(props?.availability).toEqual({ tap: [], cans: [] })
   })
 })
