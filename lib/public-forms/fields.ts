@@ -35,11 +35,18 @@ export function rejectFormulaPrefix(
   }
 }
 
+/**
+ * Summary for the alert above a failed form: the first field error, prefixed
+ * with the count when several fields failed (each field shows its own text).
+ */
 export function firstFieldError(
   errors: Record<string, string | undefined>,
   fallback = PUBLIC_FORM_INCOMPLETE,
 ): string {
-  return Object.values(errors).find(Boolean) || fallback
+  const messages = Object.values(errors).filter(Boolean)
+  if (messages.length === 0) return fallback
+  if (messages.length === 1) return messages[0] as string
+  return `${messages.length} fields need fixing. ${messages[0]}`
 }
 
 /**
