@@ -80,6 +80,10 @@ pushes to `main`:
    `VERCEL_ENV=preview` (migrations skipped), then Playwright against
    `http://127.0.0.1:3100`
 
+[`.github/workflows/claude-code-review.yml`](.github/workflows/claude-code-review.yml)
+runs Claude Code Review on pull requests. It skips bot actors (Dependabot) and
+fork PRs, which can't read its token. No check is required to merge.
+
 The CI badge reflects the latest `main` run of that workflow. Preview and
 production deploys still go through Vercel auto-deploy; the Vercel badge is the
 GitHub `Production` deployment status, not a preview.
