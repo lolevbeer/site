@@ -24,7 +24,10 @@ import {
 } from '@/lib/config/tv-display'
 
 interface LiveEventsProps {
+  /** The /e URL param; the events stream polls with it. */
   location: string
+  /** The resolved location's canonical slug, for the taproom link. */
+  locationSlug: string
   initialEvents: BreweryEvent[]
   initialFood?: FoodItem[]
   cansMenu?: PayloadMenu | null
@@ -136,6 +139,7 @@ function AgendaRow({
  */
 export function LiveEvents({
   location,
+  locationSlug,
   initialEvents,
   initialFood = [],
   cansMenu,
@@ -257,7 +261,7 @@ export function LiveEvents({
 
   return (
     <div
-      className="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground"
+      className="h-dvh w-screen overflow-hidden flex flex-col bg-background text-foreground"
       style={themeVars}
     >
       <section className="flex-1 min-h-0 flex flex-col bg-background overflow-hidden">
@@ -352,8 +356,8 @@ export function LiveEvents({
           </div>
         </div>
       </section>
-      {/* Phones only (portrait); TVs are landscape and never show it. */}
-      <TapListBanner locationSlug={location} />
+      {/* Phones only (portrait touch screens); TVs never show it. */}
+      <TapListBanner locationSlug={locationSlug} label="Open the taproom page" />
     </div>
   )
 }

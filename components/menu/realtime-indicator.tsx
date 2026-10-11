@@ -6,7 +6,8 @@
  * arrives, so a CMS save is visibly seen reaching the TV.
  *
  * Sits in the gutter outside the board's safe-area padding (see tv-display.ts),
- * sized in vh like the rest of the board so it scales with the frame.
+ * sized in vh like the rest of the board so it scales with the frame. Hidden
+ * on phones (portrait, touch), where the tap-list banner fills that corner.
  */
 
 import { Zap } from '@/components/icons'
@@ -25,7 +26,7 @@ export function RealtimeIndicator({ connected, pulseKey }: RealtimeIndicatorProp
     <div
       role="img"
       aria-label="Live updates connected"
-      className="pointer-events-none fixed text-foreground"
+      className="pointer-events-none fixed text-foreground portrait:pointer-coarse:hidden"
       style={{ right: '1vh', bottom: '0.7vh', width: '2vh', height: '2vh' }}
     >
       <Zap key={pulseKey} className="live-pulse size-full" />

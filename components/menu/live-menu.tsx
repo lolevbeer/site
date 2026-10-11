@@ -71,7 +71,7 @@ export function LiveMenu({ menuUrl, initialMenu }: LiveMenuProps) {
 
   return (
     <div
-      className="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground"
+      className="h-dvh w-screen overflow-hidden flex flex-col bg-background text-foreground"
       style={themeVars}
     >
       {/* flex-1 box so the h-full board shrinks to make room for the portrait banner. */}

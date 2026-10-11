@@ -93,9 +93,7 @@ describe('midnight rollover', () => {
     render(
       <>
         <WeeklyHoursTable weeklyHours={hours} variant="card" />
-        <ScheduleList
-          items={[...items, { id: 'b', date: '2026-09-08', title: 'Tuesday tacos' }]}
-        />
+        <ScheduleList items={[...items, { id: 'b', date: '2026-09-08', title: 'Tuesday tacos' }]} />
       </>,
     )
     const row = (name: string) => screen.getByRole('rowheader', { name }).closest('tr')
@@ -155,7 +153,12 @@ describe('hydrating cached HTML after midnight', () => {
     const node = (
       <FoodPageClient
         initialSchedules={[
-          { vendor: 'Yesterday Truck', date: '2026-09-07', time: '17:00', location: 'lawrenceville' },
+          {
+            vendor: 'Yesterday Truck',
+            date: '2026-09-07',
+            time: '17:00',
+            location: 'lawrenceville',
+          },
           { vendor: 'Today Truck', date: '2026-09-08', time: '17:00', location: 'lawrenceville' },
         ]}
       />
@@ -179,7 +182,10 @@ describe('hydrating cached HTML after midnight', () => {
     })
     const node = (
       <EventsPageClient
-        initialEvents={[ev('y', '2026-09-07', 'Yesterday show'), ev('t', '2026-09-08', 'Today show')]}
+        initialEvents={[
+          ev('y', '2026-09-07', 'Yesterday show'),
+          ev('t', '2026-09-08', 'Today show'),
+        ]}
       />
     )
     const { errors } = hydrate(node, at2359, at0001)
@@ -190,7 +196,9 @@ describe('hydrating cached HTML after midnight', () => {
 
   it('home Next Event card shows the full date in HTML and Today after mount', () => {
     const node = (
-      <QuickInfoCards nextEvent={{ name: 'Trivia', date: '2026-09-07', location: 'lawrenceville' }} />
+      <QuickInfoCards
+        nextEvent={{ name: 'Trivia', date: '2026-09-07', location: 'lawrenceville' }}
+      />
     )
     vi.setSystemTime(new Date(at2359))
     expect(renderToString(node)).toContain('Monday, September 7, 2026')

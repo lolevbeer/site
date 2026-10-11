@@ -45,6 +45,8 @@ const getDataByLocation = cache(async (locationSlug: string): Promise<{
   food: FoodItem[]
   cansMenu: PayloadMenu | null
   locationName: string
+  /** The resolved location's own slug (the param may differ in case). */
+  locationSlug: string
 } | null> => {
   const payload = await getPayload({ config })
 
@@ -97,6 +99,7 @@ const getDataByLocation = cache(async (locationSlug: string): Promise<{
     food,
     cansMenu,
     locationName: location.name,
+    locationSlug: location.slug || locationSlug.toLowerCase(),
   }
 })
 
@@ -111,6 +114,7 @@ export default async function EventsDisplayPage({ params }: EventsDisplayPagePro
   return (
     <LiveEvents
       location={location.toLowerCase()}
+      locationSlug={data.locationSlug}
       initialEvents={data.events}
       initialFood={data.food}
       cansMenu={data.cansMenu}
