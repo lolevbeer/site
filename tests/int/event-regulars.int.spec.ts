@@ -1,7 +1,8 @@
 /**
  * Weekly regulars collapse out of the /events list so one-offs stand out.
- * Only recurring occurrences exactly a week apart collapse; a monthly or
- * single occurrence stays in the dated list rather than being mislabeled.
+ * A series collapses when its gaps are whole weeks and mostly one week, so a
+ * holiday skip, a matching one-off override, or a first-to-fourth schedule
+ * still reads as weekly; monthly, biweekly, or single occurrences stay dated.
  */
 import { describe, expect, it, vi } from 'vitest'
 
@@ -34,7 +35,10 @@ describe('transformPayloadEventToBreweryEvent', () => {
       ...base,
       id: 'recurring-def1-2026-10-14',
     } as unknown as PayloadEvent)
-    const oneOff = transformPayloadEventToBreweryEvent({ ...base, id: 'abc' } as unknown as PayloadEvent)
+    const oneOff = transformPayloadEventToBreweryEvent({
+      ...base,
+      id: 'abc',
+    } as unknown as PayloadEvent)
     expect(recurring.type).toBe(EventType.RECURRING)
     expect(oneOff.type).toBe(EventType.SPECIAL_EVENT)
   })
@@ -78,6 +82,68 @@ describe('splitRegulars', () => {
     const { oneOffs, regulars } = splitRegulars(events)
     expect(regulars).toHaveLength(0)
     expect(oneOffs).toHaveLength(3)
+  })
+
+  it('tolerates a skipped week (an excluded holiday date)', () => {
+    const events = [
+      ev('recurring-t-2026-11-11', '2026-11-11'),
+      ev('recurring-t-2026-11-18', '2026-11-18'),
+      // 11-25 excluded for Thanksgiving week.
+      ev('recurring-t-2026-12-02', '2026-12-02'),
+      ev('recurring-t-2026-12-09', '2026-12-09'),
+    ]
+    const { oneOffs, regulars } = splitRegulars(events)
+    expect(oneOffs).toHaveLength(0)
+    expect(regulars[0].occurrenceIds).toHaveLength(4)
+  })
+
+  it('folds a same-time one-off override back into its series', () => {
+    // mergeScheduledEvents swaps a one-off in for that day's occurrence.
+    const events = [
+      ev('recurring-t-2026-10-14', '2026-10-14'),
+      ev('override', '2026-10-21'),
+      ev('recurring-t-2026-10-28', '2026-10-28'),
+    ]
+    const { oneOffs, regulars } = splitRegulars(events)
+    expect(oneOffs).toHaveLength(0)
+    expect(regulars[0].occurrenceIds).toEqual([
+      'recurring-t-2026-10-14',
+      'override',
+      'recurring-t-2026-10-28',
+    ])
+  })
+
+  it('keeps a one-off at a different time in the dated list, and the series still collapses', () => {
+    const events = [
+      ev('recurring-t-2026-10-14', '2026-10-14'),
+      ev('special', '2026-10-21', { time: '21:00' }),
+      ev('recurring-t-2026-10-28', '2026-10-28'),
+      ev('recurring-t-2026-11-04', '2026-11-04'),
+    ]
+    const { oneOffs, regulars } = splitRegulars(events)
+    expect(oneOffs.map((e) => e.id)).toEqual(['special'])
+    expect(regulars).toHaveLength(1)
+  })
+
+  it('collapses a first-to-fourth schedule across a month with a fifth weekday', () => {
+    // December 2026 has five Wednesdays; the 30th is skipped.
+    const dates = [
+      '2026-12-02',
+      '2026-12-09',
+      '2026-12-16',
+      '2026-12-23',
+      '2027-01-06',
+      '2027-01-13',
+    ]
+    const { oneOffs, regulars } = splitRegulars(dates.map((d) => ev(`recurring-t-${d}`, d)))
+    expect(oneOffs).toHaveLength(0)
+    expect(regulars).toHaveLength(1)
+  })
+
+  it('leaves a first-and-third (biweekly) schedule in the dated list', () => {
+    const dates = ['2026-10-07', '2026-10-21', '2026-11-04', '2026-11-18']
+    const { regulars } = splitRegulars(dates.map((d) => ev(`recurring-b-${d}`, d)))
+    expect(regulars).toHaveLength(0)
   })
 
   it('never collapses non-recurring events even when weekly', () => {

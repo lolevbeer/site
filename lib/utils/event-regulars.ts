@@ -24,31 +24,44 @@ function regularKey(event: BreweryEvent): string {
   ].join('|')
 }
 
+/**
+ * Weekly when every gap is a whole number of weeks and at least half the gaps
+ * are exactly one week. That tolerates an excluded holiday or a first-to-fourth schedule
+ * skipping a month's fifth weekday, while monthly and every-other-week series
+ * stay in the dated list.
+ */
 function isWeekly(events: BreweryEvent[]): boolean {
   if (events.length < 2) return false
-  return events.every(
-    (event, i) =>
-      i === 0 ||
-      Math.round(
-        (parseLocalDate(event.date).getTime() - parseLocalDate(events[i - 1].date).getTime()) /
-          WEEK_MS,
-      ) === 1,
-  )
+  const weeks = events
+    .slice(1)
+    .map(
+      (event, i) =>
+        (parseLocalDate(event.date).getTime() - parseLocalDate(events[i].date).getTime()) / WEEK_MS,
+    )
+    .map(Math.round)
+  if (weeks.some((gap) => gap < 1)) return false
+  const oneWeekGaps = weeks.filter((gap) => gap === 1).length
+  return oneWeekGaps > 0 && oneWeekGaps * 2 >= weeks.length
 }
 
 /**
  * Recurring occurrences that share title, location, time, and weekday and
- * fall exactly a week apart become one regular; everything else (one-offs,
- * monthly schedules, a lone occurrence) stays in the dated list.
+ * repeat weekly become one regular. A one-off with the same key joins its
+ * series: that is how a mergeScheduledEvents override of one occurrence
+ * looks. Everything else (one-offs, monthly schedules, a lone occurrence)
+ * stays in the dated list.
  */
 export function splitRegulars(events: BreweryEvent[]): {
   oneOffs: BreweryEvent[]
   regulars: RegularEvent[]
 } {
+  const recurringKeys = new Set(
+    events.filter((event) => event.type === EventType.RECURRING).map(regularKey),
+  )
   const groups = new Map<string, BreweryEvent[]>()
   for (const event of events) {
-    if (event.type !== EventType.RECURRING) continue
     const key = regularKey(event)
+    if (!recurringKeys.has(key)) continue
     groups.set(key, [...(groups.get(key) ?? []), event])
   }
 
