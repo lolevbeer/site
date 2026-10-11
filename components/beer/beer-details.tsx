@@ -2,13 +2,13 @@
  * Beer Details Component
  * Displays comprehensive beer information for individual beer pages. Taproom
  * availability arrives as a server-rendered prop (see beer/[variant]/page.tsx).
- * A Share button opens the native share sheet, or copies the link where the
- * browser has none.
+ * A Share button shares the canonical /beer/<slug> URL through the native share
+ * sheet, or copies it where the browser has none (or the sheet fails).
  */
 
 'use client'
 
-import React, { Fragment, useState, useCallback } from 'react'
+import React, { Fragment, useState, useCallback, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import type { Beer as PayloadBeer } from '@/src/payload-types'
@@ -77,29 +77,52 @@ interface BeerDetailsProps {
 }
 
 /**
- * Shares this page: the native share sheet when the browser has one (phones,
- * in-app browsers), else copies the URL and confirms with "Link copied".
+ * Shares the beer's canonical `/beer/<slug>` URL (never the current address,
+ * which can carry `?loc=` or a `/<taproom>/` prefix): the native share sheet
+ * when the browser has one (phones, in-app browsers), else copies the link.
+ * The result ("Link copied" or "Couldn't copy the link") is also announced in
+ * a polite live region, since a focused button's new name is often not read.
  */
-function ShareButton({ title }: { title: string }) {
-  const [copied, setCopied] = useState(false)
+function ShareButton({ title, path }: { title: string; path: string }) {
+  const [status, setStatus] = useState<'idle' | 'copied' | 'failed'>('idle')
+
+  // Reset the confirmation after 2 s; the cleanup also covers unmount.
+  useEffect(() => {
+    if (status === 'idle') return
+    const id = setTimeout(() => setStatus('idle'), 2000)
+    return () => clearTimeout(id)
+  }, [status])
 
   const share = useCallback(async () => {
-    const url = window.location.href
+    const url = new URL(path, window.location.origin).href
     if (typeof navigator.share === 'function') {
-      // A dismissed share sheet rejects with AbortError; nothing to do.
-      await navigator.share({ title, url }).catch(() => {})
-      return
+      try {
+        await navigator.share({ title, url })
+        return
+      } catch (err) {
+        // A dismissed sheet rejects with AbortError; any other failure falls back to copying.
+        if ((err as { name?: unknown } | null)?.name === 'AbortError') return
+      }
     }
-    await navigator.clipboard?.writeText(url)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }, [title])
+    try {
+      if (!navigator.clipboard) throw new Error('No clipboard')
+      await navigator.clipboard.writeText(url)
+      setStatus('copied')
+    } catch {
+      setStatus('failed')
+    }
+  }, [title, path])
 
   return (
-    <Button variant="outline" onClick={share}>
-      {copied ? <Check className="h-5 w-5" /> : <Share className="h-5 w-5" />}
-      {copied ? 'Link copied' : 'Share'}
-    </Button>
+    <>
+      <Button variant="outline" onClick={share}>
+        {status === 'copied' ? <Check className="h-5 w-5" /> : <Share className="h-5 w-5" />}
+        {status === 'copied' ? 'Link copied' : 'Share'}
+      </Button>
+      <span role="status" aria-live="polite" className="sr-only">
+        {status === 'copied' ? 'Link copied' : status === 'failed' ? "Couldn't copy the link" : ''}
+      </span>
+    </>
   )
 }
 
@@ -406,7 +429,7 @@ export function BeerDetails({ beer, availability, className = '' }: BeerDetailsP
 
           {/* External Links */}
           <div className="flex flex-wrap gap-3">
-            <ShareButton title={beer.name} />
+            <ShareButton title={beer.name} path={`/beer/${beer.slug}`} />
             {beer.untappd && (
               <Button variant="outline" asChild>
                 <a
