@@ -76,18 +76,18 @@ export function getDraftOnlyMessage(type: PackagingType): string {
 }
 
 /**
- * Get the location availability message (e.g., "Cans available at X").
+ * Lead-in for the packaged availability line ("Cans available at"); the beer
+ * page follows it with the linked taproom names.
  */
-export function getPackagingAtLocationsMessage(type: PackagingType, locations: string[]): string {
-  const locationStr = locations.join(' and ')
+export function getPackagingAvailableAtPrefix(type: PackagingType): string {
   switch (type) {
     case 'bottles':
-      return `Bottles available at ${locationStr}`
+      return 'Bottles available at'
     case 'cans_and_bottles':
-      return `Cans & bottles available at ${locationStr}`
+      return 'Cans & bottles available at'
     case 'cans':
     default:
-      return `Cans available at ${locationStr}`
+      return 'Cans available at'
   }
 }
 

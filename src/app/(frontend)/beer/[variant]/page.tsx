@@ -1,7 +1,14 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { getBeerBySlug, getAllBeersFromPayload, getAvailableBeersFromMenus } from '@/lib/utils/payload-api'
-import { BeerDetails } from '@/components/beer/beer-details'
+import {
+  getAllBeersFromPayload,
+  getAllLocations,
+  getBeerBySlug,
+  getCansMenu,
+  getDraftMenu,
+} from '@/lib/utils/payload-api'
+import { BeerDetails, type BeerAvailability } from '@/components/beer/beer-details'
+import { menuItemHasBeer } from '@/lib/utils/menu-item-utils'
 import { JsonLd } from '@/components/seo/json-ld'
 import { PageTransition } from '@/components/motion'
 import { generateProductSchema } from '@/lib/utils/product-schema'
@@ -60,6 +67,34 @@ export async function generateStaticParams() {
 // Enable ISR with 1 hour revalidation
 export const revalidate = 3600
 
+/**
+ * Taprooms whose website draft/cans menu lists this beer, from the same
+ * cached per-location getters the taproom pages use. Null when any menu fails
+ * to load, so the page shows no availability claim rather than a wrong one.
+ */
+async function loadAvailability(beerId: string): Promise<BeerAvailability | null> {
+  try {
+    const locations = (await getAllLocations()).filter(
+      (loc): loc is typeof loc & { slug: string } => Boolean(loc.slug),
+    )
+    const rows = await Promise.all(
+      locations.map(async (loc) => {
+        const [draft, cans] = await Promise.all([getDraftMenu(loc.slug), getCansMenu(loc.slug)])
+        const has = (menu: typeof draft) =>
+          Boolean(menu?.items?.some((item) => menuItemHasBeer(item, beerId)))
+        return { place: { name: loc.name, slug: loc.slug }, tap: has(draft), cans: has(cans) }
+      }),
+    )
+    return {
+      tap: rows.filter((row) => row.tap).map((row) => row.place),
+      cans: rows.filter((row) => row.cans).map((row) => row.place),
+    }
+  } catch (error) {
+    logger.error('Could not load menus for beer availability', error)
+    return null
+  }
+}
+
 export default async function BeerPage({ params }: BeerPageProps) {
   const { variant } = await params
 
@@ -67,13 +102,9 @@ export default async function BeerPage({ params }: BeerPageProps) {
   const beer = await getBeerBySlug(variant)
   if (!beer || beer.hideFromSite) notFound()
 
-  let inStock: boolean | undefined
-  try {
-    const onMenu = await getAvailableBeersFromMenus()
-    if (onMenu.some((candidate) => candidate.id === beer.id)) inStock = true
-  } catch (error) {
-    logger.error('Could not load menus for product availability', error)
-  }
+  const availability = await loadAvailability(beer.id)
+  const inStock =
+    availability && availability.tap.length + availability.cans.length > 0 ? true : undefined
   const productSchema = generateProductSchema(beer, { inStock })
   const webPageSchema = generateWebPageSchema({
     name: beer.name,
@@ -95,7 +126,7 @@ export default async function BeerPage({ params }: BeerPageProps) {
 
       <PageTransition>
         <div className="container mx-auto px-4 py-8 max-w-4xl">
-          <BeerDetails beer={beer} />
+          <BeerDetails beer={beer} availability={availability} />
         </div>
       </PageTransition>
     </>
