@@ -308,12 +308,12 @@ async function getLocationMenu(
   )()
 }
 
-/** Get the location's selected draft menu for the homepage and taproom page. */
+/** Get the location's selected draft menu (homepage, taproom page, beer page availability). */
 export async function getDraftMenu(locationSlug: string): Promise<PayloadMenu | null> {
   return getLocationMenu(locationSlug, 'draft')
 }
 
-/** Get the location's selected cans menu for the homepage and taproom page. */
+/** Get the location's selected cans menu (homepage, taproom page, beer page availability). */
 export async function getCansMenu(locationSlug: string): Promise<PayloadMenu | null> {
   const cansMenu = await getLocationMenu(locationSlug, 'cans')
 

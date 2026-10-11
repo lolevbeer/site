@@ -1,15 +1,15 @@
 /**
  * Beer Details Component
- * Displays comprehensive beer information for individual beer pages
+ * Displays comprehensive beer information for individual beer pages. Taproom
+ * availability arrives as a server-rendered prop (see beer/[variant]/page.tsx).
  */
 
 'use client'
 
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { Fragment, useState, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { logger } from '@/lib/utils/logger'
-import type { Menu, Beer as PayloadBeer } from '@/src/payload-types'
+import type { Beer as PayloadBeer } from '@/src/payload-types'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -36,15 +36,14 @@ import { AdminEditButton } from './admin-edit-button'
 import { GlassIcon } from '@/lib/utils/beer-icons'
 import { BeerCan3D } from './beer-can-3d'
 import { formatAbv, formatRating } from '@/lib/utils/formatters'
-import { getBeerImageUrl, getMediaUrl } from '@/lib/utils/media-utils'
-import { menuItemHasBeer } from '@/lib/utils/menu-item-utils'
+import { getBeerImageUrl, getMediaUrl, textureImageUrl } from '@/lib/utils/media-utils'
 import { getStyleName } from '@/lib/utils/relationship-name'
 import {
   getPackagingType,
   getPackagingLabel,
   getNoPackagingLabel,
   getDraftOnlyMessage,
-  getPackagingAtLocationsMessage,
+  getPackagingAvailableAtPrefix,
   getPricingLines,
 } from '@/lib/utils/packaging-utils'
 
@@ -57,9 +56,39 @@ type BeerReview = {
   hidden?: boolean
 }
 
+/** A taproom with its landing-page slug (links to `/<slug>`). */
+export interface TaproomRef {
+  name: string
+  slug: string
+}
+
+/** Taprooms pouring / selling the beer, resolved server-side from menus. */
+export interface BeerAvailability {
+  tap: TaproomRef[]
+  cans: TaproomRef[]
+}
+
 interface BeerDetailsProps {
   beer: PayloadBeer
+  availability: BeerAvailability
   className?: string
+}
+
+/** "A", "A and B" with each taproom linked to its landing page. */
+function TaproomLinks({ places }: { places: TaproomRef[] }) {
+  return places.map((place, i) => (
+    <Fragment key={place.slug}>
+      {i > 0 && ' and '}
+      <Link
+        href={`/${place.slug}`}
+        // Underlined at rest: inside muted body text, color alone is not
+        // enough to mark a link (WCAG 1.4.1).
+        className="text-primary underline underline-offset-2 hover:decoration-2"
+      >
+        {place.name}
+      </Link>
+    </Fragment>
+  ))
 }
 
 function SpecificationRow({
@@ -126,26 +155,21 @@ function formatReviewDate(dateStr: string): string {
   return formatUnit(Math.floor(diffDays / 365), 'year')
 }
 
-export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
+export function BeerDetails({ beer, availability, className = '' }: BeerDetailsProps) {
   const imagePath = getBeerImageUrl(beer.image, beer.slug, 'detail')
-  // Generated 3D label textures (see LabelTextureGenerator in the admin).
+  // Generated 3D label textures (see LabelTextureGenerator in the admin),
+  // served resized through /_next/image instead of the ~7 MB stored PNGs.
   // When present, a spinning 3D can replaces the flat image below.
-  const canBaseUrl = getMediaUrl(beer.labelBase)
-  const canMetalnessUrl = getMediaUrl(beer.labelMetalness)
+  const canBaseUrl = textureImageUrl(getMediaUrl(beer.labelBase))
+  const canMetalnessUrl = textureImageUrl(getMediaUrl(beer.labelMetalness))
   const styleName = getStyleName(beer.style)
   const packagingType = getPackagingType(beer)
-  const [tapLocations, setTapLocations] = useState<string[]>([])
-  const [canLocations, setCanLocations] = useState<string[]>([])
-  const [fetchingLocations, setFetchingLocations] = useState(true)
-  // With no beer id there is nothing to fetch, so "loading" is derived rather
-  // than cleared by the effect (react-hooks/set-state-in-effect); the location
-  // arrays simply stay empty.
-  const isLoadingLocations = Boolean(beer.id) && fetchingLocations
+  const tapLocations = availability.tap
+  const canLocations = availability.cans
   const pricingLines = getPricingLines(beer, {
     onTap: tapLocations.length > 0,
     inCans: canLocations.length > 0,
   })
-  const [locationError, setLocationError] = useState<string | null>(null)
   const [imageError, setImageError] = useState(false)
   // Flips when BeerCan3D has appended its canvas; fades the poster image out.
   const [canReady, setCanReady] = useState(false)
@@ -153,62 +177,6 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
   const handleImageError = useCallback(() => {
     setImageError(true)
   }, [])
-
-  useEffect(() => {
-    // Don't fetch locations if beer ID is missing
-    if (!beer.id) return
-
-    const fetchLocations = async () => {
-      setFetchingLocations(true)
-      setLocationError(null)
-
-      try {
-        // Query Payload CMS for all published menus (we'll filter client-side for the beer)
-        const response = await fetch(
-          `/api/menus?where[_status][equals]=published&depth=2&limit=100`,
-        )
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch menus')
-        }
-
-        const data = await response.json()
-        const tapLocs: string[] = []
-        const canLocs: string[] = []
-
-        // Process menus to extract location availability
-        if (data.docs && Array.isArray(data.docs)) {
-          data.docs.forEach((menu: Menu) => {
-            // Check if this beer is in the menu items
-            const hasBeer = beer.id && menu.items?.some((item) => menuItemHasBeer(item, beer.id!))
-
-            if (hasBeer && menu.location) {
-              const locationName =
-                typeof menu.location === 'string' ? menu.location : menu.location?.name
-
-              if (locationName) {
-                if (menu.type === 'draft' && !tapLocs.includes(locationName)) {
-                  tapLocs.push(locationName)
-                } else if (menu.type === 'cans' && !canLocs.includes(locationName)) {
-                  canLocs.push(locationName)
-                }
-              }
-            }
-          })
-        }
-
-        setTapLocations(tapLocs)
-        setCanLocations(canLocs)
-      } catch (error) {
-        logger.error('Error fetching beer location data:', error)
-        setLocationError('Unable to load location information. Please try again later.')
-      } finally {
-        setFetchingLocations(false)
-      }
-    }
-
-    fetchLocations()
-  }, [beer.id])
 
   // Don't render if beer is hidden from site
   if (beer.hideFromSite) {
@@ -257,8 +225,9 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
         {/* Beer Image and Quick Stats */}
         <div className="space-y-4">
           <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-gradient-to-b from-muted/30 to-muted/10 dark:from-muted/10 dark:to-muted/5">
-            {/* Flat image is the poster (and LCP element); it fades once the
-                3D can reports ready, and stays if WebGL/assets fail. */}
+            {/* Flat image is the poster (and LCP element); BeerCan3D waits for
+                window load + idle before building, then the poster fades once
+                the can reports ready, and stays if WebGL/assets fail. */}
             {canBaseUrl && (
               <BeerCan3D
                 baseUrl={canBaseUrl}
@@ -317,7 +286,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
                   {getPackagingLabel(packagingType)}
                 </Badge>
               )}
-              {!isLoadingLocations && tapLocations.length > 0 && canLocations.length === 0 && (
+              {tapLocations.length > 0 && canLocations.length === 0 && (
                 <Badge
                   variant="outline"
                   className="text-sm text-muted-foreground border-muted-foreground/50"
@@ -352,46 +321,38 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
                 <CardTitle className="text-lg">Availability</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
-                {isLoadingLocations ? (
-                  <div className="space-y-2 animate-pulse">
-                    <div className="h-4 bg-muted rounded w-3/4"></div>
-                    <div className="h-4 bg-muted rounded w-2/3"></div>
-                  </div>
-                ) : locationError ? (
-                  <p className="text-sm text-destructive">{locationError}</p>
-                ) : (
-                  <div className="space-y-2">
-                    {tapLocations.length > 0 && (
-                      <p className="text-sm text-muted-foreground">
-                        • On draft at {tapLocations.join(' and ')}
-                      </p>
-                    )}
-                    {canLocations.length > 0 && (
-                      <p className="text-sm text-muted-foreground">
-                        • {getPackagingAtLocationsMessage(packagingType, canLocations)}
-                      </p>
-                    )}
-                    {tapLocations.length > 0 && canLocations.length === 0 && (
-                      <p className="text-sm text-highlight font-medium">
-                        • {getDraftOnlyMessage(packagingType)}
-                      </p>
-                    )}
-                    {tapLocations.length === 0 && canLocations.length === 0 && (
-                      <p className="text-sm text-muted-foreground">
-                        Not currently available at our taprooms
-                      </p>
-                    )}
-                    <p className="pt-2">
-                      <Link
-                        href="/beer-map"
-                        prefetch={false}
-                        className="text-sm font-medium text-primary hover:underline"
-                      >
-                        Find retailers near you on the beer map
-                      </Link>
+                <div className="space-y-2">
+                  {tapLocations.length > 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      • On draft at <TaproomLinks places={tapLocations} />
                     </p>
-                  </div>
-                )}
+                  )}
+                  {canLocations.length > 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      • {getPackagingAvailableAtPrefix(packagingType)}{' '}
+                      <TaproomLinks places={canLocations} />
+                    </p>
+                  )}
+                  {tapLocations.length > 0 && canLocations.length === 0 && (
+                    <p className="text-sm text-highlight font-medium">
+                      • {getDraftOnlyMessage(packagingType)}
+                    </p>
+                  )}
+                  {tapLocations.length === 0 && canLocations.length === 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      Not currently available at our taprooms
+                    </p>
+                  )}
+                  <p className="pt-2">
+                    <Link
+                      href="/beer-map"
+                      prefetch={false}
+                      className="text-sm font-medium text-primary hover:underline"
+                    >
+                      Find retailers near you on the beer map
+                    </Link>
+                  </p>
+                </div>
               </CardContent>
             </Card>
 

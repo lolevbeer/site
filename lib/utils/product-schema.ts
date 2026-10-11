@@ -41,7 +41,6 @@ export interface ProductJsonLd {
   brand: BrandJsonLd
   category?: string
   offers?: OfferJsonLd | OfferJsonLd[]
-  aggregateRating?: AggregateRatingJsonLd
   review?: ReviewJsonLd[]
   additionalProperty?: PropertyValueJsonLd[]
   sku?: string
@@ -73,14 +72,6 @@ export interface OrganizationJsonLd {
   url?: string
 }
 
-export interface AggregateRatingJsonLd {
-  '@type': 'AggregateRating'
-  ratingValue: string
-  reviewCount?: string
-  bestRating?: string
-  worstRating?: string
-}
-
 export interface PropertyValueJsonLd {
   '@type': 'PropertyValue'
   name: string
@@ -107,7 +98,8 @@ function getBeerStyleName(beer: ProductSchemaInput): string {
 }
 
 export interface ProductSchemaOptions {
-  /** True when the beer is on a current draft or cans menu. */
+  /** True when a taproom's draft or cans menu lists the beer, false when none
+   *  does, undefined when menus could not be loaded (LimitedAvailability). */
   inStock?: boolean
 }
 
@@ -257,22 +249,9 @@ export function generateProductSchema(
     product.offers = offers
   }
 
-  // Untappd aggregate only — do not nest a shorter Review[] that disagrees
-  // with reviewCount. The visible reviews stay on the page.
-  if (beer.untappdRating && beer.untappdRating > 0) {
-    const reviewCount =
-      beer.untappdRatingCount && beer.untappdRatingCount > 0
-        ? String(beer.untappdRatingCount)
-        : undefined
-    product.aggregateRating = {
-      '@type': 'AggregateRating',
-      ratingValue: beer.untappdRating.toFixed(2),
-      bestRating: '5',
-      worstRating: '1',
-      ...(reviewCount ? { reviewCount } : {}),
-    }
-  }
-
+  // No aggregateRating: the Untappd scores are third-party ratings, which
+  // Google's review-snippet policy disallows republishing as our own markup.
+  // The rating stays visible on the page (Untappd button).
   return product
 }
 
