@@ -55,12 +55,12 @@ describe('DraftBeerCard board row', () => {
     }
   })
 
-  it('shows no ABV for a beer without one (menus pass it as "0")', () => {
-    const noAbv = { ...beer, abv: '0' as unknown as number }
+  it('shows no ABV for a beer without one (menus pass it as "")', () => {
+    const noAbv = { ...beer, abv: '' as unknown as number }
     const { container } = render(
       createElement(DraftBeerCard, { beer: noAbv, showTapAndPrice: true }),
     )
-    expect(container.textContent).not.toMatch(/(^|[^.\d])0%/)
+    expect(container.textContent).not.toContain('%')
   })
 
   it('shows Just Released only with a clock', () => {

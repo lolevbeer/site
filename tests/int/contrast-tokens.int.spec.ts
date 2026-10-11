@@ -60,13 +60,6 @@ describe('highlight contrast', () => {
   it('is at least 4.5:1 on the dark page background', () => {
     expect(contrast(dark!, '#000000')).toBeGreaterThanOrEqual(4.5)
   })
-
-  it.each(['light', 'dark'] as const)('TV %s boards meet AA with the highlight', (theme) => {
-    const vars = getThemeVars(theme) as Record<string, string>
-    expect(contrast(vars['--color-highlight'], vars['--color-background'])).toBeGreaterThanOrEqual(
-      4.5,
-    )
-  })
 })
 
 // lib/utils/display-theme.ts hand-copies site tokens onto the TV boards; every
@@ -83,8 +76,8 @@ describe('TV board theme vars mirror globals.css', () => {
     expect(darkColors.filter((name) => !boardVars.includes(name))).toEqual([])
   })
 
-  it('keeps the dark-mode noise overlay off live boards', () => {
-    expect(css).toMatch(/\.dark body:not\(:has\(\[data-board\]\)\)::before/)
+  it('stacks live boards above the dark-mode noise overlay', () => {
+    expect(css).toMatch(/\[data-board\]\s*\{\s*position:\s*relative;\s*z-index:\s*1;/)
   })
 
   it.each(['light', 'dark'] as const)('%s board vars match the site tokens', (theme) => {

@@ -6,7 +6,7 @@ import { act, cleanup, render } from '@testing-library/react'
 import { createElement } from 'react'
 import { renderToString } from 'react-dom/server'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { FeaturedBeers } from '@/components/home/featured-menu'
+import { FeaturedBeers, FeaturedCans } from '@/components/home/featured-menu'
 import { MS_PER_DAY } from '@/lib/utils/date'
 import type { Menu } from '@/src/payload-types'
 
@@ -111,6 +111,18 @@ describe('Fullscreen draft menu row sizing', () => {
         expect(row.classList.contains('flex-1')).toBe(false)
       }
     }
+  })
+
+  it('shows no ABV for a beer without one, on the board and on can cards', () => {
+    const { container } = render(
+      createElement(FeaturedBeers, { menu: makeDraftMenu([beerItem('no-abv', { abv: null })]) }),
+    )
+    expect(rowFor(container, 'no-abv').textContent).not.toMatch(/(^|[^.\d])0%/)
+    cleanup()
+    const cans = { ...makeDraftMenu([beerItem('no-abv-can', { abv: null })]), type: 'cans' }
+    const { container: home } = render(createElement(FeaturedCans, { menus: [cans as Menu] }))
+    expect(home.textContent).toContain('no-abv-can')
+    expect(home.textContent).not.toMatch(/(^|[^.\d])0%/)
   })
 
   it('renders the homepage draft list as a single centered column', () => {

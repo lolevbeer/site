@@ -143,7 +143,7 @@ function scaledVh(value: number | `${number}vh`, scale: number): string {
 function ColumnHeader({
   isOtherMenu,
   displayScale = 1,
-  priceColumn = TV_COL.price,
+  priceColumn,
 }: {
   isOtherMenu: boolean
   displayScale?: number
@@ -514,7 +514,7 @@ function convertMenuItems(menuData: Menu, labelVideos = false): MenuItem[] {
         variant: String(beer.slug),
         name: String(beer.name || ''),
         type: String(styleName || ''),
-        abv: beer.abv ? String(beer.abv) : '0',
+        abv: beer.abv ? String(beer.abv) : '',
         description: String(beer.description || ''),
         glutenFree: false,
         imageUrl: getMediaUrl(beer.image, 'card'),
@@ -915,7 +915,7 @@ function FeaturedMenu({
               {linesCleanedText && (
                 <p
                   className="text-foreground-muted"
-                  style={{ fontSize: '1.8vh', marginTop: '0.5vh' }}
+                  style={{ fontSize: TV_TYPE.badge, marginTop: '0.5vh' }}
                 >
                   {linesCleanedText}
                 </p>

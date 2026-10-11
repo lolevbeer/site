@@ -106,6 +106,6 @@ export const TV_COL = {
  * Draft board columns, tap rail | beer | ABV | half | full. One builder for the
  * header and every row, so the labels can't drift from the values under them.
  */
-export function draftBoardColumns(priceColumn: string): string {
+export function draftBoardColumns(priceColumn: string = TV_COL.price): string {
   return `${TV_COL.tap} minmax(0, 1fr) ${TV_COL.abv} ${priceColumn} ${priceColumn}`
 }
