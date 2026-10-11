@@ -32,11 +32,17 @@ import { useLocationContext } from './location-provider'
 
 interface LocationTabsProps {
   className?: string
+  /** Drop the leading "Lolev " from each name so the control fits the mobile header. */
+  shortLabels?: boolean
   /** Size of the control. Defaults to `default`; see {@link SegmentedSize}. */
   size?: SegmentedSize
 }
 
-export function LocationTabs({ className, size = 'default' }: LocationTabsProps) {
+export function LocationTabs({
+  className,
+  shortLabels = false,
+  size = 'default',
+}: LocationTabsProps) {
   const pathname = usePathname()
   const { currentLocation, setLocation, isClient, locations } = useLocationContext()
 
@@ -49,7 +55,7 @@ export function LocationTabs({ className, size = 'default' }: LocationTabsProps)
   // `isClient` is useState(false) + an effect, so it is false in both.
   const options = locations.map((location) => ({
     value: location.slug || location.id,
-    label: location.name,
+    label: shortLabels ? location.name.replace(/^Lolev\s+/i, '') : location.name,
   }))
 
   return (

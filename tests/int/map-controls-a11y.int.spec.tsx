@@ -44,6 +44,13 @@ describe('MapControls search', () => {
     expect(screen.getByRole('button', { name: 'Map' }).getAttribute('aria-pressed')).toBe('true')
     expect(screen.getByRole('button', { name: 'List' }).getAttribute('aria-pressed')).toBe('false')
   })
+
+  it('gives the map/list toggle 44px touch targets', () => {
+    render(createElement(MapControls, props))
+    for (const name of ['Map', 'List']) {
+      expect(screen.getByRole('button', { name }).className).toContain('min-h-11')
+    }
+  })
 })
 
 describe('MapSearchField', () => {

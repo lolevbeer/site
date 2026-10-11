@@ -17,8 +17,8 @@ vi.mock('@/components/location/location-provider', () => ({
     setLocation: vi.fn(),
     isClient: true,
     locations: [
-      { id: '1', slug: 'lolev-lawrenceville', name: 'Lawrenceville' },
-      { id: '2', slug: 'lolev-zelienople', name: 'Zelienople' },
+      { id: '1', slug: 'lolev-lawrenceville', name: 'Lolev Lawrenceville' },
+      { id: '2', slug: 'lolev-zelienople', name: 'Lolev Zelienople' },
     ],
   }),
 }))
@@ -36,5 +36,15 @@ describe('LocationTabs', () => {
     pathname.value = '/lolev-lawrenceville'
     rerender(createElement(LocationTabs))
     expect(screen.queryByRole('group', { name: 'Choose location' })).toBeNull()
+  })
+
+  it('drops the brand prefix from labels when shortLabels is set', () => {
+    pathname.value = '/'
+    const { rerender } = render(createElement(LocationTabs))
+    expect(screen.getByRole('button', { name: 'Lolev Lawrenceville' })).toBeTruthy()
+
+    rerender(createElement(LocationTabs, { shortLabels: true }))
+    expect(screen.getByRole('button', { name: 'Lawrenceville' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Zelienople' })).toBeTruthy()
   })
 })
