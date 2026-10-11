@@ -109,9 +109,10 @@ export function SocialLinks({
     lg: 'h-7 w-7',
   }
 
+  // Every size is at least a 44 px (h-11) tap target; only the glyph shrinks.
   const buttonSizes = {
-    sm: 'h-9 w-9',
-    md: 'h-10 w-10',
+    sm: 'h-11 w-11',
+    md: 'h-11 w-11',
     lg: 'h-11 w-11',
   }
 
