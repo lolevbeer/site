@@ -8,6 +8,8 @@
  * Outbound links are visible text under the row ("Tickets ↗" for ticketing
  * sites, "Details ↗" otherwise) rather than a whole-row anchor, so a row that
  * opens a new tab says so. Events can add an "Add to calendar" .ics link.
+ * Both link names carry the title for screen readers ("Details for Trivia",
+ * "Add Trivia to calendar") so a links list can tell rows apart.
  */
 
 'use client'
@@ -83,11 +85,18 @@ export function TimelineItem({
         <p className="text-sm text-muted-foreground flex gap-3 justify-center pt-0.5">
           {href ? (
             <a href={href} target="_blank" rel="noopener noreferrer" className={linkClass}>
-              {siteLabel(href)} ↗<span className="sr-only"> (opens in a new tab)</span>
+              {siteLabel(href)} <span aria-hidden="true">↗</span>
+              <span className="sr-only"> for {title} (opens in a new tab)</span>
             </a>
           ) : null}
           {calendarHref ? (
-            <a href={calendarHref} className={linkClass}>
+            // nofollow: one .ics per event has no search value.
+            <a
+              href={calendarHref}
+              rel="nofollow"
+              aria-label={`Add ${title} to calendar`}
+              className={linkClass}
+            >
               Add to calendar
             </a>
           ) : null}

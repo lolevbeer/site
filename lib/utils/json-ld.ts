@@ -293,7 +293,8 @@ type LocationLookup = Map<LocationSlug, PayloadLocation>
 
 /**
  * Shareable /events link for one event: `?loc=` opens the right taproom and
- * `#event-<id>` matches the row anchor ScheduleList renders.
+ * `#event-<id>` matches the row anchor /events renders (ScheduleList `anchors`,
+ * plus one per occurrence in the Regulars block).
  */
 export function eventPageUrl(locationSlug?: string, eventId?: string | number): string {
   const query = locationSlug ? `?loc=${encodeURIComponent(locationSlug)}` : ''
