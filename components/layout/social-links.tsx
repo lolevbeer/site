@@ -84,7 +84,7 @@ const socialLinks: SocialLink[] = [
 ]
 
 interface SocialLinksProps {
-  /** Size variant for the social icons */
+  /** Glyph size; every size keeps the 44 px tap target (including the mobile menu). */
   size?: 'sm' | 'md' | 'lg'
   /** Layout direction */
   direction?: 'horizontal' | 'vertical'
@@ -93,6 +93,9 @@ interface SocialLinksProps {
   /** Show labels alongside icons */
   showLabels?: boolean
 }
+
+/** Every size is a 44 px (h-11) tap target; `size` only changes the glyph. */
+const BUTTON_SIZE = 'h-11 w-11'
 
 /**
  * Social media links component with brewery social profiles
@@ -107,13 +110,6 @@ export function SocialLinks({
     sm: 'h-5 w-5',
     md: 'h-6 w-6',
     lg: 'h-7 w-7',
-  }
-
-  // Every size is at least a 44 px (h-11) tap target; only the glyph shrinks.
-  const buttonSizes = {
-    sm: 'h-11 w-11',
-    md: 'h-11 w-11',
-    lg: 'h-11 w-11',
   }
 
   return (
@@ -162,7 +158,7 @@ export function SocialLinks({
             variant="ghost"
             size="icon"
             asChild
-            className={cn(buttonSizes[size], 'text-muted-foreground', social.color)}
+            className={cn(BUTTON_SIZE, 'text-muted-foreground', social.color)}
           >
             <Link
               href={social.href}

@@ -164,4 +164,15 @@ describe('BeerPageContent full beer list', () => {
       ['Old Ale', '/beer/old-ale'],
     ])
   })
+
+  it('sorts with a fixed locale so server and browser order agree', () => {
+    const compare = vi.spyOn(String.prototype, 'localeCompare')
+    const other: Beer = { ...beer, variant: 'akko', name: 'Akko' }
+
+    render(createElement(BeerPageContent, { beers: [beer, other] }))
+
+    expect(compare).toHaveBeenCalled()
+    for (const call of compare.mock.calls) expect(call[1]).toBe('en')
+    compare.mockRestore()
+  })
 })

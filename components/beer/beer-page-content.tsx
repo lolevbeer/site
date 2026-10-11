@@ -198,8 +198,10 @@ function BeerListing({
     return filtered
   }, [beers, search, selectedType, selectedTag, availability, currentLocation])
 
+  // 'en' pins the collation: server and browser defaults can differ, which
+  // would reorder this server-rendered list on hydration.
   const beersByName = useMemo(
-    () => beers.slice().sort((a, b) => a.name.localeCompare(b.name)),
+    () => beers.slice().sort((a, b) => a.name.localeCompare(b.name, 'en')),
     [beers],
   )
 
