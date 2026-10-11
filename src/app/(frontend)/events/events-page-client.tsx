@@ -68,6 +68,7 @@ export function EventsPageClient({ initialEvents, intro }: EventsPageClientProps
               description:
                 event.description !== event.title ? event.description : undefined,
               site: safeHttpUrl(event.site),
+              badge: event.tags?.includes('beer-release') ? 'Beer release' : undefined,
             }))}
           />
           {regulars.length > 0 ? (

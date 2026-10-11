@@ -17,6 +17,8 @@ export interface ScheduleListItem {
   imageUrl?: string
   locationName?: string
   description?: string
+  /** Badge above the title, e.g. "Beer release" for tagged events. */
+  badge?: string
 }
 
 function groupItemsByDate(items: ScheduleListItem[]): Array<[string, ScheduleListItem[]]> {
@@ -63,6 +65,7 @@ export function ScheduleList({
                   description={item.description}
                   site={item.site}
                   imageUrl={item.imageUrl}
+                  badge={item.badge}
                   calendarHref={
                     calendar ? `/events/${encodeURIComponent(item.id)}/calendar.ics` : undefined
                   }

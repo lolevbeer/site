@@ -7,7 +7,8 @@
  *
  * Outbound links are visible text under the row ("Tickets ↗" for ticketing
  * sites, "Details ↗" otherwise) rather than a whole-row anchor, so a row that
- * opens a new tab says so. Events can add an "Add to calendar" .ics link.
+ * opens a new tab says so. Events can add an "Add to calendar" .ics link and
+ * a small badge (e.g. "Beer release") above the title.
  */
 
 'use client'
@@ -15,6 +16,7 @@
 import React from 'react'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
+import { Badge } from '@/components/ui/badge'
 import { formatTime } from '@/lib/utils/formatters'
 import { safeHttpUrl } from '@/lib/utils/url-utils'
 
@@ -47,6 +49,8 @@ interface TimelineItemProps {
   imageUrl?: string
   /** Same-origin .ics download; events only. */
   calendarHref?: string
+  /** Short label shown as a badge above the title, e.g. "Beer release". */
+  badge?: string
   className?: string
 }
 
@@ -59,6 +63,7 @@ export function TimelineItem({
   site,
   imageUrl,
   calendarHref,
+  badge,
   className,
 }: TimelineItemProps) {
   const href = safeHttpUrl(site)
@@ -73,6 +78,11 @@ export function TimelineItem({
       ) : null}
       {timeDisplay ? (
         <p className="text-sm text-muted-foreground tabular-nums">{timeDisplay}</p>
+      ) : null}
+      {badge ? (
+        <Badge variant="outline" className="border-amber-500 text-highlight mb-0.5">
+          {badge}
+        </Badge>
       ) : null}
       <p className="font-normal leading-tight text-balance">{title}</p>
       {location ? <p className="text-sm text-muted-foreground">{location}</p> : null}
