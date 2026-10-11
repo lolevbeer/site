@@ -2,11 +2,13 @@
  * Beer Details Component
  * Displays comprehensive beer information for individual beer pages. Taproom
  * availability arrives as a server-rendered prop (see beer/[variant]/page.tsx).
+ * A Share button shares the canonical /beer/<slug> URL through the native share
+ * sheet, or copies it where the browser has none (or the sheet fails).
  */
 
 'use client'
 
-import React, { Fragment, useState, useCallback } from 'react'
+import React, { Fragment, useState, useCallback, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import type { Beer as PayloadBeer } from '@/src/payload-types'
@@ -30,7 +32,7 @@ import {
   EmptyDescription,
   EmptyContent,
 } from '@/components/ui/empty'
-import { CircleX } from '@/components/icons'
+import { Check, CircleX, Share } from '@/components/icons'
 import { UntappdIcon } from '@/components/icons/untappd-icon'
 import { AdminEditButton } from './admin-edit-button'
 import { GlassIcon } from '@/lib/utils/beer-icons'
@@ -72,6 +74,56 @@ interface BeerDetailsProps {
   beer: PayloadBeer
   availability: BeerAvailability
   className?: string
+}
+
+/**
+ * Shares the beer's canonical `/beer/<slug>` URL (never the current address,
+ * which can carry `?loc=` or a `/<taproom>/` prefix): the native share sheet
+ * when the browser has one (phones, in-app browsers), else copies the link.
+ * The result ("Link copied" or "Couldn't copy the link") is also announced in
+ * a polite live region, since a focused button's new name is often not read.
+ */
+function ShareButton({ title, path }: { title: string; path: string }) {
+  const [status, setStatus] = useState<'idle' | 'copied' | 'failed'>('idle')
+
+  // Reset the confirmation after 2 s; the cleanup also covers unmount.
+  useEffect(() => {
+    if (status === 'idle') return
+    const id = setTimeout(() => setStatus('idle'), 2000)
+    return () => clearTimeout(id)
+  }, [status])
+
+  const share = useCallback(async () => {
+    const url = new URL(path, window.location.origin).href
+    if (typeof navigator.share === 'function') {
+      try {
+        await navigator.share({ title, url })
+        return
+      } catch (err) {
+        // A dismissed sheet rejects with AbortError; any other failure falls back to copying.
+        if ((err as { name?: unknown } | null)?.name === 'AbortError') return
+      }
+    }
+    try {
+      if (!navigator.clipboard) throw new Error('No clipboard')
+      await navigator.clipboard.writeText(url)
+      setStatus('copied')
+    } catch {
+      setStatus('failed')
+    }
+  }, [title, path])
+
+  return (
+    <>
+      <Button variant="outline" onClick={share}>
+        {status === 'copied' ? <Check className="h-5 w-5" /> : <Share className="h-5 w-5" />}
+        {status === 'copied' ? 'Link copied' : 'Share'}
+      </Button>
+      <span role="status" aria-live="polite" className="sr-only">
+        {status === 'copied' ? 'Link copied' : status === 'failed' ? "Couldn't copy the link" : ''}
+      </span>
+    </>
+  )
 }
 
 /** "A", "A and B" with each taproom linked to its landing page. */
@@ -376,24 +428,27 @@ export function BeerDetails({ beer, availability, className = '' }: BeerDetailsP
           </div>
 
           {/* External Links */}
-          {beer.untappd && (
-            <Button variant="outline" asChild>
-              <a
-                href={`https://untappd.com${typeof beer.untappd === 'string' && beer.untappd.startsWith('/') ? '' : '/b/-/'}${beer.untappd}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="no-underline"
-              >
-                <UntappdIcon className="h-5 w-5" />
-                Untappd
-                {(beer.untappdRating ?? 0) > 0 && (
-                  <span className="text-highlight font-bold">
-                    {formatRating(beer.untappdRating)}/5
-                  </span>
-                )}
-              </a>
-            </Button>
-          )}
+          <div className="flex flex-wrap gap-3">
+            <ShareButton title={beer.name} path={`/beer/${beer.slug}`} />
+            {beer.untappd && (
+              <Button variant="outline" asChild>
+                <a
+                  href={`https://untappd.com${typeof beer.untappd === 'string' && beer.untappd.startsWith('/') ? '' : '/b/-/'}${beer.untappd}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="no-underline"
+                >
+                  <UntappdIcon className="h-5 w-5" />
+                  Untappd
+                  {(beer.untappdRating ?? 0) > 0 && (
+                    <span className="text-highlight font-bold">
+                      {formatRating(beer.untappdRating)}/5
+                    </span>
+                  )}
+                </a>
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 

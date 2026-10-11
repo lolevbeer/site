@@ -1,13 +1,16 @@
 /**
  * Donation ringer: Continue on page 1 stays disabled until every gate switch is on.
  */
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { createElement } from 'react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+const submitDonationRequest = vi.fn()
 vi.mock('@/src/actions/donation-request', () => ({
-  submitDonationRequest: vi.fn(),
+  submitDonationRequest: (input: unknown) => submitDonationRequest(input),
 }))
+const track = vi.fn()
+vi.mock('@vercel/analytics', () => ({ track: (...args: unknown[]) => track(...args) }))
 
 vi.mock('@/components/location/location-provider', () => ({
   useLocationContext: () => ({
@@ -27,7 +30,16 @@ vi.stubGlobal('ResizeObserver', ResizeObserverStub)
 
 import { DonationRequestForm } from '@/components/donate/donation-request-form'
 
-afterEach(cleanup)
+const gtag = vi.fn()
+beforeEach(() => {
+  track.mockReset()
+  gtag.mockReset()
+  window.gtag = gtag
+})
+afterEach(() => {
+  cleanup()
+  delete window.gtag
+})
 
 describe('DonationRequestForm', () => {
   it('blocks Continue until every eligibility switch is on', () => {
@@ -77,5 +89,21 @@ describe('DonationRequestForm', () => {
     expect(document.getElementById('previousDonation-error')?.textContent).toBe(
       'Say whether we have donated before.',
     )
+  })
+  it('sends donate_submitted once the request is accepted', async () => {
+    submitDonationRequest.mockResolvedValue({ ok: true })
+    const { container } = render(createElement(DonationRequestForm))
+    fireEvent.submit(container.querySelector('form')!)
+    await waitFor(() => expect(screen.getByText('We got it')).toBeTruthy())
+    expect(track).toHaveBeenCalledWith('donate_submitted', undefined)
+    expect(gtag).toHaveBeenCalledWith('event', 'donate_submitted', undefined)
+  })
+  it('sends nothing when the request is rejected', async () => {
+    submitDonationRequest.mockResolvedValue({ ok: false, error: 'Server said no.', step: 3 })
+    const { container } = render(createElement(DonationRequestForm))
+    fireEvent.submit(container.querySelector('form')!)
+    await waitFor(() => expect(screen.getByText('Server said no.')).toBeTruthy())
+    expect(track).not.toHaveBeenCalled()
+    expect(gtag).not.toHaveBeenCalled()
   })
 })

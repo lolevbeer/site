@@ -19,6 +19,7 @@ import {
   type DonationRequestInput,
 } from '@/lib/donate/donation-request'
 import { firstFieldError } from '@/lib/public-forms/fields'
+import { trackConversion } from '@/lib/analytics/events'
 import { AskStep } from './ask-step'
 import { EligibilityStep } from './eligibility-step'
 import { OrganizationStep } from './organization-step'
@@ -72,8 +73,10 @@ export function DonationRequestForm() {
     setPending(true)
     try {
       const result = await submitDonationRequest(values)
-      if (result.ok) setDone(true)
-      else {
+      if (result.ok) {
+        setDone(true)
+        trackConversion('donate_submitted')
+      } else {
         setError(result.error)
         if (result.step) setStep(result.step)
       }

@@ -101,7 +101,7 @@ export async function GET() {
     <item>
       <title>${escapeXml(title)}</title>
       <link>${baseUrl}/events</link>
-      <description>${escapeXml(event.description || `${title} on ${eventDate.toLocaleDateString()}`)}</description>
+      <description>${escapeXml(`${title} on ${eventDate.toLocaleDateString()}`)}</description>
       <category>Event</category>
       <guid isPermaLink="false">event-${event.id || event.date}</guid>
       <pubDate>${formatRFC822Date(eventDate)}</pubDate>

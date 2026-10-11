@@ -1,4 +1,4 @@
-import { act, renderHook } from '@testing-library/react'
+import { act, cleanup, renderHook } from '@testing-library/react'
 import { withNuqsTestingAdapter } from 'nuqs/adapters/testing'
 import { afterEach, describe, expect, it } from 'vitest'
 import { useLocation } from '@/lib/hooks/use-location'
@@ -7,10 +7,19 @@ import type { PayloadLocation } from '@/lib/types/location'
 
 const locations = [
   { id: 'lawrenceville', slug: 'lawrenceville', name: 'Lawrenceville', active: true },
-  { id: 'zelienople', slug: 'zelienople', name: 'Zelienople', active: true },
+  {
+    id: 'zelienople',
+    slug: 'zelienople',
+    name: 'Zelienople',
+    active: true,
+    aliases: ['old-zelienople'],
+  },
 ] as PayloadLocation[]
 
-afterEach(() => localStorage.clear())
+afterEach(() => {
+  cleanup()
+  localStorage.clear()
+})
 
 describe('useLocation', () => {
   it('lets a direct selection replace a location preset from the URL', () => {
@@ -21,6 +30,22 @@ describe('useLocation', () => {
     act(() => result.current.setLocation('zelienople'))
 
     expect(result.current.currentLocation).toBe('zelienople')
+    expect(localStorage.getItem(LOCATION_STORAGE_KEY)).toBe('zelienople')
+  })
+
+  it('resolves ?loc=<alias> to the current slug and stores that', () => {
+    const { result } = renderHook(() => useLocation(locations), {
+      wrapper: withNuqsTestingAdapter({ searchParams: '?loc=old-zelienople', hasMemory: true }),
+    })
+    expect(result.current.currentLocation).toBe('zelienople')
+    expect(localStorage.getItem(LOCATION_STORAGE_KEY)).toBe('zelienople')
+  })
+
+  it('setLocation with an alias stores the current slug', () => {
+    const { result } = renderHook(() => useLocation(locations), {
+      wrapper: withNuqsTestingAdapter({ hasMemory: true }),
+    })
+    act(() => result.current.setLocation('old-zelienople'))
     expect(localStorage.getItem(LOCATION_STORAGE_KEY)).toBe('zelienople')
   })
 })

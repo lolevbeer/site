@@ -41,6 +41,7 @@ import {
   PackageIcon,
   RestaurantIcon,
   Search01Icon,
+  Share08Icon,
   Sun03Icon,
   Tick02Icon,
 } from '@hugeicons/core-free-icons'
@@ -74,6 +75,7 @@ export const Package = icon(PackageIcon)
 export const Pencil = icon(Edit03Icon)
 export const Phone = icon(Call02Icon)
 export const Search = icon(Search01Icon)
+export const Share = icon(Share08Icon)
 export const Monitor = icon(MonitorIcon)
 export const Moon = icon(Moon02Icon)
 export const Sun = icon(Sun03Icon)

@@ -21,7 +21,7 @@
  */
 
 import { cache } from 'react'
-import { getPayload } from 'payload'
+import { getPayload, type Where } from 'payload'
 import config from '@/src/payload.config'
 import { unstable_cache } from 'next/cache'
 import {
@@ -538,12 +538,14 @@ export function transformPayloadEventToBreweryEvent(
   return {
     id: event.id,
     title: event.organizer,
-    description: event.description || event.organizer,
+    // event.description is internal (staff-only read); never put it on the site.
+    description: event.organizer,
     date: event.date.split('T')[0],
     time: event.startTime || '',
     endTime: event.endTime ?? undefined,
     vendor: event.organizer,
-    type: EventType.SPECIAL_EVENT,
+    // expandRecurringEvents ids occurrences `recurring-<definition>-<date>`.
+    type: String(event.id).startsWith('recurring-') ? EventType.RECURRING : EventType.SPECIAL_EVENT,
     status: EventStatus.SCHEDULED,
     location: (eventLocation?.slug || fallbackLocationSlug) as LocationSlug,
     locationName: eventLocation?.name || fallbackLocationName,
@@ -988,6 +990,98 @@ export const getAllUpcomingEventsFromPayload = async (
     )()
   } catch (error) {
     logger.error('Error fetching upcoming events', error)
+    throw error
+  }
+}
+
+/** Mongo ObjectId, the id format for events and recurring-events docs. */
+const OBJECT_ID = '[a-f0-9]{24}'
+const ONE_OFF_EVENT_ID = new RegExp(`^${OBJECT_ID}$`)
+/** expandRecurringEvents ids occurrences `recurring-<definition>-<YYYY-MM-DD>`. */
+const RECURRING_EVENT_ID = new RegExp(`^recurring-(${OBJECT_ID})-(\\d{4}-\\d{2}-\\d{2})$`)
+
+async function findPublicEventById(
+  payload: Awaited<ReturnType<typeof getPayload>>,
+  id: string,
+): Promise<PayloadEvent | null> {
+  const { from, through } = eventWindow()
+  const upcomingPublic = (date: string): Where[] => [
+    { date: { greater_than_equal: date } },
+    { visibility: { equals: 'public' } },
+  ]
+
+  if (ONE_OFF_EVENT_ID.test(id)) {
+    const result = await payload.find({
+      collection: 'events',
+      overrideAccess: false,
+      where: { and: [{ id: { equals: id } }, ...upcomingPublic(`${from}T00:00:00.000Z`)] },
+      limit: 1,
+      depth: 1,
+    })
+    return result.docs[0] ?? null
+  }
+
+  const recurring = id.match(RECURRING_EVENT_ID)
+  if (!recurring) return null
+  const [, definitionId, date] = recurring
+  if (date < from || date > through) return null
+
+  const [definitionResult, oneOffResult] = await Promise.all([
+    payload.find({
+      collection: 'recurring-events',
+      overrideAccess: false,
+      where: {
+        and: [
+          { id: { equals: definitionId } },
+          { active: { equals: true } },
+          { visibility: { equals: 'public' } },
+        ],
+      },
+      limit: 1,
+      depth: 1,
+    }),
+    // A one-off on the same day replaces the occurrence (mergeScheduledEvents).
+    payload.find({
+      collection: 'events',
+      overrideAccess: false,
+      where: {
+        and: [
+          ...upcomingPublic(`${date}T00:00:00.000Z`),
+          { date: { less_than_equal: `${date}T23:59:59.999Z` } },
+        ],
+      },
+      limit: 100,
+      depth: 0,
+    }),
+  ])
+
+  const occurrences = expandRecurringEvents(definitionResult.docs as RecurringEvent[], date, date)
+  return (
+    mergeScheduledEvents(oneOffResult.docs, occurrences, Infinity).find(
+      (event) => event.id === id,
+    ) ?? null
+  )
+}
+
+/**
+ * One upcoming public event by its /events id: a one-off's document id or an
+ * expanded `recurring-<definition>-<date>` occurrence. Looks it up directly
+ * rather than scanning the 100-event page list, so every upcoming event
+ * resolves. Anonymous read: private events and the internal description stay
+ * hidden. Malformed ids return null without querying or caching.
+ */
+export const getPublicEventById = async (id: string): Promise<PayloadEvent | null> => {
+  if (!ONE_OFF_EVENT_ID.test(id) && !RECURRING_EVENT_ID.test(id)) return null
+  const todayKey = getTodayEST()
+
+  try {
+    return await unstable_cache(
+      async () => findPublicEventById(await getPayload({ config }), id),
+      [`event-${id}-${todayKey}`],
+      { tags: [CACHE_TAGS.events, CACHE_TAGS.locations], revalidate: 300 },
+    )()
+  } catch (error) {
+    logger.error(`Error fetching event: ${id}`, error)
     throw error
   }
 }

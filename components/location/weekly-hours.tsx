@@ -7,36 +7,18 @@
  * cannot drift apart. Banner copy is shared via `specialHoursBanner`.
  *
  * No "use client": the footer server component renders this table into the
- * HTML document. Client pages can still import it.
+ * HTML document. Client pages can still import it. Today's row is marked by
+ * the client `WeeklyHoursRow` after mount, so a cached page never highlights
+ * yesterday.
  */
 
 import React from 'react'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
+import { WeeklyHoursRow } from '@/components/location/weekly-hours-row'
 import { formatHourMinute } from '@/lib/config/locations'
 import { formatHoursTime, getDayName } from '@/lib/utils/formatters'
-import { getTodayEST } from '@/lib/utils/date'
-import type { DayOfWeek, WeeklyHoursDay } from '@/lib/utils/payload-api'
-
-/** Day keys indexed by `Date#getDay()` (0 = Sunday). */
-const DAY_KEYS: DayOfWeek[] = [
-  'sunday',
-  'monday',
-  'tuesday',
-  'wednesday',
-  'thursday',
-  'friday',
-  'saturday',
-]
-
-/**
- * Today as a `WeeklyHoursDay['day']` key in America/New_York, so SSR (UTC)
- * and the taprooms highlight the same day.
- */
-export function getTodayDayOfWeek(): DayOfWeek {
-  const [year, month, day] = getTodayEST().split('-').map(Number)
-  return DAY_KEYS[new Date(Date.UTC(year, month - 1, day)).getUTCDay()]
-}
+import type { WeeklyHoursDay } from '@/lib/utils/payload-api'
 
 /**
  * A day's opening hours as display text: "Closed", or the formatted
@@ -121,12 +103,11 @@ export interface WeeklyHoursTableProps {
 }
 
 /**
- * A week of opening hours as a day/time list, with today emphasised and any
- * holiday override called out.
+ * A week of opening hours as a day/time list, with today emphasised (on the
+ * client, after mount) and any holiday override called out.
  */
 export function WeeklyHoursTable({ weeklyHours, variant }: WeeklyHoursTableProps) {
   const styles = VARIANT_STYLES[variant]
-  const today = getTodayDayOfWeek()
   const banner = specialHoursBanner(weeklyHours)
 
   return (
@@ -143,16 +124,13 @@ export function WeeklyHoursTable({ weeklyHours, variant }: WeeklyHoursTableProps
         <caption className="sr-only">Weekly hours</caption>
         <tbody>
           {weeklyHours.map((dayData) => {
-            const isToday = dayData.day === today
             const isClosedHoliday = Boolean(dayData.holidayName && dayData.closed)
 
             return (
-              <tr
+              <WeeklyHoursRow
                 key={dayData.day}
-                className={cn(
-                  isToday && 'font-semibold text-primary',
-                  isClosedHoliday && !isToday && 'text-highlight',
-                )}
+                day={dayData.day}
+                isClosedHoliday={isClosedHoliday}
               >
                 <th
                   scope="row"
@@ -168,7 +146,7 @@ export function WeeklyHoursTable({ weeklyHours, variant }: WeeklyHoursTableProps
                 <td className="tabular-nums text-left py-0.5">
                   <HoursTimes dayData={dayData} />
                 </td>
-              </tr>
+              </WeeklyHoursRow>
             )
           })}
         </tbody>

@@ -1,15 +1,26 @@
 /** Job apply form shows each invalid field's error under that field. */
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const submitJobApplication = vi.fn()
 vi.mock('@/src/actions/job-application', () => ({
   submitJobApplication: (input: unknown) => submitJobApplication(input),
 }))
+const track = vi.fn()
+vi.mock('@vercel/analytics', () => ({ track: (...args: unknown[]) => track(...args) }))
 
 import { JobApplyForm } from '@/components/jobs/job-apply-form'
 
-afterEach(cleanup)
+const gtag = vi.fn()
+beforeEach(() => {
+  track.mockReset()
+  gtag.mockReset()
+  window.gtag = gtag
+})
+afterEach(() => {
+  cleanup()
+  delete window.gtag
+})
 
 describe('JobApplyForm', () => {
   it('marks every invalid field and clears an error when that field changes', async () => {
@@ -33,5 +44,17 @@ describe('JobApplyForm', () => {
     fireEvent.change(name, { target: { value: 'Ada' } })
     expect(name.getAttribute('aria-invalid')).toBeNull()
     expect(email.getAttribute('aria-invalid')).toBe('true')
+    // A rejected submit is not a conversion.
+    expect(track).not.toHaveBeenCalled()
+    expect(gtag).not.toHaveBeenCalled()
+  })
+
+  it('sends job_submitted once the application is accepted', async () => {
+    submitJobApplication.mockResolvedValue({ ok: true })
+    render(<JobApplyForm jobSlug="bartender" />)
+    fireEvent.click(screen.getByRole('button', { name: 'Submit application' }))
+    await waitFor(() => expect(screen.getByText('Application received')).toBeTruthy())
+    expect(track).toHaveBeenCalledWith('job_submitted', undefined)
+    expect(gtag).toHaveBeenCalledWith('event', 'job_submitted', undefined)
   })
 })

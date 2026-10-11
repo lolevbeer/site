@@ -23,6 +23,14 @@ export const LOCATION_STORAGE_KEY = 'brewery-location-preference'
  * Location slugs that would collide with App Router static segments or with a
  * vercel.json redirect source (a taproom there would be unreachable).
  */
+/**
+ * A location URL slug: lowercase letters, numbers, single dashes. Slugs become
+ * redirect targets (`/${slug}`), so anything else (e.g. "/evil.com", which
+ * would build a protocol-relative "//evil.com") is rejected on save and never
+ * redirected to.
+ */
+export const LOCATION_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+
 export const RESERVED_LOCATION_SLUGS = new Set([
   'about',
   'accessibility',
@@ -111,7 +119,7 @@ export function extractDayHours(location: PayloadLocation, day: Weekday): DayHou
 /** One-line hours summary for FAQ / llms.txt, grouped by identical open/close. */
 export function formatHoursFaqAnswer(locations: PayloadLocation[]): string {
   if (locations.length === 0) {
-    return 'Hours vary by location and holiday. See lolev.beer for this week\'s hours.'
+    return "Hours vary by location and holiday. See lolev.beer for this week's hours."
   }
   const parts = locations.map((location) => {
     const groups: { start: string; end: string; hours: string }[] = []
@@ -137,9 +145,7 @@ export function formatHoursFaqAnswer(locations: PayloadLocation[]): string {
 }
 
 /** "Lawrenceville and Zelienople" from live location docs — never a hardcoded list. */
-export function joinLocationNames(
-  locations: Array<{ name?: string | null }>,
-): string {
+export function joinLocationNames(locations: Array<{ name?: string | null }>): string {
   const names = locations
     .map((location) => location.name?.trim())
     .filter((name): name is string => Boolean(name))
@@ -286,20 +292,26 @@ export function getDefaultLocationSlug(locations: PayloadLocation[]): LocationSl
 }
 
 /**
- * Find a location by slug from an array of locations
+ * Find a location by its current slug, id, or a former slug kept in `aliases`
+ * (recorded when a taproom is renamed). A current slug wins over another
+ * location's alias. Callers that need the canonical URL use the returned
+ * location's `slug`.
  */
 export function findLocationBySlug(
   locations: PayloadLocation[],
   slug: LocationSlug,
 ): PayloadLocation | undefined {
-  return locations.find((loc) => loc.slug === slug || loc.id === slug)
+  return (
+    locations.find((loc) => loc.slug === slug || loc.id === slug) ??
+    locations.find((loc) => loc.aliases?.includes(slug))
+  )
 }
 
 /**
- * Validate if a slug is a valid location
+ * Validate if a slug (or alias) is a valid location
  */
 export function isValidLocationSlug(locations: PayloadLocation[], slug: string): boolean {
-  return locations.some((loc) => loc.slug === slug || loc.id === slug)
+  return findLocationBySlug(locations, slug) !== undefined
 }
 
 /**

@@ -12,6 +12,7 @@ import { Toaster } from '@/components/ui/sonner'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { SkipNav } from '@/components/ui/skip-nav'
 import { GoogleAnalytics } from '@/components/analytics/google-analytics'
+import { ConversionTracker } from '@/components/analytics/conversion-tracker'
 import { AuthProvider } from '@/lib/hooks/use-auth'
 import { Footer } from '@/components/layout/footer'
 import { FooterTaprooms } from '@/components/layout/footer-taprooms'
@@ -197,6 +198,7 @@ export default async function AppLayout({
                     </MotionConfig>
                     <Toaster />
                     <Analytics />
+                    <ConversionTracker />
                   </AuthProvider>
                 </LocationProvider>
               </NuqsAdapter>

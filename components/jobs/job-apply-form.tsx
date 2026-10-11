@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
 import { Textarea } from '@/components/ui/textarea'
 import { submitJobApplication } from '@/src/actions/job-application'
+import { trackConversion } from '@/lib/analytics/events'
 import {
   emptyJobApplication,
   type JobApplicationErrors,
@@ -48,8 +49,10 @@ export function JobApplyForm({ jobSlug }: { jobSlug: string }) {
     setPending(true)
     try {
       const result = await submitJobApplication(values)
-      if (result.ok) setDone(true)
-      else {
+      if (result.ok) {
+        setDone(true)
+        trackConversion('job_submitted')
+      } else {
         setError(result.error)
         setFieldErrors(result.errors ?? {})
       }

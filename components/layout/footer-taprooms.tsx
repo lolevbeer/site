@@ -83,16 +83,16 @@ export function FooterTaprooms({
               )}
             </div>
 
-            <div className="space-y-2 text-sm">
+            <div className="text-sm">
               {phone ? (
-                <a href={`tel:${phone}`} className="block hover:underline">
+                <a href={`tel:${phone}`} className="block py-2 hover:underline">
                   {phone}
                 </a>
               ) : null}
               {location.basicInfo?.email ? (
                 <Link
                   href={`mailto:${location.basicInfo.email}`}
-                  className="block hover:underline"
+                  className="block py-2 hover:underline"
                 >
                   {location.basicInfo.email}
                 </Link>

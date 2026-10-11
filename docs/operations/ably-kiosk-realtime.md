@@ -180,7 +180,9 @@ displays after changing capabilities. See [Ably's capability documentation](http
 ## Verify with 12-20 TVs
 
 1. Open `/m/<menuUrl>` and `/e/<location>` on the kiosk browsers (or
-   duplicates in desktop windows).
+   duplicates in desktop windows). After a taproom rename, a kiosk still on
+   `/e/<old-slug>` keeps rendering: the old slug is kept in the location's
+   `aliases` and the board subscribes under the current slug.
 2. Confirm each display's network tab shows a WebSocket to Ably after load,
    and that `/api/ably-auth` returns 200 JSON TokenRequests.
 3. In Payload, edit a beer on a live menu (or an event). The matching
