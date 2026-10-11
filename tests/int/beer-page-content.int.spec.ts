@@ -83,6 +83,9 @@ const otherLocationBeer: Beer = {
   },
 }
 
+/** Grid cards only: the full-list links repeat every beer name. */
+const card = { selector: 'article' }
+
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
@@ -122,14 +125,14 @@ describe('BeerPageContent filters', () => {
       createElement(BeerPageContent, { beers: [beer, otherLocationBeer] }),
     )
 
-    expect(screen.getByText('Lupula')).toBeTruthy()
-    expect(screen.queryByText('Zelie Lager')).toBeNull()
+    expect(screen.getByText('Lupula', card)).toBeTruthy()
+    expect(screen.queryByText('Zelie Lager', card)).toBeNull()
 
     locationState.currentLocation = 'zelienople'
     rerender(createElement(BeerPageContent, { beers: [beer, otherLocationBeer] }))
 
-    expect(screen.queryByText('Lupula')).toBeNull()
-    expect(screen.getByText('Zelie Lager')).toBeTruthy()
+    expect(screen.queryByText('Lupula', card)).toBeNull()
+    expect(screen.getByText('Zelie Lager', card)).toBeTruthy()
   })
 
   it('filters cans against the selected location', () => {
@@ -137,7 +140,28 @@ describe('BeerPageContent filters', () => {
 
     render(createElement(BeerPageContent, { beers: [beer, otherLocationBeer] }))
 
-    expect(screen.getByText('Lupula')).toBeTruthy()
-    expect(screen.queryByText('Zelie Lager')).toBeNull()
+    expect(screen.getByText('Lupula', card)).toBeTruthy()
+    expect(screen.queryByText('Zelie Lager', card)).toBeNull()
+  })
+})
+
+describe('BeerPageContent full beer list', () => {
+  it('links every beer, including ones the default filter hides', () => {
+    queryState.availability = 'cans'
+    const archived: Beer = { ...beer, variant: 'old-ale', name: 'Old Ale', availability: {} }
+
+    render(createElement(BeerPageContent, { beers: [beer, archived] }))
+
+    expect(screen.queryByText('Old Ale', { selector: 'article' })).toBeNull()
+    const list = screen.getByText('All beers (2)').closest('details')
+    expect(list).toBeTruthy()
+    const links = Array.from(list!.querySelectorAll('a')).map((a) => [
+      a.textContent,
+      a.getAttribute('href'),
+    ])
+    expect(links).toEqual([
+      ['Lupula', '/beer/lupula'],
+      ['Old Ale', '/beer/old-ale'],
+    ])
   })
 })

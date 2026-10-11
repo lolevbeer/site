@@ -2,6 +2,8 @@
  * Beer Page Content Component
  * Client component for interactive beer listing with inline filters.
  * Uses nuqs for URL-based filter persistence (shareable/bookmarkable).
+ * A collapsed "All beers" list under the grid links every beer page, so beers
+ * hidden by the default filter (not in cans) still have a crawlable link.
  */
 
 'use client'
@@ -10,6 +12,7 @@ import React, { Suspense, useMemo } from 'react'
 import Link from 'next/link'
 import { useQueryState, parseAsString } from 'nuqs'
 import { Beer } from '@/lib/types/beer'
+import { getBeerSlug } from '@/lib/utils/formatters'
 import { BeerCard } from '@/components/beer/beer-card'
 import { Button } from '@/components/ui/button'
 import {
@@ -195,6 +198,11 @@ function BeerListing({
     return filtered
   }, [beers, search, selectedType, selectedTag, availability, currentLocation])
 
+  const beersByName = useMemo(
+    () => beers.slice().sort((a, b) => a.name.localeCompare(b.name)),
+    [beers],
+  )
+
   return (
     <PageTransition>
       <div className="container mx-auto px-4 py-8">
@@ -329,6 +337,26 @@ function BeerListing({
             )}
           </Empty>
         )}
+
+        {/* Every beer page, filters aside: the only crawlable link to most of them. */}
+        <details className="mt-12 text-center">
+          <summary className="cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground">
+            All beers ({beers.length})
+          </summary>
+          <ul className="mt-4 columns-2 sm:columns-3 lg:columns-4 gap-6 text-left text-sm">
+            {beersByName.map((beer) => (
+              <li key={beer.variant}>
+                <Link
+                  href={`/beer/${getBeerSlug(beer)}`}
+                  prefetch={false}
+                  className="inline-block py-1 text-muted-foreground hover:text-foreground hover:underline"
+                >
+                  {beer.name}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </details>
       </div>
     </PageTransition>
   )
