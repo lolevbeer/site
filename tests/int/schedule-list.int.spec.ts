@@ -12,7 +12,7 @@ vi.mock('@/lib/utils/formatters', async () => {
   )
   return {
     ...actual,
-    formatDate: (value: string) => value,
+    formatDayLabel: (value: string) => value,
   }
 })
 
