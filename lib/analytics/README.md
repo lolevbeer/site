@@ -22,22 +22,25 @@ Helpers live in `lib/analytics/events.ts`:
 | Event | Params | Sent from |
 | --- | --- | --- |
 | `call` | none | Any click on a `tel:` link (`components/analytics/conversion-tracker.tsx`) |
-| `directions` | `page` (path the click happened on) | Any click on a Google Maps (`google.com/maps…`, `maps.google.com`) or Apple Maps (`maps.apple.com`) link |
+| `directions` | `page` (path the click happened on) | Any click on a Google Maps link (`google.com/maps…` or any `*.google.com/maps…`, `maps.google.com`, the share links `maps.app.goo.gl/…` and `goo.gl/maps/…`) or an Apple Maps link (`maps.apple.com`). This is the directions KPI. |
 | `outbound` | `host` | Any click on another off-site `http(s)` link |
 | `donate_submitted` | none | `components/donate/donation-request-form.tsx`, when the server accepts the request |
 | `job_submitted` | none | `components/jobs/job-apply-form.tsx`, when the server accepts the application |
 
-`ConversionTracker` is a single delegated `document` click listener mounted next to `<Analytics />` in the frontend layout, so links need no per-link wiring.
+`ConversionTracker` is a delegated `document` listener for `click` and middle-button `auxclick` (open in new tab) mounted next to `<Analytics />` in the frontend layout, so links need no per-link wiring. It cannot see a link opened from the right-click context menu or by long-press on a phone, so `call`, `directions`, and `outbound` slightly undercount those. `mailto:` and other non-http links are ignored.
 
 ### GA-only events
 
 | Event | Params | Sent from |
 | --- | --- | --- |
 | `view_beer` | `beer_name`, `beer_type` | `components/beer/beer-card.tsx` |
-| `get_directions` | `location` | Directions links in `components/location/location-cards.tsx` (these clicks also send `directions` above) |
 | `map_interaction` | `action` (`geolocate`, `marker_click`, `card_click`), `location` | `components/ui/distributor-map.tsx` |
 
-GA4's own enhanced measurement (scroll, outbound clicks, file downloads, video) also runs if it is enabled on the property.
+The old GA-only `get_directions` event (location cards only) was retired; use `directions`, which covers every maps link. GA4's own enhanced measurement (scroll, outbound clicks, file downloads, video) also runs if it is enabled on the property, so a GA outbound-click report can include maps clicks; use `directions` for directions.
+
+### Field Web Vitals
+
+The baseline for real-user Web Vitals (LCP, INP, CLS) comes from Sentry. `@sentry/nextjs` adds its browser tracing integration by default (`instrumentation-client.ts`, options in `sentry.options.ts`), which records Web Vitals on sampled page-load transactions (`tracesSampleRate: 0.2`). That only runs in production when `NEXT_PUBLIC_SENTRY_DSN` is set. If the DSN stays unset, there is no field-vitals source; the plan is then to add `<SpeedInsights />` from `@vercel/speed-insights/next` next to `<Analytics />`.
 
 ## Adding an event
 

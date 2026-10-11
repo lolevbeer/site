@@ -1,21 +1,29 @@
 'use client'
 
 /**
- * One delegated document click listener that reports taproom-driving link
- * clicks: `tel:` links send `call`, Google/Apple Maps links send `directions`
- * with the current page, and any other off-site link sends `outbound` with its
- * host. Mounted once in the frontend layout; renders nothing.
+ * One delegated document listener that reports taproom-driving link clicks
+ * (plain clicks and middle-click "open in new tab"): `tel:` links send `call`,
+ * Google/Apple Maps links (including Google's maps.app.goo.gl and goo.gl/maps
+ * share links) send `directions` with the current page, and any other off-site
+ * link sends `outbound` with its host. Mounted once in the frontend layout;
+ * renders nothing.
  */
 
 import { useEffect } from 'react'
 import { trackConversion } from '@/lib/analytics/events'
 
 function isMapsUrl(url: URL): boolean {
-  if (url.hostname === 'maps.apple.com' || url.hostname === 'maps.google.com') return true
-  return url.hostname.endsWith('google.com') && url.pathname.startsWith('/maps')
+  const host = url.hostname
+  if (host === 'maps.apple.com' || host === 'maps.google.com' || host === 'maps.app.goo.gl') {
+    return true
+  }
+  const isGoogle = host === 'google.com' || host.endsWith('.google.com')
+  return (isGoogle || host === 'goo.gl') && url.pathname.startsWith('/maps')
 }
 
 function trackLinkClick(event: MouseEvent) {
+  // auxclick also fires for right-click; only the middle button opens the link.
+  if (event.type === 'auxclick' && event.button !== 1) return
   const link = (event.target as Element | null)?.closest?.('a[href]')
   if (!link) return
   const href = link.getAttribute('href') ?? ''
@@ -35,7 +43,11 @@ function trackLinkClick(event: MouseEvent) {
 export function ConversionTracker() {
   useEffect(() => {
     document.addEventListener('click', trackLinkClick)
-    return () => document.removeEventListener('click', trackLinkClick)
+    document.addEventListener('auxclick', trackLinkClick)
+    return () => {
+      document.removeEventListener('click', trackLinkClick)
+      document.removeEventListener('auxclick', trackLinkClick)
+    }
   }, [])
   return null
 }

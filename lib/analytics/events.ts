@@ -52,13 +52,6 @@ export const trackBeerView = (beerName: string, beerType: string) => {
   });
 };
 
-// Location-related events
-export const trackDirections = (location: string) => {
-  trackEvent('get_directions', {
-    location: location,
-  });
-};
-
 // Map interactions
 export const trackMapInteraction = (action: string, location?: string) => {
   trackEvent('map_interaction', {
