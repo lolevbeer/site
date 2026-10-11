@@ -286,20 +286,26 @@ export function getDefaultLocationSlug(locations: PayloadLocation[]): LocationSl
 }
 
 /**
- * Find a location by slug from an array of locations
+ * Find a location by its current slug, id, or a former slug kept in `aliases`
+ * (recorded when a taproom is renamed). A current slug wins over another
+ * location's alias. Callers that need the canonical URL use the returned
+ * location's `slug`.
  */
 export function findLocationBySlug(
   locations: PayloadLocation[],
   slug: LocationSlug,
 ): PayloadLocation | undefined {
-  return locations.find((loc) => loc.slug === slug || loc.id === slug)
+  return (
+    locations.find((loc) => loc.slug === slug || loc.id === slug) ??
+    locations.find((loc) => loc.aliases?.includes(slug))
+  )
 }
 
 /**
- * Validate if a slug is a valid location
+ * Validate if a slug (or alias) is a valid location
  */
 export function isValidLocationSlug(locations: PayloadLocation[], slug: string): boolean {
-  return locations.some((loc) => loc.slug === slug || loc.id === slug)
+  return findLocationBySlug(locations, slug) !== undefined
 }
 
 /**

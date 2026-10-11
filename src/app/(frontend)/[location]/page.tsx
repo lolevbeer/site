@@ -1,10 +1,13 @@
 /**
  * Per-taproom landing page. Unique URL for LocalBusiness schema and local search
- * ("Lawrenceville brewery", "Zelienople taproom"). Unknown slugs 404.
+ * ("Lawrenceville brewery", "Zelienople taproom"). Any other spelling that
+ * resolves to a location (a former slug kept in `aliases`, different letter
+ * case, or the location id) permanently redirects to the current slug, before
+ * any page data loads; unknown slugs 404.
  */
 import { cache } from 'react'
 import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
+import { notFound, permanentRedirect } from 'next/navigation'
 import { JsonLd } from '@/components/seo/json-ld'
 import { PageTransition } from '@/components/motion'
 import { LocationLanding } from '@/components/location/location-landing'
@@ -58,12 +61,15 @@ const loadLocation = cache(async (slug: string) => {
   if (RESERVED_LOCATION_SLUGS.has(key)) return null
   const location = findLocationBySlug(locations, key)
   if (!location || location.active === false) return null
+  // Not the canonical URL: redirect before fetching data that would be discarded.
+  if (location.slug && location.slug !== slug) permanentRedirect(`/${location.slug}`)
+  const current = location.slug || key
 
   const [draftMenu, cansMenu, events, food, weeklyHours] = await Promise.all([
-    getDraftMenu(key).catch(() => null),
-    getCansMenu(key).catch(() => null),
-    getUpcomingEventsFromPayload(key, 5).catch(() => []),
-    getCombinedUpcomingFood(key, 5).catch(() => []),
+    getDraftMenu(current).catch(() => null),
+    getCansMenu(current).catch(() => null),
+    getUpcomingEventsFromPayload(current, 5).catch(() => []),
+    getCombinedUpcomingFood(current, 5).catch(() => []),
     getWeeklyHoursWithHolidays(location.id).catch(() => []),
   ])
 

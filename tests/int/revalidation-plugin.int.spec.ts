@@ -244,3 +244,19 @@ it('hard-expires populated Coming Soon and menus on style changes', async () => 
     expect(publishKioskInvalidate).toHaveBeenCalledWith({ kind: 'menu' })
   }
 })
+
+describe('location rename', () => {
+  // The rename hook has already recorded the old slug in aliases.
+  it('revalidates the slug and every alias, landing page and events board', async () => {
+    revalidatePath.mockReset()
+    const { afterChange } = await hooksFor('locations')
+    await afterChange({
+      doc: { slug: 'lolev-strip', aliases: ['lolev-lawrenceville', 'older'] },
+    })
+    const paths = revalidatePath.mock.calls.map(([path]) => path)
+    for (const slug of ['lolev-strip', 'lolev-lawrenceville', 'older']) {
+      expect(paths).toContain(`/${slug}`)
+      expect(paths).toContain(`/e/${slug}`)
+    }
+  })
+})
