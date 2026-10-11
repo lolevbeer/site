@@ -7,8 +7,12 @@ import { HandwrittenLolevLogo } from '@/components/icons'
 import { footerOnlyItems, navigationItems } from './navigation'
 import { ThemeSwitcher } from '@/components/ui/theme-switcher'
 
-/** Shared style for every text link in the footer (nav list and legal row). */
-const FOOTER_LINK_CLASS = 'text-muted-foreground hover:text-foreground transition-colors'
+/**
+ * Shared style for every text link in the footer (nav list and legal row).
+ * `inline-block py-2` makes each link a ~36 px tap target on phones.
+ */
+const FOOTER_LINK_CLASS =
+  'inline-block py-2 text-muted-foreground hover:text-foreground transition-colors'
 
 interface FooterProps {
   /**
@@ -34,7 +38,7 @@ export function Footer({ taprooms }: FooterProps) {
           <div className="flex flex-col items-center">
             <p className="text-sm text-muted-foreground mb-6">Haze • Crispy • Funky • Oaked</p>
 
-            <ul className="space-y-2 text-sm mb-6 text-center">
+            <ul className="text-sm mb-6 text-center">
               {[...navigationItems, ...footerOnlyItems].map((item) => (
                 <li key={item.href}>
                   <Link href={item.href} className={FOOTER_LINK_CLASS}>
@@ -58,7 +62,7 @@ export function Footer({ taprooms }: FooterProps) {
             </p>
             <ThemeSwitcher />
           </div>
-          <div className="flex flex-wrap gap-x-6 gap-y-2 justify-center text-sm">
+          <div className="flex flex-wrap gap-x-6 justify-center text-sm">
             <Link href="/privacy" className={FOOTER_LINK_CLASS}>
               Privacy Policy
             </Link>

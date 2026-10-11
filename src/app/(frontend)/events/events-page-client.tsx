@@ -16,7 +16,8 @@ import { ScheduleList } from '@/components/ui/schedule-list';
 import { TimelineItem } from '@/components/ui/timeline-item';
 import { formatDate, isTodayOrFuture } from '@/lib/utils/formatters';
 import { safeHttpUrl } from '@/lib/utils/url-utils';
-import { regularLabel, splitRegulars } from '@/lib/utils/event-regulars';
+import { eventBadge, regularLabel, splitRegulars } from '@/lib/utils/event-regulars';
+import { useTodayEST } from '@/lib/hooks/use-today-est';
 
 /**
  * Row anchor id. CMS and recurring ids are already URL-safe; the rare id-less
@@ -61,6 +62,9 @@ interface EventsPageClientProps {
 export function EventsPageClient({ initialEvents, intro }: EventsPageClientProps) {
   const { currentLocation, locations } = useLocationContext();
   const locationFilter = currentLocation as LocationFilter;
+  // The server list is already upcoming-only. Past days are dropped only once
+  // mounted, so HTML cached before midnight hydrates without a mismatch.
+  const today = useTodayEST();
 
   // Filter events by location and sort by date
   const filteredEvents = useMemo(() => {
@@ -69,9 +73,9 @@ export function EventsPageClient({ initialEvents, intro }: EventsPageClientProps
       : initialEvents.filter(event => event.location === locationFilter);
 
     return filtered
-      .filter(event => isTodayOrFuture(event.date))
+      .filter(event => today === null || isTodayOrFuture(event.date, today))
       .sort((a, b) => a.date.localeCompare(b.date));
-  }, [initialEvents, locationFilter]);
+  }, [initialEvents, locationFilter, today]);
 
   // Weekly regulars collapse into one block so one-offs stand out. The page's
   // JSON-LD still lists every occurrence.
@@ -106,6 +110,7 @@ export function EventsPageClient({ initialEvents, intro }: EventsPageClientProps
                   ? getLocationDisplayName(locations, event.location)
                   : undefined,
               site: safeHttpUrl(event.site),
+              badge: eventBadge(event.tags),
             }))}
           />
           {regulars.length > 0 ? (

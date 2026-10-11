@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { useEventsStream } from '@/lib/hooks/use-events-stream'
 import { useClockBucket } from '@/lib/hooks/use-clock-bucket'
 import { Logo } from '@/components/ui/logo'
+import { TapListBanner } from '@/components/ui/tap-list-banner'
 import { FeaturedCans } from '@/components/home/featured-menu'
 import type { BreweryEvent } from '@/lib/types/event'
 import type { FoodItem } from '@/src/app/(frontend)/e/[location]/page'
@@ -23,7 +24,10 @@ import {
 } from '@/lib/config/tv-display'
 
 interface LiveEventsProps {
+  /** The /e URL param; the events stream polls with it. */
   location: string
+  /** The resolved location's canonical slug, for the taproom link. */
+  locationSlug: string
   initialEvents: BreweryEvent[]
   initialFood?: FoodItem[]
   cansMenu?: PayloadMenu | null
@@ -135,6 +139,7 @@ function AgendaRow({
  */
 export function LiveEvents({
   location,
+  locationSlug,
   initialEvents,
   initialFood = [],
   cansMenu,
@@ -256,10 +261,10 @@ export function LiveEvents({
 
   return (
     <div
-      className="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground"
+      className="h-dvh w-screen overflow-hidden flex flex-col bg-background text-foreground"
       style={themeVars}
     >
-      <section className="h-full flex flex-col bg-background overflow-hidden">
+      <section className="flex-1 min-h-0 flex flex-col bg-background overflow-hidden">
         {/* Header row with Lolev Beer, title, and logo aligned */}
         <div
           className="flex items-center flex-shrink-0"
@@ -351,6 +356,8 @@ export function LiveEvents({
           </div>
         </div>
       </section>
+      {/* Phones only (portrait touch screens); TVs never show it. */}
+      <TapListBanner locationSlug={locationSlug} label="Open the taproom page" />
     </div>
   )
 }

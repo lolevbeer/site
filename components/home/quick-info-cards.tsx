@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card'
 import type { LocationSlug } from '@/lib/types/location'
 import { cn } from '@/lib/utils'
 import { formatDayLabel } from '@/lib/utils/formatters'
+import { useTodayEST } from '@/lib/hooks/use-today-est'
 import { useLocationContext } from '@/components/location/location-provider'
 import { getLocationDisplayName } from '@/lib/config/locations'
 import {
@@ -118,6 +119,8 @@ export function QuickInfoCards({
   className,
 }: QuickInfoCardsProps) {
   const { locations } = useLocationContext()
+  // "Today"/"Tomorrow" only after mount; cached HTML shows the full date.
+  const today = useTodayEST()
 
   return (
     <div className={cn('grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4', className)}>
@@ -152,7 +155,7 @@ export function QuickInfoCards({
                   {nextEvent.name}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {formatDayLabel(nextEvent.date)} ·{' '}
+                  {formatDayLabel(nextEvent.date, today)} ·{' '}
                   {getLocationDisplayName(locations, nextEvent.location)}
                 </p>
               </div>
