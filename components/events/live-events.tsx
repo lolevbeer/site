@@ -256,7 +256,9 @@ export function LiveEvents({
 
   return (
     <div
-      className="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground"
+      // relative z-[1]: above the site's fixed dark-mode noise overlay (globals.css
+      // `.dark body::before`), which follows the device theme, not the board's.
+      className="relative z-[1] h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground"
       style={themeVars}
     >
       <section className="h-full flex flex-col bg-background overflow-hidden">
@@ -266,12 +268,12 @@ export function LiveEvents({
           style={{ padding: `${TV_SAFE_Y} ${TV_SAFE_X}`, marginBottom: '0.5vh' }}
         >
           <div className="flex-1">
-            <span className="font-bold text-foreground-muted" style={{ fontSize: '4vh' }}>
+            <span className="font-bold text-foreground-muted" style={{ fontSize: TV_TYPE.title }}>
               Lolev Beer
             </span>
           </div>
           <div className="flex-1 text-center">
-            <h2 className="font-bold" style={{ fontSize: '4vh' }}>
+            <h2 className="font-bold" style={{ fontSize: TV_TYPE.title }}>
               {title}
             </h2>
             <p
@@ -305,9 +307,7 @@ export function LiveEvents({
                     >
                       <div
                         className={`flex-shrink-0 uppercase tracking-wider font-bold leading-tight ${
-                          group.isToday
-                            ? 'text-highlight'
-                            : 'text-foreground-muted'
+                          group.isToday ? 'text-highlight' : 'text-foreground-muted'
                         }`}
                         style={{ width: '16vh', fontSize: TV_TYPE.eventDay }}
                       >

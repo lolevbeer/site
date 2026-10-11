@@ -1,5 +1,5 @@
 /**
- * Taproom landing reuses DraftBeerCard (compact) and BeerCard instead of a
+ * Taproom landing reuses DraftBeerCard (compact row) and BeerCard instead of a
  * one-off beer grid, so draft rows stay lighter than the can tiles.
  */
 import { cleanup, render, screen } from '@testing-library/react'
@@ -23,20 +23,12 @@ vi.mock('@/components/location/location-provider', () => ({
 }))
 
 vi.mock('@/components/beer/draft-beer-card', () => ({
-  DraftBeerCard: ({ beer, compact }: { beer: Beer; compact?: boolean }) =>
-    createElement('article', { 'data-draft-compact': String(!!compact) }, beer.name),
+  DraftBeerCard: ({ beer, showTapAndPrice }: { beer: Beer; showTapAndPrice?: boolean }) =>
+    createElement('article', { 'data-draft-compact': String(!showTapAndPrice) }, beer.name),
 }))
 
 vi.mock('@/components/beer/beer-card', () => ({
-  BeerCard: ({
-    beer,
-    variant,
-    showCta,
-  }: {
-    beer: Beer
-    variant?: string
-    showCta?: boolean
-  }) =>
+  BeerCard: ({ beer, variant, showCta }: { beer: Beer; variant?: string; showCta?: boolean }) =>
     createElement(
       'article',
       { 'data-can-variant': variant ?? '', 'data-show-cta': String(showCta !== false) },

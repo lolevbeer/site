@@ -1,17 +1,14 @@
 /**
- * Compact DraftBeerCard is the taproom-landing row: name and style, without
- * description, hops, ABV, or glass. The time-based "Just Released" badge needs
- * a clock from the caller (`now`); without one it is left out.
+ * DraftBeerCard has two rows. Without `showTapAndPrice` (homepage featured
+ * drafts, taproom landings) it is the compact row: name and style only. The
+ * `/m` board row adds the glass, tap, description, hops, ABV, and prices; its
+ * time-based "Just Released" badge needs a clock from the caller (`now`).
  */
 import { cleanup, render } from '@testing-library/react'
 import { createElement } from 'react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import { DraftBeerCard } from '@/components/beer/draft-beer-card'
 import { GlassType, type Beer } from '@/lib/types/beer'
-
-vi.mock('@/components/location/location-provider', () => ({
-  useLocationContext: () => ({ currentLocation: 'lawrenceville' }),
-}))
 
 const beer: Beer = {
   variant: 'test-beer',
@@ -26,86 +23,45 @@ const beer: Beer = {
   tap: 7,
   pricing: { draftPrice: 7 },
   availability: { hideFromSite: false },
+  createdAt: new Date().toISOString(),
+  topBeerDrops: 'https://topbeerdrops.com/test-beer',
 }
 
 afterEach(cleanup)
 
-describe('DraftBeerCard compact layout', () => {
-  it('hides description, hops, and ABV while keeping the name and style', () => {
-    const { container } = render(
-      createElement(DraftBeerCard, { beer, compact: true, showLocation: false }),
-    )
+describe('DraftBeerCard compact row', () => {
+  it('shows only the name and style, linked to the beer page', () => {
+    const { container } = render(createElement(DraftBeerCard, { beer, now: Date.now() }))
 
     expect(container.textContent).toContain('Test Beer')
     expect(container.textContent).toContain('IPA')
-    expect(container.textContent).not.toContain('A juicy hazy IPA.')
-    expect(container.textContent).not.toContain('Hops')
-    expect(container.textContent).not.toContain('Citra')
-    expect(container.textContent).not.toContain('6.5%')
-  })
-
-  it('still shows description, hops, and ABV in the standard homepage row', () => {
-    const { container } = render(createElement(DraftBeerCard, { beer, showLocation: false }))
-
-    expect(container.textContent).toContain('A juicy hazy IPA.')
-    expect(container.textContent).toContain('Citra')
-    expect(container.textContent).toContain('6.5%')
-  })
-
-  it('still shows a Just Released badge when compact', () => {
-    const { container } = render(
-      createElement(DraftBeerCard, {
-        beer: { ...beer, createdAt: new Date().toISOString() },
-        now: Date.now(),
-        compact: true,
-        showLocation: false,
-      }),
-    )
-
-    expect(container.textContent).toContain('Just Released')
-  })
-
-  it('leaves out the Just Released badge when the caller passes no clock', () => {
-    const { container } = render(
-      createElement(DraftBeerCard, {
-        beer: { ...beer, createdAt: new Date().toISOString() },
-        compact: true,
-        showLocation: false,
-      }),
-    )
-
-    expect(container.textContent).not.toContain('Just Released')
-  })
-
-  it('hides the glass icon on public rows and keeps it on fullscreen menus', () => {
-    const { container: publicRow } = render(
-      createElement(DraftBeerCard, { beer, showLocation: false }),
-    )
-    const { container: board, unmount } = render(
-      createElement(DraftBeerCard, { beer, showTapAndPrice: true, showLocation: false }),
-    )
-
-    expect(publicRow.querySelector('svg')).toBeNull()
-    expect(board.querySelector('svg')).not.toBeNull()
-    unmount()
-  })
-
-  it('hides Top Beer Drops and can omit the just-released badge', () => {
-    const { container } = render(
-      createElement(DraftBeerCard, {
-        beer: {
-          ...beer,
-          createdAt: new Date().toISOString(),
-          topBeerDrops: 'https://topbeerdrops.com/test-beer',
-        },
-        now: Date.now(),
-        compact: true,
-        showJustReleased: false,
-        showLocation: false,
-      }),
-    )
-
-    expect(container.textContent).not.toContain('Just Released')
+    for (const hidden of ['A juicy hazy IPA.', 'Citra', '6.5%', '$7', 'Just Released']) {
+      expect(container.textContent).not.toContain(hidden)
+    }
+    expect(container.querySelector('svg')).toBeNull()
     expect(container.querySelector('a[href="https://topbeerdrops.com/test-beer"]')).toBeNull()
+    expect(container.querySelector('a[href="/beer/test-beer"]')).not.toBeNull()
+  })
+})
+
+describe('DraftBeerCard board row', () => {
+  it('shows glass, tap, description, hops, ABV, and price', () => {
+    const { container } = render(createElement(DraftBeerCard, { beer, showTapAndPrice: true }))
+
+    expect(container.querySelector('svg')).not.toBeNull()
+    for (const shown of ['7', 'A juicy hazy IPA.', 'Citra', '6.5%', '$7']) {
+      expect(container.textContent).toContain(shown)
+    }
+  })
+
+  it('shows Just Released only with a clock', () => {
+    const withClock = render(
+      createElement(DraftBeerCard, { beer, showTapAndPrice: true, now: Date.now() }),
+    )
+    expect(withClock.container.textContent).toContain('Just Released')
+    cleanup()
+
+    const { container } = render(createElement(DraftBeerCard, { beer, showTapAndPrice: true }))
+    expect(container.textContent).not.toContain('Just Released')
   })
 })
