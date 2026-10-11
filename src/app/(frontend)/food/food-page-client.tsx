@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { FoodVendorSchedule } from '@/lib/types/food';
+import type { FoodPageSchedule } from '@/lib/utils/public-client-payloads';
 import { Button } from '@/components/ui/button';
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
 import { UtensilsCrossed } from '@/components/icons';
@@ -16,7 +16,8 @@ import { safeHttpUrl } from '@/lib/utils/url-utils';
 interface FoodPageClientProps {
   /** CMS intro paragraph shown under the heading. */
   intro?: string
-  initialSchedules: FoodVendorSchedule[];
+  /** Schedules trimmed to rendered fields (see toFoodPageSchedules). */
+  initialSchedules: FoodPageSchedule[];
 }
 
 export function FoodPageClient({ initialSchedules, intro }: FoodPageClientProps) {
@@ -58,7 +59,7 @@ export function FoodPageClient({ initialSchedules, intro }: FoodPageClientProps)
               id: `${schedule.vendor}-${schedule.date}-${index}`,
               date: schedule.date,
               vendor: schedule.vendor,
-              time: schedule.time || schedule.start,
+              time: schedule.time,
               site: safeHttpUrl(schedule.site),
               logoUrl: schedule.logoUrl,
             }))}
