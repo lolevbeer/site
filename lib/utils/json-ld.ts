@@ -350,7 +350,8 @@ export function generateEventJsonLd(
     )
 
     if (endDate) jsonLd.endDate = endDate
-    jsonLd.description = (payloadEvent.description || payloadEvent.organizer).trim()
+    // The CMS description is internal (staff-only read), so describe by title.
+    jsonLd.description = payloadEvent.organizer.trim()
     if (payloadEvent.site) jsonLd.url = payloadEvent.site
     jsonLd.image = resolveEventImage(getMediaUrl(payloadEvent.image))
     jsonLd.offers = complimentaryOffer()
@@ -377,7 +378,7 @@ export function generateEventJsonLd(
     startDate,
   )
 
-  jsonLd.description = (breweryEvent.description || breweryEvent.title).trim()
+  jsonLd.description = breweryEvent.title.trim()
   jsonLd.eventStatus = getEventStatus(breweryEvent.status)
   if (endDate) jsonLd.endDate = endDate
   jsonLd.image = resolveEventImage(breweryEvent.image)
