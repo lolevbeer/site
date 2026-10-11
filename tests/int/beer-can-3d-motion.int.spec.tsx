@@ -15,15 +15,18 @@ const created: Array<{ autoRotate: boolean; listeners: Record<string, () => void
 const renders = { count: 0, scenes: 0 }
 
 vi.mock('@/components/beer/can-scene', () => ({
-  createCanScene: async () => (renders.scenes++, {
-    camera: {},
-    renderer: { domElement: document.createElement('canvas') },
-    render: () => {
-      renders.count++
-    },
-    setSize: () => {},
-    dispose: () => {},
-  }),
+  createCanScene: async () => (
+    renders.scenes++,
+    {
+      camera: {},
+      renderer: { domElement: document.createElement('canvas') },
+      render: () => {
+        renders.count++
+      },
+      setSize: () => {},
+      dispose: () => {},
+    }
+  ),
 }))
 
 vi.mock('three/addons/controls/OrbitControls.js', () => ({
@@ -126,6 +129,56 @@ describe('BeerCan3D deferral', () => {
     window.dispatchEvent(new Event('load'))
     await waitFor(() => expect(onReady).toHaveBeenCalled(), { timeout: 3000 })
     expect(renders.scenes).toBe(1)
+    readyState.mockRestore()
+  })
+
+  it('builds the scene in an idle callback when the browser has requestIdleCallback', async () => {
+    mockReducedMotion(false)
+    const idle: Array<() => void> = []
+    const ric = vi.fn((cb: () => void) => idle.push(cb))
+    const cic = vi.fn()
+    Object.assign(window, { requestIdleCallback: ric, cancelIdleCallback: cic })
+    try {
+      const onReady = vi.fn()
+      render(<BeerCan3D baseUrl="/label.png" onReady={onReady} />)
+      expect(ric).toHaveBeenCalledTimes(1)
+      await new Promise((r) => setTimeout(r, 300))
+      expect(renders.scenes).toBe(0)
+      idle[0]()
+      await waitFor(() => expect(onReady).toHaveBeenCalled(), { timeout: 3000 })
+      expect(renders.scenes).toBe(1)
+    } finally {
+      cleanup() // unmount while the stub still exists
+      delete (window as Partial<Window>).requestIdleCallback
+      delete (window as Partial<Window>).cancelIdleCallback
+    }
+  })
+
+  it('cancels a pending idle callback on unmount', () => {
+    mockReducedMotion(false)
+    const ric = vi.fn(() => 42)
+    const cic = vi.fn()
+    Object.assign(window, { requestIdleCallback: ric, cancelIdleCallback: cic })
+    try {
+      const { unmount } = render(<BeerCan3D baseUrl="/label.png" />)
+      unmount()
+      expect(cic).toHaveBeenCalledWith(42)
+    } finally {
+      cleanup() // unmount while the stub still exists
+      delete (window as Partial<Window>).requestIdleCallback
+      delete (window as Partial<Window>).cancelIdleCallback
+    }
+  })
+
+  it('never builds the scene when unmounted before the load event', async () => {
+    mockReducedMotion(false)
+    const readyState = vi.spyOn(document, 'readyState', 'get').mockReturnValue('loading')
+    const { unmount } = render(<BeerCan3D baseUrl="/label.png" />)
+    unmount()
+    readyState.mockReturnValue('complete')
+    window.dispatchEvent(new Event('load'))
+    await new Promise((r) => setTimeout(r, 400))
+    expect(renders.scenes).toBe(0)
     readyState.mockRestore()
   })
 })
