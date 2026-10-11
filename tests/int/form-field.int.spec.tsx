@@ -35,4 +35,14 @@ describe('FormField', () => {
     renderField({})
     expect(screen.getByLabelText('Mission').getAttribute('aria-describedby')).toBeNull()
   })
+  it('keeps a description the control already had', () => {
+    render(
+      <FormField id="mission" label="Mission" error="Too short.">
+        <input id="mission" aria-describedby="mission-count" />
+      </FormField>,
+    )
+    expect(screen.getByLabelText('Mission').getAttribute('aria-describedby')).toBe(
+      'mission-count mission-error',
+    )
+  })
 })

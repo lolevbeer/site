@@ -3,6 +3,7 @@
 /**
  * Apply form for a single opening. Cover letter only — Media does not accept PDFs.
  * Remount with `key={job.slug}` when the opening changes so form state resets.
+ * Server validation errors show under each field and clear when it changes.
  */
 
 import React, { useState } from 'react'
@@ -16,27 +17,42 @@ import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
 import { Textarea } from '@/components/ui/textarea'
 import { submitJobApplication } from '@/src/actions/job-application'
-import { emptyJobApplication, type JobApplicationInput } from '@/lib/jobs/application'
+import {
+  emptyJobApplication,
+  type JobApplicationErrors,
+  type JobApplicationInput,
+} from '@/lib/jobs/application'
 
 export function JobApplyForm({ jobSlug }: { jobSlug: string }) {
   const [values, setValues] = useState<JobApplicationInput>(() => emptyJobApplication(jobSlug))
   const [error, setError] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<JobApplicationErrors>({})
   const [pending, setPending] = useState(false)
   const [done, setDone] = useState(false)
 
   function set<K extends keyof JobApplicationInput>(key: K, value: JobApplicationInput[K]) {
     setValues((prev) => ({ ...prev, [key]: value }))
+    setFieldErrors((prev) => {
+      if (!prev[key]) return prev
+      const next = { ...prev }
+      delete next[key]
+      return next
+    })
   }
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault()
     if (pending) return
     setError(null)
+    setFieldErrors({})
     setPending(true)
     try {
       const result = await submitJobApplication(values)
       if (result.ok) setDone(true)
-      else setError(result.error)
+      else {
+        setError(result.error)
+        setFieldErrors(result.errors ?? {})
+      }
     } catch {
       setError('Could not submit the application. Try again in a minute.')
     } finally {
@@ -60,7 +76,7 @@ export function JobApplyForm({ jobSlug }: { jobSlug: string }) {
   return (
     <form noValidate onSubmit={onSubmit} className="relative overflow-visible flex flex-col gap-4 text-left">
       <FieldGroup className="overflow-visible p-1">
-        <FormField id="name" label="Your name">
+        <FormField id="name" error={fieldErrors.name} label="Your name">
           <Input
             id="name"
             name="name"
@@ -70,7 +86,7 @@ export function JobApplyForm({ jobSlug }: { jobSlug: string }) {
             required
           />
         </FormField>
-        <FormField id="email" label="Email">
+        <FormField id="email" error={fieldErrors.email} label="Email">
           <Input
             id="email"
             name="email"
@@ -81,7 +97,7 @@ export function JobApplyForm({ jobSlug }: { jobSlug: string }) {
             required
           />
         </FormField>
-        <FormField id="phone" label="Phone">
+        <FormField id="phone" error={fieldErrors.phone} label="Phone">
           <Input
             id="phone"
             name="phone"
@@ -92,7 +108,12 @@ export function JobApplyForm({ jobSlug }: { jobSlug: string }) {
             required
           />
         </FormField>
-        <FormField id="message" label="Why this role?" hint="At least 40 characters.">
+        <FormField
+          id="message"
+          label="Why this role?"
+          hint="At least 40 characters."
+          error={fieldErrors.message}
+        >
           <Textarea
             id="message"
             name="message"
@@ -103,10 +124,7 @@ export function JobApplyForm({ jobSlug }: { jobSlug: string }) {
           />
         </FormField>
       </FieldGroup>
-      <HoneypotField
-        value={values.companyUrlHp}
-        onChange={(value) => set('companyUrlHp', value)}
-      />
+      <HoneypotField value={values.companyUrlHp} onChange={(value) => set('companyUrlHp', value)} />
       {error ? (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>

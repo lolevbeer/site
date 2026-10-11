@@ -16,7 +16,8 @@ type DescribedControlProps = { 'aria-invalid'?: boolean; 'aria-describedby'?: st
 /**
  * ARIA props linking a control to its FormField messages. FormField applies
  * them to its direct child; spread them yourself onto a control nested deeper,
- * such as a Select's SelectTrigger.
+ * such as a Select's SelectTrigger (Radix Select Root renders no DOM). Pass the
+ * same hint and error the FormField gets, or the hint will show unlinked.
  */
 export function formFieldAria(
   id: string,
@@ -43,10 +44,17 @@ export function FormField({
   children: ReactNode
 }) {
   const aria = formFieldAria(id, { hint, error })
-  const control =
-    isValidElement(children) && Object.keys(aria).length
-      ? cloneElement(children as ReactElement<DescribedControlProps>, aria)
-      : children
+  let control = children
+  if (isValidElement<DescribedControlProps>(children) && Object.keys(aria).length) {
+    // Keep any description the control already has (a character counter, say).
+    const describedBy = [children.props['aria-describedby'], aria['aria-describedby']]
+      .filter(Boolean)
+      .join(' ')
+    control = cloneElement(children as ReactElement<DescribedControlProps>, {
+      ...aria,
+      ...(describedBy ? { 'aria-describedby': describedBy } : {}),
+    })
+  }
 
   return (
     <Field data-invalid={Boolean(error) || undefined} className="overflow-visible">
