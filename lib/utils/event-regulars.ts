@@ -8,11 +8,14 @@ import { formatTime, parseLocalDate } from '@/lib/utils/formatters'
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000
 
+export type RegularCadence = 'weekly' | 'biweekly' | 'monthly' | 'recurring'
+
 export interface RegularEvent {
   /** The soonest occurrence; its id, date, and location drive the row. */
   next: BreweryEvent
   /** Every collapsed occurrence id, in date order, kept as page anchors. */
   occurrenceIds: string[]
+  cadence: RegularCadence
 }
 
 function regularKey(event: BreweryEvent): string {
@@ -30,18 +33,38 @@ function regularKey(event: BreweryEvent): string {
  * skipping a month's fifth weekday, while monthly and every-other-week series
  * stay in the dated list.
  */
-function isWeekly(events: BreweryEvent[]): boolean {
-  if (events.length < 2) return false
-  const weeks = events
+function weekGaps(events: BreweryEvent[]): number[] {
+  return events
     .slice(1)
     .map(
       (event, i) =>
         (parseLocalDate(event.date).getTime() - parseLocalDate(events[i].date).getTime()) / WEEK_MS,
     )
     .map(Math.round)
+}
+
+function isWeekly(events: BreweryEvent[]): boolean {
+  if (events.length < 2) return false
+  const weeks = weekGaps(events)
   if (weeks.some((gap) => gap < 1)) return false
   const oneWeekGaps = weeks.filter((gap) => gap === 1).length
   return oneWeekGaps > 0 && oneWeekGaps * 2 >= weeks.length
+}
+
+/**
+ * Weekly; every other week (all gaps 2 weeks); monthly on a fixed weekday
+ * (gaps of 4-5 weeks); or a mixed nth-weekday schedule such as first-and-third
+ * Monday (gaps of 2-5 weeks), labelled by weekday only. A lone occurrence or
+ * a gap outside 1-5 weeks is null.
+ */
+function cadenceOf(events: BreweryEvent[]): RegularCadence | null {
+  if (isWeekly(events)) return 'weekly'
+  if (events.length < 2) return null
+  const weeks = weekGaps(events)
+  if (weeks.every((gap) => gap === 2)) return 'biweekly'
+  if (weeks.every((gap) => gap === 4 || gap === 5)) return 'monthly'
+  if (weeks.every((gap) => gap >= 2 && gap <= 5)) return 'recurring'
+  return null
 }
 
 /**
@@ -51,7 +74,11 @@ function isWeekly(events: BreweryEvent[]): boolean {
  * looks. Everything else (one-offs, monthly schedules, a lone occurrence)
  * stays in the dated list.
  */
-export function splitRegulars(events: BreweryEvent[]): {
+export function splitRegulars(
+  events: BreweryEvent[],
+  /** TV boards: also collapse biweekly and monthly series (/events stays weekly-only). */
+  { anyCadence = false }: { anyCadence?: boolean } = {},
+): {
   oneOffs: BreweryEvent[]
   regulars: RegularEvent[]
 } {
@@ -69,9 +96,14 @@ export function splitRegulars(events: BreweryEvent[]): {
   const regulars: RegularEvent[] = []
   for (const group of groups.values()) {
     const sorted = group.slice().sort((a, b) => a.date.localeCompare(b.date))
-    if (!isWeekly(sorted)) continue
+    const cadence = anyCadence ? cadenceOf(sorted) : isWeekly(sorted) ? 'weekly' : null
+    if (!cadence) continue
     sorted.forEach((event) => collapsed.add(event))
-    regulars.push({ next: sorted[0], occurrenceIds: sorted.map((event) => String(event.id)) })
+    regulars.push({
+      next: sorted[0],
+      occurrenceIds: sorted.map((event) => String(event.id)),
+      cadence,
+    })
   }
 
   regulars.sort((a, b) => a.next.date.localeCompare(b.next.date))

@@ -152,6 +152,51 @@ describe('splitRegulars', () => {
   })
 })
 
+describe('splitRegulars any cadence (TV boards)', () => {
+  const series = (prefix: string, dates: string[]) =>
+    dates.map((d) => ev(`recurring-${prefix}-${d}`, d))
+
+  it('collapses biweekly and monthly series with a cadence label', () => {
+    const biweekly = series('b', ['2026-10-19', '2026-11-02', '2026-11-16', '2026-11-30'])
+    const monthly = series('m', ['2026-10-05', '2026-11-02', '2026-12-07']).map((e) => ({
+      ...e,
+      title: 'Bingo',
+    }))
+    const { regulars, oneOffs } = splitRegulars([...biweekly, ...monthly], { anyCadence: true })
+    expect(oneOffs).toHaveLength(0)
+    expect(regulars.map((r) => [r.next.title, r.cadence])).toEqual([
+      ['Bingo', 'monthly'],
+      ['Trivia', 'biweekly'],
+    ])
+  })
+
+  it('labels weekly series weekly and still leaves lone or irregular ones dated', () => {
+    const weekly = series('w', ['2026-10-14', '2026-10-21', '2026-10-28'])
+    const lone = series('l', ['2026-10-15']).map((e) => ({ ...e, title: 'Solo' }))
+    const { regulars, oneOffs } = splitRegulars([...weekly, ...lone], { anyCadence: true })
+    expect(regulars.map((r) => r.cadence)).toEqual(['weekly'])
+    expect(oneOffs.map((e) => e.title)).toEqual(['Solo'])
+  })
+
+  it('collapses a first-and-third Monday schedule as recurring', () => {
+    const firstThird = series('z', [
+      '2026-10-19',
+      '2026-11-02',
+      '2026-11-16',
+      '2026-12-07',
+      '2026-12-21',
+    ])
+    const { regulars, oneOffs } = splitRegulars(firstThird, { anyCadence: true })
+    expect(oneOffs).toHaveLength(0)
+    expect(regulars.map((r) => r.cadence)).toEqual(['recurring'])
+  })
+
+  it('keeps the default weekly-only rule for /events', () => {
+    const biweekly = series('b', ['2026-10-19', '2026-11-02', '2026-11-16'])
+    expect(splitRegulars(biweekly).regulars).toHaveLength(0)
+  })
+})
+
 describe('regularLabel', () => {
   it('reads weekday, time, and title', () => {
     expect(regularLabel(ev('recurring-t-2026-10-14', '2026-10-14'))).toBe('Wednesdays 7pm · Trivia')

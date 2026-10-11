@@ -14,7 +14,8 @@ import { seededLightColors } from '@/lib/utils/seeded-colors'
 import { getThemeVars } from '@/lib/utils/display-theme'
 import { getTodayEST, toESTDate } from '@/lib/utils/date'
 import { format } from 'date-fns'
-import { formatTime } from '@/lib/utils/formatters'
+import { formatTime, parseLocalDate } from '@/lib/utils/formatters'
+import { splitRegulars, type RegularCadence, type RegularEvent } from '@/lib/utils/event-regulars'
 import {
   TV_TYPE,
   TV_SAFE_X,
@@ -64,7 +65,6 @@ interface AgendaEntry {
   name: string
   kind: 'Food' | 'Event'
   logoUrl?: string
-  description?: string
   /** Position in the combined list, which is what indexes the poll's colours. */
   colorIndex: number
 }
@@ -74,14 +74,12 @@ function AgendaRow({
   name,
   kind,
   logoUrl,
-  description,
   accentColor,
 }: {
   time: string
   name: string
   kind: 'Food' | 'Event'
   logoUrl?: string
-  description?: string
   accentColor?: string
 }) {
   return (
@@ -124,13 +122,52 @@ function AgendaRow({
         >
           {kind}
         </span>
-        {description && (
-          <span className="truncate text-foreground-muted" style={{ fontSize: TV_TYPE.body }}>
-            {description}
-          </span>
-        )}
       </div>
     </div>
+  )
+}
+
+/** Repeating events under the agenda: "Every Tue 5pm · Taco Tuesday". */
+const CADENCE_PREFIX: Record<RegularCadence, string> = {
+  weekly: 'Every',
+  biweekly: 'Every other',
+  monthly: 'Monthly',
+  // First-and-third Monday and the like: the weekday alone ("Mon 7pm").
+  recurring: '',
+}
+
+function RegularsStrip({ regulars }: { regulars: RegularEvent[] }) {
+  return (
+    <section
+      aria-label="Regulars"
+      className="flex flex-shrink-0 items-baseline w-full border-t border-border"
+      style={{ gap: '2vh', paddingTop: '1.2vh' }}
+    >
+      <h2
+        className="flex-shrink-0 uppercase tracking-wider font-bold text-foreground-muted leading-tight"
+        style={{ width: '16vh', fontSize: TV_TYPE.eventDay }}
+      >
+        Regulars
+      </h2>
+      <ul className="flex flex-wrap min-w-0" style={{ columnGap: '3vh', rowGap: '0.6vh' }}>
+        {regulars.map(({ next, cadence }) => (
+          <li key={next.id} className="flex items-baseline" style={{ gap: '1vh' }}>
+            <span
+              className="uppercase tracking-wider font-bold text-foreground-muted tabular-nums"
+              style={{ fontSize: TV_TYPE.label }}
+            >
+              {[CADENCE_PREFIX[cadence], format(parseLocalDate(next.date), 'EEE')]
+                .filter(Boolean)
+                .join(' ')}
+              {next.time ? ` ${formatTime(next.time)}` : ''}
+            </span>
+            <span className="font-bold" style={{ fontSize: TV_TYPE.eventTime }}>
+              {next.title}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }
 
@@ -153,10 +190,24 @@ export function LiveEvents({
 
   // Combine events and food into a single sorted list
   type DisplayItem = { type: 'event'; data: BreweryEvent } | { type: 'food'; data: FoodItem }
+  // Weekly regulars (Trivia, Taco Tuesday) would fill most of the ten agenda
+  // rows; they move to the "Regulars" strip, and only today's occurrence
+  // stays on the agenda so tonight is never missing.
+  const { agendaEvents, regulars } = useMemo(() => {
+    const today = getTodayEST()
+    const upcoming = events.filter((e) => e.date >= today)
+    const split = splitRegulars(upcoming, { anyCadence: true })
+    const regularIds = new Set(split.regulars.flatMap((r) => r.occurrenceIds))
+    return {
+      agendaEvents: upcoming.filter((e) => !regularIds.has(String(e.id)) || e.date === today),
+      regulars: split.regulars,
+    }
+  }, [events])
+
   const combinedItems = useMemo(() => {
     const today = getTodayEST()
     const items: DisplayItem[] = [
-      ...events.map((e) => ({ type: 'event' as const, data: e })),
+      ...agendaEvents.map((e) => ({ type: 'event' as const, data: e })),
       ...initialFood.map((f) => ({ type: 'food' as const, data: f })),
     ]
     return (
@@ -168,7 +219,7 @@ export function LiveEvents({
         .sort((a, b) => a.data.date.localeCompare(b.data.date))
         .slice(0, 10)
     )
-  }, [events, initialFood])
+  }, [agendaEvents, initialFood])
 
   /** The items grouped by calendar day, each already resolved to exactly what a
    *  row renders. Grouping is what makes the board answerable at a glance —
@@ -197,9 +248,7 @@ export function LiveEvents({
               time: item.data.time ? formatTime(item.data.time) : 'All day',
               name: item.data.title,
               kind: 'Event',
-              // A description that only repeats the title adds nothing.
-              description:
-                item.data.description !== item.data.title ? item.data.description : undefined,
+              // No description: the CMS field is internal (staff-only).
               colorIndex,
             }
           : {
@@ -295,46 +344,52 @@ export function LiveEvents({
             className="flex-1 overflow-y-auto flex flex-col"
             style={{ padding: `0 ${TV_SAFE_X}` }}
           >
-            {dayGroups.length > 0 ? (
+            {dayGroups.length > 0 || regulars.length > 0 ? (
               /* One row per day: a fixed day rail, then that day's items. The
                  rail width is what gives every name and time a single left
                  edge — the old layout centred each row independently. */
-              <div className="flex flex-col justify-evenly h-full w-full">
-                {dayGroups.map((group) => {
-                  const { weekday, day } = formatDayLabel(group.date, group.isToday)
-                  return (
-                    <div
-                      key={group.date}
-                      className="flex w-full border-t border-border"
-                      style={{ gap: '2vh', paddingTop: '1.2vh', paddingBottom: '1.2vh' }}
-                    >
+              <div className="flex flex-col h-full w-full">
+                <div
+                  // Spread a full week across the screen; a short list stays at the top.
+                  className={`flex flex-col min-h-0 w-full ${dayGroups.length >= 6 ? 'flex-1 justify-evenly' : 'justify-start'}`}
+                  role="list"
+                  aria-label="Upcoming"
+                >
+                  {dayGroups.map((group) => {
+                    const { weekday, day } = formatDayLabel(group.date, group.isToday)
+                    return (
                       <div
-                        className={`flex-shrink-0 uppercase tracking-wider font-bold leading-tight ${
-                          group.isToday
-                            ? 'text-highlight'
-                            : 'text-foreground-muted'
-                        }`}
-                        style={{ width: '16vh', fontSize: TV_TYPE.eventDay }}
+                        key={group.date}
+                        role="listitem"
+                        className="flex w-full border-t border-border"
+                        style={{ gap: '2vh', paddingTop: '1.2vh', paddingBottom: '1.2vh' }}
                       >
-                        <div>{weekday}</div>
-                        <div>{day}</div>
+                        <div
+                          className={`flex-shrink-0 uppercase tracking-wider font-bold leading-tight ${
+                            group.isToday ? 'text-highlight' : 'text-foreground-muted'
+                          }`}
+                          style={{ width: '16vh', fontSize: TV_TYPE.eventDay }}
+                        >
+                          <div>{weekday}</div>
+                          <div>{day}</div>
+                        </div>
+                        <div className="flex flex-col flex-grow min-w-0" style={{ gap: '1vh' }}>
+                          {group.items.map((item) => (
+                            <AgendaRow
+                              key={item.key}
+                              time={item.time}
+                              name={item.name}
+                              kind={item.kind}
+                              logoUrl={item.logoUrl}
+                              accentColor={itemColors?.[item.colorIndex]}
+                            />
+                          ))}
+                        </div>
                       </div>
-                      <div className="flex flex-col flex-grow min-w-0" style={{ gap: '1vh' }}>
-                        {group.items.map((item) => (
-                          <AgendaRow
-                            key={item.key}
-                            time={item.time}
-                            name={item.name}
-                            kind={item.kind}
-                            logoUrl={item.logoUrl}
-                            description={item.description}
-                            accentColor={itemColors?.[item.colorIndex]}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  )
-                })}
+                    )
+                  })}
+                </div>
+                {regulars.length > 0 && <RegularsStrip regulars={regulars} />}
               </div>
             ) : cansMenu ? (
               <FeaturedCans menu={cansMenu} hideHeader />
