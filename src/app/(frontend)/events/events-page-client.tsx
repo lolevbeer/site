@@ -12,8 +12,9 @@ import { getLocationDisplayName } from '@/lib/config/locations';
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
 import { HubIntro } from '@/components/ui/hub-intro'
 import { ScheduleList } from '@/components/ui/schedule-list';
-import { isTodayOrFuture } from '@/lib/utils/formatters';
+import { formatDate, isTodayOrFuture } from '@/lib/utils/formatters';
 import { safeHttpUrl } from '@/lib/utils/url-utils';
+import { regularLabel, splitRegulars } from '@/lib/utils/event-regulars';
 
 interface EventsPageClientProps {
   /** CMS intro paragraph shown under the heading. */
@@ -36,6 +37,10 @@ export function EventsPageClient({ initialEvents, intro }: EventsPageClientProps
       .sort((a, b) => a.date.localeCompare(b.date));
   }, [initialEvents, locationFilter]);
 
+  // Weekly regulars collapse into one block so one-offs stand out. The page's
+  // JSON-LD still lists every occurrence.
+  const { oneOffs, regulars } = useMemo(() => splitRegulars(filteredEvents), [filteredEvents]);
+
   return (
     <div className="container mx-auto px-4 py-8">
       <PageBreadcrumbs className="mb-6" />
@@ -47,8 +52,9 @@ export function EventsPageClient({ initialEvents, intro }: EventsPageClientProps
       <div className="max-w-2xl mx-auto">
         <h2 className="sr-only">Upcoming events</h2>
         {filteredEvents.length > 0 ? (
+          <>
           <ScheduleList
-            items={filteredEvents.map((event) => ({
+            items={oneOffs.map((event) => ({
               id: String(event.id ?? `${event.title}-${event.date}-${event.location}-${event.time}`),
               date: event.date,
               title: event.title,
@@ -63,6 +69,29 @@ export function EventsPageClient({ initialEvents, intro }: EventsPageClientProps
               site: safeHttpUrl(event.site),
             }))}
           />
+          {regulars.length > 0 ? (
+            <section className={`text-center ${oneOffs.length > 0 ? 'mt-12' : ''}`}>
+              <h3 className="text-lg font-semibold tracking-tight mb-3">Regulars</h3>
+              <ul className="space-y-3 list-none p-0 m-0">
+                {regulars.map(({ next, occurrenceIds }) => (
+                  <li key={occurrenceIds[0]} className="py-2">
+                    {/* Keep each occurrence's anchor so Event JSON-LD links land here. */}
+                    {occurrenceIds.map((id) => (
+                      <span key={id} id={`event-${id}`} className="block scroll-mt-20" />
+                    ))}
+                    <p className="font-normal leading-tight text-balance">{regularLabel(next)}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {locationFilter === 'all'
+                        ? `${getLocationDisplayName(locations, next.location)} · `
+                        : ''}
+                      next {formatDate(next.date, 'short')}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+          </>
         ) : (
           <Empty>
             <EmptyHeader>

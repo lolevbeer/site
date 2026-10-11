@@ -544,7 +544,8 @@ export function transformPayloadEventToBreweryEvent(
     time: event.startTime || '',
     endTime: event.endTime ?? undefined,
     vendor: event.organizer,
-    type: EventType.SPECIAL_EVENT,
+    // expandRecurringEvents ids occurrences `recurring-<definition>-<date>`.
+    type: String(event.id).startsWith('recurring-') ? EventType.RECURRING : EventType.SPECIAL_EVENT,
     status: EventStatus.SCHEDULED,
     location: (eventLocation?.slug || fallbackLocationSlug) as LocationSlug,
     locationName: eventLocation?.name || fallbackLocationName,
