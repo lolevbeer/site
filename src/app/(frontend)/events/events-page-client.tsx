@@ -15,6 +15,7 @@ import { ScheduleList } from '@/components/ui/schedule-list';
 import { formatDate, isTodayOrFuture } from '@/lib/utils/formatters';
 import { safeHttpUrl } from '@/lib/utils/url-utils';
 import { regularLabel, splitRegulars } from '@/lib/utils/event-regulars';
+import { useTodayEST } from '@/lib/hooks/use-today-est';
 
 interface EventsPageClientProps {
   /** CMS intro paragraph shown under the heading. */
@@ -25,6 +26,9 @@ interface EventsPageClientProps {
 export function EventsPageClient({ initialEvents, intro }: EventsPageClientProps) {
   const { currentLocation, locations } = useLocationContext();
   const locationFilter = currentLocation as LocationFilter;
+  // The server list is already upcoming-only. Past days are dropped only once
+  // mounted, so HTML cached before midnight hydrates without a mismatch.
+  const today = useTodayEST();
 
   // Filter events by location and sort by date
   const filteredEvents = useMemo(() => {
@@ -33,9 +37,9 @@ export function EventsPageClient({ initialEvents, intro }: EventsPageClientProps
       : initialEvents.filter(event => event.location === locationFilter);
 
     return filtered
-      .filter(event => isTodayOrFuture(event.date))
+      .filter(event => today === null || isTodayOrFuture(event.date, today))
       .sort((a, b) => a.date.localeCompare(b.date));
-  }, [initialEvents, locationFilter]);
+  }, [initialEvents, locationFilter, today]);
 
   // Weekly regulars collapse into one block so one-offs stand out. The page's
   // JSON-LD still lists every occurrence.

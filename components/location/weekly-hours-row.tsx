@@ -7,23 +7,13 @@
 import React from 'react'
 import { cn } from '@/lib/utils'
 import { useTodayEST } from '@/lib/hooks/use-today-est'
+import { WEEKDAYS_FROM_SUNDAY } from '@/lib/types/location'
 import type { DayOfWeek } from '@/lib/utils/payload-api'
-
-/** Day keys indexed by `Date#getUTCDay()` (0 = Sunday). */
-const DAY_KEYS: DayOfWeek[] = [
-  'sunday',
-  'monday',
-  'tuesday',
-  'wednesday',
-  'thursday',
-  'friday',
-  'saturday',
-]
 
 /** A YYYY-MM-DD date as its `WeeklyHoursDay['day']` key. */
 function dayOfWeek(ymd: string): DayOfWeek {
   const [year, month, day] = ymd.split('-').map(Number)
-  return DAY_KEYS[new Date(Date.UTC(year, month - 1, day)).getUTCDay()]
+  return WEEKDAYS_FROM_SUNDAY[new Date(Date.UTC(year, month - 1, day)).getUTCDay()]
 }
 
 export function WeeklyHoursRow({
