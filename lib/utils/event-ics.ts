@@ -3,8 +3,10 @@
  * /events. Times are Pittsburgh wall-clock under TZID America/New_York, with
  * a VTIMEZONE block so every client applies the right DST offset. The CMS
  * description is internal (staff-only), so the file carries no DESCRIPTION.
+ * Text is escaped, `site` must be http(s), and long lines are folded.
  */
 import { eventPageUrl, parseEventTime } from '@/lib/utils/json-ld'
+import { safeHttpUrl } from '@/lib/utils/url-utils'
 
 const TZID = 'America/New_York'
 
@@ -43,7 +45,31 @@ export interface IcsEventInput {
 }
 
 function escapeText(text: string): string {
-  return text.replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/([,;])/g, '\\$1')
+  return text
+    .replace(/\\/g, '\\\\')
+    .replace(/\r\n?|\n/g, '\\n')
+    .replace(/([,;])/g, '\\$1')
+}
+
+/** RFC 5545 §3.1: split lines over 75 octets, continuing with CRLF + space, never mid-character. */
+function foldLine(line: string): string {
+  const encoder = new TextEncoder()
+  const parts: string[] = []
+  let current = ''
+  let octets = 0
+  for (const char of line) {
+    const size = encoder.encode(char).length
+    // Continuation lines spend one octet on the leading space.
+    if (octets + size > (parts.length === 0 ? 75 : 74)) {
+      parts.push(current)
+      current = ''
+      octets = 0
+    }
+    current += char
+    octets += size
+  }
+  parts.push(current)
+  return parts.join('\r\n ')
 }
 
 /** "2026-10-14" plus whole days, as YYYYMMDD. */
@@ -107,10 +133,11 @@ export function buildEventIcs(event: IcsEventInput, now: Date = new Date()): str
     ...timing,
     `SUMMARY:${escapeText(event.organizer)}`,
     `LOCATION:${escapeText(place)}`,
-    `URL:${event.site || eventPageUrl(event.locationSlug, event.id)}`,
+    // safeHttpUrl rejects non-http values; URL serialization percent-encodes CR/LF.
+    `URL:${safeHttpUrl(event.site) ?? eventPageUrl(event.locationSlug, event.id)}`,
     'END:VEVENT',
     'END:VCALENDAR',
   )
 
-  return `${lines.join('\r\n')}\r\n`
+  return `${lines.map(foldLine).join('\r\n')}\r\n`
 }

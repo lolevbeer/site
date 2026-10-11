@@ -37,7 +37,7 @@ describe('event calendar.ics route', () => {
     expect(res.headers.get('content-disposition')).toContain('filename="trivia.ics"')
     const body = await res.text()
     expect(body).toContain('DTSTART;TZID=America/New_York:20261014T190000')
-    expect(body).toContain('LOCATION:Lolev Beer - Lawrenceville\\, 5247 Butler Street')
+    expect(body.replace(/\r\n /g, '')).toContain('LOCATION:Lolev Beer - Lawrenceville\\, 5247 Butler Street')
     expect(body).not.toContain('Smith')
   })
 
