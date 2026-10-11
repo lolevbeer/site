@@ -75,6 +75,7 @@ export interface Config {
     products: Product;
     events: Event;
     'donation-requests': DonationRequest;
+    'event-inquiries': EventInquiry;
     jobs: Job;
     'job-applications': JobApplication;
     'recurring-events': RecurringEvent;
@@ -108,6 +109,7 @@ export interface Config {
     products: ProductsSelect<false> | ProductsSelect<true>;
     events: EventsSelect<false> | EventsSelect<true>;
     'donation-requests': DonationRequestsSelect<false> | DonationRequestsSelect<true>;
+    'event-inquiries': EventInquiriesSelect<false> | EventInquiriesSelect<true>;
     jobs: JobsSelect<false> | JobsSelect<true>;
     'job-applications': JobApplicationsSelect<false> | JobApplicationsSelect<true>;
     'recurring-events': RecurringEventsSelect<false> | RecurringEventsSelect<true>;
@@ -787,6 +789,31 @@ export interface DonationRequest {
   createdAt: string;
 }
 /**
+ * Private-event inquiries from /events. Rows are created only by the public form.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "event-inquiries".
+ */
+export interface EventInquiry {
+  id: string;
+  status?: ('new' | 'contacted' | 'booked' | 'declined') | null;
+  name: string;
+  email: string;
+  phone: string;
+  preferredDate: string;
+  headcount: number;
+  taproom: string | Location;
+  message?: string | null;
+  /**
+   * When the #events ping succeeded. Empty means staff should check Slack.
+   */
+  slackNotifiedAt?: string | null;
+  slackError?: string | null;
+  ipHash?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Openings listed at /jobs (footer link). Applications land in Job Applications.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1346,6 +1373,10 @@ export interface PayloadLockedDocument {
         value: string | DonationRequest;
       } | null)
     | ({
+        relationTo: 'event-inquiries';
+        value: string | EventInquiry;
+      } | null)
+    | ({
         relationTo: 'jobs';
         value: string | Job;
       } | null)
@@ -1615,6 +1646,25 @@ export interface DonationRequestsSelect<T extends boolean = true> {
   whyLolev?: T;
   pickupName?: T;
   taproom?: T;
+  slackNotifiedAt?: T;
+  slackError?: T;
+  ipHash?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "event-inquiries_select".
+ */
+export interface EventInquiriesSelect<T extends boolean = true> {
+  status?: T;
+  name?: T;
+  email?: T;
+  phone?: T;
+  preferredDate?: T;
+  headcount?: T;
+  taproom?: T;
+  message?: T;
   slackNotifiedAt?: T;
   slackError?: T;
   ipHash?: T;
@@ -2862,6 +2912,7 @@ export interface CollectionQueryWidget {
       | 'products'
       | 'events'
       | 'donation-requests'
+      | 'event-inquiries'
       | 'jobs'
       | 'job-applications'
       | 'recurring-events'
@@ -2902,6 +2953,7 @@ export interface ActivityWidget {
           | 'products'
           | 'events'
           | 'donation-requests'
+          | 'event-inquiries'
           | 'jobs'
           | 'job-applications'
           | 'recurring-events'

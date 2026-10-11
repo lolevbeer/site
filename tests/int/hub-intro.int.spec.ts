@@ -9,6 +9,7 @@ vi.mock('@/components/location/location-provider', () => ({
   useLocationContext: () => ({ currentLocation: 'all', locations: [], cycleLocation: vi.fn() }),
 }))
 vi.mock('@/components/ui/page-breadcrumbs', () => ({ PageBreadcrumbs: () => null }))
+vi.mock('@/src/actions/event-inquiry', () => ({ submitEventInquiry: vi.fn() }))
 
 import { EventsPageClient } from '@/src/app/(frontend)/events/events-page-client'
 import { FoodPageClient } from '@/src/app/(frontend)/food/food-page-client'

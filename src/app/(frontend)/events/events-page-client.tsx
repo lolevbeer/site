@@ -10,6 +10,7 @@ import { Calendar } from '@/components/icons';
 import { useLocationContext } from '@/components/location/location-provider';
 import { getLocationDisplayName } from '@/lib/config/locations';
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
+import { EventInquiryForm } from '@/components/events/event-inquiry-form';
 import { HubIntro } from '@/components/ui/hub-intro'
 import { ScheduleList } from '@/components/ui/schedule-list';
 import { TimelineItem } from '@/components/ui/timeline-item';
@@ -165,6 +166,7 @@ export function EventsPageClient({ initialEvents, intro }: EventsPageClientProps
             </a>
           </Button>
         </div>
+        <EventInquiryForm taprooms={locations.filter((location) => location.active !== false)} />
         <p className="text-sm text-muted-foreground pt-6">
           Asking us to donate beer? Use the{' '}
           <Link href="/donate" className="underline hover:text-foreground">

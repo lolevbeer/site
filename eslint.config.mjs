@@ -41,6 +41,7 @@ const SYSTEM_OVERRIDE_FILES = [
   'lib/public-forms/**',
   'lib/slack/notify.ts',
   'src/actions/donation-request.ts',
+  'src/actions/event-inquiry.ts',
   'src/actions/job-application.ts',
   'src/utils/beer-reviews.ts',
   'src/utils/revalidate-beer-page.ts',

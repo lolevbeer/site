@@ -160,7 +160,8 @@ export function minimumEventDate(today = getTodayEST()): string {
   return addCalendarDays(today, DONATION_LEAD_DAYS)
 }
 
-function maximumEventDate(today = getTodayEST()): string {
+/** Latest event date a public form accepts: two years out. Also bounds /events inquiries. */
+export function maximumEventDate(today = getTodayEST()): string {
   const [year, month, day] = today.split('-').map(Number)
   return new Date(Date.UTC(year + DONATION_MAX_EVENT_YEARS, month - 1, day)).toISOString().slice(0, 10)
 }
