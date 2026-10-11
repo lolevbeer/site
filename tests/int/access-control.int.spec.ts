@@ -343,6 +343,13 @@ describe('private event inquiry inbox', () => {
     expect(callAccess(EventInquiries.access?.delete, userWith(['event-manager']))).toBe(false)
     expect(callAccess(EventInquiries.access?.delete, userWith(['admin']))).toBe(true)
   })
+
+  it('hides the submitter ipHash from event managers on API reads', () => {
+    const ipHash = EventInquiries.fields.find((f) => 'name' in f && f.name === 'ipHash')
+    const read = ipHash && 'access' in ipHash ? ipHash.access?.read : undefined
+    expect(callAccess(read, userWith(['event-manager']))).toBe(false)
+    expect(callAccess(read, userWith(['admin']))).toBe(true)
+  })
 })
 
 describe('jobs and applications', () => {

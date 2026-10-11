@@ -4,11 +4,12 @@
  * Short private-event inquiry form for /events, collapsed behind a
  * "Planning a private event?" disclosure. Submits to the event-inquiries
  * staff inbox (never Events). Server validation errors show under each field
- * and clear when it changes. Field ids are prefixed `inquiry-` so they cannot
+ * and clear when it changes. On success focus moves to the confirmation
+ * title. Field ids are prefixed `inquiry-` so they cannot
  * collide with other ids on the page.
  */
 
-import React, { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
@@ -34,6 +35,7 @@ import {
   type EventInquiryInput,
 } from '@/lib/events/inquiry'
 import { getTodayEST } from '@/lib/utils/date'
+import { useIsHydrated } from '@/lib/hooks/use-is-hydrated'
 
 export function EventInquiryForm({
   taprooms,
@@ -45,6 +47,16 @@ export function EventInquiryForm({
   const [fieldErrors, setFieldErrors] = useState<EventInquiryErrors>({})
   const [pending, setPending] = useState(false)
   const [done, setDone] = useState(false)
+  // Client-only: /events is ISR-cached, so a server-rendered "today" can be a
+  // day stale by hydration. The server rejects past dates either way.
+  const minDate = useIsHydrated() ? getTodayEST() : undefined
+  const doneTitleRef = useRef<HTMLDivElement>(null)
+
+  // The form (and its focused submit button) unmounts on success; move focus
+  // to the confirmation so keyboard and screen-reader users land on it.
+  useEffect(() => {
+    if (done) doneTitleRef.current?.focus()
+  }, [done])
 
   function set<K extends keyof EventInquiryInput>(key: K, value: EventInquiryInput[K]) {
     setValues((prev) => ({ ...prev, [key]: value }))
@@ -85,7 +97,9 @@ export function EventInquiryForm({
         {done ? (
           <Empty role="status">
             <EmptyHeader>
-              <EmptyTitle>Inquiry received</EmptyTitle>
+              <EmptyTitle ref={doneTitleRef} tabIndex={-1} className="outline-none">
+                Inquiry received
+              </EmptyTitle>
               <EmptyDescription>We will email or call you about availability.</EmptyDescription>
             </EmptyHeader>
           </Empty>
@@ -133,7 +147,7 @@ export function EventInquiryForm({
                   id="inquiry-preferredDate"
                   name="preferredDate"
                   type="date"
-                  min={getTodayEST()}
+                  min={minDate}
                   value={values.preferredDate}
                   onChange={(e) => set('preferredDate', e.target.value)}
                   required
@@ -162,6 +176,7 @@ export function EventInquiryForm({
                   <SelectTrigger
                     id="inquiry-taproom"
                     className="w-full"
+                    aria-required
                     {...formFieldAria('inquiry-taproom', { error: fieldErrors.taproom })}
                   >
                     <SelectValue placeholder="Select" />

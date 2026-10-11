@@ -4,7 +4,7 @@
  * never in Events. Shared helpers come from lib/public-forms.
  */
 
-import { isCalendarDate } from '@/lib/donate/donation-request'
+import { isCalendarDate, maximumEventDate } from '@/lib/donate/donation-request'
 import {
   copyKnownFields,
   isValidEmail,
@@ -77,10 +77,17 @@ export function validateEventInquiry(
 
   const errors: EventInquiryErrors = {}
   const name = trimmed(parsed.name)
-  const email = trimmed(parsed.email)
+  // Lowercase so the duplicate check and the email rate limit see one address.
+  const email = trimmed(parsed.email).toLowerCase()
   const phone = trimmed(parsed.phone)
   const preferredDate = trimmed(parsed.preferredDate)
-  const headcount = Number(parsed.headcount)
+  // Untrusted: a number, or a digit string from a plain form post. Number()
+  // alone would turn `true` into 1 and '1e2' into 100.
+  const headcount =
+    typeof parsed.headcount === 'number' ||
+    (typeof parsed.headcount === 'string' && /^\d+$/.test(parsed.headcount))
+      ? Number(parsed.headcount)
+      : NaN
   const taproom = trimmed(parsed.taproom)
   const message = trimmed(parsed.message)
 
@@ -90,8 +97,10 @@ export function validateEventInquiry(
   if (!isValidPhone(phone)) errors.phone = 'Enter a phone number.'
   if (!isCalendarDate(preferredDate)) errors.preferredDate = 'Enter a preferred date.'
   else if (preferredDate < today) errors.preferredDate = 'Pick a date in the future.'
+  else if (preferredDate > maximumEventDate(today)) {
+    errors.preferredDate = 'Pick a date within two years.'
+  }
   if (
-    parsed.headcount === '' ||
     !Number.isInteger(headcount) ||
     headcount < 1 ||
     headcount > EVENT_INQUIRY_MAX_HEADCOUNT
@@ -101,6 +110,7 @@ export function validateEventInquiry(
   if (!taproom || !taproomSlugs.includes(taproom)) errors.taproom = 'Choose a taproom.'
   if (message.length > EVENT_INQUIRY_MAX_TEXT) errors.message = 'That answer is too long.'
   rejectFormulaPrefix(name, errors, 'name')
+  rejectFormulaPrefix(email, errors, 'email')
   rejectFormulaPrefix(message, errors, 'message')
 
   if (Object.keys(errors).length > 0) return { ok: false, errors }

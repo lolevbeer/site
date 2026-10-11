@@ -1,8 +1,9 @@
 /**
  * Private-event inquiry action: honeypot does not write; success writes the
- * inbox row (never an Event) and pings Slack in after().
+ * inbox row (never an Event) and pings Slack in after(); duplicates, rate
+ * limits, and unknown taprooms do not write.
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const afterFns: Array<() => Promise<void>> = []
 const create = vi.fn()
@@ -36,7 +37,13 @@ vi.mock('@/lib/config/server-env', () => ({
 
 import { submitEventInquiry } from '@/src/actions/event-inquiry'
 import { emptyEventInquiry } from '@/lib/events/inquiry'
-import { resetPublicFormRateLimit } from '@/lib/public-forms/rate-limit'
+import {
+  PUBLIC_FORM_EMAIL_LIMIT_MESSAGE,
+  PUBLIC_FORM_IP_LIMIT_MESSAGE,
+  PUBLIC_FORM_IP_MAX,
+  resetPublicFormRateLimit,
+} from '@/lib/public-forms/rate-limit'
+import { getDateEST } from '@/lib/utils/date'
 
 function valid() {
   return {
@@ -44,14 +51,23 @@ function valid() {
     name: 'Alex Rivera',
     email: 'alex@example.org',
     phone: '412-555-0100',
-    preferredDate: '2099-11-20',
+    preferredDate: '2026-11-20',
     headcount: 30,
     taproom: 'lawrenceville',
     message: '',
   }
 }
 
+const TODAY = '2026-10-11'
+
 describe('submitEventInquiry', () => {
+  // Pin the clock so the fixture date stays inside the accepted window.
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(`${TODAY}T12:00:00-04:00`))
+  })
+  afterEach(() => vi.useRealTimers())
+
   beforeEach(() => {
     afterFns.length = 0
     create.mockReset()
@@ -105,9 +121,67 @@ describe('submitEventInquiry', () => {
     )
   })
 
-  it('never writes to Events', async () => {
+  it('stores the preferred day at noon Eastern so dayOnly pickers show the same day', async () => {
     await submitEventInquiry(valid())
-    expect(create.mock.calls.every(([a]) => a.collection !== 'events')).toBe(true)
+    const stored = create.mock.calls[0][0].data.preferredDate
+    expect(stored).toBe('2026-11-20T17:00:00.000Z')
+    expect(getDateEST(new Date(stored))).toBe('2026-11-20')
+  })
+
+  it('suppresses a recent duplicate (case-insensitive email, same day) without writing', async () => {
+    find.mockImplementation(async (args: { collection: string; where?: unknown }) => {
+      if (args.collection === 'locations') {
+        return { docs: [{ id: 'loc-1', slug: 'lawrenceville', name: 'Lawrenceville' }] }
+      }
+      const where = JSON.stringify(args.where)
+      if (where.includes('"email"')) {
+        return { docs: [{ id: 'old', createdAt: new Date().toISOString() }] }
+      }
+      return { docs: [] }
+    })
+    const result = await submitEventInquiry({ ...valid(), email: 'Alex@Example.org' })
+    expect(result).toEqual({ ok: true })
+    expect(create).not.toHaveBeenCalled()
+    const dupe = find.mock.calls.find(([a]) => JSON.stringify(a.where).includes('"email"'))
+    expect(JSON.stringify(dupe?.[0].where)).toContain('alex@example.org')
+    expect(JSON.stringify(dupe?.[0].where)).toContain('2026-11-20T17:00:00.000Z')
+  })
+
+  it('refuses when the durable ipHash limit is reached', async () => {
+    find.mockImplementation(async (args: { collection: string; where?: unknown }) => {
+      if (args.collection === 'locations') {
+        return { docs: [{ id: 'loc-1', slug: 'lawrenceville', name: 'Lawrenceville' }] }
+      }
+      if (JSON.stringify(args.where).includes('ipHash')) {
+        return { docs: Array.from({ length: PUBLIC_FORM_IP_MAX }, (_, i) => ({ id: `r${i}` })) }
+      }
+      return { docs: [] }
+    })
+    const result = await submitEventInquiry(valid())
+    expect(result).toMatchObject({ ok: false, error: PUBLIC_FORM_IP_LIMIT_MESSAGE })
+    expect(create).not.toHaveBeenCalled()
+  })
+
+  it('refuses past the in-memory per-IP limit', async () => {
+    for (let i = 0; i < PUBLIC_FORM_IP_MAX; i++) {
+      await submitEventInquiry({ ...valid(), email: `guest${i}@example.org` })
+    }
+    const result = await submitEventInquiry({ ...valid(), email: 'late@example.org' })
+    expect(result).toMatchObject({ ok: false, error: PUBLIC_FORM_IP_LIMIT_MESSAGE })
+    expect(create).toHaveBeenCalledTimes(PUBLIC_FORM_IP_MAX)
+  })
+
+  it('refuses a second inquiry from the same email inside the window', async () => {
+    await submitEventInquiry(valid())
+    const result = await submitEventInquiry({ ...valid(), email: 'ALEX@example.org' })
+    expect(result).toMatchObject({ ok: false, error: PUBLIC_FORM_EMAIL_LIMIT_MESSAGE })
+    expect(create).toHaveBeenCalledTimes(1)
+  })
+
+  it('rejects a taproom that is not an active location', async () => {
+    const result = await submitEventInquiry({ ...valid(), taproom: 'zelienople' })
+    expect(result).toMatchObject({ ok: false, errors: { taproom: 'Choose a taproom.' } })
+    expect(create).not.toHaveBeenCalled()
   })
 
   it('returns ok false for a non-object without throwing', async () => {

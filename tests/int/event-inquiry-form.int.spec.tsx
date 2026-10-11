@@ -1,5 +1,9 @@
-/** /events private-event inquiry: collapsed by default, field errors show under each field. */
+/**
+ * /events private-event inquiry: collapsed by default, field errors show under
+ * each field, focus moves to the confirmation, and the date min is client-only.
+ */
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { renderToString } from 'react-dom/server'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 const submitEventInquiry = vi.fn()
@@ -44,5 +48,18 @@ describe('EventInquiryForm', () => {
     submitEventInquiry.mockResolvedValueOnce({ ok: true })
     fireEvent.click(screen.getByRole('button', { name: 'Send inquiry' }))
     await waitFor(() => expect(screen.getByText('Inquiry received')).toBeTruthy())
+    expect(document.activeElement?.textContent).toBe('Inquiry received')
+  })
+
+  it('marks the taproom select required for assistive tech', () => {
+    render(<EventInquiryForm taprooms={taprooms} />)
+    expect(document.getElementById('inquiry-taproom')?.getAttribute('aria-required')).toBe('true')
+  })
+
+  it('leaves the date min out of the server HTML and sets it after mount', () => {
+    // The page is ISR-cached, so a server-rendered "today" can be stale on hydrate.
+    expect(renderToString(<EventInquiryForm taprooms={taprooms} />)).not.toContain('min="20')
+    render(<EventInquiryForm taprooms={taprooms} />)
+    expect(screen.getByLabelText('Preferred date').getAttribute('min')).toMatch(/^\d{4}-\d{2}-\d{2}$/)
   })
 })

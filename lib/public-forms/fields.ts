@@ -1,5 +1,5 @@
 /**
- * Shared copy/validation helpers for public donate and job forms.
+ * Shared copy/validation helpers for the public donate, job, and event-inquiry forms.
  * Extra keys on an untrusted payload are ignored.
  */
 

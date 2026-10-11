@@ -32,7 +32,7 @@ import {
   allowEmailAttempt,
   allowIpAttempt,
 } from '@/lib/public-forms/rate-limit'
-import { isRecentTimestamp } from '@/lib/utils/date'
+import { isRecentTimestamp, toESTDate } from '@/lib/utils/date'
 import { notifyCollectionOnSlack } from '@/lib/slack/notify'
 
 export type SubmitEventInquiryResult =
@@ -71,7 +71,8 @@ export async function submitEventInquiry(input: unknown): Promise<SubmitEventInq
     if (!result.ok) return fail(firstFieldError(result.errors), result.errors)
 
     const value = result.value
-    if (!allowEmailAttempt('event-inquiry', value.email.toLowerCase())) {
+    // The validator lowercases email, so the rate limit and duplicate check match.
+    if (!allowEmailAttempt('event-inquiry', value.email)) {
       return fail(PUBLIC_FORM_EMAIL_LIMIT_MESSAGE)
     }
 
@@ -80,15 +81,18 @@ export async function submitEventInquiry(input: unknown): Promise<SubmitEventInq
       return fail(PUBLIC_FORM_IP_LIMIT_MESSAGE)
     }
 
-    const taproom = taprooms.find((doc) => doc.slug === value.taproom)
-    if (!taproom) return fail('Choose a taproom.', { taproom: 'Choose a taproom.' })
+    // The validator only accepts slugs from `taprooms`, so this always matches.
+    const taproom = taprooms.find((doc) => doc.slug === value.taproom)!
+    // Noon Eastern: a midnight-UTC day shows as the previous day in the
+    // admin's dayOnly picker for Pittsburgh staff.
+    const preferredDate = toESTDate(value.preferredDate).toISOString()
 
     const recent = await payload.find({
       collection: 'event-inquiries',
       where: {
         and: [
           { email: { equals: value.email } },
-          { preferredDate: { equals: value.preferredDate } },
+          { preferredDate: { equals: preferredDate } },
         ],
       },
       limit: 1,
@@ -106,7 +110,7 @@ export async function submitEventInquiry(input: unknown): Promise<SubmitEventInq
         name: value.name,
         email: value.email,
         phone: value.phone,
-        preferredDate: value.preferredDate,
+        preferredDate,
         headcount: value.headcount,
         taproom: taproom.id,
         message: value.message || undefined,

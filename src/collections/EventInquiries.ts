@@ -5,7 +5,7 @@
  * Inquiries never become Events automatically.
  */
 import type { CollectionConfig } from 'payload'
-import { adminAccess, eventManagerAccess } from '@/src/access/roles'
+import { adminAccess, adminFieldAccess, eventManagerAccess } from '@/src/access/roles'
 import { EVENT_INQUIRY_MAX_HEADCOUNT, EVENT_INQUIRY_MAX_TEXT } from '@/lib/events/inquiry'
 
 export const EventInquiries: CollectionConfig = {
@@ -72,6 +72,9 @@ export const EventInquiries: CollectionConfig = {
       name: 'ipHash',
       type: 'text',
       index: true,
+      // Admin-only so event managers never receive it over REST/GraphQL. The
+      // public action's rate-limit query runs with overrideAccess.
+      access: { read: adminFieldAccess },
       admin: { hidden: true },
     },
   ],
