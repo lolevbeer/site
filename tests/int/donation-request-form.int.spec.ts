@@ -56,14 +56,26 @@ describe('DonationRequestForm', () => {
 
     expect(screen.getByLabelText('Organization name')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
-    expect(screen.getByRole('alert').textContent).toMatch(/organization/i)
+    expect(screen.getByRole('alert').textContent).toMatch(/fields need fixing.*organization/i)
     expect(screen.queryByRole('tooltip')).toBeNull()
     // Every invalid field shows its own error as text, not just the first.
-    for (const label of ['Organization name', 'Your name', 'Email']) {
+    const expected: Array<[string, string, string]> = [
+      ['Organization name', 'organizationName', 'Enter the organization name.'],
+      ['Your name', 'contactName', 'Enter a contact name.'],
+      ['Email', 'email', 'Enter a valid email.'],
+    ]
+    for (const [label, id, message] of expected) {
       const input = screen.getByLabelText(label)
       expect(input.getAttribute('aria-invalid')).toBe('true')
-      const errorId = input.getAttribute('aria-describedby')?.split(' ')[0] ?? ''
-      expect(document.getElementById(errorId)?.textContent).toBeTruthy()
+      expect(input.getAttribute('aria-describedby')?.split(' ')).toContain(`${id}-error`)
+      expect(document.getElementById(`${id}-error`)?.textContent).toBe(message)
     }
+    // Select: the aria links sit on the trigger, not the Radix Root.
+    const trigger = document.getElementById('previousDonation')
+    expect(trigger?.getAttribute('aria-invalid')).toBe('true')
+    expect(trigger?.getAttribute('aria-describedby')).toBe('previousDonation-error')
+    expect(document.getElementById('previousDonation-error')?.textContent).toBe(
+      'Say whether we have donated before.',
+    )
   })
 })
