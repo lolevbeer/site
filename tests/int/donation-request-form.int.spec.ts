@@ -1,13 +1,16 @@
 /**
  * Donation ringer: Continue on page 1 stays disabled until every gate switch is on.
  */
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { createElement } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
+const submitDonationRequest = vi.fn()
 vi.mock('@/src/actions/donation-request', () => ({
-  submitDonationRequest: vi.fn(),
+  submitDonationRequest: (input: unknown) => submitDonationRequest(input),
 }))
+const track = vi.fn()
+vi.mock('@vercel/analytics', () => ({ track: (...args: unknown[]) => track(...args) }))
 
 vi.mock('@/components/location/location-provider', () => ({
   useLocationContext: () => ({
@@ -77,5 +80,12 @@ describe('DonationRequestForm', () => {
     expect(document.getElementById('previousDonation-error')?.textContent).toBe(
       'Say whether we have donated before.',
     )
+  })
+  it('sends donate_submitted once the request is accepted', async () => {
+    submitDonationRequest.mockResolvedValue({ ok: true })
+    const { container } = render(createElement(DonationRequestForm))
+    fireEvent.submit(container.querySelector('form')!)
+    await waitFor(() => expect(screen.getByText('We got it')).toBeTruthy())
+    expect(track).toHaveBeenCalledWith('donate_submitted', undefined)
   })
 })

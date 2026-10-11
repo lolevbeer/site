@@ -6,6 +6,8 @@ const submitJobApplication = vi.fn()
 vi.mock('@/src/actions/job-application', () => ({
   submitJobApplication: (input: unknown) => submitJobApplication(input),
 }))
+const track = vi.fn()
+vi.mock('@vercel/analytics', () => ({ track: (...args: unknown[]) => track(...args) }))
 
 import { JobApplyForm } from '@/components/jobs/job-apply-form'
 
@@ -33,5 +35,13 @@ describe('JobApplyForm', () => {
     fireEvent.change(name, { target: { value: 'Ada' } })
     expect(name.getAttribute('aria-invalid')).toBeNull()
     expect(email.getAttribute('aria-invalid')).toBe('true')
+  })
+
+  it('sends job_submitted once the application is accepted', async () => {
+    submitJobApplication.mockResolvedValue({ ok: true })
+    render(<JobApplyForm jobSlug="bartender" />)
+    fireEvent.click(screen.getByRole('button', { name: 'Submit application' }))
+    await waitFor(() => expect(screen.getByText('Application received')).toBeTruthy())
+    expect(track).toHaveBeenCalledWith('job_submitted', undefined)
   })
 })

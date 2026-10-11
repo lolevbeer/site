@@ -1,7 +1,10 @@
 /**
- * Google Analytics event tracking utilities
- * Provides type-safe custom event tracking for user interactions
+ * Analytics event helpers. `trackEvent` sends to Google Analytics only;
+ * `trackConversion` sends to both Vercel Web Analytics and Google Analytics.
+ * The full list of events sent is in lib/analytics/README.md.
  */
+
+import { track } from '@vercel/analytics'
 
 // Extend the Window interface to include gtag
 declare global {
@@ -32,6 +35,15 @@ export const trackEvent = (
   }
 };
 
+/** Send a conversion (call, directions, form submit, ...) to Vercel Analytics and GA. */
+export const trackConversion = (
+  eventName: string,
+  params?: Record<string, string>
+): void => {
+  track(eventName, params)
+  trackEvent(eventName, params)
+};
+
 // Beer-related events
 export const trackBeerView = (beerName: string, beerType: string) => {
   trackEvent('view_beer', {
@@ -47,26 +59,10 @@ export const trackDirections = (location: string) => {
   });
 };
 
-// Social media tracking
-export const trackSocialClick = (platform: string, location?: string) => {
-  trackEvent('social_click', {
-    platform: platform,
-    location: location,
-  });
-};
-
 // Map interactions
 export const trackMapInteraction = (action: string, location?: string) => {
   trackEvent('map_interaction', {
     action: action,
     location: location,
-  });
-};
-
-// External link tracking
-export const trackExternalLink = (url: string, linkText?: string) => {
-  trackEvent('click_external_link', {
-    link_url: url,
-    link_text: linkText,
   });
 };
