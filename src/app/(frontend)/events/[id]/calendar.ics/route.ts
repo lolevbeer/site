@@ -1,11 +1,12 @@
 /**
  * Per-event "Add to calendar" download: /events/<id>/calendar.ics.
- * Looks the id up in the same cached public upcoming-events list /events
- * renders (anonymous read, so private events and the internal description
- * never reach it) and returns a single-VEVENT iCalendar file.
+ * Looks the one event up directly with getPublicEventById (anonymous read, so
+ * private events and the internal description never reach it) and returns a
+ * single-VEVENT iCalendar file. A miss is not cached, so an event made public
+ * moments later resolves.
  */
 import { NextRequest } from 'next/server'
-import { getAllUpcomingEventsFromPayload } from '@/lib/utils/payload-api'
+import { getPublicEventById } from '@/lib/utils/payload-api'
 import { buildEventIcs } from '@/lib/utils/event-ics'
 import { formatAddress } from '@/lib/utils/formatters'
 
@@ -20,9 +21,13 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params
-  const events = await getAllUpcomingEventsFromPayload(100)
-  const event = events.find((doc) => String(doc.id) === id)
-  if (!event) return new Response('Event not found', { status: 404 })
+  const event = await getPublicEventById(id)
+  if (!event) {
+    return new Response('Event not found', {
+      status: 404,
+      headers: { 'Cache-Control': 'no-store' },
+    })
+  }
 
   const location = typeof event.location === 'object' ? event.location : null
   const ics = buildEventIcs({
