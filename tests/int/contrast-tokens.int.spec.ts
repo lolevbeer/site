@@ -60,14 +60,32 @@ describe('highlight contrast', () => {
   it('is at least 4.5:1 on the dark page background', () => {
     expect(contrast(dark!, '#000000')).toBeGreaterThanOrEqual(4.5)
   })
+})
 
-  it.each(['light', 'dark'] as const)(
-    'TV %s boards use the same highlight as the site',
-    (theme) => {
-      const vars = getThemeVars(theme) as Record<string, string>
-      const bg = vars['--color-background']
-      expect(vars['--color-highlight']).toBe(theme === 'light' ? token('color-highlight') : dark)
-      expect(contrast(vars['--color-highlight'], bg)).toBeGreaterThanOrEqual(4.5)
-    },
-  )
+// lib/utils/display-theme.ts hand-copies site tokens onto the TV boards; every
+// copied value must match globals.css (@theme for light, `.dark` for dark).
+describe('TV board theme vars mirror globals.css', () => {
+  const darkStart = css.indexOf('  .dark {')
+  const darkBlock = css.slice(darkStart, css.indexOf('}', darkStart))
+  const darkToken = (name: string) =>
+    darkBlock.match(new RegExp(`--${name}:\\s*(#[0-9a-fA-F]{6})`))?.[1] ?? token(name)
+
+  it('sets every color token the dark theme overrides, so none follows the device theme', () => {
+    const darkColors = [...darkBlock.matchAll(/(--color-[a-z-]+):\s*#/g)].map((m) => m[1])
+    const boardVars = Object.keys(getThemeVars('dark'))
+    expect(darkColors.filter((name) => !boardVars.includes(name))).toEqual([])
+  })
+
+  it('stacks live boards above the dark-mode noise overlay', () => {
+    expect(css).toMatch(/\[data-board\]\s*\{\s*position:\s*relative;\s*z-index:\s*1;/)
+  })
+
+  it.each(['light', 'dark'] as const)('%s board vars match the site tokens', (theme) => {
+    const vars = Object.entries(getThemeVars(theme)).filter(([key]) => key.startsWith('--'))
+    expect(vars.length).toBeGreaterThan(0)
+    for (const [key, value] of vars) {
+      const name = key.slice(2)
+      expect([key, value]).toEqual([key, theme === 'light' ? token(name) : darkToken(name)])
+    }
+  })
 })

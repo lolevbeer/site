@@ -30,7 +30,14 @@ import { getBeerBadgeLabel } from '@/lib/types/beer'
 import { Logo } from '@/components/ui/logo'
 import { TopBeerDropsLink } from '@/components/beer/top-beer-drops-link'
 import { UntappdRating } from '@/components/beer/untappd-rating'
-import { TV_TYPE, TV_SAFE_X, TV_SAFE_Y, TV_COL, TV_LOGO_CLASS } from '@/lib/config/tv-display'
+import {
+  TV_TYPE,
+  TV_SAFE_X,
+  TV_SAFE_Y,
+  TV_COL,
+  TV_LOGO_CLASS,
+  draftBoardColumns,
+} from '@/lib/config/tv-display'
 import { OTHER_MENU_CATEGORIES, type OtherMenuCategory } from '@/lib/config/other-menu'
 import { LINES_OVERDUE_DAYS } from '@/lib/utils/lines-cleaned'
 import { formatPrice, formatPriceText, parsePrice } from '@/lib/utils/formatters'
@@ -136,7 +143,7 @@ function scaledVh(value: number | `${number}vh`, scale: number): string {
 function ColumnHeader({
   isOtherMenu,
   displayScale = 1,
-  priceColumn = TV_COL.price,
+  priceColumn,
 }: {
   isOtherMenu: boolean
   displayScale?: number
@@ -145,11 +152,12 @@ function ColumnHeader({
 }) {
   return (
     <div
-      className="grid items-center bg-[#1d1d1f]"
+      // Always a dark pill, on light and dark boards alike.
+      className="grid items-center bg-[#1d1d1f] text-[#f5f5f7]"
       style={{
         gridTemplateColumns: isOtherMenu
           ? `minmax(0, 1fr) ${scaledVh(TV_COL.price, displayScale)}`
-          : `${TV_COL.tap} minmax(0, 1fr) ${TV_COL.abv} ${priceColumn} ${priceColumn}`,
+          : draftBoardColumns(priceColumn),
         columnGap: scaledVh(1, displayScale),
         paddingBlock: scaledVh(0.65, displayScale),
         borderRadius: '0.35vh',
@@ -330,7 +338,7 @@ function OtherThingsBoard({
   return (
     <div className="flex h-full min-w-0 max-w-none flex-col" data-other-things-board>
       <div
-        className={`grid flex-shrink-0 ${columnClass} font-bold uppercase tracking-wider text-[#f5f5f7]`}
+        className={`grid flex-shrink-0 ${columnClass} font-bold uppercase tracking-wider`}
         style={{
           columnGap: TV_COLUMN_GAP,
           marginBottom: scaledVh(1.4, displayScale),
@@ -506,7 +514,7 @@ function convertMenuItems(menuData: Menu, labelVideos = false): MenuItem[] {
         variant: String(beer.slug),
         name: String(beer.name || ''),
         type: String(styleName || ''),
-        abv: beer.abv ? String(beer.abv) : '0',
+        abv: beer.abv ? String(beer.abv) : '',
         description: String(beer.description || ''),
         glutenFree: false,
         imageUrl: getMediaUrl(beer.image, 'card'),
@@ -896,18 +904,18 @@ function FeaturedMenu({
             style={{ padding: `${TV_SAFE_Y} ${TV_SAFE_X}`, marginBottom: '0.5vh' }}
           >
             <div className="flex-1">
-              <span className="font-bold text-foreground-muted" style={{ fontSize: '4vh' }}>
+              <span className="font-bold text-foreground-muted" style={{ fontSize: TV_TYPE.title }}>
                 Lolev Beer
               </span>
             </div>
             <div className="flex-1 text-center">
-              <h2 className="font-bold" style={{ fontSize: '4vh' }}>
+              <h2 className="font-bold" style={{ fontSize: TV_TYPE.title }}>
                 {menu?.name || title}
               </h2>
               {linesCleanedText && (
                 <p
                   className="text-foreground-muted"
-                  style={{ fontSize: '1.8vh', marginTop: '0.5vh' }}
+                  style={{ fontSize: TV_TYPE.badge, marginTop: '0.5vh' }}
                 >
                   {linesCleanedText}
                 </p>
@@ -949,7 +957,7 @@ function FeaturedMenu({
                       suppressHydrationWarning
                     >
                       <div
-                        className="grid flex-shrink-0 grid-cols-2 font-bold uppercase tracking-wider text-[#f5f5f7]"
+                        className="grid flex-shrink-0 grid-cols-2 font-bold uppercase tracking-wider"
                         style={{
                           columnGap: TV_COLUMN_GAP,
                           marginBottom: '0.8vh',
@@ -964,34 +972,33 @@ function FeaturedMenu({
                           />
                         ))}
                       </div>
+                      {/* Always two columns: boards are 16:9 TVs (see tv-display.ts). */}
                       <div
-                        className="grid min-h-0 min-w-0 flex-1 grid-cols-1 md:grid-cols-2"
+                        className="grid min-h-0 min-w-0 flex-1 grid-cols-2"
                         style={{ gap: TV_COLUMN_GAP }}
                       >
                         {columns.map((items, columnIndex) => (
-                          <div key={columnIndex} className="flex h-full min-w-0 flex-col">
-                            <div
-                              className="flex min-h-0 min-w-0 flex-1 flex-col justify-between"
-                              role="list"
-                            >
-                              {items.map(({ item, state, key }, idx) => (
-                                <div
-                                  key={key}
-                                  className={`min-w-0 flex-none ${animated ? getAnimationClass(state) : ''}`}
-                                  role="listitem"
-                                >
-                                  <DraftBeerCard
-                                    beer={item as unknown as Beer}
-                                    now={now}
-                                    showLocation={false}
-                                    showTapAndPrice
-                                    showRating
-                                    accentColor={itemColors?.[columnIndex * midpoint + idx]}
-                                    priceColumn={priceColumn}
-                                  />
-                                </div>
-                              ))}
-                            </div>
+                          <div
+                            key={columnIndex}
+                            className="flex min-h-0 min-w-0 flex-col justify-between"
+                            role="list"
+                          >
+                            {items.map(({ item, state, key }, idx) => (
+                              <div
+                                key={key}
+                                className={`min-w-0 flex-none ${animated ? getAnimationClass(state) : ''}`}
+                                role="listitem"
+                              >
+                                <DraftBeerCard
+                                  beer={item as unknown as Beer}
+                                  now={now}
+                                  showTapAndPrice
+                                  showRating
+                                  accentColor={itemColors?.[columnIndex * midpoint + idx]}
+                                  priceColumn={priceColumn}
+                                />
+                              </div>
+                            ))}
                           </div>
                         ))}
                       </div>
@@ -1073,12 +1080,7 @@ function FeaturedMenu({
               >
                 {displayItems.map((item, index) => (
                   <li key={`${item.variant}-${index}`}>
-                    <DraftBeerCard
-                      beer={item as unknown as Beer}
-                      compact
-                      showJustReleased={false}
-                      showLocation={false}
-                    />
+                    <DraftBeerCard beer={item as unknown as Beer} />
                   </li>
                 ))}
               </ul>

@@ -301,7 +301,7 @@ export function BeerDetails({ beer, availability, className = '' }: BeerDetailsP
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center text-center px-4">
                 {/* Full-strength muted-foreground: the /70 and /50 fades fell
-                    under the 4.5:1 AA contrast floor (see draft-beer-card). */}
+                    under the 4.5:1 AA contrast floor. */}
                 <p className="text-lg font-semibold text-muted-foreground">{beer.name}</p>
                 {styleName && <p className="text-sm text-muted-foreground mt-1">{styleName}</p>}
               </div>

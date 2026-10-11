@@ -30,7 +30,6 @@ function renderFullscreenBeer(overrides: Partial<Beer> = {}) {
       beer: { ...beer, ...overrides },
       showTapAndPrice: true,
       showRating: true,
-      showLocation: false,
     }),
   )
 }

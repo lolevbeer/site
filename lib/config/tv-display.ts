@@ -28,10 +28,22 @@
  * that only exists for a layout not pinned to an aspect ratio.
  */
 export const TV_TYPE = {
+  /** Inline pill and "Hops" label inside a draft row's description. */
+  inlineLabel: '1.45vh',
   label: '1.6vh',
   body: '1.7vh',
   badge: '1.8vh',
   tap: '2.4vh',
+  /** Draft row ABV. */
+  abv: '2.8vh',
+  /** Draft row beer name. */
+  beerName: '3vh',
+  /** Draft row half/full prices; TV_COL.price is sized to it. */
+  price: '3.8vh',
+  /** The /e board's empty state. */
+  emptyState: '2.5vh',
+  /** Board header title on /m and /e. */
+  title: '4vh',
   /** The `/e/` agenda: a day heading, an item's time, an item's name. */
   eventDay: '1.9vh',
   eventTime: '2.2vh',
@@ -81,11 +93,19 @@ export const TV_COL = {
    *  1vh gap between them. */
   tap: '10vh',
   abv: '7vh',
-  /** Wide enough for "$11" at the price type size, and no wider. It was 8vh,
+  /** Wide enough for "$11" at TV_TYPE.price, and no wider. It was 8vh,
    *  which left the beer column ~8px short of fitting the longest beer name;
    *  that space is worth more to the name than to padding beside a price. */
   price: '7vh',
   /** Used instead of `price` on a draft board that shows a longer price.
-   *  Measured at the 3.8vh price size: "$12.50" is 12.1vh wide. */
+   *  Measured at TV_TYPE.price (3.8vh): "$12.50" is 12.1vh wide. */
   priceWide: '12.5vh',
 } as const
+
+/**
+ * Draft board columns, tap rail | beer | ABV | half | full. One builder for the
+ * header and every row, so the labels can't drift from the values under them.
+ */
+export function draftBoardColumns(priceColumn: string = TV_COL.price): string {
+  return `${TV_COL.tap} minmax(0, 1fr) ${TV_COL.abv} ${priceColumn} ${priceColumn}`
+}
