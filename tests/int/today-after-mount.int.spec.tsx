@@ -27,6 +27,8 @@ vi.mock('@/components/location/location-provider', () => ({
   }),
 }))
 vi.mock('@/components/ui/page-breadcrumbs', () => ({ PageBreadcrumbs: () => null }))
+// The events page renders the inquiry form, whose server action loads Payload.
+vi.mock('@/src/actions/event-inquiry', () => ({ submitEventInquiry: vi.fn() }))
 vi.mock('@/components/motion', () => ({ MotionCard: 'div' }))
 
 function day(name: WeeklyHoursDay['day']): WeeklyHoursDay {

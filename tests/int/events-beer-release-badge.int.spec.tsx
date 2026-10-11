@@ -16,6 +16,8 @@ vi.mock('@/components/location/location-provider', () => ({
   }),
 }))
 vi.mock('@/components/ui/page-breadcrumbs', () => ({ PageBreadcrumbs: () => null }))
+// The events page renders the inquiry form, whose server action loads Payload.
+vi.mock('@/src/actions/event-inquiry', () => ({ submitEventInquiry: vi.fn() }))
 vi.mock('@/components/beer/draft-beer-card', () => ({ DraftBeerCard: () => null }))
 vi.mock('@/components/beer/beer-card', () => ({ BeerCard: () => null }))
 vi.mock('@/lib/utils/formatters', async () => {
