@@ -23,7 +23,6 @@ import {
   getNextOpeningTimeForLocation,
   getDefaultLocationSlug,
   findLocationBySlug,
-  isValidLocationSlug,
 } from '@/lib/config/locations'
 
 export interface UseLocationReturn {
@@ -202,11 +201,13 @@ function useLocationState(
   // overriding the visitor's direct selection.
   const setLocation = useCallback(
     (slug: LocationSlug) => {
-      if (!isValidLocationSlug(locations, slug)) return
+      // An alias stores the location's current slug, like `?loc=<alias>`.
+      const current = canonicalSlug(locations, slug)
+      if (!current) return
       void setUrlLocation(null)
       // Writing to storage notifies subscribers, and `currentLocation` derives
       // from that — there is no separate copy in state to keep in step.
-      saveLocationToStorage(slug)
+      saveLocationToStorage(current)
     },
     [locations, setUrlLocation],
   )

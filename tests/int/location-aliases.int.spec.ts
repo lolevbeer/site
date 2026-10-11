@@ -41,7 +41,10 @@ vi.mock('@/lib/utils/payload-api', () => ({
 import { Locations } from '@/src/collections/Locations'
 import { findLocationBySlug, isValidLocationSlug } from '@/lib/config/locations'
 import EventsDisplayPage from '@/src/app/(frontend)/e/[location]/page'
-import LocationPage from '@/src/app/(frontend)/[location]/page'
+import LocationPage, { generateMetadata } from '@/src/app/(frontend)/[location]/page'
+import { getDraftMenu } from '@/lib/utils/payload-api'
+import { generateUniqueSlug } from '@/src/collections/utils/generateUniqueSlug'
+import { GET as eventsStreamGET } from '@/src/app/api/events-stream/[location]/route'
 
 const lawrenceville = {
   id: 'loc-1',
@@ -103,12 +106,16 @@ describe('rename records the old slug', () => {
 })
 
 describe('alias validation', () => {
-  const validate = (value: string[], id = 'loc-1') =>
-    aliasesField.validate!(value as never, {
-      id,
-      req: { payload: { find } },
-      siblingData: { slug: 'lolev-lawrenceville' },
-    } as never)
+  const validate = (value: string[], id = 'loc-1', previousValue: string[] = []) =>
+    aliasesField.validate!(
+      value as never,
+      {
+        id,
+        previousValue,
+        req: { payload: { find } },
+        siblingData: { slug: 'lolev-lawrenceville' },
+      } as never,
+    )
 
   it('accepts a free alias', async () => {
     expect(await validate(['old-lawrenceville'])).toBe(true)
@@ -123,8 +130,12 @@ describe('alias validation', () => {
   })
 
   it("rejects another location's slug or alias, reading as the editor", async () => {
-    find.mockResolvedValue({ docs: [{ name: 'Zelienople' }] })
-    expect(await validate(['lolev-zelienople'])).toMatch(/Zelienople/)
+    find.mockResolvedValue({
+      docs: [{ name: 'Zelienople', slug: 'lolev-zelienople', aliases: [] }],
+    })
+    expect(await validate(['lolev-zelienople'])).toBe(
+      '"lolev-zelienople" is already the slug or an alias of Zelienople.',
+    )
     expect(find).toHaveBeenCalledWith(
       expect.objectContaining({
         collection: 'locations',
@@ -139,6 +150,69 @@ describe('alias validation', () => {
               ],
             },
           ],
+        },
+      }),
+    )
+  })
+})
+
+describe('alias validation only checks new aliases', () => {
+  const validate = (value: string[], previousValue: string[]) =>
+    aliasesField.validate!(
+      value as never,
+      { id: 'loc-1', previousValue, req: { payload: { find } } } as never,
+    )
+
+  it('an unchanged alias never blocks an unrelated save (no query)', async () => {
+    find.mockResolvedValue({ docs: [{ name: 'Zelienople', slug: 'old-lawrenceville' }] })
+    expect(await validate(['old-lawrenceville'], ['old-lawrenceville'])).toBe(true)
+    expect(find).not.toHaveBeenCalled()
+  })
+
+  it('checks only the added alias', async () => {
+    await validate(['old-lawrenceville', 'new-alias'], ['old-lawrenceville'])
+    expect(find).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          and: [
+            { id: { not_equals: 'loc-1' } },
+            { or: [{ slug: { in: ['new-alias'] } }, { aliases: { in: ['new-alias'] } }] },
+          ],
+        },
+      }),
+    )
+  })
+})
+
+describe("a new slug never takes another location's alias", () => {
+  it('suffixes a slug that another location keeps as an alias', async () => {
+    find.mockImplementation(
+      async ({ where }: { where: { or: Array<Record<string, unknown>> } }) => {
+        const taken = where.or.some(
+          (clause) =>
+            JSON.stringify(clause) === JSON.stringify({ aliases: { in: ['old-lawrenceville'] } }),
+        )
+        return { docs: taken ? [{ slug: 'lolev-lawrenceville' }] : [] }
+      },
+    )
+    const slug = await generateUniqueSlug(
+      'Old Lawrenceville',
+      'locations',
+      { payload: { find } } as unknown as PayloadRequest,
+      'update',
+      'loc-2',
+      ['slug', 'aliases'],
+    )
+    expect(slug).toBe('old-lawrenceville-1')
+  })
+
+  it('the Locations rename checks aliases too', async () => {
+    await runHook({ name: 'Old Lawrenceville' }, { id: 'loc-2', name: 'Zelienople', slug: 'z' })
+    expect(find).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          or: [{ slug: { in: ['old-lawrenceville'] } }, { aliases: { in: ['old-lawrenceville'] } }],
+          id: { not_equals: 'loc-2' },
         },
       }),
     )
@@ -178,9 +252,7 @@ describe('routes', () => {
         },
       }),
     )
-    expect((element as { props: { location: string } }).props.location).toBe(
-      'lolev-lawrenceville',
-    )
+    expect((element as { props: { location: string } }).props.location).toBe('lolev-lawrenceville')
   })
 
   it('/<alias> permanently redirects to the current slug', async () => {
@@ -188,5 +260,21 @@ describe('routes', () => {
       LocationPage({ params: Promise.resolve({ location: 'old-lawrenceville' }) }),
     ).rejects.toThrow('REDIRECT /lolev-lawrenceville')
     expect(permanentRedirect).toHaveBeenCalledWith('/lolev-lawrenceville')
+    // Redirects before loading the page's menus, events, and food.
+    expect(getDraftMenu).not.toHaveBeenCalled()
+  })
+
+  it('/<alias> metadata redirects too', async () => {
+    await expect(
+      generateMetadata({ params: Promise.resolve({ location: 'old-lawrenceville' }) }),
+    ).rejects.toThrow('REDIRECT /lolev-lawrenceville')
+  })
+
+  it('the events polling endpoint accepts an alias', async () => {
+    const response = await eventsStreamGET({} as never, {
+      params: Promise.resolve({ location: 'old-lawrenceville' }),
+    })
+    expect(response.status).toBe(200)
+    expect(await response.json()).toMatchObject({ locationName: 'Lawrenceville' })
   })
 })

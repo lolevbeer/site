@@ -1,7 +1,9 @@
 /**
  * Per-taproom landing page. Unique URL for LocalBusiness schema and local search
- * ("Lawrenceville brewery", "Zelienople taproom"). A former slug (location
- * alias) permanently redirects to the current slug; unknown slugs 404.
+ * ("Lawrenceville brewery", "Zelienople taproom"). Any other spelling that
+ * resolves to a location (a former slug kept in `aliases`, different letter
+ * case, or the location id) permanently redirects to the current slug, before
+ * any page data loads; unknown slugs 404.
  */
 import { cache } from 'react'
 import type { Metadata } from 'next'
@@ -53,17 +55,14 @@ function beersFromMenu(menu: Awaited<ReturnType<typeof getDraftMenu>> | null) {
     .filter((beer): beer is NonNullable<typeof beer> => beer !== null)
 }
 
-/** A former slug (alias) resolves to its location; send it to the current URL. */
-function redirectAlias(requested: string, current: string | null | undefined) {
-  if (current && current !== requested.toLowerCase()) permanentRedirect(`/${current}`)
-}
-
 const loadLocation = cache(async (slug: string) => {
   const locations = await getAllLocations()
   const key = slug.toLowerCase()
   if (RESERVED_LOCATION_SLUGS.has(key)) return null
   const location = findLocationBySlug(locations, key)
   if (!location || location.active === false) return null
+  // Not the canonical URL: redirect before fetching data that would be discarded.
+  if (location.slug && location.slug !== slug) permanentRedirect(`/${location.slug}`)
   const current = location.slug || key
 
   const [draftMenu, cansMenu, events, food, weeklyHours] = await Promise.all([
@@ -89,7 +88,6 @@ export async function generateMetadata({ params }: LocationPageProps): Promise<M
   const { location: slug } = await params
   const data = await loadLocation(slug)
   if (!data) return { title: 'Not Found' }
-  redirectAlias(slug, data.location.slug)
 
   const name = data.location.name
   const city = data.location.address?.city
@@ -111,7 +109,6 @@ export default async function LocationPage({ params }: LocationPageProps) {
   const { location: slug } = await params
   const data = await loadLocation(slug)
   if (!data) notFound()
-  redirectAlias(slug, data.location.slug)
 
   const { location, draftMenu, cansMenu, events, food, weeklyHours, otherLocations } = data
   const draftPayload = beersFromMenu(draftMenu)

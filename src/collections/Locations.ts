@@ -35,30 +35,35 @@ const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 /**
  * Aliases must be URL slugs that no route or other location already claims;
  * otherwise /<alias>, /e/<alias>, and ?loc=<alias> would be ambiguous or dead.
- * Location slugs and aliases are public, so the check reads as the editor.
+ * Only aliases added in this save are checked, so an existing one never blocks
+ * an unrelated save (lead bartenders can't edit this field). Location slugs and
+ * aliases are public, so the check reads as the editor.
  */
-const validateAliases: Validate<string[]> = async (value, { id, req }) => {
-  const aliases = value ?? []
-  if (aliases.length === 0) return true
-  const malformed = aliases.find((alias) => !SLUG_PATTERN.test(alias))
+const validateAliases: Validate<string[]> = async (value, { id, previousValue, req }) => {
+  const previous = new Set(previousValue ?? [])
+  const added = (value ?? []).filter((alias) => !previous.has(alias))
+  if (added.length === 0) return true
+  const malformed = added.find((alias) => !SLUG_PATTERN.test(alias))
   if (malformed) return `"${malformed}" must be a lowercase slug (letters, numbers, dashes).`
-  const reserved = aliases.find((alias) => RESERVED_LOCATION_SLUGS.has(alias))
+  const reserved = added.find((alias) => RESERVED_LOCATION_SLUGS.has(alias))
   if (reserved) return `"${reserved}" is reserved by a site page and cannot be an alias.`
 
   const claimed: Where = {
-    or: [{ slug: { in: aliases } }, { aliases: { in: aliases } }],
+    or: [{ slug: { in: added } }, { aliases: { in: added } }],
   }
   const others = await req.payload.find({
     collection: 'locations',
     where: id ? { and: [{ id: { not_equals: id } }, claimed] } : claimed,
     limit: 1,
     depth: 0,
-    select: { name: true },
+    select: { name: true, slug: true, aliases: true },
     overrideAccess: false,
     req,
   })
   const other = others.docs[0]
-  return other ? `An alias is already used by ${other.name}.` : true
+  if (!other) return true
+  const taken = added.find((alias) => alias === other.slug || other.aliases?.includes(alias))
+  return `"${taken}" is already the slug or an alias of ${other.name}.`
 }
 
 /**
@@ -111,6 +116,7 @@ export const Locations: CollectionConfig = {
             req,
             operation,
             originalDoc?.id,
+            ['slug', 'aliases'],
           )
         }
 
@@ -249,7 +255,9 @@ export const Locations: CollectionConfig = {
         position: 'sidebar',
         description:
           'Former slugs. /<alias> redirects to the current page and /e/<alias> still shows ' +
-          'the events board. A rename adds the old slug automatically; delete one to retire it.',
+          'the events board. A rename adds the old slug automatically. Browsers cache the ' +
+          'redirect, so a deleted alias can keep sending past visitors here; avoid reusing it ' +
+          "as another location's slug.",
       },
     },
     {
