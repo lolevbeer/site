@@ -6,7 +6,7 @@
  */
 import type React from 'react'
 import { act, cleanup, render, screen } from '@testing-library/react'
-import { hydrateRoot } from 'react-dom/client'
+import { hydrateRoot, type Root } from 'react-dom/client'
 import { renderToStaticMarkup, renderToString } from 'react-dom/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { WeeklyHoursTable } from '@/components/location/weekly-hours'
@@ -51,7 +51,12 @@ beforeEach(() => {
   vi.setSystemTime(new Date('2026-09-07T16:00:00Z'))
 })
 
+// cleanup() only unmounts render() roots; hydrated ones must be unmounted here,
+// or React's queued passive-effect flush runs after jsdom is torn down.
+const hydratedRoots: Root[] = []
+
 afterEach(() => {
+  act(() => hydratedRoots.splice(0).forEach((root) => root.unmount()))
   cleanup()
   document.body.innerHTML = ''
   vi.restoreAllMocks()
@@ -135,7 +140,7 @@ describe('hydrating cached HTML after midnight', () => {
     const errors = vi.fn()
     vi.spyOn(console, 'error').mockImplementation(errors)
     act(() => {
-      hydrateRoot(container, node, { onRecoverableError: errors })
+      hydratedRoots.push(hydrateRoot(container, node, { onRecoverableError: errors }))
     })
     return { container, errors }
   }
