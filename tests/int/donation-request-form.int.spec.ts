@@ -57,7 +57,13 @@ describe('DonationRequestForm', () => {
     expect(screen.getByLabelText('Organization name')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
     expect(screen.getByRole('alert').textContent).toMatch(/organization/i)
-    expect(screen.getByRole('tooltip').textContent).toMatch(/organization/i)
-    expect(screen.getByLabelText('Organization name')).toBeTruthy()
+    expect(screen.queryByRole('tooltip')).toBeNull()
+    // Every invalid field shows its own error as text, not just the first.
+    for (const label of ['Organization name', 'Your name', 'Email']) {
+      const input = screen.getByLabelText(label)
+      expect(input.getAttribute('aria-invalid')).toBe('true')
+      const errorId = input.getAttribute('aria-describedby')?.split(' ')[0] ?? ''
+      expect(document.getElementById(errorId)?.textContent).toBeTruthy()
+    }
   })
 })
