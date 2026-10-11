@@ -78,9 +78,9 @@ export function FooterTaprooms({
               <p className="font-semibold mb-2">Hours</p>
               {hours ? (
                 <WeeklyHoursTable weeklyHours={hours} variant="footer" />
-              ) : weeklyHours ? (
-                <p className="text-sm text-muted-foreground">Hours not available</p>
-              ) : null /* Suspense fallback: hours still loading, so print no placeholder. */}
+              ) : (
+                weeklyHours && <p className="text-sm text-muted-foreground">Hours not available</p>
+              )}
             </div>
 
             <div className="space-y-2 text-sm">

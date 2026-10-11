@@ -11,13 +11,16 @@ import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest'
 import { render, cleanup, waitFor } from '@testing-library/react'
 import { BeerCan3D } from '@/components/beer/beer-can-3d'
 
-const created: Array<{ autoRotate: boolean }> = []
+const created: Array<{ autoRotate: boolean; listeners: Record<string, () => void> }> = []
+const renders = { count: 0 }
 
 vi.mock('@/components/beer/can-scene', () => ({
   createCanScene: async () => ({
     camera: {},
     renderer: { domElement: document.createElement('canvas') },
-    render: () => {},
+    render: () => {
+      renders.count++
+    },
     setSize: () => {},
     dispose: () => {},
   }),
@@ -26,11 +29,15 @@ vi.mock('@/components/beer/can-scene', () => ({
 vi.mock('three/addons/controls/OrbitControls.js', () => ({
   OrbitControls: class {
     autoRotate = false
+    listeners: Record<string, () => void> = {}
     constructor(_camera: unknown, dom: HTMLElement) {
       dom.style.touchAction = 'none'
       created.push(this)
     }
     update() {}
+    addEventListener(type: string, fn: () => void) {
+      this.listeners[type] = fn
+    }
     dispose() {}
   },
 }))
@@ -46,8 +53,13 @@ function mockReducedMotion(reduce: boolean) {
 
 beforeEach(() => {
   created.length = 0
+  renders.count = 0
+  // Report the can as on-screen so the render loop starts.
   globalThis.IntersectionObserver = class {
-    observe() {}
+    constructor(private cb: IntersectionObserverCallback) {}
+    observe() {
+      this.cb([{ isIntersecting: true } as IntersectionObserverEntry], this as never)
+    }
     disconnect() {}
   } as unknown as typeof IntersectionObserver
   globalThis.ResizeObserver = class {
@@ -76,6 +88,21 @@ describe('BeerCan3D motion and touch', () => {
     mockReducedMotion(true)
     await renderCan()
     expect(created[0].autoRotate).toBe(false)
+  })
+
+  it('renders only on demand under reduced motion instead of every frame', async () => {
+    mockReducedMotion(true)
+    const raf = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => {
+      cb(0)
+      return 1
+    })
+    await renderCan()
+    // One frame on entering view, no self-scheduled loop.
+    expect(raf).toHaveBeenCalledTimes(1)
+    expect(renders.count).toBe(1)
+    created[0].listeners.change()
+    expect(renders.count).toBe(2)
+    raf.mockRestore()
   })
 
   it('lets vertical swipes over the canvas scroll the page', async () => {

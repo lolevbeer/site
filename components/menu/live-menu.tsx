@@ -66,11 +66,7 @@ export function LiveMenu({ menuUrl, initialMenu }: LiveMenuProps) {
 
   return (
     <div
-      // `dark` class too, so `dark:` utilities (amber ratings, Today label) follow
-      // the board theme rather than the device's site theme.
-      className={`h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground${
-        theme === 'dark' ? ' dark' : ''
-      }`}
+      className="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground"
       style={themeVars}
     >
       {board}

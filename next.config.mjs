@@ -8,19 +8,17 @@ const nextConfig = {
   allowedDevOrigins: ['127.0.0.1'],
 
   async redirects() {
-    // Media is served straight from Vercel Blob (disablePayloadAccessControl in
-    // payload.config.ts), so Payload's /api/media/file proxy 500s. Send old
-    // links to the same filename on the Blob store. The base URL is built the
-    // way @payloadcms/storage-vercel-blob builds it (public access, Media has no
-    // prefix). It is read at build time, so a rotated token needs a redeploy.
-    // With no token (local dev) Payload serves public/uploads itself, so no
-    // redirect. 307, not 308, so browsers don't pin the host.
+    // Media is served straight from Blob, so Payload's /api/media/file proxy
+    // 500s; send old links there. Base URL built as @payloadcms/storage-vercel-blob
+    // does, at build time. No token (local dev): Payload serves uploads itself.
+    // 307 so browsers don't pin the host.
     const storeId = process.env.BLOB_READ_WRITE_TOKEN?.match(
       /^vercel_blob_rw_([a-z\d]+)_[a-z\d]+$/i,
     )?.[1]?.toLowerCase()
     if (!storeId) return []
     const blobBaseUrl =
-      process.env.STORAGE_VERCEL_BLOB_BASE_URL || `https://${storeId}.public.blob.vercel-storage.com`
+      process.env.STORAGE_VERCEL_BLOB_BASE_URL ||
+      `https://${storeId}.public.blob.vercel-storage.com`
     return [
       {
         source: '/api/media/file/:path*',
@@ -97,7 +95,7 @@ export function scopeClientHints(rules) {
     if (rule.source !== '/:path*' || hints.length === 0) return [rule]
     const rest = rule.headers.filter((h) => !CLIENT_HINT_KEYS.has(h.key))
     return [
-      ...(rest.length > 0 ? [{ ...rule, headers: rest }] : []),
+      { ...rule, headers: rest },
       { source: '/admin/:path*', headers: hints },
     ]
   })
@@ -106,10 +104,12 @@ export function scopeClientHints(rules) {
 const payloadConfig = withPayload(nextConfig, {
   devBundleServerPackages: false,
 })
-const payloadHeaders = payloadConfig.headers
-payloadConfig.headers = async () => scopeClientHints(await payloadHeaders())
+const config = {
+  ...payloadConfig,
+  headers: async () => scopeClientHints(await payloadConfig.headers()),
+}
 
-export default withSentryConfig(payloadConfig, {
+export default withSentryConfig(config, {
   // Suppresses source map uploading logs during build
   silent: true,
   org: 'lolev-beer',

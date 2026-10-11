@@ -256,11 +256,7 @@ export function LiveEvents({
 
   return (
     <div
-      // `dark` class too, so `dark:` utilities (amber ratings, Today label) follow
-      // the board theme rather than the device's site theme.
-      className={`h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground${
-        theme === 'dark' ? ' dark' : ''
-      }`}
+      className="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground"
       style={themeVars}
     >
       <section className="h-full flex flex-col bg-background overflow-hidden">
@@ -310,7 +306,7 @@ export function LiveEvents({
                       <div
                         className={`flex-shrink-0 uppercase tracking-wider font-bold leading-tight ${
                           group.isToday
-                            ? 'text-amber-700 dark:text-amber-400'
+                            ? 'text-highlight'
                             : 'text-foreground-muted'
                         }`}
                         style={{ width: '16vh', fontSize: TV_TYPE.eventDay }}

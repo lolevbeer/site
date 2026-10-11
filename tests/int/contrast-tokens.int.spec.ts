@@ -7,6 +7,7 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { getThemeVars } from '@/lib/utils/display-theme'
 
 const css = readFileSync(join(process.cwd(), 'src/app/(frontend)/globals.css'), 'utf8')
 // Light tokens live in the top-level @theme block; dark ones under `.dark`.
@@ -43,4 +44,30 @@ describe('light-mode muted-foreground contrast', () => {
   it('is at least 4.5:1 on the #f0f0f0 segmented-control trough', () => {
     expect(contrast(muted, '#f0f0f0')).toBeGreaterThanOrEqual(4.5)
   })
+})
+
+// Amber highlight text (ratings, Today, holiday notes): one token, so the
+// next amber label can't regress contrast at a single call site.
+describe('highlight contrast', () => {
+  const dark = css.match(/\.dark \{[^}]*--color-highlight:\s*(#[0-9a-fA-F]{6})/)?.[1]
+
+  it('is at least 4.5:1 on the light page background', () => {
+    expect(contrast(token('color-highlight'), token('color-background'))).toBeGreaterThanOrEqual(
+      4.5,
+    )
+  })
+
+  it('is at least 4.5:1 on the dark page background', () => {
+    expect(contrast(dark!, '#000000')).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it.each(['light', 'dark'] as const)(
+    'TV %s boards use the same highlight as the site',
+    (theme) => {
+      const vars = getThemeVars(theme) as Record<string, string>
+      const bg = vars['--color-background']
+      expect(vars['--color-highlight']).toBe(theme === 'light' ? token('color-highlight') : dark)
+      expect(contrast(vars['--color-highlight'], bg)).toBeGreaterThanOrEqual(4.5)
+    },
+  )
 })

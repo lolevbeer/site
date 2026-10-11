@@ -372,7 +372,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
                       </p>
                     )}
                     {tapLocations.length > 0 && canLocations.length === 0 && (
-                      <p className="text-sm text-amber-700 dark:text-amber-400 font-medium">
+                      <p className="text-sm text-highlight font-medium">
                         • {getDraftOnlyMessage(packagingType)}
                       </p>
                     )}
@@ -426,7 +426,7 @@ export function BeerDetails({ beer, className = '' }: BeerDetailsProps) {
                 <UntappdIcon className="h-5 w-5" />
                 Untappd
                 {(beer.untappdRating ?? 0) > 0 && (
-                  <span className="text-amber-700 dark:text-amber-400 font-bold">
+                  <span className="text-highlight font-bold">
                     {formatRating(beer.untappdRating)}/5
                   </span>
                 )}

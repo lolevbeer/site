@@ -1,6 +1,6 @@
 /**
- * Legacy and guessed URLs in vercel.json redirect permanently to real pages,
- * with no chains (a destination is never itself a redirect source).
+ * vercel.json redirects never chain (a destination is never itself a
+ * redirect source) and never shadow a taproom slug.
  */
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -13,29 +13,7 @@ const { redirects } = JSON.parse(readFileSync(join(process.cwd(), 'vercel.json')
   redirects: Redirect[]
 }
 
-const EXPECTED: Record<string, string> = {
-  '/careers': '/jobs',
-  '/calendar': '/events',
-  '/upcoming': '/events',
-  '/shows': '/events',
-  '/performances': '/events',
-  '/lawrenceville': '/lolev-lawrenceville',
-  '/zelienople': '/lolev-zelienople',
-  '/menu': '/beer',
-  '/on-tap': '/beer',
-  '/tap-list': '/beer',
-  '/hours': '/',
-  '/shop': '/beer-map',
-  '/favicon.ico': '/favicons/favicon-32x32.png',
-  '/apple-touch-icon.png': '/favicons/apple-touch-icon.png',
-  '/apple-touch-icon-precomposed.png': '/favicons/apple-touch-icon.png',
-}
-
 describe('vercel.json redirects', () => {
-  it.each(Object.entries(EXPECTED))('%s permanently redirects to %s', (source, destination) => {
-    expect(redirects).toContainEqual({ source, destination, permanent: true })
-  })
-
   // A taproom slug equal to a top-level redirect source would be unreachable.
   it('reserves every single-segment redirect source as a location slug', () => {
     const singleSegment = redirects

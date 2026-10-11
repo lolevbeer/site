@@ -53,7 +53,8 @@ export function BeerCan3D({ baseUrl, metalnessUrl, onReady, className = '' }: Be
       controls.enableDamping = true
       controls.enableZoom = false
       controls.enablePan = false
-      controls.autoRotate = !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      controls.autoRotate = !reduceMotion
       controls.autoRotateSpeed = -2
       // OrbitControls sets touch-action: none, which traps vertical swipes on phones.
       can.renderer.domElement.style.touchAction = 'pan-y'
@@ -65,12 +66,15 @@ export function BeerCan3D({ baseUrl, metalnessUrl, onReady, className = '' }: Be
 
       // rAF auto-pauses on hidden tabs but not scrolled-out elements; the
       // observer stops rendering (GPU/battery) while the can is off-screen.
+      // Under reduced motion nothing moves on its own, so render once and then
+      // only on OrbitControls `change` (drags and their damping settle).
       let raf = 0
       const tick = () => {
         controls.update()
         can.render()
-        raf = requestAnimationFrame(tick)
+        raf = reduceMotion ? 0 : requestAnimationFrame(tick)
       }
+      if (reduceMotion) controls.addEventListener('change', () => can.render())
       const io = new IntersectionObserver(([entry]) => {
         if (entry.isIntersecting) {
           if (!raf) raf = requestAnimationFrame(tick)

@@ -1,9 +1,10 @@
 // @vitest-environment node
-// Guards the Sentry configs (all init from sentry.options.ts) against re-adding the heavy replay and profiling
-// integrations (rrweb + profiler, ~178KB gz on the client) or the noisy
-// logging options, and keeps all three gated on production + a DSN.
+// All three Sentry configs init from sentry.options.ts, which must not grow the
+// heavy replay/profiling integrations (~178KB gz on the client) or Sentry logs,
+// and stays gated on production + a DSN.
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
+import { sentryOptions } from '../../sentry.options'
 
 const read = (file: string) => readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8')
 
@@ -16,28 +17,15 @@ describe.each(['instrumentation-client.ts', 'sentry.server.config.ts', 'sentry.e
   },
 )
 
-describe.each([
-  'sentry.options.ts',
-  'instrumentation-client.ts',
-  'sentry.server.config.ts',
-  'sentry.edge.config.ts',
-])('%s', (file) => {
-  // Comments may explain why replay is gone; only code counts.
-  const source = read(file)
-    .replace(/\/\/.*$/gm, '')
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-
-  it('does not configure replay, profiling, or Sentry logs', () => {
-    expect(source).not.toMatch(/replay|profil/i)
-    expect(source).not.toMatch(/enableLogs|consoleLoggingIntegration/)
+describe('sentryOptions', () => {
+  // The object is the config: no integrations (replay, profiling, console
+  // logging) and no Sentry logs, and off outside production or without a DSN.
+  it('sets only dsn, tracing, and the enable gate', () => {
+    expect(Object.keys(sentryOptions).sort()).toEqual(['dsn', 'enabled', 'tracesSampleRate'])
   })
-})
 
-describe('sentry.options.ts', () => {
-  it('only enables Sentry in production when the DSN is set', () => {
-    expect(read('sentry.options.ts')).toMatch(
-      /enabled:\s*process\.env\.NODE_ENV === ["']production["']\s*&&\s*!!process\.env\.NEXT_PUBLIC_SENTRY_DSN/,
-    )
+  it('is off outside production', () => {
+    expect(sentryOptions.enabled).toBe(false)
   })
 })
 
