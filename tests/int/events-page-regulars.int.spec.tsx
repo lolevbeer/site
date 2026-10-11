@@ -15,6 +15,7 @@ vi.mock('@/components/location/location-provider', () => ({
   }),
 }))
 vi.mock('@/components/ui/page-breadcrumbs', () => ({ PageBreadcrumbs: () => null }))
+vi.mock('@/src/actions/event-inquiry', () => ({ submitEventInquiry: vi.fn() }))
 vi.mock('@/lib/utils/formatters', async () => {
   const actual = await vi.importActual<typeof import('@/lib/utils/formatters')>(
     '@/lib/utils/formatters',

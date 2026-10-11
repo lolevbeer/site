@@ -193,10 +193,13 @@ an email typed into the command.
 
 Slack app setup (one-time, at api.slack.com/apps):
 
-Donation requests at `/donate` and job applications at `/jobs/[slug]` post a
-summary to Slack `#events` via `chat.postMessage` (same bot token). Invite the
-**Lolev Beer** bot into `#events` or the ping fails with `not_in_channel`.
-Override with `SLACK_DONATION_CHANNEL` or `SLACK_JOBS_CHANNEL`.
+Donation requests at `/donate`, job applications at `/jobs/[slug]`, and
+private-event inquiries from the form on `/events` post a summary to Slack
+`#events` via `chat.postMessage` (same bot token). Invite the **Lolev Beer**
+bot into `#events` or the ping fails with `not_in_channel`. Override with
+`SLACK_DONATION_CHANNEL`, `SLACK_JOBS_CHANNEL`, or `SLACK_EVENT_INQUIRY_CHANNEL`
+(the job and inquiry channels fall back to the donation channel). Inquiries
+land in Admin → Event Inquiries; they never create an Event.
 
 1. **Create New App → From an app manifest** → pick the workspace → paste
    [`docs/slack-app-manifest.yml`](docs/slack-app-manifest.yml). That sets the
