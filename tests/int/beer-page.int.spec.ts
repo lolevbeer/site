@@ -227,10 +227,10 @@ describe('BeerPage server-rendered availability', () => {
     expect(generateProductSchema).toHaveBeenCalledWith(beer, { inStock: true })
   })
 
-  it('reports empty availability when no taproom menu lists the beer', async () => {
+  it('reports out of stock when no taproom menu lists the beer', async () => {
     const props = await renderPage()
     expect(props?.availability).toEqual({ tap: [], cans: [] })
-    expect(generateProductSchema).toHaveBeenCalledWith(beer, { inStock: undefined })
+    expect(generateProductSchema).toHaveBeenCalledWith(beer, { inStock: false })
   })
 
   it('leaves availability and stock unknown when menus fail to load', async () => {

@@ -103,8 +103,10 @@ export default async function BeerPage({ params }: BeerPageProps) {
   if (!beer || beer.hideFromSite) notFound()
 
   const availability = await loadAvailability(beer.id)
-  const inStock =
-    availability && availability.tap.length + availability.cans.length > 0 ? true : undefined
+  // Unknown (menus failed) stays undefined → LimitedAvailability, not a guess.
+  const inStock = availability
+    ? availability.tap.length + availability.cans.length > 0
+    : undefined
   const productSchema = generateProductSchema(beer, { inStock })
   const webPageSchema = generateWebPageSchema({
     name: beer.name,
