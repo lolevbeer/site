@@ -36,9 +36,12 @@ function sortByTime(items: ScheduleListItem[]): ScheduleListItem[] {
 export function ScheduleList({
   items,
   headingLevel = 3,
+  calendar = false,
 }: {
   items: ScheduleListItem[]
   headingLevel?: 2 | 3
+  /** Events only: link each row to /events/<id>/calendar.ics. */
+  calendar?: boolean
 }) {
   const days = groupItemsByDate(items)
   const Heading = headingLevel === 2 ? 'h2' : 'h3'
@@ -66,6 +69,9 @@ export function ScheduleList({
                   description={item.description}
                   site={item.site}
                   imageUrl={item.imageUrl}
+                  calendarHref={
+                    calendar ? `/events/${encodeURIComponent(item.id)}/calendar.ics` : undefined
+                  }
                 />
               </li>
             ))}

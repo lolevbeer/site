@@ -4,6 +4,10 @@
  * Time, title, and location stack on the center axis. A side-by-side time
  * column shoved titles off-center whenever the time string changed width
  * ("7pm" vs "5pm–8pm").
+ *
+ * Outbound links are visible text under the row ("Tickets ↗" for ticketing
+ * sites, "Details ↗" otherwise) rather than a whole-row anchor, so a row that
+ * opens a new tab says so. Events can add an "Add to calendar" .ics link.
  */
 
 'use client'
@@ -22,6 +26,17 @@ function agendaTime(time?: string, endTime?: string): string | null {
   return formatTime(time)
 }
 
+/** Hosts whose links sell tickets, labeled "Tickets" instead of "Details". */
+const TICKET_HOSTS = ['eventbrite.', 'ticketmaster.', 'tixr.', 'dice.fm', 'seetickets.', 'ticketleap.']
+
+function siteLabel(href: string): 'Tickets' | 'Details' {
+  const host = new URL(href).hostname.toLowerCase()
+  return TICKET_HOSTS.some((ticketHost) => host.includes(ticketHost)) ? 'Tickets' : 'Details'
+}
+
+const linkClass =
+  'underline underline-offset-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm'
+
 interface TimelineItemProps {
   title: string
   time?: string
@@ -30,6 +45,8 @@ interface TimelineItemProps {
   description?: string
   site?: string
   imageUrl?: string
+  /** Same-origin .ics download; events only. */
+  calendarHref?: string
   className?: string
 }
 
@@ -41,12 +58,13 @@ export function TimelineItem({
   description,
   site,
   imageUrl,
+  calendarHref,
   className,
 }: TimelineItemProps) {
   const href = safeHttpUrl(site)
   const timeDisplay = agendaTime(time, endTime)
 
-  const body = (
+  return (
     <div className={cn('flex flex-col items-center text-center py-2 gap-0.5', className)}>
       {imageUrl ? (
         <span className="relative h-10 w-10 shrink-0 rounded-full overflow-hidden bg-muted mb-1">
@@ -61,23 +79,22 @@ export function TimelineItem({
       {description ? (
         <p className="text-sm text-muted-foreground line-clamp-1">{description}</p>
       ) : null}
+      {href || calendarHref ? (
+        <p className="text-sm text-muted-foreground flex gap-3 justify-center pt-0.5">
+          {href ? (
+            <a href={href} target="_blank" rel="noopener noreferrer" className={linkClass}>
+              {siteLabel(href)} ↗<span className="sr-only"> (opens in a new tab)</span>
+            </a>
+          ) : null}
+          {calendarHref ? (
+            <a href={calendarHref} className={linkClass}>
+              Add to calendar
+            </a>
+          ) : null}
+        </p>
+      ) : null}
     </div>
   )
-
-  if (href) {
-    return (
-      <a
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="block rounded-lg hover:bg-secondary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-      >
-        {body}
-      </a>
-    )
-  }
-
-  return body
 }
 
 export default TimelineItem

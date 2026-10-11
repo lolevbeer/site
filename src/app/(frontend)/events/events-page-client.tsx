@@ -54,6 +54,7 @@ export function EventsPageClient({ initialEvents, intro }: EventsPageClientProps
         {filteredEvents.length > 0 ? (
           <>
           <ScheduleList
+            calendar
             items={oneOffs.map((event) => ({
               id: String(event.id ?? `${event.title}-${event.date}-${event.location}-${event.time}`),
               date: event.date,

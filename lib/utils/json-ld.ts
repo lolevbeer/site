@@ -231,9 +231,10 @@ function getEventStatus(status: EventStatus): string {
 }
 
 /**
- * Parse time string to hours and minutes
+ * Parse an event time string (CMS ISO or "7pm") to Pittsburgh wall-clock
+ * hours and minutes. Shared with the per-event .ics builder.
  */
-function parseTime(timeStr: string): { hours: number; minutes: number } {
+export function parseEventTime(timeStr: string): { hours: number; minutes: number } {
   const match = formatTime(timeStr).match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/i)
   if (!match) return { hours: 18, minutes: 0 }
 
@@ -260,7 +261,7 @@ function toISO8601(
   const dateKey = date.split('T')[0]
   if (!time) return { startDate: dateKey }
 
-  const { hours, minutes } = parseTime(time)
+  const { hours, minutes } = parseEventTime(time)
   const localTime = (h: number, m: number) =>
     `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`
   const eventDate = fromZonedTime(`${dateKey}T${localTime(hours, minutes)}`, 'America/New_York')
@@ -268,7 +269,7 @@ function toISO8601(
   const result = { startDate: eventDate.toISOString(), endDate: undefined as string | undefined }
 
   if (endTime) {
-    const { hours: endHours, minutes: endMinutes } = parseTime(endTime)
+    const { hours: endHours, minutes: endMinutes } = parseEventTime(endTime)
     let endDay = dateKey
     if (endHours * 60 + endMinutes < hours * 60 + minutes) {
       const next = new Date(`${dateKey}T12:00:00Z`)
@@ -294,7 +295,7 @@ type LocationLookup = Map<LocationSlug, PayloadLocation>
  * Shareable /events link for one event: `?loc=` opens the right taproom and
  * `#event-<id>` matches the row anchor ScheduleList renders.
  */
-function eventPageUrl(locationSlug?: string, eventId?: string | number): string {
+export function eventPageUrl(locationSlug?: string, eventId?: string | number): string {
   const query = locationSlug ? `?loc=${encodeURIComponent(locationSlug)}` : ''
   const hash = eventId != null && eventId !== '' ? `#event-${eventId}` : ''
   return `${LOLEV_BASE_URL}/events${query}${hash}`
