@@ -26,6 +26,7 @@ Helpers live in `lib/analytics/events.ts`:
 | `outbound` | `host` | Any click on another off-site `http(s)` link |
 | `donate_submitted` | none | `components/donate/donation-request-form.tsx`, when the server accepts the request |
 | `job_submitted` | none | `components/jobs/job-apply-form.tsx`, when the server accepts the application |
+| `event_inquiry_submitted` | none | `components/events/event-inquiry-form.tsx` (/events private-event inquiry), when the server accepts the inquiry |
 
 `ConversionTracker` is a delegated `document` listener for `click` and middle-button `auxclick` (open in new tab) mounted next to `<Analytics />` in the frontend layout, so links need no per-link wiring. It cannot see a link opened from the right-click context menu or by long-press on a phone, so `call`, `directions`, and `outbound` slightly undercount those. `mailto:` and other non-http links are ignored.
 

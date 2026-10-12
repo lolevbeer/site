@@ -25,10 +25,8 @@ import {
 } from '@/lib/config/tv-display'
 
 interface LiveEventsProps {
-  /** The /e URL param; the events stream polls with it. */
+  /** The resolved location's current slug (never an alias): the events stream polls with it and the taproom link uses it. */
   location: string
-  /** The resolved location's canonical slug, for the taproom link. */
-  locationSlug: string
   initialEvents: BreweryEvent[]
   initialFood?: FoodItem[]
   cansMenu?: PayloadMenu | null
@@ -176,7 +174,6 @@ function RegularsStrip({ regulars }: { regulars: RegularEvent[] }) {
  */
 export function LiveEvents({
   location,
-  locationSlug,
   initialEvents,
   initialFood = [],
   cansMenu,
@@ -414,7 +411,7 @@ export function LiveEvents({
         </div>
       </section>
       {/* Phones only (portrait touch screens); TVs never show it. */}
-      <TapListBanner locationSlug={locationSlug} label="Open the taproom page" />
+      <TapListBanner locationSlug={location} label="Open the taproom page" />
     </div>
   )
 }

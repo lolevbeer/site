@@ -140,9 +140,7 @@ describe('EventsPageClient regulars', () => {
     Element.prototype.scrollIntoView = scrollIntoView
     window.history.replaceState(null, '', '/events#event-%E0%A4%A')
     expect(() =>
-      render(
-        createElement(EventsPageClient, { initialEvents: [ev('law', '2026-10-15', 'Jazz')] }),
-      ),
+      render(createElement(EventsPageClient, { initialEvents: [ev('law', '2026-10-15', 'Jazz')] })),
     ).not.toThrow()
     expect(screen.getByText('Jazz')).toBeTruthy()
     expect(scrollIntoView).not.toHaveBeenCalled()

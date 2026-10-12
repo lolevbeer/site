@@ -308,13 +308,6 @@ export function findLocationBySlug(
 }
 
 /**
- * Validate if a slug (or alias) is a valid location
- */
-export function isValidLocationSlug(locations: PayloadLocation[], slug: string): boolean {
-  return findLocationBySlug(locations, slug) !== undefined
-}
-
-/**
  * Get display name for a location slug
  */
 export function getLocationDisplayName(locations: PayloadLocation[], slug: LocationSlug): string {

@@ -1,19 +1,31 @@
 /**
  * /events private-event inquiry: collapsed by default, field errors show under
- * each field, focus moves to the confirmation, and the date min is client-only.
+ * each field, focus moves to the confirmation, the date min is client-only, and
+ * an accepted inquiry sends the `event_inquiry_submitted` conversion.
  */
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { renderToString } from 'react-dom/server'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const submitEventInquiry = vi.fn()
 vi.mock('@/src/actions/event-inquiry', () => ({
   submitEventInquiry: (input: unknown) => submitEventInquiry(input),
 }))
+const track = vi.fn()
+vi.mock('@vercel/analytics', () => ({ track: (...args: unknown[]) => track(...args) }))
 
 import { EventInquiryForm } from '@/components/events/event-inquiry-form'
 
-afterEach(cleanup)
+const gtag = vi.fn()
+beforeEach(() => {
+  track.mockReset()
+  gtag.mockReset()
+  window.gtag = gtag
+})
+afterEach(() => {
+  cleanup()
+  delete window.gtag
+})
 
 const taprooms = [{ id: 'loc-1', slug: 'lawrenceville', name: 'Lawrenceville' }]
 
@@ -44,11 +56,16 @@ describe('EventInquiryForm', () => {
 
     fireEvent.change(name, { target: { value: 'Ada' } })
     expect(name.getAttribute('aria-invalid')).toBeNull()
+    // A rejected submit is not a conversion.
+    expect(track).not.toHaveBeenCalled()
+    expect(gtag).not.toHaveBeenCalled()
 
     submitEventInquiry.mockResolvedValueOnce({ ok: true })
     fireEvent.click(screen.getByRole('button', { name: 'Send inquiry' }))
     await waitFor(() => expect(screen.getByText('Inquiry received')).toBeTruthy())
     expect(document.activeElement?.textContent).toBe('Inquiry received')
+    expect(track).toHaveBeenCalledWith('event_inquiry_submitted', undefined)
+    expect(gtag).toHaveBeenCalledWith('event', 'event_inquiry_submitted', undefined)
   })
 
   it('marks the taproom select required for assistive tech', () => {

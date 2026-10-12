@@ -7,6 +7,7 @@
  */
 import { eventPageUrl, parseEventTime } from '@/lib/utils/json-ld'
 import { safeHttpUrl } from '@/lib/utils/url-utils'
+import { addEstDays } from '@/lib/utils/formatters'
 
 const TZID = 'America/New_York'
 
@@ -74,9 +75,7 @@ function foldLine(line: string): string {
 
 /** "2026-10-14" plus whole days, as YYYYMMDD. */
 function dayStamp(dateKey: string, addDays = 0): string {
-  const day = new Date(`${dateKey}T12:00:00Z`)
-  day.setUTCDate(day.getUTCDate() + addDays)
-  return day.toISOString().slice(0, 10).replace(/-/g, '')
+  return addEstDays(dateKey, addDays).replace(/-/g, '')
 }
 
 function wallTime(minutesFromMidnight: number): string {

@@ -42,7 +42,6 @@ function renderBoard() {
   return render(
     <LiveEvents
       location="lolev-lawrenceville"
-      locationSlug="lolev-lawrenceville"
       initialEvents={[]}
       initialLocationName="Lawrenceville"
     />,

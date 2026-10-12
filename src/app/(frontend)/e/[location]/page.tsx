@@ -117,7 +117,6 @@ export default async function EventsDisplayPage({ params }: EventsDisplayPagePro
   return (
     <LiveEvents
       location={data.locationSlug}
-      locationSlug={data.locationSlug}
       initialEvents={data.events}
       initialFood={data.food}
       cansMenu={data.cansMenu}

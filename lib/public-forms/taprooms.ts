@@ -18,6 +18,7 @@ export async function findActiveTaprooms(
     overrideAccess: false,
   })
   return result.docs.filter(
-    (doc): doc is Location & { slug: string } => typeof doc.slug === 'string' && doc.slug.length > 0,
+    (doc): doc is Location & { slug: string } =>
+      typeof doc.slug === 'string' && doc.slug.length > 0,
   )
 }

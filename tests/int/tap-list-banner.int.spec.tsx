@@ -76,15 +76,8 @@ describe('LiveMenu tap list banner', () => {
 })
 
 describe('LiveEvents taproom banner', () => {
-  it('links the resolved taproom slug, not the raw URL param', () => {
-    render(
-      <LiveEvents
-        location="Zelie"
-        locationSlug="zelienople"
-        initialEvents={[]}
-        initialLocationName="Zelienople"
-      />,
-    )
+  it('links the taproom page for the location the page resolved', () => {
+    render(<LiveEvents location="zelienople" initialEvents={[]} initialLocationName="Zelienople" />)
     expect(screen.getByRole('link', { name: 'Open the taproom page' }).getAttribute('href')).toBe(
       '/zelienople',
     )
@@ -93,14 +86,7 @@ describe('LiveEvents taproom banner', () => {
 
 describe('board frame', () => {
   it('uses the dynamic viewport height so the phone banner is not under the toolbar', () => {
-    render(
-      <LiveEvents
-        location="zelienople"
-        locationSlug="zelienople"
-        initialEvents={[]}
-        initialLocationName="Zelienople"
-      />,
-    )
+    render(<LiveEvents location="zelienople" initialEvents={[]} initialLocationName="Zelienople" />)
     const frame = screen.getByRole('link', { name: 'Open the taproom page' }).closest('.h-dvh')
     expect(frame).not.toBeNull()
     expect(frame?.className).not.toContain('h-screen')

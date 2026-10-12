@@ -247,8 +247,8 @@ export function formatDayLabel(dateString: string, today: string | null): string
   return formatDate(dateString, 'full')
 }
 
-/** On or after `today` (default: the current EST date). */
-export function isTodayOrFuture(dateString: string, today: string = getTodayEST()): boolean {
+/** On or after `today`, which callers take from `useTodayEST()` (never a render-time date). */
+export function isTodayOrFuture(dateString: string, today: string): boolean {
   return dateKey(dateString) >= today
 }
 

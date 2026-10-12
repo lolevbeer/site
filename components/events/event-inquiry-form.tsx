@@ -5,8 +5,8 @@
  * "Planning a private event?" disclosure. Submits to the event-inquiries
  * staff inbox (never Events). Server validation errors show under each field
  * and clear when it changes. On success focus moves to the confirmation
- * title. Field ids are prefixed `inquiry-` so they cannot
- * collide with other ids on the page.
+ * title and the `event_inquiry_submitted` conversion is sent. Field ids are
+ * prefixed `inquiry-` so they cannot collide with other ids on the page.
  */
 
 import React, { useEffect, useRef, useState } from 'react'
@@ -28,6 +28,7 @@ import {
 import { Spinner } from '@/components/ui/spinner'
 import { Textarea } from '@/components/ui/textarea'
 import { submitEventInquiry } from '@/src/actions/event-inquiry'
+import { trackConversion } from '@/lib/analytics/events'
 import {
   EVENT_INQUIRY_MAX_HEADCOUNT,
   emptyEventInquiry,
@@ -75,8 +76,10 @@ export function EventInquiryForm({
     setPending(true)
     try {
       const result = await submitEventInquiry(values)
-      if (result.ok) setDone(true)
-      else {
+      if (result.ok) {
+        setDone(true)
+        trackConversion('event_inquiry_submitted')
+      } else {
         setError(result.error)
         setFieldErrors(result.errors ?? {})
       }

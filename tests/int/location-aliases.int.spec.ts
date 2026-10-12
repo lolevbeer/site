@@ -39,7 +39,7 @@ vi.mock('@/lib/utils/payload-api', () => ({
 }))
 
 import { Locations } from '@/src/collections/Locations'
-import { findLocationBySlug, isValidLocationSlug } from '@/lib/config/locations'
+import { findLocationBySlug } from '@/lib/config/locations'
 import EventsDisplayPage from '@/src/app/(frontend)/e/[location]/page'
 import LocationPage, { generateMetadata } from '@/src/app/(frontend)/[location]/page'
 import { getDraftMenu } from '@/lib/utils/payload-api'
@@ -241,7 +241,6 @@ describe('shared resolver', () => {
   it('resolves a slug or an alias to the location', () => {
     expect(findLocationBySlug([lawrenceville], 'lolev-lawrenceville')).toBe(lawrenceville)
     expect(findLocationBySlug([lawrenceville], 'old-lawrenceville')).toBe(lawrenceville)
-    expect(isValidLocationSlug([lawrenceville], 'old-lawrenceville')).toBe(true)
     expect(findLocationBySlug([lawrenceville], 'nope')).toBeUndefined()
   })
 
