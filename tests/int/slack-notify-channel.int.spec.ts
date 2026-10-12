@@ -113,5 +113,11 @@ describe('Site Content Slack channel fields', () => {
     for (const bad of ['events', 'U0123456789', 'D0123456789', '#bad name']) {
       expect(typeof validate(bad)).toBe('string')
     }
+    // Each field gets a Send test message button; it reads the form from the name.
+    for (const f of group.fields as Array<{ admin?: { components?: { afterInput?: string[] } } }>) {
+      expect(f.admin?.components?.afterInput).toEqual([
+        '@/src/components/admin/SlackChannelTestButton#SlackChannelTestButton',
+      ])
+    }
   })
 })

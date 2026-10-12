@@ -212,7 +212,9 @@ bot into `#events` or the ping fails with `not_in_channel`. Admins set each
 form's channel in Admin → Site Content → Slack Channels (`#name` or a channel
 ID); a blank field falls back to `SLACK_DONATION_CHANNEL`, `SLACK_JOBS_CHANNEL`,
 or `SLACK_EVENT_INQUIRY_CHANNEL` (the job and inquiry channels fall back to the
-donation channel), then `#events`. Invite the bot to any channel you pick. Inquiries
+donation channel), then `#events`. Invite the bot to any channel you pick, then press **Send test message** under
+the field to confirm it can post there (admins only; it tests the typed value,
+so save afterwards). Inquiries
 land in Admin → Event Inquiries; they never create an Event.
 
 1. **Create New App → From an app manifest** → pick the workspace → paste

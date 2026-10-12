@@ -1,9 +1,9 @@
 /**
  * "Send test message" under Admin → Site Content → Slack Channels: admins
- * only, posts to the typed channel (or the form's live fallback when blank or
- * invalid), and reports which channel it tried.
+ * only, posts to the typed channel (or the form's live fallback when blank),
+ * rejects values the field validator would reject, and says why it failed.
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const auth = vi.fn()
 vi.mock('payload', () => ({ getPayload: vi.fn(async () => ({ auth })) }))
@@ -15,30 +15,45 @@ vi.mock('@/src/utils/slack-api', () => ({
   slackApi: (...args: unknown[]) => slackApi(...args),
 }))
 
-import { sendSlackTestMessage } from '@/src/actions/slack-test'
+const env = { slackBotToken: 'xoxb-test' as string | undefined }
+vi.mock('@/lib/config/server-env', () => ({ readServerEnvironment: () => env }))
+
+import { sendSlackTestMessage, type SlackTestForm } from '@/src/actions/slack-test'
 
 const admin = { id: 'a', roles: ['admin'] }
+const SLACK_ENV = ['SLACK_EVENT_INQUIRY_CHANNEL', 'SLACK_DONATION_CHANNEL', 'SLACK_JOBS_CHANNEL']
+const saved = Object.fromEntries(SLACK_ENV.map((key) => [key, process.env[key]]))
 
 beforeEach(() => {
   auth.mockReset()
+  auth.mockResolvedValue({ user: admin })
   slackApi.mockReset()
   slackApi.mockResolvedValue(true)
-  delete process.env.SLACK_EVENT_INQUIRY_CHANNEL
-  delete process.env.SLACK_DONATION_CHANNEL
+  env.slackBotToken = 'xoxb-test'
+  for (const key of SLACK_ENV) delete process.env[key]
+})
+
+afterEach(() => {
+  for (const [key, value] of Object.entries(saved)) {
+    if (value === undefined) delete process.env[key]
+    else process.env[key] = value
+  }
 })
 
 describe('sendSlackTestMessage', () => {
-  it('rejects non-admins without posting', async () => {
-    auth.mockResolvedValue({ user: { id: 'e', roles: ['event-manager'] } })
+  it('rejects anonymous callers, non-admins, and unknown forms without posting', async () => {
+    auth.mockResolvedValueOnce({ user: null })
     expect(await sendSlackTestMessage('eventInquiries', '#events')).toEqual({
       ok: false,
-      channel: null,
+      reason: 'forbidden',
     })
+    auth.mockResolvedValueOnce({ user: { id: 'e', roles: ['event-manager'] } })
+    expect((await sendSlackTestMessage('eventInquiries', '#events')).ok).toBe(false)
+    expect((await sendSlackTestMessage('toString' as SlackTestForm, '#events')).ok).toBe(false)
     expect(slackApi).not.toHaveBeenCalled()
   })
 
   it('posts to the typed channel', async () => {
-    auth.mockResolvedValue({ user: admin })
     expect(await sendSlackTestMessage('eventInquiries', ' #private-events ')).toEqual({
       ok: true,
       channel: '#private-events',
@@ -49,19 +64,36 @@ describe('sendSlackTestMessage', () => {
     )
   })
 
-  it('falls back to the live channel when blank or a DM id', async () => {
-    auth.mockResolvedValue({ user: admin })
+  it('tests the live fallback channel when the field is blank', async () => {
     process.env.SLACK_EVENT_INQUIRY_CHANNEL = '#inquiries'
     expect((await sendSlackTestMessage('eventInquiries', '')).channel).toBe('#inquiries')
-    expect((await sendSlackTestMessage('eventInquiries', 'D0123456789')).channel).toBe('#inquiries')
     expect((await sendSlackTestMessage('jobs', '')).channel).toBe('#events')
   })
 
-  it('reports a Slack failure', async () => {
-    auth.mockResolvedValue({ user: admin })
+  it('rejects a value the field would not save instead of swapping in a default', async () => {
+    for (const bad of ['private-events', 'D0123456789', '#bad name']) {
+      expect(await sendSlackTestMessage('eventInquiries', bad)).toEqual({
+        ok: false,
+        reason: 'invalid',
+      })
+    }
+    expect(slackApi).not.toHaveBeenCalled()
+  })
+
+  it('says Slack is not configured instead of blaming the channel', async () => {
+    env.slackBotToken = undefined
+    expect(await sendSlackTestMessage('donations', '#donations')).toEqual({
+      ok: false,
+      reason: 'not-configured',
+    })
+    expect(slackApi).not.toHaveBeenCalled()
+  })
+
+  it('reports a Slack refusal with the channel it tried', async () => {
     slackApi.mockResolvedValue(false)
     expect(await sendSlackTestMessage('donations', '#nope')).toEqual({
       ok: false,
+      reason: 'refused',
       channel: '#nope',
     })
   })
