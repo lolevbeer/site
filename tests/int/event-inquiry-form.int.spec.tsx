@@ -79,11 +79,12 @@ describe('EventInquiryForm', () => {
     render(<EventInquiryForm taprooms={taprooms} />)
     const trigger = screen.getByLabelText('Preferred date')
     expect(trigger.tagName).toBe('BUTTON')
-    expect(trigger.getAttribute('aria-required')).toBe('true')
     fireEvent.click(trigger)
     expect(screen.getByRole('button', { name: /October 13/ }).hasAttribute('disabled')).toBe(true)
     fireEvent.click(screen.getByRole('button', { name: /October 24/ }))
     expect(screen.getByLabelText('Preferred date').textContent).toBe('Saturday, October 24, 2026')
+    // Screen readers hear the chosen date, not just the label.
+    expect(trigger.getAttribute('aria-describedby')).toBe('inquiry-preferredDate-value')
     vi.useRealTimers()
   })
 })

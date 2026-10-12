@@ -37,6 +37,7 @@ import {
   type EventInquiryInput,
 } from '@/lib/events/inquiry'
 import { useTodayEST } from '@/lib/hooks/use-today-est'
+import { maximumEventDate } from '@/lib/donate/donation-request'
 
 export function EventInquiryForm({
   taprooms,
@@ -149,9 +150,9 @@ export function EventInquiryForm({
                 <DatePicker
                   id="inquiry-preferredDate"
                   min={minDate}
+                  max={minDate && maximumEventDate(minDate)}
                   value={values.preferredDate}
                   onChange={(value) => set('preferredDate', value)}
-                  aria-required
                 />
               </FormField>
               <FormField id="inquiry-headcount" label="How many guests?" error={fieldErrors.headcount}>

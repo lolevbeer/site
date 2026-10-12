@@ -1,7 +1,8 @@
 /**
  * DatePicker: a button that opens a calendar popover. Value in and out is a
- * YYYY-MM-DD string (the same contract as <input type="date">), days before
- * `min` are disabled, and FormField's ARIA lands on the trigger button.
+ * YYYY-MM-DD string (the same contract as <input type="date">), days outside
+ * `min`..`max` are disabled, `min` is the calendar's "today", and screen
+ * readers hear the chosen date alongside FormField's label and messages.
  */
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -11,25 +12,24 @@ import { FormField } from '@/components/ui/form-field'
 afterEach(cleanup)
 
 describe('DatePicker', () => {
-  it('shows a placeholder, then the chosen date, and reports YYYY-MM-DD', () => {
+  it('reports YYYY-MM-DD and disables days outside min..max', () => {
     const onChange = vi.fn()
-    const { rerender } = render(
-      <DatePicker id="d" value="" onChange={onChange} min="2026-10-12" defaultMonth="2026-10-12" />,
-    )
-    const trigger = screen.getByRole('button', { name: /pick a date/i })
-    fireEvent.click(trigger)
+    render(<DatePicker id="d" value="" onChange={onChange} min="2026-10-12" max="2026-10-25" />)
+    fireEvent.click(screen.getByRole('button', { name: /pick a date/i }))
 
-    // Before min: disabled. On/after min: selectable.
-    expect(screen.getByRole('button', { name: /October 11/ }).hasAttribute('disabled')).toBe(true)
-    fireEvent.click(screen.getByRole('button', { name: /October 20/ }))
+    expect(screen.getByRole('dialog', { name: 'Choose a date' })).toBeTruthy()
+    const day = (n: number) =>
+      screen.getByRole('button', { name: new RegExp(`October ${n}(st|nd|rd|th)?,`) })
+    expect(day(11).hasAttribute('disabled')).toBe(true)
+    expect(day(26).hasAttribute('disabled')).toBe(true)
+    // `min` is the calendar's today (New York), not the browser's clock.
+    expect(day(12).closest('td')?.hasAttribute('data-today')).toBe(true)
+    fireEvent.click(day(20))
     expect(onChange).toHaveBeenCalledWith('2026-10-20')
-
-    rerender(<DatePicker id="d" value="2026-10-20" onChange={onChange} min="2026-10-12" />)
-    expect(screen.getByRole('button', { name: /Tuesday, October 20, 2026/ })).toBeTruthy()
   })
 
-  it('takes FormField ARIA on the trigger', () => {
-    render(
+  it('announces the chosen date with the FormField label and error', () => {
+    const { rerender } = render(
       <FormField id="d" label="Preferred date" error="Enter a preferred date.">
         <DatePicker id="d" value="" onChange={() => {}} />
       </FormField>,
@@ -37,6 +37,14 @@ describe('DatePicker', () => {
     const trigger = screen.getByLabelText('Preferred date')
     expect(trigger.tagName).toBe('BUTTON')
     expect(trigger.getAttribute('aria-invalid')).toBe('true')
-    expect(trigger.getAttribute('aria-describedby')).toBe('d-error')
+    expect(trigger.getAttribute('aria-describedby')).toBe('d-value d-error')
+    expect(document.getElementById('d-value')?.textContent).toBe('Pick a date')
+
+    rerender(
+      <FormField id="d" label="Preferred date">
+        <DatePicker id="d" value="2026-10-20" onChange={() => {}} />
+      </FormField>,
+    )
+    expect(document.getElementById('d-value')?.textContent).toBe('Tuesday, October 20, 2026')
   })
 })
