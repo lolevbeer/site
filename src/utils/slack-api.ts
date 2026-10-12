@@ -7,8 +7,8 @@
 import { logger } from '@/lib/utils/logger'
 import { readServerEnvironment } from '@/lib/config/server-env'
 
-// Slack methods are dotted camelCase, e.g. chat.postMessage, views.open.
-const METHOD_RE = /^[a-z][a-zA-Z]*(\.[a-z][a-zA-Z]*)+$/
+// Slack methods are dotted camelCase, e.g. chat.postMessage, oauth.v2.access.
+const METHOD_RE = /^[a-z][a-zA-Z0-9]*(\.[a-z][a-zA-Z0-9]*)+$/
 
 export function isAllowedSlackHostname(hostname: string): boolean {
   return hostname === 'slack.com' || hostname.endsWith('.slack.com')
@@ -52,7 +52,7 @@ export async function slackApi<T extends Record<string, unknown>>(
     return false
   }
   if (!isWebhook && !METHOD_RE.test(target)) {
-    logger.error('Slack method rejected')
+    logger.error(`Slack method rejected: ${target.slice(0, 60)}`)
     return false
   }
 
