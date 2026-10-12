@@ -18,13 +18,19 @@ describe('isAllowedSlackHostname', () => {
 describe('slackApi method names', () => {
   afterEach(() => vi.unstubAllGlobals())
 
-  it('calls camelCase methods like chat.postMessage and rejects junk', async () => {
+  // Every method name the codebase calls; all other specs mock slackApi away.
+  it.each(['chat.postMessage', 'views.open', 'views.update'])('calls %s', async (method) => {
     const fetch = vi.fn(async () => new Response('{"ok":true}'))
     vi.stubGlobal('fetch', fetch)
-    expect(await slackApi('chat.postMessage', { channel: '#x' })).toBe(true)
-    expect(fetch).toHaveBeenCalledWith('https://slack.com/api/chat.postMessage', expect.anything())
+    expect(await slackApi(method, {})).toBe(true)
+    expect(fetch).toHaveBeenCalledWith(`https://slack.com/api/${method}`, expect.anything())
+  })
+
+  it('rejects malformed method names without calling Slack', async () => {
+    const fetch = vi.fn()
+    vi.stubGlobal('fetch', fetch)
     expect(await slackApi('../chat.postMessage', {})).toBe(false)
     expect(await slackApi('chat', {})).toBe(false)
-    expect(fetch).toHaveBeenCalledTimes(1)
+    expect(fetch).not.toHaveBeenCalled()
   })
 })
