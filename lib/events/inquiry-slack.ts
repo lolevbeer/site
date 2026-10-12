@@ -14,7 +14,8 @@ import {
 
 /**
  * Channel for inquiry pings (`SLACK_EVENT_INQUIRY_CHANNEL`, else the donation
- * channel, else `#events`).
+ * channel, else `#events`). Admin → Site Content → Slack Channels overrides it
+ * in `notifyCollectionOnSlack`.
  */
 export function eventInquirySlackChannel(): string {
   return resolveSlackChannel(
