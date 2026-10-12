@@ -6,7 +6,8 @@
 export const DEFAULT_SLACK_CHANNEL = '#events'
 
 const CHANNEL_NAME = /^#[a-z0-9_-]+$/i
-const CHANNEL_ID = /^[CGD][A-Z0-9]{8,}$/
+// Public (C) or private (G) channel ids only; D… is a DM conversation.
+const CHANNEL_ID = /^[CG][A-Z0-9]{8,}$/
 
 /**
  * Clip to `max` characters, appending an ellipsis when truncated.
@@ -28,16 +29,22 @@ export function slackPlainText(text: string, max = 140): string {
 }
 
 /**
- * Env channel or `#events`. Rejects unexpected values so a typo cannot
- * send PII to a user DM.
+ * `value` if it is a `#name` or channel id, else `fallback`. Rejects user and
+ * DM ids so a typo cannot send PII to a DM.
  */
 export function resolveSlackChannel(
   value: string | undefined,
   fallback = DEFAULT_SLACK_CHANNEL,
 ): string {
   const raw = value?.trim()
-  if (raw && (CHANNEL_NAME.test(raw) || CHANNEL_ID.test(raw))) return raw
+  if (raw && isSlackChannel(raw)) return raw
   return fallback
+}
+
+/** True for a `#name` or channel id that `resolveSlackChannel` would accept. */
+export function isSlackChannel(value: string): boolean {
+  const raw = value.trim()
+  return CHANNEL_NAME.test(raw) || CHANNEL_ID.test(raw)
 }
 
 export function field(label: string, value: string): { type: 'mrkdwn'; text: string } {

@@ -1,7 +1,7 @@
 /**
  * Public-form Slack pings post to the channel set in Admin → Site Content →
  * Slack Channels when one is set, else the env/default channel the caller
- * passes. An invalid admin value (a typo, a user id) is ignored so PII never
+ * passes. An invalid admin value (a typo, a user or DM id) is ignored so PII never
  * lands in a DM.
  */
 import type { Payload } from 'payload'
@@ -13,6 +13,7 @@ vi.mock('@/src/utils/slack-api', () => ({
 }))
 
 import { notifyCollectionOnSlack } from '@/lib/slack/notify'
+import { SiteContent } from '@/src/globals/SiteContent'
 
 function fakePayload(slackChannels: Record<string, string | null> | undefined) {
   return {
@@ -60,6 +61,26 @@ describe('notifyCollectionOnSlack channel', () => {
     expect(await postedChannel('event-inquiries', { eventInquiries: 'U0123456789' })).toBe(
       '#env-channel',
     )
+    slackApi.mockClear()
+    // A DM conversation id is not a channel.
+    expect(await postedChannel('donation-requests', { donations: 'D0123456789' })).toBe(
+      '#env-channel',
+    )
+  })
+
+  it('records the channel on the inbox row when the ping fails', async () => {
+    slackApi.mockResolvedValue(false)
+    const payload = fakePayload({ jobs: '#hiring' })
+    await notifyCollectionOnSlack(payload, {
+      collection: 'job-applications',
+      id: '1',
+      channel: '#env-channel',
+      message,
+      failLog: 'x',
+    })
+    expect(payload.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { slackError: 'Slack ping to #hiring failed' } }),
+    )
   })
 
   it('still pings the passed channel if the settings read fails', async () => {
@@ -73,5 +94,24 @@ describe('notifyCollectionOnSlack channel', () => {
       failLog: 'x',
     })
     expect(slackApi.mock.calls[0][1].channel).toBe('#env-channel')
+  })
+})
+
+describe('Site Content Slack channel fields', () => {
+  it('accept blank, #name, or a channel id and reject anything else', () => {
+    const tab = SiteContent.fields
+      .flatMap((f) => ('tabs' in f ? f.tabs : []))
+      .find((t) => t.label === 'Slack Channels')
+    const group = tab?.fields[0] as {
+      fields: Array<{ name: string; validate: (v: string) => unknown }>
+    }
+    expect(group.fields.map((f) => f.name)).toEqual(['donations', 'jobs', 'eventInquiries'])
+    const validate = group.fields[0].validate
+    for (const ok of ['', '  ', '#events', 'C0123456789', 'G0123456789']) {
+      expect(validate(ok)).toBe(true)
+    }
+    for (const bad of ['events', 'U0123456789', 'D0123456789', '#bad name']) {
+      expect(typeof validate(bad)).toBe('string')
+    }
   })
 })

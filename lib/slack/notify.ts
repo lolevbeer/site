@@ -28,6 +28,7 @@ async function channelFor(
     const settings = await payload.findGlobal({
       slug: 'site-content',
       depth: 0,
+      select: { slackChannels: true },
       overrideAccess: true,
     })
     return resolveSlackChannel(
@@ -43,7 +44,7 @@ async function channelFor(
 export async function notifyCollectionOnSlack(
   payload: Payload,
   args: {
-    collection: 'donation-requests' | 'job-applications' | 'event-inquiries'
+    collection: keyof typeof ADMIN_CHANNEL_FIELD
     id: string | number
     channel: string
     message: { text: string; blocks: Array<Record<string, unknown>> }
@@ -51,8 +52,9 @@ export async function notifyCollectionOnSlack(
   },
 ): Promise<void> {
   try {
+    const channel = await channelFor(payload, args.collection, args.channel)
     const posted = await slackApi('chat.postMessage', {
-      channel: await channelFor(payload, args.collection, args.channel),
+      channel,
       unfurl_links: false,
       unfurl_media: false,
       ...args.message,
@@ -63,9 +65,9 @@ export async function notifyCollectionOnSlack(
       overrideAccess: true,
       data: posted
         ? { slackNotifiedAt: new Date().toISOString(), slackError: null }
-        : { slackError: 'Slack ping failed' },
+        : { slackError: `Slack ping to ${channel} failed` },
     })
-    if (!posted) logger.error(args.failLog)
+    if (!posted) logger.error(`${args.failLog} (${channel})`)
   } catch (error) {
     logger.error(`${args.failLog} after()`, error)
   }

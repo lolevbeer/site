@@ -1,6 +1,6 @@
 import type { GlobalConfig } from 'payload'
 import { adminAccess, adminFieldAccess } from '@/src/access/roles'
-import { resolveSlackChannel } from '@/lib/slack/mrkdwn'
+import { isSlackChannel } from '@/lib/slack/mrkdwn'
 import {
   DEFAULT_HERO_DESCRIPTION,
   DEFAULT_ABOUT_PHILOSOPHY,
@@ -94,7 +94,7 @@ export const SiteContent: GlobalConfig = {
         {
           label: 'Slack Channels',
           description:
-            'Where public-form pings post: #channel-name or a channel ID (C…). Invite the Lolev Beer bot to the channel. Blank uses the server default (#events).',
+            'Where public-form pings post: #channel-name or a channel ID (C…). Invite the Lolev Beer bot to the channel. Blank uses the SLACK_*_CHANNEL env setting, else #events.',
           fields: [
             {
               name: 'slackChannels',
@@ -113,7 +113,7 @@ export const SiteContent: GlobalConfig = {
                 type: 'text' as const,
                 validate: (value: string | null | undefined) =>
                   !value?.trim() ||
-                  resolveSlackChannel(value, '') !== '' ||
+                  isSlackChannel(value) ||
                   'Use #channel-name or a channel ID like C0123456789.',
               })),
             },

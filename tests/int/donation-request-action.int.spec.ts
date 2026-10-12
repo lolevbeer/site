@@ -22,7 +22,7 @@ vi.mock('next/headers', () => ({
 }))
 
 vi.mock('payload', () => ({
-  getPayload: vi.fn(async () => ({ find, create, update })),
+  getPayload: vi.fn(async () => ({ find, create, update, findGlobal: async () => ({}) })),
 }))
 
 vi.mock('@/src/payload.config', () => ({ default: {} }))
