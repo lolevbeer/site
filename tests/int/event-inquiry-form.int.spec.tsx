@@ -4,7 +4,6 @@
  * an accepted inquiry sends the `event_inquiry_submitted` conversion.
  */
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { renderToString } from 'react-dom/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const submitEventInquiry = vi.fn()
@@ -73,10 +72,18 @@ describe('EventInquiryForm', () => {
     expect(document.getElementById('inquiry-taproom')?.getAttribute('aria-required')).toBe('true')
   })
 
-  it('leaves the date min out of the server HTML and sets it after mount', () => {
-    // The page is ISR-cached, so a server-rendered "today" can be stale on hydrate.
-    expect(renderToString(<EventInquiryForm taprooms={taprooms} />)).not.toContain('min="20')
+  it('picks the preferred date from a calendar, past days disabled after mount', () => {
+    // The page is ISR-cached, so "today" (the earliest day) is client-only.
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-10-14T16:00:00Z')) // Wed Oct 14, noon EDT
     render(<EventInquiryForm taprooms={taprooms} />)
-    expect(screen.getByLabelText('Preferred date').getAttribute('min')).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+    const trigger = screen.getByLabelText('Preferred date')
+    expect(trigger.tagName).toBe('BUTTON')
+    expect(trigger.getAttribute('aria-required')).toBe('true')
+    fireEvent.click(trigger)
+    expect(screen.getByRole('button', { name: /October 13/ }).hasAttribute('disabled')).toBe(true)
+    fireEvent.click(screen.getByRole('button', { name: /October 24/ }))
+    expect(screen.getByLabelText('Preferred date').textContent).toBe('Saturday, October 24, 2026')
+    vi.useRealTimers()
   })
 })

@@ -16,6 +16,7 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/u
 import { FieldGroup } from '@/components/ui/field'
 import { FormField, formFieldAria } from '@/components/ui/form-field'
 import { HoneypotField } from '@/components/ui/honeypot-field'
+import { DatePicker } from '@/components/ui/date-picker'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -145,14 +146,12 @@ export function EventInquiryForm({
                 label="Preferred date"
                 error={fieldErrors.preferredDate}
               >
-                <Input
+                <DatePicker
                   id="inquiry-preferredDate"
-                  name="preferredDate"
-                  type="date"
                   min={minDate}
                   value={values.preferredDate}
-                  onChange={(e) => set('preferredDate', e.target.value)}
-                  required
+                  onChange={(value) => set('preferredDate', value)}
+                  aria-required
                 />
               </FormField>
               <FormField id="inquiry-headcount" label="How many guests?" error={fieldErrors.headcount}>
