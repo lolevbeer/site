@@ -7,7 +7,8 @@
 import { logger } from '@/lib/utils/logger'
 import { readServerEnvironment } from '@/lib/config/server-env'
 
-const METHOD_RE = /^[a-z]+(\.[a-z]+)+$/
+// Slack methods are dotted camelCase, e.g. chat.postMessage, views.open.
+const METHOD_RE = /^[a-z][a-zA-Z]*(\.[a-z][a-zA-Z]*)+$/
 
 export function isAllowedSlackHostname(hostname: string): boolean {
   return hostname === 'slack.com' || hostname.endsWith('.slack.com')
