@@ -89,7 +89,9 @@ export function splitRegulars(
   for (const event of events) {
     const key = regularKey(event)
     if (!recurringKeys.has(key)) continue
-    groups.set(key, [...(groups.get(key) ?? []), event])
+    const group = groups.get(key)
+    if (group) group.push(event)
+    else groups.set(key, [event])
   }
 
   const collapsed = new Set<BreweryEvent>()

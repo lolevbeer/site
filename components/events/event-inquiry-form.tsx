@@ -34,8 +34,7 @@ import {
   type EventInquiryErrors,
   type EventInquiryInput,
 } from '@/lib/events/inquiry'
-import { getTodayEST } from '@/lib/utils/date'
-import { useIsHydrated } from '@/lib/hooks/use-is-hydrated'
+import { useTodayEST } from '@/lib/hooks/use-today-est'
 
 export function EventInquiryForm({
   taprooms,
@@ -47,9 +46,9 @@ export function EventInquiryForm({
   const [fieldErrors, setFieldErrors] = useState<EventInquiryErrors>({})
   const [pending, setPending] = useState(false)
   const [done, setDone] = useState(false)
-  // Client-only: /events is ISR-cached, so a server-rendered "today" can be a
-  // day stale by hydration. The server rejects past dates either way.
-  const minDate = useIsHydrated() ? getTodayEST() : undefined
+  // Client-only (null until mounted): /events is ISR-cached, so a
+  // server-rendered "today" can be a day stale. The server rejects past dates.
+  const minDate = useTodayEST() ?? undefined
   const doneTitleRef = useRef<HTMLDivElement>(null)
 
   // The form (and its focused submit button) unmounts on success; move focus

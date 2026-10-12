@@ -135,6 +135,19 @@ describe('EventsPageClient regulars', () => {
     expect(scrollIntoView).toHaveBeenCalledTimes(1)
   })
 
+  it('ignores a malformed #event- escape instead of throwing', () => {
+    const scrollIntoView = vi.fn()
+    Element.prototype.scrollIntoView = scrollIntoView
+    window.history.replaceState(null, '', '/events#event-%E0%A4%A')
+    expect(() =>
+      render(
+        createElement(EventsPageClient, { initialEvents: [ev('law', '2026-10-15', 'Jazz')] }),
+      ),
+    ).not.toThrow()
+    expect(screen.getByText('Jazz')).toBeTruthy()
+    expect(scrollIntoView).not.toHaveBeenCalled()
+  })
+
   it('gives an id-less event a URL-safe anchor', () => {
     const { container } = render(
       createElement(EventsPageClient, {

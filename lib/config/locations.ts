@@ -20,10 +20,6 @@ import { formatHoursTime } from '@/lib/utils/formatters'
 export const LOCATION_STORAGE_KEY = 'brewery-location-preference'
 
 /**
- * Location slugs that would collide with App Router static segments or with a
- * vercel.json redirect source (a taproom there would be unreachable).
- */
-/**
  * A location URL slug: lowercase letters, numbers, single dashes. Slugs become
  * redirect targets (`/${slug}`), so anything else (e.g. "/evil.com", which
  * would build a protocol-relative "//evil.com") is rejected on save and never
@@ -31,6 +27,10 @@ export const LOCATION_STORAGE_KEY = 'brewery-location-preference'
  */
 export const LOCATION_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
+/**
+ * Location slugs that would collide with App Router static segments or with a
+ * vercel.json redirect source (a taproom there would be unreachable).
+ */
 export const RESERVED_LOCATION_SLUGS = new Set([
   'about',
   'accessibility',

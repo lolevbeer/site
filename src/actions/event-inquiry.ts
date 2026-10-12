@@ -25,6 +25,7 @@ import { isHoneypotFilled } from '@/lib/public-forms/honeypot'
 import { clientIp } from '@/lib/public-forms/request-ip'
 import { hashSubmitterIp } from '@/lib/public-forms/ip-hash'
 import { hasReachedIpHashLimit } from '@/lib/public-forms/durable-limit'
+import { findActiveTaprooms } from '@/lib/public-forms/taprooms'
 import {
   PUBLIC_FORM_EMAIL_LIMIT_MESSAGE,
   PUBLIC_FORM_EMAIL_WINDOW_MS,
@@ -53,19 +54,11 @@ export async function submitEventInquiry(input: unknown): Promise<SubmitEventInq
     if (!allowIpAttempt('event-inquiry', ip)) return fail(PUBLIC_FORM_IP_LIMIT_MESSAGE)
 
     const payload = await getPayload({ config })
-    const locations = await payload.find({
-      collection: 'locations',
-      where: { active: { not_equals: false } },
-      limit: 50,
-      depth: 0,
-      // Anonymous visitor: locations are publicly readable.
-      overrideAccess: false,
-    })
-    const taprooms = locations.docs.filter((doc) => typeof doc.slug === 'string' && doc.slug)
+    const taprooms = await findActiveTaprooms(payload)
     const result = validateEventInquiry(
       parsed,
       undefined,
-      taprooms.map((doc) => doc.slug as string),
+      taprooms.map((doc) => doc.slug),
     )
     if (result.ok && result.spam) return { ok: true }
     if (!result.ok) return fail(firstFieldError(result.errors), result.errors)

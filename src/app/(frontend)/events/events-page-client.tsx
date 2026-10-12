@@ -46,7 +46,15 @@ function useScrollToHashOnce(rowsKey: unknown) {
       done.current = true;
       return;
     }
-    const target = document.getElementById(decodeURIComponent(hash));
+    let id: string;
+    try {
+      id = decodeURIComponent(hash);
+    } catch {
+      // A malformed escape (#event-%E0) would throw out of the effect.
+      done.current = true;
+      return;
+    }
+    const target = document.getElementById(id);
     if (!target) return;
     done.current = true;
     target.scrollIntoView();
