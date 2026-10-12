@@ -121,7 +121,7 @@ export async function submitEventInquiry(input: unknown): Promise<SubmitEventInq
           headcount: value.headcount,
           taproomName: taproom.name || value.taproom,
         }),
-        failLog: 'Event inquiry Slack ping to #events failed',
+        failLog: 'Event inquiry Slack ping failed',
       }),
     )
 

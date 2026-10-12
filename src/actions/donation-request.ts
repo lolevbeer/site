@@ -134,7 +134,7 @@ export async function submitDonationRequest(input: unknown): Promise<SubmitDonat
         id: created.id,
         channel: donationSlackChannel(),
         message: buildDonationSlackMessage(value),
-        failLog: 'Donation request Slack ping to #events failed',
+        failLog: 'Donation request Slack ping failed',
       }),
     )
 

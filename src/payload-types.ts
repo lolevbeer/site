@@ -2184,6 +2184,11 @@ export interface SiteContent {
   errorMessage?: string | null;
   todaysEventsTitle?: string | null;
   todaysFoodTitle?: string | null;
+  slackChannels?: {
+    donations?: string | null;
+    jobs?: string | null;
+    eventInquiries?: string | null;
+  };
   /**
    * Sixth City/Encompass8 QuickLink URL for PA distributors
    */
@@ -2702,6 +2707,13 @@ export interface SiteContentSelect<T extends boolean = true> {
   errorMessage?: T;
   todaysEventsTitle?: T;
   todaysFoodTitle?: T;
+  slackChannels?:
+    | T
+    | {
+        donations?: T;
+        jobs?: T;
+        eventInquiries?: T;
+      };
   distributorPaUrl?: T;
   distributorOhUrl?: T;
   updatedAt?: T;

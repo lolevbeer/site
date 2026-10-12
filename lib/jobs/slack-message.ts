@@ -12,7 +12,10 @@ import {
   slackPlainText,
 } from '@/lib/slack/mrkdwn'
 
-/** Channel for job pings (`SLACK_JOBS_CHANNEL`, else donation channel, else `#events`). */
+/**
+ * Env channel for job pings (`SLACK_JOBS_CHANNEL`, else donation channel, else
+ * `#events`). Admin → Site Content → Slack Channels overrides it in `notifyCollectionOnSlack`.
+ */
 export function jobApplicationSlackChannel(): string {
   return resolveSlackChannel(
     process.env.SLACK_JOBS_CHANNEL || process.env.SLACK_DONATION_CHANNEL,

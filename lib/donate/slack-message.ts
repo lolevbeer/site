@@ -12,7 +12,10 @@ import {
 } from '@/lib/slack/mrkdwn'
 import { DONATION_SLACK_CHANNEL, type ValidatedDonationRequest } from './donation-request'
 
-/** Channel for donation pings (`SLACK_DONATION_CHANNEL` or `#events`). */
+/**
+ * Env channel for donation pings (`SLACK_DONATION_CHANNEL` or `#events`).
+ * Admin → Site Content → Slack Channels overrides it in `notifyCollectionOnSlack`.
+ */
 export function donationSlackChannel(): string {
   return resolveSlackChannel(process.env.SLACK_DONATION_CHANNEL, DONATION_SLACK_CHANNEL)
 }
