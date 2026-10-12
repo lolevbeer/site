@@ -49,8 +49,6 @@ export interface HomePageData {
   weeklyHours: Record<string, WeeklyHoursDay[]>;
 
   // Derived data for components
-  allDraftMenus: PayloadMenu[];
-  allCansMenus: PayloadMenu[];
   beerCount: Record<string, number>;
   cansCount: Record<string, number>;
   allEvents: PayloadEvent[];
@@ -138,8 +136,6 @@ export const getHomePageData = cache(async (): Promise<HomePageData> => {
   const foodMarketingByLocation = arrayToLocationMap(locationSlugs, foodMarketingResults);
 
   // Derive additional data needed by components
-  const allDraftMenus = Object.values(draftMenusByLocation).filter((m): m is PayloadMenu => m !== null);
-  const allCansMenus = Object.values(cansMenusByLocation).filter((m): m is PayloadMenu => m !== null);
   // Only count items that have a beer or product assigned (exclude empty slots)
   const countFilledItems = (menusByLocation: Record<string, PayloadMenu | null>) =>
     Object.fromEntries(
@@ -175,8 +171,6 @@ export const getHomePageData = cache(async (): Promise<HomePageData> => {
     eventsMarketingByLocation,
     foodMarketingByLocation,
     weeklyHours,
-    allDraftMenus,
-    allCansMenus,
     beerCount,
     cansCount,
     allEvents,

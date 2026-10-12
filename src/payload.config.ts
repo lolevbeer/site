@@ -15,6 +15,7 @@ import { Beers } from './collections/Beers'
 import { BeerReviews } from './collections/BeerReviews'
 import { Events } from './collections/Events'
 import { DonationRequests } from './collections/DonationRequests'
+import { EventInquiries } from './collections/EventInquiries'
 import { Jobs } from './collections/Jobs'
 import { JobApplications } from './collections/JobApplications'
 import { RecurringEvents } from './collections/RecurringEvents'
@@ -243,6 +244,7 @@ export default buildConfig({
     // Food & Events
     Events,
     DonationRequests,
+    EventInquiries,
     Jobs,
     JobApplications,
     RecurringEvents,

@@ -6,7 +6,7 @@ import { PRIVACY_LASTMOD, PRIVACY_LASTMOD_LABEL } from '@/lib/legal/dates'
 import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
 
 const DESCRIPTION =
-  'How Lolev Beer collects and uses information on lolev.beer, including analytics, the beer map, donation requests, and job applications.'
+  'How Lolev Beer collects and uses information on lolev.beer, including analytics, the beer map, donation requests, private-event inquiries, and job applications.'
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata({
@@ -33,7 +33,7 @@ export default function PrivacyPage() {
           <h2>About this policy</h2>
           <p>
             This policy is about lolev.beer. It covers browsing, the beer map, donation
-            requests, and job applications.
+            requests, private-event inquiries, and job applications.
           </p>
         </section>
 
@@ -56,6 +56,10 @@ export default function PrivacyPage() {
             <li>
               <strong>Donation requests.</strong> Organization and contact name, email, phone,
               mission, event details, and what you are asking for.
+            </li>
+            <li>
+              <strong>Private-event inquiries.</strong> Name, email, phone, preferred date,
+              number of guests, taproom, and your note.
             </li>
             <li>
               <strong>Job applications.</strong> Name, email, phone, and your note. We do not

@@ -122,9 +122,8 @@ it('the rendered food page includes UTC-midnight calendar entries and their save
       initialSchedules: expect.arrayContaining([
         expect.objectContaining({
           date: today,
+          // The client gets the projected row: startTime folds into `time`.
           time: '16:00',
-          start: '16:00',
-          finish: '',
           location: 'lawrenceville',
         }),
       ]),

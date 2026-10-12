@@ -8,7 +8,7 @@ import { PUBLIC_FORM_IP_MAX, PUBLIC_FORM_IP_WINDOW_MS } from './rate-limit'
 
 export async function hasReachedIpHashLimit(
   payload: Payload,
-  collection: 'donation-requests' | 'job-applications',
+  collection: 'donation-requests' | 'job-applications' | 'event-inquiries',
   ipHash: string,
 ): Promise<boolean> {
   const since = new Date(Date.now() - PUBLIC_FORM_IP_WINDOW_MS).toISOString()

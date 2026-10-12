@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import type { BreweryEvent } from '@/lib/types/event'
+import { findLocationBySlug } from '@/lib/config/locations'
 import {
   getAllLocations,
   getUpcomingEventsFromPayload,
@@ -28,16 +29,17 @@ export function generateStaticParams() {
  */
 async function getCachedEvents(locationSlug: string) {
   const locations = await getAllLocations()
-  const location = locations.find((doc) => doc.slug === locationSlug)
+  // Shared resolver: a former slug (alias) still finds a renamed location.
+  const location = findLocationBySlug(locations, locationSlug)
 
-  if (!location) {
+  if (!location?.slug) {
     return null
   }
 
-  const eventDocs = await getUpcomingEventsFromPayload(locationSlug, 20)
+  const eventDocs = await getUpcomingEventsFromPayload(location.slug, 20)
 
   const events: BreweryEvent[] = eventDocs.map((event) =>
-    transformPayloadEventToBreweryEvent(event, locationSlug, location.name),
+    transformPayloadEventToBreweryEvent(event, location.slug ?? undefined, location.name),
   )
 
   const latestUpdate = eventDocs.reduce((latest, doc) => {

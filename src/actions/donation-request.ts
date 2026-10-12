@@ -12,7 +12,6 @@
 
 import { after } from 'next/server'
 import { getPayload } from 'payload'
-import type { Payload } from 'payload'
 import config from '@/src/payload.config'
 import { logger } from '@/lib/utils/logger'
 import { readServerEnvironment } from '@/lib/config/server-env'
@@ -29,6 +28,7 @@ import { isHoneypotFilled } from '@/lib/public-forms/honeypot'
 import { clientIp } from '@/lib/public-forms/request-ip'
 import { hashSubmitterIp } from '@/lib/public-forms/ip-hash'
 import { hasReachedIpHashLimit } from '@/lib/public-forms/durable-limit'
+import { findActiveTaprooms } from '@/lib/public-forms/taprooms'
 import {
   PUBLIC_FORM_EMAIL_LIMIT_MESSAGE,
   PUBLIC_FORM_EMAIL_WINDOW_MS,
@@ -77,20 +77,6 @@ function persistData(input: ValidatedDonationRequest, ipHash: string) {
   }
 }
 
-async function activeTaproomSlugs(payload: Payload): Promise<string[]> {
-  const result = await payload.find({
-    collection: 'locations',
-    where: { active: { not_equals: false } },
-    limit: 50,
-    depth: 0,
-    // Anonymous visitor: locations are publicly readable.
-    overrideAccess: false,
-  })
-  return result.docs
-    .map((doc) => doc.slug)
-    .filter((slug): slug is string => typeof slug === 'string' && slug.length > 0)
-}
-
 /**
  * @param input Untrusted Server Action payload. Non-objects return `{ ok: false }`.
  * @returns `{ ok: true }` on persist, honeypot, or recent duplicate. Errors include
@@ -106,7 +92,8 @@ export async function submitDonationRequest(input: unknown): Promise<SubmitDonat
     if (!allowIpAttempt('donate', ip)) return fail(PUBLIC_FORM_IP_LIMIT_MESSAGE)
 
     const payload = await getPayload({ config })
-    const result = validateDonationRequest(parsed, undefined, await activeTaproomSlugs(payload))
+    const taproomSlugs = (await findActiveTaprooms(payload)).map((doc) => doc.slug)
+    const result = validateDonationRequest(parsed, undefined, taproomSlugs)
     if (result.ok && result.spam) return { ok: true }
     if (!result.ok) return fail(firstFieldError(result.errors), result.errors)
 

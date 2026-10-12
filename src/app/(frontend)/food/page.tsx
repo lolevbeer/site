@@ -14,6 +14,7 @@ import { logger } from '@/lib/utils/logger'
 import { capitalizeName } from '@/lib/utils/formatters'
 import { foodDescription } from '@/lib/utils/seo'
 import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
+import { toFoodPageSchedules } from '@/lib/utils/public-client-payloads'
 import { getHubIntro } from '@/lib/utils/site-seo'
 import {
   getRecurringFoodState,
@@ -297,7 +298,8 @@ export default async function FoodPage() {
       {jsonLd && <JsonLd data={jsonLd} />}
 
       <PageTransition>
-        <FoodPageClient initialSchedules={schedules} intro={intro} />
+        {/* Full schedules feed the JSON-LD above; the client only gets rendered fields. */}
+        <FoodPageClient initialSchedules={toFoodPageSchedules(schedules)} intro={intro} />
       </PageTransition>
     </>
   )

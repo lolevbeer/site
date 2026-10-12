@@ -18,6 +18,7 @@ import { beerHref } from '@/lib/config/beer-filters'
 import { formatCityStateZip } from '@/lib/config/locations'
 import { getMediaUrl } from '@/lib/utils/media-utils'
 import { safeHttpUrl } from '@/lib/utils/url-utils'
+import { eventBadge } from '@/lib/utils/event-regulars'
 import type { WeeklyHoursDay } from '@/lib/utils/payload-api'
 import type { Beer } from '@/lib/types/beer'
 import type { PayloadLocation } from '@/lib/types/location'
@@ -203,6 +204,7 @@ export function LocationLanding({
                   time: event.startTime,
                   endTime: event.endTime,
                   site: safeHttpUrl(event.site),
+                  badge: eventBadge(event.tags),
                 }
               })}
             />

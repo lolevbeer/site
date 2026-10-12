@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { firstErrorKey, FormAlert, FormField, type SetDonationField } from './form-shared'
+import { FormAlert, FormField, formFieldAria, type SetDonationField } from './form-shared'
 import type { DonationRequestErrors, DonationRequestInput } from '@/lib/donate/donation-request'
 
 export function OrganizationStep({
@@ -31,7 +31,6 @@ export function OrganizationStep({
   onBack: () => void
   onContinue: () => void
 }) {
-  const openKey = firstErrorKey(fieldErrors)
   return (
     <FieldSet ref={panelRef} tabIndex={-1} className="overflow-visible outline-none">
       <legend className="sr-only">Organization</legend>
@@ -40,7 +39,6 @@ export function OrganizationStep({
           id="organizationName"
           label="Organization name"
           error={fieldErrors.organizationName}
-          forceOpen={openKey === 'organizationName'}
         >
           <Input
             id="organizationName"
@@ -56,7 +54,6 @@ export function OrganizationStep({
           id="contactName"
           label="Your name"
           error={fieldErrors.contactName}
-          forceOpen={openKey === 'contactName'}
         >
           <Input
             id="contactName"
@@ -68,7 +65,7 @@ export function OrganizationStep({
             aria-required="true"
           />
         </FormField>
-        <FormField id="email" label="Email" error={fieldErrors.email} forceOpen={openKey === 'email'}>
+        <FormField id="email" label="Email" error={fieldErrors.email}>
           <Input
             id="email"
             name="email"
@@ -80,7 +77,7 @@ export function OrganizationStep({
             aria-required="true"
           />
         </FormField>
-        <FormField id="phone" label="Phone" error={fieldErrors.phone} forceOpen={openKey === 'phone'}>
+        <FormField id="phone" label="Phone" error={fieldErrors.phone}>
           <Input
             id="phone"
             name="phone"
@@ -97,7 +94,6 @@ export function OrganizationStep({
           label="What does the organization do?"
           hint="At least 80 characters."
           error={fieldErrors.mission}
-          forceOpen={openKey === 'mission'}
         >
           <Textarea
             id="mission"
@@ -113,7 +109,6 @@ export function OrganizationStep({
           label="How did you hear about Lolev?"
           hint="At least 20 characters."
           error={fieldErrors.howHeard}
-          forceOpen={openKey === 'howHeard'}
         >
           <Textarea
             id="howHeard"
@@ -128,7 +123,6 @@ export function OrganizationStep({
           id="previousDonation"
           label="Have we donated to you before?"
           error={fieldErrors.previousDonation}
-          forceOpen={openKey === 'previousDonation'}
         >
           <Select
             value={values.previousDonation || undefined}
@@ -136,7 +130,12 @@ export function OrganizationStep({
               if (value === 'yes' || value === 'no') set('previousDonation', value)
             }}
           >
-            <SelectTrigger id="previousDonation" className="w-full" aria-required="true">
+            <SelectTrigger
+              id="previousDonation"
+              className="w-full"
+              aria-required="true"
+              {...formFieldAria('previousDonation', { error: fieldErrors.previousDonation })}
+            >
               <SelectValue placeholder="Select" />
             </SelectTrigger>
             <SelectContent>

@@ -90,7 +90,7 @@ export function MapControls({
               type="button"
               aria-pressed={mobileView === 'map'}
               onClick={() => onMobileViewChange('map')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 min-h-6 text-sm font-medium rounded-md transition-all duration-200 ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 min-h-11 text-sm font-medium rounded-md transition-all duration-200 ${
                 mobileView === 'map'
                   ? 'bg-background text-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'
@@ -103,7 +103,7 @@ export function MapControls({
               type="button"
               aria-pressed={mobileView === 'list'}
               onClick={() => onMobileViewChange('list')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 min-h-6 text-sm font-medium rounded-md transition-all duration-200 ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 min-h-11 text-sm font-medium rounded-md transition-all duration-200 ${
                 mobileView === 'list'
                   ? 'bg-background text-foreground shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'

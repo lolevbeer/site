@@ -90,7 +90,14 @@ const COLLECTION_LAYOUT_PATHS: Record<string, string[]> = {
 // Dynamic path builders for collections with slugs
 const COLLECTION_PATH_BUILDERS: Record<string, (doc: Record<string, unknown>) => string[]> = {
   beers: (doc) => (doc.slug ? [`/beer/${doc.slug}`] : []),
-  locations: (doc) => (doc.slug ? [`/${doc.slug}`] : []),
+  // Former slugs (aliases, which include the slug a rename just replaced) are
+  // cached too: /<alias> must start redirecting and /e/<alias> show fresh data.
+  locations: (doc) => {
+    const aliases = Array.isArray(doc.aliases) ? doc.aliases : []
+    return [doc.slug, ...aliases]
+      .filter((slug): slug is string => typeof slug === 'string' && slug.length > 0)
+      .flatMap((slug) => [`/${slug}`, `/e/${slug}`])
+  },
   menus: (doc) => (doc.url ? [`/m/${doc.url}`] : []),
   jobs: (doc) => {
     const paths: string[] = []

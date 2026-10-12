@@ -21,6 +21,7 @@ import {
 import { isHoneypotFilled } from '@/lib/public-forms/honeypot'
 import { DEFAULT_SLACK_CHANNEL } from '@/lib/slack/mrkdwn'
 import { getTodayEST } from '@/lib/utils/date'
+import { addEstDays } from '@/lib/utils/formatters'
 
 export const DONATION_LEAD_DAYS = 30
 /** Caps public text so a submit cannot dump megabytes into Mongo or Slack. */
@@ -150,17 +151,12 @@ export type DonationValidation =
   | { ok: true; spam: false; value: ValidatedDonationRequest }
   | { ok: false; errors: DonationRequestErrors }
 
-function addCalendarDays(ymd: string, days: number): string {
-  const [year, month, day] = ymd.split('-').map(Number)
-  const dt = new Date(Date.UTC(year, month - 1, day + days))
-  return dt.toISOString().slice(0, 10)
-}
-
 export function minimumEventDate(today = getTodayEST()): string {
-  return addCalendarDays(today, DONATION_LEAD_DAYS)
+  return addEstDays(today, DONATION_LEAD_DAYS)
 }
 
-function maximumEventDate(today = getTodayEST()): string {
+/** Latest event date a public form accepts: two years out. Also bounds /events inquiries. */
+export function maximumEventDate(today = getTodayEST()): string {
   const [year, month, day] = today.split('-').map(Number)
   return new Date(Date.UTC(year + DONATION_MAX_EVENT_YEARS, month - 1, day)).toISOString().slice(0, 10)
 }

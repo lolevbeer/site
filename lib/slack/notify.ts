@@ -11,7 +11,7 @@ import { slackApi } from '@/src/utils/slack-api'
 export async function notifyCollectionOnSlack(
   payload: Payload,
   args: {
-    collection: 'donation-requests' | 'job-applications'
+    collection: 'donation-requests' | 'job-applications' | 'event-inquiries'
     id: string | number
     channel: string
     message: { text: string; blocks: Array<Record<string, unknown>> }

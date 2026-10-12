@@ -55,6 +55,7 @@ describe('legal pages', () => {
     expect(text).toMatch(/Square/)
     expect(text).toMatch(/Donation requests/)
     expect(text).toMatch(/Job applications/)
+    expect(text).toMatch(/Private-event inquiries/)
     expect(text).toMatch(/There is no mailing-list form on this site/)
     expect(text).not.toMatch(/There is no email-list signup on this site/)
     expect(text).not.toMatch(/send updates \(with consent\)/i)
@@ -83,6 +84,9 @@ describe('legal pages', () => {
     expect(screen.getByRole('heading', { name: 'Accessibility Statement' })).toBeTruthy()
     expect(screen.getByText(/WCAG 2.2 Level AA/)).toBeTruthy()
     expect(screen.getByText(/Mapbox/)).toBeTruthy()
+    // On phones the store list is a Map/List toggle, not beside the map.
+    expect(screen.queryByText(/listed beside the map\./)).toBeNull()
+    expect(screen.getByText(/List button above the map/)).toBeTruthy()
     expect(screen.queryByText(/All 87 applicable success criteria/)).toBeNull()
     expect(screen.queryByText(/conforms to/i)).toBeNull()
     const wcag = screen.getByRole('link', { name: 'WCAG 2.2 Level AA' })

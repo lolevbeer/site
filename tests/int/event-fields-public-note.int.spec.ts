@@ -1,23 +1,27 @@
 // @vitest-environment node
 /**
- * Event `description` is published on /events and in Event JSON-LD, so staff
- * notes (billing, gratuity) must have a staff-only home on public events too:
- * `otherInfo` is event-manager-read-only and must not be hidden behind
- * visibility === 'private'.
+ * Event `description` is an internal note: only signed-in staff read it, so
+ * the public site, REST API, RSS, and JSON-LD never see it. `otherInfo` is
+ * event-manager-read-only and is available on public events too.
  */
 import { describe, expect, it } from 'vitest'
-import type { Field } from 'payload'
+import type { Field, FieldAccess } from 'payload'
 import { eventDetailFields } from '@/src/collections/shared/event-fields'
 
 const field = (name: string) =>
   eventDetailFields.find((f) => 'name' in f && f.name === name) as Field & {
     admin?: { description?: string; condition?: unknown }
-    access?: { read?: unknown }
+    access?: { read?: FieldAccess }
   }
 
+const canRead = (name: string, user: unknown) =>
+  field(name).access!.read!({ req: { user } } as Parameters<FieldAccess>[0])
+
 describe('event detail fields', () => {
-  it('warns editors that description is shown publicly', () => {
-    expect(field('description').admin?.description).toMatch(/public/i)
+  it('keeps description internal: staff read it, the public does not', () => {
+    expect(canRead('description', null)).toBe(false)
+    expect(canRead('description', { id: 'u1', roles: ['bartender'] })).toBe(true)
+    expect(field('description').admin?.description).toMatch(/internal/i)
   })
 
   it('offers the staff-only otherInfo note on public events too', () => {

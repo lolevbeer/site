@@ -4,6 +4,7 @@ import {
   getBeerImageUrl,
   getLocationImageUrl,
   getMediaUrl,
+  textureImageUrl,
 } from '@/lib/utils/media-utils'
 
 const blobHost = 'https://abc123.public.blob.vercel-storage.com'
@@ -122,5 +123,20 @@ describe('getLocationImageUrl', () => {
     expect(getLocationImageUrl('https://lolev.beer/api/media/file/loc.png')).toBe(
       '/api/media/file/loc.png',
     )
+  })
+})
+
+describe('textureImageUrl', () => {
+  it('routes a Blob texture through the same-origin image optimizer at 2048w q75', () => {
+    expect(textureImageUrl(`${blobHost}/label.png`)).toBe(
+      `/_next/image?url=${encodeURIComponent(`${blobHost}/label.png`)}&w=2048&q=75`,
+    )
+  })
+
+  it('encodes a relative Payload path and passes undefined through', () => {
+    expect(textureImageUrl('/api/media/file/label.png')).toBe(
+      '/_next/image?url=%2Fapi%2Fmedia%2Ffile%2Flabel.png&w=2048&q=75',
+    )
+    expect(textureImageUrl(undefined)).toBeUndefined()
   })
 })
