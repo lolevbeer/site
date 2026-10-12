@@ -94,7 +94,7 @@ export const SiteContent: GlobalConfig = {
         {
           label: 'Slack Channels',
           description:
-            'Where public-form pings post: #channel-name or a channel ID (C…). Invite the Lolev Beer bot to the channel. Blank uses the SLACK_*_CHANNEL env setting, else #events.',
+            'Where public-form pings post: #channel-name or a channel ID (C…). Invite the Lolev Beer bot to the channel, then use Send test message to confirm it can post. Blank uses the SLACK_*_CHANNEL env setting, else #events.',
           fields: [
             {
               name: 'slackChannels',
@@ -111,6 +111,13 @@ export const SiteContent: GlobalConfig = {
                 name,
                 label,
                 type: 'text' as const,
+                admin: {
+                  components: {
+                    afterInput: [
+                      '@/src/components/admin/SlackChannelTestButton#SlackChannelTestButton',
+                    ],
+                  },
+                },
                 validate: (value: string | null | undefined) =>
                   !value?.trim() ||
                   isSlackChannel(value) ||
