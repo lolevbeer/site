@@ -20,7 +20,7 @@ import React from 'react'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
-import { ExternalLink } from '@/components/icons/hugeicons'
+import { ExternalLink } from '@/components/icons'
 import { formatTime } from '@/lib/utils/formatters'
 import { safeHttpUrl } from '@/lib/utils/url-utils'
 
@@ -40,8 +40,9 @@ function isTicketLink(href: string): boolean {
   return TICKET_HOSTS.some((ticketHost) => host.includes(ticketHost))
 }
 
-const linkClass =
-  'underline underline-offset-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm'
+const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm'
+const linkClass = cn('underline underline-offset-2 hover:text-foreground', focusRing)
+const titleClass = 'font-normal leading-tight text-balance'
 
 interface TimelineItemProps {
   title: string
@@ -94,7 +95,7 @@ export function TimelineItem({
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className="font-normal leading-tight text-balance underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+          className={cn(titleClass, 'underline-offset-2 hover:underline', focusRing)}
         >
           {title}
           <ExternalLink
@@ -104,7 +105,7 @@ export function TimelineItem({
           <span className="sr-only"> (opens in a new tab)</span>
         </a>
       ) : (
-        <p className="font-normal leading-tight text-balance">{title}</p>
+        <p className={titleClass}>{title}</p>
       )}
       {location ? <p className="text-sm text-muted-foreground">{location}</p> : null}
       {description ? (
