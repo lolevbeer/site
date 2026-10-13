@@ -4,11 +4,11 @@ import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'path'
 import { buildConfig, type CollectionConfig } from 'payload'
 import { fileURLToPath } from 'url'
-import sharp from 'sharp'
+import { sharpTransformer } from '@payloadcms/transformer-sharp'
 import { revalidationPlugin } from './plugins/revalidation-plugin'
 
 import { Users } from './collections/Users'
-import { Media } from './collections/Media'
+import { Media, mediaSharp } from './collections/Media'
 import { Styles } from './collections/Styles'
 import { Tags } from './collections/Tags'
 import { Beers } from './collections/Beers'
@@ -232,6 +232,9 @@ export default buildConfig({
   },
   // Payload 4 keeps version history for every collection and global unless told
   // not to. Only Beers and Menus want history; they set their own `versions`.
+  // Payload 4 beta also adds readable `createdBy`/`updatedBy` user stamps to
+  // everything by default; off here so public docs don't expose staff IDs.
+  // Beers and Menus keep their own signed-in-only `updatedBy` (updatedByField).
   collections: [
     // Back of House
     Beers,
@@ -259,7 +262,7 @@ export default buildConfig({
     Distributors,
     FAQs,
     Media,
-  ].map((collection) => hideApiTab({ versions: false, ...collection })),
+  ].map((collection) => hideApiTab({ versions: false, authorship: false, ...collection })),
   globals: [
     // Back of House
     ComingSoon,
@@ -268,7 +271,7 @@ export default buildConfig({
     // Settings (last)
     SiteContent,
     SiteSeo,
-  ].map((global) => ({ versions: false, ...global })),
+  ].map((global) => ({ versions: false, authorship: false, ...global })),
   editor: lexicalEditor(),
   secret: serverEnv.payloadSecret,
   typescript: {
@@ -311,7 +314,9 @@ export default buildConfig({
       serverSelectionTimeoutMS: 5000,
     },
   }),
-  sharp,
+  upload: {
+    transformers: [sharpTransformer({ collections: { media: mediaSharp } })],
+  },
   plugins: [revalidationPlugin],
   endpoints: [
     {

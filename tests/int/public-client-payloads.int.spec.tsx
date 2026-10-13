@@ -1,7 +1,7 @@
 /**
  * Server-to-client payload projections (R34). /food and the homepage used to
  * hand whole Payload docs to client components, so every hydration shipped
- * media `sizes` objects, populated locations, SEO groups and review data the
+ * media `variants` objects, populated locations, SEO groups and review data the
  * UI never reads. These tests pin two things:
  * - the projected props render exactly what the full docs render, and
  * - the serialized props shrink (sizes are logged for the PR description).
@@ -83,7 +83,7 @@ function media(name: string): Media {
     height: 2000,
     focalX: 50,
     focalY: 50,
-    sizes: { thumbnail: size('thumbnail', 300), card: size('card', 800), detail: size('detail', 1600) },
+    variants: { thumbnail: size('thumbnail', 300), card: size('card', 800), detail: size('detail', 1600) },
   }
 }
 
@@ -259,7 +259,7 @@ describe('homepage menu projection', () => {
     const projected = toHomeBeer(beer('alpha', 0))
     expect(projected.image).toEqual({
       url: 'https://blob.example.com/media/alpha.png',
-      sizes: {
+      variants: {
         thumbnail: { url: 'https://blob.example.com/media/alpha-thumbnail.png' },
         card: { url: 'https://blob.example.com/media/alpha-card.png' },
       },

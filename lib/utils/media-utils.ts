@@ -86,7 +86,7 @@ interface MediaSizeObject {
 interface MediaObject {
   url?: string | null
   thumbnailURL?: string | null
-  sizes?: Partial<Record<MediaSize, MediaSizeObject>>
+  variants?: Partial<Record<MediaSize, MediaSizeObject>>
 }
 
 /**
@@ -115,7 +115,7 @@ export function getMediaUrl(media: unknown, size?: MediaSize): string | undefine
 
     // Try the requested size first
     if (size) {
-      const sizedUrl = obj.sizes?.[size]?.url
+      const sizedUrl = obj.variants?.[size]?.url
       if (sizedUrl) return normalizeUrl(sizedUrl)
     }
 
@@ -136,7 +136,7 @@ export function getMediaUrl(media: unknown, size?: MediaSize): string | undefine
  *
  * ponytail: relies on the runtime optimizer (first view per region converts
  * the 7 MB PNG, counted in Vercel image-optimization usage). Ceiling: add an
- * uncropped 2048w WebP 'texture' size to Media.ts imageSizes + MediaSize and
+ * uncropped 2048w WebP 'texture' variant to mediaSharp (Media.ts) + MediaSize and
  * prefer getMediaUrl(media, 'texture'), once existing labels are regenerated.
  * The black/white metalness mask shares q75; if foil edges look soft or ring
  * next to the PNG original, give it a higher listed quality.

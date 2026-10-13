@@ -153,7 +153,7 @@ export const Beers: CollectionConfig = {
         if ((!data.slug || data.slug.trim() === '') && data.name && typeof data.name === 'string') {
           // For updates, use originalDoc.id; for creates, use data.id if available
           const docId = originalDoc?.id || data.id
-          data.slug = await generateUniqueSlug(data.name, 'beers', req, operation, docId)
+          data.slug = await generateUniqueSlug(data.name, 'beers', req, docId)
         }
 
         // Auto-increment recipe number for new beers (always, even when cloning)

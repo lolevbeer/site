@@ -217,7 +217,6 @@ describe("a new slug never takes another location's alias", () => {
       'Old Lawrenceville',
       'locations',
       { payload: { find } } as unknown as PayloadRequest,
-      'update',
       'loc-2',
       ['slug', 'aliases'],
     )

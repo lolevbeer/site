@@ -116,7 +116,7 @@ export const BEERS_LIST_SELECT = {
 const BEERS_LIST_POPULATE = {
   styles: { name: true },
   tags: { name: true },
-  media: { url: true, sizes: true, filename: true, prefix: true },
+  media: { url: true, variants: true, filename: true, prefix: true },
 } as const
 
 /** Catalog/sitemap/RSS beer: `BEERS_LIST_SELECT` plus Payload `id`. */
@@ -384,7 +384,7 @@ const MENU_POPULATE = {
   styles: { name: true },
   // filename/prefix feed the Vercel Blob adapter's computed `url` — without
   // them populated media docs come back with url: null.
-  media: { url: true, sizes: true, filename: true, prefix: true },
+  media: { url: true, variants: true, filename: true, prefix: true },
   // linesLastCleaned drives the "Draft lines cleaned N days ago" line on the
   // /m draft displays (formatLinesCleanedDate in featured-menu.tsx).
   locations: { slug: true, name: true, linesLastCleaned: true, updatedAt: true },

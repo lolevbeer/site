@@ -93,7 +93,7 @@ export const Locations: CollectionConfig = {
   },
   hooks: {
     beforeChange: [
-      async ({ data, req, operation, originalDoc }) => {
+      async ({ data, req, originalDoc }) => {
         // Field access gates this command; the server supplies the date so
         // lead bartenders can record today without choosing an arbitrary date.
         if (data.markLinesCleanedToday === true) {
@@ -108,14 +108,10 @@ export const Locations: CollectionConfig = {
           typeof data.name === 'string' &&
           (data.name !== originalDoc?.name || !data.slug)
         ) {
-          data.slug = await generateUniqueSlug(
-            data.name,
-            'locations',
-            req,
-            operation,
-            originalDoc?.id,
-            ['slug', 'aliases'],
-          )
+          data.slug = await generateUniqueSlug(data.name, 'locations', req, originalDoc?.id, [
+            'slug',
+            'aliases',
+          ])
         }
 
         const previousSlug = originalDoc?.slug

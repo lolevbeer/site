@@ -116,10 +116,10 @@ export const Jobs: CollectionConfig = {
   ],
   hooks: {
     beforeChange: [
-      async ({ data, req, operation, originalDoc }) => {
+      async ({ data, req, originalDoc }) => {
         if (!data.slug?.trim() && typeof data.title === 'string' && data.title) {
           const docId = originalDoc?.id || data.id
-          data.slug = await generateUniqueSlug(data.title, 'jobs', req, operation, docId)
+          data.slug = await generateUniqueSlug(data.title, 'jobs', req, docId)
         }
         return data
       },
