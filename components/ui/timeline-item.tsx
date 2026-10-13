@@ -5,12 +5,13 @@
  * column shoved titles off-center whenever the time string changed width
  * ("7pm" vs "5pm–8pm").
  *
- * Outbound links are visible text under the row ("Tickets ↗" for ticketing
- * sites, "Details ↗" otherwise) rather than a whole-row anchor, so a row that
- * opens a new tab says so. Events can add an "Add to calendar" .ics link and
- * a small badge (e.g. "Beer release") above the title. Both link names carry
- * the title for screen readers ("Details for Trivia", "Add Trivia to
- * calendar") so a links list can tell rows apart.
+ * A row with a site links its title (new tab, marked by an external-link
+ * icon) rather than the whole row, so "Add to calendar" stays its own link.
+ * Ticketing sites also get a visible "Tickets ↗" link, since buying is news
+ * the title doesn't carry. Events can add an "Add to calendar" .ics link and
+ * a small badge (e.g. "Beer release") above the title. Link names carry the
+ * title for screen readers ("Tickets for Trivia", "Add Trivia to calendar")
+ * so a links list can tell rows apart.
  */
 
 'use client'
@@ -19,6 +20,7 @@ import React from 'react'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
+import { ExternalLink } from '@/components/icons'
 import { formatTime } from '@/lib/utils/formatters'
 import { safeHttpUrl } from '@/lib/utils/url-utils'
 
@@ -30,16 +32,17 @@ function agendaTime(time?: string, endTime?: string): string | null {
   return formatTime(time)
 }
 
-/** Hosts whose links sell tickets, labeled "Tickets" instead of "Details". */
+/** Hosts whose links sell tickets; these rows also get a visible "Tickets" link. */
 const TICKET_HOSTS = ['eventbrite.', 'ticketmaster.', 'tixr.', 'dice.fm', 'seetickets.', 'ticketleap.']
 
-function siteLabel(href: string): 'Tickets' | 'Details' {
+function isTicketLink(href: string): boolean {
   const host = new URL(href).hostname.toLowerCase()
-  return TICKET_HOSTS.some((ticketHost) => host.includes(ticketHost)) ? 'Tickets' : 'Details'
+  return TICKET_HOSTS.some((ticketHost) => host.includes(ticketHost))
 }
 
-const linkClass =
-  'underline underline-offset-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm'
+const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm'
+const linkClass = cn('underline underline-offset-2 hover:text-foreground', focusRing)
+const titleClass = 'font-normal leading-tight text-balance'
 
 interface TimelineItemProps {
   title: string
@@ -69,6 +72,7 @@ export function TimelineItem({
   className,
 }: TimelineItemProps) {
   const href = safeHttpUrl(site)
+  const ticketHref = href && isTicketLink(href) ? href : undefined
   const timeDisplay = agendaTime(time, endTime)
 
   return (
@@ -86,16 +90,32 @@ export function TimelineItem({
           {badge}
         </Badge>
       ) : null}
-      <p className="font-normal leading-tight text-balance">{title}</p>
+      {href ? (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={cn(titleClass, 'underline-offset-2 hover:underline', focusRing)}
+        >
+          {title}
+          <ExternalLink
+            aria-hidden="true"
+            className="inline size-3.5 ml-1 align-baseline text-muted-foreground"
+          />
+          <span className="sr-only"> (opens in a new tab)</span>
+        </a>
+      ) : (
+        <p className={titleClass}>{title}</p>
+      )}
       {location ? <p className="text-sm text-muted-foreground">{location}</p> : null}
       {description ? (
         <p className="text-sm text-muted-foreground line-clamp-1">{description}</p>
       ) : null}
-      {href || calendarHref ? (
+      {ticketHref || calendarHref ? (
         <p className="text-sm text-muted-foreground flex gap-3 justify-center pt-0.5">
-          {href ? (
-            <a href={href} target="_blank" rel="noopener noreferrer" className={linkClass}>
-              {siteLabel(href)} <span aria-hidden="true">↗</span>
+          {ticketHref ? (
+            <a href={ticketHref} target="_blank" rel="noopener noreferrer" className={linkClass}>
+              Tickets <span aria-hidden="true">↗</span>
               <span className="sr-only"> for {title} (opens in a new tab)</span>
             </a>
           ) : null}
