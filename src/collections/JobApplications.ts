@@ -14,34 +14,54 @@ export const JobApplications: CollectionConfig = {
     delete: adminAccess,
   },
   admin: {
-    group: 'Settings',
+    group: 'Hiring',
     useAsTitle: 'name',
-    defaultColumns: ['name', 'job', 'email', 'createdAt'],
+    defaultColumns: ['name', 'job', 'createdAt', 'email'],
     description: 'Applications from /jobs/[slug]. Completing the form is not a hire.',
   },
   fields: [
     { name: 'submissionKey', type: 'text', unique: true, admin: { hidden: true } },
+    { name: 'name', type: 'text', required: true, maxLength: 200, label: 'Applicant name' },
     {
       name: 'job',
       type: 'relationship',
       relationTo: 'jobs',
       required: true,
       index: true,
-    },
-    { name: 'name', type: 'text', required: true, maxLength: 200 },
-    { name: 'email', type: 'email', required: true },
-    { name: 'phone', type: 'text', required: true, maxLength: 32 },
-    { name: 'message', type: 'textarea', required: true, maxLength: JOB_APPLICATION_MAX_TEXT },
-    {
-      name: 'slackNotifiedAt',
-      type: 'date',
-      admin: { position: 'sidebar', readOnly: true },
+      label: 'Applied-for opening',
     },
     {
-      name: 'slackError',
-      type: 'text',
-      maxLength: 200,
-      admin: { position: 'sidebar', readOnly: true },
+      type: 'row',
+      fields: [
+        { name: 'email', type: 'email', required: true },
+        { name: 'phone', type: 'text', required: true, maxLength: 32 },
+      ],
+    },
+    {
+      name: 'message',
+      type: 'textarea',
+      required: true,
+      maxLength: JOB_APPLICATION_MAX_TEXT,
+      label: 'Application message',
+    },
+    {
+      type: 'collapsible',
+      label: 'Notification diagnostics',
+      admin: { initCollapsed: true, position: 'sidebar' },
+      fields: [
+        {
+          name: 'slackNotifiedAt',
+          type: 'date',
+          admin: { position: undefined, readOnly: true },
+          label: 'Slack notification sent',
+        },
+        {
+          name: 'slackError',
+          type: 'text',
+          maxLength: 200,
+          admin: { position: undefined, readOnly: true },
+        },
+      ],
     },
     {
       name: 'ipHash',
@@ -50,4 +70,5 @@ export const JobApplications: CollectionConfig = {
       admin: { hidden: true },
     },
   ],
+  defaultSort: '-createdAt',
 }

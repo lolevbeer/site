@@ -1,3 +1,4 @@
+import { findPayloadField } from '../helpers/payload-fields'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Location } from '@/src/payload-types'
 
@@ -80,9 +81,7 @@ describe.each([
   })
 
   it('restricts the CMS selector to menus of this type at this location', () => {
-    const field = Locations.fields
-      .flatMap((entry) => (entry.type === 'row' ? entry.fields : []))
-      .find((entry) => 'name' in entry && entry.name === `${type}Menu`)
+    const field = findPayloadField(Locations.fields, `${type}Menu`)
     if (field?.type !== 'relationship' || typeof field.filterOptions !== 'function') {
       throw new Error('Expected a filtered menu relationship')
     }

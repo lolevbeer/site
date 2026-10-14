@@ -16,7 +16,7 @@ export const FoodVendors: CollectionConfig = {
   admin: {
     group: 'Food & Events',
     useAsTitle: 'name',
-    defaultColumns: ['name', 'email', 'phone', 'site'],
+    defaultColumns: ['name', 'site', 'email', 'phone'],
   },
   fields: [
     {
@@ -24,36 +24,59 @@ export const FoodVendors: CollectionConfig = {
       type: 'text',
       required: true,
       unique: true,
-    },
-    {
-      name: 'email',
-      type: 'email',
-      access: {
-        read: authenticatedFieldAccess,
-      },
+      label: 'Vendor name',
       admin: {
-        position: 'sidebar',
-      },
-    },
-    {
-      name: 'phone',
-      type: 'text',
-      access: {
-        read: authenticatedFieldAccess,
-      },
-      admin: {
-        position: 'sidebar',
+        description: 'Shown on the public food schedule.',
       },
     },
     {
       name: 'site',
       type: 'text',
-      label: 'Website',
+      label: 'Public website',
     },
     {
       name: 'logo',
       type: 'upload',
       relationTo: 'media',
+      label: 'Public logo',
+    },
+    {
+      type: 'collapsible',
+      label: 'Staff contact details',
+      admin: { initCollapsed: true },
+      fields: [
+        {
+          type: 'row',
+          fields: [
+            {
+              name: 'email',
+              type: 'email',
+              access: {
+                read: authenticatedFieldAccess,
+              },
+              admin: {
+                position: undefined,
+                width: '50%',
+                description: 'Signed-in staff only.',
+              },
+              label: 'Staff contact email',
+            },
+            {
+              name: 'phone',
+              type: 'text',
+              access: {
+                read: authenticatedFieldAccess,
+              },
+              admin: {
+                position: undefined,
+                width: '50%',
+                description: 'Signed-in staff only.',
+              },
+              label: 'Staff contact phone',
+            },
+          ],
+        },
+      ],
     },
   ],
 }

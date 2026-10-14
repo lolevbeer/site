@@ -1,6 +1,6 @@
 /**
  * Open roles, scoped to a taproom. Anonymous REST/GraphQL read is active jobs
- * only; admins see drafts and inactive openings.
+ * only; admins also see inactive openings. Saving an active opening publishes it immediately.
  */
 import type { CollectionConfig, PayloadRequest } from 'payload'
 import { revalidatePath } from 'next/cache'
@@ -48,9 +48,9 @@ export const Jobs: CollectionConfig = {
     delete: adminAccess,
   },
   admin: {
-    group: 'Settings',
+    group: 'Hiring',
     useAsTitle: 'title',
-    defaultColumns: ['title', 'location', 'active', 'updatedAt'],
+    defaultColumns: ['title', 'location', 'employmentType', 'active', 'closesOn'],
     description: 'Openings listed at /jobs (footer link). Applications land in Job Applications.',
   },
   fields: [
@@ -58,6 +58,71 @@ export const Jobs: CollectionConfig = {
       name: 'title',
       type: 'text',
       required: true,
+      label: 'Job title',
+    },
+    {
+      type: 'row',
+      fields: [
+        {
+          name: 'location',
+          type: 'relationship',
+          relationTo: 'locations',
+          required: true,
+          index: true,
+          label: 'Taproom',
+          admin: {
+            width: '50%',
+          },
+        },
+        {
+          name: 'employmentType',
+          type: 'select',
+          defaultValue: 'full-time',
+          options: [
+            { label: 'Full-time', value: 'full-time' },
+            { label: 'Part-time', value: 'part-time' },
+            { label: 'Seasonal', value: 'seasonal' },
+          ],
+          label: 'Employment type',
+          admin: {
+            width: '50%',
+          },
+        },
+      ],
+    },
+    {
+      name: 'summary',
+      type: 'textarea',
+      admin: { description: 'One or two lines on the taproom page.' },
+      label: 'Short listing summary',
+    },
+    {
+      name: 'description',
+      type: 'textarea',
+      required: true,
+      label: 'Full job description',
+    },
+    {
+      name: 'active',
+      type: 'checkbox',
+      defaultValue: true,
+      admin: {
+        position: 'sidebar',
+        description:
+          'Saving a published opening makes it visible immediately. Closing date alone does not unpublish it.',
+      },
+      label: 'Published on website',
+    },
+    {
+      name: 'closesOn',
+      type: 'date',
+      admin: {
+        position: 'sidebar',
+        date: { pickerAppearance: 'dayOnly' },
+        description:
+          'Optional last day to apply. Sent to Google as the posting’s expiry. This does not hide the job: also uncheck Published on website when it closes.',
+      },
+      label: 'Application closing date',
     },
     {
       name: 'slug',
@@ -68,51 +133,14 @@ export const Jobs: CollectionConfig = {
         description: 'Auto-generated from the title if left blank.',
         position: 'sidebar',
       },
+      label: 'Page URL slug',
     },
     {
-      name: 'location',
-      type: 'relationship',
-      relationTo: 'locations',
-      required: true,
-      index: true,
+      type: 'collapsible',
+      label: 'Search & sharing',
+      admin: { initCollapsed: true },
+      fields: [{ ...documentSeoField, admin: { ...documentSeoField.admin, position: undefined } }],
     },
-    {
-      name: 'employmentType',
-      type: 'select',
-      defaultValue: 'full-time',
-      options: [
-        { label: 'Full-time', value: 'full-time' },
-        { label: 'Part-time', value: 'part-time' },
-        { label: 'Seasonal', value: 'seasonal' },
-      ],
-    },
-    {
-      name: 'summary',
-      type: 'textarea',
-      admin: { description: 'One or two lines on the taproom page.' },
-    },
-    {
-      name: 'description',
-      type: 'textarea',
-      required: true,
-    },
-    {
-      name: 'closesOn',
-      type: 'date',
-      admin: {
-        position: 'sidebar',
-        date: { pickerAppearance: 'dayOnly' },
-        description:
-          'Optional last day to apply. Sent to Google as the posting’s expiry. This does not hide the job: also untick Active when it closes.',
-      },
-    },
-    {
-      name: 'active',
-      type: 'checkbox',
-      defaultValue: true,
-      admin: { position: 'sidebar' },
-    },
-    documentSeoField,
   ],
   hooks: {
     beforeChange: [
@@ -133,4 +161,5 @@ export const Jobs: CollectionConfig = {
       },
     ],
   },
+  labels: { singular: 'Job Opening', plural: 'Job Openings' },
 }

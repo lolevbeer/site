@@ -126,8 +126,10 @@ export default buildConfig({
     jobsCollectionOverrides: ({ defaultJobsCollection }) =>
       hideApiTab({
         ...defaultJobsCollection,
+        labels: { singular: 'Background Job', plural: 'Background Jobs' },
         admin: {
           ...defaultJobsCollection.admin,
+          group: 'Administration',
           hidden: false,
         },
         // Payload 4 denies all job CRUD by default; open read/delete to admins.
@@ -235,15 +237,15 @@ export default buildConfig({
   // everything by default; off here so public docs don't expose staff IDs.
   // Beers and Menus keep their own signed-in-only `updatedBy` (updatedByField).
   collections: [
-    // Back of House
+    // Beer Catalog
     Beers,
     BeerReviews,
     Styles,
     Tags,
-    // Front of House
+    // Taproom Operations
     Menus,
     Products,
-    // Food & Events
+    // Food & Events and Hiring
     Events,
     DonationRequests,
     EventInquiries,
@@ -254,7 +256,7 @@ export default buildConfig({
     FoodVendors,
     RecurringFoodSchedules,
     RecurringFoodExclusions,
-    // Settings (last)
+    // Administration, Taproom Operations, and Website
     Users,
     Locations,
     HolidayHours,
@@ -263,11 +265,11 @@ export default buildConfig({
     Media,
   ].map((collection) => hideApiTab({ versions: false, authorship: false, ...collection })),
   globals: [
-    // Back of House
+    // Beer Catalog
     ComingSoon,
     // Food & Events
     RecurringFood,
-    // Settings (last)
+    // Administration, Taproom Operations, and Website
     SiteContent,
     SiteSeo,
   ].map((global) => ({ versions: false, authorship: false, ...global })),

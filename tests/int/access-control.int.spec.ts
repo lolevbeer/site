@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest'
+import type { Field } from 'payload'
+import { findPayloadField } from '../helpers/payload-fields'
 import type { User } from '@/src/payload-types'
 import { Users } from '@/src/collections/Users'
 import { Menus, canUpdateMenus } from '@/src/collections/Menus'
@@ -32,29 +34,8 @@ function callAccess(access: unknown, user: User | null) {
   return access({ req: { user } })
 }
 
-function findField(fields: unknown[], name: string): Record<string, unknown> {
-  for (const field of fields) {
-    if (!field || typeof field !== 'object') continue
-    const record = field as Record<string, unknown>
-    if (record.name === name) return record
-
-    if (Array.isArray(record.fields)) {
-      const nested = findField(record.fields, name)
-      if (Object.keys(nested).length > 0) return nested
-    }
-
-    if (Array.isArray(record.tabs)) {
-      for (const tab of record.tabs) {
-        if (!tab || typeof tab !== 'object') continue
-        const tabFields = (tab as Record<string, unknown>).fields
-        if (!Array.isArray(tabFields)) continue
-        const nested = findField(tabFields, name)
-        if (Object.keys(nested).length > 0) return nested
-      }
-    }
-  }
-
-  return {}
+function findField(fields: Field[], name: string): Record<string, unknown> {
+  return (findPayloadField(fields, name) ?? {}) as Record<string, unknown>
 }
 
 describe('menu authorization', () => {

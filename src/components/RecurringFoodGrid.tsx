@@ -348,13 +348,13 @@ const DatesList: React.FC<DatesListProps> = ({
   const exclusionModal = (
     <ConfirmationModal
       modalSlug={EXCLUSION_MODAL_SLUG}
-      heading={restoring ? 'Remove Exclusion' : 'Exclude Event'}
+      heading={restoring ? 'Restore food date' : 'Skip food date'}
       body={
         pendingToggle
-          ? `Are you sure you want to ${restoring ? 'restore' : 'exclude'} "${pendingToggle.vendorName}" on ${formatDate(pendingToggle.date)}?`
+          ? `Are you sure you want to ${restoring ? 'restore' : 'skip'} "${pendingToggle.vendorName}" on ${formatDate(pendingToggle.date)}?`
           : ''
       }
-      confirmLabel={restoring ? 'Restore' : 'Exclude'}
+      confirmLabel={restoring ? 'Restore' : 'Skip'}
       onConfirm={confirmToggleExclusion}
       onCancel={cancelToggleExclusion}
     />
@@ -401,13 +401,15 @@ const DatesList: React.FC<DatesListProps> = ({
         </Banner>
       )}
       <h4 className="recurring-food-grid__dates-heading">
-        {year} Schedule
-        {!readOnly && <span className="recurring-food-grid__dates-hint">(click to exclude)</span>}
+        {year} Dates & skips
+        {!readOnly && (
+          <span className="recurring-food-grid__dates-hint">(open a month to skip a date)</span>
+        )}
       </h4>
       <div className="recurring-food-grid__dates-list">
         {Object.entries(groupedByMonth).map(([month, dates]) => (
-          <div key={month} className="recurring-food-grid__month">
-            <div className="recurring-food-grid__month-label">{month}</div>
+          <details key={month} className="recurring-food-grid__month">
+            <summary className="recurring-food-grid__month-label">{month}</summary>
             {dates.map((item, idx) => {
               const excluded = item.type === 'recurring' && isExcluded(item.date)
               const isIndividual = item.type === 'individual'
@@ -424,7 +426,7 @@ const DatesList: React.FC<DatesListProps> = ({
               const ariaLabel =
                 isIndividual || readOnly
                   ? undefined
-                  : `${excluded ? 'Restore' : 'Exclude'} ${displayName} on ${formatDate(item.date)}`
+                  : `${excluded ? 'Restore' : 'Skip'} ${displayName} on ${formatDate(item.date)}`
 
               return (
                 <button
@@ -449,13 +451,13 @@ const DatesList: React.FC<DatesListProps> = ({
                   )}
                   {excluded && (
                     <Pill pillStyle="error" size="small">
-                      Excluded
+                      Skipped
                     </Pill>
                   )}
                 </button>
               )
             })}
-          </div>
+          </details>
         ))}
       </div>
     </div>
@@ -538,7 +540,7 @@ const LocationGrid: React.FC<LocationGridProps> = ({
           <tbody>
             {visibleWeeks.map((week, weekIndex) => (
               <tr key={week}>
-                <td>{weekIndex + 1}</td>
+                <th scope="row">{weekOrdinals[weekIndex]}</th>
                 {days.map((day) => {
                   const cellValue = locationSchedule[day]?.[week] || null
                   const cellKey = scheduleSaveKey(year, location.id, day, week)
@@ -566,7 +568,7 @@ const LocationGrid: React.FC<LocationGridProps> = ({
             className="recurring-food-grid__link-button"
             onClick={() => setShowFifthWeek(true)}
           >
-            Show 5th week
+            Show fifth occurrence
           </Button>
         )}
       </div>
@@ -780,6 +782,10 @@ export const RecurringFoodGrid: React.FC = () => {
         <ShimmerEffect height="2rem" />
       </div>
     )
+  }
+
+  if (locations.length === 0 && saveError) {
+    return <Banner type="danger">{saveError}</Banner>
   }
 
   if (locations.length === 0) {

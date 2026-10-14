@@ -82,8 +82,9 @@ function withPreviousSlug(
 export const Locations: CollectionConfig = {
   slug: 'locations',
   admin: {
-    group: 'Settings',
+    group: 'Taproom Operations',
     useAsTitle: 'name',
+    defaultColumns: ['name', 'active', 'linesLastCleaned'],
   },
   access: {
     read: () => true, // Public read access
@@ -159,6 +160,16 @@ export const Locations: CollectionConfig = {
     },
     markLinesCleanedField(),
     {
+      name: 'name',
+      type: 'text',
+      required: true,
+      unique: true,
+      access: {
+        update: adminFieldAccess,
+      },
+      label: 'Taproom name',
+    },
+    {
       name: 'active',
       type: 'checkbox',
       defaultValue: true,
@@ -170,223 +181,382 @@ export const Locations: CollectionConfig = {
       },
     },
     {
-      name: 'name',
-      type: 'text',
-      required: true,
-      unique: true,
-      access: {
-        update: adminFieldAccess,
-      },
-    },
-    {
-      type: 'row',
-      fields: (['draft', 'cans'] as const).map((type): RelationshipField => ({
-        name: `${type}Menu`,
-        label: type === 'draft' ? 'Draft Menu' : 'Cans Menu',
-        type: 'relationship',
-        relationTo: 'menus',
-        // Avoid populating the location → menu → location cycle.
-        maxDepth: 0,
-        access: { update: adminFieldAccess },
-        filterOptions: ({ id }) =>
-          id ? { location: { equals: id }, type: { equals: type } } : false,
-        admin: {
-          width: '50%',
-          description:
-            `The ${type} menu shown for this location on the homepage and /<location> page ` +
-            '(e.g. /lawrenceville). Only published menus appear. Leave blank to hide it.',
-        },
-      })),
-    },
-    {
-      name: 'intro',
-      type: 'textarea',
-      label: 'Intro text',
-      access: {
-        update: adminFieldAccess,
-      },
-      admin: {
-        rows: 3,
-        description:
-          'Optional short paragraph under the location heading for local SEO. Leave blank to show nothing.',
-      },
-    },
-    {
-      name: 'timezone',
-      type: 'select',
-      defaultValue: 'America/New_York',
-      options: [
-        { label: 'Eastern Time (EST/EDT)', value: 'America/New_York' },
-        { label: 'Central Time (CST/CDT)', value: 'America/Chicago' },
-        { label: 'Mountain Time (MST/MDT)', value: 'America/Denver' },
-        { label: 'Pacific Time (PST/PDT)', value: 'America/Los_Angeles' },
-      ],
-      access: {
-        update: adminFieldAccess,
-      },
-      admin: {
-        description: "Timezone for this location's hours",
-      },
-    },
-    {
-      name: 'slug',
-      type: 'text',
-      // Hand-set slugs (REST/Local API) skip the generator; the slug is a redirect target.
-      validate: (value: string | null | undefined) =>
-        !value ||
-        LOCATION_SLUG_PATTERN.test(value) ||
-        'Slug must be lowercase letters, numbers, and dashes.',
-      admin: {
-        description: 'Auto-generated from name (lowercase, spaces to dashes)',
-        readOnly: true,
-        position: 'sidebar',
-      },
-    },
-    {
-      name: 'aliases',
-      type: 'text',
-      hasMany: true,
-      access: {
-        update: adminFieldAccess,
-      },
-      validate: validateAliases,
-      admin: {
-        position: 'sidebar',
-        description:
-          'Former slugs. /<alias> redirects to the current page and /e/<alias> still shows ' +
-          'the events board. A rename adds the old slug automatically. Browsers cache the ' +
-          'redirect, so a deleted alias can keep sending past visitors here; avoid reusing it ' +
-          "as another location's slug.",
-      },
-    },
-    {
-      name: 'basicInfo',
-      type: 'group',
-      label: 'Contact Information',
-      access: {
-        update: adminFieldAccess,
-      },
-      admin: {
-        position: 'sidebar',
-      },
-      fields: [
-        {
-          name: 'phone',
-          type: 'text',
-        },
-        {
-          name: 'email',
-          type: 'email',
-        },
-      ],
-    },
-    {
-      name: 'address',
-      type: 'group',
-      access: {
-        update: adminFieldAccess,
-      },
-      admin: {
-        position: 'sidebar',
-      },
-      fields: [
-        {
-          name: 'street',
-          type: 'text',
-        },
-        {
-          name: 'city',
-          type: 'text',
-        },
-        {
-          name: 'state',
-          type: 'text',
-        },
-        {
-          name: 'zip',
-          type: 'text',
-        },
-        {
-          name: 'directionsUrl',
-          type: 'text',
-          label: 'Directions URL',
-          admin: {
-            description: 'Custom Google Maps or directions link for this location',
-          },
-        },
-      ],
-    },
-    {
-      name: 'coordinates',
-      type: 'point',
-      label: 'Coordinates',
-      access: {
-        update: adminFieldAccess,
-      },
-      admin: {
-        position: 'sidebar',
-        description: 'Longitude, Latitude (e.g. -79.960098, 40.465372)',
-      },
-    },
-    {
-      name: 'images',
-      type: 'group',
-      label: 'Location Images',
-      access: {
-        update: adminFieldAccess,
-      },
-      fields: [
-        {
-          name: 'card',
-          type: 'upload',
-          relationTo: 'media',
-          admin: {
-            description: 'Image shown on location cards (recommended: 800x600px)',
-          },
-        },
-        {
-          name: 'hero',
-          type: 'upload',
-          relationTo: 'media',
-          admin: {
-            description: 'Hero/banner image for this location (recommended: 1920x1080px)',
-          },
-        },
-      ],
-    },
-    {
       type: 'tabs',
-      admin: {
-        condition: (data, siblingData, { user }) => isAdmin(user),
-      },
       tabs: [
         {
-          name: 'monday',
-          label: 'Monday',
+          label: 'Hours & operations',
           fields: [
             {
-              type: 'row',
+              name: 'timezone',
+              type: 'select',
+              defaultValue: 'America/New_York',
+              options: [
+                { label: 'Eastern Time (EST/EDT)', value: 'America/New_York' },
+                { label: 'Central Time (CST/CDT)', value: 'America/Chicago' },
+                { label: 'Mountain Time (MST/MDT)', value: 'America/Denver' },
+                { label: 'Pacific Time (PST/PDT)', value: 'America/Los_Angeles' },
+              ],
+              access: {
+                update: adminFieldAccess,
+              },
+              admin: {
+                description: "Timezone for this location's hours",
+              },
+            },
+            {
+              type: 'collapsible',
+              label: 'Weekly opening hours',
+              admin: { condition: (_data, _siblingData, { user }) => isAdmin(user) },
               fields: [
                 {
-                  name: 'open',
-                  type: 'date',
-                  admin: {
-                    width: '50%',
-                    date: {
-                      pickerAppearance: 'timeOnly',
-                      displayFormat: 'h:mm a',
+                  type: 'tabs',
+                  tabs: [
+                    {
+                      name: 'monday',
+                      label: 'Monday',
+                      fields: [
+                        {
+                          type: 'row',
+                          fields: [
+                            {
+                              name: 'open',
+                              type: 'date',
+                              admin: {
+                                width: '50%',
+                                date: {
+                                  pickerAppearance: 'timeOnly',
+                                  displayFormat: 'h:mm a',
+                                },
+                              },
+                            },
+                            {
+                              name: 'close',
+                              type: 'date',
+                              admin: {
+                                width: '50%',
+                                date: {
+                                  pickerAppearance: 'timeOnly',
+                                  displayFormat: 'h:mm a',
+                                },
+                              },
+                            },
+                          ],
+                        },
+                      ],
                     },
-                  },
+                  ],
                 },
                 {
-                  name: 'close',
-                  type: 'date',
-                  admin: {
-                    width: '50%',
-                    date: {
-                      pickerAppearance: 'timeOnly',
-                      displayFormat: 'h:mm a',
+                  type: 'tabs',
+                  tabs: [
+                    {
+                      name: 'tuesday',
+                      label: 'Tuesday',
+                      fields: [
+                        {
+                          type: 'row',
+                          fields: [
+                            {
+                              name: 'open',
+                              type: 'date',
+                              admin: {
+                                width: '50%',
+                                date: {
+                                  pickerAppearance: 'timeOnly',
+                                  displayFormat: 'h:mm a',
+                                },
+                              },
+                            },
+                            {
+                              name: 'close',
+                              type: 'date',
+                              admin: {
+                                width: '50%',
+                                date: {
+                                  pickerAppearance: 'timeOnly',
+                                  displayFormat: 'h:mm a',
+                                },
+                              },
+                            },
+                          ],
+                        },
+                      ],
                     },
+                  ],
+                },
+                {
+                  type: 'tabs',
+                  tabs: [
+                    {
+                      name: 'wednesday',
+                      label: 'Wednesday',
+                      fields: [
+                        {
+                          type: 'row',
+                          fields: [
+                            {
+                              name: 'open',
+                              type: 'date',
+                              admin: {
+                                width: '50%',
+                                date: {
+                                  pickerAppearance: 'timeOnly',
+                                  displayFormat: 'h:mm a',
+                                },
+                              },
+                            },
+                            {
+                              name: 'close',
+                              type: 'date',
+                              admin: {
+                                width: '50%',
+                                date: {
+                                  pickerAppearance: 'timeOnly',
+                                  displayFormat: 'h:mm a',
+                                },
+                              },
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+                {
+                  type: 'tabs',
+                  tabs: [
+                    {
+                      name: 'thursday',
+                      label: 'Thursday',
+                      fields: [
+                        {
+                          type: 'row',
+                          fields: [
+                            {
+                              name: 'open',
+                              type: 'date',
+                              admin: {
+                                width: '50%',
+                                date: {
+                                  pickerAppearance: 'timeOnly',
+                                  displayFormat: 'h:mm a',
+                                },
+                              },
+                            },
+                            {
+                              name: 'close',
+                              type: 'date',
+                              admin: {
+                                width: '50%',
+                                date: {
+                                  pickerAppearance: 'timeOnly',
+                                  displayFormat: 'h:mm a',
+                                },
+                              },
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+                {
+                  type: 'tabs',
+                  tabs: [
+                    {
+                      name: 'friday',
+                      label: 'Friday',
+                      fields: [
+                        {
+                          type: 'row',
+                          fields: [
+                            {
+                              name: 'open',
+                              type: 'date',
+                              admin: {
+                                width: '50%',
+                                date: {
+                                  pickerAppearance: 'timeOnly',
+                                  displayFormat: 'h:mm a',
+                                },
+                              },
+                            },
+                            {
+                              name: 'close',
+                              type: 'date',
+                              admin: {
+                                width: '50%',
+                                date: {
+                                  pickerAppearance: 'timeOnly',
+                                  displayFormat: 'h:mm a',
+                                },
+                              },
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+                {
+                  type: 'tabs',
+                  tabs: [
+                    {
+                      name: 'saturday',
+                      label: 'Saturday',
+                      fields: [
+                        {
+                          type: 'row',
+                          fields: [
+                            {
+                              name: 'open',
+                              type: 'date',
+                              admin: {
+                                width: '50%',
+                                date: {
+                                  pickerAppearance: 'timeOnly',
+                                  displayFormat: 'h:mm a',
+                                },
+                              },
+                            },
+                            {
+                              name: 'close',
+                              type: 'date',
+                              admin: {
+                                width: '50%',
+                                date: {
+                                  pickerAppearance: 'timeOnly',
+                                  displayFormat: 'h:mm a',
+                                },
+                              },
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+                {
+                  type: 'tabs',
+                  tabs: [
+                    {
+                      name: 'sunday',
+                      label: 'Sunday',
+                      fields: [
+                        {
+                          type: 'row',
+                          fields: [
+                            {
+                              name: 'open',
+                              type: 'date',
+                              admin: {
+                                width: '50%',
+                                date: {
+                                  pickerAppearance: 'timeOnly',
+                                  displayFormat: 'h:mm a',
+                                },
+                              },
+                            },
+                            {
+                              name: 'close',
+                              type: 'date',
+                              admin: {
+                                width: '50%',
+                                date: {
+                                  pickerAppearance: 'timeOnly',
+                                  displayFormat: 'h:mm a',
+                                },
+                              },
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              type: 'row',
+              fields: (['draft', 'cans'] as const).map((type): RelationshipField => ({
+                name: `${type}Menu`,
+                label: type === 'draft' ? 'Draft Menu' : 'Cans Menu',
+                type: 'relationship',
+                relationTo: 'menus',
+                // Avoid populating the location → menu → location cycle.
+                maxDepth: 0,
+                access: { update: adminFieldAccess },
+                filterOptions: ({ id }) =>
+                  id ? { location: { equals: id }, type: { equals: type } } : false,
+                admin: {
+                  width: '50%',
+                  description:
+                    `The ${type} menu shown for this location on the homepage and /<location> page ` +
+                    '(e.g. /lawrenceville). Only published menus appear. Leave blank to hide it.',
+                },
+              })),
+            },
+          ],
+        },
+        {
+          label: 'Visitor information',
+          fields: [
+            {
+              name: 'basicInfo',
+              type: 'group',
+              label: 'Contact Information',
+              access: {
+                update: adminFieldAccess,
+              },
+              admin: {
+                position: undefined,
+              },
+              fields: [
+                {
+                  name: 'phone',
+                  type: 'text',
+                  label: 'Public phone',
+                },
+                {
+                  name: 'email',
+                  type: 'email',
+                  label: 'Public email',
+                },
+              ],
+            },
+            {
+              name: 'address',
+              type: 'group',
+              access: {
+                update: adminFieldAccess,
+              },
+              admin: {
+                position: undefined,
+              },
+              fields: [
+                {
+                  name: 'street',
+                  type: 'text',
+                },
+                {
+                  name: 'city',
+                  type: 'text',
+                },
+                {
+                  name: 'state',
+                  type: 'text',
+                },
+                {
+                  name: 'zip',
+                  type: 'text',
+                  label: 'Postal code',
+                },
+                {
+                  name: 'directionsUrl',
+                  type: 'text',
+                  label: 'Directions URL',
+                  admin: {
+                    description: 'Custom Google Maps or directions link for this location',
                   },
                 },
               ],
@@ -394,205 +564,112 @@ export const Locations: CollectionConfig = {
           ],
         },
         {
-          name: 'tuesday',
-          label: 'Tuesday',
+          label: 'Images & website',
           fields: [
             {
-              type: 'row',
+              name: 'intro',
+              type: 'textarea',
+              label: 'Location introduction',
+              access: {
+                update: adminFieldAccess,
+              },
+              admin: {
+                rows: 3,
+                description:
+                  'Optional paragraph under the public location heading. Blank shows nothing.',
+              },
+            },
+            {
+              name: 'images',
+              type: 'group',
+              label: 'Location Images',
+              access: {
+                update: adminFieldAccess,
+              },
               fields: [
                 {
-                  name: 'open',
-                  type: 'date',
+                  name: 'card',
+                  type: 'upload',
+                  relationTo: 'media',
                   admin: {
-                    width: '50%',
-                    date: {
-                      pickerAppearance: 'timeOnly',
-                      displayFormat: 'h:mm a',
-                    },
+                    description: 'Image shown on location cards (recommended: 800x600px)',
                   },
+                  label: 'Location card image',
                 },
                 {
-                  name: 'close',
-                  type: 'date',
+                  name: 'hero',
+                  type: 'upload',
+                  relationTo: 'media',
                   admin: {
-                    width: '50%',
-                    date: {
-                      pickerAppearance: 'timeOnly',
-                      displayFormat: 'h:mm a',
-                    },
+                    description: 'Hero/banner image for this location (recommended: 1920x1080px)',
+                  },
+                  label: 'Location banner image',
+                },
+              ],
+            },
+            {
+              type: 'collapsible',
+              label: 'URLs & map',
+              admin: { initCollapsed: true },
+              fields: [
+                {
+                  name: 'slug',
+                  type: 'text',
+                  // Hand-set slugs (REST/Local API) skip the generator; the slug is a redirect target.
+                  validate: (value: string | null | undefined) =>
+                    !value ||
+                    LOCATION_SLUG_PATTERN.test(value) ||
+                    'Slug must be lowercase letters, numbers, and dashes.',
+                  admin: {
+                    description: 'Auto-generated from name (lowercase, spaces to dashes)',
+                    readOnly: true,
+                    position: undefined,
+                  },
+                  label: 'Page URL slug',
+                },
+                {
+                  name: 'aliases',
+                  type: 'text',
+                  hasMany: true,
+                  access: {
+                    update: adminFieldAccess,
+                  },
+                  validate: validateAliases,
+                  admin: {
+                    position: undefined,
+                    description:
+                      'Former slugs. /<alias> redirects to the current page and /e/<alias> still shows ' +
+                      'the events board. A rename adds the old slug automatically. Browsers cache the ' +
+                      'redirect, so a deleted alias can keep sending past visitors here; avoid reusing it ' +
+                      "as another location's slug.",
+                  },
+                  label: 'Previous URL slugs',
+                },
+                {
+                  name: 'coordinates',
+                  type: 'point',
+                  label: 'Map coordinates',
+                  access: {
+                    update: adminFieldAccess,
+                  },
+                  admin: {
+                    position: undefined,
+                    description: 'Longitude, Latitude (e.g. -79.960098, 40.465372)',
                   },
                 },
               ],
             },
-          ],
-        },
-        {
-          name: 'wednesday',
-          label: 'Wednesday',
-          fields: [
             {
-              type: 'row',
+              type: 'collapsible',
+              label: 'Search & sharing',
+              admin: { initCollapsed: true },
               fields: [
-                {
-                  name: 'open',
-                  type: 'date',
-                  admin: {
-                    width: '50%',
-                    date: {
-                      pickerAppearance: 'timeOnly',
-                      displayFormat: 'h:mm a',
-                    },
-                  },
-                },
-                {
-                  name: 'close',
-                  type: 'date',
-                  admin: {
-                    width: '50%',
-                    date: {
-                      pickerAppearance: 'timeOnly',
-                      displayFormat: 'h:mm a',
-                    },
-                  },
-                },
-              ],
-            },
-          ],
-        },
-        {
-          name: 'thursday',
-          label: 'Thursday',
-          fields: [
-            {
-              type: 'row',
-              fields: [
-                {
-                  name: 'open',
-                  type: 'date',
-                  admin: {
-                    width: '50%',
-                    date: {
-                      pickerAppearance: 'timeOnly',
-                      displayFormat: 'h:mm a',
-                    },
-                  },
-                },
-                {
-                  name: 'close',
-                  type: 'date',
-                  admin: {
-                    width: '50%',
-                    date: {
-                      pickerAppearance: 'timeOnly',
-                      displayFormat: 'h:mm a',
-                    },
-                  },
-                },
-              ],
-            },
-          ],
-        },
-        {
-          name: 'friday',
-          label: 'Friday',
-          fields: [
-            {
-              type: 'row',
-              fields: [
-                {
-                  name: 'open',
-                  type: 'date',
-                  admin: {
-                    width: '50%',
-                    date: {
-                      pickerAppearance: 'timeOnly',
-                      displayFormat: 'h:mm a',
-                    },
-                  },
-                },
-                {
-                  name: 'close',
-                  type: 'date',
-                  admin: {
-                    width: '50%',
-                    date: {
-                      pickerAppearance: 'timeOnly',
-                      displayFormat: 'h:mm a',
-                    },
-                  },
-                },
-              ],
-            },
-          ],
-        },
-        {
-          name: 'saturday',
-          label: 'Saturday',
-          fields: [
-            {
-              type: 'row',
-              fields: [
-                {
-                  name: 'open',
-                  type: 'date',
-                  admin: {
-                    width: '50%',
-                    date: {
-                      pickerAppearance: 'timeOnly',
-                      displayFormat: 'h:mm a',
-                    },
-                  },
-                },
-                {
-                  name: 'close',
-                  type: 'date',
-                  admin: {
-                    width: '50%',
-                    date: {
-                      pickerAppearance: 'timeOnly',
-                      displayFormat: 'h:mm a',
-                    },
-                  },
-                },
-              ],
-            },
-          ],
-        },
-        {
-          name: 'sunday',
-          label: 'Sunday',
-          fields: [
-            {
-              type: 'row',
-              fields: [
-                {
-                  name: 'open',
-                  type: 'date',
-                  admin: {
-                    width: '50%',
-                    date: {
-                      pickerAppearance: 'timeOnly',
-                      displayFormat: 'h:mm a',
-                    },
-                  },
-                },
-                {
-                  name: 'close',
-                  type: 'date',
-                  admin: {
-                    width: '50%',
-                    date: {
-                      pickerAppearance: 'timeOnly',
-                      displayFormat: 'h:mm a',
-                    },
-                  },
-                },
+                { ...documentSeoField, admin: { ...documentSeoField.admin, position: undefined } },
               ],
             },
           ],
         },
       ],
     },
-    documentSeoField,
   ],
 }

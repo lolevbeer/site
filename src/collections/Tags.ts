@@ -17,23 +17,27 @@ export const Tags: CollectionConfig = {
     delete: adminAccess,
   },
   admin: {
-    hidden: true,
+    hidden: false,
     useAsTitle: 'name',
     defaultColumns: ['name'],
     pagination: {
       defaultLimit: 100,
     },
+    group: 'Beer Catalog',
   },
   fields: [
     {
       name: 'name',
-      label: 'Name',
+      label: 'Tag name',
       type: 'text',
       required: true,
       unique: true,
       admin: {
-        description: 'Tag name (e.g., Seasonal, Limited, Award Winner)',
+        description:
+          'Reusable label, e.g. Seasonal or Award Winner. Each beer selects one tag; renaming updates linked labels.',
       },
     },
   ],
+  labels: { singular: 'Beer Tag', plural: 'Beer Tags' },
+  defaultSort: 'name',
 }

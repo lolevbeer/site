@@ -38,8 +38,9 @@ export const Users: CollectionConfig = {
     },
   },
   admin: {
-    group: 'Settings',
+    group: 'Administration',
     useAsTitle: 'email',
+    defaultColumns: ['name', 'email'],
   },
   access: {
     // Every signed-in user can see who other staff are (name and email), so
@@ -93,29 +94,37 @@ export const Users: CollectionConfig = {
       name: 'name',
       type: 'text',
       admin: {
-        position: 'sidebar',
+        position: undefined,
       },
+      label: 'Staff name',
     },
     {
-      // Links a Slack account to this user so the /lolevbeer bot can act as
-      // them (see src/app/api/slack/route.ts). Claimed automatically the first
-      // time a Slack profile email matches this user's email; set it by hand
-      // when the two differ. Unique so two users can't map to one Slack account.
-      name: 'slackUserId',
-      type: 'text',
-      unique: true,
-      index: true,
+      name: 'roles',
+      type: 'select',
+      hasMany: true,
+      required: true,
+      defaultValue: ['bartender'],
+      options: [
+        { label: 'Admin', value: 'admin' },
+        { label: 'Event Manager', value: 'event-manager' },
+        { label: 'Beer Manager', value: 'beer-manager' },
+        { label: 'Food Manager', value: 'food-manager' },
+        { label: 'Lead Bartender', value: 'lead-bartender' },
+        { label: 'Bartender', value: 'bartender' },
+      ],
       admin: {
-        position: 'sidebar',
+        position: undefined,
         description:
-          'Slack member ID (e.g. U01ABCDEF). Filled in automatically when the Slack profile email matches this account — set it manually only if the emails differ.',
+          'Multiple roles are allowed. Admins change existing roles/assignments. Lead bartenders can invite bartenders for their own taprooms and record line cleaning; managers edit their respective content.',
       },
       access: {
         read: adminOrSelfFieldAccess,
-        // Self-claim is a system write (overrideAccess); only admins may
-        // retarget an existing mapping, which would hand over this account.
+        // Lead bartenders can set roles on create (validated by hook to only allow 'bartender')
+        // Only admins can change roles on existing users
+        create: leadBartenderFieldAccess,
         update: adminFieldAccess,
       },
+      label: 'Staff roles',
     },
     {
       name: 'locations',
@@ -136,33 +145,37 @@ export const Users: CollectionConfig = {
         condition: (data) =>
           data?.roles?.includes('bartender') || data?.roles?.includes('lead-bartender'),
       },
+      label: 'Assigned taprooms',
     },
     {
-      name: 'roles',
-      type: 'select',
-      hasMany: true,
-      required: true,
-      defaultValue: ['bartender'],
-      options: [
-        { label: 'Admin', value: 'admin' },
-        { label: 'Event Manager', value: 'event-manager' },
-        { label: 'Beer Manager', value: 'beer-manager' },
-        { label: 'Food Manager', value: 'food-manager' },
-        { label: 'Lead Bartender', value: 'lead-bartender' },
-        { label: 'Bartender', value: 'bartender' },
+      type: 'collapsible',
+      label: 'Slack account linking',
+      admin: { initCollapsed: true },
+      fields: [
+        {
+          // Links a Slack account to this user so the /lolevbeer bot can act as
+          // them (see src/app/api/slack/route.ts). Claimed automatically the first
+          // time a Slack profile email matches this user's email; set it by hand
+          // when the two differ. Unique so two users can't map to one Slack account.
+          name: 'slackUserId',
+          type: 'text',
+          unique: true,
+          index: true,
+          admin: {
+            position: undefined,
+            description:
+              'Slack member ID (e.g. U01ABCDEF). Filled in automatically when the Slack profile email matches this account — set it manually only if the emails differ.',
+          },
+          access: {
+            read: adminOrSelfFieldAccess,
+            // Self-claim is a system write (overrideAccess); only admins may
+            // retarget an existing mapping, which would hand over this account.
+            update: adminFieldAccess,
+          },
+          label: 'Slack member ID',
+        },
       ],
-      admin: {
-        position: 'sidebar',
-        description:
-          'Admins can manage users and all content. Event/Beer/Food Managers can manage their respective collections. Lead Bartenders can update line cleaning dates. Bartenders can update menus. Users can have multiple roles.',
-      },
-      access: {
-        read: adminOrSelfFieldAccess,
-        // Lead bartenders can set roles on create (validated by hook to only allow 'bartender')
-        // Only admins can change roles on existing users
-        create: leadBartenderFieldAccess,
-        update: adminFieldAccess,
-      },
     },
   ],
+  labels: { singular: 'Staff Account', plural: 'Staff Accounts' },
 }

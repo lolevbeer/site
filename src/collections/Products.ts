@@ -1,13 +1,16 @@
+/** Non-beer menu items, with content fields together and display badges secondary. */
 import type { CollectionConfig } from 'payload'
 import { adminAccess, hasRole } from '@/src/access/roles'
 import { OTHER_MENU_CATEGORIES } from '@/lib/config/other-menu'
 
 export const Products: CollectionConfig = {
   slug: 'products',
+  labels: { singular: 'Other Menu Item', plural: 'Other Menu Items' },
   admin: {
-    group: 'Front of House',
+    group: 'Taproom Operations',
     useAsTitle: 'name',
     defaultColumns: ['name', 'price', 'category'],
+    description: 'Other items selectable on menus. Maintain brewery beers in Beer Catalog.',
   },
   access: {
     read: () => true,
@@ -16,53 +19,46 @@ export const Products: CollectionConfig = {
     delete: adminAccess,
   },
   fields: [
+    { name: 'name', label: 'Item name', type: 'text', required: true },
     {
-      name: 'name',
-      type: 'text',
-      required: true,
+      type: 'row',
+      fields: [
+        {
+          name: 'category',
+          label: 'Menu category',
+          type: 'select',
+          options: [...OTHER_MENU_CATEGORIES],
+          admin: {
+            width: '50%',
+            description:
+              'Optional grouping on Other Things menus. Uncategorized items remain visible.',
+          },
+        },
+        {
+          name: 'price',
+          label: 'Display price',
+          type: 'text',
+          admin: { width: '50%', description: 'Price text shown on menus, e.g. "$5.00".' },
+        },
+      ],
     },
-    {
-      name: 'description',
-      type: 'textarea',
-    },
-    {
-      name: 'category',
-      type: 'select',
-      options: [...OTHER_MENU_CATEGORIES],
-      admin: {
-        description:
-          'Optional grouping on Other Things menus. Uncategorized products remain visible.',
-        position: 'sidebar',
-      },
-    },
+    { name: 'description', type: 'textarea' },
     {
       name: 'options',
+      label: 'Menu options',
       type: 'text',
       hasMany: true,
-      admin: {
-        description: 'Press "Enter" or "Tab" after entering option to add another',
-        position: 'sidebar',
-      },
+      admin: { description: 'Choices shown with this item. Press Enter or Tab after each option.' },
     },
     {
       name: 'abv',
+      label: 'ABV (%)',
       type: 'number',
-      admin: {
-        description: 'Alcohol by volume (%)',
-        step: 0.1,
-        position: 'sidebar',
-      },
-    },
-    {
-      name: 'price',
-      type: 'text',
-      admin: {
-        description: 'Display price (e.g., "$5.00")',
-      },
+      admin: { description: 'Alcohol by volume, if applicable.', step: 0.1 },
     },
     {
       name: 'guestTap',
-      label: 'Guest Tap',
+      label: 'Guest tap',
       type: 'checkbox',
       defaultValue: false,
       admin: {
@@ -72,7 +68,7 @@ export const Products: CollectionConfig = {
     },
     {
       name: 'collab',
-      label: 'Collab',
+      label: 'Collaboration',
       type: 'checkbox',
       defaultValue: false,
       admin: {

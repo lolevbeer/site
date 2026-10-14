@@ -145,6 +145,48 @@ describe('toDateKey', () => {
 })
 
 describe('RecurringFoodGrid location tabs', () => {
+  it('reports a failed load instead of claiming no active locations exist', async () => {
+    getActiveLocationsMock.mockRejectedValueOnce(new Error('Access denied'))
+    getRecurringFoodDataMock.mockResolvedValue({ year: 2026, schedules: {}, exclusions: {} })
+    render(createElement(RecurringFoodGrid))
+    expect(await screen.findByText(/Could not load recurring food schedules/)).toBeTruthy()
+    expect(screen.queryByText(/No active locations found/)).toBeNull()
+  })
+
+  it('keeps the true empty-location state when loading succeeds', async () => {
+    getActiveLocationsMock.mockResolvedValue([])
+    getRecurringFoodDataMock.mockResolvedValue({ year: 2026, schedules: {}, exclusions: {} })
+    render(createElement(RecurringFoodGrid))
+    expect(await screen.findByText(/No active locations found/)).toBeTruthy()
+    expect(screen.queryByText(/Could not load recurring food schedules/)).toBeNull()
+  })
+
+  it('keeps each month collapsed until staff open its dated bookings', async () => {
+    const year = new Date().getFullYear()
+    getActiveLocationsMock.mockResolvedValue([
+      { id: 'loc-a', name: 'Lawrenceville', slug: 'lawrenceville' },
+    ])
+    getRecurringFoodDataMock.mockResolvedValue({
+      year,
+      schedules: { 'loc-a': { sunday: { first: 'vendor-a' } } },
+      exclusions: {},
+    })
+    getFoodForLocationYearMock.mockResolvedValue([])
+    getFoodVendorsByIdsMock.mockResolvedValue({ 'vendor-a': 'Recurring Truck' })
+    const { container } = render(createElement(RecurringFoodGrid))
+    await screen.findAllByText(/Recurring Truck/)
+    const months = container.querySelectorAll('details.recurring-food-grid__month')
+    expect(months).toHaveLength(12)
+    expect([...months].every((month) => !(month as HTMLDetailsElement).open)).toBe(true)
+    expect(months[0].querySelector('summary')?.textContent).toContain(`January ${year}`)
+    const first = months[0] as HTMLDetailsElement
+    first.open = true
+    fireEvent(first, new Event('toggle'))
+    expect(first.querySelector('button')?.getAttribute('aria-label')).toMatch(
+      /Skip Recurring Truck on/,
+    )
+  })
+
   it('loads an independent schedule when the selected year changes', async () => {
     const currentYear = new Date().getFullYear()
     getActiveLocationsMock.mockResolvedValue([
@@ -232,7 +274,7 @@ describe('RecurringFoodGrid location tabs', () => {
 
     render(createElement(RecurringFoodGrid))
     const exclude = await screen.findAllByRole('button', {
-      name: /Exclude Lawrenceville Recurring on/i,
+      name: /Skip Lawrenceville Recurring on/i,
     })
     fireEvent.click(exclude[0])
     const confirmButton = await screen.findByRole('button', { name: 'confirm-exclusion' })
@@ -272,7 +314,7 @@ describe('RecurringFoodGrid location tabs', () => {
 
     render(createElement(RecurringFoodGrid))
     const dates = await screen.findAllByRole('button', {
-      name: /Exclude Lawrenceville Recurring on/i,
+      name: /Skip Lawrenceville Recurring on/i,
     })
     expect(dates.length).toBeGreaterThan(1)
 
@@ -326,7 +368,7 @@ describe('RecurringFoodGrid location tabs', () => {
 
     fireEvent.click(screen.getByRole('tab', { name: 'Zelienople' }))
     expect(
-      (await screen.findAllByRole('button', { name: /Exclude Zelie Recurring on/i })).length,
+      (await screen.findAllByRole('button', { name: /Skip Zelie Recurring on/i })).length,
     ).toBeGreaterThan(0)
 
     await act(async () => {
@@ -376,10 +418,10 @@ describe('RecurringFoodGrid location tabs', () => {
     render(createElement(RecurringFoodGrid))
     await screen.findAllByText(/Truck/)
 
-    expect(screen.queryByText('5')).toBeNull()
-    fireEvent.click(screen.getByRole('button', { name: 'Show 5th week' }))
-    expect(screen.getByText('5')).toBeTruthy()
-    expect(screen.queryByRole('button', { name: 'Show 5th week' })).toBeNull()
+    expect(screen.queryByText('5th')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Show fifth occurrence' }))
+    expect(screen.getByText('5th')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Show fifth occurrence' })).toBeNull()
   })
 
   it('always shows the fifth week row when it has data', async () => {
@@ -397,7 +439,7 @@ describe('RecurringFoodGrid location tabs', () => {
     render(createElement(RecurringFoodGrid))
     await screen.findAllByText(/Truck/)
 
-    expect(screen.getByText('5')).toBeTruthy()
-    expect(screen.queryByRole('button', { name: 'Show 5th week' })).toBeNull()
+    expect(screen.getByText('5th')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Show fifth occurrence' })).toBeNull()
   })
 })

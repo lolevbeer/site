@@ -1,0 +1,1978 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`persistent field contracts > beer-reviews retains its stored paths and validation shape > beer-reviews 1`] = `
+{
+  "approved": {
+    "defaultValue": true,
+    "index": true,
+    "required": true,
+    "type": "checkbox",
+  },
+  "beer": {
+    "index": true,
+    "relationTo": "beers",
+    "required": true,
+    "type": "relationship",
+  },
+  "externalImageUrl": {
+    "type": "text",
+  },
+  "rating": {
+    "max": 5,
+    "min": 0,
+    "required": true,
+    "type": "number",
+  },
+  "reviewedAt": {
+    "index": true,
+    "type": "date",
+  },
+  "reviewer": {
+    "required": true,
+    "type": "text",
+  },
+  "source": {
+    "defaultValue": "untappd",
+    "options": [
+      "untappd",
+    ],
+    "required": true,
+    "type": "select",
+  },
+  "sourceDate": {
+    "type": "text",
+  },
+  "sourceUrl": {
+    "index": true,
+    "required": true,
+    "type": "text",
+    "unique": true,
+  },
+  "text": {
+    "required": true,
+    "type": "textarea",
+  },
+}
+`;
+
+exports[`persistent field contracts > beers retains its stored paths and validation shape > beers 1`] = `
+{
+  "abv": {
+    "max": 20,
+    "min": 0,
+    "required": true,
+    "type": "number",
+  },
+  "bottlePrice": {
+    "type": "number",
+  },
+  "canSingle": {
+    "type": "number",
+  },
+  "collab": {
+    "defaultValue": false,
+    "type": "checkbox",
+  },
+  "collabBrewery": {
+    "type": "text",
+  },
+  "description": {
+    "type": "textarea",
+  },
+  "draftPrice": {
+    "required": true,
+    "type": "number",
+  },
+  "fourPack": {
+    "type": "number",
+  },
+  "glass": {
+    "options": [
+      "pint",
+      "stein",
+      "teku",
+      "uha",
+    ],
+    "required": true,
+    "type": "select",
+  },
+  "halfPour": {
+    "type": "number",
+  },
+  "halfPourOnly": {
+    "defaultValue": false,
+    "type": "checkbox",
+  },
+  "hideFromSite": {
+    "defaultValue": false,
+    "type": "checkbox",
+  },
+  "hops": {
+    "type": "text",
+  },
+  "image": {
+    "relationTo": "media",
+    "type": "upload",
+  },
+  "labelBase": {
+    "relationTo": "media",
+    "type": "upload",
+  },
+  "labelMetalness": {
+    "relationTo": "media",
+    "type": "upload",
+  },
+  "labelVideo": {
+    "relationTo": "media",
+    "type": "upload",
+  },
+  "name": {
+    "required": true,
+    "type": "text",
+  },
+  "positiveReviews": {
+    "access": [
+      "read",
+    ],
+    "type": "json",
+  },
+  "recipe": {
+    "type": "number",
+    "unique": true,
+  },
+  "reviews": {
+    "collection": "beer-reviews",
+    "on": "beer",
+    "type": "join",
+  },
+  "seo": {
+    "type": "group",
+  },
+  "seo.canonicalPath": {
+    "type": "text",
+    "validate": true,
+  },
+  "seo.description": {
+    "maxLength": 320,
+    "type": "textarea",
+  },
+  "seo.keywords": {
+    "hasMany": true,
+    "type": "text",
+  },
+  "seo.noIndex": {
+    "defaultValue": false,
+    "type": "checkbox",
+  },
+  "seo.ogDescription": {
+    "maxLength": 320,
+    "type": "textarea",
+  },
+  "seo.ogImage": {
+    "relationTo": "media",
+    "type": "upload",
+  },
+  "seo.ogTitle": {
+    "type": "text",
+  },
+  "seo.title": {
+    "type": "text",
+  },
+  "slug": {
+    "index": true,
+    "required": true,
+    "type": "text",
+    "unique": true,
+  },
+  "style": {
+    "index": true,
+    "relationTo": "styles",
+    "required": true,
+    "type": "relationship",
+  },
+  "tag": {
+    "index": true,
+    "relationTo": "tags",
+    "type": "relationship",
+  },
+  "topBeerDrops": {
+    "type": "text",
+  },
+  "untappd": {
+    "type": "text",
+  },
+  "untappdRating": {
+    "type": "number",
+  },
+  "untappdRatingCount": {
+    "type": "number",
+  },
+  "upc": {
+    "type": "text",
+  },
+  "updatedBy": {
+    "access": [
+      "read",
+    ],
+    "relationTo": "users",
+    "type": "relationship",
+  },
+}
+`;
+
+exports[`persistent field contracts > coming-soon retains its stored paths and validation shape > coming-soon 1`] = `
+{
+  "beers": {
+    "type": "array",
+  },
+  "beers.beer": {
+    "relationTo": "beers",
+    "type": "relationship",
+  },
+  "beers.style": {
+    "relationTo": "styles",
+    "type": "relationship",
+  },
+}
+`;
+
+exports[`persistent field contracts > distributors retains its stored paths and validation shape > distributors 1`] = `
+{
+  "active": {
+    "defaultValue": true,
+    "type": "checkbox",
+  },
+  "address": {
+    "required": true,
+    "type": "text",
+  },
+  "city": {
+    "type": "text",
+  },
+  "country": {
+    "index": true,
+    "type": "text",
+    "validate": true,
+  },
+  "customerType": {
+    "index": true,
+    "options": [
+      "Retail",
+      "On Premise",
+      "Home-D",
+    ],
+    "type": "select",
+  },
+  "location": {
+    "required": true,
+    "type": "point",
+  },
+  "name": {
+    "required": true,
+    "type": "text",
+  },
+  "phone": {
+    "type": "text",
+  },
+  "region": {
+    "index": true,
+    "options": [
+      "AL",
+      "AK",
+      "AZ",
+      "AR",
+      "CA",
+      "CO",
+      "CT",
+      "DE",
+      "DC",
+      "FL",
+      "GA",
+      "HI",
+      "ID",
+      "IL",
+      "IN",
+      "IA",
+      "KS",
+      "KY",
+      "LA",
+      "ME",
+      "MD",
+      "MA",
+      "MI",
+      "MN",
+      "MS",
+      "MO",
+      "MT",
+      "NE",
+      "NV",
+      "NH",
+      "NJ",
+      "NM",
+      "NY",
+      "NC",
+      "ND",
+      "OH",
+      "OK",
+      "OR",
+      "PA",
+      "RI",
+      "SC",
+      "SD",
+      "TN",
+      "TX",
+      "UT",
+      "VT",
+      "VA",
+      "WA",
+      "WV",
+      "WI",
+      "WY",
+    ],
+    "type": "select",
+  },
+  "state": {
+    "type": "text",
+  },
+  "website": {
+    "type": "text",
+    "validate": true,
+  },
+  "zip": {
+    "type": "text",
+  },
+}
+`;
+
+exports[`persistent field contracts > donation-requests retains its stored paths and validation shape > donation-requests 1`] = `
+{
+  "askType": {
+    "options": [
+      "product",
+      "taproom-night",
+    ],
+    "required": true,
+    "type": "select",
+  },
+  "attendees": {
+    "max": 10000,
+    "min": 1,
+    "required": true,
+    "type": "number",
+  },
+  "contactName": {
+    "maxLength": 200,
+    "required": true,
+    "type": "text",
+  },
+  "email": {
+    "required": true,
+    "type": "email",
+  },
+  "eventDate": {
+    "required": true,
+    "type": "date",
+  },
+  "eventName": {
+    "maxLength": 200,
+    "required": true,
+    "type": "text",
+  },
+  "howHeard": {
+    "maxLength": 4000,
+    "required": true,
+    "type": "textarea",
+  },
+  "howServed": {
+    "maxLength": 4000,
+    "required": false,
+    "type": "textarea",
+  },
+  "ipHash": {
+    "index": true,
+    "type": "text",
+  },
+  "mission": {
+    "maxLength": 4000,
+    "required": true,
+    "type": "textarea",
+  },
+  "organizationName": {
+    "maxLength": 200,
+    "required": true,
+    "type": "text",
+  },
+  "phone": {
+    "maxLength": 32,
+    "required": true,
+    "type": "text",
+  },
+  "pickupName": {
+    "maxLength": 200,
+    "required": false,
+    "type": "text",
+  },
+  "previousDonation": {
+    "options": [
+      "yes",
+      "no",
+    ],
+    "required": true,
+    "type": "select",
+  },
+  "recognition": {
+    "maxLength": 4000,
+    "required": true,
+    "type": "textarea",
+  },
+  "requestDetails": {
+    "maxLength": 4000,
+    "required": true,
+    "type": "textarea",
+  },
+  "slackError": {
+    "maxLength": 200,
+    "type": "text",
+  },
+  "slackNotifiedAt": {
+    "type": "date",
+  },
+  "status": {
+    "defaultValue": "new",
+    "options": [
+      "new",
+      "approved",
+      "declined",
+    ],
+    "type": "select",
+  },
+  "submissionKey": {
+    "type": "text",
+    "unique": true,
+  },
+  "taproom": {
+    "maxLength": 80,
+    "type": "text",
+  },
+  "venue": {
+    "maxLength": 400,
+    "required": true,
+    "type": "text",
+  },
+  "whyLolev": {
+    "maxLength": 4000,
+    "required": true,
+    "type": "textarea",
+  },
+}
+`;
+
+exports[`persistent field contracts > event-inquiries retains its stored paths and validation shape > event-inquiries 1`] = `
+{
+  "email": {
+    "required": true,
+    "type": "email",
+  },
+  "headcount": {
+    "max": 500,
+    "min": 1,
+    "required": true,
+    "type": "number",
+  },
+  "ipHash": {
+    "access": [
+      "read",
+    ],
+    "index": true,
+    "type": "text",
+  },
+  "message": {
+    "maxLength": 2000,
+    "type": "textarea",
+  },
+  "name": {
+    "maxLength": 200,
+    "required": true,
+    "type": "text",
+  },
+  "phone": {
+    "maxLength": 32,
+    "required": true,
+    "type": "text",
+  },
+  "preferredDate": {
+    "required": true,
+    "type": "date",
+  },
+  "slackError": {
+    "maxLength": 200,
+    "type": "text",
+  },
+  "slackNotifiedAt": {
+    "type": "date",
+  },
+  "status": {
+    "defaultValue": "new",
+    "options": [
+      "new",
+      "contacted",
+      "booked",
+      "declined",
+    ],
+    "type": "select",
+  },
+  "submissionKey": {
+    "type": "text",
+    "unique": true,
+  },
+  "taproom": {
+    "relationTo": "locations",
+    "required": true,
+    "type": "relationship",
+  },
+}
+`;
+
+exports[`persistent field contracts > events retains its stored paths and validation shape > events 1`] = `
+{
+  "attendees": {
+    "access": [
+      "read",
+    ],
+    "type": "number",
+  },
+  "date": {
+    "index": true,
+    "required": true,
+    "type": "date",
+  },
+  "description": {
+    "access": [
+      "read",
+    ],
+    "type": "textarea",
+  },
+  "email": {
+    "access": [
+      "read",
+    ],
+    "type": "email",
+  },
+  "endTime": {
+    "type": "date",
+  },
+  "image": {
+    "relationTo": "media",
+    "type": "upload",
+  },
+  "location": {
+    "hasMany": false,
+    "index": true,
+    "relationTo": "locations",
+    "required": true,
+    "type": "relationship",
+  },
+  "organizer": {
+    "index": true,
+    "required": true,
+    "type": "text",
+  },
+  "otherInfo": {
+    "access": [
+      "read",
+    ],
+    "type": "textarea",
+  },
+  "phone": {
+    "access": [
+      "read",
+    ],
+    "type": "text",
+  },
+  "pointOfContact": {
+    "access": [
+      "read",
+    ],
+    "type": "text",
+  },
+  "site": {
+    "type": "text",
+  },
+  "startTime": {
+    "type": "date",
+  },
+  "tags": {
+    "hasMany": true,
+    "options": [
+      "music",
+      "utensils",
+      "puzzle",
+      "sports",
+      "beer-release",
+      "mic-vocal",
+    ],
+    "type": "select",
+  },
+  "visibility": {
+    "defaultValue": "public",
+    "index": true,
+    "options": [
+      "public",
+      "private",
+    ],
+    "required": true,
+    "type": "select",
+  },
+}
+`;
+
+exports[`persistent field contracts > faqs retains its stored paths and validation shape > faqs 1`] = `
+{
+  "active": {
+    "defaultValue": true,
+    "type": "checkbox",
+  },
+  "answer": {
+    "required": true,
+    "type": "textarea",
+  },
+  "order": {
+    "defaultValue": 100,
+    "type": "number",
+  },
+  "question": {
+    "required": true,
+    "type": "text",
+  },
+}
+`;
+
+exports[`persistent field contracts > food retains its stored paths and validation shape > food 1`] = `
+{
+  "date": {
+    "index": true,
+    "required": true,
+    "type": "date",
+  },
+  "location": {
+    "hasMany": false,
+    "index": true,
+    "relationTo": "locations",
+    "required": true,
+    "type": "relationship",
+  },
+  "startTime": {
+    "type": "date",
+  },
+  "vendor": {
+    "index": true,
+    "relationTo": "food-vendors",
+    "required": true,
+    "type": "relationship",
+  },
+  "vendorName": {
+    "type": "text",
+  },
+}
+`;
+
+exports[`persistent field contracts > food-vendors retains its stored paths and validation shape > food-vendors 1`] = `
+{
+  "email": {
+    "access": [
+      "read",
+    ],
+    "type": "email",
+  },
+  "logo": {
+    "relationTo": "media",
+    "type": "upload",
+  },
+  "name": {
+    "required": true,
+    "type": "text",
+    "unique": true,
+  },
+  "phone": {
+    "access": [
+      "read",
+    ],
+    "type": "text",
+  },
+  "site": {
+    "type": "text",
+  },
+}
+`;
+
+exports[`persistent field contracts > holiday-hours retains its stored paths and validation shape > holiday-hours 1`] = `
+{
+  "date": {
+    "required": true,
+    "type": "date",
+  },
+  "hours": {
+    "type": "group",
+  },
+  "hours.close": {
+    "type": "date",
+  },
+  "hours.open": {
+    "type": "date",
+  },
+  "locations": {
+    "hasMany": true,
+    "relationTo": "locations",
+    "required": true,
+    "type": "relationship",
+  },
+  "name": {
+    "required": true,
+    "type": "text",
+  },
+  "note": {
+    "type": "textarea",
+  },
+  "type": {
+    "defaultValue": "closed",
+    "options": [
+      "closed",
+      "modified",
+    ],
+    "required": true,
+    "type": "select",
+  },
+}
+`;
+
+exports[`persistent field contracts > job-applications retains its stored paths and validation shape > job-applications 1`] = `
+{
+  "email": {
+    "required": true,
+    "type": "email",
+  },
+  "ipHash": {
+    "index": true,
+    "type": "text",
+  },
+  "job": {
+    "index": true,
+    "relationTo": "jobs",
+    "required": true,
+    "type": "relationship",
+  },
+  "message": {
+    "maxLength": 4000,
+    "required": true,
+    "type": "textarea",
+  },
+  "name": {
+    "maxLength": 200,
+    "required": true,
+    "type": "text",
+  },
+  "phone": {
+    "maxLength": 32,
+    "required": true,
+    "type": "text",
+  },
+  "slackError": {
+    "maxLength": 200,
+    "type": "text",
+  },
+  "slackNotifiedAt": {
+    "type": "date",
+  },
+  "submissionKey": {
+    "type": "text",
+    "unique": true,
+  },
+}
+`;
+
+exports[`persistent field contracts > jobs retains its stored paths and validation shape > jobs 1`] = `
+{
+  "active": {
+    "defaultValue": true,
+    "type": "checkbox",
+  },
+  "closesOn": {
+    "type": "date",
+  },
+  "description": {
+    "required": true,
+    "type": "textarea",
+  },
+  "employmentType": {
+    "defaultValue": "full-time",
+    "options": [
+      "full-time",
+      "part-time",
+      "seasonal",
+    ],
+    "type": "select",
+  },
+  "location": {
+    "index": true,
+    "relationTo": "locations",
+    "required": true,
+    "type": "relationship",
+  },
+  "seo": {
+    "type": "group",
+  },
+  "seo.canonicalPath": {
+    "type": "text",
+    "validate": true,
+  },
+  "seo.description": {
+    "maxLength": 320,
+    "type": "textarea",
+  },
+  "seo.keywords": {
+    "hasMany": true,
+    "type": "text",
+  },
+  "seo.noIndex": {
+    "defaultValue": false,
+    "type": "checkbox",
+  },
+  "seo.ogDescription": {
+    "maxLength": 320,
+    "type": "textarea",
+  },
+  "seo.ogImage": {
+    "relationTo": "media",
+    "type": "upload",
+  },
+  "seo.ogTitle": {
+    "type": "text",
+  },
+  "seo.title": {
+    "type": "text",
+  },
+  "slug": {
+    "index": true,
+    "type": "text",
+    "unique": true,
+  },
+  "summary": {
+    "type": "textarea",
+  },
+  "title": {
+    "required": true,
+    "type": "text",
+  },
+}
+`;
+
+exports[`persistent field contracts > locations retains its stored paths and validation shape > locations 1`] = `
+{
+  "active": {
+    "access": [
+      "update",
+    ],
+    "defaultValue": true,
+    "type": "checkbox",
+  },
+  "address": {
+    "access": [
+      "update",
+    ],
+    "type": "group",
+  },
+  "address.city": {
+    "type": "text",
+  },
+  "address.directionsUrl": {
+    "type": "text",
+  },
+  "address.state": {
+    "type": "text",
+  },
+  "address.street": {
+    "type": "text",
+  },
+  "address.zip": {
+    "type": "text",
+  },
+  "aliases": {
+    "access": [
+      "update",
+    ],
+    "hasMany": true,
+    "type": "text",
+    "validate": true,
+  },
+  "basicInfo": {
+    "access": [
+      "update",
+    ],
+    "type": "group",
+  },
+  "basicInfo.email": {
+    "type": "email",
+  },
+  "basicInfo.phone": {
+    "type": "text",
+  },
+  "cansMenu": {
+    "access": [
+      "update",
+    ],
+    "relationTo": "menus",
+    "type": "relationship",
+  },
+  "coordinates": {
+    "access": [
+      "update",
+    ],
+    "type": "point",
+  },
+  "draftMenu": {
+    "access": [
+      "update",
+    ],
+    "relationTo": "menus",
+    "type": "relationship",
+  },
+  "friday.close": {
+    "type": "date",
+  },
+  "friday.open": {
+    "type": "date",
+  },
+  "images": {
+    "access": [
+      "update",
+    ],
+    "type": "group",
+  },
+  "images.card": {
+    "relationTo": "media",
+    "type": "upload",
+  },
+  "images.hero": {
+    "relationTo": "media",
+    "type": "upload",
+  },
+  "intro": {
+    "access": [
+      "update",
+    ],
+    "type": "textarea",
+  },
+  "linesLastCleaned": {
+    "access": [
+      "create",
+      "update",
+    ],
+    "type": "date",
+  },
+  "markLinesCleanedToday": {
+    "access": [
+      "create",
+      "update",
+    ],
+    "type": "checkbox",
+    "virtual": true,
+  },
+  "monday.close": {
+    "type": "date",
+  },
+  "monday.open": {
+    "type": "date",
+  },
+  "name": {
+    "access": [
+      "update",
+    ],
+    "required": true,
+    "type": "text",
+    "unique": true,
+  },
+  "saturday.close": {
+    "type": "date",
+  },
+  "saturday.open": {
+    "type": "date",
+  },
+  "seo": {
+    "type": "group",
+  },
+  "seo.canonicalPath": {
+    "type": "text",
+    "validate": true,
+  },
+  "seo.description": {
+    "maxLength": 320,
+    "type": "textarea",
+  },
+  "seo.keywords": {
+    "hasMany": true,
+    "type": "text",
+  },
+  "seo.noIndex": {
+    "defaultValue": false,
+    "type": "checkbox",
+  },
+  "seo.ogDescription": {
+    "maxLength": 320,
+    "type": "textarea",
+  },
+  "seo.ogImage": {
+    "relationTo": "media",
+    "type": "upload",
+  },
+  "seo.ogTitle": {
+    "type": "text",
+  },
+  "seo.title": {
+    "type": "text",
+  },
+  "slug": {
+    "type": "text",
+    "validate": true,
+  },
+  "sunday.close": {
+    "type": "date",
+  },
+  "sunday.open": {
+    "type": "date",
+  },
+  "thursday.close": {
+    "type": "date",
+  },
+  "thursday.open": {
+    "type": "date",
+  },
+  "timezone": {
+    "access": [
+      "update",
+    ],
+    "defaultValue": "America/New_York",
+    "options": [
+      "America/New_York",
+      "America/Chicago",
+      "America/Denver",
+      "America/Los_Angeles",
+    ],
+    "type": "select",
+  },
+  "tuesday.close": {
+    "type": "date",
+  },
+  "tuesday.open": {
+    "type": "date",
+  },
+  "wednesday.close": {
+    "type": "date",
+  },
+  "wednesday.open": {
+    "type": "date",
+  },
+}
+`;
+
+exports[`persistent field contracts > media retains its stored paths and validation shape > media 1`] = `
+{
+  "alt": {
+    "required": true,
+    "type": "text",
+  },
+}
+`;
+
+exports[`persistent field contracts > menus retains its stored paths and validation shape > menus 1`] = `
+{
+  "animateCans": {
+    "access": [
+      "update",
+    ],
+    "defaultValue": true,
+    "type": "checkbox",
+  },
+  "description": {
+    "access": [
+      "update",
+    ],
+    "type": "textarea",
+  },
+  "items": {
+    "required": true,
+    "type": "array",
+  },
+  "items.price": {
+    "type": "text",
+  },
+  "items.product": {
+    "relationTo": [
+      "beers",
+      "products",
+    ],
+    "required": false,
+    "type": "relationship",
+  },
+  "items.promotion": {
+    "maxLength": 60,
+    "type": "text",
+  },
+  "location": {
+    "access": [
+      "update",
+    ],
+    "hasMany": false,
+    "index": true,
+    "relationTo": "locations",
+    "required": true,
+    "type": "relationship",
+  },
+  "name": {
+    "access": [
+      "update",
+    ],
+    "required": true,
+    "type": "text",
+  },
+  "targetItemCount": {
+    "access": [
+      "update",
+    ],
+    "defaultValue": 10,
+    "min": 0,
+    "type": "number",
+  },
+  "themeMode": {
+    "access": [
+      "update",
+    ],
+    "defaultValue": "auto",
+    "options": [
+      "auto",
+      "light",
+      "dark",
+    ],
+    "type": "select",
+  },
+  "type": {
+    "access": [
+      "update",
+    ],
+    "index": true,
+    "options": [
+      "cans",
+      "draft",
+      "other",
+    ],
+    "required": true,
+    "type": "select",
+  },
+  "updatedBy": {
+    "access": [
+      "read",
+    ],
+    "relationTo": "users",
+    "type": "relationship",
+  },
+  "url": {
+    "access": [
+      "update",
+    ],
+    "index": true,
+    "required": true,
+    "type": "text",
+    "unique": true,
+  },
+}
+`;
+
+exports[`persistent field contracts > products retains its stored paths and validation shape > products 1`] = `
+{
+  "abv": {
+    "type": "number",
+  },
+  "category": {
+    "options": [
+      "cocktails-cider",
+      "soft-drinks",
+      "snacks-merch",
+    ],
+    "type": "select",
+  },
+  "collab": {
+    "defaultValue": false,
+    "type": "checkbox",
+  },
+  "description": {
+    "type": "textarea",
+  },
+  "guestTap": {
+    "defaultValue": false,
+    "type": "checkbox",
+  },
+  "name": {
+    "required": true,
+    "type": "text",
+  },
+  "options": {
+    "hasMany": true,
+    "type": "text",
+  },
+  "price": {
+    "type": "text",
+  },
+}
+`;
+
+exports[`persistent field contracts > recurring-events retains its stored paths and validation shape > recurring-events 1`] = `
+{
+  "active": {
+    "defaultValue": true,
+    "index": true,
+    "required": true,
+    "type": "checkbox",
+  },
+  "attendees": {
+    "access": [
+      "read",
+    ],
+    "type": "number",
+  },
+  "day": {
+    "options": [
+      "sunday",
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+    ],
+    "required": true,
+    "type": "select",
+  },
+  "description": {
+    "access": [
+      "read",
+    ],
+    "type": "textarea",
+  },
+  "email": {
+    "access": [
+      "read",
+    ],
+    "type": "email",
+  },
+  "endTime": {
+    "type": "date",
+  },
+  "excludedDates": {
+    "type": "array",
+  },
+  "excludedDates.date": {
+    "required": true,
+    "type": "date",
+  },
+  "image": {
+    "relationTo": "media",
+    "type": "upload",
+  },
+  "location": {
+    "hasMany": false,
+    "index": true,
+    "relationTo": "locations",
+    "required": true,
+    "type": "relationship",
+  },
+  "occurrences": {
+    "hasMany": true,
+    "options": [
+      "first",
+      "second",
+      "third",
+      "fourth",
+      "fifth",
+    ],
+    "required": true,
+    "type": "select",
+  },
+  "organizer": {
+    "index": true,
+    "required": true,
+    "type": "text",
+  },
+  "otherInfo": {
+    "access": [
+      "read",
+    ],
+    "type": "textarea",
+  },
+  "phone": {
+    "access": [
+      "read",
+    ],
+    "type": "text",
+  },
+  "pointOfContact": {
+    "access": [
+      "read",
+    ],
+    "type": "text",
+  },
+  "site": {
+    "type": "text",
+  },
+  "startTime": {
+    "type": "date",
+  },
+  "tags": {
+    "hasMany": true,
+    "options": [
+      "music",
+      "utensils",
+      "puzzle",
+      "sports",
+      "beer-release",
+      "mic-vocal",
+    ],
+    "type": "select",
+  },
+  "visibility": {
+    "defaultValue": "public",
+    "index": true,
+    "options": [
+      "public",
+      "private",
+    ],
+    "required": true,
+    "type": "select",
+  },
+  "year": {
+    "defaultValue": "[function]",
+    "index": true,
+    "max": 2100,
+    "min": 2000,
+    "required": true,
+    "type": "number",
+  },
+}
+`;
+
+exports[`persistent field contracts > recurring-food retains its stored paths and validation shape > recurring-food 1`] = `
+{
+  "exclusions": {
+    "defaultValue": {},
+    "type": "json",
+  },
+  "normalizedAt": {
+    "type": "date",
+  },
+  "schedules": {
+    "defaultValue": {},
+    "type": "json",
+  },
+}
+`;
+
+exports[`persistent field contracts > recurring-food-exclusions retains its stored paths and validation shape > recurring-food-exclusions 1`] = `
+{
+  "date": {
+    "index": true,
+    "required": true,
+    "type": "date",
+  },
+  "location": {
+    "index": true,
+    "relationTo": "locations",
+    "required": true,
+    "type": "relationship",
+  },
+  "reason": {
+    "type": "text",
+  },
+}
+`;
+
+exports[`persistent field contracts > recurring-food-schedules retains its stored paths and validation shape > recurring-food-schedules 1`] = `
+{
+  "active": {
+    "defaultValue": true,
+    "index": true,
+    "required": true,
+    "type": "checkbox",
+  },
+  "day": {
+    "index": true,
+    "options": [
+      "sunday",
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+    ],
+    "required": true,
+    "type": "select",
+  },
+  "location": {
+    "index": true,
+    "relationTo": "locations",
+    "required": true,
+    "type": "relationship",
+  },
+  "occurrence": {
+    "index": true,
+    "options": [
+      "first",
+      "second",
+      "third",
+      "fourth",
+      "fifth",
+    ],
+    "required": true,
+    "type": "select",
+  },
+  "vendor": {
+    "index": true,
+    "relationTo": "food-vendors",
+    "required": true,
+    "type": "relationship",
+  },
+  "year": {
+    "index": true,
+    "max": 2100,
+    "min": 2000,
+    "required": true,
+    "type": "number",
+  },
+}
+`;
+
+exports[`persistent field contracts > site-content retains its stored paths and validation shape > site-content 1`] = `
+{
+  "aboutLocations": {
+    "defaultValue": "Our flagship location in Lawrenceville is both our production brewery and taproom, where visitors can experience our beers in the space where they're created. We also have a taproom in Zelienople. A building which previously housed a Barq's bottling facility until the 1970s.
+
+Both locations offer a curated selection of our freshest draft beers and canned offerings. We regularly host food, live events, and community gatherings, creating spaces where people can connect over a good beer.",
+    "type": "textarea",
+  },
+  "aboutPhilosophy": {
+    "defaultValue": "We focus on creating beers that are purposeful and refined.
+
+Our approach combines traditional brewing techniques with modern innovation, always in service of flavor and quality. We source the finest ingredients, obsess over every detail of the brewing process, and refine our recipes.",
+    "type": "textarea",
+  },
+  "distributorOhUrl": {
+    "access": [
+      "read",
+    ],
+    "type": "text",
+    "validate": true,
+  },
+  "distributorPaUrl": {
+    "access": [
+      "read",
+    ],
+    "type": "text",
+    "validate": true,
+  },
+  "errorMessage": {
+    "defaultValue": "We encountered an unexpected error. Don't worry, your data is safe.",
+    "type": "text",
+  },
+  "heroDescription": {
+    "defaultValue": "Brewed in Pittsburgh's vibrant Lawrenceville neighborhood, housed in a historic building that has stood since 1912. Lolev focuses on modern ales, expressive lagers and oak-aged beer.
+
+We believe that beer should be thoughtful and stimulating. Each beer we create is intended to engage your senses, crafted with attention to flavor, balance, and the experience.",
+    "type": "textarea",
+  },
+  "heroImage": {
+    "relationTo": "media",
+    "type": "upload",
+  },
+  "slackChannels": {
+    "access": [
+      "read",
+    ],
+    "type": "group",
+  },
+  "slackChannels.donations": {
+    "type": "text",
+    "validate": true,
+  },
+  "slackChannels.eventInquiries": {
+    "type": "text",
+    "validate": true,
+  },
+  "slackChannels.jobs": {
+    "type": "text",
+    "validate": true,
+  },
+  "todaysEventsTitle": {
+    "defaultValue": "Today's Event",
+    "type": "text",
+  },
+  "todaysFoodTitle": {
+    "defaultValue": "Today's Food",
+    "type": "text",
+  },
+}
+`;
+
+exports[`persistent field contracts > site-seo retains its stored paths and validation shape > site-seo 1`] = `
+{
+  "defaultTitle": {
+    "type": "text",
+  },
+  "description": {
+    "maxLength": 320,
+    "type": "textarea",
+  },
+  "keywords": {
+    "hasMany": true,
+    "type": "text",
+  },
+  "ogImage": {
+    "relationTo": "media",
+    "type": "upload",
+  },
+  "pages": {
+    "type": "group",
+  },
+  "pages.about": {
+    "type": "group",
+  },
+  "pages.about.description": {
+    "maxLength": 320,
+    "type": "textarea",
+  },
+  "pages.about.keywords": {
+    "hasMany": true,
+    "type": "text",
+  },
+  "pages.about.noIndex": {
+    "defaultValue": false,
+    "type": "checkbox",
+  },
+  "pages.about.ogDescription": {
+    "maxLength": 320,
+    "type": "textarea",
+  },
+  "pages.about.ogImage": {
+    "relationTo": "media",
+    "type": "upload",
+  },
+  "pages.about.ogTitle": {
+    "type": "text",
+  },
+  "pages.about.title": {
+    "type": "text",
+  },
+  "pages.accessibility": {
+    "type": "group",
+  },
+  "pages.accessibility.description": {
+    "maxLength": 320,
+    "type": "textarea",
+  },
+  "pages.accessibility.keywords": {
+    "hasMany": true,
+    "type": "text",
+  },
+  "pages.accessibility.noIndex": {
+    "defaultValue": false,
+    "type": "checkbox",
+  },
+  "pages.accessibility.ogDescription": {
+    "maxLength": 320,
+    "type": "textarea",
+  },
+  "pages.accessibility.ogImage": {
+    "relationTo": "media",
+    "type": "upload",
+  },
+  "pages.accessibility.ogTitle": {
+    "type": "text",
+  },
+  "pages.accessibility.title": {
+    "type": "text",
+  },
+  "pages.beer": {
+    "type": "group",
+  },
+  "pages.beer.description": {
+    "maxLength": 320,
+    "type": "textarea",
+  },
+  "pages.beer.intro": {
+    "type": "textarea",
+  },
+  "pages.beer.keywords": {
+    "hasMany": true,
+    "type": "text",
+  },
+  "pages.beer.noIndex": {
+    "defaultValue": false,
+    "type": "checkbox",
+  },
+  "pages.beer.ogDescription": {
+    "maxLength": 320,
+    "type": "textarea",
+  },
+  "pages.beer.ogImage": {
+    "relationTo": "media",
+    "type": "upload",
+  },
+  "pages.beer.ogTitle": {
+    "type": "text",
+  },
+  "pages.beer.title": {
+    "type": "text",
+  },
+  "pages.beerMap": {
+    "type": "group",
+  },
+  "pages.beerMap.description": {
+    "maxLength": 320,
+    "type": "textarea",
+  },
+  "pages.beerMap.keywords": {
+    "hasMany": true,
+    "type": "text",
+  },
+  "pages.beerMap.noIndex": {
+    "defaultValue": false,
+    "type": "checkbox",
+  },
+  "pages.beerMap.ogDescription": {
+    "maxLength": 320,
+    "type": "textarea",
+  },
+  "pages.beerMap.ogImage": {
+    "relationTo": "media",
+    "type": "upload",
+  },
+  "pages.beerMap.ogTitle": {
+    "type": "text",
+  },
+  "pages.beerMap.title": {
+    "type": "text",
+  },
+  "pages.donate": {
+    "type": "group",
+  },
+  "pages.donate.description": {
+    "maxLength": 320,
+    "type": "textarea",
+  },
+  "pages.donate.keywords": {
+    "hasMany": true,
+    "type": "text",
+  },
+  "pages.donate.noIndex": {
+    "defaultValue": false,
+    "type": "checkbox",
+  },
+  "pages.donate.ogDescription": {
+    "maxLength": 320,
+    "type": "textarea",
+  },
+  "pages.donate.ogImage": {
+    "relationTo": "media",
+    "type": "upload",
+  },
+  "pages.donate.ogTitle": {
+    "type": "text",
+  },
+  "pages.donate.title": {
+    "type": "text",
+  },
+  "pages.events": {
+    "type": "group",
+  },
+  "pages.events.description": {
+    "maxLength": 320,
+    "type": "textarea",
+  },
+  "pages.events.intro": {
+    "type": "textarea",
+  },
+  "pages.events.keywords": {
+    "hasMany": true,
+    "type": "text",
+  },
+  "pages.events.noIndex": {
+    "defaultValue": false,
+    "type": "checkbox",
+  },
+  "pages.events.ogDescription": {
+    "maxLength": 320,
+    "type": "textarea",
+  },
+  "pages.events.ogImage": {
+    "relationTo": "media",
+    "type": "upload",
+  },
+  "pages.events.ogTitle": {
+    "type": "text",
+  },
+  "pages.events.title": {
+    "type": "text",
+  },
+  "pages.faq": {
+    "type": "group",
+  },
+  "pages.faq.description": {
+    "maxLength": 320,
+    "type": "textarea",
+  },
+  "pages.faq.keywords": {
+    "hasMany": true,
+    "type": "text",
+  },
+  "pages.faq.noIndex": {
+    "defaultValue": false,
+    "type": "checkbox",
+  },
+  "pages.faq.ogDescription": {
+    "maxLength": 320,
+    "type": "textarea",
+  },
+  "pages.faq.ogImage": {
+    "relationTo": "media",
+    "type": "upload",
+  },
+  "pages.faq.ogTitle": {
+    "type": "text",
+  },
+  "pages.faq.title": {
+    "type": "text",
+  },
+  "pages.food": {
+    "type": "group",
+  },
+  "pages.food.description": {
+    "maxLength": 320,
+    "type": "textarea",
+  },
+  "pages.food.intro": {
+    "type": "textarea",
+  },
+  "pages.food.keywords": {
+    "hasMany": true,
+    "type": "text",
+  },
+  "pages.food.noIndex": {
+    "defaultValue": false,
+    "type": "checkbox",
+  },
+  "pages.food.ogDescription": {
+    "maxLength": 320,
+    "type": "textarea",
+  },
+  "pages.food.ogImage": {
+    "relationTo": "media",
+    "type": "upload",
+  },
+  "pages.food.ogTitle": {
+    "type": "text",
+  },
+  "pages.food.title": {
+    "type": "text",
+  },
+  "pages.home": {
+    "type": "group",
+  },
+  "pages.home.description": {
+    "maxLength": 320,
+    "type": "textarea",
+  },
+  "pages.home.keywords": {
+    "hasMany": true,
+    "type": "text",
+  },
+  "pages.home.noIndex": {
+    "defaultValue": false,
+    "type": "checkbox",
+  },
+  "pages.home.ogDescription": {
+    "maxLength": 320,
+    "type": "textarea",
+  },
+  "pages.home.ogImage": {
+    "relationTo": "media",
+    "type": "upload",
+  },
+  "pages.home.ogTitle": {
+    "type": "text",
+  },
+  "pages.home.title": {
+    "type": "text",
+  },
+  "pages.jobs": {
+    "type": "group",
+  },
+  "pages.jobs.description": {
+    "maxLength": 320,
+    "type": "textarea",
+  },
+  "pages.jobs.keywords": {
+    "hasMany": true,
+    "type": "text",
+  },
+  "pages.jobs.noIndex": {
+    "defaultValue": false,
+    "type": "checkbox",
+  },
+  "pages.jobs.ogDescription": {
+    "maxLength": 320,
+    "type": "textarea",
+  },
+  "pages.jobs.ogImage": {
+    "relationTo": "media",
+    "type": "upload",
+  },
+  "pages.jobs.ogTitle": {
+    "type": "text",
+  },
+  "pages.jobs.title": {
+    "type": "text",
+  },
+  "pages.privacy": {
+    "type": "group",
+  },
+  "pages.privacy.description": {
+    "maxLength": 320,
+    "type": "textarea",
+  },
+  "pages.privacy.keywords": {
+    "hasMany": true,
+    "type": "text",
+  },
+  "pages.privacy.noIndex": {
+    "defaultValue": false,
+    "type": "checkbox",
+  },
+  "pages.privacy.ogDescription": {
+    "maxLength": 320,
+    "type": "textarea",
+  },
+  "pages.privacy.ogImage": {
+    "relationTo": "media",
+    "type": "upload",
+  },
+  "pages.privacy.ogTitle": {
+    "type": "text",
+  },
+  "pages.privacy.title": {
+    "type": "text",
+  },
+  "pages.terms": {
+    "type": "group",
+  },
+  "pages.terms.description": {
+    "maxLength": 320,
+    "type": "textarea",
+  },
+  "pages.terms.keywords": {
+    "hasMany": true,
+    "type": "text",
+  },
+  "pages.terms.noIndex": {
+    "defaultValue": false,
+    "type": "checkbox",
+  },
+  "pages.terms.ogDescription": {
+    "maxLength": 320,
+    "type": "textarea",
+  },
+  "pages.terms.ogImage": {
+    "relationTo": "media",
+    "type": "upload",
+  },
+  "pages.terms.ogTitle": {
+    "type": "text",
+  },
+  "pages.terms.title": {
+    "type": "text",
+  },
+  "titleTemplate": {
+    "type": "text",
+  },
+  "twitterCreator": {
+    "type": "text",
+  },
+  "twitterSite": {
+    "type": "text",
+  },
+}
+`;
+
+exports[`persistent field contracts > styles retains its stored paths and validation shape > styles 1`] = `
+{
+  "name": {
+    "required": true,
+    "type": "text",
+    "unique": true,
+  },
+}
+`;
+
+exports[`persistent field contracts > tags retains its stored paths and validation shape > tags 1`] = `
+{
+  "name": {
+    "required": true,
+    "type": "text",
+    "unique": true,
+  },
+}
+`;
+
+exports[`persistent field contracts > users retains its stored paths and validation shape > users 1`] = `
+{
+  "locations": {
+    "access": [
+      "create",
+      "read",
+      "update",
+    ],
+    "hasMany": true,
+    "relationTo": "locations",
+    "type": "relationship",
+  },
+  "name": {
+    "type": "text",
+  },
+  "roles": {
+    "access": [
+      "create",
+      "read",
+      "update",
+    ],
+    "defaultValue": [
+      "bartender",
+    ],
+    "hasMany": true,
+    "options": [
+      "admin",
+      "event-manager",
+      "beer-manager",
+      "food-manager",
+      "lead-bartender",
+      "bartender",
+    ],
+    "required": true,
+    "type": "select",
+  },
+  "slackUserId": {
+    "access": [
+      "read",
+      "update",
+    ],
+    "index": true,
+    "type": "text",
+    "unique": true,
+  },
+}
+`;

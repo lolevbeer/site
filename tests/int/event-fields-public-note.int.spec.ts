@@ -4,12 +4,13 @@
  * the public site, REST API, RSS, and JSON-LD never see it. `otherInfo` is
  * event-manager-read-only and is available on public events too.
  */
+import { findPayloadField } from '../helpers/payload-fields'
 import { describe, expect, it } from 'vitest'
 import type { Field, FieldAccess } from 'payload'
 import { eventDetailFields } from '@/src/collections/shared/event-fields'
 
 const field = (name: string) =>
-  eventDetailFields.find((f) => 'name' in f && f.name === name) as Field & {
+  findPayloadField(eventDetailFields, name) as Field & {
     admin?: { description?: string; condition?: unknown }
     access?: { read?: FieldAccess }
   }
