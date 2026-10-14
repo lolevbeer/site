@@ -1,3 +1,4 @@
+import { validateDistributorImportUrl } from '@/lib/distributors/import-source'
 import type { GlobalConfig } from 'payload'
 import { adminAccess, adminFieldAccess } from '@/src/access/roles'
 import { isSlackChannel } from '@/lib/slack/mrkdwn'
@@ -131,6 +132,7 @@ export const SiteContent: GlobalConfig = {
           fields: [
             {
               name: 'distributorPaUrl',
+              validate: validateDistributorImportUrl,
               type: 'text',
               label: 'Pennsylvania JSON URL',
               access: {
@@ -142,6 +144,7 @@ export const SiteContent: GlobalConfig = {
             },
             {
               name: 'distributorOhUrl',
+              validate: validateDistributorImportUrl,
               type: 'text',
               label: 'Ohio JSON URL',
               access: {

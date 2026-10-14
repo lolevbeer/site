@@ -27,9 +27,10 @@ async function importSeed(environment: Partial<Record<(typeof e2eEnvironment)[nu
 }
 
 describe('isDisposableDatabase', () => {
-  it('permits only local databases or explicitly marked remote e2e databases', () => {
-    expect(isDisposableDatabase('mongodb://127.0.0.1:27017/test', undefined)).toBe(true)
-    expect(isDisposableDatabase('mongodb://localhost:27017/test', undefined)).toBe(true)
+  it('requires explicit disposable intent and a test database name even on loopback', () => {
+    expect(isDisposableDatabase('mongodb://127.0.0.1:27017/test', undefined)).toBe(false)
+    expect(isDisposableDatabase('mongodb://localhost:27017/test', '1')).toBe(false)
+    expect(isDisposableDatabase('mongodb://localhost:27017/release-ci', '1')).toBe(true)
     expect(isDisposableDatabase('mongodb+srv://cluster.example/release-ci', '1')).toBe(true)
     expect(isDisposableDatabase('mongodb+srv://cluster.example/test', '1')).toBe(false)
     expect(isDisposableDatabase('mongodb+srv://cluster.example/release-ci', undefined)).toBe(false)
@@ -63,6 +64,7 @@ describe('seed-e2e execution guard', () => {
     await expect(
       importSeed({
         DATABASE_URI: 'mongodb://127.0.0.1:27017/release-e2e',
+        E2E_DISPOSABLE_DATABASE: '1',
         E2E_ADMIN_EMAIL: 'release-smoke@example.test',
         E2E_ADMIN_PASSWORD: 'password',
         PAYLOAD_DROP_DATABASE: 'true',
@@ -80,6 +82,7 @@ describe('seed-e2e execution guard', () => {
     await expect(
       importSeed({
         DATABASE_URI: 'mongodb://127.0.0.1:27017/release-e2e',
+        E2E_DISPOSABLE_DATABASE: '1',
         E2E_ADMIN_EMAIL: 'release-smoke@example.test',
         E2E_ADMIN_PASSWORD: 'password',
       }),

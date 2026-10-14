@@ -38,7 +38,9 @@ const admin = { id: 'admin-id', collection: 'users', roles: ['admin'] } as unkno
 function mockPayload(existing: unknown[] = []) {
   return {
     find: vi.fn(async () => ({ docs: existing })),
-    findGlobal: vi.fn(async () => ({ distributorOhUrl: 'https://example.com/oh.json' })),
+    findGlobal: vi.fn(async () => ({
+      distributorOhUrl: 'https://sixthcity.encompass8.com/oh.json',
+    })),
     update: vi.fn(async () => ({})),
     create: vi.fn(async (args: { data: Record<string, unknown> }) => ({ id: 'new', ...args.data })),
   }

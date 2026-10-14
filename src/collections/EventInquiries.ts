@@ -23,6 +23,7 @@ export const EventInquiries: CollectionConfig = {
     description: 'Private-event inquiries from /events. Rows are created only by the public form.',
   },
   fields: [
+    { name: 'submissionKey', type: 'text', unique: true, admin: { hidden: true } },
     {
       name: 'status',
       type: 'select',

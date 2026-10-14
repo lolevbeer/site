@@ -778,6 +778,7 @@ export interface Event {
  */
 export interface DonationRequest {
   id: string;
+  submissionKey?: string | null;
   status?: ('new' | 'approved' | 'declined') | null;
   askType: 'product' | 'taproom-night';
   organizationName: string;
@@ -907,6 +908,7 @@ export interface Job {
  */
 export interface JobApplication {
   id: string;
+  submissionKey?: string | null;
   job: string | Job;
   name: string;
   email: string;
@@ -1648,6 +1650,7 @@ export interface EventsSelect<T extends boolean = true> {
  * via the `definition` "donation-requests_select".
  */
 export interface DonationRequestsSelect<T extends boolean = true> {
+  submissionKey?: T;
   status?: T;
   askType?: T;
   organizationName?: T;
@@ -1725,6 +1728,7 @@ export interface JobsSelect<T extends boolean = true> {
  * via the `definition` "job-applications_select".
  */
 export interface JobApplicationsSelect<T extends boolean = true> {
+  submissionKey?: T;
   job?: T;
   name?: T;
   email?: T;

@@ -1,7 +1,7 @@
 /**
  * Private-event inquiry action: honeypot does not write; success writes the
- * inbox row (never an Event) and pings Slack in after(); duplicates, rate
- * limits, and unknown taprooms do not write.
+ * inbox row (never an Event) and pings Slack in after(); exact retries, the
+ * durable IP limit, and unknown taprooms do not write.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -10,6 +10,7 @@ const create = vi.fn()
 const find = vi.fn()
 const update = vi.fn()
 const slackApi = vi.fn()
+const reserveIpHashSlot = vi.fn()
 
 vi.mock('next/server', () => ({
   after: (fn: () => Promise<void>) => {
@@ -25,6 +26,9 @@ vi.mock('payload', () => ({
   getPayload: vi.fn(async () => ({ find, create, update, findGlobal: async () => ({}) })),
 }))
 vi.mock('@/src/payload.config', () => ({ default: {} }))
+vi.mock('@/lib/public-forms/durable-limit', () => ({
+  reserveIpHashSlot: (...args: unknown[]) => reserveIpHashSlot(...args),
+}))
 vi.mock('@/src/utils/slack-api', () => ({
   slackApi: (...args: unknown[]) => slackApi(...args),
 }))
@@ -37,12 +41,7 @@ vi.mock('@/lib/config/server-env', () => ({
 
 import { submitEventInquiry } from '@/src/actions/event-inquiry'
 import { emptyEventInquiry } from '@/lib/events/inquiry'
-import {
-  PUBLIC_FORM_EMAIL_LIMIT_MESSAGE,
-  PUBLIC_FORM_IP_LIMIT_MESSAGE,
-  PUBLIC_FORM_IP_MAX,
-  resetPublicFormRateLimit,
-} from '@/lib/public-forms/rate-limit'
+import { PUBLIC_FORM_IP_LIMIT_MESSAGE } from '@/lib/public-forms/rate-limit'
 import { getDateEST } from '@/lib/utils/date'
 
 function valid() {
@@ -74,7 +73,8 @@ describe('submitEventInquiry', () => {
     find.mockReset()
     update.mockReset()
     slackApi.mockReset()
-    resetPublicFormRateLimit()
+    reserveIpHashSlot.mockReset()
+    reserveIpHashSlot.mockResolvedValue(async () => {})
     find.mockImplementation(async (args: { collection: string }) => {
       if (args.collection === 'locations') {
         return { docs: [{ id: 'loc-1', slug: 'lawrenceville', name: 'Lawrenceville' }] }
@@ -128,54 +128,38 @@ describe('submitEventInquiry', () => {
     expect(getDateEST(new Date(stored))).toBe('2026-11-20')
   })
 
-  it('suppresses a recent duplicate (case-insensitive email, same day) without writing', async () => {
+  it('acknowledges an exact retry by submissionKey without writing', async () => {
     find.mockImplementation(async (args: { collection: string; where?: unknown }) => {
       if (args.collection === 'locations') {
         return { docs: [{ id: 'loc-1', slug: 'lawrenceville', name: 'Lawrenceville' }] }
       }
-      const where = JSON.stringify(args.where)
-      if (where.includes('"email"')) {
-        return { docs: [{ id: 'old', createdAt: new Date().toISOString() }] }
-      }
+      if (JSON.stringify(args.where).includes('submissionKey')) return { docs: [{ id: 'old' }] }
       return { docs: [] }
     })
     const result = await submitEventInquiry({ ...valid(), email: 'Alex@Example.org' })
     expect(result).toEqual({ ok: true })
     expect(create).not.toHaveBeenCalled()
-    const dupe = find.mock.calls.find(([a]) => JSON.stringify(a.where).includes('"email"'))
-    expect(JSON.stringify(dupe?.[0].where)).toContain('alex@example.org')
-    expect(JSON.stringify(dupe?.[0].where)).toContain('2026-11-20T17:00:00.000Z')
+    expect(afterFns).toHaveLength(0)
   })
 
-  it('refuses when the durable ipHash limit is reached', async () => {
-    find.mockImplementation(async (args: { collection: string; where?: unknown }) => {
-      if (args.collection === 'locations') {
-        return { docs: [{ id: 'loc-1', slug: 'lawrenceville', name: 'Lawrenceville' }] }
-      }
-      if (JSON.stringify(args.where).includes('ipHash')) {
-        return { docs: Array.from({ length: PUBLIC_FORM_IP_MAX }, (_, i) => ({ id: `r${i}` })) }
-      }
-      return { docs: [] }
+  it('stores a submissionKey and ipHash with the row', async () => {
+    await submitEventInquiry(valid())
+    expect(create.mock.calls[0][0].data).toMatchObject({
+      submissionKey: expect.stringMatching(/^[0-9a-f]{64}$/),
+      ipHash: expect.any(String),
     })
+    expect(reserveIpHashSlot).toHaveBeenCalledWith(
+      expect.anything(),
+      'event-inquiries',
+      expect.any(String),
+    )
+  })
+
+  it('refuses when no durable ipHash slot is free', async () => {
+    reserveIpHashSlot.mockResolvedValue(null)
     const result = await submitEventInquiry(valid())
     expect(result).toMatchObject({ ok: false, error: PUBLIC_FORM_IP_LIMIT_MESSAGE })
     expect(create).not.toHaveBeenCalled()
-  })
-
-  it('refuses past the in-memory per-IP limit', async () => {
-    for (let i = 0; i < PUBLIC_FORM_IP_MAX; i++) {
-      await submitEventInquiry({ ...valid(), email: `guest${i}@example.org` })
-    }
-    const result = await submitEventInquiry({ ...valid(), email: 'late@example.org' })
-    expect(result).toMatchObject({ ok: false, error: PUBLIC_FORM_IP_LIMIT_MESSAGE })
-    expect(create).toHaveBeenCalledTimes(PUBLIC_FORM_IP_MAX)
-  })
-
-  it('refuses a second inquiry from the same email inside the window', async () => {
-    await submitEventInquiry(valid())
-    const result = await submitEventInquiry({ ...valid(), email: 'ALEX@example.org' })
-    expect(result).toMatchObject({ ok: false, error: PUBLIC_FORM_EMAIL_LIMIT_MESSAGE })
-    expect(create).toHaveBeenCalledTimes(1)
   })
 
   it('rejects a taproom that is not an active location', async () => {
