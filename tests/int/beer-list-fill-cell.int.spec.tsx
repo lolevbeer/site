@@ -1,38 +1,39 @@
 /**
  * Beers list cells: an empty Untappd URL or Tag can be filled straight from
- * /admin/collections/beers. Untappd opens a drawer of search results with a
- * recommended match; Tag uses Payload's select. A beer whose latest version
+ * /admin/collections/beers. Both use Payload's select: Untappd searches by
+ * the beer's name (or typed text) and lists the exact name match first. A beer whose latest version
  * is a draft saves as a draft, so filling a blank never publishes someone's
  * unfinished edits.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import type { ComponentProps, ReactNode } from 'react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type { DefaultCellComponentProps } from 'payload'
 import { TagCell, UntappdCell } from '@/src/components/admin/BeerListFillCell'
 
 type Opt = { label: string; value: string }
-const state = vi.hoisted(() => ({ canUpdate: true, refresh: vi.fn(), openModal: vi.fn() }))
+const state = vi.hoisted(() => ({ canUpdate: true, refresh: vi.fn() }))
 vi.mock('@payloadcms/ui', () => ({
   useAuth: () => ({
     permissions: { collections: { beers: state.canUpdate ? { update: true } : {} } },
   }),
-  useModal: () => ({ openModal: state.openModal, closeModal: vi.fn() }),
-  useDrawerSlug: (slug: string) => slug,
   DefaultCell: ({ cellData }: { cellData: unknown }) => <span>default:{String(cellData)}</span>,
-  Drawer: ({ children, title }: { children: ReactNode; title: string }) => (
-    <section aria-label={title}>{children}</section>
-  ),
-  Button: ({
-    buttonStyle: _style,
-    size: _size,
-    margin: _margin,
-    ...props
-  }: ComponentProps<'button'> & { buttonStyle?: string; size?: string; margin?: boolean }) => (
-    <button {...props} />
-  ),
-  Select: ({ options, onChange }: { options: Opt[]; onChange: (o: Opt) => void }) => (
+  // Stand-in for Payload's react-select: a menu opener, the search input, and one button per option.
+  Select: ({
+    options,
+    onChange,
+    onMenuOpen,
+    onInputChange,
+    'aria-label': label,
+  }: {
+    options: Opt[]
+    onChange: (o: Opt) => void
+    onMenuOpen?: () => void
+    onInputChange?: (v: string) => void
+    'aria-label'?: string
+  }) => (
     <div>
+      <button onClick={onMenuOpen}>open:{label}</button>
+      <input aria-label={`search:${label}`} onChange={(e) => onInputChange?.(e.target.value)} />
       {options.map((o) => (
         <button key={o.value} onClick={() => onChange(o)}>
           option:{o.label}
@@ -58,7 +59,6 @@ const searchResults = [
 beforeEach(() => {
   state.canUpdate = true
   state.refresh.mockReset()
-  state.openModal.mockReset()
   vi.stubGlobal(
     'fetch',
     vi.fn(async (url: string) => ({
@@ -86,25 +86,36 @@ describe('Beers list fill cells', () => {
   it('shows nothing editable to users who cannot update beers', () => {
     state.canUpdate = false
     render(<UntappdCell {...props(null, 'published')} />)
-    expect(screen.queryByRole('button')).toBeNull()
+    expect(screen.queryByRole('textbox')).toBeNull()
   })
 
-  it('searches Untappd by beer name and recommends the exact name match', async () => {
+  it('searches Untappd by beer name on open and lists the exact name match first', async () => {
     render(<UntappdCell {...props(null, 'published')} />)
-    fireEvent.click(screen.getByRole('button', { name: 'Find on Untappd' }))
-    expect(state.openModal).toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'open:Untappd URL' }))
+    const first = await screen.findByRole('button', { name: /^option:★ Lupula/ })
     expect(fetch).toHaveBeenCalledWith('/api/untappd?action=search&q=Lupula', expect.anything())
+    const options = screen.getAllByRole('button', { name: /^option:/ })
+    expect(options[0]).toBe(first)
+    expect(options[1].textContent).toContain('Lupula Light')
+  })
 
-    const recommended = await screen.findByText('Recommended')
-    const row = recommended.closest('li') as HTMLElement
-    expect(within(row).getByText('Lupula')).toBeTruthy()
+  it('searches again with typed text', async () => {
+    render(<UntappdCell {...props(null, 'published')} />)
+    fireEvent.change(screen.getByRole('textbox', { name: 'search:Untappd URL' }), {
+      target: { value: 'Lupula IPA' },
+    })
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith(
+        '/api/untappd?action=search&q=Lupula%20IPA',
+        expect.anything(),
+      ),
+    )
   })
 
   it('saves the chosen result on a published beer as a normal update', async () => {
     render(<UntappdCell {...props(null, 'published')} />)
-    fireEvent.click(screen.getByRole('button', { name: 'Find on Untappd' }))
-    const row = (await screen.findByText('Recommended')).closest('li') as HTMLElement
-    fireEvent.click(within(row).getByRole('button', { name: 'Use this' }))
+    fireEvent.click(screen.getByRole('button', { name: 'open:Untappd URL' }))
+    fireEvent.click(await screen.findByRole('button', { name: /^option:★ Lupula/ }))
     await waitFor(() => expect(state.refresh).toHaveBeenCalled())
     expect(fetch).toHaveBeenCalledWith(
       '/api/beers/beer-1',

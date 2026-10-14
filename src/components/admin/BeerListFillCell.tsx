@@ -3,28 +3,20 @@
 /**
  * Beers list-view cells for the Untappd URL and Tag columns. A filled cell
  * renders Payload's DefaultCell; an empty one, for users who may update beers,
- * offers a Payload-native way to fill it without opening each beer:
- * - Untappd: a button that searches Untappd by the beer's name (the same
- *   /api/untappd search the edit view's UntappdFetcher uses) and lists the
- *   results in a drawer, marking an exact name match as recommended.
- * - Tag: Payload's Select over the existing tags.
+ * offers Payload's Select so blanks can be filled without opening each beer:
+ * - Untappd: opening the select searches Untappd by the beer's name (the same
+ *   /api/untappd search the edit view's UntappdFetcher uses); typing searches
+ *   again. An exact name match is listed first and marked ★.
+ * - Tag: the existing tags.
  *
  * Saves PATCH /api/beers/:id, which runs Beers' access rules and hooks (the
  * Untappd URL triggers the rating fetch). Payload merges a PATCH over the
  * latest version, so a beer whose latest version is a draft must save with
  * ?draft=true; otherwise the merge would publish the pending draft.
  */
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import {
-  Button,
-  DefaultCell,
-  Drawer,
-  Select,
-  useAuth,
-  useDrawerSlug,
-  useModal,
-} from '@payloadcms/ui'
+import { DefaultCell, Select, useAuth } from '@payloadcms/ui'
 import type { DefaultCellComponentProps } from 'payload'
 
 type RowData = DefaultCellComponentProps['rowData']
@@ -80,108 +72,91 @@ function ErrorText({ error }: { error: string | null }) {
 }
 
 type UntappdResult = { name: string; url: string; brewery?: string }
+type Option = { label: string; value: string }
 
 const normalizeName = (name: string) => name.trim().toLowerCase()
 
+/** Exact (case-insensitive) name match first, marked ★; a lone result counts as the match. */
+function toOptions(results: UntappdResult[], beerName: string): Option[] {
+  const isMatch = (r: UntappdResult) =>
+    results.length === 1 || normalizeName(r.name) === normalizeName(beerName)
+  return [...results]
+    .sort((a, b) => Number(isMatch(b)) - Number(isMatch(a)))
+    .map((r) => ({
+      label: `${isMatch(r) ? '★ ' : ''}${r.name}${r.brewery ? ` · ${r.brewery}` : ''}`,
+      value: r.url,
+    }))
+}
+
 export function UntappdCell(props: DefaultCellComponentProps) {
   const canUpdate = useCanUpdateBeers()
-  const { openModal, closeModal } = useModal()
-  const drawerSlug = useDrawerSlug(`untappd-${props.rowData.id}`)
-  const [results, setResults] = useState<UntappdResult[] | null>(null)
+  const beerName = String(props.rowData.name ?? '')
+  const [options, setOptions] = useState<Option[] | null>(null)
+  const [loading, setLoading] = useState(false)
   const [searchError, setSearchError] = useState<string | null>(null)
   const { save, saving, error } = useSaveBeerField(props.rowData, 'untappd')
+  const lastQuery = useRef<string | null>(null)
+  const debounce = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+
+  useEffect(() => () => clearTimeout(debounce.current), [])
 
   if (!isEmpty(props.cellData)) return <DefaultCell {...props} />
   if (!canUpdate) return null
 
-  const beerName = String(props.rowData.name ?? '')
-
-  async function search() {
-    openModal(drawerSlug)
-    setResults(null)
+  // Untappd rate-limits us, so search only when asked: on open (by beer name)
+  // and on typed text, debounced, never for every row on page load.
+  async function search(query: string) {
+    const q = query.trim()
+    if (!q || q === lastQuery.current) return
+    lastQuery.current = q
+    setLoading(true)
     setSearchError(null)
     try {
-      const res = await fetch(`/api/untappd?action=search&q=${encodeURIComponent(beerName)}`, {
+      const res = await fetch(`/api/untappd?action=search&q=${encodeURIComponent(q)}`, {
         credentials: 'same-origin',
       })
       const body = (await res.json()) as { results?: UntappdResult[]; error?: string }
       if (!res.ok) throw new Error(body.error || `Search failed (${res.status})`)
-      setResults(body.results ?? [])
+      // A newer query superseded this one while it was in flight.
+      if (lastQuery.current === q) setOptions(toOptions(body.results ?? [], beerName))
     } catch (err) {
+      lastQuery.current = null
       setSearchError(err instanceof Error ? err.message : 'Search failed')
+    } finally {
+      setLoading(false)
     }
   }
 
-  async function choose(url: string) {
-    if (await save(url)) closeModal(drawerSlug)
-  }
-
-  // Exact (case-insensitive) name match is the recommendation, listed first;
-  // with a single result that one is the recommendation.
-  const recommendedUrl =
-    results?.length === 1
-      ? results[0].url
-      : results?.find((r) => normalizeName(r.name) === normalizeName(beerName))?.url
-  const ordered = results
-    ? [...results].sort(
-        (a, b) => Number(b.url === recommendedUrl) - Number(a.url === recommendedUrl),
-      )
-    : null
-
   return (
-    <>
-      <Button buttonStyle="secondary" size="medium" margin={false} onClick={search}>
-        Find on Untappd
-      </Button>
-      <Drawer slug={drawerSlug} title={`Untappd matches for “${beerName}”`}>
-        {searchError && <ErrorText error={searchError} />}
-        {!searchError && !ordered && <p>Searching Untappd…</p>}
-        {ordered?.length === 0 && <p>No Untappd results for “{beerName}”.</p>}
-        {ordered && ordered.length > 0 && (
-          <ul style={{ listStyle: 'none', padding: 0, display: 'grid', gap: 12 }}>
-            {ordered.map((result) => (
-              <li
-                key={result.url}
-                style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}
-              >
-                <span style={{ flex: 1, minWidth: 200 }}>
-                  <strong>{result.name}</strong>
-                  {result.url === recommendedUrl && (
-                    <span style={{ color: 'var(--theme-success-500)', marginLeft: 8 }}>
-                      Recommended
-                    </span>
-                  )}
-                  <br />
-                  <a href={result.url} target="_blank" rel="noreferrer">
-                    {result.brewery ? `${result.brewery} · ` : ''}
-                    {result.url.replace('https://untappd.com', '')}
-                  </a>
-                </span>
-                <Button
-                  buttonStyle={result.url === recommendedUrl ? 'primary' : 'secondary'}
-                  size="medium"
-                  margin={false}
-                  disabled={saving}
-                  onClick={() => void choose(result.url)}
-                >
-                  Use this
-                </Button>
-              </li>
-            ))}
-          </ul>
-        )}
-        <ErrorText error={error} />
-      </Drawer>
-    </>
+    <div style={{ minWidth: 220 }}>
+      <Select
+        aria-label="Untappd URL"
+        placeholder="Find on Untappd…"
+        options={options ?? []}
+        isLoading={loading}
+        disabled={saving}
+        // Untappd already filtered server-side; don't hide results that don't contain the typed text.
+        filterOption={() => true}
+        noOptionsMessage={() => (loading ? 'Searching Untappd…' : 'No Untappd results')}
+        menuPortalTarget={typeof document === 'undefined' ? null : document.body}
+        onMenuOpen={() => void search(beerName)}
+        onInputChange={(text) => {
+          clearTimeout(debounce.current)
+          debounce.current = setTimeout(() => void search(text || beerName), 400)
+        }}
+        onChange={(option) => {
+          if (!Array.isArray(option) && typeof option?.value === 'string') void save(option.value)
+        }}
+      />
+      <ErrorText error={searchError ?? error} />
+    </div>
   )
 }
-
-type TagOption = { label: string; value: string }
 
 export function TagCell(props: DefaultCellComponentProps) {
   const canUpdate = useCanUpdateBeers()
   const empty = isEmpty(props.cellData)
-  const [tags, setTags] = useState<TagOption[] | null>(null)
+  const [tags, setTags] = useState<Option[] | null>(null)
   const { save, saving, error } = useSaveBeerField(props.rowData, 'tag')
 
   // ponytail: one tags fetch per empty row; share a cache if the list grows past a page of blanks.
