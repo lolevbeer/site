@@ -21,7 +21,7 @@ export function FaqContactSection() {
   const selectedPhone = selected?.basicInfo?.phone
 
   return (
-    <section className="border-t border-border pt-12">
+    <section className="pt-12">
       <h2 className="text-2xl font-semibold text-center text-balance mb-3">
         Still have questions?
       </h2>

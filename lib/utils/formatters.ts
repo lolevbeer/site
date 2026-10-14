@@ -220,7 +220,8 @@ function dateKey(dateString: string): string {
   return dateString.split('T')[0]
 }
 
-function addEstDays(ymd: string, days: number): string {
+/** The YYYY-MM-DD date `days` after `ymd`. */
+export function addEstDays(ymd: string, days: number): string {
   const [year, month, day] = ymd.split('-').map(Number)
   return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10)
 }
@@ -233,15 +234,22 @@ export function isTomorrow(dateString: string): boolean {
   return dateKey(dateString) === addEstDays(getTodayEST(), 1)
 }
 
-/** "Today", "Tomorrow", or the full date — the one day label used site-wide. */
-export function formatDayLabel(dateString: string): string {
-  if (isToday(dateString)) return 'Today'
-  if (isTomorrow(dateString)) return 'Tomorrow'
+/**
+ * "Today", "Tomorrow", or the full date — the one day label used site-wide.
+ * `today` comes from `useTodayEST()`; while it is `null` (server HTML and
+ * hydration) the label is always the full date, so a page cached before
+ * midnight never says "Today" about yesterday.
+ */
+export function formatDayLabel(dateString: string, today: string | null): string {
+  const key = dateKey(dateString)
+  if (key === today) return 'Today'
+  if (today && key === addEstDays(today, 1)) return 'Tomorrow'
   return formatDate(dateString, 'full')
 }
 
-export function isTodayOrFuture(dateString: string): boolean {
-  return dateKey(dateString) >= getTodayEST()
+/** On or after `today`, which callers take from `useTodayEST()` (never a render-time date). */
+export function isTodayOrFuture(dateString: string, today: string): boolean {
+  return dateKey(dateString) >= today
 }
 
 export function getBeerSlug(beer: Beer): string {

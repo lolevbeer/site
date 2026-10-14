@@ -63,7 +63,8 @@ export default function AccessibilityPage() {
           <ul>
             <li>
               The beer map is Mapbox. Map controls and popups can be harder with a keyboard
-              or screen reader. Store names and addresses are also listed beside the map.
+              or screen reader. Store names and addresses are also listed as text: beside the
+              map on wider screens, and behind the List button above the map on phones.
             </li>
             <li>
               Some beer pages include a 3D can. That is decorative; the beer information is

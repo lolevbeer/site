@@ -21,7 +21,7 @@
  */
 
 import { cache } from 'react'
-import { getPayload } from 'payload'
+import { getPayload, type Where } from 'payload'
 import config from '@/src/payload.config'
 import { unstable_cache } from 'next/cache'
 import {
@@ -116,7 +116,7 @@ export const BEERS_LIST_SELECT = {
 const BEERS_LIST_POPULATE = {
   styles: { name: true },
   tags: { name: true },
-  media: { url: true, sizes: true, filename: true, prefix: true },
+  media: { url: true, variants: true, filename: true, prefix: true, _objectKey: true },
 } as const
 
 /** Catalog/sitemap/RSS beer: `BEERS_LIST_SELECT` plus Payload `id`. */
@@ -308,12 +308,12 @@ async function getLocationMenu(
   )()
 }
 
-/** Get the location's selected draft menu for the homepage and taproom page. */
+/** Get the location's selected draft menu (homepage, taproom page, beer page availability). */
 export async function getDraftMenu(locationSlug: string): Promise<PayloadMenu | null> {
   return getLocationMenu(locationSlug, 'draft')
 }
 
-/** Get the location's selected cans menu for the homepage and taproom page. */
+/** Get the location's selected cans menu (homepage, taproom page, beer page availability). */
 export async function getCansMenu(locationSlug: string): Promise<PayloadMenu | null> {
   const cansMenu = await getLocationMenu(locationSlug, 'cans')
 
@@ -382,9 +382,10 @@ const MENU_POPULATE = {
     updatedAt: true,
   },
   styles: { name: true },
-  // filename/prefix feed the Vercel Blob adapter's computed `url` — without
-  // them populated media docs come back with url: null.
-  media: { url: true, sizes: true, filename: true, prefix: true },
+  // filename/prefix/_objectKey feed the Vercel Blob adapter's computed `url`
+  // (Payload 4 stores new uploads under an `_objectKey` folder). The plugin also
+  // adds them whenever `url` is selected; listed so a trimmed select keeps them.
+  media: { url: true, variants: true, filename: true, prefix: true, _objectKey: true },
   // linesLastCleaned drives the "Draft lines cleaned N days ago" line on the
   // /m draft displays (formatLinesCleanedDate in featured-menu.tsx).
   locations: { slug: true, name: true, linesLastCleaned: true, updatedAt: true },
@@ -538,12 +539,14 @@ export function transformPayloadEventToBreweryEvent(
   return {
     id: event.id,
     title: event.organizer,
-    description: event.description || event.organizer,
+    // event.description is internal (staff-only read); never put it on the site.
+    description: event.organizer,
     date: event.date.split('T')[0],
     time: event.startTime || '',
     endTime: event.endTime ?? undefined,
     vendor: event.organizer,
-    type: EventType.SPECIAL_EVENT,
+    // expandRecurringEvents ids occurrences `recurring-<definition>-<date>`.
+    type: String(event.id).startsWith('recurring-') ? EventType.RECURRING : EventType.SPECIAL_EVENT,
     status: EventStatus.SCHEDULED,
     location: (eventLocation?.slug || fallbackLocationSlug) as LocationSlug,
     locationName: eventLocation?.name || fallbackLocationName,
@@ -714,7 +717,7 @@ export interface WeeklyHoursDay {
 
 /**
  * Get the current week's hours for a location with holiday overrides applied
- * Returns an array of 7 days starting from Monday of the current week
+ * Returns an array of 7 days starting from Monday of the current America/New_York week
  * Cached until 'locations' or 'holiday-hours' tags are invalidated
  *
  * React cache() on top for per-request dedupe: the footer and the page body
@@ -722,13 +725,13 @@ export interface WeeklyHoursDay {
  */
 export const getWeeklyHoursWithHolidays = cache(
   async (locationId: string): Promise<WeeklyHoursDay[]> => {
-    // Calculate week start for cache key
-    const now = new Date()
-    const dayOfWeek = now.getDay()
+    // Monday of the brewery's (EST/EDT) week, not the server's UTC week:
+    // from 8pm EDT (7pm EST) Sunday, UTC is already next Monday.
+    const [year, month, day] = getTodayEST().split('-').map(Number)
+    const dayOfWeek = new Date(year, month - 1, day).getDay()
     const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
-    const monday = new Date(now)
-    monday.setDate(now.getDate() + mondayOffset)
-    monday.setHours(0, 0, 0, 0)
+    const monday = new Date(year, month - 1, day + mondayOffset)
+    const nextMonday = new Date(year, month - 1, day + mondayOffset + 7)
     const weekKey = toDateKey(monday)
 
     try {
@@ -754,21 +757,11 @@ export const getWeeklyHoursWithHolidays = cache(
             return []
           }
 
-          // Calculate the start of the current week (Monday)
-          const currentNow = new Date()
-          const currentDayOfWeek = currentNow.getDay()
-          const currentMondayOffset = currentDayOfWeek === 0 ? -6 : 1 - currentDayOfWeek
-          const currentMonday = new Date(currentNow)
-          currentMonday.setDate(currentNow.getDate() + currentMondayOffset)
-          currentMonday.setHours(0, 0, 0, 0)
-
-          // Calculate the end of the week (Sunday)
-          const sunday = new Date(currentMonday)
-          sunday.setDate(currentMonday.getDate() + 6)
-
-          // Format dates for query
-          const startDateStr = toDateKey(currentMonday)
-          const endDateStr = toDateKey(sunday)
+          // Holiday dates are stored at noon UTC, so bound the week with the
+          // next Monday (exclusive): a bare Sunday key would compare as Sunday
+          // midnight and drop Sunday's override.
+          const startDateStr = weekKey
+          const endDateStr = toDateKey(nextMonday)
 
           // Get all holiday hours for this location within this week
           const holidayResult = await payload.find({
@@ -788,7 +781,7 @@ export const getWeeklyHoursWithHolidays = cache(
                 },
                 {
                   date: {
-                    less_than_equal: endDateStr,
+                    less_than: endDateStr,
                   },
                 },
               ],
@@ -817,8 +810,8 @@ export const getWeeklyHoursWithHolidays = cache(
           const weeklyHours: WeeklyHoursDay[] = []
 
           for (let i = 0; i < 7; i++) {
-            const date = new Date(currentMonday)
-            date.setDate(currentMonday.getDate() + i)
+            const date = new Date(monday)
+            date.setDate(monday.getDate() + i)
             const dateStr = toDateKey(date)
             const dayName = days[i]
 
@@ -998,6 +991,98 @@ export const getAllUpcomingEventsFromPayload = async (
     )()
   } catch (error) {
     logger.error('Error fetching upcoming events', error)
+    throw error
+  }
+}
+
+/** Mongo ObjectId, the id format for events and recurring-events docs. */
+const OBJECT_ID = '[a-f0-9]{24}'
+const ONE_OFF_EVENT_ID = new RegExp(`^${OBJECT_ID}$`)
+/** expandRecurringEvents ids occurrences `recurring-<definition>-<YYYY-MM-DD>`. */
+const RECURRING_EVENT_ID = new RegExp(`^recurring-(${OBJECT_ID})-(\\d{4}-\\d{2}-\\d{2})$`)
+
+async function findPublicEventById(
+  payload: Awaited<ReturnType<typeof getPayload>>,
+  id: string,
+): Promise<PayloadEvent | null> {
+  const { from, through } = eventWindow()
+  const upcomingPublic = (date: string): Where[] => [
+    { date: { greater_than_equal: date } },
+    { visibility: { equals: 'public' } },
+  ]
+
+  if (ONE_OFF_EVENT_ID.test(id)) {
+    const result = await payload.find({
+      collection: 'events',
+      overrideAccess: false,
+      where: { and: [{ id: { equals: id } }, ...upcomingPublic(`${from}T00:00:00.000Z`)] },
+      limit: 1,
+      depth: 1,
+    })
+    return result.docs[0] ?? null
+  }
+
+  const recurring = id.match(RECURRING_EVENT_ID)
+  if (!recurring) return null
+  const [, definitionId, date] = recurring
+  if (date < from || date > through) return null
+
+  const [definitionResult, oneOffResult] = await Promise.all([
+    payload.find({
+      collection: 'recurring-events',
+      overrideAccess: false,
+      where: {
+        and: [
+          { id: { equals: definitionId } },
+          { active: { equals: true } },
+          { visibility: { equals: 'public' } },
+        ],
+      },
+      limit: 1,
+      depth: 1,
+    }),
+    // A one-off on the same day replaces the occurrence (mergeScheduledEvents).
+    payload.find({
+      collection: 'events',
+      overrideAccess: false,
+      where: {
+        and: [
+          ...upcomingPublic(`${date}T00:00:00.000Z`),
+          { date: { less_than_equal: `${date}T23:59:59.999Z` } },
+        ],
+      },
+      limit: 100,
+      depth: 0,
+    }),
+  ])
+
+  const occurrences = expandRecurringEvents(definitionResult.docs as RecurringEvent[], date, date)
+  return (
+    mergeScheduledEvents(oneOffResult.docs, occurrences, Infinity).find(
+      (event) => event.id === id,
+    ) ?? null
+  )
+}
+
+/**
+ * One upcoming public event by its /events id: a one-off's document id or an
+ * expanded `recurring-<definition>-<date>` occurrence. Looks it up directly
+ * rather than scanning the 100-event page list, so every upcoming event
+ * resolves. Anonymous read: private events and the internal description stay
+ * hidden. Malformed ids return null without querying or caching.
+ */
+export const getPublicEventById = async (id: string): Promise<PayloadEvent | null> => {
+  if (!ONE_OFF_EVENT_ID.test(id) && !RECURRING_EVENT_ID.test(id)) return null
+  const todayKey = getTodayEST()
+
+  try {
+    return await unstable_cache(
+      async () => findPublicEventById(await getPayload({ config }), id),
+      [`event-${id}-${todayKey}`],
+      { tags: [CACHE_TAGS.events, CACHE_TAGS.locations], revalidate: 300 },
+    )()
+  } catch (error) {
+    logger.error(`Error fetching event: ${id}`, error)
     throw error
   }
 }

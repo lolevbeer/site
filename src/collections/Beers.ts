@@ -114,7 +114,20 @@ export const Beers: CollectionConfig = {
     group: 'Back of House',
     useAsTitle: 'name',
     listSearchableFields: ['name', 'slug'],
-    defaultColumns: ['name', 'slug', 'style', 'abv', 'hideFromSite'],
+    defaultColumns: [
+      'name',
+      'image',
+      'slug',
+      'style',
+      'tag',
+      'abv',
+      'untappd',
+      'draftPrice',
+      'fourPack',
+      'untappdRating',
+      '_status',
+      'createdAt',
+    ],
     components: {
       views: {
         edit: {
@@ -153,7 +166,7 @@ export const Beers: CollectionConfig = {
         if ((!data.slug || data.slug.trim() === '') && data.name && typeof data.name === 'string') {
           // For updates, use originalDoc.id; for creates, use data.id if available
           const docId = originalDoc?.id || data.id
-          data.slug = await generateUniqueSlug(data.name, 'beers', req, operation, docId)
+          data.slug = await generateUniqueSlug(data.name, 'beers', req, docId)
         }
 
         // Auto-increment recipe number for new beers (always, even when cloning)
@@ -336,6 +349,7 @@ export const Beers: CollectionConfig = {
                   index: true,
                   admin: {
                     description: 'Optional (search existing or add a new one)',
+                    components: { Cell: '@/src/components/admin/BeerListFillCell#TagCell' },
                   },
                 },
               ],
@@ -489,6 +503,7 @@ export const Beers: CollectionConfig = {
                   admin: {
                     description: 'Untappd URL (e.g., /b/lolev-beer-lupula/123456)',
                     width: '50%',
+                    components: { Cell: '@/src/components/admin/BeerListFillCell#UntappdCell' },
                   },
                 },
                 {

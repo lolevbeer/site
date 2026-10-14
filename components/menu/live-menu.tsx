@@ -5,6 +5,7 @@ import { useMenuStream } from '@/lib/hooks/use-menu-stream'
 import { useClockBucket } from '@/lib/hooks/use-clock-bucket'
 import { FeaturedBeers, FeaturedCans } from '@/components/home/featured-menu'
 import { RealtimeIndicator } from '@/components/menu/realtime-indicator'
+import { TapListBanner } from '@/components/ui/tap-list-banner'
 import type { Menu } from '@/src/payload-types'
 import { getThemeVars } from '@/lib/utils/display-theme'
 import { seededLightColors } from '@/lib/utils/seeded-colors'
@@ -28,6 +29,7 @@ interface LiveMenuProps {
  * - Applies dark mode via inline CSS variables for maximum browser compatibility
  * - Shows a small lightning bolt in the corner while connected to Ably, pulsing
  *   when a push arrives (see RealtimeIndicator)
+ * - On portrait screens (phones), adds a link to the taproom page (TapListBanner)
  */
 export function LiveMenu({ menuUrl, initialMenu }: LiveMenuProps) {
   const { menu, theme, realtime, pushCount } = useMenuStream(menuUrl, initialMenu)
@@ -64,12 +66,19 @@ export function LiveMenu({ menuUrl, initialMenu }: LiveMenuProps) {
 
   if (!board) return null
 
+  const location = displayMenu.location
+  const locationSlug = typeof location === 'object' ? location?.slug : undefined
+
   return (
     <div
-      className="h-screen w-screen overflow-hidden flex flex-col bg-background text-foreground"
+      // data-board: globals.css stacks boards above the site's dark-mode noise overlay.
+      data-board
+      className="h-dvh w-screen overflow-hidden flex flex-col bg-background text-foreground"
       style={themeVars}
     >
-      {board}
+      {/* flex-1 box so the h-full board shrinks to make room for the portrait banner. */}
+      <div className="flex-1 min-h-0">{board}</div>
+      {locationSlug ? <TapListBanner locationSlug={locationSlug} /> : null}
       <RealtimeIndicator connected={realtime} pulseKey={pushCount} />
     </div>
   )

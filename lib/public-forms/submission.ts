@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto'
 import type { Payload, RequiredDataFromCollectionSlug } from 'payload'
 import { reserveIpHashSlot } from './durable-limit'
 
-type FormCollection = 'donation-requests' | 'job-applications'
+export type FormCollection = 'donation-requests' | 'job-applications' | 'event-inquiries'
 
 /** Exact normalized content is one submission; changed content is a distinct request. */
 export async function savePublicForm<C extends FormCollection>(

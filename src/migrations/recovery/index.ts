@@ -132,6 +132,16 @@ export const migrationRecovery: readonly MigrationRecovery[] = [
       'Safe to rerun: creates the same named indexes with the same options. Never remove the unique indexes while new intake code is serving.',
     mode: 'roll-forward',
     verify:
-      'Inspect submissionKey_1 (unique, sparse) on both form collections and expiresAt_1 (TTL 0) on public-form-limits. Test concurrent intake using the disposable Mongo check.',
+      'Inspect submissionKey_1 (unique, sparse) on all three form collections and expiresAt_1 (TTL 0) on public-form-limits. Test concurrent intake using the disposable Mongo check.',
+  },
+  {
+    name: '20261013_090000_media_sizes_to_variants',
+    compatibility:
+      'Not compatible with the prior deployment: Payload 4 canary reads media sizes, so once this runs the live canary deployment serves original images instead of thumbnail/card/detail variants (pages still render, just heavier). Promote the beta.0 preview right after the migrating production build, then run `pnpm payload run scripts/rename-media-sizes.ts` to rename media the canary admin saved in between.',
+    retry:
+      'Safe to rerun (scripts/rename-media-sizes.ts does exactly that): the rename skips docs already moved and throws, writing nothing, if any media doc holds both sizes and variants.',
+    mode: 'roll-forward',
+    verify:
+      'In Atlas, db.media.countDocuments({ sizes: { $exists: true } }) must be 0 and the variants count must match the former sizes count; then confirm homepage and beer-page images load the -150x150/-500x500 webp variants.',
   },
 ]

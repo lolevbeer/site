@@ -68,6 +68,20 @@ describe('LiveMenu boards', () => {
   })
 })
 
+describe('LiveMenu theme frame', () => {
+  // Board theme is set per display, not by the device's site theme, so the
+  // frame's inline vars carry the highlight color (amber Untappd ratings).
+  it.each([
+    ['dark', '#ffb900'],
+    ['light', '#bb4d00'],
+  ] as const)('%s board frame sets --color-highlight %s', (theme, color) => {
+    stream.value = { ...stream.value, theme }
+    render(<LiveMenu menuUrl="l-draft" initialMenu={menu('draft')} />)
+    const frame = screen.getByTestId('featured-beers').closest<HTMLElement>('.h-dvh')!
+    expect(frame.style.getPropertyValue('--color-highlight')).toBe(color)
+  })
+})
+
 describe('LiveMenu realtime indicator', () => {
   it('shows no bolt while the display is polling only', () => {
     render(<LiveMenu menuUrl="l-draft" initialMenu={menu('draft')} />)
@@ -82,7 +96,9 @@ describe('LiveMenu realtime indicator', () => {
       const bolt = screen.getByRole('img', { name: 'Live updates connected' })
       const board = screen.getByTestId(type === 'cans' ? 'featured-cans' : 'featured-beers')
       // Same frame as the board, so it inherits the theme's CSS variables.
-      expect(bolt.parentElement).toBe(board.parentElement)
+      expect(bolt.parentElement).toBe(board.closest('.h-dvh'))
+      // Hidden on phones, where the tap-list banner sits in that corner.
+      expect(bolt.className).toContain('portrait:pointer-coarse:hidden')
     },
   )
 

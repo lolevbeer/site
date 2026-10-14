@@ -6,7 +6,7 @@ import { act, cleanup, render } from '@testing-library/react'
 import { createElement } from 'react'
 import { renderToString } from 'react-dom/server'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { FeaturedBeers } from '@/components/home/featured-menu'
+import { FeaturedBeers, FeaturedCans } from '@/components/home/featured-menu'
 import { MS_PER_DAY } from '@/lib/utils/date'
 import type { Menu } from '@/src/payload-types'
 
@@ -75,27 +75,29 @@ describe('Fullscreen draft menu row sizing', () => {
   it('uses two separate header bars and distributes natural-height rows', () => {
     const { container } = render(createElement(FeaturedBeers, { menu: makeDraftMenu() }))
     const columns = Array.from(container.querySelectorAll('[role="list"]'))
-    const boardGrid = columns[0]?.parentElement?.parentElement
+    const boardGrid = columns[0]?.parentElement
     const headerBar = boardGrid?.previousElementSibling as HTMLElement | null
     const headerColumns = Array.from(headerBar?.children ?? [])
 
     expect(container.textContent).toContain('Collab · Azvex Brewing Company')
     expect(columns).toHaveLength(2)
     expect(boardGrid?.children).toHaveLength(2)
-    expect(boardGrid?.classList.contains('md:grid-cols-2')).toBe(true)
+    // Always two columns: boards are fixed 16:9 TVs, no mobile breakpoint.
+    expect(boardGrid?.classList.contains('grid-cols-2')).toBe(true)
     expect((boardGrid as HTMLElement | undefined)?.style.gap).toBe('2.5vw')
     expect(headerColumns).toHaveLength(2)
     expect(headerBar?.style.columnGap).toBe('2.5vw')
     expect(headerBar?.classList.contains('border-b-2')).toBe(false)
     expect(headerBar?.classList.contains('bg-[#1d1d1f]')).toBe(false)
-    expect(headerBar?.classList.contains('text-[#f5f5f7]')).toBe(true)
 
     for (const [index, column] of columns.entries()) {
       expect(column.classList.contains('min-h-0')).toBe(true)
       expect(column.classList.contains('justify-between')).toBe(true)
       const header = headerColumns[index] as HTMLElement | undefined
       expect(header?.style.gridTemplateColumns).toBe('10vh minmax(0, 1fr) 7vh 7vh 7vh')
+      // The pill owns both of its colours (dark on light and dark boards).
       expect(header?.classList.contains('bg-[#1d1d1f]')).toBe(true)
+      expect(header?.classList.contains('text-[#f5f5f7]')).toBe(true)
       expect(header?.style.borderRadius).toBe('0.35vh')
       expect(header?.firstElementChild?.getAttribute('aria-hidden')).toBe('true')
       expect(header?.firstElementChild?.textContent).toBe('')
@@ -109,6 +111,18 @@ describe('Fullscreen draft menu row sizing', () => {
         expect(row.classList.contains('flex-1')).toBe(false)
       }
     }
+  })
+
+  it('shows no ABV for a beer without one, on the board and on can cards', () => {
+    const { container } = render(
+      createElement(FeaturedBeers, { menu: makeDraftMenu([beerItem('no-abv', { abv: null })]) }),
+    )
+    expect(rowFor(container, 'no-abv').textContent).not.toMatch(/(^|[^.\d])0%/)
+    cleanup()
+    const cans = { ...makeDraftMenu([beerItem('no-abv-can', { abv: null })]), type: 'cans' }
+    const { container: home } = render(createElement(FeaturedCans, { menus: [cans as Menu] }))
+    expect(home.textContent).toContain('no-abv-can')
+    expect(home.textContent).not.toMatch(/(^|[^.\d])0%/)
   })
 
   it('renders the homepage draft list as a single centered column', () => {

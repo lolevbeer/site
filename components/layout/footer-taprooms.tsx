@@ -34,6 +34,7 @@ export function FooterTaprooms({
   weeklyHours,
 }: {
   locations: PayloadLocation[]
+  /** Omitted by the layout's Suspense fallback while hours load. */
   weeklyHours?: Record<string, WeeklyHoursDay[]>
 }) {
   return locations
@@ -78,20 +79,20 @@ export function FooterTaprooms({
               {hours ? (
                 <WeeklyHoursTable weeklyHours={hours} variant="footer" />
               ) : (
-                <p className="text-sm text-muted-foreground">Hours not available</p>
+                weeklyHours && <p className="text-sm text-muted-foreground">Hours not available</p>
               )}
             </div>
 
-            <div className="space-y-2 text-sm">
+            <div className="text-sm">
               {phone ? (
-                <a href={`tel:${phone}`} className="block hover:underline">
+                <a href={`tel:${phone}`} className="block py-2 hover:underline">
                   {phone}
                 </a>
               ) : null}
               {location.basicInfo?.email ? (
                 <Link
                   href={`mailto:${location.basicInfo.email}`}
-                  className="block hover:underline"
+                  className="block py-2 hover:underline"
                 >
                   {location.basicInfo.email}
                 </Link>

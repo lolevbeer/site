@@ -18,6 +18,7 @@ import { beerHref } from '@/lib/config/beer-filters'
 import { formatCityStateZip } from '@/lib/config/locations'
 import { getMediaUrl } from '@/lib/utils/media-utils'
 import { safeHttpUrl } from '@/lib/utils/url-utils'
+import { eventBadge } from '@/lib/utils/event-regulars'
 import type { WeeklyHoursDay } from '@/lib/utils/payload-api'
 import type { Beer } from '@/lib/types/beer'
 import type { PayloadLocation } from '@/lib/types/location'
@@ -74,15 +75,18 @@ export function LocationLanding({
   const city = location.address?.city
   const heroSrc = getMediaUrl(location.images?.hero) || getMediaUrl(location.images?.card)
   const phone = location.basicInfo?.phone
+  // `?loc=` makes the hub pages open on this taproom instead of the default one.
+  const withLoc = (href: string) =>
+    location.slug
+      ? `${href}${href.includes('?') ? '&' : '?'}loc=${encodeURIComponent(location.slug)}`
+      : href
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-5xl">
       <PageBreadcrumbs className="mb-6" />
 
       <header className="text-center mb-8">
-        <h1 className="text-4xl font-bold tracking-tight text-balance mb-3">
-          {location.name}
-        </h1>
+        <h1 className="text-4xl font-bold tracking-tight text-balance mb-3">{location.name}</h1>
         <p className="text-muted-foreground text-lg text-pretty">
           Lolev Beer taproom{city ? ` in ${city}` : ''}
         </p>
@@ -152,7 +156,7 @@ export function LocationLanding({
                 <BeerIcon className="h-6 w-6" />
               </EmptyMedia>
               <EmptyTitle className="text-xl">No beers on draft</EmptyTitle>
-              <EmptyDescription className="text-muted-foreground/70">
+              <EmptyDescription className="text-muted-foreground">
                 Check back soon for the current draft list.
               </EmptyDescription>
             </EmptyHeader>
@@ -161,19 +165,14 @@ export function LocationLanding({
           <ul className="max-w-2xl mx-auto list-none p-0 m-0 space-y-1 mb-8">
             {draftBeers.map((beer, index) => (
               <li key={`${beer.variant}-${index}`}>
-                <DraftBeerCard
-                  beer={beer}
-                  compact
-                  showJustReleased={false}
-                  showLocation={false}
-                />
+                <DraftBeerCard beer={beer} />
               </li>
             ))}
           </ul>
         )}
         <div className="text-center">
           <Button asChild variant="outline" size="lg">
-            <Link href={beerHref('tap')}>View all beers</Link>
+            <Link href={withLoc(beerHref('tap'))}>View all beers</Link>
           </Button>
         </div>
       </section>
@@ -184,12 +183,7 @@ export function LocationLanding({
           <ul className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 list-none p-0 m-0 mb-8">
             {canBeers.map((beer, index) => (
               <li key={`${beer.variant}-${index}`}>
-                <BeerCard
-                  beer={beer}
-                  variant="minimal"
-                  showLocation={false}
-                  showCta={false}
-                />
+                <BeerCard beer={beer} variant="minimal" showLocation={false} showCta={false} />
               </li>
             ))}
           </ul>
@@ -202,8 +196,7 @@ export function LocationLanding({
           <div className="max-w-2xl mx-auto mb-8">
             <ScheduleList
               items={events.map((event) => {
-                const rawDate =
-                  typeof event.date === 'string' ? event.date : String(event.date)
+                const rawDate = typeof event.date === 'string' ? event.date : String(event.date)
                 return {
                   id: String(event.id),
                   date: rawDate,
@@ -211,13 +204,14 @@ export function LocationLanding({
                   time: event.startTime,
                   endTime: event.endTime,
                   site: safeHttpUrl(event.site),
+                  badge: eventBadge(event.tags),
                 }
               })}
             />
           </div>
           <div className="text-center">
             <Button asChild variant="outline" size="lg">
-              <Link href="/events">View all events</Link>
+              <Link href={withLoc('/events')}>View all events</Link>
             </Button>
           </div>
         </section>
@@ -245,7 +239,7 @@ export function LocationLanding({
           </div>
           <div className="text-center">
             <Button asChild variant="outline" size="lg">
-              <Link href="/food">View food schedule</Link>
+              <Link href={withLoc('/food')}>View food schedule</Link>
             </Button>
           </div>
         </section>

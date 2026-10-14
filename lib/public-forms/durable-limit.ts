@@ -2,10 +2,11 @@
 import { randomUUID } from 'node:crypto'
 import type { Payload } from 'payload'
 import { PUBLIC_FORM_IP_MAX, PUBLIC_FORM_IP_WINDOW_MS } from './rate-limit'
+import type { FormCollection } from './submission'
 
 export async function reserveIpHashSlot(
   payload: Payload,
-  scope: 'donation-requests' | 'job-applications',
+  scope: FormCollection,
   ipHash: string,
 ): Promise<(() => Promise<void>) | null> {
   const slots = payload.db.connection.db!.collection<{

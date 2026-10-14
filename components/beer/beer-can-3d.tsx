@@ -3,13 +3,42 @@
 /**
  * 3D spinning beer can for beer detail pages: builds the shared can scene
  * (see ./can-scene) from the CMS-generated label textures and adds orbit
- * controls + auto-rotate.
+ * controls + auto-rotate (off under prefers-reduced-motion).
+ *
+ * Mounting is deferred until the window `load` event plus an idle slot, so
+ * three.js and the label textures never compete with the flat poster image
+ * (the page's LCP) or with hydration.
  *
  * ponytail: always-on rAF instead of captiva's on-demand rendering — fine
  * for the single can on a beer page.
  */
 import { useEffect, useEffectEvent, useRef } from 'react'
 import { createCanScene } from './can-scene'
+
+/** Run `fn` once the page has loaded and the main thread is idle. Safari has
+ *  no requestIdleCallback, so it falls back to a short timeout. Returns a
+ *  cancel function. */
+function afterLoadAndIdle(fn: () => void): () => void {
+  let cancelIdle = () => {}
+  const schedule = () => {
+    if ('requestIdleCallback' in window) {
+      const id = window.requestIdleCallback(fn, { timeout: 2000 })
+      cancelIdle = () => window.cancelIdleCallback(id)
+    } else {
+      const id = setTimeout(fn, 200)
+      cancelIdle = () => clearTimeout(id)
+    }
+  }
+  if (document.readyState === 'complete') {
+    schedule()
+    return () => cancelIdle()
+  }
+  window.addEventListener('load', schedule, { once: true })
+  return () => {
+    window.removeEventListener('load', schedule)
+    cancelIdle()
+  }
+}
 
 interface BeerCan3DProps {
   /** URL of the generated label artwork PNG (beer.labelBase). */
@@ -33,7 +62,7 @@ export function BeerCan3D({ baseUrl, metalnessUrl, onReady, className = '' }: Be
     let disposed = false
     let cleanup = () => {}
 
-    ;(async () => {
+    const start = async () => {
       const [can, { OrbitControls }] = await Promise.all([
         createCanScene({
           width: el.clientWidth,
@@ -53,8 +82,11 @@ export function BeerCan3D({ baseUrl, metalnessUrl, onReady, className = '' }: Be
       controls.enableDamping = true
       controls.enableZoom = false
       controls.enablePan = false
-      controls.autoRotate = true
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      controls.autoRotate = !reduceMotion
       controls.autoRotateSpeed = -2
+      // OrbitControls sets touch-action: none, which traps vertical swipes on phones.
+      can.renderer.domElement.style.touchAction = 'pan-y'
 
       // Append only once the scene is fully assembled so the first painted
       // frame is a finished can, then tell the parent to drop its poster.
@@ -63,12 +95,15 @@ export function BeerCan3D({ baseUrl, metalnessUrl, onReady, className = '' }: Be
 
       // rAF auto-pauses on hidden tabs but not scrolled-out elements; the
       // observer stops rendering (GPU/battery) while the can is off-screen.
+      // Under reduced motion nothing moves on its own, so render once and then
+      // only on OrbitControls `change` (drags and their damping settle).
       let raf = 0
       const tick = () => {
         controls.update()
         can.render()
-        raf = requestAnimationFrame(tick)
+        raf = reduceMotion ? 0 : requestAnimationFrame(tick)
       }
+      if (reduceMotion) controls.addEventListener('change', () => can.render())
       const io = new IntersectionObserver(([entry]) => {
         if (entry.isIntersecting) {
           if (!raf) raf = requestAnimationFrame(tick)
@@ -92,13 +127,17 @@ export function BeerCan3D({ baseUrl, metalnessUrl, onReady, className = '' }: Be
         can.renderer.domElement.remove()
         can.dispose()
       }
-    })().catch(() => {
-      // WebGL unavailable or an asset failed: leave the canvas unmounted so
-      // BeerDetails keeps showing the flat label image.
-    })
+    }
+    const cancelStart = afterLoadAndIdle(() =>
+      start().catch(() => {
+        // WebGL unavailable or an asset failed: leave the canvas unmounted so
+        // BeerDetails keeps showing the flat label image.
+      }),
+    )
 
     return () => {
       disposed = true
+      cancelStart()
       cleanup()
     }
   }, [baseUrl, metalnessUrl])

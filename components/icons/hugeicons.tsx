@@ -13,6 +13,7 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import {
   AlertCircleIcon,
   ArrowDown01Icon,
+  ArrowLeft01Icon,
   ArrowLeft02Icon,
   ArrowRight01Icon,
   ArrowRight02Icon,
@@ -41,6 +42,7 @@ import {
   PackageIcon,
   RestaurantIcon,
   Search01Icon,
+  Share08Icon,
   Sun03Icon,
   Tick02Icon,
 } from '@hugeicons/core-free-icons'
@@ -74,6 +76,7 @@ export const Package = icon(PackageIcon)
 export const Pencil = icon(Edit03Icon)
 export const Phone = icon(Call02Icon)
 export const Search = icon(Search01Icon)
+export const Share = icon(Share08Icon)
 export const Monitor = icon(MonitorIcon)
 export const Moon = icon(Moon02Icon)
 export const Sun = icon(Sun03Icon)
@@ -82,14 +85,17 @@ export const UtensilsCrossed = icon(RestaurantIcon)
 export const X = icon(Cancel01Icon)
 export const Zap = icon(EnergyIcon)
 
-// shadcn/ui primitives (accordion, dialog, breadcrumb, select, carousel)
+// shadcn/ui primitives (accordion, dialog, breadcrumb, select, carousel, calendar)
 export const ArrowLeft = icon(ArrowLeft02Icon)
 export const ArrowRight = icon(ArrowRight02Icon)
 export const Check = icon(Tick02Icon)
 export const CheckIcon = Check
 export const ChevronDown = icon(ArrowDown01Icon)
 export const ChevronDownIcon = ChevronDown
+export const ChevronLeft = icon(ArrowLeft01Icon)
+export const ChevronLeftIcon = ChevronLeft
 export const ChevronRight = icon(ArrowRight01Icon)
+export const ChevronRightIcon = ChevronRight
 export const ChevronUp = icon(ArrowUp01Icon)
 export const ChevronUpIcon = ChevronUp
 export const MoreHorizontal = icon(MoreHorizontalIcon)

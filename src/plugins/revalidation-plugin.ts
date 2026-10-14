@@ -13,6 +13,7 @@
  */
 
 import { revalidatePath, revalidateTag } from 'next/cache'
+import { after } from 'next/server'
 import type { Config, Plugin, CollectionConfig, GlobalConfig, PayloadRequest } from 'payload'
 
 import { publishKioskInvalidate } from '@/lib/ably/publish'
@@ -89,7 +90,14 @@ const COLLECTION_LAYOUT_PATHS: Record<string, string[]> = {
 // Dynamic path builders for collections with slugs
 const COLLECTION_PATH_BUILDERS: Record<string, (doc: Record<string, unknown>) => string[]> = {
   beers: (doc) => (doc.slug ? [`/beer/${doc.slug}`] : []),
-  locations: (doc) => (doc.slug ? [`/${doc.slug}`] : []),
+  // Former slugs (aliases, which include the slug a rename just replaced) are
+  // cached too: /<alias> must start redirecting and /e/<alias> show fresh data.
+  locations: (doc) => {
+    const aliases = Array.isArray(doc.aliases) ? doc.aliases : []
+    return [doc.slug, ...aliases]
+      .filter((slug): slug is string => typeof slug === 'string' && slug.length > 0)
+      .flatMap((slug) => [`/${slug}`, `/e/${slug}`])
+  },
   menus: (doc) => (doc.url ? [`/m/${doc.url}`] : []),
   jobs: (doc) => {
     const paths: string[] = []
@@ -247,6 +255,24 @@ export function revalidateForCollection(slug: string): void {
   if (!extras) return
   extras.tags?.forEach(revalidateCollectionTag)
   extras.paths?.forEach(([path, type]) => revalidatePath(path, type))
+}
+
+/**
+ * `revalidateForCollection` once the current response has finished, for writers
+ * that stream (the distributor importers): inside a stream the request context is
+ * gone and Next's cache APIs throw "static generation store missing". `after` runs
+ * the refresh once the stream closes, with the request context. `shouldRun` is read
+ * then, so the caller can decide from the final counts. Outside a Next request
+ * (unit tests, the Payload CLI) there is nothing to refresh, so it does nothing.
+ */
+export function revalidateForCollectionAfterResponse(slug: string, shouldRun: () => boolean): void {
+  try {
+    after(() => {
+      if (shouldRun()) revalidateForCollection(slug)
+    })
+  } catch {
+    // `after` throws outside a request scope; no page cache to refresh there
+  }
 }
 
 /**

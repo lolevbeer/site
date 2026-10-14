@@ -32,7 +32,7 @@ export function BeerImage({ beer, className, priority = false, sizes }: BeerImag
       )}>
         <div className="text-center px-4">
           {/* Full-strength muted-foreground: the /70 and /50 fades fell under
-              the 4.5:1 AA contrast floor (see draft-beer-card). */}
+              the 4.5:1 AA contrast floor. */}
           <p className="text-sm font-semibold text-muted-foreground line-clamp-2">{beer.name}</p>
           {beer.type && (
             <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{beer.type}</p>

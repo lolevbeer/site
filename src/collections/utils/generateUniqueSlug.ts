@@ -31,6 +31,9 @@ function slugify(str: string): string {
  * 4. Removing leading/trailing dashes
  * 5. Appending an incrementing number if the slug already exists
  *
+ * `takenIn` lists the fields whose values count as taken. Locations add
+ * `aliases`, so a rename never claims another taproom's former slug.
+ *
  * System code: uniqueness must hold across every document (drafts included),
  * whoever is saving, so the lookups use `overrideAccess: true`. They pass `req`
  * to run inside the save's transaction.
@@ -39,8 +42,8 @@ export async function generateUniqueSlug(
   name: string,
   collection: CollectionSlug,
   req: PayloadRequest,
-  operation: 'create' | 'update',
   currentDocId?: string | number,
+  takenIn: string[] = ['slug'],
 ): Promise<string> {
   // Generate base slug from name
   const baseSlug = slugify(name)
@@ -53,7 +56,7 @@ export async function generateUniqueSlug(
   while (!isUnique) {
     // Check if slug exists (excluding current document and its revisions)
     const where: Where = {
-      slug: { equals: slug },
+      or: takenIn.map((field) => ({ [field]: { in: [slug] } })),
     }
 
     // Always exclude current document ID if provided (for both create and update)

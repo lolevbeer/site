@@ -75,7 +75,10 @@ export async function GET() {
   // Add beer items
   for (const beer of visibleBeers) {
     const styleName = typeof beer.style === 'object' ? beer.style?.name : beer.style || 'Beer';
-    const pubDate = formatRFC822Date(new Date(beer.updatedAt || beer.createdAt || Date.now()));
+    // createdAt, not updatedAt: a pubDate should not move each time a rating
+    // syncs or a typo is fixed. ponytail: a beer drafted long before release
+    // keeps its draft date; add a release-date field if that starts to matter.
+    const pubDate = formatRFC822Date(new Date(beer.createdAt || Date.now()));
 
     items.push(`
     <item>
@@ -98,7 +101,7 @@ export async function GET() {
     <item>
       <title>${escapeXml(title)}</title>
       <link>${baseUrl}/events</link>
-      <description>${escapeXml(event.description || `${title} on ${eventDate.toLocaleDateString()}`)}</description>
+      <description>${escapeXml(`${title} on ${eventDate.toLocaleDateString()}`)}</description>
       <category>Event</category>
       <guid isPermaLink="false">event-${event.id || event.date}</guid>
       <pubDate>${formatRFC822Date(eventDate)}</pubDate>

@@ -75,6 +75,7 @@ export interface Config {
     products: Product;
     events: Event;
     'donation-requests': DonationRequest;
+    'event-inquiries': EventInquiry;
     jobs: Job;
     'job-applications': JobApplication;
     'recurring-events': RecurringEvent;
@@ -108,6 +109,7 @@ export interface Config {
     products: ProductsSelect<false> | ProductsSelect<true>;
     events: EventsSelect<false> | EventsSelect<true>;
     'donation-requests': DonationRequestsSelect<false> | DonationRequestsSelect<true>;
+    'event-inquiries': EventInquiriesSelect<false> | EventInquiriesSelect<true>;
     jobs: JobsSelect<false> | JobsSelect<true>;
     'job-applications': JobApplicationsSelect<false> | JobApplicationsSelect<true>;
     'recurring-events': RecurringEventsSelect<false> | RecurringEventsSelect<true>;
@@ -149,6 +151,7 @@ export interface Config {
   widgets: {
     'schedule-heatmap': ScheduleHeatmapWidget;
     'menu-target-history': MenuTargetHistoryWidget;
+    welcome: WelcomeWidget;
     collections: CollectionsWidget;
     'collection-query': CollectionQueryWidget;
     activity: ActivityWidget;
@@ -404,6 +407,10 @@ export interface Location {
    * Auto-generated from name (lowercase, spaces to dashes)
    */
   slug?: string | null;
+  /**
+   * Former slugs. /<alias> redirects to the current page and /e/<alias> still shows the events board. A rename adds the old slug automatically. Browsers cache the redirect, so a deleted alias can keep sending past visitors here; avoid reusing it as another location's slug.
+   */
+  aliases?: string[] | null;
   basicInfo?: {
     phone?: string | null;
     email?: string | null;
@@ -622,9 +629,19 @@ export interface Media {
   filesize?: number | null;
   width?: number | null;
   height?: number | null;
+  original?: {
+    filename?: string | null;
+    url?: string | null;
+    mimeType?: string | null;
+    filesize?: number | null;
+    width?: number | null;
+    height?: number | null;
+    prefix?: string | null;
+    _objectKey?: string | null;
+  };
   focalX?: number | null;
   focalY?: number | null;
-  sizes?: {
+  variants?: {
     thumbnail?: {
       url?: string | null;
       width?: number | null;
@@ -632,6 +649,8 @@ export interface Media {
       mimeType?: string | null;
       filesize?: number | null;
       filename?: string | null;
+      prefix?: string | null;
+      _objectKey?: string | null;
     };
     card?: {
       url?: string | null;
@@ -640,6 +659,8 @@ export interface Media {
       mimeType?: string | null;
       filesize?: number | null;
       filename?: string | null;
+      prefix?: string | null;
+      _objectKey?: string | null;
     };
     detail?: {
       url?: string | null;
@@ -648,6 +669,8 @@ export interface Media {
       mimeType?: string | null;
       filesize?: number | null;
       filename?: string | null;
+      prefix?: string | null;
+      _objectKey?: string | null;
     };
   };
 }
@@ -725,6 +748,9 @@ export interface Event {
    */
   site?: string | null;
   tags?: ('music' | 'utensils' | 'puzzle' | 'sports' | 'beer-release' | 'mic-vocal')[] | null;
+  /**
+   * Internal notes for staff. Never shown on the website.
+   */
   description?: string | null;
   /**
    * Optional photo for Event rich results (falls back to the site OG image)
@@ -738,7 +764,7 @@ export interface Event {
   email?: string | null;
   phone?: string | null;
   /**
-   * Additional information for private event
+   * Staff-only notes (never shown on the website)
    */
   otherInfo?: string | null;
   updatedAt: string;
@@ -775,6 +801,31 @@ export interface DonationRequest {
    * Location slug from the public form, when the ask is a taproom night.
    */
   taproom?: string | null;
+  /**
+   * When the #events ping succeeded. Empty means staff should check Slack.
+   */
+  slackNotifiedAt?: string | null;
+  slackError?: string | null;
+  ipHash?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Private-event inquiries from /events. Rows are created only by the public form.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "event-inquiries".
+ */
+export interface EventInquiry {
+  id: string;
+  status?: ('new' | 'contacted' | 'booked' | 'declined') | null;
+  name: string;
+  email: string;
+  phone: string;
+  preferredDate: string;
+  headcount: number;
+  taproom: string | Location;
+  message?: string | null;
   /**
    * When the #events ping succeeded. Empty means staff should check Slack.
    */
@@ -909,6 +960,9 @@ export interface RecurringEvent {
    */
   site?: string | null;
   tags?: ('music' | 'utensils' | 'puzzle' | 'sports' | 'beer-release' | 'mic-vocal')[] | null;
+  /**
+   * Internal notes for staff. Never shown on the website.
+   */
   description?: string | null;
   /**
    * Optional photo for Event rich results (falls back to the site OG image)
@@ -922,7 +976,7 @@ export interface RecurringEvent {
   email?: string | null;
   phone?: string | null;
   /**
-   * Additional information for private event
+   * Staff-only notes (never shown on the website)
    */
   otherInfo?: string | null;
   updatedAt: string;
@@ -1342,6 +1396,10 @@ export interface PayloadLockedDocument {
         value: string | DonationRequest;
       } | null)
     | ({
+        relationTo: 'event-inquiries';
+        value: string | EventInquiry;
+      } | null)
+    | ({
         relationTo: 'jobs';
         value: string | Job;
       } | null)
@@ -1620,6 +1678,25 @@ export interface DonationRequestsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "event-inquiries_select".
+ */
+export interface EventInquiriesSelect<T extends boolean = true> {
+  status?: T;
+  name?: T;
+  email?: T;
+  phone?: T;
+  preferredDate?: T;
+  headcount?: T;
+  taproom?: T;
+  message?: T;
+  slackNotifiedAt?: T;
+  slackError?: T;
+  ipHash?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "jobs_select".
  */
 export interface JobsSelect<T extends boolean = true> {
@@ -1787,6 +1864,7 @@ export interface LocationsSelect<T extends boolean = true> {
   intro?: T;
   timezone?: T;
   slug?: T;
+  aliases?: T;
   basicInfo?:
     | T
     | {
@@ -1934,9 +2012,21 @@ export interface MediaSelect<T extends boolean = true> {
   filesize?: T;
   width?: T;
   height?: T;
+  original?:
+    | T
+    | {
+        filename?: T;
+        url?: T;
+        mimeType?: T;
+        filesize?: T;
+        width?: T;
+        height?: T;
+        prefix?: T;
+        _objectKey?: T;
+      };
   focalX?: T;
   focalY?: T;
-  sizes?:
+  variants?:
     | T
     | {
         thumbnail?:
@@ -1948,6 +2038,8 @@ export interface MediaSelect<T extends boolean = true> {
               mimeType?: T;
               filesize?: T;
               filename?: T;
+              prefix?: T;
+              _objectKey?: T;
             };
         card?:
           | T
@@ -1958,6 +2050,8 @@ export interface MediaSelect<T extends boolean = true> {
               mimeType?: T;
               filesize?: T;
               filename?: T;
+              prefix?: T;
+              _objectKey?: T;
             };
         detail?:
           | T
@@ -1968,6 +2062,8 @@ export interface MediaSelect<T extends boolean = true> {
               mimeType?: T;
               filesize?: T;
               filename?: T;
+              prefix?: T;
+              _objectKey?: T;
             };
       };
 }
@@ -2127,6 +2223,11 @@ export interface SiteContent {
   errorMessage?: string | null;
   todaysEventsTitle?: string | null;
   todaysFoodTitle?: string | null;
+  slackChannels?: {
+    donations?: string | null;
+    jobs?: string | null;
+    eventInquiries?: string | null;
+  };
   /**
    * Sixth City/Encompass8 QuickLink URL for PA distributors
    */
@@ -2645,6 +2746,13 @@ export interface SiteContentSelect<T extends boolean = true> {
   errorMessage?: T;
   todaysEventsTitle?: T;
   todaysFoodTitle?: T;
+  slackChannels?:
+    | T
+    | {
+        donations?: T;
+        jobs?: T;
+        eventInquiries?: T;
+      };
   distributorPaUrl?: T;
   distributorOhUrl?: T;
   updatedAt?: T;
@@ -2838,6 +2946,16 @@ export interface MenuTargetHistoryWidget {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "welcome_widget".
+ */
+export interface WelcomeWidget {
+  data?: {
+    [k: string]: unknown;
+  };
+  width: 'full';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "collections_widget".
  */
 export interface CollectionsWidget {
@@ -2860,6 +2978,7 @@ export interface CollectionQueryWidget {
       | 'products'
       | 'events'
       | 'donation-requests'
+      | 'event-inquiries'
       | 'jobs'
       | 'job-applications'
       | 'recurring-events'
@@ -2900,6 +3019,7 @@ export interface ActivityWidget {
           | 'products'
           | 'events'
           | 'donation-requests'
+          | 'event-inquiries'
           | 'jobs'
           | 'job-applications'
           | 'recurring-events'
@@ -2914,7 +3034,7 @@ export interface ActivityWidget {
         )[]
       | null;
   };
-  width: 'x-small' | 'small' | 'medium' | 'large' | 'x-large' | 'full';
+  width: 'small' | 'medium' | 'large' | 'x-large' | 'full';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

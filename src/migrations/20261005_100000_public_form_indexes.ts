@@ -1,7 +1,7 @@
 import type { MigrateDownArgs, MigrateUpArgs } from '@payloadcms/db-mongodb'
 
 export async function up({ payload }: MigrateUpArgs): Promise<void> {
-  for (const slug of ['donation-requests', 'job-applications']) {
+  for (const slug of ['donation-requests', 'job-applications', 'event-inquiries']) {
     await payload.db.collections[slug].collection.createIndex(
       { submissionKey: 1 },
       { unique: true, sparse: true },

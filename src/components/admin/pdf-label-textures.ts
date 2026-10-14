@@ -4,7 +4,8 @@
  * black/white metalness map (white = metallic foil, black = matte paper).
  *
  * Admin-only: runs once per label in the Payload admin browser (see
- * LabelTextureGenerator). Visitors only ever download the resulting PNGs.
+ * LabelTextureGenerator). Visitors never run this: beer pages fetch the stored
+ * PNGs resized to WebP/AVIF through /_next/image (see textureImageUrl).
  */
 // pdfjs-dist is loaded lazily: its module scope constructs a DOMMatrix,
 // which crashes during SSR — Next still server-renders 'use client'
