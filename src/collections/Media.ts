@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import type { SharpCollectionConfig } from '@payloadcms/transformer-sharp'
-import { adminAccess, adminFieldAccess, authenticatedAccess } from '@/src/access/roles'
+import { adminAccess, authenticatedAccess } from '@/src/access/roles'
 import { LABEL_VIDEO_MIME } from '@/lib/utils/media-utils'
 
 export const Media: CollectionConfig = {
@@ -29,17 +29,6 @@ export const Media: CollectionConfig = {
         description: 'Alternative text for the image (for accessibility)',
       },
     },
-    // Payload 4 keeps the untouched upload as `original` whenever Sharp re-encodes
-    // it (every image here, via formatOptions). That file still has its EXIF
-    // (GPS, device), so only admins read it. Payload merges this into its own
-    // `original` group, so only `access` is added here.
-    // ponytail: beta.0 has no option to skip storing the original; drop this once one exists.
-    {
-      name: 'original',
-      type: 'group',
-      access: { read: adminFieldAccess },
-      fields: [],
-    },
   ],
 }
 
@@ -47,9 +36,13 @@ export const Media: CollectionConfig = {
  * Sharp settings for Media, registered via `sharpTransformer` in payload.config.
  * Payload 4 moved image processing out of the collection's `upload` config;
  * generated sizes are stored under each doc's `variants` (formerly `sizes`).
+ *
+ * No main-file `formatOptions`: when Sharp re-encodes the main file, Payload 4
+ * also stores the untouched upload (EXIF and GPS intact) as `<name>-original`
+ * next to it, at a guessable public Blob URL. Left as uploaded, Payload stores
+ * no extra copy. Pages show the webp variants, which carry no EXIF.
  */
 export const mediaSharp: SharpCollectionConfig = {
-  formatOptions: { format: 'png' },
   variants: [
     {
       name: 'thumbnail',

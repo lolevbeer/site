@@ -129,7 +129,7 @@ export function getMediaUrl(media: unknown, size?: MediaSize): string | undefine
 
 /**
  * Route a 3D-can texture through Next's image optimizer: the stored label
- * PNGs are ~7 MB (Media keeps originals as PNG), while /_next/image at 2048w
+ * PNGs are ~7 MB (Media keeps the main file as uploaded), while /_next/image at 2048w
  * q75 serves a ~0.7 MB AVIF/WebP. Same-origin, so three.js's TextureLoader
  * (a plain <img>) needs no CORS. 2048 is a default deviceSize and 75 is in
  * next.config `images.qualities`; Blob hosts are in `remotePatterns`.
