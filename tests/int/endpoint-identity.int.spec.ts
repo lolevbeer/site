@@ -186,13 +186,6 @@ const cases: Case[] = [
     } as unknown as Partial<PayloadRequest>,
     ops: ['find', 'update', 'create'],
   },
-  {
-    name: 'sync-untappd-ratings',
-    load: async () => (await import('@/src/endpoints/sync-untappd-ratings')).syncUntappdRatings,
-    findDocs: [{ id: 'b1', name: 'Beer', untappd: '/b/lolev-beer/123' }],
-    url: 'http://localhost/api/sync',
-    ops: ['find', 'update'],
-  },
 ]
 
 describe.each(cases)('$name acts as the authorized user', (c) => {
