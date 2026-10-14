@@ -3,19 +3,16 @@
 import { useState } from 'react'
 import { useField, Button, Banner } from '@payloadcms/ui'
 import { logger } from '@/lib/utils/logger'
-
-interface SearchResult {
-  name: string
-  url: string
-  brewery?: string
-}
+import type { UntappdSearchResult as SearchResult } from '@/src/app/api/untappd/route'
 
 export function UntappdFetcher() {
   const { value: beerName } = useField<string>({ path: 'name' })
   const { value: untappdUrl, setValue: setUntappdUrl } = useField<string>({ path: 'untappd' })
   const { setValue: setUntappdRating } = useField<number>({ path: 'untappdRating' })
   const { setValue: setUntappdRatingCount } = useField<number>({ path: 'untappdRatingCount' })
-  const { value: existingReviews, setValue: setPositiveReviews } = useField<Array<{ url?: string }>>({ path: 'positiveReviews' })
+  const { value: existingReviews, setValue: setPositiveReviews } = useField<
+    Array<{ url?: string }>
+  >({ path: 'positiveReviews' })
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -81,7 +78,9 @@ export function UntappdFetcher() {
     setError(null)
 
     try {
-      const response = await fetch(`/api/untappd?action=rating&url=${encodeURIComponent(targetUrl)}`)
+      const response = await fetch(
+        `/api/untappd?action=rating&url=${encodeURIComponent(targetUrl)}`,
+      )
       const data = await response.json()
 
       if (!response.ok) {
@@ -98,7 +97,9 @@ export function UntappdFetcher() {
           // Merge with existing reviews, using URL as unique key
           const existing = existingReviews || []
           const existingUrls = new Set(existing.map((r: { url?: string }) => r.url).filter(Boolean))
-          const newReviews = data.positiveReviews.filter((r: { url?: string }) => r.url && !existingUrls.has(r.url))
+          const newReviews = data.positiveReviews.filter(
+            (r: { url?: string }) => r.url && !existingUrls.has(r.url),
+          )
           const merged = [...existing, ...newReviews]
           setPositiveReviews(merged)
         }
@@ -117,44 +118,43 @@ export function UntappdFetcher() {
     <div style={{ marginBottom: '20px' }}>
       {error && (
         <div style={{ marginBottom: '10px' }}>
-          <Banner type="danger">
-            {error}
-          </Banner>
+          <Banner type="danger">{error}</Banner>
         </div>
       )}
 
       {searchResults && searchResults.length > 1 && (
-        <div style={{ marginBottom: '10px', padding: '10px', background: 'var(--color-bg-secondary)', borderRadius: '4px' }}>
-          <p style={{ marginBottom: '8px', fontWeight: 'bold' }}>Multiple results found. Select one:</p>
+        <div
+          style={{
+            marginBottom: '10px',
+            padding: '10px',
+            background: 'var(--color-bg-secondary)',
+            borderRadius: '4px',
+          }}
+        >
+          <p style={{ marginBottom: '8px', fontWeight: 'bold' }}>
+            Multiple results found. Select one:
+          </p>
           {searchResults.map((result, index) => (
-            <span key={index} style={{ marginRight: '8px', marginBottom: '8px', display: 'inline-block' }}>
-            <Button
-              buttonStyle="secondary"
-              onClick={() => handleSelectResult(result)}
+            <span
+              key={index}
+              style={{ marginRight: '8px', marginBottom: '8px', display: 'inline-block' }}
             >
-              {result.name}
-            </Button>
+              <Button buttonStyle="secondary" onClick={() => handleSelectResult(result)}>
+                {result.name}
+              </Button>
             </span>
           ))}
         </div>
       )}
 
       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-        <Button
-          buttonStyle="secondary"
-          onClick={handleSearch}
-          disabled={loading || !beerName}
-        >
+        <Button buttonStyle="secondary" onClick={handleSearch} disabled={loading || !beerName}>
           {loading ? 'Searching...' : 'Search Untappd'}
         </Button>
 
         {untappdUrl && (
           <>
-            <Button
-              buttonStyle="secondary"
-              onClick={() => fetchRating()}
-              disabled={loading}
-            >
+            <Button buttonStyle="secondary" onClick={() => fetchRating()} disabled={loading}>
               {loading ? 'Fetching...' : 'Refresh Rating'}
             </Button>
 

@@ -3,105 +3,137 @@
 /**
  * Beers list-view cells for the Untappd URL and Tag columns. A filled cell
  * renders Payload's DefaultCell; an empty one, for users who may update beers,
- * offers Payload's Select so blanks can be filled without opening each beer:
- * - Untappd: opening the select searches Untappd by the beer's name (the same
- *   /api/untappd search the edit view's UntappdFetcher uses); typing searches
- *   again. An exact name match is listed first and marked ★.
- * - Tag: the existing tags.
+ * is a Payload Select that fills the blank in place.
  *
  * Saves PATCH /api/beers/:id, which runs Beers' access rules and hooks (the
  * Untappd URL triggers the rating fetch). Payload merges a PATCH over the
  * latest version, so a beer whose latest version is a draft must save with
- * ?draft=true; otherwise the merge would publish the pending draft.
+ * ?draft=true or the merge would publish the pending draft. The status is read
+ * fresh at save time: the list only selects visible columns, so the row's
+ * `_status` is missing whenever the Status column is hidden.
  */
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ComponentProps } from 'react'
 import { useRouter } from 'next/navigation'
 import { DefaultCell, Select, useAuth } from '@payloadcms/ui'
 import type { DefaultCellComponentProps } from 'payload'
+import type { UntappdSearchResult } from '@/src/app/api/untappd/route'
+import { logger } from '@/lib/utils/logger'
 
-type RowData = DefaultCellComponentProps['rowData']
+type Option = { label: string; value: string }
+type SelectProps = ComponentProps<typeof Select>
 
-function useSaveBeerField(rowData: RowData, field: 'untappd' | 'tag') {
+async function errorMessage(res: Response, fallback: string): Promise<string> {
+  const body = (await res.json().catch(() => null)) as {
+    error?: string
+    errors?: { message?: string }[]
+  } | null
+  return body?.errors?.[0]?.message || body?.error || `${fallback} (${res.status})`
+}
+
+async function saveBeerField(id: string, field: 'untappd' | 'tag', value: string) {
+  const beerURL = `/api/beers/${encodeURIComponent(id)}`
+  const latest = await fetch(`${beerURL}?draft=true&depth=0&select[_status]=true`, {
+    credentials: 'same-origin',
+  })
+  if (!latest.ok) throw new Error(await errorMessage(latest, 'Could not read beer'))
+  const { _status } = (await latest.json()) as { _status?: string }
+
+  const res = await fetch(`${beerURL}${_status === 'published' ? '' : '?draft=true'}`, {
+    method: 'PATCH',
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ [field]: value }),
+  })
+  if (!res.ok) throw new Error(await errorMessage(res, 'Save failed'))
+}
+
+/** True when the cell is blank and the signed-in user may update beers. */
+function useEditable(cellData: unknown) {
+  const canUpdate = Boolean(useAuth().permissions?.collections?.beers?.update)
+  const empty = cellData === null || cellData === undefined || cellData === ''
+  return { empty, editable: empty && canUpdate }
+}
+
+/** The editable cell: a Select whose chosen option is saved to `field`, plus any error. */
+function FillSelect({
+  rowId,
+  field,
+  minWidth,
+  loadError,
+  selectProps,
+}: {
+  rowId: string
+  field: 'untappd' | 'tag'
+  minWidth: number
+  loadError: string | null
+  selectProps: Omit<SelectProps, 'onChange' | 'disabled' | 'menuPortalTarget'>
+}) {
   const router = useRouter()
   const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const error = loadError ?? saveError
 
-  /** Resolves true once saved, so callers can close their UI. */
-  async function save(value: string): Promise<boolean> {
+  async function save(value: string) {
     setSaving(true)
-    setError(null)
-    const draft = rowData._status === 'published' ? '' : '?draft=true'
+    setSaveError(null)
     try {
-      const res = await fetch(`/api/beers/${encodeURIComponent(String(rowData.id))}${draft}`, {
-        method: 'PATCH',
-        credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ [field]: value }),
-      })
-      if (!res.ok) {
-        const body = (await res.json().catch(() => null)) as {
-          errors?: { message?: string }[]
-        } | null
-        throw new Error(body?.errors?.[0]?.message || `Save failed (${res.status})`)
-      }
+      await saveBeerField(rowId, field, value)
       router.refresh()
-      return true
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Save failed')
-      return false
+      setSaveError(err instanceof Error ? err.message : 'Save failed')
     } finally {
       setSaving(false)
     }
   }
 
-  return { save, saving, error }
+  return (
+    <div style={{ minWidth }}>
+      <Select
+        {...selectProps}
+        disabled={saving}
+        // Portal the menu so the table's overflow doesn't clip it.
+        menuPortalTarget={typeof document === 'undefined' ? null : document.body}
+        onChange={(option) => {
+          if (!Array.isArray(option) && typeof option?.value === 'string') void save(option.value)
+        }}
+      />
+      {error && (
+        <span role="alert" style={{ color: 'var(--theme-error-500)', display: 'block' }}>
+          {error}
+        </span>
+      )}
+    </div>
+  )
 }
-
-const isEmpty = (value: unknown) => value === null || value === undefined || value === ''
-
-function useCanUpdateBeers() {
-  return Boolean(useAuth().permissions?.collections?.beers?.update)
-}
-
-function ErrorText({ error }: { error: string | null }) {
-  return error ? (
-    <span role="alert" style={{ color: 'var(--theme-error-500)', display: 'block' }}>
-      {error}
-    </span>
-  ) : null
-}
-
-type UntappdResult = { name: string; url: string; brewery?: string }
-type Option = { label: string; value: string }
 
 const normalizeName = (name: string) => name.trim().toLowerCase()
 
 /** Exact (case-insensitive) name match first, marked ★; a lone result counts as the match. */
-function toOptions(results: UntappdResult[], beerName: string): Option[] {
-  const isMatch = (r: UntappdResult) =>
+function toOptions(results: UntappdSearchResult[], beerName: string): Option[] {
+  const isMatch = (r: UntappdSearchResult) =>
     results.length === 1 || normalizeName(r.name) === normalizeName(beerName)
-  return [...results]
-    .sort((a, b) => Number(isMatch(b)) - Number(isMatch(a)))
-    .map((r) => ({
-      label: `${isMatch(r) ? '★ ' : ''}${r.name}${r.brewery ? ` · ${r.brewery}` : ''}`,
-      value: r.url,
-    }))
+  const toOption = (r: UntappdSearchResult, star: boolean) => ({
+    label: `${star ? '★ ' : ''}${r.name}${r.brewery ? ` · ${r.brewery}` : ''}`,
+    value: r.url,
+  })
+  const matches = results.filter(isMatch)
+  const rest = results.filter((r) => !matches.includes(r))
+  return [...matches.map((r) => toOption(r, true)), ...rest.map((r) => toOption(r, false))]
 }
 
 export function UntappdCell(props: DefaultCellComponentProps) {
-  const canUpdate = useCanUpdateBeers()
+  const { empty, editable } = useEditable(props.cellData)
   const beerName = String(props.rowData.name ?? '')
-  const [options, setOptions] = useState<Option[] | null>(null)
+  const [options, setOptions] = useState<Option[]>([])
   const [loading, setLoading] = useState(false)
   const [searchError, setSearchError] = useState<string | null>(null)
-  const { save, saving, error } = useSaveBeerField(props.rowData, 'untappd')
   const lastQuery = useRef<string | null>(null)
   const debounce = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   useEffect(() => () => clearTimeout(debounce.current), [])
 
-  if (!isEmpty(props.cellData)) return <DefaultCell {...props} />
-  if (!canUpdate) return null
+  if (!empty) return <DefaultCell {...props} />
+  if (!editable) return null
 
   // Untappd rate-limits us, so search only when asked: on open (by beer name)
   // and on typed text, debounced, never for every row on page load.
@@ -115,8 +147,8 @@ export function UntappdCell(props: DefaultCellComponentProps) {
       const res = await fetch(`/api/untappd?action=search&q=${encodeURIComponent(q)}`, {
         credentials: 'same-origin',
       })
-      const body = (await res.json()) as { results?: UntappdResult[]; error?: string }
-      if (!res.ok) throw new Error(body.error || `Search failed (${res.status})`)
+      if (!res.ok) throw new Error(await errorMessage(res, 'Search failed'))
+      const body = (await res.json()) as { results?: UntappdSearchResult[] }
       // A newer query superseded this one while it was in flight.
       if (lastQuery.current === q) setOptions(toOptions(body.results ?? [], beerName))
     } catch (err) {
@@ -127,69 +159,88 @@ export function UntappdCell(props: DefaultCellComponentProps) {
     }
   }
 
+  // react-select passes { action }, and also reports '' on blur/menu close; only typing searches.
+  const onInputChange = ((text: string, meta?: { action?: string }) => {
+    if (meta && meta.action !== 'input-change') return
+    clearTimeout(debounce.current)
+    debounce.current = setTimeout(() => void search(text || beerName), 400)
+  }) as SelectProps['onInputChange']
+
   return (
-    <div style={{ minWidth: 220 }}>
-      <Select
-        aria-label="Untappd URL"
-        placeholder="Find on Untappd…"
-        options={options ?? []}
-        isLoading={loading}
-        disabled={saving}
+    <FillSelect
+      rowId={String(props.rowData.id)}
+      field="untappd"
+      minWidth={220}
+      loadError={searchError}
+      selectProps={{
+        'aria-label': 'Untappd URL',
+        placeholder: 'Find on Untappd…',
+        options,
+        isLoading: loading,
         // Untappd already filtered server-side; don't hide results that don't contain the typed text.
-        filterOption={() => true}
-        noOptionsMessage={() => (loading ? 'Searching Untappd…' : 'No Untappd results')}
-        menuPortalTarget={typeof document === 'undefined' ? null : document.body}
-        onMenuOpen={() => void search(beerName)}
-        onInputChange={(text) => {
-          clearTimeout(debounce.current)
-          debounce.current = setTimeout(() => void search(text || beerName), 400)
-        }}
-        onChange={(option) => {
-          if (!Array.isArray(option) && typeof option?.value === 'string') void save(option.value)
-        }}
-      />
-      <ErrorText error={searchError ?? error} />
-    </div>
+        filterOption: () => true,
+        noOptionsMessage: () => (loading ? 'Searching Untappd…' : 'No Untappd results'),
+        onMenuOpen: () => void search(beerName),
+        onInputChange,
+      }}
+    />
   )
 }
 
-export function TagCell(props: DefaultCellComponentProps) {
-  const canUpdate = useCanUpdateBeers()
-  const empty = isEmpty(props.cellData)
-  const [tags, setTags] = useState<Option[] | null>(null)
-  const { save, saving, error } = useSaveBeerField(props.rowData, 'tag')
-
-  // ponytail: one tags fetch per empty row; share a cache if the list grows past a page of blanks.
-  useEffect(() => {
-    if (!empty || !canUpdate) return
-    const controller = new AbortController()
-    fetch('/api/tags?limit=100&sort=name&depth=0', {
-      credentials: 'same-origin',
-      signal: controller.signal,
+/** One tags request shared by every Tag cell on the page; cleared on failure so a retry refetches. */
+let tagsRequest: Promise<Option[]> | null = null
+function loadTags(): Promise<Option[]> {
+  tagsRequest ??= fetch('/api/tags?limit=100&sort=name&depth=0', { credentials: 'same-origin' })
+    .then(async (res) => {
+      if (!res.ok) throw new Error(await errorMessage(res, 'Could not load tags'))
+      const body = (await res.json()) as { docs: { id: string; name: string }[] }
+      return body.docs.map((tag) => ({ label: tag.name, value: tag.id }))
     })
-      .then((res) => res.json() as Promise<{ docs: { id: string; name: string }[] }>)
-      .then((body) => setTags(body.docs.map((tag) => ({ label: tag.name, value: tag.id }))))
-      .catch(() => {})
-    return () => controller.abort()
-  }, [empty, canUpdate])
+    .catch((err: unknown) => {
+      tagsRequest = null
+      throw err
+    })
+  return tagsRequest
+}
+
+/** Test seam: forget the shared tags request between tests. */
+export function resetTagsRequest() {
+  tagsRequest = null
+}
+
+export function TagCell(props: DefaultCellComponentProps) {
+  const { empty, editable } = useEditable(props.cellData)
+  const [tags, setTags] = useState<Option[] | null>(null)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   if (!empty) return <DefaultCell {...props} />
-  if (!canUpdate) return null
+  if (!editable) return null
+
+  // Loaded on first open, not on mount, so a page of blank rows makes no request until one is used.
+  function open() {
+    if (tags) return
+    setLoadError(null)
+    loadTags()
+      .then(setTags)
+      .catch((err: unknown) => {
+        logger.error('Failed to load tags for Beers list', err)
+        setLoadError(err instanceof Error ? err.message : 'Could not load tags')
+      })
+  }
 
   return (
-    <div style={{ minWidth: 160 }}>
-      <Select
-        aria-label="Tag"
-        placeholder="Set tag…"
-        options={tags ?? []}
-        isLoading={!tags}
-        disabled={saving}
-        menuPortalTarget={typeof document === 'undefined' ? null : document.body}
-        onChange={(option) => {
-          if (!Array.isArray(option) && typeof option?.value === 'string') void save(option.value)
-        }}
-      />
-      <ErrorText error={error} />
-    </div>
+    <FillSelect
+      rowId={String(props.rowData.id)}
+      field="tag"
+      minWidth={160}
+      loadError={loadError}
+      selectProps={{
+        'aria-label': 'Tag',
+        placeholder: 'Set tag…',
+        options: tags ?? [],
+        isLoading: tags === null && !loadError,
+        onMenuOpen: open,
+      }}
+    />
   )
 }

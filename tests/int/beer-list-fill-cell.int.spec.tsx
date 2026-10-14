@@ -1,17 +1,15 @@
 /**
- * Beers list cells: an empty Untappd URL or Tag can be filled straight from
- * /admin/collections/beers. Both use Payload's select: Untappd searches by
- * the beer's name (or typed text) and lists the exact name match first. A beer whose latest version
- * is a draft saves as a draft, so filling a blank never publishes someone's
- * unfinished edits.
+ * BeerListFillCell: blank Untappd/Tag cells on /admin/collections/beers are
+ * filled in place. Saves read the beer's latest status first, so a pending
+ * draft stays a draft even when the Status column (and `_status`) is hidden.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type { DefaultCellComponentProps } from 'payload'
-import { TagCell, UntappdCell } from '@/src/components/admin/BeerListFillCell'
+import { resetTagsRequest, TagCell, UntappdCell } from '@/src/components/admin/BeerListFillCell'
 
 type Opt = { label: string; value: string }
-const state = vi.hoisted(() => ({ canUpdate: true, refresh: vi.fn() }))
+const state = vi.hoisted(() => ({ canUpdate: true, refresh: vi.fn(), status: 'published' }))
 vi.mock('@payloadcms/ui', () => ({
   useAuth: () => ({
     permissions: { collections: { beers: state.canUpdate ? { update: true } : {} } },
@@ -28,12 +26,16 @@ vi.mock('@payloadcms/ui', () => ({
     options: Opt[]
     onChange: (o: Opt) => void
     onMenuOpen?: () => void
-    onInputChange?: (v: string) => void
+    onInputChange?: (v: string, meta: { action: string }) => void
     'aria-label'?: string
   }) => (
     <div>
       <button onClick={onMenuOpen}>open:{label}</button>
-      <input aria-label={`search:${label}`} onChange={(e) => onInputChange?.(e.target.value)} />
+      <input
+        aria-label={`search:${label}`}
+        onChange={(e) => onInputChange?.(e.target.value, { action: 'input-change' })}
+        onBlur={() => onInputChange?.('', { action: 'input-blur' })}
+      />
       {options.map((o) => (
         <button key={o.value} onClick={() => onChange(o)}>
           option:{o.label}
@@ -44,32 +46,32 @@ vi.mock('@payloadcms/ui', () => ({
 }))
 vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: state.refresh }) }))
 
-// The cells only read cellData/rowData; the rest of Payload's props are irrelevant here.
-const props = (cellData: unknown, status: string) =>
-  ({
-    cellData,
-    rowData: { id: 'beer-1', name: 'Lupula', _status: status },
-  }) as unknown as DefaultCellComponentProps
+// The list view only selects visible columns, so rows here carry no `_status`.
+const props = (cellData: unknown) =>
+  ({ cellData, rowData: { id: 'beer-1', name: 'Lupula' } }) as unknown as DefaultCellComponentProps
 
 const searchResults = [
   { name: 'Lupula Light', url: 'https://untappd.com/b/lolev-lupula-light/2', brewery: 'Lolev' },
   { name: 'Lupula', url: 'https://untappd.com/b/lolev-lupula/1', brewery: 'Lolev' },
 ]
 
+const respond = (body: unknown) => ({ ok: true, json: async () => body })
+const calls = (prefix: string) =>
+  vi.mocked(fetch).mock.calls.filter(([url]) => String(url).startsWith(prefix))
+
 beforeEach(() => {
   state.canUpdate = true
+  state.status = 'published'
   state.refresh.mockReset()
+  resetTagsRequest()
   vi.stubGlobal(
     'fetch',
-    vi.fn(async (url: string) => ({
-      ok: true,
-      json: async () =>
-        url.startsWith('/api/tags')
-          ? { docs: [{ id: 'tag-1', name: 'Seasonal' }] }
-          : url.startsWith('/api/untappd')
-            ? { results: searchResults }
-            : {},
-    })),
+    vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.startsWith('/api/tags')) return respond({ docs: [{ id: 'tag-1', name: 'Seasonal' }] })
+      if (url.startsWith('/api/untappd')) return respond({ results: searchResults })
+      if (init?.method === 'PATCH') return respond({})
+      return respond({ _status: state.status })
+    }),
   )
 })
 afterEach(() => {
@@ -79,18 +81,18 @@ afterEach(() => {
 
 describe('Beers list fill cells', () => {
   it('shows the normal cell when a value is set', () => {
-    render(<UntappdCell {...props('/b/x/1', 'published')} />)
+    render(<UntappdCell {...props('/b/x/1')} />)
     expect(screen.getByText('default:/b/x/1')).toBeTruthy()
   })
 
   it('shows nothing editable to users who cannot update beers', () => {
     state.canUpdate = false
-    render(<UntappdCell {...props(null, 'published')} />)
+    render(<UntappdCell {...props(null)} />)
     expect(screen.queryByRole('textbox')).toBeNull()
   })
 
   it('searches Untappd by beer name on open and lists the exact name match first', async () => {
-    render(<UntappdCell {...props(null, 'published')} />)
+    render(<UntappdCell {...props(null)} />)
     fireEvent.click(screen.getByRole('button', { name: 'open:Untappd URL' }))
     const first = await screen.findByRole('button', { name: /^option:★ Lupula/ })
     expect(fetch).toHaveBeenCalledWith('/api/untappd?action=search&q=Lupula', expect.anything())
@@ -99,24 +101,33 @@ describe('Beers list fill cells', () => {
     expect(options[1].textContent).toContain('Lupula Light')
   })
 
-  it('searches again with typed text', async () => {
-    render(<UntappdCell {...props(null, 'published')} />)
-    fireEvent.change(screen.getByRole('textbox', { name: 'search:Untappd URL' }), {
-      target: { value: 'Lupula IPA' },
-    })
-    await waitFor(() =>
-      expect(fetch).toHaveBeenCalledWith(
+  it('searches again with typed text, but not when the input is cleared on blur', async () => {
+    vi.useFakeTimers()
+    try {
+      render(<UntappdCell {...props(null)} />)
+      const input = screen.getByRole('textbox', { name: 'search:Untappd URL' })
+      fireEvent.change(input, { target: { value: 'Lupula IPA' } })
+      await vi.advanceTimersByTimeAsync(400)
+      expect(calls('/api/untappd').map(([u]) => u)).toEqual([
         '/api/untappd?action=search&q=Lupula%20IPA',
-        expect.anything(),
-      ),
-    )
+      ])
+      fireEvent.blur(input)
+      await vi.advanceTimersByTimeAsync(400)
+      expect(calls('/api/untappd')).toHaveLength(1)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
-  it('saves the chosen result on a published beer as a normal update', async () => {
-    render(<UntappdCell {...props(null, 'published')} />)
+  it('saves to a published beer as a normal update, reading status fresh', async () => {
+    render(<UntappdCell {...props(null)} />)
     fireEvent.click(screen.getByRole('button', { name: 'open:Untappd URL' }))
     fireEvent.click(await screen.findByRole('button', { name: /^option:★ Lupula/ }))
     await waitFor(() => expect(state.refresh).toHaveBeenCalled())
+    expect(fetch).toHaveBeenCalledWith(
+      '/api/beers/beer-1?draft=true&depth=0&select[_status]=true',
+      expect.anything(),
+    )
     expect(fetch).toHaveBeenCalledWith(
       '/api/beers/beer-1',
       expect.objectContaining({
@@ -127,7 +138,9 @@ describe('Beers list fill cells', () => {
   })
 
   it('saves a tag on a draft beer as a draft', async () => {
-    render(<TagCell {...props(null, 'draft')} />)
+    state.status = 'draft'
+    render(<TagCell {...props(null)} />)
+    fireEvent.click(screen.getByRole('button', { name: 'open:Tag' }))
     fireEvent.click(await screen.findByRole('button', { name: 'option:Seasonal' }))
     await waitFor(() => expect(state.refresh).toHaveBeenCalled())
     expect(fetch).toHaveBeenCalledWith(
@@ -136,13 +149,35 @@ describe('Beers list fill cells', () => {
     )
   })
 
+  it('loads tags once for the whole page, and only when a menu is opened', async () => {
+    render(
+      <>
+        <TagCell {...props(null)} />
+        <TagCell {...props(null)} />
+      </>,
+    )
+    expect(calls('/api/tags')).toHaveLength(0)
+    for (const opener of screen.getAllByRole('button', { name: 'open:Tag' }))
+      fireEvent.click(opener)
+    await waitFor(() =>
+      expect(screen.getAllByRole('button', { name: 'option:Seasonal' })).toHaveLength(2),
+    )
+    expect(calls('/api/tags')).toHaveLength(1)
+  })
+
   it('reports a failed save', async () => {
-    render(<TagCell {...props(null, 'published')} />)
+    render(<TagCell {...props(null)} />)
+    fireEvent.click(screen.getByRole('button', { name: 'open:Tag' }))
     const option = await screen.findByRole('button', { name: 'option:Seasonal' })
-    vi.mocked(fetch).mockResolvedValueOnce({
-      ok: false,
-      json: async () => ({ errors: [{ message: 'Nope' }] }),
-    } as Response)
+    vi.mocked(fetch).mockImplementation(async (_url, init) =>
+      init?.method === 'PATCH'
+        ? ({
+            ok: false,
+            status: 403,
+            json: async () => ({ errors: [{ message: 'Nope' }] }),
+          } as Response)
+        : (respond({ _status: 'published' }) as Response),
+    )
     fireEvent.click(option)
     expect((await screen.findByRole('alert')).textContent).toContain('Nope')
     expect(state.refresh).not.toHaveBeenCalled()

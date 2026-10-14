@@ -114,8 +114,6 @@ export const Beers: CollectionConfig = {
     group: 'Back of House',
     useAsTitle: 'name',
     listSearchableFields: ['name', 'slug'],
-    // untappd and tag cells let editors fill blanks inline (BeerListFillCell);
-    // the image column shows only the thumbnail (filename hidden in custom.scss).
     defaultColumns: [
       'name',
       'image',
