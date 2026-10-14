@@ -1,5 +1,6 @@
 import type { GlobalConfig } from 'payload'
 import { adminAccess, adminFieldAccess } from '@/src/access/roles'
+import { isSlackChannel } from '@/lib/slack/mrkdwn'
 import {
   DEFAULT_HERO_DESCRIPTION,
   DEFAULT_ABOUT_PHILOSOPHY,
@@ -87,6 +88,41 @@ export const SiteContent: GlobalConfig = {
               type: 'text',
               label: "Today's Food Title",
               defaultValue: "Today's Food",
+            },
+          ],
+        },
+        {
+          label: 'Slack Channels',
+          description:
+            'Where public-form pings post: #channel-name or a channel ID (C…). Invite the Lolev Beer bot to the channel, then use Send test message to confirm it can post. Blank uses the SLACK_*_CHANNEL env setting, else #events.',
+          fields: [
+            {
+              name: 'slackChannels',
+              type: 'group',
+              label: false,
+              access: { read: adminFieldAccess },
+              fields: (
+                [
+                  ['donations', 'Donation requests'],
+                  ['jobs', 'Job applications'],
+                  ['eventInquiries', 'Private-event inquiries'],
+                ] as const
+              ).map(([name, label]) => ({
+                name,
+                label,
+                type: 'text' as const,
+                admin: {
+                  components: {
+                    afterInput: [
+                      '@/src/components/admin/SlackChannelTestButton#SlackChannelTestButton',
+                    ],
+                  },
+                },
+                validate: (value: string | null | undefined) =>
+                  !value?.trim() ||
+                  isSlackChannel(value) ||
+                  'Use #channel-name or a channel ID like C0123456789.',
+              })),
             },
           ],
         },

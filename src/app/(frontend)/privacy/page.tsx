@@ -2,22 +2,19 @@ import type { Metadata } from 'next'
 import { JsonLd } from '@/components/seo/json-ld'
 import { LegalPage } from '@/components/legal/legal-page'
 import { generateWebPageSchema } from '@/lib/utils/breadcrumb-schema'
-import { DEFAULT_OG_IMAGES } from '@/lib/utils/seo'
-import { LEGAL_PAGES_LASTMOD, LEGAL_PAGES_LASTMOD_LABEL } from '@/lib/legal/dates'
+import { PRIVACY_LASTMOD, PRIVACY_LASTMOD_LABEL } from '@/lib/legal/dates'
+import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
 
 const DESCRIPTION =
-  'How Lolev Beer collects and uses information on lolev.beer, including analytics, the beer map, donation requests, and job applications.'
+  'How Lolev Beer collects and uses information on lolev.beer, including analytics, the beer map, donation requests, private-event inquiries, and job applications.'
 
-export const metadata: Metadata = {
-  title: 'Privacy Policy',
-  description: DESCRIPTION,
-  alternates: { canonical: '/privacy' },
-  openGraph: {
-    title: 'Privacy Policy | Lolev Beer',
-    description: DESCRIPTION,
-    type: 'website',
-    images: DEFAULT_OG_IMAGES,
-  },
+export async function generateMetadata(): Promise<Metadata> {
+  return buildPageMetadata({
+    fallbackTitle: 'Privacy Policy',
+    fallbackDescription: DESCRIPTION,
+    canonicalPath: '/privacy',
+    hubKey: 'privacy',
+  })
 }
 
 export default function PrivacyPage() {
@@ -25,18 +22,18 @@ export default function PrivacyPage() {
     name: 'Privacy Policy',
     description: DESCRIPTION,
     path: '/privacy',
-    dateModified: LEGAL_PAGES_LASTMOD,
+    dateModified: PRIVACY_LASTMOD,
   })
 
   return (
     <>
       <JsonLd data={webPageSchema} />
-      <LegalPage title="Privacy Policy" lastUpdated={LEGAL_PAGES_LASTMOD_LABEL}>
+      <LegalPage title="Privacy Policy" lastUpdated={PRIVACY_LASTMOD_LABEL}>
         <section>
           <h2>About this policy</h2>
           <p>
             This policy is about lolev.beer. It covers browsing, the beer map, donation
-            requests, and job applications.
+            requests, private-event inquiries, and job applications.
           </p>
         </section>
 
@@ -61,6 +58,10 @@ export default function PrivacyPage() {
               mission, event details, and what you are asking for.
             </li>
             <li>
+              <strong>Private-event inquiries.</strong> Name, email, phone, preferred date,
+              number of guests, taproom, and your note.
+            </li>
+            <li>
               <strong>Job applications.</strong> Name, email, phone, and your note. We do not
               accept resume files.
             </li>
@@ -74,8 +75,8 @@ export default function PrivacyPage() {
         <section>
           <h2>Cookies and local storage</h2>
           <p>
-            Google Analytics sets cookies to measure traffic. Your taproom choice is stored
-            in localStorage on your device. Staff who sign in to the admin use a session
+            Google Analytics sets cookies to measure traffic. Vercel Analytics does not use
+            cookies. Your taproom choice is stored in localStorage on your device. Staff who sign in to the admin use a session
             cookie. There is no mailing-list form on this site. The homepage Newsletter
             button opens Square, where you can enroll if you want updates.
           </p>
@@ -101,8 +102,8 @@ export default function PrivacyPage() {
               Search text is sent to Mapbox Geocoding.
             </li>
             <li>
-              Sentry, for errors and sampled session replay so we can debug problems. Some
-              page activity may be recorded.
+              Sentry, for error reports and sampled performance timings (page URLs and load
+              times) so we can debug problems. No session recording.
             </li>
             <li>
               Square, if you use the homepage Newsletter link. That mailing-list form is on

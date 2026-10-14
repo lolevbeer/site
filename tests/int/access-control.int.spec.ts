@@ -4,7 +4,9 @@ import { Users } from '@/src/collections/Users'
 import { Menus, canUpdateMenus } from '@/src/collections/Menus'
 import { Beers } from '@/src/collections/Beers'
 import { Events } from '@/src/collections/Events'
+import { RecurringEvents } from '@/src/collections/RecurringEvents'
 import { DonationRequests } from '@/src/collections/DonationRequests'
+import { EventInquiries } from '@/src/collections/EventInquiries'
 import { Jobs } from '@/src/collections/Jobs'
 import { JobApplications } from '@/src/collections/JobApplications'
 import { FoodVendors } from '@/src/collections/FoodVendors'
@@ -258,6 +260,16 @@ describe('draft and sensitive field visibility', () => {
     }
   })
 
+  it('lets bartenders read every event and recurring event, not just public ones', () => {
+    for (const access of [Events.access?.read, RecurringEvents.access?.read]) {
+      for (const role of ['bartender', 'lead-bartender'] as const) {
+        expect(callAccess(access, userWith([role]))).toBe(true)
+      }
+      expect(callAccess(access, userWith(['beer-manager']))).not.toBe(true)
+      expect(callAccess(access, null)).not.toBe(true)
+    }
+  })
+
   it('limits private event details to event managers and admins', () => {
     for (const name of ['attendees', 'pointOfContact', 'email', 'phone', 'otherInfo']) {
       const field = findField(Events.fields, name)
@@ -308,6 +320,26 @@ describe('donation request inbox', () => {
     expect(callAccess(DonationRequests.access?.update, userWith(['event-manager']))).toBe(true)
     expect(callAccess(DonationRequests.access?.delete, userWith(['event-manager']))).toBe(false)
     expect(callAccess(DonationRequests.access?.delete, userWith(['admin']))).toBe(true)
+  })
+})
+
+describe('private event inquiry inbox', () => {
+  it('is not creatable via the public API and only event managers read it', () => {
+    expect(callAccess(EventInquiries.access?.create, null)).toBe(false)
+    expect(callAccess(EventInquiries.access?.create, userWith(['event-manager']))).toBe(false)
+    expect(callAccess(EventInquiries.access?.read, null)).toBe(false)
+    expect(callAccess(EventInquiries.access?.read, userWith(['bartender']))).toBe(false)
+    expect(callAccess(EventInquiries.access?.read, userWith(['event-manager']))).toBe(true)
+    expect(callAccess(EventInquiries.access?.update, userWith(['event-manager']))).toBe(true)
+    expect(callAccess(EventInquiries.access?.delete, userWith(['event-manager']))).toBe(false)
+    expect(callAccess(EventInquiries.access?.delete, userWith(['admin']))).toBe(true)
+  })
+
+  it('hides the submitter ipHash from event managers on API reads', () => {
+    const ipHash = EventInquiries.fields.find((f) => 'name' in f && f.name === 'ipHash')
+    const read = ipHash && 'access' in ipHash ? ipHash.access?.read : undefined
+    expect(callAccess(read, userWith(['event-manager']))).toBe(false)
+    expect(callAccess(read, userWith(['admin']))).toBe(true)
   })
 })
 

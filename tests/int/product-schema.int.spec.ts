@@ -67,7 +67,16 @@ describe('generateProductSchema offers and reviews', () => {
     expect(offers[0]?.availability).toBe('https://schema.org/InStock')
   })
 
-  it('keeps Untappd aggregateRating without embedding a mismatched Review array', () => {
+  it('marks offers OutOfStock when no taproom menu lists the beer', () => {
+    const schema = generateProductSchema(
+      beer({ name: 'Lupula', slug: 'lupula', draftPrice: 8 }),
+      { inStock: false },
+    )
+    const offers = Array.isArray(schema.offers) ? schema.offers : [schema.offers]
+    expect(offers[0]?.availability).toBe('https://schema.org/OutOfStock')
+  })
+
+  it('never republishes Untappd ratings or reviews as Product markup', () => {
     const schema = generateProductSchema(beer({
       name: 'Lupula',
       slug: 'lupula',
@@ -77,7 +86,7 @@ describe('generateProductSchema offers and reviews', () => {
         { username: 'sam', rating: 4, text: 'Great', date: '2026-01-01' },
       ],
     }))
-    expect(schema.aggregateRating?.reviewCount).toBe('1600')
+    expect(schema).not.toHaveProperty('aggregateRating')
     expect(schema.review).toBeUndefined()
   })
 })

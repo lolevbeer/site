@@ -2,13 +2,17 @@
  * Beer Page Content Component
  * Client component for interactive beer listing with inline filters.
  * Uses nuqs for URL-based filter persistence (shareable/bookmarkable).
+ * A collapsed "All beers" list under the grid links every beer page, so beers
+ * hidden by the default filter (not in cans) still have a crawlable link.
  */
 
 'use client'
 
-import React, { useMemo } from 'react'
+import React, { Suspense, useMemo } from 'react'
+import Link from 'next/link'
 import { useQueryState, parseAsString } from 'nuqs'
 import { Beer } from '@/lib/types/beer'
+import { getBeerSlug } from '@/lib/utils/formatters'
 import { BeerCard } from '@/components/beer/beer-card'
 import { Button } from '@/components/ui/button'
 import {
@@ -36,13 +40,53 @@ import { AVAILABILITY_OPTIONS, DEFAULT_AVAILABILITY } from '@/lib/config/beer-fi
 import { StaggerChildren, StaggerItem } from '@/components/motion'
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs'
 import { PageTransition } from '@/components/motion'
+import { HubIntro } from '@/components/ui/hub-intro'
 
 interface BeerPageContentProps {
   beers: Beer[]
+  /** CMS intro paragraph shown under the heading. */
+  intro?: string
 }
 
-export function BeerPageContent({ beers }: BeerPageContentProps) {
-  const { currentLocation } = useLocationContext()
+interface BeerListingProps extends BeerPageContentProps {
+  search: string
+  availability: string
+  selectedType: string
+  selectedTag: string
+  onSearchChange?: (value: string) => void
+  onAvailabilityChange?: (value: string) => void
+  onTypeChange?: (type: string) => void
+  onTagChange?: (tag: string) => void
+  onClear?: () => void
+}
+
+const noop = () => {}
+
+/**
+ * Filter controls read the query string, which bails out of static rendering.
+ * The catalog itself renders with the default filters so beer names are in
+ * the HTML. The suspended child applies `?q=`, style, and availability.
+ */
+export function BeerPageContent({ beers, intro }: BeerPageContentProps) {
+  return (
+    <Suspense
+      fallback={
+        <BeerListing
+          beers={beers}
+          intro={intro}
+          search=""
+          availability={DEFAULT_AVAILABILITY}
+          selectedType="all"
+          selectedTag="all"
+        />
+      }
+    >
+      <BeerPageFiltered beers={beers} intro={intro} />
+    </Suspense>
+  )
+}
+
+function BeerPageFiltered({ beers, intro }: BeerPageContentProps) {
   const [search, setSearch] = useQueryState('q', { defaultValue: '' })
   const [availability, setAvailability] = useQueryState(
     'avail',
@@ -50,6 +94,50 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
   )
   const [selectedType, setSelectedType] = useQueryState('style', { defaultValue: 'all' })
   const [selectedTag, setSelectedTag] = useQueryState('tag', { defaultValue: 'all' })
+
+  const handleSearchChange = (value: string) => setSearch(value || null)
+  const handleAvailabilityChange = (value: string) =>
+    setAvailability(value === DEFAULT_AVAILABILITY ? null : value)
+  const handleTypeChange = (type: string) => setSelectedType(type === 'all' ? null : type)
+  const handleTagChange = (tag: string) => setSelectedTag(tag === 'all' ? null : tag)
+  const clearFilters = () => {
+    setSearch(null)
+    setAvailability(null)
+    setSelectedType(null)
+    setSelectedTag(null)
+  }
+
+  return (
+    <BeerListing
+      beers={beers}
+      intro={intro}
+      search={search ?? ''}
+      availability={availability}
+      selectedType={selectedType ?? 'all'}
+      selectedTag={selectedTag ?? 'all'}
+      onSearchChange={handleSearchChange}
+      onAvailabilityChange={handleAvailabilityChange}
+      onTypeChange={handleTypeChange}
+      onTagChange={handleTagChange}
+      onClear={clearFilters}
+    />
+  )
+}
+
+function BeerListing({
+  beers,
+  intro,
+  search,
+  availability,
+  selectedType,
+  selectedTag,
+  onSearchChange = noop,
+  onAvailabilityChange = noop,
+  onTypeChange = noop,
+  onTagChange = noop,
+  onClear = noop,
+}: BeerListingProps) {
+  const { currentLocation } = useLocationContext()
 
   const beerTypes = useMemo(() => {
     const types = new Set<string>()
@@ -66,20 +154,6 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
     })
     return Array.from(tags).sort()
   }, [beers])
-
-  // Writing null resets a param to its default and drops it from the URL.
-  const handleSearchChange = (value: string) => setSearch(value || null)
-  const handleAvailabilityChange = (value: string) =>
-    setAvailability(value === DEFAULT_AVAILABILITY ? null : value)
-  const handleTypeChange = (type: string) => setSelectedType(type === 'all' ? null : type)
-  const handleTagChange = (tag: string) => setSelectedTag(tag === 'all' ? null : tag)
-
-  const clearFilters = () => {
-    setSearch(null)
-    setAvailability(null)
-    setSelectedType(null)
-    setSelectedTag(null)
-  }
 
   const hasActiveFilters =
     search ||
@@ -124,6 +198,13 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
     return filtered
   }, [beers, search, selectedType, selectedTag, availability, currentLocation])
 
+  // 'en' pins the collation: server and browser defaults can differ, which
+  // would reorder this server-rendered list on hydration.
+  const beersByName = useMemo(
+    () => beers.slice().sort((a, b) => a.name.localeCompare(b.name, 'en')),
+    [beers],
+  )
+
   return (
     <PageTransition>
       <div className="container mx-auto px-4 py-8">
@@ -131,6 +212,18 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
 
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold tracking-tight">Our Beers</h1>
+          <HubIntro text={intro} />
+          <p className="mt-3 text-muted-foreground text-balance">
+            Looking for cans or draft near you?{' '}
+            <Link
+              href="/beer-map"
+              prefetch={false}
+              className="text-primary font-medium hover:underline"
+            >
+              Find Our Beer on the map
+            </Link>
+            .
+          </p>
         </div>
 
         {/* Filter Bar */}
@@ -143,12 +236,12 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
                 aria-label="Search beers"
                 placeholder="Search beers"
                 value={search}
-                onChange={(e) => handleSearchChange(e.target.value)}
+                onChange={(e) => onSearchChange(e.target.value)}
                 className="bg-background pl-9 pr-9"
               />
               {search && (
                 <button
-                  onClick={() => handleSearchChange('')}
+                  onClick={() => onSearchChange('')}
                   className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   type="button"
                   aria-label="Clear search"
@@ -164,12 +257,12 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
               <SegmentedControl
                 aria-label="Filter by availability"
                 className="w-full sm:w-auto"
-                onValueChange={handleAvailabilityChange}
+                onValueChange={onAvailabilityChange}
                 options={AVAILABILITY_OPTIONS}
                 value={availability}
               />
 
-              <Select value={selectedType} onValueChange={handleTypeChange}>
+              <Select value={selectedType} onValueChange={onTypeChange}>
                 <SelectTrigger
                   aria-label="Filter by beer style"
                   className="w-full bg-background sm:w-44"
@@ -187,7 +280,7 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
               </Select>
 
               {beerTags.length > 0 && (
-                <Select value={selectedTag} onValueChange={handleTagChange}>
+                <Select value={selectedTag} onValueChange={onTagChange}>
                   <SelectTrigger
                     aria-label="Filter by beer series"
                     className="w-full bg-background sm:w-44"
@@ -216,7 +309,7 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
           >
             {filteredBeers.map((beer, index) => (
               <StaggerItem key={`${beer.variant}-${index}`}>
-                <BeerCard beer={beer} variant="minimal" showLocation={false} />
+                <BeerCard headingLevel="h2" beer={beer} variant="minimal" showLocation={false} />
               </StaggerItem>
             ))}
           </StaggerChildren>
@@ -227,7 +320,7 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
                 <BeerIcon className="h-6 w-6" />
               </EmptyMedia>
               <EmptyTitle className="text-xl">No Beers Found</EmptyTitle>
-              <EmptyDescription className="text-muted-foreground/70">
+              <EmptyDescription className="text-muted-foreground">
                 {search && selectedType !== 'all'
                   ? `No ${selectedType} beers matching "${search}"`
                   : search
@@ -239,13 +332,33 @@ export function BeerPageContent({ beers }: BeerPageContentProps) {
             </EmptyHeader>
             {hasActiveFilters && (
               <EmptyContent>
-                <Button variant="outline" onClick={clearFilters}>
+                <Button variant="outline" onClick={onClear}>
                   Clear all filters
                 </Button>
               </EmptyContent>
             )}
           </Empty>
         )}
+
+        {/* Every beer page, filters aside: the only crawlable link to most of them. */}
+        <details className="mt-12 text-center">
+          <summary className="cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground">
+            All beers ({beers.length})
+          </summary>
+          <ul className="mt-4 columns-2 sm:columns-3 lg:columns-4 gap-6 text-left text-sm">
+            {beersByName.map((beer) => (
+              <li key={beer.variant}>
+                <Link
+                  href={`/beer/${getBeerSlug(beer)}`}
+                  prefetch={false}
+                  className="inline-block py-1 text-muted-foreground hover:text-foreground hover:underline"
+                >
+                  {beer.name}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </details>
       </div>
     </PageTransition>
   )

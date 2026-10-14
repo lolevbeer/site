@@ -37,11 +37,20 @@ vi.mock('@/components/motion', () => ({
 vi.mock('@/lib/utils/payload-api', () => ({
   getBeerBySlug: vi.fn(),
   getAllBeersFromPayload: vi.fn(),
+  getAllLocations: vi.fn(async () => []),
+  getDraftMenu: vi.fn(async () => null),
+  getCansMenu: vi.fn(async () => null),
+  fetchGlobal: vi.fn(),
+}))
+
+vi.mock('@/lib/utils/site-seo', () => ({
+  getSiteSeo: vi.fn(async () => ({})),
 }))
 
 // Mock media-utils
 vi.mock('@/lib/utils/media-utils', () => ({
   getBeerImageUrl: vi.fn((image) => (image ? '/mock-image-url' : null)),
+  getMediaUrl: vi.fn(() => undefined),
 }))
 
 // Mock product-schema and breadcrumb-schema
@@ -51,11 +60,14 @@ vi.mock('@/lib/utils/product-schema', () => ({
 
 vi.mock('@/lib/utils/breadcrumb-schema', () => ({
   generateBreadcrumbSchema: vi.fn(() => ({})),
+  generateWebPageSchema: vi.fn(() => ({})),
 }))
 
 // Import real page AFTER mocking dependencies
 import BeerPage, { generateMetadata } from '@/src/app/(frontend)/beer/[variant]/page'
-import { getBeerBySlug } from '@/lib/utils/payload-api'
+import { getAllLocations, getBeerBySlug, getCansMenu, getDraftMenu } from '@/lib/utils/payload-api'
+import { generateProductSchema } from '@/lib/utils/product-schema'
+import type { ReactElement } from 'react'
 
 function mockedGetBeerBySlug() {
   return getBeerBySlug as ReturnType<typeof vi.fn>
@@ -164,3 +176,77 @@ describe('generateMetadata error handling', () => {
   })
 })
 
+describe('BeerPage server-rendered availability', () => {
+  const beer = { id: 'beer-9', slug: 'akko', name: 'Akko', hideFromSite: false }
+  const menuWith = (id: string) => ({
+    items: [{ product: { relationTo: 'beers', value: { id } } }],
+  })
+
+  /** Walk the returned element tree to find BeerDetails' props. */
+  async function renderPage() {
+    const tree = (await BeerPage({ params: Promise.resolve({ variant: 'akko' }) })) as ReactElement
+    const find = (node: unknown): Record<string, unknown> | null => {
+      if (!node || typeof node !== 'object') return null
+      if (Array.isArray(node)) {
+        for (const child of node) {
+          const hit = find(child)
+          if (hit) return hit
+        }
+        return null
+      }
+      const el = node as { type?: unknown; props?: Record<string, unknown> }
+      if (el.props && 'beer' in el.props && 'availability' in el.props) return el.props
+      return find(el.props?.children)
+    }
+    return find(tree)
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    ;(getDraftMenu as ReturnType<typeof vi.fn>).mockReset().mockResolvedValue(null)
+    ;(getCansMenu as ReturnType<typeof vi.fn>).mockReset().mockResolvedValue(null)
+    mockedGetBeerBySlug().mockResolvedValue(beer)
+    ;(getAllLocations as ReturnType<typeof vi.fn>).mockResolvedValue([
+      { id: 'l1', name: 'Lawrenceville', slug: 'lawrenceville' },
+      { id: 'l2', name: 'Zelienople', slug: 'zelienople' },
+    ])
+  })
+
+  it('passes tap and can locations ({name, slug}) and marks the offer in stock', async () => {
+    ;(getDraftMenu as ReturnType<typeof vi.fn>).mockImplementation(async (slug: string) =>
+      slug === 'lawrenceville' ? menuWith('beer-9') : menuWith('other'),
+    )
+    ;(getCansMenu as ReturnType<typeof vi.fn>).mockImplementation(async (slug: string) =>
+      slug === 'zelienople' ? menuWith('beer-9') : null,
+    )
+
+    const props = await renderPage()
+    expect(props?.availability).toEqual({
+      tap: [{ name: 'Lawrenceville', slug: 'lawrenceville' }],
+      cans: [{ name: 'Zelienople', slug: 'zelienople' }],
+    })
+    expect(generateProductSchema).toHaveBeenCalledWith(beer, { inStock: true })
+  })
+
+  it('reports out of stock when no taproom menu lists the beer', async () => {
+    const props = await renderPage()
+    expect(props?.availability).toEqual({ tap: [], cans: [] })
+    expect(generateProductSchema).toHaveBeenCalledWith(beer, { inStock: false })
+  })
+
+  it('throws on a menu failure so ISR keeps the last good page (no degraded cache entry)', async () => {
+    const dbError = new Error('db down')
+    ;(getDraftMenu as ReturnType<typeof vi.fn>).mockRejectedValue(dbError)
+    await expect(renderPage()).rejects.toThrow(dbError)
+    expect(generateProductSchema).not.toHaveBeenCalled()
+  })
+
+  it("ignores a beer on a published menu the taproom hasn't selected for the website", async () => {
+    // getDraftMenu/getCansMenu return only the selected menu, so a beer that is
+    // only on some other published menu does not count as available.
+    const props = await renderPage()
+    expect(getDraftMenu).toHaveBeenCalledWith('lawrenceville')
+    expect(getCansMenu).toHaveBeenCalledWith('zelienople')
+    expect(props?.availability).toEqual({ tap: [], cans: [] })
+  })
+})

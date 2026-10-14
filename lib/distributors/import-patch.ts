@@ -1,19 +1,26 @@
 /**
- * Diff for distributor re-import. Type is ignored — the Encompass feed has no
- * customer-type column, and we do not infer one. Callers must not set `active`
- * on update unless the feed is explicitly the source of truth for visibility.
+ * Diff for distributor re-import. A field is only patched when the caller
+ * passes it, so the Encompass importer (which has no customer-type or
+ * website column) never touches those fields. Callers must not
+ * set `active` or `customerType` on update unless the source file explicitly
+ * provides them — the CSV importer passes them only for non-blank cells.
  */
+import { countrySuffix } from '@/lib/utils/country-names'
+import type { CustomerType, StateCode } from './fields'
 
-const PATCH_STRINGS = ['address', 'city', 'state', 'zip', 'phone'] as const
+const PATCH_STRINGS = ['address', 'city', 'state', 'zip', 'country', 'phone', 'website'] as const
 
-export type DistributorRegion = 'NY' | 'OH' | 'PA' | 'WV'
+export type DistributorRegion = StateCode
 
 export type DistributorImportFields = {
   address?: string | null
   city?: string | null
   state?: string | null
   zip?: string | null
+  country?: string | null
   phone?: string | null
+  website?: string | null
+  customerType?: CustomerType | null
   region?: DistributorRegion | null
   active?: boolean | null
 }
@@ -23,7 +30,10 @@ export type DistributorImportPatch = Partial<{
   city: string
   state: string
   zip: string
+  country: string
   phone: string
+  website: string
+  customerType: CustomerType
   region: DistributorRegion
   active: boolean
   location: [number, number]
@@ -36,7 +46,10 @@ export function distributorImportPatch(
     city?: string
     state?: string
     zip?: string
+    country?: string
     phone?: string
+    website?: string
+    customerType?: CustomerType
     region?: DistributorRegion
     active?: boolean
   },
@@ -47,6 +60,9 @@ export function distributorImportPatch(
     const incoming = (next[field] ?? '').trim()
     const previous = (current[field] || '').trim()
     if (incoming !== previous) patch[field] = incoming
+  }
+  if (next.customerType !== undefined && next.customerType !== current.customerType) {
+    patch.customerType = next.customerType
   }
   if (next.region !== undefined) {
     const incoming = next.region
@@ -64,21 +80,29 @@ export function addressFieldsChanged(patch: DistributorImportPatch): boolean {
     patch.address !== undefined ||
     patch.city !== undefined ||
     patch.state !== undefined ||
-    patch.zip !== undefined
+    patch.zip !== undefined ||
+    patch.country !== undefined
   )
 }
 
+/**
+ * The geocoder query line. The country name is appended outside the US so an
+ * address like "47 High Street, Penge" cannot resolve to the wrong country.
+ */
 export function formatFullAddress(parts: {
   address?: string | null
   city?: string | null
   state?: string | null
   zip?: string | null
+  country?: string | null
 }): string {
   const street = parts.address?.trim() || ''
   const city = parts.city?.trim() || ''
   const state = parts.state?.trim() || ''
   const zip = parts.zip?.trim() || ''
-  return [street, [city, state, zip].filter(Boolean).join(' ')].filter(Boolean).join(', ')
+  return [street, [city, state, zip].filter(Boolean).join(' '), countrySuffix(parts.country)]
+    .filter(Boolean)
+    .join(', ')
 }
 
 export function indexDocsByName<T extends { name: string }>(docs: T[]): Map<string, T[]> {

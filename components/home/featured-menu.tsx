@@ -30,7 +30,14 @@ import { getBeerBadgeLabel } from '@/lib/types/beer'
 import { Logo } from '@/components/ui/logo'
 import { TopBeerDropsLink } from '@/components/beer/top-beer-drops-link'
 import { UntappdRating } from '@/components/beer/untappd-rating'
-import { TV_TYPE, TV_SAFE_X, TV_SAFE_Y, TV_COL, TV_LOGO_CLASS } from '@/lib/config/tv-display'
+import {
+  TV_TYPE,
+  TV_SAFE_X,
+  TV_SAFE_Y,
+  TV_COL,
+  TV_LOGO_CLASS,
+  draftBoardColumns,
+} from '@/lib/config/tv-display'
 import { OTHER_MENU_CATEGORIES, type OtherMenuCategory } from '@/lib/config/other-menu'
 import { LINES_OVERDUE_DAYS } from '@/lib/utils/lines-cleaned'
 import { formatPrice, formatPriceText, parsePrice } from '@/lib/utils/formatters'
@@ -136,7 +143,7 @@ function scaledVh(value: number | `${number}vh`, scale: number): string {
 function ColumnHeader({
   isOtherMenu,
   displayScale = 1,
-  priceColumn = TV_COL.price,
+  priceColumn,
 }: {
   isOtherMenu: boolean
   displayScale?: number
@@ -145,11 +152,12 @@ function ColumnHeader({
 }) {
   return (
     <div
-      className="grid items-center bg-[#1d1d1f]"
+      // Always a dark pill, on light and dark boards alike.
+      className="grid items-center bg-[#1d1d1f] text-[#f5f5f7]"
       style={{
         gridTemplateColumns: isOtherMenu
           ? `minmax(0, 1fr) ${scaledVh(TV_COL.price, displayScale)}`
-          : `${TV_COL.tap} minmax(0, 1fr) ${TV_COL.abv} ${priceColumn} ${priceColumn}`,
+          : draftBoardColumns(priceColumn),
         columnGap: scaledVh(1, displayScale),
         paddingBlock: scaledVh(0.65, displayScale),
         borderRadius: '0.35vh',
@@ -330,7 +338,7 @@ function OtherThingsBoard({
   return (
     <div className="flex h-full min-w-0 max-w-none flex-col" data-other-things-board>
       <div
-        className={`grid flex-shrink-0 ${columnClass} font-bold uppercase tracking-wider text-[#f5f5f7]`}
+        className={`grid flex-shrink-0 ${columnClass} font-bold uppercase tracking-wider`}
         style={{
           columnGap: TV_COLUMN_GAP,
           marginBottom: scaledVh(1.4, displayScale),
@@ -506,7 +514,7 @@ function convertMenuItems(menuData: Menu, labelVideos = false): MenuItem[] {
         variant: String(beer.slug),
         name: String(beer.name || ''),
         type: String(styleName || ''),
-        abv: beer.abv ? String(beer.abv) : '0',
+        abv: beer.abv ? String(beer.abv) : '',
         description: String(beer.description || ''),
         glutenFree: false,
         imageUrl: getMediaUrl(beer.image, 'card'),
@@ -514,11 +522,7 @@ function convertMenuItems(menuData: Menu, labelVideos = false): MenuItem[] {
         // the sprite-sheet URL; CanCard animates it iff present.
         labelVideoUrl: labelVideos ? spriteSheetUrl(beer.labelVideo) : undefined,
         glass: String(beer.glass || 'pint'),
-        fourPack: beer.fourPack
-          ? String(beer.fourPack)
-          : item.price
-            ? String(item.price)
-            : undefined,
+        fourPack: item.price?.trim() || (beer.fourPack ? String(beer.fourPack) : undefined),
         bottlePrice: beer.bottlePrice ? String(beer.bottlePrice) : undefined,
         recipe: beer.recipe || 0,
         hops: beer.hops ? String(beer.hops) : undefined,
@@ -615,8 +619,8 @@ function CanCard({
       aria-label={`${item.name} - ${item.type || 'Craft beer'}`}
     >
       <div className="text-center px-4">
-        <div className="text-2xl font-bold text-muted-foreground/70 mb-2">{item.name}</div>
-        <div className="text-sm text-muted-foreground/70">{item.type}</div>
+        <div className="text-2xl font-bold text-muted-foreground mb-2">{item.name}</div>
+        <div className="text-sm text-muted-foreground">{item.type}</div>
       </div>
     </div>
   )
@@ -865,11 +869,12 @@ function FeaturedMenu({
     [menu, labelVideos],
   )
   const displayItems = menuItems ?? filteredItems
-  // Memoized: the display re-renders on each poll with new data (10s after a
-  // change, 30s when idle; see usePolling), but this text changes once a day at
-  // most. It follows the hourly clock `now`, so a display left running rolls
-  // over at midnight; `now` is null while server rendering, so the note is left
-  // out of server HTML and hydration always matches.
+  // Memoized: the display re-renders when stream data changes (Ably invalidate
+  // and/or usePolling: 10s warm / 30s idle, or 120s safety net while Ably is
+  // connected), but this text changes once a day at most. It follows the hourly
+  // clock `now`, so a display left running rolls over at midnight; `now` is
+  // null while server rendering, so the note is left out of server HTML and
+  // hydration always matches.
   const menuLocation = typeof menu?.location === 'object' ? (menu.location as Location) : null
   const linesCleanedText = useMemo(
     () =>
@@ -899,18 +904,18 @@ function FeaturedMenu({
             style={{ padding: `${TV_SAFE_Y} ${TV_SAFE_X}`, marginBottom: '0.5vh' }}
           >
             <div className="flex-1">
-              <span className="font-bold text-foreground-muted" style={{ fontSize: '4vh' }}>
+              <span className="font-bold text-foreground-muted" style={{ fontSize: TV_TYPE.title }}>
                 Lolev Beer
               </span>
             </div>
             <div className="flex-1 text-center">
-              <h2 className="font-bold" style={{ fontSize: '4vh' }}>
+              <h2 className="font-bold" style={{ fontSize: TV_TYPE.title }}>
                 {menu?.name || title}
               </h2>
               {linesCleanedText && (
                 <p
                   className="text-foreground-muted"
-                  style={{ fontSize: '1.8vh', marginTop: '0.5vh' }}
+                  style={{ fontSize: TV_TYPE.badge, marginTop: '0.5vh' }}
                 >
                   {linesCleanedText}
                 </p>
@@ -952,7 +957,7 @@ function FeaturedMenu({
                       suppressHydrationWarning
                     >
                       <div
-                        className="grid flex-shrink-0 grid-cols-2 font-bold uppercase tracking-wider text-[#f5f5f7]"
+                        className="grid flex-shrink-0 grid-cols-2 font-bold uppercase tracking-wider"
                         style={{
                           columnGap: TV_COLUMN_GAP,
                           marginBottom: '0.8vh',
@@ -967,34 +972,33 @@ function FeaturedMenu({
                           />
                         ))}
                       </div>
+                      {/* Always two columns: boards are 16:9 TVs (see tv-display.ts). */}
                       <div
-                        className="grid min-h-0 min-w-0 flex-1 grid-cols-1 md:grid-cols-2"
+                        className="grid min-h-0 min-w-0 flex-1 grid-cols-2"
                         style={{ gap: TV_COLUMN_GAP }}
                       >
                         {columns.map((items, columnIndex) => (
-                          <div key={columnIndex} className="flex h-full min-w-0 flex-col">
-                            <div
-                              className="flex min-h-0 min-w-0 flex-1 flex-col justify-between"
-                              role="list"
-                            >
-                              {items.map(({ item, state, key }, idx) => (
-                                <div
-                                  key={key}
-                                  className={`min-w-0 flex-none ${animated ? getAnimationClass(state) : ''}`}
-                                  role="listitem"
-                                >
-                                  <DraftBeerCard
-                                    beer={item as unknown as Beer}
-                                    now={now}
-                                    showLocation={false}
-                                    showTapAndPrice
-                                    showRating
-                                    accentColor={itemColors?.[columnIndex * midpoint + idx]}
-                                    priceColumn={priceColumn}
-                                  />
-                                </div>
-                              ))}
-                            </div>
+                          <div
+                            key={columnIndex}
+                            className="flex min-h-0 min-w-0 flex-col justify-between"
+                            role="list"
+                          >
+                            {items.map(({ item, state, key }, idx) => (
+                              <div
+                                key={key}
+                                className={`min-w-0 flex-none ${animated ? getAnimationClass(state) : ''}`}
+                                role="listitem"
+                              >
+                                <DraftBeerCard
+                                  beer={item as unknown as Beer}
+                                  now={now}
+                                  showTapAndPrice
+                                  showRating
+                                  accentColor={itemColors?.[columnIndex * midpoint + idx]}
+                                  priceColumn={priceColumn}
+                                />
+                              </div>
+                            ))}
                           </div>
                         ))}
                       </div>
@@ -1042,7 +1046,7 @@ function FeaturedMenu({
                   <EmptyTitle className="text-xl">
                     No {menuType === 'draft' ? 'beers' : 'cans'} available
                   </EmptyTitle>
-                  <EmptyDescription className="text-muted-foreground/70">
+                  <EmptyDescription className="text-muted-foreground">
                     {emptyMessage}
                   </EmptyDescription>
                 </EmptyHeader>
@@ -1076,12 +1080,7 @@ function FeaturedMenu({
               >
                 {displayItems.map((item, index) => (
                   <li key={`${item.variant}-${index}`}>
-                    <DraftBeerCard
-                      beer={item as unknown as Beer}
-                      compact
-                      showJustReleased={false}
-                      showLocation={false}
-                    />
+                    <DraftBeerCard beer={item as unknown as Beer} />
                   </li>
                 ))}
               </ul>
@@ -1108,7 +1107,7 @@ function FeaturedMenu({
                 <EmptyTitle className="text-xl">
                   No {menuType === 'draft' ? 'beers on draft' : 'cans available'}
                 </EmptyTitle>
-                <EmptyDescription className="text-muted-foreground/70">
+                <EmptyDescription className="text-muted-foreground">
                   {emptyMessage}
                 </EmptyDescription>
               </EmptyHeader>

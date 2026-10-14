@@ -29,7 +29,11 @@ export function BeerMapContent({ weeklyHours, children }: BeerMapContentProps) {
       <PageBreadcrumbs className="mb-6" />
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold tracking-tight mb-2">Find Lolev Beer near you</h1>
-        <div className="w-16 h-1 bg-primary mx-auto rounded-full" />
+        <p className="mx-auto mt-3 max-w-2xl text-muted-foreground text-balance">
+          Taprooms below, then the map of bottle shops and retailers carrying Lolev across
+          Pennsylvania, New York, and Ohio. Search by city or ZIP, or use Near Me.
+        </p>
+        <div className="w-16 h-1 bg-primary mx-auto rounded-full mt-4" />
       </div>
 
       <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">

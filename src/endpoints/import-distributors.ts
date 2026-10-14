@@ -1,14 +1,10 @@
 import type { PayloadHandler } from 'payload'
 import type { SiteContent } from '@/src/payload-types'
 import { getUserFromRequest } from './auth-helper'
-import { geocode } from './geocode'
-import { sleep } from '@/src/utils/async'
+import { geocodeDistributor } from './geocode'
 import { createSSEResponse } from '@/src/utils/sse-response'
-import { DEFAULT_REGION_COORDS } from '@/src/utils/distributor-region-coords'
-import {
-  distributorImportPatch,
-  indexDocsByName,
-} from '@/lib/distributors/import-patch'
+import { revalidateForCollectionAfterResponse } from '@/src/plugins/revalidation-plugin'
+import { distributorImportPatch, indexDocsByName } from '@/lib/distributors/import-patch'
 import { applyExistingDistributorPatch } from '@/lib/distributors/upsert-existing'
 import type { Distributor } from '@/src/payload-types'
 
@@ -137,10 +133,6 @@ async function fetchDistributors(url: string): Promise<FetchResult> {
   }
 }
 
-// Default coordinates for each region (shared with the re-geocoding endpoint,
-// which finds these records again by matching against the same table)
-const DEFAULT_COORDS = DEFAULT_REGION_COORDS
-
 export const importDistributors: PayloadHandler = async (req) => {
   const { payload } = req
   const user = req.user ?? (await getUserFromRequest(req, payload))
@@ -187,6 +179,11 @@ export const importDistributors: PayloadHandler = async (req) => {
       { status: 400 },
     )
   }
+
+  // Import writes skip the per-write revalidation hook (it throws inside this
+  // stream); refresh /beer-map and its data once the stream has finished instead.
+  let wrote = false
+  revalidateForCollectionAfterResponse('distributors', () => wrote)
 
   // Stream progress updates
   return createSSEResponse(async (send) => {
@@ -253,8 +250,7 @@ export const importDistributors: PayloadHandler = async (req) => {
             current,
             patch,
             name: row.CustomerName,
-            geocode,
-            sleep,
+            geocode: geocodeDistributor,
           })
           byName.set(row.CustomerName, [{ ...current, ...patch } as Distributor])
           const msg = `Updated: "${row.CustomerName}" (${Object.keys(patch).join(', ')})`
@@ -272,9 +268,19 @@ export const importDistributors: PayloadHandler = async (req) => {
         continue
       }
 
-      const fullAddress = `${parsed.street}, ${parsed.city}, ${parsed.state} ${parsed.zip}`.trim()
-      const coords = await geocode(fullAddress)
-      const location = coords || DEFAULT_COORDS[regionUpper]
+      const location = await geocodeDistributor({
+        address: parsed.street,
+        city: parsed.city,
+        state: parsed.state,
+        zip: parsed.zip,
+      })
+      if (!location) {
+        const message = `Error: Could not geocode "${row.CustomerName}"; not created`
+        details.push(message)
+        send('item', { type: 'error', message })
+        errors++
+        continue
+      }
 
       try {
         const created = await payload.create({
@@ -291,6 +297,7 @@ export const importDistributors: PayloadHandler = async (req) => {
           },
           overrideAccess: false,
           user,
+          context: { skipRevalidate: true },
         })
         byName.set(row.CustomerName, [created])
         const msg = `Imported: ${row.CustomerName}`
@@ -304,8 +311,6 @@ export const importDistributors: PayloadHandler = async (req) => {
         send('item', { type: 'error', message: msg })
         errors++
       }
-
-      await sleep(1100)
     }
 
     if (skipped > 0) {
@@ -314,6 +319,7 @@ export const importDistributors: PayloadHandler = async (req) => {
       send('item', { type: 'skip', message: msg })
     }
 
+    wrote = imported + updated > 0
     send('complete', { imported, updated, skipped, errors, details })
   })
 }

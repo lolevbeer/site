@@ -10,7 +10,7 @@ The badges above are, in order: the `CI` workflow on `main` (type-check, lint, V
 
 ## Setup
 
-Requires Node 24.15+ (Payload 4's minimum; CI reads `engines.node` from `package.json`) and pnpm 9 or 10 (`package.json` pins `packageManager` to pnpm 10).
+Requires Node 24.15+ (Payload 4's minimum; CI reads `engines.node` from `package.json`) and pnpm 11 (`package.json` pins `packageManager` to pnpm 11).
 
 1. Clone the repo
 2. `cp .env.example .env` and fill in your values. `DATABASE_URI` and `PAYLOAD_SECRET` are required; do not leave `PAYLOAD_SECRET` as the documented placeholder. Production also requires `BLOB_READ_WRITE_TOKEN`. Slack, cron, revalidation, and geocoding keys are optional — see `.env.example`.
@@ -80,6 +80,10 @@ pushes to `main`:
    `VERCEL_ENV=preview` (migrations skipped), then Playwright against
    `http://127.0.0.1:3100`
 
+[`.github/workflows/claude-code-review.yml`](.github/workflows/claude-code-review.yml)
+runs Claude Code Review on pull requests. It skips bot actors (Dependabot) and
+fork PRs, which can't read its token. No check is required to merge.
+
 The CI badge reflects the latest `main` run of that workflow. Preview and
 production deploys still go through Vercel auto-deploy; the Vercel badge is the
 GitHub `Production` deployment status, not a preview.
@@ -109,7 +113,7 @@ file in that directory except `index.ts`; keep the recovery manifest in
 
 ## Collections
 
-- **Beers** — Beer catalog with styles, ABV, pricing, Untappd ratings, and 3D can label textures (generated in the admin from label art + metallic-mask PDFs; rendered by `components/beer/beer-can-3d.tsx`)
+- **Beers** — Beer catalog with styles, ABV, pricing, Untappd ratings, and 3D can label textures (generated in the admin from label art + metallic-mask PDFs; rendered by `components/beer/beer-can-3d.tsx`). In the Beers list, anyone who can update beers can fill an empty Tag or Untappd URL from the table with Payload's select (the Untappd one searches by the beer's name on open, or by typed text, and lists the exact name match first, marked ★); a beer with a pending draft saves the value as a draft
 - **Beer Reviews** — Approved customer reviews attached to beers
 - **Styles** — Beer style definitions
 - **Tags** — Reusable single-value labels for beers
@@ -123,10 +127,22 @@ file in that directory except `index.ts`; keep the recovery manifest in
 - **Recurring Food Exclusions** — Dates a recurring food slot does not run (system collection)
 - **Locations** — Brewery locations with hours
 - **Holiday Hours** — Holiday hour overrides
-- **Distributors** — Distribution partners with geocoded locations
+- **Distributors** — Distribution partners with geocoded locations, in any US state or DC or another country (`country`, ISO-2; blank = US). Bulk-add them from the admin Sync page's "Distributor CSV" upload, previewing with Dry run first; blank city/state/country are filled from Mapbox (set the server-only `MAPBOX_GEOCODING_TOKEN`), and optional `latitude`/`longitude` columns skip geocoding; the format (and instructions an agent can follow to convert raw sales data) is in [`public/distributor-csv-import.md`](public/distributor-csv-import.md)
 - **FAQs** — Frequently asked questions
 - **Media** — Image uploads (Vercel Blob storage)
 - **Users** — Admin users with role-based access
+
+## Public events page (`/events`)
+
+- **Never public: an event's `description`.** The field is staff-only (field access). Public rows, JSON-LD, and `.ics` files use the event title (`organizer`).
+- **Regulars.** Recurring occurrences with the same title, taproom, start time, and weekday collapse into one "Regulars" row when they repeat weekly: every gap is whole weeks and at least half are exactly one week. That tolerates a holiday skip or a 1st–4th schedule. A one-off that matches the series (an override of one week) joins it. Monthly or every-other-week series stay in the dated list.
+- **Shareable links.** Each row has an `#event-<id>` anchor (`ScheduleList anchors`, plus one per collapsed occurrence under Regulars). `eventPageUrl()` builds `/events?loc=<slug>#event-<id>` for the Event JSON-LD `url`. The page scrolls to the hash once hydration applies `?loc=` and the row exists.
+- **Row links.** Agenda rows (events and food, everywhere `TimelineItem` is used) are not whole-row links. An event's site shows as a "Tickets ↗" link (ticketing hosts) or a "Details ↗" link under the row. Link names include the title for screen readers.
+- **Add to calendar.** `/events/<id>/calendar.ics` serves one upcoming public event as iCalendar (TZID `America/New_York`, with no `DESCRIPTION`). It reads anonymously through `getPublicEventById`, so private events and descriptions never ship. Unknown ids 404 with `no-store`. robots.txt disallows the route and the link is `nofollow`. Only `/events` passes `ScheduleList calendar`; the homepage and taproom pages link to `/events` instead.
+
+## Admin dashboard
+
+- **Schedule heatmap** — booking status per EST day — red nothing, orange event without food, yellow food only, green both — 16 months at a time with ‹ › arrows to page back through history, filterable by location (recurring rules fill only the year they were set up for); click a day to open that day's list. Counts follow your read access. Users with a saved dashboard layout must add the widget manually.
 
 ## Globals
 
@@ -189,10 +205,17 @@ an email typed into the command.
 
 Slack app setup (one-time, at api.slack.com/apps):
 
-Donation requests at `/donate` and job applications at `/jobs/[slug]` post a
-summary to Slack `#events` via `chat.postMessage` (same bot token). Invite the
-**Lolev Beer** bot into `#events` or the ping fails with `not_in_channel`.
-Override with `SLACK_DONATION_CHANNEL` or `SLACK_JOBS_CHANNEL`.
+Donation requests at `/donate`, job applications at `/jobs/[slug]`, and
+private-event inquiries from the form on `/events` post a summary to Slack
+`#events` via `chat.postMessage` (same bot token). Invite the **Lolev Beer**
+bot into `#events` or the ping fails with `not_in_channel`. Admins set each
+form's channel in Admin → Site Content → Slack Channels (`#name` or a channel
+ID); a blank field falls back to `SLACK_DONATION_CHANNEL`, `SLACK_JOBS_CHANNEL`,
+or `SLACK_EVENT_INQUIRY_CHANNEL` (the job and inquiry channels fall back to the
+donation channel), then `#events`. Invite the bot to any channel you pick, then press **Send test message** under
+the field to confirm it can post there (admins only; it tests the typed value,
+so save afterwards). Inquiries
+land in Admin → Event Inquiries; they never create an Event.
 
 1. **Create New App → From an app manifest** → pick the workspace → paste
    [`docs/slack-app-manifest.yml`](docs/slack-app-manifest.yml). That sets the

@@ -19,7 +19,18 @@ import { formatHoursTime } from '@/lib/utils/formatters'
  */
 export const LOCATION_STORAGE_KEY = 'brewery-location-preference'
 
-/** Location slugs that would collide with App Router static segments. */
+/**
+ * A location URL slug: lowercase letters, numbers, single dashes. Slugs become
+ * redirect targets (`/${slug}`), so anything else (e.g. "/evil.com", which
+ * would build a protocol-relative "//evil.com") is rejected on save and never
+ * redirected to.
+ */
+export const LOCATION_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+
+/**
+ * Location slugs that would collide with App Router static segments or with a
+ * vercel.json redirect source (a taproom there would be unreachable).
+ */
 export const RESERVED_LOCATION_SLUGS = new Set([
   'about',
   'accessibility',
@@ -27,15 +38,29 @@ export const RESERVED_LOCATION_SLUGS = new Set([
   'api',
   'beer',
   'beer-map',
+  'beers',
+  'calendar',
+  'careers',
   'donate',
   'e',
   'events',
   'faq',
   'food',
+  'home',
+  'hours',
   'jobs',
+  'lawrenceville',
   'm',
+  'menu',
+  'on-tap',
+  'performances',
   'privacy',
+  'shop',
+  'shows',
+  'tap-list',
   'terms',
+  'upcoming',
+  'zelienople',
 ])
 
 /** True for public taproom landings (`/lawrenceville`), not `/beer` or nested routes. */
@@ -94,7 +119,7 @@ export function extractDayHours(location: PayloadLocation, day: Weekday): DayHou
 /** One-line hours summary for FAQ / llms.txt, grouped by identical open/close. */
 export function formatHoursFaqAnswer(locations: PayloadLocation[]): string {
   if (locations.length === 0) {
-    return 'Hours vary by location and holiday. See lolev.beer for this week\'s hours.'
+    return "Hours vary by location and holiday. See lolev.beer for this week's hours."
   }
   const parts = locations.map((location) => {
     const groups: { start: string; end: string; hours: string }[] = []
@@ -120,9 +145,7 @@ export function formatHoursFaqAnswer(locations: PayloadLocation[]): string {
 }
 
 /** "Lawrenceville and Zelienople" from live location docs — never a hardcoded list. */
-export function joinLocationNames(
-  locations: Array<{ name?: string | null }>,
-): string {
+export function joinLocationNames(locations: Array<{ name?: string | null }>): string {
   const names = locations
     .map((location) => location.name?.trim())
     .filter((name): name is string => Boolean(name))
@@ -130,6 +153,28 @@ export function joinLocationNames(
   if (names.length === 1) return names[0]
   if (names.length === 2) return `${names[0]} and ${names[1]}`
   return `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`
+}
+
+/** Taproom name and phone, skipping locations that have no phone on the document. */
+export function taproomPhones(
+  locations: Array<{ name?: string | null; basicInfo?: { phone?: string | null } | null }>,
+): { name: string; phone: string }[] {
+  return locations.flatMap((location) => {
+    const name = location.name?.trim()
+    const phone = location.basicInfo?.phone?.trim()
+    if (!name || !phone) return []
+    return [{ name, phone }]
+  })
+}
+
+/** "Lawrenceville at (412) 336-8965 or Zelienople at (724) 609-5100" */
+export function formatTaproomPhones(
+  locations: Array<{ name?: string | null; basicInfo?: { phone?: string | null } | null }>,
+): string {
+  const phones = taproomPhones(locations).map((entry) => `${entry.name} at ${entry.phone}`)
+  if (phones.length === 0) return ''
+  if (phones.length === 1) return phones[0]
+  return `${phones.slice(0, -1).join(', ')} or ${phones[phones.length - 1]}`
 }
 
 /** "Pittsburgh PA 15201" from a Payload address — street is handled by the caller. */
@@ -247,20 +292,19 @@ export function getDefaultLocationSlug(locations: PayloadLocation[]): LocationSl
 }
 
 /**
- * Find a location by slug from an array of locations
+ * Find a location by its current slug, id, or a former slug kept in `aliases`
+ * (recorded when a taproom is renamed). A current slug wins over another
+ * location's alias. Callers that need the canonical URL use the returned
+ * location's `slug`.
  */
 export function findLocationBySlug(
   locations: PayloadLocation[],
   slug: LocationSlug,
 ): PayloadLocation | undefined {
-  return locations.find((loc) => loc.slug === slug || loc.id === slug)
-}
-
-/**
- * Validate if a slug is a valid location
- */
-export function isValidLocationSlug(locations: PayloadLocation[], slug: string): boolean {
-  return locations.some((loc) => loc.slug === slug || loc.id === slug)
+  return (
+    locations.find((loc) => loc.slug === slug || loc.id === slug) ??
+    locations.find((loc) => loc.aliases?.includes(slug))
+  )
 }
 
 /**

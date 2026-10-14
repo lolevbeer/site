@@ -12,7 +12,7 @@ interface NavItem {
 }
 
 const navigationItems: NavItem[] = [
-  { label: 'Find Lolev', href: '/beer-map' },
+  { label: 'Find Our Beer', href: '/beer-map' },
   { label: 'Beer', href: '/beer' },
   { label: 'Food', href: '/food' },
   { label: 'Events', href: '/events' },

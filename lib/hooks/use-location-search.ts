@@ -35,7 +35,7 @@ const fetchPlaceSuggestions = async (
   try {
     const response = await fetch(
       `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?` +
-        `access_token=${token}&country=US&types=place,postcode,locality,neighborhood,address&limit=5${proximityParam}`,
+        `access_token=${token}&types=place,postcode,locality,neighborhood,address&limit=5${proximityParam}`,
       { signal },
     )
     if (!response.ok) return []

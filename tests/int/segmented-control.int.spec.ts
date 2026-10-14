@@ -44,4 +44,21 @@ describe('SegmentedControl', () => {
     expect(onValueChange).toHaveBeenCalledOnce()
     expect(onValueChange).toHaveBeenCalledWith('cans')
   })
+
+  it('grows each option to a 44px touch target on coarse pointers', () => {
+    render(
+      createElement(SegmentedControl, {
+        'aria-label': 'Filter by availability',
+        onValueChange: () => undefined,
+        options,
+        size: 'sm',
+        value: 'all',
+      }),
+    )
+
+    expect(screen.getByRole('group').className).toContain('pointer-coarse:h-auto')
+    for (const button of screen.getAllByRole('button')) {
+      expect(button.className).toContain('pointer-coarse:min-h-11')
+    }
+  })
 })

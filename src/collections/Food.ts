@@ -94,7 +94,7 @@ export const Food: CollectionConfig = {
       type: 'ui',
       admin: {
         components: {
-          Field: './components/FoodDateWarning#FoodDateWarning',
+          Field: '@/src/components/FoodDateWarning#FoodDateWarning',
         },
       },
     },

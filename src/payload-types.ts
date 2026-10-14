@@ -75,6 +75,7 @@ export interface Config {
     products: Product;
     events: Event;
     'donation-requests': DonationRequest;
+    'event-inquiries': EventInquiry;
     jobs: Job;
     'job-applications': JobApplication;
     'recurring-events': RecurringEvent;
@@ -108,6 +109,7 @@ export interface Config {
     products: ProductsSelect<false> | ProductsSelect<true>;
     events: EventsSelect<false> | EventsSelect<true>;
     'donation-requests': DonationRequestsSelect<false> | DonationRequestsSelect<true>;
+    'event-inquiries': EventInquiriesSelect<false> | EventInquiriesSelect<true>;
     jobs: JobsSelect<false> | JobsSelect<true>;
     'job-applications': JobApplicationsSelect<false> | JobApplicationsSelect<true>;
     'recurring-events': RecurringEventsSelect<false> | RecurringEventsSelect<true>;
@@ -135,16 +137,21 @@ export interface Config {
     'coming-soon': ComingSoon;
     'recurring-food': RecurringFood;
     'site-content': SiteContent;
+    'site-seo': SiteSeo;
     'payload-jobs-stats': PayloadJobsStat;
   };
   globalsSelect: {
     'coming-soon': ComingSoonSelect<false> | ComingSoonSelect<true>;
     'recurring-food': RecurringFoodSelect<false> | RecurringFoodSelect<true>;
     'site-content': SiteContentSelect<false> | SiteContentSelect<true>;
+    'site-seo': SiteSeoSelect<false> | SiteSeoSelect<true>;
     'payload-jobs-stats': PayloadJobsStatsSelect<false> | PayloadJobsStatsSelect<true>;
   };
   locale: null;
   widgets: {
+    'schedule-heatmap': ScheduleHeatmapWidget;
+    'menu-target-history': MenuTargetHistoryWidget;
+    welcome: WelcomeWidget;
     collections: CollectionsWidget;
     'collection-query': CollectionQueryWidget;
     activity: ActivityWidget;
@@ -284,6 +291,43 @@ export interface Beer {
     | number
     | boolean
     | null;
+  /**
+   * Optional overrides for this document’s public page. Blank fields keep the auto-generated title and description.
+   */
+  seo?: {
+    /**
+     * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "• Lolev Beer" on hub pages; the site title template adds it.
+     */
+    title?: string | null;
+    /**
+     * SERP snippet. Aim for ~150–160 characters.
+     */
+    description?: string | null;
+    /**
+     * Optional. Defaults to the meta title (plus site name where applicable).
+     */
+    ogTitle?: string | null;
+    /**
+     * Optional. Defaults to the meta description.
+     */
+    ogDescription?: string | null;
+    /**
+     * Optional social share image (1200×630 recommended). Falls back to the site default.
+     */
+    ogImage?: (string | null) | Media;
+    /**
+     * Optional. Press Enter after each keyword. Mostly legacy; Google ignores these.
+     */
+    keywords?: string[] | null;
+    /**
+     * Ask search engines not to list this page in results. Links on it are still followed, and it is left out of the sitemap.
+     */
+    noIndex?: boolean | null;
+    /**
+     * Optional override, e.g. /beer or /lawrenceville. Must start with /. Leave blank for the normal URL.
+     */
+    canonicalPath?: string | null;
+  };
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -333,12 +377,28 @@ export interface User {
  */
 export interface Location {
   id: string;
+  markLinesCleanedToday?: boolean | null;
+  /**
+   * Admin correction: choose a date, then save this location.
+   */
   linesLastCleaned?: string | null;
   /**
    * Is this location currently active?
    */
   active?: boolean | null;
   name: string;
+  /**
+   * The draft menu shown for this location on the homepage and /<location> page (e.g. /lawrenceville). Only published menus appear. Leave blank to hide it.
+   */
+  draftMenu?: (string | null) | Menu;
+  /**
+   * The cans menu shown for this location on the homepage and /<location> page (e.g. /lawrenceville). Only published menus appear. Leave blank to hide it.
+   */
+  cansMenu?: (string | null) | Menu;
+  /**
+   * Optional short paragraph under the location heading for local SEO. Leave blank to show nothing.
+   */
+  intro?: string | null;
   /**
    * Timezone for this location's hours
    */
@@ -347,6 +407,10 @@ export interface Location {
    * Auto-generated from name (lowercase, spaces to dashes)
    */
   slug?: string | null;
+  /**
+   * Former slugs. /<alias> redirects to the current page and /e/<alias> still shows the events board. A rename adds the old slug automatically. Browsers cache the redirect, so a deleted alias can keep sending past visitors here; avoid reusing it as another location's slug.
+   */
+  aliases?: string[] | null;
   basicInfo?: {
     phone?: string | null;
     email?: string | null;
@@ -406,107 +470,43 @@ export interface Location {
     open?: string | null;
     close?: string | null;
   };
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "media".
- */
-export interface Media {
-  id: string;
   /**
-   * Alternative text for the image (for accessibility)
+   * Optional overrides for this document’s public page. Blank fields keep the auto-generated title and description.
    */
-  alt: string;
-  prefix?: string | null;
-  _objectKey?: string | null;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
-  sizes?: {
-    thumbnail?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-    card?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-    detail?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
+  seo?: {
+    /**
+     * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "• Lolev Beer" on hub pages; the site title template adds it.
+     */
+    title?: string | null;
+    /**
+     * SERP snippet. Aim for ~150–160 characters.
+     */
+    description?: string | null;
+    /**
+     * Optional. Defaults to the meta title (plus site name where applicable).
+     */
+    ogTitle?: string | null;
+    /**
+     * Optional. Defaults to the meta description.
+     */
+    ogDescription?: string | null;
+    /**
+     * Optional social share image (1200×630 recommended). Falls back to the site default.
+     */
+    ogImage?: (string | null) | Media;
+    /**
+     * Optional. Press Enter after each keyword. Mostly legacy; Google ignores these.
+     */
+    keywords?: string[] | null;
+    /**
+     * Ask search engines not to list this page in results. Links on it are still followed, and it is left out of the sitemap.
+     */
+    noIndex?: boolean | null;
+    /**
+     * Optional override, e.g. /beer or /lawrenceville. Must start with /. Leave blank for the normal URL.
+     */
+    canonicalPath?: string | null;
   };
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "styles".
- */
-export interface Style {
-  id: string;
-  /**
-   * Beer style name (e.g., IPA, Stout, Pale Ale)
-   */
-  name: string;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "tags".
- */
-export interface Tag {
-  id: string;
-  /**
-   * Tag name (e.g., Seasonal, Limited, Award Winner)
-   */
-  name: string;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "beer-reviews".
- */
-export interface BeerReview {
-  id: string;
-  beer: string | Beer;
-  reviewer: string;
-  rating: number;
-  text: string;
-  reviewedAt?: string | null;
-  /**
-   * Original date text supplied by Untappd when an exact timestamp is unavailable.
-   */
-  sourceDate?: string | null;
-  source: 'untappd';
-  sourceUrl: string;
-  externalImageUrl?: string | null;
-  /**
-   * Approved reviews can be included in public beer data.
-   */
-  approved: boolean;
   updatedAt: string;
   createdAt: string;
 }
@@ -545,6 +545,10 @@ export interface Menu {
    * Play the rotating-can animation on this display. Turn off to show static can images instead.
    */
   animateCans?: boolean | null;
+  /**
+   * Ideal number of cans or draft lines on this menu
+   */
+  targetItemCount?: number | null;
   items: {
     product?:
       | ({
@@ -606,6 +610,123 @@ export interface Product {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "media".
+ */
+export interface Media {
+  id: string;
+  /**
+   * Alternative text for the image (for accessibility)
+   */
+  alt: string;
+  prefix?: string | null;
+  _objectKey?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  original?: {
+    filename?: string | null;
+    url?: string | null;
+    mimeType?: string | null;
+    filesize?: number | null;
+    width?: number | null;
+    height?: number | null;
+    prefix?: string | null;
+    _objectKey?: string | null;
+  };
+  focalX?: number | null;
+  focalY?: number | null;
+  variants?: {
+    thumbnail?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+      prefix?: string | null;
+      _objectKey?: string | null;
+    };
+    card?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+      prefix?: string | null;
+      _objectKey?: string | null;
+    };
+    detail?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+      prefix?: string | null;
+      _objectKey?: string | null;
+    };
+  };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "styles".
+ */
+export interface Style {
+  id: string;
+  /**
+   * Beer style name (e.g., IPA, Stout, Pale Ale)
+   */
+  name: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tags".
+ */
+export interface Tag {
+  id: string;
+  /**
+   * Tag name (e.g., Seasonal, Limited, Award Winner)
+   */
+  name: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "beer-reviews".
+ */
+export interface BeerReview {
+  id: string;
+  beer: string | Beer;
+  reviewer: string;
+  rating: number;
+  text: string;
+  reviewedAt?: string | null;
+  /**
+   * Original date text supplied by Untappd when an exact timestamp is unavailable.
+   */
+  sourceDate?: string | null;
+  source: 'untappd';
+  sourceUrl: string;
+  externalImageUrl?: string | null;
+  /**
+   * Approved reviews can be included in public beer data.
+   */
+  approved: boolean;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "events".
  */
 export interface Event {
@@ -627,7 +748,14 @@ export interface Event {
    */
   site?: string | null;
   tags?: ('music' | 'utensils' | 'puzzle' | 'sports' | 'beer-release' | 'mic-vocal')[] | null;
+  /**
+   * Internal notes for staff. Never shown on the website.
+   */
   description?: string | null;
+  /**
+   * Optional photo for Event rich results (falls back to the site OG image)
+   */
+  image?: (string | null) | Media;
   /**
    * Expected or registered attendees
    */
@@ -636,7 +764,7 @@ export interface Event {
   email?: string | null;
   phone?: string | null;
   /**
-   * Additional information for private event
+   * Staff-only notes (never shown on the website)
    */
   otherInfo?: string | null;
   updatedAt: string;
@@ -682,6 +810,31 @@ export interface DonationRequest {
   createdAt: string;
 }
 /**
+ * Private-event inquiries from /events. Rows are created only by the public form.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "event-inquiries".
+ */
+export interface EventInquiry {
+  id: string;
+  status?: ('new' | 'contacted' | 'booked' | 'declined') | null;
+  name: string;
+  email: string;
+  phone: string;
+  preferredDate: string;
+  headcount: number;
+  taproom: string | Location;
+  message?: string | null;
+  /**
+   * When the #events ping succeeded. Empty means staff should check Slack.
+   */
+  slackNotifiedAt?: string | null;
+  slackError?: string | null;
+  ipHash?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Openings listed at /jobs (footer link). Applications land in Job Applications.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -701,7 +854,48 @@ export interface Job {
    */
   summary?: string | null;
   description: string;
+  /**
+   * Optional last day to apply. Sent to Google as the posting’s expiry. This does not hide the job: also untick Active when it closes.
+   */
+  closesOn?: string | null;
   active?: boolean | null;
+  /**
+   * Optional overrides for this document’s public page. Blank fields keep the auto-generated title and description.
+   */
+  seo?: {
+    /**
+     * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "• Lolev Beer" on hub pages; the site title template adds it.
+     */
+    title?: string | null;
+    /**
+     * SERP snippet. Aim for ~150–160 characters.
+     */
+    description?: string | null;
+    /**
+     * Optional. Defaults to the meta title (plus site name where applicable).
+     */
+    ogTitle?: string | null;
+    /**
+     * Optional. Defaults to the meta description.
+     */
+    ogDescription?: string | null;
+    /**
+     * Optional social share image (1200×630 recommended). Falls back to the site default.
+     */
+    ogImage?: (string | null) | Media;
+    /**
+     * Optional. Press Enter after each keyword. Mostly legacy; Google ignores these.
+     */
+    keywords?: string[] | null;
+    /**
+     * Ask search engines not to list this page in results. Links on it are still followed, and it is left out of the sitemap.
+     */
+    noIndex?: boolean | null;
+    /**
+     * Optional override, e.g. /beer or /lawrenceville. Must start with /. Leave blank for the normal URL.
+     */
+    canonicalPath?: string | null;
+  };
   updatedAt: string;
   createdAt: string;
 }
@@ -764,7 +958,14 @@ export interface RecurringEvent {
    */
   site?: string | null;
   tags?: ('music' | 'utensils' | 'puzzle' | 'sports' | 'beer-release' | 'mic-vocal')[] | null;
+  /**
+   * Internal notes for staff. Never shown on the website.
+   */
   description?: string | null;
+  /**
+   * Optional photo for Event rich results (falls back to the site OG image)
+   */
+  image?: (string | null) | Media;
   /**
    * Expected or registered attendees
    */
@@ -773,7 +974,7 @@ export interface RecurringEvent {
   email?: string | null;
   phone?: string | null;
   /**
-   * Additional information for private event
+   * Staff-only notes (never shown on the website)
    */
   otherInfo?: string | null;
   updatedAt: string;
@@ -903,21 +1104,79 @@ export interface Distributor {
    */
   city?: string | null;
   /**
-   * State abbreviation (e.g., PA, NY)
+   * US state abbreviation (e.g., PA, NY); free text outside the US
    */
   state?: string | null;
   /**
-   * ZIP code
+   * ZIP or postal code
    */
   zip?: string | null;
+  /**
+   * Two-letter ISO country code (e.g., NL, JP, GB). Leave blank for the United States.
+   */
+  country?: string | null;
   /**
    * Type of customer/location
    */
   customerType?: ('Retail' | 'On Premise' | 'Home-D') | null;
   /**
-   * Geographic region
+   * US venues only: the state or DC. The CSV import defaults it to the state. Leave blank outside the US; those venues group by country.
    */
-  region?: ('NY' | 'OH' | 'PA' | 'WV') | null;
+  region?:
+    | (
+        | 'AL'
+        | 'AK'
+        | 'AZ'
+        | 'AR'
+        | 'CA'
+        | 'CO'
+        | 'CT'
+        | 'DE'
+        | 'DC'
+        | 'FL'
+        | 'GA'
+        | 'HI'
+        | 'ID'
+        | 'IL'
+        | 'IN'
+        | 'IA'
+        | 'KS'
+        | 'KY'
+        | 'LA'
+        | 'ME'
+        | 'MD'
+        | 'MA'
+        | 'MI'
+        | 'MN'
+        | 'MS'
+        | 'MO'
+        | 'MT'
+        | 'NE'
+        | 'NV'
+        | 'NH'
+        | 'NJ'
+        | 'NM'
+        | 'NY'
+        | 'NC'
+        | 'ND'
+        | 'OH'
+        | 'OK'
+        | 'OR'
+        | 'PA'
+        | 'RI'
+        | 'SC'
+        | 'SD'
+        | 'TN'
+        | 'TX'
+        | 'UT'
+        | 'VT'
+        | 'VA'
+        | 'WA'
+        | 'WV'
+        | 'WI'
+        | 'WY'
+      )
+    | null;
   /**
    * Geographic coordinates [longitude, latitude]
    *
@@ -930,7 +1189,7 @@ export interface Distributor {
    */
   phone?: string | null;
   /**
-   * Website URL
+   * Website URL, starting with http:// or https://
    */
   website?: string | null;
   /**
@@ -1135,6 +1394,10 @@ export interface PayloadLockedDocument {
         value: string | DonationRequest;
       } | null)
     | ({
+        relationTo: 'event-inquiries';
+        value: string | EventInquiry;
+      } | null)
+    | ({
         relationTo: 'jobs';
         value: string | Job;
       } | null)
@@ -1263,6 +1526,18 @@ export interface BeersSelect<T extends boolean = true> {
   slug?: T;
   recipe?: T;
   positiveReviews?: T;
+  seo?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        ogTitle?: T;
+        ogDescription?: T;
+        ogImage?: T;
+        keywords?: T;
+        noIndex?: T;
+        canonicalPath?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -1316,6 +1591,7 @@ export interface MenusSelect<T extends boolean = true> {
   url?: T;
   themeMode?: T;
   animateCans?: T;
+  targetItemCount?: T;
   items?:
     | T
     | {
@@ -1358,6 +1634,7 @@ export interface EventsSelect<T extends boolean = true> {
   site?: T;
   tags?: T;
   description?: T;
+  image?: T;
   attendees?: T;
   pointOfContact?: T;
   email?: T;
@@ -1398,6 +1675,25 @@ export interface DonationRequestsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "event-inquiries_select".
+ */
+export interface EventInquiriesSelect<T extends boolean = true> {
+  status?: T;
+  name?: T;
+  email?: T;
+  phone?: T;
+  preferredDate?: T;
+  headcount?: T;
+  taproom?: T;
+  message?: T;
+  slackNotifiedAt?: T;
+  slackError?: T;
+  ipHash?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "jobs_select".
  */
 export interface JobsSelect<T extends boolean = true> {
@@ -1407,7 +1703,20 @@ export interface JobsSelect<T extends boolean = true> {
   employmentType?: T;
   summary?: T;
   description?: T;
+  closesOn?: T;
   active?: T;
+  seo?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        ogTitle?: T;
+        ogDescription?: T;
+        ogImage?: T;
+        keywords?: T;
+        noIndex?: T;
+        canonicalPath?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1450,6 +1759,7 @@ export interface RecurringEventsSelect<T extends boolean = true> {
   site?: T;
   tags?: T;
   description?: T;
+  image?: T;
   attendees?: T;
   pointOfContact?: T;
   email?: T;
@@ -1541,11 +1851,16 @@ export interface UsersSelect<T extends boolean = true> {
  * via the `definition` "locations_select".
  */
 export interface LocationsSelect<T extends boolean = true> {
+  markLinesCleanedToday?: T;
   linesLastCleaned?: T;
   active?: T;
   name?: T;
+  draftMenu?: T;
+  cansMenu?: T;
+  intro?: T;
   timezone?: T;
   slug?: T;
+  aliases?: T;
   basicInfo?:
     | T
     | {
@@ -1610,6 +1925,18 @@ export interface LocationsSelect<T extends boolean = true> {
         open?: T;
         close?: T;
       };
+  seo?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        ogTitle?: T;
+        ogDescription?: T;
+        ogImage?: T;
+        keywords?: T;
+        noIndex?: T;
+        canonicalPath?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1642,6 +1969,7 @@ export interface DistributorsSelect<T extends boolean = true> {
   city?: T;
   state?: T;
   zip?: T;
+  country?: T;
   customerType?: T;
   region?: T;
   location?: T;
@@ -1680,9 +2008,21 @@ export interface MediaSelect<T extends boolean = true> {
   filesize?: T;
   width?: T;
   height?: T;
+  original?:
+    | T
+    | {
+        filename?: T;
+        url?: T;
+        mimeType?: T;
+        filesize?: T;
+        width?: T;
+        height?: T;
+        prefix?: T;
+        _objectKey?: T;
+      };
   focalX?: T;
   focalY?: T;
-  sizes?:
+  variants?:
     | T
     | {
         thumbnail?:
@@ -1694,6 +2034,8 @@ export interface MediaSelect<T extends boolean = true> {
               mimeType?: T;
               filesize?: T;
               filename?: T;
+              prefix?: T;
+              _objectKey?: T;
             };
         card?:
           | T
@@ -1704,6 +2046,8 @@ export interface MediaSelect<T extends boolean = true> {
               mimeType?: T;
               filesize?: T;
               filename?: T;
+              prefix?: T;
+              _objectKey?: T;
             };
         detail?:
           | T
@@ -1714,6 +2058,8 @@ export interface MediaSelect<T extends boolean = true> {
               mimeType?: T;
               filesize?: T;
               filename?: T;
+              prefix?: T;
+              _objectKey?: T;
             };
       };
 }
@@ -1873,6 +2219,11 @@ export interface SiteContent {
   errorMessage?: string | null;
   todaysEventsTitle?: string | null;
   todaysFoodTitle?: string | null;
+  slackChannels?: {
+    donations?: string | null;
+    jobs?: string | null;
+    eventInquiries?: string | null;
+  };
   /**
    * Sixth City/Encompass8 QuickLink URL for PA distributors
    */
@@ -1881,6 +2232,455 @@ export interface SiteContent {
    * Sixth City/Encompass8 QuickLink URL for OH distributors
    */
   distributorOhUrl?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * Default titles, descriptions, and social images. Per-page overrides for every static sitemap URL. Beer, location, and job pages use the SEO group on each document.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-seo".
+ */
+export interface SiteSeo {
+  id: string;
+  /**
+   * Homepage / fallback <title>. Example: Lolev Beer • Craft Brewery in Zelienople & Pittsburgh
+   */
+  defaultTitle?: string | null;
+  /**
+   * Next.js title template with %s for the page title. Example: %s • Lolev Beer. Leave blank for "%s • Lolev Beer".
+   */
+  titleTemplate?: string | null;
+  /**
+   * Site-wide description when a page has none. Taproom names are still appended in code when this is blank.
+   */
+  description?: string | null;
+  /**
+   * Merged with location names on the root layout. Mostly legacy.
+   */
+  keywords?: string[] | null;
+  /**
+   * Fallback social card (1200×630). Replaces /images/beer/og-image.jpg when set.
+   */
+  ogImage?: (string | null) | Media;
+  /**
+   * e.g. @lolevbeer
+   */
+  twitterSite?: string | null;
+  /**
+   * e.g. @lolevbeer
+   */
+  twitterCreator?: string | null;
+  pages?: {
+    /**
+     * Meta for Home (/). Blank fields keep the code defaults.
+     */
+    home?: {
+      /**
+       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "• Lolev Beer" on hub pages; the site title template adds it.
+       */
+      title?: string | null;
+      /**
+       * SERP snippet. Aim for ~150–160 characters.
+       */
+      description?: string | null;
+      /**
+       * Optional. Defaults to the meta title (plus site name where applicable).
+       */
+      ogTitle?: string | null;
+      /**
+       * Optional. Defaults to the meta description.
+       */
+      ogDescription?: string | null;
+      /**
+       * Optional social share image (1200×630 recommended). Falls back to the site default.
+       */
+      ogImage?: (string | null) | Media;
+      /**
+       * Optional. Press Enter after each keyword. Mostly legacy; Google ignores these.
+       */
+      keywords?: string[] | null;
+      /**
+       * Ask search engines not to list this page in results. Links on it are still followed, and it is left out of the sitemap.
+       */
+      noIndex?: boolean | null;
+    };
+    /**
+     * Meta for Beer catalog (/beer). Blank fields keep the code defaults.
+     */
+    beer?: {
+      /**
+       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "• Lolev Beer" on hub pages; the site title template adds it.
+       */
+      title?: string | null;
+      /**
+       * SERP snippet. Aim for ~150–160 characters.
+       */
+      description?: string | null;
+      /**
+       * Optional. Defaults to the meta title (plus site name where applicable).
+       */
+      ogTitle?: string | null;
+      /**
+       * Optional. Defaults to the meta description.
+       */
+      ogDescription?: string | null;
+      /**
+       * Optional social share image (1200×630 recommended). Falls back to the site default.
+       */
+      ogImage?: (string | null) | Media;
+      /**
+       * Optional. Press Enter after each keyword. Mostly legacy; Google ignores these.
+       */
+      keywords?: string[] | null;
+      /**
+       * Ask search engines not to list this page in results. Links on it are still followed, and it is left out of the sitemap.
+       */
+      noIndex?: boolean | null;
+      /**
+       * Optional short paragraph shown under the page heading (Beer, Events, Food). Good for search and AI answers; leave blank to show nothing.
+       */
+      intro?: string | null;
+    };
+    /**
+     * Meta for Events (/events). Blank fields keep the code defaults.
+     */
+    events?: {
+      /**
+       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "• Lolev Beer" on hub pages; the site title template adds it.
+       */
+      title?: string | null;
+      /**
+       * SERP snippet. Aim for ~150–160 characters.
+       */
+      description?: string | null;
+      /**
+       * Optional. Defaults to the meta title (plus site name where applicable).
+       */
+      ogTitle?: string | null;
+      /**
+       * Optional. Defaults to the meta description.
+       */
+      ogDescription?: string | null;
+      /**
+       * Optional social share image (1200×630 recommended). Falls back to the site default.
+       */
+      ogImage?: (string | null) | Media;
+      /**
+       * Optional. Press Enter after each keyword. Mostly legacy; Google ignores these.
+       */
+      keywords?: string[] | null;
+      /**
+       * Ask search engines not to list this page in results. Links on it are still followed, and it is left out of the sitemap.
+       */
+      noIndex?: boolean | null;
+      /**
+       * Optional short paragraph shown under the page heading (Beer, Events, Food). Good for search and AI answers; leave blank to show nothing.
+       */
+      intro?: string | null;
+    };
+    /**
+     * Meta for Food (/food). Blank fields keep the code defaults.
+     */
+    food?: {
+      /**
+       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "• Lolev Beer" on hub pages; the site title template adds it.
+       */
+      title?: string | null;
+      /**
+       * SERP snippet. Aim for ~150–160 characters.
+       */
+      description?: string | null;
+      /**
+       * Optional. Defaults to the meta title (plus site name where applicable).
+       */
+      ogTitle?: string | null;
+      /**
+       * Optional. Defaults to the meta description.
+       */
+      ogDescription?: string | null;
+      /**
+       * Optional social share image (1200×630 recommended). Falls back to the site default.
+       */
+      ogImage?: (string | null) | Media;
+      /**
+       * Optional. Press Enter after each keyword. Mostly legacy; Google ignores these.
+       */
+      keywords?: string[] | null;
+      /**
+       * Ask search engines not to list this page in results. Links on it are still followed, and it is left out of the sitemap.
+       */
+      noIndex?: boolean | null;
+      /**
+       * Optional short paragraph shown under the page heading (Beer, Events, Food). Good for search and AI answers; leave blank to show nothing.
+       */
+      intro?: string | null;
+    };
+    /**
+     * Meta for Beer map (/beer-map). Blank fields keep the code defaults.
+     */
+    beerMap?: {
+      /**
+       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "• Lolev Beer" on hub pages; the site title template adds it.
+       */
+      title?: string | null;
+      /**
+       * SERP snippet. Aim for ~150–160 characters.
+       */
+      description?: string | null;
+      /**
+       * Optional. Defaults to the meta title (plus site name where applicable).
+       */
+      ogTitle?: string | null;
+      /**
+       * Optional. Defaults to the meta description.
+       */
+      ogDescription?: string | null;
+      /**
+       * Optional social share image (1200×630 recommended). Falls back to the site default.
+       */
+      ogImage?: (string | null) | Media;
+      /**
+       * Optional. Press Enter after each keyword. Mostly legacy; Google ignores these.
+       */
+      keywords?: string[] | null;
+      /**
+       * Ask search engines not to list this page in results. Links on it are still followed, and it is left out of the sitemap.
+       */
+      noIndex?: boolean | null;
+    };
+    /**
+     * Meta for Donations (/donate). Blank fields keep the code defaults.
+     */
+    donate?: {
+      /**
+       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "• Lolev Beer" on hub pages; the site title template adds it.
+       */
+      title?: string | null;
+      /**
+       * SERP snippet. Aim for ~150–160 characters.
+       */
+      description?: string | null;
+      /**
+       * Optional. Defaults to the meta title (plus site name where applicable).
+       */
+      ogTitle?: string | null;
+      /**
+       * Optional. Defaults to the meta description.
+       */
+      ogDescription?: string | null;
+      /**
+       * Optional social share image (1200×630 recommended). Falls back to the site default.
+       */
+      ogImage?: (string | null) | Media;
+      /**
+       * Optional. Press Enter after each keyword. Mostly legacy; Google ignores these.
+       */
+      keywords?: string[] | null;
+      /**
+       * Ask search engines not to list this page in results. Links on it are still followed, and it is left out of the sitemap.
+       */
+      noIndex?: boolean | null;
+    };
+    /**
+     * Meta for Jobs list (/jobs). Blank fields keep the code defaults.
+     */
+    jobs?: {
+      /**
+       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "• Lolev Beer" on hub pages; the site title template adds it.
+       */
+      title?: string | null;
+      /**
+       * SERP snippet. Aim for ~150–160 characters.
+       */
+      description?: string | null;
+      /**
+       * Optional. Defaults to the meta title (plus site name where applicable).
+       */
+      ogTitle?: string | null;
+      /**
+       * Optional. Defaults to the meta description.
+       */
+      ogDescription?: string | null;
+      /**
+       * Optional social share image (1200×630 recommended). Falls back to the site default.
+       */
+      ogImage?: (string | null) | Media;
+      /**
+       * Optional. Press Enter after each keyword. Mostly legacy; Google ignores these.
+       */
+      keywords?: string[] | null;
+      /**
+       * Ask search engines not to list this page in results. Links on it are still followed, and it is left out of the sitemap.
+       */
+      noIndex?: boolean | null;
+    };
+    /**
+     * Meta for About (/about). Blank fields keep the code defaults.
+     */
+    about?: {
+      /**
+       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "• Lolev Beer" on hub pages; the site title template adds it.
+       */
+      title?: string | null;
+      /**
+       * SERP snippet. Aim for ~150–160 characters.
+       */
+      description?: string | null;
+      /**
+       * Optional. Defaults to the meta title (plus site name where applicable).
+       */
+      ogTitle?: string | null;
+      /**
+       * Optional. Defaults to the meta description.
+       */
+      ogDescription?: string | null;
+      /**
+       * Optional social share image (1200×630 recommended). Falls back to the site default.
+       */
+      ogImage?: (string | null) | Media;
+      /**
+       * Optional. Press Enter after each keyword. Mostly legacy; Google ignores these.
+       */
+      keywords?: string[] | null;
+      /**
+       * Ask search engines not to list this page in results. Links on it are still followed, and it is left out of the sitemap.
+       */
+      noIndex?: boolean | null;
+    };
+    /**
+     * Meta for FAQ (/faq). Blank fields keep the code defaults.
+     */
+    faq?: {
+      /**
+       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "• Lolev Beer" on hub pages; the site title template adds it.
+       */
+      title?: string | null;
+      /**
+       * SERP snippet. Aim for ~150–160 characters.
+       */
+      description?: string | null;
+      /**
+       * Optional. Defaults to the meta title (plus site name where applicable).
+       */
+      ogTitle?: string | null;
+      /**
+       * Optional. Defaults to the meta description.
+       */
+      ogDescription?: string | null;
+      /**
+       * Optional social share image (1200×630 recommended). Falls back to the site default.
+       */
+      ogImage?: (string | null) | Media;
+      /**
+       * Optional. Press Enter after each keyword. Mostly legacy; Google ignores these.
+       */
+      keywords?: string[] | null;
+      /**
+       * Ask search engines not to list this page in results. Links on it are still followed, and it is left out of the sitemap.
+       */
+      noIndex?: boolean | null;
+    };
+    /**
+     * Meta for Accessibility (/accessibility). Blank fields keep the code defaults.
+     */
+    accessibility?: {
+      /**
+       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "• Lolev Beer" on hub pages; the site title template adds it.
+       */
+      title?: string | null;
+      /**
+       * SERP snippet. Aim for ~150–160 characters.
+       */
+      description?: string | null;
+      /**
+       * Optional. Defaults to the meta title (plus site name where applicable).
+       */
+      ogTitle?: string | null;
+      /**
+       * Optional. Defaults to the meta description.
+       */
+      ogDescription?: string | null;
+      /**
+       * Optional social share image (1200×630 recommended). Falls back to the site default.
+       */
+      ogImage?: (string | null) | Media;
+      /**
+       * Optional. Press Enter after each keyword. Mostly legacy; Google ignores these.
+       */
+      keywords?: string[] | null;
+      /**
+       * Ask search engines not to list this page in results. Links on it are still followed, and it is left out of the sitemap.
+       */
+      noIndex?: boolean | null;
+    };
+    /**
+     * Meta for Privacy (/privacy). Blank fields keep the code defaults.
+     */
+    privacy?: {
+      /**
+       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "• Lolev Beer" on hub pages; the site title template adds it.
+       */
+      title?: string | null;
+      /**
+       * SERP snippet. Aim for ~150–160 characters.
+       */
+      description?: string | null;
+      /**
+       * Optional. Defaults to the meta title (plus site name where applicable).
+       */
+      ogTitle?: string | null;
+      /**
+       * Optional. Defaults to the meta description.
+       */
+      ogDescription?: string | null;
+      /**
+       * Optional social share image (1200×630 recommended). Falls back to the site default.
+       */
+      ogImage?: (string | null) | Media;
+      /**
+       * Optional. Press Enter after each keyword. Mostly legacy; Google ignores these.
+       */
+      keywords?: string[] | null;
+      /**
+       * Ask search engines not to list this page in results. Links on it are still followed, and it is left out of the sitemap.
+       */
+      noIndex?: boolean | null;
+    };
+    /**
+     * Meta for Terms (/terms). Blank fields keep the code defaults.
+     */
+    terms?: {
+      /**
+       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "• Lolev Beer" on hub pages; the site title template adds it.
+       */
+      title?: string | null;
+      /**
+       * SERP snippet. Aim for ~150–160 characters.
+       */
+      description?: string | null;
+      /**
+       * Optional. Defaults to the meta title (plus site name where applicable).
+       */
+      ogTitle?: string | null;
+      /**
+       * Optional. Defaults to the meta description.
+       */
+      ogDescription?: string | null;
+      /**
+       * Optional social share image (1200×630 recommended). Falls back to the site default.
+       */
+      ogImage?: (string | null) | Media;
+      /**
+       * Optional. Press Enter after each keyword. Mostly legacy; Google ignores these.
+       */
+      keywords?: string[] | null;
+      /**
+       * Ask search engines not to list this page in results. Links on it are still followed, and it is left out of the sitemap.
+       */
+      noIndex?: boolean | null;
+    };
+  };
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -1942,8 +2742,170 @@ export interface SiteContentSelect<T extends boolean = true> {
   errorMessage?: T;
   todaysEventsTitle?: T;
   todaysFoodTitle?: T;
+  slackChannels?:
+    | T
+    | {
+        donations?: T;
+        jobs?: T;
+        eventInquiries?: T;
+      };
   distributorPaUrl?: T;
   distributorOhUrl?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-seo_select".
+ */
+export interface SiteSeoSelect<T extends boolean = true> {
+  defaultTitle?: T;
+  titleTemplate?: T;
+  description?: T;
+  keywords?: T;
+  ogImage?: T;
+  twitterSite?: T;
+  twitterCreator?: T;
+  pages?:
+    | T
+    | {
+        home?:
+          | T
+          | {
+              title?: T;
+              description?: T;
+              ogTitle?: T;
+              ogDescription?: T;
+              ogImage?: T;
+              keywords?: T;
+              noIndex?: T;
+            };
+        beer?:
+          | T
+          | {
+              title?: T;
+              description?: T;
+              ogTitle?: T;
+              ogDescription?: T;
+              ogImage?: T;
+              keywords?: T;
+              noIndex?: T;
+              intro?: T;
+            };
+        events?:
+          | T
+          | {
+              title?: T;
+              description?: T;
+              ogTitle?: T;
+              ogDescription?: T;
+              ogImage?: T;
+              keywords?: T;
+              noIndex?: T;
+              intro?: T;
+            };
+        food?:
+          | T
+          | {
+              title?: T;
+              description?: T;
+              ogTitle?: T;
+              ogDescription?: T;
+              ogImage?: T;
+              keywords?: T;
+              noIndex?: T;
+              intro?: T;
+            };
+        beerMap?:
+          | T
+          | {
+              title?: T;
+              description?: T;
+              ogTitle?: T;
+              ogDescription?: T;
+              ogImage?: T;
+              keywords?: T;
+              noIndex?: T;
+            };
+        donate?:
+          | T
+          | {
+              title?: T;
+              description?: T;
+              ogTitle?: T;
+              ogDescription?: T;
+              ogImage?: T;
+              keywords?: T;
+              noIndex?: T;
+            };
+        jobs?:
+          | T
+          | {
+              title?: T;
+              description?: T;
+              ogTitle?: T;
+              ogDescription?: T;
+              ogImage?: T;
+              keywords?: T;
+              noIndex?: T;
+            };
+        about?:
+          | T
+          | {
+              title?: T;
+              description?: T;
+              ogTitle?: T;
+              ogDescription?: T;
+              ogImage?: T;
+              keywords?: T;
+              noIndex?: T;
+            };
+        faq?:
+          | T
+          | {
+              title?: T;
+              description?: T;
+              ogTitle?: T;
+              ogDescription?: T;
+              ogImage?: T;
+              keywords?: T;
+              noIndex?: T;
+            };
+        accessibility?:
+          | T
+          | {
+              title?: T;
+              description?: T;
+              ogTitle?: T;
+              ogDescription?: T;
+              ogImage?: T;
+              keywords?: T;
+              noIndex?: T;
+            };
+        privacy?:
+          | T
+          | {
+              title?: T;
+              description?: T;
+              ogTitle?: T;
+              ogDescription?: T;
+              ogImage?: T;
+              keywords?: T;
+              noIndex?: T;
+            };
+        terms?:
+          | T
+          | {
+              title?: T;
+              description?: T;
+              ogTitle?: T;
+              ogDescription?: T;
+              ogImage?: T;
+              keywords?: T;
+              noIndex?: T;
+            };
+      };
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
@@ -1957,6 +2919,36 @@ export interface PayloadJobsStatsSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "schedule-heatmap_widget".
+ */
+export interface ScheduleHeatmapWidget {
+  data?: {
+    location?: (string | null) | Location;
+  };
+  width: 'medium' | 'large' | 'x-large' | 'full';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "menu-target-history_widget".
+ */
+export interface MenuTargetHistoryWidget {
+  data?: {
+    [k: string]: unknown;
+  };
+  width: 'x-small' | 'small' | 'medium' | 'large' | 'x-large' | 'full';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "welcome_widget".
+ */
+export interface WelcomeWidget {
+  data?: {
+    [k: string]: unknown;
+  };
+  width: 'full';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1982,6 +2974,7 @@ export interface CollectionQueryWidget {
       | 'products'
       | 'events'
       | 'donation-requests'
+      | 'event-inquiries'
       | 'jobs'
       | 'job-applications'
       | 'recurring-events'
@@ -2022,6 +3015,7 @@ export interface ActivityWidget {
           | 'products'
           | 'events'
           | 'donation-requests'
+          | 'event-inquiries'
           | 'jobs'
           | 'job-applications'
           | 'recurring-events'
@@ -2036,7 +3030,7 @@ export interface ActivityWidget {
         )[]
       | null;
   };
-  width: 'x-small' | 'small' | 'medium' | 'large' | 'x-large' | 'full';
+  width: 'small' | 'medium' | 'large' | 'x-large' | 'full';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

@@ -66,18 +66,27 @@ beforeEach(() => {
 })
 
 function beersQuery() {
-  return find.mock.calls.map((call) => call[0] as Record<string, unknown>).find(
-    (args) => args.collection === 'beers',
-  )
+  return find.mock.calls
+    .map((call) => call[0] as Record<string, unknown>)
+    .find((args) => args.collection === 'beers')
 }
 
 function menusQuery() {
-  return find.mock.calls.map((call) => call[0] as Record<string, unknown>).find(
-    (args) => args.collection === 'menus',
-  )
+  return find.mock.calls
+    .map((call) => call[0] as Record<string, unknown>)
+    .find((args) => args.collection === 'menus')
 }
 
 describe('Payload query shape for cacheable beer lists', () => {
+  it('includes location update timestamps so cleaning edits reach menu displays', async () => {
+    find.mockResolvedValue({ docs: [] })
+    await getMenuByUrl('lawrenceville-draft')
+
+    expect(menusQuery()?.populate).toMatchObject({
+      locations: { linesLastCleaned: true, updatedAt: true },
+    })
+  })
+
   it('getAllBeersFromPayload drops the reviews join and 3D label uploads', async () => {
     find.mockResolvedValue({ docs: [] })
     await getAllBeersFromPayload()
@@ -227,9 +236,46 @@ describe('menu data cache', () => {
     unstableCache.mockClear()
     await getMenuByUrl('l-draft').catch(() => null)
 
+    // 'kiosk-menus' is the tag only this kiosk-facing cache carries, so the
+    // revalidation plugin can hard-expire it without touching public pages.
     expect(unstableCache).toHaveBeenCalledWith(expect.any(Function), ['menu-url-l-draft'], {
-      tags: ['menus', 'menu-l-draft'],
+      tags: ['menus', 'kiosk-menus', 'menu-l-draft'],
       revalidate: 3600,
     })
   })
+})
+
+it('keeps the current Pittsburgh vendor when UTC has entered the next schedule year', async () => {
+  const { getRecurringFoodState } = await import('@/src/utils/recurring-food')
+  const state = vi.mocked(getRecurringFoodState)
+  const original = state.getMockImplementation()!
+  vi.stubEnv('TZ', 'UTC')
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date('2027-01-01T02:00:00Z'))
+  try {
+    state.mockImplementation(async (_payload, { year }) => ({
+      year: year!,
+      usingLegacyData: false,
+      exclusions: {},
+      schedules: { 'loc-1': { thursday: { fifth: year === 2026 ? 'vendor-1' : null } } },
+    }))
+    find.mockImplementation(async ({ collection }) => ({
+      docs:
+        collection === 'locations'
+          ? [{ id: 'loc-1', slug: 'lawrenceville' }]
+          : collection === 'food-vendors'
+            ? [{ id: 'vendor-1', name: 'Vendor' }]
+            : [],
+    }))
+    expect(await getCombinedUpcomingFood('lawrenceville')).toEqual([
+      expect.objectContaining({
+        date: '2026-12-31',
+        vendor: expect.objectContaining({ id: 'vendor-1' }),
+      }),
+    ])
+  } finally {
+    state.mockImplementation(original)
+    vi.useRealTimers()
+    vi.unstubAllEnvs()
+  }
 })

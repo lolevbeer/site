@@ -152,3 +152,14 @@ describe('menu prices', () => {
     expect(text).not.toMatch(/Sticker[^$]*\$0|\b0\b/)
   })
 })
+
+it.each(['15', '2 for $25', '0'])(
+  'cans sale override %s wins over the regular four-pack price',
+  (price) => {
+    const cans = menu('cans', [{ ...beer('sale', { fourPack: 18, bottlePrice: 8 }), price }])
+    const text = render(createElement(FeaturedCans, { menu: cans })).container.textContent
+    expect(text).not.toContain('$18')
+    if (price !== '0') expect(text).toContain(price === '15' ? '$15' : price)
+    expect(text).toContain('$8')
+  },
+)

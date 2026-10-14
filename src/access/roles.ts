@@ -52,6 +52,13 @@ export const SCHEDULE_READER_ROLES: Role[] = ['admin', 'event-manager', 'food-ma
 /** Roles that may write Food, Food Vendors, and recurring food schedules. */
 export const FOOD_MANAGER_ROLES: Role[] = ['admin', 'food-manager']
 
+/**
+ * Roles that read every Event and Recurring Event, private ones included
+ * (bartenders need the full calendar; writes stay with EVENT_MANAGER_ROLES and
+ * contact details stay behind eventManagerFieldAccess).
+ */
+export const EVENT_READER_ROLES: Role[] = ['admin', 'event-manager', 'lead-bartender', 'bartender']
+
 /** Roles that may write Events. */
 export const EVENT_MANAGER_ROLES: Role[] = ['admin', 'event-manager']
 

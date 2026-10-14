@@ -15,7 +15,13 @@ import {
   type GeoCoordinatesJsonLd,
 } from './json-ld'
 import { getMediaUrl } from './media-utils'
-import { LOLEV_BASE_URL, LOLEV_OG_IMAGE_URL, SOCIAL_PROFILE_URLS } from './schema-shared'
+import { ORG_DESCRIPTION } from './seo'
+import {
+  CRAWLABLE_SAME_AS,
+  LOLEV_BASE_URL,
+  LOLEV_OG_IMAGE_URL,
+  SOCIAL_PROFILE_URLS,
+} from './schema-shared'
 
 /** Minimal week-hours row from getWeeklyHoursWithHolidays (avoids importing payload-api). */
 export interface SchemaHoursDay {
@@ -54,8 +60,15 @@ export interface LocalBusinessJsonLd {
   currenciesAccepted?: string
   paymentAccepted?: string
   amenityFeature?: AmenityFeatureJsonLd[]
+  areaServed?: AreaServedJsonLd[]
   sameAs?: string[]
   aggregateRating?: AggregateRatingJsonLd
+}
+
+/** schema.org Place / City / AdministrativeArea for areaServed */
+export interface AreaServedJsonLd {
+  '@type': 'AdministrativeArea' | 'City' | 'Place'
+  name: string
 }
 
 export interface OpeningHoursSpecificationJsonLd {
@@ -147,7 +160,10 @@ function generateSpecialHours(
       validFrom: valid,
       validThrough: valid,
     }
-    if (!day.closed && day.open && day.close) {
+    if (day.closed) {
+      spec.opens = '00:00'
+      spec.closes = '00:00'
+    } else if (day.open && day.close) {
       const tz = day.timezone || timezone
       spec.opens = formatHourMinute(day.open, tz)
       spec.closes = formatHourMinute(day.close, tz)
@@ -159,6 +175,55 @@ function generateSpecialHours(
 
 function locationKey(location: PayloadLocation): string {
   return location.slug || location.id
+}
+
+function locationMatchKey(location: PayloadLocation): string {
+  return `${location.slug || ''} ${location.name || ''} ${location.address?.city || ''}`.toLowerCase()
+}
+
+/**
+ * Local service areas for Brewery JSON-LD. Zelienople covers Butler County and
+ * nearby towns; Lawrenceville covers Allegheny County / Pittsburgh.
+ */
+function areaServedForLocation(location: PayloadLocation): AreaServedJsonLd[] | undefined {
+  const key = locationMatchKey(location)
+  if (key.includes('zelienople')) {
+    return [
+      { '@type': 'AdministrativeArea', name: 'Butler County' },
+      { '@type': 'City', name: 'Zelienople' },
+      { '@type': 'Place', name: 'Cranberry Township' },
+      { '@type': 'City', name: 'Harmony' },
+      { '@type': 'City', name: 'Mars' },
+    ]
+  }
+  if (key.includes('lawrenceville')) {
+    return [
+      { '@type': 'AdministrativeArea', name: 'Allegheny County' },
+      { '@type': 'City', name: 'Pittsburgh' },
+      { '@type': 'Place', name: 'Lawrenceville' },
+    ]
+  }
+  return undefined
+}
+
+function breweryDescription(location: PayloadLocation): string {
+  const key = locationMatchKey(location)
+  if (key.includes('zelienople')) {
+    return (
+      'Lolev Beer taproom in Zelienople, Butler County. Craft brewery serving purposeful beer ' +
+      'and building community, with modern ales, expressive lagers, and oak-aged beer.'
+    )
+  }
+  if (key.includes('lawrenceville')) {
+    return (
+      'Lolev Beer taproom in Pittsburgh Lawrenceville. Craft brewery serving purposeful beer ' +
+      'and building community, with modern ales, expressive lagers, and oak-aged beer.'
+    )
+  }
+  return (
+    'Craft brewery serving purposeful beer and building community in the Pittsburgh area. ' +
+    'Offering modern ales, expressive lagers, and oak-aged beer.'
+  )
 }
 
 export function generateLocalBusinessSchema(
@@ -179,8 +244,7 @@ export function generateLocalBusinessSchema(
     '@type': 'Brewery',
     '@id': `${LOLEV_BASE_URL}#${slug}`,
     name: `Lolev Beer - ${location.name}`,
-    description:
-      'Craft brewery serving purposeful beer and building community in the Pittsburgh area. Offering modern ales, expressive lagers, and oak-aged beer.',
+    description: breweryDescription(location),
     image: images,
     logo: LOLEV_OG_IMAGE_URL,
     url: pageUrl,
@@ -193,6 +257,11 @@ export function generateLocalBusinessSchema(
     currenciesAccepted: 'USD',
     paymentAccepted: 'Cash, Credit Card, Debit Card',
     sameAs: SOCIAL_PROFILE_URLS,
+  }
+
+  const areaServed = areaServedForLocation(location)
+  if (areaServed) {
+    schema.areaServed = areaServed
   }
 
   const geo = geoFromCoordinates(location.coordinates)
@@ -304,6 +373,108 @@ export interface SearchActionJsonLd {
   'query-input': string
 }
 
+/** @id of the crawlable Organization node rendered from the root layout. */
+export const CRAWLABLE_ORG_ID = `${LOLEV_BASE_URL}/#org`
+
+export interface CrawlableOrganizationJsonLd {
+  '@type': 'Organization'
+  '@id': string
+  name: string
+  url: string
+  logo: string
+  description: string
+  foundingDate: string
+  sameAs: string[]
+}
+
+export interface CrawlablePostalAddress {
+  '@type': 'PostalAddress'
+  streetAddress?: string
+  addressLocality?: string
+  addressRegion?: string
+  postalCode?: string
+  addressCountry: 'US'
+}
+
+export interface CrawlableBreweryJsonLd {
+  '@type': 'Brewery'
+  '@id': string
+  parentOrganization: { '@id': string }
+  name: string
+  url: string
+  telephone?: string
+  address?: CrawlablePostalAddress
+  geo?: GeoCoordinatesJsonLd
+  openingHoursSpecification?: OpeningHoursSpecificationJsonLd[]
+}
+
+export interface CrawlableSiteGraph {
+  '@context': 'https://schema.org'
+  '@graph': [CrawlableOrganizationJsonLd, ...CrawlableBreweryJsonLd[]]
+}
+
+function crawlablePostalAddress(location: PayloadLocation): CrawlablePostalAddress | undefined {
+  const street = location.address?.street?.trim()
+  const city = location.address?.city?.trim()
+  const state = location.address?.state?.trim()
+  const zip = location.address?.zip?.trim()
+  if (!street && !city && !state && !zip) return undefined
+  return {
+    '@type': 'PostalAddress',
+    ...(street ? { streetAddress: street } : {}),
+    ...(city ? { addressLocality: city } : {}),
+    ...(state ? { addressRegion: state } : {}),
+    ...(zip ? { postalCode: zip } : {}),
+    addressCountry: 'US',
+  }
+}
+
+/**
+ * One Organization plus one Brewery per active taproom, for the layout JSON-LD
+ * script. Hours, phone, address, and coordinates come from the location
+ * document. A phone, address line, coordinate, or hours row is included only
+ * when that location record has it.
+ */
+export function generateCrawlableSiteGraph(locations: PayloadLocation[]): CrawlableSiteGraph {
+  const organization: CrawlableOrganizationJsonLd = {
+    '@type': 'Organization',
+    '@id': CRAWLABLE_ORG_ID,
+    name: 'Lolev Beer',
+    url: LOLEV_BASE_URL,
+    logo: LOLEV_OG_IMAGE_URL,
+    description: ORG_DESCRIPTION,
+    foundingDate: '2022-12',
+    sameAs: [...CRAWLABLE_SAME_AS],
+  }
+
+  const breweries = locations
+    .filter((location) => location.active !== false)
+    .map((location): CrawlableBreweryJsonLd => {
+      const slug = location.slug || location.id
+      const brewery: CrawlableBreweryJsonLd = {
+        '@type': 'Brewery',
+        '@id': `${LOLEV_BASE_URL}/#${slug}`,
+        parentOrganization: { '@id': CRAWLABLE_ORG_ID },
+        name: `Lolev Beer - ${location.name}`,
+        url: `${LOLEV_BASE_URL}/${slug}`,
+      }
+      const phone = location.basicInfo?.phone?.trim()
+      if (phone) brewery.telephone = phone
+      const address = crawlablePostalAddress(location)
+      if (address) brewery.address = address
+      const geo = geoFromCoordinates(location.coordinates)
+      if (geo) brewery.geo = geo
+      const hours = generateOpeningHours(location)
+      if (hours.length > 0) brewery.openingHoursSpecification = hours
+      return brewery
+    })
+
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [organization, ...breweries],
+  }
+}
+
 /**
  * Generate WebSite schema for site identity
  * Links the website to the organization
@@ -315,7 +486,8 @@ export function generateWebSiteSchema(): WebSiteJsonLd {
     '@id': `${LOLEV_BASE_URL}#website`,
     name: 'Lolev Beer',
     url: LOLEV_BASE_URL,
-    description: 'Craft brewery in Pittsburgh serving modern ales, expressive lagers, and oak-aged beer.',
+    description:
+      'Craft brewery in Pittsburgh serving modern ales, expressive lagers, and oak-aged beer.',
     publisher: {
       '@id': `${LOLEV_BASE_URL}#organization`,
     },

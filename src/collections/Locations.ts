@@ -1,6 +1,8 @@
-import type { CollectionConfig, Access } from 'payload'
+import type { CollectionConfig, Access, RelationshipField, Validate, Where } from 'payload'
+import { LOCATION_SLUG_PATTERN, RESERVED_LOCATION_SLUGS } from '@/lib/config/locations'
 import { generateUniqueSlug } from './utils/generateUniqueSlug'
 import { markLinesCleanedField } from './utils/markLinesCleanedField'
+import { documentSeoField } from '@/src/fields/seo'
 import {
   adminAccess,
   adminFieldAccess,
@@ -28,6 +30,55 @@ const canUpdateLocation: Access = ({ req: { user } }) => {
   return false
 }
 
+/**
+ * Aliases must be URL slugs that no route or other location already claims;
+ * otherwise /<alias>, /e/<alias>, and ?loc=<alias> would be ambiguous or dead.
+ * Only aliases added in this save are checked, so an existing one never blocks
+ * an unrelated save (lead bartenders can't edit this field). Location slugs and
+ * aliases are public, so the check reads as the editor.
+ */
+const validateAliases: Validate<string[]> = async (value, { id, previousValue, req }) => {
+  const previous = new Set(previousValue ?? [])
+  const added = (value ?? []).filter((alias) => !previous.has(alias))
+  if (added.length === 0) return true
+  const malformed = added.find((alias) => !LOCATION_SLUG_PATTERN.test(alias))
+  if (malformed) return `"${malformed}" must be a lowercase slug (letters, numbers, dashes).`
+  const reserved = added.find((alias) => RESERVED_LOCATION_SLUGS.has(alias))
+  if (reserved) return `"${reserved}" is reserved by a site page and cannot be an alias.`
+
+  const claimed: Where = {
+    or: [{ slug: { in: added } }, { aliases: { in: added } }],
+  }
+  const others = await req.payload.find({
+    collection: 'locations',
+    where: id ? { and: [{ id: { not_equals: id } }, claimed] } : claimed,
+    limit: 1,
+    depth: 0,
+    select: { name: true, slug: true, aliases: true },
+    overrideAccess: false,
+    req,
+  })
+  const other = others.docs[0]
+  if (!other) return true
+  const taken = added.find((alias) => alias === other.slug || other.aliases?.includes(alias))
+  return `"${taken}" is already the slug or an alias of ${other.name}.`
+}
+
+/**
+ * Record the previous slug as an alias when a rename changes it, so old
+ * /<slug> links redirect and /e/<slug> TV boards keep rendering. Aliases never
+ * include the current slug or a reserved route slug (those would not resolve).
+ */
+function withPreviousSlug(
+  aliases: string[] | null | undefined,
+  previousSlug: string | null | undefined,
+  currentSlug: string | null | undefined,
+): string[] {
+  const next = [...(aliases ?? [])]
+  if (previousSlug && !RESERVED_LOCATION_SLUGS.has(previousSlug)) next.push(previousSlug)
+  return [...new Set(next)].filter((alias) => alias !== currentSlug)
+}
+
 export const Locations: CollectionConfig = {
   slug: 'locations',
   admin: {
@@ -42,7 +93,14 @@ export const Locations: CollectionConfig = {
   },
   hooks: {
     beforeChange: [
-      async ({ data, req, operation, originalDoc }) => {
+      async ({ data, req, originalDoc }) => {
+        // Field access gates this command; the server supplies the date so
+        // lead bartenders can record today without choosing an arbitrary date.
+        if (data.markLinesCleanedToday === true) {
+          data.linesLastCleaned = new Date().toISOString()
+        }
+        delete data.markLinesCleanedToday
+
         // Compute slug from name — only when the name changed or no slug
         // exists yet, so unrelated saves skip the uniqueness queries.
         if (
@@ -50,12 +108,19 @@ export const Locations: CollectionConfig = {
           typeof data.name === 'string' &&
           (data.name !== originalDoc?.name || !data.slug)
         ) {
-          data.slug = await generateUniqueSlug(
-            data.name,
-            'locations',
-            req,
-            operation,
-            originalDoc?.id,
+          data.slug = await generateUniqueSlug(data.name, 'locations', req, originalDoc?.id, [
+            'slug',
+            'aliases',
+          ])
+        }
+
+        const previousSlug = originalDoc?.slug
+        const slugChanged = Boolean(previousSlug && data.slug && data.slug !== previousSlug)
+        if (slugChanged || data.aliases) {
+          data.aliases = withPreviousSlug(
+            data.aliases ?? originalDoc?.aliases,
+            slugChanged ? previousSlug : undefined,
+            data.slug ?? previousSlug,
           )
         }
 
@@ -65,14 +130,27 @@ export const Locations: CollectionConfig = {
   },
   fields: [
     {
+      name: 'markLinesCleanedToday',
+      type: 'checkbox',
+      virtual: true,
+      access: {
+        create: leadBartenderFieldAccess,
+        update: leadBartenderFieldAccess,
+      },
+      admin: { hidden: true },
+    },
+    {
       name: 'linesLastCleaned',
       type: 'date',
       label: 'Draft Lines Last Cleaned',
       access: {
-        update: leadBartenderFieldAccess,
+        create: adminFieldAccess,
+        update: adminFieldAccess,
       },
       admin: {
         position: 'sidebar',
+        condition: (_data, _siblingData, { user }) => isAdmin(user),
+        description: 'Admin correction: choose a date, then save this location.',
         date: {
           pickerAppearance: 'dayOnly',
           displayFormat: 'MMM d, yyyy',
@@ -101,6 +179,39 @@ export const Locations: CollectionConfig = {
       },
     },
     {
+      type: 'row',
+      fields: (['draft', 'cans'] as const).map((type): RelationshipField => ({
+        name: `${type}Menu`,
+        label: type === 'draft' ? 'Draft Menu' : 'Cans Menu',
+        type: 'relationship',
+        relationTo: 'menus',
+        // Avoid populating the location → menu → location cycle.
+        maxDepth: 0,
+        access: { update: adminFieldAccess },
+        filterOptions: ({ id }) =>
+          id ? { location: { equals: id }, type: { equals: type } } : false,
+        admin: {
+          width: '50%',
+          description:
+            `The ${type} menu shown for this location on the homepage and /<location> page ` +
+            '(e.g. /lawrenceville). Only published menus appear. Leave blank to hide it.',
+        },
+      })),
+    },
+    {
+      name: 'intro',
+      type: 'textarea',
+      label: 'Intro text',
+      access: {
+        update: adminFieldAccess,
+      },
+      admin: {
+        rows: 3,
+        description:
+          'Optional short paragraph under the location heading for local SEO. Leave blank to show nothing.',
+      },
+    },
+    {
       name: 'timezone',
       type: 'select',
       defaultValue: 'America/New_York',
@@ -120,10 +231,32 @@ export const Locations: CollectionConfig = {
     {
       name: 'slug',
       type: 'text',
+      // Hand-set slugs (REST/Local API) skip the generator; the slug is a redirect target.
+      validate: (value: string | null | undefined) =>
+        !value ||
+        LOCATION_SLUG_PATTERN.test(value) ||
+        'Slug must be lowercase letters, numbers, and dashes.',
       admin: {
         description: 'Auto-generated from name (lowercase, spaces to dashes)',
         readOnly: true,
         position: 'sidebar',
+      },
+    },
+    {
+      name: 'aliases',
+      type: 'text',
+      hasMany: true,
+      access: {
+        update: adminFieldAccess,
+      },
+      validate: validateAliases,
+      admin: {
+        position: 'sidebar',
+        description:
+          'Former slugs. /<alias> redirects to the current page and /e/<alias> still shows ' +
+          'the events board. A rename adds the old slug automatically. Browsers cache the ' +
+          'redirect, so a deleted alias can keep sending past visitors here; avoid reusing it ' +
+          "as another location's slug.",
       },
     },
     {
@@ -460,5 +593,6 @@ export const Locations: CollectionConfig = {
         },
       ],
     },
+    documentSeoField,
   ],
 }

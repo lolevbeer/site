@@ -4,7 +4,7 @@ import {
   getPackagingLabel,
   getNoPackagingLabel,
   getDraftOnlyMessage,
-  getPackagingAtLocationsMessage,
+  getPackagingAvailableAtPrefix,
   getPricingLines,
 } from '@/lib/utils/packaging-utils'
 
@@ -63,14 +63,11 @@ describe('getDraftOnlyMessage', () => {
   })
 })
 
-describe('getPackagingAtLocationsMessage', () => {
-  it('returns correct messages with locations', () => {
-    expect(getPackagingAtLocationsMessage('cans', ['Lawrenceville'])).toBe(
-      'Cans available at Lawrenceville',
-    )
-    expect(getPackagingAtLocationsMessage('bottles', ['Lawrenceville', 'Zelienople'])).toBe(
-      'Bottles available at Lawrenceville and Zelienople',
-    )
+describe('getPackagingAvailableAtPrefix', () => {
+  it('returns the lead-in for each packaging type', () => {
+    expect(getPackagingAvailableAtPrefix('cans')).toBe('Cans available at')
+    expect(getPackagingAvailableAtPrefix('bottles')).toBe('Bottles available at')
+    expect(getPackagingAvailableAtPrefix('cans_and_bottles')).toBe('Cans & bottles available at')
   })
 })
 

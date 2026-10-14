@@ -17,7 +17,8 @@ import { getStyleName, relationshipName } from './relationship-name'
  * Returns a relative URL path if image is a Media object with url, otherwise false
  */
 function getImageFromPayload(image: PayloadBeer['image']): string | boolean {
-  const url = getMediaUrl(image)
+  // Catalog / beer-card tiles render ~256px square; prefer the 500px card derivative.
+  const url = getMediaUrl(image, 'card')
   return url || false
 }
 

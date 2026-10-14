@@ -1,6 +1,6 @@
 <!-- BEGIN:nextjs-agent-rules -->
 
-# This is NOT the Next.js you know
+## This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
 
@@ -19,4 +19,4 @@ Never omit `overrideAccess`: Payload 3 defaults an omitted (or `undefined`) flag
 
 When following access hides something a role legitimately needs, widen that role's access rule rather than bypassing it. A denied relationship populates as a bare ID and our consumers drop non-objects, so access gaps show up as missing content, not errors — check the rendered page.
 
-Current rules worth knowing: beer managers, bartenders, and lead bartenders read every beer; everyone else reads published beers only (drafts never show on the public site, even on a published menu or Coming Soon); beer version history is beer-manager only; menu version history follows menu `read` (bartenders see their assigned locations' revisions, other signed-in roles only published ones) and is never public. Every signed-in user reads other users' names and emails, while roles, locations, and Slack IDs stay admin-or-self; beers and menus stamp the last signed-in editor in `updatedBy` ("Last edited by", signed-in readers only); saves with no signed-in user, such as the nightly Untappd sync, keep the previous person. See `docs/plans/follow-access-control.md` for the migration.
+Current rules worth knowing: beer managers, bartenders, and lead bartenders read every beer; everyone else reads published beers only (drafts never show on the public site, even on a published menu or Coming Soon); admins, event managers, bartenders, and lead bartenders read every event and recurring event (private ones included; contact fields stay event-manager only), everyone else public events only; beer version history is beer-manager only; menu version history follows menu `read` (bartenders see their assigned locations' revisions, other signed-in roles only published ones) and is never public. Every signed-in user reads other users' names and emails, while roles, locations, and Slack IDs stay admin-or-self; beers and menus stamp the last signed-in editor in `updatedBy` ("Last edited by", signed-in readers only); saves with no signed-in user, such as the nightly Untappd sync, keep the previous person. See `docs/plans/follow-access-control.md` for the migration.

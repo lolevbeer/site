@@ -47,6 +47,7 @@ next-env.d.ts
 !/public/images
 !/public/favicons
 !/public/3d
+!/public/distributor-csv-import.md
 /public/images/*
 !/public/images/beer
 

@@ -1,32 +1,40 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { FoodVendorSchedule } from '@/lib/types/food';
+import type { FoodPageSchedule } from '@/lib/utils/public-client-payloads';
 import { Button } from '@/components/ui/button';
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from '@/components/ui/empty';
 import { UtensilsCrossed } from '@/components/icons';
 import { useLocationContext } from '@/components/location/location-provider';
 import { getLocationDisplayName } from '@/lib/config/locations';
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs';
+import { HubIntro } from '@/components/ui/hub-intro'
 import { FoodSchedule } from '@/components/food/food-schedule';
 import { isTodayOrFuture } from '@/lib/utils/formatters';
 import { safeHttpUrl } from '@/lib/utils/url-utils';
+import { useTodayEST } from '@/lib/hooks/use-today-est';
 
 interface FoodPageClientProps {
-  initialSchedules: FoodVendorSchedule[];
+  /** CMS intro paragraph shown under the heading. */
+  intro?: string
+  /** Schedules trimmed to rendered fields (see toFoodPageSchedules). */
+  initialSchedules: FoodPageSchedule[];
 }
 
-export function FoodPageClient({ initialSchedules }: FoodPageClientProps) {
+export function FoodPageClient({ initialSchedules, intro }: FoodPageClientProps) {
   const { currentLocation, locations, cycleLocation } = useLocationContext();
+  // The server list is already upcoming-only. Past days are dropped only once
+  // mounted, so HTML cached before midnight hydrates without a mismatch.
+  const today = useTodayEST();
 
   const filteredSchedules = useMemo(() => {
     return initialSchedules
       .filter(
         (schedule) =>
-          schedule.location === currentLocation && isTodayOrFuture(schedule.date),
+          schedule.location === currentLocation && (today === null || isTodayOrFuture(schedule.date, today)),
       )
       .sort((a, b) => a.date.localeCompare(b.date));
-  }, [initialSchedules, currentLocation]);
+  }, [initialSchedules, currentLocation, today]);
 
   const otherLocationsWithFood = useMemo(() => {
     const otherLocations = locations.filter(loc => {
@@ -35,15 +43,16 @@ export function FoodPageClient({ initialSchedules }: FoodPageClientProps) {
     });
     return otherLocations.filter(loc => {
       const slug = loc.slug || loc.id;
-      return initialSchedules.some(s => s.location === slug && isTodayOrFuture(s.date));
+      return initialSchedules.some(s => s.location === slug && (today === null || isTodayOrFuture(s.date, today)));
     });
-  }, [initialSchedules, currentLocation, locations]);
+  }, [initialSchedules, currentLocation, locations, today]);
 
   return (
     <div className="container mx-auto px-4 py-8">
       <PageBreadcrumbs className="mb-6" />
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold tracking-tight">Food</h1>
+        <HubIntro text={intro} />
       </div>
 
       <div className="max-w-2xl mx-auto">
@@ -54,7 +63,7 @@ export function FoodPageClient({ initialSchedules }: FoodPageClientProps) {
               id: `${schedule.vendor}-${schedule.date}-${index}`,
               date: schedule.date,
               vendor: schedule.vendor,
-              time: schedule.time || schedule.start,
+              time: schedule.time,
               site: safeHttpUrl(schedule.site),
               logoUrl: schedule.logoUrl,
             }))}

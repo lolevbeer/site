@@ -1,5 +1,5 @@
 /**
- * Taproom landing reuses DraftBeerCard (compact) and BeerCard instead of a
+ * Taproom landing reuses DraftBeerCard (compact row) and BeerCard instead of a
  * one-off beer grid, so draft rows stay lighter than the can tiles.
  */
 import { cleanup, render, screen } from '@testing-library/react'
@@ -11,7 +11,7 @@ import { isTaproomLandingPath } from '@/lib/config/locations'
 import { LocationLanding } from '@/components/location/location-landing'
 
 vi.mock('next/navigation', () => ({
-  usePathname: () => '/lawrenceville',
+  usePathname: () => '/lolev-lawrenceville',
 }))
 
 vi.mock('@/components/ui/page-breadcrumbs', () => ({
@@ -19,24 +19,16 @@ vi.mock('@/components/ui/page-breadcrumbs', () => ({
 }))
 
 vi.mock('@/components/location/location-provider', () => ({
-  useLocationContext: () => ({ currentLocation: 'lawrenceville' }),
+  useLocationContext: () => ({ currentLocation: 'lolev-lawrenceville' }),
 }))
 
 vi.mock('@/components/beer/draft-beer-card', () => ({
-  DraftBeerCard: ({ beer, compact }: { beer: Beer; compact?: boolean }) =>
-    createElement('article', { 'data-draft-compact': String(!!compact) }, beer.name),
+  DraftBeerCard: ({ beer, showTapAndPrice }: { beer: Beer; showTapAndPrice?: boolean }) =>
+    createElement('article', { 'data-draft-compact': String(!showTapAndPrice) }, beer.name),
 }))
 
 vi.mock('@/components/beer/beer-card', () => ({
-  BeerCard: ({
-    beer,
-    variant,
-    showCta,
-  }: {
-    beer: Beer
-    variant?: string
-    showCta?: boolean
-  }) =>
+  BeerCard: ({ beer, variant, showCta }: { beer: Beer; variant?: string; showCta?: boolean }) =>
     createElement(
       'article',
       { 'data-can-variant': variant ?? '', 'data-show-cta': String(showCta !== false) },
@@ -66,7 +58,7 @@ const canBeer: Beer = {
 
 const location = {
   id: 'loc-1',
-  slug: 'lawrenceville',
+  slug: 'lolev-lawrenceville',
   name: 'Lawrenceville',
   active: true,
   createdAt: '2026-01-01T00:00:00.000Z',
@@ -123,7 +115,7 @@ describe('LocationLanding beer sections', () => {
           {
             ...location,
             id: 'loc-2',
-            slug: 'zelienople',
+            slug: 'lolev-zelienople',
             name: 'Zelienople',
           },
         ],
@@ -205,14 +197,54 @@ describe('LocationLanding beer sections', () => {
 
     expect(screen.queryByRole('heading', { name: 'Jobs' })).toBeNull()
   })
+
+  it('shows the CMS intro under the subtitle when set', () => {
+    render(
+      createElement(LocationLanding, {
+        location: {
+          ...location,
+          intro: 'Our Zelienople taproom sits on Main Street in Butler County.',
+        },
+        weeklyHours: [],
+        draftBeers: [],
+        canBeers: [],
+        events: [],
+        food: [],
+        otherLocations: [],
+      }),
+    )
+
+    expect(screen.getByText('Lolev Beer taproom in Pittsburgh')).toBeTruthy()
+    expect(
+      screen.getByText('Our Zelienople taproom sits on Main Street in Butler County.'),
+    ).toBeTruthy()
+  })
+
+  it('omits the intro paragraph when blank', () => {
+    const { container } = render(
+      createElement(LocationLanding, {
+        location,
+        weeklyHours: [],
+        draftBeers: [],
+        canBeers: [],
+        events: [],
+        food: [],
+        otherLocations: [],
+      }),
+    )
+
+    const subtitle = screen.getByText('Lolev Beer taproom in Pittsburgh')
+    expect(subtitle.nextElementSibling).toBeNull()
+    expect(container.querySelector('header p + p')).toBeNull()
+  })
 })
 
 describe('isTaproomLandingPath', () => {
   const locations = [location]
 
   it('matches a taproom landing and ignores other routes', () => {
-    expect(isTaproomLandingPath('/lawrenceville', locations)).toBe(true)
-    expect(isTaproomLandingPath('/lawrenceville/', locations)).toBe(true)
+    expect(isTaproomLandingPath('/lolev-lawrenceville', locations)).toBe(true)
+    expect(isTaproomLandingPath('/lolev-lawrenceville/', locations)).toBe(true)
     expect(isTaproomLandingPath('/', locations)).toBe(false)
     expect(isTaproomLandingPath('/beer', locations)).toBe(false)
     expect(isTaproomLandingPath('/food', locations)).toBe(false)

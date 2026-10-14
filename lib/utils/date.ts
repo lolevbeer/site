@@ -2,7 +2,7 @@
  * Date utilities: EST/EDT timezone helpers and elapsed-time checks.
  */
 
-import { toZonedTime, format } from 'date-fns-tz'
+import { fromZonedTime, toZonedTime, format } from 'date-fns-tz'
 
 const EST_TIMEZONE = 'America/New_York'
 
@@ -63,9 +63,17 @@ export function getDayOfWeekEST(dateString: string): string {
 }
 
 /**
+ * UTC ISO instant of local midnight starting a YYYY-MM-DD day in EST/EDT
+ * (DST-aware), for Payload `date` range filters.
+ */
+export function getESTMidnightISO(date: string): string {
+  return fromZonedTime(`${date}T00:00:00`, EST_TIMEZONE).toISOString()
+}
+
+/**
  * Get an ISO string representing the start of today in EST/EDT, converted to UTC.
  * Suitable for Payload CMS queries with `greater_than_equal`.
  */
 export function getTodayMidnightISO(): string {
-  return new Date(`${getTodayEST()}T00:00:00-05:00`).toISOString()
+  return getESTMidnightISO(getTodayEST())
 }

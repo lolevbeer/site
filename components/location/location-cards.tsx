@@ -7,7 +7,6 @@ import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { useLocationContext } from '@/components/location/location-provider'
 import { WeeklyHoursTable } from '@/components/location/weekly-hours'
-import { trackDirections } from '@/lib/analytics/events'
 import { getLocationImageUrl } from '@/lib/utils/media-utils'
 import type { WeeklyHoursDay } from '@/lib/utils/payload-api'
 
@@ -98,7 +97,6 @@ export function LocationCards({ weeklyHours }: LocationCardsProps) {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-muted-foreground text-lg hover:text-foreground hover:underline transition-colors"
-                  onClick={() => trackDirections(location.name)}
                 >
                   <p>{location.address.street}</p>
                   <p>
@@ -136,7 +134,6 @@ export function LocationCards({ weeklyHours }: LocationCardsProps) {
                   href={mapUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={() => trackDirections(location.name)}
                 >
                   Get Directions
                 </Link>

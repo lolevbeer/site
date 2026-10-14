@@ -13,11 +13,16 @@ vi.mock('@/lib/jobs/payload', () => ({
   getActiveJobs: vi.fn(),
 }))
 
+vi.mock('@/lib/utils/site-seo', () => ({
+  getSiteSeo: vi.fn(async () => ({})),
+}))
+
 vi.mock('@/lib/utils/logger', () => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
 }))
 
 import sitemap from '@/src/app/sitemap'
+import { getSiteSeo } from '@/lib/utils/site-seo'
 import { getActiveJobs } from '@/lib/jobs/payload'
 import { getAllBeersFromPayload, getAllLocations } from '@/lib/utils/payload-api'
 
@@ -33,7 +38,9 @@ describe('sitemap', () => {
       {
         slug: 'lupula',
         hideFromSite: false,
-        updatedAt: '2026-09-01T12:00:00.000Z',
+        createdAt: '2026-09-01T12:00:00.000Z',
+        // A staff edit (or a sync that changed the rating) after creation.
+        updatedAt: '2026-10-09T03:00:00.000Z',
       },
       {
         slug: 'guest-pour',
@@ -43,24 +50,31 @@ describe('sitemap', () => {
     ])
     locations.mockResolvedValue([
       {
-        slug: 'lawrenceville',
+        slug: 'lolev-lawrenceville',
         active: true,
         updatedAt: '2026-09-01T16:29:41.957Z',
       },
       {
-        slug: 'zelienople',
+        slug: 'lolev-zelienople',
         active: true,
         updatedAt: '2026-09-04T13:16:42.524Z',
       },
     ])
-    jobs.mockResolvedValue([{ slug: 'bartender', title: 'Bartender' }])
+    jobs.mockResolvedValue([
+      {
+        slug: 'bartender',
+        title: 'Bartender',
+        postedAt: '2026-10-01T12:00:00Z',
+        updatedAt: '2026-10-02T12:00:00Z',
+      },
+    ])
   })
 
   it('includes location landing pages and visible beer pages', async () => {
     const entries = await sitemap()
     const urls = entries.map((e) => e.url)
-    expect(urls).toContain('https://lolev.beer/lawrenceville')
-    expect(urls).toContain('https://lolev.beer/zelienople')
+    expect(urls).toContain('https://lolev.beer/lolev-lawrenceville')
+    expect(urls).toContain('https://lolev.beer/lolev-zelienople')
     expect(urls).toContain('https://lolev.beer/beer/lupula')
     expect(urls).not.toContain('https://lolev.beer/beer/guest-pour')
     expect(urls).toContain('https://lolev.beer/jobs/bartender')
@@ -76,9 +90,51 @@ describe('sitemap', () => {
     expect(lastmod).toBeLessThan(before - 24 * 60 * 60 * 1000)
   })
 
-  it('uses beer updatedAt for beer URLs', async () => {
+  it('uses beer updatedAt for beer URLs and the catalog, matching the page dateModified', async () => {
     const entries = await sitemap()
     const lupula = entries.find((e) => e.url === 'https://lolev.beer/beer/lupula')
-    expect((lupula?.lastModified as Date).toISOString()).toBe('2026-09-01T12:00:00.000Z')
+    expect((lupula?.lastModified as Date).toISOString()).toBe('2026-10-09T03:00:00.000Z')
+    const catalog = entries.find((e) => e.url === 'https://lolev.beer/beer')
+    expect((catalog?.lastModified as Date).toISOString()).toBe('2026-10-09T03:00:00.000Z')
   })
+
+  it('regenerates hourly instead of staying frozen at build time', async () => {
+    const mod = await import('@/src/app/sitemap')
+    expect(mod.revalidate).toBe(3600)
+  })
+
+  it('omits pages the CMS marks noindex or canonicalizes elsewhere', async () => {
+    beers.mockResolvedValue([
+      { slug: 'lupula', seo: { noIndex: true }, updatedAt: '2026-09-01T12:00:00.000Z' },
+      {
+        slug: 'mosaic',
+        seo: { canonicalPath: '/beer/lupula' },
+        updatedAt: '2026-09-01T12:00:00.000Z',
+      },
+      {
+        slug: 'citra',
+        seo: { canonicalPath: '/beer/citra' },
+        updatedAt: '2026-09-01T12:00:00.000Z',
+      },
+    ])
+    ;(getSiteSeo as ReturnType<typeof vi.fn>).mockResolvedValue({
+      pages: { about: { noIndex: true } },
+    })
+    const urls = (await sitemap()).map((e) => e.url)
+    expect(urls).not.toContain('https://lolev.beer/beer/lupula')
+    expect(urls).not.toContain('https://lolev.beer/beer/mosaic')
+    expect(urls).toContain('https://lolev.beer/beer/citra')
+    expect(urls).not.toContain('https://lolev.beer/about')
+    expect(urls).toContain('https://lolev.beer/faq')
+  })
+})
+
+it('omits uncertain hub dates and uses each job timestamp independently of beer updates', async () => {
+  const entries = await sitemap()
+  for (const path of ['', '/events', '/food', '/faq', '/jobs']) {
+    expect(entries.find((e) => e.url === `https://lolev.beer${path}`)?.lastModified).toBeUndefined()
+  }
+  expect(entries.find((e) => e.url.endsWith('/jobs/bartender'))?.lastModified).toEqual(
+    new Date('2026-10-02T12:00:00Z'),
+  )
 })

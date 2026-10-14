@@ -2,22 +2,28 @@ import { Suspense, type ReactNode } from 'react'
 import type { Metadata, Viewport } from 'next'
 import { Poppins } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { MotionConfig } from 'framer-motion'
 import { NuqsAdapter } from 'nuqs/adapters/next/app'
 import { LocationProvider } from '@/components/location/location-provider'
 import { ThemeProvider } from 'next-themes'
 import { ConditionalLayout } from '@/components/layout/conditional-layout'
+import { FooterGate } from '@/components/layout/footer-gate'
 import { Toaster } from '@/components/ui/sonner'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { SkipNav } from '@/components/ui/skip-nav'
 import { GoogleAnalytics } from '@/components/analytics/google-analytics'
-import { PageViewTracker } from '@/components/analytics/page-view-tracker'
+import { ConversionTracker } from '@/components/analytics/conversion-tracker'
 import { AuthProvider } from '@/lib/hooks/use-auth'
 import { Footer } from '@/components/layout/footer'
+import { FooterTaprooms } from '@/components/layout/footer-taprooms'
+import { SiteJsonLd } from '@/components/seo/site-json-ld'
 import { MotionHydrationSentinel } from '@/components/motion/blur-fade'
 import { getAllLocations } from '@/lib/utils/payload-api'
 import { getWeeklyHoursForLocations } from '@/lib/utils/homepage-data'
 import { getBaseUrl } from '@/lib/utils/get-base-url'
-import { DEFAULT_OG_IMAGES, locationKeywords, siteDescription, SITE_TITLE } from '@/lib/utils/seo'
+import { DEFAULT_TITLE_TEMPLATE, locationKeywords, trim } from '@/lib/utils/seo'
+import { getSiteSeo, siteDefaults } from '@/lib/utils/site-seo'
+import { defaultOgImages } from '@/lib/seo/resolve-metadata'
 import './globals.css'
 
 /**
@@ -31,7 +37,16 @@ async function FooterHours({
 }: {
   locations: Awaited<ReturnType<typeof getAllLocations>>
 }): Promise<ReactNode> {
-  return <Footer weeklyHours={await getWeeklyHoursForLocations(locations)} />
+  return (
+    <Footer
+      taprooms={
+        <FooterTaprooms
+          locations={locations}
+          weeklyHours={await getWeeklyHoursForLocations(locations)}
+        />
+      }
+    />
+  )
 }
 
 const poppins = Poppins({
@@ -46,15 +61,24 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   // No maximumScale — allow pinch-zoom (WCAG 2.2 SC 1.4.4).
+  // Browser chrome follows the OS scheme, not the site's theme toggle; values
+  // match --color-background in globals.css.
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#000000' },
+  ],
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const locations = await getAllLocations()
-  const description = siteDescription(locations)
+  const [locations, siteSeo] = await Promise.all([getAllLocations(), getSiteSeo()])
+  // Site defaults only. Home's own overrides are applied in page.tsx so they can't leak to other routes.
+  const { title: defaultTitle, description } = siteDefaults(siteSeo, locations)
+  const titleTemplate = trim(siteSeo.titleTemplate) ?? DEFAULT_TITLE_TEMPLATE
+
   return {
     title: {
-      default: SITE_TITLE,
-      template: '%s | Lolev Beer',
+      default: defaultTitle,
+      template: titleTemplate,
     },
     description,
     keywords: [
@@ -65,6 +89,7 @@ export async function generateMetadata(): Promise<Metadata> {
       'IPA',
       'stout',
       'ale',
+      ...(siteSeo.keywords?.filter(Boolean) ?? []),
       ...locationKeywords(locations),
     ],
     authors: [{ name: 'Lolev Beer' }],
@@ -80,16 +105,17 @@ export async function generateMetadata(): Promise<Metadata> {
       type: 'website',
       locale: 'en_US',
       url: getBaseUrl(),
-      title: SITE_TITLE,
+      title: defaultTitle,
       description,
       siteName: 'Lolev Beer',
-      images: DEFAULT_OG_IMAGES,
+      images: defaultOgImages(siteSeo.ogImage),
     },
     twitter: {
       card: 'summary_large_image',
-      site: '@lolevbeer',
-      creator: '@lolevbeer',
+      site: trim(siteSeo.twitterSite) ?? '@lolevbeer',
+      creator: trim(siteSeo.twitterCreator) ?? '@lolevbeer',
     },
+    // Site-wide default; Home's noIndex is applied in page.tsx.
     robots: {
       index: true,
       follow: true,
@@ -130,7 +156,6 @@ export default async function AppLayout({
         <link rel="manifest" href="/favicons/site.webmanifest" />
 
         {/* PWA Meta Tags */}
-        <meta name="theme-color" content="#ffffff" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="Lolev" />
@@ -149,40 +174,43 @@ export default async function AppLayout({
         />
       </head>
       <body className={`${poppins.variable} antialiased min-h-screen flex flex-col font-poppins`}>
+        <SiteJsonLd locations={locations} />
         <GoogleAnalytics />
-        <ErrorBoundary>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            enableColorScheme={false}
-            disableTransitionOnChange
-            themes={['light', 'dark']}
-            storageKey="lolev-theme"
-          >
-            <NuqsAdapter>
-              <LocationProvider locations={locations}>
-                <AuthProvider>
-                  <PageViewTracker />
-                  <MotionHydrationSentinel />
-                  <SkipNav />
-                  <ConditionalLayout
-                    footer={
-                      /* Bare <Footer /> so a hung hours query still ships a footer. */
-                      <Suspense fallback={<Footer />}>
-                        <FooterHours locations={locations} />
-                      </Suspense>
-                    }
-                  >
-                    {children}
-                  </ConditionalLayout>
-                  <Toaster />
-                  <Analytics />
-                </AuthProvider>
-              </LocationProvider>
-            </NuqsAdapter>
-          </ThemeProvider>
-        </ErrorBoundary>
+        <div className="flex min-h-0 flex-1 flex-col">
+          <ErrorBoundary>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              enableColorScheme={false}
+              disableTransitionOnChange
+              themes={['light', 'dark']}
+              storageKey="lolev-theme"
+            >
+              <NuqsAdapter>
+                <LocationProvider locations={locations}>
+                  <AuthProvider>
+                    <MotionHydrationSentinel />
+                    <SkipNav />
+                    {/* Framer animations honor prefers-reduced-motion site-wide. */}
+                    <MotionConfig reducedMotion="user">
+                      <ConditionalLayout>{children}</ConditionalLayout>
+                    </MotionConfig>
+                    <Toaster />
+                    <Analytics />
+                    <ConversionTracker />
+                  </AuthProvider>
+                </LocationProvider>
+              </NuqsAdapter>
+            </ThemeProvider>
+          </ErrorBoundary>
+        </div>
+        {/* Outside LocationProvider so the taproom text is in the HTML shell. */}
+        <FooterGate>
+          <Suspense fallback={<Footer taprooms={<FooterTaprooms locations={locations} />} />}>
+            <FooterHours locations={locations} />
+          </Suspense>
+        </FooterGate>
       </body>
     </html>
   )

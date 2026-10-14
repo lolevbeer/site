@@ -8,7 +8,9 @@ import { BreweryEvent, EventStatus } from '@/lib/types/event'
 import { FoodVendorSchedule } from '@/lib/types/food'
 import type { LocationSlug, PayloadLocation } from '@/lib/types/location'
 import type { Event as PayloadCmsEvent } from '@/src/payload-types'
-import { parseLocalDate } from './formatters'
+import { formatTime } from './formatters'
+import { fromZonedTime } from 'date-fns-tz'
+import { getMediaUrl } from './media-utils'
 import {
   LOLEV_BASE_URL,
   LOLEV_OG_IMAGE_URL,
@@ -186,10 +188,25 @@ function complimentaryOffer(): OfferJsonLd {
   }
 }
 
-function organizationPerformer(name: string, url?: string): PersonOrOrganizationJsonLd {
+/** Make media/site paths absolute for Google rich results. */
+function absoluteAssetUrl(url?: string | null): string | undefined {
+  if (!url) return undefined
+  if (url.startsWith('http://') || url.startsWith('https://')) return url
+  if (url.startsWith('/')) return `${LOLEV_BASE_URL}${url}`
   return url
-    ? { '@type': 'Organization', name, url }
-    : { '@type': 'Organization', name }
+}
+
+/** Prefer a CMS/event image; always fall back to the site OG image. */
+function resolveEventImage(...candidates: Array<string | null | undefined>): string {
+  for (const candidate of candidates) {
+    const absolute = absoluteAssetUrl(candidate)
+    if (absolute) return absolute
+  }
+  return LOLEV_OG_IMAGE_URL
+}
+
+function organizationPerformer(name: string, url?: string): PersonOrOrganizationJsonLd {
+  return url ? { '@type': 'Organization', name, url } : { '@type': 'Organization', name }
 }
 
 function qualifyEventName(name: string, locationName?: string): string {
@@ -214,14 +231,16 @@ function getEventStatus(status: EventStatus): string {
 }
 
 /**
- * Parse time string to hours and minutes
+ * Parse an event time string (CMS ISO or "7pm") to Pittsburgh wall-clock
+ * hours and minutes. Shared with the per-event .ics builder.
  */
-function parseTime(timeStr: string): { hours: number; minutes: number } {
-  const match = timeStr.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i)
+export function parseEventTime(timeStr: string): { hours: number; minutes: number } {
+  const match = formatTime(timeStr).match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/i)
   if (!match) return { hours: 18, minutes: 0 }
 
   let hours = parseInt(match[1])
   const minutes = parseInt(match[2] || '0')
+  if (hours > 23 || minutes > 59) return { hours: 18, minutes: 0 }
   const meridiem = match[3]?.toLowerCase()
 
   if (meridiem === 'pm' && hours !== 12) hours += 12
@@ -239,19 +258,28 @@ function toISO8601(
   time?: string,
   endTime?: string,
 ): { startDate: string; endDate?: string } {
-  const eventDate = parseLocalDate(date)
+  const dateKey = date.split('T')[0]
+  if (!time) return { startDate: dateKey }
 
-  if (!time) return { startDate: eventDate.toISOString().split('T')[0] }
-
-  const { hours, minutes } = parseTime(time)
-  eventDate.setHours(hours, minutes, 0, 0)
+  const { hours, minutes } = parseEventTime(time)
+  const localTime = (h: number, m: number) =>
+    `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`
+  const eventDate = fromZonedTime(`${dateKey}T${localTime(hours, minutes)}`, 'America/New_York')
 
   const result = { startDate: eventDate.toISOString(), endDate: undefined as string | undefined }
 
   if (endTime) {
-    const endEventDate = new Date(eventDate)
-    const { hours: endHours, minutes: endMinutes } = parseTime(endTime)
-    endEventDate.setHours(endHours, endMinutes, 0, 0)
+    const { hours: endHours, minutes: endMinutes } = parseEventTime(endTime)
+    let endDay = dateKey
+    if (endHours * 60 + endMinutes < hours * 60 + minutes) {
+      const next = new Date(`${dateKey}T12:00:00Z`)
+      next.setUTCDate(next.getUTCDate() + 1)
+      endDay = next.toISOString().split('T')[0]
+    }
+    const endEventDate = fromZonedTime(
+      `${endDay}T${localTime(endHours, endMinutes)}`,
+      'America/New_York',
+    )
     result.endDate = endEventDate.toISOString()
   }
 
@@ -264,13 +292,26 @@ function toISO8601(
 type LocationLookup = Map<LocationSlug, PayloadLocation>
 
 /**
- * Create base event JSON-LD structure with common fields
+ * Shareable /events link for one event: `?loc=` opens the right taproom and
+ * `#event-<id>` matches the row anchor /events renders (ScheduleList `anchors`,
+ * plus one per occurrence in the Regulars block).
+ */
+export function eventPageUrl(locationSlug?: string, eventId?: string | number): string {
+  const query = locationSlug ? `?loc=${encodeURIComponent(locationSlug)}` : ''
+  const hash = eventId != null && eventId !== '' ? `#event-${eventId}` : ''
+  return `${LOLEV_BASE_URL}/events${query}${hash}`
+}
+
+/**
+ * Create base event JSON-LD structure with common fields. The url is the
+ * event's own /events anchor; callers override it with the event's site.
  */
 function createBaseEventJsonLd(
   name: string,
   locationSlug: LocationSlug | undefined,
   locationLookup: LocationLookup,
   startDate = new Date().toISOString(),
+  eventId?: string | number,
 ): EventJsonLd {
   const location = locationSlug ? locationLookup.get(locationSlug) : undefined
   const place = location ? getLocationPlaceFromPayload(location) : getDefaultPlace()
@@ -284,7 +325,8 @@ function createBaseEventJsonLd(
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
     location: place,
     organizer: getOrganizer(),
-    url: `${LOLEV_BASE_URL}/events`,
+    url: eventPageUrl(location?.slug ?? locationSlug, eventId),
+    image: LOLEV_OG_IMAGE_URL,
   }
 }
 
@@ -319,11 +361,14 @@ export function generateEventJsonLd(
       locationSlug,
       locationLookup,
       startDate,
+      payloadEvent.id,
     )
 
     if (endDate) jsonLd.endDate = endDate
-    if (payloadEvent.description) jsonLd.description = payloadEvent.description
+    // The CMS description is internal (staff-only read), so describe by title.
+    jsonLd.description = payloadEvent.organizer.trim()
     if (payloadEvent.site) jsonLd.url = payloadEvent.site
+    jsonLd.image = resolveEventImage(getMediaUrl(payloadEvent.image))
     jsonLd.offers = complimentaryOffer()
 
     return jsonLd
@@ -346,12 +391,13 @@ export function generateEventJsonLd(
     breweryEvent.location,
     locationLookup,
     startDate,
+    breweryEvent.id,
   )
 
-  jsonLd.description = breweryEvent.description
+  jsonLd.description = breweryEvent.title.trim()
   jsonLd.eventStatus = getEventStatus(breweryEvent.status)
   if (endDate) jsonLd.endDate = endDate
-  if (breweryEvent.image) jsonLd.image = breweryEvent.image
+  jsonLd.image = resolveEventImage(breweryEvent.image)
   if (breweryEvent.site) jsonLd.url = breweryEvent.site
 
   if (breweryEvent.price) {
@@ -432,7 +478,13 @@ export function generateFoodEventJsonLd(
       startDate,
     )
 
+    jsonLd.description = `${vendorName} serving food at Lolev Beer`
     jsonLd.url = vendorSite || `${LOLEV_BASE_URL}/food`
+    jsonLd.image = resolveEventImage(
+      typeof payloadFood.vendor === 'object'
+        ? getMediaUrl((payloadFood.vendor as { logo?: unknown }).logo, 'thumbnail')
+        : undefined,
+    )
     jsonLd.offers = { '@type': 'Offer', availability: 'https://schema.org/InStock' }
     jsonLd.performer = organizationPerformer(vendorName, vendorSite)
 
@@ -464,6 +516,7 @@ export function generateFoodEventJsonLd(
     foodSchedule.notes ||
     `${foodSchedule.vendor} will be serving food at Lolev Beer ${locationName}`
   if (endDate) jsonLd.endDate = endDate
+  jsonLd.image = resolveEventImage()
   jsonLd.offers = { '@type': 'Offer', availability: 'https://schema.org/InStock' }
   jsonLd.performer = organizationPerformer(foodSchedule.vendor, foodSchedule.site)
   jsonLd.url = foodSchedule.site || `${LOLEV_BASE_URL}/food`

@@ -1,5 +1,5 @@
 import type { Access, CollectionConfig } from 'payload'
-import { eventManagerAccess, hasRole } from '@/src/access/roles'
+import { EVENT_READER_ROLES, eventManagerAccess, hasRole } from '@/src/access/roles'
 import {
   RECURRING_YEAR_MAX,
   RECURRING_YEAR_MIN,
@@ -16,7 +16,7 @@ import {
 } from '@/src/collections/shared/event-fields'
 
 const canReadRecurringEvents: Access = ({ req: { user } }) => {
-  if (hasRole(user, ['admin', 'event-manager'])) return true
+  if (hasRole(user, EVENT_READER_ROLES)) return true
   return { active: { equals: true }, visibility: { equals: 'public' } }
 }
 

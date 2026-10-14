@@ -7,6 +7,7 @@ import { SectionHeader } from '@/components/ui/section-header'
 import { ScrollReveal } from '@/components/ui/scroll-reveal'
 import { ScheduleList } from '@/components/ui/schedule-list'
 import { parseLocalDate } from '@/lib/utils/formatters'
+import { eventBadge } from '@/lib/utils/event-regulars'
 import { useLocationFilteredData, type LocationData } from '@/lib/hooks/use-location-filtered-data'
 import { useLocationContext } from '@/components/location/location-provider'
 import { useSortedItems } from '@/lib/hooks/use-sorted-items'
@@ -63,6 +64,7 @@ export function UpcomingEvents({ eventsByLocation }: UpcomingEventsProps) {
               time: event.startTime,
               endTime: event.endTime,
               site: safeHttpUrl(event.site),
+              badge: eventBadge(event.tags),
               locationName:
                 currentLocation === 'all'
                   ? getLocationDisplayName(locations, event.locationSlug)

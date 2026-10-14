@@ -13,7 +13,6 @@ import {
   type PayloadLocation,
   type LocationSlug,
   type LocationInfo,
-  type Weekday,
   WEEKDAYS_FROM_SUNDAY,
   toLocationInfo,
 } from '@/lib/types/location'
@@ -22,10 +21,8 @@ import {
   isLocationOpenNow,
   getFormattedHoursForDay,
   getNextOpeningTimeForLocation,
-  getAllHoursForLocation,
   getDefaultLocationSlug,
   findLocationBySlug,
-  isValidLocationSlug,
 } from '@/lib/config/locations'
 
 export interface UseLocationReturn {
@@ -88,6 +85,46 @@ function getStoredLocationServerSnapshot(): string | null {
 }
 
 /**
+ * `loc` query value, published by LocationUrlSync. The provider reads this
+ * store instead of calling useSearchParams, so the page HTML can prerender.
+ * Server snapshot is null: the first client render matches the document.
+ */
+let publishedUrlLocation: string | null = null
+const urlLocationListeners = new Set<() => void>()
+const urlLocationSetters = new Set<(value: string | null) => void>()
+
+function subscribeToUrlLocation(listener: () => void): () => void {
+  urlLocationListeners.add(listener)
+  return () => urlLocationListeners.delete(listener)
+}
+
+function getUrlLocationSnapshot(): string | null {
+  return publishedUrlLocation
+}
+
+function getUrlLocationServerSnapshot(): string | null {
+  return null
+}
+
+/** Called by the suspended URL sync after nuqs resolves `loc`. */
+export function publishUrlLocation(value: string | null): void {
+  if (publishedUrlLocation === value) return
+  publishedUrlLocation = value
+  urlLocationListeners.forEach((listener) => listener())
+}
+
+/** Lets a location change clear `?loc=` without the provider calling nuqs. */
+export function registerUrlLocationSetter(setter: (value: string | null) => void): () => void {
+  urlLocationSetters.add(setter)
+  return () => urlLocationSetters.delete(setter)
+}
+
+function writeUrlLocation(value: string | null): void {
+  publishUrlLocation(value)
+  urlLocationSetters.forEach((setter) => setter(value))
+}
+
+/**
  * Save location preference to localStorage
  */
 function saveLocationToStorage(slug: LocationSlug): void {
@@ -104,18 +141,23 @@ function saveLocationToStorage(slug: LocationSlug): void {
   storageListeners.forEach((listener) => listener())
 }
 
+/** Current slug (or id) for a slug, id, or alias; null when nothing matches. */
+function canonicalSlug(locations: PayloadLocation[], value: string): LocationSlug | null {
+  const location = findLocationBySlug(locations, value)
+  return location ? location.slug || location.id : null
+}
+
 /**
- * Custom hook for managing location state
- * Syncs location between URL params, localStorage, and React state
- *
- * @param locations - Array of locations from the database (passed from server)
+ * Location state shared by the nuqs-backed hook and the prerender-safe one.
+ * `setUrlLocation` clears or replaces the `loc` query.
  */
-export function useLocation(locations: PayloadLocation[] = []): UseLocationReturn {
+function useLocationState(
+  locations: PayloadLocation[],
+  urlLocation: string | null,
+  setUrlLocation: (value: string | null) => void,
+): UseLocationReturn {
   const defaultSlug = useMemo(() => getDefaultLocationSlug(locations), [locations])
   const isClient = useIsHydrated()
-
-  // URL state for location - allows sharing URLs with location preset
-  const [urlLocation, setUrlLocation] = useQueryState('loc', parseAsString)
 
   const storedLocation = useSyncExternalStore(
     subscribeToStoredLocation,
@@ -125,22 +167,23 @@ export function useLocation(locations: PayloadLocation[] = []): UseLocationRetur
 
   // Priority: URL param > localStorage > default. Derived rather than held in
   // state, so selecting a location is a single write to storage and every
-  // consumer re-derives from it.
+  // consumer re-derives from it. A former slug (alias) resolves to the
+  // location's current slug, so `?loc=<old-slug>` keeps working after a rename.
+  const urlSlug = useMemo(
+    () => (urlLocation ? canonicalSlug(locations, urlLocation) : null),
+    [locations, urlLocation],
+  )
   const currentLocation = useMemo<LocationSlug>(() => {
     if (locations.length === 0) return defaultSlug
-    if (urlLocation && isValidLocationSlug(locations, urlLocation)) return urlLocation
-    if (storedLocation && isValidLocationSlug(locations, storedLocation)) return storedLocation
-    return defaultSlug
-  }, [locations, urlLocation, storedLocation, defaultSlug])
+    if (urlSlug) return urlSlug
+    return (storedLocation && canonicalSlug(locations, storedLocation)) || defaultSlug
+  }, [locations, urlSlug, storedLocation, defaultSlug])
 
   // Persist a location supplied via the URL so it survives the next visit.
   // A write to an external system is what effects are for.
   useEffect(() => {
-    if (locations.length === 0) return
-    if (urlLocation && isValidLocationSlug(locations, urlLocation)) {
-      saveLocationToStorage(urlLocation)
-    }
-  }, [urlLocation, locations])
+    if (urlSlug) saveLocationToStorage(urlSlug)
+  }, [urlSlug])
 
   // Get current location data
   const currentLocationData = useMemo(
@@ -158,11 +201,13 @@ export function useLocation(locations: PayloadLocation[] = []): UseLocationRetur
   // overriding the visitor's direct selection.
   const setLocation = useCallback(
     (slug: LocationSlug) => {
-      if (!isValidLocationSlug(locations, slug)) return
+      // An alias stores the location's current slug, like `?loc=<alias>`.
+      const current = canonicalSlug(locations, slug)
+      if (!current) return
       void setUrlLocation(null)
       // Writing to storage notifies subscribers, and `currentLocation` derives
       // from that — there is no separate copy in state to keep in step.
-      saveLocationToStorage(slug)
+      saveLocationToStorage(current)
     },
     [locations, setUrlLocation],
   )
@@ -232,30 +277,25 @@ export function useLocation(locations: PayloadLocation[] = []): UseLocationRetur
 }
 
 /**
- * Hook specifically for getting hours information
+ * Location state that reads `?loc=` through nuqs.
+ * Calling this suspends static prerender up to the nearest Suspense boundary.
  */
-export function useLocationHours(locations: PayloadLocation[], locationSlug?: LocationSlug) {
-  const { currentLocation, getLocationBySlug } = useLocation(locations)
-  const targetSlug = locationSlug || currentLocation
-  const targetLocation = getLocationBySlug(targetSlug)
+export function useLocation(locations: PayloadLocation[] = []): UseLocationReturn {
+  const [urlLocation, setUrlLocation] = useQueryState('loc', parseAsString)
+  return useLocationState(locations, urlLocation, (value) => {
+    void setUrlLocation(value)
+  })
+}
 
-  const getHoursForDay = useCallback(
-    (day: Weekday) => {
-      if (!targetLocation) return 'Hours unavailable'
-      return getFormattedHoursForDay(targetLocation, day)
-    },
-    [targetLocation],
+/**
+ * Same state as useLocation, but the URL is a store updated by LocationUrlSync.
+ * The provider uses this so the page body is in the prerendered HTML.
+ */
+export function useLocationWithoutUrl(locations: PayloadLocation[] = []): UseLocationReturn {
+  const urlLocation = useSyncExternalStore(
+    subscribeToUrlLocation,
+    getUrlLocationSnapshot,
+    getUrlLocationServerSnapshot,
   )
-
-  const getAllHours = useCallback(() => {
-    if (!targetLocation) return []
-    return getAllHoursForLocation(targetLocation)
-  }, [targetLocation])
-
-  return {
-    getHoursForDay,
-    getAllHours,
-    isOpen: targetLocation ? isLocationOpenNow(targetLocation) : false,
-    nextOpening: targetLocation ? getNextOpeningTimeForLocation(targetLocation) : null,
-  }
+  return useLocationState(locations, urlLocation, writeUrlLocation)
 }

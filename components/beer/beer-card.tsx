@@ -35,6 +35,7 @@ interface BeerCardProps {
   className?: string
   variant?: 'full' | 'minimal'
   priority?: boolean
+  headingLevel?: 'h2' | 'h3'
   /** Minimal variant only. Catalog tiles show a visual CTA; taproom landings omit it. */
   showCta?: boolean
 }
@@ -46,6 +47,7 @@ export const BeerCard = React.memo(function BeerCard({
   className = '',
   variant = 'full',
   priority = false,
+  headingLevel: Heading = 'h3',
   showCta = true,
 }: BeerCardProps) {
   const { currentLocation } = useLocationContext()
@@ -75,7 +77,7 @@ export const BeerCard = React.memo(function BeerCard({
             />
           </div>
           <div className="mb-3">
-            <h3 className="text-xl font-semibold text-center mb-2">{beer.name}</h3>
+            <Heading className="text-xl font-semibold text-center mb-2">{beer.name}</Heading>
             <div className="flex items-center justify-center gap-2">
               <UntappdRating rating={beer.untappdRating} />
               <Badge variant="outline" className="text-xs">
@@ -149,7 +151,9 @@ export const BeerCard = React.memo(function BeerCard({
           </div>
 
           <div>
-            <h3 className="font-semibold text-lg line-clamp-2 min-h-[2.5rem]">{beer.name}</h3>
+            <Heading className="font-semibold text-lg line-clamp-2 min-h-[2.5rem]">
+              {beer.name}
+            </Heading>
             <p className="text-sm text-muted-foreground font-medium mt-1">{beer.type}</p>
           </div>
 

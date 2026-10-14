@@ -20,6 +20,8 @@ interface DistributorImportResult {
   skipped: number
   errors: number
   details: string[]
+  /** True when the CSV upload was a preview that wrote nothing. */
+  dryRun?: boolean
 }
 
 interface RecalcResults {
@@ -28,21 +30,17 @@ interface RecalcResults {
   errors: number
 }
 
-interface RegeocodeDistributor {
-  name: string
-  address: string
-  city: string
-  state: string
-  zip: string
-  fullAddress?: string
-}
-
-interface RegeocodeResults {
-  checked: number
-  suspicious: number
-  fixed: number
-  failed: number
-  distributors?: RegeocodeDistributor[]
+/** Read a CSV upload's counts from an SSE `complete` or JSON error payload; missing counts are 0. */
+function csvUploadResult(data: SSEData): DistributorImportResult {
+  return {
+    region: 'CSV',
+    imported: (data.imported as number) || 0,
+    updated: (data.updated as number) || 0,
+    skipped: (data.skipped as number) || 0,
+    errors: (data.errors as number) || 0,
+    details: (data.details as string[]) || [],
+    dryRun: data.dryRun === true,
+  }
 }
 
 // No props: SyncView.tsx already gates this view to admins server-side.
@@ -66,36 +64,26 @@ export const SyncViewClient: React.FC = () => {
     }),
   })
 
-  // Lake Beverage CSV import state
-  const lakeInputRef = useRef<HTMLInputElement>(null)
-  const lake = useSSEImport<DistributorImportResult>({
-    getResults: (data) => ({
-      region: 'NY',
-      imported: (data.imported as number) || 0,
-      updated: (data.updated as number) || 0,
-      skipped: (data.skipped as number) || 0,
-      errors: (data.errors as number) || 0,
-      details: (data.details as string[]) || [],
-    }),
+  // Distributor CSV upload (US or international; format spec: public/distributor-csv-import.md).
+  // Dry run defaults on: the geocoder fills blank city/state/country, so preview before writing.
+  const csvInputRef = useRef<HTMLInputElement>(null)
+  const [csvDryRun, setCsvDryRun] = useState(true)
+  const distCsv = useSSEImport<DistributorImportResult>({
+    getResults: csvUploadResult,
+    // A 400 carries the real `errors` count and every per-line parse error in `details`
     onJSON: (data, _response, { setResults }) => {
-      setResults({
-        region: 'NY',
-        imported: 0,
-        updated: 0,
-        skipped: 0,
-        errors: 1,
-        details: [String(data.error || 'Upload failed')],
-      })
+      const details = data.details as string[] | undefined
+      setResults(
+        csvUploadResult({
+          errors: 1,
+          ...data,
+          details: details?.length ? details : [String(data.error || 'Upload failed')],
+        }),
+      )
     },
     onException: (error, { setResults }) => {
-      setResults({
-        region: 'NY',
-        imported: 0,
-        updated: 0,
-        skipped: 0,
-        errors: 1,
-        details: [error instanceof Error ? error.message : 'Upload failed'],
-      })
+      const message = error instanceof Error ? error.message : 'Upload failed'
+      setResults(csvUploadResult({ errors: 1, details: [message] }))
     },
   })
 
@@ -103,41 +91,6 @@ export const SyncViewClient: React.FC = () => {
   const [recalcDryRun, setRecalcDryRun] = useState(true)
   const recalc = useSSEImport<RecalcResults>({
     getResults: (data) => (data.results as RecalcResults) ?? null,
-  })
-
-  // Re-geocode distributors state
-  const [regeocodeDryRun, setRegeocodeDryRun] = useState(true)
-  const regeocode = useSSEImport<RegeocodeResults>({
-    getResults: (data) => ({
-      checked: (data.checked as number) || 0,
-      suspicious: (data.suspicious as number) || 0,
-      fixed: (data.fixed as number) || 0,
-      failed: (data.failed as number) || 0,
-    }),
-    handlers: ({ appendLog }) => ({
-      item: (raw) => {
-        const data = raw as SSEData
-        if (data.status === 'fixed') appendLog('success', `Fixed: ${data.name}`)
-        else if (data.status === 'skipped')
-          appendLog('status', `Skipped: ${data.name} - ${data.note}`)
-        else appendLog('error', `Failed: ${data.name} - ${data.note || data.error}`)
-      },
-    }),
-    onJSON: (data, response, { appendLog, setResults }) => {
-      if (!response.ok) {
-        setResults({ checked: 0, suspicious: 0, fixed: 0, failed: 1 })
-        appendLog('error', `Error: ${data.error || 'Request failed'}`)
-        return
-      }
-      // JSON success fallback: dry run report, or no suspicious coordinates found
-      setResults({
-        checked: (data.checked as number) || 0,
-        suspicious: (data.suspicious as number) || 0,
-        fixed: (data.fixed as number) || 0,
-        failed: 0,
-        distributors: data.distributors as RegeocodeDistributor[] | undefined,
-      })
-    },
   })
 
   // Load distributor URLs on mount using local API
@@ -242,16 +195,17 @@ export const SyncViewClient: React.FC = () => {
     }
   }
 
-  const handleLakeBeverageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDistributorCsvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
     const formData = new FormData()
     formData.append('file', file)
-    await lake.run('/api/import-lake-beverage-csv', { body: formData })
+    if (csvDryRun) formData.append('dryRun', 'true')
+    await distCsv.run('/api/import-distributors-csv', { body: formData })
 
-    if (lakeInputRef.current) {
-      lakeInputRef.current.value = ''
+    if (csvInputRef.current) {
+      csvInputRef.current.value = ''
     }
   }
 
@@ -261,12 +215,6 @@ export const SyncViewClient: React.FC = () => {
     const params = new URLSearchParams()
     if (recalcDryRun) params.set('dryRun', 'true')
     await recalc.run(`/api/recalculate-beer-prices?${params.toString()}`)
-  }
-
-  const handleRegeocodeDistributors = async () => {
-    const params = new URLSearchParams()
-    if (regeocodeDryRun) params.set('dryRun', 'true')
-    await regeocode.run(`/api/regeocode-distributors?${params.toString()}`)
   }
 
   return (
@@ -380,176 +328,86 @@ export const SyncViewClient: React.FC = () => {
                 />
               )}
 
-              {/* Lake Beverage CSV Upload */}
+              {/* Distributor CSV Upload (US or international) */}
               <div className="sync-view__subsection">
-                <h3 className="sync-view__subsection-title">Lake Beverage (NY)</h3>
+                <h3 className="sync-view__subsection-title">
+                  Distributor CSV (US or international)
+                </h3>
                 <p className="sync-view__description sync-view__description--small">
-                  Upload CSV with columns: Retail Accounts, Address, City, Account #, State, Zip
-                  Code, Phone
+                  Required columns: name, address. Optional: city, state, zip, country (two-letter
+                  code, blank = US), latitude, longitude, phone, region, customerType, website,
+                  active. Blank city, state, and country are filled from the map lookup; a cell you
+                  supply is never changed. Preview with Dry run first.{' '}
+                  <a href="/distributor-csv-import.md" download>
+                    Download the format spec
+                  </a>{' '}
+                  and hand it to an agent to convert raw sales data into this CSV.
                 </p>
 
                 <div className="sync-view__controls">
                   <input
-                    ref={lakeInputRef}
+                    ref={csvInputRef}
                     type="file"
                     accept=".csv"
-                    onChange={handleLakeBeverageUpload}
-                    disabled={lake.running}
+                    onChange={handleDistributorCsvUpload}
+                    disabled={distCsv.running}
                     style={{ display: 'none' }}
-                    id="lake-csv-upload"
+                    id="distributor-csv-upload"
                   />
                   <Button
-                    onClick={() => lakeInputRef.current?.click()}
-                    disabled={lake.running}
-                    buttonStyle="secondary"
+                    onClick={() => csvInputRef.current?.click()}
+                    disabled={distCsv.running}
+                    buttonStyle={csvDryRun ? 'secondary' : 'primary'}
                   >
-                    {lake.running ? 'Importing...' : 'Upload CSV'}
+                    {distCsv.running
+                      ? csvDryRun
+                        ? 'Previewing...'
+                        : 'Importing...'
+                      : csvDryRun
+                        ? 'Preview CSV'
+                        : 'Upload CSV'}
                   </Button>
+                  <CheckboxInput
+                    id="distributor-csv-dry-run"
+                    checked={csvDryRun}
+                    onToggle={(e) => setCsvDryRun(e.target.checked)}
+                    readOnly={distCsv.running}
+                    label="Dry run (preview only)"
+                  />
                 </div>
 
-                {lake.progress && <ImportProgress progress={lake.progress} />}
+                {distCsv.progress && <ImportProgress progress={distCsv.progress} />}
 
-                {lake.results && (
+                {distCsv.results && (
                   <ImportResultsBanner
-                    title="NY Import Results"
+                    title={distCsv.results.dryRun ? 'CSV Preview' : 'CSV Import Results'}
                     isError={
-                      lake.results.errors > 0 &&
-                      lake.results.imported === 0 &&
-                      lake.results.updated === 0
+                      distCsv.results.errors > 0 &&
+                      distCsv.results.imported === 0 &&
+                      distCsv.results.updated === 0
                     }
                     stats={[
-                      { count: lake.results.imported, label: 'imported', pillStyle: 'success' },
                       {
-                        count: lake.results.updated ?? 0,
-                        label: 'updated',
+                        count: distCsv.results.imported,
+                        label: distCsv.results.dryRun ? 'would import' : 'imported',
+                        pillStyle: 'success',
+                      },
+                      {
+                        count: distCsv.results.updated ?? 0,
+                        label: distCsv.results.dryRun ? 'would update' : 'updated',
                         pillStyle: 'success',
                         hideWhenZero: true,
                       },
-                      { count: lake.results.skipped, label: 'skipped', pillStyle: 'light' },
+                      { count: distCsv.results.skipped, label: 'skipped', pillStyle: 'light' },
                       {
-                        count: lake.results.errors,
+                        count: distCsv.results.errors,
                         label: 'errors',
                         pillStyle: 'error',
                         hideWhenZero: true,
                       },
                     ]}
-                    details={lake.results.details}
+                    details={distCsv.results.details}
                   />
-                )}
-              </div>
-
-              {/* Fix Bad Coordinates Section */}
-              <div className="sync-view__subsection">
-                <h3 className="sync-view__subsection-title">Fix Bad Coordinates</h3>
-                <p className="sync-view__description sync-view__description--small">
-                  Find and re-geocode distributors that have default/fallback coordinates
-                  (Pittsburgh, Columbus, or Rochester center)
-                </p>
-
-                <div className="sync-view__controls">
-                  <Button
-                    onClick={handleRegeocodeDistributors}
-                    disabled={regeocode.running}
-                    buttonStyle={regeocodeDryRun ? 'secondary' : 'primary'}
-                  >
-                    {regeocode.running
-                      ? regeocodeDryRun
-                        ? 'Scanning...'
-                        : 'Fixing...'
-                      : regeocodeDryRun
-                        ? 'Find Bad Coords'
-                        : 'Fix Bad Coords'}
-                  </Button>
-                  <CheckboxInput
-                    id="regeocode-dry-run"
-                    checked={regeocodeDryRun}
-                    onToggle={(e) => setRegeocodeDryRun(e.target.checked)}
-                    readOnly={regeocode.running}
-                    label="Dry run (preview only)"
-                  />
-                </div>
-
-                {regeocode.progress && <ImportProgress progress={regeocode.progress} />}
-
-                {regeocode.logs.length > 0 && <LogFeed logs={regeocode.logs} />}
-
-                {/* Results */}
-                {regeocode.results && (
-                  <div className="sync-view__banner-wrap">
-                    <Banner
-                      type={
-                        regeocode.results.fixed > 0 || regeocode.results.suspicious === 0
-                          ? 'success'
-                          : 'default'
-                      }
-                    >
-                      <div className="sync-view__banner-row">
-                        <strong>{regeocodeDryRun ? 'Scan Results' : 'Fix Results'}</strong>
-                        <Pill pillStyle="light">{regeocode.results.checked} checked</Pill>
-                        <Pill pillStyle={regeocode.results.suspicious > 0 ? 'warning' : 'success'}>
-                          {regeocode.results.suspicious} with bad coords
-                        </Pill>
-                        {!regeocodeDryRun && regeocode.results.fixed > 0 && (
-                          <Pill pillStyle="success">{regeocode.results.fixed} fixed</Pill>
-                        )}
-                        {!regeocodeDryRun && regeocode.results.failed > 0 && (
-                          <Pill pillStyle="error">{regeocode.results.failed} failed</Pill>
-                        )}
-                      </div>
-                    </Banner>
-                    {/* List of distributors with bad coords (dry run) */}
-                    {regeocodeDryRun &&
-                      regeocode.results.distributors &&
-                      regeocode.results.distributors.length > 0 && (
-                        <div className="sync-view__details">
-                          {regeocode.results.distributors.map(
-                            (dist_: RegeocodeDistributor, i: number) => (
-                              <div key={i} className="sync-view__detail-entry">
-                                <strong>{dist_.name}</strong>
-                                <br />
-                                <span className="sync-view__detail-line">
-                                  Address:{' '}
-                                  {dist_.address === '(missing)' ? (
-                                    <span className="sync-view__missing">(missing)</span>
-                                  ) : (
-                                    dist_.address
-                                  )}
-                                </span>
-                                <br />
-                                <span className="sync-view__detail-line">
-                                  City:{' '}
-                                  {dist_.city === '(missing)' ? (
-                                    <span className="sync-view__missing">(missing)</span>
-                                  ) : (
-                                    dist_.city
-                                  )}
-                                  , State:{' '}
-                                  {dist_.state === '(missing)' ? (
-                                    <span className="sync-view__missing">(missing)</span>
-                                  ) : (
-                                    dist_.state
-                                  )}
-                                  , Zip:{' '}
-                                  {dist_.zip === '(missing)' ? (
-                                    <span className="sync-view__missing">(missing)</span>
-                                  ) : (
-                                    dist_.zip
-                                  )}
-                                </span>
-                                {dist_.fullAddress && (
-                                  <>
-                                    <br />
-                                    <span className="sync-view__detail-note">
-                                      Will geocode: &quot;{dist_.fullAddress}&quot;
-                                    </span>
-                                  </>
-                                )}
-                              </div>
-                            ),
-                          )}
-                        </div>
-                      )}
-                  </div>
                 )}
               </div>
             </>

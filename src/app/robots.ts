@@ -4,8 +4,9 @@ import { getBaseUrl } from '@/lib/utils/get-base-url'
 export default function robots(): MetadataRoute.Robots {
   const baseUrl = getBaseUrl()
 
-  // Private/utility paths kept out of all crawlers, AI bots included.
-  const disallow = ['/admin', '/e/', '/m/']
+  // Private/utility paths kept out of all crawlers, AI bots included. The
+  // per-event .ics downloads have no search value (Google and Bing honor '*').
+  const disallow = ['/admin', '/e/', '/m/', '/events/*/calendar.ics']
 
   // Explicitly welcome AI crawlers (they're already covered by '*'; naming them
   // is a clearer signal that AI indexing is wanted) while keeping private paths off-limits.

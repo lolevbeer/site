@@ -1,9 +1,11 @@
 /**
  * Event JSON-LD must include a real Place address when a location lookup is
- * provided, and names must distinguish the two taprooms.
+ * provided, and always emit url / description / image (with OG fallback).
+ * The description is the event title: the CMS description is internal.
  */
 import { describe, expect, it } from 'vitest'
 import { createLocationLookup, generateEventJsonLd } from '@/lib/utils/json-ld'
+import { EventStatus, EventType } from '@/lib/types/event'
 import type { PayloadLocation } from '@/lib/types/location'
 
 type EventInput = Parameters<typeof generateEventJsonLd>[0]
@@ -27,10 +29,10 @@ describe('generateEventJsonLd', () => {
   it('leaves an empty address when no lookup is passed (the homepage bug)', () => {
     const schema = generateEventJsonLd(
       event({
-      organizer: "Drew's Clues Trivia",
-      date: '2026-09-09',
-      startTime: '4:00pm',
-      location: 'lawrenceville',
+        organizer: "Drew's Clues Trivia",
+        date: '2026-09-09',
+        startTime: '4:00pm',
+        location: 'lawrenceville',
       }),
     )
     expect(schema.location.address.streetAddress).toBe('')
@@ -50,6 +52,119 @@ describe('generateEventJsonLd', () => {
     expect(schema.location.address.streetAddress).toBe('5247 Butler Street')
     expect(schema.location.address.addressLocality).toBe('Pittsburgh')
     expect(schema.name).toContain('Lawrenceville')
-    expect(schema.url).toBe('https://lolev.beer/events')
+    expect(schema.url).toBe('https://lolev.beer/events?loc=lawrenceville')
   })
+
+  it('always emits description, url, and OG image fallback', () => {
+    const schema = generateEventJsonLd(
+      event({
+        organizer: 'Karaoke Night',
+        date: '2026-10-01',
+        startTime: '7:00pm',
+        endTime: '10:00pm',
+        location: 'lawrenceville',
+      }),
+    )
+    expect(schema.description).toBe('Karaoke Night')
+    expect(schema.url).toBe('https://lolev.beer/events?loc=lawrenceville')
+    expect(schema.image).toBe('https://lolev.beer/images/beer/og-image.jpg')
+    expect(schema.endDate).toBeTruthy()
+  })
+
+  it('links each event to its own anchor on the right taproom', () => {
+    const payloadSchema = generateEventJsonLd(
+      event({ id: 'abc123', organizer: 'Trivia', date: '2026-10-01', location: 'lawrenceville' }),
+    )
+    expect(payloadSchema.url).toBe('https://lolev.beer/events?loc=lawrenceville#event-abc123')
+    const brewerySchema = generateEventJsonLd(
+      event({
+        id: 'recurring-r1-2026-10-07',
+        title: 'Trivia',
+        date: '2026-10-07',
+        time: '7pm',
+        status: EventStatus.SCHEDULED,
+        location: 'zelienople',
+      }),
+    )
+    expect(brewerySchema.url).toBe(
+      'https://lolev.beer/events?loc=zelienople#event-recurring-r1-2026-10-07',
+    )
+  })
+
+  it('keeps an event site as the url over the anchor link', () => {
+    const schema = generateEventJsonLd(
+      event({
+        id: 'abc123',
+        organizer: 'Release',
+        date: '2026-10-01',
+        location: 'lawrenceville',
+        site: 'https://tickets.example.com/x',
+      }),
+    )
+    expect(schema.url).toBe('https://tickets.example.com/x')
+  })
+
+  it('never publishes the internal CMS description; uses the title', () => {
+    const schema = generateEventJsonLd(
+      event({
+        organizer: 'Karaoke Night',
+        description: 'Staff: tab under Smith, 20% gratuity',
+        date: '2026-10-01',
+        location: 'lawrenceville',
+      }),
+    )
+    expect(schema.description).toBe('Karaoke Night')
+  })
+
+  it('uses site url and absolute event image', () => {
+    const schema = generateEventJsonLd(
+      event({
+        title: 'Beer Release',
+        description: 'Staff only: Hazy IPA drop party',
+        date: '2026-10-02',
+        time: '5:00pm',
+        endTime: '8:00pm',
+        status: EventStatus.SCHEDULED,
+        location: 'lawrenceville',
+        vendor: 'Lolev',
+        type: EventType.SPECIAL_EVENT,
+        site: 'https://lolev.beer/events',
+        image: '/api/media/file/release.jpg',
+      }),
+    )
+    expect(schema.description).toBe('Beer Release')
+    expect(schema.url).toBe('https://lolev.beer/events')
+    expect(schema.image).toBe('https://lolev.beer/api/media/file/release.jpg')
+    expect(schema.endDate).toBeTruthy()
+  })
+})
+
+it.each([
+  ['2026-07-01', '7pm', '2026-07-01T23:00:00.000Z'],
+  ['2026-01-01', '7pm', '2026-01-02T00:00:00.000Z'],
+  ['2026-07-01', '2000-01-01T23:00:00.000Z', '2026-07-01T22:00:00.000Z'],
+  ['2026-03-08', '3am', '2026-03-08T07:00:00.000Z'],
+])('uses the Pittsburgh wall time for %s / %s', (date, startTime, expected) => {
+  expect(
+    generateEventJsonLd(event({ organizer: 'Trivia', date, startTime, location: 'lawrenceville' }))
+      .startDate,
+  ).toBe(expected)
+})
+it('rolls overnight events to the following local day and keeps date-only schedules date-only', () => {
+  const schema = generateEventJsonLd(
+    event({
+      organizer: 'Trivia',
+      date: '2026-07-01',
+      startTime: '11pm',
+      endTime: '1am',
+      location: 'lawrenceville',
+    }),
+  )
+  expect(schema.startDate).toBe('2026-07-02T03:00:00.000Z')
+  expect(schema.endDate).toBe('2026-07-02T05:00:00.000Z')
+  expect(
+    generateEventJsonLd(
+      event({ organizer: 'Trivia', date: '2026-07-01', location: 'lawrenceville' }),
+    ).startDate,
+  ).toBe('2026-07-01')
 })

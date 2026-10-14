@@ -6,14 +6,25 @@
 
 'use client'
 
-import React, { createContext, useContext, ReactNode, useMemo, Suspense } from 'react'
+import React, { createContext, useContext, ReactNode, useEffect, useMemo, Suspense } from 'react'
+import { useQueryState, parseAsString } from 'nuqs'
 import {
   type PayloadLocation,
   type LocationSlug,
   type LocationInfo,
   type Weekday,
 } from '@/lib/types/location'
-import { useLocation, useLocationHours } from '@/lib/hooks/use-location'
+import {
+  getAllHoursForLocation,
+  getFormattedHoursForDay,
+  getNextOpeningTimeForLocation,
+  isLocationOpenNow,
+} from '@/lib/config/locations'
+import {
+  publishUrlLocation,
+  registerUrlLocationSetter,
+  useLocationWithoutUrl,
+} from '@/lib/hooks/use-location'
 
 interface LocationContextValue {
   // Core location state
@@ -56,49 +67,59 @@ interface LocationProviderProps {
 }
 
 /**
- * Inner provider component that uses hooks requiring useSearchParams
- * This is wrapped in Suspense to support static generation
+ * Reads `?loc=` inside its own Suspense boundary. The page body is a sibling,
+ * so a search-param bailout does not drop the document HTML.
  */
-function LocationProviderInner({ children, locations }: LocationProviderProps) {
-  const locationState = useLocation(locations)
-  const hoursState = useLocationHours(locations)
+function LocationUrlSync() {
+  const [urlLocation, setUrlLocation] = useQueryState('loc', parseAsString)
 
-  // Memoize context value to prevent unnecessary re-renders
+  useEffect(() => {
+    publishUrlLocation(urlLocation)
+  }, [urlLocation])
+
+  useEffect(() => {
+    return registerUrlLocationSetter((value) => {
+      void setUrlLocation(value)
+    })
+  }, [setUrlLocation])
+
+  return null
+}
+
+/**
+ * Location state for the public site. `?loc=` is read in a nested Suspense
+ * boundary so the page body still prerenders. This component does not call
+ * useSearchParams; LocationUrlSync is a sibling of `children`.
+ */
+export function LocationProvider({ children, locations }: LocationProviderProps) {
+  const locationState = useLocationWithoutUrl(locations)
+  const target = locationState.currentLocationData
+  const hoursState = useMemo(
+    () => ({
+      getHoursForDay: (day: Weekday) =>
+        target ? getFormattedHoursForDay(target, day) : 'Hours unavailable',
+      getAllHours: () => (target ? getAllHoursForLocation(target) : []),
+      isOpen: target ? isLocationOpenNow(target) : false,
+      nextOpening: target ? getNextOpeningTimeForLocation(target) : null,
+    }),
+    [target],
+  )
+
   const contextValue: LocationContextValue = useMemo(
     () => ({
-      // Core state from useLocation
-      currentLocation: locationState.currentLocation,
-      currentLocationData: locationState.currentLocationData,
-      locationInfo: locationState.locationInfo,
-      locations: locationState.locations,
-      setLocation: locationState.setLocation,
-      cycleLocation: locationState.cycleLocation,
-      isOpen: locationState.isOpen,
-      todaysHours: locationState.todaysHours,
-      nextOpening: locationState.nextOpening,
-      getLocationBySlug: locationState.getLocationBySlug,
-      getLocationInfo: locationState.getLocationInfo,
-      isClient: locationState.isClient,
-
-      // Hours state
+      ...locationState,
       hours: hoursState,
     }),
     [locationState, hoursState],
   )
 
-  return <LocationContext.Provider value={contextValue}>{children}</LocationContext.Provider>
-}
-
-/**
- * Location Context Provider Component
- * Wraps the application to provide location state globally
- * Wrapped in Suspense for Next.js 15 compatibility with useSearchParams
- */
-export function LocationProvider({ children, locations }: LocationProviderProps) {
   return (
-    <Suspense fallback={null}>
-      <LocationProviderInner locations={locations}>{children}</LocationProviderInner>
-    </Suspense>
+    <LocationContext.Provider value={contextValue}>
+      <Suspense fallback={null}>
+        <LocationUrlSync />
+      </Suspense>
+      {children}
+    </LocationContext.Provider>
   )
 }
 

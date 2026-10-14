@@ -3,6 +3,7 @@ import { getPayload } from 'payload'
 import config from '@/src/payload.config'
 import { LiveEvents } from '@/components/events/live-events'
 import { notFound } from 'next/navigation'
+import { findLocationBySlug } from '@/lib/config/locations'
 import { BreweryEvent } from '@/lib/types/event'
 import {
   getCansMenu,
@@ -12,7 +13,7 @@ import {
   extractVendorInfo,
 } from '@/lib/utils/payload-api'
 import type { PayloadMenu } from '@/lib/utils/payload-api'
-import { LIVE_DISPLAY_META, NOINDEX_ROBOTS } from '@/lib/utils/seo'
+import { LIVE_DISPLAY_META, NOINDEX_ROBOTS, pageOpenGraph } from '@/lib/utils/seo'
 
 // ISR: cache for 60s, skip build-time pre-rendering (first request is dynamic, then cached)
 export const revalidate = 60
@@ -45,34 +46,38 @@ const getDataByLocation = cache(async (locationSlug: string): Promise<{
   food: FoodItem[]
   cansMenu: PayloadMenu | null
   locationName: string
+  /** Current slug, even when the request used an alias. */
+  locationSlug: string
 } | null> => {
   const payload = await getPayload({ config })
+  const key = locationSlug.toLowerCase()
 
-  // Get location by slug
+  // Match the current slug or a former one: TV kiosks bookmarked before a
+  // rename keep rendering the board (no redirect). A slug beats an alias.
   const locationResult = await payload.find({
     collection: 'locations',
     where: {
-      slug: { equals: locationSlug.toLowerCase() },
+      or: [{ slug: { equals: key } }, { aliases: { in: [key] } }],
     },
-    limit: 1,
+    limit: 2,
     overrideAccess: false,
   })
 
-  if (locationResult.docs.length === 0) {
+  const location = findLocationBySlug(locationResult.docs, key)
+  if (!location?.slug) {
     return null
   }
-
-  const location = locationResult.docs[0]
+  const slug = location.slug
 
   // Fetch events, food (individual + recurring), and cans menu in parallel
   const [eventDocs, combinedFood, cansMenu] = await Promise.all([
-    getUpcomingEventsFromPayload(locationSlug.toLowerCase(), 20),
-    getCombinedUpcomingFood(locationSlug.toLowerCase(), 20),
-    getCansMenu(locationSlug.toLowerCase()),
+    getUpcomingEventsFromPayload(slug, 20),
+    getCombinedUpcomingFood(slug, 20),
+    getCansMenu(slug),
   ])
 
   const events: BreweryEvent[] = eventDocs.map((event) =>
-    transformPayloadEventToBreweryEvent(event, locationSlug, location.name),
+    transformPayloadEventToBreweryEvent(event, slug, location.name),
   )
 
   const food: FoodItem[] = combinedFood.map((entry) => {
@@ -97,6 +102,7 @@ const getDataByLocation = cache(async (locationSlug: string): Promise<{
     food,
     cansMenu,
     locationName: location.name,
+    locationSlug: slug,
   }
 })
 
@@ -110,7 +116,7 @@ export default async function EventsDisplayPage({ params }: EventsDisplayPagePro
 
   return (
     <LiveEvents
-      location={location.toLowerCase()}
+      location={data.locationSlug}
       initialEvents={data.events}
       initialFood={data.food}
       cansMenu={data.cansMenu}
@@ -139,10 +145,12 @@ export async function generateMetadata({ params }: EventsDisplayPageProps) {
     title = `Food - ${data.locationName}`
   }
 
+  const description = `Upcoming food and events at ${data.locationName}`
   return {
     title,
-    description: `Upcoming food and events at ${data.locationName}`,
+    description,
     robots: NOINDEX_ROBOTS,
+    openGraph: pageOpenGraph(`${title} • Lolev Beer`, description),
     other: { [LIVE_DISPLAY_META]: 'ready' },
   }
 }

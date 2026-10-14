@@ -60,6 +60,7 @@ export function expandRecurringEvents(
           site: definition.site,
           tags: definition.tags,
           description: definition.description,
+          image: definition.image,
           attendees: definition.attendees,
           pointOfContact: definition.pointOfContact,
           email: definition.email,

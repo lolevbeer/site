@@ -1,12 +1,15 @@
 import type { Access, CollectionConfig, Field, PayloadRequest, Where } from 'payload'
 import { APIError } from 'payload'
 import { revalidateTag } from 'next/cache'
+import { publishKioskInvalidate } from '@/lib/ably/publish'
 import { generateUniqueSlug } from './utils/generateUniqueSlug'
 import { updatedByField } from './utils/updatedByField'
 import { adminAccess, beerManagerAccess, beerManagerFieldAccess, hasRole } from '@/src/access/roles'
 import { fetchUntappdData, type UntappdReview } from '@/src/utils/untappd'
 import { logger } from '@/lib/utils/logger'
 import { syncBeerReviews, type LegacyUntappdReview } from '@/src/utils/beer-reviews'
+import { documentSeoField } from '@/src/fields/seo'
+import { isDraftOnlySave, isTrue } from '@/src/utils/draft-save'
 
 /** Round to nearest multiple (like Excel's MROUND) */
 function mround(value: number, multiple: number): number {
@@ -29,17 +32,23 @@ async function revalidateMenusForBeer(req: PayloadRequest, beerId: string | numb
   const menus = await req.payload.find({
     collection: 'menus',
     where: { 'items.product.value': { equals: beerId } },
-    limit: 100,
+    pagination: false,
     depth: 0,
+    // Only the url is read; skip loading every menu's items.
+    select: { url: true },
     // eslint-disable-next-line no-restricted-syntax -- system: cache invalidation must find every menu listing the beer; the editor's menus read can be location-scoped (beer-manager + bartender) or empty
     overrideAccess: true,
     req,
   })
+  const urls: string[] = []
   for (const menu of menus.docs) {
     if (menu.url) {
-      revalidateTag(`menu-${menu.url}`, 'max')
+      revalidateTag(`menu-${menu.url}`, { expire: 0 })
+      urls.push(menu.url)
     }
   }
+  // One batched publish for every menu that lists the beer, not one per menu.
+  if (urls.length > 0) void publishKioskInvalidate({ kind: 'menu', keys: urls })
 }
 
 /**
@@ -86,7 +95,6 @@ export const canReadBeers: Access = ({ req }) => {
   const published: Where = { _status: { equals: 'published' } }
   if (req.payloadAPI === 'GraphQL') return published
 
-  const isTrue = (value: unknown) => value === true || value === 'true'
   if (isTrue(req.query?.draft) || isTrue(req.data?.draft)) return false
 
   return published
@@ -106,7 +114,27 @@ export const Beers: CollectionConfig = {
     group: 'Back of House',
     useAsTitle: 'name',
     listSearchableFields: ['name', 'slug'],
-    defaultColumns: ['name', 'slug', 'style', 'abv', 'hideFromSite'],
+    defaultColumns: [
+      'name',
+      'image',
+      'slug',
+      'style',
+      'tag',
+      'abv',
+      'untappd',
+      'draftPrice',
+      'fourPack',
+      'untappdRating',
+      '_status',
+      'createdAt',
+    ],
+    components: {
+      views: {
+        edit: {
+          versions: { Component: '@/src/components/admin/VersionsWithEditor#VersionsWithEditor' },
+        },
+      },
+    },
     pagination: {
       defaultLimit: 100,
     },
@@ -138,7 +166,7 @@ export const Beers: CollectionConfig = {
         if ((!data.slug || data.slug.trim() === '') && data.name && typeof data.name === 'string') {
           // For updates, use originalDoc.id; for creates, use data.id if available
           const docId = originalDoc?.id || data.id
-          data.slug = await generateUniqueSlug(data.name, 'beers', req, operation, docId)
+          data.slug = await generateUniqueSlug(data.name, 'beers', req, docId)
         }
 
         // Auto-increment recipe number for new beers (always, even when cloning)
@@ -222,13 +250,21 @@ export const Beers: CollectionConfig = {
           }
         }
 
-        if (context?.skipRevalidate) return doc
+        // A draft-only save changes nothing public or kiosk-visible, so skip
+        // the menu lookup, hard expiry and push (menus list published beers only).
+        if (context?.skipRevalidate || isDraftOnlySave(doc, req)) return doc
 
         try {
           await revalidateMenusForBeer(req, doc.id)
         } catch (error) {
           logger.error('Beer menu revalidation error:', error)
         }
+        return doc
+      },
+    ],
+    afterDelete: [
+      async ({ context, doc, req }) => {
+        if (!context?.skipRevalidate) await revalidateMenusForBeer(req, doc.id)
         return doc
       },
     ],
@@ -313,6 +349,7 @@ export const Beers: CollectionConfig = {
                   index: true,
                   admin: {
                     description: 'Optional (search existing or add a new one)',
+                    components: { Cell: '@/src/components/admin/BeerListFillCell#TagCell' },
                   },
                 },
               ],
@@ -466,6 +503,7 @@ export const Beers: CollectionConfig = {
                   admin: {
                     description: 'Untappd URL (e.g., /b/lolev-beer-lupula/123456)',
                     width: '50%',
+                    components: { Cell: '@/src/components/admin/BeerListFillCell#UntappdCell' },
                   },
                 },
                 {
@@ -576,5 +614,6 @@ export const Beers: CollectionConfig = {
         description: 'Legacy review data retained temporarily for migration compatibility.',
       },
     },
+    documentSeoField,
   ],
 }

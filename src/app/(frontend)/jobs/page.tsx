@@ -17,13 +17,19 @@ import {
 } from '@/components/ui/card'
 import { Empty, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
 import { getActiveJobs } from '@/lib/jobs/payload'
+import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
 
 export const revalidate = 300
 
-export const metadata: Metadata = {
-  title: 'Jobs',
-  description: 'Open roles at Lolev Beer taprooms.',
-  alternates: { canonical: '/jobs' },
+const DESCRIPTION = 'Open roles at Lolev Beer taprooms.'
+
+export async function generateMetadata(): Promise<Metadata> {
+  return buildPageMetadata({
+    fallbackTitle: 'Jobs',
+    fallbackDescription: DESCRIPTION,
+    canonicalPath: '/jobs',
+    hubKey: 'jobs',
+  })
 }
 
 export default async function JobsPage() {

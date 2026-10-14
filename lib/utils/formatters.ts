@@ -6,6 +6,7 @@
 import { Beer } from '@/lib/types/beer'
 import type { DayOfWeek } from '@/lib/utils/payload-api'
 import { getTodayEST } from '@/lib/utils/date'
+import { countrySuffix } from '@/lib/utils/country-names'
 
 /**
  * Time formatting utilities
@@ -48,7 +49,8 @@ export function formatTime(timeString: string, options: { timezone?: string } = 
 
   const match12h = timeString.match(/(\d{1,2})(?::(\d{2}))?\s*(AM|PM|am|pm)/i)
   if (match12h) {
-    return convertTo12Hour(parseInt(match12h[1]), parseInt(match12h[2] || '0'))
+    const hour = (parseInt(match12h[1]) % 12) + (match12h[3].toLowerCase() === 'pm' ? 12 : 0)
+    return convertTo12Hour(hour, parseInt(match12h[2] || '0'))
   }
 
   const match24h = timeString.match(/(\d{1,2}):(\d{2})/)
@@ -218,7 +220,8 @@ function dateKey(dateString: string): string {
   return dateString.split('T')[0]
 }
 
-function addEstDays(ymd: string, days: number): string {
+/** The YYYY-MM-DD date `days` after `ymd`. */
+export function addEstDays(ymd: string, days: number): string {
   const [year, month, day] = ymd.split('-').map(Number)
   return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10)
 }
@@ -231,15 +234,22 @@ export function isTomorrow(dateString: string): boolean {
   return dateKey(dateString) === addEstDays(getTodayEST(), 1)
 }
 
-/** "Today", "Tomorrow", or the full date — the one day label used site-wide. */
-export function formatDayLabel(dateString: string): string {
-  if (isToday(dateString)) return 'Today'
-  if (isTomorrow(dateString)) return 'Tomorrow'
+/**
+ * "Today", "Tomorrow", or the full date — the one day label used site-wide.
+ * `today` comes from `useTodayEST()`; while it is `null` (server HTML and
+ * hydration) the label is always the full date, so a page cached before
+ * midnight never says "Today" about yesterday.
+ */
+export function formatDayLabel(dateString: string, today: string | null): string {
+  const key = dateKey(dateString)
+  if (key === today) return 'Today'
+  if (today && key === addEstDays(today, 1)) return 'Tomorrow'
   return formatDate(dateString, 'full')
 }
 
-export function isTodayOrFuture(dateString: string): boolean {
-  return dateKey(dateString) >= getTodayEST()
+/** On or after `today`, which callers take from `useTodayEST()` (never a render-time date). */
+export function isTodayOrFuture(dateString: string, today: string): boolean {
+  return dateKey(dateString) >= today
 }
 
 export function getBeerSlug(beer: Beer): string {
@@ -267,19 +277,23 @@ export function capitalizeName(name: string): string {
 }
 
 /**
- * Format a US address from parts, omitting any missing fields.
- * Returns e.g. "123 Main St, Pittsburgh, PA 15201"
+ * Format an address from parts for display, omitting any missing fields. The country
+ * name is appended outside the US (blank and `US` mean the US and add nothing).
+ * Returns e.g. "123 Main St, Pittsburgh, PA 15201" or "47 High Street, Penge, United Kingdom"
  */
 export function formatAddress(parts: {
   address?: string | null
   city?: string | null
   state?: string | null
   zip?: string | null
+  country?: string | null
 }): string {
   const segments: string[] = []
   if (parts.address) segments.push(parts.address)
   const cityState = [parts.city, parts.state].filter(Boolean).join(', ')
   const locale = [cityState, parts.zip].filter(Boolean).join(' ')
   if (locale) segments.push(locale)
+  const country = countrySuffix(parts.country)
+  if (country) segments.push(country)
   return segments.join(', ')
 }

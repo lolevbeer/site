@@ -2,6 +2,8 @@
 .git
 *.md
 !README.md
+# Served to admins from the Sync page; the *.md rule above would drop it from the deploy
+!public/distributor-csv-import.md
 test-results
 playwright-report
 coverage

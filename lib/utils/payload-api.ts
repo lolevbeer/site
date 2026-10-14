@@ -21,7 +21,7 @@
  */
 
 import { cache } from 'react'
-import { getPayload } from 'payload'
+import { getPayload, type Where } from 'payload'
 import config from '@/src/payload.config'
 import { unstable_cache } from 'next/cache'
 import {
@@ -32,6 +32,7 @@ import {
   type RecurringFoodState,
 } from '@/src/utils/recurring-food'
 import { getPublicBeerReviews } from '@/src/utils/beer-reviews'
+import { relationshipId } from '@/src/utils/relationship-id'
 import type {
   Beer as PayloadBeer,
   Menu,
@@ -49,7 +50,7 @@ import { logger } from '@/lib/utils/logger'
 import { CACHE_TAGS } from '@/lib/utils/cache'
 import { extractBeerFromMenuItem } from './menu-item-utils'
 import { getMediaUrl } from './media-utils'
-import { getTodayEST, getTodayMidnightISO } from './date'
+import { getTodayEST } from './date'
 import { getUpcomingDatesForSlot, toDateKey } from './food-dates'
 import { formatAddress } from './formatters'
 import { expandRecurringEvents, mergeScheduledEvents } from '@/src/utils/recurring-events'
@@ -64,12 +65,14 @@ import { expandRecurringEvents, mergeScheduledEvents } from '@/src/utils/recurri
 const findLocationBySlug = async (
   payload: Awaited<ReturnType<typeof getPayload>>,
   locationSlug: string,
+  depth?: number,
 ) => {
   const result = await payload.find({
     collection: 'locations',
     overrideAccess: false,
     where: { slug: { equals: locationSlug } },
     limit: 1,
+    depth,
   })
   return result.docs[0]
 }
@@ -105,14 +108,15 @@ export const BEERS_LIST_SELECT = {
   canSingle: true,
   fourPack: true,
   hideFromSite: true,
+  seo: { noIndex: true, canonicalPath: true }, // sitemap only; skips populating seo.ogImage
   createdAt: true,
   updatedAt: true,
-} as const satisfies { [K in keyof PayloadBeer]?: true }
+} as const satisfies { [K in keyof PayloadBeer]?: true | { [key: string]: true } }
 
 const BEERS_LIST_POPULATE = {
   styles: { name: true },
   tags: { name: true },
-  media: { url: true, sizes: true, filename: true, prefix: true },
+  media: { url: true, variants: true, filename: true, prefix: true, _objectKey: true },
 } as const
 
 /** Catalog/sitemap/RSS beer: `BEERS_LIST_SELECT` plus Payload `id`. */
@@ -255,20 +259,63 @@ export const getMenusByLocation = async (locationSlug: string): Promise<PayloadM
   }
 }
 
-/**
- * Get draft menu for a location
- */
-export async function getDraftMenu(locationSlug: string): Promise<PayloadMenu | null> {
-  const menus = await getMenusByLocation(locationSlug)
-  return menus.find((menu) => menu.type === 'draft') || null
-}
+type WebsiteMenuType = 'draft' | 'cans'
 
 /**
- * Get cans menu for a location
+ * Location lookup for the website menu selections. Depth 0: only the selected
+ * menu ids are needed, not the populated menus. React `cache()` lets the draft
+ * and cans getters of one render share it, which unstable_cache alone would run
+ * twice on concurrent cold misses.
  */
+const findLocationForMenus = cache(async (locationSlug: string) => {
+  const payload = await getPayload({ config })
+  return findLocationBySlug(payload, locationSlug, 0)
+})
+
+/**
+ * Resolve the explicit website menu selection, never the first menu of a type.
+ * One cache entry per type, so a caller that wants one menu (e/[location] wants
+ * cans) never fetches or stores the other.
+ */
+async function getLocationMenu(
+  locationSlug: string,
+  type: WebsiteMenuType,
+): Promise<PayloadMenu | null> {
+  return unstable_cache(
+    async () => {
+      const location = await findLocationForMenus(locationSlug)
+      const selected = location?.[`${type}Menu`]
+      if (!location || !selected) return null
+
+      const payload = await getPayload({ config })
+      const result = await payload.find({
+        collection: 'menus',
+        overrideAccess: false,
+        where: {
+          id: { equals: relationshipId(selected) },
+          location: { equals: location.id },
+          type: { equals: type },
+          _status: { equals: 'published' },
+        },
+        depth: 3,
+        populate: CATALOG_MENU_POPULATE,
+        limit: 1,
+      })
+      return result.docs[0] ?? null
+    },
+    [`location-${locationSlug}-${type}-menu`],
+    { tags: [CACHE_TAGS.locations, CACHE_TAGS.menus, CACHE_TAGS.beers], revalidate: 300 },
+  )()
+}
+
+/** Get the location's selected draft menu (homepage, taproom page, beer page availability). */
+export async function getDraftMenu(locationSlug: string): Promise<PayloadMenu | null> {
+  return getLocationMenu(locationSlug, 'draft')
+}
+
+/** Get the location's selected cans menu (homepage, taproom page, beer page availability). */
 export async function getCansMenu(locationSlug: string): Promise<PayloadMenu | null> {
-  const menus = await getMenusByLocation(locationSlug)
-  const cansMenu = menus.find((menu) => menu.type === 'cans') || null
+  const cansMenu = await getLocationMenu(locationSlug, 'cans')
 
   // Clone and sort to avoid mutating the cached object from unstable_cache
   if (cansMenu?.items) {
@@ -318,7 +365,7 @@ const MENU_BEERS_POPULATE = {
   updatedAt: true,
   untappdRating: true,
   topBeerDrops: true,
-} as const satisfies { [K in keyof PayloadBeer]?: true }
+} as const satisfies { [K in keyof PayloadBeer]?: true | { [key: string]: true } }
 
 const MENU_POPULATE = {
   beers: MENU_BEERS_POPULATE,
@@ -335,12 +382,13 @@ const MENU_POPULATE = {
     updatedAt: true,
   },
   styles: { name: true },
-  // filename/prefix feed the Vercel Blob adapter's computed `url` — without
-  // them populated media docs come back with url: null.
-  media: { url: true, sizes: true, filename: true, prefix: true },
+  // filename/prefix/_objectKey feed the Vercel Blob adapter's computed `url`
+  // (Payload 4 stores new uploads under an `_objectKey` folder). The plugin also
+  // adds them whenever `url` is selected; listed so a trimmed select keeps them.
+  media: { url: true, variants: true, filename: true, prefix: true, _objectKey: true },
   // linesLastCleaned drives the "Draft lines cleaned N days ago" line on the
   // /m draft displays (formatLinesCleanedDate in featured-menu.tsx).
-  locations: { slug: true, name: true, linesLastCleaned: true },
+  locations: { slug: true, name: true, linesLastCleaned: true, updatedAt: true },
 } as const
 
 /** Landing/catalog menus need `convertPayloadBeer` fields `/m` can skip. */
@@ -391,7 +439,9 @@ async function findMenuByUrl(url: string): Promise<PayloadMenu | null> {
 
 /**
  * Get menu by URL slug (e.g., 'lawrenceville-draft', 'zelienople-cans')
- * Cached until the 'menus' tag or this menu's own `menu-${url}` tag is invalidated
+ * Cached until the 'menus' tag, this menu's own `menu-${url}` tag, or the
+ * kiosk-only 'kiosk-menus' tag is invalidated. Only the cached
+ * /api/menu-stream/[url] route reads this.
  */
 export const getMenuByUrl = async (url: string): Promise<PayloadMenu | null> => {
   try {
@@ -400,9 +450,13 @@ export const getMenuByUrl = async (url: string): Promise<PayloadMenu | null> => 
       [`menu-url-${url}`],
       // menu-${url} lets beer edits invalidate only the menus that contain the
       // beer (see revalidateMenusForBeer in src/collections/Beers.ts) instead
-      // of nuking every menu via the broad 'menus' tag. Edits reach this cache
-      // through those tags, so the time-based fallback can be long.
-      { tags: [CACHE_TAGS.menus, `menu-${url}`], revalidate: 3600 }, // 1 hour fallback
+      // of nuking every menu via the broad 'menus' tag. CACHE_TAGS.kioskMenus
+      // explains 'kiosk-menus'. Edits reach this cache through those tags, so
+      // the time-based fallback can be long.
+      {
+        tags: [CACHE_TAGS.menus, CACHE_TAGS.kioskMenus, `menu-${url}`],
+        revalidate: 3600, // 1 hour fallback
+      },
     )()
   } catch (error) {
     logger.error(`Error fetching menu by URL: ${url}`, error)
@@ -413,8 +467,8 @@ export const getMenuByUrl = async (url: string): Promise<PayloadMenu | null> => 
 /**
  * Get menu by URL slug - UNCACHED version for the /m display page
  * (m/[menuUrl]), which renders per request so each display load starts from
- * the current menu. Displays then poll /api/menu-stream, which reads the
- * cached getMenuByUrl.
+ * the current menu. Also read by /api/menu-stream/[url]/fresh. Ordinary display
+ * polls hit /api/menu-stream, which reads the cached getMenuByUrl.
  *
  * Returns null ONLY when the menu genuinely doesn't exist. A fetch failure
  * (cold start, transient DB blip) throws rather than returning null: the page
@@ -480,21 +534,26 @@ export function transformPayloadEventToBreweryEvent(
 ): BreweryEvent {
   const eventLocation = typeof event.location === 'object' ? event.location : null
 
+  const imageUrl = getMediaUrl(event.image, 'card')
+
   return {
     id: event.id,
     title: event.organizer,
-    description: event.description || event.organizer,
+    // event.description is internal (staff-only read); never put it on the site.
+    description: event.organizer,
     date: event.date.split('T')[0],
     time: event.startTime || '',
     endTime: event.endTime ?? undefined,
     vendor: event.organizer,
-    type: EventType.SPECIAL_EVENT,
+    // expandRecurringEvents ids occurrences `recurring-<definition>-<date>`.
+    type: String(event.id).startsWith('recurring-') ? EventType.RECURRING : EventType.SPECIAL_EVENT,
     status: EventStatus.SCHEDULED,
     location: (eventLocation?.slug || fallbackLocationSlug) as LocationSlug,
     locationName: eventLocation?.name || fallbackLocationName,
     site: event.site ?? undefined,
     attendees: event.attendees ?? undefined,
     tags: event.tags ?? undefined,
+    image: imageUrl,
   }
 }
 
@@ -511,7 +570,7 @@ export function extractVendorInfo(
     return {
       name: v.name,
       site: (fallbackSite || v.site) ?? undefined,
-      logoUrl: getMediaUrl(v.logo) ?? undefined,
+      logoUrl: getMediaUrl(v.logo, 'thumbnail') ?? undefined,
     }
   }
   return {
@@ -609,19 +668,25 @@ export const getComingSoonBeers = async () => {
   }
 }
 
+/** Cache tag per global; anything else falls back to the site-content tag. */
+const GLOBAL_TAGS: Record<string, string> = {
+  'coming-soon': CACHE_TAGS.comingSoon,
+  'site-seo': CACHE_TAGS.siteSeo,
+}
+
 /**
  * Fetch a global by slug
  * Cached based on the global type
  */
 export const fetchGlobal = async (slug: string, depth: number = 0) => {
-  const tag = slug === 'coming-soon' ? CACHE_TAGS.comingSoon : CACHE_TAGS.siteContent
+  const tag = GLOBAL_TAGS[slug] ?? CACHE_TAGS.siteContent
 
   try {
     return await unstable_cache(
       async () => {
         const payload = await getPayload({ config })
         const result = await payload.findGlobal({
-          slug: slug as 'coming-soon' | 'site-content',
+          slug: slug as 'coming-soon' | 'site-content' | 'site-seo',
           overrideAccess: false,
           depth,
         })
@@ -652,7 +717,7 @@ export interface WeeklyHoursDay {
 
 /**
  * Get the current week's hours for a location with holiday overrides applied
- * Returns an array of 7 days starting from Monday of the current week
+ * Returns an array of 7 days starting from Monday of the current America/New_York week
  * Cached until 'locations' or 'holiday-hours' tags are invalidated
  *
  * React cache() on top for per-request dedupe: the footer and the page body
@@ -660,13 +725,13 @@ export interface WeeklyHoursDay {
  */
 export const getWeeklyHoursWithHolidays = cache(
   async (locationId: string): Promise<WeeklyHoursDay[]> => {
-    // Calculate week start for cache key
-    const now = new Date()
-    const dayOfWeek = now.getDay()
+    // Monday of the brewery's (EST/EDT) week, not the server's UTC week:
+    // from 8pm EDT (7pm EST) Sunday, UTC is already next Monday.
+    const [year, month, day] = getTodayEST().split('-').map(Number)
+    const dayOfWeek = new Date(year, month - 1, day).getDay()
     const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek
-    const monday = new Date(now)
-    monday.setDate(now.getDate() + mondayOffset)
-    monday.setHours(0, 0, 0, 0)
+    const monday = new Date(year, month - 1, day + mondayOffset)
+    const nextMonday = new Date(year, month - 1, day + mondayOffset + 7)
     const weekKey = toDateKey(monday)
 
     try {
@@ -692,21 +757,11 @@ export const getWeeklyHoursWithHolidays = cache(
             return []
           }
 
-          // Calculate the start of the current week (Monday)
-          const currentNow = new Date()
-          const currentDayOfWeek = currentNow.getDay()
-          const currentMondayOffset = currentDayOfWeek === 0 ? -6 : 1 - currentDayOfWeek
-          const currentMonday = new Date(currentNow)
-          currentMonday.setDate(currentNow.getDate() + currentMondayOffset)
-          currentMonday.setHours(0, 0, 0, 0)
-
-          // Calculate the end of the week (Sunday)
-          const sunday = new Date(currentMonday)
-          sunday.setDate(currentMonday.getDate() + 6)
-
-          // Format dates for query
-          const startDateStr = toDateKey(currentMonday)
-          const endDateStr = toDateKey(sunday)
+          // Holiday dates are stored at noon UTC, so bound the week with the
+          // next Monday (exclusive): a bare Sunday key would compare as Sunday
+          // midnight and drop Sunday's override.
+          const startDateStr = weekKey
+          const endDateStr = toDateKey(nextMonday)
 
           // Get all holiday hours for this location within this week
           const holidayResult = await payload.find({
@@ -726,7 +781,7 @@ export const getWeeklyHoursWithHolidays = cache(
                 },
                 {
                   date: {
-                    less_than_equal: endDateStr,
+                    less_than: endDateStr,
                   },
                 },
               ],
@@ -755,8 +810,8 @@ export const getWeeklyHoursWithHolidays = cache(
           const weeklyHours: WeeklyHoursDay[] = []
 
           for (let i = 0; i < 7; i++) {
-            const date = new Date(currentMonday)
-            date.setDate(currentMonday.getDate() + i)
+            const date = new Date(monday)
+            date.setDate(monday.getDate() + i)
             const dateStr = toDateKey(date)
             const dayName = days[i]
 
@@ -880,6 +935,15 @@ async function findUpcomingPublicEvents(
   return mergeScheduledEvents(oneOffResult.docs, recurring, limit)
 }
 
+/** Direct public read for pushed refreshes, bypassing pending tag invalidation. */
+export async function getEventsForLocationFresh(locationSlug: string) {
+  const payload = await getPayload({ config })
+  const location = await findLocationBySlug(payload, locationSlug)
+  if (!location || !location.active) return null
+  const events = await findUpcomingPublicEvents(payload, 20, location.id)
+  return { location, events }
+}
+
 export const getUpcomingEventsFromPayload = async (
   locationSlug: string,
   limit: number = 10,
@@ -931,6 +995,98 @@ export const getAllUpcomingEventsFromPayload = async (
   }
 }
 
+/** Mongo ObjectId, the id format for events and recurring-events docs. */
+const OBJECT_ID = '[a-f0-9]{24}'
+const ONE_OFF_EVENT_ID = new RegExp(`^${OBJECT_ID}$`)
+/** expandRecurringEvents ids occurrences `recurring-<definition>-<YYYY-MM-DD>`. */
+const RECURRING_EVENT_ID = new RegExp(`^recurring-(${OBJECT_ID})-(\\d{4}-\\d{2}-\\d{2})$`)
+
+async function findPublicEventById(
+  payload: Awaited<ReturnType<typeof getPayload>>,
+  id: string,
+): Promise<PayloadEvent | null> {
+  const { from, through } = eventWindow()
+  const upcomingPublic = (date: string): Where[] => [
+    { date: { greater_than_equal: date } },
+    { visibility: { equals: 'public' } },
+  ]
+
+  if (ONE_OFF_EVENT_ID.test(id)) {
+    const result = await payload.find({
+      collection: 'events',
+      overrideAccess: false,
+      where: { and: [{ id: { equals: id } }, ...upcomingPublic(`${from}T00:00:00.000Z`)] },
+      limit: 1,
+      depth: 1,
+    })
+    return result.docs[0] ?? null
+  }
+
+  const recurring = id.match(RECURRING_EVENT_ID)
+  if (!recurring) return null
+  const [, definitionId, date] = recurring
+  if (date < from || date > through) return null
+
+  const [definitionResult, oneOffResult] = await Promise.all([
+    payload.find({
+      collection: 'recurring-events',
+      overrideAccess: false,
+      where: {
+        and: [
+          { id: { equals: definitionId } },
+          { active: { equals: true } },
+          { visibility: { equals: 'public' } },
+        ],
+      },
+      limit: 1,
+      depth: 1,
+    }),
+    // A one-off on the same day replaces the occurrence (mergeScheduledEvents).
+    payload.find({
+      collection: 'events',
+      overrideAccess: false,
+      where: {
+        and: [
+          ...upcomingPublic(`${date}T00:00:00.000Z`),
+          { date: { less_than_equal: `${date}T23:59:59.999Z` } },
+        ],
+      },
+      limit: 100,
+      depth: 0,
+    }),
+  ])
+
+  const occurrences = expandRecurringEvents(definitionResult.docs as RecurringEvent[], date, date)
+  return (
+    mergeScheduledEvents(oneOffResult.docs, occurrences, Infinity).find(
+      (event) => event.id === id,
+    ) ?? null
+  )
+}
+
+/**
+ * One upcoming public event by its /events id: a one-off's document id or an
+ * expanded `recurring-<definition>-<date>` occurrence. Looks it up directly
+ * rather than scanning the 100-event page list, so every upcoming event
+ * resolves. Anonymous read: private events and the internal description stay
+ * hidden. Malformed ids return null without querying or caching.
+ */
+export const getPublicEventById = async (id: string): Promise<PayloadEvent | null> => {
+  if (!ONE_OFF_EVENT_ID.test(id) && !RECURRING_EVENT_ID.test(id)) return null
+  const todayKey = getTodayEST()
+
+  try {
+    return await unstable_cache(
+      async () => findPublicEventById(await getPayload({ config }), id),
+      [`event-${id}-${todayKey}`],
+      { tags: [CACHE_TAGS.events, CACHE_TAGS.locations], revalidate: 300 },
+    )()
+  } catch (error) {
+    logger.error(`Error fetching event: ${id}`, error)
+    throw error
+  }
+}
+
 /**
  * Get upcoming food vendors for a location from Payload
  * Returns food entries with date >= today, sorted by date ascending
@@ -957,7 +1113,7 @@ export const getUpcomingFoodFromPayload = async (
 
         const locationId = location.id
 
-        const todayStr = getTodayMidnightISO()
+        const todayStr = `${todayKey}T00:00:00.000Z`
 
         const result = await payload.find({
           collection: 'food',
@@ -1062,9 +1218,8 @@ const getUpcomingRecurringFood = async (
 
         const locationId = location.id
 
-        // The window scans monthsAhead months starting with the current one, so
-        // it can touch at most this year and the next.
-        const now = new Date()
+        // Load schedule years from the same Pittsburgh calendar used by occurrence expansion.
+        const now = new Date(`${todayKey}T12:00:00`)
         const lastMonth = new Date(now.getFullYear(), now.getMonth() + monthsAhead - 1, 1)
         const years = [...new Set([now.getFullYear(), lastMonth.getFullYear()])]
         const recurringFoodByYear = new Map(

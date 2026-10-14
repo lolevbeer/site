@@ -1,5 +1,5 @@
 import type { Field } from 'payload'
-import { eventManagerFieldAccess } from '@/src/access/roles'
+import { authenticatedFieldAccess, eventManagerFieldAccess } from '@/src/access/roles'
 
 /**
  * Field definitions shared verbatim between the Events and RecurringEvents
@@ -109,6 +109,23 @@ export const eventDetailFields: Field[] = [
   {
     name: 'description',
     type: 'textarea',
+    // Internal: signed-in staff only. Public reads (site, REST, RSS, JSON-LD)
+    // never receive it; the site shows the event title instead.
+    access: {
+      read: authenticatedFieldAccess,
+    },
+    admin: {
+      description: 'Internal notes for staff. Never shown on the website.',
+    },
+  },
+  {
+    name: 'image',
+    type: 'upload',
+    relationTo: 'media',
+    admin: {
+      description: 'Optional photo for Event rich results (falls back to the site OG image)',
+      condition: (data) => data?.visibility !== 'private',
+    },
   },
   {
     name: 'attendees',
@@ -159,8 +176,8 @@ export const eventDetailFields: Field[] = [
       read: eventManagerFieldAccess,
     },
     admin: {
-      description: 'Additional information for private event',
-      condition: (data) => data?.visibility === 'private',
+      // Staff-only via read access above, so it is safe on public events too.
+      description: 'Staff-only notes (never shown on the website)',
       position: 'sidebar',
     },
   },

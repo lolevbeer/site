@@ -58,7 +58,7 @@ export const RecurringFood: GlobalConfig = {
       type: 'ui',
       admin: {
         components: {
-          Field: './components/RecurringFoodGrid#RecurringFoodGrid',
+          Field: '@/src/components/RecurringFoodGrid#RecurringFoodGrid',
         },
       },
     },

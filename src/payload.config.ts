@@ -4,17 +4,18 @@ import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'path'
 import { buildConfig, type CollectionConfig } from 'payload'
 import { fileURLToPath } from 'url'
-import sharp from 'sharp'
+import { sharpTransformer } from '@payloadcms/transformer-sharp'
 import { revalidationPlugin } from './plugins/revalidation-plugin'
 
 import { Users } from './collections/Users'
-import { Media } from './collections/Media'
+import { Media, mediaSharp } from './collections/Media'
 import { Styles } from './collections/Styles'
 import { Tags } from './collections/Tags'
 import { Beers } from './collections/Beers'
 import { BeerReviews } from './collections/BeerReviews'
 import { Events } from './collections/Events'
 import { DonationRequests } from './collections/DonationRequests'
+import { EventInquiries } from './collections/EventInquiries'
 import { Jobs } from './collections/Jobs'
 import { JobApplications } from './collections/JobApplications'
 import { RecurringEvents } from './collections/RecurringEvents'
@@ -31,11 +32,11 @@ import { FAQs } from './collections/FAQs'
 import { ComingSoon } from './globals/ComingSoon'
 import { RecurringFood } from './globals/RecurringFood'
 import { SiteContent } from './globals/SiteContent'
+import { SiteSeo } from './globals/SiteSeo'
 import { importDistributors } from './endpoints/import-distributors'
-import { importLakeBeverageCSV } from './endpoints/import-lake-beverage-csv'
+import { importDistributorsCsv } from './endpoints/import-distributors-csv'
 import { updateDistributorUrls } from './endpoints/update-distributor-urls'
 import { recalculateBeerPrices } from './endpoints/recalculate-beer-prices'
-import { regeocodeDistributors } from './endpoints/regeocode-distributors'
 import { adminAccess, hasRole } from './access/roles'
 import { syncUntappdRatingsTask } from './jobs/sync-untappd-ratings'
 import { getLocalDevOrigins } from '../lib/config/payload-origins'
@@ -160,6 +161,46 @@ export default buildConfig({
     importMap: {
       baseDir: path.resolve(dirname),
     },
+    dashboard: {
+      widgets: [
+        {
+          slug: 'schedule-heatmap',
+          label: 'Schedule heatmap',
+          Component: '@/src/components/admin/ScheduleHeatmap#ScheduleHeatmap',
+          minWidth: 'medium',
+          // One instance per location; add more from the dashboard and pick one.
+          fields: [{ name: 'location', type: 'relationship', relationTo: 'locations' }],
+        },
+        {
+          slug: 'menu-target-history',
+          label: 'Menu tracking',
+          Component: '@/src/components/admin/MenuTargetHistory#MenuTargetHistory',
+        },
+      ],
+      // Built-ins re-listed because setting defaultLayout replaces Payload's default.
+      // One half-width schedule per location, read as the signed-in user.
+      defaultLayout: async ({ req }) => {
+        const { docs } = await req.payload.find({
+          collection: 'locations',
+          depth: 0,
+          pagination: false,
+          select: { name: true },
+          sort: 'name',
+          overrideAccess: false,
+          req,
+        })
+        return [
+          { widgetSlug: 'collections', width: 'full' },
+          ...docs.map((l) => ({
+            widgetSlug: 'schedule-heatmap' as const,
+            width: 'medium' as const,
+            data: { location: l.id },
+          })),
+          { widgetSlug: 'menu-target-history', width: 'medium' },
+          { widgetSlug: 'activity', width: 'small' },
+        ]
+      },
+    },
     // Payload 4's Vercel Blob adapter registers its client upload handler only
     // when a blob token is set; declaring it here keeps importMap.js identical
     // with or without one (Payload 3 always registered it).
@@ -171,15 +212,15 @@ export default buildConfig({
     },
     components: {
       graphics: {
-        Logo: './components/AdminLogo#AdminLogo',
-        Icon: './components/AdminLogo#AdminIcon',
+        Logo: '@/src/components/AdminLogo#AdminLogo',
+        Icon: '@/src/components/AdminLogo#AdminIcon',
       },
-      providers: ['./components/admin/LinesCleanedAlert#LinesCleanedAlert'],
+      providers: ['@/src/components/admin/LinesCleanedAlert#LinesCleanedAlert'],
       actions: [],
-      afterNavLinks: ['./components/SyncNavLink#SyncNavLink'],
+      afterNavLinks: ['@/src/components/SyncNavLink#SyncNavLink'],
       views: {
         sync: {
-          Component: './components/SyncView#SyncView',
+          Component: '@/src/components/SyncView#SyncView',
           path: '/sync',
           meta: {
             title: 'Sync',
@@ -190,6 +231,9 @@ export default buildConfig({
   },
   // Payload 4 keeps version history for every collection and global unless told
   // not to. Only Beers and Menus want history; they set their own `versions`.
+  // Payload 4 beta also adds readable `createdBy`/`updatedBy` user stamps to
+  // everything by default; off here so public docs don't expose staff IDs.
+  // Beers and Menus keep their own signed-in-only `updatedBy` (updatedByField).
   collections: [
     // Back of House
     Beers,
@@ -202,6 +246,7 @@ export default buildConfig({
     // Food & Events
     Events,
     DonationRequests,
+    EventInquiries,
     Jobs,
     JobApplications,
     RecurringEvents,
@@ -216,7 +261,7 @@ export default buildConfig({
     Distributors,
     FAQs,
     Media,
-  ].map((collection) => hideApiTab({ versions: false, ...collection })),
+  ].map((collection) => hideApiTab({ versions: false, authorship: false, ...collection })),
   globals: [
     // Back of House
     ComingSoon,
@@ -224,8 +269,12 @@ export default buildConfig({
     RecurringFood,
     // Settings (last)
     SiteContent,
-  ].map((global) => ({ versions: false, ...global })),
+    SiteSeo,
+  ].map((global) => ({ versions: false, authorship: false, ...global })),
   editor: lexicalEditor(),
+  // Payload 4 beta adds a `payload-llm-instructions` collection on its own
+  // default access, outside the role rules in src/access. Off until we use it.
+  llmInstructions: false,
   secret: serverEnv.payloadSecret,
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
@@ -267,7 +316,9 @@ export default buildConfig({
       serverSelectionTimeoutMS: 5000,
     },
   }),
-  sharp,
+  upload: {
+    transformers: [sharpTransformer({ collections: { media: mediaSharp } })],
+  },
   plugins: [revalidationPlugin],
   endpoints: [
     {
@@ -276,9 +327,9 @@ export default buildConfig({
       handler: importDistributors,
     },
     {
-      path: '/import-lake-beverage-csv',
+      path: '/import-distributors-csv',
       method: 'post',
-      handler: importLakeBeverageCSV,
+      handler: importDistributorsCsv,
     },
     {
       path: '/update-distributor-urls',
@@ -290,16 +341,16 @@ export default buildConfig({
       method: 'post',
       handler: recalculateBeerPrices,
     },
-    {
-      path: '/regeocode-distributors',
-      method: 'post',
-      handler: regeocodeDistributors,
-    },
   ],
   storage: [
     vercelBlobStorage({
       collections: {
-        media: true,
+        // Public read on Media already; skip the Payload /api/media/file proxy so
+        // generated URLs point at *.public.blob.vercel-storage.com (Blob CDN)
+        // instead of Fast Origin Transfer through the Next.js origin.
+        media: {
+          disablePayloadAccessControl: true,
+        },
       },
       token: serverEnv.blobReadWriteToken,
     }),

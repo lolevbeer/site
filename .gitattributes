@@ -6,3 +6,7 @@
 # Exclude favicons from LFS (small files needed at deploy time)
 public/favicons/** !filter !diff !merge text=auto
 public/favicon.ico !filter !diff !merge
+
+# The social card is referenced by og:image and JSON-LD, so it must be a real
+# JPEG in the git checkout; Vercel doesn't pull LFS objects (project gitLFS is off).
+public/images/beer/og-image.jpg !filter !diff !merge

@@ -21,7 +21,7 @@ export function FaqContactSection() {
   const selectedPhone = selected?.basicInfo?.phone
 
   return (
-    <section className="border-t border-border pt-12">
+    <section className="pt-12">
       <h2 className="text-2xl font-semibold text-center text-balance mb-3">
         Still have questions?
       </h2>
@@ -90,7 +90,7 @@ export function FaqContactSection() {
 
       <div className="flex flex-wrap gap-3 justify-center">
         <Button asChild variant="default">
-          <Link href="/about">About Us</Link>
+          <Link href="/beer-map">Find Our Beer</Link>
         </Button>
         <Button asChild variant="outline">
           <Link href="/beer">Our Beers</Link>
@@ -99,7 +99,7 @@ export function FaqContactSection() {
           <Link href="/events">Upcoming Events</Link>
         </Button>
         <Button asChild variant="outline">
-          <Link href="/beer-map">Find Our Beer</Link>
+          <Link href="/about">About Us</Link>
         </Button>
       </div>
     </section>

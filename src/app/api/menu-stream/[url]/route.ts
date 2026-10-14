@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { menuStreamBody } from '@/lib/utils/menu-stream-response'
 import { getMenuByUrl } from '@/lib/utils/payload-api'
 
 /**
@@ -8,12 +9,17 @@ import { getMenuByUrl } from '@/lib/utils/payload-api'
  * never runs this function:
  * - `force-static` with no prerendered params caches each menu URL on its
  *   first request.
- * - getMenuByUrl's cache tags (`menus`, `menu-<url>`) attach to that cached
- *   response, so the Payload hooks' `revalidateTag` calls for a menu (or a beer
- *   on it) mark it stale. The next poll gets the old copy while it refreshes;
- *   the one after gets the new menu.
+ * - getMenuByUrl's cache tags (`menus`, `kiosk-menus`, `menu-<url>`) attach to
+ *   that cached response, so the Payload hooks expire it when a menu, its
+ *   location or a product (`kiosk-menus`) or a beer on it (`menu-<url>`)
+ *   changes. `kiosk-menus` and `menu-<url>` are hard-expired, so the first
+ *   fetch after the save gets the fresh menu, including the fetch triggered by
+ *   an Ably notification.
  * - The 10-minute fallback refresh bounds how long a new deployment's
  *   `deployId` (which reloads displays) takes to reach them.
+ *
+ * A display told to refetch by an Ably push uses the uncached `./fresh` route
+ * instead; see there for why.
  *
  * The response depends only on the menu, never the clock, so it stays
  * cacheable: displays work out their day/night theme themselves.
@@ -38,19 +44,5 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ error: 'Menu not found' }, { status: 404 })
   }
 
-  // The newest of the menu's and its items' updatedAt, so edits to a beer or
-  // product on the menu count as changes even if the menu document didn't.
-  let timestamp = menu.updatedAt ? new Date(menu.updatedAt).getTime() : 0
-  for (const item of menu.items ?? []) {
-    const product = item.product?.value
-    if (product && typeof product === 'object' && 'updatedAt' in product) {
-      timestamp = Math.max(timestamp, new Date(product.updatedAt as string).getTime())
-    }
-  }
-
-  return NextResponse.json({
-    menu,
-    timestamp,
-    deployId: process.env.NEXT_PUBLIC_DEPLOY_ID || '',
-  })
+  return NextResponse.json(menuStreamBody(menu))
 }

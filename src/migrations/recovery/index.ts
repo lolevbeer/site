@@ -104,4 +104,24 @@ export const migrationRecovery: readonly MigrationRecovery[] = [
     verify:
       'Read-only inspect payload_jobs_runnable (queue, completedAt, hasError, processingUntil, waitUntil, createdAt) with name-only options; observe the next scheduled maintenance run. processing_1 may reappear while any Payload 3 deployment still connects (its Mongoose autoIndex recreates it): harmless, since Payload 4 never queries it; drop it once no Payload 3 deployment remains.',
   },
+  {
+    name: '20260929_120000_location_website_menus',
+    compatibility:
+      'Adds explicit menu selections to locations; the prior deployment ignores them and continues choosing the first published menu of each type.',
+    retry:
+      'Safe to rerun: only absent fields are initialized; existing selections and explicitly cleared null values are preserved.',
+    mode: 'roll-forward',
+    verify:
+      'Check Draft Menu and Cans Menu on each Location in Payload, then confirm the homepage and /<location> page show the selected published menus.',
+  },
+  {
+    name: '20261013_090000_media_sizes_to_variants',
+    compatibility:
+      'Not compatible with the prior deployment: Payload 4 canary reads media sizes, so once this runs the live canary deployment serves original images instead of thumbnail/card/detail variants (pages still render, just heavier). Promote the beta.0 preview right after the migrating production build, then run `pnpm payload run scripts/rename-media-sizes.ts` to rename media the canary admin saved in between.',
+    retry:
+      'Safe to rerun (scripts/rename-media-sizes.ts does exactly that): the rename skips docs already moved and throws, writing nothing, if any media doc holds both sizes and variants.',
+    mode: 'roll-forward',
+    verify:
+      'In Atlas, db.media.countDocuments({ sizes: { $exists: true } }) must be 0 and the variants count must match the former sizes count; then confirm homepage and beer-page images load the -150x150/-500x500 webp variants.',
+  },
 ]

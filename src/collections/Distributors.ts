@@ -1,5 +1,7 @@
 import type { CollectionConfig } from 'payload'
 import { adminAccess } from '@/src/access/roles'
+import { CUSTOMER_TYPES, US_STATES } from '@/lib/distributors/fields'
+import { isCountryCode } from '@/lib/distributors/country'
 
 export const Distributors: CollectionConfig = {
   slug: 'distributors',
@@ -45,24 +47,32 @@ export const Distributors: CollectionConfig = {
       name: 'state',
       type: 'text',
       admin: {
-        description: 'State abbreviation (e.g., PA, NY)',
+        description: 'US state abbreviation (e.g., PA, NY); free text outside the US',
       },
     },
     {
       name: 'zip',
       type: 'text',
       admin: {
-        description: 'ZIP code',
+        description: 'ZIP or postal code',
+      },
+    },
+    {
+      name: 'country',
+      type: 'text',
+      index: true,
+      // Enforced here, not only in the CSV parser, so admin edits obey it too
+      validate: (value: string | null | undefined) =>
+        !value || isCountryCode(value) || 'Country must be a two-letter ISO code, e.g. NL, JP, GB',
+      admin: {
+        description:
+          'Two-letter ISO country code (e.g., NL, JP, GB). Leave blank for the United States.',
       },
     },
     {
       name: 'customerType',
       type: 'select',
-      options: [
-        { label: 'Retail', value: 'Retail' },
-        { label: 'On Premise', value: 'On Premise' },
-        { label: 'Home Delivery', value: 'Home-D' },
-      ],
+      options: [...CUSTOMER_TYPES],
       index: true,
       admin: {
         description: 'Type of customer/location',
@@ -71,16 +81,11 @@ export const Distributors: CollectionConfig = {
     {
       name: 'region',
       type: 'select',
-      defaultValue: 'PA',
-      options: [
-        { label: 'New York', value: 'NY' },
-        { label: 'Ohio', value: 'OH' },
-        { label: 'Pennsylvania', value: 'PA' },
-        { label: 'West Virginia', value: 'WV' },
-      ],
+      options: [...US_STATES],
       index: true,
       admin: {
-        description: 'Geographic region',
+        description:
+          'US venues only: the state or DC. The CSV import defaults it to the state. Leave blank outside the US; those venues group by country.',
       },
     },
     {
@@ -101,8 +106,11 @@ export const Distributors: CollectionConfig = {
     {
       name: 'website',
       type: 'text',
+      // Enforced here, not only in the CSV parser, so admin edits obey it too
+      validate: (value: string | null | undefined) =>
+        !value || /^https?:\/\//i.test(value) || 'Website must start with http:// or https://',
       admin: {
-        description: 'Website URL',
+        description: 'Website URL, starting with http:// or https://',
       },
     },
     {

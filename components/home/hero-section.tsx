@@ -47,9 +47,15 @@ export function HeroSection({
     }
     return availableBeers
       .filter(
-        (beer) => cansIds.has(beer.id) && getBeerImageUrl(beer.image) && !imageErrors.has(beer.id),
+        (beer) =>
+          cansIds.has(beer.id) &&
+          getBeerImageUrl(beer.image, beer.slug, 'thumbnail') &&
+          !imageErrors.has(beer.id),
       )
-      .map((beer) => ({ beer, imageUrl: getBeerImageUrl(beer.image)! }))
+      .map((beer) => ({
+        beer,
+        imageUrl: getBeerImageUrl(beer.image, beer.slug, 'thumbnail')!,
+      }))
   }, [availableBeers, cansMenus, imageErrors])
 
   return (
@@ -160,7 +166,7 @@ export function HeroSection({
               className="w-full sm:w-auto sm:min-w-[160px]"
             >
               <Link href="/beer-map" prefetch={false}>
-                Find Lolev
+                Find Our Beer
               </Link>
             </Button>
             <Button
