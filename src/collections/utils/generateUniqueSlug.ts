@@ -42,7 +42,6 @@ export async function generateUniqueSlug(
   name: string,
   collection: CollectionSlug,
   req: PayloadRequest,
-  operation: 'create' | 'update',
   currentDocId?: string | number,
   takenIn: string[] = ['slug'],
 ): Promise<string> {

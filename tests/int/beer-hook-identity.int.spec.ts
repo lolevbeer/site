@@ -33,7 +33,7 @@ describe('beer hook system lookups', () => {
   it('generateUniqueSlug checks published and draft slugs with req and overrideAccess: true', async () => {
     const { req, find } = mockReq()
 
-    await expect(generateUniqueSlug('Akko', 'beers', req, 'create')).resolves.toBe('akko')
+    await expect(generateUniqueSlug('Akko', 'beers', req)).resolves.toBe('akko')
 
     expect(find).toHaveBeenCalledTimes(2)
     expect(find).toHaveBeenCalledWith(

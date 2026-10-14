@@ -10,7 +10,7 @@ import {
 const blobHost = 'https://abc123.public.blob.vercel-storage.com'
 const sizedMedia = {
   url: `${blobHost}/hades.png`,
-  sizes: {
+  variants: {
     thumbnail: { url: `${blobHost}/hades-150x150.webp` },
     card: { url: `${blobHost}/hades-500x500.webp` },
     detail: { url: `${blobHost}/hades-1200x1200.webp` },
@@ -19,7 +19,7 @@ const sizedMedia = {
 
 const originMedia = {
   url: 'https://lolev.beer/api/media/file/hades.png',
-  sizes: {
+  variants: {
     thumbnail: { url: 'https://lolev.beer/api/media/file/hades-150x150.webp' },
     card: { url: 'http://localhost:3000/api/media/file/hades-500x500.webp' },
   },
@@ -100,7 +100,7 @@ describe('getBeerImageUrl', () => {
     expect(getBeerImageUrl(true)).toBeNull()
   })
 
-  it('uses Payload sizes when provided on a Media object', () => {
+  it('uses Payload variants when provided on a Media object', () => {
     expect(getBeerImageUrl(sizedMedia, 'hades', 'thumbnail')).toBe(
       `${blobHost}/hades-150x150.webp`,
     )

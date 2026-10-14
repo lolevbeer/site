@@ -1,7 +1,7 @@
 import React from 'react'
 import { notFound } from 'next/navigation'
 import type { Column, DocumentViewServerProps, SelectType } from 'payload'
-import { formatAdminURL, isNumber } from 'payload/shared'
+import { formatAdminURL, hasDraftsEnabled, isNumber } from 'payload/shared'
 import {
   ListQueryProvider,
   SetDocumentStepNav,
@@ -23,7 +23,7 @@ type VersionData = {
 
 // Versions list for Beers and Menus. Payload 4's version columns are fixed (its
 // only hook, CreatedAtCellOverride, swaps one cell), so this mirrors its view
-// (@payloadcms/ui/dist/views/Versions, 4.0.0-canary.37) plus a "Last edited by"
+// (@payloadcms/ui/dist/views/Versions, 4.0.0-beta.0) plus a "Last edited by"
 // column read from each version's `updatedBy`. Re-check it on Payload upgrades.
 export async function VersionsWithEditor({
   hasPublishedDoc,
@@ -34,7 +34,8 @@ export async function VersionsWithEditor({
   if (!collectionConfig || !docID) return notFound()
 
   const { slug, admin } = collectionConfig
-  const { i18n, payload, t } = req
+  const { i18n, payload, t, user } = req
+  const draftsEnabled = hasDraftsEnabled(collectionConfig)
   const isTrashed = routeSegments[2] === 'trash'
   const limit = isNumber(searchParams.limit)
     ? Number(searchParams.limit)
@@ -43,8 +44,10 @@ export async function VersionsWithEditor({
     collectionSlug: slug,
     parentID: docID,
     depth: 0,
+    locale: req.locale ?? undefined,
     overrideAccess: false,
     req,
+    user: user ?? undefined,
   }
   const data = await fetchVersions<VersionData>({
     ...query,
@@ -65,7 +68,9 @@ export async function VersionsWithEditor({
     hasPublishedDoc
       ? fetchLatestVersion<VersionData>({ ...query, select: latestSelect, status: 'published' })
       : null,
-    fetchLatestVersion<VersionData>({ ...query, select: latestSelect, status: 'draft' }),
+    draftsEnabled
+      ? fetchLatestVersion<VersionData>({ ...query, select: latestSelect, status: 'draft' })
+      : null,
     editorNames(
       req,
       data.docs.map(({ version }) => version.updatedBy),
@@ -88,20 +93,25 @@ export async function VersionsWithEditor({
         />
       )),
     },
-    {
-      accessor: '_status',
-      active: true,
-      field: { name: '', type: 'checkbox' },
-      Heading: <SortColumn Label={t('version:status')} name="status" />,
-      renderedCells: data.docs.map((doc) => (
-        <VersionsAutosaveCell
-          key={doc.id}
-          currentlyPublishedVersion={published ?? undefined}
-          latestDraftVersion={draft ?? undefined}
-          rowData={doc}
-        />
-      )),
-    },
+    // Payload shows the status column only when drafts are on.
+    ...(draftsEnabled
+      ? [
+          {
+            accessor: '_status',
+            active: true,
+            field: { name: '', type: 'checkbox' },
+            Heading: <SortColumn Label={t('version:status')} name="status" />,
+            renderedCells: data.docs.map((doc) => (
+              <VersionsAutosaveCell
+                key={doc.id}
+                currentlyPublishedVersion={published ?? undefined}
+                latestDraftVersion={draft ?? undefined}
+                rowData={doc}
+              />
+            )),
+          } satisfies Column,
+        ]
+      : []),
     {
       accessor: 'version.updatedBy',
       active: true,
@@ -139,6 +149,7 @@ export async function VersionsWithEditor({
           <ListQueryProvider
             data={data}
             modifySearchParams
+            orderableFieldName={collectionConfig.orderable === true ? '_order' : undefined}
             query={{ limit, sort: searchParams.sort }}
           >
             <VersionsViewClient
