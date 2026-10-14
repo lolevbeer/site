@@ -1,6 +1,6 @@
 /**
  * An agenda row's title is its outbound link (new tab, marked by an icon).
- * Ticketing sites also get a visible "Tickets ↗" link. Events (only) get an
+ * A ticketing site instead gets a visible "Tickets ↗" link and a plain title. Events (only) get an
  * "Add to calendar" .ics link. Link names include the title so a
  * screen-reader link list can tell rows apart.
  */
@@ -27,6 +27,9 @@ describe('TimelineItem links', () => {
     // The arrow is decorative, and the name says which event the link is for.
     expect(link.querySelector('[aria-hidden="true"]')?.textContent).toBe('↗')
     expect(link.textContent).toContain('for Anniversary Party')
+    // One link per ticket row: the title stays plain text.
+    expect(screen.getAllByRole('link')).toHaveLength(1)
+    expect(screen.getByText('Anniversary Party').tagName).toBe('P')
   })
 
   it('links the title to any site and drops the Details text', () => {

@@ -90,7 +90,8 @@ export function TimelineItem({
           {badge}
         </Badge>
       ) : null}
-      {href ? (
+      {/* A ticket site gets the "Tickets ↗" link below instead, so the row has one link. */}
+      {href && !ticketHref ? (
         <a
           href={href}
           target="_blank"
