@@ -16,7 +16,7 @@ import {
 } from '@/src/utils/untappd'
 import { logger } from '@/lib/utils/logger'
 
-interface UntappdSearchResult {
+export interface UntappdSearchResult {
   name: string
   url: string
   brewery?: string
