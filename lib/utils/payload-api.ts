@@ -116,7 +116,7 @@ export const BEERS_LIST_SELECT = {
 const BEERS_LIST_POPULATE = {
   styles: { name: true },
   tags: { name: true },
-  media: { url: true, variants: true, filename: true, prefix: true },
+  media: { url: true, variants: true, filename: true, prefix: true, _objectKey: true },
 } as const
 
 /** Catalog/sitemap/RSS beer: `BEERS_LIST_SELECT` plus Payload `id`. */
@@ -382,9 +382,10 @@ const MENU_POPULATE = {
     updatedAt: true,
   },
   styles: { name: true },
-  // filename/prefix feed the Vercel Blob adapter's computed `url` — without
-  // them populated media docs come back with url: null.
-  media: { url: true, variants: true, filename: true, prefix: true },
+  // filename/prefix/_objectKey feed the Vercel Blob adapter's computed `url`
+  // (Payload 4 stores new uploads under an `_objectKey` folder). The plugin also
+  // adds them whenever `url` is selected; listed so a trimmed select keeps them.
+  media: { url: true, variants: true, filename: true, prefix: true, _objectKey: true },
   // linesLastCleaned drives the "Draft lines cleaned N days ago" line on the
   // /m draft displays (formatLinesCleanedDate in featured-menu.tsx).
   locations: { slug: true, name: true, linesLastCleaned: true, updatedAt: true },

@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import type { SharpCollectionConfig } from '@payloadcms/transformer-sharp'
-import { adminAccess, authenticatedAccess } from '@/src/access/roles'
+import { adminAccess, adminFieldAccess, authenticatedAccess } from '@/src/access/roles'
 import { LABEL_VIDEO_MIME } from '@/lib/utils/media-utils'
 
 export const Media: CollectionConfig = {
@@ -28,6 +28,17 @@ export const Media: CollectionConfig = {
       admin: {
         description: 'Alternative text for the image (for accessibility)',
       },
+    },
+    // Payload 4 keeps the untouched upload as `original` whenever Sharp re-encodes
+    // it (every image here, via formatOptions). That file still has its EXIF
+    // (GPS, device), so only admins read it. Payload merges this into its own
+    // `original` group, so only `access` is added here.
+    // ponytail: beta.0 has no option to skip storing the original; drop this once one exists.
+    {
+      name: 'original',
+      type: 'group',
+      access: { read: adminFieldAccess },
+      fields: [],
     },
   ],
 }

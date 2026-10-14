@@ -273,6 +273,9 @@ export default buildConfig({
     SiteSeo,
   ].map((global) => ({ versions: false, authorship: false, ...global })),
   editor: lexicalEditor(),
+  // Payload 4 beta adds a `payload-llm-instructions` collection on its own
+  // default access, outside the role rules in src/access. Off until we use it.
+  llmInstructions: false,
   secret: serverEnv.payloadSecret,
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
