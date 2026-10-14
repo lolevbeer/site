@@ -113,7 +113,7 @@ file in that directory except `index.ts`; keep the recovery manifest in
 
 ## Collections
 
-- **Beers** — Beer catalog with styles, ABV, pricing, Untappd ratings, and 3D can label textures (generated in the admin from label art + metallic-mask PDFs; rendered by `components/beer/beer-can-3d.tsx`)
+- **Beers** — Beer catalog with styles, ABV, pricing, Untappd ratings, and 3D can label textures (generated in the admin from label art + metallic-mask PDFs; rendered by `components/beer/beer-can-3d.tsx`). In the Beers list, an empty Tag or Untappd URL cell is editable inline for anyone who can update beers; a beer with a pending draft saves the value as a draft
 - **Beer Reviews** — Approved customer reviews attached to beers
 - **Styles** — Beer style definitions
 - **Tags** — Reusable single-value labels for beers

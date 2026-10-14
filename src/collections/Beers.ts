@@ -114,7 +114,8 @@ export const Beers: CollectionConfig = {
     group: 'Back of House',
     useAsTitle: 'name',
     listSearchableFields: ['name', 'slug'],
-    defaultColumns: ['name', 'slug', 'style', 'abv', 'hideFromSite'],
+    // untappd and tag cells let editors fill blanks inline (BeerListFillCell).
+    defaultColumns: ['name', 'slug', 'style', 'abv', 'tag', 'untappd', 'hideFromSite'],
     components: {
       views: {
         edit: {
@@ -336,6 +337,7 @@ export const Beers: CollectionConfig = {
                   index: true,
                   admin: {
                     description: 'Optional (search existing or add a new one)',
+                    components: { Cell: '@/src/components/admin/BeerListFillCell#TagCell' },
                   },
                 },
               ],
@@ -489,6 +491,7 @@ export const Beers: CollectionConfig = {
                   admin: {
                     description: 'Untappd URL (e.g., /b/lolev-beer-lupula/123456)',
                     width: '50%',
+                    components: { Cell: '@/src/components/admin/BeerListFillCell#UntappdCell' },
                   },
                 },
                 {
