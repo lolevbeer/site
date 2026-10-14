@@ -1,1 +1,6 @@
 @import "../../components/RecurringFoodGrid.scss";
+
+// Beers list: the image column shows the thumbnail only, not the media filename.
+.collection-list--beers .cell-image .file__filename {
+  display: none;
+}
