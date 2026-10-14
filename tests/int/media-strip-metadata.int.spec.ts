@@ -17,8 +17,15 @@ async function jpegWithGps() {
     .toBuffer()
 }
 
-async function run(file: PayloadRequest['file'], operation: 'create' | 'read' = 'create') {
-  const req = { file } as PayloadRequest
+const editor = { id: 'u1', roles: ['bartender'] }
+const admin = { id: 'u2', roles: ['admin'] }
+
+async function run(
+  file: PayloadRequest['file'],
+  operation: 'create' | 'update' | 'read' = 'create',
+  user: object | null = editor,
+) {
+  const req = { file, user } as PayloadRequest
   await stripMetadata({ args: { req }, operation, req } as never)
   return req.file
 }
@@ -42,5 +49,13 @@ describe('Media upload metadata', () => {
     const jpeg = await jpegWithGps()
     const image = { data: jpeg, mimetype: 'image/jpeg', name: 'a.jpg', size: jpeg.length }
     expect(await run(image, 'read')).toBe(image)
+  })
+
+  it('decodes nothing for callers Media access would refuse', async () => {
+    const jpeg = await jpegWithGps()
+    const image = { data: jpeg, mimetype: 'image/jpeg', name: 'a.jpg', size: jpeg.length }
+    expect(await run(image, 'create', null)).toBe(image)
+    expect(await run(image, 'update', editor)).toBe(image)
+    expect(await run(image, 'update', admin)).not.toBe(image)
   })
 })

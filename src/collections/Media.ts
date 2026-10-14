@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises'
 import sharp from 'sharp'
 import type { CollectionConfig } from 'payload'
 import type { SharpCollectionConfig } from '@payloadcms/transformer-sharp'
-import { adminAccess, authenticatedAccess } from '@/src/access/roles'
+import { adminAccess, authenticatedAccess, isAdmin } from '@/src/access/roles'
 import { LABEL_VIDEO_MIME } from '@/lib/utils/media-utils'
 
 export const Media: CollectionConfig = {
@@ -31,6 +31,8 @@ export const Media: CollectionConfig = {
       async ({ operation, req }) => {
         const file = req.file
         if ((operation !== 'create' && operation !== 'update') || !file) return
+        // Runs before access checks, so decode nothing Media access would refuse.
+        if (operation === 'create' ? !req.user : !isAdmin(req.user)) return
         if (!file.mimetype.startsWith('image/')) return
         const input = file.tempFilePath ? await readFile(file.tempFilePath) : file.data
         const data = await sharp(input).rotate().toBuffer()
