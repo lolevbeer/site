@@ -212,20 +212,24 @@ export function TagCell(props: DefaultCellComponentProps) {
   const { empty, editable } = useEditable(props.cellData)
   const [tags, setTags] = useState<Option[] | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
 
   if (!empty) return <DefaultCell {...props} />
   if (!editable) return null
 
   // Loaded on first open, not on mount, so a page of blank rows makes no request until one is used.
+  // The spinner shows only during that fetch: an idle blank cell must not look busy, since a tag is optional.
   function open() {
     if (tags) return
     setLoadError(null)
+    setLoading(true)
     loadTags()
       .then(setTags)
       .catch((err: unknown) => {
         logger.error('Failed to load tags for Beers list', err)
         setLoadError(err instanceof Error ? err.message : 'Could not load tags')
       })
+      .finally(() => setLoading(false))
   }
 
   return (
@@ -238,7 +242,7 @@ export function TagCell(props: DefaultCellComponentProps) {
         'aria-label': 'Tag',
         placeholder: 'Set tag…',
         options: tags ?? [],
-        isLoading: tags === null && !loadError,
+        isLoading: loading,
         onMenuOpen: open,
       }}
     />
