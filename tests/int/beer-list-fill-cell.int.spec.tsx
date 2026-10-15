@@ -21,15 +21,17 @@ vi.mock('@payloadcms/ui', () => ({
     onChange,
     onMenuOpen,
     onInputChange,
+    isLoading,
     'aria-label': label,
   }: {
     options: Opt[]
+    isLoading?: boolean
     onChange: (o: Opt) => void
     onMenuOpen?: () => void
     onInputChange?: (v: string, meta: { action: string }) => void
     'aria-label'?: string
   }) => (
-    <div>
+    <div data-loading={String(Boolean(isLoading))}>
       <button onClick={onMenuOpen}>open:{label}</button>
       <input
         aria-label={`search:${label}`}
@@ -147,6 +149,11 @@ describe('Beers list fill cells', () => {
       '/api/beers/beer-1?draft=true',
       expect.objectContaining({ method: 'PATCH', body: JSON.stringify({ tag: 'tag-1' }) }),
     )
+  })
+
+  it('shows no loading spinner on an unopened Tag cell', () => {
+    const { container } = render(<TagCell {...props(null)} />)
+    expect(container.querySelector('[data-loading]')?.getAttribute('data-loading')).toBe('false')
   })
 
   it('loads tags once for the whole page, and only when a menu is opened', async () => {
