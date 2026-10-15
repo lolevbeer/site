@@ -245,23 +245,26 @@ export default buildConfig({
     // Taproom Operations
     Menus,
     Products,
-    // Food & Events and Hiring
+    Locations,
+    HolidayHours,
+    // Food & Events
     Events,
     DonationRequests,
     EventInquiries,
-    Jobs,
-    JobApplications,
     RecurringEvents,
     Food,
     FoodVendors,
-    RecurringFoodSchedules,
-    RecurringFoodExclusions,
-    // Administration, Taproom Operations, and Website
-    Users,
-    Locations,
-    HolidayHours,
+    // Hiring
+    Jobs,
+    JobApplications,
+    // Website
     Distributors,
     FAQs,
+    // Administration
+    Users,
+    // System (hidden from nav)
+    RecurringFoodSchedules,
+    RecurringFoodExclusions,
     Media,
   ].map((collection) => hideApiTab({ versions: false, authorship: false, ...collection })),
   globals: [
@@ -269,7 +272,7 @@ export default buildConfig({
     ComingSoon,
     // Food & Events
     RecurringFood,
-    // Administration, Taproom Operations, and Website
+    // Website
     SiteContent,
     SiteSeo,
   ].map((global) => ({ versions: false, authorship: false, ...global })),

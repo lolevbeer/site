@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import { foodManagerAccess } from '@/src/access/roles'
+import { locationField } from '@/src/collections/shared/event-fields'
 
 export const Food: CollectionConfig = {
   slug: 'food',
@@ -58,15 +59,7 @@ export const Food: CollectionConfig = {
       },
       label: 'Vendor',
     },
-    {
-      name: 'location',
-      type: 'relationship',
-      relationTo: 'locations',
-      required: true,
-      hasMany: false,
-      index: true,
-      label: 'Taproom',
-    },
+    locationField,
     {
       type: 'row',
       fields: [
@@ -76,7 +69,6 @@ export const Food: CollectionConfig = {
           required: true,
           index: true,
           admin: {
-            position: undefined,
             date: {
               displayFormat: 'MMM d, yyyy',
             },
@@ -88,7 +80,6 @@ export const Food: CollectionConfig = {
           name: 'startTime',
           type: 'date',
           admin: {
-            position: undefined,
             date: {
               pickerAppearance: 'timeOnly',
               displayFormat: 'h:mm a',

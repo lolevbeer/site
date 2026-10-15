@@ -139,7 +139,7 @@ export const Jobs: CollectionConfig = {
       type: 'collapsible',
       label: 'Search & sharing',
       admin: { initCollapsed: true },
-      fields: [{ ...documentSeoField, admin: { ...documentSeoField.admin, position: undefined } }],
+      fields: [documentSeoField],
     },
   ],
   hooks: {

@@ -110,27 +110,30 @@ function seoGroup(
   name: string,
   label: string,
   description: string,
-  { sidebar = false, extraFields = [] as Field[] } = {},
+  extraFields: Field[] = [],
 ): GroupField {
   return {
     name,
     type: 'group',
     label,
-    admin: { ...(sidebar ? { position: 'sidebar' as const } : {}), description },
+    admin: { description },
     fields: [...seoFields, ...extraFields],
   }
 }
 
 /** Hub-page SEO group: no canonical (path is fixed per page key); `withIntro` adds the intro paragraph. */
 export const hubSeoGroup = (name: string, label: string, withIntro = false): GroupField =>
-  seoGroup(name, label, `Meta for ${label}. Blank fields keep the code defaults.`, {
-    extraFields: withIntro ? [introField] : [],
-  })
+  seoGroup(
+    name,
+    label,
+    `Meta for ${label}. Blank fields keep the code defaults.`,
+    withIntro ? [introField] : [],
+  )
 
-/** Sidebar SEO group for collections with public document URLs. */
+/** SEO group for collections with public document URLs; callers place it (Beers, Jobs, Locations nest it in a "Search & sharing" disclosure). */
 export const documentSeoField = seoGroup(
   'seo',
   'SEO',
   'Optional overrides for this document’s public page. Blank fields keep the auto-generated title and description.',
-  { sidebar: true, extraFields: [canonicalPathField] },
+  [canonicalPathField],
 )

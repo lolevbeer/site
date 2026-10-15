@@ -605,7 +605,6 @@ export const Beers: CollectionConfig = {
           required: true,
           admin: {
             description: 'Auto-generated from name, but you can override it manually',
-            position: undefined,
           },
           label: 'Page URL slug',
         },
@@ -616,7 +615,6 @@ export const Beers: CollectionConfig = {
           admin: {
             description:
               'Assigned automatically to new beers; change only to fix a mistake (must be unique)',
-            position: undefined,
           },
           label: 'Recipe number',
         },
@@ -637,7 +635,7 @@ export const Beers: CollectionConfig = {
       type: 'collapsible',
       label: 'Search & sharing',
       admin: { initCollapsed: true, position: 'sidebar' },
-      fields: [{ ...documentSeoField, admin: { ...documentSeoField.admin, position: undefined } }],
+      fields: [documentSeoField],
     },
   ],
 }

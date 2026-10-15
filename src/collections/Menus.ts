@@ -340,7 +340,6 @@ export const Menus: CollectionConfig = {
               admin: {
                 description:
                   'Optional page/social description. Also used as the menu label in Slack when set; not shown on the menu board.',
-                position: undefined,
               },
             },
             {
@@ -356,7 +355,6 @@ export const Menus: CollectionConfig = {
               admin: {
                 description:
                   'Auto-generated from location and type, but you can override it manually',
-                position: undefined,
               },
             },
             {
@@ -374,7 +372,6 @@ export const Menus: CollectionConfig = {
               },
               admin: {
                 description: 'Override automatic day/night theme switching',
-                position: undefined,
               },
             },
             {
@@ -386,7 +383,6 @@ export const Menus: CollectionConfig = {
                 update: adminFieldAccess,
               },
               admin: {
-                position: undefined,
                 // Only cans menus render the rotating-can sprite sheets, so the toggle
                 // is irrelevant on draft/other menus.
                 condition: (data) => data?.type === 'cans',
@@ -404,7 +400,6 @@ export const Menus: CollectionConfig = {
                 update: adminFieldAccess,
               },
               admin: {
-                position: undefined,
                 condition: (data) => TARGETED_MENU_TYPES.includes(data?.type),
                 description:
                   'Ideal stocked count, not an enforced maximum or the number of empty tap rows.',

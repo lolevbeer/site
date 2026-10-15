@@ -1,4 +1,6 @@
-import type { CollectionConfig, Access, RelationshipField, Validate, Where } from 'payload'
+import type { CollectionConfig, Access, Field, RelationshipField, Validate, Where } from 'payload'
+import { WEEKDAYS } from '@/lib/types/location'
+import { capitalizeName } from '@/lib/utils/formatters'
 import { LOCATION_SLUG_PATTERN, RESERVED_LOCATION_SLUGS } from '@/lib/config/locations'
 import { generateUniqueSlug } from './utils/generateUniqueSlug'
 import { markLinesCleanedField } from './utils/markLinesCleanedField'
@@ -78,6 +80,13 @@ function withPreviousSlug(
   if (previousSlug && !RESERVED_LOCATION_SLUGS.has(previousSlug)) next.push(previousSlug)
   return [...new Set(next)].filter((alias) => alias !== currentSlug)
 }
+
+/** Opening or closing time for one weekday. */
+const timeField = (name: 'open' | 'close'): Field => ({
+  name,
+  type: 'date',
+  admin: { width: '50%', date: { pickerAppearance: 'timeOnly', displayFormat: 'h:mm a' } },
+})
 
 export const Locations: CollectionConfig = {
   slug: 'locations',
@@ -207,274 +216,17 @@ export const Locations: CollectionConfig = {
               type: 'collapsible',
               label: 'Weekly opening hours',
               admin: { condition: (_data, _siblingData, { user }) => isAdmin(user) },
-              fields: [
-                {
-                  type: 'tabs',
-                  tabs: [
-                    {
-                      name: 'monday',
-                      label: 'Monday',
-                      fields: [
-                        {
-                          type: 'row',
-                          fields: [
-                            {
-                              name: 'open',
-                              type: 'date',
-                              admin: {
-                                width: '50%',
-                                date: {
-                                  pickerAppearance: 'timeOnly',
-                                  displayFormat: 'h:mm a',
-                                },
-                              },
-                            },
-                            {
-                              name: 'close',
-                              type: 'date',
-                              admin: {
-                                width: '50%',
-                                date: {
-                                  pickerAppearance: 'timeOnly',
-                                  displayFormat: 'h:mm a',
-                                },
-                              },
-                            },
-                          ],
-                        },
-                      ],
-                    },
-                  ],
-                },
-                {
-                  type: 'tabs',
-                  tabs: [
-                    {
-                      name: 'tuesday',
-                      label: 'Tuesday',
-                      fields: [
-                        {
-                          type: 'row',
-                          fields: [
-                            {
-                              name: 'open',
-                              type: 'date',
-                              admin: {
-                                width: '50%',
-                                date: {
-                                  pickerAppearance: 'timeOnly',
-                                  displayFormat: 'h:mm a',
-                                },
-                              },
-                            },
-                            {
-                              name: 'close',
-                              type: 'date',
-                              admin: {
-                                width: '50%',
-                                date: {
-                                  pickerAppearance: 'timeOnly',
-                                  displayFormat: 'h:mm a',
-                                },
-                              },
-                            },
-                          ],
-                        },
-                      ],
-                    },
-                  ],
-                },
-                {
-                  type: 'tabs',
-                  tabs: [
-                    {
-                      name: 'wednesday',
-                      label: 'Wednesday',
-                      fields: [
-                        {
-                          type: 'row',
-                          fields: [
-                            {
-                              name: 'open',
-                              type: 'date',
-                              admin: {
-                                width: '50%',
-                                date: {
-                                  pickerAppearance: 'timeOnly',
-                                  displayFormat: 'h:mm a',
-                                },
-                              },
-                            },
-                            {
-                              name: 'close',
-                              type: 'date',
-                              admin: {
-                                width: '50%',
-                                date: {
-                                  pickerAppearance: 'timeOnly',
-                                  displayFormat: 'h:mm a',
-                                },
-                              },
-                            },
-                          ],
-                        },
-                      ],
-                    },
-                  ],
-                },
-                {
-                  type: 'tabs',
-                  tabs: [
-                    {
-                      name: 'thursday',
-                      label: 'Thursday',
-                      fields: [
-                        {
-                          type: 'row',
-                          fields: [
-                            {
-                              name: 'open',
-                              type: 'date',
-                              admin: {
-                                width: '50%',
-                                date: {
-                                  pickerAppearance: 'timeOnly',
-                                  displayFormat: 'h:mm a',
-                                },
-                              },
-                            },
-                            {
-                              name: 'close',
-                              type: 'date',
-                              admin: {
-                                width: '50%',
-                                date: {
-                                  pickerAppearance: 'timeOnly',
-                                  displayFormat: 'h:mm a',
-                                },
-                              },
-                            },
-                          ],
-                        },
-                      ],
-                    },
-                  ],
-                },
-                {
-                  type: 'tabs',
-                  tabs: [
-                    {
-                      name: 'friday',
-                      label: 'Friday',
-                      fields: [
-                        {
-                          type: 'row',
-                          fields: [
-                            {
-                              name: 'open',
-                              type: 'date',
-                              admin: {
-                                width: '50%',
-                                date: {
-                                  pickerAppearance: 'timeOnly',
-                                  displayFormat: 'h:mm a',
-                                },
-                              },
-                            },
-                            {
-                              name: 'close',
-                              type: 'date',
-                              admin: {
-                                width: '50%',
-                                date: {
-                                  pickerAppearance: 'timeOnly',
-                                  displayFormat: 'h:mm a',
-                                },
-                              },
-                            },
-                          ],
-                        },
-                      ],
-                    },
-                  ],
-                },
-                {
-                  type: 'tabs',
-                  tabs: [
-                    {
-                      name: 'saturday',
-                      label: 'Saturday',
-                      fields: [
-                        {
-                          type: 'row',
-                          fields: [
-                            {
-                              name: 'open',
-                              type: 'date',
-                              admin: {
-                                width: '50%',
-                                date: {
-                                  pickerAppearance: 'timeOnly',
-                                  displayFormat: 'h:mm a',
-                                },
-                              },
-                            },
-                            {
-                              name: 'close',
-                              type: 'date',
-                              admin: {
-                                width: '50%',
-                                date: {
-                                  pickerAppearance: 'timeOnly',
-                                  displayFormat: 'h:mm a',
-                                },
-                              },
-                            },
-                          ],
-                        },
-                      ],
-                    },
-                  ],
-                },
-                {
-                  type: 'tabs',
-                  tabs: [
-                    {
-                      name: 'sunday',
-                      label: 'Sunday',
-                      fields: [
-                        {
-                          type: 'row',
-                          fields: [
-                            {
-                              name: 'open',
-                              type: 'date',
-                              admin: {
-                                width: '50%',
-                                date: {
-                                  pickerAppearance: 'timeOnly',
-                                  displayFormat: 'h:mm a',
-                                },
-                              },
-                            },
-                            {
-                              name: 'close',
-                              type: 'date',
-                              admin: {
-                                width: '50%',
-                                date: {
-                                  pickerAppearance: 'timeOnly',
-                                  displayFormat: 'h:mm a',
-                                },
-                              },
-                            },
-                          ],
-                        },
-                      ],
-                    },
-                  ],
-                },
-              ],
+              // One named tab per day (not one tab bar) so all seven stack; paths stay monday.open etc.
+              fields: WEEKDAYS.map((day): Field => ({
+                type: 'tabs',
+                tabs: [
+                  {
+                    name: day,
+                    label: capitalizeName(day),
+                    fields: [{ type: 'row', fields: [timeField('open'), timeField('close')] }],
+                  },
+                ],
+              })),
             },
             {
               type: 'row',
@@ -508,9 +260,6 @@ export const Locations: CollectionConfig = {
               access: {
                 update: adminFieldAccess,
               },
-              admin: {
-                position: undefined,
-              },
               fields: [
                 {
                   name: 'phone',
@@ -529,9 +278,6 @@ export const Locations: CollectionConfig = {
               type: 'group',
               access: {
                 update: adminFieldAccess,
-              },
-              admin: {
-                position: undefined,
               },
               fields: [
                 {
@@ -623,7 +369,6 @@ export const Locations: CollectionConfig = {
                   admin: {
                     description: 'Auto-generated from name (lowercase, spaces to dashes)',
                     readOnly: true,
-                    position: undefined,
                   },
                   label: 'Page URL slug',
                 },
@@ -636,7 +381,6 @@ export const Locations: CollectionConfig = {
                   },
                   validate: validateAliases,
                   admin: {
-                    position: undefined,
                     description:
                       'Former slugs. /<alias> redirects to the current page and /e/<alias> still shows ' +
                       'the events board. A rename adds the old slug automatically. Browsers cache the ' +
@@ -653,7 +397,6 @@ export const Locations: CollectionConfig = {
                     update: adminFieldAccess,
                   },
                   admin: {
-                    position: undefined,
                     description: 'Longitude, Latitude (e.g. -79.960098, 40.465372)',
                   },
                 },
@@ -663,9 +406,7 @@ export const Locations: CollectionConfig = {
               type: 'collapsible',
               label: 'Search & sharing',
               admin: { initCollapsed: true },
-              fields: [
-                { ...documentSeoField, admin: { ...documentSeoField.admin, position: undefined } },
-              ],
+              fields: [documentSeoField],
             },
           ],
         },

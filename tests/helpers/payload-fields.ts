@@ -1,16 +1,20 @@
-/** Test-only field lookup through Payload rows, groups, collapsibles and tabs. */
-import type { Field } from 'payload'
+/**
+ * Test-only field lookup. Payload's `flattenAllFields` drops layout containers
+ * (rows, collapsibles, unnamed tabs); this then searches nested named groups and
+ * tabs too, returning the first field with a matching name.
+ */
+import type { Field, FlattenedField } from 'payload'
+// From payload/shared, not payload: several specs replace the whole 'payload' module with a mock.
+import { flattenAllFields } from 'payload/shared'
+
+function find(fields: FlattenedField[], name: string): FlattenedField | undefined {
+  for (const field of fields) {
+    if (field.name === name) return field
+    const nested = 'flattenedFields' in field ? find(field.flattenedFields, name) : undefined
+    if (nested) return nested
+  }
+}
 
 export function findPayloadField(fields: Field[], name: string): Field | undefined {
-  for (const field of fields) {
-    if ('name' in field && field.name === name) return field
-    const nested = 'fields' in field ? findPayloadField(field.fields, name) : undefined
-    if (nested) return nested
-    if (field.type === 'tabs') {
-      for (const tab of field.tabs) {
-        const found = findPayloadField(tab.fields, name)
-        if (found) return found
-      }
-    }
-  }
+  return find(flattenAllFields({ fields }), name) as Field | undefined
 }

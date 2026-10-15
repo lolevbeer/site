@@ -1,6 +1,7 @@
 /** Admin layouts preserve stored field contracts while keeping everyday editing discoverable. */
 import { describe, expect, it } from 'vitest'
-import type { Field } from 'payload'
+import type { Field, FlattenedField } from 'payload'
+import { flattenAllFields } from 'payload/shared'
 import { Beers } from '@/src/collections/Beers'
 import { BeerReviews } from '@/src/collections/BeerReviews'
 import { Styles } from '@/src/collections/Styles'
@@ -57,30 +58,33 @@ const configs = [
   SiteSeo,
 ]
 
-function storedFields(fields: Field[], prefix = ''): Array<{ path: string; field: Field }> {
+/**
+ * Stored data paths, from Payload's own flattening (rows, collapsibles and unnamed
+ * tabs are transparent). Named tabs prefix their children but are not listed
+ * themselves, matching how the contract snapshots were first recorded.
+ */
+function storedFields(
+  fields: FlattenedField[],
+  prefix = '',
+): Array<{ path: string; field: FlattenedField }> {
   return fields.flatMap((field) => {
-    if (field.type === 'ui') return []
-    if (field.type === 'tabs') {
-      return field.tabs.flatMap((tab) =>
-        storedFields(tab.fields, 'name' in tab && tab.name ? `${prefix}${tab.name}.` : prefix),
-      )
-    }
-    const name = 'name' in field ? field.name : undefined
-    const path = name ? `${prefix}${name}` : prefix
-    const nested = 'fields' in field ? storedFields(field.fields, name ? `${path}.` : prefix) : []
-    return name ? [{ path, field }, ...nested] : nested
+    const path = `${prefix}${field.name}`
+    const nested = 'flattenedFields' in field ? storedFields(field.flattenedFields, `${path}.`) : []
+    return field.type === 'tab' ? nested : [{ path, field }, ...nested]
   })
 }
 
-function findField(fields: Field[], path: string): Field {
-  const found = storedFields(fields).find((entry) => entry.path === path)
+const stored = (fields: Field[]) => storedFields(flattenAllFields({ fields }))
+
+function findField(fields: Field[], path: string): FlattenedField {
+  const found = stored(fields).find((entry) => entry.path === path)
   if (!found) throw new Error(`Missing field ${path}`)
   return found.field
 }
 
 function contracts(fields: Field[]) {
   return Object.fromEntries(
-    storedFields(fields)
+    stored(fields)
       .sort((a, b) => a.path.localeCompare(b.path))
       .map(({ path, field }) => {
         // Guard stored shapes, not function identity; access/filter/hook behavior has dedicated tests.

@@ -55,7 +55,6 @@ export const FoodVendors: CollectionConfig = {
                 read: authenticatedFieldAccess,
               },
               admin: {
-                position: undefined,
                 width: '50%',
                 description: 'Signed-in staff only.',
               },
@@ -68,7 +67,6 @@ export const FoodVendors: CollectionConfig = {
                 read: authenticatedFieldAccess,
               },
               admin: {
-                position: undefined,
                 width: '50%',
                 description: 'Signed-in staff only.',
               },

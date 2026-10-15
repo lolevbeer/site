@@ -4,6 +4,7 @@
 import type { CollectionConfig } from 'payload'
 import { adminAccess } from '@/src/access/roles'
 import { JOB_APPLICATION_MAX_TEXT } from '@/lib/jobs/application'
+import { slackDiagnosticsField } from './utils/slackDiagnosticsField'
 
 export const JobApplications: CollectionConfig = {
   slug: 'job-applications',
@@ -44,25 +45,7 @@ export const JobApplications: CollectionConfig = {
       maxLength: JOB_APPLICATION_MAX_TEXT,
       label: 'Application message',
     },
-    {
-      type: 'collapsible',
-      label: 'Notification diagnostics',
-      admin: { initCollapsed: true, position: 'sidebar' },
-      fields: [
-        {
-          name: 'slackNotifiedAt',
-          type: 'date',
-          admin: { position: undefined, readOnly: true },
-          label: 'Slack notification sent',
-        },
-        {
-          name: 'slackError',
-          type: 'text',
-          maxLength: 200,
-          admin: { position: undefined, readOnly: true },
-        },
-      ],
-    },
+    slackDiagnosticsField,
     {
       name: 'ipHash',
       type: 'text',

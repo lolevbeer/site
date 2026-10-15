@@ -7,6 +7,7 @@
 import type { CollectionConfig } from 'payload'
 import { adminAccess, eventManagerAccess } from '@/src/access/roles'
 import { DONATION_MAX_ATTENDEES, DONATION_MAX_TEXT } from '@/lib/donate/donation-request'
+import { slackDiagnosticsField } from './utils/slackDiagnosticsField'
 
 const text = (overrides: Record<string, unknown> = {}) => ({
   type: 'text' as const,
@@ -144,30 +145,7 @@ export const DonationRequests: CollectionConfig = {
         { name: 'howHeard', ...longText() },
       ],
     },
-    {
-      type: 'collapsible',
-      label: 'Notification diagnostics',
-      admin: { initCollapsed: true, position: 'sidebar' },
-      fields: [
-        {
-          name: 'slackNotifiedAt',
-          type: 'date',
-          admin: {
-            position: undefined,
-            readOnly: true,
-            description:
-              'Automatic notification to the configured channel; empty means no successful notification is recorded.',
-          },
-          label: 'Slack notification sent',
-        },
-        {
-          name: 'slackError',
-          type: 'text',
-          maxLength: 200,
-          admin: { position: undefined, readOnly: true },
-        },
-      ],
-    },
+    slackDiagnosticsField,
     {
       name: 'ipHash',
       type: 'text',

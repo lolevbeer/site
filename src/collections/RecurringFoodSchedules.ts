@@ -22,7 +22,8 @@ export const RecurringFoodSchedules: CollectionConfig = {
   admin: {
     group: 'System',
     hidden: true,
-    useAsTitle: 'vendor',
+    // A text field: a relationship title would show the vendor's ID, not its name.
+    useAsTitle: 'day',
     defaultColumns: ['vendor', 'location', 'year', 'day', 'occurrence', 'active'],
     description: 'Backing records for Recurring Food Schedule. Use the grid for routine changes.',
   },
@@ -49,9 +50,6 @@ export const RecurringFoodSchedules: CollectionConfig = {
       min: RECURRING_YEAR_MIN,
       max: RECURRING_YEAR_MAX,
       index: true,
-      admin: {
-        position: undefined,
-      },
       label: 'Schedule year',
     },
     {

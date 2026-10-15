@@ -602,6 +602,8 @@ export const RecurringFoodGrid: React.FC = () => {
   const [schedules, setSchedules] = useState<SchedulesData>({})
   const [exclusions, setExclusions] = useState<ExclusionsData>({})
   const [loading, setLoading] = useState(true)
+  // Separate from saveError: a failed load hides the grid so stale schedules are never edited.
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [pendingKeys, setPendingKeys] = useState<ReadonlySet<string>>(() => new Set())
 
@@ -692,12 +694,13 @@ export const RecurringFoodGrid: React.FC = () => {
 
     async function load() {
       setLoading(true)
+      setLoadError(null)
       try {
         await refreshData(selectedYear)
       } catch (error) {
         if (!cancelled) {
           logger.error('Error fetching recurring food data:', error)
-          setSaveError('Could not load recurring food schedules. Please refresh and try again.')
+          setLoadError('Could not load recurring food schedules. Please refresh and try again.')
         }
       } finally {
         if (!cancelled) setLoading(false)
@@ -784,8 +787,8 @@ export const RecurringFoodGrid: React.FC = () => {
     )
   }
 
-  if (locations.length === 0 && saveError) {
-    return <Banner type="danger">{saveError}</Banner>
+  if (locations.length === 0 && loadError) {
+    return <Banner type="danger">{loadError}</Banner>
   }
 
   if (locations.length === 0) {
@@ -803,6 +806,7 @@ export const RecurringFoodGrid: React.FC = () => {
           ? 'Changes in this grid save immediately.'
           : 'View only — ask a food manager to change the schedule.'}
       </Banner>
+      {loadError && <Banner type="danger">{loadError}</Banner>}
       {saveError && <Banner type="danger">{saveError}</Banner>}
       <div aria-label="Schedule year" className="recurring-food-grid__year-nav">
         <Button
@@ -846,7 +850,7 @@ export const RecurringFoodGrid: React.FC = () => {
       </div>
 
       {/* Active location grid */}
-      {activeLocation && (
+      {activeLocation && !loadError && (
         <div
           id={`recurring-food-panel-${activeLocation.id}`}
           role="tabpanel"

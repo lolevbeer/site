@@ -7,6 +7,7 @@
 import type { CollectionConfig } from 'payload'
 import { adminAccess, adminFieldAccess, eventManagerAccess } from '@/src/access/roles'
 import { EVENT_INQUIRY_MAX_HEADCOUNT, EVENT_INQUIRY_MAX_TEXT } from '@/lib/events/inquiry'
+import { slackDiagnosticsField } from './utils/slackDiagnosticsField'
 
 export const EventInquiries: CollectionConfig = {
   slug: 'event-inquiries',
@@ -76,30 +77,7 @@ export const EventInquiries: CollectionConfig = {
         { name: 'phone', type: 'text', required: true, maxLength: 32 },
       ],
     },
-    {
-      type: 'collapsible',
-      label: 'Notification diagnostics',
-      admin: { initCollapsed: true, position: 'sidebar' },
-      fields: [
-        {
-          name: 'slackNotifiedAt',
-          type: 'date',
-          admin: {
-            position: undefined,
-            readOnly: true,
-            description:
-              'Automatic notification to the configured channel; empty means none is recorded.',
-          },
-          label: 'Slack notification sent',
-        },
-        {
-          name: 'slackError',
-          type: 'text',
-          maxLength: 200,
-          admin: { position: undefined, readOnly: true },
-        },
-      ],
-    },
+    slackDiagnosticsField,
     {
       name: 'ipHash',
       type: 'text',

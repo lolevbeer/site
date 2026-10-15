@@ -73,21 +73,21 @@ export interface Config {
     tags: Tag;
     menus: Menu;
     products: Product;
+    locations: Location;
+    'holiday-hours': HolidayHour;
     events: Event;
     'donation-requests': DonationRequest;
     'event-inquiries': EventInquiry;
-    jobs: Job;
-    'job-applications': JobApplication;
     'recurring-events': RecurringEvent;
     food: Food;
     'food-vendors': FoodVendor;
-    'recurring-food-schedules': RecurringFoodSchedule;
-    'recurring-food-exclusions': RecurringFoodExclusion;
-    users: User;
-    locations: Location;
-    'holiday-hours': HolidayHour;
+    jobs: Job;
+    'job-applications': JobApplication;
     distributors: Distributor;
     faqs: Faq;
+    users: User;
+    'recurring-food-schedules': RecurringFoodSchedule;
+    'recurring-food-exclusions': RecurringFoodExclusion;
     media: Media;
     'payload-kv': PayloadKv;
     'payload-jobs': PayloadJob;
@@ -107,21 +107,21 @@ export interface Config {
     tags: TagsSelect<false> | TagsSelect<true>;
     menus: MenusSelect<false> | MenusSelect<true>;
     products: ProductsSelect<false> | ProductsSelect<true>;
+    locations: LocationsSelect<false> | LocationsSelect<true>;
+    'holiday-hours': HolidayHoursSelect<false> | HolidayHoursSelect<true>;
     events: EventsSelect<false> | EventsSelect<true>;
     'donation-requests': DonationRequestsSelect<false> | DonationRequestsSelect<true>;
     'event-inquiries': EventInquiriesSelect<false> | EventInquiriesSelect<true>;
-    jobs: JobsSelect<false> | JobsSelect<true>;
-    'job-applications': JobApplicationsSelect<false> | JobApplicationsSelect<true>;
     'recurring-events': RecurringEventsSelect<false> | RecurringEventsSelect<true>;
     food: FoodSelect<false> | FoodSelect<true>;
     'food-vendors': FoodVendorsSelect<false> | FoodVendorsSelect<true>;
-    'recurring-food-schedules': RecurringFoodSchedulesSelect<false> | RecurringFoodSchedulesSelect<true>;
-    'recurring-food-exclusions': RecurringFoodExclusionsSelect<false> | RecurringFoodExclusionsSelect<true>;
-    users: UsersSelect<false> | UsersSelect<true>;
-    locations: LocationsSelect<false> | LocationsSelect<true>;
-    'holiday-hours': HolidayHoursSelect<false> | HolidayHoursSelect<true>;
+    jobs: JobsSelect<false> | JobsSelect<true>;
+    'job-applications': JobApplicationsSelect<false> | JobApplicationsSelect<true>;
     distributors: DistributorsSelect<false> | DistributorsSelect<true>;
     faqs: FaqsSelect<false> | FaqsSelect<true>;
+    users: UsersSelect<false> | UsersSelect<true>;
+    'recurring-food-schedules': RecurringFoodSchedulesSelect<false> | RecurringFoodSchedulesSelect<true>;
+    'recurring-food-exclusions': RecurringFoodExclusionsSelect<false> | RecurringFoodExclusionsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
@@ -737,6 +737,50 @@ export interface BeerReview {
   createdAt: string;
 }
 /**
+ * Holiday and special hours overrides for locations
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "holiday-hours".
+ */
+export interface HolidayHour {
+  id: string;
+  /**
+   * Name for this override (e.g., "Christmas Day", "New Year's Eve")
+   */
+  name: string;
+  /**
+   * The date this override applies to
+   */
+  date: string;
+  /**
+   * Which location(s) this override applies to
+   */
+  locations: (string | Location)[];
+  /**
+   * Type of override
+   */
+  type: 'closed' | 'modified';
+  /**
+   * Override hours (only used when type is "Modified Hours")
+   */
+  hours?: {
+    /**
+     * Opening time
+     */
+    open?: string | null;
+    /**
+     * Closing time
+     */
+    close?: string | null;
+  };
+  /**
+   * Optional note to display (e.g., "Closed for the holiday")
+   */
+  note?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "events".
  */
@@ -816,7 +860,7 @@ export interface DonationRequest {
   whyLolev: string;
   howHeard: string;
   /**
-   * Automatic notification to the configured channel; empty means no successful notification is recorded.
+   * Set when the Slack ping succeeds. Empty means no successful ping is recorded.
    */
   slackNotifiedAt?: string | null;
   slackError?: string | null;
@@ -845,96 +889,8 @@ export interface EventInquiry {
   email: string;
   phone: string;
   /**
-   * Automatic notification to the configured channel; empty means none is recorded.
+   * Set when the Slack ping succeeds. Empty means no successful ping is recorded.
    */
-  slackNotifiedAt?: string | null;
-  slackError?: string | null;
-  ipHash?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * Openings listed at /jobs (footer link). Applications land in Job Applications.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "jobs".
- */
-export interface Job {
-  id: string;
-  title: string;
-  location: string | Location;
-  employmentType?: ('full-time' | 'part-time' | 'seasonal') | null;
-  /**
-   * One or two lines on the taproom page.
-   */
-  summary?: string | null;
-  description: string;
-  /**
-   * Saving a published opening makes it visible immediately. Closing date alone does not unpublish it.
-   */
-  active?: boolean | null;
-  /**
-   * Optional last day to apply. Sent to Google as the posting’s expiry. This does not hide the job: also uncheck Published on website when it closes.
-   */
-  closesOn?: string | null;
-  /**
-   * Auto-generated from the title if left blank.
-   */
-  slug?: string | null;
-  /**
-   * Optional overrides for this document’s public page. Blank fields keep the auto-generated title and description.
-   */
-  seo?: {
-    /**
-     * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "• Lolev Beer" on hub pages; the site title template adds it.
-     */
-    title?: string | null;
-    /**
-     * SERP snippet. Aim for ~150–160 characters.
-     */
-    description?: string | null;
-    /**
-     * Optional. Defaults to Search-result title (plus site name where applicable).
-     */
-    ogTitle?: string | null;
-    /**
-     * Optional. Defaults to Search-result description.
-     */
-    ogDescription?: string | null;
-    /**
-     * Optional social share image (1200×630 recommended). Falls back to the site default.
-     */
-    ogImage?: (string | null) | Media;
-    /**
-     * Optional. Press Enter after each keyword. Mostly legacy; Google ignores these.
-     */
-    keywords?: string[] | null;
-    /**
-     * Ask search engines not to list this page in results. Links on it are still followed, and it is left out of the sitemap.
-     */
-    noIndex?: boolean | null;
-    /**
-     * Optional override, e.g. /beer or /lawrenceville. Must start with /. Leave blank for the normal URL.
-     */
-    canonicalPath?: string | null;
-  };
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * Applications from /jobs/[slug]. Completing the form is not a hire.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "job-applications".
- */
-export interface JobApplication {
-  id: string;
-  submissionKey?: string | null;
-  name: string;
-  job: string | Job;
-  email: string;
-  phone: string;
-  message: string;
   slackNotifiedAt?: string | null;
   slackError?: string | null;
   ipHash?: string | null;
@@ -1055,80 +1011,93 @@ export interface FoodVendor {
   createdAt: string;
 }
 /**
- * Backing records for Recurring Food Schedule. Use the grid for routine changes.
+ * Openings listed at /jobs (footer link). Applications land in Job Applications.
  *
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "recurring-food-schedules".
+ * via the `definition` "jobs".
  */
-export interface RecurringFoodSchedule {
+export interface Job {
   id: string;
+  title: string;
   location: string | Location;
-  year: number;
-  day: 'sunday' | 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday';
-  occurrence: 'first' | 'second' | 'third' | 'fourth' | 'fifth';
-  vendor: string | FoodVendor;
-  active: boolean;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * Skipped location/date records managed through Recurring Food Schedule; not vendor-specific.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "recurring-food-exclusions".
- */
-export interface RecurringFoodExclusion {
-  id: string;
-  location: string | Location;
-  date: string;
+  employmentType?: ('full-time' | 'part-time' | 'seasonal') | null;
   /**
-   * Optional, publicly readable. Do not enter confidential notes.
+   * One or two lines on the taproom page.
    */
-  reason?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * Holiday and special hours overrides for locations
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "holiday-hours".
- */
-export interface HolidayHour {
-  id: string;
+  summary?: string | null;
+  description: string;
   /**
-   * Name for this override (e.g., "Christmas Day", "New Year's Eve")
+   * Saving a published opening makes it visible immediately. Closing date alone does not unpublish it.
    */
-  name: string;
+  active?: boolean | null;
   /**
-   * The date this override applies to
+   * Optional last day to apply. Sent to Google as the posting’s expiry. This does not hide the job: also uncheck Published on website when it closes.
    */
-  date: string;
+  closesOn?: string | null;
   /**
-   * Which location(s) this override applies to
+   * Auto-generated from the title if left blank.
    */
-  locations: (string | Location)[];
+  slug?: string | null;
   /**
-   * Type of override
+   * Optional overrides for this document’s public page. Blank fields keep the auto-generated title and description.
    */
-  type: 'closed' | 'modified';
-  /**
-   * Override hours (only used when type is "Modified Hours")
-   */
-  hours?: {
+  seo?: {
     /**
-     * Opening time
+     * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "• Lolev Beer" on hub pages; the site title template adds it.
      */
-    open?: string | null;
+    title?: string | null;
     /**
-     * Closing time
+     * SERP snippet. Aim for ~150–160 characters.
      */
-    close?: string | null;
+    description?: string | null;
+    /**
+     * Optional. Defaults to Search-result title (plus site name where applicable).
+     */
+    ogTitle?: string | null;
+    /**
+     * Optional. Defaults to Search-result description.
+     */
+    ogDescription?: string | null;
+    /**
+     * Optional social share image (1200×630 recommended). Falls back to the site default.
+     */
+    ogImage?: (string | null) | Media;
+    /**
+     * Optional. Press Enter after each keyword. Mostly legacy; Google ignores these.
+     */
+    keywords?: string[] | null;
+    /**
+     * Ask search engines not to list this page in results. Links on it are still followed, and it is left out of the sitemap.
+     */
+    noIndex?: boolean | null;
+    /**
+     * Optional override, e.g. /beer or /lawrenceville. Must start with /. Leave blank for the normal URL.
+     */
+    canonicalPath?: string | null;
   };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Applications from /jobs/[slug]. Completing the form is not a hire.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "job-applications".
+ */
+export interface JobApplication {
+  id: string;
+  submissionKey?: string | null;
+  name: string;
+  job: string | Job;
+  email: string;
+  phone: string;
+  message: string;
   /**
-   * Optional note to display (e.g., "Closed for the holiday")
+   * Set when the Slack ping succeeds. Empty means no successful ping is recorded.
    */
-  note?: string | null;
+  slackNotifiedAt?: string | null;
+  slackError?: string | null;
+  ipHash?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1272,6 +1241,40 @@ export interface Faq {
    * Uncheck to hide this FAQ from the site
    */
   active?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Backing records for Recurring Food Schedule. Use the grid for routine changes.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "recurring-food-schedules".
+ */
+export interface RecurringFoodSchedule {
+  id: string;
+  location: string | Location;
+  year: number;
+  day: 'sunday' | 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday';
+  occurrence: 'first' | 'second' | 'third' | 'fourth' | 'fifth';
+  vendor: string | FoodVendor;
+  active: boolean;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Skipped location/date records managed through Recurring Food Schedule; not vendor-specific.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "recurring-food-exclusions".
+ */
+export interface RecurringFoodExclusion {
+  id: string;
+  location: string | Location;
+  date: string;
+  /**
+   * Optional, publicly readable. Do not enter confidential notes.
+   */
+  reason?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1435,6 +1438,14 @@ export interface PayloadLockedDocument {
         value: string | Product;
       } | null)
     | ({
+        relationTo: 'locations';
+        value: string | Location;
+      } | null)
+    | ({
+        relationTo: 'holiday-hours';
+        value: string | HolidayHour;
+      } | null)
+    | ({
         relationTo: 'events';
         value: string | Event;
       } | null)
@@ -1445,14 +1456,6 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'event-inquiries';
         value: string | EventInquiry;
-      } | null)
-    | ({
-        relationTo: 'jobs';
-        value: string | Job;
-      } | null)
-    | ({
-        relationTo: 'job-applications';
-        value: string | JobApplication;
       } | null)
     | ({
         relationTo: 'recurring-events';
@@ -1467,24 +1470,12 @@ export interface PayloadLockedDocument {
         value: string | FoodVendor;
       } | null)
     | ({
-        relationTo: 'recurring-food-schedules';
-        value: string | RecurringFoodSchedule;
+        relationTo: 'jobs';
+        value: string | Job;
       } | null)
     | ({
-        relationTo: 'recurring-food-exclusions';
-        value: string | RecurringFoodExclusion;
-      } | null)
-    | ({
-        relationTo: 'users';
-        value: string | User;
-      } | null)
-    | ({
-        relationTo: 'locations';
-        value: string | Location;
-      } | null)
-    | ({
-        relationTo: 'holiday-hours';
-        value: string | HolidayHour;
+        relationTo: 'job-applications';
+        value: string | JobApplication;
       } | null)
     | ({
         relationTo: 'distributors';
@@ -1493,6 +1484,18 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'faqs';
         value: string | Faq;
+      } | null)
+    | ({
+        relationTo: 'users';
+        value: string | User;
+      } | null)
+    | ({
+        relationTo: 'recurring-food-schedules';
+        value: string | RecurringFoodSchedule;
+      } | null)
+    | ({
+        relationTo: 'recurring-food-exclusions';
+        value: string | RecurringFoodExclusion;
       } | null)
     | ({
         relationTo: 'media';
@@ -1671,235 +1674,6 @@ export interface ProductsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "events_select".
- */
-export interface EventsSelect<T extends boolean = true> {
-  visibility?: T;
-  organizer?: T;
-  location?: T;
-  date?: T;
-  startTime?: T;
-  endTime?: T;
-  description?: T;
-  site?: T;
-  tags?: T;
-  image?: T;
-  attendees?: T;
-  pointOfContact?: T;
-  email?: T;
-  phone?: T;
-  otherInfo?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "donation-requests_select".
- */
-export interface DonationRequestsSelect<T extends boolean = true> {
-  submissionKey?: T;
-  status?: T;
-  organizationName?: T;
-  askType?: T;
-  eventName?: T;
-  eventDate?: T;
-  attendees?: T;
-  venue?: T;
-  taproom?: T;
-  requestDetails?: T;
-  howServed?: T;
-  pickupName?: T;
-  contactName?: T;
-  email?: T;
-  phone?: T;
-  mission?: T;
-  previousDonation?: T;
-  recognition?: T;
-  whyLolev?: T;
-  howHeard?: T;
-  slackNotifiedAt?: T;
-  slackError?: T;
-  ipHash?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "event-inquiries_select".
- */
-export interface EventInquiriesSelect<T extends boolean = true> {
-  submissionKey?: T;
-  status?: T;
-  preferredDate?: T;
-  taproom?: T;
-  headcount?: T;
-  message?: T;
-  name?: T;
-  email?: T;
-  phone?: T;
-  slackNotifiedAt?: T;
-  slackError?: T;
-  ipHash?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "jobs_select".
- */
-export interface JobsSelect<T extends boolean = true> {
-  title?: T;
-  location?: T;
-  employmentType?: T;
-  summary?: T;
-  description?: T;
-  active?: T;
-  closesOn?: T;
-  slug?: T;
-  seo?:
-    | T
-    | {
-        title?: T;
-        description?: T;
-        ogTitle?: T;
-        ogDescription?: T;
-        ogImage?: T;
-        keywords?: T;
-        noIndex?: T;
-        canonicalPath?: T;
-      };
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "job-applications_select".
- */
-export interface JobApplicationsSelect<T extends boolean = true> {
-  submissionKey?: T;
-  name?: T;
-  job?: T;
-  email?: T;
-  phone?: T;
-  message?: T;
-  slackNotifiedAt?: T;
-  slackError?: T;
-  ipHash?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "recurring-events_select".
- */
-export interface RecurringEventsSelect<T extends boolean = true> {
-  active?: T;
-  visibility?: T;
-  organizer?: T;
-  location?: T;
-  year?: T;
-  day?: T;
-  occurrences?: T;
-  startTime?: T;
-  endTime?: T;
-  excludedDates?:
-    | T
-    | {
-        date?: T;
-        id?: T;
-      };
-  description?: T;
-  site?: T;
-  tags?: T;
-  image?: T;
-  attendees?: T;
-  pointOfContact?: T;
-  email?: T;
-  phone?: T;
-  otherInfo?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "food_select".
- */
-export interface FoodSelect<T extends boolean = true> {
-  vendorName?: T;
-  vendor?: T;
-  location?: T;
-  date?: T;
-  startTime?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "food-vendors_select".
- */
-export interface FoodVendorsSelect<T extends boolean = true> {
-  name?: T;
-  site?: T;
-  logo?: T;
-  email?: T;
-  phone?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "recurring-food-schedules_select".
- */
-export interface RecurringFoodSchedulesSelect<T extends boolean = true> {
-  location?: T;
-  year?: T;
-  day?: T;
-  occurrence?: T;
-  vendor?: T;
-  active?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "recurring-food-exclusions_select".
- */
-export interface RecurringFoodExclusionsSelect<T extends boolean = true> {
-  location?: T;
-  date?: T;
-  reason?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users_select".
- */
-export interface UsersSelect<T extends boolean = true> {
-  name?: T;
-  roles?: T;
-  locations?: T;
-  slackUserId?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  email?: T;
-  resetPasswordToken?: T;
-  resetPasswordExpiration?: T;
-  salt?: T;
-  hash?: T;
-  resetPasswordRequestedAt?: T;
-  loginAttempts?: T;
-  lockUntil?: T;
-  sessions?:
-    | T
-    | {
-        id?: T;
-        createdAt?: T;
-        expiresAt?: T;
-      };
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "locations_select".
  */
 export interface LocationsSelect<T extends boolean = true> {
@@ -2013,6 +1787,183 @@ export interface HolidayHoursSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "events_select".
+ */
+export interface EventsSelect<T extends boolean = true> {
+  visibility?: T;
+  organizer?: T;
+  location?: T;
+  date?: T;
+  startTime?: T;
+  endTime?: T;
+  description?: T;
+  site?: T;
+  tags?: T;
+  image?: T;
+  attendees?: T;
+  pointOfContact?: T;
+  email?: T;
+  phone?: T;
+  otherInfo?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "donation-requests_select".
+ */
+export interface DonationRequestsSelect<T extends boolean = true> {
+  submissionKey?: T;
+  status?: T;
+  organizationName?: T;
+  askType?: T;
+  eventName?: T;
+  eventDate?: T;
+  attendees?: T;
+  venue?: T;
+  taproom?: T;
+  requestDetails?: T;
+  howServed?: T;
+  pickupName?: T;
+  contactName?: T;
+  email?: T;
+  phone?: T;
+  mission?: T;
+  previousDonation?: T;
+  recognition?: T;
+  whyLolev?: T;
+  howHeard?: T;
+  slackNotifiedAt?: T;
+  slackError?: T;
+  ipHash?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "event-inquiries_select".
+ */
+export interface EventInquiriesSelect<T extends boolean = true> {
+  submissionKey?: T;
+  status?: T;
+  preferredDate?: T;
+  taproom?: T;
+  headcount?: T;
+  message?: T;
+  name?: T;
+  email?: T;
+  phone?: T;
+  slackNotifiedAt?: T;
+  slackError?: T;
+  ipHash?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "recurring-events_select".
+ */
+export interface RecurringEventsSelect<T extends boolean = true> {
+  active?: T;
+  visibility?: T;
+  organizer?: T;
+  location?: T;
+  year?: T;
+  day?: T;
+  occurrences?: T;
+  startTime?: T;
+  endTime?: T;
+  excludedDates?:
+    | T
+    | {
+        date?: T;
+        id?: T;
+      };
+  description?: T;
+  site?: T;
+  tags?: T;
+  image?: T;
+  attendees?: T;
+  pointOfContact?: T;
+  email?: T;
+  phone?: T;
+  otherInfo?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "food_select".
+ */
+export interface FoodSelect<T extends boolean = true> {
+  vendorName?: T;
+  vendor?: T;
+  location?: T;
+  date?: T;
+  startTime?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "food-vendors_select".
+ */
+export interface FoodVendorsSelect<T extends boolean = true> {
+  name?: T;
+  site?: T;
+  logo?: T;
+  email?: T;
+  phone?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "jobs_select".
+ */
+export interface JobsSelect<T extends boolean = true> {
+  title?: T;
+  location?: T;
+  employmentType?: T;
+  summary?: T;
+  description?: T;
+  active?: T;
+  closesOn?: T;
+  slug?: T;
+  seo?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        ogTitle?: T;
+        ogDescription?: T;
+        ogImage?: T;
+        keywords?: T;
+        noIndex?: T;
+        canonicalPath?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "job-applications_select".
+ */
+export interface JobApplicationsSelect<T extends boolean = true> {
+  submissionKey?: T;
+  name?: T;
+  job?: T;
+  email?: T;
+  phone?: T;
+  message?: T;
+  slackNotifiedAt?: T;
+  slackError?: T;
+  ipHash?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "distributors_select".
  */
 export interface DistributorsSelect<T extends boolean = true> {
@@ -2040,6 +1991,58 @@ export interface FaqsSelect<T extends boolean = true> {
   answer?: T;
   order?: T;
   active?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "users_select".
+ */
+export interface UsersSelect<T extends boolean = true> {
+  name?: T;
+  roles?: T;
+  locations?: T;
+  slackUserId?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  email?: T;
+  resetPasswordToken?: T;
+  resetPasswordExpiration?: T;
+  salt?: T;
+  hash?: T;
+  resetPasswordRequestedAt?: T;
+  loginAttempts?: T;
+  lockUntil?: T;
+  sessions?:
+    | T
+    | {
+        id?: T;
+        createdAt?: T;
+        expiresAt?: T;
+      };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "recurring-food-schedules_select".
+ */
+export interface RecurringFoodSchedulesSelect<T extends boolean = true> {
+  location?: T;
+  year?: T;
+  day?: T;
+  occurrence?: T;
+  vendor?: T;
+  active?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "recurring-food-exclusions_select".
+ */
+export interface RecurringFoodExclusionsSelect<T extends boolean = true> {
+  location?: T;
+  date?: T;
+  reason?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -3029,19 +3032,19 @@ export interface CollectionQueryWidget {
       | 'tags'
       | 'menus'
       | 'products'
+      | 'locations'
+      | 'holiday-hours'
       | 'events'
       | 'donation-requests'
       | 'event-inquiries'
-      | 'jobs'
-      | 'job-applications'
       | 'recurring-events'
       | 'food'
       | 'food-vendors'
-      | 'users'
-      | 'locations'
-      | 'holiday-hours'
+      | 'jobs'
+      | 'job-applications'
       | 'distributors'
       | 'faqs'
+      | 'users'
       | 'payload-jobs';
     where?:
       | {
@@ -3072,19 +3075,19 @@ export interface ActivityWidget {
           | 'tags'
           | 'menus'
           | 'products'
+          | 'locations'
+          | 'holiday-hours'
           | 'events'
           | 'donation-requests'
           | 'event-inquiries'
-          | 'jobs'
-          | 'job-applications'
           | 'recurring-events'
           | 'food'
           | 'food-vendors'
-          | 'users'
-          | 'locations'
-          | 'holiday-hours'
+          | 'jobs'
+          | 'job-applications'
           | 'distributors'
           | 'faqs'
+          | 'users'
           | 'payload-jobs'
         )[]
       | null;

@@ -153,6 +153,32 @@ describe('RecurringFoodGrid location tabs', () => {
     expect(screen.queryByText(/No active locations found/)).toBeNull()
   })
 
+  it('hides the previous year grid when the next year fails to load', async () => {
+    const currentYear = new Date().getFullYear()
+    getActiveLocationsMock.mockResolvedValue([
+      { id: 'loc-a', name: 'Lawrenceville', slug: 'lawrenceville' },
+    ])
+    getRecurringFoodDataMock.mockImplementation(async (year) => {
+      if (year === currentYear + 1) throw new Error('Access denied')
+      return {
+        year: currentYear,
+        schedules: { 'loc-a': { sunday: { first: 'vendor-a' } } },
+        exclusions: {},
+      }
+    })
+    getFoodForLocationYearMock.mockResolvedValue([])
+    getFoodVendorsByIdsMock.mockResolvedValue({ 'vendor-a': 'Current Year Truck' })
+
+    render(createElement(RecurringFoodGrid))
+    await screen.findAllByText(/Current Year Truck/)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Next year' }))
+    expect(await screen.findByText(/Could not load recurring food schedules/)).toBeTruthy()
+    expect(screen.queryAllByText(/Current Year Truck/)).toHaveLength(0)
+    // Year navigation stays available so staff can step back to a loaded year.
+    expect(screen.getByRole('button', { name: 'Previous year' })).toBeTruthy()
+  })
+
   it('keeps the true empty-location state when loading succeeds', async () => {
     getActiveLocationsMock.mockResolvedValue([])
     getRecurringFoodDataMock.mockResolvedValue({ year: 2026, schedules: {}, exclusions: {} })

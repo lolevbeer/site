@@ -93,9 +93,6 @@ export const Users: CollectionConfig = {
     {
       name: 'name',
       type: 'text',
-      admin: {
-        position: undefined,
-      },
       label: 'Staff name',
     },
     {
@@ -113,7 +110,6 @@ export const Users: CollectionConfig = {
         { label: 'Bartender', value: 'bartender' },
       ],
       admin: {
-        position: undefined,
         description:
           'Multiple roles are allowed. Admins change existing roles/assignments. Lead bartenders can invite bartenders for their own taprooms and record line cleaning; managers edit their respective content.',
       },
@@ -162,7 +158,6 @@ export const Users: CollectionConfig = {
           unique: true,
           index: true,
           admin: {
-            position: undefined,
             description:
               'Slack member ID (e.g. U01ABCDEF). Filled in automatically when the Slack profile email matches this account — set it manually only if the emails differ.',
           },
