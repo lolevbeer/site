@@ -12,6 +12,8 @@ export const RecurringFoodExclusions: CollectionConfig = {
     hidden: true,
     useAsTitle: 'date',
     defaultColumns: ['date', 'location', 'reason'],
+    description:
+      'Skipped location/date records managed through Recurring Food Schedule; not vendor-specific.',
   },
   access: {
     read: () => true,
@@ -27,6 +29,7 @@ export const RecurringFoodExclusions: CollectionConfig = {
       relationTo: 'locations',
       required: true,
       index: true,
+      label: 'Taproom',
     },
     {
       name: 'date',
@@ -39,10 +42,15 @@ export const RecurringFoodExclusions: CollectionConfig = {
           displayFormat: 'MMM d, yyyy',
         },
       },
+      label: 'Skipped food date',
     },
     {
       name: 'reason',
       type: 'text',
+      label: 'Reason',
+      admin: {
+        description: 'Optional, publicly readable. Do not enter confidential notes.',
+      },
     },
   ],
 }

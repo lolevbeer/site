@@ -1,15 +1,10 @@
+/** Shared event fields keep public listing content separate from access-controlled staff notes. */
 import type { Field } from 'payload'
 import { authenticatedFieldAccess, eventManagerFieldAccess } from '@/src/access/roles'
 
-/**
- * Field definitions shared verbatim between the Events and RecurringEvents
- * collections. Collection-specific fields (Events' `date`; RecurringEvents'
- * `year`/`day`/`occurrences`/`excludedDates`/`active`) stay in their own
- * collection configs; each config spreads these in its own admin order.
- */
-
 export const visibilityField: Field = {
   name: 'visibility',
+  label: 'Event visibility',
   type: 'select',
   required: true,
   defaultValue: 'public',
@@ -20,19 +15,17 @@ export const visibilityField: Field = {
   index: true,
   admin: {
     position: 'sidebar',
-    description: 'Public events will be displayed on the site',
+    description: 'Public events appear on the website. Private events remain in staff scheduling.',
   },
 }
 
 export const organizerField: Field = {
   name: 'organizer',
-  label: 'Name of Event',
+  label: 'Event name',
   type: 'text',
   required: true,
   index: true,
-  admin: {
-    description: 'If this is a public event, this will be listed on the website',
-  },
+  admin: { description: 'Shown on the website when the event is public.' },
 }
 
 export const timeRowField: Field = {
@@ -40,145 +33,131 @@ export const timeRowField: Field = {
   fields: [
     {
       name: 'startTime',
+      label: 'Start time',
       type: 'date',
-      admin: {
-        width: '50%',
-        date: {
-          pickerAppearance: 'timeOnly',
-          displayFormat: 'h:mm a',
-        },
-      },
+      admin: { width: '50%', date: { pickerAppearance: 'timeOnly', displayFormat: 'h:mm a' } },
     },
     {
       name: 'endTime',
+      label: 'End time',
       type: 'date',
-      admin: {
-        width: '50%',
-        date: {
-          pickerAppearance: 'timeOnly',
-          displayFormat: 'h:mm a',
-        },
-      },
+      admin: { width: '50%', date: { pickerAppearance: 'timeOnly', displayFormat: 'h:mm a' } },
     },
   ],
 }
 
 export const locationField: Field = {
   name: 'location',
+  label: 'Taproom',
   type: 'relationship',
   relationTo: 'locations',
   required: true,
   hasMany: false,
   index: true,
-  admin: {
-    position: 'sidebar',
-  },
 }
 
-/**
- * Trailing detail fields that appear in the same order at the end of both
- * collections: site, tags, description, attendees, pointOfContact, email,
- * phone, otherInfo.
- */
+/** Unnamed disclosures preserve root-level stored paths in both event collections. */
 export const eventDetailFields: Field[] = [
   {
-    name: 'site',
-    type: 'text',
-    admin: {
-      description: 'This will be linked on the website',
-      condition: (data) => data?.visibility !== 'private',
-      position: 'sidebar',
-    },
-  },
-  {
-    name: 'tags',
-    type: 'select',
-    hasMany: true,
-    options: [
-      { label: 'Music', value: 'music' },
-      { label: 'Food', value: 'utensils' },
-      { label: 'Games', value: 'puzzle' },
-      { label: 'Sports', value: 'sports' },
-      { label: 'Beer Release', value: 'beer-release' },
-      { label: 'Karaoke', value: 'mic-vocal' },
-    ],
-    admin: {
-      position: 'sidebar',
-    },
-  },
-  {
     name: 'description',
+    label: 'Staff notes',
     type: 'textarea',
-    // Internal: signed-in staff only. Public reads (site, REST, RSS, JSON-LD)
-    // never receive it; the site shows the event title instead.
-    access: {
-      read: authenticatedFieldAccess,
-    },
+    // Public reads never receive these notes; public listings use the event name.
+    access: { read: authenticatedFieldAccess },
     admin: {
-      description: 'Internal notes for staff. Never shown on the website.',
+      rows: 3,
+      description: 'Internal notes for signed-in staff only. Never shown on the website.',
     },
   },
   {
-    name: 'image',
-    type: 'upload',
-    relationTo: 'media',
-    admin: {
-      description: 'Optional photo for Event rich results (falls back to the site OG image)',
-      condition: (data) => data?.visibility !== 'private',
-    },
+    type: 'collapsible',
+    label: 'Website listing',
+    admin: { initCollapsed: true },
+    fields: [
+      {
+        name: 'site',
+        label: 'Website or ticket URL',
+        type: 'text',
+        admin: {
+          description: 'Public link shown with the event.',
+          condition: (data) => data?.visibility !== 'private',
+        },
+      },
+      {
+        name: 'tags',
+        label: 'Event tags',
+        type: 'select',
+        hasMany: true,
+        options: [
+          { label: 'Music', value: 'music' },
+          { label: 'Food', value: 'utensils' },
+          { label: 'Games', value: 'puzzle' },
+          { label: 'Sports', value: 'sports' },
+          { label: 'Beer Release', value: 'beer-release' },
+          { label: 'Karaoke', value: 'mic-vocal' },
+        ],
+      },
+      {
+        name: 'image',
+        label: 'Event image',
+        type: 'upload',
+        relationTo: 'media',
+        admin: {
+          description: 'Optional image for search results; falls back to the site social image.',
+          condition: (data) => data?.visibility !== 'private',
+        },
+      },
+    ],
   },
   {
-    name: 'attendees',
-    type: 'number',
-    access: {
-      read: eventManagerFieldAccess,
-    },
-    admin: {
-      description: 'Expected or registered attendees',
-      position: 'sidebar',
-    },
-  },
-  {
-    name: 'pointOfContact',
-    type: 'text',
-    access: {
-      read: eventManagerFieldAccess,
-    },
-    admin: {
-      position: 'sidebar',
-    },
-  },
-  {
-    name: 'email',
-    type: 'email',
-    access: {
-      read: eventManagerFieldAccess,
-    },
-    admin: {
-      position: 'sidebar',
-    },
-  },
-  {
-    name: 'phone',
-    type: 'text',
-    access: {
-      read: eventManagerFieldAccess,
-    },
-    admin: {
-      condition: (data) => data?.visibility === 'private',
-      position: 'sidebar',
-    },
-  },
-  {
-    name: 'otherInfo',
-    type: 'textarea',
-    access: {
-      read: eventManagerFieldAccess,
-    },
-    admin: {
-      // Staff-only via read access above, so it is safe on public events too.
-      description: 'Staff-only notes (never shown on the website)',
-      position: 'sidebar',
-    },
+    type: 'collapsible',
+    label: 'Booking & contact',
+    admin: { initCollapsed: true },
+    fields: [
+      {
+        name: 'attendees',
+        label: 'Expected attendees',
+        type: 'number',
+        access: { read: eventManagerFieldAccess },
+        admin: {
+          description: 'Expected or registered attendance. Admins and event managers only.',
+        },
+      },
+      {
+        name: 'pointOfContact',
+        label: 'Contact name',
+        type: 'text',
+        access: { read: eventManagerFieldAccess },
+      },
+      {
+        type: 'row',
+        fields: [
+          {
+            name: 'email',
+            label: 'Contact email',
+            type: 'email',
+            access: { read: eventManagerFieldAccess },
+            admin: { width: '50%' },
+          },
+          {
+            name: 'phone',
+            label: 'Contact phone',
+            type: 'text',
+            access: { read: eventManagerFieldAccess },
+            admin: { width: '50%', condition: (data) => data?.visibility === 'private' },
+          },
+        ],
+      },
+      {
+        name: 'otherInfo',
+        label: 'Booking notes',
+        type: 'textarea',
+        access: { read: eventManagerFieldAccess },
+        admin: {
+          rows: 3,
+          description: 'Admins and event managers only. Never shown on the website.',
+        },
+      },
+    ],
   },
 ]

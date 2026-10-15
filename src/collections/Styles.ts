@@ -10,23 +10,27 @@ export const Styles: CollectionConfig = {
     delete: adminAccess,
   },
   admin: {
-    hidden: true,
+    hidden: false,
     useAsTitle: 'name',
     defaultColumns: ['name'],
     pagination: {
       defaultLimit: 100,
     },
+    group: 'Beer Catalog',
   },
   fields: [
     {
       name: 'name',
-      label: 'Name',
+      label: 'Style name',
       type: 'text',
       required: true,
       unique: true,
       admin: {
-        description: 'Beer style name (e.g., IPA, Stout, Pale Ale)',
+        description:
+          'Reuse an existing style, e.g. IPA or Stout. Renaming changes the label on linked beers.',
       },
     },
   ],
+  labels: { singular: 'Beer Style', plural: 'Beer Styles' },
+  defaultSort: 'name',
 }

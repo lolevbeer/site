@@ -8,7 +8,7 @@ const seoFields: Field[] = [
   {
     name: 'title',
     type: 'text',
-    label: 'Meta title',
+    label: 'Search-result title',
     admin: {
       description:
         'Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "• Lolev Beer" on hub pages; the site title template adds it.',
@@ -17,7 +17,7 @@ const seoFields: Field[] = [
   {
     name: 'description',
     type: 'textarea',
-    label: 'Meta description',
+    label: 'Search-result description',
     maxLength: 320,
     admin: {
       rows: 3,
@@ -27,26 +27,26 @@ const seoFields: Field[] = [
   {
     name: 'ogTitle',
     type: 'text',
-    label: 'Open Graph title',
+    label: 'Social-share title',
     admin: {
-      description: 'Optional. Defaults to the meta title (plus site name where applicable).',
+      description: 'Optional. Defaults to Search-result title (plus site name where applicable).',
     },
   },
   {
     name: 'ogDescription',
     type: 'textarea',
-    label: 'Open Graph description',
+    label: 'Social-share description',
     maxLength: 320,
     admin: {
       rows: 2,
-      description: 'Optional. Defaults to the meta description.',
+      description: 'Optional. Defaults to Search-result description.',
     },
   },
   {
     name: 'ogImage',
     type: 'upload',
     relationTo: 'media',
-    label: 'Open Graph image',
+    label: 'Social-share image',
     admin: {
       description:
         'Optional social share image (1200×630 recommended). Falls back to the site default.',
@@ -64,7 +64,7 @@ const seoFields: Field[] = [
   {
     name: 'noIndex',
     type: 'checkbox',
-    label: 'Noindex',
+    label: 'Hide from search results',
     defaultValue: false,
     admin: {
       description:
@@ -98,7 +98,7 @@ const canonicalPathField: TextField = {
 const introField: Field = {
   name: 'intro',
   type: 'textarea',
-  label: 'Intro text',
+  label: 'Visible page introduction',
   admin: {
     rows: 3,
     description:
@@ -110,27 +110,30 @@ function seoGroup(
   name: string,
   label: string,
   description: string,
-  { sidebar = false, extraFields = [] as Field[] } = {},
+  extraFields: Field[] = [],
 ): GroupField {
   return {
     name,
     type: 'group',
     label,
-    admin: { ...(sidebar ? { position: 'sidebar' as const } : {}), description },
+    admin: { description },
     fields: [...seoFields, ...extraFields],
   }
 }
 
 /** Hub-page SEO group: no canonical (path is fixed per page key); `withIntro` adds the intro paragraph. */
 export const hubSeoGroup = (name: string, label: string, withIntro = false): GroupField =>
-  seoGroup(name, label, `Meta for ${label}. Blank fields keep the code defaults.`, {
-    extraFields: withIntro ? [introField] : [],
-  })
+  seoGroup(
+    name,
+    label,
+    `Meta for ${label}. Blank fields keep the code defaults.`,
+    withIntro ? [introField] : [],
+  )
 
-/** Sidebar SEO group for collections with public document URLs. */
+/** SEO group for collections with public document URLs; callers place it (Beers, Jobs, Locations nest it in a "Search & sharing" disclosure). */
 export const documentSeoField = seoGroup(
   'seo',
   'SEO',
   'Optional overrides for this document’s public page. Blank fields keep the auto-generated title and description.',
-  { sidebar: true, extraFields: [canonicalPathField] },
+  [canonicalPathField],
 )

@@ -73,21 +73,21 @@ export interface Config {
     tags: Tag;
     menus: Menu;
     products: Product;
+    locations: Location;
+    'holiday-hours': HolidayHour;
     events: Event;
     'donation-requests': DonationRequest;
     'event-inquiries': EventInquiry;
-    jobs: Job;
-    'job-applications': JobApplication;
     'recurring-events': RecurringEvent;
     food: Food;
     'food-vendors': FoodVendor;
-    'recurring-food-schedules': RecurringFoodSchedule;
-    'recurring-food-exclusions': RecurringFoodExclusion;
-    users: User;
-    locations: Location;
-    'holiday-hours': HolidayHour;
+    jobs: Job;
+    'job-applications': JobApplication;
     distributors: Distributor;
     faqs: Faq;
+    users: User;
+    'recurring-food-schedules': RecurringFoodSchedule;
+    'recurring-food-exclusions': RecurringFoodExclusion;
     media: Media;
     'payload-kv': PayloadKv;
     'payload-jobs': PayloadJob;
@@ -107,21 +107,21 @@ export interface Config {
     tags: TagsSelect<false> | TagsSelect<true>;
     menus: MenusSelect<false> | MenusSelect<true>;
     products: ProductsSelect<false> | ProductsSelect<true>;
+    locations: LocationsSelect<false> | LocationsSelect<true>;
+    'holiday-hours': HolidayHoursSelect<false> | HolidayHoursSelect<true>;
     events: EventsSelect<false> | EventsSelect<true>;
     'donation-requests': DonationRequestsSelect<false> | DonationRequestsSelect<true>;
     'event-inquiries': EventInquiriesSelect<false> | EventInquiriesSelect<true>;
-    jobs: JobsSelect<false> | JobsSelect<true>;
-    'job-applications': JobApplicationsSelect<false> | JobApplicationsSelect<true>;
     'recurring-events': RecurringEventsSelect<false> | RecurringEventsSelect<true>;
     food: FoodSelect<false> | FoodSelect<true>;
     'food-vendors': FoodVendorsSelect<false> | FoodVendorsSelect<true>;
-    'recurring-food-schedules': RecurringFoodSchedulesSelect<false> | RecurringFoodSchedulesSelect<true>;
-    'recurring-food-exclusions': RecurringFoodExclusionsSelect<false> | RecurringFoodExclusionsSelect<true>;
-    users: UsersSelect<false> | UsersSelect<true>;
-    locations: LocationsSelect<false> | LocationsSelect<true>;
-    'holiday-hours': HolidayHoursSelect<false> | HolidayHoursSelect<true>;
+    jobs: JobsSelect<false> | JobsSelect<true>;
+    'job-applications': JobApplicationsSelect<false> | JobApplicationsSelect<true>;
     distributors: DistributorsSelect<false> | DistributorsSelect<true>;
     faqs: FaqsSelect<false> | FaqsSelect<true>;
+    users: UsersSelect<false> | UsersSelect<true>;
+    'recurring-food-schedules': RecurringFoodSchedulesSelect<false> | RecurringFoodSchedulesSelect<true>;
+    'recurring-food-exclusions': RecurringFoodExclusionsSelect<false> | RecurringFoodExclusionsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-jobs': PayloadJobsSelect<false> | PayloadJobsSelect<true>;
@@ -200,15 +200,18 @@ export interface Beer {
   style: string | Style;
   glass: 'pint' | 'stein' | 'teku' | 'uha';
   abv: number;
+  /**
+   * Customer-facing description on the beer page.
+   */
   description?: string | null;
   hops?: string | null;
   /**
-   * Optional (search existing or add a new one)
+   * One optional reusable label. Search existing tags or add one.
    */
   tag?: (string | null) | Tag;
   draftPrice: number;
   /**
-   * Set automatically from the draft price unless "Half Pour Only" is on
+   * Calculated from Full pour unless Half pours only is on; then use the price entered here.
    */
   halfPour?: number | null;
   /**
@@ -235,7 +238,7 @@ export interface Beer {
    */
   labelMetalness?: (string | null) | Media;
   /**
-   * Generated can-rotation sprite sheet (PNG; animated in CSS on menu displays)
+   * Generated can-rotation sprite sheet (WebP; animated in CSS on menu displays)
    */
   labelVideo?: (string | null) | Media;
   /**
@@ -304,11 +307,11 @@ export interface Beer {
      */
     description?: string | null;
     /**
-     * Optional. Defaults to the meta title (plus site name where applicable).
+     * Optional. Defaults to Search-result title (plus site name where applicable).
      */
     ogTitle?: string | null;
     /**
-     * Optional. Defaults to the meta description.
+     * Optional. Defaults to Search-result description.
      */
     ogDescription?: string | null;
     /**
@@ -340,17 +343,17 @@ export interface User {
   id: string;
   name?: string | null;
   /**
-   * Slack member ID (e.g. U01ABCDEF). Filled in automatically when the Slack profile email matches this account — set it manually only if the emails differ.
+   * Multiple roles are allowed. Admins change existing roles/assignments. Lead bartenders can invite bartenders for their own taprooms and record line cleaning; managers edit their respective content.
    */
-  slackUserId?: string | null;
+  roles: ('admin' | 'event-manager' | 'beer-manager' | 'food-manager' | 'lead-bartender' | 'bartender')[];
   /**
    * Assign bartenders to the locations whose menus they may access. Users without an assignment cannot access menu drafts.
    */
   locations?: (string | Location)[] | null;
   /**
-   * Admins can manage users and all content. Event/Beer/Food Managers can manage their respective collections. Lead Bartenders can update line cleaning dates. Bartenders can update menus. Users can have multiple roles.
+   * Slack member ID (e.g. U01ABCDEF). Filled in automatically when the Slack profile email matches this account — set it manually only if the emails differ.
    */
-  roles: ('admin' | 'event-manager' | 'beer-manager' | 'food-manager' | 'lead-bartender' | 'bartender')[];
+  slackUserId?: string | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -382,66 +385,15 @@ export interface Location {
    * Admin correction: choose a date, then save this location.
    */
   linesLastCleaned?: string | null;
+  name: string;
   /**
    * Is this location currently active?
    */
   active?: boolean | null;
-  name: string;
-  /**
-   * The draft menu shown for this location on the homepage and /<location> page (e.g. /lawrenceville). Only published menus appear. Leave blank to hide it.
-   */
-  draftMenu?: (string | null) | Menu;
-  /**
-   * The cans menu shown for this location on the homepage and /<location> page (e.g. /lawrenceville). Only published menus appear. Leave blank to hide it.
-   */
-  cansMenu?: (string | null) | Menu;
-  /**
-   * Optional short paragraph under the location heading for local SEO. Leave blank to show nothing.
-   */
-  intro?: string | null;
   /**
    * Timezone for this location's hours
    */
   timezone?: ('America/New_York' | 'America/Chicago' | 'America/Denver' | 'America/Los_Angeles') | null;
-  /**
-   * Auto-generated from name (lowercase, spaces to dashes)
-   */
-  slug?: string | null;
-  /**
-   * Former slugs. /<alias> redirects to the current page and /e/<alias> still shows the events board. A rename adds the old slug automatically. Browsers cache the redirect, so a deleted alias can keep sending past visitors here; avoid reusing it as another location's slug.
-   */
-  aliases?: string[] | null;
-  basicInfo?: {
-    phone?: string | null;
-    email?: string | null;
-  };
-  address?: {
-    street?: string | null;
-    city?: string | null;
-    state?: string | null;
-    zip?: string | null;
-    /**
-     * Custom Google Maps or directions link for this location
-     */
-    directionsUrl?: string | null;
-  };
-  /**
-   * Longitude, Latitude (e.g. -79.960098, 40.465372)
-   *
-   * @minItems 2
-   * @maxItems 2
-   */
-  coordinates?: [number, number] | null;
-  images?: {
-    /**
-     * Image shown on location cards (recommended: 800x600px)
-     */
-    card?: (string | null) | Media;
-    /**
-     * Hero/banner image for this location (recommended: 1920x1080px)
-     */
-    hero?: (string | null) | Media;
-  };
   monday?: {
     open?: string | null;
     close?: string | null;
@@ -471,6 +423,57 @@ export interface Location {
     close?: string | null;
   };
   /**
+   * The draft menu shown for this location on the homepage and /<location> page (e.g. /lawrenceville). Only published menus appear. Leave blank to hide it.
+   */
+  draftMenu?: (string | null) | Menu;
+  /**
+   * The cans menu shown for this location on the homepage and /<location> page (e.g. /lawrenceville). Only published menus appear. Leave blank to hide it.
+   */
+  cansMenu?: (string | null) | Menu;
+  basicInfo?: {
+    phone?: string | null;
+    email?: string | null;
+  };
+  address?: {
+    street?: string | null;
+    city?: string | null;
+    state?: string | null;
+    zip?: string | null;
+    /**
+     * Custom Google Maps or directions link for this location
+     */
+    directionsUrl?: string | null;
+  };
+  /**
+   * Optional paragraph under the public location heading. Blank shows nothing.
+   */
+  intro?: string | null;
+  images?: {
+    /**
+     * Image shown on location cards (recommended: 800x600px)
+     */
+    card?: (string | null) | Media;
+    /**
+     * Hero/banner image for this location (recommended: 1920x1080px)
+     */
+    hero?: (string | null) | Media;
+  };
+  /**
+   * Auto-generated from name (lowercase, spaces to dashes)
+   */
+  slug?: string | null;
+  /**
+   * Former slugs. /<alias> redirects to the current page and /e/<alias> still shows the events board. A rename adds the old slug automatically. Browsers cache the redirect, so a deleted alias can keep sending past visitors here; avoid reusing it as another location's slug.
+   */
+  aliases?: string[] | null;
+  /**
+   * Longitude, Latitude (e.g. -79.960098, 40.465372)
+   *
+   * @minItems 2
+   * @maxItems 2
+   */
+  coordinates?: [number, number] | null;
+  /**
    * Optional overrides for this document’s public page. Blank fields keep the auto-generated title and description.
    */
   seo?: {
@@ -483,11 +486,11 @@ export interface Location {
      */
     description?: string | null;
     /**
-     * Optional. Defaults to the meta title (plus site name where applicable).
+     * Optional. Defaults to Search-result title (plus site name where applicable).
      */
     ogTitle?: string | null;
     /**
-     * Optional. Defaults to the meta description.
+     * Optional. Defaults to Search-result description.
      */
     ogDescription?: string | null;
     /**
@@ -525,14 +528,37 @@ export interface Menu {
    */
   name: string;
   /**
-   * Menu description
-   */
-  description?: string | null;
-  /**
    * Required to generate menu URL
    */
   location: string | Location;
   type: 'cans' | 'draft' | 'other';
+  /**
+   * Leave a product blank for an empty tap. Items may appear only once. Cans save newest recipe first, followed by other items.
+   */
+  items: {
+    product?:
+      | ({
+          relationTo: 'beers';
+          value: string | Beer;
+        } | null)
+      | ({
+          relationTo: 'products';
+          value: string | Product;
+        } | null);
+    /**
+     * Blank means no override; use the catalog price.
+     */
+    price?: string | null;
+    /**
+     * Optional promotion shown only on the fullscreen can menu.
+     */
+    promotion?: string | null;
+    id?: string | null;
+  }[];
+  /**
+   * Optional page/social description. Also used as the menu label in Slack when set; not shown on the menu board.
+   */
+  description?: string | null;
   /**
    * Auto-generated from location and type, but you can override it manually
    */
@@ -546,57 +572,39 @@ export interface Menu {
    */
   animateCans?: boolean | null;
   /**
-   * Ideal number of cans or draft lines on this menu
+   * Ideal stocked count, not an enforced maximum or the number of empty tap rows.
    */
   targetItemCount?: number | null;
-  items: {
-    product?:
-      | ({
-          relationTo: 'beers';
-          value: string | Beer;
-        } | null)
-      | ({
-          relationTo: 'products';
-          value: string | Product;
-        } | null);
-    /**
-     * Sale Price (optional override)
-     */
-    price?: string | null;
-    /**
-     * Optional promotion shown only on the fullscreen can menu.
-     */
-    promotion?: string | null;
-    id?: string | null;
-  }[];
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
 }
 /**
+ * Other items selectable on menus. Maintain brewery beers in Beer Catalog.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "products".
  */
 export interface Product {
   id: string;
   name: string;
-  description?: string | null;
   /**
-   * Optional grouping on Other Things menus. Uncategorized products remain visible.
+   * Optional grouping on Other Things menus. Uncategorized items remain visible.
    */
   category?: ('cocktails-cider' | 'soft-drinks' | 'snacks-merch') | null;
   /**
-   * Press "Enter" or "Tab" after entering option to add another
+   * Price text shown on menus, e.g. "$5.00".
+   */
+  price?: string | null;
+  description?: string | null;
+  /**
+   * Choices shown with this item. Press Enter or Tab after each option.
    */
   options?: string[] | null;
   /**
-   * Alcohol by volume (%)
+   * Alcohol by volume, if applicable.
    */
   abv?: number | null;
-  /**
-   * Display price (e.g., "$5.00")
-   */
-  price?: string | null;
   /**
    * Product from another brewery. Shows "Guest Tap" badge on menu.
    */
@@ -615,7 +623,7 @@ export interface Product {
 export interface Media {
   id: string;
   /**
-   * Alternative text for the image (for accessibility)
+   * Describe meaningful content, e.g. Guests at the Lawrenceville taproom. Do not use the filename. Later edits require an admin.
    */
   alt: string;
   prefix?: string | null;
@@ -681,7 +689,7 @@ export interface Media {
 export interface Style {
   id: string;
   /**
-   * Beer style name (e.g., IPA, Stout, Pale Ale)
+   * Reuse an existing style, e.g. IPA or Stout. Renaming changes the label on linked beers.
    */
   name: string;
   updatedAt: string;
@@ -694,7 +702,7 @@ export interface Style {
 export interface Tag {
   id: string;
   /**
-   * Tag name (e.g., Seasonal, Limited, Award Winner)
+   * Reusable label, e.g. Seasonal or Award Winner. Each beer selects one tag; renaming updates linked labels.
    */
   name: string;
   updatedAt: string;
@@ -712,16 +720,63 @@ export interface BeerReview {
   text: string;
   reviewedAt?: string | null;
   /**
+   * Required unique link identifying this review.
+   */
+  sourceUrl: string;
+  source: 'untappd';
+  /**
    * Original date text supplied by Untappd when an exact timestamp is unavailable.
    */
   sourceDate?: string | null;
-  source: 'untappd';
-  sourceUrl: string;
   externalImageUrl?: string | null;
   /**
    * Approved reviews can be included in public beer data.
    */
   approved: boolean;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Holiday and special hours overrides for locations
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "holiday-hours".
+ */
+export interface HolidayHour {
+  id: string;
+  /**
+   * Name for this override (e.g., "Christmas Day", "New Year's Eve")
+   */
+  name: string;
+  /**
+   * The date this override applies to
+   */
+  date: string;
+  /**
+   * Which location(s) this override applies to
+   */
+  locations: (string | Location)[];
+  /**
+   * Type of override
+   */
+  type: 'closed' | 'modified';
+  /**
+   * Override hours (only used when type is "Modified Hours")
+   */
+  hours?: {
+    /**
+     * Opening time
+     */
+    open?: string | null;
+    /**
+     * Closing time
+     */
+    close?: string | null;
+  };
+  /**
+   * Optional note to display (e.g., "Closed for the holiday")
+   */
+  note?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -732,39 +787,39 @@ export interface BeerReview {
 export interface Event {
   id: string;
   /**
-   * Public events will be displayed on the site
+   * Public events appear on the website. Private events remain in staff scheduling.
    */
   visibility: 'public' | 'private';
   /**
-   * If this is a public event, this will be listed on the website
+   * Shown on the website when the event is public.
    */
   organizer: string;
+  location: string | Location;
   date: string;
   startTime?: string | null;
   endTime?: string | null;
-  location: string | Location;
   /**
-   * This will be linked on the website
+   * Internal notes for signed-in staff only. Never shown on the website.
+   */
+  description?: string | null;
+  /**
+   * Public link shown with the event.
    */
   site?: string | null;
   tags?: ('music' | 'utensils' | 'puzzle' | 'sports' | 'beer-release' | 'mic-vocal')[] | null;
   /**
-   * Internal notes for staff. Never shown on the website.
-   */
-  description?: string | null;
-  /**
-   * Optional photo for Event rich results (falls back to the site OG image)
+   * Optional image for search results; falls back to the site social image.
    */
   image?: (string | null) | Media;
   /**
-   * Expected or registered attendees
+   * Expected or registered attendance. Admins and event managers only.
    */
   attendees?: number | null;
   pointOfContact?: string | null;
   email?: string | null;
   phone?: string | null;
   /**
-   * Staff-only notes (never shown on the website)
+   * Admins and event managers only. Never shown on the website.
    */
   otherInfo?: string | null;
   updatedAt: string;
@@ -779,30 +834,33 @@ export interface Event {
 export interface DonationRequest {
   id: string;
   submissionKey?: string | null;
+  /**
+   * Records the staff decision only; does not send a reply.
+   */
   status?: ('new' | 'approved' | 'declined') | null;
-  askType: 'product' | 'taproom-night';
   organizationName: string;
-  contactName: string;
-  email: string;
-  phone: string;
-  mission: string;
-  howHeard: string;
-  previousDonation: 'yes' | 'no';
+  askType: 'product' | 'taproom-night';
   eventName: string;
   eventDate: string;
-  venue: string;
   attendees: number;
-  requestDetails: string;
-  howServed?: string | null;
-  recognition: string;
-  whyLolev: string;
-  pickupName?: string | null;
+  venue: string;
   /**
    * Location slug from the public form, when the ask is a taproom night.
    */
   taproom?: string | null;
+  requestDetails: string;
+  howServed?: string | null;
+  pickupName?: string | null;
+  contactName: string;
+  email: string;
+  phone: string;
+  mission: string;
+  previousDonation: 'yes' | 'no';
+  recognition: string;
+  whyLolev: string;
+  howHeard: string;
   /**
-   * When the #events ping succeeded. Empty means staff should check Slack.
+   * Set when the Slack ping succeeds. Empty means no successful ping is recorded.
    */
   slackNotifiedAt?: string | null;
   slackError?: string | null;
@@ -811,27 +869,144 @@ export interface DonationRequest {
   createdAt: string;
 }
 /**
- * Private-event inquiries from /events. Rows are created only by the public form.
+ * Requests from /events, not confirmed bookings. Marking Booked does not create an Event; enter that booking separately.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "event-inquiries".
  */
 export interface EventInquiry {
   id: string;
+  submissionKey?: string | null;
   status?: ('new' | 'contacted' | 'booked' | 'declined') | null;
+  /**
+   * Requested date, not a confirmed booking.
+   */
+  preferredDate: string;
+  taproom: string | Location;
+  headcount: number;
+  message?: string | null;
   name: string;
   email: string;
   phone: string;
-  preferredDate: string;
-  headcount: number;
-  taproom: string | Location;
-  message?: string | null;
   /**
-   * When the #events ping succeeded. Empty means staff should check Slack.
+   * Set when the Slack ping succeeds. Empty means no successful ping is recorded.
    */
   slackNotifiedAt?: string | null;
   slackError?: string | null;
   ipHash?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Monthly series for one calendar year. A dated event with the same name, taproom and date replaces the entire generated occurrence.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "recurring-events".
+ */
+export interface RecurringEvent {
+  id: string;
+  /**
+   * Uncheck to stop expanding this series into scheduled events.
+   */
+  active: boolean;
+  /**
+   * Public events appear on the website. Private events remain in staff scheduling.
+   */
+  visibility: 'public' | 'private';
+  /**
+   * Shown on the website when the event is public.
+   */
+  organizer: string;
+  location: string | Location;
+  /**
+   * Applies only to this calendar year.
+   */
+  year: number;
+  day: 'sunday' | 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday';
+  /**
+   * For example, first and third Tuesday. Fifth runs only in months with a fifth occurrence.
+   */
+  occurrences: ('first' | 'second' | 'third' | 'fourth' | 'fifth')[];
+  startTime?: string | null;
+  endTime?: string | null;
+  /**
+   * Optional dates in this year when the recurring event will not happen.
+   */
+  excludedDates?:
+    | {
+        date: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Internal notes for signed-in staff only. Never shown on the website.
+   */
+  description?: string | null;
+  /**
+   * Public link shown with the event.
+   */
+  site?: string | null;
+  tags?: ('music' | 'utensils' | 'puzzle' | 'sports' | 'beer-release' | 'mic-vocal')[] | null;
+  /**
+   * Optional image for search results; falls back to the site social image.
+   */
+  image?: (string | null) | Media;
+  /**
+   * Expected or registered attendance. Admins and event managers only.
+   */
+  attendees?: number | null;
+  pointOfContact?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  /**
+   * Admins and event managers only. Never shown on the website.
+   */
+  otherInfo?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Dated vendor bookings. To replace recurring food, also skip that recurring date in Recurring Food Schedule.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "food".
+ */
+export interface Food {
+  id: string;
+  /**
+   * Auto-populated vendor name for display
+   */
+  vendorName?: string | null;
+  /**
+   * Food vendor serving on this date.
+   */
+  vendor: string | FoodVendor;
+  location: string | Location;
+  date: string;
+  startTime?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "food-vendors".
+ */
+export interface FoodVendor {
+  id: string;
+  /**
+   * Shown on the public food schedule.
+   */
+  name: string;
+  site?: string | null;
+  logo?: (string | null) | Media;
+  /**
+   * Signed-in staff only.
+   */
+  email?: string | null;
+  /**
+   * Signed-in staff only.
+   */
+  phone?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -844,10 +1019,6 @@ export interface EventInquiry {
 export interface Job {
   id: string;
   title: string;
-  /**
-   * Auto-generated from the title if left blank.
-   */
-  slug?: string | null;
   location: string | Location;
   employmentType?: ('full-time' | 'part-time' | 'seasonal') | null;
   /**
@@ -856,10 +1027,17 @@ export interface Job {
   summary?: string | null;
   description: string;
   /**
-   * Optional last day to apply. Sent to Google as the posting’s expiry. This does not hide the job: also untick Active when it closes.
+   * Saving a published opening makes it visible immediately. Closing date alone does not unpublish it.
+   */
+  active?: boolean | null;
+  /**
+   * Optional last day to apply. Sent to Google as the posting’s expiry. This does not hide the job: also uncheck Published on website when it closes.
    */
   closesOn?: string | null;
-  active?: boolean | null;
+  /**
+   * Auto-generated from the title if left blank.
+   */
+  slug?: string | null;
   /**
    * Optional overrides for this document’s public page. Blank fields keep the auto-generated title and description.
    */
@@ -873,11 +1051,11 @@ export interface Job {
      */
     description?: string | null;
     /**
-     * Optional. Defaults to the meta title (plus site name where applicable).
+     * Optional. Defaults to Search-result title (plus site name where applicable).
      */
     ogTitle?: string | null;
     /**
-     * Optional. Defaults to the meta description.
+     * Optional. Defaults to Search-result description.
      */
     ogDescription?: string | null;
     /**
@@ -909,11 +1087,14 @@ export interface Job {
 export interface JobApplication {
   id: string;
   submissionKey?: string | null;
-  job: string | Job;
   name: string;
+  job: string | Job;
   email: string;
   phone: string;
   message: string;
+  /**
+   * Set when the Slack ping succeeds. Empty means no successful ping is recorded.
+   */
   slackNotifiedAt?: string | null;
   slackError?: string | null;
   ipHash?: string | null;
@@ -921,173 +1102,8 @@ export interface JobApplication {
   createdAt: string;
 }
 /**
- * Manage events that repeat monthly without creating a dated event for every occurrence.
+ * Public beer-map locations. Bulk import in Tools > Sync > Distributor CSV; preview with Dry run first.
  *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "recurring-events".
- */
-export interface RecurringEvent {
-  id: string;
-  active: boolean;
-  /**
-   * Public events will be displayed on the site
-   */
-  visibility: 'public' | 'private';
-  /**
-   * If this is a public event, this will be listed on the website
-   */
-  organizer: string;
-  year: number;
-  day: 'sunday' | 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday';
-  /**
-   * Choose one or more, such as first and third.
-   */
-  occurrences: ('first' | 'second' | 'third' | 'fourth' | 'fifth')[];
-  location: string | Location;
-  startTime?: string | null;
-  endTime?: string | null;
-  /**
-   * Optional dates in this year when the recurring event will not happen.
-   */
-  excludedDates?:
-    | {
-        date: string;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * This will be linked on the website
-   */
-  site?: string | null;
-  tags?: ('music' | 'utensils' | 'puzzle' | 'sports' | 'beer-release' | 'mic-vocal')[] | null;
-  /**
-   * Internal notes for staff. Never shown on the website.
-   */
-  description?: string | null;
-  /**
-   * Optional photo for Event rich results (falls back to the site OG image)
-   */
-  image?: (string | null) | Media;
-  /**
-   * Expected or registered attendees
-   */
-  attendees?: number | null;
-  pointOfContact?: string | null;
-  email?: string | null;
-  phone?: string | null;
-  /**
-   * Staff-only notes (never shown on the website)
-   */
-  otherInfo?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "food".
- */
-export interface Food {
-  id: string;
-  /**
-   * Select food vendor
-   */
-  vendor: string | FoodVendor;
-  /**
-   * Auto-populated vendor name for display
-   */
-  vendorName?: string | null;
-  date: string;
-  location: string | Location;
-  startTime?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "food-vendors".
- */
-export interface FoodVendor {
-  id: string;
-  name: string;
-  email?: string | null;
-  phone?: string | null;
-  site?: string | null;
-  logo?: (string | null) | Media;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "recurring-food-schedules".
- */
-export interface RecurringFoodSchedule {
-  id: string;
-  location: string | Location;
-  year: number;
-  vendor: string | FoodVendor;
-  day: 'sunday' | 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday';
-  occurrence: 'first' | 'second' | 'third' | 'fourth' | 'fifth';
-  active: boolean;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "recurring-food-exclusions".
- */
-export interface RecurringFoodExclusion {
-  id: string;
-  location: string | Location;
-  date: string;
-  reason?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * Holiday and special hours overrides for locations
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "holiday-hours".
- */
-export interface HolidayHour {
-  id: string;
-  /**
-   * Name for this override (e.g., "Christmas Day", "New Year's Eve")
-   */
-  name: string;
-  /**
-   * Which location(s) this override applies to
-   */
-  locations: (string | Location)[];
-  /**
-   * The date this override applies to
-   */
-  date: string;
-  /**
-   * Type of override
-   */
-  type: 'closed' | 'modified';
-  /**
-   * Override hours (only used when type is "Modified Hours")
-   */
-  hours?: {
-    /**
-     * Opening time
-     */
-    open?: string | null;
-    /**
-     * Closing time
-     */
-    close?: string | null;
-  };
-  /**
-   * Optional note to display (e.g., "Closed for the holiday")
-   */
-  note?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "distributors".
  */
@@ -1097,6 +1113,14 @@ export interface Distributor {
    * Business or location name
    */
   name: string;
+  /**
+   * Type of customer/location
+   */
+  customerType?: ('Retail' | 'On Premise' | 'Home-D') | null;
+  /**
+   * Two-letter ISO country code (e.g., NL, JP, GB). Leave blank for the United States.
+   */
+  country?: string | null;
   /**
    * Full street address
    */
@@ -1113,14 +1137,6 @@ export interface Distributor {
    * ZIP or postal code
    */
   zip?: string | null;
-  /**
-   * Two-letter ISO country code (e.g., NL, JP, GB). Leave blank for the United States.
-   */
-  country?: string | null;
-  /**
-   * Type of customer/location
-   */
-  customerType?: ('Retail' | 'On Premise' | 'Home-D') | null;
   /**
    * US venues only: the state or DC. The CSV import defaults it to the state. Leave blank outside the US; those venues group by country.
    */
@@ -1180,13 +1196,6 @@ export interface Distributor {
       )
     | null;
   /**
-   * Geographic coordinates [longitude, latitude]
-   *
-   * @minItems 2
-   * @maxItems 2
-   */
-  location: [number, number];
-  /**
    * Contact phone number
    */
   phone?: string | null;
@@ -1194,6 +1203,13 @@ export interface Distributor {
    * Website URL, starting with http:// or https://
    */
   website?: string | null;
+  /**
+   * Geographic coordinates [longitude, latitude]
+   *
+   * @minItems 2
+   * @maxItems 2
+   */
+  location: [number, number];
   /**
    * Whether this location is currently active
    */
@@ -1225,6 +1241,40 @@ export interface Faq {
    * Uncheck to hide this FAQ from the site
    */
   active?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Backing records for Recurring Food Schedule. Use the grid for routine changes.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "recurring-food-schedules".
+ */
+export interface RecurringFoodSchedule {
+  id: string;
+  location: string | Location;
+  year: number;
+  day: 'sunday' | 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday';
+  occurrence: 'first' | 'second' | 'third' | 'fourth' | 'fifth';
+  vendor: string | FoodVendor;
+  active: boolean;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Skipped location/date records managed through Recurring Food Schedule; not vendor-specific.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "recurring-food-exclusions".
+ */
+export interface RecurringFoodExclusion {
+  id: string;
+  location: string | Location;
+  date: string;
+  /**
+   * Optional, publicly readable. Do not enter confidential notes.
+   */
+  reason?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1388,6 +1438,14 @@ export interface PayloadLockedDocument {
         value: string | Product;
       } | null)
     | ({
+        relationTo: 'locations';
+        value: string | Location;
+      } | null)
+    | ({
+        relationTo: 'holiday-hours';
+        value: string | HolidayHour;
+      } | null)
+    | ({
         relationTo: 'events';
         value: string | Event;
       } | null)
@@ -1398,14 +1456,6 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'event-inquiries';
         value: string | EventInquiry;
-      } | null)
-    | ({
-        relationTo: 'jobs';
-        value: string | Job;
-      } | null)
-    | ({
-        relationTo: 'job-applications';
-        value: string | JobApplication;
       } | null)
     | ({
         relationTo: 'recurring-events';
@@ -1420,24 +1470,12 @@ export interface PayloadLockedDocument {
         value: string | FoodVendor;
       } | null)
     | ({
-        relationTo: 'recurring-food-schedules';
-        value: string | RecurringFoodSchedule;
+        relationTo: 'jobs';
+        value: string | Job;
       } | null)
     | ({
-        relationTo: 'recurring-food-exclusions';
-        value: string | RecurringFoodExclusion;
-      } | null)
-    | ({
-        relationTo: 'users';
-        value: string | User;
-      } | null)
-    | ({
-        relationTo: 'locations';
-        value: string | Location;
-      } | null)
-    | ({
-        relationTo: 'holiday-hours';
-        value: string | HolidayHour;
+        relationTo: 'job-applications';
+        value: string | JobApplication;
       } | null)
     | ({
         relationTo: 'distributors';
@@ -1446,6 +1484,18 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'faqs';
         value: string | Faq;
+      } | null)
+    | ({
+        relationTo: 'users';
+        value: string | User;
+      } | null)
+    | ({
+        relationTo: 'recurring-food-schedules';
+        value: string | RecurringFoodSchedule;
+      } | null)
+    | ({
+        relationTo: 'recurring-food-exclusions';
+        value: string | RecurringFoodExclusion;
       } | null)
     | ({
         relationTo: 'media';
@@ -1554,9 +1604,9 @@ export interface BeerReviewsSelect<T extends boolean = true> {
   rating?: T;
   text?: T;
   reviewedAt?: T;
-  sourceDate?: T;
-  source?: T;
   sourceUrl?: T;
+  source?: T;
+  sourceDate?: T;
   externalImageUrl?: T;
   approved?: T;
   updatedAt?: T;
@@ -1587,13 +1637,8 @@ export interface TagsSelect<T extends boolean = true> {
 export interface MenusSelect<T extends boolean = true> {
   updatedBy?: T;
   name?: T;
-  description?: T;
   location?: T;
   type?: T;
-  url?: T;
-  themeMode?: T;
-  animateCans?: T;
-  targetItemCount?: T;
   items?:
     | T
     | {
@@ -1602,6 +1647,11 @@ export interface MenusSelect<T extends boolean = true> {
         promotion?: T;
         id?: T;
       };
+  description?: T;
+  url?: T;
+  themeMode?: T;
+  animateCans?: T;
+  targetItemCount?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -1612,243 +1662,15 @@ export interface MenusSelect<T extends boolean = true> {
  */
 export interface ProductsSelect<T extends boolean = true> {
   name?: T;
-  description?: T;
   category?: T;
+  price?: T;
+  description?: T;
   options?: T;
   abv?: T;
-  price?: T;
   guestTap?: T;
   collab?: T;
   updatedAt?: T;
   createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "events_select".
- */
-export interface EventsSelect<T extends boolean = true> {
-  visibility?: T;
-  organizer?: T;
-  date?: T;
-  startTime?: T;
-  endTime?: T;
-  location?: T;
-  site?: T;
-  tags?: T;
-  description?: T;
-  image?: T;
-  attendees?: T;
-  pointOfContact?: T;
-  email?: T;
-  phone?: T;
-  otherInfo?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "donation-requests_select".
- */
-export interface DonationRequestsSelect<T extends boolean = true> {
-  submissionKey?: T;
-  status?: T;
-  askType?: T;
-  organizationName?: T;
-  contactName?: T;
-  email?: T;
-  phone?: T;
-  mission?: T;
-  howHeard?: T;
-  previousDonation?: T;
-  eventName?: T;
-  eventDate?: T;
-  venue?: T;
-  attendees?: T;
-  requestDetails?: T;
-  howServed?: T;
-  recognition?: T;
-  whyLolev?: T;
-  pickupName?: T;
-  taproom?: T;
-  slackNotifiedAt?: T;
-  slackError?: T;
-  ipHash?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "event-inquiries_select".
- */
-export interface EventInquiriesSelect<T extends boolean = true> {
-  status?: T;
-  name?: T;
-  email?: T;
-  phone?: T;
-  preferredDate?: T;
-  headcount?: T;
-  taproom?: T;
-  message?: T;
-  slackNotifiedAt?: T;
-  slackError?: T;
-  ipHash?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "jobs_select".
- */
-export interface JobsSelect<T extends boolean = true> {
-  title?: T;
-  slug?: T;
-  location?: T;
-  employmentType?: T;
-  summary?: T;
-  description?: T;
-  closesOn?: T;
-  active?: T;
-  seo?:
-    | T
-    | {
-        title?: T;
-        description?: T;
-        ogTitle?: T;
-        ogDescription?: T;
-        ogImage?: T;
-        keywords?: T;
-        noIndex?: T;
-        canonicalPath?: T;
-      };
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "job-applications_select".
- */
-export interface JobApplicationsSelect<T extends boolean = true> {
-  submissionKey?: T;
-  job?: T;
-  name?: T;
-  email?: T;
-  phone?: T;
-  message?: T;
-  slackNotifiedAt?: T;
-  slackError?: T;
-  ipHash?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "recurring-events_select".
- */
-export interface RecurringEventsSelect<T extends boolean = true> {
-  active?: T;
-  visibility?: T;
-  organizer?: T;
-  year?: T;
-  day?: T;
-  occurrences?: T;
-  location?: T;
-  startTime?: T;
-  endTime?: T;
-  excludedDates?:
-    | T
-    | {
-        date?: T;
-        id?: T;
-      };
-  site?: T;
-  tags?: T;
-  description?: T;
-  image?: T;
-  attendees?: T;
-  pointOfContact?: T;
-  email?: T;
-  phone?: T;
-  otherInfo?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "food_select".
- */
-export interface FoodSelect<T extends boolean = true> {
-  vendor?: T;
-  vendorName?: T;
-  date?: T;
-  location?: T;
-  startTime?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "food-vendors_select".
- */
-export interface FoodVendorsSelect<T extends boolean = true> {
-  name?: T;
-  email?: T;
-  phone?: T;
-  site?: T;
-  logo?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "recurring-food-schedules_select".
- */
-export interface RecurringFoodSchedulesSelect<T extends boolean = true> {
-  location?: T;
-  year?: T;
-  vendor?: T;
-  day?: T;
-  occurrence?: T;
-  active?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "recurring-food-exclusions_select".
- */
-export interface RecurringFoodExclusionsSelect<T extends boolean = true> {
-  location?: T;
-  date?: T;
-  reason?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users_select".
- */
-export interface UsersSelect<T extends boolean = true> {
-  name?: T;
-  slackUserId?: T;
-  locations?: T;
-  roles?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  email?: T;
-  resetPasswordToken?: T;
-  resetPasswordExpiration?: T;
-  salt?: T;
-  hash?: T;
-  resetPasswordRequestedAt?: T;
-  loginAttempts?: T;
-  lockUntil?: T;
-  sessions?:
-    | T
-    | {
-        id?: T;
-        createdAt?: T;
-        expiresAt?: T;
-      };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1857,36 +1679,9 @@ export interface UsersSelect<T extends boolean = true> {
 export interface LocationsSelect<T extends boolean = true> {
   markLinesCleanedToday?: T;
   linesLastCleaned?: T;
-  active?: T;
   name?: T;
-  draftMenu?: T;
-  cansMenu?: T;
-  intro?: T;
+  active?: T;
   timezone?: T;
-  slug?: T;
-  aliases?: T;
-  basicInfo?:
-    | T
-    | {
-        phone?: T;
-        email?: T;
-      };
-  address?:
-    | T
-    | {
-        street?: T;
-        city?: T;
-        state?: T;
-        zip?: T;
-        directionsUrl?: T;
-      };
-  coordinates?: T;
-  images?:
-    | T
-    | {
-        card?: T;
-        hero?: T;
-      };
   monday?:
     | T
     | {
@@ -1929,6 +1724,33 @@ export interface LocationsSelect<T extends boolean = true> {
         open?: T;
         close?: T;
       };
+  draftMenu?: T;
+  cansMenu?: T;
+  basicInfo?:
+    | T
+    | {
+        phone?: T;
+        email?: T;
+      };
+  address?:
+    | T
+    | {
+        street?: T;
+        city?: T;
+        state?: T;
+        zip?: T;
+        directionsUrl?: T;
+      };
+  intro?: T;
+  images?:
+    | T
+    | {
+        card?: T;
+        hero?: T;
+      };
+  slug?: T;
+  aliases?: T;
+  coordinates?: T;
   seo?:
     | T
     | {
@@ -1950,8 +1772,8 @@ export interface LocationsSelect<T extends boolean = true> {
  */
 export interface HolidayHoursSelect<T extends boolean = true> {
   name?: T;
-  locations?: T;
   date?: T;
+  locations?: T;
   type?: T;
   hours?:
     | T
@@ -1965,20 +1787,197 @@ export interface HolidayHoursSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "events_select".
+ */
+export interface EventsSelect<T extends boolean = true> {
+  visibility?: T;
+  organizer?: T;
+  location?: T;
+  date?: T;
+  startTime?: T;
+  endTime?: T;
+  description?: T;
+  site?: T;
+  tags?: T;
+  image?: T;
+  attendees?: T;
+  pointOfContact?: T;
+  email?: T;
+  phone?: T;
+  otherInfo?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "donation-requests_select".
+ */
+export interface DonationRequestsSelect<T extends boolean = true> {
+  submissionKey?: T;
+  status?: T;
+  organizationName?: T;
+  askType?: T;
+  eventName?: T;
+  eventDate?: T;
+  attendees?: T;
+  venue?: T;
+  taproom?: T;
+  requestDetails?: T;
+  howServed?: T;
+  pickupName?: T;
+  contactName?: T;
+  email?: T;
+  phone?: T;
+  mission?: T;
+  previousDonation?: T;
+  recognition?: T;
+  whyLolev?: T;
+  howHeard?: T;
+  slackNotifiedAt?: T;
+  slackError?: T;
+  ipHash?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "event-inquiries_select".
+ */
+export interface EventInquiriesSelect<T extends boolean = true> {
+  submissionKey?: T;
+  status?: T;
+  preferredDate?: T;
+  taproom?: T;
+  headcount?: T;
+  message?: T;
+  name?: T;
+  email?: T;
+  phone?: T;
+  slackNotifiedAt?: T;
+  slackError?: T;
+  ipHash?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "recurring-events_select".
+ */
+export interface RecurringEventsSelect<T extends boolean = true> {
+  active?: T;
+  visibility?: T;
+  organizer?: T;
+  location?: T;
+  year?: T;
+  day?: T;
+  occurrences?: T;
+  startTime?: T;
+  endTime?: T;
+  excludedDates?:
+    | T
+    | {
+        date?: T;
+        id?: T;
+      };
+  description?: T;
+  site?: T;
+  tags?: T;
+  image?: T;
+  attendees?: T;
+  pointOfContact?: T;
+  email?: T;
+  phone?: T;
+  otherInfo?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "food_select".
+ */
+export interface FoodSelect<T extends boolean = true> {
+  vendorName?: T;
+  vendor?: T;
+  location?: T;
+  date?: T;
+  startTime?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "food-vendors_select".
+ */
+export interface FoodVendorsSelect<T extends boolean = true> {
+  name?: T;
+  site?: T;
+  logo?: T;
+  email?: T;
+  phone?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "jobs_select".
+ */
+export interface JobsSelect<T extends boolean = true> {
+  title?: T;
+  location?: T;
+  employmentType?: T;
+  summary?: T;
+  description?: T;
+  active?: T;
+  closesOn?: T;
+  slug?: T;
+  seo?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        ogTitle?: T;
+        ogDescription?: T;
+        ogImage?: T;
+        keywords?: T;
+        noIndex?: T;
+        canonicalPath?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "job-applications_select".
+ */
+export interface JobApplicationsSelect<T extends boolean = true> {
+  submissionKey?: T;
+  name?: T;
+  job?: T;
+  email?: T;
+  phone?: T;
+  message?: T;
+  slackNotifiedAt?: T;
+  slackError?: T;
+  ipHash?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "distributors_select".
  */
 export interface DistributorsSelect<T extends boolean = true> {
   name?: T;
+  customerType?: T;
+  country?: T;
   address?: T;
   city?: T;
   state?: T;
   zip?: T;
-  country?: T;
-  customerType?: T;
   region?: T;
-  location?: T;
   phone?: T;
   website?: T;
+  location?: T;
   active?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1992,6 +1991,58 @@ export interface FaqsSelect<T extends boolean = true> {
   answer?: T;
   order?: T;
   active?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "users_select".
+ */
+export interface UsersSelect<T extends boolean = true> {
+  name?: T;
+  roles?: T;
+  locations?: T;
+  slackUserId?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  email?: T;
+  resetPasswordToken?: T;
+  resetPasswordExpiration?: T;
+  salt?: T;
+  hash?: T;
+  resetPasswordRequestedAt?: T;
+  loginAttempts?: T;
+  lockUntil?: T;
+  sessions?:
+    | T
+    | {
+        id?: T;
+        createdAt?: T;
+        expiresAt?: T;
+      };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "recurring-food-schedules_select".
+ */
+export interface RecurringFoodSchedulesSelect<T extends boolean = true> {
+  location?: T;
+  year?: T;
+  day?: T;
+  occurrence?: T;
+  vendor?: T;
+  active?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "recurring-food-exclusions_select".
+ */
+export interface RecurringFoodExclusionsSelect<T extends boolean = true> {
+  location?: T;
+  date?: T;
+  reason?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2154,6 +2205,9 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
  */
 export interface ComingSoon {
   id: string;
+  /**
+   * Choose a published beer, or leave Known beer blank and select a planned style. Adding a draft here does not publish it.
+   */
   beers?:
     | {
         /**
@@ -2289,11 +2343,11 @@ export interface SiteSeo {
        */
       description?: string | null;
       /**
-       * Optional. Defaults to the meta title (plus site name where applicable).
+       * Optional. Defaults to Search-result title (plus site name where applicable).
        */
       ogTitle?: string | null;
       /**
-       * Optional. Defaults to the meta description.
+       * Optional. Defaults to Search-result description.
        */
       ogDescription?: string | null;
       /**
@@ -2322,11 +2376,11 @@ export interface SiteSeo {
        */
       description?: string | null;
       /**
-       * Optional. Defaults to the meta title (plus site name where applicable).
+       * Optional. Defaults to Search-result title (plus site name where applicable).
        */
       ogTitle?: string | null;
       /**
-       * Optional. Defaults to the meta description.
+       * Optional. Defaults to Search-result description.
        */
       ogDescription?: string | null;
       /**
@@ -2359,11 +2413,11 @@ export interface SiteSeo {
        */
       description?: string | null;
       /**
-       * Optional. Defaults to the meta title (plus site name where applicable).
+       * Optional. Defaults to Search-result title (plus site name where applicable).
        */
       ogTitle?: string | null;
       /**
-       * Optional. Defaults to the meta description.
+       * Optional. Defaults to Search-result description.
        */
       ogDescription?: string | null;
       /**
@@ -2396,11 +2450,11 @@ export interface SiteSeo {
        */
       description?: string | null;
       /**
-       * Optional. Defaults to the meta title (plus site name where applicable).
+       * Optional. Defaults to Search-result title (plus site name where applicable).
        */
       ogTitle?: string | null;
       /**
-       * Optional. Defaults to the meta description.
+       * Optional. Defaults to Search-result description.
        */
       ogDescription?: string | null;
       /**
@@ -2433,11 +2487,11 @@ export interface SiteSeo {
        */
       description?: string | null;
       /**
-       * Optional. Defaults to the meta title (plus site name where applicable).
+       * Optional. Defaults to Search-result title (plus site name where applicable).
        */
       ogTitle?: string | null;
       /**
-       * Optional. Defaults to the meta description.
+       * Optional. Defaults to Search-result description.
        */
       ogDescription?: string | null;
       /**
@@ -2466,11 +2520,11 @@ export interface SiteSeo {
        */
       description?: string | null;
       /**
-       * Optional. Defaults to the meta title (plus site name where applicable).
+       * Optional. Defaults to Search-result title (plus site name where applicable).
        */
       ogTitle?: string | null;
       /**
-       * Optional. Defaults to the meta description.
+       * Optional. Defaults to Search-result description.
        */
       ogDescription?: string | null;
       /**
@@ -2499,11 +2553,11 @@ export interface SiteSeo {
        */
       description?: string | null;
       /**
-       * Optional. Defaults to the meta title (plus site name where applicable).
+       * Optional. Defaults to Search-result title (plus site name where applicable).
        */
       ogTitle?: string | null;
       /**
-       * Optional. Defaults to the meta description.
+       * Optional. Defaults to Search-result description.
        */
       ogDescription?: string | null;
       /**
@@ -2532,11 +2586,11 @@ export interface SiteSeo {
        */
       description?: string | null;
       /**
-       * Optional. Defaults to the meta title (plus site name where applicable).
+       * Optional. Defaults to Search-result title (plus site name where applicable).
        */
       ogTitle?: string | null;
       /**
-       * Optional. Defaults to the meta description.
+       * Optional. Defaults to Search-result description.
        */
       ogDescription?: string | null;
       /**
@@ -2565,11 +2619,11 @@ export interface SiteSeo {
        */
       description?: string | null;
       /**
-       * Optional. Defaults to the meta title (plus site name where applicable).
+       * Optional. Defaults to Search-result title (plus site name where applicable).
        */
       ogTitle?: string | null;
       /**
-       * Optional. Defaults to the meta description.
+       * Optional. Defaults to Search-result description.
        */
       ogDescription?: string | null;
       /**
@@ -2598,11 +2652,11 @@ export interface SiteSeo {
        */
       description?: string | null;
       /**
-       * Optional. Defaults to the meta title (plus site name where applicable).
+       * Optional. Defaults to Search-result title (plus site name where applicable).
        */
       ogTitle?: string | null;
       /**
-       * Optional. Defaults to the meta description.
+       * Optional. Defaults to Search-result description.
        */
       ogDescription?: string | null;
       /**
@@ -2631,11 +2685,11 @@ export interface SiteSeo {
        */
       description?: string | null;
       /**
-       * Optional. Defaults to the meta title (plus site name where applicable).
+       * Optional. Defaults to Search-result title (plus site name where applicable).
        */
       ogTitle?: string | null;
       /**
-       * Optional. Defaults to the meta description.
+       * Optional. Defaults to Search-result description.
        */
       ogDescription?: string | null;
       /**
@@ -2664,11 +2718,11 @@ export interface SiteSeo {
        */
       description?: string | null;
       /**
-       * Optional. Defaults to the meta title (plus site name where applicable).
+       * Optional. Defaults to Search-result title (plus site name where applicable).
        */
       ogTitle?: string | null;
       /**
-       * Optional. Defaults to the meta description.
+       * Optional. Defaults to Search-result description.
        */
       ogDescription?: string | null;
       /**
@@ -2974,21 +3028,23 @@ export interface CollectionQueryWidget {
     relatedCollection:
       | 'beers'
       | 'beer-reviews'
+      | 'styles'
+      | 'tags'
       | 'menus'
       | 'products'
+      | 'locations'
+      | 'holiday-hours'
       | 'events'
       | 'donation-requests'
       | 'event-inquiries'
-      | 'jobs'
-      | 'job-applications'
       | 'recurring-events'
       | 'food'
       | 'food-vendors'
-      | 'users'
-      | 'locations'
-      | 'holiday-hours'
+      | 'jobs'
+      | 'job-applications'
       | 'distributors'
       | 'faqs'
+      | 'users'
       | 'payload-jobs';
     where?:
       | {
@@ -3015,21 +3071,23 @@ export interface ActivityWidget {
       | (
           | 'beers'
           | 'beer-reviews'
+          | 'styles'
+          | 'tags'
           | 'menus'
           | 'products'
+          | 'locations'
+          | 'holiday-hours'
           | 'events'
           | 'donation-requests'
           | 'event-inquiries'
-          | 'jobs'
-          | 'job-applications'
           | 'recurring-events'
           | 'food'
           | 'food-vendors'
-          | 'users'
-          | 'locations'
-          | 'holiday-hours'
+          | 'jobs'
+          | 'job-applications'
           | 'distributors'
           | 'faqs'
+          | 'users'
           | 'payload-jobs'
         )[]
       | null;

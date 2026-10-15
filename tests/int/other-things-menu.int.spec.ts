@@ -1,3 +1,4 @@
+import { findPayloadField } from '../helpers/payload-fields'
 import { cleanup, render } from '@testing-library/react'
 import { createElement } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -150,9 +151,7 @@ describe('Other Things fullscreen menu', () => {
 
 describe('Products Other Things category field', () => {
   it('is optional and exposes the three design categories in Payload', () => {
-    const category = Products.fields.find(
-      (candidate) => 'name' in candidate && candidate.name === 'category',
-    )
+    const category = findPayloadField(Products.fields, 'category')
 
     expect(category).not.toHaveProperty('required')
     expect(category).toMatchObject({

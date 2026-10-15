@@ -9,6 +9,7 @@ export const Media: CollectionConfig = {
   slug: 'media',
   admin: {
     hidden: true,
+    defaultColumns: ['filename', 'alt', 'mimeType', 'updatedAt'],
   },
   access: {
     read: () => true,
@@ -46,10 +47,13 @@ export const Media: CollectionConfig = {
       type: 'text',
       required: true,
       admin: {
-        description: 'Alternative text for the image (for accessibility)',
+        description:
+          'Describe meaningful content, e.g. Guests at the Lawrenceville taproom. Do not use the filename. Later edits require an admin.',
       },
+      label: 'Alternative text',
     },
   ],
+  labels: { singular: 'Media File', plural: 'Media Library' },
 }
 
 /**

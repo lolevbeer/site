@@ -68,9 +68,9 @@ const canReadMenuVersions: Access = (args) => {
 export const Menus: CollectionConfig = {
   slug: 'menus',
   admin: {
-    group: 'Front of House',
-    useAsTitle: 'description',
-    defaultColumns: ['description', 'location', 'type', '_status'],
+    group: 'Taproom Operations',
+    useAsTitle: 'name',
+    defaultColumns: ['name', 'location', 'type', '_status', 'updatedAt'],
     components: {
       views: {
         edit: {
@@ -234,17 +234,7 @@ export const Menus: CollectionConfig = {
         description: 'Menu name (e.g., "Lawrenceville Draft Menu")',
         position: 'sidebar',
       },
-    },
-    {
-      name: 'description',
-      type: 'textarea',
-      access: {
-        update: adminFieldAccess,
-      },
-      admin: {
-        description: 'Menu description',
-        position: 'sidebar',
-      },
+      label: 'Menu name',
     },
     {
       name: 'location',
@@ -260,6 +250,7 @@ export const Menus: CollectionConfig = {
         position: 'sidebar',
         description: 'Required to generate menu URL',
       },
+      label: 'Taproom',
     },
     {
       name: 'type',
@@ -277,114 +268,144 @@ export const Menus: CollectionConfig = {
       admin: {
         position: 'sidebar',
       },
+      label: 'Menu type',
     },
     {
-      name: 'url',
-      label: 'URL',
-      type: 'text',
-      unique: true,
-      index: true,
-      required: true,
-      access: {
-        update: adminFieldAccess,
-      },
-      admin: {
-        description: 'Auto-generated from location and type, but you can override it manually',
-        position: 'sidebar',
-      },
-    },
-    {
-      name: 'themeMode',
-      label: 'Theme Mode',
-      type: 'select',
-      defaultValue: 'auto',
-      options: [
-        { label: 'Auto (Pittsburgh time)', value: 'auto' },
-        { label: 'Always Light', value: 'light' },
-        { label: 'Always Dark', value: 'dark' },
-      ],
-      access: {
-        update: adminFieldAccess,
-      },
-      admin: {
-        description: 'Override automatic day/night theme switching',
-        position: 'sidebar',
-      },
-    },
-    {
-      name: 'animateCans',
-      label: 'Animate Cans',
-      type: 'checkbox',
-      defaultValue: true,
-      access: {
-        update: adminFieldAccess,
-      },
-      admin: {
-        position: 'sidebar',
-        // Only cans menus render the rotating-can sprite sheets, so the toggle
-        // is irrelevant on draft/other menus.
-        condition: (data) => data?.type === 'cans',
-        description:
-          'Play the rotating-can animation on this display. Turn off to show static can images instead.',
-      },
-    },
-    {
-      name: 'targetItemCount',
-      label: 'Target Item Count',
-      type: 'number',
-      min: 0,
-      defaultValue: DEFAULT_TARGET,
-      access: {
-        update: adminFieldAccess,
-      },
-      admin: {
-        position: 'sidebar',
-        condition: (data) => TARGETED_MENU_TYPES.includes(data?.type),
-        description: 'Ideal number of cans or draft lines on this menu',
-      },
-    },
-    {
-      name: 'items',
-      type: 'array',
-      required: true,
-      admin: {
-        initCollapsed: false,
-      },
-      fields: [
+      type: 'tabs',
+      tabs: [
         {
-          type: 'row',
+          label: 'Menu items',
           fields: [
             {
-              name: 'product',
-              type: 'relationship',
-              relationTo: ['beers', 'products'],
-              required: false,
+              name: 'items',
+              type: 'array',
+              required: true,
               admin: {
-                width: '66%',
-                sortOptions: {
-                  beers: 'name',
-                  products: 'name',
+                initCollapsed: false,
+                description:
+                  'Leave a product blank for an empty tap. Items may appear only once. Cans save newest recipe first, followed by other items.',
+              },
+              fields: [
+                {
+                  type: 'row',
+                  fields: [
+                    {
+                      name: 'product',
+                      type: 'relationship',
+                      relationTo: ['beers', 'products'],
+                      required: false,
+                      admin: {
+                        width: '66%',
+                        sortOptions: {
+                          beers: 'name',
+                          products: 'name',
+                        },
+                      },
+                      label: 'Beer / other menu item',
+                    },
+                    {
+                      name: 'price',
+                      type: 'text',
+                      admin: {
+                        description: 'Blank means no override; use the catalog price.',
+                        width: '33%',
+                      },
+                      label: 'Display price override',
+                    },
+                  ],
                 },
-              },
-            },
-            {
-              name: 'price',
-              type: 'text',
-              admin: {
-                description: 'Sale Price (optional override)',
-                width: '33%',
-              },
+                {
+                  name: 'promotion',
+                  type: 'text',
+                  maxLength: 60,
+                  admin: {
+                    condition: (data) => data?.type === 'cans',
+                    description: 'Optional promotion shown only on the fullscreen can menu.',
+                  },
+                  label: 'Promotion text',
+                },
+              ],
             },
           ],
         },
         {
-          name: 'promotion',
-          type: 'text',
-          maxLength: 60,
-          admin: {
-            condition: (data) => data?.type === 'cans',
-            description: 'Optional promotion shown only on the fullscreen can menu.',
-          },
+          label: 'Display settings',
+          fields: [
+            {
+              name: 'description',
+              type: 'textarea',
+              access: {
+                update: adminFieldAccess,
+              },
+              admin: {
+                description:
+                  'Optional page/social description. Also used as the menu label in Slack when set; not shown on the menu board.',
+              },
+            },
+            {
+              name: 'url',
+              label: 'Menu URL slug',
+              type: 'text',
+              unique: true,
+              index: true,
+              required: true,
+              access: {
+                update: adminFieldAccess,
+              },
+              admin: {
+                description:
+                  'Auto-generated from location and type, but you can override it manually',
+              },
+            },
+            {
+              name: 'themeMode',
+              label: 'Display theme',
+              type: 'select',
+              defaultValue: 'auto',
+              options: [
+                { label: 'Auto (Pittsburgh time)', value: 'auto' },
+                { label: 'Always Light', value: 'light' },
+                { label: 'Always Dark', value: 'dark' },
+              ],
+              access: {
+                update: adminFieldAccess,
+              },
+              admin: {
+                description: 'Override automatic day/night theme switching',
+              },
+            },
+            {
+              name: 'animateCans',
+              label: 'Animate cans',
+              type: 'checkbox',
+              defaultValue: true,
+              access: {
+                update: adminFieldAccess,
+              },
+              admin: {
+                // Only cans menus render the rotating-can sprite sheets, so the toggle
+                // is irrelevant on draft/other menus.
+                condition: (data) => data?.type === 'cans',
+                description:
+                  'Play the rotating-can animation on this display. Turn off to show static can images instead.',
+              },
+            },
+            {
+              name: 'targetItemCount',
+              label: 'Target stocked items',
+              type: 'number',
+              min: 0,
+              defaultValue: DEFAULT_TARGET,
+              access: {
+                update: adminFieldAccess,
+              },
+              admin: {
+                condition: (data) => TARGETED_MENU_TYPES.includes(data?.type),
+                description:
+                  'Ideal stocked count, not an enforced maximum or the number of empty tap rows.',
+              },
+            },
+          ],
         },
       ],
     },

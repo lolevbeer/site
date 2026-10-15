@@ -111,23 +111,10 @@ export const Beers: CollectionConfig = {
     delete: adminAccess, // Beer Managers can only archive, not delete
   },
   admin: {
-    group: 'Back of House',
+    group: 'Beer Catalog',
     useAsTitle: 'name',
     listSearchableFields: ['name', 'slug'],
-    defaultColumns: [
-      'name',
-      'image',
-      'slug',
-      'style',
-      'tag',
-      'abv',
-      'untappd',
-      'draftPrice',
-      'fourPack',
-      'untappdRating',
-      '_status',
-      'createdAt',
-    ],
+    defaultColumns: ['name', 'style', 'abv', 'tag', 'untappd', 'draftPrice', 'fourPack', '_status'],
     components: {
       views: {
         edit: {
@@ -288,6 +275,10 @@ export const Beers: CollectionConfig = {
                   name: 'name',
                   type: 'text',
                   required: true,
+                  label: 'Beer name',
+                  admin: {
+                    width: '50%',
+                  },
                 },
                 {
                   name: 'style',
@@ -295,6 +286,10 @@ export const Beers: CollectionConfig = {
                   relationTo: 'styles',
                   required: true,
                   index: true,
+                  label: 'Beer style',
+                  admin: {
+                    width: '50%',
+                  },
                 },
               ],
             },
@@ -311,6 +306,10 @@ export const Beers: CollectionConfig = {
                     { label: 'Teku', value: 'teku' },
                     { label: 'UHA', value: 'uha' },
                   ],
+                  label: 'Glassware',
+                  admin: {
+                    width: '50%',
+                  },
                 },
                 {
                   name: 'abv',
@@ -321,6 +320,7 @@ export const Beers: CollectionConfig = {
                   max: 20,
                   admin: {
                     step: 0.1,
+                    width: '50%',
                   },
                 },
               ],
@@ -328,31 +328,31 @@ export const Beers: CollectionConfig = {
             {
               name: 'description',
               type: 'textarea',
+              admin: {
+                rows: 4,
+                description: 'Customer-facing description on the beer page.',
+              },
             },
             {
-              type: 'row',
-              fields: [
-                {
-                  name: 'hops',
-                  type: 'text',
-                  admin: {
-                    placeholder: 'e.g. Citra, Mosaic',
-                  },
-                },
-                {
-                  // Single-value tag: relationship gives a typeahead over existing tags
-                  // plus inline "Add new" creation. hasMany defaults to false, so only
-                  // one tag is allowed per beer.
-                  name: 'tag',
-                  type: 'relationship',
-                  relationTo: 'tags',
-                  index: true,
-                  admin: {
-                    description: 'Optional (search existing or add a new one)',
-                    components: { Cell: '@/src/components/admin/BeerListFillCell#TagCell' },
-                  },
-                },
-              ],
+              name: 'hops',
+              type: 'text',
+              admin: {
+                placeholder: 'e.g. Citra, Mosaic',
+              },
+            },
+            {
+              // Single-value tag: relationship gives a typeahead over existing tags
+              // plus inline "Add new" creation. hasMany defaults to false, so only
+              // one tag is allowed per beer.
+              name: 'tag',
+              type: 'relationship',
+              relationTo: 'tags',
+              index: true,
+              admin: {
+                description: 'One optional reusable label. Search existing tags or add one.',
+                components: { Cell: '@/src/components/admin/BeerListFillCell#TagCell' },
+              },
+              label: 'Beer tag',
             },
           ],
         },
@@ -370,15 +370,17 @@ export const Beers: CollectionConfig = {
                     placeholder: 'e.g. 7',
                     step: 0.25,
                   },
+                  label: 'Full pour ($)',
                 },
                 {
                   name: 'halfPour',
                   type: 'number',
                   admin: {
                     description:
-                      'Set automatically from the draft price unless "Half Pour Only" is on',
+                      'Calculated from Full pour unless Half pours only is on; then use the price entered here.',
                     step: 0.25,
                   },
+                  label: 'Half pour ($)',
                 },
               ],
             },
@@ -390,6 +392,7 @@ export const Beers: CollectionConfig = {
                 description:
                   'Served in half pours only: hides the full draft price on the site and uses the half pour price above as entered.',
               },
+              label: 'Half pours only',
             },
             {
               type: 'row',
@@ -402,6 +405,7 @@ export const Beers: CollectionConfig = {
                     step: 0.25,
                     width: '50%',
                   },
+                  label: '4-pack ($)',
                 },
                 {
                   name: 'canSingle',
@@ -412,6 +416,7 @@ export const Beers: CollectionConfig = {
                     readOnly: true,
                     step: 0.01,
                   },
+                  label: 'Single can ($)',
                 },
               ],
             },
@@ -425,6 +430,7 @@ export const Beers: CollectionConfig = {
                     placeholder: 'e.g. 12',
                     step: 0.25,
                   },
+                  label: 'Bottle ($)',
                 },
                 {
                   name: 'upc',
@@ -476,7 +482,7 @@ export const Beers: CollectionConfig = {
                 },
                 generatedUploadField(
                   'labelVideo',
-                  'Generated can-rotation sprite sheet (PNG; animated in CSS on menu displays)',
+                  'Generated can-rotation sprite sheet (WebP; animated in CSS on menu displays)',
                 ),
               ],
             },
@@ -505,6 +511,7 @@ export const Beers: CollectionConfig = {
                     width: '50%',
                     components: { Cell: '@/src/components/admin/BeerListFillCell#UntappdCell' },
                   },
+                  label: 'Untappd beer path',
                 },
                 {
                   name: 'untappdRating',
@@ -515,6 +522,7 @@ export const Beers: CollectionConfig = {
                     step: 0.01,
                     width: '25%',
                   },
+                  label: 'Synced rating',
                 },
                 {
                   name: 'untappdRatingCount',
@@ -524,6 +532,7 @@ export const Beers: CollectionConfig = {
                     readOnly: true,
                     width: '25%',
                   },
+                  label: 'Synced rating count',
                 },
               ],
             },
@@ -560,10 +569,11 @@ export const Beers: CollectionConfig = {
         description:
           'Hide from the /beer catalog (and sitemap/feeds). Usually for guest beers. Does NOT hide the beer from menu displays (/m).',
       },
+      label: 'Hide from beer catalog',
     },
     {
       name: 'collab',
-      label: 'Collab',
+      label: 'Collaboration beer',
       type: 'checkbox',
       defaultValue: false,
       admin: {
@@ -583,25 +593,32 @@ export const Beers: CollectionConfig = {
       },
     },
     {
-      name: 'slug',
-      type: 'text',
-      unique: true,
-      index: true,
-      required: true,
-      admin: {
-        description: 'Auto-generated from name, but you can override it manually',
-        position: 'sidebar',
-      },
-    },
-    {
-      name: 'recipe',
-      type: 'number',
-      unique: true,
-      admin: {
-        description:
-          'Assigned automatically to new beers; change only to fix a mistake (must be unique)',
-        position: 'sidebar',
-      },
+      type: 'collapsible',
+      label: 'Identifiers',
+      admin: { initCollapsed: true, position: 'sidebar' },
+      fields: [
+        {
+          name: 'slug',
+          type: 'text',
+          unique: true,
+          index: true,
+          required: true,
+          admin: {
+            description: 'Auto-generated from name, but you can override it manually',
+          },
+          label: 'Page URL slug',
+        },
+        {
+          name: 'recipe',
+          type: 'number',
+          unique: true,
+          admin: {
+            description:
+              'Assigned automatically to new beers; change only to fix a mistake (must be unique)',
+          },
+          label: 'Recipe number',
+        },
+      ],
     },
     {
       name: 'positiveReviews',
@@ -614,6 +631,11 @@ export const Beers: CollectionConfig = {
         description: 'Legacy review data retained temporarily for migration compatibility.',
       },
     },
-    documentSeoField,
+    {
+      type: 'collapsible',
+      label: 'Search & sharing',
+      admin: { initCollapsed: true, position: 'sidebar' },
+      fields: [documentSeoField],
+    },
   ],
 }

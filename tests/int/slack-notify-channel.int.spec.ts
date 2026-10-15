@@ -4,6 +4,7 @@
  * passes. An invalid admin value (a typo, a user or DM id) is ignored so PII never
  * lands in a DM.
  */
+import { findPayloadField } from '../helpers/payload-fields'
 import type { Payload } from 'payload'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -99,10 +100,7 @@ describe('notifyCollectionOnSlack channel', () => {
 
 describe('Site Content Slack channel fields', () => {
   it('accept blank, #name, or a channel id and reject anything else', () => {
-    const tab = SiteContent.fields
-      .flatMap((f) => ('tabs' in f ? f.tabs : []))
-      .find((t) => t.label === 'Slack Channels')
-    const group = tab?.fields[0] as {
+    const group = findPayloadField(SiteContent.fields, 'slackChannels') as {
       fields: Array<{ name: string; validate: (v: string) => unknown }>
     }
     expect(group.fields.map((f) => f.name)).toEqual(['donations', 'jobs', 'eventInquiries'])

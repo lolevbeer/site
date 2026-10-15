@@ -5,6 +5,7 @@
  * tests pin the rules that document promises, so an agent that normalizes raw
  * data to that format gets the behavior the document describes.
  */
+import { findPayloadField } from '../helpers/payload-fields'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { PayloadRequest } from 'payload'
 import type { User } from '@/src/payload-types'
@@ -35,7 +36,7 @@ describe('US_STATES', () => {
 describe('Distributors collection', () => {
   async function field(name: string) {
     const { Distributors } = await import('@/src/collections/Distributors')
-    return Distributors.fields.find((f) => 'name' in f && f.name === name) as {
+    return findPayloadField(Distributors.fields, name) as {
       defaultValue?: unknown
       validate?: (value: unknown) => true | string
     }

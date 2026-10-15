@@ -21,9 +21,9 @@ export const BeerReviews: CollectionConfig = {
     plural: 'Beer Reviews',
   },
   admin: {
-    group: 'Back of House',
+    group: 'Beer Catalog',
     useAsTitle: 'reviewer',
-    defaultColumns: ['reviewer', 'beer', 'rating', 'approved', 'reviewedAt'],
+    defaultColumns: ['beer', 'reviewer', 'rating', 'approved', 'reviewedAt'],
   },
   access: {
     read: canReadBeerReviews,
@@ -75,24 +75,36 @@ export const BeerReviews: CollectionConfig = {
       index: true,
     },
     {
-      name: 'reviewer',
-      type: 'text',
-      required: true,
-    },
-    {
-      name: 'rating',
-      type: 'number',
-      required: true,
-      min: 0,
-      max: 5,
-      admin: {
-        step: 0.25,
-      },
+      type: 'row',
+      fields: [
+        {
+          name: 'reviewer',
+          type: 'text',
+          required: true,
+          label: 'Reviewer name',
+          admin: {
+            width: '65%',
+          },
+        },
+        {
+          name: 'rating',
+          type: 'number',
+          required: true,
+          min: 0,
+          max: 5,
+          admin: {
+            step: 0.25,
+            width: '35%',
+          },
+          label: 'Rating (0-5)',
+        },
+      ],
     },
     {
       name: 'text',
       type: 'textarea',
       required: true,
+      label: 'Review text',
     },
     {
       name: 'reviewedAt',
@@ -103,21 +115,7 @@ export const BeerReviews: CollectionConfig = {
           displayFormat: 'MMM d, yyyy',
         },
       },
-    },
-    {
-      name: 'sourceDate',
-      type: 'text',
-      admin: {
-        description:
-          'Original date text supplied by Untappd when an exact timestamp is unavailable.',
-      },
-    },
-    {
-      name: 'source',
-      type: 'select',
-      required: true,
-      defaultValue: 'untappd',
-      options: [{ label: 'Untappd', value: 'untappd' }],
+      label: 'Review date',
     },
     {
       name: 'sourceUrl',
@@ -125,10 +123,37 @@ export const BeerReviews: CollectionConfig = {
       required: true,
       unique: true,
       index: true,
+      label: 'Untappd review URL',
+      admin: {
+        description: 'Required unique link identifying this review.',
+      },
     },
     {
-      name: 'externalImageUrl',
-      type: 'text',
+      type: 'collapsible',
+      label: 'Import details',
+      admin: { initCollapsed: true },
+      fields: [
+        {
+          name: 'source',
+          type: 'select',
+          required: true,
+          defaultValue: 'untappd',
+          options: [{ label: 'Untappd', value: 'untappd' }],
+        },
+        {
+          name: 'sourceDate',
+          type: 'text',
+          admin: {
+            description:
+              'Original date text supplied by Untappd when an exact timestamp is unavailable.',
+          },
+          label: 'Original date text',
+        },
+        {
+          name: 'externalImageUrl',
+          type: 'text',
+        },
+      ],
     },
     {
       name: 'approved',
@@ -140,6 +165,7 @@ export const BeerReviews: CollectionConfig = {
         position: 'sidebar',
         description: 'Approved reviews can be included in public beer data.',
       },
+      label: 'Approved for public use',
     },
   ],
 }

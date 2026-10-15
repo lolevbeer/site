@@ -10,7 +10,7 @@ export const FAQs: CollectionConfig = {
     delete: adminAccess,
   },
   admin: {
-    group: 'Settings',
+    group: 'Website',
     useAsTitle: 'question',
     defaultColumns: ['question', 'order', 'active'],
     pagination: {
@@ -40,9 +40,11 @@ export const FAQs: CollectionConfig = {
       type: 'number',
       defaultValue: 100,
       admin: {
-        description: 'Lower numbers appear first. Default FAQs start at 0, so use 100+ to append at the end.',
+        description:
+          'Lower numbers appear first. Default FAQs start at 0, so use 100+ to append at the end.',
         position: 'sidebar',
       },
+      label: 'Display order',
     },
     {
       name: 'active',
@@ -52,7 +54,9 @@ export const FAQs: CollectionConfig = {
         description: 'Uncheck to hide this FAQ from the site',
         position: 'sidebar',
       },
+      label: 'Show on website',
     },
   ],
   defaultSort: 'order',
+  labels: { singular: 'FAQ', plural: 'FAQs' },
 }

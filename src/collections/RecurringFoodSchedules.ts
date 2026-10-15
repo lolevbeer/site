@@ -22,8 +22,10 @@ export const RecurringFoodSchedules: CollectionConfig = {
   admin: {
     group: 'System',
     hidden: true,
+    // A text field: a relationship title would show the vendor's ID, not its name.
     useAsTitle: 'day',
-    defaultColumns: ['location', 'day', 'occurrence', 'vendor', 'active'],
+    defaultColumns: ['vendor', 'location', 'year', 'day', 'occurrence', 'active'],
+    description: 'Backing records for Recurring Food Schedule. Use the grid for routine changes.',
   },
   access: {
     read: canReadRecurringSchedules,
@@ -39,6 +41,7 @@ export const RecurringFoodSchedules: CollectionConfig = {
       relationTo: 'locations',
       required: true,
       index: true,
+      label: 'Taproom',
     },
     {
       name: 'year',
@@ -47,9 +50,31 @@ export const RecurringFoodSchedules: CollectionConfig = {
       min: RECURRING_YEAR_MIN,
       max: RECURRING_YEAR_MAX,
       index: true,
-      admin: {
-        position: 'sidebar',
-      },
+      label: 'Schedule year',
+    },
+    {
+      type: 'row',
+      fields: [
+        {
+          name: 'day',
+          type: 'select',
+          required: true,
+          options: recurringDays.map((day) => ({ label: capitalizeName(day), value: day })),
+          index: true,
+          label: 'Weekday',
+        },
+        {
+          name: 'occurrence',
+          type: 'select',
+          required: true,
+          options: recurringOccurrences.map((occurrence) => ({
+            label: capitalizeName(occurrence),
+            value: occurrence,
+          })),
+          index: true,
+          label: 'Occurrence in month',
+        },
+      ],
     },
     {
       name: 'vendor',
@@ -60,23 +85,6 @@ export const RecurringFoodSchedules: CollectionConfig = {
       admin: {
         sortOptions: 'name',
       },
-    },
-    {
-      name: 'day',
-      type: 'select',
-      required: true,
-      options: recurringDays.map((day) => ({ label: capitalizeName(day), value: day })),
-      index: true,
-    },
-    {
-      name: 'occurrence',
-      type: 'select',
-      required: true,
-      options: recurringOccurrences.map((occurrence) => ({
-        label: capitalizeName(occurrence),
-        value: occurrence,
-      })),
-      index: true,
     },
     {
       name: 'active',

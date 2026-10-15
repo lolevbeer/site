@@ -12,12 +12,14 @@ export const Distributors: CollectionConfig = {
     delete: adminAccess,
   },
   admin: {
-    group: 'Settings',
+    group: 'Website',
     useAsTitle: 'name',
-    defaultColumns: ['name', 'address', 'customerType', 'region'],
+    defaultColumns: ['name', 'city', 'country', 'customerType', 'active'],
     pagination: {
       defaultLimit: 100,
     },
+    description:
+      'Public beer-map locations. Bulk import in Tools > Sync > Distributor CSV; preview with Dry run first.',
   },
   fields: [
     {
@@ -27,35 +29,17 @@ export const Distributors: CollectionConfig = {
       admin: {
         description: 'Business or location name',
       },
+      label: 'Business name',
     },
     {
-      name: 'address',
-      type: 'text',
-      required: true,
+      name: 'customerType',
+      type: 'select',
+      options: [...CUSTOMER_TYPES],
+      index: true,
       admin: {
-        description: 'Full street address',
+        description: 'Type of customer/location',
       },
-    },
-    {
-      name: 'city',
-      type: 'text',
-      admin: {
-        description: 'City name',
-      },
-    },
-    {
-      name: 'state',
-      type: 'text',
-      admin: {
-        description: 'US state abbreviation (e.g., PA, NY); free text outside the US',
-      },
-    },
-    {
-      name: 'zip',
-      type: 'text',
-      admin: {
-        description: 'ZIP or postal code',
-      },
+      label: 'Customer type',
     },
     {
       name: 'country',
@@ -68,15 +52,43 @@ export const Distributors: CollectionConfig = {
         description:
           'Two-letter ISO country code (e.g., NL, JP, GB). Leave blank for the United States.',
       },
+      label: 'Country code',
     },
     {
-      name: 'customerType',
-      type: 'select',
-      options: [...CUSTOMER_TYPES],
-      index: true,
+      name: 'address',
+      type: 'text',
+      required: true,
       admin: {
-        description: 'Type of customer/location',
+        description: 'Full street address',
       },
+    },
+    {
+      type: 'row',
+      fields: [
+        {
+          name: 'city',
+          type: 'text',
+          admin: {
+            description: 'City name',
+          },
+        },
+        {
+          name: 'state',
+          type: 'text',
+          admin: {
+            description: 'US state abbreviation (e.g., PA, NY); free text outside the US',
+          },
+          label: 'State / province',
+        },
+        {
+          name: 'zip',
+          type: 'text',
+          admin: {
+            description: 'ZIP or postal code',
+          },
+          label: 'Postal code',
+        },
+      ],
     },
     {
       name: 'region',
@@ -87,6 +99,31 @@ export const Distributors: CollectionConfig = {
         description:
           'US venues only: the state or DC. The CSV import defaults it to the state. Leave blank outside the US; those venues group by country.',
       },
+      label: 'US directory state',
+    },
+    {
+      type: 'row',
+      fields: [
+        {
+          name: 'phone',
+          type: 'text',
+          admin: {
+            description: 'Contact phone number',
+          },
+          label: 'Public phone',
+        },
+        {
+          name: 'website',
+          type: 'text',
+          // Enforced here, not only in the CSV parser, so admin edits obey it too
+          validate: (value: string | null | undefined) =>
+            !value || /^https?:\/\//i.test(value) || 'Website must start with http:// or https://',
+          admin: {
+            description: 'Website URL, starting with http:// or https://',
+          },
+          label: 'Public website',
+        },
+      ],
     },
     {
       name: 'location',
@@ -95,23 +132,7 @@ export const Distributors: CollectionConfig = {
       admin: {
         description: 'Geographic coordinates [longitude, latitude]',
       },
-    },
-    {
-      name: 'phone',
-      type: 'text',
-      admin: {
-        description: 'Contact phone number',
-      },
-    },
-    {
-      name: 'website',
-      type: 'text',
-      // Enforced here, not only in the CSV parser, so admin edits obey it too
-      validate: (value: string | null | undefined) =>
-        !value || /^https?:\/\//i.test(value) || 'Website must start with http:// or https://',
-      admin: {
-        description: 'Website URL, starting with http:// or https://',
-      },
+      label: 'Map coordinates',
     },
     {
       name: 'active',
@@ -121,6 +142,8 @@ export const Distributors: CollectionConfig = {
         description: 'Whether this location is currently active',
         position: 'sidebar',
       },
+      label: 'Show in directory',
     },
   ],
+  labels: { singular: 'Stockist', plural: 'Stockists' },
 }
