@@ -31,6 +31,7 @@ import {
 } from '@/src/utils/slack'
 import type { Menu } from '@/src/payload-types'
 import { readServerEnvironment } from '@/lib/config/server-env'
+import { getTodayEST } from '@/lib/utils/date'
 
 const SECRET = 'test-signing-secret'
 
@@ -715,6 +716,70 @@ describe('Slack route acts as the mapped Payload user', () => {
     for (const call of reads) {
       expect(call).toMatchObject({ overrideAccess: false, user: bartender })
     }
+  })
+
+  it('acknowledges an events request before fetching and privately returns the staff schedule', async () => {
+    // Load after doMock above so this observes the route's mocked transport.
+    const { slackApi } = await import('@/src/utils/slack-api')
+    vi.mocked(slackApi).mockClear()
+    find.mockImplementation(async ({ collection }: { collection: string }) => ({
+      docs: collection === 'users' ? [bartender] : collection === 'events' ? [{
+        id: 'e1', organizer: 'Private party', date: `${getTodayEST()}T12:00:00Z`,
+        location: { id: 'loc1', name: 'Lawrenceville' }, visibility: 'private',
+      }] : [],
+    }))
+    const rawBody = new URLSearchParams({
+      command: '/lolevbeer', text: 'events', user_id: 'U1',
+      response_url: 'https://hooks.slack.com/commands/test',
+    }).toString()
+    const ts = String(Math.floor(Date.now() / 1000))
+    const response = await POST({
+      text: async () => rawBody,
+      headers: new Headers({
+        'x-slack-request-timestamp': ts, 'x-slack-signature': sign(ts, rawBody),
+      }),
+    })
+    expect(response.status).toBe(200)
+    expect(find).not.toHaveBeenCalled()
+    for (const fn of afterFns) await fn()
+    expect(slackApi).toHaveBeenCalledWith(
+      'https://hooks.slack.com/commands/test',
+      expect.objectContaining({
+        response_type: 'ephemeral',
+        text: expect.stringContaining('Private party · Lawrenceville (Private)'),
+      }),
+    )
+  })
+
+  it.each(['events', 'food'])('does not disclose %s to an unlinked Slack user', async (command) => {
+    // Load after doMock so the assertions observe the route's transport.
+    const { slackApi } = await import('@/src/utils/slack-api')
+    vi.mocked(slackApi).mockClear()
+    find.mockResolvedValue({ docs: [] })
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      ok: true, json: async () => ({ ok: false }),
+    })))
+    const rawBody = new URLSearchParams({
+      command: '/lolevbeer', text: command, user_id: 'U404',
+      response_url: 'https://hooks.slack.com/commands/test',
+    }).toString()
+    const ts = String(Math.floor(Date.now() / 1000))
+    await POST({
+      text: async () => rawBody,
+      headers: new Headers({
+        'x-slack-request-timestamp': ts, 'x-slack-signature': sign(ts, rawBody),
+      }),
+    })
+    for (const fn of afterFns) await fn()
+    vi.unstubAllGlobals()
+    expect(find.mock.calls.every(([args]) => args.collection === 'users')).toBe(true)
+    expect(slackApi).toHaveBeenCalledWith(
+      'https://hooks.slack.com/commands/test',
+      expect.objectContaining({
+        response_type: 'ephemeral',
+        text: expect.stringContaining('No Lolev site account'),
+      }),
+    )
   })
 
   it("checks an invitee's existing account as the inviter, not as the system", async () => {

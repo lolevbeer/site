@@ -151,6 +151,7 @@ export interface Config {
   widgets: {
     'schedule-heatmap': ScheduleHeatmapWidget;
     'menu-target-history': MenuTargetHistoryWidget;
+    'menu-items': MenuItemsWidget;
     collections: CollectionsWidget;
     'collection-query': CollectionQueryWidget;
     activity: ActivityWidget;
@@ -2902,6 +2903,20 @@ export interface ScheduleHeatmapWidget {
 export interface MenuTargetHistoryWidget {
   data?: {
     [k: string]: unknown;
+  };
+  width: 'x-small' | 'small' | 'medium' | 'large' | 'x-large' | 'full';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "menu-items_widget".
+ */
+export interface MenuItemsWidget {
+  data?: {
+    /**
+     * Add one widget per menu, or use multiple views of the same menu.
+     */
+    menu: string | Menu;
+    itemKind?: ('all' | 'beers' | 'products') | null;
   };
   width: 'x-small' | 'small' | 'medium' | 'large' | 'x-large' | 'full';
 }

@@ -2,7 +2,7 @@
  * Slack bot endpoint for the /lolevbeer slash command.
  *
  * One URL handles all four Slack payload shapes:
- *  - slash command  → ephemeral list of menus with Edit buttons
+ *  - slash command  → ephemeral menus/events/food list, invite, or password reset
  *  - block_actions  → "Edit" click opens the edit modal (views.open)
  *  - block_suggestion → typeahead options for the beer selects
  *  - view_submission → ack instantly with a "Publishing…" view, then rebuild
@@ -57,6 +57,9 @@ import {
   type SlackStateValues,
 } from '@/src/utils/slack'
 import { slackApi } from '@/src/utils/slack-api'
+import { buildScheduleMessage, slackScheduleWindow } from '@/lib/slack/schedule'
+import { findUpcomingSlackEvents } from '@/lib/slack/upcoming-events'
+import { findUpcomingSlackFood } from '@/lib/slack/upcoming-food'
 
 const serverEnv = readServerEnvironment()
 
@@ -269,9 +272,9 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * `/lolevbeer menu` → ephemeral menu list (allowlisted users only).
- * `/lolevbeer password` → one-time admin reset link for the caller's own
- * account. Anything else → usage help.
+ * `/lolevbeer menu` → menus the requester may edit.
+ * `/lolevbeer events` / `food` → the next 14 days, read as the requester.
+ * `/lolevbeer invite` / `password` → account actions. Anything else → usage help.
  */
 async function handleSlashCommand(params: URLSearchParams): Promise<NextResponse> {
   const slackUserId = params.get('user_id') ?? undefined
@@ -305,12 +308,39 @@ async function handleSlashCommand(params: URLSearchParams): Promise<NextResponse
     return new NextResponse(null, { status: 200 })
   }
 
+  if (subcommand === 'events' || subcommand === 'food') {
+    after(async () => {
+      try {
+        const payload = await getPayload({ config })
+        const user = await resolvePayloadUser(payload, slackUserId)
+        if (!user) {
+          await slackApi(responseUrl, noAccountMessage())
+          return
+        }
+        const { from, through } = slackScheduleWindow()
+        const entries = await (subcommand === 'events'
+          ? findUpcomingSlackEvents(payload, user, from, through)
+          : findUpcomingSlackFood(payload, user, from, through))
+        await slackApi(responseUrl, buildScheduleMessage(subcommand, entries, from, through))
+      } catch (error) {
+        logger.error(`Slack ${subcommand} list failed:`, error)
+        await slackApi(responseUrl, {
+          response_type: 'ephemeral',
+          text: `Fetching ${subcommand} failed — try again.`,
+        })
+      }
+    })
+    return new NextResponse(null, { status: 200 })
+  }
+
   if (subcommand !== 'menu') {
     return NextResponse.json({
       response_type: 'ephemeral',
       text:
         'Usage:\n' +
         '• `/lolevbeer menu` — list and edit the beer menus.\n' +
+        '• `/lolevbeer events` — upcoming events over the next 14 days.\n' +
+        '• `/lolevbeer food` — upcoming food over the next 14 days.\n' +
         '• `/lolevbeer invite` — create an admin account for a teammate.\n' +
         '• `/lolevbeer password` — get a link to set a new admin password.',
     })
