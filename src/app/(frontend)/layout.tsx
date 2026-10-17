@@ -176,17 +176,17 @@ export default async function AppLayout({
       <body className={`${poppins.variable} antialiased min-h-screen flex flex-col font-poppins`}>
         <SiteJsonLd locations={locations} />
         <GoogleAnalytics />
-        <div className="flex min-h-0 flex-1 flex-col">
-          <ErrorBoundary>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="system"
-              enableSystem
-              enableColorScheme={false}
-              disableTransitionOnChange
-              themes={['light', 'dark']}
-              storageKey="lolev-theme"
-            >
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          enableColorScheme={false}
+          disableTransitionOnChange
+          themes={['light', 'dark']}
+          storageKey="lolev-theme"
+        >
+          <div className="flex min-h-0 flex-1 flex-col">
+            <ErrorBoundary>
               <NuqsAdapter>
                 <LocationProvider locations={locations}>
                   <AuthProvider>
@@ -202,15 +202,16 @@ export default async function AppLayout({
                   </AuthProvider>
                 </LocationProvider>
               </NuqsAdapter>
-            </ThemeProvider>
-          </ErrorBoundary>
-        </div>
-        {/* Outside LocationProvider so the taproom text is in the HTML shell. */}
-        <FooterGate>
-          <Suspense fallback={<Footer taprooms={<FooterTaprooms locations={locations} />} />}>
-            <FooterHours locations={locations} />
-          </Suspense>
-        </FooterGate>
+            </ErrorBoundary>
+          </div>
+          {/* Outside LocationProvider so the taproom text is in the HTML shell,
+              but inside ThemeProvider so the footer switcher shares the site theme. */}
+          <FooterGate>
+            <Suspense fallback={<Footer taprooms={<FooterTaprooms locations={locations} />} />}>
+              <FooterHours locations={locations} />
+            </Suspense>
+          </FooterGate>
+        </ThemeProvider>
       </body>
     </html>
   )

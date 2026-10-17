@@ -51,6 +51,11 @@ and its dependency graph refreshes.
 - **Deployment:** Vercel
 - **Tests:** Vitest and Playwright
 
+The footer offers system, light, and dark themes, persisted as `lolev-theme` in
+local storage. The frontend layout's shared `ThemeProvider` must wrap both the
+page content and footer; the footer stays outside `LocationProvider` so its
+taproom content remains in the HTML shell.
+
 ## Scripts
 
 ```bash
