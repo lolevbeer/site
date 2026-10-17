@@ -129,7 +129,7 @@ const cases: Case[] = [
     url: 'http://localhost/api/urls',
     extra: {
       json: async () => ({
-        distributorPaUrl: 'https://sixthcity.encompass8.com/pa',
+        distributorPaUrl: 'https://sarenecraftdist.com/QuickLink?QuickKey=example',
         distributorOhUrl: 'https://sixthcity.encompass8.com/oh',
       }),
     } as Partial<PayloadRequest>,

@@ -4,10 +4,11 @@ import {
   validateDistributorImportUrl,
 } from '@/lib/distributors/import-source'
 
-it.each(['https://sixthcity.encompass8.com/report?key=example', 'https://encompass8.com/report'])(
-  'allows supported vendor URL %s',
-  (url) => expect(isDistributorImportUrl(url)).toBe(true),
-)
+it.each([
+  'https://sixthcity.encompass8.com/report?key=example',
+  'https://encompass8.com/report',
+  'https://sarenecraftdist.com/QuickLink?QuickKey=example',
+])('allows supported vendor URL %s', (url) => expect(isDistributorImportUrl(url)).toBe(true))
 it.each([
   'http://sixthcity.encompass8.com',
   'https://127.0.0.1',
@@ -16,6 +17,12 @@ it.each([
   'https://encompass8.com@attacker.test',
   'https://user:password@encompass8.com',
   'https://encompass8.com:8443',
+  'http://sarenecraftdist.com/QuickLink',
+  'https://sarenecraftdist.com.attacker.test/QuickLink',
+  'https://sarenecraftdist.com@attacker.test/QuickLink',
+  'https://user:password@sarenecraftdist.com/QuickLink',
+  'https://sarenecraftdist.com:8443/QuickLink',
+  'https://unapproved.sarenecraftdist.com/QuickLink',
   'file:///tmp/data',
   'invalid',
 ])('rejects %s', (url) => expect(isDistributorImportUrl(url)).toBe(false))

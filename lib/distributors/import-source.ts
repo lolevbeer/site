@@ -1,4 +1,4 @@
-/** Encompass QuickLinks are the only supported network import source. */
+/** Only the distributors' approved Encompass QuickLink hosts may be fetched. */
 export function isDistributorImportUrl(value: unknown): boolean {
   if (typeof value !== 'string') return false
   try {
@@ -8,7 +8,9 @@ export function isDistributorImportUrl(value: unknown): boolean {
       !url.username &&
       !url.password &&
       !url.port &&
-      (url.hostname === 'encompass8.com' || url.hostname.endsWith('.encompass8.com'))
+      (url.hostname === 'encompass8.com' ||
+        url.hostname.endsWith('.encompass8.com') ||
+        url.hostname === 'sarenecraftdist.com')
     )
   } catch {
     return false
@@ -16,4 +18,6 @@ export function isDistributorImportUrl(value: unknown): boolean {
 }
 
 export const validateDistributorImportUrl = (value: unknown) =>
-  !value || isDistributorImportUrl(value) || 'Use an HTTPS Encompass8 QuickLink URL.'
+  !value ||
+  isDistributorImportUrl(value) ||
+  'Use an HTTPS QuickLink URL from Encompass8 or sarenecraftdist.com.'

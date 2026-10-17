@@ -83,7 +83,10 @@ interface FetchResult {
 async function fetchDistributors(url: string): Promise<FetchResult> {
   try {
     if (!isDistributorImportUrl(url))
-      return { rows: [], error: 'Use an HTTPS Encompass8 QuickLink URL.' }
+      return {
+        rows: [],
+        error: 'Use an HTTPS QuickLink URL from Encompass8 or sarenecraftdist.com.',
+      }
     const response = await fetch(url, { redirect: 'error', signal: AbortSignal.timeout(30_000) })
     if (!response.ok) {
       return { rows: [], error: `HTTP ${response.status}: ${response.statusText}` }

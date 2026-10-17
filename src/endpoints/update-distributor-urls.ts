@@ -23,7 +23,10 @@ export const updateDistributorUrls: PayloadHandler = async (req) => {
     if (
       [distributorPaUrl, distributorOhUrl].some((value) => value && !isDistributorImportUrl(value))
     ) {
-      return Response.json({ error: 'Use an HTTPS Encompass8 QuickLink URL.' }, { status: 400 })
+      return Response.json(
+        { error: 'Use an HTTPS QuickLink URL from Encompass8 or sarenecraftdist.com.' },
+        { status: 400 },
+      )
     }
 
     // Use the local API to update the global
