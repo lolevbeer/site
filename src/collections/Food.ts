@@ -1,11 +1,12 @@
 import type { CollectionConfig } from 'payload'
 import { foodManagerAccess } from '@/src/access/roles'
+import { readFood } from '@/src/access/schedules'
 import { locationField } from '@/src/collections/shared/event-fields'
 
 export const Food: CollectionConfig = {
   slug: 'food',
   access: {
-    read: () => true,
+    read: readFood,
     create: foodManagerAccess,
     update: foodManagerAccess,
     delete: foodManagerAccess,

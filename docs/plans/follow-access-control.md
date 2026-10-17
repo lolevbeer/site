@@ -58,6 +58,7 @@ This is also Payload v4 prep: v4 flips the omitted default from `true` to `false
 | Slack beer typeahead | Offers what the Slack user can read (bartenders: all beers after Task 2). |
 | Bartenders / lead bartenders | Can read draft beers in the admin panel (Task 2). |
 | Recurring food schedule global | Publicly readable (already published on `/food`). |
+| Event and food schedules | Bartenders and lead bartenders read only their assigned locations (no assignments means no access), including recurring definitions and food exclusions. Event managers retain all-event access; food managers retain all-food access; admins retain both. Public visibility rules are unchanged. Slack `/lolevbeer events` and `food` follow these collection permissions, with `•` replacing the em-dash separator. |
 
 ## Tasks
 

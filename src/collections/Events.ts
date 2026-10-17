@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload'
-import { EVENT_READER_ROLES, eventManagerAccess, hasRole } from '@/src/access/roles'
+import { eventManagerAccess } from '@/src/access/roles'
+import { readEvents } from '@/src/access/schedules'
 import {
   eventDetailFields,
   locationField,
@@ -11,18 +12,7 @@ import {
 export const Events: CollectionConfig = {
   slug: 'events',
   access: {
-    read: ({ req: { user } }) => {
-      // Admins, event managers, and bartenders can read all events
-      if (hasRole(user, EVENT_READER_ROLES)) {
-        return true
-      }
-      // Public can only read public events
-      return {
-        visibility: {
-          equals: 'public',
-        },
-      }
-    },
+    read: readEvents,
     create: eventManagerAccess,
     update: eventManagerAccess,
     delete: eventManagerAccess,
