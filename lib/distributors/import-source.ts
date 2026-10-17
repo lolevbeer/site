@@ -1,3 +1,6 @@
+export const DISTRIBUTOR_IMPORT_URL_ERROR =
+  'Use an HTTPS QuickLink URL from Encompass8 or sarenecraftdist.com.'
+
 /** Only the distributors' approved Encompass QuickLink hosts may be fetched. */
 export function isDistributorImportUrl(value: unknown): boolean {
   if (typeof value !== 'string') return false
@@ -18,6 +21,4 @@ export function isDistributorImportUrl(value: unknown): boolean {
 }
 
 export const validateDistributorImportUrl = (value: unknown) =>
-  !value ||
-  isDistributorImportUrl(value) ||
-  'Use an HTTPS QuickLink URL from Encompass8 or sarenecraftdist.com.'
+  !value || isDistributorImportUrl(value) || DISTRIBUTOR_IMPORT_URL_ERROR

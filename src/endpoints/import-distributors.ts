@@ -7,7 +7,10 @@ import { revalidateForCollectionAfterResponse } from '@/src/plugins/revalidation
 import { distributorImportPatch, indexDocsByName } from '@/lib/distributors/import-patch'
 import { applyExistingDistributorPatch } from '@/lib/distributors/upsert-existing'
 import type { Distributor } from '@/src/payload-types'
-import { isDistributorImportUrl } from '@/lib/distributors/import-source'
+import {
+  DISTRIBUTOR_IMPORT_URL_ERROR,
+  isDistributorImportUrl,
+} from '@/lib/distributors/import-source'
 
 interface DistributorRow {
   CustomerName: string
@@ -83,10 +86,7 @@ interface FetchResult {
 async function fetchDistributors(url: string): Promise<FetchResult> {
   try {
     if (!isDistributorImportUrl(url))
-      return {
-        rows: [],
-        error: 'Use an HTTPS QuickLink URL from Encompass8 or sarenecraftdist.com.',
-      }
+      return { rows: [], error: DISTRIBUTOR_IMPORT_URL_ERROR }
     const response = await fetch(url, { redirect: 'error', signal: AbortSignal.timeout(30_000) })
     if (!response.ok) {
       return { rows: [], error: `HTTP ${response.status}: ${response.statusText}` }
