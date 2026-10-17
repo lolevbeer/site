@@ -16,7 +16,7 @@ import { foodManagerAccess } from '@/src/access/roles'
  */
 export const RecurringFood: GlobalConfig = {
   slug: 'recurring-food',
-  label: 'Recurring Food',
+  label: 'Recurring Food Schedule',
   admin: {
     group: 'Food & Events',
   },

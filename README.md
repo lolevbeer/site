@@ -113,7 +113,7 @@ file in that directory except `index.ts`; keep the recovery manifest in
 
 ## Collections
 
-- **Beers** — Beer catalog with styles, ABV, pricing, Untappd ratings, and 3D can label textures (generated in the admin from label art + metallic-mask PDFs; rendered by `components/beer/beer-can-3d.tsx`)
+- **Beers** — Beer catalog with styles, ABV, pricing, Untappd ratings, and 3D can label textures (generated in the admin from label art + metallic-mask PDFs; rendered by `components/beer/beer-can-3d.tsx`). In the Beers list, anyone who can update beers can fill an empty Tag or Untappd URL from the table with Payload's select (the Untappd one searches by the beer's name on open, or by typed text, and lists the exact name match first, marked ★); a beer with a pending draft saves the value as a draft
 - **Beer Reviews** — Approved customer reviews attached to beers
 - **Styles** — Beer style definitions
 - **Tags** — Reusable single-value labels for beers
@@ -139,6 +139,40 @@ file in that directory except `index.ts`; keep the recovery manifest in
 - **Shareable links.** Each row has an `#event-<id>` anchor (`ScheduleList anchors`, plus one per collapsed occurrence under Regulars). `eventPageUrl()` builds `/events?loc=<slug>#event-<id>` for the Event JSON-LD `url`. The page scrolls to the hash once hydration applies `?loc=` and the row exists.
 - **Row links.** Agenda rows (events and food, everywhere `TimelineItem` is used) are not whole-row links. An event's site shows as a "Tickets ↗" link (ticketing hosts) or a "Details ↗" link under the row. Link names include the title for screen readers.
 - **Add to calendar.** `/events/<id>/calendar.ics` serves one upcoming public event as iCalendar (TZID `America/New_York`, with no `DESCRIPTION`). It reads anonymously through `getPublicEventById`, so private events and descriptions never ship. Unknown ids 404 with `no-store`. robots.txt disallows the route and the link is `nofollow`. Only `/events` passes `ScheduleList calendar`; the homepage and taproom pages link to `/events` instead.
+
+## Admin editing
+
+Navigation groups work into **Beer Catalog**, **Taproom Operations**, **Food &
+Events**, **Hiring**, **Website**, and **Administration**. Labels such as Other
+Menu Items (`products`), One-off Food Bookings (`food`), Special Hours
+(`holiday-hours`), Stockists (`distributors`), Staff Accounts (`users`), and Job
+Openings (`jobs`) do not rename collection slugs or API fields. Background Jobs
+is the system queue, separate from hiring.
+
+- **Fields:** Content and scheduling inputs stay in the main form. Identifiers,
+  SEO, contacts and notification diagnostics use disclosures. Unnamed layout
+  containers preserve stored paths, access rules, validation and save behavior.
+  Existing saved list columns are not reset.
+- **Beer and menus:** Beers keeps its four tabs and inline Tag/Untappd fill. Price
+  labels identify serving size and dollars. Menus use required Menu name as their
+  title, with Menu items first and Display settings separate. Blank item rows
+  still represent empty taps; blank price overrides use catalog prices. Cans
+  retain automatic newest-recipe ordering.
+- **Hours:** Locations puts all seven existing weekday open/close pairs before
+  images alongside timezone, separate from visitor information and website
+  content. Existing field permissions remain unchanged.
+- **Event privacy:** Staff notes (`description`) remain signed-in-only; Booking
+  notes and contacts remain admin/event-manager-only. A dated event matching a
+  series' name, location and date replaces the whole occurrence, not individual
+  fields. Website listing fields are separate from staff notes.
+- **Recurring food:** The grid still saves immediately and confirms skips. Rows
+  mean nth weekday occurrences, not calendar weeks. Dates collapse by month;
+  conflicts stay visible. A failed load shows an error rather than claiming no
+  active locations. One-off bookings do not replace recurring food automatically:
+  skip the recurring date explicitly.
+- **Inboxes:** Changing inquiry or donation status does not send a reply or create
+  a booking. Job Applications has no new pipeline/status field. A published job
+  opening is visible immediately; its closing date alone does not hide it.
 
 ## Admin dashboard
 

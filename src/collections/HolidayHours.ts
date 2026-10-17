@@ -3,14 +3,11 @@ import { adminAccess } from '@/src/access/roles'
 
 export const HolidayHours: CollectionConfig = {
   slug: 'holiday-hours',
-  labels: {
-    singular: 'Holiday Hours',
-    plural: 'Holiday Hours',
-  },
+  labels: { singular: 'Special Hours', plural: 'Special Hours' },
   admin: {
     useAsTitle: 'name',
-    defaultColumns: ['name', 'locations', 'date', 'type'],
-    group: 'Settings',
+    defaultColumns: ['name', 'date', 'locations', 'type'],
+    group: 'Taproom Operations',
     description: 'Holiday and special hours overrides for locations',
   },
   access: {
@@ -27,16 +24,7 @@ export const HolidayHours: CollectionConfig = {
       admin: {
         description: 'Name for this override (e.g., "Christmas Day", "New Year\'s Eve")',
       },
-    },
-    {
-      name: 'locations',
-      type: 'relationship',
-      relationTo: 'locations',
-      hasMany: true,
-      required: true,
-      admin: {
-        description: 'Which location(s) this override applies to',
-      },
+      label: 'Occasion',
     },
     {
       name: 'date',
@@ -51,6 +39,17 @@ export const HolidayHours: CollectionConfig = {
       },
     },
     {
+      name: 'locations',
+      type: 'relationship',
+      relationTo: 'locations',
+      hasMany: true,
+      required: true,
+      admin: {
+        description: 'Which location(s) this override applies to',
+      },
+      label: 'Taprooms',
+    },
+    {
       name: 'type',
       type: 'select',
       required: true,
@@ -62,6 +61,7 @@ export const HolidayHours: CollectionConfig = {
       admin: {
         description: 'Type of override',
       },
+      label: 'Hours change',
     },
     {
       name: 'hours',
@@ -107,8 +107,8 @@ export const HolidayHours: CollectionConfig = {
       type: 'textarea',
       admin: {
         description: 'Optional note to display (e.g., "Closed for the holiday")',
-        position: 'sidebar',
       },
+      label: 'Public notice',
     },
   ],
 }

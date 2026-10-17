@@ -1,8 +1,8 @@
 /**
- * Agenda rows show their outbound link as visible text ("Tickets ↗" for
- * ticketing sites, "Details ↗" otherwise) instead of wrapping the whole row,
- * and events (only) get an "Add to calendar" .ics link. Link names include
- * the title so a screen-reader link list can tell rows apart.
+ * An agenda row's title is its outbound link (new tab, marked by an icon).
+ * A ticketing site instead gets a visible "Tickets ↗" link and a plain title. Events (only) get an
+ * "Add to calendar" .ics link. Link names include the title so a
+ * screen-reader link list can tell rows apart.
  */
 import { cleanup, render, screen } from '@testing-library/react'
 import { createElement } from 'react'
@@ -27,13 +27,19 @@ describe('TimelineItem links', () => {
     // The arrow is decorative, and the name says which event the link is for.
     expect(link.querySelector('[aria-hidden="true"]')?.textContent).toBe('↗')
     expect(link.textContent).toContain('for Anniversary Party')
-    // The row itself is no longer a link.
-    expect(screen.getByText('Anniversary Party').closest('a')).toBeNull()
+    // One link per ticket row: the title stays plain text.
+    expect(screen.getAllByRole('link')).toHaveLength(1)
+    expect(screen.getByText('Anniversary Party').tagName).toBe('P')
   })
 
-  it('labels any other site as Details', () => {
+  it('links the title to any site and drops the Details text', () => {
     render(createElement(TimelineItem, { title: 'Jazz', site: 'https://band.example.com' }))
-    expect(screen.getByRole('link', { name: /Details/ })).toBeTruthy()
+    const link = screen.getByRole('link', { name: /Jazz/ })
+    expect(link.getAttribute('href')).toBe('https://band.example.com/')
+    expect(link.getAttribute('target')).toBe('_blank')
+    expect(link.textContent).toContain('opens in a new tab')
+    expect(screen.queryByText(/Details/)).toBeNull()
+    expect(screen.getAllByRole('link')).toHaveLength(1)
   })
 
   it('renders no links without a site or calendar', () => {

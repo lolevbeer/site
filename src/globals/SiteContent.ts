@@ -1,3 +1,4 @@
+import { validateDistributorImportUrl } from '@/lib/distributors/import-source'
 import type { GlobalConfig } from 'payload'
 import { adminAccess, adminFieldAccess } from '@/src/access/roles'
 import { isSlackChannel } from '@/lib/slack/mrkdwn'
@@ -11,7 +12,7 @@ export const SiteContent: GlobalConfig = {
   slug: 'site-content',
   label: 'Site Content',
   admin: {
-    group: 'Settings',
+    group: 'Website',
   },
   access: {
     read: () => true,
@@ -22,13 +23,13 @@ export const SiteContent: GlobalConfig = {
       type: 'tabs',
       tabs: [
         {
-          label: 'Hero Section',
+          label: 'Homepage',
           fields: [
             {
               name: 'heroImage',
               type: 'upload',
               relationTo: 'media',
-              label: 'Hero Background Image',
+              label: 'Homepage background image',
               admin: {
                 description:
                   'Background image for the homepage hero section (recommended: 1920x1080px or larger)',
@@ -37,7 +38,7 @@ export const SiteContent: GlobalConfig = {
             {
               name: 'heroDescription',
               type: 'textarea',
-              label: 'Hero Description',
+              label: 'Homepage introduction',
               defaultValue: DEFAULT_HERO_DESCRIPTION,
               admin: {
                 rows: 4,
@@ -131,6 +132,7 @@ export const SiteContent: GlobalConfig = {
           fields: [
             {
               name: 'distributorPaUrl',
+              validate: validateDistributorImportUrl,
               type: 'text',
               label: 'Pennsylvania JSON URL',
               access: {
@@ -142,6 +144,7 @@ export const SiteContent: GlobalConfig = {
             },
             {
               name: 'distributorOhUrl',
+              validate: validateDistributorImportUrl,
               type: 'text',
               label: 'Ohio JSON URL',
               access: {

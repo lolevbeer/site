@@ -5,7 +5,7 @@
  * `event-inquiries` staff inbox (never Events), and pings Slack #events in
  * after() so a slow Slack cannot stall the thank-you.
  *
- * Untrusted input: `unknown`. Honeypot spam and recent duplicates return
+ * Untrusted input: `unknown`. Honeypot spam and exact-content retries return
  * `{ ok: true }` without a write. Slack is best-effort.
  */
 
@@ -24,21 +24,14 @@ import { firstFieldError, PUBLIC_FORM_INCOMPLETE } from '@/lib/public-forms/fiel
 import { isHoneypotFilled } from '@/lib/public-forms/honeypot'
 import { clientIp } from '@/lib/public-forms/request-ip'
 import { hashSubmitterIp } from '@/lib/public-forms/ip-hash'
-import { hasReachedIpHashLimit } from '@/lib/public-forms/durable-limit'
+import { savePublicForm } from '@/lib/public-forms/submission'
 import { findActiveTaprooms } from '@/lib/public-forms/taprooms'
-import {
-  PUBLIC_FORM_EMAIL_LIMIT_MESSAGE,
-  PUBLIC_FORM_EMAIL_WINDOW_MS,
-  PUBLIC_FORM_IP_LIMIT_MESSAGE,
-  allowEmailAttempt,
-  allowIpAttempt,
-} from '@/lib/public-forms/rate-limit'
-import { isRecentTimestamp, toESTDate } from '@/lib/utils/date'
+import { PUBLIC_FORM_IP_LIMIT_MESSAGE } from '@/lib/public-forms/rate-limit'
+import { toESTDate } from '@/lib/utils/date'
 import { notifyCollectionOnSlack } from '@/lib/slack/notify'
 
 export type SubmitEventInquiryResult =
-  | { ok: true }
-  | { ok: false; error: string; errors?: EventInquiryErrors }
+  { ok: true } | { ok: false; error: string; errors?: EventInquiryErrors }
 
 function fail(error: string, errors?: EventInquiryErrors): SubmitEventInquiryResult {
   return { ok: false, error, errors }
@@ -51,7 +44,6 @@ export async function submitEventInquiry(input: unknown): Promise<SubmitEventInq
     if (isHoneypotFilled(parsed.companyUrlHp)) return { ok: true }
 
     const ip = await clientIp()
-    if (!allowIpAttempt('event-inquiry', ip)) return fail(PUBLIC_FORM_IP_LIMIT_MESSAGE)
 
     const payload = await getPayload({ config })
     const taprooms = await findActiveTaprooms(payload)
@@ -64,15 +56,7 @@ export async function submitEventInquiry(input: unknown): Promise<SubmitEventInq
     if (!result.ok) return fail(firstFieldError(result.errors), result.errors)
 
     const value = result.value
-    // The validator lowercases email, so the rate limit and duplicate check match.
-    if (!allowEmailAttempt('event-inquiry', value.email)) {
-      return fail(PUBLIC_FORM_EMAIL_LIMIT_MESSAGE)
-    }
-
     const ipHash = hashSubmitterIp(ip, readServerEnvironment().payloadSecret)
-    if (await hasReachedIpHashLimit(payload, 'event-inquiries', ipHash)) {
-      return fail(PUBLIC_FORM_IP_LIMIT_MESSAGE)
-    }
 
     // The validator only accepts slugs from `taprooms`, so this always matches.
     const taproom = taprooms.find((doc) => doc.slug === value.taproom)!
@@ -80,25 +64,10 @@ export async function submitEventInquiry(input: unknown): Promise<SubmitEventInq
     // admin's dayOnly picker for Pittsburgh staff.
     const preferredDate = toESTDate(value.preferredDate).toISOString()
 
-    const recent = await payload.find({
-      collection: 'event-inquiries',
-      where: {
-        and: [
-          { email: { equals: value.email } },
-          { preferredDate: { equals: preferredDate } },
-        ],
-      },
-      limit: 1,
-      overrideAccess: true,
-    })
-    if (isRecentTimestamp(recent.docs[0]?.createdAt, PUBLIC_FORM_EMAIL_WINDOW_MS)) {
-      return { ok: true }
-    }
-
-    const created = await payload.create({
-      collection: 'event-inquiries',
-      overrideAccess: true,
-      data: {
+    const saved = await savePublicForm(
+      payload,
+      'event-inquiries',
+      {
         status: 'new',
         name: value.name,
         email: value.email,
@@ -107,9 +76,12 @@ export async function submitEventInquiry(input: unknown): Promise<SubmitEventInq
         headcount: value.headcount,
         taproom: taproom.id,
         message: value.message || undefined,
-        ipHash,
       },
-    })
+      ipHash,
+    )
+    if (saved.status === 'limited') return fail(PUBLIC_FORM_IP_LIMIT_MESSAGE)
+    if (saved.status === 'duplicate') return { ok: true }
+    const created = saved.doc
 
     after(() =>
       notifyCollectionOnSlack(payload, {

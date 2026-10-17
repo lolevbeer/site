@@ -3,7 +3,7 @@
  *
  * Everything passed to a 'use client' component is serialized into the page's
  * RSC payload and hydrated in the browser. Whole Payload docs carry media
- * `sizes` objects, populated locations, SEO groups and review data that the UI
+ * `variants` objects, populated locations, SEO groups and review data that the UI
  * never reads, so these helpers keep only what the client renders. Server-only
  * consumers (JSON-LD) keep using the full docs.
  *
@@ -47,10 +47,10 @@ export function toFoodPageSchedules(schedules: FoodVendorSchedule[]): FoodPageSc
  */
 function toHomeImage(image: Beer['image']): Beer['image'] {
   if (!image || typeof image !== 'object') return image
-  const sizes: NonNullable<Media['sizes']> = {}
-  if (image.sizes?.thumbnail?.url) sizes.thumbnail = { url: image.sizes.thumbnail.url }
-  if (image.sizes?.card?.url) sizes.card = { url: image.sizes.card.url }
-  return { url: image.url, sizes } as Media
+  const variants: NonNullable<Media['variants']> = {}
+  if (image.variants?.thumbnail?.url) variants.thumbnail = { url: image.variants.thumbnail.url }
+  if (image.variants?.card?.url) variants.card = { url: image.variants.card.url }
+  return { url: image.url, variants } as Media
 }
 
 /**

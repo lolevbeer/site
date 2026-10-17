@@ -27,16 +27,26 @@ const withLegacy = beers.docs.filter(
 
 const missing: string[] = []
 for (const beer of withLegacy) {
-  const { totalDocs } = await payload.count({
+  const normalized = await payload.find({
     collection: 'beer-reviews',
     where: { beer: { equals: beer.id } },
+    select: { sourceUrl: true },
+    depth: 0,
+    pagination: false,
     overrideAccess: true,
   })
-  if (totalDocs === 0) missing.push(`${beer.slug} (${beer.name})`)
+  const urls = new Set(normalized.docs.map((review) => review.sourceUrl))
+  const legacy = beer.positiveReviews as { url?: string; text?: string }[]
+  const absent = new Set(
+    legacy
+      .filter((review) => review.url && review.text && !urls.has(review.url))
+      .map((review) => review.url),
+  )
+  if (absent.size) missing.push(`${beer.slug} (${beer.name}): ${absent.size} missing review(s)`)
 }
 
 console.log(`Beers with legacy positiveReviews: ${withLegacy.length}`)
-console.log(`...of those, with zero beer-reviews docs: ${missing.length}`)
+console.log(`...of those, with missing normalized review URLs: ${missing.length}`)
 for (const line of missing) console.log(`  - ${line}`)
 
-process.exit(0)
+process.exit(missing.length ? 1 : 0)

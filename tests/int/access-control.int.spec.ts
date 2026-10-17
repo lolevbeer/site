@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest'
+import type { Field } from 'payload'
+import { findPayloadField } from '../helpers/payload-fields'
 import type { User } from '@/src/payload-types'
 import { Users } from '@/src/collections/Users'
 import { Menus, canUpdateMenus } from '@/src/collections/Menus'
@@ -12,7 +14,6 @@ import { JobApplications } from '@/src/collections/JobApplications'
 import { FoodVendors } from '@/src/collections/FoodVendors'
 import { SiteContent } from '@/src/globals/SiteContent'
 import { RecurringFood } from '@/src/globals/RecurringFood'
-import { canRunUntappdSync } from '@/src/endpoints/sync-untappd-ratings'
 import { getAdminRelationshipID } from '@/src/components/admin/relationship-value'
 import { isFoodManager } from '@/src/access/roles'
 
@@ -33,29 +34,8 @@ function callAccess(access: unknown, user: User | null) {
   return access({ req: { user } })
 }
 
-function findField(fields: unknown[], name: string): Record<string, unknown> {
-  for (const field of fields) {
-    if (!field || typeof field !== 'object') continue
-    const record = field as Record<string, unknown>
-    if (record.name === name) return record
-
-    if (Array.isArray(record.fields)) {
-      const nested = findField(record.fields, name)
-      if (Object.keys(nested).length > 0) return nested
-    }
-
-    if (Array.isArray(record.tabs)) {
-      for (const tab of record.tabs) {
-        if (!tab || typeof tab !== 'object') continue
-        const tabFields = (tab as Record<string, unknown>).fields
-        if (!Array.isArray(tabFields)) continue
-        const nested = findField(tabFields, name)
-        if (Object.keys(nested).length > 0) return nested
-      }
-    }
-  }
-
-  return {}
+function findField(fields: Field[], name: string): Record<string, unknown> {
+  return (findPayloadField(fields, name) ?? {}) as Record<string, unknown>
 }
 
 describe('menu authorization', () => {
@@ -245,14 +225,6 @@ describe('user assignment authorization', () => {
         runHook({ roles: ['bartender'], locations: ['location-1'] }, userWith(['lead-bartender'])),
       ).toThrow(/only assign locations/i)
     })
-  })
-})
-
-describe('sync endpoint authorization', () => {
-  it('allows only admins and beer managers to sync Untappd', () => {
-    expect(canRunUntappdSync(userWith(['admin']))).toBe(true)
-    expect(canRunUntappdSync(userWith(['beer-manager']))).toBe(true)
-    expect(canRunUntappdSync(userWith(['bartender']))).toBe(false)
   })
 })
 

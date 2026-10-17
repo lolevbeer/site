@@ -30,7 +30,7 @@ export const Events: CollectionConfig = {
   admin: {
     group: 'Food & Events',
     useAsTitle: 'organizer',
-    defaultColumns: ['organizer', 'date', 'location', 'visibility'],
+    defaultColumns: ['organizer', 'date', 'startTime', 'location', 'visibility'],
     pagination: {
       defaultLimit: 100,
     },
@@ -38,6 +38,7 @@ export const Events: CollectionConfig = {
   fields: [
     visibilityField,
     organizerField,
+    locationField,
     {
       name: 'date',
       type: 'date',
@@ -50,7 +51,6 @@ export const Events: CollectionConfig = {
       },
     },
     timeRowField,
-    locationField,
     {
       name: 'dateWarning',
       type: 'ui',
@@ -62,4 +62,5 @@ export const Events: CollectionConfig = {
     },
     ...eventDetailFields,
   ],
+  labels: { singular: 'Dated Event', plural: 'Dated Events' },
 }

@@ -7,7 +7,7 @@ import { logger } from '@/lib/utils/logger'
 const QUEUE = 'maintenance'
 
 /**
- * Vercel invokes this route daily. Payload handles the schedule deduplication,
+ * Vercel wakes this queue every five minutes; the task schedules new work daily. Payload handles the schedule deduplication,
  * durable job record, retries, and execution; this route only wakes the queue.
  */
 export async function GET(request: NextRequest) {
@@ -35,15 +35,21 @@ export async function GET(request: NextRequest) {
       revalidateForCollection('beers')
     }
 
-    return NextResponse.json({
-      success: true,
-      scheduled: {
-        queued: scheduled.queued.length,
-        skipped: scheduled.skipped.length,
-        errored: scheduled.errored.length,
+    const success =
+      scheduled.errored.length === 0 &&
+      Object.values(run.jobStatus || {}).every((job) => job.status === 'success')
+    return NextResponse.json(
+      {
+        success,
+        scheduled: {
+          queued: scheduled.queued.length,
+          skipped: scheduled.skipped.length,
+          errored: scheduled.errored.length,
+        },
+        run,
       },
-      run,
-    })
+      { status: success ? 200 : 503 },
+    )
   } catch (error) {
     logger.error('Untappd jobs runner error:', error)
     return NextResponse.json({ error: 'Failed to run maintenance jobs' }, { status: 500 })

@@ -7,6 +7,7 @@
 import type { CollectionConfig } from 'payload'
 import { adminAccess, adminFieldAccess, eventManagerAccess } from '@/src/access/roles'
 import { EVENT_INQUIRY_MAX_HEADCOUNT, EVENT_INQUIRY_MAX_TEXT } from '@/lib/events/inquiry'
+import { slackDiagnosticsField } from './utils/slackDiagnosticsField'
 
 export const EventInquiries: CollectionConfig = {
   slug: 'event-inquiries',
@@ -19,10 +20,12 @@ export const EventInquiries: CollectionConfig = {
   admin: {
     group: 'Food & Events',
     useAsTitle: 'name',
-    defaultColumns: ['name', 'preferredDate', 'headcount', 'taproom', 'status', 'createdAt'],
-    description: 'Private-event inquiries from /events. Rows are created only by the public form.',
+    defaultColumns: ['name', 'status', 'preferredDate', 'taproom', 'headcount', 'createdAt'],
+    description:
+      'Requests from /events, not confirmed bookings. Marking Booked does not create an Event; enter that booking separately.',
   },
   fields: [
+    { name: 'submissionKey', type: 'text', unique: true, admin: { hidden: true } },
     {
       name: 'status',
       type: 'select',
@@ -35,14 +38,22 @@ export const EventInquiries: CollectionConfig = {
       ],
       admin: { position: 'sidebar' },
     },
-    { name: 'name', type: 'text', required: true, maxLength: 200 },
-    { name: 'email', type: 'email', required: true },
-    { name: 'phone', type: 'text', required: true, maxLength: 32 },
     {
       name: 'preferredDate',
       type: 'date',
       required: true,
-      admin: { date: { pickerAppearance: 'dayOnly', displayFormat: 'MMM d, yyyy' } },
+      admin: {
+        date: { pickerAppearance: 'dayOnly', displayFormat: 'MMM d, yyyy' },
+        description: 'Requested date, not a confirmed booking.',
+      },
+      label: 'Preferred date',
+    },
+    {
+      name: 'taproom',
+      type: 'relationship',
+      relationTo: 'locations',
+      required: true,
+      label: 'Taproom',
     },
     {
       name: 'headcount',
@@ -50,24 +61,23 @@ export const EventInquiries: CollectionConfig = {
       required: true,
       min: 1,
       max: EVENT_INQUIRY_MAX_HEADCOUNT,
-    },
-    { name: 'taproom', type: 'relationship', relationTo: 'locations', required: true },
-    { name: 'message', type: 'textarea', maxLength: EVENT_INQUIRY_MAX_TEXT },
-    {
-      name: 'slackNotifiedAt',
-      type: 'date',
-      admin: {
-        position: 'sidebar',
-        readOnly: true,
-        description: 'When the #events ping succeeded. Empty means staff should check Slack.',
-      },
+      label: 'Estimated guests',
     },
     {
-      name: 'slackError',
-      type: 'text',
-      maxLength: 200,
-      admin: { position: 'sidebar', readOnly: true },
+      name: 'message',
+      type: 'textarea',
+      maxLength: EVENT_INQUIRY_MAX_TEXT,
+      label: 'Event requirements / message',
     },
+    { name: 'name', type: 'text', required: true, maxLength: 200, label: 'Requester name' },
+    {
+      type: 'row',
+      fields: [
+        { name: 'email', type: 'email', required: true },
+        { name: 'phone', type: 'text', required: true, maxLength: 32 },
+      ],
+    },
+    slackDiagnosticsField,
     {
       name: 'ipHash',
       type: 'text',
@@ -78,4 +88,6 @@ export const EventInquiries: CollectionConfig = {
       admin: { hidden: true },
     },
   ],
+  labels: { singular: 'Private Event Inquiry', plural: 'Private Event Inquiries' },
+  defaultSort: '-createdAt',
 }

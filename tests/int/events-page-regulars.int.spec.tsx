@@ -89,7 +89,7 @@ describe('EventsPageClient regulars', () => {
     const row = screen.getByText('Wednesdays 7pm · Trivia').closest('li')!
     expect(
       within(row)
-        .getByRole('link', { name: /Details/ })
+        .getByRole('link', { name: /opens in a new tab/ })
         .getAttribute('href'),
     ).toBe('https://trivia.example.com/signup')
     expect(

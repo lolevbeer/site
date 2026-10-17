@@ -161,7 +161,7 @@ export default async function FAQPage() {
           <div className="mb-12">
             <Accordion type="single" collapsible className="w-full">
               {allFAQs.map((faq, index) => (
-                <AccordionItem key={index} value={`item-${index}`}>
+                <AccordionItem key={index} value={`item-${index}`} className="last:border-b-0">
                   <AccordionTrigger className="text-left">{faq.question}</AccordionTrigger>
                   {/* forceMount keeps closed answers in the server HTML so crawlers
                     and AI fetchers see the full Q&A; the closed state is hidden

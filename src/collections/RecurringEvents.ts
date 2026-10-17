@@ -39,9 +39,9 @@ export const RecurringEvents: CollectionConfig = {
   admin: {
     group: 'Food & Events',
     useAsTitle: 'organizer',
-    defaultColumns: ['organizer', 'year', 'day', 'occurrences', 'location', 'visibility'],
+    defaultColumns: ['organizer', 'year', 'day', 'occurrences', 'location', 'active', 'visibility'],
     description:
-      'Manage events that repeat monthly without creating a dated event for every occurrence.',
+      'Monthly series for one calendar year. A dated event with the same name, taproom and date replaces the entire generated occurrence.',
   },
   indexes: [{ fields: ['year', 'location', 'active'] }],
   fields: [
@@ -51,10 +51,15 @@ export const RecurringEvents: CollectionConfig = {
       required: true,
       defaultValue: true,
       index: true,
-      admin: { position: 'sidebar' },
+      admin: {
+        position: 'sidebar',
+        description: 'Uncheck to stop expanding this series into scheduled events.',
+      },
+      label: 'Generate occurrences',
     },
     visibilityField,
     organizerField,
+    locationField,
     {
       type: 'row',
       fields: [
@@ -66,11 +71,12 @@ export const RecurringEvents: CollectionConfig = {
           min: RECURRING_YEAR_MIN,
           max: RECURRING_YEAR_MAX,
           index: true,
-          admin: { width: '33%' },
+          admin: { width: '33%', description: 'Applies only to this calendar year.' },
+          label: 'Schedule year',
         },
         {
           name: 'day',
-          label: 'Day of week',
+          label: 'Weekday',
           type: 'select',
           required: true,
           options: recurringDays.map((day) => ({ label: capitalizeName(day), value: day })),
@@ -78,7 +84,7 @@ export const RecurringEvents: CollectionConfig = {
         },
         {
           name: 'occurrences',
-          label: 'Weeks of month',
+          label: 'Occurrences in month',
           type: 'select',
           hasMany: true,
           required: true,
@@ -88,28 +94,35 @@ export const RecurringEvents: CollectionConfig = {
           })),
           admin: {
             width: '34%',
-            description: 'Choose one or more, such as first and third.',
+            description:
+              'For example, first and third Tuesday. Fifth runs only in months with a fifth occurrence.',
           },
         },
       ],
     },
-    locationField,
     timeRowField,
     {
-      name: 'excludedDates',
+      type: 'collapsible',
       label: 'Skipped dates',
-      type: 'array',
-      admin: {
-        description: 'Optional dates in this year when the recurring event will not happen.',
-      },
+      admin: { initCollapsed: true },
       fields: [
         {
-          name: 'date',
-          type: 'date',
-          required: true,
+          name: 'excludedDates',
+          label: 'Skipped dates',
+          type: 'array',
           admin: {
-            date: { pickerAppearance: 'dayOnly', displayFormat: 'MMM d, yyyy' },
+            description: 'Optional dates in this year when the recurring event will not happen.',
           },
+          fields: [
+            {
+              name: 'date',
+              type: 'date',
+              required: true,
+              admin: {
+                date: { pickerAppearance: 'dayOnly', displayFormat: 'MMM d, yyyy' },
+              },
+            },
+          ],
         },
       ],
     },

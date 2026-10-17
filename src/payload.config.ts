@@ -4,11 +4,11 @@ import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'path'
 import { buildConfig, type CollectionConfig } from 'payload'
 import { fileURLToPath } from 'url'
-import sharp from 'sharp'
+import { sharpTransformer } from '@payloadcms/transformer-sharp'
 import { revalidationPlugin } from './plugins/revalidation-plugin'
 
 import { Users } from './collections/Users'
-import { Media } from './collections/Media'
+import { Media, mediaSharp } from './collections/Media'
 import { Styles } from './collections/Styles'
 import { Tags } from './collections/Tags'
 import { Beers } from './collections/Beers'
@@ -37,7 +37,6 @@ import { importDistributors } from './endpoints/import-distributors'
 import { importDistributorsCsv } from './endpoints/import-distributors-csv'
 import { updateDistributorUrls } from './endpoints/update-distributor-urls'
 import { recalculateBeerPrices } from './endpoints/recalculate-beer-prices'
-import { syncUntappdRatings } from './endpoints/sync-untappd-ratings'
 import { adminAccess, hasRole } from './access/roles'
 import { syncUntappdRatingsTask } from './jobs/sync-untappd-ratings'
 import { getLocalDevOrigins } from '../lib/config/payload-origins'
@@ -127,8 +126,10 @@ export default buildConfig({
     jobsCollectionOverrides: ({ defaultJobsCollection }) =>
       hideApiTab({
         ...defaultJobsCollection,
+        labels: { singular: 'Background Job', plural: 'Background Jobs' },
         admin: {
           ...defaultJobsCollection.admin,
+          group: 'Administration',
           hidden: false,
         },
         // Payload 4 denies all job CRUD by default; open read/delete to admins.
@@ -257,44 +258,53 @@ export default buildConfig({
   },
   // Payload 4 keeps version history for every collection and global unless told
   // not to. Only Beers and Menus want history; they set their own `versions`.
+  // Payload 4 beta also adds readable `createdBy`/`updatedBy` user stamps to
+  // everything by default; off here so public docs don't expose staff IDs.
+  // Beers and Menus keep their own signed-in-only `updatedBy` (updatedByField).
   collections: [
-    // Back of House
+    // Beer Catalog
     Beers,
     BeerReviews,
     Styles,
     Tags,
-    // Front of House
+    // Taproom Operations
     Menus,
     Products,
+    Locations,
+    HolidayHours,
     // Food & Events
     Events,
     DonationRequests,
     EventInquiries,
-    Jobs,
-    JobApplications,
     RecurringEvents,
     Food,
     FoodVendors,
-    RecurringFoodSchedules,
-    RecurringFoodExclusions,
-    // Settings (last)
-    Users,
-    Locations,
-    HolidayHours,
+    // Hiring
+    Jobs,
+    JobApplications,
+    // Website
     Distributors,
     FAQs,
+    // Administration
+    Users,
+    // System (hidden from nav)
+    RecurringFoodSchedules,
+    RecurringFoodExclusions,
     Media,
-  ].map((collection) => hideApiTab({ versions: false, ...collection })),
+  ].map((collection) => hideApiTab({ versions: false, authorship: false, ...collection })),
   globals: [
-    // Back of House
+    // Beer Catalog
     ComingSoon,
     // Food & Events
     RecurringFood,
-    // Settings (last)
+    // Website
     SiteContent,
     SiteSeo,
-  ].map((global) => ({ versions: false, ...global })),
+  ].map((global) => ({ versions: false, authorship: false, ...global })),
   editor: lexicalEditor(),
+  // Payload 4 beta adds a `payload-llm-instructions` collection on its own
+  // default access, outside the role rules in src/access. Off until we use it.
+  llmInstructions: false,
   secret: serverEnv.payloadSecret,
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
@@ -336,7 +346,9 @@ export default buildConfig({
       serverSelectionTimeoutMS: 5000,
     },
   }),
-  sharp,
+  upload: {
+    transformers: [sharpTransformer({ collections: { media: mediaSharp } })],
+  },
   plugins: [revalidationPlugin],
   endpoints: [
     {
@@ -358,11 +370,6 @@ export default buildConfig({
       path: '/recalculate-beer-prices',
       method: 'post',
       handler: recalculateBeerPrices,
-    },
-    {
-      path: '/sync-untappd-ratings',
-      method: 'post',
-      handler: syncUntappdRatings,
     },
   ],
   storage: [

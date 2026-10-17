@@ -7,6 +7,7 @@
 import type { CollectionConfig } from 'payload'
 import { adminAccess, eventManagerAccess } from '@/src/access/roles'
 import { DONATION_MAX_ATTENDEES, DONATION_MAX_TEXT } from '@/lib/donate/donation-request'
+import { slackDiagnosticsField } from './utils/slackDiagnosticsField'
 
 const text = (overrides: Record<string, unknown> = {}) => ({
   type: 'text' as const,
@@ -38,6 +39,7 @@ export const DonationRequests: CollectionConfig = {
       'Public donation asks from /donate. Completing the form is not a yes. Rows are created only by the public form.',
   },
   fields: [
+    { name: 'submissionKey', type: 'text', unique: true, admin: { hidden: true } },
     {
       name: 'status',
       type: 'select',
@@ -47,8 +49,13 @@ export const DonationRequests: CollectionConfig = {
         { label: 'Approved', value: 'approved' },
         { label: 'Declined', value: 'declined' },
       ],
-      admin: { position: 'sidebar' },
+      admin: {
+        position: 'sidebar',
+        description: 'Records the staff decision only; does not send a reply.',
+      },
+      label: 'Decision status',
     },
+    { name: 'organizationName', ...text() },
     {
       name: 'askType',
       type: 'select',
@@ -57,31 +64,39 @@ export const DonationRequests: CollectionConfig = {
         { label: 'Product pickup', value: 'product' },
         { label: 'Taproom fundraiser night', value: 'taproom-night' },
       ],
-    },
-    { name: 'organizationName', ...text() },
-    { name: 'contactName', ...text() },
-    { name: 'email', type: 'email', required: true },
-    { name: 'phone', ...text({ maxLength: 32 }) },
-    { name: 'mission', ...longText() },
-    { name: 'howHeard', ...longText() },
-    {
-      name: 'previousDonation',
-      type: 'select',
-      required: true,
-      options: [
-        { label: 'Yes', value: 'yes' },
-        { label: 'No', value: 'no' },
-      ],
+      label: 'Request type',
     },
     { name: 'eventName', ...text() },
     {
-      name: 'eventDate',
-      type: 'date',
-      required: true,
-      admin: { date: { pickerAppearance: 'dayOnly', displayFormat: 'MMM d, yyyy' } },
+      type: 'row',
+      fields: [
+        {
+          name: 'eventDate',
+          type: 'date',
+          required: true,
+          admin: { date: { pickerAppearance: 'dayOnly', displayFormat: 'MMM d, yyyy' } },
+        },
+        {
+          name: 'attendees',
+          type: 'number',
+          required: true,
+          min: 1,
+          max: DONATION_MAX_ATTENDEES,
+          label: 'Estimated attendance',
+        },
+      ],
     },
     { name: 'venue', ...text({ maxLength: 400 }) },
-    { name: 'attendees', type: 'number', required: true, min: 1, max: DONATION_MAX_ATTENDEES },
+    {
+      name: 'taproom',
+      type: 'text',
+      maxLength: 80,
+      admin: {
+        description: 'Location slug from the public form, when the ask is a taproom night.',
+        condition: (_: unknown, sibling: { askType?: string }) =>
+          sibling?.askType === 'taproom-night',
+      },
+    },
     { name: 'requestDetails', ...longText() },
     {
       name: 'howServed',
@@ -92,8 +107,6 @@ export const DonationRequests: CollectionConfig = {
         },
       }),
     },
-    { name: 'recognition', ...longText() },
-    { name: 'whyLolev', ...longText() },
     {
       name: 'pickupName',
       ...text({
@@ -103,30 +116,36 @@ export const DonationRequests: CollectionConfig = {
         },
       }),
     },
+    { name: 'contactName', ...text() },
     {
-      name: 'taproom',
-      type: 'text',
-      maxLength: 80,
-      admin: {
-        description: 'Location slug from the public form, when the ask is a taproom night.',
-        condition: (_: unknown, sibling: { askType?: string }) => sibling?.askType === 'taproom-night',
-      },
+      type: 'row',
+      fields: [
+        { name: 'email', type: 'email', required: true, label: 'Contact email' },
+        { name: 'phone', ...text({ maxLength: 32 }) },
+      ],
     },
     {
-      name: 'slackNotifiedAt',
-      type: 'date',
-      admin: {
-        position: 'sidebar',
-        readOnly: true,
-        description: 'When the #events ping succeeded. Empty means staff should check Slack.',
-      },
+      type: 'collapsible',
+      label: 'Organization & background',
+      admin: { initCollapsed: true },
+      fields: [
+        { name: 'mission', ...longText() },
+        {
+          name: 'previousDonation',
+          type: 'select',
+          required: true,
+          options: [
+            { label: 'Yes', value: 'yes' },
+            { label: 'No', value: 'no' },
+          ],
+          label: 'Received a donation before?',
+        },
+        { name: 'recognition', ...longText() },
+        { name: 'whyLolev', ...longText() },
+        { name: 'howHeard', ...longText() },
+      ],
     },
-    {
-      name: 'slackError',
-      type: 'text',
-      maxLength: 200,
-      admin: { position: 'sidebar', readOnly: true },
-    },
+    slackDiagnosticsField,
     {
       name: 'ipHash',
       type: 'text',
@@ -134,4 +153,5 @@ export const DonationRequests: CollectionConfig = {
       admin: { hidden: true },
     },
   ],
+  defaultSort: '-createdAt',
 }

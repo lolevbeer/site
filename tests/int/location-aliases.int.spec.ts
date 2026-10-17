@@ -2,6 +2,7 @@
  * Location aliases: a renamed taproom keeps its old slug as an alias so TV
  * kiosks on /e/<old-slug>, links to /<old-slug>, and ?loc=<old-slug> keep working.
  */
+import { findPayloadField } from '../helpers/payload-fields'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { CollectionBeforeChangeHook, PayloadRequest, TextField } from 'payload'
 import type { PayloadLocation } from '@/lib/types/location'
@@ -61,9 +62,7 @@ beforeEach(() => {
 })
 
 const beforeChange = Locations.hooks!.beforeChange![0] as CollectionBeforeChangeHook
-const aliasesField = Locations.fields.find(
-  (field) => 'name' in field && field.name === 'aliases',
-) as TextField
+const aliasesField = findPayloadField(Locations.fields, 'aliases') as TextField
 
 function runHook(data: Record<string, unknown>, originalDoc: Record<string, unknown>) {
   return beforeChange({
@@ -157,9 +156,7 @@ describe('alias validation', () => {
 })
 
 describe('slug validation', () => {
-  const slugField = Locations.fields.find(
-    (field) => 'name' in field && field.name === 'slug',
-  ) as TextField
+  const slugField = findPayloadField(Locations.fields, 'slug') as TextField
   const validate = (value: string) => slugField.validate!(value as never, {} as never)
 
   it('accepts a lowercase slug', async () => {
@@ -217,7 +214,6 @@ describe("a new slug never takes another location's alias", () => {
       'Old Lawrenceville',
       'locations',
       { payload: { find } } as unknown as PayloadRequest,
-      'update',
       'loc-2',
       ['slug', 'aliases'],
     )

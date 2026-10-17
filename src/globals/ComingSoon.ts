@@ -3,9 +3,9 @@ import { adminAccess } from '@/src/access/roles'
 
 export const ComingSoon: GlobalConfig = {
   slug: 'coming-soon',
-  label: 'Coming Soon',
+  label: 'Coming Soon Beers',
   admin: {
-    group: 'Back of House',
+    group: 'Beer Catalog',
   },
   access: {
     read: () => true,
@@ -14,13 +14,19 @@ export const ComingSoon: GlobalConfig = {
   fields: [
     {
       name: 'beers',
+      label: 'Upcoming releases',
       type: 'array',
+      admin: {
+        description:
+          'Choose a published beer, or leave Known beer blank and select a planned style. Adding a draft here does not publish it.',
+      },
       fields: [
         {
           type: 'row',
           fields: [
             {
               name: 'beer',
+              label: 'Known beer (optional)',
               type: 'relationship',
               relationTo: 'beers',
               admin: {
@@ -31,6 +37,7 @@ export const ComingSoon: GlobalConfig = {
             },
             {
               name: 'style',
+              label: 'Planned style',
               type: 'relationship',
               relationTo: 'styles',
               admin: {

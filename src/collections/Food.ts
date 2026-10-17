@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import { foodManagerAccess } from '@/src/access/roles'
+import { locationField } from '@/src/collections/shared/event-fields'
 
 export const Food: CollectionConfig = {
   slug: 'food',
@@ -9,10 +10,7 @@ export const Food: CollectionConfig = {
     update: foodManagerAccess,
     delete: foodManagerAccess,
   },
-  labels: {
-    singular: 'Food',
-    plural: 'Food',
-  },
+  labels: { singular: 'Food Booking', plural: 'One-off Food Bookings' },
   admin: {
     group: 'Food & Events',
     useAsTitle: 'vendorName',
@@ -20,19 +18,10 @@ export const Food: CollectionConfig = {
     pagination: {
       defaultLimit: 100,
     },
+    description:
+      'Dated vendor bookings. To replace recurring food, also skip that recurring date in Recurring Food Schedule.',
   },
   fields: [
-    {
-      name: 'vendor',
-      type: 'relationship',
-      relationTo: 'food-vendors',
-      required: true,
-      index: true,
-      admin: {
-        description: 'Select food vendor',
-        sortOptions: 'name',
-      },
-    },
     {
       name: 'vendorName',
       type: 'text',
@@ -59,35 +48,47 @@ export const Food: CollectionConfig = {
       },
     },
     {
-      name: 'date',
-      type: 'date',
-      required: true,
-      index: true,
-      admin: {
-        position: 'sidebar',
-        date: {
-          displayFormat: 'MMM d, yyyy',
-        },
-      },
-    },
-    {
-      name: 'location',
+      name: 'vendor',
       type: 'relationship',
-      relationTo: 'locations',
+      relationTo: 'food-vendors',
       required: true,
-      hasMany: false,
       index: true,
-    },
-    {
-      name: 'startTime',
-      type: 'date',
       admin: {
-        position: 'sidebar',
-        date: {
-          pickerAppearance: 'timeOnly',
-          displayFormat: 'h:mm a',
-        },
+        description: 'Food vendor serving on this date.',
+        sortOptions: 'name',
       },
+      label: 'Vendor',
+    },
+    locationField,
+    {
+      type: 'row',
+      fields: [
+        {
+          name: 'date',
+          type: 'date',
+          required: true,
+          index: true,
+          admin: {
+            date: {
+              displayFormat: 'MMM d, yyyy',
+            },
+            width: '50%',
+          },
+          label: 'Service date',
+        },
+        {
+          name: 'startTime',
+          type: 'date',
+          admin: {
+            date: {
+              pickerAppearance: 'timeOnly',
+              displayFormat: 'h:mm a',
+            },
+            width: '50%',
+          },
+          label: 'Start time',
+        },
+      ],
     },
     {
       name: 'dateWarning',

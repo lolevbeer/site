@@ -22,7 +22,9 @@ export function isValidEmail(email: string): boolean {
 
 export function isValidPhone(phone: string, maxLength = PUBLIC_FORM_MAX_PHONE): boolean {
   const digits = phone.replace(/\D/g, '')
-  return digits.length >= 10 && digits.length <= 15 && !/^0+$/.test(digits) && phone.length <= maxLength
+  return (
+    digits.length >= 10 && digits.length <= 15 && !/^0+$/.test(digits) && phone.length <= maxLength
+  )
 }
 
 export function rejectFormulaPrefix(

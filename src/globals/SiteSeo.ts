@@ -34,9 +34,9 @@ const introKeys = new Set<string>(INTRO_PAGE_KEYS)
 
 export const SiteSeo: GlobalConfig = {
   slug: 'site-seo',
-  label: 'SEO',
+  label: 'Search & sharing',
   admin: {
-    group: 'Settings',
+    group: 'Website',
     description:
       'Default titles, descriptions, and social images. Per-page overrides for every static sitemap URL. Beer, location, and job pages use the SEO group on each document.',
   },
@@ -94,7 +94,7 @@ export const SiteSeo: GlobalConfig = {
               name: 'ogImage',
               type: 'upload',
               relationTo: 'media',
-              label: 'Default Open Graph image',
+              label: 'Default social-share image',
               admin: {
                 description:
                   'Fallback social card (1200×630). Replaces /images/beer/og-image.jpg when set.',
@@ -126,9 +126,12 @@ export const SiteSeo: GlobalConfig = {
               name: 'pages',
               type: 'group',
               label: 'Hub pages',
-              fields: Object.entries(PAGE_LABELS).map(([key, label]) =>
-                hubSeoGroup(key, label, introKeys.has(key)),
-              ),
+              fields: Object.entries(PAGE_LABELS).map(([key, label]) => ({
+                type: 'collapsible',
+                label,
+                admin: { initCollapsed: true },
+                fields: [hubSeoGroup(key, label, introKeys.has(key))],
+              })),
             },
           ],
         },
