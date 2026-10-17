@@ -87,7 +87,7 @@ async function fetchDistributors(url: string): Promise<FetchResult> {
   try {
     if (!isDistributorImportUrl(url))
       return { rows: [], error: DISTRIBUTOR_IMPORT_URL_ERROR }
-    const response = await fetch(url, { redirect: 'error', signal: AbortSignal.timeout(30_000) })
+    const response = await fetch(url, { redirect: 'follow', signal: AbortSignal.timeout(30_000) })
     if (!response.ok) {
       return { rows: [], error: `HTTP ${response.status}: ${response.statusText}` }
     }
