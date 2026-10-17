@@ -178,6 +178,31 @@ export default buildConfig({
           label: 'Menu tracking',
           Component: '@/src/components/admin/MenuTargetHistory#MenuTargetHistory',
         },
+        {
+          slug: 'menu-items',
+          label: 'Menu items',
+          Component: '@/src/components/admin/MenuItems#MenuItems',
+          fields: [
+            {
+              name: 'menu',
+              type: 'relationship',
+              relationTo: 'menus',
+              required: true,
+              admin: { description: 'Add one widget per menu, or use multiple views of the same menu.' },
+            },
+            {
+              name: 'itemKind',
+              label: 'Items to show',
+              type: 'select',
+              defaultValue: 'all',
+              options: [
+                { label: 'All menu items', value: 'all' },
+                { label: 'Beers only', value: 'beers' },
+                { label: 'Products only', value: 'products' },
+              ],
+            },
+          ],
+        },
       ],
       // Built-ins re-listed because setting defaultLayout replaces Payload's default.
       // One half-width schedule per location, read as the signed-in user.

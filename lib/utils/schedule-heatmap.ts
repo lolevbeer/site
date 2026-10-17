@@ -2,6 +2,8 @@
  * Pure helpers for the admin schedule heatmap widget (server data + client
  * grid). Days are YYYY-MM-DD strings in EST (America/New_York).
  */
+import type { RecurringFoodState } from '@/src/utils/recurring-food'
+import { recurringDays, recurringOccurrences } from '@/src/utils/recurring-food'
 import { getDatesForSlotInYear, toDateKey } from './food-dates'
 
 export const WEEKS = 70 // ~16 months per window
@@ -79,6 +81,63 @@ export function slotDatesInRange(
   return getDatesForSlotInYear(dayIndex, weekOccurrence, year)
     .map(toDateKey)
     .filter((key) => key >= from && key <= through)
+}
+
+/** Every calendar year in [from, through]; recurring rules are set up per year. */
+export function scheduleYears(from: string, through: string): number[] {
+  const first = Number(from.slice(0, 4))
+  return Array.from({ length: Number(through.slice(0, 4)) - first + 1 }, (_, i) => first + i)
+}
+
+/** Vendor ids held by recurring food slots, for one batched name lookup. */
+export function recurringFoodVendorIds(states: RecurringFoodState[]): string[] {
+  const ids = new Set<string>()
+  for (const state of states) {
+    for (const days of Object.values(state.schedules)) {
+      for (const weeks of Object.values(days)) {
+        for (const id of Object.values(weeks)) if (id) ids.add(id)
+      }
+    }
+  }
+  return [...ids]
+}
+
+/**
+ * One food row per recurring slot date in [from, through], minus exclusions.
+ * Slots whose vendor has no name in `vendorNames` are skipped, as on the
+ * public site; pass one-offs first to dedupeSchedule to let them confirm a slot.
+ */
+export function expandRecurringFood(
+  states: RecurringFoodState[],
+  vendorNames: Map<string, string>,
+  from: string,
+  through: string,
+): ScheduleRow[] {
+  const rows: ScheduleRow[] = []
+  for (const state of states) {
+    for (const [location, days] of Object.entries(state.schedules)) {
+      const excluded = new Set(state.exclusions[location] ?? [])
+      for (const [day, weeks] of Object.entries(days)) {
+        for (const [week, vendor] of Object.entries(weeks)) {
+          const name = vendor && vendorNames.get(vendor)
+          if (!name) continue
+          const dates = slotDatesInRange(
+            recurringDays.indexOf(day as (typeof recurringDays)[number]),
+            recurringOccurrences.indexOf(week as (typeof recurringOccurrences)[number]) + 1,
+            state.year,
+            from,
+            through,
+          )
+          for (const date of dates) {
+            if (!excluded.has(date)) {
+              rows.push({ day: date, kind: 'food', name, location, vendor, recurring: true })
+            }
+          }
+        }
+      }
+    }
+  }
+  return rows
 }
 
 /**

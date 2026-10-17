@@ -31,6 +31,7 @@ import {
 } from '@/src/utils/slack'
 import type { Menu } from '@/src/payload-types'
 import { readServerEnvironment } from '@/lib/config/server-env'
+import { getTodayEST } from '@/lib/utils/date'
 
 const SECRET = 'test-signing-secret'
 
@@ -546,6 +547,7 @@ describe('Slack route acts as the mapped Payload user', () => {
   const find = vi.fn()
   const findByID = vi.fn()
   const update = vi.fn()
+  const create = vi.fn()
   let POST: (request: any) => Promise<Response>
 
   beforeAll(async () => {
@@ -557,7 +559,7 @@ describe('Slack route acts as the mapped Payload user', () => {
     }))
     vi.doMock('payload', async (importOriginal) => ({
       ...(await importOriginal<typeof import('payload')>()),
-      getPayload: vi.fn(async () => ({ find, findByID, update })),
+      getPayload: vi.fn(async () => ({ find, findByID, update, create })),
     }))
     vi.doMock('@/src/payload.config', () => ({ default: {} }))
     vi.doMock('@/src/utils/slack-api', () => ({ slackApi: vi.fn(async () => ({ ok: true })) }))
@@ -585,6 +587,7 @@ describe('Slack route acts as the mapped Payload user', () => {
     find.mockReset()
     findByID.mockReset()
     update.mockReset()
+    create.mockReset()
     // users lookup by slackUserId → the bartender; catalog searches → empty.
     find.mockImplementation(async ({ collection }: { collection: string }) =>
       collection === 'users' ? { docs: [bartender] } : { docs: [] },
@@ -592,6 +595,22 @@ describe('Slack route acts as the mapped Payload user', () => {
     findByID.mockResolvedValue(makeMenu({ id: 'menu1', location: 'loc1' }))
     update.mockResolvedValue({})
   })
+
+  /** A Slack-signed `/lolevbeer <text>` slash command from `userId`. */
+  function slashRequest(text: string, userId: string) {
+    const rawBody = new URLSearchParams({
+      command: '/lolevbeer',
+      text,
+      user_id: userId,
+      response_url: 'https://hooks.slack.com/commands/test',
+    }).toString()
+    const ts = String(Math.floor(Date.now() / 1000))
+    const headers = new Headers({
+      'x-slack-request-timestamp': ts,
+      'x-slack-signature': sign(ts, rawBody),
+    })
+    return { text: async () => rawBody, headers }
+  }
 
   /** A Slack-signed interactivity request carrying `interaction` as its payload. */
   function interactionRequest(interaction: Record<string, unknown>) {
@@ -606,6 +625,25 @@ describe('Slack route acts as the mapped Payload user', () => {
 
   const callsFor = (mock: ReturnType<typeof vi.fn>, collection: string) =>
     mock.mock.calls.map(([args]) => args).filter((args) => args.collection === collection)
+
+  it('never creates an account from Slack: an unmatched member is sent to an admin', async () => {
+    // Load after doMock so the assertions observe the route's transport.
+    const { slackApi } = await import('@/src/utils/slack-api')
+    vi.mocked(slackApi).mockClear()
+    find.mockResolvedValue({ docs: [] })
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ ok: true, user: { id: 'U_NEW', profile: { email: 'new@example.com' } } }),
+    })))
+    await POST(slashRequest('password', 'U_NEW'))
+    for (const fn of afterFns) await fn()
+    vi.unstubAllGlobals()
+    expect(create).not.toHaveBeenCalled()
+    expect(slackApi).toHaveBeenCalledWith(
+      'https://hooks.slack.com/commands/test',
+      expect.objectContaining({ text: expect.stringContaining('ask an admin to set your Slack member') }),
+    )
+  })
 
   it('resolves the Slack user with an explicit system read', async () => {
     await POST(
@@ -715,6 +753,50 @@ describe('Slack route acts as the mapped Payload user', () => {
     for (const call of reads) {
       expect(call).toMatchObject({ overrideAccess: false, user: bartender })
     }
+  })
+
+  it('acknowledges an events request before fetching and privately returns the staff schedule', async () => {
+    // Load after doMock above so this observes the route's mocked transport.
+    const { slackApi } = await import('@/src/utils/slack-api')
+    vi.mocked(slackApi).mockClear()
+    find.mockImplementation(async ({ collection }: { collection: string }) => ({
+      docs: collection === 'users' ? [bartender] : collection === 'events' ? [{
+        id: 'e1', organizer: 'Private party', date: `${getTodayEST()}T12:00:00Z`,
+        location: { id: 'loc1', name: 'Lawrenceville' }, visibility: 'private',
+      }] : [],
+    }))
+    const response = await POST(slashRequest('events', 'U1'))
+    expect(response.status).toBe(200)
+    expect(find).not.toHaveBeenCalled()
+    for (const fn of afterFns) await fn()
+    expect(slackApi).toHaveBeenCalledWith(
+      'https://hooks.slack.com/commands/test',
+      expect.objectContaining({
+        response_type: 'ephemeral',
+        text: expect.stringContaining('Private party · Lawrenceville (Private)'),
+      }),
+    )
+  })
+
+  it.each(['events', 'food'])('does not disclose %s to an unlinked Slack user', async (command) => {
+    // Load after doMock so the assertions observe the route's transport.
+    const { slackApi } = await import('@/src/utils/slack-api')
+    vi.mocked(slackApi).mockClear()
+    find.mockResolvedValue({ docs: [] })
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      ok: true, json: async () => ({ ok: false }),
+    })))
+    await POST(slashRequest(command, 'U404'))
+    for (const fn of afterFns) await fn()
+    vi.unstubAllGlobals()
+    expect(find.mock.calls.every(([args]) => args.collection === 'users')).toBe(true)
+    expect(slackApi).toHaveBeenCalledWith(
+      'https://hooks.slack.com/commands/test',
+      expect.objectContaining({
+        response_type: 'ephemeral',
+        text: expect.stringContaining('No Lolev site account'),
+      }),
+    )
   })
 
   it("checks an invitee's existing account as the inviter, not as the system", async () => {

@@ -31,13 +31,17 @@
 
 display_information:
   name: Lolev Beer
-  description: Edit beer menus, invite teammates, and reset your admin password.
+  description: View events and food, edit menus, and manage teammate accounts.
   background_color: '#1a1a1a'
   long_description: |
     Runs the Lolev admin from Slack.
 
     /lolevbeer menu — list the published menus and edit them: swap a tap, add or
     remove beers, and publish straight to the live /m/ displays.
+
+    /lolevbeer events — privately list upcoming events over the next 14 days.
+    /lolevbeer food — privately list upcoming food over the next 14 days.
+    Both include recurring schedules and follow your site account's read access.
 
     /lolevbeer invite — create an admin account for a teammate and DM them a
     link to set their password.
@@ -57,8 +61,8 @@ features:
   slash_commands:
     - command: /lolevbeer
       url: https://lolev.beer/api/slack
-      description: Edit beer menus, invite teammates, or reset your password
-      usage_hint: menu | invite | password
+      description: View events and food, edit menus, or manage accounts
+      usage_hint: events | food | menu | invite | password
       # The handler only reads a subcommand keyword, so leave Slack's text
       # unescaped — escaping would mangle nothing useful here.
       should_escape: false

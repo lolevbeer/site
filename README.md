@@ -177,6 +177,7 @@ is the system queue, separate from hiring.
 ## Admin dashboard
 
 - **Schedule heatmap** — booking status per EST day — red nothing, orange event without food, yellow food only, green both — 16 months at a time with ‹ › arrows to page back through history, filterable by location (recurring rules fill only the year they were set up for); click a day to open that day's list. Counts follow your read access. Users with a saved dashboard layout must add the widget manually.
+- **Menu items** — compact, single-line beer/product rows in menu order, with ABV when available and promotions below the item. The heading and explicit **Edit menu** link open the menu editor; each item opens its record. Hover an item for its full name/style/ABV, or the location caption for the full location name. Long lists scroll inside the widget. Open **Dashboard → Edit Dashboard → Add + → Menu items**, then use the widget's edit button to choose a menu and **All menu items**, **Beers only**, or **Products only**. Add an instance for each menu you want to track; settings and widths are independent, including multiple views of the same menu. Save the widget settings, then **Save changes** on the dashboard to keep the layout. Menu and relationship reads follow the signed-in user's access; blank slots and unreadable items are omitted. No widgets are added to existing layouts automatically.
 
 ## Globals
 
@@ -194,6 +195,20 @@ swaps the modal to a confirmation — or an error if the menu can't be published
 opened). Displays update via the revalidation hooks. The beer typeahead
 excludes items already on the menu being edited, except a row's own current
 pick so you can revert it. Handler: `src/app/api/slack/route.ts`.
+
+`/lolevbeer events` and `/lolevbeer food` privately list the next 14 calendar
+days, including today, across locations in Pittsburgh time. Both include
+one-off and recurring schedules, honor excluded dates, and let matching one-off
+entries override recurring ones. Replies include dates, available times, and
+location names; events label private bookings. At most 20 entries are shown,
+with an explicit overflow notice pointing to the admin panel.
+
+Both commands require a linked site account and read **as that user**, without
+the menu-editing gate. Bartenders and lead bartenders can see private events
+across locations; other roles follow the Events and Recurring Events collection
+rules. Event contact details are never included in Slack schedule summaries.
+Food reads also follow collection access. No new Slack scopes or slash-command
+registration are required.
 
 `/lolevbeer invite` opens a form to create an admin account for a teammate:
 pick them from a Slack member picker, set a name, roles, and (optionally)
@@ -231,7 +246,7 @@ against the user's email — and on a match it stores the ID, so accounts link
 themselves the first time someone uses the bot. When the two addresses differ,
 an admin sets the Slack member ID by hand on the user in the admin panel.
 
-Menu reads and writes then run **as that Payload user**, so roles and
+Menu reads/writes and schedule reads run **as that Payload user**, so roles and
 location scoping are enforced by Payload itself rather than re-implemented in
 the Slack handler. A user with no linked account gets a message explaining how
 to link it. The identity always comes from Slack's verified profile, never from
@@ -289,6 +304,11 @@ happen in the admin panel and take effect immediately — no env var, no redeplo
   to creating bartenders at their own locations (`Users.access.create` plus the
   collection's `beforeChange` hook).
 - **Reset your own password** — anyone with a linked account.
+- **Upcoming events and food** — anyone with a linked account, limited to
+  content their Payload user may read. Bartenders and lead bartenders see
+  private events at every location; contact details are omitted for everyone.
+  Days are Pittsburgh calendar days, and food skips inactive locations, as on
+  the public /food page.
 
 Every request runs as the requester's Payload user, so these are the collections'
 own rules rather than a copy kept in the Slack handler. Someone with no linked
