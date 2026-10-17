@@ -1,5 +1,6 @@
-import type { Access, CollectionConfig } from 'payload'
-import { foodManagerAccess, hasRole } from '@/src/access/roles'
+import type { CollectionConfig } from 'payload'
+import { foodManagerAccess } from '@/src/access/roles'
+import { readRecurringFood } from '@/src/access/schedules'
 import {
   RECURRING_YEAR_MAX,
   RECURRING_YEAR_MIN,
@@ -7,11 +8,6 @@ import {
   recurringOccurrences,
 } from '@/src/utils/recurring-food'
 import { capitalizeName } from '@/lib/utils/formatters'
-
-const canReadRecurringSchedules: Access = ({ req: { user } }) => {
-  if (hasRole(user, ['admin', 'food-manager'])) return true
-  return { active: { equals: true } }
-}
 
 export const RecurringFoodSchedules: CollectionConfig = {
   slug: 'recurring-food-schedules',
@@ -28,7 +24,7 @@ export const RecurringFoodSchedules: CollectionConfig = {
     description: 'Backing records for Recurring Food Schedule. Use the grid for routine changes.',
   },
   access: {
-    read: canReadRecurringSchedules,
+    read: readRecurringFood,
     create: foodManagerAccess,
     update: foodManagerAccess,
     delete: foodManagerAccess,

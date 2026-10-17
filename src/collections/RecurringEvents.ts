@@ -1,5 +1,6 @@
-import type { Access, CollectionConfig } from 'payload'
-import { EVENT_READER_ROLES, eventManagerAccess, hasRole } from '@/src/access/roles'
+import type { CollectionConfig } from 'payload'
+import { eventManagerAccess } from '@/src/access/roles'
+import { readRecurringEvents } from '@/src/access/schedules'
 import {
   RECURRING_YEAR_MAX,
   RECURRING_YEAR_MIN,
@@ -15,11 +16,6 @@ import {
   visibilityField,
 } from '@/src/collections/shared/event-fields'
 
-const canReadRecurringEvents: Access = ({ req: { user } }) => {
-  if (hasRole(user, EVENT_READER_ROLES)) return true
-  return { active: { equals: true }, visibility: { equals: 'public' } }
-}
-
 /**
  * Date-less event definitions. A document describes one recurring monthly
  * pattern for one calendar year; public reads expand it into concrete events.
@@ -31,7 +27,7 @@ export const RecurringEvents: CollectionConfig = {
     plural: 'Recurring Events',
   },
   access: {
-    read: canReadRecurringEvents,
+    read: readRecurringEvents,
     create: eventManagerAccess,
     update: eventManagerAccess,
     delete: eventManagerAccess,

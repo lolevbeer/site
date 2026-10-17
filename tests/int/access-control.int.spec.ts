@@ -241,10 +241,13 @@ describe('draft and sensitive field visibility', () => {
     }
   })
 
-  it('lets bartenders read every event and recurring event, not just public ones', () => {
+  it('scopes bartender event reads to assigned locations, including private events', () => {
     for (const access of [Events.access?.read, RecurringEvents.access?.read]) {
       for (const role of ['bartender', 'lead-bartender'] as const) {
-        expect(callAccess(access, userWith([role]))).toBe(true)
+        expect(callAccess(access, userWith([role]))).toBe(false)
+        expect(callAccess(access, { ...userWith([role]), locations: ['location-1'] })).toEqual({
+          location: { in: ['location-1'] },
+        })
       }
       expect(callAccess(access, userWith(['beer-manager']))).not.toBe(true)
       expect(callAccess(access, null)).not.toBe(true)

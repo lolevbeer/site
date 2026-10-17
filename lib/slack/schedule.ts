@@ -56,7 +56,7 @@ export function buildScheduleMessage(
     const when = [formatDate(entry.date), span].filter(Boolean).join(' · ')
     const title = escapeMrkdwn(slackPlainText(entry.title, 180))
     const location = escapeMrkdwn(slackPlainText(entry.location, 100))
-    return `${when} — ${title} · ${location}${entry.private ? ' (Private)' : ''}`
+    return `${when} • ${title} · ${location}${entry.private ? ' (Private)' : ''}`
   })
   const footer =
     sorted.length === 0

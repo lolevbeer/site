@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import { foodManagerAccess } from '@/src/access/roles'
+import { readFood } from '@/src/access/schedules'
 
 export const RecurringFoodExclusions: CollectionConfig = {
   slug: 'recurring-food-exclusions',
@@ -16,7 +17,7 @@ export const RecurringFoodExclusions: CollectionConfig = {
       'Skipped location/date records managed through Recurring Food Schedule; not vendor-specific.',
   },
   access: {
-    read: () => true,
+    read: readFood,
     create: foodManagerAccess,
     update: foodManagerAccess,
     delete: foodManagerAccess,
