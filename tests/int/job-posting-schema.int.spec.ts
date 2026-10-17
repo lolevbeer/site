@@ -39,8 +39,8 @@ describe('generateJobPostingSchema', () => {
   it('sets validThrough only when the job has a closing date', () => {
     expect(generateJobPostingSchema(job()).validThrough).toBeUndefined()
     expect(
-      generateJobPostingSchema(job({ closesOn: '2026-10-15T12:00:00.000Z' })).validThrough,
-    ).toBe('2026-10-15')
+      generateJobPostingSchema(job({ closesOn: '2999-10-15T12:00:00.000Z' })).validThrough,
+    ).toBe('2999-10-15')
   })
 
   it('renders the description as escaped HTML paragraphs', () => {
