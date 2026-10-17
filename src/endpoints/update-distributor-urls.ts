@@ -1,6 +1,9 @@
 import type { PayloadHandler } from 'payload'
 import { getUserFromRequest } from './auth-helper'
-import { isDistributorImportUrl } from '@/lib/distributors/import-source'
+import {
+  DISTRIBUTOR_IMPORT_URL_ERROR,
+  isDistributorImportUrl,
+} from '@/lib/distributors/import-source'
 import { logger } from '@/lib/utils/logger'
 
 export const updateDistributorUrls: PayloadHandler = async (req) => {
@@ -23,7 +26,7 @@ export const updateDistributorUrls: PayloadHandler = async (req) => {
     if (
       [distributorPaUrl, distributorOhUrl].some((value) => value && !isDistributorImportUrl(value))
     ) {
-      return Response.json({ error: 'Use an HTTPS Encompass8 QuickLink URL.' }, { status: 400 })
+      return Response.json({ error: DISTRIBUTOR_IMPORT_URL_ERROR }, { status: 400 })
     }
 
     // Use the local API to update the global

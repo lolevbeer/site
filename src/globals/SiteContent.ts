@@ -139,7 +139,7 @@ export const SiteContent: GlobalConfig = {
                 read: adminFieldAccess,
               },
               admin: {
-                description: 'Sixth City/Encompass8 QuickLink URL for PA distributors',
+                description: 'Sarene/Encompass8 QuickLink URL for PA distributors',
               },
             },
             {

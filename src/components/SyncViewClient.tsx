@@ -121,7 +121,7 @@ export const SyncViewClient: React.FC = () => {
           status: response.status,
           error: data.error,
         })
-        toast.error('Failed to save distributor URLs')
+        toast.error(data.error || 'Failed to save distributor URLs')
         return false
       }
       toast.success('Distributor URLs saved')
@@ -233,7 +233,7 @@ export const SyncViewClient: React.FC = () => {
         <div className="sync-view__section">
           <h2 className="sync-view__section-title">Distributor Location Data</h2>
           <p className="sync-view__description">
-            Import distributor locations from Sixth City/Encompass8 JSON feeds
+            Import distributor locations from Sarene/Encompass8 JSON feeds
           </p>
 
           {urlsLoading ? (

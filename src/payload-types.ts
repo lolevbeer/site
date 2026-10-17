@@ -2284,7 +2284,7 @@ export interface SiteContent {
     eventInquiries?: string | null;
   };
   /**
-   * Sixth City/Encompass8 QuickLink URL for PA distributors
+   * Sarene/Encompass8 QuickLink URL for PA distributors
    */
   distributorPaUrl?: string | null;
   /**
