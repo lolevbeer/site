@@ -7,6 +7,9 @@
 
 import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from 'vitest'
 import crypto from 'crypto'
+import { NextRequest } from 'next/server'
+import type { Where } from 'payload'
+import type { POST as SlackPost } from '@/src/app/api/slack/route'
 import {
   verifySlackSignature,
   rebuildMenuItems,
@@ -340,20 +343,14 @@ describe('buildEditModalView', () => {
 
   it('includes the remove select only when the menu has items', () => {
     const withItems = loose(buildEditModalView(menu))
-    const removeBlock = withItems.blocks.find(
-      (b) => String(b.block_id) === SLACK_IDS.blockRemove,
-    )
+    const removeBlock = withItems.blocks.find((b) => String(b.block_id) === SLACK_IDS.blockRemove)
     expect(removeBlock).toBeDefined()
     expect(removeBlock!.element.options).toHaveLength(2)
 
     const empty = loose(buildEditModalView(makeMenu({ items: [] })))
-    expect(
-      empty.blocks.some((b) => String(b.block_id) === SLACK_IDS.blockRemove),
-    ).toBe(false)
+    expect(empty.blocks.some((b) => String(b.block_id) === SLACK_IDS.blockRemove)).toBe(false)
     // The add select is always present.
-    expect(
-      empty.blocks.some((b) => String(b.block_id) === SLACK_IDS.blockAdd),
-    ).toBe(true)
+    expect(empty.blocks.some((b) => String(b.block_id) === SLACK_IDS.blockAdd)).toBe(true)
   })
 })
 
@@ -548,7 +545,7 @@ describe('Slack route acts as the mapped Payload user', () => {
   const findByID = vi.fn()
   const update = vi.fn()
   const create = vi.fn()
-  let POST: (request: any) => Promise<Response>
+  let POST: typeof SlackPost
 
   beforeAll(async () => {
     vi.doMock('next/server', async (importOriginal) => ({
@@ -569,7 +566,8 @@ describe('Slack route acts as the mapped Payload user', () => {
     vi.doMock('@/lib/config/server-env', () => ({
       readServerEnvironment: () => ({ slackSigningSecret: SECRET, slackBotToken: 'xoxb-test' }),
     }))
-    ;({ POST } = (await import('@/src/app/api/slack/route')) as any)
+    // Load after doMock registration so the route captures the mocked dependencies.
+    ;({ POST } = await import('@/src/app/api/slack/route'))
   })
 
   afterAll(() => {
@@ -609,7 +607,7 @@ describe('Slack route acts as the mapped Payload user', () => {
       'x-slack-request-timestamp': ts,
       'x-slack-signature': sign(ts, rawBody),
     })
-    return { text: async () => rawBody, headers }
+    return new NextRequest('http://localhost/api/slack', { method: 'POST', body: rawBody, headers })
   }
 
   /** A Slack-signed interactivity request carrying `interaction` as its payload. */
@@ -620,7 +618,7 @@ describe('Slack route acts as the mapped Payload user', () => {
       'x-slack-request-timestamp': ts,
       'x-slack-signature': sign(ts, rawBody),
     })
-    return { text: async () => rawBody, headers }
+    return new NextRequest('http://localhost/api/slack', { method: 'POST', body: rawBody, headers })
   }
 
   const callsFor = (mock: ReturnType<typeof vi.fn>, collection: string) =>
@@ -631,17 +629,25 @@ describe('Slack route acts as the mapped Payload user', () => {
     const { slackApi } = await import('@/src/utils/slack-api')
     vi.mocked(slackApi).mockClear()
     find.mockResolvedValue({ docs: [] })
-    vi.stubGlobal('fetch', vi.fn(async () => ({
-      ok: true,
-      json: async () => ({ ok: true, user: { id: 'U_NEW', profile: { email: 'new@example.com' } } }),
-    })))
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({
+        ok: true,
+        json: async () => ({
+          ok: true,
+          user: { id: 'U_NEW', profile: { email: 'new@example.com' } },
+        }),
+      })),
+    )
     await POST(slashRequest('password', 'U_NEW'))
     for (const fn of afterFns) await fn()
     vi.unstubAllGlobals()
     expect(create).not.toHaveBeenCalled()
     expect(slackApi).toHaveBeenCalledWith(
       'https://hooks.slack.com/commands/test',
-      expect.objectContaining({ text: expect.stringContaining('ask an admin to set your Slack member') }),
+      expect.objectContaining({
+        text: expect.stringContaining('ask an admin to set your Slack member'),
+      }),
     )
   })
 
@@ -663,7 +669,7 @@ describe('Slack route acts as the mapped Payload user', () => {
   })
 
   it('claims slackUserId via email with explicit system reads/writes', async () => {
-    find.mockImplementation(async ({ collection, where }: any) =>
+    find.mockImplementation(async ({ collection, where }: { collection: string; where: Where }) =>
       collection !== 'users' ? { docs: [] } : where.email ? { docs: [bartender] } : { docs: [] },
     )
     vi.stubGlobal(
@@ -760,10 +766,20 @@ describe('Slack route acts as the mapped Payload user', () => {
     const { slackApi } = await import('@/src/utils/slack-api')
     vi.mocked(slackApi).mockClear()
     find.mockImplementation(async ({ collection }: { collection: string }) => ({
-      docs: collection === 'users' ? [bartender] : collection === 'events' ? [{
-        id: 'e1', organizer: 'Private party', date: `${getTodayEST()}T12:00:00Z`,
-        location: { id: 'loc1', name: 'Lawrenceville' }, visibility: 'private',
-      }] : [],
+      docs:
+        collection === 'users'
+          ? [bartender]
+          : collection === 'events'
+            ? [
+                {
+                  id: 'e1',
+                  organizer: 'Private party',
+                  date: `${getTodayEST()}T12:00:00Z`,
+                  location: { id: 'loc1', name: 'Lawrenceville' },
+                  visibility: 'private',
+                },
+              ]
+            : [],
     }))
     const response = await POST(slashRequest('events', 'U1'))
     expect(response.status).toBe(200)
@@ -783,9 +799,13 @@ describe('Slack route acts as the mapped Payload user', () => {
     const { slackApi } = await import('@/src/utils/slack-api')
     vi.mocked(slackApi).mockClear()
     find.mockResolvedValue({ docs: [] })
-    vi.stubGlobal('fetch', vi.fn(async () => ({
-      ok: true, json: async () => ({ ok: false }),
-    })))
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({
+        ok: true,
+        json: async () => ({ ok: false }),
+      })),
+    )
     await POST(slashRequest(command, 'U404'))
     for (const fn of afterFns) await fn()
     vi.unstubAllGlobals()
