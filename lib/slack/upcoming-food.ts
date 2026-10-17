@@ -1,15 +1,21 @@
+/**
+ * Food over the next N days for `/lolevbeer food`: one-off Food rows plus
+ * recurring slots, read as the Slack requester and expanded by the same
+ * helpers as the admin schedule heatmap (active locations only, like /food).
+ */
 import type { Payload } from 'payload'
 import type { SlackScheduleEntry } from '@/lib/slack/schedule'
-import { toDateKey } from '@/lib/utils/food-dates'
-import type { User } from '@/src/payload-types'
+import { getDateEST, getESTMidnightISO } from '@/lib/utils/date'
 import {
-  getRecurringFoodState,
-  recurringDayName,
-  recurringWeekOccurrence,
-  recurringDays,
-  recurringOccurrences,
-} from '@/src/utils/recurring-food'
-import { relationshipId } from '@/src/utils/relationship-id'
+  addDays,
+  dedupeSchedule,
+  expandRecurringFood,
+  recurringFoodVendorIds,
+  scheduleYears,
+  type ScheduleRow,
+} from '@/lib/utils/schedule-heatmap'
+import type { User } from '@/src/payload-types'
+import { getRecurringFoodState } from '@/src/utils/recurring-food'
 
 interface NamedRelationship {
   id: string
@@ -27,16 +33,6 @@ function isNamedRelationship(value: unknown): value is NamedRelationship {
   )
 }
 
-function scheduleYears(from: string, through: string): number[] {
-  const firstYear = Number(from.slice(0, 4))
-  const lastYear = Number(through.slice(0, 4))
-  const years: number[] = []
-
-  for (let year = firstYear; year <= lastYear; year++) years.push(year)
-
-  return years
-}
-
 /**
  * Returns food scheduled in the inclusive Pittsburgh calendar window for the
  * authenticated Slack requester. Relationship IDs are intentionally never
@@ -48,120 +44,87 @@ export async function findUpcomingSlackFood(
   from: string,
   through: string,
 ): Promise<SlackScheduleEntry[]> {
-  const years = scheduleYears(from, through)
-  const [foodResult, locationsResult, ...recurringStates] = await Promise.all([
+  const [foodResult, locationsResult, recurringStates] = await Promise.all([
     payload.find({
       collection: 'food',
       where: {
         and: [
-          { date: { greater_than_equal: `${from}T00:00:00.000Z` } },
-          { date: { less_than_equal: `${through}T23:59:59.999Z` } },
+          { date: { greater_than_equal: getESTMidnightISO(from) } },
+          { date: { less_than: getESTMidnightISO(addDays(through, 1)) } },
         ],
       },
       depth: 1,
+      select: { date: true, startTime: true, location: true, vendor: true },
+      populate: { locations: { name: true }, 'food-vendors': { name: true } },
       pagination: false,
       limit: 0,
-      sort: 'date',
       overrideAccess: false,
       user,
     }),
     payload.find({
       collection: 'locations',
+      // Same filter as the public /food page: closed locations list nothing.
+      where: { active: { equals: true } },
+      select: { name: true },
       depth: 0,
       pagination: false,
       limit: 0,
       overrideAccess: false,
       user,
     }),
-    ...years.map((year) => getRecurringFoodState(payload, { overrideAccess: false, user, year })),
+    Promise.all(
+      scheduleYears(from, through).map((year) =>
+        getRecurringFoodState(payload, { overrideAccess: false, user, year }),
+      ),
+    ),
   ])
 
-  const locationNames = new Map(
-    locationsResult.docs.map((location) => [location.id, location.name] as const),
+  const locationNames = new Map(locationsResult.docs.map((l) => [l.id, l.name] as const))
+
+  // Access-denied relationships are bare IDs. Do not turn those IDs into
+  // Slack-visible content via the food row's denormalized fields.
+  const oneOffs: (ScheduleRow & { startTime?: string | null })[] = foodResult.docs.flatMap(
+    (food) =>
+      isNamedRelationship(food.location) && isNamedRelationship(food.vendor)
+        ? [
+            {
+              day: getDateEST(new Date(food.date)),
+              kind: 'food' as const,
+              name: food.vendor.name,
+              location: food.location.id,
+              vendor: food.vendor.id,
+              startTime: food.startTime ?? null,
+            },
+          ]
+        : [],
   )
-  const recurringByYear = new Map(recurringStates.map((state) => [state.year, state] as const))
 
-  const oneOffEntries: SlackScheduleEntry[] = []
-  const oneOffDateVendors = new Set<string>()
-  for (const food of foodResult.docs) {
-    // Access-denied relationships are bare IDs. Do not turn those IDs into
-    // Slack-visible content via the food row's denormalized fields.
-    if (!isNamedRelationship(food.location) || !isNamedRelationship(food.vendor)) continue
-    const locationId = relationshipId(food.location)
-    const vendorId = relationshipId(food.vendor)
-
-    const date = food.date.split('T')[0]
-    oneOffDateVendors.add(`${locationId}:${date}:${vendorId}`)
-    oneOffEntries.push({
-      date,
-      title: food.vendor.name,
-      location: food.location.name,
-      startTime: food.startTime ?? null,
-    })
-  }
-
-  const recurringVendorIds = new Set<string>()
-  for (const state of recurringStates) {
-    for (const [locationId, schedule] of Object.entries(state.schedules)) {
-      if (!locationNames.has(locationId)) continue
-      for (const day of recurringDays) {
-        for (const occurrence of recurringOccurrences) {
-          const vendorId = schedule[day]?.[occurrence]
-          if (vendorId) recurringVendorIds.add(vendorId)
-        }
-      }
-    }
-  }
-
+  const vendorIds = recurringFoodVendorIds(recurringStates)
   const vendorNames = new Map<string, string>()
-  if (recurringVendorIds.size > 0) {
+  if (vendorIds.length > 0) {
     const vendorsResult = await payload.find({
       collection: 'food-vendors',
-      where: { id: { in: [...recurringVendorIds] } },
+      where: { id: { in: vendorIds } },
       depth: 0,
-      limit: recurringVendorIds.size,
+      pagination: false,
+      select: { name: true },
       overrideAccess: false,
       user,
     })
     for (const vendor of vendorsResult.docs) vendorNames.set(vendor.id, vendor.name)
   }
 
-  const recurringEntries: SlackScheduleEntry[] = []
-  const date = new Date(`${from}T12:00:00`)
-  const lastDate = new Date(`${through}T12:00:00`)
-  while (date <= lastDate) {
-    const dateKey = toDateKey(date)
-    const state = recurringByYear.get(date.getFullYear())
-    const day = recurringDayName(date)
-    const occurrence = recurringOccurrences[recurringWeekOccurrence(date) - 1]
+  // One-offs first so a stored row confirms (replaces) its recurring slot.
+  const rows = dedupeSchedule([
+    ...oneOffs,
+    ...expandRecurringFood(recurringStates, vendorNames, from, through),
+  ]) as (ScheduleRow & { startTime?: string | null })[]
 
-    if (state && occurrence) {
-      for (const [locationId, schedule] of Object.entries(state.schedules)) {
-        const locationName = locationNames.get(locationId)
-        const vendorId = schedule[day]?.[occurrence]
-        const vendorName = vendorId ? vendorNames.get(vendorId) : undefined
-        if (
-          !locationName ||
-          !vendorId ||
-          !vendorName ||
-          state.exclusions[locationId]?.includes(dateKey) ||
-          oneOffDateVendors.has(`${locationId}:${dateKey}:${vendorId}`)
-        ) {
-          continue
-        }
-
-        recurringEntries.push({ date: dateKey, title: vendorName, location: locationName })
-      }
-    }
-
-    date.setDate(date.getDate() + 1)
-  }
-
-  return [...oneOffEntries, ...recurringEntries].sort(
-    (a, b) =>
-      a.date.localeCompare(b.date) ||
-      (a.startTime || '').localeCompare(b.startTime || '') ||
-      a.location.localeCompare(b.location) ||
-      a.title.localeCompare(b.title),
-  )
+  return rows.flatMap((row) => {
+    const location = locationNames.get(row.location)
+    if (!location) return []
+    const entry: SlackScheduleEntry = { date: row.day, title: row.name, location }
+    if (!row.recurring) entry.startTime = row.startTime ?? null
+    return [entry]
+  })
 }

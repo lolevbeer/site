@@ -548,7 +548,6 @@ describe('Slack route acts as the mapped Payload user', () => {
   const findByID = vi.fn()
   const update = vi.fn()
   const create = vi.fn()
-  const forgotPassword = vi.fn()
   let POST: (request: any) => Promise<Response>
 
   beforeAll(async () => {
@@ -560,7 +559,7 @@ describe('Slack route acts as the mapped Payload user', () => {
     }))
     vi.doMock('payload', async (importOriginal) => ({
       ...(await importOriginal<typeof import('payload')>()),
-      getPayload: vi.fn(async () => ({ find, findByID, update, create, forgotPassword })),
+      getPayload: vi.fn(async () => ({ find, findByID, update, create })),
     }))
     vi.doMock('@/src/payload.config', () => ({ default: {} }))
     vi.doMock('@/src/utils/slack-api', () => ({ slackApi: vi.fn(async () => ({ ok: true })) }))
@@ -584,15 +583,11 @@ describe('Slack route acts as the mapped Payload user', () => {
   })
 
   beforeEach(() => {
-    vi.unstubAllGlobals()
     afterFns.length = 0
     find.mockReset()
     findByID.mockReset()
     update.mockReset()
     create.mockReset()
-    create.mockImplementation(async ({ data }) => ({ id: 'new-user', ...data }))
-    forgotPassword.mockReset()
-    forgotPassword.mockResolvedValue('password-setup-token')
     // users lookup by slackUserId → the bartender; catalog searches → empty.
     find.mockImplementation(async ({ collection }: { collection: string }) =>
       collection === 'users' ? { docs: [bartender] } : { docs: [] },
@@ -600,6 +595,22 @@ describe('Slack route acts as the mapped Payload user', () => {
     findByID.mockResolvedValue(makeMenu({ id: 'menu1', location: 'loc1' }))
     update.mockResolvedValue({})
   })
+
+  /** A Slack-signed `/lolevbeer <text>` slash command from `userId`. */
+  function slashRequest(text: string, userId: string) {
+    const rawBody = new URLSearchParams({
+      command: '/lolevbeer',
+      text,
+      user_id: userId,
+      response_url: 'https://hooks.slack.com/commands/test',
+    }).toString()
+    const ts = String(Math.floor(Date.now() / 1000))
+    const headers = new Headers({
+      'x-slack-request-timestamp': ts,
+      'x-slack-signature': sign(ts, rawBody),
+    })
+    return { text: async () => rawBody, headers }
+  }
 
   /** A Slack-signed interactivity request carrying `interaction` as its payload. */
   function interactionRequest(interaction: Record<string, unknown>) {
@@ -615,119 +626,23 @@ describe('Slack route acts as the mapped Payload user', () => {
   const callsFor = (mock: ReturnType<typeof vi.fn>, collection: string) =>
     mock.mock.calls.map(([args]) => args).filter((args) => args.collection === collection)
 
-  async function runPasswordCommand(command = 'password') {
-    const rawBody = new URLSearchParams({
-      command: '/lolevbeer', text: command, user_id: 'U_NEW', trigger_id: 'trigger',
-      response_url: 'https://hooks.slack.com/commands/test',
-    }).toString()
-    const ts = String(Math.floor(Date.now() / 1000))
-    const response = await POST({
-      text: async () => rawBody,
-      headers: new Headers({
-        'x-slack-request-timestamp': ts,
-        'x-slack-signature': sign(ts, rawBody),
-      }),
-    })
-    for (const fn of afterFns) await fn()
-    return response
-  }
-
-  const regularMember = {
-    id: 'U_NEW',
-    deleted: false,
-    is_bot: false,
-    is_app_user: false,
-    is_restricted: false,
-    is_ultra_restricted: false,
-    profile: { email: ' NEW@Example.com ', real_name: ' New Teammate ' },
-  }
-
-  function slackProfile(member: unknown = regularMember) {
-    vi.stubGlobal('fetch', vi.fn(async () => ({
-      ok: true,
-      json: async () => ({ ok: true, user: member }),
-    })))
-  }
-
-  it('creates an unassigned bartender from Slack only after both identity lookups miss, then sends a private setup link', async () => {
+  it('never creates an account from Slack: an unmatched member is sent to an admin', async () => {
     // Load after doMock so the assertions observe the route's transport.
     const { slackApi } = await import('@/src/utils/slack-api')
     vi.mocked(slackApi).mockClear()
     find.mockResolvedValue({ docs: [] })
-    slackProfile()
-    await runPasswordCommand()
-    expect(create).toHaveBeenCalledWith(expect.objectContaining({
-      collection: 'users',
-      data: {
-        email: 'new@example.com',
-        name: 'New Teammate',
-        slackUserId: 'U_NEW',
-        roles: ['bartender'],
-        locations: [],
-        password: expect.any(String),
-      },
-    }))
-    const createdAfterLookups = create.mock.invocationCallOrder[0]
-    expect(find.mock.calls.map(([args]) => args.where)).toEqual([
-      { slackUserId: { equals: 'U_NEW' } },
-      { email: { equals: 'new@example.com' } },
-    ])
-    expect(find.mock.invocationCallOrder.every((order) => order < createdAfterLookups)).toBe(true)
-    expect(forgotPassword).toHaveBeenCalledWith(expect.objectContaining({
-      data: { email: 'new@example.com' }, disableEmail: true,
-    }))
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ ok: true, user: { id: 'U_NEW', profile: { email: 'new@example.com' } } }),
+    })))
+    await POST(slashRequest('password', 'U_NEW'))
+    for (const fn of afterFns) await fn()
+    vi.unstubAllGlobals()
+    expect(create).not.toHaveBeenCalled()
     expect(slackApi).toHaveBeenCalledWith(
       'https://hooks.slack.com/commands/test',
-      expect.objectContaining({ response_type: 'ephemeral', text: expect.stringContaining('password-setup-token') }),
+      expect.objectContaining({ text: expect.stringContaining('ask an admin to set your Slack member') }),
     )
-  })
-
-  it('uses an existing Slack-linked account without fetching a profile or granting new roles', async () => {
-    const fetch = vi.fn()
-    vi.stubGlobal('fetch', fetch)
-    await runPasswordCommand()
-    expect(fetch).not.toHaveBeenCalled()
-    expect(create).not.toHaveBeenCalled()
-    expect(update).not.toHaveBeenCalled()
-    expect(forgotPassword).toHaveBeenCalledWith(expect.objectContaining({ data: { email: bartender.email } }))
-  })
-
-  it('uses an email-matched account instead of creating or changing its permissions', async () => {
-    const existing = { ...bartender, email: 'new@example.com', roles: ['event-manager'] }
-    find.mockResolvedValueOnce({ docs: [] }).mockResolvedValueOnce({ docs: [existing] })
-    slackProfile()
-    await runPasswordCommand()
-    expect(create).not.toHaveBeenCalled()
-    expect(update).toHaveBeenCalledWith(expect.objectContaining({
-      id: existing.id, data: { slackUserId: 'U_NEW' },
-    }))
-    expect(forgotPassword).toHaveBeenCalledWith(expect.objectContaining({ data: { email: existing.email } }))
-  })
-
-  it.each([
-    { is_restricted: true },
-    { is_ultra_restricted: true },
-    { deleted: true },
-    { is_bot: true },
-    { is_app_user: true },
-    { id: 'U_SOMEONE_ELSE' },
-    { deleted: undefined },
-    { profile: { real_name: 'No Email' } },
-    { profile: { email: 'new@example.com' } },
-  ])('refuses automatic signup for an ineligible or incomplete Slack profile: %j', async (changes) => {
-    find.mockResolvedValue({ docs: [] })
-    slackProfile({ ...regularMember, ...changes })
-    await runPasswordCommand()
-    expect(create).not.toHaveBeenCalled()
-    expect(forgotPassword).not.toHaveBeenCalled()
-  })
-
-  it.each(['menu', 'events', 'food', 'invite'])('does not create accounts through the %s command', async (command) => {
-    find.mockResolvedValue({ docs: [] })
-    slackProfile()
-    await runPasswordCommand(command)
-    expect(create).not.toHaveBeenCalled()
-    expect(forgotPassword).not.toHaveBeenCalled()
   })
 
   it('resolves the Slack user with an explicit system read', async () => {
@@ -850,17 +765,7 @@ describe('Slack route acts as the mapped Payload user', () => {
         location: { id: 'loc1', name: 'Lawrenceville' }, visibility: 'private',
       }] : [],
     }))
-    const rawBody = new URLSearchParams({
-      command: '/lolevbeer', text: 'events', user_id: 'U1',
-      response_url: 'https://hooks.slack.com/commands/test',
-    }).toString()
-    const ts = String(Math.floor(Date.now() / 1000))
-    const response = await POST({
-      text: async () => rawBody,
-      headers: new Headers({
-        'x-slack-request-timestamp': ts, 'x-slack-signature': sign(ts, rawBody),
-      }),
-    })
+    const response = await POST(slashRequest('events', 'U1'))
     expect(response.status).toBe(200)
     expect(find).not.toHaveBeenCalled()
     for (const fn of afterFns) await fn()
@@ -881,17 +786,7 @@ describe('Slack route acts as the mapped Payload user', () => {
     vi.stubGlobal('fetch', vi.fn(async () => ({
       ok: true, json: async () => ({ ok: false }),
     })))
-    const rawBody = new URLSearchParams({
-      command: '/lolevbeer', text: command, user_id: 'U404',
-      response_url: 'https://hooks.slack.com/commands/test',
-    }).toString()
-    const ts = String(Math.floor(Date.now() / 1000))
-    await POST({
-      text: async () => rawBody,
-      headers: new Headers({
-        'x-slack-request-timestamp': ts, 'x-slack-signature': sign(ts, rawBody),
-      }),
-    })
+    await POST(slashRequest(command, 'U404'))
     for (const fn of afterFns) await fn()
     vi.unstubAllGlobals()
     expect(find.mock.calls.every(([args]) => args.collection === 'users')).toBe(true)

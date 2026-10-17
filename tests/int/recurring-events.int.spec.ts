@@ -56,4 +56,22 @@ describe('recurring event expansion', () => {
     expect(merged[0].id).toBe('one-off')
     expect(merged[0].description).toBe('Special host')
   })
+
+  it('matches an evening one-off to its recurring twin by Pittsburgh day', () => {
+    const recurring = expandRecurringEvents([definition], '2027-01-01', '2027-01-31')
+    // 8pm EST on the occurrence day is already the next day in UTC.
+    const day = recurring[0].date.slice(0, 10)
+    const next = new Date(`${day}T12:00:00Z`)
+    next.setUTCDate(next.getUTCDate() + 1)
+    const oneOff: Event = {
+      ...recurring[0],
+      id: 'evening',
+      date: `${next.toISOString().slice(0, 10)}T01:00:00.000Z`,
+    }
+
+    const merged = mergeScheduledEvents([oneOff], recurring, 10)
+
+    expect(merged.map((e) => e.id)).toEqual(['evening', expect.not.stringMatching('evening')])
+    expect(merged).toHaveLength(2)
+  })
 })

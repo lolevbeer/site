@@ -193,23 +193,11 @@ linked (`slackUserId`) from the start. They get a DM with a one-time link to set
 their password.
 
 `/lolevbeer password` returns a one-time link to set a new admin password.
-It first finds the account by Slack member ID, then by the Slack profile's
-normalized email. Existing accounts keep their roles, locations, and name.
-**Only when both lookups find no account**, an active regular Slack member
-gets a new account using their Slack name/email, linked to their Slack ID.
-Guest, bot, and deactivated accounts cannot self-register; missing email, name,
-or membership flags also prevent creation. Only the password command creates
-accounts automatically — menus, events, food, and invites never do.
-
-New accounts have the **bartender** role and **no assigned locations**. An admin
-must assign locations before they can read or edit menus. Bartenders can read
-private events and unpublished beers immediately; regular workspace membership
-is sufficient for this access through self-registration.
-
 There is no email service, so Payload's `forgotPassword` runs with
-`disableEmail: true` and the reset token is delivered as an ephemeral Slack
-message only the requester can see (valid 1 hour, single use). New users use
-the same link to set their first password. No password is sent through Slack.
+`disableEmail: true` and the reset token is delivered over Slack instead, as an
+ephemeral message only the requester can see (valid 1 hour, single use). It is
+not gated by the menu allowlist, since it only ever acts on the caller's own
+account — but it does require that account to be linked (below).
 
 The "Forgot password?" form on the `/admin` login page sends the same message
 as a Slack DM to the account's linked `slackUserId`
@@ -281,15 +269,13 @@ happen in the admin panel and take effect immediately — no env var, no redeplo
 - **Invite teammates** — admin or lead bartender, with lead bartenders limited
   to creating bartenders at their own locations (`Users.access.create` plus the
   collection's `beforeChange` hook).
-- **Reset your own password / create your own account** — existing linked or
-  email-matched accounts can reset their password; active regular Slack members
-  with no matching account can create an unassigned bartender account.
+- **Reset your own password** — anyone with a linked account.
 - **Upcoming events and food** — anyone with a linked account, limited to
   content their Payload user may read. Bartenders and lead bartenders see
   private events at every location; contact details are omitted for everyone.
+  Days are Pittsburgh calendar days, and food skips inactive locations, as on
+  the public /food page.
 
-Menu and schedule requests run as the requester's Payload user, so these are
-the collections' own rules rather than a copy kept in the Slack handler.
-Identity matching and the password command's approved self-registration are
-system operations; self-registration never accepts caller-supplied roles,
-locations, name, or email.
+Every request runs as the requester's Payload user, so these are the collections'
+own rules rather than a copy kept in the Slack handler. Someone with no linked
+account, or without the right role, gets a message saying so.

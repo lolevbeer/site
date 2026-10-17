@@ -1,3 +1,7 @@
+/**
+ * `/lolevbeer food` data: recurring expansion, exclusions, one-off overrides,
+ * EST day bucketing, and inactive-location filtering.
+ */
 import { describe, expect, it, vi } from 'vitest'
 import type { Payload } from 'payload'
 import type { User } from '@/src/payload-types'
@@ -102,15 +106,45 @@ describe('Slack upcoming food', () => {
       '2027-01-12',
     )
 
-    expect(entries).toEqual([
-      { date: '2026-12-31', title: 'December Truck', location: 'Lawrenceville' },
-      { date: '2027-01-01', title: 'Taco Truck', location: 'Lawrenceville', startTime: null },
-      {
-        date: '2027-01-01',
-        title: 'Pierogi Truck',
-        location: 'Lawrenceville',
-        startTime: '17:00',
-      },
-    ])
+    // Ordering is buildScheduleMessage's job; compare as a set.
+    expect(entries).toHaveLength(3)
+    expect(entries).toEqual(
+      expect.arrayContaining([
+        { date: '2026-12-31', title: 'December Truck', location: 'Lawrenceville' },
+        { date: '2027-01-01', title: 'Taco Truck', location: 'Lawrenceville', startTime: null },
+        {
+          date: '2027-01-01',
+          title: 'Pierogi Truck',
+          location: 'Lawrenceville',
+          startTime: '17:00',
+        },
+      ]),
+    )
+  })
+
+  it('buckets one-off food by Pittsburgh day and skips inactive locations', async () => {
+    const payload = payloadForSchedule()
+    const find = vi.mocked(payload.find)
+    const base = find.getMockImplementation()!
+    find.mockImplementation((async (args: { collection: string; where?: unknown }) =>
+      args.collection === 'food'
+        ? {
+            docs: [
+              // 9pm EST on Jan 1 is already Jan 2 in UTC.
+              {
+                id: 'late',
+                date: '2027-01-02T02:00:00.000Z',
+                location,
+                vendor: { id: 'v', name: 'Late Truck' },
+              },
+            ],
+          }
+        : base(args as never)) as never)
+    const entries = await findUpcomingSlackFood(payload, user, '2027-01-01', '2027-01-01')
+    expect(entries).toContainEqual(
+      expect.objectContaining({ date: '2027-01-01', title: 'Late Truck' }),
+    )
+    const locationsQuery = find.mock.calls.find(([a]) => a.collection === 'locations')?.[0]
+    expect(locationsQuery?.where).toEqual({ active: { equals: true } })
   })
 })

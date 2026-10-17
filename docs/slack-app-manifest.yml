@@ -11,8 +11,9 @@
 #                      it fails with missing_scope.
 #   users:read.email — include the email field in that users.info response,
 #                      which is how Slack accounts are matched to site users.
-#                      Without both, email matching and password-command
-#                      self-registration cannot work.
+#                      Without both, every command fails: nothing can resolve to
+#                      a Payload user, so menu editing, invites, and password
+#                      resets all report "no linked account".
 #   chat:write       — post messages, including the invite DM. Required for
 #                      chat.postMessage; im:write below is NOT a substitute.
 #   im:write         — open the DM conversation with an invited teammate, so
@@ -45,9 +46,8 @@ display_information:
     /lolevbeer invite — create an admin account for a teammate and DM them a
     link to set their password.
 
-    /lolevbeer password — get a one-time link to set your password. If neither
-    your Slack ID nor email matches an account, active regular members get a new
-    bartender account from their Slack name/email, with no assigned locations.
+    /lolevbeer password — get a one-time link to set a new password for your own
+    account.
 
     Permissions come from your Lolev site account, not from Slack: editing menus
     needs a bartender or admin role (and respects the locations you're assigned

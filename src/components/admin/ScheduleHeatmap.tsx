@@ -19,17 +19,15 @@ import {
   dedupeSchedule,
   PAGES_AHEAD,
   PAGES_BACK,
-  slotDatesInRange,
+  expandRecurringFood,
+  recurringFoodVendorIds,
+  scheduleYears,
   WEEKS,
   type ScheduleRow,
 } from '@/lib/utils/schedule-heatmap'
 import type { RecurringEvent } from '@/src/payload-types'
 import { expandRecurringEvents } from '@/src/utils/recurring-events'
-import {
-  getRecurringFoodState,
-  recurringDays,
-  recurringOccurrences,
-} from '@/src/utils/recurring-food'
+import { getRecurringFoodState } from '@/src/utils/recurring-food'
 import { relationshipId } from '@/src/utils/relationship-id'
 
 import { HeatmapGrid } from './HeatmapGrid'
@@ -62,10 +60,7 @@ async function readSchedule(req: PayloadRequest, canEvents: boolean, canFood: bo
     ],
   }
   const none = Promise.resolve(null)
-  const years = Array.from(
-    { length: Number(lastDay.slice(0, 4)) - Number(firstSunday.slice(0, 4)) + 1 },
-    (_, i) => Number(firstSunday.slice(0, 4)) + i,
-  )
+  const years = scheduleYears(firstSunday, lastDay)
 
   // Five 16-month windows is still only a few thousand rows; no pagination.
   const [events, recurringEvents, food, foodStates] = await Promise.all([
@@ -135,19 +130,12 @@ async function readSchedule(req: PayloadRequest, canEvents: boolean, canFood: bo
 
   // Recurring slots hold vendor ids; one lookup names them. A vendor that no
   // longer resolves is skipped, as on the public site.
-  const slotVendorIds = new Set<string>()
-  for (const state of foodStates ?? []) {
-    for (const days of Object.values(state.schedules)) {
-      for (const weeks of Object.values(days)) {
-        for (const id of Object.values(weeks)) if (id) slotVendorIds.add(id)
-      }
-    }
-  }
+  const slotVendorIds = recurringFoodVendorIds(foodStates ?? [])
   const vendorNames = new Map<string, string>()
-  if (slotVendorIds.size) {
+  if (slotVendorIds.length) {
     const { docs } = await payload.find({
       collection: 'food-vendors',
-      where: { id: { in: [...slotVendorIds] } },
+      where: { id: { in: slotVendorIds } },
       depth: 0,
       pagination: false,
       select: { name: true },
@@ -164,35 +152,7 @@ async function readSchedule(req: PayloadRequest, canEvents: boolean, canFood: bo
     location: relationshipId(d.location),
     vendor: d.vendor ? relationshipId(d.vendor) : undefined,
   }))
-  for (const state of foodStates ?? []) {
-    for (const [location, days] of Object.entries(state.schedules)) {
-      const excluded = new Set(state.exclusions[location] ?? [])
-      for (const [day, weeks] of Object.entries(days)) {
-        for (const [week, vendorId] of Object.entries(weeks)) {
-          const name = vendorId && vendorNames.get(vendorId)
-          if (!name) continue
-          const dates = slotDatesInRange(
-            recurringDays.indexOf(day as (typeof recurringDays)[number]),
-            recurringOccurrences.indexOf(week as (typeof recurringOccurrences)[number]) + 1,
-            state.year,
-            firstSunday,
-            lastDay,
-          )
-          for (const date of dates) {
-            if (excluded.has(date)) continue
-            foodRows.push({
-              day: date,
-              kind: 'food',
-              name,
-              location,
-              vendor: vendorId,
-              recurring: true,
-            })
-          }
-        }
-      }
-    }
-  }
+  foodRows.push(...expandRecurringFood(foodStates ?? [], vendorNames, firstSunday, lastDay))
 
   return { rows: dedupeSchedule([...eventRows, ...foodRows]), firstSunday, today }
 }

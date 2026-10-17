@@ -18,9 +18,9 @@
  * then entirely Payload's: every request resolves to the requester's Payload
  * user (resolvePayloadUser) and runs as them, so menu editing needs an
  * admin/bartender role (Menus.access.update, scoped to assigned locations) and
- * inviting needs admin/lead-bartender (Users.access.create). The password
- * command alone may bootstrap an unassigned bartender from an active regular
- * Slack member's verified profile when neither Slack ID nor email exists.
+ * inviting needs admin/lead-bartender (Users.access.create). Slack workspace
+ * membership by itself grants nothing, and no access rule is restated here
+ * where it could drift from the admin panel.
  *
  * Env: SLACK_SIGNING_SECRET (required), SLACK_BOT_TOKEN (required for the modal
  * and identity lookup). Setup steps are in README.md.
@@ -98,9 +98,12 @@ function canEditMenus(user: User): boolean {
 }
 
 /**
- * The Slack account's workspace-verified profile, or null. Requires both
- * `users:read` and `users:read.email`. Identity never comes from command text:
- * accepting a typed email would allow another account's reset link to be requested.
+ * The Slack account's workspace-verified profile email, or null. Requires the
+ * `users:read` and `users:read.email` bot scopes — the former to call
+ * users.info at all, the latter to get the email field back; granting only the
+ * latter fails with missing_scope. This is the only trusted way to tie a Slack
+ * identity to a site account — an email the user types is self-asserted and
+ * would let anyone request another account's reset link.
  *
  * Lowercased and trimmed to match how Payload stores it (its auth email field
  * normalizes in a beforeChange hook). Mongo's `equals` is case-sensitive, so
@@ -108,11 +111,7 @@ function canEditMenus(user: User): boolean {
  * stored "ted@example.com": that user would be told "no linked account" by
  * every command, and never auto-link.
  */
-async function slackUserProfile(slackUserId: string): Promise<{
-  email: string
-  name: string | undefined
-  canRegister: boolean
-} | null> {
+async function slackUserEmail(slackUserId: string): Promise<string | null> {
   const token = serverEnv.slackBotToken
   if (!token) {
     logger.error('SLACK_BOT_TOKEN is not configured')
@@ -129,17 +128,7 @@ async function slackUserProfile(slackUserId: string): Promise<{
     const data = (await res.json()) as {
       ok?: boolean
       error?: string
-      user?: {
-        id?: string
-        name?: string
-        real_name?: string
-        deleted?: boolean
-        is_bot?: boolean
-        is_app_user?: boolean
-        is_restricted?: boolean
-        is_ultra_restricted?: boolean
-        profile?: { email?: string; real_name?: string; display_name?: string }
-      }
+      user?: { profile?: { email?: string } }
     }
     if (!data.ok) {
       // missing_scope here means users:read and/or users:read.email was never
@@ -147,26 +136,7 @@ async function slackUserProfile(slackUserId: string): Promise<{
       logger.error(`Slack users.info failed: ${data.error}`)
       return null
     }
-    const member = data.user
-    const email = member?.profile?.email?.toLowerCase().trim()
-    if (!email) return null
-    return {
-      email,
-      name:
-        member?.profile?.real_name?.trim() ||
-        member?.real_name?.trim() ||
-        member?.profile?.display_name?.trim() ||
-        member?.name?.trim() ||
-        undefined,
-      // Fail closed for new accounts if Slack omits membership flags.
-      canRegister:
-        member?.id === slackUserId &&
-        member.deleted === false &&
-        member.is_bot === false &&
-        member.is_app_user !== true &&
-        member.is_restricted === false &&
-        member.is_ultra_restricted === false,
-    }
+    return data.user?.profile?.email?.toLowerCase().trim() || null
   } catch (error) {
     logger.error('Slack users.info request failed:', error)
     return null
@@ -185,14 +155,10 @@ async function slackUserProfile(slackUserId: string): Promise<{
  * The claim is a system write (overrideAccess): the field's update access is
  * admin-only precisely so a logged-in user can't retarget someone else's
  * mapping, but the bot establishing identity is not a privilege grant.
- *
- * Only the password command opts into self-registration after both lookups
- * miss. That approved system bootstrap grants only bartender with no locations.
  */
 async function resolvePayloadUser(
   payload: Awaited<ReturnType<typeof getPayload>>,
   slackUserId: string | undefined,
-  createIfMissing = false,
 ): Promise<User | null> {
   if (!slackUserId) return null
 
@@ -206,36 +172,19 @@ async function resolvePayloadUser(
   })
   if (byId.docs[0]) return byId.docs[0]
 
-  const profile = await slackUserProfile(slackUserId)
-  if (!profile) return null
+  const email = await slackUserEmail(slackUserId)
+  if (!email) return null
 
   const byEmail = await payload.find({
     collection: 'users',
-    where: { email: { equals: profile.email } },
+    where: { email: { equals: email } },
     limit: 1,
     depth: 0,
     // eslint-disable-next-line no-restricted-syntax -- system: no identity exists yet
     overrideAccess: true,
   })
   const user = byEmail.docs[0]
-  if (!user) {
-    if (!createIfMissing || !profile.canRegister || !profile.name) return null
-    return payload.create({
-      collection: 'users',
-      // eslint-disable-next-line no-restricted-syntax -- system: approved Slack self-registration bootstraps only an unassigned bartender after both identity lookups miss
-      overrideAccess: true,
-      depth: 0,
-      data: {
-        email: profile.email,
-        name: profile.name,
-        slackUserId,
-        roles: ['bartender'],
-        locations: [],
-        // Only the private password-setup link can make this account usable.
-        password: crypto.randomUUID(),
-      },
-    })
-  }
+  if (!user) return null
 
   try {
     await payload.update({
@@ -278,9 +227,9 @@ function noAccountMessage(): Record<string, unknown> {
   return {
     response_type: 'ephemeral',
     text:
-      'No Lolev site account is linked to your Slack profile. Run `/lolevbeer password` ' +
-      'to link or create your account. If your Slack email differs from an existing ' +
-      'site login, ask an admin to set your Slack member ID on that account.',
+      'No Lolev site account is linked to your Slack profile. This happens when your ' +
+      'Slack email differs from your site login — ask an admin to set your Slack member ' +
+      'ID on your user in the admin panel.',
   }
 }
 
@@ -460,8 +409,6 @@ async function handleSlashCommand(params: URLSearchParams): Promise<NextResponse
  * Payload skip its mailer — which is the point, since there is no email
  * service — and hand back the raw token for us to deliver over Slack instead.
  * Re-running the command simply supersedes the previous token.
- * With no Slack-ID or email match, active regular members get a new unassigned
- * bartender account from their Slack profile before the setup link is generated.
  */
 async function sendPasswordResetLink(
   slackUserId: string | undefined,
@@ -469,12 +416,9 @@ async function sendPasswordResetLink(
 ): Promise<void> {
   try {
     const payload = await getPayload({ config })
-    const user = await resolvePayloadUser(payload, slackUserId, true)
+    const user = await resolvePayloadUser(payload, slackUserId)
     if (!user?.email) {
-      await slackApi(responseUrl, {
-        response_type: 'ephemeral',
-        text: 'Could not find or create your site account. Automatic signup requires an active regular Slack member with a readable name and email. Ask an admin for help.',
-      })
+      await slackApi(responseUrl, noAccountMessage())
       return
     }
 
@@ -622,7 +566,7 @@ async function submitInvite(
       return
     }
 
-    const email = (await slackUserProfile(invite.slackUserId))?.email
+    const email = await slackUserEmail(invite.slackUserId)
     if (!email) {
       await updateView(
         buildModalErrorView(

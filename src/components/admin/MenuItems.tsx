@@ -1,37 +1,57 @@
+/**
+ * Dashboard widget listing one menu's beers and/or products (picked in the
+ * widget's settings), each linking to its admin edit page.
+ */
 import Link from 'next/link'
 import type { WidgetServerProps } from 'payload'
 import { formatAdminURL } from 'payload/shared'
+import { formatAbv } from '@/lib/utils/formatters'
 import { extractBeerFromMenuItem, extractProductFromMenuItem } from '@/lib/utils/menu-item-utils'
 import { relationshipId } from '@/src/utils/relationship-id'
 import type { MenuItemsWidget } from '@/src/payload-types'
 
-/** Each dashboard instance selects its own menu and item kind. Reads are never shared across users. */
+/**
+ * The menu with only the fields the widget renders. Not cached: draft-only
+ * saves skip revalidation, and this widget shows draft menus to their editors.
+ */
+const loadMenu = (req: WidgetServerProps['req'], menuId: string) =>
+  req.payload.findByID({
+    collection: 'menus',
+    id: menuId,
+    depth: 2,
+    select: { name: true, location: true, items: true, _status: true },
+    populate: {
+      beers: { name: true, abv: true, style: true },
+      products: { name: true, abv: true },
+      styles: { name: true },
+      locations: { name: true },
+    },
+    disableErrors: true,
+    overrideAccess: false,
+    req,
+  })
+
+/** Each dashboard instance selects its own menu and item kind. */
 export async function MenuItems({ req, widgetData }: WidgetServerProps<MenuItemsWidget>) {
   const selection = widgetData?.menu
   const menuId = selection ? relationshipId(selection) : undefined
-  const menu = menuId
-    ? await req.payload.findByID({
-        collection: 'menus',
-        id: menuId,
-        depth: 2,
-        disableErrors: true,
-        overrideAccess: false,
-        req,
-      })
-    : null
+  const menu = menuId ? await loadMenu(req, menuId) : null
   const adminRoute = req.payload.config.routes.admin
   const adminURL = (collection: string, id: string) =>
     formatAdminURL({ adminRoute, path: `/collections/${collection}/${encodeURIComponent(id)}` })
   const kind = widgetData?.itemKind
+  const noun = kind === 'beers' || kind === 'products' ? kind : 'items'
+  const locationName =
+    menu && typeof menu.location === 'object' && menu.location ? menu.location.name : undefined
+  const ellipsis = { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } as const
   const items = (menu?.items || []).flatMap((item, index) => {
     const beer = extractBeerFromMenuItem(item)
     const product = extractProductFromMenuItem(item)
-    if ((kind === 'beers' && !beer) || (kind === 'products' && !product)) return []
-    const entry = beer || product
+    const entry = kind === 'beers' ? beer : kind === 'products' ? product : beer || product
     // Denied relationships remain IDs; omit them, just as the public menus do.
     if (!entry) return []
     const style = beer?.style && typeof beer.style === 'object' ? beer.style.name : undefined
-    const details = [style, entry.abv != null ? `${entry.abv}% ABV` : undefined]
+    const details = [style, entry.abv != null ? formatAbv(entry.abv, true) : undefined]
       .filter(Boolean)
       .join(' · ')
     return [
@@ -40,7 +60,7 @@ export async function MenuItems({ req, widgetData }: WidgetServerProps<MenuItems
         name: entry.name,
         href: adminURL(beer ? 'beers' : 'products', entry.id),
         details,
-        abv: entry.abv != null ? `${entry.abv}%` : null,
+        abv: entry.abv != null ? formatAbv(entry.abv) : null,
         promotion: item.promotion,
       },
     ]
@@ -56,9 +76,7 @@ export async function MenuItems({ req, widgetData }: WidgetServerProps<MenuItems
             lineHeight: 1.25,
             margin: 0,
             minWidth: 0,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
+            ...ellipsis,
           }}
         >
           {menu ? (
@@ -88,27 +106,20 @@ export async function MenuItems({ req, widgetData }: WidgetServerProps<MenuItems
       ) : (
         <>
           <p
-            title={
-              typeof menu.location === 'object' && menu.location ? menu.location.name : undefined
-            }
+            title={locationName}
             style={{
               color: 'var(--color-text-secondary)',
               fontSize: 12,
               margin: '0 0 6px',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
+              ...ellipsis,
             }}
           >
-            {items.length} {kind === 'beers' ? 'beers' : kind === 'products' ? 'products' : 'items'}
-            {typeof menu.location === 'object' && menu.location ? ` · ${menu.location.name}` : ''}
+            {items.length} {noun}
+            {locationName ? ` · ${locationName}` : ''}
             {menu._status === 'draft' ? ' · Draft menu' : ''}
           </p>
           {items.length === 0 ? (
-            <p>
-              No readable {kind === 'beers' ? 'beers' : kind === 'products' ? 'products' : 'items'}{' '}
-              on this menu.
-            </p>
+            <p>No readable {noun} on this menu.</p>
           ) : (
             <ul
               style={{
@@ -140,9 +151,7 @@ export async function MenuItems({ req, widgetData }: WidgetServerProps<MenuItems
                       fontSize: 14,
                       flex: 1,
                       minWidth: 0,
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
+                      ...ellipsis,
                     }}
                   >
                     {item.name}

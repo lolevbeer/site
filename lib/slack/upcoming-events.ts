@@ -1,8 +1,14 @@
+/**
+ * Events over the next N days for `/lolevbeer events`: one-off and recurring
+ * events, read as the Slack requester so Payload decides private visibility.
+ */
 import type { Payload } from 'payload'
 import type { User } from '@/src/payload-types'
 import { expandRecurringEvents, mergeScheduledEvents } from '@/src/utils/recurring-events'
 import { scheduleYearFilter } from '@/src/utils/recurring-food'
 import type { SlackScheduleEntry } from '@/lib/slack/schedule'
+import { getDateEST, getESTMidnightISO } from '@/lib/utils/date'
+import { addDays, scheduleYears } from '@/lib/utils/schedule-heatmap'
 
 export async function findUpcomingSlackEvents(
   payload: Payload,
@@ -10,7 +16,7 @@ export async function findUpcomingSlackEvents(
   from: string,
   through: string,
 ): Promise<SlackScheduleEntry[]> {
-  const years = [...new Set([Number(from.slice(0, 4)), Number(through.slice(0, 4))])]
+  const years = scheduleYears(from, through)
   const [oneOff, recurring] = await Promise.all([
     payload.find({
       collection: 'events',
@@ -18,8 +24,8 @@ export async function findUpcomingSlackEvents(
       overrideAccess: false,
       where: {
         and: [
-          { date: { greater_than_equal: `${from}T00:00:00.000Z` } },
-          { date: { less_than_equal: `${through}T23:59:59.999Z` } },
+          { date: { greater_than_equal: getESTMidnightISO(from) } },
+          { date: { less_than: getESTMidnightISO(addDays(through, 1)) } },
         ],
       },
       sort: 'date',
@@ -46,7 +52,7 @@ export async function findUpcomingSlackEvents(
     if (!event.location || typeof event.location !== 'object') return []
     return [
       {
-        date: event.date.split('T')[0],
+        date: getDateEST(new Date(event.date)),
         title: event.organizer,
         location: event.location.name,
         startTime: event.startTime,

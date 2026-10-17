@@ -1,4 +1,5 @@
 import type { Event, RecurringEvent } from '@/src/payload-types'
+import { getDateEST } from '@/lib/utils/date'
 import { getDatesForSlotInYear, toDateKey } from '@/lib/utils/food-dates'
 import {
   LEGACY_SCHEDULE_YEAR,
@@ -10,10 +11,11 @@ function eventLocationId(event: Pick<Event, 'location'>): string {
   return typeof event.location === 'object' ? event.location.id : event.location
 }
 
+/** Same location, organizer, and Pittsburgh day (not UTC: 8pm EDT is tomorrow in UTC). */
 function eventIdentity(event: Pick<Event, 'organizer' | 'date' | 'location'>): string {
   return [
     eventLocationId(event),
-    event.date.split('T')[0],
+    getDateEST(new Date(event.date)),
     event.organizer.trim().toLocaleLowerCase('en-US'),
   ].join('|')
 }
