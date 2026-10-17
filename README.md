@@ -19,6 +19,27 @@ Requires Node 24.15+ (Payload 4's minimum; CI reads `engines.node` from `package
 
 Payload admin is at `/admin`. Follow the on-screen instructions to create your first admin user.
 
+### Dependency security
+
+Security floors live in `pnpm-workspace.yaml`. Regenerate `pnpm-lock.yaml` with
+the pinned pnpm version using `pnpm install --no-frozen-lockfile`; preserve the
+Ably patch and `allowBuilds` policy.
+
+The 2026-10-17 review of [#256](https://github.com/lolevbeer/site/issues/256)
+confirmed the original floors are met on every locked major line:
+`brace-expansion` 1.1.21 / 5.0.12, `fast-uri` 4.2.2, and `undici`
+6.29.0 / 7.30.0 / 8.11.2. The follow-up updates `sharp` to 0.35.5 and
+`source-map-js` to 1.2.2, with overrides preventing vulnerable resolutions.
+
+`pnpm audit` still reports [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm)
+for `braces` 3.0.3; no patched release is published. It appears through both
+production dependencies (Payload/Sass tooling) and development tooling
+(ESLint/Vite/Vitest). Dependency presence does not establish that a public
+request can reach the vulnerable pattern parser; production exploitability
+remains unproven. Do not suppress the advisory. Recheck for an upstream fix,
+and confirm Dependabot resolution after the updated lockfile reaches GitHub
+and its dependency graph refreshes.
+
 ## Tech Stack
 
 - **Framework:** Next.js 16 (App Router)
