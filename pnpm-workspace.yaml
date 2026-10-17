@@ -30,7 +30,8 @@ overrides:
   'nanoid@3': '>=3.3.18'
   'svgo@3': '>=3.3.4'
   'js-yaml@4': '>=4.2.0'
-  'sharp': '0.35.4'
+  'sharp': '0.35.5'
+  'source-map-js': '>=1.2.2 <2'
 
 patchedDependencies:
   ably@2.29.0: patches/ably@2.29.0.patch
