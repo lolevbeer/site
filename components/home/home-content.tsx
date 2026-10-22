@@ -7,15 +7,15 @@ import { QuickInfoCards } from '@/components/home/quick-info-cards';
 import { LocationCards } from '@/components/location/location-cards';
 import { ScrollReveal } from '@/components/ui/scroll-reveal';
 import type { WeeklyHoursDay } from '@/lib/utils/payload-api';
-import type { Beer as PayloadBeer, Menu as PayloadMenu } from '@/src/payload-types';
+import type { Menu as PayloadMenu } from '@/src/payload-types';
+import type { HeroBeer } from '@/lib/utils/public-client-payloads';
 import type { LocationSlug } from '@/lib/types/location';
 
 interface HomeContentProps {
-  availableBeers: PayloadBeer[];
+  /** Cans for the hero carousel, selected on the server */
+  heroBeers: HeroBeer[];
   /** All draft menus from all locations */
   draftMenus: PayloadMenu[];
-  /** All cans menus from all locations */
-  cansMenus: PayloadMenu[];
   /** Draft tap count by location slug */
   beerCount: Record<string, number>;
   /** Cans count by location slug */
@@ -28,9 +28,8 @@ interface HomeContentProps {
 }
 
 export function HomeContent({
-  availableBeers,
+  heroBeers,
   draftMenus,
-  cansMenus,
   beerCount,
   cansCount,
   nextEvent,
@@ -41,7 +40,7 @@ export function HomeContent({
 }: HomeContentProps) {
   return (
     <div className="min-h-screen">
-      <HeroSection availableBeers={availableBeers} cansMenus={cansMenus} heroDescription={heroDescription} heroImageUrl={heroImageUrl} />
+      <HeroSection beers={heroBeers} heroDescription={heroDescription} heroImageUrl={heroImageUrl} />
 
       {/* Our Locations - right after hero */}
       <section className="py-16 lg:py-24 bg-background">

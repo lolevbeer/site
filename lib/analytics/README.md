@@ -2,19 +2,19 @@
 
 The public site reports to two places:
 
-- **Google Analytics 4** (`G-RR14DE5FPS`, hardcoded in `components/analytics/google-analytics.tsx`, loaded `lazyOnload`).
+- **Google Analytics 4** (`G-RR14DE5FPS`, hardcoded in `components/analytics/google-analytics.tsx`). An inline loader defines `window.gtag` and the dataLayer queue immediately but fetches gtag.js only on the visitor's first input (pointer, key, touch or scroll) or five seconds in, whichever comes first, keeping its ~180 KB out of page load. Events tracked before then are queued and sent when it arrives. Google signals and ad personalization are off (`allow_google_signals: false`): the property is linked to a Google Ads account, and with them on gtag fires a DoubleClick ping that sets a third-party cookie on every page view.
 - **Vercel Web Analytics** (`<Analytics />` from `@vercel/analytics/next` in `src/app/(frontend)/layout.tsx`).
 
 Helpers live in `lib/analytics/events.ts`:
 
-- `trackEvent(name, params)` sends a GA event only. It is a no-op until `window.gtag` exists.
+- `trackEvent(name, params)` sends a GA event only. `window.gtag` exists from the first byte of the page (see above), so events are queued until gtag.js loads rather than lost.
 - `trackConversion(name, params)` sends the same event to Vercel Analytics (`track`) and to GA.
 
 ## Events sent
 
 ### Page views
 
-- GA sends page views itself (the `config` call on load, and enhanced measurement's history-change tracking for client-side navigation, which only counts while the GA4 property's "Page changes based on browser history events" setting is on). There is no custom page-view tracker; adding one double-counts.
+- GA sends page views itself (the queued `config` call, sent when gtag.js loads, and enhanced measurement's history-change tracking for client-side navigation, which only counts while the GA4 property's "Page changes based on browser history events" setting is on). There is no custom page-view tracker; adding one double-counts.
 - Vercel Analytics records page views automatically.
 
 ### Conversions (Vercel Analytics and GA)
@@ -41,7 +41,7 @@ The old GA-only `get_directions` event (location cards only) was retired; use `d
 
 ### Field Web Vitals
 
-The baseline for real-user Web Vitals (LCP, INP, CLS) comes from Sentry. `@sentry/nextjs` adds its browser tracing integration by default (`instrumentation-client.ts`, options in `sentry.options.ts`), which records Web Vitals on sampled page-load transactions (`tracesSampleRate: 0.2`). That only runs in production when `NEXT_PUBLIC_SENTRY_DSN` is set. If the DSN stays unset, there is no field-vitals source; the plan is then to add `<SpeedInsights />` from `@vercel/speed-insights/next` next to `<Analytics />`.
+The baseline for real-user Web Vitals (LCP, INP, CLS) comes from Sentry. `@sentry/nextjs` adds its browser tracing integration by default (`instrumentation-client.ts`, options in `sentry.options.ts`), which records Web Vitals on sampled page-load transactions (`tracesSampleRate: 0.2`). That only runs in production when `NEXT_PUBLIC_SENTRY_DSN` is set; the browser SDK is loaded as its own chunk only in that case, and error reports go through `lib/utils/report-error.ts`, which loads it on first use, so client code never imports `@sentry/nextjs` statically (`tests/int/sentry-client-config.int.spec.ts` enforces this). If the DSN stays unset, there is no field-vitals source; the plan is then to add `<SpeedInsights />` from `@vercel/speed-insights/next` next to `<Analytics />`.
 
 ## Adding an event
 

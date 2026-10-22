@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { BlurFade } from '@/components/motion'
@@ -13,50 +13,22 @@ import {
   CarouselPrevious,
 } from '@/components/ui/carousel'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import type { Beer as PayloadBeer, Menu as PayloadMenu } from '@/src/payload-types'
-import { extractBeerFromMenuItem } from '@/lib/utils/menu-item-utils'
-import { getBeerImageUrl } from '@/lib/utils/media-utils'
+import type { HeroBeer } from '@/lib/utils/public-client-payloads'
 
 interface HeroSectionProps {
-  availableBeers: PayloadBeer[]
-  cansMenus: PayloadMenu[]
+  /** Cans with thumbnails for the carousel, selected on the server (selectHeroBeers). */
+  beers: HeroBeer[]
   heroDescription?: string
   heroImageUrl?: string | null
 }
 
-export function HeroSection({
-  availableBeers,
-  cansMenus,
-  heroDescription,
-  heroImageUrl,
-}: HeroSectionProps) {
+export function HeroSection({ beers, heroDescription, heroImageUrl }: HeroSectionProps) {
   const [imageErrors, setImageErrors] = useState<Set<string>>(new Set())
   const handleImageError = (beerId: string) => {
     setImageErrors((prev) => new Set(prev).add(beerId))
   }
 
-  // Pre-filter to beers in cans menus with valid images
-  const displayBeers = useMemo(() => {
-    const cansIds = new Set<string>()
-    for (const menu of cansMenus) {
-      if (!menu.items) continue
-      for (const item of menu.items) {
-        const beer = extractBeerFromMenuItem(item)
-        if (beer?.id) cansIds.add(beer.id)
-      }
-    }
-    return availableBeers
-      .filter(
-        (beer) =>
-          cansIds.has(beer.id) &&
-          getBeerImageUrl(beer.image, beer.slug, 'thumbnail') &&
-          !imageErrors.has(beer.id),
-      )
-      .map((beer) => ({
-        beer,
-        imageUrl: getBeerImageUrl(beer.image, beer.slug, 'thumbnail')!,
-      }))
-  }, [availableBeers, cansMenus, imageErrors])
+  const displayBeers = beers.filter((beer) => !imageErrors.has(beer.id))
 
   return (
     <div className="relative flex flex-col gap-8 md:gap-16 px-4 md:px-8 py-16 md:py-24 text-center min-h-[600px] md:min-h-[700px]">
@@ -99,7 +71,7 @@ export function HeroSection({
                   aria-label="Available beers carousel"
                 >
                   <CarouselContent className="-ml-4">
-                    {displayBeers.map(({ beer, imageUrl }, index) => (
+                    {displayBeers.map((beer) => (
                       <CarouselItem
                         key={beer.id}
                         className="pl-4 basis-1/4 sm:basis-1/5 md:basis-1/4 lg:basis-1/6 xl:basis-1/8 2xl:basis-1/8"
@@ -112,13 +84,14 @@ export function HeroSection({
                               className="group flex justify-center"
                             >
                               <div className="relative h-16 w-16 md:h-24 md:w-24 rounded-lg bg-transparent transition-transform duration-200 ease-out group-hover:-translate-y-1 group-hover:scale-105">
+                                {/* Fixed size, not `fill`: a sized image gets a 1x/2x
+                                    srcset instead of 16 candidates (~2 KB of HTML per can). */}
                                 <Image
-                                  src={imageUrl}
+                                  src={beer.imageUrl}
                                   alt={`${beer.name} beer can`}
-                                  fill
-                                  className="object-contain drop-shadow-sm group-hover:drop-shadow-md transition-all duration-200"
-                                  sizes="(max-width: 768px) 64px, 96px"
-                                  loading={index < 5 ? 'eager' : 'lazy'}
+                                  width={96}
+                                  height={96}
+                                  className="h-full w-full object-contain drop-shadow-sm group-hover:drop-shadow-md transition-all duration-200"
                                   onError={() => handleImageError(beer.id)}
                                 />
                               </div>

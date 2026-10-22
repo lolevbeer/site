@@ -1,10 +1,11 @@
 /**
  * Logging utility for the application
  * Provides consistent logging across the codebase with environment-aware behavior.
- * In production, errors and warnings are forwarded to Sentry.
+ * In production, errors and warnings are forwarded to Sentry through
+ * report-error.ts, which loads the SDK on first use.
  */
 
-import * as Sentry from '@sentry/nextjs'
+import { captureException, captureMessage } from './report-error'
 
 interface LogContext {
   [key: string]: unknown
@@ -60,12 +61,12 @@ class Logger {
     if (level === 'error') {
       const errorObj = context?.error instanceof Error ? context.error : new Error(message)
 
-      Sentry.captureException(errorObj, {
+      captureException(errorObj, {
         extra: context,
         tags: { logLevel: level },
       })
     } else {
-      Sentry.captureMessage(message, {
+      captureMessage(message, {
         level: 'warning',
         extra: context,
       })
