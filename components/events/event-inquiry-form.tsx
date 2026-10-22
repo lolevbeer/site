@@ -109,39 +109,42 @@ export function EventInquiryForm({
           onSubmit={onSubmit}
           className="relative overflow-visible flex flex-col gap-4"
         >
-          <FieldGroup className="overflow-visible p-1">
-            <FormField
-              id="inquiry-preferredDate"
-              label="Preferred date"
-              error={fieldErrors.preferredDate}
-            >
-              <DatePicker
+          <FieldGroup className="overflow-visible p-1 gap-5">
+            <div data-slot="field-row" className="grid gap-5 sm:grid-cols-2">
+              <FormField
                 id="inquiry-preferredDate"
-                min={minDate}
-                max={minDate && maximumEventDate(minDate)}
-                value={values.preferredDate}
-                onChange={(value) => set('preferredDate', value)}
-              />
-            </FormField>
-            <FormField
-              id="inquiry-headcount"
-              label="How many guests?"
-              error={fieldErrors.headcount}
-            >
-              <Input
+                label="Preferred date"
+                error={fieldErrors.preferredDate}
+              >
+                <DatePicker
+                  id="inquiry-preferredDate"
+                  min={minDate}
+                  max={minDate && maximumEventDate(minDate)}
+                  value={values.preferredDate}
+                  onChange={(value) => set('preferredDate', value)}
+                />
+              </FormField>
+              <FormField
                 id="inquiry-headcount"
-                name="headcount"
-                type="number"
-                inputMode="numeric"
-                min={1}
-                max={EVENT_INQUIRY_MAX_HEADCOUNT}
-                value={values.headcount}
-                onChange={(e) =>
-                  set('headcount', e.target.value === '' ? '' : Number(e.target.value))
-                }
-                required
-              />
-            </FormField>
+                label="How many guests?"
+                error={fieldErrors.headcount}
+              >
+                <Input
+                  id="inquiry-headcount"
+                  name="headcount"
+                  type="number"
+                  inputMode="numeric"
+                  placeholder="e.g. 25"
+                  min={1}
+                  max={EVENT_INQUIRY_MAX_HEADCOUNT}
+                  value={values.headcount}
+                  onChange={(e) =>
+                    set('headcount', e.target.value === '' ? '' : Number(e.target.value))
+                  }
+                  required
+                />
+              </FormField>
+            </div>
             <FormField id="inquiry-taproom" label="Taproom" error={fieldErrors.taproom}>
               <SegmentedControl
                 aria-label="Taproom"
@@ -161,40 +164,50 @@ export function EventInquiryForm({
                 required
               />
             </FormField>
-            <FormField id="inquiry-email" label="Email" error={fieldErrors.email}>
-              <Input
-                id="inquiry-email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                value={values.email}
-                onChange={(e) => set('email', e.target.value)}
-                required
-              />
-            </FormField>
-            <FormField id="inquiry-phone" label="Phone (optional)" error={fieldErrors.phone}>
-              <Input
-                id="inquiry-phone"
-                name="phone"
-                type="tel"
-                autoComplete="tel"
-                value={values.phone}
-                onChange={(e) => set('phone', e.target.value)}
-              />
-            </FormField>
+            <div data-slot="field-row" className="grid gap-5 sm:grid-cols-2">
+              <FormField id="inquiry-email" label="Email" error={fieldErrors.email}>
+                <Input
+                  id="inquiry-email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  value={values.email}
+                  onChange={(e) => set('email', e.target.value)}
+                  required
+                />
+              </FormField>
+              <FormField id="inquiry-phone" label="Phone (optional)" error={fieldErrors.phone}>
+                <Input
+                  id="inquiry-phone"
+                  name="phone"
+                  type="tel"
+                  autoComplete="tel"
+                  value={values.phone}
+                  onChange={(e) => set('phone', e.target.value)}
+                />
+              </FormField>
+            </div>
             <FormField
               id="inquiry-message"
-              label="Anything else?"
-              hint="Optional. The occasion, timing, food, and so on."
+              label="Anything else? (optional)"
               error={fieldErrors.message}
             >
               <Textarea
                 id="inquiry-message"
                 name="message"
+                rows={3}
+                placeholder="The occasion, timing, food, and so on"
                 value={values.message}
                 onChange={(e) => set('message', e.target.value)}
               />
             </FormField>
+            {/* Same ring gutter as FormField, so the button lines up with the inputs. */}
+            <div className="w-full p-1 -m-1">
+              <Button type="submit" size="lg" className="w-full" disabled={pending}>
+                {pending ? <Spinner /> : null}
+                {pending ? 'Sending…' : 'Send inquiry'}
+              </Button>
+            </div>
           </FieldGroup>
           <HoneypotField
             value={values.companyUrlHp}
@@ -205,12 +218,6 @@ export function EventInquiryForm({
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           ) : null}
-          <div className="flex justify-end pt-2">
-            <Button type="submit" disabled={pending}>
-              {pending ? <Spinner /> : null}
-              {pending ? 'Sending…' : 'Send inquiry'}
-            </Button>
-          </div>
         </form>
       )}
     </div>

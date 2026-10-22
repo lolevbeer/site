@@ -44,8 +44,16 @@ describe('EventInquiryForm', () => {
       'Your name',
       'Email',
       'Phone (optional)',
-      'Anything else?',
+      'Anything else? (optional)',
     ])
+  })
+
+  it('pairs date with guests and email with phone on one row', () => {
+    render(<EventInquiryForm taprooms={taprooms} />)
+    const row = (id: string) => document.getElementById(id)?.closest('[data-slot=field-row]')
+    expect(row('inquiry-preferredDate')).toBeTruthy()
+    expect(row('inquiry-preferredDate')).toBe(row('inquiry-headcount'))
+    expect(row('inquiry-email')).toBe(row('inquiry-phone'))
   })
 
   it('picks a taproom in one tap', () => {
