@@ -11,6 +11,7 @@ import {
   resolveSlackChannel,
   slackPlainText,
 } from '@/lib/slack/mrkdwn'
+import { occasionAdminLabel } from '@/lib/events/inquiry'
 
 /**
  * Channel for inquiry pings (`SLACK_EVENT_INQUIRY_CHANNEL`, else the donation
@@ -28,8 +29,12 @@ export function buildEventInquirySlackMessage(input: {
   preferredDate: string
   headcount: number
   taproomName: string
+  occasion?: string
+  flexibleDate?: boolean
 }): { text: string; blocks: Array<Record<string, unknown>> } {
-  const summary = `${input.taproomName} — ${input.preferredDate}, ${input.headcount} guests`
+  const date = input.flexibleDate ? `${input.preferredDate} (flexible)` : input.preferredDate
+  const occasion = input.occasion ? occasionAdminLabel(input.occasion) : undefined
+  const summary = `${input.taproomName} — ${date}, ${input.headcount} guests`
   return {
     text: escapeMrkdwn(clip(`Private event inquiry: ${summary}`, 280)),
     blocks: [
@@ -44,8 +49,9 @@ export function buildEventInquirySlackMessage(input: {
         type: 'section',
         fields: [
           field('Taproom', input.taproomName),
-          field('Preferred date', input.preferredDate),
+          field('Preferred date', date),
           field('Guests', String(input.headcount)),
+          ...(occasion ? [field('Occasion', occasion)] : []),
         ],
       },
       {

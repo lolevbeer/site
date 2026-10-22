@@ -100,13 +100,19 @@ describe('submitEventInquiry', () => {
   })
 
   it('stores the inquiry with the taproom ID, then posts Slack in after()', async () => {
-    const result = await submitEventInquiry(valid())
+    const result = await submitEventInquiry({ ...valid(), occasion: 'work', flexibleDate: true })
     expect(result).toEqual({ ok: true })
     expect(create).toHaveBeenCalledTimes(1)
     const args = create.mock.calls[0][0]
     expect(args.collection).toBe('event-inquiries')
     expect(args.overrideAccess).toBe(true)
-    expect(args.data).toMatchObject({ taproom: 'loc-1', headcount: 30, status: 'new' })
+    expect(args.data).toMatchObject({
+      taproom: 'loc-1',
+      headcount: 30,
+      status: 'new',
+      occasion: 'work',
+      flexibleDate: true,
+    })
     const locationsRead = find.mock.calls.find(([a]) => a.collection === 'locations')
     expect(locationsRead?.[0]).toMatchObject({ overrideAccess: false })
 

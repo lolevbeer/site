@@ -883,6 +883,8 @@ export interface EventInquiry {
    * Requested date, not a confirmed booking.
    */
   preferredDate: string;
+  flexibleDate?: boolean | null;
+  occasion?: ('birthday' | 'work' | 'wedding' | 'other') | null;
   taproom: string | Location;
   headcount: number;
   message?: string | null;
@@ -1851,6 +1853,8 @@ export interface EventInquiriesSelect<T extends boolean = true> {
   submissionKey?: T;
   status?: T;
   preferredDate?: T;
+  flexibleDate?: T;
+  occasion?: T;
   taproom?: T;
   headcount?: T;
   message?: T;

@@ -19,6 +19,20 @@ import { getTodayEST } from '@/lib/utils/date'
 export const EVENT_INQUIRY_MAX_TEXT = 2000
 export const EVENT_INQUIRY_MAX_HEADCOUNT = 500
 
+/** One-tap occasion choices. `label` is the short form button; `adminLabel` shows in Admin and Slack. */
+export const EVENT_INQUIRY_OCCASIONS = [
+  { value: 'birthday', label: 'Birthday', adminLabel: 'Birthday' },
+  { value: 'work', label: 'Work', adminLabel: 'Work event' },
+  { value: 'wedding', label: 'Wedding', adminLabel: 'Wedding or rehearsal' },
+  { value: 'other', label: 'Other', adminLabel: 'Other' },
+] as const
+
+export type EventInquiryOccasion = (typeof EVENT_INQUIRY_OCCASIONS)[number]['value']
+
+export function occasionAdminLabel(value: string): string | undefined {
+  return EVENT_INQUIRY_OCCASIONS.find((option) => option.value === value)?.adminLabel
+}
+
 export interface EventInquiryInput {
   name: string
   email: string
@@ -26,9 +40,13 @@ export interface EventInquiryInput {
   phone: string
   /** YYYY-MM-DD. */
   preferredDate: string
+  /** Visitor can move the date. */
+  flexibleDate: boolean
   headcount: number | ''
   /** Location slug. The action stores the matching location ID. */
   taproom: string
+  /** Optional. An EVENT_INQUIRY_OCCASIONS value or ''. */
+  occasion: string
   /** Optional. */
   message: string
   /** Hidden honeypot. Must stay empty. */
@@ -37,8 +55,12 @@ export interface EventInquiryInput {
 
 export type EventInquiryErrors = Partial<Record<keyof EventInquiryInput, string>>
 
-export type ValidatedEventInquiry = Omit<EventInquiryInput, 'headcount' | 'companyUrlHp'> & {
+export type ValidatedEventInquiry = Omit<
+  EventInquiryInput,
+  'headcount' | 'occasion' | 'companyUrlHp'
+> & {
   headcount: number
+  occasion: EventInquiryOccasion | ''
 }
 
 export type EventInquiryValidation =
@@ -52,8 +74,10 @@ export function emptyEventInquiry(): EventInquiryInput {
     email: '',
     phone: '',
     preferredDate: '',
+    flexibleDate: false,
     headcount: '',
     taproom: '',
+    occasion: '',
     message: '',
     companyUrlHp: '',
   }
@@ -90,6 +114,9 @@ export function validateEventInquiry(
       ? Number(parsed.headcount)
       : NaN
   const taproom = trimmed(parsed.taproom)
+  const occasion = trimmed(parsed.occasion)
+  // Untrusted: only a real boolean true counts.
+  const flexibleDate = parsed.flexibleDate === true
   const message = trimmed(parsed.message)
 
   if (name.length < 2) errors.name = 'Enter your name.'
@@ -105,6 +132,7 @@ export function validateEventInquiry(
     errors.headcount = 'Enter how many guests.'
   }
   if (!taproom || !taproomSlugs.includes(taproom)) errors.taproom = 'Choose a taproom.'
+  if (occasion && !occasionAdminLabel(occasion)) errors.occasion = 'Choose an occasion.'
   if (message.length > EVENT_INQUIRY_MAX_TEXT) errors.message = 'That answer is too long.'
   rejectFormulaPrefix(name, errors, 'name')
   rejectFormulaPrefix(email, errors, 'email')
@@ -114,6 +142,17 @@ export function validateEventInquiry(
   return {
     ok: true,
     spam: false,
-    value: { name, email, phone, preferredDate, headcount, taproom, message },
+    value: {
+      name,
+      email,
+      phone,
+      preferredDate,
+      flexibleDate,
+      headcount,
+      taproom,
+      // Checked against EVENT_INQUIRY_OCCASIONS above.
+      occasion: occasion as EventInquiryOccasion | '',
+      message,
+    },
   }
 }

@@ -55,6 +55,29 @@ describe('validateEventInquiry', () => {
     )
   })
 
+  it('accepts a known occasion or none, and rejects anything else', () => {
+    expect(validateEventInquiry({ ...valid(), occasion: '' }, TODAY, TAPROOMS).ok).toBe(true)
+    expect(
+      validateEventInquiry({ ...valid(), occasion: 'birthday' }, TODAY, TAPROOMS),
+    ).toMatchObject({ ok: true, value: { occasion: 'birthday' } })
+    expect(validateEventInquiry({ ...valid(), occasion: 'rave' }, TODAY, TAPROOMS)).toMatchObject({
+      ok: false,
+      errors: { occasion: 'Choose an occasion.' },
+    })
+  })
+
+  it('keeps flexibleDate only when it is literally true', () => {
+    expect(validateEventInquiry({ ...valid(), flexibleDate: true }, TODAY, TAPROOMS)).toMatchObject(
+      {
+        ok: true,
+        value: { flexibleDate: true },
+      },
+    )
+    expect(
+      validateEventInquiry({ ...valid(), flexibleDate: 'yes' }, TODAY, TAPROOMS),
+    ).toMatchObject({ ok: true, value: { flexibleDate: false } })
+  })
+
   it('treats phone as optional but rejects a malformed one', () => {
     expect(validateEventInquiry({ ...valid(), phone: '  ' }, TODAY, TAPROOMS)).toMatchObject({
       ok: true,
@@ -153,5 +176,19 @@ describe('buildEventInquirySlackMessage', () => {
     expect(body).toContain('2026-11-20')
     expect(body).toContain('30')
     expect(body).not.toContain('alex@example.org')
+  })
+
+  it('adds the occasion and a flexible-date note when given', () => {
+    const body = JSON.stringify(
+      buildEventInquirySlackMessage({
+        preferredDate: '2026-11-20',
+        headcount: 30,
+        taproomName: 'Lawrenceville',
+        occasion: 'wedding',
+        flexibleDate: true,
+      }),
+    )
+    expect(body).toContain('Wedding or rehearsal')
+    expect(body).toContain('2026-11-20 (flexible)')
   })
 })

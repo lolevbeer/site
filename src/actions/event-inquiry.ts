@@ -73,7 +73,9 @@ export async function submitEventInquiry(input: unknown): Promise<SubmitEventInq
         email: value.email,
         phone: value.phone || undefined,
         preferredDate,
+        flexibleDate: value.flexibleDate,
         headcount: value.headcount,
+        occasion: value.occasion || undefined,
         taproom: taproom.id,
         message: value.message || undefined,
       },
@@ -91,6 +93,8 @@ export async function submitEventInquiry(input: unknown): Promise<SubmitEventInq
         message: buildEventInquirySlackMessage({
           preferredDate: value.preferredDate,
           headcount: value.headcount,
+          occasion: value.occasion,
+          flexibleDate: value.flexibleDate,
           taproomName: taproom.name || value.taproom,
         }),
         failLog: 'Event inquiry Slack ping failed',

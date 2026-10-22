@@ -473,6 +473,10 @@ exports[`persistent field contracts > event-inquiries retains its stored paths a
     "required": true,
     "type": "email",
   },
+  "flexibleDate": {
+    "defaultValue": false,
+    "type": "checkbox",
+  },
   "headcount": {
     "max": 500,
     "min": 1,
@@ -494,6 +498,15 @@ exports[`persistent field contracts > event-inquiries retains its stored paths a
     "maxLength": 200,
     "required": true,
     "type": "text",
+  },
+  "occasion": {
+    "options": [
+      "birthday",
+      "work",
+      "wedding",
+      "other",
+    ],
+    "type": "select",
   },
   "phone": {
     "maxLength": 32,

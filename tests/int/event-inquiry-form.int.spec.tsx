@@ -1,6 +1,7 @@
 /**
  * /private-events inquiry: always open, event details before contact details,
- * one-tap taproom buttons, optional phone, field errors show under
+ * one-tap taproom (preselected from the header) and occasion buttons, optional
+ * phone, fields checked on blur, a summary on success, field errors show under
  * each field, focus moves to the confirmation, the date min is client-only, and
  * an accepted inquiry sends the `event_inquiry_submitted` conversion.
  */
@@ -12,12 +13,26 @@ vi.mock('@/src/actions/event-inquiry', () => ({
   submitEventInquiry: (input: unknown) => submitEventInquiry(input),
 }))
 const track = vi.fn()
+let headerLocation = 'lawrenceville'
+vi.mock('@/components/location/location-provider', () => ({
+  useLocationContext: () => ({ currentLocation: headerLocation }),
+}))
 vi.mock('@vercel/analytics', () => ({ track: (...args: unknown[]) => track(...args) }))
+
+// The Radix checkbox measures itself; jsdom has no ResizeObserver.
+class ResizeObserverStub {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+vi.stubGlobal('ResizeObserver', ResizeObserverStub)
 
 import { EventInquiryForm } from '@/components/events/event-inquiry-form'
 
 const gtag = vi.fn()
 beforeEach(() => {
+  headerLocation = 'lawrenceville'
+  submitEventInquiry.mockReset()
   track.mockReset()
   gtag.mockReset()
   window.gtag = gtag
@@ -40,7 +55,9 @@ describe('EventInquiryForm', () => {
     expect(labels).toEqual([
       'Preferred date',
       'How many guests?',
+      'My date is flexible',
       'Taproom',
+      'Occasion (optional)',
       'Your name',
       'Email',
       'Phone (optional)',
@@ -48,12 +65,64 @@ describe('EventInquiryForm', () => {
     ])
   })
 
-  it('pairs date with guests and email with phone on one row', () => {
+  it('pairs date with guests but stacks email and phone (single column)', () => {
     render(<EventInquiryForm taprooms={taprooms} />)
     const row = (id: string) => document.getElementById(id)?.closest('[data-slot=field-row]')
     expect(row('inquiry-preferredDate')).toBeTruthy()
     expect(row('inquiry-preferredDate')).toBe(row('inquiry-headcount'))
-    expect(row('inquiry-email')).toBe(row('inquiry-phone'))
+    expect(row('inquiry-email')).toBeNull()
+    expect(row('inquiry-phone')).toBeNull()
+  })
+
+  it('preselects the taproom chosen in the header, and the visitor can change it', () => {
+    headerLocation = 'zelienople'
+    render(<EventInquiryForm taprooms={taprooms} />)
+    const zelienople = screen.getByRole('button', { name: 'Zelienople' })
+    expect(zelienople.getAttribute('aria-pressed')).toBe('true')
+    fireEvent.click(screen.getByRole('button', { name: 'Lawrenceville' }))
+    expect(zelienople.getAttribute('aria-pressed')).toBe('false')
+  })
+
+  it('flags a bad email on blur but leaves an untouched empty field alone', () => {
+    render(<EventInquiryForm taprooms={taprooms} />)
+    const email = screen.getByLabelText('Email')
+    fireEvent.blur(email)
+    expect(email.getAttribute('aria-invalid')).toBeNull()
+    fireEvent.change(email, { target: { value: 'not-an-email' } })
+    fireEvent.blur(email)
+    expect(email.getAttribute('aria-invalid')).toBe('true')
+    expect(document.getElementById('inquiry-email-error')?.textContent).toBe('Enter a valid email.')
+  })
+
+  it('toggles an occasion on and off and sends it with the flexible flag', async () => {
+    submitEventInquiry.mockResolvedValueOnce({ ok: false, error: 'x' })
+    render(<EventInquiryForm taprooms={taprooms} />)
+    const birthday = screen.getByRole('button', { name: 'Birthday' })
+    fireEvent.click(birthday)
+    expect(birthday.getAttribute('aria-pressed')).toBe('true')
+    fireEvent.click(screen.getByRole('checkbox', { name: 'My date is flexible' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Send inquiry' }))
+    await waitFor(() => expect(submitEventInquiry).toHaveBeenCalled())
+    expect(submitEventInquiry.mock.calls[0][0]).toMatchObject({
+      occasion: 'birthday',
+      flexibleDate: true,
+      taproom: 'lawrenceville',
+    })
+    fireEvent.click(birthday)
+    expect(birthday.getAttribute('aria-pressed')).toBe('false')
+  })
+
+  it('repeats what was sent on the confirmation', async () => {
+    submitEventInquiry.mockResolvedValueOnce({ ok: true })
+    render(<EventInquiryForm taprooms={taprooms} />)
+    fireEvent.change(screen.getByLabelText('How many guests?'), { target: { value: '30' } })
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'ada@example.org' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Send inquiry' }))
+    await waitFor(() => expect(screen.getByText('Inquiry received')).toBeTruthy())
+    const status = screen.getByRole('status').textContent
+    expect(status).toContain('30 guests')
+    expect(status).toContain('Lawrenceville')
+    expect(status).toContain('ada@example.org')
   })
 
   it('picks a taproom in one tap', () => {
@@ -65,6 +134,7 @@ describe('EventInquiryForm', () => {
   })
 
   it('preselects the only taproom', () => {
+    headerLocation = 'zelienople'
     render(<EventInquiryForm taprooms={taprooms.slice(0, 1)} />)
     expect(screen.getByRole('button', { name: 'Lawrenceville' }).getAttribute('aria-pressed')).toBe(
       'true',

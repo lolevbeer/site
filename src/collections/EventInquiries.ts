@@ -6,7 +6,11 @@
  */
 import type { CollectionConfig } from 'payload'
 import { adminAccess, adminFieldAccess, eventManagerAccess } from '@/src/access/roles'
-import { EVENT_INQUIRY_MAX_HEADCOUNT, EVENT_INQUIRY_MAX_TEXT } from '@/lib/events/inquiry'
+import {
+  EVENT_INQUIRY_MAX_HEADCOUNT,
+  EVENT_INQUIRY_MAX_TEXT,
+  EVENT_INQUIRY_OCCASIONS,
+} from '@/lib/events/inquiry'
 import { slackDiagnosticsField } from './utils/slackDiagnosticsField'
 
 export const EventInquiries: CollectionConfig = {
@@ -20,7 +24,15 @@ export const EventInquiries: CollectionConfig = {
   admin: {
     group: 'Food & Events',
     useAsTitle: 'name',
-    defaultColumns: ['name', 'status', 'preferredDate', 'taproom', 'headcount', 'createdAt'],
+    defaultColumns: [
+      'name',
+      'status',
+      'preferredDate',
+      'taproom',
+      'headcount',
+      'occasion',
+      'createdAt',
+    ],
     description:
       'Requests from /private-events, not confirmed bookings. Marking Booked does not create an Event; enter that booking separately.',
   },
@@ -47,6 +59,16 @@ export const EventInquiries: CollectionConfig = {
         description: 'Requested date, not a confirmed booking.',
       },
       label: 'Preferred date',
+    },
+    { name: 'flexibleDate', type: 'checkbox', defaultValue: false, label: 'Date is flexible' },
+    {
+      name: 'occasion',
+      type: 'select',
+      options: EVENT_INQUIRY_OCCASIONS.map(({ value, adminLabel }) => ({
+        value,
+        label: adminLabel,
+      })),
+      label: 'Occasion',
     },
     {
       name: 'taproom',
