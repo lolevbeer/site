@@ -12,6 +12,7 @@ const PAGE_LABELS = {
   beer: 'Beer catalog (/beer)',
   events: 'Events (/events)',
   food: 'Food (/food)',
+  privateEvents: 'Private events (/private-events)',
   beerMap: 'Beer map (/beer-map)',
   donate: 'Donations (/donate)',
   jobs: 'Jobs list (/jobs)',
@@ -29,6 +30,7 @@ export const INTRO_PAGE_KEYS = [
   'beer',
   'events',
   'food',
+  'privateEvents',
 ] as const satisfies readonly SiteSeoPageKey[]
 const introKeys = new Set<string>(INTRO_PAGE_KEYS)
 

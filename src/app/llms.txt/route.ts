@@ -47,8 +47,7 @@ ${page}`.trim()
   const taproomLinks = locations
     .filter((loc) => loc.slug)
     .map(
-      (loc) =>
-        `- [${loc.name} taproom](${baseUrl}/${loc.slug}): Hours, address, and what's on tap`,
+      (loc) => `- [${loc.name} taproom](${baseUrl}/${loc.slug}): Hours, address, and what's on tap`,
     )
     .join('\n')
 
@@ -71,6 +70,7 @@ ${taproomLinks ? `${taproomLinks}\n` : ''}- [Our Beers](${baseUrl}/beer): Full c
 - [Beer Map](${baseUrl}/beer-map): Find Lolev Beer at retailers near you
 - [About](${baseUrl}/about): Brewery philosophy and location information
 - [FAQ](${baseUrl}/faq): Frequently asked questions about hours, food, dogs, private events, etc.
+- [Private events](${baseUrl}/private-events): Book a private event or party at a taproom (inquiry form)
 - [Donation requests](${baseUrl}/donate): Request a beer donation or taproom fundraiser night (completed forms only)
 - [Jobs](${baseUrl}/jobs): Open roles at Lolev taprooms
 

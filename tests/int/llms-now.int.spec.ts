@@ -60,5 +60,7 @@ describe('private event FAQ phones', () => {
     expect(answer?.answer).toContain('Zelienople at (724) 609-5100')
     expect(answer?.answer).toContain('https://lolev.beer/donate')
     expect(answer?.answer).not.toContain('DONATE_URL')
+    expect(answer?.answer).toContain('https://lolev.beer/private-events')
+    expect(answer?.answer).not.toContain('PRIVATE_EVENTS_URL')
   })
 })

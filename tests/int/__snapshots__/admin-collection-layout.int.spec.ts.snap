@@ -473,6 +473,10 @@ exports[`persistent field contracts > event-inquiries retains its stored paths a
     "required": true,
     "type": "email",
   },
+  "flexibleDate": {
+    "defaultValue": false,
+    "type": "checkbox",
+  },
   "headcount": {
     "max": 500,
     "min": 1,
@@ -495,9 +499,21 @@ exports[`persistent field contracts > event-inquiries retains its stored paths a
     "required": true,
     "type": "text",
   },
+  "occasion": {
+    "options": [
+      "birthday",
+      "work",
+      "wedding",
+      "other",
+    ],
+    "type": "select",
+  },
+  "otherDates": {
+    "hasMany": true,
+    "type": "text",
+  },
   "phone": {
     "maxLength": 32,
-    "required": true,
     "type": "text",
   },
   "preferredDate": {
@@ -1866,6 +1882,38 @@ exports[`persistent field contracts > site-seo retains its stored paths and vali
     "type": "text",
   },
   "pages.privacy.title": {
+    "type": "text",
+  },
+  "pages.privateEvents": {
+    "type": "group",
+  },
+  "pages.privateEvents.description": {
+    "maxLength": 320,
+    "type": "textarea",
+  },
+  "pages.privateEvents.intro": {
+    "type": "textarea",
+  },
+  "pages.privateEvents.keywords": {
+    "hasMany": true,
+    "type": "text",
+  },
+  "pages.privateEvents.noIndex": {
+    "defaultValue": false,
+    "type": "checkbox",
+  },
+  "pages.privateEvents.ogDescription": {
+    "maxLength": 320,
+    "type": "textarea",
+  },
+  "pages.privateEvents.ogImage": {
+    "relationTo": "media",
+    "type": "upload",
+  },
+  "pages.privateEvents.ogTitle": {
+    "type": "text",
+  },
+  "pages.privateEvents.title": {
     "type": "text",
   },
   "pages.terms": {

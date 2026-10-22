@@ -23,6 +23,7 @@ const pathLabels: Record<string, string> = {
   beer: 'Beer',
   'beer-map': 'Find Our Beer',
   donate: 'Donations',
+  'private-events': 'Private Events',
   jobs: 'Jobs',
   accessibility: 'Accessibility',
   events: 'Events',

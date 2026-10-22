@@ -1,7 +1,7 @@
 'use server'
 
 /**
- * Public private-event inquiry from /events. Validates, stores the row in the
+ * Public private-event inquiry from /private-events. Validates, stores the row in the
  * `event-inquiries` staff inbox (never Events), and pings Slack #events in
  * after() so a slow Slack cannot stall the thank-you.
  *
@@ -71,9 +71,12 @@ export async function submitEventInquiry(input: unknown): Promise<SubmitEventInq
         status: 'new',
         name: value.name,
         email: value.email,
-        phone: value.phone,
+        phone: value.phone || undefined,
         preferredDate,
+        flexibleDate: value.flexibleDate,
+        otherDates: value.otherDates,
         headcount: value.headcount,
+        occasion: value.occasion || undefined,
         taproom: taproom.id,
         message: value.message || undefined,
       },
@@ -91,6 +94,9 @@ export async function submitEventInquiry(input: unknown): Promise<SubmitEventInq
         message: buildEventInquirySlackMessage({
           preferredDate: value.preferredDate,
           headcount: value.headcount,
+          occasion: value.occasion,
+          flexibleDate: value.flexibleDate,
+          otherDates: value.otherDates,
           taproomName: taproom.name || value.taproom,
         }),
         failLog: 'Event inquiry Slack ping failed',

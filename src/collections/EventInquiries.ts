@@ -1,12 +1,16 @@
 /**
- * Staff inbox for private-event inquiries from the form on /events.
+ * Staff inbox for private-event inquiries from the form on /private-events.
  * Creates only happen through the server action (overrideAccess); the REST
  * API is not a public drop-box and staff cannot create rows in admin.
  * Inquiries never become Events automatically.
  */
 import type { CollectionConfig } from 'payload'
 import { adminAccess, adminFieldAccess, eventManagerAccess } from '@/src/access/roles'
-import { EVENT_INQUIRY_MAX_HEADCOUNT, EVENT_INQUIRY_MAX_TEXT } from '@/lib/events/inquiry'
+import {
+  EVENT_INQUIRY_MAX_HEADCOUNT,
+  EVENT_INQUIRY_MAX_TEXT,
+  EVENT_INQUIRY_OCCASIONS,
+} from '@/lib/events/inquiry'
 import { slackDiagnosticsField } from './utils/slackDiagnosticsField'
 
 export const EventInquiries: CollectionConfig = {
@@ -20,9 +24,17 @@ export const EventInquiries: CollectionConfig = {
   admin: {
     group: 'Food & Events',
     useAsTitle: 'name',
-    defaultColumns: ['name', 'status', 'preferredDate', 'taproom', 'headcount', 'createdAt'],
+    defaultColumns: [
+      'name',
+      'status',
+      'preferredDate',
+      'taproom',
+      'headcount',
+      'occasion',
+      'createdAt',
+    ],
     description:
-      'Requests from /events, not confirmed bookings. Marking Booked does not create an Event; enter that booking separately.',
+      'Requests from /private-events, not confirmed bookings. Marking Booked does not create an Event; enter that booking separately.',
   },
   fields: [
     { name: 'submissionKey', type: 'text', unique: true, admin: { hidden: true } },
@@ -47,6 +59,27 @@ export const EventInquiries: CollectionConfig = {
         description: 'Requested date, not a confirmed booking.',
       },
       label: 'Preferred date',
+    },
+    { name: 'flexibleDate', type: 'checkbox', defaultValue: false, label: 'Date is flexible' },
+    {
+      // YYYY-MM-DD strings, not date fields: no timezone shift for whole days.
+      name: 'otherDates',
+      type: 'text',
+      hasMany: true,
+      label: 'Other dates that work',
+      admin: {
+        condition: (data) => Boolean(data?.flexibleDate),
+        description: 'YYYY-MM-DD days the guest also offered.',
+      },
+    },
+    {
+      name: 'occasion',
+      type: 'select',
+      options: EVENT_INQUIRY_OCCASIONS.map(({ value, adminLabel }) => ({
+        value,
+        label: adminLabel,
+      })),
+      label: 'Occasion',
     },
     {
       name: 'taproom',
@@ -74,7 +107,12 @@ export const EventInquiries: CollectionConfig = {
       type: 'row',
       fields: [
         { name: 'email', type: 'email', required: true },
-        { name: 'phone', type: 'text', required: true, maxLength: 32 },
+        {
+          name: 'phone',
+          type: 'text',
+          maxLength: 32,
+          admin: { description: 'Optional on the form.' },
+        },
       ],
     },
     slackDiagnosticsField,

@@ -50,8 +50,11 @@ function FAQAnswer({ question, answer, locations }: FAQAnswerProps): ReactNode {
     const phones = taproomPhones(locations)
     return (
       <div>
-        Yes! We offer private event space at both locations. For private event inquiries, please
-        contact us at{' '}
+        Yes! We offer private event space at both locations.{' '}
+        <Link href="/private-events" className="text-primary hover:underline font-medium">
+          Send a private event request
+        </Link>{' '}
+        or contact us at{' '}
         <a href="mailto:events@lolev.beer" className="text-primary hover:underline font-medium">
           events@lolev.beer
         </a>
