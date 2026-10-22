@@ -224,7 +224,7 @@ export function EventInquiryForm({
                 </p>
                 <Calendar
                   mode="multiple"
-                  numberOfMonths={2}
+                  numberOfMonths={3}
                   max={EVENT_INQUIRY_MAX_OTHER_DATES}
                   selected={values.otherDates.map(parseLocalDate)}
                   onSelect={(days) => set('otherDates', (days ?? []).map(toDateKey).sort())}
@@ -244,7 +244,13 @@ export function EventInquiryForm({
                     // The preferred date is already the first choice.
                     ...(values.preferredDate ? [parseLocalDate(values.preferredDate)] : []),
                   ]}
-                  className="rounded-md border border-muted-foreground/40 w-fit"
+                  className="rounded-md border border-muted-foreground/40"
+                  // Three months in a row once the card is wide enough (lg), stretched to
+                  // the card's width so the margins match; stacked below that.
+                  classNames={{
+                    root: 'w-fit lg:w-full',
+                    months: 'relative flex flex-col gap-4 lg:flex-row',
+                  }}
                 />
                 {values.otherDates.length > 0 ? (
                   <ul

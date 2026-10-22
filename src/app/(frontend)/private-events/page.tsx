@@ -90,7 +90,7 @@ export default async function PrivateEventsPage() {
     <>
       <JsonLd data={generateFAQSchema(faqs)} />
       <PageTransition>
-        <div className="container mx-auto px-4 py-8 max-w-2xl">
+        <div className="container mx-auto px-4 py-8 max-w-4xl">
           <PageBreadcrumbs className="mb-6" />
           <div className="text-center mb-10">
             <h1 className="text-4xl font-bold tracking-tight">Private events</h1>
