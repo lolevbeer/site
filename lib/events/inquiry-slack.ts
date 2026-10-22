@@ -31,6 +31,7 @@ export function buildEventInquirySlackMessage(input: {
   taproomName: string
   occasion?: string
   flexibleDate?: boolean
+  otherDates?: string[]
 }): { text: string; blocks: Array<Record<string, unknown>> } {
   const date = input.flexibleDate ? `${input.preferredDate} (flexible)` : input.preferredDate
   const occasion = input.occasion ? occasionAdminLabel(input.occasion) : undefined
@@ -52,6 +53,7 @@ export function buildEventInquirySlackMessage(input: {
           field('Preferred date', date),
           field('Guests', String(input.headcount)),
           ...(occasion ? [field('Occasion', occasion)] : []),
+          ...(input.otherDates?.length ? [field('Also works', input.otherDates.join(', '))] : []),
         ],
       },
       {

@@ -884,6 +884,10 @@ export interface EventInquiry {
    */
   preferredDate: string;
   flexibleDate?: boolean | null;
+  /**
+   * YYYY-MM-DD days the guest also offered.
+   */
+  otherDates?: string[] | null;
   occasion?: ('birthday' | 'work' | 'wedding' | 'other') | null;
   taproom: string | Location;
   headcount: number;
@@ -1854,6 +1858,7 @@ export interface EventInquiriesSelect<T extends boolean = true> {
   status?: T;
   preferredDate?: T;
   flexibleDate?: T;
+  otherDates?: T;
   occasion?: T;
   taproom?: T;
   headcount?: T;

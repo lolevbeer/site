@@ -62,6 +62,17 @@ export const EventInquiries: CollectionConfig = {
     },
     { name: 'flexibleDate', type: 'checkbox', defaultValue: false, label: 'Date is flexible' },
     {
+      // YYYY-MM-DD strings, not date fields: no timezone shift for whole days.
+      name: 'otherDates',
+      type: 'text',
+      hasMany: true,
+      label: 'Other dates that work',
+      admin: {
+        condition: (data) => Boolean(data?.flexibleDate),
+        description: 'YYYY-MM-DD days the guest also offered.',
+      },
+    },
+    {
       name: 'occasion',
       type: 'select',
       options: EVENT_INQUIRY_OCCASIONS.map(({ value, adminLabel }) => ({

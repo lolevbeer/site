@@ -508,6 +508,10 @@ exports[`persistent field contracts > event-inquiries retains its stored paths a
     ],
     "type": "select",
   },
+  "otherDates": {
+    "hasMany": true,
+    "type": "text",
+  },
   "phone": {
     "maxLength": 32,
     "type": "text",

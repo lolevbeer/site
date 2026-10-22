@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   EVENT_INQUIRY_MAX_HEADCOUNT,
+  EVENT_INQUIRY_MAX_OTHER_DATES,
   EVENT_INQUIRY_MAX_TEXT,
   emptyEventInquiry,
   validateEventInquiry,
@@ -76,6 +77,38 @@ describe('validateEventInquiry', () => {
     expect(
       validateEventInquiry({ ...valid(), flexibleDate: 'yes' }, TODAY, TAPROOMS),
     ).toMatchObject({ ok: true, value: { flexibleDate: false } })
+  })
+
+  it('keeps sorted, de-duplicated other dates only when the date is flexible', () => {
+    const flexible = validateEventInquiry(
+      {
+        ...valid(),
+        flexibleDate: true,
+        otherDates: ['2026-11-27', '2026-11-21', '2026-11-27', '2026-11-20'],
+      },
+      TODAY,
+      TAPROOMS,
+    )
+    // The preferred date (11-20) is dropped from the list; the rest sorted and unique.
+    expect(flexible).toMatchObject({ ok: true, value: { otherDates: ['2026-11-21', '2026-11-27'] } })
+    const fixed = validateEventInquiry(
+      { ...valid(), flexibleDate: false, otherDates: ['2026-11-21'] },
+      TODAY,
+      TAPROOMS,
+    )
+    expect(fixed).toMatchObject({ ok: true, value: { otherDates: [] } })
+  })
+
+  it.each([
+    [['2026-10-01']],
+    [['2030-01-01']],
+    [['not-a-date']],
+    ['2026-11-21'],
+    [Array.from({ length: EVENT_INQUIRY_MAX_OTHER_DATES + 1 }, (_, i) => `2026-12-${String(i + 1).padStart(2, '0')}`)],
+  ])('rejects other dates %j', (otherDates) => {
+    expect(
+      validateEventInquiry({ ...valid(), flexibleDate: true, otherDates }, TODAY, TAPROOMS),
+    ).toMatchObject({ ok: false, errors: { otherDates: expect.any(String) } })
   })
 
   it('treats phone as optional but rejects a malformed one', () => {
@@ -190,5 +223,19 @@ describe('buildEventInquirySlackMessage', () => {
     )
     expect(body).toContain('Wedding or rehearsal')
     expect(body).toContain('2026-11-20 (flexible)')
+  })
+
+  it('lists other dates that also work', () => {
+    const body = JSON.stringify(
+      buildEventInquirySlackMessage({
+        preferredDate: '2026-11-20',
+        headcount: 30,
+        taproomName: 'Lawrenceville',
+        flexibleDate: true,
+        otherDates: ['2026-11-21', '2026-11-27'],
+      }),
+    )
+    expect(body).toContain('Also works')
+    expect(body).toContain('2026-11-21, 2026-11-27')
   })
 })

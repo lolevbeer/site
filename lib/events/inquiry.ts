@@ -18,6 +18,8 @@ import { getTodayEST } from '@/lib/utils/date'
 
 export const EVENT_INQUIRY_MAX_TEXT = 2000
 export const EVENT_INQUIRY_MAX_HEADCOUNT = 500
+/** Extra days a flexible visitor can offer besides the preferred date. */
+export const EVENT_INQUIRY_MAX_OTHER_DATES = 10
 
 /** One-tap occasion choices. `label` is the short form button; `adminLabel` shows in Admin and Slack. */
 export const EVENT_INQUIRY_OCCASIONS = [
@@ -42,6 +44,8 @@ export interface EventInquiryInput {
   preferredDate: string
   /** Visitor can move the date. */
   flexibleDate: boolean
+  /** YYYY-MM-DD days that also work. Kept only when flexibleDate is true. */
+  otherDates: string[]
   headcount: number | ''
   /** Location slug. The action stores the matching location ID. */
   taproom: string
@@ -75,6 +79,7 @@ export function emptyEventInquiry(): EventInquiryInput {
     phone: '',
     preferredDate: '',
     flexibleDate: false,
+    otherDates: [],
     headcount: '',
     taproom: '',
     occasion: '',
@@ -117,6 +122,14 @@ export function validateEventInquiry(
   const occasion = trimmed(parsed.occasion)
   // Untrusted: only a real boolean true counts.
   const flexibleDate = parsed.flexibleDate === true
+  // Untrusted: must be an array of strings. Sorted, de-duplicated, and
+  // without the preferred date; ignored unless the date is flexible.
+  const rawOtherDates: unknown = flexibleDate ? parsed.otherDates : []
+  const otherDates = Array.isArray(rawOtherDates)
+    ? [...new Set(rawOtherDates.map((d) => (typeof d === 'string' ? d.trim() : '')))]
+        .filter((d) => d !== preferredDate)
+        .sort()
+    : null
   const message = trimmed(parsed.message)
 
   if (name.length < 2) errors.name = 'Enter your name.'
@@ -133,6 +146,13 @@ export function validateEventInquiry(
   }
   if (!taproom || !taproomSlugs.includes(taproom)) errors.taproom = 'Choose a taproom.'
   if (occasion && !occasionAdminLabel(occasion)) errors.occasion = 'Choose an occasion.'
+  if (
+    !otherDates ||
+    otherDates.length > EVENT_INQUIRY_MAX_OTHER_DATES ||
+    otherDates.some((d) => !isCalendarDate(d) || d < today || d > maximumEventDate(today))
+  ) {
+    errors.otherDates = `Pick up to ${EVENT_INQUIRY_MAX_OTHER_DATES} other dates within two years.`
+  }
   if (message.length > EVENT_INQUIRY_MAX_TEXT) errors.message = 'That answer is too long.'
   rejectFormulaPrefix(name, errors, 'name')
   rejectFormulaPrefix(email, errors, 'email')
@@ -148,6 +168,7 @@ export function validateEventInquiry(
       phone,
       preferredDate,
       flexibleDate,
+      otherDates: otherDates ?? [],
       headcount,
       taproom,
       // Checked against EVENT_INQUIRY_OCCASIONS above.

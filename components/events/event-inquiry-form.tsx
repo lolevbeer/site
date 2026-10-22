@@ -2,7 +2,7 @@
 
 /**
  * Private-event inquiry form on /private-events. Asks about the event first
- * (date, flexible-date switch, guests, one-tap taproom and occasion) and contact details
+ * (date, flexible-date switch with an inline calendar for other days, guests, one-tap taproom and occasion) and contact details
  * last; phone is optional. The taproom starts on the one picked in the site
  * header. Submits to the event-inquiries staff inbox (never Events).
  * Text fields are checked on blur with the same validator the server runs;
@@ -15,6 +15,8 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { Calendar } from '@/components/ui/calendar'
+import { XIcon } from '@/components/icons'
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { FormField } from '@/components/ui/form-field'
@@ -30,6 +32,7 @@ import { trackConversion } from '@/lib/analytics/events'
 import { useLocationContext } from '@/components/location/location-provider'
 import {
   EVENT_INQUIRY_MAX_HEADCOUNT,
+  EVENT_INQUIRY_MAX_OTHER_DATES,
   EVENT_INQUIRY_OCCASIONS,
   emptyEventInquiry,
   validateEventInquiry,
@@ -38,7 +41,8 @@ import {
 } from '@/lib/events/inquiry'
 import { useTodayEST } from '@/lib/hooks/use-today-est'
 import { maximumEventDate } from '@/lib/donate/donation-request'
-import { formatDate } from '@/lib/utils/formatters'
+import { formatDate, parseLocalDate } from '@/lib/utils/formatters'
+import { toDateKey } from '@/lib/utils/food-dates'
 
 /** Text fields checked when the visitor leaves them. */
 type BlurField = 'name' | 'email' | 'phone' | 'headcount'
@@ -103,7 +107,12 @@ export function EventInquiryForm({
     setFieldErrors({})
     setPending(true)
     try {
-      const result = await submitEventInquiry({ ...values, taproom })
+      const result = await submitEventInquiry({
+        ...values,
+        taproom,
+        // Kept in state so toggling back restores them, but only sent when flexible.
+        otherDates: values.flexibleDate ? values.otherDates : [],
+      })
       if (result.ok) {
         setDone(true)
         trackConversion('event_inquiry_submitted')
@@ -129,7 +138,13 @@ export function EventInquiryForm({
             <EmptyDescription>
               {[
                 values.preferredDate
-                  ? `${formatDate(values.preferredDate, 'full')}${values.flexibleDate ? ' (flexible)' : ''}`
+                  ? `${formatDate(values.preferredDate, 'full')}${
+                      values.flexibleDate
+                        ? values.otherDates.length
+                          ? ` + ${values.otherDates.length} other ${values.otherDates.length === 1 ? 'date' : 'dates'}`
+                          : ' (flexible)'
+                        : ''
+                    }`
                   : null,
                 values.headcount ? `${values.headcount} guests` : null,
                 taproomOptions.find((option) => option.value === taproom)?.label,
@@ -198,6 +213,76 @@ export function EventInquiryForm({
                 My date is flexible
               </FieldLabel>
             </Field>
+            {values.flexibleDate ? (
+              <div
+                role="group"
+                aria-labelledby="inquiry-otherDates-label"
+                className="flex flex-col gap-3"
+              >
+                <p id="inquiry-otherDates-label" className="text-sm font-medium">
+                  Other dates that also work
+                </p>
+                <Calendar
+                  mode="multiple"
+                  max={EVENT_INQUIRY_MAX_OTHER_DATES}
+                  selected={values.otherDates.map(parseLocalDate)}
+                  onSelect={(days) => set('otherDates', (days ?? []).map(toDateKey).sort())}
+                  today={minDate ? parseLocalDate(minDate) : undefined}
+                  defaultMonth={parseLocalDate(
+                    values.preferredDate || minDate || toDateKey(new Date()),
+                  )}
+                  startMonth={minDate ? parseLocalDate(minDate) : undefined}
+                  endMonth={minDate ? parseLocalDate(maximumEventDate(minDate)) : undefined}
+                  disabled={[
+                    ...(minDate
+                      ? [
+                          { before: parseLocalDate(minDate) },
+                          { after: parseLocalDate(maximumEventDate(minDate)) },
+                        ]
+                      : []),
+                    // The preferred date is already the first choice.
+                    ...(values.preferredDate ? [parseLocalDate(values.preferredDate)] : []),
+                  ]}
+                  className="rounded-md border border-muted-foreground/40 w-fit"
+                />
+                {values.otherDates.length > 0 ? (
+                  <ul
+                    aria-label="Other dates picked"
+                    className="flex flex-wrap gap-2 list-none p-0 m-0"
+                  >
+                    {values.otherDates.map((day) => (
+                      <li
+                        key={day}
+                        className="inline-flex items-center gap-1 rounded-full bg-muted py-1 pl-3 pr-1 text-sm"
+                      >
+                        {formatDate(day, 'short')}
+                        <button
+                          type="button"
+                          aria-label={`Remove ${formatDate(day, 'full')}`}
+                          className="inline-flex size-6 items-center justify-center rounded-full hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          onClick={() =>
+                            set(
+                              'otherDates',
+                              values.otherDates.filter((other) => other !== day),
+                            )
+                          }
+                        >
+                          <XIcon className="size-3.5" aria-hidden />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                <p aria-live="polite" className="text-sm text-muted-foreground">
+                  {values.otherDates.length === 0
+                    ? `Tap any days that also work, up to ${EVENT_INQUIRY_MAX_OTHER_DATES}.`
+                    : `${values.otherDates.length} other ${values.otherDates.length === 1 ? 'date' : 'dates'} picked`}
+                </p>
+                {fieldErrors.otherDates ? (
+                  <p className="text-sm text-destructive">{fieldErrors.otherDates}</p>
+                ) : null}
+              </div>
+            ) : null}
             <FormField id="inquiry-taproom" label="Taproom" error={fieldErrors.taproom}>
               <SegmentedControl
                 aria-label="Taproom"
