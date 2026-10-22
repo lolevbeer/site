@@ -224,6 +224,7 @@ export function EventInquiryForm({
                 </p>
                 <Calendar
                   mode="multiple"
+                  numberOfMonths={2}
                   max={EVENT_INQUIRY_MAX_OTHER_DATES}
                   selected={values.otherDates.map(parseLocalDate)}
                   onSelect={(days) => set('otherDates', (days ?? []).map(toDateKey).sort())}
