@@ -43,6 +43,11 @@ jobs:
     services:
       mongodb:
         image: mongo:8.0
+        # MongoDB 8 refuses to start on runner kernels 6.19+ (SERVER-121912). Letting glibc
+        # own rseq makes tcmalloc fall back to per-thread caches, which avoids the crash.
+        # Remove once runners and the image both carry the fix (8.0.30+ on kernel 7.0.14+).
+        env:
+          GLIBC_TUNABLES: glibc.pthread.rseq=1
         ports:
           - 27017:27017
         options: >-
