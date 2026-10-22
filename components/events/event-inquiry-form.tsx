@@ -188,8 +188,9 @@ export function EventInquiryForm({
             <Field orientation="horizontal">
               <Switch
                 id="inquiry-flexibleDate"
-                // bg-input (the default off track) nearly vanishes on the card.
-                className="data-[state=unchecked]:bg-muted-foreground"
+                // Off: white track, gray outline and knob. On: accent blue, white knob.
+                // Both states clear 3:1 on the card in light and dark themes.
+                className="data-[state=unchecked]:bg-white data-[state=unchecked]:border-muted-foreground data-[state=checked]:bg-accent [&>span]:data-[state=unchecked]:bg-neutral-500 [&>span]:data-[state=checked]:bg-white"
                 checked={values.flexibleDate}
                 onCheckedChange={(checked) => set('flexibleDate', checked)}
               />
