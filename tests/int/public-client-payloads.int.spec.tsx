@@ -14,13 +14,14 @@ import { HeroSection } from '@/components/home/hero-section'
 import { MarketingText } from '@/components/home/marketing-text'
 import { FoodPageClient } from '@/src/app/(frontend)/food/food-page-client'
 import {
+  selectHeroBeers,
   toFoodPageSchedules,
   toHomeBeer,
-  toHomeComingSoon,
   toHomeMenu,
 } from '@/lib/utils/public-client-payloads'
+import { buildMarketingCopy } from '@/lib/utils/marketing-copy'
 import { DayOfWeek, type FoodVendorSchedule } from '@/lib/types/food'
-import type { Beer, ComingSoon, Media, Menu } from '@/src/payload-types'
+import type { Beer, ComingSoon, Location, Media, Menu } from '@/src/payload-types'
 
 vi.stubGlobal(
   'IntersectionObserver',
@@ -194,51 +195,53 @@ describe('homepage menu projection', () => {
     }
   })
 
-  it('renders the hero carousel identically from projected beers and cans menus', () => {
+  it('selects the hero cans on the server, identically from projected docs', () => {
     const beers = ['alpha', 'bravo', 'charlie', 'delta', 'echo', 'foxtrot'].map(beer)
-    const full = render(
-      createElement(HeroSection, { availableBeers: beers, cansMenus: [menu('cans')] }),
-    ).container.innerHTML
-    cleanup()
-    const projected = render(
-      createElement(HeroSection, {
-        availableBeers: beers.map(toHomeBeer),
-        cansMenus: [toHomeMenu(menu('cans'))],
-      }),
-    ).container.innerHTML
-    expect(projected).toBe(full)
-    expect(full).toContain('alpha-thumbnail.png')
+    const full = selectHeroBeers(beers, [menu('cans')])
+    expect(full.map((b) => b.slug)).toEqual(['alpha', 'bravo', 'charlie', 'delta', 'echo', 'foxtrot'])
+    expect(full[0].imageUrl).toContain('alpha-thumbnail.png')
+    expect(selectHeroBeers(beers.map(toHomeBeer), [toHomeMenu(menu('cans'))])).toEqual(full)
+    // A beer that is not on a cans menu is left out.
+    expect(selectHeroBeers([...beers, beer('golf', 6)], [menu('cans')])).toEqual(full)
+    expect(bytes(full)).toBeLessThan(bytes(beers) / 20)
+
+    const html = render(createElement(HeroSection, { beers: full })).container.innerHTML
+    expect(html).toContain('alpha-thumbnail.png')
+    expect(html).toContain('Beer alpha beer can')
   })
 
-  it('renders the #marketing copy identically from projected menus and coming-soon beers', () => {
-    window.location.hash = '#marketing'
+  it('builds the #marketing copy on the server as a few KB of text', () => {
     const comingSoon: NonNullable<ComingSoon['beers']> = [
       { id: 'cs-1', beer: beer('golf', 0), style: null },
       { id: 'cs-2', beer: null, style: { id: 'style-2', name: 'Pilsner', updatedAt: 'x', createdAt: 'x' } },
     ]
-    const props = (draft: Menu | null, cans: Menu | null, soon: typeof comingSoon) => ({
-      draftMenusByLocation: { lawrenceville: draft },
-      cansMenusByLocation: { lawrenceville: cans },
+    const input = {
+      locations: [
+        { id: 'loc-1', slug: 'lawrenceville', name: 'Lawrenceville', timezone: 'America/New_York' } as Location,
+      ],
+      draftMenusByLocation: { lawrenceville: menu('draft') },
+      cansMenusByLocation: { lawrenceville: menu('cans') },
       eventsByLocation: {},
       foodByLocation: {},
-      comingSoonBeers: soon,
-    })
-    const full = render(
-      createElement(MarketingText, props(menu('draft'), menu('cans'), comingSoon)),
-    ).container.innerHTML
-    cleanup()
-    const projected = render(
-      createElement(
-        MarketingText,
-        props(toHomeMenu(menu('draft')), toHomeMenu(menu('cans')), toHomeComingSoon(comingSoon)),
-      ),
-    ).container.innerHTML
+      comingSoonBeers: comingSoon,
+    }
+    const copy = buildMarketingCopy(input)
+    expect(copy.draft).toHaveLength(1)
+    expect(copy.draft[0].heading).toBe('𝗟𝗔𝗪𝗥𝗘𝗡𝗖𝗘𝗩𝗜𝗟𝗟𝗘 - 𝗢𝗡 𝗗𝗥𝗔𝗙𝗧')
+    expect(copy.draft[0].lines[0]).toBe('Beer alpha • Hazy IPA • 6.5%')
+    // Six beers; the cider product and the empty slot are not beers.
+    expect(copy.cans[0].lines).toHaveLength(6)
+    expect(copy.upcoming).toEqual([
+      { heading: '𝗨𝗣𝗖𝗢𝗠𝗜𝗡𝗚 𝗕𝗘𝗘𝗥 𝗥𝗘𝗟𝗘𝗔𝗦𝗘𝗦', lines: ['Beer golf', 'Pilsner'] },
+    ])
+    expect(bytes(copy)).toBeLessThan(bytes(input) / 20)
+
+    window.location.hash = '#marketing'
+    const html = render(createElement(MarketingText, { copy })).container.innerHTML
     window.location.hash = ''
-    expect(projected).toBe(full)
-    expect(full).toContain('Beer alpha')
-    expect(full).toContain('Beer golf')
-    expect(full).toContain('Pilsner')
-    expect(bytes(toHomeComingSoon(comingSoon))).toBeLessThan(bytes(comingSoon) / 5)
+    expect(html).toContain('Beer alpha • Hazy IPA • 6.5%')
+    expect(html).toContain('Beer golf')
+    expect(html).toContain('Pilsner')
   })
 
   it('tolerates a menu with a null location and a beer with a null style', () => {

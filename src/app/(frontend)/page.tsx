@@ -13,7 +13,8 @@ import { extractBeerFromMenuItem } from '@/lib/utils/menu-item-utils';
 import { getSiteSeo, siteDefaults } from '@/lib/utils/site-seo'
 import { getAllLocations } from '@/lib/utils/payload-api'
 import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
-import { toHomeBeer, toHomeComingSoon, toHomeMenu } from '@/lib/utils/public-client-payloads'
+import { selectHeroBeers, toHomeMenu } from '@/lib/utils/public-client-payloads'
+import { buildMarketingCopy } from '@/lib/utils/marketing-copy'
 import type { Menu } from '@/src/payload-types'
 
 // ISR: Revalidate every 5 minutes as fallback (on-demand revalidation handles immediate updates)
@@ -84,7 +85,7 @@ export default async function Home(): Promise<React.ReactElement> {
   const homeCansMenusByLocation = projectMenus(data.cansMenusByLocation);
   const homeDraftMenus = Object.values(homeDraftMenusByLocation).filter((m): m is Menu => m !== null);
   const homeCansMenus = Object.values(homeCansMenusByLocation).filter((m): m is Menu => m !== null);
-  const homeAvailableBeers = data.availableBeers.map(toHomeBeer);
+  const heroBeers = selectHeroBeers(data.availableBeers, homeCansMenus);
 
   return (
     <>
@@ -105,18 +106,21 @@ export default async function Home(): Promise<React.ReactElement> {
       ))}
 
       <PageTransition>
+        {/* Staff-only #marketing view; its text is built here so the client gets strings, not menus. */}
         <MarketingText
-          draftMenusByLocation={homeDraftMenusByLocation}
-          cansMenusByLocation={homeCansMenusByLocation}
-          eventsByLocation={data.eventsMarketingByLocation}
-          foodByLocation={data.foodMarketingByLocation}
-          comingSoonBeers={toHomeComingSoon(data.comingSoonBeers)}
+          copy={buildMarketingCopy({
+            locations: data.locations,
+            draftMenusByLocation: data.draftMenusByLocation,
+            cansMenusByLocation: data.cansMenusByLocation,
+            eventsByLocation: data.eventsMarketingByLocation,
+            foodByLocation: data.foodMarketingByLocation,
+            comingSoonBeers: data.comingSoonBeers,
+          })}
         />
 
         <HomeContent
-          availableBeers={homeAvailableBeers}
+          heroBeers={heroBeers}
           draftMenus={homeDraftMenus}
-          cansMenus={homeCansMenus}
           beerCount={data.beerCount}
           cansCount={data.cansCount}
           nextEvent={data.nextEvent}
