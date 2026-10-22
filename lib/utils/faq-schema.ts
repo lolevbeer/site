@@ -63,13 +63,11 @@ export function generateFAQSchema(faqs: FAQItem[]): FAQPageJsonLd {
 export const breweryFAQs: FAQItem[] = [
   {
     question: 'What are your hours of operation?',
-    answer:
-      'Hours vary by taproom and holiday. See the footer of any page for this week.',
+    answer: 'Hours vary by taproom and holiday. See the footer of any page for this week.',
   },
   {
     question: 'Where are you located?',
-    answer:
-      'See our location pages or the footer for current taproom addresses.',
+    answer: 'See our location pages or the footer for current taproom addresses.',
   },
   {
     question: 'Do you serve food?',
@@ -89,7 +87,7 @@ export const breweryFAQs: FAQItem[] = [
   {
     question: 'Can I book a private event?',
     answer:
-      'Yes! We offer private event space at both locations. For private event inquiries, please contact us at events@lolev.beer. Beer donation and fundraiser-night requests go through the form at DONATE_URL — we do not take those by phone or Instagram.',
+      'Yes! We offer private event space at both locations. Send a request at PRIVATE_EVENTS_URL or contact us at events@lolev.beer. Beer donation and fundraiser-night requests go through the form at DONATE_URL — we do not take those by phone or Instagram.',
   },
   {
     question: 'What types of beer do you brew?',
@@ -178,6 +176,7 @@ export function getBreweryFAQs(locations: PayloadLocation[] = []): FAQItem[] {
           ...faq,
           answer: faq.answer
             .replace('events@lolev.beer', `events@lolev.beer${phoneClause}`)
+            .replace('PRIVATE_EVENTS_URL', `${getBaseUrl()}/private-events`)
             .replace('DONATE_URL', donateUrl),
         }
       }

@@ -22,6 +22,7 @@ const STATIC_LASTMOD = {
   '/terms': LEGAL_PAGES_LASTMOD,
   '/beer-map': '2026-09-09',
   '/donate': '2026-09-09',
+  '/private-events': '2026-10-22',
   '/jobs': undefined,
 } as const
 
@@ -32,6 +33,7 @@ const STATIC_INFO_PAGES: Array<{
   priority: number
 }> = [
   { path: '/beer-map', key: 'beerMap', changeFrequency: 'weekly', priority: 0.9 },
+  { path: '/private-events', key: 'privateEvents', changeFrequency: 'monthly', priority: 0.7 },
   { path: '/donate', key: 'donate', changeFrequency: 'yearly', priority: 0.3 },
   { path: '/jobs', key: 'jobs', changeFrequency: 'weekly', priority: 0.4 },
   { path: '/about', key: 'about', changeFrequency: 'monthly', priority: 0.6 },

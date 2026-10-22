@@ -49,6 +49,12 @@ export function eventsDescription(locations: NamedLocations = []): string {
   return `Discover upcoming events at Lolev Beer. From trivia nights to live music, find your next great experience${where}.`
 }
 
+/** `cities` is a joined list such as "Pittsburgh and Zelienople"; blank drops the clause. */
+export function privateEventsDescription(cities = ''): string {
+  const where = cities ? ` in ${cities}` : ''
+  return `Book a private event, party, or team outing at a Lolev Beer taproom${where}. Send your date and headcount and we will follow up about availability.`
+}
+
 export function foodDescription(locations: NamedLocations = []): string {
   const where = locationClause(locations, (names) => ` in ${names}`)
   return `This week's food trucks and vendors at Lolev Beer${where}.`

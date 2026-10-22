@@ -11,6 +11,8 @@ export interface SegmentedOption {
 
 interface SegmentedControlProps {
   'aria-label': string
+  /** Links error/hint text when used inside a FormField (which sets it). */
+  'aria-describedby'?: string
   className?: string
   onValueChange: (value: string) => void
   options: readonly SegmentedOption[]
@@ -48,6 +50,7 @@ const ITEM_SIZE_CLASS: Record<SegmentedSize, string> = {
 
 export function SegmentedControl({
   'aria-label': ariaLabel,
+  'aria-describedby': ariaDescribedBy,
   className,
   onValueChange,
   options,
@@ -61,6 +64,7 @@ export function SegmentedControl({
     <div
       role="group"
       aria-label={ariaLabel}
+      aria-describedby={ariaDescribedBy}
       className={cn(
         'relative grid w-fit items-center justify-center',
         SEGMENTED_TROUGH_CLASS,

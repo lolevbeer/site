@@ -67,9 +67,10 @@ export function Navigation() {
 }
 
 /**
- * Footer-only links. Donations and Jobs stay out of the header and mobile menu.
+ * Footer-only links. Private Events, Donations, and Jobs stay out of the header and mobile menu.
  */
 const footerOnlyItems: NavItem[] = [
+  { label: 'Private Events', href: '/private-events' },
   { label: 'Donations', href: '/donate' },
   { label: 'Jobs', href: '/jobs' },
 ]

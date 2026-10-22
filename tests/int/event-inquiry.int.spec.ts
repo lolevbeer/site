@@ -51,19 +51,35 @@ describe('validateEventInquiry', () => {
     expect(result.ok).toBe(false)
     if (result.ok) return
     expect(Object.keys(result.errors).sort()).toEqual(
-      ['email', 'headcount', 'name', 'phone', 'preferredDate', 'taproom'].sort(),
+      ['email', 'headcount', 'name', 'preferredDate', 'taproom'].sort(),
     )
+  })
+
+  it('treats phone as optional but rejects a malformed one', () => {
+    expect(validateEventInquiry({ ...valid(), phone: '  ' }, TODAY, TAPROOMS)).toMatchObject({
+      ok: true,
+      value: { phone: '' },
+    })
+    expect(validateEventInquiry({ ...valid(), phone: '123' }, TODAY, TAPROOMS)).toMatchObject({
+      ok: false,
+      errors: { phone: 'Enter a full phone number or leave it blank.' },
+    })
   })
 
   it('names the past-date and invalid-date errors separately', () => {
     const past = validateEventInquiry({ ...valid(), preferredDate: '2026-10-10' }, TODAY, TAPROOMS)
-    expect(past).toMatchObject({ ok: false, errors: { preferredDate: 'Pick a date in the future.' } })
+    expect(past).toMatchObject({
+      ok: false,
+      errors: { preferredDate: 'Pick a date in the future.' },
+    })
     const bad = validateEventInquiry({ ...valid(), preferredDate: '2026-02-30' }, TODAY, TAPROOMS)
     expect(bad).toMatchObject({ ok: false, errors: { preferredDate: 'Enter a preferred date.' } })
   })
 
   it('accepts today and up to two years out, and rejects later dates', () => {
-    expect(validateEventInquiry({ ...valid(), preferredDate: TODAY }, TODAY, TAPROOMS).ok).toBe(true)
+    expect(validateEventInquiry({ ...valid(), preferredDate: TODAY }, TODAY, TAPROOMS).ok).toBe(
+      true,
+    )
     expect(
       validateEventInquiry({ ...valid(), preferredDate: '2028-10-11' }, TODAY, TAPROOMS).ok,
     ).toBe(true)
@@ -75,18 +91,15 @@ describe('validateEventInquiry', () => {
     ).toBe(false)
   })
 
-  it.each([
-    [EVENT_INQUIRY_MAX_HEADCOUNT + 1],
-    [2.5],
-    [true],
-    ['abc'],
-    ['1e2'],
-    [' '],
-  ])('rejects headcount %j', (headcount) => {
-    expect(
-      validateEventInquiry({ ...valid(), headcount }, TODAY, TAPROOMS),
-    ).toMatchObject({ ok: false, errors: { headcount: 'Enter how many guests.' } })
-  })
+  it.each([[EVENT_INQUIRY_MAX_HEADCOUNT + 1], [2.5], [true], ['abc'], ['1e2'], [' ']])(
+    'rejects headcount %j',
+    (headcount) => {
+      expect(validateEventInquiry({ ...valid(), headcount }, TODAY, TAPROOMS)).toMatchObject({
+        ok: false,
+        errors: { headcount: 'Enter how many guests.' },
+      })
+    },
+  )
 
   it('accepts a digit-string headcount from a form post', () => {
     expect(validateEventInquiry({ ...valid(), headcount: '30' }, TODAY, TAPROOMS)).toMatchObject({
@@ -109,9 +122,9 @@ describe('validateEventInquiry', () => {
   })
 
   it('rejects a formula-prefixed email and lowercases a good one', () => {
-    expect(
-      validateEventInquiry({ ...valid(), email: '=cmd@x.co' }, TODAY, TAPROOMS),
-    ).toMatchObject({ ok: false, errors: { email: FORMULA_PREFIX_ERROR } })
+    expect(validateEventInquiry({ ...valid(), email: '=cmd@x.co' }, TODAY, TAPROOMS)).toMatchObject(
+      { ok: false, errors: { email: FORMULA_PREFIX_ERROR } },
+    )
     expect(
       validateEventInquiry({ ...valid(), email: 'Alex@Example.org' }, TODAY, TAPROOMS),
     ).toMatchObject({ ok: true, value: { email: 'alex@example.org' } })

@@ -1,6 +1,6 @@
 /**
- * Private-event inquiry payload and server-side validation for the short
- * form on /events. The inquiry lands in the staff inbox (`event-inquiries`),
+ * Private-event inquiry payload and server-side validation for the form on
+ * /private-events. The inquiry lands in the staff inbox (`event-inquiries`),
  * never in Events. Shared helpers come from lib/public-forms.
  */
 
@@ -22,6 +22,7 @@ export const EVENT_INQUIRY_MAX_HEADCOUNT = 500
 export interface EventInquiryInput {
   name: string
   email: string
+  /** Optional. Validated only when filled in. */
   phone: string
   /** YYYY-MM-DD. */
   preferredDate: string
@@ -94,17 +95,13 @@ export function validateEventInquiry(
   if (name.length < 2) errors.name = 'Enter your name.'
   else if (name.length > 200) errors.name = 'That answer is too long.'
   if (!isValidEmail(email)) errors.email = 'Enter a valid email.'
-  if (!isValidPhone(phone)) errors.phone = 'Enter a phone number.'
+  if (phone && !isValidPhone(phone)) errors.phone = 'Enter a full phone number or leave it blank.'
   if (!isCalendarDate(preferredDate)) errors.preferredDate = 'Enter a preferred date.'
   else if (preferredDate < today) errors.preferredDate = 'Pick a date in the future.'
   else if (preferredDate > maximumEventDate(today)) {
     errors.preferredDate = 'Pick a date within two years.'
   }
-  if (
-    !Number.isInteger(headcount) ||
-    headcount < 1 ||
-    headcount > EVENT_INQUIRY_MAX_HEADCOUNT
-  ) {
+  if (!Number.isInteger(headcount) || headcount < 1 || headcount > EVENT_INQUIRY_MAX_HEADCOUNT) {
     errors.headcount = 'Enter how many guests.'
   }
   if (!taproom || !taproomSlugs.includes(taproom)) errors.taproom = 'Choose a taproom.'

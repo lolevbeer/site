@@ -1,5 +1,5 @@
 /**
- * Slack #events ping for a private-event inquiry from /events.
+ * Slack #events ping for a private-event inquiry from /private-events.
  * Contact PII stays in Admin — the ping is taproom, date, and headcount only.
  */
 

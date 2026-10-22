@@ -870,7 +870,7 @@ export interface DonationRequest {
   createdAt: string;
 }
 /**
- * Requests from /events, not confirmed bookings. Marking Booked does not create an Event; enter that booking separately.
+ * Requests from /private-events, not confirmed bookings. Marking Booked does not create an Event; enter that booking separately.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "event-inquiries".
@@ -888,7 +888,10 @@ export interface EventInquiry {
   message?: string | null;
   name: string;
   email: string;
-  phone: string;
+  /**
+   * Optional on the form.
+   */
+  phone?: string | null;
   /**
    * Set when the Slack ping succeeds. Empty means no successful ping is recorded.
    */
@@ -2476,6 +2479,43 @@ export interface SiteSeo {
       intro?: string | null;
     };
     /**
+     * Meta for Private events (/private-events). Blank fields keep the code defaults.
+     */
+    privateEvents?: {
+      /**
+       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "• Lolev Beer" on hub pages; the site title template adds it.
+       */
+      title?: string | null;
+      /**
+       * SERP snippet. Aim for ~150–160 characters.
+       */
+      description?: string | null;
+      /**
+       * Optional. Defaults to Search-result title (plus site name where applicable).
+       */
+      ogTitle?: string | null;
+      /**
+       * Optional. Defaults to Search-result description.
+       */
+      ogDescription?: string | null;
+      /**
+       * Optional social share image (1200×630 recommended). Falls back to the site default.
+       */
+      ogImage?: (string | null) | Media;
+      /**
+       * Optional. Press Enter after each keyword. Mostly legacy; Google ignores these.
+       */
+      keywords?: string[] | null;
+      /**
+       * Ask search engines not to list this page in results. Links on it are still followed, and it is left out of the sitemap.
+       */
+      noIndex?: boolean | null;
+      /**
+       * Optional short paragraph shown under the page heading (Beer, Events, Food). Good for search and AI answers; leave blank to show nothing.
+       */
+      intro?: string | null;
+    };
+    /**
      * Meta for Beer map (/beer-map). Blank fields keep the code defaults.
      */
     beerMap?: {
@@ -2865,6 +2905,18 @@ export interface SiteSeoSelect<T extends boolean = true> {
               intro?: T;
             };
         food?:
+          | T
+          | {
+              title?: T;
+              description?: T;
+              ogTitle?: T;
+              ogDescription?: T;
+              ogImage?: T;
+              keywords?: T;
+              noIndex?: T;
+              intro?: T;
+            };
+        privateEvents?:
           | T
           | {
               title?: T;

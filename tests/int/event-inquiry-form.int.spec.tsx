@@ -1,5 +1,6 @@
 /**
- * /events private-event inquiry: collapsed by default, field errors show under
+ * /private-events inquiry: always open, event details before contact details,
+ * one-tap taproom buttons, optional phone, field errors show under
  * each field, focus moves to the confirmation, the date min is client-only, and
  * an accepted inquiry sends the `event_inquiry_submitted` conversion.
  */
@@ -26,15 +27,40 @@ afterEach(() => {
   delete window.gtag
 })
 
-const taprooms = [{ id: 'loc-1', slug: 'lawrenceville', name: 'Lawrenceville' }]
+const taprooms = [
+  { id: 'loc-1', slug: 'lawrenceville', name: 'Lawrenceville' },
+  { id: 'loc-2', slug: 'zelienople', name: 'Zelienople' },
+]
 
 describe('EventInquiryForm', () => {
-  it('sits behind a closed disclosure', () => {
+  it('is open on load and asks about the event before contact details', () => {
     const { container } = render(<EventInquiryForm taprooms={taprooms} />)
-    const details = container.querySelector('details')
-    expect(details).not.toBeNull()
-    expect(details?.open).toBe(false)
-    expect(screen.getByText('Planning a private event?').tagName).toBe('SUMMARY')
+    expect(container.querySelector('details')).toBeNull()
+    const labels = Array.from(container.querySelectorAll('label')).map((l) => l.textContent)
+    expect(labels).toEqual([
+      'Preferred date',
+      'How many guests?',
+      'Taproom',
+      'Your name',
+      'Email',
+      'Phone (optional)',
+      'Anything else?',
+    ])
+  })
+
+  it('picks a taproom in one tap', () => {
+    render(<EventInquiryForm taprooms={taprooms} />)
+    const zelienople = screen.getByRole('button', { name: 'Zelienople' })
+    expect(zelienople.getAttribute('aria-pressed')).toBe('false')
+    fireEvent.click(zelienople)
+    expect(zelienople.getAttribute('aria-pressed')).toBe('true')
+  })
+
+  it('preselects the only taproom', () => {
+    render(<EventInquiryForm taprooms={taprooms.slice(0, 1)} />)
+    expect(screen.getByRole('button', { name: 'Lawrenceville' }).getAttribute('aria-pressed')).toBe(
+      'true',
+    )
   })
 
   it('marks invalid fields and thanks the visitor on success', async () => {
@@ -65,11 +91,6 @@ describe('EventInquiryForm', () => {
     expect(document.activeElement?.textContent).toBe('Inquiry received')
     expect(track).toHaveBeenCalledWith('event_inquiry_submitted', undefined)
     expect(gtag).toHaveBeenCalledWith('event', 'event_inquiry_submitted', undefined)
-  })
-
-  it('marks the taproom select required for assistive tech', () => {
-    render(<EventInquiryForm taprooms={taprooms} />)
-    expect(document.getElementById('inquiry-taproom')?.getAttribute('aria-required')).toBe('true')
   })
 
   it('picks the preferred date from a calendar, past days disabled after mount', () => {

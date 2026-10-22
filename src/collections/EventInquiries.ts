@@ -1,5 +1,5 @@
 /**
- * Staff inbox for private-event inquiries from the form on /events.
+ * Staff inbox for private-event inquiries from the form on /private-events.
  * Creates only happen through the server action (overrideAccess); the REST
  * API is not a public drop-box and staff cannot create rows in admin.
  * Inquiries never become Events automatically.
@@ -22,7 +22,7 @@ export const EventInquiries: CollectionConfig = {
     useAsTitle: 'name',
     defaultColumns: ['name', 'status', 'preferredDate', 'taproom', 'headcount', 'createdAt'],
     description:
-      'Requests from /events, not confirmed bookings. Marking Booked does not create an Event; enter that booking separately.',
+      'Requests from /private-events, not confirmed bookings. Marking Booked does not create an Event; enter that booking separately.',
   },
   fields: [
     { name: 'submissionKey', type: 'text', unique: true, admin: { hidden: true } },
@@ -74,7 +74,12 @@ export const EventInquiries: CollectionConfig = {
       type: 'row',
       fields: [
         { name: 'email', type: 'email', required: true },
-        { name: 'phone', type: 'text', required: true, maxLength: 32 },
+        {
+          name: 'phone',
+          type: 'text',
+          maxLength: 32,
+          admin: { description: 'Optional on the form.' },
+        },
       ],
     },
     slackDiagnosticsField,

@@ -10,7 +10,6 @@ import { Calendar } from '@/components/icons'
 import { useLocationContext } from '@/components/location/location-provider'
 import { getLocationDisplayName } from '@/lib/config/locations'
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs'
-import { EventInquiryForm } from '@/components/events/event-inquiry-form'
 import { HubIntro } from '@/components/ui/hub-intro'
 import { ScheduleList } from '@/components/ui/schedule-list'
 import { TimelineItem } from '@/components/ui/timeline-item'
@@ -98,6 +97,9 @@ export function EventsPageClient({ initialEvents, intro }: EventsPageClientProps
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold tracking-tight">Events</h1>
         <HubIntro text={intro} />
+        <Button variant="link" size="sm" asChild className="mt-2">
+          <Link href="/private-events">Planning a private event? Book it here</Link>
+        </Button>
       </div>
 
       <div className="max-w-2xl mx-auto">
@@ -168,15 +170,12 @@ export function EventsPageClient({ initialEvents, intro }: EventsPageClientProps
 
       <div className="text-center space-y-3 pt-12 mt-12">
         <h2 className="text-lg font-semibold">Book a private event</h2>
-        <div className="flex justify-center gap-4 flex-wrap">
-          <Button variant="ghost" size="sm" asChild>
-            <a href="mailto:events@lolev.beer">events@lolev.beer</a>
-          </Button>
-          <Button variant="ghost" size="sm" asChild>
-            <a href="tel:4123368965">(412) 336-8965</a>
-          </Button>
-        </div>
-        <EventInquiryForm taprooms={locations.filter((location) => location.active !== false)} />
+        <p className="text-sm text-muted-foreground">
+          Birthdays, team outings, and celebrations at our taprooms.
+        </p>
+        <Button asChild>
+          <Link href="/private-events">Request a date</Link>
+        </Button>
         <p className="text-sm text-muted-foreground pt-6">
           Asking us to donate beer? Use the{' '}
           <Link href="/donate" className="underline hover:text-foreground">
