@@ -205,7 +205,7 @@ export function EventInquiryForm({
                 id="inquiry-flexibleDate"
                 // Off: white track, gray outline and knob. On: accent blue, white knob.
                 // Both states clear 3:1 on the card in light and dark themes.
-                className="data-[state=unchecked]:bg-white data-[state=unchecked]:border-neutral-300 data-[state=checked]:bg-accent [&>span]:bg-white [&>span]:data-[state=unchecked]:ring-1 [&>span]:data-[state=unchecked]:ring-neutral-300"
+                className="data-[state=unchecked]:bg-white data-[state=unchecked]:border-neutral-500 dark:data-[state=unchecked]:border-neutral-300 data-[state=checked]:bg-accent [&>span]:bg-white [&>span]:data-[state=unchecked]:ring-1 [&>span]:data-[state=unchecked]:ring-neutral-300"
                 checked={values.flexibleDate}
                 onCheckedChange={(checked) => set('flexibleDate', checked)}
               />
