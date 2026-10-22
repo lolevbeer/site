@@ -19,7 +19,7 @@ vi.mock('@/components/location/location-provider', () => ({
 }))
 vi.mock('@vercel/analytics', () => ({ track: (...args: unknown[]) => track(...args) }))
 
-// The Radix checkbox measures itself; jsdom has no ResizeObserver.
+// The Radix switch measures itself; jsdom has no ResizeObserver.
 class ResizeObserverStub {
   observe() {}
   unobserve() {}
@@ -100,7 +100,7 @@ describe('EventInquiryForm', () => {
     const birthday = screen.getByRole('button', { name: 'Birthday' })
     fireEvent.click(birthday)
     expect(birthday.getAttribute('aria-pressed')).toBe('true')
-    fireEvent.click(screen.getByRole('checkbox', { name: 'My date is flexible' }))
+    fireEvent.click(screen.getByRole('switch', { name: 'My date is flexible' }))
     fireEvent.click(screen.getByRole('button', { name: 'Send inquiry' }))
     await waitFor(() => expect(submitEventInquiry).toHaveBeenCalled())
     expect(submitEventInquiry.mock.calls[0][0]).toMatchObject({

@@ -2,7 +2,7 @@
 
 /**
  * Private-event inquiry form on /private-events. Asks about the event first
- * (date, flexible?, guests, one-tap taproom and occasion) and contact details
+ * (date, flexible-date switch, guests, one-tap taproom and occasion) and contact details
  * last; phone is optional. The taproom starts on the one picked in the site
  * header. Submits to the event-inquiries staff inbox (never Events).
  * Text fields are checked on blur with the same validator the server runs;
@@ -16,7 +16,6 @@ import React, { useEffect, useRef, useState } from 'react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { FormField } from '@/components/ui/form-field'
 import { HoneypotField } from '@/components/ui/honeypot-field'
@@ -24,6 +23,7 @@ import { DatePicker } from '@/components/ui/date-picker'
 import { Input } from '@/components/ui/input'
 import { SegmentedControl } from '@/components/ui/segmented-control'
 import { Spinner } from '@/components/ui/spinner'
+import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { submitEventInquiry } from '@/src/actions/event-inquiry'
 import { trackConversion } from '@/lib/analytics/events'
@@ -186,12 +186,12 @@ export function EventInquiryForm({
               </FormField>
             </div>
             <Field orientation="horizontal">
-              <Checkbox
+              <Switch
                 id="inquiry-flexibleDate"
-                // border-input nearly vanishes on the dark card.
-                className="border-muted-foreground"
+                // bg-input (the default off track) nearly vanishes on the card.
+                className="data-[state=unchecked]:bg-muted-foreground"
                 checked={values.flexibleDate}
-                onCheckedChange={(checked) => set('flexibleDate', checked === true)}
+                onCheckedChange={(checked) => set('flexibleDate', checked)}
               />
               <FieldLabel htmlFor="inquiry-flexibleDate" className="font-normal">
                 My date is flexible
