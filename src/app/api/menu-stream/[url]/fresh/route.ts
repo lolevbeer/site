@@ -10,7 +10,9 @@ import { getMenuByUrlFresh } from '@/lib/utils/payload-api'
  * same step, so the tagged menu cache can still hold the previous menu when the
  * display's refetch lands. Reading the database directly guarantees the push
  * shows the saved menu. Ordinary safety polls keep using the cached route, so
- * this costs one database read per display per push, not per poll.
+ * this costs one database read per display per push, not per poll. The first
+ * of those polls can still get the pre-save copy (collapsed with the other
+ * displays' polls); usePolling skips a cached response older than this one.
  */
 export const dynamic = 'force-dynamic'
 

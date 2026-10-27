@@ -97,6 +97,8 @@ Constants:
 
 **Amendment (Ably, 2026-09-29).** When `realtimeFallback` is true (Ably connected), warm/fast 10s cadence is replaced by `REALTIME_FALLBACK_INTERVAL_MS`; Ably `updated` messages bump an invalidate signal for an immediate poll. When Ably disconnects, the hook must reschedule immediately to the normal 10s warm / 30s idle machine so a lingering 120s timer does not remain. Unset/disabled Ably leaves this machine unchanged. Historical "Current" columns below (menu 2s / events 5s) describe pre-remediation behavior.
 
+**Amendment (collapsed safety polls, 2026-10-27).** Every display on a menu gets the same push, reads `/fresh` within milliseconds, and so schedules its 120s safety poll at the same moment. Those polls reach the cached route together; Vercel collapses them into one foreground rebuild (`REVALIDATED`, reason `delete_tag`) and answers the waiting requests with the pre-save copy (`STALE`, reason `collapsed`). Prod logs on 2026-10-27 showed the l-draft edit vanishing from three TVs this way after each of three saves. The hook therefore records the content `timestamp` of each push's `/fresh` read and skips a cached response with an older timestamp; the next poll gets the rebuilt entry. Push responses always apply (a deleted beer can lower the timestamp), and the guard disarms once a cached response catches up.
+
 Transitions:
 
 | State | Condition | Next delay |
