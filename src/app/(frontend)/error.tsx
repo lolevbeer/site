@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { AlertCircle } from '@/components/icons';
-import * as Sentry from '@sentry/nextjs';
+import { captureException } from '@/lib/utils/report-error';
 
 export default function Error({
   error,
@@ -14,7 +14,7 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    Sentry.captureException(error);
+    captureException(error);
   }, [error]);
 
   return (

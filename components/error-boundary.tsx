@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { AlertCircle } from '@/components/icons'
-import * as Sentry from '@sentry/nextjs'
+import { captureException } from '@/lib/utils/report-error'
 import { logger } from '@/lib/utils/logger'
 
 interface ErrorBoundaryProps {
@@ -38,7 +38,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     }
 
     // Report to Sentry in production
-    Sentry.captureException(error, {
+    captureException(error, {
       contexts: { react: { componentStack: errorInfo.componentStack } },
     })
   }

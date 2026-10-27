@@ -15,14 +15,14 @@
  * reloading, so this is the fallback for outages that aren't deploys.
  */
 import { useEffect } from 'react'
-import * as Sentry from '@sentry/nextjs'
+import { captureException } from '@/lib/utils/report-error'
 
 /** Delay before auto-reloading, giving a cold backend time to recover. */
 const RETRY_DELAY_MS = 5000
 
 export default function MenuError({ error }: { error: Error & { digest?: string } }) {
   useEffect(() => {
-    Sentry.captureException(error)
+    captureException(error)
     const timer = setTimeout(() => window.location.reload(), RETRY_DELAY_MS)
     return () => clearTimeout(timer)
   }, [error])

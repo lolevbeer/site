@@ -27,10 +27,13 @@ import { defaultOgImages } from '@/lib/seo/resolve-metadata'
 import './globals.css'
 
 /**
- * Fetches the footer's per-location weekly hours and renders it into the
- * footer slot. Rendered inside a `<Suspense>` boundary so the shell can
- * stream before the hours resolve. Takes `locations` from the shell rather
- * than re-fetching them, so this is one query, not two.
+ * Fetches the footer's per-location weekly hours and renders the taproom
+ * columns. Rendered inside a `<Suspense>` boundary so the shell can stream
+ * before the hours resolve. Only the taproom slot is suspended, not the whole
+ * footer: a suspended footer would ship its brand column (27 KB of inline
+ * logo SVG) twice, once in the fallback and once in the streamed result.
+ * Takes `locations` from the shell rather than re-fetching them, so this is
+ * one query, not two.
  */
 async function FooterHours({
   locations,
@@ -38,14 +41,7 @@ async function FooterHours({
   locations: Awaited<ReturnType<typeof getAllLocations>>
 }): Promise<ReactNode> {
   return (
-    <Footer
-      taprooms={
-        <FooterTaprooms
-          locations={locations}
-          weeklyHours={await getWeeklyHoursForLocations(locations)}
-        />
-      }
-    />
+    <FooterTaprooms locations={locations} weeklyHours={await getWeeklyHoursForLocations(locations)} />
   )
 }
 
@@ -207,9 +203,13 @@ export default async function AppLayout({
           {/* Outside LocationProvider so the taproom text is in the HTML shell,
               but inside ThemeProvider so the footer switcher shares the site theme. */}
           <FooterGate>
-            <Suspense fallback={<Footer taprooms={<FooterTaprooms locations={locations} />} />}>
-              <FooterHours locations={locations} />
-            </Suspense>
+            <Footer
+              taprooms={
+                <Suspense fallback={<FooterTaprooms locations={locations} />}>
+                  <FooterHours locations={locations} />
+                </Suspense>
+              }
+            />
           </FooterGate>
         </ThemeProvider>
       </body>

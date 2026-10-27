@@ -13,11 +13,14 @@
  * component that starts reading one compiles and renders it blank. When a
  * client component reads a new field, add it here too. The render-equality
  * tests in tests/int/public-client-payloads.int.spec.tsx compare full vs.
- * projected renders of FeaturedBeers, FeaturedCans, HeroSection, MarketingText
- * (#marketing) and FoodPageClient, so a missed field read by those fails there.
+ * projected renders of FeaturedBeers, FeaturedCans and FoodPageClient, so a
+ * missed field read by those fails there. The hero carousel and the #marketing
+ * copy are reduced further: selectHeroBeers (below) and
+ * lib/utils/marketing-copy.ts hand the client only the strings it renders.
  */
 import type { FoodVendorSchedule } from '@/lib/types/food'
-import type { Beer, ComingSoon, Media, Menu } from '@/src/payload-types'
+import type { Beer, Media, Menu } from '@/src/payload-types'
+import { getBeerImageUrl } from './media-utils'
 import { extractBeerFromMenuItem, extractProductFromMenuItem } from './menu-item-utils'
 
 /** A /food schedule row with only the fields FoodPageClient reads. */
@@ -111,16 +114,29 @@ export function toHomeMenu(menu: Menu): Menu {
   } as Menu
 }
 
-type ComingSoonEntry = NonNullable<ComingSoon['beers']>[number]
+/** What the hero carousel renders per can: the beer link, its name and thumbnail. */
+export interface HeroBeer {
+  id: string
+  name: string
+  slug: string
+  imageUrl: string
+}
 
 /**
- * Coming-soon entries for the #marketing copy, which prints only the beer name
- * or, without a beer, the style name. UpcomingBeers is a server component and
- * keeps the full depth-2 entries.
+ * Beers that are on a cans menu and have a thumbnail, in `beers` order.
+ * Selected on the server so the hero receives ~100 bytes per can instead of
+ * every available beer plus every cans menu (which it only used for this).
  */
-export function toHomeComingSoon(entries: ComingSoonEntry[]): ComingSoonEntry[] {
-  return entries.map(({ beer, style }) => ({
-    beer: beer && typeof beer === 'object' ? ({ name: beer.name } as Beer) : beer,
-    style: style && typeof style === 'object' ? { name: style.name } as typeof style : style,
-  }))
+export function selectHeroBeers(beers: Beer[], cansMenus: Menu[]): HeroBeer[] {
+  const cansIds = new Set<string>()
+  for (const menu of cansMenus) {
+    for (const item of menu.items ?? []) {
+      const beer = extractBeerFromMenuItem(item)
+      if (beer?.id) cansIds.add(beer.id)
+    }
+  }
+  return beers.flatMap((beer) => {
+    const imageUrl = cansIds.has(beer.id) ? getBeerImageUrl(beer.image, beer.slug, 'thumbnail') : null
+    return imageUrl ? [{ id: beer.id, name: beer.name, slug: beer.slug, imageUrl }] : []
+  })
 }
