@@ -20,6 +20,8 @@
  * - Optional Ably invalidate signals (see useAblyInvalidate) force an
  *   immediate poll; while realtime is connected, idle polling is the
  *   fallback instead of the warm/fast cadence
+ * - A cached response older than the last push's uncached read is skipped: it
+ *   is the CDN's pre-save copy, served to the displays' collapsed safety polls
  * @module
  */
 
@@ -153,6 +155,8 @@ export function usePolling<T, R extends PollingResponse>(
   const noChangeCountRef = useRef(0)
   const warmRef = useRef(false)
   const consecutiveErrorsRef = useRef(0)
+  /** Content timestamp of the last invalidate poll's uncached (`freshUrl`) read. */
+  const pushedTimestampRef = useRef<number | null>(null)
   const realtimeFallbackRef = useRef(realtimeFallback)
   // Track prior value so we only reschedule on a real connect/disconnect edge,
   // not on mount (url/poll effect starts cadence) or on unrelated dep churn.
@@ -230,23 +234,37 @@ export function usePolling<T, R extends PollingResponse>(
           }
         }
 
-        const applied = applyResponseRef.current(raw)
+        // A cached response older than the push's uncached read is the CDN's
+        // pre-save copy, served to the displays' collapsed lockstep polls
+        // (STALE, cacheReason "collapsed"): skip it, the next poll gets the rebuild.
+        // Pushes always apply (a deleted beer lowers the timestamp), and the guard
+        // disarms once the cache catches up so push-less drops still land.
+        const isPreSaveCopy =
+          !freshUrl &&
+          pushedTimestampRef.current !== null &&
+          raw.timestamp < pushedTimestampRef.current
+        if (freshUrl) pushedTimestampRef.current = raw.timestamp
+        else if (!isPreSaveCopy) pushedTimestampRef.current = null
 
-        // Membership and populated relationships can change without a newer timestamp.
-        const responseKey = JSON.stringify(raw)
-        if (responseKey !== lastResponseRef.current) {
-          lastResponseRef.current = responseKey
-          setPolled({ url, base: initialDataRef.current, value: applied.data })
-          noChangeCountRef.current = 0
-        } else {
-          noChangeCountRef.current += 1
+        if (!isPreSaveCopy) {
+          const applied = applyResponseRef.current(raw)
+
+          // Membership and populated relationships can change without a newer timestamp.
+          const responseKey = JSON.stringify(raw)
+          if (responseKey !== lastResponseRef.current) {
+            lastResponseRef.current = responseKey
+            setPolled({ url, base: initialDataRef.current, value: applied.data })
+            noChangeCountRef.current = 0
+          } else {
+            noChangeCountRef.current += 1
+          }
+          warmRef.current = raw.timestamp > 0 && Date.now() - raw.timestamp < WARM_WINDOW_MS
+
+          // Always update theme: applyResponse reads the clock, so day/night changes
+          // land on the next poll even when the data hasn't changed.
+          setTheme(applied.theme)
         }
-        warmRef.current = raw.timestamp > 0 && Date.now() - raw.timestamp < WARM_WINDOW_MS
         consecutiveErrorsRef.current = 0
-
-        // Always update theme: applyResponse reads the clock, so day/night changes
-        // land on the next poll even when the data hasn't changed.
-        setTheme(applied.theme)
       } catch {
         if (!isCurrent()) return
         // The display keeps showing its last good data; the next poll backs off.
@@ -280,6 +298,7 @@ export function usePolling<T, R extends PollingResponse>(
     noChangeCountRef.current = 0
     consecutiveErrorsRef.current = 0
     warmRef.current = false
+    pushedTimestampRef.current = null
     if (url) void poll()
 
     return () => {

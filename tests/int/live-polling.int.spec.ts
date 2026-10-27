@@ -196,6 +196,56 @@ describe('usePolling', () => {
     expect(fetchMock).toHaveBeenCalledTimes(3)
   })
 
+  // Prod 2026-10-27: TVs that got the same push poll the cached route in lockstep
+  // 120s later; Vercel collapses the requests and serves them the pre-save copy
+  // (x-vercel-cache STALE, cacheReason "collapsed"), so the edit vanished.
+  it('keeps a pushed menu over an older cached copy, but accepts a newer push even when it is older', async () => {
+    vi.useFakeTimers()
+    let cached = { timestamp: 1, value: 'before save' }
+    let fresh = { timestamp: 2, value: 'saved' }
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => ({
+        ok: true,
+        json: async () => (url.endsWith('/fresh') ? fresh : cached),
+      })),
+    )
+    const { result, rerender } = renderHook(
+      ({ invalidateSignal }) =>
+        usePolling(
+          '/m',
+          'initial',
+          (raw: { timestamp: number; value: string }) => ({ data: raw.value, theme: 'light' }),
+          { invalidateSignal, invalidateUrl: '/m/fresh' },
+        ),
+      { initialProps: { invalidateSignal: 0 } },
+    )
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    rerender({ invalidateSignal: 1 })
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(result.current.data).toBe('saved')
+
+    // The collapsed safety poll still gets the pre-save copy.
+    await act(() => vi.advanceTimersByTimeAsync(10_000))
+    expect(result.current.data).toBe('saved')
+
+    // Once the CDN serves the rebuilt entry, polling carries on as normal.
+    cached = { timestamp: 2, value: 'saved, rebuilt' }
+    await act(() => vi.advanceTimersByTimeAsync(10_000))
+    expect(result.current.data).toBe('saved, rebuilt')
+
+    // With the cache caught up, a lower timestamp without a push (a deleted product) applies.
+    cached = { timestamp: 1, value: 'product removed' }
+    await act(() => vi.advanceTimersByTimeAsync(10_000))
+    expect(result.current.data).toBe('product removed')
+
+    // A beer deleted from the menu can lower the timestamp; its push still applies.
+    fresh = { timestamp: 0, value: 'beer removed' }
+    rerender({ invalidateSignal: 2 })
+    await act(() => vi.advanceTimersByTimeAsync(0))
+    expect(result.current.data).toBe('beer removed')
+  })
+
   it('clears withdrawn menus, retains last-good data on 5xx and recovers after republishing', async () => {
     vi.useFakeTimers()
     const initial = { id: 'm1', themeMode: 'light', name: 'Published' } as Menu
