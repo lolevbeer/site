@@ -28,7 +28,6 @@ Keep the mockup's interfaces, built the Payload way:
 | Hover detail on heatmap days and sparklines | `Tooltip` |
 | Loading rows in client widgets | `ShimmerEffect` / `StaggeredShimmers` |
 | Icons | `@payloadcms/ui/icons/*` (`Calendar`, `Clock`, `Warning`, `Check`, `People`) |
-| Lines-cleaned bar | `Banner` (existing `LinesCleanedAlert`) |
 | Recents & pinned | built-in `activity` widget |
 | "Edited by" names | repo `src/components/admin/editor-names.ts` |
 
@@ -102,6 +101,7 @@ Each task starts by writing its named test and running it red. UI rendering is e
 ### 7. Needs attention widget
 - Create `src/components/admin/NeedsAttentionWidget.tsx` (server): counts `status: new` in event-inquiries, donation-requests, job-applications with `overrideAccess: false, req` (a denied read yields no row), reads locations and `readMenuTargets`, renders Payload card rows with `Pill`. Optional widget field `location` (relationship) for per-location instances.
 - Create `src/components/admin/MarkCleanedRowButton.tsx` (client): `Button buttonStyle="secondary"` calling task 5's helper, then `toast.success` and `router.refresh()` (`toast.error` on failure); shown only when the viewer may update that location (`hasRole` admin / assigned lead-bartender, mirroring `LinesCleanedAlert`).
+- Remove the `LinesCleanedAlert` provider from `src/payload.config.ts` and delete `src/components/admin/LinesCleanedAlert.tsx`; the widget's lines rows replace it (same audience: admins all locations, lead bartenders assigned ones; due/overdue from `lib/utils/lines-cleaned.ts`).
 - Empty state: `widget-card__empty` "Nothing needs attention."
 - Types: `NeedsAttentionWidget` (generated widget data).
 - Test first: `tests/int/needs-attention-widget.int.spec.tsx` (queries run as the user; a rejected read drops its row; button only for permitted roles).
@@ -183,7 +183,4 @@ Each task starts by writing its named test and running it red. UI rendering is e
 1. Mark contacted / Approve / Mark reviewed change status only; no email is sent.
 2. Existing job applications migrate to `reviewed`.
 3. Bartender location switching uses Payload `Tabs` inside the needs-attention widget.
-
-## Open questions
-
-1. The global lines-cleaned banner stays on every admin page; the dashboard row adds the Mark cleaned button. Hide the banner on the dashboard?
+4. The global lines-cleaned banner (`LinesCleanedAlert`, an admin provider) is retired; its job moves into the needs-attention widget (task 7), which keeps its role rule: admins see every location, lead bartenders their assigned ones.
