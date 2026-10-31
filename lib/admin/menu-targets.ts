@@ -2,7 +2,8 @@
  * Menu stock-vs-target data for the admin dashboard: `loadMenuTargets` reads
  * every targeted menu's saves over the last 90 days as the viewer (cached per
  * user) and groups them by location, worst current miss first;
- * `summarizeMenuTarget` reduces one menu's timeline to the figures a card shows.
+ * `summarizeMenuTarget` reduces one menu's timeline to the figures a card shows;
+ * `scaleY` and `sparklinePoints` turn item counts into SVG geometry.
  */
 import { unstable_cache } from 'next/cache'
 import type { PayloadRequest } from 'payload'
@@ -31,7 +32,7 @@ const VERSION_SELECT = {
 } as const
 
 export type MenuTimeline = { segments: Segment[]; onTargetShare: number }
-export type TargetMenu = Pick<Menu, 'id' | 'type' | 'location' | 'targetItemCount'>
+export type TargetMenu = Pick<Menu, 'id' | 'name' | 'type' | 'location' | 'targetItemCount'>
 export type MenuTargets = {
   /** Locations with at least one targeted menu, worst current miss first. */
   rows: { location: Pick<Location, 'id' | 'name'>; atLocation: TargetMenu[]; worst: number }[]
@@ -51,7 +52,7 @@ export type MenuTargets = {
 export function loadMenuTargets(req: PayloadRequest): Promise<MenuTargets | null> {
   return unstable_cache(
     () => readMenuTargets(req),
-    ['dashboard-menu-target-v1', accessKey(req), getTodayEST()],
+    ['dashboard-menu-target-v2', accessKey(req), getTodayEST()],
     { tags: [CACHE_TAGS.menus, CACHE_TAGS.locations], revalidate: 3600 },
   )()
 }
@@ -66,7 +67,7 @@ export async function readMenuTargets(req: PayloadRequest): Promise<MenuTargets 
     payload.find({
       collection: 'menus',
       where: { type: { in: [...TARGETED_MENU_TYPES] } },
-      select: { type: true, location: true, targetItemCount: true },
+      select: { name: true, type: true, location: true, targetItemCount: true },
       depth: 0,
       limit: 100,
       overrideAccess: false,
@@ -177,4 +178,36 @@ export function summarizeMenuTarget({
     shareOnTarget: Math.round(onTargetShare * 100),
     series: segments.map((g) => g.items),
   }
+}
+
+/**
+ * Vertical scale for item counts drawn `height` tall: spans `values` padded by
+ * 1 (never below 0) so small misses stay visible; `y` maps a count to an SVG y.
+ */
+export function scaleY(
+  values: number[],
+  height: number,
+): { lo: number; hi: number; y: (n: number) => number } {
+  const lo = Math.max(0, Math.min(...values) - 1)
+  const hi = Math.max(...values) + 1
+  return { lo, hi, y: (n) => height - ((n - lo) / Math.max(hi - lo, 1)) * height }
+}
+
+/**
+ * A card's sparkline: `points` for an SVG polyline through each save's item
+ * count, evenly spaced across `width` (one save draws a flat line), and the y
+ * of the dashed `target` line, on the same scale as the full chart.
+ */
+export function sparklinePoints(
+  series: number[],
+  target: number,
+  width: number,
+  height: number,
+): { points: string; targetY: number } {
+  const { y } = scaleY([...series, target], height)
+  const values = series.length === 1 ? [series[0], series[0]] : series
+  const points = values
+    .map((n, i) => `${(i / Math.max(values.length - 1, 1)) * width},${y(n)}`)
+    .join(' ')
+  return { points, targetY: y(target) }
 }
