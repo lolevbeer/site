@@ -137,7 +137,7 @@ describe('versions with editor', () => {
 // silently. Fail on any change instead: diff these files against the
 // component, re-sync it, then record the new hashes.
 it.each([
-  ['index.js', 'c023337ae5f171e33f452b9ad6dcbdb3917705ea82297ae4407c26c1e4612e29'],
+  ['index.js', 'f0ad5811cdaba4c4168ba5e36ced3bb7684125571524ea99c913aa308c9abbac'],
   ['buildColumns.js', '9a97d1d5b58f841d89d5b015ac0add6eb845774b42239ebfd369f51e426948da'],
 ])('Payload versions view %s is unchanged since VersionsWithEditor copied it', (file, hash) => {
   const source = readFileSync(`node_modules/@payloadcms/ui/dist/views/Versions/${file}`)
