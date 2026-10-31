@@ -12,6 +12,28 @@ Keep the mockup's interfaces, built the Payload way:
 - Reuse what exists: `readMenuTargets` (MenuTargetHistory), the lines-cleaned cadence (`lib/utils/lines-cleaned.ts`), the PATCH in `MarkLinesCleanedButton`, the mailto guard in `lib/donate/reply-mailto.ts`, the schedule loader in `ScheduleHeatmap`.
 - Clean up the existing widgets while touching them: move inline styles into one stylesheet on theme tokens, replace hand-rolled pills/buttons with Payload's.
 
+## Building blocks (checked against `@payloadcms/ui` 4.0.0-beta.6)
+
+`@payloadcms/ui` exports `./elements/*`, `./hooks/*`, `./icons/*` and `./utilities/*` besides its main entry, so every element below is importable. Its `WidgetCard` / `WidgetList` are internal (not exported since beta.4), so widgets write Payload's `widget-card__*` markup themselves, as the existing widgets already do.
+
+| Need | Use |
+|---|---|
+| Widget frame, header, rows, type label, empty state | Payload's `card widget-card` / `widget-card__*` classes |
+| Status labels ("3 new", "8 over", "Due tomorrow") | `Pill` (`warning` / `error` / `success`) |
+| Actions (Mark cleaned, Mark contacted, Approve) | `Button` (`secondary`, `ghost`) |
+| Inbox filters, bartender location switch | `Tabs` (text tabs, keyboard support) |
+| Open an inquiry, request or application without leaving the dashboard | `useDocumentDrawer` (Payload's document drawer) |
+| "Saved" / error feedback after an action | `toast` |
+| Relative times ("4d ago") | `formatRelativeDate` + `getRelativeTimeFormat` from `@payloadcms/ui/utilities/formatRelativeDate` (Payload: "shared by dashboard widgets so their relative timestamps render identically") |
+| Hover detail on heatmap days and sparklines | `Tooltip` |
+| Loading rows in client widgets | `ShimmerEffect` / `StaggeredShimmers` |
+| Icons | `@payloadcms/ui/icons/*` (`Calendar`, `Clock`, `Warning`, `Check`, `People`) |
+| Lines-cleaned bar | `Banner` (existing `LinesCleanedAlert`) |
+| Recents & pinned | built-in `activity` widget |
+| "Edited by" names | repo `src/components/admin/editor-names.ts` |
+
+Hand-built, because Payload has no equivalent: the sparkline (inline SVG, as `MenuTargetHistory` already draws), the existing heatmap grid, and one layout-only stylesheet on theme tokens.
+
 ## Out of scope
 
 - Sending email from "Mark contacted" / "Approve" (status change only; Email opens the staff member's mail app as today).
@@ -79,7 +101,7 @@ Each task starts by writing its named test and running it red. UI rendering is e
 
 ### 7. Needs attention widget
 - Create `src/components/admin/NeedsAttentionWidget.tsx` (server): counts `status: new` in event-inquiries, donation-requests, job-applications with `overrideAccess: false, req` (a denied read yields no row), reads locations and `readMenuTargets`, renders Payload card rows with `Pill`. Optional widget field `location` (relationship) for per-location instances.
-- Create `src/components/admin/MarkCleanedRowButton.tsx` (client): `Button buttonStyle="secondary"` calling task 5's helper, then `router.refresh()`; shown only when the viewer may update that location (`hasRole` admin / assigned lead-bartender, mirroring `LinesCleanedAlert`).
+- Create `src/components/admin/MarkCleanedRowButton.tsx` (client): `Button buttonStyle="secondary"` calling task 5's helper, then `toast.success` and `router.refresh()` (`toast.error` on failure); shown only when the viewer may update that location (`hasRole` admin / assigned lead-bartender, mirroring `LinesCleanedAlert`).
 - Empty state: `widget-card__empty` "Nothing needs attention."
 - Types: `NeedsAttentionWidget` (generated widget data).
 - Test first: `tests/int/needs-attention-widget.int.spec.tsx` (queries run as the user; a rejected read drops its row; button only for permitted roles).
@@ -93,7 +115,7 @@ Each task starts by writing its named test and running it red. UI rendering is e
 - Deps: 2, 3.
 
 ### 9. Inbox widget (replaces Donation requests widget)
-- Create `src/components/admin/InboxWidget.tsx` (server, reads the three collections as the user, `status: new` or missing) and `InboxRows.tsx` (client: kind filter toggles built from Payload `Button`, `widget-card__type` labels, Email link, ghost `Button` that PATCHes `/api/<collection>/<id>` `{ status: handledStatus }` then `router.refresh()`).
+- Create `src/components/admin/InboxWidget.tsx` (server, reads the three collections as the user, `status: new` or missing) and `InboxRows.tsx` (client: kind filter as Payload `Tabs` with counts in the labels, `widget-card__type` labels, row title opens the document in Payload's drawer via `useDocumentDrawer` (saving there refreshes the widget), relative time via `formatRelativeDate`, Email link, ghost `Button` that PATCHes `/api/<collection>/<id>` `{ status: handledStatus }` then `toast` + `router.refresh()`).
 - Delete `src/components/admin/DonationRequestsWidget.tsx` and `tests/int/donation-requests-widget.int.spec.tsx`; keep the `donation-requests` slug registered, rendering InboxWidget filtered to donations, so saved layouts keep working.
 - Types: `InboxRow`, `InboxWidget`.
 - Test first: `tests/int/inbox-widget.int.spec.tsx` (reads as the user; denied collection omitted; PATCH body per collection; donation slug still renders).
@@ -108,7 +130,7 @@ Each task starts by writing its named test and running it red. UI rendering is e
 
 ### 11. Schedule heatmap cleanup
 - `ScheduleHeatmap.scss`: "nothing booked" becomes a neutral token (`--color-bg-secondary`) instead of danger red; legend text "Nothing booked" kept.
-- `ScheduleHeatmap.tsx` / `HeatmapGrid.tsx`: add a "Tonight:" line from today's bookings; dashboard window `WEEKS` 70 → 26 (`lib/utils/schedule-heatmap.ts`), paging unchanged.
+- `ScheduleHeatmap.tsx` / `HeatmapGrid.tsx`: add a "Tonight:" line from today's bookings; day hover uses Payload `Tooltip` instead of the native `title`; dashboard window `WEEKS` 70 → 26 (`lib/utils/schedule-heatmap.ts`), paging unchanged.
 - Test first: extend `tests/int/schedule-heatmap.int.spec.ts` (tonight summary text; window length).
 - Accept: green, `tsc --noEmit`.
 - Deps: 1.
@@ -122,7 +144,7 @@ Each task starts by writing its named test and running it red. UI rendering is e
 ### 13. Role-based default layout
 - Create `src/admin/dashboard-layout.ts`: `defaultDashboardLayout({ user, locations, menus })` → widget instances.
   - admin / event-manager: needs-attention (full), inbox (large), activity (small), menu-target-history (full), schedule-heatmap per location (medium).
-  - bartender / lead-bartender: per assigned location, needs-attention (`location` set), menu-items for that location's menus, schedule-heatmap. This is mockup B; the location switcher becomes one widget group per assigned location (Payload's per-instance widget fields) instead of custom tabs.
+  - bartender / lead-bartender: per assigned location, needs-attention (`location` set), menu-items for that location's menus, schedule-heatmap. This is mockup B. A bartender with several locations switches between them with Payload `Tabs` inside the needs-attention widget (no `location` set means "my assigned locations"); a pinned `location` shows just that one.
   - `collections` and the four admin `menu-items` widgets leave the admin default (still in the picker).
 - `src/payload.config.ts`: `defaultLayout` calls it (reads locations and menus as the user).
 - Test first: `tests/int/dashboard-layout.int.spec.ts` (per role; bartender sees only assigned locations).
@@ -160,5 +182,5 @@ Each task starts by writing its named test and running it red. UI rendering is e
 
 1. Mark contacted / Approve only change status (no email). OK?
 2. Existing applications migrate to `new` (they will show in Needs attention once). Or `reviewed`?
-3. Bartender location switching: one widget group per assigned location (planned) vs. a custom switcher inside one widget.
+3. Bartender location switching: Payload `Tabs` inside one widget (planned) vs. one widget group per assigned location.
 4. The global lines-cleaned banner stays on every admin page; the dashboard row adds the Mark cleaned button. Hide the banner on the dashboard?
