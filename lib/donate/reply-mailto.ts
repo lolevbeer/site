@@ -1,22 +1,13 @@
 /**
- * mailto: link for the admin "Email requester" button on a donation request.
- * Opens the staff member's own email app (so the thread lives in their inbox)
- * with the requester's address and a summary of the request filled in. The
- * long background answers stay out: some email apps drop bodies near 2,000
- * characters.
+ * mailto: link for the admin "Email requester" button on a donation request,
+ * built on lib/email/reply-mailto: the requester's address and a summary of
+ * the request. The long background answers stay out: some email apps drop
+ * bodies near 2,000 characters.
  */
 
 import type { DonationRequest } from '@/src/payload-types'
+import { clipDetails, replyMailto } from '@/lib/email/reply-mailto'
 import { getDateEST } from '@/lib/utils/date'
-
-/** ponytail: request details clipped to keep the link short; the full text stays in Admin. */
-const MAX_DETAILS = 500
-
-/**
- * Stricter than the public form's email check, which lets `? & = % #` through:
- * in a mailto: address those would add fields such as `?cc=` to the staff reply.
- */
-const SAFE_ADDRESS = /^[A-Za-z0-9._+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/
 
 type DonationSummary = Pick<
   DonationRequest,
@@ -32,14 +23,8 @@ type DonationSummary = Pick<
   | 'requestDetails'
 >
 
-function clip(text: string): string {
-  return text.length > MAX_DETAILS ? `${text.slice(0, MAX_DETAILS)}…` : text
-}
-
 /** Null when the request has no address that is safe to put in a mailto: link. */
 export function donationReplyMailto(request: Partial<DonationSummary>): string | null {
-  if (!request.email || !SAFE_ADDRESS.test(request.email)) return null
-
   const taproomNight = request.askType === 'taproom-night'
   const where = taproomNight ? request.taproom && `${request.taproom} taproom` : request.venue
   const date = request.eventDate ? getDateEST(new Date(request.eventDate)) : ''
@@ -56,11 +41,14 @@ export function donationReplyMailto(request: Partial<DonationSummary>): string |
     `Event: ${[request.eventName, date].filter(Boolean).join(', ')}`,
     request.attendees ? `Estimated attendance: ${request.attendees}` : null,
     where ? `Where: ${where}` : null,
-    details ? clip(details) : null,
+    details ? clipDetails(details) : null,
   ]
     .filter((line) => line !== null)
     .join('\n')
 
-  const subject = `Your Lolev donation request: ${request.eventName ?? ''}`
-  return `mailto:${request.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+  return replyMailto({
+    to: request.email,
+    subject: `Your Lolev donation request: ${request.eventName ?? ''}`,
+    body,
+  })
 }
