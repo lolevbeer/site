@@ -86,7 +86,7 @@ function RadioField({
   onValueChange: (value: string) => void
   error?: string
   className?: string
-}) {
+}): React.JSX.Element {
   return (
     <FieldSet data-invalid={Boolean(error) || undefined}>
       <FieldLegend variant="label">{legend}</FieldLegend>
