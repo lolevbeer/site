@@ -6,7 +6,7 @@ import { Banner } from '@payloadcms/ui'
 import { logger } from '@/lib/utils/logger'
 import { hasRole } from '@/src/access/roles'
 import { getAdminRelationshipID } from '@/src/components/admin/relationship-value'
-import { daysSinceCleaned, LINES_OVERDUE_DAYS, LINES_WARN_DAYS } from '@/lib/utils/lines-cleaned'
+import { linesCleanedLevel, type LinesCleanedLevel } from '@/lib/utils/lines-cleaned'
 import type { User } from '@/src/payload-types'
 
 interface Location {
@@ -15,25 +15,7 @@ interface Location {
   linesLastCleaned?: string | null
 }
 
-type AlertLevel = 'warning' | 'error' | null
-
-function getAlertLevel(dateStr: string | null | undefined): {
-  level: AlertLevel
-  days: number
-  dueDate: string | null
-} {
-  const days = daysSinceCleaned(dateStr)
-  if (!dateStr || days === null) return { level: 'error', days: -1, dueDate: null }
-
-  // Calculate due date (LINES_OVERDUE_DAYS after last cleaned)
-  const dueDateObj = new Date(dateStr)
-  dueDateObj.setDate(dueDateObj.getDate() + LINES_OVERDUE_DAYS)
-  const dueDate = dueDateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-
-  if (days >= LINES_OVERDUE_DAYS) return { level: 'error', days, dueDate }
-  if (days >= LINES_WARN_DAYS) return { level: 'warning', days, dueDate }
-  return { level: null, days, dueDate }
-}
+type AlertLevel = LinesCleanedLevel['level']
 
 export function LinesCleanedAlert({ children }: { children: React.ReactNode }) {
   const { user } = useAuth<User>()
@@ -77,7 +59,7 @@ export function LinesCleanedAlert({ children }: { children: React.ReactNode }) {
         for (const location of data.docs || []) {
           if (!isAdmin && !assignedLocationIds.has(location.id)) continue
 
-          const { level, days, dueDate } = getAlertLevel(location.linesLastCleaned)
+          const { level, days, dueDate } = linesCleanedLevel(location.linesLastCleaned)
           if (level) {
             locationAlerts.push({ location, level, days, dueDate })
           }
