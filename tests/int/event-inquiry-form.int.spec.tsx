@@ -1,7 +1,8 @@
 /**
  * /private-events inquiry: always open, event details before contact details,
- * one-tap taproom (preselected from the header) and occasion buttons, optional
- * phone, fields checked on blur, a summary on success, field errors show under
+ * one-tap taproom (preselected from the header) and occasion buttons, quote
+ * fields (backup date, start time, length, drinks, company, food) with the
+ * company name shown only for "Yes", optional phone, fields checked on blur, a summary on success, field errors show under
  * each field, focus moves to the confirmation, the date min is client-only, and
  * an accepted inquiry sends the `event_inquiry_submitted` conversion.
  */
@@ -54,10 +55,19 @@ describe('EventInquiryForm', () => {
     const labels = Array.from(container.querySelectorAll('label')).map((l) => l.textContent)
     expect(labels).toEqual([
       'Preferred date',
-      'How many guests?',
+      'Backup date (optional)',
       'My date is flexible',
+      'Start time',
+      'Length',
+      'How many guests?',
       'Taproom',
       'Occasion (optional)',
+      "I'll run a host tab",
+      'Guests pay for their own drinks',
+      'Not sure yet',
+      'Yes',
+      'No',
+      'Food plan (optional)',
       'Your name',
       'Email',
       'Phone (optional)',
@@ -65,11 +75,14 @@ describe('EventInquiryForm', () => {
     ])
   })
 
-  it('pairs date with guests but stacks email and phone (single column)', () => {
+  it('pairs preferred with backup date and start time with length, stacks the rest', () => {
     render(<EventInquiryForm taprooms={taprooms} />)
     const row = (id: string) => document.getElementById(id)?.closest('[data-slot=field-row]')
     expect(row('inquiry-preferredDate')).toBeTruthy()
-    expect(row('inquiry-preferredDate')).toBe(row('inquiry-headcount'))
+    expect(row('inquiry-preferredDate')).toBe(row('inquiry-backupDate'))
+    expect(row('inquiry-startTime')).toBeTruthy()
+    expect(row('inquiry-startTime')).toBe(row('inquiry-duration'))
+    expect(row('inquiry-headcount')).toBeNull()
     expect(row('inquiry-email')).toBeNull()
     expect(row('inquiry-phone')).toBeNull()
   })
@@ -112,6 +125,55 @@ describe('EventInquiryForm', () => {
     expect(birthday.getAttribute('aria-pressed')).toBe('false')
   })
 
+  it('asks for the company name only when a company is paying', () => {
+    render(<EventInquiryForm taprooms={taprooms} />)
+    expect(screen.queryByLabelText('Company name')).toBeNull()
+    fireEvent.click(screen.getByRole('radio', { name: 'Yes' }))
+    expect(screen.getByLabelText('Company name')).toBeTruthy()
+    fireEvent.click(screen.getByRole('radio', { name: 'No' }))
+    expect(screen.queryByLabelText('Company name')).toBeNull()
+  })
+
+  it('sends the quote fields, with a 3-hour default length', async () => {
+    submitEventInquiry.mockResolvedValueOnce({ ok: false, error: 'x' })
+    render(<EventInquiryForm taprooms={taprooms} />)
+    fireEvent.change(screen.getByLabelText('Start time'), { target: { value: '18:30' } })
+    fireEvent.click(screen.getByRole('radio', { name: "I'll run a host tab" }))
+    fireEvent.click(screen.getByRole('radio', { name: 'Yes' }))
+    fireEvent.change(screen.getByLabelText('Company name'), { target: { value: 'Acme' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Send inquiry' }))
+    await waitFor(() => expect(submitEventInquiry).toHaveBeenCalled())
+    expect(submitEventInquiry.mock.calls[0][0]).toMatchObject({
+      startTime: '18:30',
+      duration: '3h',
+      drinks: 'host-tab',
+      companyPaid: 'yes',
+      companyName: 'Acme',
+      foodPlan: '',
+      backupDate: '',
+    })
+  })
+
+  it('shows a radio group error under the group', async () => {
+    submitEventInquiry.mockResolvedValueOnce({
+      ok: false,
+      error: 'x',
+      errors: { drinks: 'Choose how drinks are handled.' },
+    })
+    render(<EventInquiryForm taprooms={taprooms} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Send inquiry' }))
+    await waitFor(() =>
+      expect(document.getElementById('inquiry-drinks-error')?.textContent).toBe(
+        'Choose how drinks are handled.',
+      ),
+    )
+    expect(
+      screen
+        .getByRole('radiogroup', { name: 'How will drinks be handled?' })
+        .getAttribute('aria-describedby'),
+    ).toBe('inquiry-drinks-error')
+  })
+
   it('lets a flexible visitor tap several other days and tracks them as chips', async () => {
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(new Date('2026-10-14T16:00:00Z')) // Wed Oct 14, noon EDT
@@ -125,10 +187,11 @@ describe('EventInquiryForm', () => {
     fireEvent.click(within(calendar).getByRole('button', { name: /October 24/ }))
 
     const chips = screen.getByRole('list', { name: 'Other dates picked' })
-    expect(within(chips).getAllByRole('listitem').map((li) => li.textContent)).toEqual([
-      'Sat, Oct 24',
-      'Fri, Oct 30',
-    ])
+    expect(
+      within(chips)
+        .getAllByRole('listitem')
+        .map((li) => li.textContent),
+    ).toEqual(['Sat, Oct 24', 'Fri, Oct 30'])
     expect(screen.getByText('2 other dates picked')).toBeTruthy()
 
     fireEvent.click(screen.getByRole('button', { name: /Remove Saturday, October 24/ }))
@@ -145,7 +208,10 @@ describe('EventInquiryForm', () => {
     fireEvent.click(screen.getByRole('switch', { name: 'My date is flexible' }))
     fireEvent.click(screen.getByRole('button', { name: 'Send inquiry' }))
     await waitFor(() => expect(submitEventInquiry).toHaveBeenCalledTimes(2))
-    expect(submitEventInquiry.mock.calls[1][0]).toMatchObject({ flexibleDate: false, otherDates: [] })
+    expect(submitEventInquiry.mock.calls[1][0]).toMatchObject({
+      flexibleDate: false,
+      otherDates: [],
+    })
     vi.useRealTimers()
     // Several full calendar re-renders: ~70ms alone, but over 5s under full-suite load.
   }, 15_000)
@@ -158,9 +224,11 @@ describe('EventInquiryForm', () => {
     fireEvent.click(screen.getByRole('button', { name: /October 24/ }))
     fireEvent.click(screen.getByRole('switch', { name: 'My date is flexible' }))
     const calendar = screen.getByRole('group', { name: 'Other dates that also work' })
-    expect(within(calendar).getByRole('button', { name: /October 24/ }).hasAttribute('disabled')).toBe(
-      true,
-    )
+    expect(
+      within(calendar)
+        .getByRole('button', { name: /October 24/ })
+        .hasAttribute('disabled'),
+    ).toBe(true)
     vi.useRealTimers()
   })
 

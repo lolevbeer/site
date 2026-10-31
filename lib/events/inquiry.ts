@@ -35,6 +35,44 @@ export function occasionAdminLabel(value: string): string | undefined {
   return EVENT_INQUIRY_OCCASIONS.find((option) => option.value === value)?.adminLabel
 }
 
+/** Event length. '3h' is the form's default. */
+export const EVENT_INQUIRY_DURATIONS = [
+  { value: '3h', label: '3 hours' },
+  { value: '4h', label: '4 hours' },
+  { value: '5h+', label: '5+ hours' },
+] as const
+
+export const EVENT_INQUIRY_DRINKS = [
+  { value: 'host-tab', label: "I'll run a host tab" },
+  { value: 'guests-pay', label: 'Guests pay for their own drinks' },
+  { value: 'not-sure', label: 'Not sure yet' },
+] as const
+
+export const EVENT_INQUIRY_FOOD_PLANS = [
+  { value: 'caterer', label: 'Bringing a caterer' },
+  { value: 'food-truck', label: 'Food truck' },
+  { value: 'own-food', label: 'Bringing our own food' },
+  { value: 'suggestions', label: 'Need suggestions' },
+] as const
+
+export const EVENT_INQUIRY_YES_NO = [
+  { value: 'yes', label: 'Yes' },
+  { value: 'no', label: 'No' },
+] as const
+
+type OptionValue<T extends readonly { value: string }[]> = T[number]['value']
+
+/** Label for a stored option value; undefined when blank or unknown. */
+export function optionLabel(
+  options: readonly { value: string; label: string }[],
+  value: string | null | undefined,
+): string | undefined {
+  return options.find((option) => option.value === value)?.label
+}
+
+/** HH:MM, 24-hour, from `<input type="time">`. */
+const START_TIME = /^([01]\d|2[0-3]):[0-5]\d$/
+
 export interface EventInquiryInput {
   name: string
   email: string
@@ -46,6 +84,20 @@ export interface EventInquiryInput {
   flexibleDate: boolean
   /** YYYY-MM-DD days that also work. Kept only when flexibleDate is true. */
   otherDates: string[]
+  /** Optional YYYY-MM-DD second choice; must differ from preferredDate. */
+  backupDate: string
+  /** HH:MM, 24-hour, Eastern. */
+  startTime: string
+  /** An EVENT_INQUIRY_DURATIONS value. */
+  duration: string
+  /** An EVENT_INQUIRY_DRINKS value. */
+  drinks: string
+  /** 'yes' | 'no'. */
+  companyPaid: string
+  /** Required when companyPaid is 'yes'; dropped otherwise. */
+  companyName: string
+  /** Optional. An EVENT_INQUIRY_FOOD_PLANS value or ''. */
+  foodPlan: string
   headcount: number | ''
   /** Location slug. The action stores the matching location ID. */
   taproom: string
@@ -61,10 +113,14 @@ export type EventInquiryErrors = Partial<Record<keyof EventInquiryInput, string>
 
 export type ValidatedEventInquiry = Omit<
   EventInquiryInput,
-  'headcount' | 'occasion' | 'companyUrlHp'
+  'headcount' | 'occasion' | 'duration' | 'drinks' | 'companyPaid' | 'foodPlan' | 'companyUrlHp'
 > & {
   headcount: number
   occasion: EventInquiryOccasion | ''
+  duration: OptionValue<typeof EVENT_INQUIRY_DURATIONS>
+  drinks: OptionValue<typeof EVENT_INQUIRY_DRINKS>
+  companyPaid: OptionValue<typeof EVENT_INQUIRY_YES_NO>
+  foodPlan: OptionValue<typeof EVENT_INQUIRY_FOOD_PLANS> | ''
 }
 
 export type EventInquiryValidation =
@@ -80,6 +136,13 @@ export function emptyEventInquiry(): EventInquiryInput {
     preferredDate: '',
     flexibleDate: false,
     otherDates: [],
+    backupDate: '',
+    startTime: '',
+    duration: '3h',
+    drinks: '',
+    companyPaid: '',
+    companyName: '',
+    foodPlan: '',
     headcount: '',
     taproom: '',
     occasion: '',
@@ -131,6 +194,14 @@ export function validateEventInquiry(
         .sort()
     : null
   const message = trimmed(parsed.message)
+  const backupDate = trimmed(parsed.backupDate)
+  const startTime = trimmed(parsed.startTime)
+  const duration = trimmed(parsed.duration)
+  const drinks = trimmed(parsed.drinks)
+  const companyPaid = trimmed(parsed.companyPaid)
+  // Only kept when a company is paying.
+  const companyName = companyPaid === 'yes' ? trimmed(parsed.companyName) : ''
+  const foodPlan = trimmed(parsed.foodPlan)
 
   if (name.length < 2) errors.name = 'Enter your name.'
   else if (name.length > 200) errors.name = 'That answer is too long.'
@@ -140,6 +211,26 @@ export function validateEventInquiry(
   else if (preferredDate < today) errors.preferredDate = 'Pick a date in the future.'
   else if (preferredDate > maximumEventDate(today)) {
     errors.preferredDate = 'Pick a date within two years.'
+  }
+  if (backupDate) {
+    if (!isCalendarDate(backupDate)) errors.backupDate = 'Enter a backup date or leave it blank.'
+    else if (backupDate < today) errors.backupDate = 'Pick a date in the future.'
+    else if (backupDate > maximumEventDate(today)) {
+      errors.backupDate = 'Pick a date within two years.'
+    } else if (backupDate === preferredDate) {
+      errors.backupDate = 'Pick a different day than the preferred date.'
+    }
+  }
+  if (!START_TIME.test(startTime)) errors.startTime = 'Enter a start time.'
+  if (!optionLabel(EVENT_INQUIRY_DURATIONS, duration)) errors.duration = 'Choose how long.'
+  if (!optionLabel(EVENT_INQUIRY_DRINKS, drinks)) errors.drinks = 'Choose how drinks are handled.'
+  if (!optionLabel(EVENT_INQUIRY_YES_NO, companyPaid)) errors.companyPaid = 'Choose yes or no.'
+  if (companyPaid === 'yes') {
+    if (companyName.length < 2) errors.companyName = 'Enter the company name.'
+    else if (companyName.length > 200) errors.companyName = 'That answer is too long.'
+  }
+  if (foodPlan && !optionLabel(EVENT_INQUIRY_FOOD_PLANS, foodPlan)) {
+    errors.foodPlan = 'Choose a food plan.'
   }
   if (!Number.isInteger(headcount) || headcount < 1 || headcount > EVENT_INQUIRY_MAX_HEADCOUNT) {
     errors.headcount = 'Enter how many guests.'
@@ -157,6 +248,7 @@ export function validateEventInquiry(
   rejectFormulaPrefix(name, errors, 'name')
   rejectFormulaPrefix(email, errors, 'email')
   rejectFormulaPrefix(message, errors, 'message')
+  rejectFormulaPrefix(companyName, errors, 'companyName')
 
   if (Object.keys(errors).length > 0) return { ok: false, errors }
   return {
@@ -169,6 +261,14 @@ export function validateEventInquiry(
       preferredDate,
       flexibleDate,
       otherDates: otherDates ?? [],
+      backupDate,
+      startTime,
+      // Option values are checked against their lists above.
+      duration: duration as ValidatedEventInquiry['duration'],
+      drinks: drinks as ValidatedEventInquiry['drinks'],
+      companyPaid: companyPaid as ValidatedEventInquiry['companyPaid'],
+      companyName,
+      foodPlan: foodPlan as ValidatedEventInquiry['foodPlan'],
       headcount,
       taproom,
       // Checked against EVENT_INQUIRY_OCCASIONS above.

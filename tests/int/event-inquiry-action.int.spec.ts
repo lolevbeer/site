@@ -61,6 +61,10 @@ function valid() {
     preferredDate: '2026-11-20',
     headcount: 30,
     taproom: 'lawrenceville',
+    startTime: '18:30',
+    duration: '3h',
+    drinks: 'guests-pay',
+    companyPaid: 'no',
     message: '',
   }
 }
@@ -128,7 +132,14 @@ describe('submitEventInquiry', () => {
       occasion: 'work',
       flexibleDate: true,
       otherDates: ['2026-11-21'],
+      startTime: '18:30',
+      duration: '3h',
+      drinks: 'guests-pay',
+      companyPaid: 'no',
     })
+    expect(args.data.companyName).toBeUndefined()
+    expect(args.data.foodPlan).toBeUndefined()
+    expect(args.data.backupDate).toBeUndefined()
     const locationsRead = find.mock.calls.find(([a]) => a.collection === 'locations')
     expect(locationsRead?.[0]).toMatchObject({ overrideAccess: false })
 
@@ -163,6 +174,65 @@ describe('submitEventInquiry', () => {
     // Never echo visitor free text to an address the visitor typed in.
     expect(receipt.text).not.toContain('Need the back room')
     expect(receipt.html).not.toContain('Alex Rivera')
+  })
+
+  it('emails events@ every field on its own labeled line with the quote subject', async () => {
+    await submitEventInquiry({
+      ...valid(),
+      occasion: 'work',
+      backupDate: '2026-11-21',
+      duration: '5h+',
+      drinks: 'host-tab',
+      companyPaid: 'yes',
+      companyName: 'Acme Corp',
+      foodPlan: 'food-truck',
+      message: 'Need the back room',
+    })
+    await afterFns[1]()
+    const team = sendEmail.mock.calls[0][0]
+    expect(team.subject).toBe('Event inquiry: Alex Rivera, Work event, 2026-11-20, Lawrenceville')
+    const lines = team.text.split('\n')
+    for (const line of [
+      'Name: Alex Rivera',
+      'Email: alex@example.org',
+      'Phone: 412-555-0100',
+      'Event type: Work event',
+      'Taproom: Lawrenceville',
+      'Preferred date: 2026-11-20',
+      'Backup date: 2026-11-21',
+      'Other dates: —',
+      'Start time: 6:30pm',
+      'Length: 5+ hours',
+      'Guests: 30',
+      "Drinks: I'll run a host tab",
+      'Company paying: Yes',
+      'Company name: Acme Corp',
+      'Food plan: Food truck',
+      'Notes: Need the back room',
+    ]) {
+      expect(lines).toContain(line)
+    }
+  })
+
+  it('stores the backup day at noon Eastern and the company name when a company pays', async () => {
+    await submitEventInquiry({
+      ...valid(),
+      backupDate: '2026-11-21',
+      companyPaid: 'yes',
+      companyName: 'Acme Corp',
+    })
+    expect(create.mock.calls[0][0].data).toMatchObject({
+      backupDate: '2026-11-21T17:00:00.000Z',
+      companyPaid: 'yes',
+      companyName: 'Acme Corp',
+    })
+  })
+
+  it('still saves and answers ok when the events@ email throws', async () => {
+    sendEmail.mockRejectedValue(new Error('resend down'))
+    expect(await submitEventInquiry(valid())).toEqual({ ok: true })
+    expect(create).toHaveBeenCalledTimes(1)
+    await expect(afterFns[1]()).resolves.toBeUndefined()
   })
 
   it('escapes visitor text in the events@ HTML', async () => {

@@ -889,6 +889,16 @@ export interface EventInquiry {
    * YYYY-MM-DD days the guest also offered.
    */
   otherDates?: string[] | null;
+  backupDate?: string | null;
+  /**
+   * 24-hour, Eastern (18:30 is 6:30pm).
+   */
+  startTime?: string | null;
+  duration?: ('3h' | '4h' | '5h+') | null;
+  drinks?: ('host-tab' | 'guests-pay' | 'not-sure') | null;
+  companyPaid?: ('yes' | 'no') | null;
+  companyName?: string | null;
+  foodPlan?: ('caterer' | 'food-truck' | 'own-food' | 'suggestions') | null;
   occasion?: ('birthday' | 'work' | 'wedding' | 'other') | null;
   taproom: string | Location;
   headcount: number;
@@ -1860,6 +1870,13 @@ export interface EventInquiriesSelect<T extends boolean = true> {
   preferredDate?: T;
   flexibleDate?: T;
   otherDates?: T;
+  backupDate?: T;
+  startTime?: T;
+  duration?: T;
+  drinks?: T;
+  companyPaid?: T;
+  companyName?: T;
+  foodPlan?: T;
   occasion?: T;
   taproom?: T;
   headcount?: T;

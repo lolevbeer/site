@@ -77,6 +77,13 @@ export async function submitEventInquiry(input: unknown): Promise<SubmitEventInq
         preferredDate,
         flexibleDate: value.flexibleDate,
         otherDates: value.otherDates,
+        backupDate: value.backupDate ? toESTDate(value.backupDate).toISOString() : undefined,
+        startTime: value.startTime,
+        duration: value.duration,
+        drinks: value.drinks,
+        companyPaid: value.companyPaid,
+        companyName: value.companyName || undefined,
+        foodPlan: value.foodPlan || undefined,
         headcount: value.headcount,
         occasion: value.occasion || undefined,
         taproom: taproom.id,
@@ -106,17 +113,9 @@ export async function submitEventInquiry(input: unknown): Promise<SubmitEventInq
     )
     after(() =>
       sendEventInquiryEmails(payload, {
+        ...value,
         id: created.id,
-        name: value.name,
-        email: value.email,
-        phone: value.phone || undefined,
-        preferredDate: value.preferredDate,
-        flexibleDate: value.flexibleDate,
-        otherDates: value.otherDates,
-        headcount: value.headcount,
-        occasion: value.occasion || undefined,
         taproomName: taproom.name || value.taproom,
-        message: value.message || undefined,
       }),
     )
 

@@ -1,4 +1,4 @@
-/** Private-event inquiry validation and the #events Slack summary. */
+/** Private-event inquiry validation (including the quote fields) and the #events Slack summary. */
 import { describe, expect, it } from 'vitest'
 import {
   EVENT_INQUIRY_MAX_HEADCOUNT,
@@ -22,6 +22,10 @@ function valid() {
     preferredDate: '2026-11-20',
     headcount: 30,
     taproom: 'lawrenceville',
+    startTime: '18:30',
+    duration: '4h',
+    drinks: 'host-tab',
+    companyPaid: 'no',
     message: 'Retirement party, would love the back room.',
   }
 }
@@ -52,8 +56,115 @@ describe('validateEventInquiry', () => {
     expect(result.ok).toBe(false)
     if (result.ok) return
     expect(Object.keys(result.errors).sort()).toEqual(
-      ['email', 'headcount', 'name', 'preferredDate', 'taproom'].sort(),
+      [
+        'companyPaid',
+        'drinks',
+        'email',
+        'headcount',
+        'name',
+        'preferredDate',
+        'startTime',
+        'taproom',
+      ].sort(),
     )
+  })
+
+  describe('quote fields', () => {
+    const check = (patch: Record<string, unknown>) =>
+      validateEventInquiry({ ...valid(), ...patch }, TODAY, TAPROOMS)
+
+    it('keeps the quote fields on a valid inquiry', () => {
+      expect(check({ backupDate: '2026-11-21', foodPlan: 'food-truck' })).toMatchObject({
+        ok: true,
+        value: {
+          startTime: '18:30',
+          duration: '4h',
+          backupDate: '2026-11-21',
+          drinks: 'host-tab',
+          companyPaid: 'no',
+          companyName: '',
+          foodPlan: 'food-truck',
+        },
+      })
+    })
+
+    it.each([[''], ['6:30pm'], ['24:00'], ['18:60']])('rejects start time %j', (startTime) => {
+      expect(check({ startTime })).toMatchObject({
+        ok: false,
+        errors: { startTime: 'Enter a start time.' },
+      })
+    })
+
+    it('defaults length to 3 hours and rejects unknown lengths', () => {
+      expect(emptyEventInquiry().duration).toBe('3h')
+      expect(check({ duration: '5h+' }).ok).toBe(true)
+      expect(check({ duration: '8h' })).toMatchObject({
+        ok: false,
+        errors: { duration: expect.any(String) },
+      })
+      expect(check({ duration: '' })).toMatchObject({
+        ok: false,
+        errors: { duration: expect.any(String) },
+      })
+    })
+
+    it('requires a known drinks answer', () => {
+      for (const drinks of ['host-tab', 'guests-pay', 'not-sure'])
+        expect(check({ drinks }).ok).toBe(true)
+      expect(check({ drinks: '' })).toMatchObject({
+        ok: false,
+        errors: { drinks: 'Choose how drinks are handled.' },
+      })
+      expect(check({ drinks: 'open-bar' }).ok).toBe(false)
+    })
+
+    it('requires yes or no for company paying, and a company name only for yes', () => {
+      expect(check({ companyPaid: '' })).toMatchObject({
+        ok: false,
+        errors: { companyPaid: 'Choose yes or no.' },
+      })
+      expect(check({ companyPaid: 'yes' })).toMatchObject({
+        ok: false,
+        errors: { companyName: 'Enter the company name.' },
+      })
+      expect(check({ companyPaid: 'yes', companyName: '  Acme Corp ' })).toMatchObject({
+        ok: true,
+        value: { companyPaid: 'yes', companyName: 'Acme Corp' },
+      })
+      // A name typed before switching to "no" is dropped, not stored.
+      expect(check({ companyPaid: 'no', companyName: 'Acme Corp' })).toMatchObject({
+        ok: true,
+        value: { companyName: '' },
+      })
+      expect(check({ companyPaid: 'yes', companyName: '=HYPERLINK()' })).toMatchObject({
+        ok: false,
+        errors: { companyName: FORMULA_PREFIX_ERROR },
+      })
+      expect(check({ companyPaid: 'yes', companyName: 'a'.repeat(201) }).ok).toBe(false)
+    })
+
+    it('treats the food plan as optional but rejects unknown plans', () => {
+      expect(check({ foodPlan: '' })).toMatchObject({ ok: true, value: { foodPlan: '' } })
+      expect(check({ foodPlan: 'buffet' })).toMatchObject({
+        ok: false,
+        errors: { foodPlan: 'Choose a food plan.' },
+      })
+    })
+
+    it('accepts no backup date, or a different day from today up to two years out', () => {
+      expect(check({ backupDate: '' }).ok).toBe(true)
+      expect(check({ backupDate: TODAY }).ok).toBe(true)
+      expect(check({ backupDate: '2028-10-11' }).ok).toBe(true)
+    })
+
+    it.each([
+      ['2026-11-20', 'Pick a different day than the preferred date.'],
+      ['2026-10-10', 'Pick a date in the future.'],
+      ['2028-10-12', 'Pick a date within two years.'],
+      ['2026-02-30', 'Enter a backup date or leave it blank.'],
+    ])('rejects backup date %s', (backupDate, message) => {
+      expect(check({ backupDate })).toMatchObject({ ok: false, errors: { backupDate: message } })
+    })
   })
 
   it('accepts a known occasion or none, and rejects anything else', () => {
@@ -90,7 +201,10 @@ describe('validateEventInquiry', () => {
       TAPROOMS,
     )
     // The preferred date (11-20) is dropped from the list; the rest sorted and unique.
-    expect(flexible).toMatchObject({ ok: true, value: { otherDates: ['2026-11-21', '2026-11-27'] } })
+    expect(flexible).toMatchObject({
+      ok: true,
+      value: { otherDates: ['2026-11-21', '2026-11-27'] },
+    })
     const fixed = validateEventInquiry(
       { ...valid(), flexibleDate: false, otherDates: ['2026-11-21'] },
       TODAY,
@@ -104,7 +218,12 @@ describe('validateEventInquiry', () => {
     [['2030-01-01']],
     [['not-a-date']],
     ['2026-11-21'],
-    [Array.from({ length: EVENT_INQUIRY_MAX_OTHER_DATES + 1 }, (_, i) => `2026-12-${String(i + 1).padStart(2, '0')}`)],
+    [
+      Array.from(
+        { length: EVENT_INQUIRY_MAX_OTHER_DATES + 1 },
+        (_, i) => `2026-12-${String(i + 1).padStart(2, '0')}`,
+      ),
+    ],
   ])('rejects other dates %j', (otherDates) => {
     expect(
       validateEventInquiry({ ...valid(), flexibleDate: true, otherDates }, TODAY, TAPROOMS),
