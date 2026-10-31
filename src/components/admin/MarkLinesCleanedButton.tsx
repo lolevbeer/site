@@ -8,6 +8,7 @@ import {
   getAdminRelationshipID,
   type AdminRelationshipValue,
 } from '@/src/components/admin/relationship-value'
+import { markLinesCleaned } from '@/lib/admin/mark-lines-cleaned'
 import { daysSinceCleaned, LINES_OVERDUE_DAYS, LINES_WARN_DAYS } from '@/lib/utils/lines-cleaned'
 
 export function MarkLinesCleanedButton() {
@@ -79,21 +80,7 @@ export function MarkLinesCleanedButton() {
     setSaved(false)
 
     try {
-      const response = await fetch(`/api/locations/${encodeURIComponent(locationId)}`, {
-        method: 'PATCH',
-        credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ markLinesCleanedToday: true }),
-      })
-
-      if (!response.ok) throw new Error(`Location update failed (${response.status})`)
-
-      const result = (await response.json()) as {
-        doc?: { linesLastCleaned?: string | null }
-        linesLastCleaned?: string | null
-      }
-      const savedValue = result.doc?.linesLastCleaned || result.linesLastCleaned
-      if (!savedValue) throw new Error('Location response is missing the saved cleaning date')
+      const savedValue = await markLinesCleaned(locationId)
 
       setFetchedLastCleaned(savedValue)
       if (collectionSlug === 'locations') setLocationFormValue(savedValue)

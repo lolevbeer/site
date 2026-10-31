@@ -4,6 +4,7 @@ import type { ComponentProps, ReactNode } from 'react'
 import type { FieldAccess, PayloadRequest, SanitizedCollectionConfig, User } from 'payload'
 import { Locations } from '@/src/collections/Locations'
 import { MarkLinesCleanedButton } from '@/src/components/admin/MarkLinesCleanedButton'
+import { markLinesCleaned } from '@/lib/admin/mark-lines-cleaned'
 
 const state = vi.hoisted(() => ({ roles: ['lead-bartender'], setValue: vi.fn() }))
 vi.mock('@payloadcms/ui', () => ({
@@ -38,6 +39,36 @@ afterEach(() => {
   cleanup()
   vi.unstubAllGlobals()
   vi.useRealTimers()
+})
+
+describe('markLinesCleaned', () => {
+  it('PATCHes the location with the today command and returns the saved date', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ doc: { linesLastCleaned: '2026-09-28T16:00:00.000Z' } }),
+    } as Response)
+    await expect(markLinesCleaned('loc 1/2')).resolves.toBe('2026-09-28T16:00:00.000Z')
+    expect(fetch).toHaveBeenCalledWith('/api/locations/loc%201%2F2', {
+      method: 'PATCH',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ markLinesCleanedToday: true }),
+    })
+  })
+
+  it('reads the saved date from a top-level response', async () => {
+    await expect(markLinesCleaned('loc-1')).resolves.toBe('2026-09-20T16:00:00.000Z')
+  })
+
+  it('throws on a non-2xx response', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce({ ok: false, status: 403 } as Response)
+    await expect(markLinesCleaned('loc-1')).rejects.toThrow('Location update failed (403)')
+  })
+
+  it('throws when the response has no saved date', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce({ ok: true, json: async () => ({ doc: {} }) } as Response)
+    await expect(markLinesCleaned('loc-1')).rejects.toThrow('missing the saved cleaning date')
+  })
 })
 
 describe('line cleaning feedback', () => {
