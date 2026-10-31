@@ -57,7 +57,7 @@ async function readNew(
   }
 }
 
-/** Menu target rows labelled 'Cans · Zelienople'; empty when the viewer reads no menus. */
+/** Menu target rows labelled 'Cans To Go · Zelienople'; empty when the viewer reads no menus. */
 async function readMenuTargets(req: PayloadRequest): Promise<AttentionInput['menuTargets']> {
   const targets = await loadMenuTargets(req).catch(() => null)
   if (!targets) return []
@@ -67,7 +67,7 @@ async function readMenuTargets(req: PayloadRequest): Promise<AttentionInput['men
       const timeline = timelines.get(menu.id)
       return {
         menuId: menu.id,
-        label: `${TYPE_LABEL[menu.type] ?? menu.type} · ${location.name}`,
+        label: `${menu.name || TYPE_LABEL[menu.type] || menu.type} · ${location.name}`,
         locationId: location.id,
         summary: timeline ? summarizeMenuTarget(timeline) : null,
       }

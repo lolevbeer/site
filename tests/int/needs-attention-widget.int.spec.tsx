@@ -133,7 +133,7 @@ describe('NeedsAttentionWidget', () => {
       rows: [
         {
           location: { id: 'loc-z', name: 'Zelienople' },
-          atLocation: [{ id: 'menu-1', type: 'cans', location: 'loc-z' }],
+          atLocation: [{ id: 'menu-1', name: 'Cans To Go', type: 'cans', location: 'loc-z' }],
           worst: 5,
         },
       ],
@@ -147,7 +147,7 @@ describe('NeedsAttentionWidget', () => {
       names: [],
     })
     const { html } = await render(admin)
-    expect(html).toContain('Cans · Zelienople')
+    expect(html).toContain('Cans To Go · Zelienople')
     expect(html).toContain('5 under')
     expect(html).toContain('href="/admin/collections/menus/menu-1"')
   })
