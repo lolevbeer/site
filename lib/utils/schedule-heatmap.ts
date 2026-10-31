@@ -6,9 +6,11 @@ import type { RecurringFoodState } from '@/src/utils/recurring-food'
 import { recurringDays, recurringOccurrences } from '@/src/utils/recurring-food'
 import { getDatesForSlotInYear, toDateKey } from './food-dates'
 
-export const WEEKS = 70 // ~16 months per window
-export const PAGES_BACK = 3 // ~4 years of history
-export const PAGES_AHEAD = 1
+// The current page starts on this week's Sunday: 8 pages back keep ~4 years of
+// history; it plus 2 pages ahead reach ~18 months out.
+export const WEEKS = 26 // ~6 months per window
+export const PAGES_BACK = 8
+export const PAGES_AHEAD = 2
 
 /** What a day has booked; drives the cell color. */
 export type DayKind = 'none' | 'event' | 'food' | 'both'
@@ -42,6 +44,19 @@ export function dedupeSchedule(rows: ScheduleRow[]): ScheduleRow[] {
     seen.add(key)
     return true
   })
+}
+
+/**
+ * Header line for one location's bookings on `today`, events before food,
+ * e.g. "Tonight: Trivia · Taco Truck" or "Tonight: nothing booked".
+ */
+export function tonightSummary(rows: ScheduleRow[], today: string): string {
+  const tonight = rows.filter((r) => r.day === today)
+  const names = [
+    ...tonight.filter((r) => r.kind === 'event'),
+    ...tonight.filter((r) => r.kind === 'food'),
+  ].map((r) => r.name || 'Untitled')
+  return `Tonight: ${names.length ? names.join(' · ') : 'nothing booked'}`
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']

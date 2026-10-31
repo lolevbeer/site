@@ -4,7 +4,7 @@
  * recurring rules expanded within the year each was set up for) under the
  * viewer's read access (overrideAccess: false + req); HeatmapGrid renders
  * the location chosen in this widget instance's settings (each location gets
- * its own widget in the default layout), paging its 16-month window client-side.
+ * its own widget in the default layout), paging its 6-month window client-side.
  */
 import type { PayloadRequest, WidgetServerProps } from 'payload'
 import { unstable_cache } from 'next/cache'
@@ -62,7 +62,7 @@ async function readSchedule(req: PayloadRequest, canEvents: boolean, canFood: bo
   const none = Promise.resolve(null)
   const years = scheduleYears(firstSunday, lastDay)
 
-  // Five 16-month windows is still only a few thousand rows; no pagination.
+  // Eleven 6-month windows is still only a few thousand rows; no pagination.
   const [events, recurringEvents, food, foodStates] = await Promise.all([
     canEvents
       ? payload.find({

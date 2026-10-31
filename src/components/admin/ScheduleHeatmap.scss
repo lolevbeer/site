@@ -1,6 +1,7 @@
 // Styles for the ScheduleHeatmap dashboard widget. Reuses Payload's global
 // .card.widget-card chrome and its semantic --color-* / --spacer-* tokens
-// (yellow uses --ramp-yellow-500; event-only mixes it with --color-bg-danger).
+// (nothing booked is --color-bg-tertiary grey; yellow uses --ramp-yellow-500;
+// event-only mixes it with --color-bg-danger).
 .schedule-heatmap {
   --hm-gap: 1px; // --hm-weeks is set inline from WEEKS by HeatmapGrid
   max-height: none; // widget-card caps height for list rows; the grid sizes itself
@@ -45,10 +46,11 @@
     aspect-ratio: 1;
     border-radius: 2px;
 
-    // Status, not volume: red = open day, orange = event without food,
-    // yellow = food only, green = both.
+    // Status, not volume: grey = open day, orange = event without food,
+    // yellow = food only, green = both. Tertiary, not secondary: secondary is
+    // too close to the card background to survive the past-day fade.
     &[data-kind='none'] {
-      background: color-mix(in srgb, var(--color-bg-danger) 55%, transparent);
+      background: var(--color-bg-tertiary);
     }
 
     // An event with no food truck needs attention, so it leans red.
@@ -83,6 +85,11 @@
       outline: 1px solid var(--color-border-selected-strong);
       outline-offset: -1px; // inset: the scrolling grid clips anything outside the cell
     }
+  }
+
+  &__tonight {
+    margin: 0;
+    color: var(--color-text-secondary);
   }
 
   &__legend {
