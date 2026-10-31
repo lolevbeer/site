@@ -17,6 +17,7 @@ import * as locationWebsiteMenus from './20260929_120000_location_website_menus'
 import * as completeBeerReviews from './20261005_090000_complete_beer_review_backfill'
 import * as publicFormIndexes from './20261005_100000_public_form_indexes'
 import * as mediaSizesToVariants from './20261013_090000_media_sizes_to_variants'
+import * as jobApplicationStatus from './20261031_160000_job_application_status'
 
 export const migrations = [
   {
@@ -83,5 +84,10 @@ export const migrations = [
     up: mediaSizesToVariants.up,
     down: mediaSizesToVariants.down,
     name: '20261013_090000_media_sizes_to_variants',
+  },
+  {
+    up: jobApplicationStatus.up,
+    down: jobApplicationStatus.down,
+    name: '20261031_160000_job_application_status',
   },
 ]

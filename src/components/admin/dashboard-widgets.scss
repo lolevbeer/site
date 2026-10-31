@@ -1,0 +1,59 @@
+// Shared layout additions for our dashboard widgets, on top of Payload's
+// .card.widget-card / .widget-card__* markup. Layout only, theme tokens only
+// (--color-*, --spacer-*, --text-*); Payload's card supplies the look.
+.lolev-widget {
+  max-height: none; // the card caps height for header + rows; the meta line needs room
+
+  // Keep Payload's five-row viewport; longer lists scroll inside the card.
+  .widget-card__rows {
+    max-height: var(--widget-card-rows-height);
+  }
+
+  // Rows stack the title over an optional note.
+  .widget-card__row-main {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+  }
+
+  .widget-card__row-title {
+    max-width: 100%;
+  }
+}
+
+// Title shrinks with an ellipsis so the header link stays on one line.
+.lolev-widget__title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lolev-widget__header-link {
+  flex-shrink: 0;
+  margin-left: auto;
+  font-size: var(--text-body-small-font-size);
+  white-space: nowrap;
+}
+
+// Secondary one-line summary under the header.
+.lolev-widget__meta {
+  margin: 0;
+  overflow: hidden;
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-small-font-size);
+  line-height: var(--text-body-small-line-height);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Secondary line inside a row, under the row title.
+.lolev-widget__note {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-small-font-size);
+  line-height: var(--text-body-small-line-height);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

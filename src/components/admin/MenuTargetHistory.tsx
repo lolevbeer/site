@@ -1,154 +1,178 @@
 /**
- * Admin dashboard widget: per location, Draft and Cans side by side, each a
- * step line of items on the menu across its saves in the last 90 days against
- * a dashed line at the menu's current targetItemCount (default 10), applied to
- * every save so history is scored against today's target. The item line is green while on
- * target; the gap to the target is shaded one step redder per item off (yellow
- * at 1, red at 6+), too many and too few alike. Each step's tooltip names the
- * save's date, counts, and who saved it; a dot marks today's count; locations
- * are ordered by their worst current miss. Blank rows don't count. Reads
- * locations, menus, menu versions, and editor names under the viewer's access.
+ * Admin dashboard "Menu tracking" widget, in two views picked by the widget's
+ * `view` setting (data only, default 'cards'):
+ *
+ * - 'cards': one card per targeted menu, worst current miss first (largest
+ *   distance from target, then lowest share on target), each showing today's
+ *   count of target, a Pill for the state (green on target, warning within 2,
+ *   error beyond), a sparkline of item counts per save against a dashed target
+ *   line, and % of days on target; the card links to the menu's edit page.
+ *   Styled by MenuTargetHistory.scss on Payload's widget-card markup.
+ * - 'chart': per location, Draft and Cans side by side, each a step line of
+ *   items on the menu across its saves in the last 90 days against a dashed
+ *   line at the menu's current targetItemCount (default 10), applied to every
+ *   save so history is scored against today's target. The item line is green
+ *   while on target; the gap to the target is shaded one step redder per item
+ *   off (yellow at 1, red at 6+), too many and too few alike. Each step's
+ *   tooltip names the save's date, counts, and who saved it; a dot marks
+ *   today's count; locations are ordered by their worst current miss.
+ *
+ * Blank rows don't count. Data comes from `loadMenuTargets`
+ * (lib/admin/menu-targets), read under the viewer's access.
  */
-import { unstable_cache } from 'next/cache'
+import { Pill } from '@payloadcms/ui'
+import Link from 'next/link'
 import type { WidgetServerProps } from 'payload'
+import type { MenuTargetHistoryWidget } from '@/src/payload-types'
+import type { ReactElement } from 'react'
+import { formatAdminURL } from 'payload/shared'
 
-import { accessKey, CACHE_TAGS } from '@/lib/utils/cache'
-import { getDateEST, getESTMidnightISO, getTodayEST } from '@/lib/utils/date'
-import { formatDate } from '@/lib/utils/formatters'
 import {
-  DEFAULT_TARGET,
-  fillFor,
-  stockedCount,
-  stockTimeline,
-  TARGETED_MENU_TYPES,
-  worstMiss,
-  type Segment,
-} from '@/lib/utils/menu-target'
-import { addDays } from '@/lib/utils/schedule-heatmap'
-import { relationshipId } from '@/src/utils/relationship-id'
+  loadMenuTargets,
+  scaleY,
+  sparklinePoints,
+  summarizeMenuTarget,
+  type MenuTargets,
+  type MenuTargetSummary,
+  type MenuTimeline,
+} from '@/lib/admin/menu-targets'
+import { getDateEST } from '@/lib/utils/date'
+import { formatDate } from '@/lib/utils/formatters'
+import { fillFor, MENU_TYPE_LABEL, TARGETED_MENU_TYPES } from '@/lib/utils/menu-target'
+import './dashboard-widgets.scss'
+import './MenuTargetHistory.scss'
 
-import { editorNames } from './editor-names'
-
-const DAYS = 90
 const W = 300
 const H = 96
-const TYPE_LABEL: Record<string, string> = { cans: 'Cans', draft: 'Draft' }
-// Only what the timeline reads; versions otherwise carry every menu field.
-const VERSION_SELECT = {
-  parent: true,
-  updatedAt: true,
-  version: { items: { product: true }, updatedBy: true },
-} as const
+const SPARK_W = 120
+const SPARK_H = 32
 
 const diffLabel = (d: number) =>
   d === 0 ? 'on target' : `${Math.abs(d)} ${d < 0 ? 'under' : 'over'}`
 const dayLabel = (t: number) => formatDate(getDateEST(t))
 
-/**
- * The widget's data, cached per user (menu read access varies by role and
- * location) as plain JSON: Maps become entry arrays. The revalidation plugin
- * clears 'menus' on every published save; `today` in the key rolls the 90-day
- * window at EST midnight.
- */
-const loadMenuTargets = (req: WidgetServerProps['req']) =>
-  unstable_cache(
-    () => readMenuTargets(req),
-    ['dashboard-menu-target-v1', accessKey(req), getTodayEST()],
-    { tags: [CACHE_TAGS.menus, CACHE_TAGS.locations], revalidate: 3600 },
-  )()
-
-async function readMenuTargets(req: WidgetServerProps['req']) {
-  const { payload } = req
-  const since = getESTMidnightISO(addDays(getTodayEST(), -DAYS))
-  const versionQuery = { collection: 'menus', select: VERSION_SELECT, depth: 0, req } as const
-  // ponytail: unpaginated reads; fine at a few saves per menu per day (maxPerDoc 1000).
-  const [menus, versions, older, locations] = await Promise.all([
-    payload.find({
-      collection: 'menus',
-      where: { type: { in: [...TARGETED_MENU_TYPES] } },
-      select: { type: true, location: true, targetItemCount: true },
-      depth: 0,
-      limit: 100,
-      overrideAccess: false,
-      req,
-    }),
-    payload.findVersions({
-      ...versionQuery,
-      where: { updatedAt: { greater_than_equal: since } },
-      sort: 'updatedAt',
-      limit: 2000,
-      overrideAccess: false,
-    }),
-    // Newest-first saves before the window; the first per menu is its opening state.
-    payload.findVersions({
-      ...versionQuery,
-      where: { updatedAt: { less_than: since } },
-      sort: '-updatedAt',
-      limit: 2000,
-      overrideAccess: false,
-    }),
-    payload.find({
-      collection: 'locations',
-      select: { name: true },
-      sort: 'name',
-      depth: 0,
-      limit: 100,
-      overrideAccess: false,
-      req,
-    }),
-  ])
-  if (menus.docs.length === 0) return null
-
-  // Window runs to the end of today; the last save holds until then.
-  const end = Date.parse(getESTMidnightISO(addDays(getTodayEST(), 1)))
-  const byMenu = new Map<string, (typeof versions.docs)[number][]>()
-  for (const v of older.docs) {
-    const id = String(v.parent)
-    if (!byMenu.has(id)) byMenu.set(id, [{ ...v, updatedAt: since }])
-  }
-  for (const v of versions.docs) {
-    const id = String(v.parent)
-    const list = byMenu.get(id)
-    if (list) list.push(v)
-    else byMenu.set(id, [v])
-  }
-  const timelines = new Map(
-    menus.docs.map((menu) => [
-      menu.id,
-      stockTimeline(
-        (byMenu.get(menu.id) ?? []).map((v) => ({
-          updatedAt: v.updatedAt,
-          items: stockedCount(v.version.items),
-          editor: v.version.updatedBy ? relationshipId(v.version.updatedBy) : undefined,
-        })),
-        menu.targetItemCount ?? DEFAULT_TARGET,
-        end,
-      ),
-    ]),
-  )
-  const names = await editorNames(
-    req,
-    [...timelines.values()].flatMap((t) => t.segments.map((g) => g.editor)),
-  )
-
-  // Each location's menus by type, ordered by their worst current miss.
-  const rows = locations.docs
-    .map((location) => {
-      const atLocation = menus.docs.filter((m) => relationshipId(m.location) === location.id)
-      const worst = worstMiss(
-        atLocation.map((m) => timelines.get(m.id)?.segments.at(-1)?.diff ?? 0),
-      )
-      return { location, atLocation, worst }
-    })
-    .filter((r) => r.atLocation.length > 0)
-    .sort((a, b) => b.worst - a.worst)
-
-  return { rows, end, timelines: [...timelines], names: [...names] }
-}
-
-export async function MenuTargetHistory({ req }: WidgetServerProps) {
+export async function MenuTargetHistory({
+  req,
+  widgetData,
+}: WidgetServerProps<MenuTargetHistoryWidget>): Promise<ReactElement | null> {
   const data = await loadMenuTargets(req)
   if (!data) return null
+  if (widgetData?.view === 'chart') return <MenuTargetChart data={data} />
+  return <MenuTargetCards data={data} adminRoute={req.payload.config.routes.admin} />
+}
+
+type Card = { id: string; name: string; location: string; summary: MenuTargetSummary | null }
+
+/** Worst miss first: largest distance from target, then lowest share on target; no saves last. */
+function byWorstMiss(a: Card, b: Card): number {
+  if (!a.summary || !b.summary) return (a.summary ? 0 : 1) - (b.summary ? 0 : 1)
+  return (
+    Math.abs(b.summary.diff) - Math.abs(a.summary.diff) ||
+    a.summary.shareOnTarget - b.summary.shareOnTarget
+  )
+}
+
+/** Pill text and style for a menu's current state. */
+function statePill(summary: MenuTargetSummary): {
+  text: string
+  style: 'success' | 'warning' | 'error'
+} {
+  if (summary.diff === 0) return { text: 'On target', style: 'success' }
+  return {
+    text: diffLabel(summary.diff),
+    style: Math.abs(summary.diff) <= 2 ? 'warning' : 'error',
+  }
+}
+
+/** Default view: one linked card per menu, worst miss first. */
+function MenuTargetCards({
+  data,
+  adminRoute,
+}: {
+  data: MenuTargets
+  adminRoute: string
+}): ReactElement {
+  const timelines = new Map(data.timelines)
+  const cards: Card[] = data.rows
+    .flatMap(({ location, atLocation }) =>
+      atLocation.map((menu) => {
+        const timeline = timelines.get(menu.id)
+        return {
+          id: menu.id,
+          name: menu.name,
+          location: location.name,
+          summary: timeline ? summarizeMenuTarget(timeline) : null,
+        }
+      }),
+    )
+    .sort(byWorstMiss)
+
+  return (
+    <div className="card widget-card lolev-widget menu-targets">
+      <div className="widget-card__header">
+        <h3 className="widget-card__title">Menu tracking</h3>
+      </div>
+      <ul className="menu-targets__cards">
+        {cards.map(({ id, name, location, summary }) => {
+          const pill = summary && statePill(summary)
+          const spark = summary && sparklinePoints(summary.series, summary.target, SPARK_W, SPARK_H)
+          return (
+            <li key={id}>
+              <Link
+                className="menu-targets__card"
+                href={formatAdminURL({
+                  adminRoute,
+                  path: `/collections/menus/${encodeURIComponent(id)}`,
+                })}
+              >
+                <span className="menu-targets__head">
+                  <strong className="menu-targets__name">{name}</strong>
+                  <span className="menu-targets__location">{location}</span>
+                </span>
+                {summary && pill && spark ? (
+                  <>
+                    <span className="menu-targets__state">
+                      <span className="menu-targets__count">
+                        {summary.count} of {summary.target}
+                      </span>
+                      <Pill pillStyle={pill.style} size="small">
+                        {pill.text}
+                      </Pill>
+                    </span>
+                    <svg
+                      className="menu-targets__spark"
+                      viewBox={`0 0 ${SPARK_W} ${SPARK_H}`}
+                      preserveAspectRatio="none"
+                      role="img"
+                      aria-label={`${name}: ${summary.count} items, target ${summary.target}`}
+                    >
+                      <line
+                        className="menu-targets__spark-target"
+                        x1={0}
+                        x2={SPARK_W}
+                        y1={spark.targetY}
+                        y2={spark.targetY}
+                      />
+                      <polyline className="menu-targets__spark-line" points={spark.points} />
+                    </svg>
+                    <span className="menu-targets__share">
+                      {summary.shareOnTarget}% of days on target
+                    </span>
+                  </>
+                ) : (
+                  <span className="menu-targets__share">No saves yet</span>
+                )}
+              </Link>
+            </li>
+          )
+        })}
+      </ul>
+    </div>
+  )
+}
+
+/** 'chart' view: per location, Draft and Cans step charts side by side. */
+function MenuTargetChart({ data }: { data: MenuTargets }): ReactElement {
   const { rows, end } = data
   const timelines = new Map(data.timelines)
   const names = new Map(data.names)
@@ -169,8 +193,8 @@ export async function MenuTargetHistory({ req }: WidgetServerProps) {
               return timeline ? (
                 <MenuChart
                   key={type}
-                  label={`${location.name} ${TYPE_LABEL[type]}`}
-                  title={TYPE_LABEL[type]}
+                  label={`${location.name} ${MENU_TYPE_LABEL[type]}`}
+                  title={MENU_TYPE_LABEL[type]}
                   end={end}
                   names={names}
                   {...timeline}
@@ -197,15 +221,13 @@ function MenuChart({
   onTargetShare,
   end,
   names,
-}: {
+}: MenuTimeline & {
   label: string
   title: string
-  segments: Segment[]
-  onTargetShare: number
   end: number
   names: Map<string, string>
 }) {
-  const last = segments.at(-1)
+  const last = summarizeMenuTarget({ segments, onTargetShare })
   if (!last) {
     return (
       <div>
@@ -218,20 +240,20 @@ function MenuChart({
   const from = segments[0].start
   const x = (t: number) => ((t - from) / Math.max(end - from, 1)) * W
   // Y spans the data around the target, padded by 1, so small misses are visible.
-  const values = segments.flatMap((g) => [g.items, g.target])
-  const lo = Math.max(0, Math.min(...values) - 1)
-  const hi = Math.max(...values) + 1
-  const y = (n: number) => H - ((n - lo) / Math.max(hi - lo, 1)) * H
+  const { lo, hi, y } = scaleY(
+    segments.flatMap((g) => [g.items, g.target]),
+    H,
+  )
   const step = (key: 'items' | 'target') =>
     segments.map((g, i) => `${i ? 'V' : 'M' + x(g.start) + ' '}${y(g[key])} H${x(g.end)}`).join(' ')
-  const share = Math.round(onTargetShare * 100)
+  const share = last.shareOnTarget
 
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, marginBottom: 10 }}>
         <strong>{title}</strong>
         <span>
-          {last.items} / {last.target} · {/* Text stays in ink; the swatch carries the color. */}
+          {last.count} / {last.target} · {/* Text stays in ink; the swatch carries the color. */}
           <span
             aria-hidden
             style={{
@@ -281,7 +303,7 @@ function MenuChart({
             height={H}
             preserveAspectRatio="none"
             role="img"
-            aria-label={`${label}: ${last.items} items, target ${last.target}, ${diffLabel(last.diff)}; on target ${share}% of the time`}
+            aria-label={`${label}: ${last.count} items, target ${last.target}, ${diffLabel(last.diff)}; on target ${share}% of the time`}
             style={{ overflow: 'visible' }}
           >
             {segments.map((g, i) =>
@@ -352,7 +374,7 @@ function MenuChart({
             style={{
               position: 'absolute',
               right: -5,
-              top: y(last.items) - 5,
+              top: y(last.count) - 5,
               width: 10,
               height: 10,
               borderRadius: '50%',

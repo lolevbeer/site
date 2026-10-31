@@ -1,0 +1,20 @@
+// Inbox widget layout (InboxWidget / InboxRows), on top of Payload's
+// widget-card markup and the shared dashboard-widgets.scss. Theme tokens only.
+.inbox-widget {
+  // Each row is a framed card holding links and a button, not one whole-row link.
+  .inbox-widget__row:hover {
+    background: var(--color-bg);
+  }
+
+  .widget-card__row-meta {
+    font-size: var(--text-body-small-font-size);
+  }
+
+  // Kind label ("Event", "Donation", "Job") above the row title.
+  .widget-card__type {
+    color: var(--color-text-secondary);
+    font-size: var(--text-body-small-font-size);
+    line-height: var(--text-body-small-line-height);
+    text-transform: uppercase;
+  }
+}

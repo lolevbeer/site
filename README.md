@@ -203,15 +203,21 @@ is the system queue, separate from hiring.
   skip the recurring date explicitly.
 - **Inboxes:** Changing inquiry or donation status does not send a reply or create
   a booking. On a donation request, the sidebar **Email requester** button opens
-  your own email app with a summary of the request filled in. The **Donation
-  requests** dashboard widget (add it from the dashboard; pick New, Approved,
-  Declined, or All in its settings) lists requests with the same **Email**
-  button on each row. Job Applications has no new pipeline/status field. A published job
-  opening is visible immediately; its closing date alone does not hide it.
+  your own email app with a summary of the request filled in. The dashboard
+  **Inbox** widget lists new inquiries, donation requests and job applications
+  with the same **Email** link on each row. Job applications have a **Review
+  status** (New, Reviewed; applications from before Oct 31, 2026 start as
+  Reviewed). A published job opening is visible immediately; its closing date
+  alone does not hide it.
 
 ## Admin dashboard
 
-- **Schedule heatmap** — booking status per EST day — red nothing, orange event without food, yellow food only, green both — 16 months at a time with ‹ › arrows to page back through history, filterable by location (recurring rules fill only the year they were set up for); click a day to open that day's list. Counts follow your read access. Users with a saved dashboard layout must add the widget manually.
+Widgets use Payload's own widget card, `Pill`, `Button`, `Tabs`, `Tooltip`, document drawer and toasts; every read and status change runs as the signed-in user, so each role sees only what its access allows. Someone with no saved layout gets a default per role (`src/admin/dashboard-layout.ts`): office roles get Needs attention, Recents & pinned, Inbox, Menu tracking and one schedule per location; bartenders and lead bartenders get Needs attention plus their own locations' menus and schedules. A saved layout is never changed: add widgets from **Dashboard → Edit Dashboard → Add +**, or reset the dashboard to get the default.
+
+- **Needs attention** — one row per thing to act on: draft lines due or overdue for cleaning (with **Mark cleaned**; admins see every location, lead bartenders their assigned ones), new inquiries, donation requests and job applications (count and oldest wait), and menus more than 2 items off target. Bartenders with several locations switch with tabs; the widget setting can pin one location. This replaces the old lines-cleaned banner.
+- **Inbox** — new inquiries, donation requests and job applications in one list, oldest first, with tabs per kind. A name opens the record in a drawer; **Email** opens your mail app with a summary; **Mark contacted**, **Approve** or **Mark reviewed** changes status only (no email is sent). The widget setting can limit it to one kind; saved **Donation requests** widgets now show the Inbox limited to donation requests.
+- **Menu tracking** — one card per draft/cans menu, worst miss first: items on the menu against its target, a status pill, a sparkline and the share of days on target over the last 90 days. Set the widget's view to **History chart** for the full step chart.
+- **Schedule heatmap** — booking status per EST day — grey nothing booked, orange event without food, yellow food only, green both — 6 months at a time with ‹ › arrows to page back about 4 years and ahead about 18 months, filterable by location (recurring rules fill only the year they were set up for). A **Tonight** line lists today's bookings; hover or focus a day for its details and click it to open that day's list. Counts follow your read access.
 - **Menu items** — compact, single-line beer/product rows in menu order, with ABV when available and promotions below the item. The heading and explicit **Edit menu** link open the menu editor; each item opens its record. Hover an item for its full name/style/ABV, or the location caption for the full location name. Long lists scroll inside the widget. Open **Dashboard → Edit Dashboard → Add + → Menu items**, then use the widget's edit button to choose a menu and **All menu items**, **Beers only**, or **Products only**. Add an instance for each menu you want to track; settings and widths are independent, including multiple views of the same menu. Save the widget settings, then **Save changes** on the dashboard to keep the layout. Menu and relationship reads follow the signed-in user's access; blank slots and unreadable items are omitted. No widgets are added to existing layouts automatically.
 
 ## Globals

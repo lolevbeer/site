@@ -839,6 +839,14 @@ exports[`persistent field contracts > job-applications retains its stored paths 
   "slackNotifiedAt": {
     "type": "date",
   },
+  "status": {
+    "defaultValue": "new",
+    "options": [
+      "new",
+      "reviewed",
+    ],
+    "type": "select",
+  },
   "submissionKey": {
     "type": "text",
     "unique": true,

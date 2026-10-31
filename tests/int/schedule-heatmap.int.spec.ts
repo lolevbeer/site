@@ -1,6 +1,7 @@
 /**
  * Pure helpers behind the admin schedule heatmap widget: grid layout,
- * per-year recurring slot projection, month header spans, and booking dedupe.
+ * per-year recurring slot projection, month header spans, booking dedupe,
+ * the window length, and the "Tonight:" summary.
  */
 import { describe, expect, it } from 'vitest'
 
@@ -9,6 +10,8 @@ import {
   dedupeSchedule,
   monthSpans,
   slotDatesInRange,
+  tonightSummary,
+  WEEKS,
   type ScheduleRow,
 } from '@/lib/utils/schedule-heatmap'
 
@@ -79,5 +82,40 @@ describe('dedupeSchedule', () => {
       location: 'loc-1',
     })
     expect(dedupeSchedule([event('Trivia'), event(' trivia ')])).toHaveLength(1)
+  })
+})
+
+describe('WEEKS', () => {
+  it('shows about six months per window', () => {
+    expect(WEEKS).toBe(26)
+  })
+})
+
+describe('tonightSummary', () => {
+  const row = (kind: ScheduleRow['kind'], name: string, day = '2026-10-31'): ScheduleRow => ({
+    day,
+    kind,
+    name,
+    location: 'loc-1',
+  })
+
+  it('says nothing is booked when today has no rows', () => {
+    expect(tonightSummary([row('event', 'Trivia', '2026-11-01')], '2026-10-31')).toBe(
+      'Tonight: nothing booked',
+    )
+  })
+
+  it('names the one booking', () => {
+    expect(tonightSummary([row('food', 'Taco Truck')], '2026-10-31')).toBe('Tonight: Taco Truck')
+  })
+
+  it('lists events before food, skipping other days', () => {
+    const rows = [
+      row('food', 'Taco Truck'),
+      row('event', 'Trivia'),
+      row('event', 'Bingo', '2026-10-30'),
+      row('event', ''),
+    ]
+    expect(tonightSummary(rows, '2026-10-31')).toBe('Tonight: Trivia · Untitled · Taco Truck')
   })
 })

@@ -12,10 +12,11 @@ import { SlackChannelTestButton as SlackChannelTestButton_38589035e16c1a3c89c1a5
 import { AdminIcon as AdminIcon_3cd799f05ab0794410a063fc246d88cb } from '@/src/components/AdminLogo'
 import { AdminLogo as AdminLogo_3cd799f05ab0794410a063fc246d88cb } from '@/src/components/AdminLogo'
 import { SyncNavLink as SyncNavLink_d656220869059dfb87e573ae59f98b9f } from '@/src/components/SyncNavLink'
-import { LinesCleanedAlert as LinesCleanedAlert_cd2a45d43757864ac10ad04ad5d94aa2 } from '@/src/components/admin/LinesCleanedAlert'
 import { SyncView as SyncView_d4a55995137be8d8e874f993f349f672 } from '@/src/components/SyncView'
 import { ScheduleHeatmap as ScheduleHeatmap_65e01fac2cc928f8fd2584422dde9786 } from '@/src/components/admin/ScheduleHeatmap'
-import { DonationRequestsWidget as DonationRequestsWidget_d186c3b221df2da83a4735cb98726436 } from '@/src/components/admin/DonationRequestsWidget'
+import { NeedsAttentionWidget as NeedsAttentionWidget_776f944cf0aceb55366c7339a5fc9e1b } from '@/src/components/admin/NeedsAttentionWidget'
+import { InboxWidget as InboxWidget_887c176a1602b282f2b805a6a90a5fd5 } from '@/src/components/admin/InboxWidget'
+import { DonationRequestsInboxWidget as DonationRequestsInboxWidget_887c176a1602b282f2b805a6a90a5fd5 } from '@/src/components/admin/InboxWidget'
 import { MenuTargetHistory as MenuTargetHistory_6e7978d5a59943049707cc48ef4b312d } from '@/src/components/admin/MenuTargetHistory'
 import { MenuItems as MenuItems_c29aa656038a04d749bad9276d4f1f1e } from '@/src/components/admin/MenuItems'
 import { WelcomeWidget as WelcomeWidget_ab83ff7e88da8d3530831f296ec4756a } from '@payloadcms/ui/rsc'
@@ -43,10 +44,11 @@ export const importMap = {
   "@/src/components/AdminLogo#AdminIcon": AdminIcon_3cd799f05ab0794410a063fc246d88cb,
   "@/src/components/AdminLogo#AdminLogo": AdminLogo_3cd799f05ab0794410a063fc246d88cb,
   "@/src/components/SyncNavLink#SyncNavLink": SyncNavLink_d656220869059dfb87e573ae59f98b9f,
-  "@/src/components/admin/LinesCleanedAlert#LinesCleanedAlert": LinesCleanedAlert_cd2a45d43757864ac10ad04ad5d94aa2,
   "@/src/components/SyncView#SyncView": SyncView_d4a55995137be8d8e874f993f349f672,
   "@/src/components/admin/ScheduleHeatmap#ScheduleHeatmap": ScheduleHeatmap_65e01fac2cc928f8fd2584422dde9786,
-  "@/src/components/admin/DonationRequestsWidget#DonationRequestsWidget": DonationRequestsWidget_d186c3b221df2da83a4735cb98726436,
+  "@/src/components/admin/NeedsAttentionWidget#NeedsAttentionWidget": NeedsAttentionWidget_776f944cf0aceb55366c7339a5fc9e1b,
+  "@/src/components/admin/InboxWidget#InboxWidget": InboxWidget_887c176a1602b282f2b805a6a90a5fd5,
+  "@/src/components/admin/InboxWidget#DonationRequestsInboxWidget": DonationRequestsInboxWidget_887c176a1602b282f2b805a6a90a5fd5,
   "@/src/components/admin/MenuTargetHistory#MenuTargetHistory": MenuTargetHistory_6e7978d5a59943049707cc48ef4b312d,
   "@/src/components/admin/MenuItems#MenuItems": MenuItems_c29aa656038a04d749bad9276d4f1f1e,
   "@payloadcms/ui/rsc#WelcomeWidget": WelcomeWidget_ab83ff7e88da8d3530831f296ec4756a,

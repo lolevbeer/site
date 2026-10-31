@@ -3,7 +3,7 @@ import { mongooseAdapter } from '@payloadcms/db-mongodb'
 import { resendAdapter } from '@payloadcms/email-resend'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'path'
-import { buildConfig, type CollectionConfig } from 'payload'
+import { buildConfig, type CollectionConfig, type WidgetInstance } from 'payload'
 import { fileURLToPath } from 'url'
 import { sharpTransformer } from '@payloadcms/transformer-sharp'
 import { revalidationPlugin } from './plugins/revalidation-plugin'
@@ -39,6 +39,7 @@ import { importDistributorsCsv } from './endpoints/import-distributors-csv'
 import { updateDistributorUrls } from './endpoints/update-distributor-urls'
 import { recalculateBeerPrices } from './endpoints/recalculate-beer-prices'
 import { adminAccess, hasRole } from './access/roles'
+import { defaultDashboardLayout } from './admin/dashboard-layout'
 import { syncUntappdRatingsTask } from './jobs/sync-untappd-ratings'
 import { getLocalDevOrigins } from '../lib/config/payload-origins'
 import { readServerEnvironment } from '../lib/config/server-env'
@@ -175,27 +176,63 @@ export default buildConfig({
           fields: [{ name: 'location', type: 'relationship', relationTo: 'locations' }],
         },
         {
-          slug: 'donation-requests',
-          label: 'Donation requests',
-          Component: '@/src/components/admin/DonationRequestsWidget#DonationRequestsWidget',
+          slug: 'needs-attention',
+          label: 'Needs attention',
+          Component: '@/src/components/admin/NeedsAttentionWidget#NeedsAttentionWidget',
+          minWidth: 'medium',
           fields: [
             {
-              name: 'status',
+              name: 'location',
+              type: 'relationship',
+              relationTo: 'locations',
+              admin: {
+                description:
+                  'Leave empty for every location you can act on; pick one to pin this widget to it.',
+              },
+            },
+          ],
+        },
+        {
+          slug: 'inbox',
+          label: 'Inbox',
+          Component: '@/src/components/admin/InboxWidget#InboxWidget',
+          minWidth: 'medium',
+          fields: [
+            {
+              name: 'kind',
+              label: 'Show',
               type: 'select',
-              defaultValue: 'new',
+              defaultValue: 'all',
               options: [
-                { label: 'New', value: 'new' },
-                { label: 'Approved', value: 'approved' },
-                { label: 'Declined', value: 'declined' },
-                { label: 'All', value: 'all' },
+                { label: 'Everything', value: 'all' },
+                { label: 'Event inquiries', value: 'events' },
+                { label: 'Donation requests', value: 'donations' },
+                { label: 'Job applications', value: 'jobs' },
               ],
             },
           ],
         },
         {
+          // Kept so dashboards saved with the old Donation requests widget still render.
+          slug: 'donation-requests',
+          label: 'Donation requests',
+          Component: '@/src/components/admin/InboxWidget#DonationRequestsInboxWidget',
+        },
+        {
           slug: 'menu-target-history',
           label: 'Menu tracking',
           Component: '@/src/components/admin/MenuTargetHistory#MenuTargetHistory',
+          fields: [
+            {
+              name: 'view',
+              type: 'select',
+              defaultValue: 'cards',
+              options: [
+                { label: 'Cards', value: 'cards' },
+                { label: 'History chart', value: 'chart' },
+              ],
+            },
+          ],
         },
         {
           slug: 'menu-items',
@@ -225,28 +262,34 @@ export default buildConfig({
           ],
         },
       ],
-      // Built-ins re-listed because setting defaultLayout replaces Payload's default.
-      // One half-width schedule per location, read as the signed-in user.
+      // Per role (src/admin/dashboard-layout.ts), from locations and menus read as the
+      // signed-in user. Applies only to people without a saved dashboard.
       defaultLayout: async ({ req }) => {
-        const { docs } = await req.payload.find({
-          collection: 'locations',
-          depth: 0,
-          pagination: false,
-          select: { name: true },
-          sort: 'name',
-          overrideAccess: false,
-          req,
-        })
-        return [
-          { widgetSlug: 'collections', width: 'full' },
-          ...docs.map((l) => ({
-            widgetSlug: 'schedule-heatmap' as const,
-            width: 'medium' as const,
-            data: { location: l.id },
-          })),
-          { widgetSlug: 'menu-target-history', width: 'medium' },
-          { widgetSlug: 'activity', width: 'small' },
-        ]
+        const [locations, menus] = await Promise.all([
+          req.payload.find({
+            collection: 'locations',
+            depth: 0,
+            pagination: false,
+            select: { name: true },
+            sort: 'name',
+            overrideAccess: false,
+            req,
+          }),
+          req.payload.find({
+            collection: 'menus',
+            depth: 0,
+            pagination: false,
+            select: { location: true },
+            sort: 'type',
+            overrideAccess: false,
+            req,
+          }),
+        ])
+        return defaultDashboardLayout({
+          user: req.user,
+          locations: locations.docs,
+          menus: menus.docs,
+        }) as WidgetInstance[]
       },
     },
     // Payload 4's Vercel Blob adapter registers its client upload handler only
@@ -263,7 +306,6 @@ export default buildConfig({
         Logo: '@/src/components/AdminLogo#AdminLogo',
         Icon: '@/src/components/AdminLogo#AdminIcon',
       },
-      providers: ['@/src/components/admin/LinesCleanedAlert#LinesCleanedAlert'],
       actions: [],
       afterNavLinks: ['@/src/components/SyncNavLink#SyncNavLink'],
       views: {

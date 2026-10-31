@@ -1,13 +1,14 @@
 'use client'
 /**
  * Client grid for the ScheduleHeatmap widget. Receives booking rows from the
- * server and renders the visible 16-month window for one location, with
- * ghost Buttons (‹ › paging; the range label returns to
- * today). Each day links to its filtered list, or to the recurring rules when
- * only rules book it. Cell color is booking status: red nothing, orange event without
- * food, yellow food only, green both.
+ * server and renders the visible 6-month window for one location, with
+ * ghost Buttons (‹ › paging; the range label returns to today) and a
+ * "Tonight:" line. Each day links to its filtered list, or to the recurring
+ * rules when only rules book it. Cell color is booking status: grey nothing,
+ * orange event without food, yellow food only, green both. Day details show in
+ * one Payload Tooltip on the hovered or focused cell (and as its aria-label).
  */
-import { Button, ChevronIcon } from '@payloadcms/ui'
+import { Button, ChevronIcon, Tooltip } from '@payloadcms/ui'
 import { useMemo, useState, type CSSProperties } from 'react'
 
 import { getESTMidnightISO } from '@/lib/utils/date'
@@ -18,6 +19,7 @@ import {
   monthSpans,
   PAGES_AHEAD,
   PAGES_BACK,
+  tonightSummary,
   WEEKS,
   type DayKind,
   type ScheduleRow,
@@ -69,6 +71,9 @@ export function HeatmapGrid({
   listURLs: { event: string; food: string; recurringEvent: string; recurringFood: string }
 }) {
   const [page, setPage] = useState(PAGES_BACK)
+  // Date of the hovered or focused cell; only that cell renders a Tooltip.
+  const [active, setActive] = useState<string | null>(null)
+  const tonight = useMemo(() => tonightSummary(rows, today), [rows, today])
 
   const byDay = useMemo(() => {
     const map = new Map<string, Day>()
@@ -93,7 +98,7 @@ export function HeatmapGrid({
   const from = weeks[0][0]
   const through = weeks[WEEKS - 1][6]
 
-  // Computed once per page/location: ~490 cells, two EST conversions each.
+  // Computed once per page/location: ~180 cells, two EST conversions each.
   const cells = useMemo(
     () =>
       weeks.map((week) =>
@@ -154,11 +159,16 @@ export function HeatmapGrid({
           />
         </span>
       </div>
+      <p className="schedule-heatmap__tonight">{tonight}</p>
       <div
         role="grid"
         aria-labelledby={`hm-title-${location.id}`}
         className="schedule-heatmap__grid"
         style={{ '--hm-weeks': WEEKS } as CSSProperties}
+        onMouseOver={(e) => setActive((e.target as HTMLElement).dataset.date ?? null)}
+        onMouseLeave={() => setActive(null)}
+        onFocus={(e) => setActive(e.target.dataset.date ?? null)}
+        onBlur={() => setActive(null)}
       >
         <div className="schedule-heatmap__row" aria-hidden="true">
           <span />
@@ -184,10 +194,18 @@ export function HeatmapGrid({
                   role="gridcell"
                   key={date}
                   href={href}
-                  title={label}
+                  aria-label={label}
+                  data-date={date}
                   data-kind={kind}
                   className={`schedule-heatmap__cell${date === today ? ' is-today' : ''}${date < today ? ' is-past' : ''}`}
-                />
+                >
+                  {/* aria-hidden: the cell's aria-label already reads the same text. */}
+                  {date === active && (
+                    <Tooltip aria-hidden delay={0}>
+                      {label}
+                    </Tooltip>
+                  )}
+                </a>
               )
             })}
           </div>
