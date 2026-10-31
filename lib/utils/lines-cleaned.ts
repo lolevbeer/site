@@ -2,8 +2,7 @@
  * Shared line-cleaning cadence: days-since math and the warn/overdue
  * thresholds, plus the warning/error level the admin alerts show, so the
  * cleaning schedule lives in exactly one place. Read by the admin surfaces
- * (LinesCleanedAlert, MarkLinesCleanedButton, the dashboard's needs-attention
- * rows) and by the
+ * (MarkLinesCleanedButton and the dashboard's needs-attention rows) and by the
  * customer-facing /m draft displays (featured-menu.tsx) — it lives here rather
  * than under src/components/admin so nothing pulls admin code into the public
  * bundle.
