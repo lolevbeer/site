@@ -1,6 +1,7 @@
 /**
  * Dashboard widget listing one menu's beers and/or products (picked in the
- * widget's settings), each linking to its admin edit page.
+ * widget's settings), each linking to its admin edit page. Renders Payload's
+ * widget-card markup plus the shared dashboard-widgets.scss layout classes.
  */
 import Link from 'next/link'
 import type { WidgetServerProps } from 'payload'
@@ -9,6 +10,7 @@ import { formatAbv } from '@/lib/utils/formatters'
 import { extractBeerFromMenuItem, extractProductFromMenuItem } from '@/lib/utils/menu-item-utils'
 import { relationshipId } from '@/src/utils/relationship-id'
 import type { MenuItemsWidget } from '@/src/payload-types'
+import './dashboard-widgets.scss'
 
 /**
  * The menu with only the fields the widget renders. Not cached: draft-only
@@ -43,7 +45,6 @@ export async function MenuItems({ req, widgetData }: WidgetServerProps<MenuItems
   const noun = kind === 'beers' || kind === 'products' ? kind : 'items'
   const locationName =
     menu && typeof menu.location === 'object' && menu.location ? menu.location.name : undefined
-  const ellipsis = { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } as const
   const items = (menu?.items || []).flatMap((item, index) => {
     const beer = extractBeerFromMenuItem(item)
     const product = extractProductFromMenuItem(item)
@@ -67,18 +68,9 @@ export async function MenuItems({ req, widgetData }: WidgetServerProps<MenuItems
   })
 
   return (
-    <div className="card widget-card" style={{ maxHeight: 'none', padding: 12, gap: 0 }}>
-      <div className="widget-card__header" style={{ marginBottom: 4, gap: 8 }}>
-        <h3
-          className="widget-card__title"
-          style={{
-            fontSize: 16,
-            lineHeight: 1.25,
-            margin: 0,
-            minWidth: 0,
-            ...ellipsis,
-          }}
-        >
+    <div className="card widget-card lolev-widget">
+      <div className="widget-card__header">
+        <h3 className="widget-card__title lolev-widget__title">
           {menu ? (
             <Link href={adminURL('menus', menu.id)} title={menu.name}>
               {menu.name}
@@ -89,84 +81,50 @@ export async function MenuItems({ req, widgetData }: WidgetServerProps<MenuItems
         </h3>
         {menu && (
           <Link
+            className="lolev-widget__header-link"
             href={adminURL('menus', menu.id)}
             aria-label={`Edit menu: ${menu.name}`}
-            style={{ fontSize: 12, flexShrink: 0, whiteSpace: 'nowrap' }}
           >
             Edit menu
           </Link>
         )}
       </div>
       {!menu ? (
-        <p>
+        <p className="widget-card__empty">
           {menuId
             ? 'This menu is unavailable. Choose a readable menu in this widget’s settings.'
             : 'Choose a menu in this widget’s settings.'}
         </p>
       ) : (
         <>
-          <p
-            title={locationName}
-            style={{
-              color: 'var(--color-text-secondary)',
-              fontSize: 12,
-              margin: '0 0 6px',
-              ...ellipsis,
-            }}
-          >
+          <p className="lolev-widget__meta" title={locationName}>
             {items.length} {noun}
             {locationName ? ` · ${locationName}` : ''}
             {menu._status === 'draft' ? ' · Draft menu' : ''}
           </p>
           {items.length === 0 ? (
-            <p>No readable {noun} on this menu.</p>
+            <p className="widget-card__empty">No readable {noun} on this menu.</p>
           ) : (
-            <ul
-              style={{
-                listStyle: 'none',
-                padding: 0,
-                margin: 0,
-                maxHeight: 280,
-                overflowY: 'auto',
-              }}
-            >
+            <ul className="widget-card__rows">
               {items.map((item) => (
-                <li
-                  key={item.key}
-                  style={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    alignItems: 'baseline',
-                    justifyContent: 'space-between',
-                    gap: '2px 8px',
-                    padding: '4px 0',
-                    lineHeight: 1.3,
-                    borderTop: '1px solid var(--theme-elevation-150)',
-                  }}
-                >
+                <li key={item.key} className="widget-card__row">
                   <Link
+                    className="widget-card__row-link"
                     href={item.href}
                     title={[item.name, item.details].filter(Boolean).join(' · ')}
-                    style={{
-                      fontSize: 14,
-                      flex: 1,
-                      minWidth: 0,
-                      ...ellipsis,
-                    }}
                   >
-                    {item.name}
+                    <span className="widget-card__row-main">
+                      <span className="widget-card__row-title">{item.name}</span>
+                      {item.promotion && (
+                        <span className="lolev-widget__note">{item.promotion}</span>
+                      )}
+                    </span>
+                    {item.abv && (
+                      <span className="widget-card__row-meta" aria-label={`${item.abv} ABV`}>
+                        {item.abv}
+                      </span>
+                    )}
                   </Link>
-                  {item.abv && (
-                    <small
-                      aria-label={`${item.abv} ABV`}
-                      style={{ fontSize: 12, flexShrink: 0, color: 'var(--color-text-secondary)' }}
-                    >
-                      {item.abv}
-                    </small>
-                  )}
-                  {item.promotion && (
-                    <small style={{ flexBasis: '100%', fontSize: 12 }}>{item.promotion}</small>
-                  )}
                 </li>
               ))}
             </ul>
