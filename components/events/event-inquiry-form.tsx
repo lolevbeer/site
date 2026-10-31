@@ -2,12 +2,12 @@
 
 /**
  * Private-event inquiry form on /private-events. Asks about the event first
- * (preferred and optional backup date, flexible-date switch with an inline
- * calendar for other days, start time, length, guests, one-tap taproom and
- * occasion, drinks, who pays, food plan) so staff can quote in the first
- * reply, and contact details last; phone is optional. Company name appears
- * only when a company is paying. One column on phones. The taproom starts on the one picked in the site
- * header. Submits to the event-inquiries staff inbox (never Events).
+ * (date, guests, flexible-date switch with an inline calendar for other
+ * days, start time, length, one-tap taproom and occasion, drinks, who pays,
+ * food plan) so staff can quote in the first reply, and contact details
+ * last; phone is optional. Company name appears only when a company is
+ * paying. One column on phones. The taproom starts on the one picked in the
+ * site header. Submits to the event-inquiries staff inbox (never Events).
  * Text fields are checked on blur with the same validator the server runs;
  * server errors also show under each field and clear when it changes. On
  * success the confirmation repeats what was sent, focus moves to it, and the
@@ -253,16 +253,24 @@ export function EventInquiryForm({
                 />
               </FormField>
               <FormField
-                id="inquiry-backupDate"
-                label="Backup date (optional)"
-                error={fieldErrors.backupDate}
+                id="inquiry-headcount"
+                label="How many guests?"
+                error={fieldErrors.headcount}
               >
-                <DatePicker
-                  id="inquiry-backupDate"
-                  min={minDate}
-                  max={minDate && maximumEventDate(minDate)}
-                  value={values.backupDate}
-                  onChange={(value) => set('backupDate', value)}
+                <Input
+                  id="inquiry-headcount"
+                  name="headcount"
+                  type="number"
+                  inputMode="numeric"
+                  placeholder="e.g. 25"
+                  onBlur={() => checkField('headcount')}
+                  min={1}
+                  max={EVENT_INQUIRY_MAX_HEADCOUNT}
+                  value={values.headcount}
+                  onChange={(e) =>
+                    set('headcount', e.target.value === '' ? '' : Number(e.target.value))
+                  }
+                  required
                 />
               </FormField>
             </div>
@@ -386,27 +394,6 @@ export function EventInquiryForm({
                 </Select>
               </FormField>
             </div>
-            <FormField
-              id="inquiry-headcount"
-              label="How many guests?"
-              error={fieldErrors.headcount}
-            >
-              <Input
-                id="inquiry-headcount"
-                name="headcount"
-                type="number"
-                inputMode="numeric"
-                placeholder="e.g. 25"
-                onBlur={() => checkField('headcount')}
-                min={1}
-                max={EVENT_INQUIRY_MAX_HEADCOUNT}
-                value={values.headcount}
-                onChange={(e) =>
-                  set('headcount', e.target.value === '' ? '' : Number(e.target.value))
-                }
-                required
-              />
-            </FormField>
             <FormField id="inquiry-taproom" label="Taproom" error={fieldErrors.taproom}>
               <SegmentedControl
                 aria-label="Taproom"

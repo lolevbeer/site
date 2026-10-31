@@ -58,7 +58,7 @@ export default function PrivacyPage() {
               mission, event details, and what you are asking for.
             </li>
             <li>
-              <strong>Private-event inquiries.</strong> Name, email, phone, preferred and backup
+              <strong>Private-event inquiries.</strong> Name, email, phone, preferred and other
               dates, start time and length, number of guests, taproom, how drinks and food are
               handled, the paying company&apos;s name if a company is paying, and your note.
             </li>

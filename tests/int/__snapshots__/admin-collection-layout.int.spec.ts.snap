@@ -469,9 +469,6 @@ exports[`persistent field contracts > donation-requests retains its stored paths
 
 exports[`persistent field contracts > event-inquiries retains its stored paths and validation shape > event-inquiries 1`] = `
 {
-  "backupDate": {
-    "type": "date",
-  },
   "companyName": {
     "maxLength": 200,
     "type": "text",

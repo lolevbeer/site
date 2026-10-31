@@ -1,7 +1,7 @@
 /**
  * /private-events inquiry: always open, event details before contact details,
  * one-tap taproom (preselected from the header) and occasion buttons, quote
- * fields (backup date, start time, length, drinks, company, food) with the
+ * fields (start time, length, drinks, company, food) with the
  * company name shown only for "Yes", optional phone, fields checked on blur, a summary on success, field errors show under
  * each field, focus moves to the confirmation, the date min is client-only, and
  * an accepted inquiry sends the `event_inquiry_submitted` conversion.
@@ -55,11 +55,10 @@ describe('EventInquiryForm', () => {
     const labels = Array.from(container.querySelectorAll('label')).map((l) => l.textContent)
     expect(labels).toEqual([
       'Preferred date',
-      'Backup date (optional)',
+      'How many guests?',
       'My date is flexible',
       'Start time',
       'Length',
-      'How many guests?',
       'Taproom',
       'Occasion (optional)',
       "I'll run a host tab",
@@ -75,14 +74,13 @@ describe('EventInquiryForm', () => {
     ])
   })
 
-  it('pairs preferred with backup date and start time with length, stacks the rest', () => {
+  it('pairs date with guests and start time with length, stacks the rest', () => {
     render(<EventInquiryForm taprooms={taprooms} />)
     const row = (id: string) => document.getElementById(id)?.closest('[data-slot=field-row]')
     expect(row('inquiry-preferredDate')).toBeTruthy()
-    expect(row('inquiry-preferredDate')).toBe(row('inquiry-backupDate'))
+    expect(row('inquiry-preferredDate')).toBe(row('inquiry-headcount'))
     expect(row('inquiry-startTime')).toBeTruthy()
     expect(row('inquiry-startTime')).toBe(row('inquiry-duration'))
-    expect(row('inquiry-headcount')).toBeNull()
     expect(row('inquiry-email')).toBeNull()
     expect(row('inquiry-phone')).toBeNull()
   })
@@ -150,7 +148,6 @@ describe('EventInquiryForm', () => {
       companyPaid: 'yes',
       companyName: 'Acme',
       foodPlan: '',
-      backupDate: '',
     })
   })
 

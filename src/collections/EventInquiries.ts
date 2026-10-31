@@ -4,7 +4,7 @@
  * API is not a public drop-box and staff cannot create rows in admin.
  * Inquiries never become Events automatically.
  *
- * Quote fields (start time, length, backup date, drinks, company, food) are
+ * Quote fields (start time, length, drinks, company, food) are
  * required on the form but optional here: inquiries saved before they existed
  * show them blank and must stay editable. Filter company-paid inquiries with
  * the list view's Filters → "Company paying" is "Yes".
@@ -82,12 +82,6 @@ export const EventInquiries: CollectionConfig = {
         condition: (data) => Boolean(data?.flexibleDate),
         description: 'YYYY-MM-DD days the guest also offered.',
       },
-    },
-    {
-      name: 'backupDate',
-      type: 'date',
-      label: 'Backup date',
-      admin: { date: { pickerAppearance: 'dayOnly', displayFormat: 'MMM d, yyyy' } },
     },
     {
       type: 'row',

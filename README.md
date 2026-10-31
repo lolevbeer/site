@@ -225,7 +225,7 @@ dev, CI) Payload's console adapter logs each email instead of sending it.
 - **Admin password reset** — the `/admin` "Forgot password?" form emails a
   one-time link (valid 1 hour).
 - **Private-event inquiry** — `lib/events/inquiry-email.ts` emails every field
-  (start time, length, backup date, drinks, company, food plan included), one
+  (start time, length, other dates, drinks, company, food plan included), one
   labeled line each, to `events@lolev.beer` with the subject
   "Event inquiry: name, event type, date, taproom" and Reply-To set to the
   visitor, so the first reply can carry a quote. It also sends the visitor a

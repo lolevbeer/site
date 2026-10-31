@@ -889,7 +889,6 @@ export interface EventInquiry {
    * YYYY-MM-DD days the guest also offered.
    */
   otherDates?: string[] | null;
-  backupDate?: string | null;
   /**
    * 24-hour, Eastern (18:30 is 6:30pm).
    */
@@ -1870,7 +1869,6 @@ export interface EventInquiriesSelect<T extends boolean = true> {
   preferredDate?: T;
   flexibleDate?: T;
   otherDates?: T;
-  backupDate?: T;
   startTime?: T;
   duration?: T;
   drinks?: T;

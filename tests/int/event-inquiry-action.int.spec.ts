@@ -139,7 +139,6 @@ describe('submitEventInquiry', () => {
     })
     expect(args.data.companyName).toBeUndefined()
     expect(args.data.foodPlan).toBeUndefined()
-    expect(args.data.backupDate).toBeUndefined()
     const locationsRead = find.mock.calls.find(([a]) => a.collection === 'locations')
     expect(locationsRead?.[0]).toMatchObject({ overrideAccess: false })
 
@@ -180,7 +179,8 @@ describe('submitEventInquiry', () => {
     await submitEventInquiry({
       ...valid(),
       occasion: 'work',
-      backupDate: '2026-11-21',
+      flexibleDate: true,
+      otherDates: ['2026-11-21', '2026-11-27'],
       duration: '5h+',
       drinks: 'host-tab',
       companyPaid: 'yes',
@@ -198,9 +198,8 @@ describe('submitEventInquiry', () => {
       'Phone: 412-555-0100',
       'Event type: Work event',
       'Taproom: Lawrenceville',
-      'Preferred date: 2026-11-20',
-      'Backup date: 2026-11-21',
-      'Other dates: —',
+      'Preferred date: 2026-11-20 (flexible)',
+      'Other dates: 2026-11-21, 2026-11-27',
       'Start time: 6:30pm',
       'Length: 5+ hours',
       'Guests: 30',
@@ -214,15 +213,13 @@ describe('submitEventInquiry', () => {
     }
   })
 
-  it('stores the backup day at noon Eastern and the company name when a company pays', async () => {
+  it('stores the company name when a company pays', async () => {
     await submitEventInquiry({
       ...valid(),
-      backupDate: '2026-11-21',
       companyPaid: 'yes',
       companyName: 'Acme Corp',
     })
     expect(create.mock.calls[0][0].data).toMatchObject({
-      backupDate: '2026-11-21T17:00:00.000Z',
       companyPaid: 'yes',
       companyName: 'Acme Corp',
     })

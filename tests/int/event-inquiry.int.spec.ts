@@ -74,12 +74,11 @@ describe('validateEventInquiry', () => {
       validateEventInquiry({ ...valid(), ...patch }, TODAY, TAPROOMS)
 
     it('keeps the quote fields on a valid inquiry', () => {
-      expect(check({ backupDate: '2026-11-21', foodPlan: 'food-truck' })).toMatchObject({
+      expect(check({ foodPlan: 'food-truck' })).toMatchObject({
         ok: true,
         value: {
           startTime: '18:30',
           duration: '4h',
-          backupDate: '2026-11-21',
           drinks: 'host-tab',
           companyPaid: 'no',
           companyName: '',
@@ -149,21 +148,6 @@ describe('validateEventInquiry', () => {
         ok: false,
         errors: { foodPlan: 'Choose a food plan.' },
       })
-    })
-
-    it('accepts no backup date, or a different day from today up to two years out', () => {
-      expect(check({ backupDate: '' }).ok).toBe(true)
-      expect(check({ backupDate: TODAY }).ok).toBe(true)
-      expect(check({ backupDate: '2028-10-11' }).ok).toBe(true)
-    })
-
-    it.each([
-      ['2026-11-20', 'Pick a different day than the preferred date.'],
-      ['2026-10-10', 'Pick a date in the future.'],
-      ['2028-10-12', 'Pick a date within two years.'],
-      ['2026-02-30', 'Enter a backup date or leave it blank.'],
-    ])('rejects backup date %s', (backupDate, message) => {
-      expect(check({ backupDate })).toMatchObject({ ok: false, errors: { backupDate: message } })
     })
   })
 

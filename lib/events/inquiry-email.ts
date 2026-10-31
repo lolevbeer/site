@@ -48,7 +48,6 @@ export async function sendEventInquiryEmails(
     ['Event type', occasion],
     ['Taproom', inquiry.taproomName],
     ['Preferred date', date],
-    ['Backup date', inquiry.backupDate],
     ['Other dates', inquiry.otherDates.join(', ')],
     ['Start time', formatTime(inquiry.startTime)],
     ['Length', optionLabel(EVENT_INQUIRY_DURATIONS, inquiry.duration)],

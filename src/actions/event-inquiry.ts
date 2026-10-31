@@ -77,7 +77,6 @@ export async function submitEventInquiry(input: unknown): Promise<SubmitEventInq
         preferredDate,
         flexibleDate: value.flexibleDate,
         otherDates: value.otherDates,
-        backupDate: value.backupDate ? toESTDate(value.backupDate).toISOString() : undefined,
         startTime: value.startTime,
         duration: value.duration,
         drinks: value.drinks,

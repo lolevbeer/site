@@ -84,8 +84,6 @@ export interface EventInquiryInput {
   flexibleDate: boolean
   /** YYYY-MM-DD days that also work. Kept only when flexibleDate is true. */
   otherDates: string[]
-  /** Optional YYYY-MM-DD second choice; must differ from preferredDate. */
-  backupDate: string
   /** HH:MM, 24-hour, Eastern. */
   startTime: string
   /** An EVENT_INQUIRY_DURATIONS value. */
@@ -136,7 +134,6 @@ export function emptyEventInquiry(): EventInquiryInput {
     preferredDate: '',
     flexibleDate: false,
     otherDates: [],
-    backupDate: '',
     startTime: '',
     duration: '3h',
     drinks: '',
@@ -194,7 +191,6 @@ export function validateEventInquiry(
         .sort()
     : null
   const message = trimmed(parsed.message)
-  const backupDate = trimmed(parsed.backupDate)
   const startTime = trimmed(parsed.startTime)
   const duration = trimmed(parsed.duration)
   const drinks = trimmed(parsed.drinks)
@@ -211,15 +207,6 @@ export function validateEventInquiry(
   else if (preferredDate < today) errors.preferredDate = 'Pick a date in the future.'
   else if (preferredDate > maximumEventDate(today)) {
     errors.preferredDate = 'Pick a date within two years.'
-  }
-  if (backupDate) {
-    if (!isCalendarDate(backupDate)) errors.backupDate = 'Enter a backup date or leave it blank.'
-    else if (backupDate < today) errors.backupDate = 'Pick a date in the future.'
-    else if (backupDate > maximumEventDate(today)) {
-      errors.backupDate = 'Pick a date within two years.'
-    } else if (backupDate === preferredDate) {
-      errors.backupDate = 'Pick a different day than the preferred date.'
-    }
   }
   if (!START_TIME.test(startTime)) errors.startTime = 'Enter a start time.'
   if (!optionLabel(EVENT_INQUIRY_DURATIONS, duration)) errors.duration = 'Choose how long.'
@@ -261,7 +248,6 @@ export function validateEventInquiry(
       preferredDate,
       flexibleDate,
       otherDates: otherDates ?? [],
-      backupDate,
       startTime,
       // Option values are checked against their lists above.
       duration: duration as ValidatedEventInquiry['duration'],
