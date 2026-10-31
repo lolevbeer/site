@@ -469,6 +469,33 @@ exports[`persistent field contracts > donation-requests retains its stored paths
 
 exports[`persistent field contracts > event-inquiries retains its stored paths and validation shape > event-inquiries 1`] = `
 {
+  "companyName": {
+    "maxLength": 200,
+    "type": "text",
+  },
+  "companyPaid": {
+    "options": [
+      "yes",
+      "no",
+    ],
+    "type": "select",
+  },
+  "drinks": {
+    "options": [
+      "host-tab",
+      "guests-pay",
+      "not-sure",
+    ],
+    "type": "select",
+  },
+  "duration": {
+    "options": [
+      "3h",
+      "4h",
+      "5h+",
+    ],
+    "type": "select",
+  },
   "email": {
     "required": true,
     "type": "email",
@@ -476,6 +503,15 @@ exports[`persistent field contracts > event-inquiries retains its stored paths a
   "flexibleDate": {
     "defaultValue": false,
     "type": "checkbox",
+  },
+  "foodPlan": {
+    "options": [
+      "caterer",
+      "food-truck",
+      "own-food",
+      "suggestions",
+    ],
+    "type": "select",
   },
   "headcount": {
     "max": 500,
@@ -526,6 +562,10 @@ exports[`persistent field contracts > event-inquiries retains its stored paths a
   },
   "slackNotifiedAt": {
     "type": "date",
+  },
+  "startTime": {
+    "maxLength": 5,
+    "type": "text",
   },
   "status": {
     "defaultValue": "new",

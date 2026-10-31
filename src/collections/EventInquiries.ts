@@ -3,13 +3,22 @@
  * Creates only happen through the server action (overrideAccess); the REST
  * API is not a public drop-box and staff cannot create rows in admin.
  * Inquiries never become Events automatically.
+ *
+ * Quote fields (start time, length, drinks, company, food) are
+ * required on the form but optional here: inquiries saved before they existed
+ * show them blank and must stay editable. Filter company-paid inquiries with
+ * the list view's Filters → "Company paying" is "Yes".
  */
 import type { CollectionConfig } from 'payload'
 import { adminAccess, adminFieldAccess, eventManagerAccess } from '@/src/access/roles'
 import {
+  EVENT_INQUIRY_DRINKS,
+  EVENT_INQUIRY_DURATIONS,
+  EVENT_INQUIRY_FOOD_PLANS,
   EVENT_INQUIRY_MAX_HEADCOUNT,
   EVENT_INQUIRY_MAX_TEXT,
   EVENT_INQUIRY_OCCASIONS,
+  EVENT_INQUIRY_YES_NO,
 } from '@/lib/events/inquiry'
 import { slackDiagnosticsField } from './utils/slackDiagnosticsField'
 
@@ -28,9 +37,11 @@ export const EventInquiries: CollectionConfig = {
       'name',
       'status',
       'preferredDate',
+      'startTime',
       'taproom',
       'headcount',
       'occasion',
+      'companyPaid',
       'createdAt',
     ],
     description:
@@ -71,6 +82,55 @@ export const EventInquiries: CollectionConfig = {
         condition: (data) => Boolean(data?.flexibleDate),
         description: 'YYYY-MM-DD days the guest also offered.',
       },
+    },
+    {
+      type: 'row',
+      fields: [
+        {
+          // HH:MM text from the form's time input, not a date field: no timezone shift.
+          name: 'startTime',
+          type: 'text',
+          maxLength: 5,
+          label: 'Start time',
+          admin: { description: '24-hour, Eastern (18:30 is 6:30pm).' },
+        },
+        {
+          name: 'duration',
+          type: 'select',
+          options: [...EVENT_INQUIRY_DURATIONS],
+          label: 'Length',
+        },
+      ],
+    },
+    {
+      name: 'drinks',
+      type: 'select',
+      options: [...EVENT_INQUIRY_DRINKS],
+      label: 'Drinks',
+    },
+    {
+      type: 'row',
+      fields: [
+        {
+          name: 'companyPaid',
+          type: 'select',
+          options: [...EVENT_INQUIRY_YES_NO],
+          label: 'Company paying',
+        },
+        {
+          name: 'companyName',
+          type: 'text',
+          maxLength: 200,
+          label: 'Company name',
+          admin: { condition: (data) => data?.companyPaid === 'yes' },
+        },
+      ],
+    },
+    {
+      name: 'foodPlan',
+      type: 'select',
+      options: [...EVENT_INQUIRY_FOOD_PLANS],
+      label: 'Food plan',
     },
     {
       name: 'occasion',

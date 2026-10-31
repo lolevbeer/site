@@ -2,9 +2,12 @@
 
 /**
  * Private-event inquiry form on /private-events. Asks about the event first
- * (date, flexible-date switch with an inline calendar for other days, guests, one-tap taproom and occasion) and contact details
- * last; phone is optional. The taproom starts on the one picked in the site
- * header. Submits to the event-inquiries staff inbox (never Events).
+ * (date, guests, flexible-date switch with an inline calendar for other
+ * days, start time, length, one-tap taproom and occasion, drinks, who pays,
+ * food plan) so staff can quote in the first reply, and contact details
+ * last; phone is optional. Company name appears only when a company is
+ * paying. One column on phones. The taproom starts on the one picked in the
+ * site header. Submits to the event-inquiries staff inbox (never Events).
  * Text fields are checked on blur with the same validator the server runs;
  * server errors also show under each field and clear when it changes. On
  * success the confirmation repeats what was sent, focus moves to it, and the
@@ -18,11 +21,26 @@ import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import { XIcon } from '@/components/icons'
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
-import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
-import { FormField } from '@/components/ui/form-field'
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+} from '@/components/ui/field'
+import { FormField, formFieldAria } from '@/components/ui/form-field'
 import { HoneypotField } from '@/components/ui/honeypot-field'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Input } from '@/components/ui/input'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { SegmentedControl } from '@/components/ui/segmented-control'
 import { Spinner } from '@/components/ui/spinner'
 import { Switch } from '@/components/ui/switch'
@@ -31,9 +49,13 @@ import { submitEventInquiry } from '@/src/actions/event-inquiry'
 import { trackConversion } from '@/lib/analytics/events'
 import { useLocationContext } from '@/components/location/location-provider'
 import {
+  EVENT_INQUIRY_DRINKS,
+  EVENT_INQUIRY_DURATIONS,
+  EVENT_INQUIRY_FOOD_PLANS,
   EVENT_INQUIRY_MAX_HEADCOUNT,
   EVENT_INQUIRY_MAX_OTHER_DATES,
   EVENT_INQUIRY_OCCASIONS,
+  EVENT_INQUIRY_YES_NO,
   emptyEventInquiry,
   validateEventInquiry,
   type EventInquiryErrors,
@@ -45,7 +67,59 @@ import { formatDate, parseLocalDate } from '@/lib/utils/formatters'
 import { toDateKey } from '@/lib/utils/food-dates'
 
 /** Text fields checked when the visitor leaves them. */
-type BlurField = 'name' | 'email' | 'phone' | 'headcount'
+type BlurField = 'name' | 'email' | 'phone' | 'headcount' | 'companyName'
+
+/** Labeled radio list with its error under it (FormField fits single controls only). */
+function RadioField({
+  id,
+  legend,
+  options,
+  value,
+  onValueChange,
+  error,
+  className,
+}: {
+  id: string
+  legend: string
+  options: readonly { value: string; label: string }[]
+  value: string
+  onValueChange: (value: string) => void
+  error?: string
+  className?: string
+}): React.JSX.Element {
+  return (
+    <FieldSet data-invalid={Boolean(error) || undefined}>
+      <FieldLegend variant="label">{legend}</FieldLegend>
+      <RadioGroup
+        name={id}
+        aria-label={legend}
+        value={value}
+        onValueChange={onValueChange}
+        className={className}
+        {...formFieldAria(id, { error })}
+      >
+        {options.map((option) => (
+          <Field key={option.value} orientation="horizontal">
+            <RadioGroupItem
+              value={option.value}
+              id={`${id}-${option.value}`}
+              // The default border-input is too faint to find on the card; this clears 3:1.
+              className="border-neutral-500 dark:border-neutral-300"
+            />
+            <FieldLabel htmlFor={`${id}-${option.value}`} className="font-normal">
+              {option.label}
+            </FieldLabel>
+          </Field>
+        ))}
+      </RadioGroup>
+      {error ? (
+        <FieldError id={`${id}-error`} role={undefined}>
+          {error}
+        </FieldError>
+      ) : null}
+    </FieldSet>
+  )
+}
 
 export function EventInquiryForm({
   taprooms,
@@ -290,6 +364,36 @@ export function EventInquiryForm({
                 ) : null}
               </div>
             ) : null}
+            <div data-slot="field-row" className="grid gap-5 sm:grid-cols-2">
+              <FormField id="inquiry-startTime" label="Start time" error={fieldErrors.startTime}>
+                <Input
+                  id="inquiry-startTime"
+                  name="startTime"
+                  type="time"
+                  value={values.startTime}
+                  onChange={(e) => set('startTime', e.target.value)}
+                  required
+                />
+              </FormField>
+              <FormField id="inquiry-duration" label="Length" error={fieldErrors.duration}>
+                <Select value={values.duration} onValueChange={(value) => set('duration', value)}>
+                  <SelectTrigger
+                    id="inquiry-duration"
+                    className="w-full"
+                    {...formFieldAria('inquiry-duration', { error: fieldErrors.duration })}
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {EVENT_INQUIRY_DURATIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormField>
+            </div>
             <FormField id="inquiry-taproom" label="Taproom" error={fieldErrors.taproom}>
               <SegmentedControl
                 aria-label="Taproom"
@@ -312,6 +416,65 @@ export function EventInquiryForm({
                 // Tapping the chosen occasion again clears it (the field is optional).
                 onValueChange={(value) => set('occasion', value === values.occasion ? '' : value)}
               />
+            </FormField>
+            <RadioField
+              id="inquiry-drinks"
+              legend="How will drinks be handled?"
+              options={EVENT_INQUIRY_DRINKS}
+              value={values.drinks}
+              onValueChange={(value) => set('drinks', value)}
+              error={fieldErrors.drinks}
+            />
+            <RadioField
+              id="inquiry-companyPaid"
+              legend="Is a company paying for this event?"
+              options={EVENT_INQUIRY_YES_NO}
+              value={values.companyPaid}
+              onValueChange={(value) => set('companyPaid', value)}
+              error={fieldErrors.companyPaid}
+              className="flex gap-6 [&>*]:w-auto"
+            />
+            {values.companyPaid === 'yes' ? (
+              <FormField
+                id="inquiry-companyName"
+                label="Company name"
+                error={fieldErrors.companyName}
+              >
+                <Input
+                  id="inquiry-companyName"
+                  name="companyName"
+                  autoComplete="organization"
+                  onBlur={() => checkField('companyName')}
+                  value={values.companyName}
+                  onChange={(e) => set('companyName', e.target.value)}
+                  required
+                />
+              </FormField>
+            ) : null}
+            <FormField
+              id="inquiry-foodPlan"
+              label="Food plan (optional)"
+              error={fieldErrors.foodPlan}
+            >
+              <Select
+                value={values.foodPlan || undefined}
+                onValueChange={(value) => set('foodPlan', value)}
+              >
+                <SelectTrigger
+                  id="inquiry-foodPlan"
+                  className="w-full"
+                  {...formFieldAria('inquiry-foodPlan', { error: fieldErrors.foodPlan })}
+                >
+                  <SelectValue placeholder="Choose one" />
+                </SelectTrigger>
+                <SelectContent>
+                  {EVENT_INQUIRY_FOOD_PLANS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </FormField>
             <FormField id="inquiry-name" label="Your name" error={fieldErrors.name}>
               <Input
@@ -356,7 +519,7 @@ export function EventInquiryForm({
                 id="inquiry-message"
                 name="message"
                 rows={3}
-                placeholder="Timing, food, anything we should know"
+                placeholder="Anything we should know"
                 value={values.message}
                 onChange={(e) => set('message', e.target.value)}
               />

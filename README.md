@@ -224,10 +224,12 @@ dev, CI) Payload's console adapter logs each email instead of sending it.
 
 - **Admin password reset** — the `/admin` "Forgot password?" form emails a
   one-time link (valid 1 hour).
-- **Private-event inquiry** — `lib/events/inquiry-email.ts` emails the full
-  request, contact details included, to `events@lolev.beer` with Reply-To set
-  to the visitor, and sends the visitor a receipt with Reply-To `events@`. The
-  receipt repeats only validated fields (taproom, date, headcount), never the
+- **Private-event inquiry** — `lib/events/inquiry-email.ts` emails every field
+  (start time, length, other dates, drinks, company, food plan included), one
+  labeled line each, to `events@lolev.beer` with the subject
+  "Event inquiry: name, event type, date, taproom" and Reply-To set to the
+  visitor, so the first reply can carry a quote. It also sends the visitor a
+  receipt with Reply-To `events@`. The receipt repeats only validated fields (taproom, date, headcount), never the
   visitor's free text.
 - **Job application** — `lib/jobs/application-email.ts` emails the application
   to `jobs@lolev.beer` with Reply-To set to the applicant.
@@ -317,7 +319,8 @@ or `SLACK_EVENT_INQUIRY_CHANNEL` (the job and inquiry channels fall back to the
 donation channel), then `#events`. Invite the bot to any channel you pick, then press **Send test message** under
 the field to confirm it can post there (admins only; it tests the typed value,
 so save afterwards). Inquiries
-land in Admin → Event Inquiries; they never create an Event. Each inquiry is
+land in Admin → Event Inquiries; they never create an Event. Show only
+company-paid inquiries with Filters → "Company paying" is "Yes". Each inquiry is
 also emailed (see [Email](#email)).
 
 1. **Create New App → From an app manifest** → pick the workspace → paste
