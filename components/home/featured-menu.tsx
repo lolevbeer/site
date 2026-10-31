@@ -1117,7 +1117,9 @@ function FeaturedMenu({
 
         <div className="text-center">
           <Button asChild variant="outline" size="lg">
-            <Link href={beerHref('tap')}>View All Beer</Link>
+            <Link href={beerHref(menuType === 'draft' ? 'tap' : 'cans')}>
+              {menuType === 'draft' ? 'View All Beer' : 'View All Cans'}
+            </Link>
           </Button>
         </div>
       </div>
