@@ -20,10 +20,9 @@ import { getAllLocations } from '@/lib/utils/payload-api'
 import { getHubIntro } from '@/lib/utils/site-seo'
 import { privateEventsDescription } from '@/lib/utils/seo'
 import type { PayloadLocation } from '@/lib/types/location'
+import { EVENTS_EMAIL } from '@/lib/events/inquiry-email'
 
 export const revalidate = 3600
-
-const EVENTS_EMAIL = 'events@lolev.beer'
 
 /** Taproom cities ("Pittsburgh and Zelienople"): what event seekers search, unlike the "Lolev …" names. */
 function taproomCities(locations: PayloadLocation[]): string {
