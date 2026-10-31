@@ -6,6 +6,7 @@
  * rows are whole-row links a button cannot sit inside, hence this widget.
  */
 import Link from 'next/link'
+import type React from 'react'
 import type { WidgetServerProps } from 'payload'
 import { formatAdminURL } from 'payload/shared'
 import { donationReplyMailto } from '@/lib/donate/reply-mailto'
@@ -22,7 +23,10 @@ function eventDay(iso: string | null | undefined): string | null {
   })
 }
 
-export async function DonationRequestsWidget({ req, widgetData }: WidgetServerProps<WidgetData>) {
+export async function DonationRequestsWidget({
+  req,
+  widgetData,
+}: WidgetServerProps<WidgetData>): Promise<React.JSX.Element> {
   const status = widgetData?.status ?? 'new'
   const { docs } = await req.payload.find({
     collection: 'donation-requests',

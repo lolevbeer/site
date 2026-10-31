@@ -7,26 +7,14 @@
  * site, so the conversation lives in that inbox.
  */
 
+import type React from 'react'
 import { Button, useFormFields } from '@payloadcms/ui'
+import { reduceFieldsToValues } from 'payload/shared'
 import { donationReplyMailto } from '@/lib/donate/reply-mailto'
 
-export function DonationReplyButton() {
+export function DonationReplyButton(): React.JSX.Element | null {
   // Reads the form, not the saved doc, so unsaved edits show in the draft email.
-  const href = useFormFields(([fields]) => {
-    const value = (path: string) => fields[path]?.value as never
-    return donationReplyMailto({
-      email: value('email'),
-      contactName: value('contactName'),
-      organizationName: value('organizationName'),
-      askType: value('askType'),
-      eventName: value('eventName'),
-      eventDate: value('eventDate'),
-      attendees: value('attendees'),
-      venue: value('venue'),
-      taproom: value('taproom'),
-      requestDetails: value('requestDetails'),
-    })
-  })
+  const href = useFormFields(([fields]) => donationReplyMailto(reduceFieldsToValues(fields)))
   if (!href) return null
 
   return (
