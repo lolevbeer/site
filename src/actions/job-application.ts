@@ -1,10 +1,11 @@
 'use server'
 
 /**
- * Public job apply. Validates, stores the row, pings Slack #events in after().
+ * Public job apply. Validates, stores the row, then pings Slack #events and
+ * emails jobs@lolev.beer in after().
  *
  * Untrusted input: `unknown`. Honeypot spam returns `{ ok: true }` without a
- * write. Slack is best-effort.
+ * write. Slack and email are best-effort.
  */
 
 import { after } from 'next/server'
@@ -28,6 +29,7 @@ import { hashSubmitterIp } from '@/lib/public-forms/ip-hash'
 import { savePublicForm } from '@/lib/public-forms/submission'
 import { PUBLIC_FORM_IP_LIMIT_MESSAGE } from '@/lib/public-forms/rate-limit'
 import { notifyCollectionOnSlack } from '@/lib/slack/notify'
+import { sendJobApplicationEmail } from '@/lib/jobs/application-email'
 
 export type SubmitJobApplicationResult =
   { ok: true } | { ok: false; error: string; errors?: JobApplicationErrors }
@@ -96,6 +98,17 @@ export async function submitJobApplication(input: unknown): Promise<SubmitJobApp
           locationName,
         }),
         failLog: 'Job application Slack ping failed',
+      }),
+    )
+    after(() =>
+      sendJobApplicationEmail(payload, {
+        id: created.id,
+        jobTitle: job.title,
+        locationName,
+        name: parsed.name.trim(),
+        email,
+        phone: parsed.phone.trim(),
+        message: parsed.message.trim(),
       }),
     )
 

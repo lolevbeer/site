@@ -9,10 +9,9 @@
  */
 
 import type { Payload } from 'payload'
+import { sendPlainTextEmails } from '@/lib/email/send'
 import { occasionAdminLabel } from '@/lib/events/inquiry'
-import { escapeHtml } from '@/lib/utils/escape-html'
 import { getBaseUrl } from '@/lib/utils/get-base-url'
-import { logger } from '@/lib/utils/logger'
 
 export const EVENTS_EMAIL = 'events@lolev.beer'
 
@@ -30,12 +29,7 @@ export interface EventInquiryEmailInput {
   message?: string
 }
 
-/** Plain text plus the same text as HTML, so clients that prefer HTML don't show a blank body. */
-function body(text: string): { text: string; html: string } {
-  return { text, html: `<div style="white-space:pre-wrap">${escapeHtml(text)}</div>` }
-}
-
-/** Sends both emails; each is best-effort and logged on failure. */
+/** Sends both emails; each is best-effort (see lib/email/send). */
 export async function sendEventInquiryEmails(
   payload: Payload,
   inquiry: EventInquiryEmailInput,
@@ -67,26 +61,22 @@ export async function sendEventInquiryEmails(
     'Lolev Beer',
   ].join('\n')
 
-  const messages = [
-    {
-      to: EVENTS_EMAIL,
-      replyTo: inquiry.email,
-      subject: `Private event inquiry: ${summary}`,
-      ...body(team),
-    },
-    {
-      to: inquiry.email,
-      replyTo: EVENTS_EMAIL,
-      subject: 'We got your private event request',
-      ...body(receipt),
-    },
-  ]
-
-  for (const message of messages) {
-    try {
-      await payload.sendEmail(message)
-    } catch (error) {
-      logger.error('Event inquiry email failed', error)
-    }
-  }
+  await sendPlainTextEmails(
+    payload,
+    [
+      {
+        to: EVENTS_EMAIL,
+        replyTo: inquiry.email,
+        subject: `Private event inquiry: ${summary}`,
+        text: team,
+      },
+      {
+        to: inquiry.email,
+        replyTo: EVENTS_EMAIL,
+        subject: 'We got your private event request',
+        text: receipt,
+      },
+    ],
+    'Event inquiry email failed',
+  )
 }

@@ -5,6 +5,7 @@ import { UntappdCell as UntappdCell_e3f231507ff3636e02b69e00c6dae7e5 } from '@/s
 import { VersionsWithEditor as VersionsWithEditor_086ae422e503b0ca3c3b3cebea7f361d } from '@/src/components/admin/VersionsWithEditor'
 import { MarkLinesCleanedButton as MarkLinesCleanedButton_f5f2df171d50f30cf104614de4c760a1 } from '@/src/components/admin/MarkLinesCleanedButton'
 import { EventDateWarning as EventDateWarning_86d7a7ba4986bf7e4d43cf53ef110e20 } from '@/src/components/EventDateWarning'
+import { DonationReplyButton as DonationReplyButton_939e9c59d658d71aef291a615b0cf0fe } from '@/src/components/admin/DonationReplyButton'
 import { FoodDateWarning as FoodDateWarning_f1a26c4c763b5f7447cc10d2b4b9a2e1 } from '@/src/components/FoodDateWarning'
 import { RecurringFoodGrid as RecurringFoodGrid_0c1dc1aa84aa3f4861a00292ec49d05d } from '@/src/components/RecurringFoodGrid'
 import { SlackChannelTestButton as SlackChannelTestButton_38589035e16c1a3c89c1a5f9b8dbb9c5 } from '@/src/components/admin/SlackChannelTestButton'
@@ -34,6 +35,7 @@ export const importMap = {
   "@/src/components/admin/VersionsWithEditor#VersionsWithEditor": VersionsWithEditor_086ae422e503b0ca3c3b3cebea7f361d,
   "@/src/components/admin/MarkLinesCleanedButton#MarkLinesCleanedButton": MarkLinesCleanedButton_f5f2df171d50f30cf104614de4c760a1,
   "@/src/components/EventDateWarning#EventDateWarning": EventDateWarning_86d7a7ba4986bf7e4d43cf53ef110e20,
+  "@/src/components/admin/DonationReplyButton#DonationReplyButton": DonationReplyButton_939e9c59d658d71aef291a615b0cf0fe,
   "@/src/components/FoodDateWarning#FoodDateWarning": FoodDateWarning_f1a26c4c763b5f7447cc10d2b4b9a2e1,
   "@/src/components/RecurringFoodGrid#RecurringFoodGrid": RecurringFoodGrid_0c1dc1aa84aa3f4861a00292ec49d05d,
   "@/src/components/admin/SlackChannelTestButton#SlackChannelTestButton": SlackChannelTestButton_38589035e16c1a3c89c1a5f9b8dbb9c5,
