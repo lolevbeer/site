@@ -65,18 +65,18 @@ Each task starts by writing its named test and running it red. UI rendering is e
   export async function up({ payload }: MigrateUpArgs): Promise<void> {
     await payload.db.collections['job-applications'].collection.updateMany(
       { status: { $exists: false } },
-      { $set: { status: 'new' } },
+      { $set: { status: 'reviewed' } },
     )
   }
   export async function down(_args: MigrateDownArgs): Promise<void> {
     // Leave the field; an older build ignores it.
   }
   ```
-  Existing applications start as `new` so nothing is hidden.
+  Existing applications start as `reviewed` (decided 2026-10-31), so only new submissions show as waiting.
 - Run `pnpm generate:types`.
 - Types: `JobApplication['status']`.
 - Test first: extend `tests/int/job-application.int.spec.ts` (default is `new`; only admins update it).
-- Accept: test green, `tsc --noEmit`. Migration runs only on the prod build (local dev shares the prod DB, so un-migrated docs read `status: undefined` there; widgets treat a missing status as `new`).
+- Accept: test green, `tsc --noEmit`. Migration runs only on the prod build (local dev shares the prod DB, so un-migrated docs read `status: undefined` there; widgets query `status: new` only, so a missing status counts as handled).
 - Deps: none. **Parallel.**
 
 ### 4. Extract the menu-target loader
@@ -115,7 +115,7 @@ Each task starts by writing its named test and running it red. UI rendering is e
 - Deps: 2, 3.
 
 ### 9. Inbox widget (replaces Donation requests widget)
-- Create `src/components/admin/InboxWidget.tsx` (server, reads the three collections as the user, `status: new` or missing) and `InboxRows.tsx` (client: kind filter as Payload `Tabs` with counts in the labels, `widget-card__type` labels, row title opens the document in Payload's drawer via `useDocumentDrawer` (saving there refreshes the widget), relative time via `formatRelativeDate`, Email link, ghost `Button` that PATCHes `/api/<collection>/<id>` `{ status: handledStatus }` then `toast` + `router.refresh()`).
+- Create `src/components/admin/InboxWidget.tsx` (server, reads the three collections as the user, `status: new`) and `InboxRows.tsx` (client: kind filter as Payload `Tabs` with counts in the labels, `widget-card__type` labels, row title opens the document in Payload's drawer via `useDocumentDrawer` (saving there refreshes the widget), relative time via `formatRelativeDate`, Email link, ghost `Button` that PATCHes `/api/<collection>/<id>` `{ status: handledStatus }` then `toast` + `router.refresh()`).
 - Delete `src/components/admin/DonationRequestsWidget.tsx` and `tests/int/donation-requests-widget.int.spec.tsx`; keep the `donation-requests` slug registered, rendering InboxWidget filtered to donations, so saved layouts keep working.
 - Types: `InboxRow`, `InboxWidget`.
 - Test first: `tests/int/inbox-widget.int.spec.tsx` (reads as the user; denied collection omitted; PATCH body per collection; donation slug still renders).
@@ -178,9 +178,12 @@ Each task starts by writing its named test and running it red. UI rendering is e
 - Wave 3: 7 (after 1, 5, 6), 9 (after 1, 8), 10 (after 1, 4)
 - Wave 4 (sequential): 13, 14, 15, 16, 17
 
+## Decisions (2026-10-31)
+
+1. Mark contacted / Approve / Mark reviewed change status only; no email is sent.
+2. Existing job applications migrate to `reviewed`.
+3. Bartender location switching uses Payload `Tabs` inside the needs-attention widget.
+
 ## Open questions
 
-1. Mark contacted / Approve only change status (no email). OK?
-2. Existing applications migrate to `new` (they will show in Needs attention once). Or `reviewed`?
-3. Bartender location switching: Payload `Tabs` inside one widget (planned) vs. one widget group per assigned location.
-4. The global lines-cleaned banner stays on every admin page; the dashboard row adds the Mark cleaned button. Hide the banner on the dashboard?
+1. The global lines-cleaned banner stays on every admin page; the dashboard row adds the Mark cleaned button. Hide the banner on the dashboard?
