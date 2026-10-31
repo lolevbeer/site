@@ -150,6 +150,7 @@ export interface Config {
   locale: null;
   widgets: {
     'schedule-heatmap': ScheduleHeatmapWidget;
+    'donation-requests': DonationRequestsWidget;
     'menu-target-history': MenuTargetHistoryWidget;
     'menu-items': MenuItemsWidget;
     welcome: WelcomeWidget;
@@ -836,7 +837,7 @@ export interface DonationRequest {
   id: string;
   submissionKey?: string | null;
   /**
-   * Records the staff decision only; does not send a reply.
+   * Records the staff decision only; does not send a reply. Use Email requester to write one.
    */
   status?: ('new' | 'approved' | 'declined') | null;
   organizationName: string;
@@ -3049,6 +3050,16 @@ export interface ScheduleHeatmapWidget {
     location?: (string | null) | Location;
   };
   width: 'medium' | 'large' | 'x-large' | 'full';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "donation-requests_widget".
+ */
+export interface DonationRequestsWidget {
+  data?: {
+    status?: ('new' | 'approved' | 'declined' | 'all') | null;
+  };
+  width: 'x-small' | 'small' | 'medium' | 'large' | 'x-large' | 'full';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

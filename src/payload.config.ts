@@ -175,6 +175,24 @@ export default buildConfig({
           fields: [{ name: 'location', type: 'relationship', relationTo: 'locations' }],
         },
         {
+          slug: 'donation-requests',
+          label: 'Donation requests',
+          Component: '@/src/components/admin/DonationRequestsWidget#DonationRequestsWidget',
+          fields: [
+            {
+              name: 'status',
+              type: 'select',
+              defaultValue: 'new',
+              options: [
+                { label: 'New', value: 'new' },
+                { label: 'Approved', value: 'approved' },
+                { label: 'Declined', value: 'declined' },
+                { label: 'All', value: 'all' },
+              ],
+            },
+          ],
+        },
+        {
           slug: 'menu-target-history',
           label: 'Menu tracking',
           Component: '@/src/components/admin/MenuTargetHistory#MenuTargetHistory',

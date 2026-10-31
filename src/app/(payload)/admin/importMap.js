@@ -5,6 +5,7 @@ import { UntappdCell as UntappdCell_e3f231507ff3636e02b69e00c6dae7e5 } from '@/s
 import { VersionsWithEditor as VersionsWithEditor_086ae422e503b0ca3c3b3cebea7f361d } from '@/src/components/admin/VersionsWithEditor'
 import { MarkLinesCleanedButton as MarkLinesCleanedButton_f5f2df171d50f30cf104614de4c760a1 } from '@/src/components/admin/MarkLinesCleanedButton'
 import { EventDateWarning as EventDateWarning_86d7a7ba4986bf7e4d43cf53ef110e20 } from '@/src/components/EventDateWarning'
+import { DonationReplyButton as DonationReplyButton_939e9c59d658d71aef291a615b0cf0fe } from '@/src/components/admin/DonationReplyButton'
 import { FoodDateWarning as FoodDateWarning_f1a26c4c763b5f7447cc10d2b4b9a2e1 } from '@/src/components/FoodDateWarning'
 import { RecurringFoodGrid as RecurringFoodGrid_0c1dc1aa84aa3f4861a00292ec49d05d } from '@/src/components/RecurringFoodGrid'
 import { SlackChannelTestButton as SlackChannelTestButton_38589035e16c1a3c89c1a5f9b8dbb9c5 } from '@/src/components/admin/SlackChannelTestButton'
@@ -14,6 +15,7 @@ import { SyncNavLink as SyncNavLink_d656220869059dfb87e573ae59f98b9f } from '@/s
 import { LinesCleanedAlert as LinesCleanedAlert_cd2a45d43757864ac10ad04ad5d94aa2 } from '@/src/components/admin/LinesCleanedAlert'
 import { SyncView as SyncView_d4a55995137be8d8e874f993f349f672 } from '@/src/components/SyncView'
 import { ScheduleHeatmap as ScheduleHeatmap_65e01fac2cc928f8fd2584422dde9786 } from '@/src/components/admin/ScheduleHeatmap'
+import { DonationRequestsWidget as DonationRequestsWidget_d186c3b221df2da83a4735cb98726436 } from '@/src/components/admin/DonationRequestsWidget'
 import { MenuTargetHistory as MenuTargetHistory_6e7978d5a59943049707cc48ef4b312d } from '@/src/components/admin/MenuTargetHistory'
 import { MenuItems as MenuItems_c29aa656038a04d749bad9276d4f1f1e } from '@/src/components/admin/MenuItems'
 import { WelcomeWidget as WelcomeWidget_ab83ff7e88da8d3530831f296ec4756a } from '@payloadcms/ui/rsc'
@@ -34,6 +36,7 @@ export const importMap = {
   "@/src/components/admin/VersionsWithEditor#VersionsWithEditor": VersionsWithEditor_086ae422e503b0ca3c3b3cebea7f361d,
   "@/src/components/admin/MarkLinesCleanedButton#MarkLinesCleanedButton": MarkLinesCleanedButton_f5f2df171d50f30cf104614de4c760a1,
   "@/src/components/EventDateWarning#EventDateWarning": EventDateWarning_86d7a7ba4986bf7e4d43cf53ef110e20,
+  "@/src/components/admin/DonationReplyButton#DonationReplyButton": DonationReplyButton_939e9c59d658d71aef291a615b0cf0fe,
   "@/src/components/FoodDateWarning#FoodDateWarning": FoodDateWarning_f1a26c4c763b5f7447cc10d2b4b9a2e1,
   "@/src/components/RecurringFoodGrid#RecurringFoodGrid": RecurringFoodGrid_0c1dc1aa84aa3f4861a00292ec49d05d,
   "@/src/components/admin/SlackChannelTestButton#SlackChannelTestButton": SlackChannelTestButton_38589035e16c1a3c89c1a5f9b8dbb9c5,
@@ -43,6 +46,7 @@ export const importMap = {
   "@/src/components/admin/LinesCleanedAlert#LinesCleanedAlert": LinesCleanedAlert_cd2a45d43757864ac10ad04ad5d94aa2,
   "@/src/components/SyncView#SyncView": SyncView_d4a55995137be8d8e874f993f349f672,
   "@/src/components/admin/ScheduleHeatmap#ScheduleHeatmap": ScheduleHeatmap_65e01fac2cc928f8fd2584422dde9786,
+  "@/src/components/admin/DonationRequestsWidget#DonationRequestsWidget": DonationRequestsWidget_d186c3b221df2da83a4735cb98726436,
   "@/src/components/admin/MenuTargetHistory#MenuTargetHistory": MenuTargetHistory_6e7978d5a59943049707cc48ef4b312d,
   "@/src/components/admin/MenuItems#MenuItems": MenuItems_c29aa656038a04d749bad9276d4f1f1e,
   "@payloadcms/ui/rsc#WelcomeWidget": WelcomeWidget_ab83ff7e88da8d3530831f296ec4756a,

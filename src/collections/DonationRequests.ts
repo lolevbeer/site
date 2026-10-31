@@ -51,9 +51,18 @@ export const DonationRequests: CollectionConfig = {
       ],
       admin: {
         position: 'sidebar',
-        description: 'Records the staff decision only; does not send a reply.',
+        description:
+          'Records the staff decision only; does not send a reply. Use Email requester to write one.',
       },
       label: 'Decision status',
+    },
+    {
+      name: 'emailRequester',
+      type: 'ui',
+      admin: {
+        position: 'sidebar',
+        components: { Field: '@/src/components/admin/DonationReplyButton#DonationReplyButton' },
+      },
     },
     { name: 'organizationName', ...text() },
     {

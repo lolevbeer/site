@@ -1,5 +1,6 @@
 /**
- * Public job apply: inactive slug is rejected; honeypot does not write.
+ * Public job apply: inactive slug is rejected; honeypot does not write; a saved
+ * application pings Slack and emails jobs@ in after().
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -7,6 +8,7 @@ const afterFns: Array<() => Promise<void>> = []
 const create = vi.fn()
 const find = vi.fn()
 const update = vi.fn()
+const sendEmail = vi.fn()
 const slackApi = vi.fn()
 
 vi.mock('next/server', () => ({
@@ -22,7 +24,13 @@ vi.mock('next/headers', () => ({
 }))
 
 vi.mock('payload', () => ({
-  getPayload: vi.fn(async () => ({ find, create, update, findGlobal: async () => ({}) })),
+  getPayload: vi.fn(async () => ({
+    find,
+    create,
+    update,
+    sendEmail,
+    findGlobal: async () => ({}),
+  })),
 }))
 
 vi.mock('@/src/payload.config', () => ({ default: {} }))
@@ -62,6 +70,8 @@ describe('submitJobApplication', () => {
     find.mockReset()
     update.mockReset()
     slackApi.mockReset()
+    sendEmail.mockReset()
+    sendEmail.mockResolvedValue({ id: 'email-1' })
     create.mockResolvedValue({ id: 'app-1' })
     update.mockResolvedValue({})
     slackApi.mockResolvedValue(true)
@@ -118,7 +128,8 @@ describe('submitJobApplication', () => {
       await Promise.all([submitJobApplication(valid()), submitJobApplication(valid())]),
     ).toEqual([{ ok: true }, { ok: true }])
     expect(records.size).toBe(1)
-    expect(afterFns).toHaveLength(1)
+    // One Slack ping and one jobs@ email per saved application.
+    expect(afterFns).toHaveLength(2)
     await afterFns[0]()
     expect(slackApi).toHaveBeenCalledTimes(1)
     expect(
@@ -128,6 +139,24 @@ describe('submitJobApplication', () => {
       }),
     ).toEqual({ ok: true })
     expect(records.size).toBe(2)
-    expect(afterFns).toHaveLength(2)
+    expect(afterFns).toHaveLength(4)
+  })
+
+  it('emails jobs@ the application with Reply-To set to the applicant', async () => {
+    find.mockImplementation(async (args: { collection: string }) => ({
+      docs:
+        args.collection === 'jobs'
+          ? [{ id: 'job-1', title: 'Bartender', location: { name: 'Lawrenceville' } }]
+          : [],
+    }))
+    expect(await submitJobApplication(valid())).toEqual({ ok: true })
+    await afterFns[1]()
+    expect(sendEmail).toHaveBeenCalledTimes(1)
+    const message = sendEmail.mock.calls[0][0]
+    expect(message).toMatchObject({ to: 'jobs@lolev.beer', replyTo: 'alex@example.com' })
+    expect(message.subject).toContain('Bartender')
+    for (const detail of ['Alex Rivera', '412-555-0100', 'Butler Street', 'Lawrenceville']) {
+      expect(message.text).toContain(detail)
+    }
   })
 })

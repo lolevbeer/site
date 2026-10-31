@@ -197,7 +197,11 @@ is the system queue, separate from hiring.
   active locations. One-off bookings do not replace recurring food automatically:
   skip the recurring date explicitly.
 - **Inboxes:** Changing inquiry or donation status does not send a reply or create
-  a booking. Job Applications has no new pipeline/status field. A published job
+  a booking. On a donation request, the sidebar **Email requester** button opens
+  your own email app with a summary of the request filled in. The **Donation
+  requests** dashboard widget (add it from the dashboard; pick New, Approved,
+  Declined, or All in its settings) lists requests with the same **Email**
+  button on each row. Job Applications has no new pipeline/status field. A published job
   opening is visible immediately; its closing date alone does not hide it.
 
 ## Admin dashboard
@@ -224,7 +228,15 @@ dev, CI) Payload's console adapter logs each email instead of sending it.
   request, contact details included, to `events@lolev.beer` with Reply-To set
   to the visitor, and sends the visitor a receipt with Reply-To `events@`. The
   receipt repeats only validated fields (taproom, date, headcount), never the
-  visitor's free text. Both are best-effort, sent in `after()`.
+  visitor's free text.
+- **Job application** — `lib/jobs/application-email.ts` emails the application
+  to `jobs@lolev.beer` with Reply-To set to the applicant.
+- **Donation requests** send no email. Staff reply with the **Email requester**
+  button (`lib/donate/reply-mailto.ts`), a `mailto:` link that opens their own
+  email app, so the thread stays in their inbox.
+
+Form emails are best-effort and sent in `after()` (`lib/email/send.ts`): a
+failed send is logged and never blocks the form or the Slack ping.
 
 ## Slack bot
 
