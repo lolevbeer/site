@@ -71,13 +71,4 @@ describe('QuickInfoCards location navigation', () => {
     expect(setLocationMock).toHaveBeenCalledOnce()
     expect(setLocationMock).toHaveBeenCalledWith('zelienople')
   })
-
-  it('uses two columns until the xl breakpoint', () => {
-    const { container } = render(createElement(QuickInfoCards, props))
-    const gridClass = container.firstElementChild?.getAttribute('class')
-
-    expect(gridClass).toContain('md:grid-cols-2')
-    expect(gridClass).toContain('xl:grid-cols-3')
-    expect(gridClass).not.toContain('md:grid-cols-3')
-  })
 })

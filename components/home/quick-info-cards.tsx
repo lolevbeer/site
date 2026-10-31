@@ -144,7 +144,10 @@ export function QuickInfoCards({
 
       {/* Next Event Card */}
       <MotionCard className="h-full">
-        <Link href="/events" className="group block h-full">
+        <Link
+          href={nextEvent ? `/events?loc=${encodeURIComponent(nextEvent.location)}` : '/events'}
+          className="group block h-full"
+        >
           <Card className="p-6 lg:p-8 h-full transition-colors cursor-pointer shadow-none bg-transparent border border-border hover:bg-secondary/50 relative text-center flex flex-col items-center justify-center">
             <h3 className="text-3xl lg:text-4xl font-bold mb-5">
               {nextEvent ? 'Next Event' : 'Upcoming Events'}

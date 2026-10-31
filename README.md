@@ -56,6 +56,11 @@ local storage. The frontend layout's shared `ThemeProvider` must wrap both the
 page content and footer; the footer stays outside `LocationProvider` so its
 taproom content remains in the HTML shell.
 
+Homepage links preserve browsing context: **Next Event** opens the advertised
+taproom's agenda via `/events?loc=<slug>` (or `/events` when no event is shown).
+The draft and cans sections link to their corresponding catalog availability
+filters while retaining the visitor's selected taproom.
+
 ## Scripts
 
 ```bash
