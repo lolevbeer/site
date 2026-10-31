@@ -17,11 +17,23 @@ export const JobApplications: CollectionConfig = {
   admin: {
     group: 'Hiring',
     useAsTitle: 'name',
-    defaultColumns: ['name', 'job', 'createdAt', 'email'],
+    defaultColumns: ['name', 'job', 'status', 'createdAt', 'email'],
     description: 'Applications from /jobs/[slug]. Completing the form is not a hire.',
   },
   fields: [
     { name: 'submissionKey', type: 'text', unique: true, admin: { hidden: true } },
+    {
+      // New submissions start as `new`; applications saved before this field were backfilled to `reviewed`.
+      name: 'status',
+      type: 'select',
+      defaultValue: 'new',
+      label: 'Review status',
+      options: [
+        { label: 'New', value: 'new' },
+        { label: 'Reviewed', value: 'reviewed' },
+      ],
+      admin: { position: 'sidebar' },
+    },
     { name: 'name', type: 'text', required: true, maxLength: 200, label: 'Applicant name' },
     {
       name: 'job',

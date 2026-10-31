@@ -1107,6 +1107,7 @@ export interface Job {
 export interface JobApplication {
   id: string;
   submissionKey?: string | null;
+  status?: ('new' | 'reviewed') | null;
   name: string;
   job: string | Job;
   email: string;
@@ -1980,6 +1981,7 @@ export interface JobsSelect<T extends boolean = true> {
  */
 export interface JobApplicationsSelect<T extends boolean = true> {
   submissionKey?: T;
+  status?: T;
   name?: T;
   job?: T;
   email?: T;
