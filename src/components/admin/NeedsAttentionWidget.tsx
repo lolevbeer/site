@@ -20,6 +20,7 @@ import {
   type AttentionInput,
   type AttentionRow,
 } from '@/lib/admin/needs-attention'
+import { MENU_TYPE_LABEL } from '@/lib/utils/menu-target'
 import { getUserLocationIds, hasRole } from '@/src/access/roles'
 import { MarkCleanedRowButton } from '@/src/components/admin/MarkCleanedRowButton'
 import { AttentionHeader, NeedsAttentionTabs } from '@/src/components/admin/NeedsAttentionTabs'
@@ -28,17 +29,13 @@ import { relationshipId } from '@/src/utils/relationship-id'
 import './dashboard-widgets.scss'
 import './NeedsAttentionWidget.scss'
 
-// Until the widget is registered and payload-types regenerated (NeedsAttentionWidget).
-type Submissions = AttentionInput['inquiries']
-
 const SUBMISSION_LIMIT = 100
-const TYPE_LABEL: Record<string, string> = { cans: 'Cans', draft: 'Draft' }
 
 /** New submissions in one inbox collection, oldest first; null when the read is denied. */
 async function readNew(
   req: PayloadRequest,
   collection: 'event-inquiries' | 'donation-requests' | 'job-applications',
-): Promise<Submissions> {
+): Promise<AttentionInput['inquiries']> {
   try {
     const { docs } = await req.payload.find({
       collection,
@@ -66,7 +63,7 @@ async function readMenuTargets(req: PayloadRequest): Promise<AttentionInput['men
       const timeline = timelines.get(menu.id)
       return {
         menuId: menu.id,
-        label: `${menu.name || TYPE_LABEL[menu.type] || menu.type} · ${location.name}`,
+        label: `${menu.name || MENU_TYPE_LABEL[menu.type] || menu.type} · ${location.name}`,
         locationId: location.id,
         summary: timeline ? summarizeMenuTarget(timeline) : null,
       }

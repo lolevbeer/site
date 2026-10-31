@@ -56,11 +56,13 @@ export function buildAttentionRows(input: AttentionInput): AttentionRow[] {
     }))
     .filter((l) => l.level !== null)
     // Overdue before due; never cleaned (-1) leads its group, then most days first.
-    .sort(
-      (a, b) =>
-        Number(b.level === 'error') - Number(a.level === 'error') ||
-        (a.days === -1 ? -1 : b.days === -1 ? 1 : b.days - a.days),
-    )
+    .sort((a, b) => {
+      const byLevel = Number(b.level === 'error') - Number(a.level === 'error')
+      if (byLevel !== 0) return byLevel
+      if (a.days === -1) return -1
+      if (b.days === -1) return 1
+      return b.days - a.days
+    })
     .map(({ location, level, days, dueDate }): AttentionRow => ({
       key: `lines-${location.id}`,
       pillStyle: level === 'error' ? 'error' : 'warning',

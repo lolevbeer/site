@@ -38,7 +38,7 @@ import {
 } from '@/lib/admin/menu-targets'
 import { getDateEST } from '@/lib/utils/date'
 import { formatDate } from '@/lib/utils/formatters'
-import { fillFor, TARGETED_MENU_TYPES } from '@/lib/utils/menu-target'
+import { fillFor, MENU_TYPE_LABEL, TARGETED_MENU_TYPES } from '@/lib/utils/menu-target'
 import './dashboard-widgets.scss'
 import './MenuTargetHistory.scss'
 
@@ -46,7 +46,6 @@ const W = 300
 const H = 96
 const SPARK_W = 120
 const SPARK_H = 32
-const TYPE_LABEL: Record<string, string> = { cans: 'Cans', draft: 'Draft' }
 
 const diffLabel = (d: number) =>
   d === 0 ? 'on target' : `${Math.abs(d)} ${d < 0 ? 'under' : 'over'}`
@@ -194,8 +193,8 @@ function MenuTargetChart({ data }: { data: MenuTargets }): ReactElement {
               return timeline ? (
                 <MenuChart
                   key={type}
-                  label={`${location.name} ${TYPE_LABEL[type]}`}
-                  title={TYPE_LABEL[type]}
+                  label={`${location.name} ${MENU_TYPE_LABEL[type]}`}
+                  title={MENU_TYPE_LABEL[type]}
                   end={end}
                   names={names}
                   {...timeline}

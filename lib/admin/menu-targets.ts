@@ -170,11 +170,14 @@ export function summarizeMenuTarget({
 }: MenuTimeline): MenuTargetSummary | null {
   const last = segments.at(-1)
   if (!last) return null
+  let state: MenuTargetSummary['state'] = 'on'
+  if (last.diff < 0) state = 'under'
+  else if (last.diff > 0) state = 'over'
   return {
     count: last.items,
     target: last.target,
     diff: last.diff,
-    state: last.diff === 0 ? 'on' : last.diff < 0 ? 'under' : 'over',
+    state,
     shareOnTarget: Math.round(onTargetShare * 100),
     series: segments.map((g) => g.items),
   }

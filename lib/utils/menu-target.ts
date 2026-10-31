@@ -8,6 +8,8 @@
 export const DEFAULT_TARGET = 10
 /** Menu types that carry a targetItemCount; others (e.g. 'other') aren't tracked. */
 export const TARGETED_MENU_TYPES = ['draft', 'cans'] as const
+/** Display name of a targeted menu type, e.g. for a menu with no name. */
+export const MENU_TYPE_LABEL: Record<string, string> = { cans: 'Cans', draft: 'Draft' }
 
 export type Revision = {
   updatedAt: string
