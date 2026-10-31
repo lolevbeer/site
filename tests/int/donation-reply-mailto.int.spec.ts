@@ -68,6 +68,14 @@ describe('donationReplyMailto', () => {
     expect(href.length).toBeLessThan(2000)
   })
 
+  it('refuses an address that would smuggle extra mailto fields', () => {
+    // The public form only checks x@y.tld, so ? & = % # can reach the stored address.
+    expect(donationReplyMailto({ ...request, email: 'sam@example.org?cc=spy@evil.com' })).toBeNull()
+    expect(
+      donationReplyMailto({ ...request, email: 'sam@example.org&bcc=spy@evil.com' }),
+    ).toBeNull()
+  })
+
   it('returns null without an email address', () => {
     expect(donationReplyMailto({ ...request, email: '' })).toBeNull()
   })

@@ -12,6 +12,12 @@ import { getDateEST } from '@/lib/utils/date'
 /** ponytail: request details clipped to keep the link short; the full text stays in Admin. */
 const MAX_DETAILS = 500
 
+/**
+ * Stricter than the public form's email check, which lets `? & = % #` through:
+ * in a mailto: address those would add fields such as `?cc=` to the staff reply.
+ */
+const SAFE_ADDRESS = /^[A-Za-z0-9._+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/
+
 type DonationSummary = Pick<
   DonationRequest,
   | 'email'
@@ -30,9 +36,9 @@ function clip(text: string): string {
   return text.length > MAX_DETAILS ? `${text.slice(0, MAX_DETAILS)}…` : text
 }
 
-/** Null when the request has no email address to write to. */
+/** Null when the request has no address that is safe to put in a mailto: link. */
 export function donationReplyMailto(request: Partial<DonationSummary>): string | null {
-  if (!request.email) return null
+  if (!request.email || !SAFE_ADDRESS.test(request.email)) return null
 
   const taproomNight = request.askType === 'taproom-night'
   const where = taproomNight ? request.taproom && `${request.taproom} taproom` : request.venue
