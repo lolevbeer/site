@@ -5,6 +5,7 @@
 
 import type { PublicJob } from '@/lib/jobs/payload'
 import { postalAddressFromLocation, type PostalAddressJsonLd } from './json-ld'
+import { escapeHtml } from './escape-html'
 import { LOLEV_BASE_URL, LOLEV_OG_IMAGE_URL } from './schema-shared'
 
 export interface JobPostingJsonLd {
@@ -32,9 +33,6 @@ const EMPLOYMENT_TYPES: Record<string, string> = {
   'part-time': 'PART_TIME',
   seasonal: 'TEMPORARY',
 }
-
-const escapeHtml = (text: string) =>
-  text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
 /** Google collapses plain-text newlines, so blank-line-separated paragraphs become <p>. */
 function paragraphsToHtml(text: string): string {

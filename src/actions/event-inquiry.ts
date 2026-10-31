@@ -2,11 +2,12 @@
 
 /**
  * Public private-event inquiry from /private-events. Validates, stores the row in the
- * `event-inquiries` staff inbox (never Events), and pings Slack #events in
- * after() so a slow Slack cannot stall the thank-you.
+ * `event-inquiries` staff inbox (never Events), then pings Slack #events and
+ * emails events@ plus a receipt to the visitor in after() so a slow Slack or
+ * email provider cannot stall the thank-you.
  *
  * Untrusted input: `unknown`. Honeypot spam and exact-content retries return
- * `{ ok: true }` without a write. Slack is best-effort.
+ * `{ ok: true }` without a write. Slack and email are best-effort.
  */
 
 import { after } from 'next/server'
@@ -20,6 +21,7 @@ import {
   type EventInquiryErrors,
 } from '@/lib/events/inquiry'
 import { buildEventInquirySlackMessage, eventInquirySlackChannel } from '@/lib/events/inquiry-slack'
+import { sendEventInquiryEmails } from '@/lib/events/inquiry-email'
 import { firstFieldError, PUBLIC_FORM_INCOMPLETE } from '@/lib/public-forms/fields'
 import { isHoneypotFilled } from '@/lib/public-forms/honeypot'
 import { clientIp } from '@/lib/public-forms/request-ip'
@@ -100,6 +102,21 @@ export async function submitEventInquiry(input: unknown): Promise<SubmitEventInq
           taproomName: taproom.name || value.taproom,
         }),
         failLog: 'Event inquiry Slack ping failed',
+      }),
+    )
+    after(() =>
+      sendEventInquiryEmails(payload, {
+        id: created.id,
+        name: value.name,
+        email: value.email,
+        phone: value.phone || undefined,
+        preferredDate: value.preferredDate,
+        flexibleDate: value.flexibleDate,
+        otherDates: value.otherDates,
+        headcount: value.headcount,
+        occasion: value.occasion || undefined,
+        taproomName: taproom.name || value.taproom,
+        message: value.message || undefined,
       }),
     )
 

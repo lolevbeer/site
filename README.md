@@ -211,6 +211,21 @@ is the system queue, separate from hiring.
 - **Recurring Food** — Year-by-year monthly food truck schedule
 - **Site Content** — Editable site-wide content (about page, etc.)
 
+## Email
+
+Payload sends email through Resend (`@payloadcms/email-resend`, configured in
+`src/payload.config.ts`) from `Lolev App <app@lolev.beer>`, so `lolev.beer` must stay a
+verified domain in Resend. Set `RESEND_API_KEY` in Vercel; without it (local
+dev, CI) Payload's console adapter logs each email instead of sending it.
+
+- **Admin password reset** — the `/admin` "Forgot password?" form emails a
+  one-time link (valid 1 hour).
+- **Private-event inquiry** — `lib/events/inquiry-email.ts` emails the full
+  request, contact details included, to `events@lolev.beer` with Reply-To set
+  to the visitor, and sends the visitor a receipt with Reply-To `events@`. The
+  receipt repeats only validated fields (taproom, date, headcount), never the
+  visitor's free text. Both are best-effort, sent in `after()`.
+
 ## Slack bot
 
 `/lolevbeer menu` in Slack lists the menus with Edit buttons; the Edit modal
@@ -253,16 +268,16 @@ linked (`slackUserId`) from the start. They get a DM with a one-time link to set
 their password.
 
 `/lolevbeer password` returns a one-time link to set a new admin password.
-There is no email service, so Payload's `forgotPassword` runs with
-`disableEmail: true` and the reset token is delivered over Slack instead, as an
-ephemeral message only the requester can see (valid 1 hour, single use). It is
+Payload's `forgotPassword` runs with `disableEmail: true` here, so the reset
+token is delivered only over Slack, as an ephemeral message only the requester
+can see (valid 1 hour, single use). It is
 not gated by the menu allowlist, since it only ever acts on the caller's own
 account — but it does require that account to be linked (below).
 
-The "Forgot password?" form on the `/admin` login page sends the same message
-as a Slack DM to the account's linked `slackUserId`
-(`Users.auth.forgotPassword.generateEmailHTML`). Unlinked accounts receive
-nothing from the form; `/lolevbeer password` links them by email first.
+The "Forgot password?" form on the `/admin` login page emails the reset link
+(see [Email](#email)) and also sends it as a Slack DM to the account's linked
+`slackUserId` (`Users.auth.forgotPassword.generateEmailHTML`). Unlinked
+accounts get the email only.
 
 ### Linking Slack accounts to site users
 
@@ -281,7 +296,7 @@ an email typed into the command.
 Slack app setup (one-time, at api.slack.com/apps):
 
 Donation requests at `/donate`, job applications at `/jobs/[slug]`, and
-private-event inquiries from the form on `/events` post a summary to Slack
+private-event inquiries from the form on `/private-events` post a summary to Slack
 `#events` via `chat.postMessage` (same bot token). Invite the **Lolev Beer**
 bot into `#events` or the ping fails with `not_in_channel`. Admins set each
 form's channel in Admin → Site Content → Slack Channels (`#name` or a channel
@@ -290,7 +305,8 @@ or `SLACK_EVENT_INQUIRY_CHANNEL` (the job and inquiry channels fall back to the
 donation channel), then `#events`. Invite the bot to any channel you pick, then press **Send test message** under
 the field to confirm it can post there (admins only; it tests the typed value,
 so save afterwards). Inquiries
-land in Admin → Event Inquiries; they never create an Event.
+land in Admin → Event Inquiries; they never create an Event. Each inquiry is
+also emailed (see [Email](#email)).
 
 1. **Create New App → From an app manifest** → pick the workspace → paste
    [`docs/slack-app-manifest.yml`](docs/slack-app-manifest.yml). That sets the

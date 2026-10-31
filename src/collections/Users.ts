@@ -13,6 +13,7 @@ import {
 } from '@/src/access/roles'
 import { relationshipIds } from '@/src/utils/relationship-id'
 import { buildPasswordResetMessage } from '@/src/utils/slack'
+import { getBaseUrl } from '@/lib/utils/get-base-url'
 import { slackApi } from '@/src/utils/slack-api'
 
 export const Users: CollectionConfig = {
@@ -21,10 +22,9 @@ export const Users: CollectionConfig = {
     // 7 days in seconds (7 * 24 * 60 * 60)
     tokenExpiration: 604800,
     forgotPassword: {
-      // No email service: DM the reset link over Slack with the same message
-      // `/lolevbeer password` sends (see README). Unlinked accounts get nothing.
-      // The '' return only reaches Payload's console email adapter — return
-      // real HTML here if an email adapter is ever configured.
+      // Two channels: DM the link over Slack with the same message
+      // `/lolevbeer password` sends (see README), and return it as the email
+      // body (Resend when RESEND_API_KEY is set, else Payload's console logger).
       generateEmailHTML: async ({ token, user } = {}) => {
         if (token && user?.slackUserId) {
           // Text only: the builder's response_type is for slash-command replies.
@@ -33,7 +33,8 @@ export const Users: CollectionConfig = {
             text: buildPasswordResetMessage(token).text,
           })
         }
-        return ''
+        const link = `${getBaseUrl()}/admin/reset/${token}`
+        return `<p>Set a new Lolev admin password: <a href="${link}">${link}</a></p><p>The link expires in 1 hour and works once. Didn't ask for this? Ignore this email.</p>`
       },
     },
   },

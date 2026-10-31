@@ -43,6 +43,9 @@ importers:
       '@payloadcms/db-mongodb':
         specifier: 4.0.0-beta.3
         version: 4.0.0-beta.3(payload@4.0.0-beta.3(graphql@16.13.1)(supports-color@8.1.1)(typescript@6.0.3))
+      '@payloadcms/email-resend':
+        specifier: 4.0.0-beta.3
+        version: 4.0.0-beta.3(payload@4.0.0-beta.3(graphql@16.13.1)(supports-color@8.1.1)(typescript@6.0.3))
       '@payloadcms/next':
         specifier: 4.0.0-beta.3
         version: 4.0.0-beta.3(@types/react@19.3.0)(date-fns-tz@3.2.0(date-fns@4.4.0))(graphql@16.13.1)(monaco-editor@0.55.1)(next@16.4.2(@babel/core@7.29.7(supports-color@8.1.1))(@opentelemetry/api@1.9.1)(@playwright/test@1.64.1)(@types/node@25.9.5)(babel-plugin-macros@3.1.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(sass@1.77.4))(payload@4.0.0-beta.3(graphql@16.13.1)(supports-color@8.1.1)(typescript@6.0.3))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(supports-color@8.1.1)(typescript@6.0.3)
@@ -1351,6 +1354,12 @@ packages:
 
   '@payloadcms/db-mongodb@4.0.0-beta.3':
     resolution: {integrity: sha512-S+0ZODQFgOLSYA0HP1H2brvwRaezyI+6Spi08raajPx2k97m8l16cwjvqeJAYoKwBcgOUfEr32/86k9TbvGOZg==}
+    peerDependencies:
+      payload: 4.0.0-beta.3
+
+  '@payloadcms/email-resend@4.0.0-beta.3':
+    resolution: {integrity: sha512-yGegTlQR41GnRHTeedgd6ocjUegUVe7y4T3WNsWxnDIDoh5zEAJ2Nsa4AbLACyyj+oyajks6rhxVk44U5vMW+w==}
+    engines: {node: '>=24.15.0'}
     peerDependencies:
       payload: 4.0.0-beta.3
 
@@ -7253,6 +7262,10 @@ snapshots:
       - mongodb-client-encryption
       - snappy
       - socks
+
+  '@payloadcms/email-resend@4.0.0-beta.3(payload@4.0.0-beta.3(graphql@16.13.1)(supports-color@8.1.1)(typescript@6.0.3))':
+    dependencies:
+      payload: 4.0.0-beta.3(graphql@16.13.1)(supports-color@8.1.1)(typescript@6.0.3)
 
   '@payloadcms/graphql@4.0.0-beta.3(graphql@16.13.1)(payload@4.0.0-beta.3(graphql@16.13.1)(supports-color@8.1.1)(typescript@6.0.3))(typescript@6.0.3)':
     dependencies:

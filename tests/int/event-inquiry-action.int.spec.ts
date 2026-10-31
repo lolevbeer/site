@@ -1,6 +1,7 @@
 /**
  * Private-event inquiry action: honeypot does not write; success writes the
- * inbox row (never an Event) and pings Slack in after(); exact retries, the
+ * inbox row (never an Event), then pings Slack and emails events@ plus the
+ * visitor in after(); exact retries, the
  * durable IP limit, and unknown taprooms do not write.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -9,6 +10,7 @@ const afterFns: Array<() => Promise<void>> = []
 const create = vi.fn()
 const find = vi.fn()
 const update = vi.fn()
+const sendEmail = vi.fn()
 const slackApi = vi.fn()
 const reserveIpHashSlot = vi.fn()
 
@@ -23,7 +25,13 @@ vi.mock('next/headers', () => ({
   }),
 }))
 vi.mock('payload', () => ({
-  getPayload: vi.fn(async () => ({ find, create, update, findGlobal: async () => ({}) })),
+  getPayload: vi.fn(async () => ({
+    find,
+    create,
+    update,
+    sendEmail,
+    findGlobal: async () => ({}),
+  })),
 }))
 vi.mock('@/src/payload.config', () => ({ default: {} }))
 vi.mock('@/lib/public-forms/durable-limit', () => ({
@@ -72,6 +80,8 @@ describe('submitEventInquiry', () => {
     create.mockReset()
     find.mockReset()
     update.mockReset()
+    sendEmail.mockReset()
+    sendEmail.mockResolvedValue({ id: 'email-1' })
     slackApi.mockReset()
     reserveIpHashSlot.mockReset()
     reserveIpHashSlot.mockResolvedValue(async () => {})
@@ -122,7 +132,7 @@ describe('submitEventInquiry', () => {
     const locationsRead = find.mock.calls.find(([a]) => a.collection === 'locations')
     expect(locationsRead?.[0]).toMatchObject({ overrideAccess: false })
 
-    expect(afterFns).toHaveLength(1)
+    expect(afterFns).toHaveLength(2)
     await afterFns[0]()
     expect(slackApi).toHaveBeenCalledWith(
       'chat.postMessage',
@@ -131,6 +141,41 @@ describe('submitEventInquiry', () => {
     expect(update).toHaveBeenCalledWith(
       expect.objectContaining({ collection: 'event-inquiries', id: 'inq-1' }),
     )
+  })
+
+  it('emails events@ the full request and the visitor a receipt in after()', async () => {
+    await submitEventInquiry({ ...valid(), message: 'Need the back room' })
+    expect(afterFns).toHaveLength(2)
+    await afterFns[1]()
+    expect(sendEmail).toHaveBeenCalledTimes(2)
+    const [team, receipt] = sendEmail.mock.calls.map(([message]) => message)
+    expect(team).toMatchObject({ to: 'events@lolev.beer', replyTo: 'alex@example.org' })
+    for (const detail of [
+      'Alex Rivera',
+      'alex@example.org',
+      '412-555-0100',
+      'Need the back room',
+    ]) {
+      expect(team.text).toContain(detail)
+    }
+    expect(receipt).toMatchObject({ to: 'alex@example.org', replyTo: 'events@lolev.beer' })
+    expect(receipt.text).toContain('Lawrenceville')
+    // Never echo visitor free text to an address the visitor typed in.
+    expect(receipt.text).not.toContain('Need the back room')
+    expect(receipt.html).not.toContain('Alex Rivera')
+  })
+
+  it('escapes visitor text in the events@ HTML', async () => {
+    await submitEventInquiry({ ...valid(), message: '<script>x</script>' })
+    await afterFns[1]()
+    expect(sendEmail.mock.calls[0][0].html).toContain('&lt;script&gt;')
+  })
+
+  it('still sends the receipt when the events@ email fails', async () => {
+    sendEmail.mockRejectedValueOnce(new Error('resend down'))
+    await submitEventInquiry(valid())
+    await expect(afterFns[1]()).resolves.toBeUndefined()
+    expect(sendEmail).toHaveBeenCalledTimes(2)
   })
 
   it('stores the preferred day at noon Eastern so dayOnly pickers show the same day', async () => {

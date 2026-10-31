@@ -1,6 +1,7 @@
 /**
- * The admin panel's "Forgot password?" form has no email service behind it,
- * so Users.auth.forgotPassword.generateEmailHTML DMs the reset link over Slack.
+ * The admin panel's "Forgot password?" form sends the reset link two ways:
+ * Users.auth.forgotPassword.generateEmailHTML DMs it over Slack and returns it
+ * as the email body (sent through Resend when RESEND_API_KEY is set).
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -27,8 +28,9 @@ describe('admin forgot password → Slack DM', () => {
     )
   })
 
-  it('sends nothing when the account has no linked Slack user', async () => {
-    await generate({ req: {} as never, token: 'abc123', user: { slackUserId: null } })
+  it('skips the DM but still returns the email link when no Slack user is linked', async () => {
+    const html = await generate({ req: {} as never, token: 'abc123', user: { slackUserId: null } })
     expect(slackApi).not.toHaveBeenCalled()
+    expect(html).toContain('/admin/reset/abc123"')
   })
 })

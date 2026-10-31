@@ -1,5 +1,6 @@
 import { vercelBlobStorage } from '@payloadcms/storage-vercel-blob'
 import { mongooseAdapter } from '@payloadcms/db-mongodb'
+import { resendAdapter } from '@payloadcms/email-resend'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import path from 'path'
 import { buildConfig, type CollectionConfig } from 'payload'
@@ -188,7 +189,9 @@ export default buildConfig({
               type: 'relationship',
               relationTo: 'menus',
               required: true,
-              admin: { description: 'Add one widget per menu, or use multiple views of the same menu.' },
+              admin: {
+                description: 'Add one widget per menu, or use multiple views of the same menu.',
+              },
             },
             {
               name: 'itemKind',
@@ -349,6 +352,16 @@ export default buildConfig({
   upload: {
     transformers: [sharpTransformer({ collections: { media: mediaSharp } })],
   },
+  // Admin password resets and event-inquiry emails. Without a key (local dev,
+  // CI) Payload's console adapter logs them instead. lolev.beer must stay a
+  // verified sending domain in Resend.
+  email: process.env.RESEND_API_KEY
+    ? resendAdapter({
+        apiKey: process.env.RESEND_API_KEY,
+        defaultFromAddress: 'app@lolev.beer',
+        defaultFromName: 'Lolev App',
+      })
+    : undefined,
   plugins: [revalidationPlugin],
   endpoints: [
     {
