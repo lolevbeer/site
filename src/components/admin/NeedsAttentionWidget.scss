@@ -1,0 +1,21 @@
+// Needs attention widget: rows carry an action button beside Payload's row
+// link, and bartenders get location tabs under the header. Layout only,
+// theme tokens only.
+.needs-attention__row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacer-2);
+
+  .widget-card__row-link {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .btn {
+    flex-shrink: 0;
+  }
+}
+
+.needs-attention__tabs {
+  flex-shrink: 0;
+}
