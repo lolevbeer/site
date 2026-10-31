@@ -198,7 +198,10 @@ is the system queue, separate from hiring.
   skip the recurring date explicitly.
 - **Inboxes:** Changing inquiry or donation status does not send a reply or create
   a booking. On a donation request, the sidebar **Email requester** button opens
-  your own email app with a summary of the request filled in. Job Applications has no new pipeline/status field. A published job
+  your own email app with a summary of the request filled in. The **Donation
+  requests** dashboard widget (add it from the dashboard; pick New, Approved,
+  Declined, or All in its settings) lists requests with the same **Email**
+  button on each row. Job Applications has no new pipeline/status field. A published job
   opening is visible immediately; its closing date alone does not hide it.
 
 ## Admin dashboard
