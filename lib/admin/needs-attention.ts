@@ -122,5 +122,7 @@ export function buildAttentionRows(input: AttentionInput): AttentionRow[] {
 
 /** A wait as whole days ('4d'), or whole hours under a day ('5h'). */
 function formatWait(ms: number): string {
-  return ms >= MS_PER_DAY ? `${Math.floor(ms / MS_PER_DAY)}d` : `${Math.floor(ms / MS_PER_HOUR)}h`
+  if (ms >= MS_PER_DAY) return `${Math.floor(ms / MS_PER_DAY)}d`
+  if (ms >= MS_PER_HOUR) return `${Math.floor(ms / MS_PER_HOUR)}h`
+  return '<1h'
 }

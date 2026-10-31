@@ -76,6 +76,14 @@ describe('buildAttentionRows', () => {
     ])
   })
 
+  it('says <1h for a submission waiting under an hour', () => {
+    const rows = buildAttentionRows({
+      ...EMPTY,
+      applications: [{ id: 'a1', createdAt: daysAgo(10 / 1440) }],
+    })
+    expect(rows[0]?.meta).toBe('oldest <1h')
+  })
+
   it('flags lines due soon, overdue, and never cleaned', () => {
     const rows = buildAttentionRows({
       ...EMPTY,

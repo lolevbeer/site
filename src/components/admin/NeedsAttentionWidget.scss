@@ -1,6 +1,19 @@
 // Needs attention widget: rows carry an action button beside Payload's row
 // link, and bartenders get location tabs under the header. Layout only,
 // theme tokens only.
+
+// Every row is something to act on, so show them all rather than Payload's
+// five-row scrolling viewport.
+.needs-attention .widget-card__rows {
+  max-height: none;
+  overflow: visible;
+}
+
+// Titles wrap instead of truncating, so a narrow (phone) row beside its
+// Mark cleaned button still names the location.
+.needs-attention .widget-card__row-title {
+  white-space: normal;
+}
 .needs-attention__row {
   display: flex;
   align-items: center;
