@@ -144,4 +144,14 @@ export const migrationRecovery: readonly MigrationRecovery[] = [
     verify:
       'In Atlas, db.media.countDocuments({ sizes: { $exists: true } }) must be 0 and the variants count must match the former sizes count; then confirm homepage and beer-page images load the -150x150/-500x500 webp variants.',
   },
+  {
+    name: '20261031_160000_job_application_status',
+    compatibility:
+      'Sets status: reviewed on job applications that have no status. Prior app versions ignore the field, so the live deployment keeps working before and after.',
+    retry:
+      'Safe to rerun: it only updates applications whose status is missing, so applications already marked new or reviewed are never touched.',
+    mode: 'roll-forward',
+    verify:
+      'In Atlas, db["job-applications"].countDocuments({ status: { $exists: false } }) must be 0; the dashboard Inbox then shows only applications submitted after the deploy.',
+  },
 ]
