@@ -85,3 +85,15 @@ describe('defaultDashboardLayout', () => {
     expect(layout.map((w) => w.widgetSlug)).toContain('inbox')
   })
 })
+
+describe('dashboard config', () => {
+  it('registers every widget the default layouts use', async () => {
+    const config = await (await import('@/src/payload.config')).default
+    const registered = new Set(config.admin.dashboard?.widgets.map((w) => w.slug))
+    const used = [
+      defaultDashboardLayout({ user: user(['admin']), locations, menus }),
+      defaultDashboardLayout({ user: user(['bartender'], ['law', 'zel']), locations, menus }),
+    ].flatMap((layout) => layout.map((w) => w.widgetSlug))
+    expect(used.filter((slug) => !registered.has(slug))).toEqual([])
+  }, 60_000)
+})

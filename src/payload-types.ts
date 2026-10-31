@@ -150,6 +150,8 @@ export interface Config {
   locale: null;
   widgets: {
     'schedule-heatmap': ScheduleHeatmapWidget;
+    'needs-attention': NeedsAttentionWidget;
+    inbox: InboxWidget;
     'donation-requests': DonationRequestsWidget;
     'menu-target-history': MenuTargetHistoryWidget;
     'menu-items': MenuItemsWidget;
@@ -3070,11 +3072,34 @@ export interface ScheduleHeatmapWidget {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "needs-attention_widget".
+ */
+export interface NeedsAttentionWidget {
+  data?: {
+    /**
+     * Leave empty for every location you can act on; pick one to pin this widget to it.
+     */
+    location?: (string | null) | Location;
+  };
+  width: 'medium' | 'large' | 'x-large' | 'full';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "inbox_widget".
+ */
+export interface InboxWidget {
+  data?: {
+    kind?: ('all' | 'events' | 'donations' | 'jobs') | null;
+  };
+  width: 'medium' | 'large' | 'x-large' | 'full';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "donation-requests_widget".
  */
 export interface DonationRequestsWidget {
   data?: {
-    status?: ('new' | 'approved' | 'declined' | 'all') | null;
+    [k: string]: unknown;
   };
   width: 'x-small' | 'small' | 'medium' | 'large' | 'x-large' | 'full';
 }
@@ -3084,7 +3109,7 @@ export interface DonationRequestsWidget {
  */
 export interface MenuTargetHistoryWidget {
   data?: {
-    [k: string]: unknown;
+    view?: ('cards' | 'chart') | null;
   };
   width: 'x-small' | 'small' | 'medium' | 'large' | 'x-large' | 'full';
 }

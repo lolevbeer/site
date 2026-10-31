@@ -23,6 +23,7 @@
 import { Pill } from '@payloadcms/ui'
 import Link from 'next/link'
 import type { WidgetServerProps } from 'payload'
+import type { MenuTargetHistoryWidget } from '@/src/payload-types'
 import type { ReactElement } from 'react'
 import { formatAdminURL } from 'payload/shared'
 
@@ -51,12 +52,10 @@ const diffLabel = (d: number) =>
   d === 0 ? 'on target' : `${Math.abs(d)} ${d < 0 ? 'under' : 'over'}`
 const dayLabel = (t: number) => formatDate(getDateEST(t))
 
-type View = 'cards' | 'chart'
-
 export async function MenuTargetHistory({
   req,
   widgetData,
-}: WidgetServerProps<{ data?: { view?: View } }>): Promise<ReactElement | null> {
+}: WidgetServerProps<MenuTargetHistoryWidget>): Promise<ReactElement | null> {
   const data = await loadMenuTargets(req)
   if (!data) return null
   if (widgetData?.view === 'chart') return <MenuTargetChart data={data} />

@@ -10,7 +10,12 @@ import type React from 'react'
 import type { CollectionSlug, WidgetServerProps } from 'payload'
 import { formatAdminURL } from 'payload/shared'
 import { buildInboxRows } from '@/lib/admin/inbox'
-import type { DonationRequest, EventInquiry, JobApplication } from '@/src/payload-types'
+import type {
+  DonationRequest,
+  EventInquiry,
+  InboxWidget as InboxWidgetData,
+  JobApplication,
+} from '@/src/payload-types'
 import { InboxRows, type InboxKind } from './InboxRows'
 import './dashboard-widgets.scss'
 import './InboxWidget.scss'
@@ -48,7 +53,7 @@ async function readNew<T>(
 export async function InboxWidget({
   req,
   widgetData,
-}: WidgetServerProps<{ data?: { kind?: InboxKind } }>): Promise<React.JSX.Element> {
+}: WidgetServerProps<InboxWidgetData>): Promise<React.JSX.Element> {
   const kind = widgetData?.kind ?? 'all'
   const wants = (k: InboxKind): boolean => kind === 'all' || kind === k
   const [inquiries, donations, applications] = await Promise.all([
@@ -83,4 +88,11 @@ export async function InboxWidget({
       <InboxRows rows={rows} kind={kind} />
     </div>
   )
+}
+
+/** The legacy 'donation-requests' widget slug: the Inbox limited to donation requests. */
+export async function DonationRequestsInboxWidget(
+  props: WidgetServerProps<InboxWidgetData>,
+): Promise<React.JSX.Element> {
+  return InboxWidget({ ...props, widgetData: { kind: 'donations' } })
 }

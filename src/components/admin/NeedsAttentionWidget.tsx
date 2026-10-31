@@ -23,13 +23,12 @@ import {
 import { getUserLocationIds, hasRole } from '@/src/access/roles'
 import { MarkCleanedRowButton } from '@/src/components/admin/MarkCleanedRowButton'
 import { AttentionHeader, NeedsAttentionTabs } from '@/src/components/admin/NeedsAttentionTabs'
-import type { User } from '@/src/payload-types'
+import type { NeedsAttentionWidget as WidgetData, User } from '@/src/payload-types'
 import { relationshipId } from '@/src/utils/relationship-id'
 import './dashboard-widgets.scss'
 import './NeedsAttentionWidget.scss'
 
 // Until the widget is registered and payload-types regenerated (NeedsAttentionWidget).
-type WidgetData = { data?: { location?: string | { id: string } | null } }
 type Submissions = AttentionInput['inquiries']
 
 const SUBMISSION_LIMIT = 100

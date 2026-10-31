@@ -9,7 +9,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import type { ComponentProps, ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import type { InboxRow } from '@/lib/admin/inbox'
-import { InboxWidget } from '@/src/components/admin/InboxWidget'
+import { DonationRequestsInboxWidget, InboxWidget } from '@/src/components/admin/InboxWidget'
 import { InboxRows } from '@/src/components/admin/InboxRows'
 
 const state = vi.hoisted(() => ({
@@ -148,6 +148,15 @@ describe('InboxWidget (server)', () => {
     expect(find.mock.calls.map(([args]) => args.collection)).toEqual(['donation-requests'])
     expect(html).toContain('Food Bank')
     expect(html).not.toContain('role="tablist"')
+  })
+
+  it('renders the legacy donation-requests widget as donations only, ignoring its old status setting', async () => {
+    const element = await DonationRequestsInboxWidget({
+      req,
+      widgetData: { status: 'all' },
+    } as never)
+    expect(find.mock.calls.map(([args]) => args.collection)).toEqual(['donation-requests'])
+    expect(renderToStaticMarkup(element)).toContain('Food Bank')
   })
 
   it('prefixes row links with the admin route and adds Email links', async () => {
