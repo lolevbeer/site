@@ -2,7 +2,7 @@
  * Default dashboard per role (src/admin/dashboard-layout.ts): office roles get
  * the full dashboard, bartenders their own locations' widgets only.
  */
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { defaultDashboardLayout } from '@/src/admin/dashboard-layout'
 import type { User } from '@/src/payload-types'
 
@@ -88,6 +88,9 @@ describe('defaultDashboardLayout', () => {
 
 describe('dashboard config', () => {
   it('registers every widget the default layouts use', async () => {
+    // Building the config only validates these; nothing connects to the database.
+    vi.stubEnv('DATABASE_URI', process.env.DATABASE_URI || 'mongodb://127.0.0.1:27017/config-test')
+    vi.stubEnv('PAYLOAD_SECRET', process.env.PAYLOAD_SECRET || 'config-test-secret')
     const config = await (await import('@/src/payload.config')).default
     const registered = new Set(config.admin.dashboard?.widgets.map((w) => w.slug))
     const used = [
