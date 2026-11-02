@@ -8,7 +8,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card'
 import { HubIntro } from '@/components/ui/hub-intro'
 import { JsonLd } from '@/components/seo/json-ld'
 import { PageTransition } from '@/components/motion'
@@ -105,7 +105,16 @@ export default async function PrivateEventsPage() {
           </div>
 
           <Card>
-            <CardContent className="overflow-visible p-6">
+            <CardHeader>
+              <h2 className="text-2xl font-semibold tracking-tight">
+                Tell us what you have in mind
+              </h2>
+              <CardDescription>
+                Send an availability request. Our events team will follow up by email to work
+                through the details with you. Your date is only booked once we confirm it.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="overflow-visible">
               <EventInquiryForm taprooms={taprooms} />
             </CardContent>
           </Card>

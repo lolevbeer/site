@@ -70,7 +70,7 @@ export function optionLabel(
   return options.find((option) => option.value === value)?.label
 }
 
-/** HH:MM, 24-hour, from `<input type="time">`. */
+/** HH:MM, 24-hour, from the public time picker. */
 const START_TIME = /^([01]\d|2[0-3]):[0-5]\d$/
 
 export interface EventInquiryInput {

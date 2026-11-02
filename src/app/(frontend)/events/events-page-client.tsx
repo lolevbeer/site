@@ -97,8 +97,8 @@ export function EventsPageClient({ initialEvents, intro }: EventsPageClientProps
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold tracking-tight">Events</h1>
         <HubIntro text={intro} />
-        <Button variant="link" size="sm" asChild className="mt-2">
-          <Link href="/private-events">Planning a private event? Book it here</Link>
+        <Button variant="outline" size="lg" asChild className="mt-4">
+          <Link href="/private-events">Check private event availability</Link>
         </Button>
       </div>
 
@@ -168,13 +168,13 @@ export function EventsPageClient({ initialEvents, intro }: EventsPageClientProps
         )}
       </div>
 
-      <div className="text-center space-y-3 pt-12 mt-12">
-        <h2 className="text-lg font-semibold">Book a private event</h2>
+      <div className="flex flex-col items-center gap-3 pt-12 mt-12">
+        <h2 className="text-lg font-semibold">Plan a private event</h2>
         <p className="text-sm text-muted-foreground">
           Birthdays, team outings, and celebrations at our taprooms.
         </p>
         <Button asChild>
-          <Link href="/private-events">Request a date</Link>
+          <Link href="/private-events">Check private event availability</Link>
         </Button>
         <p className="text-sm text-muted-foreground pt-6">
           Asking us to donate beer? Use the{' '}

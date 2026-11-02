@@ -334,6 +334,15 @@ land in Admin → Event Inquiries; they never create an Event. Show only
 company-paid inquiries with Filters → "Company paying" is "Yes". Each inquiry is
 also emailed (see [Email](#email)).
 
+The public inquiry stays on one page, grouped into event details, drinks/food,
+and contact details. Related fields share rows on wider screens; contact fields
+stack on phones. Start time uses explicit hour, minute, and AM/PM controls in
+Eastern time, with quarter-hour minute choices and the `HH:MM` storage format.
+The flexible-date switch uses a thin 1px outline for its off state.
+Failed submissions move focus
+to the first invalid field. The events-page CTA requests availability, not an
+instant booking; the form and confirmation repeat that distinction.
+
 1. **Create New App → From an app manifest** → pick the workspace → paste
    [`docs/slack-app-manifest.yml`](docs/slack-app-manifest.yml). That sets the
    scopes (`commands`, `users:read`, `users:read.email`, `chat:write`,

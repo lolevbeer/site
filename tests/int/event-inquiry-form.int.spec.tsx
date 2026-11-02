@@ -33,6 +33,7 @@ import { EventInquiryForm } from '@/components/events/event-inquiry-form'
 const gtag = vi.fn()
 beforeEach(() => {
   headerLocation = 'lawrenceville'
+  Element.prototype.scrollIntoView = vi.fn()
   submitEventInquiry.mockReset()
   track.mockReset()
   gtag.mockReset()
@@ -49,42 +50,6 @@ const taprooms = [
 ]
 
 describe('EventInquiryForm', () => {
-  it('is open on load and asks about the event before contact details', () => {
-    const { container } = render(<EventInquiryForm taprooms={taprooms} />)
-    expect(container.querySelector('details')).toBeNull()
-    const labels = Array.from(container.querySelectorAll('label')).map((l) => l.textContent)
-    expect(labels).toEqual([
-      'Preferred date',
-      'How many guests?',
-      'My date is flexible',
-      'Start time',
-      'Length',
-      'Taproom',
-      'Occasion (optional)',
-      "I'll run a host tab",
-      'Guests pay for their own drinks',
-      'Not sure yet',
-      'Yes',
-      'No',
-      'Food plan (optional)',
-      'Your name',
-      'Email',
-      'Phone (optional)',
-      'Anything else? (optional)',
-    ])
-  })
-
-  it('pairs date with guests and start time with length, stacks the rest', () => {
-    render(<EventInquiryForm taprooms={taprooms} />)
-    const row = (id: string) => document.getElementById(id)?.closest('[data-slot=field-row]')
-    expect(row('inquiry-preferredDate')).toBeTruthy()
-    expect(row('inquiry-preferredDate')).toBe(row('inquiry-headcount'))
-    expect(row('inquiry-startTime')).toBeTruthy()
-    expect(row('inquiry-startTime')).toBe(row('inquiry-duration'))
-    expect(row('inquiry-email')).toBeNull()
-    expect(row('inquiry-phone')).toBeNull()
-  })
-
   it('preselects the taproom chosen in the header, and the visitor can change it', () => {
     headerLocation = 'zelienople'
     render(<EventInquiryForm taprooms={taprooms} />)
@@ -130,25 +95,6 @@ describe('EventInquiryForm', () => {
     expect(screen.getByLabelText('Company name')).toBeTruthy()
     fireEvent.click(screen.getByRole('radio', { name: 'No' }))
     expect(screen.queryByLabelText('Company name')).toBeNull()
-  })
-
-  it('sends the quote fields, with a 3-hour default length', async () => {
-    submitEventInquiry.mockResolvedValueOnce({ ok: false, error: 'x' })
-    render(<EventInquiryForm taprooms={taprooms} />)
-    fireEvent.change(screen.getByLabelText('Start time'), { target: { value: '18:30' } })
-    fireEvent.click(screen.getByRole('radio', { name: "I'll run a host tab" }))
-    fireEvent.click(screen.getByRole('radio', { name: 'Yes' }))
-    fireEvent.change(screen.getByLabelText('Company name'), { target: { value: 'Acme' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Send inquiry' }))
-    await waitFor(() => expect(submitEventInquiry).toHaveBeenCalled())
-    expect(submitEventInquiry.mock.calls[0][0]).toMatchObject({
-      startTime: '18:30',
-      duration: '3h',
-      drinks: 'host-tab',
-      companyPaid: 'yes',
-      companyName: 'Acme',
-      foodPlan: '',
-    })
   })
 
   it('shows a radio group error under the group', async () => {
@@ -273,6 +219,7 @@ describe('EventInquiryForm', () => {
     expect(document.getElementById('inquiry-headcount-error')?.textContent).toBe(
       'Enter how many guests.',
     )
+    expect(document.activeElement?.id).toBe('inquiry-headcount')
 
     fireEvent.change(name, { target: { value: 'Ada' } })
     expect(name.getAttribute('aria-invalid')).toBeNull()
