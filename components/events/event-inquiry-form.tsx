@@ -257,7 +257,7 @@ export function EventInquiryForm({
           ref={formRef}
           noValidate
           onSubmit={onSubmit}
-          className="relative overflow-visible flex flex-col gap-4 [&_[data-slot=select-trigger]]:border-0 [&_[data-slot=select-trigger]]:shadow-none"
+          className="relative overflow-visible flex flex-col gap-4"
         >
           <FieldGroup className="overflow-visible p-1 gap-5">
             <FieldSet>
