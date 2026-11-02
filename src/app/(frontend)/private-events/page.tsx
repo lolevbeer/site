@@ -8,7 +8,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs'
-import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { HubIntro } from '@/components/ui/hub-intro'
 import { JsonLd } from '@/components/seo/json-ld'
 import { PageTransition } from '@/components/motion'
@@ -97,22 +97,15 @@ export default async function PrivateEventsPage() {
               <HubIntro text={intro} />
             ) : (
               <p className="mt-3 text-muted-foreground text-balance">
-                Host a birthday, team outing, or celebration at a Lolev Beer taproom
-                {cities ? ` in ${cities}` : ''}. Tell us the date and headcount and we will get back
-                to you about availability.
+                Birthdays, team outings, and celebrations at our taprooms
+                {cities ? ` in ${cities}` : ''}.
               </p>
             )}
           </div>
 
           <Card>
             <CardHeader>
-              <h2 className="text-2xl font-semibold tracking-tight">
-                Tell us what you have in mind
-              </h2>
-              <CardDescription>
-                Send an availability request. Our events team will follow up by email to work
-                through the details with you. Your date is only booked once we confirm it.
-              </CardDescription>
+              <h2 className="text-2xl font-semibold tracking-tight">Request availability</h2>
             </CardHeader>
             <CardContent className="overflow-visible">
               <EventInquiryForm taprooms={taprooms} />

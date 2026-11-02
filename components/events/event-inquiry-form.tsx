@@ -25,7 +25,6 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/u
 import {
   Field,
   FieldError,
-  FieldDescription,
   FieldGroup,
   FieldLabel,
   FieldLegend,
@@ -244,11 +243,7 @@ export function EventInquiryForm({
                 .join(' · ')}
             </EmptyDescription>
             <EmptyDescription>
-              Thanks! We will email {values.email || 'you'} about availability.
-            </EmptyDescription>
-            <EmptyDescription>
-              Your date is not reserved yet. Our events team will confirm availability and details
-              with you before your event is booked.
+              We will email {values.email || 'you'} about availability. Your date is not reserved yet.
             </EmptyDescription>
           </EmptyHeader>
         </Empty>
@@ -261,10 +256,7 @@ export function EventInquiryForm({
         >
           <FieldGroup className="overflow-visible p-1 gap-5">
             <FieldSet>
-              <FieldLegend>1. Your event</FieldLegend>
-              <FieldDescription>
-                Start with your preferred date and an estimated guest count.
-              </FieldDescription>
+              <FieldLegend>Your event</FieldLegend>
               <FieldGroup className="gap-5">
                 <FieldGroup data-slot="field-row" className="grid gap-5 sm:grid-cols-2">
                   <FormField
@@ -458,10 +450,7 @@ export function EventInquiryForm({
               </FieldGroup>
             </FieldSet>
             <FieldSet>
-              <FieldLegend>2. Drinks &amp; food</FieldLegend>
-              <FieldDescription>
-                Still deciding? Choose “Not sure yet” for drinks and leave food blank.
-              </FieldDescription>
+              <FieldLegend>Drinks &amp; food</FieldLegend>
               <FieldGroup className="gap-5">
                 <RadioField
                   id="inquiry-drinks"
@@ -530,8 +519,7 @@ export function EventInquiryForm({
               </FieldGroup>
             </FieldSet>
             <FieldSet>
-              <FieldLegend>3. How to reach you</FieldLegend>
-              <FieldDescription>We will follow up by email about availability.</FieldDescription>
+              <FieldLegend>Contact details</FieldLegend>
               <FieldGroup className="gap-5">
                 <FieldGroup className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                   <FormField id="inquiry-name" label="Your name" error={fieldErrors.name}>
