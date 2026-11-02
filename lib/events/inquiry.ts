@@ -51,7 +51,7 @@ export const EVENT_INQUIRY_DRINKS = [
 ] as const
 
 export const EVENT_INQUIRY_FOOD_PLANS = [
-  { value: 'caterer', label: 'Bringing a caterer' },
+  { value: 'caterer', label: 'Would like to bring a caterer' },
   { value: 'food-truck', label: 'Food truck' },
   { value: 'own-food', label: 'Bringing our own food' },
   { value: 'suggestions', label: 'Need suggestions' },
