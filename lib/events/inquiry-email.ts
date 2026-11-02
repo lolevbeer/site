@@ -12,6 +12,7 @@
 import type { Payload } from 'payload'
 import { sendPlainTextEmails } from '@/lib/email/send'
 import {
+  EVENTS_EMAIL,
   EVENT_INQUIRY_DRINKS,
   EVENT_INQUIRY_DURATIONS,
   EVENT_INQUIRY_FOOD_PLANS,
@@ -22,8 +23,6 @@ import {
 } from '@/lib/events/inquiry'
 import { formatTime } from '@/lib/utils/formatters'
 import { getBaseUrl } from '@/lib/utils/get-base-url'
-
-export const EVENTS_EMAIL = 'events@lolev.beer'
 
 export type EventInquiryEmailInput = ValidatedEventInquiry & {
   id: string | number

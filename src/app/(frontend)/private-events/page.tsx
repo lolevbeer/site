@@ -20,7 +20,7 @@ import { getAllLocations } from '@/lib/utils/payload-api'
 import { getHubIntro } from '@/lib/utils/site-seo'
 import { privateEventsDescription } from '@/lib/utils/seo'
 import type { PayloadLocation } from '@/lib/types/location'
-import { EVENTS_EMAIL } from '@/lib/events/inquiry-email'
+import { EVENTS_EMAIL } from '@/lib/events/inquiry'
 
 export const revalidate = 3600
 

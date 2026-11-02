@@ -333,6 +333,8 @@ so save afterwards). Inquiries
 land in Admin → Event Inquiries; they never create an Event. Show only
 company-paid inquiries with Filters → "Company paying" is "Yes". Each inquiry is
 also emailed (see [Email](#email)).
+Admin “Email guest” replies prefill `events@lolev.beer` in CC so the events team
+can stay on the conversation.
 
 The public inquiry stays on one page, grouped into event details, drinks/food,
 and contact details. Related fields share rows on wider screens; contact fields

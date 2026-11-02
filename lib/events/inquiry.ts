@@ -16,6 +16,8 @@ import {
 import { isHoneypotFilled } from '@/lib/public-forms/honeypot'
 import { getTodayEST } from '@/lib/utils/date'
 
+export const EVENTS_EMAIL = 'events@lolev.beer'
+
 export const EVENT_INQUIRY_MAX_TEXT = 2000
 export const EVENT_INQUIRY_MAX_HEADCOUNT = 500
 /** Extra days a flexible visitor can offer besides the preferred date. */

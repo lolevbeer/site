@@ -19,16 +19,19 @@ export function clipDetails(text: string): string {
   return text.length > MAX_DETAILS ? `${text.slice(0, MAX_DETAILS)}…` : text
 }
 
-/** Null when `to` is missing or not safe to put in a mailto: link. */
+/** Null when a recipient is missing or unsafe to put in a mailto: link. */
 export function replyMailto({
   to,
+  cc,
   subject,
   body,
 }: {
   to: string | null | undefined
+  cc?: string
   subject: string
   body: string
 }): string | null {
-  if (!to || !SAFE_ADDRESS.test(to)) return null
-  return `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+  if (!to || !SAFE_ADDRESS.test(to) || (cc !== undefined && !SAFE_ADDRESS.test(cc))) return null
+  const copy = cc ? `&cc=${encodeURIComponent(cc)}` : ''
+  return `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}${copy}`
 }

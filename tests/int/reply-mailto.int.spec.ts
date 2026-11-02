@@ -12,6 +12,7 @@ function parse(href: string) {
   const url = new URL(href)
   return {
     to: decodeURIComponent(url.pathname),
+    cc: url.searchParams.get('cc'),
     subject: url.searchParams.get('subject'),
     body: url.searchParams.get('body') ?? '',
   }
@@ -38,6 +39,17 @@ describe('replyMailto', () => {
     expect(replyMailto({ to: '', subject: 's', body: 'b' })).toBeNull()
     expect(replyMailto({ to: null, subject: 's', body: 'b' })).toBeNull()
   })
+
+  it('rejects a CC address that could inject another header', () => {
+    expect(
+      replyMailto({
+        to: 'sam@example.org',
+        cc: 'events@example.org\r\nbcc: spy@evil.com',
+        subject: 'Event',
+        body: 'Reply',
+      }),
+    ).toBeNull()
+  })
 })
 
 const inquiry = {
@@ -58,6 +70,7 @@ describe('inquiryReplyMailto', () => {
   it('addresses the guest and summarizes the inquiry', () => {
     const mail = parse(inquiryReplyMailto(inquiry)!)
     expect(mail.to).toBe('pat@example.org')
+    expect(mail.cc).toBe('events@lolev.beer')
     expect(mail.subject).toBe('Your Lolev private event inquiry: 2026-12-05')
     expect(mail.body.startsWith('Hi Pat Kim,')).toBe(true)
     for (const line of [
@@ -95,6 +108,7 @@ describe('jobReplyMailto', () => {
   it('addresses the applicant and summarizes the application', () => {
     const mail = parse(jobReplyMailto(application)!)
     expect(mail.to).toBe('alex@example.org')
+    expect(mail.cc).toBeNull()
     expect(mail.subject).toBe('Your Lolev job application: Bartender')
     expect(mail.body.startsWith('Hi Alex Ruiz,')).toBe(true)
     expect(mail.body).toContain('Job: Bartender')
