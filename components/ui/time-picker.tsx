@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, type JSX } from 'react'
 import {
   Select,
   SelectContent,
@@ -13,6 +13,16 @@ import {
 const HOURS = Array.from({ length: 12 }, (_, index) => String(index + 1))
 const MINUTES = ['00', '15', '30', '45']
 
+interface TimePickerProps {
+  id: string
+  value: string
+  onChange: (value: string) => void
+  disabled?: boolean
+  'aria-label'?: string
+  'aria-invalid'?: boolean
+  'aria-describedby'?: string
+}
+
 /** Explicit 12-hour controls; the form and server still exchange HH:MM in 24-hour time. */
 export function TimePicker({
   id,
@@ -22,24 +32,21 @@ export function TimePicker({
   'aria-label': label = 'Time',
   'aria-invalid': invalid,
   'aria-describedby': describedBy,
-}: {
-  id: string
-  value: string
-  onChange: (value: string) => void
-  disabled?: boolean
-  'aria-label'?: string
-  'aria-invalid'?: boolean
-  'aria-describedby'?: string
-}) {
+}: TimePickerProps): JSX.Element {
   // Minutes and period can be chosen before the hour without inventing a start time.
   const [draftMinute, setDraftMinute] = useState('00')
   const [draftPeriod, setDraftPeriod] = useState('PM')
-  const [hours24, minutes] = value.split(':')
-  const hour = value ? String(Number(hours24) % 12 || 12) : ''
-  const minute = value ? minutes : draftMinute
-  const period = value ? (Number(hours24) >= 12 ? 'PM' : 'AM') : draftPeriod
+  let hour = ''
+  let minute = draftMinute
+  let period = draftPeriod
+  if (value) {
+    const [hours24, minutes] = value.split(':')
+    hour = String(Number(hours24) % 12 || 12)
+    minute = minutes
+    period = Number(hours24) >= 12 ? 'PM' : 'AM'
+  }
 
-  function change(nextHour: string, nextMinute: string, nextPeriod: string) {
+  function change(nextHour: string, nextMinute: string, nextPeriod: string): void {
     setDraftMinute(nextMinute)
     setDraftPeriod(nextPeriod)
     if (!nextHour) return

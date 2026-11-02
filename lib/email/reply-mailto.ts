@@ -31,7 +31,9 @@ export function replyMailto({
   subject: string
   body: string
 }): string | null {
-  if (!to || !SAFE_ADDRESS.test(to) || (cc !== undefined && !SAFE_ADDRESS.test(cc))) return null
-  const copy = cc ? `&cc=${encodeURIComponent(cc)}` : ''
-  return `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}${copy}`
+  if (!to || !SAFE_ADDRESS.test(to)) return null
+  if (cc !== undefined && !SAFE_ADDRESS.test(cc)) return null
+
+  const ccQuery = cc ? `&cc=${encodeURIComponent(cc)}` : ''
+  return `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}${ccQuery}`
 }

@@ -124,6 +124,17 @@ function RadioField({
   )
 }
 
+function formatInquiryDate(values: EventInquiryInput): string | null {
+  if (!values.preferredDate) return null
+
+  const date = formatDate(values.preferredDate, 'full')
+  if (!values.flexibleDate) return date
+  if (values.otherDates.length === 0) return `${date} (flexible)`
+
+  const count = values.otherDates.length
+  return `${date} + ${count} other ${count === 1 ? 'date' : 'dates'}`
+}
+
 export function EventInquiryForm({
   taprooms,
 }: {
@@ -137,12 +148,12 @@ export function EventInquiryForm({
   const [values, setValues] = useState<EventInquiryInput>(emptyEventInquiry)
   // Until the visitor picks one: the only taproom, else the header's taproom.
   // Derived, not stored, because the header location resolves after mount.
-  const defaultTaproom =
-    taproomSlugs.length === 1
-      ? taproomSlugs[0]
-      : taproomSlugs.includes(currentLocation)
-        ? currentLocation
-        : ''
+  let defaultTaproom = ''
+  if (taproomSlugs.length === 1) {
+    defaultTaproom = taproomSlugs[0]
+  } else if (taproomSlugs.includes(currentLocation)) {
+    defaultTaproom = currentLocation
+  }
   const taproom = values.taproom || defaultTaproom
   const [error, setError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<EventInquiryErrors>({})
@@ -226,15 +237,7 @@ export function EventInquiryForm({
             </EmptyTitle>
             <EmptyDescription>
               {[
-                values.preferredDate
-                  ? `${formatDate(values.preferredDate, 'full')}${
-                      values.flexibleDate
-                        ? values.otherDates.length
-                          ? ` + ${values.otherDates.length} other ${values.otherDates.length === 1 ? 'date' : 'dates'}`
-                          : ' (flexible)'
-                        : ''
-                    }`
-                  : null,
+                formatInquiryDate(values),
                 values.startTime ? `${formatTime(values.startTime)} Eastern` : null,
                 values.headcount ? `${values.headcount} guests` : null,
                 taproomOptions.find((option) => option.value === taproom)?.label,
@@ -243,7 +246,8 @@ export function EventInquiryForm({
                 .join(' · ')}
             </EmptyDescription>
             <EmptyDescription>
-              We will email {values.email || 'you'} about availability. Your date is not reserved yet.
+              We will email {values.email || 'you'} about availability. Your date is not reserved
+              yet.
             </EmptyDescription>
           </EmptyHeader>
         </Empty>
