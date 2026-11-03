@@ -108,7 +108,7 @@
     --color-destructive: #ff453a;
     --color-destructive-foreground: #ffffff;
     --color-border: #38383a;
-    --color-input: #1c1c1e;
+    --color-input: #77777c; /* Visible control boundaries on the dark card and page. */
     --color-ring: #0a84ff;
   }
 
