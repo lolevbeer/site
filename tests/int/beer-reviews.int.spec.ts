@@ -1,6 +1,12 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { Payload, PayloadRequest } from 'payload'
-import { getPublicBeerReviews, pruneLegacyReview, syncBeerReviews } from '@/src/utils/beer-reviews'
+import {
+  getHallOfFameReviews,
+  getPublicBeerReviews,
+  pruneLegacyReview,
+  syncBeerReviews,
+} from '@/src/utils/beer-reviews'
+import { stripReviewHtml } from '@/lib/utils/review-text'
 
 function payloadWith(existingDocs: unknown[] = []) {
   const find = vi.fn(async () => ({ docs: existingDocs }))
@@ -181,5 +187,64 @@ describe('legacy review pruning on delete', () => {
     await pruneLegacyReview({ beer: 'beer-1', payload, req, sourceUrl: null })
 
     expect(findByID).not.toHaveBeenCalled()
+  })
+})
+
+describe('hall of fame reviews', () => {
+  const review = (id: string, beer: unknown, extra: Record<string, unknown> = {}) => ({
+    id,
+    beer,
+    reviewer: `Reviewer ${id}`,
+    rating: 4.75,
+    text: 'Best haze in Pittsburgh.',
+    reviewedAt: '2026-08-20T00:00:00.000Z',
+    sourceUrl: `https://untappd.com/checkin/${id}`,
+    source: 'untappd' as const,
+    approved: true,
+    hallOfFame: true,
+    createdAt: '2026-08-20T00:00:00.000Z',
+    updatedAt: '2026-08-20T00:00:00.000Z',
+    ...extra,
+  })
+
+  it('reads flagged, approved reviews as an anonymous visitor', async () => {
+    const { payload, find } = payloadWith()
+
+    await getHallOfFameReviews(payload)
+
+    expect(find).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collection: 'beer-reviews',
+        overrideAccess: false,
+        where: { and: [{ hallOfFame: { equals: true } }, { approved: { equals: true } }] },
+      }),
+    )
+  })
+
+  it('links published beers and drops reviews of beers the visitor cannot read', async () => {
+    const { payload } = payloadWith([
+      review('a', { id: 'beer-1', name: 'Rumination', slug: 'rumination' }),
+      review('b', 'beer-draft'),
+      review('c', { id: 'beer-2', name: 'Guest Beer', slug: 'guest', hideFromSite: true }),
+      review('d', { id: 'beer-1', name: 'Rumination', slug: 'rumination' }, { approved: false }),
+    ])
+
+    const reviews = await getHallOfFameReviews(payload)
+
+    expect(reviews.map((r) => r.id)).toEqual(['a', 'c'])
+    expect(reviews[0]).toMatchObject({
+      reviewer: 'Reviewer a',
+      url: 'https://untappd.com/checkin/a',
+      beer: { name: 'Rumination', slug: 'rumination' },
+    })
+    expect(reviews[1].beer).toEqual({ name: 'Guest Beer', slug: undefined })
+  })
+})
+
+describe('stripReviewHtml', () => {
+  it('keeps mention text and decodes entities', () => {
+    expect(stripReviewHtml('Thanks <a href="/user/x">Mike B.</a> &amp; crew')).toBe(
+      'Thanks Mike B. & crew',
+    )
   })
 })

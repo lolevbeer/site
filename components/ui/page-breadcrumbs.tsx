@@ -30,6 +30,7 @@ const pathLabels: Record<string, string> = {
   food: 'Food',
   about: 'About',
   faq: 'FAQ',
+  'hall-of-fame': 'Hall of Fame',
   privacy: 'Privacy Policy',
   terms: 'Terms of Service',
 }

@@ -553,7 +553,7 @@ export const Beers: CollectionConfig = {
               maxDepth: 1,
               admin: {
                 allowCreate: true,
-                defaultColumns: ['reviewer', 'rating', 'approved', 'reviewedAt'],
+                defaultColumns: ['reviewer', 'rating', 'approved', 'hallOfFame', 'reviewedAt'],
               },
             },
           ],

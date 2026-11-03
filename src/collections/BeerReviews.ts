@@ -23,7 +23,7 @@ export const BeerReviews: CollectionConfig = {
   admin: {
     group: 'Beer Catalog',
     useAsTitle: 'reviewer',
-    defaultColumns: ['beer', 'reviewer', 'rating', 'approved', 'reviewedAt'],
+    defaultColumns: ['beer', 'reviewer', 'rating', 'approved', 'hallOfFame', 'reviewedAt'],
   },
   access: {
     read: canReadBeerReviews,
@@ -166,6 +166,18 @@ export const BeerReviews: CollectionConfig = {
         description: 'Approved reviews can be included in public beer data.',
       },
       label: 'Approved for public use',
+    },
+    {
+      name: 'hallOfFame',
+      type: 'checkbox',
+      defaultValue: false,
+      index: true,
+      admin: {
+        position: 'sidebar',
+        description:
+          'Show this review on the Hall of Fame page (/hall-of-fame). Only approved reviews appear there.',
+      },
+      label: 'Hall of Fame',
     },
   ],
 }

@@ -77,6 +77,7 @@ const footerOnlyItems: NavItem[] = [
   { label: 'Private Events', href: '/private-events' },
   { label: 'Donations', href: '/donate' },
   { label: 'Jobs', href: '/jobs' },
+  { label: 'Hall of Fame', href: '/hall-of-fame' },
 ]
 
 export { navigationItems, footerOnlyItems }

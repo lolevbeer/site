@@ -18,6 +18,7 @@ const PAGE_LABELS = {
   jobs: 'Jobs list (/jobs)',
   about: 'About (/about)',
   faq: 'FAQ (/faq)',
+  hallOfFame: 'Hall of Fame (/hall-of-fame)',
   accessibility: 'Accessibility (/accessibility)',
   privacy: 'Privacy (/privacy)',
   terms: 'Terms (/terms)',
