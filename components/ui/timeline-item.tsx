@@ -21,16 +21,8 @@ import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { ExternalLink } from '@/components/icons'
-import { formatTime } from '@/lib/utils/formatters'
+import { formatTimeRange } from '@/lib/utils/formatters'
 import { safeHttpUrl } from '@/lib/utils/url-utils'
-
-function agendaTime(time?: string, endTime?: string): string | null {
-  if (!time || time.toLowerCase() === 'tbd') return null
-  if (endTime && endTime.toLowerCase() !== 'tbd') {
-    return `${formatTime(time)}–${formatTime(endTime)}`
-  }
-  return formatTime(time)
-}
 
 /** Hosts whose links sell tickets; these rows also get a visible "Tickets" link. */
 const TICKET_HOSTS = ['eventbrite.', 'ticketmaster.', 'tixr.', 'dice.fm', 'seetickets.', 'ticketleap.']
@@ -73,7 +65,7 @@ export function TimelineItem({
 }: TimelineItemProps) {
   const href = safeHttpUrl(site)
   const ticketHref = href && isTicketLink(href) ? href : undefined
-  const timeDisplay = agendaTime(time, endTime)
+  const timeDisplay = formatTimeRange(time, endTime)
 
   return (
     <div className={cn('flex flex-col items-center text-center py-2 gap-0.5', className)}>

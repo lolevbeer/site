@@ -25,13 +25,27 @@ vi.mock('@/lib/utils/payload-api', () => ({
       address: { city: 'Pittsburgh', state: 'PA', zip: '15201' },
     },
   ]),
+  getPublicEventById: vi.fn(async (id: string) =>
+    id === 'recurring-abc123-2026-11-07'
+      ? {
+          id,
+          organizer: 'Trivia Night',
+          date: '2026-11-07T00:00:00.000Z',
+          startTime: '2000-01-01T00:00:00.000Z',
+          endTime: '2000-01-01T03:00:00.000Z',
+          location: { name: 'Lawrenceville' },
+        }
+      : null,
+  ),
 }))
 
 import { GET as beerCard } from '@/src/app/og/beer/[slug]/route'
 import { GET as locationCard } from '@/src/app/og/location/[slug]/route'
+import { GET as eventCard } from '@/src/app/og/event/[id]/route'
 import { renderOgCard } from '@/lib/og/card'
 
 const ctx = (slug: string) => ({ params: Promise.resolve({ slug }) })
+const eventCtx = (id: string) => ({ params: Promise.resolve({ id }) })
 const req = new Request('https://lolev.beer/og')
 
 describe('OG card routes', () => {
@@ -72,6 +86,15 @@ describe('OG card routes', () => {
     expect(ok.status).toBe(200)
     expect((await ok.arrayBuffer()).byteLength).toBeGreaterThan(1000)
     expect((await locationCard(req, ctx('nowhere'))).status).toBe(404)
+  })
+
+  it('renders a PNG for a public event and 404s when the lookup misses', async () => {
+    const ok = await eventCard(req, eventCtx('recurring-abc123-2026-11-07'))
+    expect(ok.status).toBe(200)
+    expect(ok.headers.get('content-type')).toBe('image/png')
+    expect((await ok.arrayBuffer()).byteLength).toBeGreaterThan(1000)
+    // Unknown, private, past, and malformed ids all come back null from getPublicEventById.
+    expect((await eventCard(req, eventCtx('nope'))).status).toBe(404)
   })
 
   it('fetches beer photos over HTTP from the site origin (public/ is not in the Vercel bundle)', async () => {
