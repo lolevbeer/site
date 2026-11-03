@@ -17,6 +17,11 @@ exports[`persistent field contracts > beer-reviews retains its stored paths and 
   "externalImageUrl": {
     "type": "text",
   },
+  "hallOfFame": {
+    "defaultValue": false,
+    "index": true,
+    "type": "checkbox",
+  },
   "rating": {
     "max": 5,
     "min": 0,
@@ -1843,6 +1848,35 @@ exports[`persistent field contracts > site-seo retains its stored paths and vali
     "type": "text",
   },
   "pages.food.title": {
+    "type": "text",
+  },
+  "pages.hallOfFame": {
+    "type": "group",
+  },
+  "pages.hallOfFame.description": {
+    "maxLength": 320,
+    "type": "textarea",
+  },
+  "pages.hallOfFame.keywords": {
+    "hasMany": true,
+    "type": "text",
+  },
+  "pages.hallOfFame.noIndex": {
+    "defaultValue": false,
+    "type": "checkbox",
+  },
+  "pages.hallOfFame.ogDescription": {
+    "maxLength": 320,
+    "type": "textarea",
+  },
+  "pages.hallOfFame.ogImage": {
+    "relationTo": "media",
+    "type": "upload",
+  },
+  "pages.hallOfFame.ogTitle": {
+    "type": "text",
+  },
+  "pages.hallOfFame.title": {
     "type": "text",
   },
   "pages.home": {

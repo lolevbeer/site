@@ -31,7 +31,11 @@ import {
   scheduleYearFilter,
   type RecurringFoodState,
 } from '@/src/utils/recurring-food'
-import { getPublicBeerReviews } from '@/src/utils/beer-reviews'
+import {
+  getHallOfFameReviews as findHallOfFameReviews,
+  getPublicBeerReviews,
+  type HallOfFameReview,
+} from '@/src/utils/beer-reviews'
 import { relationshipId } from '@/src/utils/relationship-id'
 import type {
   Beer as PayloadBeer,
@@ -202,6 +206,26 @@ export const getBeerBySlug = cache(async (slug: string): Promise<PayloadBeer | n
     { tags: [CACHE_TAGS.beers], revalidate: 3600 },
   )()
 })
+
+/**
+ * Reviews flagged for the Hall of Fame page.
+ * Cached until the 'beers' tag is invalidated (beer-reviews saves fire it).
+ */
+export const getHallOfFameReviews = async (): Promise<HallOfFameReview[]> => {
+  try {
+    return await unstable_cache(
+      async (): Promise<HallOfFameReview[]> => {
+        const payload = await getPayload({ config })
+        return findHallOfFameReviews(payload)
+      },
+      ['hall-of-fame-reviews'],
+      { tags: [CACHE_TAGS.beers], revalidate: 3600 },
+    )()
+  } catch (error) {
+    logger.error('Error fetching Hall of Fame reviews from Payload', error)
+    throw error
+  }
+}
 
 /**
  * Get menus for a specific location

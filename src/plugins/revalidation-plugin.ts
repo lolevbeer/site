@@ -62,7 +62,7 @@ const SITE_WIDE_GLOBALS = new Set(['site-seo'])
 // Paths to revalidate for each collection
 const COLLECTION_PATHS: Record<string, string[]> = {
   beers: ['/', '/beer'],
-  'beer-reviews': ['/', '/beer'],
+  'beer-reviews': ['/', '/beer', '/hall-of-fame'],
   menus: ['/'],
   events: ['/', '/events'],
   'recurring-events': ['/', '/events'],
