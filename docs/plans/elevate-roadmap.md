@@ -82,11 +82,23 @@ sale. Everything below works toward that.
 
 ### 6. Search and local presence
 
-- Add Menu and Event structured data for what's pouring and what's on, if it
-  isn't there already. Product, breadcrumb and webpage schema exist on beer
-  pages today.
-- Keep Google Business Profile hours and events in sync from HolidayHours and
-  Events, so the knowledge panel never contradicts the site.
+- Structured data is largely done. Brewery schema has `hasMenu` and holiday
+  `specialOpeningHoursSpecification` (`lib/utils/local-business-schema.ts`),
+  location menus emit Menu, MenuSection and MenuItem (`lib/utils/menu-schema.ts`),
+  and the homepage and `/events` emit Event (`lib/utils/json-ld.ts`).
+- Step 1, measure: run Search Console's rich-result and enhancement reports
+  and the Rich Results Test on prod pages. Fix what Google actually flags.
+- Step 2, event pages: events have no page of their own. Their `url` is an
+  `/events#event-<id>` anchor, and the description repeats the title because
+  the CMS description is staff-only. Add an `/events/[id]` page next to the
+  existing `calendar.ics` route, with a public description field, an OG image
+  and a sitemap entry. Each event then becomes shareable and indexable.
+- Step 3, Business Profile hours: push HolidayHours to each Google Business
+  Profile location as special hours, from an `afterChange` hook (system code,
+  `overrideAccess: true`) with a nightly cron as a backstop. This needs
+  Business Profile API access approval and an OAuth refresh token from a
+  profile manager. Hours first, because wrong holiday hours cost visits.
+  Event posts can come later, once the API supports them for our account.
 
 ### 7. Measure it
 
