@@ -466,81 +466,93 @@ export function EventInquiryForm({
                 </FormField>
               </FieldGroup>
             </FieldSet>
-            <FieldSet disabled={pending}>
-              <FieldLegend>Contact details</FieldLegend>
-              <FieldGroup className="gap-4 sm:gap-5">
-                <FieldGroup className="grid gap-4 sm:grid-cols-2 sm:gap-5">
-                  <FormField id="inquiry-name" label="Your name" error={fieldErrors.name}>
-                    <Input
-                      id="inquiry-name"
-                      name="name"
-                      autoComplete="name"
-                      onBlur={() => checkField('name')}
-                      value={values.name}
-                      onChange={(e) => set('name', e.target.value)}
-                      required
-                    />
-                  </FormField>
-                  <FormField id="inquiry-email" label="Email" error={fieldErrors.email}>
-                    <Input
-                      id="inquiry-email"
-                      name="email"
-                      type="email"
-                      autoComplete="email"
-                      onBlur={() => checkField('email')}
-                      value={values.email}
-                      onChange={(e) => set('email', e.target.value)}
-                      required
-                    />
-                  </FormField>
-                  <FormField id="inquiry-phone" label="Phone (optional)" error={fieldErrors.phone}>
-                    <Input
+            {/* The submit bar sticks to the screen bottom only while this last
+                section is on screen: sticky is bounded by this wrapper. */}
+            <div className="flex flex-col gap-4 sm:gap-5">
+              <FieldSet disabled={pending}>
+                <FieldLegend>Contact details</FieldLegend>
+                <FieldGroup className="gap-4 sm:gap-5">
+                  <FieldGroup className="grid gap-4 sm:grid-cols-2 sm:gap-5">
+                    <FormField id="inquiry-name" label="Your name" error={fieldErrors.name}>
+                      <Input
+                        id="inquiry-name"
+                        name="name"
+                        autoComplete="name"
+                        onBlur={() => checkField('name')}
+                        value={values.name}
+                        onChange={(e) => set('name', e.target.value)}
+                        required
+                      />
+                    </FormField>
+                    <FormField id="inquiry-email" label="Email" error={fieldErrors.email}>
+                      <Input
+                        id="inquiry-email"
+                        name="email"
+                        type="email"
+                        autoComplete="email"
+                        onBlur={() => checkField('email')}
+                        value={values.email}
+                        onChange={(e) => set('email', e.target.value)}
+                        required
+                      />
+                    </FormField>
+                    <FormField
                       id="inquiry-phone"
-                      name="phone"
-                      type="tel"
-                      autoComplete="tel"
-                      onBlur={() => checkField('phone')}
-                      value={values.phone}
-                      onChange={(e) => set('phone', e.target.value)}
-                    />
-                  </FormField>
-                  <FormField
-                    id="inquiry-companyName"
-                    label="Company name (if a company is paying)"
-                    error={fieldErrors.companyName}
-                  >
-                    <Input
+                      label="Phone (optional)"
+                      error={fieldErrors.phone}
+                    >
+                      <Input
+                        id="inquiry-phone"
+                        name="phone"
+                        type="tel"
+                        autoComplete="tel"
+                        onBlur={() => checkField('phone')}
+                        value={values.phone}
+                        onChange={(e) => set('phone', e.target.value)}
+                      />
+                    </FormField>
+                    <FormField
                       id="inquiry-companyName"
-                      name="companyName"
-                      autoComplete="organization"
-                      onBlur={() => checkField('companyName')}
-                      value={values.companyName}
-                      onChange={(e) => set('companyName', e.target.value)}
+                      label="Company name (if a company is paying)"
+                      error={fieldErrors.companyName}
+                    >
+                      <Input
+                        id="inquiry-companyName"
+                        name="companyName"
+                        autoComplete="organization"
+                        onBlur={() => checkField('companyName')}
+                        value={values.companyName}
+                        onChange={(e) => set('companyName', e.target.value)}
+                      />
+                    </FormField>
+                  </FieldGroup>
+                  <FormField
+                    id="inquiry-message"
+                    label="Anything else? (optional)"
+                    error={fieldErrors.message}
+                  >
+                    <Textarea
+                      id="inquiry-message"
+                      name="message"
+                      rows={3}
+                      placeholder="Anything we should know"
+                      value={values.message}
+                      onChange={(e) => set('message', e.target.value)}
                     />
                   </FormField>
                 </FieldGroup>
-                <FormField
-                  id="inquiry-message"
-                  label="Anything else? (optional)"
-                  error={fieldErrors.message}
-                >
-                  <Textarea
-                    id="inquiry-message"
-                    name="message"
-                    rows={3}
-                    placeholder="Anything we should know"
-                    value={values.message}
-                    onChange={(e) => set('message', e.target.value)}
-                  />
-                </FormField>
-              </FieldGroup>
-            </FieldSet>
-            {/* Same ring gutter as FormField, so the button lines up with the inputs. */}
-            <div className="w-full p-1 -m-1">
-              <Button type="submit" size="lg" className="w-full" disabled={pending}>
-                {pending ? <Spinner /> : null}
-                {pending ? 'Sending…' : 'Send inquiry'}
-              </Button>
+              </FieldSet>
+              {/* Full card width (negative margins undo the card and gutter padding)
+                with the card background, so fields scroll under it cleanly; the
+                button sits in FormField's ring gutter so it lines up with the inputs. */}
+              <div className="sticky bottom-0 z-10 -mx-4 bg-card px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:-mx-7 sm:px-7">
+                <div className="w-full p-1 -m-1">
+                  <Button type="submit" size="lg" className="w-full" disabled={pending}>
+                    {pending ? <Spinner /> : null}
+                    {pending ? 'Sending…' : 'Send inquiry'}
+                  </Button>
+                </div>
+              </div>
             </div>
           </FieldGroup>
           <HoneypotField

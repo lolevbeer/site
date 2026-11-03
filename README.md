@@ -350,7 +350,9 @@ The flexible-date calendar shows one month on phones and three at desktop widths
 (1024px and up), retaining picked dates during resizing and navigation. Choosing
 an alternative as the preferred date removes it from the alternatives and their
 count. The flexible-date switch uses a thin 1px outline for its off state.
-All controls freeze while sending. A failed submission preserves the input,
+Once the contact details scroll into view, **Send inquiry** sticks to the
+bottom of the screen (CSS `sticky`, bounded by that last section) until the form
+ends. All controls freeze while sending. A failed submission preserves the input,
 reenables editing, and moves focus to the first invalid field; confirmation
 repeats the submitted values and taproom, even if the header location changes,
 and promises an email reply within 24 hours (the page FAQ says the same).
