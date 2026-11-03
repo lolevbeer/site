@@ -657,6 +657,10 @@ exports[`persistent field contracts > events retains its stored paths and valida
   "startTime": {
     "type": "date",
   },
+  "summary": {
+    "maxLength": 300,
+    "type": "textarea",
+  },
   "tags": {
     "hasMany": true,
     "options": [
@@ -1388,6 +1392,10 @@ exports[`persistent field contracts > recurring-events retains its stored paths 
   },
   "startTime": {
     "type": "date",
+  },
+  "summary": {
+    "maxLength": 300,
+    "type": "textarea",
   },
   "tags": {
     "hasMany": true,
