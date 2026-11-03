@@ -76,8 +76,8 @@ async function renderPage(id: string) {
 }
 
 function eventJsonLd(container: HTMLElement) {
-  const blocks = [...container.querySelectorAll('script[type="application/ld+json"]')].map(
-    (node) => JSON.parse(node.textContent ?? '{}'),
+  const blocks = [...container.querySelectorAll('script[type="application/ld+json"]')].map((node) =>
+    JSON.parse(node.textContent ?? '{}'),
   )
   return blocks.find((block) => block['@type'] === 'Event')
 }

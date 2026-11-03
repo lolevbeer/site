@@ -147,7 +147,12 @@ describe('generateEventJsonLd', () => {
     )
     expect(schema.description).toBe('Sing your heart out, every Wednesday.')
     const blank = generateEventJsonLd(
-      event({ organizer: 'Karaoke Night', summary: '   ', date: '2026-10-01', location: 'lawrenceville' }),
+      event({
+        organizer: 'Karaoke Night',
+        summary: '   ',
+        date: '2026-10-01',
+        location: 'lawrenceville',
+      }),
     )
     expect(blank.description).toBe('Karaoke Night')
   })

@@ -93,7 +93,7 @@ sale. Everything below works toward that.
   the CMS description is staff-only. Add an `/events/[id]` page next to the
   existing `calendar.ics` route, with a public description field, an OG image
   and a sitemap entry. Each event then becomes shareable and indexable.
-  Plan: `docs/plans/event-pages.md`.
+  Plan: `docs/plans/event-pages.md`. Status: built on `feat/event-pages`.
 - Step 3, Business Profile hours: push HolidayHours to each Google Business
   Profile location as special hours, from an `afterChange` hook (system code,
   `overrideAccess: true`) with a nightly cron as a backstop. This needs

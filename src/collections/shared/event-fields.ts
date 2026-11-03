@@ -84,7 +84,8 @@ export const eventDetailFields: Field[] = [
         maxLength: 300,
         // Publicly readable on purpose: this is the website copy, unlike staff-only `description`.
         admin: {
-          description: 'Public one-to-two sentence description for the event page and search results.',
+          description:
+            'Public one-to-two sentence description for the event page and search results.',
           condition: (data) => data?.visibility !== 'private',
         },
       },

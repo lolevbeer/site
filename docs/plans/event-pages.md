@@ -1,6 +1,6 @@
 # Event pages: `/events/[id]`
 
-Status: Phase 1 plan, awaiting approval. Roadmap item 6, step 2
+Status: approved and implemented on `feat/event-pages` (see Deviations). Roadmap item 6, step 2
 (`docs/plans/elevate-roadmap.md`).
 
 Worktree: `/Users/tedslesinski/Repos/site/.claude/worktrees/elevate-roadmap`.
@@ -15,16 +15,16 @@ all point at it instead of an `/events#event-<id>` anchor.
 
 ## What exists (reused, not rebuilt)
 
-| Need | Existing piece |
-|---|---|
-| Look up one public event or occurrence, anonymous, cached, private and past filtered out | `getPublicEventById` (`lib/utils/payload-api.ts:1074`). It accepts both `<objectId>` and `recurring-<id>-<YYYY-MM-DD>` ids. |
-| Event JSON-LD | `generateEventJsonLd` and `eventPageUrl` (`lib/utils/json-ld.ts`) |
-| Add-to-calendar | `events/[id]/calendar.ics/route.ts` and `buildEventIcs` |
-| Social card | `renderOgCard` and `ogNotFound` (`lib/og/card`), `ogCardImages` (`lib/og/paths.ts`) |
-| Page metadata | `buildPageMetadata` (`lib/seo/resolve-metadata`), as on `beer/[variant]/page.tsx` |
-| Breadcrumb and webpage schema | `generateBreadcrumbSchema`, `generateWebPageSchema` |
-| Freshness | Saves to `events` and `recurring-events` already revalidate the `events` cache tag, which `getPublicEventById` uses. No revalidation change is needed. |
-| Upcoming list for the sitemap | `getAllUpcomingEventsFromPayload` (used by `/events`) |
+| Need                                                                                     | Existing piece                                                                                                                                         |
+| ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Look up one public event or occurrence, anonymous, cached, private and past filtered out | `getPublicEventById` (`lib/utils/payload-api.ts:1074`). It accepts both `<objectId>` and `recurring-<id>-<YYYY-MM-DD>` ids.                            |
+| Event JSON-LD                                                                            | `generateEventJsonLd` and `eventPageUrl` (`lib/utils/json-ld.ts`)                                                                                      |
+| Add-to-calendar                                                                          | `events/[id]/calendar.ics/route.ts` and `buildEventIcs`                                                                                                |
+| Social card                                                                              | `renderOgCard` and `ogNotFound` (`lib/og/card`), `ogCardImages` (`lib/og/paths.ts`)                                                                    |
+| Page metadata                                                                            | `buildPageMetadata` (`lib/seo/resolve-metadata`), as on `beer/[variant]/page.tsx`                                                                      |
+| Breadcrumb and webpage schema                                                            | `generateBreadcrumbSchema`, `generateWebPageSchema`                                                                                                    |
+| Freshness                                                                                | Saves to `events` and `recurring-events` already revalidate the `events` cache tag, which `getPublicEventById` uses. No revalidation change is needed. |
+| Upcoming list for the sitemap                                                            | `getAllUpcomingEventsFromPayload` (used by `/events`)                                                                                                  |
 
 ## Database
 
@@ -182,3 +182,19 @@ with 3, 4 and 5 once task 2 is done.
   archive matters later, `getPublicEventById` would need a past-events mode.
 - **Food truck pages.** Food truck days have Event JSON-LD too
   (`generateFoodEventJsonLd`), but they don't get pages in this plan.
+
+## Deviations
+
+- The social card time reads "4pm–12am" (the listing's existing format,
+  `formatTimeRange`, moved to `lib/utils/formatters.ts`), not "7–10 PM".
+- `isTicketLink` moved to `lib/utils/url-utils.ts`, because `timeline-item.tsx`
+  is a client module and the server page can't import from it.
+- The page's breadcrumb JSON-LD comes from `PageBreadcrumbs`, not a separate
+  `generateBreadcrumbSchema` call, so there's only one BreadcrumbList.
+- `IcsEventInput` lost the `site` and `locationSlug` fields, since the ICS
+  `URL:` is now always the event page.
+- Sitemap event URLs use the sitemap's `getBaseUrl()`, so they match the
+  other entries.
+- `ScheduleList` takes a per-item `detailHref`, not a list-wide flag.
+- The homepage list (`UpcomingEvents`) passes `detailHref` but has no test of
+  its own.

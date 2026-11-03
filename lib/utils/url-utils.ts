@@ -16,7 +16,14 @@ export function safeHttpUrl(url: string | null | undefined): string | undefined 
 }
 
 /** Hosts whose links sell tickets; event links to them read "Tickets" rather than "Website". */
-const TICKET_HOSTS = ['eventbrite.', 'ticketmaster.', 'tixr.', 'dice.fm', 'seetickets.', 'ticketleap.']
+const TICKET_HOSTS = [
+  'eventbrite.',
+  'ticketmaster.',
+  'tixr.',
+  'dice.fm',
+  'seetickets.',
+  'ticketleap.',
+]
 
 /**
  * Whether an absolute http(s) URL (as returned by safeHttpUrl) is a ticketing
