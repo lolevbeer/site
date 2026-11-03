@@ -807,6 +807,10 @@ export interface Event {
    */
   description?: string | null;
   /**
+   * Public one-to-two sentence description for the event page and search results.
+   */
+  summary?: string | null;
+  /**
    * Public link shown with the event.
    */
   site?: string | null;
@@ -964,6 +968,10 @@ export interface RecurringEvent {
    * Internal notes for signed-in staff only. Never shown on the website.
    */
   description?: string | null;
+  /**
+   * Public one-to-two sentence description for the event page and search results.
+   */
+  summary?: string | null;
   /**
    * Public link shown with the event.
    */
@@ -1820,6 +1828,7 @@ export interface EventsSelect<T extends boolean = true> {
   startTime?: T;
   endTime?: T;
   description?: T;
+  summary?: T;
   site?: T;
   tags?: T;
   image?: T;
@@ -1912,6 +1921,7 @@ export interface RecurringEventsSelect<T extends boolean = true> {
         id?: T;
       };
   description?: T;
+  summary?: T;
   site?: T;
   tags?: T;
   image?: T;

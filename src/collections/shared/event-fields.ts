@@ -1,4 +1,7 @@
-/** Shared event fields keep public listing content separate from access-controlled staff notes. */
+/**
+ * Shared event fields keep public listing content (name, summary, link, tags, image)
+ * separate from access-controlled staff notes and booking contacts.
+ */
 import type { Field } from 'payload'
 import { authenticatedFieldAccess, eventManagerFieldAccess } from '@/src/access/roles'
 
@@ -74,6 +77,17 @@ export const eventDetailFields: Field[] = [
     label: 'Website listing',
     admin: { initCollapsed: true },
     fields: [
+      {
+        name: 'summary',
+        label: 'Public summary',
+        type: 'textarea',
+        maxLength: 300,
+        // Publicly readable on purpose: this is the website copy, unlike staff-only `description`.
+        admin: {
+          description: 'Public one-to-two sentence description for the event page and search results.',
+          condition: (data) => data?.visibility !== 'private',
+        },
+      },
       {
         name: 'site',
         label: 'Website or ticket URL',
