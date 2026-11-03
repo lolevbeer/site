@@ -60,7 +60,7 @@ const darkVars = {
   '--color-destructive': '#ff453a',
   '--color-destructive-foreground': '#ffffff',
   '--color-border': '#38383a',
-  '--color-input': '#1c1c1e',
+  '--color-input': '#77777c',
   '--color-ring': '#0a84ff',
 } as React.CSSProperties
 
