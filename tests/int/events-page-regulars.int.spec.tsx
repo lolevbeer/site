@@ -73,7 +73,7 @@ describe('EventsPageClient regulars', () => {
     expect(container.querySelector('#event-recurring-t-2026-10-21')).not.toBeNull()
   })
 
-  it('keeps the series site link and Add to calendar in the Regulars row', () => {
+  it('links the Regulars row to its next occurrence page and keeps Add to calendar', () => {
     render(
       createElement(EventsPageClient, {
         initialEvents: [
@@ -88,15 +88,26 @@ describe('EventsPageClient regulars', () => {
     )
     const row = screen.getByText('Wednesdays 7pm · Trivia').closest('li')!
     expect(
-      within(row)
-        .getByRole('link', { name: /opens in a new tab/ })
-        .getAttribute('href'),
-    ).toBe('https://trivia.example.com/signup')
+      within(row).getByRole('link', { name: 'Wednesdays 7pm · Trivia' }).getAttribute('href'),
+    ).toBe('/events/recurring-t-2026-10-14')
+    // The non-ticket series site lives on the event page now.
+    expect(within(row).queryByRole('link', { name: /opens in a new tab/ })).toBeNull()
     expect(
       within(row)
         .getByRole('link', { name: /^Add .*Trivia to calendar$/ })
         .getAttribute('href'),
     ).toBe('/events/recurring-t-2026-10-14/calendar.ics')
+  })
+
+  it('links a one-off row title to its event page', () => {
+    render(
+      createElement(EventsPageClient, {
+        initialEvents: [ev('release', '2026-10-15', 'Mosaic can release')],
+      }),
+    )
+    expect(screen.getByRole('link', { name: 'Mosaic can release' }).getAttribute('href')).toBe(
+      '/events/release',
+    )
   })
 
   it('never renders the CMS description, even when it differs from the title', () => {
@@ -154,5 +165,7 @@ describe('EventsPageClient regulars', () => {
     )
     const row = container.querySelector('[id^="event-"]')
     expect(row?.id).toMatch(/^event-[a-z0-9-]+$/)
+    // No id means no event page to link to.
+    expect(screen.queryByRole('link', { name: 'Mosaic Can Release!' })).toBeNull()
   })
 })

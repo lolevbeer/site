@@ -54,8 +54,7 @@ export async function generateMetadata({ params }: EventPageProps): Promise<Meta
   return buildPageMetadata({
     fallbackTitle: `${event.organizer}${where}`,
     fallbackDescription:
-      event.summary?.trim() ||
-      `${event.organizer}${where} on ${formatDate(event.date, 'full')}.`,
+      event.summary?.trim() || `${event.organizer}${where} on ${formatDate(event.date, 'full')}.`,
     canonicalPath: `/events/${encodeURIComponent(id)}`,
     fallbackOgImages: ogCardImages('event', id, event.organizer),
   })

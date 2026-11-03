@@ -65,6 +65,7 @@ export function UpcomingEvents({ eventsByLocation }: UpcomingEventsProps) {
               endTime: event.endTime,
               site: safeHttpUrl(event.site),
               badge: eventBadge(event.tags),
+              detailHref: `/events/${encodeURIComponent(String(event.id))}`,
               locationName:
                 currentLocation === 'all'
                   ? getLocationDisplayName(locations, event.locationSlug)

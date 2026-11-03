@@ -122,6 +122,8 @@ export function EventsPageClient({ initialEvents, intro }: EventsPageClientProps
                     : undefined,
                 site: safeHttpUrl(event.site),
                 badge: eventBadge(event.tags),
+                // An id-less event has no page; its row keeps today's site link.
+                detailHref: event.id ? `/events/${encodeURIComponent(event.id)}` : undefined,
               }))}
             />
             {regulars.length > 0 ? (
@@ -142,6 +144,7 @@ export function EventsPageClient({ initialEvents, intro }: EventsPageClientProps
                             : ''
                         }next ${formatDate(next.date, 'short')}`}
                         site={next.site}
+                        detailHref={`/events/${encodeURIComponent(occurrenceIds[0])}`}
                         calendarHref={`/events/${encodeURIComponent(occurrenceIds[0])}/calendar.ics`}
                         className="py-0"
                       />

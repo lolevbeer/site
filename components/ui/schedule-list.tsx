@@ -19,6 +19,8 @@ export interface ScheduleListItem {
   description?: string
   /** Badge above the title, e.g. "Beer release" for tagged events. */
   badge?: string
+  /** Events only: the row's /events/<id> page, linked from its title. */
+  detailHref?: string
 }
 
 function groupItemsByDate(items: ScheduleListItem[]): Array<[string, ScheduleListItem[]]> {
@@ -48,8 +50,9 @@ export function ScheduleList({
   calendar?: boolean
   /**
    * /events only: give each row an `event-<id>` anchor so older shared
-   * `/events#event-<id>` links still land on it (JSON-LD and calendar files
-   * now link to /events/<id>, see eventPageUrl). Ids must be URL-safe.
+   * `/events#event-<id>` links still land on it. JSON-LD, calendar files and
+   * the row titles (detailHref) now point at /events/<id>, see eventPageUrl.
+   * Ids must be URL-safe.
    */
   anchors?: boolean
 }) {
@@ -76,6 +79,7 @@ export function ScheduleList({
                   site={item.site}
                   imageUrl={item.imageUrl}
                   badge={item.badge}
+                  detailHref={item.detailHref}
                   calendarHref={
                     calendar ? `/events/${encodeURIComponent(item.id)}/calendar.ics` : undefined
                   }
