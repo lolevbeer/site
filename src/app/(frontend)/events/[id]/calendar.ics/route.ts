@@ -36,8 +36,6 @@ export async function GET(
     date: event.date,
     startTime: event.startTime,
     endTime: event.endTime,
-    site: event.site,
-    locationSlug: location?.slug ?? undefined,
     locationName: location?.name,
     address: location?.address
       ? formatAddress({

@@ -3,10 +3,10 @@
  * /events. Times are Pittsburgh wall-clock under TZID America/New_York, with
  * a VTIMEZONE block so every client applies the right DST offset. The CMS
  * description is internal (staff-only), so the file carries no DESCRIPTION.
- * Text is escaped, `site` must be http(s), and long lines are folded.
+ * Text is escaped and long lines are folded. URL is our /events/<id> page,
+ * which carries the event's own ticket or info link.
  */
 import { eventPageUrl, parseEventTime } from '@/lib/utils/json-ld'
-import { safeHttpUrl } from '@/lib/utils/url-utils'
 import { addEstDays } from '@/lib/utils/formatters'
 
 const TZID = 'America/New_York'
@@ -39,8 +39,6 @@ export interface IcsEventInput {
   date: string
   startTime?: string | null
   endTime?: string | null
-  site?: string | null
-  locationSlug?: string
   locationName?: string
   address?: string
 }
@@ -132,8 +130,7 @@ export function buildEventIcs(event: IcsEventInput, now: Date = new Date()): str
     ...timing,
     `SUMMARY:${escapeText(event.organizer)}`,
     `LOCATION:${escapeText(place)}`,
-    // safeHttpUrl rejects non-http values; URL serialization percent-encodes CR/LF.
-    `URL:${safeHttpUrl(event.site) ?? eventPageUrl(event.locationSlug, event.id)}`,
+    `URL:${eventPageUrl(event.id)}`,
     'END:VEVENT',
     'END:VCALENDAR',
   )

@@ -63,6 +63,8 @@ export interface BreweryEvent extends BaseEvent {
   end?: string | number;
   tags?: ('music' | 'utensils' | 'puzzle' | 'sports' | 'beer-release' | 'mic-vocal')[];
   image?: string;
+  /** Public one-line summary (the CMS description is staff-only). */
+  summary?: string;
   price?: string;
   ageRestriction?: string;
   requirements?: string[];

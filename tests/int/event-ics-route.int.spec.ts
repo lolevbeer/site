@@ -48,6 +48,7 @@ describe('event calendar.ics route', () => {
       'LOCATION:Lolev Beer - Lawrenceville\\, 5247 Butler Street',
     )
     expect(body).not.toContain('Smith')
+    expect(body).toContain('URL:https://lolev.beer/events/abc123')
   })
 
   it('404s for an unknown or non-public event', async () => {

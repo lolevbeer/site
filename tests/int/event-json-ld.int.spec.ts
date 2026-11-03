@@ -1,7 +1,9 @@
 /**
  * Event JSON-LD must include a real Place address when a location lookup is
  * provided, and always emit url / description / image (with OG fallback).
- * The description is the event title: the CMS description is internal.
+ * The url is always our /events/<id> page; an event's own site goes on the
+ * offer. The description is the public summary, else the title: the CMS
+ * description is internal.
  */
 import { describe, expect, it } from 'vitest'
 import { createLocationLookup, generateEventJsonLd } from '@/lib/utils/json-ld'
@@ -52,7 +54,7 @@ describe('generateEventJsonLd', () => {
     expect(schema.location.address.streetAddress).toBe('5247 Butler Street')
     expect(schema.location.address.addressLocality).toBe('Pittsburgh')
     expect(schema.name).toContain('Lawrenceville')
-    expect(schema.url).toBe('https://lolev.beer/events?loc=lawrenceville')
+    expect(schema.url).toBe('https://lolev.beer/events')
   })
 
   it('always emits description, url, and OG image fallback', () => {
@@ -66,16 +68,25 @@ describe('generateEventJsonLd', () => {
       }),
     )
     expect(schema.description).toBe('Karaoke Night')
-    expect(schema.url).toBe('https://lolev.beer/events?loc=lawrenceville')
+    expect(schema.url).toBe('https://lolev.beer/events')
     expect(schema.image).toBe('https://lolev.beer/images/beer/og-image.jpg')
     expect(schema.endDate).toBeTruthy()
   })
 
-  it('links each event to its own anchor on the right taproom', () => {
+  it('links each event to its own /events/<id> page', () => {
     const payloadSchema = generateEventJsonLd(
       event({ id: 'abc123', organizer: 'Trivia', date: '2026-10-01', location: 'lawrenceville' }),
     )
-    expect(payloadSchema.url).toBe('https://lolev.beer/events?loc=lawrenceville#event-abc123')
+    expect(payloadSchema.url).toBe('https://lolev.beer/events/abc123')
+    const recurringPayload = generateEventJsonLd(
+      event({
+        id: 'recurring-r1-2026-10-07',
+        organizer: 'Trivia',
+        date: '2026-10-07',
+        location: 'zelienople',
+      }),
+    )
+    expect(recurringPayload.url).toBe('https://lolev.beer/events/recurring-r1-2026-10-07')
     const brewerySchema = generateEventJsonLd(
       event({
         id: 'recurring-r1-2026-10-07',
@@ -86,12 +97,17 @@ describe('generateEventJsonLd', () => {
         location: 'zelienople',
       }),
     )
-    expect(brewerySchema.url).toBe(
-      'https://lolev.beer/events?loc=zelienople#event-recurring-r1-2026-10-07',
-    )
+    expect(brewerySchema.url).toBe('https://lolev.beer/events/recurring-r1-2026-10-07')
   })
 
-  it('keeps an event site as the url over the anchor link', () => {
+  it('encodes the id in the page url', () => {
+    const schema = generateEventJsonLd(
+      event({ id: 'a b/c', organizer: 'Trivia', date: '2026-10-01', location: 'lawrenceville' }),
+    )
+    expect(schema.url).toBe('https://lolev.beer/events/a%20b%2Fc')
+  })
+
+  it('keeps our page as the url and puts a safe event site on the offer', () => {
     const schema = generateEventJsonLd(
       event({
         id: 'abc123',
@@ -101,7 +117,54 @@ describe('generateEventJsonLd', () => {
         site: 'https://tickets.example.com/x',
       }),
     )
-    expect(schema.url).toBe('https://tickets.example.com/x')
+    expect(schema.url).toBe('https://lolev.beer/events/abc123')
+    expect(schema.offers?.url).toBe('https://tickets.example.com/x')
+    expect(schema.offers?.price).toBe('0')
+  })
+
+  it('drops a non-http event site from the offer', () => {
+    const schema = generateEventJsonLd(
+      event({
+        id: 'abc123',
+        organizer: 'Release',
+        date: '2026-10-01',
+        location: 'lawrenceville',
+        site: 'javascript:alert(1)',
+      }),
+    )
+    expect(schema.offers?.url).toBeUndefined()
+  })
+
+  it('uses the public summary as the description when present', () => {
+    const schema = generateEventJsonLd(
+      event({
+        organizer: 'Karaoke Night',
+        summary: '  Sing your heart out, every Wednesday.  ',
+        description: 'Staff: tab under Smith',
+        date: '2026-10-01',
+        location: 'lawrenceville',
+      }),
+    )
+    expect(schema.description).toBe('Sing your heart out, every Wednesday.')
+    const blank = generateEventJsonLd(
+      event({ organizer: 'Karaoke Night', summary: '   ', date: '2026-10-01', location: 'lawrenceville' }),
+    )
+    expect(blank.description).toBe('Karaoke Night')
+  })
+
+  it('uses the summary for a mapped BreweryEvent too, so list and single JSON-LD agree', () => {
+    const schema = generateEventJsonLd(
+      event({
+        id: 'e1',
+        title: 'Trivia',
+        summary: 'Six rounds, prizes.',
+        date: '2026-10-07',
+        time: '7pm',
+        status: EventStatus.SCHEDULED,
+        location: 'zelienople',
+      }),
+    )
+    expect(schema.description).toBe('Six rounds, prizes.')
   })
 
   it('never publishes the internal CMS description; uses the title', () => {
@@ -116,7 +179,7 @@ describe('generateEventJsonLd', () => {
     expect(schema.description).toBe('Karaoke Night')
   })
 
-  it('uses site url and absolute event image', () => {
+  it('puts the site on the offer and uses an absolute event image', () => {
     const schema = generateEventJsonLd(
       event({
         title: 'Beer Release',
@@ -134,6 +197,7 @@ describe('generateEventJsonLd', () => {
     )
     expect(schema.description).toBe('Beer Release')
     expect(schema.url).toBe('https://lolev.beer/events')
+    expect(schema.offers?.url).toBe('https://lolev.beer/events')
     expect(schema.image).toBe('https://lolev.beer/api/media/file/release.jpg')
     expect(schema.endDate).toBeTruthy()
   })

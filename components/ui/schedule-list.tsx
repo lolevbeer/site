@@ -47,8 +47,9 @@ export function ScheduleList({
   /** Events only: link each row to /events/<id>/calendar.ics. */
   calendar?: boolean
   /**
-   * /events only: give each row an `event-<id>` anchor (see eventPageUrl) so
-   * shared links and the Event JSON-LD url land on it. Ids must be URL-safe.
+   * /events only: give each row an `event-<id>` anchor so older shared
+   * `/events#event-<id>` links still land on it (JSON-LD and calendar files
+   * now link to /events/<id>, see eventPageUrl). Ids must be URL-safe.
    */
   anchors?: boolean
 }) {

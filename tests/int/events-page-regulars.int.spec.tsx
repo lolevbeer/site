@@ -1,7 +1,7 @@
 /**
  * /events lists one-offs by date and folds weekly regulars into one
- * "Regulars" block, keeping every collapsed occurrence's anchor so the Event
- * JSON-LD links (#event-<id>) still land.
+ * "Regulars" block, keeping every collapsed occurrence's anchor so older
+ * shared links (#event-<id>) still land.
  */
 import { cleanup, render, screen, within } from '@testing-library/react'
 import { createElement } from 'react'

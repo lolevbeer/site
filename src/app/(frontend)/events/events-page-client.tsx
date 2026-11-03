@@ -130,7 +130,7 @@ export function EventsPageClient({ initialEvents, intro }: EventsPageClientProps
                 <ul className="space-y-3 list-none p-0 m-0">
                   {regulars.map(({ next, occurrenceIds }) => (
                     <li key={occurrenceIds[0]} className="py-2">
-                      {/* Keep each occurrence's anchor so Event JSON-LD links land here. */}
+                      {/* Keep each occurrence's anchor so older #event-<id> links land here. */}
                       {occurrenceIds.map((id) => (
                         <span key={id} id={`event-${id}`} className="block scroll-mt-20" />
                       ))}
