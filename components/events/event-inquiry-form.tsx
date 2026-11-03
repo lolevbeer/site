@@ -72,6 +72,8 @@ import { toDateKey } from '@/lib/utils/food-dates'
 /** Text fields checked when the visitor leaves them. */
 type BlurField = 'name' | 'email' | 'phone' | 'headcount' | 'companyName'
 
+const UNDECIDED_FOOD_PLAN = 'undecided'
+
 /** Labeled radio list with its error under it (FormField fits single controls only). */
 function RadioField({
   id,
@@ -80,6 +82,7 @@ function RadioField({
   value,
   onValueChange,
   error,
+  disabled,
   className,
 }: {
   id: string
@@ -88,6 +91,7 @@ function RadioField({
   value: string
   onValueChange: (value: string) => void
   error?: string
+  disabled?: boolean
   className?: string
 }): React.JSX.Element {
   return (
@@ -98,6 +102,7 @@ function RadioField({
         aria-label={legend}
         value={value}
         onValueChange={onValueChange}
+        disabled={disabled}
         className={className}
         {...formFieldAria(id, { error })}
       >
@@ -158,13 +163,28 @@ export function EventInquiryForm({
   const [error, setError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<EventInquiryErrors>({})
   const [pending, setPending] = useState(false)
-  const [done, setDone] = useState(false)
+  const [submitted, setSubmitted] = useState<{
+    values: EventInquiryInput
+    taproomLabel: string
+  } | null>(null)
+  const [calendarMonths, setCalendarMonths] = useState(1)
   // Client-only (null until mounted): /events is ISR-cached, so a
   // server-rendered "today" can be a day stale. The server rejects past dates.
   const minDate = useTodayEST() ?? undefined
   const doneTitleRef = useRef<HTMLDivElement>(null)
   const formRef = useRef<HTMLFormElement>(null)
   const errorRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const desktopMediaQuery = window.matchMedia('(min-width: 1024px)')
+    function updateCalendarMonths() {
+      setCalendarMonths(desktopMediaQuery.matches ? 3 : 1)
+    }
+
+    updateCalendarMonths()
+    desktopMediaQuery.addEventListener('change', updateCalendarMonths)
+    return () => desktopMediaQuery.removeEventListener('change', updateCalendarMonths)
+  }, [])
 
   useEffect(() => {
     if (!error || pending) return
@@ -179,11 +199,18 @@ export function EventInquiryForm({
   // The form (and its focused submit button) unmounts on success; move focus
   // to the confirmation so keyboard and screen-reader users land on it.
   useEffect(() => {
-    if (done) doneTitleRef.current?.focus()
-  }, [done])
+    if (submitted) doneTitleRef.current?.focus()
+  }, [submitted])
 
   function set<K extends keyof EventInquiryInput>(key: K, value: EventInquiryInput[K]) {
-    setValues((prev) => ({ ...prev, [key]: value }))
+    if (pending) return
+    setValues((prev) => {
+      const next = { ...prev, [key]: value }
+      if (key === 'preferredDate') {
+        next.otherDates = prev.otherDates.filter((day) => day !== value)
+      }
+      return next
+    })
     setFieldErrors((prev) => {
       if (!prev[key]) return prev
       const next = { ...prev }
@@ -194,7 +221,7 @@ export function EventInquiryForm({
 
   /** Show this field's validator error once it has a value; empty fields wait for submit. */
   function checkField(key: BlurField) {
-    if (values[key] === '') return
+    if (pending || values[key] === '') return
     const result = validateEventInquiry({ ...values, taproom }, minDate, taproomSlugs)
     const message = result.ok ? undefined : result.errors[key]
     if (message) setFieldErrors((prev) => ({ ...prev, [key]: message }))
@@ -203,18 +230,22 @@ export function EventInquiryForm({
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault()
     if (pending) return
+    const submittedValues: EventInquiryInput = {
+      ...values,
+      taproom,
+      // Kept in state so toggling back restores them, but only sent when flexible.
+      otherDates: values.flexibleDate ? [...values.otherDates] : [],
+    }
+    const taproomLabel = taproomOptions.find((option) => option.value === taproom)?.label || ''
+    // Keep the resolved taproom stable if the site header changes while sending.
+    setValues((prev) => ({ ...prev, taproom }))
     setError(null)
     setFieldErrors({})
     setPending(true)
     try {
-      const result = await submitEventInquiry({
-        ...values,
-        taproom,
-        // Kept in state so toggling back restores them, but only sent when flexible.
-        otherDates: values.flexibleDate ? values.otherDates : [],
-      })
+      const result = await submitEventInquiry(submittedValues)
       if (result.ok) {
-        setDone(true)
+        setSubmitted({ values: submittedValues, taproomLabel })
         trackConversion('event_inquiry_submitted')
       } else {
         setError(result.error)
@@ -229,7 +260,7 @@ export function EventInquiryForm({
 
   return (
     <div className="text-left">
-      {done ? (
+      {submitted ? (
         <Empty role="status">
           <EmptyHeader>
             <EmptyTitle ref={doneTitleRef} tabIndex={-1} className="outline-none">
@@ -237,17 +268,19 @@ export function EventInquiryForm({
             </EmptyTitle>
             <EmptyDescription>
               {[
-                formatInquiryDate(values),
-                values.startTime ? `${formatTime(values.startTime)} Eastern` : null,
-                values.headcount ? `${values.headcount} guests` : null,
-                taproomOptions.find((option) => option.value === taproom)?.label,
+                formatInquiryDate(submitted.values),
+                submitted.values.startTime
+                  ? `${formatTime(submitted.values.startTime)} Eastern`
+                  : null,
+                submitted.values.headcount ? `${submitted.values.headcount} guests` : null,
+                submitted.taproomLabel,
               ]
                 .filter(Boolean)
                 .join(' · ')}
             </EmptyDescription>
             <EmptyDescription>
-              We will email {values.email || 'you'} about availability. Your date is not reserved
-              yet.
+              We will email {submitted.values.email || 'you'} about availability. Your date is not
+              reserved yet.
             </EmptyDescription>
           </EmptyHeader>
         </Empty>
@@ -259,7 +292,7 @@ export function EventInquiryForm({
           className="relative overflow-visible flex flex-col gap-4"
         >
           <FieldGroup className="overflow-visible p-1 gap-5">
-            <FieldSet>
+            <FieldSet disabled={pending}>
               <FieldLegend>Your event</FieldLegend>
               <FieldGroup className="gap-5">
                 <FieldGroup data-slot="field-row" className="grid gap-5 sm:grid-cols-2">
@@ -270,6 +303,7 @@ export function EventInquiryForm({
                   >
                     <DatePicker
                       id="inquiry-preferredDate"
+                      disabled={pending}
                       min={minDate}
                       max={minDate && maximumEventDate(minDate)}
                       value={values.preferredDate}
@@ -278,7 +312,7 @@ export function EventInquiryForm({
                   </FormField>
                   <FormField
                     id="inquiry-headcount"
-                    label="How many guests?"
+                    label="Estimated guests"
                     error={fieldErrors.headcount}
                   >
                     <Input
@@ -301,6 +335,7 @@ export function EventInquiryForm({
                 <Field orientation="horizontal">
                   <Switch
                     id="inquiry-flexibleDate"
+                    disabled={pending}
                     // Off: white track, gray outline and knob. On: accent blue, white knob.
                     // Both states clear 3:1 on the card in light and dark themes.
                     className="border data-[state=unchecked]:bg-white data-[state=unchecked]:border-neutral-500/85 dark:data-[state=unchecked]:border-neutral-300 data-[state=checked]:bg-accent [&>span]:bg-white [&>span]:data-[state=unchecked]:ring-1 [&>span]:data-[state=unchecked]:ring-neutral-300"
@@ -322,7 +357,8 @@ export function EventInquiryForm({
                     </p>
                     <Calendar
                       mode="multiple"
-                      numberOfMonths={3}
+                      disableNavigation={pending}
+                      numberOfMonths={calendarMonths}
                       max={EVENT_INQUIRY_MAX_OTHER_DATES}
                       selected={values.otherDates.map(parseLocalDate)}
                       onSelect={(days) => set('otherDates', (days ?? []).map(toDateKey).sort())}
@@ -333,6 +369,7 @@ export function EventInquiryForm({
                       startMonth={minDate ? parseLocalDate(minDate) : undefined}
                       endMonth={minDate ? parseLocalDate(maximumEventDate(minDate)) : undefined}
                       disabled={[
+                        pending,
                         ...(minDate
                           ? [
                               { before: parseLocalDate(minDate) },
@@ -343,8 +380,7 @@ export function EventInquiryForm({
                         ...(values.preferredDate ? [parseLocalDate(values.preferredDate)] : []),
                       ]}
                       className="rounded-md border border-muted-foreground/40"
-                      // Three months in a row once the card is wide enough (lg), stretched to
-                      // the card's width so the margins match; stacked below that.
+                      // Show one month below lg and three across on larger screens.
                       classNames={{
                         root: 'w-fit lg:w-full',
                         months: 'relative flex flex-col gap-4 lg:flex-row',
@@ -391,19 +427,21 @@ export function EventInquiryForm({
                 <FieldGroup data-slot="field-row" className="grid gap-5 sm:grid-cols-2">
                   <FormField
                     id="inquiry-startTime"
-                    label="Start time"
+                    label="Preferred start time"
                     hint="Eastern time (Pittsburgh)."
                     error={fieldErrors.startTime}
                   >
                     <TimePicker
                       id="inquiry-startTime"
-                      aria-label="Start time"
+                      aria-label="Preferred start time"
+                      disabled={pending}
                       value={values.startTime}
                       onChange={(value) => set('startTime', value)}
                     />
                   </FormField>
                   <FormField id="inquiry-duration" label="Length" error={fieldErrors.duration}>
                     <Select
+                      disabled={pending}
                       value={values.duration}
                       onValueChange={(value) => set('duration', value)}
                     >
@@ -453,11 +491,12 @@ export function EventInquiryForm({
                 </FormField>
               </FieldGroup>
             </FieldSet>
-            <FieldSet>
+            <FieldSet disabled={pending}>
               <FieldLegend>Drinks &amp; food</FieldLegend>
               <FieldGroup className="gap-5">
                 <RadioField
                   id="inquiry-drinks"
+                  disabled={pending}
                   legend="How will drinks be handled?"
                   options={EVENT_INQUIRY_DRINKS}
                   value={values.drinks}
@@ -468,6 +507,7 @@ export function EventInquiryForm({
                 <FieldGroup className="grid gap-5 sm:grid-cols-2">
                   <RadioField
                     id="inquiry-companyPaid"
+                    disabled={pending}
                     legend="Is a company paying for this event?"
                     options={EVENT_INQUIRY_YES_NO}
                     value={values.companyPaid}
@@ -499,18 +539,22 @@ export function EventInquiryForm({
                   error={fieldErrors.foodPlan}
                 >
                   <Select
-                    value={values.foodPlan || undefined}
-                    onValueChange={(value) => set('foodPlan', value)}
+                    disabled={pending}
+                    value={values.foodPlan || UNDECIDED_FOOD_PLAN}
+                    onValueChange={(value) =>
+                      set('foodPlan', value === UNDECIDED_FOOD_PLAN ? '' : value)
+                    }
                   >
                     <SelectTrigger
                       id="inquiry-foodPlan"
                       className="w-full"
                       {...formFieldAria('inquiry-foodPlan', { error: fieldErrors.foodPlan })}
                     >
-                      <SelectValue placeholder="Choose one" />
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
+                        <SelectItem value={UNDECIDED_FOOD_PLAN}>Not decided yet</SelectItem>
                         {EVENT_INQUIRY_FOOD_PLANS.map((option) => (
                           <SelectItem key={option.value} value={option.value}>
                             {option.label}
@@ -522,7 +566,7 @@ export function EventInquiryForm({
                 </FormField>
               </FieldGroup>
             </FieldSet>
-            <FieldSet>
+            <FieldSet disabled={pending}>
               <FieldLegend>Contact details</FieldLegend>
               <FieldGroup className="gap-5">
                 <FieldGroup className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
