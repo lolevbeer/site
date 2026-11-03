@@ -104,10 +104,11 @@ export default async function PrivateEventsPage() {
           </div>
 
           <Card>
-            <CardHeader>
+            {/* Narrower side padding on phones gives the one-tap button rows room for their labels. */}
+            <CardHeader className="px-4 sm:px-6">
               <h2 className="text-2xl font-semibold tracking-tight">Request availability</h2>
             </CardHeader>
-            <CardContent className="overflow-visible">
+            <CardContent className="overflow-visible px-3 sm:px-6">
               <EventInquiryForm taprooms={taprooms} />
             </CardContent>
           </Card>

@@ -44,17 +44,19 @@ export const EVENT_INQUIRY_DURATIONS = [
   { value: '5h+', label: '5+ hours' },
 ] as const
 
+// Drinks and food labels are short because the form shows them as one-tap
+// buttons in a single row; Admin and the staff email reuse them.
 export const EVENT_INQUIRY_DRINKS = [
-  { value: 'host-tab', label: "I'll run a host tab" },
-  { value: 'guests-pay', label: 'Guests pay for their own drinks' },
-  { value: 'not-sure', label: 'Not sure yet' },
+  { value: 'host-tab', label: 'Host tab' },
+  { value: 'guests-pay', label: 'Guests pay' },
+  { value: 'not-sure', label: 'Not sure' },
 ] as const
 
 export const EVENT_INQUIRY_FOOD_PLANS = [
-  { value: 'caterer', label: 'Would like to bring a caterer' },
+  { value: 'caterer', label: 'Caterer' },
   { value: 'food-truck', label: 'Food truck' },
-  { value: 'own-food', label: 'Bringing our own food' },
-  { value: 'suggestions', label: 'Need suggestions' },
+  { value: 'own-food', label: 'Own food' },
+  { value: 'suggestions', label: 'Need ideas' },
 ] as const
 
 export const EVENT_INQUIRY_YES_NO = [

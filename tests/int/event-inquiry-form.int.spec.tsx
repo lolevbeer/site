@@ -2,8 +2,8 @@
 /**
  * /private-events inquiry: always open, event details before contact details,
  * one-tap taproom (preselected from the header) and occasion buttons, quote
- * fields (one start-time list, length, drinks starting on "Not sure yet",
- * optional company name, food), a digits-only guest count, optional phone,
+ * fields (one start-time list; length, drinks starting on "Not sure", and an
+ * optional food plan as one-tap buttons; optional company name), a digits-only guest count, optional phone,
  * fields checked on blur, a summary with the 24-hour reply promise on
  * success, field errors show under each field, focus moves to the confirmation, the date min is client-only, and
  * an accepted inquiry sends the `event_inquiry_submitted` conversion.
@@ -80,7 +80,7 @@ function resizeCalendar(desktop: boolean) {
 }
 
 function chooseTime(value: string) {
-  fireEvent.keyDown(screen.getByRole('combobox', { name: /Preferred start time/ }), {
+  fireEvent.keyDown(screen.getByRole('combobox', { name: 'Start time (Eastern)' }), {
     key: 'Enter',
   })
   fireEvent.click(screen.getByRole('option', { name: value }))
@@ -129,7 +129,7 @@ describe('EventInquiryForm', () => {
     submitEventInquiry.mockResolvedValue({ ok: false, error: 'x' })
     render(<EventInquiryForm taprooms={taprooms} />)
     expect(screen.queryByRole('radio', { name: 'Yes' })).toBeNull()
-    fireEvent.change(screen.getByLabelText('Company name (optional)'), {
+    fireEvent.change(screen.getByLabelText('Company name (if a company is paying)'), {
       target: { value: 'Acme Corp' },
     })
     fireEvent.click(screen.getByRole('button', { name: 'Send inquiry' }))
@@ -138,25 +138,36 @@ describe('EventInquiryForm', () => {
     expect(submitEventInquiry.mock.calls[0][0]).not.toHaveProperty('companyPaid')
   })
 
-  it('starts drinks on "Not sure yet" so the question can be skipped', () => {
+  it('picks length and drinks in one tap, with drinks starting on "Not sure"', async () => {
+    submitEventInquiry.mockResolvedValue({ ok: false, error: 'x' })
     render(<EventInquiryForm taprooms={taprooms} />)
-    expect(
-      (screen.getByRole('radio', { name: 'Not sure yet' }) as HTMLButtonElement).getAttribute(
-        'aria-checked',
-      ),
-    ).toBe('true')
+    expect(screen.queryByRole('radio')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Not sure' }).getAttribute('aria-pressed')).toBe(
+      'true',
+    )
+    expect(screen.getByRole('button', { name: '3 hours' }).getAttribute('aria-pressed')).toBe(
+      'true',
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Host tab' }))
+    fireEvent.click(screen.getByRole('button', { name: '5+ hours' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Send inquiry' }))
+    await waitFor(() => expect(submitEventInquiry).toHaveBeenCalled())
+    expect(submitEventInquiry.mock.calls[0][0]).toMatchObject({
+      drinks: 'host-tab',
+      duration: '5h+',
+    })
   })
 
   it('keeps only digits in the guest count, so scrolling cannot change it', () => {
     render(<EventInquiryForm taprooms={taprooms} />)
-    const guests = screen.getByLabelText('Estimated guests') as HTMLInputElement
+    const guests = screen.getByLabelText('Guests') as HTMLInputElement
     expect(guests.type).toBe('text')
     expect(guests.inputMode).toBe('numeric')
     fireEvent.change(guests, { target: { value: '3a0' } })
     expect(guests.value).toBe('30')
   })
 
-  it('shows a radio group error under the group', async () => {
+  it('shows a choice error under its buttons', async () => {
     submitEventInquiry.mockResolvedValueOnce({
       ok: false,
       error: 'x',
@@ -171,7 +182,7 @@ describe('EventInquiryForm', () => {
     )
     expect(
       screen
-        .getByRole('radiogroup', { name: 'How will drinks be handled?' })
+        .getByRole('group', { name: 'How will drinks be handled?' })
         .getAttribute('aria-describedby'),
     ).toBe('inquiry-drinks-error')
   })
@@ -295,20 +306,19 @@ describe('EventInquiryForm', () => {
     })
   }, 15_000)
 
-  it('lets a visitor choose a food plan and return it to undecided', async () => {
+  it('lets a visitor tap a food plan and tap it again to clear it', async () => {
     submitEventInquiry.mockResolvedValue({ ok: false, error: 'x' })
     render(<EventInquiryForm taprooms={taprooms} />)
-    const food = screen.getByRole('combobox', { name: 'Food plan (optional)' })
-    expect(food.textContent).toBe('Not decided yet')
-    fireEvent.keyDown(food, { key: 'Enter' })
-    fireEvent.click(screen.getByRole('option', { name: 'Food truck' }))
+    expect(screen.getByRole('group', { name: 'Food plan (optional)' })).toBeTruthy()
+    const truck = screen.getByRole('button', { name: 'Food truck' })
+    fireEvent.click(truck)
+    expect(truck.getAttribute('aria-pressed')).toBe('true')
     fireEvent.click(screen.getByRole('button', { name: 'Send inquiry' }))
     await waitFor(() => expect(submitEventInquiry).toHaveBeenCalledTimes(1))
     expect(submitEventInquiry.mock.calls[0][0]).toMatchObject({ foodPlan: 'food-truck' })
 
-    fireEvent.keyDown(food, { key: 'Enter' })
-    fireEvent.click(screen.getByRole('option', { name: 'Not decided yet' }))
-    expect(food.textContent).toBe('Not decided yet')
+    fireEvent.click(truck)
+    expect(truck.getAttribute('aria-pressed')).toBe('false')
     fireEvent.click(screen.getByRole('button', { name: 'Send inquiry' }))
     await waitFor(() => expect(submitEventInquiry).toHaveBeenCalledTimes(2))
     expect(submitEventInquiry.mock.calls[1][0]).toMatchObject({ foodPlan: '' })
@@ -322,12 +332,14 @@ describe('EventInquiryForm', () => {
     }>()
     submitEventInquiry.mockReturnValueOnce(submission.promise)
     render(<EventInquiryForm taprooms={taprooms} />)
-    const guests = screen.getByLabelText('Estimated guests') as HTMLInputElement
+    const guests = screen.getByLabelText('Guests') as HTMLInputElement
     const email = screen.getByLabelText('Email') as HTMLInputElement
     const flexible = screen.getByRole('switch', { name: 'My date is flexible' })
     const birthday = screen.getByRole('button', { name: 'Birthday' })
     const zelienople = screen.getByRole('button', { name: 'Zelienople' })
-    const company = screen.getByLabelText('Company name (optional)') as HTMLInputElement
+    const company = screen.getByLabelText(
+      'Company name (if a company is paying)',
+    ) as HTMLInputElement
     fireEvent.change(guests, { target: { value: '30' } })
     fireEvent.change(email, { target: { value: 'ada@example.org' } })
     fireEvent.click(birthday)
@@ -391,13 +403,8 @@ describe('EventInquiryForm', () => {
     const submission = Promise.withResolvers<{ ok: true }>()
     submitEventInquiry.mockReturnValueOnce(submission.promise)
     const { rerender } = render(<EventInquiryForm taprooms={taprooms} />)
-    fireEvent.change(screen.getByLabelText('Estimated guests'), { target: { value: '30' } })
+    fireEvent.change(screen.getByLabelText('Guests'), { target: { value: '30' } })
     fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'ada@example.org' } })
-    expect(
-      screen
-        .getByRole('combobox', { name: /Preferred start time/ })
-        .getAttribute('aria-describedby'),
-    ).toBe('inquiry-startTime-description')
     chooseTime('6:30pm')
     fireEvent.click(screen.getByRole('button', { name: 'Send inquiry' }))
     expect(submitEventInquiry.mock.calls[0][0]).toMatchObject({
@@ -480,7 +487,7 @@ describe('EventInquiryForm', () => {
     fireEvent.click(trigger)
     expect(screen.getByRole('button', { name: /October 13/ }).hasAttribute('disabled')).toBe(true)
     fireEvent.click(screen.getByRole('button', { name: /October 24/ }))
-    expect(screen.getByLabelText('Preferred date').textContent).toBe('Saturday, October 24, 2026')
+    expect(screen.getByLabelText('Preferred date').textContent).toBe('Sat, Oct 24, 2026')
     // Screen readers hear the chosen date, not just the label.
     expect(trigger.getAttribute('aria-describedby')).toBe('inquiry-preferredDate-value')
     vi.useRealTimers()

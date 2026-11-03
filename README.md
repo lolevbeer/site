@@ -338,16 +338,18 @@ Admin “Email guest” replies prefill `events@lolev.beer` in CC so the events 
 can stay on the conversation.
 
 The public inquiry stays on one page, grouped into event details, drinks/food,
-and contact details. Related fields share rows on wider screens; contact fields
-stack on phones. **Estimated guests** and **Preferred start time** are estimates
-for the quote; the start time is one list of half-hour slots from 10am to 10pm
-Eastern, stored as `HH:MM`. The guest count is a digits-only text field (a number
-field would change under a scroll wheel). Drinks start on **Not sure yet**.
+and contact details. Related fields share rows on wider screens; on phones the
+date and guest count still share a row and contact fields stack. **Guests** and
+**Start time (Eastern)** are estimates for the quote; the start time is one list
+of half-hour slots from 10am to 10pm, stored as `HH:MM`. The guest count is a
+digits-only text field (a number field would change under a scroll wheel).
+Length, taproom, occasion, drinks, and food plan are one-tap button rows; drinks
+start on **Not sure**, and tapping a chosen occasion or food plan again clears
+it. Taproom buttons drop the "Lolev " prefix to fit phones.
 The flexible-date calendar shows one month on phones and three at desktop widths
 (1024px and up), retaining picked dates during resizing and navigation. Choosing
 an alternative as the preferred date removes it from the alternatives and their
 count. The flexible-date switch uses a thin 1px outline for its off state.
-**Not decided yet** clears an optional food plan without adding a stored choice.
 All controls freeze while sending. A failed submission preserves the input,
 reenables editing, and moves focus to the first invalid field; confirmation
 repeats the submitted values and taproom, even if the header location changes,

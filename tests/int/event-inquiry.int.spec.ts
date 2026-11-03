@@ -97,7 +97,7 @@ describe('validateEventInquiry', () => {
       })
     })
 
-    it('starts drinks on "Not sure yet" and rejects unknown answers', () => {
+    it('starts drinks on "Not sure" and rejects unknown answers', () => {
       expect(emptyEventInquiry().drinks).toBe('not-sure')
       expect(check({ drinks: 'open-bar' }).ok).toBe(false)
     })

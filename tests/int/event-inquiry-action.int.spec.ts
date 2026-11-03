@@ -201,7 +201,7 @@ describe('submitEventInquiry', () => {
       'Start time: 6:30pm',
       'Length: 5+ hours',
       'Guests: 30',
-      "Drinks: I'll run a host tab",
+      'Drinks: Host tab',
       'Company paying: Yes',
       'Company name: Acme Corp',
       'Food plan: Food truck',
