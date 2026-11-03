@@ -1,6 +1,10 @@
 import { MetadataRoute } from 'next'
 import { getActiveJobs } from '@/lib/jobs/payload'
-import { getAllBeersFromPayload, getAllLocations } from '@/lib/utils/payload-api'
+import {
+  getAllBeersFromPayload,
+  getAllLocations,
+  getAllUpcomingEventsFromPayload,
+} from '@/lib/utils/payload-api'
 import { logger } from '@/lib/utils/logger'
 import { getBaseUrl } from '@/lib/utils/get-base-url'
 import { RESERVED_LOCATION_SLUGS } from '@/lib/config/locations'
@@ -10,7 +14,7 @@ import { trim } from '@/lib/utils/seo'
 import type { SeoOverride } from '@/lib/seo/resolve-metadata'
 import type { SiteSeoPageKey } from '@/src/globals/SiteSeo'
 
-/** sitemap.ts is cached at build by default; regenerate hourly so new beers and jobs appear. */
+/** sitemap.ts is cached at build by default; regenerate hourly so new beers, jobs and events appear. */
 export const revalidate = 3600
 
 /** lastmod for pages that change with code, not CMS. YYYY-MM-DD of last meaningful edit. */
@@ -77,11 +81,14 @@ const orEmpty = <T>(source: Promise<T[]>, name: string) =>
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = getBaseUrl()
-  const [siteSeo, beers, locations, jobs] = await Promise.all([
+  const [siteSeo, beers, locations, jobs, events] = await Promise.all([
     getSiteSeo(),
     orEmpty(getAllBeersFromPayload(), 'beers'),
     orEmpty(getAllLocations(), 'locations'),
     orEmpty(getActiveJobs(), 'jobs'),
+    // Same call as the /events page, so the sitemap lists exactly what it lists:
+    // upcoming public one-offs and recurring occurrences, private ones excluded.
+    orEmpty(getAllUpcomingEventsFromPayload(100), 'events'),
   ])
 
   const visibleBeers = beers.filter((beer) => beer.slug && !beer.hideFromSite)
@@ -147,5 +154,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.4,
     }))
 
-  return [...staticPages, ...beerPages, ...locationPages, ...jobPages]
+  // Event pages have no SEO group of their own, so they follow the events hub.
+  const eventPages: MetadataRoute.Sitemap = siteSeo.pages?.events?.noIndex
+    ? []
+    : events.map((event) => ({
+        url: `${baseUrl}/events/${encodeURIComponent(String(event.id))}`,
+        lastModified: event.updatedAt ? new Date(event.updatedAt) : undefined,
+        changeFrequency: 'weekly' as const,
+        priority: 0.6,
+      }))
+
+  return [...staticPages, ...beerPages, ...locationPages, ...jobPages, ...eventPages]
 }
