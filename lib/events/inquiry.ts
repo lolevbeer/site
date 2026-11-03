@@ -72,8 +72,14 @@ export function optionLabel(
   return options.find((option) => option.value === value)?.label
 }
 
-/** HH:MM, 24-hour, from the public time picker. */
+/** HH:MM, 24-hour. The form sends one of EVENT_INQUIRY_START_TIMES. */
 const START_TIME = /^([01]\d|2[0-3]):[0-5]\d$/
+
+/** Start-time choices: HH:MM every half hour, 10:00 through 22:00. */
+export const EVENT_INQUIRY_START_TIMES = Array.from({ length: 25 }, (_, index) => {
+  const hour = 10 + Math.floor(index / 2)
+  return `${hour}:${index % 2 === 0 ? '00' : '30'}`
+})
 
 export interface EventInquiryInput {
   name: string
@@ -90,11 +96,9 @@ export interface EventInquiryInput {
   startTime: string
   /** An EVENT_INQUIRY_DURATIONS value. */
   duration: string
-  /** An EVENT_INQUIRY_DRINKS value. */
+  /** An EVENT_INQUIRY_DRINKS value. Starts on 'not-sure'. */
   drinks: string
-  /** 'yes' | 'no'. */
-  companyPaid: string
-  /** Required when companyPaid is 'yes'; dropped otherwise. */
+  /** Optional. A name means a company is paying (stored as companyPaid 'yes'). */
   companyName: string
   /** Optional. An EVENT_INQUIRY_FOOD_PLANS value or ''. */
   foodPlan: string
@@ -113,12 +117,13 @@ export type EventInquiryErrors = Partial<Record<keyof EventInquiryInput, string>
 
 export type ValidatedEventInquiry = Omit<
   EventInquiryInput,
-  'headcount' | 'occasion' | 'duration' | 'drinks' | 'companyPaid' | 'foodPlan' | 'companyUrlHp'
+  'headcount' | 'occasion' | 'duration' | 'drinks' | 'foodPlan' | 'companyUrlHp'
 > & {
   headcount: number
   occasion: EventInquiryOccasion | ''
   duration: OptionValue<typeof EVENT_INQUIRY_DURATIONS>
   drinks: OptionValue<typeof EVENT_INQUIRY_DRINKS>
+  /** Derived: 'yes' when a company name was given. */
   companyPaid: OptionValue<typeof EVENT_INQUIRY_YES_NO>
   foodPlan: OptionValue<typeof EVENT_INQUIRY_FOOD_PLANS> | ''
 }
@@ -138,8 +143,7 @@ export function emptyEventInquiry(): EventInquiryInput {
     otherDates: [],
     startTime: '',
     duration: '3h',
-    drinks: '',
-    companyPaid: '',
+    drinks: 'not-sure',
     companyName: '',
     foodPlan: '',
     headcount: '',
@@ -196,9 +200,7 @@ export function validateEventInquiry(
   const startTime = trimmed(parsed.startTime)
   const duration = trimmed(parsed.duration)
   const drinks = trimmed(parsed.drinks)
-  const companyPaid = trimmed(parsed.companyPaid)
-  // Only kept when a company is paying.
-  const companyName = companyPaid === 'yes' ? trimmed(parsed.companyName) : ''
+  const companyName = trimmed(parsed.companyName)
   const foodPlan = trimmed(parsed.foodPlan)
 
   if (name.length < 2) errors.name = 'Enter your name.'
@@ -213,10 +215,10 @@ export function validateEventInquiry(
   if (!START_TIME.test(startTime)) errors.startTime = 'Enter a start time.'
   if (!optionLabel(EVENT_INQUIRY_DURATIONS, duration)) errors.duration = 'Choose how long.'
   if (!optionLabel(EVENT_INQUIRY_DRINKS, drinks)) errors.drinks = 'Choose how drinks are handled.'
-  if (!optionLabel(EVENT_INQUIRY_YES_NO, companyPaid)) errors.companyPaid = 'Choose yes or no.'
-  if (companyPaid === 'yes') {
-    if (companyName.length < 2) errors.companyName = 'Enter the company name.'
-    else if (companyName.length > 200) errors.companyName = 'That answer is too long.'
+  if (companyName.length === 1) {
+    errors.companyName = 'Enter the full company name or leave it blank.'
+  } else if (companyName.length > 200) {
+    errors.companyName = 'That answer is too long.'
   }
   if (foodPlan && !optionLabel(EVENT_INQUIRY_FOOD_PLANS, foodPlan)) {
     errors.foodPlan = 'Choose a food plan.'
@@ -254,7 +256,7 @@ export function validateEventInquiry(
       // Option values are checked against their lists above.
       duration: duration as ValidatedEventInquiry['duration'],
       drinks: drinks as ValidatedEventInquiry['drinks'],
-      companyPaid: companyPaid as ValidatedEventInquiry['companyPaid'],
+      companyPaid: companyName ? 'yes' : 'no',
       companyName,
       foodPlan: foodPlan as ValidatedEventInquiry['foodPlan'],
       headcount,

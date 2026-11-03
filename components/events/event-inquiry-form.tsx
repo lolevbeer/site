@@ -3,14 +3,17 @@
 /**
  * Private-event inquiry form on /private-events. Asks about the event first
  * (date, guests, flexible-date switch with an inline calendar for other
- * days, start time, length, one-tap taproom and occasion, drinks, who pays,
- * food plan) so staff can quote in the first reply, and contact details
- * last; phone is optional. Company name appears only when a company is
- * paying. One column on phones. The taproom starts on the one picked in the
+ * days, start time from one half-hour list, length, one-tap taproom and
+ * occasion, drinks starting on "Not sure yet", food plan) so staff can quote
+ * in the first reply, and contact details last; phone and company name are
+ * optional (a company name means a company is paying). The guest count is a
+ * digits-only text field so a scroll wheel cannot change it. One column on
+ * phones. The taproom starts on the one picked in the
  * site header. Submits to the event-inquiries staff inbox (never Events).
  * Text fields are checked on blur with the same validator the server runs;
  * server errors also show under each field and clear when it changes. On
- * success the confirmation repeats what was sent, focus moves to it, and the
+ * success the confirmation repeats what was sent, promises a reply within
+ * 24 hours, focus moves to it, and the
  * `event_inquiry_submitted` conversion is sent. Rejected submissions focus the
  * first invalid control. Related fields share rows when space allows.
  * Field ids use the `inquiry-` prefix to avoid collisions elsewhere on the page.
@@ -35,7 +38,6 @@ import { HoneypotField } from '@/components/ui/honeypot-field'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Input } from '@/components/ui/input'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { TimePicker } from '@/components/ui/time-picker'
 import {
   Select,
   SelectContent,
@@ -58,7 +60,7 @@ import {
   EVENT_INQUIRY_MAX_HEADCOUNT,
   EVENT_INQUIRY_MAX_OTHER_DATES,
   EVENT_INQUIRY_OCCASIONS,
-  EVENT_INQUIRY_YES_NO,
+  EVENT_INQUIRY_START_TIMES,
   emptyEventInquiry,
   validateEventInquiry,
   type EventInquiryErrors,
@@ -279,8 +281,8 @@ export function EventInquiryForm({
                 .join(' · ')}
             </EmptyDescription>
             <EmptyDescription>
-              We will email {submitted.values.email || 'you'} about availability. Your date is not
-              reserved yet.
+              We will email {submitted.values.email || 'you'} within 24 hours about availability.
+              Your date is not reserved yet.
             </EmptyDescription>
           </EmptyHeader>
         </Empty>
@@ -315,19 +317,19 @@ export function EventInquiryForm({
                     label="Estimated guests"
                     error={fieldErrors.headcount}
                   >
+                    {/* Text, not type="number": a scroll wheel over a number field changes it. */}
                     <Input
                       id="inquiry-headcount"
                       name="headcount"
-                      type="number"
                       inputMode="numeric"
                       placeholder="e.g. 25"
                       onBlur={() => checkField('headcount')}
-                      min={1}
-                      max={EVENT_INQUIRY_MAX_HEADCOUNT}
+                      maxLength={String(EVENT_INQUIRY_MAX_HEADCOUNT).length}
                       value={values.headcount}
-                      onChange={(e) =>
-                        set('headcount', e.target.value === '' ? '' : Number(e.target.value))
-                      }
+                      onChange={(e) => {
+                        const digits = e.target.value.replace(/\D/g, '')
+                        set('headcount', digits === '' ? '' : Number(digits))
+                      }}
                       required
                     />
                   </FormField>
@@ -431,13 +433,31 @@ export function EventInquiryForm({
                     hint="Eastern time (Pittsburgh)."
                     error={fieldErrors.startTime}
                   >
-                    <TimePicker
-                      id="inquiry-startTime"
-                      aria-label="Preferred start time"
+                    <Select
                       disabled={pending}
                       value={values.startTime}
-                      onChange={(value) => set('startTime', value)}
-                    />
+                      onValueChange={(value) => set('startTime', value)}
+                    >
+                      <SelectTrigger
+                        id="inquiry-startTime"
+                        className="w-full"
+                        {...formFieldAria('inquiry-startTime', {
+                          hint: 'Eastern time (Pittsburgh).',
+                          error: fieldErrors.startTime,
+                        })}
+                      >
+                        <SelectValue placeholder="Choose a time" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          {EVENT_INQUIRY_START_TIMES.map((time) => (
+                            <SelectItem key={time} value={time}>
+                              {formatTime(time)}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
                   </FormField>
                   <FormField id="inquiry-duration" label="Length" error={fieldErrors.duration}>
                     <Select
@@ -504,35 +524,6 @@ export function EventInquiryForm({
                   error={fieldErrors.drinks}
                   className="grid gap-3 sm:grid-cols-3"
                 />
-                <FieldGroup className="grid gap-5 sm:grid-cols-2">
-                  <RadioField
-                    id="inquiry-companyPaid"
-                    disabled={pending}
-                    legend="Is a company paying for this event?"
-                    options={EVENT_INQUIRY_YES_NO}
-                    value={values.companyPaid}
-                    onValueChange={(value) => set('companyPaid', value)}
-                    error={fieldErrors.companyPaid}
-                    className="flex gap-6 [&>*]:w-auto"
-                  />
-                  {values.companyPaid === 'yes' ? (
-                    <FormField
-                      id="inquiry-companyName"
-                      label="Company name"
-                      error={fieldErrors.companyName}
-                    >
-                      <Input
-                        id="inquiry-companyName"
-                        name="companyName"
-                        autoComplete="organization"
-                        onBlur={() => checkField('companyName')}
-                        value={values.companyName}
-                        onChange={(e) => set('companyName', e.target.value)}
-                        required
-                      />
-                    </FormField>
-                  ) : null}
-                </FieldGroup>
                 <FormField
                   id="inquiry-foodPlan"
                   label="Food plan (optional)"
@@ -569,7 +560,7 @@ export function EventInquiryForm({
             <FieldSet disabled={pending}>
               <FieldLegend>Contact details</FieldLegend>
               <FieldGroup className="gap-5">
-                <FieldGroup className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                <FieldGroup className="grid gap-5 sm:grid-cols-2">
                   <FormField id="inquiry-name" label="Your name" error={fieldErrors.name}>
                     <Input
                       id="inquiry-name"
@@ -604,6 +595,21 @@ export function EventInquiryForm({
                       onChange={(e) => set('phone', e.target.value)}
                     />
                   </FormField>
+                  <FormField
+                    id="inquiry-companyName"
+                    label="Company name (optional)"
+                    hint="Only if a company is paying."
+                    error={fieldErrors.companyName}
+                  >
+                    <Input
+                      id="inquiry-companyName"
+                      name="companyName"
+                      autoComplete="organization"
+                      onBlur={() => checkField('companyName')}
+                      value={values.companyName}
+                      onChange={(e) => set('companyName', e.target.value)}
+                    />
+                  </FormField>
                 </FieldGroup>
                 <FormField
                   id="inquiry-message"
@@ -628,9 +634,6 @@ export function EventInquiryForm({
                 {pending ? 'Sending…' : 'Send inquiry'}
               </Button>
             </div>
-            <p className="text-center text-sm text-muted-foreground">
-              This is an availability request, not a confirmed booking.
-            </p>
           </FieldGroup>
           <HoneypotField
             value={values.companyUrlHp}

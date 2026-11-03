@@ -64,7 +64,7 @@ function privateEventFaqs(locations: PayloadLocation[]): FAQItem[] {
     },
     {
       question: 'How do I book a private event?',
-      answer: `Send the form on this page with your preferred date, guest count, and taproom, and we will follow up about availability. You can also email ${EVENTS_EMAIL}${phones ? ` or call ${phones}` : ''}.`,
+      answer: `Send the form on this page with your preferred date, guest count, and taproom, and we will email you about availability within 24 hours. You can also email ${EVENTS_EMAIL}${phones ? ` or call ${phones}` : ''}.`,
     },
     {
       question: 'Is my date booked once I send the form?',

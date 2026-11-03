@@ -2,9 +2,10 @@
 /**
  * /private-events inquiry: always open, event details before contact details,
  * one-tap taproom (preselected from the header) and occasion buttons, quote
- * fields (start time, length, drinks, company, food) with the
- * company name shown only for "Yes", optional phone, fields checked on blur, a summary on success, field errors show under
- * each field, focus moves to the confirmation, the date min is client-only, and
+ * fields (one start-time list, length, drinks starting on "Not sure yet",
+ * optional company name, food), a digits-only guest count, optional phone,
+ * fields checked on blur, a summary with the 24-hour reply promise on
+ * success, field errors show under each field, focus moves to the confirmation, the date min is client-only, and
  * an accepted inquiry sends the `event_inquiry_submitted` conversion.
  */
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
@@ -78,8 +79,8 @@ function resizeCalendar(desktop: boolean) {
   })
 }
 
-function chooseTime(part: string, value: string) {
-  fireEvent.keyDown(screen.getByRole('combobox', { name: `Preferred start time ${part}` }), {
+function chooseTime(value: string) {
+  fireEvent.keyDown(screen.getByRole('combobox', { name: /Preferred start time/ }), {
     key: 'Enter',
   })
   fireEvent.click(screen.getByRole('option', { name: value }))
@@ -124,13 +125,35 @@ describe('EventInquiryForm', () => {
     expect(birthday.getAttribute('aria-pressed')).toBe('false')
   })
 
-  it('asks for the company name only when a company is paying', () => {
+  it('asks for an optional company name instead of a yes/no question', async () => {
+    submitEventInquiry.mockResolvedValue({ ok: false, error: 'x' })
     render(<EventInquiryForm taprooms={taprooms} />)
-    expect(screen.queryByLabelText('Company name')).toBeNull()
-    fireEvent.click(screen.getByRole('radio', { name: 'Yes' }))
-    expect(screen.getByLabelText('Company name')).toBeTruthy()
-    fireEvent.click(screen.getByRole('radio', { name: 'No' }))
-    expect(screen.queryByLabelText('Company name')).toBeNull()
+    expect(screen.queryByRole('radio', { name: 'Yes' })).toBeNull()
+    fireEvent.change(screen.getByLabelText('Company name (optional)'), {
+      target: { value: 'Acme Corp' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Send inquiry' }))
+    await waitFor(() => expect(submitEventInquiry).toHaveBeenCalled())
+    expect(submitEventInquiry.mock.calls[0][0]).toMatchObject({ companyName: 'Acme Corp' })
+    expect(submitEventInquiry.mock.calls[0][0]).not.toHaveProperty('companyPaid')
+  })
+
+  it('starts drinks on "Not sure yet" so the question can be skipped', () => {
+    render(<EventInquiryForm taprooms={taprooms} />)
+    expect(
+      (screen.getByRole('radio', { name: 'Not sure yet' }) as HTMLButtonElement).getAttribute(
+        'aria-checked',
+      ),
+    ).toBe('true')
+  })
+
+  it('keeps only digits in the guest count, so scrolling cannot change it', () => {
+    render(<EventInquiryForm taprooms={taprooms} />)
+    const guests = screen.getByLabelText('Estimated guests') as HTMLInputElement
+    expect(guests.type).toBe('text')
+    expect(guests.inputMode).toBe('numeric')
+    fireEvent.change(guests, { target: { value: '3a0' } })
+    expect(guests.value).toBe('30')
   })
 
   it('shows a radio group error under the group', async () => {
@@ -304,7 +327,7 @@ describe('EventInquiryForm', () => {
     const flexible = screen.getByRole('switch', { name: 'My date is flexible' })
     const birthday = screen.getByRole('button', { name: 'Birthday' })
     const zelienople = screen.getByRole('button', { name: 'Zelienople' })
-    const companyYes = screen.getByRole('radio', { name: 'Yes' })
+    const company = screen.getByLabelText('Company name (optional)') as HTMLInputElement
     fireEvent.change(guests, { target: { value: '30' } })
     fireEvent.change(email, { target: { value: 'ada@example.org' } })
     fireEvent.click(birthday)
@@ -316,7 +339,7 @@ describe('EventInquiryForm', () => {
       flexible,
       birthday,
       zelienople,
-      companyYes,
+      company,
       screen.getByLabelText('Preferred date'),
       ...screen.getAllByRole('combobox'),
     ]) {
@@ -328,14 +351,13 @@ describe('EventInquiryForm', () => {
     fireEvent.keyDown(flexible, { key: ' ' })
     fireEvent.click(birthday)
     fireEvent.click(zelienople)
-    fireEvent.click(companyYes)
-    fireEvent.keyDown(companyYes, { key: 'ArrowRight' })
+    fireEvent.change(company, { target: { value: 'Acme Corp' } })
     expect(guests.value).toBe('30')
     expect(email.value).toBe('ada@example.org')
     expect(flexible.getAttribute('aria-checked')).toBe('false')
     expect(birthday.getAttribute('aria-pressed')).toBe('true')
     expect(zelienople.getAttribute('aria-pressed')).toBe('false')
-    expect(screen.queryByLabelText('Company name')).toBeNull()
+    expect(company.value).toBe('')
 
     await act(async () => {
       submission.resolve({
@@ -351,8 +373,7 @@ describe('EventInquiryForm', () => {
     fireEvent.change(guests, { target: { value: '45' } })
     fireEvent.click(flexible)
     fireEvent.click(zelienople)
-    fireEvent.click(companyYes)
-    expect(screen.getByLabelText('Company name')).toBeTruthy()
+    fireEvent.change(company, { target: { value: 'Acme Corp' } })
     submitEventInquiry.mockResolvedValueOnce({ ok: false, error: 'x' })
     fireEvent.click(screen.getByRole('button', { name: 'Send inquiry' }))
     await waitFor(() => expect(submitEventInquiry).toHaveBeenCalledTimes(2))
@@ -362,7 +383,7 @@ describe('EventInquiryForm', () => {
       flexibleDate: true,
       occasion: 'birthday',
       taproom: 'zelienople',
-      companyPaid: 'yes',
+      companyName: 'Acme Corp',
     })
   })
 
@@ -372,9 +393,12 @@ describe('EventInquiryForm', () => {
     const { rerender } = render(<EventInquiryForm taprooms={taprooms} />)
     fireEvent.change(screen.getByLabelText('Estimated guests'), { target: { value: '30' } })
     fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'ada@example.org' } })
-    chooseTime('hour', '6')
-    chooseTime('minute', '30')
-    chooseTime('AM or PM', 'PM')
+    expect(
+      screen
+        .getByRole('combobox', { name: /Preferred start time/ })
+        .getAttribute('aria-describedby'),
+    ).toBe('inquiry-startTime-description')
+    chooseTime('6:30pm')
     fireEvent.click(screen.getByRole('button', { name: 'Send inquiry' }))
     expect(submitEventInquiry.mock.calls[0][0]).toMatchObject({
       headcount: 30,
@@ -391,7 +415,7 @@ describe('EventInquiryForm', () => {
     expect(status).toContain('6:30pm Eastern')
     expect(status).toContain('Lawrenceville')
     expect(status).not.toContain('Zelienople')
-    expect(status).toContain('ada@example.org')
+    expect(status).toContain('ada@example.org within 24 hours')
     headerLocation = 'lawrenceville'
     rerender(<EventInquiryForm taprooms={taprooms} />)
     headerLocation = 'zelienople'

@@ -331,7 +331,8 @@ donation channel), then `#events`. Invite the bot to any channel you pick, then 
 the field to confirm it can post there (admins only; it tests the typed value,
 so save afterwards). Inquiries
 land in Admin → Event Inquiries; they never create an Event. Show only
-company-paid inquiries with Filters → "Company paying" is "Yes". Each inquiry is
+company-paid inquiries with Filters → "Company paying" is "Yes" (set when the
+visitor fills in the optional company name). Each inquiry is
 also emailed (see [Email](#email)).
 Admin “Email guest” replies prefill `events@lolev.beer` in CC so the events team
 can stay on the conversation.
@@ -339,8 +340,9 @@ can stay on the conversation.
 The public inquiry stays on one page, grouped into event details, drinks/food,
 and contact details. Related fields share rows on wider screens; contact fields
 stack on phones. **Estimated guests** and **Preferred start time** are estimates
-for the quote; the time controls use explicit hour, minute, and AM/PM choices in
-Eastern time, with quarter-hour minutes and the unchanged `HH:MM` storage format.
+for the quote; the start time is one list of half-hour slots from 10am to 10pm
+Eastern, stored as `HH:MM`. The guest count is a digits-only text field (a number
+field would change under a scroll wheel). Drinks start on **Not sure yet**.
 The flexible-date calendar shows one month on phones and three at desktop widths
 (1024px and up), retaining picked dates during resizing and navigation. Choosing
 an alternative as the preferred date removes it from the alternatives and their
@@ -348,8 +350,9 @@ count. The flexible-date switch uses a thin 1px outline for its off state.
 **Not decided yet** clears an optional food plan without adding a stored choice.
 All controls freeze while sending. A failed submission preserves the input,
 reenables editing, and moves focus to the first invalid field; confirmation
-repeats the submitted values and taproom, even if the header location changes.
-The events-page CTA requests availability, not an instant booking; the form and
+repeats the submitted values and taproom, even if the header location changes,
+and promises an email reply within 24 hours (the page FAQ says the same).
+The events-page CTA requests availability, not an instant booking; the FAQ and
 confirmation repeat that distinction.
 
 1. **Create New App → From an app manifest** → pick the workspace → paste
