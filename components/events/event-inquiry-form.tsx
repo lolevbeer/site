@@ -3,16 +3,21 @@
 /**
  * Private-event inquiry form on /private-events. Asks about the event first
  * (date, guests, flexible-date switch with an inline calendar for other
- * days, start time, length, one-tap taproom and occasion, drinks, who pays,
- * food plan) so staff can quote in the first reply, and contact details
- * last; phone is optional. Company name appears only when a company is
- * paying. One column on phones. The taproom starts on the one picked in the
+ * days, start time from one half-hour list, then one-tap buttons for
+ * length, taproom, occasion, drinks (starting on "Not sure") and food plan;
+ * tapping a chosen optional button again clears it) so staff can quote
+ * in the first reply, and contact details last; phone and company name are
+ * optional (a company name means a company is paying). The guest count is a
+ * digits-only text field so a scroll wheel cannot change it. One column on
+ * phones. The taproom starts on the one picked in the
  * site header. Submits to the event-inquiries staff inbox (never Events).
  * Text fields are checked on blur with the same validator the server runs;
  * server errors also show under each field and clear when it changes. On
- * success the confirmation repeats what was sent, focus moves to it, and the
- * `event_inquiry_submitted` conversion is sent. Field ids are prefixed
- * `inquiry-` so they cannot collide with other ids on the page.
+ * success the confirmation repeats what was sent, promises a reply within
+ * 24 hours, focus moves to it, and the
+ * `event_inquiry_submitted` conversion is sent. Rejected submissions focus the
+ * first invalid control. Related fields share rows when space allows.
+ * Field ids use the `inquiry-` prefix to avoid collisions elsewhere on the page.
  */
 
 import React, { useEffect, useRef, useState } from 'react'
@@ -21,23 +26,16 @@ import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import { XIcon } from '@/components/icons'
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-  FieldLegend,
-  FieldSet,
-} from '@/components/ui/field'
+import { Field, FieldGroup, FieldLabel, FieldLegend, FieldSet } from '@/components/ui/field'
 import { FormField, formFieldAria } from '@/components/ui/form-field'
 import { HoneypotField } from '@/components/ui/honeypot-field'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Input } from '@/components/ui/input'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import {
   Select,
   SelectContent,
   SelectItem,
+  SelectGroup,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
@@ -55,7 +53,7 @@ import {
   EVENT_INQUIRY_MAX_HEADCOUNT,
   EVENT_INQUIRY_MAX_OTHER_DATES,
   EVENT_INQUIRY_OCCASIONS,
-  EVENT_INQUIRY_YES_NO,
+  EVENT_INQUIRY_START_TIMES,
   emptyEventInquiry,
   validateEventInquiry,
   type EventInquiryErrors,
@@ -63,62 +61,21 @@ import {
 } from '@/lib/events/inquiry'
 import { useTodayEST } from '@/lib/hooks/use-today-est'
 import { maximumEventDate } from '@/lib/donate/donation-request'
-import { formatDate, parseLocalDate } from '@/lib/utils/formatters'
+import { formatDate, formatTime, parseLocalDate } from '@/lib/utils/formatters'
 import { toDateKey } from '@/lib/utils/food-dates'
 
 /** Text fields checked when the visitor leaves them. */
 type BlurField = 'name' | 'email' | 'phone' | 'headcount' | 'companyName'
 
-/** Labeled radio list with its error under it (FormField fits single controls only). */
-function RadioField({
-  id,
-  legend,
-  options,
-  value,
-  onValueChange,
-  error,
-  className,
-}: {
-  id: string
-  legend: string
-  options: readonly { value: string; label: string }[]
-  value: string
-  onValueChange: (value: string) => void
-  error?: string
-  className?: string
-}): React.JSX.Element {
-  return (
-    <FieldSet data-invalid={Boolean(error) || undefined}>
-      <FieldLegend variant="label">{legend}</FieldLegend>
-      <RadioGroup
-        name={id}
-        aria-label={legend}
-        value={value}
-        onValueChange={onValueChange}
-        className={className}
-        {...formFieldAria(id, { error })}
-      >
-        {options.map((option) => (
-          <Field key={option.value} orientation="horizontal">
-            <RadioGroupItem
-              value={option.value}
-              id={`${id}-${option.value}`}
-              // The default border-input is too faint to find on the card; this clears 3:1.
-              className="border-neutral-500 dark:border-neutral-300"
-            />
-            <FieldLabel htmlFor={`${id}-${option.value}`} className="font-normal">
-              {option.label}
-            </FieldLabel>
-          </Field>
-        ))}
-      </RadioGroup>
-      {error ? (
-        <FieldError id={`${id}-error`} role={undefined}>
-          {error}
-        </FieldError>
-      ) : null}
-    </FieldSet>
-  )
+function formatInquiryDate(values: EventInquiryInput): string | null {
+  if (!values.preferredDate) return null
+
+  const date = formatDate(values.preferredDate, 'full')
+  if (!values.flexibleDate) return date
+  if (values.otherDates.length === 0) return `${date} (flexible)`
+
+  const count = values.otherDates.length
+  return `${date} + ${count} other ${count === 1 ? 'date' : 'dates'}`
 }
 
 export function EventInquiryForm({
@@ -128,36 +85,74 @@ export function EventInquiryForm({
 }) {
   const taproomOptions = taprooms
     .filter((location) => location.slug)
-    .map((location) => ({ value: location.slug as string, label: location.name || '' }))
+    // "Lawrenceville", not "Lolev Lawrenceville": the brand is implied and the row is narrow.
+    .map((location) => ({
+      value: location.slug as string,
+      label: (location.name || '').replace(/^Lolev\s+/, ''),
+    }))
   const taproomSlugs = taproomOptions.map((option) => option.value)
   const { currentLocation } = useLocationContext()
   const [values, setValues] = useState<EventInquiryInput>(emptyEventInquiry)
   // Until the visitor picks one: the only taproom, else the header's taproom.
   // Derived, not stored, because the header location resolves after mount.
-  const defaultTaproom =
-    taproomSlugs.length === 1
-      ? taproomSlugs[0]
-      : taproomSlugs.includes(currentLocation)
-        ? currentLocation
-        : ''
+  let defaultTaproom = ''
+  if (taproomSlugs.length === 1) {
+    defaultTaproom = taproomSlugs[0]
+  } else if (taproomSlugs.includes(currentLocation)) {
+    defaultTaproom = currentLocation
+  }
   const taproom = values.taproom || defaultTaproom
   const [error, setError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<EventInquiryErrors>({})
   const [pending, setPending] = useState(false)
-  const [done, setDone] = useState(false)
+  const [submitted, setSubmitted] = useState<{
+    values: EventInquiryInput
+    taproomLabel: string
+  } | null>(null)
+  const [calendarMonths, setCalendarMonths] = useState(1)
   // Client-only (null until mounted): /events is ISR-cached, so a
   // server-rendered "today" can be a day stale. The server rejects past dates.
   const minDate = useTodayEST() ?? undefined
   const doneTitleRef = useRef<HTMLDivElement>(null)
+  const formRef = useRef<HTMLFormElement>(null)
+  const errorRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const desktopMediaQuery = window.matchMedia('(min-width: 1024px)')
+    function updateCalendarMonths() {
+      setCalendarMonths(desktopMediaQuery.matches ? 3 : 1)
+    }
+
+    updateCalendarMonths()
+    desktopMediaQuery.addEventListener('change', updateCalendarMonths)
+    return () => desktopMediaQuery.removeEventListener('change', updateCalendarMonths)
+  }, [])
+
+  useEffect(() => {
+    if (!error || pending) return
+    const invalid = formRef.current?.querySelector<HTMLElement>(
+      '[data-invalid="true"] :is(button, input, textarea)',
+    )
+    const target = invalid ?? errorRef.current
+    target?.focus({ preventScroll: true })
+    target?.scrollIntoView({ block: 'center', behavior: 'instant' })
+  }, [error, pending])
 
   // The form (and its focused submit button) unmounts on success; move focus
   // to the confirmation so keyboard and screen-reader users land on it.
   useEffect(() => {
-    if (done) doneTitleRef.current?.focus()
-  }, [done])
+    if (submitted) doneTitleRef.current?.focus()
+  }, [submitted])
 
   function set<K extends keyof EventInquiryInput>(key: K, value: EventInquiryInput[K]) {
-    setValues((prev) => ({ ...prev, [key]: value }))
+    if (pending) return
+    setValues((prev) => {
+      const next = { ...prev, [key]: value }
+      if (key === 'preferredDate') {
+        next.otherDates = prev.otherDates.filter((day) => day !== value)
+      }
+      return next
+    })
     setFieldErrors((prev) => {
       if (!prev[key]) return prev
       const next = { ...prev }
@@ -168,7 +163,7 @@ export function EventInquiryForm({
 
   /** Show this field's validator error once it has a value; empty fields wait for submit. */
   function checkField(key: BlurField) {
-    if (values[key] === '') return
+    if (pending || values[key] === '') return
     const result = validateEventInquiry({ ...values, taproom }, minDate, taproomSlugs)
     const message = result.ok ? undefined : result.errors[key]
     if (message) setFieldErrors((prev) => ({ ...prev, [key]: message }))
@@ -177,18 +172,22 @@ export function EventInquiryForm({
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault()
     if (pending) return
+    const submittedValues: EventInquiryInput = {
+      ...values,
+      taproom,
+      // Kept in state so toggling back restores them, but only sent when flexible.
+      otherDates: values.flexibleDate ? [...values.otherDates] : [],
+    }
+    const taproomLabel = taproomOptions.find((option) => option.value === taproom)?.label || ''
+    // Keep the resolved taproom stable if the site header changes while sending.
+    setValues((prev) => ({ ...prev, taproom }))
     setError(null)
     setFieldErrors({})
     setPending(true)
     try {
-      const result = await submitEventInquiry({
-        ...values,
-        taproom,
-        // Kept in state so toggling back restores them, but only sent when flexible.
-        otherDates: values.flexibleDate ? values.otherDates : [],
-      })
+      const result = await submitEventInquiry(submittedValues)
       if (result.ok) {
-        setDone(true)
+        setSubmitted({ values: submittedValues, taproomLabel })
         trackConversion('event_inquiry_submitted')
       } else {
         setError(result.error)
@@ -203,7 +202,7 @@ export function EventInquiryForm({
 
   return (
     <div className="text-left">
-      {done ? (
+      {submitted ? (
         <Empty role="status">
           <EmptyHeader>
             <EmptyTitle ref={doneTitleRef} tabIndex={-1} className="outline-none">
@@ -211,325 +210,349 @@ export function EventInquiryForm({
             </EmptyTitle>
             <EmptyDescription>
               {[
-                values.preferredDate
-                  ? `${formatDate(values.preferredDate, 'full')}${
-                      values.flexibleDate
-                        ? values.otherDates.length
-                          ? ` + ${values.otherDates.length} other ${values.otherDates.length === 1 ? 'date' : 'dates'}`
-                          : ' (flexible)'
-                        : ''
-                    }`
+                formatInquiryDate(submitted.values),
+                submitted.values.startTime
+                  ? `${formatTime(submitted.values.startTime)} Eastern`
                   : null,
-                values.headcount ? `${values.headcount} guests` : null,
-                taproomOptions.find((option) => option.value === taproom)?.label,
+                submitted.values.headcount ? `${submitted.values.headcount} guests` : null,
+                submitted.taproomLabel,
               ]
                 .filter(Boolean)
                 .join(' · ')}
             </EmptyDescription>
             <EmptyDescription>
-              Thanks! We will email {values.email || 'you'} about availability.
+              We will email {submitted.values.email || 'you'} within 24 hours about availability.
+              Your date is not reserved yet.
             </EmptyDescription>
           </EmptyHeader>
         </Empty>
       ) : (
         <form
+          ref={formRef}
           noValidate
           onSubmit={onSubmit}
           className="relative overflow-visible flex flex-col gap-4"
         >
-          <FieldGroup className="overflow-visible p-1 gap-5">
-            <div data-slot="field-row" className="grid gap-5 sm:grid-cols-2">
-              <FormField
-                id="inquiry-preferredDate"
-                label="Preferred date"
-                error={fieldErrors.preferredDate}
-              >
-                <DatePicker
-                  id="inquiry-preferredDate"
-                  min={minDate}
-                  max={minDate && maximumEventDate(minDate)}
-                  value={values.preferredDate}
-                  onChange={(value) => set('preferredDate', value)}
-                />
-              </FormField>
-              <FormField
-                id="inquiry-headcount"
-                label="How many guests?"
-                error={fieldErrors.headcount}
-              >
-                <Input
-                  id="inquiry-headcount"
-                  name="headcount"
-                  type="number"
-                  inputMode="numeric"
-                  placeholder="e.g. 25"
-                  onBlur={() => checkField('headcount')}
-                  min={1}
-                  max={EVENT_INQUIRY_MAX_HEADCOUNT}
-                  value={values.headcount}
-                  onChange={(e) =>
-                    set('headcount', e.target.value === '' ? '' : Number(e.target.value))
-                  }
-                  required
-                />
-              </FormField>
-            </div>
-            <Field orientation="horizontal">
-              <Switch
-                id="inquiry-flexibleDate"
-                // Off: white track, gray outline and knob. On: accent blue, white knob.
-                // Both states clear 3:1 on the card in light and dark themes.
-                className="data-[state=unchecked]:bg-white data-[state=unchecked]:border-neutral-500 dark:data-[state=unchecked]:border-neutral-300 data-[state=checked]:bg-accent [&>span]:bg-white [&>span]:data-[state=unchecked]:ring-1 [&>span]:data-[state=unchecked]:ring-neutral-300"
-                checked={values.flexibleDate}
-                onCheckedChange={(checked) => set('flexibleDate', checked)}
-              />
-              <FieldLabel htmlFor="inquiry-flexibleDate" className="font-normal">
-                My date is flexible
-              </FieldLabel>
-            </Field>
-            {values.flexibleDate ? (
-              <div
-                role="group"
-                aria-labelledby="inquiry-otherDates-label"
-                className="flex flex-col gap-3"
-              >
-                <p id="inquiry-otherDates-label" className="text-sm font-medium">
-                  Other dates that also work
-                </p>
-                <Calendar
-                  mode="multiple"
-                  numberOfMonths={3}
-                  max={EVENT_INQUIRY_MAX_OTHER_DATES}
-                  selected={values.otherDates.map(parseLocalDate)}
-                  onSelect={(days) => set('otherDates', (days ?? []).map(toDateKey).sort())}
-                  today={minDate ? parseLocalDate(minDate) : undefined}
-                  defaultMonth={parseLocalDate(
-                    values.preferredDate || minDate || toDateKey(new Date()),
-                  )}
-                  startMonth={minDate ? parseLocalDate(minDate) : undefined}
-                  endMonth={minDate ? parseLocalDate(maximumEventDate(minDate)) : undefined}
-                  disabled={[
-                    ...(minDate
-                      ? [
-                          { before: parseLocalDate(minDate) },
-                          { after: parseLocalDate(maximumEventDate(minDate)) },
-                        ]
-                      : []),
-                    // The preferred date is already the first choice.
-                    ...(values.preferredDate ? [parseLocalDate(values.preferredDate)] : []),
-                  ]}
-                  className="rounded-md border border-muted-foreground/40"
-                  // Three months in a row once the card is wide enough (lg), stretched to
-                  // the card's width so the margins match; stacked below that.
-                  classNames={{
-                    root: 'w-fit lg:w-full',
-                    months: 'relative flex flex-col gap-4 lg:flex-row',
-                  }}
-                />
-                {values.otherDates.length > 0 ? (
-                  <ul
-                    aria-label="Other dates picked"
-                    className="flex flex-wrap gap-2 list-none p-0 m-0"
-                  >
-                    {values.otherDates.map((day) => (
-                      <li
-                        key={day}
-                        className="inline-flex items-center gap-1 rounded-full bg-muted py-1 pl-3 pr-1 text-sm"
-                      >
-                        {formatDate(day, 'short')}
-                        <button
-                          type="button"
-                          aria-label={`Remove ${formatDate(day, 'full')}`}
-                          className="inline-flex size-6 items-center justify-center rounded-full hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                          onClick={() =>
-                            set(
-                              'otherDates',
-                              values.otherDates.filter((other) => other !== day),
-                            )
-                          }
-                        >
-                          <XIcon className="size-3.5" aria-hidden />
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-                <p aria-live="polite" className="text-sm text-muted-foreground">
-                  {values.otherDates.length === 0
-                    ? `Tap any days that also work, up to ${EVENT_INQUIRY_MAX_OTHER_DATES}.`
-                    : `${values.otherDates.length} other ${values.otherDates.length === 1 ? 'date' : 'dates'} picked`}
-                </p>
-                {fieldErrors.otherDates ? (
-                  <p className="text-sm text-destructive">{fieldErrors.otherDates}</p>
-                ) : null}
-              </div>
-            ) : null}
-            <div data-slot="field-row" className="grid gap-5 sm:grid-cols-2">
-              <FormField id="inquiry-startTime" label="Start time" error={fieldErrors.startTime}>
-                <Input
-                  id="inquiry-startTime"
-                  name="startTime"
-                  type="time"
-                  value={values.startTime}
-                  onChange={(e) => set('startTime', e.target.value)}
-                  required
-                />
-              </FormField>
-              <FormField id="inquiry-duration" label="Length" error={fieldErrors.duration}>
-                <Select value={values.duration} onValueChange={(value) => set('duration', value)}>
-                  <SelectTrigger
-                    id="inquiry-duration"
-                    className="w-full"
-                    {...formFieldAria('inquiry-duration', { error: fieldErrors.duration })}
-                  >
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {EVENT_INQUIRY_DURATIONS.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormField>
-            </div>
-            <FormField id="inquiry-taproom" label="Taproom" error={fieldErrors.taproom}>
-              <SegmentedControl
-                aria-label="Taproom"
-                className="w-full"
-                options={taproomOptions}
-                value={taproom || undefined}
-                onValueChange={(value) => set('taproom', value)}
-              />
-            </FormField>
-            <FormField
-              id="inquiry-occasion"
-              label="Occasion (optional)"
-              error={fieldErrors.occasion}
-            >
-              <SegmentedControl
-                aria-label="Occasion"
-                className="w-full"
-                options={EVENT_INQUIRY_OCCASIONS}
-                value={values.occasion || undefined}
-                // Tapping the chosen occasion again clears it (the field is optional).
-                onValueChange={(value) => set('occasion', value === values.occasion ? '' : value)}
-              />
-            </FormField>
-            <RadioField
-              id="inquiry-drinks"
-              legend="How will drinks be handled?"
-              options={EVENT_INQUIRY_DRINKS}
-              value={values.drinks}
-              onValueChange={(value) => set('drinks', value)}
-              error={fieldErrors.drinks}
-            />
-            <RadioField
-              id="inquiry-companyPaid"
-              legend="Is a company paying for this event?"
-              options={EVENT_INQUIRY_YES_NO}
-              value={values.companyPaid}
-              onValueChange={(value) => set('companyPaid', value)}
-              error={fieldErrors.companyPaid}
-              className="flex gap-6 [&>*]:w-auto"
-            />
-            {values.companyPaid === 'yes' ? (
-              <FormField
-                id="inquiry-companyName"
-                label="Company name"
-                error={fieldErrors.companyName}
-              >
-                <Input
-                  id="inquiry-companyName"
-                  name="companyName"
-                  autoComplete="organization"
-                  onBlur={() => checkField('companyName')}
-                  value={values.companyName}
-                  onChange={(e) => set('companyName', e.target.value)}
-                  required
-                />
-              </FormField>
-            ) : null}
-            <FormField
-              id="inquiry-foodPlan"
-              label="Food plan (optional)"
-              error={fieldErrors.foodPlan}
-            >
-              <Select
-                value={values.foodPlan || undefined}
-                onValueChange={(value) => set('foodPlan', value)}
-              >
-                <SelectTrigger
-                  id="inquiry-foodPlan"
-                  className="w-full"
-                  {...formFieldAria('inquiry-foodPlan', { error: fieldErrors.foodPlan })}
+          <FieldGroup className="overflow-visible p-1 gap-4 sm:gap-5">
+            <FieldSet disabled={pending}>
+              <FieldLegend>Your event</FieldLegend>
+              <FieldGroup className="gap-4 sm:gap-5">
+                {/* Side by side even on phones: a guest count needs only a narrow column. */}
+                <FieldGroup
+                  data-slot="field-row"
+                  className="grid grid-cols-[minmax(0,1fr)_7rem] gap-3 sm:grid-cols-2 sm:gap-5"
                 >
-                  <SelectValue placeholder="Choose one" />
-                </SelectTrigger>
-                <SelectContent>
-                  {EVENT_INQUIRY_FOOD_PLANS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </FormField>
-            <FormField id="inquiry-name" label="Your name" error={fieldErrors.name}>
-              <Input
-                id="inquiry-name"
-                name="name"
-                autoComplete="name"
-                onBlur={() => checkField('name')}
-                value={values.name}
-                onChange={(e) => set('name', e.target.value)}
-                required
-              />
-            </FormField>
-            <FormField id="inquiry-email" label="Email" error={fieldErrors.email}>
-              <Input
-                id="inquiry-email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                onBlur={() => checkField('email')}
-                value={values.email}
-                onChange={(e) => set('email', e.target.value)}
-                required
-              />
-            </FormField>
-            <FormField id="inquiry-phone" label="Phone (optional)" error={fieldErrors.phone}>
-              <Input
-                id="inquiry-phone"
-                name="phone"
-                type="tel"
-                autoComplete="tel"
-                onBlur={() => checkField('phone')}
-                value={values.phone}
-                onChange={(e) => set('phone', e.target.value)}
-              />
-            </FormField>
-            <FormField
-              id="inquiry-message"
-              label="Anything else? (optional)"
-              error={fieldErrors.message}
-            >
-              <Textarea
-                id="inquiry-message"
-                name="message"
-                rows={3}
-                placeholder="Anything we should know"
-                value={values.message}
-                onChange={(e) => set('message', e.target.value)}
-              />
-            </FormField>
-            {/* Same ring gutter as FormField, so the button lines up with the inputs. */}
-            <div className="w-full p-1 -m-1">
-              <Button type="submit" size="lg" className="w-full" disabled={pending}>
-                {pending ? <Spinner /> : null}
-                {pending ? 'Sending…' : 'Send inquiry'}
-              </Button>
+                  <FormField
+                    id="inquiry-preferredDate"
+                    label="Preferred date"
+                    error={fieldErrors.preferredDate}
+                  >
+                    <DatePicker
+                      id="inquiry-preferredDate"
+                      disabled={pending}
+                      min={minDate}
+                      max={minDate && maximumEventDate(minDate)}
+                      value={values.preferredDate}
+                      onChange={(value) => set('preferredDate', value)}
+                    />
+                  </FormField>
+                  <FormField id="inquiry-headcount" label="Guests" error={fieldErrors.headcount}>
+                    {/* Text, not type="number": a scroll wheel over a number field changes it. */}
+                    <Input
+                      id="inquiry-headcount"
+                      name="headcount"
+                      inputMode="numeric"
+                      placeholder="e.g. 25"
+                      onBlur={() => checkField('headcount')}
+                      maxLength={String(EVENT_INQUIRY_MAX_HEADCOUNT).length}
+                      value={values.headcount}
+                      onChange={(e) => {
+                        const digits = e.target.value.replace(/\D/g, '')
+                        set('headcount', digits === '' ? '' : Number(digits))
+                      }}
+                      required
+                    />
+                  </FormField>
+                </FieldGroup>
+                <Field orientation="horizontal">
+                  <Switch
+                    id="inquiry-flexibleDate"
+                    disabled={pending}
+                    // Off: white track, gray outline and knob. On: accent blue, white knob.
+                    // Both states clear 3:1 on the card in light and dark themes.
+                    className="border data-[state=unchecked]:bg-white data-[state=unchecked]:border-neutral-500/85 dark:data-[state=unchecked]:border-neutral-300 data-[state=checked]:bg-accent [&>span]:bg-white [&>span]:data-[state=unchecked]:ring-1 [&>span]:data-[state=unchecked]:ring-neutral-300"
+                    checked={values.flexibleDate}
+                    onCheckedChange={(checked) => set('flexibleDate', checked)}
+                  />
+                  <FieldLabel htmlFor="inquiry-flexibleDate" className="font-normal">
+                    My date is flexible
+                  </FieldLabel>
+                </Field>
+                {values.flexibleDate ? (
+                  <div
+                    role="group"
+                    aria-labelledby="inquiry-otherDates-label"
+                    className="flex flex-col gap-3"
+                  >
+                    <p id="inquiry-otherDates-label" className="text-sm font-medium">
+                      Other dates that also work
+                    </p>
+                    <Calendar
+                      mode="multiple"
+                      disableNavigation={pending}
+                      numberOfMonths={calendarMonths}
+                      max={EVENT_INQUIRY_MAX_OTHER_DATES}
+                      selected={values.otherDates.map(parseLocalDate)}
+                      onSelect={(days) => set('otherDates', (days ?? []).map(toDateKey).sort())}
+                      today={minDate ? parseLocalDate(minDate) : undefined}
+                      defaultMonth={parseLocalDate(
+                        values.preferredDate || minDate || toDateKey(new Date()),
+                      )}
+                      startMonth={minDate ? parseLocalDate(minDate) : undefined}
+                      endMonth={minDate ? parseLocalDate(maximumEventDate(minDate)) : undefined}
+                      disabled={[
+                        pending,
+                        ...(minDate
+                          ? [
+                              { before: parseLocalDate(minDate) },
+                              { after: parseLocalDate(maximumEventDate(minDate)) },
+                            ]
+                          : []),
+                        // The preferred date is already the first choice.
+                        ...(values.preferredDate ? [parseLocalDate(values.preferredDate)] : []),
+                      ]}
+                      className="rounded-md border border-muted-foreground/40"
+                      // Show one month below lg and three across on larger screens.
+                      classNames={{
+                        root: 'w-fit lg:w-full',
+                        months: 'relative flex flex-col gap-4 lg:flex-row',
+                      }}
+                    />
+                    {values.otherDates.length > 0 ? (
+                      <ul
+                        aria-label="Other dates picked"
+                        className="flex flex-wrap gap-2 list-none p-0 m-0"
+                      >
+                        {values.otherDates.map((day) => (
+                          <li
+                            key={day}
+                            className="inline-flex items-center gap-1 rounded-full bg-muted py-1 pl-3 pr-1 text-sm"
+                          >
+                            {formatDate(day, 'short')}
+                            <button
+                              type="button"
+                              aria-label={`Remove ${formatDate(day, 'full')}`}
+                              className="inline-flex size-6 items-center justify-center rounded-full hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                              onClick={() =>
+                                set(
+                                  'otherDates',
+                                  values.otherDates.filter((other) => other !== day),
+                                )
+                              }
+                            >
+                              <XIcon className="size-3.5" aria-hidden />
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                    <p aria-live="polite" className="text-sm text-muted-foreground">
+                      {values.otherDates.length === 0
+                        ? `Tap any days that also work, up to ${EVENT_INQUIRY_MAX_OTHER_DATES}.`
+                        : `${values.otherDates.length} other ${values.otherDates.length === 1 ? 'date' : 'dates'} picked`}
+                    </p>
+                    {fieldErrors.otherDates ? (
+                      <p className="text-sm text-destructive">{fieldErrors.otherDates}</p>
+                    ) : null}
+                  </div>
+                ) : null}
+                <FieldGroup data-slot="field-row" className="grid gap-4 sm:grid-cols-2 sm:gap-5">
+                  <FormField
+                    id="inquiry-startTime"
+                    label="Start time (Eastern)"
+                    error={fieldErrors.startTime}
+                  >
+                    <Select
+                      disabled={pending}
+                      value={values.startTime}
+                      onValueChange={(value) => set('startTime', value)}
+                    >
+                      <SelectTrigger
+                        id="inquiry-startTime"
+                        className="w-full"
+                        {...formFieldAria('inquiry-startTime', { error: fieldErrors.startTime })}
+                      >
+                        <SelectValue placeholder="Choose a time" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          {EVENT_INQUIRY_START_TIMES.map((time) => (
+                            <SelectItem key={time} value={time}>
+                              {formatTime(time)}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </FormField>
+                  <FormField id="inquiry-duration" label="Length" error={fieldErrors.duration}>
+                    <SegmentedControl
+                      aria-label="Length"
+                      className="w-full"
+                      options={EVENT_INQUIRY_DURATIONS}
+                      value={values.duration}
+                      onValueChange={(value) => set('duration', value)}
+                    />
+                  </FormField>
+                </FieldGroup>
+                <FormField id="inquiry-taproom" label="Taproom" error={fieldErrors.taproom}>
+                  <SegmentedControl
+                    aria-label="Taproom"
+                    className="w-full"
+                    options={taproomOptions}
+                    value={taproom || undefined}
+                    onValueChange={(value) => set('taproom', value)}
+                  />
+                </FormField>
+                <FormField
+                  id="inquiry-occasion"
+                  label="Occasion (optional)"
+                  error={fieldErrors.occasion}
+                >
+                  <SegmentedControl
+                    aria-label="Occasion"
+                    className="w-full"
+                    options={EVENT_INQUIRY_OCCASIONS}
+                    value={values.occasion || undefined}
+                    // Tapping the chosen occasion again clears it (the field is optional).
+                    onValueChange={(value) =>
+                      set('occasion', value === values.occasion ? '' : value)
+                    }
+                  />
+                </FormField>
+              </FieldGroup>
+            </FieldSet>
+            <FieldSet disabled={pending}>
+              <FieldLegend>Drinks &amp; food</FieldLegend>
+              <FieldGroup className="gap-4 sm:gap-5">
+                <FormField
+                  id="inquiry-drinks"
+                  label="How will drinks be handled?"
+                  error={fieldErrors.drinks}
+                >
+                  <SegmentedControl
+                    aria-label="How will drinks be handled?"
+                    className="w-full"
+                    options={EVENT_INQUIRY_DRINKS}
+                    value={values.drinks}
+                    onValueChange={(value) => set('drinks', value)}
+                  />
+                </FormField>
+                <FormField
+                  id="inquiry-foodPlan"
+                  label="Food plan (optional)"
+                  error={fieldErrors.foodPlan}
+                >
+                  <SegmentedControl
+                    aria-label="Food plan (optional)"
+                    className="w-full"
+                    options={EVENT_INQUIRY_FOOD_PLANS}
+                    value={values.foodPlan || undefined}
+                    // Tapping the chosen plan again clears it (the field is optional).
+                    onValueChange={(value) =>
+                      set('foodPlan', value === values.foodPlan ? '' : value)
+                    }
+                  />
+                </FormField>
+              </FieldGroup>
+            </FieldSet>
+            {/* The submit bar sticks to the screen bottom only while this last
+                section is on screen: sticky is bounded by this wrapper. */}
+            <div className="flex flex-col gap-4 sm:gap-5">
+              <FieldSet disabled={pending}>
+                <FieldLegend>Contact details</FieldLegend>
+                <FieldGroup className="gap-4 sm:gap-5">
+                  <FieldGroup className="grid gap-4 sm:grid-cols-2 sm:gap-5">
+                    <FormField id="inquiry-name" label="Your name" error={fieldErrors.name}>
+                      <Input
+                        id="inquiry-name"
+                        name="name"
+                        autoComplete="name"
+                        onBlur={() => checkField('name')}
+                        value={values.name}
+                        onChange={(e) => set('name', e.target.value)}
+                        required
+                      />
+                    </FormField>
+                    <FormField id="inquiry-email" label="Email" error={fieldErrors.email}>
+                      <Input
+                        id="inquiry-email"
+                        name="email"
+                        type="email"
+                        autoComplete="email"
+                        onBlur={() => checkField('email')}
+                        value={values.email}
+                        onChange={(e) => set('email', e.target.value)}
+                        required
+                      />
+                    </FormField>
+                    <FormField
+                      id="inquiry-phone"
+                      label="Phone (optional)"
+                      error={fieldErrors.phone}
+                    >
+                      <Input
+                        id="inquiry-phone"
+                        name="phone"
+                        type="tel"
+                        autoComplete="tel"
+                        onBlur={() => checkField('phone')}
+                        value={values.phone}
+                        onChange={(e) => set('phone', e.target.value)}
+                      />
+                    </FormField>
+                    <FormField
+                      id="inquiry-companyName"
+                      label="Company name (if a company is paying)"
+                      error={fieldErrors.companyName}
+                    >
+                      <Input
+                        id="inquiry-companyName"
+                        name="companyName"
+                        autoComplete="organization"
+                        onBlur={() => checkField('companyName')}
+                        value={values.companyName}
+                        onChange={(e) => set('companyName', e.target.value)}
+                      />
+                    </FormField>
+                  </FieldGroup>
+                  <FormField
+                    id="inquiry-message"
+                    label="Anything else? (optional)"
+                    error={fieldErrors.message}
+                  >
+                    <Textarea
+                      id="inquiry-message"
+                      name="message"
+                      rows={3}
+                      placeholder="Anything we should know"
+                      value={values.message}
+                      onChange={(e) => set('message', e.target.value)}
+                    />
+                  </FormField>
+                </FieldGroup>
+              </FieldSet>
+              {/* Full card width (negative margins undo the card and gutter padding)
+                with the card background, so fields scroll under it cleanly; the
+                button sits in FormField's ring gutter so it lines up with the inputs. */}
+              <div className="sticky bottom-0 z-10 -mx-4 bg-card px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:-mx-7 sm:px-7">
+                <div className="w-full p-1 -m-1">
+                  <Button type="submit" size="lg" className="w-full" disabled={pending}>
+                    {pending ? <Spinner /> : null}
+                    {pending ? 'Sending…' : 'Send inquiry'}
+                  </Button>
+                </div>
+              </div>
             </div>
           </FieldGroup>
           <HoneypotField
@@ -537,7 +560,7 @@ export function EventInquiryForm({
             onChange={(value) => set('companyUrlHp', value)}
           />
           {error ? (
-            <Alert variant="destructive">
+            <Alert ref={errorRef} tabIndex={-1} variant="destructive">
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           ) : null}

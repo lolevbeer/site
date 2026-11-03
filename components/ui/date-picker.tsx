@@ -1,7 +1,8 @@
 /**
  * shadcn date picker: a button that opens a Calendar popover. Takes and
  * reports a YYYY-MM-DD string, like <input type="date">, so form state and
- * server validation stay unchanged. Days outside `min`..`max` are disabled and
+ * server validation stay unchanged. The chosen day shows as "Sat, Oct 24, 2026"
+ * so it fits a half-width phone column. Days outside `min`..`max` are disabled and
  * `min` is the calendar's "today" (pass the New York date, not the browser's).
  *
  * Inside FormField the <label> names the button, so the shown date is linked
@@ -17,7 +18,16 @@ import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { toDateKey } from '@/lib/utils/food-dates'
-import { formatDate, parseLocalDate } from '@/lib/utils/formatters'
+import { parseLocalDate } from '@/lib/utils/formatters'
+
+function formatPickedDate(value: string): string {
+  return parseLocalDate(value).toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
+}
 import { cn } from '@/lib/utils'
 
 export function DatePicker({
@@ -51,8 +61,8 @@ export function DatePicker({
           type="button"
           variant="outline"
           className={cn(
-            // Match Input: border-input, text-base, h-10.
-            'h-10 w-full justify-start border-input text-base font-normal',
+            // Match Input: border-input, h-9, text-base (text-sm from md up), gray focus ring.
+            'h-9 w-full justify-start border-input text-base font-normal md:text-sm focus-visible:ring-[3px] focus-visible:ring-offset-0 focus-visible:border-muted-foreground/60 focus-visible:ring-muted-foreground/20',
             !value && 'text-muted-foreground',
             className,
           )}
@@ -60,7 +70,7 @@ export function DatePicker({
           aria-describedby={[valueId, buttonProps['aria-describedby']].filter(Boolean).join(' ')}
         >
           <CalendarIcon className="size-4" aria-hidden />
-          <span id={valueId}>{value ? formatDate(value, 'full') : 'Pick a date'}</span>
+          <span id={valueId}>{value ? formatPickedDate(value) : 'Pick a date'}</span>
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start" aria-label="Choose a date">

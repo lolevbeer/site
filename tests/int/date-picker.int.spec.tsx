@@ -45,6 +45,6 @@ describe('DatePicker', () => {
         <DatePicker id="d" value="2026-10-20" onChange={() => {}} />
       </FormField>,
     )
-    expect(document.getElementById('d-value')?.textContent).toBe('Tuesday, October 20, 2026')
+    expect(document.getElementById('d-value')?.textContent).toBe('Tue, Oct 20, 2026')
   })
 })

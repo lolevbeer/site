@@ -64,7 +64,6 @@ function valid() {
     startTime: '18:30',
     duration: '3h',
     drinks: 'guests-pay',
-    companyPaid: 'no',
     message: '',
   }
 }
@@ -183,7 +182,6 @@ describe('submitEventInquiry', () => {
       otherDates: ['2026-11-21', '2026-11-27'],
       duration: '5h+',
       drinks: 'host-tab',
-      companyPaid: 'yes',
       companyName: 'Acme Corp',
       foodPlan: 'food-truck',
       message: 'Need the back room',
@@ -203,7 +201,7 @@ describe('submitEventInquiry', () => {
       'Start time: 6:30pm',
       'Length: 5+ hours',
       'Guests: 30',
-      "Drinks: I'll run a host tab",
+      'Drinks: Host tab',
       'Company paying: Yes',
       'Company name: Acme Corp',
       'Food plan: Food truck',
@@ -216,7 +214,6 @@ describe('submitEventInquiry', () => {
   it('stores the company name when a company pays', async () => {
     await submitEventInquiry({
       ...valid(),
-      companyPaid: 'yes',
       companyName: 'Acme Corp',
     })
     expect(create.mock.calls[0][0].data).toMatchObject({

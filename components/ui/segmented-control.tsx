@@ -29,6 +29,8 @@ interface SegmentedControlProps {
  *
  * On coarse (touch) pointers each option is at least 44px tall and the group
  * drops its fixed height to fit them; mouse layouts keep the compact size.
+ * A label too long for its button wraps onto a second line (the group height
+ * is a minimum, not fixed) instead of spilling over its neighbors.
  */
 export const SEGMENTED_TROUGH_CLASS =
   'rounded-sm bg-black/[0.06] p-1 gap-0.5 text-muted-foreground dark:bg-muted/40'
@@ -39,13 +41,13 @@ const TROUGH_PADDING_PX = 4
 const TROUGH_GAP_PX = 2
 
 const GROUP_SIZE_CLASS: Record<SegmentedSize, string> = {
-  sm: 'h-9',
-  default: 'h-10',
+  sm: 'min-h-9',
+  default: 'min-h-10',
 }
 
 const ITEM_SIZE_CLASS: Record<SegmentedSize, string> = {
   sm: 'px-2.5 text-xs',
-  default: 'px-4 text-sm',
+  default: 'px-2 text-sm sm:px-4',
 }
 
 export function SegmentedControl({
@@ -96,7 +98,7 @@ export function SegmentedControl({
             aria-pressed={isActive}
             onClick={() => onValueChange(option.value)}
             className={cn(
-              'relative inline-flex cursor-pointer items-center justify-center whitespace-nowrap rounded-sm py-1.5 font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
+              'relative inline-flex cursor-pointer items-center justify-center text-balance text-center rounded-sm py-1.5 font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
               ITEM_SIZE_CLASS[size],
               'pointer-coarse:min-h-11',
               isActive ? 'text-foreground' : SEGMENTED_ITEM_IDLE_CLASS,

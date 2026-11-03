@@ -8,7 +8,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { PageBreadcrumbs } from '@/components/ui/page-breadcrumbs'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { HubIntro } from '@/components/ui/hub-intro'
 import { JsonLd } from '@/components/seo/json-ld'
 import { PageTransition } from '@/components/motion'
@@ -20,7 +20,7 @@ import { getAllLocations } from '@/lib/utils/payload-api'
 import { getHubIntro } from '@/lib/utils/site-seo'
 import { privateEventsDescription } from '@/lib/utils/seo'
 import type { PayloadLocation } from '@/lib/types/location'
-import { EVENTS_EMAIL } from '@/lib/events/inquiry-email'
+import { EVENTS_EMAIL } from '@/lib/events/inquiry'
 
 export const revalidate = 3600
 
@@ -64,7 +64,7 @@ function privateEventFaqs(locations: PayloadLocation[]): FAQItem[] {
     },
     {
       question: 'How do I book a private event?',
-      answer: `Send the form on this page with your preferred date, guest count, and taproom, and we will follow up about availability. You can also email ${EVENTS_EMAIL}${phones ? ` or call ${phones}` : ''}.`,
+      answer: `Send the form on this page with your preferred date, guest count, and taproom, and we will email you about availability within 24 hours. You can also email ${EVENTS_EMAIL}${phones ? ` or call ${phones}` : ''}.`,
     },
     {
       question: 'Is my date booked once I send the form?',
@@ -97,15 +97,18 @@ export default async function PrivateEventsPage() {
               <HubIntro text={intro} />
             ) : (
               <p className="mt-3 text-muted-foreground text-balance">
-                Host a birthday, team outing, or celebration at a Lolev Beer taproom
-                {cities ? ` in ${cities}` : ''}. Tell us the date and headcount and we will get back
-                to you about availability.
+                Birthdays, team outings, and celebrations at our taprooms
+                {cities ? ` in ${cities}` : ''}.
               </p>
             )}
           </div>
 
           <Card>
-            <CardContent className="overflow-visible p-6">
+            {/* Narrower side padding on phones gives the one-tap button rows room for their labels. */}
+            <CardHeader className="px-4 sm:px-6">
+              <h2 className="text-2xl font-semibold tracking-tight">Request availability</h2>
+            </CardHeader>
+            <CardContent className="overflow-visible px-3 sm:px-6">
               <EventInquiryForm taprooms={taprooms} />
             </CardContent>
           </Card>

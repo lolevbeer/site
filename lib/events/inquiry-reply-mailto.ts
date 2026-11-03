@@ -6,7 +6,12 @@
 
 import type { EventInquiry } from '@/src/payload-types'
 import { clipDetails, replyMailto } from '@/lib/email/reply-mailto'
-import { EVENT_INQUIRY_DURATIONS, occasionAdminLabel, optionLabel } from '@/lib/events/inquiry'
+import {
+  EVENTS_EMAIL,
+  EVENT_INQUIRY_DURATIONS,
+  occasionAdminLabel,
+  optionLabel,
+} from '@/lib/events/inquiry'
 import { getDateEST } from '@/lib/utils/date'
 import { formatTime } from '@/lib/utils/formatters'
 
@@ -37,6 +42,7 @@ export function inquiryReplyMailto(inquiry: Partial<EventInquiry>): string | nul
 
   return replyMailto({
     to: inquiry.email,
+    cc: EVENTS_EMAIL,
     subject: `Your Lolev private event inquiry: ${date}`,
     body,
   })

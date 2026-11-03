@@ -25,7 +25,6 @@ function valid() {
     startTime: '18:30',
     duration: '4h',
     drinks: 'host-tab',
-    companyPaid: 'no',
     message: 'Retirement party, would love the back room.',
   }
 }
@@ -56,16 +55,7 @@ describe('validateEventInquiry', () => {
     expect(result.ok).toBe(false)
     if (result.ok) return
     expect(Object.keys(result.errors).sort()).toEqual(
-      [
-        'companyPaid',
-        'drinks',
-        'email',
-        'headcount',
-        'name',
-        'preferredDate',
-        'startTime',
-        'taproom',
-      ].sort(),
+      ['email', 'headcount', 'name', 'preferredDate', 'startTime', 'taproom'].sort(),
     )
   })
 
@@ -107,39 +97,26 @@ describe('validateEventInquiry', () => {
       })
     })
 
-    it('requires a known drinks answer', () => {
-      for (const drinks of ['host-tab', 'guests-pay', 'not-sure'])
-        expect(check({ drinks }).ok).toBe(true)
-      expect(check({ drinks: '' })).toMatchObject({
-        ok: false,
-        errors: { drinks: 'Choose how drinks are handled.' },
-      })
+    it('starts drinks on "Not sure" and rejects unknown answers', () => {
+      expect(emptyEventInquiry().drinks).toBe('not-sure')
       expect(check({ drinks: 'open-bar' }).ok).toBe(false)
     })
 
-    it('requires yes or no for company paying, and a company name only for yes', () => {
-      expect(check({ companyPaid: '' })).toMatchObject({
-        ok: false,
-        errors: { companyPaid: 'Choose yes or no.' },
-      })
-      expect(check({ companyPaid: 'yes' })).toMatchObject({
-        ok: false,
-        errors: { companyName: 'Enter the company name.' },
-      })
-      expect(check({ companyPaid: 'yes', companyName: '  Acme Corp ' })).toMatchObject({
+    it('marks a company as paying exactly when a company name is given', () => {
+      expect(check({})).toMatchObject({ ok: true, value: { companyPaid: 'no', companyName: '' } })
+      expect(check({ companyName: '  Acme Corp ' })).toMatchObject({
         ok: true,
         value: { companyPaid: 'yes', companyName: 'Acme Corp' },
       })
-      // A name typed before switching to "no" is dropped, not stored.
-      expect(check({ companyPaid: 'no', companyName: 'Acme Corp' })).toMatchObject({
-        ok: true,
-        value: { companyName: '' },
+      expect(check({ companyName: 'A' })).toMatchObject({
+        ok: false,
+        errors: { companyName: 'Enter the full company name or leave it blank.' },
       })
-      expect(check({ companyPaid: 'yes', companyName: '=HYPERLINK()' })).toMatchObject({
+      expect(check({ companyName: '=HYPERLINK()' })).toMatchObject({
         ok: false,
         errors: { companyName: FORMULA_PREFIX_ERROR },
       })
-      expect(check({ companyPaid: 'yes', companyName: 'a'.repeat(201) }).ok).toBe(false)
+      expect(check({ companyName: 'a'.repeat(201) }).ok).toBe(false)
     })
 
     it('treats the food plan as optional but rejects unknown plans', () => {

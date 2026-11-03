@@ -61,4 +61,24 @@ describe('SegmentedControl', () => {
       expect(button.className).toContain('pointer-coarse:min-h-11')
     }
   })
+
+  // jsdom has no layout, so this checks the classes that let a label wrap
+  // (measured in a browser: four labels overflowed their buttons at 360px).
+  it('wraps a label that does not fit instead of spilling out of its button', () => {
+    render(
+      createElement(SegmentedControl, {
+        'aria-label': 'Filter by availability',
+        onValueChange: () => undefined,
+        options,
+        value: 'all',
+      }),
+    )
+
+    expect(screen.getByRole('group').className).toContain('min-h-10')
+    expect(screen.getByRole('group').className).not.toMatch(/(^|\s)h-10(\s|$)/)
+    for (const button of screen.getAllByRole('button')) {
+      expect(button.className).not.toContain('whitespace-nowrap')
+      expect(button.className).toContain('text-balance')
+    }
+  })
 })
