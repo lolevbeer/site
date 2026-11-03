@@ -22,15 +22,7 @@ import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { ExternalLink } from '@/components/icons'
 import { formatTimeRange } from '@/lib/utils/formatters'
-import { safeHttpUrl } from '@/lib/utils/url-utils'
-
-/** Hosts whose links sell tickets; these rows also get a visible "Tickets" link. */
-const TICKET_HOSTS = ['eventbrite.', 'ticketmaster.', 'tixr.', 'dice.fm', 'seetickets.', 'ticketleap.']
-
-function isTicketLink(href: string): boolean {
-  const host = new URL(href).hostname.toLowerCase()
-  return TICKET_HOSTS.some((ticketHost) => host.includes(ticketHost))
-}
+import { isTicketLink, safeHttpUrl } from '@/lib/utils/url-utils'
 
 const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm'
 const linkClass = cn('underline underline-offset-2 hover:text-foreground', focusRing)
