@@ -61,8 +61,8 @@ export function DatePicker({
           type="button"
           variant="outline"
           className={cn(
-            // Match shadcn Input: border-input, h-9, text-base (text-sm from md up).
-            'h-9 w-full justify-start border-input text-base font-normal md:text-sm',
+            // Match Input: border-input, h-9, text-base (text-sm from md up), gray focus ring.
+            'h-9 w-full justify-start border-input text-base font-normal md:text-sm focus-visible:ring-[3px] focus-visible:ring-offset-0 focus-visible:border-muted-foreground/60 focus-visible:ring-muted-foreground/20',
             !value && 'text-muted-foreground',
             className,
           )}
