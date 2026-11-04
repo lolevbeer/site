@@ -122,6 +122,8 @@ export function EventsPageClient({ initialEvents, intro }: EventsPageClientProps
                     : undefined,
                 site: safeHttpUrl(event.site),
                 badge: eventBadge(event.tags),
+                // An id-less event has no page; its row keeps today's site link.
+                detailHref: event.id ? `/events/${encodeURIComponent(event.id)}` : undefined,
               }))}
             />
             {regulars.length > 0 ? (
@@ -130,7 +132,7 @@ export function EventsPageClient({ initialEvents, intro }: EventsPageClientProps
                 <ul className="space-y-3 list-none p-0 m-0">
                   {regulars.map(({ next, occurrenceIds }) => (
                     <li key={occurrenceIds[0]} className="py-2">
-                      {/* Keep each occurrence's anchor so Event JSON-LD links land here. */}
+                      {/* Keep each occurrence's anchor so older #event-<id> links land here. */}
                       {occurrenceIds.map((id) => (
                         <span key={id} id={`event-${id}`} className="block scroll-mt-20" />
                       ))}
@@ -142,6 +144,7 @@ export function EventsPageClient({ initialEvents, intro }: EventsPageClientProps
                             : ''
                         }next ${formatDate(next.date, 'short')}`}
                         site={next.site}
+                        detailHref={`/events/${encodeURIComponent(occurrenceIds[0])}`}
                         calendarHref={`/events/${encodeURIComponent(occurrenceIds[0])}/calendar.ics`}
                         className="py-0"
                       />

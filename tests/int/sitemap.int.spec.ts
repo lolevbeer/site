@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 vi.mock('@/lib/utils/payload-api', () => ({
   getAllBeersFromPayload: vi.fn(),
   getAllLocations: vi.fn(),
+  getAllUpcomingEventsFromPayload: vi.fn(),
 }))
 
 vi.mock('@/lib/jobs/payload', () => ({
@@ -24,15 +25,25 @@ vi.mock('@/lib/utils/logger', () => ({
 import sitemap from '@/src/app/sitemap'
 import { getSiteSeo } from '@/lib/utils/site-seo'
 import { getActiveJobs } from '@/lib/jobs/payload'
-import { getAllBeersFromPayload, getAllLocations } from '@/lib/utils/payload-api'
+import {
+  getAllBeersFromPayload,
+  getAllLocations,
+  getAllUpcomingEventsFromPayload,
+} from '@/lib/utils/payload-api'
 
 const beers = getAllBeersFromPayload as ReturnType<typeof vi.fn>
 const locations = getAllLocations as ReturnType<typeof vi.fn>
 const jobs = getActiveJobs as ReturnType<typeof vi.fn>
+const events = getAllUpcomingEventsFromPayload as ReturnType<typeof vi.fn>
+
+const ONE_OFF_ID = '6650a1b2c3d4e5f6a7b8c9d0'
+const RECURRING_ID = 'recurring-6650a1b2c3d4e5f6a7b8c9d1-2026-11-14'
 
 describe('sitemap', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // clearAllMocks keeps implementations, so undo any test's SEO override.
+    ;(getSiteSeo as ReturnType<typeof vi.fn>).mockResolvedValue({})
     vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://lolev.beer')
     beers.mockResolvedValue([
       {
@@ -68,6 +79,48 @@ describe('sitemap', () => {
         updatedAt: '2026-10-02T12:00:00Z',
       },
     ])
+    // The fetcher already drops private events and past dates, so the mock
+    // returns only what /events would list.
+    events.mockResolvedValue([
+      { id: ONE_OFF_ID, visibility: 'public', updatedAt: '2026-10-20T15:00:00.000Z' },
+      { id: RECURRING_ID, visibility: 'public', updatedAt: '2026-10-21T15:00:00.000Z' },
+    ])
+  })
+
+  it('lists every event /events lists, one-off and recurring, at /events/<id>', async () => {
+    const entries = await sitemap()
+    // Same fetcher and limit as the /events page, which excludes private events.
+    expect(events).toHaveBeenCalledWith(100)
+    const eventEntries = entries.filter((e) => e.url.startsWith('https://lolev.beer/events/'))
+    expect(eventEntries).toEqual([
+      {
+        url: `https://lolev.beer/events/${ONE_OFF_ID}`,
+        lastModified: new Date('2026-10-20T15:00:00.000Z'),
+        changeFrequency: 'weekly',
+        priority: 0.6,
+      },
+      {
+        url: `https://lolev.beer/events/${RECURRING_ID}`,
+        lastModified: new Date('2026-10-21T15:00:00.000Z'),
+        changeFrequency: 'weekly',
+        priority: 0.6,
+      },
+    ])
+  })
+
+  it('lists no event pages when the events hub is noindex', async () => {
+    ;(getSiteSeo as ReturnType<typeof vi.fn>).mockResolvedValue({
+      pages: { events: { noIndex: true } },
+    })
+    const urls = (await sitemap()).map((e) => e.url)
+    expect(urls.filter((url) => url.startsWith('https://lolev.beer/events'))).toEqual([])
+  })
+
+  it('keeps the rest of the sitemap when the events fetch fails', async () => {
+    events.mockRejectedValue(new Error('db down'))
+    const urls = (await sitemap()).map((e) => e.url)
+    expect(urls).toContain('https://lolev.beer/events')
+    expect(urls).toContain('https://lolev.beer/beer/lupula')
   })
 
   it('includes location landing pages and visible beer pages', async () => {

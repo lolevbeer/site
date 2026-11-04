@@ -68,6 +68,18 @@ export function formatTime(timeString: string, options: { timezone?: string } = 
 }
 
 /**
+ * Agenda time for an event row or card, e.g. "7pm–10pm", or just "7pm" with no end.
+ * Null when the start is missing or "TBD", so callers can drop the time entirely.
+ */
+export function formatTimeRange(time?: string | null, endTime?: string | null): string | null {
+  if (!time || time.toLowerCase() === 'tbd') return null
+  if (endTime && endTime.toLowerCase() !== 'tbd') {
+    return `${formatTime(time)}–${formatTime(endTime)}`
+  }
+  return formatTime(time)
+}
+
+/**
  * Format an opening or closing time for an hours table, e.g. "11 AM", "9:30 PM".
  *
  * Deliberately separate from {@link formatTime}, which renders "11am" / "9:30pm"

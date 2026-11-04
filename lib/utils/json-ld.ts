@@ -11,6 +11,7 @@ import type { Event as PayloadCmsEvent } from '@/src/payload-types'
 import { formatTime } from './formatters'
 import { fromZonedTime } from 'date-fns-tz'
 import { getMediaUrl } from './media-utils'
+import { safeHttpUrl } from './url-utils'
 import {
   LOLEV_BASE_URL,
   LOLEV_OG_IMAGE_URL,
@@ -179,12 +180,14 @@ function getOrganizer(): OrganizationJsonLd {
   }
 }
 
-function complimentaryOffer(): OfferJsonLd {
+/** Free-entry offer; `url` is the event's own ticket or info site, if any. */
+function complimentaryOffer(url?: string): OfferJsonLd {
   return {
     '@type': 'Offer',
     price: '0',
     priceCurrency: 'USD',
     availability: 'https://schema.org/InStock',
+    ...(url && { url }),
   }
 }
 
@@ -292,19 +295,18 @@ function toISO8601(
 type LocationLookup = Map<LocationSlug, PayloadLocation>
 
 /**
- * Shareable /events link for one event: `?loc=` opens the right taproom and
- * `#event-<id>` matches the row anchor /events renders (ScheduleList `anchors`,
- * plus one per occurrence in the Regulars block).
+ * Canonical page for one event: `/events/<id>`, where id is a one-off event
+ * id or an expanded `recurring-<definition>-<date>` occurrence. With no id,
+ * the /events listing.
  */
-export function eventPageUrl(locationSlug?: string, eventId?: string | number): string {
-  const query = locationSlug ? `?loc=${encodeURIComponent(locationSlug)}` : ''
-  const hash = eventId != null && eventId !== '' ? `#event-${eventId}` : ''
-  return `${LOLEV_BASE_URL}/events${query}${hash}`
+export function eventPageUrl(eventId?: string | number): string {
+  if (eventId == null || eventId === '') return `${LOLEV_BASE_URL}/events`
+  return `${LOLEV_BASE_URL}/events/${encodeURIComponent(String(eventId))}`
 }
 
 /**
  * Create base event JSON-LD structure with common fields. The url is the
- * event's own /events anchor; callers override it with the event's site.
+ * event's own /events/<id> page (food callers override it).
  */
 function createBaseEventJsonLd(
   name: string,
@@ -325,7 +327,7 @@ function createBaseEventJsonLd(
     eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
     location: place,
     organizer: getOrganizer(),
-    url: eventPageUrl(location?.slug ?? locationSlug, eventId),
+    url: eventPageUrl(eventId),
     image: LOLEV_OG_IMAGE_URL,
   }
 }
@@ -365,11 +367,11 @@ export function generateEventJsonLd(
     )
 
     if (endDate) jsonLd.endDate = endDate
-    // The CMS description is internal (staff-only read), so describe by title.
-    jsonLd.description = payloadEvent.organizer.trim()
-    if (payloadEvent.site) jsonLd.url = payloadEvent.site
+    // The CMS description is internal (staff-only read): describe by the
+    // public summary, else the title.
+    jsonLd.description = payloadEvent.summary?.trim() || payloadEvent.organizer.trim()
     jsonLd.image = resolveEventImage(getMediaUrl(payloadEvent.image))
-    jsonLd.offers = complimentaryOffer()
+    jsonLd.offers = complimentaryOffer(safeHttpUrl(payloadEvent.site))
 
     return jsonLd
   }
@@ -394,11 +396,11 @@ export function generateEventJsonLd(
     breweryEvent.id,
   )
 
-  jsonLd.description = breweryEvent.title.trim()
+  jsonLd.description = breweryEvent.summary?.trim() || breweryEvent.title.trim()
   jsonLd.eventStatus = getEventStatus(breweryEvent.status)
   if (endDate) jsonLd.endDate = endDate
   jsonLd.image = resolveEventImage(breweryEvent.image)
-  if (breweryEvent.site) jsonLd.url = breweryEvent.site
+  const site = safeHttpUrl(breweryEvent.site)
 
   if (breweryEvent.price) {
     const priceMatch = breweryEvent.price.match(/\$?(\d+(?:\.\d{2})?)/)
@@ -411,10 +413,10 @@ export function generateEventJsonLd(
           ? 'https://schema.org/SoldOut'
           : 'https://schema.org/InStock',
       validFrom: new Date().toISOString(),
-      ...(breweryEvent.site && { url: breweryEvent.site }),
+      ...(site && { url: site }),
     }
   } else {
-    jsonLd.offers = complimentaryOffer()
+    jsonLd.offers = complimentaryOffer(site)
   }
 
   if (breweryEvent.vendor && breweryEvent.vendor !== breweryEvent.title) {

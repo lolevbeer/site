@@ -61,7 +61,7 @@ describe('buildEventIcs', () => {
     expect(ics).toContain('DTEND;TZID=America/New_York:20261014T210000')
     expect(ics).toContain('SUMMARY:Trivia')
     expect(ics).toContain('UID:event-abc123@lolev.beer')
-    expect(ics).toContain('URL:https://lolev.beer/events?loc=lawrenceville#event-abc123')
+    expect(ics).toContain('URL:https://lolev.beer/events/abc123')
     expect(unfold(ics)).toContain('LOCATION:Lolev Beer - Lawrenceville\\, 5247 Butler Street\\, Pittsburgh\\, PA 15201')
     expect(ics).toContain('DTSTAMP:20261001T000000Z')
   })
@@ -111,23 +111,16 @@ describe('buildEventIcs', () => {
     expect(ics).toContain('DTEND;TZID=America/New_York:20261015T010000')
   })
 
-  it('prefers the event site for URL and escapes text', () => {
-    const ics = buildEventIcs(
-      { ...base, organizer: 'Bands; Beer, Fun', startTime: '7pm', site: 'https://tix.example.com/x' },
-      stamp,
-    )
+  it('escapes text', () => {
+    const ics = buildEventIcs({ ...base, organizer: 'Bands; Beer, Fun', startTime: '7pm' }, stamp)
     expect(ics).toContain('SUMMARY:Bands\\; Beer\\, Fun')
-    expect(ics).toContain('URL:https://tix.example.com/x')
   })
 
-  it('drops a non-http site and cannot be injected through a newline in it', () => {
-    const injected = buildEventIcs(
-      { ...base, startTime: '7pm', site: 'https://tix.example.com/x\r\nDESCRIPTION:pwned' },
-      stamp,
-    )
-    expect(injected).not.toMatch(/^DESCRIPTION/m)
-    const bogus = buildEventIcs({ ...base, startTime: '7pm', site: 'javascript:alert(1)' }, stamp)
-    expect(bogus).toContain('URL:https://lolev.beer/events?loc=lawrenceville#event-abc123')
+  it('links to our event page, encoding a recurring occurrence id', () => {
+    const ics = buildEventIcs({ ...base, id: 'recurring-r1-2026-10-14', startTime: '7pm' }, stamp)
+    expect(ics).toContain('URL:https://lolev.beer/events/recurring-r1-2026-10-14')
+    const odd = buildEventIcs({ ...base, id: 'a b', startTime: '7pm' }, stamp)
+    expect(odd).toContain('URL:https://lolev.beer/events/a%20b')
   })
 
   it('folds lines longer than 75 octets and escapes bare carriage returns', () => {

@@ -5,11 +5,14 @@
  * column shoved titles off-center whenever the time string changed width
  * ("7pm" vs "5pm–8pm").
  *
- * A row with a site links its title (new tab, marked by an external-link
- * icon) rather than the whole row, so "Add to calendar" stays its own link.
- * Ticketing sites also get a visible "Tickets ↗" link, since buying is news
- * the title doesn't carry. Events can add an "Add to calendar" .ics link and
- * a small badge (e.g. "Beer release") above the title. Link names carry the
+ * Event rows pass `detailHref` (their /events/<id> page), and the title links
+ * there in the same tab; the event page carries any non-ticket site. Without
+ * it (food rows), a row with a site links its title (new tab, marked by an
+ * external-link icon). Either way the title is the link rather than the whole
+ * row, so "Add to calendar" stays its own link. Ticketing sites also get a
+ * visible "Tickets ↗" link, since buying is news the title doesn't carry.
+ * Events can add an "Add to calendar" .ics link and a small badge (e.g.
+ * "Beer release") above the title. Link names carry the
  * title for screen readers ("Tickets for Trivia", "Add Trivia to calendar")
  * so a links list can tell rows apart.
  */
@@ -18,29 +21,15 @@
 
 import React from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { ExternalLink } from '@/components/icons'
-import { formatTime } from '@/lib/utils/formatters'
-import { safeHttpUrl } from '@/lib/utils/url-utils'
+import { formatTimeRange } from '@/lib/utils/formatters'
+import { isTicketLink, safeHttpUrl } from '@/lib/utils/url-utils'
 
-function agendaTime(time?: string, endTime?: string): string | null {
-  if (!time || time.toLowerCase() === 'tbd') return null
-  if (endTime && endTime.toLowerCase() !== 'tbd') {
-    return `${formatTime(time)}–${formatTime(endTime)}`
-  }
-  return formatTime(time)
-}
-
-/** Hosts whose links sell tickets; these rows also get a visible "Tickets" link. */
-const TICKET_HOSTS = ['eventbrite.', 'ticketmaster.', 'tixr.', 'dice.fm', 'seetickets.', 'ticketleap.']
-
-function isTicketLink(href: string): boolean {
-  const host = new URL(href).hostname.toLowerCase()
-  return TICKET_HOSTS.some((ticketHost) => host.includes(ticketHost))
-}
-
-const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm'
+const focusRing =
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm'
 const linkClass = cn('underline underline-offset-2 hover:text-foreground', focusRing)
 const titleClass = 'font-normal leading-tight text-balance'
 
@@ -52,6 +41,12 @@ interface TimelineItemProps {
   description?: string
   site?: string
   imageUrl?: string
+  /**
+   * Same-origin event page (`/events/<id>`); events only. When set, the title
+   * links here in the same tab and a non-ticket `site` is not linked from the
+   * row (the event page shows it). A ticket site keeps its "Tickets ↗" link.
+   */
+  detailHref?: string
   /** Same-origin .ics download; events only. */
   calendarHref?: string
   /** Short label shown as a badge above the title, e.g. "Beer release". */
@@ -67,13 +62,14 @@ export function TimelineItem({
   description,
   site,
   imageUrl,
+  detailHref,
   calendarHref,
   badge,
   className,
 }: TimelineItemProps) {
   const href = safeHttpUrl(site)
   const ticketHref = href && isTicketLink(href) ? href : undefined
-  const timeDisplay = agendaTime(time, endTime)
+  const timeDisplay = formatTimeRange(time, endTime)
 
   return (
     <div className={cn('flex flex-col items-center text-center py-2 gap-0.5', className)}>
@@ -90,8 +86,15 @@ export function TimelineItem({
           {badge}
         </Badge>
       ) : null}
-      {/* A ticket site gets the "Tickets ↗" link below instead, so the row has one link. */}
-      {href && !ticketHref ? (
+      {/* The title links to the event page, else to a non-ticket site (tickets get "Tickets ↗" below). */}
+      {detailHref ? (
+        <Link
+          href={detailHref}
+          className={cn(titleClass, 'underline-offset-2 hover:underline', focusRing)}
+        >
+          {title}
+        </Link>
+      ) : href && !ticketHref ? (
         <a
           href={href}
           target="_blank"

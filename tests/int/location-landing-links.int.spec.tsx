@@ -48,5 +48,6 @@ describe('LocationLanding view-all links', () => {
     expect(screen.getByRole('link', { name: 'View food schedule' }).getAttribute('href')).toBe(
       '/food?loc=zelienople',
     )
+    expect(screen.getByRole('link', { name: 'Trivia' }).getAttribute('href')).toBe('/events/evt-1')
   })
 })

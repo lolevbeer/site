@@ -541,6 +541,7 @@ export function transformPayloadEventToBreweryEvent(
     title: event.organizer,
     // event.description is internal (staff-only read); never put it on the site.
     description: event.organizer,
+    summary: event.summary ?? undefined,
     date: event.date.split('T')[0],
     time: event.startTime || '',
     endTime: event.endTime ?? undefined,

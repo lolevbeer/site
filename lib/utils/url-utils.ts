@@ -15,6 +15,26 @@ export function safeHttpUrl(url: string | null | undefined): string | undefined 
   return undefined
 }
 
+/** Hosts whose links sell tickets; event links to them read "Tickets" rather than "Website". */
+const TICKET_HOSTS = [
+  'eventbrite.',
+  'ticketmaster.',
+  'tixr.',
+  'dice.fm',
+  'seetickets.',
+  'ticketleap.',
+]
+
+/**
+ * Whether an absolute http(s) URL (as returned by safeHttpUrl) is a ticketing
+ * site. Lives here rather than in the client-only TimelineItem so the server
+ * event page can call it too.
+ */
+export function isTicketLink(href: string): boolean {
+  const host = new URL(href).hostname.toLowerCase()
+  return TICKET_HOSTS.some((ticketHost) => host.includes(ticketHost))
+}
+
 /** Vercel Blob public CDN hosts. Keep these absolute so browsers and next/image
  * hit Blob Data Transfer instead of Fast Origin Transfer via /api/media/file/... */
 function isVercelBlobHost(hostname: string): boolean {
