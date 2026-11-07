@@ -39,6 +39,9 @@ export async function parseSSEStream(
 
   const decoder = new TextDecoder()
   let buffer = ''
+  // Outside the read loop: a frame's event and data lines can arrive in different chunks.
+  let currentEvent = ''
+  let currentData = ''
 
   try {
     while (true) {
@@ -50,9 +53,6 @@ export async function parseSSEStream(
       // Split on newlines, keeping incomplete lines in buffer
       const lines = buffer.split('\n')
       buffer = lines.pop() || ''
-
-      let currentEvent = ''
-      let currentData = ''
 
       for (const line of lines) {
         if (line.startsWith('event: ')) {

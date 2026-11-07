@@ -102,11 +102,28 @@ const PERMANENT_STATUSES = new Set([404, 410])
 let consecutiveFailures = 0
 const MAX_CONSECUTIVE_FAILURES = 5
 
+/** How long an open circuit blocks requests before it closes on its own. */
+export const UNTAPPD_CIRCUIT_COOLDOWN_MS = 5 * 60 * 1000
+let circuitOpenedAt = 0
+
 /**
- * Check if the circuit breaker is open (too many consecutive failures)
+ * Check if the circuit breaker is open (too many consecutive failures).
+ * It closes after the cooldown, because a warm instance may never see the job's
+ * reset and an open circuit makes no request that could succeed and reset it.
  */
 export function isCircuitOpen(): boolean {
-  return consecutiveFailures >= MAX_CONSECUTIVE_FAILURES
+  if (consecutiveFailures < MAX_CONSECUTIVE_FAILURES) return false
+  if (Date.now() - circuitOpenedAt < UNTAPPD_CIRCUIT_COOLDOWN_MS) return true
+  resetCircuit()
+  return false
+}
+
+/** Count a failed request. Returns true when this failure opens the circuit. */
+function recordFailure(): boolean {
+  consecutiveFailures++
+  if (consecutiveFailures < MAX_CONSECUTIVE_FAILURES) return false
+  circuitOpenedAt = Date.now()
+  return true
 }
 
 /**
@@ -155,7 +172,7 @@ export async function fetchUntappdData(url: string): Promise<UntappdData> {
     // Rate limit detection
     if (response.status === 429) {
       await discardResponseBody(response)
-      consecutiveFailures++
+      recordFailure()
       Sentry.captureMessage('Untappd rate limit hit', {
         level: 'warning',
         extra: { url: fullUrl, consecutiveFailures },
@@ -176,8 +193,7 @@ export async function fetchUntappdData(url: string): Promise<UntappdData> {
         return failed('permanent')
       }
 
-      consecutiveFailures++
-      if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+      if (recordFailure()) {
         Sentry.captureMessage('Untappd circuit breaker opened after consecutive failures', {
           level: 'error',
           extra: { url: fullUrl, status: response.status, consecutiveFailures },
@@ -269,9 +285,7 @@ export async function fetchUntappdData(url: string): Promise<UntappdData> {
 
     return { rating, ratingCount, positiveReviews }
   } catch (error) {
-    consecutiveFailures++
-
-    if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+    if (recordFailure()) {
       Sentry.captureException(error, {
         extra: {
           url: fullUrl,

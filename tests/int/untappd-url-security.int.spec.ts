@@ -17,6 +17,7 @@ import {
   isCircuitOpen,
   normalizeUntappdBeerUrl,
   resetCircuit,
+  UNTAPPD_CIRCUIT_COOLDOWN_MS,
   UNTAPPD_FETCH_TIMEOUT_MS,
   UNTAPPD_MAX_BODY_BYTES,
 } from '@/src/utils/untappd'
@@ -157,5 +158,48 @@ describe('GET /api/untappd rating', () => {
 
     expect(response.status).toBe(400)
     expect(fetchUntappdDataSpy).not.toHaveBeenCalled()
+  })
+})
+
+describe('Untappd circuit breaker recovery', () => {
+  const url = '/b/lolev-beer-lupula/123456'
+
+  async function openCircuit(status = 503) {
+    global.fetch = vi.fn(async () => new Response('', { status }))
+    for (let i = 0; i < 5; i++) await fetchUntappdData(url)
+    expect(isCircuitOpen()).toBe(true)
+  }
+
+  afterEach(() => resetCircuit())
+
+  it('holds the cooldown when rate limiting opened the circuit', async () => {
+    await openCircuit(429)
+    await fetchUntappdData(url)
+    expect(global.fetch).toHaveBeenCalledTimes(5)
+  })
+
+  it('stays open during the cooldown and contacts Untappd again after it', async () => {
+    const now = vi.spyOn(Date, 'now').mockReturnValue(1_000_000)
+    await openCircuit()
+    const fetchMock = vi.mocked(global.fetch)
+
+    now.mockReturnValue(1_000_000 + UNTAPPD_CIRCUIT_COOLDOWN_MS - 1)
+    await fetchUntappdData(url)
+    expect(fetchMock).toHaveBeenCalledTimes(5)
+
+    now.mockReturnValue(1_000_000 + UNTAPPD_CIRCUIT_COOLDOWN_MS)
+    await fetchUntappdData(url)
+    expect(fetchMock).toHaveBeenCalledTimes(6)
+  })
+
+  it('answers the rating route with a 503 and a retry message, not an empty success', async () => {
+    await openCircuit()
+
+    const response = await GET(
+      new NextRequest(`http://localhost/api/untappd?action=rating&url=${encodeURIComponent(url)}`),
+    )
+
+    expect(response.status).toBe(503)
+    expect((await response.json()).error).toMatch(/try again/i)
   })
 })

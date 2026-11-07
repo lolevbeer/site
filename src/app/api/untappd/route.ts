@@ -199,7 +199,14 @@ async function searchUntappd(query: string): Promise<NextResponse> {
  */
 async function fetchRating(url: string): Promise<NextResponse> {
   try {
-    const { rating, ratingCount, positiveReviews } = await fetchUntappdData(url)
+    const { rating, ratingCount, positiveReviews, failure } = await fetchUntappdData(url)
+
+    if (failure === 'retryable') {
+      return NextResponse.json(
+        { error: 'Untappd is unavailable right now. Try again in a few minutes.' },
+        { status: 503 },
+      )
+    }
 
     return NextResponse.json({ rating, ratingCount, positiveReviews, url } as UntappdRatingResult)
   } catch (error) {

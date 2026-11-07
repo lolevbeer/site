@@ -120,3 +120,34 @@ it('deleting a beer invalidates all containing menus without truncating at 100',
   )
   expect(revalidateTag).toHaveBeenCalledWith('menu-draft', { expire: 0 })
 })
+
+describe('Beers derived prices on partial updates', () => {
+  const update = async (data: Record<string, unknown>, originalDoc: Record<string, unknown>) => {
+    const hook = Beers.hooks!.beforeChange![0] as unknown as AnyHook
+    await hook({ req: mockReq().req, operation: 'update', data, originalDoc })
+    return data
+  }
+
+  it('keeps a manual half pour when only draftPrice is sent', async () => {
+    const data = await update({ draftPrice: 10 }, { id: 'b', halfPourOnly: true, halfPour: 4 })
+    expect(data).not.toHaveProperty('halfPour')
+  })
+
+  it('lets an incoming halfPourOnly: false turn calculation back on', async () => {
+    const data = await update(
+      { draftPrice: 10, halfPourOnly: false },
+      { id: 'b', halfPourOnly: true, halfPour: 4 },
+    )
+    expect(data.halfPour).toBe(6)
+  })
+
+  it('clears canSingle when fourPack is cleared', async () => {
+    const data = await update({ fourPack: null }, { id: 'b', fourPack: 20, canSingle: 5.25 })
+    expect(data.canSingle).toBeNull()
+  })
+
+  it('leaves canSingle alone when fourPack is not part of the update', async () => {
+    const data = await update({ name: 'Akko' }, { id: 'b', fourPack: 20, canSingle: 5.25 })
+    expect(data).not.toHaveProperty('canSingle')
+  })
+})

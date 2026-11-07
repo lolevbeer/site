@@ -130,9 +130,12 @@ export function useLocationSearch(proximity: Coordinates | null = null) {
     [cancelInFlight],
   )
 
-  const commitTypedPlace = useCallback(async () => {
+  /** Search for the typed text now. Resolves true if found, false if not, null if newer typing superseded it. */
+  const commitTypedPlace = useCallback(async (): Promise<boolean | null> => {
     const term = searchTerm.trim()
     if (!term) return false
+    // The armed autocomplete would otherwise fire and abort this search.
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current)
     abortRef.current?.abort()
     const controller = new AbortController()
     abortRef.current = controller
@@ -144,7 +147,7 @@ export function useLocationSearch(proximity: Coordinates | null = null) {
         ? { latitude: proximityLat, longitude: proximityLng }
         : null
     const suggestions = await fetchPlaceSuggestions(term, proximityForFetch, controller.signal)
-    if (id !== requestIdRef.current) return false
+    if (id !== requestIdRef.current) return null
     setSearching(false)
     const suggestion = suggestions[0]
     if (!suggestion?.latitude || suggestion.longitude == null) {
