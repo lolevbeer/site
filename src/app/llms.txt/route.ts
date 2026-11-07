@@ -73,6 +73,7 @@ ${taproomLinks ? `${taproomLinks}\n` : ''}- [Our Beers](${baseUrl}/beer): Full c
 - [Private events](${baseUrl}/private-events): Book a private event or party at a taproom (inquiry form)
 - [Donation requests](${baseUrl}/donate): Request a beer donation or taproom fundraiser night (completed forms only)
 - [Jobs](${baseUrl}/jobs): Open roles at Lolev taprooms
+- [Hall of Fame](${baseUrl}/hall-of-fame): Favorite Untappd reviews of Lolev beers
 
 ## Beer Styles We Brew
 

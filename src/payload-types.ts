@@ -737,6 +737,10 @@ export interface BeerReview {
    * Approved reviews can be included in public beer data.
    */
   approved: boolean;
+  /**
+   * Show this review on the Hall of Fame page (/hall-of-fame). Only approved reviews appear there.
+   */
+  hallOfFame?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -1640,6 +1644,7 @@ export interface BeerReviewsSelect<T extends boolean = true> {
   sourceDate?: T;
   externalImageUrl?: T;
   approved?: T;
+  hallOfFame?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2720,6 +2725,39 @@ export interface SiteSeo {
       noIndex?: boolean | null;
     };
     /**
+     * Meta for Hall of Fame (/hall-of-fame). Blank fields keep the code defaults.
+     */
+    hallOfFame?: {
+      /**
+       * Browser tab and SERP title. Leave blank to keep the auto-generated title. Do not append "• Lolev Beer" on hub pages; the site title template adds it.
+       */
+      title?: string | null;
+      /**
+       * SERP snippet. Aim for ~150–160 characters.
+       */
+      description?: string | null;
+      /**
+       * Optional. Defaults to Search-result title (plus site name where applicable).
+       */
+      ogTitle?: string | null;
+      /**
+       * Optional. Defaults to Search-result description.
+       */
+      ogDescription?: string | null;
+      /**
+       * Optional social share image (1200×630 recommended). Falls back to the site default.
+       */
+      ogImage?: (string | null) | Media;
+      /**
+       * Optional. Press Enter after each keyword. Mostly legacy; Google ignores these.
+       */
+      keywords?: string[] | null;
+      /**
+       * Ask search engines not to list this page in results. Links on it are still followed, and it is left out of the sitemap.
+       */
+      noIndex?: boolean | null;
+    };
+    /**
      * Meta for Accessibility (/accessibility). Blank fields keep the code defaults.
      */
     accessibility?: {
@@ -3012,6 +3050,17 @@ export interface SiteSeoSelect<T extends boolean = true> {
               noIndex?: T;
             };
         faq?:
+          | T
+          | {
+              title?: T;
+              description?: T;
+              ogTitle?: T;
+              ogDescription?: T;
+              ogImage?: T;
+              keywords?: T;
+              noIndex?: T;
+            };
+        hallOfFame?:
           | T
           | {
               title?: T;

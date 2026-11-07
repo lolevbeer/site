@@ -28,6 +28,7 @@ const STATIC_LASTMOD = {
   '/donate': '2026-09-09',
   '/private-events': '2026-10-22',
   '/jobs': undefined,
+  '/hall-of-fame': undefined,
 } as const
 
 const STATIC_INFO_PAGES: Array<{
@@ -42,6 +43,7 @@ const STATIC_INFO_PAGES: Array<{
   { path: '/jobs', key: 'jobs', changeFrequency: 'weekly', priority: 0.4 },
   { path: '/about', key: 'about', changeFrequency: 'monthly', priority: 0.6 },
   { path: '/faq', key: 'faq', changeFrequency: 'monthly', priority: 0.5 },
+  { path: '/hall-of-fame', key: 'hallOfFame', changeFrequency: 'monthly', priority: 0.4 },
   { path: '/accessibility', key: 'accessibility', changeFrequency: 'monthly', priority: 0.3 },
   { path: '/privacy', key: 'privacy', changeFrequency: 'yearly', priority: 0.2 },
   { path: '/terms', key: 'terms', changeFrequency: 'yearly', priority: 0.2 },
