@@ -49,7 +49,9 @@ Each batch is one worktree off `origin/main`, failing test first per task, `tsc 
 ### Batch 1 — deps (closes #256)
 
 1. `pnpm-workspace.yaml`: `undici@6 ^6.29.1`, `undici@7 ^7.30.1`, `undici@8 >=8.12.2`, `fast-uri >=4.2.3`; add `zod@4 >=4.6.6`; bump `vitest` to 4.1.12. `pnpm install` (not frozen), `pnpm audit`, full test run.
-2. Optional, same PR: `glob@13 >=14.0.2`, `minimatch@10 >=11.0.1` (build-time only). Record `deepmerge` as accepted (no fix published).
+2. Done: audit went from 31 findings (12 high) to 3 (0 high). Recommended to accept the three left, pending owner sign-off on #256:
+   - `glob` 13.0.6 and `minimatch` 10.2.6: the patches are major versions, and the paths are build or lint tooling (`@sentry/bundler-plugin-core`, `eslint-config-next`), not request handling. Revisit when those parents move.
+   - `deepmerge` 4.3.1 (GHSA-gcqx-w48m-w2h4, low): no patch is published and Payload pins it exactly. It is reachable: Payload merges submitted document data with it during write validation (`fields/hooks/beforeChange/promise.js`, `utilities/runValidationLifecycle.js`). The advisory poisons the prototype of the returned object only, and that object is used as validation data. Exploitability here is untested. Watch for a Payload release that moves off 4.3.1.
 
 ### Batch 2 — one-line bug fixes (closes #315, #325, #326, #316, #322)
 
