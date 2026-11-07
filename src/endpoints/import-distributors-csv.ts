@@ -13,7 +13,8 @@
  *    is required and a made-up pin would be mistaken for a real one.
  * 3. Match. Rows are matched to existing distributors by exact name within their
  *    group: the US state (`region`) for US rows, the country for the rest, so
- *    re-uploading a file updates rather than duplicates.
+ *    re-uploading a file updates rather than duplicates. Coordinates in the file
+ *    move an existing pin; coordinates the import looked up never do on their own.
  *
  * `dryRun=true` runs steps 1–3 and reports what would happen without writing. Every
  * line names the resolved address and which cells were inferred; an uncertain
@@ -60,6 +61,8 @@ async function mapInBatches<T, R>(
 /** A parsed row after enrichment, with the pin it was located at (if it was). */
 type EnrichedRow = DistributorCsvRow & {
   location?: [number, number]
+  /** The pin the file itself gave. `location` may instead be a geocoded guess. */
+  csvLocation?: [number, number]
   /** e.g. ` (inferred: city, country; check this)`, appended to report lines. */
   note: string
 }
@@ -96,6 +99,7 @@ export const importDistributorsCsv: PayloadHandler = async (req) => {
 
   // Import writes skip the per-write revalidation hook (it throws inside this
   // stream); refresh /beer-map and its data once the stream has finished instead.
+  // Set straight after each write, so a cancelled stream still refreshes what it saved.
   let wrote = false
   revalidateForCollectionAfterResponse('distributors', () => wrote)
 
@@ -124,7 +128,7 @@ export const importDistributorsCsv: PayloadHandler = async (req) => {
     // results are kept in file order so reports and duplicate checks read top to bottom.
     let locatedCount = 0
     const located = await mapInBatches(rows, LOOKUP_CONCURRENCY, async (row) => {
-      if (!needsFill(row)) return { row: { ...row, note: '' } }
+      if (!needsFill(row)) return { row: { ...row, csvLocation: row.location, note: '' } }
       // Count finished-or-started lookups, not the row index, so the bar never goes backwards
       progress(locatedCount++, rows.length, row.name, 'Locating')
       // A pin from the file is kept and only reverse-looked-up for its blank parts
@@ -144,6 +148,7 @@ export const importDistributorsCsv: PayloadHandler = async (req) => {
           ...row,
           ...filled,
           location: row.location ?? resolved!.coords,
+          csvLocation: row.location,
           note: flags.length ? ` (${flags.join('; ')})` : '',
         },
       }
@@ -204,13 +209,16 @@ export const importDistributorsCsv: PayloadHandler = async (req) => {
       }
 
       // Everything but bookkeeping is a distributor field
-      const { line, name, location, note, ...fields } = row
+      const { line, name, location, csvLocation, note, ...fields } = row
       const at = `${formatAddress(row)}${note}`
 
       try {
         if (matches.length === 1) {
           const current = matches[0]
-          const patch = distributorImportPatch(current, fields)
+          let patch = distributorImportPatch(current, fields)
+          if (csvLocation && csvLocation.join() !== current.location?.join()) {
+            patch = { ...patch, location: csvLocation }
+          }
           if (!patch) {
             skipped++
             continue
@@ -230,6 +238,7 @@ export const importDistributorsCsv: PayloadHandler = async (req) => {
             // Reuse the pin found while enriching instead of geocoding twice
             geocode: location ? async () => location : geocodeDistributor,
           })
+          wrote = true
           report('success', `Updated: "${name}" (${changed}) — ${at}`)
           if (result.warning) details.push(result.warning)
           updated++
@@ -256,6 +265,7 @@ export const importDistributorsCsv: PayloadHandler = async (req) => {
           user,
           context: { skipRevalidate: true },
         })
+        wrote = true
         report('success', `Imported: ${name} — ${at}`)
         imported++
       } catch (error: unknown) {
@@ -267,7 +277,6 @@ export const importDistributorsCsv: PayloadHandler = async (req) => {
 
     if (skipped > 0) report('skip', `${dryRun ? 'Would skip' : 'Skipped'} ${skipped} unchanged`)
 
-    wrote = !dryRun && imported + updated > 0
     send('complete', { imported, updated, skipped, errors, details, dryRun })
   })
 }

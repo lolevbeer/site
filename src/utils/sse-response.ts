@@ -27,6 +27,9 @@ const SSE_HEADERS = {
  * wants to report a failure to the browser should catch it and `send` an
  * `error` event, exactly as it would have inside a hand-rolled stream.
  *
+ * If the reader disconnects, `send` becomes a no-op and `body` keeps running to
+ * its end, so an import still finishes the rows and bookkeeping it started.
+ *
  * @example
  * ```ts
  * return createSSEResponse(async (send) => {
@@ -37,15 +40,20 @@ const SSE_HEADERS = {
  */
 export function createSSEResponse(body: (send: SSESend) => Promise<void> | void): Response {
   const encoder = new TextEncoder()
+  let cancelled = false
 
   const stream = new ReadableStream({
     async start(controller) {
       const send: SSESend = (event, data) => {
+        if (cancelled) return
         controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`))
       }
 
       await body(send)
-      controller.close()
+      if (!cancelled) controller.close()
+    },
+    cancel() {
+      cancelled = true
     },
   })
 
