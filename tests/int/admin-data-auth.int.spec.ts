@@ -89,6 +89,22 @@ describe('admin data server actions', () => {
     )
   })
 
+  it('refuses grid edits before the recurring food migration, writing nothing', async () => {
+    auth.mockResolvedValue({ user: userWith(['food-manager']) })
+    findGlobal.mockResolvedValue({ normalizedAt: null, schedules: {}, exclusions: {} })
+    const year = new Date().getFullYear()
+
+    await expect(
+      setRecurringFoodSchedule(year, 'location-1', 'monday', 'first', 'vendor-1'),
+    ).rejects.toThrow('Run the recurring food migration')
+    await expect(setRecurringFoodExclusion('location-1', '2026-08-26', true)).rejects.toThrow(
+      'Run the recurring food migration',
+    )
+
+    expect(updateGlobal).not.toHaveBeenCalled()
+    expect(create).not.toHaveBeenCalled()
+  })
+
   it('writes normalized recurring grid changes as the food manager', async () => {
     const user = userWith(['food-manager'])
     auth.mockResolvedValue({ user })

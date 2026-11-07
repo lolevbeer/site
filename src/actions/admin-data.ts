@@ -16,14 +16,11 @@ import {
   dayBounds,
   exclusionTimestamp,
   getRecurringFoodState,
-  legacyObject,
   RECURRING_YEAR_MAX,
   RECURRING_YEAR_MIN,
   recurringDays,
   recurringOccurrences,
   scheduleYearFilter,
-  type RecurringFoodExclusionsData,
-  type RecurringFoodSchedulesData,
 } from '@/src/utils/recurring-food'
 
 /**
@@ -267,10 +264,20 @@ export async function getRecurringFoodData(year: number = new Date().getFullYear
   }
 }
 
-/**
- * Update one grid slot. Before the migration runs this writes the legacy
- * global; afterwards it uses the normalized schedule collection.
- */
+/** Grid edits write the normalized collections, so the migration must have run first. */
+async function requireNormalizedRecurringFood({ payload, user }: AuthorizedPayload): Promise<void> {
+  const recurringFood = await payload.findGlobal({
+    slug: 'recurring-food',
+    depth: 0,
+    overrideAccess: false,
+    user,
+  })
+  if (!recurringFood.normalizedAt) {
+    throw new Error('Run the recurring food migration before editing the grid')
+  }
+}
+
+/** Update one grid slot in the normalized schedule collection. */
 export async function setRecurringFoodSchedule(
   year: number,
   locationId: string,
@@ -284,34 +291,7 @@ export async function setRecurringFoodSchedule(
   const validDay = requireOneOf(day, recurringDays, 'recurring day')
   const validOccurrence = requireOneOf(occurrence, recurringOccurrences, 'recurring occurrence')
   const validVendorId = vendorId === null ? null : requireIdentifier(vendorId, 'vendor ID')
-  const legacy = await payload.findGlobal({
-    slug: 'recurring-food',
-    depth: 0,
-    overrideAccess: false,
-    user,
-  })
-
-  if (!legacy.normalizedAt) {
-    if (validYear !== new Date().getFullYear()) {
-      throw new Error('Run the recurring food migration before editing another year')
-    }
-
-    // The legacy global is already fetched — mutate its JSON directly.
-    const schedules: RecurringFoodSchedulesData = structuredClone(
-      legacyObject<RecurringFoodSchedulesData>(legacy.schedules),
-    )
-    schedules[validLocationId] ??= {}
-    schedules[validLocationId][validDay] ??= {}
-    schedules[validLocationId][validDay][validOccurrence] = validVendorId
-
-    await payload.updateGlobal({
-      slug: 'recurring-food',
-      data: { schedules },
-      overrideAccess: false,
-      user,
-    })
-    return
-  }
+  await requireNormalizedRecurringFood({ payload, user })
 
   const existing = await payload.find({
     collection: 'recurring-food-schedules',
@@ -375,31 +355,7 @@ export async function setRecurringFoodExclusion(
   const validLocationId = requireIdentifier(locationId, 'location ID')
   const dateOnly = requireDateOnly(date)
   const { start: startOfDay, end: endOfDay } = dayBounds(dateOnly)
-  const legacy = await payload.findGlobal({
-    slug: 'recurring-food',
-    depth: 0,
-    overrideAccess: false,
-    user,
-  })
-
-  if (!legacy.normalizedAt) {
-    // The legacy global is already fetched — mutate its JSON directly.
-    const exclusions: RecurringFoodExclusionsData = structuredClone(
-      legacyObject<RecurringFoodExclusionsData>(legacy.exclusions),
-    )
-    const current = new Set(exclusions[validLocationId] || [])
-    if (excluded) current.add(dateOnly)
-    else current.delete(dateOnly)
-    exclusions[validLocationId] = [...current].sort()
-
-    await payload.updateGlobal({
-      slug: 'recurring-food',
-      data: { exclusions },
-      overrideAccess: false,
-      user,
-    })
-    return
-  }
+  await requireNormalizedRecurringFood({ payload, user })
 
   const existing = await payload.find({
     collection: 'recurring-food-exclusions',

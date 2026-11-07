@@ -609,10 +609,8 @@ export const RecurringFoodGrid: React.FC = () => {
 
   /**
    * Every write goes through one promise chain. Each cell edit is a
-   * read/modify/write of shared state (the whole legacy global before the
-   * migration, one schedule document after), so two overlapping saves can land
-   * out of order and leave storage on the older value — or, pre-migration,
-   * clobber an edit to a different cell entirely.
+   * read/modify/write of one schedule document, so two overlapping saves can
+   * land out of order and leave storage on the older value.
    *
    * Only the control whose own key is in flight is locked, not the whole grid:
    * a global lock would stop a second edit from ever being started, leaving the
@@ -715,22 +713,33 @@ export const RecurringFoodGrid: React.FC = () => {
 
   /**
    * Queue one optimistic write. Callers apply their change to local state
-   * first; on failure this restores the server's version, reports it, and
-   * rethrows so a caller that renders its own confirmation (the exclusion
-   * modal) can stay open.
+   * first; on failure this reports it and rethrows so a caller that renders its
+   * own confirmation (the exclusion modal) can stay open. The server's version
+   * is restored once the queue drains: restoring earlier would replace a queued
+   * edit's optimistic state with a value that edit is about to overwrite.
    */
+  const queuedSavesRef = useRef(0)
+  const restoreAfterQueueRef = useRef(false)
   const save = useCallback(
-    (key: string, label: 'schedule' | 'exclusion', task: () => Promise<void>): Promise<void> =>
-      enqueue(key, async () => {
+    (key: string, label: 'schedule' | 'exclusion', task: () => Promise<void>): Promise<void> => {
+      queuedSavesRef.current += 1
+      return enqueue(key, async () => {
         try {
           await task()
         } catch (error) {
           logger.error(`Error saving recurring food ${label}:`, error)
           setSaveError(`That ${label} change was not saved. The grid has been restored.`)
-          await refreshData(selectedYear)
+          restoreAfterQueueRef.current = true
           throw error
+        } finally {
+          queuedSavesRef.current -= 1
+          if (queuedSavesRef.current === 0 && restoreAfterQueueRef.current) {
+            restoreAfterQueueRef.current = false
+            await refreshData(selectedYear)
+          }
         }
-      }),
+      })
+    },
     [enqueue, refreshData, selectedYear],
   )
 

@@ -116,10 +116,12 @@ const setRecurringFoodExclusionMock = vi.mocked(setRecurringFoodExclusion)
 
 function deferred<T>() {
   let resolve!: (value: T) => void
-  const promise = new Promise<T>((next) => {
+  let reject!: (error: Error) => void
+  const promise = new Promise<T>((next, fail) => {
     resolve = next
+    reject = fail
   })
-  return { promise, resolve }
+  return { promise, resolve, reject }
 }
 
 afterEach(() => {
@@ -367,6 +369,56 @@ describe('RecurringFoodGrid location tabs', () => {
     await waitFor(() => {
       expect((dates[0] as HTMLButtonElement).disabled).toBe(false)
     })
+  })
+
+  it('waits for queued saves before restoring the grid after a failed save', async () => {
+    // Restoring mid-queue replaced a queued edit's optimistic state with the
+    // server's older value, and nothing rewrote it once that edit had saved.
+    const firstSave = deferred<void>()
+    const secondSave = deferred<void>()
+    getActiveLocationsMock.mockResolvedValue([
+      { id: 'loc-a', name: 'Lawrenceville', slug: 'lawrenceville' },
+    ])
+    getRecurringFoodDataMock.mockResolvedValue({
+      year: 2026,
+      schedules: { 'loc-a': { sunday: { first: 'vendor-a' } } },
+      exclusions: {},
+    })
+    getFoodForLocationYearMock.mockResolvedValue([])
+    getFoodVendorsByIdsMock.mockResolvedValue({ 'vendor-a': 'Lawrenceville Recurring' })
+    setRecurringFoodExclusionMock
+      .mockReturnValueOnce(firstSave.promise)
+      .mockReturnValueOnce(secondSave.promise)
+
+    render(createElement(RecurringFoodGrid))
+    const dates = await screen.findAllByRole('button', {
+      name: /Skip Lawrenceville Recurring on/i,
+    })
+
+    for (const date of dates.slice(0, 2)) {
+      fireEvent.click(date)
+      await screen.findByRole('button', { name: 'confirm-exclusion' })
+      const onConfirm = confirmationModalProps.at(-1)?.onConfirm
+      if (!onConfirm) throw new Error('Expected a confirmation handler')
+      await act(async () => {
+        void Promise.resolve(onConfirm()).catch(() => {})
+        await Promise.resolve()
+      })
+    }
+
+    const loadsBeforeFailure = getRecurringFoodDataMock.mock.calls.length
+    await act(async () => {
+      firstSave.reject(new Error('save failed'))
+    })
+    await waitFor(() => expect(setRecurringFoodExclusionMock).toHaveBeenCalledTimes(2))
+    expect(getRecurringFoodDataMock).toHaveBeenCalledTimes(loadsBeforeFailure)
+
+    await act(async () => {
+      secondSave.resolve()
+    })
+    await waitFor(() =>
+      expect(getRecurringFoodDataMock).toHaveBeenCalledTimes(loadsBeforeFailure + 1),
+    )
   })
 
   it('ignores a slower previous vendor-name fetch after switching tabs', async () => {
