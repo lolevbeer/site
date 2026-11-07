@@ -4,6 +4,7 @@ import { useMemo } from 'react'
 import Image from 'next/image'
 import { useEventsStream } from '@/lib/hooks/use-events-stream'
 import { useClockBucket } from '@/lib/hooks/use-clock-bucket'
+import { useTodayEST } from '@/lib/hooks/use-today-est'
 import { Logo } from '@/components/ui/logo'
 import { TapListBanner } from '@/components/ui/tap-list-banner'
 import { FeaturedCans } from '@/components/home/featured-menu'
@@ -184,6 +185,9 @@ export function LiveEvents({
     initialEvents,
     initialLocationName,
   )
+  // This board runs for days, so today must be a dependency of everything below
+  // that filters or labels by date. Before hydration there is no client clock yet.
+  const today = useTodayEST() ?? getTodayEST()
 
   // Combine events and food into a single sorted list
   type DisplayItem = { type: 'event'; data: BreweryEvent } | { type: 'food'; data: FoodItem }
@@ -191,7 +195,6 @@ export function LiveEvents({
   // rows; they move to the "Regulars" strip, and only today's occurrence
   // stays on the agenda so tonight is never missing.
   const { agendaEvents, regulars } = useMemo(() => {
-    const today = getTodayEST()
     const upcoming = events.filter((e) => e.date >= today)
     const split = splitRegulars(upcoming, { anyCadence: true })
     const regularIds = new Set(split.regulars.flatMap((r) => r.occurrenceIds))
@@ -199,10 +202,9 @@ export function LiveEvents({
       agendaEvents: upcoming.filter((e) => !regularIds.has(String(e.id)) || e.date === today),
       regulars: split.regulars,
     }
-  }, [events])
+  }, [events, today])
 
   const combinedItems = useMemo(() => {
-    const today = getTodayEST()
     const items: DisplayItem[] = [
       ...agendaEvents.map((e) => ({ type: 'event' as const, data: e })),
       ...initialFood.map((f) => ({ type: 'food' as const, data: f })),
@@ -216,7 +218,7 @@ export function LiveEvents({
         .sort((a, b) => a.data.date.localeCompare(b.data.date))
         .slice(0, 10)
     )
-  }, [agendaEvents, initialFood])
+  }, [agendaEvents, initialFood, today])
 
   /** The items grouped by calendar day, each already resolved to exactly what a
    *  row renders. Grouping is what makes the board answerable at a glance —
@@ -233,7 +235,6 @@ export function LiveEvents({
    *  inside an O(n) loop, repeated on every stream refresh for the life of
    *  the display. */
   const dayGroups = useMemo(() => {
-    const today = getTodayEST()
     const byDate = new Map<string, AgendaEntry[]>()
 
     combinedItems.forEach((item, colorIndex) => {
@@ -274,7 +275,7 @@ export function LiveEvents({
           return a.sortTime.localeCompare(b.sortTime)
         }),
       }))
-  }, [combinedItems])
+  }, [combinedItems, today])
 
   // Dynamic title based on content
   const hasEvents = events.length > 0

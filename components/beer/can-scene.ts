@@ -141,7 +141,14 @@ export async function createCanScene({
     new GLTFLoader().loadAsync('/3d/Can.gltf'),
     loadTexture(base),
     metalness ? loadTexture(metalness) : Promise.resolve(null),
-  ])
+  ]).catch((error: unknown) => {
+    // No handle reaches the caller, so release the context here. Loaded textures
+    // are not on the GPU until the first render, so there is nothing else to free.
+    envTex.dispose()
+    renderer.dispose()
+    renderer.forceContextLoss()
+    throw error
+  })
 
   // Bare aluminum body, normalized to a fixed height so the camera
   // distance and label math don't depend on the model's units

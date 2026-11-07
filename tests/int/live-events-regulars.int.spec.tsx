@@ -4,7 +4,7 @@
  * agenda keeps one-offs and food. A regular still appears on its own day when
  * that day is today, and the internal event description never renders.
  */
-import { cleanup, render, screen, within } from '@testing-library/react'
+import { act, cleanup, render, screen, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { EventStatus, EventType, type BreweryEvent } from '@/lib/types/event'
 
@@ -94,5 +94,37 @@ describe('LiveEvents regulars', () => {
     stream.events = [ev('one', 'Open Mic', '2026-10-15', '19:00', false)]
     renderBoard()
     expect(screen.queryByRole('region', { name: 'Regulars' })).toBeNull()
+  })
+})
+
+describe('LiveEvents across New York midnight', () => {
+  it('drops yesterday and moves the Today label on an unchanged board', async () => {
+    vi.useRealTimers()
+    vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] })
+    vi.setSystemTime(new Date('2026-10-14T03:59:30Z')) // Tue Oct 13, 11:59:30pm ET
+    stream.events = [
+      ev('old', 'Open Mic', '2026-10-13', '19:00', false),
+      ev('new', 'Book Club', '2026-10-14', '19:00', false),
+    ]
+    render(
+      <LiveEvents
+        location="lolev-lawrenceville"
+        initialEvents={[]}
+        initialLocationName="Lawrenceville"
+        initialFood={[{ id: 'truck', vendor: 'Old Truck', date: '2026-10-13' }]}
+      />,
+    )
+    const agenda = screen.getByRole('list', { name: 'Upcoming' })
+    expect(agenda.textContent).toContain('Open Mic')
+    expect(agenda.textContent).toContain('Old Truck')
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(60_000)
+    })
+
+    expect(agenda.textContent).not.toContain('Open Mic')
+    expect(agenda.textContent).not.toContain('Old Truck')
+    expect(agenda.textContent).toContain('Book Club')
+    expect(agenda.textContent).toContain('Today')
   })
 })
