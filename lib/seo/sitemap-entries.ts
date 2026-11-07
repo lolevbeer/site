@@ -1,4 +1,8 @@
-import { MetadataRoute } from 'next'
+/**
+ * Sitemap contents: every public URL that should be indexed. Served as XML by
+ * src/app/sitemap.xml/route.ts.
+ */
+import type { MetadataRoute } from 'next'
 import { getActiveJobs } from '@/lib/jobs/payload'
 import {
   getAllBeersFromPayload,
@@ -13,9 +17,6 @@ import { getSiteSeo } from '@/lib/utils/site-seo'
 import { trim } from '@/lib/utils/seo'
 import type { SeoOverride } from '@/lib/seo/resolve-metadata'
 import type { SiteSeoPageKey } from '@/src/globals/SiteSeo'
-
-/** sitemap.ts is cached at build by default; regenerate hourly so new beers, jobs and events appear. */
-export const revalidate = 3600
 
 /** lastmod for pages that change with code, not CMS. YYYY-MM-DD of last meaningful edit. */
 const STATIC_LASTMOD = {
@@ -79,7 +80,7 @@ const orEmpty = <T>(source: Promise<T[]>, name: string) =>
     return [] as T[]
   })
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+export async function getSitemapEntries(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = getBaseUrl()
   const [siteSeo, beers, locations, jobs, events] = await Promise.all([
     getSiteSeo(),

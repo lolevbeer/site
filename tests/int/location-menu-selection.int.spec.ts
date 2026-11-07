@@ -52,7 +52,7 @@ describe.each([
     expect(unstableCache).toHaveBeenLastCalledWith(
       expect.any(Function),
       [`location-lawrenceville-${type}-menu`],
-      { tags: ['locations', 'menus', 'beers'], revalidate: 300 },
+      { tags: ['locations', 'menus', 'beers'], revalidate: 3600 },
     )
   })
 

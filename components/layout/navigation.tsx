@@ -9,10 +9,13 @@ import { cn } from '@/lib/utils'
 interface NavItem {
   label: string
   href: string
+  /** False keeps a heavy page out of viewport prefetch, which runs on every page. */
+  prefetch?: false
 }
 
 const navigationItems: NavItem[] = [
-  { label: 'Find Our Beer', href: '/beer-map' },
+  // Carries every distributor: about 50 KB compressed per prefetch.
+  { label: 'Find Our Beer', href: '/beer-map', prefetch: false },
   { label: 'Beer', href: '/beer' },
   { label: 'Food', href: '/food' },
   { label: 'Events', href: '/events' },
@@ -43,6 +46,7 @@ export function Navigation() {
           <Link
             key={item.href}
             href={item.href}
+            prefetch={item.prefetch}
             aria-current={isActive ? 'page' : undefined}
             className={cn(
               // py-1, not pb-1: the bottom gap clears the active underline, and the

@@ -33,6 +33,11 @@ import type { Event, Location } from '@/src/payload-types'
 // ISR: same 5-minute window as /events and the .ics route.
 export const revalidate = 300
 
+/** None at build; each event caches on its first request. Without this, `revalidate` does nothing. */
+export function generateStaticParams() {
+  return []
+}
+
 interface EventPageProps {
   params: Promise<{ id: string }>
 }

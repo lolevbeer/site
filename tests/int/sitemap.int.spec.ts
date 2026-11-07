@@ -22,7 +22,8 @@ vi.mock('@/lib/utils/logger', () => ({
   logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
 }))
 
-import sitemap from '@/src/app/sitemap'
+import { getSitemapEntries as sitemap } from '@/lib/seo/sitemap-entries'
+import { GET, revalidate } from '@/src/app/sitemap.xml/route'
 import { getSiteSeo } from '@/lib/utils/site-seo'
 import { getActiveJobs } from '@/lib/jobs/payload'
 import {
@@ -151,9 +152,28 @@ describe('sitemap', () => {
     expect((catalog?.lastModified as Date).toISOString()).toBe('2026-10-09T03:00:00.000Z')
   })
 
-  it('regenerates hourly instead of staying frozen at build time', async () => {
-    const mod = await import('@/src/app/sitemap')
-    expect(mod.revalidate).toBe(3600)
+  it('regenerates hourly instead of staying frozen at build time', () => {
+    expect(revalidate).toBe(3600)
+  })
+
+  // A sitemap.ts metadata route was served like a static file on Vercel, so it
+  // never refreshed. This route keeps the shape of feed.xml, which does.
+  it('serves the entries as sitemap XML with a CDN lifetime', async () => {
+    const response = await GET()
+    const xml = await response.text()
+
+    expect(response.headers.get('Content-Type')).toBe('application/xml; charset=utf-8')
+    expect(response.headers.get('Cache-Control')).toContain('s-maxage=3600')
+    expect(xml.startsWith('<?xml version="1.0" encoding="UTF-8"?>')).toBe(true)
+    expect(xml).toContain('<loc>https://lolev.beer/beer/lupula</loc>')
+    expect(xml).toContain('<lastmod>2026-10-09T03:00:00.000Z</lastmod>')
+    expect(xml).toContain('<changefreq>weekly</changefreq>')
+    expect(xml).toContain('<priority>0.7</priority>')
+  })
+
+  it('escapes URLs', async () => {
+    beers.mockResolvedValue([{ slug: 'a&b', hideFromSite: false }])
+    expect(await (await GET()).text()).toContain('<loc>https://lolev.beer/beer/a&amp;b</loc>')
   })
 
   it('omits pages the CMS marks noindex or canonicalizes elsewhere', async () => {

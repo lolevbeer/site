@@ -53,6 +53,7 @@ export function UpcomingBeers({
               {beer?.slug && !beer.hideFromSite ? (
                 <Link
                   href={`/beer/${beer.slug}`}
+                  prefetch={false}
                   className="text-lg font-semibold transition-colors hover:text-muted-foreground"
                 >
                   {beer.name}

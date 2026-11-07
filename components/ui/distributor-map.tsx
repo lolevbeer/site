@@ -18,12 +18,10 @@ import { X } from '@/components/icons'
 import { cn } from '@/lib/utils'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { toast } from 'sonner'
-import { useMapData } from '@/lib/hooks/use-map-data'
 import { useGeolocation } from '@/lib/hooks/use-geolocation'
 import { useLocationSearch } from '@/lib/hooks/use-location-search'
 import { MapControls } from '@/components/map/map-controls'
 import { LocationCard } from '@/components/map/location-card'
-import { LocationListSkeleton } from '@/components/map/location-card-skeleton'
 import { useTheme } from 'next-themes'
 import { trackMapInteraction } from '@/lib/analytics/events'
 import { useLocationContext } from '@/components/location/location-provider'
@@ -75,7 +73,7 @@ interface DistributorMapProps {
   className?: string
   height?: string | number
   showSearch?: boolean
-  initialData?: GeoJSON
+  geoData: GeoJSON
 }
 
 function idFromUniqueId(uniqueId: string): number {
@@ -104,15 +102,8 @@ export function DistributorMap({
   className,
   height = 600,
   showSearch = true,
-  initialData,
+  geoData,
 }: DistributorMapProps) {
-  const {
-    geoData: fetchedData,
-    loading: fetchLoading,
-    error: fetchError,
-  } = useMapData({
-    enabled: !initialData,
-  })
   const { getUserLocation } = useGeolocation()
   const { currentLocationData, locations, isClient } = useLocationContext()
   const taproomReference = useMemo(
@@ -122,10 +113,6 @@ export function DistributorMap({
   const [geoReference, setGeoReference] = useState<ReferencePoint | null>(null)
   const { resolvedTheme } = useTheme()
   const themeReady = resolvedTheme != null
-
-  const geoData = initialData || fetchedData
-  const loading = !initialData && fetchLoading
-  const error = !initialData ? fetchError : null
 
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [popupPoint, setPopupPoint] = useState<MapPoint | null>(null)
@@ -209,7 +196,7 @@ export function DistributorMap({
   }, [isClient, currentLocationData, searchLocation, geoReference, flyTo])
 
   const taprooms = useMemo(() => taproomPoints(locations), [locations])
-  const retailers = useMemo(() => retailerPoints(geoData?.features ?? []), [geoData])
+  const retailers = useMemo(() => retailerPoints(geoData.features), [geoData])
 
   const sortedLocations = useMemo(
     () =>
@@ -389,44 +376,6 @@ export function DistributorMap({
       <Card className={cn('flex items-center justify-center', className)} style={{ height }}>
         <div className="text-center p-8" role="status">
           <p className="text-muted-foreground">Map token not configured</p>
-        </div>
-      </Card>
-    )
-  }
-
-  if (loading) {
-    const containerHeight = typeof height === 'number' ? `${height}px` : height
-    return (
-      <div
-        className={cn('flex flex-col', className)}
-        style={{ height: containerHeight, width: '100%' }}
-      >
-        <Card className="border-0 flex-shrink-0 shadow-none">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-24 bg-muted animate-pulse rounded" />
-            <div className="h-4 w-20 bg-muted animate-pulse rounded" />
-          </div>
-        </Card>
-        <div className="flex flex-1 relative h-full overflow-hidden">
-          <div className="hidden md:flex md:w-1/2 h-full items-center justify-center bg-muted/30">
-            <div className="text-center" role="status">
-              <div className="animate-spin h-8 w-8 border-4 border-primary/30 border-t-primary rounded-full mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">Loading map...</p>
-            </div>
-          </div>
-          <div className="w-full md:w-1/2 h-full overflow-hidden">
-            <LocationListSkeleton count={8} />
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <Card className={cn('flex items-center justify-center', className)} style={{ height }}>
-        <div className="text-center p-8" role="alert">
-          <p className="text-destructive font-medium">{error}</p>
         </div>
       </Card>
     )

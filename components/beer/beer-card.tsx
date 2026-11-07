@@ -99,6 +99,7 @@ export const BeerCard = React.memo(function BeerCard({
           ) : null}
           <Link
             href={beerHref}
+            prefetch={false}
             onClick={() => trackBeerView(beer.name, beer.type)}
             aria-label={beer.name}
             className="absolute inset-0 rounded-[inherit] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
@@ -199,6 +200,7 @@ export const BeerCard = React.memo(function BeerCard({
             <Button asChild variant="outline" size="sm" className="ml-auto">
               <Link
                 href={showLocation ? `/${currentLocation}/beer/${beerSlug}` : `/beer/${beerSlug}`}
+                prefetch={false}
                 className="no-underline"
                 onClick={() => trackBeerView(beer.name, beer.type)}
               >

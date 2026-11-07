@@ -7,6 +7,7 @@
  * - DB errors propagate to error.tsx (not caught)
  * - the public summary renders only when set
  * - recurring occurrence ids resolve like one-off ids
+ * - the route caches each event on its first request
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, render, screen } from '@testing-library/react'
@@ -39,7 +40,10 @@ vi.mock('@/lib/utils/site-seo', () => ({
   getSiteSeo: vi.fn(async () => ({})),
 }))
 
-import EventPage, { generateMetadata } from '@/src/app/(frontend)/events/[id]/page'
+import EventPage, {
+  generateMetadata,
+  generateStaticParams,
+} from '@/src/app/(frontend)/events/[id]/page'
 import { getAllLocations, getPublicEventById } from '@/lib/utils/payload-api'
 
 const ONE_OFF_ID = '6650f1a2b3c4d5e6f7a8b9c0'
@@ -89,6 +93,12 @@ beforeEach(() => {
 afterEach(cleanup)
 
 describe('EventPage', () => {
+  // Without generateStaticParams the route renders per request and its
+  // `revalidate` export does nothing.
+  it('caches event pages on their first request', () => {
+    expect(generateStaticParams()).toEqual([])
+  })
+
   it('calls notFound() when the lookup misses', async () => {
     lookup().mockResolvedValue(null)
     await expect(EventPage({ params: Promise.resolve({ id: 'nope' }) })).rejects.toThrow(

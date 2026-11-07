@@ -14,6 +14,7 @@ vi.mock('next/cache', () => ({
   revalidatePath: (...args: unknown[]) => revalidatePath(...args),
 }))
 
+import { Locations } from '@/src/collections/Locations'
 import { revalidateForCollection, revalidationPlugin } from '@/src/plugins/revalidation-plugin'
 import type { Config } from 'payload'
 
@@ -51,6 +52,48 @@ describe('kiosk cache invalidation', () => {
       expect(hardExpired()).toEqual(hard)
       for (const tag of soft) expect(revalidateTag).toHaveBeenCalledWith(tag, 'max')
     }
+  })
+})
+
+describe('marking lines cleaned', () => {
+  const doc = { id: 'loc-1', slug: 'lolev-zelienople', name: 'Zelienople' }
+
+  beforeEach(() => {
+    revalidateTag.mockReset()
+    revalidatePath.mockReset()
+    publishKioskInvalidate.mockReset()
+  })
+
+  // The date shows only on /m boards, and every public page carries 'locations'
+  // through the root layout, so this routine save must not touch public caches.
+  it('refreshes the menu boards without invalidating public pages', async () => {
+    const { afterChange } = await hooksFor('locations')
+    await afterChange({ doc, context: { kioskOnly: true } })
+    expect(revalidateTag.mock.calls).toEqual([['kiosk-menus', { expire: 0 }]])
+    expect(revalidatePath).not.toHaveBeenCalled()
+    expect(publishKioskInvalidate).toHaveBeenCalledWith({ kind: 'menu' })
+  })
+
+  it('leaves every other location save on the full fan-out', async () => {
+    const { afterChange } = await hooksFor('locations')
+    await afterChange({ doc })
+    expect(revalidateTag).toHaveBeenCalledWith('locations', 'max')
+  })
+
+  // Runs the real Locations hook: only a PATCH with nothing else in it qualifies.
+  it.each([
+    [{ markLinesCleanedToday: true }, true],
+    [{ markLinesCleanedToday: true, active: false }, false],
+  ])('flags %j as kiosk-only: %s', async (body, kioskOnly) => {
+    const context: Record<string, unknown> = {}
+    const beforeChange = Locations.hooks!.beforeChange![0] as unknown as (args: {
+      context: object
+      data: object
+      req: object
+      originalDoc: object
+    }) => Promise<unknown>
+    await beforeChange({ context, data: { ...body }, req: { data: body }, originalDoc: doc })
+    expect(context.kioskOnly).toBe(kioskOnly)
   })
 })
 

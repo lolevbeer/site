@@ -1,6 +1,6 @@
 /**
  * Site-wide SEO defaults and per-hub-page meta overrides.
- * Covers every static URL in src/app/sitemap.ts.
+ * Covers every static URL in lib/seo/sitemap-entries.ts.
  */
 import type { GlobalConfig } from 'payload'
 import { adminAccess } from '@/src/access/roles'

@@ -284,6 +284,10 @@ export function revalidateForCollectionAfterResponse(slug: string, shouldRun: ()
  *
  * Draft-only saves (Save Draft, autosave) skip everything: public pages and
  * kiosks read published documents only, so nothing they show has changed.
+ *
+ * `context.kioskOnly` saves (marking lines cleaned) change only what /m boards
+ * show. Every public page carries the `locations` tag through the root layout,
+ * so running the full fan-out for this routine save would invalidate the site.
  */
 function createCollectionAfterChangeHook(slug: string) {
   return async ({
@@ -296,6 +300,11 @@ function createCollectionAfterChangeHook(slug: string) {
     context?: Record<string, unknown>
   }) => {
     if (context?.skipRevalidate || isDraftOnlySave(doc, req)) {
+      return doc
+    }
+    if (context?.kioskOnly) {
+      revalidateCollectionTag(CACHE_TAGS.kioskMenus)
+      void publishKioskInvalidate({ kind: 'menu' })
       return doc
     }
     invalidateCollection(slug, doc)

@@ -103,11 +103,14 @@ export const Locations: CollectionConfig = {
   },
   hooks: {
     beforeChange: [
-      async ({ data, req, originalDoc }) => {
+      async ({ context, data, req, originalDoc }) => {
         // Field access gates this command; the server supplies the date so
         // lead bartenders can record today without choosing an arbitrary date.
         if (data.markLinesCleanedToday === true) {
           data.linesLastCleaned = new Date().toISOString()
+          // The date shows only on /m boards. A PATCH carrying nothing else leaves
+          // public pages alone; see `kioskOnly` in the revalidation plugin.
+          context.kioskOnly = Object.keys(req.data ?? {}).length === 1
         }
         delete data.markLinesCleanedToday
 

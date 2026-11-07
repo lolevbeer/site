@@ -8,5 +8,5 @@ import { DistributorMapLoader } from '@/components/beer/distributor-map-loader'
 
 export async function BeerMapCanvas() {
   const distributorData = await getAllDistributorsGeoJSON()
-  return <DistributorMapLoader initialData={distributorData} />
+  return <DistributorMapLoader geoData={distributorData} />
 }
