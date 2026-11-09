@@ -7,7 +7,7 @@
 import { NextResponse } from 'next/server'
 import type { MetadataRoute } from 'next'
 import { getSitemapEntries } from '@/lib/seo/sitemap-entries'
-import { escapeHtml } from '@/lib/utils/escape-html'
+import { escapeXml } from '@/lib/utils/escape-xml'
 
 export const revalidate = 3600
 
@@ -17,7 +17,7 @@ function urlElement({
   changeFrequency,
   priority,
 }: MetadataRoute.Sitemap[number]): string {
-  const lines = [`<loc>${escapeHtml(url)}</loc>`]
+  const lines = [`<loc>${escapeXml(url)}</loc>`]
   if (lastModified) lines.push(`<lastmod>${new Date(lastModified).toISOString()}</lastmod>`)
   if (changeFrequency) lines.push(`<changefreq>${changeFrequency}</changefreq>`)
   if (priority !== undefined) lines.push(`<priority>${priority}</priority>`)

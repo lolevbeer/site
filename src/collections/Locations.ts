@@ -110,7 +110,8 @@ export const Locations: CollectionConfig = {
           data.linesLastCleaned = new Date().toISOString()
           // The date shows only on /m boards. A PATCH carrying nothing else leaves
           // public pages alone; see `kioskOnly` in the revalidation plugin.
-          context.kioskOnly = Object.keys(req.data ?? {}).length === 1
+          const keys = Object.keys(req.data ?? {})
+          context.kioskOnly = keys.length === 1 && keys[0] === 'markLinesCleanedToday'
         }
         delete data.markLinesCleanedToday
 

@@ -30,6 +30,7 @@ import {
 } from '@/lib/utils/payload-api'
 import { generateStaticParams as jobParams } from '@/src/app/(frontend)/jobs/[slug]/page'
 import nextConfig from '../../next.config.mjs'
+import { textureImageUrl } from '@/lib/utils/media-utils'
 
 describe('tagged, clock-independent reads', () => {
   beforeEach(() => lifetimes.clear())
@@ -66,6 +67,13 @@ describe('Vercel cron', () => {
       '*/5 6-7 * * *',
     )
   })
+
+  it('keeps every scheduled task inside the cron window', () => {
+    const source = readFileSync(join(process.cwd(), 'src/jobs/sync-untappd-ratings.ts'), 'utf8')
+    const hours = [...source.matchAll(/cron:\s*'\d+ \d+ (\d+) \* \* \*'/g)].map((m) => Number(m[1]))
+    expect(hours.length).toBeGreaterThan(0)
+    for (const hour of hours) expect([6, 7]).toContain(hour)
+  })
 })
 
 describe('image optimization', () => {
@@ -75,5 +83,10 @@ describe('image optimization', () => {
 
   it('limits the widths each image can be transformed at', () => {
     expect(nextConfig.images?.deviceSizes).toEqual([640, 828, 1200, 1920, 2560])
+  })
+
+  it('serves the 3D can textures at a listed width', () => {
+    const width = Number(new URL(textureImageUrl('/a.png')!, 'https://x.test').searchParams.get('w'))
+    expect([...(nextConfig.images?.deviceSizes ?? []), ...(nextConfig.images?.imageSizes ?? [])]).toContain(width)
   })
 })

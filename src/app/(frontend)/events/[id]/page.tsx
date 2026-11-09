@@ -30,7 +30,7 @@ import { getMediaUrl } from '@/lib/utils/media-utils'
 import { isTicketLink, safeHttpUrl } from '@/lib/utils/url-utils'
 import type { Event, Location } from '@/src/payload-types'
 
-// ISR: same 5-minute window as /events and the .ics route.
+// ISR: same 5-minute window as /events (the .ics route is CDN-cached by its Cache-Control header).
 export const revalidate = 300
 
 /** None at build; each event caches on its first request. Without this, `revalidate` does nothing. */

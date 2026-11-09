@@ -90,7 +90,7 @@ export function FaqContactSection() {
 
       <div className="flex flex-wrap gap-3 justify-center">
         <Button asChild variant="default">
-          <Link href="/beer-map">Find Our Beer</Link>
+          <Link href="/beer-map" prefetch={false}>Find Our Beer</Link>
         </Button>
         <Button asChild variant="outline">
           <Link href="/beer">Our Beers</Link>

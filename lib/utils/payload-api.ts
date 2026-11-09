@@ -870,7 +870,8 @@ export const getWeeklyHoursWithHolidays = cache(
         [`weekly-hours-${locationId}-${weekKey}`],
         // Hourly, not shorter: the footer on every page reads this, and Next caps a
         // page at its shortest read. Saves refresh through the tags and the week is
-        // in the key, so the clock never makes this stale.
+        // in the data-cache key, but a page's ISR entry can embed last week's hours
+        // for up to an hour after Sunday midnight.
         { tags: [CACHE_TAGS.locations, CACHE_TAGS.holidayHours], revalidate: 3600 },
       )()
     } catch (error) {

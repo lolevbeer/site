@@ -10,8 +10,6 @@ import { getPublicEventById } from '@/lib/utils/payload-api'
 import { buildEventIcs } from '@/lib/utils/event-ics'
 import { formatAddress } from '@/lib/utils/formatters'
 
-export const revalidate = 300
-
 function fileName(title: string): string {
   return (title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'event') + '.ics'
 }

@@ -14,18 +14,10 @@ import {
 } from '@/lib/utils/payload-api';
 import { logger } from '@/lib/utils/logger';
 import { getBaseUrl } from '@/lib/utils/get-base-url';
+import { escapeXml } from '@/lib/utils/escape-xml';
 import { DEFAULT_OG_IMAGE_PATH } from '@/lib/utils/seo';
 
 export const revalidate = 3600; // Revalidate every hour
-
-function escapeXml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
-}
 
 function formatRFC822Date(date: Date): string {
   return date.toUTCString();

@@ -302,7 +302,10 @@ function createCollectionAfterChangeHook(slug: string) {
     if (context?.skipRevalidate || isDraftOnlySave(doc, req)) {
       return doc
     }
-    if (context?.kioskOnly) {
+    // Consume the flag so later saves sharing this request's context fan out normally.
+    const kioskOnly = context?.kioskOnly
+    if (context) delete context.kioskOnly
+    if (kioskOnly) {
       revalidateCollectionTag(CACHE_TAGS.kioskMenus)
       void publishKioskInvalidate({ kind: 'menu' })
       return doc

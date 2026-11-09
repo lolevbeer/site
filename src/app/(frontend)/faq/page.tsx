@@ -38,7 +38,7 @@ function FAQAnswer({ question, answer, locations }: FAQAnswerProps): ReactNode {
       <div>
         Our beers are distributed throughout the Pittsburgh area and select locations in
         Pennsylvania, New York, and Ohio. Use our{' '}
-        <Link href="/beer-map" className="text-primary hover:underline font-medium">
+        <Link href="/beer-map" prefetch={false} className="text-primary hover:underline font-medium">
           Beer Map
         </Link>{' '}
         to find the nearest retailer carrying Lolev Beer.
