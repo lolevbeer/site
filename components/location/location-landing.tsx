@@ -183,7 +183,7 @@ export function LocationLanding({
           <ul className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 list-none p-0 m-0 mb-8">
             {canBeers.map((beer, index) => (
               <li key={`${beer.variant}-${index}`}>
-                <BeerCard beer={beer} variant="minimal" showLocation={false} showCta={false} />
+                <BeerCard beer={beer} variant="minimal" showLocation={false} />
               </li>
             ))}
           </ul>
