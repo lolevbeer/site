@@ -16,6 +16,11 @@ import { generateJobPostingSchema } from '@/lib/utils/job-posting-schema'
 
 export const revalidate = 300
 
+/** None at build; each job caches on its first request. Without this, `revalidate` does nothing. */
+export function generateStaticParams() {
+  return []
+}
+
 interface JobPageProps {
   params: Promise<{ slug: string }>
 }

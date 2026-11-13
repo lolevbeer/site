@@ -70,7 +70,7 @@ export default async function JobsPage() {
                   ) : null}
                   <CardFooter>
                     <Button asChild variant="outline">
-                      <Link href={`/jobs/${job.slug}`}>Apply</Link>
+                      <Link href={`/jobs/${job.slug}`} prefetch={false}>Apply</Link>
                     </Button>
                   </CardFooter>
                 </Card>

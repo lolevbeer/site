@@ -90,6 +90,7 @@ export function MobileMenu({ isOpen, onClose, isScrolled = false }: MobileMenuPr
                       >
                         <Link
                           href={item.href}
+                          prefetch={item.prefetch}
                           onClick={onClose}
                           aria-current={isActive ? 'page' : undefined}
                           className={cn(

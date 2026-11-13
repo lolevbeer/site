@@ -90,6 +90,7 @@ export function TimelineItem({
       {detailHref ? (
         <Link
           href={detailHref}
+          prefetch={false}
           className={cn(titleClass, 'underline-offset-2 hover:underline', focusRing)}
         >
           {title}

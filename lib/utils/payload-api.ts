@@ -251,7 +251,7 @@ export const getMenusByLocation = async (locationSlug: string): Promise<PayloadM
       [`menus-location-${locationSlug}`],
       // 'beers' keeps homepage featured menus fresh on beer edits now that the
       // revalidation plugin no longer fires the broad 'menus' tag for beers.
-      { tags: [CACHE_TAGS.menus, CACHE_TAGS.locations, CACHE_TAGS.beers], revalidate: 300 }, // 5 min fallback
+      { tags: [CACHE_TAGS.menus, CACHE_TAGS.locations, CACHE_TAGS.beers], revalidate: 3600 }, // 1 hour fallback
     )()
   } catch (error) {
     logger.error(`Error fetching menus for location: ${locationSlug}`, error)
@@ -304,7 +304,7 @@ async function getLocationMenu(
       return result.docs[0] ?? null
     },
     [`location-${locationSlug}-${type}-menu`],
-    { tags: [CACHE_TAGS.locations, CACHE_TAGS.menus, CACHE_TAGS.beers], revalidate: 300 },
+    { tags: [CACHE_TAGS.locations, CACHE_TAGS.menus, CACHE_TAGS.beers], revalidate: 3600 },
   )()
 }
 
@@ -634,7 +634,7 @@ export const getAvailableBeersFromMenus = async (): Promise<PayloadBeer[]> => {
         return beers
       },
       ['available-beers-from-menus'],
-      { tags: [CACHE_TAGS.menus, CACHE_TAGS.beers], revalidate: 300 },
+      { tags: [CACHE_TAGS.menus, CACHE_TAGS.beers], revalidate: 3600 },
     )()
   } catch (error) {
     logger.error('Error fetching available beers from menus', error)
@@ -661,7 +661,7 @@ export const getComingSoonBeers = async () => {
         return result.beers || []
       },
       ['coming-soon-beers'],
-      { tags: [CACHE_TAGS.comingSoon], revalidate: 300 },
+      { tags: [CACHE_TAGS.comingSoon], revalidate: 3600 },
     )()
   } catch (error) {
     logger.error('Error fetching coming soon beers', error)
@@ -694,7 +694,9 @@ export const fetchGlobal = async (slug: string, depth: number = 0) => {
         return result
       },
       [`global-${slug}`],
-      { tags: [tag], revalidate: 300 },
+      // Hourly, not shorter: the root layout reads this, and Next caps every page
+      // at its shortest read. Saves refresh through the tag.
+      { tags: [tag], revalidate: 3600 },
     )()
   } catch (error) {
     logger.error(`Error fetching global: ${slug}`, error)
@@ -866,7 +868,11 @@ export const getWeeklyHoursWithHolidays = cache(
           return weeklyHours
         },
         [`weekly-hours-${locationId}-${weekKey}`],
-        { tags: [CACHE_TAGS.locations, CACHE_TAGS.holidayHours], revalidate: 300 },
+        // Hourly, not shorter: the footer on every page reads this, and Next caps a
+        // page at its shortest read. Saves refresh through the tags and the week is
+        // in the data-cache key, but a page's ISR entry can embed last week's hours
+        // for up to an hour after Sunday midnight.
+        { tags: [CACHE_TAGS.locations, CACHE_TAGS.holidayHours], revalidate: 3600 },
       )()
     } catch (error) {
       logger.error(`Error fetching weekly hours with holidays for location ${locationId}`, error)

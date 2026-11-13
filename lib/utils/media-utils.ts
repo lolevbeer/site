@@ -129,21 +129,21 @@ export function getMediaUrl(media: unknown, size?: MediaSize): string | undefine
 
 /**
  * Route a 3D-can texture through Next's image optimizer: the stored label
- * PNGs are ~7 MB (Media keeps the main file as uploaded), while /_next/image at 2048w
+ * PNGs are ~7 MB (Media keeps the main file as uploaded), while /_next/image at 1920w
  * q75 serves a ~0.7 MB AVIF/WebP. Same-origin, so three.js's TextureLoader
- * (a plain <img>) needs no CORS. 2048 is a default deviceSize and 75 is in
+ * (a plain <img>) needs no CORS. 1920 must stay in next.config `images.deviceSizes` (unlisted widths 400) and 75 is in
  * next.config `images.qualities`; Blob hosts are in `remotePatterns`.
  *
  * ponytail: relies on the runtime optimizer (first view per region converts
  * the 7 MB PNG, counted in Vercel image-optimization usage). Ceiling: add an
- * uncropped 2048w WebP 'texture' variant to mediaSharp (Media.ts) + MediaSize and
+ * uncropped 1920w WebP 'texture' variant to mediaSharp (Media.ts) + MediaSize and
  * prefer getMediaUrl(media, 'texture'), once existing labels are regenerated.
  * The black/white metalness mask shares q75; if foil edges look soft or ring
  * next to the PNG original, give it a higher listed quality.
  */
 export function textureImageUrl(url: string | undefined): string | undefined {
   if (!url) return undefined
-  return `/_next/image?url=${encodeURIComponent(url)}&w=2048&q=75`
+  return `/_next/image?url=${encodeURIComponent(url)}&w=1920&q=75`
 }
 
 /**

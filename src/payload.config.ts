@@ -302,6 +302,7 @@ export default buildConfig({
       },
     },
     components: {
+      providers: ['@/src/components/admin/AdminBrowserMarker#AdminBrowserMarker'],
       graphics: {
         Logo: '@/src/components/AdminLogo#AdminLogo',
         Icon: '@/src/components/AdminLogo#AdminIcon',

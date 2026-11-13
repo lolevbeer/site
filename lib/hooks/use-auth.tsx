@@ -12,9 +12,16 @@ const AuthContext = createContext<AuthContextType>({
   isLoading: true,
 });
 
+/** Set by the admin panel (AdminBrowserMarker): only these browsers can hold a session. */
+export const ADMIN_BROWSER_KEY = 'lolev-admin-browser';
+
 /**
  * Client-side auth provider that checks if user is authenticated
  * Used for showing/hiding admin UI elements (cosmetic only - real security is server-side)
+ *
+ * The session cookie is HttpOnly, so only the server can read it. To spare every
+ * anonymous page load that uncached Payload call, it runs only in browsers that
+ * have opened the admin panel.
  */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -23,6 +30,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     async function checkAuth() {
       try {
+        if (!localStorage.getItem(ADMIN_BROWSER_KEY)) return;
+
         const response = await fetch('/api/users/me', {
           credentials: 'include',
         });

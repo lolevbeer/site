@@ -7,8 +7,9 @@ import { logger } from '@/lib/utils/logger'
 const QUEUE = 'maintenance'
 
 /**
- * Vercel wakes this queue every five minutes; the task schedules new work daily. Payload handles the schedule deduplication,
- * durable job record, retries, and execution; this route only wakes the queue.
+ * Vercel wakes this queue every five minutes from 06:00 to 07:55 UTC (vercel.json): the task is scheduled for 06:00 and its
+ * retries finish well inside that window. Payload handles the schedule deduplication, durable job record, retries, and
+ * execution; this route only wakes the queue. Move the cron window with any new task's schedule.
  */
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get('authorization')

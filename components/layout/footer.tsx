@@ -41,7 +41,7 @@ export function Footer({ taprooms }: FooterProps) {
             <ul className="text-sm mb-6 text-center">
               {[...navigationItems, ...footerOnlyItems].map((item) => (
                 <li key={item.href}>
-                  <Link href={item.href} className={FOOTER_LINK_CLASS}>
+                  <Link href={item.href} prefetch={item.prefetch} className={FOOTER_LINK_CLASS}>
                     {item.label}
                   </Link>
                 </li>
@@ -72,7 +72,7 @@ export function Footer({ taprooms }: FooterProps) {
             <Link href="/terms" className={FOOTER_LINK_CLASS}>
               Terms of Service
             </Link>
-            <Link href="/admin" rel="nofollow" className={FOOTER_LINK_CLASS}>
+            <Link href="/admin" prefetch={false} rel="nofollow" className={FOOTER_LINK_CLASS}>
               Login
             </Link>
           </div>

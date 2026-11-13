@@ -12,6 +12,7 @@ import { SlackChannelTestButton as SlackChannelTestButton_38589035e16c1a3c89c1a5
 import { AdminIcon as AdminIcon_3cd799f05ab0794410a063fc246d88cb } from '@/src/components/AdminLogo'
 import { AdminLogo as AdminLogo_3cd799f05ab0794410a063fc246d88cb } from '@/src/components/AdminLogo'
 import { SyncNavLink as SyncNavLink_d656220869059dfb87e573ae59f98b9f } from '@/src/components/SyncNavLink'
+import { AdminBrowserMarker as AdminBrowserMarker_823db5f6df4bdfeaec26474a42fa8da9 } from '@/src/components/admin/AdminBrowserMarker'
 import { SyncView as SyncView_d4a55995137be8d8e874f993f349f672 } from '@/src/components/SyncView'
 import { ScheduleHeatmap as ScheduleHeatmap_65e01fac2cc928f8fd2584422dde9786 } from '@/src/components/admin/ScheduleHeatmap'
 import { NeedsAttentionWidget as NeedsAttentionWidget_776f944cf0aceb55366c7339a5fc9e1b } from '@/src/components/admin/NeedsAttentionWidget'
@@ -44,6 +45,7 @@ export const importMap = {
   "@/src/components/AdminLogo#AdminIcon": AdminIcon_3cd799f05ab0794410a063fc246d88cb,
   "@/src/components/AdminLogo#AdminLogo": AdminLogo_3cd799f05ab0794410a063fc246d88cb,
   "@/src/components/SyncNavLink#SyncNavLink": SyncNavLink_d656220869059dfb87e573ae59f98b9f,
+  "@/src/components/admin/AdminBrowserMarker#AdminBrowserMarker": AdminBrowserMarker_823db5f6df4bdfeaec26474a42fa8da9,
   "@/src/components/SyncView#SyncView": SyncView_d4a55995137be8d8e874f993f349f672,
   "@/src/components/admin/ScheduleHeatmap#ScheduleHeatmap": ScheduleHeatmap_65e01fac2cc928f8fd2584422dde9786,
   "@/src/components/admin/NeedsAttentionWidget#NeedsAttentionWidget": NeedsAttentionWidget_776f944cf0aceb55366c7339a5fc9e1b,

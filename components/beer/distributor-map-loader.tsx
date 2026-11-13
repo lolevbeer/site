@@ -6,7 +6,7 @@
  */
 
 import dynamic from 'next/dynamic'
-import { MapLoadingSkeleton } from '@/components/map/location-card-skeleton'
+import { MapLoadingSkeleton } from '@/components/map/map-loading-skeleton'
 import type { DistributorGeoJSON } from '@/lib/utils/payload-api'
 
 const DistributorMap = dynamic(
@@ -17,11 +17,6 @@ const DistributorMap = dynamic(
   },
 )
 
-export function DistributorMapLoader({ initialData }: { initialData?: DistributorGeoJSON }) {
-  return (
-    <DistributorMap
-      height={700}
-      initialData={initialData}
-    />
-  )
+export function DistributorMapLoader({ geoData }: { geoData: DistributorGeoJSON }) {
+  return <DistributorMap height={700} geoData={geoData} />
 }

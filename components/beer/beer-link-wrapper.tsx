@@ -53,8 +53,11 @@ export function BeerLinkWrapper({
   return (
     <div className={cn('relative', className)}>
       {children}
+      {/* No prefetch: a menu renders dozens of these, and each stale prefetch
+          regenerates that beer page on the server. */}
       <Link
         href={href}
+        prefetch={false}
         aria-label={label}
         className="absolute inset-0 rounded-[inherit] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       />

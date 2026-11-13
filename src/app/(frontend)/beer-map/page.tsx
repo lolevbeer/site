@@ -7,7 +7,7 @@ import { Metadata } from 'next'
 import { Suspense } from 'react'
 import { BeerMapContent } from '@/components/beer/beer-map-content'
 import { BeerMapCanvas } from '@/components/beer/beer-map-canvas'
-import { MapLoadingSkeleton } from '@/components/map/location-card-skeleton'
+import { MapLoadingSkeleton } from '@/components/map/map-loading-skeleton'
 import {
   getAllLocations,
   getWeeklyHoursWithHolidays,
