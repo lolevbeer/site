@@ -52,6 +52,7 @@ export function HallOfFameCard({ review }: { review: HallOfFameReview }) {
           {review.beer.slug ? (
             <Link
               href={`/beer/${review.beer.slug}`}
+              prefetch={false}
               className="font-medium text-primary hover:underline"
             >
               {review.beer.name}
