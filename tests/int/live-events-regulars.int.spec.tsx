@@ -127,4 +127,39 @@ describe('LiveEvents across New York midnight', () => {
     expect(agenda.textContent).toContain('Book Club')
     expect(agenda.textContent).toContain('Today')
   })
+
+  it('reloads once the new day starts and the page is up, so food rows refill', async () => {
+    vi.useRealTimers()
+    vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] })
+    vi.setSystemTime(new Date('2026-10-14T03:59:30Z')) // Tue Oct 13, 11:59:30pm ET
+    const reload = vi.fn()
+    vi.stubGlobal('location', { href: 'http://localhost/e/lolev-lawrenceville', reload })
+    // A cold backend serves the error screen with status 200 first.
+    let html = '<div></div>'
+    const fetchMock = vi.fn(async () => ({ ok: true, text: async () => html }))
+    vi.stubGlobal('fetch', fetchMock)
+    try {
+      renderBoard()
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(10_000)
+      })
+      expect(fetchMock).not.toHaveBeenCalled()
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(60_000) // past midnight
+      })
+      expect(fetchMock).toHaveBeenCalledWith('http://localhost/e/lolev-lawrenceville', {
+        cache: 'no-store',
+      })
+      expect(reload).not.toHaveBeenCalled()
+
+      html = '<meta name="live-display" content="ready"/>'
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(60_000) // retry
+      })
+      expect(reload).toHaveBeenCalledTimes(1)
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
 })

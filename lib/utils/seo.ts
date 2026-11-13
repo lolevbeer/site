@@ -81,7 +81,7 @@ export const NOINDEX_ROBOTS = { index: false, follow: false } as const
 /** CMS "Noindex" checkbox: keep the page out of results but let crawlers follow its links. */
 export const NOINDEX_FOLLOW_ROBOTS = { index: false, follow: true } as const
 
-/** Meta tag a TV display page emits once its data loads; usePolling reloads onto a new deploy only after seeing it. */
+/** Meta tag a TV display page emits once its data loads; displays reload (new deploy, new day) only after seeing it (isLiveDisplayReady). */
 export const LIVE_DISPLAY_META = 'live-display'
 
 /** Compressed 1200×630 social card. Keep this on every page-level `openGraph`. */

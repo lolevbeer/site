@@ -169,6 +169,11 @@ A redeploy of the same commit (or an env-var-only change) keeps the same
 (a separate "Deployment Rollback" event), so after a rollback displays reload on
 the fallback poll.
 
+The `/e/<location>` events board also reloads itself once a day, just after
+midnight New York time, with the same ready check (`isLiveDisplayReady`). The
+events stream carries events only, while food trucks come from the page render,
+so without the reload a board left running would run out of food rows.
+
 ### Connected, but edits do not arrive
 
 `Unauthorized to publish to channel` means the server key lacks **Publish**
