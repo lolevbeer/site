@@ -20,6 +20,8 @@ export const Events: CollectionConfig = {
   admin: {
     group: 'Food & Events',
     useAsTitle: 'organizer',
+    // The list's search box; without this it matches the title field only.
+    listSearchableFields: ['organizer', 'summary'],
     defaultColumns: ['organizer', 'date', 'startTime', 'location', 'visibility'],
     pagination: {
       defaultLimit: 100,

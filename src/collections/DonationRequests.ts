@@ -34,6 +34,8 @@ export const DonationRequests: CollectionConfig = {
   admin: {
     group: 'Food & Events',
     useAsTitle: 'organizationName',
+    // The list's search box; without this it matches the title field only.
+    listSearchableFields: ['organizationName', 'contactName', 'email', 'phone', 'eventName'],
     defaultColumns: ['organizationName', 'eventDate', 'askType', 'status', 'createdAt'],
     description:
       'Public donation asks from /donate. Completing the form is not a yes. Rows are created only by the public form.',

@@ -33,6 +33,8 @@ export const EventInquiries: CollectionConfig = {
   admin: {
     group: 'Food & Events',
     useAsTitle: 'name',
+    // The list's search box; without this it matches the title field only.
+    listSearchableFields: ['name', 'email', 'phone', 'companyName'],
     defaultColumns: [
       'name',
       'status',
