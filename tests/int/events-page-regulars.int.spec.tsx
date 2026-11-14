@@ -54,6 +54,22 @@ function ev(
 }
 
 describe('EventsPageClient regulars', () => {
+  it('lists Regulars before distant one-offs, so this week is seen first', () => {
+    render(
+      createElement(EventsPageClient, {
+        initialEvents: [
+          ev('recurring-t-2026-10-14', '2026-10-14', 'Trivia'),
+          ev('recurring-t-2026-10-21', '2026-10-21', 'Trivia'),
+          ev('anniversary', '2027-01-15', 'Anniversary party'),
+        ],
+      }),
+    )
+    const order = screen
+      .getByRole('heading', { name: 'Regulars' })
+      .compareDocumentPosition(screen.getByText('Anniversary party'))
+    expect(order & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
   it('shows one-offs in the dated list and weekly trivia once under Regulars', () => {
     const { container } = render(
       createElement(EventsPageClient, {

@@ -46,6 +46,22 @@ const weeklyHours: Record<string, WeeklyHoursDay[]> = {
 
 afterEach(cleanup)
 
+describe('BeerMapContent order', () => {
+  it('puts the finder before the taproom hours in the DOM, for keyboard and screen readers', () => {
+    render(
+      createElement(
+        BeerMapContent,
+        { weeklyHours },
+        createElement('div', { 'data-testid': 'finder' }),
+      ),
+    )
+    const order = screen
+      .getByTestId('finder')
+      .compareDocumentPosition(screen.getByRole('heading', { name: 'Lawrenceville' }))
+    expect(order & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+})
+
 describe('BeerMapContent hours', () => {
   it('renders the shared weekly hours table for each taproom, not an accordion', () => {
     render(createElement(BeerMapContent, { weeklyHours }))

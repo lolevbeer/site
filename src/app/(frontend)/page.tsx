@@ -128,11 +128,11 @@ export default async function Home(): Promise<React.ReactElement> {
           heroImageUrl={data.siteContent.heroImageUrl}
           weeklyHours={data.weeklyHours}
         >
-          <FeaturedCans menus={homeCansMenus} />
-
           <UpcomingFood foodByLocation={data.foodByLocation} />
 
           <UpcomingEvents eventsByLocation={data.eventsByLocation} />
+
+          <FeaturedCans menus={homeCansMenus} />
 
           <UpcomingBeers comingSoonBeers={data.comingSoonBeers} />
         </HomeContent>

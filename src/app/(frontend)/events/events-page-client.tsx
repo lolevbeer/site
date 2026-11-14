@@ -106,28 +106,9 @@ export function EventsPageClient({ initialEvents, intro }: EventsPageClientProps
         <h2 className="sr-only">Upcoming events</h2>
         {filteredEvents.length > 0 ? (
           <>
-            <ScheduleList
-              calendar
-              anchors
-              items={oneOffs.map((event) => ({
-                // No description: the CMS field is internal and never reaches this page.
-                id: eventAnchorId(event),
-                date: event.date,
-                title: event.title,
-                time: event.time,
-                endTime: event.endTime,
-                locationName:
-                  locationFilter === 'all'
-                    ? getLocationDisplayName(locations, event.location)
-                    : undefined,
-                site: safeHttpUrl(event.site),
-                badge: eventBadge(event.tags),
-                // An id-less event has no page; its row keeps today's site link.
-                detailHref: event.id ? `/events/${encodeURIComponent(event.id)}` : undefined,
-              }))}
-            />
+            {/* Regulars lead: they are this week's plans, while one-offs can be months out. */}
             {regulars.length > 0 ? (
-              <section className={`text-center ${oneOffs.length > 0 ? 'mt-12' : ''}`}>
+              <section className={`text-center ${oneOffs.length > 0 ? 'mb-12' : ''}`}>
                 <h3 className="text-lg font-semibold tracking-tight mb-3">Regulars</h3>
                 <ul className="space-y-3 list-none p-0 m-0">
                   {regulars.map(({ next, occurrenceIds }) => (
@@ -153,6 +134,26 @@ export function EventsPageClient({ initialEvents, intro }: EventsPageClientProps
                 </ul>
               </section>
             ) : null}
+            <ScheduleList
+              calendar
+              anchors
+              items={oneOffs.map((event) => ({
+                // No description: the CMS field is internal and never reaches this page.
+                id: eventAnchorId(event),
+                date: event.date,
+                title: event.title,
+                time: event.time,
+                endTime: event.endTime,
+                locationName:
+                  locationFilter === 'all'
+                    ? getLocationDisplayName(locations, event.location)
+                    : undefined,
+                site: safeHttpUrl(event.site),
+                badge: eventBadge(event.tags),
+                // An id-less event has no page; its row keeps today's site link.
+                detailHref: event.id ? `/events/${encodeURIComponent(event.id)}` : undefined,
+              }))}
+            />
           </>
         ) : (
           <Empty>
