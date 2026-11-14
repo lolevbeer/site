@@ -14,6 +14,7 @@ import { AdminLogo as AdminLogo_3cd799f05ab0794410a063fc246d88cb } from '@/src/c
 import { SyncNavLink as SyncNavLink_d656220869059dfb87e573ae59f98b9f } from '@/src/components/SyncNavLink'
 import { AdminBrowserMarker as AdminBrowserMarker_823db5f6df4bdfeaec26474a42fa8da9 } from '@/src/components/admin/AdminBrowserMarker'
 import { SyncView as SyncView_d4a55995137be8d8e874f993f349f672 } from '@/src/components/SyncView'
+import { MCPAuthorizeView as MCPAuthorizeView_a5859e694d23fd11a46e2dcf78fce1a2 } from '@payloadcms/plugin-mcp/rsc'
 import { ScheduleHeatmap as ScheduleHeatmap_65e01fac2cc928f8fd2584422dde9786 } from '@/src/components/admin/ScheduleHeatmap'
 import { NeedsAttentionWidget as NeedsAttentionWidget_776f944cf0aceb55366c7339a5fc9e1b } from '@/src/components/admin/NeedsAttentionWidget'
 import { InboxWidget as InboxWidget_887c176a1602b282f2b805a6a90a5fd5 } from '@/src/components/admin/InboxWidget'
@@ -47,6 +48,7 @@ export const importMap = {
   "@/src/components/SyncNavLink#SyncNavLink": SyncNavLink_d656220869059dfb87e573ae59f98b9f,
   "@/src/components/admin/AdminBrowserMarker#AdminBrowserMarker": AdminBrowserMarker_823db5f6df4bdfeaec26474a42fa8da9,
   "@/src/components/SyncView#SyncView": SyncView_d4a55995137be8d8e874f993f349f672,
+  "@payloadcms/plugin-mcp/rsc#MCPAuthorizeView": MCPAuthorizeView_a5859e694d23fd11a46e2dcf78fce1a2,
   "@/src/components/admin/ScheduleHeatmap#ScheduleHeatmap": ScheduleHeatmap_65e01fac2cc928f8fd2584422dde9786,
   "@/src/components/admin/NeedsAttentionWidget#NeedsAttentionWidget": NeedsAttentionWidget_776f944cf0aceb55366c7339a5fc9e1b,
   "@/src/components/admin/InboxWidget#InboxWidget": InboxWidget_887c176a1602b282f2b805a6a90a5fd5,

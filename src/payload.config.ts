@@ -7,6 +7,7 @@ import { buildConfig, type CollectionConfig, type WidgetInstance } from 'payload
 import { fileURLToPath } from 'url'
 import { sharpTransformer } from '@payloadcms/transformer-sharp'
 import { revalidationPlugin } from './plugins/revalidation-plugin'
+import { ssoPlugins } from './plugins/sso'
 
 import { Users } from './collections/Users'
 import { Media, mediaSharp } from './collections/Media'
@@ -423,7 +424,8 @@ export default buildConfig({
         defaultFromName: 'Lolev App',
       })
     : undefined,
-  plugins: [revalidationPlugin],
+  // ssoPlugins: sign-in for our other apps (see src/plugins/sso.ts).
+  plugins: [revalidationPlugin, ...ssoPlugins],
   endpoints: [
     {
       path: '/import-distributors',

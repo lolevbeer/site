@@ -9,12 +9,12 @@
 
 import type React from 'react'
 import { Button, useFormFields } from '@payloadcms/ui'
-import { reduceFieldsToValues } from 'payload/shared'
+import { getDataFromFormState } from 'payload/shared'
 import { donationReplyMailto } from '@/lib/donate/reply-mailto'
 
 export function DonationReplyButton(): React.JSX.Element | null {
   // Reads the form, not the saved doc, so unsaved edits show in the draft email.
-  const href = useFormFields(([fields]) => donationReplyMailto(reduceFieldsToValues(fields)))
+  const href = useFormFields(([fields]) => donationReplyMailto(getDataFromFormState(fields)))
   if (!href) return null
 
   return (
