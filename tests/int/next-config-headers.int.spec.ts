@@ -81,3 +81,48 @@ describe('legacy media redirect', () => {
     expect(redirects.some((r) => r.source === '/api/media/file/:path*')).toBe(false)
   })
 })
+
+describe('Content-Security-Policy-Report-Only (#259)', () => {
+  const saved = { dsn: process.env.NEXT_PUBLIC_SENTRY_DSN, env: process.env.VERCEL_ENV }
+  afterEach(() => {
+    for (const [key, value] of [
+      ['NEXT_PUBLIC_SENTRY_DSN', saved.dsn],
+      ['VERCEL_ENV', saved.env],
+    ] as const) {
+      if (value === undefined) delete process.env[key]
+      else process.env[key] = value
+    }
+  })
+
+  async function cspValue(): Promise<string> {
+    const rules = (await nextConfig.headers!()) as Rule[]
+    const found = rulesWithKey(rules, 'Content-Security-Policy-Report-Only')
+    expect(found.map((r) => r.source)).toEqual(['/:path*'])
+    return found[0].headers.find((h) => h.key === 'Content-Security-Policy-Report-Only')!.value
+  }
+
+  it('reports on every path without enforcing', async () => {
+    const value = await cspValue()
+    expect(value).toContain("object-src 'none'")
+    expect(value).toContain("frame-ancestors 'none'")
+    // The kiosk boards' realtime socket and the beer map's tiles must stay allowed.
+    expect(value).toMatch(/connect-src [^;]*wss:\/\/\*\.ably\.net/)
+    expect(value).toMatch(/connect-src [^;]*https:\/\/api\.mapbox\.com/)
+    const rules = (await nextConfig.headers!()) as Rule[]
+    expect(rulesWithKey(rules, 'Content-Security-Policy')).toEqual([])
+  })
+
+  it('sends production violations to the Sentry security endpoint from the DSN', async () => {
+    process.env.NEXT_PUBLIC_SENTRY_DSN = 'https://abc123@o42.ingest.us.sentry.io/77'
+    process.env.VERCEL_ENV = 'production'
+    expect(await cspValue()).toContain(
+      'report-uri https://o42.ingest.us.sentry.io/api/77/security/?sentry_key=abc123',
+    )
+  })
+
+  it('sends no reports from previews', async () => {
+    process.env.NEXT_PUBLIC_SENTRY_DSN = 'https://abc123@o42.ingest.us.sentry.io/77'
+    process.env.VERCEL_ENV = 'preview'
+    expect(await cspValue()).not.toContain('report-uri')
+  })
+})

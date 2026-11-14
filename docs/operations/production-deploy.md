@@ -108,7 +108,7 @@ Atlas restore always starts into an isolated target for validation; do not repla
 5. Complete an admin login with an authorized account and confirm the affected admin surfaces load.
 6. Run the same production-status wrapper used before promotion and confirm no intended migration remains pending and its target fingerprint matches the pre-promotion result.
 7. Confirm scheduled cron activity is visible through the approved operational surface and investigate any missed or failing job. The maintenance cron only runs from 06:00 to 07:55 UTC, so outside that window check the next one rather than treating silence as a failure.
-8. Inspect Sentry for new release-related errors and record the result.
+8. Inspect Sentry for new release-related errors and record the result. The site sends `Content-Security-Policy-Report-Only` (built in `cspReportOnly()` in `next.config.mjs`), and production violations arrive in Sentry as CSP security reports. A new blocked host there means the release loads something the policy doesn't list; add it before the policy is ever switched to enforcing.
 
 ## Failure decision table
 
