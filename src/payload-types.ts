@@ -137,6 +137,19 @@ export type SupportedTimezones =
   | 'Pacific/Noumea'
   | 'Pacific/Auckland'
   | 'Pacific/Fiji';
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "LexicalNodes_C8E2B098".
+ */
+export type LexicalNodes_C8E2B098 =
+  | SerializedTextNode
+  | SerializedTabNode
+  | SerializedLineBreakNode
+  | SerializedParagraphNode<LexicalNodes_C8E2B098>
+  | SerializedListNode<LexicalNodes_C8E2B098>
+  | SerializedListItemNode<LexicalNodes_C8E2B098>
+  | SerializedAutoLinkNode<LexicalNodes_C8E2B098, LexicalLinkFields>
+  | SerializedLinkNode<LexicalNodes_C8E2B098, LexicalLinkFields>;
 
 export interface Config {
   auth: {
@@ -1156,6 +1169,10 @@ export interface Job {
    * One or two lines on the taproom page.
    */
   summary?: string | null;
+  /**
+   * Links, bold, italic and lists are allowed.
+   */
+  descriptionRich: LexicalRichText<LexicalNodes_C8E2B098>;
   description: string;
   /**
    * Saving a published opening makes it visible immediately. Closing date alone does not unpublish it.
@@ -1362,8 +1379,9 @@ export interface Faq {
    */
   question: string;
   /**
-   * The answer to the question
+   * The answer to the question. Links, bold, italic and lists are allowed.
    */
+  answerRich: LexicalRichText<LexicalNodes_C8E2B098>;
   answer: string;
   /**
    * Lower numbers appear first. Default FAQs start at 0, so use 100+ to append at the end.
@@ -2070,6 +2088,7 @@ export interface JobsSelect<T extends boolean = true> {
   location?: T;
   employmentType?: T;
   summary?: T;
+  descriptionRich?: T;
   description?: T;
   active?: T;
   closesOn?: T;
@@ -2133,6 +2152,7 @@ export interface DistributorsSelect<T extends boolean = true> {
  */
 export interface FaqsSelect<T extends boolean = true> {
   question?: T;
+  answerRich?: T;
   answer?: T;
   order?: T;
   active?: T;
@@ -3436,6 +3456,104 @@ export interface TaskSchedulePublish {
  */
 export interface Auth {
   [k: string]: unknown;
+}
+
+/** @internal Core Lexical types — see @payloadcms/richtext-lexical. */
+export type LexicalElementFormat = 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+export type LexicalElementDirection = ('ltr' | 'rtl') | null;
+
+export interface SerializedLexicalElementBase<TChildren> {
+  children: TChildren[];
+  direction: LexicalElementDirection;
+  format: LexicalElementFormat;
+  indent: number;
+  textFormat?: number;
+  textStyle?: string;
+  /** @deprecated Ignored when loading. Typed as required only to match Lexical's types: rich text sent through the API, CLI or MCP may not contain it. */
+  version: number;
+}
+
+export type LexicalTextMode = 'normal' | 'token' | 'segmented';
+
+export interface SerializedTextNode {
+  type: 'text';
+  detail: number;
+  format: number;
+  mode: LexicalTextMode;
+  style: string;
+  text: string;
+  /** @deprecated Ignored when loading. Typed as required only to match Lexical's types: rich text sent through the API, CLI or MCP may not contain it. */
+  version: number;
+}
+
+export interface SerializedTabNode {
+  type: 'tab';
+  detail: number;
+  format: number;
+  mode: LexicalTextMode;
+  style: string;
+  text: string;
+  /** @deprecated Ignored when loading. Typed as required only to match Lexical's types: rich text sent through the API, CLI or MCP may not contain it. */
+  version: number;
+}
+
+export interface SerializedLineBreakNode {
+  type: 'linebreak';
+  /** @deprecated Ignored when loading. Typed as required only to match Lexical's types: rich text sent through the API, CLI or MCP may not contain it. */
+  version: number;
+}
+
+export interface SerializedParagraphNode<TChildren> extends SerializedLexicalElementBase<TChildren> {
+  type: 'paragraph';
+  textFormat: number;
+  textStyle: string;
+}
+
+export interface SerializedListNode<TChildren> extends SerializedLexicalElementBase<TChildren> {
+  type: 'list';
+  checked?: boolean;
+  listType: 'number' | 'bullet' | 'check';
+  start: number;
+  tag: 'ul' | 'ol';
+}
+
+export interface SerializedListItemNode<TChildren> extends SerializedLexicalElementBase<TChildren> {
+  type: 'listitem';
+  checked?: boolean;
+  value: number;
+}
+
+export interface LexicalLinkFields {
+  [k: string]: unknown;
+  doc?: {
+    relationTo: string;
+    value: Config['db']['defaultIDType'] | { [k: string]: unknown; id: Config['db']['defaultIDType'] };
+  } | null;
+  linkType: 'custom' | 'internal';
+  newTab: boolean;
+  url?: string;
+}
+export interface SerializedLinkNode<TChildren, TFields = LexicalLinkFields> extends SerializedLexicalElementBase<TChildren> {
+  type: 'link';
+  fields: TFields;
+  id?: string;
+}
+export interface SerializedAutoLinkNode<TChildren, TFields = LexicalLinkFields> extends SerializedLexicalElementBase<TChildren> {
+  type: 'autolink';
+  fields: TFields;
+}
+
+/** Shape of a Lexical `richText` field. */
+export interface LexicalRichText<TNode> {
+  root: {
+    children: TNode[];
+    direction: LexicalElementDirection;
+    format: LexicalElementFormat;
+    indent: number;
+    type: 'root';
+    /** @deprecated Ignored when loading. Typed as required only to match Lexical's types: rich text sent through the API, CLI or MCP may not contain it. */
+    version: number;
+  };
 }
 
 

@@ -154,4 +154,14 @@ export const migrationRecovery: readonly MigrationRecovery[] = [
     verify:
       'In Atlas, db["job-applications"].countDocuments({ status: { $exists: false } }) must be 0; the dashboard Inbox then shows only applications submitted after the deploy.',
   },
+  {
+    name: '20261114_170000_rich_text_faq_jobs',
+    compatibility:
+      'Adds faqs.answerRich and jobs.descriptionRich built from the existing plain text and leaves faqs.answer and jobs.description untouched. Prior app versions ignore the new fields and keep rendering the plain text, so the live deployment keeps working before and after.',
+    retry:
+      'Safe to rerun: it only writes documents whose rich field is missing, so answers and descriptions already converted or since edited are never touched.',
+    mode: 'roll-forward',
+    verify:
+      'In Atlas, db.faqs.countDocuments({ answerRich: { $exists: false } }) and db.jobs.countDocuments({ descriptionRich: { $exists: false } }) must both be 0; then open /faq and a job page and confirm the text reads as before.',
+  },
 ]

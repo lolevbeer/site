@@ -7,6 +7,16 @@ import { MarkLinesCleanedButton as MarkLinesCleanedButton_f5f2df171d50f30cf10461
 import { EventDateWarning as EventDateWarning_86d7a7ba4986bf7e4d43cf53ef110e20 } from '@/src/components/EventDateWarning'
 import { DonationReplyButton as DonationReplyButton_939e9c59d658d71aef291a615b0cf0fe } from '@/src/components/admin/DonationReplyButton'
 import { FoodDateWarning as FoodDateWarning_f1a26c4c763b5f7447cc10d2b4b9a2e1 } from '@/src/components/FoodDateWarning'
+import { RscEntryLexicalCell as RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
+import { RscEntryLexicalField as RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
+import { LexicalDiffComponent as LexicalDiffComponent_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
+import { FixedToolbarFeatureClient as FixedToolbarFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
+import { OrderedListFeatureClient as OrderedListFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
+import { UnorderedListFeatureClient as UnorderedListFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
+import { LinkFeatureClient as LinkFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
+import { BoldFeatureClient as BoldFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
+import { ItalicFeatureClient as ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
+import { ParagraphFeatureClient as ParagraphFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { RecurringFoodGrid as RecurringFoodGrid_0c1dc1aa84aa3f4861a00292ec49d05d } from '@/src/components/RecurringFoodGrid'
 import { SlackChannelTestButton as SlackChannelTestButton_38589035e16c1a3c89c1a5f9b8dbb9c5 } from '@/src/components/admin/SlackChannelTestButton'
 import { AdminIcon as AdminIcon_3cd799f05ab0794410a063fc246d88cb } from '@/src/components/AdminLogo'
@@ -41,6 +51,16 @@ export const importMap = {
   "@/src/components/EventDateWarning#EventDateWarning": EventDateWarning_86d7a7ba4986bf7e4d43cf53ef110e20,
   "@/src/components/admin/DonationReplyButton#DonationReplyButton": DonationReplyButton_939e9c59d658d71aef291a615b0cf0fe,
   "@/src/components/FoodDateWarning#FoodDateWarning": FoodDateWarning_f1a26c4c763b5f7447cc10d2b4b9a2e1,
+  "@payloadcms/richtext-lexical/rsc#RscEntryLexicalCell": RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e,
+  "@payloadcms/richtext-lexical/rsc#RscEntryLexicalField": RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e,
+  "@payloadcms/richtext-lexical/rsc#LexicalDiffComponent": LexicalDiffComponent_44fe37237e0ebf4470c9990d8cb7b07e,
+  "@payloadcms/richtext-lexical/client#FixedToolbarFeatureClient": FixedToolbarFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
+  "@payloadcms/richtext-lexical/client#OrderedListFeatureClient": OrderedListFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
+  "@payloadcms/richtext-lexical/client#UnorderedListFeatureClient": UnorderedListFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
+  "@payloadcms/richtext-lexical/client#LinkFeatureClient": LinkFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
+  "@payloadcms/richtext-lexical/client#BoldFeatureClient": BoldFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
+  "@payloadcms/richtext-lexical/client#ItalicFeatureClient": ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
+  "@payloadcms/richtext-lexical/client#ParagraphFeatureClient": ParagraphFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@/src/components/RecurringFoodGrid#RecurringFoodGrid": RecurringFoodGrid_0c1dc1aa84aa3f4861a00292ec49d05d,
   "@/src/components/admin/SlackChannelTestButton#SlackChannelTestButton": SlackChannelTestButton_38589035e16c1a3c89c1a5f9b8dbb9c5,
   "@/src/components/AdminLogo#AdminIcon": AdminIcon_3cd799f05ab0794410a063fc246d88cb,

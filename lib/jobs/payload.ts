@@ -11,13 +11,17 @@ import { logger } from '@/lib/utils/logger'
 import { CACHE_TAGS } from '@/lib/utils/cache'
 import type { SeoOverride } from '@/lib/seo/resolve-metadata'
 import type { PayloadLocation } from '@/lib/types/location'
+import type { SimpleRichText } from '@/src/fields/rich-text'
 
 export interface PublicJob {
   id: string
   title: string
   slug: string
   summary: string
+  /** Plain-text copy of the description (structured data). */
   description: string
+  /** What staff wrote; missing on a job saved before the rich-text migration. */
+  descriptionRich?: SimpleRichText
   employmentType: string
   locationName: string
   locationSlug: string
@@ -39,6 +43,7 @@ type JobDoc = {
   slug?: string | null
   summary?: string | null
   description?: string | null
+  descriptionRich?: SimpleRichText | null
   employmentType?: string | null
   location?: unknown
   updatedAt?: string
@@ -60,6 +65,7 @@ function toPublicJob(doc: JobDoc): PublicJob | null {
     slug: doc.slug,
     summary: doc.summary || '',
     description: doc.description || '',
+    descriptionRich: doc.descriptionRich ?? undefined,
     employmentType: doc.employmentType || 'full-time',
     locationName: relatedString(doc.location, 'name'),
     locationSlug: relatedString(doc.location, 'slug'),

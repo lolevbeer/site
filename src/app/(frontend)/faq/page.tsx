@@ -22,6 +22,8 @@ import { FaqContactSection } from '@/components/faq/faq-contact'
 import { taproomPhones } from '@/lib/config/locations'
 import type { PayloadLocation } from '@/lib/types/location'
 import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
+import { RichText } from '@/components/ui/rich-text'
+import type { Faq } from '@/src/payload-types'
 
 interface FAQAnswerProps {
   question: string
@@ -38,7 +40,11 @@ function FAQAnswer({ question, answer, locations }: FAQAnswerProps): ReactNode {
       <div>
         Our beers are distributed throughout the Pittsburgh area and select locations in
         Pennsylvania, New York, and Ohio. Use our{' '}
-        <Link href="/beer-map" prefetch={false} className="text-primary hover:underline font-medium">
+        <Link
+          href="/beer-map"
+          prefetch={false}
+          className="text-primary hover:underline font-medium"
+        >
           Beer Map
         </Link>{' '}
         to find the nearest retailer carrying Lolev Beer.
@@ -135,12 +141,18 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function FAQPage() {
   const [cmsFAQs, locations] = await Promise.all([getActiveFAQs(), getAllLocations()])
-  const dynamicFAQs: FAQItem[] = cmsFAQs.map((faq) => ({
+  // CMS FAQs: `answer` is the plain copy (structured data), `rich` what staff
+  // wrote. A FAQ saved before the migration ran has no rich value yet.
+  const dynamicFAQs: (FAQItem & { rich?: Faq['answerRich'] | null })[] = cmsFAQs.map((faq) => ({
     question: faq.question,
     answer: faq.answer,
+    rich: faq.answerRich,
   }))
 
-  const allFAQs = [...getBreweryFAQs(locations), ...dynamicFAQs]
+  const allFAQs: (FAQItem & { rich?: Faq['answerRich'] | null })[] = [
+    ...getBreweryFAQs(locations),
+    ...dynamicFAQs,
+  ]
 
   // Generate FAQ schema for SEO
   const faqSchema = generateFAQSchema(allFAQs)
@@ -174,7 +186,15 @@ export default async function FAQPage() {
                     className="text-muted-foreground data-[state=closed]:hidden"
                     data-speakable="faq-answer"
                   >
-                    <FAQAnswer question={faq.question} answer={faq.answer} locations={locations} />
+                    {faq.rich ? (
+                      <RichText data={faq.rich} />
+                    ) : (
+                      <FAQAnswer
+                        question={faq.question}
+                        answer={faq.answer}
+                        locations={locations}
+                      />
+                    )}
                   </AccordionContent>
                 </AccordionItem>
               ))}
