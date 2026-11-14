@@ -24,6 +24,8 @@ import { slackDiagnosticsField } from './utils/slackDiagnosticsField'
 
 export const EventInquiries: CollectionConfig = {
   slug: 'event-inquiries',
+  // Saved filters, columns and sort for this list, private or shared (#374).
+  enableQueryPresets: true,
   access: {
     read: eventManagerAccess,
     create: () => false,

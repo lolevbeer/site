@@ -98,6 +98,7 @@ export const getActiveJobs = async (): Promise<PublicJob[]> => {
           sort: 'title',
           depth: 1,
           limit: 100,
+          joins: false, // skip the admin-only applications join
           overrideAccess: false,
         })
         return toPublicJobs(result.docs)
@@ -122,6 +123,7 @@ export const getJobBySlug = cache(async (slug: string): Promise<PublicJob | null
         },
         limit: 1,
         depth: 1,
+        joins: false, // skip the admin-only applications join
         overrideAccess: false,
       })
       const doc = result.docs[0]

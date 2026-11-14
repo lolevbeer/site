@@ -873,6 +873,11 @@ exports[`persistent field contracts > jobs retains its stored paths and validati
     "defaultValue": true,
     "type": "checkbox",
   },
+  "applications": {
+    "collection": "job-applications",
+    "on": "job",
+    "type": "join",
+  },
   "closesOn": {
     "type": "date",
   },

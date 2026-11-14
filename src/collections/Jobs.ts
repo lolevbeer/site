@@ -157,6 +157,22 @@ export const Jobs: CollectionConfig = {
       admin: { initCollapsed: true },
       fields: [documentSeoField],
     },
+    {
+      // Read-only list of this opening's applications. Applications are
+      // admin-only, so nobody else gets rows. A join runs on every read of a
+      // job, so the public reads (lib/jobs/payload.ts, the application form)
+      // pass `joins: false`.
+      name: 'applications',
+      type: 'join',
+      collection: 'job-applications',
+      on: 'job',
+      defaultSort: '-createdAt',
+      maxDepth: 1,
+      admin: {
+        allowCreate: false,
+        defaultColumns: ['name', 'status', 'email', 'phone', 'createdAt'],
+      },
+    },
   ],
   hooks: {
     beforeValidate: [syncPlainCopy('descriptionRich', 'description')],

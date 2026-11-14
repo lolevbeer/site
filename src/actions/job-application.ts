@@ -61,6 +61,7 @@ export async function submitJobApplication(input: unknown): Promise<SubmitJobApp
       },
       limit: 1,
       depth: 1,
+      joins: false, // skip the admin-only applications join
       // Anonymous visitor: jobs read access already limits this to active openings.
       overrideAccess: false,
     })
