@@ -6,7 +6,7 @@ import type { CollectionConfig, PayloadRequest } from 'payload'
 import { revalidatePath } from 'next/cache'
 import { adminAccess, hasRole } from '@/src/access/roles'
 import { generateUniqueSlug } from './utils/generateUniqueSlug'
-import { simpleEditor, syncPlainCopy } from '@/src/fields/rich-text'
+import { simpleEditor, syncPlainCopy, validateHeadingOrder } from '@/src/fields/rich-text'
 import { documentSeoField } from '@/src/fields/seo'
 
 /**
@@ -104,7 +104,11 @@ export const Jobs: CollectionConfig = {
       required: true,
       // Under the job page's h1, so sections start at h2.
       editor: simpleEditor(['h2', 'h3']),
-      admin: { description: 'Headings, links, bold, italic and lists are allowed.' },
+      validate: validateHeadingOrder(2),
+      admin: {
+        description:
+          'Headings, links, bold, italic and lists are allowed. Start sections with Heading 2; use Heading 3 inside one.',
+      },
     },
     {
       // Plain-text copy of descriptionRich, filled by syncPlainCopy. Read by the

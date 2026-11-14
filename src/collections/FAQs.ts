@@ -33,9 +33,10 @@ export const FAQs: CollectionConfig = {
       type: 'richText',
       label: 'Answer',
       required: true,
-      editor: simpleEditor(),
+      // Under the question, which the accordion renders as an h3.
+      editor: simpleEditor(['h4']),
       admin: {
-        description: 'The answer to the question. Links, bold, italic and lists are allowed.',
+        description: 'The answer to the question. A small heading, links, bold, italic and lists are allowed.',
       },
     },
     {

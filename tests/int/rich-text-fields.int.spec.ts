@@ -8,7 +8,12 @@ import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn(), revalidateTag: vi.fn() }))
 
-import { richTextToPlain, syncPlainCopy, textToRichText } from '@/src/fields/rich-text'
+import {
+  richTextToPlain,
+  syncPlainCopy,
+  textToRichText,
+  validateHeadingOrder,
+} from '@/src/fields/rich-text'
 import { FAQs } from '@/src/collections/FAQs'
 import { Jobs } from '@/src/collections/Jobs'
 import { up } from '@/src/migrations/20261114_170000_rich_text_faq_jobs'
@@ -48,6 +53,40 @@ describe('textToRichText / richTextToPlain', () => {
   it('treats empty input as empty', () => {
     expect(richTextToPlain(textToRichText(''))).toBe('')
     expect(richTextToPlain(null)).toBe('')
+  })
+})
+
+describe('validateHeadingOrder', () => {
+  const validate = validateHeadingOrder(2) as unknown as (
+    value: unknown,
+    options: Record<string, unknown>,
+  ) => Promise<string | true>
+  // Payload's own rich text validation delegates to the field's editor.
+  const editor = { validate: (value: unknown) => (value ? true : 'required') }
+  const options = { required: true, editor }
+
+  function withHeadings(...tags: string[]) {
+    const state = textToRichText('Body')
+    const headings = tags.map((tag) => ({
+      ...state.root.children[0],
+      type: 'heading',
+      tag,
+      children: [{ type: 'text', text: tag, version: 1 }],
+    }))
+    state.root.children.unshift(...(headings as never[]))
+    return state
+  }
+
+  it.each([[[]], [['h2']], [['h2', 'h3', 'h3', 'h2']]])('accepts %j', async (tags) => {
+    expect(await validate(withHeadings(...tags), options)).toBe(true)
+  })
+
+  it('refuses a description that opens with an h3', async () => {
+    expect(await validate(withHeadings('h3'), options)).toMatch(/Start with a Heading 2/)
+  })
+
+  it('still requires a value', async () => {
+    expect(await validate(null, options)).not.toBe(true)
   })
 })
 

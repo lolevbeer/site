@@ -153,17 +153,18 @@ export type LexicalNodes_9D695663 =
   | SerializedHeadingNode<LexicalNodes_9D695663, 'h2' | 'h3'>;
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "LexicalNodes_C8E2B098".
+ * via the `definition` "LexicalNodes_C2C1C366".
  */
-export type LexicalNodes_C8E2B098 =
+export type LexicalNodes_C2C1C366 =
   | SerializedTextNode
   | SerializedTabNode
   | SerializedLineBreakNode
-  | SerializedParagraphNode<LexicalNodes_C8E2B098>
-  | SerializedListNode<LexicalNodes_C8E2B098>
-  | SerializedListItemNode<LexicalNodes_C8E2B098>
-  | SerializedAutoLinkNode<LexicalNodes_C8E2B098, LexicalLinkFields>
-  | SerializedLinkNode<LexicalNodes_C8E2B098, LexicalLinkFields>;
+  | SerializedParagraphNode<LexicalNodes_C2C1C366>
+  | SerializedListNode<LexicalNodes_C2C1C366>
+  | SerializedListItemNode<LexicalNodes_C2C1C366>
+  | SerializedAutoLinkNode<LexicalNodes_C2C1C366, LexicalLinkFields>
+  | SerializedLinkNode<LexicalNodes_C2C1C366, LexicalLinkFields>
+  | SerializedHeadingNode<LexicalNodes_C2C1C366, 'h4'>;
 
 export interface Config {
   auth: {
@@ -1184,7 +1185,7 @@ export interface Job {
    */
   summary?: string | null;
   /**
-   * Headings, links, bold, italic and lists are allowed.
+   * Headings, links, bold, italic and lists are allowed. Start sections with Heading 2; use Heading 3 inside one.
    */
   descriptionRich: LexicalRichText<LexicalNodes_9D695663>;
   description: string;
@@ -1393,9 +1394,9 @@ export interface Faq {
    */
   question: string;
   /**
-   * The answer to the question. Links, bold, italic and lists are allowed.
+   * The answer to the question. A small heading, links, bold, italic and lists are allowed.
    */
-  answerRich: LexicalRichText<LexicalNodes_C8E2B098>;
+  answerRich: LexicalRichText<LexicalNodes_C2C1C366>;
   answer: string;
   /**
    * Lower numbers appear first. Default FAQs start at 0, so use 100+ to append at the end.

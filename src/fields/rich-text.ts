@@ -21,14 +21,15 @@ import {
   UnorderedListFeature,
 } from '@payloadcms/richtext-lexical'
 import { convertLexicalToPlaintext } from '@payloadcms/richtext-lexical/plaintext'
-import type { CollectionBeforeValidateHook } from 'payload'
+import type { CollectionBeforeValidateHook, RichTextField } from 'payload'
+import { richText as defaultRichTextValidate } from 'payload/shared'
 import type { Faq, Job } from '@/src/payload-types'
 
-/** Stored value of any `simpleEditor` field: the widest one, headings included. */
-export type SimpleRichText = NonNullable<Job['descriptionRich']>
+/** Stored value of a `simpleEditor` field, whichever heading levels it allows. */
+export type SimpleRichText = NonNullable<Faq['answerRich']> | NonNullable<Job['descriptionRich']>
 
 /** What `textToRichText` builds: paragraphs only, so it fits every `simpleEditor` field. */
-type ParagraphsOnly = NonNullable<Faq['answerRich']>
+type ParagraphsOnly = NonNullable<Faq['answerRich']> & NonNullable<Job['descriptionRich']>
 
 /**
  * Editor for these fields: paragraphs, bold, italic, links to a URL, and lists.
@@ -37,8 +38,9 @@ type ParagraphsOnly = NonNullable<Faq['answerRich']>
  *
  * `headings` are the heading levels staff may add. Pass only the levels that
  * fit under the heading the page already renders above the field: a job
- * description sits under the page's h1, so it takes h2 and h3. Leave it empty
- * where a heading has no place (a FAQ answer inside its accordion item).
+ * description sits under the page's h1, so it takes h2 and h3; a FAQ answer
+ * sits under its question's h3, so it takes h4. Pair more than one level with
+ * `validateHeadingOrder`.
  */
 export function simpleEditor(headings: HeadingFeatureProps['enabledHeadingSizes'] = []) {
   return lexicalEditor({
@@ -53,6 +55,32 @@ export function simpleEditor(headings: HeadingFeatureProps['enabledHeadingSizes'
       FixedToolbarFeature(),
     ],
   })
+}
+
+/**
+ * Field `validate` that keeps headings in outline order: the first heading is
+ * `top` (the level just under the page's own heading), and no heading is more
+ * than one level deeper than the one before it. Runs Payload's own rich text
+ * validation (required, node checks) first.
+ */
+export function validateHeadingOrder(top: 2 | 3 | 4): NonNullable<RichTextField['validate']> {
+  return async (value, options) => {
+    const base = await defaultRichTextValidate(value, options)
+    if (base !== true) return base
+
+    let previous = top - 1
+    for (const node of (value as SimpleRichText | null | undefined)?.root.children ?? []) {
+      if (node.type !== 'heading') continue
+      const level = Number(node.tag[1])
+      if (level > previous + 1) {
+        return previous < top
+          ? `Start with a Heading ${top}; a Heading ${level} comes after it.`
+          : `A Heading ${level} can't follow a Heading ${previous}. Use a Heading ${previous + 1} first.`
+      }
+      previous = level
+    }
+    return true
+  }
 }
 
 const LINE_BREAK = { type: 'linebreak', version: 1 } as const
@@ -88,7 +116,7 @@ export function textToRichText(text: string): ParagraphsOnly {
       version: 1,
     }))
 
-  return buildEditorState<ParagraphsOnly>({ nodes: paragraphs })
+  return buildEditorState({ nodes: paragraphs }) as ParagraphsOnly
 }
 
 /** Editor state as plain text, paragraphs separated by a blank line. Empty for a missing value. */

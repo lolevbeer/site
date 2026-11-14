@@ -883,6 +883,7 @@ exports[`persistent field contracts > jobs retains its stored paths and validati
   "descriptionRich": {
     "required": true,
     "type": "richText",
+    "validate": true,
   },
   "employmentType": {
     "defaultValue": "full-time",
