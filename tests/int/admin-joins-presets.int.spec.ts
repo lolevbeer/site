@@ -51,6 +51,44 @@ describe('query presets (#374)', () => {
     ).toEqual(['donation-requests', 'event-inquiries', 'job-applications'])
   })
 
+  // A preset's filters can hold a submitter's email, and Payload opens the
+  // preset store to every signed-in user unless told otherwise.
+  describe('are limited to people who can read the list they filter', () => {
+    const req = (roles: string[] | null) => ({
+      user: roles ? { id: 'u1', roles } : null,
+      payload: {
+        config,
+        collections: Object.fromEntries(config.collections.map((c) => [c.slug, { config: c }])),
+      },
+    })
+    const access = (operation: 'create' | 'delete' | 'read' | 'update', roles: string[] | null) =>
+      config.queryPresets!.access[operation]!({ req: req(roles) } as never)
+
+    it.each(['read', 'update', 'delete'] as const)('%s', async (operation) => {
+      expect(await access(operation, ['admin'])).toEqual({
+        relatedCollection: { in: ['donation-requests', 'event-inquiries', 'job-applications'] },
+      })
+      expect(await access(operation, ['event-manager'])).toEqual({
+        relatedCollection: { in: ['donation-requests', 'event-inquiries'] },
+      })
+      expect(await access(operation, ['bartender'])).toBe(false)
+      expect(await access(operation, null)).toBe(false)
+    })
+
+    it('create', async () => {
+      const create = (roles: string[] | null, relatedCollection: string) =>
+        config.queryPresets!.access.create!({
+          req: req(roles),
+          data: { relatedCollection },
+        } as never)
+      expect(await create(['admin'], 'job-applications')).toBe(true)
+      expect(await create(['event-manager'], 'event-inquiries')).toBe(true)
+      expect(await create(['event-manager'], 'job-applications')).toBe(false)
+      expect(await create(['bartender'], 'event-inquiries')).toBe(false)
+      expect(await create(null, 'event-inquiries')).toBe(false)
+    })
+  })
+
   it('keep no version history, like our other collections', () => {
     const presets = collection('payload-query-presets')
     expect(presets).toBeDefined()

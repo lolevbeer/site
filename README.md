@@ -211,7 +211,8 @@ is the system queue, separate from hiring.
   of the form (admins only; nobody else gets rows).
 - **Saved filters:** Private Event Inquiries, Donation Requests and Job
   Applications have query presets: save a list's filters, columns and sort,
-  keep it private or share it with everyone or named people.
+  keep it private or share it with everyone or named people. Only people who
+  can open a list can see or make its presets.
 - **Hours:** Locations puts all seven existing weekday open/close pairs before
   images alongside timezone, separate from visitor information and website
   content. Existing field permissions remain unchanged.

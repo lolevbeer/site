@@ -39,7 +39,7 @@ import { importDistributors } from './endpoints/import-distributors'
 import { importDistributorsCsv } from './endpoints/import-distributors-csv'
 import { updateDistributorUrls } from './endpoints/update-distributor-urls'
 import { recalculateBeerPrices } from './endpoints/recalculate-beer-prices'
-import { adminAccess, hasRole } from './access/roles'
+import { adminAccess, createQueryPresetAccess, hasRole, queryPresetAccess } from './access/roles'
 import { defaultDashboardLayout } from './admin/dashboard-layout'
 import { syncUntappdRatingsTask } from './jobs/sync-untappd-ratings'
 import { getLocalDevOrigins } from '../lib/config/payload-origins'
@@ -107,6 +107,19 @@ function hideApiTab(collection: CollectionConfig): CollectionConfig {
 export default buildConfig({
   // serverURL, cookiePrefix, and the api/admin routes use Payload's defaults
   // ('' = relative URLs on any domain; 'payload'; '/api'; '/admin').
+  // Saved list filters (enableQueryPresets on the inbox collections) are only
+  // for people who can read the list they filter.
+  queryPresets: {
+    access: {
+      create: createQueryPresetAccess,
+      read: queryPresetAccess,
+      update: queryPresetAccess,
+      delete: queryPresetAccess,
+    },
+    // Required by the type; empty keeps Payload's sharing choices (only me,
+    // everyone, specific users).
+    constraints: {},
+  },
   cors: allowedOrigins,
   csrf: allowedOrigins,
   // Nothing calls GraphQL (#367): the site reads through the Local API and the
