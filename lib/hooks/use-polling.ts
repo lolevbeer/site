@@ -40,6 +40,16 @@ export const WARM_WINDOW_MS = 60_000
 /** Delay after the 1st, 2nd, and 3rd-or-later consecutive failed poll. */
 const ERROR_BACKOFF_MS = [30_000, 60_000, 120_000] as const
 
+/**
+ * Whether this display's page renders right now. Displays reload only when it
+ * does: a cold backend serves the error screen with status 200, so `ok` alone
+ * would swap a working display for a black one.
+ */
+export async function isLiveDisplayReady(): Promise<boolean> {
+  const page = await fetch(window.location.href, { cache: 'no-store' })
+  return page.ok && (await page.text()).includes(`name="${LIVE_DISPLAY_META}"`)
+}
+
 interface PollingResponse {
   timestamp: number
   deployId?: string
@@ -215,20 +225,16 @@ export function usePolling<T, R extends PollingResponse>(
         const raw: R = await response.json()
         if (!isCurrent()) return
 
-        // New deploy: reload only once its page carries the LIVE_DISPLAY_META tag,
-        // so displays keep the current menu while the backend warms. The error
-        // screen is served with 200, so `ok` alone isn't enough. A failed check
-        // backs off like a failed poll.
+        // New deploy: reload only once its page is ready (isLiveDisplayReady),
+        // so displays keep the current menu while the backend warms. A failed
+        // check backs off like a failed poll.
         if (raw.deployId) {
           if (deployIdRef.current === null) {
             deployIdRef.current = raw.deployId
           } else if (raw.deployId !== deployIdRef.current) {
-            const page = await fetch(window.location.href, { cache: 'no-store' })
-            const html = page.ok ? await page.text() : ''
+            const ready = await isLiveDisplayReady()
             if (!isCurrent()) return
-            if (!page.ok || !html.includes(`name="${LIVE_DISPLAY_META}"`)) {
-              throw new Error('New deploy not ready')
-            }
+            if (!ready) throw new Error('New deploy not ready')
             window.location.reload()
             return
           }
