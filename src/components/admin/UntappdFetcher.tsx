@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useField, Button, Banner } from '@payloadcms/ui'
 import { logger } from '@/lib/utils/logger'
 import type { UntappdSearchResult as SearchResult } from '@/src/app/api/untappd/route'
@@ -17,6 +17,16 @@ export function UntappdFetcher() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [searchResults, setSearchResults] = useState<SearchResult[] | null>(null)
+
+  // The URL in the form right now, or null once the form is gone. A rating only
+  // applies if this still matches the URL it was fetched for.
+  const currentUrl = useRef<string | null | undefined>(untappdUrl)
+  useEffect(() => {
+    currentUrl.current = untappdUrl
+    return () => {
+      currentUrl.current = null
+    }
+  }, [untappdUrl])
 
   const handleSearch = async () => {
     if (!beerName) {
@@ -73,6 +83,8 @@ export function UntappdFetcher() {
       setError('No Untappd URL set')
       return
     }
+    // A URL just picked from search reaches the field only on the next render.
+    currentUrl.current = targetUrl
 
     setLoading(true)
     setError(null)
@@ -82,6 +94,7 @@ export function UntappdFetcher() {
         `/api/untappd?action=rating&url=${encodeURIComponent(targetUrl)}`,
       )
       const data = await response.json()
+      if (currentUrl.current !== targetUrl) return
 
       if (!response.ok) {
         setError(data.error || 'Failed to fetch rating')
@@ -107,8 +120,9 @@ export function UntappdFetcher() {
         setError('Could not find rating on page')
       }
     } catch (err) {
-      setError('Failed to fetch rating')
       logger.error('Error occurred', err)
+      if (currentUrl.current !== targetUrl) return
+      setError('Failed to fetch rating')
     } finally {
       setLoading(false)
     }
