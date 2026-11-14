@@ -226,9 +226,14 @@ function BeerListing({
           </p>
         </div>
 
-        {/* Filter Bar */}
-        <section aria-label="Beer filters" className="sticky top-16 z-20 glass rounded-lg p-3 mb-6">
-          <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
+        {/* Only search and location stay pinned: the whole filter stack covered
+            ~40% of a phone screen while scrolling (#335). Siblings, not nested,
+            because a sticky element stops sticking when its parent scrolls away. */}
+        <section
+          aria-label="Search and location"
+          className="sticky top-16 z-20 glass rounded-lg p-3 mb-3"
+        >
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="relative min-w-0 flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -251,53 +256,55 @@ function BeerListing({
               )}
             </div>
 
-            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap xl:flex-nowrap">
-              <LocationTabs className="w-full sm:w-auto" />
+            <LocationTabs className="w-full sm:w-auto" />
+          </div>
+        </section>
 
-              <SegmentedControl
-                aria-label="Filter by availability"
-                className="w-full sm:w-auto"
-                onValueChange={onAvailabilityChange}
-                options={AVAILABILITY_OPTIONS}
-                value={availability}
-              />
+        <section aria-label="Beer filters" className="px-3 mb-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <SegmentedControl
+              aria-label="Filter by availability"
+              className="w-full sm:w-auto"
+              onValueChange={onAvailabilityChange}
+              options={AVAILABILITY_OPTIONS}
+              value={availability}
+            />
 
-              <Select value={selectedType} onValueChange={onTypeChange}>
+            <Select value={selectedType} onValueChange={onTypeChange}>
+              <SelectTrigger
+                aria-label="Filter by beer style"
+                className="w-full bg-background sm:w-44"
+              >
+                <SelectValue placeholder="All Styles" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Styles</SelectItem>
+                {beerTypes.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {type}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {beerTags.length > 0 && (
+              <Select value={selectedTag} onValueChange={onTagChange}>
                 <SelectTrigger
-                  aria-label="Filter by beer style"
+                  aria-label="Filter by beer series"
                   className="w-full bg-background sm:w-44"
                 >
-                  <SelectValue placeholder="All Styles" />
+                  <SelectValue placeholder="All Series" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Styles</SelectItem>
-                  {beerTypes.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {type}
+                  <SelectItem value="all">All Series</SelectItem>
+                  {beerTags.map((tag) => (
+                    <SelectItem key={tag} value={tag}>
+                      {tag}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-
-              {beerTags.length > 0 && (
-                <Select value={selectedTag} onValueChange={onTagChange}>
-                  <SelectTrigger
-                    aria-label="Filter by beer series"
-                    className="w-full bg-background sm:w-44"
-                  >
-                    <SelectValue placeholder="All Series" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Series</SelectItem>
-                    {beerTags.map((tag) => (
-                      <SelectItem key={tag} value={tag}>
-                        {tag}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
+            )}
           </div>
         </section>
 

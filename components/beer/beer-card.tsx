@@ -13,7 +13,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { BeerImage } from './beer-image'
-import { getBeerSlug, getBeerAvailability } from '@/lib/utils/formatters'
+import { formatAbv, getBeerSlug, getBeerAvailability } from '@/lib/utils/formatters'
 import { trackBeerView } from '@/lib/analytics/events'
 import { TopBeerDropsLink } from '@/components/beer/top-beer-drops-link'
 import { UntappdRating } from '@/components/beer/untappd-rating'
@@ -36,8 +36,6 @@ interface BeerCardProps {
   variant?: 'full' | 'minimal'
   priority?: boolean
   headingLevel?: 'h2' | 'h3'
-  /** Minimal variant only. Catalog tiles show a visual CTA; taproom landings omit it. */
-  showCta?: boolean
 }
 
 export const BeerCard = React.memo(function BeerCard({
@@ -48,7 +46,6 @@ export const BeerCard = React.memo(function BeerCard({
   variant = 'full',
   priority = false,
   headingLevel: Heading = 'h3',
-  showCta = true,
 }: BeerCardProps) {
   const { currentLocation } = useLocationContext()
   const beerSlug = getBeerSlug(beer)
@@ -65,24 +62,30 @@ export const BeerCard = React.memo(function BeerCard({
     return (
       <MotionCard>
         {/* Stretched link, not a wrapper: this card contains its own anchor (the
-            Top Beer Drops icon) and a View Details button, and nesting either
-            inside an <a> is invalid. See BeerLinkWrapper for the same pattern. */}
+            Top Beer Drops icon), and nesting it inside an <a> is invalid. See
+            BeerLinkWrapper for the same pattern. */}
         <div className="group relative flex flex-col cursor-pointer transition-transform duration-200">
-          <div className="relative h-64 w-full flex-shrink-0 mb-4 transition-transform duration-200">
+          <div className="relative h-44 md:h-64 w-full flex-shrink-0 mb-4 transition-transform duration-200">
+            {/* Both grids using this tile are two columns on phones. */}
             <BeerImage
               beer={beer}
               className="w-full h-full"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+              sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
               priority={priority}
             />
           </div>
-          <div className="mb-3">
+          <div>
             <Heading className="text-xl font-semibold text-center mb-2">{beer.name}</Heading>
-            <div className="flex items-center justify-center gap-2">
+            <div className="flex flex-wrap items-center justify-center gap-2">
               <UntappdRating rating={beer.untappdRating} />
               <Badge variant="outline" className="text-xs">
                 {beer.type}
               </Badge>
+              {beer.abv > 0 && (
+                <span className="text-xs text-muted-foreground tabular-nums">
+                  {formatAbv(beer.abv)}
+                </span>
+              )}
               {beer.topBeerDrops && (
                 <TopBeerDropsLink
                   url={beer.topBeerDrops}
@@ -92,11 +95,6 @@ export const BeerCard = React.memo(function BeerCard({
               )}
             </div>
           </div>
-          {showCta ? (
-            <Button variant="outline" className="w-full group-hover:bg-secondary" tabIndex={-1}>
-              View Details
-            </Button>
-          ) : null}
           <Link
             href={beerHref}
             prefetch={false}

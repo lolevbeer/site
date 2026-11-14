@@ -28,12 +28,8 @@ vi.mock('@/components/beer/draft-beer-card', () => ({
 }))
 
 vi.mock('@/components/beer/beer-card', () => ({
-  BeerCard: ({ beer, variant, showCta }: { beer: Beer; variant?: string; showCta?: boolean }) =>
-    createElement(
-      'article',
-      { 'data-can-variant': variant ?? '', 'data-show-cta': String(showCta !== false) },
-      beer.name,
-    ),
+  BeerCard: ({ beer, variant }: { beer: Beer; variant?: string }) =>
+    createElement('article', { 'data-can-variant': variant ?? '' }, beer.name),
 }))
 
 const draftBeer: Beer = {
@@ -93,7 +89,6 @@ describe('LocationLanding beer sections', () => {
 
     expect(draftCard.getAttribute('data-draft-compact')).toBe('true')
     expect(canCard.getAttribute('data-can-variant')).toBe('minimal')
-    expect(canCard.getAttribute('data-show-cta')).toBe('false')
     expect(screen.queryByText('A juicy hazy IPA.')).toBeNull()
     expect(screen.getByText('5247 Butler Street')).toBeTruthy()
     expect(screen.getByRole('link', { name: '(412) 336-8965' }).getAttribute('href')).toBe(

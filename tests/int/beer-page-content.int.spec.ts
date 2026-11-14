@@ -109,6 +109,17 @@ describe('BeerPageContent filters', () => {
     )
   })
 
+  it('pins only search and location while scrolling; other filters scroll away (#335)', () => {
+    render(createElement(BeerPageContent, { beers: [beer] }))
+    const pinned = (el: HTMLElement) => el.closest('.sticky')
+
+    expect(pinned(screen.getByRole('searchbox', { name: 'Search beers' }))).toBeTruthy()
+    expect(pinned(screen.getByRole('group', { name: 'Choose location' }))).toBeTruthy()
+    expect(pinned(screen.getByRole('group', { name: 'Filter by availability' }))).toBeNull()
+    expect(pinned(screen.getByRole('combobox', { name: 'Filter by beer style' }))).toBeNull()
+    expect(pinned(screen.getByRole('combobox', { name: 'Filter by beer series' }))).toBeNull()
+  })
+
   it('keeps availability changes wired to shareable URL state', () => {
     render(createElement(BeerPageContent, { beers: [beer] }))
 
