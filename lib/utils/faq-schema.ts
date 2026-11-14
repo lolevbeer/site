@@ -14,6 +14,9 @@ import {
 } from '@/lib/config/locations'
 import { getBaseUrl } from '@/lib/utils/get-base-url'
 
+/** The FAQ's outside-food answer, also shown on /food when no truck is booked. */
+export const OUTSIDE_FOOD_POLICY = 'You are always welcome to bring outside food or order delivery.'
+
 export interface FAQItem {
   question: string
   answer: string
@@ -125,7 +128,7 @@ export const breweryFAQs: FAQItem[] = [
   },
   {
     question: 'Can I bring outside food?',
-    answer: 'You are always welcome to bring outside food or order delivery.',
+    answer: OUTSIDE_FOOD_POLICY,
   },
   {
     question: 'Do you have outdoor seating?',

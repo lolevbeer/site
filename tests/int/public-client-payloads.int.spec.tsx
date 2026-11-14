@@ -6,7 +6,7 @@
  * - the projected props render exactly what the full docs render, and
  * - the serialized props shrink (sizes are logged for the PR description).
  */
-import { cleanup, render } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import React, { createElement } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { FeaturedBeers, FeaturedCans } from '@/components/home/featured-menu'
@@ -44,7 +44,8 @@ vi.mock('@/lib/hooks/use-auth', () => ({
 vi.mock('@/components/ui/page-breadcrumbs', () => ({ PageBreadcrumbs: () => null }))
 // Embla needs layout APIs jsdom lacks; the carousel's children are what we compare.
 vi.mock('@/components/ui/carousel', () => {
-  const Pass = ({ children }: { children?: React.ReactNode }) => createElement('div', null, children)
+  const Pass = ({ children }: { children?: React.ReactNode }) =>
+    createElement('div', null, children)
   return {
     Carousel: Pass,
     CarouselContent: Pass,
@@ -84,7 +85,11 @@ function media(name: string): Media {
     height: 2000,
     focalX: 50,
     focalY: 50,
-    variants: { thumbnail: size('thumbnail', 300), card: size('card', 800), detail: size('detail', 1600) },
+    variants: {
+      thumbnail: size('thumbnail', 300),
+      card: size('card', 800),
+      detail: size('detail', 1600),
+    },
   }
 }
 
@@ -96,7 +101,9 @@ function beer(slug: string, index: number): Beer {
     style: { id: 'style-1', name: 'Hazy IPA', updatedAt: 'x', createdAt: 'x' },
     glass: 'teku',
     abv: 6.5 + index / 10,
-    description: 'A long tasting description that the compact homepage cards never show. '.repeat(3),
+    description: 'A long tasting description that the compact homepage cards never show. '.repeat(
+      3,
+    ),
     hops: 'Citra, Mosaic, Nelson',
     draftPrice: 8,
     halfPour: 5,
@@ -198,7 +205,14 @@ describe('homepage menu projection', () => {
   it('selects the hero cans on the server, identically from projected docs', () => {
     const beers = ['alpha', 'bravo', 'charlie', 'delta', 'echo', 'foxtrot'].map(beer)
     const full = selectHeroBeers(beers, [menu('cans')])
-    expect(full.map((b) => b.slug)).toEqual(['alpha', 'bravo', 'charlie', 'delta', 'echo', 'foxtrot'])
+    expect(full.map((b) => b.slug)).toEqual([
+      'alpha',
+      'bravo',
+      'charlie',
+      'delta',
+      'echo',
+      'foxtrot',
+    ])
     expect(full[0].imageUrl).toContain('alpha-thumbnail.png')
     expect(selectHeroBeers(beers.map(toHomeBeer), [toHomeMenu(menu('cans'))])).toEqual(full)
     // A beer that is not on a cans menu is left out.
@@ -213,11 +227,20 @@ describe('homepage menu projection', () => {
   it('builds the #marketing copy on the server as a few KB of text', () => {
     const comingSoon: NonNullable<ComingSoon['beers']> = [
       { id: 'cs-1', beer: beer('golf', 0), style: null },
-      { id: 'cs-2', beer: null, style: { id: 'style-2', name: 'Pilsner', updatedAt: 'x', createdAt: 'x' } },
+      {
+        id: 'cs-2',
+        beer: null,
+        style: { id: 'style-2', name: 'Pilsner', updatedAt: 'x', createdAt: 'x' },
+      },
     ]
     const input = {
       locations: [
-        { id: 'loc-1', slug: 'lawrenceville', name: 'Lawrenceville', timezone: 'America/New_York' } as Location,
+        {
+          id: 'loc-1',
+          slug: 'lawrenceville',
+          name: 'Lawrenceville',
+          timezone: 'America/New_York',
+        } as Location,
       ],
       draftMenusByLocation: { lawrenceville: menu('draft') },
       cansMenusByLocation: { lawrenceville: menu('cans') },
@@ -255,7 +278,9 @@ describe('homepage menu projection', () => {
     expect(toHomeBeer(first).style).toBeNull()
     const full = render(createElement(FeaturedBeers, { menus: [broken] })).container.innerHTML
     cleanup()
-    expect(render(createElement(FeaturedBeers, { menus: [projected] })).container.innerHTML).toBe(full)
+    expect(render(createElement(FeaturedBeers, { menus: [projected] })).container.innerHTML).toBe(
+      full,
+    )
   })
 
   it('keeps one display URL per image size the homepage reads, and nothing else', () => {
@@ -267,7 +292,15 @@ describe('homepage menu projection', () => {
         card: { url: 'https://blob.example.com/media/alpha-card.png' },
       },
     })
-    for (const key of ['description', 'hops', 'labelVideo', 'labelBase', 'seo', 'positiveReviews', 'upc']) {
+    for (const key of [
+      'description',
+      'hops',
+      'labelVideo',
+      'labelBase',
+      'seo',
+      'positiveReviews',
+      'upc',
+    ]) {
       expect(projected).not.toHaveProperty(key)
     }
   })
@@ -296,6 +329,16 @@ describe('/food client projection', () => {
     specialEvent: false,
   }))
 
+  /** Render /food with every date listed (2099 rows sit behind "Show later dates"). */
+  function renderAllDates(
+    initialSchedules: Parameters<typeof FoodPageClient>[0]['initialSchedules'],
+  ) {
+    const { container } = render(createElement(FoodPageClient, { initialSchedules }))
+    const showLater = screen.queryByRole('button', { name: 'Show later dates' })
+    if (showLater) fireEvent.click(showLater)
+    return container
+  }
+
   it('keeps only the rendered fields, folding start into time', () => {
     const [first] = toFoodPageSchedules(schedules)
     expect(first).toEqual({
@@ -312,9 +355,7 @@ describe('/food client projection', () => {
       { ...schedules[1], vendor: 'Start Only', time: '', start: '5pm' },
       { ...schedules[3], vendor: 'Both Set', date: '2099-02-01', time: '4-9pm', start: '6pm' },
     ]
-    const text = render(
-      createElement(FoodPageClient, { initialSchedules: toFoodPageSchedules(rows) }),
-    ).container.textContent
+    const text = renderAllDates(toFoodPageSchedules(rows)).textContent
     // Each agenda row renders its time right before the vendor name.
     expect(text).toContain('5pmStart Only')
     expect(text).toMatch(/9pmBoth Set/)
@@ -325,11 +366,9 @@ describe('/food client projection', () => {
     const projectedSchedules = toFoodPageSchedules(schedules)
     // The pre-R34 client rendered `time || start`; fold that in for the baseline.
     const asBefore = schedules.map((row) => ({ ...row, time: row.time || row.start }))
-    const full = render(createElement(FoodPageClient, { initialSchedules: asBefore })).container
-      .innerHTML
+    const full = renderAllDates(asBefore).innerHTML
     cleanup()
-    const projected = render(createElement(FoodPageClient, { initialSchedules: projectedSchedules }))
-      .container
+    const projected = renderAllDates(projectedSchedules)
     // Lawrenceville rows only; row 1 has a time range, row 3 only a start time.
     expect(projected.innerHTML).toBe(full)
     expect(projected.textContent).toContain('Vendor 1')
