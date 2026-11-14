@@ -44,6 +44,26 @@ describe('beer hook system lookups', () => {
     )
   })
 
+  // Two queries in flight at a transaction's start both send startTransaction
+  // with one txnNumber; the replica set rejects the second (code 117). Prod,
+  // 2026-11-13: beer creates failed until a retry won the race.
+  it('generateUniqueSlug never runs its two lookups at once on the save transaction', async () => {
+    const { req, find } = mockReq()
+    let inFlight = 0
+    let maxInFlight = 0
+    find.mockImplementation(async () => {
+      maxInFlight = Math.max(maxInFlight, ++inFlight)
+      await new Promise((resolve) => setTimeout(resolve, 0))
+      inFlight--
+      return { docs: [] }
+    })
+
+    await generateUniqueSlug('Akko', 'beers', req)
+
+    expect(find).toHaveBeenCalledTimes(2)
+    expect(maxInFlight).toBe(1)
+  })
+
   it('Beers beforeChange recipe max and uniqueness checks pass req and overrideAccess: true', async () => {
     const { req, find } = mockReq()
     const hook = Beers.hooks!.beforeChange![0] as unknown as AnyHook
