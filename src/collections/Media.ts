@@ -27,7 +27,7 @@ export const Media: CollectionConfig = {
     // The main file's URL is public, so strip EXIF (GPS, device) before Payload
     // sees the upload: auto-rotate, then re-encode in the same format without
     // metadata. Runs before upload processing, so Sharp leaves the main file
-    // as-is and Payload stores no `-original` copy (see mediaSharp).
+    // as-is and Payload keeps no second, untouched copy (see mediaSharp).
     beforeOperation: [
       async ({ operation, req }) => {
         const file = req.file
@@ -62,8 +62,8 @@ export const Media: CollectionConfig = {
  * generated sizes are stored under each doc's `variants` (formerly `sizes`).
  *
  * No main-file `formatOptions`: when Sharp re-encodes the main file, Payload 4
- * also stores the untouched upload as `<name>-original` next to it, at a
- * guessable public Blob URL. EXIF is stripped earlier instead, by Media's
+ * also keeps the untouched upload (the doc's `original`) in public Blob
+ * storage, EXIF included. EXIF is stripped earlier instead, by Media's
  * beforeOperation hook, so the main file stays in its uploaded format.
  */
 export const mediaSharp: SharpCollectionConfig = {

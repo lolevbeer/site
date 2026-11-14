@@ -252,6 +252,31 @@ dev, CI) Payload's console adapter logs each email instead of sending it.
 Form emails are best-effort and sent in `after()` (`lib/email/send.ts`): a
 failed send is logged and never blocks the form or the Slack ping.
 
+## Single sign-on for other apps
+
+Staff can sign in to our other apps with their Lolev admin account. The app
+sends them here, they sign in and click **Allow**, and the app gets a
+short-lived token saying who they are. It is set up in `src/plugins/sso.ts` and
+uses the OAuth server built into `@payloadcms/plugin-mcp` (authorization code
+with PKCE). That plugin's MCP tools are switched off: `/api/mcp` only answers
+with a 401. The Allow page is Payload's own and mentions "MCP tools"; none are
+exposed.
+
+Nothing can sign in until both env vars are set:
+
+- `SSO_REDIRECT_URIS`: comma-separated callback URLs allowed to receive a
+  sign-in, matched exactly (for example `https://staff.example.com/auth/callback`).
+  Any other callback is refused with a 400.
+- `SSO_TOKEN_SECRET`: signs the token. Share it with each app, and keep it
+  separate from `PAYLOAD_SECRET`.
+
+**Connecting an app:** follow
+[Sign in with Lolev: connecting another app](docs/sso-for-other-apps.md). It
+has the endpoints, each step of the sign-in, the token's contents, reference
+code and a table of failures. In short, the app gets a 5-minute signed token
+with the user's ID, email, name and roles, then runs its own session; the token
+is not a Payload login and cannot call this site's API.
+
 ## Slack bot
 
 `/lolevbeer menu` in Slack lists the menus with Edit buttons; the Edit modal
