@@ -11,6 +11,8 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const SECRET = 'sso-test-signing-secret'
 const CALLBACK = 'https://staff.example.com/auth/callback'
+/** A callback that is not on the allowlist. */
+const EVIL_CALLBACK = 'https://evil.example/callback'
 const ORIGIN = 'https://lolev.test'
 const staff = {
   id: 'u1',
@@ -67,11 +69,18 @@ function call(method: 'get' | 'post', path: string, init: CallInit = {}) {
 }
 
 /** An app registers itself, then sends a signed-in staff member to the authorize endpoint. */
-async function startSignIn(
+async function startSignIn({
   redirectURI = CALLBACK,
-  sendRedirectURI = true,
-  extra: { headers?: Record<string, string>; params?: Record<string, string> } = {},
-) {
+  omitRedirectURI = false,
+  headers,
+  params,
+}: {
+  redirectURI?: string
+  /** Register the callback but leave it out of the authorize request. */
+  omitRedirectURI?: boolean
+  headers?: Record<string, string>
+  params?: Record<string, string>
+} = {}) {
   const registered = await call('post', '/mcp/oauth/register', {
     body: JSON.stringify({ client_name: 'Staff app', redirect_uris: [redirectURI] }),
   })
@@ -83,11 +92,11 @@ async function startSignIn(
     code_challenge: createHash('sha256').update(verifier).digest('base64url'),
     code_challenge_method: 'S256',
     state: 'xyz',
-    ...(sendRedirectURI ? { redirect_uri: redirectURI } : {}),
-    ...extra.params,
+    ...(omitRedirectURI ? {} : { redirect_uri: redirectURI }),
+    ...params,
   })
   const authorize = await call('get', '/mcp/oauth/authorize', {
-    headers: extra.headers,
+    headers,
     search: `?${search}`,
     user: staff,
   })
@@ -144,14 +153,17 @@ describe('single sign-on for other apps', () => {
   })
 
   it('refuses a callback URL that is not on the allowlist', async () => {
-    const { authorize } = await startSignIn('https://evil.example/callback')
+    const { authorize } = await startSignIn({ redirectURI: EVIL_CALLBACK })
     expect(authorize.status).toBe(400)
     expect(authorize.headers.get('Location')).toBeNull()
   })
 
   it('refuses a request that leaves the callback URL out', async () => {
     // Payload would fall back to the one URL the client registered, unchecked.
-    const { authorize } = await startSignIn('https://evil.example/callback', false)
+    const { authorize } = await startSignIn({
+      redirectURI: EVIL_CALLBACK,
+      omitRedirectURI: true,
+    })
     expect(authorize.status).toBe(400)
   })
 
@@ -161,7 +173,7 @@ describe('single sign-on for other apps', () => {
     it('reloads once through our own page, so the staff member’s session counts', async () => {
       // Payload ignores the session cookie on cross-site requests; a reload
       // from our own page is same-origin.
-      const { authorize } = await startSignIn(CALLBACK, true, { headers: crossSite })
+      const { authorize } = await startSignIn({ headers: crossSite })
       expect(authorize.status).toBe(200)
       expect(authorize.headers.get('Content-Type')).toContain('text/html')
       expect(authorize.headers.get('Location')).toBeNull()
@@ -172,7 +184,7 @@ describe('single sign-on for other apps', () => {
     })
 
     it('does not reload twice', async () => {
-      const { authorize } = await startSignIn(CALLBACK, true, {
+      const { authorize } = await startSignIn({
         headers: crossSite,
         params: { sso_reloaded: '1' },
       })
@@ -180,7 +192,8 @@ describe('single sign-on for other apps', () => {
     })
 
     it('still refuses a callback URL that is not on the allowlist', async () => {
-      const { authorize } = await startSignIn('https://evil.example/callback', true, {
+      const { authorize } = await startSignIn({
+        redirectURI: EVIL_CALLBACK,
         headers: crossSite,
       })
       expect(authorize.status).toBe(400)

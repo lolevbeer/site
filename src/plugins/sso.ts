@@ -13,7 +13,7 @@
  *    staff to "Allow" it.
  *  - A staff member who is already signed in here is not asked to sign in
  *    again when the other app sends them over (see the reload in
- *    redirectAllowlist).
+ *    guardAuthorize).
  *  - The token is an identity token (issueSsoToken), not a Payload login. It
  *    cannot open the admin or the REST API.
  *  - The MCP endpoint the plugin also mounts (/api/mcp) offers no tools.
@@ -72,9 +72,38 @@ const oauthServer = mcpPlugin({
 })
 
 /**
- * Puts the callback allowlist in front of Payload's authorize endpoint, the one
- * step every sign-in passes through. Runs after the MCP plugin (order 10),
- * which adds that endpoint.
+ * Wraps Payload's authorize handler: refuses callbacks that are not on the
+ * allowlist, and reloads cross-site arrivals once so the session counts.
+ */
+function guardAuthorize(authorize: PayloadHandler): PayloadHandler {
+  return (req) => {
+    const url = req.url ? new URL(req.url) : null
+    // Required, not optional: without it Payload falls back to the one URL
+    // the client registered, which nothing has checked.
+    const redirectURI = url?.searchParams.get('redirect_uri')
+    if (!url || !redirectURI || !allowedRedirectURIs().includes(redirectURI)) {
+      return new Response('This app is not allowed to sign in here.', { status: 400 })
+    }
+    // A browser sent here by the other app makes a cross-site request, and
+    // Payload ignores the session cookie on those, so a signed-in staff
+    // member would get the login form again. Reload the same address from
+    // a page of our own: that request is same-origin and their session
+    // counts. RELOADED keeps it to one reload.
+    if (req.headers.get('Sec-Fetch-Site') === 'cross-site' && !url.searchParams.has(RELOADED)) {
+      url.searchParams.set(RELOADED, '1')
+      const target = (url.pathname + url.search).replaceAll('&', '&amp;')
+      return new Response(`<!doctype html><meta http-equiv="refresh" content="0;url=${target}">`, {
+        headers: { 'Cache-Control': 'no-store', 'Content-Type': 'text/html; charset=utf-8' },
+      })
+    }
+    return authorize(req)
+  }
+}
+
+/**
+ * Puts guardAuthorize in front of Payload's authorize endpoint, the one step
+ * every sign-in passes through. Runs after the MCP plugin (order 10), which
+ * adds that endpoint.
  */
 const redirectAllowlist = definePlugin({
   slug: 'sso-redirect-allowlist',
@@ -84,32 +113,7 @@ const redirectAllowlist = definePlugin({
     const endpoints = (config.endpoints ?? []).map((endpoint) => {
       if (endpoint.method !== 'get' || endpoint.path !== '/mcp/oauth/authorize') return endpoint
       guarded = true
-      const handler: PayloadHandler = (req) => {
-        const url = req.url ? new URL(req.url) : null
-        // Required, not optional: without it Payload falls back to the one URL
-        // the client registered, which nothing has checked.
-        const redirectURI = url?.searchParams.get('redirect_uri')
-        if (!url || !redirectURI || !allowedRedirectURIs().includes(redirectURI)) {
-          return new Response('This app is not allowed to sign in here.', { status: 400 })
-        }
-        // A browser sent here by the other app makes a cross-site request, and
-        // Payload ignores the session cookie on those, so a signed-in staff
-        // member would get the login form again. Reload the same address from
-        // a page of our own: that request is same-origin and their session
-        // counts. RELOADED keeps it to one reload.
-        if (req.headers.get('Sec-Fetch-Site') === 'cross-site' && !url.searchParams.has(RELOADED)) {
-          url.searchParams.set(RELOADED, '1')
-          const target = (url.pathname + url.search).replaceAll('&', '&amp;')
-          return new Response(
-            `<!doctype html><meta http-equiv="refresh" content="0;url=${target}">`,
-            {
-              headers: { 'Cache-Control': 'no-store', 'Content-Type': 'text/html; charset=utf-8' },
-            },
-          )
-        }
-        return endpoint.handler(req)
-      }
-      return { ...endpoint, handler }
+      return { ...endpoint, handler: guardAuthorize(endpoint.handler) }
     })
     // Fail the build rather than run without the allowlist if a Payload upgrade moves the endpoint.
     if (!guarded) throw new Error('SSO: authorize endpoint not found, allowlist not applied')
