@@ -183,3 +183,30 @@ describe('distributor feed import (PA/OH)', () => {
     expect(revalidateForCollection).toHaveBeenCalledWith('distributors')
   })
 })
+
+describe('distributor CSV import cancelled mid-stream', () => {
+  it('still refreshes the map for rows committed after the reader left', async () => {
+    const { importDistributorsCsv } = await import('@/src/endpoints/import-distributors-csv')
+    const csv =
+      'name,address,city,state,zip,phone\n' +
+      'Planet Wine,2004 Mt Vernon Ave,Alexandria,VA,22301,\n' +
+      'Corks,7110 Patterson Ave,Richmond,VA,23229,\n'
+    const payload = mockPayload()
+    let release = () => {}
+    const gate = new Promise<void>((resolve) => (release = resolve))
+    payload.create.mockImplementationOnce(async (args) => {
+      await gate
+      return { id: 'new', ...args.data }
+    })
+
+    const res = await importDistributorsCsv(csvReq(payload, csv))
+    await vi.waitFor(() => expect(payload.create).toHaveBeenCalledTimes(1))
+    await res.body!.cancel()
+    release()
+    await vi.waitFor(() => expect(payload.create).toHaveBeenCalledTimes(2))
+    await new Promise((resolve) => setTimeout(resolve))
+
+    while (afterCallbacks.length) await afterCallbacks.shift()!()
+    expect(revalidateForCollection).toHaveBeenCalledExactlyOnceWith('distributors')
+  })
+})

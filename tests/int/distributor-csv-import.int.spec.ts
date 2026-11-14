@@ -844,6 +844,89 @@ describe('importDistributorsCsv endpoint', () => {
     })
   })
 
+  describe('re-importing an existing pin', () => {
+    const geo = 'name,address,city,state,zip,phone,latitude,longitude\n'
+    const shop = {
+      id: 'd1',
+      name: 'Shop',
+      address: '1 Main',
+      city: 'Richmond',
+      state: 'VA',
+      zip: '',
+      phone: '',
+      region: 'VA',
+      location: [-77, 37],
+    }
+
+    it('moves the pin on a coordinate-only correction', async () => {
+      const handler = await load()
+      const { req, payload } = csvReq(`${geo}Shop,1 Main,Richmond,VA,,,37.5,-77.4\n`, admin, [shop])
+      const evs = await events(await handler(req))
+      expect(payload.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: { location: [-77.4, 37.5] } }),
+      )
+      expect(evs.at(-1)).toMatchObject({ data: { updated: 1, skipped: 0 } })
+    })
+
+    it('updates coordinates and a contact field together', async () => {
+      const handler = await load()
+      const { req, payload } = csvReq(`${geo}Shop,1 Main,Richmond,VA,,7035493444,37.5,-77.4\n`, admin, [
+        shop,
+      ])
+      await events(await handler(req))
+      expect(payload.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: { phone: expect.any(String), location: [-77.4, 37.5] },
+        }),
+      )
+    })
+
+    it('reports the pin change on a dry run without writing', async () => {
+      const handler = await load()
+      const { req, payload } = csvReq(`${geo}Shop,1 Main,Richmond,VA,,,37.5,-77.4\n`, admin, [shop], {
+        dryRun: 'true',
+      })
+      const evs = await events(await handler(req))
+      expect(payload.update).not.toHaveBeenCalled()
+      expect(JSON.stringify(evs)).toContain('Would update: \\"Shop\\" (location)')
+    })
+
+    it('skips a row whose coordinates already match', async () => {
+      const handler = await load()
+      const { req, payload } = csvReq(`${geo}Shop,1 Main,Richmond,VA,,,37,-77\n`, admin, [shop])
+      await events(await handler(req))
+      expect(payload.update).not.toHaveBeenCalled()
+    })
+
+    it('leaves the pin alone when the row gives no coordinates', async () => {
+      const handler = await load()
+      const { req, payload } = csvReq(`${geo}Shop,1 Main,Richmond,VA,,,,\n`, admin, [shop])
+      await events(await handler(req))
+      expect(payload.update).not.toHaveBeenCalled()
+    })
+
+    it('does not treat a geocoded guess for a blank city as a correction', async () => {
+      resolveDistributor.mockResolvedValue({
+        coords: [-70, 30],
+        parts: { city: 'Richmond' },
+        source: 'Mapbox',
+        uncertain: false,
+      })
+      const handler = await load()
+      const { req, payload } = csvReq(`${geo}Shop,1 Main,,VA,,,,\n`, admin, [shop])
+      await events(await handler(req))
+      expect(resolveDistributor).toHaveBeenCalled()
+      expect(payload.update).not.toHaveBeenCalled()
+    })
+
+    it('never writes the bookkeeping field to the distributor', async () => {
+      const handler = await load()
+      const { req, payload } = csvReq(`${geo}New Bar,1 Main,Richmond,VA,,,37.5,-77.4\n`, admin)
+      await events(await handler(req))
+      expect(payload.create.mock.calls[0][0].data).not.toHaveProperty('csvLocation')
+    })
+  })
+
   describe('lookup concurrency', () => {
     it('locates several rows at once but reports them in file order', async () => {
       let inFlight = 0

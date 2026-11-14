@@ -42,7 +42,8 @@ Optional `latitude` and `longitude` columns (decimal degrees, e.g. `52.3719711`,
 `4.8903227`) give the map pin directly. Give both or neither. A row with them is not
 geocoded: the pin is used as-is and the upload only looks up any blank city, state, or
 country from it. A row without them is located from its address; a row that cannot be
-located is reported and not created.
+located is reported and not created. Re-uploading a row with new coordinates moves the
+existing pin. Leaving them blank keeps the pin where it is.
 
 A two-letter `state` with a blank `country` must be a US code: `QC` or `DE` alone is
 ambiguous, so fill `country` for a non-US venue.
