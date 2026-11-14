@@ -33,7 +33,7 @@ export const FAQs: CollectionConfig = {
       type: 'richText',
       label: 'Answer',
       required: true,
-      editor: simpleEditor,
+      editor: simpleEditor(),
       admin: {
         description: 'The answer to the question. Links, bold, italic and lists are allowed.',
       },

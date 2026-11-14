@@ -11,6 +11,8 @@ import {
   BoldFeature,
   buildEditorState,
   FixedToolbarFeature,
+  HeadingFeature,
+  type HeadingFeatureProps,
   ItalicFeature,
   lexicalEditor,
   LinkFeature,
@@ -20,27 +22,38 @@ import {
 } from '@payloadcms/richtext-lexical'
 import { convertLexicalToPlaintext } from '@payloadcms/richtext-lexical/plaintext'
 import type { CollectionBeforeValidateHook } from 'payload'
-import type { Faq } from '@/src/payload-types'
+import type { Faq, Job } from '@/src/payload-types'
 
-/** Stored value of a `simpleEditor` field (FAQ answers and job descriptions share it). */
-export type SimpleRichText = NonNullable<Faq['answerRich']>
+/** Stored value of any `simpleEditor` field: the widest one, headings included. */
+export type SimpleRichText = NonNullable<Job['descriptionRich']>
+
+/** What `textToRichText` builds: paragraphs only, so it fits every `simpleEditor` field. */
+type ParagraphsOnly = NonNullable<Faq['answerRich']>
 
 /**
  * Editor for these fields: paragraphs, bold, italic, links to a URL, and lists.
- * No headings, uploads or links to documents, so every node has a plain-text
+ * No uploads, links to documents or font sizes, so every node has a plain-text
  * form and renders with the site's own styles.
+ *
+ * `headings` are the heading levels staff may add. Pass only the levels that
+ * fit under the heading the page already renders above the field: a job
+ * description sits under the page's h1, so it takes h2 and h3. Leave it empty
+ * where a heading has no place (a FAQ answer inside its accordion item).
  */
-export const simpleEditor = lexicalEditor({
-  features: [
-    ParagraphFeature(),
-    BoldFeature(),
-    ItalicFeature(),
-    LinkFeature({ enabledCollections: [] }),
-    UnorderedListFeature(),
-    OrderedListFeature(),
-    FixedToolbarFeature(),
-  ],
-})
+export function simpleEditor(headings: HeadingFeatureProps['enabledHeadingSizes'] = []) {
+  return lexicalEditor({
+    features: [
+      ParagraphFeature(),
+      ...(headings.length ? [HeadingFeature({ enabledHeadingSizes: headings })] : []),
+      BoldFeature(),
+      ItalicFeature(),
+      LinkFeature({ enabledCollections: [] }),
+      UnorderedListFeature(),
+      OrderedListFeature(),
+      FixedToolbarFeature(),
+    ],
+  })
+}
 
 const LINE_BREAK = { type: 'linebreak', version: 1 } as const
 
@@ -57,7 +70,7 @@ function textNode(text: string) {
 }
 
 /** Plain text as editor state: one paragraph per blank-line block, single newlines as line breaks. */
-export function textToRichText(text: string): SimpleRichText {
+export function textToRichText(text: string): ParagraphsOnly {
   const paragraphs = text
     .split(/\n{2,}/)
     .map((block) => block.trim())
@@ -75,7 +88,7 @@ export function textToRichText(text: string): SimpleRichText {
       version: 1,
     }))
 
-  return buildEditorState<SimpleRichText>({ nodes: paragraphs })
+  return buildEditorState<ParagraphsOnly>({ nodes: paragraphs })
 }
 
 /** Editor state as plain text, paragraphs separated by a blank line. Empty for a missing value. */

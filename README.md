@@ -202,7 +202,8 @@ is the system queue, separate from hiring.
   moment, as the person who scheduled it, and upcoming schedules are listed in
   the same drawer and under Background Jobs.
 - **Rich text:** FAQ answers and job descriptions are rich text: paragraphs,
-  bold, italic, links and lists. Each keeps a hidden plain-text copy, filled on
+  bold, italic, links and lists. Job descriptions also take section headings
+  (h2 and h3, under the page's h1). Each keeps a hidden plain-text copy, filled on
   save, that the structured data and `llms-full.txt` read. The built-in FAQs
   with live hours and phone numbers still live in `lib/utils/faq-schema.ts`.
 - **Hours:** Locations puts all seven existing weekday open/close pairs before

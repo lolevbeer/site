@@ -102,8 +102,9 @@ export const Jobs: CollectionConfig = {
       type: 'richText',
       label: 'Full job description',
       required: true,
-      editor: simpleEditor,
-      admin: { description: 'Links, bold, italic and lists are allowed.' },
+      // Under the job page's h1, so sections start at h2.
+      editor: simpleEditor(['h2', 'h3']),
+      admin: { description: 'Headings, links, bold, italic and lists are allowed.' },
     },
     {
       // Plain-text copy of descriptionRich, filled by syncPlainCopy. Read by the

@@ -33,6 +33,18 @@ describe('textToRichText / richTextToPlain', () => {
     expect(richTextToPlain(textToRichText(text))).toBe(text)
   })
 
+  // Job descriptions may carry h2/h3; the plain copy keeps the heading's text.
+  it('keeps heading text in the plain copy', () => {
+    const state = textToRichText('Body')
+    state.root.children.unshift({
+      ...state.root.children[0],
+      type: 'heading',
+      tag: 'h2',
+      children: [{ type: 'text', text: 'What you will do', version: 1 }],
+    } as never)
+    expect(richTextToPlain(state)).toBe('What you will do\n\nBody')
+  })
+
   it('treats empty input as empty', () => {
     expect(richTextToPlain(textToRichText(''))).toBe('')
     expect(richTextToPlain(null)).toBe('')
