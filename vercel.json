@@ -4,6 +4,10 @@
     {
       "path": "/api/cron/sync-untappd",
       "schedule": "*/5 6-7 * * *"
+    },
+    {
+      "path": "/api/cron/publish-scheduled",
+      "schedule": "*/5 * * * *"
     }
   ],
   "functions": {

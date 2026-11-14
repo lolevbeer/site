@@ -3,6 +3,7 @@ import { getPayload } from 'payload'
 import config from '@/src/payload.config'
 import { revalidateForCollection } from '@/src/plugins/revalidation-plugin'
 import { logger } from '@/lib/utils/logger'
+import { isCronRequest } from '../authorize'
 
 const QUEUE = 'maintenance'
 
@@ -12,8 +13,7 @@ const QUEUE = 'maintenance'
  * execution; this route only wakes the queue. Move the cron window with any new task's schedule.
  */
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get('authorization')
-  if (!process.env.CRON_SECRET || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!isCronRequest(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

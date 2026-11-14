@@ -241,6 +241,7 @@ export interface Config {
   jobs: {
     tasks: {
       syncUntappdRatings: TaskSyncUntappdRatings;
+      schedulePublish: TaskSchedulePublish;
       inline: {
         input: unknown;
         output: unknown;
@@ -1476,7 +1477,7 @@ export interface PayloadJob {
     | {
         executedAt: string;
         completedAt: string;
-        taskSlug: 'inline' | 'syncUntappdRatings';
+        taskSlug: 'inline' | 'syncUntappdRatings' | 'schedulePublish';
         taskID: string;
         input:
           | {
@@ -1507,13 +1508,13 @@ export interface PayloadJob {
           | boolean
           | null;
         parent?: {
-          taskSlug?: ('inline' | 'syncUntappdRatings') | null;
+          taskSlug?: ('inline' | 'syncUntappdRatings' | 'schedulePublish') | null;
           taskID?: string | null;
         };
         id?: string | null;
       }[]
     | null;
-  taskSlug?: ('inline' | 'syncUntappdRatings') | null;
+  taskSlug?: ('inline' | 'syncUntappdRatings' | 'schedulePublish') | null;
   queue?: string | null;
   waitUntil?: string | null;
   processingUntil?: string | null;
@@ -3389,6 +3390,31 @@ export interface TaskSyncUntappdRatings {
     unavailable: number;
     circuitBroken: boolean;
   };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TaskSchedulePublish".
+ */
+export interface TaskSchedulePublish {
+  input: {
+    type?: ('publish' | 'unpublish') | null;
+    locale?: string | null;
+    doc?:
+      | ({
+          relationTo: 'beers';
+          value: string | Beer;
+        } | null)
+      | ({
+          relationTo: 'menus';
+          value: string | Menu;
+        } | null);
+    global?: string | null;
+    user?: {
+      relationTo: 'users';
+      value: string | User;
+    } | null;
+  };
+  output?: unknown;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
