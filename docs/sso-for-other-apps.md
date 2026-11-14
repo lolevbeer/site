@@ -15,7 +15,8 @@ app needs.
 - **A browser-only app** (for example GitHub Pages): it can run the sign-in and
   learn who the user is, but it cannot keep anything private. Its files are
   public, it must never hold `SSO_TOKEN_SECRET`, and the token cannot call this
-  site's API.
+  site's API. Its origin must also be in `allowedOrigins` in
+  `src/payload.config.ts`, or the browser blocks the code exchange.
 - **A job with no person present** (cron, script): no. Every sign-in needs
   someone in a browser to click Allow.
 
@@ -145,7 +146,16 @@ token.
 import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto'
 
 const ISSUER = 'https://lolev.beer/api/mcp/oauth'
-const { LOLEV_SSO_CLIENT_ID, LOLEV_SSO_TOKEN_SECRET, LOLEV_SSO_CALLBACK } = process.env
+
+/** Reads a required setting, so a missing one fails at startup rather than mid sign-in. */
+function setting(name: string): string {
+  const value = process.env[name]
+  if (!value) throw new Error(`Missing ${name}`)
+  return value
+}
+const LOLEV_SSO_CLIENT_ID = setting('LOLEV_SSO_CLIENT_ID')
+const LOLEV_SSO_TOKEN_SECRET = setting('LOLEV_SSO_TOKEN_SECRET')
+const LOLEV_SSO_CALLBACK = setting('LOLEV_SSO_CALLBACK')
 
 /** Step 1: returns the URL to redirect to, and the two values to keep in a cookie. */
 export function startSignIn() {
