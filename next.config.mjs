@@ -120,8 +120,11 @@ const BLOB = 'https://*.public.blob.vercel-storage.com'
  * policy still limits where data can be sent, plugins, <base> and framing.
  * Production builds send reports to Sentry's security endpoint, built from the
  * public DSN; previews only log to the console.
+ * `frameAncestors` is 'none' everywhere except the staff-only draft menu page,
+ * which the admin's live preview pane frames (see the headers below and the
+ * matching X-Frame-Options rules in vercel.json).
  */
-export function cspReportOnly() {
+export function cspReportOnly(frameAncestors = "'none'") {
   const directives = [
     "default-src 'self'",
     `script-src 'self' 'unsafe-inline' ${GTAG}`,
@@ -140,7 +143,7 @@ export function cspReportOnly() {
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
-    "frame-ancestors 'none'",
+    `frame-ancestors ${frameAncestors}`,
   ]
   const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN
   if (dsn && process.env.VERCEL_ENV === 'production') {
@@ -160,6 +163,11 @@ const config = {
     {
       source: '/:path*',
       headers: [{ key: 'Content-Security-Policy-Report-Only', value: cspReportOnly() }],
+    },
+    {
+      // After the rule above: Next sends the last matching value for a repeated key.
+      source: '/m/:menuUrl/preview',
+      headers: [{ key: 'Content-Security-Policy-Report-Only', value: cspReportOnly("'self'") }],
     },
   ],
 }

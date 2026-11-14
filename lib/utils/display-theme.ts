@@ -7,6 +7,7 @@
  * (`.dark` when the device's site theme is dark). Values mirror globals.css;
  * tests/int/contrast-tokens.int.spec.ts fails if they drift.
  */
+import { getPittsburghTheme } from '@/lib/utils/pittsburgh-time'
 
 /** Light mode CSS variables for live displays */
 const lightVars = {
@@ -67,4 +68,11 @@ const darkVars = {
 /** Get the appropriate theme variables for a given theme mode */
 export function getThemeVars(theme: 'light' | 'dark'): React.CSSProperties {
   return theme === 'dark' ? darkVars : lightVars
+}
+
+/** A menu board's theme: its fixed themeMode, or Pittsburgh day/night for "auto". */
+export function getMenuTheme(menu: {
+  themeMode?: 'auto' | 'light' | 'dark' | null
+}): 'light' | 'dark' {
+  return menu.themeMode && menu.themeMode !== 'auto' ? menu.themeMode : getPittsburghTheme()
 }

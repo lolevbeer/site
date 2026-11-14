@@ -97,7 +97,8 @@ describe('Content-Security-Policy-Report-Only (#259)', () => {
   async function cspValue(): Promise<string> {
     const rules = (await nextConfig.headers!()) as Rule[]
     const found = rulesWithKey(rules, 'Content-Security-Policy-Report-Only')
-    expect(found.map((r) => r.source)).toEqual(['/:path*'])
+    // The draft menu page repeats the header to allow same-origin framing (#376).
+    expect(found.map((r) => r.source)).toEqual(['/:path*', '/m/:menuUrl/preview'])
     return found[0].headers.find((h) => h.key === 'Content-Security-Policy-Report-Only')!.value
   }
 
