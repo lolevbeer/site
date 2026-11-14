@@ -133,7 +133,8 @@ export const Beers: CollectionConfig = {
     },
   },
   versions: {
-    drafts: true,
+    // Publish at a set time from the admin; /api/cron/publish-scheduled runs the queue (#370).
+    drafts: { schedulePublish: true },
   },
   hooks: {
     beforeChange: [

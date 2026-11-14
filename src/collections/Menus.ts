@@ -93,7 +93,8 @@ export const Menus: CollectionConfig = {
     delete: adminAccess,
   },
   versions: {
-    drafts: true,
+    // Publish at a set time from the admin; /api/cron/publish-scheduled runs the queue (#370).
+    drafts: { schedulePublish: true },
     maxPerDoc: 1000, // ~1.5 KB each, so ~1.5 MB per menu; feeds the menu-target-history widget
   },
   hooks: {

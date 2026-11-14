@@ -195,6 +195,12 @@ is the system queue, separate from hiring.
   organization or event name); Dated and Recurring Events match organizer and
   summary; Stockists match name, city and address. Other lists search their
   title only. GraphQL is turned off; the API is REST only.
+- **Scheduled publish:** On a beer or menu, the calendar icon beside Save Draft
+  schedules a publish (or unpublish) for a set time; check the Type choice
+  before saving. A job runner wakes every five minutes, so it goes live within
+  five minutes of that time. It publishes whatever the latest draft is at that
+  moment, as the person who scheduled it, and upcoming schedules are listed in
+  the same drawer and under Background Jobs.
 - **Hours:** Locations puts all seven existing weekday open/close pairs before
   images alongside timezone, separate from visitor information and website
   content. Existing field permissions remain unchanged.
