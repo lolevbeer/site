@@ -202,3 +202,62 @@ export function reviewToLegacy(review: BeerReview): LegacyUntappdReview {
     hidden: !review.approved,
   }
 }
+
+/** A Hall of Fame review with the beer it is about, ready for the public page. */
+export interface HallOfFameReview {
+  id: string
+  reviewer: string
+  rating: number
+  text: string
+  /** ISO timestamp when known, otherwise Untappd's original date text. */
+  date?: string
+  url: string
+  image?: string
+  beer: {
+    name: string
+    /** Set only when the beer has a public page to link to. */
+    slug?: string
+  }
+}
+
+/**
+ * Reviews a beer manager flagged for the Hall of Fame page, newest first.
+ *
+ * Runs as an anonymous visitor: `canReadBeerReviews` limits it to approved
+ * docs, and beer read access leaves a draft beer as a bare id, so reviews of
+ * unpublished beers drop out instead of leaking the beer's name. A beer hidden
+ * from the catalog keeps its name but loses the link, since its page 404s.
+ */
+export async function getHallOfFameReviews(payload: Payload): Promise<HallOfFameReview[]> {
+  const reviews = await payload.find({
+    collection: 'beer-reviews',
+    where: {
+      and: [{ hallOfFame: { equals: true } }, { approved: { equals: true } }],
+    },
+    depth: 1,
+    populate: { beers: { name: true, slug: true, hideFromSite: true } },
+    limit: 200,
+    sort: '-reviewedAt',
+    overrideAccess: false,
+  })
+
+  return reviews.docs.flatMap((review): HallOfFameReview[] => {
+    const beer = review.beer
+    if (!review.approved || !beer || typeof beer !== 'object' || !beer.name) return []
+    return [
+      {
+        id: String(review.id),
+        reviewer: review.reviewer,
+        rating: review.rating,
+        text: review.text,
+        date: review.reviewedAt || review.sourceDate || undefined,
+        url: review.sourceUrl,
+        image: review.externalImageUrl || undefined,
+        beer: {
+          name: beer.name,
+          slug: beer.slug && !beer.hideFromSite ? beer.slug : undefined,
+        },
+      },
+    ]
+  })
+}

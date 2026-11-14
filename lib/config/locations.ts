@@ -46,6 +46,7 @@ export const RESERVED_LOCATION_SLUGS = new Set([
   'events',
   'faq',
   'food',
+  'hall-of-fame',
   'home',
   'hours',
   'jobs',
