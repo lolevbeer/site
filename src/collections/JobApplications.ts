@@ -17,6 +17,8 @@ export const JobApplications: CollectionConfig = {
   admin: {
     group: 'Hiring',
     useAsTitle: 'name',
+    // The list's search box; without this it matches the title field only.
+    listSearchableFields: ['name', 'email', 'phone'],
     defaultColumns: ['name', 'job', 'status', 'createdAt', 'email'],
     description: 'Applications from /jobs/[slug]. Completing the form is not a hire.',
   },

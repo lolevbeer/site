@@ -190,6 +190,11 @@ is the system queue, separate from hiring.
   title, with Menu items first and Display settings separate. Blank item rows
   still represent empty taps; blank price overrides use catalog prices. Cans
   retain automatic newest-recipe ordering.
+- **List search:** The search box on Private Event Inquiries, Donation Requests
+  and Job Applications matches name, email and phone (plus company,
+  organization or event name); Dated and Recurring Events match organizer and
+  summary; Stockists match name, city and address. Other lists search their
+  title only. GraphQL is turned off; the API is REST only.
 - **Hours:** Locations puts all seven existing weekday open/close pairs before
   images alongside timezone, separate from visitor information and website
   content. Existing field permissions remain unchanged.

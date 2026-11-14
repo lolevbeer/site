@@ -35,6 +35,8 @@ export const RecurringEvents: CollectionConfig = {
   admin: {
     group: 'Food & Events',
     useAsTitle: 'organizer',
+    // The list's search box; without this it matches the title field only.
+    listSearchableFields: ['organizer', 'summary'],
     defaultColumns: ['organizer', 'year', 'day', 'occurrences', 'location', 'active', 'visibility'],
     description:
       'Monthly series for one calendar year. A dated event with the same name, taproom and date replaces the entire generated occurrence.',

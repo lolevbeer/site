@@ -109,11 +109,9 @@ export default buildConfig({
   // ('' = relative URLs on any domain; 'payload'; '/api'; '/admin').
   cors: allowedOrigins,
   csrf: allowedOrigins,
-  routes: {
-    // GraphQL lives under /api here; Payload's default is /graphql.
-    graphQL: '/api/graphql',
-    graphQLPlayground: '/api/graphql-playground',
-  },
+  // Nothing calls GraphQL (#367): the site reads through the Local API and the
+  // admin through REST. Off, with its route files deleted, so it is not public surface.
+  graphQL: { disable: true },
   // Payload 4 lowered the default query depth to 1; keep v3's 2 until each
   // query that omits `depth` is audited.
   defaultDepth: 2,

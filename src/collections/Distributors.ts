@@ -14,6 +14,8 @@ export const Distributors: CollectionConfig = {
   admin: {
     group: 'Website',
     useAsTitle: 'name',
+    // The list's search box; without this it matches the title field only.
+    listSearchableFields: ['name', 'city', 'address'],
     defaultColumns: ['name', 'city', 'country', 'customerType', 'active'],
     pagination: {
       defaultLimit: 100,
