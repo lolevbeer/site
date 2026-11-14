@@ -103,3 +103,65 @@ describe('useLocationSearch', () => {
     expect(result.current.placeSuggestions[0]?.label).toBe('Pittsburgh')
   })
 })
+
+describe('useLocationSearch explicit search', () => {
+  /** Hold the explicit search's Mapbox response until the test releases it. */
+  function deferFirstFetch() {
+    let release: (() => void) | undefined
+    fetchMock.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          release = () => resolve({ ok: true, json: async () => mapboxBody('Pittsburgh') })
+        }),
+    )
+    fetchMock.mockResolvedValue({ ok: true, json: async () => mapboxBody('Other') })
+    return () => release?.()
+  }
+
+  const outlastDebounce = () =>
+    act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 320))
+    })
+
+  it('is not aborted by the autocomplete debounce armed while typing', async () => {
+    const release = deferFirstFetch()
+    const { result } = renderHook(() => useLocationSearch(null))
+
+    act(() => {
+      result.current.setSearchTerm('Pittsburgh')
+    })
+    let commit: Promise<boolean | null> | undefined
+    act(() => {
+      commit = result.current.commitTypedPlace()
+    })
+    await outlastDebounce()
+    release()
+
+    await act(async () => {
+      await expect(commit).resolves.toBe(true)
+    })
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('reports null, not a failed search, when newer typing supersedes it', async () => {
+    const release = deferFirstFetch()
+    const { result } = renderHook(() => useLocationSearch(null))
+
+    act(() => {
+      result.current.setSearchTerm('Pitt')
+    })
+    let commit: Promise<boolean | null> | undefined
+    act(() => {
+      commit = result.current.commitTypedPlace()
+    })
+    act(() => {
+      result.current.setSearchTerm('Pittsburgh')
+    })
+    await outlastDebounce()
+    release()
+
+    await act(async () => {
+      await expect(commit).resolves.toBeNull()
+    })
+  })
+})

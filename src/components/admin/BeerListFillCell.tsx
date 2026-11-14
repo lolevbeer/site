@@ -149,12 +149,14 @@ export function UntappdCell(props: DefaultCellComponentProps) {
       })
       if (!res.ok) throw new Error(await errorMessage(res, 'Search failed'))
       const body = (await res.json()) as { results?: UntappdSearchResult[] }
-      // A newer query superseded this one while it was in flight.
-      if (lastQuery.current === q) setOptions(toOptions(body.results ?? [], beerName))
+      // A newer query superseded this one while it was in flight, and owns the state now.
+      if (lastQuery.current !== q) return
+      setOptions(toOptions(body.results ?? [], beerName))
+      setLoading(false)
     } catch (err) {
+      if (lastQuery.current !== q) return
       lastQuery.current = null
       setSearchError(err instanceof Error ? err.message : 'Search failed')
-    } finally {
       setLoading(false)
     }
   }

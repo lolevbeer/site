@@ -141,11 +141,15 @@ export const Beers: CollectionConfig = {
         // Compute canSingle from fourPack: MROUND((fourPack/4) + 0.25, 0.25)
         if (data.fourPack && typeof data.fourPack === 'number') {
           data.canSingle = mround(data.fourPack / 4 + 0.25, 0.25)
+        } else if ('fourPack' in data && !data.fourPack) {
+          data.canSingle = null
         }
 
         // Compute halfPour from draftPrice: round(draftPrice / 2) + 1
-        // Skip auto-calculation if halfPourOnly is enabled (manual override)
-        if (data.draftPrice && typeof data.draftPrice === 'number' && !data.halfPourOnly) {
+        // Skip auto-calculation if halfPourOnly is enabled (manual override).
+        // A partial update may omit the flag, so fall back to the saved value.
+        const halfPourOnly = data.halfPourOnly ?? originalDoc?.halfPourOnly
+        if (data.draftPrice && typeof data.draftPrice === 'number' && !halfPourOnly) {
           data.halfPour = Math.round(data.draftPrice / 2) + 1
         }
 

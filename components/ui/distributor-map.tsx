@@ -401,8 +401,8 @@ export function DistributorMap({
         onCommitSearch={async () => {
           const term = searchTerm.trim()
           if (!term) return
-          const ok = await commitTypedPlace()
-          if (!ok) toast.error('Could not find that place')
+          const found = await commitTypedPlace()
+          if (found === false) toast.error('Could not find that place')
         }}
         locationCount={listLocations.length}
         locationTotal={locationTotal}

@@ -190,3 +190,53 @@ describe('Beers list fill cells', () => {
     expect(state.refresh).not.toHaveBeenCalled()
   })
 })
+
+describe('Untappd list search overlap', () => {
+  /** Route each Untappd search to a promise the test settles by hand. */
+  function deferSearches() {
+    const pending = new Map<
+      string,
+      { resolve: (value: Response) => void; reject: (error: Error) => void }
+    >()
+    vi.mocked(fetch).mockImplementation(((url: string) => {
+      const q = new URL(url, 'http://x').searchParams.get('q') ?? ''
+      return new Promise((resolve, reject) => pending.set(q, { resolve, reject }))
+    }) as typeof fetch)
+    return pending
+  }
+
+  const loading = (container: HTMLElement) =>
+    container.querySelector('[data-loading]')?.getAttribute('data-loading')
+
+  it('keeps the newer search when an older one fails after it started', async () => {
+    const pending = deferSearches()
+    const { container } = render(<UntappdCell {...props(null)} />)
+    fireEvent.click(screen.getByRole('button', { name: 'open:Untappd URL' }))
+    fireEvent.change(screen.getByRole('textbox', { name: 'search:Untappd URL' }), {
+      target: { value: 'Lupula IPA' },
+    })
+    await waitFor(() => expect(pending.has('Lupula IPA')).toBe(true))
+
+    pending.get('Lupula')!.reject(new Error('older search failed'))
+    await new Promise((resolve) => setTimeout(resolve))
+    expect(screen.queryByText('older search failed')).toBeNull()
+    expect(loading(container)).toBe('true')
+
+    pending.get('Lupula IPA')!.resolve(respond({ results: searchResults }) as unknown as Response)
+    await screen.findByRole('button', { name: /^option:.*Lupula Light/ })
+    expect(loading(container)).toBe('false')
+  })
+
+  it('clears loading on a lone failure and lets the same query retry', async () => {
+    const pending = deferSearches()
+    const { container } = render(<UntappdCell {...props(null)} />)
+    const open = screen.getByRole('button', { name: 'open:Untappd URL' })
+    fireEvent.click(open)
+    pending.get('Lupula')!.reject(new Error('search failed'))
+    await waitFor(() => expect(loading(container)).toBe('false'))
+
+    pending.clear()
+    fireEvent.click(open)
+    expect(pending.has('Lupula')).toBe(true)
+  })
+})
