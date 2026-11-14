@@ -22,6 +22,8 @@ import {
  */
 export const RecurringEvents: CollectionConfig = {
   slug: 'recurring-events',
+  // Admin deletes go to the trash and can be restored (#368).
+  trash: true,
   labels: {
     singular: 'Recurring Event',
     plural: 'Recurring Events',

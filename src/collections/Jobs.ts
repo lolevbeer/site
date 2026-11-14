@@ -39,6 +39,8 @@ async function locationSlugForJob(
 
 export const Jobs: CollectionConfig = {
   slug: 'jobs',
+  // Admin deletes go to the trash and can be restored (#368).
+  trash: true,
   access: {
     read: ({ req: { user } }) => {
       if (hasRole(user, 'admin')) return true

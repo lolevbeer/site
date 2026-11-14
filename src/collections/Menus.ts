@@ -67,6 +67,8 @@ const canReadMenuVersions: Access = (args) => {
 
 export const Menus: CollectionConfig = {
   slug: 'menus',
+  // Admin deletes go to the trash and can be restored (#368).
+  trash: true,
   admin: {
     group: 'Taproom Operations',
     useAsTitle: 'name',

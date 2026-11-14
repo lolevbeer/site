@@ -11,6 +11,8 @@ import {
 
 export const Events: CollectionConfig = {
   slug: 'events',
+  // Admin deletes go to the trash and can be restored (#368).
+  trash: true,
   access: {
     read: readEvents,
     create: eventManagerAccess,

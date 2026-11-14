@@ -5,6 +5,8 @@ import { isCountryCode } from '@/lib/distributors/country'
 
 export const Distributors: CollectionConfig = {
   slug: 'distributors',
+  // Admin deletes go to the trash and can be restored (#368).
+  trash: true,
   access: {
     read: () => true,
     create: adminAccess,

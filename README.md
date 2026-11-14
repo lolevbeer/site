@@ -213,6 +213,13 @@ is the system queue, separate from hiring.
   Applications have query presets: save a list's filters, columns and sort,
   keep it private or share it with everyone or named people. Only people who
   can open a list can see or make its presets.
+- **Trash:** Deleting a beer, menu, event, recurring event, job opening, FAQ,
+  food vendor, stockist or inbox submission moves it to that list's **Trash**
+  tab, where it can be restored or deleted for good. Only people who could
+  delete before can trash. A trashed item disappears from the site and the
+  public API at once and keeps its slug and recipe number, so a new beer with
+  the same name gets a numbered slug. Inbox submissions hold contact details:
+  empty the trash to remove them for good.
 - **Hours:** Locations puts all seven existing weekday open/close pairs before
   images alongside timezone, separate from visitor information and website
   content. Existing field permissions remain unchanged.

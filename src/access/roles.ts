@@ -1,4 +1,4 @@
-import type { Access, FieldAccess, PayloadRequest } from 'payload'
+import type { Access, CollectionSlug, FieldAccess, PayloadRequest } from 'payload'
 import type { User } from '@/src/payload-types'
 import { relationshipId } from '@/src/utils/relationship-id'
 
@@ -243,4 +243,21 @@ export const createQueryPresetAccess: Access = async ({ req, data }) => {
   if (!req.user) return false
   const readable = await readablePresetCollections(req)
   return data ? readable.includes(data.relatedCollection) : readable.length > 0
+}
+
+/**
+ * Base read rule for every collection (`baseAccess` in payload.config.ts, which
+ * Payload ANDs with each collection's own `read`): signed-out visitors never
+ * get a trashed document.
+ *
+ * Payload hides trash unless a request asks for it, but REST accepts
+ * `?trash=true` from anyone, and then only read access stands in the way.
+ * Signed-in users are left to the collection's rule, so staff can open the
+ * trash view.
+ */
+export const hideTrashFromVisitors: Access = ({ req, slug }) => {
+  const collection = req.payload.collections[slug as CollectionSlug]
+  if (req.user || !collection?.config.trash) return true
+
+  return { deletedAt: { exists: false } }
 }

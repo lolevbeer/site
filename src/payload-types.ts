@@ -448,6 +448,7 @@ export interface Beer {
   };
   updatedAt: string;
   createdAt: string;
+  deletedAt?: string | null;
   _status?: ('draft' | 'published') | null;
 }
 /**
@@ -705,6 +706,7 @@ export interface Menu {
   targetItemCount?: number | null;
   updatedAt: string;
   createdAt: string;
+  deletedAt?: string | null;
   _status?: ('draft' | 'published') | null;
 }
 /**
@@ -966,6 +968,7 @@ export interface Event {
   otherInfo?: string | null;
   updatedAt: string;
   createdAt: string;
+  deletedAt?: string | null;
 }
 /**
  * Public donation asks from /donate. Completing the form is not a yes. Rows are created only by the public form.
@@ -1009,6 +1012,7 @@ export interface DonationRequest {
   ipHash?: string | null;
   updatedAt: string;
   createdAt: string;
+  deletedAt?: string | null;
 }
 /**
  * Requests from /private-events, not confirmed bookings. Marking Booked does not create an Event; enter that booking separately.
@@ -1056,6 +1060,7 @@ export interface EventInquiry {
   ipHash?: string | null;
   updatedAt: string;
   createdAt: string;
+  deletedAt?: string | null;
 }
 /**
  * Monthly series for one calendar year. A dated event with the same name, taproom and date replaces the entire generated occurrence.
@@ -1128,6 +1133,7 @@ export interface RecurringEvent {
   otherInfo?: string | null;
   updatedAt: string;
   createdAt: string;
+  deletedAt?: string | null;
 }
 /**
  * Dated vendor bookings. To replace recurring food, also skip that recurring date in Recurring Food Schedule.
@@ -1173,6 +1179,7 @@ export interface FoodVendor {
   phone?: string | null;
   updatedAt: string;
   createdAt: string;
+  deletedAt?: string | null;
 }
 /**
  * Openings listed at /jobs (footer link). Applications land in Job Applications.
@@ -1250,6 +1257,7 @@ export interface Job {
   };
   updatedAt: string;
   createdAt: string;
+  deletedAt?: string | null;
 }
 /**
  * Applications from /jobs/[slug]. Completing the form is not a hire.
@@ -1274,6 +1282,7 @@ export interface JobApplication {
   ipHash?: string | null;
   updatedAt: string;
   createdAt: string;
+  deletedAt?: string | null;
 }
 /**
  * Public beer-map locations. Bulk import in Tools > Sync > Distributor CSV; preview with Dry run first.
@@ -1390,6 +1399,7 @@ export interface Distributor {
   active?: boolean | null;
   updatedAt: string;
   createdAt: string;
+  deletedAt?: string | null;
 }
 /**
  * Additional FAQs that will be appended to the default FAQs on the FAQ page.
@@ -1418,6 +1428,7 @@ export interface Faq {
   active?: boolean | null;
   updatedAt: string;
   createdAt: string;
+  deletedAt?: string | null;
 }
 /**
  * Backing records for Recurring Food Schedule. Use the grid for routine changes.
@@ -1816,6 +1827,7 @@ export interface BeersSelect<T extends boolean = true> {
       };
   updatedAt?: T;
   createdAt?: T;
+  deletedAt?: T;
   _status?: T;
 }
 /**
@@ -1879,6 +1891,7 @@ export interface MenusSelect<T extends boolean = true> {
   targetItemCount?: T;
   updatedAt?: T;
   createdAt?: T;
+  deletedAt?: T;
   _status?: T;
 }
 /**
@@ -2033,6 +2046,7 @@ export interface EventsSelect<T extends boolean = true> {
   otherInfo?: T;
   updatedAt?: T;
   createdAt?: T;
+  deletedAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2064,6 +2078,7 @@ export interface DonationRequestsSelect<T extends boolean = true> {
   ipHash?: T;
   updatedAt?: T;
   createdAt?: T;
+  deletedAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2093,6 +2108,7 @@ export interface EventInquiriesSelect<T extends boolean = true> {
   ipHash?: T;
   updatedAt?: T;
   createdAt?: T;
+  deletedAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2126,6 +2142,7 @@ export interface RecurringEventsSelect<T extends boolean = true> {
   otherInfo?: T;
   updatedAt?: T;
   createdAt?: T;
+  deletedAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2152,6 +2169,7 @@ export interface FoodVendorsSelect<T extends boolean = true> {
   phone?: T;
   updatedAt?: T;
   createdAt?: T;
+  deletedAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2182,6 +2200,7 @@ export interface JobsSelect<T extends boolean = true> {
   applications?: T;
   updatedAt?: T;
   createdAt?: T;
+  deletedAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2200,6 +2219,7 @@ export interface JobApplicationsSelect<T extends boolean = true> {
   ipHash?: T;
   updatedAt?: T;
   createdAt?: T;
+  deletedAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2220,6 +2240,7 @@ export interface DistributorsSelect<T extends boolean = true> {
   active?: T;
   updatedAt?: T;
   createdAt?: T;
+  deletedAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2233,6 +2254,7 @@ export interface FaqsSelect<T extends boolean = true> {
   active?: T;
   updatedAt?: T;
   createdAt?: T;
+  deletedAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
