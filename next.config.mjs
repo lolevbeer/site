@@ -107,12 +107,61 @@ export function scopeClientHints(rules) {
   })
 }
 
+const ABLY = ['*.ably.net', '*.ably.io', '*.ably-realtime.com']
+const GTAG = 'https://www.googletagmanager.com'
+const GOOGLE_ANALYTICS = [GTAG, 'https://*.google-analytics.com', 'https://*.analytics.google.com']
+const BLOB = 'https://*.public.blob.vercel-storage.com'
+
+/**
+ * Report-only CSP (#259): logs violations, blocks nothing. Built from what the
+ * site loads: GA, Mapbox, Ably (kiosk boards), Sentry, Blob images.
+ * ponytail: script-src keeps 'unsafe-inline' because Next's inline scripts would
+ * need per-request nonces, which force dynamic rendering and drop ISR. The
+ * policy still limits where data can be sent, plugins, <base> and framing.
+ * Production builds send reports to Sentry's security endpoint, built from the
+ * public DSN; previews only log to the console.
+ */
+export function cspReportOnly() {
+  const directives = [
+    "default-src 'self'",
+    `script-src 'self' 'unsafe-inline' ${GTAG}`,
+    "style-src 'self' 'unsafe-inline'",
+    `img-src 'self' data: blob: ${BLOB} https://images.untp.beer https://*.lolev.beer https://api.mapbox.com ${GOOGLE_ANALYTICS.join(' ')}`,
+    "font-src 'self' data:",
+    [
+      "connect-src 'self'",
+      BLOB,
+      'https://api.mapbox.com https://events.mapbox.com',
+      ...ABLY.flatMap((host) => [`https://${host}`, `wss://${host}`]),
+      ...GOOGLE_ANALYTICS,
+      'https://*.ingest.sentry.io https://*.ingest.us.sentry.io',
+    ].join(' '),
+    "worker-src 'self' blob:",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+  ]
+  const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN
+  if (dsn && process.env.VERCEL_ENV === 'production') {
+    const { username, host, pathname } = new URL(dsn)
+    directives.push(`report-uri https://${host}/api${pathname}/security/?sentry_key=${username}`)
+  }
+  return directives.join('; ')
+}
+
 const payloadConfig = withPayload(nextConfig, {
   devBundleServerPackages: false,
 })
 const config = {
   ...payloadConfig,
-  headers: async () => scopeClientHints(await payloadConfig.headers()),
+  headers: async () => [
+    ...scopeClientHints(await payloadConfig.headers()),
+    {
+      source: '/:path*',
+      headers: [{ key: 'Content-Security-Policy-Report-Only', value: cspReportOnly() }],
+    },
+  ],
 }
 
 export default withSentryConfig(config, {
