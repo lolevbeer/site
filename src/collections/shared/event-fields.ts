@@ -59,6 +59,16 @@ export const locationField: Field = {
   index: true,
 }
 
+/** Event tag choices; values are icon names, labels are what staff see. */
+export const eventTagOptions = [
+  { label: 'Music', value: 'music' },
+  { label: 'Food', value: 'utensils' },
+  { label: 'Games', value: 'puzzle' },
+  { label: 'Sports', value: 'sports' },
+  { label: 'Beer Release', value: 'beer-release' },
+  { label: 'Karaoke', value: 'mic-vocal' },
+] as const
+
 /** Unnamed disclosures preserve root-level stored paths in both event collections. */
 export const eventDetailFields: Field[] = [
   {
@@ -103,14 +113,7 @@ export const eventDetailFields: Field[] = [
         label: 'Event tags',
         type: 'select',
         hasMany: true,
-        options: [
-          { label: 'Music', value: 'music' },
-          { label: 'Food', value: 'utensils' },
-          { label: 'Games', value: 'puzzle' },
-          { label: 'Sports', value: 'sports' },
-          { label: 'Beer Release', value: 'beer-release' },
-          { label: 'Karaoke', value: 'mic-vocal' },
-        ],
+        options: [...eventTagOptions],
       },
       {
         name: 'image',

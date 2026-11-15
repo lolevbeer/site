@@ -9,6 +9,7 @@
  * promoted in any order.
  */
 import {
+  AlignFeature,
   BoldFeature,
   buildEditorState,
   FixedToolbarFeature,
@@ -45,12 +46,19 @@ type ParagraphsOnly = NonNullable<Faq['answerRich']> & NonNullable<Job['descript
  * description sits under the page's h1, so it takes h2 and h3; a FAQ answer
  * sits under its question's h3, so it takes h4. Pair more than one level with
  * `validateHeadingOrder`.
+ *
+ * `align` adds the left / centre / right / justify buttons. Only the homepage
+ * introduction turns it on: the other pages set their copy left themselves.
  */
-export function simpleEditor(headings: HeadingFeatureProps['enabledHeadingSizes'] = []) {
+export function simpleEditor(
+  headings: HeadingFeatureProps['enabledHeadingSizes'] = [],
+  { align = false }: { align?: boolean } = {},
+) {
   return lexicalEditor({
     features: [
       ParagraphFeature(),
       ...(headings.length ? [HeadingFeature({ enabledHeadingSizes: headings })] : []),
+      ...(align ? [AlignFeature()] : []),
       BoldFeature(),
       ItalicFeature(),
       LinkFeature({ enabledCollections: [] }),

@@ -1,8 +1,8 @@
 import { validateDistributorImportUrl } from '@/lib/distributors/import-source'
-import type { Field, GlobalConfig } from 'payload'
+import type { Field, GlobalConfig, RichTextField } from 'payload'
 import { adminAccess, adminFieldAccess } from '@/src/access/roles'
 import { isSlackChannel } from '@/lib/slack/mrkdwn'
-import { simpleEditor, syncPlainCopy } from '@/src/fields/rich-text'
+import { simpleEditor, syncPlainCopy, validateHeadingOrder } from '@/src/fields/rich-text'
 import {
   DEFAULT_HERO_DESCRIPTION,
   DEFAULT_ABOUT_PHILOSOPHY,
@@ -12,9 +12,15 @@ import {
 /**
  * A rich text field and the hidden plain-text copy it replaced. Staff edit the
  * rich field; `syncPlainCopy` (in `hooks` below) fills the copy, which builds
- * from before rich text still render.
+ * from before rich text still render. `overrides` replaces the rich field's
+ * editor, validation or admin settings.
  */
-function richCopy(name: string, label: string, defaultText: string): Field[] {
+function richCopy(
+  name: string,
+  label: string,
+  defaultText: string,
+  overrides: Pick<RichTextField, 'editor' | 'validate' | 'admin'> = {},
+): Field[] {
   return [
     {
       name: `${name}Rich`,
@@ -25,6 +31,7 @@ function richCopy(name: string, label: string, defaultText: string): Field[] {
       // reached with it, hiding the saved plain text. syncPlainCopy builds the
       // rich value from the plain default on a first save.
       admin: { description: 'Links, bold, italic and lists are allowed.' },
+      ...overrides,
     },
     { name, type: 'textarea', defaultValue: defaultText, admin: { hidden: true } },
   ]
@@ -62,7 +69,17 @@ export const SiteContent: GlobalConfig = {
                   'Background image for the homepage hero section (recommended: 1920x1080px or larger)',
               },
             },
-            ...richCopy('heroDescription', 'Homepage introduction', DEFAULT_HERO_DESCRIPTION),
+            ...richCopy('heroDescription', 'Homepage introduction', DEFAULT_HERO_DESCRIPTION, {
+              // Under the homepage's h1, so headings start at h2 and stay in order.
+              editor: simpleEditor(['h2', 'h3'], { align: true }),
+              validate: validateHeadingOrder(2),
+              admin: {
+                // Centres the editor like the homepage does (custom.scss).
+                className: 'rich-text-centred',
+                description:
+                  'Shown centred unless you pick another alignment. Headings, links, bold, italic and lists are allowed. Start with Heading 2; use Heading 3 under one.',
+              },
+            }),
           ],
         },
         {

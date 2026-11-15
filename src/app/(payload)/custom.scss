@@ -4,3 +4,9 @@
 .collection-list--beers .cell-image .file__filename {
   display: none;
 }
+
+// Site Content homepage introduction: the homepage centres this copy, so the
+// editor does too. An alignment picked in the toolbar is inline and wins.
+.rich-text-centred .ContentEditable__root {
+  text-align: center;
+}

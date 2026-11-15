@@ -1,0 +1,38 @@
+// "Recurring series" block above the Dated Events table (RecurringEventsPanel).
+// The table itself uses Payload's `.table` styles. Layout only, theme tokens only.
+.recurring-events-panel {
+  // Space before the dated table's own header row.
+  margin-bottom: var(--spacer-4);
+
+  .recurring-events-panel__header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacer-3);
+    // Clear of the list controls' border above; the table header row supplies the gap below.
+    padding-block: var(--spacer-3) var(--spacer-1);
+    // Same page gutter as the search box and "Create New" above.
+    padding-inline: var(--gutter-h);
+
+    h2 {
+      margin: 0 auto 0 0;
+      font-size: var(--text-body-large-font-size, 14px);
+      font-weight: var(--text-body-medium-bold-font-weight);
+    }
+  }
+
+  // Payload lays the linked cell out as a flex row with no gap; keep the
+  // "Paused" pill off the name, and long text inside its column.
+  td.cell--linked > a {
+    gap: var(--spacer-2);
+  }
+
+  td {
+    overflow-wrap: anywhere;
+  }
+
+  .recurring-events-panel__empty {
+    margin: 0;
+    padding-inline: var(--gutter-h);
+    color: var(--color-text-secondary);
+  }
+}

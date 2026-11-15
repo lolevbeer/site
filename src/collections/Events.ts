@@ -28,6 +28,10 @@ export const Events: CollectionConfig = {
     pagination: {
       defaultLimit: 100,
     },
+    components: {
+      // Recurring series (a separate collection) listed above the dated table.
+      beforeListTable: ['@/src/components/admin/RecurringEventsPanel#RecurringEventsPanel'],
+    },
   },
   fields: [
     visibilityField,
