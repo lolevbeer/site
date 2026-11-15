@@ -572,7 +572,7 @@
   }
 }
 
-/* Field validation message: the destructive red pulled toward the body text
+/* Form error text (field messages and the summary alert): the destructive red pulled toward the body text
    colour, so it reads softer than a button-red but keeps more contrast than a
    see-through red would (lighter on dark, darker on light). */
 @utility text-field-error {

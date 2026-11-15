@@ -420,7 +420,7 @@ export function EventInquiryForm({
                 </FormField>
                 <FormField
                   id="inquiry-occasion"
-                  label="Occasion (optional)"
+                  label="Occasion"
                   error={fieldErrors.occasion}
                 >
                   <SegmentedControl
@@ -454,11 +454,11 @@ export function EventInquiryForm({
                 </FormField>
                 <FormField
                   id="inquiry-foodPlan"
-                  label="Food plan (optional)"
+                  label="Food plan"
                   error={fieldErrors.foodPlan}
                 >
                   <SegmentedControl
-                    aria-label="Food plan (optional)"
+                    aria-label="Food plan"
                     className="w-full"
                     options={EVENT_INQUIRY_FOOD_PLANS}
                     value={values.foodPlan || undefined}
@@ -502,7 +502,7 @@ export function EventInquiryForm({
                     </FormField>
                     <FormField
                       id="inquiry-phone"
-                      label="Phone (optional)"
+                      label="Phone"
                       error={fieldErrors.phone}
                     >
                       <Input
@@ -532,7 +532,7 @@ export function EventInquiryForm({
                   </FieldGroup>
                   <FormField
                     id="inquiry-message"
-                    label="Anything else? (optional)"
+                    label="Anything else?"
                     error={fieldErrors.message}
                   >
                     <Textarea
