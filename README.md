@@ -176,8 +176,11 @@ file in that directory except `index.ts`; keep the recovery manifest in
 
 Navigation groups work into **Beer Catalog**, **Taproom Operations**, **Food &
 Events**, **Hiring**, **Website**, and **Administration**. Labels such as Other
-Menu Items (`products`), One-off Food Bookings (`food`), Special Hours
-(`holiday-hours`), Stockists (`distributors`), Staff Accounts (`users`), and Job
+Menu Items (`products`), Food Bookings (`food`), Events Recurring
+(`recurring-events`), Food Recurring (the `recurring-food` global), Event
+Inquiries (`event-inquiries`), Donations (`donation-requests`), Special Hours
+(`holiday-hours`), Content (the `site-content` global), SEO (the `site-seo`
+global), and Job
 Openings (`jobs`) do not rename collection slugs or API fields. Background Jobs
 is the system queue, separate from hiring.
 
@@ -190,10 +193,10 @@ is the system queue, separate from hiring.
   title, with Menu items first and Display settings separate. Blank item rows
   still represent empty taps; blank price overrides use catalog prices. Cans
   retain automatic newest-recipe ordering.
-- **List search:** The search box on Private Event Inquiries, Donation Requests
+- **List search:** The search box on Event Inquiries, Donations
   and Job Applications matches name, email and phone (plus company,
   organization or event name); Dated and Recurring Events match organizer and
-  summary; Stockists match name, city and address. Other lists search their
+  summary; Distributors match name, city and address. Other lists search their
   title only. GraphQL is turned off; the API is REST only.
 - **Scheduled publish:** On a beer or menu, the calendar icon beside Save Draft
   schedules a publish (or unpublish) for a set time; check the Type choice
@@ -207,12 +210,12 @@ is the system queue, separate from hiring.
   FAQ answers a small one (h4, under the question). Each keeps a hidden plain-text copy, filled on
   save, that the structured data and `llms-full.txt` read. The built-in FAQs
   with live hours and phone numbers still live in `lib/utils/faq-schema.ts`.
-  In Site Content, the homepage introduction and the About page's Our
+  In Content, the homepage introduction and the About page's Our
   Philosophy and Our Locations are rich text too, without headings (each sits
   under the page's own heading), with the same hidden plain-text copy.
 - **Applications on a job:** A job opening lists its applications at the bottom
   of the form (admins only; nobody else gets rows).
-- **Saved filters:** Private Event Inquiries, Donation Requests and Job
+- **Saved filters:** Event Inquiries, Donations and Job
   Applications have query presets: save a list's filters, columns and sort,
   keep it private or share it with everyone or named people. Only people who
   can open a list can see or make its presets.
@@ -266,7 +269,7 @@ Widgets use Payload's own widget card, `Pill`, `Button`, `Tabs`, `Tooltip`, docu
 
 - **Coming Soon** — Upcoming beer announcements
 - **Recurring Food** — Year-by-year monthly food truck schedule
-- **Site Content** — Editable site-wide content (about page, etc.)
+- **Content** (`site-content`) — Editable site-wide content (about page, etc.)
 
 ## Email
 
@@ -391,7 +394,7 @@ Donation requests at `/donate`, job applications at `/jobs/[slug]`, and
 private-event inquiries from the form on `/private-events` post a summary to Slack
 `#events` via `chat.postMessage` (same bot token). Invite the **Lolev Beer**
 bot into `#events` or the ping fails with `not_in_channel`. Admins set each
-form's channel in Admin → Site Content → Slack Channels (`#name` or a channel
+form's channel in Admin → Content → Slack Channels (`#name` or a channel
 ID); a blank field falls back to `SLACK_DONATION_CHANNEL`, `SLACK_JOBS_CHANNEL`,
 or `SLACK_EVENT_INQUIRY_CHANNEL` (the job and inquiry channels fall back to the
 donation channel), then `#events`. Invite the bot to any channel you pick, then press **Send test message** under

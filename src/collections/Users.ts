@@ -173,5 +173,5 @@ export const Users: CollectionConfig = {
       ],
     },
   ],
-  labels: { singular: 'Staff Account', plural: 'Staff Accounts' },
+  labels: { singular: 'User', plural: 'Users' },
 }

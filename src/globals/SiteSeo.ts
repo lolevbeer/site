@@ -37,7 +37,7 @@ const introKeys = new Set<string>(INTRO_PAGE_KEYS)
 
 export const SiteSeo: GlobalConfig = {
   slug: 'site-seo',
-  label: 'Search & sharing',
+  label: 'SEO',
   admin: {
     group: 'Website',
     description:

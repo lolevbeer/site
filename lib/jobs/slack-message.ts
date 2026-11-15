@@ -14,7 +14,7 @@ import {
 
 /**
  * Env channel for job pings (`SLACK_JOBS_CHANNEL`, else donation channel, else
- * `#events`). Admin → Site Content → Slack Channels overrides it in `notifyCollectionOnSlack`.
+ * `#events`). Admin → Content → Slack Channels overrides it in `notifyCollectionOnSlack`.
  */
 export function jobApplicationSlackChannel(): string {
   return resolveSlackChannel(

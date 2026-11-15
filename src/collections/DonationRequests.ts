@@ -169,4 +169,5 @@ export const DonationRequests: CollectionConfig = {
     },
   ],
   defaultSort: '-createdAt',
+  labels: { singular: 'Donation', plural: 'Donations' },
 }

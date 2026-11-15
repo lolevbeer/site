@@ -1,7 +1,7 @@
 'use client'
 
 /**
- * "Send test message" under each Slack Channels field (Admin → Site Content).
+ * "Send test message" under each Slack Channels field (Admin → Content).
  * Tests the value as typed, before saving, and says which channel it hit.
  */
 

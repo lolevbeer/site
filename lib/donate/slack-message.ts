@@ -14,7 +14,7 @@ import { DONATION_SLACK_CHANNEL, type ValidatedDonationRequest } from './donatio
 
 /**
  * Env channel for donation pings (`SLACK_DONATION_CHANNEL` or `#events`).
- * Admin → Site Content → Slack Channels overrides it in `notifyCollectionOnSlack`.
+ * Admin → Content → Slack Channels overrides it in `notifyCollectionOnSlack`.
  */
 export function donationSlackChannel(): string {
   return resolveSlackChannel(process.env.SLACK_DONATION_CHANNEL, DONATION_SLACK_CHANNEL)
@@ -81,7 +81,7 @@ export function buildDonationSlackMessage(input: DonationSlackFields): {
         elements: [
           {
             type: 'mrkdwn',
-            text: 'Inbox is Admin → Donation Requests. Completing the form is not a yes. Contact details are in the inbox, not here.',
+            text: 'Inbox is Admin → Donations. Completing the form is not a yes. Contact details are in the inbox, not here.',
           },
         ],
       },

@@ -149,5 +149,5 @@ export const Distributors: CollectionConfig = {
       label: 'Show in directory',
     },
   ],
-  labels: { singular: 'Stockist', plural: 'Stockists' },
+  labels: { singular: 'Distributor', plural: 'Distributors' },
 }

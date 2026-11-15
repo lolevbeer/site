@@ -1,5 +1,5 @@
 /**
- * Public-form Slack pings post to the channel set in Admin → Site Content →
+ * Public-form Slack pings post to the channel set in Admin → Content →
  * Slack Channels when one is set, else the env/default channel the caller
  * passes. An invalid admin value (a typo, a user or DM id) is ignored so PII never
  * lands in a DM.

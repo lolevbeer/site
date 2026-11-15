@@ -192,6 +192,6 @@ export const EventInquiries: CollectionConfig = {
       admin: { hidden: true },
     },
   ],
-  labels: { singular: 'Private Event Inquiry', plural: 'Private Event Inquiries' },
+  labels: { singular: 'Event Inquiry', plural: 'Event Inquiries' },
   defaultSort: '-createdAt',
 }

@@ -3,7 +3,7 @@
  * failure on the inbox row. Unfurls are off so submitted text cannot fetch
  * arbitrary URLs in Slack.
  *
- * The channel set in Admin → Site Content → Slack Channels wins; blank or
+ * The channel set in Admin → Content → Slack Channels wins; blank or
  * invalid falls back to `args.channel` (env var or `#events`).
  */
 

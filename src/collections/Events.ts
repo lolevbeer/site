@@ -56,5 +56,5 @@ export const Events: CollectionConfig = {
     },
     ...eventDetailFields,
   ],
-  labels: { singular: 'Dated Event', plural: 'Dated Events' },
+  labels: { singular: 'Event', plural: 'Events' },
 }

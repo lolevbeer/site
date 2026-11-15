@@ -15,7 +15,7 @@ import { occasionAdminLabel } from '@/lib/events/inquiry'
 
 /**
  * Channel for inquiry pings (`SLACK_EVENT_INQUIRY_CHANNEL`, else the donation
- * channel, else `#events`). Admin → Site Content → Slack Channels overrides it
+ * channel, else `#events`). Admin → Content → Slack Channels overrides it
  * in `notifyCollectionOnSlack`.
  */
 export function eventInquirySlackChannel(): string {
