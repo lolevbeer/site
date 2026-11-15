@@ -102,6 +102,8 @@ export const canReadBeers: Access = ({ req }) => {
 
 export const Beers: CollectionConfig = {
   slug: 'beers',
+  // Admin deletes go to the trash and can be restored (#368).
+  trash: true,
   access: {
     read: canReadBeers,
     // Version history holds unpublished edits, so only beer managers see it.
@@ -167,6 +169,7 @@ export const Beers: CollectionConfig = {
             collection: 'beers',
             sort: '-recipe',
             limit: 1,
+            trash: true, // a trashed beer keeps its recipe number
             // eslint-disable-next-line no-restricted-syntax -- system: next recipe number must count every beer, drafts included
             overrideAccess: true,
             req,
@@ -188,6 +191,7 @@ export const Beers: CollectionConfig = {
               id: { not_equals: originalDoc?.id },
             },
             limit: 1,
+            trash: true, // a trashed beer keeps its recipe number
             // eslint-disable-next-line no-restricted-syntax -- system: recipe uniqueness invariant spans every beer, drafts included
             overrideAccess: true,
             req,

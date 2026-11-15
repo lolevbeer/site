@@ -26,6 +26,8 @@ export const EventInquiries: CollectionConfig = {
   slug: 'event-inquiries',
   // Saved filters, columns and sort for this list, private or shared (#374).
   enableQueryPresets: true,
+  // Admin deletes go to the trash and can be restored (#368).
+  trash: true,
   access: {
     read: eventManagerAccess,
     create: () => false,

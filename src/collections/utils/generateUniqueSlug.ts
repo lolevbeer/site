@@ -34,7 +34,8 @@ function slugify(str: string): string {
  * `takenIn` lists the fields whose values count as taken. Locations add
  * `aliases`, so a rename never claims another taproom's former slug.
  *
- * System code: uniqueness must hold across every document (drafts included),
+ * System code: uniqueness must hold across every document (drafts and trashed
+ * documents included, since a trashed document still holds its unique index),
  * whoever is saving, so the lookups use `overrideAccess: true`. They pass `req`
  * to run inside the save's transaction.
  */
@@ -76,6 +77,7 @@ export async function generateUniqueSlug(
       depth: 0,
       select: { slug: true },
       draft: false,
+      trash: true,
       overrideAccess: true,
       req,
     })
@@ -86,6 +88,7 @@ export async function generateUniqueSlug(
       depth: 0,
       select: { slug: true },
       draft: true,
+      trash: true,
       overrideAccess: true,
       req,
     })

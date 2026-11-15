@@ -3,6 +3,8 @@ import { authenticatedFieldAccess, foodManagerAccess } from '@/src/access/roles'
 
 export const FoodVendors: CollectionConfig = {
   slug: 'food-vendors',
+  // Admin deletes go to the trash and can be restored (#368).
+  trash: true,
   access: {
     read: () => true,
     create: foodManagerAccess,

@@ -27,6 +27,8 @@ export const DonationRequests: CollectionConfig = {
   slug: 'donation-requests',
   // Saved filters, columns and sort for this list, private or shared (#374).
   enableQueryPresets: true,
+  // Admin deletes go to the trash and can be restored (#368).
+  trash: true,
   access: {
     read: eventManagerAccess,
     create: () => false,

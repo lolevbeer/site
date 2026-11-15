@@ -39,7 +39,13 @@ import { importDistributors } from './endpoints/import-distributors'
 import { importDistributorsCsv } from './endpoints/import-distributors-csv'
 import { updateDistributorUrls } from './endpoints/update-distributor-urls'
 import { recalculateBeerPrices } from './endpoints/recalculate-beer-prices'
-import { adminAccess, createQueryPresetAccess, hasRole, queryPresetAccess } from './access/roles'
+import {
+  adminAccess,
+  createQueryPresetAccess,
+  hasRole,
+  hideTrashFromVisitors,
+  queryPresetAccess,
+} from './access/roles'
 import { defaultDashboardLayout } from './admin/dashboard-layout'
 import { syncUntappdRatingsTask } from './jobs/sync-untappd-ratings'
 import { getLocalDevOrigins } from '../lib/config/payload-origins'
@@ -120,6 +126,8 @@ export default buildConfig({
     // everyone, specific users).
     constraints: {},
   },
+  // Applies on top of every collection's own read rule.
+  baseAccess: { collections: { read: hideTrashFromVisitors } },
   cors: allowedOrigins,
   csrf: allowedOrigins,
   // Nothing calls GraphQL (#367): the site reads through the Local API and the

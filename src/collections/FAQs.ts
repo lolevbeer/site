@@ -4,6 +4,8 @@ import { simpleEditor, syncPlainCopy } from '@/src/fields/rich-text'
 
 export const FAQs: CollectionConfig = {
   slug: 'faqs',
+  // Admin deletes go to the trash and can be restored (#368).
+  trash: true,
   access: {
     read: () => true, // Public can read FAQs
     create: adminAccess,
