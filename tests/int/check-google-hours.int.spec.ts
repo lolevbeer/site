@@ -72,8 +72,49 @@ describe('compareHours', () => {
     google.specialDays = [{ date: { year: 2026, month: 11, day: 26 } }]
 
     expect(compareHours({ today: TODAY, location, holidays: [], google })).toEqual([
-      { date: '2026-11-26', site: '4pm–10pm', google: 'Closed', googleSpecial: true },
+      {
+        date: '2026-11-26',
+        site: '4pm–10pm',
+        google: 'Closed',
+        googleSpecial: true,
+        fix: { type: 'closed' },
+      },
     ])
+  })
+
+  it('offers Special Hours for holiday hours Google has and the site lacks', () => {
+    const google = matchingGoogle()
+    google.periods = google.periods!.map((p) => (p.open.date!.day === 25 ? period(25, 12, 18) : p))
+    google.specialDays = [{ date: { year: 2026, month: 11, day: 25 } }]
+
+    expect(compareHours({ today: TODAY, location, holidays: [], google })).toEqual([
+      {
+        date: '2026-11-25',
+        site: '4pm–10pm',
+        google: '12pm–6pm',
+        googleSpecial: true,
+        // Noon and 6pm Eastern (EST) on the day itself.
+        fix: {
+          type: 'modified',
+          hours: { open: '2026-11-25T17:00:00.000Z', close: '2026-11-25T23:00:00.000Z' },
+        },
+      },
+    ])
+  })
+
+  it('offers no fix when the site already has Special Hours for that day', () => {
+    const google = matchingGoogle()
+    google.periods = google.periods!.map((p) => (p.open.date!.day === 26 ? period(26, 12, 18) : p))
+    google.specialDays = [{ date: { year: 2026, month: 11, day: 26 } }]
+
+    const [mismatch] = compareHours({
+      today: TODAY,
+      location,
+      holidays: [thanksgivingClosed],
+      google,
+    })
+    expect(mismatch).toMatchObject({ date: '2026-11-26', site: 'Closed', googleSpecial: true })
+    expect(mismatch.fix).toBeUndefined()
   })
 
   it('reports nothing when a Special Hours entry already matches Google', () => {
@@ -107,7 +148,17 @@ describe('compareHours', () => {
 
     expect(compareHours({ today: TODAY, location, holidays: [shortWednesday], google })).toEqual([
       { date: '2026-11-25', site: '4pm–8pm', google: '4pm–10pm', googleSpecial: false },
-      { date: '2026-11-27', site: '4pm–10pm', google: '12pm–10pm', googleSpecial: false },
+      // No Special Hours entry on the 27th, so Google's hours can be added for it.
+      {
+        date: '2026-11-27',
+        site: '4pm–10pm',
+        google: '12pm–10pm',
+        googleSpecial: false,
+        fix: {
+          type: 'modified',
+          hours: { open: '2026-11-27T17:00:00.000Z', close: '2026-11-28T03:00:00.000Z' },
+        },
+      },
     ])
   })
 
@@ -145,8 +196,25 @@ describe('compareHours', () => {
     ]
 
     expect(compareHours({ today: TODAY, location, holidays: [], google })).toEqual([
-      { date: '2026-11-22', site: '4pm–10pm', google: '12pm–10pm', googleSpecial: false },
+      {
+        date: '2026-11-22',
+        site: '4pm–10pm',
+        google: '12pm–10pm',
+        googleSpecial: false,
+        fix: {
+          type: 'modified',
+          hours: { open: '2026-11-22T17:00:00.000Z', close: '2026-11-23T03:00:00.000Z' },
+        },
+      },
     ])
+  })
+
+  it('offers no fix when Google shows no hours for the whole week', () => {
+    const mismatches = compareHours({ today: TODAY, location, holidays: [], google: {} })
+
+    // Six open days differ, but a listing with no hours at all is not six closures.
+    expect(mismatches).toHaveLength(6)
+    expect(mismatches.every((m) => m.fix === undefined)).toBe(true)
   })
 
   it('skips a day Google cut off at the edge of its seven-day window', () => {
@@ -165,13 +233,15 @@ describe('compareHours', () => {
 describe('runGoogleHoursCheck', () => {
   const find = vi.fn()
   const findGlobal = vi.fn()
-  const payload = { find, findGlobal } as unknown as Payload
+  const create = vi.fn()
+  const payload = { find, findGlobal, create } as unknown as Payload
   const fetchMock = vi.fn()
 
   beforeEach(() => {
     vi.useFakeTimers({ now: new Date('2026-11-22T06:30:00.000Z') })
     vi.stubGlobal('fetch', fetchMock)
     slackApi.mockResolvedValue(true)
+    create.mockResolvedValue({ id: 'h-new' })
     findGlobal.mockResolvedValue({ slackChannels: { hours: '#managers' } })
     find.mockImplementation(async ({ collection }: { collection: string }) => ({
       docs: collection === 'locations' ? [location] : [],
@@ -198,8 +268,11 @@ describe('runGoogleHoursCheck', () => {
     expect(fetchMock.mock.calls[0][0]).toBe('https://places.googleapis.com/v1/places/place-1')
   })
 
-  it('posts the differences to the configured Slack channel', async () => {
-    googleReplies({ periods: [22, 24, 25, 27, 28].map((d) => period(d)) })
+  it('only proposes, in the configured Slack channel, when Special Hours already exist', async () => {
+    find.mockImplementation(async ({ collection }: { collection: string }) => ({
+      docs: collection === 'locations' ? [location] : [thanksgivingClosed],
+    }))
+    googleReplies(matchingGoogle())
 
     await expect(runGoogleHoursCheck(payload, 'key')).resolves.toEqual({
       checked: 1,
@@ -209,7 +282,48 @@ describe('runGoogleHoursCheck', () => {
     expect(method).toBe('chat.postMessage')
     expect(body.channel).toBe('#managers')
     expect(body.text).toContain('Lawrenceville')
-    expect(body.text).toContain('Thu, Nov 26: Google says Closed, the site says 4pm–10pm')
+    expect(body.text).toContain('Thu, Nov 26: Google says 4pm–10pm, the site says Closed')
+    expect(body.text).toContain('If Google is right')
+    // Someone entered that closure, so the job does not overrule it.
+    expect(create).not.toHaveBeenCalled()
+  })
+
+  it('adds Special Hours for an ordinary day that differs from Google', async () => {
+    googleReplies({ periods: [22, 24, 25, 27, 28].map((d) => period(d)) })
+
+    await runGoogleHoursCheck(payload, 'key')
+
+    expect(create.mock.calls[0][0].data).toMatchObject({
+      name: 'Hours from Google',
+      date: '2026-11-26T12:00:00.000Z',
+      type: 'closed',
+    })
+    expect(slackApi.mock.calls[0][1].text).toContain(
+      'Thu, Nov 26: Google says Closed, the site said 4pm–10pm',
+    )
+  })
+
+  it('adds Special Hours for a holiday closure Google has, and says so in Slack', async () => {
+    googleReplies({
+      periods: [22, 24, 25, 27, 28].map((d) => period(d)),
+      specialDays: [{ date: { year: 2026, month: 11, day: 26 } }],
+    })
+
+    await runGoogleHoursCheck(payload, 'key')
+
+    expect(create).toHaveBeenCalledTimes(1)
+    expect(create.mock.calls[0][0]).toMatchObject({
+      collection: 'holiday-hours',
+      overrideAccess: true,
+      data: { date: '2026-11-26T12:00:00.000Z', locations: ['loc-1'], type: 'closed' },
+    })
+    const { text } = slackApi.mock.calls[0][1]
+    expect(text).toContain(
+      'Thu, Nov 26: Google says Closed (holiday hours), the site said 4pm–10pm',
+    )
+    expect(text).toContain('/admin/collections/holiday-hours/h-new|Added Special Hours>')
+    // Nothing is left for a person to decide.
+    expect(text).not.toContain('If Google is right')
   })
 
   it('says so in Slack when Google has no hours for a place ID', async () => {

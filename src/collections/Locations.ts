@@ -315,7 +315,7 @@ export const Locations: CollectionConfig = {
                   label: 'Google place ID',
                   admin: {
                     description:
-                      'Turns on the nightly check of this taproom\'s hours against Google. Look it up at developers.google.com/maps/documentation/places/web-service/place-id (starts with "ChIJ").',
+                      'Turns on the nightly check of this taproom\'s hours against Google, which adds Special Hours for any day Google shows different hours. Look it up at developers.google.com/maps/documentation/places/web-service/place-id (starts with "ChIJ").',
                   },
                 },
               ],

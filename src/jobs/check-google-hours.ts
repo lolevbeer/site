@@ -3,14 +3,20 @@
  *
  * For every active location with a Google place ID, the next seven days of site hours
  * (weekly hours plus Special Hours overrides) are compared with what Google
- * shows for those days, holidays included. Differences are posted to Slack as
- * a proposal; nothing is written to the site, because either side can be the
- * one that is wrong.
+ * shows for those days, holidays included, and every difference is posted to
+ * Slack.
+ *
+ * A differing day that has no Special Hours entry is also fixed: the job adds
+ * an entry that matches Google, holiday or not. So Google wins over the weekly
+ * hours, one day at a time; the weekly hours themselves are never edited. A
+ * day whose Special Hours entry someone already entered stays a proposal, and
+ * so does every day when Google shows no hours at all for the week.
  *
  * Google only publishes holiday hours seven days ahead through the Places API,
  * so that is how early a holiday change can be noticed.
  */
 import type { Payload, TaskConfig } from 'payload'
+import { fromZonedTime } from 'date-fns-tz'
 import type { HolidayHour, Location } from '@/src/payload-types'
 import { WEEKDAYS_FROM_SUNDAY } from '@/lib/types/location'
 import { getTodayEST } from '@/lib/utils/date'
@@ -51,7 +57,13 @@ export interface HoursMismatch {
   google: string
   /** Google marks this day as holiday/special hours. */
   googleSpecial: boolean
+  /** Set when a new Special Hours entry would make the site match Google. */
+  fix?: SpecialHoursFix
 }
+
+/** The `type` and `hours` of a Special Hours entry that copies Google for one day. */
+type SpecialHoursFix =
+  { type: 'closed' } | { type: 'modified'; hours: { open: string; close: string } }
 
 type SiteLocation = Pick<
   Location,
@@ -71,19 +83,20 @@ const googleTime = ({ hour = 0, minute = 0 }: GooglePoint) =>
   formatTime(`${hour}:${String(minute).padStart(2, '0')}`)
 
 /**
- * What the site shows for one YYYY-MM-DD date: the Special Hours override if
- * any, else the weekly hours.
+ * A Google time as the instant Payload stores for a time field: that wall-clock
+ * time in the taproom's timezone. `fallbackDay` is used when Google omits the date.
  */
-function siteHours(location: SiteLocation, holidays: SiteHoliday[], date: string): string {
-  // When two entries cover the same day, the site shows the last one Payload
-  // returns (the `holidayMap` in lib/utils/payload-api.ts), so take the last here too.
-  const holiday = holidays
-    .filter(
-      (h) =>
-        h.date.slice(0, 10) === date &&
-        h.locations.some((l) => (typeof l === 'string' ? l : l.id) === location.id),
-    )
-    .at(-1)
+function googleInstant(point: GooglePoint, fallbackDay: string, timezone: string): string {
+  const day = point.date ? dateKey(point.date) : fallbackDay
+  const time = `${String(point.hour ?? 0).padStart(2, '0')}:${String(point.minute ?? 0).padStart(2, '0')}`
+  return fromZonedTime(`${day}T${time}:00`, timezone).toISOString()
+}
+
+/**
+ * What the site shows for one YYYY-MM-DD date: `holiday` (its Special Hours
+ * entry) if any, else the weekly hours.
+ */
+function siteHours(location: SiteLocation, holiday: SiteHoliday | undefined, date: string): string {
   if (holiday?.type === 'closed') return CLOSED
 
   const hours = holiday ? holiday.hours : location[WEEKDAYS_FROM_SUNDAY[dayOfWeek(date)]]
@@ -119,9 +132,38 @@ export function compareHours(args: {
       todays
         .map((p) => (p.close ? `${googleTime(p.open)}–${googleTime(p.close)}` : 'Open 24 hours'))
         .join(', ') || CLOSED
-    const site = siteHours(args.location, args.holidays, key)
-    if (google !== site)
-      mismatches.push({ date: key, site, google, googleSpecial: special.has(key) })
+    // When two entries cover the same day, the site shows the last one Payload
+    // returns (the `holidayMap` in lib/utils/payload-api.ts), so take the last here too.
+    const holiday = args.holidays
+      .filter(
+        (h) =>
+          h.date.slice(0, 10) === key &&
+          h.locations.some((l) => (typeof l === 'string' ? l : l.id) === args.location.id),
+      )
+      .at(-1)
+    const site = siteHours(args.location, holiday, key)
+    if (google === site) continue
+
+    // Fixable only when nobody has entered Special Hours for the day. Split or
+    // all-night days do not fit one open/close pair. A listing with no hours
+    // for the whole week (marked closed, or its hours removed) is left for a
+    // person: copying it would show the taproom closed all week.
+    let fix: SpecialHoursFix | undefined
+    if (!holiday && periods.length > 0) {
+      const [only, ...rest] = todays
+      const timezone = args.location.timezone || 'America/New_York'
+      if (!only) fix = { type: 'closed' }
+      else if (rest.length === 0 && only.close) {
+        fix = {
+          type: 'modified',
+          hours: {
+            open: googleInstant(only.open, key, timezone),
+            close: googleInstant(only.close, key, timezone),
+          },
+        }
+      }
+    }
+    mismatches.push({ date: key, site, google, googleSpecial: special.has(key), fix })
   }
   return mismatches
 }
@@ -146,8 +188,17 @@ async function fetchGoogleHours(
   return place.currentOpeningHours
 }
 
-/** The Slack message for one taproom: one line per differing day, then what to do. */
-function slackText(location: Pick<Location, 'id' | 'name'>, mismatches: HoursMismatch[]): string {
+/**
+ * The Slack message for one taproom: one line per differing day, then what to
+ * do about the days the job did not fix. `added` maps a date to the ID of the
+ * Special Hours entry the job created for it.
+ */
+function slackText(
+  location: Pick<Location, 'id' | 'name'>,
+  mismatches: HoursMismatch[],
+  added: Map<string, string>,
+): string {
+  const admin = `${getBaseUrl()}/admin/collections`
   const lines = mismatches.map(({ date, site, google, googleSpecial }) => {
     const day = new Date(`${date}T12:00:00Z`).toLocaleDateString('en-US', {
       weekday: 'short',
@@ -155,14 +206,19 @@ function slackText(location: Pick<Location, 'id' | 'name'>, mismatches: HoursMis
       day: 'numeric',
       timeZone: 'UTC',
     })
-    return `• ${day}: Google says ${google}${googleSpecial ? ' (holiday hours)' : ''}, the site says ${site}`
+    const googleSays = `• ${day}: Google says ${google}${googleSpecial ? ' (holiday hours)' : ''}`
+    const entry = added.get(date)
+    return entry
+      ? `${googleSays}, the site said ${site}. <${admin}/holiday-hours/${entry}|Added Special Hours> to match.`
+      : `${googleSays}, the site says ${site}`
   })
-  const admin = `${getBaseUrl()}/admin/collections`
-  return [
-    `*${escapeMrkdwn(location.name)}: hours on Google differ from the site*`,
-    ...lines,
-    `If Google is right, <${admin}/holiday-hours/create|add Special Hours> for a one-off day or <${admin}/locations/${location.id}|change the weekly hours>. If the site is right, fix the Google listing.`,
-  ].join('\n')
+  const text = [`*${escapeMrkdwn(location.name)}: hours on Google differ from the site*`, ...lines]
+  if (added.size < mismatches.length) {
+    text.push(
+      `If Google is right, <${admin}/holiday-hours/create|add Special Hours> for a one-off day or <${admin}/locations/${location.id}|change the weekly hours>. If the site is right, fix the Google listing.`,
+    )
+  }
+  return text.join('\n')
 }
 
 /**
@@ -176,8 +232,20 @@ function slackText(location: Pick<Location, 'id' | 'name'>, mismatches: HoursMis
  * place ID Google has no hours for is reported in Slack instead of thrown: a
  * retry cannot fix it, and a silent skip would look like "no differences".
  *
+ * Google's hours for a differing day with no Special Hours entry are added to
+ * the site (see `HoursMismatch.fix`); the public pages pick the entry up
+ * through the collection's normal revalidation.
+ *
+ * ponytail: a weekly-hours difference is never resolved by these entries, so
+ * it adds one entry per night as each new day enters the seven-day window,
+ * until someone fixes the weekly hours or the Google listing.
+ *
  * ponytail: stateless, so an unresolved difference is re-posted every night
  * until someone fixes one side. Store what was last posted if that gets noisy.
+ *
+ * ponytail: an entry is added before Slack is told. If that Slack post then
+ * fails, the retry finds the site matching and says nothing; the entry is
+ * still recognisable by its "Hours from Google" name. Post first if that ever bites.
  */
 export async function runGoogleHoursCheck(
   payload: Payload,
@@ -262,7 +330,25 @@ export async function runGoogleHoursCheck(
     if (mismatches.length === 0) continue
     result.mismatches += mismatches.length
 
-    await post(slackText(location, mismatches))
+    // ponytail: one entry per taproom per day, even when both taprooms close
+    // for the same holiday. Merge them by hand if the list gets long.
+    const added = new Map<string, string>()
+    for (const { date, fix } of mismatches) {
+      if (!fix) continue
+      const entry = await payload.create({
+        collection: 'holiday-hours',
+        data: {
+          name: 'Hours from Google',
+          date: `${date}T12:00:00.000Z`,
+          locations: [location.id],
+          ...fix,
+        },
+        overrideAccess: true,
+      })
+      added.set(date, String(entry.id))
+    }
+
+    await post(slackText(location, mismatches, added))
   }
   return result
 }
