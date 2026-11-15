@@ -5,6 +5,7 @@ import { cva, type VariantProps } from "class-variance-authority"
 import * as React from "react"
 import { cn } from "@/lib/utils"
 
+import { AlertCircle } from "@/components/icons"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 
@@ -56,7 +57,7 @@ function FieldGroup({ className, ...props }: React.ComponentProps<"div">) {
 }
 
 const fieldVariants = cva(
-  "group/field flex w-full gap-3 data-[invalid=true]:text-destructive",
+  "group/field flex w-full gap-3",
   {
     variants: {
       orientation: {
@@ -227,10 +228,15 @@ function FieldError({
     <div
       role="alert"
       data-slot="field-error"
-      className={cn("text-sm font-normal text-destructive", className)}
+      className={cn(
+        "flex items-start gap-1.5 text-xs font-normal text-field-error",
+        className
+      )}
       {...props}
     >
-      {content}
+      {/* The icon means the error is not signalled by colour alone. */}
+      <AlertCircle aria-hidden className="mt-px size-3.5 shrink-0" />
+      <div className="min-w-0">{content}</div>
     </div>
   )
 }

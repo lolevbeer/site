@@ -74,8 +74,8 @@ describe('SegmentedControl', () => {
       }),
     )
 
-    expect(screen.getByRole('group').className).toContain('min-h-10')
-    expect(screen.getByRole('group').className).not.toMatch(/(^|\s)h-10(\s|$)/)
+    expect(screen.getByRole('group').className).toContain('min-h-9')
+    expect(screen.getByRole('group').className).not.toMatch(/(^|\s)h-9(\s|$)/)
     for (const button of screen.getAllByRole('button')) {
       expect(button.className).not.toContain('whitespace-nowrap')
       expect(button.className).toContain('text-balance')

@@ -26,7 +26,14 @@ import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import { XIcon } from '@/components/icons'
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
-import { Field, FieldGroup, FieldLabel, FieldLegend, FieldSet } from '@/components/ui/field'
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+} from '@/components/ui/field'
 import { FormField, formFieldAria } from '@/components/ui/form-field'
 import { HoneypotField } from '@/components/ui/honeypot-field'
 import { DatePicker } from '@/components/ui/date-picker'
@@ -359,7 +366,7 @@ export function EventInquiryForm({
                         : `${values.otherDates.length} other ${values.otherDates.length === 1 ? 'date' : 'dates'} picked`}
                     </p>
                     {fieldErrors.otherDates ? (
-                      <p className="text-sm text-destructive">{fieldErrors.otherDates}</p>
+                      <FieldError role={undefined}>{fieldErrors.otherDates}</FieldError>
                     ) : null}
                   </div>
                 ) : null}
@@ -413,7 +420,7 @@ export function EventInquiryForm({
                 </FormField>
                 <FormField
                   id="inquiry-occasion"
-                  label="Occasion (optional)"
+                  label="Occasion"
                   error={fieldErrors.occasion}
                 >
                   <SegmentedControl
@@ -447,11 +454,11 @@ export function EventInquiryForm({
                 </FormField>
                 <FormField
                   id="inquiry-foodPlan"
-                  label="Food plan (optional)"
+                  label="Food plan"
                   error={fieldErrors.foodPlan}
                 >
                   <SegmentedControl
-                    aria-label="Food plan (optional)"
+                    aria-label="Food plan"
                     className="w-full"
                     options={EVENT_INQUIRY_FOOD_PLANS}
                     value={values.foodPlan || undefined}
@@ -495,7 +502,7 @@ export function EventInquiryForm({
                     </FormField>
                     <FormField
                       id="inquiry-phone"
-                      label="Phone (optional)"
+                      label="Phone"
                       error={fieldErrors.phone}
                     >
                       <Input
@@ -525,7 +532,7 @@ export function EventInquiryForm({
                   </FieldGroup>
                   <FormField
                     id="inquiry-message"
-                    label="Anything else? (optional)"
+                    label="Anything else?"
                     error={fieldErrors.message}
                   >
                     <Textarea

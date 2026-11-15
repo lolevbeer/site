@@ -309,7 +309,7 @@ describe('EventInquiryForm', () => {
   it('lets a visitor tap a food plan and tap it again to clear it', async () => {
     submitEventInquiry.mockResolvedValue({ ok: false, error: 'x' })
     render(<EventInquiryForm taprooms={taprooms} />)
-    expect(screen.getByRole('group', { name: 'Food plan (optional)' })).toBeTruthy()
+    expect(screen.getByRole('group', { name: 'Food plan' })).toBeTruthy()
     const truck = screen.getByRole('button', { name: 'Food truck' })
     fireEvent.click(truck)
     expect(truck.getAttribute('aria-pressed')).toBe('true')

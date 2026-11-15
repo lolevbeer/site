@@ -61,8 +61,8 @@ export function DatePicker({
           type="button"
           variant="outline"
           className={cn(
-            // Match Input: border-input, h-9, text-base (text-sm from md up), gray focus ring.
-            'h-9 w-full justify-start border-input text-base font-normal md:text-sm focus-visible:ring-[3px] focus-visible:ring-offset-0 focus-visible:border-muted-foreground/60 focus-visible:ring-muted-foreground/20',
+            // Match Input: borderless bg-input fill, h-9, text-base (text-sm from md up), gray focus ring.
+            'h-9 w-full justify-start border-transparent aria-invalid:field-invalid-tint bg-input dark:bg-input/30 text-base font-normal md:text-sm focus-visible:ring-[3px] focus-visible:ring-offset-0 focus-visible:border-muted-foreground/60 focus-visible:ring-muted-foreground/20',
             !value && 'text-muted-foreground',
             className,
           )}
