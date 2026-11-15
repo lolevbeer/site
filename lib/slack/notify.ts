@@ -1,10 +1,12 @@
 /**
- * Best-effort Slack ping after a public form write. Records success or
- * failure on the inbox row. Unfurls are off so submitted text cannot fetch
- * arbitrary URLs in Slack.
+ * Slack channel lookup for system pings, and the best-effort ping after a
+ * public form write.
  *
- * The channel set in Admin → Content → Slack Channels wins; blank or
- * invalid falls back to `args.channel` (env var or `#events`).
+ * `slackChannelFor` reads the channel set in Admin → Content → Slack Channels;
+ * the nightly Google hours check (`src/jobs/check-google-hours.ts`) uses it too.
+ * `notifyCollectionOnSlack` records success or failure on the inbox row, with
+ * unfurls off so submitted text cannot fetch arbitrary URLs in Slack; a blank
+ * or invalid channel setting falls back to `args.channel` (env var or `#events`).
  */
 
 import type { Payload } from 'payload'
@@ -18,7 +20,10 @@ const ADMIN_CHANNEL_FIELD = {
   'event-inquiries': 'eventInquiries',
 } as const
 
-/** The channel set in Admin → Content → Slack Channels for `field`, else `fallback`. */
+/**
+ * The channel set in Admin → Content → Slack Channels for `field`; when that
+ * is blank, invalid or unreadable, `fallback`, which defaults to `#events`.
+ */
 export async function slackChannelFor(
   payload: Payload,
   field: (typeof ADMIN_CHANNEL_FIELD)[keyof typeof ADMIN_CHANNEL_FIELD] | 'hours',

@@ -111,6 +111,44 @@ describe('compareHours', () => {
     ])
   })
 
+  it('uses the same entry as the site when two Special Hours cover one day', () => {
+    // Payload returns the newest entry first; the site shows the oldest.
+    const newerOpen = {
+      id: 'h-3',
+      name: 'Open after all',
+      date: '2026-11-26T12:00:00.000Z',
+      type: 'modified' as const,
+      locations: ['loc-1'],
+      hours: day,
+    }
+    const google = matchingGoogle()
+    google.periods = google.periods!.filter((p) => p.open.date!.day !== 26)
+
+    expect(
+      compareHours({
+        today: TODAY,
+        location,
+        holidays: [newerOpen, thanksgivingClosed],
+        google,
+      }),
+    ).toEqual([])
+  })
+
+  it("still compares today when it starts with the clipped tail of last night's hours", () => {
+    const google = matchingGoogle()
+    google.periods = [
+      {
+        open: { date: { year: 2026, month: 11, day: 22 }, hour: 0, minute: 0, truncated: true },
+        close: { date: { year: 2026, month: 11, day: 22 }, hour: 2, minute: 0 },
+      },
+      ...google.periods!.map((p) => (p.open.date!.day === 22 ? period(22, 12, 22) : p)),
+    ]
+
+    expect(compareHours({ today: TODAY, location, holidays: [], google })).toEqual([
+      { date: '2026-11-22', site: '4pm–10pm', google: '12pm–10pm', googleSpecial: false },
+    ])
+  })
+
   it('skips a day Google cut off at the edge of its seven-day window', () => {
     const google = matchingGoogle()
     google.periods![5].close = {
@@ -174,13 +212,57 @@ describe('runGoogleHoursCheck', () => {
     expect(body.text).toContain('Thu, Nov 26: Google says Closed, the site says 4pm–10pm')
   })
 
-  it('skips a taproom whose hours Google does not know', async () => {
+  it('says so in Slack when Google has no hours for a place ID', async () => {
     googleReplies(undefined)
 
     await expect(runGoogleHoursCheck(payload, 'key')).resolves.toEqual({
       checked: 0,
       mismatches: 0,
     })
+    const { text } = slackApi.mock.calls[0][1]
+    expect(text).toContain('Lawrenceville')
+    expect(text).toContain('no hours')
+    expect(text).toContain('Google place ID')
+  })
+
+  it('only looks at active taprooms', async () => {
+    googleReplies(matchingGoogle())
+
+    await runGoogleHoursCheck(payload, 'key')
+    const locationsQuery = find.mock.calls.find(([args]) => args.collection === 'locations')![0]
+    expect(locationsQuery.where).toEqual({
+      and: [{ 'address.googlePlaceId': { exists: true } }, { active: { equals: true } }],
+    })
+  })
+
+  it('escapes the taproom name in Slack messages', async () => {
+    find.mockImplementation(async ({ collection }: { collection: string }) => ({
+      docs: collection === 'locations' ? [{ ...location, name: 'Tap <!channel> & Grill' }] : [],
+    }))
+    googleReplies({ periods: [22, 24, 25, 27, 28].map((d) => period(d)) })
+
+    await runGoogleHoursCheck(payload, 'key')
+    expect(slackApi.mock.calls[0][1].text).toContain('Tap &lt;!channel&gt; &amp; Grill')
+  })
+
+  it('posts nothing when Google fails for a later taproom, so a retry repeats no message', async () => {
+    const second = {
+      ...location,
+      id: 'loc-2',
+      name: 'Zelienople',
+      address: { googlePlaceId: 'place-2' },
+    }
+    find.mockImplementation(async ({ collection }: { collection: string }) => ({
+      docs: collection === 'locations' ? [location, second] : [],
+    }))
+    // The first taproom differs from Google; the second request fails.
+    fetchMock.mockImplementation(async (url: string) =>
+      url.endsWith('place-1')
+        ? new Response(JSON.stringify({ currentOpeningHours: { periods: [] } }))
+        : new Response('nope', { status: 503 }),
+    )
+
+    await expect(runGoogleHoursCheck(payload, 'key')).rejects.toThrow(/Google Places/)
     expect(slackApi).not.toHaveBeenCalled()
   })
 
@@ -198,6 +280,11 @@ describe('runGoogleHoursCheck', () => {
   it('stays quiet about a missing key while no taproom has a place ID', async () => {
     find.mockResolvedValue({ docs: [] })
 
+    await runGoogleHoursCheck(payload, undefined)
+    expect(slackApi).not.toHaveBeenCalled()
+
+    // A place ID of only spaces is not a place ID.
+    find.mockResolvedValue({ docs: [{ ...location, address: { googlePlaceId: '  ' } }] })
     await runGoogleHoursCheck(payload, undefined)
     expect(slackApi).not.toHaveBeenCalled()
   })

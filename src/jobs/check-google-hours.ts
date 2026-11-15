@@ -1,7 +1,7 @@
 /**
  * Nightly check of each taproom's hours against its Google listing.
  *
- * For every location with a Google place ID, the next seven days of site hours
+ * For every active location with a Google place ID, the next seven days of site hours
  * (weekly hours plus Special Hours overrides) are compared with what Google
  * shows for those days, holidays included. Differences are posted to Slack as
  * a proposal; nothing is written to the site, because either side can be the
@@ -12,10 +12,12 @@
  */
 import type { Payload, TaskConfig } from 'payload'
 import type { HolidayHour, Location } from '@/src/payload-types'
+import { WEEKDAYS_FROM_SUNDAY } from '@/lib/types/location'
 import { getTodayEST } from '@/lib/utils/date'
 import { formatTime } from '@/lib/utils/formatters'
 import { getBaseUrl } from '@/lib/utils/get-base-url'
-import { logger } from '@/lib/utils/logger'
+import { addDays, dayOfWeek } from '@/lib/utils/schedule-heatmap'
+import { escapeMrkdwn } from '@/lib/slack/mrkdwn'
 import { slackChannelFor } from '@/lib/slack/notify'
 import { slackApi } from '@/src/utils/slack-api'
 
@@ -59,42 +61,32 @@ type SiteHoliday = Pick<HolidayHour, 'date' | 'type' | 'hours'> & {
   locations: Array<string | { id: string }>
 }
 
-const WEEKDAYS = [
-  'sunday',
-  'monday',
-  'tuesday',
-  'wednesday',
-  'thursday',
-  'friday',
-  'saturday',
-] as const
 const DAYS_AHEAD = 7
 const CLOSED = 'Closed'
 
 const dateKey = ({ year, month, day }: GoogleDate) =>
   `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
 
-/** The calendar date `offset` days after `key`, at noon UTC so it never shifts a day. */
-const addDays = (key: string, offset: number) =>
-  new Date(new Date(`${key}T12:00:00Z`).getTime() + offset * 86_400_000)
-
-/** YYYY-MM-DD of a date built by `addDays`. */
-const toKey = (date: Date) => date.toISOString().slice(0, 10)
-
 const googleTime = ({ hour = 0, minute = 0 }: GooglePoint) =>
   formatTime(`${hour}:${String(minute).padStart(2, '0')}`)
 
-/** What the site shows for one date: the Special Hours override if any, else the weekly hours. */
-function siteHours(location: SiteLocation, holidays: SiteHoliday[], date: Date): string {
-  const key = toKey(date)
-  const holiday = holidays.find(
-    (h) =>
-      h.date.slice(0, 10) === key &&
-      h.locations.some((l) => (typeof l === 'string' ? l : l.id) === location.id),
-  )
+/**
+ * What the site shows for one YYYY-MM-DD date: the Special Hours override if
+ * any, else the weekly hours.
+ */
+function siteHours(location: SiteLocation, holidays: SiteHoliday[], date: string): string {
+  // When two entries cover the same day, the site shows the last one Payload
+  // returns (the `holidayMap` in lib/utils/payload-api.ts), so take the last here too.
+  const holiday = holidays
+    .filter(
+      (h) =>
+        h.date.slice(0, 10) === date &&
+        h.locations.some((l) => (typeof l === 'string' ? l : l.id) === location.id),
+    )
+    .at(-1)
   if (holiday?.type === 'closed') return CLOSED
 
-  const hours = holiday ? holiday.hours : location[WEEKDAYS[date.getUTCDay()]]
+  const hours = holiday ? holiday.hours : location[WEEKDAYS_FROM_SUNDAY[dayOfWeek(date)]]
   if (!hours?.open || !hours.close) return CLOSED
   const timezone = location.timezone || undefined
   return `${formatTime(hours.open, { timezone })}–${formatTime(hours.close, { timezone })}`
@@ -113,17 +105,21 @@ export function compareHours(args: {
   const mismatches: HoursMismatch[] = []
 
   for (let offset = 0; offset < DAYS_AHEAD; offset++) {
-    const date = addDays(args.today, offset)
-    const key = toKey(date)
-    const todays = periods.filter((p) => p.open.date && dateKey(p.open.date) === key)
-    // A clipped time is not the real opening or closing time, so it proves nothing.
-    if (todays.some((p) => p.open.truncated || p.close?.truncated)) continue
+    const key = addDays(args.today, offset)
+    // A clipped opening time is the tail of hours that began before the window
+    // (last night, running past midnight), so it is not part of this day.
+    const todays = periods.filter(
+      (p) => p.open.date && dateKey(p.open.date) === key && !p.open.truncated,
+    )
+    // A clipped closing time is not the real one. Google does this to a midnight
+    // close on the window's last day; the day is compared in full the next night.
+    if (todays.some((p) => p.close?.truncated)) continue
 
     const google =
       todays
         .map((p) => (p.close ? `${googleTime(p.open)}–${googleTime(p.close)}` : 'Open 24 hours'))
         .join(', ') || CLOSED
-    const site = siteHours(args.location, args.holidays, date)
+    const site = siteHours(args.location, args.holidays, key)
     if (google !== site)
       mismatches.push({ date: key, site, google, googleSpecial: special.has(key) })
   }
@@ -153,7 +149,7 @@ async function fetchGoogleHours(
 /** The Slack message for one taproom: one line per differing day, then what to do. */
 function slackText(location: Pick<Location, 'id' | 'name'>, mismatches: HoursMismatch[]): string {
   const lines = mismatches.map(({ date, site, google, googleSpecial }) => {
-    const day = addDays(date, 0).toLocaleDateString('en-US', {
+    const day = new Date(`${date}T12:00:00Z`).toLocaleDateString('en-US', {
       weekday: 'short',
       month: 'short',
       day: 'numeric',
@@ -163,20 +159,22 @@ function slackText(location: Pick<Location, 'id' | 'name'>, mismatches: HoursMis
   })
   const admin = `${getBaseUrl()}/admin/collections`
   return [
-    `*${location.name}: hours on Google differ from the site*`,
+    `*${escapeMrkdwn(location.name)}: hours on Google differ from the site*`,
     ...lines,
     `If Google is right, <${admin}/holiday-hours/create|add Special Hours> for a one-off day or <${admin}/locations/${location.id}|change the weekly hours>. If the site is right, fix the Google listing.`,
   ].join('\n')
 }
 
 /**
- * Compares every location that has a Google place ID and posts one Slack
- * message per taproom with differences. Throws when Google is down or
- * rate-limiting, or when Slack fails, so the task retries.
+ * Compares every active location that has a Google place ID and posts one
+ * Slack message per taproom with differences. Throws when Google is down or
+ * rate-limiting, or when Slack fails, so the task retries. Google is asked
+ * about every taproom before anything is posted, so a failed Google request
+ * retries the whole run without repeating a message.
  *
- * A missing API key, or a request Google rejects (bad key or place ID), is
- * reported in Slack instead of thrown: a retry cannot fix it, and a silent
- * skip would look like "no differences".
+ * A missing API key, a request Google rejects (bad key or place ID), or a
+ * place ID Google has no hours for is reported in Slack instead of thrown: a
+ * retry cannot fix it, and a silent skip would look like "no differences".
  *
  * ponytail: stateless, so an unresolved difference is re-posted every night
  * until someone fixes one side. Store what was last posted if that gets noisy.
@@ -191,7 +189,9 @@ export async function runGoogleHoursCheck(
   const [locations, holidays, channel] = await Promise.all([
     payload.find({
       collection: 'locations',
-      where: { 'address.googlePlaceId': { exists: true } },
+      where: {
+        and: [{ 'address.googlePlaceId': { exists: true } }, { active: { equals: true } }],
+      },
       limit: 100,
       depth: 0,
       overrideAccess: true,
@@ -202,7 +202,7 @@ export async function runGoogleHoursCheck(
       where: {
         and: [
           { date: { greater_than_equal: today } },
-          { date: { less_than: toKey(addDays(today, DAYS_AHEAD)) } },
+          { date: { less_than: addDays(today, DAYS_AHEAD) } },
         ],
       },
       limit: 100,
@@ -223,26 +223,36 @@ export async function runGoogleHoursCheck(
     if (!posted) throw new Error(`Slack post about Google hours to ${channel} failed`)
   }
 
+  // A place ID of only spaces is not a place ID.
+  const taprooms = locations.docs.flatMap((location) => {
+    const placeId = location.address?.googlePlaceId?.trim()
+    return placeId ? [{ location, placeId }] : []
+  })
+
   const result = { checked: 0, mismatches: 0 }
   if (!apiKey) {
     // Quiet until a taproom has a place ID: before that the check is simply not set up.
-    if (locations.docs.length > 0) {
+    if (taprooms.length > 0) {
       await post('*Google hours check is not running:* `GOOGLE_PLACES_API_KEY` is not set.')
     }
     return result
   }
 
-  for (const location of locations.docs) {
-    const placeId = location.address?.googlePlaceId?.trim()
-    if (!placeId) continue
-    const google = await fetchGoogleHours(placeId, apiKey)
+  const replies = await Promise.all(
+    taprooms.map(({ placeId }) => fetchGoogleHours(placeId, apiKey)),
+  )
+  for (const [index, { location }] of taprooms.entries()) {
+    const google = replies[index]
+    const notRunning = `*${escapeMrkdwn(location.name)}: Google hours check is not running.*`
     if (!google) {
-      logger.warn(`Google has no hours for ${location.name}`, { placeId })
+      await post(
+        `${notRunning} Google has no hours for this taproom's Google place ID. Check the place ID and that the Google listing has hours.`,
+      )
       continue
     }
     if ('rejected' in google) {
       await post(
-        `*${location.name}: Google hours check is not running.* Google rejected the request (HTTP ${google.rejected}). Check \`GOOGLE_PLACES_API_KEY\` and this taproom's Google place ID.`,
+        `${notRunning} Google rejected the request (HTTP ${google.rejected}). Check \`GOOGLE_PLACES_API_KEY\` and this taproom's Google place ID.`,
       )
       continue
     }
