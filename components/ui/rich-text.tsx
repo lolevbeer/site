@@ -1,5 +1,6 @@
 /**
- * Renders staff-written rich text (FAQ answers, job descriptions) with the
+ * Renders staff-written rich text (FAQ answers, job descriptions, the homepage
+ * introduction and About page sections) with the
  * site's link and list styles. The editor for these fields allows paragraphs,
  * bold, italic, links and lists, plus h2/h3 on job descriptions and h4 on FAQ answers (see `simpleEditor` in src/fields/rich-text.ts).
  */

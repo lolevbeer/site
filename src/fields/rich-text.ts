@@ -1,9 +1,10 @@
 /**
- * Rich text for short staff-written copy (FAQ answers, job descriptions; #375).
+ * Rich text for short staff-written copy: FAQ answers, job descriptions (#375),
+ * and the Site Content homepage introduction and About page sections.
  *
  * Each rich field sits beside the plain-text field it replaced. Staff edit the
  * rich field; `syncPlainCopy` keeps the plain field as a text copy. The copy is
- * what structured data and llms-full.txt read, and what a build from before
+ * what structured data and llms-full.txt read (FAQs, jobs), and what a build from before
  * this change (or a rollback) still renders, so the two can be deployed and
  * promoted in any order.
  */
@@ -21,12 +22,15 @@ import {
   UnorderedListFeature,
 } from '@payloadcms/richtext-lexical'
 import { convertLexicalToPlaintext } from '@payloadcms/richtext-lexical/plaintext'
-import type { CollectionBeforeValidateHook, RichTextField } from 'payload'
+import type { CollectionBeforeValidateHook, GlobalBeforeValidateHook, RichTextField } from 'payload'
 import { richText as defaultRichTextValidate } from 'payload/shared'
-import type { Faq, Job } from '@/src/payload-types'
+import type { Faq, Job, SiteContent } from '@/src/payload-types'
 
 /** Stored value of a `simpleEditor` field, whichever heading levels it allows. */
-export type SimpleRichText = NonNullable<Faq['answerRich']> | NonNullable<Job['descriptionRich']>
+export type SimpleRichText =
+  | NonNullable<Faq['answerRich']>
+  | NonNullable<Job['descriptionRich']>
+  | NonNullable<SiteContent['heroDescriptionRich']>
 
 /** What `textToRichText` builds: paragraphs only, so it fits every `simpleEditor` field. */
 type ParagraphsOnly = NonNullable<Faq['answerRich']> & NonNullable<Job['descriptionRich']>
@@ -127,14 +131,19 @@ export function richTextToPlain(state: SimpleRichText | null | undefined): strin
 /**
  * beforeValidate hook that keeps `plainField` and `richField` in step.
  *
- * On update Payload passes the whole merged document, so both fields are always
- * present and the change against the saved document decides:
+ * Works on a collection or a global. A collection update passes the whole
+ * merged document; a global update passes only what the caller sent. Either
+ * way the change against the saved document decides:
  * - the rich field changed (the admin form) → rewrite the plain copy;
- * - only the plain field changed, or there is no rich value yet (scripts,
- *   seeds, older API callers) → rebuild the rich field from the plain text;
+ * - only the plain field changed, or no rich value is sent or saved yet
+ *   (scripts, seeds, older API callers) → rebuild the rich field from the
+ *   plain text;
  * - neither changed → nothing.
  */
-export function syncPlainCopy(richField: string, plainField: string): CollectionBeforeValidateHook {
+export function syncPlainCopy(
+  richField: string,
+  plainField: string,
+): CollectionBeforeValidateHook & GlobalBeforeValidateHook {
   return ({ data, originalDoc }) => {
     if (!data) return data
 
@@ -145,7 +154,7 @@ export function syncPlainCopy(richField: string, plainField: string): Collection
 
     if (richChanged) {
       data[plainField] = richTextToPlain(rich)
-    } else if (plainChanged || (!rich && typeof plain === 'string')) {
+    } else if (plainChanged || (!rich && !originalDoc?.[richField] && typeof plain === 'string')) {
       data[richField] = textToRichText(plain)
     }
 

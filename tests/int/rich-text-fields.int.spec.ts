@@ -1,5 +1,6 @@
 /**
- * Rich text for FAQ answers and job descriptions (#375). The rich field is what
+ * Rich text for FAQ answers, job descriptions (#375) and the Site Content
+ * homepage introduction and About page copy. The rich field is what
  * staff edit; the original text field stays as a plain copy kept in step by a
  * hook, so structured data, llms-full.txt, older builds and rollbacks keep
  * reading plain text.
@@ -17,6 +18,8 @@ import {
 import { FAQs } from '@/src/collections/FAQs'
 import { Jobs } from '@/src/collections/Jobs'
 import { up } from '@/src/migrations/20261114_170000_rich_text_faq_jobs'
+import { SiteContent } from '@/src/globals/SiteContent'
+import { up as upSiteContent } from '@/src/migrations/20261114_213000_rich_text_site_content'
 
 type Hook = (args: {
   data?: Record<string, unknown>
@@ -187,5 +190,82 @@ describe('migration 20261114_170000_rich_text_faq_jobs', () => {
     expect(faqs.docs[0].answer).toBe('Old answer\n\nSecond paragraph')
     expect(faqs.docs[1].answerRich).toBe(already)
     expect(richTextToPlain(jobs.docs[0].descriptionRich as never)).toBe('Pour beer.')
+  })
+})
+
+// Site Content saves can carry part of the global (API callers), unlike the
+// merged document a collection update gets.
+describe('syncPlainCopy on a partial save', () => {
+  const hook = syncPlainCopy('heroDescriptionRich', 'heroDescription') as unknown as Hook
+
+  it('keeps saved formatting when only the unchanged plain copy is sent', async () => {
+    const saved = { heroDescriptionRich: textToRichText('Saved'), heroDescription: 'Saved' }
+    const data: Record<string, unknown> = { heroDescription: 'Saved' }
+    await hook({ data, originalDoc: saved })
+    expect(data).toEqual({ heroDescription: 'Saved' })
+  })
+})
+
+describe('site content', () => {
+  const tabs = SiteContent.fields[0] as { tabs: { fields: Record<string, unknown>[] }[] }
+  const fields = tabs.tabs.flatMap((tab) => tab.fields) as {
+    name?: string
+    type: string
+    defaultValue?: unknown
+    admin?: { hidden?: boolean }
+  }[]
+
+  it.each([
+    ['heroDescriptionRich', 'heroDescription'],
+    ['aboutPhilosophyRich', 'aboutPhilosophy'],
+    ['aboutLocationsRich', 'aboutLocations'],
+  ] as const)('staff edit %s, and %s is a hidden plain copy that keeps the default', (rich, plain) => {
+    const richField = fields.find((f) => f.name === rich)
+    const plainField = fields.find((f) => f.name === plain)
+    expect(richField?.type).toBe('richText')
+    expect(plainField?.type).toBe('textarea')
+    expect(plainField?.admin?.hidden).toBe(true)
+    // A default on the rich field would mask saved plain text before the migration runs.
+    expect(richField?.defaultValue).toBeUndefined()
+    expect(typeof plainField?.defaultValue).toBe('string')
+    expect(SiteContent.hooks?.beforeValidate).toHaveLength(3)
+  })
+})
+
+describe('migration 20261114_213000_rich_text_site_content', () => {
+  function fakeGlobals(doc: Record<string, unknown> | null) {
+    return {
+      collection: {
+        findOne: async () => doc,
+        updateOne: async (_where: unknown, update: { $set: Record<string, unknown> }) => {
+          Object.assign(doc!, update.$set)
+        },
+      },
+    }
+  }
+
+  it('fills each missing rich field from its plain text and leaves converted ones alone', async () => {
+    const already = textToRichText('Already rich')
+    const doc: Record<string, unknown> = {
+      globalType: 'site-content',
+      heroDescription: 'Hero\n\nSecond paragraph',
+      aboutPhilosophy: 'Plain copy',
+      aboutPhilosophyRich: already,
+    }
+    const payload = { db: { globals: fakeGlobals(doc) } }
+
+    await upSiteContent({ payload } as never)
+    await upSiteContent({ payload } as never)
+
+    expect(richTextToPlain(doc.heroDescriptionRich as never)).toBe('Hero\n\nSecond paragraph')
+    expect(doc.aboutPhilosophyRich).toBe(already)
+    // Never saved in the CMS: nothing to convert, pages use the field default.
+    expect(doc.aboutLocationsRich).toBeUndefined()
+  })
+
+  it('does nothing when Site Content has never been saved', async () => {
+    await expect(
+      upSiteContent({ payload: { db: { globals: fakeGlobals(null) } } } as never),
+    ).resolves.toBeUndefined()
   })
 })

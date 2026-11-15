@@ -18,7 +18,8 @@ import type { HeroBeer } from '@/lib/utils/public-client-payloads'
 interface HeroSectionProps {
   /** Cans with thumbnails for the carousel, selected on the server (selectHeroBeers). */
   beers: HeroBeer[]
-  heroDescription?: string
+  /** Homepage introduction, rendered by the server page (rich text or plain text). */
+  heroDescription?: React.ReactNode
   heroImageUrl?: string | null
 }
 
@@ -123,9 +124,9 @@ export function HeroSection({ beers, heroDescription, heroImageUrl }: HeroSectio
         </BlurFade>
         {heroDescription && (
           <BlurFade delay={0.2}>
-            <p className="mt-0 mb-0 text-balance text-base md:text-lg text-foreground max-w-4xl px-4 whitespace-pre-line">
+            <div className="text-balance text-base md:text-lg text-foreground max-w-4xl px-4 whitespace-pre-line">
               {heroDescription}
-            </p>
+            </div>
           </BlurFade>
         )}
 

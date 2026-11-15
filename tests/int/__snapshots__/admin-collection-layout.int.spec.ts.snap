@@ -1548,11 +1548,17 @@ exports[`persistent field contracts > site-content retains its stored paths and 
 Both locations offer a curated selection of our freshest draft beers and canned offerings. We regularly host food, live events, and community gatherings, creating spaces where people can connect over a good beer.",
     "type": "textarea",
   },
+  "aboutLocationsRich": {
+    "type": "richText",
+  },
   "aboutPhilosophy": {
     "defaultValue": "We focus on creating beers that are purposeful and refined.
 
 Our approach combines traditional brewing techniques with modern innovation, always in service of flavor and quality. We source the finest ingredients, obsess over every detail of the brewing process, and refine our recipes.",
     "type": "textarea",
+  },
+  "aboutPhilosophyRich": {
+    "type": "richText",
   },
   "distributorOhUrl": {
     "access": [
@@ -1577,6 +1583,9 @@ Our approach combines traditional brewing techniques with modern innovation, alw
 
 We believe that beer should be thoughtful and stimulating. Each beer we create is intended to engage your senses, crafted with attention to flavor, balance, and the experience.",
     "type": "textarea",
+  },
+  "heroDescriptionRich": {
+    "type": "richText",
   },
   "heroImage": {
     "relationTo": "media",
