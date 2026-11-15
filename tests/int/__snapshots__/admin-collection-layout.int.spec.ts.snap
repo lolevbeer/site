@@ -974,6 +974,9 @@ exports[`persistent field contracts > locations retains its stored paths and val
   "address.directionsUrl": {
     "type": "text",
   },
+  "address.googlePlaceId": {
+    "type": "text",
+  },
   "address.state": {
     "type": "text",
   },
@@ -1602,6 +1605,10 @@ We believe that beer should be thoughtful and stimulating. Each beer we create i
     "validate": true,
   },
   "slackChannels.eventInquiries": {
+    "type": "text",
+    "validate": true,
+  },
+  "slackChannels.hours": {
     "type": "text",
     "validate": true,
   },

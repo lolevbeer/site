@@ -8,9 +8,10 @@ import { isCronRequest } from '../authorize'
 const QUEUE = 'maintenance'
 
 /**
- * Vercel wakes this queue every five minutes from 06:00 to 07:55 UTC (vercel.json): the task is scheduled for 06:00 and its
- * retries finish well inside that window. Payload handles the schedule deduplication, durable job record, retries, and
- * execution; this route only wakes the queue. Move the cron window with any new task's schedule.
+ * Vercel wakes this queue every five minutes from 06:00 to 07:55 UTC (vercel.json): the Untappd sync is scheduled for
+ * 06:00 and the Google hours check for 06:30, and their retries finish well inside that window. Payload handles the
+ * schedule deduplication, durable job record, retries, and execution; this route only wakes the queue. Move the cron
+ * window with any new task's schedule.
  */
 export async function GET(request: NextRequest) {
   if (!isCronRequest(request)) {

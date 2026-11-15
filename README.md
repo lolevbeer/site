@@ -157,7 +157,7 @@ file in that directory except `index.ts`; keep the recovery manifest in
 - **Recurring Food Schedules** — Normalized monthly food-truck slots (system collection)
 - **Recurring Food Exclusions** — Dates a recurring food slot does not run (system collection)
 - **Locations** — Brewery locations with hours
-- **Holiday Hours** — Holiday hour overrides
+- **Holiday Hours** — Holiday hour overrides. A nightly job (`src/jobs/check-google-hours.ts`) compares the next seven days of each taproom's hours, overrides included, with its Google listing and posts any difference to Slack as a proposal; it never changes hours itself. To turn it on: set `GOOGLE_PLACES_API_KEY` (a Google Cloud key with Places API (New) enabled), fill in **Google place ID** on each Location (Visitor information → Address), and optionally pick the channel under Content → Slack Channels → "Hours that differ from Google" (default `#events`). Google only exposes holiday hours seven days ahead, and an unresolved difference is re-posted each night
 - **Distributors** — Distribution partners with geocoded locations, in any US state or DC or another country (`country`, ISO-2; blank = US). Bulk-add them from the admin Sync page's "Distributor CSV" upload, previewing with Dry run first; blank city/state/country are filled from Mapbox (set the server-only `MAPBOX_GEOCODING_TOKEN`), and optional `latitude`/`longitude` columns skip geocoding; the format (and instructions an agent can follow to convert raw sales data) is in [`public/distributor-csv-import.md`](public/distributor-csv-import.md)
 - **FAQs** — Frequently asked questions
 - **Media** — Image uploads (Vercel Blob storage)

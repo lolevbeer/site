@@ -98,7 +98,7 @@ export const SiteContent: GlobalConfig = {
         {
           label: 'Slack Channels',
           description:
-            'Where public-form pings post: #channel-name or a channel ID (C…). Invite the Lolev Beer bot to the channel, then use Send test message to confirm it can post. Blank uses the SLACK_*_CHANNEL env setting, else #events.',
+            'Where public-form pings and the nightly Google hours check post: #channel-name or a channel ID (C…). Invite the Lolev Beer bot to the channel, then use Send test message to confirm it can post. Blank uses the SLACK_*_CHANNEL env setting (forms only), else #events.',
           fields: [
             {
               name: 'slackChannels',
@@ -110,6 +110,7 @@ export const SiteContent: GlobalConfig = {
                   ['donations', 'Donation requests'],
                   ['jobs', 'Job applications'],
                   ['eventInquiries', 'Private-event inquiries'],
+                  ['hours', 'Hours that differ from Google'],
                 ] as const
               ).map(([name, label]) => ({
                 name,

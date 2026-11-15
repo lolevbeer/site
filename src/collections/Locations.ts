@@ -309,6 +309,15 @@ export const Locations: CollectionConfig = {
                     description: 'Custom Google Maps or directions link for this location',
                   },
                 },
+                {
+                  name: 'googlePlaceId',
+                  type: 'text',
+                  label: 'Google place ID',
+                  admin: {
+                    description:
+                      'Turns on the nightly check of this taproom\'s hours against Google. Look it up at developers.google.com/maps/documentation/places/web-service/place-id (starts with "ChIJ").',
+                  },
+                },
               ],
             },
           ],

@@ -103,7 +103,12 @@ describe('Site Content Slack channel fields', () => {
     const group = findPayloadField(SiteContent.fields, 'slackChannels') as {
       fields: Array<{ name: string; validate: (v: string) => unknown }>
     }
-    expect(group.fields.map((f) => f.name)).toEqual(['donations', 'jobs', 'eventInquiries'])
+    expect(group.fields.map((f) => f.name)).toEqual([
+      'donations',
+      'jobs',
+      'eventInquiries',
+      'hours',
+    ])
     const validate = group.fields[0].validate
     for (const ok of ['', '  ', '#events', 'C0123456789', 'G0123456789']) {
       expect(validate(ok)).toBe(true)
