@@ -8,6 +8,9 @@ export default defineConfig({
   css: { postcss: { plugins: [] } },
   test: {
     environment: 'jsdom',
+    // Node 25+ has its own `localStorage` global, which is undefined without
+    // --localstorage-file and hides jsdom's. Turn it off so tests get jsdom's.
+    execArgv: ['--no-experimental-webstorage'],
     include: ['tests/int/**/*.int.spec.ts', 'tests/int/**/*.int.spec.tsx'],
   },
 })
