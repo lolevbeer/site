@@ -59,6 +59,19 @@ describe('textToRichText / richTextToPlain', () => {
   })
 })
 
+/** A paragraph of body text with a heading of each given level before it. */
+function withHeadings(...tags: string[]) {
+  const state = textToRichText('Body')
+  const headings = tags.map((tag) => ({
+    ...state.root.children[0],
+    type: 'heading',
+    tag,
+    children: [{ type: 'text', text: tag, version: 1 }],
+  }))
+  state.root.children.unshift(...(headings as never[]))
+  return state
+}
+
 describe('validateHeadingOrder', () => {
   const validate = validateHeadingOrder(2) as unknown as (
     value: unknown,
@@ -67,18 +80,6 @@ describe('validateHeadingOrder', () => {
   // Payload's own rich text validation delegates to the field's editor.
   const editor = { validate: (value: unknown) => (value ? true : 'required') }
   const options = { required: true, editor }
-
-  function withHeadings(...tags: string[]) {
-    const state = textToRichText('Body')
-    const headings = tags.map((tag) => ({
-      ...state.root.children[0],
-      type: 'heading',
-      tag,
-      children: [{ type: 'text', text: tag, version: 1 }],
-    }))
-    state.root.children.unshift(...(headings as never[]))
-    return state
-  }
 
   it.each([[[]], [['h2']], [['h2', 'h3', 'h3', 'h2']]])('accepts %j', async (tags) => {
     expect(await validate(withHeadings(...tags), options)).toBe(true)
@@ -219,16 +220,31 @@ describe('site content', () => {
     ['heroDescriptionRich', 'heroDescription'],
     ['aboutPhilosophyRich', 'aboutPhilosophy'],
     ['aboutLocationsRich', 'aboutLocations'],
-  ] as const)('staff edit %s, and %s is a hidden plain copy that keeps the default', (rich, plain) => {
-    const richField = fields.find((f) => f.name === rich)
-    const plainField = fields.find((f) => f.name === plain)
-    expect(richField?.type).toBe('richText')
-    expect(plainField?.type).toBe('textarea')
-    expect(plainField?.admin?.hidden).toBe(true)
-    // A default on the rich field would mask saved plain text before the migration runs.
-    expect(richField?.defaultValue).toBeUndefined()
-    expect(typeof plainField?.defaultValue).toBe('string')
-    expect(SiteContent.hooks?.beforeValidate).toHaveLength(3)
+  ] as const)(
+    'staff edit %s, and %s is a hidden plain copy that keeps the default',
+    (rich, plain) => {
+      const richField = fields.find((f) => f.name === rich)
+      const plainField = fields.find((f) => f.name === plain)
+      expect(richField?.type).toBe('richText')
+      expect(plainField?.type).toBe('textarea')
+      expect(plainField?.admin?.hidden).toBe(true)
+      // A default on the rich field would mask saved plain text before the migration runs.
+      expect(richField?.defaultValue).toBeUndefined()
+      expect(typeof plainField?.defaultValue).toBe('string')
+      expect(SiteContent.hooks?.beforeValidate).toHaveLength(3)
+    },
+  )
+
+  // The homepage introduction sits under the page's only h1, so its headings start at h2.
+  it('keeps homepage introduction headings in outline order', async () => {
+    const hero = fields.find((f) => f.name === 'heroDescriptionRich') as unknown as {
+      validate: (value: unknown, options: unknown) => Promise<string | true>
+    }
+    // Payload's own rich text validation delegates to the field's editor.
+    const options = { required: false, editor: { validate: () => true } }
+
+    expect(await hero.validate(withHeadings('h2'), options)).toBe(true)
+    expect(await hero.validate(withHeadings('h3'), options)).toMatch(/Start with a Heading 2/)
   })
 })
 

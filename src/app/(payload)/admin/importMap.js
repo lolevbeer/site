@@ -28,6 +28,7 @@ import { QueryPresetsWhereCell as QueryPresetsWhereCell_3817bf644402e67bfe6577f6
 import { QueryPresetsWhereField as QueryPresetsWhereField_3817bf644402e67bfe6577f60ef982de } from '@payloadcms/ui'
 import { QueryPresetsAccessCell as QueryPresetsAccessCell_3817bf644402e67bfe6577f60ef982de } from '@payloadcms/ui'
 import { RecurringFoodGrid as RecurringFoodGrid_0c1dc1aa84aa3f4861a00292ec49d05d } from '@/src/components/RecurringFoodGrid'
+import { AlignFeatureClient as AlignFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { SlackChannelTestButton as SlackChannelTestButton_38589035e16c1a3c89c1a5f9b8dbb9c5 } from '@/src/components/admin/SlackChannelTestButton'
 import { AdminIcon as AdminIcon_3cd799f05ab0794410a063fc246d88cb } from '@/src/components/AdminLogo'
 import { AdminLogo as AdminLogo_3cd799f05ab0794410a063fc246d88cb } from '@/src/components/AdminLogo'
@@ -81,6 +82,7 @@ export const importMap = {
   "@payloadcms/ui#QueryPresetsWhereField": QueryPresetsWhereField_3817bf644402e67bfe6577f60ef982de,
   "@payloadcms/ui#QueryPresetsAccessCell": QueryPresetsAccessCell_3817bf644402e67bfe6577f60ef982de,
   "@/src/components/RecurringFoodGrid#RecurringFoodGrid": RecurringFoodGrid_0c1dc1aa84aa3f4861a00292ec49d05d,
+  "@payloadcms/richtext-lexical/client#AlignFeatureClient": AlignFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@/src/components/admin/SlackChannelTestButton#SlackChannelTestButton": SlackChannelTestButton_38589035e16c1a3c89c1a5f9b8dbb9c5,
   "@/src/components/AdminLogo#AdminIcon": AdminIcon_3cd799f05ab0794410a063fc246d88cb,
   "@/src/components/AdminLogo#AdminLogo": AdminLogo_3cd799f05ab0794410a063fc246d88cb,

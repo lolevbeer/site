@@ -211,8 +211,11 @@ is the system queue, separate from hiring.
   save, that the structured data and `llms-full.txt` read. The built-in FAQs
   with live hours and phone numbers still live in `lib/utils/faq-schema.ts`.
   In Content, the homepage introduction and the About page's Our
-  Philosophy and Our Locations are rich text too, without headings (each sits
-  under the page's own heading), with the same hidden plain-text copy.
+  Philosophy and Our Locations are rich text too, with the same hidden
+  plain-text copy. The About sections take no headings (each sits under the
+  page's own heading). The homepage introduction takes h2 and h3 under the
+  page's h1, with the same skipped-level check, and has alignment buttons; text
+  with no alignment picked is centred, on the site and in the editor.
 - **Applications on a job:** A job opening lists its applications at the bottom
   of the form (admins only; nobody else gets rows).
 - **Saved filters:** Event Inquiries, Donations and Job

@@ -2,7 +2,10 @@
  * Renders staff-written rich text (FAQ answers, job descriptions, the homepage
  * introduction and About page sections) with the
  * site's link and list styles. The editor for these fields allows paragraphs,
- * bold, italic, links and lists, plus h2/h3 on job descriptions and h4 on FAQ answers (see `simpleEditor` in src/fields/rich-text.ts).
+ * bold, italic, links and lists, plus h2/h3 on job descriptions and the
+ * homepage introduction, and h4 on FAQ answers (see `simpleEditor` in
+ * src/fields/rich-text.ts). An alignment picked in the editor comes through as
+ * an inline `text-align`; text without one inherits the page's alignment.
  */
 import { RichText as LexicalRichText } from '@payloadcms/richtext-lexical/react'
 import type { SimpleRichText } from '@/src/fields/rich-text'

@@ -1586,6 +1586,7 @@ We believe that beer should be thoughtful and stimulating. Each beer we create i
   },
   "heroDescriptionRich": {
     "type": "richText",
+    "validate": true,
   },
   "heroImage": {
     "relationTo": "media",
