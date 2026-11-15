@@ -22,7 +22,8 @@ interface MobileMenuProps {
  * Mobile hamburger menu with navigation and social links.
  *
  * Radix Dialog owns focus trapping, scroll locking, Escape handling, and focus
- * restoration. The location switcher stays in `Header`, outside this dialog.
+ * restoration. The location switcher and the menu button (which turns into the
+ * X while open) stay in `Header`, outside this dialog.
  */
 export function MobileMenu({ isOpen, onClose, isScrolled = false }: MobileMenuProps) {
   const pathname = usePathname()
@@ -44,7 +45,18 @@ export function MobileMenu({ isOpen, onClose, isScrolled = false }: MobileMenuPr
             />
           </Dialog.Overlay>
 
-          <Dialog.Content asChild forceMount aria-describedby={undefined}>
+          <Dialog.Content
+            asChild
+            forceMount
+            aria-describedby={undefined}
+            // The header's X button is outside this panel. Leave its press to
+            // the button's own toggle; dismissing here too would reopen the menu.
+            onPointerDownOutside={(event) => {
+              if ((event.target as Element).closest('[data-mobile-menu-trigger]')) {
+                event.preventDefault()
+              }
+            }}
+          >
             <motion.div
               initial={{ x: '100%', filter: 'blur(4px)' }}
               animate={{ x: 0, filter: 'blur(0px)' }}
@@ -57,16 +69,14 @@ export function MobileMenu({ isOpen, onClose, isScrolled = false }: MobileMenuPr
               )}
             >
               <Dialog.Title className="sr-only">Mobile navigation menu</Dialog.Title>
-              <Dialog.Close asChild>
-                <button
-                  aria-label="Close menu"
-                  className="absolute right-2 top-2 flex h-10 w-10 items-center justify-center rounded-md hover:bg-muted transition-colors"
-                >
-                  <span className="relative h-5 w-5">
-                    <span className="absolute top-1/2 block h-0.5 w-full rotate-45 bg-foreground rounded-full" />
-                    <span className="absolute top-1/2 block h-0.5 w-full -rotate-45 bg-foreground rounded-full" />
-                  </span>
-                </button>
+              {/* The visible X is the header's menu button, which sits outside
+                this modal: screen readers are told to ignore it and keyboard
+                focus is trapped in here. This is their close button, shown
+                only when focused from the keyboard. `[clip:auto]` undoes the
+                `clip` in the `.sr-only` rule in globals.css, and `z-10` lifts
+                it above the animated nav links. */}
+              <Dialog.Close className="sr-only focus-visible:not-sr-only focus-visible:absolute focus-visible:left-2 focus-visible:top-2 focus-visible:z-10 focus-visible:[clip:auto] focus-visible:rounded-md focus-visible:bg-primary focus-visible:px-4 focus-visible:py-2 focus-visible:text-sm focus-visible:font-semibold focus-visible:text-primary-foreground">
+                Close menu
               </Dialog.Close>
               <div className="flex min-h-full flex-col">
                 {/* Navigation - centered with staggered animations */}
