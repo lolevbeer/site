@@ -701,6 +701,10 @@ exports[`persistent field contracts > faqs retains its stored paths and validati
     "required": true,
     "type": "textarea",
   },
+  "answerRich": {
+    "required": true,
+    "type": "richText",
+  },
   "order": {
     "defaultValue": 100,
     "type": "number",
@@ -875,6 +879,11 @@ exports[`persistent field contracts > jobs retains its stored paths and validati
   "description": {
     "required": true,
     "type": "textarea",
+  },
+  "descriptionRich": {
+    "required": true,
+    "type": "richText",
+    "validate": true,
   },
   "employmentType": {
     "defaultValue": "full-time",

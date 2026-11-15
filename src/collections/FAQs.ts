@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload'
 import { adminAccess } from '@/src/access/roles'
+import { simpleEditor, syncPlainCopy } from '@/src/fields/rich-text'
 
 export const FAQs: CollectionConfig = {
   slug: 'faqs',
@@ -28,12 +29,23 @@ export const FAQs: CollectionConfig = {
       },
     },
     {
+      name: 'answerRich',
+      type: 'richText',
+      label: 'Answer',
+      required: true,
+      // Under the question, which the accordion renders as an h3.
+      editor: simpleEditor(['h4']),
+      admin: {
+        description: 'The answer to the question. A small heading, links, bold, italic and lists are allowed.',
+      },
+    },
+    {
+      // Plain-text copy of answerRich, filled by syncPlainCopy. Read by the FAQ
+      // structured data, llms-full.txt and builds from before rich text (#375).
       name: 'answer',
       type: 'textarea',
       required: true,
-      admin: {
-        description: 'The answer to the question',
-      },
+      admin: { hidden: true },
     },
     {
       name: 'order',
@@ -57,6 +69,7 @@ export const FAQs: CollectionConfig = {
       label: 'Show on website',
     },
   ],
+  hooks: { beforeValidate: [syncPlainCopy('answerRich', 'answer')] },
   defaultSort: 'order',
   labels: { singular: 'FAQ', plural: 'FAQs' },
 }

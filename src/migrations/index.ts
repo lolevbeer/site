@@ -18,6 +18,7 @@ import * as completeBeerReviews from './20261005_090000_complete_beer_review_bac
 import * as publicFormIndexes from './20261005_100000_public_form_indexes'
 import * as mediaSizesToVariants from './20261013_090000_media_sizes_to_variants'
 import * as jobApplicationStatus from './20261031_160000_job_application_status'
+import * as richTextFaqJobs from './20261114_170000_rich_text_faq_jobs'
 
 export const migrations = [
   {
@@ -89,5 +90,10 @@ export const migrations = [
     up: jobApplicationStatus.up,
     down: jobApplicationStatus.down,
     name: '20261031_160000_job_application_status',
+  },
+  {
+    up: richTextFaqJobs.up,
+    down: richTextFaqJobs.down,
+    name: '20261114_170000_rich_text_faq_jobs',
   },
 ]

@@ -6,6 +6,7 @@ import type { CollectionConfig, PayloadRequest } from 'payload'
 import { revalidatePath } from 'next/cache'
 import { adminAccess, hasRole } from '@/src/access/roles'
 import { generateUniqueSlug } from './utils/generateUniqueSlug'
+import { simpleEditor, syncPlainCopy, validateHeadingOrder } from '@/src/fields/rich-text'
 import { documentSeoField } from '@/src/fields/seo'
 
 /**
@@ -97,10 +98,25 @@ export const Jobs: CollectionConfig = {
       label: 'Short listing summary',
     },
     {
+      name: 'descriptionRich',
+      type: 'richText',
+      label: 'Full job description',
+      required: true,
+      // Under the job page's h1, so sections start at h2.
+      editor: simpleEditor(['h2', 'h3']),
+      validate: validateHeadingOrder(2),
+      admin: {
+        description:
+          'Headings, links, bold, italic and lists are allowed. Start sections with Heading 2; use Heading 3 inside one.',
+      },
+    },
+    {
+      // Plain-text copy of descriptionRich, filled by syncPlainCopy. Read by the
+      // JobPosting structured data and builds from before rich text (#375).
       name: 'description',
       type: 'textarea',
       required: true,
-      label: 'Full job description',
+      admin: { hidden: true },
     },
     {
       name: 'active',
@@ -143,6 +159,7 @@ export const Jobs: CollectionConfig = {
     },
   ],
   hooks: {
+    beforeValidate: [syncPlainCopy('descriptionRich', 'description')],
     beforeChange: [
       async ({ data, req, originalDoc }) => {
         if (!data.slug?.trim() && typeof data.title === 'string' && data.title) {

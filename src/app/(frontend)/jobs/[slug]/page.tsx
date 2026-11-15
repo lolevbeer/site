@@ -10,6 +10,7 @@ import { PageTransition } from '@/components/motion'
 import { Card, CardContent } from '@/components/ui/card'
 import { JobApplyForm } from '@/components/jobs/job-apply-form'
 import { getJobBySlug } from '@/lib/jobs/payload'
+import { RichText } from '@/components/ui/rich-text'
 import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
 import { JsonLd } from '@/components/seo/json-ld'
 import { generateJobPostingSchema } from '@/lib/utils/job-posting-schema'
@@ -75,7 +76,9 @@ export default async function JobPage({ params }: JobPageProps) {
             ) : null}
           </p>
         </div>
-        {job.description ? (
+        {job.descriptionRich ? (
+          <RichText data={job.descriptionRich} className="mb-10" />
+        ) : job.description ? (
           <div className="text-pretty whitespace-pre-wrap mb-10">{job.description}</div>
         ) : null}
         <h2 className="text-2xl font-semibold text-center mb-6">Apply</h2>

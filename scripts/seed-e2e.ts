@@ -1,6 +1,7 @@
 /** Seeds the disposable release-smoke database through Payload's local API. */
 import { isDropDatabaseEnabled } from '@/lib/config/server-env'
 import { isDisposableDatabase, isLoopbackHost } from './e2e-database-guard'
+import { textToRichText } from '@/src/fields/rich-text'
 
 export async function runSeed(): Promise<void> {
   const databaseUri = process.env.DATABASE_URI
@@ -72,6 +73,7 @@ export async function runSeed(): Promise<void> {
         data: {
           active: true,
           answer: 'Initial release fixture answer',
+          answerRich: textToRichText('Initial release fixture answer'),
           order: 9999,
           question: 'Production readiness fixture',
         },

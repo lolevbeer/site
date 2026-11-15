@@ -137,6 +137,34 @@ export type SupportedTimezones =
   | 'Pacific/Noumea'
   | 'Pacific/Auckland'
   | 'Pacific/Fiji';
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "LexicalNodes_9D695663".
+ */
+export type LexicalNodes_9D695663 =
+  | SerializedTextNode
+  | SerializedTabNode
+  | SerializedLineBreakNode
+  | SerializedParagraphNode<LexicalNodes_9D695663>
+  | SerializedListNode<LexicalNodes_9D695663>
+  | SerializedListItemNode<LexicalNodes_9D695663>
+  | SerializedAutoLinkNode<LexicalNodes_9D695663, LexicalLinkFields>
+  | SerializedLinkNode<LexicalNodes_9D695663, LexicalLinkFields>
+  | SerializedHeadingNode<LexicalNodes_9D695663, 'h2' | 'h3'>;
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "LexicalNodes_C2C1C366".
+ */
+export type LexicalNodes_C2C1C366 =
+  | SerializedTextNode
+  | SerializedTabNode
+  | SerializedLineBreakNode
+  | SerializedParagraphNode<LexicalNodes_C2C1C366>
+  | SerializedListNode<LexicalNodes_C2C1C366>
+  | SerializedListItemNode<LexicalNodes_C2C1C366>
+  | SerializedAutoLinkNode<LexicalNodes_C2C1C366, LexicalLinkFields>
+  | SerializedLinkNode<LexicalNodes_C2C1C366, LexicalLinkFields>
+  | SerializedHeadingNode<LexicalNodes_C2C1C366, 'h4'>;
 
 export interface Config {
   auth: {
@@ -1156,6 +1184,10 @@ export interface Job {
    * One or two lines on the taproom page.
    */
   summary?: string | null;
+  /**
+   * Headings, links, bold, italic and lists are allowed. Start sections with Heading 2; use Heading 3 inside one.
+   */
+  descriptionRich: LexicalRichText<LexicalNodes_9D695663>;
   description: string;
   /**
    * Saving a published opening makes it visible immediately. Closing date alone does not unpublish it.
@@ -1362,8 +1394,9 @@ export interface Faq {
    */
   question: string;
   /**
-   * The answer to the question
+   * The answer to the question. A small heading, links, bold, italic and lists are allowed.
    */
+  answerRich: LexicalRichText<LexicalNodes_C2C1C366>;
   answer: string;
   /**
    * Lower numbers appear first. Default FAQs start at 0, so use 100+ to append at the end.
@@ -2070,6 +2103,7 @@ export interface JobsSelect<T extends boolean = true> {
   location?: T;
   employmentType?: T;
   summary?: T;
+  descriptionRich?: T;
   description?: T;
   active?: T;
   closesOn?: T;
@@ -2133,6 +2167,7 @@ export interface DistributorsSelect<T extends boolean = true> {
  */
 export interface FaqsSelect<T extends boolean = true> {
   question?: T;
+  answerRich?: T;
   answer?: T;
   order?: T;
   active?: T;
@@ -3436,6 +3471,112 @@ export interface TaskSchedulePublish {
  */
 export interface Auth {
   [k: string]: unknown;
+}
+
+/** @internal Core Lexical types — see @payloadcms/richtext-lexical. */
+export type LexicalElementFormat = 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+export type LexicalElementDirection = ('ltr' | 'rtl') | null;
+
+export interface SerializedLexicalElementBase<TChildren> {
+  children: TChildren[];
+  direction: LexicalElementDirection;
+  format: LexicalElementFormat;
+  indent: number;
+  textFormat?: number;
+  textStyle?: string;
+  /** @deprecated Ignored when loading. Typed as required only to match Lexical's types: rich text sent through the API, CLI or MCP may not contain it. */
+  version: number;
+}
+
+export type LexicalTextMode = 'normal' | 'token' | 'segmented';
+
+export interface SerializedTextNode {
+  type: 'text';
+  detail: number;
+  format: number;
+  mode: LexicalTextMode;
+  style: string;
+  text: string;
+  /** @deprecated Ignored when loading. Typed as required only to match Lexical's types: rich text sent through the API, CLI or MCP may not contain it. */
+  version: number;
+}
+
+export interface SerializedTabNode {
+  type: 'tab';
+  detail: number;
+  format: number;
+  mode: LexicalTextMode;
+  style: string;
+  text: string;
+  /** @deprecated Ignored when loading. Typed as required only to match Lexical's types: rich text sent through the API, CLI or MCP may not contain it. */
+  version: number;
+}
+
+export interface SerializedLineBreakNode {
+  type: 'linebreak';
+  /** @deprecated Ignored when loading. Typed as required only to match Lexical's types: rich text sent through the API, CLI or MCP may not contain it. */
+  version: number;
+}
+
+export interface SerializedParagraphNode<TChildren> extends SerializedLexicalElementBase<TChildren> {
+  type: 'paragraph';
+  textFormat: number;
+  textStyle: string;
+}
+
+export interface SerializedListNode<TChildren> extends SerializedLexicalElementBase<TChildren> {
+  type: 'list';
+  checked?: boolean;
+  listType: 'number' | 'bullet' | 'check';
+  start: number;
+  tag: 'ul' | 'ol';
+}
+
+export interface SerializedListItemNode<TChildren> extends SerializedLexicalElementBase<TChildren> {
+  type: 'listitem';
+  checked?: boolean;
+  value: number;
+}
+
+export interface LexicalLinkFields {
+  [k: string]: unknown;
+  doc?: {
+    relationTo: string;
+    value: Config['db']['defaultIDType'] | { [k: string]: unknown; id: Config['db']['defaultIDType'] };
+  } | null;
+  linkType: 'custom' | 'internal';
+  newTab: boolean;
+  url?: string;
+}
+export interface SerializedLinkNode<TChildren, TFields = LexicalLinkFields> extends SerializedLexicalElementBase<TChildren> {
+  type: 'link';
+  fields: TFields;
+  id?: string;
+}
+export interface SerializedAutoLinkNode<TChildren, TFields = LexicalLinkFields> extends SerializedLexicalElementBase<TChildren> {
+  type: 'autolink';
+  fields: TFields;
+}
+
+export interface SerializedHeadingNode<
+  TChildren,
+  TTag extends 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6',
+> extends SerializedLexicalElementBase<TChildren> {
+  type: 'heading';
+  tag: TTag;
+}
+
+/** Shape of a Lexical `richText` field. */
+export interface LexicalRichText<TNode> {
+  root: {
+    children: TNode[];
+    direction: LexicalElementDirection;
+    format: LexicalElementFormat;
+    indent: number;
+    type: 'root';
+    /** @deprecated Ignored when loading. Typed as required only to match Lexical's types: rich text sent through the API, CLI or MCP may not contain it. */
+    version: number;
+  };
 }
 
 
