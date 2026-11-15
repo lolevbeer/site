@@ -9,6 +9,10 @@ import { LogoWithText } from '@/components/ui/logo'
 import { LocationTabs } from '@/components/location/location-tabs'
 import { cn } from '@/lib/utils'
 
+/** One line of the mobile menu button's two-line hamburger / X. */
+const MENU_LINE =
+  'block h-0.5 w-full bg-foreground rounded-full transition-transform duration-200 motion-reduce:transition-none'
+
 /**
  * Main site header component with logo, navigation, and mobile navigation dialog.
  */
@@ -99,19 +103,27 @@ export function Header() {
                 <LocationTabs className="w-full" />
               </div>
 
-              {/* Mobile menu button - animated two-line hamburger */}
+              {/* Mobile menu button: a two-line hamburger that becomes the X
+                while the menu is open, and is the only visible close control.
+                The modal dialog turns off pointer events outside its panel, so
+                the button opts back in with `pointer-events-auto`; MobileMenu
+                ignores the outside-press on `data-mobile-menu-trigger` so the
+                click closes the menu instead of closing and reopening it. */}
               <Dialog.Trigger asChild>
-                {/* Hidden while open: the panel has its own close button. */}
                 <button
-                  aria-label="Open menu"
-                  className={cn(
-                    'flex items-center justify-center w-10 h-10 md:hidden rounded-md hover:bg-muted transition-colors',
-                    isMobileMenuOpen && 'invisible',
-                  )}
+                  data-mobile-menu-trigger
+                  aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
+                  className="pointer-events-auto flex items-center justify-center w-10 h-10 md:hidden rounded-md hover:bg-muted transition-colors"
                 >
+                  {/* Lines sit 4px either side of centre; each moves to the
+                    centre and turns 45° to form the X. */}
                   <div className="w-5 h-2.5 flex flex-col justify-between">
-                    <span className="block h-0.5 w-full bg-foreground rounded-full" />
-                    <span className="block h-0.5 w-full bg-foreground rounded-full" />
+                    <span
+                      className={cn(MENU_LINE, isMobileMenuOpen && 'translate-y-1 rotate-45')}
+                    />
+                    <span
+                      className={cn(MENU_LINE, isMobileMenuOpen && '-translate-y-1 -rotate-45')}
+                    />
                   </div>
                 </button>
               </Dialog.Trigger>

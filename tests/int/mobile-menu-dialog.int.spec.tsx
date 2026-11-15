@@ -39,10 +39,14 @@ beforeEach(() => {
       },
       media: query,
       onchange: null,
-      addEventListener: (_event: string, listener: (event: MediaQueryListEvent) => void) => desktopListeners.add(listener),
-      removeEventListener: (_event: string, listener: (event: MediaQueryListEvent) => void) => desktopListeners.delete(listener),
-      addListener: (listener: (event: MediaQueryListEvent) => void) => desktopListeners.add(listener),
-      removeListener: (listener: (event: MediaQueryListEvent) => void) => desktopListeners.delete(listener),
+      addEventListener: (_event: string, listener: (event: MediaQueryListEvent) => void) =>
+        desktopListeners.add(listener),
+      removeEventListener: (_event: string, listener: (event: MediaQueryListEvent) => void) =>
+        desktopListeners.delete(listener),
+      addListener: (listener: (event: MediaQueryListEvent) => void) =>
+        desktopListeners.add(listener),
+      removeListener: (listener: (event: MediaQueryListEvent) => void) =>
+        desktopListeners.delete(listener),
       dispatchEvent: () => true,
     })),
   )
@@ -71,6 +75,18 @@ describe('mobile navigation dialog', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     expect(document.activeElement).toBe(trigger)
     expect(close).toBeTruthy()
+  })
+
+  it('closes from the header button, which becomes the X while open', async () => {
+    render(createElement(Header))
+    const { trigger } = openMenu()
+
+    expect(trigger.getAttribute('aria-label')).toBe('Close menu')
+    // A real press is pointerdown (an "outside" press to the dialog) then click.
+    fireEvent.pointerDown(trigger, { button: 0, pointerType: 'mouse' })
+    fireEvent.click(trigger)
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(trigger.getAttribute('aria-label')).toBe('Open menu')
   })
 
   it('closes on outside interaction and releases scroll lock', async () => {
