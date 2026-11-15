@@ -47,6 +47,9 @@ importers:
       '@payloadcms/email-resend':
         specifier: 4.0.0-beta.9
         version: 4.0.0-beta.9(payload@4.0.0-beta.9(graphql@16.13.1)(supports-color@8.1.1)(typescript@6.0.3))
+      '@payloadcms/live-preview-react':
+        specifier: 4.0.0-beta.9
+        version: 4.0.0-beta.9(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@payloadcms/next':
         specifier: 4.0.0-beta.9
         version: 4.0.0-beta.9(@types/react@19.3.0)(date-fns-tz@3.2.0(date-fns@4.4.0))(graphql@16.13.1)(monaco-editor@0.55.1)(next@16.4.2(@babel/core@7.29.7(supports-color@8.1.1))(@opentelemetry/api@1.9.1)(@playwright/test@1.64.1)(@types/node@25.9.5)(babel-plugin-macros@3.1.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(sass@1.77.4))(payload@4.0.0-beta.9(graphql@16.13.1)(supports-color@8.1.1)(typescript@6.0.3))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(supports-color@8.1.1)(typescript@6.0.3)
@@ -1381,6 +1384,15 @@ packages:
     peerDependencies:
       graphql: ^16.8.1
       payload: 4.0.0-beta.9
+
+  '@payloadcms/live-preview-react@4.0.0-beta.9':
+    resolution: {integrity: sha512-F2UnloMNPoz1b20R0jZziGFhetsTho4y9XpLBed49ep1j5FmBpuwbHcFlUd1OU5B9L7bQ6BcTJtxHJpgQHTG5Q==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.3.1
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.3.1
+
+  '@payloadcms/live-preview@4.0.0-beta.9':
+    resolution: {integrity: sha512-kUvo2VSqM1TTjnYLS0idtZ16WgzZdLPuIIPKOCvuP4yFNk+W1gjLbxadya2HCGScvswjxh9xQcZiztdiju5btg==}
 
   '@payloadcms/next@4.0.0-beta.9':
     resolution: {integrity: sha512-zqxsRpVi+Gh70ZPsXwvqBygvv1qkCOcWuZT8eA5RoWpY03u7aTyz/C2SfW06pmEF1VeUgvWvaOeV1ChP7ff4/g==}
@@ -7308,6 +7320,14 @@ snapshots:
       tsx: 4.23.15
     transitivePeerDependencies:
       - typescript
+
+  '@payloadcms/live-preview-react@4.0.0-beta.9(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
+    dependencies:
+      '@payloadcms/live-preview': 4.0.0-beta.9
+      react: 19.3.1
+      react-dom: 19.3.1(react@19.3.1)
+
+  '@payloadcms/live-preview@4.0.0-beta.9': {}
 
   '@payloadcms/next@4.0.0-beta.9(@types/react@19.3.0)(date-fns-tz@3.2.0(date-fns@4.4.0))(graphql@16.13.1)(monaco-editor@0.55.1)(next@16.4.2(@babel/core@7.29.7(supports-color@8.1.1))(@opentelemetry/api@1.9.1)(@playwright/test@1.64.1)(@types/node@25.9.5)(babel-plugin-macros@3.1.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(sass@1.77.4))(payload@4.0.0-beta.9(graphql@16.13.1)(supports-color@8.1.1)(typescript@6.0.3))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(supports-color@8.1.1)(typescript@6.0.3)':
     dependencies:

@@ -220,6 +220,14 @@ is the system queue, separate from hiring.
   public API at once and keeps its slug and recipe number, so a new beer with
   the same name gets a numbered slug. Inbox submissions hold contact details:
   empty the trash to remove them for good.
+- **Preview:** A saved beer or menu shows two icon buttons beside Save Draft: a
+  link icon that copies the public page's full URL, and a new-tab icon ("Open
+  preview") that opens that page. Both use the site the admin is open on, so
+  they work on preview deployments too. The public page shows published content
+  only. On a menu, the icon to their left opens **live preview**: the draft board
+  beside the editor, following edits before they are saved. It loads
+  `/m/<url>/preview`, a staff-only page (404 when signed out) and the only page
+  the site allows inside a frame.
 - **Hours:** Locations puts all seven existing weekday open/close pairs before
   images alongside timezone, separate from visitor information and website
   content. Existing field permissions remain unchanged.

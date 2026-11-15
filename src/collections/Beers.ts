@@ -10,6 +10,7 @@ import { logger } from '@/lib/utils/logger'
 import { syncBeerReviews, type LegacyUntappdReview } from '@/src/utils/beer-reviews'
 import { documentSeoField } from '@/src/fields/seo'
 import { isDraftOnlySave, isTrue } from '@/src/utils/draft-save'
+import { getBaseUrl } from '@/lib/utils/get-base-url'
 
 /** Round to nearest multiple (like Excel's MROUND) */
 function mround(value: number, multiple: number): number {
@@ -123,16 +124,16 @@ export const Beers: CollectionConfig = {
           versions: { Component: '@/src/components/admin/VersionsWithEditor#VersionsWithEditor' },
         },
       },
+      edit: { PreviewButton: '@/src/components/admin/PreviewControls#PreviewControls' },
     },
     pagination: {
       defaultLimit: 100,
     },
-    preview: (doc) => {
-      if (doc?.slug) {
-        return `/beer/${doc.slug}`
-      }
-      return ''
-    },
+    // A full URL: Payload's copy button puts this string on the clipboard. It
+    // uses the origin the admin is open on, so it also works on preview
+    // deployments and local dev.
+    // The public page shows published beers only, so a draft-only beer 404s.
+    preview: (doc, { req }) => (doc?.slug ? `${req.origin || getBaseUrl()}/beer/${doc.slug}` : ''),
   },
   versions: {
     // Publish at a set time from the admin; /api/cron/publish-scheduled runs the queue (#370).

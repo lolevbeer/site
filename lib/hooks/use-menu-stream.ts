@@ -2,7 +2,7 @@
 
 import { useAblyInvalidate } from './use-ably-invalidate'
 import { usePolling } from './use-polling'
-import { getPittsburghTheme } from '@/lib/utils/pittsburgh-time'
+import { getMenuTheme } from '@/lib/utils/display-theme'
 import type { Menu } from '@/src/payload-types'
 
 interface UseMenuStreamResult {
@@ -44,10 +44,7 @@ export function useMenuStream(menuUrl: string, initialMenu: Menu | null): UseMen
     initialMenu,
     ({ menu: responseMenu }) => ({
       data: responseMenu,
-      theme:
-        responseMenu.themeMode && responseMenu.themeMode !== 'auto'
-          ? responseMenu.themeMode
-          : getPittsburghTheme(),
+      theme: getMenuTheme(responseMenu),
     }),
     {
       clearOnNotFound: true,

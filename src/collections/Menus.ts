@@ -5,6 +5,7 @@ import { adminAccess, adminFieldAccess, getUserLocationIds, hasRole } from '@/sr
 import { markLinesCleanedField } from './utils/markLinesCleanedField'
 import { updatedByField } from './utils/updatedByField'
 import { DEFAULT_TARGET, TARGETED_MENU_TYPES } from '@/lib/utils/menu-target'
+import { getBaseUrl } from '@/lib/utils/get-base-url'
 
 /**
  * Menus at the locations this user is assigned to, or `false` when they hold
@@ -79,12 +80,18 @@ export const Menus: CollectionConfig = {
           versions: { Component: '@/src/components/admin/VersionsWithEditor#VersionsWithEditor' },
         },
       },
+      edit: { PreviewButton: '@/src/components/admin/PreviewControls#PreviewControls' },
     },
-    preview: (doc) => {
-      if (doc?.url) {
-        return `/m/${doc.url}`
-      }
-      return ''
+    // A full URL: Payload's copy button puts this string on the clipboard. It
+    // uses the origin the admin is open on, so it also works on preview
+    // deployments and local dev.
+    // This is the public board, which shows the published menu.
+    preview: (doc, { req }) => (doc?.url ? `${req.origin || getBaseUrl()}/m/${doc.url}` : ''),
+    // The pane beside the editor frames the staff-only draft board, which
+    // follows unsaved edits (components/menu/preview-menu.tsx). Relative, so it
+    // stays on the admin's origin and the viewer's session cookie applies.
+    livePreview: {
+      url: ({ data }) => (data?.url ? `/m/${data.url}/preview` : null),
     },
   },
   access: {

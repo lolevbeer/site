@@ -34,22 +34,42 @@ interface LiveMenuProps {
 export function LiveMenu({ menuUrl, initialMenu }: LiveMenuProps) {
   const { menu, theme, realtime, pushCount } = useMenuStream(menuUrl, initialMenu)
 
-  const displayMenu = menu
+  if (!menu) return null
 
+  return <MenuBoard menu={menu} theme={theme} realtime={realtime} pushCount={pushCount} />
+}
+
+interface MenuBoardProps {
+  menu: Menu
+  theme: 'light' | 'dark'
+  /** True while connected to Ably (drives the corner bolt). */
+  realtime?: boolean
+  /** Changes on each Ably push (drives the bolt's pulse). */
+  pushCount?: number
+}
+
+/**
+ * The fullscreen themed board for one menu. LiveMenu feeds it from the public
+ * stream; PreviewMenu feeds it the draft being edited in the admin.
+ */
+export function MenuBoard({
+  menu: displayMenu,
+  theme,
+  realtime = false,
+  pushCount = 0,
+}: MenuBoardProps) {
   // Deterministic light colors that change every 30s of wall-clock time,
   // however often the display polls (dark mode only). Seed 0 until hydrated.
   const colorSeed = useClockBucket(30_000) ?? 0
   const itemColors = useMemo(() => {
-    const itemCount = displayMenu?.items?.length || 0
+    const itemCount = displayMenu.items?.length || 0
     if (itemCount === 0 || theme !== 'dark') return undefined
 
     return seededLightColors(itemCount, colorSeed)
-  }, [displayMenu?.items?.length, theme, colorSeed])
+  }, [displayMenu.items?.length, theme, colorSeed])
 
   // Apply CSS variables directly - bypasses .dark class for browser compatibility
   const themeVars = getThemeVars(theme)
-
-  if (!displayMenu) return null
 
   // 'other' type renders like draft
   const board =

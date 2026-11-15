@@ -512,6 +512,36 @@ export const getMenuByUrlFresh = async (url: string): Promise<PayloadMenu | null
 }
 
 /**
+ * The latest draft of a menu, read as the signed-in person behind `headers`.
+ * For the staff-only /m/[menuUrl]/preview page that Payload live preview frames.
+ *
+ * Anonymous visitors get null. Menu access rules decide what a signed-in role
+ * sees: admins and assigned bartenders get the draft, other roles the
+ * published menu.
+ */
+export async function getDraftMenuForViewer(
+  url: string,
+  headers: Headers,
+): Promise<PayloadMenu | null> {
+  const payload = await getPayload({ config })
+  const { user } = await payload.auth({ headers })
+  if (!user) return null
+
+  const result = await payload.find({
+    collection: 'menus',
+    draft: true,
+    overrideAccess: false,
+    user,
+    where: { url: { equals: url } },
+    depth: 3,
+    populate: MENU_POPULATE,
+    limit: 1,
+  })
+
+  return result.docs[0] || null
+}
+
+/**
  * Get all active locations from Payload
  * Cached until 'locations' tag is invalidated
  *
