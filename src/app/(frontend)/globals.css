@@ -571,3 +571,19 @@
     font-size: min(1.4vh, 6cqi);
   }
 }
+
+/* Field validation message: the destructive red pulled toward the body text
+   colour, so it reads softer than a button-red but keeps more contrast than a
+   see-through red would (lighter on dark, darker on light). */
+@utility text-field-error {
+  color: color-mix(in oklab, var(--color-destructive) 60%, var(--color-foreground));
+}
+
+/* Invalid form field: a faint red wash painted over whatever fill the field
+   already has (a background-image layer), so it works on both themes without
+   knowing the fill colour. Use as `aria-invalid:field-invalid-tint`. */
+@utility field-invalid-tint {
+  background-image: linear-gradient(
+    color-mix(in oklab, var(--color-destructive) 14%, transparent) 0 0
+  );
+}

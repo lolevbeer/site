@@ -26,7 +26,14 @@ import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import { XIcon } from '@/components/icons'
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
-import { Field, FieldGroup, FieldLabel, FieldLegend, FieldSet } from '@/components/ui/field'
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+} from '@/components/ui/field'
 import { FormField, formFieldAria } from '@/components/ui/form-field'
 import { HoneypotField } from '@/components/ui/honeypot-field'
 import { DatePicker } from '@/components/ui/date-picker'
@@ -359,7 +366,7 @@ export function EventInquiryForm({
                         : `${values.otherDates.length} other ${values.otherDates.length === 1 ? 'date' : 'dates'} picked`}
                     </p>
                     {fieldErrors.otherDates ? (
-                      <p className="text-sm text-destructive">{fieldErrors.otherDates}</p>
+                      <FieldError role={undefined}>{fieldErrors.otherDates}</FieldError>
                     ) : null}
                   </div>
                 ) : null}

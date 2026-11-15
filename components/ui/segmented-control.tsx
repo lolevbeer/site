@@ -40,11 +40,6 @@ export const SEGMENTED_ITEM_IDLE_CLASS = 'text-muted-foreground hover:text-foreg
 const TROUGH_PADDING_PX = 4
 const TROUGH_GAP_PX = 2
 
-const GROUP_SIZE_CLASS: Record<SegmentedSize, string> = {
-  sm: 'min-h-9',
-  default: 'min-h-10',
-}
-
 const ITEM_SIZE_CLASS: Record<SegmentedSize, string> = {
   sm: 'px-2.5 text-xs',
   default: 'px-2 text-sm sm:px-4',
@@ -70,8 +65,9 @@ export function SegmentedControl({
       className={cn(
         'relative grid w-fit items-center justify-center',
         SEGMENTED_TROUGH_CLASS,
-        GROUP_SIZE_CLASS[size],
-        'pointer-coarse:h-auto',
+        // 36px at every size, the height of Input and SelectTrigger (h-9), so
+        // they line up in a row.
+        'min-h-9 pointer-coarse:h-auto',
         className,
       )}
       style={{ gridTemplateColumns: `repeat(${count}, minmax(0, 1fr))` }}
@@ -98,7 +94,7 @@ export function SegmentedControl({
             aria-pressed={isActive}
             onClick={() => onValueChange(option.value)}
             className={cn(
-              'relative inline-flex cursor-pointer items-center justify-center text-balance text-center rounded-sm py-1.5 font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
+              'relative inline-flex cursor-pointer items-center justify-center text-balance text-center rounded-sm py-1 font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
               ITEM_SIZE_CLASS[size],
               'pointer-coarse:min-h-11',
               isActive ? 'text-foreground' : SEGMENTED_ITEM_IDLE_CLASS,

@@ -242,7 +242,7 @@ function BeerListing({
                 placeholder="Search beers"
                 value={search}
                 onChange={(e) => onSearchChange(e.target.value)}
-                className="bg-background pl-9 pr-9"
+                className="pl-9 pr-9"
               />
               {search && (
                 <button
@@ -271,10 +271,7 @@ function BeerListing({
             />
 
             <Select value={selectedType} onValueChange={onTypeChange}>
-              <SelectTrigger
-                aria-label="Filter by beer style"
-                className="w-full bg-background sm:w-44"
-              >
+              <SelectTrigger aria-label="Filter by beer style" className="w-full sm:w-44">
                 <SelectValue placeholder="All Styles" />
               </SelectTrigger>
               <SelectContent>
@@ -289,10 +286,7 @@ function BeerListing({
 
             {beerTags.length > 0 && (
               <Select value={selectedTag} onValueChange={onTagChange}>
-                <SelectTrigger
-                  aria-label="Filter by beer series"
-                  className="w-full bg-background sm:w-44"
-                >
+                <SelectTrigger aria-label="Filter by beer series" className="w-full sm:w-44">
                   <SelectValue placeholder="All Series" />
                 </SelectTrigger>
                 <SelectContent>

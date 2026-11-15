@@ -60,10 +60,12 @@ export function FormField({
     <Field data-invalid={Boolean(error) || undefined} className="overflow-visible">
       <FieldLabel htmlFor={id}>{label}</FieldLabel>
       <div className="w-full min-w-0 overflow-visible p-1 -m-1">{control}</div>
-      {/* No role="alert": the form's FormAlert announces the failure once,
-        rather than every invalid field interrupting at the same moment. */}
+      {/* -mt-1.5 tucks the message 6px under the field, so it reads as a note
+        on that field rather than a second label. No role="alert": the form's
+        FormAlert announces the failure once, rather than every invalid field
+        interrupting at the same moment. */}
       {error ? (
-        <FieldError id={`${id}-error`} role={undefined}>
+        <FieldError id={`${id}-error`} role={undefined} className="-mt-1.5">
           {error}
         </FieldError>
       ) : null}
