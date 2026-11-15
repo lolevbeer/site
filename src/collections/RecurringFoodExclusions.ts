@@ -14,7 +14,7 @@ export const RecurringFoodExclusions: CollectionConfig = {
     useAsTitle: 'date',
     defaultColumns: ['date', 'location', 'reason'],
     description:
-      'Skipped location/date records managed through Recurring Food Schedule; not vendor-specific.',
+      'Skipped location/date records managed through Food Recurring; not vendor-specific.',
   },
   access: {
     read: readFood,

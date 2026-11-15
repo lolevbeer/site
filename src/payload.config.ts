@@ -354,11 +354,10 @@ export default buildConfig({
     // Taproom Operations
     Menus,
     Products,
-    Locations,
     HolidayHours,
     // Food & Events
-    Events,
     DonationRequests,
+    Events,
     EventInquiries,
     RecurringEvents,
     Food,
@@ -371,6 +370,7 @@ export default buildConfig({
     FAQs,
     // Administration
     Users,
+    Locations,
     // System (hidden from nav)
     RecurringFoodSchedules,
     RecurringFoodExclusions,

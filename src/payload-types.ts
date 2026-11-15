@@ -191,10 +191,9 @@ export interface Config {
     tags: Tag;
     menus: Menu;
     products: Product;
-    locations: Location;
     'holiday-hours': HolidayHour;
-    events: Event;
     'donation-requests': DonationRequest;
+    events: Event;
     'event-inquiries': EventInquiry;
     'recurring-events': RecurringEvent;
     food: Food;
@@ -204,6 +203,7 @@ export interface Config {
     distributors: Distributor;
     faqs: Faq;
     users: User;
+    locations: Location;
     'recurring-food-schedules': RecurringFoodSchedule;
     'recurring-food-exclusions': RecurringFoodExclusion;
     media: Media;
@@ -229,10 +229,9 @@ export interface Config {
     tags: TagsSelect<false> | TagsSelect<true>;
     menus: MenusSelect<false> | MenusSelect<true>;
     products: ProductsSelect<false> | ProductsSelect<true>;
-    locations: LocationsSelect<false> | LocationsSelect<true>;
     'holiday-hours': HolidayHoursSelect<false> | HolidayHoursSelect<true>;
-    events: EventsSelect<false> | EventsSelect<true>;
     'donation-requests': DonationRequestsSelect<false> | DonationRequestsSelect<true>;
+    events: EventsSelect<false> | EventsSelect<true>;
     'event-inquiries': EventInquiriesSelect<false> | EventInquiriesSelect<true>;
     'recurring-events': RecurringEventsSelect<false> | RecurringEventsSelect<true>;
     food: FoodSelect<false> | FoodSelect<true>;
@@ -242,6 +241,7 @@ export interface Config {
     distributors: DistributorsSelect<false> | DistributorsSelect<true>;
     faqs: FaqsSelect<false> | FaqsSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
+    locations: LocationsSelect<false> | LocationsSelect<true>;
     'recurring-food-schedules': RecurringFoodSchedulesSelect<false> | RecurringFoodSchedulesSelect<true>;
     'recurring-food-exclusions': RecurringFoodExclusionsSelect<false> | RecurringFoodExclusionsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
@@ -934,6 +934,50 @@ export interface HolidayHour {
   createdAt: string;
 }
 /**
+ * Public donation asks from /donate. Completing the form is not a yes. Rows are created only by the public form.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "donation-requests".
+ */
+export interface DonationRequest {
+  id: string;
+  submissionKey?: string | null;
+  /**
+   * Records the staff decision only; does not send a reply. Use Email requester to write one.
+   */
+  status?: ('new' | 'approved' | 'declined') | null;
+  organizationName: string;
+  askType: 'product' | 'taproom-night';
+  eventName: string;
+  eventDate: string;
+  attendees: number;
+  venue: string;
+  /**
+   * Location slug from the public form, when the ask is a taproom night.
+   */
+  taproom?: string | null;
+  requestDetails: string;
+  howServed?: string | null;
+  pickupName?: string | null;
+  contactName: string;
+  email: string;
+  phone: string;
+  mission: string;
+  previousDonation: 'yes' | 'no';
+  recognition: string;
+  whyLolev: string;
+  howHeard: string;
+  /**
+   * Set when the Slack ping succeeds. Empty means no successful ping is recorded.
+   */
+  slackNotifiedAt?: string | null;
+  slackError?: string | null;
+  ipHash?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  deletedAt?: string | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "events".
  */
@@ -979,50 +1023,6 @@ export interface Event {
    * Admins and event managers only. Never shown on the website.
    */
   otherInfo?: string | null;
-  updatedAt: string;
-  createdAt: string;
-  deletedAt?: string | null;
-}
-/**
- * Public donation asks from /donate. Completing the form is not a yes. Rows are created only by the public form.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "donation-requests".
- */
-export interface DonationRequest {
-  id: string;
-  submissionKey?: string | null;
-  /**
-   * Records the staff decision only; does not send a reply. Use Email requester to write one.
-   */
-  status?: ('new' | 'approved' | 'declined') | null;
-  organizationName: string;
-  askType: 'product' | 'taproom-night';
-  eventName: string;
-  eventDate: string;
-  attendees: number;
-  venue: string;
-  /**
-   * Location slug from the public form, when the ask is a taproom night.
-   */
-  taproom?: string | null;
-  requestDetails: string;
-  howServed?: string | null;
-  pickupName?: string | null;
-  contactName: string;
-  email: string;
-  phone: string;
-  mission: string;
-  previousDonation: 'yes' | 'no';
-  recognition: string;
-  whyLolev: string;
-  howHeard: string;
-  /**
-   * Set when the Slack ping succeeds. Empty means no successful ping is recorded.
-   */
-  slackNotifiedAt?: string | null;
-  slackError?: string | null;
-  ipHash?: string | null;
   updatedAt: string;
   createdAt: string;
   deletedAt?: string | null;
@@ -1149,7 +1149,7 @@ export interface RecurringEvent {
   deletedAt?: string | null;
 }
 /**
- * Dated vendor bookings. To replace recurring food, also skip that recurring date in Recurring Food Schedule.
+ * Dated vendor bookings. To replace recurring food, also skip that recurring date in Food Recurring.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "food".
@@ -1444,7 +1444,7 @@ export interface Faq {
   deletedAt?: string | null;
 }
 /**
- * Backing records for Recurring Food Schedule. Use the grid for routine changes.
+ * Backing records for Food Recurring. Use the grid for routine changes.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "recurring-food-schedules".
@@ -1461,7 +1461,7 @@ export interface RecurringFoodSchedule {
   createdAt: string;
 }
 /**
- * Skipped location/date records managed through Recurring Food Schedule; not vendor-specific.
+ * Skipped location/date records managed through Food Recurring; not vendor-specific.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "recurring-food-exclusions".
@@ -1637,20 +1637,16 @@ export interface PayloadLockedDocument {
         value: string | Product;
       } | null)
     | ({
-        relationTo: 'locations';
-        value: string | Location;
-      } | null)
-    | ({
         relationTo: 'holiday-hours';
         value: string | HolidayHour;
       } | null)
     | ({
-        relationTo: 'events';
-        value: string | Event;
-      } | null)
-    | ({
         relationTo: 'donation-requests';
         value: string | DonationRequest;
+      } | null)
+    | ({
+        relationTo: 'events';
+        value: string | Event;
       } | null)
     | ({
         relationTo: 'event-inquiries';
@@ -1687,6 +1683,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'users';
         value: string | User;
+      } | null)
+    | ({
+        relationTo: 'locations';
+        value: string | Location;
       } | null)
     | ({
         relationTo: 'recurring-food-schedules';
@@ -1925,100 +1925,6 @@ export interface ProductsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "locations_select".
- */
-export interface LocationsSelect<T extends boolean = true> {
-  markLinesCleanedToday?: T;
-  linesLastCleaned?: T;
-  name?: T;
-  active?: T;
-  timezone?: T;
-  monday?:
-    | T
-    | {
-        open?: T;
-        close?: T;
-      };
-  tuesday?:
-    | T
-    | {
-        open?: T;
-        close?: T;
-      };
-  wednesday?:
-    | T
-    | {
-        open?: T;
-        close?: T;
-      };
-  thursday?:
-    | T
-    | {
-        open?: T;
-        close?: T;
-      };
-  friday?:
-    | T
-    | {
-        open?: T;
-        close?: T;
-      };
-  saturday?:
-    | T
-    | {
-        open?: T;
-        close?: T;
-      };
-  sunday?:
-    | T
-    | {
-        open?: T;
-        close?: T;
-      };
-  draftMenu?: T;
-  cansMenu?: T;
-  basicInfo?:
-    | T
-    | {
-        phone?: T;
-        email?: T;
-      };
-  address?:
-    | T
-    | {
-        street?: T;
-        city?: T;
-        state?: T;
-        zip?: T;
-        directionsUrl?: T;
-      };
-  intro?: T;
-  images?:
-    | T
-    | {
-        card?: T;
-        hero?: T;
-      };
-  slug?: T;
-  aliases?: T;
-  coordinates?: T;
-  seo?:
-    | T
-    | {
-        title?: T;
-        description?: T;
-        ogTitle?: T;
-        ogDescription?: T;
-        ogImage?: T;
-        keywords?: T;
-        noIndex?: T;
-        canonicalPath?: T;
-      };
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "holiday-hours_select".
  */
 export interface HolidayHoursSelect<T extends boolean = true> {
@@ -2035,31 +1941,6 @@ export interface HolidayHoursSelect<T extends boolean = true> {
   note?: T;
   updatedAt?: T;
   createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "events_select".
- */
-export interface EventsSelect<T extends boolean = true> {
-  visibility?: T;
-  organizer?: T;
-  location?: T;
-  date?: T;
-  startTime?: T;
-  endTime?: T;
-  description?: T;
-  summary?: T;
-  site?: T;
-  tags?: T;
-  image?: T;
-  attendees?: T;
-  pointOfContact?: T;
-  email?: T;
-  phone?: T;
-  otherInfo?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  deletedAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2089,6 +1970,31 @@ export interface DonationRequestsSelect<T extends boolean = true> {
   slackNotifiedAt?: T;
   slackError?: T;
   ipHash?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  deletedAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "events_select".
+ */
+export interface EventsSelect<T extends boolean = true> {
+  visibility?: T;
+  organizer?: T;
+  location?: T;
+  date?: T;
+  startTime?: T;
+  endTime?: T;
+  description?: T;
+  summary?: T;
+  site?: T;
+  tags?: T;
+  image?: T;
+  attendees?: T;
+  pointOfContact?: T;
+  email?: T;
+  phone?: T;
+  otherInfo?: T;
   updatedAt?: T;
   createdAt?: T;
   deletedAt?: T;
@@ -2300,6 +2206,100 @@ export interface UsersSelect<T extends boolean = true> {
         type?: T;
         metadata?: T;
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "locations_select".
+ */
+export interface LocationsSelect<T extends boolean = true> {
+  markLinesCleanedToday?: T;
+  linesLastCleaned?: T;
+  name?: T;
+  active?: T;
+  timezone?: T;
+  monday?:
+    | T
+    | {
+        open?: T;
+        close?: T;
+      };
+  tuesday?:
+    | T
+    | {
+        open?: T;
+        close?: T;
+      };
+  wednesday?:
+    | T
+    | {
+        open?: T;
+        close?: T;
+      };
+  thursday?:
+    | T
+    | {
+        open?: T;
+        close?: T;
+      };
+  friday?:
+    | T
+    | {
+        open?: T;
+        close?: T;
+      };
+  saturday?:
+    | T
+    | {
+        open?: T;
+        close?: T;
+      };
+  sunday?:
+    | T
+    | {
+        open?: T;
+        close?: T;
+      };
+  draftMenu?: T;
+  cansMenu?: T;
+  basicInfo?:
+    | T
+    | {
+        phone?: T;
+        email?: T;
+      };
+  address?:
+    | T
+    | {
+        street?: T;
+        city?: T;
+        state?: T;
+        zip?: T;
+        directionsUrl?: T;
+      };
+  intro?: T;
+  images?:
+    | T
+    | {
+        card?: T;
+        hero?: T;
+      };
+  slug?: T;
+  aliases?: T;
+  coordinates?: T;
+  seo?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        ogTitle?: T;
+        ogDescription?: T;
+        ogImage?: T;
+        keywords?: T;
+        noIndex?: T;
+        canonicalPath?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -3510,10 +3510,9 @@ export interface CollectionQueryWidget {
       | 'tags'
       | 'menus'
       | 'products'
-      | 'locations'
       | 'holiday-hours'
-      | 'events'
       | 'donation-requests'
+      | 'events'
       | 'event-inquiries'
       | 'recurring-events'
       | 'food'
@@ -3523,6 +3522,7 @@ export interface CollectionQueryWidget {
       | 'distributors'
       | 'faqs'
       | 'users'
+      | 'locations'
       | 'payload-jobs';
     where?:
       | {
@@ -3553,10 +3553,9 @@ export interface ActivityWidget {
           | 'tags'
           | 'menus'
           | 'products'
-          | 'locations'
           | 'holiday-hours'
-          | 'events'
           | 'donation-requests'
+          | 'events'
           | 'event-inquiries'
           | 'recurring-events'
           | 'food'
@@ -3566,6 +3565,7 @@ export interface ActivityWidget {
           | 'distributors'
           | 'faqs'
           | 'users'
+          | 'locations'
           | 'payload-jobs'
         )[]
       | null;

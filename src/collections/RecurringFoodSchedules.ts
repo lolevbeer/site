@@ -21,7 +21,7 @@ export const RecurringFoodSchedules: CollectionConfig = {
     // A text field: a relationship title would show the vendor's ID, not its name.
     useAsTitle: 'day',
     defaultColumns: ['vendor', 'location', 'year', 'day', 'occurrence', 'active'],
-    description: 'Backing records for Recurring Food Schedule. Use the grid for routine changes.',
+    description: 'Backing records for Food Recurring. Use the grid for routine changes.',
   },
   access: {
     read: readRecurringFood,

@@ -91,7 +91,7 @@ const timeField = (name: 'open' | 'close'): Field => ({
 export const Locations: CollectionConfig = {
   slug: 'locations',
   admin: {
-    group: 'Taproom Operations',
+    group: 'Administration',
     useAsTitle: 'name',
     defaultColumns: ['name', 'active', 'linesLastCleaned'],
   },

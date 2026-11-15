@@ -34,7 +34,7 @@ const RICH_COPY_FIELDS = ['heroDescription', 'aboutPhilosophy', 'aboutLocations'
 
 export const SiteContent: GlobalConfig = {
   slug: 'site-content',
-  label: 'Site Content',
+  label: 'Content',
   admin: {
     group: 'Website',
   },

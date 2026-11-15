@@ -1,7 +1,7 @@
 'use server'
 
 /**
- * "Send test message" for Admin → Site Content → Slack Channels. Admins only.
+ * "Send test message" for Admin → Content → Slack Channels. Admins only.
  * Posts to the channel typed in the field (saved or not); a blank field tests
  * the env/default channel the live form pings use.
  *

@@ -11,7 +11,7 @@ export const Food: CollectionConfig = {
     update: foodManagerAccess,
     delete: foodManagerAccess,
   },
-  labels: { singular: 'Food Booking', plural: 'One-off Food Bookings' },
+  labels: { singular: 'Food Booking', plural: 'Food Bookings' },
   admin: {
     group: 'Food & Events',
     useAsTitle: 'vendorName',
@@ -20,7 +20,7 @@ export const Food: CollectionConfig = {
       defaultLimit: 100,
     },
     description:
-      'Dated vendor bookings. To replace recurring food, also skip that recurring date in Recurring Food Schedule.',
+      'Dated vendor bookings. To replace recurring food, also skip that recurring date in Food Recurring.',
   },
   fields: [
     {

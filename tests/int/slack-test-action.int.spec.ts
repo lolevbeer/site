@@ -1,5 +1,5 @@
 /**
- * "Send test message" under Admin → Site Content → Slack Channels: admins
+ * "Send test message" under Admin → Content → Slack Channels: admins
  * only, posts to the typed channel (or the form's live fallback when blank),
  * rejects values the field validator would reject, and says why it failed.
  */

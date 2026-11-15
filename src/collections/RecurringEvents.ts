@@ -26,7 +26,7 @@ export const RecurringEvents: CollectionConfig = {
   trash: true,
   labels: {
     singular: 'Recurring Event',
-    plural: 'Recurring Events',
+    plural: 'Events Recurring',
   },
   access: {
     read: readRecurringEvents,
