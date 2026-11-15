@@ -16,6 +16,7 @@ import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
 import { selectHeroBeers, toHomeMenu } from '@/lib/utils/public-client-payloads'
 import { buildMarketingCopy } from '@/lib/utils/marketing-copy'
 import type { Menu } from '@/src/payload-types'
+import { RichText } from '@/components/ui/rich-text'
 
 // ISR: Revalidate every 5 minutes as fallback (on-demand revalidation handles immediate updates)
 export const revalidate = 300;
@@ -124,7 +125,17 @@ export default async function Home(): Promise<React.ReactElement> {
           beerCount={data.beerCount}
           cansCount={data.cansCount}
           nextEvent={data.nextEvent}
-          heroDescription={data.siteContent.heroDescription}
+          heroDescription={
+            data.siteContent.heroDescriptionRich ? (
+              // The introduction is centred, so list markers sit inside, next to their text.
+              <RichText
+                data={data.siteContent.heroDescriptionRich}
+                className="text-balance [&_ul]:list-inside [&_ol]:list-inside [&_ul]:pl-0 [&_ol]:pl-0"
+              />
+            ) : (
+              data.siteContent.heroDescription
+            )
+          }
           heroImageUrl={data.siteContent.heroImageUrl}
           weeklyHours={data.weeklyHours}
         >

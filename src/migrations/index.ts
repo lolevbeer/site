@@ -19,6 +19,7 @@ import * as publicFormIndexes from './20261005_100000_public_form_indexes'
 import * as mediaSizesToVariants from './20261013_090000_media_sizes_to_variants'
 import * as jobApplicationStatus from './20261031_160000_job_application_status'
 import * as richTextFaqJobs from './20261114_170000_rich_text_faq_jobs'
+import * as richTextSiteContent from './20261114_213000_rich_text_site_content'
 
 export const migrations = [
   {
@@ -95,5 +96,10 @@ export const migrations = [
     up: richTextFaqJobs.up,
     down: richTextFaqJobs.down,
     name: '20261114_170000_rich_text_faq_jobs',
+  },
+  {
+    up: richTextSiteContent.up,
+    down: richTextSiteContent.down,
+    name: '20261114_213000_rich_text_site_content',
   },
 ]

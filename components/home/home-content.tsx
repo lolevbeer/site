@@ -22,7 +22,7 @@ interface HomeContentProps {
   cansCount: Record<string, number>;
   nextEvent: { name: string; date: string; location: LocationSlug } | null;
   children: React.ReactNode;
-  heroDescription?: string;
+  heroDescription?: React.ReactNode;
   heroImageUrl?: string | null;
   weeklyHours?: Record<string, WeeklyHoursDay[]>;
 }

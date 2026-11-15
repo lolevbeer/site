@@ -164,4 +164,14 @@ export const migrationRecovery: readonly MigrationRecovery[] = [
     verify:
       'In Atlas, db.faqs.countDocuments({ answerRich: { $exists: false } }) and db.jobs.countDocuments({ descriptionRich: { $exists: false } }) must both be 0; then open /faq and a job page and confirm the text reads as before.',
   },
+  {
+    name: '20261114_213000_rich_text_site_content',
+    compatibility:
+      'Adds heroDescriptionRich, aboutPhilosophyRich and aboutLocationsRich to the site-content global, built from the existing plain text, and leaves the plain fields untouched. Prior app versions ignore the new fields and keep rendering the plain text, so the live deployment keeps working before and after.',
+    retry:
+      'Safe to rerun: it only writes rich fields that are missing, so copy already converted or since edited is never touched.',
+    mode: 'roll-forward',
+    verify:
+      'In Atlas, db.globals.findOne({ globalType: "site-content" }) must have a ...Rich field beside each of heroDescription, aboutPhilosophy and aboutLocations that is set; then open the homepage and /about and confirm the text reads as before.',
+  },
 ]

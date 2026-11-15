@@ -139,6 +139,19 @@ export type SupportedTimezones =
   | 'Pacific/Fiji';
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "LexicalNodes_C8E2B098".
+ */
+export type LexicalNodes_C8E2B098 =
+  | SerializedTextNode
+  | SerializedTabNode
+  | SerializedLineBreakNode
+  | SerializedParagraphNode<LexicalNodes_C8E2B098>
+  | SerializedListNode<LexicalNodes_C8E2B098>
+  | SerializedListItemNode<LexicalNodes_C8E2B098>
+  | SerializedAutoLinkNode<LexicalNodes_C8E2B098, LexicalLinkFields>
+  | SerializedLinkNode<LexicalNodes_C8E2B098, LexicalLinkFields>;
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "LexicalNodes_9D695663".
  */
 export type LexicalNodes_9D695663 =
@@ -2581,8 +2594,20 @@ export interface SiteContent {
    * Background image for the homepage hero section (recommended: 1920x1080px or larger)
    */
   heroImage?: (string | null) | Media;
+  /**
+   * Links, bold, italic and lists are allowed.
+   */
+  heroDescriptionRich?: LexicalRichText<LexicalNodes_C8E2B098> | null;
   heroDescription?: string | null;
+  /**
+   * Links, bold, italic and lists are allowed.
+   */
+  aboutPhilosophyRich?: LexicalRichText<LexicalNodes_C8E2B098> | null;
   aboutPhilosophy?: string | null;
+  /**
+   * Links, bold, italic and lists are allowed.
+   */
+  aboutLocationsRich?: LexicalRichText<LexicalNodes_C8E2B098> | null;
   aboutLocations?: string | null;
   errorMessage?: string | null;
   todaysEventsTitle?: string | null;
@@ -3174,8 +3199,11 @@ export interface RecurringFoodSelect<T extends boolean = true> {
  */
 export interface SiteContentSelect<T extends boolean = true> {
   heroImage?: T;
+  heroDescriptionRich?: T;
   heroDescription?: T;
+  aboutPhilosophyRich?: T;
   aboutPhilosophy?: T;
+  aboutLocationsRich?: T;
   aboutLocations?: T;
   errorMessage?: T;
   todaysEventsTitle?: T;
@@ -3677,14 +3705,6 @@ export interface SerializedAutoLinkNode<TChildren, TFields = LexicalLinkFields> 
   fields: TFields;
 }
 
-export interface SerializedHeadingNode<
-  TChildren,
-  TTag extends 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6',
-> extends SerializedLexicalElementBase<TChildren> {
-  type: 'heading';
-  tag: TTag;
-}
-
 /** Shape of a Lexical `richText` field. */
 export interface LexicalRichText<TNode> {
   root: {
@@ -3696,6 +3716,14 @@ export interface LexicalRichText<TNode> {
     /** @deprecated Ignored when loading. Typed as required only to match Lexical's types: rich text sent through the API, CLI or MCP may not contain it. */
     version: number;
   };
+}
+
+export interface SerializedHeadingNode<
+  TChildren,
+  TTag extends 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6',
+> extends SerializedLexicalElementBase<TChildren> {
+  type: 'heading';
+  tag: TTag;
 }
 
 

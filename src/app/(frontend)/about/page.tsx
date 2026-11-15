@@ -16,6 +16,7 @@ import { PageTransition } from '@/components/motion';
 import { getSiteContent } from '@/lib/utils/site-content';
 import { getAllLocations } from '@/lib/utils/payload-api';
 import { buildPageMetadata } from '@/lib/seo/resolve-metadata'
+import { RichText } from '@/components/ui/rich-text'
 import {
   DEFAULT_ABOUT_PHILOSOPHY,
   DEFAULT_ABOUT_LOCATIONS,
@@ -39,7 +40,7 @@ export async function generateMetadata(): Promise<Metadata> {
   });
 }
 
-/** Renders multi-paragraph text split by double newlines */
+/** Plain-text fallback for a section whose rich text is not saved yet: one paragraph per blank line. */
 function Paragraphs({ text }: { text: string }) {
   return (
     <>
@@ -72,12 +73,20 @@ export default async function AboutPage() {
         <div className="mx-auto">
           <section className="mb-12" data-speakable="philosophy">
             <h2 className="text-2xl font-semibold mb-4">Our Philosophy</h2>
-            <Paragraphs text={philosophy} />
+            {siteContent.aboutPhilosophyRich ? (
+              <RichText data={siteContent.aboutPhilosophyRich} className="mb-4" />
+            ) : (
+              <Paragraphs text={philosophy} />
+            )}
           </section>
 
           <section className="mb-12" data-speakable="locations">
             <h2 className="text-2xl font-semibold mb-4">Our Locations</h2>
-            <Paragraphs text={locations} />
+            {siteContent.aboutLocationsRich ? (
+              <RichText data={siteContent.aboutLocationsRich} className="mb-4" />
+            ) : (
+              <Paragraphs text={locations} />
+            )}
           </section>
 
           <div className="text-center mt-12 space-y-4">

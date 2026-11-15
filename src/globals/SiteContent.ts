@@ -1,12 +1,34 @@
 import { validateDistributorImportUrl } from '@/lib/distributors/import-source'
-import type { GlobalConfig } from 'payload'
+import type { Field, GlobalConfig } from 'payload'
 import { adminAccess, adminFieldAccess } from '@/src/access/roles'
 import { isSlackChannel } from '@/lib/slack/mrkdwn'
+import { simpleEditor, syncPlainCopy, textToRichText } from '@/src/fields/rich-text'
 import {
   DEFAULT_HERO_DESCRIPTION,
   DEFAULT_ABOUT_PHILOSOPHY,
   DEFAULT_ABOUT_LOCATIONS,
 } from '@/lib/constants/site-content-defaults'
+
+/**
+ * A rich text field and the hidden plain-text copy it replaced. Staff edit the
+ * rich field; `syncPlainCopy` (in `hooks` below) fills the copy, which builds
+ * from before rich text still render.
+ */
+function richCopy(name: string, label: string, defaultText: string): Field[] {
+  return [
+    {
+      name: `${name}Rich`,
+      type: 'richText',
+      label,
+      editor: simpleEditor(),
+      defaultValue: textToRichText(defaultText),
+      admin: { description: 'Links, bold, italic and lists are allowed.' },
+    },
+    { name, type: 'textarea', defaultValue: defaultText, admin: { hidden: true } },
+  ]
+}
+
+const RICH_COPY_FIELDS = ['heroDescription', 'aboutPhilosophy', 'aboutLocations']
 
 export const SiteContent: GlobalConfig = {
   slug: 'site-content',
@@ -17,6 +39,9 @@ export const SiteContent: GlobalConfig = {
   access: {
     read: () => true,
     update: adminAccess,
+  },
+  hooks: {
+    beforeValidate: RICH_COPY_FIELDS.map((name) => syncPlainCopy(`${name}Rich`, name)),
   },
   fields: [
     {
@@ -35,38 +60,14 @@ export const SiteContent: GlobalConfig = {
                   'Background image for the homepage hero section (recommended: 1920x1080px or larger)',
               },
             },
-            {
-              name: 'heroDescription',
-              type: 'textarea',
-              label: 'Homepage introduction',
-              defaultValue: DEFAULT_HERO_DESCRIPTION,
-              admin: {
-                rows: 4,
-              },
-            },
+            ...richCopy('heroDescription', 'Homepage introduction', DEFAULT_HERO_DESCRIPTION),
           ],
         },
         {
           label: 'About Page',
           fields: [
-            {
-              name: 'aboutPhilosophy',
-              type: 'textarea',
-              label: 'Our Philosophy',
-              defaultValue: DEFAULT_ABOUT_PHILOSOPHY,
-              admin: {
-                rows: 6,
-              },
-            },
-            {
-              name: 'aboutLocations',
-              type: 'textarea',
-              label: 'Our Locations',
-              defaultValue: DEFAULT_ABOUT_LOCATIONS,
-              admin: {
-                rows: 6,
-              },
-            },
+            ...richCopy('aboutPhilosophy', 'Our Philosophy', DEFAULT_ABOUT_PHILOSOPHY),
+            ...richCopy('aboutLocations', 'Our Locations', DEFAULT_ABOUT_LOCATIONS),
           ],
         },
         {
