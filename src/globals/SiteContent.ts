@@ -2,7 +2,7 @@ import { validateDistributorImportUrl } from '@/lib/distributors/import-source'
 import type { Field, GlobalConfig } from 'payload'
 import { adminAccess, adminFieldAccess } from '@/src/access/roles'
 import { isSlackChannel } from '@/lib/slack/mrkdwn'
-import { simpleEditor, syncPlainCopy, textToRichText } from '@/src/fields/rich-text'
+import { simpleEditor, syncPlainCopy } from '@/src/fields/rich-text'
 import {
   DEFAULT_HERO_DESCRIPTION,
   DEFAULT_ABOUT_PHILOSOPHY,
@@ -21,7 +21,9 @@ function richCopy(name: string, label: string, defaultText: string): Field[] {
       type: 'richText',
       label,
       editor: simpleEditor(),
-      defaultValue: textToRichText(defaultText),
+      // No default here: Payload would fill a rich field the migration has not
+      // reached with it, hiding the saved plain text. syncPlainCopy builds the
+      // rich value from the plain default on a first save.
       admin: { description: 'Links, bold, italic and lists are allowed.' },
     },
     { name, type: 'textarea', defaultValue: defaultText, admin: { hidden: true } },

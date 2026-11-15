@@ -1549,57 +1549,6 @@ Both locations offer a curated selection of our freshest draft beers and canned 
     "type": "textarea",
   },
   "aboutLocationsRich": {
-    "defaultValue": {
-      "root": {
-        "children": [
-          {
-            "children": [
-              {
-                "detail": 0,
-                "format": 0,
-                "mode": "normal",
-                "style": "",
-                "text": "Our flagship location in Lawrenceville is both our production brewery and taproom, where visitors can experience our beers in the space where they're created. We also have a taproom in Zelienople. A building which previously housed a Barq's bottling facility until the 1970s.",
-                "type": "text",
-                "version": 1,
-              },
-            ],
-            "direction": "ltr",
-            "format": "",
-            "indent": 0,
-            "textFormat": 0,
-            "textStyle": "",
-            "type": "paragraph",
-            "version": 1,
-          },
-          {
-            "children": [
-              {
-                "detail": 0,
-                "format": 0,
-                "mode": "normal",
-                "style": "",
-                "text": "Both locations offer a curated selection of our freshest draft beers and canned offerings. We regularly host food, live events, and community gatherings, creating spaces where people can connect over a good beer.",
-                "type": "text",
-                "version": 1,
-              },
-            ],
-            "direction": "ltr",
-            "format": "",
-            "indent": 0,
-            "textFormat": 0,
-            "textStyle": "",
-            "type": "paragraph",
-            "version": 1,
-          },
-        ],
-        "direction": "ltr",
-        "format": "",
-        "indent": 0,
-        "type": "root",
-        "version": 1,
-      },
-    },
     "type": "richText",
   },
   "aboutPhilosophy": {
@@ -1609,57 +1558,6 @@ Our approach combines traditional brewing techniques with modern innovation, alw
     "type": "textarea",
   },
   "aboutPhilosophyRich": {
-    "defaultValue": {
-      "root": {
-        "children": [
-          {
-            "children": [
-              {
-                "detail": 0,
-                "format": 0,
-                "mode": "normal",
-                "style": "",
-                "text": "We focus on creating beers that are purposeful and refined.",
-                "type": "text",
-                "version": 1,
-              },
-            ],
-            "direction": "ltr",
-            "format": "",
-            "indent": 0,
-            "textFormat": 0,
-            "textStyle": "",
-            "type": "paragraph",
-            "version": 1,
-          },
-          {
-            "children": [
-              {
-                "detail": 0,
-                "format": 0,
-                "mode": "normal",
-                "style": "",
-                "text": "Our approach combines traditional brewing techniques with modern innovation, always in service of flavor and quality. We source the finest ingredients, obsess over every detail of the brewing process, and refine our recipes.",
-                "type": "text",
-                "version": 1,
-              },
-            ],
-            "direction": "ltr",
-            "format": "",
-            "indent": 0,
-            "textFormat": 0,
-            "textStyle": "",
-            "type": "paragraph",
-            "version": 1,
-          },
-        ],
-        "direction": "ltr",
-        "format": "",
-        "indent": 0,
-        "type": "root",
-        "version": 1,
-      },
-    },
     "type": "richText",
   },
   "distributorOhUrl": {
@@ -1687,57 +1585,6 @@ We believe that beer should be thoughtful and stimulating. Each beer we create i
     "type": "textarea",
   },
   "heroDescriptionRich": {
-    "defaultValue": {
-      "root": {
-        "children": [
-          {
-            "children": [
-              {
-                "detail": 0,
-                "format": 0,
-                "mode": "normal",
-                "style": "",
-                "text": "Brewed in Pittsburgh's vibrant Lawrenceville neighborhood, housed in a historic building that has stood since 1912. Lolev focuses on modern ales, expressive lagers and oak-aged beer.",
-                "type": "text",
-                "version": 1,
-              },
-            ],
-            "direction": "ltr",
-            "format": "",
-            "indent": 0,
-            "textFormat": 0,
-            "textStyle": "",
-            "type": "paragraph",
-            "version": 1,
-          },
-          {
-            "children": [
-              {
-                "detail": 0,
-                "format": 0,
-                "mode": "normal",
-                "style": "",
-                "text": "We believe that beer should be thoughtful and stimulating. Each beer we create is intended to engage your senses, crafted with attention to flavor, balance, and the experience.",
-                "type": "text",
-                "version": 1,
-              },
-            ],
-            "direction": "ltr",
-            "format": "",
-            "indent": 0,
-            "textFormat": 0,
-            "textStyle": "",
-            "type": "paragraph",
-            "version": 1,
-          },
-        ],
-        "direction": "ltr",
-        "format": "",
-        "indent": 0,
-        "type": "root",
-        "version": 1,
-      },
-    },
     "type": "richText",
   },
   "heroImage": {

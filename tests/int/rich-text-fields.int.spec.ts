@@ -219,13 +219,15 @@ describe('site content', () => {
     ['heroDescriptionRich', 'heroDescription'],
     ['aboutPhilosophyRich', 'aboutPhilosophy'],
     ['aboutLocationsRich', 'aboutLocations'],
-  ] as const)('staff edit %s, and %s is a hidden plain copy with the same default', (rich, plain) => {
+  ] as const)('staff edit %s, and %s is a hidden plain copy that keeps the default', (rich, plain) => {
     const richField = fields.find((f) => f.name === rich)
     const plainField = fields.find((f) => f.name === plain)
     expect(richField?.type).toBe('richText')
     expect(plainField?.type).toBe('textarea')
     expect(plainField?.admin?.hidden).toBe(true)
-    expect(richTextToPlain(richField?.defaultValue as never)).toBe(plainField?.defaultValue)
+    // A default on the rich field would mask saved plain text before the migration runs.
+    expect(richField?.defaultValue).toBeUndefined()
+    expect(typeof plainField?.defaultValue).toBe('string')
     expect(SiteContent.hooks?.beforeValidate).toHaveLength(3)
   })
 })
