@@ -184,6 +184,37 @@ describe('runGoogleHoursCheck', () => {
     expect(slackApi).not.toHaveBeenCalled()
   })
 
+  it('says so in Slack when the API key is missing, without calling Google', async () => {
+    await expect(runGoogleHoursCheck(payload, undefined)).resolves.toEqual({
+      checked: 0,
+      mismatches: 0,
+    })
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(slackApi).toHaveBeenCalledTimes(1)
+    expect(slackApi.mock.calls[0][1].channel).toBe('#managers')
+    expect(slackApi.mock.calls[0][1].text).toContain('GOOGLE_PLACES_API_KEY')
+  })
+
+  it('stays quiet about a missing key while no taproom has a place ID', async () => {
+    find.mockResolvedValue({ docs: [] })
+
+    await runGoogleHoursCheck(payload, undefined)
+    expect(slackApi).not.toHaveBeenCalled()
+  })
+
+  it('says so in Slack, without retrying, when Google rejects the key or place ID', async () => {
+    fetchMock.mockResolvedValue(new Response('denied', { status: 403 }))
+
+    await expect(runGoogleHoursCheck(payload, 'key')).resolves.toEqual({
+      checked: 0,
+      mismatches: 0,
+    })
+    const { text } = slackApi.mock.calls[0][1]
+    expect(text).toContain('Lawrenceville')
+    expect(text).toContain('403')
+    expect(text).toContain('GOOGLE_PLACES_API_KEY')
+  })
+
   it('fails so the job retries when Google or Slack is down', async () => {
     fetchMock.mockResolvedValue(new Response('nope', { status: 500 }))
     await expect(runGoogleHoursCheck(payload, 'key')).rejects.toThrow(/Google Places/)

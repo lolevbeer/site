@@ -133,7 +133,7 @@ export function compareHours(args: {
 async function fetchGoogleHours(
   placeId: string,
   apiKey: string,
-): Promise<GoogleOpeningHours | undefined> {
+): Promise<GoogleOpeningHours | { rejected: number } | undefined> {
   const response = await fetch(
     `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}`,
     {
@@ -141,6 +141,10 @@ async function fetchGoogleHours(
       signal: AbortSignal.timeout(10_000),
     },
   )
+  // A 4xx (bad key, bad place ID) will not fix itself on a retry; a rate limit or 5xx might.
+  if (response.status >= 400 && response.status < 500 && response.status !== 429) {
+    return { rejected: response.status }
+  }
   if (!response.ok) throw new Error(`Google Places returned ${response.status} for ${placeId}`)
   const place = (await response.json()) as { currentOpeningHours?: GoogleOpeningHours }
   return place.currentOpeningHours
@@ -167,15 +171,19 @@ function slackText(location: Pick<Location, 'id' | 'name'>, mismatches: HoursMis
 
 /**
  * Compares every location that has a Google place ID and posts one Slack
- * message per taproom with differences. Throws when Google or Slack fails so
- * the task retries.
+ * message per taproom with differences. Throws when Google is down or
+ * rate-limiting, or when Slack fails, so the task retries.
+ *
+ * A missing API key, or a request Google rejects (bad key or place ID), is
+ * reported in Slack instead of thrown: a retry cannot fix it, and a silent
+ * skip would look like "no differences".
  *
  * ponytail: stateless, so an unresolved difference is re-posted every night
  * until someone fixes one side. Store what was last posted if that gets noisy.
  */
 export async function runGoogleHoursCheck(
   payload: Payload,
-  apiKey: string,
+  apiKey: string | undefined,
 ): Promise<{ checked: number; mismatches: number }> {
   // ponytail: Eastern "today" for every taproom; use each location's timezone
   // if one ever opens outside Eastern time.
@@ -204,7 +212,26 @@ export async function runGoogleHoursCheck(
     slackChannelFor(payload, 'hours'),
   ])
 
+  const post = async (text: string) => {
+    const posted = await slackApi('chat.postMessage', {
+      channel,
+      unfurl_links: false,
+      unfurl_media: false,
+      text,
+      blocks: [{ type: 'section', text: { type: 'mrkdwn', text } }],
+    })
+    if (!posted) throw new Error(`Slack post about Google hours to ${channel} failed`)
+  }
+
   const result = { checked: 0, mismatches: 0 }
+  if (!apiKey) {
+    // Quiet until a taproom has a place ID: before that the check is simply not set up.
+    if (locations.docs.length > 0) {
+      await post('*Google hours check is not running:* `GOOGLE_PLACES_API_KEY` is not set.')
+    }
+    return result
+  }
+
   for (const location of locations.docs) {
     const placeId = location.address?.googlePlaceId?.trim()
     if (!placeId) continue
@@ -213,21 +240,19 @@ export async function runGoogleHoursCheck(
       logger.warn(`Google has no hours for ${location.name}`, { placeId })
       continue
     }
+    if ('rejected' in google) {
+      await post(
+        `*${location.name}: Google hours check is not running.* Google rejected the request (HTTP ${google.rejected}). Check \`GOOGLE_PLACES_API_KEY\` and this taproom's Google place ID.`,
+      )
+      continue
+    }
     result.checked++
 
     const mismatches = compareHours({ today, location, holidays: holidays.docs, google })
     if (mismatches.length === 0) continue
     result.mismatches += mismatches.length
 
-    const text = slackText(location, mismatches)
-    const posted = await slackApi('chat.postMessage', {
-      channel,
-      unfurl_links: false,
-      unfurl_media: false,
-      text,
-      blocks: [{ type: 'section', text: { type: 'mrkdwn', text } }],
-    })
-    if (!posted) throw new Error(`Slack post of Google hours differences to ${channel} failed`)
+    await post(slackText(location, mismatches))
   }
   return result
 }
@@ -248,10 +273,6 @@ export const checkGoogleHoursTask: TaskConfig = {
   schedule: [{ cron: '0 30 6 * * *', queue: 'maintenance' }],
   handler: async ({ req }) => {
     const apiKey = process.env.GOOGLE_PLACES_API_KEY?.trim()
-    if (!apiKey) {
-      logger.warn('Google hours check skipped: GOOGLE_PLACES_API_KEY is not set')
-      return { output: { checked: 0, mismatches: 0 } }
-    }
     return { output: await runGoogleHoursCheck(req.payload, apiKey) }
   },
 }
