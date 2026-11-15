@@ -8,6 +8,8 @@ import { slackDiagnosticsField } from './utils/slackDiagnosticsField'
 
 export const JobApplications: CollectionConfig = {
   slug: 'job-applications',
+  // Saved filters, columns and sort for this list, private or shared (#374).
+  enableQueryPresets: true,
   access: {
     read: adminAccess,
     create: () => false,

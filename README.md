@@ -207,6 +207,12 @@ is the system queue, separate from hiring.
   FAQ answers a small one (h4, under the question). Each keeps a hidden plain-text copy, filled on
   save, that the structured data and `llms-full.txt` read. The built-in FAQs
   with live hours and phone numbers still live in `lib/utils/faq-schema.ts`.
+- **Applications on a job:** A job opening lists its applications at the bottom
+  of the form (admins only; nobody else gets rows).
+- **Saved filters:** Private Event Inquiries, Donation Requests and Job
+  Applications have query presets: save a list's filters, columns and sort,
+  keep it private or share it with everyone or named people. Only people who
+  can open a list can see or make its presets.
 - **Hours:** Locations puts all seven existing weekday open/close pairs before
   images alongside timezone, separate from visitor information and website
   content. Existing field permissions remain unchanged.

@@ -1,4 +1,4 @@
-import type { Access, FieldAccess } from 'payload'
+import type { Access, FieldAccess, PayloadRequest } from 'payload'
 import type { User } from '@/src/payload-types'
 import { relationshipId } from '@/src/utils/relationship-id'
 
@@ -210,4 +210,37 @@ export const foodManagerAccess: Access = ({ req: { user } }) => {
  */
 export const leadBartenderAccess: Access = ({ req: { user } }) => {
   return hasRole(user, LEAD_BARTENDER_ROLES)
+}
+
+/**
+ * Slugs of the preset-enabled collections this request may read, sorted.
+ * Asks each collection's own `read` rule, so there is no second role list.
+ */
+async function readablePresetCollections(req: PayloadRequest): Promise<string[]> {
+  const readable: string[] = []
+  for (const { config } of Object.values(req.payload.collections)) {
+    if (config.enableQueryPresets && (await config.access.read({ req, slug: config.slug })))
+      readable.push(config.slug)
+  }
+  return readable.sort()
+}
+
+/**
+ * Read, update and delete access for Payload's query-preset store
+ * (`queryPresets.access` in payload.config.ts): a saved filter is only for
+ * people who can read the list it filters. A preset's filter values can hold a
+ * submitter's name or email, and Payload opens the store to every signed-in
+ * user by default.
+ */
+export const queryPresetAccess: Access = async ({ req }) => {
+  if (!req.user) return false
+  const readable = await readablePresetCollections(req)
+  return readable.length > 0 ? { relatedCollection: { in: readable } } : false
+}
+
+/** Create access for query presets: only for a list the user can read. */
+export const createQueryPresetAccess: Access = async ({ req, data }) => {
+  if (!req.user) return false
+  const readable = await readablePresetCollections(req)
+  return data ? readable.includes(data.relatedCollection) : readable.length > 0
 }

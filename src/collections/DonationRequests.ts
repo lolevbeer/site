@@ -25,6 +25,8 @@ const longText = (overrides: Record<string, unknown> = {}) => ({
 
 export const DonationRequests: CollectionConfig = {
   slug: 'donation-requests',
+  // Saved filters, columns and sort for this list, private or shared (#374).
+  enableQueryPresets: true,
   access: {
     read: eventManagerAccess,
     create: () => false,
