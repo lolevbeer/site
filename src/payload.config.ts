@@ -47,6 +47,7 @@ import {
   queryPresetAccess,
 } from './access/roles'
 import { defaultDashboardLayout } from './admin/dashboard-layout'
+import { checkGoogleHoursTask } from './jobs/check-google-hours'
 import { syncUntappdRatingsTask } from './jobs/sync-untappd-ratings'
 import { getLocalDevOrigins } from '../lib/config/payload-origins'
 import { readServerEnvironment } from '../lib/config/server-env'
@@ -144,7 +145,7 @@ export default buildConfig({
     },
     deleteJobOnComplete: false,
     processingOrder: 'createdAt',
-    tasks: [syncUntappdRatingsTask],
+    tasks: [syncUntappdRatingsTask, checkGoogleHoursTask],
     jobsCollectionOverrides: ({ defaultJobsCollection }) =>
       hideApiTab({
         ...defaultJobsCollection,

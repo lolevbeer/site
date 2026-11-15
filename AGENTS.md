@@ -13,7 +13,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 Payload access rules (collection, global, and field `access`) are the single source of truth for who may read or write what. Every Payload Local API call states the identity it runs as:
 
 - **Acting for a person** (anonymous visitor, admin editor, Slack user): `overrideAccess: false` plus their `user` or the hook's `req`. Public pages pass no user — anonymous is the correct identity. Inside hooks, always pass `req` so the call runs as the editor and inside the save transaction.
-- **User-less system code** (migrations, `scripts/`, the Untappd job and cron, public form intake, rate limiting, Slack notify, and derived-data helpers such as review sync, unique slug/recipe checks, and page revalidation): `overrideAccess: true`. It is allowed only in the files listed as `SYSTEM_OVERRIDE_FILES` in `eslint.config.mjs`, or behind `// eslint-disable-next-line no-restricted-syntax -- system: <reason>` on the `overrideAccess` line.
+- **User-less system code** (migrations, `scripts/`, the Untappd and Google hours jobs and their cron, public form intake, rate limiting, Slack notify, and derived-data helpers such as review sync, unique slug/recipe checks, and page revalidation): `overrideAccess: true`. It is allowed only in the files listed as `SYSTEM_OVERRIDE_FILES` in `eslint.config.mjs`, or behind `// eslint-disable-next-line no-restricted-syntax -- system: <reason>` on the `overrideAccess` line.
 
 Never omit `overrideAccess`: Payload 3 defaults an omitted (or `undefined`) flag to `true`, Payload 4 flips it to `false`. ESLint rejects both an omitted flag and an unfenced `true`.
 

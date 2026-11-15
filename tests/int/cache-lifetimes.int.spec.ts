@@ -4,7 +4,7 @@
  * regenerations: Next caps a page at the shortest lifetime of any read it makes,
  * and the root layout's reads are on every page.
  */
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -69,10 +69,15 @@ describe('Vercel cron', () => {
   })
 
   it('keeps every scheduled task inside the cron window', () => {
-    const source = readFileSync(join(process.cwd(), 'src/jobs/sync-untappd-ratings.ts'), 'utf8')
-    const hours = [...source.matchAll(/cron:\s*'\d+ \d+ (\d+) \* \* \*'/g)].map((m) => Number(m[1]))
-    expect(hours.length).toBeGreaterThan(0)
-    for (const hour of hours) expect([6, 7]).toContain(hour)
+    const jobs = join(process.cwd(), 'src/jobs')
+    for (const file of readdirSync(jobs)) {
+      const source = readFileSync(join(jobs, file), 'utf8')
+      const hours = [...source.matchAll(/cron:\s*'\d+ \d+ (\d+) \* \* \*'/g)].map((m) =>
+        Number(m[1]),
+      )
+      expect(hours.length, `${file} has no daily schedule`).toBeGreaterThan(0)
+      for (const hour of hours) expect([6, 7], file).toContain(hour)
+    }
   })
 })
 

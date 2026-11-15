@@ -1,10 +1,12 @@
 /**
- * Best-effort Slack ping after a public form write. Records success or
- * failure on the inbox row. Unfurls are off so submitted text cannot fetch
- * arbitrary URLs in Slack.
+ * Slack channel lookup for system pings, and the best-effort ping after a
+ * public form write.
  *
- * The channel set in Admin → Content → Slack Channels wins; blank or
- * invalid falls back to `args.channel` (env var or `#events`).
+ * `slackChannelFor` reads the channel set in Admin → Content → Slack Channels;
+ * the nightly Google hours check (`src/jobs/check-google-hours.ts`) uses it too.
+ * `notifyCollectionOnSlack` records success or failure on the inbox row, with
+ * unfurls off so submitted text cannot fetch arbitrary URLs in Slack; a blank
+ * or invalid channel setting falls back to `args.channel` (env var or `#events`).
  */
 
 import type { Payload } from 'payload'
@@ -18,11 +20,14 @@ const ADMIN_CHANNEL_FIELD = {
   'event-inquiries': 'eventInquiries',
 } as const
 
-/** The Admin-set channel for this form, else `fallback`. */
-async function channelFor(
+/**
+ * The channel set in Admin → Content → Slack Channels for `field`; when that
+ * is blank, invalid or unreadable, `fallback`, which defaults to `#events`.
+ */
+export async function slackChannelFor(
   payload: Payload,
-  collection: keyof typeof ADMIN_CHANNEL_FIELD,
-  fallback: string,
+  field: (typeof ADMIN_CHANNEL_FIELD)[keyof typeof ADMIN_CHANNEL_FIELD] | 'hours',
+  fallback?: string,
 ): Promise<string> {
   try {
     const settings = await payload.findGlobal({
@@ -31,13 +36,10 @@ async function channelFor(
       select: { slackChannels: true },
       overrideAccess: true,
     })
-    return resolveSlackChannel(
-      settings.slackChannels?.[ADMIN_CHANNEL_FIELD[collection]] ?? undefined,
-      fallback,
-    )
+    return resolveSlackChannel(settings.slackChannels?.[field] ?? undefined, fallback)
   } catch (error) {
     logger.error('Slack channel settings read failed', error)
-    return fallback
+    return resolveSlackChannel(undefined, fallback)
   }
 }
 
@@ -52,7 +54,11 @@ export async function notifyCollectionOnSlack(
   },
 ): Promise<void> {
   try {
-    const channel = await channelFor(payload, args.collection, args.channel)
+    const channel = await slackChannelFor(
+      payload,
+      ADMIN_CHANNEL_FIELD[args.collection],
+      args.channel,
+    )
     const posted = await slackApi('chat.postMessage', {
       channel,
       unfurl_links: false,

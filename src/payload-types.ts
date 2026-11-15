@@ -287,6 +287,7 @@ export interface Config {
   jobs: {
     tasks: {
       syncUntappdRatings: TaskSyncUntappdRatings;
+      checkGoogleHours: TaskCheckGoogleHours;
       schedulePublish: TaskSchedulePublish;
       inline: {
         input: unknown;
@@ -585,6 +586,10 @@ export interface Location {
      * Custom Google Maps or directions link for this location
      */
     directionsUrl?: string | null;
+    /**
+     * Turns on the nightly check of this taproom's hours against Google, which adds Special Hours for any day Google shows different hours. Look it up at developers.google.com/maps/documentation/places/web-service/place-id (starts with "ChIJ").
+     */
+    googlePlaceId?: string | null;
   };
   /**
    * Optional paragraph under the public location heading. Blank shows nothing.
@@ -1555,7 +1560,7 @@ export interface PayloadJob {
     | {
         executedAt: string;
         completedAt: string;
-        taskSlug: 'inline' | 'syncUntappdRatings' | 'schedulePublish';
+        taskSlug: 'inline' | 'syncUntappdRatings' | 'checkGoogleHours' | 'schedulePublish';
         taskID: string;
         input:
           | {
@@ -1586,13 +1591,13 @@ export interface PayloadJob {
           | boolean
           | null;
         parent?: {
-          taskSlug?: ('inline' | 'syncUntappdRatings' | 'schedulePublish') | null;
+          taskSlug?: ('inline' | 'syncUntappdRatings' | 'checkGoogleHours' | 'schedulePublish') | null;
           taskID?: string | null;
         };
         id?: string | null;
       }[]
     | null;
-  taskSlug?: ('inline' | 'syncUntappdRatings' | 'schedulePublish') | null;
+  taskSlug?: ('inline' | 'syncUntappdRatings' | 'checkGoogleHours' | 'schedulePublish') | null;
   queue?: string | null;
   waitUntil?: string | null;
   processingUntil?: string | null;
@@ -2275,6 +2280,7 @@ export interface LocationsSelect<T extends boolean = true> {
         state?: T;
         zip?: T;
         directionsUrl?: T;
+        googlePlaceId?: T;
       };
   intro?: T;
   images?:
@@ -2616,6 +2622,7 @@ export interface SiteContent {
     donations?: string | null;
     jobs?: string | null;
     eventInquiries?: string | null;
+    hours?: string | null;
   };
   /**
    * Sarene/Encompass8 QuickLink URL for PA distributors
@@ -3214,6 +3221,7 @@ export interface SiteContentSelect<T extends boolean = true> {
         donations?: T;
         jobs?: T;
         eventInquiries?: T;
+        hours?: T;
       };
   distributorPaUrl?: T;
   distributorOhUrl?: T;
@@ -3585,6 +3593,17 @@ export interface TaskSyncUntappdRatings {
     errors: number;
     unavailable: number;
     circuitBroken: boolean;
+  };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "TaskCheckGoogleHours".
+ */
+export interface TaskCheckGoogleHours {
+  input?: unknown;
+  output: {
+    checked: number;
+    mismatches: number;
   };
 }
 /**

@@ -70,6 +70,14 @@ describe('sendSlackTestMessage', () => {
     expect((await sendSlackTestMessage('jobs', '')).channel).toBe('#events')
   })
 
+  it('tests the Google hours check channel', async () => {
+    expect(await sendSlackTestMessage('hours', '#managers')).toEqual({
+      ok: true,
+      channel: '#managers',
+    })
+    expect((await sendSlackTestMessage('hours', '')).channel).toBe('#events')
+  })
+
   it('rejects a value the field would not save instead of swapping in a default', async () => {
     for (const bad of ['private-events', 'D0123456789', '#bad name']) {
       expect(await sendSlackTestMessage('eventInquiries', bad)).toEqual({

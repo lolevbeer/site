@@ -264,11 +264,20 @@ describe('sync-untappd cron runner', () => {
 
     expect(response.status).toBe(200)
     expect(handleSchedules).toHaveBeenCalledWith({ queue: 'maintenance' })
+    expect(runJobs).toHaveBeenCalledTimes(2)
     expect(runJobs).toHaveBeenCalledWith({
       queue: 'maintenance',
       limit: 1,
       sequential: true,
       overrideAccess: true,
+      where: { taskSlug: { equals: 'syncUntappdRatings' } },
+    })
+    expect(runJobs).toHaveBeenCalledWith({
+      queue: 'maintenance',
+      limit: 1,
+      sequential: true,
+      overrideAccess: true,
+      where: { taskSlug: { not_equals: 'syncUntappdRatings' } },
     })
     // 'kiosk-menus' refreshes the TV menu displays after the nightly sync.
     expect(revalidateTag.mock.calls.map((call) => call[0]).sort()).toEqual([
@@ -285,6 +294,20 @@ describe('sync-untappd cron runner', () => {
     // The beer detail pages are 3600s ISR, so the dynamic segment must be
     // invalidated as a route — a tag alone leaves last night's rating up.
     expect(revalidatePath).toHaveBeenCalledWith('/beer/[variant]', 'page')
+  })
+
+  it('leaves the beer caches alone when only another maintenance job ran', async () => {
+    handleSchedules.mockResolvedValue({ queued: [], skipped: [], errored: [] })
+    runJobs
+      .mockResolvedValueOnce({ jobStatus: {} })
+      .mockResolvedValueOnce({ jobStatus: { hours: { status: 'error' } } })
+
+    const response = await GET(cronRequest())
+
+    // The other job's failure still fails the wake.
+    expect(response.status).toBe(503)
+    expect(revalidateTag).not.toHaveBeenCalled()
+    expect(revalidatePath).not.toHaveBeenCalled()
   })
 
   it('rejects a missing cron secret configuration', async () => {

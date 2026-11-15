@@ -3,7 +3,7 @@
 /**
  * "Send test message" for Admin → Content → Slack Channels. Admins only.
  * Posts to the channel typed in the field (saved or not); a blank field tests
- * the env/default channel the live form pings use.
+ * the env/default channel the live pings use.
  *
  * Result: `ok` true when Slack accepted the post. Otherwise `reason` says why:
  * `forbidden` (not an admin or unknown form), `invalid` (typed value is not a
@@ -18,7 +18,7 @@ import config from '@payload-config'
 import { isAdmin } from '@/src/access/roles'
 import type { User } from '@/src/payload-types'
 import { readServerEnvironment } from '@/lib/config/server-env'
-import { isSlackChannel } from '@/lib/slack/mrkdwn'
+import { DEFAULT_SLACK_CHANNEL, isSlackChannel } from '@/lib/slack/mrkdwn'
 import { donationSlackChannel } from '@/lib/donate/slack-message'
 import { jobApplicationSlackChannel } from '@/lib/jobs/slack-message'
 import { eventInquirySlackChannel } from '@/lib/events/inquiry-slack'
@@ -29,6 +29,7 @@ const FORMS = {
   donations: ['Donation requests', donationSlackChannel],
   jobs: ['Job applications', jobApplicationSlackChannel],
   eventInquiries: ['Private-event inquiries', eventInquirySlackChannel],
+  hours: ['Google hours check', () => DEFAULT_SLACK_CHANNEL],
 } as const
 
 export type SlackTestForm = keyof typeof FORMS
