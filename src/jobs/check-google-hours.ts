@@ -87,7 +87,8 @@ const pad = (value: number) => String(value).padStart(2, '0')
 const dateKey = ({ year, month, day }: GoogleDate) => `${year}-${pad(month)}-${pad(day)}`
 
 /** A Google time as "HH:MM" on the 24-hour clock. */
-const clock = ({ hour = 0, minute = 0 }: GooglePoint) => `${pad(hour)}:${pad(minute)}`
+// `??` rather than a default: Google omits zero fields, and a null must also read as zero.
+const clock = (point: GooglePoint) => `${pad(point.hour ?? 0)}:${pad(point.minute ?? 0)}`
 
 const googleTime = (point: GooglePoint) => formatTime(clock(point))
 
@@ -101,17 +102,17 @@ function googleInstant(point: GooglePoint, fallbackDay: string, timezone: string
 }
 
 /**
- * The Special Hours entry that copies Google's hours for one day, or undefined
- * when they do not fit one: a split or all-night day has no single open/close pair.
+ * The Special Hours entry that copies `periods`, Google's hours for one day, or
+ * undefined when they do not fit one: a split or all-night day has no single open/close pair.
  */
 function specialHoursFix(
-  todays: GooglePeriod[],
+  periods: GooglePeriod[],
   day: string,
   timezone: string,
 ): SpecialHoursFix | undefined {
-  if (todays.length === 0) return { type: 'closed' }
-  const [only] = todays
-  if (todays.length > 1 || !only.close) return undefined
+  if (periods.length === 0) return { type: 'closed' }
+  const [only] = periods
+  if (periods.length > 1 || !only.close) return undefined
   return {
     type: 'modified',
     hours: {
