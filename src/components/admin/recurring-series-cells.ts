@@ -1,7 +1,7 @@
 /**
- * Text for one recurring series in the Dated Events list columns, used by the
- * "Recurring series" block above that list (RecurringEventsPanel). Pure
- * formatting; kept beside the block because nothing else needs it.
+ * Text for recurring series in the Events list columns, used by the "Recurring
+ * series" block above that list (RecurringEventsPanel). Pure formatting and
+ * ordering; kept beside the block because nothing else needs it.
  */
 import { formatInTimeZone } from 'date-fns-tz'
 import { capitalizeName } from '@/lib/utils/formatters'
@@ -26,10 +26,18 @@ export type RecurringSeries = Pick<
   | 'description'
   | 'summary'
   | 'site'
+  | 'image'
+  | 'attendees'
+  | 'pointOfContact'
+  | 'email'
+  | 'phone'
+  | 'otherInfo'
   | 'createdAt'
   | 'updatedAt'
 >
 
+// ponytail: taproom time, while Payload shows the dated rows in the browser's
+// zone. The same for staff in Eastern time; format in the browser if that changes.
 const TAPROOM_TIMEZONE = 'America/New_York'
 /** The time fields' own `displayFormat` (event-fields.ts), so times read like the dated rows. */
 const TIME_FORMAT = 'h:mm a'
@@ -51,9 +59,9 @@ export function recurringPatternLabel(
 }
 
 /**
- * One series as text, keyed by the Dated Events list's column names. The `date`
- * column holds the pattern and year, since a series has no date. Columns not
- * listed here render blank.
+ * One series as text, keyed by the Events list's column names. The `date`
+ * column holds the pattern and year, since a series has no date, and `image`
+ * the file name. Fields the viewer may not read arrive unset and stay blank.
  *
  * @param dateFormat The admin's date format, for the created/updated columns.
  */
@@ -65,6 +73,7 @@ export function recurringSeriesCells(
   const year = series.year ?? LEGACY_SCHEDULE_YEAR
   // A location the viewer cannot read (or an unpopulated one) is a bare ID.
   const location = series.location && typeof series.location === 'object' ? series.location : null
+  const image = series.image && typeof series.image === 'object' ? series.image : null
 
   return {
     id: series.id,
@@ -81,7 +90,59 @@ export function recurringSeriesCells(
     description: series.description ?? '',
     summary: series.summary ?? '',
     site: series.site ?? '',
+    image: image?.filename ?? '',
+    attendees: series.attendees == null ? '' : String(series.attendees),
+    pointOfContact: series.pointOfContact ?? '',
+    email: series.email ?? '',
+    phone: series.phone ?? '',
+    otherInfo: series.otherInfo ?? '',
     createdAt: formatStored(series.createdAt, dateFormat),
     updatedAt: formatStored(series.updatedAt, dateFormat),
   }
+}
+
+/** One row of the block: where it links, whether it is paused, and its cell text. */
+export interface RecurringSeriesRow {
+  id: string
+  href: string
+  paused: boolean
+  /** Cell text keyed by the Events list's column names. */
+  cells: Record<string, string>
+}
+
+/**
+ * The block's rows, ordered by season then name, so year-less legacy series sit
+ * among the 2026 ones they are shown as. Each row carries text for `columns`
+ * only, plus the name, which the row's link falls back to. A series that cannot
+ * be formatted (bad stored data) goes to `onError` and is left out, so one bad
+ * series does not cost the rest.
+ */
+export function recurringSeriesRows(
+  docs: RecurringSeries[],
+  options: {
+    /** Admin URL of the recurring-events list; each row links to `<listURL>/<id>`. */
+    listURL: string
+    dateFormat: string
+    columns: string[]
+    onError: (err: unknown, id: string) => void
+  },
+): RecurringSeriesRow[] {
+  const season = (series: RecurringSeries) => series.year ?? LEGACY_SCHEDULE_YEAR
+
+  return [...docs]
+    .sort((a, b) => season(a) - season(b) || a.organizer.localeCompare(b.organizer))
+    .flatMap((series) => {
+      try {
+        const all = recurringSeriesCells(series, options.dateFormat)
+        const cells = Object.fromEntries(
+          ['organizer', ...options.columns].map((column) => [column, all[column] ?? '']),
+        )
+        return [
+          { id: series.id, href: `${options.listURL}/${series.id}`, paused: !series.active, cells },
+        ]
+      } catch (err) {
+        options.onError(err, series.id)
+        return []
+      }
+    })
 }
