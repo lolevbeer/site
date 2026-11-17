@@ -306,7 +306,11 @@ export const Locations: CollectionConfig = {
                   type: 'text',
                   label: 'Directions URL',
                   admin: {
-                    description: 'Custom Google Maps or directions link for this location',
+                    description:
+                      'Custom Google Maps or directions link for this location. A map under the field shows the place the link points at.',
+                    components: {
+                      afterInput: ['@/src/components/admin/DirectionsUrlMap#DirectionsUrlMap'],
+                    },
                   },
                 },
                 {
@@ -315,7 +319,10 @@ export const Locations: CollectionConfig = {
                   label: 'Google place ID',
                   admin: {
                     description:
-                      'Turns on the nightly check of this taproom\'s hours against Google, which adds Special Hours for any day Google shows different hours. Look it up at developers.google.com/maps/documentation/places/web-service/place-id (starts with "ChIJ").',
+                      'Turns on the nightly check of this taproom\'s hours against Google, which adds Special Hours for any day Google shows different hours. Look it up at developers.google.com/maps/documentation/places/web-service/place-id (starts with "ChIJ"). The line under the field turns green with the Google listing\'s name and address when the ID is right.',
+                    components: {
+                      afterInput: ['@/src/components/admin/GooglePlaceIdCheck#GooglePlaceIdCheck'],
+                    },
                   },
                 },
               ],

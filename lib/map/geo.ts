@@ -14,11 +14,7 @@ export const DETAIL_ZOOM = 14
 export type LngLat = { lng: number; lat: number }
 
 export function lngLat(
-  coordinates:
-    | [number, number]
-    | { coordinates?: [number, number] | null }
-    | null
-    | undefined,
+  coordinates: [number, number] | { coordinates?: [number, number] | null } | null | undefined,
 ): LngLat | null {
   if (!coordinates) return null
   const pair = Array.isArray(coordinates) ? coordinates : coordinates.coordinates
@@ -33,30 +29,34 @@ export function googleDirectionsUrl(address: string): string {
   return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`
 }
 
-/** `@lat,lng` or `!3dlat!4dlng` from a Google Maps directions URL. */
+/**
+ * The place a Google Maps URL points at: its pin (`!3dlat!4dlng`) when it has
+ * one, else the centre of the map view (`@lat,lng`), which can sit a few
+ * hundred metres from the pin.
+ */
 export function coordsFromDirectionsUrl(url: string | null | undefined): LngLat | null {
   if (!url) return null
-  const at = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
-  if (at) return lngLat([Number(at[2]), Number(at[1])])
-  const bang = url.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/)
-  if (bang) return lngLat([Number(bang[2]), Number(bang[1])])
+  const pin = url.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/)
+  if (pin) return lngLat([Number(pin[2]), Number(pin[1])])
+  const view = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
+  if (view) return lngLat([Number(view[2]), Number(view[1])])
   return null
 }
 
-export function locationLngLat(location: {
-  coordinates?: [number, number] | null
-  address?: { directionsUrl?: string | null } | null
-} | null | undefined): LngLat | null {
+export function locationLngLat(
+  location:
+    | {
+        coordinates?: [number, number] | null
+        address?: { directionsUrl?: string | null } | null
+      }
+    | null
+    | undefined,
+): LngLat | null {
   if (!location) return null
   return lngLat(location.coordinates) ?? coordsFromDirectionsUrl(location.address?.directionsUrl)
 }
 
-export function distanceMiles(
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number,
-): number {
+export function distanceMiles(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const dLat = ((lat2 - lat1) * Math.PI) / 180
   const dLon = ((lon2 - lon1) * Math.PI) / 180
   const a =
@@ -69,19 +69,24 @@ export function distanceMiles(
   return EARTH_RADIUS_MILES * c
 }
 
-export function cameraForTaproom(
-  coordinates: [number, number] | null | undefined,
-): { latitude: number; longitude: number; zoom: number } {
+export function cameraForTaproom(coordinates: [number, number] | null | undefined): {
+  latitude: number
+  longitude: number
+  zoom: number
+} {
   const coords = lngLat(coordinates)
   if (!coords) return { ...DEFAULT_MAP_CENTER, zoom: DEFAULT_MAP_ZOOM }
   return { latitude: coords.lat, longitude: coords.lng, zoom: TAPROOM_ZOOM }
 }
 
 export function cameraForLocation(
-  location: {
-    coordinates?: [number, number] | null
-    address?: { directionsUrl?: string | null } | null
-  } | null | undefined,
+  location:
+    | {
+        coordinates?: [number, number] | null
+        address?: { directionsUrl?: string | null } | null
+      }
+    | null
+    | undefined,
 ): { latitude: number; longitude: number; zoom: number } {
   const coords = locationLngLat(location)
   return cameraForTaproom(coords ? [coords.lng, coords.lat] : null)

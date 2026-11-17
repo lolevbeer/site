@@ -1,7 +1,9 @@
 /**
- * Google hours check: the next seven days of site hours (weekly hours plus
- * Special Hours overrides) are compared with Google's hours for the same days,
- * and only real differences are reported to Slack.
+ * Google hours check: site hours (weekly hours plus Special Hours overrides)
+ * are compared with the hours on each taproom's Google Business Profile for
+ * the next seven days and every later special-hours day. Real differences are
+ * reported to Slack, and a day with no Special Hours entry gets one that
+ * copies Google.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Payload } from 'payload'
@@ -17,10 +19,9 @@ vi.mock('@/lib/utils/logger', () => ({
 import {
   compareHours,
   datesToCompare,
-  hoursOn,
+  googleDay,
   runGoogleHoursCheck,
   type BusinessProfile,
-  type GoogleOpeningHours,
 } from '@/src/jobs/check-google-hours'
 
 // Sunday 2026-11-22 through Saturday 2026-11-28; Thanksgiving is Thursday the 26th.
@@ -45,15 +46,60 @@ const location = {
   saturday: day,
 }
 
-const period = (dayOfMonth: number, openHour = 16, closeHour = 22) => ({
-  open: { date: { year: 2026, month: 11, day: dayOfMonth }, hour: openHour, minute: 0 },
-  close: { date: { year: 2026, month: 11, day: dayOfMonth }, hour: closeHour, minute: 0 },
+const DAY_NAMES = ['SUNDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY']
+
+/** A Business Profile agreeing with the weekly hours above: 4pm–10pm, closed Mondays. */
+const matchingProfile = (): BusinessProfile => ({
+  name: 'locations/1',
+  metadata: { placeId: 'place-1' },
+  openInfo: { status: 'OPEN' },
+  regularHours: {
+    periods: DAY_NAMES.map((name) => ({
+      openDay: name,
+      openTime: { hours: 16 },
+      closeDay: name,
+      closeTime: { hours: 22 },
+    })),
+  },
 })
 
-/** Google agreeing with the weekly hours above: open every day but Monday the 23rd. */
-const matchingGoogle = (): GoogleOpeningHours => ({
-  periods: [22, 24, 25, 26, 27, 28].map((d) => period(d)),
+const closedOn = (month: number, dayOfMonth: number) => ({
+  startDate: { year: 2026, month, day: dayOfMonth },
+  endDate: { year: 2026, month, day: dayOfMonth },
+  closed: true,
 })
+
+/** Special hours on a November day. Google leaves out zero fields, as here. */
+const specialOn = (dayOfMonth: number, openHour: number, closeHour: number) => ({
+  startDate: { year: 2026, month: 11, day: dayOfMonth },
+  openTime: { hours: openHour },
+  closeTime: { hours: closeHour },
+})
+
+/** The matching profile with special hours added. */
+const withSpecials = (
+  ...specialHourPeriods: NonNullable<
+    NonNullable<BusinessProfile['specialHours']>['specialHourPeriods']
+  >
+): BusinessProfile => ({ ...matchingProfile(), specialHours: { specialHourPeriods } })
+
+/** The matching profile with one weekday's regular hours replaced. */
+const withRegular = (
+  openDay: string,
+  ...hours: Array<[open: number, close: number]>
+): BusinessProfile => {
+  const profile = matchingProfile()
+  profile.regularHours!.periods = [
+    ...profile.regularHours!.periods!.filter((p) => p.openDay !== openDay),
+    ...hours.map(([open, close]) => ({
+      openDay,
+      openTime: { hours: open },
+      closeDay: openDay,
+      closeTime: { hours: close },
+    })),
+  ]
+  return profile
+}
 
 const thanksgivingClosed = {
   id: 'h-1',
@@ -64,18 +110,15 @@ const thanksgivingClosed = {
 }
 
 describe('compareHours', () => {
+  const compare = (profile: BusinessProfile, holidays: Array<typeof thanksgivingClosed> = []) =>
+    compareHours({ dates: WEEK, location, holidays, profile })
+
   it('reports nothing when Google matches the weekly hours', () => {
-    expect(compareHours({ dates: WEEK, location, holidays: [], google: matchingGoogle() })).toEqual(
-      [],
-    )
+    expect(compare(matchingProfile())).toEqual([])
   })
 
   it('reports a holiday closure Google has and the site lacks', () => {
-    const google = matchingGoogle()
-    google.periods = google.periods!.filter((p) => p.open.date!.day !== 26)
-    google.specialDays = [{ date: { year: 2026, month: 11, day: 26 } }]
-
-    expect(compareHours({ dates: WEEK, location, holidays: [], google })).toEqual([
+    expect(compare(withSpecials(closedOn(11, 26)))).toEqual([
       {
         date: '2026-11-26',
         site: '4pm–10pm',
@@ -87,11 +130,7 @@ describe('compareHours', () => {
   })
 
   it('offers Special Hours for holiday hours Google has and the site lacks', () => {
-    const google = matchingGoogle()
-    google.periods = google.periods!.map((p) => (p.open.date!.day === 25 ? period(25, 12, 18) : p))
-    google.specialDays = [{ date: { year: 2026, month: 11, day: 25 } }]
-
-    expect(compareHours({ dates: WEEK, location, holidays: [], google })).toEqual([
+    expect(compare(withSpecials(specialOn(25, 12, 18)))).toEqual([
       {
         date: '2026-11-25',
         site: '4pm–10pm',
@@ -107,40 +146,21 @@ describe('compareHours', () => {
   })
 
   it('offers no fix when the site already has Special Hours for that day', () => {
-    const google = matchingGoogle()
-    google.periods = google.periods!.map((p) => (p.open.date!.day === 26 ? period(26, 12, 18) : p))
-    google.specialDays = [{ date: { year: 2026, month: 11, day: 26 } }]
-
-    const [mismatch] = compareHours({
-      dates: WEEK,
-      location,
-      holidays: [thanksgivingClosed],
-      google,
-    })
+    const [mismatch] = compare(withSpecials(specialOn(26, 12, 18)), [thanksgivingClosed])
     expect(mismatch).toMatchObject({ date: '2026-11-26', site: 'Closed', googleSpecial: true })
     expect(mismatch.fix).toBeUndefined()
   })
 
   it('reports nothing when a Special Hours entry already matches Google', () => {
-    const google = matchingGoogle()
-    google.periods = google.periods!.filter((p) => p.open.date!.day !== 26)
-
-    expect(compareHours({ dates: WEEK, location, holidays: [thanksgivingClosed], google })).toEqual(
-      [],
-    )
+    expect(compare(withSpecials(closedOn(11, 26)), [thanksgivingClosed])).toEqual([])
   })
 
   it("ignores another taproom's Special Hours entry", () => {
     const other = { ...thanksgivingClosed, locations: ['loc-2'] }
-
-    expect(
-      compareHours({ dates: WEEK, location, holidays: [other], google: matchingGoogle() }),
-    ).toEqual([])
+    expect(compare(matchingProfile(), [other])).toEqual([])
   })
 
   it('reports changed times, and modified Special Hours that differ', () => {
-    const google = matchingGoogle()
-    google.periods = google.periods!.map((p) => (p.open.date!.day === 27 ? period(27, 12, 22) : p))
     const shortWednesday = {
       id: 'h-2',
       name: 'Thanksgiving Eve',
@@ -150,7 +170,14 @@ describe('compareHours', () => {
       hours: { open: OPEN, close: '2000-01-02T01:00:00.000Z' },
     }
 
-    expect(compareHours({ dates: WEEK, location, holidays: [shortWednesday], google })).toEqual([
+    expect(
+      compareHours({
+        dates: WEEK,
+        location,
+        holidays: [shortWednesday],
+        profile: withRegular('FRIDAY', [12, 22]),
+      }),
+    ).toEqual([
       { date: '2026-11-25', site: '4pm–8pm', google: '4pm–10pm', googleSpecial: false },
       // No Special Hours entry on the 27th, so Google's hours can be added for it.
       {
@@ -176,59 +203,47 @@ describe('compareHours', () => {
       locations: ['loc-1'],
       hours: day,
     }
-    const google = matchingGoogle()
-    google.periods = google.periods!.filter((p) => p.open.date!.day !== 26)
 
     expect(
       compareHours({
         dates: WEEK,
         location,
         holidays: [newerOpen, thanksgivingClosed],
-        google,
+        profile: withSpecials(closedOn(11, 26)),
       }),
     ).toEqual([])
   })
 
   it('proposes only, with both spans, when Google shows a split day', () => {
-    const google = matchingGoogle()
-    google.periods = google.periods!.flatMap((p) =>
-      p.open.date!.day === 25 ? [period(25, 11, 14), period(25, 17, 22)] : [p],
-    )
-
-    const [mismatch] = compareHours({ dates: WEEK, location, holidays: [], google })
+    const [mismatch] = compare(withRegular('WEDNESDAY', [11, 14], [17, 22]))
     expect(mismatch).toMatchObject({ date: '2026-11-25', google: '11am–2pm, 5pm–10pm' })
     expect(mismatch.fix).toBeUndefined()
   })
 
   it('proposes only when Google shows a day open 24 hours', () => {
-    const google = matchingGoogle()
-    google.periods = google.periods!.map((p) =>
-      p.open.date!.day === 25 ? { open: { date: p.open.date, hour: 0, minute: 0 } } : p,
-    )
-
-    const [mismatch] = compareHours({ dates: WEEK, location, holidays: [], google })
-    expect(mismatch).toMatchObject({ date: '2026-11-25', google: 'Open 24 hours' })
-    expect(mismatch.fix).toBeUndefined()
+    // Midnight to 24:00, as special hours and as regular hours.
+    for (const profile of [withSpecials(specialOn(25, 0, 24)), withRegular('WEDNESDAY', [0, 24])]) {
+      const [mismatch] = compare(profile)
+      expect(mismatch).toMatchObject({ date: '2026-11-25', google: 'Open 24 hours' })
+      expect(mismatch.fix).toBeUndefined()
+    }
   })
 
   it('copies a morning half-hour open and a midnight close on the next day', () => {
-    const google = matchingGoogle()
-    // Google leaves out zero fields, so midnight arrives with no hour or minute.
-    google.periods = google.periods!.map((p) =>
-      p.open.date!.day === 27
-        ? {
-            open: { date: { year: 2026, month: 11, day: 27 }, hour: 9, minute: 30 },
-            close: { date: { year: 2026, month: 11, day: 28 } },
-          }
-        : p,
-    )
+    const profile = withSpecials({
+      startDate: { year: 2026, month: 11, day: 27 },
+      openTime: { hours: 9, minutes: 30 },
+      // Google leaves out zero fields, so midnight arrives with no hour or minute.
+      endDate: { year: 2026, month: 11, day: 28 },
+      closeTime: {},
+    })
 
-    expect(compareHours({ dates: WEEK, location, holidays: [], google })).toEqual([
+    expect(compare(profile)).toEqual([
       {
         date: '2026-11-27',
         site: '4pm–10pm',
         google: '9:30am–12am',
-        googleSpecial: false,
+        googleSpecial: true,
         // 9:30am Eastern (EST) on the 27th, midnight Eastern at the start of the 28th.
         fix: {
           type: 'modified',
@@ -238,81 +253,49 @@ describe('compareHours', () => {
     ])
   })
 
-  it('offers no fix when Google shows no hours for the whole week', () => {
-    const mismatches = compareHours({ dates: WEEK, location, holidays: [], google: {} })
+  it('offers a closure for every day of a week-long closure on Google', () => {
+    const mismatches = compare(
+      withSpecials(...[22, 24, 25, 26, 27, 28].map((d) => closedOn(11, d))),
+    )
 
-    // Six open days differ, but a listing with no hours at all is not six closures.
     expect(mismatches).toHaveLength(6)
-    expect(mismatches.every((m) => m.fix === undefined)).toBe(true)
+    expect(mismatches.every((m) => m.fix?.type === 'closed')).toBe(true)
   })
 })
 
-const DAY_NAMES = ['SUNDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY']
-
-/** A Business Profile agreeing with the weekly hours above: 4pm–10pm, closed Mondays. */
-const matchingProfile = (): BusinessProfile => ({
-  metadata: { placeId: 'place-1' },
-  regularHours: {
-    periods: DAY_NAMES.map((name) => ({
-      openDay: name,
-      openTime: { hours: 16 },
-      closeDay: name,
-      closeTime: { hours: 22 },
-    })),
-  },
-})
-
-const closedOn = (month: number, dayOfMonth: number) => ({
-  startDate: { year: 2026, month, day: dayOfMonth },
-  endDate: { year: 2026, month, day: dayOfMonth },
-  closed: true,
-})
-
-describe('hoursOn', () => {
-  it('lays the regular week out by date', () => {
-    expect(hoursOn(matchingProfile(), WEEK)).toEqual({ ...matchingGoogle(), specialDays: [] })
+describe('googleDay', () => {
+  it('uses the regular hours for the weekday', () => {
+    expect(googleDay(matchingProfile(), TODAY)).toEqual({
+      special: false,
+      periods: [{ open: '16:00', close: { date: TODAY, time: '22:00' } }],
+    })
+    // Monday the 23rd is closed.
+    expect(googleDay(matchingProfile(), '2026-11-23')).toEqual({ special: false, periods: [] })
   })
 
   it('uses special hours instead of the regular hours on their day', () => {
-    const profile = matchingProfile()
-    profile.specialHours = {
-      specialHourPeriods: [
-        closedOn(11, 26),
-        {
-          startDate: { year: 2026, month: 11, day: 25 },
-          openTime: { hours: 12 },
-          closeTime: { hours: 18, minutes: 30 },
-        },
-      ],
-    }
-
-    const hours = hoursOn(profile, WEEK)
-    expect(hours.periods!.map((p) => p.open.date!.day)).toEqual([22, 24, 25, 27, 28])
-    expect(hours.periods![2]).toEqual({
-      open: { date: { year: 2026, month: 11, day: 25 }, hour: 12, minute: 0 },
-      close: { date: { year: 2026, month: 11, day: 25 }, hour: 18, minute: 30 },
+    const profile = withSpecials(closedOn(11, 26), {
+      startDate: { year: 2026, month: 11, day: 25 },
+      openTime: { hours: 12 },
+      closeTime: { hours: 18, minutes: 30 },
     })
-    expect(hours.specialDays).toEqual([
-      { date: { year: 2026, month: 11, day: 25 } },
-      { date: { year: 2026, month: 11, day: 26 } },
-    ])
+
+    expect(googleDay(profile, '2026-11-26')).toEqual({ special: true, periods: [] })
+    expect(googleDay(profile, '2026-11-25')).toEqual({
+      special: true,
+      periods: [{ open: '12:00', close: { date: '2026-11-25', time: '18:30' } }],
+    })
   })
 
   it("reads Google's 24:00 close as midnight, matching a site close at 12am", () => {
-    const profile = matchingProfile()
-    for (const p of profile.regularHours!.periods!) p.closeTime = { hours: 24 }
+    const profile = withRegular('SUNDAY', [16, 24])
     const untilMidnight = { open: OPEN, close: '2000-01-02T05:00:00.000Z' }
     const late = { ...location, sunday: untilMidnight }
 
-    const hours = hoursOn(profile, [TODAY])
-    expect(hours.periods![0].close).toEqual({
-      date: { year: 2026, month: 11, day: 23 },
-      hour: 0,
-      minute: 0,
-    })
-    expect(compareHours({ dates: [TODAY], location: late, holidays: [], google: hours })).toEqual(
-      [],
-    )
+    expect(googleDay(profile, TODAY).periods).toEqual([
+      { open: '16:00', close: { date: '2026-11-23', time: '00:00' } },
+    ])
+    expect(compareHours({ dates: [TODAY], location: late, holidays: [], profile })).toEqual([])
   })
 })
 
@@ -488,6 +471,63 @@ describe('runGoogleHoursCheck', () => {
     expect(create).not.toHaveBeenCalled()
   })
 
+  it('says so in Slack when Google marks the listing closed', async () => {
+    googleReplies([{ ...matchingProfile(), openInfo: { status: 'CLOSED_TEMPORARILY' } }])
+
+    await expect(runGoogleHoursCheck(payload, credentials)).resolves.toEqual({
+      checked: 0,
+      mismatches: 0,
+    })
+    expect(slackApi.mock.calls[0][1].text).toContain('temporarily closed')
+  })
+
+  it('says so in Slack when Google has put its own hours on the listing', async () => {
+    const profile = matchingProfile()
+    profile.metadata!.hasGoogleUpdated = true
+    fetchMock.mockImplementation(async (url: string) => {
+      if (url.startsWith('https://oauth2.googleapis.com/')) {
+        return new Response(JSON.stringify({ access_token: 'access' }))
+      }
+      return new Response(
+        JSON.stringify(
+          url.includes('locations/1:getGoogleUpdated')
+            ? { diffMask: 'regularHours' }
+            : { locations: [profile] },
+        ),
+      )
+    })
+
+    await expect(runGoogleHoursCheck(payload, credentials)).resolves.toEqual({
+      checked: 1,
+      mismatches: 0,
+    })
+    expect(slackApi).toHaveBeenCalledTimes(1)
+    expect(slackApi.mock.calls[0][1].text).toContain('Google has put its own hours')
+  })
+
+  it("stays quiet about Google's edits to anything but the hours", async () => {
+    const profile = matchingProfile()
+    profile.metadata!.hasGoogleUpdated = true
+    // The locations reply carries no diffMask, as when Google changed something else.
+    googleReplies([profile])
+
+    await runGoogleHoursCheck(payload, credentials)
+    expect(slackApi).not.toHaveBeenCalled()
+  })
+
+  it('splits a long message into Slack sections of at most 3,000 characters', async () => {
+    const days = Array.from({ length: 30 }, (_, i) => closedOn(12, i + 1))
+    googleReplies([withSpecials(...days)])
+
+    await runGoogleHoursCheck(payload, credentials)
+
+    const { text, blocks } = slackApi.mock.calls[0][1]
+    expect(create).toHaveBeenCalledTimes(26) // December's Mondays are already closed.
+    expect(blocks.length).toBeGreaterThan(1)
+    for (const block of blocks) expect(block.text.text.length).toBeLessThanOrEqual(3000)
+    expect(blocks.map((b: { text: { text: string } }) => b.text.text).join('\n')).toBe(text)
+  })
+
   it('only looks at active taprooms', async () => {
     await runGoogleHoursCheck(payload, credentials)
     const locationsQuery = find.mock.calls.find(([args]) => args.collection === 'locations')![0]
@@ -540,8 +580,9 @@ describe('runGoogleHoursCheck', () => {
     })
     expect(slackApi).toHaveBeenCalledTimes(1)
     const { text } = slackApi.mock.calls[0][1]
-    expect(text).toContain('400')
-    expect(text).toContain('GOOGLE_BUSINESS_REFRESH_TOKEN')
+    // Google's own reason is passed on, so a revoked sign-in is told from a disabled API.
+    expect(text).toContain('HTTP 400: invalid_grant')
+    expect(text).toContain('google-business-signin.mjs')
   })
 
   it('fails so the job retries when Google or Slack is down', async () => {

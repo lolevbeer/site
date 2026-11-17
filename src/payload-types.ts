@@ -583,11 +583,11 @@ export interface Location {
     state?: string | null;
     zip?: string | null;
     /**
-     * Custom Google Maps or directions link for this location
+     * Custom Google Maps or directions link for this location. A map under the field shows the place the link points at.
      */
     directionsUrl?: string | null;
     /**
-     * Turns on the nightly check of this taproom's hours against Google, which adds Special Hours for any day Google shows different hours. Look it up at developers.google.com/maps/documentation/places/web-service/place-id (starts with "ChIJ").
+     * Turns on the nightly check of this taproom's hours against Google, which adds Special Hours for any day Google shows different hours. Look it up at developers.google.com/maps/documentation/places/web-service/place-id (starts with "ChIJ"). The line under the field turns green with the Google listing's name and address when the ID is right.
      */
     googlePlaceId?: string | null;
   };
