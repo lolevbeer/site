@@ -68,6 +68,21 @@ export function formatTime(timeString: string, options: { timezone?: string } = 
 }
 
 /**
+ * One day's opening hours as the Google hours check writes them, e.g.
+ * "4pm–10pm", or "Closed" when the day lacks an opening or closing time.
+ * Shared by the nightly check and the admin's comparison with Google, so
+ * both read the site's hours the same way.
+ */
+export function formatOpenHours(
+  hours: { open?: string | null; close?: string | null } | null | undefined,
+  timezone?: string | null,
+): string {
+  if (!hours?.open || !hours.close) return 'Closed'
+  const options = { timezone: timezone || undefined }
+  return `${formatTime(hours.open, options)}–${formatTime(hours.close, options)}`
+}
+
+/**
  * Agenda time for an event row or card, e.g. "7pm–10pm", or just "7pm" with no end.
  * Null when the start is missing or "TBD", so callers can drop the time entirely.
  */

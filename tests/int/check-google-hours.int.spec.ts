@@ -20,6 +20,7 @@ import {
   compareHours,
   datesToCompare,
   googleDay,
+  googleWeek,
   runGoogleHoursCheck,
   type BusinessProfile,
 } from '@/src/jobs/check-google-hours'
@@ -296,6 +297,25 @@ describe('googleDay', () => {
       { open: '16:00', close: { date: '2026-11-23', time: '00:00' } },
     ])
     expect(compareHours({ dates: [TODAY], location: late, holidays: [], profile })).toEqual([])
+  })
+})
+
+describe('googleWeek', () => {
+  it("labels each weekday with Google's regular hours, leaving special hours out", () => {
+    const profile = {
+      ...withRegular('WEDNESDAY', [11, 14], [17, 22]),
+      specialHours: { specialHourPeriods: [closedOn(11, 26)] },
+    }
+
+    expect(googleWeek(profile, TODAY)).toEqual({
+      monday: 'Closed',
+      tuesday: '4pm–10pm',
+      wednesday: '11am–2pm, 5pm–10pm',
+      thursday: '4pm–10pm',
+      friday: '4pm–10pm',
+      saturday: '4pm–10pm',
+      sunday: '4pm–10pm',
+    })
   })
 })
 

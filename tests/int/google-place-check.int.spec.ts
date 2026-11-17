@@ -20,18 +20,29 @@ const ENV = [
 const saved = Object.fromEntries(ENV.map((key) => [key, process.env[key]]))
 const fetchMock = vi.fn()
 
+const week = {
+  periods: ['SUNDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'].map((day) => ({
+    openDay: day,
+    openTime: { hours: 16 },
+    closeDay: day,
+    closeTime: { hours: 22 },
+  })),
+}
+
 const profiles = [
   {
     title: 'Lolev Beer',
     metadata: { placeId: 'place-1' },
-    storefrontAddress: { addressLines: ['5247 Butler St', ''], locality: 'Pittsburgh' },
-    regularHours: { periods: [{ openDay: 'MONDAY', closeDay: 'MONDAY' }] },
+    storefrontAddress: {
+      addressLines: ['5247 Butler St', ''],
+      locality: 'Pittsburgh',
+      administrativeArea: 'PA',
+      postalCode: '15201-2621',
+    },
+    phoneNumbers: { primaryPhone: '(412) 336-8965' },
+    regularHours: week,
   },
-  {
-    title: 'Lolev Zelienople',
-    metadata: { placeId: 'place-2' },
-    regularHours: { periods: [{ openDay: 'MONDAY', closeDay: 'MONDAY' }] },
-  },
+  { title: 'Lolev Zelienople', metadata: { placeId: 'place-2' }, regularHours: week },
   { title: 'No hours yet', metadata: { placeId: 'place-3' } },
 ]
 
@@ -70,19 +81,29 @@ describe('checkGooglePlaceId', () => {
   })
 
   it('returns the name and address of the profile with that place ID', async () => {
-    expect(await checkGooglePlaceId(' place-1 ')).toEqual({
+    expect(await checkGooglePlaceId(' place-1 ')).toMatchObject({
       ok: true,
       title: 'Lolev Beer',
       address: '5247 Butler St, Pittsburgh',
     })
   })
 
-  it('returns a profile that has no address', async () => {
-    expect(await checkGooglePlaceId('place-2')).toEqual({
-      ok: true,
-      title: 'Lolev Zelienople',
-      address: '',
+  it("returns the listing's address and phone as the Location fields hold them", async () => {
+    expect(await checkGooglePlaceId('place-1')).toMatchObject({
+      details: {
+        street: '5247 Butler St',
+        city: 'Pittsburgh',
+        state: 'PA',
+        zip: '15201-2621',
+        phone: '(412) 336-8965',
+      },
     })
+  })
+
+  it("returns Google's regular hours for each weekday", async () => {
+    const result = await checkGooglePlaceId('place-2')
+    expect(result).toMatchObject({ ok: true, title: 'Lolev Zelienople', address: '' })
+    expect(result.ok && result.week).toMatchObject({ monday: 'Closed', friday: '4pm–10pm' })
   })
 
   it('says when no managed profile has that place ID', async () => {

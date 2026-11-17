@@ -20,8 +20,12 @@ import { BoldFeatureClient as BoldFeatureClient_e70f5e05f09f93e00b997edb1ef0c864
 import { ItalicFeatureClient as ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { HeadingFeatureClient as HeadingFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { ParagraphFeatureClient as ParagraphFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
+import { WeekdayCell as WeekdayCell_6dba1656da4a7af03d24f21fd6b8e566 } from '@/src/components/admin/WeekdayCell'
+import { GoogleWeekCompare as GoogleWeekCompare_7e6535383082d5c54519b70673f7e1b5 } from '@/src/components/admin/GoogleWeekCompare'
+import { UpcomingSpecialHours as UpcomingSpecialHours_12deaa9bb1f38c05c0c2a1d907a49274 } from '@/src/components/admin/UpcomingSpecialHours'
 import { DirectionsUrlMap as DirectionsUrlMap_d204807086ccd6a1c509c95df6ad69b2 } from '@/src/components/admin/DirectionsUrlMap'
 import { GooglePlaceIdCheck as GooglePlaceIdCheck_a169e8a9a12ad5ec535a9bc6038f126a } from '@/src/components/admin/GooglePlaceIdCheck'
+import { CoordinatesCheck as CoordinatesCheck_f3fc424de1064039d46d62afe3e1788e } from '@/src/components/admin/CoordinatesCheck'
 import { QueryPresetsHeading as QueryPresetsHeading_3817bf644402e67bfe6577f60ef982de } from '@payloadcms/ui'
 import { QueryPresetsGroupByCell as QueryPresetsGroupByCell_3817bf644402e67bfe6577f60ef982de } from '@payloadcms/ui'
 import { QueryPresetsGroupByField as QueryPresetsGroupByField_3817bf644402e67bfe6577f60ef982de } from '@payloadcms/ui'
@@ -77,8 +81,12 @@ export const importMap = {
   "@payloadcms/richtext-lexical/client#ItalicFeatureClient": ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#HeadingFeatureClient": HeadingFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#ParagraphFeatureClient": ParagraphFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
+  "@/src/components/admin/WeekdayCell#WeekdayCell": WeekdayCell_6dba1656da4a7af03d24f21fd6b8e566,
+  "@/src/components/admin/GoogleWeekCompare#GoogleWeekCompare": GoogleWeekCompare_7e6535383082d5c54519b70673f7e1b5,
+  "@/src/components/admin/UpcomingSpecialHours#UpcomingSpecialHours": UpcomingSpecialHours_12deaa9bb1f38c05c0c2a1d907a49274,
   "@/src/components/admin/DirectionsUrlMap#DirectionsUrlMap": DirectionsUrlMap_d204807086ccd6a1c509c95df6ad69b2,
   "@/src/components/admin/GooglePlaceIdCheck#GooglePlaceIdCheck": GooglePlaceIdCheck_a169e8a9a12ad5ec535a9bc6038f126a,
+  "@/src/components/admin/CoordinatesCheck#CoordinatesCheck": CoordinatesCheck_f3fc424de1064039d46d62afe3e1788e,
   "@payloadcms/ui#QueryPresetsHeading": QueryPresetsHeading_3817bf644402e67bfe6577f60ef982de,
   "@payloadcms/ui#QueryPresetsGroupByCell": QueryPresetsGroupByCell_3817bf644402e67bfe6577f60ef982de,
   "@payloadcms/ui#QueryPresetsGroupByField": QueryPresetsGroupByField_3817bf644402e67bfe6577f60ef982de,

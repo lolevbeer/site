@@ -69,6 +69,24 @@ export function distanceMiles(lat1: number, lon1: number, lat2: number, lon2: nu
   return EARTH_RADIUS_MILES * c
 }
 
+const METRES_PER_MILE = 1609.344
+
+/**
+ * How far `coordinates` ([lng, lat]) sit from the pin in a Google Maps
+ * directions link, in metres; `metres` is null when there are no coordinates
+ * yet. Null when the link carries no location to compare with.
+ */
+export function pinOffset(
+  coordinates: [number, number] | null | undefined,
+  directionsUrl: string | null | undefined,
+): { pin: LngLat; metres: number | null } | null {
+  const pin = coordsFromDirectionsUrl(directionsUrl)
+  if (!pin) return null
+  const saved = lngLat(coordinates)
+  if (!saved) return { pin, metres: null }
+  return { pin, metres: distanceMiles(saved.lat, saved.lng, pin.lat, pin.lng) * METRES_PER_MILE }
+}
+
 export function cameraForTaproom(coordinates: [number, number] | null | undefined): {
   latitude: number
   longitude: number

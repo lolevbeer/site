@@ -131,16 +131,31 @@ describe('persistent field contracts', () => {
 
 describe('editor task hierarchy', () => {
   it('keeps the timezone visible to lead bartenders while weekday editors remain admin-only', () => {
+    expect(findField(Locations.fields, 'timezone').admin?.condition).toBeUndefined()
     const hoursTabs = Locations.fields.find((field) => field.type === 'tabs')
     if (hoursTabs?.type !== 'tabs') throw new Error('Expected location sections')
-    const hours = hoursTabs.tabs[0].fields
-    const timezone = hours.find((field) => 'name' in field && field.name === 'timezone')
-    expect(timezone).toBeDefined()
-    expect(timezone?.admin?.condition).toBeUndefined()
-    const weekdaySection = hours.find((field) => field.type === 'collapsible')
+    const weekdaySection = hoursTabs.tabs[0].fields.find((field) => field.type === 'collapsible')
     expect(
       weekdaySection?.admin?.condition?.({}, {}, { user: { roles: ['lead-bartender'] } } as never),
     ).toBe(false)
+  })
+
+  it('keeps everything that places a taproom on a map in one section', () => {
+    const tabs = Locations.fields.find((field) => field.type === 'tabs')
+    if (tabs?.type !== 'tabs') throw new Error('Expected location sections')
+    const section = tabs.tabs
+      .flatMap((tab) => tab.fields)
+      .find((field) => field.type === 'collapsible' && field.label === 'Address & map')
+    if (section?.type !== 'collapsible') throw new Error('Expected an Address & map section')
+    const paths = stored(section.fields).map((entry) => entry.path)
+    expect(paths).toEqual(
+      expect.arrayContaining([
+        'address.directionsUrl',
+        'address.googlePlaceId',
+        'coordinates',
+        'timezone',
+      ]),
+    )
   })
 
   it('identifies menus with their required name instead of optional copy', () => {

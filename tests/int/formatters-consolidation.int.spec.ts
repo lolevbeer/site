@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatHoursTime, getDayName, formatTime } from '@/lib/utils/formatters'
+import { formatHoursTime, getDayName, formatTime, formatOpenHours } from '@/lib/utils/formatters'
 
 // The behaviour the four removed copies had, pinned so consolidation can't drift it.
 describe('formatHoursTime', () => {
@@ -33,3 +33,16 @@ it.each([
   ['12pm', '12pm'],
   ['7:30pm', '7:30pm'],
 ])('preserves the meridiem in %s', (input, expected) => expect(formatTime(input)).toBe(expected))
+
+describe('formatOpenHours', () => {
+  it('writes a day as the Google hours check compares it', () => {
+    const day = { open: '2000-01-01T21:00:00.000Z', close: '2000-01-02T03:00:00.000Z' }
+    expect(formatOpenHours(day, 'America/New_York')).toBe('4pm–10pm')
+    expect(formatOpenHours(day, 'America/Chicago')).toBe('3pm–9pm')
+  })
+
+  it('reads a day without both times as closed', () => {
+    expect(formatOpenHours(undefined)).toBe('Closed')
+    expect(formatOpenHours({ open: '2000-01-01T21:00:00.000Z', close: null })).toBe('Closed')
+  })
+})
