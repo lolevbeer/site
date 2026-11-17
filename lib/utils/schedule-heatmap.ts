@@ -12,8 +12,11 @@ export const WEEKS = 26 // ~6 months per window
 export const PAGES_BACK = 8
 export const PAGES_AHEAD = 2
 
-/** What a day has booked; drives the cell color. */
-export type DayKind = 'none' | 'event' | 'food' | 'both'
+/**
+ * One location's bookings on one EST day. `eventDoc` / `foodDoc` are true when
+ * a stored document (not only a recurring rule) books it.
+ */
+export type Day = { events: string[]; food: string[]; eventDoc: boolean; foodDoc: boolean }
 
 /**
  * One booking on one EST day, as sent from the server to the client grid.
@@ -46,26 +49,95 @@ export function dedupeSchedule(rows: ScheduleRow[]): ScheduleRow[] {
   })
 }
 
+/** One location's rows grouped by day; names are trimmed, unnamed ones read "Untitled". */
+export function groupByDay(rows: ScheduleRow[]): Map<string, Day> {
+  const map = new Map<string, Day>()
+  for (const r of rows) {
+    const day = map.get(r.day) ?? { events: [], food: [], eventDoc: false, foodDoc: false }
+    const name = r.name.trim() || 'Untitled'
+    if (r.kind === 'event') {
+      day.events.push(name)
+      day.eventDoc ||= !r.recurring
+    } else {
+      day.food.push(name)
+      day.foodDoc ||= !r.recurring
+    }
+    map.set(r.day, day)
+  }
+  return map
+}
+
 /**
- * Header line for one location's bookings on `today`, events before food,
- * e.g. "Tonight: Trivia · Taco Truck" or "Tonight: nothing booked".
+ * Header line for one location on `today`, events before food: "Tonight:
+ * Trivia · Taco Truck", "Tonight: Trivia · no food booked", or, with nothing
+ * booked, "Tonight: closed. Next: Fri, Nov 20 · Trivia".
  */
-export function tonightSummary(rows: ScheduleRow[], today: string): string {
-  const tonight = rows.filter((r) => r.day === today)
-  const names = [
-    ...tonight.filter((r) => r.kind === 'event'),
-    ...tonight.filter((r) => r.kind === 'food'),
-  ].map((r) => r.name || 'Untitled')
-  return `Tonight: ${names.length ? names.join(' · ') : 'nothing booked'}`
+export function tonightSummary(
+  byDay: Map<string, Day>,
+  today: string,
+  closedDays: number[],
+): string {
+  const tonight = byDay.get(today)
+  if (tonight) {
+    const names = [...tonight.events, ...tonight.food].join(' · ')
+    return `Tonight: ${names}${tonight.food.length ? '' : ' · no food booked'}`
+  }
+  const status = closedDays.includes(dayOfWeek(today)) ? 'closed' : 'nothing booked'
+  const next = [...byDay.keys()].filter((day) => day > today).sort()[0]
+  if (!next) return `Tonight: ${status}`
+  const { events, food } = byDay.get(next)!
+  return `Tonight: ${status}. Next: ${formatDay(next, today)} · ${[...events, ...food].join(' · ')}`
+}
+
+/**
+ * Hover text for one day, in the legend's words: "Fri, Nov 20 · Event: Trivia
+ * · Food: El Rincon", "Wed, Nov 18 · No food booked", "Mon, Nov 23 · Closed".
+ * An event always reports missing food, even on a closed day.
+ */
+export function dayLabel(
+  date: string,
+  day: Day | undefined,
+  closed: boolean,
+  today: string,
+): string {
+  const parts = [formatDay(date, today)]
+  if (day?.events.length) parts.push(`Event: ${day.events.join(', ')}`)
+  if (day?.food.length) parts.push(`Food: ${day.food.join(', ')}`)
+  else parts.push(closed && !day?.events.length ? 'Closed' : 'No food booked')
+  return parts.join(' · ')
+}
+
+/** Open days from `today` (included) through the next `days` with no food booked. */
+export function openNightsWithoutFood(
+  byDay: Map<string, Day>,
+  today: string,
+  closedDays: number[],
+  days = 28,
+): number {
+  let count = 0
+  for (let i = 0; i < days; i++) {
+    const date = addDays(today, i)
+    if (!closedDays.includes(dayOfWeek(date)) && !byDay.get(date)?.food.length) count++
+  }
+  return count
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+/** Short weekday names, Sunday first (index = dayOfWeek). */
+export const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 /** Short month name of a YYYY-MM-DD date. */
 export const monthName = (date: string) => MONTHS[Number(date.slice(5, 7)) - 1]
 
 /** 0 = Sunday for a YYYY-MM-DD date; noon UTC keeps DST out of the math. */
 export const dayOfWeek = (date: string) => new Date(`${date}T12:00:00Z`).getUTCDay()
+
+/** "Fri, Nov 20"; adds the year when it isn't today's: "Thu, Jan 7, 2027". */
+export function formatDay(date: string, today: string): string {
+  const day = `${DAY_NAMES[dayOfWeek(date)]}, ${monthName(date)} ${Number(date.slice(8, 10))}`
+  return date.slice(0, 4) === today.slice(0, 4) ? day : `${day}, ${date.slice(0, 4)}`
+}
 
 /** Shift a YYYY-MM-DD date by whole days. */
 export function addDays(date: string, days: number): string {

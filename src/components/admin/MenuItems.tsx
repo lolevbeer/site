@@ -72,8 +72,12 @@ export async function MenuItems({ req, widgetData }: WidgetServerProps<MenuItems
       <div className="widget-card__header">
         <h3 className="widget-card__title lolev-widget__title">
           {menu ? (
-            <Link href={adminURL('menus', menu.id)} title={menu.name}>
+            // The location sits in the title: every taproom has a "Draft Beer" menu.
+            <Link href={adminURL('menus', menu.id)}>
               {menu.name}
+              {locationName && (
+                <span className="lolev-widget__title-location"> · {locationName}</span>
+              )}
             </Link>
           ) : (
             'Menu items'
@@ -97,9 +101,8 @@ export async function MenuItems({ req, widgetData }: WidgetServerProps<MenuItems
         </p>
       ) : (
         <>
-          <p className="lolev-widget__meta" title={locationName}>
+          <p className="lolev-widget__meta">
             {items.length} {noun}
-            {locationName ? ` · ${locationName}` : ''}
             {menu._status === 'draft' ? ' · Draft menu' : ''}
           </p>
           {items.length === 0 ? (

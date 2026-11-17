@@ -21,12 +21,15 @@
   }
 }
 
-// Title shrinks with an ellipsis so the header link stays on one line.
+// Title wraps instead of truncating, so the location after the menu name stays
+// readable on narrow cards; the header link keeps to one line beside it.
 .lolev-widget__title {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+}
+
+.lolev-widget__title-location {
+  color: var(--color-text-secondary);
 }
 
 .lolev-widget__header-link {

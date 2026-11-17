@@ -2,62 +2,63 @@
 /**
  * Client grid for the ScheduleHeatmap widget. Receives booking rows from the
  * server and renders the visible 6-month window for one location, with
- * ghost Buttons (‹ › paging; the range label returns to today) and a
- * "Tonight:" line. Each day links to its filtered list, or to the recurring
- * rules when only rules book it. Cell color is booking status: grey nothing,
- * orange event without food, yellow food only, green both. Day details show in
- * one Payload Tooltip on the hovered or focused cell (and as its aria-label).
+ * ghost Buttons (‹ › paging; the range label returns to today), a "Tonight:"
+ * line and a Pill counting open nights without food in the next four weeks.
+ * Each day links to its filtered list, or to the recurring rules when only
+ * rules book it.
+ *
+ * A cell answers two questions separately: its fill is food (green = booked,
+ * gray = open with no food, hatched = closed per the location's weekly
+ * hours) and a dot is an event. An event with no food turns pale red with a
+ * red dot, the only alarm color. Day details show in one Payload Tooltip on
+ * the hovered or focused cell (and as its aria-label).
  */
-import { Button, ChevronIcon, Tooltip } from '@payloadcms/ui'
+import { Button, ChevronIcon, Pill, Tooltip } from '@payloadcms/ui'
 import { useMemo, useState, type CSSProperties } from 'react'
 
 import { getESTMidnightISO } from '@/lib/utils/date'
 import {
   addDays,
   buildHeatmapWeeks,
+  DAY_NAMES,
+  dayLabel,
+  dayOfWeek,
+  groupByDay,
   monthName,
   monthSpans,
+  openNightsWithoutFood,
   PAGES_AHEAD,
   PAGES_BACK,
   tonightSummary,
   WEEKS,
-  type DayKind,
   type ScheduleRow,
 } from '@/lib/utils/schedule-heatmap'
 
-const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-const LEGEND: { kind: DayKind; label: string }[] = [
-  { kind: 'none', label: 'Nothing booked' },
-  { kind: 'event', label: 'Event, no food' },
-  { kind: 'food', label: 'Food only' },
-  { kind: 'both', label: 'Both' },
+/** What a cell or legend swatch shows; each flag becomes a data attribute the styles read. */
+type Marks = { food?: boolean; event?: boolean; closed?: boolean }
+
+const LEGEND: (Marks & { label: string })[] = [
+  { label: 'Food booked', food: true },
+  { label: 'No food' },
+  { label: 'Closed', closed: true },
+  { label: 'Event', event: true, food: true },
+  { label: 'Event, no food', event: true },
 ]
 const plural = (n: number, one: string, many: string) => (n === 1 ? one : many)
 
-/** Names booked on one day, and whether any came from a stored document. */
-type Day = { events: string[]; food: string[]; eventDoc: boolean; foodDoc: boolean }
-type Cell = { date: string; kind: DayKind; label: string; href: string }
+/** `data-*` presence attributes for the stylesheet; false flags are left off. */
+const markAttrs = ({ food, event, closed }: Marks) => ({
+  'data-food': food || undefined,
+  'data-event': event || undefined,
+  'data-closed': closed || undefined,
+})
 
-/** Cell color from what the day has booked. */
-function dayKind(d: Day | undefined): DayKind {
-  if (!d) return 'none'
-  if (d.events.length && d.food.length) return 'both'
-  return d.events.length ? 'event' : d.food.length ? 'food' : 'none'
-}
-
-/** Hover text, e.g. "2026-10-10: 2 events (A, B), 1 food (C)". */
-function dayLabel(date: string, d: Day | undefined): string {
-  const parts = [
-    d?.events.length &&
-      `${d.events.length} ${plural(d.events.length, 'event', 'events')} (${d.events.join(', ')})`,
-    d?.food.length && `${d.food.length} food (${d.food.join(', ')})`,
-  ].filter(Boolean)
-  return `${date}: ${parts.length ? parts.join(', ') : 'nothing scheduled'}`
-}
+type Cell = Marks & { date: string; label: string; href: string }
 
 export function HeatmapGrid({
   rows,
   location,
+  closedDays,
   firstSunday,
   today,
   listURLs,
@@ -65,6 +66,8 @@ export function HeatmapGrid({
   /** Rows for this location only. */
   rows: ScheduleRow[]
   location: { id: string; name: string }
+  /** Weekdays (0 = Sunday) the location has no opening hours. */
+  closedDays: number[]
   firstSunday: string
   today: string
   /** Day lists for stored docs; `recurring*` for days booked only by a rule. */
@@ -73,23 +76,16 @@ export function HeatmapGrid({
   const [page, setPage] = useState(PAGES_BACK)
   // Date of the hovered or focused cell; only that cell renders a Tooltip.
   const [active, setActive] = useState<string | null>(null)
-  const tonight = useMemo(() => tonightSummary(rows, today), [rows, today])
 
-  const byDay = useMemo(() => {
-    const map = new Map<string, Day>()
-    for (const r of rows) {
-      const day = map.get(r.day) ?? { events: [], food: [], eventDoc: false, foodDoc: false }
-      if (r.kind === 'event') {
-        day.events.push(r.name || 'Untitled')
-        day.eventDoc ||= !r.recurring
-      } else {
-        day.food.push(r.name || 'Untitled')
-        day.foodDoc ||= !r.recurring
-      }
-      map.set(r.day, day)
-    }
-    return map
-  }, [rows])
+  const byDay = useMemo(() => groupByDay(rows), [rows])
+  const tonight = useMemo(
+    () => tonightSummary(byDay, today, closedDays),
+    [byDay, today, closedDays],
+  )
+  const gaps = useMemo(
+    () => openNightsWithoutFood(byDay, today, closedDays),
+    [byDay, today, closedDays],
+  )
 
   const weeks = useMemo(
     () => buildHeatmapWeeks(addDays(firstSunday, page * WEEKS * 7), WEEKS),
@@ -104,6 +100,7 @@ export function HeatmapGrid({
       weeks.map((week) =>
         week.map((date): Cell => {
           const d = byDay.get(date)
+          const closed = closedDays.includes(dayOfWeek(date))
           // Event list when the day has events (or nothing), else food. Days
           // booked only by recurring rules have no dated docs, so they open
           // the rule list instead of an empty filtered list.
@@ -120,10 +117,17 @@ export function HeatmapGrid({
                 ? listURLs.recurringEvent
                 : listURLs.recurringFood
               : `${isEvent ? listURLs.event : listURLs.food}?${params}`
-          return { date, kind: dayKind(d), label: dayLabel(date, d), href }
+          return {
+            date,
+            food: Boolean(d?.food.length),
+            event: Boolean(d?.events.length),
+            closed,
+            label: dayLabel(date, d, closed, today),
+            href,
+          }
         }),
       ),
-    [weeks, byDay, location.id, listURLs],
+    [weeks, byDay, closedDays, location.id, listURLs, today],
   )
 
   return (
@@ -132,15 +136,16 @@ export function HeatmapGrid({
         <h3 id={`hm-title-${location.id}`} className="widget-card__title">
           {location.name}
         </h3>
-        <Button
-          buttonStyle="ghost"
-          disabled={page === PAGES_BACK}
-          tooltip={page === PAGES_BACK ? undefined : 'Back to today'}
-          onClick={() => setPage(PAGES_BACK)}
-        >
-          {`${monthName(from)} ${from.slice(0, 4)} – ${monthName(through)} ${through.slice(0, 4)}`}
-        </Button>
-        <span className="schedule-heatmap__arrows">
+        {/* Range and arrows stay together, so a narrow card wraps them as one group. */}
+        <span className="schedule-heatmap__nav">
+          <Button
+            buttonStyle="ghost"
+            disabled={page === PAGES_BACK}
+            tooltip={page === PAGES_BACK ? undefined : 'Back to today'}
+            onClick={() => setPage(PAGES_BACK)}
+          >
+            {`${monthName(from)} ${from.slice(0, 4)} – ${monthName(through)} ${through.slice(0, 4)}`}
+          </Button>
           <Button
             buttonStyle="ghost"
             round
@@ -159,7 +164,14 @@ export function HeatmapGrid({
           />
         </span>
       </div>
-      <p className="schedule-heatmap__tonight">{tonight}</p>
+      <div className="schedule-heatmap__status">
+        <p className="schedule-heatmap__tonight">{tonight}</p>
+        <Pill pillStyle={gaps ? 'warning' : 'success'} size="small">
+          {gaps
+            ? `${gaps} open ${plural(gaps, 'night', 'nights')} without food in the next 4 weeks`
+            : 'Food booked every open night for the next 4 weeks'}
+        </Pill>
+      </div>
       <div
         role="grid"
         aria-labelledby={`hm-title-${location.id}`}
@@ -182,13 +194,13 @@ export function HeatmapGrid({
             </span>
           ))}
         </div>
-        {DAY_LABELS.map((dow, d) => (
+        {DAY_NAMES.map((dow, d) => (
           <div role="row" key={dow} className="schedule-heatmap__row">
             <span role="rowheader" className="schedule-heatmap__dow">
-              {d % 2 ? dow : ''}
+              {dow}
             </span>
             {cells.map((week) => {
-              const { date, kind, label, href } = week[d]
+              const { date, label, href, ...marks } = week[d]
               return (
                 <a
                   role="gridcell"
@@ -196,7 +208,7 @@ export function HeatmapGrid({
                   href={href}
                   aria-label={label}
                   data-date={date}
-                  data-kind={kind}
+                  {...markAttrs(marks)}
                   className={`schedule-heatmap__cell${date === today ? ' is-today' : ''}${date < today ? ' is-past' : ''}`}
                 >
                   {/* aria-hidden: the cell's aria-label already reads the same text. */}
@@ -212,9 +224,9 @@ export function HeatmapGrid({
         ))}
       </div>
       <div className="schedule-heatmap__legend" aria-hidden="true">
-        {LEGEND.map(({ kind, label }) => (
-          <span key={kind} className="schedule-heatmap__key">
-            <span className="schedule-heatmap__swatch" data-kind={kind} /> {label}
+        {LEGEND.map(({ label, ...marks }) => (
+          <span key={label} className="schedule-heatmap__key">
+            <span className="schedule-heatmap__swatch" {...markAttrs(marks)} /> {label}
           </span>
         ))}
       </div>
