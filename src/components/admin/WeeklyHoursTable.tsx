@@ -23,12 +23,12 @@ const CELL = {
 const INPUT = {
   font: 'inherit',
   padding: '2px 6px',
-  border: '1px solid var(--theme-elevation-150)',
-  borderRadius: 'var(--style-radius-s)',
-  background: 'var(--theme-input-bg)',
-  color: 'var(--theme-text)',
+  border: '1px solid var(--field-color-border)',
+  borderRadius: 'var(--field-border-radius)',
+  background: 'var(--field-color-bg)',
+  color: 'var(--color-text)',
 }
-const ERROR = { color: 'var(--theme-error-500)' }
+const ERROR = { color: 'var(--color-text-danger)' }
 
 /** One stored time of one day, edited as a clock time in the taproom's zone. */
 function TimeInput({ path, timezone, label }: { path: string; timezone: string; label: string }) {
@@ -132,7 +132,7 @@ export function WeeklyHoursTable() {
     )
   } else {
     googleNote = (
-      <span style={{ color: 'var(--theme-success-500)' }}>
+      <span style={{ color: 'var(--color-text-success)' }}>
         ✓ Matches Google&apos;s regular hours.
       </span>
     )

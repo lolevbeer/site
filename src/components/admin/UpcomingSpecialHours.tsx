@@ -59,7 +59,7 @@ export function UpcomingSpecialHours() {
       <span className="field-label">Upcoming Special Hours</span>
       {entries === null && <p style={NOTE}>Loading…</p>}
       {entries === 'failed' && (
-        <p role="alert" style={{ ...NOTE, color: 'var(--theme-error-500)' }}>
+        <p role="alert" style={{ ...NOTE, color: 'var(--color-text-danger)' }}>
           Could not load Special Hours.
         </p>
       )}

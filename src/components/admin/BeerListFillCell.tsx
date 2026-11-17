@@ -98,7 +98,7 @@ function FillSelect({
         }}
       />
       {error && (
-        <span role="alert" style={{ color: 'var(--theme-error-500)', display: 'block' }}>
+        <span role="alert" style={{ color: 'var(--color-text-danger)', display: 'block' }}>
           {error}
         </span>
       )}

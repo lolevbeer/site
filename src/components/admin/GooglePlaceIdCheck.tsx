@@ -50,7 +50,7 @@ export function GooglePlaceIdCheck({ path }: { path: string }) {
   if (!result) return <p style={NOTE}>Checking with Google…</p>
   if (!result.ok) {
     return (
-      <p role="alert" style={{ ...NOTE, color: 'var(--theme-error-500)' }}>
+      <p role="alert" style={{ ...NOTE, color: 'var(--color-text-danger)' }}>
         {describeFailure(result)}
       </p>
     )
@@ -69,7 +69,7 @@ export function GooglePlaceIdCheck({ path }: { path: string }) {
 
   return (
     <div>
-      <p role="status" style={{ ...NOTE, color: 'var(--theme-success-500)' }}>
+      <p role="status" style={{ ...NOTE, color: 'var(--color-text-success)' }}>
         ✓ Found on Google: {[result.title, result.address].filter(Boolean).join(', ')}
       </p>
       {copied && differences.length === 0 && (

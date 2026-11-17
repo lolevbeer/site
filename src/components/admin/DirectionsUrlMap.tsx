@@ -20,7 +20,7 @@ export function DirectionsUrlMap({ path }: { path: string }) {
 
   if (!safeHttpUrl(url)) {
     return (
-      <p role="alert" style={{ ...NOTE, color: 'var(--theme-error-500)' }}>
+      <p role="alert" style={{ ...NOTE, color: 'var(--color-text-danger)' }}>
         This is not a web link. It should start with https://
       </p>
     )

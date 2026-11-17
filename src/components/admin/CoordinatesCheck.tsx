@@ -38,14 +38,14 @@ export function CoordinatesCheck() {
   }
   if (metres <= TOLERANCE_METRES) {
     return (
-      <p role="status" style={{ ...NOTE, marginBottom: 24, color: 'var(--theme-success-500)' }}>
+      <p role="status" style={{ ...NOTE, marginBottom: 24, color: 'var(--color-text-success)' }}>
         ✓ Matches the Directions URL&apos;s pin.
       </p>
     )
   }
   return (
     <div style={{ marginBlock: '8px 24px' }}>
-      <p role="alert" style={{ ...NOTE, color: 'var(--theme-error-500)' }}>
+      <p role="alert" style={{ ...NOTE, color: 'var(--color-text-danger)' }}>
         These coordinates are {Math.round(metres)} m from the Directions URL&apos;s pin, so maps on
         the site put the taproom in the wrong place.
       </p>
