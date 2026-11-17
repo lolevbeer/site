@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import { formatHoursTime, getDayName, formatTime, formatOpenHours } from '@/lib/utils/formatters'
-import { clockFromStoredTime, storedTimeFromClock } from '@/lib/utils/date'
+import {
+  clockFromPickedTime,
+  clockFromStoredTime,
+  pickerTimeFromClock,
+  storedTimeFromClock,
+} from '@/lib/utils/date'
 
 // The behaviour the four removed copies had, pinned so consolidation can't drift it.
 describe('formatHoursTime', () => {
@@ -59,6 +64,15 @@ describe('weekly hours as the admin table edits them', () => {
     expect(storedTimeFromClock('16:00', 'America/New_York')).toBe('2000-01-01T21:00:00.000Z')
     expect(storedTimeFromClock('22:30', 'America/Chicago')).toBe('2000-01-02T04:30:00.000Z')
     expect(storedTimeFromClock('', 'America/New_York')).toBeNull()
+  })
+
+  it("hands Payload's time picker the clock time, whatever the browser's zone", () => {
+    // The picker shows and returns times in the browser's zone; only hours and minutes matter.
+    const picked = pickerTimeFromClock('17:30')!
+    expect([picked.getHours(), picked.getMinutes()]).toEqual([17, 30])
+    expect(clockFromPickedTime(picked)).toBe('17:30')
+    expect(pickerTimeFromClock('')).toBeUndefined()
+    expect(clockFromPickedTime(null)).toBe('')
   })
 
   it('round-trips, so the public hours read the same after an edit', () => {

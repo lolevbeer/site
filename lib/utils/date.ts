@@ -93,3 +93,19 @@ export function clockFromStoredTime(stored: string | null | undefined, timezone:
 export function storedTimeFromClock(clock: string, timezone: string): string | null {
   return clock ? fromZonedTime(`${WEEKLY_HOURS_DAY}T${clock}:00`, timezone).toISOString() : null
 }
+
+/**
+ * "HH:mm" as the Date Payload's time picker shows: that clock time in the
+ * browser's own zone, on the weekly-hours reference day. Undefined when blank.
+ */
+export function pickerTimeFromClock(clock: string): Date | undefined {
+  if (!clock) return undefined
+  const [hours, minutes] = clock.split(':').map(Number)
+  return new Date(2000, 0, 1, hours, minutes)
+}
+
+/** The clock time ("HH:mm") picked in Payload's time picker; "" when it was cleared. */
+export function clockFromPickedTime(picked: Date | null | undefined): string {
+  if (!picked) return ''
+  return `${String(picked.getHours()).padStart(2, '0')}:${String(picked.getMinutes()).padStart(2, '0')}`
+}

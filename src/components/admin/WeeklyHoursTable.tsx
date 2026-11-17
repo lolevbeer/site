@@ -8,9 +8,14 @@
  * hidden from the form; a day with no times is closed.
  */
 
-import { useField, useFormFields } from '@payloadcms/ui'
+import { DatePicker, useField, useFormFields } from '@payloadcms/ui'
 import { WEEKDAYS, type Weekday } from '@/lib/types/location'
-import { clockFromStoredTime, storedTimeFromClock } from '@/lib/utils/date'
+import {
+  clockFromPickedTime,
+  clockFromStoredTime,
+  pickerTimeFromClock,
+  storedTimeFromClock,
+} from '@/lib/utils/date'
 import { capitalizeName, formatOpenHours } from '@/lib/utils/formatters'
 import { describeFailure, useGooglePlace } from './google-place-lookup'
 
@@ -20,27 +25,26 @@ const CELL = {
   textAlign: 'left' as const,
   whiteSpace: 'nowrap' as const,
 }
-const INPUT = {
-  font: 'inherit',
-  padding: '2px 6px',
-  border: '1px solid var(--field-color-border)',
-  borderRadius: 'var(--field-border-radius)',
-  background: 'var(--field-color-bg)',
-  color: 'var(--color-text)',
-}
 const ERROR = { color: 'var(--color-text-danger)' }
 
-/** One stored time of one day, edited as a clock time in the taproom's zone. */
+/**
+ * One stored time of one day in Payload's own time picker (a list of times
+ * every 15 minutes, or typed). The picker works in the browser's zone, so the
+ * value goes through its clock time to stay in the taproom's zone.
+ */
 function TimeInput({ path, timezone, label }: { path: string; timezone: string; label: string }) {
   const { value, setValue } = useField<string | null>({ path })
   return (
-    <input
-      type="time"
-      aria-label={label}
-      style={INPUT}
-      value={clockFromStoredTime(value, timezone)}
-      onChange={(event) => setValue(storedTimeFromClock(event.target.value, timezone))}
-    />
+    <div style={{ width: 130 }} aria-label={label} role="group">
+      <DatePicker
+        pickerAppearance="timeOnly"
+        displayFormat="h:mm a"
+        timeIntervals={15}
+        overrides={{ title: label }}
+        value={pickerTimeFromClock(clockFromStoredTime(value, timezone))}
+        onChange={(picked) => setValue(storedTimeFromClock(clockFromPickedTime(picked), timezone))}
+      />
+    </div>
   )
 }
 
