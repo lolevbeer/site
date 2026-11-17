@@ -1,25 +1,48 @@
 // Styles for the ScheduleHeatmap dashboard widget. Reuses Payload's global
-// .card.widget-card chrome and its semantic --color-* / --spacer-* tokens
-// (nothing booked is --color-bg-tertiary grey; yellow uses --ramp-yellow-500;
-// event-only mixes it with --color-bg-danger).
+// .card.widget-card chrome and its semantic --color-* / --spacer-* tokens.
+// A cell answers two questions on their own: fill is food (green = booked,
+// gray = open with no food, hatched = closed) and a dot is an event.
+// Red is kept for the one problem, an event with no food.
 .schedule-heatmap {
-  --hm-gap: 1px; // --hm-weeks is set inline from WEEKS by HeatmapGrid
+  --hm-gap: 2px; // --hm-weeks is set inline from WEEKS by HeatmapGrid
+  --hm-min-cell: 12px;
   max-height: none; // widget-card caps height for list rows; the grid sizes itself
+  container-type: inline-size; // the grid sizes to this card, not the viewport
 
   &__grid {
     display: flex;
     flex-direction: column;
     gap: var(--hm-gap);
     overflow-x: auto;
+    padding-bottom: var(--spacer-1); // room for a scrollbar below the Sat row
+
+    // Phone-width cards: tighter gaps and cells so six months still nearly fit.
+    // Set here, not on the card: a container query styles only descendants.
+    @container (max-width: 480px) {
+      --hm-gap: 1px;
+      --hm-min-cell: 10px;
+    }
   }
 
   // Day-label column plus one equal column per week, so cells fill the widget.
-  // The 6px floor keeps cells readable; narrower widgets scroll instead.
+  // The cell floor keeps the event dot readable; narrower widgets scroll
+  // sideways, starting at this week, with the day labels pinned.
   &__row {
     display: grid;
-    grid-template-columns: 2.25em repeat(var(--hm-weeks), minmax(6px, 1fr));
+    grid-template-columns: 2.5em repeat(var(--hm-weeks), minmax(var(--hm-min-cell), 1fr));
     gap: var(--hm-gap);
     align-items: center;
+
+    // Pinned label column; the card background hides cells scrolling under it.
+    > :first-child {
+      position: sticky;
+      left: 0;
+      z-index: 1;
+      align-self: stretch;
+      display: flex;
+      align-items: center;
+      background: var(--color-bg);
+    }
   }
 
   // Each label spans the columns of its month's weeks (span set inline).
@@ -31,60 +54,78 @@
     color: var(--color-text-secondary);
   }
 
-  // line-height 1 keeps the label shorter than a cell, so rows are cell-height
-  // and the vertical gap matches the horizontal one.
   &__dow {
     font-size: 10px;
     line-height: 1;
     color: var(--color-text-secondary);
   }
 
-  // Grid cells stretch to their column; legend swatches are fixed 10px.
+  // Grid cells stretch to their column; legend swatches are fixed 12px.
   &__cell,
   &__swatch {
+    position: relative;
     display: inline-block;
     aspect-ratio: 1;
-    border-radius: 2px;
+    border-radius: var(--radius-chip);
+    // Open with no food booked: a soft gray slot waiting to be filled. A fill,
+    // not an outline, so months of unbooked weeks don't read as a spreadsheet.
+    background: var(--color-bg-secondary);
 
-    // Status, not volume: grey = open day, orange = event without food,
-    // yellow = food only, green = both. Tertiary, not secondary: secondary is
-    // too close to the card background to survive the past-day fade.
-    &[data-kind='none'] {
-      background: var(--color-bg-tertiary);
+    // Closed that weekday (no opening hours): hatched, the usual "unavailable".
+    &[data-closed] {
+      background: repeating-linear-gradient(-45deg, var(--color-border) 0 1px, transparent 1px 3px);
     }
 
-    // An event with no food truck needs attention, so it leans red.
-    &[data-kind='event'] {
-      background: color-mix(in srgb, var(--color-bg-danger) 50%, var(--ramp-yellow-500));
+    // Success green softened toward the card, so a fully booked month stays calm.
+    &[data-food] {
+      background: color-mix(in srgb, var(--color-bg-success) 75%, var(--color-bg));
     }
 
-    &[data-kind='food'] {
-      background: var(--ramp-yellow-500);
+    // An event is a dot: white on food.
+    &[data-event]::after {
+      content: '';
+      position: absolute;
+      inset: 32%;
+      border-radius: 50%;
+      background: var(--color-text-onsuccess);
     }
 
-    &[data-kind='both'] {
-      background: var(--color-bg-success);
+    // An event with no food booked: the only red, a red dot on a pale red cell.
+    &[data-event]:not([data-food]) {
+      background: var(--color-bg-danger-tertiary);
+
+      &::after {
+        background: var(--color-text-danger);
+      }
     }
   }
 
   &__swatch {
-    width: 10px;
+    width: 12px;
   }
 
   &__cell {
     &.is-past {
-      opacity: 0.6; // readable history, still distinct from upcoming days
+      opacity: 0.5; // readable history, still distinct from upcoming days
     }
 
     &.is-today {
-      outline: 1px solid var(--color-text);
-      outline-offset: -1px; // inset: the scrolling grid clips anything outside the cell
+      outline: 2px solid var(--color-text);
+      outline-offset: -2px; // inset: the scrolling grid clips anything outside the cell
     }
 
     &:focus-visible {
-      outline: 1px solid var(--color-border-selected-strong);
-      outline-offset: -1px; // inset: the scrolling grid clips anything outside the cell
+      outline: 2px solid var(--color-border-selected-strong);
+      outline-offset: -2px; // inset: the scrolling grid clips anything outside the cell
     }
+  }
+
+  // "Tonight:" text and the food-gap Pill; the Pill drops below on narrow widgets.
+  &__status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--spacer-1) var(--spacer-2);
   }
 
   &__tonight {
@@ -96,20 +137,23 @@
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: var(--spacer-2);
-    font-size: 10px;
+    gap: var(--spacer-1) var(--spacer-3);
+    font-size: 11px;
     color: var(--color-text-secondary);
   }
 
   &__key {
     display: inline-flex;
     align-items: center;
-    gap: var(--hm-gap);
+    gap: var(--spacer-1);
   }
 }
 
+// Title, then the range button and arrows as one right-aligned group; on
+// narrow widgets the group wraps under the title instead of squeezing it.
 .schedule-heatmap__header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--spacer-2);
 
@@ -118,8 +162,9 @@
     margin: 0;
   }
 
-  .schedule-heatmap__arrows {
+  .schedule-heatmap__nav {
     margin-left: auto;
     display: flex;
+    align-items: center;
   }
 }

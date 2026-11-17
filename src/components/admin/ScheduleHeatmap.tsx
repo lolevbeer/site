@@ -2,7 +2,8 @@
  * Admin dashboard widget: GitHub-style heatmap of event and food-truck
  * bookings per EST day. This server component only gathers rows (one-offs plus
  * recurring rules expanded within the year each was set up for) under the
- * viewer's read access (overrideAccess: false + req); HeatmapGrid renders
+ * viewer's read access (overrideAccess: false + req), plus the chosen
+ * location's closed weekdays from its weekly opening hours; HeatmapGrid renders
  * the location chosen in this widget instance's settings (each location gets
  * its own widget in the default layout), paging its 6-month window client-side.
  */
@@ -11,6 +12,8 @@ import { unstable_cache } from 'next/cache'
 import { cache } from 'react'
 import { formatAdminURL } from 'payload/shared'
 
+import { closedWeekdays } from '@/lib/config/locations'
+import type { PayloadLocation } from '@/lib/types/location'
 import { accessKey, CACHE_TAGS } from '@/lib/utils/cache'
 import { getDateEST, getESTMidnightISO, getTodayEST } from '@/lib/utils/date'
 import {
@@ -170,7 +173,17 @@ export async function ScheduleHeatmap({ req, permissions, widgetData }: WidgetSe
           collection: 'locations',
           id: locationId,
           depth: 0,
-          select: { name: true },
+          // Weekly hours mark closed days (holiday Special Hours are not read).
+          select: {
+            name: true,
+            sunday: true,
+            monday: true,
+            tuesday: true,
+            wednesday: true,
+            thursday: true,
+            friday: true,
+            saturday: true,
+          },
           disableErrors: true,
           overrideAccess: false,
           req,
@@ -190,6 +203,7 @@ export async function ScheduleHeatmap({ req, permissions, widgetData }: WidgetSe
     <HeatmapGrid
       rows={rows.filter((r) => r.location === location.id)}
       location={{ id: location.id, name: location.name }}
+      closedDays={closedWeekdays(location as PayloadLocation)}
       firstSunday={firstSunday}
       today={today}
       listURLs={{

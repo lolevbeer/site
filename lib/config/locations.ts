@@ -117,6 +117,17 @@ export function extractDayHours(location: PayloadLocation, day: Weekday): DayHou
   }
 }
 
+/**
+ * Weekdays (0 = Sunday) with no opening hours. A location with no hours set at
+ * all counts as open every day, so missing data never hides bookable nights.
+ */
+export function closedWeekdays(location: PayloadLocation): number[] {
+  const closed = WEEKDAYS_FROM_SUNDAY.flatMap((day, i) =>
+    extractDayHours(location, day) ? [] : [i],
+  )
+  return closed.length === WEEKDAYS_FROM_SUNDAY.length ? [] : closed
+}
+
 /** One-line hours summary for FAQ / llms.txt, grouped by identical open/close. */
 export function formatHoursFaqAnswer(locations: PayloadLocation[]): string {
   if (locations.length === 0) {

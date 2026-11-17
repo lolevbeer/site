@@ -43,6 +43,12 @@ describe('MenuItems widget', () => {
     )
   })
 
+  it('names the location in the title, so same-name menus at two taprooms tell apart', async () => {
+    const html = await render({ menu: 'menu-1' })
+    expect(html).toMatch(/<h3[^>]*>.*Taproom.*Lawrenceville.*<\/h3>/)
+    expect(html).toContain('<p class="lolev-widget__meta">2 items</p>')
+  })
+
   it('links each row to its admin edit page', async () => {
     const html = await render({ menu: 'menu-1' })
     expect(html).toContain('href="/admin/collections/beers/beer-1"')

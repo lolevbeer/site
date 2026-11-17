@@ -1,14 +1,21 @@
 /**
  * Pure helpers behind the admin schedule heatmap widget: grid layout,
  * per-year recurring slot projection, month header spans, booking dedupe,
- * the window length, and the "Tonight:" summary.
+ * the window length, the "Tonight:" summary, day hover text, the open
+ * nights without food count, and closed weekdays from opening hours.
  */
 import { describe, expect, it } from 'vitest'
 
+import { closedWeekdays } from '@/lib/config/locations'
+import { WEEKDAYS, type PayloadLocation, type Weekday } from '@/lib/types/location'
 import {
   buildHeatmapWeeks,
+  dayLabel,
   dedupeSchedule,
+  formatDay,
+  groupByDay,
   monthSpans,
+  openNightsWithoutFood,
   slotDatesInRange,
   tonightSummary,
   WEEKS,
@@ -91,22 +98,34 @@ describe('WEEKS', () => {
   })
 })
 
+const row = (kind: ScheduleRow['kind'], name: string, day = '2026-10-31'): ScheduleRow => ({
+  day,
+  kind,
+  name,
+  location: 'loc-1',
+})
+
 describe('tonightSummary', () => {
-  const row = (kind: ScheduleRow['kind'], name: string, day = '2026-10-31'): ScheduleRow => ({
-    day,
-    kind,
-    name,
-    location: 'loc-1',
+  // 2026-10-31 is a Saturday (weekday 6).
+  const summary = (rows: ScheduleRow[], closedDays: number[] = []) =>
+    tonightSummary(groupByDay(rows), '2026-10-31', closedDays)
+
+  it('says nothing is booked and names the next booking', () => {
+    expect(
+      summary([row('event', 'Trivia', '2026-11-01'), row('food', 'Tacos', '2026-11-02')]),
+    ).toBe('Tonight: nothing booked. Next: Sun, Nov 1 · Trivia')
   })
 
-  it('says nothing is booked when today has no rows', () => {
-    expect(tonightSummary([row('event', 'Trivia', '2026-11-01')], '2026-10-31')).toBe(
-      'Tonight: nothing booked',
-    )
+  it('says closed on a weekday with no opening hours, and stops when nothing is ahead', () => {
+    expect(summary([row('event', 'Bingo', '2026-10-30')], [6])).toBe('Tonight: closed')
   })
 
-  it('names the one booking', () => {
-    expect(tonightSummary([row('food', 'Taco Truck')], '2026-10-31')).toBe('Tonight: Taco Truck')
+  it('names the one booking, trimmed', () => {
+    expect(summary([row('food', ' Taco Truck ')])).toBe('Tonight: Taco Truck')
+  })
+
+  it('flags an event with no food booked', () => {
+    expect(summary([row('event', 'Trivia')])).toBe('Tonight: Trivia · no food booked')
   })
 
   it('lists events before food, skipping other days', () => {
@@ -116,6 +135,70 @@ describe('tonightSummary', () => {
       row('event', 'Bingo', '2026-10-30'),
       row('event', ''),
     ]
-    expect(tonightSummary(rows, '2026-10-31')).toBe('Tonight: Trivia · Untitled · Taco Truck')
+    expect(summary(rows)).toBe('Tonight: Trivia · Untitled · Taco Truck')
+  })
+})
+
+describe('formatDay', () => {
+  it('reads as weekday, month and day', () => {
+    expect(formatDay('2026-11-20', '2026-11-17')).toBe('Fri, Nov 20')
+  })
+
+  it("adds the year when it is not today's", () => {
+    expect(formatDay('2027-01-07', '2026-11-17')).toBe('Thu, Jan 7, 2027')
+  })
+})
+
+describe('dayLabel', () => {
+  const today = '2026-11-17'
+  const day = (rows: ScheduleRow[], date: string) => groupByDay(rows).get(date)
+
+  it('names events and food', () => {
+    const rows = [row('event', 'Trivia', '2026-11-20'), row('food', 'El Rincon', '2026-11-20')]
+    expect(dayLabel('2026-11-20', day(rows, '2026-11-20'), false, today)).toBe(
+      'Fri, Nov 20 · Event: Trivia · Food: El Rincon',
+    )
+  })
+
+  it('calls out an event with no food, even on a closed day', () => {
+    const rows = [row('event', 'Private party', '2026-11-23')]
+    expect(dayLabel('2026-11-23', day(rows, '2026-11-23'), true, today)).toBe(
+      'Mon, Nov 23 · Event: Private party · No food booked',
+    )
+  })
+
+  it('tells an open, empty day from a closed one', () => {
+    expect(dayLabel('2026-11-18', undefined, false, today)).toBe('Wed, Nov 18 · No food booked')
+    expect(dayLabel('2026-11-23', undefined, true, today)).toBe('Mon, Nov 23 · Closed')
+  })
+})
+
+describe('openNightsWithoutFood', () => {
+  it('counts open days from today on that have no food, skipping closed weekdays', () => {
+    // Tue Nov 17 – Mon Nov 23, closed Mondays, food Fri and Sat: Tue, Wed, Thu, Sun are open gaps.
+    const byDay = groupByDay([
+      row('food', 'Tacos', '2026-11-20'),
+      row('food', 'Pierogi', '2026-11-21'),
+      row('event', 'Trivia', '2026-11-19'),
+    ])
+    expect(openNightsWithoutFood(byDay, '2026-11-17', [1], 7)).toBe(4)
+  })
+
+  it('looks four weeks ahead by default', () => {
+    expect(openNightsWithoutFood(new Map(), '2026-11-17', [])).toBe(28)
+  })
+})
+
+describe('closedWeekdays', () => {
+  const hours = { open: '16:00', close: '22:00' }
+  const location = (days: Partial<Record<Weekday, typeof hours>>) => days as PayloadLocation
+
+  it('lists weekdays (0 = Sunday) with no opening hours', () => {
+    const { monday: _closed, ...open } = Object.fromEntries(WEEKDAYS.map((d) => [d, hours]))
+    expect(closedWeekdays(location(open))).toEqual([1])
+  })
+
+  it('treats a location with no hours set as open every day', () => {
+    expect(closedWeekdays(location({}))).toEqual([])
   })
 })
