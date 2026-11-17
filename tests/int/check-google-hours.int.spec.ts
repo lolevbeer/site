@@ -16,12 +16,16 @@ vi.mock('@/lib/utils/logger', () => ({
 
 import {
   compareHours,
+  datesToCompare,
+  hoursOn,
   runGoogleHoursCheck,
+  type BusinessProfile,
   type GoogleOpeningHours,
 } from '@/src/jobs/check-google-hours'
 
 // Sunday 2026-11-22 through Saturday 2026-11-28; Thanksgiving is Thursday the 26th.
 const TODAY = '2026-11-22'
+const WEEK = [22, 23, 24, 25, 26, 27, 28].map((d) => `2026-11-${d}`)
 
 // 4pm–10pm Eastern (EST) every day except Monday, which is closed.
 const OPEN = '2000-01-01T21:00:00.000Z'
@@ -61,9 +65,9 @@ const thanksgivingClosed = {
 
 describe('compareHours', () => {
   it('reports nothing when Google matches the weekly hours', () => {
-    expect(
-      compareHours({ today: TODAY, location, holidays: [], google: matchingGoogle() }),
-    ).toEqual([])
+    expect(compareHours({ dates: WEEK, location, holidays: [], google: matchingGoogle() })).toEqual(
+      [],
+    )
   })
 
   it('reports a holiday closure Google has and the site lacks', () => {
@@ -71,7 +75,7 @@ describe('compareHours', () => {
     google.periods = google.periods!.filter((p) => p.open.date!.day !== 26)
     google.specialDays = [{ date: { year: 2026, month: 11, day: 26 } }]
 
-    expect(compareHours({ today: TODAY, location, holidays: [], google })).toEqual([
+    expect(compareHours({ dates: WEEK, location, holidays: [], google })).toEqual([
       {
         date: '2026-11-26',
         site: '4pm–10pm',
@@ -87,7 +91,7 @@ describe('compareHours', () => {
     google.periods = google.periods!.map((p) => (p.open.date!.day === 25 ? period(25, 12, 18) : p))
     google.specialDays = [{ date: { year: 2026, month: 11, day: 25 } }]
 
-    expect(compareHours({ today: TODAY, location, holidays: [], google })).toEqual([
+    expect(compareHours({ dates: WEEK, location, holidays: [], google })).toEqual([
       {
         date: '2026-11-25',
         site: '4pm–10pm',
@@ -108,7 +112,7 @@ describe('compareHours', () => {
     google.specialDays = [{ date: { year: 2026, month: 11, day: 26 } }]
 
     const [mismatch] = compareHours({
-      today: TODAY,
+      dates: WEEK,
       location,
       holidays: [thanksgivingClosed],
       google,
@@ -121,16 +125,16 @@ describe('compareHours', () => {
     const google = matchingGoogle()
     google.periods = google.periods!.filter((p) => p.open.date!.day !== 26)
 
-    expect(
-      compareHours({ today: TODAY, location, holidays: [thanksgivingClosed], google }),
-    ).toEqual([])
+    expect(compareHours({ dates: WEEK, location, holidays: [thanksgivingClosed], google })).toEqual(
+      [],
+    )
   })
 
   it("ignores another taproom's Special Hours entry", () => {
     const other = { ...thanksgivingClosed, locations: ['loc-2'] }
 
     expect(
-      compareHours({ today: TODAY, location, holidays: [other], google: matchingGoogle() }),
+      compareHours({ dates: WEEK, location, holidays: [other], google: matchingGoogle() }),
     ).toEqual([])
   })
 
@@ -146,7 +150,7 @@ describe('compareHours', () => {
       hours: { open: OPEN, close: '2000-01-02T01:00:00.000Z' },
     }
 
-    expect(compareHours({ today: TODAY, location, holidays: [shortWednesday], google })).toEqual([
+    expect(compareHours({ dates: WEEK, location, holidays: [shortWednesday], google })).toEqual([
       { date: '2026-11-25', site: '4pm–8pm', google: '4pm–10pm', googleSpecial: false },
       // No Special Hours entry on the 27th, so Google's hours can be added for it.
       {
@@ -177,36 +181,12 @@ describe('compareHours', () => {
 
     expect(
       compareHours({
-        today: TODAY,
+        dates: WEEK,
         location,
         holidays: [newerOpen, thanksgivingClosed],
         google,
       }),
     ).toEqual([])
-  })
-
-  it("still compares today when it starts with the clipped tail of last night's hours", () => {
-    const google = matchingGoogle()
-    google.periods = [
-      {
-        open: { date: { year: 2026, month: 11, day: 22 }, hour: 0, minute: 0, truncated: true },
-        close: { date: { year: 2026, month: 11, day: 22 }, hour: 2, minute: 0 },
-      },
-      ...google.periods!.map((p) => (p.open.date!.day === 22 ? period(22, 12, 22) : p)),
-    ]
-
-    expect(compareHours({ today: TODAY, location, holidays: [], google })).toEqual([
-      {
-        date: '2026-11-22',
-        site: '4pm–10pm',
-        google: '12pm–10pm',
-        googleSpecial: false,
-        fix: {
-          type: 'modified',
-          hours: { open: '2026-11-22T17:00:00.000Z', close: '2026-11-23T03:00:00.000Z' },
-        },
-      },
-    ])
   })
 
   it('proposes only, with both spans, when Google shows a split day', () => {
@@ -215,7 +195,7 @@ describe('compareHours', () => {
       p.open.date!.day === 25 ? [period(25, 11, 14), period(25, 17, 22)] : [p],
     )
 
-    const [mismatch] = compareHours({ today: TODAY, location, holidays: [], google })
+    const [mismatch] = compareHours({ dates: WEEK, location, holidays: [], google })
     expect(mismatch).toMatchObject({ date: '2026-11-25', google: '11am–2pm, 5pm–10pm' })
     expect(mismatch.fix).toBeUndefined()
   })
@@ -226,7 +206,7 @@ describe('compareHours', () => {
       p.open.date!.day === 25 ? { open: { date: p.open.date, hour: 0, minute: 0 } } : p,
     )
 
-    const [mismatch] = compareHours({ today: TODAY, location, holidays: [], google })
+    const [mismatch] = compareHours({ dates: WEEK, location, holidays: [], google })
     expect(mismatch).toMatchObject({ date: '2026-11-25', google: 'Open 24 hours' })
     expect(mismatch.fix).toBeUndefined()
   })
@@ -243,7 +223,7 @@ describe('compareHours', () => {
         : p,
     )
 
-    expect(compareHours({ today: TODAY, location, holidays: [], google })).toEqual([
+    expect(compareHours({ dates: WEEK, location, holidays: [], google })).toEqual([
       {
         date: '2026-11-27',
         site: '4pm–10pm',
@@ -259,23 +239,98 @@ describe('compareHours', () => {
   })
 
   it('offers no fix when Google shows no hours for the whole week', () => {
-    const mismatches = compareHours({ today: TODAY, location, holidays: [], google: {} })
+    const mismatches = compareHours({ dates: WEEK, location, holidays: [], google: {} })
 
     // Six open days differ, but a listing with no hours at all is not six closures.
     expect(mismatches).toHaveLength(6)
     expect(mismatches.every((m) => m.fix === undefined)).toBe(true)
   })
+})
 
-  it('skips a day Google cut off at the edge of its seven-day window', () => {
-    const google = matchingGoogle()
-    google.periods![5].close = {
-      ...google.periods![5].close!,
-      hour: 23,
-      minute: 59,
-      truncated: true,
+const DAY_NAMES = ['SUNDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY']
+
+/** A Business Profile agreeing with the weekly hours above: 4pm–10pm, closed Mondays. */
+const matchingProfile = (): BusinessProfile => ({
+  metadata: { placeId: 'place-1' },
+  regularHours: {
+    periods: DAY_NAMES.map((name) => ({
+      openDay: name,
+      openTime: { hours: 16 },
+      closeDay: name,
+      closeTime: { hours: 22 },
+    })),
+  },
+})
+
+const closedOn = (month: number, dayOfMonth: number) => ({
+  startDate: { year: 2026, month, day: dayOfMonth },
+  endDate: { year: 2026, month, day: dayOfMonth },
+  closed: true,
+})
+
+describe('hoursOn', () => {
+  it('lays the regular week out by date', () => {
+    expect(hoursOn(matchingProfile(), WEEK)).toEqual({ ...matchingGoogle(), specialDays: [] })
+  })
+
+  it('uses special hours instead of the regular hours on their day', () => {
+    const profile = matchingProfile()
+    profile.specialHours = {
+      specialHourPeriods: [
+        closedOn(11, 26),
+        {
+          startDate: { year: 2026, month: 11, day: 25 },
+          openTime: { hours: 12 },
+          closeTime: { hours: 18, minutes: 30 },
+        },
+      ],
     }
 
-    expect(compareHours({ today: TODAY, location, holidays: [], google })).toEqual([])
+    const hours = hoursOn(profile, WEEK)
+    expect(hours.periods!.map((p) => p.open.date!.day)).toEqual([22, 24, 25, 27, 28])
+    expect(hours.periods![2]).toEqual({
+      open: { date: { year: 2026, month: 11, day: 25 }, hour: 12, minute: 0 },
+      close: { date: { year: 2026, month: 11, day: 25 }, hour: 18, minute: 30 },
+    })
+    expect(hours.specialDays).toEqual([
+      { date: { year: 2026, month: 11, day: 25 } },
+      { date: { year: 2026, month: 11, day: 26 } },
+    ])
+  })
+
+  it("reads Google's 24:00 close as midnight, matching a site close at 12am", () => {
+    const profile = matchingProfile()
+    for (const p of profile.regularHours!.periods!) p.closeTime = { hours: 24 }
+    const untilMidnight = { open: OPEN, close: '2000-01-02T05:00:00.000Z' }
+    const late = { ...location, sunday: untilMidnight }
+
+    const hours = hoursOn(profile, [TODAY])
+    expect(hours.periods![0].close).toEqual({
+      date: { year: 2026, month: 11, day: 23 },
+      hour: 0,
+      minute: 0,
+    })
+    expect(compareHours({ dates: [TODAY], location: late, holidays: [], google: hours })).toEqual(
+      [],
+    )
+  })
+})
+
+describe('datesToCompare', () => {
+  it('adds later days with special hours on either side to the next seven', () => {
+    const profile = matchingProfile()
+    profile.specialHours = {
+      specialHourPeriods: [closedOn(8, 29), closedOn(11, 26), closedOn(12, 25)],
+    }
+    const newYear = { ...thanksgivingClosed, date: '2027-01-01T12:00:00.000Z' }
+    const elsewhere = { ...thanksgivingClosed, date: '2026-12-31T12:00:00.000Z', locations: ['x'] }
+
+    // The past special day and another taproom's entry are left out.
+    expect(datesToCompare(TODAY, profile, [newYear, elsewhere], 'loc-1')).toEqual([
+      ...WEEK,
+      '2026-12-25',
+      '2027-01-01',
+    ])
   })
 })
 
@@ -285,8 +340,18 @@ describe('runGoogleHoursCheck', () => {
   const create = vi.fn()
   const payload = { find, findGlobal, create } as unknown as Payload
   const fetchMock = vi.fn()
+  const credentials = { clientId: 'id', clientSecret: 'secret', refreshToken: 'refresh' }
+
+  /** Google signs the job in, then returns `profiles` (or `listStatus`) for the locations call. */
+  const googleReplies = (profiles: BusinessProfile[], listStatus = 200) =>
+    fetchMock.mockImplementation(async (url: string) =>
+      url.startsWith('https://oauth2.googleapis.com/')
+        ? new Response(JSON.stringify({ access_token: 'access' }))
+        : new Response(JSON.stringify({ locations: profiles }), { status: listStatus }),
+    )
 
   beforeEach(() => {
+    // 06:30 UTC is 1:30am Eastern on Sunday the 22nd, so the week is the 22nd–28th.
     vi.useFakeTimers({ now: new Date('2026-11-22T06:30:00.000Z') })
     vi.stubGlobal('fetch', fetchMock)
     slackApi.mockResolvedValue(true)
@@ -295,6 +360,7 @@ describe('runGoogleHoursCheck', () => {
     find.mockImplementation(async ({ collection }: { collection: string }) => ({
       docs: collection === 'locations' ? [location] : [],
     }))
+    googleReplies([matchingProfile()])
   })
   afterEach(() => {
     vi.useRealTimers()
@@ -302,28 +368,28 @@ describe('runGoogleHoursCheck', () => {
     vi.clearAllMocks()
   })
 
-  const googleReplies = (currentOpeningHours: GoogleOpeningHours | undefined) =>
-    fetchMock.mockResolvedValue(new Response(JSON.stringify({ currentOpeningHours })))
-
   it('stays quiet when everything matches', async () => {
-    // 06:30 UTC is 1:30am Eastern on Sunday the 22nd, so the window is the 22nd–28th.
-    googleReplies(matchingGoogle())
-
-    await expect(runGoogleHoursCheck(payload, 'key')).resolves.toEqual({
+    await expect(runGoogleHoursCheck(payload, credentials)).resolves.toEqual({
       checked: 1,
       mismatches: 0,
     })
     expect(slackApi).not.toHaveBeenCalled()
-    expect(fetchMock.mock.calls[0][0]).toBe('https://places.googleapis.com/v1/places/place-1')
+
+    const [tokenCall, listCall] = fetchMock.mock.calls
+    expect(tokenCall[0]).toBe('https://oauth2.googleapis.com/token')
+    expect(String(tokenCall[1].body)).toContain('refresh_token=refresh')
+    expect(listCall[0]).toContain(
+      'https://mybusinessbusinessinformation.googleapis.com/v1/accounts/-/locations?',
+    )
+    expect(listCall[1].headers).toEqual({ Authorization: 'Bearer access' })
   })
 
   it('only proposes, in the configured Slack channel, when Special Hours already exist', async () => {
     find.mockImplementation(async ({ collection }: { collection: string }) => ({
       docs: collection === 'locations' ? [location] : [thanksgivingClosed],
     }))
-    googleReplies(matchingGoogle())
 
-    await expect(runGoogleHoursCheck(payload, 'key')).resolves.toEqual({
+    await expect(runGoogleHoursCheck(payload, credentials)).resolves.toEqual({
       checked: 1,
       mismatches: 1,
     })
@@ -338,9 +404,13 @@ describe('runGoogleHoursCheck', () => {
   })
 
   it('adds Special Hours for an ordinary day that differs from Google', async () => {
-    googleReplies({ periods: [22, 24, 25, 27, 28].map((d) => period(d)) })
+    const profile = matchingProfile()
+    profile.regularHours!.periods = profile.regularHours!.periods!.filter(
+      (p) => p.openDay !== 'THURSDAY',
+    )
+    googleReplies([profile])
 
-    await runGoogleHoursCheck(payload, 'key')
+    await runGoogleHoursCheck(payload, credentials)
 
     expect(create.mock.calls[0][0].data).toMatchObject({
       name: 'Hours from Google',
@@ -352,46 +422,74 @@ describe('runGoogleHoursCheck', () => {
     )
   })
 
-  it('adds Special Hours for a holiday closure Google has, and says so in Slack', async () => {
-    googleReplies({
-      periods: [22, 24, 25, 27, 28].map((d) => period(d)),
-      specialDays: [{ date: { year: 2026, month: 11, day: 26 } }],
-    })
+  it('adds Special Hours for a holiday closure Google has, however far ahead', async () => {
+    const profile = matchingProfile()
+    profile.specialHours = { specialHourPeriods: [closedOn(12, 25)] }
+    googleReplies([profile])
 
-    await runGoogleHoursCheck(payload, 'key')
+    await expect(runGoogleHoursCheck(payload, credentials)).resolves.toEqual({
+      checked: 1,
+      mismatches: 1,
+    })
 
     expect(create).toHaveBeenCalledTimes(1)
     expect(create.mock.calls[0][0]).toMatchObject({
       collection: 'holiday-hours',
       overrideAccess: true,
-      data: { date: '2026-11-26T12:00:00.000Z', locations: ['loc-1'], type: 'closed' },
+      data: { date: '2026-12-25T12:00:00.000Z', locations: ['loc-1'], type: 'closed' },
     })
     const { text } = slackApi.mock.calls[0][1]
     expect(text).toContain(
-      'Thu, Nov 26: Google says Closed (holiday hours), the site said 4pm–10pm',
+      'Fri, Dec 25: Google says Closed (holiday hours), the site said 4pm–10pm',
     )
     expect(text).toContain('/admin/collections/holiday-hours/h-new|Added Special Hours>')
     // Nothing is left for a person to decide.
     expect(text).not.toContain('If Google is right')
   })
 
-  it('says so in Slack when Google has no hours for a place ID', async () => {
-    googleReplies(undefined)
+  it('reports a Special Hours entry beyond the week that Google does not have', async () => {
+    const christmas = { ...thanksgivingClosed, date: '2026-12-25T12:00:00.000Z' }
+    find.mockImplementation(async ({ collection }: { collection: string }) => ({
+      docs: collection === 'locations' ? [location] : [christmas],
+    }))
 
-    await expect(runGoogleHoursCheck(payload, 'key')).resolves.toEqual({
+    await runGoogleHoursCheck(payload, credentials)
+
+    expect(slackApi.mock.calls[0][1].text).toContain(
+      'Fri, Dec 25: Google says 4pm–10pm, the site says Closed',
+    )
+    expect(create).not.toHaveBeenCalled()
+  })
+
+  it('reads every upcoming Special Hours entry, not just the next week', async () => {
+    await runGoogleHoursCheck(payload, credentials)
+    const query = find.mock.calls.find(([args]) => args.collection === 'holiday-hours')![0]
+    expect(query.where).toEqual({ date: { greater_than_equal: '2026-11-22' } })
+  })
+
+  it('says so in Slack when no managed profile has the place ID', async () => {
+    googleReplies([{ ...matchingProfile(), metadata: { placeId: 'someone-else' } }])
+
+    await expect(runGoogleHoursCheck(payload, credentials)).resolves.toEqual({
       checked: 0,
       mismatches: 0,
     })
     const { text } = slackApi.mock.calls[0][1]
     expect(text).toContain('Lawrenceville')
-    expect(text).toContain('no hours')
+    expect(text).toContain('no Business Profile')
     expect(text).toContain('Google place ID')
   })
 
-  it('only looks at active taprooms', async () => {
-    googleReplies(matchingGoogle())
+  it('says so in Slack when the profile has no regular hours', async () => {
+    googleReplies([{ metadata: { placeId: 'place-1' } }])
 
-    await runGoogleHoursCheck(payload, 'key')
+    await runGoogleHoursCheck(payload, credentials)
+    expect(slackApi.mock.calls[0][1].text).toContain('no regular hours')
+    expect(create).not.toHaveBeenCalled()
+  })
+
+  it('only looks at active taprooms', async () => {
+    await runGoogleHoursCheck(payload, credentials)
     const locationsQuery = find.mock.calls.find(([args]) => args.collection === 'locations')![0]
     expect(locationsQuery.where).toEqual({
       and: [{ 'address.googlePlaceId': { exists: true } }, { active: { equals: true } }],
@@ -400,36 +498,17 @@ describe('runGoogleHoursCheck', () => {
 
   it('escapes the taproom name in Slack messages', async () => {
     find.mockImplementation(async ({ collection }: { collection: string }) => ({
-      docs: collection === 'locations' ? [{ ...location, name: 'Tap <!channel> & Grill' }] : [],
+      docs:
+        collection === 'locations'
+          ? [{ ...location, name: 'Tap <!channel> & Grill' }]
+          : [thanksgivingClosed],
     }))
-    googleReplies({ periods: [22, 24, 25, 27, 28].map((d) => period(d)) })
 
-    await runGoogleHoursCheck(payload, 'key')
+    await runGoogleHoursCheck(payload, credentials)
     expect(slackApi.mock.calls[0][1].text).toContain('Tap &lt;!channel&gt; &amp; Grill')
   })
 
-  it('posts nothing when Google fails for a later taproom, so a retry repeats no message', async () => {
-    const second = {
-      ...location,
-      id: 'loc-2',
-      name: 'Zelienople',
-      address: { googlePlaceId: 'place-2' },
-    }
-    find.mockImplementation(async ({ collection }: { collection: string }) => ({
-      docs: collection === 'locations' ? [location, second] : [],
-    }))
-    // The first taproom differs from Google; the second request fails.
-    fetchMock.mockImplementation(async (url: string) =>
-      url.endsWith('place-1')
-        ? new Response(JSON.stringify({ currentOpeningHours: { periods: [] } }))
-        : new Response('nope', { status: 503 }),
-    )
-
-    await expect(runGoogleHoursCheck(payload, 'key')).rejects.toThrow(/Google Places/)
-    expect(slackApi).not.toHaveBeenCalled()
-  })
-
-  it('says so in Slack when the API key is missing, without calling Google', async () => {
+  it('says so in Slack when the credentials are missing, without calling Google', async () => {
     await expect(runGoogleHoursCheck(payload, undefined)).resolves.toEqual({
       checked: 0,
       mismatches: 0,
@@ -437,40 +516,44 @@ describe('runGoogleHoursCheck', () => {
     expect(fetchMock).not.toHaveBeenCalled()
     expect(slackApi).toHaveBeenCalledTimes(1)
     expect(slackApi.mock.calls[0][1].channel).toBe('#managers')
-    expect(slackApi.mock.calls[0][1].text).toContain('GOOGLE_PLACES_API_KEY')
+    expect(slackApi.mock.calls[0][1].text).toContain('GOOGLE_BUSINESS_REFRESH_TOKEN')
   })
 
-  it('stays quiet about a missing key while no taproom has a place ID', async () => {
+  it('does nothing while no taproom has a place ID', async () => {
     find.mockResolvedValue({ docs: [] })
-
     await runGoogleHoursCheck(payload, undefined)
-    expect(slackApi).not.toHaveBeenCalled()
 
     // A place ID of only spaces is not a place ID.
     find.mockResolvedValue({ docs: [{ ...location, address: { googlePlaceId: '  ' } }] })
-    await runGoogleHoursCheck(payload, undefined)
+    await runGoogleHoursCheck(payload, credentials)
+
     expect(slackApi).not.toHaveBeenCalled()
+    expect(fetchMock).not.toHaveBeenCalled()
   })
 
-  it('says so in Slack, without retrying, when Google rejects the key or place ID', async () => {
-    fetchMock.mockResolvedValue(new Response('denied', { status: 403 }))
+  it('says so once in Slack, without retrying, when Google rejects the sign-in', async () => {
+    fetchMock.mockResolvedValue(new Response('{"error":"invalid_grant"}', { status: 400 }))
 
-    await expect(runGoogleHoursCheck(payload, 'key')).resolves.toEqual({
+    await expect(runGoogleHoursCheck(payload, credentials)).resolves.toEqual({
       checked: 0,
       mismatches: 0,
     })
+    expect(slackApi).toHaveBeenCalledTimes(1)
     const { text } = slackApi.mock.calls[0][1]
-    expect(text).toContain('Lawrenceville')
-    expect(text).toContain('403')
-    expect(text).toContain('GOOGLE_PLACES_API_KEY')
+    expect(text).toContain('400')
+    expect(text).toContain('GOOGLE_BUSINESS_REFRESH_TOKEN')
   })
 
   it('fails so the job retries when Google or Slack is down', async () => {
-    fetchMock.mockResolvedValue(new Response('nope', { status: 500 }))
-    await expect(runGoogleHoursCheck(payload, 'key')).rejects.toThrow(/Google Places/)
+    googleReplies([], 503)
+    await expect(runGoogleHoursCheck(payload, credentials)).rejects.toThrow(/Google returned 503/)
+    expect(slackApi).not.toHaveBeenCalled()
 
-    googleReplies({ periods: [] })
+    find.mockImplementation(async ({ collection }: { collection: string }) => ({
+      docs: collection === 'locations' ? [location] : [thanksgivingClosed],
+    }))
+    googleReplies([matchingProfile()])
     slackApi.mockResolvedValue(false)
-    await expect(runGoogleHoursCheck(payload, 'key')).rejects.toThrow(/Slack/)
+    await expect(runGoogleHoursCheck(payload, credentials)).rejects.toThrow(/Slack/)
   })
 })
