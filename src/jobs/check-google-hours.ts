@@ -23,7 +23,7 @@ import { fromZonedTime } from 'date-fns-tz'
 import type { HolidayHour, Location } from '@/src/payload-types'
 import { WEEKDAYS_FROM_SUNDAY, type Weekday } from '@/lib/types/location'
 import { getTodayEST } from '@/lib/utils/date'
-import { formatOpenHours, formatTime } from '@/lib/utils/formatters'
+import { formatDate, formatOpenHours, formatTime } from '@/lib/utils/formatters'
 import { getBaseUrl } from '@/lib/utils/get-base-url'
 import { addDays, dayOfWeek } from '@/lib/utils/schedule-heatmap'
 import { clip, escapeMrkdwn } from '@/lib/slack/mrkdwn'
@@ -403,13 +403,7 @@ function slackText(
 ): string {
   const admin = `${getBaseUrl()}/admin/collections`
   const lines = mismatches.map(({ date, site, google, googleSpecial }) => {
-    const day = new Date(`${date}T12:00:00Z`).toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-      timeZone: 'UTC',
-    })
-    const googleSays = `• ${day}: Google says ${google}${googleSpecial ? ' (holiday hours)' : ''}`
+    const googleSays = `• ${formatDate(date)}: Google says ${google}${googleSpecial ? ' (holiday hours)' : ''}`
     const entry = added.get(date)
     return entry
       ? `${googleSays}, the site said ${site}. <${admin}/holiday-hours/${entry}|Added Special Hours> to match.`

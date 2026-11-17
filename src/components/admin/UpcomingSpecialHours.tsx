@@ -10,20 +10,11 @@ import { useEffect, useState } from 'react'
 import { useConfig, useDocumentInfo, useField } from '@payloadcms/ui'
 import type { HolidayHour } from '@/src/payload-types'
 import { getTodayEST } from '@/lib/utils/date'
-import { formatOpenHours } from '@/lib/utils/formatters'
+import { formatDate, formatOpenHours } from '@/lib/utils/formatters'
 
 type Entry = Pick<HolidayHour, 'id' | 'name' | 'date' | 'type' | 'hours'>
 
 const NOTE = { margin: '4px 0 0' }
-
-/** "Thu, Nov 26" for a stored Special Hours date (noon UTC on the day). */
-const dayLabel = (date: string) =>
-  new Date(`${date.slice(0, 10)}T12:00:00Z`).toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    timeZone: 'UTC',
-  })
 
 export function UpcomingSpecialHours() {
   const { id } = useDocumentInfo()
@@ -71,7 +62,7 @@ export function UpcomingSpecialHours() {
           {entries.map((entry) => (
             <li key={entry.id}>
               <a href={`${collection}/${entry.id}`}>
-                {dayLabel(entry.date)}:{' '}
+                {formatDate(entry.date)}:{' '}
                 {entry.type === 'closed' ? 'Closed' : formatOpenHours(entry.hours, timezone)}
               </a>{' '}
               ({entry.name})
