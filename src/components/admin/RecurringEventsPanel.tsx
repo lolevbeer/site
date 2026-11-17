@@ -1,5 +1,5 @@
 /**
- * "Recurring series" block above the Dated Events list table (the collection's
+ * "Recurring series" block above the Events list table (the collection's
  * `beforeListTable` slot), so one-off and repeating events are managed from one
  * screen. Lists this year's and later series, one row each, linking to the
  * series' own edit form, with a "Create New Recurring" button for people who
@@ -26,10 +26,10 @@ import { accessKey, CACHE_TAGS } from '@/lib/utils/cache'
 import { getTodayEST } from '@/lib/utils/date'
 import { RecurringEventsTable } from '@/src/components/admin/RecurringEventsTable'
 import {
-  recurringSeriesCells,
+  recurringSeriesRows,
   type RecurringSeries,
 } from '@/src/components/admin/recurring-series-cells'
-import { LEGACY_SCHEDULE_YEAR } from '@/src/utils/recurring-food'
+import { LEGACY_SCHEDULE_YEAR, scheduleYearFilter } from '@/src/utils/recurring-food'
 import './RecurringEventsPanel.scss'
 
 type Props = BeforeListTableServerProps
@@ -45,10 +45,10 @@ function loadSeries(
 ): Promise<{ docs: RecurringSeries[]; totalDocs: number }> {
   const thisYear = Number(getTodayEST().slice(0, 4))
   const fromThisYear: Where = { year: { greater_than_equal: thisYear } }
-  // Series from before the year field existed have no year and count as 2026.
+  // While 2026 is still in range, its filter also brings in the year-less legacy series.
   const where: Where =
     thisYear <= LEGACY_SCHEDULE_YEAR
-      ? { or: [fromThisYear, { year: { exists: false } }] }
+      ? { or: [fromThisYear, scheduleYearFilter(LEGACY_SCHEDULE_YEAR)] }
       : fromThisYear
 
   return unstable_cache(
@@ -71,10 +71,18 @@ function loadSeries(
           description: true,
           summary: true,
           site: true,
+          image: true,
+          // Event managers only; field access leaves these out for everyone else.
+          attendees: true,
+          pointOfContact: true,
+          email: true,
+          phone: true,
+          otherInfo: true,
           createdAt: true,
           updatedAt: true,
         },
-        populate: { locations: { name: true } },
+        populate: { locations: { name: true }, media: { filename: true } },
+        // Decides which series make the limit; recurringSeriesRows orders them for display.
         sort: ['year', 'organizer'],
         depth: 1,
         limit: LIMIT,
@@ -83,19 +91,17 @@ function loadSeries(
       })
       return { docs, totalDocs }
     },
-    ['recurring-events-panel-v1', accessKey({ user }), String(thisYear)],
+    ['recurring-events-panel-v2', accessKey({ user }), String(thisYear)],
     // Hourly fallback only; saves refresh through the tags (AGENTS.md, Caching).
     { tags: [CACHE_TAGS.events, CACHE_TAGS.locations], revalidate: 3600 },
   )()
 }
 
-/** A field's list-column heading as plain text, whichever way its label is declared. */
-function fieldLabel(field: FlattenedField, i18n: Props['i18n']): string | undefined {
+/** A field's list-column heading: our labels are strings, Payload's own (dates) functions. */
+function fieldLabel(field: FlattenedField, i18n: Props['i18n']): string {
   const { label } = field
   if (typeof label === 'function') return label({ i18n, t: i18n.t })
-  if (typeof label === 'string') return label
-  if (label) return label[i18n.language] ?? Object.values(label)[0]
-  return undefined
+  return typeof label === 'string' ? label : ''
 }
 
 export async function RecurringEventsPanel({
@@ -115,39 +121,39 @@ export async function RecurringEventsPanel({
     path: `/collections/${SLUG}`,
   })
 
-  let rows: React.ComponentProps<typeof RecurringEventsTable>['rows']
-  let hasMore: boolean
-  try {
-    const { docs, totalDocs } = await loadSeries(payload, user)
-    rows = docs.map((series) => ({
-      id: series.id,
-      href: `${listURL}/${series.id}`,
-      paused: !series.active,
-      cells: recurringSeriesCells(series, payload.config.admin.dateFormat),
-    }))
-    hasMore = totalDocs > docs.length
-  } catch (err) {
-    // This block is an extra; a failed read or a malformed series must not take
-    // the Dated Events list down with it.
+  // Same columns as the dated table, decided the way Payload does: the viewer's
+  // saved choice, else the defaults. `_select` is that table's checkbox column,
+  // kept as an empty spacer here.
+  const saved = listPreferences?.columns?.filter((column) => column.active) ?? []
+  const initialColumns = [
+    '_select',
+    ...(saved.length > 0
+      ? saved.map((column) => column.accessor)
+      : (collectionConfig.admin.defaultColumns ?? [])),
+  ]
+
+  // This block is an extra: a failed read must not take the Events list down
+  // with it, and still leaves the Create button.
+  const series = await loadSeries(payload, user).catch((err: unknown) => {
     payload.logger.error({ err }, 'Recurring series block failed to load')
     return null
-  }
+  })
+  const rows = recurringSeriesRows(series?.docs ?? [], {
+    listURL,
+    dateFormat: payload.config.admin.dateFormat,
+    columns: initialColumns,
+    onError: (err, id) =>
+      payload.logger.error({ err, id }, 'Recurring series left out of the block: bad data'),
+  })
+  const hasMore = series !== null && series.totalDocs > series.docs.length
 
   const canCreate = Boolean(permissions?.collections?.[SLUG]?.create)
   if (rows.length === 0 && !canCreate) return null
 
-  // Same columns as the dated table: the viewer's saved choice, else the defaults.
-  // `_select` is that table's checkbox column, kept as an empty spacer here.
-  const saved = listPreferences?.columns?.filter((column) => column.active)
-  const initialColumns = [
-    '_select',
-    ...(saved?.map((column) => column.accessor) ?? collectionConfig.admin.defaultColumns ?? []),
-  ]
-
   // Header text is the dated list's own, except Date: a series has a pattern instead.
   const labels: Record<string, string> = {}
   for (const field of collectionConfig.flattenedFields) {
-    labels[field.name] = fieldLabel(field, i18n) ?? ''
+    labels[field.name] = fieldLabel(field, i18n)
   }
   labels.id ??= 'ID'
   labels.date = 'Repeats'
@@ -174,7 +180,9 @@ export async function RecurringEventsPanel({
         )}
       </header>
       {rows.length === 0 ? (
-        <p className="recurring-events-panel__empty">No recurring series this year.</p>
+        <p className="recurring-events-panel__empty">
+          {series ? 'No recurring series this year.' : 'Recurring series could not be loaded.'}
+        </p>
       ) : (
         // Keyed by the columns: with no dated table to measure, a column change
         // must still reset the table to the new server-side columns.
