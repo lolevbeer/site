@@ -325,10 +325,12 @@ export async function runGoogleHoursCheck(
   }
 
   const replies = await Promise.all(
-    taprooms.map(({ placeId }) => fetchGoogleHours(placeId, apiKey)),
+    taprooms.map(async ({ location, placeId }) => ({
+      location,
+      google: await fetchGoogleHours(placeId, apiKey),
+    })),
   )
-  for (const [index, { location }] of taprooms.entries()) {
-    const google = replies[index]
+  for (const { location, google } of replies) {
     const notRunning = `*${escapeMrkdwn(location.name)}: Google hours check is not running.*`
     if (!google) {
       await post(
