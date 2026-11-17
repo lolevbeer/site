@@ -80,42 +80,18 @@ function withPreviousSlug(
   return [...new Set(next)].filter((alias) => alias !== currentSlug)
 }
 
-/** Opening or closing time for one weekday. */
-const timeField = (name: 'open' | 'close'): Field => ({
-  name,
-  type: 'date',
-  admin: { width: '40%', date: { pickerAppearance: 'timeOnly', displayFormat: 'h:mm a' } },
-})
-
 /**
- * One line of the weekly hours table: day name, then open and close. The group
- * keeps the stored shape (`monday.open`, `monday.close`) the named tabs had.
+ * One weekday's stored hours (`monday.open`, `monday.close`, instants on
+ * 2000-01-01; a day without both is closed). Hidden from the form: the weekly
+ * hours table (`WeeklyHoursTable`) edits all seven days in one place.
  */
-const weekdayRow = (day: (typeof WEEKDAYS)[number]): Field => ({
+const weekdayHours = (day: (typeof WEEKDAYS)[number]): Field => ({
   name: day,
   type: 'group',
-  label: false,
-  admin: { hideGutter: true },
+  admin: { hidden: true },
   fields: [
-    {
-      type: 'row',
-      fields: [
-        {
-          name: 'day',
-          type: 'ui',
-          admin: {
-            components: {
-              Field: {
-                path: '@/src/components/admin/WeekdayCell#WeekdayCell',
-                clientProps: { day },
-              },
-            },
-          },
-        },
-        timeField('open'),
-        timeField('close'),
-      ],
-    },
+    { name: 'open', type: 'date' },
+    { name: 'close', type: 'date' },
   ],
 })
 
@@ -235,13 +211,13 @@ export const Locations: CollectionConfig = {
               label: 'Weekly opening hours',
               admin: { condition: (_data, _siblingData, { user }) => isAdmin(user) },
               fields: [
-                ...WEEKDAYS.map(weekdayRow),
+                ...WEEKDAYS.map(weekdayHours),
                 {
-                  name: 'googleWeek',
+                  name: 'weeklyHours',
                   type: 'ui',
                   admin: {
                     components: {
-                      Field: '@/src/components/admin/GoogleWeekCompare#GoogleWeekCompare',
+                      Field: '@/src/components/admin/WeeklyHoursTable#WeeklyHoursTable',
                     },
                   },
                 },

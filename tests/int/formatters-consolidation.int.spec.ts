@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { formatHoursTime, getDayName, formatTime, formatOpenHours } from '@/lib/utils/formatters'
+import { clockFromStoredTime, storedTimeFromClock } from '@/lib/utils/date'
 
 // The behaviour the four removed copies had, pinned so consolidation can't drift it.
 describe('formatHoursTime', () => {
@@ -44,5 +45,24 @@ describe('formatOpenHours', () => {
   it('reads a day without both times as closed', () => {
     expect(formatOpenHours(undefined)).toBe('Closed')
     expect(formatOpenHours({ open: '2000-01-01T21:00:00.000Z', close: null })).toBe('Closed')
+  })
+})
+
+describe('weekly hours as the admin table edits them', () => {
+  it("reads a stored opening time as the clock time in the taproom's zone", () => {
+    expect(clockFromStoredTime('2000-01-01T21:00:00.000Z', 'America/New_York')).toBe('16:00')
+    expect(clockFromStoredTime('2000-01-01T05:00:00.000Z', 'America/New_York')).toBe('00:00')
+    expect(clockFromStoredTime(null, 'America/New_York')).toBe('')
+  })
+
+  it('stores a clock time on the reference day the existing hours use', () => {
+    expect(storedTimeFromClock('16:00', 'America/New_York')).toBe('2000-01-01T21:00:00.000Z')
+    expect(storedTimeFromClock('22:30', 'America/Chicago')).toBe('2000-01-02T04:30:00.000Z')
+    expect(storedTimeFromClock('', 'America/New_York')).toBeNull()
+  })
+
+  it('round-trips, so the public hours read the same after an edit', () => {
+    const stored = storedTimeFromClock('17:00', 'America/New_York')!
+    expect(formatOpenHours({ open: stored, close: stored }, 'America/New_York')).toBe('5pm–5pm')
   })
 })
