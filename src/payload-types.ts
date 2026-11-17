@@ -533,10 +533,6 @@ export interface Location {
    * Is this location currently active?
    */
   active?: boolean | null;
-  /**
-   * Timezone for this location's hours
-   */
-  timezone?: ('America/New_York' | 'America/Chicago' | 'America/Denver' | 'America/Los_Angeles') | null;
   monday?: {
     open?: string | null;
     close?: string | null;
@@ -583,14 +579,25 @@ export interface Location {
     state?: string | null;
     zip?: string | null;
     /**
-     * Custom Google Maps or directions link for this location
+     * Custom Google Maps or directions link for this location. A map under the field shows the place the link points at.
      */
     directionsUrl?: string | null;
     /**
-     * Turns on the nightly check of this taproom's hours against Google, which adds Special Hours for any day Google shows different hours. Look it up at developers.google.com/maps/documentation/places/web-service/place-id (starts with "ChIJ").
+     * Turns on the nightly check of this taproom's hours against Google, which adds Special Hours for any day Google shows different hours. Look it up at developers.google.com/maps/documentation/places/web-service/place-id (starts with "ChIJ"). The line under the field turns green with the Google listing's name and address when the ID is right.
      */
     googlePlaceId?: string | null;
   };
+  /**
+   * Where the site's maps put the taproom: Longitude, Latitude (e.g. -79.960098, 40.465372).
+   *
+   * @minItems 2
+   * @maxItems 2
+   */
+  coordinates?: [number, number] | null;
+  /**
+   * Timezone for this location's hours
+   */
+  timezone?: ('America/New_York' | 'America/Chicago' | 'America/Denver' | 'America/Los_Angeles') | null;
   /**
    * Optional paragraph under the public location heading. Blank shows nothing.
    */
@@ -613,13 +620,6 @@ export interface Location {
    * Former slugs. /<alias> redirects to the current page and /e/<alias> still shows the events board. A rename adds the old slug automatically. Browsers cache the redirect, so a deleted alias can keep sending past visitors here; avoid reusing it as another location's slug.
    */
   aliases?: string[] | null;
-  /**
-   * Longitude, Latitude (e.g. -79.960098, 40.465372)
-   *
-   * @minItems 2
-   * @maxItems 2
-   */
-  coordinates?: [number, number] | null;
   /**
    * Optional overrides for this document’s public page. Blank fields keep the auto-generated title and description.
    */
@@ -2221,7 +2221,6 @@ export interface LocationsSelect<T extends boolean = true> {
   linesLastCleaned?: T;
   name?: T;
   active?: T;
-  timezone?: T;
   monday?:
     | T
     | {
@@ -2282,6 +2281,8 @@ export interface LocationsSelect<T extends boolean = true> {
         directionsUrl?: T;
         googlePlaceId?: T;
       };
+  coordinates?: T;
+  timezone?: T;
   intro?: T;
   images?:
     | T
@@ -2291,7 +2292,6 @@ export interface LocationsSelect<T extends boolean = true> {
       };
   slug?: T;
   aliases?: T;
-  coordinates?: T;
   seo?:
     | T
     | {

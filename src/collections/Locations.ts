@@ -1,6 +1,5 @@
 import type { CollectionConfig, Access, Field, RelationshipField, Validate, Where } from 'payload'
 import { WEEKDAYS } from '@/lib/types/location'
-import { capitalizeName } from '@/lib/utils/formatters'
 import { LOCATION_SLUG_PATTERN, RESERVED_LOCATION_SLUGS } from '@/lib/config/locations'
 import { generateUniqueSlug } from './utils/generateUniqueSlug'
 import { markLinesCleanedField } from './utils/markLinesCleanedField'
@@ -81,11 +80,19 @@ function withPreviousSlug(
   return [...new Set(next)].filter((alias) => alias !== currentSlug)
 }
 
-/** Opening or closing time for one weekday. */
-const timeField = (name: 'open' | 'close'): Field => ({
-  name,
-  type: 'date',
-  admin: { width: '50%', date: { pickerAppearance: 'timeOnly', displayFormat: 'h:mm a' } },
+/**
+ * One weekday's stored hours (`monday.open`, `monday.close`, instants on
+ * 2000-01-01; a day without both is closed). Hidden from the form: the weekly
+ * hours table (`WeeklyHoursTable`) edits all seven days in one place.
+ */
+const weekdayHours = (day: (typeof WEEKDAYS)[number]): Field => ({
+  name: day,
+  type: 'group',
+  admin: { hidden: true },
+  fields: [
+    { name: 'open', type: 'date' },
+    { name: 'close', type: 'date' },
+  ],
 })
 
 export const Locations: CollectionConfig = {
@@ -200,37 +207,30 @@ export const Locations: CollectionConfig = {
           label: 'Hours & operations',
           fields: [
             {
-              name: 'timezone',
-              type: 'select',
-              defaultValue: 'America/New_York',
-              options: [
-                { label: 'Eastern Time (EST/EDT)', value: 'America/New_York' },
-                { label: 'Central Time (CST/CDT)', value: 'America/Chicago' },
-                { label: 'Mountain Time (MST/MDT)', value: 'America/Denver' },
-                { label: 'Pacific Time (PST/PDT)', value: 'America/Los_Angeles' },
-              ],
-              access: {
-                update: adminFieldAccess,
-              },
-              admin: {
-                description: "Timezone for this location's hours",
-              },
-            },
-            {
               type: 'collapsible',
               label: 'Weekly opening hours',
               admin: { condition: (_data, _siblingData, { user }) => isAdmin(user) },
-              // One named tab per day (not one tab bar) so all seven stack; paths stay monday.open etc.
-              fields: WEEKDAYS.map((day): Field => ({
-                type: 'tabs',
-                tabs: [
-                  {
-                    name: day,
-                    label: capitalizeName(day),
-                    fields: [{ type: 'row', fields: [timeField('open'), timeField('close')] }],
+              fields: [
+                ...WEEKDAYS.map(weekdayHours),
+                {
+                  name: 'weeklyHours',
+                  type: 'ui',
+                  admin: {
+                    components: {
+                      Field: '@/src/components/admin/WeeklyHoursTable#WeeklyHoursTable',
+                    },
                   },
-                ],
-              })),
+                },
+              ],
+            },
+            {
+              name: 'upcomingSpecialHours',
+              type: 'ui',
+              admin: {
+                components: {
+                  Field: '@/src/components/admin/UpcomingSpecialHours#UpcomingSpecialHours',
+                },
+              },
             },
             {
               type: 'row',
@@ -278,44 +278,100 @@ export const Locations: CollectionConfig = {
               ],
             },
             {
-              name: 'address',
-              type: 'group',
-              access: {
-                update: adminFieldAccess,
-              },
+              type: 'collapsible',
+              label: 'Address & map',
               fields: [
                 {
-                  name: 'street',
-                  type: 'text',
+                  name: 'address',
+                  type: 'group',
+                  label: false,
+                  admin: { hideGutter: true },
+                  access: {
+                    update: adminFieldAccess,
+                  },
+                  fields: [
+                    {
+                      name: 'street',
+                      type: 'text',
+                    },
+                    {
+                      type: 'row',
+                      fields: [
+                        { name: 'city', type: 'text', admin: { width: '40%' } },
+                        { name: 'state', type: 'text', admin: { width: '20%' } },
+                        {
+                          name: 'zip',
+                          type: 'text',
+                          label: 'Postal code',
+                          admin: { width: '40%' },
+                        },
+                      ],
+                    },
+                    {
+                      name: 'directionsUrl',
+                      type: 'text',
+                      label: 'Directions URL',
+                      admin: {
+                        description:
+                          'Custom Google Maps or directions link for this location. A map under the field shows the place the link points at.',
+                        components: {
+                          afterInput: ['@/src/components/admin/DirectionsUrlMap#DirectionsUrlMap'],
+                        },
+                      },
+                    },
+                    {
+                      name: 'googlePlaceId',
+                      type: 'text',
+                      label: 'Google place ID',
+                      admin: {
+                        description:
+                          'Turns on the nightly check of this taproom\'s hours against Google, which adds Special Hours for any day Google shows different hours. Look it up at developers.google.com/maps/documentation/places/web-service/place-id (starts with "ChIJ"). The line under the field turns green with the Google listing\'s name and address when the ID is right.',
+                        components: {
+                          afterInput: [
+                            '@/src/components/admin/GooglePlaceIdCheck#GooglePlaceIdCheck',
+                          ],
+                        },
+                      },
+                    },
+                  ],
                 },
                 {
-                  name: 'city',
-                  type: 'text',
-                },
-                {
-                  name: 'state',
-                  type: 'text',
-                },
-                {
-                  name: 'zip',
-                  type: 'text',
-                  label: 'Postal code',
-                },
-                {
-                  name: 'directionsUrl',
-                  type: 'text',
-                  label: 'Directions URL',
+                  name: 'coordinates',
+                  type: 'point',
+                  label: 'Map coordinates',
+                  access: {
+                    update: adminFieldAccess,
+                  },
                   admin: {
-                    description: 'Custom Google Maps or directions link for this location',
+                    description:
+                      "Where the site's maps put the taproom: Longitude, Latitude (e.g. -79.960098, 40.465372).",
                   },
                 },
                 {
-                  name: 'googlePlaceId',
-                  type: 'text',
-                  label: 'Google place ID',
+                  // A point field draws afterInput under both of its inputs, so the check sits below it.
+                  name: 'coordinatesCheck',
+                  type: 'ui',
                   admin: {
-                    description:
-                      'Turns on the nightly check of this taproom\'s hours against Google, which adds Special Hours for any day Google shows different hours. Look it up at developers.google.com/maps/documentation/places/web-service/place-id (starts with "ChIJ").',
+                    components: {
+                      Field: '@/src/components/admin/CoordinatesCheck#CoordinatesCheck',
+                    },
+                  },
+                },
+                {
+                  name: 'timezone',
+                  type: 'select',
+                  defaultValue: 'America/New_York',
+                  options: [
+                    { label: 'Eastern Time (EST/EDT)', value: 'America/New_York' },
+                    { label: 'Central Time (CST/CDT)', value: 'America/Chicago' },
+                    { label: 'Mountain Time (MST/MDT)', value: 'America/Denver' },
+                    { label: 'Pacific Time (PST/PDT)', value: 'America/Los_Angeles' },
+                  ],
+                  access: {
+                    update: adminFieldAccess,
+                  },
+                  admin: {
+                    description: "Timezone for this location's hours",
                   },
                 },
               ],
@@ -368,7 +424,7 @@ export const Locations: CollectionConfig = {
             },
             {
               type: 'collapsible',
-              label: 'URLs & map',
+              label: 'Page URLs',
               admin: { initCollapsed: true },
               fields: [
                 {
@@ -401,17 +457,6 @@ export const Locations: CollectionConfig = {
                       "as another location's slug.",
                   },
                   label: 'Previous URL slugs',
-                },
-                {
-                  name: 'coordinates',
-                  type: 'point',
-                  label: 'Map coordinates',
-                  access: {
-                    update: adminFieldAccess,
-                  },
-                  admin: {
-                    description: 'Longitude, Latitude (e.g. -79.960098, 40.465372)',
-                  },
                 },
               ],
             },

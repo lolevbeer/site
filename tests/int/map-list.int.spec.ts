@@ -7,6 +7,7 @@ import {
   cameraForLocation,
   cameraForTaproom,
   coordsFromDirectionsUrl,
+  pinOffset,
   DEFAULT_MAP_CENTER,
   DEFAULT_MAP_ZOOM,
   googleDirectionsUrl,
@@ -44,19 +45,25 @@ const retailers: MapPoint[] = [
     uniqueId: 'philly',
     name: '1 Stop Mini Market',
     address: '700 S 8th St, Philadelphia, PA',
-    lng: -75.155, lat: 39.942, kind: 'retailer',
+    lng: -75.155,
+    lat: 39.942,
+    kind: 'retailer',
   },
   {
     uniqueId: 'moonlit',
     name: 'Moonlit Downtown',
     address: '1015 Forbes Ave, Pittsburgh, PA',
-    lng: -79.993, lat: 40.438, kind: 'retailer',
+    lng: -79.993,
+    lat: 40.438,
+    kind: 'retailer',
   },
   {
     uniqueId: 'delivery',
     name: 'Beer To Your Door',
     address: 'Pittsburgh, PA',
-    lng: -79.99, lat: 40.44, kind: 'retailer',
+    lng: -79.99,
+    lat: 40.44,
+    kind: 'retailer',
   },
 ]
 
@@ -66,6 +73,40 @@ describe('coordsFromDirectionsUrl', () => {
       'https://www.google.com/maps/place/Lolev+Beer/@40.4816217,-79.9564325,821m',
     )
     expect(coords).toEqual({ lat: 40.4816217, lng: -79.9564325 })
+  })
+
+  it('prefers the pin over the map view centre when the URL has both', () => {
+    const coords = coordsFromDirectionsUrl(
+      'https://www.google.com/maps/place/Lolev+Beer/@40.4816217,-79.9564325,821m/data=!3m2!1e3!4b1!8m2!3d40.4816217!4d-79.9538576!16s',
+    )
+    expect(coords).toEqual({ lat: 40.4816217, lng: -79.9538576 })
+  })
+
+  it('finds nothing in a link with no coordinates', () => {
+    expect(coordsFromDirectionsUrl('https://maps.app.goo.gl/abc123')).toBeNull()
+  })
+})
+
+describe('pinOffset', () => {
+  const url =
+    'https://www.google.com/maps/place/Lolev+Beer/@40.4816217,-79.9564325,821m/data=!3m2!1e3!4b1!8m2!3d40.4816217!4d-79.9538576!16s'
+  const pin = { lat: 40.4816217, lng: -79.9538576 }
+
+  it("measures how far the coordinates are from the link's pin", () => {
+    // Lawrenceville's saved coordinates are the map view centre, west of the pin.
+    const offset = pinOffset([-79.9564325, 40.4816217], url)
+    expect(offset?.pin).toEqual(pin)
+    expect(offset?.metres).toBeGreaterThan(210)
+    expect(offset?.metres).toBeLessThan(225)
+  })
+
+  it('offers the pin when there are no coordinates yet', () => {
+    expect(pinOffset(null, url)).toEqual({ pin, metres: null })
+  })
+
+  it('has nothing to compare when the link has no location', () => {
+    expect(pinOffset([-79.95, 40.48], 'https://maps.app.goo.gl/abc123')).toBeNull()
+    expect(pinOffset([-79.95, 40.48], '')).toBeNull()
   })
 })
 
@@ -182,9 +223,19 @@ describe('search suggestions', () => {
     expect(stores[0]?.kind).toBe('store')
 
     const places = parseMapboxFeatures([
-      { id: 'place.1', text: 'Pittsburgh', place_name: 'Pittsburgh, Pennsylvania, United States', center: [-79.9959, 40.4406] },
+      {
+        id: 'place.1',
+        text: 'Pittsburgh',
+        place_name: 'Pittsburgh, Pennsylvania, United States',
+        center: [-79.9959, 40.4406],
+      },
     ])
-    expect(places[0]).toMatchObject({ kind: 'place', label: 'Pittsburgh', longitude: -79.9959, latitude: 40.4406 })
+    expect(places[0]).toMatchObject({
+      kind: 'place',
+      label: 'Pittsburgh',
+      longitude: -79.9959,
+      latitude: 40.4406,
+    })
 
     const merged = mergeSuggestions(stores, places, 'moon', 8)
     expect(merged[0]?.kind).toBe('store')

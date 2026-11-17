@@ -140,6 +140,8 @@ export function cspReportOnly(frameAncestors = "'none'") {
       'https://*.ingest.sentry.io https://*.ingest.us.sentry.io',
     ].join(' '),
     "worker-src 'self' blob:",
+    // The admin previews a Location's directions link as an embedded Google map.
+    'frame-src https://www.google.com',
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

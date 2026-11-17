@@ -1,29 +1,32 @@
 /**
  * Nightly check of each taproom's hours against its Google listing.
  *
- * For every active location with a Google place ID, the next seven days of site hours
- * (weekly hours plus Special Hours overrides) are compared with what Google
- * shows for those days, holidays included, and every difference is posted to
- * Slack.
+ * For every active location with a Google place ID, site hours (weekly hours
+ * plus Special Hours overrides) are compared with the hours on its Google
+ * Business Profile, and every difference is posted to Slack. The days compared
+ * are the next seven, plus every later day that has special hours on Google or
+ * a Special Hours entry on the site.
  *
  * A differing day that has no Special Hours entry is also fixed: the job adds
  * an entry that matches Google, holiday or not. So Google wins over the weekly
  * hours, one day at a time; the weekly hours themselves are never edited. A
  * day whose Special Hours entry someone already entered stays a proposal, and
- * so does every day when Google shows no hours at all for the week.
+ * so does a day Google shows as split or open around the clock.
  *
- * Google only publishes holiday hours seven days ahead through the Places API,
- * so that is how early a holiday change can be noticed.
+ * Google's hours come from the Business Profile API, read as a signed-in
+ * manager of the profiles (`GOOGLE_BUSINESS_*`), so holiday hours are seen as
+ * soon as they are entered on Google. A taproom is matched to its profile by
+ * place ID. Nothing is ever written to Google.
  */
 import type { Payload, TaskConfig } from 'payload'
 import { fromZonedTime } from 'date-fns-tz'
 import type { HolidayHour, Location } from '@/src/payload-types'
-import { WEEKDAYS_FROM_SUNDAY } from '@/lib/types/location'
+import { WEEKDAYS_FROM_SUNDAY, type Weekday } from '@/lib/types/location'
 import { getTodayEST } from '@/lib/utils/date'
-import { formatTime } from '@/lib/utils/formatters'
+import { formatDate, formatOpenHours, formatTime } from '@/lib/utils/formatters'
 import { getBaseUrl } from '@/lib/utils/get-base-url'
 import { addDays, dayOfWeek } from '@/lib/utils/schedule-heatmap'
-import { escapeMrkdwn } from '@/lib/slack/mrkdwn'
+import { clip, escapeMrkdwn } from '@/lib/slack/mrkdwn'
 import { slackChannelFor } from '@/lib/slack/notify'
 import { slackApi } from '@/src/utils/slack-api'
 
@@ -33,26 +36,82 @@ interface GoogleDate {
   day: number
 }
 
-interface GooglePoint {
-  date?: GoogleDate
-  hour?: number
-  minute?: number
-  /** Set when Google clipped this time to the edge of its seven-day window. */
-  truncated?: boolean
+/** A time of day from the Business Profile API. Zero fields are omitted; 24 hours is midnight at the day's end. */
+interface ProfileTime {
+  hours?: number
+  minutes?: number
 }
 
-/** One stretch of opening hours. No `close` means open around the clock. */
-interface GooglePeriod {
-  open: GooglePoint
-  close?: GooglePoint
+/** A location from the Business Profile API (Business Information v1). */
+export interface BusinessProfile {
+  /** Resource name, "locations/123". */
+  name?: string
+  /** The business name shown on Google. */
+  title?: string
+  storefrontAddress?: {
+    addressLines?: string[]
+    locality?: string
+    /** State, e.g. "PA". */
+    administrativeArea?: string
+    postalCode?: string
+  }
+  phoneNumbers?: { primaryPhone?: string }
+  metadata?: {
+    placeId?: string
+    /** Google has edits of its own to this listing that the owner has not reviewed. */
+    hasGoogleUpdated?: boolean
+  }
+  /** `status` is "OPEN", "CLOSED_TEMPORARILY" or "CLOSED_PERMANENTLY". */
+  openInfo?: { status?: string }
+  regularHours?: {
+    periods?: Array<{
+      /** "MONDAY" … "SUNDAY" */
+      openDay: string
+      openTime?: ProfileTime
+      closeDay: string
+      closeTime?: ProfileTime
+    }>
+  }
+  specialHours?: {
+    specialHourPeriods?: Array<{
+      startDate: GoogleDate
+      /** The same day, or the next one for a close after midnight. */
+      endDate?: GoogleDate
+      openTime?: ProfileTime
+      closeTime?: ProfileTime
+      closed?: boolean
+    }>
+  }
 }
 
-/** `currentOpeningHours` from Places API (New) Place Details. */
-export interface GoogleOpeningHours {
-  /** Omitted when the place is closed for the whole window. */
-  periods?: GooglePeriod[]
-  /** Days in the window whose hours differ from the regular week. */
-  specialDays?: Array<{ date?: GoogleDate }>
+/** What the job signs in to Google with: an OAuth client and a manager's long-lived sign-in. */
+export interface BusinessCredentials {
+  clientId: string
+  clientSecret: string
+  refreshToken: string
+}
+
+/** Google refused a request for a reason a retry cannot fix. `detail` is Google's own error text. */
+export interface GoogleRejection {
+  rejected: number
+  detail: string
+}
+
+/** GET a Business Profile API URL as the signed-in manager. */
+type GoogleGet = <T>(url: string) => Promise<T | GoogleRejection>
+
+/** One stretch of opening hours. Times are "HH:MM"; no `close` means open around the clock. */
+interface DayPeriod {
+  open: string
+  /** The close, and the day it falls on (the next day for a close at or after midnight). */
+  close?: { date: string; time: string }
+}
+
+/** Google's hours for one day. A closed day has no periods. */
+export interface GoogleDay {
+  periods: DayPeriod[]
+  /** The day has special hours on Google, in place of the regular week. */
+  special: boolean
 }
 
 export interface HoursMismatch {
@@ -81,44 +140,130 @@ type SiteHoliday = Pick<HolidayHour, 'date' | 'type' | 'hours'> & {
 
 const DAYS_AHEAD = 7
 const CLOSED = 'Closed'
+const BUSINESS_API = 'https://mybusinessbusinessinformation.googleapis.com/v1'
 
 const pad = (value: number) => String(value).padStart(2, '0')
 
 const dateKey = ({ year, month, day }: GoogleDate) => `${year}-${pad(month)}-${pad(day)}`
 
-/** A Google time as "HH:MM" on the 24-hour clock. */
-// `??` rather than a default: Google omits zero fields, and a null must also read as zero.
-const clock = (point: GooglePoint) => `${pad(point.hour ?? 0)}:${pad(point.minute ?? 0)}`
+/** A profile time as "HH:MM" on the 24-hour clock. */
+const clock = (time: ProfileTime = {}) => `${pad(time.hours ?? 0)}:${pad(time.minutes ?? 0)}`
 
-const googleTime = (point: GooglePoint) => formatTime(clock(point))
-
-/**
- * A Google time as the instant Payload stores for a time field: that wall-clock
- * time in the taproom's timezone. `fallbackDay` is used when Google omits the date.
- */
-function googleInstant(point: GooglePoint, fallbackDay: string, timezone: string): string {
-  const day = point.date ? dateKey(point.date) : fallbackDay
-  return fromZonedTime(`${day}T${clock(point)}:00`, timezone).toISOString()
+/** One of Google's opening spans as a period of the day it opens on, `date`. */
+function dayPeriod(
+  date: string,
+  span: { openTime?: ProfileTime; closeDate: string; closeTime?: ProfileTime },
+): DayPeriod {
+  const open = clock(span.openTime)
+  // Google writes midnight at the end of a day as 24:00; that is 00:00 on the next day.
+  const midnight = span.closeTime?.hours === 24
+  const close = {
+    date: midnight ? addDays(span.closeDate, 1) : span.closeDate,
+    time: midnight ? '00:00' : clock(span.closeTime),
+  }
+  const allDay = open === '00:00' && close.time === '00:00' && close.date === addDays(date, 1)
+  return allDay ? { open } : { open, close }
 }
 
 /**
- * The Special Hours entry that copies `periods`, Google's hours for one day, or
- * undefined when they do not fit one: a split or all-night day has no single open/close pair.
+ * Google's hours on one YYYY-MM-DD date: the profile's special hours for a day
+ * that has them, else its regular hours for that weekday.
+ */
+export function googleDay(profile: BusinessProfile, date: string): GoogleDay {
+  const specials = (profile.specialHours?.specialHourPeriods ?? []).filter(
+    (s) => dateKey(s.startDate) === date,
+  )
+  if (specials.length > 0) {
+    const open = specials.filter((s) => !s.closed)
+    return {
+      special: true,
+      periods: open.map((s) =>
+        dayPeriod(date, {
+          openTime: s.openTime,
+          closeDate: s.endDate ? dateKey(s.endDate) : date,
+          closeTime: s.closeTime,
+        }),
+      ),
+    }
+  }
+
+  const weekday = WEEKDAYS_FROM_SUNDAY[dayOfWeek(date)].toUpperCase()
+  const regular = (profile.regularHours?.periods ?? []).filter((r) => r.openDay === weekday)
+  return {
+    special: false,
+    periods: regular.map((r) =>
+      dayPeriod(date, {
+        openTime: r.openTime,
+        closeDate: r.closeDay === r.openDay ? date : addDays(date, 1),
+        closeTime: r.closeTime,
+      }),
+    ),
+  }
+}
+
+/** One day of Google's hours as the comparison writes it: "4pm–10pm", "Closed", "Open 24 hours". */
+function googleDayLabel(day: GoogleDay): string {
+  const spans = day.periods.map((p) =>
+    p.close ? `${formatTime(p.open)}–${formatTime(p.close.time)}` : 'Open 24 hours',
+  )
+  return spans.join(', ') || CLOSED
+}
+
+/**
+ * Google's regular hours for each weekday, special hours left out, labelled as
+ * the comparison writes them. The admin shows these beside the weekly hours.
+ */
+export function googleWeek(profile: BusinessProfile, today: string): Record<Weekday, string> {
+  const regular = { ...profile, specialHours: undefined }
+  const days = Array.from({ length: 7 }, (_, offset) => addDays(today, offset))
+  return Object.fromEntries(
+    days.map((date) => [
+      WEEKDAYS_FROM_SUNDAY[dayOfWeek(date)],
+      googleDayLabel(googleDay(regular, date)),
+    ]),
+  ) as Record<Weekday, string>
+}
+
+const coversLocation = (holiday: SiteHoliday, locationId: string) =>
+  holiday.locations.some((l) => (typeof l === 'string' ? l : l.id) === locationId)
+
+/**
+ * The days to compare for one taproom, from `today` on: the next seven, plus
+ * every later day with special hours on Google or a Special Hours entry on the site.
+ */
+export function datesToCompare(
+  today: string,
+  profile: BusinessProfile,
+  holidays: SiteHoliday[],
+  locationId: string,
+): string[] {
+  const dates = new Set(Array.from({ length: DAYS_AHEAD }, (_, offset) => addDays(today, offset)))
+  for (const s of profile.specialHours?.specialHourPeriods ?? []) dates.add(dateKey(s.startDate))
+  for (const h of holidays) {
+    if (coversLocation(h, locationId)) dates.add(h.date.slice(0, 10))
+  }
+  return [...dates].filter((date) => date >= today).sort()
+}
+
+/**
+ * The Special Hours entry that copies `periods`, Google's hours for `date`, or
+ * undefined when they do not fit one: a split or all-night day has no single
+ * open/close pair. Times are stored as Payload stores a time field: that
+ * wall-clock time in the taproom's timezone.
  */
 function specialHoursFix(
-  periods: GooglePeriod[],
-  day: string,
+  periods: DayPeriod[],
+  date: string,
   timezone: string,
 ): SpecialHoursFix | undefined {
   if (periods.length === 0) return { type: 'closed' }
   const [only] = periods
   if (periods.length > 1 || !only.close) return undefined
+  const instant = (day: string, time: string) =>
+    fromZonedTime(`${day}T${time}:00`, timezone).toISOString()
   return {
     type: 'modified',
-    hours: {
-      open: googleInstant(only.open, day, timezone),
-      close: googleInstant(only.close, day, timezone),
-    },
+    hours: { open: instant(date, only.open), close: instant(only.close.date, only.close.time) },
   }
 }
 
@@ -130,80 +275,120 @@ function siteHours(location: SiteLocation, holiday: SiteHoliday | undefined, dat
   if (holiday?.type === 'closed') return CLOSED
 
   const hours = holiday ? holiday.hours : location[WEEKDAYS_FROM_SUNDAY[dayOfWeek(date)]]
-  if (!hours?.open || !hours.close) return CLOSED
-  const timezone = location.timezone || undefined
-  return `${formatTime(hours.open, { timezone })}–${formatTime(hours.close, { timezone })}`
+  return formatOpenHours(hours, location.timezone)
 }
 
-/** Days in the next seven where Google and the site show different hours. */
+/** The days among `dates` (YYYY-MM-DD) where Google's profile and the site show different hours. */
 export function compareHours(args: {
-  /** YYYY-MM-DD, the first day of Google's window. */
-  today: string
+  dates: string[]
   location: SiteLocation
   holidays: SiteHoliday[]
-  google: GoogleOpeningHours
+  profile: BusinessProfile
 }): HoursMismatch[] {
-  const periods = args.google.periods ?? []
-  const special = new Set(args.google.specialDays?.map((d) => d.date && dateKey(d.date)))
   const mismatches: HoursMismatch[] = []
 
-  for (let offset = 0; offset < DAYS_AHEAD; offset++) {
-    const key = addDays(args.today, offset)
-    // A clipped opening time is the tail of hours that began before the window
-    // (last night, running past midnight), so it is not part of this day.
-    const todays = periods.filter(
-      (p) => p.open.date && dateKey(p.open.date) === key && !p.open.truncated,
-    )
-    // A clipped closing time is not the real one. Google does this to a midnight
-    // close on the window's last day; the day is compared in full the next night.
-    if (todays.some((p) => p.close?.truncated)) continue
-
-    const google =
-      todays
-        .map((p) => (p.close ? `${googleTime(p.open)}–${googleTime(p.close)}` : 'Open 24 hours'))
-        .join(', ') || CLOSED
+  for (const date of args.dates) {
+    const day = googleDay(args.profile, date)
+    const google = googleDayLabel(day)
     // When two entries cover the same day, the site shows the last one Payload
     // returns (the `holidayMap` in lib/utils/payload-api.ts), so take the last here too.
     const holiday = args.holidays
-      .filter(
-        (h) =>
-          h.date.slice(0, 10) === key &&
-          h.locations.some((l) => (typeof l === 'string' ? l : l.id) === args.location.id),
-      )
+      .filter((h) => h.date.slice(0, 10) === date && coversLocation(h, args.location.id))
       .at(-1)
-    const site = siteHours(args.location, holiday, key)
+    const site = siteHours(args.location, holiday, date)
     if (google === site) continue
 
-    // Fixable only when nobody has entered Special Hours for the day. A listing
-    // with no hours for the whole week (marked closed, or its hours removed) is
-    // left for a person: copying it would show the taproom closed all week.
-    const fixable = !holiday && periods.length > 0
-    const fix = fixable
-      ? specialHoursFix(todays, key, args.location.timezone || 'America/New_York')
-      : undefined
-    mismatches.push({ date: key, site, google, googleSpecial: special.has(key), fix })
+    // Fixable only when nobody has entered Special Hours for the day.
+    const fix = holiday
+      ? undefined
+      : specialHoursFix(day.periods, date, args.location.timezone || 'America/New_York')
+    mismatches.push({ date, site, google, googleSpecial: day.special, fix })
   }
   return mismatches
 }
 
-async function fetchGoogleHours(
-  placeId: string,
-  apiKey: string,
-): Promise<GoogleOpeningHours | { rejected: number } | undefined> {
-  const response = await fetch(
-    `https://places.googleapis.com/v1/places/${encodeURIComponent(placeId)}`,
-    {
-      headers: { 'X-Goog-Api-Key': apiKey, 'X-Goog-FieldMask': 'currentOpeningHours' },
-      signal: AbortSignal.timeout(10_000),
-    },
-  )
-  // A 4xx (bad key, bad place ID) will not fix itself on a retry; a rate limit or 5xx might.
-  if (response.status >= 400 && response.status < 500 && response.status !== 429) {
-    return { rejected: response.status }
+/** Google's own words for a refused request: the OAuth or API error code and message. */
+async function rejectionDetail(response: Response): Promise<string> {
+  try {
+    const body = (await response.json()) as {
+      error?: string | { status?: string; message?: string }
+      error_description?: string
+    }
+    const parts =
+      typeof body.error === 'string'
+        ? [body.error, body.error_description]
+        : [body.error?.status, body.error?.message]
+    return clip(parts.filter(Boolean).join(': '), 200)
+  } catch {
+    return ''
   }
-  if (!response.ok) throw new Error(`Google Places returned ${response.status} for ${placeId}`)
-  const place = (await response.json()) as { currentOpeningHours?: GoogleOpeningHours }
-  return place.currentOpeningHours
+}
+
+/**
+ * Call Google and parse the JSON reply. A 4xx (revoked sign-in, API switched
+ * off, wrong client secret) will not fix itself on a retry, so it comes back
+ * as a rejection with Google's reason; a rate limit or 5xx throws so the task retries.
+ */
+async function googleJson<T>(url: string, init: RequestInit): Promise<T | GoogleRejection> {
+  const response = await fetch(url, { ...init, signal: AbortSignal.timeout(10_000) })
+  if (response.status >= 400 && response.status < 500 && response.status !== 429) {
+    return { rejected: response.status, detail: await rejectionDetail(response) }
+  }
+  if (!response.ok) throw new Error(`Google returned ${response.status} for ${new URL(url).host}`)
+  return (await response.json()) as T
+}
+
+/** The Google sign-in from `GOOGLE_BUSINESS_*`, or undefined unless all three are set. */
+export function businessCredentials(): BusinessCredentials | undefined {
+  const clientId = process.env.GOOGLE_BUSINESS_CLIENT_ID?.trim()
+  const clientSecret = process.env.GOOGLE_BUSINESS_CLIENT_SECRET?.trim()
+  const refreshToken = process.env.GOOGLE_BUSINESS_REFRESH_TOKEN?.trim()
+  if (!clientId || !clientSecret || !refreshToken) return undefined
+  return { clientId, clientSecret, refreshToken }
+}
+
+/**
+ * Signs in to Google and lists every Business Profile location the manager can
+ * see, with its name, address, phone, open status and hours. `get` makes further
+ * calls with the same sign-in. Also used by the place ID check in the admin
+ * (`src/actions/google-place-check.ts`).
+ */
+export async function fetchProfiles(
+  credentials: BusinessCredentials,
+): Promise<{ profiles: BusinessProfile[]; get: GoogleGet } | GoogleRejection> {
+  const token = await googleJson<{ access_token: string }>('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    body: new URLSearchParams({
+      client_id: credentials.clientId,
+      client_secret: credentials.clientSecret,
+      refresh_token: credentials.refreshToken,
+      grant_type: 'refresh_token',
+    }),
+  })
+  if ('rejected' in token) return token
+  const get: GoogleGet = (url) =>
+    googleJson(url, { headers: { Authorization: `Bearer ${token.access_token}` } })
+
+  // ponytail: one page of 100 locations across all the manager's accounts.
+  // Follow `nextPageToken` if the business ever has more.
+  const list = await get<{ locations?: BusinessProfile[] }>(
+    `${BUSINESS_API}/accounts/-/locations?pageSize=100&readMask=name,title,storefrontAddress,phoneNumbers,metadata,openInfo,regularHours,specialHours`,
+  )
+  if ('rejected' in list) return list
+  return { profiles: list.locations ?? [], get }
+}
+
+/**
+ * Whether Google has put hours of its own on a listing, in place of the ones
+ * the owner entered and this check reads. Maps then shows Google's version
+ * until the owner accepts or rejects the edit in Business Profile.
+ */
+async function googleChangedHours(get: GoogleGet, profile: BusinessProfile): Promise<boolean> {
+  if (!profile.metadata?.hasGoogleUpdated || !profile.name) return false
+  const update = await get<{ diffMask?: string }>(
+    `${BUSINESS_API}/${profile.name}:getGoogleUpdated?readMask=regularHours,specialHours`,
+  )
+  return !('rejected' in update) && /hours/i.test(update.diffMask ?? '')
 }
 
 /**
@@ -218,13 +403,7 @@ function slackText(
 ): string {
   const admin = `${getBaseUrl()}/admin/collections`
   const lines = mismatches.map(({ date, site, google, googleSpecial }) => {
-    const day = new Date(`${date}T12:00:00Z`).toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-      timeZone: 'UTC',
-    })
-    const googleSays = `• ${day}: Google says ${google}${googleSpecial ? ' (holiday hours)' : ''}`
+    const googleSays = `• ${formatDate(date)}: Google says ${google}${googleSpecial ? ' (holiday hours)' : ''}`
     const entry = added.get(date)
     return entry
       ? `${googleSays}, the site said ${site}. <${admin}/holiday-hours/${entry}|Added Special Hours> to match.`
@@ -239,16 +418,32 @@ function slackText(
   return text.join('\n')
 }
 
+/** Slack caps a section block at 3,000 characters, so a long message is split at line breaks. */
+function slackSections(text: string): string[] {
+  const sections: string[] = []
+  for (const line of text.split('\n')) {
+    const last = sections.at(-1)
+    if (last !== undefined && last.length + line.length < 2900) {
+      sections[sections.length - 1] = `${last}\n${line}`
+    } else {
+      sections.push(line)
+    }
+  }
+  return sections
+}
+
 /**
  * Compares every active location that has a Google place ID and posts one
  * Slack message per taproom with differences. Throws when Google is down or
- * rate-limiting, or when Slack fails, so the task retries. Google is asked
- * about every taproom before anything is posted, so a failed Google request
- * retries the whole run without repeating a message.
+ * rate-limiting, or when Slack fails, so the task retries. Everything is read
+ * from Google before anything is posted, so a failed Google request retries
+ * the whole run without repeating a message.
  *
- * A missing API key, a request Google rejects (bad key or place ID), or a
- * place ID Google has no hours for is reported in Slack instead of thrown: a
- * retry cannot fix it, and a silent skip would look like "no differences".
+ * Missing credentials, a request Google rejects, a place ID with no profile or
+ * no hours, and a listing Google marks closed are reported in Slack instead of
+ * thrown: a retry cannot fix them, and a silent skip would look like "no
+ * differences". So is a listing where Google has put its own hours in place of
+ * the owner's, since Maps then shows hours this check does not read.
  *
  * Google's hours for a differing day with no Special Hours entry are added to
  * the site (see `HoursMismatch.fix`); the public pages pick the entry up
@@ -267,7 +462,7 @@ function slackText(
  */
 export async function runGoogleHoursCheck(
   payload: Payload,
-  apiKey: string | undefined,
+  credentials: BusinessCredentials | undefined,
 ): Promise<{ checked: number; mismatches: number }> {
   // ponytail: Eastern "today" for every taproom; use each location's timezone
   // if one ever opens outside Eastern time.
@@ -284,14 +479,10 @@ export async function runGoogleHoursCheck(
     }),
     payload.find({
       collection: 'holiday-hours',
-      // Dates are stored at noon UTC, so day-key bounds cover whole days.
-      where: {
-        and: [
-          { date: { greater_than_equal: today } },
-          { date: { less_than: addDays(today, DAYS_AHEAD) } },
-        ],
-      },
-      limit: 100,
+      // Dates are stored at noon UTC, so a day-key bound covers the whole day.
+      // ponytail: the first 500 upcoming entries; page if that is ever too few.
+      where: { date: { greater_than_equal: today } },
+      limit: 500,
       depth: 0,
       overrideAccess: true,
     }),
@@ -304,49 +495,73 @@ export async function runGoogleHoursCheck(
       unfurl_links: false,
       unfurl_media: false,
       text,
-      blocks: [{ type: 'section', text: { type: 'mrkdwn', text } }],
+      blocks: slackSections(text).map((section) => ({
+        type: 'section',
+        text: { type: 'mrkdwn', text: section },
+      })),
     })
     if (!posted) throw new Error(`Slack post about Google hours to ${channel} failed`)
   }
 
-  // A place ID of only spaces is not a place ID.
-  const taprooms = locations.docs.flatMap((location) => {
+  const result = { checked: 0, mismatches: 0 }
+  // A place ID of only spaces is not a place ID. Quiet until a taproom has
+  // one: before that the check is simply not set up.
+  const withPlaceId = locations.docs.flatMap((location) => {
     const placeId = location.address?.googlePlaceId?.trim()
     return placeId ? [{ location, placeId }] : []
   })
-
-  const result = { checked: 0, mismatches: 0 }
-  if (!apiKey) {
-    // Quiet until a taproom has a place ID: before that the check is simply not set up.
-    if (taprooms.length > 0) {
-      await post('*Google hours check is not running:* `GOOGLE_PLACES_API_KEY` is not set.')
-    }
+  if (withPlaceId.length === 0) return result
+  if (!credentials) {
+    await post(
+      '*Google hours check is not running:* `GOOGLE_BUSINESS_CLIENT_ID`, `GOOGLE_BUSINESS_CLIENT_SECRET` and `GOOGLE_BUSINESS_REFRESH_TOKEN` are not all set.',
+    )
     return result
   }
 
-  const replies = await Promise.all(
-    taprooms.map(async ({ location, placeId }) => ({
-      location,
-      google: await fetchGoogleHours(placeId, apiKey),
-    })),
+  const google = await fetchProfiles(credentials)
+  if ('rejected' in google) {
+    const reason = google.detail ? `: ${escapeMrkdwn(google.detail)}` : ''
+    await post(
+      `*Google hours check is not running.* Google rejected the request (HTTP ${google.rejected}${reason}). If it says \`invalid_grant\`, the saved Google sign-in was revoked: run \`node scripts/google-business-signin.mjs\` again (see the README).`,
+    )
+    return result
+  }
+  const taprooms = await Promise.all(
+    withPlaceId.map(async ({ location, placeId }) => {
+      const profile = google.profiles.find((p) => p.metadata?.placeId === placeId)
+      const googleEdited = profile ? await googleChangedHours(google.get, profile) : false
+      return { location, profile, googleEdited }
+    }),
   )
-  for (const { location, google } of replies) {
-    const notRunning = `*${escapeMrkdwn(location.name)}: Google hours check is not running.*`
-    if (!google) {
+
+  for (const { location, profile, googleEdited } of taprooms) {
+    const name = escapeMrkdwn(location.name)
+    const notRunning = `*${name}: Google hours check is not running.*`
+    if (!profile) {
       await post(
-        `${notRunning} Google has no hours for this taproom's Google place ID. Check the place ID and that the Google listing has hours.`,
+        `${notRunning} The signed-in Google account manages no Business Profile with this taproom's Google place ID. Check the place ID.`,
       )
       continue
     }
-    if ('rejected' in google) {
-      await post(
-        `${notRunning} Google rejected the request (HTTP ${google.rejected}). Check \`GOOGLE_PLACES_API_KEY\` and this taproom's Google place ID.`,
-      )
+    const status = profile.openInfo?.status
+    if (status && status !== 'OPEN') {
+      const closed = status === 'CLOSED_PERMANENTLY' ? 'permanently closed' : 'temporarily closed'
+      await post(`${notRunning} Google shows this listing as ${closed}.`)
       continue
+    }
+    if (!profile.regularHours?.periods?.length) {
+      await post(`${notRunning} Its Google Business Profile has no regular hours.`)
+      continue
+    }
+    if (googleEdited) {
+      await post(
+        `*${name}: Google has put its own hours on this listing.* Maps may show hours that differ from the ones compared here. Review Google's edits in Business Profile.`,
+      )
     }
     result.checked++
 
-    const mismatches = compareHours({ today, location, holidays: holidays.docs, google })
+    const dates = datesToCompare(today, profile, holidays.docs, location.id)
+    const mismatches = compareHours({ dates, location, holidays: holidays.docs, profile })
     if (mismatches.length === 0) continue
     result.mismatches += mismatches.length
 
@@ -388,7 +603,6 @@ export const checkGoogleHoursTask: TaskConfig = {
   // 06:30 UTC, inside the window the Vercel cron wakes the maintenance queue (vercel.json).
   schedule: [{ cron: '0 30 6 * * *', queue: 'maintenance' }],
   handler: async ({ req }) => {
-    const apiKey = process.env.GOOGLE_PLACES_API_KEY?.trim()
-    return { output: await runGoogleHoursCheck(req.payload, apiKey) }
+    return { output: await runGoogleHoursCheck(req.payload, businessCredentials()) }
   },
 }
