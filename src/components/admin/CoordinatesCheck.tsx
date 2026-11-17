@@ -1,7 +1,7 @@
 'use client'
 
 /**
- * Under a Location's "Map coordinates" field: compares them with the pin in
+ * Below a Location's "Map coordinates" field: compares them with the pin in
  * the Directions URL. The site's maps place the taproom by these coordinates,
  * so they should sit on that pin. Warns when they are more than a short walk
  * apart (or missing) and offers to copy the pin's position into the field.
@@ -15,8 +15,8 @@ const NOTE = { margin: '4px 0 0' }
 /** Farther apart than this, the map shows the taproom on the wrong spot. */
 const TOLERANCE_METRES = 50
 
-export function CoordinatesCheck({ path }: { path: string }) {
-  const { value, setValue } = useField<[number, number] | null>({ path })
+export function CoordinatesCheck() {
+  const { value, setValue } = useField<[number, number] | null>({ path: 'coordinates' })
   const { value: directionsUrl } = useField<string>({ path: 'address.directionsUrl' })
   const offset = pinOffset(value, directionsUrl)
   if (!offset) return null

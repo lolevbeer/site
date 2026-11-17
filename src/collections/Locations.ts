@@ -345,8 +345,15 @@ export const Locations: CollectionConfig = {
                   admin: {
                     description:
                       "Where the site's maps put the taproom: Longitude, Latitude (e.g. -79.960098, 40.465372).",
+                  },
+                },
+                {
+                  // A point field draws afterInput under both of its inputs, so the check sits below it.
+                  name: 'coordinatesCheck',
+                  type: 'ui',
+                  admin: {
                     components: {
-                      afterInput: ['@/src/components/admin/CoordinatesCheck#CoordinatesCheck'],
+                      Field: '@/src/components/admin/CoordinatesCheck#CoordinatesCheck',
                     },
                   },
                 },
