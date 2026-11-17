@@ -71,7 +71,7 @@ export function SlackChannelTestButton({
         role={status && !status.ok ? 'alert' : 'status'}
         style={{
           margin: '4px 0 0',
-          color: status && !status.ok ? 'var(--theme-error-500)' : undefined,
+          color: status && !status.ok ? 'var(--color-text-danger)' : undefined,
         }}
       >
         {status?.text}

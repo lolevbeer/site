@@ -461,7 +461,8 @@ describe('EventInquiryForm', () => {
     expect(document.getElementById('inquiry-headcount-error')?.textContent).toBe(
       'Enter how many guests.',
     )
-    expect(document.activeElement?.id).toBe('inquiry-headcount')
+    // Focus moves in an effect once the submit stops pending, which can land a render later.
+    await waitFor(() => expect(document.activeElement?.id).toBe('inquiry-headcount'))
 
     fireEvent.change(name, { target: { value: 'Ada' } })
     expect(name.getAttribute('aria-invalid')).toBeNull()

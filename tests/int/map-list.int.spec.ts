@@ -7,6 +7,7 @@ import {
   cameraForLocation,
   cameraForTaproom,
   coordsFromDirectionsUrl,
+  pinOffset,
   DEFAULT_MAP_CENTER,
   DEFAULT_MAP_ZOOM,
   googleDirectionsUrl,
@@ -83,6 +84,29 @@ describe('coordsFromDirectionsUrl', () => {
 
   it('finds nothing in a link with no coordinates', () => {
     expect(coordsFromDirectionsUrl('https://maps.app.goo.gl/abc123')).toBeNull()
+  })
+})
+
+describe('pinOffset', () => {
+  const url =
+    'https://www.google.com/maps/place/Lolev+Beer/@40.4816217,-79.9564325,821m/data=!3m2!1e3!4b1!8m2!3d40.4816217!4d-79.9538576!16s'
+  const pin = { lat: 40.4816217, lng: -79.9538576 }
+
+  it("measures how far the coordinates are from the link's pin", () => {
+    // Lawrenceville's saved coordinates are the map view centre, west of the pin.
+    const offset = pinOffset([-79.9564325, 40.4816217], url)
+    expect(offset?.pin).toEqual(pin)
+    expect(offset?.metres).toBeGreaterThan(210)
+    expect(offset?.metres).toBeLessThan(225)
+  })
+
+  it('offers the pin when there are no coordinates yet', () => {
+    expect(pinOffset(null, url)).toEqual({ pin, metres: null })
+  })
+
+  it('has nothing to compare when the link has no location', () => {
+    expect(pinOffset([-79.95, 40.48], 'https://maps.app.goo.gl/abc123')).toBeNull()
+    expect(pinOffset([-79.95, 40.48], '')).toBeNull()
   })
 })
 

@@ -20,7 +20,7 @@ export function DirectionsUrlMap({ path }: { path: string }) {
 
   if (!safeHttpUrl(url)) {
     return (
-      <p role="alert" style={{ ...NOTE, color: 'var(--theme-error-500)' }}>
+      <p role="alert" style={{ ...NOTE, color: 'var(--color-text-danger)' }}>
         This is not a web link. It should start with https://
       </p>
     )
@@ -43,7 +43,7 @@ export function DirectionsUrlMap({ path }: { path: string }) {
         src={`https://www.google.com/maps?q=${pin.lat},${pin.lng}&z=16&output=embed`}
         loading="lazy"
         referrerPolicy="no-referrer"
-        style={{ width: '100%', maxWidth: 480, height: 220, border: 0, borderRadius: 4 }}
+        style={{ width: '100%', maxWidth: 400, height: 160, border: 0, borderRadius: 4 }}
       />
       <p role="status" style={NOTE}>
         Pin at {pin.lat}, {pin.lng}

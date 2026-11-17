@@ -21,9 +21,9 @@
 import type { Payload, TaskConfig } from 'payload'
 import { fromZonedTime } from 'date-fns-tz'
 import type { HolidayHour, Location } from '@/src/payload-types'
-import { WEEKDAYS_FROM_SUNDAY } from '@/lib/types/location'
+import { WEEKDAYS_FROM_SUNDAY, type Weekday } from '@/lib/types/location'
 import { getTodayEST } from '@/lib/utils/date'
-import { formatTime } from '@/lib/utils/formatters'
+import { formatOpenHours, formatTime } from '@/lib/utils/formatters'
 import { getBaseUrl } from '@/lib/utils/get-base-url'
 import { addDays, dayOfWeek } from '@/lib/utils/schedule-heatmap'
 import { clip, escapeMrkdwn } from '@/lib/slack/mrkdwn'
@@ -48,7 +48,14 @@ export interface BusinessProfile {
   name?: string
   /** The business name shown on Google. */
   title?: string
-  storefrontAddress?: { addressLines?: string[]; locality?: string }
+  storefrontAddress?: {
+    addressLines?: string[]
+    locality?: string
+    /** State, e.g. "PA". */
+    administrativeArea?: string
+    postalCode?: string
+  }
+  phoneNumbers?: { primaryPhone?: string }
   metadata?: {
     placeId?: string
     /** Google has edits of its own to this listing that the owner has not reviewed. */
@@ -194,6 +201,29 @@ export function googleDay(profile: BusinessProfile, date: string): GoogleDay {
   }
 }
 
+/** One day of Google's hours as the comparison writes it: "4pm–10pm", "Closed", "Open 24 hours". */
+function googleDayLabel(day: GoogleDay): string {
+  const spans = day.periods.map((p) =>
+    p.close ? `${formatTime(p.open)}–${formatTime(p.close.time)}` : 'Open 24 hours',
+  )
+  return spans.join(', ') || CLOSED
+}
+
+/**
+ * Google's regular hours for each weekday, special hours left out, labelled as
+ * the comparison writes them. The admin shows these beside the weekly hours.
+ */
+export function googleWeek(profile: BusinessProfile, today: string): Record<Weekday, string> {
+  const regular = { ...profile, specialHours: undefined }
+  const days = Array.from({ length: 7 }, (_, offset) => addDays(today, offset))
+  return Object.fromEntries(
+    days.map((date) => [
+      WEEKDAYS_FROM_SUNDAY[dayOfWeek(date)],
+      googleDayLabel(googleDay(regular, date)),
+    ]),
+  ) as Record<Weekday, string>
+}
+
 const coversLocation = (holiday: SiteHoliday, locationId: string) =>
   holiday.locations.some((l) => (typeof l === 'string' ? l : l.id) === locationId)
 
@@ -245,9 +275,7 @@ function siteHours(location: SiteLocation, holiday: SiteHoliday | undefined, dat
   if (holiday?.type === 'closed') return CLOSED
 
   const hours = holiday ? holiday.hours : location[WEEKDAYS_FROM_SUNDAY[dayOfWeek(date)]]
-  if (!hours?.open || !hours.close) return CLOSED
-  const timezone = location.timezone || undefined
-  return `${formatTime(hours.open, { timezone })}–${formatTime(hours.close, { timezone })}`
+  return formatOpenHours(hours, location.timezone)
 }
 
 /** The days among `dates` (YYYY-MM-DD) where Google's profile and the site show different hours. */
@@ -261,12 +289,7 @@ export function compareHours(args: {
 
   for (const date of args.dates) {
     const day = googleDay(args.profile, date)
-    const google =
-      day.periods
-        .map((p) =>
-          p.close ? `${formatTime(p.open)}–${formatTime(p.close.time)}` : 'Open 24 hours',
-        )
-        .join(', ') || CLOSED
+    const google = googleDayLabel(day)
     // When two entries cover the same day, the site shows the last one Payload
     // returns (the `holidayMap` in lib/utils/payload-api.ts), so take the last here too.
     const holiday = args.holidays
@@ -326,7 +349,7 @@ export function businessCredentials(): BusinessCredentials | undefined {
 
 /**
  * Signs in to Google and lists every Business Profile location the manager can
- * see, with its name, address, open status and hours. `get` makes further
+ * see, with its name, address, phone, open status and hours. `get` makes further
  * calls with the same sign-in. Also used by the place ID check in the admin
  * (`src/actions/google-place-check.ts`).
  */
@@ -349,7 +372,7 @@ export async function fetchProfiles(
   // ponytail: one page of 100 locations across all the manager's accounts.
   // Follow `nextPageToken` if the business ever has more.
   const list = await get<{ locations?: BusinessProfile[] }>(
-    `${BUSINESS_API}/accounts/-/locations?pageSize=100&readMask=name,title,storefrontAddress,metadata,openInfo,regularHours,specialHours`,
+    `${BUSINESS_API}/accounts/-/locations?pageSize=100&readMask=name,title,storefrontAddress,phoneNumbers,metadata,openInfo,regularHours,specialHours`,
   )
   if ('rejected' in list) return list
   return { profiles: list.locations ?? [], get }

@@ -1026,6 +1026,9 @@ exports[`persistent field contracts > locations retains its stored paths and val
     "relationTo": "menus",
     "type": "relationship",
   },
+  "friday": {
+    "type": "group",
+  },
   "friday.close": {
     "type": "date",
   },
@@ -1067,6 +1070,9 @@ exports[`persistent field contracts > locations retains its stored paths and val
     "type": "checkbox",
     "virtual": true,
   },
+  "monday": {
+    "type": "group",
+  },
   "monday.close": {
     "type": "date",
   },
@@ -1080,6 +1086,9 @@ exports[`persistent field contracts > locations retains its stored paths and val
     "required": true,
     "type": "text",
     "unique": true,
+  },
+  "saturday": {
+    "type": "group",
   },
   "saturday.close": {
     "type": "date",
@@ -1124,11 +1133,17 @@ exports[`persistent field contracts > locations retains its stored paths and val
     "type": "text",
     "validate": true,
   },
+  "sunday": {
+    "type": "group",
+  },
   "sunday.close": {
     "type": "date",
   },
   "sunday.open": {
     "type": "date",
+  },
+  "thursday": {
+    "type": "group",
   },
   "thursday.close": {
     "type": "date",
@@ -1149,11 +1164,17 @@ exports[`persistent field contracts > locations retains its stored paths and val
     ],
     "type": "select",
   },
+  "tuesday": {
+    "type": "group",
+  },
   "tuesday.close": {
     "type": "date",
   },
   "tuesday.open": {
     "type": "date",
+  },
+  "wednesday": {
+    "type": "group",
   },
   "wednesday.close": {
     "type": "date",

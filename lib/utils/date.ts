@@ -2,7 +2,7 @@
  * Date utilities: EST/EDT timezone helpers and elapsed-time checks.
  */
 
-import { fromZonedTime, toZonedTime, format } from 'date-fns-tz'
+import { formatInTimeZone, fromZonedTime, toZonedTime, format } from 'date-fns-tz'
 
 const EST_TIMEZONE = 'America/New_York'
 
@@ -76,4 +76,36 @@ export function getESTMidnightISO(date: string): string {
  */
 export function getTodayMidnightISO(): string {
   return getESTMidnightISO(getTodayEST())
+}
+
+/**
+ * Weekly opening and closing times are stored as instants on 1 January 2000
+ * (a winter day, so no daylight saving), read back in the taproom's timezone.
+ */
+const WEEKLY_HOURS_DAY = '2000-01-01'
+
+/** A stored weekly opening or closing time as "HH:mm" in `timezone`; "" when unset. */
+export function clockFromStoredTime(stored: string | null | undefined, timezone: string): string {
+  return stored ? formatInTimeZone(stored, timezone, 'HH:mm') : ''
+}
+
+/** "HH:mm" in `timezone` as the instant a weekly opening or closing time is stored as; null when blank. */
+export function storedTimeFromClock(clock: string, timezone: string): string | null {
+  return clock ? fromZonedTime(`${WEEKLY_HOURS_DAY}T${clock}:00`, timezone).toISOString() : null
+}
+
+/**
+ * "HH:mm" as the Date Payload's time picker shows: that clock time in the
+ * browser's own zone, on the weekly-hours reference day. Undefined when blank.
+ */
+export function pickerTimeFromClock(clock: string): Date | undefined {
+  if (!clock) return undefined
+  const [hours, minutes] = clock.split(':').map(Number)
+  return new Date(2000, 0, 1, hours, minutes)
+}
+
+/** The clock time ("HH:mm") picked in Payload's time picker; "" when it was cleared. */
+export function clockFromPickedTime(picked: Date | null | undefined): string {
+  if (!picked) return ''
+  return `${String(picked.getHours()).padStart(2, '0')}:${String(picked.getMinutes()).padStart(2, '0')}`
 }
