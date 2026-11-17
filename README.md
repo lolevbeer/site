@@ -198,11 +198,11 @@ is the system queue, separate from hiring.
   organization or event name); Dated and Recurring Events match organizer and
   summary; Distributors match name, city and address. Other lists search their
   title only. GraphQL is turned off; the API is REST only.
-- **Recurring series on Dated Events:** The Dated Events list shows this year's
-  and later recurring series above the dated rows, in the same columns, with
-  the repeat pattern in the Date column ("Repeats"). Rows and the "Create New
-  Recurring" button open the Recurring Events forms. Search, filters and sorting
-  apply to the dated rows only; the block shows up to 50 series.
+- **Recurring series on Events:** The Events list shows this year's and later
+  recurring series above the dated rows, in the same columns, with the repeat
+  pattern in the Date column ("Repeats") and times in taproom time. Rows and the
+  "Create New Recurring" button open the Events Recurring forms. Search, filters
+  and sorting apply to the dated rows only; the block shows up to 50 series.
 - **Scheduled publish:** On a beer or menu, the calendar icon beside Save Draft
   schedules a publish (or unpublish) for a set time; check the Type choice
   before saving. A job runner wakes every five minutes, so it goes live within

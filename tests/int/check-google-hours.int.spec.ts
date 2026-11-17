@@ -209,6 +209,55 @@ describe('compareHours', () => {
     ])
   })
 
+  it('proposes only, with both spans, when Google shows a split day', () => {
+    const google = matchingGoogle()
+    google.periods = google.periods!.flatMap((p) =>
+      p.open.date!.day === 25 ? [period(25, 11, 14), period(25, 17, 22)] : [p],
+    )
+
+    const [mismatch] = compareHours({ today: TODAY, location, holidays: [], google })
+    expect(mismatch).toMatchObject({ date: '2026-11-25', google: '11am–2pm, 5pm–10pm' })
+    expect(mismatch.fix).toBeUndefined()
+  })
+
+  it('proposes only when Google shows a day open 24 hours', () => {
+    const google = matchingGoogle()
+    google.periods = google.periods!.map((p) =>
+      p.open.date!.day === 25 ? { open: { date: p.open.date, hour: 0, minute: 0 } } : p,
+    )
+
+    const [mismatch] = compareHours({ today: TODAY, location, holidays: [], google })
+    expect(mismatch).toMatchObject({ date: '2026-11-25', google: 'Open 24 hours' })
+    expect(mismatch.fix).toBeUndefined()
+  })
+
+  it('copies a morning half-hour open and a midnight close on the next day', () => {
+    const google = matchingGoogle()
+    // Google leaves out zero fields, so midnight arrives with no hour or minute.
+    google.periods = google.periods!.map((p) =>
+      p.open.date!.day === 27
+        ? {
+            open: { date: { year: 2026, month: 11, day: 27 }, hour: 9, minute: 30 },
+            close: { date: { year: 2026, month: 11, day: 28 } },
+          }
+        : p,
+    )
+
+    expect(compareHours({ today: TODAY, location, holidays: [], google })).toEqual([
+      {
+        date: '2026-11-27',
+        site: '4pm–10pm',
+        google: '9:30am–12am',
+        googleSpecial: false,
+        // 9:30am Eastern (EST) on the 27th, midnight Eastern at the start of the 28th.
+        fix: {
+          type: 'modified',
+          hours: { open: '2026-11-27T14:30:00.000Z', close: '2026-11-28T05:00:00.000Z' },
+        },
+      },
+    ])
+  })
+
   it('offers no fix when Google shows no hours for the whole week', () => {
     const mismatches = compareHours({ today: TODAY, location, holidays: [], google: {} })
 

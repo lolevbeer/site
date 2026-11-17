@@ -41,10 +41,16 @@ interface GooglePoint {
   truncated?: boolean
 }
 
+/** One stretch of opening hours. No `close` means open around the clock. */
+interface GooglePeriod {
+  open: GooglePoint
+  close?: GooglePoint
+}
+
 /** `currentOpeningHours` from Places API (New) Place Details. */
 export interface GoogleOpeningHours {
   /** Omitted when the place is closed for the whole window. */
-  periods?: Array<{ open: GooglePoint; close?: GooglePoint }>
+  periods?: GooglePeriod[]
   /** Days in the window whose hours differ from the regular week. */
   specialDays?: Array<{ date?: GoogleDate }>
 }
@@ -76,11 +82,15 @@ type SiteHoliday = Pick<HolidayHour, 'date' | 'type' | 'hours'> & {
 const DAYS_AHEAD = 7
 const CLOSED = 'Closed'
 
-const dateKey = ({ year, month, day }: GoogleDate) =>
-  `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+const pad = (value: number) => String(value).padStart(2, '0')
 
-const googleTime = ({ hour = 0, minute = 0 }: GooglePoint) =>
-  formatTime(`${hour}:${String(minute).padStart(2, '0')}`)
+const dateKey = ({ year, month, day }: GoogleDate) => `${year}-${pad(month)}-${pad(day)}`
+
+/** A Google time as "HH:MM" on the 24-hour clock. */
+// `??` rather than a default: Google omits zero fields, and a null must also read as zero.
+const clock = (point: GooglePoint) => `${pad(point.hour ?? 0)}:${pad(point.minute ?? 0)}`
+
+const googleTime = (point: GooglePoint) => formatTime(clock(point))
 
 /**
  * A Google time as the instant Payload stores for a time field: that wall-clock
@@ -88,22 +98,21 @@ const googleTime = ({ hour = 0, minute = 0 }: GooglePoint) =>
  */
 function googleInstant(point: GooglePoint, fallbackDay: string, timezone: string): string {
   const day = point.date ? dateKey(point.date) : fallbackDay
-  const time = `${String(point.hour ?? 0).padStart(2, '0')}:${String(point.minute ?? 0).padStart(2, '0')}`
-  return fromZonedTime(`${day}T${time}:00`, timezone).toISOString()
+  return fromZonedTime(`${day}T${clock(point)}:00`, timezone).toISOString()
 }
 
 /**
- * The Special Hours entry that copies Google's periods for one day, or nothing
- * when they do not fit one open/close pair (split or all-night days).
+ * The Special Hours entry that copies `periods`, Google's hours for one day, or
+ * undefined when they do not fit one: a split or all-night day has no single open/close pair.
  */
 function specialHoursFix(
-  todays: NonNullable<GoogleOpeningHours['periods']>,
+  periods: GooglePeriod[],
   day: string,
   timezone: string,
 ): SpecialHoursFix | undefined {
-  const [only, ...rest] = todays
-  if (!only) return { type: 'closed' }
-  if (rest.length > 0 || !only.close) return undefined
+  if (periods.length === 0) return { type: 'closed' }
+  const [only] = periods
+  if (periods.length > 1 || !only.close) return undefined
   return {
     type: 'modified',
     hours: {
@@ -168,10 +177,10 @@ export function compareHours(args: {
     // Fixable only when nobody has entered Special Hours for the day. A listing
     // with no hours for the whole week (marked closed, or its hours removed) is
     // left for a person: copying it would show the taproom closed all week.
-    const fix =
-      !holiday && periods.length > 0
-        ? specialHoursFix(todays, key, args.location.timezone || 'America/New_York')
-        : undefined
+    const fixable = !holiday && periods.length > 0
+    const fix = fixable
+      ? specialHoursFix(todays, key, args.location.timezone || 'America/New_York')
+      : undefined
     mismatches.push({ date: key, site, google, googleSpecial: special.has(key), fix })
   }
   return mismatches

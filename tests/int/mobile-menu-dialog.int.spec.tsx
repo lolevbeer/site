@@ -82,6 +82,8 @@ describe('mobile navigation dialog', () => {
     const { trigger } = openMenu()
 
     expect(trigger.getAttribute('aria-label')).toBe('Close menu')
+    // Radix starts listening for outside presses a tick after the dialog opens.
+    await new Promise<void>((resolve) => setTimeout(resolve))
     // A real press is pointerdown (an "outside" press to the dialog) then click.
     fireEvent.pointerDown(trigger, { button: 0, pointerType: 'mouse' })
     fireEvent.click(trigger)

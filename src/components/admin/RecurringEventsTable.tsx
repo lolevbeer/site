@@ -2,7 +2,7 @@
 
 /**
  * The rows of the "Recurring series" block (RecurringEventsPanel), laid out in
- * the same columns as the Dated Events table below so the two stack as one.
+ * the same columns as the Events table below so the two stack as one.
  *
  * Two separate tables size their columns from their own content, so CSS alone
  * cannot line them up. This component reads the dated table's rendered header
@@ -14,17 +14,11 @@
  * It depends on Payload's list markup: tables inside `.collection-list`, header
  * cells carrying `data-column`. If that markup changes, measuring is skipped
  * and the block keeps `initialColumns`. With group-by, it follows the first group.
+ * tests/int/recurring-series-cells.int.spec.ts fails if an upgrade renames either.
  */
 import { useLayoutEffect, useRef, useState } from 'react'
 import { Link, Pill } from '@payloadcms/ui'
-
-export interface RecurringEventsRow {
-  id: string
-  href: string
-  paused: boolean
-  /** Cell text keyed by the dated list's column names; missing columns render blank. */
-  cells: Record<string, string>
-}
+import type { RecurringSeriesRow } from '@/src/components/admin/recurring-series-cells'
 
 interface Column {
   accessor: string
@@ -32,7 +26,8 @@ interface Column {
 }
 
 interface Props {
-  rows: RecurringEventsRow[]
+  /** Cell text is sent for `initialColumns` only; any other column renders blank. */
+  rows: RecurringSeriesRow[]
   /** Header text per column name. */
   labels: Record<string, string>
   /** Columns to show until the dated table has been measured. */
@@ -86,10 +81,16 @@ export function RecurringEventsTable({ rows, labels, initialColumns }: Props): R
     }
 
     sync()
-    // Payload replaces the table when columns change, so watch the whole list view.
-    const mutations = new MutationObserver(sync)
+    // Payload replaces the table when columns change, so watch the whole list
+    // view. Row selection and popups change it too, so sync once per frame at most.
+    let frame = 0
+    const mutations = new MutationObserver(() => {
+      cancelAnimationFrame(frame)
+      frame = requestAnimationFrame(sync)
+    })
     mutations.observe(listView, { childList: true, subtree: true })
     return () => {
+      cancelAnimationFrame(frame)
       mutations.disconnect()
       resizes.disconnect()
     }
@@ -146,7 +147,8 @@ export function RecurringEventsTable({ rows, labels, initialColumns }: Props): R
                   </td>
                 ) : (
                   <td className={`cell-${accessor}`} key={accessor}>
-                    {row.cells[accessor]}
+                    {/* In a span so Payload's four-line clamp applies, as on the dated rows. */}
+                    <span>{row.cells[accessor]}</span>
                   </td>
                 ),
               )}
