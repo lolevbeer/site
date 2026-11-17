@@ -158,12 +158,12 @@ function profilePoint(date: string, time: ProfileTime = {}): GooglePoint {
  * "12am–12am", not "Open 24 hours". Handle it if a taproom ever never closes.
  */
 export function hoursOn(profile: BusinessProfile, dates: string[]): GoogleOpeningHours {
+  const specialPeriods = profile.specialHours?.specialHourPeriods ?? []
+  const regularPeriods = profile.regularHours?.periods ?? []
   const periods: GooglePeriod[] = []
   const specialDays: Array<{ date: GoogleDate }> = []
   for (const date of dates) {
-    const specials = (profile.specialHours?.specialHourPeriods ?? []).filter(
-      (s) => dateKey(s.startDate) === date,
-    )
+    const specials = specialPeriods.filter((s) => dateKey(s.startDate) === date)
     if (specials.length > 0) {
       specialDays.push({ date: specials[0].startDate })
       for (const s of specials) {
@@ -176,7 +176,7 @@ export function hoursOn(profile: BusinessProfile, dates: string[]): GoogleOpenin
       continue
     }
     const weekday = WEEKDAYS_FROM_SUNDAY[dayOfWeek(date)].toUpperCase()
-    for (const r of profile.regularHours?.periods ?? []) {
+    for (const r of regularPeriods) {
       if (r.openDay !== weekday) continue
       periods.push({
         open: profilePoint(date, r.openTime),
@@ -202,7 +202,9 @@ export function datesToCompare(
 ): string[] {
   const dates = new Set(Array.from({ length: DAYS_AHEAD }, (_, offset) => addDays(today, offset)))
   for (const s of profile.specialHours?.specialHourPeriods ?? []) dates.add(dateKey(s.startDate))
-  for (const h of holidays) if (coversLocation(h, locationId)) dates.add(h.date.slice(0, 10))
+  for (const h of holidays) {
+    if (coversLocation(h, locationId)) dates.add(h.date.slice(0, 10))
+  }
   return [...dates].filter((date) => date >= today).sort()
 }
 
