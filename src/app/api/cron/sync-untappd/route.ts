@@ -25,20 +25,16 @@ export async function GET(request: NextRequest) {
   try {
     const payload = await getPayload({ config })
     const scheduled = await payload.jobs.handleSchedules({ queue: QUEUE })
-    const untappd = await payload.jobs.run({
-      queue: QUEUE,
-      limit: 1,
-      sequential: true,
-      overrideAccess: true,
-      where: { taskSlug: { equals: syncUntappdRatingsTask.slug } },
-    })
-    const others = await payload.jobs.run({
-      queue: QUEUE,
-      limit: 1,
-      sequential: true,
-      overrideAccess: true,
-      where: { taskSlug: { not_equals: syncUntappdRatingsTask.slug } },
-    })
+    const runOne = (operator: 'equals' | 'not_equals') =>
+      payload.jobs.run({
+        queue: QUEUE,
+        limit: 1,
+        sequential: true,
+        overrideAccess: true,
+        where: { taskSlug: { [operator]: syncUntappdRatingsTask.slug } },
+      })
+    const untappd = await runOne('equals')
+    const others = await runOne('not_equals')
     const run = { jobStatus: { ...untappd.jobStatus, ...others.jobStatus } }
 
     // Job tasks avoid Next cache APIs so they also work from the Payload CLI.

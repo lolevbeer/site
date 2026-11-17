@@ -93,6 +93,27 @@ function googleInstant(point: GooglePoint, fallbackDay: string, timezone: string
 }
 
 /**
+ * The Special Hours entry that copies Google's periods for one day, or nothing
+ * when they do not fit one open/close pair (split or all-night days).
+ */
+function specialHoursFix(
+  todays: NonNullable<GoogleOpeningHours['periods']>,
+  day: string,
+  timezone: string,
+): SpecialHoursFix | undefined {
+  const [only, ...rest] = todays
+  if (!only) return { type: 'closed' }
+  if (rest.length > 0 || !only.close) return undefined
+  return {
+    type: 'modified',
+    hours: {
+      open: googleInstant(only.open, day, timezone),
+      close: googleInstant(only.close, day, timezone),
+    },
+  }
+}
+
+/**
  * What the site shows for one YYYY-MM-DD date: `holiday` (its Special Hours
  * entry) if any, else the weekly hours.
  */
@@ -144,25 +165,13 @@ export function compareHours(args: {
     const site = siteHours(args.location, holiday, key)
     if (google === site) continue
 
-    // Fixable only when nobody has entered Special Hours for the day. Split or
-    // all-night days do not fit one open/close pair. A listing with no hours
-    // for the whole week (marked closed, or its hours removed) is left for a
-    // person: copying it would show the taproom closed all week.
-    let fix: SpecialHoursFix | undefined
-    if (!holiday && periods.length > 0) {
-      const [only, ...rest] = todays
-      const timezone = args.location.timezone || 'America/New_York'
-      if (!only) fix = { type: 'closed' }
-      else if (rest.length === 0 && only.close) {
-        fix = {
-          type: 'modified',
-          hours: {
-            open: googleInstant(only.open, key, timezone),
-            close: googleInstant(only.close, key, timezone),
-          },
-        }
-      }
-    }
+    // Fixable only when nobody has entered Special Hours for the day. A listing
+    // with no hours for the whole week (marked closed, or its hours removed) is
+    // left for a person: copying it would show the taproom closed all week.
+    const fix =
+      !holiday && periods.length > 0
+        ? specialHoursFix(todays, key, args.location.timezone || 'America/New_York')
+        : undefined
     mismatches.push({ date: key, site, google, googleSpecial: special.has(key), fix })
   }
   return mismatches
@@ -307,10 +316,12 @@ export async function runGoogleHoursCheck(
   }
 
   const replies = await Promise.all(
-    taprooms.map(({ placeId }) => fetchGoogleHours(placeId, apiKey)),
+    taprooms.map(async ({ location, placeId }) => ({
+      location,
+      google: await fetchGoogleHours(placeId, apiKey),
+    })),
   )
-  for (const [index, { location }] of taprooms.entries()) {
-    const google = replies[index]
+  for (const { location, google } of replies) {
     const notRunning = `*${escapeMrkdwn(location.name)}: Google hours check is not running.*`
     if (!google) {
       await post(
