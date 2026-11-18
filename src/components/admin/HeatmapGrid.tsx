@@ -44,7 +44,6 @@ const LEGEND: (Marks & { label: string })[] = [
   { label: 'Event', event: true, food: true },
   { label: 'Event, no food', event: true },
 ]
-const plural = (n: number, one: string, many: string) => (n === 1 ? one : many)
 
 /** `data-*` presence attributes for the stylesheet; false flags are left off. */
 const markAttrs = ({ food, event, closed }: Marks) => ({
@@ -106,17 +105,17 @@ export function HeatmapGrid({
           // the rule list instead of an empty filtered list.
           const isEvent = Boolean(d?.events.length) || !d?.food.length
           const hasDoc = isEvent ? d?.eventDoc : d?.foodDoc
-          const params = new URLSearchParams({
-            'where[date][greater_than_equal]': getESTMidnightISO(date),
-            'where[date][less_than]': getESTMidnightISO(addDays(date, 1)),
-          })
-          params.set('where[location][equals]', location.id)
-          const href =
-            d && !hasDoc
-              ? isEvent
-                ? listURLs.recurringEvent
-                : listURLs.recurringFood
-              : `${isEvent ? listURLs.event : listURLs.food}?${params}`
+          let href: string
+          if (d && !hasDoc) {
+            href = isEvent ? listURLs.recurringEvent : listURLs.recurringFood
+          } else {
+            const params = new URLSearchParams({
+              'where[date][greater_than_equal]': getESTMidnightISO(date),
+              'where[date][less_than]': getESTMidnightISO(addDays(date, 1)),
+              'where[location][equals]': location.id,
+            })
+            href = `${isEvent ? listURLs.event : listURLs.food}?${params}`
+          }
           return {
             date,
             food: Boolean(d?.food.length),
@@ -168,7 +167,7 @@ export function HeatmapGrid({
         <p className="schedule-heatmap__tonight">{tonight}</p>
         <Pill pillStyle={gaps ? 'warning' : 'success'} size="small">
           {gaps
-            ? `${gaps} open ${plural(gaps, 'night', 'nights')} without food in the next 4 weeks`
+            ? `${gaps} open ${gaps === 1 ? 'night' : 'nights'} without food in the next 4 weeks`
             : 'Food booked every open night for the next 4 weeks'}
         </Pill>
       </div>

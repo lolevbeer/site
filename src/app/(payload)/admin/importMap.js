@@ -5,6 +5,7 @@ import { UntappdCell as UntappdCell_e3f231507ff3636e02b69e00c6dae7e5 } from '@/s
 import { PreviewControls as PreviewControls_e5c0490040b43f7662876a27010d6efc } from '@/src/components/admin/PreviewControls'
 import { VersionsWithEditor as VersionsWithEditor_086ae422e503b0ca3c3b3cebea7f361d } from '@/src/components/admin/VersionsWithEditor'
 import { MarkLinesCleanedButton as MarkLinesCleanedButton_f5f2df171d50f30cf104614de4c760a1 } from '@/src/components/admin/MarkLinesCleanedButton'
+import { MenuItemsField as MenuItemsField_e78f192010ab08af44724c3272fc7efb } from '@/src/components/admin/MenuItemsField'
 import { DonationReplyButton as DonationReplyButton_939e9c59d658d71aef291a615b0cf0fe } from '@/src/components/admin/DonationReplyButton'
 import { EventDateWarning as EventDateWarning_86d7a7ba4986bf7e4d43cf53ef110e20 } from '@/src/components/EventDateWarning'
 import { RecurringEventsPanel as RecurringEventsPanel_e7e4aea551a6872fcc74882726563207 } from '@/src/components/admin/RecurringEventsPanel'
@@ -65,6 +66,7 @@ export const importMap = {
   "@/src/components/admin/PreviewControls#PreviewControls": PreviewControls_e5c0490040b43f7662876a27010d6efc,
   "@/src/components/admin/VersionsWithEditor#VersionsWithEditor": VersionsWithEditor_086ae422e503b0ca3c3b3cebea7f361d,
   "@/src/components/admin/MarkLinesCleanedButton#MarkLinesCleanedButton": MarkLinesCleanedButton_f5f2df171d50f30cf104614de4c760a1,
+  "@/src/components/admin/MenuItemsField#MenuItemsField": MenuItemsField_e78f192010ab08af44724c3272fc7efb,
   "@/src/components/admin/DonationReplyButton#DonationReplyButton": DonationReplyButton_939e9c59d658d71aef291a615b0cf0fe,
   "@/src/components/EventDateWarning#EventDateWarning": EventDateWarning_86d7a7ba4986bf7e4d43cf53ef110e20,
   "@/src/components/admin/RecurringEventsPanel#RecurringEventsPanel": RecurringEventsPanel_e7e4aea551a6872fcc74882726563207,
